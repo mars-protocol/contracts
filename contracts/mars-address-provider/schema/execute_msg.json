@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecuteMsg",
+  "anyOf": [
+    {
+      "description": "Update address provider config",
+      "type": "object",
+      "required": [
+        "update_config"
+      ],
+      "properties": {
+        "update_config": {
+          "type": "object",
+          "required": [
+            "config"
+          ],
+          "properties": {
+            "config": {
+              "$ref": "#/definitions/ConfigParams"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "ConfigParams": {
+      "type": "object",
+      "properties": {
+        "council_address": {
+          "description": "Council contract handles the submission and execution of proposals",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "incentives_address": {
+          "description": "Incentives contract handles incentives to depositors on the red bank",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mars_token_address": {
+          "description": "Mars token cw20 contract",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "oracle_address": {
+          "description": "Oracle contract provides prices in uusd for assets used in the protocol",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "owner": {
+          "description": "Contract owner (has special permissions to update parameters)",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "protocol_admin_address": {
+          "description": "Protocol admin is the Cosmos level contract admin that has permissions to migrate contracts",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "protocol_rewards_collector_address": {
+          "description": "Protocol Rewards Collector receives and distributes protocl rewards",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "red_bank_address": {
+          "description": "Red Bank contract handles user's depositing/borrowing and holds the protocol's liquidity",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "safety_fund_address": {
+          "description": "Safety fund contract accumulates UST to protect the protocol from shortfall events",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "staking_address": {
+          "description": "Staking address handles Mars staking and xMars minting",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "treasury_address": {
+          "description": "Treasury contract accumulates protocol fees that can be spent by the council through the voting of proposals",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "vesting_address": {
+          "description": "Vesting contract",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "xmars_token_address": {
+          "description": "xMars token cw20 contract",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

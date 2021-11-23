@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UserCollateralResponse",
+  "type": "object",
+  "required": [
+    "collateral"
+  ],
+  "properties": {
+    "collateral": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/UserAssetCollateralResponse"
+      }
+    }
+  },
+  "definitions": {
+    "AssetType": {
+      "type": "string",
+      "enum": [
+        "cw20",
+        "native"
+      ]
+    },
+    "UserAssetCollateralResponse": {
+      "type": "object",
+      "required": [
+        "asset_label",
+        "asset_reference",
+        "asset_type",
+        "denom",
+        "enabled"
+      ],
+      "properties": {
+        "asset_label": {
+          "description": "Either denom if native asset or contract address if cw20",
+          "type": "string"
+        },
+        "asset_reference": {
+          "description": "Bytes used as key on the kv store for data related to the asset",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          }
+        },
+        "asset_type": {
+          "description": "Indicated whether the asset is native or a cw20 token",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AssetType"
+            }
+          ]
+        },
+        "denom": {
+          "description": "Asset denom",
+          "type": "string"
+        },
+        "enabled": {
+          "description": "Wether the user is using asset as collateral or not",
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

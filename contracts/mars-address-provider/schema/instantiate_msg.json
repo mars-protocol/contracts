@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InstantiateMsg",
+  "description": "Only owner can be set on initialization (the EOA doing all the deployments) as all other contracts are supposed to be initialized after this one with its address passed as a param. After initializing all contracts. An update config call should be done setting council as the owner and submiting all the contract addresses",
+  "type": "object",
+  "required": [
+    "owner"
+  ],
+  "properties": {
+    "owner": {
+      "type": "string"
+    }
+  }
+}

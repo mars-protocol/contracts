@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "anyOf": [
+    {
+      "description": "Query contract config",
+      "type": "object",
+      "required": [
+        "config"
+      ],
+      "properties": {
+        "config": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Query info about asset incentive for a given maToken",
+      "type": "object",
+      "required": [
+        "asset_incentive"
+      ],
+      "properties": {
+        "asset_incentive": {
+          "type": "object",
+          "required": [
+            "ma_token_address"
+          ],
+          "properties": {
+            "ma_token_address": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Query user current unclaimed rewards",
+      "type": "object",
+      "required": [
+        "user_unclaimed_rewards"
+      ],
+      "properties": {
+        "user_unclaimed_rewards": {
+          "type": "object",
+          "required": [
+            "user_address"
+          ],
+          "properties": {
+            "user_address": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

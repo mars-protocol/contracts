@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ReceiveMsg",
+  "anyOf": [
+    {
+      "description": "Stake Mars and mint xMars in return",
+      "type": "object",
+      "required": [
+        "stake"
+      ],
+      "properties": {
+        "stake": {
+          "type": "object",
+          "properties": {
+            "recipient": {
+              "description": "Address to receive the xMars tokens. Set to sender if not specified",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Burn xMars and initiate a cooldown period on which the underlying Mars will be claimable. Only one open claim per address is allowed.",
+      "type": "object",
+      "required": [
+        "unstake"
+      ],
+      "properties": {
+        "unstake": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

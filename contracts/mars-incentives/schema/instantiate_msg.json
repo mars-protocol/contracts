@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InstantiateMsg",
+  "type": "object",
+  "required": [
+    "address_provider_address",
+    "owner"
+  ],
+  "properties": {
+    "address_provider_address": {
+      "description": "Address provider returns addresses for all protocol contracts",
+      "type": "string"
+    },
+    "owner": {
+      "description": "Contract owner",
+      "type": "string"
+    }
+  }
+}

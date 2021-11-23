@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "anyOf": [
+    {
+      "description": "Config of this contract",
+      "type": "object",
+      "required": [
+        "config"
+      ],
+      "properties": {
+        "config": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Parameters and current status of an allocation",
+      "type": "object",
+      "required": [
+        "allocation"
+      ],
+      "properties": {
+        "allocation": {
+          "type": "object",
+          "required": [
+            "account"
+          ],
+          "properties": {
+            "account": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Simulate how many MARS and xMARS will be released if a withdrawal is attempted",
+      "type": "object",
+      "required": [
+        "simulate_withdraw"
+      ],
+      "properties": {
+        "simulate_withdraw": {
+          "type": "object",
+          "required": [
+            "account"
+          ],
+          "properties": {
+            "account": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Total amount of xMARS owned by an account that's under custody by this contract Used by Martian Council to determine the account's vested voting power",
+      "type": "object",
+      "required": [
+        "voting_power_at"
+      ],
+      "properties": {
+        "voting_power_at": {
+          "type": "object",
+          "required": [
+            "account",
+            "block"
+          ],
+          "properties": {
+            "account": {
+              "type": "string"
+            },
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

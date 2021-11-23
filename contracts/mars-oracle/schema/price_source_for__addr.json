@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PriceSource_for_Addr",
+  "anyOf": [
+    {
+      "description": "Returns a fixed value; used for UST",
+      "type": "object",
+      "required": [
+        "fixed"
+      ],
+      "properties": {
+        "fixed": {
+          "type": "object",
+          "required": [
+            "price"
+          ],
+          "properties": {
+            "price": {
+              "$ref": "#/definitions/Decimal"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Native Terra stablecoins transaction rate quoted in UST",
+      "type": "object",
+      "required": [
+        "native"
+      ],
+      "properties": {
+        "native": {
+          "type": "object",
+          "required": [
+            "denom"
+          ],
+          "properties": {
+            "denom": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Astroport spot price quoted in UST\n\nNOTE: `pair_address` must point to an astroport pair consists of the asset of intereset and UST",
+      "type": "object",
+      "required": [
+        "astroport_spot"
+      ],
+      "properties": {
+        "astroport_spot": {
+          "type": "object",
+          "required": [
+            "pair_address"
+          ],
+          "properties": {
+            "pair_address": {
+              "description": "Address of the Astroport pair",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Addr"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Astroport TWAP price quoted in UST\n\nNOTE: `pair_address` must point to an astroport pair consists of the asset of intereset and UST",
+      "type": "object",
+      "required": [
+        "astroport_twap"
+      ],
+      "properties": {
+        "astroport_twap": {
+          "type": "object",
+          "required": [
+            "pair_address",
+            "tolerance",
+            "window_size"
+          ],
+          "properties": {
+            "pair_address": {
+              "description": "Address of the Astroport pair",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Addr"
+                }
+              ]
+            },
+            "tolerance": {
+              "description": "When calculating averaged price, we take the most recent TWAP snapshot and find a second snapshot in the range of window_size +/- tolerance. For example, if window size is 5 minutes and tolerance is 1 minute, we look for snapshots that are 4 - 6 minutes back in time from the most recent snapshot.\n\nIf there are multiple snapshots within the range, we take the one that is closest to the desired window size.",
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "window_size": {
+              "description": "Address of the asset of interest\n\nNOTE: Spot price in intended for CW20 tokens. Terra native tokens should use Fixed or Native price sources.",
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Astroport liquidity token\n\nNOTE: Astroport's pair contract does not have a query command to check the address of the LP token associated with a pair. Therefore, we can't implement relevant checks in the contract. The owner must make sure the addresses supplied are accurate",
+      "type": "object",
+      "required": [
+        "astroport_liquidity_token"
+      ],
+      "properties": {
+        "astroport_liquidity_token": {
+          "type": "object",
+          "required": [
+            "pair_address"
+          ],
+          "properties": {
+            "pair_address": {
+              "description": "Address of the asset of interest",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Addr"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "Addr": {
+      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+      "type": "string"
+    },
+    "Decimal": {
+      "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+[package]
+name = "mars-treasury"
+version = "1.0.0"
+authors = ["Spike Spiegel <spikeonmars@protonmail.com>"]
+edition = "2018"
+
+exclude = [
+  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "contract.wasm",
+  "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+mars-core = { path = "../../packages/mars-core", version = "1.0.0" }
+
+cw-storage-plus = "0.9.0"
+
+cosmwasm-std = "0.16.2"
+
+schemars = "0.8.1"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+
+[dev-dependencies]
+cosmwasm-schema = "0.16.2"
