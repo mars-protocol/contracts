@@ -83,7 +83,6 @@ export const testnet: Config = {
         deposit_enabled: true,
         borrow_enabled: true
       }
-      asset_symbol: "UST",
     },
     {
       symbol: "LUNA",
