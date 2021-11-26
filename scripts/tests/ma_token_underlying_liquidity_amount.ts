@@ -84,7 +84,7 @@ const SECONDS_IN_YEAR = 60 * 60 * 24 * 365;
           incentives_address: incentives,
           oracle_address: oracle,
           red_bank_address: redBank,
-          protocol_rewards_collector: protocolRewardsCollector,
+          protocol_rewards_collector_address: protocolRewardsCollector,
           protocol_admin_address: deployer.key.accAddress,
         }
       }

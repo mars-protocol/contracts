@@ -1,11 +1,6 @@
 /*
 MWE for a bug in the red bank: depositing an asset after it has been borrowed fails.
 Does not depend on which user makes the deposit, or the interest rate model used for the asset.
-
-Error message:
-```
-failed to execute message; message index: 0: dispatch: Generic error: addr_validate errored: Input
-is empty: execute wasm contract failed
 ```
 */
 
@@ -18,7 +13,7 @@ import {
 import {
   deployContract,
   executeContract,
-  queryContract,
+  queryContract, setGasAdjustment,
   setTimeoutDuration,
   uploadContract
 } from "../helpers.js"
@@ -61,6 +56,8 @@ async function checkCollateral(
 
 (async () => {
   setTimeoutDuration(0)
+
+  setGasAdjustment(2)
 
   const terra = new LocalTerra()
 
@@ -109,7 +106,7 @@ async function checkCollateral(
           incentives_address: incentives,
           oracle_address: oracle,
           red_bank_address: redBank,
-          protocol_rewards_collector: protocolRewardsCollector,
+          protocol_rewards_collector_address: protocolRewardsCollector,
           protocol_admin_address: deployer.key.accAddress,
         }
       }
@@ -204,10 +201,6 @@ async function checkCollateral(
   console.log("borrower provides Luna")
 
   await depositNative(terra, borrower, redBank, "uluna", LUNA_COLLATERAL)
-
-  // TODO: uncommenting these two lines makes the test pass
-  // await depositNative(terra, provider, redBank, "uusd", USD_COLLATERAL)
-  // await depositNative(terra, provider, redBank, "uusd", USD_COLLATERAL)
 
   console.log("borrower borrows USD")
 

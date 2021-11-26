@@ -108,7 +108,7 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
           incentives_address: incentives,
           oracle_address: oracle,
           red_bank_address: redBank,
-          protocol_rewards_collector: protocolRewardsCollector,
+          protocol_rewards_collector_address: protocolRewardsCollector,
           protocol_admin_address: deployer.key.accAddress,
         }
       }

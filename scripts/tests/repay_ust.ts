@@ -94,7 +94,7 @@ async function getDebt(
           incentives_address: incentives,
           oracle_address: oracle,
           red_bank_address: redBank,
-          protocol_rewards_collector: protocolRewardsCollector,
+          protocol_rewards_collector_address: protocolRewardsCollector,
           protocol_admin_address: deployer.key.accAddress,
         }
       }
@@ -168,11 +168,6 @@ async function getDebt(
   )
 
   await setAssetOraclePriceSource(terra, deployer, oracle, { native: { denom: "uusd" } }, 1)
-
-  // TODO: making two deposits into the red bank for an asset is necessary for the second borrow of
-  // that asset to succeed. Remove these two deposits when this bug has been identified and fixed.
-  await depositNative(terra, deployer, redBank, "uusd", USD_COLLATERAL)
-  await depositNative(terra, deployer, redBank, "uusd", USD_COLLATERAL)
 
   // TESTS
 

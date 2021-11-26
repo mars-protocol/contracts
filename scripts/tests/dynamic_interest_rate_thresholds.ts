@@ -91,7 +91,7 @@ async function queryBorrowRate(
           incentives_address: incentives,
           oracle_address: oracle,
           red_bank_address: redBank,
-          protocol_rewards_collector: protocolRewardsCollector,
+          protocol_rewards_collector_address: protocolRewardsCollector,
           protocol_admin_address: deployer.key.accAddress,
         }
       }
@@ -186,11 +186,10 @@ async function queryBorrowRate(
     strictEqual(uusdBorrowRate, uusdCurrentBorrowRate)
   }
 
-  // TODO: Test threshold seconds if `sleep` works on LocalTerra. Currently we get `Generic error: addr_validate errored`
-  /*const localTerraSec = uusdUpdateThresholdSeconds * BLOCK_TIME
+  const localTerraSec = uusdUpdateThresholdSeconds * BLOCK_TIME
   const timoutInMs = localTerraSec * 1000
   console.log("Wait ~", localTerraSec, " seconds")
-  await sleep(timoutInMs + 10)*/
+  await sleep(timoutInMs + 10)
 
   console.log("[3 tx with usd] borrow")
   await borrowNative(terra, user2, redBank, "uusd", 200_000000)

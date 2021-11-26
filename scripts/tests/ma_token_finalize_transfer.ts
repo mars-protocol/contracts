@@ -216,7 +216,7 @@ async function testTransferCollateral(
           incentives_address: incentives,
           oracle_address: oracle,
           red_bank_address: redBank,
-          protocol_rewards_collector: protocolRewardsCollector,
+          protocol_rewards_collector_address: protocolRewardsCollector,
           protocol_admin_address: deployer.key.accAddress,
         }
       }
@@ -298,11 +298,6 @@ async function testTransferCollateral(
   )
 
   const maLuna = await queryMaAssetAddress(terra, redBank, { native: { denom: "uluna" } })
-
-  // TODO: making two deposits into the red bank for an asset is necessary for the second borrow of
-  // that asset to succeed. Remove these two deposits when this bug has been identified and fixed.
-  await depositNative(terra, deployer, redBank, "uusd", USD_COLLATERAL)
-  await depositNative(terra, deployer, redBank, "uusd", USD_COLLATERAL)
 
   // tests
 
