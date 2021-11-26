@@ -271,6 +271,7 @@ export async function setupRedBank(terra: LCDClient, wallet: Wallet, contractAdd
       "init_asset": {
         "asset": assetType,
         "asset_params": asset.init_params,
+        "asset_symbol": asset.symbol,
       },
     };
 

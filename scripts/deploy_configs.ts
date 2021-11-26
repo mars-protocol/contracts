@@ -59,6 +59,7 @@ export const testnet: Config = {
   initialAssets: [
     // find contract addresses of CW20's here: https://github.com/terra-project/assets/blob/master/cw20/tokens.json
     {
+      symbol: "UST",
       denom: "uusd",
       init_params: {
         initial_borrow_rate: "0.2",
@@ -82,8 +83,10 @@ export const testnet: Config = {
         deposit_enabled: true,
         borrow_enabled: true
       }
+      asset_symbol: "UST",
     },
     {
+      symbol: "LUNA",
       denom: "uluna",
       init_params: {
         initial_borrow_rate: "0.1",

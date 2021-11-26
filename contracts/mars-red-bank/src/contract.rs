@@ -105,7 +105,8 @@ pub fn execute(
         ExecuteMsg::InitAsset {
             asset,
             asset_params,
-        } => execute_init_asset(deps, env, info, asset, asset_params),
+            asset_symbol,
+        } => execute_init_asset(deps, env, info, asset, asset_params, asset_symbol),
 
         ExecuteMsg::InitAssetTokenCallback { reference } => {
             execute_init_asset_token_callback(deps, env, info, reference)
@@ -315,6 +316,7 @@ pub fn execute_init_asset(
     info: MessageInfo,
     asset: Asset,
     asset_params: InitOrUpdateAssetParams,
+    asset_symbol_option: Option<String>,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
@@ -350,11 +352,15 @@ pub fn execute_init_asset(
             money_market.market_count += 1;
             GLOBAL_STATE.save(deps.storage, &money_market)?;
 
-            let symbol = match asset {
-                Asset::Native { denom } => denom,
-                Asset::Cw20 { contract_addr } => {
-                    let contract_addr = deps.api.addr_validate(&contract_addr)?;
-                    cw20_get_symbol(&deps.querier, contract_addr)?
+            let symbol = if let Some(asset_symbol) = asset_symbol_option {
+                asset_symbol
+            } else {
+                match asset {
+                    Asset::Native { denom } => denom,
+                    Asset::Cw20 { contract_addr } => {
+                        let contract_addr = deps.api.addr_validate(&contract_addr)?;
+                        cw20_get_symbol(&deps.querier, contract_addr)?
+                    }
                 }
             };
 
@@ -377,7 +383,7 @@ pub fn execute_init_asset(
                     admin: Some(protocol_admin_address.to_string()),
                     code_id: config.ma_token_code_id,
                     msg: to_binary(&ma_token::msg::InstantiateMsg {
-                        name: format!("Mars {} liquidity token", symbol),
+                        name: format!("Mars {} Liquidity Token", symbol),
                         symbol: format!("ma{}", symbol),
                         decimals: 6,
                         initial_balances: vec![],
@@ -2422,6 +2428,7 @@ mod tests {
                     denom: "someasset".to_string(),
                 },
                 asset_params: asset_params.clone(),
+                asset_symbol: None,
             };
             let info = mock_info("somebody");
             let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -2441,6 +2448,7 @@ mod tests {
                     denom: "someasset".to_string(),
                 },
                 asset_params: empty_asset_params,
+                asset_symbol: None,
             };
             let info = mock_info("owner");
             let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -2459,6 +2467,7 @@ mod tests {
                     denom: "someasset".to_string(),
                 },
                 asset_params: invalid_asset_params,
+                asset_symbol: None,
             };
             let info = mock_info("owner");
             let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -2488,6 +2497,7 @@ mod tests {
                     denom: "someasset".to_string(),
                 },
                 asset_params: invalid_asset_params,
+                asset_symbol: None,
             };
             let info = mock_info("owner");
             let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -2518,6 +2528,7 @@ mod tests {
                     denom: "someasset".to_string(),
                 },
                 asset_params: invalid_asset_params,
+                asset_symbol: None,
             };
             let info = mock_info("owner");
             let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -2547,6 +2558,7 @@ mod tests {
                     denom: "someasset".to_string(),
                 },
                 asset_params: invalid_asset_params,
+                asset_symbol: None,
             };
             let info = mock_info("owner");
             let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -2565,6 +2577,7 @@ mod tests {
                     denom: "someasset".to_string(),
                 },
                 asset_params: asset_params.clone(),
+                asset_symbol: None,
             };
             let info = mock_info("owner");
             let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -2594,7 +2607,7 @@ mod tests {
                     admin: Some("protocol_admin".to_string()),
                     code_id: 5u64,
                     msg: to_binary(&ma_token::msg::InstantiateMsg {
-                        name: String::from("Mars someasset liquidity token"),
+                        name: String::from("Mars someasset Liquidity Token"),
                         symbol: String::from("masomeasset"),
                         decimals: 6,
                         initial_balances: vec![],
@@ -2641,6 +2654,7 @@ mod tests {
                     denom: "someasset".to_string(),
                 },
                 asset_params: asset_params.clone(),
+                asset_symbol: None,
             };
             let info = mock_info("owner");
             let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -2682,6 +2696,7 @@ mod tests {
                     contract_addr: cw20_addr.to_string(),
                 },
                 asset_params,
+                asset_symbol: None,
             };
             let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
@@ -2738,6 +2753,84 @@ mod tests {
             let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
             assert_eq!(error_res, MarsError::Unauthorized {}.into());
         }
+    }
+
+    #[test]
+    fn test_init_asset_with_msg_symbol() {
+        let mut deps = th_setup(&[]);
+        let dynamic_ir_params = DynamicInterestRateModelParams {
+            min_borrow_rate: Decimal::from_ratio(5u128, 100u128),
+            max_borrow_rate: Decimal::from_ratio(50u128, 100u128),
+            kp_1: Decimal::from_ratio(3u128, 1u128),
+            optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
+            kp_augmentation_threshold: Decimal::from_ratio(2000u128, 1u128),
+            kp_2: Decimal::from_ratio(2u128, 1u128),
+            update_threshold_seconds: 1,
+            update_threshold_txs: 1,
+        };
+        let asset_params = InitOrUpdateAssetParams {
+            initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
+            max_loan_to_value: Some(Decimal::from_ratio(8u128, 10u128)),
+            reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
+            liquidation_threshold: Some(Decimal::one()),
+            liquidation_bonus: Some(Decimal::zero()),
+            interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
+                dynamic_ir_params.clone(),
+            )),
+            active: Some(true),
+            deposit_enabled: Some(true),
+            borrow_enabled: Some(true),
+        };
+        let msg = ExecuteMsg::InitAsset {
+            asset: Asset::Native {
+                denom: "someasset".to_string(),
+            },
+            asset_params: asset_params.clone(),
+            asset_symbol: Some("COIN".to_string()),
+        };
+        let info = mock_info("owner");
+        let env = mock_env(MockEnvParams::default());
+        let res = execute(deps.as_mut(), env, info, msg).unwrap();
+
+        // should instantiate a liquidity token
+        assert_eq!(
+            res.messages,
+            vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Instantiate {
+                admin: Some("protocol_admin".to_string()),
+                code_id: 1u64,
+                msg: to_binary(&ma_token::msg::InstantiateMsg {
+                    name: String::from("Mars COIN Liquidity Token"),
+                    symbol: String::from("maCOIN"),
+                    decimals: 6,
+                    initial_balances: vec![],
+                    mint: Some(MinterResponse {
+                        minter: MOCK_CONTRACT_ADDR.to_string(),
+                        cap: None,
+                    }),
+                    init_hook: Some(ma_token::msg::InitHook {
+                        contract_addr: MOCK_CONTRACT_ADDR.to_string(),
+                        msg: to_binary(&ExecuteMsg::InitAssetTokenCallback {
+                            reference: b"someasset".to_vec(),
+                        })
+                        .unwrap()
+                    }),
+                    marketing: Some(InstantiateMarketingInfo {
+                        project: Some("Mars Protocol".to_string()),
+                        description: Some(
+                            "Interest earning token representing deposits for COIN".to_string()
+                        ),
+
+                        marketing: Some("protocol_admin".to_string()),
+                        logo: None,
+                    }),
+                    red_bank_address: MOCK_CONTRACT_ADDR.to_string(),
+                    incentives_address: "incentives".to_string(),
+                })
+                .unwrap(),
+                funds: vec![],
+                label: "".to_string()
+            })),]
+        );
     }
 
     #[test]
@@ -2815,6 +2908,7 @@ mod tests {
                     denom: "someasset".to_string(),
                 },
                 asset_params: asset_params.clone(),
+                asset_symbol: None,
             };
             let info = mock_info("owner");
             let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -3134,6 +3228,7 @@ mod tests {
                 denom: "someasset".to_string(),
             },
             asset_params: asset_params_with_dynamic_ir.clone(),
+            asset_symbol: None,
         };
         let info = mock_info("owner");
         let env = mock_env_at_block_time(1_000_000);

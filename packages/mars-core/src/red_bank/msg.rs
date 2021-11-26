@@ -12,11 +12,13 @@ use super::interest_rate_models::InterestRateModelParams;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
+    /// Market configuration
     pub config: CreateOrUpdateConfig,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[allow(clippy::large_enum_variant)]
 pub enum ExecuteMsg {
     /// Implementation of cw20 receive msg
     Receive(Cw20ReceiveMsg),
@@ -30,6 +32,12 @@ pub enum ExecuteMsg {
         asset: Asset,
         /// Asset parameters
         asset_params: InitOrUpdateAssetParams,
+        /// Asset symbol to be used in maToken name and description. If non is provided,
+        /// denom will be used for native and token symbol will be used for cw20. Mostly
+        /// useful for native assets since it's denom (e.g.: uluna, uusd) does not match it's
+        /// user facing symbol (LUNA, UST) which should be used in maToken's attributes
+        /// for the sake of consistency
+        asset_symbol: Option<String>,
     },
 
     /// Callback sent from maToken contract after instantiated
