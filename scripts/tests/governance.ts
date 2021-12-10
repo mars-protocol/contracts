@@ -159,11 +159,9 @@ async function waitUntilBlockHeight(
   const vesting = await deployContract(terra, deployer, "../artifacts/mars_vesting.wasm",
     {
       address_provider_address: addressProvider,
-      default_unlock_schedule: {
-        start_time: 0,
-        cliff: 0,
-        duration: 0
-      }
+      unlock_start_time: 0,
+      unlock_cliff: 0,
+      unlock_duration: 0,
     }
   )
 

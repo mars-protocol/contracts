@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Order,
-    Response, StdResult, Storage, Uint128, WasmMsg,
+    Response, StdError, StdResult, Storage, Uint128, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg};
 use cw_storage_plus::{Bound, U64Key};
@@ -128,8 +128,8 @@ pub fn execute_receive_cw20(
             execute_stake(deps, env, info, cw20_msg.sender, recipient, cw20_msg.amount)
         }
 
-        ReceiveMsg::Unstake {} => {
-            execute_unstake(deps, env, info, cw20_msg.sender, cw20_msg.amount)
+        ReceiveMsg::Unstake { recipient } => {
+            execute_unstake(deps, env, info, cw20_msg.sender, recipient, cw20_msg.amount)
         }
     }
 }
@@ -186,42 +186,33 @@ pub fn execute_stake(
 ) -> Result<Response, ContractError> {
     // check stake is valid
     let config = CONFIG.load(deps.storage)?;
-    let (mars_token_address, xmars_token_address) = get_token_addresses(&deps, &config)?;
+    let global_state = GLOBAL_STATE.load(deps.storage)?;
 
-    // Has to send Mars tokens
-    if info.sender != mars_token_address {
-        return Err(MarsError::Unauthorized {}.into());
-    }
     if stake_amount.is_zero() {
         return Err(ContractError::StakeAmountZero {});
     }
 
-    let total_mars_in_staking_contract =
-        cw20_get_balance(&deps.querier, mars_token_address, env.contract.address)?;
+    let staking_tokens_info =
+        get_staking_tokens_info(deps.as_ref(), &env, &config, &global_state, stake_amount)?;
 
-    // The math needs to be done with MARS amount before the stake transaction.
-    // The staked mars are already in the contract's balance as part of the send call.
-    // That amount needs to be deducted
-    let net_total_mars_in_staking_contract =
-        total_mars_in_staking_contract.checked_sub(stake_amount)?;
+    // Has to send Mars tokens
+    if info.sender != staking_tokens_info.mars_token_address {
+        return Err(MarsError::Unauthorized {}.into());
+    }
 
-    let global_state = GLOBAL_STATE.load(deps.storage)?;
-    let total_mars_for_stakers =
-        net_total_mars_in_staking_contract.checked_sub(global_state.total_mars_for_claimers)?;
+    let xmars_per_mars_option = compute_xmars_per_mars(&staking_tokens_info)?;
 
-    let total_xmars_supply = cw20_get_total_supply(&deps.querier, xmars_token_address.clone())?;
-
-    let mint_amount = if total_mars_for_stakers.is_zero() || total_xmars_supply.is_zero() {
-        stake_amount
+    let mint_amount = if let Some(xmars_per_mars) = xmars_per_mars_option {
+        stake_amount * xmars_per_mars
     } else {
-        stake_amount.multiply_ratio(total_xmars_supply, total_mars_for_stakers)
+        stake_amount
     };
 
     let recipient = option_recipient.unwrap_or_else(|| staker.clone());
 
     let res = Response::new()
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: xmars_token_address.to_string(),
+            contract_addr: staking_tokens_info.xmars_token_address.to_string(),
             funds: vec![],
             msg: to_binary(&Cw20ExecuteMsg::Mint {
                 recipient: recipient.clone(),
@@ -242,35 +233,30 @@ pub fn execute_unstake(
     env: Env,
     info: MessageInfo,
     staker: String,
+    option_recipient: Option<String>,
     burn_amount: Uint128,
 ) -> Result<Response, ContractError> {
     // check if unstake is valid
     let config = CONFIG.load(deps.storage)?;
-    let (mars_token_address, xmars_token_address) = get_token_addresses(&deps, &config)?;
-    if info.sender != xmars_token_address {
+    let mut global_state = GLOBAL_STATE.load(deps.storage)?;
+
+    let staking_tokens_info =
+        get_staking_tokens_info(deps.as_ref(), &env, &config, &global_state, Uint128::zero())?;
+
+    if info.sender != staking_tokens_info.xmars_token_address {
         return Err(MarsError::Unauthorized {}.into());
     }
     if burn_amount.is_zero() {
         return Err(ContractError::UnstakeAmountZero {});
     }
 
-    let staker_addr = deps.api.addr_validate(&staker)?;
+    let mars_per_xmars_option = compute_mars_per_xmars(&staking_tokens_info)?;
 
-    if CLAIMS.may_load(deps.storage, &staker_addr)?.is_some() {
-        return Err(ContractError::UnstakeActiveClaim {});
-    }
-
-    let total_mars_in_staking_contract =
-        cw20_get_balance(&deps.querier, mars_token_address, env.contract.address)?;
-
-    let mut global_state = GLOBAL_STATE.load(deps.storage)?;
-
-    let total_mars_for_stakers =
-        total_mars_in_staking_contract.checked_sub(global_state.total_mars_for_claimers)?;
-
-    let total_xmars_supply = cw20_get_total_supply(&deps.querier, xmars_token_address.clone())?;
-
-    let claimable_amount = burn_amount.multiply_ratio(total_mars_for_stakers, total_xmars_supply);
+    let claimable_amount = if let Some(mars_per_xmars) = mars_per_xmars_option {
+        burn_amount * mars_per_xmars
+    } else {
+        return Err(StdError::generic_err("mars/xmars ratio is undefined").into());
+    };
 
     let claim = Claim {
         created_at_block: env.block.height,
@@ -278,15 +264,19 @@ pub fn execute_unstake(
         amount: claimable_amount,
     };
 
-    CLAIMS.save(deps.storage, &staker_addr, &claim)?;
+    let recipient = option_recipient.unwrap_or_else(|| staker.clone());
+    let recipient_addr = deps.api.addr_validate(&recipient)?;
+
+    if CLAIMS.may_load(deps.storage, &recipient_addr)?.is_some() {
+        return Err(ContractError::UnstakeActiveClaim {});
+    }
+    CLAIMS.save(deps.storage, &recipient_addr, &claim)?;
 
     global_state.total_mars_for_claimers = global_state
         .total_mars_for_claimers
         .checked_add(claimable_amount)?;
 
-    // Total Mars for claimers should never be higher than total Mars, if it is
-    // there's some logical inconsistency in the contract
-    if global_state.total_mars_for_claimers > total_mars_in_staking_contract {
+    if global_state.total_mars_for_claimers > staking_tokens_info.total_mars_in_staking_contract {
         return Err(ContractError::MarsForClaimersOverflow {});
     }
 
@@ -294,7 +284,7 @@ pub fn execute_unstake(
 
     let res = Response::new()
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: xmars_token_address.to_string(),
+            contract_addr: staking_tokens_info.xmars_token_address.to_string(),
             funds: vec![],
             msg: to_binary(&Cw20ExecuteMsg::Burn {
                 amount: burn_amount,
@@ -302,8 +292,9 @@ pub fn execute_unstake(
         }))
         .add_attribute("action", "unstake")
         .add_attribute("staker", staker)
-        .add_attribute("mars_claimable", claimable_amount)
-        .add_attribute("xmars_burned", burn_amount);
+        .add_attribute("recipient", recipient)
+        .add_attribute("xmars_burned", burn_amount)
+        .add_attribute("mars_claimable", claimable_amount);
     Ok(res)
 }
 
@@ -495,6 +486,8 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::GlobalState {} => to_binary(&query_global_state(deps)?),
+        QueryMsg::XMarsPerMars {} => to_binary(&query_xmars_per_mars(deps, env)?),
+        QueryMsg::MarsPerXMars {} => to_binary(&query_mars_per_xmars(deps, env)?),
         QueryMsg::Claim { user_address } => to_binary(&query_claim(deps, env, user_address)?),
     }
 }
@@ -507,6 +500,26 @@ fn query_config(deps: Deps) -> StdResult<Config> {
 fn query_global_state(deps: Deps) -> StdResult<GlobalState> {
     let global_state = GLOBAL_STATE.load(deps.storage)?;
     Ok(global_state)
+}
+
+fn query_xmars_per_mars(deps: Deps, env: Env) -> StdResult<Option<Decimal>> {
+    let config = CONFIG.load(deps.storage)?;
+    let global_state = GLOBAL_STATE.load(deps.storage)?;
+
+    let staking_tokens_info =
+        get_staking_tokens_info(deps, &env, &config, &global_state, Uint128::zero())?;
+
+    compute_xmars_per_mars(&staking_tokens_info)
+}
+
+fn query_mars_per_xmars(deps: Deps, env: Env) -> StdResult<Option<Decimal>> {
+    let config = CONFIG.load(deps.storage)?;
+    let global_state = GLOBAL_STATE.load(deps.storage)?;
+
+    let staking_tokens_info =
+        get_staking_tokens_info(deps, &env, &config, &global_state, Uint128::zero())?;
+
+    compute_mars_per_xmars(&staking_tokens_info)
 }
 
 fn query_claim(deps: Deps, _env: Env, user_address_unchecked: String) -> StdResult<ClaimResponse> {
@@ -526,12 +539,14 @@ fn query_claim(deps: Deps, _env: Env, user_address_unchecked: String) -> StdResu
 // HELPERS
 
 /// Gets mars and xmars token addresses from address provider and returns them in a tuple.
-fn get_token_addresses(deps: &DepsMut, config: &Config) -> Result<(Addr, Addr), ContractError> {
+fn get_token_addresses(deps: Deps, config: &Config) -> StdResult<(Addr, Addr)> {
     let mut addresses_query = address_provider::helpers::query_addresses(
         &deps.querier,
         config.address_provider_address.clone(),
         vec![MarsContract::MarsToken, MarsContract::XMarsToken],
-    )?;
+    )
+    .map_err(|_| StdError::generic_err("Failed to query token addresses"))?;
+
     let xmars_token_address = addresses_query.pop().unwrap();
     let mars_token_address = addresses_query.pop().unwrap();
 
@@ -548,6 +563,84 @@ fn apply_slash_events_to_claim(storage: &dyn Storage, claim: &mut Claim) -> StdR
         claim.amount = claim.amount * (Decimal::one() - slash_event.slash_percentage);
     }
     Ok(())
+}
+
+struct StakingTokensInfo {
+    mars_token_address: Addr,
+    xmars_token_address: Addr,
+    total_mars_in_staking_contract: Uint128,
+    total_mars_for_stakers: Uint128,
+    total_xmars_supply: Uint128,
+}
+
+/// Gets mars and xmars info to check addresses and compute ratios
+/// mars_to_deduct accounts for mars that are already in
+/// the contract but should not be taken into account for the net amount
+/// in the balance
+fn get_staking_tokens_info(
+    deps: Deps,
+    env: &Env,
+    config: &Config,
+    global_state: &GlobalState,
+    mars_to_deduct: Uint128,
+) -> StdResult<StakingTokensInfo> {
+    let (mars_token_address, xmars_token_address) = get_token_addresses(deps, config)?;
+
+    let total_mars_in_staking_contract = cw20_get_balance(
+        &deps.querier,
+        mars_token_address.clone(),
+        env.contract.address.clone(),
+    )?
+    .checked_sub(mars_to_deduct)?;
+    let total_mars_for_stakers =
+        total_mars_in_staking_contract.checked_sub(global_state.total_mars_for_claimers)?;
+
+    let total_xmars_supply = cw20_get_total_supply(&deps.querier, xmars_token_address.clone())?;
+
+    Ok(StakingTokensInfo {
+        mars_token_address,
+        xmars_token_address,
+        total_mars_in_staking_contract,
+        total_mars_for_stakers,
+        total_xmars_supply,
+    })
+}
+
+/// Compute the ratio between xMars and Mars token in terms of how many xMars token will be minted
+/// by staking 1 Mars token.
+fn compute_xmars_per_mars(staking_tokens_info: &StakingTokensInfo) -> StdResult<Option<Decimal>> {
+    let total_mars_for_stakers = staking_tokens_info.total_mars_for_stakers;
+    let total_xmars_supply = staking_tokens_info.total_xmars_supply;
+    // Mars/xMars ratio is undefined if either `total_mars_for_stakers` or `total_xmars_supply` is zero
+    // in this case, we return None
+    if total_mars_for_stakers.is_zero() || total_xmars_supply.is_zero() {
+        Ok(None)
+    } else {
+        Ok(Some(Decimal::from_ratio(
+            staking_tokens_info.total_xmars_supply,
+            staking_tokens_info.total_mars_for_stakers,
+        )))
+    }
+}
+
+/// Compute the ratio between Mars and xMars in terms of how many Mars tokens can be claimed by
+/// burning 1 xMars token.
+///
+/// This is calculated by simply taking the inversion of `xmars_per_mars`.
+fn compute_mars_per_xmars(staking_tokens_info: &StakingTokensInfo) -> StdResult<Option<Decimal>> {
+    let total_mars_for_stakers = staking_tokens_info.total_mars_for_stakers;
+    let total_xmars_supply = staking_tokens_info.total_xmars_supply;
+
+    // Mars/xMars ratio is undefined if either `total_mars_for_stakers` or `total_xmars_supply` is zero
+    // in this case, we return None
+    if total_mars_for_stakers.is_zero() || total_xmars_supply.is_zero() {
+        Ok(None)
+    } else {
+        Ok(Some(Decimal::from_ratio(
+            total_mars_for_stakers,
+            total_xmars_supply,
+        )))
+    }
 }
 
 // TESTS
@@ -833,6 +926,7 @@ mod tests {
             block_time: Timestamp::from_seconds(unstake_time),
         });
         let initial_mars_for_claimers = Uint128::new(700_000);
+        let mut mars_for_claimers = initial_mars_for_claimers;
 
         deps.querier.set_cw20_balances(
             Addr::unchecked("mars_token"),
@@ -855,7 +949,10 @@ mod tests {
         // unstake other token -> Unauthorized
         {
             let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
-                msg: to_binary(&ReceiveMsg::Unstake {}).unwrap(),
+                msg: to_binary(&ReceiveMsg::Unstake {
+                    recipient: Some(String::from("recipient")),
+                })
+                .unwrap(),
                 sender: String::from("staker"),
                 amount: unstake_amount,
             });
@@ -867,7 +964,10 @@ mod tests {
         // valid unstake
         {
             let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
-                msg: to_binary(&ReceiveMsg::Unstake {}).unwrap(),
+                msg: to_binary(&ReceiveMsg::Unstake {
+                    recipient: Some(String::from("recipient")),
+                })
+                .unwrap(),
                 sender: String::from("staker"),
                 amount: unstake_amount,
             });
@@ -895,10 +995,67 @@ mod tests {
                 vec![
                     attr("action", "unstake"),
                     attr("staker", String::from("staker")),
-                    attr("mars_claimable", expected_claimable_mars),
+                    attr("recipient", String::from("recipient")),
                     attr("xmars_burned", unstake_amount),
+                    attr("mars_claimable", expected_claimable_mars),
                 ],
                 res.attributes
+            );
+
+            let claim = CLAIMS
+                .load(&deps.storage, &Addr::unchecked("recipient"))
+                .unwrap();
+
+            assert_eq!(
+                claim,
+                Claim {
+                    created_at_block: unstake_height,
+                    cooldown_end_timestamp: unstake_time + TEST_COOLDOWN_DURATION,
+                    amount: expected_claimable_mars,
+                }
+            );
+
+            mars_for_claimers += expected_claimable_mars;
+
+            let global_state = GLOBAL_STATE.load(&deps.storage).unwrap();
+
+            assert_eq!(global_state.total_mars_for_claimers, mars_for_claimers);
+        }
+
+        // cannot unstake again (recipient has an open claim)
+        {
+            let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
+                msg: to_binary(&ReceiveMsg::Unstake {
+                    recipient: Some(String::from("recipient")),
+                })
+                .unwrap(),
+                sender: String::from("staker"),
+                amount: unstake_amount,
+            });
+            let info = mock_info("xmars_token", &[]);
+
+            let err = execute(deps.as_mut(), env.clone(), info, msg.clone()).unwrap_err();
+
+            assert_eq!(err, ContractError::UnstakeActiveClaim {});
+        }
+
+        // unstake again, but use `None` as recipient
+        // recipient should default to staker, which does not have an open claim
+        {
+            let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
+                msg: to_binary(&ReceiveMsg::Unstake { recipient: None }).unwrap(),
+                sender: String::from("staker"),
+                amount: unstake_amount,
+            });
+            let info = mock_info("xmars_token", &[]);
+
+            let res = execute(deps.as_mut(), env, info, msg.clone()).unwrap();
+
+            assert_eq!(attr("recipient", String::from("staker")), res.attributes[2]);
+
+            let expected_claimable_mars = unstake_amount.multiply_ratio(
+                unstake_mars_in_contract - mars_for_claimers,
+                unstake_xmars_supply,
             );
 
             let claim = CLAIMS
@@ -914,25 +1071,11 @@ mod tests {
                 }
             );
 
+            mars_for_claimers += expected_claimable_mars;
+
             let global_state = GLOBAL_STATE.load(&deps.storage).unwrap();
-            assert_eq!(
-                global_state.total_mars_for_claimers,
-                initial_mars_for_claimers + expected_claimable_mars
-            );
-        }
 
-        // cannot unstake again (there's an open claim)
-        {
-            let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
-                msg: to_binary(&ReceiveMsg::Unstake {}).unwrap(),
-                sender: String::from("staker"),
-                amount: unstake_amount,
-            });
-            let info = mock_info("xmars_token", &[]);
-
-            let err = execute(deps.as_mut(), env, info, msg.clone()).unwrap_err();
-
-            assert_eq!(err, ContractError::UnstakeActiveClaim {});
+            assert_eq!(global_state.total_mars_for_claimers, mars_for_claimers);
         }
     }
 

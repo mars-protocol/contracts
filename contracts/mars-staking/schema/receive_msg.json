@@ -32,7 +32,16 @@
       ],
       "properties": {
         "unstake": {
-          "type": "object"
+          "type": "object",
+          "properties": {
+            "recipient": {
+              "description": "Address to claim the Mars tokens after cooldown. Set to sender is not specified",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
         }
       },
       "additionalProperties": false

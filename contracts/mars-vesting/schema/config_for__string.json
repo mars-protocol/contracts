@@ -3,53 +3,33 @@
   "title": "Config_for_String",
   "type": "object",
   "required": [
-    "address_provider_address"
+    "address_provider_address",
+    "unlock_cliff",
+    "unlock_duration",
+    "unlock_start_time"
   ],
   "properties": {
     "address_provider_address": {
       "description": "Address provider address",
       "type": "string"
     },
-    "default_unlock_schedule": {
-      "description": "By default, unlocking starts at Mars launch, with a cliff of 6 months and a duration of 36 months.\n\nAn allocation can have personalized unlocking schedule, but if that is not specified, will use this global default schedule instead.\n\nIf the global default schedule is not known at contract instantiation (e.g. if vesting contract needs to be deployed earlier than the other components of the protocol), then set this to None in `InstantiationMsg`.",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/Schedule"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    }
-  },
-  "definitions": {
-    "Schedule": {
-      "type": "object",
-      "required": [
-        "cliff",
-        "duration",
-        "start_time"
-      ],
-      "properties": {
-        "cliff": {
-          "description": "Number of seconds starting UST during which no token will be vested/unlocked",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "duration": {
-          "description": "Number of seconds taken since UST for tokens to be fully vested/unlocked",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "start_time": {
-          "description": "Timestamp of when vesting/unlocking is to be started (in seconds)",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      }
+    "unlock_cliff": {
+      "description": "Number of seconds during which no token will be unlocked",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "unlock_duration": {
+      "description": "Number of seconds taken for tokens to be fully unlocked",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "unlock_start_time": {
+      "description": "UNIX timestamp, in seconds, of when unlocking is to be started",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
     }
   }
 }

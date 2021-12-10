@@ -131,6 +131,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
     deployer,
     join(ASTROPORT_ARTIFACTS_PATH, "astroport_factory.wasm"),
     {
+      owner: deployer.key.accAddress,
       token_code_id: cw20CodeId,
       generator_address: astroportGenerator,
       pair_configs: [

@@ -16,20 +16,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Stake all vested but not-yet-withdrawn MARS (locked and unlocked), receive xMARS",
-      "type": "object",
-      "required": [
-        "stake"
-      ],
-      "properties": {
-        "stake": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "description": "Claim withdrawable MARS and xMARS",
+      "description": "Withdraw unlocked MARS token",
       "type": "object",
       "required": [
         "withdraw"
@@ -37,40 +24,6 @@
       "properties": {
         "withdraw": {
           "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "description": "Give up allocation, refund all unvested tokens to `config.fallback_recipient`",
-      "type": "object",
-      "required": [
-        "terminate"
-      ],
-      "properties": {
-        "terminate": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "description": "If the global default unlocking schedule is set to None at instantiation, the protocol admin can update it. However, it the value is set, then it cannot be set again. In other words, only None -> Some(..), not Some(..) -> Some(..)",
-      "type": "object",
-      "required": [
-        "set_default_unlock_schedule"
-      ],
-      "properties": {
-        "set_default_unlock_schedule": {
-          "type": "object",
-          "required": [
-            "default_unlock_schedule"
-          ],
-          "properties": {
-            "default_unlock_schedule": {
-              "$ref": "#/definitions/Schedule"
-            }
-          }
         }
       },
       "additionalProperties": false
@@ -98,34 +51,6 @@
         },
         "sender": {
           "type": "string"
-        }
-      }
-    },
-    "Schedule": {
-      "type": "object",
-      "required": [
-        "cliff",
-        "duration",
-        "start_time"
-      ],
-      "properties": {
-        "cliff": {
-          "description": "Number of seconds starting UST during which no token will be vested/unlocked",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "duration": {
-          "description": "Number of seconds taken since UST for tokens to be fully vested/unlocked",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "start_time": {
-          "description": "Timestamp of when vesting/unlocking is to be started (in seconds)",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
         }
       }
     },

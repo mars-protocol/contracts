@@ -1,7 +1,8 @@
 use cosmwasm_std::{
     from_binary, from_slice,
     testing::{MockQuerier, MOCK_CONTRACT_ADDR},
-    Addr, Coin, Querier, QuerierResult, QueryRequest, StdResult, SystemError, Uint128, WasmQuery,
+    Addr, Coin, Fraction, Querier, QuerierResult, QueryRequest, StdResult, SystemError, Uint128,
+    WasmQuery,
 };
 use cw20::Cw20QueryMsg;
 use terra_cosmwasm::TerraQueryWrapper;
@@ -13,7 +14,7 @@ use crate::{
         asset::Asset,
         pair::{CumulativePricesResponse, PairInfo, PoolResponse, SimulationResponse},
     },
-    incentives, ma_token, oracle,
+    incentives, ma_token, oracle, staking,
     testing::mock_address_provider,
     vesting, xmars_token,
 };
@@ -25,6 +26,7 @@ use super::{
     incentives_querier::IncentivesQuerier,
     native_querier::NativeQuerier,
     oracle_querier::OracleQuerier,
+    staking_querier::StakingQuerier,
     vesting_querier::VestingQuerier,
     xmars_querier::XMarsQuerier,
 };
@@ -38,6 +40,7 @@ pub struct MarsMockQuerier {
     astroport_factory_querier: AstroportFactoryQuerier,
     astroport_pair_querier: AstroportPairQuerier,
     oracle_querier: OracleQuerier,
+    staking_querier: StakingQuerier,
     vesting_querier: VestingQuerier,
     incentives_querier: IncentivesQuerier,
 }
@@ -69,6 +72,7 @@ impl MarsMockQuerier {
             astroport_factory_querier: AstroportFactoryQuerier::default(),
             astroport_pair_querier: AstroportPairQuerier::default(),
             oracle_querier: OracleQuerier::default(),
+            staking_querier: StakingQuerier::default(),
             vesting_querier: VestingQuerier::default(),
             incentives_querier: IncentivesQuerier::default(),
         }
@@ -132,6 +136,16 @@ impl MarsMockQuerier {
 
     pub fn set_oracle_price(&mut self, asset_reference: Vec<u8>, price: Decimal) {
         self.oracle_querier.prices.insert(asset_reference, price);
+    }
+
+    pub fn set_staking_xmars_per_mars(&mut self, xmars_per_mars: Decimal) {
+        self.staking_querier.xmars_per_mars = xmars_per_mars;
+        self.staking_querier.mars_per_xmars = xmars_per_mars.inv().unwrap();
+    }
+
+    pub fn set_staking_mars_per_xmars(&mut self, mars_per_xmars: Decimal) {
+        self.staking_querier.mars_per_xmars = mars_per_xmars;
+        self.staking_querier.xmars_per_mars = mars_per_xmars.inv().unwrap();
     }
 
     pub fn set_xmars_address(&mut self, address: Addr) {
@@ -262,6 +276,14 @@ impl MarsMockQuerier {
                     return self
                         .oracle_querier
                         .handle_query(&contract_addr, oracle_query);
+                }
+
+                // Staking Queries
+                let parse_staking_query: StdResult<staking::msg::QueryMsg> = from_binary(msg);
+                if let Ok(staking_query) = parse_staking_query {
+                    return self
+                        .staking_querier
+                        .handle_query(&contract_addr, staking_query);
                 }
 
                 // Astroport Queries

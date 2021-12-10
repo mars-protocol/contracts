@@ -35,8 +35,14 @@ impl VestingQuerier {
         }
 
         match query {
-            vesting::msg::QueryMsg::VotingPowerAt { account, block } => {
-                match self.voting_power_at.get(&(Addr::unchecked(account), block)) {
+            vesting::msg::QueryMsg::VotingPowerAt {
+                user_address,
+                block,
+            } => {
+                match self
+                    .voting_power_at
+                    .get(&(Addr::unchecked(user_address), block))
+                {
                     Some(voting_power) => Ok(to_binary(voting_power).into()).into(),
                     // If voting power is not set, return zero
                     None => Ok(to_binary(&Uint128::zero()).into()).into(),

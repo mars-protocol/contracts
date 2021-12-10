@@ -655,7 +655,7 @@ fn vesting_get_balance_at(
     querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: vesting_address.into(),
         msg: to_binary(&vesting::msg::QueryMsg::VotingPowerAt {
-            account: user_address.to_string(),
+            user_address: user_address.to_string(),
             block,
         })?,
     }))

@@ -48,14 +48,14 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
   const deployer = terra.wallets.test1;
   const alice = terra.wallets.test2; // a user who creates a governance proposal
   const bob = terra.wallets.test3; // a person receiving a MARS token allocations
-  const jv = terra.wallets.test4; // Mars JV
+  const admin = terra.wallets.test4; // protocol admin
   // mock contract addresses
   const astroportGenerator = new MnemonicKey().accAddress
 
   console.log("deployer:", deployer.key.accAddress);
   console.log("alice:   ", alice.key.accAddress);
   console.log("bob:     ", bob.key.accAddress);
-  console.log("jv:      ", jv.key.accAddress);
+  console.log("admin:   ", admin.key.accAddress);
 
   process.stdout.write("deploying astroport... ");
 
@@ -74,6 +74,7 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
     deployer,
     join(ASTROPORT_ARTIFACTS_PATH, "astroport_factory.wasm"),
     {
+      owner: deployer.key.accAddress,
       token_code_id: tokenCodeID,
       generator_address: astroportGenerator,
       pair_configs: [
@@ -150,11 +151,9 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
     "../artifacts/mars_vesting.wasm",
     {
       address_provider_address: addressProvider,
-      default_unlock_schedule: {
-        start_time: 0,
-        cliff: 0,
-        duration: 0,
-      },
+      unlock_start_time: 0,
+      unlock_cliff: 0,
+      unlock_duration: 0,
     }
   );
 
@@ -205,18 +204,18 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
         staking_address: staking,
         vesting_address: vesting,
         xmars_token_address: xMars,
-        protocol_admin_address: jv.key.accAddress,
+        protocol_admin_address: admin.key.accAddress,
       },
     },
   });
 
   console.log("done!");
 
-  process.stdout.write("mint Mars tokens for alice and JV... ");
+  process.stdout.write("mint Mars tokens for alice and admin... ");
 
   await mintCw20(terra, deployer, mars, alice.key.accAddress, ALICE_MARS_BALANCE);
   await mintCw20(terra, deployer, mars, bob.key.accAddress, BOB_WALLET_MARS_BALANCE);
-  await mintCw20(terra, deployer, mars, jv.key.accAddress, BOB_VESTING_MARS_BALANCE);
+  await mintCw20(terra, deployer, mars, admin.key.accAddress, BOB_VESTING_MARS_BALANCE);
 
   console.log("done!");
 
@@ -239,58 +238,28 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
   }
 
   {
-    process.stdout.write("JV creates an allocation for bob... ");
+    process.stdout.write("admin creates an allocation for bob... ");
 
-    await executeContract(terra, jv, mars, {
+    // `BOB_VESTING_MARS_BALANCE` of Mars tokens are staked; same amount of xMars should be minted
+    const txResult = await executeContract(terra, admin, mars, {
       send: {
         contract: vesting,
         amount: String(BOB_VESTING_MARS_BALANCE),
         msg: toEncodedBinary({
-          create_allocations: {
-            allocations: [
-              [
-                bob.key.accAddress,
-                {
-                  amount: String(BOB_VESTING_MARS_BALANCE),
-                  vest_schedule: {
-                    start_time: 0,
-                    cliff: 0,
-                    duration: 0,
-                  },
-                  unlock_schedule: null,
-                },
-              ],
-            ],
+          create_allocation: {
+            user_address: bob.key.accAddress
           },
         }),
       },
     });
 
-    console.log("success!");
-  }
-
-  {
-    process.stdout.write(
-      "bob stakes Mars through vesting contract and receives the same amount of xMars... "
-    );
-
-    const txResult = await executeContract(terra, bob, vesting, {
-      stake: {},
-    });
-
-    console.log("success!");
-
-    process.stdout.write(
-      "contract should return correct voting power before and after the staking event... "
-    );
-
     // the block height where bob performed the staking action
     const height = await getBlockHeight(terra, txResult);
 
-    // before the height, bob should have 0 voting power
+    // before the height, bob should have 0 locked voting power
     const votingPowerBefore: string = await queryContract(terra, vesting, {
       voting_power_at: {
-        account: bob.key.accAddress,
+        user_address: bob.key.accAddress,
         block: height - 1,
       },
     });
@@ -299,7 +268,7 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
     // at or after the height, bob should have `BOB_VESTING_MARS_BALANCE` voting power
     const votingPowerAfter: string = await queryContract(terra, vesting, {
       voting_power_at: {
-        account: bob.key.accAddress,
+        user_address: bob.key.accAddress,
         block: height,
       },
     });
@@ -355,12 +324,36 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
   {
     process.stdout.write("bob withdraws xMars... ");
 
-    await executeContract(terra, bob, vesting, {
+    const txResult = await executeContract(terra, bob, vesting, {
       withdraw: {},
     });
 
+    // bob's wallet xMars balance should not have changed
     const bobXMarsBalance = await queryBalanceCw20(terra, bob.key.accAddress, xMars);
-    strictEqual(bobXMarsBalance, BOB_WALLET_MARS_BALANCE + BOB_VESTING_MARS_BALANCE);
+    strictEqual(bobXMarsBalance, BOB_WALLET_MARS_BALANCE);
+
+    // a claim should have been created for bob
+    type ClaimResponse = {
+      claim?: {
+        created_at_block: number,
+        cooldown_end_timestamp: number,
+        amount: string
+      }
+    };
+    const response: ClaimResponse = await terra.wasm.contractQuery(staking, {
+      claim: {
+        user_address: bob.key.accAddress
+      }
+    });
+    const expectedResponse: ClaimResponse = {
+      claim: {
+        created_at_block: txResult.height,
+        cooldown_end_timestamp: 0, // localterra returns an empty string for txResult.timestamp, so we can't verify it
+        amount: BOB_VESTING_MARS_BALANCE.toString()
+      }
+    };
+    strictEqual(response.claim?.created_at_block, expectedResponse.claim?.created_at_block)
+    strictEqual(response.claim?.amount, expectedResponse.claim?.amount)
 
     console.log("success!");
   }

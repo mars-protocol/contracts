@@ -116,7 +116,10 @@ pub mod msg {
 
         /// Burn xMars and initiate a cooldown period on which the underlying Mars
         /// will be claimable. Only one open claim per address is allowed.
-        Unstake {},
+        Unstake {
+            /// Address to claim the Mars tokens after cooldown. Set to sender is not specified
+            recipient: Option<String>,
+        },
     }
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -126,6 +129,12 @@ pub mod msg {
         Config {},
         /// Get contract global state
         GlobalState {},
+        /// Compute the amount of xMars token to be minted by staking 1 unit of Mars token.
+        /// The ratio may be undefined, in which case we return `Ok(None)`
+        XMarsPerMars {},
+        /// Compute the amount of Mars token to be claimed by burning 1 unit of xMars token.
+        /// The ratio may be undefined, in which case we return `Ok(None)`
+        MarsPerXMars {},
         /// Get open claim for given user. If claim exists, slash events are applied to the amount
         /// so actual amount of Mars received is given.
         Claim { user_address: String },

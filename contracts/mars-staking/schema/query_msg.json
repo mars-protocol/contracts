@@ -29,6 +29,32 @@
       "additionalProperties": false
     },
     {
+      "description": "Compute the amount of xMars token to be minted by staking 1 unit of Mars token. The ratio may be undefined, in which case we return `Ok(None)`",
+      "type": "object",
+      "required": [
+        "x_mars_per_mars"
+      ],
+      "properties": {
+        "x_mars_per_mars": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Compute the amount of Mars token to be claimed by burning 1 unit of xMars token. The ratio may be undefined, in which case we return `Ok(None)`",
+      "type": "object",
+      "required": [
+        "mars_per_x_mars"
+      ],
+      "properties": {
+        "mars_per_x_mars": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
       "description": "Get open claim for given user. If claim exists, slash events are applied to the amount so actual amount of Mars received is given.",
       "type": "object",
       "required": [

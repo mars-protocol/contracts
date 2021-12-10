@@ -703,6 +703,7 @@ async function testLiquidateCw20(env: Env) {
   const pairCodeID = await uploadContract(terra, deployer, join(ASTROPORT_ARTIFACTS_PATH, "astroport_pair.wasm"))
   const astroportFactory = await deployContract(terra, deployer, join(ASTROPORT_ARTIFACTS_PATH, "astroport_factory.wasm"),
     {
+      owner: deployer.key.accAddress,
       token_code_id: tokenCodeID,
       generator_address: astroportGenerator,
       pair_configs: [

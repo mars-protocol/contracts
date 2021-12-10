@@ -3,7 +3,7 @@
   "title": "QueryMsg",
   "anyOf": [
     {
-      "description": "Config of this contract",
+      "description": "Config of this contract. Returns `Config<String>`",
       "type": "object",
       "required": [
         "config"
@@ -16,7 +16,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Parameters and current status of an allocation",
+      "description": "Status of an allocation. Returns `Allocation`",
       "type": "object",
       "required": [
         "allocation"
@@ -25,10 +25,10 @@
         "allocation": {
           "type": "object",
           "required": [
-            "account"
+            "user_address"
           ],
           "properties": {
-            "account": {
+            "user_address": {
               "type": "string"
             }
           }
@@ -37,28 +37,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Simulate how many MARS and xMARS will be released if a withdrawal is attempted",
-      "type": "object",
-      "required": [
-        "simulate_withdraw"
-      ],
-      "properties": {
-        "simulate_withdraw": {
-          "type": "object",
-          "required": [
-            "account"
-          ],
-          "properties": {
-            "account": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "description": "Total amount of xMARS owned by an account that's under custody by this contract Used by Martian Council to determine the account's vested voting power",
+      "description": "Total amount of xMARS owned by a recipient at a certain height",
       "type": "object",
       "required": [
         "voting_power_at"
@@ -67,17 +46,17 @@
         "voting_power_at": {
           "type": "object",
           "required": [
-            "account",
-            "block"
+            "block",
+            "user_address"
           ],
           "properties": {
-            "account": {
-              "type": "string"
-            },
             "block": {
               "type": "integer",
               "format": "uint64",
               "minimum": 0.0
+            },
+            "user_address": {
+              "type": "string"
             }
           }
         }
