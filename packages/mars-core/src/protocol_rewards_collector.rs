@@ -67,6 +67,7 @@ pub struct AssetConfig {
     pub enabled_for_distribution: bool,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for AssetConfig {
     fn default() -> Self {
         AssetConfig {

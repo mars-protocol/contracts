@@ -1506,7 +1506,7 @@ fn process_underlying_asset_transfer_to_liquidator(
     liquidator_addr: &Addr,
     collateral_asset_label: String,
     collateral_asset_type: AssetType,
-    mut collateral_market: &mut Market,
+    collateral_market: &mut Market,
     collateral_amount_to_liquidate: Uint128,
     protocol_rewards_collector_address: Addr,
     mut response: Response,
@@ -1529,14 +1529,14 @@ fn process_underlying_asset_transfer_to_liquidator(
     response = apply_accumulated_interests(
         env,
         protocol_rewards_collector_address,
-        &mut collateral_market,
+        collateral_market,
         response,
     )?;
 
     response = update_interest_rates(
         &deps,
         env,
-        &mut collateral_market,
+        collateral_market,
         collateral_amount_to_liquidate,
         &collateral_asset_label,
         response,

@@ -5,7 +5,7 @@ use cw20::{BalanceResponse, Cw20QueryMsg, TokenInfoResponse};
 
 use crate::ma_token;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Cw20Querier {
     /// maps cw20 contract address to user balances
     pub balances: HashMap<Addr, HashMap<Addr, Uint128>>,
@@ -139,15 +139,6 @@ impl Cw20Querier {
                 request: Default::default(),
             })
             .into(),
-        }
-    }
-}
-
-impl Default for Cw20Querier {
-    fn default() -> Self {
-        Cw20Querier {
-            balances: HashMap::new(),
-            token_info_responses: HashMap::new(),
         }
     }
 }

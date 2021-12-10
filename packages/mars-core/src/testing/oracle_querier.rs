@@ -4,16 +4,9 @@ use std::collections::HashMap;
 use crate::math::decimal::Decimal;
 use crate::oracle::msg::QueryMsg;
 
+#[derive(Default)]
 pub struct OracleQuerier {
     pub prices: HashMap<Vec<u8>, Decimal>,
-}
-
-impl Default for OracleQuerier {
-    fn default() -> Self {
-        OracleQuerier {
-            prices: HashMap::new(),
-        }
-    }
 }
 
 impl OracleQuerier {
