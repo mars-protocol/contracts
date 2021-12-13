@@ -8,15 +8,12 @@ use cw20::Cw20QueryMsg;
 use terra_cosmwasm::TerraQueryWrapper;
 
 use crate::{
-    address_provider,
-    astroport::{
-        self,
-        asset::Asset,
-        pair::{CumulativePricesResponse, PairInfo, PoolResponse, SimulationResponse},
-    },
-    incentives, ma_token, oracle, staking,
-    testing::mock_address_provider,
+    address_provider, incentives, ma_token, oracle, staking, testing::mock_address_provider,
     vesting, xmars_token,
+};
+use astroport::{
+    asset::{Asset, PairInfo},
+    pair::{CumulativePricesResponse, PoolResponse, SimulationResponse},
 };
 
 use super::{

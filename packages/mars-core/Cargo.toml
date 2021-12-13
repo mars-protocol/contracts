@@ -23,3 +23,5 @@ cosmwasm-std = "0.16.2"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.23"
+
+astroport = { git = "https://github.com/astroport-fi/astroport", version = "0.2.0" }

@@ -314,11 +314,7 @@ mod helpers {
 
     use crate::error::ContractError;
 
-    // Once astroport package is published on crates.io, update Cargo.toml and change these lines to
-    // use astroport::asset::{...};
-    // and
-    // use astroport::pair::{...};
-    use mars_core::astroport::{
+    use astroport::{
         asset::{Asset as AstroportAsset, AssetInfo as AstroportAssetInfo},
         pair::{
             CumulativePricesResponse, PoolResponse, QueryMsg as AstroportQueryMsg,
@@ -440,13 +436,11 @@ mod helpers {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use astroport::asset::{Asset as AstroportAsset, AssetInfo, PairInfo};
+    use astroport::factory::PairType;
+    use astroport::pair::{CumulativePricesResponse, SimulationResponse};
     use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
     use cosmwasm_std::{from_binary, Addr, OwnedDeps};
-    use mars_core::astroport::{
-        asset::{Asset as AstroportAsset, AssetInfo},
-        factory::PairType,
-        pair::{CumulativePricesResponse, PairInfo, SimulationResponse},
-    };
     use mars_core::testing::{mock_dependencies, mock_env_at_block_time, MarsMockQuerier};
 
     #[test]

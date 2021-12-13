@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
 
-use crate::astroport::{factory::QueryMsg, pair::PairInfo};
+use astroport::{asset::PairInfo, factory::QueryMsg};
 
 #[derive(Clone, Default)]
 pub struct AstroportFactoryQuerier {

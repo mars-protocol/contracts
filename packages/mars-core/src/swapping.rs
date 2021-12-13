@@ -1,9 +1,9 @@
-use crate::astroport::{
-    asset::{Asset as AstroportAsset, AssetInfo},
-    pair::{ExecuteMsg as AstroportPairExecuteMsg, PairInfo},
+use crate::helpers::cw20_get_balance;
+use astroport::{
+    asset::{Asset as AstroportAsset, AssetInfo, PairInfo},
+    pair::ExecuteMsg as AstroportPairExecuteMsg,
     querier::query_pair_info,
 };
-use crate::helpers::cw20_get_balance;
 use cosmwasm_std::{
     attr, to_binary, Addr, Coin, CosmosMsg, Decimal as StdDecimal, DepsMut, Empty, Env, Response,
     StdError, StdResult, Uint128, WasmMsg,
@@ -139,10 +139,10 @@ fn asset_into_swap_msg(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::astroport::factory::PairType;
     use crate::testing::{
         assert_generic_error_message, mock_dependencies, mock_env, MockEnvParams,
     };
+    use astroport::factory::PairType;
     use cosmwasm_std::testing::MOCK_CONTRACT_ADDR;
     use cosmwasm_std::SubMsg;
 

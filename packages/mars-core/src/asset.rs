@@ -3,9 +3,9 @@ use cw20::Cw20ExecuteMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::astroport::asset::AssetInfo as AstroportAssetInfo;
 use crate::helpers::cw20_get_balance;
 use crate::tax::deduct_tax;
+use astroport::asset::AssetInfo as AstroportAssetInfo;
 
 /// Represents either a native asset or a cw20. Meant to be used as part of a msg
 /// in a contract call and not to be used internally

@@ -3,7 +3,7 @@ use cosmwasm_std::{
     StdResult, Uint128, WasmMsg,
 };
 
-use mars_core::astroport::asset::AssetInfo;
+use astroport::asset::AssetInfo;
 
 use mars_core::asset::{build_send_asset_with_tax_deduction_msg, get_asset_balance, Asset};
 use mars_core::error::MarsError;

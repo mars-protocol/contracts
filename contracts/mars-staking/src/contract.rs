@@ -7,7 +7,7 @@ use cosmwasm_std::{
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg};
 use cw_storage_plus::{Bound, U64Key};
 
-use mars_core::astroport::asset::AssetInfo;
+use astroport::asset::AssetInfo;
 
 use mars_core::error::MarsError;
 use mars_core::helpers::{

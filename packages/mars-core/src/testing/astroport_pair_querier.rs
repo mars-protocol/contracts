@@ -2,9 +2,7 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, QuerierResult, SystemError};
 
-use crate::astroport::pair::{
-    CumulativePricesResponse, PoolResponse, QueryMsg, SimulationResponse,
-};
+use astroport::pair::{CumulativePricesResponse, PoolResponse, QueryMsg, SimulationResponse};
 
 #[derive(Clone, Default)]
 pub struct AstroportPairQuerier {
@@ -41,6 +39,9 @@ impl AstroportPairQuerier {
                 })
                 .into(),
             },
+            _ => {
+                panic!("[mock]: Unsupported Astroport pair query");
+            }
         };
 
         Ok(ret).into()
