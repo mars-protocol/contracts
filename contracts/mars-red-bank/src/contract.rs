@@ -1804,7 +1804,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
         QueryMsg::UserCollateral { user_address } => {
             let address = deps.api.addr_validate(&user_address)?;
-            to_binary(&query_collateral(deps, address)?)
+            to_binary(&query_user_collateral(deps, address)?)
         }
 
         QueryMsg::UncollateralizedLoanLimit {
@@ -1976,7 +1976,7 @@ pub fn query_user_asset_debt(
     })
 }
 
-pub fn query_collateral(deps: Deps, address: Addr) -> StdResult<UserCollateralResponse> {
+pub fn query_user_collateral(deps: Deps, address: Addr) -> StdResult<UserCollateralResponse> {
     let user = USERS.may_load(deps.storage, &address)?.unwrap_or_default();
 
     let collateral: StdResult<Vec<_>> = MARKETS
@@ -7626,7 +7626,7 @@ mod tests {
             .unwrap();
 
         // Assert markets correctly return collateral status
-        let res = query_collateral(deps.as_ref(), user_addr.clone()).unwrap();
+        let res = query_user_collateral(deps.as_ref(), user_addr.clone()).unwrap();
         assert_eq!(res.collateral[0].denom, String::from("DP1"));
         assert!(!res.collateral[0].enabled);
         assert_eq!(res.collateral[1].denom, String::from("uusd"));
@@ -7639,7 +7639,7 @@ mod tests {
             .unwrap();
 
         // Assert markets correctly return collateral status
-        let res = query_collateral(deps.as_ref(), user_addr).unwrap();
+        let res = query_user_collateral(deps.as_ref(), user_addr).unwrap();
         assert_eq!(res.collateral[0].denom, String::from("DP1"));
         assert!(res.collateral[0].enabled);
         assert_eq!(res.collateral[1].denom, String::from("uusd"));
