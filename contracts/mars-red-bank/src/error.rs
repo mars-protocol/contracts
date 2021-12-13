@@ -79,7 +79,7 @@ pub enum ContractError {
     #[error("Amount to repay is greater than total debt")]
     CannotRepayMoreThanDebt {},
 
-    #[error("Amount to repay is greater than total debt")]
+    #[error("User has a positive uncollateralized loan limit and thus cannot be liquidated")]
     CannotLiquidateWhenPositiveUncollateralizedLoanLimit {},
 
     #[error("Must send more than 0 {asset:?} in order to liquidate")]

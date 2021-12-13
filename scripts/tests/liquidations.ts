@@ -1,6 +1,6 @@
 import {
   Coin,
-  LocalTerra,
+  LocalTerra, MnemonicKey,
   Wallet
 } from "@terra-money/terra.js"
 import {
@@ -13,7 +13,7 @@ import {
   deployContract,
   executeContract,
   instantiateContract,
-  queryContract,
+  queryContract, setGasAdjustment,
   setTimeoutDuration,
   sleep,
   toEncodedBinary,
@@ -136,7 +136,8 @@ async function testCollateralizedNativeLoan(
   txResult = await borrowNative(terra, borrower, redBank, "uusd", uusdAmountBorrowed)
   txEvents = txResult.logs[0].eventsByType
 
-  uusdAmountReceivedFromBorrow = Coin.fromString(txEvents.coin_received.amount[0]).amount.toNumber()
+  const amountIdx = txEvents.coin_received.receiver.indexOf(borrower.key.accAddress)
+  uusdAmountReceivedFromBorrow = Coin.fromString(txEvents.coin_received.amount[amountIdx]).amount.toNumber()
   expectedUusdAmountReceived = (await deductTax(terra, new Coin("uusd", uusdAmountBorrowed))).toNumber()
   strictEqual(uusdAmountReceivedFromBorrow, expectedUusdAmountReceived)
 
@@ -307,7 +308,8 @@ async function testCollateralizedCw20Loan(
   let txResult = await borrowCw20(terra, borrower, redBank, cw20Token1, cw20Token1AmountBorrowed)
   let txEvents = txResult.logs[0].eventsByType
 
-  let cw20Token1AmountReceivedFromBorrow = parseInt(txEvents.from_contract.amount[1])
+  let amountIdx = txEvents.from_contract.action.indexOf('transfer')
+  let cw20Token1AmountReceivedFromBorrow = parseInt(txEvents.from_contract.amount[amountIdx])
   let expectedCw20Token1AmountReceived = cw20Token1AmountBorrowed
   strictEqual(cw20Token1AmountReceivedFromBorrow, expectedCw20Token1AmountReceived)
 
@@ -346,7 +348,8 @@ async function testCollateralizedCw20Loan(
   txResult = await borrowCw20(terra, borrower, redBank, cw20Token1, cw20Token1AmountBorrowed)
   txEvents = txResult.logs[0].eventsByType
 
-  cw20Token1AmountReceivedFromBorrow = parseInt(txEvents.from_contract.amount[1])
+  amountIdx = txEvents.from_contract.action.indexOf('transfer')
+  cw20Token1AmountReceivedFromBorrow = parseInt(txEvents.from_contract.amount[amountIdx])
   expectedCw20Token1AmountReceived = cw20Token1AmountBorrowed
   strictEqual(cw20Token1AmountReceivedFromBorrow, expectedCw20Token1AmountReceived)
 
@@ -529,7 +532,7 @@ async function testUncollateralizedNativeLoan(
     ),
     (error: any) => {
       return error.response.data.message.includes(
-        "user has a positive uncollateralized loan limit and thus cannot be liquidated"
+        "User has a positive uncollateralized loan limit and thus cannot be liquidated"
       )
     }
   )
@@ -545,9 +548,11 @@ async function testUncollateralizedNativeLoan(
 
 (async () => {
   setTimeoutDuration(0)
+  setGasAdjustment(2)
 
   const terra = new LocalTerra()
   const deployer = terra.wallets.test1
+  const protocolRewardsCollector = new MnemonicKey().accAddress
 
   console.log("upload contracts")
 
@@ -590,6 +595,7 @@ async function testUncollateralizedNativeLoan(
           incentives_address: incentives,
           oracle_address: oracle,
           red_bank_address: redBank,
+          protocol_rewards_collector_address: protocolRewardsCollector,
           protocol_admin_address: deployer.key.accAddress,
         }
       }
