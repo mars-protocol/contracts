@@ -12,9 +12,11 @@ import { join } from "path"
 import 'dotenv/config.js'
 import {
   deployContract,
-  executeContract, Logger,
+  executeContract,
+  Logger,
   queryContract,
   setTimeoutDuration,
+  setGasAdjustment,
   sleep,
   uploadContract
 } from "../helpers.js"
@@ -57,6 +59,7 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
 
 (async () => {
   setTimeoutDuration(0)
+  setGasAdjustment(2)
 
   const logger = new Logger()
 
@@ -131,14 +134,16 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
           reserve_factor: "0.2",
           liquidation_threshold: "0.85",
           liquidation_bonus: "0.1",
-          interest_rate_strategy: {
+          interest_rate_model_params: {
             dynamic: {
               min_borrow_rate: "0.0",
               max_borrow_rate: "1.0",
               kp_1: "0.04",
               optimal_utilization_rate: "0.9",
               kp_augmentation_threshold: "0.15",
-              kp_2: "0.07"
+              kp_2: "0.07",
+              update_threshold_txs: 1,
+              update_threshold_seconds: 1
             }
           },
           active: true,
@@ -156,6 +161,7 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
   const pairCodeID = await uploadContract(terra, deployer, join(ASTROPORT_ARTIFACTS_PATH, "astroport_pair.wasm"))
   const astroportFactory = await deployContract(terra, deployer, join(ASTROPORT_ARTIFACTS_PATH, "astroport_factory.wasm"),
     {
+      owner: deployer.key.accAddress,
       token_code_id: tokenCodeID,
       generator_address: astroportGenerator,
       pair_configs: [

@@ -344,7 +344,9 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
       contract: astroportPair,
       amount: "1000000",
       msg: toEncodedBinary({
-        swap: {},
+        swap: {
+          max_spread: "0.02"
+        },
       }),
     },
   }, { logger: logger });
@@ -357,10 +359,10 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
   // kValue = 70000000 * 414018001 = 28981260070000000
   // returnAmount = poolUusdDepth - kvalue / (poolUancDepth + offerUancAmount)
   // = 414018001 - 28981260070000000 / (70000000 + 1000000)
-  // = 5831240
-  // spotPrice = returnAmount / probeAmount = 5831240 / 1000000 = 5.83124
+  // = 5831239
+  // spotPrice = returnAmount / probeAmount = 5831239 / 1000000 = 5.831239
   process.stdout.write("querying spot price... ");
-  await assertOraclePrice(anchorToken, "5.83124");
+  await assertOraclePrice(anchorToken, "5.831239");
   console.log("success!");
 
   process.stdout.write("configuring TWAP price source... ");

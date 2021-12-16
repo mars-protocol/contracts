@@ -15,6 +15,7 @@ use crate::state::{ASTROPORT_TWAP_SNAPSHOTS, CONFIG, PRICE_SOURCES};
 use crate::{AstroportTwapSnapshot, Config, PriceSourceChecked, PriceSourceUnchecked};
 
 use self::helpers::*;
+use astroport::pair::TWAP_PRECISION;
 
 // INIT
 
@@ -275,7 +276,11 @@ fn query_asset_price(
                         .checked_add(Uint128::MAX - previous_snapshot.price_cumulative)?
                 };
             let period = current_snapshot.timestamp - previous_snapshot.timestamp;
-            let price = Decimal::from_ratio(price_delta, period);
+            // NOTE: Astroport introduces TWAP precision (https://github.com/astroport-fi/astroport/pull/143).
+            // We need to divide the result by price_precision: (price_delta / (time * price_precision)).
+            let price_precision = Uint128::from(10_u128.pow(TWAP_PRECISION.into()));
+            let price =
+                Decimal::from_ratio(price_delta, price_precision.checked_mul(period.into())?);
 
             Ok(price)
         }
@@ -1093,7 +1098,7 @@ mod tests {
             price,
             Decimal::from_ratio(
                 query_time_cumulative_price - snapshot_time_cumulative_price,
-                query_time - snapshot_time
+                (query_time - snapshot_time) * 10_u64.pow(TWAP_PRECISION.into())
             )
         );
     }
