@@ -9,7 +9,7 @@ import { strictEqual } from "assert"
 import 'dotenv/config.js'
 import {
   deployContract,
-  executeContract,
+  executeContract, Logger,
   queryContract,
   setTimeoutDuration,
   sleep,
@@ -61,6 +61,7 @@ async function castVote(
   council: string,
   proposalId: number,
   vote: string,
+  logger?: Logger
 ) {
   return await executeContract(terra, wallet, council,
     {
@@ -68,7 +69,8 @@ async function castVote(
         proposal_id: proposalId,
         vote
       }
-    }
+    },
+    { logger: logger }
   )
 }
 
@@ -105,6 +107,8 @@ async function waitUntilBlockHeight(
 
 (async () => {
   setTimeoutDuration(0)
+
+  const logger = new Logger()
 
   const terra = new LocalTerra()
 
@@ -202,14 +206,15 @@ async function waitUntilBlockHeight(
           protocol_admin_address: deployer.key.accAddress,
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
   // mint tokens
-  await mintCw20(terra, deployer, mars, alice.key.accAddress, ALICE_PROPOSAL_DEPOSIT)
-  await mintCw20(terra, deployer, mars, bob.key.accAddress, BOB_PROPOSAL_DEPOSIT)
-  await mintCw20(terra, deployer, xMars, alice.key.accAddress, ALICE_XMARS_BALANCE)
-  await mintCw20(terra, deployer, xMars, bob.key.accAddress, BOB_XMARS_BALANCE)
+  await mintCw20(terra, deployer, mars, alice.key.accAddress, ALICE_PROPOSAL_DEPOSIT, logger)
+  await mintCw20(terra, deployer, mars, bob.key.accAddress, BOB_PROPOSAL_DEPOSIT, logger)
+  await mintCw20(terra, deployer, xMars, alice.key.accAddress, ALICE_XMARS_BALANCE, logger)
+  await mintCw20(terra, deployer, xMars, bob.key.accAddress, BOB_XMARS_BALANCE, logger)
 
   // TESTS
 
@@ -287,7 +292,8 @@ async function waitUntilBlockHeight(
           }
         })
       }
-    }
+    },
+    { logger: logger }
   )
   let blockHeight = await getBlockHeight(terra, txResult)
   const aliceProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD
@@ -309,7 +315,8 @@ async function waitUntilBlockHeight(
           }
         })
       }
-    }
+    },
+    { logger: logger }
   )
   blockHeight = await getBlockHeight(terra, txResult)
   const bobProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD
@@ -317,7 +324,7 @@ async function waitUntilBlockHeight(
 
   console.log("alice sends entire xMars balance to bob")
 
-  await transferCw20(terra, alice, xMars, bob.key.accAddress, ALICE_XMARS_BALANCE)
+  await transferCw20(terra, alice, xMars, bob.key.accAddress, ALICE_XMARS_BALANCE, logger)
 
   await assertXmarsBalanceAt(terra, xMars, alice.key.accAddress, blockHeight - 1, ALICE_XMARS_BALANCE)
   await assertXmarsBalanceAt(terra, xMars, bob.key.accAddress, blockHeight - 1, BOB_XMARS_BALANCE)
@@ -327,14 +334,14 @@ async function waitUntilBlockHeight(
   // proposal quorum should use xMars balances from the blockHeight before a proposal was submitted.
   // so, proposal quorum should still be reached by alice's and bob's votes, even after a large
   // amount of xMars is minted to carol.
-  await mintCw20(terra, deployer, xMars, carol.key.accAddress, ALICE_XMARS_BALANCE * BOB_XMARS_BALANCE * 100)
+  await mintCw20(terra, deployer, xMars, carol.key.accAddress, ALICE_XMARS_BALANCE * BOB_XMARS_BALANCE * 100, logger)
 
   await assertXmarsBalanceAt(terra, xMars, carol.key.accAddress, blockHeight - 1, 0)
 
   console.log("vote")
 
-  await castVote(terra, alice, council, aliceProposalId, "for")
-  await castVote(terra, bob, council, aliceProposalId, "against")
+  await castVote(terra, alice, council, aliceProposalId, "for", logger)
+  await castVote(terra, bob, council, aliceProposalId, "against", logger)
 
   console.log("wait for voting periods to end")
 
@@ -346,7 +353,7 @@ async function waitUntilBlockHeight(
 
   const aliceMarsBalanceBefore = await queryBalanceCw20(terra, alice.key.accAddress, mars)
 
-  await executeContract(terra, deployer, council, { end_proposal: { proposal_id: aliceProposalId } })
+  await executeContract(terra, deployer, council, { end_proposal: { proposal_id: aliceProposalId } }, { logger: logger })
 
   const aliceProposalStatus = await queryContract(terra, council, { proposal: { proposal_id: aliceProposalId } })
   strictEqual(aliceProposalStatus.status, "passed")
@@ -359,7 +366,7 @@ async function waitUntilBlockHeight(
   const bobMarsBalanceBefore = await queryBalanceCw20(terra, bob.key.accAddress, mars)
   const stakingContractMarsBalanceBefore = await queryBalanceCw20(terra, staking, mars)
 
-  await executeContract(terra, deployer, council, { end_proposal: { proposal_id: bobProposalId } })
+  await executeContract(terra, deployer, council, { end_proposal: { proposal_id: bobProposalId } }, { logger: logger })
 
   const bobProposalStatus = await queryContract(terra, council, { proposal: { proposal_id: bobProposalId } })
   strictEqual(bobProposalStatus.status, "rejected")
@@ -375,7 +382,7 @@ async function waitUntilBlockHeight(
 
   console.log("execute proposal")
 
-  await executeContract(terra, deployer, council, { execute_proposal: { proposal_id: aliceProposalId } })
+  await executeContract(terra, deployer, council, { execute_proposal: { proposal_id: aliceProposalId } }, { logger: logger })
 
   // check that the asset has been initialised on the red bank
   const marketsList = await queryContract(terra, redBank, { markets_list: {} })
@@ -388,4 +395,6 @@ async function waitUntilBlockHeight(
   strictEqual(parseInt(assetConfig.fixed.price), LUNA_USD_PRICE)
 
   console.log("OK")
+
+  logger.showGasConsumption()
 })()

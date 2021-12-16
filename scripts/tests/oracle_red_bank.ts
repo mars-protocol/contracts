@@ -12,7 +12,7 @@ import { join } from "path"
 import 'dotenv/config.js'
 import {
   deployContract,
-  executeContract,
+  executeContract, Logger,
   queryContract,
   setTimeoutDuration,
   sleep,
@@ -57,6 +57,8 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
 
 (async () => {
   setTimeoutDuration(0)
+
+  const logger = new Logger()
 
   const terra = new LocalTerra()
 
@@ -112,7 +114,8 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
           protocol_admin_address: deployer.key.accAddress,
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
   console.log("init assets")
@@ -143,7 +146,8 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
           borrow_enabled: true
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
   console.log("setup astroport pair")
@@ -174,7 +178,8 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
           { native_token: { denom: "uusd" } }
         ]
       }
-    }
+    },
+    { logger: logger }
   )
   const ulunaUusdPair = result.logs[0].eventsByType.wasm.pair_contract_addr[0]
 
@@ -191,12 +196,13 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
           asset: { native: { denom: "uluna" } },
           price_source: { fixed: { price: "25" } }
         }
-      }
+      },
+      { logger: logger }
     )
 
     const alice = terra.wallets.test2
 
-    await depositNative(terra, alice, redBank, "uluna", 1_000000)
+    await depositNative(terra, alice, redBank, "uluna", 1_000000, logger)
 
     const userPosition = await queryContract(terra, redBank,
       { user_position: { user_address: alice.key.accAddress } }
@@ -215,12 +221,13 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
           asset: { native: { denom: "uluna" } },
           price_source: { astroport_spot: { pair_address: ulunaUusdPair } }
         }
-      }
+      },
+      { logger: logger }
     )
 
     const bob = terra.wallets.test3
 
-    await depositNative(terra, bob, redBank, "uluna", 1_000000)
+    await depositNative(terra, bob, redBank, "uluna", 1_000000, logger)
 
     // provide liquidity such that the price of luna is $30
     await executeContract(terra, deployer, ulunaUusdPair,
@@ -237,7 +244,7 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
           ]
         }
       },
-      `1000000000000uluna,30000000000000uusd`,
+      { coins: `1000000000000uluna,30000000000000uusd`, logger: logger }
     )
 
     const userPosition = await queryContract(terra, redBank,
@@ -263,12 +270,13 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
             }
           }
         }
-      }
+      },
+      { logger: logger }
     )
 
     const carol = terra.wallets.test4
 
-    await depositNative(terra, carol, redBank, "uluna", 1_000000)
+    await depositNative(terra, carol, redBank, "uluna", 1_000000, logger)
 
     // trigger cumulative prices to be updated
     await executeContract(terra, deployer, ulunaUusdPair,
@@ -285,12 +293,12 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
           ]
         }
       },
-      `1uluna,30uusd`,
+      { coins: `1uluna,30uusd`, logger: logger }
     )
 
     // record TWAP
     await executeContract(terra, deployer, oracle,
-      { record_twap_snapshots: { assets: [{ native: { denom: "uluna" } }] } }
+      { record_twap_snapshots: { assets: [{ native: { denom: "uluna" } }] } }, { logger: logger }
     )
 
     // wait until a twap snapshot can be recorded again
@@ -298,7 +306,7 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
 
     // record TWAP
     await executeContract(terra, deployer, oracle,
-      { record_twap_snapshots: { assets: [{ native: { denom: "uluna" } }] } }
+      { record_twap_snapshots: { assets: [{ native: { denom: "uluna" } }] } }, { logger: logger }
     )
 
     const userPosition = await queryContract(terra, redBank,
@@ -318,12 +326,13 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
           asset: { native: { denom: "uluna" } },
           price_source: { native: { denom: "uluna" } }
         }
-      }
+      },
+      { logger: logger }
     )
 
     const dan = terra.wallets.test5
 
-    await depositNative(terra, dan, redBank, "uluna", 1_000000)
+    await depositNative(terra, dan, redBank, "uluna", 1_000000, logger)
 
     const userPosition = await queryContract(terra, redBank,
       { user_position: { user_address: dan.key.accAddress } }
@@ -335,4 +344,6 @@ async function waitUntilTerraOracleAvailable(terra: LCDClient) {
   }
 
   console.log("OK")
+
+  logger.showGasConsumption()
 })()

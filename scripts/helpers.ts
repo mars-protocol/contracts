@@ -53,6 +53,45 @@ export class TransactionError extends CustomError {
   }
 }
 
+interface Opts {
+  admin?: string,
+  coins?: string,
+  logger?: Logger
+}
+
+export class Logger {
+  private gasConsumptions: Array<{msg: string, gasUsed: number}> = []
+
+  constructor(readonly logGasConsumption: boolean = true) {}
+
+  addGasConsumption(msg: object, gasUsed: number) {
+    const msgStr = JSON.stringify(msg)
+    this.gasConsumptions.push({msg: msgStr, gasUsed: gasUsed})
+  }
+
+  showGasConsumption() {
+    if (this.gasConsumptions.length == 0) {
+      return;
+    }
+
+    this.gasConsumptions.sort((a, b) => b.gasUsed - a.gasUsed);
+
+    console.log("--- MAX GAS CONSUMPTION ---")
+    const maxGasConsumption = this.gasConsumptions[0]
+    console.log("gas used: ", maxGasConsumption.gasUsed, ", msg: ", maxGasConsumption.msg)
+
+    console.log("--- AVERAGE GAS CONSUMPTION ---")
+    const sumOfGasConsumption = this.gasConsumptions.reduce((a, b) => a + b.gasUsed, 0);
+    const avgOfGasConsumption = sumOfGasConsumption / this.gasConsumptions.length
+    console.log("avg gas used: ", avgOfGasConsumption)
+
+    console.log("--- SORTED GAS CONSUMPTION (DESCENDING) ---")
+    this.gasConsumptions.forEach(function ({msg, gasUsed}) {
+      console.log("gas used: ", gasUsed, ", msg: ", msg)
+    })
+  }
+}
+
 export async function createTransaction(wallet: Wallet, msg: Msg) {
   return await wallet.createTx({
     msgs: [msg],
@@ -95,7 +134,8 @@ export async function uploadContract(terra: LCDClient, wallet: Wallet, filepath:
   return Number(result.logs[0].eventsByType.store_code.code_id[0]) // code_id
 }
 
-export async function instantiateContract(terra: LCDClient, wallet: Wallet, codeId: number, msg: object, admin?: string) {
+export async function instantiateContract(terra: LCDClient, wallet: Wallet, codeId: number, msg: object, opts: Opts = {}) {
+  let admin = opts.admin
   if (admin == undefined) {
     admin = wallet.key.accAddress
   }
@@ -105,9 +145,19 @@ export async function instantiateContract(terra: LCDClient, wallet: Wallet, code
   return attributes[attributes.length - 1].value // contract address
 }
 
-export async function executeContract(terra: LCDClient, wallet: Wallet, contractAddress: string, msg: object, coins?: string) {
+export async function executeContract(terra: LCDClient, wallet: Wallet, contractAddress: string, msg: object, opts: Opts = {}) {
+  const coins = opts.coins
+  const logger = opts.logger
+
   const executeMsg = new MsgExecuteContract(wallet.key.accAddress, contractAddress, msg, coins);
-  return await performTransaction(terra, wallet, executeMsg);
+  const result = await performTransaction(terra, wallet, executeMsg);
+
+  if (logger !== undefined && logger.logGasConsumption) {
+    // save gas consumption during contract execution
+    logger.addGasConsumption(msg, result.gas_used)
+  }
+
+  return result;
 }
 
 export async function queryContract(terra: LCDClient, contractAddress: string, query: object): Promise<any> {

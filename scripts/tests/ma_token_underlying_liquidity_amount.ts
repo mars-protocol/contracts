@@ -2,7 +2,7 @@ import { LocalTerra } from "@terra-money/terra.js"
 import { strictEqual, strict as assert } from "assert"
 import {
   deployContract,
-  executeContract,
+  executeContract, Logger,
   queryContract,
   setGasAdjustment,
   setTimeoutDuration,
@@ -36,6 +36,8 @@ const SECONDS_IN_YEAR = 60 * 60 * 24 * 365;
   // gas is not correctly estimated in the repay_native method on the red bank,
   // so any estimates need to be adjusted upwards
   setGasAdjustment(2)
+
+  const logger = new Logger()
 
   const terra = new LocalTerra()
   const deployer = terra.wallets.test1
@@ -88,7 +90,8 @@ const SECONDS_IN_YEAR = 60 * 60 * 24 * 365;
           protocol_admin_address: deployer.key.accAddress,
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
   console.log("init assets")
@@ -117,10 +120,11 @@ const SECONDS_IN_YEAR = 60 * 60 * 24 * 365;
           borrow_enabled: true
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
-  await setAssetOraclePriceSource(terra, deployer, oracle, { native: { denom: "uluna" } }, 25)
+  await setAssetOraclePriceSource(terra, deployer, oracle, { native: { denom: "uluna" } }, 25, logger)
 
   // uusd
   await executeContract(terra, deployer, redBank,
@@ -146,17 +150,18 @@ const SECONDS_IN_YEAR = 60 * 60 * 24 * 365;
           borrow_enabled: true
         }
       }
-    }
+    },
+    { logger: logger }
   )
   const maUusd = await queryMaAssetAddress(terra, redBank, { native: { denom: "uusd" } })
 
-  await setAssetOraclePriceSource(terra, deployer, oracle, { native: { denom: "uusd" } }, 1)
+  await setAssetOraclePriceSource(terra, deployer, oracle, { native: { denom: "uusd" } }, 1, logger)
 
   // TESTS
 
   console.log("provide usd")
 
-  await depositNative(terra, provider, redBank, "uusd", USD_COLLATERAL)
+  await depositNative(terra, provider, redBank, "uusd", USD_COLLATERAL, logger)
 
   // underlying_liquidity_amount will be the same as the amount of uusd provided
   const maUusdBalance = await queryBalanceCw20(terra, provider.key.accAddress, maUusd)
@@ -174,11 +179,11 @@ const SECONDS_IN_YEAR = 60 * 60 * 24 * 365;
 
   console.log("provide luna")
 
-  await depositNative(terra, borrower, redBank, "uluna", LUNA_COLLATERAL)
+  await depositNative(terra, borrower, redBank, "uluna", LUNA_COLLATERAL, logger)
 
   console.log("borrow")
 
-  let result = await borrowNative(terra, borrower, redBank, "uusd", USD_BORROW)
+  let result = await borrowNative(terra, borrower, redBank, "uusd", USD_BORROW, logger)
   const borrowTime = await getTxTimestamp(terra, result)
 
   await sleep(1000)
@@ -219,4 +224,6 @@ const SECONDS_IN_YEAR = 60 * 60 * 24 * 365;
   }
 
   console.log("OK")
+
+  logger.showGasConsumption()
 })()

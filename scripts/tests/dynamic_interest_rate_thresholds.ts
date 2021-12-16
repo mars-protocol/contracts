@@ -6,7 +6,7 @@ import {
 import { strictEqual, notStrictEqual } from "assert"
 import {
   deployContract,
-  executeContract,
+  executeContract, Logger,
   queryContract,
   setGasAdjustment,
   setTimeoutDuration, sleep,
@@ -45,6 +45,8 @@ async function queryBorrowRate(
   // gas is not correctly estimated in the repay_native method on the red bank,
   // so any estimates need to be adjusted upwards
   setGasAdjustment(2)
+
+  const logger = new Logger()
 
   const terra = new LocalTerra()
   const deployer = terra.wallets.test1
@@ -95,7 +97,8 @@ async function queryBorrowRate(
           protocol_admin_address: deployer.key.accAddress,
         }
       }
-    }
+    },
+    {logger: logger}
   )
 
   console.log("init assets")
@@ -129,10 +132,11 @@ async function queryBorrowRate(
           borrow_enabled: true
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
-  await setAssetOraclePriceSource(terra, deployer, oracle, { native: { denom: "uluna" } }, 45)
+  await setAssetOraclePriceSource(terra, deployer, oracle, { native: { denom: "uluna" } }, 45, logger)
 
   // uusd
   let uusdCurrentBorrowRate = 0.2
@@ -164,21 +168,22 @@ async function queryBorrowRate(
           borrow_enabled: true
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
-  await setAssetOraclePriceSource(terra, deployer, oracle, { native: { denom: "uusd" } }, 1)
+  await setAssetOraclePriceSource(terra, deployer, oracle, { native: { denom: "uusd" } }, 1, logger)
 
   // TESTS
 
   console.log("[1 tx with usd] deposit")
-  await depositNative(terra, user1, redBank, "uusd", USD_COLLATERAL)
+  await depositNative(terra, user1, redBank, "uusd", USD_COLLATERAL, logger)
 
   console.log("[1 tx with luna] deposit")
-  await depositNative(terra, user2, redBank, "uluna", LUNA_COLLATERAL)
+  await depositNative(terra, user2, redBank, "uluna", LUNA_COLLATERAL, logger)
 
   console.log("[2 tx with usd] borrow")
-  await borrowNative(terra, user2, redBank, "uusd", 100_000000)
+  await borrowNative(terra, user2, redBank, "uusd", 100_000000, logger)
 
   // uusd borrow rate should not change
   {
@@ -192,7 +197,7 @@ async function queryBorrowRate(
   await sleep(timoutInMs + 10)
 
   console.log("[3 tx with usd] borrow")
-  await borrowNative(terra, user2, redBank, "uusd", 200_000000)
+  await borrowNative(terra, user2, redBank, "uusd", 200_000000, logger)
 
   // uusd borrow rate should change because we exceeded threshold txs
   {
@@ -202,7 +207,7 @@ async function queryBorrowRate(
   }
 
   console.log("[4 tx with usd] borrow")
-  await borrowNative(terra, user2, redBank, "uusd", 150_000000)
+  await borrowNative(terra, user2, redBank, "uusd", 150_000000, logger)
 
   // uusd and uluna borrow rates should not change
   {
@@ -214,7 +219,7 @@ async function queryBorrowRate(
   }
 
   console.log("[2 tx with luna] borrow")
-  await borrowNative(terra, user1, redBank, "uluna", 300_000000)
+  await borrowNative(terra, user1, redBank, "uluna", 300_000000, logger)
 
   // uluna borrow rate should change because we exceeded threshold txs
   {
@@ -223,4 +228,6 @@ async function queryBorrowRate(
   }
 
   console.log("OK")
+
+  logger.showGasConsumption()
 })()

@@ -5,7 +5,7 @@ import "dotenv/config.js";
 import {
   deployContract,
   executeContract,
-  instantiateContract,
+  instantiateContract, Logger,
   queryContract,
   setGasAdjustment,
   toEncodedBinary,
@@ -58,7 +58,7 @@ async function expectPromiseToFail(promise: Promise<any>) {
   }
 }
 
-async function recordTwapSnapshots() {
+async function recordTwapSnapshots(logger?: Logger) {
   const result = await executeContract(terra, charlie, oracle, {
     record_twap_snapshots: {
       assets: [
@@ -69,7 +69,7 @@ async function recordTwapSnapshots() {
         },
       ],
     },
-  });
+  }, { logger: logger });
   const timestamp = parseInt(result.logs[0].eventsByType.from_contract.timestamp[0]);
   const cumulativePrice = parseInt(result.logs[0].eventsByType.wasm.price_cumulative[0]);
   return { timestamp, cumulativePrice };
@@ -95,6 +95,8 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
   console.log("alice:   ", alice.key.accAddress);
   console.log("bob:     ", bob.key.accAddress);
   console.log("charlie: ", charlie.key.accAddress);
+
+  const logger = new Logger()
 
   process.stdout.write("deploying anchor token... ");
   const cw20CodeId = await uploadContract(
@@ -163,7 +165,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
         },
       ],
     },
-  });
+  }, { logger: logger });
   astroportPair = result1.logs[0].eventsByType.from_contract.pair_contract_addr[0];
   astroportLiquidityToken = result1.logs[0].eventsByType.from_contract.liquidity_token_addr[0];
   console.log("success!");
@@ -185,7 +187,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
         },
       ],
     },
-  });
+  }, { logger: logger });
   const astroportPair2 = result2.logs[0].eventsByType.from_contract.pair_contract_addr[0];
   console.log("success!");
 
@@ -195,7 +197,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
       amount: "69000000",
       spender: astroportPair,
     },
-  });
+  }, { logger: logger });
   await executeContract(
     terra,
     alice,
@@ -222,7 +224,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
         ],
       },
     },
-    "420000000uusd"
+    { coins: "420000000uusd", logger: logger }
   );
   console.log("success!");
 
@@ -247,7 +249,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
           },
         },
       },
-    })
+    }, { logger: logger })
   );
   console.log("success!");
 
@@ -265,7 +267,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
         },
       },
     },
-  });
+  }, { logger: logger });
   console.log("success!");
 
   process.stdout.write("configure UST price source... ");
@@ -282,7 +284,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
         },
       },
     },
-  });
+  }, { logger: logger });
   console.log("success!");
 
   process.stdout.write("configure liquidity token price source... ");
@@ -299,7 +301,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
         },
       },
     },
-  });
+  }, { logger: logger });
   console.log("success!");
 
   // currently there are 69000000 uANC + 420000000 uusd in the pair. we calculating spot price by
@@ -345,7 +347,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
         swap: {},
       }),
     },
-  });
+  }, { logger: logger });
   const poolUusdDepth = await queryBalanceNative(terra, astroportPair, "uusd");
   strictEqual(poolUusdDepth, 414018001);
   const poolUancDepth = await queryBalanceCw20(terra, astroportPair, anchorToken);
@@ -378,7 +380,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
         },
       },
     },
-  });
+  }, { logger: logger });
   console.log("success!");
 
   let snapshots: Snapshot[] = [];
@@ -432,7 +434,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
           swap: {},
         }),
       },
-    });
+    }, { logger: logger });
     console.log("success!");
 
     process.stdout.write("recoding TWAP snapshot... ");
@@ -480,4 +482,6 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
   console.log("success!");
 
   console.log("OK");
+
+  logger.showGasConsumption()
 })();

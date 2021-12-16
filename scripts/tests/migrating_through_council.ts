@@ -8,7 +8,7 @@ import { strictEqual } from "assert"
 import 'dotenv/config.js'
 import {
   deployContract,
-  executeContract, instantiateContract,
+  executeContract, instantiateContract, Logger,
   queryContract,
   setTimeoutDuration,
   sleep,
@@ -42,6 +42,7 @@ async function castVote(
   council: string,
   proposalId: number,
   vote: string,
+  logger?: Logger
 ) {
   return await executeContract(terra, wallet, council,
     {
@@ -49,7 +50,8 @@ async function castVote(
         proposal_id: proposalId,
         vote
       }
-    }
+    },
+    { logger: logger }
   )
 }
 
@@ -86,6 +88,8 @@ async function waitUntilBlockHeight(
 
 (async () => {
   setTimeoutDuration(0)
+
+  const logger = new Logger()
 
   const terra = new LocalTerra()
 
@@ -156,16 +160,17 @@ async function waitUntilBlockHeight(
           xmars_token_address: xMars,
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
   // mint tokens
-  await mintCw20(terra, deployer, mars, john.key.accAddress, JOHN_PROPOSAL_DEPOSIT)
-  await mintCw20(terra, deployer, xMars, john.key.accAddress, JOHN_XMARS_BALANCE)
+  await mintCw20(terra, deployer, mars, john.key.accAddress, JOHN_PROPOSAL_DEPOSIT, logger)
+  await mintCw20(terra, deployer, xMars, john.key.accAddress, JOHN_XMARS_BALANCE, logger)
 
   // deploy `counter_version_one` with admin set to council
   const counterVer1CodeId = await uploadContract(terra, deployer, join(MARS_MOCKS_ARTIFACTS_PATH, "counter_version_one.wasm"))
-  const counterVer1 = await instantiateContract(terra, deployer, counterVer1CodeId, { owner: deployer.key.accAddress }, council)
+  const counterVer1 = await instantiateContract(terra, deployer, counterVer1CodeId, { owner: deployer.key.accAddress }, { admin: council })
 
   // upload `counter_version_two`
   const counterVer2CodeId = await uploadContract(terra, deployer, join(MARS_MOCKS_ARTIFACTS_PATH, "counter_version_two.wasm"))
@@ -174,8 +179,8 @@ async function waitUntilBlockHeight(
 
   console.log("verify first version of `counter` contract")
 
-  await executeContract(terra, deployer, counterVer1, { increment: {}})
-  await executeContract(terra, deployer, counterVer1, { increment: {}})
+  await executeContract(terra, deployer, counterVer1, { increment: {}}, { logger: logger })
+  await executeContract(terra, deployer, counterVer1, { increment: {}}, { logger: logger })
 
   const countResponse = await queryContract(terra, counterVer1, {get_count: {}})
   strictEqual(countResponse.count, 2)
@@ -212,7 +217,8 @@ async function waitUntilBlockHeight(
           }
         })
       }
-    }
+    },
+    { logger: logger }
   )
   let blockHeight = await getBlockHeight(terra, txResult)
   const johnProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD
@@ -221,7 +227,7 @@ async function waitUntilBlockHeight(
 
   console.log("vote")
 
-  await castVote(terra, john, council, johnProposalId, "for")
+  await castVote(terra, john, council, johnProposalId, "for", logger)
 
   console.log("wait for voting periods to end")
 
@@ -229,7 +235,7 @@ async function waitUntilBlockHeight(
 
   console.log("end proposal")
 
-  await executeContract(terra, deployer, council, { end_proposal: { proposal_id: johnProposalId } })
+  await executeContract(terra, deployer, council, { end_proposal: { proposal_id: johnProposalId } }, { logger: logger })
 
   const johnProposalStatus = await queryContract(terra, council, { proposal: { proposal_id: johnProposalId } })
   strictEqual(johnProposalStatus.status, "passed")
@@ -240,11 +246,11 @@ async function waitUntilBlockHeight(
 
   console.log("execute proposal")
 
-  await executeContract(terra, deployer, council, { execute_proposal: { proposal_id: johnProposalId } })
+  await executeContract(terra, deployer, council, { execute_proposal: { proposal_id: johnProposalId } }, { logger: logger })
 
   console.log("verify second version of `counter` contract")
 
-  await executeContract(terra, deployer, counterVer1, { increment: {}})
+  await executeContract(terra, deployer, counterVer1, { increment: {}}, { logger: logger })
 
   const countResponse2 = await queryContract(terra, counterVer1, {get_count: {}})
   strictEqual(countResponse2.count, 3)
@@ -253,4 +259,6 @@ async function waitUntilBlockHeight(
   strictEqual(versionResponse2.version, "two")
 
   console.log("OK")
+
+  logger.showGasConsumption()
 })()

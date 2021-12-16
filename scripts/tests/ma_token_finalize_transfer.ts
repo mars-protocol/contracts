@@ -6,7 +6,7 @@ import {
 } from "@terra-money/terra.js"
 import {
   deployContract,
-  executeContract,
+  executeContract, Logger,
   queryContract,
   setTimeoutDuration,
   uploadContract
@@ -54,6 +54,7 @@ async function testHealthFactorChecks(
   terra: LocalTerra,
   redBank: string,
   maLuna: string,
+  logger?: Logger
 ) {
   const provider = terra.wallets.test2
   const borrower = terra.wallets.test3
@@ -61,20 +62,20 @@ async function testHealthFactorChecks(
 
   console.log("provider provides USD")
 
-  await depositNative(terra, provider, redBank, "uusd", USD_COLLATERAL)
+  await depositNative(terra, provider, redBank, "uusd", USD_COLLATERAL, logger)
 
   console.log("borrower provides Luna")
 
-  await depositNative(terra, borrower, redBank, "uluna", LUNA_COLLATERAL)
+  await depositNative(terra, borrower, redBank, "uluna", LUNA_COLLATERAL, logger)
 
   console.log("borrower borrows USD")
 
-  await borrowNative(terra, borrower, redBank, "uusd", USD_BORROW)
+  await borrowNative(terra, borrower, redBank, "uusd", USD_BORROW, logger)
 
   console.log("transferring the entire maToken balance should fail")
 
   await assert.rejects(
-    transferCw20(terra, borrower, maLuna, recipient.key.accAddress, LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR),
+    transferCw20(terra, borrower, maLuna, recipient.key.accAddress, LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR, logger),
     (error: any) => {
       return error.response.data.message.includes(
         "Cannot make token transfer if it results in a health factor lower than 1 for the sender"
@@ -87,7 +88,8 @@ async function testHealthFactorChecks(
   assert(await checkCollateral(terra, recipient, redBank, "uluna", false))
 
   await transferCw20(terra, borrower, maLuna, recipient.key.accAddress,
-    Math.floor(LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR / 100)
+    Math.floor(LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR / 100),
+    logger
   )
 
   assert(await checkCollateral(terra, recipient, redBank, "uluna", true))
@@ -97,20 +99,21 @@ async function testCollateralStatusChanges(
   terra: LocalTerra,
   redBank: string,
   maLuna: string,
+  logger?: Logger
 ) {
   const provider = terra.wallets.test5
   const recipient = terra.wallets.test6
 
   console.log("provider provides Luna")
 
-  await depositNative(terra, provider, redBank, "uluna", LUNA_COLLATERAL)
+  await depositNative(terra, provider, redBank, "uluna", LUNA_COLLATERAL, logger)
 
   assert(await checkCollateral(terra, provider, redBank, "uluna", true))
   assert(await checkCollateral(terra, recipient, redBank, "uluna", false))
 
   console.log("transferring all maTokens to recipient should enable that asset as collateral")
 
-  await transferCw20(terra, provider, maLuna, recipient.key.accAddress, LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR)
+  await transferCw20(terra, provider, maLuna, recipient.key.accAddress, LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR, logger)
 
   assert(await checkCollateral(terra, provider, redBank, "uluna", false))
   assert(await checkCollateral(terra, recipient, redBank, "uluna", true))
@@ -120,6 +123,7 @@ async function testTransferCollateral(
   terra: LocalTerra,
   redBank: string,
   maLuna: string,
+  logger?: Logger
 ) {
   const provider = terra.wallets.test7
   const borrower = terra.wallets.test8
@@ -127,15 +131,15 @@ async function testTransferCollateral(
 
   console.log("provider provides USD")
 
-  await depositNative(terra, provider, redBank, "uusd", USD_COLLATERAL)
+  await depositNative(terra, provider, redBank, "uusd", USD_COLLATERAL, logger)
 
   console.log("borrower provides Luna")
 
-  await depositNative(terra, borrower, redBank, "uluna", LUNA_COLLATERAL)
+  await depositNative(terra, borrower, redBank, "uluna", LUNA_COLLATERAL, logger)
 
   console.log("borrower borrows USD")
 
-  await borrowNative(terra, borrower, redBank, "uusd", USD_COLLATERAL / 100)
+  await borrowNative(terra, borrower, redBank, "uusd", USD_COLLATERAL / 100, logger)
 
   console.log("disabling Luna as collateral should fail")
 
@@ -148,7 +152,8 @@ async function testTransferCollateral(
           asset: { native: { denom: "uluna" } },
           enable: false,
         }
-      }
+      },
+      { logger: logger }
     ),
     (error: any) => {
       return error.response.data.message.includes(
@@ -160,7 +165,8 @@ async function testTransferCollateral(
   console.log("transfer maLuna")
 
   await transferCw20(terra, borrower, maLuna, recipient.key.accAddress,
-    Math.floor(LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR / 100)
+    Math.floor(LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR / 100),
+    logger
   )
 }
 
@@ -168,6 +174,8 @@ async function testTransferCollateral(
 
 (async () => {
   setTimeoutDuration(0)
+
+  const logger = new Logger()
 
   const terra = new LocalTerra()
 
@@ -220,7 +228,8 @@ async function testTransferCollateral(
           protocol_admin_address: deployer.key.accAddress,
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
   console.log("init assets")
@@ -253,12 +262,14 @@ async function testTransferCollateral(
           borrow_enabled: true
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
   await setAssetOraclePriceSource(terra, deployer, oracle,
     { native: { denom: "uluna" } },
-    25
+    25,
+    logger
   )
 
   // uusd
@@ -289,12 +300,14 @@ async function testTransferCollateral(
           borrow_enabled: true
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
   await setAssetOraclePriceSource(terra, deployer, oracle,
     { native: { denom: "uusd" } },
-    1
+    1,
+    logger
   )
 
   const maLuna = await queryMaAssetAddress(terra, redBank, { native: { denom: "uluna" } })
@@ -302,13 +315,15 @@ async function testTransferCollateral(
   // tests
 
   console.log("testHealthFactorChecks")
-  await testHealthFactorChecks(terra, redBank, maLuna)
+  await testHealthFactorChecks(terra, redBank, maLuna, logger)
 
   console.log("testCollateralStatusChanges")
-  await testCollateralStatusChanges(terra, redBank, maLuna)
+  await testCollateralStatusChanges(terra, redBank, maLuna, logger)
 
   console.log("testTransferCollateral")
-  await testTransferCollateral(terra, redBank, maLuna)
+  await testTransferCollateral(terra, redBank, maLuna, logger)
 
   console.log("OK")
+
+  logger.showGasConsumption()
 })()

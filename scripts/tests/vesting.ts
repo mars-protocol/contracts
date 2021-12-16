@@ -7,7 +7,7 @@ import { strictEqual } from "assert";
 import "dotenv/config.js";
 import {
   deployContract,
-  executeContract,
+  executeContract, Logger,
   queryContract,
   toEncodedBinary,
   uploadContract,
@@ -42,6 +42,8 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
 // MAIN
 
 (async () => {
+  const logger = new Logger()
+
   const terra = new LocalTerra();
 
   // addresses
@@ -207,15 +209,15 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
         protocol_admin_address: admin.key.accAddress,
       },
     },
-  });
+  }, { logger: logger });
 
   console.log("done!");
 
   process.stdout.write("mint Mars tokens for alice and admin... ");
 
-  await mintCw20(terra, deployer, mars, alice.key.accAddress, ALICE_MARS_BALANCE);
-  await mintCw20(terra, deployer, mars, bob.key.accAddress, BOB_WALLET_MARS_BALANCE);
-  await mintCw20(terra, deployer, mars, admin.key.accAddress, BOB_VESTING_MARS_BALANCE);
+  await mintCw20(terra, deployer, mars, alice.key.accAddress, ALICE_MARS_BALANCE, logger);
+  await mintCw20(terra, deployer, mars, bob.key.accAddress, BOB_WALLET_MARS_BALANCE, logger);
+  await mintCw20(terra, deployer, mars, admin.key.accAddress, BOB_VESTING_MARS_BALANCE, logger);
 
   console.log("done!");
 
@@ -232,7 +234,7 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
         amount: String(BOB_WALLET_MARS_BALANCE),
         msg: toEncodedBinary({ stake: {} }),
       },
-    });
+    }, { logger: logger });
 
     console.log("success!");
   }
@@ -251,7 +253,7 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
           },
         }),
       },
-    });
+    }, { logger: logger });
 
     // the block height where bob performed the staking action
     const height = await getBlockHeight(terra, txResult);
@@ -293,7 +295,7 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
           },
         }),
       },
-    });
+    }, { logger: logger });
     const proposalId = parseInt(
       submitProposalResult.logs[0].eventsByType.wasm.proposal_id[0]
     );
@@ -307,7 +309,7 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
         proposal_id: proposalId,
         vote: "for",
       },
-    });
+    }, { logger: logger });
 
     console.log("success!");
 
@@ -326,7 +328,7 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
 
     const txResult = await executeContract(terra, bob, vesting, {
       withdraw: {},
-    });
+    }, { logger: logger });
 
     // bob's wallet xMars balance should not have changed
     const bobXMarsBalance = await queryBalanceCw20(terra, bob.key.accAddress, xMars);
@@ -359,4 +361,6 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
   }
 
   console.log("OK");
+
+  logger.showGasConsumption()
 })();

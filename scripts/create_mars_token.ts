@@ -105,7 +105,7 @@ const TOKEN_LOGO = "https://marsprotocol.io/mars_logo_colored.svg";
       mutable: true,
       admins: [multisigAddress]
     },
-    multisigAddress
+    { admin: multisigAddress }
   )
 
   console.log("proxy:", proxyAddress)
@@ -144,7 +144,7 @@ const TOKEN_LOGO = "https://marsprotocol.io/mars_logo_colored.svg";
         logo: { url: TOKEN_LOGO }
       }
     },
-    multisigAddress
+    { admin: multisigAddress }
   )
 
   console.log("mars:", marsAddress)

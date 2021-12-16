@@ -4,6 +4,7 @@ import 'dotenv/config.js'
 import {
   deployContract,
   executeContract,
+  Logger,
   setTimeoutDuration,
   uploadContract
 } from "../helpers.js"
@@ -26,6 +27,8 @@ const MARS_COLLATERAL = 100_000_000_000000;
 
 (async () => {
   setTimeoutDuration(0)
+
+  const logger = new Logger()
 
   const terra = new LocalTerra()
   const deployer = terra.wallets.test1
@@ -85,7 +88,8 @@ const MARS_COLLATERAL = 100_000_000_000000;
           protocol_admin_address: deployer.key.accAddress,
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
   console.log("init assets")
@@ -114,12 +118,14 @@ const MARS_COLLATERAL = 100_000_000_000000;
           borrow_enabled: true
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
   await setAssetOraclePriceSource(terra, deployer, oracle,
     { cw20: { contract_addr: mars } },
-    2
+    2,
+    logger
   )
 
   // uusd
@@ -146,27 +152,31 @@ const MARS_COLLATERAL = 100_000_000_000000;
           borrow_enabled: true
         }
       }
-    }
+    },
+    { logger: logger }
   )
 
   await setAssetOraclePriceSource(terra, deployer, oracle,
     { native: { denom: "uusd" } },
-    1
+    1,
+    logger
   )
 
   // TESTS
 
   console.log("provide uusd")
 
-  await depositNative(terra, provider, redBank, "uusd", UUSD_COLLATERAL)
+  await depositNative(terra, provider, redBank, "uusd", UUSD_COLLATERAL, logger)
 
   console.log("provide mars")
 
-  await depositCw20(terra, borrower, redBank, mars, MARS_COLLATERAL)
+  await depositCw20(terra, borrower, redBank, mars, MARS_COLLATERAL, logger)
 
   console.log("borrow uusd")
 
-  await borrowNative(terra, borrower, redBank, "uusd", UUSD_COLLATERAL)
+  await borrowNative(terra, borrower, redBank, "uusd", UUSD_COLLATERAL, logger)
 
   console.log("OK")
+
+  logger.showGasConsumption()
 })()
