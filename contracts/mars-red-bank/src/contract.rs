@@ -376,6 +376,8 @@ pub fn execute_init_asset(
             let protocol_admin_address = addresses_query.pop().unwrap();
             let incentives_address = addresses_query.pop().unwrap();
 
+            let token_symbol = format!("ma{}", symbol);
+
             let res = Response::new()
                 .add_attribute("action", "init_asset")
                 .add_attribute("asset", asset_label)
@@ -384,7 +386,7 @@ pub fn execute_init_asset(
                     code_id: config.ma_token_code_id,
                     msg: to_binary(&ma_token::msg::InstantiateMsg {
                         name: format!("Mars {} Liquidity Token", symbol),
-                        symbol: format!("ma{}", symbol),
+                        symbol: token_symbol.clone(),
                         decimals: 6,
                         initial_balances: vec![],
                         mint: Some(MinterResponse {
@@ -410,7 +412,7 @@ pub fn execute_init_asset(
                         incentives_address: incentives_address.into(),
                     })?,
                     funds: vec![],
-                    label: String::from(""),
+                    label: token_symbol,
                 }));
             Ok(res)
         }
@@ -2637,7 +2639,7 @@ mod tests {
                     })
                     .unwrap(),
                     funds: vec![],
-                    label: "".to_string()
+                    label: "masomeasset".to_string()
                 })),]
             );
 
@@ -2828,7 +2830,7 @@ mod tests {
                 })
                 .unwrap(),
                 funds: vec![],
-                label: "".to_string()
+                label: "maCOIN".to_string()
             })),]
         );
     }

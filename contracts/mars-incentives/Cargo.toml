@@ -19,6 +19,8 @@ crate-type = ["cdylib", "rlib"]
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
 
+library = []
+
 [dependencies]
 mars-core = { path = "../../packages/mars-core", version = "1.0.0" }
 
