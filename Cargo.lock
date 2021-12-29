@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "astroport"
 version = "0.3.1"
-source = "git+https://github.com/astroport-fi/astroport#7aa47b36d776f3aff83968aa2f64c21f67d89152"
+source = "git+https://github.com/astroport-fi/astroport-core.git?tag=v1.0.0#05bfb278302d462c355e47ed67566a8a97f417dd"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 0.8.1",
