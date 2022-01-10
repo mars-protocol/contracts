@@ -124,6 +124,9 @@ pub enum ContractError {
 
     #[error("User's health factor can't be less than 1 after disabling collateral")]
     InvalidHealthFactorAfterDisablingCollateral {},
+
+    #[error("Invalid native coins sent. Only one native coin is required: {denom:?}")]
+    InvalidNativeCoinsSent { denom: String },
 }
 
 impl ContractError {

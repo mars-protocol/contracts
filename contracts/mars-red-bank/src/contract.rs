@@ -22,6 +22,7 @@ use mars_core::math::decimal::Decimal;
 
 use crate::accounts::get_user_position;
 use crate::error::ContractError;
+use crate::error::ContractError::InvalidNativeCoinsSent;
 use crate::interest_rate_models::init_interest_rate_model;
 use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
@@ -127,7 +128,7 @@ pub fn execute(
         }
 
         ExecuteMsg::DepositNative { denom } => {
-            let deposit_amount = get_denom_amount_from_coins(&info.funds, &denom);
+            let deposit_amount = get_denom_amount_from_coins(&info.funds, &denom)?;
             let depositor_address = info.sender.clone();
             execute_deposit(
                 deps,
@@ -145,7 +146,7 @@ pub fn execute(
 
         ExecuteMsg::RepayNative { denom } => {
             let repayer_address = info.sender.clone();
-            let repay_amount = get_denom_amount_from_coins(&info.funds, &denom);
+            let repay_amount = get_denom_amount_from_coins(&info.funds, &denom)?;
 
             execute_repay(
                 deps,
@@ -168,7 +169,7 @@ pub fn execute(
             let sender = info.sender.clone();
             let user_addr = deps.api.addr_validate(&user_address)?;
             let sent_debt_asset_amount =
-                get_denom_amount_from_coins(&info.funds, &debt_asset_denom);
+                get_denom_amount_from_coins(&info.funds, &debt_asset_denom)?;
             execute_liquidate(
                 deps,
                 env,
@@ -2114,12 +2115,14 @@ fn build_debt_position_changed_event(label: &str, enabled: bool, user_addr: Stri
 // HELPERS
 
 // native coins
-fn get_denom_amount_from_coins(coins: &[Coin], denom: &str) -> Uint128 {
-    coins
-        .iter()
-        .find(|c| c.denom == denom)
-        .map(|c| c.amount)
-        .unwrap_or_else(Uint128::zero)
+fn get_denom_amount_from_coins(coins: &[Coin], denom: &str) -> Result<Uint128, ContractError> {
+    if coins.len() == 1 && coins[0].denom == denom {
+        Ok(coins[0].amount)
+    } else {
+        Err(InvalidNativeCoinsSent {
+            denom: denom.to_string(),
+        })
+    }
 }
 
 fn get_asset_identifiers(
@@ -3529,6 +3532,22 @@ mod tests {
         assert_eq!(market.liquidity_index, expected_params.liquidity_index);
         assert_eq!(market.borrow_index, expected_params.borrow_index);
 
+        // send many native coins
+        let info = cosmwasm_std::testing::mock_info(
+            "depositor",
+            &[coin(100, "somecoin1"), coin(200, "somecoin2")],
+        );
+        let msg = ExecuteMsg::DepositNative {
+            denom: String::from("somecoin2"),
+        };
+        let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+        assert_eq!(
+            error_res,
+            ContractError::InvalidNativeCoinsSent {
+                denom: "somecoin2".to_string()
+            }
+        );
+
         // empty deposit fails
         let info = mock_info("depositor");
         let msg = ExecuteMsg::DepositNative {
@@ -3537,8 +3556,8 @@ mod tests {
         let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::InvalidDepositAmount {
-                asset: "somecoin".to_string()
+            ContractError::InvalidNativeCoinsSent {
+                denom: "somecoin".to_string()
             }
         );
     }
@@ -4869,7 +4888,7 @@ mod tests {
         );
 
         // *
-        // Repay zero native debt(should fail)
+        // Repay zero native debt (should fail)
         // *
         let env = mock_env_at_block_time(block_time);
         let info = mock_info("borrower");
@@ -4879,8 +4898,8 @@ mod tests {
         let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::InvalidRepayAmount {
-                asset: "borrowedcoinnative".to_string()
+            ContractError::InvalidNativeCoinsSent {
+                denom: "borrowedcoinnative".to_string()
             }
         );
 
@@ -6502,6 +6521,30 @@ mod tests {
             assert_eq!(
                 expected_global_cw20_debt_scaled,
                 debt_market_after.debt_total_scaled
+            );
+        }
+
+        // send many native coins
+        {
+            let env = mock_env(MockEnvParams::default());
+            let info = cosmwasm_std::testing::mock_info(
+                "liquidator",
+                &[coin(100, "somecoin1"), coin(200, "somecoin2")],
+            );
+            let msg = ExecuteMsg::LiquidateNative {
+                collateral_asset: Asset::Native {
+                    denom: "collateral".to_string(),
+                },
+                debt_asset_denom: "somecoin2".to_string(),
+                user_address: user_address.to_string(),
+                receive_ma_token: false,
+            };
+            let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+            assert_eq!(
+                error_res,
+                ContractError::InvalidNativeCoinsSent {
+                    denom: "somecoin2".to_string()
+                }
             );
         }
 
