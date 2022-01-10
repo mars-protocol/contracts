@@ -37,3 +37,6 @@ astroport = { git = "https://github.com/astroport-fi/astroport-core.git", tag = 
 
 [dev-dependencies]
 cosmwasm-schema = "0.16.2"
+
+[profile.release]
+overflow-checks = true

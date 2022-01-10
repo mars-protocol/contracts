@@ -36,3 +36,6 @@ thiserror = "1.0.23"
 
 [dev-dependencies]
 cosmwasm-schema = "0.16.2"
+
+[profile.release]
+overflow-checks = true
