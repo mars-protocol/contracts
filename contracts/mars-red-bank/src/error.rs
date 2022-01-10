@@ -46,7 +46,7 @@ pub enum ContractError {
     #[error("User's health factor can't be less than 1 after withdraw")]
     InvalidHealthFactorAfterWithdraw {},
 
-    #[error("User's health factor can't be less than 1 after withdraw")]
+    #[error("Asset is already initialized")]
     AssetAlreadyInitialized {},
 
     #[error("Asset not initialized")]
