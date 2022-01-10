@@ -25,12 +25,20 @@ use crate::state::{ALLOCATIONS, CONFIG, TEMP_DATA, VOTING_POWER_SNAPSHOTS};
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    CONFIG.save(deps.storage, &msg.check(deps.api)?)?;
-    Ok(Response::default())
+    let timestamp = env.block.time.seconds();
+    if msg.unlock_start_time > timestamp
+        && msg.unlock_cliff > 0u64
+        && msg.unlock_duration > msg.unlock_cliff
+    {
+        CONFIG.save(deps.storage, &msg.check(deps.api)?)?;
+        Ok(Response::default())
+    } else {
+        Err(ContractError::InvalidUnlockTimeSetup {})
+    }
 }
 
 // EXECUTE
@@ -441,6 +449,48 @@ mod tests {
             unlock_duration: 94608000,     // 3 years
         };
         assert_eq!(res, expected)
+    }
+
+    #[test]
+    fn invalid_instantiation() {
+        let mut deps = mock_dependencies(&[]);
+        let block_time_sec = 1000u64;
+        let env = mock_env_at_block_time(block_time_sec);
+
+        let valid_msg = InstantiateMsg {
+            address_provider_address: "address_provider".to_string(),
+            unlock_start_time: 1640995200, // 2022-01-01
+            unlock_cliff: 15552000,        // 180 days
+            unlock_duration: 94608000,     // 3 years
+        };
+
+        // unlock_start_time < current time
+        let invalid_msg = InstantiateMsg {
+            unlock_start_time: block_time_sec - 1u64,
+            ..valid_msg.clone()
+        };
+        let error_res = instantiate(
+            deps.as_mut(),
+            env.clone(),
+            mock_info("deployer"),
+            invalid_msg,
+        )
+        .unwrap_err();
+        assert_eq!(error_res, ContractError::InvalidUnlockTimeSetup {});
+
+        // unlock_duration = 0
+        let invalid_msg = InstantiateMsg {
+            unlock_duration: 0u64,
+            ..valid_msg.clone()
+        };
+        let error_res = instantiate(
+            deps.as_mut(),
+            env.clone(),
+            mock_info("deployer"),
+            invalid_msg,
+        )
+        .unwrap_err();
+        assert_eq!(error_res, ContractError::InvalidUnlockTimeSetup {})
     }
 
     #[test]

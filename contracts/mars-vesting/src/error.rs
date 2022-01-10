@@ -25,4 +25,7 @@ pub enum ContractError {
 
     #[error("Mars/xMars ratio is undefined")]
     XMarsRatioUndefined {},
+
+    #[error("Unlock time setup is invalid")]
+    InvalidUnlockTimeSetup {},
 }
