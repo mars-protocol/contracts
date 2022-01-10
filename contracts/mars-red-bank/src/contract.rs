@@ -1244,6 +1244,15 @@ pub fn execute_liquidate(
         });
     }
 
+    let mut user = USERS.load(deps.storage, &user_address)?;
+    let using_collateral_asset_as_collateral =
+        get_bit(user.collateral_assets, collateral_market.index)?;
+    if !using_collateral_asset_as_collateral {
+        return Err(ContractError::CannotLiquidateWhenCollateralUnset {
+            asset: collateral_asset_label,
+        });
+    }
+
     // check if user has available collateral in specified collateral asset to be liquidated
     let user_collateral_balance_scaled = cw20_get_balance(
         &deps.querier,
@@ -1280,7 +1289,6 @@ pub fn execute_liquidate(
     let oracle_address = addresses_query.pop().unwrap();
 
     let global_state = GLOBAL_STATE.load(deps.storage)?;
-    let user = USERS.load(deps.storage, &user_address)?;
     let user_position = get_user_position(
         deps.as_ref(),
         block_time,
@@ -1372,7 +1380,6 @@ pub fn execute_liquidate(
 
     // if max collateral to liquidate equals the user's balance then unset collateral bit
     if collateral_amount_to_liquidate == user_collateral_balance {
-        let mut user = USERS.load(deps.storage, &user_address)?;
         unset_bit(&mut user.collateral_assets, collateral_market.index)?;
         USERS.save(deps.storage, &user_address, &user)?;
         response = response.add_event(build_collateral_position_changed_event(
@@ -7024,6 +7031,80 @@ mod tests {
         let info = mock_info(debt_contract_addr.as_str());
         let error_res = execute(deps.as_mut(), env, info, liquidate_msg).unwrap_err();
         assert_eq!(error_res, ContractError::CannotLiquidateHealthyPosition {});
+    }
+
+    #[test]
+    fn test_liquidate_if_collateral_disabled() {
+        // initialize collateral and debt markets
+        let mut deps = th_setup(&[]);
+
+        let debt_contract_addr = Addr::unchecked("debt");
+
+        let collateral_market_1 = Market {
+            ma_token_address: Addr::unchecked("collateral1"),
+            asset_type: AssetType::Native,
+            ..Default::default()
+        };
+        let collateral_market_2 = Market {
+            ma_token_address: Addr::unchecked("collateral2"),
+            asset_type: AssetType::Native,
+            ..Default::default()
+        };
+        let debt_market = Market {
+            ma_token_address: Addr::unchecked("debt"),
+            asset_type: AssetType::Cw20,
+            ..Default::default()
+        };
+
+        // initialize markets
+        let collateral_market_initial_1 =
+            th_init_market(deps.as_mut(), b"collateral1", &collateral_market_1);
+        let _collateral_market_initial_2 =
+            th_init_market(deps.as_mut(), b"collateral2", &collateral_market_2);
+
+        let debt_market_initial =
+            th_init_market(deps.as_mut(), debt_contract_addr.as_bytes(), &debt_market);
+
+        // Set user as having collateral and debt in respective markets
+        let user_address = Addr::unchecked("user");
+        let mut user = User::default();
+        set_bit(
+            &mut user.collateral_assets,
+            collateral_market_initial_1.index,
+        )
+        .unwrap();
+        set_bit(&mut user.borrowed_assets, debt_market_initial.index).unwrap();
+
+        USERS
+            .save(deps.as_mut().storage, &user_address, &user)
+            .unwrap();
+
+        // perform liquidation (should fail because collateral2 isn't set as collateral for user)
+        let liquidator_address = Addr::unchecked("liquidator");
+        let debt_to_cover = Uint128::from(1_000_000u64);
+
+        let liquidate_msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
+            msg: to_binary(&ReceiveMsg::LiquidateCw20 {
+                collateral_asset: Asset::Native {
+                    denom: "collateral2".to_string(),
+                },
+                user_address: user_address.to_string(),
+                receive_ma_token: true,
+            })
+            .unwrap(),
+            sender: liquidator_address.to_string(),
+            amount: debt_to_cover,
+        });
+
+        let env = mock_env(MockEnvParams::default());
+        let info = mock_info(debt_contract_addr.as_str());
+        let error_res = execute(deps.as_mut(), env, info, liquidate_msg).unwrap_err();
+        assert_eq!(
+            error_res,
+            ContractError::CannotLiquidateWhenCollateralUnset {
+                asset: "collateral2".to_string()
+            }
+        );
     }
 
     #[test]

@@ -85,6 +85,9 @@ pub enum ContractError {
     #[error("Must send more than 0 {asset:?} in order to liquidate")]
     InvalidLiquidateAmount { asset: String },
 
+    #[error("User can't be liquidated for asset {asset:?} not being used as collateral")]
+    CannotLiquidateWhenCollateralUnset { asset: String },
+
     #[error("User has no balance in specified collateral asset to be liquidated")]
     CannotLiquidateWhenNoCollateralBalance {},
 
