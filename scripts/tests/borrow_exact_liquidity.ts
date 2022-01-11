@@ -1,4 +1,4 @@
-import { LocalTerra } from "@terra-money/terra.js"
+import { LocalTerra, MnemonicKey } from "@terra-money/terra.js"
 import { join } from "path"
 import 'dotenv/config.js'
 import {
@@ -34,6 +34,8 @@ const MARS_COLLATERAL = 100_000_000_000000;
   const deployer = terra.wallets.test1
   const provider = terra.wallets.test2
   const borrower = terra.wallets.test3
+  // mock contract addresses
+  const protocolRewardsCollector = new MnemonicKey().accAddress
 
   console.log("upload contracts")
 
@@ -84,6 +86,7 @@ const MARS_COLLATERAL = 100_000_000_000000;
           incentives_address: incentives,
           mars_token_address: mars,
           oracle_address: oracle,
+          protocol_rewards_collector_address: protocolRewardsCollector,
           red_bank_address: redBank,
           protocol_admin_address: deployer.key.accAddress,
         }

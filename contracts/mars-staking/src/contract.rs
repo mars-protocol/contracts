@@ -449,7 +449,7 @@ pub fn execute_swap_uusd_to_mars(
     deps: DepsMut,
     env: Env,
     amount: Option<Uint128>,
-) -> StdResult<Response> {
+) -> Result<Response, MarsError> {
     let config = CONFIG.load(deps.storage)?;
 
     let offer_asset_info = AssetInfo::NativeToken {
@@ -468,7 +468,7 @@ pub fn execute_swap_uusd_to_mars(
 
     let astroport_max_spread = Some(config.astroport_max_spread);
 
-    execute_swap(
+    Ok(execute_swap(
         deps,
         env,
         offer_asset_info,
@@ -476,7 +476,7 @@ pub fn execute_swap_uusd_to_mars(
         amount,
         config.astroport_factory_address,
         astroport_max_spread,
-    )
+    )?)
 }
 
 // QUERY

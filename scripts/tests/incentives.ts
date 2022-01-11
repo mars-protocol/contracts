@@ -100,6 +100,7 @@ function assertBalance(
   const carol = terra.wallets.test4
   const dan = terra.wallets.test5
   // mock contract addresses
+  const protocolRewardsCollector = new MnemonicKey().accAddress
   const astroportFactory = new MnemonicKey().accAddress
 
   console.log("upload contracts")
@@ -176,6 +177,7 @@ function assertBalance(
           incentives_address: incentives,
           mars_token_address: mars,
           oracle_address: oracle,
+          protocol_rewards_collector_address: protocolRewardsCollector,
           red_bank_address: redBank,
           staking_address: staking,
           xmars_token_address: xMars,

@@ -9,6 +9,7 @@ import {
   deployContract,
   executeContract, Logger,
   queryContract,
+  setTimeoutDuration,
   toEncodedBinary,
   uploadContract,
 } from "../helpers.js";
@@ -42,6 +43,8 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
 // MAIN
 
 (async () => {
+  setTimeoutDuration(0)
+
   const logger = new Logger()
 
   const terra = new LocalTerra();

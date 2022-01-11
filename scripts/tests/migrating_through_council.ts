@@ -1,6 +1,7 @@
 import {
   LCDClient,
   LocalTerra,
+  MnemonicKey,
   Wallet
 } from "@terra-money/terra.js"
 import { join } from "path"
@@ -96,6 +97,8 @@ async function waitUntilBlockHeight(
   // addresses
   const deployer = terra.wallets.test1
   const john = terra.wallets.test2
+  // mock contract addresses
+  const staking = new MnemonicKey().accAddress
 
   console.log("upload contracts")
 
@@ -120,11 +123,9 @@ async function waitUntilBlockHeight(
   const vesting = await deployContract(terra, deployer, "../artifacts/mars_vesting.wasm",
     {
       address_provider_address: addressProvider,
-      default_unlock_schedule: {
-        start_time: 0,
-        cliff: 0,
-        duration: 0
-      }
+      unlock_start_time: 0,
+      unlock_cliff: 0,
+      unlock_duration: 0
     }
   )
 
@@ -158,6 +159,7 @@ async function waitUntilBlockHeight(
           vesting_address: vesting,
           mars_token_address: mars,
           xmars_token_address: xMars,
+          staking_address: staking,
         }
       }
     },
@@ -179,13 +181,13 @@ async function waitUntilBlockHeight(
 
   console.log("verify first version of `counter` contract")
 
-  await executeContract(terra, deployer, counterVer1, { increment: {}}, { logger: logger })
-  await executeContract(terra, deployer, counterVer1, { increment: {}}, { logger: logger })
+  await executeContract(terra, deployer, counterVer1, { increment: {} }, { logger: logger })
+  await executeContract(terra, deployer, counterVer1, { increment: {} }, { logger: logger })
 
-  const countResponse = await queryContract(terra, counterVer1, {get_count: {}})
+  const countResponse = await queryContract(terra, counterVer1, { get_count: {} })
   strictEqual(countResponse.count, 2)
 
-  const versionResponse = await queryContract(terra, counterVer1, {get_version: {}})
+  const versionResponse = await queryContract(terra, counterVer1, { get_version: {} })
   strictEqual(versionResponse.version, "one")
 
   console.log("john submits a proposal to initialise `counter` contract migration")
@@ -250,12 +252,12 @@ async function waitUntilBlockHeight(
 
   console.log("verify second version of `counter` contract")
 
-  await executeContract(terra, deployer, counterVer1, { increment: {}}, { logger: logger })
+  await executeContract(terra, deployer, counterVer1, { increment: {} }, { logger: logger })
 
-  const countResponse2 = await queryContract(terra, counterVer1, {get_count: {}})
+  const countResponse2 = await queryContract(terra, counterVer1, { get_count: {} })
   strictEqual(countResponse2.count, 3)
 
-  const versionResponse2 = await queryContract(terra, counterVer1, {get_version: {}})
+  const versionResponse2 = await queryContract(terra, counterVer1, { get_version: {} })
   strictEqual(versionResponse2.version, "two")
 
   console.log("OK")

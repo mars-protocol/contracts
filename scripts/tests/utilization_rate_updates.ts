@@ -4,6 +4,7 @@ Tests that market utilization rates update when funds are sent to/from the red b
 import {
   LCDClient,
   LocalTerra,
+  MnemonicKey,
   Wallet
 } from "@terra-money/terra.js"
 import { join } from "path"
@@ -277,6 +278,8 @@ async function testDynamicInterestRate(env: Env, logger?: Logger) {
   const deployer = terra.wallets.test1
   const alice = terra.wallets.test2
   const bob = terra.wallets.test3
+  // mock contract addresses
+  const protocolRewardsCollector = new MnemonicKey().accAddress
 
   console.log("upload contracts")
 
@@ -331,6 +334,7 @@ async function testDynamicInterestRate(env: Env, logger?: Logger) {
           incentives_address: incentives,
           mars_token_address: mars,
           oracle_address: oracle,
+          protocol_rewards_collector_address: protocolRewardsCollector,
           red_bank_address: redBank,
           protocol_admin_address: deployer.key.accAddress,
         }

@@ -19,11 +19,11 @@ pub fn handle_query(contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
         QueryMsg::Address { contract } => to_binary(&get_contract_address(contract)).into(),
 
         QueryMsg::Addresses { contracts } => {
-            let mut ret: Vec<Addr> = Vec::with_capacity(contracts.len());
-            for contract in contracts {
-                ret.push(get_contract_address(contract));
-            }
-            to_binary(&ret).into()
+            let addresses = contracts
+                .into_iter()
+                .map(get_contract_address)
+                .collect::<Vec<_>>();
+            to_binary(&addresses).into()
         }
 
         _ => panic!("[mock]: Unsupported address provider query"),

@@ -2074,7 +2074,11 @@ pub fn query_underlying_debt_amount(
     get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())
 }
 
-pub fn query_user_position(deps: Deps, env: Env, address: Addr) -> StdResult<UserPositionResponse> {
+pub fn query_user_position(
+    deps: Deps,
+    env: Env,
+    address: Addr,
+) -> Result<UserPositionResponse, MarsError> {
     let config = CONFIG.load(deps.storage)?;
     let global_state = GLOBAL_STATE.load(deps.storage)?;
     let user = USERS.load(deps.storage, &address)?;
