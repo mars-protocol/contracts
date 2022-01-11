@@ -178,19 +178,17 @@ pub fn execute_record_twap_snapshots(
 // QUERIES
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => Ok(to_binary(&query_config(deps, env)?)?),
+        QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
         QueryMsg::AssetPriceSource { asset } => {
-            Ok(to_binary(&query_asset_price_source(deps, env, asset)?)?)
+            to_binary(&query_asset_price_source(deps, env, asset)?)
         }
-        QueryMsg::AssetPrice { asset } => Ok(to_binary(&query_asset_price(
-            deps,
-            env,
-            asset.get_reference(),
-        )?)?),
+        QueryMsg::AssetPrice { asset } => {
+            to_binary(&query_asset_price(deps, env, asset.get_reference())?)
+        }
         QueryMsg::AssetPriceByReference { asset_reference } => {
-            Ok(to_binary(&query_asset_price(deps, env, asset_reference)?)?)
+            to_binary(&query_asset_price(deps, env, asset_reference)?)
         }
     }
 }
@@ -1074,7 +1072,7 @@ mod tests {
         )
         .unwrap_err();
 
-        assert_eq!(error, ContractError::NoSnapshotWithinTolerance {});
+        assert_eq!(error, ContractError::NoSnapshotWithinTolerance {}.into());
 
         // query price when a snapshot was taken within the tolerable window
         let query_time = snapshot_time + window_size;
