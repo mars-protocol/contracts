@@ -7,6 +7,7 @@ use cosmwasm_std::{
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg};
 use cw_storage_plus::{Bound, U64Key};
 
+use mars_core::council::error::ContractError;
 use mars_core::error::MarsError;
 use mars_core::helpers::{option_string_to_addr, zero_address};
 use mars_core::math::decimal::Decimal;
@@ -16,7 +17,6 @@ use mars_core::address_provider::MarsContract;
 use mars_core::vesting;
 use mars_core::xmars_token;
 
-use crate::error::ContractError;
 use crate::msg::{CreateOrUpdateConfig, ExecuteMsg, InstantiateMsg, QueryMsg, ReceiveMsg};
 use crate::state::{CONFIG, GLOBAL_STATE, PROPOSALS, PROPOSAL_VOTES};
 use crate::{
@@ -734,6 +734,31 @@ mod tests {
             );
         }
 
+        // init with proposal_required_threshold less than 50%
+        {
+            let config = CreateOrUpdateConfig {
+                address_provider_address: Some(String::from("address_provider")),
+
+                proposal_voting_period: Some(1),
+                proposal_effective_delay: Some(1),
+                proposal_expiration_period: Some(1),
+                proposal_required_deposit: Some(Uint128::new(1)),
+                proposal_required_quorum: Some(Decimal::percent(50)),
+                proposal_required_threshold: Some(Decimal::percent(49)),
+            };
+            let msg = InstantiateMsg { config };
+            let env = cosmwasm_std::testing::mock_env();
+            let info = mock_info("someone");
+            let error_res = instantiate(deps.as_mut(), env, info, msg).unwrap_err();
+            assert_eq!(
+                error_res,
+                ContractError::ProposalRequiredThresholdOutOfRange {
+                    proposal_required_threshold: Decimal::percent(49),
+                    minimum: Decimal::percent(50),
+                }
+            );
+        }
+
         // Successful Init
         {
             let config = CreateOrUpdateConfig {
@@ -810,6 +835,27 @@ mod tests {
                         .to_string()
                 }
                 .into()
+            );
+        }
+
+        // *
+        // update config with proposal_required_threshold less than 50%
+        // *
+        {
+            let config = CreateOrUpdateConfig {
+                proposal_required_threshold: Some(Decimal::percent(49)),
+                ..init_config.clone()
+            };
+            let msg = UpdateConfig { config };
+            let env = cosmwasm_std::testing::mock_env();
+            let info = mock_info(MOCK_CONTRACT_ADDR);
+            let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
+            assert_eq!(
+                error_res,
+                ContractError::ProposalRequiredThresholdOutOfRange {
+                    proposal_required_threshold: Decimal::percent(49),
+                    minimum: Decimal::percent(50),
+                }
             );
         }
 

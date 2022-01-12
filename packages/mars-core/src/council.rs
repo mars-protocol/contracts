@@ -2,9 +2,12 @@ use cosmwasm_std::{Addr, CosmosMsg, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::error::MarsError;
 use crate::helpers::all_conditions_valid;
 use crate::math::decimal::Decimal;
+
+use self::error::ContractError;
+
+const MINIMUM_PROPOSAL_REQUIRED_THRESHOLD_PERCENTAGE: u64 = 50;
 
 /// Council global configuration
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -28,7 +31,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn validate(&self) -> Result<(), MarsError> {
+    pub fn validate(&self) -> Result<(), ContractError> {
         let conditions_and_names = vec![
             (
                 Self::less_or_equal_one(&self.proposal_required_quorum),
@@ -39,7 +42,22 @@ impl Config {
                 "proposal_required_threshold",
             ),
         ];
-        all_conditions_valid(conditions_and_names)
+        all_conditions_valid(conditions_and_names)?;
+
+        let minimum_proposal_required_threshold =
+            Decimal::percent(MINIMUM_PROPOSAL_REQUIRED_THRESHOLD_PERCENTAGE);
+
+        if self
+            .proposal_required_threshold
+            .le(&minimum_proposal_required_threshold)
+        {
+            return Err(ContractError::ProposalRequiredThresholdOutOfRange {
+                proposal_required_threshold: self.proposal_required_threshold,
+                minimum: minimum_proposal_required_threshold,
+            });
+        }
+
+        Ok(())
     }
 
     fn less_or_equal_one(value: &Decimal) -> bool {
@@ -232,5 +250,58 @@ pub mod msg {
             start_after: Option<String>,
             limit: Option<u32>,
         },
+    }
+}
+
+pub mod error {
+    use cosmwasm_std::StdError;
+    use thiserror::Error;
+
+    use crate::{error::MarsError, math::decimal::Decimal};
+
+    #[derive(Error, Debug, PartialEq)]
+    pub enum ContractError {
+        #[error("{0}")]
+        Std(#[from] StdError),
+
+        #[error("{0}")]
+        Mars(#[from] MarsError),
+
+        #[error("Invalid Proposal: {error:?}")]
+        InvalidProposal { error: String },
+
+        #[error("Proposal is not active")]
+        ProposalNotActive {},
+
+        #[error("User has already voted on this proposal")]
+        VoteUserAlreadyVoted {},
+        #[error("User has no voting power at block: {block:?}")]
+        VoteNoVotingPower { block: u64 },
+        #[error("Voting period has ended")]
+        VoteVotingPeriodEnded {},
+
+        #[error("Voting period has not ended")]
+        EndProposalVotingPeriodNotEnded {},
+
+        #[error("Proposal has not passed or has already been executed")]
+        ExecuteProposalNotPassed {},
+        #[error("Proposal must end it's delay period in order to be executed")]
+        ExecuteProposalDelayNotEnded {},
+        #[error("Proposal has expired")]
+        ExecuteProposalExpired {},
+
+        #[error("Proposal required threshold {proposal_required_threshold} must be between {minimum} and 1")]
+        ProposalRequiredThresholdOutOfRange {
+            proposal_required_threshold: Decimal,
+            minimum: Decimal,
+        },
+    }
+
+    impl ContractError {
+        pub fn invalid_proposal<S: Into<String>>(error: S) -> ContractError {
+            ContractError::InvalidProposal {
+                error: error.into(),
+            }
+        }
     }
 }
