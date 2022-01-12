@@ -626,6 +626,23 @@ pub fn execute_update_uncollateralized_loan_limit(
 
     let (asset_label, asset_reference, _) = asset.get_attributes();
 
+    // Check that the user has no collateralized debt
+    if let Some(user) = USERS.may_load(deps.storage, &user_address)? {
+        let previous_uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
+            .may_load(deps.storage, (asset_reference.as_slice(), &user_address))?
+            .unwrap_or_else(Uint128::zero);
+
+        if previous_uncollateralized_loan_limit == Uint128::zero() {
+            let asset_market = MARKETS.load(deps.storage, asset_reference.as_slice())?;
+
+            let is_borrowing_asset = get_bit(user.borrowed_assets, asset_market.index)?;
+
+            if is_borrowing_asset {
+                return Err(ContractError::UserHasCollateralizedDebt {});
+            }
+        };
+    }
+
     UNCOLLATERALIZED_LOAN_LIMITS.save(
         deps.storage,
         (asset_reference.as_slice(), &user_address),
@@ -7326,12 +7343,43 @@ mod tests {
         // should get index 0
         let market_initial = th_init_market(deps.as_mut(), b"somecoin", &mock_market);
 
-        let borrower_addr = Addr::unchecked("borrower");
-
         let mut block_time = mock_market.indexes_last_updated + 10000u64;
         let initial_uncollateralized_loan_limit = Uint128::from(2400_u128);
 
-        // Update uncollateralized loan limit
+        // Check that borrowers with uncollateralized debt cannot get an uncollateralized loan limit
+        let existing_borrower_addr = Addr::unchecked("existing_borrower");
+
+        let mut existing_borrower = User::default();
+        set_bit(&mut existing_borrower.borrowed_assets, 0).unwrap();
+        USERS
+            .save(
+                &mut deps.storage,
+                &existing_borrower_addr,
+                &existing_borrower,
+            )
+            .unwrap();
+
+        let update_limit_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
+            asset: Asset::Native {
+                denom: "somecoin".to_string(),
+            },
+            user_address: existing_borrower_addr.to_string(),
+            new_limit: initial_uncollateralized_loan_limit,
+        };
+        let update_limit_env = mock_env_at_block_time(block_time);
+        let info = mock_info("owner");
+        let err = execute(
+            deps.as_mut(),
+            update_limit_env.clone(),
+            info,
+            update_limit_msg,
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::UserHasCollateralizedDebt {});
+
+        // Update uncollateralized loan limit for users without collateralized loans
+        let borrower_addr = Addr::unchecked("borrower");
+
         let update_limit_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
             asset: Asset::Native {
                 denom: "somecoin".to_string(),
@@ -7341,7 +7389,6 @@ mod tests {
         };
 
         // update limit as unauthorized user, should fail
-        let update_limit_env = mock_env_at_block_time(block_time);
         let info = mock_info("random");
         let error_res = execute(
             deps.as_mut(),

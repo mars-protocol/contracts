@@ -130,6 +130,9 @@ pub enum ContractError {
 
     #[error("Invalid native coins sent. Only one native coin is required: {denom:?}")]
     InvalidNativeCoinsSent { denom: String },
+
+    #[error("Cannot update uncollateralized loan limit because user has collateralized debt")]
+    UserHasCollateralizedDebt {},
 }
 
 impl ContractError {
