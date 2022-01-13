@@ -2298,9 +2298,10 @@ mod tests {
         let error_res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::ParamsNotLessOrEqualOne {
-                expected_params: "close_factor".to_string(),
-                invalid_params: "close_factor".to_string()
+            MarsError::InvalidParam {
+                param_name: "close_factor".to_string(),
+                invalid_value: "1.3".to_string(),
+                predicate: "<= 1".to_string(),
             }
             .into()
         );
@@ -2373,9 +2374,10 @@ mod tests {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::ParamsNotLessOrEqualOne {
-                expected_params: "close_factor".to_string(),
-                invalid_params: "close_factor".to_string()
+            MarsError::InvalidParam {
+                param_name: "close_factor".to_string(),
+                invalid_value: "1.3".to_string(),
+                predicate: "<= 1".to_string(),
             }
             .into()
         );
@@ -2488,11 +2490,10 @@ mod tests {
             assert_eq!(error_res, MarsError::InstantiateParamsUnavailable {}.into());
         }
 
-        // init asset with some params greater than 1
+        // init asset with max_loan_to_value greater than 1
         {
             let invalid_asset_params = InitOrUpdateAssetParams {
-                max_loan_to_value: Some(Decimal::from_ratio(110u128, 10u128)),
-                reserve_factor: Some(Decimal::from_ratio(120u128, 100u128)),
+                max_loan_to_value: Some(Decimal::from_ratio(11u128, 10u128)),
                 ..asset_params.clone()
             };
             let msg = ExecuteMsg::InitAsset {
@@ -2507,11 +2508,66 @@ mod tests {
             assert_eq!(
                 error_res,
                 ContractError::Market(
-                    MarsError::ParamsNotLessOrEqualOne {
-                        expected_params:
-                            "max_loan_to_value, reserve_factor, liquidation_threshold, liquidation_bonus"
-                                .to_string(),
-                        invalid_params: "max_loan_to_value, reserve_factor".to_string()
+                    MarsError::InvalidParam {
+                        param_name: "max_loan_to_value".to_string(),
+                        invalid_value: "1.1".to_string(),
+                        predicate: "<= 1".to_string(),
+                    }
+                    .into()
+                )
+            );
+        }
+
+        // init asset with liquidation_threshold greater than 1
+        {
+            let invalid_asset_params = InitOrUpdateAssetParams {
+                liquidation_threshold: Some(Decimal::from_ratio(11u128, 10u128)),
+                ..asset_params.clone()
+            };
+            let msg = ExecuteMsg::InitAsset {
+                asset: Asset::Native {
+                    denom: "someasset".to_string(),
+                },
+                asset_params: invalid_asset_params,
+                asset_symbol: None,
+            };
+            let info = mock_info("owner");
+            let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+            assert_eq!(
+                error_res,
+                ContractError::Market(
+                    MarsError::InvalidParam {
+                        param_name: "liquidation_threshold".to_string(),
+                        invalid_value: "1.1".to_string(),
+                        predicate: "<= 1".to_string(),
+                    }
+                    .into()
+                )
+            );
+        }
+
+        // init asset with liquidation_bonus greater than 1
+        {
+            let invalid_asset_params = InitOrUpdateAssetParams {
+                liquidation_bonus: Some(Decimal::from_ratio(11u128, 10u128)),
+                ..asset_params.clone()
+            };
+            let msg = ExecuteMsg::InitAsset {
+                asset: Asset::Native {
+                    denom: "someasset".to_string(),
+                },
+                asset_params: invalid_asset_params,
+                asset_symbol: None,
+            };
+            let info = mock_info("owner");
+            let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+            assert_eq!(
+                error_res,
+                ContractError::Market(
+                    MarsError::InvalidParam {
+                        param_name: "liquidation_bonus".to_string(),
+                        invalid_value: "1.1".to_string(),
+                        predicate: "<= 1".to_string(),
                     }
                     .into()
                 )
@@ -2947,10 +3003,10 @@ mod tests {
             let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
         }
 
-        // update asset with some params greater than 1
+        // update asset with max_loan_to_value greater than 1
         {
             let invalid_asset_params = InitOrUpdateAssetParams {
-                liquidation_threshold: Some(Decimal::from_ratio(110u128, 10u128)),
+                max_loan_to_value: Some(Decimal::from_ratio(11u128, 10u128)),
                 ..asset_params.clone()
             };
             let msg = ExecuteMsg::UpdateAsset {
@@ -2963,12 +3019,68 @@ mod tests {
             let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
             assert_eq!(
                 error_res,
-                ContractError::Market(MarsError::ParamsNotLessOrEqualOne {
-                    expected_params:
-                        "max_loan_to_value, reserve_factor, liquidation_threshold, liquidation_bonus"
-                            .to_string(),
-                    invalid_params: "liquidation_threshold".to_string()
-                }.into())
+                ContractError::Market(
+                    MarsError::InvalidParam {
+                        param_name: "max_loan_to_value".to_string(),
+                        invalid_value: "1.1".to_string(),
+                        predicate: "<= 1".to_string(),
+                    }
+                    .into()
+                )
+            );
+        }
+
+        // update asset with liquidation_threshold greater than 1
+        {
+            let invalid_asset_params = InitOrUpdateAssetParams {
+                liquidation_threshold: Some(Decimal::from_ratio(11u128, 10u128)),
+                ..asset_params.clone()
+            };
+            let msg = ExecuteMsg::UpdateAsset {
+                asset: Asset::Native {
+                    denom: "someasset".to_string(),
+                },
+                asset_params: invalid_asset_params,
+            };
+            let info = mock_info("owner");
+            let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+            assert_eq!(
+                error_res,
+                ContractError::Market(
+                    MarsError::InvalidParam {
+                        param_name: "liquidation_threshold".to_string(),
+                        invalid_value: "1.1".to_string(),
+                        predicate: "<= 1".to_string(),
+                    }
+                    .into()
+                )
+            );
+        }
+
+        // update asset with liquidation_bonus greater than 1
+        {
+            let invalid_asset_params = InitOrUpdateAssetParams {
+                liquidation_bonus: Some(Decimal::from_ratio(11u128, 10u128)),
+                ..asset_params.clone()
+            };
+            let msg = ExecuteMsg::UpdateAsset {
+                asset: Asset::Native {
+                    denom: "someasset".to_string(),
+                },
+                asset_params: invalid_asset_params,
+            };
+            let info = mock_info("owner");
+            let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+            assert_eq!(
+                error_res,
+                ContractError::Market(
+                    MarsError::InvalidParam {
+                        param_name: "liquidation_bonus".to_string(),
+                        invalid_value: "1.1".to_string(),
+                        predicate: "<= 1".to_string(),
+                    }
+                    .into()
+                )
             );
         }
 

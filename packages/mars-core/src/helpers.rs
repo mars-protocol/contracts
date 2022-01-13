@@ -2,7 +2,7 @@ use cosmwasm_std::{
     to_binary, Addr, Api, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128, WasmQuery,
 };
 
-use crate::error::MarsError;
+use crate::{error::MarsError, math::decimal::Decimal};
 use cw20::{BalanceResponse, Cw20QueryMsg, TokenInfoResponse};
 use std::convert::TryInto;
 
@@ -77,24 +77,16 @@ pub fn option_string_to_addr(
     }
 }
 
-/// Verify if all conditions are met. If not return list of invalid params.
-pub fn all_conditions_valid(conditions_and_names: Vec<(bool, &str)>) -> Result<(), MarsError> {
-    // All params which should meet criteria
-    let param_names: Vec<_> = conditions_and_names.iter().map(|elem| elem.1).collect();
-    // Filter params which don't meet criteria
-    let invalid_params: Vec<_> = conditions_and_names
-        .into_iter()
-        .filter(|elem| !elem.0)
-        .map(|elem| elem.1)
-        .collect();
-    if !invalid_params.is_empty() {
-        return Err(MarsError::ParamsNotLessOrEqualOne {
-            expected_params: param_names.join(", "),
-            invalid_params: invalid_params.join(", "),
-        });
+pub fn decimal_param_le_one(param_value: &Decimal, param_name: &str) -> Result<(), MarsError> {
+    if !param_value.le(&Decimal::one()) {
+        Err(MarsError::InvalidParam {
+            param_name: param_name.to_string(),
+            invalid_value: param_value.to_string(),
+            predicate: "<= 1".to_string(),
+        })
+    } else {
+        Ok(())
     }
-
-    Ok(())
 }
 
 pub fn zero_address() -> Addr {

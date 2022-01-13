@@ -9,7 +9,7 @@ use cosmwasm_std::{Addr, Uint128};
 
 use crate::asset::AssetType;
 use crate::error::MarsError;
-use crate::helpers::all_conditions_valid;
+use crate::helpers::decimal_param_le_one;
 use crate::math::decimal::Decimal;
 
 use self::interest_rate_models::InterestRateModel;
@@ -29,15 +29,9 @@ pub struct Config {
 
 impl Config {
     pub fn validate(&self) -> Result<(), MarsError> {
-        let conditions_and_names =
-            vec![(Self::less_or_equal_one(&self.close_factor), "close_factor")];
-        all_conditions_valid(conditions_and_names)?;
+        decimal_param_le_one(&self.close_factor, "close_factor")?;
 
         Ok(())
-    }
-
-    fn less_or_equal_one(value: &Decimal) -> bool {
-        value.le(&Decimal::one())
     }
 }
 
@@ -95,23 +89,9 @@ pub struct Market {
 
 impl Market {
     pub fn validate(&self) -> Result<(), MarketError> {
-        // max_loan_to_value, reserve_factor, liquidation_threshold and liquidation_bonus should be less or equal 1
-        let conditions_and_names = vec![
-            (
-                self.max_loan_to_value.le(&Decimal::one()),
-                "max_loan_to_value",
-            ),
-            (self.reserve_factor.le(&Decimal::one()), "reserve_factor"),
-            (
-                self.liquidation_threshold.le(&Decimal::one()),
-                "liquidation_threshold",
-            ),
-            (
-                self.liquidation_bonus.le(&Decimal::one()),
-                "liquidation_bonus",
-            ),
-        ];
-        all_conditions_valid(conditions_and_names)?;
+        decimal_param_le_one(&self.max_loan_to_value, "max_loan_to_value")?;
+        decimal_param_le_one(&self.liquidation_threshold, "liquidation_threshold")?;
+        decimal_param_le_one(&self.liquidation_bonus, "liquidation_bonus")?;
 
         // liquidation_threshold should be greater than max_loan_to_value
         if self.liquidation_threshold <= self.max_loan_to_value {

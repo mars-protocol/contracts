@@ -669,6 +669,7 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::{MockApi, MockStorage, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{Coin, OwnedDeps, StdError, SubMsg};
+    use mars_core::council::MINIMUM_PROPOSAL_REQUIRED_THRESHOLD_PERCENTAGE;
     use mars_core::math::decimal::Decimal;
     use mars_core::testing::{
         mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams,
@@ -684,6 +685,8 @@ mod tests {
     #[test]
     fn test_proper_initialization() {
         let mut deps = mock_dependencies(&[]);
+        let env = cosmwasm_std::testing::mock_env();
+        let info = mock_info("someone");
 
         // init config with empty params
         {
@@ -700,81 +703,83 @@ mod tests {
             let msg = InstantiateMsg {
                 config: empty_config,
             };
-            let info = mock_info("someone");
-            let env = cosmwasm_std::testing::mock_env();
-            let error_res = instantiate(deps.as_mut(), env, info, msg).unwrap_err();
+            let error_res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
             assert_eq!(error_res, MarsError::InstantiateParamsUnavailable {}.into());
         }
 
-        // init with proposal_required_quorum, proposal_required_threshold greater than 1
-        {
-            let config = CreateOrUpdateConfig {
-                address_provider_address: Some(String::from("address_provider")),
+        let init_config = CreateOrUpdateConfig {
+            address_provider_address: Some(String::from("address_provider")),
+            proposal_voting_period: Some(1),
+            proposal_effective_delay: Some(1),
+            proposal_expiration_period: Some(1),
+            proposal_required_deposit: Some(Uint128::new(1)),
+            proposal_required_quorum: Some(Decimal::percent(75)),
+            proposal_required_threshold: Some(Decimal::percent(
+                MINIMUM_PROPOSAL_REQUIRED_THRESHOLD_PERCENTAGE,
+            )),
+        };
 
-                proposal_voting_period: Some(1),
-                proposal_effective_delay: Some(1),
-                proposal_expiration_period: Some(1),
-                proposal_required_deposit: Some(Uint128::new(1)),
-                proposal_required_quorum: Some(Decimal::from_ratio(11u128, 10u128)),
-                proposal_required_threshold: Some(Decimal::from_ratio(11u128, 10u128)),
+        // *
+        // init with invalid params
+        // *
+        {
+            // init with proposal_required_quorum greater than 1
+            let config = CreateOrUpdateConfig {
+                proposal_required_quorum: Some(Decimal::percent(101)),
+                ..init_config.clone()
             };
             let msg = InstantiateMsg { config };
-            let env = cosmwasm_std::testing::mock_env();
-            let info = mock_info("someone");
-            let error_res = instantiate(deps.as_mut(), env, info, msg).unwrap_err();
+            let error_res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
             assert_eq!(
                 error_res,
-                MarsError::ParamsNotLessOrEqualOne {
-                    expected_params: "proposal_required_quorum, proposal_required_threshold"
-                        .to_string(),
-                    invalid_params: "proposal_required_quorum, proposal_required_threshold"
-                        .to_string()
+                MarsError::InvalidParam {
+                    param_name: "proposal_required_quorum".to_string(),
+                    invalid_value: "1.01".to_string(),
+                    predicate: "<= 1".to_string(),
+                }
+                .into()
+            );
+
+            // init with proposal_required_threshold less than 50%
+            let config = CreateOrUpdateConfig {
+                proposal_required_threshold: Some(Decimal::percent(49)),
+                ..init_config.clone()
+            };
+            let msg = InstantiateMsg { config };
+            let error_res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
+            assert_eq!(
+                error_res,
+                MarsError::InvalidParam {
+                    param_name: "proposal_required_threshold".to_string(),
+                    invalid_value: "0.49".to_string(),
+                    predicate: ">= 0.5 and <= 1".to_string(),
+                }
+                .into()
+            );
+
+            // init with proposal_required_threshold greater than 100%
+            let config = CreateOrUpdateConfig {
+                proposal_required_threshold: Some(Decimal::percent(101)),
+                ..init_config.clone()
+            };
+            let msg = InstantiateMsg { config };
+            let error_res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
+            assert_eq!(
+                error_res,
+                MarsError::InvalidParam {
+                    param_name: "proposal_required_threshold".to_string(),
+                    invalid_value: "1.01".to_string(),
+                    predicate: ">= 0.5 and <= 1".to_string(),
                 }
                 .into()
             );
         }
 
-        // init with proposal_required_threshold less than 50%
-        {
-            let config = CreateOrUpdateConfig {
-                address_provider_address: Some(String::from("address_provider")),
-
-                proposal_voting_period: Some(1),
-                proposal_effective_delay: Some(1),
-                proposal_expiration_period: Some(1),
-                proposal_required_deposit: Some(Uint128::new(1)),
-                proposal_required_quorum: Some(Decimal::percent(50)),
-                proposal_required_threshold: Some(Decimal::percent(49)),
-            };
-            let msg = InstantiateMsg { config };
-            let env = cosmwasm_std::testing::mock_env();
-            let info = mock_info("someone");
-            let error_res = instantiate(deps.as_mut(), env, info, msg).unwrap_err();
-            assert_eq!(
-                error_res,
-                ContractError::ProposalRequiredThresholdOutOfRange {
-                    proposal_required_threshold: Decimal::percent(49),
-                    minimum: Decimal::percent(50),
-                }
-            );
-        }
-
         // Successful Init
         {
-            let config = CreateOrUpdateConfig {
-                address_provider_address: Some(String::from("address_provider")),
-
-                proposal_voting_period: Some(1),
-                proposal_effective_delay: Some(1),
-                proposal_expiration_period: Some(1),
-                proposal_required_deposit: Some(Uint128::new(1)),
-                proposal_required_threshold: Some(Decimal::one()),
-                proposal_required_quorum: Some(Decimal::one()),
+            let msg = InstantiateMsg {
+                config: init_config,
             };
-            let msg = InstantiateMsg { config };
-            let env = mock_env(MockEnvParams::default());
-            let info = mock_info("someone");
-
             let res = instantiate(deps.as_mut(), env, info, msg).unwrap();
             assert_eq!(0, res.messages.len());
 
@@ -803,7 +808,9 @@ mod tests {
             proposal_effective_delay: Some(11),
             proposal_expiration_period: Some(12),
             proposal_required_deposit: Some(Uint128::new(111)),
-            proposal_required_threshold: Some(Decimal::one()),
+            proposal_required_threshold: Some(Decimal::percent(
+                MINIMUM_PROPOSAL_REQUIRED_THRESHOLD_PERCENTAGE,
+            )),
             proposal_required_quorum: Some(Decimal::one()),
         };
         let msg = InstantiateMsg {
@@ -811,51 +818,64 @@ mod tests {
         };
         let env = cosmwasm_std::testing::mock_env();
         let info = mock_info(MOCK_CONTRACT_ADDR);
-        let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
 
         // *
-        // update config with proposal_required_quorum, proposal_required_threshold greater than 1
+        // update config with invalid params
         // *
         {
+            let env = cosmwasm_std::testing::mock_env();
+            let info = mock_info(MOCK_CONTRACT_ADDR);
+
+            // proposal_required_quorum greater than 1
             let config = CreateOrUpdateConfig {
-                proposal_required_quorum: Some(Decimal::from_ratio(11u128, 10u128)),
-                proposal_required_threshold: Some(Decimal::from_ratio(11u128, 10u128)),
+                proposal_required_quorum: Some(Decimal::percent(101)),
                 ..init_config.clone()
             };
             let msg = UpdateConfig { config };
-            let env = cosmwasm_std::testing::mock_env();
-            let info = mock_info(MOCK_CONTRACT_ADDR);
-            let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
+            let error_res = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
             assert_eq!(
                 error_res,
-                MarsError::ParamsNotLessOrEqualOne {
-                    expected_params: "proposal_required_quorum, proposal_required_threshold"
-                        .to_string(),
-                    invalid_params: "proposal_required_quorum, proposal_required_threshold"
-                        .to_string()
+                MarsError::InvalidParam {
+                    param_name: "proposal_required_quorum".to_string(),
+                    invalid_value: "1.01".to_string(),
+                    predicate: "<= 1".to_string(),
                 }
                 .into()
             );
-        }
 
-        // *
-        // update config with proposal_required_threshold less than 50%
-        // *
-        {
+            // proposal_required_threshold less than 50%
             let config = CreateOrUpdateConfig {
                 proposal_required_threshold: Some(Decimal::percent(49)),
                 ..init_config.clone()
             };
             let msg = UpdateConfig { config };
-            let env = cosmwasm_std::testing::mock_env();
-            let info = mock_info(MOCK_CONTRACT_ADDR);
-            let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
+            let error_res = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
             assert_eq!(
                 error_res,
-                ContractError::ProposalRequiredThresholdOutOfRange {
-                    proposal_required_threshold: Decimal::percent(49),
-                    minimum: Decimal::percent(50),
+                MarsError::InvalidParam {
+                    param_name: "proposal_required_threshold".to_string(),
+                    invalid_value: "0.49".to_string(),
+                    predicate: ">= 0.5 and <= 1".to_string(),
                 }
+                .into()
+            );
+
+            // proposal_required_threshold greater than 100%
+            let config = CreateOrUpdateConfig {
+                proposal_required_threshold: Some(Decimal::percent(101)),
+                ..init_config.clone()
+            };
+            let msg = UpdateConfig { config };
+            let error_res = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
+            assert_eq!(
+                error_res,
+                MarsError::InvalidParam {
+                    param_name: "proposal_required_threshold".to_string(),
+                    invalid_value: "1.01".to_string(),
+                    predicate: ">= 0.5 and <= 1".to_string(),
+                }
+                .into()
             );
         }
 
@@ -866,9 +886,8 @@ mod tests {
             let msg = UpdateConfig {
                 config: init_config,
             };
-            let env = cosmwasm_std::testing::mock_env();
             let info = mock_info("somebody");
-            let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
+            let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
             assert_eq!(error_res, MarsError::Unauthorized {}.into());
         }
 
@@ -889,7 +908,6 @@ mod tests {
             let msg = UpdateConfig {
                 config: config.clone(),
             };
-            let env = cosmwasm_std::testing::mock_env();
             let info = mock_info(MOCK_CONTRACT_ADDR);
             let res = execute(deps.as_mut(), env, info, msg).unwrap();
             assert_eq!(0, res.messages.len());

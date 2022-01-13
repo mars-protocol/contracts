@@ -2,12 +2,14 @@ use cosmwasm_std::{Addr, CosmosMsg, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::helpers::all_conditions_valid;
+use crate::error::MarsError;
+use crate::helpers::decimal_param_le_one;
 use crate::math::decimal::Decimal;
 
 use self::error::ContractError;
 
-const MINIMUM_PROPOSAL_REQUIRED_THRESHOLD_PERCENTAGE: u64 = 50;
+pub const MINIMUM_PROPOSAL_REQUIRED_THRESHOLD_PERCENTAGE: u64 = 50;
+pub const MAXIMUM_PROPOSAL_REQUIRED_THRESHOLD_PERCENTAGE: u64 = 100;
 
 /// Council global configuration
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -32,36 +34,28 @@ pub struct Config {
 
 impl Config {
     pub fn validate(&self) -> Result<(), ContractError> {
-        let conditions_and_names = vec![
-            (
-                Self::less_or_equal_one(&self.proposal_required_quorum),
-                "proposal_required_quorum",
-            ),
-            (
-                Self::less_or_equal_one(&self.proposal_required_threshold),
-                "proposal_required_threshold",
-            ),
-        ];
-        all_conditions_valid(conditions_and_names)?;
+        decimal_param_le_one(&self.proposal_required_quorum, "proposal_required_quorum")?;
 
         let minimum_proposal_required_threshold =
             Decimal::percent(MINIMUM_PROPOSAL_REQUIRED_THRESHOLD_PERCENTAGE);
+        let maximum_proposal_required_threshold =
+            Decimal::percent(MAXIMUM_PROPOSAL_REQUIRED_THRESHOLD_PERCENTAGE);
 
-        if self
-            .proposal_required_threshold
-            .le(&minimum_proposal_required_threshold)
+        if !(self.proposal_required_threshold >= minimum_proposal_required_threshold
+            && self.proposal_required_threshold <= maximum_proposal_required_threshold)
         {
-            return Err(ContractError::ProposalRequiredThresholdOutOfRange {
-                proposal_required_threshold: self.proposal_required_threshold,
-                minimum: minimum_proposal_required_threshold,
-            });
+            return Err(MarsError::InvalidParam {
+                param_name: "proposal_required_threshold".to_string(),
+                invalid_value: self.proposal_required_threshold.to_string(),
+                predicate: format!(
+                    ">= {} and <= {}",
+                    minimum_proposal_required_threshold, maximum_proposal_required_threshold
+                ),
+            }
+            .into());
         }
 
         Ok(())
-    }
-
-    fn less_or_equal_one(value: &Decimal) -> bool {
-        value.le(&Decimal::one())
     }
 }
 
@@ -257,7 +251,7 @@ pub mod error {
     use cosmwasm_std::StdError;
     use thiserror::Error;
 
-    use crate::{error::MarsError, math::decimal::Decimal};
+    use crate::error::MarsError;
 
     #[derive(Error, Debug, PartialEq)]
     pub enum ContractError {
@@ -289,12 +283,6 @@ pub mod error {
         ExecuteProposalDelayNotEnded {},
         #[error("Proposal has expired")]
         ExecuteProposalExpired {},
-
-        #[error("Proposal required threshold {proposal_required_threshold} must be between {minimum} and 1")]
-        ProposalRequiredThresholdOutOfRange {
-            proposal_required_threshold: Decimal,
-            minimum: Decimal,
-        },
     }
 
     impl ContractError {
