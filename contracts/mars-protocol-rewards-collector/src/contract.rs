@@ -203,7 +203,11 @@ pub fn execute_withdraw_from_red_bank(
 
     let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: red_bank_address.to_string(),
-        msg: to_binary(&red_bank::msg::ExecuteMsg::Withdraw { asset, amount })?,
+        msg: to_binary(&red_bank::msg::ExecuteMsg::Withdraw {
+            asset,
+            amount,
+            recipient: None,
+        })?,
         funds: vec![],
     });
 
@@ -781,7 +785,8 @@ mod tests {
                 contract_addr: "red_bank".to_string(),
                 msg: to_binary(&red_bank::msg::ExecuteMsg::Withdraw {
                     asset: asset.clone(),
-                    amount: Some(amount)
+                    amount: Some(amount),
+                    recipient: None
                 })
                 .unwrap(),
                 funds: vec![]

@@ -73,6 +73,8 @@ pub enum ExecuteMsg {
     DepositNative {
         /// Denom used in Terra (e.g: uluna, uusd)
         denom: String,
+        /// Address that will receive the maTokens
+        on_behalf_of: Option<String>,
     },
 
     /// Withdraw an amount of the asset burning an equivalent amount of maTokens.
@@ -85,6 +87,8 @@ pub enum ExecuteMsg {
         /// Amount to be withdrawn. If None is specified, the full maToken balance will be
         /// burned in exchange for the equivalent asset amount.
         amount: Option<Uint128>,
+        /// The address where the withdrawn amount is sent
+        recipient: Option<String>,
     },
 
     /// Borrow Terra native coins. If borrow allowed, amount is added to caller's debt
@@ -96,6 +100,8 @@ pub enum ExecuteMsg {
         asset: Asset,
         /// Amount to borrow
         amount: Uint128,
+        /// The address where the borrowed amount is sent
+        recipient: Option<String>,
     },
 
     /// Repay Terra native coins loan. Coins used to repay must be sent in the
@@ -103,6 +109,8 @@ pub enum ExecuteMsg {
     RepayNative {
         /// Denom used in Terra (e.g: uluna, uusd)
         denom: String,
+        /// Repay the funds for the user
+        on_behalf_of: Option<String>,
     },
 
     /// Liquidate under-collateralized native loans. Coins used to repay must be sent in the
@@ -149,9 +157,15 @@ pub enum ExecuteMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ReceiveMsg {
     /// Deposit sent cw20 tokens
-    DepositCw20 {},
+    DepositCw20 {
+        /// Deposit the funds for the user
+        on_behalf_of: Option<String>,
+    },
     /// Repay sent cw20 tokens
-    RepayCw20 {},
+    RepayCw20 {
+        /// Repay the funds for the user
+        on_behalf_of: Option<String>,
+    },
     /// Liquidate under-collateralized cw20 loan using the sent cw20 tokens.
     LiquidateCw20 {
         /// Collateral asset liquidator gets from the borrower
