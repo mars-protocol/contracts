@@ -136,7 +136,7 @@ async function waitUntilBlockHeight(
         proposal_expiration_period: 3000,
         proposal_required_deposit: String(PROPOSAL_REQUIRED_DEPOSIT),
         proposal_required_quorum: String(PROPOSAL_REQUIRED_QUORUM),
-        proposal_required_threshold: "0.05"
+        proposal_required_threshold: "0.5"
       }
     }
   )
@@ -163,9 +163,9 @@ async function waitUntilBlockHeight(
   const vesting = await deployContract(terra, deployer, "../artifacts/mars_vesting.wasm",
     {
       address_provider_address: addressProvider,
-      unlock_start_time: 0,
-      unlock_cliff: 0,
-      unlock_duration: 0,
+      unlock_start_time: 1893452400, // 2030-01-01
+      unlock_cliff: 15552000,        // 180 days
+      unlock_duration: 94608000,     // 3 years
     }
   )
 
