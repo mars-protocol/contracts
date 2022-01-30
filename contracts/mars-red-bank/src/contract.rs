@@ -1309,8 +1309,7 @@ pub fn execute_liquidate(
     let (collateral_asset_label, collateral_asset_reference, collateral_asset_type) =
         collateral_asset.get_attributes();
 
-    let mut collateral_market =
-        MARKETS.load(deps.storage, collateral_asset_reference.as_slice())?;
+    let collateral_market = MARKETS.load(deps.storage, collateral_asset_reference.as_slice())?;
 
     if !collateral_market.active {
         return Err(ContractError::MarketNotActive {
@@ -1385,7 +1384,14 @@ pub fn execute_liquidate(
         return Err(ContractError::CannotLiquidateHealthyPosition {});
     }
 
-    let mut debt_market = MARKETS.load(deps.storage, debt_asset_reference.as_slice())?;
+    let collateral_and_debt_are_the_same_asset = debt_asset_type == collateral_asset_type
+        && debt_asset_reference == collateral_asset_reference;
+
+    let debt_market = if !collateral_and_debt_are_the_same_asset {
+        MARKETS.load(deps.storage, debt_asset_reference.as_slice())?
+    } else {
+        collateral_market.clone()
+    };
 
     if !debt_market.active {
         return Err(ContractError::MarketNotActive {
@@ -1402,13 +1408,6 @@ pub fn execute_liquidate(
         user_position.get_asset_price(debt_asset_reference.as_slice(), &debt_asset_label)?;
 
     let mut response = Response::new();
-
-    response = apply_accumulated_interests(
-        &env,
-        protocol_rewards_collector_address.clone(),
-        &mut debt_market,
-        response,
-    )?;
 
     let user_debt_asset_total_debt =
         get_underlying_debt_amount(user_debt.amount_scaled, &debt_market, block_time)?;
@@ -1445,9 +1444,8 @@ pub fn execute_liquidate(
             &liquidator_address,
             collateral_asset_label.clone(),
             collateral_asset_type,
-            &mut collateral_market,
+            &collateral_market,
             collateral_amount_to_liquidate,
-            protocol_rewards_collector_address,
             response,
         )?;
     }
@@ -1463,8 +1461,7 @@ pub fn execute_liquidate(
         ));
     }
 
-    // 5. Update debt market and positions
-
+    // 5. Compute and update new debt
     let debt_amount_to_repay_scaled =
         get_scaled_debt_amount(debt_amount_to_repay, &debt_market, env.block.time.seconds())?;
 
@@ -1482,28 +1479,105 @@ pub fn execute_liquidate(
         (debt_asset_reference.as_slice(), &user_address),
         &debt,
     )?;
-    debt_market.debt_total_scaled = debt_market
+
+    let debt_market_debt_total_scaled_after = debt_market
         .debt_total_scaled
         .checked_sub(debt_amount_to_repay_scaled)?;
 
-    response = update_interest_rates(
-        &deps,
-        &env,
-        &mut debt_market,
-        refund_amount,
-        &debt_asset_label,
-        response,
-    )?;
+    // 6. Update markets depending on whether the collateral and debt markets are the same
+    // and whether the liquidator receives ma_tokens (no change in liquidity) or underlying asset
+    // (changes liquidity)
+    if collateral_and_debt_are_the_same_asset {
+        // NOTE: for the sake of clarity copy attributes from collateral market and
+        // give generic naming. Debt market could have been used as well
+        let mut asset_market_after = collateral_market;
+        let asset_reference = collateral_asset_reference;
+        let asset_label = &collateral_asset_label;
 
-    // save markets
-    MARKETS.save(deps.storage, debt_asset_reference.as_slice(), &debt_market)?;
-    MARKETS.save(
-        deps.storage,
-        collateral_asset_reference.as_slice(),
-        &collateral_market,
-    )?;
+        response = apply_accumulated_interests(
+            &env,
+            protocol_rewards_collector_address,
+            &mut asset_market_after,
+            response,
+        )?;
 
-    // 6. Build response
+        asset_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
+
+        let mut less_liquidity = refund_amount;
+
+        if !receive_ma_token {
+            less_liquidity = less_liquidity.checked_add(collateral_amount_to_liquidate)?;
+        };
+
+        response = update_interest_rates(
+            &deps,
+            &env,
+            &mut asset_market_after,
+            less_liquidity,
+            asset_label,
+            response,
+        )?;
+
+        MARKETS.save(
+            deps.storage,
+            asset_reference.as_slice(),
+            &asset_market_after,
+        )?;
+    } else {
+        if !receive_ma_token {
+            let mut collateral_market_after = collateral_market;
+
+            response = apply_accumulated_interests(
+                &env,
+                protocol_rewards_collector_address.clone(),
+                &mut collateral_market_after,
+                response,
+            )?;
+
+            response = update_interest_rates(
+                &deps,
+                &env,
+                &mut collateral_market_after,
+                collateral_amount_to_liquidate,
+                &collateral_asset_label,
+                response,
+            )?;
+
+            MARKETS.save(
+                deps.storage,
+                collateral_asset_reference.as_slice(),
+                &collateral_market_after,
+            )?;
+        }
+
+        let mut debt_market_after = debt_market;
+
+        response = apply_accumulated_interests(
+            &env,
+            protocol_rewards_collector_address,
+            &mut debt_market_after,
+            response,
+        )?;
+
+        debt_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
+
+        response = update_interest_rates(
+            &deps,
+            &env,
+            &mut debt_market_after,
+            refund_amount,
+            &debt_asset_label,
+            response,
+        )?;
+
+        MARKETS.save(
+            deps.storage,
+            debt_asset_reference.as_slice(),
+            &debt_market_after,
+        )?;
+    }
+
+    // 7. Build response
     // refund sent amount in excess of actual debt amount to liquidate
     if refund_amount > Uint128::zero() {
         response = response.add_message(build_send_asset_with_tax_deduction_msg(
@@ -1590,9 +1664,8 @@ fn process_underlying_asset_transfer_to_liquidator(
     liquidator_addr: &Addr,
     collateral_asset_label: String,
     collateral_asset_type: AssetType,
-    collateral_market: &mut Market,
+    collateral_market: &Market,
     collateral_amount_to_liquidate: Uint128,
-    protocol_rewards_collector_address: Addr,
     mut response: Response,
 ) -> Result<Response, ContractError> {
     let block_time = env.block.time.seconds();
@@ -1608,23 +1681,6 @@ fn process_underlying_asset_transfer_to_liquidator(
     if contract_collateral_balance < collateral_amount_to_liquidate {
         return Err(ContractError::CannotLiquidateWhenNotEnoughCollateral {});
     }
-
-    // Apply update collateral interest as liquidity is reduced
-    response = apply_accumulated_interests(
-        env,
-        protocol_rewards_collector_address,
-        collateral_market,
-        response,
-    )?;
-
-    response = update_interest_rates(
-        &deps,
-        env,
-        collateral_market,
-        collateral_amount_to_liquidate,
-        &collateral_asset_label,
-        response,
-    )?;
 
     let collateral_amount_to_liquidate_scaled = get_scaled_liquidity_amount(
         collateral_amount_to_liquidate,
@@ -6254,7 +6310,7 @@ mod tests {
     }
 
     #[test]
-    pub fn test_execute_liquidate() {
+    pub fn test_liquidate() {
         // Setup
         let available_liquidity_collateral = 1_000_000_000u128;
         let available_liquidity_cw20_debt = 2_000_000_000u128;
@@ -6313,13 +6369,6 @@ mod tests {
         );
 
         // initialize collateral and debt markets
-        deps.querier.set_native_exchange_rates(
-            "uusd".to_string(),
-            &[
-                ("collateral".to_string(), collateral_price),
-                ("native_debt".to_string(), native_debt_price),
-            ],
-        );
 
         deps.querier
             .set_oracle_price(b"collateral".to_vec(), collateral_price);
@@ -6683,6 +6732,18 @@ mod tests {
                 res.messages,
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: collateral_market_ma_token_addr.to_string(),
+                        msg: to_binary(
+                            &mars_core::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
+                                sender: user_address.to_string(),
+                                recipient: liquidator_address.to_string(),
+                                amount: expected_liquidated_collateral_amount_scaled.into(),
+                            }
+                        )
+                        .unwrap(),
+                        funds: vec![]
+                    })),
+                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: cw20_debt_market.ma_token_address.clone().to_string(),
                         msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
                             recipient: "protocol_rewards_collector".to_string(),
@@ -6693,18 +6754,6 @@ mod tests {
                             )
                             .unwrap(),
                         })
-                        .unwrap(),
-                        funds: vec![]
-                    })),
-                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-                        contract_addr: collateral_market_ma_token_addr.to_string(),
-                        msg: to_binary(
-                            &mars_core::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
-                                sender: user_address.to_string(),
-                                recipient: liquidator_address.to_string(),
-                                amount: expected_liquidated_collateral_amount_scaled.into(),
-                            }
-                        )
                         .unwrap(),
                         funds: vec![]
                     })),
@@ -6860,34 +6909,6 @@ mod tests {
                 res.messages,
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-                        contract_addr: cw20_debt_market.ma_token_address.clone().to_string(),
-                        msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
-                            recipient: "protocol_rewards_collector".to_string(),
-                            amount: compute_scaled_amount(
-                                expected_debt_rates.protocol_rewards_to_distribute,
-                                expected_debt_rates.liquidity_index,
-                                ScalingOperation::Liquidity
-                            )
-                            .unwrap(),
-                        })
-                        .unwrap(),
-                        funds: vec![]
-                    })),
-                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-                        contract_addr: collateral_market_ma_token_addr.to_string(),
-                        msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
-                            recipient: "protocol_rewards_collector".to_string(),
-                            amount: compute_scaled_amount(
-                                expected_collateral_rates.protocol_rewards_to_distribute,
-                                expected_collateral_rates.liquidity_index,
-                                ScalingOperation::Liquidity
-                            )
-                            .unwrap(),
-                        })
-                        .unwrap(),
-                        funds: vec![]
-                    })),
-                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: collateral_market_ma_token_addr.to_string(),
                         msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
                             user: user_address.to_string(),
@@ -6906,6 +6927,34 @@ mod tests {
                             }
                         )
                         .unwrap()],
+                    })),
+                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: collateral_market_ma_token_addr.to_string(),
+                        msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
+                            recipient: "protocol_rewards_collector".to_string(),
+                            amount: compute_scaled_amount(
+                                expected_collateral_rates.protocol_rewards_to_distribute,
+                                expected_collateral_rates.liquidity_index,
+                                ScalingOperation::Liquidity
+                            )
+                            .unwrap(),
+                        })
+                        .unwrap(),
+                        funds: vec![]
+                    })),
+                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: cw20_debt_market.ma_token_address.clone().to_string(),
+                        msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
+                            recipient: "protocol_rewards_collector".to_string(),
+                            amount: compute_scaled_amount(
+                                expected_debt_rates.protocol_rewards_to_distribute,
+                                expected_debt_rates.liquidity_index,
+                                ScalingOperation::Liquidity
+                            )
+                            .unwrap(),
+                        })
+                        .unwrap(),
+                        funds: vec![]
                     })),
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: cw20_debt_contract_addr.to_string(),
@@ -7138,12 +7187,12 @@ mod tests {
             assert_eq!(
                 res.events,
                 vec![
-                    th_build_interests_updated_event("collateral", &expected_collateral_rates),
                     build_collateral_position_changed_event(
                         "collateral",
                         false,
                         user_address.to_string()
                     ),
+                    th_build_interests_updated_event("collateral", &expected_collateral_rates),
                     th_build_interests_updated_event(
                         cw20_debt_contract_addr.as_str(),
                         &expected_debt_rates
@@ -7325,20 +7374,6 @@ mod tests {
                 res.messages,
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-                        contract_addr: debt_market_after.ma_token_address.to_string(),
-                        msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
-                            recipient: "protocol_rewards_collector".to_string(),
-                            amount: compute_scaled_amount(
-                                expected_debt_rates.protocol_rewards_to_distribute,
-                                expected_debt_rates.liquidity_index,
-                                ScalingOperation::Liquidity
-                            )
-                            .unwrap(),
-                        })
-                        .unwrap(),
-                        funds: vec![]
-                    })),
-                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: collateral_market_ma_token_addr.to_string(),
                         msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
                             user: user_address.to_string(),
@@ -7358,6 +7393,20 @@ mod tests {
                         )
                         .unwrap()],
                     })),
+                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: debt_market_after.ma_token_address.to_string(),
+                        msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
+                            recipient: "protocol_rewards_collector".to_string(),
+                            amount: compute_scaled_amount(
+                                expected_debt_rates.protocol_rewards_to_distribute,
+                                expected_debt_rates.liquidity_index,
+                                ScalingOperation::Liquidity
+                            )
+                            .unwrap(),
+                        })
+                        .unwrap(),
+                        funds: vec![]
+                    })),
                     SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                         to_address: liquidator_address.to_string(),
                         amount: vec![deduct_tax(
@@ -7368,7 +7417,7 @@ mod tests {
                             }
                         )
                         .unwrap()],
-                    }))
+                    })),
                 ]
             );
 
@@ -7391,12 +7440,12 @@ mod tests {
             assert_eq!(
                 res.events,
                 vec![
-                    th_build_interests_updated_event("collateral", &expected_collateral_rates),
                     build_collateral_position_changed_event(
                         "collateral",
                         false,
                         user_address.to_string()
                     ),
+                    th_build_interests_updated_event("collateral", &expected_collateral_rates),
                     th_build_interests_updated_event("native_debt", &expected_debt_rates),
                 ]
             );
@@ -7433,6 +7482,772 @@ mod tests {
     }
 
     #[test]
+    fn test_liquidate_with_same_asset_for_debt_and_collateral() {
+        // Setup
+        let available_liquidity = 1_000_000_000u128;
+        let mut deps = th_setup(&[coin(available_liquidity, "the_asset")]);
+
+        // Set tax data
+        deps.querier.set_native_tax(
+            Decimal::zero(),
+            &[(String::from("the_asset"), Uint128::new(100u128))],
+        );
+
+        let user_address = Addr::unchecked("user");
+        let liquidator_address = Addr::unchecked("liquidator");
+        let ma_token_address = Addr::unchecked("mathe_asset");
+
+        let asset_max_ltv = Decimal::from_ratio(5u128, 10u128);
+        let asset_liquidation_threshold = Decimal::from_ratio(6u128, 10u128);
+        let asset_liquidation_bonus = Decimal::from_ratio(1u128, 10u128);
+        let asset_price = Decimal::from_ratio(2_u128, 1_u128);
+
+        let initial_user_debt_balance = Uint128::from(3_000_000_u64);
+        // NOTE: this should change in practice but it will stay static on this test
+        // as the balance is mocked and does not get updated
+        let user_collateral_balance = Uint128::from(2_000_000_u64);
+
+        let close_factor = Decimal::from_ratio(1u128, 2u128);
+
+        // Global debt for the market (starts at index 1.000000000...)
+        let initial_global_debt_scaled = Uint128::new(500_000_000) * SCALING_FACTOR;
+        let liquidation_block_time = 15_000_000;
+
+        CONFIG
+            .update(deps.as_mut().storage, |mut config| -> StdResult<_> {
+                config.close_factor = close_factor;
+                Ok(config)
+            })
+            .unwrap();
+
+        // initialize market
+        deps.querier
+            .set_oracle_price(b"the_asset".to_vec(), asset_price);
+
+        let interest_rate_params = LinearInterestRateModelParams {
+            optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
+            base: Decimal::from_ratio(0u128, 100u128),
+            slope_1: Decimal::from_ratio(10u128, 100u128),
+            slope_2: Decimal::one(),
+        };
+
+        let asset_market = Market {
+            ma_token_address: ma_token_address.clone(),
+            max_loan_to_value: asset_max_ltv,
+            liquidation_threshold: asset_liquidation_threshold,
+            liquidation_bonus: asset_liquidation_bonus,
+            debt_total_scaled: initial_global_debt_scaled,
+            liquidity_index: Decimal::one(),
+            borrow_index: Decimal::one(),
+            borrow_rate: Decimal::from_ratio(2u128, 10u128),
+            liquidity_rate: Decimal::from_ratio(2u128, 10u128),
+            reserve_factor: Decimal::from_ratio(2u128, 100u128),
+            asset_type: AssetType::Native,
+            indexes_last_updated: 0,
+            interest_rate_model: InterestRateModel::Linear {
+                params: interest_rate_params.clone(),
+            },
+            ..Default::default()
+        };
+
+        let asset_market_initial = th_init_market(deps.as_mut(), b"the_asset", &asset_market);
+
+        let initial_user_debt_scaled = compute_scaled_amount(
+            initial_user_debt_balance,
+            asset_market_initial.borrow_index,
+            ScalingOperation::Debt,
+        )
+        .unwrap();
+
+        // Set user as having collateral and debt in market
+        let mut user = User::default();
+        set_bit(&mut user.collateral_assets, asset_market_initial.index).unwrap();
+        set_bit(&mut user.borrowed_assets, asset_market_initial.index).unwrap();
+        USERS
+            .save(deps.as_mut().storage, &user_address, &user)
+            .unwrap();
+
+        // Set the querier to return positive collateral balance
+        deps.querier.set_cw20_balances(
+            ma_token_address.clone(),
+            &[(
+                user_address.clone(),
+                user_collateral_balance * SCALING_FACTOR,
+            )],
+        );
+
+        // set user to have positive debt amount in debt asset
+        {
+            let debt = Debt {
+                amount_scaled: initial_user_debt_scaled,
+                uncollateralized: false,
+            };
+            DEBTS
+                .save(deps.as_mut().storage, (b"the_asset", &user_address), &debt)
+                .unwrap();
+        }
+
+        // Perform partial liquidation receiving ma_token in return
+        {
+            let debt_to_repay = Uint128::from(400_000_u64);
+            let liquidate_msg = ExecuteMsg::LiquidateNative {
+                collateral_asset: Asset::Native {
+                    denom: "the_asset".to_string(),
+                },
+                debt_asset_denom: "the_asset".to_string(),
+                user_address: user_address.to_string(),
+                receive_ma_token: true,
+            };
+
+            let asset_market_before = MARKETS.load(&deps.storage, b"the_asset").unwrap();
+
+            let block_time = liquidation_block_time;
+            let env = mock_env_at_block_time(block_time);
+            let info = cosmwasm_std::testing::mock_info(
+                liquidator_address.as_str(),
+                &[coin(debt_to_repay.into(), "the_asset")],
+            );
+            let res = execute(deps.as_mut(), env.clone(), info, liquidate_msg).unwrap();
+
+            // get expected indices and rates for debt market
+            let expected_rates = th_get_expected_indices_and_rates(
+                &asset_market_before,
+                block_time,
+                available_liquidity,
+                TestUtilizationDeltas {
+                    less_debt: debt_to_repay.into(),
+                    ..Default::default()
+                },
+            );
+
+            let asset_market_after = MARKETS.load(&deps.storage, b"the_asset").unwrap();
+
+            let expected_liquidated_amount = Decimal::divide_uint128_by_decimal(
+                debt_to_repay * asset_price * (Decimal::one() + asset_liquidation_bonus),
+                asset_price,
+            )
+            .unwrap();
+
+            let expected_liquidated_amount_scaled = get_scaled_liquidity_amount(
+                expected_liquidated_amount,
+                &asset_market_after,
+                env.block.time.seconds(),
+            )
+            .unwrap();
+
+            assert_eq!(
+                res.messages,
+                vec![
+                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: ma_token_address.to_string(),
+                        msg: to_binary(
+                            &mars_core::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
+                                sender: user_address.to_string(),
+                                recipient: liquidator_address.to_string(),
+                                amount: expected_liquidated_amount_scaled.into(),
+                            }
+                        )
+                        .unwrap(),
+                        funds: vec![]
+                    })),
+                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: ma_token_address.clone().to_string(),
+                        msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
+                            recipient: "protocol_rewards_collector".to_string(),
+                            amount: compute_scaled_amount(
+                                expected_rates.protocol_rewards_to_distribute,
+                                expected_rates.liquidity_index,
+                                ScalingOperation::Liquidity
+                            )
+                            .unwrap(),
+                        })
+                        .unwrap(),
+                        funds: vec![]
+                    })),
+                ]
+            );
+
+            mars_core::testing::assert_eq_vec(
+                res.attributes,
+                vec![
+                    attr("action", "liquidate"),
+                    attr("collateral_asset", "the_asset"),
+                    attr("debt_asset", "the_asset"),
+                    attr("user", user_address.as_str()),
+                    attr("liquidator", liquidator_address.as_str()),
+                    attr(
+                        "collateral_amount_liquidated",
+                        expected_liquidated_amount.to_string(),
+                    ),
+                    attr("debt_amount_repaid", debt_to_repay.to_string()),
+                    attr("refund_amount", "0"),
+                ],
+            );
+            assert_eq!(
+                res.events,
+                vec![
+                    build_collateral_position_changed_event(
+                        "the_asset",
+                        true,
+                        liquidator_address.to_string()
+                    ),
+                    th_build_interests_updated_event("the_asset", &expected_rates)
+                ]
+            );
+
+            // check user still has deposited collateral asset and
+            // still has outstanding debt in debt asset
+            let user = USERS.load(&deps.storage, &user_address).unwrap();
+            assert!(get_bit(user.collateral_assets, asset_market_before.index).unwrap());
+            assert!(get_bit(user.borrowed_assets, asset_market_before.index).unwrap());
+
+            // check liquidator gets its collateral bit set
+            let liquidator = USERS.load(&deps.storage, &user_address).unwrap();
+            assert!(get_bit(liquidator.collateral_assets, asset_market_before.index).unwrap());
+
+            // check user's debt decreased by the appropriate amount
+            let debt = DEBTS
+                .load(&deps.storage, (b"the_asset", &user_address))
+                .unwrap();
+
+            let expected_less_debt_scaled = compute_scaled_amount(
+                debt_to_repay.into(),
+                expected_rates.borrow_index,
+                ScalingOperation::Debt,
+            )
+            .unwrap();
+
+            let expected_user_debt_scaled = initial_user_debt_scaled - expected_less_debt_scaled;
+
+            assert_eq!(expected_user_debt_scaled, debt.amount_scaled);
+
+            // check global debt decreased by the appropriate amount
+            let expected_global_debt_scaled =
+                initial_global_debt_scaled - expected_less_debt_scaled;
+
+            assert_eq!(
+                expected_global_debt_scaled,
+                asset_market_after.debt_total_scaled
+            );
+        }
+
+        // Reset state for next test
+        {
+            let debt = Debt {
+                amount_scaled: initial_user_debt_scaled,
+                uncollateralized: false,
+            };
+            DEBTS
+                .save(deps.as_mut().storage, (b"the_asset", &user_address), &debt)
+                .unwrap();
+
+            MARKETS
+                .save(deps.as_mut().storage, b"the_asset", &asset_market_initial)
+                .unwrap();
+
+            // NOTE: Do not reset liquidator in order to check that position is not reset in next
+            // liquidation receiving ma tokens
+        }
+
+        // Perform partial liquidation receiving underlying asset in return
+        {
+            let debt_to_repay = Uint128::from(400_000_u64);
+            let liquidate_msg = ExecuteMsg::LiquidateNative {
+                collateral_asset: Asset::Native {
+                    denom: "the_asset".to_string(),
+                },
+                debt_asset_denom: "the_asset".to_string(),
+                user_address: user_address.to_string(),
+                receive_ma_token: false,
+            };
+
+            let asset_market_before = MARKETS.load(&deps.storage, b"the_asset").unwrap();
+
+            let block_time = liquidation_block_time;
+            let env = mock_env_at_block_time(block_time);
+            let info = cosmwasm_std::testing::mock_info(
+                liquidator_address.as_str(),
+                &[coin(debt_to_repay.into(), "the_asset")],
+            );
+            let res = execute(deps.as_mut(), env.clone(), info, liquidate_msg).unwrap();
+
+            let asset_market_after = MARKETS.load(&deps.storage, b"the_asset").unwrap();
+            let expected_liquidated_amount = Decimal::divide_uint128_by_decimal(
+                debt_to_repay * asset_price * (Decimal::one() + asset_liquidation_bonus),
+                asset_price,
+            )
+            .unwrap();
+
+            // get expected indices and rates for debt market
+            let expected_rates = th_get_expected_indices_and_rates(
+                &asset_market_before,
+                block_time,
+                available_liquidity,
+                TestUtilizationDeltas {
+                    less_debt: debt_to_repay.into(),
+                    less_liquidity: expected_liquidated_amount.into(),
+                    ..Default::default()
+                },
+            );
+
+            let expected_liquidated_amount_scaled = compute_scaled_amount(
+                expected_liquidated_amount,
+                expected_rates.liquidity_index,
+                ScalingOperation::Liquidity,
+            )
+            .unwrap();
+
+            assert_eq!(
+                res.messages,
+                vec![
+                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: ma_token_address.to_string(),
+                        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+                            user: user_address.to_string(),
+                            amount: expected_liquidated_amount_scaled.into(),
+                        })
+                        .unwrap(),
+                        funds: vec![]
+                    })),
+                    // NOTE: Tax set to 0 so no tax should be charged
+                    SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+                        to_address: liquidator_address.to_string(),
+                        amount: vec![Coin {
+                            denom: String::from("the_asset"),
+                            amount: expected_liquidated_amount,
+                        }],
+                    })),
+                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: ma_token_address.clone().to_string(),
+                        msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
+                            recipient: "protocol_rewards_collector".to_string(),
+                            amount: compute_scaled_amount(
+                                expected_rates.protocol_rewards_to_distribute,
+                                expected_rates.liquidity_index,
+                                ScalingOperation::Liquidity
+                            )
+                            .unwrap(),
+                        })
+                        .unwrap(),
+                        funds: vec![]
+                    })),
+                ]
+            );
+
+            mars_core::testing::assert_eq_vec(
+                res.attributes,
+                vec![
+                    attr("action", "liquidate"),
+                    attr("collateral_asset", "the_asset"),
+                    attr("debt_asset", "the_asset"),
+                    attr("user", user_address.as_str()),
+                    attr("liquidator", liquidator_address.as_str()),
+                    attr(
+                        "collateral_amount_liquidated",
+                        expected_liquidated_amount.to_string(),
+                    ),
+                    attr("debt_amount_repaid", debt_to_repay.to_string()),
+                    attr("refund_amount", "0"),
+                ],
+            );
+            assert_eq!(
+                res.events,
+                vec![th_build_interests_updated_event(
+                    "the_asset",
+                    &expected_rates
+                ),]
+            );
+
+            // check user still has deposited collateral asset and
+            // still has outstanding debt in debt asset
+            let user = USERS.load(&deps.storage, &user_address).unwrap();
+            assert!(get_bit(user.collateral_assets, asset_market_before.index).unwrap());
+            assert!(get_bit(user.borrowed_assets, asset_market_before.index).unwrap());
+
+            // check user's debt decreased by the appropriate amount
+            let debt = DEBTS
+                .load(&deps.storage, (b"the_asset", &user_address))
+                .unwrap();
+
+            let expected_less_debt_scaled = compute_scaled_amount(
+                debt_to_repay.into(),
+                expected_rates.borrow_index,
+                ScalingOperation::Debt,
+            )
+            .unwrap();
+
+            let expected_user_debt_scaled = initial_user_debt_scaled - expected_less_debt_scaled;
+
+            assert_eq!(expected_user_debt_scaled, debt.amount_scaled);
+
+            // check global debt decreased by the appropriate amount
+            let expected_global_debt_scaled =
+                initial_global_debt_scaled - expected_less_debt_scaled;
+
+            assert_eq!(
+                expected_global_debt_scaled,
+                asset_market_after.debt_total_scaled
+            );
+        }
+
+        // Reset state for next test
+        {
+            let debt = Debt {
+                amount_scaled: initial_user_debt_scaled,
+                uncollateralized: false,
+            };
+            DEBTS
+                .save(deps.as_mut().storage, (b"the_asset", &user_address), &debt)
+                .unwrap();
+
+            MARKETS
+                .save(deps.as_mut().storage, b"the_asset", &asset_market_initial)
+                .unwrap();
+
+            // NOTE: Do not reset liquidator having the asset as collateral in order to check
+            // position changed event is not emitted
+        }
+
+        // Perform overpaid liquidation receiving ma_token in return
+        {
+            let block_time = liquidation_block_time;
+            // Since debt is being over repayed, we expect to max out the liquidatable debt
+            // get expected indices and rates for debt and collateral markets
+            let expected_indices = th_get_expected_indices(&asset_market_initial, block_time);
+            let user_debt_balance_before =
+                compute_underlying_amount(initial_user_debt_scaled, expected_indices.borrow)
+                    .unwrap();
+            let debt_to_repay = user_debt_balance_before;
+            let expected_less_debt = user_debt_balance_before * close_factor;
+            let expected_refund_amount = debt_to_repay - expected_less_debt;
+
+            let liquidate_msg = ExecuteMsg::LiquidateNative {
+                collateral_asset: Asset::Native {
+                    denom: "the_asset".to_string(),
+                },
+                debt_asset_denom: "the_asset".to_string(),
+                user_address: user_address.to_string(),
+                receive_ma_token: true,
+            };
+
+            let asset_market_before = MARKETS.load(&deps.storage, b"the_asset").unwrap();
+
+            let env = mock_env_at_block_time(block_time);
+            let info = cosmwasm_std::testing::mock_info(
+                liquidator_address.as_str(),
+                &[coin(debt_to_repay.into(), "the_asset")],
+            );
+            let res = execute(deps.as_mut(), env.clone(), info, liquidate_msg).unwrap();
+
+            let asset_market_after = MARKETS.load(&deps.storage, b"the_asset").unwrap();
+            let expected_liquidated_amount = Decimal::divide_uint128_by_decimal(
+                expected_less_debt * asset_price * (Decimal::one() + asset_liquidation_bonus),
+                asset_price,
+            )
+            .unwrap();
+
+            // get expected indices and rates for debt market
+            let expected_rates = th_get_expected_indices_and_rates(
+                &asset_market_before,
+                block_time,
+                available_liquidity,
+                TestUtilizationDeltas {
+                    less_debt: expected_less_debt.into(),
+                    less_liquidity: expected_refund_amount.into(),
+                    ..Default::default()
+                },
+            );
+
+            let expected_liquidated_amount_scaled = compute_scaled_amount(
+                expected_liquidated_amount,
+                expected_rates.liquidity_index,
+                ScalingOperation::Liquidity,
+            )
+            .unwrap();
+
+            assert_eq!(
+                res.messages,
+                vec![
+                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: ma_token_address.to_string(),
+                        msg: to_binary(
+                            &mars_core::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
+                                sender: user_address.to_string(),
+                                recipient: liquidator_address.to_string(),
+                                amount: expected_liquidated_amount_scaled.into(),
+                            }
+                        )
+                        .unwrap(),
+                        funds: vec![]
+                    })),
+                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: ma_token_address.clone().to_string(),
+                        msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
+                            recipient: "protocol_rewards_collector".to_string(),
+                            amount: compute_scaled_amount(
+                                expected_rates.protocol_rewards_to_distribute,
+                                expected_rates.liquidity_index,
+                                ScalingOperation::Liquidity
+                            )
+                            .unwrap(),
+                        })
+                        .unwrap(),
+                        funds: vec![]
+                    })),
+                    // NOTE: Tax set to 0 so no tax should be charged
+                    SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+                        to_address: liquidator_address.to_string(),
+                        amount: vec![Coin {
+                            denom: String::from("the_asset"),
+                            amount: expected_refund_amount,
+                        }],
+                    })),
+                ]
+            );
+
+            mars_core::testing::assert_eq_vec(
+                res.attributes,
+                vec![
+                    attr("action", "liquidate"),
+                    attr("collateral_asset", "the_asset"),
+                    attr("debt_asset", "the_asset"),
+                    attr("user", user_address.as_str()),
+                    attr("liquidator", liquidator_address.as_str()),
+                    attr(
+                        "collateral_amount_liquidated",
+                        expected_liquidated_amount.to_string(),
+                    ),
+                    attr("debt_amount_repaid", expected_less_debt.to_string()),
+                    attr("refund_amount", expected_refund_amount),
+                ],
+            );
+            assert_eq!(
+                res.events,
+                vec![
+                    th_build_interests_updated_event("the_asset", &expected_rates),
+                    // NOTE: Should not emit position change event as it was changed on the
+                    // first call and was not reset
+                ]
+            );
+
+            // check user still has deposited collateral asset and
+            // still has outstanding debt in debt asset
+            let user = USERS.load(&deps.storage, &user_address).unwrap();
+            assert!(get_bit(user.collateral_assets, asset_market_before.index).unwrap());
+            assert!(get_bit(user.borrowed_assets, asset_market_before.index).unwrap());
+
+            // check user's debt decreased by the appropriate amount
+            let debt = DEBTS
+                .load(&deps.storage, (b"the_asset", &user_address))
+                .unwrap();
+
+            let expected_less_debt_scaled = compute_scaled_amount(
+                expected_less_debt.into(),
+                expected_rates.borrow_index,
+                ScalingOperation::Debt,
+            )
+            .unwrap();
+
+            let expected_user_debt_scaled = initial_user_debt_scaled - expected_less_debt_scaled;
+
+            assert_eq!(expected_user_debt_scaled, debt.amount_scaled);
+
+            // check global debt decreased by the appropriate amount
+            let expected_global_debt_scaled =
+                initial_global_debt_scaled - expected_less_debt_scaled;
+
+            assert_eq!(
+                expected_global_debt_scaled,
+                asset_market_after.debt_total_scaled
+            );
+        }
+
+        // Reset state for next test
+        {
+            let debt = Debt {
+                amount_scaled: initial_user_debt_scaled,
+                uncollateralized: false,
+            };
+            DEBTS
+                .save(deps.as_mut().storage, (b"the_asset", &user_address), &debt)
+                .unwrap();
+
+            MARKETS
+                .save(deps.as_mut().storage, b"the_asset", &asset_market_initial)
+                .unwrap();
+
+            // NOTE: reset liquidator to not having the asset as collateral in order to check
+            // position is not changed when receiving underlying asset
+            let liquidator = User::default();
+            USERS
+                .save(deps.as_mut().storage, &liquidator_address, &liquidator)
+                .unwrap();
+        }
+
+        // Perform overpaid liquidation receiving underlying asset in return
+        {
+            let block_time = liquidation_block_time;
+            // Since debt is being over repayed, we expect to max out the liquidatable debt
+            // get expected indices and rates for debt and collateral markets
+            let expected_indices = th_get_expected_indices(&asset_market_initial, block_time);
+            let user_debt_balance_before =
+                compute_underlying_amount(initial_user_debt_scaled, expected_indices.borrow)
+                    .unwrap();
+            let debt_to_repay = user_debt_balance_before;
+            let expected_less_debt = user_debt_balance_before * close_factor;
+            let expected_refund_amount = debt_to_repay - expected_less_debt;
+
+            let liquidate_msg = ExecuteMsg::LiquidateNative {
+                collateral_asset: Asset::Native {
+                    denom: "the_asset".to_string(),
+                },
+                debt_asset_denom: "the_asset".to_string(),
+                user_address: user_address.to_string(),
+                receive_ma_token: false,
+            };
+
+            let asset_market_before = MARKETS.load(&deps.storage, b"the_asset").unwrap();
+
+            let env = mock_env_at_block_time(block_time);
+            let info = cosmwasm_std::testing::mock_info(
+                liquidator_address.as_str(),
+                &[coin(debt_to_repay.into(), "the_asset")],
+            );
+            let res = execute(deps.as_mut(), env.clone(), info, liquidate_msg).unwrap();
+
+            let asset_market_after = MARKETS.load(&deps.storage, b"the_asset").unwrap();
+            let expected_liquidated_amount = Decimal::divide_uint128_by_decimal(
+                expected_less_debt * asset_price * (Decimal::one() + asset_liquidation_bonus),
+                asset_price,
+            )
+            .unwrap();
+
+            // get expected indices and rates for debt market
+            let expected_rates = th_get_expected_indices_and_rates(
+                &asset_market_before,
+                block_time,
+                available_liquidity,
+                TestUtilizationDeltas {
+                    less_debt: expected_less_debt.into(),
+                    less_liquidity: (expected_refund_amount + expected_liquidated_amount).into(),
+                    ..Default::default()
+                },
+            );
+
+            let expected_liquidated_amount_scaled = compute_scaled_amount(
+                expected_liquidated_amount,
+                expected_rates.liquidity_index,
+                ScalingOperation::Liquidity,
+            )
+            .unwrap();
+
+            assert_eq!(
+                res.messages,
+                vec![
+                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: ma_token_address.to_string(),
+                        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+                            user: user_address.to_string(),
+                            amount: expected_liquidated_amount_scaled.into(),
+                        })
+                        .unwrap(),
+                        funds: vec![]
+                    })),
+                    // NOTE: Tax set to 0 so no tax should be charged
+                    SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+                        to_address: liquidator_address.to_string(),
+                        amount: vec![Coin {
+                            denom: String::from("the_asset"),
+                            amount: expected_liquidated_amount,
+                        }],
+                    })),
+                    SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: ma_token_address.clone().to_string(),
+                        msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
+                            recipient: "protocol_rewards_collector".to_string(),
+                            amount: compute_scaled_amount(
+                                expected_rates.protocol_rewards_to_distribute,
+                                expected_rates.liquidity_index,
+                                ScalingOperation::Liquidity
+                            )
+                            .unwrap(),
+                        })
+                        .unwrap(),
+                        funds: vec![]
+                    })),
+                    // NOTE: Tax set to 0 so no tax should be charged
+                    SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+                        to_address: liquidator_address.to_string(),
+                        amount: vec![Coin {
+                            denom: String::from("the_asset"),
+                            amount: expected_refund_amount,
+                        }],
+                    })),
+                ]
+            );
+
+            mars_core::testing::assert_eq_vec(
+                res.attributes,
+                vec![
+                    attr("action", "liquidate"),
+                    attr("collateral_asset", "the_asset"),
+                    attr("debt_asset", "the_asset"),
+                    attr("user", user_address.as_str()),
+                    attr("liquidator", liquidator_address.as_str()),
+                    attr(
+                        "collateral_amount_liquidated",
+                        expected_liquidated_amount.to_string(),
+                    ),
+                    attr("debt_amount_repaid", expected_less_debt.to_string()),
+                    attr("refund_amount", expected_refund_amount),
+                ],
+            );
+            assert_eq!(
+                res.events,
+                vec![th_build_interests_updated_event(
+                    "the_asset",
+                    &expected_rates
+                ),]
+            );
+
+            // check user still has deposited collateral asset and
+            // still has outstanding debt in debt asset
+            let user = USERS.load(&deps.storage, &user_address).unwrap();
+            assert!(get_bit(user.collateral_assets, asset_market_before.index).unwrap());
+            assert!(get_bit(user.borrowed_assets, asset_market_before.index).unwrap());
+
+            // check liquidator does not have collateral bit set
+            let liquidator = USERS.load(&deps.storage, &liquidator_address).unwrap();
+            assert!(!(get_bit(liquidator.collateral_assets, asset_market_before.index).unwrap()));
+
+            // check user's debt decreased by the appropriate amount
+            let debt = DEBTS
+                .load(&deps.storage, (b"the_asset", &user_address))
+                .unwrap();
+
+            let expected_less_debt_scaled = compute_scaled_amount(
+                expected_less_debt.into(),
+                expected_rates.borrow_index,
+                ScalingOperation::Debt,
+            )
+            .unwrap();
+
+            let expected_user_debt_scaled = initial_user_debt_scaled - expected_less_debt_scaled;
+
+            assert_eq!(expected_user_debt_scaled, debt.amount_scaled);
+
+            // check global debt decreased by the appropriate amount
+            let expected_global_debt_scaled =
+                initial_global_debt_scaled - expected_less_debt_scaled;
+
+            assert_eq!(
+                expected_global_debt_scaled,
+                asset_market_after.debt_total_scaled
+            );
+        }
+    }
+
+    #[test]
     fn test_underlying_asset_balance_check_when_transfer_to_liquidator() {
         let native_collateral_liquidity = 4510000u128;
         let mut deps = th_setup(&[coin(native_collateral_liquidity, "native_collateral")]);
@@ -7458,7 +8273,7 @@ mod tests {
         let env = mock_env(MockEnvParams::default());
 
         // Indices changed in order to detect that there is no scaling on asset balance
-        let mut market = Market {
+        let market = Market {
             liquidity_index: Decimal::from_ratio(2u128, 1u128),
             borrow_index: Decimal::from_ratio(4u128, 1u128),
             asset_type: AssetType::Native,
@@ -7475,9 +8290,8 @@ mod tests {
                 &liquidator_addr,
                 "native_collateral".to_string(),
                 AssetType::Native,
-                &mut market,
+                &market,
                 collateral_amount_to_liquidate,
-                Addr::unchecked("protocol_rewards_collector"),
                 Response::new(),
             )
             .unwrap_err();
@@ -7497,16 +8311,15 @@ mod tests {
                 &liquidator_addr,
                 "native_collateral".to_string(),
                 AssetType::Native,
-                &mut market,
+                &market,
                 collateral_amount_to_liquidate,
-                Addr::unchecked("protocol_rewards_collector"),
                 Response::new(),
             )
             .unwrap();
         }
 
         // Indices changed in order to detect that there is no scaling on asset balance
-        let mut market = Market {
+        let market = Market {
             liquidity_index: Decimal::from_ratio(8u128, 1u128),
             borrow_index: Decimal::from_ratio(6u128, 1u128),
             asset_type: AssetType::Cw20,
@@ -7523,9 +8336,8 @@ mod tests {
                 &liquidator_addr,
                 "cw20_collateral".to_string(),
                 AssetType::Cw20,
-                &mut market,
+                &market,
                 collateral_amount_to_liquidate,
-                Addr::unchecked("protocol_rewards_collector"),
                 Response::new(),
             )
             .unwrap_err();
@@ -7545,9 +8357,8 @@ mod tests {
                 &liquidator_addr,
                 "cw20_collateral".to_string(),
                 AssetType::Cw20,
-                &mut market,
+                &market,
                 collateral_amount_to_liquidate,
-                Addr::unchecked("protocol_rewards_collector"),
                 Response::new(),
             )
             .unwrap();
