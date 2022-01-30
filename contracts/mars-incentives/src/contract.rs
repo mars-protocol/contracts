@@ -95,6 +95,8 @@ pub fn execute_set_asset_incentive(
         return Err(MarsError::Unauthorized {}.into());
     }
 
+    // use lower case address to prevent duplicate assets
+    let ma_token_address = ma_token_address.to_lowercase();
     let ma_asset_address = deps.api.addr_validate(&ma_token_address)?;
 
     let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &ma_asset_address)? {
@@ -582,6 +584,72 @@ mod tests {
         assert_eq!(asset_incentive.emission_per_second, Uint128::new(100));
         assert_eq!(asset_incentive.index, Decimal::zero());
         assert_eq!(asset_incentive.last_updated, 1_000_000);
+    }
+
+    #[test]
+    fn test_set_new_asset_incentive_with_lower_and_upper_case() {
+        let mut deps = th_setup(&[]);
+
+        let ma_asset_lower_case = "ma_asset";
+        let ma_asset_lower_case_addr = Addr::unchecked(ma_asset_lower_case);
+
+        let env = mock_env();
+        let info = mock_info("owner", &[]);
+
+        // ma_token_address (lower case) should be set correctly
+        {
+            let msg = ExecuteMsg::SetAssetIncentive {
+                ma_token_address: ma_asset_lower_case.to_string(),
+                emission_per_second: Uint128::new(100),
+            };
+
+            let res = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+            assert_eq!(
+                res.attributes,
+                vec![
+                    attr("action", "set_asset_incentive"),
+                    attr("ma_asset", ma_asset_lower_case),
+                    attr("emission_per_second", "100"),
+                ]
+            );
+
+            let asset_incentive = ASSET_INCENTIVES
+                .load(deps.as_ref().storage, &ma_asset_lower_case_addr)
+                .unwrap();
+
+            assert_eq!(asset_incentive.emission_per_second, Uint128::new(100));
+        }
+
+        // ma_token_address (upper case) should update asset incentive set with lower case
+        // emission_per_second should be updated
+        {
+            deps.querier
+                .set_cw20_total_supply(ma_asset_lower_case_addr.clone(), Uint128::new(2_000_000));
+
+            let ma_asset_upper_case = ma_asset_lower_case.to_uppercase();
+
+            let msg = ExecuteMsg::SetAssetIncentive {
+                ma_token_address: ma_asset_upper_case.to_string(),
+                emission_per_second: Uint128::new(123),
+            };
+
+            let res = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+            assert_eq!(
+                res.attributes,
+                vec![
+                    attr("action", "set_asset_incentive"),
+                    attr("ma_asset", ma_asset_lower_case), // should be lower case
+                    attr("emission_per_second", "123"),
+                ]
+            );
+
+            // asset incentive should be available with lower case address
+            let asset_incentive = ASSET_INCENTIVES
+                .load(deps.as_ref().storage, &ma_asset_lower_case_addr)
+                .unwrap();
+
+            assert_eq!(asset_incentive.emission_per_second, Uint128::new(123));
+        }
     }
 
     #[test]

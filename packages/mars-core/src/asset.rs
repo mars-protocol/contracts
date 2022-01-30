@@ -24,11 +24,12 @@ impl Asset {
         match &self {
             Asset::Native { denom } => {
                 let asset_reference = denom.as_bytes().to_vec();
-                (denom.to_string(), asset_reference, AssetType::Native)
+                (denom.clone(), asset_reference, AssetType::Native)
             }
             Asset::Cw20 { contract_addr } => {
-                let asset_reference = contract_addr.as_bytes().to_vec();
-                (contract_addr.to_string(), asset_reference, AssetType::Cw20)
+                let lower_case_contract_addr = contract_addr.to_lowercase();
+                let asset_reference = lower_case_contract_addr.as_bytes().to_vec();
+                (lower_case_contract_addr, asset_reference, AssetType::Cw20)
             }
         }
     }
@@ -37,7 +38,7 @@ impl Asset {
     pub fn get_reference(&self) -> Vec<u8> {
         match &self {
             Asset::Native { denom } => denom.as_bytes().to_vec(),
-            Asset::Cw20 { contract_addr } => contract_addr.as_bytes().to_vec(),
+            Asset::Cw20 { contract_addr } => contract_addr.to_lowercase().as_bytes().to_vec(),
         }
     }
 }

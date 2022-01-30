@@ -2897,7 +2897,7 @@ mod tests {
                 asset: Asset::Cw20 {
                     contract_addr: cw20_addr.to_string(),
                 },
-                asset_params,
+                asset_params: asset_params.clone(),
                 asset_symbol: None,
             };
             let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -2930,6 +2930,20 @@ mod tests {
                     attr("asset", cw20_addr.clone())
                 ],
             );
+        }
+
+        // can't init cw20 asset more than once with the upper case name
+        {
+            let msg = ExecuteMsg::InitAsset {
+                asset: Asset::Cw20 {
+                    contract_addr: cw20_addr.to_string().to_uppercase(),
+                },
+                asset_params,
+                asset_symbol: None,
+            };
+            let info = mock_info("owner");
+            let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+            assert_eq!(error_res, ContractError::AssetAlreadyInitialized {});
         }
 
         // cw20 callback comes back with created token
