@@ -357,11 +357,10 @@ fn asset_incentive_compute_index(
         )));
     }
     let seconds_elapsed = time_end - time_start;
-    let new_index = previous_index
-        + Decimal::from_ratio(
-            emission_per_second.u128() * seconds_elapsed as u128,
-            total_supply,
-        );
+    let emission_for_elapsed_seconds =
+        emission_per_second.checked_mul(Uint128::from(seconds_elapsed))?;
+    let new_index =
+        previous_index + Decimal::from_ratio(emission_for_elapsed_seconds, total_supply);
     Ok(new_index)
 }
 
@@ -373,7 +372,9 @@ fn user_compute_accrued_rewards(
     user_asset_index: Decimal,
     asset_incentive_index: Decimal,
 ) -> StdResult<Uint128> {
-    Ok((user_balance * asset_incentive_index) - (user_balance * user_asset_index))
+    let result =
+        (user_balance * asset_incentive_index).checked_sub(user_balance * user_asset_index)?;
+    Ok(result)
 }
 
 /// Result of querying and updating the status of the user and a give asset incentives in order to

@@ -1747,7 +1747,7 @@ fn liquidation_compute_amounts(
         collateral_amount_to_liquidate = user_collateral_balance;
         debt_amount_to_repay = Decimal::divide_uint128_by_decimal(
             Decimal::divide_uint128_by_decimal(
-                collateral_price * collateral_amount_to_liquidate,
+                collateral_amount_to_liquidate * collateral_price,
                 debt_price,
             )?,
             Decimal::one() + liquidation_bonus,
