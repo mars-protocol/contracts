@@ -1391,8 +1391,7 @@ pub fn execute_liquidate(
         return Err(ContractError::CannotLiquidateHealthyPosition {});
     }
 
-    let collateral_and_debt_are_the_same_asset = debt_asset_type == collateral_asset_type
-        && debt_asset_reference == collateral_asset_reference;
+    let collateral_and_debt_are_the_same_asset = debt_asset_reference == collateral_asset_reference;
 
     let debt_market = if !collateral_and_debt_are_the_same_asset {
         MARKETS.load(deps.storage, debt_asset_reference.as_slice())?
