@@ -128,8 +128,8 @@ impl Default for Market {
         Market {
             index: 0,
             ma_token_address: crate::helpers::zero_address(),
-            liquidity_index: Default::default(),
-            borrow_index: Default::default(),
+            liquidity_index: Decimal::one(),
+            borrow_index: Decimal::one(),
             borrow_rate: Default::default(),
             liquidity_rate: Default::default(),
             max_loan_to_value: Default::default(),

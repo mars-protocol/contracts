@@ -119,6 +119,21 @@ impl Decimal {
         Ok(result)
     }
 
+    /// Multiply Uint128 by Decimal, rounding up to the nearest integer.
+    pub fn multiply_uint128_by_decimal_and_ceil(a: Uint128, b: Decimal) -> StdResult<Uint128> {
+        let numerator_u256 = a.full_mul(b.numerator());
+        let denominator_u256 = Uint256::from(b.denominator());
+
+        let mut result_u256 = numerator_u256 / denominator_u256;
+
+        if numerator_u256.checked_rem(denominator_u256)? > Uint256::zero() {
+            result_u256 += Uint256::from(1_u32);
+        }
+
+        let result = result_u256.try_into()?;
+        Ok(result)
+    }
+
     pub fn to_std_decimal(&self) -> StdDecimal {
         StdDecimal::from_str(self.to_string().as_str()).unwrap()
     }
