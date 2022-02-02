@@ -2220,7 +2220,7 @@ pub fn query_user_position(
 ) -> Result<UserPositionResponse, MarsError> {
     let config = CONFIG.load(deps.storage)?;
     let global_state = GLOBAL_STATE.load(deps.storage)?;
-    let user = USERS.load(deps.storage, &address)?;
+    let user = USERS.may_load(deps.storage, &address)?.unwrap_or_default();
     let oracle_address = address_provider::helpers::query_address(
         &deps.querier,
         config.address_provider_address,
