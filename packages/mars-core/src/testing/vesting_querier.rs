@@ -9,6 +9,8 @@ pub struct VestingQuerier {
     pub vesting_address: Addr,
     /// maps human address and a block to a specific voting power
     pub voting_power_at: HashMap<(Addr, u64), Uint128>,
+    /// maps a block to a specific voting power
+    pub total_voting_power_at: HashMap<u64, Uint128>,
 }
 
 impl Default for VestingQuerier {
@@ -16,6 +18,7 @@ impl Default for VestingQuerier {
         VestingQuerier {
             vesting_address: Addr::unchecked(""),
             voting_power_at: HashMap::new(),
+            total_voting_power_at: HashMap::new(),
         }
     }
 }
@@ -44,6 +47,14 @@ impl VestingQuerier {
                     .get(&(Addr::unchecked(user_address), block))
                 {
                     Some(voting_power) => Ok(to_binary(voting_power).into()).into(),
+                    // If voting power is not set, return zero
+                    None => Ok(to_binary(&Uint128::zero()).into()).into(),
+                }
+            }
+
+            vesting::msg::QueryMsg::TotalVotingPowerAt { block } => {
+                match self.total_voting_power_at.get(&block) {
+                    Some(total_voting_power) => Ok(to_binary(total_voting_power).into()).into(),
                     // If voting power is not set, return zero
                     None => Ok(to_binary(&Uint128::zero()).into()).into(),
                 }

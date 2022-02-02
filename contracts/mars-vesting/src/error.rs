@@ -2,6 +2,7 @@ use cosmwasm_std::{OverflowError, StdError};
 use thiserror::Error;
 
 use mars_core::error::MarsError;
+use mars_core::math::decimal::Decimal;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
@@ -28,4 +29,7 @@ pub enum ContractError {
 
     #[error("Unlock time setup is invalid")]
     InvalidUnlockTimeSetup {},
+
+    #[error("Mars:XMars ratio is not one, is {xmars_per_mars} xMARS per MARS")]
+    MarsXMarsRatioNotOne { xmars_per_mars: Decimal },
 }

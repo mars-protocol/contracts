@@ -4,26 +4,31 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::{Addr, Api, StdResult, Uint128};
 use cw20::Cw20ReceiveMsg;
 
-// T = String (unchecked) or Addr (checked)
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Copy)]
+pub struct Schedule {
+    /// Time when vesting/unlocking starts
+    pub start_time: u64,
+    /// Time before with no token is to be vested/unlocked
+    pub cliff: u64,
+    /// Duration of the vesting/unlocking process. At time `start_time + duration`, the tokens are
+    /// vested/unlocked in full
+    pub duration: u64,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config<T> {
     /// Address provider address
+    /// T is to be `String` for the unchecked type, or `cosmwasm_std::Addr` for the checked type
     pub address_provider_address: T,
-    /// UNIX timestamp, in seconds, of when unlocking is to be started
-    pub unlock_start_time: u64,
-    /// Number of seconds during which no token will be unlocked
-    pub unlock_cliff: u64,
-    /// Number of seconds taken for tokens to be fully unlocked
-    pub unlock_duration: u64,
+    /// Schedule for token unlocking; this schedule is the same for all users
+    pub unlock_schedule: Schedule,
 }
 
 impl From<Config<Addr>> for Config<String> {
     fn from(config: Config<Addr>) -> Self {
         Config {
             address_provider_address: config.address_provider_address.to_string(),
-            unlock_start_time: config.unlock_start_time,
-            unlock_cliff: config.unlock_cliff,
-            unlock_duration: config.unlock_duration,
+            unlock_schedule: config.unlock_schedule,
         }
     }
 }
@@ -32,9 +37,7 @@ impl Config<String> {
     pub fn check(&self, api: &dyn Api) -> StdResult<Config<Addr>> {
         Ok(Config {
             address_provider_address: api.addr_validate(&self.address_provider_address)?,
-            unlock_start_time: self.unlock_start_time,
-            unlock_cliff: self.unlock_cliff,
-            unlock_duration: self.unlock_duration,
+            unlock_schedule: self.unlock_schedule,
         })
     }
 }
@@ -42,21 +45,12 @@ impl Config<String> {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Allocation {
     /// Total amount of MARS allocated
-    pub mars_allocated_amount: Uint128,
+    pub allocated_amount: Uint128,
     /// Amount of MARS already withdrawn
-    pub mars_withdrawn_amount: Uint128,
-    /// Amount of MARS staked in staking contract
-    pub mars_staked_amount: Uint128,
-    /// Amount of xMARS received by staking MARS tokens in staking contract
-    pub xmars_minted_amount: Uint128,
+    pub withdrawn_amount: Uint128,
+    /// The user's vesting schedule
+    pub vest_schedule: Schedule,
 }
-
-/// Snapshot of a recipient's xMARS amount. Used to calculate the recipient's voting power when
-/// voting for a governance proposal.
-///
-/// The first number is block height. The second number is the amount of xMARS the recipient has at
-/// this block height.
-pub type Snapshot = (u64, Uint128);
 
 pub mod msg {
     use super::*;
@@ -76,7 +70,10 @@ pub mod msg {
     #[serde(rename_all = "snake_case")]
     pub enum ReceiveMsg {
         /// Create a new allocation for a recipeint
-        CreateAllocation { user_address: String },
+        CreateAllocation {
+            user_address: String,
+            vest_schedule: Schedule,
+        },
     }
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -86,7 +83,12 @@ pub mod msg {
         Config {},
         /// Status of an allocation. Returns `Allocation`
         Allocation { user_address: String },
-        /// Total amount of xMARS owned by a recipient at a certain height
+        /// A user's locked voting power at a certain height, which equals the user's total allocated
+        /// Mars token amount minus the amount they have already withdrawn up to that height.
+        /// Returns `Uint128`
         VotingPowerAt { user_address: String, block: u64 },
+        /// Total locked voting power owned by the vesting contract at a certain height. Used by
+        /// Martian Council to calculate a governance proposal's quorum. Returns `Uint128`
+        TotalVotingPowerAt { block: u64 },
     }
 }

@@ -271,16 +271,23 @@ pub fn execute_cast_vote(
 
     let balance_at_block = proposal.start_height - 1;
 
-    // The voting power of a user consists of two parts:
-    // 1. the amount of xMARS token in the user's wallet
-    // 2. the amount of xMARS locked in the vesting contract owned by the user
+    // The voting power of a user for a proposal is defined as the sum of two parts:
+    //
+    // - Free voting power: the amount of xMARS token in the user's wallet, at the block before the
+    //   proposal was created
+    // - Locked voting power: the amount of MARS locked in the vesting contract owned by the user,
+    //   at the block before the proposal was created
+    //
+    // The reason we can use the amount of MARS (instead of xMARS) for locked voting power is that,
+    // since vesting allocations can only be created when 1 MARS == 1 xMARS, these MARS tokens would
+    // have produced the same amount of xMARS if they were staked.
     let voting_power_free = xmars_get_balance_at(
         &deps.querier,
         xmars_token_address,
         info.sender.clone(),
         balance_at_block,
     )?;
-    let voting_power_locked = vesting_get_balance_at(
+    let voting_power_locked = vesting_get_voting_power_at(
         &deps.querier,
         vesting_address,
         info.sender.clone(),
@@ -341,6 +348,7 @@ pub fn execute_end_proposal(
     let mars_contracts = vec![
         MarsContract::MarsToken,
         MarsContract::Staking,
+        MarsContract::Vesting,
         MarsContract::XMarsToken,
     ];
     let mut addresses_query = address_provider::helpers::query_addresses(
@@ -349,18 +357,36 @@ pub fn execute_end_proposal(
         mars_contracts,
     )?;
     let xmars_token_address = addresses_query.pop().unwrap();
+    let vesting_address = addresses_query.pop().unwrap();
     let staking_address = addresses_query.pop().unwrap();
     let mars_token_address = addresses_query.pop().unwrap();
+
+    // The total voting power of a proposal is defined as the sum of two parts:
+    //
+    // - Free voting power: the total supply of xMARS token at the block before the proposal was
+    //   created
+    // - Locked voting power: the total amount of MARS token locked in the vesting contract, at the
+    //   block before the proposal was created
+    //
+    // The reason we can use the amount of MARS (instead of xMARS) for locked voting power is that,
+    // since vesting allocations can only be created when 1 MARS == 1 xMARS, these MARS tokens would
+    // have produced the same amount of xMARS if they were staked.
+    let total_voting_power_free = xmars_get_total_supply_at(
+        &deps.querier,
+        xmars_token_address,
+        proposal.start_height - 1,
+    )?;
+    let total_voting_power_locked = vesting_get_total_voting_power_at(
+        &deps.querier,
+        vesting_address,
+        proposal.start_height - 1,
+    )?;
+    let total_voting_power = total_voting_power_free + total_voting_power_locked;
 
     // Compute proposal quorum and threshold
     let for_votes = proposal.for_votes;
     let against_votes = proposal.against_votes;
     let total_votes = for_votes + against_votes;
-    let total_voting_power = xmars_get_total_supply_at(
-        &deps.querier,
-        xmars_token_address,
-        proposal.start_height - 1,
-    )?;
 
     let mut proposal_quorum: Decimal = Decimal::zero();
     let mut proposal_threshold: Decimal = Decimal::zero();
@@ -647,7 +673,18 @@ fn xmars_get_balance_at(
     Ok(query.balance)
 }
 
-fn vesting_get_balance_at(
+fn vesting_get_total_voting_power_at(
+    querier: &QuerierWrapper,
+    vesting_address: Addr,
+    block: u64,
+) -> StdResult<Uint128> {
+    querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: vesting_address.into(),
+        msg: to_binary(&vesting::msg::QueryMsg::TotalVotingPowerAt { block })?,
+    }))
+}
+
+fn vesting_get_voting_power_at(
     querier: &QuerierWrapper,
     vesting_address: Addr,
     user_address: Addr,
@@ -1364,7 +1401,7 @@ mod tests {
 
         deps.querier.set_vesting_address(Addr::unchecked("vesting"));
         deps.querier
-            .set_locked_voting_power_at(voter_address.clone(), 99_999, Uint128::new(23));
+            .set_vesting_voting_power_at(voter_address.clone(), 99_999, Uint128::new(23));
 
         let active_proposal = th_build_mock_proposal(
             deps.as_mut(),
@@ -1607,6 +1644,8 @@ mod tests {
         deps.querier
             .set_xmars_total_supply_at(99_999, Uint128::new(100));
         deps.querier.set_vesting_address(Addr::unchecked("vesting"));
+        deps.querier
+            .set_vesting_total_voting_power_at(99_999, Uint128::zero());
 
         th_build_mock_proposal(
             deps.as_mut(),
@@ -1660,6 +1699,8 @@ mod tests {
         deps.querier
             .set_xmars_total_supply_at(89_999, Uint128::new(100_000));
         deps.querier.set_vesting_address(Addr::unchecked("vesting"));
+        deps.querier
+            .set_vesting_total_voting_power_at(99_999, Uint128::zero());
 
         let proposal_threshold = Decimal::from_ratio(51_u128, 100_u128);
         let proposal_quorum = Decimal::from_ratio(2_u128, 100_u128);

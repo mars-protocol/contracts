@@ -163,11 +163,13 @@ async function waitUntilBlockHeight(
   const vesting = await deployContract(terra, deployer, "../artifacts/mars_vesting.wasm",
     {
       address_provider_address: addressProvider,
-      unlock_start_time: 1893452400, // 2030-01-01
-      unlock_cliff: 15552000,        // 180 days
-      unlock_duration: 94608000,     // 3 years
+      unlock_schedule: {
+        start_time: 1647302400, // 2021-03-15
+        cliff: 15552000,        // 180 days
+        duration: 94608000,     // 3 years
+      }
     }
-  )
+  );
 
   const mars = await deployContract(terra, deployer, join(CW_PLUS_ARTIFACTS_PATH, "cw20_base.wasm"),
     {

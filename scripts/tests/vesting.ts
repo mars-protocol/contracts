@@ -122,7 +122,7 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
         proposal_expiration_period: 3000,
         proposal_required_deposit: String(PROPOSAL_REQUIRED_DEPOSIT),
         proposal_required_quorum: String(PROPOSAL_REQUIRED_QUORUM),
-        proposal_required_threshold: "0.05",
+        proposal_required_threshold: "0.5",
       },
     }
   );
@@ -156,9 +156,11 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
     "../artifacts/mars_vesting.wasm",
     {
       address_provider_address: addressProvider,
-      unlock_start_time: 0,
-      unlock_cliff: 0,
-      unlock_duration: 0,
+      unlock_schedule: {
+        start_time: 1647302400, // 2021-03-15
+        cliff: 15552000,        // 180 days
+        duration: 94608000,     // 3 years
+      }
     }
   );
 
@@ -252,7 +254,12 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
         amount: String(BOB_VESTING_MARS_BALANCE),
         msg: toEncodedBinary({
           create_allocation: {
-            user_address: bob.key.accAddress
+            user_address: bob.key.accAddress,
+            vest_schedule: {
+              start_time: 1614556800, // 2021-03-01
+              cliff: 15552000,        // 180 days
+              duration: 94608000,     // 3 years
+            }
           },
         }),
       },
@@ -322,43 +329,6 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
       castVoteResult.logs[0].eventsByType.wasm.voting_power[0]
     );
     strictEqual(bobVotingPower, BOB_WALLET_MARS_BALANCE + BOB_VESTING_MARS_BALANCE);
-
-    console.log("success!");
-  }
-
-  {
-    process.stdout.write("bob withdraws xMars... ");
-
-    const txResult = await executeContract(terra, bob, vesting, {
-      withdraw: {},
-    }, { logger: logger });
-
-    // bob's wallet xMars balance should not have changed
-    const bobXMarsBalance = await queryBalanceCw20(terra, bob.key.accAddress, xMars);
-    strictEqual(bobXMarsBalance, BOB_WALLET_MARS_BALANCE);
-
-    // a claim should have been created for bob
-    type ClaimResponse = {
-      claim?: {
-        created_at_block: number,
-        cooldown_end_timestamp: number,
-        amount: string
-      }
-    };
-    const response: ClaimResponse = await terra.wasm.contractQuery(staking, {
-      claim: {
-        user_address: bob.key.accAddress
-      }
-    });
-    const expectedResponse: ClaimResponse = {
-      claim: {
-        created_at_block: txResult.height,
-        cooldown_end_timestamp: 0, // localterra returns an empty string for txResult.timestamp, so we can't verify it
-        amount: BOB_VESTING_MARS_BALANCE.toString()
-      }
-    };
-    strictEqual(response.claim?.created_at_block, expectedResponse.claim?.created_at_block)
-    strictEqual(response.claim?.amount, expectedResponse.claim?.amount)
 
     console.log("success!");
   }
