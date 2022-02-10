@@ -424,7 +424,8 @@ pub fn execute_swap_asset_to_uusd(
     )?;
 
     if let AssetInfo::Token { contract_addr } = offer_asset_info.clone() {
-        if contract_addr == mars_token_address {
+        if contract_addr.to_string().to_lowercase() == mars_token_address.to_string().to_lowercase()
+        {
             return Err(ContractError::MarsCannotSwap {});
         }
     }
@@ -1488,6 +1489,20 @@ mod tests {
         let msg = ExecuteMsg::SwapAssetToUusd {
             offer_asset_info: AssetInfo::Token {
                 contract_addr: Addr::unchecked("mars_token"),
+            },
+            amount: None,
+        };
+        let info = mock_info("owner", &[]);
+        let response =
+            execute(deps.as_mut(), mock_env(MockEnvParams::default()), info, msg).unwrap_err();
+        assert_eq!(response, ContractError::MarsCannotSwap {});
+
+        // *
+        // Check for case sensitivity
+        // *
+        let msg = ExecuteMsg::SwapAssetToUusd {
+            offer_asset_info: AssetInfo::Token {
+                contract_addr: Addr::unchecked("MARS_token"),
             },
             amount: None,
         };
