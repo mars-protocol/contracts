@@ -562,6 +562,7 @@ async function assertXmarsTotalSupplyAt(
 
     const stakingMarsBalanceBefore = await queryBalanceCw20(terra, staking, mars)
     const deployerMarsBalanceBefore = await queryBalanceCw20(terra, deployer.key.accAddress, mars)
+    const marsForClaimersBefore = (await queryContract(terra, staking, { global_state: {} })).total_mars_for_claimers
 
     // slash 10% of the Mars balance
     const transferMarsAmount = Math.floor(stakingMarsBalanceBefore / 10)
@@ -581,8 +582,11 @@ async function assertXmarsTotalSupplyAt(
 
     const stakingMarsBalanceAfter = await queryBalanceCw20(terra, staking, mars)
     const deployerMarsBalanceAfter = await queryBalanceCw20(terra, deployer.key.accAddress, mars)
+    const marsForClaimersAfter = (await queryContract(terra, staking, { global_state: {} })).total_mars_for_claimers
     strictEqual(stakingMarsBalanceAfter, stakingMarsBalanceBefore - transferMarsAmount)
     strictEqual(deployerMarsBalanceAfter, deployerMarsBalanceBefore + transferMarsAmount)
+    strictEqual(Math.floor(marsForClaimersBefore * 0.9), parseInt(marsForClaimersAfter))
+
   }
 
   {

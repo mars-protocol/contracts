@@ -383,7 +383,8 @@ pub fn execute_transfer_mars(
     )?;
 
     let mut global_state = GLOBAL_STATE.load(deps.storage)?;
-    global_state.total_mars_for_claimers = global_state.total_mars_for_claimers * slash_percentage;
+    global_state.total_mars_for_claimers =
+        global_state.total_mars_for_claimers * (Decimal::one() - slash_percentage);
     GLOBAL_STATE.save(deps.storage, &global_state)?;
 
     let res = Response::new()
@@ -1371,7 +1372,7 @@ mod tests {
         let mut deps = th_setup(&[]);
         let initial_mars_for_claimers = Uint128::new(4_000_000_000000);
         let initial_mars_in_contract = Uint128::new(10_000_000_000000);
-        let transfer_amount = Uint128::new(5_000_000_000000);
+        let transfer_amount = Uint128::new(4_000_000_000000);
         let transfer_block = 123456_u64;
 
         deps.querier.set_cw20_balances(
@@ -1439,8 +1440,12 @@ mod tests {
 
             let expected_slash_percentage =
                 Decimal::from_ratio(transfer_amount, initial_mars_in_contract);
-            let expected_total_mars_for_claimers =
-                initial_mars_for_claimers * expected_slash_percentage;
+
+            // should be reduced proportionally
+            let expected_total_mars_for_claimers = initial_mars_for_claimers.multiply_ratio(
+                initial_mars_in_contract - transfer_amount,
+                initial_mars_in_contract,
+            );
 
             assert_eq!(
                 res.attributes,
