@@ -83,37 +83,6 @@
       "additionalProperties": false
     },
     {
-      "description": "Swap any asset on the contract to uusd. Meant for received protocol rewards as a middle step to be converted to Mars.",
-      "type": "object",
-      "required": [
-        "swap_asset_to_uusd"
-      ],
-      "properties": {
-        "swap_asset_to_uusd": {
-          "type": "object",
-          "required": [
-            "offer_asset_info"
-          ],
-          "properties": {
-            "amount": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/Uint128"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "offer_asset_info": {
-              "$ref": "#/definitions/AssetInfo"
-            }
-          }
-        }
-      },
-      "additionalProperties": false
-    },
-    {
       "description": "Swap uusd on the contract to Mars. Meant for received protocol rewards in order for them to belong to xMars holders as underlying Mars.",
       "type": "object",
       "required": [
@@ -140,54 +109,6 @@
     }
   ],
   "definitions": {
-    "Addr": {
-      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
-      "type": "string"
-    },
-    "AssetInfo": {
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "token"
-          ],
-          "properties": {
-            "token": {
-              "type": "object",
-              "required": [
-                "contract_addr"
-              ],
-              "properties": {
-                "contract_addr": {
-                  "$ref": "#/definitions/Addr"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "native_token"
-          ],
-          "properties": {
-            "native_token": {
-              "type": "object",
-              "required": [
-                "denom"
-              ],
-              "properties": {
-                "denom": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
     "Binary": {
       "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
       "type": "string"

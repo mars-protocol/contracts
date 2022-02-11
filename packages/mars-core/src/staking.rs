@@ -58,7 +58,6 @@ pub struct ClaimResponse {
 pub mod msg {
     use cosmwasm_std::{Decimal as StdDecimal, Uint128};
 
-    use astroport::asset::AssetInfo;
     use cw20::Cw20ReceiveMsg;
     use schemars::JsonSchema;
     use serde::{Deserialize, Serialize};
@@ -92,13 +91,6 @@ pub mod msg {
         /// Transfer Mars, deducting it proportionally from both xMars holders and addresses
         /// with an open claim
         TransferMars { amount: Uint128, recipient: String },
-
-        /// Swap any asset on the contract to uusd. Meant for received protocol rewards
-        /// as a middle step to be converted to Mars.
-        SwapAssetToUusd {
-            offer_asset_info: AssetInfo,
-            amount: Option<Uint128>,
-        },
 
         /// Swap uusd on the contract to Mars. Meant for received protocol rewards in order
         /// for them to belong to xMars holders as underlying Mars.

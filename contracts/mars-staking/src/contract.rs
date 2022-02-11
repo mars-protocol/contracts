@@ -103,16 +103,6 @@ pub fn execute(
             Ok(execute_transfer_mars(deps, env, info, recipient, amount)?)
         }
 
-        ExecuteMsg::SwapAssetToUusd {
-            offer_asset_info,
-            amount,
-        } => Ok(execute_swap_asset_to_uusd(
-            deps,
-            env,
-            offer_asset_info,
-            amount,
-        )?),
-
         ExecuteMsg::SwapUusdToMars { amount } => Ok(execute_swap_uusd_to_mars(deps, env, amount)?),
     }
 }
@@ -264,7 +254,9 @@ pub fn execute_unstake(
         amount: claimable_amount,
     };
 
-    let recipient = option_recipient.unwrap_or_else(|| staker.clone());
+    let recipient = option_recipient
+        .unwrap_or_else(|| staker.clone())
+        .to_lowercase();
     let recipient_addr = deps.api.addr_validate(&recipient)?;
 
     if CLAIMS.may_load(deps.storage, &recipient_addr)?.is_some() {
@@ -406,45 +398,6 @@ pub fn execute_transfer_mars(
         );
 
     Ok(res)
-}
-
-pub fn execute_swap_asset_to_uusd(
-    deps: DepsMut,
-    env: Env,
-    offer_asset_info: AssetInfo,
-    amount: Option<Uint128>,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-
-    // throw error if the user tries to swap Mars
-    let mars_token_address = address_provider::helpers::query_address(
-        &deps.querier,
-        config.address_provider_address,
-        MarsContract::MarsToken,
-    )?;
-
-    if let AssetInfo::Token { contract_addr } = offer_asset_info.clone() {
-        if contract_addr.to_string().to_lowercase() == mars_token_address.to_string().to_lowercase()
-        {
-            return Err(ContractError::MarsCannotSwap {});
-        }
-    }
-
-    let ask_asset_info = AssetInfo::NativeToken {
-        denom: "uusd".to_string(),
-    };
-
-    let astroport_max_spread = Some(config.astroport_max_spread);
-
-    Ok(execute_swap(
-        deps,
-        env,
-        offer_asset_info,
-        ask_asset_info,
-        amount,
-        config.astroport_factory_address,
-        astroport_max_spread,
-    )?)
 }
 
 pub fn execute_swap_uusd_to_mars(
@@ -1082,6 +1035,108 @@ mod tests {
     }
 
     #[test]
+    fn test_claim_with_recipient_is_case_insensitive() {
+        let mut deps = th_setup(&[]);
+
+        // setup variables for unstake
+        let unstake_amount = Uint128::new(1_200_000);
+        let unstake_mars_in_contract = Uint128::new(3_000_000);
+        let unstake_xmars_supply = Uint128::new(2_500_000);
+        let unstake_height = 123456;
+        let unstake_time = 1_000_000_000;
+        let env = mock_env(MockEnvParams {
+            block_height: unstake_height,
+            block_time: Timestamp::from_seconds(unstake_time),
+        });
+        let initial_mars_for_claimers = Uint128::new(700_000);
+        let mut mars_for_claimers = initial_mars_for_claimers;
+
+        deps.querier.set_cw20_balances(
+            Addr::unchecked("mars_token"),
+            &[(
+                Addr::unchecked(MOCK_CONTRACT_ADDR),
+                unstake_mars_in_contract,
+            )],
+        );
+        deps.querier
+            .set_cw20_total_supply(Addr::unchecked("xmars_token"), unstake_xmars_supply);
+        GLOBAL_STATE
+            .save(
+                &mut deps.storage,
+                &GlobalState {
+                    total_mars_for_claimers: initial_mars_for_claimers,
+                },
+            )
+            .unwrap();
+        // valid unstake
+        {
+            let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
+                msg: to_binary(&ReceiveMsg::Unstake {
+                    recipient: Some(String::from("reCipient")),
+                })
+                .unwrap(),
+                sender: String::from("staker"),
+                amount: unstake_amount,
+            });
+            let info = mock_info("xmars_token", &[]);
+
+            let res = execute(deps.as_mut(), env.clone(), info, msg.clone()).unwrap();
+
+            let expected_claimable_mars = unstake_amount.multiply_ratio(
+                unstake_mars_in_contract - initial_mars_for_claimers,
+                unstake_xmars_supply,
+            );
+
+            assert_eq!(
+                vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: String::from("xmars_token"),
+                    funds: vec![],
+                    msg: to_binary(&Cw20ExecuteMsg::Burn {
+                        amount: unstake_amount,
+                    })
+                    .unwrap(),
+                })),],
+                res.messages
+            );
+            assert_eq!(
+                vec![
+                    attr("action", "unstake"),
+                    attr("staker", String::from("staker")),
+                    attr("recipient", String::from("recipient")),
+                    attr("xmars_burned", unstake_amount),
+                    attr("mars_claimable", expected_claimable_mars),
+                ],
+                res.attributes
+            );
+
+            let claim_upper = CLAIMS
+                .may_load(&deps.storage, &Addr::unchecked("reCipient"))
+                .unwrap();
+
+            assert_eq!(claim_upper, None);
+
+            let claim = CLAIMS
+                .load(&deps.storage, &Addr::unchecked("recipient"))
+                .unwrap();
+
+            assert_eq!(
+                claim,
+                Claim {
+                    created_at_block: unstake_height,
+                    cooldown_end_timestamp: unstake_time + TEST_COOLDOWN_DURATION,
+                    amount: expected_claimable_mars,
+                }
+            );
+
+            mars_for_claimers += expected_claimable_mars;
+
+            let global_state = GLOBAL_STATE.load(&deps.storage).unwrap();
+
+            assert_eq!(global_state.total_mars_for_claimers, mars_for_claimers);
+        }
+    }
+
+    #[test]
     fn test_claim() {
         let mut deps = th_setup(&[]);
         let initial_mars_for_claimers = Uint128::new(4_000_000_000000);
@@ -1478,38 +1533,6 @@ mod tests {
                 expected_total_mars_for_claimers
             );
         }
-    }
-
-    #[test]
-    fn test_cannot_swap_mars() {
-        let mut deps = th_setup(&[]);
-        // *
-        // can't swap Mars with SwapAssetToUusd
-        // *
-        let msg = ExecuteMsg::SwapAssetToUusd {
-            offer_asset_info: AssetInfo::Token {
-                contract_addr: Addr::unchecked("mars_token"),
-            },
-            amount: None,
-        };
-        let info = mock_info("owner", &[]);
-        let response =
-            execute(deps.as_mut(), mock_env(MockEnvParams::default()), info, msg).unwrap_err();
-        assert_eq!(response, ContractError::MarsCannotSwap {});
-
-        // *
-        // Check for case sensitivity
-        // *
-        let msg = ExecuteMsg::SwapAssetToUusd {
-            offer_asset_info: AssetInfo::Token {
-                contract_addr: Addr::unchecked("MARS_token"),
-            },
-            amount: None,
-        };
-        let info = mock_info("owner", &[]);
-        let response =
-            execute(deps.as_mut(), mock_env(MockEnvParams::default()), info, msg).unwrap_err();
-        assert_eq!(response, ContractError::MarsCannotSwap {});
     }
 
     // TEST HELPERS

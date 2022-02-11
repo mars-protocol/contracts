@@ -38,7 +38,7 @@ const ASTROPORT_ARTIFACTS_PATH = process.env.ASTROPORT_ARTIFACTS_PATH!
 
 const COOLDOWN_DURATION_SECONDS = 2
 const MARS_STAKE_AMOUNT = 1_000_000000
-const ULUNA_SWAP_AMOUNT = 100_000000
+const UUSD_REWARDS_AMOUNT = 100_000000
 
 const LUNA_USD_PRICE = 25
 const ULUNA_UUSD_PAIR_ULUNA_LP_AMOUNT = 1_000_000_000000
@@ -329,37 +329,17 @@ async function assertXmarsTotalSupplyAt(
   {
     console.log("swap protocol rewards to USD, then USD to Mars")
 
-    // send luna to the staking contract to simulate rewards accrued to stakers from activity on the
-    // protocol
+    // send uusd to the staking contract to simulate rewards accrued to stakers sent form the rewards distributor 
     await performTransaction(terra, deployer,
-      new MsgSend(deployer.key.accAddress, staking, { uluna: ULUNA_SWAP_AMOUNT })
+      new MsgSend(deployer.key.accAddress, staking, { uusd: UUSD_REWARDS_AMOUNT })
     )
-
-    // swap luna to usd
-    const uusdBalanceBeforeSwapToUusd = await queryBalanceNative(terra, staking, "uusd")
-
-    await executeContract(terra, deployer, staking,
-      {
-        swap_asset_to_uusd: {
-          offer_asset_info: { native_token: { denom: "uluna" } },
-          amount: String(ULUNA_SWAP_AMOUNT)
-        }
-      },
-      { logger: logger }
-    )
-
-    const ulunaBalanceAfterSwapToUusd = await queryBalanceNative(terra, staking, "uluna")
-    const uusdBalanceAfterSwapToUusd = await queryBalanceNative(terra, staking, "uusd")
-
-    strictEqual(ulunaBalanceAfterSwapToUusd, 0)
-    assert(uusdBalanceAfterSwapToUusd > uusdBalanceBeforeSwapToUusd)
 
     // swap usd to mars
     const uusdBalanceBeforeSwapToMars = await queryBalanceNative(terra, staking, "uusd")
     const marsBalanceBeforeSwapToMars = await queryBalanceCw20(terra, staking, mars)
 
     // don't swap the entire uusd balance, otherwise there won't be enough to pay the tx fee
-    const uusdSwapAmount = uusdBalanceAfterSwapToUusd - 10_000000
+    const uusdSwapAmount = uusdBalanceBeforeSwapToMars - 10_000000
 
     await executeContract(terra, deployer, staking,
       { swap_uusd_to_mars: { amount: String(uusdSwapAmount) } }, { logger: logger }
