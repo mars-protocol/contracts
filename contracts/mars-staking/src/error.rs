@@ -33,6 +33,9 @@ pub enum ContractError {
     #[error("Mars amount to transfer is greater than total balance")]
     TransferMarsAmountTooLarge {},
 
+    #[error("Cannot have two slash events on the same block")]
+    TransferMarsCannotHaveTwoSlashEventsOnBlock {},
+
     #[error("Cannot swap MARS")]
     MarsCannotSwap {},
 }

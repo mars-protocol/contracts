@@ -350,6 +350,14 @@ pub fn execute_transfer_mars(
         return Err(MarsError::Unauthorized {}.into());
     }
 
+    // Check there are no slash events on the same block
+    let slash_event_on_block =
+        SLASH_EVENTS.may_load(deps.storage, U64Key::new(env.block.height))?;
+
+    if slash_event_on_block.is_some() {
+        return Err(ContractError::TransferMarsCannotHaveTwoSlashEventsOnBlock {});
+    }
+
     let mars_token_address = address_provider::helpers::query_address(
         &deps.querier,
         config.address_provider_address,
@@ -1532,6 +1540,22 @@ mod tests {
                 global_state.total_mars_for_claimers,
                 expected_total_mars_for_claimers
             );
+        }
+
+        // Transfer on same block fails
+        {
+            let env = mock_env_at_block_height(transfer_block);
+            let info = mock_info("owner", &[]);
+            let msg = ExecuteMsg::TransferMars {
+                recipient: "recipient".to_string(),
+                amount: Uint128::new(200_000u128),
+            };
+            let err = execute(deps.as_mut(), env, info, msg).unwrap_err();
+
+            assert_eq!(
+                err,
+                ContractError::TransferMarsCannotHaveTwoSlashEventsOnBlock {}
+            )
         }
     }
 
