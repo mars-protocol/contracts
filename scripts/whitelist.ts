@@ -12,6 +12,11 @@ async function main() {
       URL: 'https://bombay-lcd.terra.dev',
       chainID: 'bombay-12'
     })
+  } else if (process.env.NETWORK === "mainnet") {
+    terra = new LCDClient({
+      URL: 'https://lcd.terra.dev',
+      chainID: 'columbus-5'
+    })
   } else {
     terra = new LocalTerra();
   }
