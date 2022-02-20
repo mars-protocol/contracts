@@ -16,7 +16,9 @@ import {
 import {
   getBlockHeight,
   mintCw20,
-  queryBalanceCw20
+  queryBalanceCw20,
+  waitUntilBlockHeight,
+  castVote
 } from "./test_helpers.js";
 
 // CONSTS
@@ -36,9 +38,10 @@ const PROPOSAL_VOTING_PERIOD = 10;
 // block before proposals were submitted are used
 const PROPOSAL_REQUIRED_QUORUM = 0.99;
 
-const ALICE_MARS_BALANCE = PROPOSAL_REQUIRED_DEPOSIT;
+const ALICE_MARS_BALANCE = PROPOSAL_REQUIRED_DEPOSIT * 2; // deposit is returned if proposal pass, otherwise goes to staking contract
 const BOB_WALLET_MARS_BALANCE = 12345; // Mars tokens in bob's wallet
 const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob in the vesting contract
+const JOHN_WALLET_MARS_BALANCE = 600_000000; // Mars tokens in john's wallet
 
 // MAIN
 
@@ -53,13 +56,15 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
   const deployer = terra.wallets.test1;
   const alice = terra.wallets.test2; // a user who creates a governance proposal
   const bob = terra.wallets.test3; // a person receiving a MARS token allocations
-  const admin = terra.wallets.test4; // protocol admin
+  const john = terra.wallets.test4; // a user who stakes MARS and vote for proposal
+  const admin = terra.wallets.test5; // protocol admin
   // mock contract addresses
   const astroportGenerator = new MnemonicKey().accAddress
 
   console.log("deployer:", deployer.key.accAddress);
   console.log("alice:   ", alice.key.accAddress);
   console.log("bob:     ", bob.key.accAddress);
+  console.log("john:   ", john.key.accAddress);
   console.log("admin:   ", admin.key.accAddress);
 
   process.stdout.write("deploying astroport... ");
@@ -222,6 +227,7 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
 
   await mintCw20(terra, deployer, mars, alice.key.accAddress, ALICE_MARS_BALANCE, logger);
   await mintCw20(terra, deployer, mars, bob.key.accAddress, BOB_WALLET_MARS_BALANCE, logger);
+  await mintCw20(terra, deployer, mars, john.key.accAddress, JOHN_WALLET_MARS_BALANCE, logger);
   await mintCw20(terra, deployer, mars, admin.key.accAddress, BOB_VESTING_MARS_BALANCE, logger);
 
   console.log("done!");
@@ -290,15 +296,15 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
   }
 
   {
-    process.stdout.write("alice submits a governance proposal... ");
+    process.stdout.write("alice submits first governance proposal... ");
 
     const submitProposalResult = await executeContract(terra, alice, mars, {
       send: {
         contract: council,
-        amount: String(ALICE_MARS_BALANCE),
+        amount: String(PROPOSAL_REQUIRED_DEPOSIT),
         msg: toEncodedBinary({
           submit_proposal: {
-            title: "Test",
+            title: "Test 1",
             description: "This is a test",
             link: "https://twitter.com/",
             messages: [],
@@ -306,6 +312,9 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
         }),
       },
     }, { logger: logger });
+    let blockHeight = await getBlockHeight(terra, submitProposalResult)
+    const aliceProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD
+    const aliceProposalEffectiveDelayEnd = aliceProposalVotingPeriodEnd + PROPOSAL_EFFECTIVE_DELAY
     const proposalId = parseInt(
       submitProposalResult.logs[0].eventsByType.wasm.proposal_id[0]
     );
@@ -314,12 +323,7 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
 
     process.stdout.write("bob votes for the governance proposal... ");
 
-    const castVoteResult = await executeContract(terra, bob, council, {
-      cast_vote: {
-        proposal_id: proposalId,
-        vote: "for",
-      },
-    }, { logger: logger });
+    const castVoteResult =await castVote(terra, bob, council, proposalId, "for", logger)
 
     console.log("success!");
 
@@ -329,6 +333,117 @@ const BOB_VESTING_MARS_BALANCE = 1_000_000000; // Mars tokens allocated to bob i
       castVoteResult.logs[0].eventsByType.wasm.voting_power[0]
     );
     strictEqual(bobVotingPower, BOB_WALLET_MARS_BALANCE + BOB_VESTING_MARS_BALANCE);
+
+    console.log("success!");
+
+    process.stdout.write("wait for voting periods to end...")
+
+    await waitUntilBlockHeight(terra, aliceProposalVotingPeriodEnd)
+    await executeContract(terra, deployer, council, { end_proposal: { proposal_id: proposalId } }, { logger: logger })
+    await waitUntilBlockHeight(terra, aliceProposalEffectiveDelayEnd)
+
+    console.log("success!");
+  }
+
+  {
+    process.stdout.write(
+      "john stakes Mars available in his wallet and receives the same amount of xMars... "
+    );
+
+    await executeContract(terra, john, mars, {
+      send: {
+        contract: staking,
+        amount: String(JOHN_WALLET_MARS_BALANCE),
+        msg: toEncodedBinary({ stake: {} }),
+      },
+    }, { logger: logger });
+
+    console.log("success!");
+  }
+
+  {
+    process.stdout.write("alice submits second governance proposal... ");
+
+    const submitProposalResult = await executeContract(terra, alice, mars, {
+      send: {
+        contract: council,
+        amount: String(PROPOSAL_REQUIRED_DEPOSIT),
+        msg: toEncodedBinary({
+          submit_proposal: {
+            title: "Test 2",
+            description: "This is a test",
+            link: "https://twitter.com/",
+            messages: [],
+          },
+        }),
+      },
+    }, { logger: logger });
+    let blockHeight = await getBlockHeight(terra, submitProposalResult)
+    const aliceProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD
+    const aliceProposalEffectiveDelayEnd = aliceProposalVotingPeriodEnd + PROPOSAL_EFFECTIVE_DELAY
+    const proposalId = parseInt(
+      submitProposalResult.logs[0].eventsByType.wasm.proposal_id[0]
+    );
+
+    console.log("success!");
+
+    process.stdout.write("john vote for proposal...")
+
+    await castVote(terra, john, council, proposalId, "for", logger)
+
+    console.log("success!");
+
+    process.stdout.write("proposal is rejected...")
+
+    await waitUntilBlockHeight(terra, aliceProposalVotingPeriodEnd)
+    await executeContract(terra, deployer, council, { end_proposal: { proposal_id: proposalId } }, { logger: logger })
+    const aliceProposalStatus = await queryContract(terra, council, { proposal: { proposal_id: proposalId } })
+    strictEqual(aliceProposalStatus.status, "rejected")
+    await waitUntilBlockHeight(terra, aliceProposalEffectiveDelayEnd)
+
+    console.log("success!");
+  }
+
+  {
+    process.stdout.write("alice submits third governance proposal... ");
+
+    const submitProposalResult = await executeContract(terra, alice, mars, {
+      send: {
+        contract: council,
+        amount: String(PROPOSAL_REQUIRED_DEPOSIT),
+        msg: toEncodedBinary({
+          submit_proposal: {
+            title: "Test 3",
+            description: "This is a test",
+            link: "https://twitter.com/",
+            messages: [],
+          },
+        }),
+      },
+    }, { logger: logger });
+    let blockHeight = await getBlockHeight(terra, submitProposalResult)
+    const aliceProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD
+    const aliceProposalEffectiveDelayEnd = aliceProposalVotingPeriodEnd + PROPOSAL_EFFECTIVE_DELAY
+    const proposalId = parseInt(
+      submitProposalResult.logs[0].eventsByType.wasm.proposal_id[0]
+    );
+
+    console.log("success!");
+
+    process.stdout.write("bob and john vote for proposal...")
+
+    await castVote(terra, bob, council, proposalId, "for", logger)
+    await castVote(terra, john, council, proposalId, "for", logger)
+
+    console.log("success!");
+
+    process.stdout.write("proposal is passed...")
+
+    await waitUntilBlockHeight(terra, aliceProposalVotingPeriodEnd)
+    await executeContract(terra, deployer, council, { end_proposal: { proposal_id: proposalId } }, { logger: logger })
+    const aliceProposalStatus = await queryContract(terra, council, { proposal: { proposal_id: proposalId } })
+    strictEqual(aliceProposalStatus.status, "passed")
+    await waitUntilBlockHeight(terra, aliceProposalEffectiveDelayEnd)
 
     console.log("success!");
   }

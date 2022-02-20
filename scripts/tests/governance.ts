@@ -20,7 +20,9 @@ import {
   getBlockHeight,
   mintCw20,
   queryBalanceCw20,
-  transferCw20
+  transferCw20,
+  waitUntilBlockHeight,
+  castVote
 } from "./test_helpers.js"
 
 // CONSTS
@@ -53,54 +55,6 @@ async function assertXmarsBalanceAt(
 ) {
   const xMarsBalance = await queryContract(terra, xMars, { balance_at: { address, block } })
   strictEqual(parseInt(xMarsBalance.balance), expectedBalance)
-}
-
-async function castVote(
-  terra: LCDClient,
-  wallet: Wallet,
-  council: string,
-  proposalId: number,
-  vote: string,
-  logger?: Logger
-) {
-  return await executeContract(terra, wallet, council,
-    {
-      cast_vote: {
-        proposal_id: proposalId,
-        vote
-      }
-    },
-    { logger: logger }
-  )
-}
-
-async function waitUntilBlockHeight(
-  terra: LCDClient,
-  blockHeight: number,
-) {
-  const maxTries = 10
-  let tries = 0
-  let backoff = 1
-  while (true) {
-    const latestBlock = await terra.tendermint.blockInfo()
-    const latestBlockHeight = parseInt(latestBlock.block.header.height)
-
-    if (latestBlockHeight >= blockHeight) {
-      break
-    }
-
-    // timeout
-    tries++
-    if (tries == maxTries) {
-      throw new Error(
-        `timed out waiting for block height ${blockHeight}, current block height: ${latestBlockHeight}`
-      )
-    }
-
-    // exponential backoff
-    await sleep(backoff * 1000)
-    backoff *= 2
-  }
 }
 
 // MAIN

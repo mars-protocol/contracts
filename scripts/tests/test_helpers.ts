@@ -111,6 +111,27 @@ export async function deductTax(
   return coin.amount.sub(await computeTax(terra, coin)).floor()
 }
 
+// governance
+
+export async function castVote(
+  terra: LCDClient,
+  wallet: Wallet,
+  council: string,
+  proposalId: number,
+  vote: string,
+  logger?: Logger
+) {
+  return await executeContract(terra, wallet, council,
+    {
+      cast_vote: {
+        proposal_id: proposalId,
+        vote
+      }
+    },
+    { logger: logger }
+  )
+}
+
 // red bank
 
 export async function setAssetOraclePriceSource(
@@ -250,6 +271,35 @@ export async function getTxTimestamp(
 ) {
   const txInfo = await terra.tx.txInfo(result.txhash)
   return Date.parse(txInfo.timestamp) / 1000 // seconds
+}
+
+export async function waitUntilBlockHeight(
+  terra: LCDClient,
+  blockHeight: number,
+) {
+  const maxTries = 10
+  let tries = 0
+  let backoff = 1
+  while (true) {
+    const latestBlock = await terra.tendermint.blockInfo()
+    const latestBlockHeight = parseInt(latestBlock.block.header.height)
+
+    if (latestBlockHeight >= blockHeight) {
+      break
+    }
+
+    // timeout
+    tries++
+    if (tries == maxTries) {
+      throw new Error(
+        `timed out waiting for block height ${blockHeight}, current block height: ${latestBlockHeight}`
+      )
+    }
+
+    // exponential backoff
+    await sleep(backoff * 1000)
+    backoff *= 2
+  }
 }
 
 // testing
