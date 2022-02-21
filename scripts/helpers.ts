@@ -8,6 +8,7 @@ import {
   MsgExecuteContract,
   MsgInstantiateContract,
   MsgMigrateContract,
+  MsgUpdateContractAdmin,
   MsgStoreCode,
   Tx,
   TxError,
@@ -167,6 +168,11 @@ export async function queryContract(terra: LCDClient, contractAddress: string, q
 export async function deployContract(terra: LCDClient, wallet: Wallet, filepath: string, initMsg: object) {
   const codeId = await uploadContract(terra, wallet, filepath);
   return await instantiateContract(terra, wallet, codeId, initMsg);
+}
+
+export async function updateContractAdmin(terra: LCDClient, admin: Wallet, newAdmin: string, contractAddress: string) {
+  const updateContractAdminMsg = new MsgUpdateContractAdmin(admin.key.accAddress, newAdmin, contractAddress);
+  return await performTransaction(terra, admin, updateContractAdminMsg);
 }
 
 export async function migrate(terra: LCDClient, wallet: Wallet, contractAddress: string, newCodeId: number) {

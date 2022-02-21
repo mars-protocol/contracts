@@ -9,10 +9,12 @@ import { strictEqual } from "assert"
 import 'dotenv/config.js'
 import {
   deployContract,
-  executeContract, instantiateContract, Logger,
+  executeContract,
+  instantiateContract,
+  updateContractAdmin,
+  Logger,
   queryContract,
   setTimeoutDuration,
-  sleep,
   toEncodedBinary,
   uploadContract
 } from "../helpers.js"
@@ -78,7 +80,9 @@ async function castVote(
     { owner: deployer.key.accAddress }
   )
 
-  const council = await deployContract(terra, deployer, "../artifacts/mars_council.wasm",
+  const councilCodeId = await uploadContract(terra, deployer, "../artifacts/mars_council.wasm")
+  // instantiate `mars_council` with admin set to deployer
+  const council = await instantiateContract(terra, deployer, councilCodeId,
     {
       config: {
         address_provider_address: addressProvider,
@@ -89,15 +93,18 @@ async function castVote(
         proposal_required_quorum: String(PROPOSAL_REQUIRED_QUORUM),
         proposal_required_threshold: "0.5"
       }
-    }
-  )
+    },
+    { admin: deployer.key.accAddress }
+    )
 
   const vesting = await deployContract(terra, deployer, "../artifacts/mars_vesting.wasm",
     {
       address_provider_address: addressProvider,
-      unlock_start_time: 1893452400, // 2030-01-01
-      unlock_cliff: 15552000,        // 180 days
-      unlock_duration: 94608000,     // 3 years
+      unlock_schedule: {
+        start_time: 1893452400, // 2030-01-01
+        cliff: 15552000,        // 180 days
+        duration: 94608000,     // 3 years
+      }
     }
   )
 
@@ -138,99 +145,180 @@ async function castVote(
     { logger: logger }
   )
 
-  // mint tokens
-  await mintCw20(terra, deployer, mars, john.key.accAddress, JOHN_PROPOSAL_DEPOSIT, logger)
-  await mintCw20(terra, deployer, xMars, john.key.accAddress, JOHN_XMARS_BALANCE, logger)
-
   // deploy `counter_version_one` with admin set to council
   const counterVer1CodeId = await uploadContract(terra, deployer, join(MARS_MOCKS_ARTIFACTS_PATH, "counter_version_one.wasm"))
   const counterVer1 = await instantiateContract(terra, deployer, counterVer1CodeId, { owner: deployer.key.accAddress }, { admin: council })
 
-  // upload `counter_version_two`
-  const counterVer2CodeId = await uploadContract(terra, deployer, join(MARS_MOCKS_ARTIFACTS_PATH, "counter_version_two.wasm"))
+  // mint tokens
+  await mintCw20(terra, deployer, mars, john.key.accAddress, JOHN_PROPOSAL_DEPOSIT, logger)
+  await mintCw20(terra, deployer, xMars, john.key.accAddress, JOHN_XMARS_BALANCE, logger)
 
   // TESTS
 
-  console.log("verify first version of `counter` contract")
+  // migrate `counter` contract
+  {
+    console.log("upload new version of `counter` contract")
 
-  await executeContract(terra, deployer, counterVer1, { increment: {} }, { logger: logger })
-  await executeContract(terra, deployer, counterVer1, { increment: {} }, { logger: logger })
+    const counterVer2CodeId = await uploadContract(terra, deployer, join(MARS_MOCKS_ARTIFACTS_PATH, "counter_version_two.wasm"))
 
-  const countResponse = await queryContract(terra, counterVer1, { get_count: {} })
-  strictEqual(countResponse.count, 2)
+    console.log("verify first version of `counter` contract")
 
-  const versionResponse = await queryContract(terra, counterVer1, { get_version: {} })
-  strictEqual(versionResponse.version, "one")
+    await executeContract(terra, deployer, counterVer1, {increment: {}}, {logger: logger})
+    await executeContract(terra, deployer, counterVer1, {increment: {}}, {logger: logger})
 
-  console.log("john submits a proposal to initialise `counter` contract migration")
+    const countResponse = await queryContract(terra, counterVer1, {get_count: {}})
+    strictEqual(countResponse.count, 2)
 
-  let txResult = await executeContract(terra, john, mars,
-    {
-      send: {
-        contract: council,
-        amount: String(JOHN_PROPOSAL_DEPOSIT),
-        msg: toEncodedBinary({
-          submit_proposal: {
-            title: "Migrate counter contract",
-            description: "Migrate counter_version_one -> counter_version_two",
-            link: "http://www.terra.money",
-            messages: [
-              {
-                execution_order: 1,
-                msg: {
-                  wasm: {
-                    migrate: {
-                      contract_addr: counterVer1,
-                      new_code_id: counterVer2CodeId,
-                      msg: toEncodedBinary({})
+    const versionResponse = await queryContract(terra, counterVer1, {get_version: {}})
+    strictEqual(versionResponse.version, "one")
+
+    console.log("john submits a proposal to initialise `counter` contract migration")
+
+    let txResult = await executeContract(terra, john, mars,
+      {
+        send: {
+          contract: council,
+          amount: String(JOHN_PROPOSAL_DEPOSIT),
+          msg: toEncodedBinary({
+            submit_proposal: {
+              title: "Migrate counter contract",
+              description: "Migrate counter_version_one -> counter_version_two",
+              link: "http://www.terra.money",
+              messages: [
+                {
+                  execution_order: 1,
+                  msg: {
+                    wasm: {
+                      migrate: {
+                        contract_addr: counterVer1,
+                        new_code_id: counterVer2CodeId,
+                        msg: toEncodedBinary({})
+                      }
+                    }
+                  }
+                },
+              ]
+            }
+          })
+        }
+      },
+      {logger: logger}
+    )
+    let blockHeight = await getBlockHeight(terra, txResult)
+    const johnProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD
+    const johnProposalEffectiveDelayEnd = johnProposalVotingPeriodEnd + PROPOSAL_EFFECTIVE_DELAY
+    const johnProposalId = parseInt(txResult.logs[0].eventsByType.wasm.proposal_id[0])
+
+    console.log("vote")
+
+    await castVote(terra, john, council, johnProposalId, "for", logger)
+
+    console.log("wait for voting periods to end")
+
+    await waitUntilBlockHeight(terra, johnProposalVotingPeriodEnd)
+
+    console.log("end proposal")
+
+    await executeContract(terra, deployer, council, {end_proposal: {proposal_id: johnProposalId}}, {logger: logger})
+
+    const johnProposalStatus = await queryContract(terra, council, {proposal: {proposal_id: johnProposalId}})
+    strictEqual(johnProposalStatus.status, "passed")
+
+    console.log("wait for effective delay period to end")
+
+    await waitUntilBlockHeight(terra, johnProposalEffectiveDelayEnd)
+
+    console.log("execute proposal")
+
+    await executeContract(terra, deployer, council, {execute_proposal: {proposal_id: johnProposalId}}, {logger: logger})
+
+    console.log("verify second version of `counter` contract")
+
+    await executeContract(terra, deployer, counterVer1, {increment: {}}, {logger: logger})
+
+    const countResponse2 = await queryContract(terra, counterVer1, {get_count: {}})
+    strictEqual(countResponse2.count, 3)
+
+    const versionResponse2 = await queryContract(terra, counterVer1, {get_version: {}})
+    strictEqual(versionResponse2.version, "two")
+  }
+
+  // migrate `council` contract
+  {
+    console.log("upload new version of `council` contract")
+
+    // we use `counter` contract with migrate entrypoint as new version of `council` contract
+    const councilVer2CodeId = await uploadContract(terra, deployer, join(MARS_MOCKS_ARTIFACTS_PATH, "counter_version_two.wasm"))
+
+    console.log("update council admin to itself")
+
+    await updateContractAdmin(terra, deployer, council, council)
+
+    console.log("john submits a proposal to initialise `council` contract migration")
+
+    let txResult = await executeContract(terra, john, mars,
+      {
+        send: {
+          contract: council,
+          amount: String(JOHN_PROPOSAL_DEPOSIT),
+          msg: toEncodedBinary({
+            submit_proposal: {
+              title: "Migrate council contract",
+              description: "Migrate council -> counter_version_two",
+              link: "http://www.terra.money",
+              messages: [
+                {
+                  execution_order: 1,
+                  msg: {
+                    wasm: {
+                      migrate: {
+                        contract_addr: council,
+                        new_code_id: councilVer2CodeId,
+                        msg: toEncodedBinary({})
+                      }
                     }
                   }
                 }
-              },
-            ]
-          }
-        })
-      }
-    },
-    { logger: logger }
-  )
-  let blockHeight = await getBlockHeight(terra, txResult)
-  const johnProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD
-  const johnProposalEffectiveDelayEnd = johnProposalVotingPeriodEnd + PROPOSAL_EFFECTIVE_DELAY
-  const johnProposalId = parseInt(txResult.logs[0].eventsByType.wasm.proposal_id[0])
+              ]
+            }
+          })
+        }
+      },
+      { logger: logger }
+    )
+    let blockHeight = await getBlockHeight(terra, txResult)
+    const johnProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD
+    const johnProposalEffectiveDelayEnd = johnProposalVotingPeriodEnd + PROPOSAL_EFFECTIVE_DELAY
+    const johnProposalId = parseInt(txResult.logs[0].eventsByType.wasm.proposal_id[0])
 
-  console.log("vote")
+    console.log("vote")
 
-  await castVote(terra, john, council, johnProposalId, "for", logger)
+    await castVote(terra, john, council, johnProposalId, "for", logger)
 
-  console.log("wait for voting periods to end")
+    console.log("wait for voting periods to end")
 
-  await waitUntilBlockHeight(terra, johnProposalVotingPeriodEnd)
+    await waitUntilBlockHeight(terra, johnProposalVotingPeriodEnd)
 
-  console.log("end proposal")
+    console.log("end proposal")
 
-  await executeContract(terra, deployer, council, { end_proposal: { proposal_id: johnProposalId } }, { logger: logger })
+    await executeContract(terra, deployer, council, { end_proposal: { proposal_id: johnProposalId } }, { logger: logger })
 
-  const johnProposalStatus = await queryContract(terra, council, { proposal: { proposal_id: johnProposalId } })
-  strictEqual(johnProposalStatus.status, "passed")
+    const johnProposalStatus = await queryContract(terra, council, { proposal: { proposal_id: johnProposalId } })
+    strictEqual(johnProposalStatus.status, "passed")
 
-  console.log("wait for effective delay period to end")
+    console.log("wait for effective delay period to end")
 
-  await waitUntilBlockHeight(terra, johnProposalEffectiveDelayEnd)
+    await waitUntilBlockHeight(terra, johnProposalEffectiveDelayEnd)
 
-  console.log("execute proposal")
+    console.log("execute proposal")
 
-  await executeContract(terra, deployer, council, { execute_proposal: { proposal_id: johnProposalId } }, { logger: logger })
+    await executeContract(terra, deployer, council, { execute_proposal: { proposal_id: johnProposalId } }, { logger: logger })
 
-  console.log("verify second version of `counter` contract")
+    console.log("verify second version of `council` contract")
 
-  await executeContract(terra, deployer, counterVer1, { increment: {} }, { logger: logger })
-
-  const countResponse2 = await queryContract(terra, counterVer1, { get_count: {} })
-  strictEqual(countResponse2.count, 3)
-
-  const versionResponse2 = await queryContract(terra, counterVer1, { get_version: {} })
-  strictEqual(versionResponse2.version, "two")
+    const versionResponse2 = await queryContract(terra, council, { get_version: {} })
+    strictEqual(versionResponse2.version, "two")
+  }
 
   console.log("OK")
 
