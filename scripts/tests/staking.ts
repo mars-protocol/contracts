@@ -327,7 +327,7 @@ async function assertXmarsTotalSupplyAt(
   }
 
   {
-    console.log("swap protocol rewards to USD, then USD to Mars")
+    console.log("swap USD to Mars")
 
     // send uusd to the staking contract to simulate rewards accrued to stakers sent form the rewards distributor 
     await performTransaction(terra, deployer,
