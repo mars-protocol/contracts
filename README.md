@@ -1,6 +1,9 @@
 # Mars Protocol
 This repository contains the source code for the core smart contracts of Mars Protocol. Smart contracts are meant to be compiled to `.wasm` files and uploaded to the [Terra](https://www.terra.money/) blockchain.
 
+## Bug bounty
+A bug bounty is currently open for these contracts. See details at: https://immunefi.com/bounty/marsprotocol/
+
 ## Verify contracts
 
 Follow these instructions to verify that the smart contracts that exist on chain correspond to a particular version of the contract's source code:
