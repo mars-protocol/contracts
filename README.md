@@ -16,8 +16,6 @@ Follow these instructions to verify that the smart contracts that exist on chain
     - One way to do this is to get the checksum directly from the blockchain:
 
     ```
-    CODE_ID=610
-
     curl "https://fcd.terra.dev/terra/wasm/v1beta1/codes/${CODE_ID}" \
       | jq ".code_info.code_hash" \
       | tr -d \" \
@@ -28,8 +26,6 @@ Follow these instructions to verify that the smart contracts that exist on chain
     - Alternatively, download the wasm byte code relating to the code ID from the blockchain and calculate its SHA256 checksum:
 
     ```
-    CODE_ID=610
-
     curl "https://fcd.terra.dev/terra/wasm/v1beta1/codes/${CODE_ID}/byte_code" \
       | jq ".byte_code" \
       | tr -d \" \
