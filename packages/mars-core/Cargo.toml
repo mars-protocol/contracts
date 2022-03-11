@@ -3,6 +3,13 @@ name = "mars-core"
 version = "1.0.0"
 authors = ["Spike Spiegel <spikeonmars@protonmail.com>"]
 edition = "2018"
+description = "Mars is a fully automated, on-chain credit protocol built on Terra and governed by a decentralised community of users and developers"
+license = "GPL-3.0"
+repository = "https://github.com/mars-protocol/mars-core"
+homepage = "https://marsprotocol.io"
+documentation = "https://marsprotocol.io"
+readme = "README.md"
+keywords = ["terra", "cosmwasm"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
