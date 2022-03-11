@@ -7,7 +7,7 @@ description = "Mars is a fully automated, on-chain credit protocol built on Terr
 license = "GPL-3.0"
 repository = "https://github.com/mars-protocol/mars-core"
 homepage = "https://marsprotocol.io"
-documentation = "https://marsprotocol.io"
+documentation = "https://docs.marsprotocol.io/mars-protocol/developers/protocol-overview"
 readme = "README.md"
 keywords = ["terra", "cosmwasm"]
 
