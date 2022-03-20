@@ -12,7 +12,7 @@ interface CouncilInitMsg {
 
 interface VestingInitMsg {
   address_provider_address?: string
-  default_unlock_schedule: Schedule
+  unlock_schedule: Schedule
 }
 
 interface Schedule {

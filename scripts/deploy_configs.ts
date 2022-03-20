@@ -12,9 +12,11 @@ export const testnet: Config = {
   },
   vestingInitMsg: {
     "address_provider_address": undefined,
-    "unlock_start_time": 1638316800,
-    "unlock_cliff": 15770000,
-    "unlock_duration": 94610000
+    "unlock_schedule": {
+      "start_time": 1638316800,
+      "cliff": 15770000,
+      "duration": 94610000
+    }
   },
   stakingInitMsg: {
     "config": {
@@ -237,9 +239,11 @@ export const local: Config = {
   vestingInitMsg: {
     // "config": {
     "address_provider_address": undefined,
-    "unlock_start_time": 1638316800,
-    "unlock_cliff": 15770000,
-    "unlock_duration": 94610000
+    "unlock_schedule": {
+      "start_time": 1638316800,
+      "cliff": 15770000,
+      "duration": 94610000
+    }
     // }
   },
   stakingInitMsg: {
