@@ -2,7 +2,7 @@
 
 on: push
 
-name: Basic
+name: Main
 
 jobs:
 

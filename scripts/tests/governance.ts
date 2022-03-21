@@ -118,7 +118,7 @@ async function assertXmarsBalanceAt(
     {
       address_provider_address: addressProvider,
       unlock_schedule: {
-        start_time: 1647302400, // 2021-03-15
+        start_time: 1893452400, // 2030-01-01
         cliff: 15552000,        // 180 days
         duration: 94608000,     // 3 years
       }

@@ -351,7 +351,7 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
     },
   }, { logger: logger });
   const poolUusdDepth = await queryBalanceNative(terra, astroportPair, "uusd");
-  strictEqual(poolUusdDepth, 414018001);
+  strictEqual(poolUusdDepth, 414018000);
   const poolUancDepth = await queryBalanceCw20(terra, astroportPair, anchorToken);
   strictEqual(poolUancDepth, 70000000);
   console.log("success!");
