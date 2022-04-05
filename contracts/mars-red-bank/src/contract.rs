@@ -22,7 +22,6 @@ use mars_core::math::decimal::Decimal;
 
 use crate::accounts::get_user_position;
 use crate::error::ContractError;
-use crate::error::ContractError::InvalidNativeCoinsSent;
 use crate::interest_rate_models::init_interest_rate_model;
 use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
@@ -2269,7 +2268,7 @@ fn get_denom_amount_from_coins(coins: &[Coin], denom: &str) -> Result<Uint128, C
     if coins.len() == 1 && coins[0].denom == denom {
         Ok(coins[0].amount)
     } else {
-        Err(InvalidNativeCoinsSent {
+        Err(ContractError::InvalidNativeCoinsSent {
             denom: denom.to_string(),
         })
     }
