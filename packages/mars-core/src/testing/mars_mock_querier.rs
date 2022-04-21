@@ -28,6 +28,8 @@ use super::{
     xmars_querier::XMarsQuerier,
 };
 use crate::math::decimal::Decimal;
+use crate::testing::basset_querier::BAssetQuerier;
+use basset::hub::StateResponse;
 
 pub struct MarsMockQuerier {
     base: MockQuerier<TerraQueryWrapper>,
@@ -40,6 +42,7 @@ pub struct MarsMockQuerier {
     staking_querier: StakingQuerier,
     vesting_querier: VestingQuerier,
     incentives_querier: IncentivesQuerier,
+    basset_querier: BAssetQuerier,
 }
 
 impl Querier for MarsMockQuerier {
@@ -72,6 +75,7 @@ impl MarsMockQuerier {
             staking_querier: StakingQuerier::default(),
             vesting_querier: VestingQuerier::default(),
             incentives_querier: IncentivesQuerier::default(),
+            basset_querier: BAssetQuerier::default(),
         }
     }
 
@@ -237,6 +241,10 @@ impl MarsMockQuerier {
             .insert(Addr::unchecked(user_address), unclaimed_rewards);
     }
 
+    pub fn set_basset_state_response(&mut self, state_response: StateResponse) {
+        self.basset_querier.state_response = Some(state_response);
+    }
+
     pub fn handle_query(&self, request: &QueryRequest<TerraQueryWrapper>) -> QuerierResult {
         match &request {
             QueryRequest::Custom(TerraQueryWrapper { route, query_data }) => {
@@ -322,6 +330,12 @@ impl MarsMockQuerier {
                     return self
                         .vesting_querier
                         .handle_query(&contract_addr, vesting_query);
+                }
+
+                // bAsset Queries
+                let basset_query: StdResult<basset::hub::QueryMsg> = from_binary(msg);
+                if let Ok(query) = basset_query {
+                    return self.basset_querier.handle_query(&query);
                 }
 
                 panic!("[mock]: Unsupported wasm query: {:?}", msg);

@@ -33,5 +33,7 @@ thiserror = "1.0.23"
 
 astroport = "1.0"
 
+basset = { git = "https://github.com/lidofinance/lido-terra-contracts", tag = "v1.0.2" }
+
 [profile.release]
 overflow-checks = true

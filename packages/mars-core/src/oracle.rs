@@ -50,6 +50,8 @@ pub enum PriceSource<A> {
         /// Address of the asset of interest
         pair_address: A,
     },
+    /// stLuna price calculated from stLuna/Luna exchange rate from Lido hub contract and Luna price from current price source
+    StLuna { hub_address: A },
 }
 
 impl<A> fmt::Display for PriceSource<A> {
@@ -60,6 +62,7 @@ impl<A> fmt::Display for PriceSource<A> {
             PriceSource::AstroportSpot { .. } => "astroport_spot",
             PriceSource::AstroportTwap { .. } => "astroport_twap",
             PriceSource::AstroportLiquidityToken { .. } => "astroport_liquidity_token",
+            PriceSource::StLuna { .. } => "stluna",
         };
         write!(f, "{}", label)
     }
@@ -94,6 +97,9 @@ impl PriceSourceUnchecked {
                     pair_address: api.addr_validate(pair_address)?,
                 }
             }
+            PriceSourceUnchecked::StLuna { hub_address } => PriceSourceChecked::StLuna {
+                hub_address: api.addr_validate(hub_address)?,
+            },
         })
     }
 }
