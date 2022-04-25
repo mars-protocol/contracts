@@ -304,7 +304,7 @@ fn query_asset_price(
             Ok(price)
         }
 
-        PriceSourceChecked::StLuna { hub_address } => {
+        PriceSourceChecked::Stluna { hub_address } => {
             let stluna_exchange_rate = query_stluna_exchange_rate(&deps.querier, &hub_address)?;
 
             let luna_asset = Asset::Native {
@@ -699,7 +699,7 @@ mod tests {
         let reference = asset.get_reference();
         let msg = ExecuteMsg::SetAsset {
             asset: asset,
-            price_source: PriceSourceUnchecked::StLuna {
+            price_source: PriceSourceUnchecked::Stluna {
                 hub_address: "stluna_hub_addr".to_string(),
             },
         };
@@ -710,7 +710,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             price_source,
-            PriceSourceChecked::StLuna {
+            PriceSourceChecked::Stluna {
                 hub_address: Addr::unchecked("stluna_hub_addr")
             }
         );
@@ -1192,7 +1192,7 @@ mod tests {
             .save(
                 &mut deps.storage,
                 asset_reference.as_slice(),
-                &PriceSourceChecked::StLuna {
+                &PriceSourceChecked::Stluna {
                     hub_address: Addr::unchecked("stluna_hub_addr"),
                 },
             )
