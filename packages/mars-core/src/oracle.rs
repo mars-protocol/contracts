@@ -158,6 +158,9 @@ pub mod msg {
         /// NOTE: meant to be used by protocol contracts only
         AssetPriceByReference { asset_reference: Vec<u8> },
     }
+
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    pub struct MigrateMsg {}
 }
 
 pub mod helpers {

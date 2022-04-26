@@ -12,7 +12,7 @@ use mars_core::helpers::option_string_to_addr;
 use mars_core::math::decimal::Decimal;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::state::{ASTROPORT_TWAP_SNAPSHOTS, CONFIG, PRICE_SOURCES};
 use crate::{AstroportTwapSnapshot, Config, PriceSourceChecked, PriceSourceUnchecked};
 
@@ -316,6 +316,11 @@ fn query_asset_price(
             Ok(stluna_price)
         }
     }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+    Ok(Response::default())
 }
 
 // HELPERS
