@@ -315,6 +315,18 @@ fn query_asset_price(
             let stluna_price = stluna_exchange_rate.checked_mul(luna_price)?;
             Ok(stluna_price)
         }
+
+        PriceSourceChecked::Lunax { staking_address } => {
+            let lunax_exchange_rate = query_lunax_exchange_rate(&deps.querier, &staking_address)?;
+
+            let luna_asset = Asset::Native {
+                denom: "uluna".to_string(),
+            };
+            let luna_price = query_asset_price(deps, env, luna_asset.get_reference())?;
+
+            let lunax_price = lunax_exchange_rate.checked_mul(luna_price)?;
+            Ok(lunax_price)
+        }
     }
 }
 
@@ -343,7 +355,8 @@ mod helpers {
             SimulationResponse,
         },
     };
-    use mars_core::basset::hub::{QueryMsg, StateResponse};
+    use basset::hub::{QueryMsg as BAssetQueryMsg, StateResponse as BAssetStateResponse};
+    use stader::msg::{QueryMsg as StaderQueryMsg, QueryStateResponse as StaderStateResponse};
 
     const PROBE_AMOUNT: Uint128 = Uint128::new(1_000_000);
 
@@ -457,11 +470,24 @@ mod helpers {
         querier: &QuerierWrapper,
         hub_address: &Addr,
     ) -> StdResult<Decimal> {
-        let response: StateResponse = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-            contract_addr: hub_address.to_string(),
-            msg: to_binary(&QueryMsg::State {})?,
-        }))?;
+        let response: BAssetStateResponse =
+            querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+                contract_addr: hub_address.to_string(),
+                msg: to_binary(&BAssetQueryMsg::State {})?,
+            }))?;
         Ok(response.stluna_exchange_rate.into())
+    }
+
+    pub fn query_lunax_exchange_rate(
+        querier: &QuerierWrapper,
+        staking_address: &Addr,
+    ) -> StdResult<Decimal> {
+        let response: StaderStateResponse =
+            querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+                contract_addr: staking_address.to_string(),
+                msg: to_binary(&StaderQueryMsg::State {})?,
+            }))?;
+        Ok(response.state.exchange_rate.into())
     }
 }
 
@@ -473,11 +499,13 @@ mod tests {
     use astroport::asset::{Asset as AstroportAsset, AssetInfo, PairInfo};
     use astroport::factory::PairType;
     use astroport::pair::{CumulativePricesResponse, SimulationResponse};
+    use basset::hub::StateResponse;
     use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
     use cosmwasm_std::Decimal as StdDecimal;
     use cosmwasm_std::{from_binary, Addr, OwnedDeps};
-    use mars_core::basset::hub::StateResponse;
     use mars_core::testing::{mock_dependencies, mock_env_at_block_time, MarsMockQuerier};
+    use stader::msg::QueryStateResponse as StaderStateResponse;
+    use stader::state::State as StaderState;
 
     #[test]
     fn test_proper_initialization() {
@@ -717,6 +745,34 @@ mod tests {
             price_source,
             PriceSourceChecked::Stluna {
                 hub_address: Addr::unchecked("stluna_hub_addr")
+            }
+        );
+    }
+
+    #[test]
+    fn test_set_asset_lunax() {
+        let mut deps = th_setup();
+        let info = mock_info("owner", &[]);
+
+        let asset = Asset::Cw20 {
+            contract_addr: String::from("lunax_token"),
+        };
+        let reference = asset.get_reference();
+        let msg = ExecuteMsg::SetAsset {
+            asset: asset,
+            price_source: PriceSourceUnchecked::Lunax {
+                staking_address: "lunax_staking_addr".to_string(),
+            },
+        };
+        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+        let price_source = PRICE_SOURCES
+            .load(&deps.storage, reference.as_slice())
+            .unwrap();
+        assert_eq!(
+            price_source,
+            PriceSourceChecked::Lunax {
+                staking_address: Addr::unchecked("lunax_staking_addr")
             }
         );
     }
@@ -1230,6 +1286,77 @@ mod tests {
 
         // stLuna/USD = stLuna/Luna * Luna/USD
         assert_eq!(price, Decimal::from_ratio(1034_u128, 10_u128));
+    }
+
+    #[test]
+    fn test_query_asset_price_lunax() {
+        let mut deps = th_setup();
+
+        // Setup Luna native price source
+        let asset = Asset::Native {
+            denom: "uluna".to_string(),
+        };
+        let asset_reference = asset.get_reference();
+
+        deps.querier.set_native_exchange_rates(
+            "uluna".to_string(),
+            &[("uusd".to_string(), Decimal::from_ratio(94_u128, 1_u128))],
+        );
+
+        PRICE_SOURCES
+            .save(
+                &mut deps.storage,
+                asset_reference.as_slice(),
+                &PriceSourceChecked::Native {
+                    denom: "uluna".to_string(),
+                },
+            )
+            .unwrap();
+
+        // Setup LunaX (LunaX / Luna) price source
+        let asset = Asset::Cw20 {
+            contract_addr: String::from("lunax_token"),
+        };
+        let asset_reference = asset.get_reference();
+
+        PRICE_SOURCES
+            .save(
+                &mut deps.storage,
+                asset_reference.as_slice(),
+                &PriceSourceChecked::Lunax {
+                    staking_address: Addr::unchecked("lunax_staking_addr"),
+                },
+            )
+            .unwrap();
+
+        deps.querier.set_stader_state_response(StaderStateResponse {
+            state: StaderState {
+                total_staked: Default::default(),
+                exchange_rate: StdDecimal::from_ratio(112_u128, 100_u128), // 1 lunax = 1.12 luna
+                last_reconciled_batch_id: 0,
+                current_undelegation_batch_id: 0,
+                last_undelegation_time: Default::default(),
+                last_swap_time: Default::default(),
+                last_reinvest_time: Default::default(),
+                validators: vec![],
+                reconciled_funds_to_withdraw: Default::default(),
+            },
+        });
+
+        let price: Decimal = from_binary(
+            &query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::AssetPriceByReference {
+                    asset_reference: asset_reference.clone(),
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+
+        // LunaX/USD = LunaX/Luna * Luna/USD
+        assert_eq!(price, Decimal::from_ratio(10528_u128, 100_u128));
     }
 
     // TEST_HELPERS

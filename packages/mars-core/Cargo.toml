@@ -1,6 +1,6 @@
 [package]
 name = "mars-core"
-version = "1.0.1"
+version = "1.0.2"
 authors = ["Spike Spiegel <spikeonmars@protonmail.com>"]
 edition = "2018"
 description = "Mars is a fully automated, on-chain credit protocol built on Terra and governed by a decentralised community of users and developers"
@@ -34,6 +34,8 @@ thiserror = "1.0.23"
 astroport = "1.0"
 
 basset = { git = "https://github.com/lidofinance/lido-terra-contracts", tag = "v1.0.2" }
+
+stader = { git = "https://github.com/stader-labs/stader-liquid-token", package = "staking", tag = "v0.2.1", features = ["library"] }
 
 [profile.release]
 overflow-checks = true

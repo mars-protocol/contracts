@@ -10,6 +10,7 @@ mod mock_address_provider;
 mod mocks;
 mod native_querier;
 mod oracle_querier;
+mod stader_querier;
 mod staking_querier;
 mod vesting_querier;
 mod xmars_querier;

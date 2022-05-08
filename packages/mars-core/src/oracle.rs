@@ -52,6 +52,8 @@ pub enum PriceSource<A> {
     },
     /// stLuna price calculated from stLuna/Luna exchange rate from Lido hub contract and Luna price from current price source
     Stluna { hub_address: A },
+    /// Lunax price calculated from Lunax/Luna exchange rate from Stader staking contract and Luna price from current price source
+    Lunax { staking_address: A },
 }
 
 impl<A> fmt::Display for PriceSource<A> {
@@ -63,6 +65,7 @@ impl<A> fmt::Display for PriceSource<A> {
             PriceSource::AstroportTwap { .. } => "astroport_twap",
             PriceSource::AstroportLiquidityToken { .. } => "astroport_liquidity_token",
             PriceSource::Stluna { .. } => "stluna",
+            PriceSource::Lunax { .. } => "lunax",
         };
         write!(f, "{}", label)
     }
@@ -99,6 +102,9 @@ impl PriceSourceUnchecked {
             }
             PriceSourceUnchecked::Stluna { hub_address } => PriceSourceChecked::Stluna {
                 hub_address: api.addr_validate(hub_address)?,
+            },
+            PriceSourceUnchecked::Lunax { staking_address } => PriceSourceChecked::Lunax {
+                staking_address: api.addr_validate(staking_address)?,
             },
         })
     }

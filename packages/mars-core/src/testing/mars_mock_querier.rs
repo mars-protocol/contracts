@@ -29,7 +29,9 @@ use super::{
 };
 use crate::math::decimal::Decimal;
 use crate::testing::basset_querier::BAssetQuerier;
+use crate::testing::stader_querier::StaderQuerier;
 use basset::hub::StateResponse;
+use stader::msg::QueryStateResponse as LunaxStateResponse;
 
 pub struct MarsMockQuerier {
     base: MockQuerier<TerraQueryWrapper>,
@@ -43,6 +45,7 @@ pub struct MarsMockQuerier {
     vesting_querier: VestingQuerier,
     incentives_querier: IncentivesQuerier,
     basset_querier: BAssetQuerier,
+    stader_querier: StaderQuerier,
 }
 
 impl Querier for MarsMockQuerier {
@@ -76,6 +79,7 @@ impl MarsMockQuerier {
             vesting_querier: VestingQuerier::default(),
             incentives_querier: IncentivesQuerier::default(),
             basset_querier: BAssetQuerier::default(),
+            stader_querier: StaderQuerier::default(),
         }
     }
 
@@ -245,6 +249,10 @@ impl MarsMockQuerier {
         self.basset_querier.state_response = Some(state_response);
     }
 
+    pub fn set_stader_state_response(&mut self, state_response: LunaxStateResponse) {
+        self.stader_querier.state_response = Some(state_response);
+    }
+
     pub fn handle_query(&self, request: &QueryRequest<TerraQueryWrapper>) -> QuerierResult {
         match &request {
             QueryRequest::Custom(TerraQueryWrapper { route, query_data }) => {
@@ -332,10 +340,25 @@ impl MarsMockQuerier {
                         .handle_query(&contract_addr, vesting_query);
                 }
 
+                // NOTE: basset and stader queries have the same schema (causing panic on basset for stader query mocked)
+                // so we use state_response to check if there is some setup
+
                 // bAsset Queries
                 let basset_query: StdResult<basset::hub::QueryMsg> = from_binary(msg);
-                if let Ok(query) = basset_query {
-                    return self.basset_querier.handle_query(&query);
+                match basset_query {
+                    Ok(query) if self.basset_querier.state_response.is_some() => {
+                        return self.basset_querier.handle_query(&query);
+                    }
+                    _ => {}
+                }
+
+                // Stader Queries
+                let stader_query: StdResult<stader::msg::QueryMsg> = from_binary(msg);
+                match stader_query {
+                    Ok(query) if self.stader_querier.state_response.is_some() => {
+                        return self.stader_querier.handle_query(&query);
+                    }
+                    _ => {}
                 }
 
                 panic!("[mock]: Unsupported wasm query: {:?}", msg);

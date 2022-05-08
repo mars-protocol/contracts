@@ -1,6 +1,6 @@
 [package]
 name = "mars-oracle"
-version = "1.0.1"
+version = "1.0.2"
 authors = [
   "Spike Spiegel <spikeonmars@protonmail.com>",
   "larry_0x <larry@delphidigital.io>"
@@ -23,7 +23,7 @@ crate-type = ["cdylib", "rlib"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-core = { path = "../../packages/mars-core", version = "1.0.1" }
+mars-core = { path = "../../packages/mars-core", version = "1.0.2" }
 
 terra-cosmwasm = "2.2.0"
 
@@ -37,6 +37,10 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.23"
 
 astroport = "1.0"
+
+basset = { git = "https://github.com/lidofinance/lido-terra-contracts", tag = "v1.0.2" }
+
+stader = { git = "https://github.com/stader-labs/stader-liquid-token", package = "staking", tag = "v0.2.1", features = ["library"] }
 
 [dev-dependencies]
 cosmwasm-schema = "0.16.2"
