@@ -617,6 +617,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-red-bank-closure"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.9.1",
+ "cw20 0.9.1",
+ "mars-core",
+ "mars-red-bank",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "mars-safety-fund"
 version = "1.0.0"
 dependencies = [

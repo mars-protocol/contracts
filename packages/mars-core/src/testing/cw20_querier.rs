@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Addr, QuerierResult, SystemError, Uint128};
-use cw20::{BalanceResponse, Cw20QueryMsg, TokenInfoResponse};
+use cw20::{AllAccountsResponse, BalanceResponse, Cw20QueryMsg, TokenInfoResponse};
 
 use crate::ma_token;
 
@@ -16,6 +16,41 @@ pub struct Cw20Querier {
 impl Cw20Querier {
     pub fn handle_cw20_query(&self, contract_addr: &Addr, query: Cw20QueryMsg) -> QuerierResult {
         match query {
+            Cw20QueryMsg::AllAccounts { start_after, limit } => {
+                if start_after.is_some() {
+                    return Err(SystemError::InvalidRequest {
+                        error: "mock cw20 only supports `start_after` to be `None`".to_string(),
+                        request: Default::default(),
+                    })
+                    .into();
+                }
+
+                let contract_balances = match self.balances.get(contract_addr) {
+                    Some(balances) => balances,
+                    None => {
+                        return Err(SystemError::InvalidRequest {
+                            error: format!(
+                                "no balance available for account address {}",
+                                contract_addr
+                            ),
+                            request: Default::default(),
+                        })
+                        .into()
+                    }
+                };
+
+                let mut accounts = contract_balances
+                    .keys()
+                    .take(limit.unwrap_or(10) as usize)
+                    .map(|addr| addr.to_string())
+                    .collect::<Vec<_>>();
+
+                // sort accounts alphabetically
+                accounts.sort();
+
+                Ok(to_binary(&AllAccountsResponse { accounts }).into()).into()
+            }
+
             Cw20QueryMsg::Balance { address } => {
                 let contract_balances = match self.balances.get(contract_addr) {
                     Some(balances) => balances,
