@@ -7,7 +7,7 @@ use crate::contract::{instantiate, query};
 
 #[test]
 fn test_proper_initialization() {
-    let mut deps = mock_dependencies(&[]);
+    let mut deps = mock_dependencies();
     let info = mock_info("creator", &coins(1000, "luna"));
 
     let example_string = String::from("spiderman123");
