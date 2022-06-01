@@ -1,0 +1,29 @@
+[package]
+name = "example"
+version = "0.1.0"
+authors = ["grod220 <gabe.r@delphilabs.io>, larry_0x <larry@delphidigital.io>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+library = []
+
+[dependencies]
+fields-credit-manager = { version = "0.1.0", path = "../../packages/fields-credit-manager" }
+
+cosmwasm-std = "0.16"
+cw721 = "0.9"
+cw721-base = { version = "0.9", features = ["library"] }  # must be imported as library!!!
+cw-controllers = "0.9"
+cw-storage-plus = "0.9"
+schemars = "0.8.1"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+sha2 = "0.9"
+base64 = "0.13.0"
+
+[dev-dependencies]
+cosmwasm-schema = "0.16"
+k256 = { version = "0.9.6", features = ["ecdsa"] }

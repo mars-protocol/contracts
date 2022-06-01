@@ -1,0 +1,21 @@
+[package]
+name = "fields-credit-manager"
+version = "0.1.0"
+authors = ["larry_0x <larry@delphidigital.io>", "Gabe R. <gabe.r@delphilabs.io>"]
+edition = "2018"
+
+[lib]
+doctest = false
+
+[dependencies]
+cosmwasm-std = "=0.16.2"
+cw20 = "=0.9.1"
+cw721 = "=0.9.2"
+
+terra-cosmwasm = "=2.2.0"
+
+schemars = "0.8.1"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+
+[dev-dependencies]
+cosmwasm-schema = "0.16.2"
