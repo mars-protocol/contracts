@@ -1,0 +1,22 @@
+{
+  "name": "fields-scripts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run format-check && npm run lint && jest",
+    "format": "prettier --write .",
+    "format-check": "prettier --ignore-path .gitignore --check .",
+    "lint": "tsc && eslint . --ext .ts"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.18.2",
+    "@babel/preset-typescript": "^7.17.12",
+    "@types/jest": "^27.5.1",
+    "@typescript-eslint/eslint-plugin": "^5.27.0",
+    "@typescript-eslint/parser": "^5.27.0",
+    "eslint": "^8.16.0",
+    "jest": "^28.1.0",
+    "prettier": "2.6.2",
+    "ts-node": "^10.5.0"
+  }
+}
