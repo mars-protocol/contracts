@@ -3,10 +3,15 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "npm run format-check && npm run lint && jest",
+    "test": "jest --testTimeout=20000 && npm run lint && npm run format-check",
     "format": "prettier --write .",
     "format-check": "prettier --ignore-path .gitignore --check .",
     "lint": "tsc && eslint . --ext .ts"
+  },
+  "dependencies": {
+    "@cosmjs/stargate": "^0.28.4",
+    "cosmjs-types": "^0.5.0",
+    "osmojs": "^0.4.46"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.18.2",
