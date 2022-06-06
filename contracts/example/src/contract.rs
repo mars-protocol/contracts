@@ -18,8 +18,12 @@ pub fn instantiate(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(_: DepsMut, _env: Env, _: MessageInfo, msg: ExecuteMsg) -> StdResult<Response> {
-    match msg {}
+pub fn execute(deps: DepsMut, _env: Env, _: MessageInfo, msg: ExecuteMsg) -> StdResult<Response> {
+    match msg {
+        ExecuteMsg::UpdateItemString {
+            str,
+        } => try_update_item(deps, str),
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -34,4 +38,9 @@ fn try_get_stored_str(deps: Deps) -> StdResult<StoredStringResponse> {
     Ok(StoredStringResponse {
         str,
     })
+}
+
+fn try_update_item(deps: DepsMut, str: String) -> StdResult<Response> {
+    SOME_STRING.save(deps.storage, &str)?;
+    Ok(Response::new().add_attribute("method", "UpdateItemString"))
 }
