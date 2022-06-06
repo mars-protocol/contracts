@@ -1,1 +1,0 @@
-222079eb7ade43eb8d5c34391dc356e571338eca3d06407da8dff3a433852289  ./target/wasm32-unknown-unknown/release/example.wasm
