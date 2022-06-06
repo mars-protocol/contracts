@@ -9,7 +9,7 @@ describe('example contract', () => {
   test('can deploy contract', async () => {
     const client = await getOsmosisClient(testWallet1);
 
-    const contractCode = fs.readFileSync(path.resolve(__dirname, '../../artifacts/example-aarch64.wasm'));
+    const contractCode = fs.readFileSync(path.resolve(__dirname, '../../artifacts/example.wasm'));
     const storeCode = {
       typeUrl: '/cosmwasm.wasm.v1.MsgStoreCode',
       value: MsgStoreCode.fromPartial({
