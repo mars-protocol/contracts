@@ -2,25 +2,20 @@ import { testWallet1 } from '../utils/test-wallets';
 import { getOsmosisClient } from '../utils/osmosis-client';
 import fs from 'fs';
 import path from 'path';
-import { EncodeObject } from '@cosmjs/proto-signing';
-import { AccessType } from 'cosmjs-types/cosmwasm/wasm/v1/types';
 import { Network, networks } from '../utils/config';
+import { MsgStoreCode } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 
 describe('example contract', () => {
   test('can deploy contract', async () => {
     const client = await getOsmosisClient(testWallet1);
 
     const contractCode = fs.readFileSync(path.resolve(__dirname, '../../artifacts/example-aarch64.wasm'));
-    const storeCode: EncodeObject = {
+    const storeCode = {
       typeUrl: '/cosmwasm.wasm.v1.MsgStoreCode',
-      value: {
-        instantiate_permission: {
-          address: testWallet1.address,
-          permission: AccessType.ACCESS_TYPE_UNSPECIFIED,
-        },
+      value: MsgStoreCode.fromPartial({
         sender: testWallet1.address,
-        wasm_byte_code: contractCode,
-      },
+        wasmByteCode: contractCode,
+      }),
     };
 
     const result = await client.signAndBroadcast(

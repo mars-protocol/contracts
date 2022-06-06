@@ -25,6 +25,6 @@ export const networks: Record<Network, NetworkConfig> = {
     networkName: 'osmosis',
     bech32Prefix: 'osmo',
     nativeDenom: 'uosmo',
-    defaultSendFee: calculateFee(100_000, GasPrice.fromString('0.025uosmo')),
+    defaultSendFee: calculateFee(3_000_000, GasPrice.fromString('0.025uosmo')),
   },
 };

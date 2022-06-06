@@ -3,7 +3,7 @@ import { getOsmosisClient } from '../utils/osmosis-client';
 import { assertIsDeliverTxSuccess } from '@cosmjs/stargate';
 import { Network, networks } from '../utils/config';
 
-describe('example client test', () => {
+describe.skip('example client test', () => {
   test('can get client and transfer tokens', async () => {
     const client = await getOsmosisClient(testWallet1);
 

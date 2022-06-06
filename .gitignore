@@ -1,6 +1,3 @@
-# cosmwasm compiled contract binaries
-artifacts
-
 # cargo files
 target
 
