@@ -3,7 +3,7 @@ use cosmwasm_std::{
 };
 
 use fields_credit_manager::example::{
-    ExecuteMsg, InstantiateMsg, QueryMsg, StoredStringResponse, UpdateItemStringResponse,
+    ExecuteMsg, InstantiateMsg, QueryMsg, StoredStringResponse,
 };
 
 use crate::state::SOME_STRING;

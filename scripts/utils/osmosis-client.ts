@@ -2,7 +2,7 @@ import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Slip10RawIndex } from '@cosmjs/crypto';
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { SigningStargateClient } from '@cosmjs/stargate';
-import { MsgInstantiateContract, MsgStoreCode } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
+import { MsgExecuteContract, MsgInstantiateContract, MsgStoreCode } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 import { getSigningOsmosisClient } from 'osmojs';
 import { Network, networks } from './config';
 import { walletDataType } from './test-wallets';
@@ -31,6 +31,7 @@ export const getOsmosisClient: ClientGetter = async (wallet) => {
 
   client.registry.register('/cosmwasm.wasm.v1.MsgStoreCode', MsgStoreCode);
   client.registry.register('/cosmwasm.wasm.v1.MsgInstantiateContract', MsgInstantiateContract);
+  client.registry.register('/cosmwasm.wasm.v1.MsgExecuteContract', MsgExecuteContract);
 
   return client;
 };

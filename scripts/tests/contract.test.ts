@@ -1,8 +1,9 @@
+import { MsgExecuteContractEncodeObject } from "@cosmjs/cosmwasm-stargate";
 import { toUtf8 } from "@cosmjs/encoding";
 import { Uint53 } from "@cosmjs/math";
 import { assertIsDeliverTxSuccess, SigningStargateClient } from '@cosmjs/stargate';
 import { findAttribute, parseRawLog } from '@cosmjs/stargate/build/logs';
-import { MsgInstantiateContract, MsgStoreCode } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
+import { MsgExecuteContract, MsgInstantiateContract, MsgStoreCode } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 import fs from 'fs';
 import Long from "long";
 import path from 'path';
@@ -76,16 +77,32 @@ describe('example contract', () => {
     expect(contractAddr).toBeDefined();
   });
 
-  test.skip('can save item', async () => {
+  test('can save item', async () => {
     const queryClient = await getQueryClient();
     const beforeRes: { str: string } = await queryClient.queryContractSmart(contractAddr, { get_stored_string: {} })
     expect(beforeRes.str).toBe(INSTANTIATE_STR)
 
     const updatedString = "spiderman123"
 
+    const executeContractMsg: MsgExecuteContractEncodeObject = {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: testWallet1.address,
+        contract: contractAddr,
+        msg: toUtf8(JSON.stringify({ "update_item_string": { str: updatedString } })),
+        funds: [],
+      }),
+    };
+
+    const execResult = await client.signAndBroadcast(
+      testWallet1.address,
+      [executeContractMsg],
+      networks[Network.OSMOSIS].defaultSendFee,
+    );
+    assertIsDeliverTxSuccess(execResult);
+
     const afterRes: { str: string } = await queryClient.queryContractSmart(contractAddr, { get_stored_string: {} })
     expect(afterRes.str).toBe(updatedString)
-    console.log('afterRes', afterRes)
 
     queryClient.disconnect()
   });
