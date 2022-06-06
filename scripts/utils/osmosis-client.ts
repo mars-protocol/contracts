@@ -1,10 +1,11 @@
-import { getSigningOsmosisClient } from 'osmojs';
-import { SigningStargateClient } from '@cosmjs/stargate';
-import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import { walletDataType } from './test-wallets';
-import { Network, networks } from './config';
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Slip10RawIndex } from '@cosmjs/crypto';
-import { MsgStoreCode } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
+import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+import { SigningStargateClient } from '@cosmjs/stargate';
+import { MsgInstantiateContract, MsgStoreCode } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
+import { getSigningOsmosisClient } from 'osmojs';
+import { Network, networks } from './config';
+import { walletDataType } from './test-wallets';
 
 const hdPath = [
   Slip10RawIndex.hardened(44),
@@ -13,6 +14,7 @@ const hdPath = [
   Slip10RawIndex.normal(0),
   Slip10RawIndex.normal(0),
 ];
+
 
 type ClientGetter = (wallet: walletDataType) => Promise<SigningStargateClient>;
 
@@ -28,5 +30,12 @@ export const getOsmosisClient: ClientGetter = async (wallet) => {
   });
 
   client.registry.register('/cosmwasm.wasm.v1.MsgStoreCode', MsgStoreCode);
+  client.registry.register('/cosmwasm.wasm.v1.MsgInstantiateContract', MsgInstantiateContract);
+
   return client;
+};
+
+/* Separate client needed as querying not available in signed Osmosis client at the moment */
+export const getQueryClient: () => Promise<CosmWasmClient> = async () => {
+  return await CosmWasmClient.connect(networks[Network.OSMOSIS].localRpcEndpoint);
 };

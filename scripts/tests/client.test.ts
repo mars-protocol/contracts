@@ -1,9 +1,9 @@
-import { testWallet1, testWallet2 } from '../utils/test-wallets';
-import { getOsmosisClient } from '../utils/osmosis-client';
 import { assertIsDeliverTxSuccess } from '@cosmjs/stargate';
 import { Network, networks } from '../utils/config';
+import { getOsmosisClient } from '../utils/osmosis-client';
+import { testWallet1, testWallet2 } from '../utils/test-wallets';
 
-describe.skip('example client test', () => {
+describe('example client test', () => {
   test('can get client and transfer tokens', async () => {
     const client = await getOsmosisClient(testWallet1);
 
@@ -20,5 +20,7 @@ describe.skip('example client test', () => {
     );
 
     assertIsDeliverTxSuccess(result);
+
+    client.disconnect()
   });
 });
