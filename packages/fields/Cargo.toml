@@ -1,6 +1,6 @@
 [package]
-name = "fields-credit-manager"
-version = "0.1.0"
+name = "fields"
+version = "2.0.0"
 authors = ["larry_0x <larry@delphidigital.io>", "Gabe R. <gabe.r@delphilabs.io>"]
 edition = "2018"
 
@@ -10,6 +10,8 @@ doctest = false
 [dependencies]
 cosmwasm-std = "1.0.0"
 cw20 = "0.13.2"
+cw-asset = "2.0.0"
+cw-storage-plus = "0.13"
 
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }

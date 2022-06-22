@@ -1,6 +1,6 @@
 [package]
-name = "example"
-version = "0.1.0"
+name = "credit-manager"
+version = "2.0.0"
 authors = ["grod220 <gabe.r@delphilabs.io>, larry_0x <larry@delphidigital.io>"]
 edition = "2018"
 
@@ -12,8 +12,9 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-fields-credit-manager = { version = "0.1.0", path = "../../packages/fields-credit-manager" }
+fields = { version = "2.0.0", path = "../../packages/fields" }
 
+cw-asset = "2.0.0"
 cosmwasm-std = "1.0.0"
 cw-storage-plus = "0.13.2"
 schemars = "0.8.1"

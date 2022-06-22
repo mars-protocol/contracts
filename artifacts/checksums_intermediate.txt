@@ -1,1 +1,1 @@
-3cc7d46f21acb94f4107960599a1899c99b1452e801114c5805367970148c5ea  target/wasm32-unknown-unknown/release/example.wasm
+a0787373c53017e5f198a58e205be8c91992def3ec8be353d4974abb6f779bb0  ./target/wasm32-unknown-unknown/release/credit_manager.wasm
