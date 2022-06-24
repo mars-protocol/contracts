@@ -2,7 +2,7 @@ use cosmwasm_std::Addr;
 use cw_asset::AssetInfoUnchecked;
 use cw_multi_test::Executor;
 
-use rover::{InstantiateMsg, QueryMsg};
+use rover::msg::{InstantiateMsg, QueryMsg};
 
 use crate::helpers::{mock_app, mock_contract};
 

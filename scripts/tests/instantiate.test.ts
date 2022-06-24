@@ -79,7 +79,7 @@ describe('instantiating fields contract', () => {
       config: {},
     });
 
-    expect(configRes.owner).toEqual(owner);;
+    expect(configRes.owner).toEqual(owner);
     expect(configRes.account_nft).toEqual("");
   });
 });

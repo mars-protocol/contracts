@@ -1,14 +1,16 @@
-use anyhow::Result as AnyResult;
 use cosmwasm_std::Addr;
 use cw721::OwnerOfResponse;
-use cw721_base::{InstantiateMsg as NftInstantiateMsg, QueryMsg as NftQueryMsg};
-use cw_multi_test::{App, AppResponse, Executor};
+use cw721_base::InstantiateMsg as NftInstantiateMsg;
+use cw721_base::QueryMsg as NftQueryMsg;
+use cw_multi_test::Executor;
+use rover::msg::query::ConfigResponse;
+use rover::msg::ExecuteMsg::UpdateConfig;
+use rover::msg::{InstantiateMsg, QueryMsg};
 
-use account_nft::msg::ExecuteMsg as NftExecuteMsg;
-use rover::ExecuteMsg::{CreateCreditAccount, UpdateConfig};
-use rover::{ConfigResponse, InstantiateMsg, QueryMsg};
-
-use crate::helpers::{mock_account_nft_contract, mock_app, mock_contract};
+use crate::helpers::{
+    get_token_id, mock_account_nft_contract, mock_app, mock_contract, mock_create_credit_account,
+    transfer_nft_contract_ownership,
+};
 
 pub mod helpers;
 
@@ -73,36 +75,11 @@ fn test_create_credit_account() {
         panic!("Should have thrown error due to nft contract not proposing a new owner yet");
     }
 
-    let proposal_msg: NftExecuteMsg = NftExecuteMsg::ProposeNewOwner {
-        new_owner: manager_contract_addr.to_string(),
-    };
-    app.execute_contract(owner.clone(), nft_contract_addr.clone(), &proposal_msg, &[])
-        .unwrap();
-
-    app.execute_contract(
-        owner.clone(),
-        manager_contract_addr.clone(),
-        &UpdateConfig {
-            account_nft: Some(nft_contract_addr.to_string()),
-            owner: None,
-        },
-        &[],
-    )
-    .unwrap();
+    transfer_nft_contract_ownership(&mut app, &owner, &nft_contract_addr, &manager_contract_addr);
 
     let res = mock_create_credit_account(&mut app, &manager_contract_addr, &user).unwrap();
 
-    let attr: Vec<&String> = res
-        .events
-        .iter()
-        .flat_map(|event| &event.attributes)
-        .filter(|attr| attr.key == "token_id")
-        .map(|attr| &attr.value)
-        .collect();
-
-    assert_eq!(attr.len(), 1);
-
-    let token_id = attr.first().unwrap().as_str();
+    let token_id = get_token_id(res);
     assert_eq!(token_id, "1");
 
     // Double checking ownership by querying NFT account-nft for correct owner
@@ -123,17 +100,4 @@ fn test_create_credit_account() {
         .unwrap();
 
     assert_eq!(user, owner_res.owner)
-}
-
-fn mock_create_credit_account(
-    app: &mut App,
-    manager_contract_addr: &Addr,
-    user: &Addr,
-) -> AnyResult<AppResponse> {
-    app.execute_contract(
-        user.clone(),
-        manager_contract_addr.clone(),
-        &CreateCreditAccount {},
-        &[],
-    )
 }

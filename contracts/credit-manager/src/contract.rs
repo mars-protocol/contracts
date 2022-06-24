@@ -3,11 +3,13 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 
-use rover::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::execute::{create_credit_account, update_config};
+use crate::deposit::receive_cw20;
+use crate::error::ContractError;
+use crate::execute::{create_credit_account, dispatch_actions, execute_callback, update_config};
 use crate::instantiate::store_config;
-use crate::query::{query_allowed_assets, query_allowed_vaults, query_config};
+use crate::query::{query_allowed_assets, query_allowed_vaults, query_config, query_position};
 
 const CONTRACT_NAME: &str = "crates.io:rover-credit-manager";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -18,7 +20,7 @@ pub fn instantiate(
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
-) -> StdResult<Response> {
+) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     store_config(deps, &msg)?;
     Ok(Response::new().add_attribute("method", "instantiate"))
@@ -27,15 +29,20 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> StdResult<Response> {
+) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::CreateCreditAccount {} => create_credit_account(deps, info.sender),
         ExecuteMsg::UpdateConfig { account_nft, owner } => {
             update_config(deps, info, account_nft, owner)
         }
+        ExecuteMsg::Callback(callback) => execute_callback(deps, info, env, callback),
+        ExecuteMsg::UpdateCreditAccount { token_id, actions } => {
+            dispatch_actions(deps, env, info, token_id, actions)
+        }
+        ExecuteMsg::Receive(msg) => receive_cw20(deps, info, msg),
     }
 }
 
@@ -49,5 +56,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::AllowedAssets { start_after, limit } => {
             to_binary(&query_allowed_assets(deps, start_after, limit)?)
         }
+        QueryMsg::Position { token_id } => to_binary(&query_position(deps, token_id)?),
     }
 }
