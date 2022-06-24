@@ -44,11 +44,7 @@ fn store_allow_lists(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(_: DepsMut, _env: Env, _: MessageInfo, msg: ExecuteMsg) -> StdResult<Response> {
-    match msg {
-        ExecuteMsg::UpdateItemString {
-            str: _,
-        } => Ok(Response::new()),
-    }
+    match msg {}
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
