@@ -7,11 +7,14 @@ pub struct InstantiateMsg {
     pub owner: String,
     pub allowed_vaults: Vec<String>,
     pub allowed_assets: Vec<AssetInfoUnchecked>,
+    pub nft_contract_code_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg {}
+pub enum ExecuteMsg {
+    CreateCreditAccount {},
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -27,5 +30,6 @@ pub enum QueryMsg {
     AllowedAssets {
         start_after: Option<AssetInfoUnchecked>,
         limit: Option<u32>,
-    }
+    },
+    CreditAccountNftAddress {},
 }

@@ -1,0 +1,22 @@
+[package]
+name = "account-nft"
+version = "1.0.0"
+authors = ["larry_0x <larry@delphidigital.io>, grod220 <gabe.r@delphilabs.io>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+cw721 = "0.13"
+cw721-base = { version = "0.13", features = ["library"] }
+cosmwasm-std = "1.0"
+schemars = "0.8"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+
+[dev-dependencies]
+cosmwasm-schema = "1.0"
+cw-multi-test = "0.13"
