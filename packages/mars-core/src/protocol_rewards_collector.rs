@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use cosmwasm_std::{Addr, Decimal as StdDecimal};
+use cosmwasm_std::Addr;
 
 use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
@@ -19,10 +19,6 @@ pub struct Config {
     pub safety_fund_fee_share: Decimal,
     /// Percentage of fees that are sent to the treasury
     pub treasury_fee_share: Decimal,
-    /// Astroport factory contract address
-    pub astroport_factory_address: Addr,
-    /// Astroport max spread
-    pub astroport_max_spread: StdDecimal,
 }
 
 impl Config {
@@ -67,9 +63,7 @@ pub mod msg {
     use schemars::JsonSchema;
     use serde::{Deserialize, Serialize};
 
-    use cosmwasm_std::{CosmosMsg, Decimal as StdDecimal, Uint128};
-
-    use astroport::asset::AssetInfo;
+    use cosmwasm_std::{CosmosMsg, Uint128};
 
     use crate::asset::Asset;
     use crate::math::decimal::Decimal;
@@ -85,8 +79,6 @@ pub mod msg {
         pub address_provider_address: Option<String>,
         pub safety_fund_fee_share: Option<Decimal>,
         pub treasury_fee_share: Option<Decimal>,
-        pub astroport_factory_address: Option<String>,
-        pub astroport_max_spread: Option<StdDecimal>,
     }
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -111,12 +103,6 @@ pub mod msg {
             /// Asset market fees to distribute
             asset: Asset,
             /// Amount to distribute to protocol contracts, defaults to contract balance if not specified
-            amount: Option<Uint128>,
-        },
-
-        /// Swap any asset on the contract to uusd
-        SwapAssetToUusd {
-            offer_asset_info: AssetInfo,
             amount: Option<Uint128>,
         },
 

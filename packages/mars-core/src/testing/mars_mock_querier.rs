@@ -1,51 +1,27 @@
 use cosmwasm_std::{
     from_binary, from_slice,
     testing::{MockQuerier, MOCK_CONTRACT_ADDR},
-    Addr, Coin, Fraction, Querier, QuerierResult, QueryRequest, StdResult, SystemError, Uint128,
-    WasmQuery,
+    Addr, Coin, Querier, QuerierResult, QueryRequest, StdResult, SystemError, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
 use terra_cosmwasm::TerraQueryWrapper;
 
-use crate::{
-    address_provider, incentives, ma_token, oracle, staking, testing::mock_address_provider,
-    vesting, xmars_token,
-};
-use astroport::{
-    asset::{Asset, PairInfo},
-    pair::{CumulativePricesResponse, PoolResponse, SimulationResponse},
-};
+use crate::{address_provider, incentives, ma_token, oracle, testing::mock_address_provider};
 
 use super::{
-    astroport_factory_querier::AstroportFactoryQuerier,
-    astroport_pair_querier::AstroportPairQuerier,
     cw20_querier::{mock_token_info_response, Cw20Querier},
     incentives_querier::IncentivesQuerier,
     native_querier::NativeQuerier,
     oracle_querier::OracleQuerier,
-    staking_querier::StakingQuerier,
-    vesting_querier::VestingQuerier,
-    xmars_querier::XMarsQuerier,
 };
 use crate::math::decimal::Decimal;
-use crate::testing::basset_querier::BAssetQuerier;
-use crate::testing::stader_querier::StaderQuerier;
-use basset::hub::StateResponse;
-use stader::msg::QueryStateResponse as LunaxStateResponse;
 
 pub struct MarsMockQuerier {
     base: MockQuerier<TerraQueryWrapper>,
     native_querier: NativeQuerier,
     cw20_querier: Cw20Querier,
-    xmars_querier: XMarsQuerier,
-    astroport_factory_querier: AstroportFactoryQuerier,
-    astroport_pair_querier: AstroportPairQuerier,
     oracle_querier: OracleQuerier,
-    staking_querier: StakingQuerier,
-    vesting_querier: VestingQuerier,
     incentives_querier: IncentivesQuerier,
-    basset_querier: BAssetQuerier,
-    stader_querier: StaderQuerier,
 }
 
 impl Querier for MarsMockQuerier {
@@ -71,15 +47,8 @@ impl MarsMockQuerier {
             base,
             native_querier: NativeQuerier::default(),
             cw20_querier: Cw20Querier::default(),
-            xmars_querier: XMarsQuerier::default(),
-            astroport_factory_querier: AstroportFactoryQuerier::default(),
-            astroport_pair_querier: AstroportPairQuerier::default(),
             oracle_querier: OracleQuerier::default(),
-            staking_querier: StakingQuerier::default(),
-            vesting_querier: VestingQuerier::default(),
             incentives_querier: IncentivesQuerier::default(),
-            basset_querier: BAssetQuerier::default(),
-            stader_querier: StaderQuerier::default(),
         }
     }
 
@@ -143,98 +112,6 @@ impl MarsMockQuerier {
         self.oracle_querier.prices.insert(asset_reference, price);
     }
 
-    pub fn set_staking_xmars_per_mars(&mut self, xmars_per_mars: Decimal) {
-        self.staking_querier.xmars_per_mars = xmars_per_mars;
-        self.staking_querier.mars_per_xmars = xmars_per_mars.inv().unwrap();
-    }
-
-    pub fn set_staking_mars_per_xmars(&mut self, mars_per_xmars: Decimal) {
-        self.staking_querier.mars_per_xmars = mars_per_xmars;
-        self.staking_querier.xmars_per_mars = mars_per_xmars.inv().unwrap();
-    }
-
-    pub fn set_xmars_address(&mut self, address: Addr) {
-        self.xmars_querier.xmars_address = address;
-    }
-
-    pub fn set_xmars_balance_at(&mut self, address: Addr, block: u64, balance: Uint128) {
-        self.xmars_querier
-            .balances_at
-            .insert((address, block), balance);
-    }
-
-    pub fn set_xmars_total_supply_at(&mut self, block: u64, balance: Uint128) {
-        self.xmars_querier.total_supplies_at.insert(block, balance);
-    }
-
-    pub fn set_vesting_address(&mut self, address: Addr) {
-        self.vesting_querier.vesting_address = address;
-    }
-
-    pub fn set_vesting_voting_power_at(
-        &mut self,
-        address: Addr,
-        block: u64,
-        voting_power: Uint128,
-    ) {
-        self.vesting_querier
-            .voting_power_at
-            .insert((address, block), voting_power);
-    }
-
-    pub fn set_vesting_total_voting_power_at(&mut self, block: u64, total_voting_power: Uint128) {
-        self.vesting_querier
-            .total_voting_power_at
-            .insert(block, total_voting_power);
-    }
-
-    pub fn set_astroport_pair(&mut self, pair_info: PairInfo) {
-        let asset_infos = &pair_info.asset_infos;
-
-        // factory
-        let key = format!("{}-{}", asset_infos[0], asset_infos[1]);
-        self.astroport_factory_querier
-            .pairs
-            .insert(key, pair_info.clone());
-
-        // pair
-        let pool_response = PoolResponse {
-            assets: [
-                Asset {
-                    info: asset_infos[0].clone(),
-                    amount: Uint128::zero(),
-                },
-                Asset {
-                    info: asset_infos[1].clone(),
-                    amount: Uint128::zero(),
-                },
-            ],
-            total_share: Uint128::zero(),
-        };
-        let key = pair_info.contract_addr.to_string();
-        self.astroport_pair_querier.pairs.insert(key, pool_response);
-    }
-
-    pub fn set_astroport_pair_cumulative_prices(
-        &mut self,
-        contract_addr: String,
-        cumulative_prices: CumulativePricesResponse,
-    ) {
-        self.astroport_pair_querier
-            .cumulative_prices
-            .insert(contract_addr, cumulative_prices);
-    }
-
-    pub fn set_astroport_pair_simulation(
-        &mut self,
-        contract_addr: String,
-        simulation: SimulationResponse,
-    ) {
-        self.astroport_pair_querier
-            .simulations
-            .insert(contract_addr, simulation);
-    }
-
     pub fn set_incentives_address(&mut self, address: Addr) {
         self.incentives_querier.incentives_address = address;
     }
@@ -243,14 +120,6 @@ impl MarsMockQuerier {
         self.incentives_querier
             .unclaimed_rewards_at
             .insert(Addr::unchecked(user_address), unclaimed_rewards);
-    }
-
-    pub fn set_basset_state_response(&mut self, state_response: StateResponse) {
-        self.basset_querier.state_response = Some(state_response);
-    }
-
-    pub fn set_stader_state_response(&mut self, state_response: LunaxStateResponse) {
-        self.stader_querier.state_response = Some(state_response);
     }
 
     pub fn handle_query(&self, request: &QueryRequest<TerraQueryWrapper>) -> QuerierResult {
@@ -278,12 +147,6 @@ impl MarsMockQuerier {
                         .handle_ma_token_query(&contract_addr, ma_token_query);
                 }
 
-                // XMars Queries
-                let parse_xmars_query: StdResult<xmars_token::msg::QueryMsg> = from_binary(msg);
-                if let Ok(xmars_query) = parse_xmars_query {
-                    return self.xmars_querier.handle_query(&contract_addr, xmars_query);
-                }
-
                 // Address Provider Queries
                 let parse_address_provider_query: StdResult<address_provider::msg::QueryMsg> =
                     from_binary(msg);
@@ -302,63 +165,12 @@ impl MarsMockQuerier {
                         .handle_query(&contract_addr, oracle_query);
                 }
 
-                // Staking Queries
-                let parse_staking_query: StdResult<staking::msg::QueryMsg> = from_binary(msg);
-                if let Ok(staking_query) = parse_staking_query {
-                    return self
-                        .staking_querier
-                        .handle_query(&contract_addr, staking_query);
-                }
-
-                // Astroport Queries
-                let astroport_factory_query: StdResult<astroport::factory::QueryMsg> =
-                    from_binary(msg);
-                if let Ok(factory_query) = astroport_factory_query {
-                    return self.astroport_factory_querier.handle_query(&factory_query);
-                }
-
-                let astroport_pair_query: StdResult<astroport::pair::QueryMsg> = from_binary(msg);
-                if let Ok(pair_query) = astroport_pair_query {
-                    return self
-                        .astroport_pair_querier
-                        .handle_query(&contract_addr, &pair_query);
-                }
-
                 // Incentives Queries
                 let parse_incentives_query: StdResult<incentives::msg::QueryMsg> = from_binary(msg);
                 if let Ok(incentives_query) = parse_incentives_query {
                     return self
                         .incentives_querier
                         .handle_query(&contract_addr, incentives_query);
-                }
-
-                // Vesting Queries
-                let parse_vesting_query: StdResult<vesting::msg::QueryMsg> = from_binary(msg);
-                if let Ok(vesting_query) = parse_vesting_query {
-                    return self
-                        .vesting_querier
-                        .handle_query(&contract_addr, vesting_query);
-                }
-
-                // NOTE: basset and stader queries have the same schema (causing panic on basset for stader query mocked)
-                // so we use state_response to check if there is some setup
-
-                // bAsset Queries
-                let basset_query: StdResult<basset::hub::QueryMsg> = from_binary(msg);
-                match basset_query {
-                    Ok(query) if self.basset_querier.state_response.is_some() => {
-                        return self.basset_querier.handle_query(&query);
-                    }
-                    _ => {}
-                }
-
-                // Stader Queries
-                let stader_query: StdResult<stader::msg::QueryMsg> = from_binary(msg);
-                match stader_query {
-                    Ok(query) if self.stader_querier.state_response.is_some() => {
-                        return self.stader_querier.handle_query(&query);
-                    }
-                    _ => {}
                 }
 
                 panic!("[mock]: Unsupported wasm query: {:?}", msg);

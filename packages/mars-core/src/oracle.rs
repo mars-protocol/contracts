@@ -3,109 +3,33 @@ use std::fmt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Api, StdResult, Uint128};
+use cosmwasm_std::{Addr, Api, StdResult};
 
 use crate::math::decimal::Decimal;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum PriceSource<A> {
-    /// Returns a fixed value; used for UST
+pub enum PriceSource {
+    /// Returns a fixed value; used for OSMO
     Fixed { price: Decimal },
-    /// Native Terra stablecoins transaction rate quoted in UST
-    Native { denom: String },
-    /// Astroport spot price quoted in UST
-    ///
-    /// NOTE: `pair_address` must point to an astroport pair consists of the asset of intereset and UST
-    AstroportSpot {
-        /// Address of the Astroport pair
-        pair_address: A,
-    },
-    /// Astroport TWAP price quoted in UST
-    ///
-    /// NOTE: `pair_address` must point to an astroport pair consists of the asset of intereset and UST
-    AstroportTwap {
-        /// Address of the Astroport pair
-        pair_address: A,
-        /// Address of the asset of interest
-        ///
-        /// NOTE: Spot price in intended for CW20 tokens. Terra native tokens should use Fixed or
-        /// Native price sources.
-        window_size: u64,
-        /// When calculating averaged price, we take the most recent TWAP snapshot and find a second
-        /// snapshot in the range of window_size +/- tolerance. For example, if window size is 5 minutes
-        /// and tolerance is 1 minute, we look for snapshots that are 4 - 6 minutes back in time from
-        /// the most recent snapshot.
-        ///
-        /// If there are multiple snapshots within the range, we take the one that is closest to the
-        /// desired window size.
-        tolerance: u64,
-    },
-    /// Astroport liquidity token
-    ///
-    /// NOTE: Astroport's pair contract does not have a query command to check the address of the LP
-    /// token associated with a pair. Therefore, we can't implement relevant checks in the contract.
-    /// The owner must make sure the addresses supplied are accurate
-    AstroportLiquidityToken {
-        /// Address of the asset of interest
-        pair_address: A,
-    },
-    /// stLuna price calculated from stLuna/Luna exchange rate from Lido hub contract and Luna price from current price source
-    Stluna { hub_address: A },
-    /// Lunax price calculated from Lunax/Luna exchange rate from Stader staking contract and Luna price from current price source
-    Lunax { staking_address: A },
 }
 
-impl<A> fmt::Display for PriceSource<A> {
+impl fmt::Display for PriceSource {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let label = match self {
             PriceSource::Fixed { .. } => "fixed",
-            PriceSource::Native { .. } => "native",
-            PriceSource::AstroportSpot { .. } => "astroport_spot",
-            PriceSource::AstroportTwap { .. } => "astroport_twap",
-            PriceSource::AstroportLiquidityToken { .. } => "astroport_liquidity_token",
-            PriceSource::Stluna { .. } => "stluna",
-            PriceSource::Lunax { .. } => "lunax",
         };
         write!(f, "{}", label)
     }
 }
 
-pub type PriceSourceUnchecked = PriceSource<String>;
-pub type PriceSourceChecked = PriceSource<Addr>;
+pub type PriceSourceUnchecked = PriceSource;
+pub type PriceSourceChecked = PriceSource;
 
 impl PriceSourceUnchecked {
-    pub fn to_checked(&self, api: &dyn Api) -> StdResult<PriceSourceChecked> {
+    pub fn to_checked(&self, _api: &dyn Api) -> StdResult<PriceSourceChecked> {
         Ok(match self {
             PriceSourceUnchecked::Fixed { price } => PriceSourceChecked::Fixed { price: *price },
-            PriceSourceUnchecked::Native { denom } => PriceSourceChecked::Native {
-                denom: denom.clone(),
-            },
-            PriceSourceUnchecked::AstroportSpot { pair_address } => {
-                PriceSourceChecked::AstroportSpot {
-                    pair_address: api.addr_validate(pair_address)?,
-                }
-            }
-            PriceSourceUnchecked::AstroportTwap {
-                pair_address,
-                window_size,
-                tolerance,
-            } => PriceSourceChecked::AstroportTwap {
-                pair_address: api.addr_validate(pair_address)?,
-                window_size: *window_size,
-                tolerance: *tolerance,
-            },
-            PriceSourceUnchecked::AstroportLiquidityToken { pair_address } => {
-                PriceSourceChecked::AstroportLiquidityToken {
-                    pair_address: api.addr_validate(pair_address)?,
-                }
-            }
-            PriceSourceUnchecked::Stluna { hub_address } => PriceSourceChecked::Stluna {
-                hub_address: api.addr_validate(hub_address)?,
-            },
-            PriceSourceUnchecked::Lunax { staking_address } => PriceSourceChecked::Lunax {
-                staking_address: api.addr_validate(staking_address)?,
-            },
         })
     }
 }
@@ -114,14 +38,6 @@ impl PriceSourceUnchecked {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
     pub owner: Addr,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct AstroportTwapSnapshot {
-    /// Timestamp of the most recent TWAP data update
-    pub timestamp: u64,
-    /// Cumulative price of the asset retrieved by the most recent TWAP data update
-    pub price_cumulative: Uint128,
 }
 
 pub mod msg {
@@ -146,8 +62,6 @@ pub mod msg {
             asset: Asset,
             price_source: PriceSourceUnchecked,
         },
-        /// Fetch cumulative prices from Astroport pairs and record in contract storage
-        RecordTwapSnapshots { assets: Vec<Asset> },
     }
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
