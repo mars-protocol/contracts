@@ -4,7 +4,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::helpers::cw20_get_balance;
-use crate::tax::deduct_tax;
 
 /// Represents either a native asset or a cw20. Meant to be used as part of a msg
 /// in a contract call and not to be used internally
@@ -50,19 +49,16 @@ pub enum AssetType {
 }
 
 /// Prepares a message to send the asset from the contract executing the messages to the recipient.
-/// If the `AssetType` is `Native`, a "tax" is charged (see [`build_send_native_asset_with_tax_deduction_msg`] for details). Also sender will always be the contract calling this method
+/// Sender will always be the contract calling this method
 /// as it's the only Bank Transfer
-/// No tax is charged on `Cw20` asset transfers.
-pub fn build_send_asset_with_tax_deduction_msg(
-    deps: Deps,
+pub fn build_send_asset_msg(
     recipient_address: Addr,
     asset_label: String,
     asset_type: AssetType,
     amount: Uint128,
 ) -> StdResult<CosmosMsg> {
     match asset_type {
-        AssetType::Native => Ok(build_send_native_asset_with_tax_deduction_msg(
-            deps,
+        AssetType::Native => Ok(build_send_native_asset_msg(
             recipient_address,
             asset_label,
             amount,
@@ -72,18 +68,14 @@ pub fn build_send_asset_with_tax_deduction_msg(
 }
 
 /// Prepare BankMsg::Send message.
-/// When doing native transfers a "tax" is charged.
-/// The actual amount taken from the contract is: amount + tax.
-/// Instead of sending amount, send: amount - compute_tax(amount).
-pub fn build_send_native_asset_with_tax_deduction_msg(
-    deps: Deps,
+pub fn build_send_native_asset_msg(
     recipient_address: Addr,
     denom: String,
     amount: Uint128,
 ) -> StdResult<CosmosMsg> {
     Ok(CosmosMsg::Bank(BankMsg::Send {
         to_address: recipient_address.into(),
-        amount: vec![deduct_tax(deps, Coin { denom, amount })?],
+        amount: vec![Coin { denom, amount }],
     }))
 }
 

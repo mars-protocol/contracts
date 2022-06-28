@@ -1,27 +1,12 @@
 use crate::math::decimal::Decimal;
-use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, Uint128};
+use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult};
 use std::collections::HashMap;
-use terra_cosmwasm::{
-    ExchangeRateItem, ExchangeRatesResponse, TaxCapResponse, TaxRateResponse, TerraQuery,
-    TerraRoute,
-};
+use terra_cosmwasm::{ExchangeRateItem, ExchangeRatesResponse, TerraQuery, TerraRoute};
 
+#[derive(Default)]
 pub struct NativeQuerier {
     /// maps denom to exchange rates
     pub exchange_rates: HashMap<String, HashMap<String, Decimal>>,
-    /// maps denom to tax caps
-    pub tax_caps: HashMap<String, Uint128>,
-    pub tax_rate: Decimal,
-}
-
-impl Default for NativeQuerier {
-    fn default() -> Self {
-        NativeQuerier {
-            exchange_rates: HashMap::new(),
-            tax_caps: HashMap::new(),
-            tax_rate: Decimal::zero(),
-        }
-    }
 }
 
 impl NativeQuerier {
@@ -42,37 +27,6 @@ impl NativeQuerier {
                 .into();
 
                 Ok(err).into()
-            }
-
-            TerraRoute::Treasury => {
-                let ret: ContractResult<Binary> = match query_data {
-                    TerraQuery::TaxRate {} => {
-                        let res = TaxRateResponse {
-                            rate: self.tax_rate.to_std_decimal(),
-                        };
-                        to_binary(&res).into()
-                    }
-
-                    TerraQuery::TaxCap { denom } => match self.tax_caps.get(denom) {
-                        Some(cap) => {
-                            let res = TaxCapResponse { cap: *cap };
-                            to_binary(&res).into()
-                        }
-                        None => Err(format!(
-                            "no tax cap available for provided denom: {}",
-                            denom
-                        ))
-                        .into(),
-                    },
-
-                    _ => Err(format!(
-                        "[mock]: Unsupported query data for QueryRequest::Custom : {:?}",
-                        query_data
-                    ))
-                    .into(),
-                };
-
-                Ok(ret).into()
             }
 
             _ => {

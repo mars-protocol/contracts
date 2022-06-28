@@ -78,9 +78,6 @@ pub enum ExecuteMsg {
     },
 
     /// Withdraw an amount of the asset burning an equivalent amount of maTokens.
-    /// If asset is a Terra native token, the amount sent to the user
-    /// is selected so that the sum of the transfered amount plus the stability tax
-    /// payed is equal to the withdrawn amount.
     Withdraw {
         /// Asset to withdraw
         asset: Asset,
@@ -92,9 +89,7 @@ pub enum ExecuteMsg {
     },
 
     /// Borrow Terra native coins. If borrow allowed, amount is added to caller's debt
-    /// and sent to the address. If asset is a Terra native token, the amount sent
-    /// is selected so that the sum of the transfered amount plus the stability tax
-    /// payed is equal to the borrowed amount.
+    /// and sent to the address.
     Borrow {
         /// Asset to borrow
         asset: Asset,

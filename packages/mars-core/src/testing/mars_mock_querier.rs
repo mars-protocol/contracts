@@ -70,12 +70,6 @@ impl MarsMockQuerier {
             .insert(base_denom, exchange_rates.iter().cloned().collect());
     }
 
-    /// Set mock querier for tax data
-    pub fn set_native_tax(&mut self, tax_rate: Decimal, tax_caps: &[(String, Uint128)]) {
-        self.native_querier.tax_rate = tax_rate;
-        self.native_querier.tax_caps = tax_caps.iter().cloned().collect();
-    }
-
     /// Set mock querier balances results for a given cw20 token
     pub fn set_cw20_balances(&mut self, cw20_address: Addr, balances: &[(Addr, Uint128)]) {
         self.cw20_querier
