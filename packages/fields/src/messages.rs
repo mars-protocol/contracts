@@ -1,5 +1,5 @@
-use crate::types::AssetInfo;
 use cosmwasm_std::Addr;
+use cw_asset::AssetInfo;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

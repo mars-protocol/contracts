@@ -1,9 +1,10 @@
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
 };
+use cw_asset::{AssetInfo, AssetInfoUnchecked};
+use std::convert::TryFrom;
 
 use fields::messages::{AllowListsResponse, ExecuteMsg, InstantiateMsg, OwnerResponse, QueryMsg};
-use fields::types::AssetInfo;
 
 use crate::state::{ALLOWED_ASSETS, ALLOWED_VAULTS, OWNER};
 
@@ -37,7 +38,7 @@ fn store_allow_lists(
             }
             _ => {}
         }
-        ALLOWED_ASSETS.save(deps.storage, denom_or_addr.to_string(), &true)?;
+        ALLOWED_ASSETS.save(deps.storage, denom_or_addr.into(), &true)?;
     }
     Ok(())
 }
@@ -68,7 +69,8 @@ fn try_get_allow_lists(deps: Deps) -> StdResult<AllowListsResponse> {
         .collect::<StdResult<Vec<_>>>()?;
     let assets = ALLOWED_ASSETS
         .keys(deps.storage, None, None, Order::Ascending)
-        .map(|asset_str| Ok(AssetInfo::from_str(asset_str?)))
+        .map(|key| AssetInfoUnchecked::try_from(key?))
+        .map(|unchecked| unchecked?.check(deps.api, None))
         .collect::<StdResult<Vec<_>>>()?;
 
     Ok(AllowListsResponse {

@@ -10,7 +10,7 @@ doctest = false
 [dependencies]
 cosmwasm-std = "1.0.0"
 cw20 = "0.13.2"
-cw-asset = "2.0.0"
+cw-asset = "2.1.0"
 cw-storage-plus = "0.13"
 
 schemars = "0.8.1"

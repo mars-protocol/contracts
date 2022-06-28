@@ -14,7 +14,7 @@ library = []
 [dependencies]
 fields = { version = "2.0.0", path = "../../packages/fields" }
 
-cw-asset = "2.0.0"
+cw-asset = "2.1.0"
 cosmwasm-std = "1.0.0"
 cw-storage-plus = "0.13.2"
 schemars = "0.8.1"
