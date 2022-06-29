@@ -1,8 +1,8 @@
 use cosmwasm_std::Addr;
 use cw_multi_test::Executor;
 
-use rover::messages::{AllowListsResponse, InstantiateMsg, OwnerResponse, QueryMsg};
-use rover::types::AssetInfo;
+use fields::messages::{AllowListsResponse, InstantiateMsg, OwnerResponse, QueryMsg};
+use fields::types::AssetInfo;
 
 use crate::helpers::{mock_app, mock_contract};
 

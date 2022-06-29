@@ -1,9 +1,11 @@
+use std::convert::TryFrom;
+
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
 };
+use cw_asset::AssetInfoUnchecked;
 
-use rover::messages::{AllowListsResponse, ExecuteMsg, InstantiateMsg, OwnerResponse, QueryMsg};
-use rover::types::AssetInfo;
+use rover::{AllowListsResponse, ExecuteMsg, InstantiateMsg, OwnerResponse, QueryMsg};
 
 use crate::state::{ALLOWED_ASSETS, ALLOWED_VAULTS, OWNER};
 
@@ -16,30 +18,22 @@ pub fn instantiate(
 ) -> StdResult<Response> {
     let owner = deps.api.addr_validate(&msg.owner)?;
     OWNER.save(deps.storage, &owner)?;
-    store_allow_lists(deps, msg.allowed_vaults, msg.allowed_assets)?;
-    Ok(Response::new().add_attribute("method", "instantiate"))
-}
 
-fn store_allow_lists(
-    deps: DepsMut,
-    allowed_vaults: Vec<String>,
-    allowed_assets: Vec<AssetInfo>,
-) -> StdResult<()> {
-    for unverified_addr in &allowed_vaults {
-        let addr = deps.api.addr_validate(unverified_addr)?;
-        ALLOWED_VAULTS.save(deps.storage, addr, &true)?;
-    }
+    msg
+        .allowed_vaults
+        .iter()
+        .try_for_each(|vault| {
+            ALLOWED_VAULTS.save(deps.storage, deps.api.addr_validate(vault)?, &true)
+        })?;
 
-    for denom_or_addr in &allowed_assets {
-        match denom_or_addr {
-            AssetInfo::Cw20(unverified_addr) => {
-                deps.api.addr_validate(unverified_addr.as_str())?;
-            }
-            _ => {}
-        }
-        ALLOWED_ASSETS.save(deps.storage, denom_or_addr.to_string(), &true)?;
-    }
-    Ok(())
+    msg
+        .allowed_assets
+        .iter()
+        .try_for_each(|info| {
+            ALLOWED_ASSETS.save(deps.storage, info.check(deps.api, None)?.into(), &true)
+        })?;
+
+    Ok(Response::new())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -66,9 +60,10 @@ fn try_get_allow_lists(deps: Deps) -> StdResult<AllowListsResponse> {
     let vaults = ALLOWED_VAULTS
         .keys(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?;
+
     let assets = ALLOWED_ASSETS
         .keys(deps.storage, None, None, Order::Ascending)
-        .map(|asset_str| Ok(AssetInfo::from_str(asset_str?)))
+        .map(|key| AssetInfoUnchecked::try_from(key?))
         .collect::<StdResult<Vec<_>>>()?;
 
     Ok(AllowListsResponse {
