@@ -1,7 +1,13 @@
 [package]
-name = "mars-outpost-core"
+name = "mars-outpost"
 version = "0.1.0"
-authors = ["Ahmad Kaouk <ahmad@delphilabs.io"]
+authors = [
+  "Ahmad Kaouk <ahmad@delphilabs.io",
+  "Spike Spiegel <spikeonmars@protonmail.com>",
+  "larry_0x <larry@delphidigital.io>",
+  "Piotr Babel",
+  "Harry Scholes"
+]
 edition = "2018"
 description = "Mars is a fully automated, on-chain credit protocol governed by a decentralised community of users and developers"
 license = "GPL-3.0"
