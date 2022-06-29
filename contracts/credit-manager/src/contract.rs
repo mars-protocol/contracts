@@ -3,12 +3,16 @@ use std::convert::TryFrom;
 use cosmwasm_std::{
     entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
 };
+use cw2::set_contract_version;
 use cw_asset::{AssetInfo, AssetInfoKey, AssetInfoUnchecked};
-
 use cw_storage_plus::Bound;
+
 use rover::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::state::{ALLOWED_ASSETS, ALLOWED_VAULTS, OWNER};
+
+const CONTRACT_NAME: &str = "crates.io:rover-credit-manager";
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
@@ -17,9 +21,11 @@ const DEFAULT_LIMIT: u32 = 10;
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
-    _: MessageInfo,
+    _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
     let owner = deps.api.addr_validate(&msg.owner)?;
     OWNER.save(deps.storage, &owner)?;
 
@@ -41,7 +47,7 @@ pub fn instantiate(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(_: DepsMut, _env: Env, _: MessageInfo, msg: ExecuteMsg) -> StdResult<Response> {
+pub fn execute(_deps: DepsMut, _env: Env, _info: MessageInfo, msg: ExecuteMsg) -> StdResult<Response> {
     match msg {}
 }
 
