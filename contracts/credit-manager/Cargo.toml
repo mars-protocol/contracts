@@ -1,6 +1,6 @@
 [package]
 name = "credit-manager"
-version = "2.0.0"
+version = "0.1.0"
 authors = ["grod220 <gabe.r@delphilabs.io>, larry_0x <larry@delphidigital.io>"]
 edition = "2018"
 
@@ -12,13 +12,13 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-rover = { version = "2.0.0", path = "../../packages/rover" }
+rover = { version = "0.1", path = "../../packages/rover" }
 
-cw-asset = "2.0.0"
-cosmwasm-std = "1.0.0"
-cw-storage-plus = "0.13.2"
+cw-asset = "2.1"
+cosmwasm-std = "1.0"
+cw-storage-plus = "0.13"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-cw-multi-test = "0.13.4"
+cw-multi-test = "0.13"

@@ -119,7 +119,7 @@ dependencies = [
 
 [[package]]
 name = "credit-manager"
-version = "2.0.0"
+version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-asset",
@@ -173,11 +173,12 @@ dependencies = [
 
 [[package]]
 name = "cw-asset"
-version = "2.0.0"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26767ad8483411eb37b71e5aaf6bdad1c3d015ecdd2e0369f264c0335d79b3b3"
+checksum = "4a2015b1cdbe475b1c8b6a2a04e6b7be1f576ec41d8e6811bd7d069959f5c7f7"
 dependencies = [
  "cosmwasm-std",
+ "cw-storage-plus",
  "cw20",
  "schemars",
  "serde",
@@ -521,7 +522,7 @@ dependencies = [
 
 [[package]]
 name = "rover"
-version = "2.0.0"
+version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-asset",
