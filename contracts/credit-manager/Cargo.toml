@@ -12,7 +12,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-fields = { version = "2.0.0", path = "../../packages/fields" }
+rover = { version = "2.0.0", path = "../../packages/rover" }
 
 cw-asset = "2.0.0"
 cosmwasm-std = "1.0.0"

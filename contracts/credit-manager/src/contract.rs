@@ -2,8 +2,8 @@ use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
 };
 
-use fields::messages::{AllowListsResponse, ExecuteMsg, InstantiateMsg, OwnerResponse, QueryMsg};
-use fields::types::AssetInfo;
+use rover::messages::{AllowListsResponse, ExecuteMsg, InstantiateMsg, OwnerResponse, QueryMsg};
+use rover::types::AssetInfo;
 
 use crate::state::{ALLOWED_ASSETS, ALLOWED_VAULTS, OWNER};
 

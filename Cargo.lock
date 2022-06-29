@@ -136,7 +136,7 @@ dependencies = [
  "cw-asset",
  "cw-multi-test",
  "cw-storage-plus",
- "fields",
+ "rover",
  "schemars",
  "serde",
 ]
@@ -345,19 +345,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fields"
-version = "2.0.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-asset",
- "cw-storage-plus",
- "cw20",
- "schemars",
- "serde",
-]
-
-[[package]]
 name = "forward_ref"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -541,6 +528,19 @@ dependencies = [
  "crypto-bigint",
  "hmac",
  "zeroize",
+]
+
+[[package]]
+name = "rover"
+version = "2.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-asset",
+ "cw-storage-plus",
+ "cw20",
+ "schemars",
+ "serde",
 ]
 
 [[package]]

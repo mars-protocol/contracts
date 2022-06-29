@@ -1,5 +1,5 @@
 [package]
-name = "fields"
+name = "rover"
 version = "2.0.0"
 authors = ["larry_0x <larry@delphidigital.io>", "Gabe R. <gabe.r@delphilabs.io>"]
 edition = "2018"
