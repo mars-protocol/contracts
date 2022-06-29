@@ -1,5 +1,4 @@
-use cosmwasm_std::Addr;
-use cw_asset::AssetInfo;
+use cw_asset::AssetInfoUnchecked;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -7,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct InstantiateMsg {
     pub owner: String,
     pub allowed_vaults: Vec<String>,
-    pub allowed_assets: Vec<AssetInfo>,
+    pub allowed_assets: Vec<AssetInfoUnchecked>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -17,17 +16,16 @@ pub enum ExecuteMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    GetOwner {},
-    GetAllowLists {},
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct OwnerResponse {
-    pub owner: Addr,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct AllowListsResponse {
-    pub vaults: Vec<Addr>,
-    pub assets: Vec<AssetInfo>,
+    /// The contract's owner. Response type: `String`
+    Owner {},
+    /// Whitelisted vaults. Response type: `Vec<String>`
+    AllowedVaults {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+    /// Whitelisted assets. Response type: `Vec<AssetInfoUnchecked>`
+    AllowedAssets {
+        start_after: Option<AssetInfoUnchecked>,
+        limit: Option<u32>,
+    }
 }

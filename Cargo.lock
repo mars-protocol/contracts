@@ -82,16 +82,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-schema"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "772e80bbad231a47a2068812b723a1ff81dd4a0d56c9391ac748177bea3a61da"
-dependencies = [
- "schemars",
- "serde_json",
-]
-
-[[package]]
 name = "cosmwasm-std"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -129,14 +119,14 @@ dependencies = [
 
 [[package]]
 name = "credit-manager"
-version = "2.0.0"
+version = "0.1.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-asset",
  "cw-multi-test",
  "cw-storage-plus",
- "fields",
+ "cw2",
+ "rover",
  "schemars",
  "serde",
 ]
@@ -235,6 +225,18 @@ dependencies = [
  "schemars",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "cw2"
+version = "0.13.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04cf4639517490dd36b333bbd6c4fbd92e325fd0acf4683b41753bc5eb63bfc1"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "schemars",
+ "serde",
 ]
 
 [[package]]
@@ -343,19 +345,6 @@ checksum = "131655483be284720a17d74ff97592b8e76576dc25563148601df2d7c9080924"
 dependencies = [
  "rand_core 0.6.3",
  "subtle",
-]
-
-[[package]]
-name = "fields"
-version = "2.0.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-asset",
- "cw-storage-plus",
- "cw20",
- "schemars",
- "serde",
 ]
 
 [[package]]
@@ -542,6 +531,18 @@ dependencies = [
  "crypto-bigint",
  "hmac",
  "zeroize",
+]
+
+[[package]]
+name = "rover"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-asset",
+ "cw-storage-plus",
+ "cw20",
+ "schemars",
+ "serde",
 ]
 
 [[package]]
