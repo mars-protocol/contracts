@@ -167,7 +167,7 @@ impl Fraction<u128> for Decimal {
 
 impl From<StdDecimal> for Decimal {
     fn from(std_decimal: StdDecimal) -> Decimal {
-        Decimal(Uint128::new(std_decimal.numerator()))
+        Decimal(Uint128::new(std_decimal.numerator().u128()))
     }
 }
 

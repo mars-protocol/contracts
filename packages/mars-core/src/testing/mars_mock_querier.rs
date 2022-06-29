@@ -1,7 +1,8 @@
 use cosmwasm_std::{
     from_binary, from_slice,
     testing::{MockQuerier, MOCK_CONTRACT_ADDR},
-    Addr, Coin, Querier, QuerierResult, QueryRequest, StdResult, SystemError, Uint128, WasmQuery, Empty, SystemResult,
+    Addr, Coin, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError, SystemResult,
+    Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
 

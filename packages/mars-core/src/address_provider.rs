@@ -191,8 +191,8 @@ mod tests {
     use crate::error::MarsError;
     use cosmwasm_std::testing::{MockApi, MockStorage};
     use cosmwasm_std::{
-        from_binary, from_slice, to_binary, Binary, ContractResult, OwnedDeps, Querier,
-        QuerierResult, QueryRequest, StdResult, SystemError, WasmQuery, Empty,
+        from_binary, from_slice, to_binary, Binary, ContractResult, Empty, OwnedDeps, Querier,
+        QuerierResult, QueryRequest, StdResult, SystemError, WasmQuery,
     };
 
     #[test]
@@ -201,6 +201,7 @@ mod tests {
             storage: MockStorage::default(),
             api: MockApi::default(),
             querier: AddressProviderMockQuerier {},
+            custom_query_type: Default::default(),
         };
 
         // Errors if address is empty
@@ -239,6 +240,7 @@ mod tests {
             storage: MockStorage::default(),
             api: MockApi::default(),
             querier: AddressProviderMockQuerier {},
+            custom_query_type: Default::default(),
         };
 
         // Errors if addresses are empty
