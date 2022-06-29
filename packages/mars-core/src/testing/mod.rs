@@ -5,7 +5,6 @@ mod incentives_querier;
 mod mars_mock_querier;
 mod mock_address_provider;
 mod mocks;
-mod native_querier;
 mod oracle_querier;
 
 pub use helpers::*;

@@ -42,7 +42,7 @@ pub enum ExecuteMsg {
 
     /// Callback sent from maToken contract after instantiated
     InitAssetTokenCallback {
-        /// Either the denom for a terra native asset or address for a cw20 token
+        /// Either the denom for a native asset or address for a cw20 token
         /// in bytes
         reference: Vec<u8>,
     },
@@ -68,10 +68,10 @@ pub enum ExecuteMsg {
         new_limit: Uint128,
     },
 
-    /// Deposit Terra native coins. Deposited coins must be sent in the transaction
+    /// Deposit native coins. Deposited coins must be sent in the transaction
     /// this call is made
     DepositNative {
-        /// Denom used in Terra (e.g: uluna, uusd)
+        /// Denom used (e.g: uluna, uusd)
         denom: String,
         /// Address that will receive the maTokens
         on_behalf_of: Option<String>,
@@ -88,7 +88,7 @@ pub enum ExecuteMsg {
         recipient: Option<String>,
     },
 
-    /// Borrow Terra native coins. If borrow allowed, amount is added to caller's debt
+    /// Borrow native coins. If borrow allowed, amount is added to caller's debt
     /// and sent to the address.
     Borrow {
         /// Asset to borrow
@@ -99,10 +99,10 @@ pub enum ExecuteMsg {
         recipient: Option<String>,
     },
 
-    /// Repay Terra native coins loan. Coins used to repay must be sent in the
+    /// Repay native coins loan. Coins used to repay must be sent in the
     /// transaction this call is made.
     RepayNative {
-        /// Denom used in Terra (e.g: uluna, uusd)
+        /// Denom used (e.g: uluna, uusd)
         denom: String,
         /// Repay the funds for the user
         on_behalf_of: Option<String>,
@@ -113,7 +113,7 @@ pub enum ExecuteMsg {
     LiquidateNative {
         /// Collateral asset liquidator gets from the borrower
         collateral_asset: Asset,
-        /// Denom used in Terra (e.g: uluna, uusd) of the debt asset
+        /// Denom (e.g: uluna, uusd) of the debt asset
         debt_asset_denom: String,
         /// The address of the borrower getting liquidated
         user_address: String,
