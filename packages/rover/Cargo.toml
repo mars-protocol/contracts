@@ -1,5 +1,5 @@
 [package]
-name = "fields-credit-manager"
+name = "rover"
 version = "0.1.0"
 authors = ["larry_0x <larry@delphidigital.io>", "Gabe R. <gabe.r@delphilabs.io>"]
 edition = "2018"
@@ -8,11 +8,9 @@ edition = "2018"
 doctest = false
 
 [dependencies]
-cosmwasm-std = "1.0.0"
-cw20 = "0.13.2"
-
+cosmwasm-std = "1.0"
+cw20 = "0.13"
+cw-asset = "2.1"
+cw-storage-plus = "0.13"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-
-[dev-dependencies]
-cosmwasm-schema = "1.0.0"

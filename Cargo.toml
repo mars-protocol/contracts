@@ -1,7 +1,7 @@
 [workspace]
 members = ["packages/*", "contracts/*"]
 
-[profile.release.package.fields-credit-manager]
+[profile.release.package.rover]
 codegen-units = 1
 incremental = false
 
