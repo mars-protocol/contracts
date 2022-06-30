@@ -2,11 +2,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Decimal};
 
 use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
-use crate::math::decimal::Decimal;
 
 /// Global configuration
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -63,10 +62,9 @@ pub mod msg {
     use schemars::JsonSchema;
     use serde::{Deserialize, Serialize};
 
-    use cosmwasm_std::{CosmosMsg, Uint128};
+    use cosmwasm_std::{CosmosMsg, Decimal, Uint128};
 
     use crate::asset::Asset;
-    use crate::math::decimal::Decimal;
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
     pub struct InstantiateMsg {

@@ -2,9 +2,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use cosmwasm_std::{Env, StdResult};
-
-use crate::math::decimal::Decimal;
+use crate::math;
+use cosmwasm_std::{Decimal, Env, StdError, StdResult};
 
 use super::Market;
 
@@ -133,6 +132,7 @@ pub fn get_liquidity_rate(
         .checked_mul(current_utilization_rate)?
         // This operation should not underflow as reserve_factor is checked to be <= 1
         .checked_mul(Decimal::one() - reserve_factor)
+        .map_err(StdError::from)
 }
 
 // DYNAMIC
@@ -274,18 +274,21 @@ pub fn linear_get_borrow_rate(
         } else {
             // The borrow interest rates increase slowly with utilization
             params.base
-                + params.slope_1.checked_mul(
-                    current_utilization_rate.checked_div(params.optimal_utilization_rate)?,
-                )?
+                + params.slope_1.checked_mul(math::checked_div(
+                    current_utilization_rate,
+                    params.optimal_utilization_rate,
+                )?)?
         }
     } else {
         // The borrow interest rates increase sharply with utilization
         params.base
             + params.slope_1
-            + params
-                .slope_2
-                .checked_mul(current_utilization_rate - params.optimal_utilization_rate)?
-                .checked_div(Decimal::one() - params.optimal_utilization_rate)?
+            + math::checked_div(
+                params
+                    .slope_2
+                    .checked_mul(current_utilization_rate - params.optimal_utilization_rate)?,
+                Decimal::one() - params.optimal_utilization_rate,
+            )?
     };
 
     Ok(new_borrow_rate)
@@ -294,8 +297,8 @@ pub fn linear_get_borrow_rate(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::math::decimal::Decimal;
     use crate::testing::mock_env_at_block_time;
+    use cosmwasm_std::Decimal;
 
     #[test]
     fn test_dynamic_model_lifecycle() {
@@ -630,12 +633,14 @@ mod tests {
         .unwrap();
 
         let expected_borrow_rate = interest_rate_model_params.base
-            + interest_rate_model_params
-                .slope_1
-                .checked_mul(utilization_rate)
-                .unwrap()
-                .checked_div(interest_rate_model_params.optimal_utilization_rate)
-                .unwrap();
+            + math::checked_div(
+                interest_rate_model_params
+                    .slope_1
+                    .checked_mul(utilization_rate)
+                    .unwrap(),
+                interest_rate_model_params.optimal_utilization_rate,
+            )
+            .unwrap();
 
         assert_eq!(market.borrow_rate, expected_borrow_rate);
         assert_eq!(
@@ -664,12 +669,14 @@ mod tests {
                 linear_get_borrow_rate(&linear_ir_params, current_utilization_rate).unwrap();
 
             let expected_borrow_rate = linear_ir_params.base
-                + linear_ir_params
-                    .slope_1
-                    .checked_mul(current_utilization_rate)
-                    .unwrap()
-                    .checked_div(linear_ir_params.optimal_utilization_rate)
-                    .unwrap();
+                + math::checked_div(
+                    linear_ir_params
+                        .slope_1
+                        .checked_mul(current_utilization_rate)
+                        .unwrap(),
+                    linear_ir_params.optimal_utilization_rate,
+                )
+                .unwrap();
 
             assert_eq!(new_borrow_rate, expected_borrow_rate);
         }
@@ -681,12 +688,14 @@ mod tests {
                 linear_get_borrow_rate(&linear_ir_params, current_utilization_rate).unwrap();
 
             let expected_borrow_rate = linear_ir_params.base
-                + linear_ir_params
-                    .slope_1
-                    .checked_mul(current_utilization_rate)
-                    .unwrap()
-                    .checked_div(linear_ir_params.optimal_utilization_rate)
-                    .unwrap();
+                + math::checked_div(
+                    linear_ir_params
+                        .slope_1
+                        .checked_mul(current_utilization_rate)
+                        .unwrap(),
+                    linear_ir_params.optimal_utilization_rate,
+                )
+                .unwrap();
 
             assert_eq!(new_borrow_rate, expected_borrow_rate);
         }
@@ -699,14 +708,16 @@ mod tests {
 
             let expected_borrow_rate = linear_ir_params.base
                 + linear_ir_params.slope_1
-                + linear_ir_params
-                    .slope_2
-                    .checked_mul(
-                        current_utilization_rate - linear_ir_params.optimal_utilization_rate,
-                    )
-                    .unwrap()
-                    .checked_div(Decimal::one() - linear_ir_params.optimal_utilization_rate)
-                    .unwrap();
+                + math::checked_div(
+                    linear_ir_params
+                        .slope_2
+                        .checked_mul(
+                            current_utilization_rate - linear_ir_params.optimal_utilization_rate,
+                        )
+                        .unwrap(),
+                    Decimal::one() - linear_ir_params.optimal_utilization_rate,
+                )
+                .unwrap();
 
             assert_eq!(new_borrow_rate, expected_borrow_rate);
         }

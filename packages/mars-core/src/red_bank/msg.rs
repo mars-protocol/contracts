@@ -1,12 +1,11 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_std::{Addr, Decimal, Uint128};
 
 use cw20::Cw20ReceiveMsg;
 
 use crate::asset::Asset;
-use crate::math::decimal::Decimal;
 
 use super::interest_rate_models::InterestRateModelParams;
 

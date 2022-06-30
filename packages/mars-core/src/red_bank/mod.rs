@@ -5,12 +5,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_std::{Addr, Decimal, Uint128};
 
 use crate::asset::AssetType;
 use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
-use crate::math::decimal::Decimal;
 
 use self::interest_rate_models::InterestRateModel;
 

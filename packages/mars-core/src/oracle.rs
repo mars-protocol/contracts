@@ -3,14 +3,12 @@ use std::fmt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Api, StdResult};
-
-use crate::math::decimal::Decimal;
+use cosmwasm_std::{Addr, Api, Decimal, StdResult};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum PriceSource {
-    /// Returns a fixed value; used for OSMO
+    /// Returns a fixed value;
     Fixed { price: Decimal },
 }
 
@@ -84,10 +82,11 @@ pub mod msg {
 }
 
 pub mod helpers {
-    use cosmwasm_std::{to_binary, Addr, QuerierWrapper, QueryRequest, StdResult, WasmQuery};
+    use cosmwasm_std::{
+        to_binary, Addr, Decimal, QuerierWrapper, QueryRequest, StdResult, WasmQuery,
+    };
 
     use crate::asset::AssetType;
-    use crate::math::decimal::Decimal;
 
     use super::msg::QueryMsg;
 

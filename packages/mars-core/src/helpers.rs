@@ -1,8 +1,9 @@
 use cosmwasm_std::{
-    to_binary, Addr, Api, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128, WasmQuery,
+    to_binary, Addr, Api, Decimal, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
+    WasmQuery,
 };
 
-use crate::{error::MarsError, math::decimal::Decimal};
+use crate::error::MarsError;
 use cw20::{BalanceResponse, Cw20QueryMsg, TokenInfoResponse};
 use std::convert::TryInto;
 
