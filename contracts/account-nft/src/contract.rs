@@ -1,15 +1,17 @@
+use std::convert::TryInto;
+
 use cosmwasm_std::{
     entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
-use cw721::NumTokensResponse;
-use cw721_base::{
-    ContractError, Cw721Contract, ExecuteMsg, Extension, InstantiateMsg, MintMsg, QueryMsg,
-};
+use cw721_base::{ContractError, Cw721Contract, Extension, InstantiateMsg, QueryMsg};
+
+use crate::execute::{try_mint, try_update_owner};
+use crate::msg::ExecuteMsg;
 
 // Extending CW721 base contract
 pub type Parent<'a> = Cw721Contract<'a, Extension, Empty>;
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -19,7 +21,7 @@ pub fn instantiate(
     Parent::default().instantiate(deps, env, info, msg)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -27,33 +29,13 @@ pub fn execute(
     msg: ExecuteMsg<Extension>,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint(mint_msg) => mint_override(deps, env, info, mint_msg),
-        _ => Parent::default().execute(deps, env, info, msg),
+        ExecuteMsg::Mint(mint_msg) => try_mint(deps, env, info, mint_msg),
+        ExecuteMsg::UpdateOwner { new_owner } => try_update_owner(deps, new_owner),
+        _ => Parent::default().execute(deps, env, info, msg.try_into()?),
     }
 }
 
-fn mint_override(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: MintMsg<Extension>,
-) -> Result<Response, ContractError> {
-    let parent = Parent::default();
-
-    let num_tokens: NumTokensResponse =
-        deps.querier.query_wasm_smart(&env.contract.address, &QueryMsg::NumTokens {})?;
-
-    let mint_msg_override = MintMsg {
-        token_id: (num_tokens.count + 1).to_string(),
-        owner: msg.owner,
-        token_uri: None,
-        extension: None,
-    };
-
-    parent.mint(deps, env, info, mint_msg_override)
-}
-
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     Parent::default().query(deps, env, msg)
 }

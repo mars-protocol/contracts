@@ -1,18 +1,21 @@
-use crate::state::{ALLOWED_ASSETS, ALLOWED_VAULTS, CREDIT_ACCOUNT_NFT_CONTRACT, OWNER};
+use crate::state::{ACCOUNT_NFT, ALLOWED_ASSETS, ALLOWED_VAULTS, OWNER};
 use cosmwasm_std::{Addr, Deps, Order, StdResult};
 use cw_asset::{AssetInfo, AssetInfoKey, AssetInfoUnchecked};
 use cw_storage_plus::Bound;
+use rover::ConfigResponse;
 use std::convert::TryFrom;
 
 const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
 
-pub fn query_nft_contract_addr(deps: Deps) -> StdResult<String> {
-    Ok(CREDIT_ACCOUNT_NFT_CONTRACT.load(deps.storage)?.into())
-}
-
-pub fn query_owner(deps: Deps) -> StdResult<String> {
-    Ok(OWNER.load(deps.storage)?.into())
+pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
+    Ok(ConfigResponse {
+        owner: OWNER.load(deps.storage)?.into(),
+        account_nft: match ACCOUNT_NFT.load(deps.storage)? {
+            None => String::from(""),
+            Some(addr) => addr.into(),
+        },
+    })
 }
 
 /// NOTE: This implementation of the query function assumes the map `ALLOWED_VAULTS` only saves `true`.

@@ -6,10 +6,7 @@ import path from 'path';
 import { getCosmWasmClient } from '../utils/client';
 import { Network, networks } from '../utils/config';
 import { testWallet1 } from '../utils/test-wallets';
-import { getCosmWasmClient } from '../utils/client';
-import { sha256 } from '@cosmjs/crypto';
-import { GetAllowListResponse, GetNftAddressResponse, serializeAssetInfo } from '../utils/types';
-import { AssetInfo, serializeAssetInfo } from '../utils/types';
+import { AssetInfo, Config, serializeAssetInfo } from '../utils/types';
 
 describe('instantiating fields contract', () => {
   let client: SigningCosmWasmClient;
@@ -60,9 +57,6 @@ describe('instantiating fields contract', () => {
     managerContractAddr = contractAddress;
     expect(managerContractAddr).toBeDefined();
 
-    const ownerFromQuery = await client.queryContractSmart(contractAddress, { owner: {} });
-    expect(ownerFromQuery).toEqual(owner);
-
     const allowedVaultsFromQuery: string[] = await client.queryContractSmart(contractAddress, {
       allowed_vaults: {},
     });
@@ -81,11 +75,12 @@ describe('instantiating fields contract', () => {
         .every((asset_str) => allowed_assets.map(serializeAssetInfo).includes(asset_str)),
     ).toBeTruthy();
 
-    const nftAddressRes: GetNftAddressResponse = await client.queryContractSmart(contractAddress, {
-      get_credit_account_nft_address: {},
+    const configRes: Config = await client.queryContractSmart(contractAddress, {
+      config: {},
     });
 
-    expect(nftAddressRes.address).toBeDefined();
+    expect(configRes.owner).toEqual(owner);;
+    expect(configRes.account_nft).toEqual("");
   });
 });
 

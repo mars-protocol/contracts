@@ -1,6 +1,6 @@
 [package]
 name = "account-nft"
-version = "1.0.0"
+version = "0.1.0"
 authors = ["larry_0x <larry@delphidigital.io>, grod220 <gabe.r@delphilabs.io>"]
 edition = "2018"
 
@@ -18,5 +18,4 @@ schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-cosmwasm-schema = "1.0"
 cw-multi-test = "0.13"

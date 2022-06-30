@@ -2,84 +2,68 @@ use cosmwasm_std::Addr;
 use cw_asset::AssetInfoUnchecked;
 use cw_multi_test::Executor;
 
-use rover::{InstantiateMsg, QueryMsg};
+use crate::helpers::{mock_app, mock_contract};
+use rover::{ConfigResponse, InstantiateMsg, QueryMsg};
 
-use crate::helpers::{mock_account_nft_contract, mock_app, mock_contract};
-
-mod helpers;
+pub mod helpers;
 
 #[test]
 fn test_owner_set_on_instantiate() {
     let mut app = mock_app();
-    let nft_contract_code_id = app.store_code(mock_account_nft_contract());
-    let manager_code_id = app.store_code(mock_contract());
+    let code_id = app.store_code(mock_contract());
     let owner = Addr::unchecked("owner");
 
     let msg = InstantiateMsg {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_assets: vec![],
-        nft_contract_code_id,
     };
 
     let contract_addr = app
-        .instantiate_contract(
-            manager_code_id,
-            owner.clone(),
-            &msg,
-            &[],
-            "mock-account-nft",
-            None,
-        )
+        .instantiate_contract(code_id, owner.clone(), &msg, &[], "mock-account-nft", None)
         .unwrap();
 
-    let res: String = app
+    let res: ConfigResponse = app
         .wrap()
-        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Owner {})
+        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
         .unwrap();
 
-    assert_eq!(owner, res);
+    assert_eq!(owner, res.owner);
 }
 
 #[test]
-fn test_nft_contract_addr_set_on_instantiate() {
+fn test_nft_contract_addr_not_set_on_instantiate() {
     let mut app = mock_app();
     let owner = Addr::unchecked("owner");
-
-    let nft_contract_code_id = app.store_code(mock_account_nft_contract());
-
-    let credit_manager_code_id = app.store_code(mock_contract());
-    let manager_initiate_msg = InstantiateMsg {
-        owner: owner.to_string(),
-        allowed_vaults: vec![],
-        allowed_assets: vec![],
-        nft_contract_code_id,
-    };
+    let code_id = app.store_code(mock_contract());
 
     let contract_addr = app
         .instantiate_contract(
-            credit_manager_code_id,
+            code_id,
             owner.clone(),
-            &manager_initiate_msg,
+            &InstantiateMsg {
+                owner: owner.to_string(),
+                allowed_vaults: vec![],
+                allowed_assets: vec![],
+            },
             &[],
             "manager-mock-account-nft",
             None,
         )
         .unwrap();
 
-    let res: String = app
+    let res: ConfigResponse = app
         .wrap()
-        .query_wasm_smart(contract_addr.clone(), &QueryMsg::CreditAccountNftAddress {})
+        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
         .unwrap();
 
-    assert!(res.as_str().chars().count() > 0);
+    assert_eq!(res.account_nft, "");
 }
 
 #[test]
 fn test_allowed_vaults_and_assets_stored_on_instantiate() {
     let mut app = mock_app();
-    let nft_contract_code_id = app.store_code(mock_account_nft_contract());
-    let credit_manager_code_id = app.store_code(mock_contract());
+    let code_id = app.store_code(mock_contract());
     let owner = Addr::unchecked("owner");
 
     let allowed_vaults = vec![
@@ -99,12 +83,11 @@ fn test_allowed_vaults_and_assets_stored_on_instantiate() {
         owner: owner.to_string(),
         allowed_vaults: allowed_vaults.clone(),
         allowed_assets: allowed_assets.clone(),
-        nft_contract_code_id,
     };
 
     let contract_addr = app
         .instantiate_contract(
-            credit_manager_code_id,
+            code_id,
             owner,
             &msg,
             &[],
@@ -145,7 +128,6 @@ fn test_allowed_vaults_and_assets_stored_on_instantiate() {
 #[test]
 fn test_panics_on_invalid_instantiation_addrs() {
     let mut app = mock_app();
-    let nft_contract_code_id = app.store_code(mock_account_nft_contract());
     let manager_code_id = app.store_code(mock_contract());
     let owner = Addr::unchecked("owner");
 
@@ -153,7 +135,6 @@ fn test_panics_on_invalid_instantiation_addrs() {
         owner: owner.to_string(),
         allowed_vaults: vec![String::from("%%%INVALID%%%")],
         allowed_assets: vec![],
-        nft_contract_code_id,
     };
 
     let instantiate_res = app.instantiate_contract(
@@ -174,7 +155,6 @@ fn test_panics_on_invalid_instantiation_addrs() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_assets: vec![AssetInfoUnchecked::Cw20(String::from("AA"))], // Because cw-asset lowercases before passing to validate, in the test env, two letter strings is only one that triggers a fail
-        nft_contract_code_id,
     };
 
     let instantiate_res = app.instantiate_contract(
@@ -185,21 +165,6 @@ fn test_panics_on_invalid_instantiation_addrs() {
         "mock-contract",
         None,
     );
-
-    match instantiate_res {
-        Err(_) => {}
-        Ok(_) => panic!("Should have thrown an error"),
-    }
-
-    let msg = InstantiateMsg {
-        owner: owner.to_string(),
-        allowed_vaults: vec![],
-        allowed_assets: vec![],
-        nft_contract_code_id: 0,
-    };
-
-    let instantiate_res =
-        app.instantiate_contract(manager_code_id, owner, &msg, &[], "mock-contract", None);
 
     match instantiate_res {
         Err(_) => {}

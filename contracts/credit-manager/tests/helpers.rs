@@ -4,14 +4,14 @@ use cw_multi_test::{App, Contract, ContractWrapper};
 use account_nft::contract::{
     execute as cw721Execute, instantiate as cw721Instantiate, query as cw721Query,
 };
-use credit_manager::contract::{execute, instantiate, query, reply};
+use credit_manager::contract::{execute, instantiate, query};
 
 pub fn mock_app() -> App {
     App::default()
 }
 
 pub fn mock_contract() -> Box<dyn Contract<Empty>> {
-    let contract = ContractWrapper::new(execute, instantiate, query).with_reply(reply);
+    let contract = ContractWrapper::new(execute, instantiate, query);
     Box::new(contract)
 }
 

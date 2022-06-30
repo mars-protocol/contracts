@@ -4,15 +4,14 @@ use cw_multi_test::Executor;
 
 use rover::{InstantiateMsg, QueryMsg};
 
-use crate::helpers::{mock_account_nft_contract, mock_app, mock_contract};
+use crate::helpers::{mock_app, mock_contract};
 
-mod helpers;
+pub mod helpers;
 
 #[test]
 fn test_pagination_on_allowed_vaults_query_works() {
     let mut app = mock_app();
-    let nft_contract_code_id = app.store_code(mock_account_nft_contract());
-    let credit_manager_code_id = app.store_code(mock_contract());
+    let code_id = app.store_code(mock_contract());
     let owner = Addr::unchecked("owner");
 
     let allowed_vaults = vec![
@@ -54,18 +53,10 @@ fn test_pagination_on_allowed_vaults_query_works() {
         owner: owner.to_string(),
         allowed_vaults: allowed_vaults.clone(),
         allowed_assets: vec![],
-        nft_contract_code_id,
     };
 
     let contract_addr = app
-        .instantiate_contract(
-            credit_manager_code_id,
-            owner.clone(),
-            &msg,
-            &[],
-            "mock-contract",
-            None,
-        )
+        .instantiate_contract(code_id, owner.clone(), &msg, &[], "mock-contract", None)
         .unwrap();
 
     let vaults_res: Vec<String> = app
@@ -162,8 +153,7 @@ fn test_pagination_on_allowed_vaults_query_works() {
 #[test]
 fn test_pagination_on_allowed_assets_query_works() {
     let mut app = mock_app();
-    let nft_contract_code_id = app.store_code(mock_account_nft_contract());
-    let credit_manager_code_id = app.store_code(mock_contract());
+    let code_id = app.store_code(mock_contract());
     let owner = Addr::unchecked("owner");
 
     let allowed_assets = vec![
@@ -205,18 +195,10 @@ fn test_pagination_on_allowed_assets_query_works() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_assets: allowed_assets.clone(),
-        nft_contract_code_id,
     };
 
     let contract_addr = app
-        .instantiate_contract(
-            credit_manager_code_id,
-            owner.clone(),
-            &msg,
-            &[],
-            "mock-contract",
-            None,
-        )
+        .instantiate_contract(code_id, owner.clone(), &msg, &[], "mock-contract", None)
         .unwrap();
 
     let assets_res: Vec<AssetInfoUnchecked> = app

@@ -7,20 +7,23 @@ pub struct InstantiateMsg {
     pub owner: String,
     pub allowed_vaults: Vec<String>,
     pub allowed_assets: Vec<AssetInfoUnchecked>,
-    pub nft_contract_code_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     CreateCreditAccount {},
+    UpdateConfig {
+        account_nft: Option<String>,
+        owner: Option<String>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    /// The contract's owner. Response type: `String`
-    Owner {},
+    /// Owner & account nft address. Response type: `ConfigResponse`
+    Config {},
     /// Whitelisted vaults. Response type: `Vec<String>`
     AllowedVaults {
         start_after: Option<String>,
@@ -31,5 +34,11 @@ pub enum QueryMsg {
         start_after: Option<AssetInfoUnchecked>,
         limit: Option<u32>,
     },
-    CreditAccountNftAddress {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct ConfigResponse {
+    pub owner: String,
+    pub account_nft: String,
 }

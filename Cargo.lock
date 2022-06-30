@@ -4,9 +4,8 @@ version = 3
 
 [[package]]
 name = "account-nft"
-version = "1.0.0"
+version = "0.1.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
  "cw721",
@@ -95,16 +94,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-schema"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "772e80bbad231a47a2068812b723a1ff81dd4a0d56c9391ac748177bea3a61da"
-dependencies = [
- "schemars",
- "serde_json",
-]
-
-[[package]]
 name = "cosmwasm-std"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -149,7 +138,6 @@ dependencies = [
  "cw-asset",
  "cw-multi-test",
  "cw-storage-plus",
- "cw-utils",
  "cw2",
  "cw721",
  "cw721-base",
