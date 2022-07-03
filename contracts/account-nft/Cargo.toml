@@ -9,6 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 backtraces = ["cosmwasm-std/backtraces"]
+library = []
 
 [dependencies]
 cw721 = "0.13"

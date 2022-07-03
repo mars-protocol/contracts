@@ -57,7 +57,7 @@ fn test_nft_contract_addr_not_set_on_instantiate() {
         .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
         .unwrap();
 
-    assert_eq!(res.account_nft, "");
+    assert_eq!(res.account_nft, None);
 }
 
 #[test]

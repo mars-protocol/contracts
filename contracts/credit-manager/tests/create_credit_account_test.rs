@@ -1,10 +1,10 @@
 extern crate core;
 
+use anyhow::Result as AnyResult;
 use cosmwasm_std::Addr;
 use cw721::OwnerOfResponse;
-use cw721_base::{Extension, InstantiateMsg as NftInstantiateMsg, QueryMsg as NftQueryMsg};
+use cw721_base::{InstantiateMsg as NftInstantiateMsg, QueryMsg as NftQueryMsg};
 use cw_multi_test::{App, AppResponse, Executor};
-use std::fmt::Error;
 
 use rover::ExecuteMsg::{CreateCreditAccount, UpdateConfig};
 use rover::{ConfigResponse, InstantiateMsg, QueryMsg};
@@ -80,7 +80,7 @@ fn test_create_credit_account() {
         Err(_) => {}
     }
 
-    let update_msg: NftExecuteMsg<Extension> = NftExecuteMsg::UpdateOwner {
+    let update_msg: NftExecuteMsg = NftExecuteMsg::UpdateOwner {
         new_owner: manager_contract_addr.to_string(),
     };
     app.execute_contract(user.clone(), nft_contract_addr.clone(), &update_msg, &[])
@@ -109,7 +109,7 @@ fn test_create_credit_account() {
     let owner_res: OwnerOfResponse = app
         .wrap()
         .query_wasm_smart(
-            config_res.account_nft,
+            config_res.account_nft.unwrap(),
             &NftQueryMsg::OwnerOf {
                 token_id: token_id.to_string(),
                 include_expired: None,
@@ -124,12 +124,11 @@ fn mock_create_credit_account(
     app: &mut App,
     manager_contract_addr: &Addr,
     user: &Addr,
-) -> Result<AppResponse, Error> {
+) -> AnyResult<AppResponse> {
     app.execute_contract(
         user.clone(),
         manager_contract_addr.clone(),
         &CreateCreditAccount {},
         &[],
     )
-    .map_err(|_| Error::default())
 }

@@ -2,28 +2,17 @@ use cosmwasm_std::{
     to_binary, Addr, Attribute, CosmosMsg, DepsMut, MessageInfo, Response, StdError, StdResult,
     WasmMsg,
 };
-use cw721_base::{ExecuteMsg, Extension, MintMsg};
+use account_nft::msg::{ExecuteMsg as NftExecuteMsg};
 
 use crate::state::{ACCOUNT_NFT, OWNER};
 
 pub fn try_create_credit_account(deps: DepsMut, user: Addr) -> StdResult<Response> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
 
-    if let None = contract_addr {
-        return Err(StdError::generic_err(
-            "No account nft contract address is set",
-        ));
-    }
-
     let nft_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: contract_addr.unwrap().to_string(),
+        contract_addr: contract_addr.to_string(),
         funds: vec![],
-        msg: to_binary(&ExecuteMsg::Mint(MintMsg::<Extension> {
-            token_id: String::from("contract-will-generate"),
-            owner: user.to_string(),
-            token_uri: None,
-            extension: None,
-        }))?,
+        msg: to_binary(&NftExecuteMsg::Mint { user: user.to_string() })?,
     });
 
     Ok(Response::new()
@@ -50,7 +39,7 @@ pub fn try_update_config(
 
     if let Some(addr_str) = new_account_nft {
         let validated = deps.api.addr_validate(addr_str.as_str())?;
-        ACCOUNT_NFT.save(deps.storage, &Some(validated))?;
+        ACCOUNT_NFT.save(deps.storage, &validated)?;
         attributes.push(Attribute::new(
             "action",
             "rover/credit_manager/update_config/account_nft",

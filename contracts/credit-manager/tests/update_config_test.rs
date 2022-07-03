@@ -18,7 +18,7 @@ fn test_update_config_works_with_full_config() {
 
     let config_res = query_config(&mut app, &contract_addr.clone());
 
-    assert_eq!(config_res.account_nft, "");
+    assert_eq!(config_res.account_nft, None);
     assert_eq!(config_res.owner, original_owner.to_string());
 
     let new_owner = Addr::unchecked("new_owner");
@@ -36,7 +36,7 @@ fn test_update_config_works_with_full_config() {
 
     let config_res = query_config(&mut app, &contract_addr.clone());
 
-    assert_eq!(config_res.account_nft, account_nft_contract.to_string());
+    assert_eq!(config_res.account_nft, Some(account_nft_contract.to_string()));
     assert_eq!(config_res.owner, new_owner.to_string());
 }
 
@@ -49,7 +49,7 @@ fn test_update_config_works_with_some_config() {
 
     let config_res = query_config(&mut app, &contract_addr.clone());
 
-    assert_eq!(config_res.account_nft, "");
+    assert_eq!(config_res.account_nft, None);
     assert_eq!(config_res.owner, original_owner.to_string());
 
     let account_nft_contract = Addr::unchecked("account_nft_contract");
@@ -66,7 +66,7 @@ fn test_update_config_works_with_some_config() {
 
     let config_res = query_config(&mut app, &contract_addr.clone());
 
-    assert_eq!(config_res.account_nft, account_nft_contract.to_string());
+    assert_eq!(config_res.account_nft, Some(account_nft_contract.to_string()));
     assert_eq!(config_res.owner, original_owner.to_string());
 
     let new_owner = Addr::unchecked("new_owner");
@@ -82,7 +82,7 @@ fn test_update_config_works_with_some_config() {
     .unwrap();
 
     let config_res = query_config(&mut app, &contract_addr.clone());
-    assert_eq!(config_res.account_nft, account_nft_contract.to_string());
+    assert_eq!(config_res.account_nft, Some(account_nft_contract.to_string()));
     assert_eq!(config_res.owner, new_owner.to_string());
 }
 
@@ -106,7 +106,7 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
 
     let config_res = query_config(&mut app, &contract_addr.clone());
 
-    assert_eq!(config_res.account_nft, "");
+    assert_eq!(config_res.account_nft, None);
     assert_eq!(config_res.owner, original_owner.to_string());
 }
 

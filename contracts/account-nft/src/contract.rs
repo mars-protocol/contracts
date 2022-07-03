@@ -1,8 +1,8 @@
 use std::convert::TryInto;
 
-use cosmwasm_std::{
-    entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
-};
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
+use cosmwasm_std::{Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult};
 use cw721_base::{ContractError, Cw721Contract, InstantiateMsg, QueryMsg};
 
 use crate::execute::{try_mint, try_update_owner};
