@@ -1,6 +1,6 @@
 use cosmwasm_std::Addr;
 use cw721::OwnerOfResponse;
-use cw721_base::{ExecuteMsg, Extension, InstantiateMsg, MintMsg, QueryMsg};
+use cw721_base::{InstantiateMsg, QueryMsg};
 use cw_multi_test::{App, AppResponse, BasicApp, ContractWrapper, Executor};
 use msg::ExecuteMsg as ExtendedExecuteMsg;
 use std::fmt::Error;
@@ -84,7 +84,7 @@ fn test_normal_base_cw721_actions_can_still_be_taken() {
     let res = mint_action(&mut app, &owner, &contract_addr, &rover_user).unwrap();
     let token_id = get_token_id(res);
 
-    let burn_msg: ExtendedExecuteMsg<Extension> = ExtendedExecuteMsg::Burn { token_id };
+    let burn_msg: ExtendedExecuteMsg = ExtendedExecuteMsg::Burn { token_id };
     app.execute_contract(rover_user, contract_addr.clone(), &burn_msg, &[])
         .map_err(|_| Error::default())
         .unwrap();
@@ -133,7 +133,7 @@ fn replace_owner(
     contract_addr: &Addr,
     new_owner: &Addr,
 ) -> Result<AppResponse, Error> {
-    let update_msg: ExtendedExecuteMsg<Extension> = ExtendedExecuteMsg::UpdateOwner {
+    let update_msg: ExtendedExecuteMsg = ExtendedExecuteMsg::UpdateOwner {
         new_owner: new_owner.to_string(),
     };
     app.execute_contract(
@@ -154,14 +154,7 @@ fn mint_action(
     app.execute_contract(
         sender.clone(),
         contract_addr.clone(),
-        &ExecuteMsg::Mint {
-            0: MintMsg {
-                token_id: String::from("some_token_id_that_will_be_ignored"),
-                owner: token_owner.to_string(),
-                token_uri: None,
-                extension: Extension::None,
-            },
-        },
+        &ExtendedExecuteMsg::Mint { user: token_owner.into() },
         &[],
     )
     .map_err(|_| Error::default())

@@ -1,5 +1,5 @@
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
-use cw721_base::{ContractError, Extension, MintMsg};
+use cw721_base::{ContractError, MintMsg};
 
 use crate::contract::Parent;
 
@@ -7,13 +7,13 @@ pub fn try_mint(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: MintMsg<Extension>,
+    user: String,
 ) -> Result<Response, ContractError> {
     let parent = Parent::default();
     let num_tokens = parent.token_count(deps.storage)?;
     let mint_msg_override = MintMsg {
         token_id: (num_tokens + 1).to_string(),
-        owner: msg.owner,
+        owner: user,
         token_uri: None,
         extension: None,
     };

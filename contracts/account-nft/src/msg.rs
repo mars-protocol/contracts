@@ -1,14 +1,14 @@
 use std::convert::TryInto;
 
-use cosmwasm_std::{Binary, StdError};
+use cosmwasm_std::{Binary, Empty, StdError};
 use cw721::Expiration;
-use cw721_base::{ContractError, ExecuteMsg as ParentExecuteMsg, MintMsg};
+use cw721_base::{ContractError, ExecuteMsg as ParentExecuteMsg};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg<T> {
+pub enum ExecuteMsg {
     //--------------------------------------------------------------------------------------------------
     // Extended and overridden messages
     //--------------------------------------------------------------------------------------------------
@@ -16,8 +16,10 @@ pub enum ExecuteMsg<T> {
     /// and give ownership access to Rover with this action after both are independently deployed.
     UpdateOwner { new_owner: String },
 
-    /// Mint a new NFT, can only be called by the contract minter
-    Mint(MintMsg<T>),
+    /// Mint a new NFT to the specified user; can only be called by the contract minter
+    Mint {
+        user: String,
+    },
 
     //--------------------------------------------------------------------------------------------------
     // Base cw721 messages
@@ -53,10 +55,10 @@ pub enum ExecuteMsg<T> {
     Burn { token_id: String },
 }
 
-impl<T> TryInto<ParentExecuteMsg<T>> for ExecuteMsg<T> {
+impl TryInto<ParentExecuteMsg<Option<Empty>>> for ExecuteMsg {
     type Error = ContractError;
 
-    fn try_into(self) -> Result<ParentExecuteMsg<T>, Self::Error> {
+    fn try_into(self) -> Result<ParentExecuteMsg<Option<Empty>>, Self::Error> {
         match self {
             ExecuteMsg::TransferNft {
                 recipient,
