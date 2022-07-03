@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{DepsMut, Empty, Env, MessageInfo, Response};
 use cw721_base::{ContractError, MintMsg};
 
 use crate::contract::Parent;
@@ -15,7 +15,7 @@ pub fn try_mint(
         token_id: (num_tokens + 1).to_string(),
         owner: user,
         token_uri: None,
-        extension: None,
+        extension: Empty {},
     };
     parent.mint(deps, env, info, mint_msg_override)
 }

@@ -55,10 +55,10 @@ pub enum ExecuteMsg {
     Burn { token_id: String },
 }
 
-impl TryInto<ParentExecuteMsg<Option<Empty>>> for ExecuteMsg {
+impl TryInto<ParentExecuteMsg<Empty>> for ExecuteMsg {
     type Error = ContractError;
 
-    fn try_into(self) -> Result<ParentExecuteMsg<Option<Empty>>, Self::Error> {
+    fn try_into(self) -> Result<ParentExecuteMsg<Empty>, Self::Error> {
         match self {
             ExecuteMsg::TransferNft {
                 recipient,

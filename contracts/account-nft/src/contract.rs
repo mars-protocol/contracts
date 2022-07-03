@@ -9,7 +9,7 @@ use crate::execute::{try_mint, try_update_owner};
 use crate::msg::ExecuteMsg;
 
 // Extending CW721 base contract
-pub type Parent<'a> = Cw721Contract<'a, Option<Empty>, Empty>;
+pub type Parent<'a> = Cw721Contract<'a, Empty, Empty>;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
