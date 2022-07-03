@@ -1,12 +1,13 @@
+use std::fmt::Error;
+
+use anyhow::Result as AnyResult;
 use cosmwasm_std::Addr;
 use cw721::OwnerOfResponse;
 use cw721_base::{InstantiateMsg, QueryMsg};
 use cw_multi_test::{App, AppResponse, BasicApp, ContractWrapper, Executor};
-use msg::ExecuteMsg as ExtendedExecuteMsg;
-use std::fmt::Error;
 
 use crate::contract::{execute, instantiate, query};
-use crate::msg;
+use crate::msg::ExecuteMsg as ExtendedExecuteMsg;
 
 #[test]
 fn test_id_incrementer() {
@@ -66,9 +67,8 @@ fn test_can_change_owner() {
     mint_action(&mut app, &new_owner, &contract_addr, &rover_user).unwrap();
 
     let res = mint_action(&mut app, &original_owner, &contract_addr, &rover_user);
-    match res {
-        Ok(_) => panic!("Original owner should no longer have access"),
-        Err(_) => {}
+    if res.is_ok() {
+        panic!("Original owner should no longer have access");
     }
 }
 
@@ -150,14 +150,13 @@ fn mint_action(
     sender: &Addr,
     contract_addr: &Addr,
     token_owner: &Addr,
-) -> Result<AppResponse, Error> {
+) -> AnyResult<AppResponse> {
     app.execute_contract(
         sender.clone(),
         contract_addr.clone(),
         &ExtendedExecuteMsg::Mint { user: token_owner.into() },
         &[],
     )
-    .map_err(|_| Error::default())
 }
 
 fn get_token_id(res: AppResponse) -> String {

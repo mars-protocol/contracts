@@ -2,8 +2,9 @@ use cosmwasm_std::Addr;
 use cw_asset::AssetInfoUnchecked;
 use cw_multi_test::Executor;
 
-use crate::helpers::{mock_app, mock_contract};
 use rover::{ConfigResponse, InstantiateMsg, QueryMsg};
+
+use crate::helpers::{mock_app, mock_contract};
 
 pub mod helpers;
 
@@ -146,9 +147,8 @@ fn test_panics_on_invalid_instantiation_addrs() {
         None,
     );
 
-    match instantiate_res {
-        Err(_) => {}
-        Ok(_) => panic!("Should have thrown an error"),
+    if instantiate_res.is_ok() {
+        panic!("Should have thrown an error");
     }
 
     let msg = InstantiateMsg {
@@ -166,8 +166,7 @@ fn test_panics_on_invalid_instantiation_addrs() {
         None,
     );
 
-    match instantiate_res {
-        Err(_) => {}
-        Ok(_) => panic!("Should have thrown an error"),
+    if instantiate_res.is_ok() {
+        panic!("Should have thrown an error");
     }
 }
