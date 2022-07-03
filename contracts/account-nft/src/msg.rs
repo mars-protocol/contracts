@@ -93,9 +93,7 @@ impl TryInto<ParentExecuteMsg<Option<Empty>>> for ExecuteMsg {
             }
             ExecuteMsg::RevokeAll { operator } => Ok(ParentExecuteMsg::RevokeAll { operator }),
             ExecuteMsg::Burn { token_id } => Ok(ParentExecuteMsg::Burn { token_id }),
-            _ => Err(ContractError::Std {
-                0: StdError::generic_err("Attempting to convert to a non-cw721 compatible message"),
-            }),
+            _ => Err(StdError::generic_err("Attempting to convert to a non-cw721 compatible message").into()),
         }
     }
 }
