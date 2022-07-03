@@ -65,6 +65,6 @@ pub fn query_allowed_assets(
         .take(limit)
         .collect::<StdResult<Vec<_>>>()?
         .into_iter()
-        .map(|key| AssetInfoUnchecked::try_from(key))
+        .map(AssetInfoUnchecked::try_from)
         .collect()
 }
