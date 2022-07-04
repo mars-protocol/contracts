@@ -6,6 +6,7 @@ version = 3
 name = "account-nft"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "cosmwasm-std",
  "cw-multi-test",
  "cw721",
@@ -134,6 +135,7 @@ name = "credit-manager"
 version = "0.1.0"
 dependencies = [
  "account-nft",
+ "anyhow",
  "cosmwasm-std",
  "cw-asset",
  "cw-multi-test",

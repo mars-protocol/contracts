@@ -2,8 +2,9 @@ use cosmwasm_std::Addr;
 use cw_asset::AssetInfoUnchecked;
 use cw_multi_test::Executor;
 
-use crate::helpers::{mock_app, mock_contract};
 use rover::{ConfigResponse, InstantiateMsg, QueryMsg};
+
+use crate::helpers::{mock_app, mock_contract};
 
 pub mod helpers;
 
@@ -57,7 +58,7 @@ fn test_nft_contract_addr_not_set_on_instantiate() {
         .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
         .unwrap();
 
-    assert_eq!(res.account_nft, "");
+    assert_eq!(res.account_nft, None);
 }
 
 #[test]
@@ -146,9 +147,8 @@ fn test_panics_on_invalid_instantiation_addrs() {
         None,
     );
 
-    match instantiate_res {
-        Err(_) => {}
-        Ok(_) => panic!("Should have thrown an error"),
+    if instantiate_res.is_ok() {
+        panic!("Should have thrown an error");
     }
 
     let msg = InstantiateMsg {
@@ -166,8 +166,7 @@ fn test_panics_on_invalid_instantiation_addrs() {
         None,
     );
 
-    match instantiate_res {
-        Err(_) => {}
-        Ok(_) => panic!("Should have thrown an error"),
+    if instantiate_res.is_ok() {
+        panic!("Should have thrown an error");
     }
 }

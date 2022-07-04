@@ -11,10 +11,7 @@ const DEFAULT_LIMIT: u32 = 10;
 pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     Ok(ConfigResponse {
         owner: OWNER.load(deps.storage)?.into(),
-        account_nft: match ACCOUNT_NFT.load(deps.storage)? {
-            None => String::from(""),
-            Some(addr) => addr.into(),
-        },
+        account_nft: ACCOUNT_NFT.may_load(deps.storage)?.map(|addr| addr.to_string()),
     })
 }
 
@@ -68,6 +65,6 @@ pub fn query_allowed_assets(
         .take(limit)
         .collect::<StdResult<Vec<_>>>()?
         .into_iter()
-        .map(|key| AssetInfoUnchecked::try_from(key))
+        .map(AssetInfoUnchecked::try_from)
         .collect()
 }

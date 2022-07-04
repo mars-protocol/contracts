@@ -1,12 +1,13 @@
-use cosmwasm_std::Addr;
-use cw721::OwnerOfResponse;
-use cw721_base::{ExecuteMsg, Extension, InstantiateMsg, MintMsg, QueryMsg};
-use cw_multi_test::{App, AppResponse, BasicApp, ContractWrapper, Executor};
-use msg::ExecuteMsg as ExtendedExecuteMsg;
 use std::fmt::Error;
 
+use anyhow::Result as AnyResult;
+use cosmwasm_std::Addr;
+use cw721::OwnerOfResponse;
+use cw721_base::{InstantiateMsg, QueryMsg};
+use cw_multi_test::{App, AppResponse, BasicApp, ContractWrapper, Executor};
+
 use crate::contract::{execute, instantiate, query};
-use crate::msg;
+use crate::msg::ExecuteMsg as ExtendedExecuteMsg;
 
 #[test]
 fn test_id_incrementer() {
@@ -66,9 +67,8 @@ fn test_can_change_owner() {
     mint_action(&mut app, &new_owner, &contract_addr, &rover_user).unwrap();
 
     let res = mint_action(&mut app, &original_owner, &contract_addr, &rover_user);
-    match res {
-        Ok(_) => panic!("Original owner should no longer have access"),
-        Err(_) => {}
+    if res.is_ok() {
+        panic!("Original owner should no longer have access");
     }
 }
 
@@ -84,7 +84,7 @@ fn test_normal_base_cw721_actions_can_still_be_taken() {
     let res = mint_action(&mut app, &owner, &contract_addr, &rover_user).unwrap();
     let token_id = get_token_id(res);
 
-    let burn_msg: ExtendedExecuteMsg<Extension> = ExtendedExecuteMsg::Burn { token_id };
+    let burn_msg: ExtendedExecuteMsg = ExtendedExecuteMsg::Burn { token_id };
     app.execute_contract(rover_user, contract_addr.clone(), &burn_msg, &[])
         .map_err(|_| Error::default())
         .unwrap();
@@ -133,7 +133,7 @@ fn replace_owner(
     contract_addr: &Addr,
     new_owner: &Addr,
 ) -> Result<AppResponse, Error> {
-    let update_msg: ExtendedExecuteMsg<Extension> = ExtendedExecuteMsg::UpdateOwner {
+    let update_msg: ExtendedExecuteMsg = ExtendedExecuteMsg::UpdateOwner {
         new_owner: new_owner.to_string(),
     };
     app.execute_contract(
@@ -150,21 +150,13 @@ fn mint_action(
     sender: &Addr,
     contract_addr: &Addr,
     token_owner: &Addr,
-) -> Result<AppResponse, Error> {
+) -> AnyResult<AppResponse> {
     app.execute_contract(
         sender.clone(),
         contract_addr.clone(),
-        &ExecuteMsg::Mint {
-            0: MintMsg {
-                token_id: String::from("some_token_id_that_will_be_ignored"),
-                owner: token_owner.to_string(),
-                token_uri: None,
-                extension: Extension::None,
-            },
-        },
+        &ExtendedExecuteMsg::Mint { user: token_owner.into() },
         &[],
     )
-    .map_err(|_| Error::default())
 }
 
 fn get_token_id(res: AppResponse) -> String {

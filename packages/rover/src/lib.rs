@@ -40,5 +40,5 @@ pub enum QueryMsg {
 #[serde(rename_all = "snake_case")]
 pub struct ConfigResponse {
     pub owner: String,
-    pub account_nft: String,
+    pub account_nft: Option<String>,
 }

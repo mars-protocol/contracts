@@ -12,17 +12,18 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
+account-nft = { version = "0.1", path = "../account-nft", features = ["library"] }
 rover = { version = "0.1", path = "../../packages/rover" }
 
 cosmwasm-std = "1.0"
 cw2 = "0.13"
 cw-asset = "2.1"
 cw-storage-plus = "0.13"
-cw721-base = { version = "0.13", features = ["library"] }
 schemars = "0.8"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-cw-multi-test = "0.13"
-account-nft = { version = "0.1", path = "../account-nft" }
+anyhow = "1"
 cw721 = "0.13"
+cw721-base = { version = "0.13", features = ["library"] }
+cw-multi-test = "0.13"

@@ -1,16 +1,14 @@
-extern crate core;
-
+use anyhow::Result as AnyResult;
 use cosmwasm_std::Addr;
 use cw721::OwnerOfResponse;
-use cw721_base::{Extension, InstantiateMsg as NftInstantiateMsg, QueryMsg as NftQueryMsg};
+use cw721_base::{InstantiateMsg as NftInstantiateMsg, QueryMsg as NftQueryMsg};
 use cw_multi_test::{App, AppResponse, Executor};
-use std::fmt::Error;
 
+use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use rover::ExecuteMsg::{CreateCreditAccount, UpdateConfig};
 use rover::{ConfigResponse, InstantiateMsg, QueryMsg};
 
 use crate::helpers::{mock_account_nft_contract, mock_app, mock_contract};
-use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 
 pub mod helpers;
 
@@ -57,9 +55,8 @@ fn test_create_credit_account() {
     let user = Addr::unchecked("some_user");
     let res = mock_create_credit_account(&mut app, &manager_contract_addr, &user);
 
-    match res {
-        Ok(_) => panic!("Should have thrown error due to nft contract not yet set"),
-        Err(_) => {}
+    if res.is_ok() {
+        panic!("Should have thrown error due to nft contract not yet set");
     }
 
     app.execute_contract(
@@ -75,12 +72,11 @@ fn test_create_credit_account() {
 
     let res = mock_create_credit_account(&mut app, &manager_contract_addr, &user);
 
-    match res {
-        Ok(_) => panic!("Should have thrown error due to nft contract not setting new owner yet"),
-        Err(_) => {}
+    if res.is_ok() {
+        panic!("Should have thrown error due to nft contract not setting new owner yet");
     }
 
-    let update_msg: NftExecuteMsg<Extension> = NftExecuteMsg::UpdateOwner {
+    let update_msg: NftExecuteMsg = NftExecuteMsg::UpdateOwner {
         new_owner: manager_contract_addr.to_string(),
     };
     app.execute_contract(user.clone(), nft_contract_addr.clone(), &update_msg, &[])
@@ -97,6 +93,7 @@ fn test_create_credit_account() {
         .collect();
 
     assert_eq!(attr.len(), 1);
+
     let token_id = attr.first().unwrap().as_str();
     assert_eq!(token_id, "1");
 
@@ -109,7 +106,7 @@ fn test_create_credit_account() {
     let owner_res: OwnerOfResponse = app
         .wrap()
         .query_wasm_smart(
-            config_res.account_nft,
+            config_res.account_nft.unwrap(),
             &NftQueryMsg::OwnerOf {
                 token_id: token_id.to_string(),
                 include_expired: None,
@@ -124,12 +121,11 @@ fn mock_create_credit_account(
     app: &mut App,
     manager_contract_addr: &Addr,
     user: &Addr,
-) -> Result<AppResponse, Error> {
+) -> AnyResult<AppResponse> {
     app.execute_contract(
         user.clone(),
         manager_contract_addr.clone(),
         &CreateCreditAccount {},
         &[],
     )
-    .map_err(|_| Error::default())
 }

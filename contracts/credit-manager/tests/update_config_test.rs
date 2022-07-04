@@ -1,11 +1,9 @@
-extern crate core;
-
 use cosmwasm_std::Addr;
 use cw_multi_test::{App, Executor};
-use rover::ExecuteMsg::UpdateConfig;
+
+use rover::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::helpers::{mock_app, mock_contract};
-use rover::{ConfigResponse, InstantiateMsg, QueryMsg};
 
 pub mod helpers;
 
@@ -18,7 +16,7 @@ fn test_update_config_works_with_full_config() {
 
     let config_res = query_config(&mut app, &contract_addr.clone());
 
-    assert_eq!(config_res.account_nft, "");
+    assert_eq!(config_res.account_nft, None);
     assert_eq!(config_res.owner, original_owner.to_string());
 
     let new_owner = Addr::unchecked("new_owner");
@@ -26,7 +24,7 @@ fn test_update_config_works_with_full_config() {
     app.execute_contract(
         original_owner.clone(),
         contract_addr.clone(),
-        &UpdateConfig {
+        &ExecuteMsg::UpdateConfig {
             account_nft: Some(account_nft_contract.to_string()),
             owner: Some(new_owner.to_string()),
         },
@@ -36,7 +34,7 @@ fn test_update_config_works_with_full_config() {
 
     let config_res = query_config(&mut app, &contract_addr.clone());
 
-    assert_eq!(config_res.account_nft, account_nft_contract.to_string());
+    assert_eq!(config_res.account_nft, Some(account_nft_contract.to_string()));
     assert_eq!(config_res.owner, new_owner.to_string());
 }
 
@@ -49,14 +47,14 @@ fn test_update_config_works_with_some_config() {
 
     let config_res = query_config(&mut app, &contract_addr.clone());
 
-    assert_eq!(config_res.account_nft, "");
+    assert_eq!(config_res.account_nft, None);
     assert_eq!(config_res.owner, original_owner.to_string());
 
     let account_nft_contract = Addr::unchecked("account_nft_contract");
     app.execute_contract(
         original_owner.clone(),
         contract_addr.clone(),
-        &UpdateConfig {
+        &ExecuteMsg::UpdateConfig {
             account_nft: Some(account_nft_contract.to_string()),
             owner: None,
         },
@@ -66,14 +64,14 @@ fn test_update_config_works_with_some_config() {
 
     let config_res = query_config(&mut app, &contract_addr.clone());
 
-    assert_eq!(config_res.account_nft, account_nft_contract.to_string());
+    assert_eq!(config_res.account_nft, Some(account_nft_contract.to_string()));
     assert_eq!(config_res.owner, original_owner.to_string());
 
     let new_owner = Addr::unchecked("new_owner");
     app.execute_contract(
         original_owner.clone(),
         contract_addr.clone(),
-        &UpdateConfig {
+        &ExecuteMsg::UpdateConfig {
             account_nft: None,
             owner: Some(new_owner.to_string()),
         },
@@ -82,7 +80,7 @@ fn test_update_config_works_with_some_config() {
     .unwrap();
 
     let config_res = query_config(&mut app, &contract_addr.clone());
-    assert_eq!(config_res.account_nft, account_nft_contract.to_string());
+    assert_eq!(config_res.account_nft, Some(account_nft_contract.to_string()));
     assert_eq!(config_res.owner, new_owner.to_string());
 }
 
@@ -96,7 +94,7 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
     app.execute_contract(
         original_owner.clone(),
         contract_addr.clone(),
-        &UpdateConfig {
+        &ExecuteMsg::UpdateConfig {
             account_nft: None,
             owner: None,
         },
@@ -106,7 +104,7 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
 
     let config_res = query_config(&mut app, &contract_addr.clone());
 
-    assert_eq!(config_res.account_nft, "");
+    assert_eq!(config_res.account_nft, None);
     assert_eq!(config_res.owner, original_owner.to_string());
 }
 
