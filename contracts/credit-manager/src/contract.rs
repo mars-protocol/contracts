@@ -5,7 +5,7 @@ use cw2::set_contract_version;
 
 use rover::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::execute::{try_create_credit_account, try_update_config};
+use crate::execute::{create_credit_account, update_config};
 use crate::instantiate::store_config;
 use crate::query::{query_allowed_assets, query_allowed_vaults, query_config};
 
@@ -32,9 +32,9 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> StdResult<Response> {
     match msg {
-        ExecuteMsg::CreateCreditAccount {} => try_create_credit_account(deps, info.sender),
+        ExecuteMsg::CreateCreditAccount {} => create_credit_account(deps, info.sender),
         ExecuteMsg::UpdateConfig { account_nft, owner } => {
-            try_update_config(deps, info, account_nft, owner)
+            update_config(deps, info, account_nft, owner)
         }
     }
 }

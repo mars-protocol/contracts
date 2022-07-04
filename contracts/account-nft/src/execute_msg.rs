@@ -13,13 +13,14 @@ pub enum ExecuteMsg {
     // Extended and overridden messages
     //--------------------------------------------------------------------------------------------------
     /// Due to some chains being permissioned via governance, we must instantiate this contract first
-    /// and give ownership access to Rover with this action after both are independently deployed.
-    UpdateOwner { new_owner: String },
+    /// and give ownership access to Rover contract with this action after both are independently deployed.
+    ProposeNewOwner { new_owner: String },
+
+    /// Accept the proposed ownership transfer
+    AcceptOwnership {},
 
     /// Mint a new NFT to the specified user; can only be called by the contract minter
-    Mint {
-        user: String,
-    },
+    Mint { user: String },
 
     //--------------------------------------------------------------------------------------------------
     // Base cw721 messages
@@ -93,7 +94,10 @@ impl TryInto<ParentExecuteMsg<Empty>> for ExecuteMsg {
             }
             ExecuteMsg::RevokeAll { operator } => Ok(ParentExecuteMsg::RevokeAll { operator }),
             ExecuteMsg::Burn { token_id } => Ok(ParentExecuteMsg::Burn { token_id }),
-            _ => Err(StdError::generic_err("Attempting to convert to a non-cw721 compatible message").into()),
+            _ => Err(StdError::generic_err(
+                "Attempting to convert to a non-cw721 compatible message",
+            )
+            .into()),
         }
     }
 }

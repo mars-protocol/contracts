@@ -1,6 +1,6 @@
 pub mod contract;
 pub mod execute;
-pub mod msg;
-
-#[cfg(test)]
-mod tests;
+pub mod execute_msg;
+pub mod query;
+pub mod query_msg;
+pub mod state;

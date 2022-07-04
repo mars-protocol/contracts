@@ -4,7 +4,7 @@ use cw721::OwnerOfResponse;
 use cw721_base::{InstantiateMsg as NftInstantiateMsg, QueryMsg as NftQueryMsg};
 use cw_multi_test::{App, AppResponse, Executor};
 
-use account_nft::msg::ExecuteMsg as NftExecuteMsg;
+use account_nft::execute_msg::ExecuteMsg as NftExecuteMsg;
 use rover::ExecuteMsg::{CreateCreditAccount, UpdateConfig};
 use rover::{ConfigResponse, InstantiateMsg, QueryMsg};
 
@@ -59,6 +59,26 @@ fn test_create_credit_account() {
         panic!("Should have thrown error due to nft contract not yet set");
     }
 
+    let res = app.execute_contract(
+        owner.clone(),
+        manager_contract_addr.clone(),
+        &UpdateConfig {
+            account_nft: Some(nft_contract_addr.to_string()),
+            owner: None,
+        },
+        &[],
+    );
+
+    if res.is_ok() {
+        panic!("Should have thrown error due to nft contract not proposing a new owner yet");
+    }
+
+    let proposal_msg: NftExecuteMsg = NftExecuteMsg::ProposeNewOwner {
+        new_owner: manager_contract_addr.to_string(),
+    };
+    app.execute_contract(owner.clone(), nft_contract_addr.clone(), &proposal_msg, &[])
+        .unwrap();
+
     app.execute_contract(
         owner.clone(),
         manager_contract_addr.clone(),
@@ -69,18 +89,6 @@ fn test_create_credit_account() {
         &[],
     )
     .unwrap();
-
-    let res = mock_create_credit_account(&mut app, &manager_contract_addr, &user);
-
-    if res.is_ok() {
-        panic!("Should have thrown error due to nft contract not setting new owner yet");
-    }
-
-    let update_msg: NftExecuteMsg = NftExecuteMsg::UpdateOwner {
-        new_owner: manager_contract_addr.to_string(),
-    };
-    app.execute_contract(user.clone(), nft_contract_addr.clone(), &update_msg, &[])
-        .unwrap();
 
     let res = mock_create_credit_account(&mut app, &manager_contract_addr, &user).unwrap();
 

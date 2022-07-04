@@ -1,18 +1,19 @@
+use account_nft::execute_msg::ExecuteMsg as NftExecuteMsg;
 use cosmwasm_std::{
-    to_binary, Addr, Attribute, CosmosMsg, DepsMut, MessageInfo, Response, StdError, StdResult,
-    WasmMsg,
+    to_binary, Addr, CosmosMsg, DepsMut, MessageInfo, Response, StdError, StdResult, WasmMsg,
 };
-use account_nft::msg::{ExecuteMsg as NftExecuteMsg};
 
 use crate::state::{ACCOUNT_NFT, OWNER};
 
-pub fn try_create_credit_account(deps: DepsMut, user: Addr) -> StdResult<Response> {
+pub fn create_credit_account(deps: DepsMut, user: Addr) -> StdResult<Response> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
 
     let nft_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: contract_addr.to_string(),
         funds: vec![],
-        msg: to_binary(&NftExecuteMsg::Mint { user: user.to_string() })?,
+        msg: to_binary(&NftExecuteMsg::Mint {
+            user: user.to_string(),
+        })?,
     });
 
     Ok(Response::new()
@@ -20,7 +21,7 @@ pub fn try_create_credit_account(deps: DepsMut, user: Addr) -> StdResult<Respons
         .add_attribute("action", "rover/credit_manager/create_credit_account"))
 }
 
-pub fn try_update_config(
+pub fn update_config(
     deps: DepsMut,
     info: MessageInfo,
     new_account_nft: Option<String>,
@@ -35,25 +36,29 @@ pub fn try_update_config(
         )));
     }
 
-    let mut attributes: Vec<Attribute> = vec![];
+    let mut response = Response::new();
 
     if let Some(addr_str) = new_account_nft {
         let validated = deps.api.addr_validate(addr_str.as_str())?;
         ACCOUNT_NFT.save(deps.storage, &validated)?;
-        attributes.push(Attribute::new(
-            "action",
-            "rover/credit_manager/update_config/account_nft",
-        ));
+
+        // Accept ownership. NFT contract owner must have proposed Rover as a new owner first.
+        let accept_ownership_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: addr_str,
+            funds: vec![],
+            msg: to_binary(&NftExecuteMsg::AcceptOwnership {})?,
+        });
+
+        response = response
+            .add_message(accept_ownership_msg)
+            .add_attribute("action", "rover/credit_manager/update_config/account_nft");
     }
 
     if let Some(addr_str) = new_owner {
         let validated = deps.api.addr_validate(addr_str.as_str())?;
         OWNER.save(deps.storage, &validated)?;
-        attributes.push(Attribute::new(
-            "action",
-            "rover/credit_manager/update_config/owner",
-        ));
+        response = response.add_attribute("action", "rover/credit_manager/update_config/owner");
     }
 
-    Ok(Response::new().add_attributes(attributes))
+    Ok(response)
 }
