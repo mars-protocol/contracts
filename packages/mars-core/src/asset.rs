@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, Addr, BankMsg, Coin, CosmosMsg, Deps, StdResult, Uint128, WasmMsg};
+use cosmwasm_std::{to_binary, Addr, BankMsg, CosmosMsg, Deps, StdResult, Uint128, WasmMsg, coins};
 use cw20::Cw20ExecuteMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -75,7 +75,7 @@ pub fn build_send_native_asset_msg(
 ) -> StdResult<CosmosMsg> {
     Ok(CosmosMsg::Bank(BankMsg::Send {
         to_address: recipient_address.into(),
-        amount: vec![Coin { denom, amount }],
+        amount: coins(amount.u128(), denom),
     }))
 }
 

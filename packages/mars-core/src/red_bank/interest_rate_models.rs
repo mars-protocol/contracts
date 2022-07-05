@@ -274,7 +274,7 @@ pub fn linear_get_borrow_rate(
         } else {
             // The borrow interest rates increase slowly with utilization
             params.base
-                + params.slope_1.checked_mul(math::checked_div(
+                + params.slope_1.checked_mul(math::divide_decimal_by_decimal(
                     current_utilization_rate,
                     params.optimal_utilization_rate,
                 )?)?
@@ -283,7 +283,7 @@ pub fn linear_get_borrow_rate(
         // The borrow interest rates increase sharply with utilization
         params.base
             + params.slope_1
-            + math::checked_div(
+            + math::divide_decimal_by_decimal(
                 params
                     .slope_2
                     .checked_mul(current_utilization_rate - params.optimal_utilization_rate)?,
@@ -633,7 +633,7 @@ mod tests {
         .unwrap();
 
         let expected_borrow_rate = interest_rate_model_params.base
-            + math::checked_div(
+            + math::divide_decimal_by_decimal(
                 interest_rate_model_params
                     .slope_1
                     .checked_mul(utilization_rate)
@@ -669,7 +669,7 @@ mod tests {
                 linear_get_borrow_rate(&linear_ir_params, current_utilization_rate).unwrap();
 
             let expected_borrow_rate = linear_ir_params.base
-                + math::checked_div(
+                + math::divide_decimal_by_decimal(
                     linear_ir_params
                         .slope_1
                         .checked_mul(current_utilization_rate)
@@ -688,7 +688,7 @@ mod tests {
                 linear_get_borrow_rate(&linear_ir_params, current_utilization_rate).unwrap();
 
             let expected_borrow_rate = linear_ir_params.base
-                + math::checked_div(
+                + math::divide_decimal_by_decimal(
                     linear_ir_params
                         .slope_1
                         .checked_mul(current_utilization_rate)
@@ -708,7 +708,7 @@ mod tests {
 
             let expected_borrow_rate = linear_ir_params.base
                 + linear_ir_params.slope_1
-                + math::checked_div(
+                + math::divide_decimal_by_decimal(
                     linear_ir_params
                         .slope_2
                         .checked_mul(

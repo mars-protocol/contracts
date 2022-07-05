@@ -19,7 +19,7 @@ pub fn uint128_checked_div_with_ceil(
 }
 
 /// Divide 'a' by 'b'.
-pub fn checked_div(a: Decimal, b: Decimal) -> StdResult<Decimal> {
+pub fn divide_decimal_by_decimal(a: Decimal, b: Decimal) -> StdResult<Decimal> {
     Decimal::checked_from_ratio(a.numerator(), b.numerator()).map_err(|e| match e {
         CheckedFromRatioError::Overflow => StdError::Overflow {
             source: OverflowError {
@@ -126,27 +126,27 @@ mod tests {
     fn checked_decimal_division() {
         let a = Decimal::from_ratio(99988u128, 100u128);
         let b = Decimal::from_ratio(24997u128, 100u128);
-        let c = checked_div(a, b).unwrap();
+        let c = divide_decimal_by_decimal(a, b).unwrap();
         assert_eq!(c, Decimal::from_str("4.0").unwrap());
 
         let a = Decimal::from_ratio(123456789u128, 1000000u128);
         let b = Decimal::from_ratio(33u128, 1u128);
-        let c = checked_div(a, b).unwrap();
+        let c = divide_decimal_by_decimal(a, b).unwrap();
         assert_eq!(c, Decimal::from_str("3.741114818181818181").unwrap());
 
         let a = Decimal::MAX;
         let b = Decimal::MAX;
-        let c = checked_div(a, b).unwrap();
+        let c = divide_decimal_by_decimal(a, b).unwrap();
         assert_eq!(c, Decimal::one());
 
         // Note: DivideByZeroError is not public so we just check if dividing by zero returns error
         let a = Decimal::one();
         let b = Decimal::zero();
-        checked_div(a, b).unwrap_err();
+        divide_decimal_by_decimal(a, b).unwrap_err();
 
         let a = Decimal::MAX;
         let b = Decimal::from_ratio(1u128, DECIMAL_FRACTIONAL);
-        let res_error = checked_div(a, b).unwrap_err();
+        let res_error = divide_decimal_by_decimal(a, b).unwrap_err();
         assert_eq!(
             res_error,
             OverflowError::new(OverflowOperation::Mul, Uint128::MAX, DECIMAL_FRACTIONAL).into()

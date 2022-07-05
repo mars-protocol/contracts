@@ -25,11 +25,11 @@ keywords = ["mars", "cosmwasm"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cw2 = "0.13.4"
-cw20 = "0.13.4"
-cw20-base = { version = "0.13.4", features = ["library"] }
+cw2 = "0.13"
+cw20 = "0.13"
+cw20-base = { version = "0.13", features = ["library"] }
 
-cosmwasm-std = "1.0.0"
+cosmwasm-std = "1.0"
 
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
