@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR},
-    Addr, BlockInfo, Coin, ContractInfo, Env, MessageInfo, OwnedDeps, Timestamp,
+    Addr, BlockInfo, Coin, ContractInfo, Env, MessageInfo, OwnedDeps, Timestamp, TransactionInfo,
 };
 
 use super::mars_mock_querier::MarsMockQuerier;
@@ -27,6 +27,7 @@ pub fn mock_env(mock_env_params: MockEnvParams) -> Env {
             time: mock_env_params.block_time,
             chain_id: "cosmos-testnet-14002".to_string(),
         },
+        transaction: Some(TransactionInfo { index: 3 }),
         contract: ContractInfo {
             address: Addr::unchecked(MOCK_CONTRACT_ADDR),
         },
@@ -69,5 +70,6 @@ pub fn mock_dependencies(
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: custom_querier,
+        custom_query_type: Default::default(),
     }
 }

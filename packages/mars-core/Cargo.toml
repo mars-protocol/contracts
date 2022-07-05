@@ -2,7 +2,7 @@
 name = "mars-outpost"
 version = "0.1.0"
 authors = [
-  "Ahmad Kaouk <ahmad@delphilabs.io",
+  "Ahmad Kaouk <ahmad@delphilabs.io>",
   "Spike Spiegel <spikeonmars@protonmail.com>",
   "larry_0x <larry@delphidigital.io>",
   "Piotr Babel",
@@ -25,17 +25,15 @@ keywords = ["mars", "cosmwasm"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-terra-cosmwasm = "2.2.0"
+cw2 = "0.13"
+cw20 = "0.13"
+cw20-base = { version = "0.13", features = ["library"] }
 
-cw2 = "0.9.0"
-cw20 = "0.9.0"
-cw20-base = { version = "0.9.0", features = ["library"] }
+cosmwasm-std = "1.0"
 
-cosmwasm-std = "0.16.2"
-
-schemars = "0.8.1"
-serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-thiserror = "1.0.23"
+schemars = "0.8.8"
+serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+thiserror = "1.0.31"
 
 [profile.release]
 overflow-checks = true

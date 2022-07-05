@@ -15,7 +15,6 @@ pub mod math;
 // Helpers
 pub mod error;
 pub mod helpers;
-pub mod tax;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod testing;

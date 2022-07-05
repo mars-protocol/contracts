@@ -1,24 +1,21 @@
 use cosmwasm_std::{
     from_binary, from_slice,
     testing::{MockQuerier, MOCK_CONTRACT_ADDR},
-    Addr, Coin, Querier, QuerierResult, QueryRequest, StdResult, SystemError, Uint128, WasmQuery,
+    Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
+    SystemResult, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
-use terra_cosmwasm::TerraQueryWrapper;
 
 use crate::{address_provider, incentives, ma_token, oracle, testing::mock_address_provider};
 
 use super::{
     cw20_querier::{mock_token_info_response, Cw20Querier},
     incentives_querier::IncentivesQuerier,
-    native_querier::NativeQuerier,
     oracle_querier::OracleQuerier,
 };
-use crate::math::decimal::Decimal;
 
 pub struct MarsMockQuerier {
-    base: MockQuerier<TerraQueryWrapper>,
-    native_querier: NativeQuerier,
+    base: MockQuerier<Empty>,
     cw20_querier: Cw20Querier,
     oracle_querier: OracleQuerier,
     incentives_querier: IncentivesQuerier,
@@ -27,14 +24,13 @@ pub struct MarsMockQuerier {
 impl Querier for MarsMockQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         // MockQuerier doesn't support Custom, so we ignore it completely here
-        let request: QueryRequest<TerraQueryWrapper> = match from_slice(bin_request) {
+        let request: QueryRequest<Empty> = match from_slice(bin_request) {
             Ok(v) => v,
             Err(e) => {
-                return Err(SystemError::InvalidRequest {
+                return SystemResult::Err(SystemError::InvalidRequest {
                     error: format!("Parsing query request: {}", e),
                     request: bin_request.into(),
                 })
-                .into()
             }
         };
         self.handle_query(&request)
@@ -42,10 +38,9 @@ impl Querier for MarsMockQuerier {
 }
 
 impl MarsMockQuerier {
-    pub fn new(base: MockQuerier<TerraQueryWrapper>) -> Self {
+    pub fn new(base: MockQuerier<Empty>) -> Self {
         MarsMockQuerier {
             base,
-            native_querier: NativeQuerier::default(),
             cw20_querier: Cw20Querier::default(),
             oracle_querier: OracleQuerier::default(),
             incentives_querier: IncentivesQuerier::default(),
@@ -57,23 +52,6 @@ impl MarsMockQuerier {
         let contract_addr = Addr::unchecked(MOCK_CONTRACT_ADDR);
         self.base
             .update_balance(contract_addr.to_string(), contract_balances.to_vec());
-    }
-
-    /// Set mock querier exchange rates query results for a given denom
-    pub fn set_native_exchange_rates(
-        &mut self,
-        base_denom: String,
-        exchange_rates: &[(String, Decimal)],
-    ) {
-        self.native_querier
-            .exchange_rates
-            .insert(base_denom, exchange_rates.iter().cloned().collect());
-    }
-
-    /// Set mock querier for tax data
-    pub fn set_native_tax(&mut self, tax_rate: Decimal, tax_caps: &[(String, Uint128)]) {
-        self.native_querier.tax_rate = tax_rate;
-        self.native_querier.tax_caps = tax_caps.iter().cloned().collect();
     }
 
     /// Set mock querier balances results for a given cw20 token
@@ -122,12 +100,8 @@ impl MarsMockQuerier {
             .insert(Addr::unchecked(user_address), unclaimed_rewards);
     }
 
-    pub fn handle_query(&self, request: &QueryRequest<TerraQueryWrapper>) -> QuerierResult {
+    pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
         match &request {
-            QueryRequest::Custom(TerraQueryWrapper { route, query_data }) => {
-                self.native_querier.handle_query(route, query_data)
-            }
-
             QueryRequest::Wasm(WasmQuery::Smart { contract_addr, msg }) => {
                 let contract_addr = Addr::unchecked(contract_addr);
 

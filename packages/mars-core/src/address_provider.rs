@@ -191,10 +191,9 @@ mod tests {
     use crate::error::MarsError;
     use cosmwasm_std::testing::{MockApi, MockStorage};
     use cosmwasm_std::{
-        from_binary, from_slice, to_binary, Binary, ContractResult, OwnedDeps, Querier,
+        from_binary, from_slice, to_binary, Binary, ContractResult, Empty, OwnedDeps, Querier,
         QuerierResult, QueryRequest, StdResult, SystemError, WasmQuery,
     };
-    use terra_cosmwasm::TerraQueryWrapper;
 
     #[test]
     fn test_query_address() {
@@ -202,6 +201,7 @@ mod tests {
             storage: MockStorage::default(),
             api: MockApi::default(),
             querier: AddressProviderMockQuerier {},
+            custom_query_type: Default::default(),
         };
 
         // Errors if address is empty
@@ -240,6 +240,7 @@ mod tests {
             storage: MockStorage::default(),
             api: MockApi::default(),
             querier: AddressProviderMockQuerier {},
+            custom_query_type: Default::default(),
         };
 
         // Errors if addresses are empty
@@ -287,7 +288,7 @@ mod tests {
 
     impl Querier for AddressProviderMockQuerier {
         fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-            let request: QueryRequest<TerraQueryWrapper> = match from_slice(bin_request) {
+            let request: QueryRequest<Empty> = match from_slice(bin_request) {
                 Ok(v) => v,
                 Err(e) => {
                     return Err(SystemError::InvalidRequest {
@@ -302,7 +303,7 @@ mod tests {
     }
 
     impl AddressProviderMockQuerier {
-        pub fn handle_query(&self, request: &QueryRequest<TerraQueryWrapper>) -> QuerierResult {
+        pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
             if let QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: _,
                 msg,
