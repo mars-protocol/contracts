@@ -3,22 +3,22 @@ use std::str;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    from_binary, to_binary, Addr, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
-    Order, Response, StdError, StdResult, Uint128, WasmMsg,
+    from_binary, to_binary, Addr, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env, Event,
+    MessageInfo, Order, Response, StdError, StdResult, Uint128, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 use cw20_base::msg::InstantiateMarketingInfo;
-use cw_storage_plus::U32Key;
 
 use mars_outpost::address_provider::{self, MarsContract};
-use mars_outpost::ma_token;
+use mars_outpost::{ma_token, math};
 
 use mars_outpost::asset::{
     build_send_asset_with_tax_deduction_msg, get_asset_balance, Asset, AssetType,
 };
 use mars_outpost::error::MarsError;
-use mars_outpost::helpers::{cw20_get_balance, cw20_get_symbol, option_string_to_addr, zero_address};
-use mars_outpost::math::decimal::Decimal;
+use mars_outpost::helpers::{
+    cw20_get_balance, cw20_get_symbol, option_string_to_addr, zero_address,
+};
 
 use crate::accounts::get_user_position;
 use crate::error::ContractError;
@@ -360,11 +360,7 @@ pub fn execute_init_asset(
             MARKETS.save(deps.storage, asset_reference.as_slice(), &new_market)?;
 
             // Save index to reference mapping
-            MARKET_REFERENCES_BY_INDEX.save(
-                deps.storage,
-                U32Key::new(market_idx),
-                &asset_reference.to_vec(),
-            )?;
+            MARKET_REFERENCES_BY_INDEX.save(deps.storage, market_idx, &asset_reference.to_vec())?;
 
             // Increment market count
             money_market.market_count += 1;
@@ -1744,17 +1740,15 @@ fn liquidation_compute_amounts(
     let debt_amount_to_repay_in_uusd = debt_amount_to_repay * debt_price;
     let collateral_amount_to_liquidate_in_uusd =
         debt_amount_to_repay_in_uusd * (Decimal::one() + liquidation_bonus);
-    let mut collateral_amount_to_liquidate = Decimal::divide_uint128_by_decimal(
-        collateral_amount_to_liquidate_in_uusd,
-        collateral_price,
-    )?;
+    let mut collateral_amount_to_liquidate =
+        math::divide_uint128_by_decimal(collateral_amount_to_liquidate_in_uusd, collateral_price)?;
 
     // If collateral amount to liquidate is higher than user_collateral_balance,
     // liquidate the full balance and adjust the debt amount to repay accordingly
     if collateral_amount_to_liquidate > user_collateral_balance {
         collateral_amount_to_liquidate = user_collateral_balance;
-        debt_amount_to_repay = Decimal::divide_uint128_by_decimal(
-            Decimal::divide_uint128_by_decimal(
+        debt_amount_to_repay = math::divide_uint128_by_decimal(
+            math::divide_uint128_by_decimal(
                 collateral_amount_to_liquidate * collateral_price,
                 debt_price,
             )?,
@@ -2303,16 +2297,15 @@ fn get_asset_denom(deps: Deps, asset_label: &str, asset_type: AssetType) -> StdR
 }
 
 pub fn market_get_from_index(deps: &Deps, index: u32) -> StdResult<(Vec<u8>, Market)> {
-    let asset_reference_vec =
-        match MARKET_REFERENCES_BY_INDEX.load(deps.storage, U32Key::new(index)) {
-            Ok(asset_reference_vec) => asset_reference_vec,
-            Err(_) => {
-                return Err(StdError::generic_err(format!(
-                    "no market reference exists with index: {}",
-                    index
-                )))
-            }
-        };
+    let asset_reference_vec = match MARKET_REFERENCES_BY_INDEX.load(deps.storage, index) {
+        Ok(asset_reference_vec) => asset_reference_vec,
+        Err(_) => {
+            return Err(StdError::generic_err(format!(
+                "no market reference exists with index: {}",
+                index
+            )))
+        }
+    };
 
     match MARKETS.load(deps.storage, asset_reference_vec.as_slice()) {
         Ok(asset_market) => Ok((asset_reference_vec, asset_market)),
@@ -2801,9 +2794,7 @@ mod tests {
             assert_eq!(AssetType::Native, market.asset_type);
 
             // should store reference in market index
-            let market_reference = MARKET_REFERENCES_BY_INDEX
-                .load(&deps.storage, U32Key::new(0))
-                .unwrap();
+            let market_reference = MARKET_REFERENCES_BY_INDEX.load(&deps.storage, 0).unwrap();
             assert_eq!(b"someasset", market_reference.as_slice());
 
             // Should have market count of 1
@@ -2919,9 +2910,7 @@ mod tests {
             assert_eq!(AssetType::Cw20, market.asset_type);
 
             // should store reference in market index
-            let market_reference = MARKET_REFERENCES_BY_INDEX
-                .load(&deps.storage, U32Key::new(1))
-                .unwrap();
+            let market_reference = MARKET_REFERENCES_BY_INDEX.load(&deps.storage, 1).unwrap();
             assert_eq!(cw20_addr.as_bytes(), market_reference.as_slice());
 
             // should have an asset_type of cw20
@@ -3364,9 +3353,7 @@ mod tests {
                 new_market.interest_rate_model
             );
 
-            let new_market_reference = MARKET_REFERENCES_BY_INDEX
-                .load(&deps.storage, U32Key::new(0))
-                .unwrap();
+            let new_market_reference = MARKET_REFERENCES_BY_INDEX.load(&deps.storage, 0).unwrap();
             assert_eq!(b"someasset", new_market_reference.as_slice());
 
             let new_money_market = GLOBAL_STATE.load(&deps.storage).unwrap();
@@ -4727,12 +4714,12 @@ mod tests {
                 * token_2_exchange_rate;
 
             // How much to withdraw in uusd to have health factor equal to one
-            let how_much_to_withdraw_in_uusd = Decimal::divide_uint128_by_decimal(
+            let how_much_to_withdraw_in_uusd = math::divide_uint128_by_decimal(
                 weighted_liquidation_threshold_in_uusd - total_collateralized_debt_in_uusd,
                 market_3_initial.liquidation_threshold,
             )
             .unwrap();
-            Decimal::divide_uint128_by_decimal(how_much_to_withdraw_in_uusd, token_3_exchange_rate)
+            math::divide_uint128_by_decimal(how_much_to_withdraw_in_uusd, token_3_exchange_rate)
                 .unwrap()
         };
 
@@ -6184,12 +6171,10 @@ mod tests {
                 .unwrap()
                 * exchange_rate_3);
         let exceeding_borrow_amount =
-            Decimal::divide_uint128_by_decimal(max_borrow_allowed_in_uusd, exchange_rate_2)
-                .unwrap()
+            math::divide_uint128_by_decimal(max_borrow_allowed_in_uusd, exchange_rate_2).unwrap()
                 + Uint128::from(100_u64);
         let permissible_borrow_amount =
-            Decimal::divide_uint128_by_decimal(max_borrow_allowed_in_uusd, exchange_rate_2)
-                .unwrap()
+            math::divide_uint128_by_decimal(max_borrow_allowed_in_uusd, exchange_rate_2).unwrap()
                 - Uint128::from(100_u64);
 
         // borrow above the allowed amount given current collateral, should fail
@@ -6793,7 +6778,7 @@ mod tests {
                 .load(&deps.storage, cw20_debt_contract_addr.as_bytes())
                 .unwrap();
 
-            let expected_liquidated_collateral_amount = Decimal::divide_uint128_by_decimal(
+            let expected_liquidated_collateral_amount = math::divide_uint128_by_decimal(
                 first_debt_to_repay
                     * cw20_debt_price
                     * (Decimal::one() + collateral_liquidation_bonus),
@@ -6953,7 +6938,7 @@ mod tests {
                 },
             );
 
-            let expected_liquidated_collateral_amount = Decimal::divide_uint128_by_decimal(
+            let expected_liquidated_collateral_amount = math::divide_uint128_by_decimal(
                 expected_less_debt
                     * cw20_debt_price
                     * (Decimal::one() + collateral_liquidation_bonus),
@@ -7160,8 +7145,8 @@ mod tests {
             .unwrap();
 
             // Since debt is being over_repayed, we expect to liquidate total collateral
-            let expected_less_debt = Decimal::divide_uint128_by_decimal(
-                Decimal::divide_uint128_by_decimal(
+            let expected_less_debt = math::divide_uint128_by_decimal(
+                math::divide_uint128_by_decimal(
                     collateral_price * user_collateral_balance,
                     cw20_debt_price,
                 )
@@ -7389,8 +7374,8 @@ mod tests {
             .unwrap();
 
             // Since debt is being over_repayed, we expect to liquidate total collateral
-            let expected_less_debt = Decimal::divide_uint128_by_decimal(
-                Decimal::divide_uint128_by_decimal(
+            let expected_less_debt = math::divide_uint128_by_decimal(
+                math::divide_uint128_by_decimal(
                     collateral_price * user_collateral_balance,
                     native_debt_price,
                 )
@@ -7689,7 +7674,7 @@ mod tests {
 
             let asset_market_after = MARKETS.load(&deps.storage, b"the_asset").unwrap();
 
-            let expected_liquidated_amount = Decimal::divide_uint128_by_decimal(
+            let expected_liquidated_amount = math::divide_uint128_by_decimal(
                 debt_to_repay * asset_price * (Decimal::one() + asset_liquidation_bonus),
                 asset_price,
             )
@@ -7834,7 +7819,7 @@ mod tests {
             let res = execute(deps.as_mut(), env.clone(), info, liquidate_msg).unwrap();
 
             let asset_market_after = MARKETS.load(&deps.storage, b"the_asset").unwrap();
-            let expected_liquidated_amount = Decimal::divide_uint128_by_decimal(
+            let expected_liquidated_amount = math::divide_uint128_by_decimal(
                 debt_to_repay * asset_price * (Decimal::one() + asset_liquidation_bonus),
                 asset_price,
             )
@@ -8001,7 +7986,7 @@ mod tests {
             let res = execute(deps.as_mut(), env.clone(), info, liquidate_msg).unwrap();
 
             let asset_market_after = MARKETS.load(&deps.storage, b"the_asset").unwrap();
-            let expected_liquidated_amount = Decimal::divide_uint128_by_decimal(
+            let expected_liquidated_amount = math::divide_uint128_by_decimal(
                 expected_less_debt * asset_price * (Decimal::one() + asset_liquidation_bonus),
                 asset_price,
             )
@@ -8176,7 +8161,7 @@ mod tests {
             let res = execute(deps.as_mut(), env.clone(), info, liquidate_msg).unwrap();
 
             let asset_market_after = MARKETS.load(&deps.storage, b"the_asset").unwrap();
-            let expected_liquidated_amount = Decimal::divide_uint128_by_decimal(
+            let expected_liquidated_amount = math::divide_uint128_by_decimal(
                 expected_less_debt * asset_price * (Decimal::one() + asset_liquidation_bonus),
                 asset_price,
             )
@@ -9217,7 +9202,7 @@ mod tests {
                 * token_2_exchange_rate;
             let weighted_liquidation_threshold_in_uusd =
                 token_1_weighted_lt_in_uusd + token_2_weighted_lt_in_uusd;
-            let max_debt_for_valid_hf = Decimal::divide_uint128_by_decimal(
+            let max_debt_for_valid_hf = math::divide_uint128_by_decimal(
                 weighted_liquidation_threshold_in_uusd,
                 token_3_exchange_rate,
             )
@@ -9612,7 +9597,7 @@ mod tests {
         MARKETS.save(deps.storage, key, &new_market).unwrap();
 
         MARKET_REFERENCES_BY_INDEX
-            .save(deps.storage, U32Key::new(index), &key.to_vec())
+            .save(deps.storage, index, &key.to_vec())
             .unwrap();
 
         MARKET_REFERENCES_BY_MA_TOKEN

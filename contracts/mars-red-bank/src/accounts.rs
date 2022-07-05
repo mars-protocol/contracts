@@ -1,8 +1,7 @@
-use cosmwasm_std::{Addr, Deps, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, Decimal, Deps, StdError, StdResult, Uint128};
 
 use mars_outpost::asset::AssetType;
 use mars_outpost::helpers::cw20_get_balance;
-use mars_outpost::math::decimal::Decimal;
 
 use mars_outpost::oracle;
 

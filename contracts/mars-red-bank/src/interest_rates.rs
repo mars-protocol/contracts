@@ -1,14 +1,13 @@
 use std::str;
 
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, DepsMut, Env, Event, Response, StdError, StdResult, Uint128,
-    WasmMsg,
+    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, Event, Response, StdError, StdResult,
+    Uint128, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
 
 use mars_outpost::asset::get_asset_balance;
-use mars_outpost::math::decimal::Decimal;
-use mars_outpost::math::uint128_checked_div_with_ceil;
+use mars_outpost::math;
 
 use crate::error::ContractError;
 use crate::interest_rate_models::update_market_interest_rates_with_model;
@@ -109,7 +108,9 @@ pub fn calculate_applied_linear_interest_rate(
         Uint128::from(time_elapsed),
         Uint128::from(SECONDS_PER_YEAR),
     ))?;
-    index.checked_mul(Decimal::one() + rate_factor)
+    index
+        .checked_mul(Decimal::one() + rate_factor)
+        .map_err(StdError::from)
 }
 
 /// Get scaled liquidity amount from an underlying amount, a Market and timestamp in seconds
@@ -205,8 +206,8 @@ pub fn compute_scaled_amount(
     // Scale by SCALING_FACTOR to have better precision
     let scaled_amount = amount.checked_mul(SCALING_FACTOR)?;
     match scaling_operation {
-        ScalingOperation::Truncate => Decimal::divide_uint128_by_decimal(scaled_amount, index),
-        ScalingOperation::Ceil => Decimal::divide_uint128_by_decimal_and_ceil(scaled_amount, index),
+        ScalingOperation::Truncate => math::divide_uint128_by_decimal(scaled_amount, index),
+        ScalingOperation::Ceil => math::divide_uint128_by_decimal_and_ceil(scaled_amount, index),
     }
 }
 
@@ -224,7 +225,7 @@ pub fn compute_underlying_amount(
     match scaling_operation {
         ScalingOperation::Truncate => Ok(before_scaling_factor.checked_div(SCALING_FACTOR)?),
         ScalingOperation::Ceil => {
-            uint128_checked_div_with_ceil(before_scaling_factor, SCALING_FACTOR)
+            math::uint128_checked_div_with_ceil(before_scaling_factor, SCALING_FACTOR)
         }
     }
 }
@@ -325,8 +326,7 @@ pub fn build_interests_updated_event(label: &str, market: &Market) -> Event {
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::Uint128;
-    use mars_outpost::math::decimal::Decimal;
+    use cosmwasm_std::{Decimal, Uint128};
     use mars_outpost::red_bank::Market;
 
     use crate::interest_rates::{

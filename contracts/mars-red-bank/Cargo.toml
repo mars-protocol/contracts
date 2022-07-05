@@ -30,18 +30,18 @@ library = []
 [dependencies]
 mars-outpost = { path = "../../packages/mars-outpost", version = "0.1.0" }
 
-cw20 = "0.9.0"
-cw20-base = { version = "0.9.0", features = ["library"] }
-cw-storage-plus = "0.9.0"
+cw20 = "0.13"
+cw20-base = { version = "0.13", features = ["library"] }
+cw-storage-plus = "0.13"
 
-cosmwasm-std = "0.16.2"
+cosmwasm-std = "1.0"
 
-schemars = "0.8.1"
-serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-thiserror = "1.0.23"
+schemars = "0.8.8"
+serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+thiserror = "1.0.31"
 
 [dev-dependencies]
-cosmwasm-schema = "0.16.2"
+cosmwasm-schema = "1.0.0"
 
 [profile.release]
 overflow-checks = true
