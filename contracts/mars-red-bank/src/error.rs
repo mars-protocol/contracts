@@ -2,7 +2,7 @@ use thiserror::Error;
 
 use cosmwasm_std::{OverflowError, StdError};
 
-use mars_core::error::MarsError;
+use mars_outpost::error::MarsError;
 
 use crate::interest_rate_models::InterestRateModelError;
 use crate::MarketError;

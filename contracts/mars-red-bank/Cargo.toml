@@ -1,7 +1,13 @@
 [package]
 name = "mars-red-bank"
-version = "1.0.0"
-authors = ["Spike Spiegel <spikeonmars@protonmail.com>"]
+version = "0.1.0"
+authors = [
+  "Ahmad Kaouk <ahmad@delphilabs.io>",
+  "Spike Spiegel <spikeonmars@protonmail.com>",
+  "larry_0x <larry@delphidigital.io>",
+  "Piotr Babel",
+  "Harry Scholes"
+]
 edition = "2018"
 
 exclude = [
@@ -22,7 +28,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-mars-core = { path = "../../packages/mars-core", version = "1.0.0" }
+mars-outpost = { path = "../../packages/mars-outpost", version = "0.1.0" }
 
 cw20 = "0.9.0"
 cw20-base = { version = "0.9.0", features = ["library"] }

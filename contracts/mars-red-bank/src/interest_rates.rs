@@ -6,9 +6,9 @@ use cosmwasm_std::{
 };
 use cw20::Cw20ExecuteMsg;
 
-use mars_core::asset::get_asset_balance;
-use mars_core::math::decimal::Decimal;
-use mars_core::math::uint128_checked_div_with_ceil;
+use mars_outpost::asset::get_asset_balance;
+use mars_outpost::math::decimal::Decimal;
+use mars_outpost::math::uint128_checked_div_with_ceil;
 
 use crate::error::ContractError;
 use crate::interest_rate_models::update_market_interest_rates_with_model;
@@ -326,8 +326,8 @@ pub fn build_interests_updated_event(label: &str, market: &Market) -> Event {
 #[cfg(test)]
 mod tests {
     use cosmwasm_std::Uint128;
-    use mars_core::math::decimal::Decimal;
-    use mars_core::red_bank::Market;
+    use mars_outpost::math::decimal::Decimal;
+    use mars_outpost::red_bank::Market;
 
     use crate::interest_rates::{
         calculate_applied_linear_interest_rate, get_scaled_debt_amount,

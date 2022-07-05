@@ -10,15 +10,15 @@ use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 use cw20_base::msg::InstantiateMarketingInfo;
 use cw_storage_plus::U32Key;
 
-use mars_core::address_provider::{self, MarsContract};
-use mars_core::ma_token;
+use mars_outpost::address_provider::{self, MarsContract};
+use mars_outpost::ma_token;
 
-use mars_core::asset::{
+use mars_outpost::asset::{
     build_send_asset_with_tax_deduction_msg, get_asset_balance, Asset, AssetType,
 };
-use mars_core::error::MarsError;
-use mars_core::helpers::{cw20_get_balance, cw20_get_symbol, option_string_to_addr, zero_address};
-use mars_core::math::decimal::Decimal;
+use mars_outpost::error::MarsError;
+use mars_outpost::helpers::{cw20_get_balance, cw20_get_symbol, option_string_to_addr, zero_address};
+use mars_outpost::math::decimal::Decimal;
 
 use crate::accounts::get_user_position;
 use crate::error::ContractError;
@@ -1034,7 +1034,7 @@ pub fn execute_borrow(
             // if user was already borrowing, get price from user position
             user_position.get_asset_price(asset_reference.as_slice(), &asset_label)?
         } else {
-            mars_core::oracle::helpers::query_price(
+            mars_outpost::oracle::helpers::query_price(
                 deps.querier,
                 oracle_address,
                 &asset_label,
@@ -1651,7 +1651,7 @@ fn process_ma_token_transfer_to_liquidator(
     response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: collateral_market.ma_token_address.to_string(),
         msg: to_binary(
-            &mars_core::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
+            &mars_outpost::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
                 sender: user_addr.to_string(),
                 recipient: liquidator_addr.to_string(),
                 amount: collateral_amount_to_liquidate_scaled,
@@ -1698,7 +1698,7 @@ fn process_underlying_asset_transfer_to_liquidator(
 
     response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: collateral_market.ma_token_address.to_string(),
-        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
             user: user_addr.to_string(),
 
             amount: collateral_amount_to_liquidate_scaled,
@@ -2359,8 +2359,8 @@ mod tests {
     use cosmwasm_std::testing::{MockApi, MockStorage, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{attr, coin, from_binary, BankMsg, OwnedDeps, SubMsg};
 
-    use mars_core::tax::deduct_tax;
-    use mars_core::testing::{
+    use mars_outpost::tax::deduct_tax;
+    use mars_outpost::testing::{
         mock_dependencies, mock_env, mock_env_at_block_time, mock_info, MarsMockQuerier,
         MockEnvParams,
     };
@@ -3730,7 +3730,7 @@ mod tests {
         let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            StdError::not_found("mars_core::red_bank::Market").into()
+            StdError::not_found("mars_outpost::red_bank::Market").into()
         );
     }
 
@@ -3953,7 +3953,7 @@ mod tests {
         let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            StdError::not_found("mars_core::red_bank::Market").into()
+            StdError::not_found("mars_outpost::red_bank::Market").into()
         );
     }
 
@@ -3970,7 +3970,7 @@ mod tests {
         let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            StdError::not_found("mars_core::red_bank::Market").into()
+            StdError::not_found("mars_outpost::red_bank::Market").into()
         );
     }
 
@@ -6814,7 +6814,7 @@ mod tests {
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: collateral_market_ma_token_addr.to_string(),
                         msg: to_binary(
-                            &mars_core::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
+                            &mars_outpost::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
                                 sender: user_address.to_string(),
                                 recipient: liquidator_address.to_string(),
                                 amount: expected_liquidated_collateral_amount_scaled.into(),
@@ -6840,7 +6840,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 res.attributes,
                 vec![
                     attr("action", "liquidate"),
@@ -6987,7 +6987,7 @@ mod tests {
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: collateral_market_ma_token_addr.to_string(),
-                        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+                        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
                             user: user_address.to_string(),
                             amount: expected_liquidated_collateral_amount_scaled.into(),
                         })
@@ -7045,7 +7045,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 vec![
                     attr("action", "liquidate"),
                     attr("collateral_asset", "collateral"),
@@ -7212,7 +7212,7 @@ mod tests {
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: collateral_market_ma_token_addr.to_string(),
-                        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+                        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
                             user: user_address.to_string(),
                             amount: expected_liquidated_collateral_amount_scaled.into(),
                         })
@@ -7242,7 +7242,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 vec![
                     attr("action", "liquidate"),
                     attr("collateral_asset", "collateral"),
@@ -7446,7 +7446,7 @@ mod tests {
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: collateral_market_ma_token_addr.to_string(),
-                        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+                        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
                             user: user_address.to_string(),
                             amount: expected_liquidated_collateral_amount_scaled.into(),
                         })
@@ -7492,7 +7492,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 vec![
                     attr("action", "liquidate"),
                     attr("collateral_asset", "collateral"),
@@ -7708,7 +7708,7 @@ mod tests {
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: ma_token_address.to_string(),
                         msg: to_binary(
-                            &mars_core::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
+                            &mars_outpost::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
                                 sender: user_address.to_string(),
                                 recipient: liquidator_address.to_string(),
                                 amount: expected_liquidated_amount_scaled.into(),
@@ -7734,7 +7734,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 res.attributes,
                 vec![
                     attr("action", "liquidate"),
@@ -7865,7 +7865,7 @@ mod tests {
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: ma_token_address.to_string(),
-                        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+                        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
                             user: user_address.to_string(),
                             amount: expected_liquidated_amount_scaled.into(),
                         })
@@ -7897,7 +7897,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 res.attributes,
                 vec![
                     attr("action", "liquidate"),
@@ -8033,7 +8033,7 @@ mod tests {
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: ma_token_address.to_string(),
                         msg: to_binary(
-                            &mars_core::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
+                            &mars_outpost::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
                                 sender: user_address.to_string(),
                                 recipient: liquidator_address.to_string(),
                                 amount: expected_liquidated_amount_scaled.into(),
@@ -8067,7 +8067,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 res.attributes,
                 vec![
                     attr("action", "liquidate"),
@@ -8207,7 +8207,7 @@ mod tests {
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: ma_token_address.to_string(),
-                        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+                        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
                             user: user_address.to_string(),
                             amount: expected_liquidated_amount_scaled.into(),
                         })
@@ -8247,7 +8247,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 res.attributes,
                 vec![
                     attr("action", "liquidate"),
