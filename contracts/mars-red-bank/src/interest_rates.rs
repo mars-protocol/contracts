@@ -348,10 +348,12 @@ mod tests {
     #[test]
     fn test_liquidity_and_debt_rounding() {
         let start = Uint128::from(100_000_000_000_u128);
-        let mut market = Market::default();
-        market.liquidity_index = Decimal::from_ratio(3_u128, 1_u128);
-        market.borrow_index = Decimal::from_ratio(3_u128, 1_u128);
-        market.indexes_last_updated = 1;
+        let market = Market {
+            liquidity_index: Decimal::from_ratio(3_u128, 1_u128),
+            borrow_index: Decimal::from_ratio(3_u128, 1_u128),
+            indexes_last_updated: 1,
+            ..Default::default()
+        };
 
         let scaled_amount_liquidity = get_scaled_liquidity_amount(start, &market, 1).unwrap();
         let scaled_amount_debt = get_scaled_debt_amount(start, &market, 1).unwrap();

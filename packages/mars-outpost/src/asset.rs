@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, Addr, BankMsg, CosmosMsg, Deps, StdResult, Uint128, WasmMsg, coins};
+use cosmwasm_std::{coins, to_binary, Addr, BankMsg, CosmosMsg, Deps, StdResult, Uint128, WasmMsg};
 use cw20::Cw20ExecuteMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

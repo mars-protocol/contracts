@@ -330,7 +330,7 @@ mod tests {
         let mut market = Market {
             borrow_rate: Decimal::percent(10),
             liquidity_rate: Decimal::percent(10),
-            reserve_factor: reserve_factor,
+            reserve_factor,
             interest_rate_model,
             ..Default::default()
         };
@@ -617,7 +617,7 @@ mod tests {
         let mut market = Market {
             borrow_rate: Decimal::percent(10),
             liquidity_rate: Decimal::zero(),
-            reserve_factor: reserve_factor,
+            reserve_factor,
             interest_rate_model,
             ..Default::default()
         };
