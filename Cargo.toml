@@ -1,5 +1,9 @@
 [workspace]
-members = ["packages/*", "contracts/mars-red-bank"]
+members = [
+    "packages/*", 
+    "contracts/mars-red-bank",
+    "contracts/mars-address-provider",
+]
 # members = ["contracts/*", "packages/*"]
 
 [profile.release]

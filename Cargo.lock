@@ -379,6 +379,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5916d2ae698f6de9bfb891ad7a8d65c09d232dc58cc4ac433c7da3b2fd84bc2b"
 
 [[package]]
+name = "mars-address-provider"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "mars-outpost",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-outpost"
 version = "0.1.0"
 dependencies = [

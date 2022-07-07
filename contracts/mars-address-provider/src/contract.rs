@@ -7,7 +7,7 @@ use crate::msg::{ConfigParams, ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::CONFIG;
 use crate::{Config, MarsContract};
 
-use mars_core::helpers::option_string_to_addr;
+use mars_outpost::helpers::option_string_to_addr;
 
 // INIT
 
@@ -176,12 +176,15 @@ fn get_address(config: &Config, address: MarsContract) -> Addr {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
+    use cosmwasm_std::testing::{
+        mock_dependencies, mock_dependencies_with_balance, mock_env, MockApi, MockQuerier,
+        MockStorage,
+    };
     use cosmwasm_std::{from_binary, Coin, OwnedDeps};
 
     #[test]
     fn test_proper_initialization() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         let owner_address = Addr::unchecked("owner");
 
         // *
@@ -297,7 +300,7 @@ mod tests {
 
     // TEST HELPERS
     fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
-        let mut deps = mock_dependencies(contract_balances);
+        let mut deps = mock_dependencies_with_balance(contract_balances);
         let msg = InstantiateMsg {
             owner: "owner".to_string(),
         };
