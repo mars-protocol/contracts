@@ -21,18 +21,12 @@ pub fn instantiate(
     // Initialize config
     let config = Config {
         owner: deps.api.addr_validate(&msg.owner)?,
-        council_address: Addr::unchecked(""),
         incentives_address: Addr::unchecked(""),
-        safety_fund_address: Addr::unchecked(""),
         mars_token_address: Addr::unchecked(""),
         oracle_address: Addr::unchecked(""),
         protocol_admin_address: Addr::unchecked(""),
         protocol_rewards_collector_address: Addr::unchecked(""),
         red_bank_address: Addr::unchecked(""),
-        staking_address: Addr::unchecked(""),
-        treasury_address: Addr::unchecked(""),
-        vesting_address: Addr::unchecked(""),
-        xmars_token_address: Addr::unchecked(""),
     };
 
     CONFIG.save(deps.storage, &config)?;
@@ -71,28 +65,18 @@ pub fn execute_update_config(
 
     let ConfigParams {
         owner,
-        council_address,
         incentives_address,
-        safety_fund_address,
         mars_token_address,
         oracle_address,
         protocol_admin_address,
         protocol_rewards_collector_address,
         red_bank_address,
-        staking_address,
-        treasury_address,
-        vesting_address,
-        xmars_token_address,
     } = config_params;
 
     // Update config
     config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
-    config.council_address =
-        option_string_to_addr(deps.api, council_address, config.council_address)?;
     config.incentives_address =
         option_string_to_addr(deps.api, incentives_address, config.incentives_address)?;
-    config.safety_fund_address =
-        option_string_to_addr(deps.api, safety_fund_address, config.safety_fund_address)?;
     config.mars_token_address =
         option_string_to_addr(deps.api, mars_token_address, config.mars_token_address)?;
     config.oracle_address = option_string_to_addr(deps.api, oracle_address, config.oracle_address)?;
@@ -108,14 +92,6 @@ pub fn execute_update_config(
     )?;
     config.red_bank_address =
         option_string_to_addr(deps.api, red_bank_address, config.red_bank_address)?;
-    config.staking_address =
-        option_string_to_addr(deps.api, staking_address, config.staking_address)?;
-    config.treasury_address =
-        option_string_to_addr(deps.api, treasury_address, config.treasury_address)?;
-    config.vesting_address =
-        option_string_to_addr(deps.api, vesting_address, config.vesting_address)?;
-    config.xmars_token_address =
-        option_string_to_addr(deps.api, xmars_token_address, config.xmars_token_address)?;
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -156,18 +132,12 @@ fn query_addresses(deps: Deps, contracts: Vec<MarsContract>) -> StdResult<Vec<Ad
 
 fn get_address(config: &Config, address: MarsContract) -> Addr {
     match address {
-        MarsContract::Council => config.council_address.clone(),
         MarsContract::Incentives => config.incentives_address.clone(),
-        MarsContract::SafetyFund => config.safety_fund_address.clone(),
         MarsContract::MarsToken => config.mars_token_address.clone(),
         MarsContract::Oracle => config.oracle_address.clone(),
         MarsContract::ProtocolAdmin => config.protocol_admin_address.clone(),
         MarsContract::ProtocolRewardsCollector => config.protocol_rewards_collector_address.clone(),
         MarsContract::RedBank => config.red_bank_address.clone(),
-        MarsContract::Staking => config.staking_address.clone(),
-        MarsContract::Treasury => config.treasury_address.clone(),
-        MarsContract::Vesting => config.vesting_address.clone(),
-        MarsContract::XMarsToken => config.xmars_token_address.clone(),
     }
 }
 
@@ -229,7 +199,7 @@ mod tests {
                 config: ConfigParams {
                     incentives_address: Some("incentives".to_string()),
                     mars_token_address: Some("mars-token".to_string()),
-                    treasury_address: Some("treasury".to_string()),
+                    red_bank_address: Some("red-bank".to_string()),
                     ..Default::default()
                 },
             };
@@ -245,10 +215,13 @@ mod tests {
             let new_config = CONFIG.load(&deps.storage).unwrap();
 
             assert_eq!(new_config.owner, Addr::unchecked("owner"));
-            assert_eq!(new_config.xmars_token_address, Addr::unchecked(""),);
+            assert_eq!(
+                new_config.protocol_rewards_collector_address,
+                Addr::unchecked(""),
+            );
             assert_eq!(new_config.incentives_address, Addr::unchecked("incentives"));
             assert_eq!(new_config.mars_token_address, Addr::unchecked("mars-token"));
-            assert_eq!(new_config.treasury_address, Addr::unchecked("treasury"));
+            assert_eq!(new_config.red_bank_address, Addr::unchecked("red-bank"));
         }
     }
 
@@ -257,15 +230,15 @@ mod tests {
         let mut deps = th_setup(&[]);
         let env = mock_env();
 
-        let council_address = Addr::unchecked("council");
+        let mars_token_address = Addr::unchecked("mars_token");
         let incentives_address = Addr::unchecked("incentives");
-        let xmars_token_address = Addr::unchecked("xmars_token");
+        let red_bank_address = Addr::unchecked("red_bank");
 
         CONFIG
             .update(&mut deps.storage, |mut c| -> StdResult<_> {
-                c.council_address = council_address.clone();
+                c.mars_token_address = mars_token_address.clone();
                 c.incentives_address = incentives_address.clone();
-                c.xmars_token_address = xmars_token_address.clone();
+                c.red_bank_address = red_bank_address.clone();
                 Ok(c)
             })
             .unwrap();
@@ -288,13 +261,13 @@ mod tests {
                 deps.as_ref(),
                 env,
                 QueryMsg::Addresses {
-                    contracts: vec![MarsContract::XMarsToken, MarsContract::Council],
+                    contracts: vec![MarsContract::RedBank, MarsContract::MarsToken],
                 },
             )
             .unwrap();
             let result: Vec<Addr> = from_binary(&addresses_query).unwrap();
-            assert_eq!(result[0], xmars_token_address);
-            assert_eq!(result[1], council_address);
+            assert_eq!(result[0], red_bank_address);
+            assert_eq!(result[1], mars_token_address);
         }
     }
 

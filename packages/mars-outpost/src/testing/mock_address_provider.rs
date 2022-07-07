@@ -34,17 +34,11 @@ pub fn handle_query(contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
 
 fn get_contract_address(contract: MarsContract) -> Addr {
     match contract {
-        MarsContract::Council => Addr::unchecked("council"),
         MarsContract::Incentives => Addr::unchecked("incentives"),
-        MarsContract::SafetyFund => Addr::unchecked("safety_fund"),
         MarsContract::MarsToken => Addr::unchecked("mars_token"),
         MarsContract::Oracle => Addr::unchecked("oracle"),
         MarsContract::ProtocolAdmin => Addr::unchecked("protocol_admin"),
         MarsContract::ProtocolRewardsCollector => Addr::unchecked("protocol_rewards_collector"),
         MarsContract::RedBank => Addr::unchecked("red_bank"),
-        MarsContract::Staking => Addr::unchecked("staking"),
-        MarsContract::Treasury => Addr::unchecked("treasury"),
-        MarsContract::Vesting => Addr::unchecked("vesting"),
-        MarsContract::XMarsToken => Addr::unchecked("xmars_token"),
     }
 }
