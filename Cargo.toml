@@ -1,9 +1,10 @@
 [workspace]
 members = [
-    "packages/*", 
+    "packages/*",
     "contracts/mars-red-bank",
     "contracts/mars-address-provider",
-    "contracts/mars-ma-token"
+    "contracts/mars-ma-token",
+    "contracts/mars-oracle"
 ]
 # members = ["contracts/*", "packages/*"]
 

@@ -69,9 +69,9 @@ pub mod msg {
         Config {},
         /// Get asset's price source. Returns `AssetConfigChecked`
         AssetPriceSource { asset: Asset },
-        /// Query asset price given an asset; returns `mars_core::math::decimal::Decimal`
+        /// Query asset price given an asset; returns `Decimal`
         AssetPrice { asset: Asset },
-        /// Query asset price given it's internal reference; returns `mars_core::math::decimal::Decimal`
+        /// Query asset price given it's internal reference; returns `Decimal`
         ///
         /// NOTE: meant to be used by protocol contracts only
         AssetPriceByReference { asset_reference: Vec<u8> },

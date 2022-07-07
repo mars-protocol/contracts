@@ -2,22 +2,20 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     attr, to_binary, Attribute, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
-    Uint128,
+    Uint128, Decimal, QuerierWrapper
 };
-use mars_core::error::MarsError;
+use mars_outpost::error::MarsError;
 use terra_cosmwasm::TerraQuerier;
 
-use mars_core::asset::Asset;
-use mars_core::helpers::option_string_to_addr;
-use mars_core::math::decimal::Decimal;
+use mars_outpost::asset::Asset;
+use mars_outpost::helpers::option_string_to_addr;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
-use crate::state::{ASTROPORT_TWAP_SNAPSHOTS, CONFIG, PRICE_SOURCES};
-use crate::{AstroportTwapSnapshot, Config, PriceSourceChecked, PriceSourceUnchecked};
+use crate::state::{CONFIG, PRICE_SOURCES};
+use crate::{Config, PriceSourceChecked, PriceSourceUnchecked};
 
 use self::helpers::*;
-use astroport::pair::TWAP_PRECISION;
 
 // INIT
 
@@ -49,10 +47,7 @@ pub fn execute(
         ExecuteMsg::SetAsset {
             asset,
             price_source,
-        } => execute_set_asset(deps, env, info, asset, price_source),
-        ExecuteMsg::RecordTwapSnapshots { assets } => {
-            execute_record_twap_snapshots(deps, env, info, assets)
-        }
+        } => execute_set_asset(deps, env, info, asset, price_source)
     }
 }
 
@@ -106,75 +101,6 @@ pub fn execute_set_asset(
         .add_attribute("price_source", price_source_unchecked.to_string()))
 }
 
-/// Modified from
-/// https://github.com/Uniswap/uniswap-v2-periphery/blob/master/contracts/examples/ExampleOracleSimple.sol
-pub fn execute_record_twap_snapshots(
-    deps: DepsMut,
-    env: Env,
-    _info: MessageInfo,
-    assets: Vec<Asset>,
-) -> Result<Response, ContractError> {
-    let timestamp = env.block.time.seconds();
-    let mut attrs: Vec<Attribute> = vec![];
-
-    for asset in assets {
-        let (asset_label, asset_reference, _) = asset.get_attributes();
-        let price_source = PRICE_SOURCES.load(deps.storage, &asset_reference)?;
-
-        // Asset must be configured to use TWAP price source
-        let (pair_address, window_size, tolerance) = match price_source {
-            PriceSourceChecked::AstroportTwap {
-                pair_address,
-                window_size,
-                tolerance,
-            } => (pair_address, window_size, tolerance),
-            _ => {
-                return Err(ContractError::PriceSourceNotTwap {});
-            }
-        };
-
-        // Load existing snapshots. If there's none, we initialize an empty vector
-        let mut snapshots = ASTROPORT_TWAP_SNAPSHOTS
-            .load(deps.storage, &asset_reference)
-            .unwrap_or_else(|_| vec![]);
-
-        // A potential attack is to repeatly call `RecordTwapSnapshots` so that `snapshots` becomes a
-        // very big vector, so that calculating the average price becomes extremely gas expensive.
-        // To deter this, we reject a new snapshot if the most recent snapshot is less than `tolerance`
-        // seconds ago.
-        if let Some(latest_snapshot) = snapshots.last() {
-            if timestamp - latest_snapshot.timestamp < tolerance {
-                continue;
-            }
-        }
-
-        // Query new price data
-        let price_cumulative = query_astroport_cumulative_price(&deps.querier, &pair_address)?;
-
-        // Purge snapshots that are too old, i.e. more than (window_size + tolerance) away from the
-        // current timestamp. These snapshots will never be used in the future for calculating
-        // average prices
-        snapshots.retain(|snapshot| timestamp - snapshot.timestamp <= window_size + tolerance);
-
-        snapshots.push(AstroportTwapSnapshot {
-            timestamp,
-            price_cumulative,
-        });
-
-        ASTROPORT_TWAP_SNAPSHOTS.save(deps.storage, &asset_reference, &snapshots)?;
-
-        attrs.extend(vec![
-            attr("asset", asset_label),
-            attr("price_cumulative", price_cumulative),
-        ]);
-    }
-
-    Ok(Response::new()
-        .add_attribute("action", "record_twap_snapshots")
-        .add_attribute("timestamp", timestamp.to_string())
-        .add_attributes(attrs))
-}
-
 // QUERIES
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -210,23 +136,6 @@ fn query_asset_price(
 
     match price_source {
         PriceSourceChecked::Fixed { price } => Ok(price),
-
-        PriceSourceChecked::Native { denom } => {
-            let terra_querier = TerraQuerier::new(&deps.querier);
-
-            // NOTE: Exchange rate returns how much of the quote (second argument) is required to
-            // buy one unit of the base_denom (first argument).
-            // We want to know how much uusd we need to buy 1 of the target currency
-            let asset_prices_query = terra_querier
-                .query_exchange_rates(denom, vec!["uusd".to_string()])?
-                .exchange_rates
-                .pop();
-
-            match asset_prices_query {
-                Some(exchange_rate_item) => Ok(exchange_rate_item.exchange_rate.into()),
-                None => Err(ContractError::NativePriceNotFound {}),
-            }
-        }
 
         // NOTE: Spot price is defined as the amount of UST to be returned when swapping `PROBE_AMOUNT`
         // of the asset of interest, divided by `PROBE_AMOUNT`. In the current implementation,
@@ -303,30 +212,6 @@ fn query_asset_price(
             let price = Decimal::from_ratio(asset0_value + asset1_value, pool.total_share);
             Ok(price)
         }
-
-        PriceSourceChecked::Stluna { hub_address } => {
-            let stluna_exchange_rate = query_stluna_exchange_rate(&deps.querier, &hub_address)?;
-
-            let luna_asset = Asset::Native {
-                denom: "uluna".to_string(),
-            };
-            let luna_price = query_asset_price(deps, env, luna_asset.get_reference())?;
-
-            let stluna_price = stluna_exchange_rate.checked_mul(luna_price)?;
-            Ok(stluna_price)
-        }
-
-        PriceSourceChecked::Lunax { staking_address } => {
-            let lunax_exchange_rate = query_lunax_exchange_rate(&deps.querier, &staking_address)?;
-
-            let luna_asset = Asset::Native {
-                denom: "uluna".to_string(),
-            };
-            let luna_price = query_asset_price(deps, env, luna_asset.get_reference())?;
-
-            let lunax_price = lunax_exchange_rate.checked_mul(luna_price)?;
-            Ok(lunax_price)
-        }
     }
 }
 
@@ -338,13 +223,11 @@ pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Respons
 // HELPERS
 
 mod helpers {
-    use cosmwasm_std::{
-        to_binary, Addr, QuerierWrapper, QueryRequest, StdResult, Uint128, WasmQuery,
-    };
+    use cosmwasm_std::{to_binary, Addr, QuerierWrapper, QueryRequest, StdResult, Uint128, Decimal, WasmQuery, Deps};
+    use osmo_bindings::{OsmosisQuery, PoolStateResponse, SpotPriceResponse};
 
-    use mars_core::asset::Asset;
-    use mars_core::math::decimal::Decimal;
-    use mars_core::oracle::AstroportTwapSnapshot;
+    use mars_outpost::asset::Asset;
+    use mars_outpost::oracle::AstroportTwapSnapshot;
 
     use crate::error::ContractError;
 
@@ -411,6 +294,29 @@ mod helpers {
         }))
     }
 
+    pub fn query_osmosis_pool(
+        deps: &Deps<OsmosisQuery>,
+        pool_id: u64,
+    ) -> StdResult<PoolStateResponse> {
+        let pool_query = OsmosisQuery::PoolState { id: pool_id };
+        let query = QueryRequest::from(pool_query);
+        let pool_info: PoolStateResponse = deps.querier.query(&query)?;
+        Ok(pool_info)
+    }
+
+    pub fn query_osmosis_spot_price(
+        deps: &Deps<OsmosisQuery>,
+        pool_id: u64,
+    ) -> StdResult<Decimal> {
+        let pool_info = query_osmosis_pool(deps, pool_id)?;
+        let asset_1 = pool_info.assets.get(0).unwrap();
+        let asset_2 = pool_info.assets.get(1).unwrap();
+        let spot_price = OsmosisQuery::spot_price(pool_id, asset_1.denom.as_str(), asset_2.denom.as_str());
+        let query = QueryRequest::from(spot_price);
+        let response: SpotPriceResponse = deps.querier.query(&query)?;
+        Ok(response.price)
+    }
+
     pub fn query_astroport_spot_price(
         querier: &QuerierWrapper,
         pair_address: &Addr,
@@ -464,30 +370,6 @@ mod helpers {
             response.price0_cumulative_last
         };
         Ok(price_cumulative)
-    }
-
-    pub fn query_stluna_exchange_rate(
-        querier: &QuerierWrapper,
-        hub_address: &Addr,
-    ) -> StdResult<Decimal> {
-        let response: BAssetStateResponse =
-            querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-                contract_addr: hub_address.to_string(),
-                msg: to_binary(&BAssetQueryMsg::State {})?,
-            }))?;
-        Ok(response.stluna_exchange_rate.into())
-    }
-
-    pub fn query_lunax_exchange_rate(
-        querier: &QuerierWrapper,
-        staking_address: &Addr,
-    ) -> StdResult<Decimal> {
-        let response: StaderStateResponse =
-            querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-                contract_addr: staking_address.to_string(),
-                msg: to_binary(&StaderQueryMsg::State {})?,
-            }))?;
-        Ok(response.state.exchange_rate.into())
     }
 }
 
@@ -605,34 +487,6 @@ mod tests {
     }
 
     #[test]
-    fn test_set_asset_native() {
-        let mut deps = th_setup();
-        let info = mock_info("owner", &[]);
-
-        let asset = Asset::Native {
-            denom: String::from("luna"),
-        };
-        let reference = asset.get_reference();
-        let msg = ExecuteMsg::SetAsset {
-            asset: asset,
-            price_source: PriceSourceUnchecked::Native {
-                denom: "luna".to_string(),
-            },
-        };
-        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
-
-        let price_source = PRICE_SOURCES
-            .load(&deps.storage, reference.as_slice())
-            .unwrap();
-        assert_eq!(
-            price_source,
-            PriceSourceChecked::Native {
-                denom: "luna".to_string()
-            }
-        );
-    }
-
-    #[test]
     fn test_set_asset_astroport_spot() {
         let mut deps = th_setup();
         let info = mock_info("owner", &[]);
@@ -722,221 +576,6 @@ mod tests {
     }
 
     #[test]
-    fn test_set_asset_stluna() {
-        let mut deps = th_setup();
-        let info = mock_info("owner", &[]);
-
-        let asset = Asset::Cw20 {
-            contract_addr: String::from("stluna_token"),
-        };
-        let reference = asset.get_reference();
-        let msg = ExecuteMsg::SetAsset {
-            asset: asset,
-            price_source: PriceSourceUnchecked::Stluna {
-                hub_address: "stluna_hub_addr".to_string(),
-            },
-        };
-        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
-
-        let price_source = PRICE_SOURCES
-            .load(&deps.storage, reference.as_slice())
-            .unwrap();
-        assert_eq!(
-            price_source,
-            PriceSourceChecked::Stluna {
-                hub_address: Addr::unchecked("stluna_hub_addr")
-            }
-        );
-    }
-
-    #[test]
-    fn test_set_asset_lunax() {
-        let mut deps = th_setup();
-        let info = mock_info("owner", &[]);
-
-        let asset = Asset::Cw20 {
-            contract_addr: String::from("lunax_token"),
-        };
-        let reference = asset.get_reference();
-        let msg = ExecuteMsg::SetAsset {
-            asset: asset,
-            price_source: PriceSourceUnchecked::Lunax {
-                staking_address: "lunax_staking_addr".to_string(),
-            },
-        };
-        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
-
-        let price_source = PRICE_SOURCES
-            .load(&deps.storage, reference.as_slice())
-            .unwrap();
-        assert_eq!(
-            price_source,
-            PriceSourceChecked::Lunax {
-                staking_address: Addr::unchecked("lunax_staking_addr")
-            }
-        );
-    }
-
-    #[test]
-    fn test_record_twap_snapshots() {
-        let mut deps = th_setup();
-        let info = mock_info("anyone", &[]);
-
-        let window_size = 3600;
-        let tolerance = 600;
-
-        let asset = Asset::Cw20 {
-            contract_addr: "cw20token".to_string(),
-        };
-        let reference = asset.get_reference();
-
-        // set price source to astroport TWAP
-        PRICE_SOURCES
-            .save(
-                &mut deps.storage,
-                reference.as_slice(),
-                &PriceSourceChecked::AstroportTwap {
-                    pair_address: Addr::unchecked("pair"),
-                    window_size,
-                    tolerance,
-                },
-            )
-            .unwrap();
-
-        // set cumulative price
-        let offer_asset_info = AssetInfo::Token {
-            contract_addr: Addr::unchecked("cw20token"),
-        };
-        let ask_asset_info = AssetInfo::NativeToken {
-            denom: "uusd".to_string(),
-        };
-
-        let mut cumulative_prices = CumulativePricesResponse {
-            assets: [
-                AstroportAsset {
-                    info: offer_asset_info,
-                    amount: Uint128::zero(),
-                },
-                AstroportAsset {
-                    info: ask_asset_info,
-                    amount: Uint128::zero(),
-                },
-            ],
-            total_share: Uint128::zero(),
-            price0_cumulative_last: Uint128::zero(), // token
-            price1_cumulative_last: Uint128::zero(), // uusd
-        };
-
-        // set the cumulative price
-        cumulative_prices.price0_cumulative_last = Uint128::new(1_000_000000);
-        deps.querier
-            .set_astroport_pair_cumulative_prices("pair".to_string(), cumulative_prices.clone());
-
-        // record first snapshot
-        let snapshot_time = 100_000;
-
-        let msg = ExecuteMsg::RecordTwapSnapshots {
-            assets: vec![asset.clone()],
-        };
-
-        let response = execute(
-            deps.as_mut(),
-            mock_env_at_block_time(snapshot_time),
-            info.clone(),
-            msg.clone(),
-        )
-        .unwrap();
-
-        assert_eq!(
-            response.attributes,
-            vec![
-                attr("action", "record_twap_snapshots"),
-                attr("timestamp", "100000"),
-                attr("asset", "cw20token"),
-                attr("price_cumulative", "1000000000"),
-            ]
-        );
-
-        let snapshots = ASTROPORT_TWAP_SNAPSHOTS
-            .load(deps.as_ref().storage, &reference)
-            .unwrap();
-        assert_eq!(snapshots.len(), 1);
-        assert_eq!(snapshots[0].price_cumulative, Uint128::new(1_000_000000));
-        assert_eq!(snapshots[0].timestamp, snapshot_time);
-
-        // update the cumulative price
-        cumulative_prices.price0_cumulative_last = Uint128::new(2_000_000000);
-        deps.querier
-            .set_astroport_pair_cumulative_prices("pair".to_string(), cumulative_prices.clone());
-
-        // try to record a second snapshot within `tolerance` seconds
-        let snapshot_too_soon_time = snapshot_time + tolerance - 1;
-
-        let response = execute(
-            deps.as_mut(),
-            mock_env_at_block_time(snapshot_too_soon_time),
-            info.clone(),
-            msg.clone(),
-        )
-        .unwrap();
-
-        assert_eq!(
-            response.attributes,
-            vec![
-                attr("action", "record_twap_snapshots"),
-                attr("timestamp", "100599"),
-            ]
-        );
-        assert!(response.events.len() == 0);
-
-        // record a second snapshot
-        let second_snapshot_time = snapshot_time + tolerance;
-
-        let response = execute(
-            deps.as_mut(),
-            mock_env_at_block_time(second_snapshot_time),
-            info.clone(),
-            msg.clone(),
-        )
-        .unwrap();
-
-        assert_eq!(
-            response.attributes,
-            vec![
-                attr("action", "record_twap_snapshots"),
-                attr("timestamp", "100600"),
-                attr("asset", "cw20token"),
-                attr("price_cumulative", "2000000000"),
-            ]
-        );
-
-        let snapshots = ASTROPORT_TWAP_SNAPSHOTS
-            .load(deps.as_ref().storage, &reference)
-            .unwrap();
-        assert_eq!(snapshots.len(), 2);
-        assert_eq!(snapshots[1].price_cumulative, Uint128::new(2_000_000000));
-        assert_eq!(snapshots[1].timestamp, second_snapshot_time);
-
-        // record a third snapshot and check that old snapshots are removed from state
-        let third_snapshot_time = second_snapshot_time + window_size + tolerance + 1;
-
-        execute(
-            deps.as_mut(),
-            mock_env_at_block_time(third_snapshot_time),
-            info.clone(),
-            msg.clone(),
-        )
-        .unwrap();
-
-        let snapshots = ASTROPORT_TWAP_SNAPSHOTS
-            .load(deps.as_ref().storage, &reference)
-            .unwrap();
-        assert_eq!(snapshots.len(), 1);
-        assert_eq!(snapshots[0].price_cumulative, Uint128::new(2_000_000000));
-        assert_eq!(snapshots[0].timestamp, third_snapshot_time);
-    }
-
-    #[test]
     fn test_query_asset_price_source() {
         let mut deps = th_setup();
         let info = mock_info("owner", &[]);
@@ -1001,42 +640,6 @@ mod tests {
         .unwrap();
 
         assert_eq!(price, Decimal::from_ratio(3_u128, 2_u128));
-    }
-
-    #[test]
-    fn test_query_asset_price_native() {
-        let mut deps = th_setup();
-        let asset = Asset::Native {
-            denom: String::from("nativecoin"),
-        };
-        let asset_reference = asset.get_reference();
-
-        deps.querier.set_native_exchange_rates(
-            "nativecoin".to_string(),
-            &[("uusd".to_string(), Decimal::from_ratio(4_u128, 1_u128))],
-        );
-
-        PRICE_SOURCES
-            .save(
-                &mut deps.storage,
-                asset_reference.as_slice(),
-                &PriceSourceChecked::Native {
-                    denom: "nativecoin".to_string(),
-                },
-            )
-            .unwrap();
-
-        let price: Decimal = from_binary(
-            &query(
-                deps.as_ref(),
-                mock_env(),
-                QueryMsg::AssetPriceByReference { asset_reference },
-            )
-            .unwrap(),
-        )
-        .unwrap();
-
-        assert_eq!(price, Decimal::from_ratio(4_u128, 1_u128));
     }
 
     #[test]
@@ -1216,147 +819,6 @@ mod tests {
                 (query_time - snapshot_time) * 10_u64.pow(TWAP_PRECISION.into())
             )
         );
-    }
-
-    #[test]
-    fn test_query_asset_price_stluna() {
-        let mut deps = th_setup();
-
-        // Setup Luna native price source
-        let asset = Asset::Native {
-            denom: "uluna".to_string(),
-        };
-        let asset_reference = asset.get_reference();
-
-        deps.querier.set_native_exchange_rates(
-            "uluna".to_string(),
-            &[("uusd".to_string(), Decimal::from_ratio(94_u128, 1_u128))],
-        );
-
-        PRICE_SOURCES
-            .save(
-                &mut deps.storage,
-                asset_reference.as_slice(),
-                &PriceSourceChecked::Native {
-                    denom: "uluna".to_string(),
-                },
-            )
-            .unwrap();
-
-        // Setup stLuna (stLuna / Luna) price source
-        let asset = Asset::Cw20 {
-            contract_addr: String::from("stluna_token"),
-        };
-        let asset_reference = asset.get_reference();
-
-        PRICE_SOURCES
-            .save(
-                &mut deps.storage,
-                asset_reference.as_slice(),
-                &PriceSourceChecked::Stluna {
-                    hub_address: Addr::unchecked("stluna_hub_addr"),
-                },
-            )
-            .unwrap();
-
-        deps.querier.set_basset_state_response(StateResponse {
-            bluna_exchange_rate: Default::default(),
-            stluna_exchange_rate: StdDecimal::from_ratio(11_u128, 10_u128), // 1 stluna = 1.1 luna
-            total_bond_bluna_amount: Default::default(),
-            total_bond_stluna_amount: Default::default(),
-            last_index_modification: 0,
-            prev_hub_balance: Default::default(),
-            last_unbonded_time: 0,
-            last_processed_batch: 0,
-            total_bond_amount: Default::default(),
-            exchange_rate: Default::default(),
-        });
-
-        let price: Decimal = from_binary(
-            &query(
-                deps.as_ref(),
-                mock_env(),
-                QueryMsg::AssetPriceByReference {
-                    asset_reference: asset_reference.clone(),
-                },
-            )
-            .unwrap(),
-        )
-        .unwrap();
-
-        // stLuna/USD = stLuna/Luna * Luna/USD
-        assert_eq!(price, Decimal::from_ratio(1034_u128, 10_u128));
-    }
-
-    #[test]
-    fn test_query_asset_price_lunax() {
-        let mut deps = th_setup();
-
-        // Setup Luna native price source
-        let asset = Asset::Native {
-            denom: "uluna".to_string(),
-        };
-        let asset_reference = asset.get_reference();
-
-        deps.querier.set_native_exchange_rates(
-            "uluna".to_string(),
-            &[("uusd".to_string(), Decimal::from_ratio(94_u128, 1_u128))],
-        );
-
-        PRICE_SOURCES
-            .save(
-                &mut deps.storage,
-                asset_reference.as_slice(),
-                &PriceSourceChecked::Native {
-                    denom: "uluna".to_string(),
-                },
-            )
-            .unwrap();
-
-        // Setup LunaX (LunaX / Luna) price source
-        let asset = Asset::Cw20 {
-            contract_addr: String::from("lunax_token"),
-        };
-        let asset_reference = asset.get_reference();
-
-        PRICE_SOURCES
-            .save(
-                &mut deps.storage,
-                asset_reference.as_slice(),
-                &PriceSourceChecked::Lunax {
-                    staking_address: Addr::unchecked("lunax_staking_addr"),
-                },
-            )
-            .unwrap();
-
-        deps.querier.set_stader_state_response(StaderStateResponse {
-            state: StaderState {
-                total_staked: Default::default(),
-                exchange_rate: StdDecimal::from_ratio(112_u128, 100_u128), // 1 lunax = 1.12 luna
-                last_reconciled_batch_id: 0,
-                current_undelegation_batch_id: 0,
-                last_undelegation_time: Default::default(),
-                last_swap_time: Default::default(),
-                last_reinvest_time: Default::default(),
-                validators: vec![],
-                reconciled_funds_to_withdraw: Default::default(),
-            },
-        });
-
-        let price: Decimal = from_binary(
-            &query(
-                deps.as_ref(),
-                mock_env(),
-                QueryMsg::AssetPriceByReference {
-                    asset_reference: asset_reference.clone(),
-                },
-            )
-            .unwrap(),
-        )
-        .unwrap();
-
-        // LunaX/USD = LunaX/Luna * Luna/USD
-        assert_eq!(price, Decimal::from_ratio(10528_u128, 100_u128));
     }
 
     // TEST_HELPERS
