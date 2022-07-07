@@ -1,10 +1,9 @@
-use cosmwasm_std::{Addr, Deps, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, Decimal, Deps, StdError, StdResult, Uint128};
 
-use mars_core::asset::AssetType;
-use mars_core::helpers::cw20_get_balance;
-use mars_core::math::decimal::Decimal;
+use mars_outpost::asset::AssetType;
+use mars_outpost::helpers::cw20_get_balance;
 
-use mars_core::oracle;
+use mars_outpost::oracle;
 
 use crate::contract::{get_bit, market_get_from_index};
 use crate::error::ContractError;

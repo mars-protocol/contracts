@@ -3,22 +3,20 @@ use std::str;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    from_binary, to_binary, Addr, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
-    Order, Response, StdError, StdResult, Uint128, WasmMsg,
+    from_binary, to_binary, Addr, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env, Event,
+    MessageInfo, Order, Response, StdError, StdResult, Uint128, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 use cw20_base::msg::InstantiateMarketingInfo;
-use cw_storage_plus::U32Key;
 
-use mars_core::address_provider::{self, MarsContract};
-use mars_core::ma_token;
+use mars_outpost::address_provider::{self, MarsContract};
+use mars_outpost::{ma_token, math};
 
-use mars_core::asset::{
-    build_send_asset_with_tax_deduction_msg, get_asset_balance, Asset, AssetType,
+use mars_outpost::asset::{build_send_asset_msg, get_asset_balance, Asset, AssetType};
+use mars_outpost::error::MarsError;
+use mars_outpost::helpers::{
+    cw20_get_balance, cw20_get_symbol, option_string_to_addr, zero_address,
 };
-use mars_core::error::MarsError;
-use mars_core::helpers::{cw20_get_balance, cw20_get_symbol, option_string_to_addr, zero_address};
-use mars_core::math::decimal::Decimal;
 
 use crate::accounts::get_user_position;
 use crate::error::ContractError;
@@ -360,11 +358,7 @@ pub fn execute_init_asset(
             MARKETS.save(deps.storage, asset_reference.as_slice(), &new_market)?;
 
             // Save index to reference mapping
-            MARKET_REFERENCES_BY_INDEX.save(
-                deps.storage,
-                U32Key::new(market_idx),
-                &asset_reference.to_vec(),
-            )?;
+            MARKET_REFERENCES_BY_INDEX.save(deps.storage, market_idx, &asset_reference.to_vec())?;
 
             // Increment market count
             money_market.market_count += 1;
@@ -942,8 +936,7 @@ pub fn execute_withdraw(
     } else {
         withdrawer_addr.clone()
     };
-    response = response.add_message(build_send_asset_with_tax_deduction_msg(
-        deps.as_ref(),
+    response = response.add_message(build_send_asset_msg(
         recipient_address.clone(),
         asset_label.clone(),
         asset_type,
@@ -1034,7 +1027,7 @@ pub fn execute_borrow(
             // if user was already borrowing, get price from user position
             user_position.get_asset_price(asset_reference.as_slice(), &asset_label)?
         } else {
-            mars_core::oracle::helpers::query_price(
+            mars_outpost::oracle::helpers::query_price(
                 deps.querier,
                 oracle_address,
                 &asset_label,
@@ -1135,8 +1128,7 @@ pub fn execute_borrow(
     } else {
         borrower_address.clone()
     };
-    response = response.add_message(build_send_asset_with_tax_deduction_msg(
-        deps.as_ref(),
+    response = response.add_message(build_send_asset_msg(
         recipient_address.clone(),
         asset_label.clone(),
         asset_type,
@@ -1223,8 +1215,7 @@ pub fn execute_repay(
     let mut debt_amount_after = Uint128::zero();
     if repay_amount > debt_amount_before {
         refund_amount = repay_amount - debt_amount_before;
-        let refund_msg = build_send_asset_with_tax_deduction_msg(
-            deps.as_ref(),
+        let refund_msg = build_send_asset_msg(
             user_address.clone(),
             asset_label.clone(),
             asset_type,
@@ -1588,8 +1579,7 @@ pub fn execute_liquidate(
     // 7. Build response
     // refund sent amount in excess of actual debt amount to liquidate
     if refund_amount > Uint128::zero() {
-        response = response.add_message(build_send_asset_with_tax_deduction_msg(
-            deps.as_ref(),
+        response = response.add_message(build_send_asset_msg(
             liquidator_address.clone(),
             debt_asset_label.clone(),
             debt_asset_type,
@@ -1651,7 +1641,7 @@ fn process_ma_token_transfer_to_liquidator(
     response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: collateral_market.ma_token_address.to_string(),
         msg: to_binary(
-            &mars_core::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
+            &mars_outpost::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
                 sender: user_addr.to_string(),
                 recipient: liquidator_addr.to_string(),
                 amount: collateral_amount_to_liquidate_scaled,
@@ -1698,7 +1688,7 @@ fn process_underlying_asset_transfer_to_liquidator(
 
     response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: collateral_market.ma_token_address.to_string(),
-        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
             user: user_addr.to_string(),
 
             amount: collateral_amount_to_liquidate_scaled,
@@ -1706,8 +1696,7 @@ fn process_underlying_asset_transfer_to_liquidator(
         funds: vec![],
     }));
 
-    response = response.add_message(build_send_asset_with_tax_deduction_msg(
-        deps.as_ref(),
+    response = response.add_message(build_send_asset_msg(
         liquidator_addr.clone(),
         collateral_asset_label,
         collateral_asset_type,
@@ -1744,17 +1733,15 @@ fn liquidation_compute_amounts(
     let debt_amount_to_repay_in_uusd = debt_amount_to_repay * debt_price;
     let collateral_amount_to_liquidate_in_uusd =
         debt_amount_to_repay_in_uusd * (Decimal::one() + liquidation_bonus);
-    let mut collateral_amount_to_liquidate = Decimal::divide_uint128_by_decimal(
-        collateral_amount_to_liquidate_in_uusd,
-        collateral_price,
-    )?;
+    let mut collateral_amount_to_liquidate =
+        math::divide_uint128_by_decimal(collateral_amount_to_liquidate_in_uusd, collateral_price)?;
 
     // If collateral amount to liquidate is higher than user_collateral_balance,
     // liquidate the full balance and adjust the debt amount to repay accordingly
     if collateral_amount_to_liquidate > user_collateral_balance {
         collateral_amount_to_liquidate = user_collateral_balance;
-        debt_amount_to_repay = Decimal::divide_uint128_by_decimal(
-            Decimal::divide_uint128_by_decimal(
+        debt_amount_to_repay = math::divide_uint128_by_decimal(
+            math::divide_uint128_by_decimal(
                 collateral_amount_to_liquidate * collateral_price,
                 debt_price,
             )?,
@@ -2303,16 +2290,15 @@ fn get_asset_denom(deps: Deps, asset_label: &str, asset_type: AssetType) -> StdR
 }
 
 pub fn market_get_from_index(deps: &Deps, index: u32) -> StdResult<(Vec<u8>, Market)> {
-    let asset_reference_vec =
-        match MARKET_REFERENCES_BY_INDEX.load(deps.storage, U32Key::new(index)) {
-            Ok(asset_reference_vec) => asset_reference_vec,
-            Err(_) => {
-                return Err(StdError::generic_err(format!(
-                    "no market reference exists with index: {}",
-                    index
-                )))
-            }
-        };
+    let asset_reference_vec = match MARKET_REFERENCES_BY_INDEX.load(deps.storage, index) {
+        Ok(asset_reference_vec) => asset_reference_vec,
+        Err(_) => {
+            return Err(StdError::generic_err(format!(
+                "no market reference exists with index: {}",
+                index
+            )))
+        }
+    };
 
     match MARKETS.load(deps.storage, asset_reference_vec.as_slice()) {
         Ok(asset_market) => Ok((asset_reference_vec, asset_market)),
@@ -2357,10 +2343,9 @@ mod tests {
     use super::*;
 
     use cosmwasm_std::testing::{MockApi, MockStorage, MOCK_CONTRACT_ADDR};
-    use cosmwasm_std::{attr, coin, from_binary, BankMsg, OwnedDeps, SubMsg};
+    use cosmwasm_std::{attr, coin, coins, from_binary, BankMsg, OwnedDeps, SubMsg};
 
-    use mars_core::tax::deduct_tax;
-    use mars_core::testing::{
+    use mars_outpost::testing::{
         mock_dependencies, mock_env, mock_env_at_block_time, mock_info, MarsMockQuerier,
         MockEnvParams,
     };
@@ -2801,9 +2786,7 @@ mod tests {
             assert_eq!(AssetType::Native, market.asset_type);
 
             // should store reference in market index
-            let market_reference = MARKET_REFERENCES_BY_INDEX
-                .load(&deps.storage, U32Key::new(0))
-                .unwrap();
+            let market_reference = MARKET_REFERENCES_BY_INDEX.load(&deps.storage, 0).unwrap();
             assert_eq!(b"someasset", market_reference.as_slice());
 
             // Should have market count of 1
@@ -2919,9 +2902,7 @@ mod tests {
             assert_eq!(AssetType::Cw20, market.asset_type);
 
             // should store reference in market index
-            let market_reference = MARKET_REFERENCES_BY_INDEX
-                .load(&deps.storage, U32Key::new(1))
-                .unwrap();
+            let market_reference = MARKET_REFERENCES_BY_INDEX.load(&deps.storage, 1).unwrap();
             assert_eq!(cw20_addr.as_bytes(), market_reference.as_slice());
 
             // should have an asset_type of cw20
@@ -3364,9 +3345,7 @@ mod tests {
                 new_market.interest_rate_model
             );
 
-            let new_market_reference = MARKET_REFERENCES_BY_INDEX
-                .load(&deps.storage, U32Key::new(0))
-                .unwrap();
+            let new_market_reference = MARKET_REFERENCES_BY_INDEX.load(&deps.storage, 0).unwrap();
             assert_eq!(b"someasset", new_market_reference.as_slice());
 
             let new_money_market = GLOBAL_STATE.load(&deps.storage).unwrap();
@@ -3730,7 +3709,7 @@ mod tests {
         let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            StdError::not_found("mars_core::red_bank::Market").into()
+            StdError::not_found("mars_outpost::red_bank::Market").into()
         );
     }
 
@@ -3953,7 +3932,7 @@ mod tests {
         let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            StdError::not_found("mars_core::red_bank::Market").into()
+            StdError::not_found("mars_outpost::red_bank::Market").into()
         );
     }
 
@@ -3970,7 +3949,7 @@ mod tests {
         let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            StdError::not_found("mars_core::red_bank::Market").into()
+            StdError::not_found("mars_outpost::red_bank::Market").into()
         );
     }
 
@@ -4104,12 +4083,6 @@ mod tests {
         let initial_available_liquidity = Uint128::from(12000000u128);
         let mut deps = th_setup(&[coin(initial_available_liquidity.into(), "somecoin")]);
 
-        // Set tax data
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("somecoin"), Uint128::new(100u128))],
-        );
-
         let initial_liquidity_index = Decimal::from_ratio(15u128, 10u128);
         let mock_market = Market {
             ma_token_address: Addr::unchecked("matoken"),
@@ -4217,14 +4190,7 @@ mod tests {
                 })),
                 SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                     to_address: withdrawer_addr.to_string(),
-                    amount: vec![deduct_tax(
-                        deps.as_ref(),
-                        Coin {
-                            denom: String::from("somecoin"),
-                            amount: withdraw_amount.into(),
-                        }
-                    )
-                    .unwrap()],
+                    amount: coins(withdraw_amount.u128(), "somecoin")
                 })),
             ]
         );
@@ -4595,12 +4561,6 @@ mod tests {
         let initial_available_liquidity = Uint128::from(10000000u128);
         let mut deps = th_setup(&[coin(initial_available_liquidity.into(), "token3")]);
 
-        // Set tax data
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("token3"), Uint128::new(100u128))],
-        );
-
         let withdrawer_addr = Addr::unchecked("withdrawer");
 
         // Initialize markets
@@ -4727,12 +4687,12 @@ mod tests {
                 * token_2_exchange_rate;
 
             // How much to withdraw in uusd to have health factor equal to one
-            let how_much_to_withdraw_in_uusd = Decimal::divide_uint128_by_decimal(
+            let how_much_to_withdraw_in_uusd = math::divide_uint128_by_decimal(
                 weighted_liquidation_threshold_in_uusd - total_collateralized_debt_in_uusd,
                 market_3_initial.liquidation_threshold,
             )
             .unwrap();
-            Decimal::divide_uint128_by_decimal(how_much_to_withdraw_in_uusd, token_3_exchange_rate)
+            math::divide_uint128_by_decimal(how_much_to_withdraw_in_uusd, token_3_exchange_rate)
                 .unwrap()
         };
 
@@ -4788,14 +4748,7 @@ mod tests {
                     })),
                     SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                         to_address: withdrawer_addr.to_string(),
-                        amount: vec![deduct_tax(
-                            deps.as_ref(),
-                            Coin {
-                                denom: String::from("token3"),
-                                amount: withdraw_amount,
-                            }
-                        )
-                        .unwrap()],
+                        amount: coins(withdraw_amount.u128(), "token3")
                     })),
                 ]
             );
@@ -4807,12 +4760,6 @@ mod tests {
         // Withdraw native token
         let initial_available_liquidity = Uint128::from(12000000u128);
         let mut deps = th_setup(&[coin(initial_available_liquidity.into(), "somecoin")]);
-
-        // Set tax data
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("somecoin"), Uint128::new(100u128))],
-        );
 
         let initial_liquidity_index = Decimal::from_ratio(15u128, 10u128);
         let mock_market = Market {
@@ -4920,14 +4867,7 @@ mod tests {
                 })),
                 SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                     to_address: withdrawer_addr.to_string(),
-                    amount: vec![deduct_tax(
-                        deps.as_ref(),
-                        Coin {
-                            denom: String::from("somecoin"),
-                            amount: withdrawer_balance.into(),
-                        }
-                    )
-                    .unwrap()],
+                    amount: coins(withdrawer_balance.u128(), "somecoin")
                 })),
             ]
         );
@@ -4969,12 +4909,6 @@ mod tests {
         // Withdraw native token
         let initial_available_liquidity = Uint128::from(12000000u128);
         let mut deps = th_setup(&[coin(initial_available_liquidity.into(), "somecoin")]);
-
-        // Set tax data
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("somecoin"), Uint128::new(100u128))],
-        );
 
         deps.querier.set_cw20_balances(
             Addr::unchecked("matoken"),
@@ -5047,11 +4981,6 @@ mod tests {
             .set_oracle_price(b"depositedcoin".to_vec(), Decimal::one());
         deps.querier
             .set_oracle_price(b"borrowedcoincw20".to_vec(), Decimal::one());
-
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("borrowedcoinnative"), Uint128::new(100u128))],
-        );
 
         let mock_market_1 = Market {
             ma_token_address: Addr::unchecked("matoken1"),
@@ -5311,14 +5240,7 @@ mod tests {
             res.messages,
             vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                 to_address: "borrower".to_string(),
-                amount: vec![deduct_tax(
-                    deps.as_ref(),
-                    Coin {
-                        denom: String::from("borrowedcoinnative"),
-                        amount: borrow_amount.into(),
-                    }
-                )
-                .unwrap()],
+                amount: coins(borrow_amount.u128(), "borrowedcoinnative")
             }))]
         );
         assert_eq!(
@@ -5702,11 +5624,6 @@ mod tests {
         deps.querier
             .set_oracle_price(b"borrowedcoinnative".to_vec(), Decimal::one());
 
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("borrowedcoinnative"), Uint128::new(100u128))],
-        );
-
         let mock_market_1 = Market {
             ma_token_address: Addr::unchecked("matoken1"),
             liquidity_index: Decimal::one(),
@@ -5864,12 +5781,6 @@ mod tests {
         };
         let market = th_init_market(deps.as_mut(), b"uusd", &mock_market);
 
-        // Set tax data for uusd
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("uusd"), Uint128::new(100u128))],
-        );
-
         // Set user as having the market_collateral deposited
         let deposit_amount_scaled = Uint128::new(110_000) * SCALING_FACTOR;
         let mut user = User::default();
@@ -5972,12 +5883,6 @@ mod tests {
         };
         let market = th_init_market(deps.as_mut(), b"uusd", &mock_market);
 
-        // Set tax data for uusd
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("uusd"), Uint128::new(100u128))],
-        );
-
         // User should have amount of collateral more than initial liquidity in order to borrow full liquidity
         let deposit_amount = initial_liquidity + 1000u128;
         let mut user = User::default();
@@ -6064,12 +5969,6 @@ mod tests {
             coin(available_liquidity_3.into(), "uusd"),
         ]);
 
-        // Set tax data
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("depositedcoin2"), Uint128::new(100u128))],
-        );
-
         let cw20_contract_addr = Addr::unchecked("depositedcoin1");
         deps.querier.set_cw20_balances(
             cw20_contract_addr.clone(),
@@ -6085,10 +5984,6 @@ mod tests {
         deps.querier
             .set_oracle_price(b"depositedcoin2".to_vec(), exchange_rate_2);
         // NOTE: uusd price (asset3) should be set to 1 by the oracle helper
-
-        let exchange_rates = &[(String::from("depositedcoin2"), exchange_rate_2)];
-        deps.querier
-            .set_native_exchange_rates(String::from("uusd"), &exchange_rates[..]);
 
         let mock_market_1 = Market {
             ma_token_address: Addr::unchecked("matoken1"),
@@ -6184,12 +6079,10 @@ mod tests {
                 .unwrap()
                 * exchange_rate_3);
         let exceeding_borrow_amount =
-            Decimal::divide_uint128_by_decimal(max_borrow_allowed_in_uusd, exchange_rate_2)
-                .unwrap()
+            math::divide_uint128_by_decimal(max_borrow_allowed_in_uusd, exchange_rate_2).unwrap()
                 + Uint128::from(100_u64);
         let permissible_borrow_amount =
-            Decimal::divide_uint128_by_decimal(max_borrow_allowed_in_uusd, exchange_rate_2)
-                .unwrap()
+            math::divide_uint128_by_decimal(max_borrow_allowed_in_uusd, exchange_rate_2).unwrap()
                 - Uint128::from(100_u64);
 
         // borrow above the allowed amount given current collateral, should fail
@@ -6302,12 +6195,6 @@ mod tests {
         };
         let market = th_init_market(deps.as_mut(), b"uusd", &mock_market);
 
-        // Set tax data for uusd
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("uusd"), Uint128::new(100u128))],
-        );
-
         // Set user as having the market_collateral deposited
         let deposit_amount_scaled = Uint128::new(100_000) * SCALING_FACTOR;
         let mut user = User::default();
@@ -6366,14 +6253,7 @@ mod tests {
             res.messages,
             vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                 to_address: another_user_addr.to_string(),
-                amount: vec![deduct_tax(
-                    deps.as_ref(),
-                    Coin {
-                        denom: String::from("uusd"),
-                        amount: borrow_amount,
-                    }
-                )
-                .unwrap()],
+                amount: coins(borrow_amount.u128(), "uusd")
             }))]
         );
         assert_eq!(
@@ -6398,15 +6278,6 @@ mod tests {
             coin(available_liquidity_collateral.into(), "collateral"),
             coin(available_liquidity_native_debt.into(), "native_debt"),
         ]);
-
-        // Set tax data
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[
-                (String::from("collateral"), Uint128::new(100u128)),
-                (String::from("native_debt"), Uint128::new(120u128)),
-            ],
-        );
 
         let cw20_debt_contract_addr = Addr::unchecked("cw20_debt");
         let user_address = Addr::unchecked("user");
@@ -6793,7 +6664,7 @@ mod tests {
                 .load(&deps.storage, cw20_debt_contract_addr.as_bytes())
                 .unwrap();
 
-            let expected_liquidated_collateral_amount = Decimal::divide_uint128_by_decimal(
+            let expected_liquidated_collateral_amount = math::divide_uint128_by_decimal(
                 first_debt_to_repay
                     * cw20_debt_price
                     * (Decimal::one() + collateral_liquidation_bonus),
@@ -6814,7 +6685,7 @@ mod tests {
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: collateral_market_ma_token_addr.to_string(),
                         msg: to_binary(
-                            &mars_core::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
+                            &mars_outpost::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
                                 sender: user_address.to_string(),
                                 recipient: liquidator_address.to_string(),
                                 amount: expected_liquidated_collateral_amount_scaled.into(),
@@ -6840,7 +6711,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 res.attributes,
                 vec![
                     attr("action", "liquidate"),
@@ -6953,7 +6824,7 @@ mod tests {
                 },
             );
 
-            let expected_liquidated_collateral_amount = Decimal::divide_uint128_by_decimal(
+            let expected_liquidated_collateral_amount = math::divide_uint128_by_decimal(
                 expected_less_debt
                     * cw20_debt_price
                     * (Decimal::one() + collateral_liquidation_bonus),
@@ -6987,7 +6858,7 @@ mod tests {
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: collateral_market_ma_token_addr.to_string(),
-                        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+                        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
                             user: user_address.to_string(),
                             amount: expected_liquidated_collateral_amount_scaled.into(),
                         })
@@ -6996,14 +6867,7 @@ mod tests {
                     })),
                     SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                         to_address: liquidator_address.to_string(),
-                        amount: vec![deduct_tax(
-                            deps.as_ref(),
-                            Coin {
-                                denom: String::from("collateral"),
-                                amount: expected_liquidated_collateral_amount,
-                            }
-                        )
-                        .unwrap()],
+                        amount: coins(expected_liquidated_collateral_amount.u128(), "collateral")
                     })),
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: collateral_market_ma_token_addr.to_string(),
@@ -7045,7 +6909,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 vec![
                     attr("action", "liquidate"),
                     attr("collateral_asset", "collateral"),
@@ -7160,8 +7024,8 @@ mod tests {
             .unwrap();
 
             // Since debt is being over_repayed, we expect to liquidate total collateral
-            let expected_less_debt = Decimal::divide_uint128_by_decimal(
-                Decimal::divide_uint128_by_decimal(
+            let expected_less_debt = math::divide_uint128_by_decimal(
+                math::divide_uint128_by_decimal(
                     collateral_price * user_collateral_balance,
                     cw20_debt_price,
                 )
@@ -7212,7 +7076,7 @@ mod tests {
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: collateral_market_ma_token_addr.to_string(),
-                        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+                        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
                             user: user_address.to_string(),
                             amount: expected_liquidated_collateral_amount_scaled.into(),
                         })
@@ -7221,14 +7085,7 @@ mod tests {
                     })),
                     SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                         to_address: liquidator_address.to_string(),
-                        amount: vec![deduct_tax(
-                            deps.as_ref(),
-                            Coin {
-                                denom: String::from("collateral"),
-                                amount: user_collateral_balance,
-                            }
-                        )
-                        .unwrap()],
+                        amount: coins(user_collateral_balance.u128(), "collateral")
                     })),
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: cw20_debt_contract_addr.to_string(),
@@ -7242,7 +7099,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 vec![
                     attr("action", "liquidate"),
                     attr("collateral_asset", "collateral"),
@@ -7389,8 +7246,8 @@ mod tests {
             .unwrap();
 
             // Since debt is being over_repayed, we expect to liquidate total collateral
-            let expected_less_debt = Decimal::divide_uint128_by_decimal(
-                Decimal::divide_uint128_by_decimal(
+            let expected_less_debt = math::divide_uint128_by_decimal(
+                math::divide_uint128_by_decimal(
                     collateral_price * user_collateral_balance,
                     native_debt_price,
                 )
@@ -7446,7 +7303,7 @@ mod tests {
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: collateral_market_ma_token_addr.to_string(),
-                        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+                        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
                             user: user_address.to_string(),
                             amount: expected_liquidated_collateral_amount_scaled.into(),
                         })
@@ -7455,14 +7312,7 @@ mod tests {
                     })),
                     SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                         to_address: liquidator_address.to_string(),
-                        amount: vec![deduct_tax(
-                            deps.as_ref(),
-                            Coin {
-                                denom: String::from("collateral"),
-                                amount: user_collateral_balance,
-                            }
-                        )
-                        .unwrap()],
+                        amount: coins(user_collateral_balance.u128(), "collateral")
                     })),
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: debt_market_after.ma_token_address.to_string(),
@@ -7480,19 +7330,12 @@ mod tests {
                     })),
                     SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                         to_address: liquidator_address.to_string(),
-                        amount: vec![deduct_tax(
-                            deps.as_ref(),
-                            Coin {
-                                denom: String::from("native_debt"),
-                                amount: expected_refund_amount,
-                            }
-                        )
-                        .unwrap()],
+                        amount: coins(expected_refund_amount.u128(), "native_debt")
                     })),
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 vec![
                     attr("action", "liquidate"),
                     attr("collateral_asset", "collateral"),
@@ -7552,12 +7395,6 @@ mod tests {
         // Setup
         let available_liquidity = Uint128::from(1_000_000_000u128);
         let mut deps = th_setup(&[coin(available_liquidity.into(), "the_asset")]);
-
-        // Set tax data
-        deps.querier.set_native_tax(
-            Decimal::zero(),
-            &[(String::from("the_asset"), Uint128::new(100u128))],
-        );
 
         let user_address = Addr::unchecked("user");
         let liquidator_address = Addr::unchecked("liquidator");
@@ -7689,7 +7526,7 @@ mod tests {
 
             let asset_market_after = MARKETS.load(&deps.storage, b"the_asset").unwrap();
 
-            let expected_liquidated_amount = Decimal::divide_uint128_by_decimal(
+            let expected_liquidated_amount = math::divide_uint128_by_decimal(
                 debt_to_repay * asset_price * (Decimal::one() + asset_liquidation_bonus),
                 asset_price,
             )
@@ -7708,7 +7545,7 @@ mod tests {
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: ma_token_address.to_string(),
                         msg: to_binary(
-                            &mars_core::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
+                            &mars_outpost::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
                                 sender: user_address.to_string(),
                                 recipient: liquidator_address.to_string(),
                                 amount: expected_liquidated_amount_scaled.into(),
@@ -7734,7 +7571,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 res.attributes,
                 vec![
                     attr("action", "liquidate"),
@@ -7834,7 +7671,7 @@ mod tests {
             let res = execute(deps.as_mut(), env.clone(), info, liquidate_msg).unwrap();
 
             let asset_market_after = MARKETS.load(&deps.storage, b"the_asset").unwrap();
-            let expected_liquidated_amount = Decimal::divide_uint128_by_decimal(
+            let expected_liquidated_amount = math::divide_uint128_by_decimal(
                 debt_to_repay * asset_price * (Decimal::one() + asset_liquidation_bonus),
                 asset_price,
             )
@@ -7865,7 +7702,7 @@ mod tests {
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: ma_token_address.to_string(),
-                        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+                        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
                             user: user_address.to_string(),
                             amount: expected_liquidated_amount_scaled.into(),
                         })
@@ -7875,10 +7712,7 @@ mod tests {
                     // NOTE: Tax set to 0 so no tax should be charged
                     SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                         to_address: liquidator_address.to_string(),
-                        amount: vec![Coin {
-                            denom: String::from("the_asset"),
-                            amount: expected_liquidated_amount,
-                        }],
+                        amount: coins(expected_liquidated_amount.u128(), "the_asset")
                     })),
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: ma_token_address.clone().to_string(),
@@ -7897,7 +7731,7 @@ mod tests {
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 res.attributes,
                 vec![
                     attr("action", "liquidate"),
@@ -8001,7 +7835,7 @@ mod tests {
             let res = execute(deps.as_mut(), env.clone(), info, liquidate_msg).unwrap();
 
             let asset_market_after = MARKETS.load(&deps.storage, b"the_asset").unwrap();
-            let expected_liquidated_amount = Decimal::divide_uint128_by_decimal(
+            let expected_liquidated_amount = math::divide_uint128_by_decimal(
                 expected_less_debt * asset_price * (Decimal::one() + asset_liquidation_bonus),
                 asset_price,
             )
@@ -8033,7 +7867,7 @@ mod tests {
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: ma_token_address.to_string(),
                         msg: to_binary(
-                            &mars_core::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
+                            &mars_outpost::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
                                 sender: user_address.to_string(),
                                 recipient: liquidator_address.to_string(),
                                 amount: expected_liquidated_amount_scaled.into(),
@@ -8059,15 +7893,12 @@ mod tests {
                     // NOTE: Tax set to 0 so no tax should be charged
                     SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                         to_address: liquidator_address.to_string(),
-                        amount: vec![Coin {
-                            denom: String::from("the_asset"),
-                            amount: expected_refund_amount,
-                        }],
+                        amount: coins(expected_refund_amount.u128(), "the_asset")
                     })),
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 res.attributes,
                 vec![
                     attr("action", "liquidate"),
@@ -8171,12 +8002,12 @@ mod tests {
             let env = mock_env_at_block_time(block_time);
             let info = cosmwasm_std::testing::mock_info(
                 liquidator_address.as_str(),
-                &[coin(debt_to_repay.into(), "the_asset")],
+                &coins(debt_to_repay.u128(), "the_asset"),
             );
             let res = execute(deps.as_mut(), env.clone(), info, liquidate_msg).unwrap();
 
             let asset_market_after = MARKETS.load(&deps.storage, b"the_asset").unwrap();
-            let expected_liquidated_amount = Decimal::divide_uint128_by_decimal(
+            let expected_liquidated_amount = math::divide_uint128_by_decimal(
                 expected_less_debt * asset_price * (Decimal::one() + asset_liquidation_bonus),
                 asset_price,
             )
@@ -8207,7 +8038,7 @@ mod tests {
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: ma_token_address.to_string(),
-                        msg: to_binary(&mars_core::ma_token::msg::ExecuteMsg::Burn {
+                        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
                             user: user_address.to_string(),
                             amount: expected_liquidated_amount_scaled.into(),
                         })
@@ -8217,10 +8048,7 @@ mod tests {
                     // NOTE: Tax set to 0 so no tax should be charged
                     SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                         to_address: liquidator_address.to_string(),
-                        amount: vec![Coin {
-                            denom: String::from("the_asset"),
-                            amount: expected_liquidated_amount,
-                        }],
+                        amount: coins(expected_liquidated_amount.u128(), "the_asset")
                     })),
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: ma_token_address.clone().to_string(),
@@ -8239,15 +8067,12 @@ mod tests {
                     // NOTE: Tax set to 0 so no tax should be charged
                     SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                         to_address: liquidator_address.to_string(),
-                        amount: vec![Coin {
-                            denom: String::from("the_asset"),
-                            amount: expected_refund_amount,
-                        }],
+                        amount: coins(expected_refund_amount.u128(), "the_asset")
                     })),
                 ]
             );
 
-            mars_core::testing::assert_eq_vec(
+            mars_outpost::testing::assert_eq_vec(
                 res.attributes,
                 vec![
                     attr("action", "liquidate"),
@@ -8307,12 +8132,6 @@ mod tests {
     fn test_underlying_asset_balance_check_when_transfer_to_liquidator() {
         let native_collateral_liquidity = 4510000u128;
         let mut deps = th_setup(&[coin(native_collateral_liquidity, "native_collateral")]);
-
-        // Set tax data
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("native_collateral"), Uint128::new(100u128))],
-        );
 
         let cw20_collateral_liquidity = 6510000u128;
         let cw20_collateral_contract_addr = Addr::unchecked("cw20_collateral");
@@ -8820,12 +8639,6 @@ mod tests {
         let available_liquidity = Uint128::from(2000000000u128);
         let mut deps = th_setup(&[coin(available_liquidity.into(), "somecoin")]);
 
-        // Set tax data
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("somecoin"), Uint128::new(100u128))],
-        );
-
         let mock_market = Market {
             ma_token_address: Addr::unchecked("matoken"),
             borrow_index: Decimal::from_ratio(12u128, 10u128),
@@ -8944,14 +8757,7 @@ mod tests {
             res.messages,
             vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                 to_address: borrower_addr.to_string(),
-                amount: vec![deduct_tax(
-                    deps.as_ref(),
-                    Coin {
-                        denom: String::from("somecoin"),
-                        amount: initial_borrow_amount,
-                    }
-                )
-                .unwrap()],
+                amount: coins(initial_borrow_amount.u128(), "somecoin")
             }))]
         );
 
@@ -9217,7 +9023,7 @@ mod tests {
                 * token_2_exchange_rate;
             let weighted_liquidation_threshold_in_uusd =
                 token_1_weighted_lt_in_uusd + token_2_weighted_lt_in_uusd;
-            let max_debt_for_valid_hf = Decimal::divide_uint128_by_decimal(
+            let max_debt_for_valid_hf = math::divide_uint128_by_decimal(
                 weighted_liquidation_threshold_in_uusd,
                 token_3_exchange_rate,
             )
@@ -9612,7 +9418,7 @@ mod tests {
         MARKETS.save(deps.storage, key, &new_market).unwrap();
 
         MARKET_REFERENCES_BY_INDEX
-            .save(deps.storage, U32Key::new(index), &key.to_vec())
+            .save(deps.storage, index, &key.to_vec())
             .unwrap();
 
         MARKET_REFERENCES_BY_MA_TOKEN
