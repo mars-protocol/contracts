@@ -1,5 +1,5 @@
 use cosmwasm_std::{OverflowError, StdError};
-use mars_core::error::MarsError;
+use mars_outpost::error::MarsError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -19,11 +19,8 @@ pub enum ContractError {
     #[error("Native price not found")]
     NativePriceNotFound {},
 
-    #[error("No TWAP snapshot within tolerance")]
-    NoSnapshotWithinTolerance {},
-
-    #[error("Invalid pair")]
-    InvalidPair {},
+    #[error("Invalid pool id")]
+    InvalidPoolId {},
 }
 
 impl From<ContractError> for StdError {

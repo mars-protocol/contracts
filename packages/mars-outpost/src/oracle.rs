@@ -10,12 +10,28 @@ use cosmwasm_std::{Addr, Api, Decimal, StdResult};
 pub enum PriceSource {
     /// Returns a fixed value;
     Fixed { price: Decimal },
+
+    /// Osmosis spot price quoted in OSMO
+    ///
+    /// NOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO
+    OsmosisSpot {
+        /// Pool id
+        pool_id: u64,
+    },
+
+    /// Osmosis liquidity token
+    OsmosisLiquidityToken {
+        /// Pool id
+        pool_id: u64,
+    },
 }
 
 impl fmt::Display for PriceSource {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let label = match self {
             PriceSource::Fixed { .. } => "fixed",
+            PriceSource::OsmosisSpot { .. } => "osmosis_spot",
+            PriceSource::OsmosisLiquidityToken { .. } => "osmosis_liquidity_token",
         };
         write!(f, "{}", label)
     }
@@ -28,6 +44,12 @@ impl PriceSourceUnchecked {
     pub fn to_checked(&self, _api: &dyn Api) -> StdResult<PriceSourceChecked> {
         Ok(match self {
             PriceSourceUnchecked::Fixed { price } => PriceSourceChecked::Fixed { price: *price },
+            PriceSourceUnchecked::OsmosisSpot { pool_id } => {
+                PriceSourceChecked::OsmosisSpot { pool_id: *pool_id }
+            }
+            PriceSourceUnchecked::OsmosisLiquidityToken { pool_id } => {
+                PriceSourceChecked::OsmosisLiquidityToken { pool_id: *pool_id }
+            }
         })
     }
 }
@@ -97,8 +119,9 @@ pub mod helpers {
         asset_reference: Vec<u8>,
         asset_type: AssetType,
     ) -> StdResult<Decimal> {
-        // For UST, we skip the query and just return 1 to save gas
-        if asset_type == AssetType::Native && asset_label == "uusd" {
+        // For OSMO, we skip the query and just return 1 to save gas
+        if asset_type == AssetType::Native && asset_label == "uosmo" {
+            // FIXME: generalize for other assets
             Ok(Decimal::one())
         } else {
             querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
