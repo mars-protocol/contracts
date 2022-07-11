@@ -15,16 +15,66 @@ pub enum MarsContract {
     RedBank,
 }
 
-impl fmt::Display for MarsContract {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            MarsContract::Incentives => "incentives",
-            MarsContract::Oracle => "oracle",
-            MarsContract::ProtocolAdmin => "protocol_admin",
-            MarsContract::ProtocolRewardsCollector => "protocol_rewards_collector",
-            MarsContract::RedBank => "red_bank",
-        };
-        write!(f, "{}", s)
+pub mod msg {
+    use schemars::JsonSchema;
+    use serde::{Deserialize, Serialize};
+
+    use super::MarsContract;
+
+    /// Essentially, mars-address-provider is a required init param for all other contracts, so it
+    /// needs to be initialised first (Only owner can be set on initialization). So the deployment
+    /// looks like this:
+    ///
+    /// 1. Init the address provider
+    /// 2. Init all other contracts, passing in the address provider address (not ALL contracts
+    ///    need this but many do)
+    /// 3. Update the address provider, with an update config call to contain all the
+    ///    other contract addresses from step 2, this is why we need it to be owned by an EOA
+    ///    (externally owned account) - so we can do this update as part of the deployment
+    /// 4. Update the owner of the address provider contract at the end of deployment to be
+    ///    either a. the multisig or b. the gov/council contract
+
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    pub struct InstantiateMsg {
+        pub owner: String,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    #[serde(rename_all = "snake_case")]
+    pub enum ExecuteMsg {
+        /// Update address provider config
+        UpdateConfig { config: ConfigParams },
+    }
+
+    #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, JsonSchema)]
+    pub struct ConfigParams {
+        /// Contract owner (has special permissions to update parameters)
+        pub owner: Option<String>,
+        /// Incentives contract handles incentives to depositors on the red bank
+        pub incentives_address: Option<String>,
+        /// Mars token cw20 contract
+        pub mars_token_address: Option<String>,
+        /// Oracle contract provides prices for assets used in the protocol
+        pub oracle_address: Option<String>,
+        /// Protocol admin is the Cosmos level contract admin that has permissions to migrate
+        /// contracts
+        pub protocol_admin_address: Option<String>,
+        /// Protocol Rewards Collector receives and distributes protocl rewards
+        pub protocol_rewards_collector_address: Option<String>,
+        /// Red Bank contract handles user's depositing/borrowing and holds the protocol's
+        /// liquidity
+        pub red_bank_address: Option<String>,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    #[serde(rename_all = "snake_case")]
+    pub enum QueryMsg {
+        /// Get config
+        Config {},
+        /// Get a single address
+        Address { contract: MarsContract },
+        /// Get a list of addresses
+        Addresses { contracts: Vec<MarsContract> },
     }
 }
 
