@@ -1,10 +1,10 @@
-use account_nft::contract::{execute, instantiate, query};
 use anyhow::Result as AnyResult;
 use cosmwasm_std::Addr;
 use cw721_base::InstantiateMsg;
 use cw_multi_test::{AppResponse, BasicApp, ContractWrapper, Executor};
 
-use account_nft::execute_msg::ExecuteMsg as ExtendedExecuteMsg;
+use account_nft::contract::{execute, instantiate, query};
+use account_nft::msg::ExecuteMsg as ExtendedExecuteMsg;
 
 pub fn instantiate_mock_nft_contract(app: &mut BasicApp, owner: &Addr) -> Addr {
     let contract = Box::new(ContractWrapper::new(execute, instantiate, query));

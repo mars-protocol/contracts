@@ -1,4 +1,4 @@
-use account_nft::execute_msg::ExecuteMsg as NftExecuteMsg;
+use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, DepsMut, MessageInfo, Response, StdError, StdResult, WasmMsg,
 };

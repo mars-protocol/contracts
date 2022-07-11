@@ -8,9 +8,8 @@ use cosmwasm_std::{
 use cw721_base::{ContractError, Cw721Contract, InstantiateMsg};
 
 use crate::execute::{accept_ownership, mint, propose_new_owner};
-use crate::execute_msg::ExecuteMsg;
+use crate::msg::{ExecuteMsg, QueryMsg};
 use crate::query::query_proposed_new_owner;
-use crate::query_msg::QueryMsg;
 
 // Extending CW721 base contract
 pub type Parent<'a> = Cw721Contract<'a, Empty, Empty>;

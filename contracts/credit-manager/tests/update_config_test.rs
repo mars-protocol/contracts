@@ -1,4 +1,4 @@
-use account_nft::execute_msg::ExecuteMsg as NftExecuteMsg;
+use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use cosmwasm_std::Addr;
 use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, Executor};

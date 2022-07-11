@@ -5,7 +5,7 @@ use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg;
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 
-use account_nft::execute_msg::ExecuteMsg as ExtendedExecuteMsg;
+use account_nft::msg::ExecuteMsg as ExtendedExecuteMsg;
 
 use crate::helpers::{instantiate_mock_nft_contract, mint_action};
 

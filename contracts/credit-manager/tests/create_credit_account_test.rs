@@ -4,7 +4,7 @@ use cw721::OwnerOfResponse;
 use cw721_base::{InstantiateMsg as NftInstantiateMsg, QueryMsg as NftQueryMsg};
 use cw_multi_test::{App, AppResponse, Executor};
 
-use account_nft::execute_msg::ExecuteMsg as NftExecuteMsg;
+use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use rover::ExecuteMsg::{CreateCreditAccount, UpdateConfig};
 use rover::{ConfigResponse, InstantiateMsg, QueryMsg};
 

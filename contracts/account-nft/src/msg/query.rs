@@ -1,6 +1,6 @@
-use cosmwasm_std::StdError;
 use std::convert::TryInto;
 
+use cosmwasm_std::StdError;
 use cw721_base::QueryMsg as ParentQueryMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
