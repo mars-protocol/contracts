@@ -17,8 +17,8 @@ use cw20_base::enumerable::{query_all_accounts, query_all_allowances};
 use cw20_base::state::{BALANCES, TOKEN_INFO};
 use cw20_base::ContractError;
 
-use mars_core::cw20_core::instantiate_token_info_and_marketing;
-use mars_core::red_bank;
+use mars_outpost::cw20_core::instantiate_token_info_and_marketing;
+use mars_outpost::red_bank;
 
 use crate::allowances::{execute_send_from, execute_transfer_from};
 use crate::core;
@@ -391,7 +391,7 @@ pub fn query_underlying_asset_balance(
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, mock_dependencies_with_balance};
     use cosmwasm_std::{coins, Addr, CosmosMsg, StdError, SubMsg, WasmMsg};
 
     use cw20::{
@@ -408,7 +408,7 @@ mod tests {
 
         #[test]
         fn basic() {
-            let mut deps = mock_dependencies(&[]);
+            let mut deps = mock_dependencies();
             let amount = Uint128::from(11223344u128);
             let hook_msg = Binary::from(r#"{"some": 123}"#.as_bytes());
             let instantiate_msg = InstantiateMsg {
@@ -457,7 +457,7 @@ mod tests {
 
         #[test]
         fn mintable() {
-            let mut deps = mock_dependencies(&[]);
+            let mut deps = mock_dependencies();
             let amount = Uint128::new(11223344);
             let minter = String::from("asmodat");
             let limit = Uint128::new(511223344);
@@ -507,7 +507,7 @@ mod tests {
 
         #[test]
         fn mintable_over_cap() {
-            let mut deps = mock_dependencies(&[]);
+            let mut deps = mock_dependencies();
             let amount = Uint128::new(11223344);
             let minter = String::from("asmodat");
             let limit = Uint128::new(11223300);
@@ -542,7 +542,7 @@ mod tests {
 
             #[test]
             fn basic() {
-                let mut deps = mock_dependencies(&[]);
+                let mut deps = mock_dependencies();
                 let instantiate_msg = InstantiateMsg {
                     name: "Cash Token".to_string(),
                     symbol: "CASH".to_string(),
@@ -585,7 +585,7 @@ mod tests {
 
             #[test]
             fn invalid_marketing() {
-                let mut deps = mock_dependencies(&[]);
+                let mut deps = mock_dependencies();
                 let instantiate_msg = InstantiateMsg {
                     name: "Cash Token".to_string(),
                     symbol: "CASH".to_string(),
@@ -619,7 +619,7 @@ mod tests {
 
     #[test]
     fn can_mint_by_minter() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
 
         let genesis = String::from("genesis");
         let amount = Uint128::new(11223344);
@@ -643,7 +643,7 @@ mod tests {
             res.messages,
             vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: String::from("incentives"),
-                msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+                msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
                     user_address: Addr::unchecked(&winner),
                     user_balance_before: Uint128::zero(),
                     total_supply_before: amount,
@@ -683,7 +683,7 @@ mod tests {
 
     #[test]
     fn others_cannot_mint() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         do_instantiate_with_minter(
             deps.as_mut(),
             &String::from("genesis"),
@@ -704,7 +704,7 @@ mod tests {
 
     #[test]
     fn no_one_mints_if_minter_unset() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         do_instantiate(deps.as_mut(), &String::from("genesis"), Uint128::new(1234));
 
         let msg = ExecuteMsg::Mint {
@@ -719,7 +719,7 @@ mod tests {
 
     #[test]
     fn instantiate_multiple_accounts() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         let amount1 = Uint128::from(11223344u128);
         let addr1 = String::from("addr0001");
         let amount2 = Uint128::from(7890987u128);
@@ -764,7 +764,7 @@ mod tests {
 
     #[test]
     fn transfer() {
-        let mut deps = mock_dependencies(&coins(2, "token"));
+        let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
         let addr1 = String::from("addr0001");
         let addr2 = String::from("addr0002");
         let amount1 = Uint128::from(12340000u128);
@@ -843,7 +843,7 @@ mod tests {
                 })),
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("incentives"),
-                    msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
                         user_address: Addr::unchecked(&addr1),
                         user_balance_before: amount1,
                         total_supply_before: amount1,
@@ -853,7 +853,7 @@ mod tests {
                 })),
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("incentives"),
-                    msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
                         user_address: Addr::unchecked(&addr2),
                         user_balance_before: Uint128::zero(),
                         total_supply_before: amount1,
@@ -875,7 +875,7 @@ mod tests {
 
     #[test]
     fn transfer_on_liquidation() {
-        let mut deps = mock_dependencies(&coins(2, "token"));
+        let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
         let addr1 = String::from("addr0001");
         let addr2 = String::from("addr0002");
         let amount1 = Uint128::from(12340000u128);
@@ -951,7 +951,7 @@ mod tests {
                 vec![
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: String::from("incentives"),
-                        msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+                        msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
                             user_address: Addr::unchecked(&addr1),
                             user_balance_before: amount1,
                             total_supply_before: amount1,
@@ -961,7 +961,7 @@ mod tests {
                     })),
                     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: String::from("incentives"),
-                        msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+                        msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
                             user_address: Addr::unchecked(&addr2),
                             user_balance_before: Uint128::zero(),
                             total_supply_before: amount1,
@@ -984,7 +984,7 @@ mod tests {
 
     #[test]
     fn burn() {
-        let mut deps = mock_dependencies(&coins(2, "token"));
+        let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
         let addr1 = String::from("addr0001");
         let amount1 = Uint128::from(12340000u128);
         let burn = Uint128::from(76543u128);
@@ -1046,7 +1046,7 @@ mod tests {
             res.messages,
             vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: String::from("incentives"),
-                msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+                msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
                     user_address: Addr::unchecked(&addr1),
                     user_balance_before: amount1,
                     total_supply_before: amount1,
@@ -1066,7 +1066,7 @@ mod tests {
 
     #[test]
     fn send() {
-        let mut deps = mock_dependencies(&coins(2, "token"));
+        let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
         let addr1 = String::from("addr0001");
         let contract = String::from("addr0002");
         let amount1 = Uint128::from(12340000u128);
@@ -1124,7 +1124,7 @@ mod tests {
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("red_bank"),
                     msg: to_binary(
-                        &mars_core::red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
+                        &mars_outpost::red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
                             sender_address: Addr::unchecked(&addr1),
                             recipient_address: Addr::unchecked(&contract),
                             sender_previous_balance: amount1,
@@ -1138,7 +1138,7 @@ mod tests {
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("incentives"),
 
-                    msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
                         user_address: Addr::unchecked(&addr1),
                         user_balance_before: amount1,
                         total_supply_before: amount1,
@@ -1148,7 +1148,7 @@ mod tests {
                 })),
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("incentives"),
-                    msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
                         user_address: Addr::unchecked(&contract),
                         user_balance_before: Uint128::zero(),
                         total_supply_before: amount1,

@@ -99,7 +99,7 @@ pub fn finalize_transfer_msg(
     Ok(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: red_bank_address.into(),
         msg: to_binary(
-            &mars_core::red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
+            &mars_outpost::red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
                 sender_address,
                 recipient_address,
                 sender_previous_balance,
@@ -119,7 +119,7 @@ pub fn balance_change_msg(
 ) -> StdResult<CosmosMsg> {
     Ok(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: incentives_address.into(),
-        msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+        msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
             user_address,
             user_balance_before,
             total_supply_before,

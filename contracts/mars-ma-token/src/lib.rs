@@ -6,4 +6,4 @@ pub mod state;
 #[cfg(test)]
 mod test_helpers;
 
-pub use mars_core::ma_token::*;
+pub use mars_outpost::ma_token::*;
