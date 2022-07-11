@@ -7,13 +7,13 @@ use cosmwasm_std::{
 
 use astroport::asset::AssetInfo;
 
-use mars_core::asset::{build_send_asset_with_tax_deduction_msg, get_asset_balance, Asset};
-use mars_core::error::MarsError;
-use mars_core::helpers::{option_string_to_addr, zero_address};
-use mars_core::swapping::execute_swap;
+use mars_outpost::asset::{build_send_asset_msg, get_asset_balance, Asset};
+use mars_outpost::error::MarsError;
+use mars_outpost::helpers::{option_string_to_addr, zero_address};
+use mars_outpost::swapping::execute_swap;
 
-use mars_core::address_provider::{self, MarsContract};
-use mars_core::red_bank;
+use mars_outpost::address_provider::{self, MarsContract};
+use mars_outpost::red_bank;
 
 use crate::error::ContractError;
 use crate::msg::{CreateOrUpdateConfig, ExecuteMsg, InstantiateMsg, QueryMsg};
@@ -278,8 +278,7 @@ pub fn execute_distribute_protocol_rewards(
     // only build and add send message if fee is non-zero
     let mut messages = vec![];
     if !safety_fund_amount.is_zero() {
-        let safety_fund_msg = build_send_asset_with_tax_deduction_msg(
-            deps.as_ref(),
+        let safety_fund_msg = build_send_asset_msg(
             safety_fund_address,
             asset_label.clone(),
             asset_type,
@@ -288,8 +287,7 @@ pub fn execute_distribute_protocol_rewards(
         messages.push(safety_fund_msg);
     }
     if !treasury_amount.is_zero() {
-        let treasury_msg = build_send_asset_with_tax_deduction_msg(
-            deps.as_ref(),
+        let treasury_msg = build_send_asset_msg(
             treasury_address,
             asset_label.clone(),
             asset_type,
@@ -298,8 +296,7 @@ pub fn execute_distribute_protocol_rewards(
         messages.push(treasury_msg);
     }
     if !staking_amount.is_zero() {
-        let staking_msg = build_send_asset_with_tax_deduction_msg(
-            deps.as_ref(),
+        let staking_msg = build_send_asset_msg(
             staking_address,
             asset_label.clone(),
             asset_type,
@@ -409,8 +406,8 @@ mod tests {
 
     use cw20::Cw20ExecuteMsg;
 
-    use mars_core::math::decimal::Decimal;
-    use mars_core::{
+    use mars_outpost::math::decimal::Decimal;
+    use mars_outpost::{
         tax::deduct_tax,
         testing::{mock_dependencies, mock_info, MarsMockQuerier},
     };
@@ -751,7 +748,7 @@ mod tests {
             .unwrap_err();
         assert_eq!(
             err,
-            StdError::not_found("mars_core::protocol_rewards_collector::AssetConfig")
+            StdError::not_found("mars_outpost::protocol_rewards_collector::AssetConfig")
         );
 
         // querying unknown assets returns that they are not enabled
@@ -807,12 +804,6 @@ mod tests {
 
         // initialize contract with balance
         let mut deps = th_setup(&[coin(balance, "somecoin")]);
-
-        // Set tax data
-        deps.querier.set_native_tax(
-            Decimal::from_ratio(1u128, 100u128),
-            &[(String::from("somecoin"), Uint128::new(100u128))],
-        );
 
         // call function on an asset that isn't enabled
         let permissible_amount = Uint128::new(1_500_000_000);

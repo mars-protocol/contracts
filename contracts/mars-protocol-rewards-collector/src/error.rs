@@ -2,7 +2,7 @@ use cosmwasm_std::{OverflowError, StdError, Uint128};
 use thiserror::Error;
 
 use crate::ConfigError;
-use mars_core::error::MarsError;
+use mars_outpost::error::MarsError;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
