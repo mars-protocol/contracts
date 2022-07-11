@@ -7,12 +7,8 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     /// Contract owner
     pub owner: Addr,
-    /// Council contract address
-    pub council_address: Addr,
     /// Incentives contract address
     pub incentives_address: Addr,
-    /// Safety fund contract address
-    pub safety_fund_address: Addr,
     /// Mars token address
     pub mars_token_address: Addr,
     /// Oracle address
@@ -23,31 +19,17 @@ pub struct Config {
     pub protocol_rewards_collector_address: Addr,
     /// Red bank contract address
     pub red_bank_address: Addr,
-    /// Staking contract address
-    pub staking_address: Addr,
-    /// Treasury contract address
-    pub treasury_address: Addr,
-    /// Vesting contract address
-    pub vesting_address: Addr,
-    /// xMars token address
-    pub xmars_token_address: Addr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 /// Contracts from mars protocol
 pub enum MarsContract {
-    Council,
     Incentives,
-    SafetyFund,
     MarsToken,
     Oracle,
     ProtocolAdmin,
     ProtocolRewardsCollector,
     RedBank,
-    Staking,
-    Treasury,
-    Vesting,
-    XMarsToken,
 }
 
 pub mod msg {
@@ -56,11 +38,19 @@ pub mod msg {
 
     use super::MarsContract;
 
-    /// Only owner can be set on initialization (the EOA doing all the deployments)
-    /// as all other contracts are supposed to be initialized after this one with its address
-    /// passed as a param.
-    /// After initializing all contracts. An update config call should be done setting council as the
-    /// owner and submiting all the contract addresses
+    /// Essentially, mars-address-provider is a required init param for all other contracts, so it
+    /// needs to be initialised first (Only owner can be set on initialization). So the deployment
+    /// looks like this:
+    ///
+    /// 1. Init the address provider
+    /// 2. Init all other contracts, passing in the address provider address (not ALL contracts 
+    ///    need this but many do)
+    /// 3. Update the address provider, with an update config call to contain all the
+    ///    other contract addresses from step 2, this is why we need it to be owned by an EOA
+    ///    (externally owned account) - so we can do this update as part of the deployment
+    /// 4. Update the owner of the address provider contract at the end of deployment to be
+    ///    either a. the multisig or b. the gov/council contract
+
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
     pub struct InstantiateMsg {
         pub owner: String,
@@ -77,16 +67,11 @@ pub mod msg {
     pub struct ConfigParams {
         /// Contract owner (has special permissions to update parameters)
         pub owner: Option<String>,
-        /// Council contract handles the submission and execution of proposals
-        pub council_address: Option<String>,
         /// Incentives contract handles incentives to depositors on the red bank
         pub incentives_address: Option<String>,
-        /// Safety fund contract accumulates UST to protect the protocol from shortfall
-        /// events
-        pub safety_fund_address: Option<String>,
         /// Mars token cw20 contract
         pub mars_token_address: Option<String>,
-        /// Oracle contract provides prices in uusd for assets used in the protocol
+        /// Oracle contract provides prices for assets used in the protocol
         pub oracle_address: Option<String>,
         /// Protocol admin is the Cosmos level contract admin that has permissions to migrate
         /// contracts
@@ -96,15 +81,6 @@ pub mod msg {
         /// Red Bank contract handles user's depositing/borrowing and holds the protocol's
         /// liquidity
         pub red_bank_address: Option<String>,
-        /// Staking address handles Mars staking and xMars minting
-        pub staking_address: Option<String>,
-        /// Treasury contract accumulates protocol fees that can be spent by the council through
-        /// the voting of proposals
-        pub treasury_address: Option<String>,
-        /// Vesting contract
-        pub vesting_address: Option<String>,
-        /// xMars token cw20 contract
-        pub xmars_token_address: Option<String>,
     }
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -272,13 +248,13 @@ mod tests {
             let addresses = helpers::query_addresses(
                 &deps.as_ref().querier,
                 Addr::unchecked("address_provider"),
-                vec![MarsContract::Vesting, MarsContract::RedBank],
+                vec![MarsContract::Oracle, MarsContract::RedBank],
             )
             .unwrap();
 
             assert_eq!(
                 addresses,
-                vec![Addr::unchecked("vesting"), Addr::unchecked("red_bank")]
+                vec![Addr::unchecked("oracle"), Addr::unchecked("red_bank")]
             );
         }
     }
@@ -343,16 +319,10 @@ mod tests {
             MarsContract::ProtocolRewardsCollector => Addr::unchecked(""),
 
             // correctly set
-            MarsContract::Council => Addr::unchecked("council"),
-            MarsContract::SafetyFund => Addr::unchecked("safety_fund"),
             MarsContract::MarsToken => Addr::unchecked("mars_token"),
             MarsContract::Oracle => Addr::unchecked("oracle"),
             MarsContract::ProtocolAdmin => Addr::unchecked("protocol_admin"),
             MarsContract::RedBank => Addr::unchecked("red_bank"),
-            MarsContract::Staking => Addr::unchecked("staking"),
-            MarsContract::Treasury => Addr::unchecked("treasury"),
-            MarsContract::Vesting => Addr::unchecked("vesting"),
-            MarsContract::XMarsToken => Addr::unchecked("xmars_token"),
         }
     }
 }
