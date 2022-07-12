@@ -86,7 +86,7 @@ mod tests {
 
     #[test]
     fn transfer_from_respects_limits() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         let owner = String::from("addr0001");
         let spender = String::from("addr0002");
         let rcpt = String::from("addr0003");
@@ -133,7 +133,7 @@ mod tests {
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("red_bank"),
                     msg: to_binary(
-                        &mars_core::red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
+                        &mars_outpost::red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
                             sender_address: Addr::unchecked(&owner),
                             recipient_address: Addr::unchecked(&rcpt),
                             sender_previous_balance: start,
@@ -146,7 +146,7 @@ mod tests {
                 })),
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("incentives"),
-                    msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
                         user_address: Addr::unchecked(&owner),
                         user_balance_before: start,
                         total_supply_before: start,
@@ -156,7 +156,7 @@ mod tests {
                 })),
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("incentives"),
-                    msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
                         user_address: Addr::unchecked(&rcpt),
                         user_balance_before: Uint128::zero(),
                         total_supply_before: start,
@@ -217,7 +217,7 @@ mod tests {
 
     #[test]
     fn send_from_respects_limits() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         let owner = String::from("addr0001");
         let spender = String::from("addr0002");
         let contract = String::from("cool-dex");
@@ -264,7 +264,7 @@ mod tests {
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("red_bank"),
                     msg: to_binary(
-                        &mars_core::red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
+                        &mars_outpost::red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
                             sender_address: Addr::unchecked(&owner),
                             recipient_address: Addr::unchecked(&contract),
                             sender_previous_balance: start,
@@ -277,7 +277,7 @@ mod tests {
                 })),
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("incentives"),
-                    msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
                         user_address: Addr::unchecked(&owner),
                         user_balance_before: start,
                         total_supply_before: start,
@@ -287,7 +287,7 @@ mod tests {
                 })),
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("incentives"),
-                    msg: to_binary(&mars_core::incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&mars_outpost::incentives::msg::ExecuteMsg::BalanceChange {
                         user_address: Addr::unchecked(&contract),
                         user_balance_before: Uint128::zero(),
                         total_supply_before: start,

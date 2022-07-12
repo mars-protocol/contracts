@@ -3,6 +3,7 @@ members = [
     "packages/*", 
     "contracts/mars-red-bank",
     "contracts/mars-address-provider",
+    "contracts/mars-ma-token"
 ]
 # members = ["contracts/*", "packages/*"]
 
