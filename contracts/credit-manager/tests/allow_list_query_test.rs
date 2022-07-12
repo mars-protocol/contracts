@@ -6,7 +6,7 @@ use rover::{InstantiateMsg, QueryMsg};
 
 use crate::helpers::{mock_app, mock_contract};
 
-mod helpers;
+pub mod helpers;
 
 #[test]
 fn test_pagination_on_allowed_vaults_query_works() {

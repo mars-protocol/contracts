@@ -6,12 +6,13 @@ import path from 'path';
 import { getCosmWasmClient } from '../utils/client';
 import { Network, networks } from '../utils/config';
 import { testWallet1 } from '../utils/test-wallets';
-import { AssetInfo, serializeAssetInfo } from '../utils/types';
+import { AssetInfo, Config, serializeAssetInfo } from '../utils/types';
 
 describe('instantiating fields contract', () => {
   let client: SigningCosmWasmClient;
-  let codeId: number;
-  let contractAddr: string;
+  let managerCodeId: number;
+  let managerContractAddr: string;
+  let accountNftCodeId: number;
 
   beforeAll(async () => {
     client = await getCosmWasmClient(testWallet1);
@@ -21,23 +22,16 @@ describe('instantiating fields contract', () => {
     client.disconnect();
   });
 
-  test('can be uploaded', async () => {
+  test('credit manager wasm can be uploaded', async () => {
     const wasm = fs.readFileSync(path.resolve(__dirname, '../../artifacts/credit_manager.wasm'));
-    const {
-      codeId: uploadCodeId,
-      originalChecksum,
-      originalSize,
-      compressedChecksum,
-      compressedSize,
-    } = await client.upload(testWallet1.address, wasm, networks[Network.OSMOSIS].defaultSendFee);
+    managerCodeId = await uploadAndAssert(client, wasm);
+    expect(managerCodeId).toBeDefined();
+  });
 
-    expect(originalChecksum).toEqual(toHex(sha256(wasm)));
-    expect(originalSize).toEqual(wasm.length);
-    expect(compressedChecksum).toMatch(/^[0-9a-f]{64}$/);
-    expect(compressedSize).toBeLessThan(wasm.length * 0.5);
-    expect(uploadCodeId).toBeGreaterThanOrEqual(1);
-    codeId = uploadCodeId;
-    expect(codeId).toBeDefined();
+  test('account nft wasm can be uploaded', async () => {
+    const wasm = fs.readFileSync(path.resolve(__dirname, '../../artifacts/account_nft.wasm'));
+    accountNftCodeId = await uploadAndAssert(client, wasm);
+    expect(accountNftCodeId).toBeDefined();
   });
 
   test('can be instantiated', async () => {
@@ -55,16 +49,13 @@ describe('instantiating fields contract', () => {
 
     const { contractAddress } = await client.instantiate(
       testWallet1.address,
-      codeId,
-      { owner, allowed_vaults, allowed_assets },
+      managerCodeId,
+      { owner, allowed_vaults, allowed_assets, nft_contract_code_id: accountNftCodeId },
       'test-instantiate-string-123',
       networks[Network.OSMOSIS].defaultSendFee,
     );
-    contractAddr = contractAddress;
-    expect(contractAddr).toBeDefined();
-
-    const ownerFromQuery = await client.queryContractSmart(contractAddress, { owner: {} });
-    expect(ownerFromQuery).toEqual(owner);
+    managerContractAddr = contractAddress;
+    expect(managerContractAddr).toBeDefined();
 
     const allowedVaultsFromQuery: string[] = await client.queryContractSmart(contractAddress, {
       allowed_vaults: {},
@@ -83,5 +74,29 @@ describe('instantiating fields contract', () => {
         .map(serializeAssetInfo)
         .every((asset_str) => allowed_assets.map(serializeAssetInfo).includes(asset_str)),
     ).toBeTruthy();
+
+    const configRes: Config = await client.queryContractSmart(contractAddress, {
+      config: {},
+    });
+
+    expect(configRes.owner).toEqual(owner);;
+    expect(configRes.account_nft).toEqual("");
   });
 });
+
+async function uploadAndAssert(client: SigningCosmWasmClient, wasm: Buffer) {
+  const {
+    codeId: uploadCodeId,
+    originalChecksum,
+    originalSize,
+    compressedChecksum,
+    compressedSize,
+  } = await client.upload(testWallet1.address, wasm, networks[Network.OSMOSIS].defaultSendFee);
+
+  expect(originalChecksum).toEqual(toHex(sha256(wasm)));
+  expect(originalSize).toEqual(wasm.length);
+  expect(compressedChecksum).toMatch(/^[0-9a-f]{64}$/);
+  expect(compressedSize).toBeLessThan(wasm.length * 0.5);
+  expect(uploadCodeId).toBeGreaterThanOrEqual(1);
+  return uploadCodeId;
+}

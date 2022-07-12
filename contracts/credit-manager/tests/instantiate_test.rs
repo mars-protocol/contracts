@@ -2,11 +2,11 @@ use cosmwasm_std::Addr;
 use cw_asset::AssetInfoUnchecked;
 use cw_multi_test::Executor;
 
-use rover::{InstantiateMsg, QueryMsg};
+use rover::{ConfigResponse, InstantiateMsg, QueryMsg};
 
 use crate::helpers::{mock_app, mock_contract};
 
-mod helpers;
+pub mod helpers;
 
 #[test]
 fn test_owner_set_on_instantiate() {
@@ -21,15 +21,44 @@ fn test_owner_set_on_instantiate() {
     };
 
     let contract_addr = app
-        .instantiate_contract(code_id, owner.clone(), &msg, &[], "mock-contract", None)
+        .instantiate_contract(code_id, owner.clone(), &msg, &[], "mock-account-nft", None)
         .unwrap();
 
-    let res: String = app
+    let res: ConfigResponse = app
         .wrap()
-        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Owner {})
+        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
         .unwrap();
 
-    assert_eq!(owner, res);
+    assert_eq!(owner, res.owner);
+}
+
+#[test]
+fn test_nft_contract_addr_not_set_on_instantiate() {
+    let mut app = mock_app();
+    let owner = Addr::unchecked("owner");
+    let code_id = app.store_code(mock_contract());
+
+    let contract_addr = app
+        .instantiate_contract(
+            code_id,
+            owner.clone(),
+            &InstantiateMsg {
+                owner: owner.to_string(),
+                allowed_vaults: vec![],
+                allowed_assets: vec![],
+            },
+            &[],
+            "manager-mock-account-nft",
+            None,
+        )
+        .unwrap();
+
+    let res: ConfigResponse = app
+        .wrap()
+        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
+        .unwrap();
+
+    assert_eq!(res.account_nft, None);
 }
 
 #[test]
@@ -58,7 +87,14 @@ fn test_allowed_vaults_and_assets_stored_on_instantiate() {
     };
 
     let contract_addr = app
-        .instantiate_contract(code_id, owner, &msg, &[], "mock-contract", None)
+        .instantiate_contract(
+            code_id,
+            owner,
+            &msg,
+            &[],
+            "mock-credit-manager-contract",
+            None,
+        )
         .unwrap();
 
     let assets_res: Vec<AssetInfoUnchecked> = app
@@ -93,7 +129,7 @@ fn test_allowed_vaults_and_assets_stored_on_instantiate() {
 #[test]
 fn test_panics_on_invalid_instantiation_addrs() {
     let mut app = mock_app();
-    let code_id = app.store_code(mock_contract());
+    let manager_code_id = app.store_code(mock_contract());
     let owner = Addr::unchecked("owner");
 
     let msg = InstantiateMsg {
@@ -102,12 +138,17 @@ fn test_panics_on_invalid_instantiation_addrs() {
         allowed_assets: vec![],
     };
 
-    let instantiate_res =
-        app.instantiate_contract(code_id, owner.clone(), &msg, &[], "mock-contract", None);
+    let instantiate_res = app.instantiate_contract(
+        manager_code_id,
+        owner.clone(),
+        &msg,
+        &[],
+        "mock-contract",
+        None,
+    );
 
-    match instantiate_res {
-        Err(_) => {}
-        Ok(_) => panic!("Should have thrown an error"),
+    if instantiate_res.is_ok() {
+        panic!("Should have thrown an error");
     }
 
     let msg = InstantiateMsg {
@@ -116,11 +157,16 @@ fn test_panics_on_invalid_instantiation_addrs() {
         allowed_assets: vec![AssetInfoUnchecked::Cw20(String::from("AA"))], // Because cw-asset lowercases before passing to validate, in the test env, two letter strings is only one that triggers a fail
     };
 
-    let instantiate_res =
-        app.instantiate_contract(code_id, owner, &msg, &[], "mock-contract", None);
+    let instantiate_res = app.instantiate_contract(
+        manager_code_id,
+        owner.clone(),
+        &msg,
+        &[],
+        "mock-contract",
+        None,
+    );
 
-    match instantiate_res {
-        Err(_) => {}
-        Ok(_) => panic!("Should have thrown an error"),
+    if instantiate_res.is_ok() {
+        panic!("Should have thrown an error");
     }
 }
