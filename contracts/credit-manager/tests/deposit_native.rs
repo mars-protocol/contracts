@@ -1,19 +1,19 @@
 extern crate core;
 
 use cosmwasm_std::{Addr, Coin, Uint128};
-use credit_manager::error::ContractError::{
-    ExtraFundsReceived, FundsMismatch, NotTokenOwner, NotWhitelisted,
-};
 use cw20::Cw20Coin;
 use cw_asset::{AssetInfo, AssetInfoUnchecked, AssetList, AssetUnchecked};
 use cw_multi_test::{App, Executor};
+use rover::error::ContractError::{
+    ExtraFundsReceived, FundsMismatch, NotTokenOwner, NotWhitelisted,
+};
 
 use rover::msg::execute::Action;
 use rover::msg::ExecuteMsg;
 
 use crate::helpers::{
-    assert_err, deploy_mock_cw20, get_position, get_token_id, mock_app, mock_create_credit_account,
-    setup_credit_manager,
+    assert_err, deploy_mock_cw20, get_token_id, mock_app, mock_create_credit_account,
+    query_position, setup_credit_manager,
 };
 
 pub mod helpers;
@@ -63,7 +63,7 @@ fn test_deposit_nothing() {
     let res = mock_create_credit_account(&mut app, &contract_addr, &user).unwrap();
     let token_id = get_token_id(res);
 
-    let res = get_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &contract_addr, &token_id);
     assert_eq!(res.assets.len(), 0);
 
     app.execute_contract(
@@ -77,7 +77,7 @@ fn test_deposit_nothing() {
     )
     .unwrap();
 
-    let res = get_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &contract_addr, &token_id);
     assert_eq!(res.assets.len(), 0);
 }
 
@@ -111,7 +111,7 @@ fn test_deposit_but_no_funds() {
         },
     );
 
-    let res = get_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &contract_addr, &token_id);
     assert_eq!(res.assets.len(), 0);
 }
 
@@ -201,7 +201,7 @@ fn test_can_only_deposit_allowed_assets() {
 
     assert_err(res, NotWhitelisted(AssetInfo::native("uosmo").to_string()));
 
-    let res = get_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &contract_addr, &token_id);
     assert_eq!(res.assets.len(), 0);
 }
 
@@ -243,7 +243,7 @@ fn test_extra_funds_received() {
 
     assert_err(res, ExtraFundsReceived(AssetList::from(vec![extra_funds])));
 
-    let res = get_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &contract_addr, &token_id);
     assert_eq!(res.assets.len(), 0);
 }
 
@@ -278,7 +278,7 @@ fn test_native_deposit_success() {
     )
     .unwrap();
 
-    let res = get_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &contract_addr, &token_id);
     assert_eq!(res.assets.len(), 1);
     assert_eq!(res.assets.first().unwrap().amount, amount);
     assert_eq!(res.assets.first().unwrap().info, info);
@@ -327,7 +327,7 @@ fn test_multiple_deposit_actions() {
     )
     .unwrap();
 
-    let res = get_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &contract_addr, &token_id);
     assert_eq!(res.assets.len(), 2);
 
     let coin = app

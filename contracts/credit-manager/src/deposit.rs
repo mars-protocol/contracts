@@ -2,7 +2,8 @@ use cosmwasm_std::{Api, DepsMut, MessageInfo, Response, StdError, StdResult, Sto
 use cw20::Cw20ReceiveMsg;
 use cw_asset::{Asset, AssetInfo, AssetInfoUnchecked, AssetList, AssetUnchecked};
 
-use crate::error::ContractError;
+use rover::error::ContractError;
+
 use crate::execute::assert_is_token_owner;
 use crate::state::{ALLOWED_ASSETS, ASSETS};
 
@@ -73,7 +74,7 @@ pub fn cw20_deposit(
         .add_attribute("deposit_received", asset.to_string()))
 }
 
-fn assert_asset_is_whitelisted(
+pub fn assert_asset_is_whitelisted(
     storage: &mut dyn Storage,
     asset: &AssetInfo,
 ) -> Result<(), ContractError> {

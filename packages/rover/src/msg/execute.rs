@@ -1,6 +1,7 @@
+use crate::adapters::RedBankUnchecked;
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdResult, WasmMsg};
 use cw20::Cw20ReceiveMsg;
-use cw_asset::AssetUnchecked;
+use cw_asset::{Asset, AssetUnchecked};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -23,10 +24,11 @@ pub enum ExecuteMsg {
     //--------------------------------------------------------------------------------------------------
     // Privileged messages
     //--------------------------------------------------------------------------------------------------
-    /// Update owner or stored account nft contract
+    /// Update owner, stored account nft contract, or red bank contract addr
     UpdateConfig {
         account_nft: Option<String>,
         owner: Option<String>,
+        red_bank: Option<RedBankUnchecked>,
     },
     /// Internal actions only callable by the contract itself
     Callback(CallbackMsg),
@@ -40,14 +42,17 @@ pub enum Action {
     /// NOTE: CW20 Deposits should use Cw20ExecuteMsg::Send {}
     NativeDeposit(AssetUnchecked),
 
-    Placeholder {},
+    /// Borrow asset of specified amount from Red Bank
+    Borrow(AssetUnchecked),
 }
 
 /// Internal actions made by the contract with pre-validated inputs
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CallbackMsg {
-    Placeholder {},
+    /// Borrow specified amount of asset from Red Bank;
+    /// Increase the token's asset amount and debt shares;
+    Borrow { token_id: String, asset: Asset },
 }
 
 impl CallbackMsg {

@@ -1,6 +1,7 @@
 use cosmwasm_std::Addr;
 use cw_asset::AssetInfoUnchecked;
 use cw_multi_test::Executor;
+use rover::adapters::RedBankBase;
 
 use rover::msg::query::{ConfigResponse, QueryMsg};
 use rover::msg::InstantiateMsg;
@@ -19,6 +20,9 @@ fn test_owner_set_on_instantiate() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_assets: vec![],
+        red_bank: RedBankBase {
+            contract_addr: String::from("redbankaddr"),
+        },
     };
 
     let contract_addr = app
@@ -47,6 +51,9 @@ fn test_nft_contract_addr_not_set_on_instantiate() {
                 owner: owner.to_string(),
                 allowed_vaults: vec![],
                 allowed_assets: vec![],
+                red_bank: RedBankBase {
+                    contract_addr: String::from("redbankaddr"),
+                },
             },
             &[],
             "manager-mock-account-nft",
@@ -85,6 +92,9 @@ fn test_allowed_vaults_and_assets_stored_on_instantiate() {
         owner: owner.to_string(),
         allowed_vaults: allowed_vaults.clone(),
         allowed_assets: allowed_assets.clone(),
+        red_bank: RedBankBase {
+            contract_addr: String::from("redbankaddr"),
+        },
     };
 
     let contract_addr = app
@@ -128,6 +138,34 @@ fn test_allowed_vaults_and_assets_stored_on_instantiate() {
 }
 
 #[test]
+fn test_red_bank_set_on_instantiate() {
+    let mut app = mock_app();
+    let code_id = app.store_code(mock_contract());
+    let owner = Addr::unchecked("owner");
+    let red_bank_addr = String::from("redbankaddr");
+
+    let msg = InstantiateMsg {
+        owner: owner.to_string(),
+        allowed_vaults: vec![],
+        allowed_assets: vec![],
+        red_bank: RedBankBase {
+            contract_addr: String::from("redbankaddr"),
+        },
+    };
+
+    let contract_addr = app
+        .instantiate_contract(code_id, owner.clone(), &msg, &[], "mock-account-nft", None)
+        .unwrap();
+
+    let res: ConfigResponse = app
+        .wrap()
+        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
+        .unwrap();
+
+    assert_eq!(red_bank_addr, res.red_bank);
+}
+
+#[test]
 fn test_panics_on_invalid_instantiation_addrs() {
     let mut app = mock_app();
     let manager_code_id = app.store_code(mock_contract());
@@ -137,6 +175,9 @@ fn test_panics_on_invalid_instantiation_addrs() {
         owner: owner.to_string(),
         allowed_vaults: vec!["%%%INVALID%%%".to_string()],
         allowed_assets: vec![],
+        red_bank: RedBankBase {
+            contract_addr: String::from("redbankaddr"),
+        },
     };
 
     let instantiate_res = app.instantiate_contract(
@@ -155,7 +196,32 @@ fn test_panics_on_invalid_instantiation_addrs() {
     let msg = InstantiateMsg {
         owner: owner.to_string(),
         allowed_vaults: vec![],
-        allowed_assets: vec![AssetInfoUnchecked::Cw20("AA".to_string())], // Because cw-asset lowercases before passing to validate, in the test env, two letter strings is only one that triggers a fail
+        allowed_assets: vec![AssetInfoUnchecked::Cw20(String::from("AA"))], // Because cw-asset lowercases before passing to validate, in the test env, two letter strings is only one that triggers a fail
+        red_bank: RedBankBase {
+            contract_addr: String::from("redbankaddr"),
+        },
+    };
+
+    let instantiate_res = app.instantiate_contract(
+        manager_code_id,
+        owner.clone(),
+        &msg,
+        &[],
+        "mock-contract",
+        None,
+    );
+
+    if instantiate_res.is_ok() {
+        panic!("Should have thrown an error");
+    }
+
+    let msg = InstantiateMsg {
+        owner: owner.to_string(),
+        allowed_vaults: vec![],
+        allowed_assets: vec![], // Because cw-asset lowercases before passing to validate, in the test env, two letter strings is only one that triggers a fail
+        red_bank: RedBankBase {
+            contract_addr: String::from("%%%INVALID%%%"),
+        },
     };
 
     let instantiate_res = app.instantiate_contract(

@@ -3,10 +3,10 @@ use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, Executor};
 
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
-use rover::msg::query::ConfigResponse;
-use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use rover::adapters::{RedBankBase, RedBankUnchecked};
+use rover::msg::{ExecuteMsg, InstantiateMsg};
 
-use crate::helpers::{mock_account_nft_contract, mock_app, mock_contract};
+use crate::helpers::{mock_account_nft_contract, mock_app, mock_contract, query_config};
 
 pub mod helpers;
 
@@ -23,8 +23,10 @@ fn test_update_config_works_with_full_config() {
     assert_eq!(config_res.owner, original_owner.to_string());
 
     let new_owner = Addr::unchecked("new_owner");
-
     let nft_contract_addr = setup_nft_and_propose_owner(&mut app, &original_owner, &contract_addr);
+    let new_red_bank_addr = RedBankUnchecked {
+        contract_addr: String::from("new_red_bank_addr"),
+    };
 
     app.execute_contract(
         original_owner.clone(),
@@ -32,6 +34,7 @@ fn test_update_config_works_with_full_config() {
         &ExecuteMsg::UpdateConfig {
             account_nft: Some(nft_contract_addr.to_string()),
             owner: Some(new_owner.to_string()),
+            red_bank: Some(new_red_bank_addr.clone()),
         },
         &[],
     )
@@ -41,6 +44,7 @@ fn test_update_config_works_with_full_config() {
 
     assert_eq!(config_res.account_nft, Some(nft_contract_addr.to_string()));
     assert_eq!(config_res.owner, new_owner.to_string());
+    assert_eq!(config_res.red_bank, new_red_bank_addr.contract_addr);
 }
 
 #[test]
@@ -54,6 +58,7 @@ fn test_update_config_works_with_some_config() {
 
     assert_eq!(config_res.account_nft, None);
     assert_eq!(config_res.owner, original_owner.to_string());
+    assert_eq!(config_res.red_bank, String::from("initial_red_bank"));
 
     let nft_contract_addr = setup_nft_and_propose_owner(&mut app, &original_owner, &contract_addr);
     app.execute_contract(
@@ -62,6 +67,7 @@ fn test_update_config_works_with_some_config() {
         &ExecuteMsg::UpdateConfig {
             account_nft: Some(nft_contract_addr.to_string()),
             owner: None,
+            red_bank: None,
         },
         &[],
     )
@@ -71,6 +77,7 @@ fn test_update_config_works_with_some_config() {
 
     assert_eq!(config_res.account_nft, Some(nft_contract_addr.to_string()));
     assert_eq!(config_res.owner, original_owner.to_string());
+    assert_eq!(config_res.red_bank, String::from("initial_red_bank"));
 
     let new_owner = Addr::unchecked("new_owner");
     app.execute_contract(
@@ -79,6 +86,7 @@ fn test_update_config_works_with_some_config() {
         &ExecuteMsg::UpdateConfig {
             account_nft: None,
             owner: Some(new_owner.to_string()),
+            red_bank: None,
         },
         &[],
     )
@@ -87,6 +95,27 @@ fn test_update_config_works_with_some_config() {
     let config_res = query_config(&mut app, &contract_addr.clone());
     assert_eq!(config_res.account_nft, Some(nft_contract_addr.to_string()));
     assert_eq!(config_res.owner, new_owner.to_string());
+    assert_eq!(config_res.red_bank, String::from("initial_red_bank"));
+
+    let new_red_bank = RedBankUnchecked {
+        contract_addr: String::from("new_red_bank_addr"),
+    };
+    app.execute_contract(
+        new_owner.clone(),
+        contract_addr.clone(),
+        &ExecuteMsg::UpdateConfig {
+            account_nft: None,
+            owner: None,
+            red_bank: Some(new_red_bank.clone()),
+        },
+        &[],
+    )
+    .unwrap();
+
+    let config_res = query_config(&mut app, &contract_addr.clone());
+    assert_eq!(config_res.account_nft, Some(nft_contract_addr.to_string()));
+    assert_eq!(config_res.owner, new_owner.to_string());
+    assert_eq!(config_res.red_bank, new_red_bank.contract_addr);
 }
 
 #[test]
@@ -102,6 +131,7 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
         &ExecuteMsg::UpdateConfig {
             account_nft: None,
             owner: None,
+            red_bank: None,
         },
         &[],
     )
@@ -113,12 +143,6 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
     assert_eq!(config_res.owner, original_owner.to_string());
 }
 
-fn query_config(app: &mut App, contract_addr: &Addr) -> ConfigResponse {
-    app.wrap()
-        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
-        .unwrap()
-}
-
 fn instantiate(app: &mut App, original_owner: &Addr, code_id: u64) -> Addr {
     app.instantiate_contract(
         code_id,
@@ -127,6 +151,9 @@ fn instantiate(app: &mut App, original_owner: &Addr, code_id: u64) -> Addr {
             owner: original_owner.to_string(),
             allowed_vaults: vec![],
             allowed_assets: vec![],
+            red_bank: RedBankBase {
+                contract_addr: String::from("initial_red_bank"),
+            },
         },
         &[],
         "mock_manager_contract",

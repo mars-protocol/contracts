@@ -5,12 +5,12 @@ use cw20::{BalanceResponse, Cw20Coin, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_asset::{AssetInfo, AssetInfoUnchecked};
 use cw_multi_test::Executor;
 
-use credit_manager::error::ContractError::{NotTokenOwner, NotWhitelisted};
+use rover::error::ContractError::{NotTokenOwner, NotWhitelisted};
 use rover::msg::execute::ReceiveMsg;
 
 use crate::helpers::{
-    assert_err, deploy_mock_cw20, get_position, get_token_id, mock_app, mock_create_credit_account,
-    setup_credit_manager,
+    assert_err, deploy_mock_cw20, get_token_id, mock_app, mock_create_credit_account,
+    query_position, setup_credit_manager,
 };
 
 pub mod helpers;
@@ -61,7 +61,7 @@ fn test_only_token_owner_can_deposit() {
         },
     );
 
-    let res = get_position(&app, &manager_contract, &token_id);
+    let res = query_position(&app, &manager_contract, &token_id);
     assert_eq!(res.assets.len(), 0);
 }
 
@@ -115,7 +115,7 @@ fn test_can_only_deposit_allowed_assets() {
         NotWhitelisted(AssetInfo::Cw20(cw20_contract_a).to_string()),
     );
 
-    let res = get_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &contract_addr, &token_id);
     assert_eq!(res.assets.len(), 0);
 }
 
@@ -157,7 +157,7 @@ fn test_cw20_deposit_success() {
     )
     .unwrap();
 
-    let res = get_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &contract_addr, &token_id);
     assert_eq!(res.assets.len(), 1);
     assert_eq!(res.assets.first().unwrap().amount, amount);
     assert_eq!(res.assets.first().unwrap().info, asset_info);

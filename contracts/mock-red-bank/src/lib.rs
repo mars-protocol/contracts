@@ -1,8 +1,7 @@
 pub mod contract;
 
-pub mod borrow;
-pub mod deposit;
 pub mod execute;
-pub mod instantiate;
+pub mod helpers;
+pub mod msg;
 pub mod query;
 pub mod state;

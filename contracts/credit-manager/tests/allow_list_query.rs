@@ -1,6 +1,7 @@
 use cosmwasm_std::Addr;
 use cw_asset::AssetInfoUnchecked;
 use cw_multi_test::Executor;
+use rover::adapters::RedBankBase;
 
 use rover::msg::{InstantiateMsg, QueryMsg};
 
@@ -53,6 +54,9 @@ fn test_pagination_on_allowed_vaults_query_works() {
         owner: owner.to_string(),
         allowed_vaults: allowed_vaults.clone(),
         allowed_assets: vec![],
+        red_bank: RedBankBase {
+            contract_addr: String::from("redbankaddr"),
+        },
     };
 
     let contract_addr = app
@@ -195,6 +199,9 @@ fn test_pagination_on_allowed_assets_query_works() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_assets: allowed_assets.clone(),
+        red_bank: RedBankBase {
+            contract_addr: String::from("redbankaddr"),
+        },
     };
 
     let contract_addr = app

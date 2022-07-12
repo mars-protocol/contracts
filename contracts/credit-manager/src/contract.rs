@@ -4,15 +4,18 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw20::Cw20ReceiveMsg;
+use rover::error::ContractError;
 
 use rover::msg::execute::ReceiveMsg;
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::deposit::cw20_deposit;
-use crate::error::ContractError;
 use crate::execute::{create_credit_account, dispatch_actions, execute_callback, update_config};
 use crate::instantiate::store_config;
-use crate::query::{query_allowed_assets, query_allowed_vaults, query_config, query_position};
+use crate::query::{
+    query_allowed_assets, query_allowed_vaults, query_config, query_position,
+    query_total_debt_shares,
+};
 
 const CONTRACT_NAME: &str = "crates.io:rover-credit-manager";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -38,9 +41,11 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::CreateCreditAccount {} => create_credit_account(deps, info.sender),
-        ExecuteMsg::UpdateConfig { account_nft, owner } => {
-            update_config(deps, info, account_nft, owner)
-        }
+        ExecuteMsg::UpdateConfig {
+            account_nft,
+            owner,
+            red_bank,
+        } => update_config(deps, info, account_nft, owner, red_bank),
         ExecuteMsg::Callback(callback) => execute_callback(deps, info, env, callback),
         ExecuteMsg::UpdateCreditAccount { token_id, actions } => {
             dispatch_actions(deps, env, info, &token_id, &actions)
@@ -60,6 +65,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_binary(&query_allowed_assets(deps, start_after, limit)?)
         }
         QueryMsg::Position { token_id } => to_binary(&query_position(deps, &token_id)?),
+        QueryMsg::TotalDebtShares(asset_info) => {
+            to_binary(&query_total_debt_shares(deps, asset_info)?)
+        }
     }
 }
 

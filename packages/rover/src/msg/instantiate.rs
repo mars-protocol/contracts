@@ -1,3 +1,4 @@
+use crate::adapters::RedBankUnchecked;
 use cw_asset::AssetInfoUnchecked;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -7,4 +8,5 @@ pub struct InstantiateMsg {
     pub owner: String,
     pub allowed_vaults: Vec<String>,
     pub allowed_assets: Vec<AssetInfoUnchecked>,
+    pub red_bank: RedBankUnchecked,
 }

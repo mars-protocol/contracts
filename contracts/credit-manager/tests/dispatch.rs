@@ -1,12 +1,12 @@
 extern crate core;
 
 use crate::helpers::{
-    assert_err, get_position, get_token_id, mock_app, mock_create_credit_account,
+    assert_err, get_token_id, mock_app, mock_create_credit_account, query_position,
     setup_credit_manager,
 };
 use cosmwasm_std::Addr;
-use credit_manager::error::ContractError::NotTokenOwner;
 use cw_multi_test::Executor;
+use rover::error::ContractError::NotTokenOwner;
 use rover::msg::ExecuteMsg::UpdateCreditAccount;
 
 pub mod helpers;
@@ -51,7 +51,7 @@ fn test_nothing_happens_if_no_actions_are_passed() {
     let res = mock_create_credit_account(&mut app, &contract_addr, &user).unwrap();
     let token_id = get_token_id(res);
 
-    let res = get_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &contract_addr, &token_id);
     assert_eq!(res.assets.len(), 0);
 
     app.execute_contract(
@@ -65,6 +65,6 @@ fn test_nothing_happens_if_no_actions_are_passed() {
     )
     .unwrap();
 
-    let res = get_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &contract_addr, &token_id);
     assert_eq!(res.assets.len(), 0);
 }

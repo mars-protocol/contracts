@@ -6,12 +6,13 @@ use cw721_base::QueryMsg;
 use cw_asset::AssetList;
 
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
+use rover::adapters::RedBankUnchecked;
+use rover::error::ContractError;
 use rover::msg::execute::{Action, CallbackMsg};
 
+use crate::borrow::borrow;
 use crate::deposit::native_deposit;
-use crate::error::ContractError;
-
-use crate::state::{ACCOUNT_NFT, OWNER};
+use crate::state::{ACCOUNT_NFT, OWNER, RED_BANK};
 
 pub fn create_credit_account(deps: DepsMut, user: Addr) -> Result<Response, ContractError> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
@@ -34,6 +35,7 @@ pub fn update_config(
     info: MessageInfo,
     new_account_nft: Option<String>,
     new_owner: Option<String>,
+    new_red_bank: Option<RedBankUnchecked>,
 ) -> Result<Response, ContractError> {
     let owner = OWNER.load(deps.storage)?;
 
@@ -60,6 +62,11 @@ pub fn update_config(
         response = response
             .add_message(accept_ownership_msg)
             .add_attribute("action", "rover/credit_manager/update_config/account_nft");
+    }
+
+    if let Some(unchecked) = new_red_bank {
+        RED_BANK.save(deps.storage, &unchecked.check(deps.api)?)?;
+        response = response.add_attribute("action", "rover/credit_manager/update_config/red_bank");
     }
 
     if let Some(addr_str) = new_owner {
@@ -96,7 +103,10 @@ pub fn dispatch_actions(
                     &mut received_coins,
                 )?;
             }
-            Action::Placeholder { .. } => callbacks.push(CallbackMsg::Placeholder {}),
+            Action::Borrow(asset) => callbacks.push(CallbackMsg::Borrow {
+                token_id: token_id.to_string(),
+                asset: asset.check(deps.api, None)?,
+            }),
         }
     }
 
@@ -117,7 +127,7 @@ pub fn dispatch_actions(
 }
 
 pub fn execute_callback(
-    _deps: DepsMut,
+    deps: DepsMut,
     info: MessageInfo,
     env: Env,
     callback: CallbackMsg,
@@ -126,7 +136,7 @@ pub fn execute_callback(
         return Err(ContractError::ExternalInvocation {});
     }
     match callback {
-        CallbackMsg::Placeholder { .. } => Ok(Response::new()),
+        CallbackMsg::Borrow { asset, token_id } => borrow(deps, env, &token_id, asset),
     }
 }
 

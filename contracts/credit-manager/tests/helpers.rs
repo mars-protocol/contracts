@@ -14,9 +14,13 @@ use account_nft::contract::{
 };
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use credit_manager::contract::{execute, instantiate, query};
-use credit_manager::error::ContractError;
+use mock_red_bank::contract::{
+    execute as redBankExecute, instantiate as redBankInstantiate, query as redBankQuery,
+};
+use rover::adapters::RedBankBase;
+use rover::error::ContractError;
 use rover::msg::execute::ExecuteMsg::{CreateCreditAccount, UpdateConfig};
-use rover::msg::query::{PositionResponse, QueryMsg};
+use rover::msg::query::{ConfigResponse, PositionResponse, QueryMsg};
 use rover::msg::InstantiateMsg;
 
 pub fn mock_app() -> App {
@@ -35,6 +39,11 @@ pub fn mock_account_nft_contract() -> Box<dyn Contract<Empty>> {
 
 pub fn mock_cw20_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(cw20Execute, cw20Instantiate, cw20Query);
+    Box::new(contract)
+}
+
+pub fn mock_red_bank_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(redBankExecute, redBankInstantiate, redBankQuery);
     Box::new(contract)
 }
 
@@ -89,10 +98,24 @@ pub fn transfer_nft_contract_ownership(
         &UpdateConfig {
             account_nft: Some(nft_contract_addr.to_string()),
             owner: None,
+            red_bank: None,
         },
         &[],
     )
     .unwrap();
+}
+
+pub fn setup_red_bank(app: &mut App) -> Addr {
+    let contract_code_id = app.store_code(mock_red_bank_contract());
+    app.instantiate_contract(
+        contract_code_id,
+        Addr::unchecked("red_bank_contract_owner"),
+        &Empty {},
+        &[],
+        "mock-red-bank",
+        None,
+    )
+    .unwrap()
 }
 
 pub fn setup_nft_contract(app: &mut App, owner: &Addr, manager_contract_addr: &Addr) -> Addr {
@@ -122,10 +145,14 @@ pub fn setup_credit_manager(
     allowed_assets: Vec<AssetInfoUnchecked>,
 ) -> Addr {
     let credit_manager_code_id = app.store_code(mock_contract());
+    let red_bank_addr = setup_red_bank(app);
     let manager_initiate_msg = InstantiateMsg {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_assets,
+        red_bank: RedBankBase {
+            contract_addr: red_bank_addr.to_string(),
+        },
     };
 
     let manager_contract_addr = app
@@ -156,7 +183,7 @@ pub fn get_token_id(res: AppResponse) -> String {
     attr.first().unwrap().to_string()
 }
 
-pub fn get_position(
+pub fn query_position(
     app: &App,
     manager_contract_addr: &Addr,
     token_id: &String,
@@ -179,4 +206,10 @@ pub fn assert_err(res: AnyResult<AppResponse>, err: ContractError) {
             assert_eq!(contract_err, err);
         }
     }
+}
+
+pub fn query_config(app: &mut App, contract_addr: &Addr) -> ConfigResponse {
+    app.wrap()
+        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
+        .unwrap()
 }

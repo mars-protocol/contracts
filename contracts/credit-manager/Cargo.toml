@@ -24,9 +24,9 @@ cw721-base = { version = "0.13", features = ["library"] }
 cw-asset = "2.1"
 cw-storage-plus = "0.13"
 schemars = "0.8"
-serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-thiserror = "1.0"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 anyhow = "1"
 cw-multi-test = "0.13"
+mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }

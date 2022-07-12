@@ -19,6 +19,9 @@ pub enum QueryMsg {
     },
     /// The entire position represented by token. Response type: `PositionResponse`
     Position { token_id: String },
+
+    /// Total debt shares issued for Asset. Response type: `TotalDebtSharesResponse`
+    TotalDebtShares(AssetInfoUnchecked),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -26,6 +29,7 @@ pub enum QueryMsg {
 pub struct PositionResponse {
     pub token_id: String,
     pub assets: Vec<AssetUnchecked>,
+    pub debt_shares: Vec<AssetUnchecked>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -33,4 +37,9 @@ pub struct PositionResponse {
 pub struct ConfigResponse {
     pub owner: String,
     pub account_nft: Option<String>,
+    pub red_bank: String,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct TotalDebtSharesResponse(pub AssetUnchecked);
