@@ -440,6 +440,7 @@ dependencies = [
  "cw2",
  "cw20",
  "cw20-base",
+ "osmo-bindings",
  "schemars",
  "serde",
  "thiserror",

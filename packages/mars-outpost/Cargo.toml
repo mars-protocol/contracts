@@ -35,5 +35,7 @@ schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = "1.0.31"
 
+osmo-bindings = "0.5.1"
+
 [profile.release]
 overflow-checks = true

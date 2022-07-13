@@ -20,7 +20,7 @@ use self::helpers::*;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut,
+    deps: DepsMut<OsmosisQuery>,
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
@@ -227,16 +227,13 @@ mod helpers {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use astroport::asset::{Asset as AstroportAsset, AssetInfo, PairInfo};
-    use astroport::factory::PairType;
-    use astroport::pair::{CumulativePricesResponse, SimulationResponse};
-    use basset::hub::StateResponse;
-    use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
-    use cosmwasm_std::Decimal as StdDecimal;
-    use cosmwasm_std::{from_binary, Addr, OwnedDeps};
-    use mars_core::testing::{mock_dependencies, mock_env_at_block_time, MarsMockQuerier};
-    use stader::msg::QueryStateResponse as StaderStateResponse;
-    use stader::state::State as StaderState;
+    use cosmwasm_std::testing::{
+        mock_env, mock_info, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+    };
+    use cosmwasm_std::{from_binary, Addr, Coin, Decimal, OwnedDeps, Uint128};
+    use mars_outpost::testing::MarsMockQuerier;
+    use osmo_bindings::PoolStateResponse;
+    use std::marker::PhantomData;
 
     #[test]
     fn test_proper_initialization() {
@@ -291,23 +288,6 @@ mod tests {
     }
 
     #[test]
-    fn test_set_asset() {
-        let mut deps = th_setup();
-
-        let msg = ExecuteMsg::SetAsset {
-            asset: Asset::Native {
-                denom: "luna".to_string(),
-            },
-            price_source: PriceSourceUnchecked::Native {
-                denom: "luna".to_string(),
-            },
-        };
-        let info = mock_info("another_one", &[]);
-        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-        assert_eq!(err, MarsError::Unauthorized {}.into());
-    }
-
-    #[test]
     fn test_set_asset_fixed() {
         let mut deps = th_setup();
         let info = mock_info("owner", &[]);
@@ -317,7 +297,7 @@ mod tests {
         };
         let reference = asset.get_reference();
         let msg = ExecuteMsg::SetAsset {
-            asset: asset,
+            asset,
             price_source: PriceSourceUnchecked::Fixed {
                 price: Decimal::from_ratio(1_u128, 2_u128),
             },
@@ -336,33 +316,37 @@ mod tests {
     }
 
     #[test]
-    fn test_set_asset_astroport_spot() {
+    fn test_set_asset_osmosis_spot() {
         let mut deps = th_setup();
         let info = mock_info("owner", &[]);
 
-        let offer_asset_info = AssetInfo::Token {
-            contract_addr: Addr::unchecked("cw20token"),
-        };
-        let ask_asset_info = AssetInfo::NativeToken {
-            denom: "uusd".to_string(),
-        };
+        deps.querier.set_pool_state(
+            102,
+            PoolStateResponse {
+                assets: vec![
+                    Coin {
+                        denom: "sometoken".to_string(),
+                        amount: Uint128::zero(),
+                    },
+                    Coin {
+                        denom: "uosmo".to_string(),
+                        amount: Uint128::zero(),
+                    },
+                ],
+                shares: Coin {
+                    denom: "lpsometoken".to_string(),
+                    amount: Uint128::zero(),
+                },
+            },
+        );
 
-        deps.querier.set_astroport_pair(PairInfo {
-            asset_infos: [offer_asset_info.clone(), ask_asset_info.clone()],
-            contract_addr: Addr::unchecked("pair"),
-            liquidity_token: Addr::unchecked("lp"),
-            pair_type: PairType::Xyk {},
-        });
-
-        let asset = Asset::Cw20 {
-            contract_addr: "cw20token".to_string(),
+        let asset = Asset::Native {
+            denom: "sometoken".to_string(),
         };
         let reference = asset.get_reference();
         let msg = ExecuteMsg::SetAsset {
-            asset: asset,
-            price_source: PriceSourceUnchecked::AstroportSpot {
-                pair_address: "pair".to_string(),
-            },
+            asset,
+            price_source: PriceSourceUnchecked::OsmosisSpot { pool_id: 102 },
         };
         execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
@@ -371,9 +355,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             price_source,
-            PriceSourceChecked::AstroportSpot {
-                pair_address: Addr::unchecked("pair")
-            }
+            PriceSourceUnchecked::OsmosisSpot { pool_id: 102 }
         );
     }
 
@@ -444,67 +426,8 @@ mod tests {
         assert_eq!(price, Decimal::from_ratio(3_u128, 2_u128));
     }
 
-    #[test]
-    fn test_query_asset_price_astroport_spot() {
-        let mut deps = th_setup();
-        let asset = Asset::Native {
-            denom: String::from("cw20token"),
-        };
-        let asset_reference = asset.get_reference();
-
-        // set price source
-        PRICE_SOURCES
-            .save(
-                &mut deps.storage,
-                asset_reference.as_slice(),
-                &PriceSourceChecked::AstroportSpot {
-                    pair_address: Addr::unchecked("pair"),
-                },
-            )
-            .unwrap();
-
-        // set astroport pair info
-        let offer_asset_info = AssetInfo::Token {
-            contract_addr: Addr::unchecked("cw20token"),
-        };
-        let ask_asset_info = AssetInfo::NativeToken {
-            denom: "uusd".to_string(),
-        };
-
-        deps.querier.set_astroport_pair(PairInfo {
-            asset_infos: [offer_asset_info.clone(), ask_asset_info.clone()],
-            contract_addr: Addr::unchecked("pair"),
-            liquidity_token: Addr::unchecked("lp"),
-            pair_type: PairType::Xyk {},
-        });
-
-        // set astroport spot price and query it
-        deps.querier.set_astroport_pair_simulation(
-            "pair".to_string(),
-            SimulationResponse {
-                return_amount: Uint128::new(9_000000),
-                commission_amount: Uint128::new(1_000000),
-                spread_amount: Uint128::zero(),
-            },
-        );
-
-        let price: Decimal = from_binary(
-            &query(
-                deps.as_ref(),
-                mock_env(),
-                QueryMsg::AssetPriceByReference {
-                    asset_reference: asset_reference.clone(),
-                },
-            )
-            .unwrap(),
-        )
-        .unwrap();
-
-        assert_eq!(price, Decimal::from_ratio(10_u128, 1_u128));
-    }
-
     // TEST_HELPERS
-    fn th_setup() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
+    fn th_setup() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, OsmosisQuery> {
         let mut deps = mock_dependencies(&[]);
 
         let msg = InstantiateMsg {
@@ -514,5 +437,22 @@ mod tests {
         instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         deps
+    }
+
+    fn mock_dependencies(
+        contract_balance: &[Coin],
+    ) -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, OsmosisQuery> {
+        let contract_addr = Addr::unchecked(MOCK_CONTRACT_ADDR);
+        let custom_querier: MarsMockQuerier = MarsMockQuerier::new(MockQuerier::new(&[(
+            &contract_addr.to_string(),
+            contract_balance,
+        )]));
+
+        OwnedDeps::<_, _, _, OsmosisQuery> {
+            storage: MockStorage::default(),
+            api: MockApi::default(),
+            querier: custom_querier,
+            custom_query_type: PhantomData,
+        }
     }
 }
