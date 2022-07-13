@@ -9,5 +9,5 @@ pub const ALLOWED_ASSETS: Map<AssetInfoKey, bool> = Map::new("allowed_assets");
 pub const ALLOWED_VAULTS: Map<Addr, bool> = Map::new("allowed_vaults");
 
 /* Positions */
-type NftTokenId = String;
+type NftTokenId<'a> = &'a str;
 pub const ASSETS: Map<(NftTokenId, AssetInfoKey), Uint128> = Map::new("assets");

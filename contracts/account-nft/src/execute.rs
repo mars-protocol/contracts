@@ -8,13 +8,13 @@ pub fn mint(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    user: String,
+    user: &str,
 ) -> Result<Response, ContractError> {
     let parent = Parent::default();
     let num_tokens = parent.token_count(deps.storage)?;
     let mint_msg_override = MintMsg {
         token_id: (num_tokens + 1).to_string(),
-        owner: user,
+        owner: user.to_string(),
         token_uri: None,
         extension: Empty {},
     };
@@ -24,9 +24,9 @@ pub fn mint(
 pub fn propose_new_owner(
     deps: DepsMut,
     info: MessageInfo,
-    new_owner: String,
+    new_owner: &str,
 ) -> Result<Response, ContractError> {
-    let proposed_owner_addr = deps.api.addr_validate(new_owner.as_str())?;
+    let proposed_owner_addr = deps.api.addr_validate(new_owner)?;
     let current_owner = Parent::default().minter.load(deps.storage)?;
 
     if info.sender != current_owner {

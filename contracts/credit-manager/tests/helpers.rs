@@ -51,14 +51,14 @@ pub fn mock_create_credit_account(
     )
 }
 
-pub fn deploy_mock_cw20(app: &mut App, symbol: String, initial_balances: Vec<Cw20Coin>) -> Addr {
+pub fn deploy_mock_cw20(app: &mut App, symbol: &str, initial_balances: Vec<Cw20Coin>) -> Addr {
     let code_id = app.store_code(mock_cw20_contract());
     app.instantiate_contract(
         code_id,
         Addr::unchecked("cw20-instantiator"),
         &cw20InstantiateMsg {
             name: format!("Token: {}", symbol.clone()),
-            symbol,
+            symbol: symbol.to_string(),
             decimals: 9,
             initial_balances,
             mint: None,

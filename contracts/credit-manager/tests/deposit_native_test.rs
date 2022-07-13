@@ -167,9 +167,9 @@ fn test_can_only_deposit_allowed_assets() {
     });
     let cw20_contract = deploy_mock_cw20(
         &mut app,
-        String::from("jakecoin"),
+        "jakecoin",
         vec![Cw20Coin {
-            address: user.clone().into(),
+            address: user.to_string(),
             amount: Uint128::from(500u128),
         }],
     );

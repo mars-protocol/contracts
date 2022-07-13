@@ -19,20 +19,20 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     })
 }
 
-pub fn query_position(deps: Deps, token_id: String) -> StdResult<PositionResponse> {
+pub fn query_position(deps: Deps, token_id: &str) -> StdResult<PositionResponse> {
     let res: StdResult<Vec<AssetUnchecked>> = ASSETS
-        .prefix(token_id.clone())
+        .prefix(token_id)
         .range(deps.storage, None, None, Order::Ascending)
         .into_iter()
         .map(|res| {
             let (asset_info_key, amount) = res?;
-            let info_unchecked = AssetInfoUnchecked::try_from(asset_info_key.clone())?;
+            let info_unchecked = AssetInfoUnchecked::try_from(asset_info_key)?;
             Ok(AssetUnchecked::new(info_unchecked, amount.u128()))
         })
         .collect();
 
     Ok(PositionResponse {
-        token_id,
+        token_id: token_id.to_string(),
         assets: res?,
     })
 }

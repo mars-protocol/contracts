@@ -23,9 +23,9 @@ fn test_only_token_owner_can_deposit() {
 
     let cw20_contract = deploy_mock_cw20(
         &mut app,
-        String::from("jakecoin"),
+        "jakecoin",
         vec![Cw20Coin {
-            address: another_user.clone().into(),
+            address: another_user.to_string(),
             amount: Uint128::from(500u128),
         }],
     );
@@ -43,7 +43,7 @@ fn test_only_token_owner_can_deposit() {
         another_user.clone(),
         cw20_contract.clone(),
         &Cw20ExecuteMsg::Send {
-            contract: manager_contract.clone().into(),
+            contract: manager_contract.to_string(),
             amount,
             msg: to_binary(&ReceiveMsg::Deposit {
                 token_id: token_id.clone(),
@@ -71,18 +71,18 @@ fn test_can_only_deposit_allowed_assets() {
     let user = Addr::unchecked("user");
     let cw20_contract_a = deploy_mock_cw20(
         &mut app,
-        String::from("jakecoin"),
+        "jakecoin",
         vec![Cw20Coin {
-            address: user.clone().into(),
+            address: user.to_string(),
             amount: Uint128::from(500u128),
         }],
     );
 
     let cw20_contract_b = deploy_mock_cw20(
         &mut app,
-        String::from("sparkycoin"),
+        "sparkycoin",
         vec![Cw20Coin {
-            address: user.clone().into(),
+            address: user.to_string(),
             amount: Uint128::from(500u128),
         }],
     );
@@ -100,7 +100,7 @@ fn test_can_only_deposit_allowed_assets() {
         user.clone(),
         cw20_contract_a.clone(),
         &Cw20ExecuteMsg::Send {
-            contract: contract_addr.clone().into(),
+            contract: contract_addr.to_string(),
             amount,
             msg: to_binary(&ReceiveMsg::Deposit {
                 token_id: token_id.clone(),
@@ -125,9 +125,9 @@ fn test_cw20_deposit_success() {
     let user = Addr::unchecked("user");
     let cw20_contract = deploy_mock_cw20(
         &mut app,
-        String::from("jakecoin"),
+        "jakecoin",
         vec![Cw20Coin {
-            address: user.clone().into(),
+            address: user.to_string(),
             amount: Uint128::from(500u128),
         }],
     );
@@ -146,7 +146,7 @@ fn test_cw20_deposit_success() {
         user.clone(),
         cw20_contract.clone(),
         &Cw20ExecuteMsg::Send {
-            contract: contract_addr.clone().into(),
+            contract: contract_addr.to_string(),
             amount,
             msg: to_binary(&ReceiveMsg::Deposit {
                 token_id: token_id.clone(),

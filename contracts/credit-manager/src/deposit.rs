@@ -15,8 +15,8 @@ pub fn native_deposit(
     storage: &mut dyn Storage,
     api: &dyn Api,
     response: Response,
-    nft_token_id: &String,
-    asset_unchecked: AssetUnchecked,
+    nft_token_id: &str,
+    asset_unchecked: &AssetUnchecked,
     received_coins: &mut AssetList,
 ) -> Result<Response, ContractError> {
     let asset = asset_unchecked.check(api, None)?;
@@ -37,7 +37,7 @@ pub fn native_deposit(
     }
 
     // increase the user asset amount
-    increment_position(storage, &nft_token_id, &asset.info, &asset.amount)?;
+    increment_position(storage, nft_token_id, &asset.info, &asset.amount)?;
 
     Ok(response
         .add_attribute("deposit_received", asset.to_string())
@@ -70,7 +70,7 @@ pub fn receive_cw20(
     match from_binary(&cw20_msg.msg)? {
         ReceiveMsg::Deposit { token_id } => {
             let sender = deps.api.addr_validate(&cw20_msg.sender)?;
-            assert_is_token_owner(&deps, &sender, &token_id.clone().into())?;
+            assert_is_token_owner(&deps, &sender, &token_id)?;
             let asset = AssetInfoUnchecked::cw20(&info.sender).check(deps.api, None)?;
             assert_asset_is_whitelisted(deps.storage, &asset)?;
             increment_position(deps.storage, &token_id, &asset, &cw20_msg.amount)?;
@@ -85,7 +85,7 @@ fn assert_asset_is_whitelisted(
     storage: &mut dyn Storage,
     asset: &AssetInfo,
 ) -> Result<(), ContractError> {
-    let is_whitelisted = ALLOWED_ASSETS.has(storage, asset.clone().into());
+    let is_whitelisted = ALLOWED_ASSETS.has(storage, asset.into());
     if !is_whitelisted {
         return Err(NotWhitelisted(asset.to_string()));
     }
@@ -94,17 +94,14 @@ fn assert_asset_is_whitelisted(
 
 fn increment_position(
     storage: &mut dyn Storage,
-    token_id: &String,
+    token_id: &str,
     asset: &AssetInfo,
     amount: &Uint128,
 ) -> StdResult<()> {
-    let position = ASSETS
-        .load(storage, (token_id.clone(), asset.clone().into()))
-        .unwrap_or(Uint128::zero());
-    ASSETS.save(
+    ASSETS.update(
         storage,
-        (token_id.clone(), asset.clone().into()),
-        &position.add(amount),
+        (token_id, asset.into()),
+        |value_opt| -> StdResult<_> { Ok(value_opt.unwrap_or(Uint128::zero()).add(amount)) },
     )?;
     Ok(())
 }

@@ -40,7 +40,7 @@ pub fn execute(
         }
         ExecuteMsg::Callback(callback) => execute_callback(deps, info, env, callback),
         ExecuteMsg::UpdateCreditAccount { token_id, actions } => {
-            dispatch_actions(deps, env, info, token_id, actions)
+            dispatch_actions(deps, env, info, &token_id, &actions)
         }
         ExecuteMsg::Receive(msg) => receive_cw20(deps, info, msg),
     }
@@ -56,6 +56,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::AllowedAssets { start_after, limit } => {
             to_binary(&query_allowed_assets(deps, start_after, limit)?)
         }
-        QueryMsg::Position { token_id } => to_binary(&query_position(deps, token_id)?),
+        QueryMsg::Position { token_id } => to_binary(&query_position(deps, &token_id)?),
     }
 }

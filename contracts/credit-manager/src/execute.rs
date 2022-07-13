@@ -49,7 +49,7 @@ pub fn update_config(
     let mut response = Response::new();
 
     if let Some(addr_str) = new_account_nft {
-        let validated = deps.api.addr_validate(addr_str.as_str())?;
+        let validated = deps.api.addr_validate(&addr_str)?;
         ACCOUNT_NFT.save(deps.storage, &validated)?;
 
         // Accept ownership. NFT contract owner must have proposed Rover as a new owner first.
@@ -65,7 +65,7 @@ pub fn update_config(
     }
 
     if let Some(addr_str) = new_owner {
-        let validated = deps.api.addr_validate(addr_str.as_str())?;
+        let validated = deps.api.addr_validate(&addr_str)?;
         OWNER.save(deps.storage, &validated)?;
         response = response.add_attribute("action", "rover/credit_manager/update_config/owner");
     }
@@ -77,10 +77,10 @@ pub fn dispatch_actions(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    token_id: String,
-    actions: Vec<Action>,
+    token_id: &str,
+    actions: &[Action],
 ) -> Result<Response, ContractError> {
-    assert_is_token_owner(&deps, &info.sender, &token_id)?;
+    assert_is_token_owner(&deps, &info.sender, token_id)?;
 
     let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];
@@ -93,7 +93,7 @@ pub fn dispatch_actions(
                     deps.storage,
                     deps.api,
                     response,
-                    &token_id,
+                    token_id,
                     asset,
                     &mut received_coins,
                 )?;
@@ -104,7 +104,7 @@ pub fn dispatch_actions(
 
     // after all deposits have been handled, we assert that the `received_natives` list is empty
     // this way, we ensure that the user does not send any extra fund which will get lost in the contract
-    if received_coins.len() > 0 {
+    if !received_coins.is_empty() {
         return Err(ExtraFundsReceived(received_coins));
     }
 
@@ -135,21 +135,21 @@ pub fn execute_callback(
 pub fn assert_is_token_owner(
     deps: &DepsMut,
     user: &Addr,
-    token_id: &String,
+    token_id: &str,
 ) -> Result<(), ContractError> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
     let owner_res: OwnerOfResponse = deps.querier.query_wasm_smart(
         contract_addr,
         &QueryMsg::OwnerOf {
-            token_id: token_id.clone(),
+            token_id: token_id.to_string(),
             include_expired: None,
         },
     )?;
 
-    if user.as_str() != owner_res.owner {
+    if user != &owner_res.owner {
         return Err(NotTokenOwner {
             user: user.to_string(),
-            token_id: token_id.clone(),
+            token_id: token_id.to_string(),
         });
     }
 
