@@ -19,15 +19,31 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+          target: wasm32-unknown-unknown
+
+      - name: Install cargo make
+        uses: davidB/rust-cargo-make@v1
 
       - name: Run cargo check
         uses: actions-rs/cargo@v1
         with:
-          command: check
+          command: make
+          args: check
 
-      - name: Compile Contracts to WASM
-        run: |
-          $GITHUB_WORKSPACE/scripts/build_artifacts.sh
+      - name: Compile WASM contract
+        uses: actions-rs/cargo@v1
+        with:
+          command: make
+          args: build
+        env:
+          RUSTFLAGS: "-C link-arg=-s"
+
+
+      - name: Run Rust-Optimizer
+        uses: actions-rs/cargo@v1
+        with:
+          command: make
+          args: rust-optimizer
 
   test:
     name: Test Suite
@@ -41,14 +57,16 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-          target: wasm32-unknown-unknown
           override: true
+
+      - name: Install cargo make
+        uses: davidB/rust-cargo-make@v1
 
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
-          command: test
-          args: --locked
+          command: make
+          args: test
         env:
           RUST_BACKTRACE: 1
 
@@ -67,14 +85,17 @@ jobs:
           components: rustfmt, clippy
           override: true
 
+      - name: Install cargo make
+        uses: davidB/rust-cargo-make@v1
+
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
         with:
-          command: fmt
-          args: --all -- --check
+          command: make
+          args: fmt
 
       - name: Run cargo clippy
         uses: actions-rs/cargo@v1
         with:
-          command: clippy
-          args: -- -D warnings
+          command: make
+          args: clippy

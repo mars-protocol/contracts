@@ -1,11 +1,14 @@
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    entry_point, from_binary, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult,
 };
 use cw2::set_contract_version;
+use cw20::Cw20ReceiveMsg;
 
+use rover::msg::execute::ReceiveMsg;
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::deposit::receive_cw20;
+use crate::deposit::cw20_deposit;
 use crate::error::ContractError;
 use crate::execute::{create_credit_account, dispatch_actions, execute_callback, update_config};
 use crate::instantiate::store_config;
@@ -57,5 +60,15 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_binary(&query_allowed_assets(deps, start_after, limit)?)
         }
         QueryMsg::Position { token_id } => to_binary(&query_position(deps, &token_id)?),
+    }
+}
+
+pub fn receive_cw20(
+    deps: DepsMut,
+    info: MessageInfo,
+    cw20_msg: Cw20ReceiveMsg,
+) -> Result<Response, ContractError> {
+    match from_binary(&cw20_msg.msg)? {
+        ReceiveMsg::Deposit { token_id } => cw20_deposit(deps, info, &cw20_msg, &token_id),
     }
 }

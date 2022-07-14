@@ -25,7 +25,7 @@ pub enum ContractError {
         received: Uint128,
     },
 
-    #[error("This method cannot be invoked externally")]
+    #[error("Callbacks cannot be invoked externally")]
     ExternalInvocation {},
 
     #[error("{user:?} is not the owner of {token_id:?}")]

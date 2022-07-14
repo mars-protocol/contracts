@@ -14,8 +14,8 @@ pub fn instantiate_mock_nft_contract(app: &mut BasicApp, owner: &Addr) -> Addr {
         code_id,
         owner.clone(),
         &InstantiateMsg {
-            name: String::from("mock_nft"),
-            symbol: String::from("MOCK"),
+            name: "mock_nft".to_string(),
+            symbol: "MOCK".to_string(),
             minter: owner.to_string(),
         },
         &[],

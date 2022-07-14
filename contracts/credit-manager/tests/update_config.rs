@@ -142,8 +142,8 @@ fn setup_nft_and_propose_owner(app: &mut App, original_owner: &Addr, contract_ad
             nft_contract_code_id,
             original_owner.clone(),
             &NftInstantiateMsg {
-                name: String::from("Rover Credit Account"),
-                symbol: String::from("RCA"),
+                name: "Rover Credit Account".to_string(),
+                symbol: "RCA".to_string(),
                 minter: original_owner.to_string(),
             },
             &[],

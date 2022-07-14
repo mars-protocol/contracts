@@ -1,0 +1,39 @@
+[config]
+default_to_workspace = false
+
+[tasks.check]
+command = "cargo"
+args = ["check"]
+
+[tasks.build]
+command = "cargo"
+args = ["build", "--release", "--target", "wasm32-unknown-unknown", "--locked"]
+
+[tasks.rust-optimizer]
+script = """docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.12.6
+"""
+
+[tasks.test]
+command = "cargo"
+args = ["test", "--locked"]
+
+[tasks.fmt]
+command = "cargo"
+args = ["fmt", "--all", "--check"]
+
+[tasks.clippy]
+command = "cargo"
+args = ["clippy", "--", "-D", "warnings"]
+
+[tasks.all-github-actions]
+dependencies = [
+    "check",
+    "build",
+    "rust-optimizer",
+    "test",
+    "fmt",
+    "clippy",
+]

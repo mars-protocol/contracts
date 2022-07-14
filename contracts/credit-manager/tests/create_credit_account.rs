@@ -26,8 +26,8 @@ fn test_create_credit_account() {
             nft_contract_code_id,
             owner.clone(),
             &NftInstantiateMsg {
-                name: String::from("Rover Credit Account"),
-                symbol: String::from("RCA"),
+                name: "Rover Credit Account".to_string(),
+                symbol: "RCA".to_string(),
                 minter: owner.to_string(),
             },
             &[],

@@ -10,9 +10,7 @@ use rover::msg::execute::{Action, CallbackMsg};
 
 use crate::deposit::native_deposit;
 use crate::error::ContractError;
-use crate::error::ContractError::{
-    ExternalInvocation, ExtraFundsReceived, NotTokenOwner, Unauthorized,
-};
+
 use crate::state::{ACCOUNT_NFT, OWNER};
 
 pub fn create_credit_account(deps: DepsMut, user: Addr) -> Result<Response, ContractError> {
@@ -40,9 +38,9 @@ pub fn update_config(
     let owner = OWNER.load(deps.storage)?;
 
     if info.sender != owner {
-        return Err(Unauthorized {
+        return Err(ContractError::Unauthorized {
             user: info.sender.into(),
-            action: String::from("update config"),
+            action: "update config".to_string(),
         });
     }
 
@@ -105,7 +103,7 @@ pub fn dispatch_actions(
     // after all deposits have been handled, we assert that the `received_natives` list is empty
     // this way, we ensure that the user does not send any extra fund which will get lost in the contract
     if !received_coins.is_empty() {
-        return Err(ExtraFundsReceived(received_coins));
+        return Err(ContractError::ExtraFundsReceived(received_coins));
     }
 
     let callback_msgs = callbacks
@@ -125,7 +123,7 @@ pub fn execute_callback(
     callback: CallbackMsg,
 ) -> Result<Response, ContractError> {
     if info.sender != env.contract.address {
-        return Err(ExternalInvocation {});
+        return Err(ContractError::ExternalInvocation {});
     }
     match callback {
         CallbackMsg::Placeholder { .. } => Ok(Response::new()),
@@ -147,7 +145,7 @@ pub fn assert_is_token_owner(
     )?;
 
     if user != &owner_res.owner {
-        return Err(NotTokenOwner {
+        return Err(ContractError::NotTokenOwner {
             user: user.to_string(),
             token_id: token_id.to_string(),
         });
