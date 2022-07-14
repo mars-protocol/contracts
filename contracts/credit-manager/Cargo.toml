@@ -17,13 +17,16 @@ rover = { version = "0.1", path = "../../packages/rover" }
 
 cosmwasm-std = "1.0"
 cw2 = "0.13"
+cw20 = "0.13"
+cw20-base = { version = "0.13", features = ["library"] }
+cw721 = "0.13"
+cw721-base = { version = "0.13", features = ["library"] }
 cw-asset = "2.1"
 cw-storage-plus = "0.13"
 schemars = "0.8"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+thiserror = "1.0"
 
 [dev-dependencies]
 anyhow = "1"
-cw721 = "0.13"
-cw721-base = { version = "0.13", features = ["library"] }
 cw-multi-test = "0.13"

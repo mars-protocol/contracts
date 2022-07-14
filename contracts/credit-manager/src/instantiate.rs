@@ -1,6 +1,5 @@
 use cosmwasm_std::{DepsMut, StdResult};
-
-use rover::InstantiateMsg;
+use rover::msg::InstantiateMsg;
 
 use crate::state::{ALLOWED_ASSETS, ALLOWED_VAULTS, OWNER};
 

@@ -1,0 +1,101 @@
+# Based on https://github.com/actions-rs/example/blob/master/.github/workflows/quickstart.yml
+
+on: push
+
+name: Main
+
+jobs:
+
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: wasm32-unknown-unknown
+
+      - name: Install cargo make
+        uses: davidB/rust-cargo-make@v1
+
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: make
+          args: check
+
+      - name: Compile WASM contract
+        uses: actions-rs/cargo@v1
+        with:
+          command: make
+          args: build
+        env:
+          RUSTFLAGS: "-C link-arg=-s"
+
+
+      - name: Run Rust-Optimizer
+        uses: actions-rs/cargo@v1
+        with:
+          command: make
+          args: rust-optimizer
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Install cargo make
+        uses: davidB/rust-cargo-make@v1
+
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: make
+          args: test
+        env:
+          RUST_BACKTRACE: 1
+
+  lints:
+    name: Lints
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: rustfmt, clippy
+          override: true
+
+      - name: Install cargo make
+        uses: davidB/rust-cargo-make@v1
+
+      - name: Run cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: make
+          args: fmt
+
+      - name: Run cargo clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: make
+          args: clippy

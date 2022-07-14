@@ -2,7 +2,8 @@ use cosmwasm_std::Addr;
 use cw_asset::AssetInfoUnchecked;
 use cw_multi_test::Executor;
 
-use rover::{ConfigResponse, InstantiateMsg, QueryMsg};
+use rover::msg::query::{ConfigResponse, QueryMsg};
+use rover::msg::InstantiateMsg;
 
 use crate::helpers::{mock_app, mock_contract};
 
@@ -68,16 +69,16 @@ fn test_allowed_vaults_and_assets_stored_on_instantiate() {
     let owner = Addr::unchecked("owner");
 
     let allowed_vaults = vec![
-        String::from("vaultcontract1"),
-        String::from("vaultcontract2"),
-        String::from("vaultcontract3"),
+        "vaultcontract1".to_string(),
+        "vaultcontract2".to_string(),
+        "vaultcontract3".to_string(),
     ];
 
     let allowed_assets = vec![
-        AssetInfoUnchecked::Native(String::from("uosmo")),
-        AssetInfoUnchecked::Cw20(String::from("osmo85wwjycfxjlaxsae9asmxlk3bsgxbw")),
-        AssetInfoUnchecked::Cw20(String::from("osmompbtkt3jezatztteo577lxkqbkdyke")),
-        AssetInfoUnchecked::Cw20(String::from("osmos6kmpxz9xcstleqnu2fnz8gskgf6gx")),
+        AssetInfoUnchecked::Native("uosmo".to_string()),
+        AssetInfoUnchecked::Cw20("osmo85wwjycfxjlaxsae9asmxlk3bsgxbw".to_string()),
+        AssetInfoUnchecked::Cw20("osmompbtkt3jezatztteo577lxkqbkdyke".to_string()),
+        AssetInfoUnchecked::Cw20("osmos6kmpxz9xcstleqnu2fnz8gskgf6gx".to_string()),
     ];
 
     let msg = InstantiateMsg {
@@ -134,7 +135,7 @@ fn test_panics_on_invalid_instantiation_addrs() {
 
     let msg = InstantiateMsg {
         owner: owner.to_string(),
-        allowed_vaults: vec![String::from("%%%INVALID%%%")],
+        allowed_vaults: vec!["%%%INVALID%%%".to_string()],
         allowed_assets: vec![],
     };
 
@@ -154,7 +155,7 @@ fn test_panics_on_invalid_instantiation_addrs() {
     let msg = InstantiateMsg {
         owner: owner.to_string(),
         allowed_vaults: vec![],
-        allowed_assets: vec![AssetInfoUnchecked::Cw20(String::from("AA"))], // Because cw-asset lowercases before passing to validate, in the test env, two letter strings is only one that triggers a fail
+        allowed_assets: vec![AssetInfoUnchecked::Cw20("AA".to_string())], // Because cw-asset lowercases before passing to validate, in the test env, two letter strings is only one that triggers a fail
     };
 
     let instantiate_res = app.instantiate_contract(

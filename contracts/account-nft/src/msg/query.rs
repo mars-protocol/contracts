@@ -153,8 +153,7 @@ impl TryInto<ParentQueryMsg> for QueryMsg {
             QueryMsg::Minter {} => Ok(ParentQueryMsg::Minter {}),
             _ => Err(StdError::generic_err(
                 "Attempting to convert to a non-cw721 compatible message",
-            )
-            .into()),
+            )),
         }
     }
 }

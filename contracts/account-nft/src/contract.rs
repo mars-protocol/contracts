@@ -32,8 +32,8 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint { user } => mint(deps, env, info, user),
-        ExecuteMsg::ProposeNewOwner { new_owner } => propose_new_owner(deps, info, new_owner),
+        ExecuteMsg::Mint { user } => mint(deps, env, info, &user),
+        ExecuteMsg::ProposeNewOwner { new_owner } => propose_new_owner(deps, info, &new_owner),
         ExecuteMsg::AcceptOwnership {} => accept_ownership(deps, info),
         _ => Parent::default().execute(deps, env, info, msg.try_into()?),
     }

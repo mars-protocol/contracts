@@ -1,9 +1,11 @@
-use crate::state::{ACCOUNT_NFT, ALLOWED_ASSETS, ALLOWED_VAULTS, OWNER};
-use cosmwasm_std::{Addr, Deps, Order, StdResult};
-use cw_asset::{AssetInfo, AssetInfoKey, AssetInfoUnchecked};
-use cw_storage_plus::Bound;
-use rover::ConfigResponse;
 use std::convert::TryFrom;
+
+use cosmwasm_std::{Addr, Deps, Order, StdResult};
+use cw_asset::{AssetInfo, AssetInfoKey, AssetInfoUnchecked, AssetUnchecked};
+use cw_storage_plus::Bound;
+use rover::msg::query::{ConfigResponse, PositionResponse};
+
+use crate::state::{ACCOUNT_NFT, ALLOWED_ASSETS, ALLOWED_VAULTS, ASSETS, OWNER};
 
 const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
@@ -11,7 +13,27 @@ const DEFAULT_LIMIT: u32 = 10;
 pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     Ok(ConfigResponse {
         owner: OWNER.load(deps.storage)?.into(),
-        account_nft: ACCOUNT_NFT.may_load(deps.storage)?.map(|addr| addr.to_string()),
+        account_nft: ACCOUNT_NFT
+            .may_load(deps.storage)?
+            .map(|addr| addr.to_string()),
+    })
+}
+
+pub fn query_position(deps: Deps, token_id: &str) -> StdResult<PositionResponse> {
+    let res: StdResult<Vec<AssetUnchecked>> = ASSETS
+        .prefix(token_id)
+        .range(deps.storage, None, None, Order::Ascending)
+        .into_iter()
+        .map(|res| {
+            let (asset_info_key, amount) = res?;
+            let info_unchecked = AssetInfoUnchecked::try_from(asset_info_key)?;
+            Ok(AssetUnchecked::new(info_unchecked, amount.u128()))
+        })
+        .collect();
+
+    Ok(PositionResponse {
+        token_id: token_id.to_string(),
+        assets: res?,
     })
 }
 
