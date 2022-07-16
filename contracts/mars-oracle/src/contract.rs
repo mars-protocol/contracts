@@ -146,14 +146,19 @@ fn query_asset_price(
         // NOTE: Price sources must exist for both assets in the pool
         PriceSourceChecked::OsmosisLiquidityToken { pool_id } => {
             let pool = query_osmosis_pool(deps, pool_id)?;
+            println!("PIOBAB {:?}", pool);
 
             let asset0: Asset = (&pool.assets[0]).into();
             let asset0_price = query_asset_price(deps, env.clone(), asset0.get_reference())?;
             let asset0_value = asset0_price * pool.assets[0].amount;
 
+            println!("PIOBAB1 {:?}", asset0_value);
+
             let asset1: Asset = (&pool.assets[1]).into();
             let asset1_price = query_asset_price(deps, env, asset1.get_reference())?;
             let asset1_value = asset1_price * pool.assets[1].amount;
+
+            println!("PIOBAB2 {:?}", asset1_value);
 
             let price = Decimal::from_ratio(asset0_value + asset1_value, pool.shares.amount);
             Ok(price)
@@ -236,7 +241,8 @@ mod tests {
     };
     use cosmwasm_std::{from_binary, Addr, Coin, Decimal, OwnedDeps, Uint128};
     use mars_outpost::testing::MarsMockQuerier;
-    use osmo_bindings::PoolStateResponse;
+    use osmo_bindings::Swap;
+    use osmo_bindings::{PoolStateResponse, SpotPriceResponse};
     use std::marker::PhantomData;
 
     #[test]
@@ -329,7 +335,7 @@ mod tests {
             PoolStateResponse {
                 assets: vec![
                     Coin {
-                        denom: "sometoken".to_string(),
+                        denom: "uatom".to_string(),
                         amount: Uint128::zero(),
                     },
                     Coin {
@@ -338,14 +344,14 @@ mod tests {
                     },
                 ],
                 shares: Coin {
-                    denom: "lpsometoken".to_string(),
+                    denom: "uatomlp".to_string(),
                     amount: Uint128::zero(),
                 },
             },
         );
 
         let asset = Asset::Native {
-            denom: "sometoken".to_string(),
+            denom: "uatom".to_string(),
         };
         let reference = asset.get_reference();
         let msg = ExecuteMsg::SetAsset {
@@ -360,6 +366,30 @@ mod tests {
         assert_eq!(
             price_source,
             PriceSourceUnchecked::OsmosisSpot { pool_id: 102 }
+        );
+    }
+
+    #[test]
+    fn test_set_asset_osmosis_liquidity_token() {
+        let mut deps = th_setup();
+        let info = mock_info("owner", &[]);
+
+        let asset = Asset::Native {
+            denom: "uatom".to_string(),
+        };
+        let reference = asset.get_reference();
+        let msg = ExecuteMsg::SetAsset {
+            asset,
+            price_source: PriceSourceUnchecked::OsmosisLiquidityToken { pool_id: 208 },
+        };
+        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+        let price_source = PRICE_SOURCES
+            .load(&deps.storage, reference.as_slice())
+            .unwrap();
+        assert_eq!(
+            price_source,
+            PriceSourceUnchecked::OsmosisLiquidityToken { pool_id: 208 }
         );
     }
 
@@ -428,6 +458,156 @@ mod tests {
         .unwrap();
 
         assert_eq!(price, Decimal::from_ratio(3_u128, 2_u128));
+    }
+
+    #[test]
+    fn test_query_asset_osmosis_spot() {
+        let mut deps = th_setup();
+
+        let asset = Asset::Native {
+            denom: "uatom".to_string(),
+        };
+        let reference = asset.get_reference();
+
+        PRICE_SOURCES
+            .save(
+                &mut deps.storage,
+                reference.as_slice(),
+                &PriceSourceChecked::OsmosisSpot { pool_id: 102 },
+            )
+            .unwrap();
+
+        deps.querier.set_spot_price(
+            Swap {
+                pool_id: 102,
+                denom_in: "uatom".to_string(),
+                denom_out: "uosmo".to_string(),
+            },
+            SpotPriceResponse {
+                price: Decimal::from_ratio(2u128, 56u128),
+            },
+        );
+
+        let price: Decimal = from_binary(
+            &query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::AssetPriceByReference {
+                    asset_reference: reference,
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(price, Decimal::from_ratio(2u128, 56u128));
+    }
+
+    #[test]
+    fn test_query_asset_osmosis_liquidity_token() {
+        let mut deps = th_setup();
+
+        // Setup atom spot price
+        {
+            let asset = Asset::Native {
+                denom: "uatom".to_string(),
+            };
+            let reference = asset.get_reference();
+
+            PRICE_SOURCES
+                .save(
+                    &mut deps.storage,
+                    reference.as_slice(),
+                    &PriceSourceChecked::OsmosisSpot { pool_id: 1 },
+                )
+                .unwrap();
+
+            deps.querier.set_spot_price(
+                Swap {
+                    pool_id: 1,
+                    denom_in: "uatom".to_string(),
+                    denom_out: "uosmo".to_string(),
+                },
+                SpotPriceResponse {
+                    price: Decimal::from_ratio(8u128, 5u128),
+                },
+            );
+        }
+
+        // Setup juno spot price
+        {
+            let asset = Asset::Native {
+                denom: "ujuno".to_string(),
+            };
+            let reference = asset.get_reference();
+
+            PRICE_SOURCES
+                .save(
+                    &mut deps.storage,
+                    reference.as_slice(),
+                    &PriceSourceChecked::OsmosisSpot { pool_id: 2 },
+                )
+                .unwrap();
+
+            deps.querier.set_spot_price(
+                Swap {
+                    pool_id: 2,
+                    denom_in: "ujuno".to_string(),
+                    denom_out: "uosmo".to_string(),
+                },
+                SpotPriceResponse {
+                    price: Decimal::from_ratio(4u128, 5u128),
+                },
+            );
+        }
+
+        let asset = Asset::Native {
+            denom: "atomjunolp".to_string(),
+        };
+        let reference = asset.get_reference();
+
+        // Setup atom - juno lp
+        {
+            PRICE_SOURCES
+                .save(
+                    &mut deps.storage,
+                    reference.as_slice(),
+                    &PriceSourceChecked::OsmosisLiquidityToken { pool_id: 3 },
+                )
+                .unwrap();
+
+            deps.querier.set_pool_state(
+                3,
+                PoolStateResponse {
+                    assets: vec![
+                        Coin {
+                            denom: "uatom".to_string(),
+                            amount: Uint128::from(100u32),
+                        },
+                        Coin {
+                            denom: "ujuno".to_string(),
+                            amount: Uint128::from(235u32),
+                        },
+                    ],
+                    shares: Coin {
+                        denom: "atomjunolp".to_string(),
+                        amount: Uint128::from(1000u32),
+                    },
+                },
+            );
+        }
+
+        let price: Decimal = from_binary(
+            &query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::AssetPriceByReference {
+                    asset_reference: reference,
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(price, Decimal::from_ratio(348u128, 1000u128));
     }
 
     // TEST_HELPERS

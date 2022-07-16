@@ -5,9 +5,9 @@ use cosmwasm_std::{
     SystemResult, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
-use osmo_bindings::{OsmosisQuery, PoolStateResponse, SpotPriceResponse};
+use osmo_bindings::{OsmosisQuery, PoolStateResponse, SpotPriceResponse, Swap};
 
-use crate::testing::osmosis_querier::{OsmosisQuerier, SpotPriceKey};
+use crate::testing::osmosis_querier::OsmosisQuerier;
 use crate::{address_provider, incentives, ma_token, oracle, testing::mock_address_provider};
 
 use super::{
@@ -116,8 +116,8 @@ impl MarsMockQuerier {
         self.osmosis_querier.pools.insert(pool_id, pool_state);
     }
 
-    pub fn set_spot_price(&mut self, key: SpotPriceKey, spot_price: SpotPriceResponse) {
-        self.osmosis_querier.spot_prices.insert(key, spot_price);
+    pub fn set_spot_price(&mut self, swap: Swap, spot_price: SpotPriceResponse) {
+        self.osmosis_querier.spot_prices.insert(swap.into(), spot_price);
     }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {

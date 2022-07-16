@@ -11,12 +11,12 @@ pub struct SpotPriceKey {
     pub denom_out: String,
 }
 
-impl From<&Swap> for SpotPriceKey {
-    fn from(swap: &Swap) -> Self {
+impl From<Swap> for SpotPriceKey {
+    fn from(swap: Swap) -> Self {
         Self {
             pool_id: swap.pool_id,
-            denom_in: swap.denom_in.clone(),
-            denom_out: swap.denom_out.clone(),
+            denom_in: swap.denom_in,
+            denom_out: swap.denom_out,
         }
     }
 }
@@ -29,7 +29,7 @@ pub struct OsmosisQuerier {
 
 impl OsmosisQuerier {
     pub fn handle_query(&self, request: OsmosisQuery) -> QuerierResult {
-        let res: ContractResult<Binary> = match &request {
+        let res: ContractResult<Binary> = match request {
             OsmosisQuery::PoolState { id } => match self.pools.get(&id) {
                 Some(pool_state_response) => to_binary(&pool_state_response).into(),
                 None => Err(SystemError::InvalidRequest {
@@ -38,7 +38,7 @@ impl OsmosisQuerier {
                 })
                 .into(),
             },
-            OsmosisQuery::SpotPrice { swap, .. } => match self.spot_prices.get(&swap.into()) {
+            OsmosisQuery::SpotPrice { swap, .. } => match self.spot_prices.get(&swap.clone().into()) {
                 Some(spot_price_response) => to_binary(&spot_price_response).into(),
                 None => Err(SystemError::InvalidRequest {
                     error: format!("SpotPriceResponse is not found for swap: {:?}", swap),
