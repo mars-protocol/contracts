@@ -136,7 +136,9 @@ fn query_asset_price(
     match price_source {
         PriceSourceChecked::Fixed { price } => Ok(price),
 
-        PriceSourceChecked::OsmosisSpot { pool_id } => query_osmosis_spot_price(deps, pool_id),
+        PriceSourceChecked::OsmosisSpot { pool_id } => {
+            query_osmosis_spot_price(deps, asset_reference, pool_id)
+        }
 
         // The value of each unit of the liquidity token is the total value of pool's two assets
         // divided by the liquidity token's total supply
@@ -180,6 +182,10 @@ mod helpers {
         }
     }
 
+    pub fn get_asset_name(asset_reference: Vec<u8>) -> Result<String, ContractError> {
+        String::from_utf8(asset_reference).map_err(|_| ContractError::CannotEncodeToUtf8String)
+    }
+
     /// Assert the osmosis pool indicated by `pool_id` consists of OSMO and `asset`
     pub fn assert_osmosis_pool_assets(
         deps: Deps<OsmosisQuery>,
@@ -209,13 +215,11 @@ mod helpers {
 
     pub fn query_osmosis_spot_price(
         deps: Deps<OsmosisQuery>,
+        asset_reference: Vec<u8>,
         pool_id: u64,
     ) -> Result<Decimal, ContractError> {
-        let pool_info = query_osmosis_pool(deps, pool_id)?; // FIXME: we can take asset from price sources (one of the asset is osmo)
-        let asset_1 = &pool_info.assets[0];
-        let asset_2 = &pool_info.assets[1];
-        let spot_price =
-            OsmosisQuery::spot_price(pool_id, asset_1.denom.as_str(), asset_2.denom.as_str());
+        let denom_in = get_asset_name(asset_reference)?;
+        let spot_price = OsmosisQuery::spot_price(pool_id, denom_in.as_str(), "uosmo");
         let query = QueryRequest::from(spot_price);
         let response: SpotPriceResponse = deps.querier.query(&query)?;
         Ok(response.price)
