@@ -43,7 +43,7 @@ pub mod msg {
     /// looks like this:
     ///
     /// 1. Init the address provider
-    /// 2. Init all other contracts, passing in the address provider address (not ALL contracts 
+    /// 2. Init all other contracts, passing in the address provider address (not ALL contracts
     ///    need this but many do)
     /// 3. Update the address provider, with an update config call to contain all the
     ///    other contract addresses from step 2, this is why we need it to be owned by an EOA

@@ -38,14 +38,16 @@ impl OsmosisQuerier {
                 })
                 .into(),
             },
-            OsmosisQuery::SpotPrice { swap, .. } => match self.spot_prices.get(&swap.clone().into()) {
-                Some(spot_price_response) => to_binary(&spot_price_response).into(),
-                None => Err(SystemError::InvalidRequest {
-                    error: format!("SpotPriceResponse is not found for swap: {:?}", swap),
-                    request: Default::default(),
-                })
-                .into(),
-            },
+            OsmosisQuery::SpotPrice { swap, .. } => {
+                match self.spot_prices.get(&swap.clone().into()) {
+                    Some(spot_price_response) => to_binary(&spot_price_response).into(),
+                    None => Err(SystemError::InvalidRequest {
+                        error: format!("SpotPriceResponse is not found for swap: {:?}", swap),
+                        request: Default::default(),
+                    })
+                    .into(),
+                }
+            }
             _ => {
                 panic!("[mock]: Unsupported Osmosis query");
             }

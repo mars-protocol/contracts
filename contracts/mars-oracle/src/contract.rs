@@ -146,19 +146,14 @@ fn query_asset_price(
         // NOTE: Price sources must exist for both assets in the pool
         PriceSourceChecked::OsmosisLiquidityToken { pool_id } => {
             let pool = query_osmosis_pool(deps, pool_id)?;
-            println!("PIOBAB {:?}", pool);
 
             let asset0: Asset = (&pool.assets[0]).into();
             let asset0_price = query_asset_price(deps, env.clone(), asset0.get_reference())?;
             let asset0_value = asset0_price * pool.assets[0].amount;
 
-            println!("PIOBAB1 {:?}", asset0_value);
-
             let asset1: Asset = (&pool.assets[1]).into();
             let asset1_price = query_asset_price(deps, env, asset1.get_reference())?;
             let asset1_value = asset1_price * pool.assets[1].amount;
-
-            println!("PIOBAB2 {:?}", asset1_value);
 
             let price = Decimal::from_ratio(asset0_value + asset1_value, pool.shares.amount);
             Ok(price)

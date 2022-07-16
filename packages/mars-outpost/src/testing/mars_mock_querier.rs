@@ -39,9 +39,7 @@ impl Querier for MarsMockQuerier {
         // Custom Osmosis Queries
         let parse_osmosis_query: StdResult<QueryRequest<OsmosisQuery>> = from_slice(bin_request);
         if let Ok(QueryRequest::Custom(osmosis_query)) = parse_osmosis_query {
-            return self
-                .osmosis_querier
-                .handle_query(osmosis_query);
+            return self.osmosis_querier.handle_query(osmosis_query);
         }
 
         self.handle_query(&request)
@@ -117,7 +115,9 @@ impl MarsMockQuerier {
     }
 
     pub fn set_spot_price(&mut self, swap: Swap, spot_price: SpotPriceResponse) {
-        self.osmosis_querier.spot_prices.insert(swap.into(), spot_price);
+        self.osmosis_querier
+            .spot_prices
+            .insert(swap.into(), spot_price);
     }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
