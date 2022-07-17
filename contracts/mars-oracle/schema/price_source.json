@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PriceSource",
+  "oneOf": [
+    {
+      "description": "Returns a fixed value;",
+      "type": "object",
+      "required": [
+        "fixed"
+      ],
+      "properties": {
+        "fixed": {
+          "type": "object",
+          "required": [
+            "price"
+          ],
+          "properties": {
+            "price": {
+              "$ref": "#/definitions/Decimal"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Osmosis spot price quoted in OSMO\n\nNOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO",
+      "type": "object",
+      "required": [
+        "osmosis_spot"
+      ],
+      "properties": {
+        "osmosis_spot": {
+          "type": "object",
+          "required": [
+            "pool_id"
+          ],
+          "properties": {
+            "pool_id": {
+              "description": "Pool id",
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Osmosis liquidity token",
+      "type": "object",
+      "required": [
+        "osmosis_liquidity_token"
+      ],
+      "properties": {
+        "osmosis_liquidity_token": {
+          "type": "object",
+          "required": [
+            "pool_id"
+          ],
+          "properties": {
+            "pool_id": {
+              "description": "Pool id",
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "Decimal": {
+      "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+      "type": "string"
+    }
+  }
+}
