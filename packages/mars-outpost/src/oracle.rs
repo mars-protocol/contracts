@@ -1,58 +1,7 @@
-use std::fmt;
-
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Api, Decimal, StdResult};
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum PriceSource {
-    /// Returns a fixed value;
-    Fixed { price: Decimal },
-
-    /// Osmosis spot price quoted in OSMO
-    ///
-    /// NOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO
-    OsmosisSpot {
-        /// Pool id
-        pool_id: u64,
-    },
-
-    /// Osmosis liquidity token
-    OsmosisLiquidityToken {
-        /// Pool id
-        pool_id: u64,
-    },
-}
-
-impl fmt::Display for PriceSource {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let label = match self {
-            PriceSource::Fixed { .. } => "fixed",
-            PriceSource::OsmosisSpot { .. } => "osmosis_spot",
-            PriceSource::OsmosisLiquidityToken { .. } => "osmosis_liquidity_token",
-        };
-        write!(f, "{}", label)
-    }
-}
-
-pub type PriceSourceUnchecked = PriceSource;
-pub type PriceSourceChecked = PriceSource;
-
-impl PriceSourceUnchecked {
-    pub fn to_checked(&self, _api: &dyn Api) -> StdResult<PriceSourceChecked> {
-        Ok(match self {
-            PriceSourceUnchecked::Fixed { price } => PriceSourceChecked::Fixed { price: *price },
-            PriceSourceUnchecked::OsmosisSpot { pool_id } => {
-                PriceSourceChecked::OsmosisSpot { pool_id: *pool_id }
-            }
-            PriceSourceUnchecked::OsmosisLiquidityToken { pool_id } => {
-                PriceSourceChecked::OsmosisLiquidityToken { pool_id: *pool_id }
-            }
-        })
-    }
-}
+use cosmwasm_std::Addr;
 
 /// Contract global configuration
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -64,7 +13,6 @@ pub mod msg {
     use schemars::JsonSchema;
     use serde::{Deserialize, Serialize};
 
-    use super::PriceSourceUnchecked;
     use crate::asset::Asset;
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -74,14 +22,11 @@ pub mod msg {
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
     #[serde(rename_all = "snake_case")]
-    pub enum ExecuteMsg {
+    pub enum ExecuteMsg<T> {
         /// Update contract config
         UpdateConfig { owner: Option<String> },
         /// Specify parameters to query asset price
-        SetAsset {
-            asset: Asset,
-            price_source: PriceSourceUnchecked,
-        },
+        SetAsset { asset: Asset, price_source: T },
     }
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -115,19 +60,13 @@ pub mod helpers {
     pub fn query_price(
         querier: QuerierWrapper,
         oracle_address: Addr,
-        asset_label: &str,
+        _asset_label: &str,
         asset_reference: Vec<u8>,
-        asset_type: AssetType,
+        _asset_type: AssetType,
     ) -> StdResult<Decimal> {
-        // For OSMO, we skip the query and just return 1 to save gas
-        if asset_type == AssetType::Native && asset_label == "uosmo" {
-            // FIXME: generalize for other assets
-            Ok(Decimal::one())
-        } else {
-            querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-                contract_addr: oracle_address.into(),
-                msg: to_binary(&QueryMsg::AssetPriceByReference { asset_reference })?,
-            }))
-        }
+        querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: oracle_address.into(),
+            msg: to_binary(&QueryMsg::AssetPriceByReference { asset_reference })?,
+        }))
     }
 }
