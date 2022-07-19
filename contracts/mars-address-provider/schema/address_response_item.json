@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AddressResponseItem",
+  "type": "object",
+  "required": [
+    "address",
+    "contract"
+  ],
+  "properties": {
+    "address": {
+      "description": "The contract's address",
+      "type": "string"
+    },
+    "contract": {
+      "description": "The contract",
+      "allOf": [
+        {
+          "$ref": "#/definitions/MarsContract"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "MarsContract": {
+      "type": "string",
+      "enum": [
+        "incentives",
+        "oracle",
+        "protocol_admin",
+        "protocol_rewards_collector",
+        "red_bank"
+      ]
+    }
+  }
+}
