@@ -122,7 +122,7 @@ impl MarsMockQuerier {
                 }
 
                 // Address Provider Queries
-                let parse_address_provider_query: StdResult<address_provider::msg::QueryMsg> =
+                let parse_address_provider_query: StdResult<address_provider::QueryMsg> =
                     from_binary(msg);
                 if let Ok(address_provider_query) = parse_address_provider_query {
                     return mock_address_provider::handle_query(

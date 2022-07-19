@@ -92,7 +92,7 @@ pub mod helpers {
 
     pub fn query_price(
         querier: QuerierWrapper,
-        oracle_address: Addr,
+        oracle_address: &Addr,
         asset_label: &str,
         asset_reference: Vec<u8>,
         asset_type: AssetType,

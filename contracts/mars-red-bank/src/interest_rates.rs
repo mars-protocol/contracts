@@ -30,7 +30,7 @@ const SECONDS_PER_YEAR: u64 = 31536000u64;
 /// the period between indexes_last_updated and current_block
 pub fn apply_accumulated_interests(
     env: &Env,
-    protocol_rewards_collector_address: Addr,
+    protocol_rewards_collector_address: &Addr,
     market: &mut Market,
     mut response: Response,
 ) -> StdResult<Response> {

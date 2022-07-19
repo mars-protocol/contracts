@@ -1,13 +1,23 @@
+use std::convert::TryInto;
+
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+    to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
+};
+
+use cw_storage_plus::Bound;
+use mars_outpost::address_provider::{
+    AddressResponseItem, Config, ExecuteMsg, InstantiateMsg, MarsContract, QueryMsg,
+};
 
 use crate::error::ContractError;
-use crate::msg::{ConfigParams, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::CONFIG;
-use crate::{Config, MarsContract};
+use crate::helpers::{assert_owner, assert_valid_addr};
+use crate::key::MarsContractKey;
+use crate::state::{CONFIG, CONTRACTS};
 
-use mars_outpost::helpers::option_string_to_addr;
+const DEFAULT_LIMIT: u32 = 10;
+const MAX_LIMIT: u32 = 30;
 
 // INIT
 
@@ -18,85 +28,68 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    // Initialize config
-    let config = Config {
-        owner: deps.api.addr_validate(&msg.owner)?,
-        incentives_address: Addr::unchecked(""),
-        mars_token_address: Addr::unchecked(""),
-        oracle_address: Addr::unchecked(""),
-        protocol_admin_address: Addr::unchecked(""),
-        protocol_rewards_collector_address: Addr::unchecked(""),
-        red_bank_address: Addr::unchecked(""),
-    };
+    assert_valid_addr(deps.api, &msg.owner, &msg.prefix)?;
 
-    CONFIG.save(deps.storage, &config)?;
+    CONFIG.save(deps.storage, &msg)?;
 
     Ok(Response::default())
 }
 
-// HANDLERS
+// EXECUTE
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::UpdateConfig {
-            config: config_params,
-        } => execute_update_config(deps, env, info, config_params),
+        ExecuteMsg::SetAddress {
+            contract,
+            address,
+        } => set_address(deps, info.sender, contract, address),
+        ExecuteMsg::TransferOwnership {
+            new_owner,
+        } => transfer_ownership(deps, info.sender, new_owner),
     }
 }
 
-/// Update config
-pub fn execute_update_config(
+pub fn set_address(
     deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    config_params: ConfigParams,
+    sender: Addr,
+    contract: MarsContract,
+    address: String,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+
+    assert_owner(&sender, &config.owner)?;
+    assert_valid_addr(deps.api, &address, &config.prefix)?;
+
+    CONTRACTS.save(deps.storage, contract.into(), &address)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "mars-address-provider/address_set")
+        .add_attribute("contract", contract.to_string())
+        .add_attribute("address", address))
+}
+
+pub fn transfer_ownership(
+    deps: DepsMut,
+    sender: Addr,
+    new_owner: String,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
 
-    if info.sender != config.owner {
-        return Err(ContractError::Unauthorized {});
-    }
+    assert_owner(&sender, &config.owner)?;
 
-    let ConfigParams {
-        owner,
-        incentives_address,
-        mars_token_address,
-        oracle_address,
-        protocol_admin_address,
-        protocol_rewards_collector_address,
-        red_bank_address,
-    } = config_params;
-
-    // Update config
-    config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
-    config.incentives_address =
-        option_string_to_addr(deps.api, incentives_address, config.incentives_address)?;
-    config.mars_token_address =
-        option_string_to_addr(deps.api, mars_token_address, config.mars_token_address)?;
-    config.oracle_address = option_string_to_addr(deps.api, oracle_address, config.oracle_address)?;
-    config.protocol_admin_address = option_string_to_addr(
-        deps.api,
-        protocol_admin_address,
-        config.protocol_admin_address,
-    )?;
-    config.protocol_rewards_collector_address = option_string_to_addr(
-        deps.api,
-        protocol_rewards_collector_address,
-        config.protocol_rewards_collector_address,
-    )?;
-    config.red_bank_address =
-        option_string_to_addr(deps.api, red_bank_address, config.red_bank_address)?;
-
+    config.owner = new_owner;
     CONFIG.save(deps.storage, &config)?;
 
-    let res = Response::new().add_attribute("action", "update_config");
-    Ok(res)
+    Ok(Response::new()
+        .add_attribute("action", "mars-address-provider/ownership_transferred")
+        .add_attribute("previous_owner", sender)
+        .add_attribute("new_owner", config.owner))
 }
 
 // QUERIES
@@ -105,40 +98,55 @@ pub fn execute_update_config(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::Address { contract } => to_binary(&query_address(deps, contract)?),
-        QueryMsg::Addresses { contracts } => to_binary(&query_addresses(deps, contracts)?),
+        QueryMsg::Address(contract) => to_binary(&query_address(deps, contract)?),
+        QueryMsg::Addresses(contracts) => to_binary(&query_addresses(deps, contracts)?),
+        QueryMsg::AllAddresses {
+            start_after,
+            limit,
+        } => to_binary(&query_all_addresses(deps, start_after, limit)?),
     }
 }
 
 fn query_config(deps: Deps) -> StdResult<Config> {
-    let config = CONFIG.load(deps.storage)?;
-    Ok(config)
+    CONFIG.load(deps.storage)
 }
 
-fn query_address(deps: Deps, contract: MarsContract) -> StdResult<Addr> {
-    let config = CONFIG.load(deps.storage)?;
-    Ok(get_address(&config, contract))
+fn query_address(deps: Deps, contract: MarsContract) -> StdResult<AddressResponseItem> {
+    Ok(AddressResponseItem {
+        contract,
+        address: CONTRACTS.load(deps.storage, contract.into())?,
+    })
 }
 
-fn query_addresses(deps: Deps, contracts: Vec<MarsContract>) -> StdResult<Vec<Addr>> {
-    let config = CONFIG.load(deps.storage)?;
-    let mut ret: Vec<Addr> = Vec::with_capacity(contracts.len());
-    for contract in contracts {
-        ret.push(get_address(&config, contract));
-    }
-
-    Ok(ret)
+fn query_addresses(
+    deps: Deps,
+    contracts: Vec<MarsContract>,
+) -> StdResult<Vec<AddressResponseItem>> {
+    contracts
+        .into_iter()
+        .map(|contract| query_address(deps, contract))
+        .collect::<StdResult<Vec<_>>>()
 }
 
-fn get_address(config: &Config, address: MarsContract) -> Addr {
-    match address {
-        MarsContract::Incentives => config.incentives_address.clone(),
-        MarsContract::MarsToken => config.mars_token_address.clone(),
-        MarsContract::Oracle => config.oracle_address.clone(),
-        MarsContract::ProtocolAdmin => config.protocol_admin_address.clone(),
-        MarsContract::ProtocolRewardsCollector => config.protocol_rewards_collector_address.clone(),
-        MarsContract::RedBank => config.red_bank_address.clone(),
-    }
+fn query_all_addresses(
+    deps: Deps,
+    start_after: Option<MarsContract>,
+    limit: Option<u32>,
+) -> StdResult<Vec<AddressResponseItem>> {
+    let start = start_after.map(MarsContractKey::from).map(Bound::exclusive);
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+
+    CONTRACTS
+        .range(deps.storage, start, None, Order::Ascending)
+        .take(limit)
+        .map(|item| {
+            let (k, v) = item?;
+            Ok(AddressResponseItem {
+                contract: k.try_into()?,
+                address: v,
+            })
+        })
+        .collect()
 }
 
 // TESTS
@@ -147,141 +155,162 @@ fn get_address(config: &Config, address: MarsContract) -> Addr {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_dependencies_with_balance, mock_env, MockApi, MockQuerier,
-        MockStorage,
+        mock_dependencies_with_balance, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{from_binary, Coin, OwnedDeps};
+    use cosmwasm_std::{from_binary, OwnedDeps};
 
     #[test]
     fn test_proper_initialization() {
-        let mut deps = mock_dependencies();
-        let owner_address = Addr::unchecked("owner");
+        let mut deps = th_setup();
 
-        // *
-        // init config with empty params
-        // *
         let msg = InstantiateMsg {
             owner: "owner".to_string(),
+            prefix: "osmo".to_string(),
         };
-        let info = MessageInfo {
-            sender: Addr::unchecked("whoever"),
-            funds: vec![],
-        };
-        instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        instantiate(deps.as_mut(), mock_env(), mock_info("deployer", &[]), msg).unwrap();
 
         let config = CONFIG.load(&deps.storage).unwrap();
-        assert_eq!(owner_address, config.owner);
+        assert_eq!(config.owner, "owner".to_string());
     }
 
     #[test]
-    fn test_update_config() {
-        let mut deps = th_setup(&[]);
-        // *
-        // non owner is not authorized
-        // *
-        {
-            let msg = ExecuteMsg::UpdateConfig {
-                config: ConfigParams::default(),
-            };
-            let info = MessageInfo {
-                sender: Addr::unchecked("somebody"),
-                funds: vec![],
-            };
-            let error_res = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-            assert_eq!(error_res, ContractError::Unauthorized {});
-        }
+    fn test_set_address() {
+        let mut deps = th_setup();
 
-        // *
-        // update config
-        // *
-        {
-            let msg = ExecuteMsg::UpdateConfig {
-                config: ConfigParams {
-                    incentives_address: Some("incentives".to_string()),
-                    mars_token_address: Some("mars-token".to_string()),
-                    red_bank_address: Some("red-bank".to_string()),
-                    ..Default::default()
-                },
-            };
-            let info = MessageInfo {
-                sender: Addr::unchecked("owner"),
-                funds: vec![],
-            };
+        let msg = ExecuteMsg::SetAddress {
+            contract: MarsContract::RedBank,
+            address: "red_bank".to_string(),
+        };
 
-            let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-            assert_eq!(0, res.messages.len());
+        // non-owner cannot set address
+        let err =
+            execute(deps.as_mut(), mock_env(), mock_info("jake", &[]), msg.clone()).unwrap_err();
+        assert_eq!(err, ContractError::Unauthorized);
 
-            // Read config from state
-            let new_config = CONFIG.load(&deps.storage).unwrap();
+        // owner can set address
+        execute(deps.as_mut(), mock_env(), mock_info("owner", &[]), msg).unwrap();
 
-            assert_eq!(new_config.owner, Addr::unchecked("owner"));
-            assert_eq!(
-                new_config.protocol_rewards_collector_address,
-                Addr::unchecked(""),
-            );
-            assert_eq!(new_config.incentives_address, Addr::unchecked("incentives"));
-            assert_eq!(new_config.mars_token_address, Addr::unchecked("mars-token"));
-            assert_eq!(new_config.red_bank_address, Addr::unchecked("red-bank"));
-        }
+        let address = CONTRACTS.load(deps.as_ref().storage, MarsContract::RedBank.into()).unwrap();
+        assert_eq!(address, "red_bank".to_string());
+    }
+
+    #[test]
+    fn test_transfer_ownership() {
+        let mut deps = th_setup();
+
+        let msg = ExecuteMsg::TransferOwnership {
+            new_owner: "larry".to_string(),
+        };
+
+        // non-owner cannot transfer ownership
+        let err =
+            execute(deps.as_mut(), mock_env(), mock_info("jake", &[]), msg.clone()).unwrap_err();
+        assert_eq!(err, ContractError::Unauthorized);
+
+        // owner can transfer ownership
+        execute(deps.as_mut(), mock_env(), mock_info("owner", &[]), msg).unwrap();
+
+        let config = CONFIG.load(deps.as_ref().storage).unwrap();
+        assert_eq!(config.owner, "larry".to_string());
     }
 
     #[test]
     fn test_address_queries() {
-        let mut deps = th_setup(&[]);
-        let env = mock_env();
+        let mut deps = th_setup();
 
-        let mars_token_address = Addr::unchecked("mars_token");
-        let incentives_address = Addr::unchecked("incentives");
-        let red_bank_address = Addr::unchecked("red_bank");
-
-        CONFIG
-            .update(&mut deps.storage, |mut c| -> StdResult<_> {
-                c.mars_token_address = mars_token_address.clone();
-                c.incentives_address = incentives_address.clone();
-                c.red_bank_address = red_bank_address.clone();
-                Ok(c)
-            })
+        CONTRACTS
+            .save(deps.as_mut().storage, MarsContract::Incentives.into(), &"incentives".to_string())
+            .unwrap();
+        CONTRACTS
+            .save(deps.as_mut().storage, MarsContract::Oracle.into(), &"oracle".to_string())
+            .unwrap();
+        CONTRACTS
+            .save(deps.as_mut().storage, MarsContract::RedBank.into(), &"red_bank".to_string())
             .unwrap();
 
-        {
-            let address_query = query(
-                deps.as_ref(),
-                env.clone(),
-                QueryMsg::Address {
+        let res: AddressResponseItem =
+            th_query(deps.as_ref(), QueryMsg::Address(MarsContract::Incentives));
+        assert_eq!(
+            res,
+            AddressResponseItem {
+                contract: MarsContract::Incentives,
+                address: "incentives".to_string()
+            }
+        );
+
+        let res: Vec<AddressResponseItem> = th_query(
+            deps.as_ref(),
+            QueryMsg::Addresses(vec![MarsContract::Incentives, MarsContract::RedBank]),
+        );
+        assert_eq!(
+            res,
+            vec![
+                AddressResponseItem {
                     contract: MarsContract::Incentives,
+                    address: "incentives".to_string()
                 },
-            )
-            .unwrap();
-            let result: Addr = from_binary(&address_query).unwrap();
-            assert_eq!(result, incentives_address);
-        }
+                AddressResponseItem {
+                    contract: MarsContract::RedBank,
+                    address: "red_bank".to_string()
+                }
+            ]
+        );
 
-        {
-            let addresses_query = query(
-                deps.as_ref(),
-                env,
-                QueryMsg::Addresses {
-                    contracts: vec![MarsContract::RedBank, MarsContract::MarsToken],
+        let res: Vec<AddressResponseItem> = th_query(
+            deps.as_ref(),
+            QueryMsg::AllAddresses {
+                start_after: None,
+                limit: Some(2),
+            },
+        );
+        assert_eq!(
+            res,
+            vec![
+                AddressResponseItem {
+                    contract: MarsContract::Incentives,
+                    address: "incentives".to_string()
                 },
-            )
-            .unwrap();
-            let result: Vec<Addr> = from_binary(&addresses_query).unwrap();
-            assert_eq!(result[0], red_bank_address);
-            assert_eq!(result[1], mars_token_address);
-        }
+                AddressResponseItem {
+                    contract: MarsContract::Oracle,
+                    address: "oracle".to_string()
+                }
+            ]
+        );
+
+        let res: Vec<AddressResponseItem> = th_query(
+            deps.as_ref(),
+            QueryMsg::AllAddresses {
+                start_after: Some(MarsContract::Oracle),
+                limit: None,
+            },
+        );
+        assert_eq!(
+            res,
+            vec![AddressResponseItem {
+                contract: MarsContract::RedBank,
+                address: "red_bank".to_string()
+            }]
+        );
     }
 
-    // TEST HELPERS
-    fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
-        let mut deps = mock_dependencies_with_balance(contract_balances);
-        let msg = InstantiateMsg {
-            owner: "owner".to_string(),
-        };
-        let info = MessageInfo {
-            sender: Addr::unchecked("someone"),
-            funds: vec![],
-        };
-        instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+    fn th_setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
+        let mut deps = mock_dependencies_with_balance(&[]);
+
+        instantiate(
+            deps.as_mut(),
+            mock_env(),
+            mock_info("deployer", &[]),
+            InstantiateMsg {
+                owner: "owner".to_string(),
+                prefix: "osmo".to_string(),
+            },
+        )
+        .unwrap();
+
         deps
+    }
+
+    fn th_query<T: serde::de::DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
+        from_binary(&query(deps, mock_env(), msg).unwrap()).unwrap()
     }
 }

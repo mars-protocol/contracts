@@ -398,6 +398,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-outpost",
+ "serde",
  "thiserror",
 ]
 
