@@ -1,5 +1,5 @@
 [package]
-name = "mars-oracle"
+name = "osmosis-mars-oracle"
 version = "0.1.0"
 authors = [
   "Spike Spiegel <spikeonmars@protonmail.com>",
@@ -26,7 +26,7 @@ crate-type = ["cdylib", "rlib"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../../packages/mars-outpost", version = "0.1.0" }
+mars-outpost = { path = "../../../packages/mars-outpost", version = "0.1.0" }
 
 cosmwasm-std = "1.0"
 

@@ -12,7 +12,7 @@ use mars_outpost::helpers::option_string_to_addr;
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::state::{CONFIG, PRICE_SOURCES};
-use crate::{Config, PriceSourceChecked, PriceSourceUnchecked};
+use crate::{Config, PriceSource};
 
 use self::helpers::*;
 
@@ -39,7 +39,7 @@ pub fn execute(
     deps: DepsMut<OsmosisQuery>,
     env: Env,
     info: MessageInfo,
-    msg: ExecuteMsg,
+    msg: ExecuteMsg<PriceSource>,
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::UpdateConfig { owner } => execute_update_config(deps, env, info, owner),
@@ -73,7 +73,7 @@ pub fn execute_set_asset(
     _env: Env,
     info: MessageInfo,
     asset: Asset,
-    price_source_unchecked: PriceSourceUnchecked,
+    price_source: PriceSource,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     if info.sender != config.owner {
@@ -81,19 +81,18 @@ pub fn execute_set_asset(
     }
 
     let (asset_label, asset_reference, _) = asset.get_attributes();
-    let price_source = price_source_unchecked.to_checked(deps.api)?;
     PRICE_SOURCES.save(deps.storage, &asset_reference, &price_source)?;
 
     // for spot we must make sure: the osmosis pool indicated by `pool_id`
     // consists of OSMO and the asset of interest
-    if let PriceSourceChecked::OsmosisSpot { pool_id } = &price_source {
+    if let PriceSource::Spot { pool_id } = &price_source {
         assert_osmosis_pool_assets(deps.as_ref(), &asset, *pool_id)?;
     }
 
     Ok(Response::new()
         .add_attribute("action", "set_asset")
         .add_attribute("asset", asset_label)
-        .add_attribute("price_source", price_source_unchecked.to_string()))
+        .add_attribute("price_source", price_source.to_string()))
 }
 
 // QUERIES
@@ -122,7 +121,7 @@ fn query_asset_price_source(
     deps: Deps<OsmosisQuery>,
     _env: Env,
     asset: Asset,
-) -> StdResult<PriceSourceChecked> {
+) -> StdResult<PriceSource> {
     PRICE_SOURCES.load(deps.storage, &asset.get_reference())
 }
 
@@ -134,17 +133,15 @@ fn query_asset_price(
     let price_source = PRICE_SOURCES.load(deps.storage, &asset_reference)?;
 
     match price_source {
-        PriceSourceChecked::Fixed { price } => Ok(price),
+        PriceSource::Fixed { price } => Ok(price),
 
-        PriceSourceChecked::OsmosisSpot { pool_id } => {
-            query_osmosis_spot_price(deps, asset_reference, pool_id)
-        }
+        PriceSource::Spot { pool_id } => query_osmosis_spot_price(deps, asset_reference, pool_id),
 
         // The value of each unit of the liquidity token is the total value of pool's two assets
         // divided by the liquidity token's total supply
         //
         // NOTE: Price sources must exist for both assets in the pool
-        PriceSourceChecked::OsmosisLiquidityToken { pool_id } => {
+        PriceSource::LiquidityToken { pool_id } => {
             let pool = query_osmosis_pool(deps, pool_id)?;
 
             let asset0: Asset = (&pool.assets[0]).into();
@@ -303,7 +300,7 @@ mod tests {
         let reference = asset.get_reference();
         let msg = ExecuteMsg::SetAsset {
             asset,
-            price_source: PriceSourceUnchecked::Fixed {
+            price_source: PriceSource::Fixed {
                 price: Decimal::from_ratio(1_u128, 2_u128),
             },
         };
@@ -314,7 +311,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             price_source,
-            PriceSourceChecked::Fixed {
+            PriceSource::Fixed {
                 price: Decimal::from_ratio(1_u128, 2_u128)
             }
         );
@@ -351,17 +348,14 @@ mod tests {
         let reference = asset.get_reference();
         let msg = ExecuteMsg::SetAsset {
             asset,
-            price_source: PriceSourceUnchecked::OsmosisSpot { pool_id: 102 },
+            price_source: PriceSource::Spot { pool_id: 102 },
         };
         execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
         let price_source = PRICE_SOURCES
             .load(&deps.storage, reference.as_slice())
             .unwrap();
-        assert_eq!(
-            price_source,
-            PriceSourceUnchecked::OsmosisSpot { pool_id: 102 }
-        );
+        assert_eq!(price_source, PriceSource::Spot { pool_id: 102 });
     }
 
     #[test]
@@ -375,17 +369,14 @@ mod tests {
         let reference = asset.get_reference();
         let msg = ExecuteMsg::SetAsset {
             asset,
-            price_source: PriceSourceUnchecked::OsmosisLiquidityToken { pool_id: 208 },
+            price_source: PriceSource::LiquidityToken { pool_id: 208 },
         };
         execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
         let price_source = PRICE_SOURCES
             .load(&deps.storage, reference.as_slice())
             .unwrap();
-        assert_eq!(
-            price_source,
-            PriceSourceUnchecked::OsmosisLiquidityToken { pool_id: 208 }
-        );
+        assert_eq!(price_source, PriceSource::LiquidityToken { pool_id: 208 });
     }
 
     #[test]
@@ -399,14 +390,14 @@ mod tests {
 
         let msg = ExecuteMsg::SetAsset {
             asset: asset.clone(),
-            price_source: PriceSourceUnchecked::Fixed {
+            price_source: PriceSource::Fixed {
                 price: Decimal::from_ratio(1_u128, 2_u128),
             },
         };
 
         execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        let price_source: PriceSourceChecked = from_binary(
+        let price_source: PriceSource = from_binary(
             &query(
                 deps.as_ref(),
                 mock_env(),
@@ -418,7 +409,7 @@ mod tests {
 
         assert_eq!(
             price_source,
-            PriceSourceChecked::Fixed {
+            PriceSource::Fixed {
                 price: Decimal::from_ratio(1_u128, 2_u128),
             },
         );
@@ -436,7 +427,7 @@ mod tests {
             .save(
                 &mut deps.storage,
                 asset_reference.as_slice(),
-                &PriceSourceChecked::Fixed {
+                &PriceSource::Fixed {
                     price: Decimal::from_ratio(3_u128, 2_u128),
                 },
             )
@@ -468,7 +459,7 @@ mod tests {
             .save(
                 &mut deps.storage,
                 reference.as_slice(),
-                &PriceSourceChecked::OsmosisSpot { pool_id: 102 },
+                &PriceSource::Spot { pool_id: 102 },
             )
             .unwrap();
 
@@ -512,7 +503,7 @@ mod tests {
                 .save(
                     &mut deps.storage,
                     reference.as_slice(),
-                    &PriceSourceChecked::OsmosisSpot { pool_id: 1 },
+                    &PriceSource::Spot { pool_id: 1 },
                 )
                 .unwrap();
 
@@ -539,7 +530,7 @@ mod tests {
                 .save(
                     &mut deps.storage,
                     reference.as_slice(),
-                    &PriceSourceChecked::OsmosisSpot { pool_id: 2 },
+                    &PriceSource::Spot { pool_id: 2 },
                 )
                 .unwrap();
 
@@ -566,7 +557,7 @@ mod tests {
                 .save(
                     &mut deps.storage,
                     reference.as_slice(),
-                    &PriceSourceChecked::OsmosisLiquidityToken { pool_id: 3 },
+                    &PriceSource::LiquidityToken { pool_id: 3 },
                 )
                 .unwrap();
 

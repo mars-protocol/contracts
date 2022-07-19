@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ExecuteMsg",
+  "title": "ExecuteMsg_for_PriceSource",
   "oneOf": [
     {
       "description": "Update contract config",

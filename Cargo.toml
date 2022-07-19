@@ -4,7 +4,7 @@ members = [
     "contracts/mars-red-bank",
     "contracts/mars-address-provider",
     "contracts/mars-ma-token",
-    "contracts/mars-oracle"
+    "contracts/osmosis/mars-oracle",
 ]
 # members = ["contracts/*", "packages/*"]
 
