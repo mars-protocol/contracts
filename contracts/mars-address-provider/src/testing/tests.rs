@@ -11,7 +11,7 @@ use crate::state::{CONFIG, CONTRACTS};
 use super::helpers::{th_query, th_setup};
 
 #[test]
-fn test_proper_initialization() {
+fn proper_initialization() {
     let deps = th_setup();
 
     let config: Config = th_query(deps.as_ref(), QueryMsg::Config {});
@@ -19,7 +19,7 @@ fn test_proper_initialization() {
 }
 
 #[test]
-fn test_set_address() {
+fn setting_address() {
     let mut deps = th_setup();
 
     let msg = ExecuteMsg::SetAddress {
@@ -39,7 +39,7 @@ fn test_set_address() {
 }
 
 #[test]
-fn test_transfer_ownership() {
+fn transferring_ownership() {
     let mut deps = th_setup();
 
     let msg = ExecuteMsg::TransferOwnership {
@@ -58,7 +58,7 @@ fn test_transfer_ownership() {
 }
 
 #[test]
-fn test_address_queries() {
+fn querying_addresses() {
     let mut deps = th_setup();
 
     CONTRACTS
