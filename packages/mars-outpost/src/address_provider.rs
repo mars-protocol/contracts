@@ -125,15 +125,11 @@ pub mod helpers {
         address_provider_addr: &Addr,
         contracts: Vec<MarsContract>,
     ) -> StdResult<HashMap<MarsContract, Addr>> {
-        let res: Vec<AddressResponseItem> =
-            deps.querier.query_wasm_smart(address_provider_addr, &QueryMsg::Addresses(contracts))?;
+        let res: Vec<AddressResponseItem> = deps
+            .querier
+            .query_wasm_smart(address_provider_addr, &QueryMsg::Addresses(contracts))?;
 
-        let mut map = HashMap::new();
-        for item in res {
-            map.insert(item.contract, deps.api.addr_validate(&item.address)?);
-        }
-
-        Ok(map)
+        res.iter().map(|item| Ok((item.contract, deps.api.addr_validate(&item.address)?))).collect()
     }
 }
 
