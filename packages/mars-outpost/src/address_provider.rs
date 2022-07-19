@@ -6,6 +6,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum MarsContract {
     Incentives,
     Oracle,
