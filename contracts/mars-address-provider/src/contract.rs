@@ -79,17 +79,17 @@ pub fn transfer_ownership(
     sender: Addr,
     new_owner: String,
 ) -> Result<Response, ContractError> {
-    let mut config = CONFIG.load(deps.storage)?;
+    CONFIG.update(deps.storage, |mut config| -> Result<_, ContractError> {
+        assert_owner(&sender, &config.owner)?;
 
-    assert_owner(&sender, &config.owner)?;
-
-    config.owner = new_owner;
-    CONFIG.save(deps.storage, &config)?;
+        config.owner = new_owner.clone();
+        Ok(config)
+    })?;
 
     Ok(Response::new()
         .add_attribute("action", "mars-address-provider/ownership_transferred")
         .add_attribute("previous_owner", sender)
-        .add_attribute("new_owner", config.owner))
+        .add_attribute("new_owner", new_owner))
 }
 
 // QUERIES
