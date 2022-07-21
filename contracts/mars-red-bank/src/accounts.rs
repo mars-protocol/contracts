@@ -197,9 +197,7 @@ fn get_user_asset_positions(
         let asset_price = oracle::helpers::query_price(
             deps.querier,
             oracle_address,
-            &asset_label,
             asset_reference_vec.clone(),
-            market.asset_type,
         )?;
 
         let user_asset_position = UserAssetPosition {

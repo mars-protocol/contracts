@@ -1030,9 +1030,7 @@ pub fn execute_borrow(
             mars_outpost::oracle::helpers::query_price(
                 deps.querier,
                 oracle_address,
-                &asset_label,
                 asset_reference.clone(),
-                asset_type,
             )?
         };
 
