@@ -1,4 +1,6 @@
-use cosmwasm_std::{coins, to_binary, Addr, BankMsg, CosmosMsg, Deps, StdResult, Uint128, WasmMsg};
+use cosmwasm_std::{
+    coins, to_binary, Addr, BankMsg, Coin, CosmosMsg, Deps, StdResult, Uint128, WasmMsg,
+};
 use cw20::Cw20ExecuteMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -37,6 +39,14 @@ impl Asset {
         match &self {
             Asset::Native { denom } => denom.as_bytes().to_vec(),
             Asset::Cw20 { contract_addr } => contract_addr.to_lowercase().as_bytes().to_vec(),
+        }
+    }
+}
+
+impl From<&Coin> for Asset {
+    fn from(coin: &Coin) -> Self {
+        Asset::Native {
+            denom: coin.denom.clone(),
         }
     }
 }

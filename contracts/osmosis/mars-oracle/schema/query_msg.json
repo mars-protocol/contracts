@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "QueryMsg",
-  "anyOf": [
+  "oneOf": [
     {
       "description": "Query contract config. Returns `Config`",
       "type": "object",
@@ -37,7 +37,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Query asset price given an asset; returns `mars_core::math::decimal::Decimal`",
+      "description": "Query asset price given an asset; returns `Decimal`",
       "type": "object",
       "required": [
         "asset_price"
@@ -58,7 +58,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Query asset price given it's internal reference; returns `mars_core::math::decimal::Decimal`\n\nNOTE: meant to be used by protocol contracts only",
+      "description": "Query asset price given it's internal reference; returns `Decimal`\n\nNOTE: meant to be used by protocol contracts only",
       "type": "object",
       "required": [
         "asset_price_by_reference"
@@ -87,7 +87,7 @@
   "definitions": {
     "Asset": {
       "description": "Represents either a native asset or a cw20. Meant to be used as part of a msg in a contract call and not to be used internally",
-      "anyOf": [
+      "oneOf": [
         {
           "type": "object",
           "required": [

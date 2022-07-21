@@ -1,9 +1,12 @@
 [package]
-name = "mars-oracle"
-version = "1.0.2"
+name = "osmosis-mars-oracle"
+version = "0.1.0"
 authors = [
   "Spike Spiegel <spikeonmars@protonmail.com>",
-  "larry_0x <larry@delphidigital.io>"
+  "larry_0x <larry@delphidigital.io>",
+  "Piotr Babel <piotr@delphilabs.io>",
+  "Ahmad Kaouk <ahmad@delphilabs.io>",
+  "Harry Scholes"
 ]
 edition = "2018"
 
@@ -23,27 +26,21 @@ crate-type = ["cdylib", "rlib"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-core = { path = "../../packages/mars-core", version = "1.0.2" }
+mars-outpost = { path = "../../../packages/mars-outpost", version = "0.1.0" }
 
-terra-cosmwasm = "2.2.0"
+cosmwasm-std = "1.0"
 
-cw-storage-plus = "0.9.0"
+cw-storage-plus = "0.13"
 
-cosmwasm-std = "0.16.2"
+schemars = "0.8.8"
+serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 
-schemars = "0.8.1"
-serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+thiserror = "1.0.31"
 
-thiserror = "1.0.23"
-
-astroport = "1.0"
-
-basset = { git = "https://github.com/lidofinance/lido-terra-contracts", tag = "v1.0.2" }
-
-stader = { git = "https://github.com/stader-labs/stader-liquid-token", package = "staking", tag = "v0.2.1", features = ["library"] }
+osmo-bindings = { git = "https://github.com/osmosis-labs/bindings", tag = "v0.6.0" }
 
 [dev-dependencies]
-cosmwasm-schema = "0.16.2"
+cosmwasm-schema = "1.0.0"
 
 [profile.release]
 overflow-checks = true
