@@ -53,16 +53,12 @@ pub mod helpers {
         to_binary, Addr, Decimal, QuerierWrapper, QueryRequest, StdResult, WasmQuery,
     };
 
-    use crate::asset::AssetType;
-
     use super::msg::QueryMsg;
 
     pub fn query_price(
         querier: QuerierWrapper,
-        oracle_address: Addr,
-        _asset_label: &str,
+        oracle_address: &Addr,
         asset_reference: Vec<u8>,
-        _asset_type: AssetType,
     ) -> StdResult<Decimal> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: oracle_address.into(),

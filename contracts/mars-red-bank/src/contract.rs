@@ -379,14 +379,14 @@ pub fn execute_init_asset(
             // Prepare response, should instantiate an maToken
             // and use the Register hook.
             // A new maToken should be created which callbacks this contract in order to be registered.
-            let mut addresses_query = address_provider::helpers::query_addresses(
-                &deps.querier,
-                config.address_provider_address,
+            let addresses = address_provider::helpers::query_addresses(
+                deps.as_ref(),
+                &config.address_provider_address,
                 vec![MarsContract::Incentives, MarsContract::ProtocolAdmin],
             )?;
-
-            let protocol_admin_address = addresses_query.pop().unwrap();
-            let incentives_address = addresses_query.pop().unwrap();
+            // TODO: protocol admin may be a marshub address, which can't be validated into `Addr`
+            let protocol_admin_address = &addresses[&MarsContract::ProtocolAdmin];
+            let incentives_address = &addresses[&MarsContract::Incentives];
 
             let token_symbol = format!("ma{}", symbol);
 
@@ -566,13 +566,13 @@ pub fn execute_update_asset(
 
             if should_update_interest_rates {
                 let protocol_rewards_collector_address = address_provider::helpers::query_address(
-                    &deps.querier,
-                    config.address_provider_address,
+                    deps.as_ref(),
+                    &config.address_provider_address,
                     MarsContract::ProtocolRewardsCollector,
                 )?;
                 response = apply_accumulated_interests(
                     &env,
-                    protocol_rewards_collector_address,
+                    &protocol_rewards_collector_address,
                     &mut market,
                     response,
                 )?;
@@ -738,13 +738,13 @@ pub fn execute_deposit(
 
     // update indexes and interest rates
     let protocol_rewards_collector_address = address_provider::helpers::query_address(
-        &deps.querier,
-        config.address_provider_address,
+        deps.as_ref(),
+        &config.address_provider_address,
         MarsContract::ProtocolRewardsCollector,
     )?;
     response = apply_accumulated_interests(
         &env,
-        protocol_rewards_collector_address,
+        &protocol_rewards_collector_address,
         &mut market,
         response,
     )?;
@@ -829,13 +829,13 @@ pub fn execute_withdraw(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let mut addresses_query = address_provider::helpers::query_addresses(
-        &deps.querier,
-        config.address_provider_address,
+    let addresses = address_provider::helpers::query_addresses(
+        deps.as_ref(),
+        &config.address_provider_address,
         vec![MarsContract::Oracle, MarsContract::ProtocolRewardsCollector],
     )?;
-    let protocol_rewards_collector_address = addresses_query.pop().unwrap();
-    let oracle_address = addresses_query.pop().unwrap();
+    let protocol_rewards_collector_address = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let oracle_address = &addresses[&MarsContract::Oracle];
 
     let mut withdrawer = match USERS.may_load(deps.storage, &withdrawer_addr)? {
         Some(user) => user,
@@ -844,7 +844,7 @@ pub fn execute_withdraw(
             // storage (If this happens the protocol did something wrong). The exception is
             // the protocol_rewards_collector which gets minted token without depositing
             // nor receiving a transfer from another user.
-            if withdrawer_addr != protocol_rewards_collector_address {
+            if withdrawer_addr != *protocol_rewards_collector_address {
                 return Err(ContractError::ExistingUserPositionRequired {});
             }
             User::default()
@@ -1002,13 +1002,13 @@ pub fn execute_borrow(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let mut addresses_query = address_provider::helpers::query_addresses(
-        &deps.querier,
-        config.address_provider_address,
+    let addresses = address_provider::helpers::query_addresses(
+        deps.as_ref(),
+        &config.address_provider_address,
         vec![MarsContract::Oracle, MarsContract::ProtocolRewardsCollector],
     )?;
-    let protocol_rewards_collector_address = addresses_query.pop().unwrap();
-    let oracle_address = addresses_query.pop().unwrap();
+    let protocol_rewards_collector_address = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let oracle_address = &addresses[&MarsContract::Oracle];
 
     // Check if user can borrow specified amount
     let mut uncollateralized_debt = false;
@@ -1018,7 +1018,7 @@ pub fn execute_borrow(
             deps.as_ref(),
             env.block.time.seconds(),
             &borrower_address,
-            oracle_address.clone(),
+            oracle_address,
             &user,
             global_state.market_count,
         )?;
@@ -1030,9 +1030,7 @@ pub fn execute_borrow(
             mars_outpost::oracle::helpers::query_price(
                 deps.querier,
                 oracle_address,
-                &asset_label,
                 asset_reference.clone(),
-                asset_type,
             )?
         };
 
@@ -1192,8 +1190,8 @@ pub fn execute_repay(
     let config = CONFIG.load(deps.storage)?;
 
     let protocol_rewards_collector_address = address_provider::helpers::query_address(
-        &deps.querier,
-        config.address_provider_address,
+        deps.as_ref(),
+        &config.address_provider_address,
         MarsContract::ProtocolRewardsCollector,
     )?;
 
@@ -1201,7 +1199,7 @@ pub fn execute_repay(
 
     response = apply_accumulated_interests(
         &env,
-        protocol_rewards_collector_address,
+        &protocol_rewards_collector_address,
         &mut market,
         response,
     )?;
@@ -1350,13 +1348,13 @@ pub fn execute_liquidate(
     // 2. Compute health factor
     let config = CONFIG.load(deps.storage)?;
 
-    let mut addresses_query = address_provider::helpers::query_addresses(
-        &deps.querier,
-        config.address_provider_address,
+    let addresses = address_provider::helpers::query_addresses(
+        deps.as_ref(),
+        &config.address_provider_address,
         vec![MarsContract::Oracle, MarsContract::ProtocolRewardsCollector],
     )?;
-    let protocol_rewards_collector_address = addresses_query.pop().unwrap();
-    let oracle_address = addresses_query.pop().unwrap();
+    let protocol_rewards_collector_address = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let oracle_address = &addresses[&MarsContract::Oracle];
 
     let global_state = GLOBAL_STATE.load(deps.storage)?;
     let user_position = get_user_position(
@@ -1528,7 +1526,7 @@ pub fn execute_liquidate(
 
             response = apply_accumulated_interests(
                 &env,
-                protocol_rewards_collector_address.clone(),
+                protocol_rewards_collector_address,
                 &mut collateral_market_after,
                 response,
             )?;
@@ -1803,15 +1801,15 @@ pub fn execute_update_asset_collateral_status(
         let global_state = GLOBAL_STATE.load(deps.storage)?;
         let config = CONFIG.load(deps.storage)?;
         let oracle_address = address_provider::helpers::query_address(
-            &deps.querier,
-            config.address_provider_address,
+            deps.as_ref(),
+            &config.address_provider_address,
             MarsContract::Oracle,
         )?;
         let user_position = get_user_position(
             deps.as_ref(),
             env.block.time.seconds(),
             &user_address,
-            oracle_address,
+            &oracle_address,
             &user,
             global_state.market_count,
         )?;
@@ -1860,15 +1858,15 @@ pub fn execute_finalize_liquidity_token_transfer(
     let mut from_user = USERS.load(deps.storage, &from_address)?;
     let config = CONFIG.load(deps.storage)?;
     let oracle_address = address_provider::helpers::query_address(
-        &deps.querier,
-        config.address_provider_address,
+        deps.as_ref(),
+        &config.address_provider_address,
         MarsContract::Oracle,
     )?;
     let user_position = get_user_position(
         deps.as_ref(),
         env.block.time.seconds(),
         &from_address,
-        oracle_address,
+        &oracle_address,
         &from_user,
         global_state.market_count,
     )?;
@@ -2208,15 +2206,15 @@ pub fn query_user_position(
     let global_state = GLOBAL_STATE.load(deps.storage)?;
     let user = USERS.may_load(deps.storage, &address)?.unwrap_or_default();
     let oracle_address = address_provider::helpers::query_address(
-        &deps.querier,
-        config.address_provider_address,
+        deps,
+        &config.address_provider_address,
         MarsContract::Oracle,
     )?;
     let user_position = get_user_position(
         deps,
         env.block.time.seconds(),
         &address,
-        oracle_address,
+        &oracle_address,
         &user,
         global_state.market_count,
     )?;
@@ -9052,7 +9050,7 @@ mod tests {
                 deps.as_ref(),
                 env.block.time.seconds(),
                 &user_addr,
-                Addr::unchecked("oracle"),
+                &Addr::unchecked("oracle"),
                 &user,
                 3,
             )

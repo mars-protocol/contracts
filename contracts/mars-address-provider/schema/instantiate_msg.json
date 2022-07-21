@@ -1,13 +1,19 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "InstantiateMsg",
-  "description": "Only owner can be set on initialization (the EOA doing all the deployments) as all other contracts are supposed to be initialized after this one with its address passed as a param. After initializing all contracts. An update config call should be done setting council as the owner and submiting all the contract addresses",
+  "description": "Essentially, mars-address-provider is a required init param for all other contracts, so it needs to be initialised first (Only owner can be set on initialization). So the deployment looks like this:\n\n1. Init the address provider 2. Init all other contracts, passing in the address provider address (not ALL contracts need this but many do) 3. Update the address provider, with an update config call to contain all the other contract addresses from step 2, this is why we need it to be owned by an EOA (externally owned account) - so we can do this update as part of the deployment 4. Update the owner of the address provider contract at the end of deployment to be either a. the multisig or b. the gov/council contract",
   "type": "object",
   "required": [
-    "owner"
+    "owner",
+    "prefix"
   ],
   "properties": {
     "owner": {
+      "description": "The contract's owner",
+      "type": "string"
+    },
+    "prefix": {
+      "description": "The address prefix of the chain this contract is deployed on",
       "type": "string"
     }
   }

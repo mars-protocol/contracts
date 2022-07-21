@@ -2,8 +2,7 @@ use std::env::current_dir;
 use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
-use mars_address_provider::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use mars_address_provider::Config;
+use mars_outpost::address_provider::{AddressResponseItem, ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -14,5 +13,5 @@ fn main() {
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
     export_schema(&schema_for!(ExecuteMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
-    export_schema(&schema_for!(Config), &out_dir);
+    export_schema(&schema_for!(AddressResponseItem), &out_dir);
 }

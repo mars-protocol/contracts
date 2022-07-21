@@ -1,5 +1,8 @@
 pub mod contract;
 pub mod error;
+mod helpers;
+mod key;
 pub mod state;
 
-pub use mars_outpost::address_provider::*;
+#[cfg(test)]
+mod testing;

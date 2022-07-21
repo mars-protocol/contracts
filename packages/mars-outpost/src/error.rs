@@ -1,8 +1,6 @@
 use cosmwasm_std::StdError;
 use thiserror::Error;
 
-use crate::address_provider::MarsContract;
-
 #[derive(Error, Debug, PartialEq)]
 pub enum MarsError {
     #[error("{0}")]
@@ -23,9 +21,6 @@ pub enum MarsError {
         invalid_value: String,
         predicate: String,
     },
-
-    #[error("One or more addresses are empty: {empty_addresses:?}")]
-    EmptyAddresses { empty_addresses: Vec<MarsContract> },
 }
 
 impl From<MarsError> for StdError {
@@ -46,19 +41,6 @@ mod tests {
 
     #[test]
     fn test_mars_error_to_std_error() {
-        {
-            let mars_error = MarsError::EmptyAddresses {
-                empty_addresses: vec![MarsContract::RedBank],
-            };
-
-            let std_error: StdError = mars_error.into();
-
-            assert_eq!(
-                std_error,
-                StdError::generic_err("One or more addresses are empty: [RedBank]")
-            )
-        }
-
         {
             let mars_error = MarsError::Unauthorized {};
 

@@ -61,7 +61,7 @@ pub fn get_user_position(
     deps: Deps,
     block_time: u64,
     user_address: &Addr,
-    oracle_address: Addr,
+    oracle_address: &Addr,
     user: &User,
     market_count: u32,
 ) -> StdResult<UserPosition> {
@@ -132,7 +132,7 @@ fn get_user_asset_positions(
     market_count: u32,
     user: &User,
     user_address: &Addr,
-    oracle_address: Addr,
+    oracle_address: &Addr,
     block_time: u64,
 ) -> StdResult<Vec<UserAssetPosition>> {
     let mut ret: Vec<UserAssetPosition> = vec![];
@@ -196,10 +196,8 @@ fn get_user_asset_positions(
 
         let asset_price = oracle::helpers::query_price(
             deps.querier,
-            oracle_address.clone(),
-            &asset_label,
+            oracle_address,
             asset_reference_vec.clone(),
-            market.asset_type,
         )?;
 
         let user_asset_position = UserAssetPosition {
