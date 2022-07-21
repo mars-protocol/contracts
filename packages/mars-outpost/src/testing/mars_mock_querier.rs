@@ -5,7 +5,9 @@ use cosmwasm_std::{
     SystemResult, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
+use osmo_bindings::{OsmosisQuery, PoolStateResponse, SpotPriceResponse, Swap};
 
+use crate::testing::osmosis_querier::OsmosisQuerier;
 use crate::{address_provider, incentives, ma_token, oracle, testing::mock_address_provider};
 
 use super::{
@@ -19,11 +21,11 @@ pub struct MarsMockQuerier {
     cw20_querier: Cw20Querier,
     oracle_querier: OracleQuerier,
     incentives_querier: IncentivesQuerier,
+    osmosis_querier: OsmosisQuerier,
 }
 
 impl Querier for MarsMockQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        // MockQuerier doesn't support Custom, so we ignore it completely here
         let request: QueryRequest<Empty> = match from_slice(bin_request) {
             Ok(v) => v,
             Err(e) => {
@@ -33,6 +35,13 @@ impl Querier for MarsMockQuerier {
                 })
             }
         };
+
+        // Custom Osmosis Queries
+        let parse_osmosis_query: StdResult<QueryRequest<OsmosisQuery>> = from_slice(bin_request);
+        if let Ok(QueryRequest::Custom(osmosis_query)) = parse_osmosis_query {
+            return self.osmosis_querier.handle_query(osmosis_query);
+        }
+
         self.handle_query(&request)
     }
 }
@@ -44,6 +53,7 @@ impl MarsMockQuerier {
             cw20_querier: Cw20Querier::default(),
             oracle_querier: OracleQuerier::default(),
             incentives_querier: IncentivesQuerier::default(),
+            osmosis_querier: OsmosisQuerier::default(),
         }
     }
 
@@ -98,6 +108,16 @@ impl MarsMockQuerier {
         self.incentives_querier
             .unclaimed_rewards_at
             .insert(Addr::unchecked(user_address), unclaimed_rewards);
+    }
+
+    pub fn set_pool_state(&mut self, pool_id: u64, pool_state: PoolStateResponse) {
+        self.osmosis_querier.pools.insert(pool_id, pool_state);
+    }
+
+    pub fn set_spot_price(&mut self, swap: Swap, spot_price: SpotPriceResponse) {
+        self.osmosis_querier
+            .spot_prices
+            .insert(swap.into(), spot_price);
     }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {

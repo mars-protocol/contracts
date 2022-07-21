@@ -6,6 +6,7 @@ mod mars_mock_querier;
 mod mock_address_provider;
 mod mocks;
 mod oracle_querier;
+mod osmosis_querier;
 
 pub use helpers::*;
 pub use mars_mock_querier::MarsMockQuerier;

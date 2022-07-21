@@ -391,7 +391,9 @@ pub fn query_underlying_asset_balance(
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, mock_dependencies_with_balance};
+    use cosmwasm_std::testing::{
+        mock_dependencies, mock_dependencies_with_balance, mock_env, mock_info,
+    };
     use cosmwasm_std::{coins, Addr, CosmosMsg, StdError, SubMsg, WasmMsg};
 
     use cw20::{
