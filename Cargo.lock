@@ -598,9 +598,9 @@ name = "mars-incentives"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus",
- "cw20",
+ "cosmwasm-std 1.0.0",
+ "cw-storage-plus 0.13.4",
+ "cw20 0.13.4",
  "mars-outpost",
  "mars-testing",
  "schemars",
@@ -650,6 +650,7 @@ dependencies = [
  "cw20 0.13.4",
  "cw20-base",
  "mars-outpost",
+ "osmo-bindings 0.5.1",
  "schemars",
  "serde",
  "thiserror",
@@ -675,12 +676,12 @@ dependencies = [
 name = "mars-testing"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-std",
+ "cosmwasm-std 1.0.0",
  "cw2",
- "cw20",
+ "cw20 0.13.4",
  "cw20-base",
  "mars-outpost",
- "osmo-bindings",
+ "osmo-bindings 0.6.0",
  "schemars",
  "serde",
  "thiserror",
@@ -691,6 +692,17 @@ name = "opaque-debug"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
+
+[[package]]
+name = "osmo-bindings"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d29a49bf5df140714e63e3a13b6d6c7b7903620c4e3451476bb59cf50c1c7f88"
+dependencies = [
+ "cosmwasm-std 1.0.0",
+ "schemars",
+ "serde",
+]
 
 [[package]]
 name = "osmo-bindings"
@@ -711,7 +723,7 @@ dependencies = [
  "cw-storage-plus 0.13.4",
  "mars-outpost",
  "mars-testing",
- "osmo-bindings",
+ "osmo-bindings 0.6.0",
  "schemars",
  "serde",
  "thiserror",

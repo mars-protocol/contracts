@@ -19,7 +19,7 @@ pub enum ContractError {
     ConfigError(#[from] ConfigError),
 
     #[error("Asset is not enabled for distribution: {asset_label:?}")]
-    AssetNotEnabled { asset_label: String },
+    AssetNotEnabledForDistribution { asset_label: String },
 
     #[error("Amount to distribute {amount} is larger than available balance {balance}")]
     AmountToDistributeTooLarge { amount: Uint128, balance: Uint128 },

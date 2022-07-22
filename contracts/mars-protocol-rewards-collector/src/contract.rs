@@ -1,24 +1,23 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
-    WasmMsg,
+    attr, to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    Uint128, WasmMsg,
 };
 
-use astroport::asset::AssetInfo;
-
-use mars_outpost::asset::{build_send_asset_msg, get_asset_balance, Asset};
+use mars_outpost::asset::{get_asset_balance, Asset};
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::{option_string_to_addr, zero_address};
-use mars_outpost::swapping::execute_swap;
 
 use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::red_bank;
+use osmo_bindings::{Step, OsmosisMsg};
 
 use crate::error::ContractError;
 use crate::msg::{CreateOrUpdateConfig, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{ASSET_CONFIG, CONFIG};
-use crate::{AssetConfig, Config};
+use crate::state::CONFIG;
+use crate::swap::construct_swap_msg;
+use crate::Config;
 
 // INIT
 
@@ -34,19 +33,17 @@ pub fn instantiate(
     let CreateOrUpdateConfig {
         owner,
         address_provider_address,
-        safety_fund_fee_share,
-        treasury_fee_share,
-        astroport_factory_address,
-        astroport_max_spread,
+        safety_tax_rate,
+        safety_fund_asset,
+        fee_collector_asset,
     } = msg.config;
 
     // All fields should be available
     let available = owner.is_some()
         && address_provider_address.is_some()
-        && safety_fund_fee_share.is_some()
-        && treasury_fee_share.is_some()
-        && astroport_factory_address.is_some()
-        && astroport_max_spread.is_some();
+        && safety_tax_rate.is_some()
+        && safety_fund_asset.is_some()
+        && fee_collector_asset.is_some();
 
     if !available {
         return Err(MarsError::InstantiateParamsUnavailable {}.into());
@@ -54,19 +51,14 @@ pub fn instantiate(
 
     let config = Config {
         owner: option_string_to_addr(deps.api, owner, zero_address())?,
+        safety_tax_rate: safety_tax_rate.unwrap(),
+        safety_fund_asset: safety_fund_asset.unwrap(),
+        fee_collector_asset: fee_collector_asset.unwrap(),
         address_provider_address: option_string_to_addr(
             deps.api,
             address_provider_address,
             zero_address(),
         )?,
-        safety_fund_fee_share: safety_fund_fee_share.unwrap(),
-        treasury_fee_share: treasury_fee_share.unwrap(),
-        astroport_factory_address: option_string_to_addr(
-            deps.api,
-            astroport_factory_address,
-            zero_address(),
-        )?,
-        astroport_max_spread: astroport_max_spread.unwrap(),
     };
 
     config.validate()?;
@@ -84,26 +76,27 @@ pub fn execute(
     env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+) -> Result<Response<OsmosisMsg>, ContractError> {
     match msg {
         ExecuteMsg::UpdateConfig { config } => execute_update_config(deps, env, info, config),
-        ExecuteMsg::UpdateAssetConfig { asset, enabled } => {
-            execute_update_asset_config(deps, env, info, asset, enabled)
-        }
         ExecuteMsg::WithdrawFromRedBank { asset, amount } => {
             execute_withdraw_from_red_bank(deps, env, info, asset, amount)
         }
         ExecuteMsg::DistributeProtocolRewards { asset, amount } => {
             execute_distribute_protocol_rewards(deps, env, info, asset, amount)
         }
-        ExecuteMsg::SwapAssetToUusd {
-            offer_asset_info,
+        ExecuteMsg::SwapAsset {
+            asset_in,
             amount,
-        } => Ok(execute_swap_asset_to_uusd(
+            safety_fund_asset_steps,
+            fee_collector_asset_steps,
+        } => Ok(execute_swap_asset(
             deps,
             env,
-            offer_asset_info,
+            asset_in,
             amount,
+            &safety_fund_asset_steps,
+            &fee_collector_asset_steps,
         )?),
         ExecuteMsg::ExecuteCosmosMsg(cosmos_msg) => {
             Ok(execute_execute_cosmos_msg(deps, env, info, cosmos_msg)?)
@@ -117,7 +110,7 @@ pub fn execute_update_config(
     _env: Env,
     info: MessageInfo,
     new_config: CreateOrUpdateConfig,
-) -> Result<Response, ContractError> {
+) -> Result<Response<OsmosisMsg>, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
 
     if info.sender != config.owner {
@@ -129,10 +122,9 @@ pub fn execute_update_config(
     let CreateOrUpdateConfig {
         owner,
         address_provider_address,
-        safety_fund_fee_share,
-        treasury_fee_share,
-        astroport_factory_address,
-        astroport_max_spread,
+        safety_tax_rate,
+        safety_fund_asset,
+        fee_collector_asset,
     } = new_config;
 
     config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
@@ -141,14 +133,9 @@ pub fn execute_update_config(
         address_provider_address,
         config.address_provider_address,
     )?;
-    config.safety_fund_fee_share = safety_fund_fee_share.unwrap_or(config.safety_fund_fee_share);
-    config.treasury_fee_share = treasury_fee_share.unwrap_or(config.treasury_fee_share);
-    config.astroport_factory_address = option_string_to_addr(
-        deps.api,
-        astroport_factory_address,
-        config.astroport_factory_address,
-    )?;
-    config.astroport_max_spread = astroport_max_spread.unwrap_or(config.astroport_max_spread);
+    config.safety_tax_rate = safety_tax_rate.unwrap_or(config.safety_tax_rate);
+    config.safety_fund_asset = safety_fund_asset.unwrap_or(config.safety_fund_asset);
+    config.fee_collector_asset = fee_collector_asset.unwrap_or(config.fee_collector_asset);
 
     config.validate()?;
 
@@ -158,41 +145,13 @@ pub fn execute_update_config(
     Ok(res)
 }
 
-/// Update config
-pub fn execute_update_asset_config(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    asset: Asset,
-    enabled: bool,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-
-    if info.sender != config.owner {
-        return Err(MarsError::Unauthorized {}.into());
-    }
-
-    let (asset_label, asset_reference, _) = asset.get_attributes();
-
-    let new_asset_config = AssetConfig {
-        enabled_for_distribution: enabled,
-    };
-
-    ASSET_CONFIG.save(deps.storage, asset_reference.as_slice(), &new_asset_config)?;
-
-    let res = Response::new()
-        .add_attribute("action", "update_asset_config")
-        .add_attribute("asset", asset_label);
-    Ok(res)
-}
-
 pub fn execute_withdraw_from_red_bank(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     asset: Asset,
     amount: Option<Uint128>,
-) -> Result<Response, ContractError> {
+) -> Result<Response<OsmosisMsg>, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
     let red_bank_address = address_provider::helpers::query_address(
@@ -225,17 +184,13 @@ pub fn execute_distribute_protocol_rewards(
     _info: MessageInfo,
     asset: Asset,
     amount: Option<Uint128>,
-) -> Result<Response, ContractError> {
+) -> Result<Response<OsmosisMsg>, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
-    let (asset_label, asset_reference, asset_type) = asset.get_attributes();
+    let (asset_label, _, asset_type) = asset.get_attributes();
 
-    let asset_config = ASSET_CONFIG
-        .load(deps.storage, &asset_reference)
-        .unwrap_or_default();
-
-    if !asset_config.enabled_for_distribution {
-        return Err(ContractError::AssetNotEnabled { asset_label });
+    if asset != config.safety_fund_asset && asset != config.fee_collector_asset {
+        return Err(ContractError::AssetNotEnabledForDistribution { asset_label });
     }
 
     let balance = get_asset_balance(
@@ -253,58 +208,6 @@ pub fn execute_distribute_protocol_rewards(
         None => balance,
     };
 
-    let mars_contracts = vec![
-        MarsContract::SafetyFund,
-        MarsContract::Staking,
-        MarsContract::Treasury,
-    ];
-    let mut addresses_query = address_provider::helpers::query_addresses(
-        &deps.querier,
-        config.address_provider_address,
-        mars_contracts,
-    )?;
-
-    let treasury_address = addresses_query.pop().unwrap();
-    let staking_address = addresses_query.pop().unwrap();
-    let safety_fund_address = addresses_query.pop().unwrap();
-
-    let safety_fund_amount = amount_to_distribute * config.safety_fund_fee_share;
-    let treasury_amount = amount_to_distribute * config.treasury_fee_share;
-    let amount_to_distribute_before_staking_rewards =
-        safety_fund_amount.checked_add(treasury_amount)?;
-    let staking_amount =
-        amount_to_distribute.checked_sub(amount_to_distribute_before_staking_rewards)?;
-
-    // only build and add send message if fee is non-zero
-    let mut messages = vec![];
-    if !safety_fund_amount.is_zero() {
-        let safety_fund_msg = build_send_asset_msg(
-            safety_fund_address,
-            asset_label.clone(),
-            asset_type,
-            safety_fund_amount,
-        )?;
-        messages.push(safety_fund_msg);
-    }
-    if !treasury_amount.is_zero() {
-        let treasury_msg = build_send_asset_msg(
-            treasury_address,
-            asset_label.clone(),
-            asset_type,
-            treasury_amount,
-        )?;
-        messages.push(treasury_msg);
-    }
-    if !staking_amount.is_zero() {
-        let staking_msg = build_send_asset_msg(
-            staking_address,
-            asset_label.clone(),
-            asset_type,
-            staking_amount,
-        )?;
-        messages.push(staking_msg);
-    }
-
     let res = Response::new()
         .add_attribute("action", "distribute_protocol_income")
         .add_attribute("asset", asset_label)
@@ -320,30 +223,66 @@ pub fn execute_distribute_protocol_rewards(
     Ok(res)
 }
 
-/// Swap any asset on the contract to uusd
-pub fn execute_swap_asset_to_uusd(
+/// Swap any asset on the contract
+pub fn execute_swap_asset(
     deps: DepsMut,
     env: Env,
-    offer_asset_info: AssetInfo,
+    asset_in: Asset,
     amount: Option<Uint128>,
-) -> StdResult<Response> {
+    safety_fund_asset_steps: &[Step],
+    fee_collector_asset_steps: &[Step],
+) -> StdResult<Response<OsmosisMsg>> {
     let config = CONFIG.load(deps.storage)?;
+    let (denom_in, _, asset_type) = asset_in.get_attributes();
 
-    let ask_asset_info = AssetInfo::NativeToken {
-        denom: "uusd".to_string(),
+    // if amount is None, swap the total balance of asset_in
+    let amount_to_swap = match amount {
+        Some(swap_amount) => swap_amount,
+        None => get_asset_balance(
+            deps.as_ref(),
+            env.contract.address,
+            denom_in.clone(),
+            asset_type,
+        )?,
     };
 
-    let astroport_max_spread = Some(config.astroport_max_spread);
+    // split the amount to swap between the safety fund and the fee collector
+    // swap the safety fund share to safety_fund_asset, and the fee collector
+    // share to fee_collector asset
+    let safety_fund_share = amount_to_swap * config.safety_tax_rate;
+    let fee_collector_share = amount_to_swap - safety_fund_share;
+    let messages = vec![];
 
-    execute_swap(
-        deps,
-        env,
-        offer_asset_info,
-        ask_asset_info,
-        amount,
-        config.astroport_factory_address,
-        astroport_max_spread,
-    )
+    if !safety_fund_share.is_zero() {
+        messages.push(construct_swap_msg(
+            deps,
+            env,
+            &denom_in,
+            safety_fund_share,
+            &safety_fund_asset_steps,
+        )?);
+    }
+
+    if !fee_collector_share.is_zero() {
+        messages.push(construct_swap_msg(
+            deps,
+            env,
+            &denom_in,
+            fee_collector_share,
+            &fee_collector_asset_steps,
+        )?);
+    }
+    let response = Response::new()
+        .add_attributes(vec![
+            attr("action", "swap"),
+            attr("denom_in", denom_in),
+            attr("amount_to_swap", amount_to_swap),
+            attr("safety_fund_share", safety_fund_share),
+            attr("fee_collector_share", fee_collector_share),
+        ])
+        .add_messages(messages);
+
+    Ok(response)
 }
 
 /// Execute Cosmos message
@@ -351,8 +290,8 @@ pub fn execute_execute_cosmos_msg(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    msg: CosmosMsg,
-) -> Result<Response, MarsError> {
+    msg: CosmosMsg<OsmosisMsg>,
+) -> Result<Response<OsmosisMsg>, MarsError> {
     let config = CONFIG.load(deps.storage)?;
 
     if info.sender != config.owner {
@@ -372,7 +311,6 @@ pub fn execute_execute_cosmos_msg(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::AssetConfig { asset } => to_binary(&query_asset_config(deps, asset)?),
     }
 }
 
@@ -380,16 +318,6 @@ fn query_config(deps: Deps) -> StdResult<Config> {
     let config = CONFIG.load(deps.storage)?;
 
     Ok(config)
-}
-
-fn query_asset_config(deps: Deps, asset: Asset) -> StdResult<AssetConfig> {
-    let reference = asset.get_reference();
-
-    let asset_config = ASSET_CONFIG
-        .load(deps.storage, &reference)
-        .unwrap_or_default();
-
-    Ok(asset_config)
 }
 
 // TESTS
@@ -401,16 +329,12 @@ mod tests {
     use cosmwasm_std::{
         attr, coin, from_binary,
         testing::{mock_env, MockApi, MockStorage, MOCK_CONTRACT_ADDR},
-        Addr, BankMsg, Coin, Decimal as StdDecimal, OwnedDeps, StdError, SubMsg,
+        Addr, BankMsg, Coin, Decimal, OwnedDeps,SubMsg,
     };
 
     use cw20::Cw20ExecuteMsg;
 
-    use mars_outpost::math::decimal::Decimal;
-    use mars_outpost::{
-        tax::deduct_tax,
-        testing::{mock_dependencies, mock_info, MarsMockQuerier},
-    };
+    use mars_outpost::testing::{mock_dependencies, mock_info, MarsMockQuerier};
 
     use crate::ConfigError;
 
@@ -419,14 +343,12 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
 
         // Config with base params valid (just update the rest)
-        let astroport_max_spread = StdDecimal::percent(1);
         let base_config = CreateOrUpdateConfig {
             owner: Some("owner".to_string()),
             address_provider_address: Some("address_provider".to_string()),
-            safety_fund_fee_share: Some(Decimal::from_ratio(2u128, 10u128)),
-            treasury_fee_share: Some(Decimal::from_ratio(1u128, 10u128)),
-            astroport_factory_address: Some("astroport".to_string()),
-            astroport_max_spread: Some(astroport_max_spread),
+            safety_tax_rate: Some(Decimal::from_ratio(5u128, 10u128)),
+            safety_fund_asset: Some(Asset::Native { denom: "uusdc".to_string() }),
+            fee_collector_asset: Some(Asset::Native { denom: "umars".to_string() }),
         };
 
         let info = mock_info("owner");
@@ -437,10 +359,9 @@ mod tests {
         let empty_config = CreateOrUpdateConfig {
             owner: None,
             address_provider_address: None,
-            safety_fund_fee_share: None,
-            treasury_fee_share: None,
-            astroport_factory_address: None,
-            astroport_max_spread: None,
+            safety_tax_rate: None,
+            safety_fund_asset: None,
+            fee_collector_asset: None
         };
         let msg = InstantiateMsg {
             config: empty_config,
@@ -449,11 +370,11 @@ mod tests {
         assert_eq!(err, MarsError::InstantiateParamsUnavailable {}.into());
 
         // *
-        // init config with safety_fund_fee_share greater than 1
+        // init config with safety_tax_rate greater than 1
         // *
-        let mut safety_fund_fee_share = Decimal::from_ratio(11u128, 10u128);
+        let mut safety_tax_rate = Decimal::from_ratio(11u128, 10u128);
         let config = CreateOrUpdateConfig {
-            safety_fund_fee_share: Some(safety_fund_fee_share),
+            safety_tax_rate: Some(safety_tax_rate),
             ..base_config.clone()
         };
         let msg = InstantiateMsg { config };
@@ -461,56 +382,19 @@ mod tests {
         assert_eq!(
             response,
             ConfigError::Mars(MarsError::InvalidParam {
-                param_name: "safety_fund_fee_share".to_string(),
-                invalid_value: safety_fund_fee_share.to_string(),
+                param_name: "safety_tax_rate".to_string(),
+                invalid_value: safety_tax_rate.to_string(),
                 predicate: "<= 1".to_string(),
             })
             .into()
         );
-
-        // *
-        // init config with treasury_fee_share greater than 1
-        // *
-        let mut treasury_fee_share = Decimal::from_ratio(12u128, 10u128);
-        let config = CreateOrUpdateConfig {
-            treasury_fee_share: Some(treasury_fee_share),
-            ..base_config.clone()
-        };
-        let msg = InstantiateMsg { config };
-        let response = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
-        assert_eq!(
-            response,
-            ConfigError::Mars(MarsError::InvalidParam {
-                param_name: "treasury_fee_share".to_string(),
-                invalid_value: treasury_fee_share.to_string(),
-                predicate: "<= 1".to_string(),
-            })
-            .into()
-        );
-
-        // *
-        // init config with invalid fee share amounts
-        // *
-        safety_fund_fee_share = Decimal::from_ratio(7u128, 10u128);
-        treasury_fee_share = Decimal::from_ratio(4u128, 10u128);
-        let config = CreateOrUpdateConfig {
-            safety_fund_fee_share: Some(safety_fund_fee_share),
-            treasury_fee_share: Some(treasury_fee_share),
-            ..base_config.clone()
-        };
-        let exceeding_fees_msg = InstantiateMsg { config };
-        let response =
-            instantiate(deps.as_mut(), mock_env(), info.clone(), exceeding_fees_msg).unwrap_err();
-        assert_eq!(response, ConfigError::InvalidFeeShareAmounts {}.into());
 
         // *
         // init config with valid params
         // *
-        safety_fund_fee_share = Decimal::from_ratio(5u128, 10u128);
-        treasury_fee_share = Decimal::from_ratio(3u128, 10u128);
+        safety_tax_rate = Decimal::from_ratio(5u128, 10u128);
         let config = CreateOrUpdateConfig {
-            safety_fund_fee_share: Some(safety_fund_fee_share),
-            treasury_fee_share: Some(treasury_fee_share),
+            safety_tax_rate: Some(safety_tax_rate),
             ..base_config
         };
         let msg = InstantiateMsg { config };
@@ -524,26 +408,24 @@ mod tests {
         let value: Config = from_binary(&res).unwrap();
         assert_eq!(value.owner, "owner");
         assert_eq!(value.address_provider_address, "address_provider");
-        assert_eq!(value.safety_fund_fee_share, safety_fund_fee_share);
-        assert_eq!(value.treasury_fee_share, treasury_fee_share);
-        assert_eq!(value.astroport_factory_address, "astroport");
-        assert_eq!(value.astroport_max_spread, astroport_max_spread);
+        assert_eq!(value.safety_tax_rate, safety_tax_rate);
+        assert_eq!(value.safety_fund_asset, Asset::Native { denom: "uusdc".to_string() });
+        assert_eq!(value.fee_collector_asset, Asset::Native { denom: "umars".to_string() });
     }
 
     #[test]
     fn test_update_config() {
         let mut deps = th_setup(&[]);
 
-        let mut safety_fund_fee_share = Decimal::percent(10);
+        let mut safety_tax_rate = Decimal::percent(10);
         let mut treasury_fee_share = Decimal::percent(20);
-        let mut astroport_max_spread = StdDecimal::percent(1);
+        let mut astroport_max_spread = Decimal::percent(1);
         let base_config = CreateOrUpdateConfig {
             owner: Some("owner".to_string()),
             address_provider_address: Some("address_provider".to_string()),
-            safety_fund_fee_share: Some(safety_fund_fee_share),
-            treasury_fee_share: Some(treasury_fee_share),
-            astroport_factory_address: Some("astroport".to_string()),
-            astroport_max_spread: Some(astroport_max_spread),
+            safety_tax_rate: Some(safety_tax_rate),
+            safety_fund_asset: Some(Asset::Native { denom: "uusdc".to_string() }),
+            fee_collector_asset: Some(Asset::Native { denom: "umars".to_string() }),
         };
 
         // *
@@ -557,14 +439,14 @@ mod tests {
         assert_eq!(error_res, MarsError::Unauthorized {}.into());
 
         // *
-        // update config with safety_fund_fee_share greater than 1
+        // update config with safety_tax_rate greater than 1
         // *
         let info = mock_info("owner");
 
-        safety_fund_fee_share = Decimal::from_ratio(11u128, 10u128);
+        safety_tax_rate = Decimal::from_ratio(11u128, 10u128);
         let config = CreateOrUpdateConfig {
             owner: None,
-            safety_fund_fee_share: Some(safety_fund_fee_share),
+            safety_tax_rate: Some(safety_tax_rate),
             ..base_config.clone()
         };
         let msg = ExecuteMsg::UpdateConfig { config };
@@ -572,20 +454,20 @@ mod tests {
         assert_eq!(
             error_res,
             ConfigError::Mars(MarsError::InvalidParam {
-                param_name: "safety_fund_fee_share".to_string(),
-                invalid_value: safety_fund_fee_share.to_string(),
+                param_name: "safety_tax_rate".to_string(),
+                invalid_value: safety_tax_rate.to_string(),
                 predicate: "<= 1".to_string(),
             })
             .into()
         );
 
         // *
-        // update config with treasury_fee_share greater than 1
+        // update config with safety_tax_rate greater than 1
         // *
-        treasury_fee_share = Decimal::from_ratio(12u128, 10u128);
+        safety_tax_rate = Decimal::from_ratio(12u128, 10u128);
         let config = CreateOrUpdateConfig {
             owner: None,
-            treasury_fee_share: Some(treasury_fee_share),
+            safety_tax_rate: Some(safety_tax_rate),
             ..base_config.clone()
         };
         let msg = ExecuteMsg::UpdateConfig { config };
@@ -594,41 +476,26 @@ mod tests {
         assert_eq!(
             error_res,
             ConfigError::Mars(MarsError::InvalidParam {
-                param_name: "treasury_fee_share".to_string(),
-                invalid_value: treasury_fee_share.to_string(),
+                param_name: "safety_tax_rate".to_string(),
+                invalid_value: safety_tax_rate.to_string(),
                 predicate: "<= 1".to_string(),
             })
             .into()
         );
 
-        // *
-        // update config with invalid fee share amounts
-        // *
-        safety_fund_fee_share = Decimal::from_ratio(10u128, 10u128);
-        let config = CreateOrUpdateConfig {
-            owner: None,
-            safety_fund_fee_share: Some(safety_fund_fee_share),
-            treasury_fee_share: None,
-            ..base_config
-        };
-        let exceeding_fees_msg = ExecuteMsg::UpdateConfig { config };
-        let error_res =
-            execute(deps.as_mut(), mock_env(), info.clone(), exceeding_fees_msg).unwrap_err();
-        assert_eq!(error_res, ConfigError::InvalidFeeShareAmounts {}.into());
 
         // *
         // update config with all new params
         // *
-        safety_fund_fee_share = Decimal::from_ratio(5u128, 100u128);
+        safety_tax_rate = Decimal::from_ratio(5u128, 100u128);
         treasury_fee_share = Decimal::from_ratio(3u128, 100u128);
-        astroport_max_spread = StdDecimal::percent(2);
+        astroport_max_spread = Decimal::percent(2);
         let config = CreateOrUpdateConfig {
             owner: Some("new_owner".to_string()),
             address_provider_address: Some("new_address_provider".to_string()),
-            safety_fund_fee_share: Some(safety_fund_fee_share),
-            treasury_fee_share: Some(treasury_fee_share),
-            astroport_factory_address: Some("new_astroport".to_string()),
-            astroport_max_spread: Some(astroport_max_spread),
+            safety_tax_rate: Some(safety_tax_rate),
+            safety_fund_asset: Some(Asset::Native { denom: "uatom".to_string() }),
+            fee_collector_asset: Some(Asset::Native { denom: "uosmo".to_string() }),
         };
         let msg = ExecuteMsg::UpdateConfig {
             config: config.clone(),
@@ -645,116 +512,19 @@ mod tests {
             new_config.address_provider_address,
             config.address_provider_address.unwrap()
         );
+        assert_eq!(new_config.safety_tax_rate, config.safety_tax_rate.unwrap());
         assert_eq!(
-            new_config.safety_fund_fee_share,
-            config.safety_fund_fee_share.unwrap()
+            new_config.safety_tax_rate,
+            config.safety_tax_rate.unwrap()
         );
         assert_eq!(
-            new_config.treasury_fee_share,
-            config.treasury_fee_share.unwrap()
+            new_config.safety_fund_asset,
+            config.safety_fund_asset.unwrap()
         );
         assert_eq!(
-            new_config.astroport_factory_address,
-            config.astroport_factory_address.unwrap()
+            new_config.fee_collector_asset,
+            config.fee_collector_asset.unwrap()
         );
-        assert_eq!(
-            new_config.astroport_max_spread,
-            config.astroport_max_spread.unwrap()
-        );
-    }
-
-    #[test]
-    fn test_update_asset_config() {
-        let mut deps = th_setup(&[]);
-
-        // asset config with valid params
-        let asset = Asset::Native {
-            denom: "somecoin".to_string(),
-        };
-        let msg = ExecuteMsg::UpdateAssetConfig {
-            asset: asset.clone(),
-            enabled: true,
-        };
-
-        // *
-        // non owner is not authorized
-        // *
-        let info = mock_info("somebody");
-        let error_res = execute(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
-        assert_eq!(error_res, MarsError::Unauthorized {}.into());
-
-        // *
-        // owner can create asset config
-        // *
-        let info = mock_info("owner");
-        // we can just call .unwrap() to assert this was a success
-        let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
-        assert_eq!(
-            res.attributes,
-            vec![
-                attr("action", "update_asset_config"),
-                attr("asset", "somecoin"),
-            ]
-        );
-
-        // *
-        // query asset config
-        // *
-        let res = query(
-            deps.as_ref(),
-            mock_env(),
-            QueryMsg::AssetConfig {
-                asset: asset.clone(),
-            },
-        )
-        .unwrap();
-        let value: AssetConfig = from_binary(&res).unwrap();
-        assert_eq!(value.enabled_for_distribution, true);
-
-        // *
-        // owner can update asset config
-        // *
-        let msg = ExecuteMsg::UpdateAssetConfig {
-            asset: asset.clone(),
-            enabled: false,
-        };
-        // we can just call .unwrap() to assert this was a success
-        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(
-            res.attributes,
-            vec![
-                attr("action", "update_asset_config"),
-                attr("asset", "somecoin"),
-            ]
-        );
-
-        let reference = asset.get_reference();
-        let value = ASSET_CONFIG
-            .load(deps.as_ref().storage, reference.as_slice())
-            .unwrap();
-        assert_eq!(value.enabled_for_distribution, false);
-
-        // *
-        // unknown assets are not enabled
-        // *
-        let asset = Asset::Native {
-            denom: "uluna".to_string(),
-        };
-        let reference = asset.get_reference();
-
-        // no asset config stored for unknown assets
-        let err = ASSET_CONFIG
-            .load(deps.as_ref().storage, reference.as_slice())
-            .unwrap_err();
-        assert_eq!(
-            err,
-            StdError::not_found("mars_outpost::protocol_rewards_collector::AssetConfig")
-        );
-
-        // querying unknown assets returns that they are not enabled
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::AssetConfig { asset }).unwrap();
-        let value: AssetConfig = from_binary(&res).unwrap();
-        assert_eq!(value.enabled_for_distribution, false);
     }
 
     #[test]
@@ -815,7 +585,7 @@ mod tests {
         let error_res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::AssetNotEnabled {
+            ContractError::AssetNotEnabledForDistribution {
                 asset_label: "somecoin".to_string()
             }
         );
@@ -853,7 +623,7 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
         let config = CONFIG.load(&deps.storage).unwrap();
-        let expected_safety_fund_amount = permissible_amount * config.safety_fund_fee_share;
+        let expected_safety_fund_amount = permissible_amount * config.safety_tax_rate;
         let expected_treasury_amount = permissible_amount * config.treasury_fee_share;
         let expected_staking_amount =
             permissible_amount - (expected_safety_fund_amount + expected_treasury_amount);
@@ -863,36 +633,30 @@ mod tests {
             vec![
                 SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                     to_address: "safety_fund".to_string(),
-                    amount: vec![deduct_tax(
-                        deps.as_ref(),
+                    amount: vec![
                         Coin {
                             denom: "somecoin".to_string(),
                             amount: expected_safety_fund_amount.into(),
                         }
-                    )
-                    .unwrap()],
+                    ],
                 })),
                 SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                     to_address: "treasury".to_string(),
-                    amount: vec![deduct_tax(
-                        deps.as_ref(),
+                    amount: vec![
                         Coin {
                             denom: "somecoin".to_string(),
                             amount: expected_treasury_amount.into(),
                         }
-                    )
-                    .unwrap()],
+                    ],
                 })),
                 SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                     to_address: "staking".to_string(),
-                    amount: vec![deduct_tax(
-                        deps.as_ref(),
+                    amount: vec![
                         Coin {
                             denom: "somecoin".to_string(),
                             amount: expected_staking_amount.into(),
                         }
-                    )
-                    .unwrap()],
+                    ],
                 }))
             ]
         );
@@ -918,7 +682,7 @@ mod tests {
         // verify messages are correct
         let expected_rewards_to_be_distributed = Uint128::new(balance);
         let expected_safety_fund_amount =
-            expected_rewards_to_be_distributed * config.safety_fund_fee_share;
+            expected_rewards_to_be_distributed * config.safety_tax_rate;
         let expected_treasury_amount =
             expected_rewards_to_be_distributed * config.treasury_fee_share;
         let expected_staking_amount = expected_rewards_to_be_distributed
@@ -929,36 +693,30 @@ mod tests {
             vec![
                 SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                     to_address: "safety_fund".to_string(),
-                    amount: vec![deduct_tax(
-                        deps.as_ref(),
+                    amount: vec![
                         Coin {
                             denom: "somecoin".to_string(),
                             amount: expected_safety_fund_amount.into(),
                         }
-                    )
-                    .unwrap()],
+                    ],
                 })),
                 SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                     to_address: "treasury".to_string(),
-                    amount: vec![deduct_tax(
-                        deps.as_ref(),
+                    amount: vec![
                         Coin {
                             denom: "somecoin".to_string(),
                             amount: expected_treasury_amount.into(),
                         }
-                    )
-                    .unwrap()],
+                    ],
                 })),
                 SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
                     to_address: "staking".to_string(),
-                    amount: vec![deduct_tax(
-                        deps.as_ref(),
+                    amount: vec![
                         Coin {
                             denom: "somecoin".to_string(),
                             amount: expected_staking_amount.into(),
                         }
-                    )
-                    .unwrap()],
+                    ],
                 }))
             ]
         );
@@ -1003,7 +761,7 @@ mod tests {
         let error_res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::AssetNotEnabled {
+            ContractError::AssetNotEnabledForDistribution {
                 asset_label: "cw20_address".to_string()
             }
         );
@@ -1042,7 +800,7 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
         let config = CONFIG.load(&deps.storage).unwrap();
-        let expected_safety_fund_amount = permissible_amount * config.safety_fund_fee_share;
+        let expected_safety_fund_amount = permissible_amount * config.safety_tax_rate;
         let expected_treasury_amount = permissible_amount * config.treasury_fee_share;
         let expected_staking_amount =
             permissible_amount - (expected_safety_fund_amount + expected_treasury_amount);
@@ -1101,7 +859,7 @@ mod tests {
         // verify messages are correct
         let expected_rewards_to_be_distributed = Uint128::new(balance);
         let expected_safety_fund_amount =
-            expected_rewards_to_be_distributed * config.safety_fund_fee_share;
+            expected_rewards_to_be_distributed * config.safety_tax_rate;
         let expected_treasury_amount =
             expected_rewards_to_be_distributed * config.treasury_fee_share;
         let expected_staking_amount = expected_rewards_to_be_distributed
@@ -1193,10 +951,9 @@ mod tests {
         let config = CreateOrUpdateConfig {
             owner: Some("owner".to_string()),
             address_provider_address: Some("address_provider".to_string()),
-            safety_fund_fee_share: Some(Decimal::percent(10)),
-            treasury_fee_share: Some(Decimal::percent(20)),
-            astroport_factory_address: Some("astroport".to_string()),
-            astroport_max_spread: Some(StdDecimal::percent(1)),
+            safety_tax_rate: Some(Decimal::percent(10)),
+            safety_fund_asset: Some(Asset::Native { denom: "uusdc".to_string() }),
+            fee_collector_asset: Some(Asset::Native { denom: "umars".to_string() }),
         };
         let msg = InstantiateMsg { config };
         instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
