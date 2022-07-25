@@ -20,9 +20,7 @@ fn test_owner_set_on_instantiate() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_assets: vec![],
-        red_bank: RedBankBase {
-            contract_addr: String::from("redbankaddr"),
-        },
+        red_bank: RedBankBase("redbankaddr".to_string()),
     };
 
     let contract_addr = app
@@ -51,9 +49,7 @@ fn test_nft_contract_addr_not_set_on_instantiate() {
                 owner: owner.to_string(),
                 allowed_vaults: vec![],
                 allowed_assets: vec![],
-                red_bank: RedBankBase {
-                    contract_addr: String::from("redbankaddr"),
-                },
+                red_bank: RedBankBase("redbankaddr".to_string()),
             },
             &[],
             "manager-mock-account-nft",
@@ -92,9 +88,7 @@ fn test_allowed_vaults_and_assets_stored_on_instantiate() {
         owner: owner.to_string(),
         allowed_vaults: allowed_vaults.clone(),
         allowed_assets: allowed_assets.clone(),
-        red_bank: RedBankBase {
-            contract_addr: String::from("redbankaddr"),
-        },
+        red_bank: RedBankBase("redbankaddr".to_string()),
     };
 
     let contract_addr = app
@@ -142,15 +136,13 @@ fn test_red_bank_set_on_instantiate() {
     let mut app = mock_app();
     let code_id = app.store_code(mock_contract());
     let owner = Addr::unchecked("owner");
-    let red_bank_addr = String::from("redbankaddr");
+    let red_bank_addr = "redbankaddr".to_string();
 
     let msg = InstantiateMsg {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_assets: vec![],
-        red_bank: RedBankBase {
-            contract_addr: String::from("redbankaddr"),
-        },
+        red_bank: RedBankBase("redbankaddr".to_string()),
     };
 
     let contract_addr = app
@@ -175,9 +167,7 @@ fn test_panics_on_invalid_instantiation_addrs() {
         owner: owner.to_string(),
         allowed_vaults: vec!["%%%INVALID%%%".to_string()],
         allowed_assets: vec![],
-        red_bank: RedBankBase {
-            contract_addr: String::from("redbankaddr"),
-        },
+        red_bank: RedBankBase("redbankaddr".to_string()),
     };
 
     let instantiate_res = app.instantiate_contract(
@@ -197,9 +187,7 @@ fn test_panics_on_invalid_instantiation_addrs() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_assets: vec![AssetInfoUnchecked::Cw20(String::from("AA"))], // Because cw-asset lowercases before passing to validate, in the test env, two letter strings is only one that triggers a fail
-        red_bank: RedBankBase {
-            contract_addr: String::from("redbankaddr"),
-        },
+        red_bank: RedBankBase("redbankaddr".to_string()),
     };
 
     let instantiate_res = app.instantiate_contract(
@@ -218,10 +206,8 @@ fn test_panics_on_invalid_instantiation_addrs() {
     let msg = InstantiateMsg {
         owner: owner.to_string(),
         allowed_vaults: vec![],
-        allowed_assets: vec![], // Because cw-asset lowercases before passing to validate, in the test env, two letter strings is only one that triggers a fail
-        red_bank: RedBankBase {
-            contract_addr: String::from("%%%INVALID%%%"),
-        },
+        allowed_assets: vec![],
+        red_bank: RedBankBase("%%%INVALID%%%".to_string()),
     };
 
     let instantiate_res = app.instantiate_contract(

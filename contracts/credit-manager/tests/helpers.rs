@@ -150,9 +150,7 @@ pub fn setup_credit_manager(
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_assets,
-        red_bank: RedBankBase {
-            contract_addr: red_bank_addr.to_string(),
-        },
+        red_bank: RedBankBase(red_bank_addr.to_string()),
     };
 
     let manager_contract_addr = app

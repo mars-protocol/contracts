@@ -42,9 +42,7 @@ fn test_create_credit_account() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_assets: vec![],
-        red_bank: RedBankBase {
-            contract_addr: String::from("redbankaddr"),
-        },
+        red_bank: RedBankBase("redbankaddr".to_string()),
     };
 
     let manager_contract_addr = app

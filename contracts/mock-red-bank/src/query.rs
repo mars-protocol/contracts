@@ -1,4 +1,4 @@
-use cosmwasm_std::{Deps, Env, StdResult, Uint128};
+use cosmwasm_std::{Deps, Env, StdResult};
 use cw_asset::AssetInfoUnchecked;
 
 use crate::helpers::load_debt_amount;
@@ -14,13 +14,7 @@ pub fn query_debt(
     let asset_info = asset_info_unchecked.check(deps.api, None)?;
     let debt_amount = load_debt_amount(deps.storage, &user_addr, &asset_info);
     Ok(UserAssetDebtResponse {
-        // only amount matters for our testing
         amount: debt_amount,
-        // for other attributes we fill in some random value
-        denom: "".to_string(),
-        asset_label: asset_info.to_string(),
-        asset_reference: vec![],
         asset_info: asset_info.into(),
-        amount_scaled: Uint128::zero(),
     })
 }

@@ -19,7 +19,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         account_nft: ACCOUNT_NFT
             .may_load(deps.storage)?
             .map(|addr| addr.to_string()),
-        red_bank: RED_BANK.load(deps.storage)?.contract_addr.into(),
+        red_bank: RED_BANK.load(deps.storage)?.0.into(),
     })
 }
 

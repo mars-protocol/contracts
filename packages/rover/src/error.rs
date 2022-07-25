@@ -23,10 +23,10 @@ pub enum ContractError {
     ExtraFundsReceived(AssetListBase<Addr>),
 
     #[error("No asset amount set for action")]
-    NoAmount {},
+    NoAmount,
 
     #[error("Deposits of CW20's should come via Cw20ExecuteMsg::Send to cw20 contract specifying Rover's ReceiveMsg")]
-    WrongDepositMethodForCW20 {},
+    WrongDepositMethodForCW20,
 
     #[error("Sent fund mismatch. Expected: {expected:?}, received {received:?}")]
     FundsMismatch {
@@ -35,7 +35,7 @@ pub enum ContractError {
     },
 
     #[error("Callbacks cannot be invoked externally")]
-    ExternalInvocation {},
+    ExternalInvocation,
 
     #[error("{user:?} is not the owner of {token_id:?}")]
     NotTokenOwner { user: String, token_id: String },

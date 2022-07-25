@@ -1,10 +1,15 @@
 use cosmwasm_std::{DepsMut, MessageInfo, Response, StdResult, Uint128};
-use cw_asset::Asset;
+use cw_asset::AssetUnchecked;
 
 use crate::helpers::load_debt_amount;
 use crate::state::DEBT_AMOUNT;
 
-pub fn execute_borrow(deps: DepsMut, info: MessageInfo, asset: Asset) -> StdResult<Response> {
+pub fn execute_borrow(
+    deps: DepsMut,
+    info: MessageInfo,
+    asset_unchecked: AssetUnchecked,
+) -> StdResult<Response> {
+    let asset = asset_unchecked.check(deps.api, None)?;
     let debt_amount = load_debt_amount(deps.storage, &info.sender, &asset.info);
 
     DEBT_AMOUNT.save(
