@@ -632,7 +632,7 @@ pub fn execute_update_asset(
     }
 }
 
-/// Update uncollateralized loan limit by a given amount in uusd
+/// Update uncollateralized loan limit by a given amount in base asset
 pub fn execute_update_uncollateralized_loan_limit(
     deps: DepsMut,
     _env: Env,
@@ -882,14 +882,14 @@ pub fn execute_withdraw(
         let withdraw_asset_price =
             user_position.get_asset_price(asset_reference.as_slice(), &asset_label)?;
 
-        let withdraw_amount_in_uusd = withdraw_amount * withdraw_asset_price;
+        let withdraw_amount_in_base_asset = withdraw_amount * withdraw_asset_price;
 
-        let weighted_liquidation_threshold_in_uusd_after_withdraw = user_position
-            .weighted_liquidation_threshold_in_uusd
-            .checked_sub(withdraw_amount_in_uusd * market.liquidation_threshold)?;
+        let weighted_liquidation_threshold_in_base_asset_after_withdraw = user_position
+            .weighted_liquidation_threshold_in_base_asset
+            .checked_sub(withdraw_amount_in_base_asset * market.liquidation_threshold)?;
         let health_factor_after_withdraw = Decimal::from_ratio(
-            weighted_liquidation_threshold_in_uusd_after_withdraw,
-            user_position.total_collateralized_debt_in_uusd,
+            weighted_liquidation_threshold_in_base_asset_after_withdraw,
+            user_position.total_collateralized_debt_in_base_asset,
         );
         if health_factor_after_withdraw < Decimal::one() {
             return Err(ContractError::InvalidHealthFactorAfterWithdraw {});
@@ -1043,11 +1043,11 @@ pub fn execute_borrow(
             )?
         };
 
-        let borrow_amount_in_uusd = borrow_amount * borrow_asset_price;
+        let borrow_amount_in_base_asset = borrow_amount * borrow_asset_price;
 
-        let total_debt_in_uusd_after_borrow =
-            user_position.total_debt_in_uusd.checked_add(borrow_amount_in_uusd)?;
-        if total_debt_in_uusd_after_borrow > user_position.max_debt_in_uusd {
+        let total_debt_in_base_asset_after_borrow =
+            user_position.total_debt_in_base_asset.checked_add(borrow_amount_in_base_asset)?;
+        if total_debt_in_base_asset_after_borrow > user_position.max_debt_in_base_asset {
             return Err(ContractError::BorrowAmountExceedsGivenCollateral {});
         }
     } else {
@@ -1688,13 +1688,15 @@ fn liquidation_compute_amounts(
         sent_debt_asset_amount
     };
 
-    // Collateral: debt to repay in uusd times the liquidation
+    // Collateral: debt to repay in base asset times the liquidation
     // bonus
-    let debt_amount_to_repay_in_uusd = debt_amount_to_repay * debt_price;
-    let collateral_amount_to_liquidate_in_uusd =
-        debt_amount_to_repay_in_uusd * (Decimal::one() + liquidation_bonus);
-    let mut collateral_amount_to_liquidate =
-        math::divide_uint128_by_decimal(collateral_amount_to_liquidate_in_uusd, collateral_price)?;
+    let debt_amount_to_repay_in_base_asset = debt_amount_to_repay * debt_price;
+    let collateral_amount_to_liquidate_in_base_asset =
+        debt_amount_to_repay_in_base_asset * (Decimal::one() + liquidation_bonus);
+    let mut collateral_amount_to_liquidate = math::divide_uint128_by_decimal(
+        collateral_amount_to_liquidate_in_base_asset,
+        collateral_price,
+    )?;
 
     // If collateral amount to liquidate is higher than user_collateral_balance,
     // liquidate the full balance and adjust the debt amount to repay accordingly
@@ -1794,7 +1796,7 @@ pub fn execute_update_asset_collateral_status(
     Ok(res)
 }
 
-/// Update uncollateralized loan limit by a given amount in uusd
+/// Update uncollateralized loan limit by a given amount in base asset
 pub fn execute_finalize_liquidity_token_transfer(
     deps: DepsMut,
     env: Env,
@@ -2172,12 +2174,13 @@ pub fn query_user_position(
     )?;
 
     Ok(UserPositionResponse {
-        total_collateral_in_uusd: user_position.total_collateral_in_uusd,
-        total_debt_in_uusd: user_position.total_debt_in_uusd,
-        total_collateralized_debt_in_uusd: user_position.total_collateralized_debt_in_uusd,
-        max_debt_in_uusd: user_position.max_debt_in_uusd,
-        weighted_liquidation_threshold_in_uusd: user_position
-            .weighted_liquidation_threshold_in_uusd,
+        total_collateral_in_base_asset: user_position.total_collateral_in_base_asset,
+        total_debt_in_base_asset: user_position.total_debt_in_base_asset,
+        total_collateralized_debt_in_base_asset: user_position
+            .total_collateralized_debt_in_base_asset,
+        max_debt_in_base_asset: user_position.max_debt_in_base_asset,
+        weighted_liquidation_threshold_in_base_asset: user_position
+            .weighted_liquidation_threshold_in_base_asset,
         health_status: user_position.health_status,
     })
 }
@@ -4560,7 +4563,7 @@ mod tests {
 
         // Calculate how much to withdraw to have health factor equal to one
         let how_much_to_withdraw = {
-            let token_1_weighted_lt_in_uusd = compute_underlying_amount(
+            let token_1_weighted_lt_in_base_asset = compute_underlying_amount(
                 ma_token_1_balance_scaled,
                 get_updated_liquidity_index(&market_1_initial, env.block.time.seconds()).unwrap(),
                 ScalingOperation::Truncate,
@@ -4568,7 +4571,7 @@ mod tests {
             .unwrap()
                 * market_1_initial.liquidation_threshold
                 * token_1_exchange_rate;
-            let token_3_weighted_lt_in_uusd = compute_underlying_amount(
+            let token_3_weighted_lt_in_base_asset = compute_underlying_amount(
                 ma_token_3_balance_scaled,
                 get_updated_liquidity_index(&market_3_initial, env.block.time.seconds()).unwrap(),
                 ScalingOperation::Truncate,
@@ -4576,10 +4579,10 @@ mod tests {
             .unwrap()
                 * market_3_initial.liquidation_threshold
                 * token_3_exchange_rate;
-            let weighted_liquidation_threshold_in_uusd =
-                token_1_weighted_lt_in_uusd + token_3_weighted_lt_in_uusd;
+            let weighted_liquidation_threshold_in_base_asset =
+                token_1_weighted_lt_in_base_asset + token_3_weighted_lt_in_base_asset;
 
-            let total_collateralized_debt_in_uusd = compute_underlying_amount(
+            let total_collateralized_debt_in_base_asset = compute_underlying_amount(
                 token_2_debt_scaled,
                 get_updated_borrow_index(&market_2_initial, env.block.time.seconds()).unwrap(),
                 ScalingOperation::Ceil,
@@ -4587,14 +4590,18 @@ mod tests {
             .unwrap()
                 * token_2_exchange_rate;
 
-            // How much to withdraw in uusd to have health factor equal to one
-            let how_much_to_withdraw_in_uusd = math::divide_uint128_by_decimal(
-                weighted_liquidation_threshold_in_uusd - total_collateralized_debt_in_uusd,
+            // How much to withdraw in base asset to have health factor equal to one
+            let how_much_to_withdraw_in_base_asset = math::divide_uint128_by_decimal(
+                weighted_liquidation_threshold_in_base_asset
+                    - total_collateralized_debt_in_base_asset,
                 market_3_initial.liquidation_threshold,
             )
             .unwrap();
-            math::divide_uint128_by_decimal(how_much_to_withdraw_in_uusd, token_3_exchange_rate)
-                .unwrap()
+            math::divide_uint128_by_decimal(
+                how_much_to_withdraw_in_base_asset,
+                token_3_exchange_rate,
+            )
+            .unwrap()
         };
 
         // Withdraw token3 with failure
@@ -5763,7 +5770,7 @@ mod tests {
 
         deps.querier.set_oracle_price(cw20_contract_addr.as_bytes().to_vec(), exchange_rate_1);
         deps.querier.set_oracle_price(b"depositedcoin2".to_vec(), exchange_rate_2);
-        // NOTE: uusd price (asset3) should be set to 1 by the oracle helper
+        // NOTE: base asset price (asset3) should be set to 1 by the oracle helper
 
         let mock_market_1 = Market {
             ma_token_address: Addr::unchecked("matoken1"),
@@ -5827,7 +5834,7 @@ mod tests {
             .set_cw20_balances(ma_token_address_2, &[(borrower_addr.clone(), balance_2.into())]);
         deps.querier.set_cw20_balances(ma_token_address_3, &[(borrower_addr, balance_3.into())]);
 
-        let max_borrow_allowed_in_uusd = (market_1_initial.max_loan_to_value
+        let max_borrow_allowed_in_base_asset = (market_1_initial.max_loan_to_value
             * compute_underlying_amount(
                 balance_1,
                 market_1_initial.liquidity_index,
@@ -5852,10 +5859,12 @@ mod tests {
                 .unwrap()
                 * exchange_rate_3);
         let exceeding_borrow_amount =
-            math::divide_uint128_by_decimal(max_borrow_allowed_in_uusd, exchange_rate_2).unwrap()
+            math::divide_uint128_by_decimal(max_borrow_allowed_in_base_asset, exchange_rate_2)
+                .unwrap()
                 + Uint128::from(100_u64);
         let permissible_borrow_amount =
-            math::divide_uint128_by_decimal(max_borrow_allowed_in_uusd, exchange_rate_2).unwrap()
+            math::divide_uint128_by_decimal(max_borrow_allowed_in_base_asset, exchange_rate_2)
+                .unwrap()
                 - Uint128::from(100_u64);
 
         // borrow above the allowed amount given current collateral, should fail
@@ -8549,7 +8558,7 @@ mod tests {
             );
 
             // Calculate maximum debt for the user to have valid health factor
-            let token_1_weighted_lt_in_uusd = compute_underlying_amount(
+            let token_1_weighted_lt_in_base_asset = compute_underlying_amount(
                 ma_token_1_balance_scaled,
                 get_updated_liquidity_index(&market_1_initial, env.block.time.seconds()).unwrap(),
                 ScalingOperation::Truncate,
@@ -8557,7 +8566,7 @@ mod tests {
             .unwrap()
                 * market_1_initial.liquidation_threshold
                 * token_1_exchange_rate;
-            let token_2_weighted_lt_in_uusd = compute_underlying_amount(
+            let token_2_weighted_lt_in_base_asset = compute_underlying_amount(
                 ma_token_2_balance_scaled,
                 get_updated_liquidity_index(&market_2_initial, env.block.time.seconds()).unwrap(),
                 ScalingOperation::Truncate,
@@ -8565,10 +8574,10 @@ mod tests {
             .unwrap()
                 * market_2_initial.liquidation_threshold
                 * token_2_exchange_rate;
-            let weighted_liquidation_threshold_in_uusd =
-                token_1_weighted_lt_in_uusd + token_2_weighted_lt_in_uusd;
+            let weighted_liquidation_threshold_in_base_asset =
+                token_1_weighted_lt_in_base_asset + token_2_weighted_lt_in_base_asset;
             let max_debt_for_valid_hf = math::divide_uint128_by_decimal(
-                weighted_liquidation_threshold_in_uusd,
+                weighted_liquidation_threshold_in_base_asset,
                 token_3_exchange_rate,
             )
             .unwrap();

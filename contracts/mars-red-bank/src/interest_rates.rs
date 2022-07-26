@@ -193,7 +193,7 @@ pub enum ScalingOperation {
 /// Scales the amount dividing by an index in order to compute interest rates. Before dividing,
 /// the value is multiplied by SCALING_FACTOR for greater precision.
 /// Example:
-/// Current index is 10. We deposit 6.123456 UST (6123456 uusd). Scaled amount will be
+/// Current index is 10. We deposit 6.123456 OSMO (6123456 uosmo). Scaled amount will be
 /// 6123456 / 10 = 612345 so we loose some precision. In order to avoid this situation
 /// we scale the amount by SCALING_FACTOR.
 pub fn compute_scaled_amount(

@@ -53,9 +53,9 @@ pub struct Market {
     /// Indicated whether the asset is native or a cw20 token
     pub asset_type: AssetType,
 
-    /// Max uusd that can be borrowed per uusd collateral when using the asset as collateral
+    /// Max base asset that can be borrowed per "base asset" collateral when using the asset as collateral
     pub max_loan_to_value: Decimal,
-    /// uusd amount in debt position per uusd of asset collateral that if surpassed makes the user's position liquidatable.
+    /// Base asset amount in debt position per "base asset" of asset collateral that if surpassed makes the user's position liquidatable.
     pub liquidation_threshold: Decimal,
     /// Bonus amount of collateral liquidator get when repaying user's debt (Will get collateral
     /// from user in an amount equal to debt repayed + bonus)
@@ -267,11 +267,11 @@ pub struct UserAssetCollateralResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct UserPositionResponse {
-    pub total_collateral_in_uusd: Uint128,
-    pub total_debt_in_uusd: Uint128,
+    pub total_collateral_in_base_asset: Uint128,
+    pub total_debt_in_base_asset: Uint128,
     /// Total debt minus the uncollateralized debt
-    pub total_collateralized_debt_in_uusd: Uint128,
-    pub max_debt_in_uusd: Uint128,
-    pub weighted_liquidation_threshold_in_uusd: Uint128,
+    pub total_collateralized_debt_in_base_asset: Uint128,
+    pub max_debt_in_base_asset: Uint128,
+    pub weighted_liquidation_threshold_in_base_asset: Uint128,
     pub health_status: UserHealthStatus,
 }
