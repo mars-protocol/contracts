@@ -8914,6 +8914,12 @@ mod tests {
             config,
         };
         instantiate(deps.as_mut(), env, info, msg).unwrap();
+
+        let asset = Asset::Native {
+            denom: "uusd".to_string(),
+        };
+        deps.querier.set_oracle_price(asset.get_reference(), Decimal::one());
+
         deps
     }
 
