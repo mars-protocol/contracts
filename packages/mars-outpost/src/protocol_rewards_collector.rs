@@ -21,6 +21,13 @@ pub struct Config {
     pub safety_fund_asset: Asset,
     /// The asset to which the fee collector share is converted
     pub fee_collector_asset: Asset,
+    /// The channel ID of the mars hub
+    pub channel_id: String,
+    /// revision, needed for the IBC block timeout
+    /// TODO check where to find the revision
+    pub revision: u64,
+    /// Block timeout, when the IBC transfer times out
+    pub block_timeout: u64,
 }
 
 impl Config {

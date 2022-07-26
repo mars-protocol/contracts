@@ -1,4 +1,4 @@
-use osmo_bindings::{Step, OsmosisMsg};
+use osmo_bindings::{OsmosisMsg, Step};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -21,13 +21,21 @@ pub struct CreateOrUpdateConfig {
     pub safety_fund_asset: Option<Asset>,
     /// The asset to which the fee collector share is converted
     pub fee_collector_asset: Option<Asset>,
+    /// The channel id of the mars hub
+    pub channel_id: Option<String>,
+    /// Revision, used to determine the IBC Block timeout
+    pub revision: Option<u64>,
+    /// Block timeout
+    pub block_timeout: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     /// Update contract config
-    UpdateConfig { config: CreateOrUpdateConfig },
+    UpdateConfig {
+        config: CreateOrUpdateConfig,
+    },
 
     /// Withdraw maTokens from the red bank
     WithdrawFromRedBank {
