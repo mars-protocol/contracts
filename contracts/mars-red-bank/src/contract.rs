@@ -2326,7 +2326,9 @@ mod tests {
             address_provider_address: Some("address_provider".to_string()),
             ma_token_code_id: Some(10u64),
             close_factor: None,
-            base_asset: Some("uusd".to_string()),
+            base_asset: Some(Asset::Native {
+                denom: "uusd".to_string(),
+            }),
         };
 
         // *
@@ -2407,7 +2409,9 @@ mod tests {
             address_provider_address: Some("address_provider".to_string()),
             ma_token_code_id: Some(20u64),
             close_factor: Some(close_factor),
-            base_asset: Some("uusd".to_string()),
+            base_asset: Some(Asset::Native {
+                denom: "uusd".to_string(),
+            }),
         };
         let msg = InstantiateMsg {
             config: init_config.clone(),
@@ -2460,7 +2464,9 @@ mod tests {
             address_provider_address: Some("new_address_provider".to_string()),
             ma_token_code_id: Some(40u64),
             close_factor: Some(close_factor),
-            base_asset: Some("uusd".to_string()),
+            base_asset: Some(Asset::Native {
+                denom: "uusd".to_string(),
+            }),
         };
         let msg = ExecuteMsg::UpdateConfig {
             config: config.clone(),
@@ -2493,7 +2499,9 @@ mod tests {
             address_provider_address: Some("address_provider".to_string()),
             ma_token_code_id: Some(5u64),
             close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
-            base_asset: Some("uusd".to_string()),
+            base_asset: Some(Asset::Native {
+                denom: "uusd".to_string(),
+            }),
         };
         let msg = InstantiateMsg {
             config,
@@ -3009,7 +3017,9 @@ mod tests {
             address_provider_address: Some("address_provider".to_string()),
             ma_token_code_id: Some(5u64),
             close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
-            base_asset: Some("uusd".to_string()),
+            base_asset: Some(Asset::Native {
+                denom: "uusd".to_string(),
+            }),
         };
         let msg = InstantiateMsg {
             config,
@@ -3396,7 +3406,9 @@ mod tests {
             address_provider_address: Some("address_provider".to_string()),
             ma_token_code_id: Some(5u64),
             close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
-            base_asset: Some("uusd".to_string()),
+            base_asset: Some(Asset::Native {
+                denom: "uusd".to_string(),
+            }),
         };
         let msg = InstantiateMsg {
             config,
@@ -8908,7 +8920,9 @@ mod tests {
             address_provider_address: Some("address_provider".to_string()),
             ma_token_code_id: Some(1u64),
             close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
-            base_asset: Some("uusd".to_string()),
+            base_asset: Some(Asset::Native {
+                denom: "uusd".to_string(),
+            }),
         };
         let msg = InstantiateMsg {
             config,

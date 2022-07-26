@@ -180,7 +180,7 @@ pub struct CreateOrUpdateConfig {
     pub address_provider_address: Option<String>,
     pub ma_token_code_id: Option<u64>,
     pub close_factor: Option<Decimal>,
-    pub base_asset: Option<String>,
+    pub base_asset: Option<Asset>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

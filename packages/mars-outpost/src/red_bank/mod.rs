@@ -7,7 +7,7 @@ use thiserror::Error;
 
 use cosmwasm_std::{Addr, Decimal, Uint128};
 
-use crate::asset::AssetType;
+use crate::asset::{Asset, AssetType};
 use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
 
@@ -25,7 +25,7 @@ pub struct Config {
     /// Maximum percentage of outstanding debt that can be covered by a liquidator
     pub close_factor: Decimal,
     /// Base asset used for denomination. For example: OSMO, INJ, USDC etc.
-    pub base_asset: String,
+    pub base_asset: Asset,
 }
 
 impl Config {
