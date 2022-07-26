@@ -29,10 +29,8 @@ impl UserPosition {
         asset_reference: &[u8],
         asset_label: &str,
     ) -> Result<Decimal, ContractError> {
-        let asset_position = self
-            .asset_positions
-            .iter()
-            .find(|ap| ap.asset_reference.as_slice() == asset_reference);
+        let asset_position =
+            self.asset_positions.iter().find(|ap| ap.asset_reference.as_slice() == asset_reference);
 
         match asset_position {
             Some(position) => Ok(position.asset_price),
@@ -157,11 +155,7 @@ fn get_user_asset_positions(
             let collateral_amount =
                 get_underlying_liquidity_amount(asset_balance_scaled, &market, block_time)?;
 
-            (
-                collateral_amount,
-                market.max_loan_to_value,
-                market.liquidation_threshold,
-            )
+            (collateral_amount, market.max_loan_to_value, market.liquidation_threshold)
         } else {
             (Uint128::zero(), Decimal::zero(), Decimal::zero())
         };
@@ -187,9 +181,7 @@ fn get_user_asset_positions(
             AssetType::Cw20 => match String::from_utf8(asset_reference_vec.clone()) {
                 Ok(res) => res,
                 Err(_) => {
-                    return Err(StdError::generic_err(
-                        "failed to encode Cw20 address into string",
-                    ))
+                    return Err(StdError::generic_err("failed to encode Cw20 address into string"))
                 }
             },
         };

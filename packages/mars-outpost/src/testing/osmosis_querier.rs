@@ -30,7 +30,9 @@ pub struct OsmosisQuerier {
 impl OsmosisQuerier {
     pub fn handle_query(&self, request: OsmosisQuery) -> QuerierResult {
         let res: ContractResult<Binary> = match request {
-            OsmosisQuery::PoolState { id } => match self.pools.get(&id) {
+            OsmosisQuery::PoolState {
+                id,
+            } => match self.pools.get(&id) {
                 Some(pool_state_response) => to_binary(&pool_state_response).into(),
                 None => Err(SystemError::InvalidRequest {
                     error: format!("PoolStateResponse is not found for pool id: {}", id),
@@ -38,16 +40,17 @@ impl OsmosisQuerier {
                 })
                 .into(),
             },
-            OsmosisQuery::SpotPrice { swap, .. } => {
-                match self.spot_prices.get(&swap.clone().into()) {
-                    Some(spot_price_response) => to_binary(&spot_price_response).into(),
-                    None => Err(SystemError::InvalidRequest {
-                        error: format!("SpotPriceResponse is not found for swap: {:?}", swap),
-                        request: Default::default(),
-                    })
-                    .into(),
-                }
-            }
+            OsmosisQuery::SpotPrice {
+                swap,
+                ..
+            } => match self.spot_prices.get(&swap.clone().into()) {
+                Some(spot_price_response) => to_binary(&spot_price_response).into(),
+                None => Err(SystemError::InvalidRequest {
+                    error: format!("SpotPriceResponse is not found for swap: {:?}", swap),
+                    request: Default::default(),
+                })
+                .into(),
+            },
             _ => {
                 panic!("[mock]: Unsupported Osmosis query");
             }

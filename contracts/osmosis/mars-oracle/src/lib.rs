@@ -12,7 +12,9 @@ use std::fmt;
 #[serde(rename_all = "snake_case")]
 pub enum PriceSource {
     /// Returns a fixed value;
-    Fixed { price: Decimal },
+    Fixed {
+        price: Decimal,
+    },
 
     /// Osmosis spot price quoted in OSMO
     ///
@@ -32,9 +34,15 @@ pub enum PriceSource {
 impl fmt::Display for PriceSource {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let label = match self {
-            PriceSource::Fixed { .. } => "fixed",
-            PriceSource::Spot { .. } => "spot",
-            PriceSource::LiquidityToken { .. } => "liquidity_token",
+            PriceSource::Fixed {
+                ..
+            } => "fixed",
+            PriceSource::Spot {
+                ..
+            } => "spot",
+            PriceSource::LiquidityToken {
+                ..
+            } => "liquidity_token",
         };
         write!(f, "{}", label)
     }

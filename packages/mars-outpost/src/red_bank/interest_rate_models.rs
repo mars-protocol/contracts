@@ -108,17 +108,16 @@ pub fn update_market_interest_rates_with_model(
             }
         }
 
-        InterestRateModel::Linear { ref params } => {
+        InterestRateModel::Linear {
+            ref params,
+        } => {
             market.borrow_rate = linear_get_borrow_rate(params, current_utilization_rate)?;
         }
     }
 
     // update liquidity rate
-    market.liquidity_rate = get_liquidity_rate(
-        market.borrow_rate,
-        current_utilization_rate,
-        market.reserve_factor,
-    )?;
+    market.liquidity_rate =
+        get_liquidity_rate(market.borrow_rate, current_utilization_rate, market.reserve_factor)?;
 
     Ok(())
 }
@@ -196,15 +195,9 @@ pub fn dynamic_get_borrow_rate(
     // we use a boolean flag to determine the direction of the error
     let (error_value, error_positive) =
         if params.optimal_utilization_rate > current_utilization_rate {
-            (
-                params.optimal_utilization_rate - current_utilization_rate,
-                true,
-            )
+            (params.optimal_utilization_rate - current_utilization_rate, true)
         } else {
-            (
-                current_utilization_rate - params.optimal_utilization_rate,
-                false,
-            )
+            (current_utilization_rate - params.optimal_utilization_rate, false)
         };
 
     let kp = if error_value >= params.kp_augmentation_threshold {
@@ -357,7 +350,11 @@ mod tests {
                     .checked_mul(Decimal::one() - reserve_factor)
                     .unwrap()
             );
-            if let InterestRateModel::Dynamic { ref state, .. } = market.interest_rate_model {
+            if let InterestRateModel::Dynamic {
+                ref state,
+                ..
+            } = market.interest_rate_model
+            {
                 assert_eq!(state.borrow_rate_last_updated, time_start);
                 assert_eq!(state.txs_since_last_borrow_rate_update, 1);
             } else {
@@ -388,7 +385,11 @@ mod tests {
                     .checked_mul(Decimal::one() - reserve_factor)
                     .unwrap()
             );
-            if let InterestRateModel::Dynamic { ref state, .. } = market.interest_rate_model {
+            if let InterestRateModel::Dynamic {
+                ref state,
+                ..
+            } = market.interest_rate_model
+            {
                 assert_eq!(state.borrow_rate_last_updated, time_start + 200);
                 assert_eq!(state.txs_since_last_borrow_rate_update, 0);
             } else {
@@ -419,7 +420,11 @@ mod tests {
                     .checked_mul(Decimal::one() - reserve_factor)
                     .unwrap()
             );
-            if let InterestRateModel::Dynamic { ref state, .. } = market.interest_rate_model {
+            if let InterestRateModel::Dynamic {
+                ref state,
+                ..
+            } = market.interest_rate_model
+            {
                 assert_eq!(state.borrow_rate_last_updated, time_start + 1201);
                 assert_eq!(state.txs_since_last_borrow_rate_update, 0);
             } else {
@@ -465,7 +470,11 @@ mod tests {
                     .checked_mul(Decimal::one() - reserve_factor)
                     .unwrap()
             );
-            if let InterestRateModel::Dynamic { ref state, .. } = market.interest_rate_model {
+            if let InterestRateModel::Dynamic {
+                ref state,
+                ..
+            } = market.interest_rate_model
+            {
                 assert_eq!(state.borrow_rate_last_updated, time_start + 1201);
                 assert_eq!(state.txs_since_last_borrow_rate_update, 3);
             } else {
@@ -496,7 +505,11 @@ mod tests {
                     .checked_mul(Decimal::one() - reserve_factor)
                     .unwrap()
             );
-            if let InterestRateModel::Dynamic { ref state, .. } = market.interest_rate_model {
+            if let InterestRateModel::Dynamic {
+                ref state,
+                ..
+            } = market.interest_rate_model
+            {
                 assert_eq!(state.borrow_rate_last_updated, time_start + 1208);
                 assert_eq!(state.txs_since_last_borrow_rate_update, 0);
             } else {
@@ -634,10 +647,7 @@ mod tests {
 
         let expected_borrow_rate = interest_rate_model_params.base
             + math::divide_decimal_by_decimal(
-                interest_rate_model_params
-                    .slope_1
-                    .checked_mul(utilization_rate)
-                    .unwrap(),
+                interest_rate_model_params.slope_1.checked_mul(utilization_rate).unwrap(),
                 interest_rate_model_params.optimal_utilization_rate,
             )
             .unwrap();
@@ -670,10 +680,7 @@ mod tests {
 
             let expected_borrow_rate = linear_ir_params.base
                 + math::divide_decimal_by_decimal(
-                    linear_ir_params
-                        .slope_1
-                        .checked_mul(current_utilization_rate)
-                        .unwrap(),
+                    linear_ir_params.slope_1.checked_mul(current_utilization_rate).unwrap(),
                     linear_ir_params.optimal_utilization_rate,
                 )
                 .unwrap();
@@ -689,10 +696,7 @@ mod tests {
 
             let expected_borrow_rate = linear_ir_params.base
                 + math::divide_decimal_by_decimal(
-                    linear_ir_params
-                        .slope_1
-                        .checked_mul(current_utilization_rate)
-                        .unwrap(),
+                    linear_ir_params.slope_1.checked_mul(current_utilization_rate).unwrap(),
                     linear_ir_params.optimal_utilization_rate,
                 )
                 .unwrap();
@@ -773,10 +777,7 @@ mod tests {
 
             let expected_borrow_rate = linear_ir_params.base
                 + linear_ir_params.slope_1
-                + linear_ir_params
-                    .slope_2
-                    .checked_mul(current_utilization_rate)
-                    .unwrap();
+                + linear_ir_params.slope_2.checked_mul(current_utilization_rate).unwrap();
 
             assert_eq!(new_borrow_rate, expected_borrow_rate);
         }

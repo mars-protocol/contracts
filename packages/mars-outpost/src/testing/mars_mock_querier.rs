@@ -60,15 +60,12 @@ impl MarsMockQuerier {
     /// Set new balances for contract address
     pub fn set_contract_balances(&mut self, contract_balances: &[Coin]) {
         let contract_addr = Addr::unchecked(MOCK_CONTRACT_ADDR);
-        self.base
-            .update_balance(contract_addr.to_string(), contract_balances.to_vec());
+        self.base.update_balance(contract_addr.to_string(), contract_balances.to_vec());
     }
 
     /// Set mock querier balances results for a given cw20 token
     pub fn set_cw20_balances(&mut self, cw20_address: Addr, balances: &[(Addr, Uint128)]) {
-        self.cw20_querier
-            .balances
-            .insert(cw20_address, balances.iter().cloned().collect());
+        self.cw20_querier.balances.insert(cw20_address, balances.iter().cloned().collect());
     }
 
     /// Set mock querier so that it returns a specific total supply on the token info query
@@ -115,30 +112,27 @@ impl MarsMockQuerier {
     }
 
     pub fn set_spot_price(&mut self, swap: Swap, spot_price: SpotPriceResponse) {
-        self.osmosis_querier
-            .spot_prices
-            .insert(swap.into(), spot_price);
+        self.osmosis_querier.spot_prices.insert(swap.into(), spot_price);
     }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
         match &request {
-            QueryRequest::Wasm(WasmQuery::Smart { contract_addr, msg }) => {
+            QueryRequest::Wasm(WasmQuery::Smart {
+                contract_addr,
+                msg,
+            }) => {
                 let contract_addr = Addr::unchecked(contract_addr);
 
                 // Cw20 Queries
                 let parse_cw20_query: StdResult<Cw20QueryMsg> = from_binary(msg);
                 if let Ok(cw20_query) = parse_cw20_query {
-                    return self
-                        .cw20_querier
-                        .handle_cw20_query(&contract_addr, cw20_query);
+                    return self.cw20_querier.handle_cw20_query(&contract_addr, cw20_query);
                 }
 
                 // MaToken Queries
                 let parse_ma_token_query: StdResult<ma_token::msg::QueryMsg> = from_binary(msg);
                 if let Ok(ma_token_query) = parse_ma_token_query {
-                    return self
-                        .cw20_querier
-                        .handle_ma_token_query(&contract_addr, ma_token_query);
+                    return self.cw20_querier.handle_ma_token_query(&contract_addr, ma_token_query);
                 }
 
                 // Address Provider Queries
@@ -154,17 +148,13 @@ impl MarsMockQuerier {
                 // Oracle Queries
                 let parse_oracle_query: StdResult<oracle::msg::QueryMsg> = from_binary(msg);
                 if let Ok(oracle_query) = parse_oracle_query {
-                    return self
-                        .oracle_querier
-                        .handle_query(&contract_addr, oracle_query);
+                    return self.oracle_querier.handle_query(&contract_addr, oracle_query);
                 }
 
                 // Incentives Queries
                 let parse_incentives_query: StdResult<incentives::msg::QueryMsg> = from_binary(msg);
                 if let Ok(incentives_query) = parse_incentives_query {
-                    return self
-                        .incentives_querier
-                        .handle_query(&contract_addr, incentives_query);
+                    return self.incentives_querier.handle_query(&contract_addr, incentives_query);
                 }
 
                 panic!("[mock]: Unsupported wasm query: {:?}", msg);

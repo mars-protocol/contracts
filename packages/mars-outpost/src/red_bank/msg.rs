@@ -23,7 +23,9 @@ pub enum ExecuteMsg {
     Receive(Cw20ReceiveMsg),
 
     /// Update contract config (only owner can call)
-    UpdateConfig { config: CreateOrUpdateConfig },
+    UpdateConfig {
+        config: CreateOrUpdateConfig,
+    },
 
     /// Initialize an asset on the money market (only owner can call)
     InitAsset {
@@ -178,6 +180,7 @@ pub struct CreateOrUpdateConfig {
     pub address_provider_address: Option<String>,
     pub ma_token_code_id: Option<u64>,
     pub close_factor: Option<Decimal>,
+    pub base_asset: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -213,35 +216,55 @@ pub enum QueryMsg {
     Config {},
 
     /// Get asset market
-    Market { asset: Asset },
+    Market {
+        asset: Asset,
+    },
 
     /// Get a list of all markets. Returns MarketsListResponse
     MarketsList {},
 
     /// Get uncollateralized limit for given asset and user.
     /// Returns UncollateralizedLoanLimitResponse
-    UncollateralizedLoanLimit { user_address: String, asset: Asset },
+    UncollateralizedLoanLimit {
+        user_address: String,
+        asset: Asset,
+    },
 
     /// Get all debt positions for a user. Returns UsetDebtResponse
-    UserDebt { user_address: String },
+    UserDebt {
+        user_address: String,
+    },
 
     /// Get user debt position for a specific asset. Returns UserAssetDebtResponse
-    UserAssetDebt { user_address: String, asset: Asset },
+    UserAssetDebt {
+        user_address: String,
+        asset: Asset,
+    },
 
     /// Get info about whether or not user is using each asset as collateral.
     /// Returns UserCollateralResponse
-    UserCollateral { user_address: String },
+    UserCollateral {
+        user_address: String,
+    },
 
     /// Get user position. Returns UserPositionResponse
-    UserPosition { user_address: String },
+    UserPosition {
+        user_address: String,
+    },
 
     /// Get liquidity scaled amount for a given underlying asset amount
     /// (i.e: how much maTokens will get minted if the given amount is deposited)
-    ScaledLiquidityAmount { asset: Asset, amount: Uint128 },
+    ScaledLiquidityAmount {
+        asset: Asset,
+        amount: Uint128,
+    },
 
     /// Get equivalent scaled debt for a given underlying asset amount.
     /// (i.e: how much scaled debt is added if the given amount is borrowed)
-    ScaledDebtAmount { asset: Asset, amount: Uint128 },
+    ScaledDebtAmount {
+        asset: Asset,
+        amount: Uint128,
+    },
 
     /// Get underlying asset amount for a given maToken balance.
     UnderlyingLiquidityAmount {

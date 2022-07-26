@@ -24,6 +24,8 @@ pub struct Config {
     pub ma_token_code_id: u64,
     /// Maximum percentage of outstanding debt that can be covered by a liquidator
     pub close_factor: Decimal,
+    /// Base asset used for denomination. For example: OSMO, INJ, USDC etc.
+    pub base_asset: String,
 }
 
 impl Config {

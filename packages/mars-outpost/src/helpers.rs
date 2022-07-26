@@ -58,10 +58,7 @@ pub fn read_be_u64(input: &[u8]) -> StdResult<u64> {
 
     match slice_to_array_result {
         Ok(array) => Ok(u64::from_be_bytes(array)),
-        Err(err) => Err(StdError::generic_err(format!(
-            "Error converting slice to array: {}",
-            err
-        ))),
+        Err(err) => Err(StdError::generic_err(format!("Error converting slice to array: {}", err))),
     }
 }
 

@@ -24,9 +24,14 @@ pub mod msg {
     #[serde(rename_all = "snake_case")]
     pub enum ExecuteMsg<T> {
         /// Update contract config
-        UpdateConfig { owner: Option<String> },
+        UpdateConfig {
+            owner: Option<String>,
+        },
         /// Specify parameters to query asset price
-        SetAsset { asset: Asset, price_source: T },
+        SetAsset {
+            asset: Asset,
+            price_source: T,
+        },
     }
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -35,13 +40,19 @@ pub mod msg {
         /// Query contract config. Returns `Config`
         Config {},
         /// Get asset's price source. Returns `AssetConfigChecked`
-        AssetPriceSource { asset: Asset },
+        AssetPriceSource {
+            asset: Asset,
+        },
         /// Query asset price given an asset; returns `Decimal`
-        AssetPrice { asset: Asset },
+        AssetPrice {
+            asset: Asset,
+        },
         /// Query asset price given it's internal reference; returns `Decimal`
         ///
         /// NOTE: meant to be used by protocol contracts only
-        AssetPriceByReference { asset_reference: Vec<u8> },
+        AssetPriceByReference {
+            asset_reference: Vec<u8>,
+        },
     }
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -62,7 +73,9 @@ pub mod helpers {
     ) -> StdResult<Decimal> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: oracle_address.into(),
-            msg: to_binary(&QueryMsg::AssetPriceByReference { asset_reference })?,
+            msg: to_binary(&QueryMsg::AssetPriceByReference {
+                asset_reference,
+            })?,
         }))
     }
 }

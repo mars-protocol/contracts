@@ -12,8 +12,12 @@ use crate::helpers::cw20_get_balance;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Asset {
-    Cw20 { contract_addr: String },
-    Native { denom: String },
+    Cw20 {
+        contract_addr: String,
+    },
+    Native {
+        denom: String,
+    },
 }
 
 impl Asset {
@@ -22,11 +26,15 @@ impl Asset {
     /// and asset type
     pub fn get_attributes(&self) -> (String, Vec<u8>, AssetType) {
         match &self {
-            Asset::Native { denom } => {
+            Asset::Native {
+                denom,
+            } => {
                 let asset_reference = denom.as_bytes().to_vec();
                 (denom.clone(), asset_reference, AssetType::Native)
             }
-            Asset::Cw20 { contract_addr } => {
+            Asset::Cw20 {
+                contract_addr,
+            } => {
                 let lower_case_contract_addr = contract_addr.to_lowercase();
                 let asset_reference = lower_case_contract_addr.as_bytes().to_vec();
                 (lower_case_contract_addr, asset_reference, AssetType::Cw20)
@@ -37,8 +45,12 @@ impl Asset {
     /// Return bytes used as key for storage
     pub fn get_reference(&self) -> Vec<u8> {
         match &self {
-            Asset::Native { denom } => denom.as_bytes().to_vec(),
-            Asset::Cw20 { contract_addr } => contract_addr.to_lowercase().as_bytes().to_vec(),
+            Asset::Native {
+                denom,
+            } => denom.as_bytes().to_vec(),
+            Asset::Cw20 {
+                contract_addr,
+            } => contract_addr.to_lowercase().as_bytes().to_vec(),
         }
     }
 }
@@ -68,11 +80,9 @@ pub fn build_send_asset_msg(
     amount: Uint128,
 ) -> StdResult<CosmosMsg> {
     match asset_type {
-        AssetType::Native => Ok(build_send_native_asset_msg(
-            recipient_address,
-            asset_label,
-            amount,
-        )?),
+        AssetType::Native => {
+            Ok(build_send_native_asset_msg(recipient_address, asset_label, amount)?)
+        }
         AssetType::Cw20 => build_send_cw20_token_msg(recipient_address, asset_label, amount),
     }
 }

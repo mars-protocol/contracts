@@ -108,9 +108,7 @@ pub fn calculate_applied_linear_interest_rate(
         Uint128::from(time_elapsed),
         Uint128::from(SECONDS_PER_YEAR),
     ))?;
-    index
-        .checked_mul(Decimal::one() + rate_factor)
-        .map_err(StdError::from)
+    index.checked_mul(Decimal::one() + rate_factor).map_err(StdError::from)
 }
 
 /// Get scaled liquidity amount from an underlying amount, a Market and timestamp in seconds
@@ -357,23 +355,14 @@ mod tests {
 
         let scaled_amount_liquidity = get_scaled_liquidity_amount(start, &market, 1).unwrap();
         let scaled_amount_debt = get_scaled_debt_amount(start, &market, 1).unwrap();
-        assert_eq!(
-            Uint128::from(33_333_333_333_333_333_u128),
-            scaled_amount_liquidity
-        );
-        assert_eq!(
-            Uint128::from(33_333_333_333_333_334_u128),
-            scaled_amount_debt
-        );
+        assert_eq!(Uint128::from(33_333_333_333_333_333_u128), scaled_amount_liquidity);
+        assert_eq!(Uint128::from(33_333_333_333_333_334_u128), scaled_amount_debt);
 
         let back_to_underlying_liquidity =
             get_underlying_liquidity_amount(scaled_amount_liquidity, &market, 1).unwrap();
         let back_to_underlying_debt =
             get_underlying_debt_amount(scaled_amount_debt, &market, 1).unwrap();
-        assert_eq!(
-            Uint128::from(99_999_999_999_u128),
-            back_to_underlying_liquidity
-        );
+        assert_eq!(Uint128::from(99_999_999_999_u128), back_to_underlying_liquidity);
         assert_eq!(Uint128::from(100_000_000_001_u128), back_to_underlying_debt);
     }
 }

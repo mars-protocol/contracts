@@ -168,10 +168,7 @@ mod tests {
         );
 
         // make sure money arrived
-        assert_eq!(
-            get_balance(deps.as_ref(), owner.clone()),
-            start.checked_sub(transfer).unwrap()
-        );
+        assert_eq!(get_balance(deps.as_ref(), owner.clone()), start.checked_sub(transfer).unwrap());
         assert_eq!(get_balance(deps.as_ref(), rcpt.clone()), transfer);
 
         // ensure it looks good
@@ -304,10 +301,7 @@ mod tests {
         );
 
         // make sure money sent
-        assert_eq!(
-            get_balance(deps.as_ref(), owner.clone()),
-            start.checked_sub(transfer).unwrap()
-        );
+        assert_eq!(get_balance(deps.as_ref(), owner.clone()), start.checked_sub(transfer).unwrap());
         assert_eq!(get_balance(deps.as_ref(), contract.clone()), transfer);
 
         // ensure it looks good
