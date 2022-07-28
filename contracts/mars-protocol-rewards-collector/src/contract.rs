@@ -289,24 +289,29 @@ pub fn execute_swap_asset(
     let mut messages = vec![];
 
     if !safety_fund_share.is_zero() {
-        messages.push(construct_swap_msg(
+        if let Ok(msg) = construct_swap_msg(
             deps.as_ref(),
             env.clone(),
             &denom_in,
             safety_fund_share,
             safety_fund_asset_steps,
-        )?);
+        ) {
+            messages.push(msg);
+        }
     }
 
     if !fee_collector_share.is_zero() {
-        messages.push(construct_swap_msg(
+        if let Ok(msg) = construct_swap_msg(
             deps.as_ref(),
             env,
             &denom_in,
             fee_collector_share,
             fee_collector_asset_steps,
-        )?);
+        ) {
+            messages.push(msg);
+        }
     }
+
     let response = Response::new()
         .add_attributes(vec![
             attr("action", "swap"),
@@ -360,12 +365,13 @@ mod tests {
     use super::*;
 
     use cosmwasm_std::{
-        attr, coin, from_binary,
+        attr, coin, coins, from_binary,
         testing::{mock_env, MockApi, MockStorage},
         BankMsg, Coin, Decimal, OwnedDeps, SubMsg,
     };
 
     use mars_outpost::testing::{mock_dependencies, mock_info, MarsMockQuerier};
+    use osmo_bindings::Swap;
 
     use crate::ConfigError;
 
@@ -731,6 +737,138 @@ mod tests {
     }
 
     #[test]
+    fn test_execute_swap_msg() {
+        // initialize contract with balance
+        let mut deps = th_setup(&coins(500_000, "uatom"));
+        let info = mock_info("owner");
+
+        let msg = ExecuteMsg::SwapAsset {
+            asset_in: Asset::Native {
+                denom: "uatom".to_string(),
+            },
+            amount: None,
+            fee_collector_asset_steps: vec![
+                Step {
+                    pool_id: 1,
+                    denom_out: "uosmo".to_string(),
+                },
+                Step {
+                    pool_id: 3,
+                    denom_out: "umars".to_string(),
+                },
+            ],
+            safety_fund_asset_steps: vec![
+                Step {
+                    pool_id: 1,
+                    denom_out: "uosmo".to_string(),
+                },
+                Step {
+                    pool_id: 2,
+                    denom_out: "uusdc".to_string(),
+                },
+            ],
+        };
+        let res = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
+
+        assert_eq!(
+            res.messages,
+            vec![
+                SubMsg::new(CosmosMsg::Custom(OsmosisMsg::Swap {
+                    first: Swap {
+                        pool_id: 1,
+                        denom_in: "uatom".to_string(),
+                        denom_out: "uosmo".to_string(),
+                    },
+                    route: vec![Step {
+                        pool_id: 2,
+                        denom_out: "uusdc".to_string(),
+                    }],
+                    amount: osmo_bindings::SwapAmountWithLimit::ExactIn {
+                        input: Uint128::new(250_000),
+                        min_output: Uint128::zero()
+                    }
+                })),
+                SubMsg::new(CosmosMsg::Custom(OsmosisMsg::Swap {
+                    first: Swap {
+                        pool_id: 1,
+                        denom_in: "uatom".to_string(),
+                        denom_out: "uosmo".to_string(),
+                    },
+                    route: vec![Step {
+                        pool_id: 3,
+                        denom_out: "umars".to_string(),
+                    }],
+                    amount: osmo_bindings::SwapAmountWithLimit::ExactIn {
+                        input: Uint128::new(250_000),
+                        min_output: Uint128::zero()
+                    }
+                }))
+            ]
+        );
+
+        assert_eq!(
+            res.attributes,
+            vec![
+                attr("action", "swap"),
+                attr("denom_in", "uatom"),
+                attr("amount_to_swap", "500000"),
+                attr("safety_fund_share", "250000"),
+                attr("fee_collector_share", "250000"),
+            ]
+        );
+
+        // test swap all the amount to safety fund (safety fund tax rate = 1)
+        let config = CreateOrUpdateConfig {
+            owner: None,
+            address_provider_address: None,
+            fee_collector_asset: None,
+            safety_fund_asset: None,
+            channel_id: None,
+            revision: None,
+            block_timeout: None,
+            safety_tax_rate: Some(Decimal::percent(100)),
+        };
+        let conf_msg = ExecuteMsg::UpdateConfig {
+            config,
+        };
+
+        // change the safety_tax_rate to 1
+        let _ = execute(deps.as_mut(), mock_env(), info.clone(), conf_msg).unwrap();
+
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        assert_eq!(
+            res.messages,
+            vec![SubMsg::new(CosmosMsg::Custom(OsmosisMsg::Swap {
+                first: Swap {
+                    pool_id: 1,
+                    denom_in: "uatom".to_string(),
+                    denom_out: "uosmo".to_string(),
+                },
+                route: vec![Step {
+                    pool_id: 2,
+                    denom_out: "uusdc".to_string(),
+                }],
+                amount: osmo_bindings::SwapAmountWithLimit::ExactIn {
+                    input: Uint128::new(500_000),
+                    min_output: Uint128::zero()
+                }
+            })),]
+        );
+
+        assert_eq!(
+            res.attributes,
+            vec![
+                attr("action", "swap"),
+                attr("denom_in", "uatom"),
+                attr("amount_to_swap", "500000"),
+                attr("safety_fund_share", "500000"),
+                attr("fee_collector_share", "0"),
+            ]
+        );
+    }
+
+    #[test]
     fn test_execute_cosmos_msg() {
         let mut deps = th_setup(&[]);
 
@@ -768,7 +906,7 @@ mod tests {
         let config = CreateOrUpdateConfig {
             owner: Some("owner".to_string()),
             address_provider_address: Some("address_provider".to_string()),
-            safety_tax_rate: Some(Decimal::percent(10)),
+            safety_tax_rate: Some(Decimal::percent(50)),
             safety_fund_asset: Some(Asset::Native {
                 denom: "uusdc".to_string(),
             }),
