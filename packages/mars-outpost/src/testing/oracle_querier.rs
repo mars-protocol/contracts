@@ -12,14 +12,13 @@ impl OracleQuerier {
     pub fn handle_query(&self, contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
         let oracle = Addr::unchecked("oracle");
         if *contract_addr != oracle {
-            panic!(
-                "[mock]: Oracle request made to {} shoud be {}",
-                contract_addr, oracle
-            );
+            panic!("[mock]: Oracle request made to {} shoud be {}", contract_addr, oracle);
         }
 
         let ret: ContractResult<Binary> = match query {
-            QueryMsg::AssetPriceByReference { asset_reference } => {
+            QueryMsg::AssetPriceByReference {
+                asset_reference,
+            } => {
                 let option_price = self.prices.get(&asset_reference);
 
                 if let Some(price) = option_price {

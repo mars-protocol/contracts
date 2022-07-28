@@ -16,7 +16,10 @@ pub struct Cw20Querier {
 impl Cw20Querier {
     pub fn handle_cw20_query(&self, contract_addr: &Addr, query: Cw20QueryMsg) -> QuerierResult {
         match query {
-            Cw20QueryMsg::AllAccounts { start_after, limit } => {
+            Cw20QueryMsg::AllAccounts {
+                start_after,
+                limit,
+            } => {
                 if start_after.is_some() {
                     return Err(SystemError::InvalidRequest {
                         error: "mock cw20 only supports `start_after` to be `None`".to_string(),
@@ -48,10 +51,16 @@ impl Cw20Querier {
                 // sort accounts alphabetically
                 accounts.sort();
 
-                Ok(to_binary(&AllAccountsResponse { accounts }).into()).into()
+                Ok(to_binary(&AllAccountsResponse {
+                    accounts,
+                })
+                .into())
+                .into()
             }
 
-            Cw20QueryMsg::Balance { address } => {
+            Cw20QueryMsg::Balance {
+                address,
+            } => {
                 let contract_balances = match self.balances.get(contract_addr) {
                     Some(balances) => balances,
                     None => {
@@ -119,7 +128,9 @@ impl Cw20Querier {
         query: ma_token::msg::QueryMsg,
     ) -> QuerierResult {
         match query {
-            ma_token::msg::QueryMsg::BalanceAndTotalSupply { address } => {
+            ma_token::msg::QueryMsg::BalanceAndTotalSupply {
+                address,
+            } => {
                 let contract_balances = match self.balances.get(contract_addr) {
                     Some(balances) => balances,
                     None => {

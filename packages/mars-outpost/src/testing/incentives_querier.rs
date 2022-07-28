@@ -26,19 +26,16 @@ impl IncentivesQuerier {
         }
 
         let ret: ContractResult<Binary> = match query {
-            QueryMsg::UserUnclaimedRewards { user_address } => {
-                match self
-                    .unclaimed_rewards_at
-                    .get(&(Addr::unchecked(user_address.clone())))
-                {
-                    Some(balance) => to_binary(balance).into(),
-                    None => Err(format!(
-                        "[mock]: no unclaimed rewards for account address {}",
-                        &user_address
-                    ))
-                    .into(),
-                }
-            }
+            QueryMsg::UserUnclaimedRewards {
+                user_address,
+            } => match self.unclaimed_rewards_at.get(&(Addr::unchecked(user_address.clone()))) {
+                Some(balance) => to_binary(balance).into(),
+                None => Err(format!(
+                    "[mock]: no unclaimed rewards for account address {}",
+                    &user_address
+                ))
+                .into(),
+            },
             _ => Err("[mock]: query not supported ").into(),
         };
 

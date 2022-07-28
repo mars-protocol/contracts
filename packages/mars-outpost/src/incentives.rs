@@ -89,9 +89,13 @@ pub mod msg {
         Config {},
 
         /// Query info about asset incentive for a given maToken
-        AssetIncentive { ma_token_address: String },
+        AssetIncentive {
+            ma_token_address: String,
+        },
 
         /// Query user current unclaimed rewards
-        UserUnclaimedRewards { user_address: String },
+        UserUnclaimedRewards {
+            user_address: String,
+        },
     }
 }

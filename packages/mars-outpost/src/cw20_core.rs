@@ -52,10 +52,7 @@ pub fn instantiate_token_info_and_marketing(
         let data = MarketingInfoResponse {
             project: marketing.project,
             description: marketing.description,
-            marketing: marketing
-                .marketing
-                .map(|addr| deps.api.addr_validate(&addr))
-                .transpose()?,
+            marketing: marketing.marketing.map(|addr| deps.api.addr_validate(&addr)).transpose()?,
             logo,
         };
         MARKETING_INFO.save(deps.storage, &data)?;
@@ -71,10 +68,8 @@ fn verify_xml_preamble(data: &[u8]) -> Result<(), ContractError> {
     // The easiest way to perform this check would be just match on regex, however regex
     // compilation is heavy and probably not worth it.
 
-    let preamble = data
-        .split_inclusive(|c| *c == b'>')
-        .next()
-        .ok_or(ContractError::InvalidXmlPreamble {})?;
+    let preamble =
+        data.split_inclusive(|c| *c == b'>').next().ok_or(ContractError::InvalidXmlPreamble {})?;
 
     const PREFIX: &[u8] = b"<?xml ";
     const POSTFIX: &[u8] = b"?>";

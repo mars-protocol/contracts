@@ -108,9 +108,7 @@ pub fn calculate_applied_linear_interest_rate(
         Uint128::from(time_elapsed),
         Uint128::from(SECONDS_PER_YEAR),
     ))?;
-    index
-        .checked_mul(Decimal::one() + rate_factor)
-        .map_err(StdError::from)
+    index.checked_mul(Decimal::one() + rate_factor).map_err(StdError::from)
 }
 
 /// Get scaled liquidity amount from an underlying amount, a Market and timestamp in seconds
@@ -195,7 +193,7 @@ pub enum ScalingOperation {
 /// Scales the amount dividing by an index in order to compute interest rates. Before dividing,
 /// the value is multiplied by SCALING_FACTOR for greater precision.
 /// Example:
-/// Current index is 10. We deposit 6.123456 UST (6123456 uusd). Scaled amount will be
+/// Current index is 10. We deposit 6.123456 OSMO (6123456 uosmo). Scaled amount will be
 /// 6123456 / 10 = 612345 so we loose some precision. In order to avoid this situation
 /// we scale the amount by SCALING_FACTOR.
 pub fn compute_scaled_amount(
@@ -357,23 +355,14 @@ mod tests {
 
         let scaled_amount_liquidity = get_scaled_liquidity_amount(start, &market, 1).unwrap();
         let scaled_amount_debt = get_scaled_debt_amount(start, &market, 1).unwrap();
-        assert_eq!(
-            Uint128::from(33_333_333_333_333_333_u128),
-            scaled_amount_liquidity
-        );
-        assert_eq!(
-            Uint128::from(33_333_333_333_333_334_u128),
-            scaled_amount_debt
-        );
+        assert_eq!(Uint128::from(33_333_333_333_333_333_u128), scaled_amount_liquidity);
+        assert_eq!(Uint128::from(33_333_333_333_333_334_u128), scaled_amount_debt);
 
         let back_to_underlying_liquidity =
             get_underlying_liquidity_amount(scaled_amount_liquidity, &market, 1).unwrap();
         let back_to_underlying_debt =
             get_underlying_debt_amount(scaled_amount_debt, &market, 1).unwrap();
-        assert_eq!(
-            Uint128::from(99_999_999_999_u128),
-            back_to_underlying_liquidity
-        );
+        assert_eq!(Uint128::from(99_999_999_999_u128), back_to_underlying_liquidity);
         assert_eq!(Uint128::from(100_000_000_001_u128), back_to_underlying_debt);
     }
 }

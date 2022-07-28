@@ -27,7 +27,9 @@ pub fn mock_env(mock_env_params: MockEnvParams) -> Env {
             time: mock_env_params.block_time,
             chain_id: "cosmos-testnet-14002".to_string(),
         },
-        transaction: Some(TransactionInfo { index: 3 }),
+        transaction: Some(TransactionInfo {
+            index: 3,
+        }),
         contract: ContractInfo {
             address: Addr::unchecked(MOCK_CONTRACT_ADDR),
         },
@@ -61,10 +63,8 @@ pub fn mock_dependencies(
     contract_balance: &[Coin],
 ) -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     let contract_addr = Addr::unchecked(MOCK_CONTRACT_ADDR);
-    let custom_querier: MarsMockQuerier = MarsMockQuerier::new(MockQuerier::new(&[(
-        &contract_addr.to_string(),
-        contract_balance,
-    )]));
+    let custom_querier: MarsMockQuerier =
+        MarsMockQuerier::new(MockQuerier::new(&[(&contract_addr.to_string(), contract_balance)]));
 
     OwnedDeps {
         storage: MockStorage::default(),

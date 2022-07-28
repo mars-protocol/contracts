@@ -13,7 +13,10 @@ pub enum MarsError {
     InstantiateParamsUnavailable {},
 
     #[error("Incorrect number of addresses, expected {expected:?}, got {actual:?}")]
-    AddressesQueryWrongNumber { expected: u32, actual: u32 },
+    AddressesQueryWrongNumber {
+        expected: u32,
+        actual: u32,
+    },
 
     #[error("Invalid param: {param_name} is {invalid_value}, but it should be {predicate}")]
     InvalidParam {

@@ -83,10 +83,15 @@ pub mod msg {
     #[serde(rename_all = "snake_case")]
     pub enum ExecuteMsg {
         /// Update contract config
-        UpdateConfig { config: CreateOrUpdateConfig },
+        UpdateConfig {
+            config: CreateOrUpdateConfig,
+        },
 
         /// Update asset config
-        UpdateAssetConfig { asset: Asset, enabled: bool },
+        UpdateAssetConfig {
+            asset: Asset,
+            enabled: bool,
+        },
 
         /// Withdraw maTokens from the red bank
         WithdrawFromRedBank {
@@ -114,6 +119,8 @@ pub mod msg {
         /// Get config parameters
         Config {},
         /// Get asset config parameters
-        AssetConfig { asset: Asset },
+        AssetConfig {
+            asset: Asset,
+        },
     }
 }

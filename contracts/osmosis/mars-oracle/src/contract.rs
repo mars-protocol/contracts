@@ -42,7 +42,9 @@ pub fn execute(
     msg: ExecuteMsg<PriceSource>,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::UpdateConfig { owner } => execute_update_config(deps, env, info, owner),
+        ExecuteMsg::UpdateConfig {
+            owner,
+        } => execute_update_config(deps, env, info, owner),
         ExecuteMsg::SetAsset {
             asset,
             price_source,
@@ -85,7 +87,10 @@ pub fn execute_set_asset(
 
     // for spot we must make sure: the osmosis pool indicated by `pool_id`
     // consists of OSMO and the asset of interest
-    if let PriceSource::Spot { pool_id } = &price_source {
+    if let PriceSource::Spot {
+        pool_id,
+    } = &price_source
+    {
         assert_osmosis_pool_assets(deps.as_ref(), &asset, *pool_id)?;
     }
 
@@ -101,15 +106,15 @@ pub fn execute_set_asset(
 pub fn query(deps: Deps<OsmosisQuery>, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
-        QueryMsg::AssetPriceSource { asset } => {
-            to_binary(&query_asset_price_source(deps, env, asset)?)
-        }
-        QueryMsg::AssetPrice { asset } => {
-            to_binary(&query_asset_price(deps, env, asset.get_reference())?)
-        }
-        QueryMsg::AssetPriceByReference { asset_reference } => {
-            to_binary(&query_asset_price(deps, env, asset_reference)?)
-        }
+        QueryMsg::AssetPriceSource {
+            asset,
+        } => to_binary(&query_asset_price_source(deps, env, asset)?),
+        QueryMsg::AssetPrice {
+            asset,
+        } => to_binary(&query_asset_price(deps, env, asset.get_reference())?),
+        QueryMsg::AssetPriceByReference {
+            asset_reference,
+        } => to_binary(&query_asset_price(deps, env, asset_reference)?),
     }
 }
 
@@ -133,15 +138,21 @@ fn query_asset_price(
     let price_source = PRICE_SOURCES.load(deps.storage, &asset_reference)?;
 
     match price_source {
-        PriceSource::Fixed { price } => Ok(price),
+        PriceSource::Fixed {
+            price,
+        } => Ok(price),
 
-        PriceSource::Spot { pool_id } => query_osmosis_spot_price(deps, asset_reference, pool_id),
+        PriceSource::Spot {
+            pool_id,
+        } => query_osmosis_spot_price(deps, asset_reference, pool_id),
 
         // The value of each unit of the liquidity token is the total value of pool's two assets
         // divided by the liquidity token's total supply
         //
         // NOTE: Price sources must exist for both assets in the pool
-        PriceSource::LiquidityToken { pool_id } => {
+        PriceSource::LiquidityToken {
+            pool_id,
+        } => {
             let pool = query_osmosis_pool(deps, pool_id)?;
 
             let asset0: Asset = (&pool.assets[0]).into();
@@ -204,7 +215,9 @@ mod helpers {
         deps: Deps<OsmosisQuery>,
         pool_id: u64,
     ) -> StdResult<PoolStateResponse> {
-        let pool_query = OsmosisQuery::PoolState { id: pool_id };
+        let pool_query = OsmosisQuery::PoolState {
+            id: pool_id,
+        };
         let query = QueryRequest::from(pool_query);
         let pool_info: PoolStateResponse = deps.querier.query(&query)?;
         Ok(pool_info)
@@ -270,7 +283,9 @@ mod tests {
         let info = mock_info("owner", &[]);
         // no change
         {
-            let msg = ExecuteMsg::UpdateConfig { owner: None };
+            let msg = ExecuteMsg::UpdateConfig {
+                owner: None,
+            };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
             let config = CONFIG.load(&deps.storage).unwrap();
@@ -306,9 +321,7 @@ mod tests {
         };
         execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
-        let price_source = PRICE_SOURCES
-            .load(&deps.storage, reference.as_slice())
-            .unwrap();
+        let price_source = PRICE_SOURCES.load(&deps.storage, reference.as_slice()).unwrap();
         assert_eq!(
             price_source,
             PriceSource::Fixed {
@@ -348,14 +361,19 @@ mod tests {
         let reference = asset.get_reference();
         let msg = ExecuteMsg::SetAsset {
             asset,
-            price_source: PriceSource::Spot { pool_id: 102 },
+            price_source: PriceSource::Spot {
+                pool_id: 102,
+            },
         };
         execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
-        let price_source = PRICE_SOURCES
-            .load(&deps.storage, reference.as_slice())
-            .unwrap();
-        assert_eq!(price_source, PriceSource::Spot { pool_id: 102 });
+        let price_source = PRICE_SOURCES.load(&deps.storage, reference.as_slice()).unwrap();
+        assert_eq!(
+            price_source,
+            PriceSource::Spot {
+                pool_id: 102
+            }
+        );
     }
 
     #[test]
@@ -369,14 +387,19 @@ mod tests {
         let reference = asset.get_reference();
         let msg = ExecuteMsg::SetAsset {
             asset,
-            price_source: PriceSource::LiquidityToken { pool_id: 208 },
+            price_source: PriceSource::LiquidityToken {
+                pool_id: 208,
+            },
         };
         execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
-        let price_source = PRICE_SOURCES
-            .load(&deps.storage, reference.as_slice())
-            .unwrap();
-        assert_eq!(price_source, PriceSource::LiquidityToken { pool_id: 208 });
+        let price_source = PRICE_SOURCES.load(&deps.storage, reference.as_slice()).unwrap();
+        assert_eq!(
+            price_source,
+            PriceSource::LiquidityToken {
+                pool_id: 208
+            }
+        );
     }
 
     #[test]
@@ -401,7 +424,9 @@ mod tests {
             &query(
                 deps.as_ref(),
                 mock_env(),
-                QueryMsg::AssetPriceSource { asset },
+                QueryMsg::AssetPriceSource {
+                    asset,
+                },
             )
             .unwrap(),
         )
@@ -437,7 +462,9 @@ mod tests {
             &query(
                 deps.as_ref(),
                 mock_env(),
-                QueryMsg::AssetPriceByReference { asset_reference },
+                QueryMsg::AssetPriceByReference {
+                    asset_reference,
+                },
             )
             .unwrap(),
         )
@@ -459,7 +486,9 @@ mod tests {
             .save(
                 &mut deps.storage,
                 reference.as_slice(),
-                &PriceSource::Spot { pool_id: 102 },
+                &PriceSource::Spot {
+                    pool_id: 102,
+                },
             )
             .unwrap();
 
@@ -503,7 +532,9 @@ mod tests {
                 .save(
                     &mut deps.storage,
                     reference.as_slice(),
-                    &PriceSource::Spot { pool_id: 1 },
+                    &PriceSource::Spot {
+                        pool_id: 1,
+                    },
                 )
                 .unwrap();
 
@@ -530,7 +561,9 @@ mod tests {
                 .save(
                     &mut deps.storage,
                     reference.as_slice(),
-                    &PriceSource::Spot { pool_id: 2 },
+                    &PriceSource::Spot {
+                        pool_id: 2,
+                    },
                 )
                 .unwrap();
 
@@ -557,7 +590,9 @@ mod tests {
                 .save(
                     &mut deps.storage,
                     reference.as_slice(),
-                    &PriceSource::LiquidityToken { pool_id: 3 },
+                    &PriceSource::LiquidityToken {
+                        pool_id: 3,
+                    },
                 )
                 .unwrap();
 

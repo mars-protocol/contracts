@@ -13,7 +13,10 @@ pub fn assert_eq_vec<T: std::fmt::Debug + PartialEq>(expected: Vec<T>, actual: V
 /// Assert StdError::GenericErr message with expected_msg
 pub fn assert_generic_error_message<T>(response: StdResult<T>, expected_msg: &str) {
     match response {
-        Err(StdError::GenericErr { msg, .. }) => assert_eq!(msg, expected_msg),
+        Err(StdError::GenericErr {
+            msg,
+            ..
+        }) => assert_eq!(msg, expected_msg),
         Err(other_err) => panic!("Unexpected error: {:?}", other_err),
         Ok(_) => panic!("SHOULD NOT ENTER HERE!"),
     }

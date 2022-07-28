@@ -13,11 +13,11 @@ use crate::{Debt, User, UserHealthStatus};
 
 /// User global position
 pub struct UserPosition {
-    pub total_collateral_in_uusd: Uint128,
-    pub total_debt_in_uusd: Uint128,
-    pub total_collateralized_debt_in_uusd: Uint128,
-    pub max_debt_in_uusd: Uint128,
-    pub weighted_liquidation_threshold_in_uusd: Uint128,
+    pub total_collateral_in_base_asset: Uint128,
+    pub total_debt_in_base_asset: Uint128,
+    pub total_collateralized_debt_in_base_asset: Uint128,
+    pub max_debt_in_base_asset: Uint128,
+    pub weighted_liquidation_threshold_in_base_asset: Uint128,
     pub health_status: UserHealthStatus,
     pub asset_positions: Vec<UserAssetPosition>,
 }
@@ -29,10 +29,8 @@ impl UserPosition {
         asset_reference: &[u8],
         asset_label: &str,
     ) -> Result<Decimal, ContractError> {
-        let asset_position = self
-            .asset_positions
-            .iter()
-            .find(|ap| ap.asset_reference.as_slice() == asset_reference);
+        let asset_position =
+            self.asset_positions.iter().find(|ap| ap.asset_reference.as_slice() == asset_reference);
 
         match asset_position {
             Some(position) => Ok(position.asset_price),
@@ -55,8 +53,8 @@ pub struct UserAssetPosition {
 }
 
 /// Calculates the user data across the markets.
-/// This includes the total debt/collateral balances in uusd,
-/// the max debt in uusd, the average Liquidation threshold, and the Health factor.
+/// This includes the total debt/collateral balances in base asset,
+/// the max debt in base asset, the average Liquidation threshold, and the Health factor.
 pub fn get_user_position(
     deps: Deps,
     block_time: u64,
@@ -74,49 +72,50 @@ pub fn get_user_position(
         block_time,
     )?;
 
-    let mut total_collateral_in_uusd = Uint128::zero();
-    let mut total_debt_in_uusd = Uint128::zero();
-    let mut total_collateralized_debt_in_uusd = Uint128::zero();
-    let mut max_debt_in_uusd = Uint128::zero();
-    let mut weighted_liquidation_threshold_in_uusd = Uint128::zero();
+    let mut total_collateral_in_base_asset = Uint128::zero();
+    let mut total_debt_in_base_asset = Uint128::zero();
+    let mut total_collateralized_debt_in_base_asset = Uint128::zero();
+    let mut max_debt_in_base_asset = Uint128::zero();
+    let mut weighted_liquidation_threshold_in_base_asset = Uint128::zero();
 
     for user_asset_position in &user_asset_positions {
         let asset_price = user_asset_position.asset_price;
-        let collateral_in_uusd = user_asset_position.collateral_amount * asset_price;
-        total_collateral_in_uusd = total_collateral_in_uusd.checked_add(collateral_in_uusd)?;
+        let collateral_in_base_asset = user_asset_position.collateral_amount * asset_price;
+        total_collateral_in_base_asset =
+            total_collateral_in_base_asset.checked_add(collateral_in_base_asset)?;
 
-        max_debt_in_uusd =
-            max_debt_in_uusd.checked_add(collateral_in_uusd * user_asset_position.max_ltv)?;
-        weighted_liquidation_threshold_in_uusd = weighted_liquidation_threshold_in_uusd
-            .checked_add(collateral_in_uusd * user_asset_position.liquidation_threshold)?;
+        max_debt_in_base_asset = max_debt_in_base_asset
+            .checked_add(collateral_in_base_asset * user_asset_position.max_ltv)?;
+        weighted_liquidation_threshold_in_base_asset = weighted_liquidation_threshold_in_base_asset
+            .checked_add(collateral_in_base_asset * user_asset_position.liquidation_threshold)?;
 
-        let debt_in_uusd = user_asset_position.debt_amount * asset_price;
-        total_debt_in_uusd = total_debt_in_uusd.checked_add(debt_in_uusd)?;
+        let debt_in_base_asset = user_asset_position.debt_amount * asset_price;
+        total_debt_in_base_asset = total_debt_in_base_asset.checked_add(debt_in_base_asset)?;
 
         if !user_asset_position.uncollateralized_debt {
-            total_collateralized_debt_in_uusd =
-                total_collateralized_debt_in_uusd.checked_add(debt_in_uusd)?;
+            total_collateralized_debt_in_base_asset =
+                total_collateralized_debt_in_base_asset.checked_add(debt_in_base_asset)?;
         }
     }
 
     // When computing health factor we should not take debt into account that has been given
     // an uncollateralized loan limit
-    let health_status = if total_collateralized_debt_in_uusd.is_zero() {
+    let health_status = if total_collateralized_debt_in_base_asset.is_zero() {
         UserHealthStatus::NotBorrowing
     } else {
         let health_factor = Decimal::from_ratio(
-            weighted_liquidation_threshold_in_uusd,
-            total_collateralized_debt_in_uusd,
+            weighted_liquidation_threshold_in_base_asset,
+            total_collateralized_debt_in_base_asset,
         );
         UserHealthStatus::Borrowing(health_factor)
     };
 
     let user_position = UserPosition {
-        total_collateral_in_uusd,
-        total_debt_in_uusd,
-        total_collateralized_debt_in_uusd,
-        max_debt_in_uusd,
-        weighted_liquidation_threshold_in_uusd,
+        total_collateral_in_base_asset,
+        total_debt_in_base_asset,
+        total_collateralized_debt_in_base_asset,
+        max_debt_in_base_asset,
+        weighted_liquidation_threshold_in_base_asset,
         health_status,
         asset_positions: user_asset_positions,
     };
@@ -157,11 +156,7 @@ fn get_user_asset_positions(
             let collateral_amount =
                 get_underlying_liquidity_amount(asset_balance_scaled, &market, block_time)?;
 
-            (
-                collateral_amount,
-                market.max_loan_to_value,
-                market.liquidation_threshold,
-            )
+            (collateral_amount, market.max_loan_to_value, market.liquidation_threshold)
         } else {
             (Uint128::zero(), Decimal::zero(), Decimal::zero())
         };
@@ -187,9 +182,7 @@ fn get_user_asset_positions(
             AssetType::Cw20 => match String::from_utf8(asset_reference_vec.clone()) {
                 Ok(res) => res,
                 Err(_) => {
-                    return Err(StdError::generic_err(
-                        "failed to encode Cw20 address into string",
-                    ))
+                    return Err(StdError::generic_err("failed to encode Cw20 address into string"))
                 }
             },
         };
