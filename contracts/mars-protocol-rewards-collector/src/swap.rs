@@ -9,7 +9,7 @@ pub fn construct_swap_msg(
     swap_amount: Uint128,
     steps: &[Step],
 ) -> StdResult<CosmosMsg<OsmosisMsg>> {
-    // Having the same asset as offer and ask asset doesn't make any sense
+    // Having the same asset in and asset out doesn't make any sense
     match steps.last() {
         Some(Step {
             pool_id: _,
