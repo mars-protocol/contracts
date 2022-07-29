@@ -116,7 +116,7 @@ pub mod helpers {
     use cosmwasm_std::{Addr, Deps, StdResult};
 
     pub fn query_address(
-        deps: Deps,
+        deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
         contract: MarsContract,
     ) -> StdResult<Addr> {
@@ -127,7 +127,7 @@ pub mod helpers {
     }
 
     pub fn query_addresses(
-        deps: Deps,
+        deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
         contracts: Vec<MarsContract>,
     ) -> StdResult<HashMap<MarsContract, Addr>> {
@@ -152,7 +152,7 @@ mod tests {
 
     #[test]
     fn test_query_address() {
-        let deps = OwnedDeps {
+        let deps = OwnedDeps::<_, _, _, Empty> {
             storage: MockStorage::default(),
             api: MockApi::default(),
             querier: AddressProviderMockQuerier {},
@@ -172,7 +172,7 @@ mod tests {
 
     #[test]
     fn test_query_addresses() {
-        let deps = OwnedDeps {
+        let deps = OwnedDeps::<_, _, _, Empty> {
             storage: MockStorage::default(),
             api: MockApi::default(),
             querier: AddressProviderMockQuerier {},

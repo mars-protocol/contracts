@@ -1,180 +1,112 @@
-use cosmwasm_std::{CosmosMsg, Uint128};
-use osmo_bindings::{OsmosisMsg, Step, Swap, SwapAmountWithLimit};
+use cosmwasm_std::{CosmosMsg, QuerierWrapper, QueryRequest, Uint128};
+use osmo_bindings::{OsmosisMsg, OsmosisQuery, PoolStateResponse, Step, Swap, SwapAmountWithLimit};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::{ContractError, ContractResult};
+use crate::{error::ContractResult, ContractError};
 
-pub fn build_swap_msg(
-    denom_in: &str,
-    amount: Uint128,
-    steps: &[Step],
-) -> ContractResult<CosmosMsg<OsmosisMsg>> {
-    let first_swap = steps
-        .first()
-        .map(|step| Swap::new(step.pool_id, denom_in, &step.denom_out))
-        .ok_or(ContractError::InvalidSwapRoute {
-            steps: steps.to_vec(),
-            reason: "the route must contain at least one step".to_string(),
-        })?;
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct SwapInstructions(Vec<Step>);
 
-    Ok(CosmosMsg::Custom(OsmosisMsg::Swap {
-        first: first_swap,
-        route: steps[1..].to_vec(),
-        amount: SwapAmountWithLimit::ExactIn {
-            input: amount,
-            min_output: Uint128::zero(), // TODO: implement slippage tolerance
-        },
-    }))
+impl SwapInstructions {
+    // Perform basic validation of the swap steps
+    pub fn validate(
+        &self,
+        querier: &QuerierWrapper<OsmosisQuery>,
+        denom_in: &str,
+        denom_out: &str,
+    ) -> ContractResult<()> {
+        let steps = self.steps();
+
+        // there must be at least one step
+        if steps.len() == 0 {
+            return Err(ContractError::InvalidSwapRoute {
+                steps: steps.to_vec(),
+                reason: "the route must contain at least one step".to_string(),
+            });
+        }
+
+        // for each step, the pool must contain the input and output denoms
+        let mut prev_denom_out = denom_in;
+        for (i, step) in steps.iter().enumerate() {
+            let pool_state: PoolStateResponse =
+                querier.query(&QueryRequest::Custom(OsmosisQuery::PoolState {
+                    id: step.pool_id,
+                }))?;
+
+            if !pool_state.has_denom(prev_denom_out) {
+                return Err(ContractError::InvalidSwapRoute {
+                    steps: steps.to_vec(),
+                    reason: format!(
+                        "step {}: pool {} does not contain input denom {}",
+                        i, step.pool_id, prev_denom_out
+                    ),
+                });
+            }
+
+            if !pool_state.has_denom(&step.denom_out) {
+                return Err(ContractError::InvalidSwapRoute {
+                    steps: steps.to_vec(),
+                    reason: format!(
+                        "step {}: pool {} does not contain output denom {}",
+                        i, step.pool_id, &step.denom_out
+                    ),
+                });
+            }
+
+            prev_denom_out = &step.denom_out;
+        }
+
+        // the final output denom must not be the same from the initial input denom
+        if denom_in == prev_denom_out {
+            return Err(ContractError::InvalidSwapRoute {
+                steps: steps.to_vec(),
+                reason: format!("input and output denom cannot both be {}", denom_in),
+            });
+        }
+
+        // the route's output denom must match the desired output denom
+        if prev_denom_out != denom_out {
+            return Err(ContractError::InvalidSwapRoute {
+                steps: steps.to_vec(),
+                reason: format!(
+                    "the route output denom {} does not match the desired output {}",
+                    prev_denom_out, denom_out
+                ),
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Return a referenece to the swap steps
+    pub fn steps(&self) -> &[Step] {
+        &self.0
+    }
+
+    /// Build a CosmosMsg that swaps given an input denom and amount
+    pub fn build_swap_msg(
+        &self,
+        denom_in: &str,
+        amount: Uint128,
+    ) -> ContractResult<CosmosMsg<OsmosisMsg>> {
+        let steps = self.steps();
+
+        let first_swap = steps
+            .first()
+            .map(|step| Swap::new(step.pool_id, denom_in, &step.denom_out))
+            .ok_or(ContractError::InvalidSwapRoute {
+                steps: steps.to_vec(),
+                reason: "the route must contain at least one step".to_string(),
+            })?;
+
+        Ok(CosmosMsg::Custom(OsmosisMsg::Swap {
+            first: first_swap,
+            route: steps[1..].to_vec(),
+            amount: SwapAmountWithLimit::ExactIn {
+                input: amount,
+                min_output: Uint128::zero(), // TODO: implement slippage tolerance
+            },
+        }))
+    }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use cosmwasm_std::Coin;
-//     use mars_outpost::testing::{
-//         assert_generic_error_message, mock_dependencies, mock_env, MockEnvParams,
-//     };
-
-//     #[test]
-//     fn test_cannot_swap_same_assets() {
-//         let msg = build_swap_msg(
-//             mock_dependencies(&[]).as_ref(),
-//             mock_env(MockEnvParams::default()),
-//             "uosmo",
-//             Uint128::new(1000),
-//             &[Step {
-//                 pool_id: 1,
-//                 denom_out: "uosmo".to_string(),
-//             }],
-//         );
-
-//         assert_generic_error_message(
-//             msg,
-//             "Cannot swap an asset into itself. Both assets were specified as uosmo",
-//         );
-//     }
-
-//     #[test]
-//     fn test_cannot_swap_asset_with_zero_swap_amount() {
-//         let deps = mock_dependencies(&[Coin {
-//             denom: "uosmo".to_string(),
-//             amount: Uint128::new(100_000),
-//         }]);
-
-//         let msg = build_swap_msg(
-//             deps.as_ref(),
-//             mock_env(MockEnvParams::default()),
-//             "uosmo",
-//             Uint128::zero(),
-//             &[Step {
-//                 pool_id: 1,
-//                 denom_out: "umars".to_string(),
-//             }],
-//         );
-//         assert_generic_error_message(msg, "Swap amount must be strictly greater than zero")
-//     }
-
-//     #[test]
-//     fn test_cannot_swap_asset_with_zero_balance() {
-//         let deps = mock_dependencies(&[Coin {
-//             denom: "uosmo".to_string(),
-//             amount: Uint128::zero(),
-//         }]);
-
-//         let msg = build_swap_msg(
-//             deps.as_ref(),
-//             mock_env(MockEnvParams::default()),
-//             "uosmo",
-//             Uint128::new(1000),
-//             &[Step {
-//                 pool_id: 1,
-//                 denom_out: "umars".to_string(),
-//             }],
-//         );
-//         assert_generic_error_message(
-//             msg,
-//             "The amount requested for swap exceeds contract balance for the asset uosmo",
-//         )
-//     }
-
-//     #[test]
-//     fn test_cannot_swap_more_than_contract_balance() {
-//         let deps = mock_dependencies(&[Coin {
-//             denom: "somecoin".to_string(),
-//             amount: Uint128::new(1_000_000),
-//         }]);
-
-//         let msg = build_swap_msg(
-//             deps.as_ref(),
-//             mock_env(MockEnvParams::default()),
-//             "somecoin",
-//             Uint128::new(1_000_001),
-//             &[Step {
-//                 pool_id: 1,
-//                 denom_out: "uosmo".to_string(),
-//             }],
-//         );
-//         assert_generic_error_message(
-//             msg,
-//             "The amount requested for swap exceeds contract balance for the asset somecoin",
-//         )
-//     }
-
-//     #[test]
-//     fn test_cannot_swap_with_invalid_route() {
-//         let deps = mock_dependencies(&[Coin {
-//             denom: "somecoin".to_string(),
-//             amount: Uint128::new(1_000_000),
-//         }]);
-
-//         let msg = build_swap_msg(
-//             deps.as_ref(),
-//             mock_env(MockEnvParams::default()),
-//             "somecoin",
-//             Uint128::new(1_000_001),
-//             &[Step {
-//                 pool_id: 1,
-//                 denom_out: "uosmo".to_string(),
-//             }],
-//         );
-//         assert_generic_error_message(
-//             msg,
-//             "The amount requested for swap exceeds contract balance for the asset somecoin",
-//         )
-//     }
-//     #[test]
-//     fn test_swap_native_token_balance() {
-//         let contract_asset_balance = Uint128::new(1_000_000);
-//         let deps = mock_dependencies(&[Coin {
-//             denom: "uosmo".to_string(),
-//             amount: contract_asset_balance,
-//         }]);
-
-//         let msg = build_swap_msg(
-//             deps.as_ref(),
-//             mock_env(MockEnvParams::default()),
-//             "uosmo",
-//             Uint128::new(500_000),
-//             &[Step {
-//                 pool_id: 1,
-//                 denom_out: "uusdc".to_string(),
-//             }],
-//         )
-//         .unwrap();
-
-//         assert_eq!(
-//             msg,
-//             CosmosMsg::Custom(OsmosisMsg::Swap {
-//                 first: Swap {
-//                     pool_id: 1,
-//                     denom_in: "uosmo".to_string(),
-//                     denom_out: "uusdc".to_string()
-//                 },
-//                 route: Vec::new(),
-//                 amount: SwapAmountWithLimit::ExactIn {
-//                     input: Uint128::new(500_000),
-//                     min_output: Uint128::zero()
-//                 }
-//             })
-//         );
-//     }
-// }

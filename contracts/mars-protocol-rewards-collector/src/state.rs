@@ -2,7 +2,7 @@ use cw_storage_plus::{Item, Map};
 
 use mars_outpost::protocol_rewards_collector::Config;
 
-use crate::msg::SwapInstructions;
+use crate::SwapInstructions;
 
 // The reward collector contract's config
 pub const CONFIG: Item<Config> = Item::new("config");

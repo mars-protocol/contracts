@@ -8,7 +8,7 @@ use crate::error::{ContractError, ContractResult};
 ///
 /// - if not provided, use the available balance as default.
 pub fn unwrap_option_amount(
-    querier: &QuerierWrapper,
+    querier: &QuerierWrapper<impl cosmwasm_std::CustomQuery>,
     addr: &Addr,
     denom: &str,
     amount: Option<Uint128>,

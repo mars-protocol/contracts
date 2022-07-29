@@ -3,9 +3,10 @@ mod error;
 pub mod helpers;
 pub mod msg;
 pub mod state;
-pub mod swap;
+mod swap;
 
 pub use error::{ContractError, ContractResult};
+pub use swap::SwapInstructions;
 
 #[cfg(test)]
 mod testing;

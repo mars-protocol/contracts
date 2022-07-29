@@ -13,13 +13,13 @@ use mars_outpost::protocol_rewards_collector::{
 };
 use mars_outpost::red_bank;
 
-use osmo_bindings::OsmosisMsg;
+use osmo_bindings::{OsmosisMsg, OsmosisQuery};
 
 use crate::error::{ContractError, ContractResult};
 use crate::helpers::{stringify_option_amount, unwrap_option_amount};
-use crate::msg::{ExecuteMsg, SwapInstructions};
+use crate::msg::ExecuteMsg;
 use crate::state::{CONFIG, INSTRUCTIONS};
-use crate::swap::build_swap_msg;
+use crate::swap::SwapInstructions;
 
 // INIT
 
@@ -29,7 +29,7 @@ pub fn instantiate(
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
+) -> ContractResult<Response> {
     msg.validate()?;
 
     CONFIG.save(deps.storage, &msg)?;
@@ -41,7 +41,7 @@ pub fn instantiate(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    deps: DepsMut,
+    deps: DepsMut<OsmosisQuery>,
     env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
@@ -72,7 +72,7 @@ pub fn execute(
 }
 
 pub fn update_config(
-    deps: DepsMut,
+    deps: DepsMut<impl cosmwasm_std::CustomQuery>,
     sender: Addr,
     new_config: CreateOrUpdateConfig,
 ) -> ContractResult<Response<OsmosisMsg>> {
@@ -111,7 +111,7 @@ pub fn update_config(
 }
 
 pub fn set_swap_instructions(
-    deps: DepsMut,
+    deps: DepsMut<OsmosisQuery>,
     sender: Addr,
     denom_in: String,
     denom_out: String,
@@ -123,7 +123,7 @@ pub fn set_swap_instructions(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    instructions.validate()?;
+    instructions.validate(&deps.querier, &denom_in, &denom_out)?;
 
     INSTRUCTIONS.save(deps.storage, (denom_in.clone(), denom_out.clone()), &instructions)?;
 
@@ -134,7 +134,7 @@ pub fn set_swap_instructions(
 }
 
 pub fn withdraw_from_red_bank(
-    deps: DepsMut,
+    deps: DepsMut<impl cosmwasm_std::CustomQuery>,
     denom: String,
     amount: Option<Uint128>,
 ) -> ContractResult<Response<OsmosisMsg>> {
@@ -167,7 +167,7 @@ pub fn withdraw_from_red_bank(
 }
 
 pub fn swap_asset(
-    deps: DepsMut,
+    deps: DepsMut<impl cosmwasm_std::CustomQuery>,
     env: Env,
     denom: String,
     amount: Option<Uint128>,
@@ -184,15 +184,19 @@ pub fn swap_asset(
     let mut messages = vec![];
 
     if !amount_safety_fund.is_zero() {
-        let instructions =
-            INSTRUCTIONS.load(deps.storage, (denom.clone(), config.safety_fund_denom.clone()))?;
-        messages.push(build_swap_msg(&denom, amount_safety_fund, instructions.steps())?);
+        messages.push(
+            INSTRUCTIONS
+                .load(deps.storage, (denom.clone(), config.safety_fund_denom.clone()))?
+                .build_swap_msg(&denom, amount_safety_fund)?,
+        );
     }
 
     if !amount_fee_collector.is_zero() {
-        let instructions =
-            INSTRUCTIONS.load(deps.storage, (denom.clone(), config.fee_collector_denom.clone()))?;
-        messages.push(build_swap_msg(&denom, amount_fee_collector, instructions.steps())?);
+        messages.push(
+            INSTRUCTIONS
+                .load(deps.storage, (denom.clone(), config.fee_collector_denom.clone()))?
+                .build_swap_msg(&denom, amount_fee_collector)?,
+        );
     }
 
     Ok(Response::new()
@@ -204,7 +208,7 @@ pub fn swap_asset(
 }
 
 pub fn distribute_rewards(
-    deps: DepsMut,
+    deps: DepsMut<impl cosmwasm_std::CustomQuery>,
     env: Env,
     denom: String,
     amount: Option<Uint128>,
@@ -253,7 +257,7 @@ pub fn distribute_rewards(
 }
 
 pub fn execute_cosmos_msg(
-    deps: DepsMut,
+    deps: DepsMut<impl cosmwasm_std::CustomQuery>,
     sender: Addr,
     msg: CosmosMsg<OsmosisMsg>,
 ) -> ContractResult<Response<OsmosisMsg>> {

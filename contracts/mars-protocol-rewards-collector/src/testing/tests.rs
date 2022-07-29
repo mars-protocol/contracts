@@ -135,7 +135,7 @@ use super::*;
             config: base_config.clone(),
         };
         let info = mock_info("somebody");
-        let error_res = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        let error_res = tests(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(error_res, MarsError::Unauthorized {}.into());
 
         // *
@@ -152,7 +152,7 @@ use super::*;
         let msg = ExecuteMsg::UpdateConfig {
             config,
         };
-        let error_res = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        let error_res = tests(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
             ConfigError::Mars(MarsError::InvalidParam {
@@ -176,7 +176,7 @@ use super::*;
             config,
         };
         let info = mock_info("owner");
-        let error_res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+        let error_res = tests(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
         assert_eq!(
             error_res,
             ConfigError::Mars(MarsError::InvalidParam {
@@ -209,7 +209,7 @@ use super::*;
             config: config.clone(),
         };
         // we can just call .unwrap() to assert this was a success
-        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = tests(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // Read config from state
@@ -240,7 +240,7 @@ use super::*;
         };
         let info = mock_info("anybody");
         // we can just call .unwrap() to assert this was a success
-        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = tests(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         assert_eq!(
             res.messages,
@@ -274,7 +274,7 @@ use super::*;
             amount: Some(permissible_amount),
         };
         let info = mock_info("anybody");
-        let error_res = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        let error_res = tests(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
             ContractError::AssetNotEnabledForDistribution {
@@ -291,7 +291,7 @@ use super::*;
             amount: Some(exceeding_amount),
         };
         let info = mock_info("anybody");
-        let error_res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+        let error_res = tests(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
         assert_eq!(
             error_res,
             ContractError::AmountToDistributeTooLarge {
@@ -308,7 +308,7 @@ use super::*;
             },
             amount: Some(permissible_amount),
         };
-        let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+        let res = tests(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
         assert_eq!(
             res.messages,
@@ -342,7 +342,7 @@ use super::*;
             },
             amount: None,
         };
-        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = tests(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         assert_eq!(
             res.messages,
@@ -402,7 +402,7 @@ use super::*;
                 },
             ],
         };
-        let res = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
+        let res = tests(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
 
         assert_eq!(
             res.messages,
@@ -467,9 +467,9 @@ use super::*;
         };
 
         // change the safety_tax_rate to 1
-        let _ = execute(deps.as_mut(), mock_env(), info.clone(), conf_msg).unwrap();
+        let _ = tests(deps.as_mut(), mock_env(), info.clone(), conf_msg).unwrap();
 
-        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = tests(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         assert_eq!(
             res.messages,
@@ -520,14 +520,14 @@ use super::*;
         // non owner is not authorized
         // *
         let info = mock_info("somebody");
-        let error_res = execute(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
+        let error_res = tests(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
         assert_eq!(error_res, MarsError::Unauthorized {}.into());
 
         // *
         // can execute Cosmos msg
         // *
         let info = mock_info("owner");
-        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = tests(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.messages, vec![SubMsg::new(cosmos_msg)]);
         assert_eq!(res.attributes, vec![attr("action", "execute_cosmos_msg")]);
     }
