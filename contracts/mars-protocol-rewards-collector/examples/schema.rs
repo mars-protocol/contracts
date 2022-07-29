@@ -3,8 +3,8 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use mars_protocol_rewards_collector::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use mars_protocol_rewards_collector::Config;
+use mars_outpost::protocol_rewards_collector::{InstantiateMsg, QueryMsg, Config};
+use mars_protocol_rewards_collector::msg::ExecuteMsg;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

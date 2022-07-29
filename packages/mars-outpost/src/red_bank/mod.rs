@@ -30,7 +30,7 @@ pub struct Config {
 
 impl Config {
     pub fn validate(&self) -> Result<(), MarsError> {
-        decimal_param_le_one(&self.close_factor, "close_factor")?;
+        decimal_param_le_one(self.close_factor, "close_factor")?;
 
         Ok(())
     }
@@ -90,9 +90,9 @@ pub struct Market {
 
 impl Market {
     pub fn validate(&self) -> Result<(), MarketError> {
-        decimal_param_le_one(&self.max_loan_to_value, "max_loan_to_value")?;
-        decimal_param_le_one(&self.liquidation_threshold, "liquidation_threshold")?;
-        decimal_param_le_one(&self.liquidation_bonus, "liquidation_bonus")?;
+        decimal_param_le_one(self.max_loan_to_value, "max_loan_to_value")?;
+        decimal_param_le_one(self.liquidation_threshold, "liquidation_threshold")?;
+        decimal_param_le_one(self.liquidation_bonus, "liquidation_bonus")?;
 
         // liquidation_threshold should be greater than max_loan_to_value
         if self.liquidation_threshold <= self.max_loan_to_value {

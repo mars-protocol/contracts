@@ -75,7 +75,7 @@ pub fn option_string_to_addr(
     }
 }
 
-pub fn decimal_param_le_one(param_value: &Decimal, param_name: &str) -> Result<(), MarsError> {
+pub fn decimal_param_le_one(param_value: Decimal, param_name: &str) -> Result<(), MarsError> {
     if !param_value.le(&Decimal::one()) {
         Err(MarsError::InvalidParam {
             param_name: param_name.to_string(),
