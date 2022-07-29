@@ -232,7 +232,7 @@ fn distributing_rewards() {
         block_time: Timestamp::from_seconds(17000000),
     });
 
-    // distribute uusdc
+    // distribute uusdc to safety fund
     let res = execute(
         deps.as_mut(),
         env.clone(),
@@ -260,7 +260,7 @@ fn distributing_rewards() {
         }))
     );
 
-    // distribute umars
+    // distribute umars to fee collector
     let res = execute(
         deps.as_mut(),
         env.clone(),
@@ -288,7 +288,7 @@ fn distributing_rewards() {
         }))
     );
 
-    // distribute uosmo; should fail
+    // distribute uatom; should fail
     let err = execute(
         deps.as_mut(),
         mock_env(),
@@ -331,7 +331,7 @@ fn executing_cosmos_msg() {
 }
 
 #[test]
-fn querying_instructions() {
+fn querying_routess() {
     let deps = helpers::setup_test();
 
     // NOTE: the response is ordered alphabetically
@@ -383,7 +383,7 @@ fn querying_instructions() {
 }
 
 #[test]
-fn validating_swap_instruction() {
+fn validating_route() {
     let deps = helpers::setup_test();
     let q = &deps.as_ref().querier;
 
