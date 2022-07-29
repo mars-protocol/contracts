@@ -388,16 +388,16 @@ fn validating_route() {
     let q = &deps.as_ref().querier;
 
     // invalid - route is empty
-    let ins = Route(vec![]);
+    let route = Route(vec![]);
     assert_eq!(
-        ins.validate(q, "uatom", "umars"),
+        route.validate(q, "uatom", "umars"),
         Err(ContractError::InvalidRoute {
             reason: "the route must contain at least one step".to_string()
         })
     );
 
     // invalid - the pool must contain the input denom
-    let ins = Route(vec![
+    let route = Route(vec![
         Step {
             pool_id: 68,
             denom_out: "uusdc".to_string(),
@@ -408,14 +408,14 @@ fn validating_route() {
         },
     ]);
     assert_eq!(
-        ins.validate(q, "uatom", "umars"),
+        route.validate(q, "uatom", "umars"),
         Err(ContractError::InvalidRoute {
             reason: "step 2: pool 420 does not contain input denom uusdc".to_string()
         })
     );
 
     // invalid - the pool must contain the output denom
-    let ins = Route(vec![
+    let route = Route(vec![
         Step {
             pool_id: 1,
             denom_out: "uosmo".to_string(),
@@ -426,7 +426,7 @@ fn validating_route() {
         },
     ]);
     assert_eq!(
-        ins.validate(q, "uatom", "umars"),
+        route.validate(q, "uatom", "umars"),
         Err(ContractError::InvalidRoute {
             reason: "step 2: pool 69 does not contain output denom umars".to_string()
         })
@@ -434,7 +434,7 @@ fn validating_route() {
 
     // invalid - route contains a loop
     // this examle: ATOM -> OSMO -> USDC -> OSMO -> MARS
-    let ins = Route(vec![
+    let route = Route(vec![
         Step {
             pool_id: 1,
             denom_out: "uosmo".to_string(),
@@ -453,14 +453,14 @@ fn validating_route() {
         },
     ]);
     assert_eq!(
-        ins.validate(q, "uatom", "umars"),
+        route.validate(q, "uatom", "umars"),
         Err(ContractError::InvalidRoute {
             reason: "route contains a loop: denom uosmo seen twice".to_string()
         })
     );
 
     // invalid - route's final output denom does not match the desired output
-    let ins = Route(vec![
+    let route = Route(vec![
         Step {
             pool_id: 1,
             denom_out: "uosmo".to_string(),
@@ -471,7 +471,7 @@ fn validating_route() {
         },
     ]);
     assert_eq!(
-        ins.validate(q, "uatom", "umars"),
+        route.validate(q, "uatom", "umars"),
         Err(ContractError::InvalidRoute {
             reason: "the route's output denom uusdc does not match the desired output umars"
                 .to_string()
@@ -479,7 +479,7 @@ fn validating_route() {
     );
 
     // valid
-    let ins = Route(vec![
+    let route = Route(vec![
         Step {
             pool_id: 1,
             denom_out: "uosmo".to_string(),
@@ -489,7 +489,7 @@ fn validating_route() {
             denom_out: "umars".to_string(),
         },
     ]);
-    assert_eq!(ins.validate(q, "uatom", "umars"), Ok(()));
+    assert_eq!(route.validate(q, "uatom", "umars"), Ok(()));
 }
 
 #[test]
