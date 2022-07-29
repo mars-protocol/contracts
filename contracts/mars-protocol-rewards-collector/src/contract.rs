@@ -25,14 +25,15 @@ use crate::swap::SwapInstructions;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut,
+    deps: DepsMut<OsmosisQuery>,
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> ContractResult<Response> {
-    msg.validate()?;
+    let cfg = msg.check(deps.api)?;
+    cfg.validate()?;
 
-    CONFIG.save(deps.storage, &msg)?;
+    CONFIG.save(deps.storage, &cfg)?;
 
     Ok(Response::default())
 }
@@ -47,7 +48,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> ContractResult<Response<OsmosisMsg>> {
     match msg {
-        ExecuteMsg::UpdateConfig(new_config) => update_config(deps, info.sender, new_config),
+        ExecuteMsg::UpdateConfig(new_cfg) => update_config(deps, info.sender, new_cfg),
         ExecuteMsg::SetSwapInstructions {
             denom_in,
             denom_out,
@@ -74,11 +75,11 @@ pub fn execute(
 pub fn update_config(
     deps: DepsMut<impl cosmwasm_std::CustomQuery>,
     sender: Addr,
-    new_config: CreateOrUpdateConfig,
+    new_cfg: CreateOrUpdateConfig,
 ) -> ContractResult<Response<OsmosisMsg>> {
-    let mut config = CONFIG.load(deps.storage)?;
+    let mut cfg = CONFIG.load(deps.storage)?;
 
-    if sender != config.owner_addr {
+    if sender != cfg.owner {
         return Err(MarsError::Unauthorized {}.into());
     }
 
@@ -91,21 +92,20 @@ pub fn update_config(
         channel_id,
         revision,
         block_timeout,
-    } = new_config;
+    } = new_cfg;
 
-    config.owner_addr = option_string_to_addr(deps.api, owner, config.owner_addr)?;
-    config.address_provider_addr =
-        option_string_to_addr(deps.api, address_provider, config.address_provider_addr)?;
-    config.safety_tax_rate = safety_tax_rate.unwrap_or(config.safety_tax_rate);
-    config.safety_fund_denom = safety_fund_denom.unwrap_or(config.safety_fund_denom);
-    config.fee_collector_denom = fee_collector_denom.unwrap_or(config.fee_collector_denom);
-    config.channel_id = channel_id.unwrap_or(config.channel_id);
-    config.revision = revision.unwrap_or(config.revision);
-    config.block_timeout = block_timeout.unwrap_or(config.block_timeout);
+    cfg.owner = option_string_to_addr(deps.api, owner, cfg.owner)?;
+    cfg.address_provider = option_string_to_addr(deps.api, address_provider, cfg.address_provider)?;
+    cfg.safety_tax_rate = safety_tax_rate.unwrap_or(cfg.safety_tax_rate);
+    cfg.safety_fund_denom = safety_fund_denom.unwrap_or(cfg.safety_fund_denom);
+    cfg.fee_collector_denom = fee_collector_denom.unwrap_or(cfg.fee_collector_denom);
+    cfg.channel_id = channel_id.unwrap_or(cfg.channel_id);
+    cfg.revision = revision.unwrap_or(cfg.revision);
+    cfg.block_timeout = block_timeout.unwrap_or(cfg.block_timeout);
 
-    config.validate()?;
+    cfg.validate()?;
 
-    CONFIG.save(deps.storage, &config)?;
+    CONFIG.save(deps.storage, &cfg)?;
 
     Ok(Response::new().add_attribute("action", "mars/rewards-collector/update_config"))
 }
@@ -117,9 +117,9 @@ pub fn set_swap_instructions(
     denom_out: String,
     instructions: SwapInstructions,
 ) -> ContractResult<Response<OsmosisMsg>> {
-    let config = CONFIG.load(deps.storage)?;
+    let cfg = CONFIG.load(deps.storage)?;
 
-    if sender != config.owner_addr {
+    if sender != cfg.owner {
         return Err(MarsError::Unauthorized {}.into());
     }
 
@@ -138,11 +138,11 @@ pub fn withdraw_from_red_bank(
     denom: String,
     amount: Option<Uint128>,
 ) -> ContractResult<Response<OsmosisMsg>> {
-    let config = CONFIG.load(deps.storage)?;
+    let cfg = CONFIG.load(deps.storage)?;
 
     let red_bank_addr = address_provider::helpers::query_address(
         deps.as_ref(),
-        &config.address_provider_addr,
+        &cfg.address_provider,
         MarsContract::RedBank,
     )?;
 
@@ -172,21 +172,21 @@ pub fn swap_asset(
     denom: String,
     amount: Option<Uint128>,
 ) -> ContractResult<Response<OsmosisMsg>> {
-    let config = CONFIG.load(deps.storage)?;
+    let cfg = CONFIG.load(deps.storage)?;
 
     // if amount is None, swap the total balance
     let amount_to_swap =
         unwrap_option_amount(&deps.querier, &env.contract.address, &denom, amount)?;
 
     // split the amount to swap between the safety fund and the fee collector
-    let amount_safety_fund = amount_to_swap * config.safety_tax_rate;
+    let amount_safety_fund = amount_to_swap * cfg.safety_tax_rate;
     let amount_fee_collector = amount_to_swap.checked_sub(amount_safety_fund)?;
     let mut messages = vec![];
 
     if !amount_safety_fund.is_zero() {
         messages.push(
             INSTRUCTIONS
-                .load(deps.storage, (denom.clone(), config.safety_fund_denom.clone()))?
+                .load(deps.storage, (denom.clone(), cfg.safety_fund_denom.clone()))?
                 .build_swap_msg(&denom, amount_safety_fund)?,
         );
     }
@@ -194,7 +194,7 @@ pub fn swap_asset(
     if !amount_fee_collector.is_zero() {
         messages.push(
             INSTRUCTIONS
-                .load(deps.storage, (denom.clone(), config.fee_collector_denom.clone()))?
+                .load(deps.storage, (denom.clone(), cfg.fee_collector_denom.clone()))?
                 .build_swap_msg(&denom, amount_fee_collector)?,
         );
     }
@@ -213,18 +213,18 @@ pub fn distribute_rewards(
     denom: String,
     amount: Option<Uint128>,
 ) -> ContractResult<Response<OsmosisMsg>> {
-    let config = CONFIG.load(deps.storage)?;
+    let cfg = CONFIG.load(deps.storage)?;
 
-    let to_address = if denom == config.safety_fund_denom {
+    let to_address = if denom == cfg.safety_fund_denom {
         address_provider::helpers::query_address(
             deps.as_ref(),
-            &config.address_provider_addr,
+            &cfg.address_provider,
             MarsContract::SafetyFund,
         )?
-    } else if denom == config.fee_collector_denom {
+    } else if denom == cfg.fee_collector_denom {
         address_provider::helpers::query_address(
             deps.as_ref(),
-            &config.address_provider_addr,
+            &cfg.address_provider,
             MarsContract::FeeCollector,
         )?
     } else {
@@ -237,15 +237,15 @@ pub fn distribute_rewards(
         unwrap_option_amount(&deps.querier, &env.contract.address, &denom, amount)?;
 
     let transfer_msg = CosmosMsg::Ibc(IbcMsg::Transfer {
-        channel_id: config.channel_id,
+        channel_id: cfg.channel_id,
         to_address: to_address.to_string(),
         amount: Coin {
             denom: denom.clone(),
             amount: amount_to_distribute,
         },
         timeout: IbcTimeout::with_block(IbcTimeoutBlock {
-            revision: config.revision,
-            height: env.block.height + config.block_timeout,
+            revision: cfg.revision,
+            height: env.block.height + cfg.block_timeout,
         }),
     });
 
@@ -261,9 +261,9 @@ pub fn execute_cosmos_msg(
     sender: Addr,
     msg: CosmosMsg<OsmosisMsg>,
 ) -> ContractResult<Response<OsmosisMsg>> {
-    let config = CONFIG.load(deps.storage)?;
+    let cfg = CONFIG.load(deps.storage)?;
 
-    if sender != config.owner_addr {
+    if sender != cfg.owner {
         return Err(MarsError::Unauthorized {}.into());
     }
 
@@ -275,12 +275,17 @@ pub fn execute_cosmos_msg(
 // QUERIES
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(
+    deps: Deps<impl cosmwasm_std::CustomQuery>,
+    _env: Env,
+    msg: QueryMsg,
+) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
     }
 }
 
-fn query_config(deps: Deps) -> StdResult<Config> {
-    CONFIG.load(deps.storage)
+fn query_config(deps: Deps<impl cosmwasm_std::CustomQuery>) -> StdResult<Config<String>> {
+    let cfg = CONFIG.load(deps.storage)?;
+    Ok(cfg.into())
 }

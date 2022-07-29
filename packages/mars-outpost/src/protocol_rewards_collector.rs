@@ -1,18 +1,18 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, CosmosMsg, Decimal, Uint128};
+use cosmwasm_std::{Addr, Api, CosmosMsg, Decimal, StdResult, Uint128};
 
 use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
 
 /// Global configuration
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Config {
+pub struct Config<T> {
     /// Contract owner
-    pub owner_addr: Addr,
+    pub owner: T,
     /// Address provider returns addresses for all protocol contracts
-    pub address_provider_addr: Addr,
+    pub address_provider: T,
     /// Percentage of fees that are sent to the safety fund
     pub safety_tax_rate: Decimal,
     /// The asset to which the safety fund share is converted
@@ -22,20 +22,49 @@ pub struct Config {
     /// The channel ID of the mars hub
     pub channel_id: String,
     /// revision, needed for the IBC block timeout
-    /// TODO check where to find the revision
     pub revision: u64,
     /// Block timeout, when the IBC transfer times out
     pub block_timeout: u64,
 }
 
-impl Config {
+impl<T> Config<T> {
     pub fn validate(&self) -> Result<(), MarsError> {
         decimal_param_le_one(self.safety_tax_rate, "safety_tax_rate")?;
         Ok(())
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+impl Config<String> {
+    pub fn check(&self, api: &dyn Api) -> StdResult<Config<Addr>> {
+        Ok(Config {
+            owner: api.addr_validate(&self.owner)?,
+            address_provider: api.addr_validate(&self.owner)?,
+            safety_tax_rate: self.safety_tax_rate,
+            safety_fund_denom: self.safety_fund_denom.clone(),
+            fee_collector_denom: self.fee_collector_denom.clone(),
+            channel_id: self.channel_id.clone(),
+            revision: self.revision,
+            block_timeout: self.block_timeout,
+        })
+    }
+}
+
+impl From<Config<Addr>> for Config<String> {
+    fn from(cfg: Config<Addr>) -> Self {
+        Self {
+            owner: cfg.owner.into(),
+            address_provider: cfg.address_provider.into(),
+            safety_tax_rate: cfg.safety_tax_rate,
+            safety_fund_denom: cfg.safety_fund_denom.clone(),
+            fee_collector_denom: cfg.fee_collector_denom.clone(),
+            channel_id: cfg.channel_id.clone(),
+            revision: cfg.revision,
+            block_timeout: cfg.block_timeout,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CreateOrUpdateConfig {
     /// Contract owner
     pub owner: Option<String>,
@@ -55,7 +84,7 @@ pub struct CreateOrUpdateConfig {
     pub block_timeout: Option<u64>,
 }
 
-pub type InstantiateMsg = Config;
+pub type InstantiateMsg = Config<String>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -100,6 +129,6 @@ pub enum ExecuteMsg<SwapInstructions, CustomMsg> {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    /// Get config parameters; response: `Config`
+    /// Get config parameters; response: `Config<String>`
     Config {},
 }
