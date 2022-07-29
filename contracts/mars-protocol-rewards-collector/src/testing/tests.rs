@@ -8,15 +8,15 @@ use osmo_bindings::{OsmosisMsg, Step, Swap, SwapAmountWithLimit};
 
 use mars_outpost::error::MarsError;
 use mars_outpost::protocol_rewards_collector::{
-    Config, CreateOrUpdateConfig, InstructionResponse, QueryMsg,
+    Config, CreateOrUpdateConfig, RouteResponse, QueryMsg,
 };
 use mars_outpost::testing::{mock_env as mock_env_at_height_and_time, mock_info, MockEnvParams};
 
-use super::helpers::{self, mock_config, mock_instructions};
+use super::helpers::{self, mock_config, mock_routes};
 use crate::contract::{execute, instantiate};
 use crate::helpers::{stringify_option_amount, unwrap_option_amount};
 use crate::msg::ExecuteMsg;
-use crate::{ContractError, SwapInstruction};
+use crate::{ContractError, Route};
 
 #[test]
 fn instantiating() {
@@ -82,7 +82,7 @@ fn updating_config() {
 }
 
 #[test]
-fn setting_instructions() {
+fn setting_route() {
     let mut deps = helpers::setup_test();
 
     let steps = vec![
@@ -96,22 +96,22 @@ fn setting_instructions() {
         },
     ];
 
-    let msg = ExecuteMsg::SetInstruction {
+    let msg = ExecuteMsg::SetRoute {
         denom_in: "uatom".to_string(),
         denom_out: "umars".to_string(),
-        instruction: SwapInstruction(steps.clone()),
+        route: Route(steps.clone()),
     };
-    let invalid_msg = ExecuteMsg::SetInstruction {
+    let invalid_msg = ExecuteMsg::SetRoute {
         denom_in: "uatom".to_string(),
         denom_out: "umars".to_string(),
-        instruction: SwapInstruction(vec![]),
+        route: Route(vec![]),
     };
 
     // non-owner is not authorized
     let err = execute(deps.as_mut(), mock_env(), mock_info("jake"), msg.clone()).unwrap_err();
     assert_eq!(err, MarsError::Unauthorized {}.into());
 
-    // attempting to set an invalid swap instruction; should fail
+    // attempting to set an invalid swap route; should fail
     let err = execute(deps.as_mut(), mock_env(), mock_info("owner"), invalid_msg).unwrap_err();
     assert_eq!(
         err,
@@ -123,14 +123,14 @@ fn setting_instructions() {
     // properly set up swap instruction
     execute(deps.as_mut(), mock_env(), mock_info("owner"), msg).unwrap();
 
-    let res: InstructionResponse<SwapInstruction> = helpers::query(
+    let res: RouteResponse<Route> = helpers::query(
         deps.as_ref(),
-        QueryMsg::Instruction {
+        QueryMsg::Route {
             denom_in: "uatom".to_string(),
             denom_out: "umars".to_string(),
         },
     );
-    assert_eq!(res.instruction, SwapInstruction(steps.clone()));
+    assert_eq!(res.route, Route(steps.clone()));
 }
 
 #[test]
@@ -335,46 +335,46 @@ fn querying_instructions() {
     let deps = helpers::setup_test();
 
     // NOTE: the response is ordered alphabetically
-    let instructions = mock_instructions();
+    let routes = mock_routes();
     let expected = vec![
-        InstructionResponse {
+        RouteResponse {
             denom_in: "uatom".to_string(),
             denom_out: "umars".to_string(),
-            instruction: instructions.get(&("uatom", "umars")).unwrap().clone(),
+            route: routes.get(&("uatom", "umars")).unwrap().clone(),
         },
-        InstructionResponse {
+        RouteResponse {
             denom_in: "uatom".to_string(),
             denom_out: "uusdc".to_string(),
-            instruction: instructions.get(&("uatom", "uusdc")).unwrap().clone(),
+            route: routes.get(&("uatom", "uusdc")).unwrap().clone(),
         },
-        InstructionResponse {
+        RouteResponse {
             denom_in: "uosmo".to_string(),
             denom_out: "umars".to_string(),
-            instruction: instructions.get(&("uosmo", "umars")).unwrap().clone(),
+            route: routes.get(&("uosmo", "umars")).unwrap().clone(),
         },
     ];
 
-    let res: Vec<InstructionResponse<SwapInstruction>> = helpers::query(
+    let res: Vec<RouteResponse<Route>> = helpers::query(
         deps.as_ref(),
-        QueryMsg::Instructions {
+        QueryMsg::Routes {
             start_after: None,
             limit: None,
         },
     );
     assert_eq!(res, expected);
 
-    let res: Vec<InstructionResponse<SwapInstruction>> = helpers::query(
+    let res: Vec<RouteResponse<Route>> = helpers::query(
         deps.as_ref(),
-        QueryMsg::Instructions {
+        QueryMsg::Routes {
             start_after: None,
             limit: Some(1),
         },
     );
     assert_eq!(res, expected[..1]);
 
-    let res: Vec<InstructionResponse<SwapInstruction>> = helpers::query(
+    let res: Vec<RouteResponse<Route>> = helpers::query(
         deps.as_ref(),
-        QueryMsg::Instructions {
+        QueryMsg::Routes {
             start_after: Some(("uatom".to_string(), "uosmo".to_string())),
             limit: None,
         },
@@ -388,7 +388,7 @@ fn validating_swap_instruction() {
     let q = &deps.as_ref().querier;
 
     // invalid - route is empty
-    let ins = SwapInstruction(vec![]);
+    let ins = Route(vec![]);
     assert_eq!(
         ins.validate(q, "uatom", "umars"),
         Err(ContractError::InvalidSwapRoute {
@@ -397,7 +397,7 @@ fn validating_swap_instruction() {
     );
 
     // invalid - the pool must contain the input denom
-    let ins = SwapInstruction(vec![
+    let ins = Route(vec![
         Step {
             pool_id: 68,
             denom_out: "uusdc".to_string(),
@@ -415,7 +415,7 @@ fn validating_swap_instruction() {
     );
 
     // invalid - the pool must contain the output denom
-    let ins = SwapInstruction(vec![
+    let ins = Route(vec![
         Step {
             pool_id: 1,
             denom_out: "uosmo".to_string(),
@@ -434,7 +434,7 @@ fn validating_swap_instruction() {
 
     // invalid - route contains a loop
     // this examle: ATOM -> OSMO -> USDC -> OSMO -> MARS
-    let ins = SwapInstruction(vec![
+    let ins = Route(vec![
         Step {
             pool_id: 1,
             denom_out: "uosmo".to_string(),
@@ -460,7 +460,7 @@ fn validating_swap_instruction() {
     );
 
     // invalid - route's final output denom does not match the desired output
-    let ins = SwapInstruction(vec![
+    let ins = Route(vec![
         Step {
             pool_id: 1,
             denom_out: "uosmo".to_string(),
@@ -479,7 +479,7 @@ fn validating_swap_instruction() {
     );
 
     // valid
-    let ins = SwapInstruction(vec![
+    let ins = Route(vec![
         Step {
             pool_id: 1,
             denom_out: "uosmo".to_string(),

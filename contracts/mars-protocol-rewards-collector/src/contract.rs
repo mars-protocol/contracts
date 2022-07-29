@@ -10,7 +10,7 @@ use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 use mars_outpost::protocol_rewards_collector::{
-    Config, CreateOrUpdateConfig, InstantiateMsg, InstructionResponse, QueryMsg,
+    Config, CreateOrUpdateConfig, InstantiateMsg, RouteResponse, QueryMsg,
 };
 use mars_outpost::red_bank;
 
@@ -19,8 +19,8 @@ use osmo_bindings::{OsmosisMsg, OsmosisQuery};
 use crate::error::{ContractError, ContractResult};
 use crate::helpers::{stringify_option_amount, unwrap_option_amount};
 use crate::msg::ExecuteMsg;
-use crate::state::{CONFIG, INSTRUCTIONS};
-use crate::swap::SwapInstruction;
+use crate::state::{CONFIG, ROUTES};
+use crate::swap::Route;
 
 const DEFAULT_LIMIT: u32 = 5;
 const MAX_LIMIT: u32 = 10;
@@ -53,11 +53,11 @@ pub fn execute(
 ) -> ContractResult<Response<OsmosisMsg>> {
     match msg {
         ExecuteMsg::UpdateConfig(new_cfg) => update_config(deps, info.sender, new_cfg),
-        ExecuteMsg::SetInstruction {
+        ExecuteMsg::SetRoute {
             denom_in,
             denom_out,
-            instruction,
-        } => set_instruction(deps, info.sender, denom_in, denom_out, instruction),
+            route,
+        } => set_route(deps, info.sender, denom_in, denom_out, route),
         ExecuteMsg::WithdrawFromRedBank {
             denom,
             amount,
@@ -116,12 +116,12 @@ pub fn update_config(
     Ok(Response::new().add_attribute("action", "mars/rewards-collector/update_config"))
 }
 
-pub fn set_instruction(
+pub fn set_route(
     deps: DepsMut<OsmosisQuery>,
     sender: Addr,
     denom_in: String,
     denom_out: String,
-    instructions: SwapInstruction,
+    route: Route,
 ) -> ContractResult<Response<OsmosisMsg>> {
     let cfg = CONFIG.load(deps.storage)?;
 
@@ -129,9 +129,9 @@ pub fn set_instruction(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    instructions.validate(&deps.querier, &denom_in, &denom_out)?;
+    route.validate(&deps.querier, &denom_in, &denom_out)?;
 
-    INSTRUCTIONS.save(deps.storage, (denom_in.clone(), denom_out.clone()), &instructions)?;
+    ROUTES.save(deps.storage, (denom_in.clone(), denom_out.clone()), &route)?;
 
     Ok(Response::new()
         .add_attribute("action", "mars/rewards-collector/set_instructions")
@@ -191,7 +191,7 @@ pub fn swap_asset(
 
     if !amount_safety_fund.is_zero() {
         messages.push(
-            INSTRUCTIONS
+            ROUTES
                 .load(deps.storage, (denom.clone(), cfg.safety_fund_denom))?
                 .build_swap_msg(&denom, amount_safety_fund)?,
         );
@@ -199,7 +199,7 @@ pub fn swap_asset(
 
     if !amount_fee_collector.is_zero() {
         messages.push(
-            INSTRUCTIONS
+            ROUTES
                 .load(deps.storage, (denom.clone(), cfg.fee_collector_denom))?
                 .build_swap_msg(&denom, amount_fee_collector)?,
         );
@@ -291,14 +291,14 @@ pub fn query(
 ) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::Instruction {
+        QueryMsg::Route {
             denom_in,
             denom_out,
-        } => to_binary(&query_instruction(deps, denom_in, denom_out)?),
-        QueryMsg::Instructions {
+        } => to_binary(&query_route(deps, denom_in, denom_out)?),
+        QueryMsg::Routes {
             start_after,
             limit,
-        } => to_binary(&query_instructions(deps, start_after, limit)?),
+        } => to_binary(&query_routes(deps, start_after, limit)?),
     }
 }
 
@@ -307,35 +307,35 @@ pub fn query_config(deps: Deps<impl cosmwasm_std::CustomQuery>) -> StdResult<Con
     Ok(cfg.into())
 }
 
-pub fn query_instruction(
+pub fn query_route(
     deps: Deps<impl cosmwasm_std::CustomQuery>,
     denom_in: String,
     denom_out: String,
-) -> StdResult<InstructionResponse<SwapInstruction>> {
-    Ok(InstructionResponse {
+) -> StdResult<RouteResponse<Route>> {
+    Ok(RouteResponse {
         denom_in: denom_in.clone(),
         denom_out: denom_out.clone(),
-        instruction: INSTRUCTIONS.load(deps.storage, (denom_in, denom_out))?,
+        route: ROUTES.load(deps.storage, (denom_in, denom_out))?,
     })
 }
 
-pub fn query_instructions(
+pub fn query_routes(
     deps: Deps<impl cosmwasm_std::CustomQuery>,
     start_after: Option<(String, String)>,
     limit: Option<u32>,
-) -> StdResult<Vec<InstructionResponse<SwapInstruction>>> {
+) -> StdResult<Vec<RouteResponse<Route>>> {
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
     let start = start_after.map(Bound::exclusive);
 
-    INSTRUCTIONS
+    ROUTES
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
         .map(|item| {
             let (k, v) = item?;
-            Ok(InstructionResponse {
+            Ok(RouteResponse {
                 denom_in: k.0,
                 denom_out: k.1,
-                instruction: v,
+                route: v,
             })
         })
         .collect()

@@ -94,7 +94,7 @@ pub type InstantiateMsg = Config<String>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg<SwapInstruction, CustomMsg> {
+pub enum ExecuteMsg<Route, CustomMsg> {
     /// Update contract config
     UpdateConfig(CreateOrUpdateConfig),
 
@@ -102,10 +102,10 @@ pub enum ExecuteMsg<SwapInstruction, CustomMsg> {
     ///
     /// This is chain-specific, and can include parameters such as slippage tolerance and the routes
     /// for multi-step swaps
-    SetInstruction {
+    SetRoute {
         denom_in: String,
         denom_out: String,
-        instruction: SwapInstruction,
+        route: Route,
     },
 
     /// Withdraw maTokens from the red bank
@@ -137,21 +137,23 @@ pub enum ExecuteMsg<SwapInstruction, CustomMsg> {
 pub enum QueryMsg {
     /// Get config parameters; response: `Config<String>`
     Config {},
-    /// Get instruction for swapping an input denom into an output denom; response: `InstructionResponse`
-    Instruction {
+    /// Get instruction for swapping an input denom into an output denom; response: `RouteResponse`
+    Route {
         denom_in: String,
         denom_out: String,
     },
-    /// Enumerate all swap instructions; response: `Vec<InstructionResponse>`
-    Instructions {
+    /// Enumerate all swap instructions; response: `RoutesResponse`
+    Routes {
         start_after: Option<(String, String)>,
         limit: Option<u32>,
     },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InstructionResponse<SwapInstruction> {
+pub struct RouteResponse<Route> {
     pub denom_in: String,
     pub denom_out: String,
-    pub instruction: SwapInstruction,
+    pub route: Route,
 }
+
+pub type RoutesResponse<Route> = Vec<RouteResponse<Route>>;

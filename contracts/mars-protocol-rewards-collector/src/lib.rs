@@ -6,7 +6,7 @@ pub mod state;
 mod swap;
 
 pub use error::{ContractError, ContractResult};
-pub use swap::SwapInstruction;
+pub use swap::Route;
 
 #[cfg(test)]
 mod testing;

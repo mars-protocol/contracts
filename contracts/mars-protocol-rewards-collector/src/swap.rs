@@ -7,9 +7,9 @@ use crate::error::{ContractError, ContractResult};
 use crate::helpers::hashset;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SwapInstruction(pub Vec<Step>);
+pub struct Route(pub Vec<Step>);
 
-impl SwapInstruction {
+impl Route {
     // Perform basic validation of the swap steps
     pub fn validate(
         &self,

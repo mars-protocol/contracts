@@ -1,6 +1,5 @@
 use osmo_bindings::OsmosisMsg;
 
-use crate::SwapInstruction;
+use crate::Route;
 
-pub type ExecuteMsg =
-    mars_outpost::protocol_rewards_collector::ExecuteMsg<SwapInstruction, OsmosisMsg>;
+pub type ExecuteMsg = mars_outpost::protocol_rewards_collector::ExecuteMsg<Route, OsmosisMsg>;

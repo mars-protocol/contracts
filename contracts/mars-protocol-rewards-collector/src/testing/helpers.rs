@@ -8,7 +8,7 @@ use osmo_bindings::{OsmosisQuery, PoolStateResponse, Step};
 use mars_outpost::protocol_rewards_collector::{Config, QueryMsg};
 use mars_outpost::testing::{mock_info, MarsMockQuerier};
 
-use crate::{contract, msg::ExecuteMsg, SwapInstruction};
+use crate::{contract, msg::ExecuteMsg, Route};
 
 pub(super) fn mock_config() -> Config<Addr> {
     Config {
@@ -24,13 +24,13 @@ pub(super) fn mock_config() -> Config<Addr> {
     }
 }
 
-pub(super) fn mock_instructions() -> HashMap<(&'static str, &'static str), SwapInstruction> {
+pub(super) fn mock_routes() -> HashMap<(&'static str, &'static str), Route> {
     let mut map = HashMap::new();
 
     // uosmo -> umars
     map.insert(
         ("uosmo", "umars"),
-        SwapInstruction(vec![Step {
+        Route(vec![Step {
             pool_id: 420,
             denom_out: "umars".to_string(),
         }]),
@@ -39,7 +39,7 @@ pub(super) fn mock_instructions() -> HashMap<(&'static str, &'static str), SwapI
     // uatom -> uosmo -> umars
     map.insert(
         ("uatom", "umars"),
-        SwapInstruction(vec![
+        Route(vec![
             Step {
                 pool_id: 1,
                 denom_out: "uosmo".to_string(),
@@ -54,7 +54,7 @@ pub(super) fn mock_instructions() -> HashMap<(&'static str, &'static str), SwapI
     // uatom -> uosmo -> uusdc
     map.insert(
         ("uatom", "uusdc"),
-        SwapInstruction(vec![
+        Route(vec![
             Step {
                 pool_id: 1,
                 denom_out: "uosmo".to_string(),
@@ -116,15 +116,15 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, O
     contract::instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
     // set a few swap instructions
-    mock_instructions().into_iter().for_each(|((denom_in, denom_out), instruction)| {
+    mock_routes().into_iter().for_each(|((denom_in, denom_out), route)| {
         contract::execute(
             deps.as_mut(),
             mock_env(),
             mock_info("owner"),
-            ExecuteMsg::SetInstruction {
+            ExecuteMsg::SetRoute {
                 denom_in: denom_in.to_string(),
                 denom_out: denom_out.to_string(),
-                instruction,
+                route,
             },
         )
         .unwrap();
