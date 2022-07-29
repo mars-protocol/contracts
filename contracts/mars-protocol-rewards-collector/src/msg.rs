@@ -1,6 +1,6 @@
 use osmo_bindings::OsmosisMsg;
 
-use crate::SwapInstructions;
+use crate::SwapInstruction;
 
 pub type ExecuteMsg =
-    mars_outpost::protocol_rewards_collector::ExecuteMsg<SwapInstructions, OsmosisMsg>;
+    mars_outpost::protocol_rewards_collector::ExecuteMsg<SwapInstruction, OsmosisMsg>;

@@ -6,9 +6,9 @@ use serde::{Deserialize, Serialize};
 use crate::{error::ContractResult, ContractError};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SwapInstructions(pub Vec<Step>);
+pub struct SwapInstruction(pub Vec<Step>);
 
-impl SwapInstructions {
+impl SwapInstruction {
     // Perform basic validation of the swap steps
     pub fn validate(
         &self,

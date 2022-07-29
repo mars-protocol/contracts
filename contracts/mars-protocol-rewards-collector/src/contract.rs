@@ -2,14 +2,15 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Addr, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout,
-    IbcTimeoutBlock, MessageInfo, Response, StdResult, Uint128, WasmMsg,
+    IbcTimeoutBlock, MessageInfo, Order, Response, StdResult, Uint128, WasmMsg,
 };
+use cw_storage_plus::Bound;
 
 use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 use mars_outpost::protocol_rewards_collector::{
-    Config, CreateOrUpdateConfig, InstantiateMsg, QueryMsg,
+    Config, CreateOrUpdateConfig, InstantiateMsg, InstructionResponse, QueryMsg,
 };
 use mars_outpost::red_bank;
 
@@ -19,7 +20,10 @@ use crate::error::{ContractError, ContractResult};
 use crate::helpers::{stringify_option_amount, unwrap_option_amount};
 use crate::msg::ExecuteMsg;
 use crate::state::{CONFIG, INSTRUCTIONS};
-use crate::swap::SwapInstructions;
+use crate::swap::SwapInstruction;
+
+const DEFAULT_LIMIT: u32 = 5;
+const MAX_LIMIT: u32 = 10;
 
 // INIT
 
@@ -49,11 +53,11 @@ pub fn execute(
 ) -> ContractResult<Response<OsmosisMsg>> {
     match msg {
         ExecuteMsg::UpdateConfig(new_cfg) => update_config(deps, info.sender, new_cfg),
-        ExecuteMsg::SetSwapInstructions {
+        ExecuteMsg::SetInstruction {
             denom_in,
             denom_out,
-            instructions,
-        } => set_swap_instructions(deps, info.sender, denom_in, denom_out, instructions),
+            instruction,
+        } => set_instruction(deps, info.sender, denom_in, denom_out, instruction),
         ExecuteMsg::WithdrawFromRedBank {
             denom,
             amount,
@@ -110,12 +114,12 @@ pub fn update_config(
     Ok(Response::new().add_attribute("action", "mars/rewards-collector/update_config"))
 }
 
-pub fn set_swap_instructions(
+pub fn set_instruction(
     deps: DepsMut<OsmosisQuery>,
     sender: Addr,
     denom_in: String,
     denom_out: String,
-    instructions: SwapInstructions,
+    instructions: SwapInstruction,
 ) -> ContractResult<Response<OsmosisMsg>> {
     let cfg = CONFIG.load(deps.storage)?;
 
@@ -128,7 +132,7 @@ pub fn set_swap_instructions(
     INSTRUCTIONS.save(deps.storage, (denom_in.clone(), denom_out.clone()), &instructions)?;
 
     Ok(Response::new()
-        .add_attribute("action", "mars/rewards-collector/update_swap_instructions")
+        .add_attribute("action", "mars/rewards-collector/set_instructions")
         .add_attribute("denom_in", denom_in)
         .add_attribute("denom_out", denom_out))
 }
@@ -282,10 +286,52 @@ pub fn query(
 ) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Instruction {
+            denom_in,
+            denom_out,
+        } => to_binary(&query_instruction(deps, denom_in, denom_out)?),
+        QueryMsg::Instructions {
+            start_after,
+            limit,
+        } => to_binary(&query_instructions(deps, start_after, limit)?),
     }
 }
 
-fn query_config(deps: Deps<impl cosmwasm_std::CustomQuery>) -> StdResult<Config<String>> {
+pub fn query_config(deps: Deps<impl cosmwasm_std::CustomQuery>) -> StdResult<Config<String>> {
     let cfg = CONFIG.load(deps.storage)?;
     Ok(cfg.into())
+}
+
+pub fn query_instruction(
+    deps: Deps<impl cosmwasm_std::CustomQuery>,
+    denom_in: String,
+    denom_out: String,
+) -> StdResult<InstructionResponse<SwapInstruction>> {
+    Ok(InstructionResponse {
+        denom_in: denom_in.clone(),
+        denom_out: denom_out.clone(),
+        instruction: INSTRUCTIONS.load(deps.storage, (denom_in, denom_out))?,
+    })
+}
+
+pub fn query_instructions(
+    deps: Deps<impl cosmwasm_std::CustomQuery>,
+    start_after: Option<(String, String)>,
+    limit: Option<u32>,
+) -> StdResult<Vec<InstructionResponse<SwapInstruction>>> {
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+    let start = start_after.map(Bound::exclusive);
+
+    INSTRUCTIONS
+        .range(deps.storage, start, None, Order::Ascending)
+        .take(limit)
+        .map(|item| {
+            let (k, v) = item?;
+            Ok(InstructionResponse {
+                denom_in: k.0,
+                denom_out: k.1,
+                instruction: v,
+            })
+        })
+        .collect()
 }

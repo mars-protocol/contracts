@@ -88,18 +88,18 @@ pub type InstantiateMsg = Config<String>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg<SwapInstructions, CustomMsg> {
+pub enum ExecuteMsg<SwapInstruction, CustomMsg> {
     /// Update contract config
     UpdateConfig(CreateOrUpdateConfig),
 
-    /// Configure the instructions for swapping an asset
+    /// Configure the instruction for swapping an asset
     ///
     /// This is chain-specific, and can include parameters such as slippage tolerance and the routes
     /// for multi-step swaps
-    SetSwapInstructions {
+    SetInstruction {
         denom_in: String,
         denom_out: String,
-        instructions: SwapInstructions,
+        instruction: SwapInstruction,
     },
 
     /// Withdraw maTokens from the red bank
@@ -131,4 +131,21 @@ pub enum ExecuteMsg<SwapInstructions, CustomMsg> {
 pub enum QueryMsg {
     /// Get config parameters; response: `Config<String>`
     Config {},
+    /// Get instruction for swapping an input denom into an output denom; response: `InstructionResponse`
+    Instruction {
+        denom_in: String,
+        denom_out: String,
+    },
+    /// Enumerate all swap instructions; response: `Vec<InstructionResponse>`
+    Instructions {
+        start_after: Option<(String, String)>,
+        limit: Option<u32>,
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct InstructionResponse<SwapInstruction> {
+    pub denom_in: String,
+    pub denom_out: String,
+    pub instruction: SwapInstruction,
 }
