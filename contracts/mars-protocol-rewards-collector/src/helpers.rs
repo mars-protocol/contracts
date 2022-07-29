@@ -27,7 +27,7 @@ pub fn unwrap_option_amount(
     }
 }
 
-// Convert to an optional Uint128 to string. If the amount is undefined, return the string `undefined`
+/// Convert an optional Uint128 amount to string. If the amount is undefined, return `undefined`
 pub fn stringify_option_amount(amount: Option<Uint128>) -> String {
     amount.map_or_else(|| "undefined".to_string(), |amount| amount.to_string())
 }
