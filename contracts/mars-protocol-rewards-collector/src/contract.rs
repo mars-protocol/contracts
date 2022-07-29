@@ -10,7 +10,7 @@ use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 use mars_outpost::protocol_rewards_collector::{
-    Config, CreateOrUpdateConfig, InstantiateMsg, RouteResponse, QueryMsg,
+    Config, CreateOrUpdateConfig, InstantiateMsg, QueryMsg, RouteResponse, RoutesResponse,
 };
 use mars_outpost::red_bank;
 
@@ -323,7 +323,7 @@ pub fn query_routes(
     deps: Deps<impl cosmwasm_std::CustomQuery>,
     start_after: Option<(String, String)>,
     limit: Option<u32>,
-) -> StdResult<Vec<RouteResponse<Route>>> {
+) -> StdResult<RoutesResponse<Route>> {
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
     let start = start_after.map(Bound::exclusive);
 
