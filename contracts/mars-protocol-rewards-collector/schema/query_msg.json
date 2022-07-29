@@ -16,7 +16,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Get instruction for swapping an input denom into an output denom; response: `RouteResponse`",
+      "description": "Get routes for swapping an input denom into an output denom; response: `RouteResponse`",
       "type": "object",
       "required": [
         "route"
@@ -41,7 +41,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Enumerate all swap instructions; response: `RoutesResponse`",
+      "description": "Enumerate all swap routes; response: `RoutesResponse`",
       "type": "object",
       "required": [
         "routes"

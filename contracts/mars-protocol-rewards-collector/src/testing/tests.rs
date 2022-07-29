@@ -120,7 +120,7 @@ fn setting_route() {
         }
     );
 
-    // properly set up swap instruction
+    // properly set up route
     execute(deps.as_mut(), mock_env(), mock_info("owner"), msg).unwrap();
 
     let res: RouteResponse<Route> = helpers::query(

@@ -98,7 +98,7 @@ pub enum ExecuteMsg<Route, CustomMsg> {
     /// Update contract config
     UpdateConfig(CreateOrUpdateConfig),
 
-    /// Configure the instruction for swapping an asset
+    /// Configure the route for swapping an asset
     ///
     /// This is chain-specific, and can include parameters such as slippage tolerance and the routes
     /// for multi-step swaps
@@ -137,12 +137,12 @@ pub enum ExecuteMsg<Route, CustomMsg> {
 pub enum QueryMsg {
     /// Get config parameters; response: `Config<String>`
     Config {},
-    /// Get instruction for swapping an input denom into an output denom; response: `RouteResponse`
+    /// Get routes for swapping an input denom into an output denom; response: `RouteResponse`
     Route {
         denom_in: String,
         denom_out: String,
     },
-    /// Enumerate all swap instructions; response: `RoutesResponse`
+    /// Enumerate all swap routes; response: `RoutesResponse`
     Routes {
         start_after: Option<(String, String)>,
         limit: Option<u32>,

@@ -16,7 +16,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Configure the instruction for swapping an asset\n\nThis is chain-specific, and can include parameters such as slippage tolerance and the routes for multi-step swaps",
+      "description": "Configure the route for swapping an asset\n\nThis is chain-specific, and can include parameters such as slippage tolerance and the routes for multi-step swaps",
       "type": "object",
       "required": [
         "set_route"

@@ -115,7 +115,7 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, O
     let msg = mock_config().into();
     contract::instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-    // set a few swap instructions
+    // set a few swap routes
     mock_routes().into_iter().for_each(|((denom_in, denom_out), route)| {
         contract::execute(
             deps.as_mut(),

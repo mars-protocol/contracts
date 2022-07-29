@@ -8,5 +8,5 @@ use crate::Route;
 // The reward collector contract's config
 pub const CONFIG: Item<Config<Addr>> = Item::new("config");
 
-// Instructions for swapping an offer asset into an ask asset
+// Route for swapping an offer asset into an ask asset
 pub const ROUTES: Map<(String, String), Route> = Map::new("routes");
