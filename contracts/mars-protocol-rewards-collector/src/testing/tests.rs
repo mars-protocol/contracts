@@ -8,7 +8,7 @@ use osmo_bindings::{OsmosisMsg, Step, Swap, SwapAmountWithLimit};
 
 use mars_outpost::error::MarsError;
 use mars_outpost::protocol_rewards_collector::{
-    Config, CreateOrUpdateConfig, RouteResponse, QueryMsg,
+    Config, CreateOrUpdateConfig, QueryMsg, RouteResponse,
 };
 use mars_outpost::testing::{mock_env as mock_env_at_height_and_time, mock_info, MockEnvParams};
 

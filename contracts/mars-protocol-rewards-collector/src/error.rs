@@ -28,7 +28,7 @@ pub enum ContractError {
     #[error("Invalid route: {reason}")]
     InvalidRoute {
         reason: String,
-    }
+    },
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;
