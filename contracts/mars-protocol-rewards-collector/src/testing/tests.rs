@@ -116,7 +116,6 @@ fn setting_instructions() {
     assert_eq!(
         err,
         ContractError::InvalidSwapRoute {
-            steps: vec![],
             reason: "the route must contain at least one step".to_string()
         }
     );
@@ -393,7 +392,6 @@ fn validating_swap_instruction() {
     assert_eq!(
         ins.validate(q, "uatom", "umars"),
         Err(ContractError::InvalidSwapRoute {
-            steps: vec![],
             reason: "the route must contain at least one step".to_string()
         })
     );
@@ -407,12 +405,11 @@ fn validating_swap_instruction() {
         Step {
             pool_id: 420,
             denom_out: "umars".to_string(), // 420 is OSMO-MARS pool; but the previous step's output is USDC
-        }
+        },
     ]);
     assert_eq!(
         ins.validate(q, "uatom", "umars"),
         Err(ContractError::InvalidSwapRoute {
-            steps: ins.steps().to_vec(),
             reason: "step 2: pool 420 does not contain input denom uusdc".to_string()
         })
     );
@@ -426,12 +423,11 @@ fn validating_swap_instruction() {
         Step {
             pool_id: 69,
             denom_out: "umars".to_string(), // 69 is OSMO-USDC pool; but this step's output is MARS
-        }
+        },
     ]);
     assert_eq!(
         ins.validate(q, "uatom", "umars"),
         Err(ContractError::InvalidSwapRoute {
-            steps: ins.steps().to_vec(),
             reason: "step 2: pool 69 does not contain output denom umars".to_string()
         })
     );
@@ -454,12 +450,11 @@ fn validating_swap_instruction() {
         Step {
             pool_id: 420,
             denom_out: "umars".to_string(),
-        }
+        },
     ]);
     assert_eq!(
         ins.validate(q, "uatom", "umars"),
         Err(ContractError::InvalidSwapRoute {
-            steps: ins.steps().to_vec(),
             reason: "route contains a loop: denom uosmo seen twice".to_string()
         })
     );
@@ -478,8 +473,8 @@ fn validating_swap_instruction() {
     assert_eq!(
         ins.validate(q, "uatom", "umars"),
         Err(ContractError::InvalidSwapRoute {
-            steps: ins.steps().to_vec(),
-            reason: "the route's output denom uusdc does not match the desired output umars".to_string()
+            reason: "the route's output denom uusdc does not match the desired output umars"
+                .to_string()
         })
     );
 

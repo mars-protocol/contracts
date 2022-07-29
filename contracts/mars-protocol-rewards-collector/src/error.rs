@@ -3,8 +3,6 @@ use thiserror::Error;
 
 use mars_outpost::error::MarsError;
 
-use osmo_bindings::Step;
-
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
@@ -27,9 +25,8 @@ pub enum ContractError {
         balance: Uint128,
     },
 
-    #[error("Invalid swap route {steps:?}: {reason}")]
+    #[error("Invalid swap route: {reason}")]
     InvalidSwapRoute {
-        steps: Vec<Step>,
         reason: String,
     }
 }
