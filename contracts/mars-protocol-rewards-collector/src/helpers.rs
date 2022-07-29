@@ -6,9 +6,7 @@ use cosmwasm_std::{Addr, QuerierWrapper, Uint128};
 use crate::error::{ContractError, ContractResult};
 
 /// For a denom with an optional Uint128 amount,
-///
 /// - if the amount is provided, assert that it is no larger than the available balance;
-///
 /// - if not provided, use the available balance as default.
 pub fn unwrap_option_amount(
     querier: &QuerierWrapper<impl cosmwasm_std::CustomQuery>,
