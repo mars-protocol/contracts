@@ -20,7 +20,7 @@ impl SwapInstruction {
         let steps = self.steps();
 
         // there must be at least one step
-        if steps.len() == 0 {
+        if steps.is_empty() {
             return Err(ContractError::InvalidSwapRoute {
                 reason: "the route must contain at least one step".to_string(),
             });

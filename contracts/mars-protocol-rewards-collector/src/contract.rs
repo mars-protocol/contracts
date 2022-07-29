@@ -192,7 +192,7 @@ pub fn swap_asset(
     if !amount_safety_fund.is_zero() {
         messages.push(
             INSTRUCTIONS
-                .load(deps.storage, (denom.clone(), cfg.safety_fund_denom.clone()))?
+                .load(deps.storage, (denom.clone(), cfg.safety_fund_denom))?
                 .build_swap_msg(&denom, amount_safety_fund)?,
         );
     }
@@ -200,7 +200,7 @@ pub fn swap_asset(
     if !amount_fee_collector.is_zero() {
         messages.push(
             INSTRUCTIONS
-                .load(deps.storage, (denom.clone(), cfg.fee_collector_denom.clone()))?
+                .load(deps.storage, (denom.clone(), cfg.fee_collector_denom))?
                 .build_swap_msg(&denom, amount_fee_collector)?,
         );
     }
@@ -235,7 +235,7 @@ pub fn distribute_rewards(
         )?
     } else {
         return Err(ContractError::AssetNotEnabledForDistribution {
-            denom: denom.clone(),
+            denom,
         });
     };
 

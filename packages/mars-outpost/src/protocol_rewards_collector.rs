@@ -40,7 +40,7 @@ impl Config<String> {
     pub fn check(&self, api: &dyn Api) -> StdResult<Config<Addr>> {
         Ok(Config {
             owner: api.addr_validate(&self.owner)?,
-            address_provider: api.addr_validate(&&self.address_provider)?,
+            address_provider: api.addr_validate(&self.address_provider)?,
             safety_tax_rate: self.safety_tax_rate,
             safety_fund_denom: self.safety_fund_denom.clone(),
             fee_collector_denom: self.fee_collector_denom.clone(),
