@@ -1,559 +1,540 @@
-use super::*;
+use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
+use cosmwasm_std::{
+    coin, to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, IbcMsg, IbcTimeout, IbcTimeoutBlock,
+    SubMsg, Timestamp, Uint128, WasmMsg,
+};
 
-    use cosmwasm_std::{
-        attr, coin, coins, from_binary,
-        testing::{mock_env, MockApi, MockStorage},
-        BankMsg, Coin, Decimal, OwnedDeps, SubMsg,
+use osmo_bindings::{OsmosisMsg, Step, Swap, SwapAmountWithLimit};
+
+use mars_outpost::error::MarsError;
+use mars_outpost::protocol_rewards_collector::{
+    Config, CreateOrUpdateConfig, InstructionResponse, QueryMsg,
+};
+use mars_outpost::testing::{mock_env as mock_env_at_height_and_time, mock_info, MockEnvParams};
+
+use super::helpers::{self, mock_config, mock_instructions};
+use crate::contract::{execute, instantiate};
+use crate::helpers::{stringify_option_amount, unwrap_option_amount};
+use crate::msg::ExecuteMsg;
+use crate::{ContractError, SwapInstruction};
+
+#[test]
+fn instantiating() {
+    let mut deps = helpers::setup_test();
+
+    // config should have been correctly stored
+    let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
+    assert_eq!(cfg, mock_config().into());
+
+    // init config with safety_tax_rate greater than 1; should fail
+    let mut cfg = mock_config();
+    cfg.safety_tax_rate = Decimal::percent(150);
+
+    let info = mock_info("deployer");
+    let err = instantiate(deps.as_mut(), mock_env(), info, cfg.into()).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::Mars(MarsError::InvalidParam {
+            param_name: "safety_tax_rate".to_string(),
+            invalid_value: "1.5".to_string(),
+            predicate: "<= 1".to_string(),
+        })
+    );
+}
+
+#[test]
+fn updating_config() {
+    let mut deps = helpers::setup_test();
+
+    let new_cfg = CreateOrUpdateConfig {
+        safety_tax_rate: Some(Decimal::percent(69)),
+        ..Default::default()
     };
 
-    use mars_outpost::testing::{mock_dependencies, mock_info, MarsMockQuerier};
-    use osmo_bindings::Swap;
+    // non-owner is not authorized
+    let info = mock_info("jake");
+    let msg = ExecuteMsg::UpdateConfig(new_cfg.clone());
+    let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+    assert_eq!(err, MarsError::Unauthorized {}.into());
 
-    #[test]
-    fn test_proper_initialization() {
-        let mut deps = mock_dependencies(&[]);
+    // update config with safety_tax_rate greater than 1
+    let mut invalid_cfg = new_cfg.clone();
+    invalid_cfg.safety_tax_rate = Some(Decimal::percent(125));
 
-        // Config with base params valid (just update the rest)
-        let base_config = CreateOrUpdateConfig {
-            owner: Some("owner".to_string()),
-            address_provider_address: Some("address_provider".to_string()),
-            safety_tax_rate: Some(Decimal::from_ratio(5u128, 10u128)),
-            safety_fund_asset: Some(Asset::Native {
-                denom: "uusdc".to_string(),
-            }),
-            fee_collector_asset: Some(Asset::Native {
-                denom: "umars".to_string(),
-            }),
-            channel_id: Some("channel-110".to_string()),
-            revision: Some(1),
-            block_timeout: Some(50),
-        };
+    let info = mock_info("owner");
+    let msg = ExecuteMsg::UpdateConfig(invalid_cfg.clone());
+    let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::Mars(MarsError::InvalidParam {
+            param_name: "safety_tax_rate".to_string(),
+            invalid_value: "1.25".to_string(),
+            predicate: "<= 1".to_string(),
+        })
+    );
 
-        let info = mock_info("owner");
+    // update config properly
+    let msg = ExecuteMsg::UpdateConfig(new_cfg);
+    execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        // *
-        // init config with empty params
-        // *
-        let empty_config = CreateOrUpdateConfig {
-            owner: None,
-            address_provider_address: None,
-            safety_tax_rate: None,
-            safety_fund_asset: None,
-            fee_collector_asset: None,
-            channel_id: None,
-            revision: None,
-            block_timeout: None,
-        };
-        let msg = InstantiateMsg {
-            config: empty_config,
-        };
-        let err = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
-        assert_eq!(err, MarsError::InstantiateParamsUnavailable {}.into());
+    let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
+    assert_eq!(cfg.safety_tax_rate, Decimal::percent(69));
+}
 
-        // *
-        // init config with safety_tax_rate greater than 1
-        // *
-        let mut safety_tax_rate = Decimal::from_ratio(11u128, 10u128);
-        let config = CreateOrUpdateConfig {
-            safety_tax_rate: Some(safety_tax_rate),
-            ..base_config.clone()
-        };
-        let msg = InstantiateMsg {
-            config,
-        };
-        let response = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
-        assert_eq!(
-            response,
-            ConfigError::Mars(MarsError::InvalidParam {
-                param_name: "safety_tax_rate".to_string(),
-                invalid_value: safety_tax_rate.to_string(),
-                predicate: "<= 1".to_string(),
+#[test]
+fn setting_instructions() {
+    let mut deps = helpers::setup_test();
+
+    let steps = vec![
+        Step {
+            pool_id: 1,
+            denom_out: "uosmo".to_string(),
+        },
+        Step {
+            pool_id: 420,
+            denom_out: "umars".to_string(),
+        },
+    ];
+
+    let msg = ExecuteMsg::SetInstruction {
+        denom_in: "uatom".to_string(),
+        denom_out: "umars".to_string(),
+        instruction: SwapInstruction(steps.clone()),
+    };
+    let invalid_msg = ExecuteMsg::SetInstruction {
+        denom_in: "uatom".to_string(),
+        denom_out: "umars".to_string(),
+        instruction: SwapInstruction(vec![]),
+    };
+
+    // non-owner is not authorized
+    let err = execute(deps.as_mut(), mock_env(), mock_info("jake"), msg.clone()).unwrap_err();
+    assert_eq!(err, MarsError::Unauthorized {}.into());
+
+    // attempting to set an invalid swap instruction; should fail
+    let err = execute(deps.as_mut(), mock_env(), mock_info("owner"), invalid_msg).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidSwapRoute {
+            steps: vec![],
+            reason: "the route must contain at least one step".to_string()
+        }
+    );
+
+    // properly set up swap instruction
+    execute(deps.as_mut(), mock_env(), mock_info("owner"), msg).unwrap();
+
+    let res: InstructionResponse<SwapInstruction> = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Instruction {
+            denom_in: "uatom".to_string(),
+            denom_out: "umars".to_string(),
+        },
+    );
+    assert_eq!(res.instruction, SwapInstruction(steps.clone()));
+}
+
+#[test]
+fn withdrawing_from_red_bank() {
+    let mut deps = helpers::setup_test();
+
+    // anyone can execute a withdrawal
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("jake"),
+        ExecuteMsg::WithdrawFromRedBank {
+            denom: "uatom".to_string(),
+            amount: Some(Uint128::new(42069)),
+        },
+    )
+    .unwrap();
+
+    assert_eq!(res.messages.len(), 1);
+    assert_eq!(
+        res.messages[0],
+        SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: "red_bank".to_string(),
+            msg: to_binary(&mars_outpost::red_bank::msg::ExecuteMsg::Withdraw {
+                asset: mars_outpost::asset::Asset::Native {
+                    denom: "uatom".to_string()
+                },
+                amount: Some(Uint128::new(42069)),
+                recipient: None
             })
-            .into()
-        );
+            .unwrap(),
+            funds: vec![]
+        }))
+    )
+}
 
-        // *
-        // init config with valid params
-        // *
-        safety_tax_rate = Decimal::from_ratio(5u128, 10u128);
-        let config = CreateOrUpdateConfig {
-            safety_tax_rate: Some(safety_tax_rate),
-            ..base_config
-        };
-        let msg = InstantiateMsg {
-            config,
-        };
+#[test]
+fn swapping_asset() {
+    let mut deps = helpers::setup_test();
 
-        // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("jake"),
+        ExecuteMsg::SwapAsset {
+            denom: "uatom".to_string(),
+            amount: Some(Uint128::new(42069)),
+        },
+    )
+    .unwrap();
 
-        // it worked, let's query the state
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
-        let value: Config = from_binary(&res).unwrap();
-        assert_eq!(value.owner, "owner");
-        assert_eq!(value.address_provider_address, "address_provider");
-        assert_eq!(value.safety_tax_rate, safety_tax_rate);
-        assert_eq!(
-            value.safety_fund_asset,
-            Asset::Native {
-                denom: "uusdc".to_string()
-            }
-        );
-        assert_eq!(
-            value.fee_collector_asset,
-            Asset::Native {
-                denom: "umars".to_string()
-            }
-        );
-    }
-
-    #[test]
-    fn test_update_config() {
-        let mut deps = th_setup(&[]);
-
-        let mut safety_tax_rate = Decimal::percent(10);
-        let base_config = CreateOrUpdateConfig {
-            owner: Some("owner".to_string()),
-            address_provider_address: Some("address_provider".to_string()),
-            safety_tax_rate: Some(safety_tax_rate),
-            safety_fund_asset: Some(Asset::Native {
-                denom: "uusdc".to_string(),
-            }),
-            fee_collector_asset: Some(Asset::Native {
-                denom: "umars".to_string(),
-            }),
-            channel_id: Some("channel-182".to_string()),
-            revision: Some(1),
-            block_timeout: Some(50),
-        };
-
-        // *
-        // non owner is not authorized
-        // *
-        let msg = ExecuteMsg::UpdateConfig {
-            config: base_config.clone(),
-        };
-        let info = mock_info("somebody");
-        let error_res = tests(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-        assert_eq!(error_res, MarsError::Unauthorized {}.into());
-
-        // *
-        // update config with safety_tax_rate greater than 1
-        // *
-        let info = mock_info("owner");
-
-        safety_tax_rate = Decimal::from_ratio(11u128, 10u128);
-        let config = CreateOrUpdateConfig {
-            owner: None,
-            safety_tax_rate: Some(safety_tax_rate),
-            ..base_config.clone()
-        };
-        let msg = ExecuteMsg::UpdateConfig {
-            config,
-        };
-        let error_res = tests(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-        assert_eq!(
-            error_res,
-            ConfigError::Mars(MarsError::InvalidParam {
-                param_name: "safety_tax_rate".to_string(),
-                invalid_value: safety_tax_rate.to_string(),
-                predicate: "<= 1".to_string(),
-            })
-            .into()
-        );
-
-        // *
-        // update config with safety_tax_rate greater than 1
-        // *
-        safety_tax_rate = Decimal::from_ratio(12u128, 10u128);
-        let config = CreateOrUpdateConfig {
-            owner: None,
-            safety_tax_rate: Some(safety_tax_rate),
-            ..base_config
-        };
-        let msg = ExecuteMsg::UpdateConfig {
-            config,
-        };
-        let info = mock_info("owner");
-        let error_res = tests(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
-        assert_eq!(
-            error_res,
-            ConfigError::Mars(MarsError::InvalidParam {
-                param_name: "safety_tax_rate".to_string(),
-                invalid_value: safety_tax_rate.to_string(),
-                predicate: "<= 1".to_string(),
-            })
-            .into()
-        );
-
-        // *
-        // update config with all new params
-        // *
-        safety_tax_rate = Decimal::from_ratio(5u128, 100u128);
-        let config = CreateOrUpdateConfig {
-            owner: Some("new_owner".to_string()),
-            address_provider_address: Some("new_address_provider".to_string()),
-            safety_tax_rate: Some(safety_tax_rate),
-            safety_fund_asset: Some(Asset::Native {
-                denom: "uatom".to_string(),
-            }),
-            fee_collector_asset: Some(Asset::Native {
-                denom: "uosmo".to_string(),
-            }),
-            channel_id: Some("channel-182".to_string()),
-            revision: Some(1),
-            block_timeout: Some(50),
-        };
-        let msg = ExecuteMsg::UpdateConfig {
-            config: config.clone(),
-        };
-        // we can just call .unwrap() to assert this was a success
-        let res = tests(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // Read config from state
-        let new_config = CONFIG.load(&deps.storage).unwrap();
-
-        assert_eq!(new_config.owner, config.owner.unwrap());
-        assert_eq!(new_config.address_provider_address, config.address_provider_address.unwrap());
-        assert_eq!(new_config.safety_tax_rate, config.safety_tax_rate.unwrap());
-        assert_eq!(new_config.safety_tax_rate, config.safety_tax_rate.unwrap());
-        assert_eq!(new_config.safety_fund_asset, config.safety_fund_asset.unwrap());
-        assert_eq!(new_config.fee_collector_asset, config.fee_collector_asset.unwrap());
-    }
-
-    #[test]
-    fn test_execute_withdraw_from_red_bank() {
-        let mut deps = th_setup(&[]);
-
-        // *
-        // anyone can execute a withdrawal
-        // *
-        let asset = Asset::Native {
-            denom: "somecoin".to_string(),
-        };
-        let amount = Uint128::new(123_456);
-        let msg = ExecuteMsg::WithdrawFromRedBank {
-            asset: asset.clone(),
-            amount: Some(amount),
-        };
-        let info = mock_info("anybody");
-        // we can just call .unwrap() to assert this was a success
-        let res = tests(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        assert_eq!(
-            res.messages,
-            vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: "red_bank".to_string(),
-                msg: to_binary(&red_bank::msg::ExecuteMsg::Withdraw {
-                    asset,
-                    amount: Some(amount),
-                    recipient: None
-                })
-                .unwrap(),
-                funds: vec![]
-            }))]
-        );
-        assert_eq!(res.attributes, vec![attr("action", "withdraw_from_red_bank"),]);
-    }
-
-    #[test]
-    fn test_distribute_protocol_rewards() {
-        let balance = 2_000_000_000u128;
-
-        // initialize contract with balance
-        let mut deps = th_setup(&[coin(balance, "uusdc"), coin(1_000_000, "umars")]);
-
-        // call function on an asset that isn't enabled for distribution
-        let permissible_amount = Uint128::new(1_500_000_000);
-        let msg = ExecuteMsg::DistributeProtocolRewards {
-            asset: Asset::Native {
-                denom: "uosmo".to_string(),
+    // amount for safety fund:   42069 * 0.25 = 10517
+    // amount for fee collector: 42069 - 10517 = 31552
+    assert_eq!(res.messages.len(), 2);
+    assert_eq!(
+        res.messages[0],
+        SubMsg::new(CosmosMsg::Custom(OsmosisMsg::Swap {
+            first: Swap {
+                pool_id: 1,
+                denom_in: "uatom".to_string(),
+                denom_out: "uosmo".to_string()
             },
-            amount: Some(permissible_amount),
-        };
-        let info = mock_info("anybody");
-        let error_res = tests(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-        assert_eq!(
-            error_res,
-            ContractError::AssetNotEnabledForDistribution {
-                asset_label: "uosmo".to_string()
-            }
-        );
-
-        // call function providing amount exceeding balance
-        let exceeding_amount = Uint128::new(2_000_000_001);
-        let msg = ExecuteMsg::DistributeProtocolRewards {
-            asset: Asset::Native {
-                denom: "uusdc".to_string(),
-            },
-            amount: Some(exceeding_amount),
-        };
-        let info = mock_info("anybody");
-        let error_res = tests(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
-        assert_eq!(
-            error_res,
-            ContractError::AmountToDistributeTooLarge {
-                amount: exceeding_amount,
-                balance: Uint128::new(balance)
-            }
-        );
-
-        // call function providing an amount less than the balance, and distribute safety fund rewards ("uusdc")
-        let permissible_amount = Uint128::new(1_500_000_000);
-        let msg = ExecuteMsg::DistributeProtocolRewards {
-            asset: Asset::Native {
-                denom: "uusdc".to_string(),
-            },
-            amount: Some(permissible_amount),
-        };
-        let res = tests(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
-
-        assert_eq!(
-            res.messages,
-            vec![SubMsg::new(CosmosMsg::Ibc(IbcMsg::Transfer {
-                channel_id: "channel-182".to_string(),
-                to_address: "safety_fund".to_string(),
-                amount: Coin {
-                    denom: "uusdc".to_string(),
-                    amount: permissible_amount
-                },
-                timeout: IbcTimeout::with_block(IbcTimeoutBlock {
-                    revision: 1,
-                    height: 12395,
-                })
-            }))]
-        );
-
-        assert_eq!(
-            res.attributes,
-            vec![
-                attr("action", "distribute_protocol_income"),
-                attr("asset", "uusdc"),
-                attr("amount_to_distribute", permissible_amount),
-            ]
-        );
-
-        // call function without providing an amount, and distribute fee collector rewards ("umars")
-        let msg = ExecuteMsg::DistributeProtocolRewards {
-            asset: Asset::Native {
-                denom: "umars".to_string(),
-            },
-            amount: None,
-        };
-        let res = tests(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        assert_eq!(
-            res.messages,
-            vec![SubMsg::new(CosmosMsg::Ibc(IbcMsg::Transfer {
-                channel_id: "channel-182".to_string(),
-                to_address: "fee_collector".to_string(),
-                amount: Coin {
-                    denom: "umars".to_string(),
-                    amount: Uint128::new(1_000_000)
-                },
-                timeout: IbcTimeout::with_block(IbcTimeoutBlock {
-                    revision: 1,
-                    height: 12395,
-                })
-            }))]
-        );
-
-        assert_eq!(
-            res.attributes,
-            vec![
-                attr("action", "distribute_protocol_income"),
-                attr("asset", "umars"),
-                attr("amount_to_distribute", Uint128::new(1_000_000)),
-            ]
-        );
-    }
-
-    #[test]
-    fn test_execute_swap_msg() {
-        // initialize contract with balance
-        let mut deps = th_setup(&coins(500_000, "uatom"));
-        let info = mock_info("owner");
-
-        let msg = ExecuteMsg::SwapAsset {
-            asset_in: Asset::Native {
-                denom: "uatom".to_string(),
-            },
-            amount: None,
-            fee_collector_asset_steps: vec![
-                Step {
-                    pool_id: 1,
-                    denom_out: "uosmo".to_string(),
-                },
-                Step {
-                    pool_id: 3,
-                    denom_out: "umars".to_string(),
-                },
-            ],
-            safety_fund_asset_steps: vec![
-                Step {
-                    pool_id: 1,
-                    denom_out: "uosmo".to_string(),
-                },
-                Step {
-                    pool_id: 2,
-                    denom_out: "uusdc".to_string(),
-                },
-            ],
-        };
-        let res = tests(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
-
-        assert_eq!(
-            res.messages,
-            vec![
-                SubMsg::new(CosmosMsg::Custom(OsmosisMsg::Swap {
-                    first: Swap {
-                        pool_id: 1,
-                        denom_in: "uatom".to_string(),
-                        denom_out: "uosmo".to_string(),
-                    },
-                    route: vec![Step {
-                        pool_id: 2,
-                        denom_out: "uusdc".to_string(),
-                    }],
-                    amount: osmo_bindings::SwapAmountWithLimit::ExactIn {
-                        input: Uint128::new(250_000),
-                        min_output: Uint128::zero()
-                    }
-                })),
-                SubMsg::new(CosmosMsg::Custom(OsmosisMsg::Swap {
-                    first: Swap {
-                        pool_id: 1,
-                        denom_in: "uatom".to_string(),
-                        denom_out: "uosmo".to_string(),
-                    },
-                    route: vec![Step {
-                        pool_id: 3,
-                        denom_out: "umars".to_string(),
-                    }],
-                    amount: osmo_bindings::SwapAmountWithLimit::ExactIn {
-                        input: Uint128::new(250_000),
-                        min_output: Uint128::zero()
-                    }
-                }))
-            ]
-        );
-
-        assert_eq!(
-            res.attributes,
-            vec![
-                attr("action", "swap"),
-                attr("denom_in", "uatom"),
-                attr("amount_to_swap", "500000"),
-                attr("safety_fund_share", "250000"),
-                attr("fee_collector_share", "250000"),
-            ]
-        );
-
-        // test swap all the amount to safety fund (safety fund tax rate = 1)
-        let config = CreateOrUpdateConfig {
-            owner: None,
-            address_provider_address: None,
-            fee_collector_asset: None,
-            safety_fund_asset: None,
-            channel_id: None,
-            revision: None,
-            block_timeout: None,
-            safety_tax_rate: Some(Decimal::percent(100)),
-        };
-        let conf_msg = ExecuteMsg::UpdateConfig {
-            config,
-        };
-
-        // change the safety_tax_rate to 1
-        let _ = tests(deps.as_mut(), mock_env(), info.clone(), conf_msg).unwrap();
-
-        let res = tests(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        assert_eq!(
-            res.messages,
-            vec![SubMsg::new(CosmosMsg::Custom(OsmosisMsg::Swap {
-                first: Swap {
-                    pool_id: 1,
-                    denom_in: "uatom".to_string(),
-                    denom_out: "uosmo".to_string(),
-                },
-                route: vec![Step {
-                    pool_id: 2,
-                    denom_out: "uusdc".to_string(),
-                }],
-                amount: osmo_bindings::SwapAmountWithLimit::ExactIn {
-                    input: Uint128::new(500_000),
-                    min_output: Uint128::zero()
-                }
-            })),]
-        );
-
-        assert_eq!(
-            res.attributes,
-            vec![
-                attr("action", "swap"),
-                attr("denom_in", "uatom"),
-                attr("amount_to_swap", "500000"),
-                attr("safety_fund_share", "500000"),
-                attr("fee_collector_share", "0"),
-            ]
-        );
-    }
-
-    #[test]
-    fn test_execute_cosmos_msg() {
-        let mut deps = th_setup(&[]);
-
-        let bank = BankMsg::Send {
-            to_address: "destination".to_string(),
-            amount: vec![Coin {
-                denom: "uluna".to_string(),
-                amount: Uint128::new(123456),
+            route: vec![Step {
+                pool_id: 69,
+                denom_out: "uusdc".to_string()
             }],
-        };
-        let cosmos_msg = CosmosMsg::Bank(bank);
-        let msg = ExecuteMsg::ExecuteCosmosMsg(cosmos_msg.clone());
+            amount: SwapAmountWithLimit::ExactIn {
+                input: Uint128::new(10517),
+                min_output: Uint128::zero()
+            }
+        }))
+    );
+    assert_eq!(
+        res.messages[1],
+        SubMsg::new(CosmosMsg::Custom(OsmosisMsg::Swap {
+            first: Swap {
+                pool_id: 1,
+                denom_in: "uatom".to_string(),
+                denom_out: "uosmo".to_string()
+            },
+            route: vec![Step {
+                pool_id: 420,
+                denom_out: "umars".to_string()
+            }],
+            amount: SwapAmountWithLimit::ExactIn {
+                input: Uint128::new(31552),
+                min_output: Uint128::zero()
+            }
+        }))
+    );
+}
 
-        // *
-        // non owner is not authorized
-        // *
-        let info = mock_info("somebody");
-        let error_res = tests(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
-        assert_eq!(error_res, MarsError::Unauthorized {}.into());
+#[test]
+fn distributing_rewards() {
+    let mut deps = helpers::setup_test();
 
-        // *
-        // can execute Cosmos msg
-        // *
-        let info = mock_info("owner");
-        let res = tests(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(res.messages, vec![SubMsg::new(cosmos_msg)]);
-        assert_eq!(res.attributes, vec![attr("action", "execute_cosmos_msg")]);
-    }
+    let env = mock_env_at_height_and_time(MockEnvParams {
+        block_height: 10000,
+        block_time: Timestamp::from_seconds(17000000),
+    });
 
-    // TEST HELPERS
+    // distribute uusdc
+    let res = execute(
+        deps.as_mut(),
+        env.clone(),
+        mock_info("jake"),
+        ExecuteMsg::DistributeRewards {
+            denom: "uusdc".to_string(),
+            amount: Some(Uint128::new(123)),
+        },
+    )
+    .unwrap();
+    assert_eq!(res.messages.len(), 1);
+    assert_eq!(
+        res.messages[0],
+        SubMsg::new(CosmosMsg::Ibc(IbcMsg::Transfer {
+            channel_id: "channel-69".to_string(),
+            to_address: "safety_fund".to_string(),
+            amount: coin(123, "uusdc"),
+            timeout: IbcTimeout::with_both(
+                IbcTimeoutBlock {
+                    revision: 1,
+                    height: 10050,
+                },
+                Timestamp::from_seconds(17000300)
+            )
+        }))
+    );
 
-    fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
-        let mut deps = mock_dependencies(contract_balances);
-        let info = mock_info("owner");
-        let config = CreateOrUpdateConfig {
-            owner: Some("owner".to_string()),
-            address_provider_address: Some("address_provider".to_string()),
-            safety_tax_rate: Some(Decimal::percent(50)),
-            safety_fund_asset: Some(Asset::Native {
-                denom: "uusdc".to_string(),
-            }),
-            fee_collector_asset: Some(Asset::Native {
-                denom: "umars".to_string(),
-            }),
-            channel_id: Some("channel-182".to_string()),
-            revision: Some(1),
-            block_timeout: Some(50),
-        };
-        let msg = InstantiateMsg {
-            config,
-        };
-        instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        deps
-    }
+    // distribute umars
+    let res = execute(
+        deps.as_mut(),
+        env.clone(),
+        mock_info("jake"),
+        ExecuteMsg::DistributeRewards {
+            denom: "umars".to_string(),
+            amount: None,
+        },
+    )
+    .unwrap();
+    assert_eq!(res.messages.len(), 1);
+    assert_eq!(
+        res.messages[0],
+        SubMsg::new(CosmosMsg::Ibc(IbcMsg::Transfer {
+            channel_id: "channel-69".to_string(),
+            to_address: "fee_collector".to_string(),
+            amount: coin(8964, "umars"),
+            timeout: IbcTimeout::with_both(
+                IbcTimeoutBlock {
+                    revision: 1,
+                    height: 10050,
+                },
+                Timestamp::from_seconds(17000300)
+            )
+        }))
+    );
+
+    // distribute uosmo; should fail
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("jake"),
+        ExecuteMsg::DistributeRewards {
+            denom: "uatom".to_string(),
+            amount: Some(Uint128::new(123)),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::AssetNotEnabledForDistribution {
+            denom: "uatom".to_string()
+        }
+    );
+}
+
+#[test]
+fn executing_cosmos_msg() {
+    let mut deps = helpers::setup_test();
+
+    let cosmos_msg = CosmosMsg::Bank(BankMsg::Send {
+        to_address: "destination".to_string(),
+        amount: vec![Coin {
+            denom: "uluna".to_string(),
+            amount: Uint128::new(123456),
+        }],
+    });
+    let msg = ExecuteMsg::ExecuteCosmosMsg(cosmos_msg.clone());
+
+    // non-owner is not authorized
+    let err = execute(deps.as_mut(), mock_env(), mock_info("jake"), msg.clone()).unwrap_err();
+    assert_eq!(err, MarsError::Unauthorized {}.into());
+
+    // owner can execute cosmos msg
+    let res = execute(deps.as_mut(), mock_env(), mock_info("owner"), msg).unwrap();
+    assert_eq!(res.messages.len(), 1);
+    assert_eq!(res.messages[0], SubMsg::new(cosmos_msg));
+}
+
+#[test]
+fn querying_instructions() {
+    let deps = helpers::setup_test();
+
+    // NOTE: the response is ordered alphabetically
+    let instructions = mock_instructions();
+    let expected = vec![
+        InstructionResponse {
+            denom_in: "uatom".to_string(),
+            denom_out: "umars".to_string(),
+            instruction: instructions.get(&("uatom", "umars")).unwrap().clone(),
+        },
+        InstructionResponse {
+            denom_in: "uatom".to_string(),
+            denom_out: "uusdc".to_string(),
+            instruction: instructions.get(&("uatom", "uusdc")).unwrap().clone(),
+        },
+        InstructionResponse {
+            denom_in: "uosmo".to_string(),
+            denom_out: "umars".to_string(),
+            instruction: instructions.get(&("uosmo", "umars")).unwrap().clone(),
+        },
+    ];
+
+    let res: Vec<InstructionResponse<SwapInstruction>> = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Instructions {
+            start_after: None,
+            limit: None,
+        },
+    );
+    assert_eq!(res, expected);
+
+    let res: Vec<InstructionResponse<SwapInstruction>> = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Instructions {
+            start_after: None,
+            limit: Some(1),
+        },
+    );
+    assert_eq!(res, expected[..1]);
+
+    let res: Vec<InstructionResponse<SwapInstruction>> = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Instructions {
+            start_after: Some(("uatom".to_string(), "uosmo".to_string())),
+            limit: None,
+        },
+    );
+    assert_eq!(res, expected[1..]);
+}
+
+#[test]
+fn validating_swap_instruction() {
+    let deps = helpers::setup_test();
+    let q = &deps.as_ref().querier;
+
+    // invalid - route is empty
+    let ins = SwapInstruction(vec![]);
+    assert_eq!(
+        ins.validate(q, "uatom", "umars"),
+        Err(ContractError::InvalidSwapRoute {
+            steps: vec![],
+            reason: "the route must contain at least one step".to_string()
+        })
+    );
+
+    // invalid - the pool must contain the input denom
+    let ins = SwapInstruction(vec![
+        Step {
+            pool_id: 68,
+            denom_out: "uusdc".to_string(),
+        },
+        Step {
+            pool_id: 420,
+            denom_out: "umars".to_string(), // 420 is OSMO-MARS pool; but the previous step's output is USDC
+        }
+    ]);
+    assert_eq!(
+        ins.validate(q, "uatom", "umars"),
+        Err(ContractError::InvalidSwapRoute {
+            steps: ins.steps().to_vec(),
+            reason: "step 2: pool 420 does not contain input denom uusdc".to_string()
+        })
+    );
+
+    // invalid - the pool must contain the output denom
+    let ins = SwapInstruction(vec![
+        Step {
+            pool_id: 1,
+            denom_out: "uosmo".to_string(),
+        },
+        Step {
+            pool_id: 69,
+            denom_out: "umars".to_string(), // 69 is OSMO-USDC pool; but this step's output is MARS
+        }
+    ]);
+    assert_eq!(
+        ins.validate(q, "uatom", "umars"),
+        Err(ContractError::InvalidSwapRoute {
+            steps: ins.steps().to_vec(),
+            reason: "step 2: pool 69 does not contain output denom umars".to_string()
+        })
+    );
+
+    // invalid - route contains a loop
+    // this examle: ATOM -> OSMO -> USDC -> OSMO -> MARS
+    let ins = SwapInstruction(vec![
+        Step {
+            pool_id: 1,
+            denom_out: "uosmo".to_string(),
+        },
+        Step {
+            pool_id: 69,
+            denom_out: "uusdc".to_string(),
+        },
+        Step {
+            pool_id: 69,
+            denom_out: "uosmo".to_string(),
+        },
+        Step {
+            pool_id: 420,
+            denom_out: "umars".to_string(),
+        }
+    ]);
+    assert_eq!(
+        ins.validate(q, "uatom", "umars"),
+        Err(ContractError::InvalidSwapRoute {
+            steps: ins.steps().to_vec(),
+            reason: "route contains a loop: denom uosmo seen twice".to_string()
+        })
+    );
+
+    // invalid - route's final output denom does not match the desired output
+    let ins = SwapInstruction(vec![
+        Step {
+            pool_id: 1,
+            denom_out: "uosmo".to_string(),
+        },
+        Step {
+            pool_id: 69,
+            denom_out: "uusdc".to_string(),
+        },
+    ]);
+    assert_eq!(
+        ins.validate(q, "uatom", "umars"),
+        Err(ContractError::InvalidSwapRoute {
+            steps: ins.steps().to_vec(),
+            reason: "the route's output denom uusdc does not match the desired output umars".to_string()
+        })
+    );
+
+    // valid
+    let ins = SwapInstruction(vec![
+        Step {
+            pool_id: 1,
+            denom_out: "uosmo".to_string(),
+        },
+        Step {
+            pool_id: 420,
+            denom_out: "umars".to_string(),
+        },
+    ]);
+    assert_eq!(ins.validate(q, "uatom", "umars"), Ok(()));
+}
+
+#[test]
+fn unwrapping_option_amount() {
+    let deps = helpers::setup_test();
+
+    assert_eq!(
+        unwrap_option_amount(
+            &deps.as_ref().querier,
+            &Addr::unchecked(MOCK_CONTRACT_ADDR),
+            "uatom",
+            None
+        ),
+        Ok(Uint128::new(88888))
+    );
+    assert_eq!(
+        unwrap_option_amount(
+            &deps.as_ref().querier,
+            &Addr::unchecked(MOCK_CONTRACT_ADDR),
+            "uatom",
+            Some(Uint128::new(12345))
+        ),
+        Ok(Uint128::new(12345))
+    );
+    assert_eq!(
+        unwrap_option_amount(
+            &deps.as_ref().querier,
+            &Addr::unchecked(MOCK_CONTRACT_ADDR),
+            "uatom",
+            Some(Uint128::new(99999))
+        ),
+        Err(ContractError::AmountToDistributeTooLarge {
+            amount: Uint128::new(99999),
+            balance: Uint128::new(88888),
+        })
+    );
+}
+
+#[test]
+fn stringifying_option_amount() {
+    assert_eq!(stringify_option_amount(Some(Uint128::new(42069))), "42069".to_string());
+    assert_eq!(stringify_option_amount(None), "undefined".to_string());
+}

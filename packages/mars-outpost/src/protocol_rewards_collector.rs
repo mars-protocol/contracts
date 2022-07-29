@@ -21,10 +21,12 @@ pub struct Config<T> {
     pub fee_collector_denom: String,
     /// The channel ID of the mars hub
     pub channel_id: String,
-    /// revision, needed for the IBC block timeout
-    pub revision: u64,
-    /// Block timeout, when the IBC transfer times out
-    pub block_timeout: u64,
+    /// Revision number of Mars Hub's IBC client
+    pub timeout_revision: u64,
+    /// Number of blocks after which an IBC transfer is to be considered failed, if no acknowledgement is received
+    pub timeout_blocks: u64,
+    /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
+    pub timeout_seconds: u64,
 }
 
 impl<T> Config<T> {
@@ -38,13 +40,14 @@ impl Config<String> {
     pub fn check(&self, api: &dyn Api) -> StdResult<Config<Addr>> {
         Ok(Config {
             owner: api.addr_validate(&self.owner)?,
-            address_provider: api.addr_validate(&self.owner)?,
+            address_provider: api.addr_validate(&&self.address_provider)?,
             safety_tax_rate: self.safety_tax_rate,
             safety_fund_denom: self.safety_fund_denom.clone(),
             fee_collector_denom: self.fee_collector_denom.clone(),
             channel_id: self.channel_id.clone(),
-            revision: self.revision,
-            block_timeout: self.block_timeout,
+            timeout_revision: self.timeout_revision,
+            timeout_blocks: self.timeout_blocks,
+            timeout_seconds: self.timeout_seconds,
         })
     }
 }
@@ -58,8 +61,9 @@ impl From<Config<Addr>> for Config<String> {
             safety_fund_denom: cfg.safety_fund_denom.clone(),
             fee_collector_denom: cfg.fee_collector_denom.clone(),
             channel_id: cfg.channel_id.clone(),
-            revision: cfg.revision,
-            block_timeout: cfg.block_timeout,
+            timeout_revision: cfg.timeout_revision,
+            timeout_blocks: cfg.timeout_blocks,
+            timeout_seconds: cfg.timeout_seconds,
         }
     }
 }
@@ -78,10 +82,12 @@ pub struct CreateOrUpdateConfig {
     pub fee_collector_denom: Option<String>,
     /// The channel id of the mars hub
     pub channel_id: Option<String>,
-    /// Revision, used to determine the IBC Block timeout
-    pub revision: Option<u64>,
-    /// Block timeout
-    pub block_timeout: Option<u64>,
+    /// Revision number of Mars Hub's IBC light client
+    pub timeout_revision: Option<u64>,
+    /// Number of blocks after which an IBC transfer is to be considered failed, if no acknowledgement is received
+    pub timeout_blocks: Option<u64>,
+    /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
+    pub timeout_seconds: Option<u64>,
 }
 
 pub type InstantiateMsg = Config<String>;

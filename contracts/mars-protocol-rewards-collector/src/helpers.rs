@@ -1,3 +1,6 @@
+use std::collections::HashSet;
+use std::hash::Hash;
+
 use cosmwasm_std::{Addr, QuerierWrapper, Uint128};
 
 use crate::error::{ContractError, ContractResult};
@@ -30,4 +33,9 @@ pub fn unwrap_option_amount(
 /// Convert an optional Uint128 amount to string. If the amount is undefined, return `undefined`
 pub fn stringify_option_amount(amount: Option<Uint128>) -> String {
     amount.map_or_else(|| "undefined".to_string(), |amount| amount.to_string())
+}
+
+/// Build a hashset from array data
+pub fn hashset<T: Eq + Clone + Hash>(data: &[T]) -> HashSet<T> {
+    data.iter().cloned().collect()
 }

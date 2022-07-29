@@ -94,8 +94,9 @@ pub fn update_config(
         safety_fund_denom,
         fee_collector_denom,
         channel_id,
-        revision,
-        block_timeout,
+        timeout_revision,
+        timeout_blocks,
+        timeout_seconds,
     } = new_cfg;
 
     cfg.owner = option_string_to_addr(deps.api, owner, cfg.owner)?;
@@ -104,8 +105,9 @@ pub fn update_config(
     cfg.safety_fund_denom = safety_fund_denom.unwrap_or(cfg.safety_fund_denom);
     cfg.fee_collector_denom = fee_collector_denom.unwrap_or(cfg.fee_collector_denom);
     cfg.channel_id = channel_id.unwrap_or(cfg.channel_id);
-    cfg.revision = revision.unwrap_or(cfg.revision);
-    cfg.block_timeout = block_timeout.unwrap_or(cfg.block_timeout);
+    cfg.timeout_revision = timeout_revision.unwrap_or(cfg.timeout_revision);
+    cfg.timeout_blocks = timeout_blocks.unwrap_or(cfg.timeout_blocks);
+    cfg.timeout_seconds = timeout_seconds.unwrap_or(cfg.timeout_seconds);
 
     cfg.validate()?;
 
@@ -247,10 +249,13 @@ pub fn distribute_rewards(
             denom: denom.clone(),
             amount: amount_to_distribute,
         },
-        timeout: IbcTimeout::with_block(IbcTimeoutBlock {
-            revision: cfg.revision,
-            height: env.block.height + cfg.block_timeout,
-        }),
+        timeout: IbcTimeout::with_both(
+            IbcTimeoutBlock {
+                revision: cfg.timeout_revision,
+                height: env.block.height + cfg.timeout_blocks,
+            },
+            env.block.time.plus_seconds(cfg.timeout_seconds),
+        ),
     });
 
     Ok(Response::new()

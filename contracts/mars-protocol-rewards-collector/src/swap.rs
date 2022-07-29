@@ -3,7 +3,8 @@ use osmo_bindings::{OsmosisMsg, OsmosisQuery, PoolStateResponse, Step, Swap, Swa
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{error::ContractResult, ContractError};
+use crate::error::{ContractError, ContractResult};
+use crate::helpers::hashset;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SwapInstruction(pub Vec<Step>);
@@ -26,8 +27,11 @@ impl SwapInstruction {
             });
         }
 
-        // for each step, the pool must contain the input and output denoms
+        // for each step:
+        // - the pool must contain the input and output denoms
+        // - the output denom must not be the same as the input denom of a previous step (i.e. the route must not contain a loop)
         let mut prev_denom_out = denom_in;
+        let mut seen_denoms = hashset(&[denom_in]);
         for (i, step) in steps.iter().enumerate() {
             let pool_state: PoolStateResponse =
                 querier.query(&QueryRequest::Custom(OsmosisQuery::PoolState {
@@ -39,7 +43,9 @@ impl SwapInstruction {
                     steps: steps.to_vec(),
                     reason: format!(
                         "step {}: pool {} does not contain input denom {}",
-                        i, step.pool_id, prev_denom_out
+                        i + 1,
+                        step.pool_id,
+                        prev_denom_out
                     ),
                 });
             }
@@ -49,28 +55,30 @@ impl SwapInstruction {
                     steps: steps.to_vec(),
                     reason: format!(
                         "step {}: pool {} does not contain output denom {}",
-                        i, step.pool_id, &step.denom_out
+                        i + 1,
+                        step.pool_id,
+                        &step.denom_out
                     ),
                 });
             }
 
+            if seen_denoms.contains(step.denom_out.as_str()) {
+                return Err(ContractError::InvalidSwapRoute {
+                    steps: steps.to_vec(),
+                    reason: format!("route contains a loop: denom {} seen twice", step.denom_out),
+                });
+            }
+
             prev_denom_out = &step.denom_out;
+            seen_denoms.insert(&step.denom_out);
         }
 
-        // the final output denom must not be the same from the initial input denom
-        if denom_in == prev_denom_out {
-            return Err(ContractError::InvalidSwapRoute {
-                steps: steps.to_vec(),
-                reason: format!("input and output denom cannot both be {}", denom_in),
-            });
-        }
-
-        // the route's output denom must match the desired output denom
+        // the route's final output denom must match the desired output denom
         if prev_denom_out != denom_out {
             return Err(ContractError::InvalidSwapRoute {
                 steps: steps.to_vec(),
                 reason: format!(
-                    "the route output denom {} does not match the desired output {}",
+                    "the route's output denom {} does not match the desired output {}",
                     prev_denom_out, denom_out
                 ),
             });
