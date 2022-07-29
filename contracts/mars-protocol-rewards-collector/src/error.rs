@@ -25,8 +25,8 @@ pub enum ContractError {
         balance: Uint128,
     },
 
-    #[error("Invalid swap route: {reason}")]
-    InvalidSwapRoute {
+    #[error("Invalid route: {reason}")]
+    InvalidRoute {
         reason: String,
     }
 }

@@ -21,7 +21,7 @@ impl Route {
 
         // there must be at least one step
         if steps.is_empty() {
-            return Err(ContractError::InvalidSwapRoute {
+            return Err(ContractError::InvalidRoute {
                 reason: "the route must contain at least one step".to_string(),
             });
         }
@@ -38,7 +38,7 @@ impl Route {
                 }))?;
 
             if !pool_state.has_denom(prev_denom_out) {
-                return Err(ContractError::InvalidSwapRoute {
+                return Err(ContractError::InvalidRoute {
                     reason: format!(
                         "step {}: pool {} does not contain input denom {}",
                         i + 1,
@@ -49,7 +49,7 @@ impl Route {
             }
 
             if !pool_state.has_denom(&step.denom_out) {
-                return Err(ContractError::InvalidSwapRoute {
+                return Err(ContractError::InvalidRoute {
                     reason: format!(
                         "step {}: pool {} does not contain output denom {}",
                         i + 1,
@@ -60,7 +60,7 @@ impl Route {
             }
 
             if seen_denoms.contains(step.denom_out.as_str()) {
-                return Err(ContractError::InvalidSwapRoute {
+                return Err(ContractError::InvalidRoute {
                     reason: format!("route contains a loop: denom {} seen twice", step.denom_out),
                 });
             }
@@ -71,7 +71,7 @@ impl Route {
 
         // the route's final output denom must match the desired output denom
         if prev_denom_out != denom_out {
-            return Err(ContractError::InvalidSwapRoute {
+            return Err(ContractError::InvalidRoute {
                 reason: format!(
                     "the route's output denom {} does not match the desired output {}",
                     prev_denom_out, denom_out
@@ -98,7 +98,7 @@ impl Route {
         let first_swap = steps
             .first()
             .map(|step| Swap::new(step.pool_id, denom_in, &step.denom_out))
-            .ok_or(ContractError::InvalidSwapRoute {
+            .ok_or(ContractError::InvalidRoute {
                 reason: "the route must contain at least one step".to_string(),
             })?;
 

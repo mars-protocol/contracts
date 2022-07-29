@@ -115,7 +115,7 @@ fn setting_route() {
     let err = execute(deps.as_mut(), mock_env(), mock_info("owner"), invalid_msg).unwrap_err();
     assert_eq!(
         err,
-        ContractError::InvalidSwapRoute {
+        ContractError::InvalidRoute {
             reason: "the route must contain at least one step".to_string()
         }
     );
@@ -391,7 +391,7 @@ fn validating_swap_instruction() {
     let ins = Route(vec![]);
     assert_eq!(
         ins.validate(q, "uatom", "umars"),
-        Err(ContractError::InvalidSwapRoute {
+        Err(ContractError::InvalidRoute {
             reason: "the route must contain at least one step".to_string()
         })
     );
@@ -409,7 +409,7 @@ fn validating_swap_instruction() {
     ]);
     assert_eq!(
         ins.validate(q, "uatom", "umars"),
-        Err(ContractError::InvalidSwapRoute {
+        Err(ContractError::InvalidRoute {
             reason: "step 2: pool 420 does not contain input denom uusdc".to_string()
         })
     );
@@ -427,7 +427,7 @@ fn validating_swap_instruction() {
     ]);
     assert_eq!(
         ins.validate(q, "uatom", "umars"),
-        Err(ContractError::InvalidSwapRoute {
+        Err(ContractError::InvalidRoute {
             reason: "step 2: pool 69 does not contain output denom umars".to_string()
         })
     );
@@ -454,7 +454,7 @@ fn validating_swap_instruction() {
     ]);
     assert_eq!(
         ins.validate(q, "uatom", "umars"),
-        Err(ContractError::InvalidSwapRoute {
+        Err(ContractError::InvalidRoute {
             reason: "route contains a loop: denom uosmo seen twice".to_string()
         })
     );
@@ -472,7 +472,7 @@ fn validating_swap_instruction() {
     ]);
     assert_eq!(
         ins.validate(q, "uatom", "umars"),
-        Err(ContractError::InvalidSwapRoute {
+        Err(ContractError::InvalidRoute {
             reason: "the route's output denom uusdc does not match the desired output umars"
                 .to_string()
         })
