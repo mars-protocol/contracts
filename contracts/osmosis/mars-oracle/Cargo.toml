@@ -37,3 +37,4 @@ osmo-bindings = { git = "https://github.com/osmosis-labs/bindings", tag = "v0.6.
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"
+mars-testing = { path = "../../../packages/mars-testing", version = "0.1.0" }

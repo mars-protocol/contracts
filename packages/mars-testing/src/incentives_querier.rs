@@ -1,7 +1,7 @@
 use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, QuerierResult, Uint128};
 use std::collections::HashMap;
 
-use crate::incentives::msg::QueryMsg;
+use mars_outpost::incentives::msg::QueryMsg;
 
 pub struct IncentivesQuerier {
     /// incentives contract address to be used in queries

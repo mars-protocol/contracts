@@ -427,7 +427,7 @@ dependencies = [
  "cw2",
  "cw20",
  "cw20-base",
- "osmo-bindings",
+ "mars-testing",
  "schemars",
  "serde",
  "thiserror",
@@ -443,6 +443,22 @@ dependencies = [
  "cw20",
  "cw20-base",
  "mars-outpost",
+ "mars-testing",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-testing"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw2",
+ "cw20",
+ "cw20-base",
+ "mars-outpost",
+ "osmo-bindings",
  "schemars",
  "serde",
  "thiserror",
@@ -472,6 +488,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-outpost",
+ "mars-testing",
  "osmo-bindings",
  "schemars",
  "serde",

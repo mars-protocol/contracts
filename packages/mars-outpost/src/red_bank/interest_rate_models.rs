@@ -290,8 +290,8 @@ pub fn linear_get_borrow_rate(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::mock_env_at_block_time;
     use cosmwasm_std::Decimal;
+    use mars_testing::mock_env_at_block_time;
 
     #[test]
     fn test_dynamic_model_lifecycle() {

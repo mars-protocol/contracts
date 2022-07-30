@@ -5,7 +5,8 @@ use mars_outpost::asset::Asset;
 use mars_outpost::red_bank::interest_rate_models::update_market_interest_rates_with_model;
 use mars_outpost::red_bank::msg::{CreateOrUpdateConfig, InstantiateMsg};
 use mars_outpost::red_bank::{GlobalState, Market};
-use mars_outpost::testing::{
+
+use mars_testing::{
     mock_dependencies, mock_env, mock_env_at_block_time, mock_info, MarsMockQuerier, MockEnvParams,
 };
 

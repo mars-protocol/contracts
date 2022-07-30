@@ -1,7 +1,7 @@
 use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, Decimal, QuerierResult};
 use std::collections::HashMap;
 
-use crate::oracle::msg::QueryMsg;
+use mars_outpost::oracle::msg::QueryMsg;
 
 #[derive(Default)]
 pub struct OracleQuerier {

@@ -20,10 +20,11 @@ use mars_outpost::red_bank::msg::{
 use mars_outpost::red_bank::{
     ConfigResponse, Debt, Market, MarketError, User, UserAssetDebtResponse, UserHealthStatus,
 };
-use mars_outpost::testing::{
+use mars_outpost::{ma_token, math};
+
+use mars_testing::{
     mock_dependencies, mock_env, mock_env_at_block_time, mock_info, MockEnvParams,
 };
-use mars_outpost::{ma_token, math};
 
 use crate::accounts::get_user_position;
 use crate::contract::{
@@ -4115,7 +4116,7 @@ pub fn test_liquidate() {
             ]
         );
 
-        mars_outpost::testing::assert_eq_vec(
+        mars_testing::assert_eq_vec(
             res.attributes,
             vec![
                 attr("action", "liquidate"),
@@ -4301,7 +4302,7 @@ pub fn test_liquidate() {
             ]
         );
 
-        mars_outpost::testing::assert_eq_vec(
+        mars_testing::assert_eq_vec(
             vec![
                 attr("action", "liquidate"),
                 attr("collateral_asset", "collateral"),
@@ -4474,7 +4475,7 @@ pub fn test_liquidate() {
             ]
         );
 
-        mars_outpost::testing::assert_eq_vec(
+        mars_testing::assert_eq_vec(
             vec![
                 attr("action", "liquidate"),
                 attr("collateral_asset", "collateral"),
@@ -4689,7 +4690,7 @@ pub fn test_liquidate() {
             ]
         );
 
-        mars_outpost::testing::assert_eq_vec(
+        mars_testing::assert_eq_vec(
             vec![
                 attr("action", "liquidate"),
                 attr("collateral_asset", "collateral"),
@@ -4909,7 +4910,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             ]
         );
 
-        mars_outpost::testing::assert_eq_vec(
+        mars_testing::assert_eq_vec(
             res.attributes,
             vec![
                 attr("action", "liquidate"),
@@ -5056,7 +5057,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             ]
         );
 
-        mars_outpost::testing::assert_eq_vec(
+        mars_testing::assert_eq_vec(
             res.attributes,
             vec![
                 attr("action", "liquidate"),
@@ -5207,7 +5208,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             ]
         );
 
-        mars_outpost::testing::assert_eq_vec(
+        mars_testing::assert_eq_vec(
             res.attributes,
             vec![
                 attr("action", "liquidate"),
@@ -5366,7 +5367,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             ]
         );
 
-        mars_outpost::testing::assert_eq_vec(
+        mars_testing::assert_eq_vec(
             res.attributes,
             vec![
                 attr("action", "liquidate"),
