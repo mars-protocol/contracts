@@ -3,9 +3,8 @@ use thiserror::Error;
 use cosmwasm_std::{OverflowError, StdError};
 
 use mars_outpost::error::MarsError;
-
-use crate::interest_rate_models::InterestRateModelError;
-use crate::MarketError;
+use mars_outpost::red_bank::interest_rate_models::InterestRateModelError;
+use mars_outpost::red_bank::MarketError;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
