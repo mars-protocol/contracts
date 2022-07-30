@@ -1,23 +1,21 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Order,
+    attr, to_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo, Order,
     OverflowError, OverflowOperation, QueryRequest, Response, StdError, StdResult, Uint128,
     WasmMsg, WasmQuery,
 };
 
-use mars_core::error::MarsError;
-use mars_core::helpers::option_string_to_addr;
-use mars_core::math::decimal::Decimal;
+use mars_outpost::error::MarsError;
+use mars_outpost::helpers::option_string_to_addr;
 
-use mars_core::address_provider;
-use mars_core::address_provider::MarsContract;
-use mars_core::staking;
+use mars_outpost::address_provider;
+use mars_outpost::address_provider::MarsContract;
+use mars_outpost::incentives::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_outpost::incentives::{AssetIncentive, AssetIncentiveResponse, Config};
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{ASSET_INCENTIVES, CONFIG, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
-use crate::{AssetIncentive, AssetIncentiveResponse, Config};
 
 // INIT
 
@@ -68,13 +66,7 @@ pub fn execute(
         ExecuteMsg::UpdateConfig {
             owner,
             address_provider_address,
-        } => Ok(execute_update_config(
-            deps,
-            env,
-            info,
-            owner,
-            address_provider_address,
-        )?),
+        } => Ok(execute_update_config(deps, env, info, owner, address_provider_address)?),
         ExecuteMsg::ExecuteCosmosMsg(cosmos_msg) => {
             Ok(execute_execute_cosmos_msg(deps, env, info, cosmos_msg)?)
         }
@@ -102,8 +94,10 @@ pub fn execute_set_asset_incentive(
     let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &ma_asset_address)? {
         Some(mut asset_incentive) => {
             // Update index up to now
-            let total_supply =
-                mars_core::helpers::cw20_get_total_supply(&deps.querier, ma_asset_address.clone())?;
+            let total_supply = mars_outpost::helpers::cw20_get_total_supply(
+                &deps.querier,
+                ma_asset_address.clone(),
+            )?;
             asset_incentive_update_index(
                 &mut asset_incentive,
                 total_supply,
@@ -161,9 +155,8 @@ pub fn execute_balance_change(
     // Check if user has accumulated uncomputed rewards (which means index is not up to date)
     let user_asset_index_key = USER_ASSET_INDICES.key((&user_address, &ma_token_address));
 
-    let user_asset_index = user_asset_index_key
-        .may_load(deps.storage)?
-        .unwrap_or_else(Decimal::zero);
+    let user_asset_index =
+        user_asset_index_key.may_load(deps.storage)?.unwrap_or_else(Decimal::zero);
 
     let mut accrued_rewards = Uint128::zero();
 
@@ -240,8 +233,8 @@ pub fn execute_claim_rewards(
         let config = CONFIG.load(deps.storage)?;
         let mars_contracts = vec![MarsContract::MarsToken, MarsContract::Staking];
         let mut addresses_query = address_provider::helpers::query_addresses(
-            &deps.querier,
-            config.address_provider_address,
+            deps.as_ref(),
+            &config.address_provider_address,
             mars_contracts,
         )?;
         let staking_address = addresses_query.pop().unwrap();
@@ -283,11 +276,8 @@ pub fn execute_update_config(
     };
 
     config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
-    config.address_provider_address = option_string_to_addr(
-        deps.api,
-        address_provider_address,
-        config.address_provider_address,
-    )?;
+    config.address_provider_address =
+        option_string_to_addr(deps.api, address_provider_address, config.address_provider_address)?;
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -308,9 +298,7 @@ pub fn execute_execute_cosmos_msg(
         return Err(MarsError::Unauthorized {});
     }
 
-    let response = Response::new()
-        .add_attribute("action", "execute_cosmos_msg")
-        .add_message(msg);
+    let response = Response::new().add_attribute("action", "execute_cosmos_msg").add_message(msg);
 
     Ok(response)
 }
@@ -396,26 +384,20 @@ fn compute_user_unclaimed_rewards(
     env: &Env,
     user_address: &Addr,
 ) -> StdResult<(Uint128, Vec<UserAssetIncentiveStatus>)> {
-    let mut total_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-        .may_load(deps.storage, user_address)?
-        .unwrap_or_else(Uint128::zero);
+    let mut total_unclaimed_rewards =
+        USER_UNCLAIMED_REWARDS.may_load(deps.storage, user_address)?.unwrap_or_else(Uint128::zero);
 
-    let result_asset_incentives: StdResult<Vec<_>> = ASSET_INCENTIVES
-        .range(deps.storage, None, None, Order::Ascending)
-        .collect();
+    let result_asset_incentives: StdResult<Vec<_>> =
+        ASSET_INCENTIVES.range(deps.storage, None, None, Order::Ascending).collect();
 
     let mut user_asset_incentive_statuses_to_update: Vec<UserAssetIncentiveStatus> = vec![];
 
-    for (ma_token_address_bytes, mut asset_incentive) in result_asset_incentives? {
-        let ma_token_address = deps
-            .api
-            .addr_validate(&String::from_utf8(ma_token_address_bytes)?)?;
-
+    for (ma_token_addr, mut asset_incentive) in result_asset_incentives? {
         // Get asset user balances and total supply
-        let balance_and_total_supply: mars_core::ma_token::msg::BalanceAndTotalSupplyResponse =
+        let balance_and_total_supply: mars_outpost::ma_token::msg::BalanceAndTotalSupplyResponse =
             deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-                contract_addr: ma_token_address.to_string(),
-                msg: to_binary(&mars_core::ma_token::msg::QueryMsg::BalanceAndTotalSupply {
+                contract_addr: ma_token_addr.as_str().to_string(),
+                msg: to_binary(&mars_outpost::ma_token::msg::QueryMsg::BalanceAndTotalSupply {
                     address: user_address.to_string(),
                 })?,
             }))?;
@@ -434,7 +416,7 @@ fn compute_user_unclaimed_rewards(
         )?;
 
         let user_asset_index = USER_ASSET_INDICES
-            .may_load(deps.storage, (user_address, &ma_token_address))?
+            .may_load(deps.storage, (user_address, &ma_token_addr))?
             .unwrap_or_else(Decimal::zero);
 
         if user_asset_index != asset_incentive.index {
@@ -448,16 +430,13 @@ fn compute_user_unclaimed_rewards(
         }
 
         user_asset_incentive_statuses_to_update.push(UserAssetIncentiveStatus {
-            ma_token_address,
+            ma_token_address: ma_token_addr,
             user_index_current: user_asset_index,
             asset_incentive_updated: asset_incentive,
         });
     }
 
-    Ok((
-        total_unclaimed_rewards,
-        user_asset_incentive_statuses_to_update,
-    ))
+    Ok((total_unclaimed_rewards, user_asset_incentive_statuses_to_update))
 }
 
 // QUERIES
@@ -466,12 +445,12 @@ fn compute_user_unclaimed_rewards(
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::AssetIncentive { ma_token_address } => {
-            to_binary(&query_asset_incentive(deps, ma_token_address)?)
-        }
-        QueryMsg::UserUnclaimedRewards { user_address } => {
-            to_binary(&query_user_unclaimed_rewards(deps, env, user_address)?)
-        }
+        QueryMsg::AssetIncentive {
+            ma_token_address,
+        } => to_binary(&query_asset_incentive(deps, ma_token_address)?),
+        QueryMsg::UserUnclaimedRewards {
+            user_address,
+        } => to_binary(&query_user_unclaimed_rewards(deps, env, user_address)?),
     }
 }
 
@@ -511,7 +490,7 @@ mod tests {
         testing::{mock_env, mock_info, MockApi, MockStorage},
         Addr, BankMsg, Coin, OwnedDeps, SubMsg, Timestamp, Uint128,
     };
-    use mars_core::testing::{mock_dependencies, MarsMockQuerier, MockEnvParams};
+    use mars_outpost::testing::{mock_dependencies, MarsMockQuerier, MockEnvParams};
 
     // init
     #[test]
@@ -530,10 +509,7 @@ mod tests {
 
         let config = CONFIG.load(deps.as_ref().storage).unwrap();
         assert_eq!(config.owner, Addr::unchecked("owner"));
-        assert_eq!(
-            config.address_provider_address,
-            Addr::unchecked("address_provider")
-        );
+        assert_eq!(config.address_provider_address, Addr::unchecked("address_provider"));
     }
 
     // SetAssetIncentive
@@ -558,7 +534,7 @@ mod tests {
         let ma_asset_address = Addr::unchecked("ma_asset");
 
         let info = mock_info("owner", &[]);
-        let env = mars_core::testing::mock_env(MockEnvParams {
+        let env = mars_outpost::testing::mock_env(MockEnvParams {
             block_time: Timestamp::from_seconds(1_000_000),
             ..Default::default()
         });
@@ -577,9 +553,8 @@ mod tests {
             ]
         );
 
-        let asset_incentive = ASSET_INCENTIVES
-            .load(deps.as_ref().storage, &ma_asset_address)
-            .unwrap();
+        let asset_incentive =
+            ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_asset_address).unwrap();
 
         assert_eq!(asset_incentive.emission_per_second, Uint128::new(100));
         assert_eq!(asset_incentive.index, Decimal::zero());
@@ -613,9 +588,8 @@ mod tests {
                 ]
             );
 
-            let asset_incentive = ASSET_INCENTIVES
-                .load(deps.as_ref().storage, &ma_asset_lower_case_addr)
-                .unwrap();
+            let asset_incentive =
+                ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_asset_lower_case_addr).unwrap();
 
             assert_eq!(asset_incentive.emission_per_second, Uint128::new(100));
         }
@@ -644,9 +618,8 @@ mod tests {
             );
 
             // asset incentive should be available with lower case address
-            let asset_incentive = ASSET_INCENTIVES
-                .load(deps.as_ref().storage, &ma_asset_lower_case_addr)
-                .unwrap();
+            let asset_incentive =
+                ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_asset_lower_case_addr).unwrap();
 
             assert_eq!(asset_incentive.emission_per_second, Uint128::new(123));
         }
@@ -658,8 +631,7 @@ mod tests {
         let mut deps = th_setup(&[]);
         let ma_asset_address = Addr::unchecked("ma_asset");
         let ma_asset_total_supply = Uint128::new(2_000_000);
-        deps.querier
-            .set_cw20_total_supply(ma_asset_address.clone(), ma_asset_total_supply);
+        deps.querier.set_cw20_total_supply(ma_asset_address.clone(), ma_asset_total_supply);
 
         ASSET_INCENTIVES
             .save(
@@ -675,7 +647,7 @@ mod tests {
 
         // execute msg
         let info = mock_info("owner", &[]);
-        let env = mars_core::testing::mock_env(MockEnvParams {
+        let env = mars_outpost::testing::mock_env(MockEnvParams {
             block_time: Timestamp::from_seconds(1_000_000),
             ..Default::default()
         });
@@ -696,9 +668,8 @@ mod tests {
             ]
         );
 
-        let asset_incentive = ASSET_INCENTIVES
-            .load(deps.as_ref().storage, &ma_asset_address)
-            .unwrap();
+        let asset_incentive =
+            ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_asset_address).unwrap();
 
         let expected_index = asset_incentive_compute_index(
             Decimal::from_ratio(1_u128, 2_u128),
@@ -752,7 +723,7 @@ mod tests {
             .unwrap();
 
         let info = mock_info("ma_asset", &[]);
-        let env = mars_core::testing::mock_env(MockEnvParams {
+        let env = mars_outpost::testing::mock_env(MockEnvParams {
             block_time: Timestamp::from_seconds(600_000),
             ..Default::default()
         });
@@ -783,9 +754,8 @@ mod tests {
         );
 
         // asset incentive index stays the same
-        let asset_incentive = ASSET_INCENTIVES
-            .load(deps.as_ref().storage, &ma_asset_address)
-            .unwrap();
+        let asset_incentive =
+            ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_asset_address).unwrap();
         assert_eq!(asset_incentive.index, asset_incentive_index);
         assert_eq!(asset_incentive.last_updated, 600_000);
 
@@ -796,9 +766,8 @@ mod tests {
         assert_eq!(user_asset_index, asset_incentive_index);
 
         // rewards get updated
-        let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-            .load(deps.as_ref().storage, &user_address)
-            .unwrap();
+        let user_unclaimed_rewards =
+            USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, &user_address).unwrap();
         assert_eq!(user_unclaimed_rewards, expected_accrued_rewards)
     }
 
@@ -827,7 +796,7 @@ mod tests {
             .unwrap();
 
         let info = mock_info("ma_asset", &[]);
-        let env = mars_core::testing::mock_env(MockEnvParams {
+        let env = mars_outpost::testing::mock_env(MockEnvParams {
             block_time: Timestamp::from_seconds(time_contract_call),
             ..Default::default()
         });
@@ -860,9 +829,8 @@ mod tests {
         );
 
         // asset incentive gets updated
-        let asset_incentive = ASSET_INCENTIVES
-            .load(deps.as_ref().storage, &ma_asset_address)
-            .unwrap();
+        let asset_incentive =
+            ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_asset_address).unwrap();
         assert_eq!(asset_incentive.index, expected_index);
         assert_eq!(asset_incentive.last_updated, time_contract_call);
 
@@ -873,9 +841,8 @@ mod tests {
         assert_eq!(user_asset_index, expected_index);
 
         // no new rewards
-        let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-            .may_load(deps.as_ref().storage, &user_address)
-            .unwrap();
+        let user_unclaimed_rewards =
+            USER_UNCLAIMED_REWARDS.may_load(deps.as_ref().storage, &user_address).unwrap();
         assert_eq!(user_unclaimed_rewards, None)
     }
 
@@ -904,7 +871,7 @@ mod tests {
 
         {
             let info = mock_info("ma_asset", &[]);
-            let env = mars_core::testing::mock_env(MockEnvParams {
+            let env = mars_outpost::testing::mock_env(MockEnvParams {
                 block_time: Timestamp::from_seconds(time_contract_call),
                 ..Default::default()
             });
@@ -922,22 +889,18 @@ mod tests {
             // Some time passes and we query the user rewards, expected value should not be 0
             let user_balance = Uint128::new(100_000);
             let total_supply = Uint128::new(100_000);
-            deps.querier
-                .set_cw20_total_supply(ma_asset_address.clone(), total_supply);
+            deps.querier.set_cw20_total_supply(ma_asset_address.clone(), total_supply);
             deps.querier.set_cw20_balances(
                 ma_asset_address.clone(),
                 &[(user_address.clone(), user_balance)],
             );
-            let env = mars_core::testing::mock_env(MockEnvParams {
+            let env = mars_outpost::testing::mock_env(MockEnvParams {
                 block_time: Timestamp::from_seconds(time_contract_call + 1000),
                 ..Default::default()
             });
             let rewards_query =
                 query_user_unclaimed_rewards(deps.as_ref(), env, String::from("user")).unwrap();
-            assert_eq!(
-                Uint128::new(1000).checked_mul(emission_per_second).unwrap(),
-                rewards_query
-            );
+            assert_eq!(Uint128::new(1000).checked_mul(emission_per_second).unwrap(), rewards_query);
         }
     }
 
@@ -951,12 +914,9 @@ mod tests {
         let total_supply = Uint128::new(100_000);
         let user_balance = Uint128::new(10_000);
 
+        deps.querier.set_cw20_total_supply(ma_asset_address.clone(), total_supply);
         deps.querier
-            .set_cw20_total_supply(ma_asset_address.clone(), total_supply);
-        deps.querier.set_cw20_balances(
-            ma_asset_address.clone(),
-            &[(user_address.clone(), user_balance)],
-        );
+            .set_cw20_balances(ma_asset_address.clone(), &[(user_address.clone(), user_balance)]);
 
         // set asset incentive
         {
@@ -981,7 +941,7 @@ mod tests {
         {
             let time_contract_call = 600_000_u64;
 
-            let env = mars_core::testing::mock_env(MockEnvParams {
+            let env = mars_outpost::testing::mock_env(MockEnvParams {
                 block_time: Timestamp::from_seconds(time_contract_call),
                 ..Default::default()
             });
@@ -1003,7 +963,7 @@ mod tests {
                 &[(user_address.clone(), user_balance)],
             );
 
-            let env = mars_core::testing::mock_env(MockEnvParams {
+            let env = mars_outpost::testing::mock_env(MockEnvParams {
                 block_time: Timestamp::from_seconds(time_contract_call),
                 ..Default::default()
             });
@@ -1025,7 +985,7 @@ mod tests {
         {
             let time_contract_call = 800_000_u64;
 
-            let env = mars_core::testing::mock_env(MockEnvParams {
+            let env = mars_outpost::testing::mock_env(MockEnvParams {
                 block_time: Timestamp::from_seconds(time_contract_call),
                 ..Default::default()
             });
@@ -1074,7 +1034,7 @@ mod tests {
             let time_contract_call = 600_000_u64;
             let user_balance = Uint128::new(10_000);
 
-            let env = mars_core::testing::mock_env(MockEnvParams {
+            let env = mars_outpost::testing::mock_env(MockEnvParams {
                 block_time: Timestamp::from_seconds(time_contract_call),
                 ..Default::default()
             });
@@ -1114,9 +1074,8 @@ mod tests {
             // asset incentive gets updated
             expected_time_last_updated = time_contract_call;
 
-            let asset_incentive = ASSET_INCENTIVES
-                .load(deps.as_ref().storage, &ma_asset_address)
-                .unwrap();
+            let asset_incentive =
+                ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_asset_address).unwrap();
             assert_eq!(asset_incentive.index, expected_asset_incentive_index);
             assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
 
@@ -1127,9 +1086,8 @@ mod tests {
             assert_eq!(user_asset_index, expected_asset_incentive_index);
 
             // user gets new rewards
-            let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-                .load(deps.as_ref().storage, &user_address)
-                .unwrap();
+            let user_unclaimed_rewards =
+                USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, &user_address).unwrap();
             expected_accumulated_rewards += expected_accrued_rewards;
             assert_eq!(user_unclaimed_rewards, expected_accumulated_rewards)
         }
@@ -1139,7 +1097,7 @@ mod tests {
             let time_contract_call = 700_000_u64;
             let user_balance = Uint128::new(20_000);
 
-            let env = mars_core::testing::mock_env(MockEnvParams {
+            let env = mars_outpost::testing::mock_env(MockEnvParams {
                 block_time: Timestamp::from_seconds(time_contract_call),
                 ..Default::default()
             });
@@ -1180,9 +1138,8 @@ mod tests {
             // asset incentive gets updated
             expected_time_last_updated = time_contract_call;
 
-            let asset_incentive = ASSET_INCENTIVES
-                .load(deps.as_ref().storage, &ma_asset_address)
-                .unwrap();
+            let asset_incentive =
+                ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_asset_address).unwrap();
             assert_eq!(asset_incentive.index, expected_asset_incentive_index);
             assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
 
@@ -1193,9 +1150,8 @@ mod tests {
             assert_eq!(user_asset_index, expected_asset_incentive_index);
 
             // user gets new rewards
-            let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-                .load(deps.as_ref().storage, &user_address)
-                .unwrap();
+            let user_unclaimed_rewards =
+                USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, &user_address).unwrap();
             expected_accumulated_rewards += expected_accrued_rewards;
             assert_eq!(user_unclaimed_rewards, expected_accumulated_rewards)
         }
@@ -1205,7 +1161,7 @@ mod tests {
             let time_contract_call = 700_000_u64;
             let user_balance = Uint128::new(20_000);
 
-            let env = mars_core::testing::mock_env(MockEnvParams {
+            let env = mars_outpost::testing::mock_env(MockEnvParams {
                 block_time: Timestamp::from_seconds(time_contract_call),
                 ..Default::default()
             });
@@ -1228,9 +1184,8 @@ mod tests {
             );
 
             // asset incentive is still the same
-            let asset_incentive = ASSET_INCENTIVES
-                .load(deps.as_ref().storage, &ma_asset_address)
-                .unwrap();
+            let asset_incentive =
+                ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_asset_address).unwrap();
             assert_eq!(asset_incentive.index, expected_asset_incentive_index);
             assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
 
@@ -1241,9 +1196,8 @@ mod tests {
             assert_eq!(user_asset_index, expected_asset_incentive_index);
 
             // user gets no new rewards
-            let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-                .load(deps.as_ref().storage, &user_address)
-                .unwrap();
+            let user_unclaimed_rewards =
+                USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, &user_address).unwrap();
             assert_eq!(user_unclaimed_rewards, expected_accumulated_rewards)
         }
     }
@@ -1274,12 +1228,9 @@ mod tests {
         // incentive -> hence no associated index
         let ma_no_user_address = Addr::unchecked("ma_no_user");
 
-        deps.querier
-            .set_cw20_total_supply(ma_asset_address.clone(), ma_asset_total_supply);
-        deps.querier
-            .set_cw20_total_supply(ma_zero_address.clone(), ma_zero_total_supply);
-        deps.querier
-            .set_cw20_total_supply(ma_no_user_address.clone(), ma_no_user_total_supply);
+        deps.querier.set_cw20_total_supply(ma_asset_address.clone(), ma_asset_total_supply);
+        deps.querier.set_cw20_total_supply(ma_zero_address.clone(), ma_zero_total_supply);
+        deps.querier.set_cw20_total_supply(ma_no_user_address.clone(), ma_no_user_total_supply);
         deps.querier.set_cw20_balances(
             ma_asset_address.clone(),
             &[(user_address.clone(), ma_asset_user_balance)],
@@ -1330,11 +1281,7 @@ mod tests {
 
         // user indices
         USER_ASSET_INDICES
-            .save(
-                deps.as_mut().storage,
-                (&user_address, &ma_asset_address),
-                &Decimal::one(),
-            )
+            .save(deps.as_mut().storage, (&user_address, &ma_asset_address), &Decimal::one())
             .unwrap();
 
         USER_ASSET_INDICES
@@ -1347,11 +1294,7 @@ mod tests {
 
         // unclaimed_rewards
         USER_UNCLAIMED_REWARDS
-            .save(
-                deps.as_mut().storage,
-                &user_address,
-                &previous_unclaimed_rewards,
-            )
+            .save(deps.as_mut().storage, &user_address, &previous_unclaimed_rewards)
             .unwrap();
 
         let expected_ma_asset_incentive_index = asset_incentive_compute_index(
@@ -1383,14 +1326,14 @@ mod tests {
 
         // MSG
         let info = mock_info("user", &[]);
-        let env = mars_core::testing::mock_env(MockEnvParams {
+        let env = mars_outpost::testing::mock_env(MockEnvParams {
             block_time: Timestamp::from_seconds(time_contract_call),
             ..Default::default()
         });
         let msg = ExecuteMsg::ClaimRewards {};
 
         // query a bit before gives less rewards
-        let env_before = mars_core::testing::mock_env(MockEnvParams {
+        let env_before = mars_outpost::testing::mock_env(MockEnvParams {
             block_time: Timestamp::from_seconds(time_contract_call - 10_000),
             ..Default::default()
         });
@@ -1439,21 +1382,18 @@ mod tests {
         );
 
         // ma_asset and ma_zero incentives get updated, ma_no_user does not
-        let ma_asset_incentive = ASSET_INCENTIVES
-            .load(deps.as_ref().storage, &ma_asset_address)
-            .unwrap();
+        let ma_asset_incentive =
+            ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_asset_address).unwrap();
         assert_eq!(ma_asset_incentive.index, expected_ma_asset_incentive_index);
         assert_eq!(ma_asset_incentive.last_updated, time_contract_call);
 
-        let ma_zero_incentive = ASSET_INCENTIVES
-            .load(deps.as_ref().storage, &ma_zero_address)
-            .unwrap();
+        let ma_zero_incentive =
+            ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_zero_address).unwrap();
         assert_eq!(ma_zero_incentive.index, Decimal::one());
         assert_eq!(ma_zero_incentive.last_updated, time_contract_call);
 
-        let ma_no_user_incentive = ASSET_INCENTIVES
-            .load(deps.as_ref().storage, &ma_no_user_address)
-            .unwrap();
+        let ma_no_user_incentive =
+            ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_no_user_address).unwrap();
         assert_eq!(ma_no_user_incentive.index, Decimal::one());
         assert_eq!(ma_no_user_incentive.last_updated, time_start);
 
@@ -1475,9 +1415,8 @@ mod tests {
         assert_eq!(user_ma_no_user_index, None);
 
         // user rewards are cleared
-        let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-            .load(deps.as_ref().storage, &user_address)
-            .unwrap();
+        let user_unclaimed_rewards =
+            USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, &user_address).unwrap();
         assert_eq!(user_unclaimed_rewards, Uint128::zero())
     }
 
@@ -1577,11 +1516,7 @@ mod tests {
                 1000,
                 10
             ),
-            Err(StdError::overflow(OverflowError::new(
-                OverflowOperation::Sub,
-                1000,
-                10
-            )))
+            Err(StdError::overflow(OverflowError::new(OverflowOperation::Sub, 1000, 10)))
         );
 
         assert_eq!(
