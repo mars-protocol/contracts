@@ -584,11 +584,11 @@ mod tests {
             let ma_asset_upper_case = ma_asset_lower_case.to_uppercase();
 
             let msg = ExecuteMsg::SetAssetIncentive {
-                ma_token_address: ma_asset_upper_case.to_string(),
+                ma_token_address: ma_asset_upper_case,
                 emission_per_second: Uint128::new(123),
             };
 
-            let res = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+            let res = execute(deps.as_mut(), env, info, msg).unwrap();
             assert_eq!(
                 res.attributes,
                 vec![
@@ -872,8 +872,8 @@ mod tests {
             let total_supply = Uint128::new(100_000);
             deps.querier.set_cw20_total_supply(ma_asset_address.clone(), total_supply);
             deps.querier.set_cw20_balances(
-                ma_asset_address.clone(),
-                &[(user_address.clone(), user_balance)],
+                ma_asset_address,
+                &[(user_address, user_balance)],
             );
             let env = mars_outpost::testing::mock_env(MockEnvParams {
                 block_time: Timestamp::from_seconds(time_contract_call + 1000),
@@ -955,7 +955,7 @@ mod tests {
                 deps.as_mut(),
                 env,
                 info,
-                user_address.clone(),
+                user_address,
                 Uint128::new(10_000),
                 total_supply,
             )
@@ -1151,7 +1151,7 @@ mod tests {
                 user_balance_before: user_balance,
                 total_supply_before: total_supply,
             };
-            let res = execute(deps.as_mut(), env, info.clone(), msg).unwrap();
+            let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
             assert_eq!(
                 res.attributes,
