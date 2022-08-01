@@ -1,16 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, to_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo, Order,
-    OverflowError, OverflowOperation, QueryRequest, Response, StdError, StdResult, Uint128,
-    WasmMsg, WasmQuery,
+    attr, coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env,
+    MessageInfo, Order, OverflowError, OverflowOperation, QueryRequest, Response, StdError,
+    StdResult, Uint128, WasmQuery,
 };
 
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 
-use mars_outpost::address_provider;
-use mars_outpost::address_provider::MarsContract;
 use mars_outpost::incentives::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_outpost::incentives::{AssetIncentive, AssetIncentiveResponse, Config};
 
@@ -28,7 +26,7 @@ pub fn instantiate(
 ) -> StdResult<Response> {
     let config = Config {
         owner: deps.api.addr_validate(&msg.owner)?,
-        address_provider_address: deps.api.addr_validate(&msg.address_provider_address)?,
+        mars_denom: msg.mars_denom,
     };
 
     CONFIG.save(deps.storage, &config)?;
@@ -65,8 +63,8 @@ pub fn execute(
         ExecuteMsg::ClaimRewards {} => execute_claim_rewards(deps, env, info),
         ExecuteMsg::UpdateConfig {
             owner,
-            address_provider_address,
-        } => Ok(execute_update_config(deps, env, info, owner, address_provider_address)?),
+            mars_denom,
+        } => Ok(execute_update_config(deps, env, info, owner, mars_denom)?),
         ExecuteMsg::ExecuteCosmosMsg(cosmos_msg) => {
             Ok(execute_execute_cosmos_msg(deps, env, info, cosmos_msg)?)
         }
@@ -201,9 +199,9 @@ pub fn execute_claim_rewards(
     env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
-    let user_address = info.sender;
+    let user_addr = info.sender;
     let (total_unclaimed_rewards, user_asset_incentive_statuses_to_update) =
-        compute_user_unclaimed_rewards(deps.as_ref(), &env, &user_address)?;
+        compute_user_unclaimed_rewards(deps.as_ref(), &env, &user_addr)?;
 
     // Commit updated asset_incentives and user indexes
     for user_asset_incentive_status in user_asset_incentive_statuses_to_update {
@@ -218,45 +216,29 @@ pub fn execute_claim_rewards(
         if asset_incentive_updated.index != user_asset_incentive_status.user_index_current {
             USER_ASSET_INDICES.save(
                 deps.storage,
-                (&user_address, &user_asset_incentive_status.ma_token_address),
+                (&user_addr, &user_asset_incentive_status.ma_token_address),
                 &asset_incentive_updated.index,
             )?
         }
     }
 
     // clear unclaimed rewards
-    USER_UNCLAIMED_REWARDS.save(deps.storage, &user_address, &Uint128::zero())?;
+    USER_UNCLAIMED_REWARDS.save(deps.storage, &user_addr, &Uint128::zero())?;
 
     let mut response = Response::new();
     if total_unclaimed_rewards > Uint128::zero() {
-        // Build message to stake mars and send resulting xmars to the user
         let config = CONFIG.load(deps.storage)?;
-        let mars_contracts = vec![MarsContract::MarsToken, MarsContract::Staking];
-        let mut addresses_query = address_provider::helpers::query_addresses(
-            deps.as_ref(),
-            &config.address_provider_address,
-            mars_contracts,
-        )?;
-        let staking_address = addresses_query.pop().unwrap();
-        let mars_token_address = addresses_query.pop().unwrap();
-
-        response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: mars_token_address.to_string(),
-            msg: to_binary(&cw20::Cw20ExecuteMsg::Send {
-                contract: staking_address.to_string(),
-                amount: total_unclaimed_rewards,
-                msg: to_binary(&staking::msg::ReceiveMsg::Stake {
-                    recipient: Some(user_address.to_string()),
-                })?,
-            })?,
-            funds: vec![],
+        // Build message to send mars to the user
+        response = response.add_message(CosmosMsg::Bank(BankMsg::Send {
+            to_address: user_addr.to_string(),
+            amount: coins(total_unclaimed_rewards.u128(), config.mars_denom),
         }));
     };
 
     response = response.add_attributes(vec![
         attr("action", "claim_rewards"),
-        attr("user", user_address),
-        attr("mars_staked_as_rewards", total_unclaimed_rewards),
+        attr("user", user_addr),
+        attr("mars_rewards", total_unclaimed_rewards),
     ]);
 
     Ok(response)
@@ -267,7 +249,7 @@ pub fn execute_update_config(
     _env: Env,
     info: MessageInfo,
     owner: Option<String>,
-    address_provider_address: Option<String>,
+    mars_denom: Option<String>,
 ) -> Result<Response, MarsError> {
     let mut config = CONFIG.load(deps.storage)?;
 
@@ -276,8 +258,7 @@ pub fn execute_update_config(
     };
 
     config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
-    config.address_provider_address =
-        option_string_to_addr(deps.api, address_provider_address, config.address_provider_address)?;
+    config.mars_denom = mars_denom.unwrap_or(config.mars_denom);
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -500,7 +481,7 @@ mod tests {
         let info = mock_info("sender", &[]);
         let msg = InstantiateMsg {
             owner: String::from("owner"),
-            address_provider_address: String::from("address_provider"),
+            mars_denom: String::from("umars"),
         };
 
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -509,7 +490,7 @@ mod tests {
 
         let config = CONFIG.load(deps.as_ref().storage).unwrap();
         assert_eq!(config.owner, Addr::unchecked("owner"));
-        assert_eq!(config.address_provider_address, Addr::unchecked("address_provider"));
+        assert_eq!(config.mars_denom, "umars".to_string());
     }
 
     // SetAssetIncentive
@@ -1357,18 +1338,9 @@ mod tests {
 
         assert_eq!(
             res.messages,
-            vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: String::from("mars_token"),
-                msg: to_binary(&cw20::Cw20ExecuteMsg::Send {
-                    contract: String::from("staking"),
-                    amount: expected_accrued_rewards,
-                    msg: to_binary(&staking::msg::ReceiveMsg::Stake {
-                        recipient: Some(user_address.to_string()),
-                    })
-                    .unwrap()
-                })
-                .unwrap(),
-                funds: vec![],
+            vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+                to_address: user_address.to_string(),
+                amount: coins(expected_accrued_rewards.u128(), "umars".to_string())
             }))]
         );
 
@@ -1377,7 +1349,7 @@ mod tests {
             vec![
                 attr("action", "claim_rewards"),
                 attr("user", "user"),
-                attr("mars_staked_as_rewards", expected_accrued_rewards),
+                attr("mars_rewards", expected_accrued_rewards),
             ]
         );
 
@@ -1435,7 +1407,7 @@ mod tests {
             vec![
                 attr("action", "claim_rewards"),
                 attr("user", "user"),
-                attr("mars_staked_as_rewards", "0"),
+                attr("mars_rewards", "0"),
             ]
         );
     }
@@ -1449,7 +1421,7 @@ mod tests {
         // *
         let msg = ExecuteMsg::UpdateConfig {
             owner: None,
-            address_provider_address: None,
+            mars_denom: None,
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -1460,7 +1432,7 @@ mod tests {
         // *
         let msg = ExecuteMsg::UpdateConfig {
             owner: Some(String::from("new_owner")),
-            address_provider_address: None,
+            mars_denom: None,
         };
         let info = mock_info("owner", &[]);
 
@@ -1471,8 +1443,8 @@ mod tests {
         let new_config = CONFIG.load(deps.as_ref().storage).unwrap();
         assert_eq!(new_config.owner, Addr::unchecked("new_owner"));
         assert_eq!(
-            new_config.address_provider_address,
-            Addr::unchecked("address_provider") // should not change
+            new_config.mars_denom,
+            "umars".to_string()
         );
     }
 
@@ -1581,7 +1553,7 @@ mod tests {
 
         let msg = InstantiateMsg {
             owner: String::from("owner"),
-            address_provider_address: String::from("address_provider"),
+            mars_denom: String::from("umars"),
         };
         let info = mock_info("owner", &[]);
         instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
