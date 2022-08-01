@@ -403,6 +403,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-incentives"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw20",
+ "mars-outpost",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-ma-token"
 version = "0.1.0"
 dependencies = [

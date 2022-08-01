@@ -1,7 +1,7 @@
 use std::string::FromUtf8Error;
 
 use cosmwasm_std::StdError;
-use mars_core::error::MarsError;
+use mars_outpost::error::MarsError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]

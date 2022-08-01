@@ -1,9 +1,8 @@
-use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_std::{Addr, Uint128, Decimal};
 use cw_storage_plus::{Item, Map};
 
-use mars_core::math::decimal::Decimal;
 
-use crate::{AssetIncentive, Config};
+use mars_outpost::incentives::{AssetIncentive, Config};
 
 // keys (for singleton)
 pub const CONFIG: Item<Config> = Item::new("config");

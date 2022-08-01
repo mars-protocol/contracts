@@ -8,8 +8,8 @@ use cosmwasm_std::{Addr, Decimal, Uint128};
 pub struct Config {
     /// Contract owner
     pub owner: Addr,
-    /// Address provider returns addresses for all protocol contracts
-    pub address_provider_address: Addr,
+    /// Mars Token Denom 
+    pub mars_denom: String,
 }
 
 /// Incentive Metadata for a given incentive
@@ -39,8 +39,8 @@ pub mod msg {
     pub struct InstantiateMsg {
         /// Contract owner
         pub owner: String,
-        /// Address provider returns addresses for all protocol contracts
-        pub address_provider_address: String,
+        /// Mars token denom
+        pub mars_denom: String,
     }
 
     #[derive(Serialize, Deserialize, Clone, Debug, JsonSchema)]
@@ -75,7 +75,7 @@ pub mod msg {
         /// Update contract config (only callable by owner)
         UpdateConfig {
             owner: Option<String>,
-            address_provider_address: Option<String>,
+            mars_denom: Option<String>,
         },
 
         /// Execute Cosmos msg (only callable by owner)
