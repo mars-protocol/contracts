@@ -7,8 +7,9 @@ use cosmwasm_std::{
 use cw20::Cw20QueryMsg;
 use osmo_bindings::{OsmosisQuery, PoolStateResponse, SpotPriceResponse, Swap};
 
-use crate::testing::osmosis_querier::OsmosisQuerier;
-use crate::{address_provider, incentives, ma_token, oracle, testing::mock_address_provider};
+use crate::mock_address_provider;
+use crate::osmosis_querier::OsmosisQuerier;
+use mars_outpost::{address_provider, incentives, ma_token, oracle};
 
 use super::{
     cw20_querier::{mock_token_info_response, Cw20Querier},

@@ -8,10 +8,10 @@ use cw20::Cw20ExecuteMsg;
 
 use mars_outpost::asset::get_asset_balance;
 use mars_outpost::math;
+use mars_outpost::red_bank::interest_rate_models::update_market_interest_rates_with_model;
+use mars_outpost::red_bank::Market;
 
 use crate::error::ContractError;
-use crate::interest_rate_models::update_market_interest_rates_with_model;
-use crate::Market;
 
 /// Scaling factor used to keep more precision during division / multiplication by index.
 pub const SCALING_FACTOR: Uint128 = Uint128::new(1_000_000);

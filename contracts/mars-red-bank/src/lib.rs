@@ -1,8 +1,10 @@
+mod accounts;
 pub mod contract;
 pub mod error;
+mod events;
+mod helpers;
+mod interest_rates;
 pub mod state;
 
-mod accounts;
-mod interest_rates;
-
-pub use mars_outpost::red_bank::*;
+#[cfg(test)]
+mod testing;

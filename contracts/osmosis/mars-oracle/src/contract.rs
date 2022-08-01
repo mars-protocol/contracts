@@ -245,7 +245,7 @@ mod tests {
         mock_env, mock_info, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     };
     use cosmwasm_std::{from_binary, Addr, Coin, Decimal, OwnedDeps, Uint128};
-    use mars_outpost::testing::MarsMockQuerier;
+    use mars_testing::MarsMockQuerier;
     use osmo_bindings::Swap;
     use osmo_bindings::{PoolStateResponse, SpotPriceResponse};
     use std::marker::PhantomData;

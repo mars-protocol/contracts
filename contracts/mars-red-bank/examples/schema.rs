@@ -3,8 +3,8 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use mars_red_bank::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, ReceiveMsg};
-use mars_red_bank::{
+use mars_outpost::red_bank::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, ReceiveMsg};
+use mars_outpost::red_bank::{
     ConfigResponse, Market, MarketsListResponse, UserAssetDebtResponse, UserCollateralResponse,
     UserDebtResponse, UserPositionResponse,
 };

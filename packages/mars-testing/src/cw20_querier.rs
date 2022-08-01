@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use cosmwasm_std::{to_binary, Addr, QuerierResult, SystemError, Uint128};
 use cw20::{AllAccountsResponse, BalanceResponse, Cw20QueryMsg, TokenInfoResponse};
 
-use crate::ma_token;
+use mars_outpost::ma_token;
 
 #[derive(Clone, Debug, Default)]
 pub struct Cw20Querier {

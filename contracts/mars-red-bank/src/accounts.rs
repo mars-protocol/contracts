@@ -4,12 +4,12 @@ use mars_outpost::asset::AssetType;
 use mars_outpost::helpers::cw20_get_balance;
 
 use mars_outpost::oracle;
+use mars_outpost::red_bank::{Debt, User, UserHealthStatus};
 
-use crate::contract::{get_bit, market_get_from_index};
 use crate::error::ContractError;
+use crate::helpers::{get_bit, market_get_from_index};
 use crate::interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount};
 use crate::state::DEBTS;
-use crate::{Debt, User, UserHealthStatus};
 
 /// User global position
 pub struct UserPosition {
