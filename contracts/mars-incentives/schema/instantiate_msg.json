@@ -3,12 +3,12 @@
   "title": "InstantiateMsg",
   "type": "object",
   "required": [
-    "address_provider_address",
+    "mars_denom",
     "owner"
   ],
   "properties": {
-    "address_provider_address": {
-      "description": "Address provider returns addresses for all protocol contracts",
+    "mars_denom": {
+      "description": "Mars token denom",
       "type": "string"
     },
     "owner": {

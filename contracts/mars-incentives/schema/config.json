@@ -4,17 +4,13 @@
   "description": "Global configuration",
   "type": "object",
   "required": [
-    "address_provider_address",
+    "mars_denom",
     "owner"
   ],
   "properties": {
-    "address_provider_address": {
-      "description": "Address provider returns addresses for all protocol contracts",
-      "allOf": [
-        {
-          "$ref": "#/definitions/Addr"
-        }
-      ]
+    "mars_denom": {
+      "description": "Mars Token Denom",
+      "type": "string"
     },
     "owner": {
       "description": "Contract owner",
