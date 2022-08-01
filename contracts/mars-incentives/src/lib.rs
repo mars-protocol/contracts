@@ -1,3 +1,9 @@
 pub mod contract;
-pub mod error;
+mod error;
+mod helpers;
 pub mod state;
+
+pub use error::ContractError;
+
+#[cfg(test)]
+mod testing;

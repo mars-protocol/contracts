@@ -40,4 +40,5 @@ serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = "1.0.31"
 
 [dev-dependencies]
+mars-testing = { version = "0.1.0", path = "../../packages/mars-testing" }
 cosmwasm-schema = "1.0.0"
