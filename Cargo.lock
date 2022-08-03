@@ -411,6 +411,7 @@ dependencies = [
  "cw-storage-plus",
  "cw20",
  "mars-outpost",
+ "mars-testing",
  "schemars",
  "serde",
  "thiserror",
