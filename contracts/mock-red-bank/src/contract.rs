@@ -1,6 +1,7 @@
-#![allow(unused_imports)]
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+    to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 
 use crate::execute::execute_borrow;
@@ -26,18 +27,18 @@ pub fn execute(
 ) -> StdResult<Response> {
     match msg {
         ExecuteMsg::Borrow {
-            asset,
+            coin,
             recipient: _recipient,
-        } => execute_borrow(deps, info, asset),
+        } => execute_borrow(deps, info, coin),
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::UserAssetDebt {
             user_address,
-            asset,
-        } => to_binary(&query_debt(deps, env, user_address, asset)?),
+            denom,
+        } => to_binary(&query_debt(deps, user_address, denom)?),
     }
 }

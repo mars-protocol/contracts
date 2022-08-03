@@ -1,5 +1,4 @@
-use cosmwasm_std::Uint128;
-use cw_asset::{AssetInfoUnchecked, AssetUnchecked};
+use cosmwasm_std::{Coin, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -7,7 +6,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Borrow {
-        asset: AssetUnchecked,
+        coin: Coin,
         recipient: Option<String>,
     },
 }
@@ -15,14 +14,11 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    UserAssetDebt {
-        user_address: String,
-        asset: AssetInfoUnchecked,
-    },
+    UserAssetDebt { user_address: String, denom: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct UserAssetDebtResponse {
-    pub asset_info: AssetInfoUnchecked,
+    pub denom: String,
     pub amount: Uint128,
 }

@@ -3,18 +3,19 @@ use cosmwasm_std::{
 };
 use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg;
-use cw_asset::AssetList;
 
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
-use rover::adapters::RedBankUnchecked;
+use rover::coin_list::CoinList;
 use rover::error::ContractError;
 use rover::msg::execute::{Action, CallbackMsg};
+use rover::msg::instantiate::ConfigUpdates;
+use rover::ContractResult;
 
 use crate::borrow::borrow;
-use crate::deposit::native_deposit;
-use crate::state::{ACCOUNT_NFT, OWNER, RED_BANK};
+use crate::deposit::deposit;
+use crate::state::{ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, OWNER, RED_BANK};
 
-pub fn create_credit_account(deps: DepsMut, user: Addr) -> Result<Response, ContractError> {
+pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Response> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
 
     let nft_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -33,10 +34,8 @@ pub fn create_credit_account(deps: DepsMut, user: Addr) -> Result<Response, Cont
 pub fn update_config(
     deps: DepsMut,
     info: MessageInfo,
-    new_account_nft: Option<String>,
-    new_owner: Option<String>,
-    new_red_bank: Option<RedBankUnchecked>,
-) -> Result<Response, ContractError> {
+    new_config: ConfigUpdates,
+) -> ContractResult<Response> {
     let owner = OWNER.load(deps.storage)?;
 
     if info.sender != owner {
@@ -46,33 +45,58 @@ pub fn update_config(
         });
     }
 
-    let mut response = Response::new();
+    let mut response =
+        Response::new().add_attribute("action", "rover/credit_manager/update_config");
 
-    if let Some(addr_str) = new_account_nft {
+    if let Some(addr_str) = new_config.account_nft {
         let validated = deps.api.addr_validate(&addr_str)?;
         ACCOUNT_NFT.save(deps.storage, &validated)?;
 
         // Accept ownership. NFT contract owner must have proposed Rover as a new owner first.
         let accept_ownership_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: addr_str,
+            contract_addr: addr_str.clone(),
             funds: vec![],
-            msg: to_binary(&NftExecuteMsg::AcceptOwnership {})?,
+            msg: to_binary(&NftExecuteMsg::AcceptOwnership)?,
         });
 
         response = response
             .add_message(accept_ownership_msg)
-            .add_attribute("action", "rover/credit_manager/update_config/account_nft");
+            .add_attribute("key", "account_nft")
+            .add_attribute("value", addr_str);
     }
 
-    if let Some(unchecked) = new_red_bank {
-        RED_BANK.save(deps.storage, &unchecked.check(deps.api)?)?;
-        response = response.add_attribute("action", "rover/credit_manager/update_config/red_bank");
-    }
-
-    if let Some(addr_str) = new_owner {
+    if let Some(addr_str) = new_config.owner {
         let validated = deps.api.addr_validate(&addr_str)?;
         OWNER.save(deps.storage, &validated)?;
-        response = response.add_attribute("action", "rover/credit_manager/update_config/owner");
+        response = response
+            .add_attribute("key", "owner")
+            .add_attribute("value", addr_str);
+    }
+
+    if let Some(coins) = new_config.allowed_coins {
+        coins
+            .iter()
+            .try_for_each(|denom| ALLOWED_COINS.save(deps.storage, denom, &true))?;
+        response = response
+            .add_attribute("key", "allowed_coins")
+            .add_attribute("value", coins.join(", "));
+    }
+
+    if let Some(vaults) = new_config.allowed_vaults {
+        vaults.iter().try_for_each(|unchecked| {
+            let vault = deps.api.addr_validate(unchecked)?;
+            ALLOWED_VAULTS.save(deps.storage, vault, &true)
+        })?;
+        response = response
+            .add_attribute("key", "allowed_vaults")
+            .add_attribute("value", vaults.join(", "));
+    }
+
+    if let Some(unchecked) = new_config.red_bank {
+        RED_BANK.save(deps.storage, &unchecked.check(deps.api)?)?;
+        response = response
+            .add_attribute("key", "red_bank")
+            .add_attribute("value", unchecked.0);
     }
 
     Ok(response)
@@ -84,28 +108,21 @@ pub fn dispatch_actions(
     info: MessageInfo,
     token_id: &str,
     actions: &[Action],
-) -> Result<Response, ContractError> {
+) -> ContractResult<Response> {
     assert_is_token_owner(&deps, &info.sender, token_id)?;
 
     let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];
-    let mut received_coins = AssetList::from(&info.funds);
+    let mut received_coins = CoinList::from(&info.funds);
 
     for action in actions {
         match action {
-            Action::NativeDeposit(asset) => {
-                response = native_deposit(
-                    deps.storage,
-                    deps.api,
-                    response,
-                    token_id,
-                    asset,
-                    &mut received_coins,
-                )?;
+            Action::Deposit(coin) => {
+                response = deposit(deps.storage, response, token_id, coin, &mut received_coins)?;
             }
-            Action::Borrow(asset) => callbacks.push(CallbackMsg::Borrow {
+            Action::Borrow(coin) => callbacks.push(CallbackMsg::Borrow {
                 token_id: token_id.to_string(),
-                asset: asset.check(deps.api, None)?,
+                coin: coin.clone(),
             }),
         }
     }
@@ -131,20 +148,16 @@ pub fn execute_callback(
     info: MessageInfo,
     env: Env,
     callback: CallbackMsg,
-) -> Result<Response, ContractError> {
+) -> ContractResult<Response> {
     if info.sender != env.contract.address {
-        return Err(ContractError::ExternalInvocation {});
+        return Err(ContractError::ExternalInvocation);
     }
     match callback {
-        CallbackMsg::Borrow { asset, token_id } => borrow(deps, env, &token_id, asset),
+        CallbackMsg::Borrow { coin, token_id } => borrow(deps, env, &token_id, coin),
     }
 }
 
-pub fn assert_is_token_owner(
-    deps: &DepsMut,
-    user: &Addr,
-    token_id: &str,
-) -> Result<(), ContractError> {
+pub fn assert_is_token_owner(deps: &DepsMut, user: &Addr, token_id: &str) -> ContractResult<()> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
     let owner_res: OwnerOfResponse = deps.querier.query_wasm_smart(
         contract_addr,

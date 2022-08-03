@@ -1,13 +1,15 @@
 extern crate core;
 
-use crate::helpers::{
+use cosmwasm_std::Addr;
+use cw_multi_test::Executor;
+
+use rover::error::ContractError::NotTokenOwner;
+use rover::msg::ExecuteMsg::UpdateCreditAccount;
+
+use helpers::{
     assert_err, get_token_id, mock_app, mock_create_credit_account, query_position,
     setup_credit_manager,
 };
-use cosmwasm_std::Addr;
-use cw_multi_test::Executor;
-use rover::error::ContractError::NotTokenOwner;
-use rover::msg::ExecuteMsg::UpdateCreditAccount;
 
 pub mod helpers;
 
@@ -15,16 +17,16 @@ pub mod helpers;
 fn test_dispatch_only_allowed_for_token_owner() {
     let mut app = mock_app();
     let owner = Addr::unchecked("owner");
-    let contract_addr = setup_credit_manager(&mut app, &owner, vec![]);
+    let mock = setup_credit_manager(&mut app, &owner, vec![], vec![]);
 
     let user = Addr::unchecked("user");
-    let res = mock_create_credit_account(&mut app, &contract_addr, &user).unwrap();
+    let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
     let token_id = get_token_id(res);
 
     let bad_guy = Addr::unchecked("bad_guy");
     let res = app.execute_contract(
         bad_guy.clone(),
-        contract_addr.clone(),
+        mock.credit_manager.clone(),
         &UpdateCreditAccount {
             token_id: token_id.clone(),
             actions: vec![],
@@ -45,18 +47,18 @@ fn test_dispatch_only_allowed_for_token_owner() {
 fn test_nothing_happens_if_no_actions_are_passed() {
     let mut app = mock_app();
     let owner = Addr::unchecked("owner");
-    let contract_addr = setup_credit_manager(&mut app, &owner, vec![]);
+    let mock = setup_credit_manager(&mut app, &owner, vec![], vec![]);
 
     let user = Addr::unchecked("user");
-    let res = mock_create_credit_account(&mut app, &contract_addr, &user).unwrap();
+    let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
     let token_id = get_token_id(res);
 
-    let res = query_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &mock.credit_manager, &token_id);
     assert_eq!(res.assets.len(), 0);
 
     app.execute_contract(
         user.clone(),
-        contract_addr.clone(),
+        mock.credit_manager.clone(),
         &UpdateCreditAccount {
             token_id: token_id.clone(),
             actions: vec![],
@@ -65,6 +67,6 @@ fn test_nothing_happens_if_no_actions_are_passed() {
     )
     .unwrap();
 
-    let res = query_position(&app, &contract_addr, &token_id);
+    let res = query_position(&app, &mock.credit_manager, &token_id);
     assert_eq!(res.assets.len(), 0);
 }

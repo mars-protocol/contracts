@@ -1,8 +1,7 @@
 use cosmwasm_std::{
-    to_binary, Addr, Api, CosmosMsg, QuerierWrapper, QueryRequest, StdResult, Uint128, WasmMsg,
-    WasmQuery,
+    to_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, QueryRequest, StdResult, Uint128,
+    WasmMsg, WasmQuery,
 };
-use cw_asset::{Asset, AssetInfo, AssetUnchecked};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -27,12 +26,12 @@ impl RedBankUnchecked {
 }
 
 impl RedBank {
-    /// Generate message for borrowing a specified amount of asset
-    pub fn borrow_msg(&self, asset: &Asset) -> StdResult<CosmosMsg> {
+    /// Generate message for borrowing a specified amount of coin
+    pub fn borrow_msg(&self, coin: &Coin) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.0.to_string(),
             msg: to_binary(&ExecuteMsg::Borrow {
-                asset: AssetUnchecked::from(asset.clone()),
+                coin: coin.clone(),
                 recipient: None,
             })?,
             funds: vec![],
@@ -43,14 +42,14 @@ impl RedBank {
         &self,
         querier: &QuerierWrapper,
         user_address: &Addr,
-        asset_info: &AssetInfo,
+        denom: &str,
     ) -> StdResult<Uint128> {
         let response: UserAssetDebtResponse =
             querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: self.0.to_string(),
                 msg: to_binary(&QueryMsg::UserAssetDebt {
                     user_address: user_address.to_string(),
-                    asset: asset_info.clone().into(),
+                    denom: denom.to_string(),
                 })?,
             }))?;
         Ok(response.amount)

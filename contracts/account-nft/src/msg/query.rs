@@ -11,7 +11,7 @@ pub enum QueryMsg {
     //--------------------------------------------------------------------------------------------------
     // Extended messages
     //--------------------------------------------------------------------------------------------------
-    ProposedNewOwner {},
+    ProposedNewOwner,
 
     //--------------------------------------------------------------------------------------------------
     // Base cw721 messages
@@ -49,11 +49,11 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
     /// Total number of tokens issued
-    NumTokens {},
+    NumTokens,
 
     /// With MetaData Extension.
     /// Returns top-level metadata about the contract: `ContractInfoResponse`
-    ContractInfo {},
+    ContractInfo,
     /// With MetaData Extension.
     /// Returns metadata about one particular token, based on *ERC721 Metadata JSON Schema*
     /// but directly from the contract: `NftInfoResponse`
@@ -86,7 +86,7 @@ pub enum QueryMsg {
     },
 
     /// Return the minter
-    Minter {},
+    Minter,
 }
 
 impl TryInto<ParentQueryMsg> for QueryMsg {
