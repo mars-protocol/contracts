@@ -1,6 +1,8 @@
-use crate::OsmosisPriceSource;
 use mars_oracle_base::OracleBase;
+
 use osmo_bindings::OsmosisQuery;
+
+use crate::OsmosisPriceSource;
 
 /// The Osmosis oracle contract inherits logics from the base oracle contract, with the Osmosis query
 /// and price source plugins
