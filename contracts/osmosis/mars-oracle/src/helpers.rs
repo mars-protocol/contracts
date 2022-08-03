@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use cosmwasm_std::{Decimal, QuerierWrapper, QueryRequest, StdError, StdResult};
 use osmo_bindings::{OsmosisQuery, PoolStateResponse, SpotPriceResponse};
 
@@ -15,25 +13,24 @@ pub(crate) fn assert_osmosis_pool_assets(
     denom: &str,
 ) -> ContractResult<()> {
     let pool = query_osmosis_pool(querier, pool_id)?;
-    let denoms: HashSet<_> = pool.assets.into_iter().map(|coin| coin.denom).collect();
 
-    if denoms.len() != 2 {
+    if pool.assets.len() != 2 {
         return Err(ContractError::InvalidPoolId {
             reason: format!(
                 "expecting pool {} to contain exactly two coins; found {}",
                 pool_id,
-                denoms.len()
+                pool.assets.len()
             ),
         });
     }
 
-    if !denoms.contains(BASE_DENOM) {
+    if !pool.has_denom(BASE_DENOM) {
         return Err(ContractError::InvalidPoolId {
             reason: format!("pool {} does not contain the base denom {}", pool_id, BASE_DENOM),
         });
     }
 
-    if !denoms.contains(denom) {
+    if !pool.has_denom(denom) {
         return Err(ContractError::InvalidPoolId {
             reason: format!("pool {} does not contain {}", pool_id, denom),
         });
