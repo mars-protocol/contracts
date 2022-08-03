@@ -94,8 +94,8 @@ impl MarsMockQuerier {
         token_info.symbol = symbol;
     }
 
-    pub fn set_oracle_price(&mut self, asset_reference: Vec<u8>, price: Decimal) {
-        self.oracle_querier.prices.insert(asset_reference, price);
+    pub fn set_oracle_price(&mut self, denom: &str, price: Decimal) {
+        self.oracle_querier.prices.insert(denom.to_string(), price);
     }
 
     pub fn set_incentives_address(&mut self, address: Addr) {
@@ -147,7 +147,7 @@ impl MarsMockQuerier {
                 }
 
                 // Oracle Queries
-                let parse_oracle_query: StdResult<oracle::msg::QueryMsg> = from_binary(msg);
+                let parse_oracle_query: StdResult<oracle::QueryMsg> = from_binary(msg);
                 if let Ok(oracle_query) = parse_oracle_query {
                     return self.oracle_querier.handle_query(&contract_addr, oracle_query);
                 }

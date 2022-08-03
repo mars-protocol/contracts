@@ -1,6 +1,7 @@
-use cosmwasm_std::{OverflowError, StdError};
-use mars_outpost::error::MarsError;
+use cosmwasm_std::StdError;
 use thiserror::Error;
+
+use mars_outpost::error::MarsError;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
@@ -10,21 +11,10 @@ pub enum ContractError {
     #[error("{0}")]
     Mars(#[from] MarsError),
 
-    #[error("{0}")]
-    Overflow(#[from] OverflowError),
-
-    #[error("Can't encode asset reference to utf8 string")]
-    CannotEncodeToUtf8String,
-
-    #[error("Invalid pool id")]
-    InvalidPoolId {},
+    #[error("Invalid pool id: {reason}")]
+    InvalidPoolId {
+        reason: String,
+    },
 }
 
-impl From<ContractError> for StdError {
-    fn from(source: ContractError) -> Self {
-        match source {
-            ContractError::Std(e) => e,
-            e => StdError::generic_err(format!("{}", e)),
-        }
-    }
-}
+pub type ContractResult<T> = Result<T, ContractError>;

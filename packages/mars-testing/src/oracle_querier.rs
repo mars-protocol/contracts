@@ -1,11 +1,11 @@
 use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, Decimal, QuerierResult};
 use std::collections::HashMap;
 
-use mars_outpost::oracle::msg::QueryMsg;
+use mars_outpost::oracle::{PriceResponse, QueryMsg};
 
 #[derive(Default)]
 pub struct OracleQuerier {
-    pub prices: HashMap<Vec<u8>, Decimal>,
+    pub prices: HashMap<String, Decimal>,
 }
 
 impl OracleQuerier {
@@ -16,19 +16,19 @@ impl OracleQuerier {
         }
 
         let ret: ContractResult<Binary> = match query {
-            QueryMsg::AssetPriceByReference {
-                asset_reference,
+            QueryMsg::Price {
+                denom,
             } => {
-                let option_price = self.prices.get(&asset_reference);
+                let option_price = self.prices.get(&denom);
 
                 if let Some(price) = option_price {
-                    to_binary(price).into()
-                } else {
-                    Err(format!(
-                        "[mock]: could not find oracle price for {}",
-                        String::from_utf8(asset_reference).unwrap()
-                    ))
+                    to_binary(&PriceResponse {
+                        denom,
+                        price: *price,
+                    })
                     .into()
+                } else {
+                    Err(format!("[mock]: could not find oracle price for {}", denom)).into()
                 }
             }
 

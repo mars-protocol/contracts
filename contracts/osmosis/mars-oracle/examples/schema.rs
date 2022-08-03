@@ -3,9 +3,8 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use mars_outpost::oracle::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use mars_outpost::oracle::Config;
-use osmosis_mars_oracle::PriceSource;
+use mars_oracle_osmosis::{ExecuteMsg, PriceSourceResponse};
+use mars_outpost::oracle::{Config, InstantiateMsg, PriceResponse, QueryMsg};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -14,8 +13,10 @@ fn main() {
     remove_schemas(&out_dir).unwrap();
 
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
-    export_schema(&schema_for!(ExecuteMsg<PriceSource>), &out_dir);
+    export_schema(&schema_for!(ExecuteMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
 
-    export_schema(&schema_for!(Config), &out_dir);
+    export_schema(&schema_for!(Config<String>), &out_dir);
+    export_schema(&schema_for!(PriceSourceResponse), &out_dir);
+    export_schema(&schema_for!(PriceResponse), &out_dir);
 }
