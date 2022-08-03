@@ -7,8 +7,8 @@ use osmo_bindings::{OsmosisQuery, PoolStateResponse};
 use mars_outpost::oracle::{InstantiateMsg, QueryMsg};
 use mars_testing::{mock_info, MarsMockQuerier};
 
-use crate::contract;
-use crate::msg::{ExecuteMsg, PriceSource};
+use crate::contract::entry;
+use crate::{ExecuteMsg, OsmosisPriceSource};
 
 pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, OsmosisQuery> {
     let mut deps = OwnedDeps::<_, _, _, OsmosisQuery> {
@@ -49,7 +49,7 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, O
     );
 
     // instantiate the oracle contract
-    contract::instantiate(
+    entry::instantiate(
         deps.as_mut(),
         mock_env(),
         mock_info("owner"),
@@ -65,9 +65,9 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, O
 pub(super) fn set_price_source(
     deps: DepsMut<OsmosisQuery>,
     denom: &str,
-    price_source: PriceSource,
+    price_source: OsmosisPriceSource,
 ) {
-    contract::execute(
+    entry::execute(
         deps,
         mock_env(),
         mock_info("owner"),
@@ -80,5 +80,5 @@ pub(super) fn set_price_source(
 }
 
 pub(super) fn query<T: serde::de::DeserializeOwned>(deps: Deps<OsmosisQuery>, msg: QueryMsg) -> T {
-    from_binary(&contract::query(deps, mock_env(), msg).unwrap()).unwrap()
+    from_binary(&entry::query(deps, mock_env(), msg).unwrap()).unwrap()
 }

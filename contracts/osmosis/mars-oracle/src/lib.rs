@@ -1,10 +1,11 @@
 pub mod contract;
-mod error;
 mod helpers;
-pub mod msg;
-pub mod state;
+mod price_source;
 
-pub use error::{ContractError, ContractResult};
+pub use price_source::OsmosisPriceSource;
+
+pub type ExecuteMsg = mars_outpost::oracle::ExecuteMsg<OsmosisPriceSource>;
+pub type PriceSourceResponse = mars_outpost::oracle::PriceSourceResponse<OsmosisPriceSource>;
 
 #[cfg(test)]
 mod testing;

@@ -435,12 +435,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-oracle-base"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "mars-outpost",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-oracle-osmosis"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
+ "mars-oracle-base",
  "mars-outpost",
  "mars-testing",
  "osmo-bindings",

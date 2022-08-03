@@ -3,7 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use mars_oracle_osmosis::msg::{ExecuteMsg, PriceSourceResponse};
+use mars_oracle_osmosis::{ExecuteMsg, PriceSourceResponse};
 use mars_outpost::oracle::{Config, InstantiateMsg, PriceResponse, QueryMsg};
 
 fn main() {

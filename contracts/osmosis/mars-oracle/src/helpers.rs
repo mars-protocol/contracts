@@ -1,8 +1,8 @@
-use cosmwasm_std::{Decimal, QuerierWrapper, QueryRequest, StdError, StdResult};
+use cosmwasm_std::{Decimal, QuerierWrapper, QueryRequest, StdResult};
+
 use osmo_bindings::{OsmosisQuery, PoolStateResponse, SpotPriceResponse};
 
-use crate::error::{ContractError, ContractResult};
-use crate::msg::PriceSource;
+use mars_oracle_base::{ContractError, ContractResult};
 
 const BASE_DENOM: &str = "uosmo";
 
@@ -37,25 +37,6 @@ pub(crate) fn assert_osmosis_pool_assets(
     }
 
     Ok(())
-}
-
-/// For a given denom and price source, query the price using the appropriate helper function
-pub(crate) fn query_price_with_source(
-    querier: &QuerierWrapper<OsmosisQuery>,
-    denom: String,
-    price_source: PriceSource,
-) -> StdResult<Decimal> {
-    match price_source {
-        PriceSource::Fixed {
-            price,
-        } => Ok(price),
-        PriceSource::Spot {
-            pool_id,
-        } => query_osmosis_spot_price(querier, pool_id, &denom),
-        PriceSource::LiquidityToken {
-            ..
-        } => Err(StdError::generic_err("Unimplemented")),
-    }
 }
 
 /// Query the spot price of a coin, denominated in OSMO
