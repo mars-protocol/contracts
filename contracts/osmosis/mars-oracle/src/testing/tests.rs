@@ -340,10 +340,76 @@ fn querying_price_spot() {
     assert_eq!(res.price, Decimal::from_ratio(88888u128, 12345u128));
 }
 
-// #[test]
-// fn querying_price_liquidity_token() {
-// }
+#[test]
+fn querying_all_prices() {
+    let mut deps = helpers::setup_test();
 
-// #[test]
-// fn querying_all_prices() {
-// }
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uosmo",
+        OsmosisPriceSource::Fixed {
+            price: Decimal::one(),
+        },
+    );
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uatom",
+        OsmosisPriceSource::Spot {
+            pool_id: 1,
+        },
+    );
+    helpers::set_price_source(
+        deps.as_mut(),
+        "umars",
+        OsmosisPriceSource::Spot {
+            pool_id: 89,
+        },
+    );
+
+    deps.querier.set_spot_price(
+        Swap {
+            pool_id: 1,
+            denom_in: "uatom".to_string(),
+            denom_out: "uosmo".to_string(),
+        },
+        SpotPriceResponse {
+            price: Decimal::from_ratio(77777u128, 12345u128),
+        },
+    );
+    deps.querier.set_spot_price(
+        Swap {
+            pool_id: 89,
+            denom_in: "umars".to_string(),
+            denom_out: "uosmo".to_string(),
+        },
+        SpotPriceResponse {
+            price: Decimal::from_ratio(88888u128, 12345u128),
+        },
+    );
+
+    // NOTE: responses are ordered alphabetically by denom
+    let res: Vec<PriceResponse> = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Prices {
+            start_after: None,
+            limit: None,
+        },
+    );
+    assert_eq!(
+        res,
+        vec![
+            PriceResponse {
+                denom: "uatom".to_string(),
+                price: Decimal::from_ratio(77777u128, 12345u128),
+            },
+            PriceResponse {
+                denom: "umars".to_string(),
+                price: Decimal::from_ratio(88888u128, 12345u128),
+            },
+            PriceResponse {
+                denom: "uosmo".to_string(),
+                price: Decimal::one(),
+            },
+        ]
+    );
+}
