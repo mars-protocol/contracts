@@ -8,7 +8,8 @@ use mars_outpost::oracle::{InstantiateMsg, QueryMsg};
 use mars_testing::{mock_info, MarsMockQuerier};
 
 use crate::contract::entry;
-use crate::{ExecuteMsg, OsmosisPriceSource};
+use crate::msg::ExecuteMsg;
+use crate::OsmosisPriceSource;
 
 pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, OsmosisQuery> {
     let mut deps = OwnedDeps::<_, _, _, OsmosisQuery> {

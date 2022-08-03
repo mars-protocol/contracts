@@ -10,7 +10,8 @@ use osmo_bindings::{SpotPriceResponse, Swap};
 
 use super::helpers;
 use crate::contract::entry::execute;
-use crate::{ExecuteMsg, OsmosisPriceSource, PriceSourceResponse};
+use crate::msg::{ExecuteMsg, PriceSourceResponse};
+use crate::OsmosisPriceSource;
 
 #[test]
 fn instantiating() {
