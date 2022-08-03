@@ -83,6 +83,3 @@ impl PriceSource<OsmosisQuery> for OsmosisPriceSource {
         }
     }
 }
-
-// pub type ExecuteMsg = mars_outpost::oracle::ExecuteMsg<PriceSource>;
-// pub type PriceSourceResponse = mars_outpost::oracle::PriceSourceResponse<PriceSource>;
