@@ -79,12 +79,12 @@ pub mod helpers {
     pub fn query_price(
         querier: &QuerierWrapper,
         oracle: impl Into<String>,
-        denom: &str,
+        denom: impl Into<String>,
     ) -> StdResult<Decimal> {
         let res: PriceResponse = querier.query_wasm_smart(
             oracle.into(),
             &QueryMsg::Price {
-                denom: denom.to_string(),
+                denom: denom.into(),
             },
         )?;
         Ok(res.price)
