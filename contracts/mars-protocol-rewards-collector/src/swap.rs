@@ -1,5 +1,7 @@
-use cosmwasm_std::{CosmosMsg, Deps, Env, StdError, StdResult, Uint128};
+use cosmwasm_std::{CosmosMsg, Deps, Env, Uint128};
 use osmo_bindings::{OsmosisMsg, Step, Swap, SwapAmountWithLimit};
+
+use crate::error::ContractError;
 
 /// Swap assets via Osmosis
 pub fn construct_swap_msg(
@@ -8,7 +10,7 @@ pub fn construct_swap_msg(
     denom_in: &str,
     swap_amount: Uint128,
     steps: &[Step],
-) -> StdResult<CosmosMsg<OsmosisMsg>> {
+) -> Result<CosmosMsg<OsmosisMsg>, ContractError> {
     // Having the same asset in and asset out doesn't make any sense
     match steps.last() {
         Some(Step {
@@ -16,23 +18,27 @@ pub fn construct_swap_msg(
             denom_out,
         }) => {
             if denom_in == denom_out {
-                return Err(StdError::generic_err(format!(
-                    "Cannot swap an asset into itself. Both assets were specified as {}",
-                    denom_in
-                )));
+                return Err(ContractError::SwapError {
+                    msg: format!(
+                        "Cannot swap an asset into itself. Both assets were specified as {}",
+                        denom_in
+                    ),
+                });
             }
         }
         None => {
-            return Err(StdError::generic_err(format!(
-                "Invalid swap route {:?}, the route should contain at least one step",
-                steps
-            )))
+            return Err(ContractError::SwapError {
+                msg: format!(
+                    "Invalid swap route {:?}, the route should contain at least one step",
+                    steps
+                ),
+            });
         }
     }
 
     // Swap Amount must be greater than zero
     if swap_amount.is_zero() {
-        return Err(StdError::GenericErr {
+        return Err(ContractError::SwapError {
             msg: "Swap amount must be strictly greater than zero".to_string(),
         });
     }
@@ -42,10 +48,12 @@ pub fn construct_swap_msg(
         deps.querier.query_balance(env.contract.address, denom_in)?.amount;
 
     if swap_amount > contract_offer_asset_balance {
-        return Err(StdError::generic_err(format!(
-            "The amount requested for swap exceeds contract balance for the asset {}",
-            denom_in
-        )));
+        return Err(ContractError::SwapError {
+            msg: format!(
+                "The amount requested for swap exceeds contract balance for the asset {}",
+                denom_in
+            ),
+        });
     }
 
     let first_swap = match steps.first() {
@@ -54,10 +62,12 @@ pub fn construct_swap_msg(
             denom_out,
         }) => Swap::new(*pool_id, denom_in, denom_out.clone()),
         None => {
-            return Err(StdError::generic_err(format!(
-                "Invalid swap route {:?}, the route should contain at least one step",
-                steps
-            )))
+            return Err(ContractError::SwapError {
+                msg: format!(
+                    "Invalid swap route {:?}, the route should contain at least one step",
+                    steps
+                ),
+            })
         }
     };
 
@@ -75,9 +85,7 @@ pub fn construct_swap_msg(
 mod tests {
     use super::*;
     use cosmwasm_std::Coin;
-    use mars_outpost::testing::{
-        assert_generic_error_message, mock_dependencies, mock_env, MockEnvParams,
-    };
+    use mars_outpost::testing::{mock_dependencies, mock_env, MockEnvParams};
 
     #[test]
     fn test_cannot_swap_same_assets() {
@@ -92,9 +100,12 @@ mod tests {
             }],
         );
 
-        assert_generic_error_message(
+        assert_eq!(
             msg,
-            "Cannot swap an asset into itself. Both assets were specified as uosmo",
+            Err(ContractError::SwapError {
+                msg: "Cannot swap an asset into itself. Both assets were specified as uosmo"
+                    .to_string()
+            })
         );
     }
 
@@ -115,7 +126,12 @@ mod tests {
                 denom_out: "umars".to_string(),
             }],
         );
-        assert_generic_error_message(msg, "Swap amount must be strictly greater than zero")
+        assert_eq!(
+            msg,
+            Err(ContractError::SwapError {
+                msg: "Swap amount must be strictly greater than zero".to_string()
+            })
+        );
     }
 
     #[test]
@@ -135,10 +151,14 @@ mod tests {
                 denom_out: "umars".to_string(),
             }],
         );
-        assert_generic_error_message(
+
+        assert_eq!(
             msg,
-            "The amount requested for swap exceeds contract balance for the asset uosmo",
-        )
+            Err(ContractError::SwapError {
+                msg: "The amount requested for swap exceeds contract balance for the asset uosmo"
+                    .to_string()
+            })
+        );
     }
 
     #[test]
@@ -158,10 +178,14 @@ mod tests {
                 denom_out: "uosmo".to_string(),
             }],
         );
-        assert_generic_error_message(
+        assert_eq!(
             msg,
-            "The amount requested for swap exceeds contract balance for the asset somecoin",
-        )
+            Err(ContractError::SwapError {
+                msg:
+                    "The amount requested for swap exceeds contract balance for the asset somecoin"
+                        .to_string()
+            })
+        );
     }
 
     #[test]
@@ -181,11 +205,17 @@ mod tests {
                 denom_out: "uosmo".to_string(),
             }],
         );
-        assert_generic_error_message(
+
+        assert_eq!(
             msg,
-            "The amount requested for swap exceeds contract balance for the asset somecoin",
-        )
+            Err(ContractError::SwapError {
+                msg:
+                    "The amount requested for swap exceeds contract balance for the asset somecoin"
+                        .to_string()
+            })
+        );
     }
+
     #[test]
     fn test_swap_native_token_balance() {
         let contract_asset_balance = Uint128::new(1_000_000);
