@@ -1,13 +1,7 @@
 [package]
 name = "mars-protocol-rewards-collector"
 version = "1.0.0"
-authors = [
-  "Ahmad Kaouk <ahmad@delphilabs.io>",
-  "Spike Spiegel <spikeonmars@protonmail.com>",
-  "larry_0x <larry@delphidigital.io>",
-  "Piotr Babel <piotr@delphilabs.io>",
-  "Harry Scholes"
-]
+authors = ["Harry Scholes <harryscholes@users.noreply.github.com>"]
 edition = "2018"
 
 exclude = [
@@ -26,22 +20,22 @@ crate-type = ["cdylib", "rlib"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../../packages/mars-outpost", version = "0.1.0" }
+mars-core = { path = "../../packages/mars-core", version = "1.0.0" }
 
-cw20 = "0.13"
-cw20-base = { version = "0.13", features = ["library"] }
-cw-storage-plus = "0.13"
+cw20 = "0.9.0"
+cw20-base = { version = "0.9.0", features = ["library"] }
+cw-storage-plus = "0.9.0"
 
-cosmwasm-std = { version = "1.0", features = ["stargate"] }
+cosmwasm-std = "0.16.2"
 
-schemars = "0.8.8"
-serde = { version = "1.0.137", default-features = false, features = ["derive"] }
-thiserror = "1.0.31"
+schemars = "0.8.1"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+thiserror = "1.0.23"
 
-osmo-bindings = { git = "https://github.com/osmosis-labs/bindings", tag = "v0.6.0" }
+astroport = "1.0"
 
 [dev-dependencies]
-cosmwasm-schema = { version = "1.0" }
+cosmwasm-schema = { version = "0.16.2" }
 
 [profile.release]
 overflow-checks = true

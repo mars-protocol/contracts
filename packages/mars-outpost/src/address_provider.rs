@@ -13,8 +13,6 @@ pub enum MarsContract {
     ProtocolAdmin,
     ProtocolRewardsCollector,
     RedBank,
-    FeeCollector,
-    SafetyFund
 }
 
 impl fmt::Display for MarsContract {
@@ -25,8 +23,6 @@ impl fmt::Display for MarsContract {
             MarsContract::ProtocolAdmin => "protocol_admin",
             MarsContract::ProtocolRewardsCollector => "protocol_rewards_collector",
             MarsContract::RedBank => "red_bank",
-            MarsContract::FeeCollector => "fee_collector",
-            MarsContract::SafetyFund => "safety_fund"
         };
         write!(f, "{}", s)
     }
@@ -42,8 +38,6 @@ impl FromStr for MarsContract {
             "protocol_admin" => Ok(MarsContract::ProtocolAdmin),
             "protocol_rewards_collector" => Ok(MarsContract::ProtocolRewardsCollector),
             "red_bank" => Ok(MarsContract::RedBank),
-            "fee_collector" => Ok(MarsContract::FeeCollector),
-            "safety_fund" => Ok(MarsContract::SafetyFund),
             _ => Err(StdError::parse_err("MarsContract", s)),
         }
     }
