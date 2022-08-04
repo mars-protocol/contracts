@@ -8,7 +8,7 @@ use cosmwasm_std::{Addr, Decimal, Uint128};
 pub struct Config {
     /// Contract owner
     pub owner: Addr,
-    /// Mars Token Denom 
+    /// Mars Token Denom
     pub mars_denom: String,
 }
 

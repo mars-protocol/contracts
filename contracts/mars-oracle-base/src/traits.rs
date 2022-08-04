@@ -12,13 +12,12 @@ where
     C: CustomQuery,
 {
     /// Validate whether the price source is valid for a given denom
-    fn validate(&self, querier: &QuerierWrapper<C>, denom: impl Into<String>)
-        -> ContractResult<()>;
+    fn validate(&self, querier: &QuerierWrapper<C>, denom: impl AsRef<str>) -> ContractResult<()>;
 
     /// Query the price of an asset based on the given price source
     fn query_price(
         &self,
         querier: &QuerierWrapper<C>,
-        denom: impl Into<String>,
+        denom: impl AsRef<str>,
     ) -> StdResult<Decimal>;
 }

@@ -50,7 +50,7 @@ impl PriceSource<OsmosisQuery> for OsmosisPriceSource {
     fn validate(
         &self,
         querier: &QuerierWrapper<OsmosisQuery>,
-        denom: impl Into<String>,
+        denom: impl AsRef<str>,
     ) -> ContractResult<()> {
         match self {
             OsmosisPriceSource::Fixed {
@@ -58,7 +58,7 @@ impl PriceSource<OsmosisQuery> for OsmosisPriceSource {
             } => Ok(()),
             OsmosisPriceSource::Spot {
                 pool_id,
-            } => helpers::assert_osmosis_pool_assets(querier, *pool_id, &denom.into()),
+            } => helpers::assert_osmosis_pool_assets(querier, *pool_id, denom),
             OsmosisPriceSource::LiquidityToken {
                 ..
             } => Ok(()),
@@ -68,7 +68,7 @@ impl PriceSource<OsmosisQuery> for OsmosisPriceSource {
     fn query_price(
         &self,
         querier: &QuerierWrapper<OsmosisQuery>,
-        denom: impl Into<String>,
+        denom: impl AsRef<str>,
     ) -> StdResult<Decimal> {
         match self {
             OsmosisPriceSource::Fixed {
@@ -76,7 +76,7 @@ impl PriceSource<OsmosisQuery> for OsmosisPriceSource {
             } => Ok(*price),
             OsmosisPriceSource::Spot {
                 pool_id,
-            } => helpers::query_osmosis_spot_price(querier, *pool_id, &denom.into()),
+            } => helpers::query_osmosis_spot_price(querier, *pool_id, denom),
             OsmosisPriceSource::LiquidityToken {
                 ..
             } => Err(StdError::generic_err("Unimplemented")),

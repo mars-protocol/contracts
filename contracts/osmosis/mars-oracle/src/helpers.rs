@@ -10,7 +10,7 @@ const BASE_DENOM: &str = "uosmo";
 pub(crate) fn assert_osmosis_pool_assets(
     querier: &QuerierWrapper<OsmosisQuery>,
     pool_id: u64,
-    denom: &str,
+    denom: impl AsRef<str>,
 ) -> ContractResult<()> {
     let pool = query_osmosis_pool(querier, pool_id)?;
 
@@ -30,9 +30,9 @@ pub(crate) fn assert_osmosis_pool_assets(
         });
     }
 
-    if !pool.has_denom(denom) {
+    if !pool.has_denom(denom.as_ref()) {
         return Err(ContractError::InvalidPoolId {
-            reason: format!("pool {} does not contain {}", pool_id, denom),
+            reason: format!("pool {} does not contain {}", pool_id, denom.as_ref()),
         });
     }
 
@@ -43,10 +43,13 @@ pub(crate) fn assert_osmosis_pool_assets(
 pub(crate) fn query_osmosis_spot_price(
     querier: &QuerierWrapper<OsmosisQuery>,
     pool_id: u64,
-    denom: &str,
+    denom: impl AsRef<str>,
 ) -> StdResult<Decimal> {
-    let custom_query = OsmosisQuery::spot_price(pool_id, denom, BASE_DENOM);
-    let res: SpotPriceResponse = querier.query(&QueryRequest::Custom(custom_query))?;
+    let res: SpotPriceResponse = querier.query(&QueryRequest::Custom(OsmosisQuery::spot_price(
+        pool_id,
+        denom.as_ref(),
+        BASE_DENOM,
+    )))?;
     Ok(res.price)
 }
 
