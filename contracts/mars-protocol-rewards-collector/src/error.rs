@@ -18,6 +18,11 @@ pub enum ContractError {
     #[error("{0}")]
     ConfigError(#[from] ConfigError),
 
+    #[error("Swap Error {msg}")]
+    SwapError{
+        msg: String,
+    },
+
     #[error("Asset is not enabled for distribution: {asset_label:?}")]
     AssetNotEnabledForDistribution {
         asset_label: String,

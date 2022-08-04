@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, to_binary, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout,
-    IbcTimeoutBlock, MessageInfo, Response, StdResult, Uint128, WasmMsg,
+    attr, to_binary, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, Fraction, IbcMsg, IbcTimeout,
+    IbcTimeoutBlock, MessageInfo, Response, StdError, StdResult, Uint128, WasmMsg,
 };
 
 use mars_outpost::asset::{get_asset_balance, Asset};
@@ -284,10 +284,15 @@ pub fn execute_swap_asset(
     // split the amount to swap between the safety fund and the fee collector
     // swap the safety fund share to safety_fund_asset, and the fee collector
     // share to fee_collector asset
-    let safety_fund_share = amount_to_swap * config.safety_tax_rate;
+    let safety_fund_share = amount_to_swap
+        .checked_multiply_ratio(
+            config.safety_tax_rate.numerator(),
+            config.safety_tax_rate.denominator(),
+        )
+        .map_err(|_| StdError::generic_err("Checked Multiply ratio error: ".to_string()))?;
     let fee_collector_share = amount_to_swap - safety_fund_share;
-    let mut messages = vec![];
 
+    let mut messages = vec![];
     if !safety_fund_share.is_zero() {
         if let Ok(msg) = construct_swap_msg(
             deps.as_ref(),
@@ -584,7 +589,6 @@ mod tests {
         assert_eq!(new_config.owner, config.owner.unwrap());
         assert_eq!(new_config.address_provider_address, config.address_provider_address.unwrap());
         assert_eq!(new_config.safety_tax_rate, config.safety_tax_rate.unwrap());
-        assert_eq!(new_config.safety_tax_rate, config.safety_tax_rate.unwrap());
         assert_eq!(new_config.safety_fund_asset, config.safety_fund_asset.unwrap());
         assert_eq!(new_config.fee_collector_asset, config.fee_collector_asset.unwrap());
     }
@@ -739,7 +743,7 @@ mod tests {
     #[test]
     fn test_execute_swap_msg() {
         // initialize contract with balance
-        let mut deps = th_setup(&coins(500_000, "uatom"));
+        let mut deps = th_setup(&coins(700_000, "uatom"));
         let info = mock_info("owner");
 
         let msg = ExecuteMsg::SwapAsset {
@@ -784,7 +788,7 @@ mod tests {
                         denom_out: "uusdc".to_string(),
                     }],
                     amount: osmo_bindings::SwapAmountWithLimit::ExactIn {
-                        input: Uint128::new(250_000),
+                        input: Uint128::new(210_000),
                         min_output: Uint128::zero()
                     }
                 })),
@@ -799,7 +803,7 @@ mod tests {
                         denom_out: "umars".to_string(),
                     }],
                     amount: osmo_bindings::SwapAmountWithLimit::ExactIn {
-                        input: Uint128::new(250_000),
+                        input: Uint128::new(490_000),
                         min_output: Uint128::zero()
                     }
                 }))
@@ -811,9 +815,9 @@ mod tests {
             vec![
                 attr("action", "swap"),
                 attr("denom_in", "uatom"),
-                attr("amount_to_swap", "500000"),
-                attr("safety_fund_share", "250000"),
-                attr("fee_collector_share", "250000"),
+                attr("amount_to_swap", "700000"),
+                attr("safety_fund_share", "210000"),
+                attr("fee_collector_share", "490000"),
             ]
         );
 
@@ -850,7 +854,7 @@ mod tests {
                     denom_out: "uusdc".to_string(),
                 }],
                 amount: osmo_bindings::SwapAmountWithLimit::ExactIn {
-                    input: Uint128::new(500_000),
+                    input: Uint128::new(700_000),
                     min_output: Uint128::zero()
                 }
             })),]
@@ -861,8 +865,8 @@ mod tests {
             vec![
                 attr("action", "swap"),
                 attr("denom_in", "uatom"),
-                attr("amount_to_swap", "500000"),
-                attr("safety_fund_share", "500000"),
+                attr("amount_to_swap", "700000"),
+                attr("safety_fund_share", "700000"),
                 attr("fee_collector_share", "0"),
             ]
         );
@@ -906,7 +910,7 @@ mod tests {
         let config = CreateOrUpdateConfig {
             owner: Some("owner".to_string()),
             address_provider_address: Some("address_provider".to_string()),
-            safety_tax_rate: Some(Decimal::percent(50)),
+            safety_tax_rate: Some(Decimal::percent(30)),
             safety_fund_asset: Some(Asset::Native {
                 denom: "uusdc".to_string(),
             }),
