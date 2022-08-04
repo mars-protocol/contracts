@@ -309,7 +309,8 @@ where
             .add_message(transfer_msg)
             .add_attribute("action", "mars/rewards-collector/distribute_rewards")
             .add_attribute("denom", denom)
-            .add_attribute("amount", amount_to_distribute))
+            .add_attribute("amount", amount_to_distribute)
+            .add_attribute("to", to_address))
     }
 
     fn execute_cosmos_msg(
