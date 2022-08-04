@@ -114,7 +114,7 @@ fn setting_price_source_spot() {
     let err = set_price_source_spot("umars", 1).unwrap_err();
     assert_eq!(
         err,
-        ContractError::InvalidPoolId {
+        ContractError::InvalidPriceSource {
             reason: "pool 1 does not contain umars".to_string()
         }
     );
@@ -123,7 +123,7 @@ fn setting_price_source_spot() {
     let err = set_price_source_spot("uatom", 64).unwrap_err();
     assert_eq!(
         err,
-        ContractError::InvalidPoolId {
+        ContractError::InvalidPriceSource {
             reason: "pool 64 does not contain the base denom uosmo".to_string()
         }
     );
@@ -132,7 +132,7 @@ fn setting_price_source_spot() {
     let err = set_price_source_spot("uusdc", 3333).unwrap_err();
     assert_eq!(
         err,
-        ContractError::InvalidPoolId {
+        ContractError::InvalidPriceSource {
             reason: "expecting pool 3333 to contain exactly two coins; found 3".to_string()
         }
     );

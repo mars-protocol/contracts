@@ -11,8 +11,8 @@ pub enum ContractError {
     #[error("{0}")]
     Mars(#[from] MarsError),
 
-    #[error("Invalid pool id: {reason}")]
-    InvalidPoolId {
+    #[error("Invalid price source: {reason}")]
+    InvalidPriceSource {
         reason: String,
     },
 }

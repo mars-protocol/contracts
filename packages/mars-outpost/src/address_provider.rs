@@ -14,7 +14,7 @@ pub enum MarsContract {
     ProtocolRewardsCollector,
     RedBank,
     FeeCollector,
-    SafetyFund
+    SafetyFund,
 }
 
 impl fmt::Display for MarsContract {
@@ -26,7 +26,7 @@ impl fmt::Display for MarsContract {
             MarsContract::ProtocolRewardsCollector => "protocol_rewards_collector",
             MarsContract::RedBank => "red_bank",
             MarsContract::FeeCollector => "fee_collector",
-            MarsContract::SafetyFund => "safety_fund"
+            MarsContract::SafetyFund => "safety_fund",
         };
         write!(f, "{}", s)
     }
