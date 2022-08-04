@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ExecuteMsg_for_PriceSource",
+  "title": "ExecuteMsg_for_OsmosisPriceSource",
   "oneOf": [
     {
       "description": "Update contract config",
@@ -24,24 +24,24 @@
       "additionalProperties": false
     },
     {
-      "description": "Specify parameters to query asset price",
+      "description": "Specify the price source to be used for a coin\n\nNOTE: The input parameters for method are chain-specific.",
       "type": "object",
       "required": [
-        "set_asset"
+        "set_price_source"
       ],
       "properties": {
-        "set_asset": {
+        "set_price_source": {
           "type": "object",
           "required": [
-            "asset",
+            "denom",
             "price_source"
           ],
           "properties": {
-            "asset": {
-              "$ref": "#/definitions/Asset"
+            "denom": {
+              "type": "string"
             },
             "price_source": {
-              "$ref": "#/definitions/PriceSource"
+              "$ref": "#/definitions/OsmosisPriceSource"
             }
           }
         }
@@ -50,56 +50,11 @@
     }
   ],
   "definitions": {
-    "Asset": {
-      "description": "Represents either a native asset or a cw20. Meant to be used as part of a msg in a contract call and not to be used internally",
-      "oneOf": [
-        {
-          "type": "object",
-          "required": [
-            "cw20"
-          ],
-          "properties": {
-            "cw20": {
-              "type": "object",
-              "required": [
-                "contract_addr"
-              ],
-              "properties": {
-                "contract_addr": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "native"
-          ],
-          "properties": {
-            "native": {
-              "type": "object",
-              "required": [
-                "denom"
-              ],
-              "properties": {
-                "denom": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
     "Decimal": {
       "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
       "type": "string"
     },
-    "PriceSource": {
+    "OsmosisPriceSource": {
       "oneOf": [
         {
           "description": "Returns a fixed value;",
@@ -126,17 +81,16 @@
           "description": "Osmosis spot price quoted in OSMO\n\nNOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO",
           "type": "object",
           "required": [
-            "osmosis_spot"
+            "spot"
           ],
           "properties": {
-            "osmosis_spot": {
+            "spot": {
               "type": "object",
               "required": [
                 "pool_id"
               ],
               "properties": {
                 "pool_id": {
-                  "description": "Pool id",
                   "type": "integer",
                   "format": "uint64",
                   "minimum": 0.0
@@ -150,17 +104,16 @@
           "description": "Osmosis liquidity token",
           "type": "object",
           "required": [
-            "osmosis_liquidity_token"
+            "liquidity_token"
           ],
           "properties": {
-            "osmosis_liquidity_token": {
+            "liquidity_token": {
               "type": "object",
               "required": [
                 "pool_id"
               ],
               "properties": {
                 "pool_id": {
-                  "description": "Pool id",
                   "type": "integer",
                   "format": "uint64",
                   "minimum": 0.0

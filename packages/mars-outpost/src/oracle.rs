@@ -1,81 +1,92 @@
+use cosmwasm_std::Decimal;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::Addr;
-
-/// Contract global configuration
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Config {
-    pub owner: Addr,
+pub struct Config<T> {
+    pub owner: T,
 }
 
-pub mod msg {
-    use schemars::JsonSchema;
-    use serde::{Deserialize, Serialize};
+pub type InstantiateMsg = Config<String>;
 
-    use crate::asset::Asset;
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecuteMsg<T> {
+    /// Update contract config
+    UpdateConfig {
+        owner: Option<String>,
+    },
+    /// Specify the price source to be used for a coin
+    ///
+    /// NOTE: The input parameters for method are chain-specific.
+    SetPriceSource {
+        denom: String,
+        price_source: T,
+    },
+}
 
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    pub struct InstantiateMsg {
-        pub owner: String,
-    }
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum QueryMsg {
+    /// Query contract config. Returns `Config<String>`
+    Config {},
+    /// Query a coin's price source. Returns `PriceSourceResponse`
+    ///
+    /// NOTE: The response type of this query is chain-specific.
+    PriceSource {
+        denom: String,
+    },
+    /// Enumerate all coins' price sources. Returns `Vec<PriceSourceResponse>`
+    ///
+    /// NOTE: The response type of this query is chain-specific.
+    PriceSources {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+    /// Query a coin's price; returns `PriceResponse`
+    ///
+    /// NOTE: This query may be dependent on block time (e.g. if the price source is TWAP), so may not
+    /// work properly with time travel queries on archive nodes.
+    Price {
+        denom: String,
+    },
+    /// Enumerate all coins' prices. Returns `Vec<PriceResponse>`
+    ///
+    /// NOTE: This query may be dependent on block time (e.g. if the price source is TWAP), so may not
+    /// work properly with time travel queries on archive nodes.
+    Prices {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+}
 
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    #[serde(rename_all = "snake_case")]
-    pub enum ExecuteMsg<T> {
-        /// Update contract config
-        UpdateConfig {
-            owner: Option<String>,
-        },
-        /// Specify parameters to query asset price
-        SetAsset {
-            asset: Asset,
-            price_source: T,
-        },
-    }
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct PriceSourceResponse<T> {
+    pub denom: String,
+    pub price_source: T,
+}
 
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    #[serde(rename_all = "snake_case")]
-    pub enum QueryMsg {
-        /// Query contract config. Returns `Config`
-        Config {},
-        /// Get asset's price source. Returns `AssetConfigChecked`
-        AssetPriceSource {
-            asset: Asset,
-        },
-        /// Query asset price given an asset; returns `Decimal`
-        AssetPrice {
-            asset: Asset,
-        },
-        /// Query asset price given it's internal reference; returns `Decimal`
-        ///
-        /// NOTE: meant to be used by protocol contracts only
-        AssetPriceByReference {
-            asset_reference: Vec<u8>,
-        },
-    }
-
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    pub struct MigrateMsg {}
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct PriceResponse {
+    pub denom: String,
+    pub price: Decimal,
 }
 
 pub mod helpers {
-    use cosmwasm_std::{
-        to_binary, Addr, Decimal, QuerierWrapper, QueryRequest, StdResult, WasmQuery,
-    };
-
-    use super::msg::QueryMsg;
+    use super::{PriceResponse, QueryMsg};
+    use cosmwasm_std::{Decimal, QuerierWrapper, StdResult};
 
     pub fn query_price(
-        querier: QuerierWrapper,
-        oracle_address: &Addr,
-        asset_reference: Vec<u8>,
+        querier: &QuerierWrapper,
+        oracle: impl Into<String>,
+        denom: impl Into<String>,
     ) -> StdResult<Decimal> {
-        querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-            contract_addr: oracle_address.into(),
-            msg: to_binary(&QueryMsg::AssetPriceByReference {
-                asset_reference,
-            })?,
-        }))
+        let res: PriceResponse = querier.query_wasm_smart(
+            oracle.into(),
+            &QueryMsg::Price {
+                denom: denom.into(),
+            },
+        )?;
+        Ok(res.price)
     }
 }

@@ -1,10 +1,11 @@
 [workspace]
 members = [
     "packages/*",
-    "contracts/mars-red-bank",
+    # "contracts/mars-red-bank",
     "contracts/mars-address-provider",
     "contracts/mars-ma-token",
     "contracts/mars-incentives",
+    "contracts/mars-oracle-base",
     "contracts/osmosis/mars-oracle",
     "contracts/mars-protocol-rewards-collector",
 ]

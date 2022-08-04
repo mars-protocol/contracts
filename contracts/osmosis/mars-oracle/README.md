@@ -1,2 +1,3 @@
-# Oracle
-Provides prices in uosmo for assets used in the protocol.
+# Osmosis Oracle
+
+Provides prices denominated in `uosmo` for assets used in the protocol.
