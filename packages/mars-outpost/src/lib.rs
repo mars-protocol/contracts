@@ -4,8 +4,8 @@ pub mod cw20_core;
 pub mod incentives;
 pub mod ma_token;
 pub mod oracle;
-pub mod protocol_rewards_collector;
 pub mod red_bank;
+pub mod rewards_collector;
 
 // Types
 pub mod asset;
