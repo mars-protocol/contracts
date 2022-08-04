@@ -1,7 +1,6 @@
 use cosmwasm_std::{OverflowError, StdError, Uint128};
 use thiserror::Error;
 
-use crate::ConfigError;
 use mars_outpost::error::MarsError;
 
 #[derive(Error, Debug, PartialEq)]
@@ -15,17 +14,9 @@ pub enum ContractError {
     #[error("{0}")]
     Overflow(#[from] OverflowError),
 
-    #[error("{0}")]
-    ConfigError(#[from] ConfigError),
-
-    #[error("Swap Error {msg}")]
-    SwapError{
-        msg: String,
-    },
-
-    #[error("Asset is not enabled for distribution: {asset_label:?}")]
+    #[error("Asset is not enabled for distribution: {denom}")]
     AssetNotEnabledForDistribution {
-        asset_label: String,
+        denom: String,
     },
 
     #[error("Amount to distribute {amount} is larger than available balance {balance}")]
@@ -33,4 +24,11 @@ pub enum ContractError {
         amount: Uint128,
         balance: Uint128,
     },
+
+    #[error("Invalid route: {reason}")]
+    InvalidRoute {
+        reason: String,
+    },
 }
+
+pub type ContractResult<T> = Result<T, ContractError>;

@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Array_of_RouteResponse_for_Route",
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/RouteResponse_for_Route"
+  },
+  "definitions": {
+    "Route": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Step"
+      }
+    },
+    "RouteResponse_for_Route": {
+      "type": "object",
+      "required": [
+        "denom_in",
+        "denom_out",
+        "route"
+      ],
+      "properties": {
+        "denom_in": {
+          "type": "string"
+        },
+        "denom_out": {
+          "type": "string"
+        },
+        "route": {
+          "$ref": "#/definitions/Route"
+        }
+      }
+    },
+    "Step": {
+      "type": "object",
+      "required": [
+        "denom_out",
+        "pool_id"
+      ],
+      "properties": {
+        "denom_out": {
+          "type": "string"
+        },
+        "pool_id": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      }
+    }
+  }
+}
