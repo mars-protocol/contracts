@@ -289,8 +289,10 @@ pub fn execute_swap_asset(
             config.safety_tax_rate.numerator(),
             config.safety_tax_rate.denominator(),
         )
-        .map_err(|_| StdError::generic_err("Checked Multiply ratio error: ".to_string()))?;
-    let fee_collector_share = amount_to_swap - safety_fund_share;
+        .map_err(|err| StdError::generic_err(err.to_string()))?;
+    let fee_collector_share = amount_to_swap
+        .checked_sub(safety_fund_share)
+        .map_err(|err| StdError::generic_err(err.to_string()))?;
 
     let mut messages = vec![];
     if !safety_fund_share.is_zero() {
