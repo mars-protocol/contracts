@@ -15,7 +15,7 @@ pub(crate) fn assert_osmosis_pool_assets(
     let pool = query_osmosis_pool(querier, pool_id)?;
 
     if pool.assets.len() != 2 {
-        return Err(ContractError::InvalidPoolId {
+        return Err(ContractError::InvalidPriceSource {
             reason: format!(
                 "expecting pool {} to contain exactly two coins; found {}",
                 pool_id,
@@ -25,13 +25,13 @@ pub(crate) fn assert_osmosis_pool_assets(
     }
 
     if !pool.has_denom(BASE_DENOM) {
-        return Err(ContractError::InvalidPoolId {
+        return Err(ContractError::InvalidPriceSource {
             reason: format!("pool {} does not contain the base denom {}", pool_id, BASE_DENOM),
         });
     }
 
     if !pool.has_denom(denom.as_ref()) {
-        return Err(ContractError::InvalidPoolId {
+        return Err(ContractError::InvalidPriceSource {
             reason: format!("pool {} does not contain {}", pool_id, denom.as_ref()),
         });
     }
