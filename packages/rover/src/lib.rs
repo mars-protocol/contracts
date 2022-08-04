@@ -3,7 +3,7 @@ use cosmwasm_std::Uint128;
 use crate::error::ContractError;
 
 pub mod adapters;
-pub mod coin_list;
+pub mod coins;
 pub mod error;
 pub mod msg;
 

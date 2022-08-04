@@ -3,7 +3,7 @@ extern crate core;
 use cosmwasm_std::{Addr, Coin, Uint128};
 use cw_multi_test::{App, Executor};
 
-use rover::coin_list::CoinList;
+use rover::coins::Coins;
 use rover::error::ContractError::{
     ExtraFundsReceived, FundsMismatch, NotTokenOwner, NotWhitelisted,
 };
@@ -258,7 +258,7 @@ fn test_extra_funds_received() {
         &[Coin::new(234u128, "uosmo"), extra_funds.clone()],
     );
 
-    assert_err(res, ExtraFundsReceived(CoinList::from(&vec![extra_funds])));
+    assert_err(res, ExtraFundsReceived(Coins::from(vec![extra_funds])));
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
     assert_eq!(res.assets.len(), 0);

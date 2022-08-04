@@ -1,6 +1,6 @@
 use cosmwasm_std::{Coin, Response, StdError, StdResult, Storage, Uint128};
 
-use rover::coin_list::CoinList;
+use rover::coins::Coins;
 use rover::error::ContractError;
 use rover::ContractResult;
 
@@ -11,7 +11,7 @@ pub fn deposit(
     response: Response,
     nft_token_id: &str,
     coin: &Coin,
-    received_coins: &mut CoinList,
+    received_coins: &mut Coins,
 ) -> ContractResult<Response> {
     assert_coin_is_whitelisted(storage, &coin.denom)?;
 
@@ -32,10 +32,9 @@ pub fn deposit(
 }
 
 /// Assert that fund of exactly the same type and amount was sent along with a message
-fn assert_sent_fund(expected: &Coin, received_coins: &CoinList) -> ContractResult<()> {
+fn assert_sent_fund(expected: &Coin, received_coins: &Coins) -> ContractResult<()> {
     let received = received_coins
-        .find_denom(&expected.denom)
-        .map(|c| c.amount)
+        .amount(&expected.denom)
         .unwrap_or_else(Uint128::zero);
 
     if received != expected.amount {

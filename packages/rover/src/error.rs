@@ -1,7 +1,7 @@
 use cosmwasm_std::{CheckedMultiplyRatioError, StdError, Uint128};
 use thiserror::Error;
 
-use crate::coin_list::CoinList;
+use crate::coins::Coins;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
@@ -18,7 +18,7 @@ pub enum ContractError {
     NotWhitelisted(String),
 
     #[error("Extra funds received: {0}")]
-    ExtraFundsReceived(CoinList),
+    ExtraFundsReceived(Coins),
 
     #[error("No coin amount set for action")]
     NoAmount,

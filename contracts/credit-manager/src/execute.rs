@@ -5,7 +5,7 @@ use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg;
 
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
-use rover::coin_list::CoinList;
+use rover::coins::Coins;
 use rover::error::ContractError;
 use rover::msg::execute::{Action, CallbackMsg};
 use rover::msg::instantiate::ConfigUpdates;
@@ -113,7 +113,7 @@ pub fn dispatch_actions(
 
     let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];
-    let mut received_coins = CoinList::from(&info.funds);
+    let mut received_coins = Coins::from(info.funds.as_slice());
 
     for action in actions {
         match action {
