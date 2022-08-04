@@ -1,8 +1,8 @@
-use cosmwasm_std::{Decimal, QuerierWrapper, QueryRequest, StdError, StdResult};
+use cosmwasm_std::{Decimal, QuerierWrapper, QueryRequest, StdResult};
+
 use osmo_bindings::{OsmosisQuery, PoolStateResponse, SpotPriceResponse};
 
-use crate::error::{ContractError, ContractResult};
-use crate::msg::PriceSource;
+use mars_oracle_base::{ContractError, ContractResult};
 
 const BASE_DENOM: &str = "uosmo";
 
@@ -10,7 +10,7 @@ const BASE_DENOM: &str = "uosmo";
 pub(crate) fn assert_osmosis_pool_assets(
     querier: &QuerierWrapper<OsmosisQuery>,
     pool_id: u64,
-    denom: &str,
+    denom: impl AsRef<str>,
 ) -> ContractResult<()> {
     let pool = query_osmosis_pool(querier, pool_id)?;
 
@@ -30,42 +30,26 @@ pub(crate) fn assert_osmosis_pool_assets(
         });
     }
 
-    if !pool.has_denom(denom) {
+    if !pool.has_denom(denom.as_ref()) {
         return Err(ContractError::InvalidPoolId {
-            reason: format!("pool {} does not contain {}", pool_id, denom),
+            reason: format!("pool {} does not contain {}", pool_id, denom.as_ref()),
         });
     }
 
     Ok(())
 }
 
-/// For a given denom and price source, query the price using the appropriate helper function
-pub(crate) fn query_price_with_source(
-    querier: &QuerierWrapper<OsmosisQuery>,
-    denom: String,
-    price_source: PriceSource,
-) -> StdResult<Decimal> {
-    match price_source {
-        PriceSource::Fixed {
-            price,
-        } => Ok(price),
-        PriceSource::Spot {
-            pool_id,
-        } => query_osmosis_spot_price(querier, pool_id, &denom),
-        PriceSource::LiquidityToken {
-            ..
-        } => Err(StdError::generic_err("Unimplemented")),
-    }
-}
-
 /// Query the spot price of a coin, denominated in OSMO
 pub(crate) fn query_osmosis_spot_price(
     querier: &QuerierWrapper<OsmosisQuery>,
     pool_id: u64,
-    denom: &str,
+    denom: impl AsRef<str>,
 ) -> StdResult<Decimal> {
-    let custom_query = OsmosisQuery::spot_price(pool_id, denom, BASE_DENOM);
-    let res: SpotPriceResponse = querier.query(&QueryRequest::Custom(custom_query))?;
+    let res: SpotPriceResponse = querier.query(&QueryRequest::Custom(OsmosisQuery::spot_price(
+        pool_id,
+        denom.as_ref(),
+        BASE_DENOM,
+    )))?;
     Ok(res.price)
 }
 

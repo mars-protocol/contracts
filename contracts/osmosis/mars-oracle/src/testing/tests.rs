@@ -1,6 +1,7 @@
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::Decimal;
 
+use mars_oracle_base::ContractError;
 use mars_outpost::error::MarsError;
 use mars_outpost::oracle::{Config, PriceResponse, QueryMsg};
 use mars_testing::mock_info;
@@ -8,9 +9,9 @@ use mars_testing::mock_info;
 use osmo_bindings::{SpotPriceResponse, Swap};
 
 use super::helpers;
-use crate::contract::execute;
-use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, PriceSource, PriceSourceResponse};
+use crate::contract::entry::execute;
+use crate::msg::{ExecuteMsg, PriceSourceResponse};
+use crate::OsmosisPriceSource;
 
 #[test]
 fn instantiating() {
@@ -50,7 +51,7 @@ fn setting_price_source_by_non_owner() {
         mock_info("jake"),
         ExecuteMsg::SetPriceSource {
             denom: "uosmo".to_string(),
-            price_source: PriceSource::Fixed {
+            price_source: OsmosisPriceSource::Fixed {
                 price: Decimal::one(),
             },
         },
@@ -69,7 +70,7 @@ fn setting_price_source_fixed() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "uosmo".to_string(),
-            price_source: PriceSource::Fixed {
+            price_source: OsmosisPriceSource::Fixed {
                 price: Decimal::one(),
             },
         },
@@ -85,7 +86,7 @@ fn setting_price_source_fixed() {
     );
     assert_eq!(
         res.price_source,
-        PriceSource::Fixed {
+        OsmosisPriceSource::Fixed {
             price: Decimal::one()
         }
     );
@@ -102,7 +103,7 @@ fn setting_price_source_spot() {
             mock_info("owner"),
             ExecuteMsg::SetPriceSource {
                 denom: denom.to_string(),
-                price_source: PriceSource::Spot {
+                price_source: OsmosisPriceSource::Spot {
                     pool_id,
                 },
             },
@@ -148,7 +149,7 @@ fn setting_price_source_spot() {
     );
     assert_eq!(
         res.price_source,
-        PriceSource::Spot {
+        OsmosisPriceSource::Spot {
             pool_id: 89,
         }
     );
@@ -164,7 +165,7 @@ fn setting_price_source_liquidity_token() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "gamm/pool/89".to_string(),
-            price_source: PriceSource::LiquidityToken {
+            price_source: OsmosisPriceSource::LiquidityToken {
                 pool_id: 89,
             },
         },
@@ -180,7 +181,7 @@ fn setting_price_source_liquidity_token() {
     );
     assert_eq!(
         res.price_source,
-        PriceSource::LiquidityToken {
+        OsmosisPriceSource::LiquidityToken {
             pool_id: 89,
         }
     );
@@ -193,28 +194,28 @@ fn querying_price_source() {
     helpers::set_price_source(
         deps.as_mut(),
         "uosmo",
-        PriceSource::Fixed {
+        OsmosisPriceSource::Fixed {
             price: Decimal::one(),
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        PriceSource::Spot {
+        OsmosisPriceSource::Spot {
             pool_id: 1,
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        PriceSource::Spot {
+        OsmosisPriceSource::Spot {
             pool_id: 89,
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "gamm/pool/89",
-        PriceSource::LiquidityToken {
+        OsmosisPriceSource::LiquidityToken {
             pool_id: 89,
         },
     );
@@ -228,7 +229,7 @@ fn querying_price_source() {
     );
     assert_eq!(
         res.price_source,
-        PriceSource::Spot {
+        OsmosisPriceSource::Spot {
             pool_id: 89,
         }
     );
@@ -248,13 +249,13 @@ fn querying_price_source() {
         vec![
             PriceSourceResponse {
                 denom: "gamm/pool/89".to_string(),
-                price_source: PriceSource::LiquidityToken {
+                price_source: OsmosisPriceSource::LiquidityToken {
                     pool_id: 89
                 }
             },
             PriceSourceResponse {
                 denom: "uatom".to_string(),
-                price_source: PriceSource::Spot {
+                price_source: OsmosisPriceSource::Spot {
                     pool_id: 1
                 }
             }
@@ -273,13 +274,13 @@ fn querying_price_source() {
         vec![
             PriceSourceResponse {
                 denom: "umars".to_string(),
-                price_source: PriceSource::Spot {
+                price_source: OsmosisPriceSource::Spot {
                     pool_id: 89
                 }
             },
             PriceSourceResponse {
                 denom: "uosmo".to_string(),
-                price_source: PriceSource::Fixed {
+                price_source: OsmosisPriceSource::Fixed {
                     price: Decimal::one()
                 }
             }
@@ -294,7 +295,7 @@ fn querying_price_fixed() {
     helpers::set_price_source(
         deps.as_mut(),
         "uosmo",
-        PriceSource::Fixed {
+        OsmosisPriceSource::Fixed {
             price: Decimal::one(),
         },
     );
@@ -315,7 +316,7 @@ fn querying_price_spot() {
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        PriceSource::Spot {
+        OsmosisPriceSource::Spot {
             pool_id: 89,
         },
     );
@@ -340,10 +341,76 @@ fn querying_price_spot() {
     assert_eq!(res.price, Decimal::from_ratio(88888u128, 12345u128));
 }
 
-// #[test]
-// fn querying_price_liquidity_token() {
-// }
+#[test]
+fn querying_all_prices() {
+    let mut deps = helpers::setup_test();
 
-// #[test]
-// fn querying_all_prices() {
-// }
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uosmo",
+        OsmosisPriceSource::Fixed {
+            price: Decimal::one(),
+        },
+    );
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uatom",
+        OsmosisPriceSource::Spot {
+            pool_id: 1,
+        },
+    );
+    helpers::set_price_source(
+        deps.as_mut(),
+        "umars",
+        OsmosisPriceSource::Spot {
+            pool_id: 89,
+        },
+    );
+
+    deps.querier.set_spot_price(
+        Swap {
+            pool_id: 1,
+            denom_in: "uatom".to_string(),
+            denom_out: "uosmo".to_string(),
+        },
+        SpotPriceResponse {
+            price: Decimal::from_ratio(77777u128, 12345u128),
+        },
+    );
+    deps.querier.set_spot_price(
+        Swap {
+            pool_id: 89,
+            denom_in: "umars".to_string(),
+            denom_out: "uosmo".to_string(),
+        },
+        SpotPriceResponse {
+            price: Decimal::from_ratio(88888u128, 12345u128),
+        },
+    );
+
+    // NOTE: responses are ordered alphabetically by denom
+    let res: Vec<PriceResponse> = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Prices {
+            start_after: None,
+            limit: None,
+        },
+    );
+    assert_eq!(
+        res,
+        vec![
+            PriceResponse {
+                denom: "uatom".to_string(),
+                price: Decimal::from_ratio(77777u128, 12345u128),
+            },
+            PriceResponse {
+                denom: "umars".to_string(),
+                price: Decimal::from_ratio(88888u128, 12345u128),
+            },
+            PriceResponse {
+                denom: "uosmo".to_string(),
+                price: Decimal::one(),
+            },
+        ]
+    );
+}
