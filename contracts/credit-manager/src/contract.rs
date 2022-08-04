@@ -1,6 +1,4 @@
-use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
-};
+use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
@@ -46,8 +44,8 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
+    let res = match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::AllowedVaults { start_after, limit } => {
             to_binary(&query_allowed_vaults(deps, start_after, limit)?)
@@ -55,7 +53,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::AllowedCoins { start_after, limit } => {
             to_binary(&query_allowed_coins(deps, start_after, limit)?)
         }
-        QueryMsg::Position { token_id } => to_binary(&query_position(deps, &token_id)?),
+        QueryMsg::Position { token_id } => to_binary(&query_position(deps, &env, &token_id)?),
         QueryMsg::AllAssets { start_after, limit } => {
             to_binary(&query_all_assets(deps, start_after, limit)?)
         }
@@ -66,5 +64,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::AllTotalDebtShares { start_after, limit } => {
             to_binary(&query_all_total_debt_shares(deps, start_after, limit)?)
         }
-    }
+    };
+    res.map_err(Into::into)
 }

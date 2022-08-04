@@ -3,12 +3,15 @@ name = "rover"
 version = "0.1.0"
 authors = ["larry_0x <larry@delphidigital.io>", "Gabe R. <gabe.r@delphilabs.io>"]
 edition = "2018"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/mars-protocol/rover"
 
 [lib]
 doctest = false
 
 [dependencies]
 mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }
+mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features = ["library"] }
 
 cosmwasm-std = "1.0"
 cw-storage-plus = "0.14"

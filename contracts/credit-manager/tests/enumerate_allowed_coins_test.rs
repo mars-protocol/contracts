@@ -1,7 +1,7 @@
 use cosmwasm_std::Addr;
 use cw_multi_test::Executor;
 
-use rover::adapters::RedBankBase;
+use rover::adapters::{OracleBase, RedBankBase};
 use rover::msg::{InstantiateMsg, QueryMsg};
 
 use crate::helpers::{mock_app, mock_contract};
@@ -54,6 +54,7 @@ fn test_pagination_on_allowed_coins_query_works() {
         allowed_vaults: vec![],
         allowed_coins: allowed_coins.clone(),
         red_bank: RedBankBase("redbankaddr".to_string()),
+        oracle: OracleBase("oracle_contract".to_string()),
     };
 
     let contract_addr = app

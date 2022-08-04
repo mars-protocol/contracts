@@ -3,6 +3,8 @@ name = "credit-manager"
 version = "0.1.0"
 authors = ["grod220 <gabe.r@delphilabs.io>, larry_0x <larry@delphidigital.io>"]
 edition = "2018"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/mars-protocol/rover"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -13,6 +15,8 @@ library = []
 
 [dependencies]
 account-nft = { version = "0.1", path = "../account-nft", features = ["library"] }
+mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features = ["library"] }
+mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }
 rover = { version = "0.1", path = "../../packages/rover" }
 
 cosmwasm-std = "1.0"
@@ -26,4 +30,3 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 [dev-dependencies]
 anyhow = "1"
 cw-multi-test = "0.14"
-mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }

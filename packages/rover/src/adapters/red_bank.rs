@@ -38,7 +38,7 @@ impl RedBank {
         }))
     }
 
-    pub fn query_user_debt(
+    pub fn query_debt(
         &self,
         querier: &QuerierWrapper,
         user_address: &Addr,

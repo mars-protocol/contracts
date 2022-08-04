@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Coin, Uint128};
+use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 use credit_manager::borrow::DEFAULT_DEBT_UNITS_PER_COIN_BORROWED;
 use cw_multi_test::{App, Executor};
 
@@ -7,8 +7,8 @@ use rover::msg::query::CoinShares;
 use rover::msg::{ExecuteMsg, QueryMsg};
 
 use crate::helpers::{
-    fund_red_bank_native, get_token_id, mock_create_credit_account, query_config,
-    setup_credit_manager,
+    fund_red_bank, get_token_id, mock_create_credit_account, query_config, setup_credit_manager,
+    CoinPriceLTV,
 };
 
 pub mod helpers;
@@ -79,45 +79,173 @@ fn test_pagination_on_all_total_debt_shares_query_works() {
         &mut app,
         &Addr::unchecked("owner"),
         vec![
-            "coin_1".to_string(),
-            "coin_2".to_string(),
-            "coin_3".to_string(),
-            "coin_4".to_string(),
-            "coin_5".to_string(),
-            "coin_6".to_string(),
-            "coin_7".to_string(),
-            "coin_8".to_string(),
-            "coin_9".to_string(),
-            "coin_10".to_string(),
-            "coin_11".to_string(),
-            "coin_12".to_string(),
-            "coin_13".to_string(),
-            "coin_14".to_string(),
-            "coin_15".to_string(),
-            "coin_16".to_string(),
-            "coin_17".to_string(),
-            "coin_18".to_string(),
-            "coin_19".to_string(),
-            "coin_20".to_string(),
-            "coin_21".to_string(),
-            "coin_22".to_string(),
-            "coin_23".to_string(),
-            "coin_24".to_string(),
-            "coin_25".to_string(),
-            "coin_26".to_string(),
-            "coin_27".to_string(),
-            "coin_28".to_string(),
-            "coin_29".to_string(),
-            "coin_30".to_string(),
-            "coin_31".to_string(),
-            "coin_32".to_string(),
+            CoinPriceLTV {
+                denom: "coin_1".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_2".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_3".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_4".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_5".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_6".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_7".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_8".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_9".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_10".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_11".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_12".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_13".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_14".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_15".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_16".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_17".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_18".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_19".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_20".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_21".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_22".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_23".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_24".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_25".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_26".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_27".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_28".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_29".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_30".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_31".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_32".to_string(),
+                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                price: Decimal::from_atomics(10u128, 0).unwrap(),
+            },
         ],
         vec![],
     );
 
     let config = query_config(&mut app, &mock.credit_manager.clone());
 
-    fund_red_bank_native(
+    fund_red_bank(
         &mut app,
         config.red_bank.clone(),
         vec![

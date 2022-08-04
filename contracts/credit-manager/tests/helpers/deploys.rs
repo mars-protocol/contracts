@@ -1,16 +1,19 @@
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Addr, Coin, Empty};
+use cosmwasm_std::{Addr, Coin};
 use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
-use rover::adapters::RedBankBase;
+use mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
+use mock_red_bank::msg::{DenomWithLTV, InstantiateMsg as RedBankInstantiateMsg};
+use rover::adapters::{OracleBase, RedBankBase};
 use rover::msg::execute::ExecuteMsg;
 use rover::msg::instantiate::ConfigUpdates;
 use rover::msg::InstantiateMsg;
 
 use crate::helpers::contracts::{mock_account_nft_contract, mock_contract, mock_red_bank_contract};
 use crate::helpers::types::MockEnv;
+use crate::helpers::{mock_oracle_contract, CoinPriceLTV};
 
 pub fn mock_create_credit_account(
     app: &mut App,
@@ -43,28 +46,12 @@ pub fn transfer_nft_contract_ownership(
         &ExecuteMsg::UpdateConfig {
             new_config: ConfigUpdates {
                 account_nft: Some(nft_contract_addr.to_string()),
-                owner: None,
-                allowed_vaults: None,
-                allowed_coins: None,
-                red_bank: None,
+                ..Default::default()
             },
         },
         &[],
     )
     .unwrap();
-}
-
-pub fn setup_red_bank(app: &mut App) -> Addr {
-    let contract_code_id = app.store_code(mock_red_bank_contract());
-    app.instantiate_contract(
-        contract_code_id,
-        Addr::unchecked("red_bank_contract_owner"),
-        &Empty {},
-        &[],
-        "mock-red-bank",
-        None,
-    )
-    .unwrap()
 }
 
 pub fn setup_nft_contract(app: &mut App, owner: &Addr, manager_contract_addr: &Addr) -> Addr {
@@ -88,19 +75,74 @@ pub fn setup_nft_contract(app: &mut App, owner: &Addr, manager_contract_addr: &A
     nft_contract_addr
 }
 
+pub fn setup_oracle(app: &mut App, coins: &Vec<CoinPriceLTV>) -> Addr {
+    let contract_code_id = app.store_code(mock_oracle_contract());
+    app.instantiate_contract(
+        contract_code_id,
+        Addr::unchecked("oracle_contract_owner"),
+        &OracleInstantiateMsg {
+            coins: coins
+                .iter()
+                .map(|item| CoinPrice {
+                    denom: item.denom.to_string(),
+                    price: item.price,
+                })
+                .collect(),
+        },
+        &[],
+        "mock-oracle",
+        None,
+    )
+    .unwrap()
+}
+
+pub fn setup_red_bank(app: &mut App, coins: &Vec<CoinPriceLTV>) -> Addr {
+    let contract_code_id = app.store_code(mock_red_bank_contract());
+    app.instantiate_contract(
+        contract_code_id,
+        Addr::unchecked("red_bank_contract_owner"),
+        &RedBankInstantiateMsg {
+            coins: coins
+                .iter()
+                .map(|item| DenomWithLTV {
+                    denom: item.denom.to_string(),
+                    max_ltv: item.max_ltv,
+                })
+                .collect(),
+        },
+        &[],
+        "mock-red-bank",
+        None,
+    )
+    .unwrap()
+}
+
+pub fn fund_red_bank(app: &mut BasicApp, red_bank_addr: String, funds: Vec<Coin>) {
+    app.sudo(SudoMsg::Bank(BankSudo::Mint {
+        to_address: red_bank_addr,
+        amount: funds,
+    }))
+    .unwrap();
+}
+
 pub fn setup_credit_manager(
     mut app: &mut App,
     owner: &Addr,
-    allowed_assets: Vec<String>,
+    allowed_coins: Vec<CoinPriceLTV>,
     allowed_vaults: Vec<String>,
 ) -> MockEnv {
     let credit_manager_code_id = app.store_code(mock_contract());
-    let red_bank = setup_red_bank(app);
+    let red_bank = setup_red_bank(app, &allowed_coins);
+    let oracle = setup_oracle(app, &allowed_coins);
     let manager_initiate_msg = InstantiateMsg {
         owner: owner.to_string(),
+        allowed_coins: allowed_coins
+            .iter()
+            .map(|item| item.denom.clone())
+            .collect(),
         allowed_vaults,
         red_bank: RedBankBase(red_bank.to_string()),
-        allowed_coins: allowed_assets,
+        oracle: OracleBase(oracle.to_string()),
     };
 
     let credit_manager = app
@@ -117,15 +159,8 @@ pub fn setup_credit_manager(
     let nft = setup_nft_contract(&mut app, &owner, &credit_manager);
     MockEnv {
         credit_manager,
+        oracle,
         red_bank,
         nft,
     }
-}
-
-pub fn fund_red_bank_native(app: &mut BasicApp, red_bank_addr: String, funds: Vec<Coin>) {
-    app.sudo(SudoMsg::Bank(BankSudo::Mint {
-        to_address: red_bank_addr,
-        amount: funds,
-    }))
-    .unwrap();
 }

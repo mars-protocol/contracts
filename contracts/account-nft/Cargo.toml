@@ -3,6 +3,8 @@ name = "account-nft"
 version = "0.1.0"
 authors = ["larry_0x <larry@delphidigital.io>, grod220 <gabe.r@delphilabs.io>"]
 edition = "2018"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/mars-protocol/rover"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

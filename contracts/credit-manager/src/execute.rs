@@ -13,7 +13,8 @@ use rover::ContractResult;
 
 use crate::borrow::borrow;
 use crate::deposit::deposit;
-use crate::state::{ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, OWNER, RED_BANK};
+use crate::health::assert_health;
+use crate::state::{ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, ORACLE, OWNER, RED_BANK};
 
 pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Response> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
@@ -99,6 +100,13 @@ pub fn update_config(
             .add_attribute("value", unchecked.0);
     }
 
+    if let Some(unchecked) = new_config.oracle {
+        ORACLE.save(deps.storage, &unchecked.check(deps.api)?)?;
+        response = response
+            .add_attribute("key", "oracle")
+            .add_attribute("value", unchecked.0);
+    }
+
     Ok(response)
 }
 
@@ -133,6 +141,11 @@ pub fn dispatch_actions(
         return Err(ContractError::ExtraFundsReceived(received_coins));
     }
 
+    // after user selected actions, we assert LTV is healthy; if not, throw error and revert all actions
+    callbacks.extend([CallbackMsg::AssertHealth {
+        token_id: token_id.to_string(),
+    }]);
+
     let callback_msgs = callbacks
         .iter()
         .map(|callback| callback.into_cosmos_msg(&env.contract.address))
@@ -154,6 +167,7 @@ pub fn execute_callback(
     }
     match callback {
         CallbackMsg::Borrow { coin, token_id } => borrow(deps, env, &token_id, coin),
+        CallbackMsg::AssertHealth { token_id } => assert_health(deps, env, &token_id),
     }
 }
 

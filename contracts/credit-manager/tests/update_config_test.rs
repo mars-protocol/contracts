@@ -3,7 +3,7 @@ use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, Executor};
 
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
-use rover::adapters::RedBankBase;
+use rover::adapters::{OracleBase, RedBankBase};
 use rover::msg::instantiate::ConfigUpdates;
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
@@ -27,6 +27,7 @@ fn test_update_config_works_with_full_config() {
     let new_red_bank = RedBankBase("new_red_bank".to_string());
     let new_allowed_vaults = vec!["vaultcontract1".to_string()];
     let new_allowed_assets = vec!["uosmo".to_string()];
+    let new_oracle = OracleBase("new_oracle".to_string());
 
     app.execute_contract(
         original_owner.clone(),
@@ -38,6 +39,7 @@ fn test_update_config_works_with_full_config() {
                 allowed_vaults: Some(new_allowed_vaults.clone()),
                 allowed_coins: Some(new_allowed_assets.clone()),
                 red_bank: Some(new_red_bank.clone()),
+                oracle: Some(new_oracle.clone()),
             },
         },
         &[],
@@ -62,6 +64,9 @@ fn test_update_config_works_with_full_config() {
 
     assert_eq!(new_config.red_bank, new_red_bank.0);
     assert_ne!(new_config.red_bank, original_config.red_bank);
+
+    assert_eq!(new_config.oracle, new_oracle.0);
+    assert_ne!(new_config.oracle, original_config.oracle);
 }
 
 #[test]
@@ -84,10 +89,8 @@ fn test_update_config_works_with_some_config() {
         &ExecuteMsg::UpdateConfig {
             new_config: ConfigUpdates {
                 account_nft: Some(nft_contract_addr.to_string()),
-                owner: None,
                 allowed_vaults: Some(new_allowed_vaults.clone()),
-                allowed_coins: None,
-                red_bank: None,
+                ..Default::default()
             },
         },
         &[],
@@ -126,13 +129,7 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
         original_owner.clone(),
         contract_addr.clone(),
         &ExecuteMsg::UpdateConfig {
-            new_config: ConfigUpdates {
-                account_nft: None,
-                owner: None,
-                allowed_vaults: None,
-                allowed_coins: None,
-                red_bank: None,
-            },
+            new_config: Default::default(),
         },
         &[],
     )
@@ -158,6 +155,7 @@ fn instantiate(app: &mut App, original_owner: &Addr, code_id: u64) -> Addr {
             allowed_vaults: vec![],
             allowed_coins: vec![],
             red_bank: RedBankBase("initial_red_bank".to_string()),
+            oracle: OracleBase("initial_oracle".to_string()),
         },
         &[],
         "mock_manager_contract",

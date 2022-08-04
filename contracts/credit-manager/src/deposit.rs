@@ -1,8 +1,7 @@
 use cosmwasm_std::{Coin, Response, StdError, StdResult, Storage, Uint128};
 
 use rover::coins::Coins;
-use rover::error::ContractError;
-use rover::ContractResult;
+use rover::error::{ContractError, ContractResult};
 
 use crate::state::{ALLOWED_COINS, ASSETS};
 

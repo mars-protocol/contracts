@@ -22,7 +22,7 @@ pub fn borrow(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractRe
 
     let red_bank = RED_BANK.load(deps.storage)?;
     let total_debt_amount =
-        red_bank.query_user_debt(&deps.querier, &env.contract.address, &coin.denom)?;
+        red_bank.query_debt(&deps.querier, &env.contract.address, &coin.denom)?;
 
     let debt_shares_to_add = if total_debt_amount.is_zero() {
         coin.amount

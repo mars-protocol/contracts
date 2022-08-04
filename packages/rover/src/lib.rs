@@ -5,6 +5,7 @@ use crate::error::ContractError;
 pub mod adapters;
 pub mod coins;
 pub mod error;
+pub mod health;
 pub mod msg;
 
 pub type ContractResult<T> = Result<T, ContractError>;

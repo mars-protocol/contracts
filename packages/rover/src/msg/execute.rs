@@ -45,12 +45,15 @@ pub enum CallbackMsg {
     /// Borrow specified amount of coin from Red Bank;
     /// Increase the token's asset amount and debt shares;
     Borrow { token_id: String, coin: Coin },
+    /// Calculate a token's current LTV. If below the maximum LTV, emits a `position_updated`
+    /// event; if above the maximum LTV, throw an error
+    AssertHealth { token_id: String },
 }
 
 impl CallbackMsg {
     pub fn into_cosmos_msg(&self, contract_addr: &Addr) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: String::from(contract_addr),
+            contract_addr: contract_addr.to_string(),
             msg: to_binary(&ExecuteMsg::Callback(self.clone()))?,
             funds: vec![],
         }))

@@ -1,27 +1,32 @@
-use cosmwasm_std::{CheckedMultiplyRatioError, StdError, Uint128};
+use cosmwasm_std::{
+    CheckedFromRatioError, CheckedMultiplyRatioError, DecimalRangeExceeded, OverflowError,
+    StdError, Uint128,
+};
 use thiserror::Error;
 
 use crate::coins::Coins;
 
+pub type ContractResult<T> = Result<T, ContractError>;
+
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
+    #[error("Health factor {health_factor:?} less than 1")]
+    AccountUnhealthy { health_factor: String },
+
     #[error("{0}")]
-    Std(#[from] StdError),
+    CheckedFromRatioError(#[from] CheckedFromRatioError),
 
     #[error("{0}")]
     CheckedMultiply(#[from] CheckedMultiplyRatioError),
 
-    #[error("{user:?} is not authorized to {action:?}")]
-    Unauthorized { user: String, action: String },
+    #[error("{0}")]
+    DecimalRangeExceeded(#[from] DecimalRangeExceeded),
 
-    #[error("{0} is not whitelisted")]
-    NotWhitelisted(String),
+    #[error("Callbacks cannot be invoked externally")]
+    ExternalInvocation,
 
     #[error("Extra funds received: {0}")]
     ExtraFundsReceived(Coins),
-
-    #[error("No coin amount set for action")]
-    NoAmount,
 
     #[error("Sent fund mismatch. Expected: {expected:?}, received {received:?}")]
     FundsMismatch {
@@ -29,9 +34,21 @@ pub enum ContractError {
         received: Uint128,
     },
 
-    #[error("Callbacks cannot be invoked externally")]
-    ExternalInvocation,
+    #[error("No coin amount set for action")]
+    NoAmount,
 
     #[error("{user:?} is not the owner of {token_id:?}")]
     NotTokenOwner { user: String, token_id: String },
+
+    #[error("{0} is not whitelisted")]
+    NotWhitelisted(String),
+
+    #[error("{0}")]
+    Overflow(#[from] OverflowError),
+
+    #[error("{0}")]
+    Std(#[from] StdError),
+
+    #[error("{user:?} is not authorized to {action:?}")]
+    Unauthorized { user: String, action: String },
 }

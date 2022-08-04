@@ -1,21 +1,23 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
-};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 
 use crate::execute::execute_borrow;
-use crate::msg::{ExecuteMsg, QueryMsg};
-use crate::query::query_debt;
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::query::{query_debt, query_market};
+use crate::state::ASSET_LTV;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _msg: Empty,
+    msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    Ok(Response::default()) // do nothing
+    for item in msg.coins {
+        ASSET_LTV.save(deps.storage, item.denom, &item.max_ltv)?
+    }
+    Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -40,5 +42,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             user_address,
             denom,
         } => to_binary(&query_debt(deps, user_address, denom)?),
+        QueryMsg::Market { denom } => to_binary(&query_market(deps, denom)?),
     }
 }

@@ -1,11 +1,13 @@
-use cosmwasm_std::{Addr, Coin, Uint128};
+use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 use cw_multi_test::{App, Executor};
 
 use rover::msg::execute::Action;
 use rover::msg::query::AssetResponseItem;
 use rover::msg::{ExecuteMsg, QueryMsg};
 
-use crate::helpers::{get_token_id, mock_create_credit_account, setup_credit_manager};
+use crate::helpers::{
+    get_token_id, mock_create_credit_account, setup_credit_manager, CoinPriceLTV,
+};
 
 pub mod helpers;
 
@@ -75,20 +77,76 @@ fn test_pagination_on_all_assets_query_works() {
         &mut app,
         &Addr::unchecked("owner"),
         vec![
-            "coin_1".to_string(),
-            "coin_2".to_string(),
-            "coin_3".to_string(),
-            "coin_4".to_string(),
-            "coin_5".to_string(),
-            "coin_6".to_string(),
-            "coin_7".to_string(),
-            "coin_8".to_string(),
-            "coin_9".to_string(),
-            "coin_10".to_string(),
-            "coin_11".to_string(),
-            "coin_12".to_string(),
-            "coin_13".to_string(),
-            "coin_14".to_string(),
+            CoinPriceLTV {
+                denom: "coin_1".to_string(),
+                price: Decimal::from_atomics(1u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(1u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_2".to_string(),
+                price: Decimal::from_atomics(2u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(2u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_3".to_string(),
+                price: Decimal::from_atomics(3u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(3u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_4".to_string(),
+                price: Decimal::from_atomics(4u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(4u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_5".to_string(),
+                price: Decimal::from_atomics(5u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(5u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_6".to_string(),
+                price: Decimal::from_atomics(6u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(6u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_7".to_string(),
+                price: Decimal::from_atomics(7u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(7u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_8".to_string(),
+                price: Decimal::from_atomics(8u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(8u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_9".to_string(),
+                price: Decimal::from_atomics(9u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(9u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_10".to_string(),
+                price: Decimal::from_atomics(10u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(10u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_11".to_string(),
+                price: Decimal::from_atomics(11u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(11u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_12".to_string(),
+                price: Decimal::from_atomics(12u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(12u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_13".to_string(),
+                price: Decimal::from_atomics(13u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(13u128, 2).unwrap(),
+            },
+            CoinPriceLTV {
+                denom: "coin_14".to_string(),
+                price: Decimal::from_atomics(14u128, 1).unwrap(),
+                max_ltv: Decimal::from_atomics(14u128, 2).unwrap(),
+            },
         ],
         vec![],
     );
