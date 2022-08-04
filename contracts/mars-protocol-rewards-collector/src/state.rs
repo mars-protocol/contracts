@@ -1,6 +1,12 @@
+use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 
-use crate::{AssetConfig, Config};
+use mars_outpost::protocol_rewards_collector::Config;
 
-pub const CONFIG: Item<Config> = Item::new("config");
-pub const ASSET_CONFIG: Map<&[u8], AssetConfig> = Map::new("assets");
+use crate::Route;
+
+// The reward collector contract's config
+pub const CONFIG: Item<Config<Addr>> = Item::new("config");
+
+// Route for swapping an offer asset into an ask asset
+pub const ROUTES: Map<(String, String), Route> = Map::new("routes");

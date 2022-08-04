@@ -1,5 +1,12 @@
 pub mod contract;
-pub mod error;
+mod error;
+pub mod helpers;
+pub mod msg;
 pub mod state;
+mod swap;
 
-pub use mars_core::protocol_rewards_collector::*;
+pub use error::{ContractError, ContractResult};
+pub use swap::Route;
+
+#[cfg(test)]
+mod testing;
