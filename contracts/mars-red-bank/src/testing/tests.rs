@@ -22,9 +22,7 @@ use mars_outpost::red_bank::{
 };
 use mars_outpost::{ma_token, math};
 
-use mars_testing::{
-    mock_dependencies, mock_env, mock_env_at_block_time, mock_info, MockEnvParams,
-};
+use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, mock_info, MockEnvParams};
 
 use crate::accounts::get_user_position;
 use crate::contract::{

@@ -159,9 +159,7 @@ fn withdrawing_from_red_bank() {
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "red_bank".to_string(),
             msg: to_binary(&mars_outpost::red_bank::msg::ExecuteMsg::Withdraw {
-                asset: mars_outpost::asset::Asset::Native {
-                    denom: "uatom".to_string()
-                },
+                denom: "uatom".to_string(),
                 amount: Some(Uint128::new(42069)),
                 recipient: None
             })

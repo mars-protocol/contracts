@@ -1,13 +1,11 @@
 pub mod interest_rate_models;
 pub mod msg;
 
+use cosmwasm_std::{Addr, Decimal, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use cosmwasm_std::{Addr, Decimal, Uint128};
-
-use crate::asset::{Asset, AssetType};
 use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
 
@@ -24,14 +22,11 @@ pub struct Config {
     pub ma_token_code_id: u64,
     /// Maximum percentage of outstanding debt that can be covered by a liquidator
     pub close_factor: Decimal,
-    /// Base asset used for denomination. For example: OSMO, INJ, USDC etc.
-    pub base_asset: Asset,
 }
 
 impl Config {
     pub fn validate(&self) -> Result<(), MarsError> {
         decimal_param_le_one(self.close_factor, "close_factor")?;
-
         Ok(())
     }
 }
@@ -50,8 +45,6 @@ pub struct Market {
     pub index: u32,
     /// maToken contract address
     pub ma_token_address: Addr,
-    /// Indicated whether the asset is native or a cw20 token
-    pub asset_type: AssetType,
 
     /// Max base asset that can be borrowed per "base asset" collateral when using the asset as collateral
     pub max_loan_to_value: Decimal,
@@ -137,7 +130,6 @@ impl Default for Market {
             reserve_factor: Default::default(),
             indexes_last_updated: 0,
             debt_total_scaled: Default::default(),
-            asset_type: AssetType::Native,
             liquidation_threshold: Decimal::one(),
             liquidation_bonus: Decimal::zero(),
             interest_rate_model: dynamic_ir_model,
@@ -196,6 +188,7 @@ pub enum UserHealthStatus {
     NotBorrowing,
     Borrowing(Decimal),
 }
+
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConfigResponse {
@@ -215,12 +208,6 @@ pub struct MarketsListResponse {
 pub struct MarketInfo {
     /// Asset denom
     pub denom: String,
-    /// Either denom if native asset or contract address if cw20
-    pub asset_label: String,
-    /// Bytes used as key on the kv store for data related to the asset
-    pub asset_reference: Vec<u8>,
-    /// Indicated whether the asset is native or a cw20 token
-    pub asset_type: AssetType,
     /// Address for the corresponding maToken
     pub ma_token_address: Addr,
 }
@@ -234,12 +221,6 @@ pub struct UserDebtResponse {
 pub struct UserAssetDebtResponse {
     /// Asset denom
     pub denom: String,
-    /// Either denom if native asset or contract address if cw20
-    pub asset_label: String,
-    /// Bytes used as key on the kv store for data related to the asset
-    pub asset_reference: Vec<u8>,
-    /// Indicated whether the asset is native or a cw20 token
-    pub asset_type: AssetType,
     /// Scaled debt amount stored in contract state
     pub amount_scaled: Uint128,
     /// Underlying asset amount that is actually owed at the current block
@@ -255,12 +236,6 @@ pub struct UserCollateralResponse {
 pub struct UserAssetCollateralResponse {
     /// Asset denom
     pub denom: String,
-    /// Either denom if native asset or contract address if cw20
-    pub asset_label: String,
-    /// Bytes used as key on the kv store for data related to the asset
-    pub asset_reference: Vec<u8>,
-    /// Indicated whether the asset is native or a cw20 token
-    pub asset_type: AssetType,
     /// Wether the user is using asset as collateral or not
     pub enabled: bool,
 }

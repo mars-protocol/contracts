@@ -1,16 +1,10 @@
-// Contracts
 pub mod address_provider;
 pub mod cw20_core;
+pub mod error;
+pub mod helpers;
 pub mod incentives;
 pub mod ma_token;
+pub mod math;
 pub mod oracle;
 pub mod red_bank;
 pub mod rewards_collector;
-
-// Types
-pub mod asset;
-pub mod math;
-
-// Helpers
-pub mod error;
-pub mod helpers;
