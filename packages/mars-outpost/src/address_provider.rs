@@ -13,6 +13,8 @@ pub enum MarsContract {
     ProtocolAdmin,
     ProtocolRewardsCollector,
     RedBank,
+    FeeCollector,
+    SafetyFund
 }
 
 impl fmt::Display for MarsContract {
@@ -23,6 +25,8 @@ impl fmt::Display for MarsContract {
             MarsContract::ProtocolAdmin => "protocol_admin",
             MarsContract::ProtocolRewardsCollector => "protocol_rewards_collector",
             MarsContract::RedBank => "red_bank",
+            MarsContract::FeeCollector => "fee_collector",
+            MarsContract::SafetyFund => "safety_fund"
         };
         write!(f, "{}", s)
     }
@@ -38,6 +42,8 @@ impl FromStr for MarsContract {
             "protocol_admin" => Ok(MarsContract::ProtocolAdmin),
             "protocol_rewards_collector" => Ok(MarsContract::ProtocolRewardsCollector),
             "red_bank" => Ok(MarsContract::RedBank),
+            "fee_collector" => Ok(MarsContract::FeeCollector),
+            "safety_fund" => Ok(MarsContract::SafetyFund),
             _ => Err(StdError::parse_err("MarsContract", s)),
         }
     }
@@ -110,7 +116,7 @@ pub mod helpers {
     use cosmwasm_std::{Addr, Deps, StdResult};
 
     pub fn query_address(
-        deps: Deps,
+        deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
         contract: MarsContract,
     ) -> StdResult<Addr> {
@@ -121,7 +127,7 @@ pub mod helpers {
     }
 
     pub fn query_addresses(
-        deps: Deps,
+        deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
         contracts: Vec<MarsContract>,
     ) -> StdResult<HashMap<MarsContract, Addr>> {
@@ -146,7 +152,7 @@ mod tests {
 
     #[test]
     fn test_query_address() {
-        let deps = OwnedDeps {
+        let deps = OwnedDeps::<_, _, _, Empty> {
             storage: MockStorage::default(),
             api: MockApi::default(),
             querier: AddressProviderMockQuerier {},
@@ -166,7 +172,7 @@ mod tests {
 
     #[test]
     fn test_query_addresses() {
-        let deps = OwnedDeps {
+        let deps = OwnedDeps::<_, _, _, Empty> {
             storage: MockStorage::default(),
             api: MockApi::default(),
             querier: AddressProviderMockQuerier {},
