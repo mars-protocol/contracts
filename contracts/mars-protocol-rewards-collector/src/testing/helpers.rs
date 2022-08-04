@@ -6,7 +6,7 @@ use cosmwasm_std::{coin, from_binary, Addr, Decimal, Deps, OwnedDeps};
 use osmo_bindings::{OsmosisQuery, PoolStateResponse, Step};
 
 use mars_outpost::protocol_rewards_collector::{Config, QueryMsg};
-use mars_outpost::testing::{mock_info, MarsMockQuerier};
+use mars_testing::{mock_info, MarsMockQuerier};
 
 use crate::{contract, msg::ExecuteMsg, Route};
 

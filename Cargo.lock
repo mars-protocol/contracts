@@ -456,6 +456,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-outpost",
+ "mars-testing",
  "osmo-bindings",
  "schemars",
  "serde",

@@ -10,7 +10,7 @@ use mars_outpost::error::MarsError;
 use mars_outpost::protocol_rewards_collector::{
     Config, CreateOrUpdateConfig, QueryMsg, RouteResponse,
 };
-use mars_outpost::testing::{mock_env as mock_env_at_height_and_time, mock_info, MockEnvParams};
+use mars_testing::{mock_env as mock_env_at_height_and_time, mock_info, MockEnvParams};
 
 use super::helpers::{self, mock_config, mock_routes};
 use crate::contract::{execute, instantiate};
