@@ -1,7 +1,9 @@
+extern crate core;
+
 pub mod contract;
 
+pub mod borrow;
 pub mod deposit;
-pub mod error;
 pub mod execute;
 pub mod instantiate;
 pub mod query;

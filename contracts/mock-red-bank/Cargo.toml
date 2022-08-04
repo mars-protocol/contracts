@@ -1,8 +1,9 @@
 [package]
-name = "account-nft"
-version = "0.1.0"
+name = "mock-red-bank"
+version = "1.0.0"
 authors = ["larry_0x <larry@delphidigital.io>, grod220 <gabe.r@delphilabs.io>"]
 edition = "2018"
+license = "GPL-3.0-or-later"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -12,13 +13,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cw-storage-plus = "0.14"
-cw721 = "0.13"
-cw721-base = { version = "0.13", features = ["library"] }
 cosmwasm-std = "1.0"
+cw-storage-plus = "0.14"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
-
-[dev-dependencies]
-anyhow = "1"
-cw-multi-test = "0.14"

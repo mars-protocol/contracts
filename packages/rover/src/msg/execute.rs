@@ -1,8 +1,8 @@
-use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdResult, WasmMsg};
-use cw20::Cw20ReceiveMsg;
-use cw_asset::AssetUnchecked;
+use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, StdResult, WasmMsg};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::msg::instantiate::ConfigUpdates;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -11,23 +11,18 @@ pub enum ExecuteMsg {
     // Public messages
     //--------------------------------------------------------------------------------------------------
     /// Mints NFT representing a credit account for user. User can have many.
-    CreateCreditAccount {},
+    CreateCreditAccount,
     /// Update user's position on their credit account
     UpdateCreditAccount {
         token_id: String,
         actions: Vec<Action>,
     },
-    /// The receiving message for Cw20ExecuteMsg::Send deposits
-    Receive(Cw20ReceiveMsg),
 
     //--------------------------------------------------------------------------------------------------
     // Privileged messages
     //--------------------------------------------------------------------------------------------------
-    /// Update owner or stored account nft contract
-    UpdateConfig {
-        account_nft: Option<String>,
-        owner: Option<String>,
-    },
+    /// Update contract config constants
+    UpdateConfig { new_config: ConfigUpdates },
     /// Internal actions only callable by the contract itself
     Callback(CallbackMsg),
 }
@@ -36,18 +31,20 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Action {
-    /// Deposit native asset of specified type and amount. Verifies if the correct amount is sent with transaction.
-    /// NOTE: CW20 Deposits should use Cw20ExecuteMsg::Send {}
-    NativeDeposit(AssetUnchecked),
+    /// Deposit native coin of specified type and amount. Verifies if the correct amount is sent with transaction.
+    Deposit(Coin),
 
-    Placeholder {},
+    /// Borrow coin of specified amount from Red Bank
+    Borrow(Coin),
 }
 
 /// Internal actions made by the contract with pre-validated inputs
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CallbackMsg {
-    Placeholder {},
+    /// Borrow specified amount of coin from Red Bank;
+    /// Increase the token's asset amount and debt shares;
+    Borrow { token_id: String, coin: Coin },
 }
 
 impl CallbackMsg {
@@ -58,11 +55,4 @@ impl CallbackMsg {
             funds: vec![],
         }))
     }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ReceiveMsg {
-    /// Deposit for CW20's. Requires using Cw20ExecuteMsg::Send and specifying this receive message
-    Deposit { token_id: String },
 }

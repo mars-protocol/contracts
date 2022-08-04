@@ -3,6 +3,8 @@ use cw721::OwnerOfResponse;
 use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw721_base::QueryMsg as NftQueryMsg;
 use cw_multi_test::Executor;
+use rover::adapters::RedBankBase;
+use rover::msg::instantiate::ConfigUpdates;
 use rover::msg::query::ConfigResponse;
 use rover::msg::ExecuteMsg::UpdateConfig;
 use rover::msg::{InstantiateMsg, QueryMsg};
@@ -40,7 +42,8 @@ fn test_create_credit_account() {
     let manager_initiate_msg = InstantiateMsg {
         owner: owner.to_string(),
         allowed_vaults: vec![],
-        allowed_assets: vec![],
+        allowed_coins: vec![],
+        red_bank: RedBankBase("redbankaddr".to_string()),
     };
 
     let manager_contract_addr = app
@@ -65,8 +68,13 @@ fn test_create_credit_account() {
         owner.clone(),
         manager_contract_addr.clone(),
         &UpdateConfig {
-            account_nft: Some(nft_contract_addr.to_string()),
-            owner: None,
+            new_config: ConfigUpdates {
+                account_nft: Some(nft_contract_addr.to_string()),
+                owner: None,
+                allowed_coins: None,
+                allowed_vaults: None,
+                red_bank: None,
+            },
         },
         &[],
     );
