@@ -5,7 +5,7 @@ use crate::{ContractError, ContractResult};
 /// For a denom with an optional Uint128 amount,
 /// - if the amount is provided, assert that it is no larger than the available balance;
 /// - if not provided, use the available balance as default.
-pub fn unwrap_option_amount(
+pub(crate) fn unwrap_option_amount(
     querier: &QuerierWrapper<impl cosmwasm_std::CustomQuery>,
     addr: &Addr,
     denom: &str,
@@ -26,6 +26,59 @@ pub fn unwrap_option_amount(
 }
 
 /// Convert an optional Uint128 amount to string. If the amount is undefined, return `undefined`
-pub fn stringify_option_amount(amount: Option<Uint128>) -> String {
+pub(crate) fn stringify_option_amount(amount: Option<Uint128>) -> String {
     amount.map_or_else(|| "undefined".to_string(), |amount| amount.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cosmwasm_std::coin;
+    use cosmwasm_std::testing::{mock_dependencies_with_balance, MOCK_CONTRACT_ADDR};
+
+    #[test]
+    fn unwrapping_option_amount() {
+        let deps = mock_dependencies_with_balance(&[
+            coin(88888, "uatom"),
+            coin(1234, "uusdc"),
+            coin(8964, "umars"),
+        ]);
+
+        assert_eq!(
+            unwrap_option_amount(
+                &deps.as_ref().querier,
+                &Addr::unchecked(MOCK_CONTRACT_ADDR),
+                "uatom",
+                None
+            ),
+            Ok(Uint128::new(88888))
+        );
+        assert_eq!(
+            unwrap_option_amount(
+                &deps.as_ref().querier,
+                &Addr::unchecked(MOCK_CONTRACT_ADDR),
+                "uatom",
+                Some(Uint128::new(12345))
+            ),
+            Ok(Uint128::new(12345))
+        );
+        assert_eq!(
+            unwrap_option_amount(
+                &deps.as_ref().querier,
+                &Addr::unchecked(MOCK_CONTRACT_ADDR),
+                "uatom",
+                Some(Uint128::new(99999))
+            ),
+            Err(ContractError::AmountToDistributeTooLarge {
+                amount: Uint128::new(99999),
+                balance: Uint128::new(88888),
+            })
+        );
+    }
+
+    #[test]
+    fn stringifying_option_amount() {
+        assert_eq!(stringify_option_amount(Some(Uint128::new(42069))), "42069".to_string());
+        assert_eq!(stringify_option_amount(None), "undefined".to_string());
+    }
 }

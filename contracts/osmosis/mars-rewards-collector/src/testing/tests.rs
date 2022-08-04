@@ -1,6 +1,6 @@
-use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
+use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, IbcMsg, IbcTimeout, IbcTimeoutBlock,
+    coin, to_binary, BankMsg, Coin, CosmosMsg, Decimal, IbcMsg, IbcTimeout, IbcTimeoutBlock,
     SubMsg, Timestamp, Uint128, WasmMsg,
 };
 
@@ -8,7 +8,6 @@ use osmo_bindings::{OsmosisMsg, Step, Swap, SwapAmountWithLimit};
 
 use mars_outpost::error::MarsError;
 use mars_outpost::rewards_collector::{Config, CreateOrUpdateConfig, QueryMsg, RouteResponse};
-use mars_rewards_collector_base::helpers::{stringify_option_amount, unwrap_option_amount};
 use mars_rewards_collector_base::{ContractError, Route};
 use mars_testing::{mock_env as mock_env_at_height_and_time, mock_info, MockEnvParams};
 
@@ -512,46 +511,4 @@ fn stringifying_route() {
         },
     ]);
     assert_eq!(route.to_string(), "1:uosmo|420:umars".to_string());
-}
-
-#[test]
-fn unwrapping_option_amount() {
-    let deps = helpers::setup_test();
-
-    assert_eq!(
-        unwrap_option_amount(
-            &deps.as_ref().querier,
-            &Addr::unchecked(MOCK_CONTRACT_ADDR),
-            "uatom",
-            None
-        ),
-        Ok(Uint128::new(88888))
-    );
-    assert_eq!(
-        unwrap_option_amount(
-            &deps.as_ref().querier,
-            &Addr::unchecked(MOCK_CONTRACT_ADDR),
-            "uatom",
-            Some(Uint128::new(12345))
-        ),
-        Ok(Uint128::new(12345))
-    );
-    assert_eq!(
-        unwrap_option_amount(
-            &deps.as_ref().querier,
-            &Addr::unchecked(MOCK_CONTRACT_ADDR),
-            "uatom",
-            Some(Uint128::new(99999))
-        ),
-        Err(ContractError::AmountToDistributeTooLarge {
-            amount: Uint128::new(99999),
-            balance: Uint128::new(88888),
-        })
-    );
-}
-
-#[test]
-fn stringifying_option_amount() {
-    assert_eq!(stringify_option_amount(Some(Uint128::new(42069))), "42069".to_string());
-    assert_eq!(stringify_option_amount(None), "undefined".to_string());
 }
