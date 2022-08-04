@@ -2,7 +2,7 @@ use cosmwasm_std::{OverflowError, StdError, Uint128};
 use thiserror::Error;
 
 use crate::ConfigError;
-use mars_core::error::MarsError;
+use mars_outpost::error::MarsError;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
@@ -18,9 +18,19 @@ pub enum ContractError {
     #[error("{0}")]
     ConfigError(#[from] ConfigError),
 
+    #[error("Swap Error {msg}")]
+    SwapError{
+        msg: String,
+    },
+
     #[error("Asset is not enabled for distribution: {asset_label:?}")]
-    AssetNotEnabled { asset_label: String },
+    AssetNotEnabledForDistribution {
+        asset_label: String,
+    },
 
     #[error("Amount to distribute {amount} is larger than available balance {balance}")]
-    AmountToDistributeTooLarge { amount: Uint128, balance: Uint128 },
+    AmountToDistributeTooLarge {
+        amount: Uint128,
+        balance: Uint128,
+    },
 }
