@@ -62,7 +62,7 @@ fn updating_config() {
     invalid_cfg.safety_tax_rate = Some(Decimal::percent(125));
 
     let info = mock_info("owner");
-    let msg = ExecuteMsg::UpdateConfig(invalid_cfg.clone());
+    let msg = ExecuteMsg::UpdateConfig(invalid_cfg);
     let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
     assert_eq!(
         err,
@@ -130,7 +130,7 @@ fn setting_route() {
             denom_out: "umars".to_string(),
         },
     );
-    assert_eq!(res.route, Route(steps.clone()));
+    assert_eq!(res.route, Route(steps));
 }
 
 #[test]
@@ -263,7 +263,7 @@ fn distributing_rewards() {
     // distribute umars to fee collector
     let res = execute(
         deps.as_mut(),
-        env.clone(),
+        env,
         mock_info("jake"),
         ExecuteMsg::DistributeRewards {
             denom: "umars".to_string(),
