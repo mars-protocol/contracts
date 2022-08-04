@@ -179,7 +179,8 @@ where
         Ok(Response::new()
             .add_attribute("action", "mars/rewards-collector/set_instructions")
             .add_attribute("denom_in", denom_in)
-            .add_attribute("denom_out", denom_out))
+            .add_attribute("denom_out", denom_out)
+            .add_attribute("route", route.to_string()))
     }
 
     fn withdraw_from_red_bank(

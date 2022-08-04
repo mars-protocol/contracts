@@ -1,3 +1,5 @@
+use std::fmt;
+
 use cosmwasm_std::{CosmosMsg, QuerierWrapper, QueryRequest, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -10,6 +12,18 @@ use crate::helpers::hashset;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct OsmosisRoute(pub Vec<Step>);
+
+impl fmt::Display for OsmosisRoute {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = self
+            .0
+            .iter()
+            .map(|step| format!("{}:{}", step.pool_id, step.denom_out))
+            .collect::<Vec<_>>()
+            .join("|");
+        write!(f, "{}", s)
+    }
+}
 
 impl Route<OsmosisMsg, OsmosisQuery> for OsmosisRoute {
     // Perform basic validation of the swap steps

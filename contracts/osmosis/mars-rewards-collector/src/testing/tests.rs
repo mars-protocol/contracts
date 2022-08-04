@@ -500,6 +500,21 @@ fn validating_route() {
 }
 
 #[test]
+fn stringifying_route() {
+    let route = OsmosisRoute(vec![
+        Step {
+            pool_id: 1,
+            denom_out: "uosmo".to_string(),
+        },
+        Step {
+            pool_id: 420,
+            denom_out: "umars".to_string(),
+        },
+    ]);
+    assert_eq!(route.to_string(), "1:uosmo|420:umars".to_string());
+}
+
+#[test]
 fn unwrapping_option_amount() {
     let deps = helpers::setup_test();
 
