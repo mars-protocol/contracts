@@ -1,18 +1,18 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Array_of_RouteResponse_for_Route",
+  "title": "Array_of_RouteResponse_for_OsmosisRoute",
   "type": "array",
   "items": {
-    "$ref": "#/definitions/RouteResponse_for_Route"
+    "$ref": "#/definitions/RouteResponse_for_OsmosisRoute"
   },
   "definitions": {
-    "Route": {
+    "OsmosisRoute": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/Step"
       }
     },
-    "RouteResponse_for_Route": {
+    "RouteResponse_for_OsmosisRoute": {
       "type": "object",
       "required": [
         "denom_in",
@@ -27,7 +27,7 @@
           "type": "string"
         },
         "route": {
-          "$ref": "#/definitions/Route"
+          "$ref": "#/definitions/OsmosisRoute"
         }
       }
     },

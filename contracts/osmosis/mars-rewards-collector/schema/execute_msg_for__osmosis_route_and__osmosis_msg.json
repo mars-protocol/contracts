@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ExecuteMsg_for_Route_and_OsmosisMsg",
+  "title": "ExecuteMsg_for_OsmosisRoute_and_OsmosisMsg",
   "oneOf": [
     {
       "description": "Update contract config",
@@ -10,7 +10,15 @@
       ],
       "properties": {
         "update_config": {
-          "$ref": "#/definitions/CreateOrUpdateConfig"
+          "type": "object",
+          "required": [
+            "new_cfg"
+          ],
+          "properties": {
+            "new_cfg": {
+              "$ref": "#/definitions/CreateOrUpdateConfig"
+            }
+          }
         }
       },
       "additionalProperties": false
@@ -37,7 +45,7 @@
               "type": "string"
             },
             "route": {
-              "$ref": "#/definitions/Route"
+              "$ref": "#/definitions/OsmosisRoute"
             }
           }
         }
@@ -145,7 +153,15 @@
       ],
       "properties": {
         "execute_cosmos_msg": {
-          "$ref": "#/definitions/CosmosMsg_for_OsmosisMsg"
+          "type": "object",
+          "required": [
+            "cosmos_msg"
+          ],
+          "properties": {
+            "cosmos_msg": {
+              "$ref": "#/definitions/CosmosMsg_for_OsmosisMsg"
+            }
+          }
         }
       },
       "additionalProperties": false
@@ -650,7 +666,7 @@
         }
       ]
     },
-    "Route": {
+    "OsmosisRoute": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/Step"
