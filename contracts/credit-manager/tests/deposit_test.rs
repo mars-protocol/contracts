@@ -13,10 +13,12 @@ use rover::msg::ExecuteMsg;
 
 use crate::helpers::{
     assert_err, get_token_id, mock_app, mock_create_credit_account, query_position,
-    setup_credit_manager, CoinPriceLTV,
+    setup_credit_manager, CoinInfo,
 };
 
 pub mod helpers;
+
+// TODO: Assert values
 
 #[test]
 fn test_only_owner_of_token_can_deposit() {
@@ -55,10 +57,11 @@ fn test_only_owner_of_token_can_deposit() {
 #[test]
 fn test_deposit_nothing() {
     let mut app = mock_app();
-    let coin_info = CoinPriceLTV {
+    let coin_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(25u128, 2).unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
     };
     let mock = setup_credit_manager(
         &mut app,
@@ -72,7 +75,7 @@ fn test_deposit_nothing() {
     let token_id = get_token_id(res);
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.assets.len(), 0);
+    assert_eq!(res.coin_assets.len(), 0);
 
     app.execute_contract(
         user.clone(),
@@ -86,16 +89,17 @@ fn test_deposit_nothing() {
     .unwrap();
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.assets.len(), 0);
+    assert_eq!(res.coin_assets.len(), 0);
 }
 
 #[test]
 fn test_deposit_but_no_funds() {
     let mut app = mock_app();
-    let coin_info = CoinPriceLTV {
+    let coin_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(25u128, 2).unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
     };
     let deposit_amount = Uint128::from(234u128);
     let mock = setup_credit_manager(
@@ -128,16 +132,17 @@ fn test_deposit_but_no_funds() {
     );
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.assets.len(), 0);
+    assert_eq!(res.coin_assets.len(), 0);
 }
 
 #[test]
 fn test_deposit_but_not_enough_funds() {
     let user = Addr::unchecked("user");
-    let coin_info = CoinPriceLTV {
+    let coin_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(25u128, 2).unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
     };
     let mut app = App::new(|router, _, storage| {
         router
@@ -182,10 +187,11 @@ fn test_deposit_but_not_enough_funds() {
 #[test]
 fn test_can_only_deposit_allowed_assets() {
     let user = Addr::unchecked("user");
-    let coin_info = CoinPriceLTV {
+    let coin_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(25u128, 2).unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
     };
     let mut app = App::new(|router, _, storage| {
         router
@@ -225,21 +231,23 @@ fn test_can_only_deposit_allowed_assets() {
     assert_err(res, NotWhitelisted(not_allowed_coin.denom));
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.assets.len(), 0);
+    assert_eq!(res.coin_assets.len(), 0);
 }
 
 #[test]
 fn test_extra_funds_received() {
     let user = Addr::unchecked("user");
-    let uosmo_info = CoinPriceLTV {
+    let uosmo_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(25u128, 2).unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
     };
-    let uatom_info = CoinPriceLTV {
+    let uatom_info = CoinInfo {
         denom: "uatom".to_string(),
         price: Decimal::from_atomics(10u128, 1).unwrap(),
         max_ltv: Decimal::from_atomics(82u128, 2).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
     };
     let mut app = App::new(|router, _, storage| {
         router
@@ -282,16 +290,17 @@ fn test_extra_funds_received() {
     assert_err(res, ExtraFundsReceived(Coins::from(vec![extra_funds])));
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.assets.len(), 0);
+    assert_eq!(res.coin_assets.len(), 0);
 }
 
 #[test]
 fn test_deposit_success() {
     let user = Addr::unchecked("user");
-    let coin_info = CoinPriceLTV {
+    let coin_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(25u128, 2).unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
     };
 
     let mut app = App::new(|router, _, storage| {
@@ -328,10 +337,10 @@ fn test_deposit_success() {
     .unwrap();
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.assets.len(), 1);
-    assert_eq!(res.assets.first().unwrap().amount, deposit_amount);
-    assert_eq!(res.assets.first().unwrap().denom, coin_info.denom);
-    assert_eq!(res.assets.first().unwrap().price_per_unit, coin_info.price);
+    assert_eq!(res.coin_assets.len(), 1);
+    assert_eq!(res.coin_assets.first().unwrap().amount, deposit_amount);
+    assert_eq!(res.coin_assets.first().unwrap().denom, coin_info.denom);
+    assert_eq!(res.coin_assets.first().unwrap().price, coin_info.price);
 
     let coin = app
         .wrap()
@@ -343,15 +352,17 @@ fn test_deposit_success() {
 #[test]
 fn test_multiple_deposit_actions() {
     let user = Addr::unchecked("user");
-    let uosmo_info = CoinPriceLTV {
+    let uosmo_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(25u128, 2).unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
     };
-    let uatom_info = CoinPriceLTV {
+    let uatom_info = CoinInfo {
         denom: "uatom".to_string(),
         price: Decimal::from_atomics(10u128, 1).unwrap(),
         max_ltv: Decimal::from_atomics(82u128, 2).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
     };
     let mut app = App::new(|router, _, storage| {
         router
@@ -398,7 +409,7 @@ fn test_multiple_deposit_actions() {
     .unwrap();
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.assets.len(), 2);
+    assert_eq!(res.coin_assets.len(), 2);
     assert_present(&res, &uosmo_info, uosmo_amount);
     assert_present(&res, &uatom_info, uatom_amount);
 
@@ -415,8 +426,8 @@ fn test_multiple_deposit_actions() {
     assert_eq!(coin.amount, uatom_amount);
 }
 
-fn assert_present(res: &PositionResponse, coin: &CoinPriceLTV, amount: Uint128) {
-    res.assets
+fn assert_present(res: &PositionResponse, coin: &CoinInfo, amount: Uint128) {
+    res.coin_assets
         .iter()
         .find(|item| item.denom == coin.denom && &item.amount == &amount)
         .unwrap();

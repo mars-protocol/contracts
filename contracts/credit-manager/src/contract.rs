@@ -5,6 +5,7 @@ use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use rover::ContractResult;
 
 use crate::execute::{create_credit_account, dispatch_actions, execute_callback, update_config};
+use crate::health::compute_health;
 use crate::instantiate::store_config;
 use crate::query::{
     query_all_assets, query_all_debt_shares, query_all_total_debt_shares, query_allowed_coins,
@@ -54,6 +55,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             to_binary(&query_allowed_coins(deps, start_after, limit)?)
         }
         QueryMsg::Position { token_id } => to_binary(&query_position(deps, &env, &token_id)?),
+        QueryMsg::Health { token_id } => to_binary(&compute_health(deps, &env, &token_id)?),
         QueryMsg::AllAssets { start_after, limit } => {
             to_binary(&query_all_assets(deps, start_after, limit)?)
         }

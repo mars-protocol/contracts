@@ -4,13 +4,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct InstantiateMsg {
-    pub coins: Vec<DenomWithLTV>,
+    pub coins: Vec<CoinMarketInfo>,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct DenomWithLTV {
+pub struct CoinMarketInfo {
     pub denom: String,
     pub max_ltv: Decimal,
+    pub liquidation_threshold: Decimal,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -41,4 +42,5 @@ pub struct UserAssetDebtResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Market {
     pub max_loan_to_value: Decimal,
+    pub liquidation_threshold: Decimal,
 }

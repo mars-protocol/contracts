@@ -13,7 +13,7 @@ use rover::ContractResult;
 
 use crate::borrow::borrow;
 use crate::deposit::deposit;
-use crate::health::assert_health;
+use crate::health::assert_below_max_ltv;
 use crate::state::{ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, ORACLE, OWNER, RED_BANK};
 
 pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Response> {
@@ -142,7 +142,7 @@ pub fn dispatch_actions(
     }
 
     // after user selected actions, we assert LTV is healthy; if not, throw error and revert all actions
-    callbacks.extend([CallbackMsg::AssertHealth {
+    callbacks.extend([CallbackMsg::AssertBelowMaxLTV {
         token_id: token_id.to_string(),
     }]);
 
@@ -167,7 +167,7 @@ pub fn execute_callback(
     }
     match callback {
         CallbackMsg::Borrow { coin, token_id } => borrow(deps, env, &token_id, coin),
-        CallbackMsg::AssertHealth { token_id } => assert_health(deps, env, &token_id),
+        CallbackMsg::AssertBelowMaxLTV { token_id } => assert_below_max_ltv(deps, env, &token_id),
     }
 }
 

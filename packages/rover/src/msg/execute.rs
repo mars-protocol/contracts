@@ -45,9 +45,9 @@ pub enum CallbackMsg {
     /// Borrow specified amount of coin from Red Bank;
     /// Increase the token's asset amount and debt shares;
     Borrow { token_id: String, coin: Coin },
-    /// Calculate a token's current LTV. If below the maximum LTV, emits a `position_updated`
-    /// event; if above the maximum LTV, throw an error
-    AssertHealth { token_id: String },
+    /// Calculate the account's max loan-to-value health factor. If above 1,
+    /// emits a `position_changed` event. If 1 or below, raises an error.
+    AssertBelowMaxLTV { token_id: String },
 }
 
 impl CallbackMsg {

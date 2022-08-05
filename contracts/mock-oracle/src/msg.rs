@@ -21,10 +21,11 @@ pub enum ExecuteMsg {
 }
 
 // mocked from: https://github.com/mars-protocol/mars-core/blob/master/packages/mars-core/src/oracle.rs#L155
-// cw-asset needs to be implemented before we can import
+// cw-asset needs to be removed before we can import
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     Config {},
     AssetPrice { denom: String },
+    AssetPriceSource { denom: String },
 }

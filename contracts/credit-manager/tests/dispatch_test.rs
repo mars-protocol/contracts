@@ -54,7 +54,7 @@ fn test_nothing_happens_if_no_actions_are_passed() {
     let token_id = get_token_id(res);
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.assets.len(), 0);
+    assert_eq!(res.coin_assets.len(), 0);
 
     app.execute_contract(
         user.clone(),
@@ -68,5 +68,5 @@ fn test_nothing_happens_if_no_actions_are_passed() {
     .unwrap();
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.assets.len(), 0);
+    assert_eq!(res.coin_assets.len(), 0);
 }

@@ -4,7 +4,7 @@ use cosmwasm_std::{
 };
 
 use crate::msg::{CoinPrice, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::ASSET_PRICE;
+use crate::state::COIN_PRICE;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -14,7 +14,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
     for item in msg.coins {
-        ASSET_PRICE.save(deps.storage, item.denom, &item.price)?
+        COIN_PRICE.save(deps.storage, item.denom, &item.price)?
     }
     Ok(Response::default())
 }
@@ -32,7 +32,7 @@ pub fn execute(
 }
 
 fn change_price(deps: DepsMut, coin: CoinPrice) -> StdResult<Response> {
-    ASSET_PRICE.save(deps.storage, coin.denom, &coin.price)?;
+    COIN_PRICE.save(deps.storage, coin.denom, &coin.price)?;
     Ok(Response::new())
 }
 
@@ -50,5 +50,5 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 // TODO: After mars-core bumps to the next version https://crates.io/crates/mars-core (currently 1.0.0)
 // should update this mock to return MarsDecimal:  https://github.com/mars-protocol/mars-core/blob/master/packages/mars-core/src/math/decimal.rs
 fn query_asset_price(deps: Deps, denom: String) -> StdResult<Decimal> {
-    ASSET_PRICE.load(deps.storage, denom)
+    COIN_PRICE.load(deps.storage, denom)
 }

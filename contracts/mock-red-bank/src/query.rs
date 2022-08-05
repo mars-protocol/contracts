@@ -2,7 +2,7 @@ use cosmwasm_std::{Deps, StdResult};
 
 use crate::helpers::load_debt_amount;
 use crate::msg::{Market, UserAssetDebtResponse};
-use crate::state::ASSET_LTV;
+use crate::state::COIN_MARKET_INFO;
 
 pub fn query_debt(
     deps: Deps,
@@ -15,6 +15,9 @@ pub fn query_debt(
 }
 
 pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
-    let max_loan_to_value = ASSET_LTV.load(deps.storage, denom)?;
-    Ok(Market { max_loan_to_value })
+    let market_info = COIN_MARKET_INFO.load(deps.storage, denom)?;
+    Ok(Market {
+        max_loan_to_value: market_info.max_ltv,
+        liquidation_threshold: market_info.liquidation_threshold,
+    })
 }

@@ -5,7 +5,7 @@ use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
 use crate::execute::execute_borrow;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::query::{query_debt, query_market};
-use crate::state::ASSET_LTV;
+use crate::state::COIN_MARKET_INFO;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -15,7 +15,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
     for item in msg.coins {
-        ASSET_LTV.save(deps.storage, item.denom, &item.max_ltv)?
+        COIN_MARKET_INFO.save(deps.storage, item.denom.clone(), &item)?;
     }
     Ok(Response::default())
 }

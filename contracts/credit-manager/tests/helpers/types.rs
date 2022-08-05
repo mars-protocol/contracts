@@ -11,13 +11,14 @@ pub struct MockEnv {
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct CoinPriceLTV {
+pub struct CoinInfo {
     pub denom: String,
     pub price: Decimal,
     pub max_ltv: Decimal,
+    pub liquidation_threshold: Decimal,
 }
 
-impl CoinPriceLTV {
+impl CoinInfo {
     pub fn to_coin(&self, amount: Uint128) -> Coin {
         Coin {
             denom: self.denom.clone(),

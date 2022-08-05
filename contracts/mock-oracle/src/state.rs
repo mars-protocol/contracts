@@ -1,4 +1,4 @@
 use cosmwasm_std::Decimal;
 use cw_storage_plus::Map;
 
-pub const ASSET_PRICE: Map<String, Decimal> = Map::new("asset_price");
+pub const COIN_PRICE: Map<String, Decimal> = Map::new("coin_price");

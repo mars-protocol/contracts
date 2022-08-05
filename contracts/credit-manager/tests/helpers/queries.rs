@@ -1,5 +1,6 @@
 use cosmwasm_std::Addr;
 use cw_multi_test::{App, AppResponse};
+use rover::health::Health;
 
 use rover::msg::query::{ConfigResponse, PositionResponse, QueryMsg};
 
@@ -25,6 +26,17 @@ pub fn query_position(
         .query_wasm_smart(
             manager_contract_addr.clone(),
             &QueryMsg::Position {
+                token_id: token_id.clone(),
+            },
+        )
+        .unwrap()
+}
+
+pub fn query_health(app: &App, manager_contract_addr: &Addr, token_id: &String) -> Health {
+    app.wrap()
+        .query_wasm_smart(
+            manager_contract_addr.clone(),
+            &QueryMsg::Health {
                 token_id: token_id.clone(),
             },
         )

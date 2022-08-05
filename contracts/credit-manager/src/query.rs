@@ -2,12 +2,11 @@ use cosmwasm_std::{Decimal, Deps, Env, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
 
 use rover::msg::query::{
-    AssetResponseItem, CoinShares, CoinSharesValue, CoinValue, ConfigResponse, PositionResponse,
+    AssetResponseItem, CoinShares, CoinValue, ConfigResponse, DebtSharesValue, PositionResponse,
     SharesResponseItem,
 };
-use rover::{ContractResult, Denom, NftTokenId, Shares};
+use rover::{ContractResult, Denom, NftTokenId};
 
-use crate::health::compute_health;
 use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, ASSETS, DEBT_SHARES, ORACLE, OWNER, RED_BANK,
     TOTAL_DEBT_SHARES,
@@ -32,19 +31,13 @@ pub fn query_position(
     env: &Env,
     token_id: NftTokenId,
 ) -> ContractResult<PositionResponse> {
-    let assets = get_assets_value(deps, token_id)?;
-    let debt_shares = get_debts_value(deps, env, token_id)?;
-    let health = compute_health(&deps, &assets, &debt_shares)?;
+    let coin_asset_values = get_coin_asset_values(deps, token_id)?;
+    let debt_shares_values = get_debt_shares_values(deps, env, token_id)?;
 
     Ok(PositionResponse {
         token_id: token_id.to_string(),
-        assets,
-        debt_shares,
-        assets_value: health.assets_value,
-        ltv_adjusted_assets_value: health.ltv_adjusted_assets_value,
-        debts_value: health.debts_value,
-        health_factor: health.health_factor,
-        healthy: health.healthy,
+        coin_assets: coin_asset_values,
+        debt_shares: debt_shares_values,
     })
 }
 
@@ -71,16 +64,16 @@ pub fn query_all_assets(
         .collect())
 }
 
-fn get_debts_value(
+fn get_debt_shares_values(
     deps: Deps,
     env: &Env,
     token_id: NftTokenId,
-) -> ContractResult<Vec<CoinSharesValue>> {
+) -> ContractResult<Vec<DebtSharesValue>> {
     let oracle = ORACLE.load(deps.storage)?;
     DEBT_SHARES
         .prefix(token_id)
         .range(deps.storage, None, None, Order::Ascending)
-        .collect::<StdResult<Vec<(String, Shares)>>>()?
+        .collect::<StdResult<Vec<_>>>()?
         .iter()
         .map(|(denom, shares)| {
             // proportion of debt this token represents
@@ -90,22 +83,19 @@ fn get_debts_value(
             let token_share_ratio = Decimal::checked_from_ratio(*shares, total_debt_shares)?;
 
             // total rover debt for asset
-            let total_debt_amount = RED_BANK.load(deps.storage)?.query_debt(
-                &deps.querier,
-                &env.contract.address,
-                denom,
-            )?;
-            let total_debt_amount = Decimal::from_atomics(total_debt_amount, 0)?;
+            let red_bank = RED_BANK.load(deps.storage)?;
+            let total_debt_amount =
+                red_bank.query_debt(&deps.querier, &env.contract.address, denom)?;
+            let total_debt_amount_dec = Decimal::from_atomics(total_debt_amount, 0)?;
 
             // debt value of token's position
-            let price_per_unit = oracle.query_price(&deps.querier, denom)?;
-            let position_debt_value = price_per_unit
-                .checked_mul(total_debt_amount)?
+            let coin_price = oracle.query_price(&deps.querier, denom)?;
+            let position_debt_value = coin_price
+                .checked_mul(total_debt_amount_dec)?
                 .checked_mul(token_share_ratio)?;
 
-            Ok(CoinSharesValue {
-                value: position_debt_value,
-                price_per_unit,
+            Ok(DebtSharesValue {
+                total_value: position_debt_value,
                 denom: denom.clone(),
                 shares: *shares,
             })
@@ -113,7 +103,7 @@ fn get_debts_value(
         .collect()
 }
 
-fn get_assets_value(deps: Deps, token_id: &str) -> ContractResult<Vec<CoinValue>> {
+fn get_coin_asset_values(deps: Deps, token_id: &str) -> ContractResult<Vec<CoinValue>> {
     let oracle = ORACLE.load(deps.storage)?;
     ASSETS
         .prefix(token_id)
@@ -121,14 +111,14 @@ fn get_assets_value(deps: Deps, token_id: &str) -> ContractResult<Vec<CoinValue>
         .collect::<StdResult<Vec<(String, Uint128)>>>()?
         .iter()
         .map(|(denom, amount)| {
-            let price_per_unit = oracle.query_price(&deps.querier, denom)?;
+            let price = oracle.query_price(&deps.querier, denom)?;
             let decimal_amount = Decimal::from_atomics(*amount, 0)?;
-            let value = price_per_unit.checked_mul(decimal_amount)?;
+            let total_value = price.checked_mul(decimal_amount)?;
             Ok(CoinValue {
-                value,
-                price_per_unit,
                 denom: denom.clone(),
                 amount: *amount,
+                price,
+                total_value,
             })
         })
         .collect()

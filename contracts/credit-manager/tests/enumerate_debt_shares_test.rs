@@ -8,7 +8,7 @@ use rover::msg::{ExecuteMsg, QueryMsg};
 
 use crate::helpers::{
     fund_red_bank, get_token_id, mock_create_credit_account, query_config, setup_credit_manager,
-    CoinPriceLTV,
+    CoinInfo,
 };
 
 pub mod helpers;
@@ -79,164 +79,196 @@ fn test_pagination_on_all_debt_shares_query_works() {
         &mut app,
         &Addr::unchecked("owner"),
         vec![
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_1".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_2".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_3".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_4".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_5".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_6".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_7".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_8".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_9".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_10".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_11".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_12".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_13".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_14".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_15".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_16".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_17".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_18".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_19".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_20".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_21".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_22".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_23".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_24".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_25".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_26".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_27".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_28".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_29".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_30".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_31".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
-            CoinPriceLTV {
+            CoinInfo {
                 denom: "coin_32".to_string(),
                 max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
                 price: Decimal::from_atomics(10u128, 0).unwrap(),
             },
         ],

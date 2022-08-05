@@ -5,7 +5,7 @@ use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
-use mock_red_bank::msg::{DenomWithLTV, InstantiateMsg as RedBankInstantiateMsg};
+use mock_red_bank::msg::{CoinMarketInfo, InstantiateMsg as RedBankInstantiateMsg};
 use rover::adapters::{OracleBase, RedBankBase};
 use rover::msg::execute::ExecuteMsg;
 use rover::msg::instantiate::ConfigUpdates;
@@ -13,7 +13,7 @@ use rover::msg::InstantiateMsg;
 
 use crate::helpers::contracts::{mock_account_nft_contract, mock_contract, mock_red_bank_contract};
 use crate::helpers::types::MockEnv;
-use crate::helpers::{mock_oracle_contract, CoinPriceLTV};
+use crate::helpers::{mock_oracle_contract, CoinInfo};
 
 pub fn mock_create_credit_account(
     app: &mut App,
@@ -75,7 +75,7 @@ pub fn setup_nft_contract(app: &mut App, owner: &Addr, manager_contract_addr: &A
     nft_contract_addr
 }
 
-pub fn setup_oracle(app: &mut App, coins: &Vec<CoinPriceLTV>) -> Addr {
+pub fn setup_oracle(app: &mut App, coins: &Vec<CoinInfo>) -> Addr {
     let contract_code_id = app.store_code(mock_oracle_contract());
     app.instantiate_contract(
         contract_code_id,
@@ -96,7 +96,7 @@ pub fn setup_oracle(app: &mut App, coins: &Vec<CoinPriceLTV>) -> Addr {
     .unwrap()
 }
 
-pub fn setup_red_bank(app: &mut App, coins: &Vec<CoinPriceLTV>) -> Addr {
+pub fn setup_red_bank(app: &mut App, coins: &Vec<CoinInfo>) -> Addr {
     let contract_code_id = app.store_code(mock_red_bank_contract());
     app.instantiate_contract(
         contract_code_id,
@@ -104,9 +104,10 @@ pub fn setup_red_bank(app: &mut App, coins: &Vec<CoinPriceLTV>) -> Addr {
         &RedBankInstantiateMsg {
             coins: coins
                 .iter()
-                .map(|item| DenomWithLTV {
+                .map(|item| CoinMarketInfo {
                     denom: item.denom.to_string(),
                     max_ltv: item.max_ltv,
+                    liquidation_threshold: item.liquidation_threshold,
                 })
                 .collect(),
         },
@@ -128,7 +129,7 @@ pub fn fund_red_bank(app: &mut BasicApp, red_bank_addr: String, funds: Vec<Coin>
 pub fn setup_credit_manager(
     mut app: &mut App,
     owner: &Addr,
-    allowed_coins: Vec<CoinPriceLTV>,
+    allowed_coins: Vec<CoinInfo>,
     allowed_vaults: Vec<String>,
 ) -> MockEnv {
     let credit_manager_code_id = app.store_code(mock_contract());

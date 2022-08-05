@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 pub enum QueryMsg {
     /// Owner & account nft address. Response type: `ConfigResponse`
     Config,
-    /// Whitelisted vaults. Response type: `Vec<WithMaxLTV<String>>`
+    /// Whitelisted vaults. Response type: `Vec<String>`
     AllowedVaults {
         start_after: Option<String>,
         limit: Option<u32>,
@@ -19,6 +19,8 @@ pub enum QueryMsg {
     },
     /// The entire position represented by token. Response type: `PositionResponse`
     Position { token_id: String },
+    /// The health of the entire position represented by token. Response type: `Health`
+    Health { token_id: String },
     /// Enumerate assets for all token positions. Response type: `Vec<AssetResponseItem>`
     /// start_after accepts (token_id, denom)
     AllAssets {
@@ -67,32 +69,29 @@ pub struct CoinShares {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct CoinValue {
-    pub value: Decimal,
-    pub price_per_unit: Decimal,
     pub denom: String,
     pub amount: Uint128,
+    pub price: Decimal,
+    pub total_value: Decimal,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct CoinSharesValue {
-    pub value: Decimal,
-    pub price_per_unit: Decimal,
+pub struct DebtSharesValue {
     pub denom: String,
     pub shares: Uint128,
+    pub total_value: Decimal,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct PositionResponse {
+    /// Unique NFT token id that represents the cross-margin account. The owner of this NFT, owns the account.
     pub token_id: String,
-    pub assets: Vec<CoinValue>,
-    pub debt_shares: Vec<CoinSharesValue>,
-    pub assets_value: Decimal,
-    pub ltv_adjusted_assets_value: Decimal,
-    pub debts_value: Decimal,
-    pub health_factor: Option<Decimal>,
-    pub healthy: bool,
+    /// All coin asset positions with its value
+    pub coin_assets: Vec<CoinValue>,
+    /// All debt positions with its value
+    pub debt_shares: Vec<DebtSharesValue>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
