@@ -1,20 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "ExecuteMsg",
-  "anyOf": [
-    {
-      "description": "Implementation of cw20 receive msg",
-      "type": "object",
-      "required": [
-        "receive"
-      ],
-      "properties": {
-        "receive": {
-          "$ref": "#/definitions/Cw20ReceiveMsg"
-        }
-      },
-      "additionalProperties": false
-    },
+  "oneOf": [
     {
       "description": "Update contract config (only owner can call)",
       "type": "object",
@@ -46,18 +33,10 @@
         "init_asset": {
           "type": "object",
           "required": [
-            "asset",
-            "asset_params"
+            "asset_params",
+            "denom"
           ],
           "properties": {
-            "asset": {
-              "description": "Asset related info",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Asset"
-                }
-              ]
-            },
             "asset_params": {
               "description": "Asset parameters",
               "allOf": [
@@ -72,6 +51,10 @@
                 "string",
                 "null"
               ]
+            },
+            "denom": {
+              "description": "Asset related info",
+              "type": "string"
             }
           }
         }
@@ -88,17 +71,11 @@
         "init_asset_token_callback": {
           "type": "object",
           "required": [
-            "reference"
+            "denom"
           ],
           "properties": {
-            "reference": {
-              "description": "Either the denom for a terra native asset or address for a cw20 token in bytes",
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "format": "uint8",
-                "minimum": 0.0
-              }
+            "denom": {
+              "type": "string"
             }
           }
         }
@@ -115,18 +92,10 @@
         "update_asset": {
           "type": "object",
           "required": [
-            "asset",
-            "asset_params"
+            "asset_params",
+            "denom"
           ],
           "properties": {
-            "asset": {
-              "description": "Asset related info",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Asset"
-                }
-              ]
-            },
             "asset_params": {
               "description": "Asset parameters",
               "allOf": [
@@ -134,6 +103,10 @@
                   "$ref": "#/definitions/InitOrUpdateAssetParams"
                 }
               ]
+            },
+            "denom": {
+              "description": "Asset related info",
+              "type": "string"
             }
           }
         }
@@ -150,18 +123,14 @@
         "update_uncollateralized_loan_limit": {
           "type": "object",
           "required": [
-            "asset",
+            "denom",
             "new_limit",
             "user_address"
           ],
           "properties": {
-            "asset": {
+            "denom": {
               "description": "Asset the user receives the credit in",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Asset"
-                }
-              ]
+              "type": "string"
             },
             "new_limit": {
               "description": "Limit for the uncolateralize loan.",
@@ -181,21 +150,28 @@
       "additionalProperties": false
     },
     {
-      "description": "Deposit Terra native coins. Deposited coins must be sent in the transaction this call is made",
+      "description": "Deposit native coins. Deposited coins must be sent in the transaction this call is made",
       "type": "object",
       "required": [
-        "deposit_native"
+        "deposit"
       ],
       "properties": {
-        "deposit_native": {
+        "deposit": {
           "type": "object",
           "required": [
             "denom"
           ],
           "properties": {
             "denom": {
-              "description": "Denom used in Terra (e.g: uluna, uusd)",
+              "description": "Denom used (e.g: uluna, uusd)",
               "type": "string"
+            },
+            "on_behalf_of": {
+              "description": "Address that will receive the maTokens",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           }
         }
@@ -203,7 +179,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Withdraw an amount of the asset burning an equivalent amount of maTokens. If asset is a Terra native token, the amount sent to the user is selected so that the sum of the transfered amount plus the stability tax payed is equal to the withdrawn amount.",
+      "description": "Withdraw an amount of the asset burning an equivalent amount of maTokens.",
       "type": "object",
       "required": [
         "withdraw"
@@ -212,7 +188,7 @@
         "withdraw": {
           "type": "object",
           "required": [
-            "asset"
+            "denom"
           ],
           "properties": {
             "amount": {
@@ -226,12 +202,15 @@
                 }
               ]
             },
-            "asset": {
+            "denom": {
               "description": "Asset to withdraw",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Asset"
-                }
+              "type": "string"
+            },
+            "recipient": {
+              "description": "The address where the withdrawn amount is sent",
+              "type": [
+                "string",
+                "null"
               ]
             }
           }
@@ -240,7 +219,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Borrow Terra native coins. If borrow allowed, amount is added to caller's debt and sent to the address. If asset is a Terra native token, the amount sent is selected so that the sum of the transfered amount plus the stability tax payed is equal to the borrowed amount.",
+      "description": "Borrow native coins. If borrow allowed, amount is added to caller's debt and sent to the address.",
       "type": "object",
       "required": [
         "borrow"
@@ -250,7 +229,7 @@
           "type": "object",
           "required": [
             "amount",
-            "asset"
+            "denom"
           ],
           "properties": {
             "amount": {
@@ -261,12 +240,15 @@
                 }
               ]
             },
-            "asset": {
+            "denom": {
               "description": "Asset to borrow",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Asset"
-                }
+              "type": "string"
+            },
+            "recipient": {
+              "description": "The address where the borrowed amount is sent",
+              "type": [
+                "string",
+                "null"
               ]
             }
           }
@@ -275,21 +257,28 @@
       "additionalProperties": false
     },
     {
-      "description": "Repay Terra native coins loan. Coins used to repay must be sent in the transaction this call is made.",
+      "description": "Repay native coins loan. Coins used to repay must be sent in the transaction this call is made.",
       "type": "object",
       "required": [
-        "repay_native"
+        "repay"
       ],
       "properties": {
-        "repay_native": {
+        "repay": {
           "type": "object",
           "required": [
             "denom"
           ],
           "properties": {
             "denom": {
-              "description": "Denom used in Terra (e.g: uluna, uusd)",
+              "description": "Denom used (e.g: uluna, uusd)",
               "type": "string"
+            },
+            "on_behalf_of": {
+              "description": "Repay the funds for the user",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           }
         }
@@ -300,28 +289,24 @@
       "description": "Liquidate under-collateralized native loans. Coins used to repay must be sent in the transaction this call is made.",
       "type": "object",
       "required": [
-        "liquidate_native"
+        "liquidate"
       ],
       "properties": {
-        "liquidate_native": {
+        "liquidate": {
           "type": "object",
           "required": [
-            "collateral_asset",
-            "debt_asset_denom",
+            "collateral_denom",
+            "debt_denom",
             "receive_ma_token",
             "user_address"
           ],
           "properties": {
-            "collateral_asset": {
-              "description": "Collateral asset liquidator gets from the borrower",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Asset"
-                }
-              ]
+            "collateral_denom": {
+              "description": "Denom of the collateral asset, which liquidator gets from the borrower",
+              "type": "string"
             },
-            "debt_asset_denom": {
-              "description": "Denom used in Terra (e.g: uluna, uusd) of the debt asset",
+            "debt_denom": {
+              "description": "Denom of the debt asset",
               "type": "string"
             },
             "receive_ma_token": {
@@ -347,17 +332,13 @@
         "update_asset_collateral_status": {
           "type": "object",
           "required": [
-            "asset",
+            "denom",
             "enable"
           ],
           "properties": {
-            "asset": {
+            "denom": {
               "description": "Asset to update status for",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Asset"
-                }
-              ]
+              "type": "string"
             },
             "enable": {
               "description": "Option to enable (true) / disable (false) asset as collateral",
@@ -436,55 +417,6 @@
       "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
       "type": "string"
     },
-    "Asset": {
-      "description": "Represents either a native asset or a cw20. Meant to be used as part of a msg in a contract call and not to be used internally",
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "cw20"
-          ],
-          "properties": {
-            "cw20": {
-              "type": "object",
-              "required": [
-                "contract_addr"
-              ],
-              "properties": {
-                "contract_addr": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "native"
-          ],
-          "properties": {
-            "native": {
-              "type": "object",
-              "required": [
-                "denom"
-              ],
-              "properties": {
-                "denom": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
-    "Binary": {
-      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
-      "type": "string"
-    },
     "CreateOrUpdateConfig": {
       "type": "object",
       "properties": {
@@ -517,26 +449,6 @@
             "string",
             "null"
           ]
-        }
-      }
-    },
-    "Cw20ReceiveMsg": {
-      "description": "Cw20ReceiveMsg should be de/serialized under `Receive()` variant in a ExecuteMsg",
-      "type": "object",
-      "required": [
-        "amount",
-        "msg",
-        "sender"
-      ],
-      "properties": {
-        "amount": {
-          "$ref": "#/definitions/Uint128"
-        },
-        "msg": {
-          "$ref": "#/definitions/Binary"
-        },
-        "sender": {
-          "type": "string"
         }
       }
     },
@@ -712,7 +624,7 @@
       }
     },
     "InterestRateModelParams": {
-      "anyOf": [
+      "oneOf": [
         {
           "type": "object",
           "required": [

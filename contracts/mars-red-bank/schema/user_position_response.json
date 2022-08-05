@@ -4,23 +4,23 @@
   "type": "object",
   "required": [
     "health_status",
-    "max_debt_in_uusd",
-    "total_collateral_in_uusd",
-    "total_collateralized_debt_in_uusd",
-    "total_debt_in_uusd",
-    "weighted_liquidation_threshold_in_uusd"
+    "max_debt_in_base_asset",
+    "total_collateral_in_base_asset",
+    "total_collateralized_debt_in_base_asset",
+    "total_debt_in_base_asset",
+    "weighted_liquidation_threshold_in_base_asset"
   ],
   "properties": {
     "health_status": {
       "$ref": "#/definitions/UserHealthStatus"
     },
-    "max_debt_in_uusd": {
+    "max_debt_in_base_asset": {
       "$ref": "#/definitions/Uint128"
     },
-    "total_collateral_in_uusd": {
+    "total_collateral_in_base_asset": {
       "$ref": "#/definitions/Uint128"
     },
-    "total_collateralized_debt_in_uusd": {
+    "total_collateralized_debt_in_base_asset": {
       "description": "Total debt minus the uncollateralized debt",
       "allOf": [
         {
@@ -28,10 +28,10 @@
         }
       ]
     },
-    "total_debt_in_uusd": {
+    "total_debt_in_base_asset": {
       "$ref": "#/definitions/Uint128"
     },
-    "weighted_liquidation_threshold_in_uusd": {
+    "weighted_liquidation_threshold_in_base_asset": {
       "$ref": "#/definitions/Uint128"
     }
   },
@@ -45,7 +45,7 @@
       "type": "string"
     },
     "UserHealthStatus": {
-      "anyOf": [
+      "oneOf": [
         {
           "type": "string",
           "enum": [
