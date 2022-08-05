@@ -128,23 +128,23 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&queries::query_config(deps)?),
+        QueryMsg::Config {} => to_binary(&queries::config(deps)?),
         QueryMsg::Market {
             denom,
-        } => to_binary(&queries::query_market(deps, denom)?),
+        } => to_binary(&queries::market(deps, denom)?),
         QueryMsg::Markets {
             start_after,
             limit,
-        } => to_binary(&queries::query_markets(deps, start_after, limit)?),
+        } => to_binary(&queries::markets(deps, start_after, limit)?),
         QueryMsg::UserDebt {
             user_address,
         } => {
-            to_binary(&queries::query_user_debt(deps, env, deps.api.addr_validate(&user_address)?)?)
+            to_binary(&queries::user_debt(deps, env, deps.api.addr_validate(&user_address)?)?)
         }
         QueryMsg::UserAssetDebt {
             user_address,
             denom,
-        } => to_binary(&queries::query_user_asset_debt(
+        } => to_binary(&queries::user_asset_debt(
             deps,
             env,
             deps.api.addr_validate(&user_address)?,
@@ -152,14 +152,14 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         )?),
         QueryMsg::UserCollateral {
             user_address,
-        } => to_binary(&queries::query_user_collateral(
+        } => to_binary(&queries::user_collateral(
             deps,
             deps.api.addr_validate(&user_address)?,
         )?),
         QueryMsg::UncollateralizedLoanLimit {
             user_address,
             denom,
-        } => to_binary(&queries::query_uncollateralized_loan_limit(
+        } => to_binary(&queries::uncollateralized_loan_limit(
             deps,
             deps.api.addr_validate(&user_address)?,
             denom,
@@ -167,15 +167,15 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::ScaledLiquidityAmount {
             denom,
             amount,
-        } => to_binary(&queries::query_scaled_liquidity_amount(deps, env, denom, amount)?),
+        } => to_binary(&queries::scaled_liquidity_amount(deps, env, denom, amount)?),
         QueryMsg::ScaledDebtAmount {
             denom,
             amount,
-        } => to_binary(&queries::query_scaled_debt_amount(deps, env, denom, amount)?),
+        } => to_binary(&queries::scaled_debt_amount(deps, env, denom, amount)?),
         QueryMsg::UnderlyingLiquidityAmount {
             ma_token_address,
             amount_scaled,
-        } => to_binary(&queries::query_underlying_liquidity_amount(
+        } => to_binary(&queries::underlying_liquidity_amount(
             deps,
             env,
             ma_token_address,
@@ -184,10 +184,10 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::UnderlyingDebtAmount {
             denom,
             amount_scaled,
-        } => to_binary(&queries::query_underlying_debt_amount(deps, env, denom, amount_scaled)?),
+        } => to_binary(&queries::underlying_debt_amount(deps, env, denom, amount_scaled)?),
         QueryMsg::UserPosition {
             user_address,
-        } => to_binary(&queries::query_user_position(
+        } => to_binary(&queries::user_position(
             deps,
             env,
             deps.api.addr_validate(&user_address)?,

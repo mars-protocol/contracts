@@ -22,7 +22,7 @@ use crate::state::{
 const DEFAULT_LIMIT: u32 = 5;
 const MAX_LIMIT: u32 = 10;
 
-pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
+pub fn config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     let money_market = GLOBAL_STATE.load(deps.storage)?;
 
@@ -35,13 +35,13 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     })
 }
 
-pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
+pub fn market(deps: Deps, denom: String) -> StdResult<Market> {
     MARKETS
         .load(deps.storage, &denom)
         .map_err(|_| StdError::generic_err(format!("failed to load market for: {}", denom)))
 }
 
-pub fn query_markets(
+pub fn markets(
     deps: Deps,
     start_after: Option<String>,
     limit: Option<u32>,
@@ -69,7 +69,7 @@ pub fn query_markets(
         .collect()
 }
 
-pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<UserDebtResponse> {
+pub fn user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<UserDebtResponse> {
     let user = USERS.may_load(deps.storage, &user_address)?.unwrap_or_default();
 
     let debts: StdResult<Vec<_>> = MARKETS
@@ -101,7 +101,7 @@ pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<Us
     })
 }
 
-pub fn query_user_asset_debt(
+pub fn user_asset_debt(
     deps: Deps,
     env: Env,
     user_address: Addr,
@@ -127,7 +127,7 @@ pub fn query_user_asset_debt(
     })
 }
 
-pub fn query_user_collateral(deps: Deps, address: Addr) -> StdResult<UserCollateralResponse> {
+pub fn user_collateral(deps: Deps, address: Addr) -> StdResult<UserCollateralResponse> {
     let user = USERS.may_load(deps.storage, &address)?.unwrap_or_default();
 
     let collateral: StdResult<Vec<_>> = MARKETS
@@ -146,7 +146,7 @@ pub fn query_user_collateral(deps: Deps, address: Addr) -> StdResult<UserCollate
     })
 }
 
-pub fn query_uncollateralized_loan_limit(
+pub fn uncollateralized_loan_limit(
     deps: Deps,
     user_address: Addr,
     denom: String,
@@ -163,7 +163,7 @@ pub fn query_uncollateralized_loan_limit(
     }
 }
 
-pub fn query_scaled_liquidity_amount(
+pub fn scaled_liquidity_amount(
     deps: Deps,
     env: Env,
     denom: String,
@@ -173,7 +173,7 @@ pub fn query_scaled_liquidity_amount(
     get_scaled_liquidity_amount(amount, &market, env.block.time.seconds())
 }
 
-pub fn query_scaled_debt_amount(
+pub fn scaled_debt_amount(
     deps: Deps,
     env: Env,
     denom: String,
@@ -183,7 +183,7 @@ pub fn query_scaled_debt_amount(
     get_scaled_debt_amount(amount, &market, env.block.time.seconds())
 }
 
-pub fn query_underlying_liquidity_amount(
+pub fn underlying_liquidity_amount(
     deps: Deps,
     env: Env,
     ma_token_address: String,
@@ -195,7 +195,7 @@ pub fn query_underlying_liquidity_amount(
     get_underlying_liquidity_amount(amount_scaled, &market, env.block.time.seconds())
 }
 
-pub fn query_underlying_debt_amount(
+pub fn underlying_debt_amount(
     deps: Deps,
     env: Env,
     denom: String,
@@ -205,7 +205,7 @@ pub fn query_underlying_debt_amount(
     get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())
 }
 
-pub fn query_user_position(
+pub fn user_position(
     deps: Deps,
     env: Env,
     address: Addr,

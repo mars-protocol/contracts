@@ -1,7 +1,6 @@
 use cosmwasm_std::testing::{MockApi, MockStorage};
 use cosmwasm_std::{Coin, Decimal, DepsMut, Event, OwnedDeps, StdResult, Uint128};
 
-use mars_outpost::asset::Asset;
 use mars_outpost::red_bank::interest_rate_models::update_market_interest_rates_with_model;
 use mars_outpost::red_bank::msg::{CreateOrUpdateConfig, InstantiateMsg};
 use mars_outpost::red_bank::{GlobalState, Market};
@@ -15,39 +14,34 @@ use crate::interest_rates::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     ScalingOperation,
 };
-use crate::state::{
-    GLOBAL_STATE, MARKETS, MARKET_REFERENCES_BY_INDEX, MARKET_REFERENCES_BY_MA_TOKEN,
-};
+use crate::state::{GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_INDEX, MARKET_DENOMS_BY_MA_TOKEN};
 
 pub(super) fn th_setup(
     contract_balances: &[Coin],
 ) -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     let mut deps = mock_dependencies(contract_balances);
-    let env = mock_env(MockEnvParams::default());
-    let info = mock_info("owner");
-    let config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
-        address_provider_address: Some("address_provider".to_string()),
-        ma_token_code_id: Some(1u64),
-        close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
-        base_asset: Some(Asset::Native {
-            denom: "uusd".to_string(),
-        }),
-    };
-    let msg = InstantiateMsg {
-        config,
-    };
-    instantiate(deps.as_mut(), env, info, msg).unwrap();
 
-    let asset = Asset::Native {
-        denom: "uusd".to_string(),
-    };
-    deps.querier.set_oracle_price(asset.get_reference(), Decimal::one());
+    instantiate(
+        deps.as_mut(),
+        mock_env(MockEnvParams::default()),
+        mock_info("owner"),
+        InstantiateMsg {
+            config: CreateOrUpdateConfig {
+                owner: Some("owner".to_string()),
+                address_provider_address: Some("address_provider".to_string()),
+                ma_token_code_id: Some(1u64),
+                close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
+            },
+        },
+    )
+    .unwrap();
+
+    deps.querier.set_oracle_price("uusd", Decimal::one());
 
     deps
 }
 
-pub(super) fn th_init_market(deps: DepsMut, key: &[u8], market: &Market) -> Market {
+pub(super) fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {
     let mut index = 0;
 
     GLOBAL_STATE
@@ -60,15 +54,16 @@ pub(super) fn th_init_market(deps: DepsMut, key: &[u8], market: &Market) -> Mark
 
     let new_market = Market {
         index,
+        denom: denom.to_string(),
         ..market.clone()
     };
 
-    MARKETS.save(deps.storage, key, &new_market).unwrap();
+    MARKETS.save(deps.storage, denom, &new_market).unwrap();
 
-    MARKET_REFERENCES_BY_INDEX.save(deps.storage, index, &key.to_vec()).unwrap();
+    MARKET_DENOMS_BY_INDEX.save(deps.storage, index, &denom.to_string()).unwrap();
 
-    MARKET_REFERENCES_BY_MA_TOKEN
-        .save(deps.storage, &new_market.ma_token_address, &key.to_vec())
+    MARKET_DENOMS_BY_MA_TOKEN
+        .save(deps.storage, &new_market.ma_token_address, &denom.to_string())
         .unwrap();
 
     new_market
