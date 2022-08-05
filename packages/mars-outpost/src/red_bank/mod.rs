@@ -43,6 +43,8 @@ pub struct GlobalState {
 pub struct Market {
     /// Market index (Bit position on data)
     pub index: u32,
+    /// Denom of the asset
+    pub denom: String,
     /// maToken contract address
     pub ma_token_address: Addr,
 
@@ -121,6 +123,7 @@ impl Default for Market {
 
         Market {
             index: 0,
+            denom: "".to_string(),
             ma_token_address: crate::helpers::zero_address(),
             liquidity_index: Decimal::one(),
             borrow_index: Decimal::one(),
@@ -197,19 +200,6 @@ pub struct ConfigResponse {
     pub ma_token_code_id: u64,
     pub market_count: u32,
     pub close_factor: Decimal,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct MarketsListResponse {
-    pub markets_list: Vec<MarketInfo>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct MarketInfo {
-    /// Asset denom
-    pub denom: String,
-    /// Address for the corresponding maToken
-    pub ma_token_address: Addr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

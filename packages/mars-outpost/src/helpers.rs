@@ -1,11 +1,12 @@
+use std::convert::TryInto;
+
 use cosmwasm_std::{
-    to_binary, Addr, Api, Decimal, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
-    WasmQuery,
+    coins, to_binary, Addr, Api, BankMsg, CosmosMsg, Decimal, QuerierWrapper, QueryRequest,
+    StdError, StdResult, Uint128, WasmQuery,
 };
+use cw20::{BalanceResponse, Cw20QueryMsg, TokenInfoResponse};
 
 use crate::error::MarsError;
-use cw20::{BalanceResponse, Cw20QueryMsg, TokenInfoResponse};
-use std::convert::TryInto;
 
 // CW20
 pub fn cw20_get_balance(
@@ -13,36 +14,29 @@ pub fn cw20_get_balance(
     token_address: Addr,
     balance_address: Addr,
 ) -> StdResult<Uint128> {
-    let query: BalanceResponse = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+    let res: BalanceResponse = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: token_address.into(),
         msg: to_binary(&Cw20QueryMsg::Balance {
             address: balance_address.into(),
         })?,
     }))?;
 
-    Ok(query.balance)
+    Ok(res.balance)
 }
 
 pub fn cw20_get_total_supply(querier: &QuerierWrapper, token_address: Addr) -> StdResult<Uint128> {
-    let query = cw20_get_info(querier, token_address)?;
-    Ok(query.total_supply)
-}
-
-pub fn cw20_get_symbol(querier: &QuerierWrapper, token_address: Addr) -> StdResult<String> {
-    let query = cw20_get_info(querier, token_address)?;
-    Ok(query.symbol)
-}
-
-pub fn cw20_get_info(
-    querier: &QuerierWrapper,
-    token_address: Addr,
-) -> StdResult<TokenInfoResponse> {
-    let query: TokenInfoResponse = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+    let res: TokenInfoResponse = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: token_address.into(),
         msg: to_binary(&Cw20QueryMsg::TokenInfo {})?,
     }))?;
+    Ok(res.total_supply)
+}
 
-    Ok(query)
+pub fn build_send_coin_msg(recipient_addr: &Addr, denom: &str, amount: Uint128) -> CosmosMsg {
+    CosmosMsg::Bank(BankMsg::Send {
+        to_address: recipient_addr.into(),
+        amount: coins(amount.u128(), denom),
+    })
 }
 
 pub fn read_be_u64(input: &[u8]) -> StdResult<u64> {

@@ -102,10 +102,10 @@ pub enum ExecuteMsg {
     /// Liquidate under-collateralized native loans. Coins used to repay must be sent in the
     /// transaction this call is made.
     Liquidate {
-        /// Collateral asset liquidator gets from the borrower
+        /// Denom of the collateral asset, which liquidator gets from the borrower
         collateral_denom: String,
-        /// Denom (e.g: uluna, uusd) of the debt asset
-        debt_asset_denom: String,
+        /// Denom of the debt asset
+        debt_denom: String,
         /// The address of the borrower getting liquidated
         user_address: String,
         /// Whether the liquidator gets liquidated collateral in maToken (true) or
@@ -184,8 +184,11 @@ pub enum QueryMsg {
         denom: String,
     },
 
-    /// Get a list of all markets. Returns MarketsListResponse
-    MarketsList {},
+    /// Enumerate markets with pagination. Returns Vec<Market>
+    Markets {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
 
     /// Get uncollateralized limit for given asset and user.
     /// Returns UncollateralizedLoanLimitResponse

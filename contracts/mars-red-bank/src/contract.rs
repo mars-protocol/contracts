@@ -3,44 +3,44 @@ use std::str;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    from_binary, to_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo,
-    Order, Response, StdError, StdResult, Uint128, WasmMsg,
+    to_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo, Order, Response,
+    StdError, StdResult, Uint128, WasmMsg,
 };
-use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
+use cw20::{Cw20ExecuteMsg, MinterResponse};
 use cw20_base::msg::InstantiateMarketingInfo;
 
+use cw_storage_plus::Bound;
 use mars_outpost::address_provider::{self, MarsContract};
-use mars_outpost::asset::{build_send_asset_msg, get_asset_balance, Asset, AssetType};
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::{
-    cw20_get_balance, cw20_get_symbol, option_string_to_addr, zero_address,
+    build_send_coin_msg, cw20_get_balance, option_string_to_addr, zero_address,
 };
 use mars_outpost::red_bank::interest_rate_models::init_interest_rate_model;
 use mars_outpost::red_bank::msg::{
-    CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg, QueryMsg, ReceiveMsg,
+    CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg, QueryMsg,
 };
 use mars_outpost::red_bank::{
-    Config, ConfigResponse, Debt, GlobalState, Market, MarketInfo, MarketsListResponse, User,
-    UserAssetCollateralResponse, UserAssetDebtResponse, UserCollateralResponse, UserDebtResponse,
-    UserHealthStatus, UserPositionResponse,
+    Config, ConfigResponse, Debt, GlobalState, Market, User, UserAssetCollateralResponse,
+    UserAssetDebtResponse, UserCollateralResponse, UserDebtResponse, UserHealthStatus,
+    UserPositionResponse,
 };
 use mars_outpost::{ma_token, math};
 
 use crate::accounts::get_user_position;
 use crate::error::ContractError;
 use crate::events::{build_collateral_position_changed_event, build_debt_position_changed_event};
-use crate::helpers::{
-    get_asset_denom, get_asset_identifiers, get_bit, get_denom_amount_from_coins, set_bit,
-    unset_bit,
-};
+use crate::helpers::{get_bit, get_denom_amount_from_coins, set_bit, unset_bit};
 use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
     get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
 };
 use crate::state::{
-    CONFIG, DEBTS, GLOBAL_STATE, MARKETS, MARKET_REFERENCES_BY_INDEX,
-    MARKET_REFERENCES_BY_MA_TOKEN, UNCOLLATERALIZED_LOAN_LIMITS, USERS,
+    CONFIG, DEBTS, GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_INDEX, MARKET_DENOMS_BY_MA_TOKEN,
+    UNCOLLATERALIZED_LOAN_LIMITS, USERS,
 };
+
+const DEFAULT_LIMIT: u32 = 5;
+const MAX_LIMIT: u32 = 10;
 
 // INIT
 
@@ -58,15 +58,13 @@ pub fn instantiate(
         address_provider_address,
         ma_token_code_id,
         close_factor,
-        base_asset,
     } = msg.config;
 
     // All fields should be available
     let available = owner.is_some()
         && address_provider_address.is_some()
         && ma_token_code_id.is_some()
-        && close_factor.is_some()
-        && base_asset.is_some();
+        && close_factor.is_some();
 
     if !available {
         return Err(MarsError::InstantiateParamsUnavailable {}.into());
@@ -81,7 +79,6 @@ pub fn instantiate(
         )?,
         ma_token_code_id: ma_token_code_id.unwrap(),
         close_factor: close_factor.unwrap(),
-        base_asset: base_asset.unwrap(),
     };
 
     config.validate()?;
@@ -107,116 +104,87 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    let api = deps.api;
     match msg {
-        ExecuteMsg::Receive(cw20_msg) => execute_receive_cw20(deps, env, info, cw20_msg),
-
         ExecuteMsg::UpdateConfig {
             config,
         } => execute_update_config(deps, env, info, config),
-
         ExecuteMsg::InitAsset {
-            asset,
+            denom,
             asset_params,
             asset_symbol,
-        } => execute_init_asset(deps, env, info, asset, asset_params, asset_symbol),
-
+        } => execute_init_asset(deps, env, info, denom, asset_params, asset_symbol),
         ExecuteMsg::InitAssetTokenCallback {
-            reference,
-        } => execute_init_asset_token_callback(deps, env, info, reference),
-
+            denom,
+        } => execute_init_asset_token_callback(deps, info, denom),
         ExecuteMsg::UpdateAsset {
-            asset,
+            denom,
             asset_params,
-        } => execute_update_asset(deps, env, info, asset, asset_params),
-
+        } => execute_update_asset(deps, env, info, denom, asset_params),
         ExecuteMsg::UpdateUncollateralizedLoanLimit {
             user_address,
-            asset,
+            denom,
             new_limit,
-        } => {
-            let user_addr = deps.api.addr_validate(&user_address)?;
-            execute_update_uncollateralized_loan_limit(deps, env, info, user_addr, asset, new_limit)
-        }
-
-        ExecuteMsg::DepositNative {
+        } => execute_update_uncollateralized_loan_limit(
+            deps,
+            info,
+            api.addr_validate(&user_address)?,
+            denom,
+            new_limit,
+        ),
+        ExecuteMsg::Deposit {
             denom,
             on_behalf_of,
-        } => {
-            let deposit_amount = get_denom_amount_from_coins(&info.funds, &denom)?;
-            let depositor_address = info.sender.clone();
-            execute_deposit(
-                deps,
-                env,
-                info,
-                depositor_address,
-                on_behalf_of,
-                denom.as_bytes(),
-                denom.as_str(),
-                deposit_amount,
-            )
-        }
-
+        } => execute_deposit(
+            deps,
+            env,
+            info.sender,
+            on_behalf_of,
+            denom.clone(),
+            get_denom_amount_from_coins(&info.funds, &denom)?,
+        ),
         ExecuteMsg::Withdraw {
-            asset,
+            denom,
             amount,
-            recipient: recipient_address,
-        } => execute_withdraw(deps, env, info, asset, amount, recipient_address),
-        ExecuteMsg::Borrow {
-            asset,
-            amount,
-            recipient: recipient_address,
-        } => execute_borrow(deps, env, info, asset, amount, recipient_address),
+            recipient,
+        } => execute_withdraw(deps, env, info, denom, amount, recipient),
 
-        ExecuteMsg::RepayNative {
+        ExecuteMsg::Borrow {
+            denom,
+            amount,
+            recipient,
+        } => execute_borrow(deps, env, info, denom, amount, recipient),
+
+        ExecuteMsg::Repay {
             denom,
             on_behalf_of,
-        } => {
-            let repayer_address = info.sender.clone();
-            let repay_amount = get_denom_amount_from_coins(&info.funds, &denom)?;
-
-            execute_repay(
-                deps,
-                env,
-                info,
-                repayer_address,
-                on_behalf_of,
-                denom.as_bytes(),
-                denom.clone(),
-                repay_amount,
-                AssetType::Native,
-            )
-        }
-
-        ExecuteMsg::LiquidateNative {
-            collateral_asset,
-            debt_asset_denom,
+        } => execute_repay(
+            deps,
+            env,
+            info.sender,
+            on_behalf_of,
+            denom.clone(),
+            get_denom_amount_from_coins(&info.funds, &denom)?,
+        ),
+        ExecuteMsg::Liquidate {
+            collateral_denom,
+            debt_denom,
             user_address,
             receive_ma_token,
-        } => {
-            let sender = info.sender.clone();
-            let user_addr = deps.api.addr_validate(&user_address)?;
-            let sent_debt_asset_amount =
-                get_denom_amount_from_coins(&info.funds, &debt_asset_denom)?;
-            execute_liquidate(
-                deps,
-                env,
-                info,
-                sender,
-                collateral_asset,
-                Asset::Native {
-                    denom: debt_asset_denom,
-                },
-                user_addr,
-                sent_debt_asset_amount,
-                receive_ma_token,
-            )
-        }
-
+        } => execute_liquidate(
+            deps,
+            env,
+            info.sender,
+            collateral_denom,
+            debt_denom.clone(),
+            api.addr_validate(&user_address)?,
+            get_denom_amount_from_coins(&info.funds, &debt_denom)?,
+            receive_ma_token,
+        ),
         ExecuteMsg::UpdateAssetCollateralStatus {
-            asset,
+            denom,
             enable,
-        } => execute_update_asset_collateral_status(deps, env, info, asset, enable),
-
+        } => execute_update_asset_collateral_status(deps, env, info, denom, enable),
         ExecuteMsg::FinalizeLiquidityTokenTransfer {
             sender_address,
             recipient_address,
@@ -236,73 +204,6 @@ pub fn execute(
     }
 }
 
-/// cw20 receive implementation
-pub fn execute_receive_cw20(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    cw20_msg: Cw20ReceiveMsg,
-) -> Result<Response, ContractError> {
-    match from_binary(&cw20_msg.msg)? {
-        ReceiveMsg::DepositCw20 {
-            on_behalf_of,
-        } => {
-            let depositor_addr = deps.api.addr_validate(&cw20_msg.sender)?;
-            let token_contract_address = info.sender.clone();
-            execute_deposit(
-                deps,
-                env,
-                info,
-                depositor_addr,
-                on_behalf_of,
-                token_contract_address.as_bytes(),
-                token_contract_address.as_str(),
-                cw20_msg.amount,
-            )
-        }
-        ReceiveMsg::RepayCw20 {
-            on_behalf_of,
-        } => {
-            let repayer_addr = deps.api.addr_validate(&cw20_msg.sender)?;
-            let token_contract_address = info.sender.clone();
-            execute_repay(
-                deps,
-                env,
-                info,
-                repayer_addr,
-                on_behalf_of,
-                token_contract_address.as_bytes(),
-                token_contract_address.to_string(),
-                cw20_msg.amount,
-                AssetType::Cw20,
-            )
-        }
-        ReceiveMsg::LiquidateCw20 {
-            collateral_asset,
-            user_address,
-            receive_ma_token,
-        } => {
-            let debt_asset_addr = info.sender.clone();
-            let liquidator_addr = deps.api.addr_validate(&cw20_msg.sender)?;
-            let user_addr = deps.api.addr_validate(&user_address)?;
-            execute_liquidate(
-                deps,
-                env,
-                info,
-                liquidator_addr,
-                collateral_asset,
-                Asset::Cw20 {
-                    contract_addr: debt_asset_addr.to_string(),
-                },
-                user_addr,
-                cw20_msg.amount,
-                receive_ma_token,
-            )
-        }
-    }
-}
-
-/// Update config
 pub fn execute_update_config(
     deps: DepsMut,
     _env: Env,
@@ -322,7 +223,6 @@ pub fn execute_update_config(
         address_provider_address,
         ma_token_code_id,
         close_factor,
-        base_asset,
     } = new_config;
 
     // Update config
@@ -331,7 +231,6 @@ pub fn execute_update_config(
         option_string_to_addr(deps.api, address_provider_address, config.address_provider_address)?;
     config.ma_token_code_id = ma_token_code_id.unwrap_or(config.ma_token_code_id);
     config.close_factor = close_factor.unwrap_or(config.close_factor);
-    config.base_asset = base_asset.unwrap_or(config.base_asset);
 
     // Validate config
     config.validate()?;
@@ -348,9 +247,9 @@ pub fn execute_init_asset(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    asset: Asset,
+    denom: String,
     asset_params: InitOrUpdateAssetParams,
-    asset_symbol_option: Option<String>,
+    asset_symbol: Option<String>,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
@@ -360,101 +259,83 @@ pub fn execute_init_asset(
 
     let mut money_market = GLOBAL_STATE.load(deps.storage)?;
 
-    let (asset_label, asset_reference, asset_type) = asset.get_attributes();
-    let market_option = MARKETS.may_load(deps.storage, asset_reference.as_slice())?;
-    match market_option {
-        None => {
-            let market_idx = money_market.market_count;
-            let new_market =
-                create_market(env.block.time.seconds(), market_idx, asset_type, asset_params)?;
+    if let Some(_) = MARKETS.may_load(deps.storage, &denom)? {
+        return Err(ContractError::AssetAlreadyInitialized {});
+    };
 
-            // Save new market
-            MARKETS.save(deps.storage, asset_reference.as_slice(), &new_market)?;
+    let market_idx = money_market.market_count;
+    let new_market = create_market(env.block.time.seconds(), market_idx, &denom, asset_params)?;
 
-            // Save index to reference mapping
-            MARKET_REFERENCES_BY_INDEX.save(deps.storage, market_idx, &asset_reference.to_vec())?;
+    // Save new market
+    MARKETS.save(deps.storage, &denom, &new_market)?;
 
-            // Increment market count
-            money_market.market_count += 1;
-            GLOBAL_STATE.save(deps.storage, &money_market)?;
+    // Save index to reference mapping
+    MARKET_DENOMS_BY_INDEX.save(deps.storage, market_idx, &denom)?;
 
-            let symbol = if let Some(asset_symbol) = asset_symbol_option {
-                asset_symbol
-            } else {
-                match asset {
-                    Asset::Native {
+    // Increment market count
+    money_market.market_count += 1;
+    GLOBAL_STATE.save(deps.storage, &money_market)?;
+
+    let symbol = asset_symbol.unwrap_or_else(|| denom.clone());
+
+    // Prepare response, should instantiate an maToken
+    // and use the Register hook.
+    // A new maToken should be created which callbacks this contract in order to be registered.
+    let addresses = address_provider::helpers::query_addresses(
+        deps.as_ref(),
+        &config.address_provider_address,
+        vec![MarsContract::Incentives, MarsContract::ProtocolAdmin],
+    )?;
+    // TODO: protocol admin may be a marshub address, which can't be validated into `Addr`
+    let protocol_admin_address = &addresses[&MarsContract::ProtocolAdmin];
+    let incentives_address = &addresses[&MarsContract::Incentives];
+
+    let token_symbol = format!("ma{}", symbol);
+
+    let res = Response::new()
+        .add_attribute("action", "init_asset")
+        .add_attribute("denom", &denom)
+        .add_message(CosmosMsg::Wasm(WasmMsg::Instantiate {
+            admin: Some(protocol_admin_address.to_string()),
+            code_id: config.ma_token_code_id,
+            msg: to_binary(&ma_token::msg::InstantiateMsg {
+                name: format!("Mars {} Liquidity Token", symbol),
+                symbol: token_symbol.clone(),
+                decimals: 6,
+                initial_balances: vec![],
+                mint: Some(MinterResponse {
+                    minter: env.contract.address.to_string(),
+                    cap: None,
+                }),
+                marketing: Some(InstantiateMarketingInfo {
+                    project: Some(String::from("Mars Protocol")),
+                    description: Some(format!(
+                        "Interest earning token representing deposits for {}",
+                        symbol
+                    )),
+                    marketing: Some(protocol_admin_address.to_string()),
+                    logo: None,
+                }),
+                init_hook: Some(ma_token::msg::InitHook {
+                    contract_addr: env.contract.address.to_string(),
+                    msg: to_binary(&ExecuteMsg::InitAssetTokenCallback {
                         denom,
-                    } => denom,
-                    Asset::Cw20 {
-                        contract_addr,
-                    } => {
-                        let contract_addr = deps.api.addr_validate(&contract_addr)?;
-                        cw20_get_symbol(&deps.querier, contract_addr)?
-                    }
-                }
-            };
-
-            // Prepare response, should instantiate an maToken
-            // and use the Register hook.
-            // A new maToken should be created which callbacks this contract in order to be registered.
-            let addresses = address_provider::helpers::query_addresses(
-                deps.as_ref(),
-                &config.address_provider_address,
-                vec![MarsContract::Incentives, MarsContract::ProtocolAdmin],
-            )?;
-            // TODO: protocol admin may be a marshub address, which can't be validated into `Addr`
-            let protocol_admin_address = &addresses[&MarsContract::ProtocolAdmin];
-            let incentives_address = &addresses[&MarsContract::Incentives];
-
-            let token_symbol = format!("ma{}", symbol);
-
-            let res = Response::new()
-                .add_attribute("action", "init_asset")
-                .add_attribute("asset", asset_label)
-                .add_message(CosmosMsg::Wasm(WasmMsg::Instantiate {
-                    admin: Some(protocol_admin_address.to_string()),
-                    code_id: config.ma_token_code_id,
-                    msg: to_binary(&ma_token::msg::InstantiateMsg {
-                        name: format!("Mars {} Liquidity Token", symbol),
-                        symbol: token_symbol.clone(),
-                        decimals: 6,
-                        initial_balances: vec![],
-                        mint: Some(MinterResponse {
-                            minter: env.contract.address.to_string(),
-                            cap: None,
-                        }),
-                        marketing: Some(InstantiateMarketingInfo {
-                            project: Some(String::from("Mars Protocol")),
-                            description: Some(format!(
-                                "Interest earning token representing deposits for {}",
-                                symbol
-                            )),
-                            marketing: Some(protocol_admin_address.to_string()),
-                            logo: None,
-                        }),
-                        init_hook: Some(ma_token::msg::InitHook {
-                            contract_addr: env.contract.address.to_string(),
-                            msg: to_binary(&ExecuteMsg::InitAssetTokenCallback {
-                                reference: asset_reference,
-                            })?,
-                        }),
-                        red_bank_address: env.contract.address.to_string(),
-                        incentives_address: incentives_address.into(),
                     })?,
-                    funds: vec![],
-                    label: token_symbol,
-                }));
-            Ok(res)
-        }
-        Some(_) => Err(ContractError::AssetAlreadyInitialized {}),
-    }
+                }),
+                red_bank_address: env.contract.address.to_string(),
+                incentives_address: incentives_address.into(),
+            })?,
+            funds: vec![],
+            label: token_symbol,
+        }));
+    Ok(res)
 }
 
 /// Initialize new market
 pub fn create_market(
     block_time: u64,
     index: u32,
-    asset_type: AssetType,
+    denom: &str,
     params: InitOrUpdateAssetParams,
 ) -> Result<Market, ContractError> {
     // Destructuring a struct’s fields into separate variables in order to force
@@ -488,7 +369,7 @@ pub fn create_market(
 
     let new_market = Market {
         index,
-        asset_type,
+        denom: denom.to_string(),
         ma_token_address: Addr::unchecked(""),
         borrow_index: Decimal::one(),
         liquidity_index: Decimal::one(),
@@ -516,20 +397,19 @@ pub fn create_market(
 
 pub fn execute_init_asset_token_callback(
     deps: DepsMut,
-    _env: Env,
     info: MessageInfo,
-    reference: Vec<u8>,
+    denom: String,
 ) -> Result<Response, ContractError> {
-    let mut market = MARKETS.load(deps.storage, reference.as_slice())?;
+    let mut market = MARKETS.load(deps.storage, &denom)?;
 
     if market.ma_token_address == zero_address() {
         let ma_contract_addr = info.sender;
 
         market.ma_token_address = ma_contract_addr.clone();
-        MARKETS.save(deps.storage, reference.as_slice(), &market)?;
+        MARKETS.save(deps.storage, &denom, &market)?;
 
         // save ma token contract to reference mapping
-        MARKET_REFERENCES_BY_MA_TOKEN.save(deps.storage, &ma_contract_addr, &reference)?;
+        MARKET_DENOMS_BY_MA_TOKEN.save(deps.storage, &ma_contract_addr, &denom)?;
 
         let res = Response::new().add_attribute("action", "init_asset_token_callback");
         Ok(res)
@@ -544,7 +424,7 @@ pub fn execute_update_asset(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    asset: Asset,
+    denom: String,
     asset_params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
@@ -553,96 +433,86 @@ pub fn execute_update_asset(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    let (asset_label, asset_reference, _asset_type) = asset.get_attributes();
-    let market_option = MARKETS.may_load(deps.storage, asset_reference.as_slice())?;
-    match market_option {
-        None => Err(ContractError::AssetNotInitialized {}),
-        Some(mut market) => {
-            // Destructuring a struct’s fields into separate variables in order to force
-            // compile error if we add more params
-            let InitOrUpdateAssetParams {
-                initial_borrow_rate: _,
-                max_loan_to_value,
-                reserve_factor,
-                liquidation_threshold,
-                liquidation_bonus,
-                interest_rate_model_params,
-                active,
-                deposit_enabled,
-                borrow_enabled,
-            } = asset_params;
+    let mut market =
+        MARKETS.may_load(deps.storage, &denom)?.ok_or(ContractError::AssetNotInitialized {})?;
 
-            // If reserve factor or interest rates are updated we update indexes with
-            // current values before applying the change to prevent applying this
-            // new params to a period where they were not valid yet. Interests rates are
-            // recalculated after changes are applied.
-            let should_update_interest_rates = (reserve_factor.is_some()
-                && reserve_factor.unwrap() != market.reserve_factor)
-                || interest_rate_model_params.is_some();
+    // Destructuring a struct’s fields into separate variables in order to force
+    // compile error if we add more params
+    let InitOrUpdateAssetParams {
+        initial_borrow_rate: _,
+        max_loan_to_value,
+        reserve_factor,
+        liquidation_threshold,
+        liquidation_bonus,
+        interest_rate_model_params,
+        active,
+        deposit_enabled,
+        borrow_enabled,
+    } = asset_params;
 
-            let mut response = Response::new();
+    // If reserve factor or interest rates are updated we update indexes with
+    // current values before applying the change to prevent applying this
+    // new params to a period where they were not valid yet. Interests rates are
+    // recalculated after changes are applied.
+    let should_update_interest_rates = (reserve_factor.is_some()
+        && reserve_factor.unwrap() != market.reserve_factor)
+        || interest_rate_model_params.is_some();
 
-            if should_update_interest_rates {
-                let protocol_rewards_collector_address = address_provider::helpers::query_address(
-                    deps.as_ref(),
-                    &config.address_provider_address,
-                    MarsContract::ProtocolRewardsCollector,
-                )?;
-                response = apply_accumulated_interests(
-                    &env,
-                    &protocol_rewards_collector_address,
-                    &mut market,
-                    response,
-                )?;
-            }
+    let mut response = Response::new();
 
-            let mut updated_market = Market {
-                max_loan_to_value: max_loan_to_value.unwrap_or(market.max_loan_to_value),
-                reserve_factor: reserve_factor.unwrap_or(market.reserve_factor),
-                liquidation_threshold: liquidation_threshold
-                    .unwrap_or(market.liquidation_threshold),
-                liquidation_bonus: liquidation_bonus.unwrap_or(market.liquidation_bonus),
-                active: active.unwrap_or(market.active),
-                deposit_enabled: deposit_enabled.unwrap_or(market.deposit_enabled),
-                borrow_enabled: borrow_enabled.unwrap_or(market.borrow_enabled),
-                ..market
-            };
-
-            if let Some(params) = interest_rate_model_params {
-                updated_market.interest_rate_model =
-                    init_interest_rate_model(params, env.block.time.seconds())?;
-            }
-
-            updated_market.validate()?;
-
-            if should_update_interest_rates {
-                response = update_interest_rates(
-                    &deps,
-                    &env,
-                    &mut updated_market,
-                    Uint128::zero(),
-                    &asset_label,
-                    response,
-                )?;
-            }
-            MARKETS.save(deps.storage, asset_reference.as_slice(), &updated_market)?;
-
-            response = response
-                .add_attribute("action", "update_asset")
-                .add_attribute("asset", &asset_label);
-
-            Ok(response)
-        }
+    if should_update_interest_rates {
+        let protocol_rewards_collector_address = address_provider::helpers::query_address(
+            deps.as_ref(),
+            &config.address_provider_address,
+            MarsContract::ProtocolRewardsCollector,
+        )?;
+        response = apply_accumulated_interests(
+            &env,
+            &protocol_rewards_collector_address,
+            &mut market,
+            response,
+        )?;
     }
+
+    let mut updated_market = Market {
+        max_loan_to_value: max_loan_to_value.unwrap_or(market.max_loan_to_value),
+        reserve_factor: reserve_factor.unwrap_or(market.reserve_factor),
+        liquidation_threshold: liquidation_threshold.unwrap_or(market.liquidation_threshold),
+        liquidation_bonus: liquidation_bonus.unwrap_or(market.liquidation_bonus),
+        active: active.unwrap_or(market.active),
+        deposit_enabled: deposit_enabled.unwrap_or(market.deposit_enabled),
+        borrow_enabled: borrow_enabled.unwrap_or(market.borrow_enabled),
+        ..market
+    };
+
+    if let Some(params) = interest_rate_model_params {
+        updated_market.interest_rate_model =
+            init_interest_rate_model(params, env.block.time.seconds())?;
+    }
+
+    updated_market.validate()?;
+
+    if should_update_interest_rates {
+        response = update_interest_rates(
+            &deps,
+            &env,
+            &mut updated_market,
+            Uint128::zero(),
+            &denom,
+            response,
+        )?;
+    }
+    MARKETS.save(deps.storage, &denom, &updated_market)?;
+
+    Ok(response.add_attribute("action", "update_asset").add_attribute("denom", denom))
 }
 
 /// Update uncollateralized loan limit by a given amount in base asset
 pub fn execute_update_uncollateralized_loan_limit(
     deps: DepsMut,
-    _env: Env,
     info: MessageInfo,
     user_address: Addr,
-    asset: Asset,
+    denom: String,
     new_limit: Uint128,
 ) -> Result<Response, ContractError> {
     // Get config
@@ -653,16 +523,14 @@ pub fn execute_update_uncollateralized_loan_limit(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    let (asset_label, asset_reference, _) = asset.get_attributes();
-
     // Check that the user has no collateralized debt
     if let Some(user) = USERS.may_load(deps.storage, &user_address)? {
         let previous_uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
-            .may_load(deps.storage, (asset_reference.as_slice(), &user_address))?
+            .may_load(deps.storage, (&denom, &user_address))?
             .unwrap_or_else(Uint128::zero);
 
         if previous_uncollateralized_loan_limit == Uint128::zero() {
-            let asset_market = MARKETS.load(deps.storage, asset_reference.as_slice())?;
+            let asset_market = MARKETS.load(deps.storage, &denom)?;
 
             let is_borrowing_asset = get_bit(user.borrowed_assets, asset_market.index)?;
 
@@ -672,15 +540,11 @@ pub fn execute_update_uncollateralized_loan_limit(
         };
     }
 
-    UNCOLLATERALIZED_LOAN_LIMITS.save(
-        deps.storage,
-        (asset_reference.as_slice(), &user_address),
-        &new_limit,
-    )?;
+    UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (&denom, &user_address), &new_limit)?;
 
     DEBTS.update(
         deps.storage,
-        (asset_reference.as_slice(), &user_address),
+        (&denom, &user_address),
         |debt_opt: Option<Debt>| -> StdResult<_> {
             let mut debt = debt_opt.unwrap_or(Debt {
                 amount_scaled: Uint128::zero(),
@@ -695,7 +559,7 @@ pub fn execute_update_uncollateralized_loan_limit(
     let res = Response::new()
         .add_attribute("action", "update_uncollateralized_loan_limit")
         .add_attribute("user", user_address.as_str())
-        .add_attribute("asset", asset_label)
+        .add_attribute("denom", denom)
         .add_attribute("new_allowance", new_limit.to_string());
     Ok(res)
 }
@@ -704,11 +568,9 @@ pub fn execute_update_uncollateralized_loan_limit(
 pub fn execute_deposit(
     deps: DepsMut,
     env: Env,
-    _info: MessageInfo,
     sender_address: Addr,
     on_behalf_of: Option<String>,
-    asset_reference: &[u8],
-    asset_label: &str,
+    denom: String,
     deposit_amount: Uint128,
 ) -> Result<Response, ContractError> {
     let user_address = if let Some(address) = on_behalf_of {
@@ -717,22 +579,22 @@ pub fn execute_deposit(
         sender_address.clone()
     };
 
-    let mut market = MARKETS.load(deps.storage, asset_reference)?;
+    let mut market = MARKETS.load(deps.storage, &denom)?;
     if !market.active {
         return Err(ContractError::MarketNotActive {
-            asset: asset_label.to_string(),
+            denom,
         });
     }
     if !market.deposit_enabled {
         return Err(ContractError::DepositNotEnabled {
-            asset: asset_label.to_string(),
+            denom,
         });
     }
 
     // Cannot deposit zero amount
     if deposit_amount.is_zero() {
         return Err(ContractError::InvalidDepositAmount {
-            asset: asset_label.to_string(),
+            denom,
         });
     }
 
@@ -744,7 +606,7 @@ pub fn execute_deposit(
         set_bit(&mut user.collateral_assets, market.index)?;
         USERS.save(deps.storage, &user_address, &user)?;
         response = response.add_event(build_collateral_position_changed_event(
-            asset_label,
+            &denom,
             true,
             user_address.to_string(),
         ));
@@ -764,9 +626,8 @@ pub fn execute_deposit(
         &mut market,
         response,
     )?;
-    response =
-        update_interest_rates(&deps, &env, &mut market, Uint128::zero(), asset_label, response)?;
-    MARKETS.save(deps.storage, asset_reference, &market)?;
+    response = update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, response)?;
+    MARKETS.save(deps.storage, &denom, &market)?;
 
     if market.liquidity_index.is_zero() {
         return Err(ContractError::InvalidLiquidityIndex {});
@@ -776,7 +637,7 @@ pub fn execute_deposit(
 
     response = response
         .add_attribute("action", "deposit")
-        .add_attribute("asset", asset_label)
+        .add_attribute("denom", denom)
         .add_attribute("sender", sender_address)
         .add_attribute("user", user_address.as_str())
         .add_attribute("amount", deposit_amount)
@@ -797,18 +658,16 @@ pub fn execute_withdraw(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    asset: Asset,
+    denom: String,
     amount: Option<Uint128>,
     recipient_address: Option<String>,
 ) -> Result<Response, ContractError> {
     let withdrawer_addr = info.sender;
 
-    let (asset_label, asset_reference, asset_type) = asset.get_attributes();
-    let mut market = MARKETS.load(deps.storage, asset_reference.as_slice())?;
-
+    let mut market = MARKETS.load(deps.storage, &denom)?;
     if !market.active {
         return Err(ContractError::MarketNotActive {
-            asset: asset_label,
+            denom,
         });
     }
 
@@ -823,24 +682,15 @@ pub fn execute_withdraw(
 
     if withdrawer_balance_scaled_before.is_zero() {
         return Err(ContractError::UserNoBalance {
-            asset: asset_label,
+            denom,
         });
     }
 
-    let withdraw_amount = match amount {
-        Some(amount) => {
-            // Check user has sufficient balance to send back
-            if amount.is_zero() || amount > withdrawer_balance_before {
-                return Err(ContractError::InvalidWithdrawAmount {
-                    asset: asset_label,
-                });
-            };
-            amount
-        }
-        None => {
-            // If no amount is specified, the full balance is withdrawn
-            withdrawer_balance_before
-        }
+    let withdraw_amount = amount.unwrap_or(withdrawer_balance_before);
+    if withdraw_amount.is_zero() || withdraw_amount > withdrawer_balance_before {
+        return Err(ContractError::InvalidWithdrawAmount {
+            denom,
+        });
     };
 
     let config = CONFIG.load(deps.storage)?;
@@ -883,8 +733,7 @@ pub fn execute_withdraw(
             global_state.market_count,
         )?;
 
-        let withdraw_asset_price =
-            user_position.get_asset_price(asset_reference.as_slice(), &asset_label)?;
+        let withdraw_asset_price = user_position.get_asset_price(&denom)?;
 
         let withdraw_amount_in_base_asset = withdraw_amount * withdraw_asset_price;
 
@@ -907,7 +756,7 @@ pub fn execute_withdraw(
         unset_bit(&mut withdrawer.collateral_assets, market.index)?;
         USERS.save(deps.storage, &withdrawer_addr, &withdrawer)?;
         response = response.add_event(build_collateral_position_changed_event(
-            asset_label.as_str(),
+            &denom,
             false,
             withdrawer_addr.to_string(),
         ));
@@ -920,9 +769,8 @@ pub fn execute_withdraw(
         &mut market,
         response,
     )?;
-    response =
-        update_interest_rates(&deps, &env, &mut market, withdraw_amount, &asset_label, response)?;
-    MARKETS.save(deps.storage, asset_reference.as_slice(), &market)?;
+    response = update_interest_rates(&deps, &env, &mut market, withdraw_amount, &denom, response)?;
+    MARKETS.save(deps.storage, &denom, &market)?;
 
     // burn maToken
     let withdrawer_balance_after = withdrawer_balance_before.checked_sub(withdraw_amount)?;
@@ -946,21 +794,15 @@ pub fn execute_withdraw(
     } else {
         withdrawer_addr.clone()
     };
-    response = response.add_message(build_send_asset_msg(
-        recipient_address.clone(),
-        asset_label.clone(),
-        asset_type,
-        withdraw_amount,
-    )?);
 
-    response = response
+    Ok(response
+        .add_message(build_send_coin_msg(&recipient_address, &denom, withdraw_amount))
         .add_attribute("action", "withdraw")
-        .add_attribute("asset", asset_label.as_str())
-        .add_attribute("user", withdrawer_addr.as_str())
-        .add_attribute("recipient", recipient_address.as_str())
+        .add_attribute("denom", denom)
+        .add_attribute("user", withdrawer_addr.to_string())
+        .add_attribute("recipient", recipient_address.to_string())
         .add_attribute("burn_amount", burn_amount)
-        .add_attribute("withdraw_amount", withdraw_amount);
-    Ok(response)
+        .add_attribute("withdraw_amount", withdraw_amount))
 }
 
 /// Add debt for the borrower and send the borrowed funds
@@ -968,37 +810,36 @@ pub fn execute_borrow(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    asset: Asset,
+    denom: String,
     borrow_amount: Uint128,
     recipient_address: Option<String>,
 ) -> Result<Response, ContractError> {
     let borrower_address = info.sender;
-    let (asset_label, asset_reference, asset_type) = asset.get_attributes();
 
     // Cannot borrow zero amount
     if borrow_amount.is_zero() {
         return Err(ContractError::InvalidBorrowAmount {
-            asset: asset_label,
+            denom,
         });
     }
 
     // Load market and user state
     let global_state = GLOBAL_STATE.load(deps.storage)?;
-    let mut borrow_market = MARKETS.load(deps.storage, asset_reference.as_slice())?;
+    let mut borrow_market = MARKETS.load(deps.storage, &denom)?;
 
     if !borrow_market.active {
         return Err(ContractError::MarketNotActive {
-            asset: asset_label,
+            denom,
         });
     }
     if !borrow_market.borrow_enabled {
         return Err(ContractError::BorrowNotEnabled {
-            asset: asset_label,
+            denom,
         });
     }
 
     let uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
-        .may_load(deps.storage, (asset_reference.as_slice(), &borrower_address))?
+        .may_load(deps.storage, (&denom, &borrower_address))?
         .unwrap_or_else(Uint128::zero);
     let mut user: User = match USERS.may_load(deps.storage, &borrower_address)? {
         Some(user) => user,
@@ -1038,13 +879,9 @@ pub fn execute_borrow(
 
         let borrow_asset_price = if is_borrowing_asset {
             // if user was already borrowing, get price from user position
-            user_position.get_asset_price(asset_reference.as_slice(), &asset_label)?
+            user_position.get_asset_price(&denom)?
         } else {
-            mars_outpost::oracle::helpers::query_price(
-                deps.querier,
-                oracle_address,
-                asset_reference.clone(),
-            )?
+            mars_outpost::oracle::helpers::query_price(&deps.querier, oracle_address, &denom)?
         };
 
         let borrow_amount_in_base_asset = borrow_amount * borrow_asset_price;
@@ -1058,14 +895,13 @@ pub fn execute_borrow(
         // Uncollateralized loan: check borrow amount plus debt does not exceed uncollateralized loan limit
         uncollateralized_debt = true;
 
-        let borrower_debt = DEBTS
-            .may_load(deps.storage, (asset_reference.as_slice(), &borrower_address))?
-            .unwrap_or(Debt {
+        let borrower_debt =
+            DEBTS.may_load(deps.storage, (&denom, &borrower_address))?.unwrap_or(Debt {
                 amount_scaled: Uint128::zero(),
                 uncollateralized: uncollateralized_debt,
             });
 
-        let asset_market = MARKETS.load(deps.storage, asset_reference.as_slice())?;
+        let asset_market = MARKETS.load(deps.storage, &denom)?;
         let debt_amount = get_underlying_debt_amount(
             borrower_debt.amount_scaled,
             &asset_market,
@@ -1092,35 +928,27 @@ pub fn execute_borrow(
         set_bit(&mut user.borrowed_assets, borrow_market.index)?;
         USERS.save(deps.storage, &borrower_address, &user)?;
         response = response.add_event(build_debt_position_changed_event(
-            asset_label.as_str(),
+            &denom,
             true,
             borrower_address.to_string(),
         ));
     }
 
     // Set new debt
-    let mut debt = DEBTS
-        .may_load(deps.storage, (asset_reference.as_slice(), &borrower_address))?
-        .unwrap_or(Debt {
-            amount_scaled: Uint128::zero(),
-            uncollateralized: uncollateralized_debt,
-        });
+    let mut debt = DEBTS.may_load(deps.storage, (&denom, &borrower_address))?.unwrap_or(Debt {
+        amount_scaled: Uint128::zero(),
+        uncollateralized: uncollateralized_debt,
+    });
     let borrow_amount_scaled =
         get_scaled_debt_amount(borrow_amount, &borrow_market, env.block.time.seconds())?;
     debt.amount_scaled = debt.amount_scaled.checked_add(borrow_amount_scaled)?;
-    DEBTS.save(deps.storage, (asset_reference.as_slice(), &borrower_address), &debt)?;
+    DEBTS.save(deps.storage, (&denom, &borrower_address), &debt)?;
 
     borrow_market.debt_total_scaled += borrow_amount_scaled;
 
-    response = update_interest_rates(
-        &deps,
-        &env,
-        &mut borrow_market,
-        borrow_amount,
-        &asset_label,
-        response,
-    )?;
-    MARKETS.save(deps.storage, asset_reference.as_slice(), &borrow_market)?;
+    response =
+        update_interest_rates(&deps, &env, &mut borrow_market, borrow_amount, &denom, response)?;
+    MARKETS.save(deps.storage, &denom, &borrow_market)?;
 
     // Send borrow amount to borrower or another recipient
     let recipient_address = if let Some(address) = recipient_address {
@@ -1128,73 +956,52 @@ pub fn execute_borrow(
     } else {
         borrower_address.clone()
     };
-    response = response.add_message(build_send_asset_msg(
-        recipient_address.clone(),
-        asset_label.clone(),
-        asset_type,
-        borrow_amount,
-    )?);
 
-    response = response
+    Ok(response
+        .add_message(build_send_coin_msg(&recipient_address, &denom, borrow_amount))
         .add_attribute("action", "borrow")
-        .add_attribute("asset", asset_label.as_str())
+        .add_attribute("denom", denom)
         .add_attribute("user", borrower_address.as_str())
         .add_attribute("recipient", recipient_address.as_str())
-        .add_attribute("amount", borrow_amount);
-    Ok(response)
+        .add_attribute("amount", borrow_amount))
 }
 
 /// Handle the repay of native tokens. Refund extra funds if they exist
 pub fn execute_repay(
     deps: DepsMut,
     env: Env,
-    _info: MessageInfo,
     sender_address: Addr,
     on_behalf_of: Option<String>,
-    asset_reference: &[u8],
-    asset_label: String,
+    denom: String,
     repay_amount: Uint128,
-    asset_type: AssetType,
 ) -> Result<Response, ContractError> {
     let user_address = if let Some(address) = on_behalf_of {
-        let on_behalf_of_addr = deps.api.addr_validate(&address)?;
-        // Uncollateralized loans should not have 'on behalf of' because it creates accounting complexity for them
-        match UNCOLLATERALIZED_LOAN_LIMITS
-            .may_load(deps.storage, (asset_reference, &on_behalf_of_addr))?
-        {
-            Some(limit) if !limit.is_zero() => {
-                return Err(ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {})
-            }
-            _ => on_behalf_of_addr,
-        }
+        deps.api.addr_validate(&address)?
     } else {
         sender_address.clone()
     };
 
-    let mut market = MARKETS.load(deps.storage, asset_reference)?;
-
-    if !market.active {
-        return Err(ContractError::MarketNotActive {
-            asset: asset_label,
-        });
-    }
-
     // Cannot repay zero amount
     if repay_amount.is_zero() {
         return Err(ContractError::InvalidRepayAmount {
-            asset: asset_label,
+            denom,
+        });
+    }
+
+    let mut market = MARKETS.load(deps.storage, &denom)?;
+    if !market.active {
+        return Err(ContractError::MarketNotActive {
+            denom,
         });
     }
 
     // Check new debt
-    let mut debt = DEBTS.load(deps.storage, (asset_reference, &user_address))?;
-
+    let mut debt = DEBTS.load(deps.storage, (&denom, &user_address))?;
     if debt.amount_scaled.is_zero() {
         return Err(ContractError::CannotRepayZeroDebt {});
     }
 
     let config = CONFIG.load(deps.storage)?;
-
     let protocol_rewards_collector_address = address_provider::helpers::query_address(
         deps.as_ref(),
         &config.address_provider_address,
@@ -1219,13 +1026,7 @@ pub fn execute_repay(
     let mut debt_amount_after = Uint128::zero();
     if repay_amount > debt_amount_before {
         refund_amount = repay_amount - debt_amount_before;
-        let refund_msg = build_send_asset_msg(
-            user_address.clone(),
-            asset_label.clone(),
-            asset_type,
-            refund_amount,
-        )?;
-        response = response.add_message(refund_msg);
+        response = response.add_message(build_send_coin_msg(&user_address, &denom, refund_amount));
     } else {
         debt_amount_after = debt_amount_before - repay_amount;
     }
@@ -1233,16 +1034,15 @@ pub fn execute_repay(
     let debt_amount_scaled_after =
         get_scaled_debt_amount(debt_amount_after, &market, env.block.time.seconds())?;
     debt.amount_scaled = debt_amount_scaled_after;
-    DEBTS.save(deps.storage, (asset_reference, &user_address), &debt)?;
+    DEBTS.save(deps.storage, (&denom, &user_address), &debt)?;
 
     let debt_amount_scaled_delta =
         debt_amount_scaled_before.checked_sub(debt_amount_scaled_after)?;
 
     market.debt_total_scaled = market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
 
-    response =
-        update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &asset_label, response)?;
-    MARKETS.save(deps.storage, asset_reference, &market)?;
+    response = update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, response)?;
+    MARKETS.save(deps.storage, &denom, &market)?;
 
     if debt.amount_scaled.is_zero() {
         // Remove asset from borrowed assets
@@ -1250,7 +1050,7 @@ pub fn execute_repay(
         unset_bit(&mut user.borrowed_assets, market.index)?;
         USERS.save(deps.storage, &user_address, &user)?;
         response = response.add_event(build_debt_position_changed_event(
-            &asset_label,
+            &denom,
             false,
             user_address.to_string(),
         ));
@@ -1258,7 +1058,7 @@ pub fn execute_repay(
 
     response = response
         .add_attribute("action", "repay")
-        .add_attribute("asset", asset_label)
+        .add_attribute("denom", denom)
         .add_attribute("sender", sender_address)
         .add_attribute("user", user_address)
         .add_attribute("amount", repay_amount.checked_sub(refund_amount)?);
@@ -1269,22 +1069,20 @@ pub fn execute_repay(
 pub fn execute_liquidate(
     mut deps: DepsMut,
     env: Env,
-    _info: MessageInfo,
     liquidator_address: Addr,
-    collateral_asset: Asset,
-    debt_asset: Asset,
+    collateral_denom: String,
+    debt_denom: String,
     user_address: Addr,
     sent_debt_asset_amount: Uint128,
     receive_ma_token: bool,
 ) -> Result<Response, ContractError> {
     let block_time = env.block.time.seconds();
-    let (debt_asset_label, debt_asset_reference, debt_asset_type) = debt_asset.get_attributes();
 
     // 1. Validate liquidation
     // If user (contract) has a positive uncollateralized limit then the user
     // cannot be liquidated
-    if let Some(limit) = UNCOLLATERALIZED_LOAN_LIMITS
-        .may_load(deps.storage, (debt_asset_reference.as_slice(), &user_address))?
+    if let Some(limit) =
+        UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&debt_denom, &user_address))?
     {
         if !limit.is_zero() {
             return Err(ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});
@@ -1294,18 +1092,15 @@ pub fn execute_liquidate(
     // liquidator must send positive amount of funds in the debt asset
     if sent_debt_asset_amount.is_zero() {
         return Err(ContractError::InvalidLiquidateAmount {
-            asset: debt_asset_label,
+            denom: debt_denom,
         });
     }
 
-    let (collateral_asset_label, collateral_asset_reference, collateral_asset_type) =
-        collateral_asset.get_attributes();
-
-    let collateral_market = MARKETS.load(deps.storage, collateral_asset_reference.as_slice())?;
+    let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
 
     if !collateral_market.active {
         return Err(ContractError::MarketNotActive {
-            asset: collateral_asset_label,
+            denom: collateral_denom,
         });
     }
 
@@ -1314,7 +1109,7 @@ pub fn execute_liquidate(
         get_bit(user.collateral_assets, collateral_market.index)?;
     if !using_collateral_asset_as_collateral {
         return Err(ContractError::CannotLiquidateWhenCollateralUnset {
-            asset: collateral_asset_label,
+            denom: collateral_denom,
         });
     }
 
@@ -1334,8 +1129,7 @@ pub fn execute_liquidate(
     }
 
     // check if user has outstanding debt in the deposited asset that needs to be repayed
-    let mut user_debt =
-        DEBTS.load(deps.storage, (debt_asset_reference.as_slice(), &user_address))?;
+    let mut user_debt = DEBTS.load(deps.storage, (&debt_denom, &user_address))?;
     if user_debt.amount_scaled.is_zero() {
         return Err(ContractError::CannotLiquidateWhenNoDebtBalance {});
     }
@@ -1374,25 +1168,23 @@ pub fn execute_liquidate(
         return Err(ContractError::CannotLiquidateHealthyPosition {});
     }
 
-    let collateral_and_debt_are_the_same_asset = debt_asset_reference == collateral_asset_reference;
+    let collateral_and_debt_are_the_same_asset = collateral_denom == debt_denom;
 
     let debt_market = if !collateral_and_debt_are_the_same_asset {
-        MARKETS.load(deps.storage, debt_asset_reference.as_slice())?
+        MARKETS.load(deps.storage, &debt_denom)?
     } else {
         collateral_market.clone()
     };
 
     if !debt_market.active {
         return Err(ContractError::MarketNotActive {
-            asset: debt_asset_label,
+            denom: debt_denom,
         });
     }
 
     // 3. Compute debt to repay and collateral to liquidate
-    let collateral_price = user_position
-        .get_asset_price(collateral_asset_reference.as_slice(), &collateral_asset_label)?;
-    let debt_price =
-        user_position.get_asset_price(debt_asset_reference.as_slice(), &debt_asset_label)?;
+    let collateral_price = user_position.get_asset_price(&collateral_denom)?;
+    let debt_price = user_position.get_asset_price(&debt_denom)?;
 
     let mut response = Response::new();
 
@@ -1418,7 +1210,7 @@ pub fn execute_liquidate(
             block_time,
             &user_address,
             &liquidator_address,
-            &collateral_asset_label,
+            &collateral_denom,
             &collateral_market,
             collateral_amount_to_liquidate,
             response,
@@ -1429,8 +1221,7 @@ pub fn execute_liquidate(
             &env,
             &user_address,
             &liquidator_address,
-            collateral_asset_label.clone(),
-            collateral_asset_type,
+            &collateral_denom,
             &collateral_market,
             collateral_amount_to_liquidate,
             response,
@@ -1442,7 +1233,7 @@ pub fn execute_liquidate(
         unset_bit(&mut user.collateral_assets, collateral_market.index)?;
         USERS.save(deps.storage, &user_address, &user)?;
         response = response.add_event(build_collateral_position_changed_event(
-            collateral_asset_label.as_str(),
+            &collateral_denom,
             false,
             user_address.to_string(),
         ));
@@ -1463,7 +1254,7 @@ pub fn execute_liquidate(
 
     user_debt.amount_scaled = user_debt_asset_debt_amount_scaled_after;
 
-    DEBTS.save(deps.storage, (debt_asset_reference.as_slice(), &user_address), &user_debt)?;
+    DEBTS.save(deps.storage, (&debt_denom, &user_address), &user_debt)?;
 
     let debt_market_debt_total_scaled_after =
         debt_market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
@@ -1474,18 +1265,17 @@ pub fn execute_liquidate(
     if collateral_and_debt_are_the_same_asset {
         // NOTE: for the sake of clarity copy attributes from collateral market and
         // give generic naming. Debt market could have been used as well
-        let mut asset_market_after = collateral_market;
-        let asset_reference = collateral_asset_reference;
-        let asset_label = &collateral_asset_label;
+        let mut market_after = collateral_market;
+        let denom = &collateral_denom;
 
         response = apply_accumulated_interests(
             &env,
             protocol_rewards_collector_address,
-            &mut asset_market_after,
+            &mut market_after,
             response,
         )?;
 
-        asset_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
+        market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
 
         let mut less_liquidity = refund_amount;
 
@@ -1493,16 +1283,10 @@ pub fn execute_liquidate(
             less_liquidity = less_liquidity.checked_add(collateral_amount_to_liquidate)?;
         };
 
-        response = update_interest_rates(
-            &deps,
-            &env,
-            &mut asset_market_after,
-            less_liquidity,
-            asset_label,
-            response,
-        )?;
+        response =
+            update_interest_rates(&deps, &env, &mut market_after, less_liquidity, denom, response)?;
 
-        MARKETS.save(deps.storage, asset_reference.as_slice(), &asset_market_after)?;
+        MARKETS.save(deps.storage, denom, &market_after)?;
     } else {
         if !receive_ma_token {
             let mut collateral_market_after = collateral_market;
@@ -1519,15 +1303,11 @@ pub fn execute_liquidate(
                 &env,
                 &mut collateral_market_after,
                 collateral_amount_to_liquidate,
-                &collateral_asset_label,
+                &collateral_denom,
                 response,
             )?;
 
-            MARKETS.save(
-                deps.storage,
-                collateral_asset_reference.as_slice(),
-                &collateral_market_after,
-            )?;
+            MARKETS.save(deps.storage, &collateral_denom, &collateral_market_after)?;
         }
 
         let mut debt_market_after = debt_market;
@@ -1546,34 +1326,32 @@ pub fn execute_liquidate(
             &env,
             &mut debt_market_after,
             refund_amount,
-            &debt_asset_label,
+            &debt_denom,
             response,
         )?;
 
-        MARKETS.save(deps.storage, debt_asset_reference.as_slice(), &debt_market_after)?;
+        MARKETS.save(deps.storage, &debt_denom, &debt_market_after)?;
     }
 
     // 7. Build response
     // refund sent amount in excess of actual debt amount to liquidate
     if refund_amount > Uint128::zero() {
-        response = response.add_message(build_send_asset_msg(
-            liquidator_address.clone(),
-            debt_asset_label.clone(),
-            debt_asset_type,
+        response = response.add_message(build_send_coin_msg(
+            &liquidator_address,
+            &debt_denom,
             refund_amount,
-        )?);
+        ));
     }
 
-    response = response
+    Ok(response
         .add_attribute("action", "liquidate")
-        .add_attribute("collateral_asset", collateral_asset_label.as_str())
-        .add_attribute("debt_asset", debt_asset_label.as_str())
+        .add_attribute("collateral_denom", collateral_denom)
+        .add_attribute("debt_denom", debt_denom)
         .add_attribute("user", user_address.as_str())
         .add_attribute("liquidator", liquidator_address.as_str())
         .add_attribute("collateral_amount_liquidated", collateral_amount_to_liquidate.to_string())
         .add_attribute("debt_amount_repaid", debt_amount_to_repay.to_string())
-        .add_attribute("refund_amount", refund_amount.to_string());
-    Ok(response)
+        .add_attribute("refund_amount", refund_amount.to_string()))
 }
 
 /// Transfer ma tokens from user to liquidator
@@ -1627,8 +1405,7 @@ pub fn process_underlying_asset_transfer_to_liquidator(
     env: &Env,
     user_addr: &Addr,
     liquidator_addr: &Addr,
-    collateral_asset_label: String,
-    collateral_asset_type: AssetType,
+    collateral_denom: &str,
     collateral_market: &Market,
     collateral_amount_to_liquidate: Uint128,
     mut response: Response,
@@ -1636,12 +1413,8 @@ pub fn process_underlying_asset_transfer_to_liquidator(
     let block_time = env.block.time.seconds();
 
     // Ensure contract has enough collateral to send back underlying asset
-    let contract_collateral_balance = get_asset_balance(
-        deps.as_ref(),
-        env.contract.address.clone(),
-        collateral_asset_label.clone(),
-        collateral_asset_type,
-    )?;
+    let contract_collateral_balance =
+        deps.querier.query_balance(&env.contract.address, collateral_denom)?.amount;
 
     if contract_collateral_balance < collateral_amount_to_liquidate {
         return Err(ContractError::CannotLiquidateWhenNotEnoughCollateral {});
@@ -1660,14 +1433,11 @@ pub fn process_underlying_asset_transfer_to_liquidator(
         funds: vec![],
     }));
 
-    response = response.add_message(build_send_asset_msg(
-        liquidator_addr.clone(),
-        collateral_asset_label,
-        collateral_asset_type,
+    Ok(response.add_message(build_send_coin_msg(
+        &liquidator_addr,
+        &collateral_denom,
         collateral_amount_to_liquidate,
-    )?);
-
-    Ok(response)
+    )))
 }
 
 /// Computes debt to repay (in debt asset),
@@ -1725,7 +1495,7 @@ pub fn execute_update_asset_collateral_status(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    asset: Asset,
+    denom: String,
     enable: bool,
 ) -> Result<Response, ContractError> {
     let user_address = info.sender;
@@ -1733,8 +1503,7 @@ pub fn execute_update_asset_collateral_status(
 
     let mut events = vec![];
 
-    let (collateral_asset_label, collateral_asset_reference, _) = asset.get_attributes();
-    let collateral_market = MARKETS.load(deps.storage, collateral_asset_reference.as_slice())?;
+    let collateral_market = MARKETS.load(deps.storage, &denom)?;
     let has_collateral_asset = get_bit(user.collateral_assets, collateral_market.index)?;
     if !has_collateral_asset && enable {
         let collateral_ma_address = collateral_market.ma_token_address;
@@ -1745,14 +1514,14 @@ pub fn execute_update_asset_collateral_status(
             set_bit(&mut user.collateral_assets, collateral_market.index)?;
             USERS.save(deps.storage, &user_address, &user)?;
             events.push(build_collateral_position_changed_event(
-                collateral_asset_label.as_str(),
+                &denom,
                 true,
                 user_address.to_string(),
             ));
         } else {
             return Err(ContractError::UserNoCollateralBalance {
                 user_address: user_address.to_string(),
-                asset: collateral_asset_label,
+                denom: denom.to_string(),
             });
         }
     } else if has_collateral_asset && !enable {
@@ -1784,20 +1553,19 @@ pub fn execute_update_asset_collateral_status(
 
         USERS.save(deps.storage, &user_address, &user)?;
         events.push(build_collateral_position_changed_event(
-            collateral_asset_label.as_str(),
+            &denom,
             false,
             user_address.to_string(),
         ));
     }
 
-    let res = Response::new()
+    Ok(Response::new()
         .add_attribute("action", "update_asset_collateral_status")
         .add_attribute("user", user_address.as_str())
-        .add_attribute("asset", collateral_asset_label)
+        .add_attribute("denom", denom)
         .add_attribute("has_collateral", has_collateral_asset.to_string())
         .add_attribute("enable", enable.to_string())
-        .add_events(events);
-    Ok(res)
+        .add_events(events))
 }
 
 /// Update uncollateralized loan limit by a given amount in base asset
@@ -1812,8 +1580,8 @@ pub fn execute_finalize_liquidity_token_transfer(
     amount: Uint128,
 ) -> Result<Response, ContractError> {
     // Get liquidity token market
-    let market_reference = MARKET_REFERENCES_BY_MA_TOKEN.load(deps.storage, &info.sender)?;
-    let market = MARKETS.load(deps.storage, market_reference.as_slice())?;
+    let denom = MARKET_DENOMS_BY_MA_TOKEN.load(deps.storage, &info.sender)?;
+    let market = MARKETS.load(deps.storage, &denom)?;
 
     // Check user health factor is above 1
     let global_state = GLOBAL_STATE.load(deps.storage)?;
@@ -1838,7 +1606,6 @@ pub fn execute_finalize_liquidity_token_transfer(
         }
     }
 
-    let asset_label = String::from_utf8(market_reference).expect("Found invalid UTF-8");
     let mut events = vec![];
 
     // Update users's positions
@@ -1847,7 +1614,7 @@ pub fn execute_finalize_liquidity_token_transfer(
             unset_bit(&mut from_user.collateral_assets, market.index)?;
             USERS.save(deps.storage, &from_address, &from_user)?;
             events.push(build_collateral_position_changed_event(
-                asset_label.as_str(),
+                &denom,
                 false,
                 from_address.to_string(),
             ))
@@ -1858,17 +1625,16 @@ pub fn execute_finalize_liquidity_token_transfer(
             set_bit(&mut to_user.collateral_assets, market.index)?;
             USERS.save(deps.storage, &to_address, &to_user)?;
             events.push(build_collateral_position_changed_event(
-                asset_label.as_str(),
+                &denom,
                 true,
                 to_address.to_string(),
             ))
         }
     }
 
-    let res = Response::new()
+    Ok(Response::new()
         .add_attribute("action", "finalize_liquidity_token_transfer")
-        .add_events(events);
-    Ok(res)
+        .add_events(events))
 }
 
 // QUERIES
@@ -1877,53 +1643,44 @@ pub fn execute_finalize_liquidity_token_transfer(
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
-
         QueryMsg::Market {
-            asset,
-        } => to_binary(&query_market(deps, asset)?),
-
-        QueryMsg::MarketsList {} => to_binary(&query_markets_list(deps)?),
-
+            denom,
+        } => to_binary(&query_market(deps, denom)?),
+        QueryMsg::Markets {
+            start_after,
+            limit,
+        } => to_binary(&query_markets(deps, start_after, limit)?),
         QueryMsg::UserDebt {
             user_address,
-        } => {
-            let address = deps.api.addr_validate(&user_address)?;
-            to_binary(&query_user_debt(deps, env, address)?)
-        }
-
+        } => to_binary(&query_user_debt(deps, env, deps.api.addr_validate(&user_address)?)?),
         QueryMsg::UserAssetDebt {
             user_address,
-            asset,
-        } => {
-            let address = deps.api.addr_validate(&user_address)?;
-            to_binary(&query_user_asset_debt(deps, env, address, asset)?)
-        }
-
+            denom,
+        } => to_binary(&query_user_asset_debt(
+            deps,
+            env,
+            deps.api.addr_validate(&user_address)?,
+            denom,
+        )?),
         QueryMsg::UserCollateral {
             user_address,
-        } => {
-            let address = deps.api.addr_validate(&user_address)?;
-            to_binary(&query_user_collateral(deps, address)?)
-        }
-
+        } => to_binary(&query_user_collateral(deps, deps.api.addr_validate(&user_address)?)?),
         QueryMsg::UncollateralizedLoanLimit {
             user_address,
-            asset,
-        } => {
-            let user_address = deps.api.addr_validate(&user_address)?;
-            to_binary(&query_uncollateralized_loan_limit(deps, user_address, asset)?)
-        }
-
+            denom,
+        } => to_binary(&query_uncollateralized_loan_limit(
+            deps,
+            deps.api.addr_validate(&user_address)?,
+            denom,
+        )?),
         QueryMsg::ScaledLiquidityAmount {
-            asset,
+            denom,
             amount,
-        } => to_binary(&query_scaled_liquidity_amount(deps, env, asset, amount)?),
-
+        } => to_binary(&query_scaled_liquidity_amount(deps, env, denom, amount)?),
         QueryMsg::ScaledDebtAmount {
-            asset,
+            denom,
             amount,
-        } => to_binary(&query_scaled_debt_amount(deps, env, asset, amount)?),
-
+        } => to_binary(&query_scaled_debt_amount(deps, env, denom, amount)?),
         QueryMsg::UnderlyingLiquidityAmount {
             ma_token_address,
             amount_scaled,
@@ -1933,18 +1690,13 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             ma_token_address,
             amount_scaled,
         )?),
-
         QueryMsg::UnderlyingDebtAmount {
-            asset,
+            denom,
             amount_scaled,
-        } => to_binary(&query_underlying_debt_amount(deps, env, asset, amount_scaled)?),
-
+        } => to_binary(&query_underlying_debt_amount(deps, env, denom, amount_scaled)?),
         QueryMsg::UserPosition {
             user_address,
-        } => {
-            let address = deps.api.addr_validate(&user_address)?;
-            to_binary(&query_user_position(deps, env, address)?)
-        }
+        } => to_binary(&query_user_position(deps, env, deps.api.addr_validate(&user_address)?)?),
     }
 }
 
@@ -1961,39 +1713,38 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     })
 }
 
-pub fn query_market(deps: Deps, asset: Asset) -> StdResult<Market> {
-    let (label, reference, _) = asset.get_attributes();
-    let market = match MARKETS.load(deps.storage, reference.as_slice()) {
-        Ok(market) => market,
-        Err(_) => {
-            return Err(StdError::generic_err(format!("failed to load market for: {}", label)))
-        }
-    };
-
-    Ok(market)
+pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
+    MARKETS
+        .load(deps.storage, &denom)
+        .map_err(|_| StdError::generic_err(format!("failed to load market for: {}", denom)))
 }
 
-pub fn query_markets_list(deps: Deps) -> StdResult<MarketsListResponse> {
-    let markets_list: StdResult<Vec<_>> = MARKETS
-        .range(deps.storage, None, None, Order::Ascending)
+pub fn query_markets(
+    deps: Deps,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> StdResult<Vec<Market>> {
+    // we have to do this because MARKET uses &str as the key, while &str is a reference. in order for
+    // the key to live long enough, we need to store the original string out of the `match` enclosure
+    let denom: String;
+    let start = match start_after {
+        Some(s) => {
+            denom = s;
+            Some(Bound::exclusive(denom.as_ref()))
+        }
+        None => None,
+    };
+
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+
+    MARKETS
+        .range(deps.storage, start, None, Order::Ascending)
+        .take(limit)
         .map(|item| {
-            let (asset_reference, market) = item?;
-            let (denom, asset_label) =
-                get_asset_identifiers(deps, asset_reference.clone(), market.asset_type)?;
-
-            Ok(MarketInfo {
-                denom,
-                asset_label,
-                asset_reference,
-                asset_type: market.asset_type,
-                ma_token_address: market.ma_token_address,
-            })
+            let (_, market) = item?;
+            Ok(market)
         })
-        .collect();
-
-    Ok(MarketsListResponse {
-        markets_list: markets_list?,
-    })
+        .collect()
 }
 
 pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<UserDebtResponse> {
@@ -2002,13 +1753,11 @@ pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<Us
     let debts: StdResult<Vec<_>> = MARKETS
         .range(deps.storage, None, None, Order::Ascending)
         .map(|item| {
-            let (asset_reference, market) = item?;
-            let (denom, asset_label) =
-                get_asset_identifiers(deps, asset_reference.clone(), market.asset_type)?;
+            let (denom, market) = item?;
 
             let is_borrowing_asset = get_bit(user.borrowed_assets, market.index)?;
             let (amount_scaled, amount) = if is_borrowing_asset {
-                let debt = DEBTS.load(deps.storage, (asset_reference.as_slice(), &user_address))?;
+                let debt = DEBTS.load(deps.storage, (&denom, &user_address))?;
                 let amount_scaled = debt.amount_scaled;
                 let amount =
                     get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
@@ -2019,9 +1768,6 @@ pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<Us
 
             Ok(UserAssetDebtResponse {
                 denom,
-                asset_label,
-                asset_reference,
-                asset_type: market.asset_type,
                 amount_scaled,
                 amount,
             })
@@ -2037,31 +1783,23 @@ pub fn query_user_asset_debt(
     deps: Deps,
     env: Env,
     user_address: Addr,
-    asset: Asset,
+    denom: String,
 ) -> StdResult<UserAssetDebtResponse> {
-    let (asset_label, asset_reference, asset_type) = asset.get_attributes();
+    let market = MARKETS.load(deps.storage, &denom)?;
 
-    let market = MARKETS.load(deps.storage, &asset_reference)?;
+    let (amount_scaled, amount) = match DEBTS.may_load(deps.storage, (&denom, &user_address))? {
+        Some(debt) => {
+            let amount_scaled = debt.amount_scaled;
+            let amount =
+                get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
+            (amount_scaled, amount)
+        }
 
-    let denom = get_asset_denom(deps, &asset_label, asset_type)?;
-
-    let (amount_scaled, amount) =
-        match DEBTS.may_load(deps.storage, (asset_reference.as_slice(), &user_address))? {
-            Some(debt) => {
-                let amount_scaled = debt.amount_scaled;
-                let amount =
-                    get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
-                (amount_scaled, amount)
-            }
-
-            None => (Uint128::zero(), Uint128::zero()),
-        };
+        None => (Uint128::zero(), Uint128::zero()),
+    };
 
     Ok(UserAssetDebtResponse {
         denom,
-        asset_label,
-        asset_reference,
-        asset_type: market.asset_type,
         amount_scaled,
         amount,
     })
@@ -2073,15 +1811,9 @@ pub fn query_user_collateral(deps: Deps, address: Addr) -> StdResult<UserCollate
     let collateral: StdResult<Vec<_>> = MARKETS
         .range(deps.storage, None, None, Order::Ascending)
         .map(|item| {
-            let (asset_reference, market) = item?;
-            let (denom, asset_label) =
-                get_asset_identifiers(deps, asset_reference.clone(), market.asset_type)?;
-
+            let (denom, market) = item?;
             Ok(UserAssetCollateralResponse {
                 denom,
-                asset_label,
-                asset_reference,
-                asset_type: market.asset_type,
                 enabled: get_bit(user.collateral_assets, market.index)?,
             })
         })
@@ -2095,17 +1827,16 @@ pub fn query_user_collateral(deps: Deps, address: Addr) -> StdResult<UserCollate
 pub fn query_uncollateralized_loan_limit(
     deps: Deps,
     user_address: Addr,
-    asset: Asset,
+    denom: String,
 ) -> StdResult<Uint128> {
-    let (asset_label, asset_reference, _) = asset.get_attributes();
-    let uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
-        .load(deps.storage, (asset_reference.as_slice(), &user_address));
+    let uncollateralized_loan_limit =
+        UNCOLLATERALIZED_LOAN_LIMITS.load(deps.storage, (&denom, &user_address));
 
     match uncollateralized_loan_limit {
         Ok(limit) => Ok(limit),
         Err(_) => Err(StdError::not_found(format!(
             "No uncollateralized loan approved for user_address: {} on asset: {}",
-            user_address, asset_label
+            user_address, denom
         ))),
     }
 }
@@ -2113,22 +1844,20 @@ pub fn query_uncollateralized_loan_limit(
 pub fn query_scaled_liquidity_amount(
     deps: Deps,
     env: Env,
-    asset: Asset,
+    denom: String,
     amount: Uint128,
 ) -> StdResult<Uint128> {
-    let asset_reference = asset.get_reference();
-    let market = MARKETS.load(deps.storage, asset_reference.as_slice())?;
+    let market = MARKETS.load(deps.storage, &denom)?;
     get_scaled_liquidity_amount(amount, &market, env.block.time.seconds())
 }
 
 pub fn query_scaled_debt_amount(
     deps: Deps,
     env: Env,
-    asset: Asset,
+    denom: String,
     amount: Uint128,
 ) -> StdResult<Uint128> {
-    let asset_reference = asset.get_reference();
-    let market = MARKETS.load(deps.storage, asset_reference.as_slice())?;
+    let market = MARKETS.load(deps.storage, &denom)?;
     get_scaled_debt_amount(amount, &market, env.block.time.seconds())
 }
 
@@ -2139,19 +1868,18 @@ pub fn query_underlying_liquidity_amount(
     amount_scaled: Uint128,
 ) -> StdResult<Uint128> {
     let ma_token_address = deps.api.addr_validate(&ma_token_address)?;
-    let market_reference = MARKET_REFERENCES_BY_MA_TOKEN.load(deps.storage, &ma_token_address)?;
-    let market = MARKETS.load(deps.storage, market_reference.as_slice())?;
+    let denom = MARKET_DENOMS_BY_MA_TOKEN.load(deps.storage, &ma_token_address)?;
+    let market = MARKETS.load(deps.storage, &denom)?;
     get_underlying_liquidity_amount(amount_scaled, &market, env.block.time.seconds())
 }
 
 pub fn query_underlying_debt_amount(
     deps: Deps,
     env: Env,
-    asset: Asset,
+    denom: String,
     amount_scaled: Uint128,
 ) -> StdResult<Uint128> {
-    let asset_reference = asset.get_reference();
-    let market = MARKETS.load(deps.storage, asset_reference.as_slice())?;
+    let market = MARKETS.load(deps.storage, &denom)?;
     get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())
 }
 
@@ -2188,5 +1916,3 @@ pub fn query_user_position(
         health_status: user_position.health_status,
     })
 }
-
-// EVENTS

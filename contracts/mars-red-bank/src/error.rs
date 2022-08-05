@@ -23,29 +23,29 @@ pub enum ContractError {
     #[error("{0}")]
     InterestRateModel(#[from] InterestRateModelError),
 
-    #[error("Price not found for asset: {label:?}")]
+    #[error("Price not found for asset: {denom:?}")]
     PriceNotFound {
-        label: String,
+        denom: String,
     },
 
-    #[error("User has no balance (asset: {asset:?})")]
+    #[error("User has no balance (asset: {denom:?})")]
     UserNoBalance {
-        asset: String,
+        denom: String,
     },
 
     #[error(
-        "User address {user_address:?} has no balance in specified collateral asset {asset:?}"
+        "User address {user_address:?} has no balance in specified collateral asset {denom:?}"
     )]
     UserNoCollateralBalance {
         user_address: String,
-        asset: String,
+        denom: String,
     },
 
     #[error(
-        "Withdraw amount must be greater than 0 and less or equal user balance (asset: {asset:?})"
+        "Withdraw amount must be greater than 0 and less or equal user balance (asset: {denom:?})"
     )]
     InvalidWithdrawAmount {
-        asset: String,
+        denom: String,
     },
 
     #[error("Sender requires to have an existing user position")]
@@ -60,17 +60,17 @@ pub enum ContractError {
     #[error("Asset not initialized")]
     AssetNotInitialized {},
 
-    #[error("Deposit amount must be greater than 0 {asset:?}")]
+    #[error("Deposit amount must be greater than 0 {denom:?}")]
     InvalidDepositAmount {
-        asset: String,
+        denom: String,
     },
 
     #[error("Cannot have 0 as liquidity index")]
     InvalidLiquidityIndex {},
 
-    #[error("Borrow amount must be greater than 0 {asset:?}")]
+    #[error("Borrow amount must be greater than 0 {denom:?}")]
     InvalidBorrowAmount {
-        asset: String,
+        denom: String,
     },
 
     #[error("Address has no collateral deposited")]
@@ -82,9 +82,9 @@ pub enum ContractError {
     #[error("Borrow amount exceeds uncollateralized loan limit given existing debt")]
     BorrowAmountExceedsUncollateralizedLoanLimit {},
 
-    #[error("Repay amount must be greater than 0 {asset:?}")]
+    #[error("Repay amount must be greater than 0 {denom:?}")]
     InvalidRepayAmount {
-        asset: String,
+        denom: String,
     },
 
     #[error("Cannot repay 0 debt")]
@@ -96,14 +96,14 @@ pub enum ContractError {
     #[error("User has a positive uncollateralized loan limit and thus cannot be liquidated")]
     CannotLiquidateWhenPositiveUncollateralizedLoanLimit {},
 
-    #[error("Must send more than 0 {asset:?} in order to liquidate")]
+    #[error("Must send more than 0 {denom:?} in order to liquidate")]
     InvalidLiquidateAmount {
-        asset: String,
+        denom: String,
     },
 
-    #[error("User can't be liquidated for asset {asset:?} not being used as collateral")]
+    #[error("User can't be liquidated for asset {denom:?} not being used as collateral")]
     CannotLiquidateWhenCollateralUnset {
-        asset: String,
+        denom: String,
     },
 
     #[error("User has no balance in specified collateral asset to be liquidated")]
@@ -131,31 +131,31 @@ pub enum ContractError {
     #[error("Contract current asset balance cannot be less than liquidity taken")]
     OperationExceedsAvailableLiquidity {},
 
-    #[error("Deposit for {asset:?} is not enabled")]
+    #[error("Deposit for {denom:?} is not enabled")]
     DepositNotEnabled {
-        asset: String,
+        denom: String,
     },
 
-    #[error("Borrow for {asset:?} is not enabled")]
+    #[error("Borrow for {denom:?} is not enabled")]
     BorrowNotEnabled {
-        asset: String,
+        denom: String,
     },
 
-    #[error("Cannot perform operation. Market for {asset:?} is not active")]
+    #[error("Cannot perform operation. Market for {denom:?} is not active")]
     MarketNotActive {
-        asset: String,
+        denom: String,
     },
 
-    #[error("Cannot liquidate. Debt asset {asset:?}")]
+    #[error("Cannot liquidate. Debt asset {denom:?}")]
     LiquidationNotAllowedWhenDebtMarketInactive {
-        asset: String,
+        denom: String,
     },
 
     #[error("User's health factor can't be less than 1 after disabling collateral")]
     InvalidHealthFactorAfterDisablingCollateral {},
 
-    #[error("Invalid native coins sent. Only one native coin is required: {denom:?}")]
-    InvalidNativeCoinsSent {
+    #[error("Invalid coins sent. Only one coin is accepted: {denom:?}")]
+    InvalidCoinsSent {
         denom: String,
     },
 
@@ -164,12 +164,4 @@ pub enum ContractError {
 
     #[error("Cannot repay uncollateralized loan on behalf of another user")]
     CannotRepayUncollateralizedLoanOnBehalfOf {},
-}
-
-impl ContractError {
-    pub fn price_not_found<S: Into<String>>(label: S) -> ContractError {
-        ContractError::PriceNotFound {
-            label: label.into(),
-        }
-    }
 }
