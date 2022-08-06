@@ -1,5 +1,3 @@
-extern crate core;
-
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 use cw_multi_test::{App, Executor};
 
@@ -17,8 +15,6 @@ use crate::helpers::{
 };
 
 pub mod helpers;
-
-// TODO: Assert values
 
 #[test]
 fn test_only_owner_of_token_can_deposit() {
@@ -337,10 +333,15 @@ fn test_deposit_success() {
     .unwrap();
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
+    let assets_res = res.coin_assets.first().unwrap();
     assert_eq!(res.coin_assets.len(), 1);
-    assert_eq!(res.coin_assets.first().unwrap().amount, deposit_amount);
-    assert_eq!(res.coin_assets.first().unwrap().denom, coin_info.denom);
-    assert_eq!(res.coin_assets.first().unwrap().price, coin_info.price);
+    assert_eq!(assets_res.amount, deposit_amount);
+    assert_eq!(assets_res.denom, coin_info.denom);
+    assert_eq!(assets_res.price, coin_info.price);
+    assert_eq!(
+        assets_res.total_value,
+        coin_info.price * Decimal::from_atomics(deposit_amount, 0).unwrap()
+    );
 
     let coin = app
         .wrap()
@@ -410,8 +411,10 @@ fn test_multiple_deposit_actions() {
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
     assert_eq!(res.coin_assets.len(), 2);
-    assert_present(&res, &uosmo_info, uosmo_amount);
-    assert_present(&res, &uatom_info, uatom_amount);
+    let uosmo_value = Decimal::from_atomics(uosmo_amount, 0).unwrap() * uosmo_info.price;
+    assert_present(&res, &uosmo_info, uosmo_amount, uosmo_value);
+    let uatom_value = Decimal::from_atomics(uatom_amount, 0).unwrap() * uatom_info.price;
+    assert_present(&res, &uatom_info, uatom_amount, uatom_value);
 
     let coin = app
         .wrap()
@@ -426,9 +429,11 @@ fn test_multiple_deposit_actions() {
     assert_eq!(coin.amount, uatom_amount);
 }
 
-fn assert_present(res: &PositionResponse, coin: &CoinInfo, amount: Uint128) {
+fn assert_present(res: &PositionResponse, coin: &CoinInfo, amount: Uint128, total_val: Decimal) {
     res.coin_assets
         .iter()
-        .find(|item| item.denom == coin.denom && &item.amount == &amount)
+        .find(|item| {
+            item.denom == coin.denom && &item.amount == &amount && item.total_value == total_val
+        })
         .unwrap();
 }

@@ -1,5 +1,3 @@
-extern crate core;
-
 use std::ops::{Add, Div, Mul};
 
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
@@ -7,15 +5,14 @@ use cw_multi_test::{App, BasicApp, Executor};
 
 use credit_manager::borrow::DEFAULT_DEBT_UNITS_PER_COIN_BORROWED;
 use mock_oracle::msg::{CoinPrice, ExecuteMsg as OracleExecuteMsg};
-use mock_red_bank::msg::QueryMsg::UserAssetDebt;
-use mock_red_bank::msg::UserAssetDebtResponse;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{Borrow, Deposit};
-use rover::msg::ExecuteMsg;
+use rover::msg::query::{CoinShares, DebtSharesValue};
+use rover::msg::{ExecuteMsg, QueryMsg};
 
 use crate::helpers::{
     assert_err, fund_red_bank, get_token_id, mock_app, mock_create_credit_account, query_config,
-    query_health, query_position, setup_credit_manager, CoinInfo, MockEnv,
+    query_health, query_position, query_red_bank_debt, setup_credit_manager, CoinInfo, MockEnv,
 };
 
 pub mod helpers;
@@ -662,16 +659,12 @@ fn test_debt_value() {
     )
     .unwrap();
 
-    let interim_red_bank_debt: UserAssetDebtResponse = app
-        .wrap()
-        .query_wasm_smart(
-            config.red_bank.clone(),
-            &UserAssetDebt {
-                user_address: mock.credit_manager.clone().into(),
-                denom: uatom_info.denom.clone(),
-            },
-        )
-        .unwrap();
+    let interim_red_bank_debt = query_red_bank_debt(
+        &mut app,
+        &mock.credit_manager,
+        &config.red_bank,
+        &uatom_info.denom,
+    );
 
     let user_b_deposit_amount = Uint128::from(101u128);
     let user_b_borrowed_amount_atom = Uint128::from(24u128);
@@ -690,44 +683,69 @@ fn test_debt_value() {
     )
     .unwrap();
 
-    let position = query_position(&app, &mock.credit_manager, &token_id_a);
-    assert_eq!(position.token_id, token_id_a);
-    assert_eq!(position.coin_assets.len(), 2);
+    let position_a = query_position(&app, &mock.credit_manager, &token_id_a);
+    assert_eq!(position_a.token_id, token_id_a);
+    assert_eq!(position_a.coin_assets.len(), 2);
+    assert_eq!(position_a.debt_shares.len(), 2);
 
     let health = query_health(&app, &mock.credit_manager, &token_id_a);
+    assert_eq!(health.above_max_ltv, false);
+    assert_eq!(health.liquidatable, false);
 
-    let user_a_borrowed_amount_atom_dec =
-        Decimal::from_atomics(user_a_borrowed_amount_atom, 0).unwrap();
-    let user_b_borrowed_amount_atom_dec =
-        Decimal::from_atomics(user_b_borrowed_amount_atom, 0).unwrap();
-
-    let interest = Decimal::one() + Decimal::one(); // simulated from mock_oracle
-    let total_debt_shares_value = uatom_info.price
-        * (user_a_borrowed_amount_atom_dec + user_b_borrowed_amount_atom_dec + interest);
+    let red_bank_atom_debt = query_red_bank_debt(
+        &mut app,
+        &mock.credit_manager,
+        &config.red_bank,
+        &uatom_info.denom,
+    );
 
     let user_a_debt_shares_atom =
         user_a_borrowed_amount_atom.mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED);
+    assert_eq!(
+        user_a_debt_shares_atom,
+        find_by_denom(&uatom_info.denom, &position_a.debt_shares).shares
+    );
 
+    let position_b = query_position(&app, &mock.credit_manager, &token_id_b);
     let user_b_debt_shares_atom = user_a_debt_shares_atom
         .multiply_ratio(user_b_borrowed_amount_atom, interim_red_bank_debt.amount);
+    assert_eq!(
+        user_b_debt_shares_atom,
+        find_by_denom(&uatom_info.denom, &position_b.debt_shares).shares
+    );
 
-    let debt_shares_ownership_ratio = Decimal::checked_from_ratio(
-        user_a_debt_shares_atom,
-        user_a_debt_shares_atom + user_b_debt_shares_atom,
-    )
-    .unwrap();
+    let red_bank_atom_res: CoinShares = app
+        .wrap()
+        .query_wasm_smart(
+            &mock.credit_manager,
+            &QueryMsg::TotalDebtShares(uatom_info.denom.clone()),
+        )
+        .unwrap();
 
-    let atom_debt_value = total_debt_shares_value.mul(debt_shares_ownership_ratio);
+    assert_eq!(
+        red_bank_atom_res.shares,
+        user_a_debt_shares_atom + user_b_debt_shares_atom
+    );
 
-    let user_a_borrowed_amount_osmo_dec =
-        Decimal::from_atomics(user_a_borrowed_amount_osmo, 0).unwrap();
-    let osmo_debt_value = uosmo_info.price * (user_a_borrowed_amount_osmo_dec + Decimal::one());
+    let user_a_owed_atom = red_bank_atom_debt
+        .amount
+        .multiply_ratio(user_a_debt_shares_atom, red_bank_atom_res.shares);
+    let user_a_owed_atom_value =
+        uatom_info.price * Decimal::from_atomics(user_a_owed_atom, 0).unwrap();
 
-    let total_debt_value = atom_debt_value.add(osmo_debt_value);
+    let osmo_borrowed_amount_dec =
+        Decimal::from_atomics(user_a_borrowed_amount_osmo + Uint128::new(1u128), 0).unwrap();
+    let osmo_debt_value = uosmo_info.price * osmo_borrowed_amount_dec;
+
+    let total_debt_value = user_a_owed_atom_value.add(osmo_debt_value);
     assert_eq!(health.debts_value, total_debt_value);
 
     let user_a_deposit_amount_osmo_dec =
         Decimal::from_atomics(user_a_deposit_amount_osmo, 0).unwrap();
+    let user_a_borrowed_amount_osmo_dec =
+        Decimal::from_atomics(user_a_borrowed_amount_osmo, 0).unwrap();
+    let user_a_borrowed_amount_atom_dec =
+        Decimal::from_atomics(user_a_borrowed_amount_atom, 0).unwrap();
 
     let lqdt_adjusted_assets_value = (uosmo_info.price
         * user_a_deposit_amount_osmo_dec
@@ -748,8 +766,6 @@ fn test_debt_value() {
         health.max_ltv_health_factor,
         Some(ltv_adjusted_assets_value.div(total_debt_value))
     );
-    assert_eq!(health.above_max_ltv, false);
-    assert_eq!(health.liquidatable, false);
 }
 
 fn price_change(app: &mut BasicApp, mock: &MockEnv, coin: CoinPrice) -> () {
@@ -760,4 +776,11 @@ fn price_change(app: &mut BasicApp, mock: &MockEnv, coin: CoinPrice) -> () {
         &[],
     )
     .unwrap();
+}
+
+fn find_by_denom<'a>(denom: &'a str, shares: &'a Vec<DebtSharesValue>) -> &'a DebtSharesValue {
+    shares
+        .iter()
+        .find(|item| item.denom == denom.to_string())
+        .unwrap()
 }

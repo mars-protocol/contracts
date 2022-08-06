@@ -1,11 +1,12 @@
 use cosmwasm_std::{Decimal, Deps, Env, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
 
+use rover::error::ContractResult;
 use rover::msg::query::{
     AssetResponseItem, CoinShares, CoinValue, ConfigResponse, DebtSharesValue, PositionResponse,
     SharesResponseItem,
 };
-use rover::{ContractResult, Denom, NftTokenId};
+use rover::{Denom, NftTokenId};
 
 use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, ASSETS, DEBT_SHARES, ORACLE, OWNER, RED_BANK,
@@ -76,23 +77,25 @@ fn get_debt_shares_values(
         .collect::<StdResult<Vec<_>>>()?
         .iter()
         .map(|(denom, shares)| {
-            // proportion of debt this token represents
+            // total shares of debt issued for denom
             let total_debt_shares = TOTAL_DEBT_SHARES
                 .load(deps.storage, denom)
                 .unwrap_or(Uint128::zero());
-            let token_share_ratio = Decimal::checked_from_ratio(*shares, total_debt_shares)?;
 
-            // total rover debt for asset
+            // total rover debt amount in Redbank for asset
             let red_bank = RED_BANK.load(deps.storage)?;
             let total_debt_amount =
                 red_bank.query_debt(&deps.querier, &env.contract.address, denom)?;
-            let total_debt_amount_dec = Decimal::from_atomics(total_debt_amount, 0)?;
+
+            // amount of debt for token's position
+            // NOTE: Given the nature of integers, the debt is rounded down. This means that the
+            //       remaining share owners will take a small hit of the remainder.
+            let owed = total_debt_amount.checked_multiply_ratio(*shares, total_debt_shares)?;
+            let owed_dec = Decimal::from_atomics(owed, 0)?;
 
             // debt value of token's position
             let coin_price = oracle.query_price(&deps.querier, denom)?;
-            let position_debt_value = coin_price
-                .checked_mul(total_debt_amount_dec)?
-                .checked_mul(token_share_ratio)?;
+            let position_debt_value = coin_price.checked_mul(owed_dec)?;
 
             Ok(DebtSharesValue {
                 total_value: position_debt_value,
@@ -155,13 +158,12 @@ pub fn query_allowed_vaults(
     start_after: Option<String>,
     limit: Option<u32>,
 ) -> StdResult<Vec<String>> {
-    let start = match &start_after {
-        Some(addr_str) => {
-            let addr = deps.api.addr_validate(addr_str)?;
-            Some(Bound::exclusive(addr))
-        }
-        None => None,
-    };
+    let start = start_after
+        .map(|addr_str| -> StdResult<_> {
+            let addr = deps.api.addr_validate(&addr_str)?;
+            Ok(Bound::exclusive(addr))
+        })
+        .transpose()?;
 
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 

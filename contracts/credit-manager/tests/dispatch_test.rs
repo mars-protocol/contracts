@@ -1,5 +1,3 @@
-extern crate core;
-
 use cosmwasm_std::Addr;
 use cw_multi_test::Executor;
 

@@ -4,8 +4,6 @@ use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 use cw_multi_test::{App, Executor};
 
 use credit_manager::borrow::DEFAULT_DEBT_UNITS_PER_COIN_BORROWED;
-use mock_red_bank::msg::QueryMsg::UserAssetDebt;
-use mock_red_bank::msg::UserAssetDebtResponse;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{Borrow, Deposit};
 use rover::msg::query::CoinShares;
@@ -14,7 +12,7 @@ use rover::msg::QueryMsg;
 
 use crate::helpers::{
     assert_err, fund_red_bank, get_token_id, mock_app, mock_create_credit_account, query_config,
-    query_position, setup_credit_manager, CoinInfo,
+    query_position, query_red_bank_debt, setup_credit_manager, CoinInfo,
 };
 
 pub mod helpers;
@@ -69,7 +67,7 @@ fn test_can_only_borrow_what_is_whitelisted() {
 
     let mock = setup_credit_manager(&mut app, &owner, vec![coin_info], vec![]);
     let user = Addr::unchecked("user");
-    let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
+    let res = mock_create_credit_account(&mut app, &mock.credit_manager.clone(), &user).unwrap();
     let token_id = get_token_id(res);
 
     let res = app.execute_contract(
@@ -190,17 +188,30 @@ fn test_success_when_new_debt_asset() {
 
     let position = query_position(&mut app, &mock.credit_manager, &token_id);
     assert_eq!(position.coin_assets.len(), 1);
+    let asset_res = position.coin_assets.first().unwrap();
     assert_eq!(
-        position.coin_assets.first().unwrap().amount,
+        asset_res.amount,
         Uint128::from(342u128) // Deposit + Borrow
     );
-    assert_eq!(position.coin_assets.first().unwrap().denom, coin_info.denom);
+    assert_eq!(asset_res.denom, coin_info.denom);
+    assert_eq!(asset_res.price, coin_info.price);
+    assert_eq!(
+        asset_res.total_value,
+        coin_info.price * Decimal::from_atomics(342u128, 0).unwrap()
+    );
+
+    let debt_shares_res = position.debt_shares.first().unwrap();
     assert_eq!(position.debt_shares.len(), 1);
     assert_eq!(
-        position.debt_shares.first().unwrap().shares,
+        debt_shares_res.shares,
         Uint128::from(42u128).mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED)
     );
-    assert_eq!(position.debt_shares.first().unwrap().denom, coin_info.denom);
+    assert_eq!(debt_shares_res.denom, coin_info.denom);
+    let debt_amount = Uint128::from(42u128) + Uint128::new(1u128); // simulated yield
+    assert_eq!(
+        debt_shares_res.total_value,
+        coin_info.price * Decimal::from_atomics(debt_amount, 0).unwrap()
+    );
 
     let coin = app
         .wrap()
@@ -292,16 +303,12 @@ fn test_debt_shares_with_debt_amount() {
     )
     .unwrap();
 
-    let interim_red_bank_debt: UserAssetDebtResponse = app
-        .wrap()
-        .query_wasm_smart(
-            config.red_bank,
-            &UserAssetDebt {
-                user_address: mock.credit_manager.clone().into(),
-                denom: coin_info.denom.clone(),
-            },
-        )
-        .unwrap();
+    let interim_red_bank_debt = query_red_bank_debt(
+        &mut app,
+        &mock.credit_manager,
+        &config.red_bank,
+        &coin_info.denom,
+    );
 
     app.execute_contract(
         user_b,
@@ -319,27 +326,63 @@ fn test_debt_shares_with_debt_amount() {
 
     let token_a_shares = Uint128::from(50u128).mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED);
     let position = query_position(&mut app, &mock.credit_manager, &token_id_a);
-    assert_eq!(
-        position.debt_shares.first().unwrap().shares,
-        token_a_shares.clone()
-    );
+    let debt_position_a = position.debt_shares.first().unwrap();
+    assert_eq!(debt_position_a.shares, token_a_shares.clone());
+    assert_eq!(debt_position_a.denom, coin_info.denom);
 
     let token_b_shares = Uint128::from(50u128)
         .mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED)
         .multiply_ratio(Uint128::from(50u128), interim_red_bank_debt.amount);
-
     let position = query_position(&mut app, &mock.credit_manager, &token_id_b);
-    assert_eq!(
-        position.debt_shares.first().unwrap().shares,
-        token_b_shares.clone()
-    );
+    let debt_position_b = position.debt_shares.first().unwrap();
+    assert_eq!(debt_position_b.shares, token_b_shares.clone());
+    assert_eq!(debt_position_b.denom, coin_info.denom);
 
-    let res: CoinShares = app
+    let total: CoinShares = app
         .wrap()
         .query_wasm_smart(
-            mock.credit_manager,
-            &QueryMsg::TotalDebtShares(coin_info.denom),
+            mock.credit_manager.clone(),
+            &QueryMsg::TotalDebtShares(coin_info.denom.clone()),
         )
         .unwrap();
-    assert_eq!(res.shares, token_a_shares + token_b_shares);
+    assert_eq!(
+        total.shares,
+        debt_position_a.shares + debt_position_b.shares
+    );
+
+    let red_bank_debt = query_red_bank_debt(
+        &mut app,
+        &mock.credit_manager,
+        &config.red_bank,
+        &coin_info.denom,
+    );
+
+    let a_amount_owed = red_bank_debt
+        .amount
+        .multiply_ratio(debt_position_a.shares, total.shares);
+    assert_eq!(
+        debt_position_a.total_value,
+        coin_info.price * Decimal::from_atomics(a_amount_owed, 0).unwrap()
+    );
+
+    let b_amount_owed = red_bank_debt
+        .amount
+        .multiply_ratio(debt_position_b.shares, total.shares);
+    assert_eq!(
+        debt_position_b.total_value,
+        coin_info.price * Decimal::from_atomics(b_amount_owed, 0).unwrap()
+    );
+
+    // NOTE: There is an expected rounding error. This will not pass.
+    // let total_borrowed_plus_interest = Decimal::from_atomics(Uint128::from(102u128), 0).unwrap();
+    // assert_eq!(
+    //     total_borrowed_plus_interest * coin_info.price,
+    //     debt_position_a.total_value + debt_position_b.total_value
+    // )
+    // This test below asserts the rounding down that's happening
+    let total_owed = Decimal::from_atomics(a_amount_owed + b_amount_owed, 0).unwrap();
+    assert_eq!(
+        total_owed * coin_info.price,
+        debt_position_a.total_value + debt_position_b.total_value
+    )
 }

@@ -6,10 +6,9 @@ use cw721_base::QueryMsg;
 
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use rover::coins::Coins;
-use rover::error::ContractError;
+use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::{Action, CallbackMsg};
 use rover::msg::instantiate::ConfigUpdates;
-use rover::ContractResult;
 
 use crate::borrow::borrow;
 use crate::deposit::deposit;

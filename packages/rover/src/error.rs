@@ -10,6 +10,9 @@ pub type ContractResult<T> = Result<T, ContractError>;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
+    #[error("Actions resulted in exceeding maximum allowed loan-to-value")]
+    AboveMaxLTV,
+
     #[error("{0}")]
     CheckedFromRatioError(#[from] CheckedFromRatioError),
 
@@ -18,9 +21,6 @@ pub enum ContractError {
 
     #[error("{0}")]
     DecimalRangeExceeded(#[from] DecimalRangeExceeded),
-
-    #[error("Actions resulted in exceeding maximum allowed loan-to-value")]
-    AboveMaxLTV,
 
     #[error("Callbacks cannot be invoked externally")]
     ExternalInvocation,

@@ -1,7 +1,6 @@
 use cosmwasm_std::{Coin, DepsMut, Env, Response, StdError, StdResult, Uint128};
-use rover::ContractResult;
 
-use rover::error::ContractError;
+use rover::error::{ContractError, ContractResult};
 
 use crate::deposit::assert_coin_is_whitelisted;
 use crate::state::{ASSETS, DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES};

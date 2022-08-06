@@ -1,8 +1,8 @@
 use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
+use rover::error::ContractResult;
 
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use rover::ContractResult;
 
 use crate::execute::{create_credit_account, dispatch_actions, execute_callback, update_config};
 use crate::health::compute_health;
