@@ -8,7 +8,8 @@ members = [
     "contracts/mars-oracle-base",
     "contracts/osmosis/mars-oracle",
     "contracts/mars-rewards-collector-base",
-    "contracts/osmosis/mars-rewards-collector"
+    "contracts/osmosis/mars-rewards-collector",
+    "schema"
 ]
 # members = ["contracts/*", "packages/*"]
 

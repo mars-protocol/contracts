@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "ExecuteMsg",
-  "anyOf": [
+  "oneOf": [
     {
       "description": "Implementation of cw20 receive msg",
       "type": "object",
@@ -92,7 +92,7 @@
           ],
           "properties": {
             "reference": {
-              "description": "Either the denom for a terra native asset or address for a cw20 token in bytes",
+              "description": "Either the denom for a native asset or address for a cw20 token in bytes",
               "type": "array",
               "items": {
                 "type": "integer",
@@ -181,7 +181,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Deposit Terra native coins. Deposited coins must be sent in the transaction this call is made",
+      "description": "Deposit native coins. Deposited coins must be sent in the transaction this call is made",
       "type": "object",
       "required": [
         "deposit_native"
@@ -194,8 +194,15 @@
           ],
           "properties": {
             "denom": {
-              "description": "Denom used in Terra (e.g: uluna, uusd)",
+              "description": "Denom used (e.g: uluna, uusd)",
               "type": "string"
+            },
+            "on_behalf_of": {
+              "description": "Address that will receive the maTokens",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           }
         }
@@ -203,7 +210,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Withdraw an amount of the asset burning an equivalent amount of maTokens. If asset is a Terra native token, the amount sent to the user is selected so that the sum of the transfered amount plus the stability tax payed is equal to the withdrawn amount.",
+      "description": "Withdraw an amount of the asset burning an equivalent amount of maTokens.",
       "type": "object",
       "required": [
         "withdraw"
@@ -233,6 +240,13 @@
                   "$ref": "#/definitions/Asset"
                 }
               ]
+            },
+            "recipient": {
+              "description": "The address where the withdrawn amount is sent",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           }
         }
@@ -240,7 +254,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Borrow Terra native coins. If borrow allowed, amount is added to caller's debt and sent to the address. If asset is a Terra native token, the amount sent is selected so that the sum of the transfered amount plus the stability tax payed is equal to the borrowed amount.",
+      "description": "Borrow native coins. If borrow allowed, amount is added to caller's debt and sent to the address.",
       "type": "object",
       "required": [
         "borrow"
@@ -268,6 +282,13 @@
                   "$ref": "#/definitions/Asset"
                 }
               ]
+            },
+            "recipient": {
+              "description": "The address where the borrowed amount is sent",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           }
         }
@@ -275,7 +296,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Repay Terra native coins loan. Coins used to repay must be sent in the transaction this call is made.",
+      "description": "Repay native coins loan. Coins used to repay must be sent in the transaction this call is made.",
       "type": "object",
       "required": [
         "repay_native"
@@ -288,8 +309,15 @@
           ],
           "properties": {
             "denom": {
-              "description": "Denom used in Terra (e.g: uluna, uusd)",
+              "description": "Denom used (e.g: uluna, uusd)",
               "type": "string"
+            },
+            "on_behalf_of": {
+              "description": "Repay the funds for the user",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           }
         }
@@ -321,7 +349,7 @@
               ]
             },
             "debt_asset_denom": {
-              "description": "Denom used in Terra (e.g: uluna, uusd) of the debt asset",
+              "description": "Denom (e.g: uluna, uusd) of the debt asset",
               "type": "string"
             },
             "receive_ma_token": {
@@ -438,7 +466,7 @@
     },
     "Asset": {
       "description": "Represents either a native asset or a cw20. Meant to be used as part of a msg in a contract call and not to be used internally",
-      "anyOf": [
+      "oneOf": [
         {
           "type": "object",
           "required": [
@@ -492,6 +520,16 @@
           "type": [
             "string",
             "null"
+          ]
+        },
+        "base_asset": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Asset"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "close_factor": {
@@ -712,7 +750,7 @@
       }
     },
     "InterestRateModelParams": {
-      "anyOf": [
+      "oneOf": [
         {
           "type": "object",
           "required": [

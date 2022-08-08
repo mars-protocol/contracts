@@ -508,6 +508,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-schema"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "mars-oracle-osmosis",
+ "mars-outpost",
+ "mars-rewards-collector-osmosis",
+ "schemars",
+]
+
+[[package]]
 name = "mars-testing"
 version = "0.1.0"
 dependencies = [

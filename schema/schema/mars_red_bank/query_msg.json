@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "QueryMsg",
-  "anyOf": [
+  "oneOf": [
     {
       "description": "Get config",
       "type": "object",
@@ -266,7 +266,7 @@
   "definitions": {
     "Asset": {
       "description": "Represents either a native asset or a cw20. Meant to be used as part of a msg in a contract call and not to be used internally",
-      "anyOf": [
+      "oneOf": [
         {
           "type": "object",
           "required": [

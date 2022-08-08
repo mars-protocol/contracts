@@ -16,6 +16,51 @@
     }
   },
   "definitions": {
+    "Asset": {
+      "description": "Represents either a native asset or a cw20. Meant to be used as part of a msg in a contract call and not to be used internally",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "cw20"
+          ],
+          "properties": {
+            "cw20": {
+              "type": "object",
+              "required": [
+                "contract_addr"
+              ],
+              "properties": {
+                "contract_addr": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "native"
+          ],
+          "properties": {
+            "native": {
+              "type": "object",
+              "required": [
+                "denom"
+              ],
+              "properties": {
+                "denom": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
     "CreateOrUpdateConfig": {
       "type": "object",
       "properties": {
@@ -23,6 +68,16 @@
           "type": [
             "string",
             "null"
+          ]
+        },
+        "base_asset": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Asset"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "close_factor": {

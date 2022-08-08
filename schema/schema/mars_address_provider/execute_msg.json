@@ -57,7 +57,9 @@
         "oracle",
         "protocol_admin",
         "protocol_rewards_collector",
-        "red_bank"
+        "red_bank",
+        "fee_collector",
+        "safety_fund"
       ]
     }
   }

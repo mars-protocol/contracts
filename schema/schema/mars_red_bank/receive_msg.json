@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "ReceiveMsg",
-  "anyOf": [
+  "oneOf": [
     {
       "description": "Deposit sent cw20 tokens",
       "type": "object",
@@ -10,7 +10,16 @@
       ],
       "properties": {
         "deposit_cw20": {
-          "type": "object"
+          "type": "object",
+          "properties": {
+            "on_behalf_of": {
+              "description": "Deposit the funds for the user",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
         }
       },
       "additionalProperties": false
@@ -23,7 +32,16 @@
       ],
       "properties": {
         "repay_cw20": {
-          "type": "object"
+          "type": "object",
+          "properties": {
+            "on_behalf_of": {
+              "description": "Repay the funds for the user",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
         }
       },
       "additionalProperties": false
@@ -68,7 +86,7 @@
   "definitions": {
     "Asset": {
       "description": "Represents either a native asset or a cw20. Meant to be used as part of a msg in a contract call and not to be used internally",
-      "anyOf": [
+      "oneOf": [
         {
           "type": "object",
           "required": [

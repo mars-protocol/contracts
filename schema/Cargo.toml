@@ -1,0 +1,20 @@
+[package]
+name = "mars-schema"
+version = "0.1.0"
+authors = [
+  "Ahmad Kaouk <ahmad@delphilabs.io>",
+  "Spike Spiegel <spikeonmars@protonmail.com>",
+  "larry_0x <larry@delphidigital.io>",
+  "Piotr Babel",
+  "Harry Scholes"
+]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cosmwasm-schema = "1.0"
+mars-outpost = { path = "../packages/mars-outpost" }
+mars-oracle-osmosis = { path = "../contracts/osmosis/mars-oracle" }
+mars-rewards-collector-osmosis = { path = "../contracts/osmosis/mars-rewards-collector" }
+schemars = "0.8"

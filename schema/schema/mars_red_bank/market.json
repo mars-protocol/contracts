@@ -96,7 +96,7 @@
       ]
     },
     "liquidation_threshold": {
-      "description": "uusd amount in debt position per uusd of asset collateral that if surpassed makes the user's position liquidatable.",
+      "description": "Base asset amount in debt position per \"base asset\" of asset collateral that if surpassed makes the user's position liquidatable.",
       "allOf": [
         {
           "$ref": "#/definitions/Decimal"
@@ -128,7 +128,7 @@
       ]
     },
     "max_loan_to_value": {
-      "description": "Max uusd that can be borrowed per uusd collateral when using the asset as collateral",
+      "description": "Max base asset that can be borrowed per \"base asset\" collateral when using the asset as collateral",
       "allOf": [
         {
           "$ref": "#/definitions/Decimal"
@@ -255,7 +255,7 @@
       }
     },
     "InterestRateModel": {
-      "anyOf": [
+      "oneOf": [
         {
           "type": "object",
           "required": [
