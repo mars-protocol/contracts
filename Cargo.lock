@@ -394,7 +394,6 @@ checksum = "505e71a4706fa491e9b1b55f51b95d4037d0821ee40131190475f692b35b009b"
 name = "mars-address-provider"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-outpost",
@@ -406,7 +405,6 @@ dependencies = [
 name = "mars-incentives"
 version = "1.0.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
  "cw20",
@@ -421,7 +419,6 @@ dependencies = [
 name = "mars-ma-token"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
  "cw0",
@@ -450,7 +447,6 @@ dependencies = [
 name = "mars-oracle-osmosis"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-oracle-base",
@@ -480,7 +476,6 @@ dependencies = [
 name = "mars-rewards-collector-base"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-outpost",
@@ -495,7 +490,6 @@ dependencies = [
 name = "mars-rewards-collector-osmosis"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-outpost",

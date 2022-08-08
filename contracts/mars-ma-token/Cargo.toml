@@ -36,6 +36,3 @@ cw-storage-plus = "0.13"
 schemars = "0.8.10"
 serde = { version = "1.0.138", default-features = false, features = ["derive"] }
 thiserror = "1.0.31"
-
-[dev-dependencies]
-cosmwasm-schema = "1.0"
