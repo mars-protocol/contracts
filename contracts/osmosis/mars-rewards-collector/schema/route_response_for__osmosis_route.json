@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "RouteResponse_for_Route",
+  "title": "RouteResponse_for_OsmosisRoute",
   "type": "object",
   "required": [
     "denom_in",
@@ -15,11 +15,11 @@
       "type": "string"
     },
     "route": {
-      "$ref": "#/definitions/Route"
+      "$ref": "#/definitions/OsmosisRoute"
     }
   },
   "definitions": {
-    "Route": {
+    "OsmosisRoute": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/Step"

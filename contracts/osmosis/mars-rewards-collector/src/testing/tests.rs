@@ -1,22 +1,20 @@
-use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
+use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, IbcMsg, IbcTimeout, IbcTimeoutBlock,
+    coin, to_binary, BankMsg, Coin, CosmosMsg, Decimal, IbcMsg, IbcTimeout, IbcTimeoutBlock,
     SubMsg, Timestamp, Uint128, WasmMsg,
 };
 
 use osmo_bindings::{OsmosisMsg, Step, Swap, SwapAmountWithLimit};
 
 use mars_outpost::error::MarsError;
-use mars_outpost::protocol_rewards_collector::{
-    Config, CreateOrUpdateConfig, QueryMsg, RouteResponse,
-};
+use mars_outpost::rewards_collector::{Config, CreateOrUpdateConfig, QueryMsg, RouteResponse};
+use mars_rewards_collector_base::{ContractError, Route};
 use mars_testing::{mock_env as mock_env_at_height_and_time, mock_info, MockEnvParams};
 
 use super::helpers::{self, mock_config, mock_routes};
-use crate::contract::{execute, instantiate};
-use crate::helpers::{stringify_option_amount, unwrap_option_amount};
+use crate::contract::entry::{execute, instantiate};
 use crate::msg::ExecuteMsg;
-use crate::{ContractError, Route};
+use crate::OsmosisRoute;
 
 #[test]
 fn instantiating() {
@@ -53,7 +51,9 @@ fn updating_config() {
 
     // non-owner is not authorized
     let info = mock_info("jake");
-    let msg = ExecuteMsg::UpdateConfig(new_cfg.clone());
+    let msg = ExecuteMsg::UpdateConfig {
+        new_cfg: new_cfg.clone(),
+    };
     let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(err, MarsError::Unauthorized {}.into());
 
@@ -62,7 +62,9 @@ fn updating_config() {
     invalid_cfg.safety_tax_rate = Some(Decimal::percent(125));
 
     let info = mock_info("owner");
-    let msg = ExecuteMsg::UpdateConfig(invalid_cfg);
+    let msg = ExecuteMsg::UpdateConfig {
+        new_cfg: invalid_cfg,
+    };
     let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
     assert_eq!(
         err,
@@ -74,7 +76,9 @@ fn updating_config() {
     );
 
     // update config properly
-    let msg = ExecuteMsg::UpdateConfig(new_cfg);
+    let msg = ExecuteMsg::UpdateConfig {
+        new_cfg,
+    };
     execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
     let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
@@ -99,12 +103,12 @@ fn setting_route() {
     let msg = ExecuteMsg::SetRoute {
         denom_in: "uatom".to_string(),
         denom_out: "umars".to_string(),
-        route: Route(steps.clone()),
+        route: OsmosisRoute(steps.clone()),
     };
     let invalid_msg = ExecuteMsg::SetRoute {
         denom_in: "uatom".to_string(),
         denom_out: "umars".to_string(),
-        route: Route(vec![]),
+        route: OsmosisRoute(vec![]),
     };
 
     // non-owner is not authorized
@@ -123,14 +127,14 @@ fn setting_route() {
     // properly set up route
     execute(deps.as_mut(), mock_env(), mock_info("owner"), msg).unwrap();
 
-    let res: RouteResponse<Route> = helpers::query(
+    let res: RouteResponse<OsmosisRoute> = helpers::query(
         deps.as_ref(),
         QueryMsg::Route {
             denom_in: "uatom".to_string(),
             denom_out: "umars".to_string(),
         },
     );
-    assert_eq!(res.route, Route(steps));
+    assert_eq!(res.route, OsmosisRoute(steps));
 }
 
 #[test]
@@ -318,7 +322,9 @@ fn executing_cosmos_msg() {
             amount: Uint128::new(123456),
         }],
     });
-    let msg = ExecuteMsg::ExecuteCosmosMsg(cosmos_msg.clone());
+    let msg = ExecuteMsg::ExecuteCosmosMsg {
+        cosmos_msg: cosmos_msg.clone(),
+    };
 
     // non-owner is not authorized
     let err = execute(deps.as_mut(), mock_env(), mock_info("jake"), msg.clone()).unwrap_err();
@@ -354,7 +360,7 @@ fn querying_routess() {
         },
     ];
 
-    let res: Vec<RouteResponse<Route>> = helpers::query(
+    let res: Vec<RouteResponse<OsmosisRoute>> = helpers::query(
         deps.as_ref(),
         QueryMsg::Routes {
             start_after: None,
@@ -363,7 +369,7 @@ fn querying_routess() {
     );
     assert_eq!(res, expected);
 
-    let res: Vec<RouteResponse<Route>> = helpers::query(
+    let res: Vec<RouteResponse<OsmosisRoute>> = helpers::query(
         deps.as_ref(),
         QueryMsg::Routes {
             start_after: None,
@@ -372,7 +378,7 @@ fn querying_routess() {
     );
     assert_eq!(res, expected[..1]);
 
-    let res: Vec<RouteResponse<Route>> = helpers::query(
+    let res: Vec<RouteResponse<OsmosisRoute>> = helpers::query(
         deps.as_ref(),
         QueryMsg::Routes {
             start_after: Some(("uatom".to_string(), "uosmo".to_string())),
@@ -388,7 +394,7 @@ fn validating_route() {
     let q = &deps.as_ref().querier;
 
     // invalid - route is empty
-    let route = Route(vec![]);
+    let route = OsmosisRoute(vec![]);
     assert_eq!(
         route.validate(q, "uatom", "umars"),
         Err(ContractError::InvalidRoute {
@@ -397,7 +403,7 @@ fn validating_route() {
     );
 
     // invalid - the pool must contain the input denom
-    let route = Route(vec![
+    let route = OsmosisRoute(vec![
         Step {
             pool_id: 68,
             denom_out: "uusdc".to_string(),
@@ -415,7 +421,7 @@ fn validating_route() {
     );
 
     // invalid - the pool must contain the output denom
-    let route = Route(vec![
+    let route = OsmosisRoute(vec![
         Step {
             pool_id: 1,
             denom_out: "uosmo".to_string(),
@@ -434,7 +440,7 @@ fn validating_route() {
 
     // invalid - route contains a loop
     // this examle: ATOM -> OSMO -> USDC -> OSMO -> MARS
-    let route = Route(vec![
+    let route = OsmosisRoute(vec![
         Step {
             pool_id: 1,
             denom_out: "uosmo".to_string(),
@@ -460,7 +466,7 @@ fn validating_route() {
     );
 
     // invalid - route's final output denom does not match the desired output
-    let route = Route(vec![
+    let route = OsmosisRoute(vec![
         Step {
             pool_id: 1,
             denom_out: "uosmo".to_string(),
@@ -479,7 +485,7 @@ fn validating_route() {
     );
 
     // valid
-    let route = Route(vec![
+    let route = OsmosisRoute(vec![
         Step {
             pool_id: 1,
             denom_out: "uosmo".to_string(),
@@ -493,43 +499,16 @@ fn validating_route() {
 }
 
 #[test]
-fn unwrapping_option_amount() {
-    let deps = helpers::setup_test();
-
-    assert_eq!(
-        unwrap_option_amount(
-            &deps.as_ref().querier,
-            &Addr::unchecked(MOCK_CONTRACT_ADDR),
-            "uatom",
-            None
-        ),
-        Ok(Uint128::new(88888))
-    );
-    assert_eq!(
-        unwrap_option_amount(
-            &deps.as_ref().querier,
-            &Addr::unchecked(MOCK_CONTRACT_ADDR),
-            "uatom",
-            Some(Uint128::new(12345))
-        ),
-        Ok(Uint128::new(12345))
-    );
-    assert_eq!(
-        unwrap_option_amount(
-            &deps.as_ref().querier,
-            &Addr::unchecked(MOCK_CONTRACT_ADDR),
-            "uatom",
-            Some(Uint128::new(99999))
-        ),
-        Err(ContractError::AmountToDistributeTooLarge {
-            amount: Uint128::new(99999),
-            balance: Uint128::new(88888),
-        })
-    );
-}
-
-#[test]
-fn stringifying_option_amount() {
-    assert_eq!(stringify_option_amount(Some(Uint128::new(42069))), "42069".to_string());
-    assert_eq!(stringify_option_amount(None), "undefined".to_string());
+fn stringifying_route() {
+    let route = OsmosisRoute(vec![
+        Step {
+            pool_id: 1,
+            denom_out: "uosmo".to_string(),
+        },
+        Step {
+            pool_id: 420,
+            denom_out: "umars".to_string(),
+        },
+    ]);
+    assert_eq!(route.to_string(), "1:uosmo|420:umars".to_string());
 }

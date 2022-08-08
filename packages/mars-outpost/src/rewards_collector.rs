@@ -96,7 +96,9 @@ pub type InstantiateMsg = Config<String>;
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg<Route, CustomMsg> {
     /// Update contract config
-    UpdateConfig(CreateOrUpdateConfig),
+    UpdateConfig {
+        new_cfg: CreateOrUpdateConfig,
+    },
 
     /// Configure the route for swapping an asset
     ///
@@ -129,7 +131,9 @@ pub enum ExecuteMsg<Route, CustomMsg> {
     },
 
     /// Execute Cosmos msg (only callable by owner)
-    ExecuteCosmosMsg(CosmosMsg<CustomMsg>),
+    ExecuteCosmosMsg {
+        cosmos_msg: CosmosMsg<CustomMsg>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

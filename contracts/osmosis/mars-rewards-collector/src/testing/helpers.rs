@@ -5,10 +5,12 @@ use cosmwasm_std::{coin, from_binary, Addr, Decimal, Deps, OwnedDeps};
 
 use osmo_bindings::{OsmosisQuery, PoolStateResponse, Step};
 
-use mars_outpost::protocol_rewards_collector::{Config, QueryMsg};
+use mars_outpost::rewards_collector::{Config, QueryMsg};
 use mars_testing::{mock_info, MarsMockQuerier};
 
-use crate::{contract, msg::ExecuteMsg, Route};
+use crate::contract::entry;
+use crate::msg::ExecuteMsg;
+use crate::OsmosisRoute;
 
 pub(super) fn mock_config() -> Config<Addr> {
     Config {
@@ -24,13 +26,13 @@ pub(super) fn mock_config() -> Config<Addr> {
     }
 }
 
-pub(super) fn mock_routes() -> HashMap<(&'static str, &'static str), Route> {
+pub(super) fn mock_routes() -> HashMap<(&'static str, &'static str), OsmosisRoute> {
     let mut map = HashMap::new();
 
     // uosmo -> umars
     map.insert(
         ("uosmo", "umars"),
-        Route(vec![Step {
+        OsmosisRoute(vec![Step {
             pool_id: 420,
             denom_out: "umars".to_string(),
         }]),
@@ -39,7 +41,7 @@ pub(super) fn mock_routes() -> HashMap<(&'static str, &'static str), Route> {
     // uatom -> uosmo -> umars
     map.insert(
         ("uatom", "umars"),
-        Route(vec![
+        OsmosisRoute(vec![
             Step {
                 pool_id: 1,
                 denom_out: "uosmo".to_string(),
@@ -54,7 +56,7 @@ pub(super) fn mock_routes() -> HashMap<(&'static str, &'static str), Route> {
     // uatom -> uosmo -> uusdc
     map.insert(
         ("uatom", "uusdc"),
-        Route(vec![
+        OsmosisRoute(vec![
             Step {
                 pool_id: 1,
                 denom_out: "uosmo".to_string(),
@@ -113,11 +115,11 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, O
     // instantiate the contract
     let info = mock_info("deployer");
     let msg = mock_config().into();
-    contract::instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+    entry::instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
     // set a few swap routes
     mock_routes().into_iter().for_each(|((denom_in, denom_out), route)| {
-        contract::execute(
+        entry::execute(
             deps.as_mut(),
             mock_env(),
             mock_info("owner"),
@@ -133,9 +135,6 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, O
     deps
 }
 
-pub(super) fn query<T: serde::de::DeserializeOwned>(
-    deps: Deps<impl cosmwasm_std::CustomQuery>,
-    msg: QueryMsg,
-) -> T {
-    from_binary(&contract::query(deps, mock_env(), msg).unwrap()).unwrap()
+pub(super) fn query<T: serde::de::DeserializeOwned>(deps: Deps<OsmosisQuery>, msg: QueryMsg) -> T {
+    from_binary(&entry::query(deps, mock_env(), msg).unwrap()).unwrap()
 }

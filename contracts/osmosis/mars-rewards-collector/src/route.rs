@@ -1,23 +1,39 @@
+use std::fmt;
+
 use cosmwasm_std::{CosmosMsg, QuerierWrapper, QueryRequest, Uint128};
-use osmo_bindings::{OsmosisMsg, OsmosisQuery, PoolStateResponse, Step, Swap, SwapAmountWithLimit};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::error::{ContractError, ContractResult};
+use mars_rewards_collector_base::{ContractError, ContractResult, Route};
+
+use osmo_bindings::{OsmosisMsg, OsmosisQuery, PoolStateResponse, Step, Swap, SwapAmountWithLimit};
+
 use crate::helpers::hashset;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Route(pub Vec<Step>);
+pub struct OsmosisRoute(pub Vec<Step>);
 
-impl Route {
+impl fmt::Display for OsmosisRoute {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = self
+            .0
+            .iter()
+            .map(|step| format!("{}:{}", step.pool_id, step.denom_out))
+            .collect::<Vec<_>>()
+            .join("|");
+        write!(f, "{}", s)
+    }
+}
+
+impl Route<OsmosisMsg, OsmosisQuery> for OsmosisRoute {
     // Perform basic validation of the swap steps
-    pub fn validate(
+    fn validate(
         &self,
         querier: &QuerierWrapper<OsmosisQuery>,
         denom_in: &str,
         denom_out: &str,
     ) -> ContractResult<()> {
-        let steps = self.steps();
+        let steps = &self.0;
 
         // there must be at least one step
         if steps.is_empty() {
@@ -82,18 +98,13 @@ impl Route {
         Ok(())
     }
 
-    /// Return a referenece to the swap steps
-    pub fn steps(&self) -> &[Step] {
-        &self.0
-    }
-
     /// Build a CosmosMsg that swaps given an input denom and amount
-    pub fn build_swap_msg(
+    fn build_swap_msg(
         &self,
         denom_in: &str,
         amount: Uint128,
     ) -> ContractResult<CosmosMsg<OsmosisMsg>> {
-        let steps = self.steps();
+        let steps = &self.0;
 
         let first_swap = steps
             .first()
