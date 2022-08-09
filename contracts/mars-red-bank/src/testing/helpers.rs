@@ -1,13 +1,10 @@
-use cosmwasm_std::testing::{MockApi, MockStorage};
+use cosmwasm_std::testing::{mock_env, MockApi, MockStorage};
 use cosmwasm_std::{Coin, Decimal, DepsMut, Event, OwnedDeps, StdResult, Uint128};
 
 use mars_outpost::red_bank::interest_rate_models::update_market_interest_rates_with_model;
 use mars_outpost::red_bank::msg::{CreateOrUpdateConfig, InstantiateMsg};
 use mars_outpost::red_bank::{GlobalState, Market};
-
-use mars_testing::{
-    mock_dependencies, mock_env, mock_env_at_block_time, mock_info, MarsMockQuerier, MockEnvParams,
-};
+use mars_testing::{mock_dependencies, mock_env_at_block_time, mock_info, MarsMockQuerier};
 
 use crate::contract::instantiate;
 use crate::interest_rates::{
@@ -16,14 +13,14 @@ use crate::interest_rates::{
 };
 use crate::state::{GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_INDEX, MARKET_DENOMS_BY_MA_TOKEN};
 
-pub(super) fn th_setup(
+pub(super) fn setup(
     contract_balances: &[Coin],
 ) -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     let mut deps = mock_dependencies(contract_balances);
 
     instantiate(
         deps.as_mut(),
-        mock_env(MockEnvParams::default()),
+        mock_env(),
         mock_info("owner"),
         InstantiateMsg {
             config: CreateOrUpdateConfig {
@@ -41,7 +38,7 @@ pub(super) fn th_setup(
     deps
 }
 
-pub(super) fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {
+pub(super) fn init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {
     let mut index = 0;
 
     GLOBAL_STATE
@@ -79,9 +76,9 @@ pub(super) struct TestInterestResults {
     pub less_debt_scaled: Uint128,
 }
 
-pub(super) fn th_build_interests_updated_event(label: &str, ir: &TestInterestResults) -> Event {
+pub(super) fn build_interests_updated_event(denom: &str, ir: &TestInterestResults) -> Event {
     Event::new("interests_updated")
-        .add_attribute("asset", label)
+        .add_attribute("denom", denom)
         .add_attribute("borrow_index", ir.borrow_index.to_string())
         .add_attribute("liquidity_index", ir.liquidity_index.to_string())
         .add_attribute("borrow_rate", ir.borrow_rate.to_string())
@@ -100,7 +97,7 @@ pub(super) struct TestUtilizationDeltaInfo {
 
 /// Takes a market before an action (ie: a borrow) among some test parameters
 /// used in that action and computes the expected indices and rates after that action.
-pub(super) fn th_get_expected_indices_and_rates(
+pub(super) fn get_expected_indices_and_rates(
     market: &Market,
     block_time: u64,
     initial_liquidity: Uint128,
@@ -116,10 +113,10 @@ pub(super) fn th_get_expected_indices_and_rates(
         panic!("Cannot have less debt with 0 current user debt scaled");
     }
 
-    let expected_indices = th_get_expected_indices(market, block_time);
+    let expected_indices = get_expected_indices(market, block_time);
 
     let expected_protocol_rewards_to_distribute =
-        th_get_expected_protocol_rewards(market, &expected_indices);
+        get_expected_protocol_rewards(market, &expected_indices);
 
     // When borrowing, new computed index is used for scaled amount
     let more_debt_scaled = compute_scaled_amount(
@@ -194,7 +191,7 @@ pub(super) fn th_get_expected_indices_and_rates(
 
 /// Compute protocol income to be distributed (using values up to the instant
 /// before the contract call is made)
-pub(super) fn th_get_expected_protocol_rewards(
+pub(super) fn get_expected_protocol_rewards(
     market: &Market,
     expected_indices: &TestExpectedIndices,
 ) -> Uint128 {
@@ -225,7 +222,7 @@ pub(super) struct TestExpectedIndices {
     pub borrow: Decimal,
 }
 
-pub(super) fn th_get_expected_indices(market: &Market, block_time: u64) -> TestExpectedIndices {
+pub(super) fn get_expected_indices(market: &Market, block_time: u64) -> TestExpectedIndices {
     let seconds_elapsed = block_time - market.indexes_last_updated;
     // market indices
     let expected_liquidity_index = calculate_applied_linear_interest_rate(

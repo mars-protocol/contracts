@@ -58,10 +58,14 @@ impl MarsMockQuerier {
         }
     }
 
-    /// Set new balances for contract address
+    /// Set balances for an address
+    pub fn set_balances(&mut self, addr: impl Into<String>, balances: &[Coin]) {
+        self.base.update_balance(addr.into(), balances.to_vec());
+    }
+
+    /// Set balances for the mock contract address
     pub fn set_contract_balances(&mut self, contract_balances: &[Coin]) {
-        let contract_addr = Addr::unchecked(MOCK_CONTRACT_ADDR);
-        self.base.update_balance(contract_addr.to_string(), contract_balances.to_vec());
+        self.set_balances(MOCK_CONTRACT_ADDR, contract_balances);
     }
 
     /// Set mock querier balances results for a given cw20 token

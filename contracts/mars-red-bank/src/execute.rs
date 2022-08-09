@@ -14,7 +14,7 @@ use mars_outpost::helpers::{
 };
 use mars_outpost::red_bank::interest_rate_models::init_interest_rate_model;
 use mars_outpost::red_bank::msg::{CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams};
-use mars_outpost::red_bank::{Debt, Market, User, UserHealthStatus, GlobalState, Config};
+use mars_outpost::red_bank::{Config, Debt, GlobalState, Market, User, UserHealthStatus};
 use mars_outpost::{ma_token, math};
 
 use crate::accounts::get_user_position;
@@ -130,7 +130,7 @@ pub fn init_asset(
 
     let mut money_market = GLOBAL_STATE.load(deps.storage)?;
 
-    if let Some(_) = MARKETS.may_load(deps.storage, &denom)? {
+    if MARKETS.may_load(deps.storage, &denom)?.is_some() {
         return Err(ContractError::AssetAlreadyInitialized {});
     };
 
@@ -841,7 +841,14 @@ pub fn repay(
     repay_amount: Uint128,
 ) -> Result<Response, ContractError> {
     let user_address = if let Some(address) = on_behalf_of {
-        deps.api.addr_validate(&address)?
+        let on_behalf_of_addr = deps.api.addr_validate(&address)?;
+        // Uncollateralized loans should not have 'on behalf of' because it creates accounting complexity for them
+        match UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&denom, &on_behalf_of_addr))? {
+            Some(limit) if !limit.is_zero() => {
+                return Err(ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {})
+            }
+            _ => on_behalf_of_addr,
+        }
     } else {
         sender_address.clone()
     };
@@ -952,13 +959,6 @@ pub fn liquidate(
             return Err(ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});
         }
     };
-
-    // liquidator must send positive amount of funds in the debt asset
-    if sent_debt_asset_amount.is_zero() {
-        return Err(ContractError::InvalidLiquidateAmount {
-            denom: debt_denom,
-        });
-    }
 
     let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
 
@@ -1296,8 +1296,8 @@ pub fn process_underlying_asset_transfer_to_liquidator(
     }));
 
     Ok(response.add_message(build_send_coin_msg(
-        &liquidator_addr,
-        &collateral_denom,
+        liquidator_addr,
+        collateral_denom,
         collateral_amount_to_liquidate,
     )))
 }
@@ -1383,7 +1383,7 @@ pub fn update_asset_collateral_status(
         } else {
             return Err(ContractError::UserNoCollateralBalance {
                 user_address: user_address.to_string(),
-                denom: denom.to_string(),
+                denom,
             });
         }
     } else if has_collateral_asset && !enable {

@@ -96,11 +96,6 @@ pub enum ContractError {
     #[error("User has a positive uncollateralized loan limit and thus cannot be liquidated")]
     CannotLiquidateWhenPositiveUncollateralizedLoanLimit {},
 
-    #[error("Must send more than 0 {denom:?} in order to liquidate")]
-    InvalidLiquidateAmount {
-        denom: String,
-    },
-
     #[error("User can't be liquidated for asset {denom:?} not being used as collateral")]
     CannotLiquidateWhenCollateralUnset {
         denom: String,

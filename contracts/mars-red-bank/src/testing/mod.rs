@@ -1,2 +1,8 @@
+mod admin;
+mod borrowing;
+mod depositing;
 mod helpers;
-mod tests;
+mod liquidation;
+mod misc;
+mod queries;
+mod withdrawals;
