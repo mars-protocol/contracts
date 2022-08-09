@@ -197,13 +197,10 @@ where
             MarsContract::RedBank,
         )?;
 
-        // TODO: update red bank execute msg to take denom instead of asset
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: red_bank_addr.to_string(),
             msg: to_binary(&red_bank::msg::ExecuteMsg::Withdraw {
-                asset: mars_outpost::asset::Asset::Native {
-                    denom: denom.clone(),
-                },
+                denom: denom.clone(),
                 amount,
                 recipient: None,
             })?,

@@ -8,7 +8,6 @@ pub mod red_bank;
 pub mod rewards_collector;
 
 // Types
-pub mod asset;
 pub mod math;
 
 // Helpers

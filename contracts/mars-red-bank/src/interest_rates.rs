@@ -1,17 +1,17 @@
 use std::str;
 
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, Event, Response, StdError, StdResult,
-    Uint128, WasmMsg,
+    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, Response, StdError, StdResult, Uint128,
+    WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
 
-use mars_outpost::asset::get_asset_balance;
 use mars_outpost::math;
 use mars_outpost::red_bank::interest_rate_models::update_market_interest_rates_with_model;
 use mars_outpost::red_bank::Market;
 
 use crate::error::ContractError;
+use crate::events::build_interests_updated_event;
 
 /// Scaling factor used to keep more precision during division / multiplication by index.
 pub const SCALING_FACTOR: Uint128 = Uint128::new(1_000_000);
@@ -284,16 +284,11 @@ pub fn update_interest_rates(
     env: &Env,
     market: &mut Market,
     liquidity_taken: Uint128,
-    asset_label: &str,
+    denom: &str,
     mut response: Response,
 ) -> Result<Response, ContractError> {
     // compute utilization rate
-    let contract_current_balance = get_asset_balance(
-        deps.as_ref(),
-        env.contract.address.clone(),
-        asset_label.to_string(),
-        market.asset_type,
-    )?;
+    let contract_current_balance = deps.querier.query_balance(&env.contract.address, denom)?.amount;
     if contract_current_balance < liquidity_taken {
         return Err(ContractError::OperationExceedsAvailableLiquidity {});
     }
@@ -309,17 +304,8 @@ pub fn update_interest_rates(
 
     update_market_interest_rates_with_model(env, market, current_utilization_rate)?;
 
-    response = response.add_event(build_interests_updated_event(asset_label, market));
+    response = response.add_event(build_interests_updated_event(denom, market));
     Ok(response)
-}
-
-pub fn build_interests_updated_event(label: &str, market: &Market) -> Event {
-    Event::new("interests_updated")
-        .add_attribute("asset", label)
-        .add_attribute("borrow_index", market.borrow_index.to_string())
-        .add_attribute("liquidity_index", market.liquidity_index.to_string())
-        .add_attribute("borrow_rate", market.borrow_rate.to_string())
-        .add_attribute("liquidity_rate", market.liquidity_rate.to_string())
 }
 
 #[cfg(test)]

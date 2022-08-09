@@ -477,6 +477,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-red-bank"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw20",
+ "cw20-base",
+ "mars-outpost",
+ "mars-testing",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-rewards-collector-base"
 version = "0.1.0"
 dependencies = [
