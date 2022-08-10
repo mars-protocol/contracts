@@ -8,10 +8,10 @@ pub const GLOBAL_STATE: Item<GlobalState> = Item::new("global_state");
 
 pub const USERS: Map<&Addr, User> = Map::new("users");
 
-pub const MARKETS: Map<&[u8], Market> = Map::new("markets");
-pub const MARKET_REFERENCES_BY_INDEX: Map<u32, Vec<u8>> = Map::new("market_refs_by_index");
-pub const MARKET_REFERENCES_BY_MA_TOKEN: Map<&Addr, Vec<u8>> = Map::new("market_refs_by_ma_token");
+pub const MARKETS: Map<&str, Market> = Map::new("markets");
+pub const MARKET_DENOMS_BY_INDEX: Map<u32, String> = Map::new("market_denoms_by_index");
+pub const MARKET_DENOMS_BY_MA_TOKEN: Map<&Addr, String> = Map::new("market_denoms_by_ma_token");
 
-pub const DEBTS: Map<(&[u8], &Addr), Debt> = Map::new("debts");
-pub const UNCOLLATERALIZED_LOAN_LIMITS: Map<(&[u8], &Addr), Uint128> =
+pub const DEBTS: Map<(&str, &Addr), Debt> = Map::new("debts");
+pub const UNCOLLATERALIZED_LOAN_LIMITS: Map<(&str, &Addr), Uint128> =
     Map::new("uncollateralized_loan_limits");

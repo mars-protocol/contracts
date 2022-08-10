@@ -1,13 +1,11 @@
-use cosmwasm_std::{Addr, Decimal, Deps, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, Decimal, Deps, StdResult, Uint128};
 
-use mars_outpost::asset::AssetType;
 use mars_outpost::helpers::cw20_get_balance;
-
 use mars_outpost::oracle;
 use mars_outpost::red_bank::{Debt, User, UserHealthStatus};
 
 use crate::error::ContractError;
-use crate::helpers::{get_bit, market_get_from_index};
+use crate::helpers::{get_bit, get_market_from_index};
 use crate::interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount};
 use crate::state::DEBTS;
 
@@ -24,26 +22,20 @@ pub struct UserPosition {
 
 impl UserPosition {
     /// Gets asset price used to build the position for a given reference
-    pub fn get_asset_price(
-        &self,
-        asset_reference: &[u8],
-        asset_label: &str,
-    ) -> Result<Decimal, ContractError> {
-        let asset_position =
-            self.asset_positions.iter().find(|ap| ap.asset_reference.as_slice() == asset_reference);
-
-        match asset_position {
-            Some(position) => Ok(position.asset_price),
-            None => Err(ContractError::price_not_found(asset_label)),
-        }
+    pub fn get_asset_price(&self, denom: &str) -> Result<Decimal, ContractError> {
+        self.asset_positions
+            .iter()
+            .find(|ap| ap.denom == denom)
+            .map(|ap| ap.asset_price)
+            .ok_or_else(|| ContractError::PriceNotFound {
+                denom: denom.to_string(),
+            })
     }
 }
 
 /// User asset settlement
 pub struct UserAssetPosition {
-    pub asset_label: String,
-    pub asset_type: AssetType,
-    pub asset_reference: Vec<u8>,
+    pub denom: String,
     pub collateral_amount: Uint128,
     pub debt_amount: Uint128,
     pub uncollateralized_debt: bool,
@@ -143,7 +135,7 @@ fn get_user_asset_positions(
             continue;
         }
 
-        let (asset_reference_vec, market) = market_get_from_index(&deps, i)?;
+        let (denom, market) = get_market_from_index(&deps, i)?;
 
         let (collateral_amount, max_ltv, liquidation_threshold) = if user_is_using_as_collateral {
             // query asset balance (ma_token contract gives back a scaled value)
@@ -163,8 +155,7 @@ fn get_user_asset_positions(
 
         let (debt_amount, uncollateralized_debt) = if user_is_borrowing {
             // query debt
-            let user_debt: Debt =
-                DEBTS.load(deps.storage, (asset_reference_vec.as_slice(), user_address))?;
+            let user_debt: Debt = DEBTS.load(deps.storage, (&denom, user_address))?;
 
             let debt_amount =
                 get_underlying_debt_amount(user_debt.amount_scaled, &market, block_time)?;
@@ -174,29 +165,10 @@ fn get_user_asset_positions(
             (Uint128::zero(), false)
         };
 
-        let asset_label = match market.asset_type {
-            AssetType::Native => match String::from_utf8(asset_reference_vec.clone()) {
-                Ok(res) => res,
-                Err(_) => return Err(StdError::generic_err("failed to encode denom into string")),
-            },
-            AssetType::Cw20 => match String::from_utf8(asset_reference_vec.clone()) {
-                Ok(res) => res,
-                Err(_) => {
-                    return Err(StdError::generic_err("failed to encode Cw20 address into string"))
-                }
-            },
-        };
-
-        let asset_price = oracle::helpers::query_price(
-            deps.querier,
-            oracle_address,
-            asset_reference_vec.clone(),
-        )?;
+        let asset_price = oracle::helpers::query_price(&deps.querier, oracle_address, &denom)?;
 
         let user_asset_position = UserAssetPosition {
-            asset_label,
-            asset_type: market.asset_type,
-            asset_reference: asset_reference_vec,
+            denom,
             collateral_amount,
             debt_amount,
             uncollateralized_debt,

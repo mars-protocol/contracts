@@ -1,16 +1,5 @@
 [workspace]
-members = [
-    "packages/*",
-    # "contracts/mars-red-bank",
-    "contracts/mars-address-provider",
-    "contracts/mars-ma-token",
-    "contracts/mars-incentives",
-    "contracts/mars-oracle-base",
-    "contracts/osmosis/mars-oracle",
-    "contracts/mars-rewards-collector-base",
-    "contracts/osmosis/mars-rewards-collector"
-]
-# members = ["contracts/*", "packages/*"]
+members = ["contracts/**/mars-*", "packages/*"]
 
 [profile.release]
 opt-level = 3

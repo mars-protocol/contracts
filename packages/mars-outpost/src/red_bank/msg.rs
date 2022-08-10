@@ -1,11 +1,6 @@
+use cosmwasm_std::{Addr, Decimal, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-use cosmwasm_std::{Addr, Decimal, Uint128};
-
-use cw20::Cw20ReceiveMsg;
-
-use crate::asset::Asset;
 
 use super::interest_rate_models::InterestRateModelParams;
 
@@ -19,9 +14,6 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 #[allow(clippy::large_enum_variant)]
 pub enum ExecuteMsg {
-    /// Implementation of cw20 receive msg
-    Receive(Cw20ReceiveMsg),
-
     /// Update contract config (only owner can call)
     UpdateConfig {
         config: CreateOrUpdateConfig,
@@ -30,7 +22,7 @@ pub enum ExecuteMsg {
     /// Initialize an asset on the money market (only owner can call)
     InitAsset {
         /// Asset related info
-        asset: Asset,
+        denom: String,
         /// Asset parameters
         asset_params: InitOrUpdateAssetParams,
         /// Asset symbol to be used in maToken name and description. If non is provided,
@@ -43,15 +35,13 @@ pub enum ExecuteMsg {
 
     /// Callback sent from maToken contract after instantiated
     InitAssetTokenCallback {
-        /// Either the denom for a native asset or address for a cw20 token
-        /// in bytes
-        reference: Vec<u8>,
+        denom: String,
     },
 
     /// Update an asset on the money market (only owner can call)
     UpdateAsset {
         /// Asset related info
-        asset: Asset,
+        denom: String,
         /// Asset parameters
         asset_params: InitOrUpdateAssetParams,
     },
@@ -64,14 +54,14 @@ pub enum ExecuteMsg {
         /// Address that receives the credit
         user_address: String,
         /// Asset the user receives the credit in
-        asset: Asset,
+        denom: String,
         /// Limit for the uncolateralize loan.
         new_limit: Uint128,
     },
 
     /// Deposit native coins. Deposited coins must be sent in the transaction
     /// this call is made
-    DepositNative {
+    Deposit {
         /// Denom used (e.g: uluna, uusd)
         denom: String,
         /// Address that will receive the maTokens
@@ -81,7 +71,7 @@ pub enum ExecuteMsg {
     /// Withdraw an amount of the asset burning an equivalent amount of maTokens.
     Withdraw {
         /// Asset to withdraw
-        asset: Asset,
+        denom: String,
         /// Amount to be withdrawn. If None is specified, the full maToken balance will be
         /// burned in exchange for the equivalent asset amount.
         amount: Option<Uint128>,
@@ -93,7 +83,7 @@ pub enum ExecuteMsg {
     /// and sent to the address.
     Borrow {
         /// Asset to borrow
-        asset: Asset,
+        denom: String,
         /// Amount to borrow
         amount: Uint128,
         /// The address where the borrowed amount is sent
@@ -102,7 +92,7 @@ pub enum ExecuteMsg {
 
     /// Repay native coins loan. Coins used to repay must be sent in the
     /// transaction this call is made.
-    RepayNative {
+    Repay {
         /// Denom used (e.g: uluna, uusd)
         denom: String,
         /// Repay the funds for the user
@@ -111,11 +101,11 @@ pub enum ExecuteMsg {
 
     /// Liquidate under-collateralized native loans. Coins used to repay must be sent in the
     /// transaction this call is made.
-    LiquidateNative {
-        /// Collateral asset liquidator gets from the borrower
-        collateral_asset: Asset,
-        /// Denom (e.g: uluna, uusd) of the debt asset
-        debt_asset_denom: String,
+    Liquidate {
+        /// Denom of the collateral asset, which liquidator gets from the borrower
+        collateral_denom: String,
+        /// Denom of the debt asset
+        debt_denom: String,
         /// The address of the borrower getting liquidated
         user_address: String,
         /// Whether the liquidator gets liquidated collateral in maToken (true) or
@@ -126,7 +116,7 @@ pub enum ExecuteMsg {
     /// Update (enable / disable) asset as collateral for the caller
     UpdateAssetCollateralStatus {
         /// Asset to update status for
-        asset: Asset,
+        denom: String,
         /// Option to enable (true) / disable (false) asset as collateral
         enable: bool,
     },
@@ -150,37 +140,11 @@ pub enum ExecuteMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ReceiveMsg {
-    /// Deposit sent cw20 tokens
-    DepositCw20 {
-        /// Deposit the funds for the user
-        on_behalf_of: Option<String>,
-    },
-    /// Repay sent cw20 tokens
-    RepayCw20 {
-        /// Repay the funds for the user
-        on_behalf_of: Option<String>,
-    },
-    /// Liquidate under-collateralized cw20 loan using the sent cw20 tokens.
-    LiquidateCw20 {
-        /// Collateral asset liquidator gets from the borrower
-        collateral_asset: Asset,
-        /// The address of the borrower getting liquidated
-        user_address: String,
-        /// Whether the liquidator gets liquidated collateral in maToken (true) or
-        /// the underlying collateral asset (false)
-        receive_ma_token: bool,
-    },
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CreateOrUpdateConfig {
     pub owner: Option<String>,
     pub address_provider_address: Option<String>,
     pub ma_token_code_id: Option<u64>,
     pub close_factor: Option<Decimal>,
-    pub base_asset: Option<Asset>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -217,17 +181,20 @@ pub enum QueryMsg {
 
     /// Get asset market
     Market {
-        asset: Asset,
+        denom: String,
     },
 
-    /// Get a list of all markets. Returns MarketsListResponse
-    MarketsList {},
+    /// Enumerate markets with pagination. Returns Vec<Market>
+    Markets {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
 
     /// Get uncollateralized limit for given asset and user.
     /// Returns UncollateralizedLoanLimitResponse
     UncollateralizedLoanLimit {
         user_address: String,
-        asset: Asset,
+        denom: String,
     },
 
     /// Get all debt positions for a user. Returns UsetDebtResponse
@@ -238,7 +205,7 @@ pub enum QueryMsg {
     /// Get user debt position for a specific asset. Returns UserAssetDebtResponse
     UserAssetDebt {
         user_address: String,
-        asset: Asset,
+        denom: String,
     },
 
     /// Get info about whether or not user is using each asset as collateral.
@@ -255,14 +222,14 @@ pub enum QueryMsg {
     /// Get liquidity scaled amount for a given underlying asset amount
     /// (i.e: how much maTokens will get minted if the given amount is deposited)
     ScaledLiquidityAmount {
-        asset: Asset,
+        denom: String,
         amount: Uint128,
     },
 
     /// Get equivalent scaled debt for a given underlying asset amount.
     /// (i.e: how much scaled debt is added if the given amount is borrowed)
     ScaledDebtAmount {
-        asset: Asset,
+        denom: String,
         amount: Uint128,
     },
 
@@ -276,7 +243,7 @@ pub enum QueryMsg {
     /// (i.e: How much underlying asset needs to be repaid to cancel a given scaled debt
     /// amount stored in state)
     UnderlyingDebtAmount {
-        asset: Asset,
+        denom: String,
         amount_scaled: Uint128,
     },
 }
