@@ -1,2 +1,8 @@
+mod admin;
+mod borrow;
+mod deposit;
 mod helpers;
-mod tests;
+mod liquidate;
+mod misc;
+mod query;
+mod withdraw;
