@@ -56,6 +56,7 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, O
         mock_info("owner"),
         InstantiateMsg {
             owner: "owner".to_string(),
+            base_denom: "uosmo".to_string(),
         },
     )
     .unwrap();

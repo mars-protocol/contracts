@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config<T> {
+    /// The contract's owner, who can update config and price sources
     pub owner: T,
+    /// The asset in which prices are denominated in
+    pub base_denom: String,
 }
 
 pub type InstantiateMsg = Config<String>;
