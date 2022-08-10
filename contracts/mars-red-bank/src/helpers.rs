@@ -16,7 +16,7 @@ pub fn get_denom_amount_from_coins(coins: &[Coin], denom: &str) -> Result<Uint12
     }
 }
 
-pub fn market_get_from_index(deps: &Deps, index: u32) -> StdResult<(String, Market)> {
+pub fn get_market_from_index(deps: &Deps, index: u32) -> StdResult<(String, Market)> {
     let denom = MARKET_DENOMS_BY_INDEX
         .load(deps.storage, index)
         .map_err(|_| StdError::generic_err(format!("no denom exists with index: {}", index)))?;

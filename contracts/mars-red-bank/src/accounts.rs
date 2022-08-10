@@ -5,7 +5,7 @@ use mars_outpost::oracle;
 use mars_outpost::red_bank::{Debt, User, UserHealthStatus};
 
 use crate::error::ContractError;
-use crate::helpers::{get_bit, market_get_from_index};
+use crate::helpers::{get_bit, get_market_from_index};
 use crate::interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount};
 use crate::state::DEBTS;
 
@@ -135,7 +135,7 @@ fn get_user_asset_positions(
             continue;
         }
 
-        let (denom, market) = market_get_from_index(&deps, i)?;
+        let (denom, market) = get_market_from_index(&deps, i)?;
 
         let (collateral_amount, max_ltv, liquidation_threshold) = if user_is_using_as_collateral {
             // query asset balance (ma_token contract gives back a scaled value)
