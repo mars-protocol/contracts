@@ -54,6 +54,7 @@ where
             deps.storage,
             &Config {
                 owner: deps.api.addr_validate(&msg.owner)?,
+                base_denom: msg.base_denom,
             },
         )?;
 
@@ -127,7 +128,7 @@ where
             return Err(MarsError::Unauthorized {}.into());
         }
 
-        price_source.validate(&deps.querier, &denom)?;
+        price_source.validate(&deps.querier, &denom, &cfg.base_denom)?;
 
         self.price_sources.save(deps.storage, denom.clone(), &price_source)?;
 
@@ -141,6 +142,7 @@ where
         let cfg = self.config.load(deps.storage)?;
         Ok(Config {
             owner: cfg.owner.to_string(),
+            base_denom: cfg.base_denom,
         })
     }
 
@@ -178,10 +180,11 @@ where
     }
 
     fn query_price(&self, deps: Deps<C>, denom: String) -> StdResult<PriceResponse> {
+        let cfg = self.config.load(deps.storage)?;
         let price_source = self.price_sources.load(deps.storage, denom.clone())?;
         Ok(PriceResponse {
             denom: denom.clone(),
-            price: price_source.query_price(&deps.querier, denom)?,
+            price: price_source.query_price(&deps.querier, &denom, &cfg.base_denom)?,
         })
     }
 
@@ -191,6 +194,8 @@ where
         start_after: Option<String>,
         limit: Option<u32>,
     ) -> StdResult<Vec<PriceResponse>> {
+        let cfg = self.config.load(deps.storage)?;
+
         let start = start_after.map(Bound::exclusive);
         let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
@@ -201,7 +206,7 @@ where
                 let (k, v) = item?;
                 Ok(PriceResponse {
                     denom: k.clone(),
-                    price: v.query_price(&deps.querier, k)?,
+                    price: v.query_price(&deps.querier, &k, &cfg.base_denom)?,
                 })
             })
             .collect()

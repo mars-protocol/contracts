@@ -4,13 +4,12 @@ use osmo_bindings::{OsmosisQuery, PoolStateResponse, SpotPriceResponse};
 
 use mars_oracle_base::{ContractError, ContractResult};
 
-const BASE_DENOM: &str = "uosmo";
-
 /// Assert the Osmosis pool indicated by `pool_id` contains exactly two assets, and they are OSMO and `denom`
 pub(crate) fn assert_osmosis_pool_assets(
     querier: &QuerierWrapper<OsmosisQuery>,
     pool_id: u64,
-    denom: impl AsRef<str>,
+    denom: &str,
+    base_denom: &str,
 ) -> ContractResult<()> {
     let pool = query_osmosis_pool(querier, pool_id)?;
 
@@ -24,15 +23,15 @@ pub(crate) fn assert_osmosis_pool_assets(
         });
     }
 
-    if !pool.has_denom(BASE_DENOM) {
+    if !pool.has_denom(base_denom) {
         return Err(ContractError::InvalidPriceSource {
-            reason: format!("pool {} does not contain the base denom {}", pool_id, BASE_DENOM),
+            reason: format!("pool {} does not contain the base denom {}", pool_id, base_denom),
         });
     }
 
-    if !pool.has_denom(denom.as_ref()) {
+    if !pool.has_denom(denom) {
         return Err(ContractError::InvalidPriceSource {
-            reason: format!("pool {} does not contain {}", pool_id, denom.as_ref()),
+            reason: format!("pool {} does not contain {}", pool_id, denom),
         });
     }
 
@@ -43,13 +42,11 @@ pub(crate) fn assert_osmosis_pool_assets(
 pub(crate) fn query_osmosis_spot_price(
     querier: &QuerierWrapper<OsmosisQuery>,
     pool_id: u64,
-    denom: impl AsRef<str>,
+    denom: &str,
+    base_denom: &str,
 ) -> StdResult<Decimal> {
-    let res: SpotPriceResponse = querier.query(&QueryRequest::Custom(OsmosisQuery::spot_price(
-        pool_id,
-        denom.as_ref(),
-        BASE_DENOM,
-    )))?;
+    let res: SpotPriceResponse = querier
+        .query(&QueryRequest::Custom(OsmosisQuery::spot_price(pool_id, denom, base_denom)))?;
     Ok(res.price)
 }
 

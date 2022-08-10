@@ -5,8 +5,8 @@ use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
 use mars_outpost::red_bank::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_outpost::red_bank::{
-    ConfigResponse, Market, UserAssetDebtResponse, UserCollateralResponse,
-    UserDebtResponse, UserPositionResponse,
+    ConfigResponse, Market, UserAssetDebtResponse, UserCollateralResponse, UserDebtResponse,
+    UserPositionResponse,
 };
 
 fn main() {

@@ -19,6 +19,7 @@ fn instantiating() {
 
     let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
     assert_eq!(cfg.owner, "owner".to_string());
+    assert_eq!(cfg.base_denom, "uosmo".to_string());
 }
 
 #[test]
