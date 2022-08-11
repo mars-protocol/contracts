@@ -5,10 +5,7 @@ use mars_testing::{mock_env, MockEnvParams};
 
 use crate::helpers::set_bit;
 use crate::interest_rates::{get_scaled_debt_amount, get_underlying_debt_amount};
-use crate::query::{
-    user_asset_debt as query_user_asset_debt, user_collateral as query_user_collateral,
-    user_debt as query_user_debt,
-};
+use crate::query::{query_user_asset_debt, query_user_collateral, query_user_debt};
 use crate::state::{DEBTS, USERS};
 
 use super::helpers::{th_init_market, th_setup};
