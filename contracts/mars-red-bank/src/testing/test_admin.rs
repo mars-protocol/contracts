@@ -1,3 +1,5 @@
+use std::any::type_name;
+
 use cosmwasm_std::testing::{mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
     attr, coin, from_binary, to_binary, Addr, CosmosMsg, Decimal, Event, StdError, SubMsg, Uint128,
@@ -1209,5 +1211,5 @@ fn test_init_asset_callback_cannot_be_called_on_its_own() {
         denom: "uluna".to_string(),
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, StdError::not_found("mars_outpost::red_bank::Market").into());
+    assert_eq!(error_res, StdError::not_found(type_name::<Market>()).into());
 }

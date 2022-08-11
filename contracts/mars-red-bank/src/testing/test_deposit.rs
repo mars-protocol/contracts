@@ -1,3 +1,5 @@
+use std::any::type_name;
+
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{
     attr, coin, to_binary, Addr, CosmosMsg, Decimal, StdError, SubMsg, Uint128, WasmMsg,
@@ -141,7 +143,7 @@ fn test_cannot_deposit_if_no_market() {
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, StdError::not_found("mars_outpost::red_bank::Market").into());
+    assert_eq!(error_res, StdError::not_found(type_name::<Market>()).into());
 }
 
 #[test]
