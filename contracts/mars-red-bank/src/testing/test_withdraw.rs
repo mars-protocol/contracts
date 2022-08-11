@@ -3,8 +3,7 @@ use cosmwasm_std::{
     attr, coin, coins, to_binary, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128, WasmMsg,
 };
 
-use mars_outpost::red_bank::msg::ExecuteMsg;
-use mars_outpost::red_bank::{Debt, Market, User};
+use mars_outpost::red_bank::{Debt, ExecuteMsg, Market, User};
 use mars_outpost::{ma_token, math};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 

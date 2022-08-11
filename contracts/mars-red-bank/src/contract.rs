@@ -1,7 +1,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 
-use mars_outpost::red_bank::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_outpost::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::error::ContractError;
 use crate::helpers::get_denom_amount_from_coins;

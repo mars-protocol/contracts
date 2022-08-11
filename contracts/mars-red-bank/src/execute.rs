@@ -12,11 +12,10 @@ use mars_outpost::error::MarsError;
 use mars_outpost::helpers::{
     build_send_asset_msg, cw20_get_balance, option_string_to_addr, zero_address,
 };
-use mars_outpost::red_bank::interest_rate_models::init_interest_rate_model;
-use mars_outpost::red_bank::msg::{
-    CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
+use mars_outpost::red_bank::{
+    init_interest_rate_model, Config, CreateOrUpdateConfig, Debt, ExecuteMsg, GlobalState,
+    InitOrUpdateAssetParams, InstantiateMsg, Market, User, UserHealthStatus,
 };
-use mars_outpost::red_bank::{Config, Debt, GlobalState, Market, User, UserHealthStatus};
 use mars_outpost::{ma_token, math};
 
 use crate::accounts::get_user_position;

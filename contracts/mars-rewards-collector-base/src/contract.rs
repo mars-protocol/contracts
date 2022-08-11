@@ -199,7 +199,7 @@ where
 
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: red_bank_addr.to_string(),
-            msg: to_binary(&red_bank::msg::ExecuteMsg::Withdraw {
+            msg: to_binary(&red_bank::ExecuteMsg::Withdraw {
                 denom: denom.clone(),
                 amount,
                 recipient: None,

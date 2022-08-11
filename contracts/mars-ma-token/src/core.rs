@@ -98,7 +98,7 @@ pub fn finalize_transfer_msg(
 ) -> StdResult<CosmosMsg> {
     Ok(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: red_bank_address.into(),
-        msg: to_binary(&mars_outpost::red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
+        msg: to_binary(&mars_outpost::red_bank::ExecuteMsg::FinalizeLiquidityTokenTransfer {
             sender_address,
             recipient_address,
             sender_previous_balance,

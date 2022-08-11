@@ -1,11 +1,12 @@
+use std::any::type_name;
+
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{
     attr, coin, to_binary, Addr, CosmosMsg, Decimal, StdError, SubMsg, Uint128, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
 
-use mars_outpost::red_bank::msg::ExecuteMsg;
-use mars_outpost::red_bank::Market;
+use mars_outpost::red_bank::{ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use crate::contract::execute;
@@ -142,7 +143,7 @@ fn test_cannot_deposit_if_no_market() {
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, StdError::not_found("mars_outpost::red_bank::Market").into());
+    assert_eq!(error_res, StdError::not_found(type_name::<Market>()).into());
 }
 
 #[test]

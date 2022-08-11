@@ -3,8 +3,7 @@ use cosmwasm_std::{attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, SubMsg,
 
 use mars_outpost::error::MarsError;
 use mars_outpost::math;
-use mars_outpost::red_bank::msg::ExecuteMsg;
-use mars_outpost::red_bank::{Debt, Market, User, UserHealthStatus};
+use mars_outpost::red_bank::{Debt, ExecuteMsg, Market, User, UserHealthStatus};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use crate::accounts::get_user_position;

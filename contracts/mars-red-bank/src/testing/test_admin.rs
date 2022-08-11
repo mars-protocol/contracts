@@ -1,3 +1,5 @@
+use std::any::type_name;
+
 use cosmwasm_std::testing::{mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
     attr, coin, from_binary, to_binary, Addr, CosmosMsg, Decimal, Event, StdError, SubMsg, Uint128,
@@ -9,15 +11,12 @@ use cw20_base::msg::InstantiateMarketingInfo;
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::zero_address;
 use mars_outpost::ma_token;
-use mars_outpost::red_bank::interest_rate_models::{
-    get_liquidity_rate, linear_get_borrow_rate, DynamicInterestRateModelParams,
-    DynamicInterestRateModelState, InterestRateModel, InterestRateModelError,
-    InterestRateModelParams, LinearInterestRateModelParams,
+use mars_outpost::red_bank::{
+    get_liquidity_rate, linear_get_borrow_rate, ConfigResponse, CreateOrUpdateConfig,
+    DynamicInterestRateModelParams, DynamicInterestRateModelState, ExecuteMsg,
+    InitOrUpdateAssetParams, InstantiateMsg, InterestRateModel, InterestRateModelError,
+    InterestRateModelParams, LinearInterestRateModelParams, Market, MarketError, QueryMsg,
 };
-use mars_outpost::red_bank::msg::{
-    CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg, QueryMsg,
-};
-use mars_outpost::red_bank::{ConfigResponse, Market, MarketError};
 use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, MockEnvParams};
 
 use crate::contract::{execute, instantiate, query};
@@ -1212,5 +1211,5 @@ fn test_init_asset_callback_cannot_be_called_on_its_own() {
         denom: "uluna".to_string(),
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, StdError::not_found("mars_outpost::red_bank::Market").into());
+    assert_eq!(error_res, StdError::not_found(type_name::<Market>()).into());
 }
