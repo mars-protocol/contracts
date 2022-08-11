@@ -71,7 +71,7 @@ fn test_deposit_nothing() {
     let token_id = get_token_id(res);
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.coin_assets.len(), 0);
+    assert_eq!(res.coins.len(), 0);
 
     app.execute_contract(
         user.clone(),
@@ -85,7 +85,7 @@ fn test_deposit_nothing() {
     .unwrap();
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.coin_assets.len(), 0);
+    assert_eq!(res.coins.len(), 0);
 }
 
 #[test]
@@ -128,7 +128,7 @@ fn test_deposit_but_no_funds() {
     );
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.coin_assets.len(), 0);
+    assert_eq!(res.coins.len(), 0);
 }
 
 #[test]
@@ -227,7 +227,7 @@ fn test_can_only_deposit_allowed_assets() {
     assert_err(res, NotWhitelisted(not_allowed_coin.denom));
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.coin_assets.len(), 0);
+    assert_eq!(res.coins.len(), 0);
 }
 
 #[test]
@@ -286,7 +286,7 @@ fn test_extra_funds_received() {
     assert_err(res, ExtraFundsReceived(Coins::from(vec![extra_funds])));
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.coin_assets.len(), 0);
+    assert_eq!(res.coins.len(), 0);
 }
 
 #[test]
@@ -333,13 +333,13 @@ fn test_deposit_success() {
     .unwrap();
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    let assets_res = res.coin_assets.first().unwrap();
-    assert_eq!(res.coin_assets.len(), 1);
+    let assets_res = res.coins.first().unwrap();
+    assert_eq!(res.coins.len(), 1);
     assert_eq!(assets_res.amount, deposit_amount);
     assert_eq!(assets_res.denom, coin_info.denom);
     assert_eq!(assets_res.price, coin_info.price);
     assert_eq!(
-        assets_res.total_value,
+        assets_res.value,
         coin_info.price * Decimal::from_atomics(deposit_amount, 0).unwrap()
     );
 
@@ -410,7 +410,7 @@ fn test_multiple_deposit_actions() {
     .unwrap();
 
     let res = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(res.coin_assets.len(), 2);
+    assert_eq!(res.coins.len(), 2);
     let uosmo_value = Decimal::from_atomics(uosmo_amount, 0).unwrap() * uosmo_info.price;
     assert_present(&res, &uosmo_info, uosmo_amount, uosmo_value);
     let uatom_value = Decimal::from_atomics(uatom_amount, 0).unwrap() * uatom_info.price;
@@ -430,10 +430,8 @@ fn test_multiple_deposit_actions() {
 }
 
 fn assert_present(res: &PositionResponse, coin: &CoinInfo, amount: Uint128, total_val: Decimal) {
-    res.coin_assets
+    res.coins
         .iter()
-        .find(|item| {
-            item.denom == coin.denom && &item.amount == &amount && item.total_value == total_val
-        })
+        .find(|item| item.denom == coin.denom && &item.amount == &amount && item.value == total_val)
         .unwrap();
 }

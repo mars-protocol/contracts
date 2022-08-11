@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, StdResult};
+use cosmwasm_std::{DepsMut, Empty, StdResult};
 use rover::msg::InstantiateMsg;
 
 use crate::state::{ALLOWED_COINS, ALLOWED_VAULTS, ORACLE, OWNER, RED_BANK};
@@ -11,12 +11,12 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> StdResult<()> {
 
     msg.allowed_vaults.iter().try_for_each(|unchecked| {
         let vault = deps.api.addr_validate(unchecked)?;
-        ALLOWED_VAULTS.save(deps.storage, vault, &true)
+        ALLOWED_VAULTS.save(deps.storage, &vault, &Empty {})
     })?;
 
     msg.allowed_coins
         .iter()
-        .try_for_each(|denom| ALLOWED_COINS.save(deps.storage, denom, &true))?;
+        .try_for_each(|denom| ALLOWED_COINS.save(deps.storage, denom, &Empty {}))?;
 
     Ok(())
 }

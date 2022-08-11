@@ -3,7 +3,7 @@ use cosmwasm_std::{Coin, DepsMut, Env, Response, StdError, StdResult, Uint128};
 use rover::error::{ContractError, ContractResult};
 
 use crate::deposit::assert_coin_is_whitelisted;
-use crate::state::{ASSETS, DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES};
+use crate::state::{COIN_BALANCES, DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES};
 
 pub static DEFAULT_DEBT_UNITS_PER_COIN_BORROWED: Uint128 = Uint128::new(1_000_000);
 
@@ -51,7 +51,7 @@ pub fn borrow(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractRe
         },
     )?;
 
-    ASSETS.update(
+    COIN_BALANCES.update(
         deps.storage,
         (token_id, &coin.denom),
         |current_amount| -> StdResult<_> {

@@ -63,13 +63,13 @@ fn test_only_assets_with_no_debts() {
     .unwrap();
 
     let position = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(position.coin_assets.len(), 1);
+    assert_eq!(position.coins.len(), 1);
     assert_eq!(position.debt_shares.len(), 0);
 
     let health = query_health(&app, &mock.credit_manager, &token_id);
     let assets_value = coin_info.price * Decimal::from_atomics(deposit_amount, 0).unwrap();
-    assert_eq!(health.assets_value, assets_value);
-    assert_eq!(health.debts_value, Decimal::zero());
+    assert_eq!(health.total_assets_value, assets_value);
+    assert_eq!(health.total_debts_value, Decimal::zero());
     assert_eq!(health.lqdt_health_factor, None);
     assert_eq!(health.max_ltv_health_factor, None);
     assert_eq!(health.liquidatable, false);
@@ -138,17 +138,17 @@ fn test_terra_ragnarok() {
     .unwrap();
 
     let position = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(position.coin_assets.len(), 1);
+    assert_eq!(position.coins.len(), 1);
     assert_eq!(position.debt_shares.len(), 1);
 
     let health = query_health(&app, &mock.credit_manager, &token_id);
     let assets_value =
         coin_info.price * Decimal::from_atomics(deposit_amount + borrow_amount, 0).unwrap();
-    assert_eq!(health.assets_value, assets_value);
+    assert_eq!(health.total_assets_value, assets_value);
     // Note: Simulated yield from mock_red_bank makes debt position more expensive
     let debts_value = coin_info.price
         * Decimal::from_atomics(borrow_amount.add(Uint128::from(1u128)), 0).unwrap();
-    assert_eq!(health.debts_value, debts_value);
+    assert_eq!(health.total_debts_value, debts_value);
     assert_eq!(
         health.lqdt_health_factor,
         Some(assets_value * coin_info.liquidation_threshold / debts_value)
@@ -170,12 +170,12 @@ fn test_terra_ragnarok() {
     );
 
     let position = query_position(&app, &mock.credit_manager, &token_id);
-    assert_eq!(position.coin_assets.len(), 1);
+    assert_eq!(position.coins.len(), 1);
     assert_eq!(position.debt_shares.len(), 1);
 
     let health = query_health(&app, &mock.credit_manager, &token_id);
-    assert_eq!(health.assets_value, Decimal::zero());
-    assert_eq!(health.debts_value, Decimal::zero());
+    assert_eq!(health.total_assets_value, Decimal::zero());
+    assert_eq!(health.total_debts_value, Decimal::zero());
     assert_eq!(health.lqdt_health_factor, None);
     assert_eq!(health.max_ltv_health_factor, None);
     assert_eq!(health.liquidatable, false);
@@ -231,12 +231,12 @@ fn test_debts_no_assets() {
 
     let position = query_position(&app, &mock.credit_manager, &token_id);
     assert_eq!(position.token_id, token_id);
-    assert_eq!(position.coin_assets.len(), 0);
+    assert_eq!(position.coins.len(), 0);
     assert_eq!(position.debt_shares.len(), 0);
 
     let health = query_health(&app, &mock.credit_manager, &token_id);
-    assert_eq!(health.assets_value, Decimal::zero());
-    assert_eq!(health.debts_value, Decimal::zero());
+    assert_eq!(health.total_assets_value, Decimal::zero());
+    assert_eq!(health.total_debts_value, Decimal::zero());
     assert_eq!(health.lqdt_health_factor, None);
     assert_eq!(health.max_ltv_health_factor, None);
     assert_eq!(health.liquidatable, false);
@@ -309,14 +309,14 @@ fn test_cannot_borrow_more_than_healthy() {
 
     let position = query_position(&app, &mock.credit_manager, &token_id);
     assert_eq!(position.token_id, token_id);
-    assert_eq!(position.coin_assets.len(), 1);
+    assert_eq!(position.coins.len(), 1);
     assert_eq!(position.debt_shares.len(), 1);
 
     let health = query_health(&app, &mock.credit_manager, &token_id);
     let assets_value = Decimal::from_atomics(82789u128, 2).unwrap();
-    assert_eq!(health.assets_value, assets_value);
+    assert_eq!(health.total_assets_value, assets_value);
     let debts_value = Decimal::from_atomics(1206354u128, 4).unwrap();
-    assert_eq!(health.debts_value, debts_value);
+    assert_eq!(health.total_debts_value, debts_value);
     assert_eq!(
         health.lqdt_health_factor,
         Some(assets_value * coin_info.liquidation_threshold / debts_value)
@@ -354,9 +354,9 @@ fn test_cannot_borrow_more_than_healthy() {
     // All valid on step 2 as well (meaning step 3 did not go through)
     let health = query_health(&app, &mock.credit_manager, &token_id);
     let assets_value = Decimal::from_atomics(106443u128, 2).unwrap();
-    assert_eq!(health.assets_value, assets_value);
+    assert_eq!(health.total_assets_value, assets_value);
     let debts_value = Decimal::from_atomics(3595408u128, 4).unwrap();
-    assert_eq!(health.debts_value, debts_value);
+    assert_eq!(health.total_debts_value, debts_value);
     assert_eq!(
         health.lqdt_health_factor,
         Some(assets_value * coin_info.liquidation_threshold / debts_value)
@@ -546,18 +546,18 @@ fn test_assets_and_ltv_lqdt_adjusted_value() {
 
     let position = query_position(&app, &mock.credit_manager, &token_id);
     assert_eq!(position.token_id, token_id);
-    assert_eq!(position.coin_assets.len(), 2);
+    assert_eq!(position.coins.len(), 2);
     assert_eq!(position.debt_shares.len(), 1);
 
     let health = query_health(&app, &mock.credit_manager, &token_id);
     let deposit_amount_dec = Decimal::from_atomics(deposit_amount, 0).unwrap();
     let borrowed_amount_dec = Decimal::from_atomics(borrowed_amount, 0).unwrap();
     assert_eq!(
-        health.assets_value,
+        health.total_assets_value,
         uosmo_info.price * deposit_amount_dec + uatom_info.price * borrowed_amount_dec
     );
     assert_eq!(
-        health.debts_value,
+        health.total_debts_value,
         uatom_info.price * (borrowed_amount_dec + Decimal::one()) // simulated interest
     );
 
@@ -685,7 +685,7 @@ fn test_debt_value() {
 
     let position_a = query_position(&app, &mock.credit_manager, &token_id_a);
     assert_eq!(position_a.token_id, token_id_a);
-    assert_eq!(position_a.coin_assets.len(), 2);
+    assert_eq!(position_a.coins.len(), 2);
     assert_eq!(position_a.debt_shares.len(), 2);
 
     let health = query_health(&app, &mock.credit_manager, &token_id_a);
@@ -738,7 +738,7 @@ fn test_debt_value() {
     let osmo_debt_value = uosmo_info.price * osmo_borrowed_amount_dec;
 
     let total_debt_value = user_a_owed_atom_value.add(osmo_debt_value);
-    assert_eq!(health.debts_value, total_debt_value);
+    assert_eq!(health.total_debts_value, total_debt_value);
 
     let user_a_deposit_amount_osmo_dec =
         Decimal::from_atomics(user_a_deposit_amount_osmo, 0).unwrap();

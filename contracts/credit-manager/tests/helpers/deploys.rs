@@ -142,8 +142,8 @@ pub fn setup_credit_manager(
             .map(|item| item.denom.clone())
             .collect(),
         allowed_vaults,
-        red_bank: RedBankBase(red_bank.to_string()),
-        oracle: OracleBase(oracle.to_string()),
+        red_bank: RedBankBase::new(red_bank.to_string()),
+        oracle: OracleBase::new(oracle.to_string()),
     };
 
     let credit_manager = app

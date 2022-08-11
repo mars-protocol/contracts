@@ -24,10 +24,10 @@ fn test_update_config_works_with_full_config() {
 
     let nft_contract_addr = setup_nft_and_propose_owner(&mut app, &original_owner, &contract_addr);
     let new_owner = Addr::unchecked("new_owner");
-    let new_red_bank = RedBankBase("new_red_bank".to_string());
+    let new_red_bank = RedBankBase::new("new_red_bank".to_string());
     let new_allowed_vaults = vec!["vaultcontract1".to_string()];
     let new_allowed_assets = vec!["uosmo".to_string()];
-    let new_oracle = OracleBase("new_oracle".to_string());
+    let new_oracle = OracleBase::new("new_oracle".to_string());
 
     app.execute_contract(
         original_owner.clone(),
@@ -62,10 +62,10 @@ fn test_update_config_works_with_full_config() {
     assert_eq!(new_queried_allowed_assets, new_allowed_assets);
     assert_ne!(new_queried_allowed_assets, original_allowed_assets);
 
-    assert_eq!(new_config.red_bank, new_red_bank.0);
+    assert_eq!(&new_config.red_bank, new_red_bank.address());
     assert_ne!(new_config.red_bank, original_config.red_bank);
 
-    assert_eq!(new_config.oracle, new_oracle.0);
+    assert_eq!(&new_config.oracle, new_oracle.address());
     assert_ne!(new_config.oracle, original_config.oracle);
 }
 
@@ -154,8 +154,8 @@ fn instantiate(app: &mut App, original_owner: &Addr, code_id: u64) -> Addr {
             owner: original_owner.to_string(),
             allowed_vaults: vec![],
             allowed_coins: vec![],
-            red_bank: RedBankBase("initial_red_bank".to_string()),
-            oracle: OracleBase("initial_oracle".to_string()),
+            red_bank: RedBankBase::new("initial_red_bank".to_string()),
+            oracle: OracleBase::new("initial_oracle".to_string()),
         },
         &[],
         "mock_manager_contract",

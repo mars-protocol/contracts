@@ -53,8 +53,8 @@ fn test_pagination_on_allowed_coins_query_works() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_coins: allowed_coins.clone(),
-        red_bank: RedBankBase("redbankaddr".to_string()),
-        oracle: OracleBase("oracle_contract".to_string()),
+        red_bank: RedBankBase::new("red_bank_contract".to_string()),
+        oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
     let contract_addr = app

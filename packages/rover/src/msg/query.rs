@@ -21,9 +21,9 @@ pub enum QueryMsg {
     Position { token_id: String },
     /// The health of the entire position represented by token. Response type: `Health`
     Health { token_id: String },
-    /// Enumerate assets for all token positions. Response type: `Vec<AssetResponseItem>`
+    /// Enumerate coin balances for all token positions. Response type: `Vec<CoinBalanceResponseItem>`
     /// start_after accepts (token_id, denom)
-    AllAssets {
+    AllCoinBalances {
         start_after: Option<(String, String)>,
         limit: Option<u32>,
     },
@@ -45,7 +45,7 @@ pub enum QueryMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct AssetResponseItem {
+pub struct CoinBalanceResponseItem {
     pub token_id: String,
     pub denom: String,
     pub amount: Uint128,
@@ -72,7 +72,7 @@ pub struct CoinValue {
     pub denom: String,
     pub amount: Uint128,
     pub price: Decimal,
-    pub total_value: Decimal,
+    pub value: Decimal,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -88,8 +88,8 @@ pub struct DebtSharesValue {
 pub struct PositionResponse {
     /// Unique NFT token id that represents the cross-margin account. The owner of this NFT, owns the account.
     pub token_id: String,
-    /// All coin asset positions with its value
-    pub coin_assets: Vec<CoinValue>,
+    /// All coin balances with its value
+    pub coins: Vec<CoinValue>,
     /// All debt positions with its value
     pub debt_shares: Vec<DebtSharesValue>,
 }

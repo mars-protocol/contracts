@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Health {
     /// Total value of assets
-    pub assets_value: Decimal,
+    pub total_assets_value: Decimal,
     /// Total value of debts
-    pub debts_value: Decimal,
+    pub total_debts_value: Decimal,
     /// The sum of the value of all assets (multiplied by their liquidation threshold) over the
     /// sum of the value of all debts. Main health factor used throughout app.
     pub lqdt_health_factor: Option<Decimal>,

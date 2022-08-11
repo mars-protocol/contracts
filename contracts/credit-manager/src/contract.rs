@@ -56,7 +56,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         }
         QueryMsg::Position { token_id } => to_binary(&query_position(deps, &env, &token_id)?),
         QueryMsg::Health { token_id } => to_binary(&compute_health(deps, &env, &token_id)?),
-        QueryMsg::AllAssets { start_after, limit } => {
+        QueryMsg::AllCoinBalances { start_after, limit } => {
             to_binary(&query_all_assets(deps, start_after, limit)?)
         }
         QueryMsg::AllDebtShares { start_after, limit } => {

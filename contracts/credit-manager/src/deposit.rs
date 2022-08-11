@@ -3,7 +3,7 @@ use cosmwasm_std::{Coin, Response, StdError, StdResult, Storage, Uint128};
 use rover::coins::Coins;
 use rover::error::{ContractError, ContractResult};
 
-use crate::state::{ALLOWED_COINS, ASSETS};
+use crate::state::{ALLOWED_COINS, COIN_BALANCES};
 
 pub fn deposit(
     storage: &mut dyn Storage,
@@ -55,7 +55,7 @@ pub fn assert_coin_is_whitelisted(storage: &mut dyn Storage, denom: &str) -> Con
 }
 
 fn increment_position(storage: &mut dyn Storage, token_id: &str, coin: &Coin) -> StdResult<()> {
-    ASSETS.update(
+    COIN_BALANCES.update(
         storage,
         (token_id, &coin.denom),
         |value_opt| -> StdResult<_> {

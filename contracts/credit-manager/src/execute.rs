@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
+    to_binary, Addr, CosmosMsg, DepsMut, Empty, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
 use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg;
@@ -76,7 +76,7 @@ pub fn update_config(
     if let Some(coins) = new_config.allowed_coins {
         coins
             .iter()
-            .try_for_each(|denom| ALLOWED_COINS.save(deps.storage, denom, &true))?;
+            .try_for_each(|denom| ALLOWED_COINS.save(deps.storage, denom, &Empty {}))?;
         response = response
             .add_attribute("key", "allowed_coins")
             .add_attribute("value", coins.join(", "));
@@ -85,7 +85,7 @@ pub fn update_config(
     if let Some(vaults) = new_config.allowed_vaults {
         vaults.iter().try_for_each(|unchecked| {
             let vault = deps.api.addr_validate(unchecked)?;
-            ALLOWED_VAULTS.save(deps.storage, vault, &true)
+            ALLOWED_VAULTS.save(deps.storage, &vault, &Empty {})
         })?;
         response = response
             .add_attribute("key", "allowed_vaults")
@@ -96,14 +96,14 @@ pub fn update_config(
         RED_BANK.save(deps.storage, &unchecked.check(deps.api)?)?;
         response = response
             .add_attribute("key", "red_bank")
-            .add_attribute("value", unchecked.0);
+            .add_attribute("value", unchecked.address());
     }
 
     if let Some(unchecked) = new_config.oracle {
         ORACLE.save(deps.storage, &unchecked.check(deps.api)?)?;
         response = response
             .add_attribute("key", "oracle")
-            .add_attribute("value", unchecked.0);
+            .add_attribute("value", unchecked.address());
     }
 
     Ok(response)
@@ -166,7 +166,9 @@ pub fn execute_callback(
     }
     match callback {
         CallbackMsg::Borrow { coin, token_id } => borrow(deps, env, &token_id, coin),
-        CallbackMsg::AssertBelowMaxLTV { token_id } => assert_below_max_ltv(deps, env, &token_id),
+        CallbackMsg::AssertBelowMaxLTV { token_id } => {
+            assert_below_max_ltv(deps.as_ref(), env, &token_id)
+        }
     }
 }
 

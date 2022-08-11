@@ -44,8 +44,8 @@ fn test_create_credit_account() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_coins: vec![],
-        red_bank: RedBankBase("redbankaddr".to_string()),
-        oracle: OracleBase("oracle_contract".to_string()),
+        red_bank: RedBankBase::new("red_bank_contract".to_string()),
+        oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
     let manager_contract_addr = app

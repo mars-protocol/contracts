@@ -122,7 +122,7 @@ fn test_borrowing_zero_does_nothing() {
     assert_err(res, ContractError::NoAmount);
 
     let position = query_position(&mut app, &mock.credit_manager, &token_id);
-    assert_eq!(position.coin_assets.len(), 0);
+    assert_eq!(position.coins.len(), 0);
     assert_eq!(position.debt_shares.len(), 0);
 }
 
@@ -164,7 +164,7 @@ fn test_success_when_new_debt_asset() {
     );
 
     let position = query_position(&mut app, &mock.credit_manager, &token_id);
-    assert_eq!(position.coin_assets.len(), 0);
+    assert_eq!(position.coins.len(), 0);
     assert_eq!(position.debt_shares.len(), 0);
     app.execute_contract(
         user,
@@ -187,8 +187,8 @@ fn test_success_when_new_debt_asset() {
     .unwrap();
 
     let position = query_position(&mut app, &mock.credit_manager, &token_id);
-    assert_eq!(position.coin_assets.len(), 1);
-    let asset_res = position.coin_assets.first().unwrap();
+    assert_eq!(position.coins.len(), 1);
+    let asset_res = position.coins.first().unwrap();
     assert_eq!(
         asset_res.amount,
         Uint128::from(342u128) // Deposit + Borrow
@@ -196,7 +196,7 @@ fn test_success_when_new_debt_asset() {
     assert_eq!(asset_res.denom, coin_info.denom);
     assert_eq!(asset_res.price, coin_info.price);
     assert_eq!(
-        asset_res.total_value,
+        asset_res.value,
         coin_info.price * Decimal::from_atomics(342u128, 0).unwrap()
     );
 

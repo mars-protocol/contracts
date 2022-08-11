@@ -19,8 +19,8 @@ fn test_owner_set_on_instantiate() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_coins: vec![],
-        red_bank: RedBankBase("redbankaddr".to_string()),
-        oracle: OracleBase("oracle_contract".to_string()),
+        red_bank: RedBankBase::new("red_bank_contract".to_string()),
+        oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
     let contract_addr = app
@@ -45,8 +45,8 @@ fn test_raises_on_invalid_owner_addr() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_coins: vec![],
-        red_bank: RedBankBase("redbankaddr".to_string()),
-        oracle: OracleBase("oracle_contract".to_string()),
+        red_bank: RedBankBase::new("red_bank_contract".to_string()),
+        oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
     let instantiate_res = app.instantiate_contract(
@@ -77,8 +77,8 @@ fn test_nft_contract_addr_not_set_on_instantiate() {
                 owner: owner.to_string(),
                 allowed_vaults: vec![],
                 allowed_coins: vec![],
-                red_bank: RedBankBase("redbankaddr".to_string()),
-                oracle: OracleBase("oracle_contract".to_string()),
+                red_bank: RedBankBase::new("red_bank_contract".to_string()),
+                oracle: OracleBase::new("oracle_contract".to_string()),
             },
             &[],
             "manager-mock-account-nft",
@@ -110,8 +110,8 @@ fn test_allowed_vaults_set_on_instantiate() {
         owner: owner.to_string(),
         allowed_vaults: allowed_vaults.clone(),
         allowed_coins: vec![],
-        red_bank: RedBankBase("redbankaddr".to_string()),
-        oracle: OracleBase("oracle_contract".to_string()),
+        red_bank: RedBankBase::new("red_bank_contract".to_string()),
+        oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
     let contract_addr = app
@@ -149,8 +149,8 @@ fn test_raises_on_invalid_vaults_addr() {
         owner: owner.to_string(),
         allowed_vaults: vec!["%%%INVALID%%%".to_string()],
         allowed_coins: vec![],
-        red_bank: RedBankBase("redbankaddr".to_string()),
-        oracle: OracleBase("oracle_contract".to_string()),
+        red_bank: RedBankBase::new("red_bank_contract".to_string()),
+        oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
     let instantiate_res = app.instantiate_contract(
@@ -184,8 +184,8 @@ fn test_allowed_coins_set_on_instantiate() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_coins: allowed_coins.clone(),
-        red_bank: RedBankBase("redbankaddr".to_string()),
-        oracle: OracleBase("oracle_contract".to_string()),
+        red_bank: RedBankBase::new("red_bank_contract".to_string()),
+        oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
     let contract_addr = app
@@ -218,14 +218,14 @@ fn test_red_bank_set_on_instantiate() {
     let mut app = mock_app();
     let code_id = app.store_code(mock_contract());
     let owner = Addr::unchecked("owner");
-    let red_bank_addr = "redbankaddr".to_string();
+    let red_bank_addr = "red_bank_contract".to_string();
 
     let msg = InstantiateMsg {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_coins: vec![],
-        red_bank: RedBankBase("redbankaddr".to_string()),
-        oracle: OracleBase("oracle_contract".to_string()),
+        red_bank: RedBankBase::new("red_bank_contract".to_string()),
+        oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
     let contract_addr = app
@@ -250,8 +250,8 @@ fn test_raises_on_invalid_red_bank_addr() {
         owner: owner.to_string(),
         allowed_coins: vec![],
         allowed_vaults: vec![],
-        red_bank: RedBankBase("%%%INVALID%%%".to_string()),
-        oracle: OracleBase("oracle_contract".to_string()),
+        red_bank: RedBankBase::new("%%%INVALID%%%".to_string()),
+        oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
     let instantiate_res = app.instantiate_contract(
@@ -279,8 +279,8 @@ fn test_oracle_set_on_instantiate() {
         owner: owner.to_string(),
         allowed_coins: vec![],
         allowed_vaults: vec![],
-        red_bank: RedBankBase("redbankaddr".to_string()),
-        oracle: OracleBase("oracle_contract".to_string()),
+        red_bank: RedBankBase::new("red_bank_contract".to_string()),
+        oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
     let contract_addr = app
@@ -305,8 +305,8 @@ fn test_raises_on_invalid_oracle_addr() {
         owner: owner.to_string(),
         allowed_vaults: vec![],
         allowed_coins: vec![],
-        red_bank: RedBankBase("redbankaddr".to_string()),
-        oracle: OracleBase("%%%INVALID%%%".to_string()),
+        red_bank: RedBankBase::new("red_bank_contract".to_string()),
+        oracle: OracleBase::new("%%%INVALID%%%".to_string()),
     };
 
     let instantiate_res = app.instantiate_contract(

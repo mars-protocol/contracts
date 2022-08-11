@@ -47,8 +47,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-// TODO: After mars-core bumps to the next version https://crates.io/crates/mars-core (currently 1.0.0)
-// should update this mock to return MarsDecimal:  https://github.com/mars-protocol/mars-core/blob/master/packages/mars-core/src/math/decimal.rs
 fn query_asset_price(deps: Deps, denom: String) -> StdResult<Decimal> {
     COIN_PRICE.load(deps.storage, denom)
 }

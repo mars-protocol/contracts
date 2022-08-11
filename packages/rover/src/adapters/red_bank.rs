@@ -8,7 +8,17 @@ use serde::{Deserialize, Serialize};
 use mock_red_bank::msg::{ExecuteMsg, QueryMsg, UserAssetDebtResponse};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct RedBankBase<T>(pub T);
+pub struct RedBankBase<T>(T);
+
+impl<T> RedBankBase<T> {
+    pub fn new(address: T) -> RedBankBase<T> {
+        RedBankBase(address)
+    }
+
+    pub fn address(&self) -> &T {
+        &self.0
+    }
+}
 
 pub type RedBankUnchecked = RedBankBase<String>;
 pub type RedBank = RedBankBase<Addr>;

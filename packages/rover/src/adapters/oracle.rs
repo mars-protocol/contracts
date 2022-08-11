@@ -1,13 +1,21 @@
-use cosmwasm_std::{
-    to_binary, Addr, Api, Decimal, QuerierWrapper, QueryRequest, StdResult, WasmQuery,
-};
+use cosmwasm_std::{Addr, Api, Decimal, QuerierWrapper, StdResult};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mock_oracle::msg::QueryMsg;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct OracleBase<T>(pub T);
+pub struct OracleBase<T>(T);
+
+impl<T> OracleBase<T> {
+    pub fn new(address: T) -> OracleBase<T> {
+        OracleBase(address)
+    }
+
+    pub fn address(&self) -> &T {
+        &self.0
+    }
+}
 
 pub type OracleUnchecked = OracleBase<String>;
 pub type Oracle = OracleBase<Addr>;
@@ -20,18 +28,17 @@ impl From<Oracle> for OracleUnchecked {
 
 impl OracleUnchecked {
     pub fn check(&self, api: &dyn Api) -> StdResult<Oracle> {
-        Ok(OracleBase(api.addr_validate(&self.0)?))
+        Ok(OracleBase::new(api.addr_validate(&self.0)?))
     }
 }
 
 impl Oracle {
     pub fn query_price(&self, querier: &QuerierWrapper, denom: &str) -> StdResult<Decimal> {
-        let response: Decimal = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-            contract_addr: self.0.to_string(),
-            msg: to_binary(&QueryMsg::AssetPrice {
+        querier.query_wasm_smart(
+            self.0.to_string(),
+            &QueryMsg::AssetPrice {
                 denom: denom.to_string(),
-            })?,
-        }))?;
-        Ok(response)
+            },
+        )
     }
 }

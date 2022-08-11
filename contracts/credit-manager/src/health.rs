@@ -1,6 +1,6 @@
 use std::ops::{Add, Div, Mul};
 
-use cosmwasm_std::{Decimal, Deps, DepsMut, Env, Event, Response, StdResult};
+use cosmwasm_std::{Decimal, Deps, Env, Event, Response, StdResult};
 
 use mock_red_bank::msg::{Market, QueryMsg};
 use rover::error::{ContractError, ContractResult};
@@ -19,19 +19,19 @@ pub fn compute_health(deps: Deps, env: &Env, token_id: NftTokenId) -> ContractRe
 
     // The sum of the position's coin asset values w/ loan-to-value adjusted & liquidation threshold adjusted
     let (total_assets_value, max_ltv_adjusted_value, lqdt_adjusted_value) =
-        position.coin_assets.iter().try_fold::<_, _, StdResult<_>>(
+        position.coins.iter().try_fold::<_, _, StdResult<_>>(
             (Decimal::zero(), Decimal::zero(), Decimal::zero()),
             |(total, max_ltv_adjusted_total, lqdt_adjusted_total), item| {
                 let market: Market = deps.querier.query_wasm_smart(
-                    red_bank.0.clone(),
+                    red_bank.address().clone(),
                     &QueryMsg::Market {
                         denom: item.denom.clone(),
                     },
                 )?;
                 Ok((
-                    total.add(item.total_value),
-                    max_ltv_adjusted_total.add(item.total_value.mul(market.max_loan_to_value)),
-                    lqdt_adjusted_total.add(item.total_value.mul(market.liquidation_threshold)),
+                    total.add(item.value),
+                    max_ltv_adjusted_total.add(item.value.mul(market.max_loan_to_value)),
+                    lqdt_adjusted_total.add(item.value.mul(market.liquidation_threshold)),
                 ))
             },
         )?;
@@ -55,12 +55,12 @@ pub fn compute_health(deps: Deps, env: &Env, token_id: NftTokenId) -> ContractRe
         )
     };
 
-    let liquidatable = lqdt_health_factor.map_or_else(|| false, |hf| hf <= Decimal::one());
-    let above_max_ltv = max_ltv_health_factor.map_or_else(|| false, |hf| hf <= Decimal::one());
+    let liquidatable = lqdt_health_factor.map_or(false, |hf| hf <= Decimal::one());
+    let above_max_ltv = max_ltv_health_factor.map_or(false, |hf| hf <= Decimal::one());
 
     Ok(Health {
-        assets_value: total_assets_value,
-        debts_value: total_debts_value,
+        total_assets_value,
+        total_debts_value,
         lqdt_health_factor,
         liquidatable,
         max_ltv_health_factor,
@@ -69,11 +69,11 @@ pub fn compute_health(deps: Deps, env: &Env, token_id: NftTokenId) -> ContractRe
 }
 
 pub fn assert_below_max_ltv(
-    deps: DepsMut,
+    deps: Deps,
     env: Env,
     token_id: NftTokenId,
 ) -> ContractResult<Response> {
-    let position = compute_health(deps.as_ref(), &env, token_id)?;
+    let position = compute_health(deps, &env, token_id)?;
 
     if position.above_max_ltv {
         return Err(ContractError::AboveMaxLTV);
@@ -83,8 +83,8 @@ pub fn assert_below_max_ltv(
         .add_attribute("timestamp", env.block.time.seconds().to_string())
         .add_attribute("height", env.block.height.to_string())
         .add_attribute("token_id", token_id)
-        .add_attribute("assets_value", position.assets_value.to_string())
-        .add_attribute("debts_value", position.debts_value.to_string())
+        .add_attribute("assets_value", position.total_assets_value.to_string())
+        .add_attribute("debts_value", position.total_debts_value.to_string())
         .add_attribute(
             "lqdt_health_factor",
             val_or_not_applicable(position.lqdt_health_factor),

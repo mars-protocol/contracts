@@ -1,16 +1,18 @@
-use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{Addr, Coin, Uint128};
 use cw_multi_test::{App, Executor};
 
 use rover::msg::execute::Action;
-use rover::msg::query::AssetResponseItem;
+use rover::msg::query::CoinBalanceResponseItem;
 use rover::msg::{ExecuteMsg, QueryMsg};
 
-use crate::helpers::{get_token_id, mock_create_credit_account, setup_credit_manager, CoinInfo};
+use crate::helpers::{
+    build_mock_coin_infos, get_token_id, mock_create_credit_account, setup_credit_manager,
+};
 
 pub mod helpers;
 
 #[test]
-fn test_pagination_on_all_coin_assets_query_works() {
+fn test_pagination_on_all_coin_balances_query_works() {
     let user_a = Addr::unchecked("user_a");
     let user_b = Addr::unchecked("user_b");
     let user_c = Addr::unchecked("user_c");
@@ -71,97 +73,9 @@ fn test_pagination_on_all_coin_assets_query_works() {
             .unwrap();
     });
 
-    let mock = setup_credit_manager(
-        &mut app,
-        &Addr::unchecked("owner"),
-        vec![
-            CoinInfo {
-                denom: "coin_1".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_2".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_3".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_4".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_5".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_6".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_7".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_8".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_9".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_10".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_11".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_12".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_13".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-            CoinInfo {
-                denom: "coin_14".to_string(),
-                max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-                price: Decimal::from_atomics(10u128, 0).unwrap(),
-            },
-        ],
-        vec![],
-    );
+    let mock_coin_infos = build_mock_coin_infos(14);
+
+    let mock = setup_credit_manager(&mut app, &Addr::unchecked("owner"), mock_coin_infos, vec![]);
 
     let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user_a).unwrap();
     let token_id_a = get_token_id(res);
@@ -211,11 +125,11 @@ fn test_pagination_on_all_coin_assets_query_works() {
     )
     .unwrap();
 
-    let all_assets_res: Vec<AssetResponseItem> = app
+    let all_assets_res: Vec<CoinBalanceResponseItem> = app
         .wrap()
         .query_wasm_smart(
             mock.credit_manager.clone(),
-            &QueryMsg::AllAssets {
+            &QueryMsg::AllCoinBalances {
                 start_after: None,
                 limit: Some(58 as u32),
             },
@@ -225,11 +139,11 @@ fn test_pagination_on_all_coin_assets_query_works() {
     // Assert maximum is observed
     assert_eq!(all_assets_res.len(), 30);
 
-    let all_assets_res: Vec<AssetResponseItem> = app
+    let all_assets_res: Vec<CoinBalanceResponseItem> = app
         .wrap()
         .query_wasm_smart(
             mock.credit_manager.clone(),
-            &QueryMsg::AllAssets {
+            &QueryMsg::AllCoinBalances {
                 start_after: None,
                 limit: Some(2 as u32),
             },
@@ -239,53 +153,53 @@ fn test_pagination_on_all_coin_assets_query_works() {
     // Assert limit request is observed
     assert_eq!(all_assets_res.len(), 2);
 
-    let all_assets_res_a: Vec<AssetResponseItem> = app
+    let all_assets_res_a: Vec<CoinBalanceResponseItem> = app
         .wrap()
         .query_wasm_smart(
             mock.credit_manager.clone(),
-            &QueryMsg::AllAssets {
+            &QueryMsg::AllCoinBalances {
                 start_after: None,
                 limit: None,
             },
         )
         .unwrap();
 
-    let AssetResponseItem {
+    let CoinBalanceResponseItem {
         token_id, denom, ..
     } = all_assets_res_a.last().unwrap().clone();
-    let all_assets_res_b: Vec<AssetResponseItem> = app
+    let all_assets_res_b: Vec<CoinBalanceResponseItem> = app
         .wrap()
         .query_wasm_smart(
             mock.credit_manager.clone(),
-            &QueryMsg::AllAssets {
+            &QueryMsg::AllCoinBalances {
                 start_after: Some((token_id, denom)),
                 limit: None,
             },
         )
         .unwrap();
 
-    let AssetResponseItem {
+    let CoinBalanceResponseItem {
         token_id, denom, ..
     } = all_assets_res_b.last().unwrap().clone();
-    let all_assets_res_c: Vec<AssetResponseItem> = app
+    let all_assets_res_c: Vec<CoinBalanceResponseItem> = app
         .wrap()
         .query_wasm_smart(
             mock.credit_manager.clone(),
-            &QueryMsg::AllAssets {
+            &QueryMsg::AllCoinBalances {
                 start_after: Some((token_id, denom)),
                 limit: None,
             },
         )
         .unwrap();
 
-    let AssetResponseItem {
+    let CoinBalanceResponseItem {
         token_id, denom, ..
     } = all_assets_res_c.last().unwrap().clone();
-    let all_assets_res_d: Vec<AssetResponseItem> = app
+    let all_assets_res_d: Vec<CoinBalanceResponseItem> = app
         .wrap()
         .query_wasm_smart(
             mock.credit_manager.clone(),
-            &QueryMsg::AllAssets {
+            &QueryMsg::AllCoinBalances {
                 start_after: Some((token_id, denom)),
                 limit: None,
             },
@@ -299,7 +213,7 @@ fn test_pagination_on_all_coin_assets_query_works() {
 
     assert_eq!(all_assets_res_d.len(), 2);
 
-    let combined_res: Vec<AssetResponseItem> = all_assets_res_a
+    let combined_res: Vec<CoinBalanceResponseItem> = all_assets_res_a
         .iter()
         .cloned()
         .chain(all_assets_res_b.iter().cloned())
@@ -309,32 +223,32 @@ fn test_pagination_on_all_coin_assets_query_works() {
 
     let user_a_response_items = user_a_coins
         .iter()
-        .map(|coin| AssetResponseItem {
+        .map(|coin| CoinBalanceResponseItem {
             token_id: token_id_a.clone(),
             denom: coin.denom.clone(),
             amount: Uint128::from(1u128),
         })
-        .collect::<Vec<AssetResponseItem>>();
+        .collect::<Vec<CoinBalanceResponseItem>>();
 
     let user_b_response_items = user_b_coins
         .iter()
-        .map(|coin| AssetResponseItem {
+        .map(|coin| CoinBalanceResponseItem {
             token_id: token_id_b.clone(),
             denom: coin.denom.clone(),
             amount: Uint128::from(1u128),
         })
-        .collect::<Vec<AssetResponseItem>>();
+        .collect::<Vec<CoinBalanceResponseItem>>();
 
     let user_c_response_items = user_c_coins
         .iter()
-        .map(|coin| AssetResponseItem {
+        .map(|coin| CoinBalanceResponseItem {
             token_id: token_id_c.clone(),
             denom: coin.denom.clone(),
             amount: Uint128::from(1u128),
         })
-        .collect::<Vec<AssetResponseItem>>();
+        .collect::<Vec<CoinBalanceResponseItem>>();
 
-    let combined_starting_vals: Vec<AssetResponseItem> = user_a_response_items
+    let combined_starting_vals: Vec<CoinBalanceResponseItem> = user_a_response_items
         .iter()
         .cloned()
         .chain(user_b_response_items)
