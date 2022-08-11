@@ -4,8 +4,7 @@ use cosmwasm_std::{
 };
 use cw20::Cw20ExecuteMsg;
 
-use mars_outpost::red_bank::msg::ExecuteMsg;
-use mars_outpost::red_bank::Market;
+use mars_outpost::red_bank::{ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use crate::contract::execute;

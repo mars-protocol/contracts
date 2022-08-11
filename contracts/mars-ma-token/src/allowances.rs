@@ -133,7 +133,7 @@ mod tests {
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("red_bank"),
                     msg: to_binary(
-                        &mars_outpost::red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
+                        &mars_outpost::red_bank::ExecuteMsg::FinalizeLiquidityTokenTransfer {
                             sender_address: Addr::unchecked(&owner),
                             recipient_address: Addr::unchecked(&rcpt),
                             sender_previous_balance: start,
@@ -261,7 +261,7 @@ mod tests {
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("red_bank"),
                     msg: to_binary(
-                        &mars_outpost::red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
+                        &mars_outpost::red_bank::ExecuteMsg::FinalizeLiquidityTokenTransfer {
                             sender_address: Addr::unchecked(&owner),
                             recipient_address: Addr::unchecked(&contract),
                             sender_previous_balance: start,
