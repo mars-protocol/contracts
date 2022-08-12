@@ -376,8 +376,6 @@ pub fn deposit(
             ));
         }
 
-        println!("should have updated user collaterals to {}", amount_scaled + mint_amount);
-        println!("user is {}", user_address);
         amount_scaled.checked_add(mint_amount).map_err(StdError::overflow)
     })?;
 
