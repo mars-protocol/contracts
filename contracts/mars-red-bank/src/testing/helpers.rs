@@ -1,9 +1,8 @@
 use cosmwasm_std::testing::{MockApi, MockStorage};
-use cosmwasm_std::{Coin, Decimal, DepsMut, Event, OwnedDeps, StdResult, Uint128};
+use cosmwasm_std::{Coin, Decimal, DepsMut, Event, OwnedDeps, Uint128};
 
 use mars_outpost::red_bank::{
-    update_market_interest_rates_with_model, CreateOrUpdateConfig, GlobalState, InstantiateMsg,
-    Market,
+    update_market_interest_rates_with_model, CreateOrUpdateConfig, InstantiateMsg, Market,
 };
 use mars_testing::{
     mock_dependencies, mock_env, mock_env_at_block_time, mock_info, MarsMockQuerier, MockEnvParams,
@@ -14,7 +13,7 @@ use crate::interest_rates::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     ScalingOperation,
 };
-use crate::state::{GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_INDEX, MARKET_DENOMS_BY_MA_TOKEN};
+use crate::state::MARKETS;
 
 pub(super) fn th_setup(
     contract_balances: &[Coin],
@@ -25,7 +24,6 @@ pub(super) fn th_setup(
     let config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
         address_provider_address: Some("address_provider".to_string()),
-        ma_token_code_id: Some(1u64),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
@@ -39,29 +37,12 @@ pub(super) fn th_setup(
 }
 
 pub(super) fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {
-    let mut index = 0;
-
-    GLOBAL_STATE
-        .update(deps.storage, |mut mm: GlobalState| -> StdResult<GlobalState> {
-            index = mm.market_count;
-            mm.market_count += 1;
-            Ok(mm)
-        })
-        .unwrap();
-
     let new_market = Market {
-        index,
         denom: denom.to_string(),
         ..market.clone()
     };
 
     MARKETS.save(deps.storage, denom, &new_market).unwrap();
-
-    MARKET_DENOMS_BY_INDEX.save(deps.storage, index, &denom.to_string()).unwrap();
-
-    MARKET_DENOMS_BY_MA_TOKEN
-        .save(deps.storage, &new_market.ma_token_address, &denom.to_string())
-        .unwrap();
 
     new_market
 }

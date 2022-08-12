@@ -15,6 +15,6 @@ pub const COLLATERALS: Map<(&Addr, &str), Uint128> = Map::new("collaterals");
 /// Scaled debt amounts, indexed by composite key {user_address | denom}
 pub const DEBTS: Map<(&Addr, &str), Debt> = Map::new("debts");
 
-/// Uncollateralized loan limits, indexed by composite key {denom | user_address}
-pub const UNCOLLATERALIZED_LOAN_LIMITS: Map<(&str, &Addr), Uint128> =
+/// Uncollateralized loan limits, indexed by composite key {user_address | denom}
+pub const UNCOLLATERALIZED_LOAN_LIMITS: Map<(&Addr, &str), Uint128> =
     Map::new("uncollateralized_loan_limits");

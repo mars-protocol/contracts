@@ -3,19 +3,18 @@ use cosmwasm_std::{
     attr, coin, coins, to_binary, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128, WasmMsg,
 };
 
-use mars_outpost::red_bank::{Debt, ExecuteMsg, Market, User};
-use mars_outpost::{ma_token, math};
+use mars_outpost::math;
+use mars_outpost::red_bank::{Debt, ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use crate::contract::execute;
 use crate::error::ContractError;
 use crate::events::build_collateral_position_changed_event;
-use crate::helpers::{get_bit, set_bit};
 use crate::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
     get_updated_borrow_index, get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
 };
-use crate::state::{DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN, USERS};
+use crate::state::{DEBTS, MARKETS};
 
 use super::helpers::{
     th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,

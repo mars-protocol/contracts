@@ -135,16 +135,12 @@ pub fn query_uncollateralized_loan_limit(
     user_address: Addr,
     denom: String,
 ) -> StdResult<Uint128> {
-    let uncollateralized_loan_limit =
-        UNCOLLATERALIZED_LOAN_LIMITS.load(deps.storage, (&denom, &user_address));
-
-    match uncollateralized_loan_limit {
-        Ok(limit) => Ok(limit),
-        Err(_) => Err(StdError::not_found(format!(
+    UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&user_address, &denom))?.ok_or_else(|| {
+        StdError::not_found(format!(
             "No uncollateralized loan approved for user_address: {} on asset: {}",
             user_address, denom
-        ))),
-    }
+        ))
+    })
 }
 
 pub fn query_scaled_liquidity_amount(

@@ -294,7 +294,7 @@ pub fn update_uncollateralized_loan_limit(
     // - DOES NOT have an uncollateral loan limit
     // - DOES have a non-zero amount of collateral deposited in the money market
     let current_uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
-        .may_load(deps.storage, (&denom, &user_address))?
+        .may_load(deps.storage, (&user_address, &denom))?
         .unwrap_or_else(Uint128::zero);
     let current_collateral_amount_scaled =
         COLLATERALS.may_load(deps.storage, (&user_address, &denom))?.unwrap_or_else(Uint128::zero);
@@ -303,7 +303,7 @@ pub fn update_uncollateralized_loan_limit(
         return Err(ContractError::UserHasCollateralizedDebt {});
     }
 
-    UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (&denom, &user_address), &new_limit)?;
+    UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (&user_address, &denom), &new_limit)?;
 
     DEBTS.update(
         deps.storage,
@@ -586,7 +586,7 @@ pub fn borrow(
     }
 
     let uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
-        .may_load(deps.storage, (&denom, &borrower_address))?
+        .may_load(deps.storage, (&borrower_address, &denom))?
         .unwrap_or_else(Uint128::zero);
 
     let config = CONFIG.load(deps.storage)?;
@@ -712,7 +712,7 @@ pub fn repay(
     let user_address = if let Some(address) = on_behalf_of {
         let on_behalf_of_addr = deps.api.addr_validate(&address)?;
         // Uncollateralized loans should not have 'on behalf of' because it creates accounting complexity for them
-        match UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&denom, &on_behalf_of_addr))? {
+        match UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&on_behalf_of_addr, &denom))? {
             Some(limit) if !limit.is_zero() => {
                 return Err(ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {})
             }
@@ -819,7 +819,7 @@ pub fn liquidate(
     // If user (contract) has a positive uncollateralized limit then the user
     // cannot be liquidated
     if let Some(limit) =
-        UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&debt_denom, &user_address))?
+        UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&user_address, &debt_denom))?
     {
         if !limit.is_zero() {
             return Err(ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});

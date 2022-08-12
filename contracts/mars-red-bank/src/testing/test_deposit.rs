@@ -1,20 +1,17 @@
 use std::any::type_name;
 
 use cosmwasm_std::testing::mock_info;
-use cosmwasm_std::{
-    attr, coin, to_binary, Addr, CosmosMsg, Decimal, StdError, SubMsg, Uint128, WasmMsg,
-};
-use cw20::Cw20ExecuteMsg;
+use cosmwasm_std::{attr, coin, Addr, Decimal, StdError, Uint128};
 
+use cw_utils::PaymentError;
 use mars_outpost::red_bank::{ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use crate::contract::execute;
 use crate::error::ContractError;
 use crate::events::build_collateral_position_changed_event;
-use crate::helpers::get_bit;
 use crate::interest_rates::{compute_scaled_amount, ScalingOperation, SCALING_FACTOR};
-use crate::state::{MARKETS, USERS};
+use crate::state::{COLLATERALS, MARKETS};
 
 use super::helpers::{
     th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
@@ -27,7 +24,6 @@ fn test_deposit_native_asset() {
     let reserve_factor = Decimal::from_ratio(1u128, 10u128);
 
     let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
         liquidity_index: Decimal::from_ratio(11u128, 10u128),
         max_loan_to_value: Decimal::one(),
         borrow_index: Decimal::from_ratio(1u128, 1u128),
@@ -63,19 +59,7 @@ fn test_deposit_native_asset() {
     )
     .unwrap();
 
-    // mints coin_amount/liquidity_index
-    assert_eq!(
-        res.messages,
-        vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: "matoken".to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
-                recipient: "depositor".to_string(),
-                amount: expected_mint_amount.into(),
-            })
-            .unwrap(),
-            funds: vec![]
-        }))]
-    );
+    assert_eq!(res.messages, vec![]);
     assert_eq!(
         res.attributes,
         vec![
@@ -94,11 +78,17 @@ fn test_deposit_native_asset() {
         ]
     );
 
+    let amount_scaled = COLLATERALS
+        .load(deps.as_ref().storage, (&Addr::unchecked("depositor"), "somecoin"))
+        .unwrap();
+    assert_eq!(amount_scaled, expected_mint_amount);
+
     let market = MARKETS.load(&deps.storage, "somecoin").unwrap();
     assert_eq!(market.borrow_rate, expected_params.borrow_rate);
     assert_eq!(market.liquidity_rate, expected_params.liquidity_rate);
     assert_eq!(market.liquidity_index, expected_params.liquidity_index);
     assert_eq!(market.borrow_index, expected_params.borrow_index);
+    assert_eq!(market.collateral_total_scaled, expected_mint_amount);
 
     // send many native coins
     let info = cosmwasm_std::testing::mock_info(
@@ -110,12 +100,7 @@ fn test_deposit_native_asset() {
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ContractError::InvalidCoinsSent {
-            denom: "somecoin2".to_string()
-        }
-    );
+    assert_eq!(error_res, ContractError::Payment(PaymentError::MultipleDenoms {}));
 
     // empty deposit fails
     let info = mock_info("depositor", &[]);
@@ -124,12 +109,7 @@ fn test_deposit_native_asset() {
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ContractError::InvalidCoinsSent {
-            denom: "somecoin".to_string()
-        }
-    );
+    assert_eq!(error_res, ContractError::Payment(PaymentError::NoFunds {}));
 }
 
 #[test]
@@ -151,7 +131,6 @@ fn test_cannot_deposit_if_market_not_active() {
     let mut deps = th_setup(&[]);
 
     let mock_market = Market {
-        ma_token_address: Addr::unchecked("ma_somecoin"),
         active: false,
         deposit_enabled: true,
         ..Default::default()
@@ -179,7 +158,6 @@ fn test_cannot_deposit_if_market_not_enabled() {
     let mut deps = th_setup(&[]);
 
     let mock_market = Market {
-        ma_token_address: Addr::unchecked("ma_somecoin"),
         active: true,
         deposit_enabled: false,
         ..Default::default()
@@ -208,7 +186,6 @@ fn test_deposit_on_behalf_of() {
     let mut deps = th_setup(&[coin(initial_liquidity, "somecoin")]);
 
     let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
         ..Default::default()
@@ -236,34 +213,26 @@ fn test_deposit_on_behalf_of() {
     )
     .unwrap();
 
-    // 'depositor' should not be saved
-    let _user = USERS.load(&deps.storage, &depositor_addr).unwrap_err();
-
-    // 'another_user' should have collateral bit set
-    let user = USERS.load(&deps.storage, &another_user_addr).unwrap();
-    assert!(get_bit(user.collateral_assets, market.index).unwrap());
-
     // recipient should be `another_user`
-    assert_eq!(
-        res.messages,
-        vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: "matoken".to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
-                recipient: another_user_addr.to_string(),
-                amount: expected_mint_amount.into(),
-            })
-            .unwrap(),
-            funds: vec![]
-        }))]
-    );
+    assert_eq!(res.messages, vec![]);
     assert_eq!(
         res.attributes,
         vec![
             attr("action", "deposit"),
             attr("denom", "somecoin"),
-            attr("sender", depositor_addr),
-            attr("user", another_user_addr),
+            attr("sender", &depositor_addr),
+            attr("user", &another_user_addr),
             attr("amount", deposit_amount.to_string()),
         ]
     );
+
+    let err = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, "somecoin")).unwrap_err();
+    assert_eq!(err, StdError::not_found(type_name::<Uint128>()));
+
+    let amount_scaled =
+        COLLATERALS.load(deps.as_ref().storage, (&another_user_addr, "somecoin")).unwrap();
+    assert_eq!(amount_scaled, expected_mint_amount);
+
+    let market = MARKETS.load(deps.as_ref().storage, "somecoin").unwrap();
+    assert_eq!(market.collateral_total_scaled, expected_mint_amount);
 }
