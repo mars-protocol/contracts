@@ -99,6 +99,10 @@ pub fn execute(
                 sent_debt_asset.amount,
             )
         }
+        ExecuteMsg::UpdateAssetCollateralStatus {
+            denom,
+            enable,
+        } => execute::update_asset_collateral_status(deps, env, info, denom, enable),
     }
 }
 

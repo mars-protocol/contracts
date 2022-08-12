@@ -5,6 +5,39 @@ use serde::{Deserialize, Serialize};
 use super::interest_rate_models::InterestRateModelParams;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct CreateOrUpdateConfig {
+    pub owner: Option<String>,
+    pub address_provider_address: Option<String>,
+    pub close_factor: Option<Decimal>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct InitOrUpdateAssetParams {
+    /// Initial borrow rate
+    pub initial_borrow_rate: Option<Decimal>,
+
+    /// Portion of the borrow rate that is kept as protocol rewards
+    pub reserve_factor: Option<Decimal>,
+    /// Max uusd that can be borrowed per uusd of collateral when using the asset as collateral
+    pub max_loan_to_value: Option<Decimal>,
+    /// uusd amount in debt position per uusd of asset collateral that if surpassed makes the user's position liquidatable.
+    pub liquidation_threshold: Option<Decimal>,
+    /// Bonus amount of collateral liquidator get when repaying user's debt (Will get collateral
+    /// from user in an amount equal to debt repayed + bonus)
+    pub liquidation_bonus: Option<Decimal>,
+
+    /// Interest rate strategy to calculate borrow_rate and liquidity_rate
+    pub interest_rate_model_params: Option<InterestRateModelParams>,
+
+    /// If false cannot do any action (deposit/withdraw/borrow/repay/liquidate)
+    pub active: Option<bool>,
+    /// If false cannot deposit
+    pub deposit_enabled: Option<bool>,
+    /// If false cannot borrow
+    pub borrow_enabled: Option<bool>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
     /// Market configuration
     pub config: CreateOrUpdateConfig,
@@ -100,39 +133,14 @@ pub enum ExecuteMsg {
         /// The address of the borrower getting liquidated
         user_address: String,
     },
-}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CreateOrUpdateConfig {
-    pub owner: Option<String>,
-    pub address_provider_address: Option<String>,
-    pub close_factor: Option<Decimal>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitOrUpdateAssetParams {
-    /// Initial borrow rate
-    pub initial_borrow_rate: Option<Decimal>,
-
-    /// Portion of the borrow rate that is kept as protocol rewards
-    pub reserve_factor: Option<Decimal>,
-    /// Max uusd that can be borrowed per uusd of collateral when using the asset as collateral
-    pub max_loan_to_value: Option<Decimal>,
-    /// uusd amount in debt position per uusd of asset collateral that if surpassed makes the user's position liquidatable.
-    pub liquidation_threshold: Option<Decimal>,
-    /// Bonus amount of collateral liquidator get when repaying user's debt (Will get collateral
-    /// from user in an amount equal to debt repayed + bonus)
-    pub liquidation_bonus: Option<Decimal>,
-
-    /// Interest rate strategy to calculate borrow_rate and liquidity_rate
-    pub interest_rate_model_params: Option<InterestRateModelParams>,
-
-    /// If false cannot do any action (deposit/withdraw/borrow/repay/liquidate)
-    pub active: Option<bool>,
-    /// If false cannot deposit
-    pub deposit_enabled: Option<bool>,
-    /// If false cannot borrow
-    pub borrow_enabled: Option<bool>,
+    /// Update (enable / disable) asset as collateral for the caller
+    UpdateAssetCollateralStatus {
+        /// Asset to update status for
+        denom: String,
+        /// Option to enable (true) / disable (false) asset as collateral
+        enable: bool,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -159,23 +167,23 @@ pub enum QueryMsg {
         denom: String,
     },
 
-    /// Get all debt positions for a user. Returns Vec<CoinScaled>
+    /// Get all debt positions for a user. Returns Vec<DebtResponse>
     UserDebt {
         user_address: String,
     },
 
-    /// Get user debt position for a specific asset. Returns CoinScaled
+    /// Get user debt position for a specific asset. Returns DebtResponse
     UserAssetDebt {
         user_address: String,
         denom: String,
     },
 
-    /// Get all collateral positions for a user. Returns Vec<CoinScaled>
+    /// Get all collateral positions for a user. Returns Vec<CollateralResponse>
     UserCollateral {
         user_address: String,
     },
 
-    /// Get user collateral positions for a specific asset. Returns CoinScaled
+    /// Get user collateral positions for a specific asset. Returns CollateralResponse
     UserAssetCollateral {
         user_address: String,
         denom: String,

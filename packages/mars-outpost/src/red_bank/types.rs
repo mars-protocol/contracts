@@ -139,14 +139,49 @@ pub enum MarketError {
     },
 }
 
-/// Debt for each asset and user
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+pub struct Collateral {
+    /// Scaled collateral amount
+    pub amount_scaled: Uint128,
+    /// Whether this collateral is active
+    ///
+    /// Active collaterals count towards the user's health factor, but is susceptible to
+    /// liquidations. On the other hand, inactive collaterals cannot be liquidated, but they don't
+    /// add to the user's health factor.
+    ///
+    /// When making a new fresh deposit, this is set to `true` be default. The user can optionally
+    /// invoke the `update_asset_collateral_status` to configure this setting.
+    pub enabled: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct Debt {
     /// Scaled debt amount
     pub amount_scaled: Uint128,
-
     /// Marker for uncollateralized debt
     pub uncollateralized: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct CollateralResponse {
+    /// Asset denom
+    pub denom: String,
+    /// Scaled amount stored in contract state
+    pub amount_scaled: Uint128,
+    /// Underlying asset amount that is actually owed at the current block
+    pub amount: Uint128,
+    /// Whether this collateral is enabled
+    pub enabled: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct DebtResponse {
+    /// Asset denom
+    pub denom: String,
+    /// Scaled amount stored in contract state
+    pub amount_scaled: Uint128,
+    /// Underlying asset amount that is actually owed at the current block
+    pub amount: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -154,16 +189,6 @@ pub struct Debt {
 pub enum UserHealthStatus {
     NotBorrowing,
     Borrowing(Decimal),
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CoinScaled {
-    /// Asset denom
-    pub denom: String,
-    /// Scaled amount stored in contract state
-    pub amount_scaled: Uint128,
-    /// Underlying asset amount that is actually owed at the current block
-    pub amount: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

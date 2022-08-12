@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use cosmwasm_std::{Addr, Decimal, Deps, Order, StdResult, Uint128};
 
@@ -23,7 +23,7 @@ pub struct UserPosition {
 impl UserPosition {
     /// Gets asset price used to build the position for a given reference
     pub fn get_asset_price(&self, denom: &str) -> Result<Decimal, ContractError> {
-        self.prices.get(denom).map(|p| *p).ok_or_else(|| ContractError::PriceNotFound {
+        self.prices.get(denom).copied().ok_or_else(|| ContractError::PriceNotFound {
             denom: denom.to_string(),
         })
     }
@@ -97,6 +97,7 @@ pub fn get_user_position(
     Ok(user_position)
 }
 
+#[derive(Default)]
 pub struct UserAssetPosition {
     pub collateral_amount: Uint128,
     pub debt_amount: Uint128,
@@ -104,13 +105,6 @@ pub struct UserAssetPosition {
     pub max_ltv: Decimal,
     pub liquidation_threshold: Decimal,
     pub asset_price: Decimal,
-}
-
-#[derive(Default)]
-struct UserAssetPositionScaled {
-    collateral_amount_scaled: Uint128,
-    debt_amount_scaled: Uint128,
-    uncollateralized_debt: bool,
 }
 
 /// Goes through assets user has a position in and returns a HashMap mapping the asset denoms to the
@@ -121,63 +115,54 @@ fn get_user_asset_positions(
     oracle_address: &Addr,
     block_time: u64,
 ) -> StdResult<HashMap<String, UserAssetPosition>> {
-    // first, we iterate COLLATERALS and DEBTS maps, and collect the scaled amounts into a hashmap
-    // indexed by the asset's denom
-    let mut positions_scaled = HashMap::new();
+    // Firstly, find all denoms that the user has a collateral or debt position in.
+    // Collect them into a hashset so there are no dups.
+    let collateral_denoms = COLLATERALS
+        .prefix(user_address)
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<StdResult<HashSet<_>>>()?;
+    let debt_denoms = DEBTS
+        .prefix(user_address)
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<StdResult<HashSet<_>>>()?;
 
-    COLLATERALS
-        .prefix(&user_address)
-        .range(deps.storage, None, None, Order::Ascending)
-        .try_for_each(|item| -> StdResult<_> {
-            let (denom, amount_scaled) = item?;
+    let mut denoms = HashSet::new();
+    denoms.extend(collateral_denoms);
+    denoms.extend(debt_denoms);
 
-            let ps = positions_scaled.entry(denom).or_insert_with(UserAssetPositionScaled::default);
-            ps.collateral_amount_scaled = amount_scaled;
-
-            Ok(())
-        })?;
-
-    DEBTS.prefix(&user_address).range(deps.storage, None, None, Order::Ascending).try_for_each(
-        |item| -> StdResult<_> {
-            let (denom, debt) = item?;
-
-            let ps = positions_scaled.entry(denom).or_insert_with(UserAssetPositionScaled::default);
-            ps.debt_amount_scaled = debt.amount_scaled;
-            ps.uncollateralized_debt = debt.uncollateralized;
-
-            Ok(())
-        },
-    )?;
-
-    // then, we enumerate all denoms, compute the underlying amounts, and query the prices. finally,
-    // collect the results into another hashmap indexed by the denoms
-    positions_scaled
+    // Then, enumerate all denoms, compute the underlying amounts, and query the prices.
+    //
+    // Finally, collect the results into a hashmap indexed by the denoms.
+    //
+    // NOTE: a collateral asset is only included if its collateral status is set to "active".
+    denoms
         .into_iter()
-        .map(|(denom, ps)| {
+        .map(|denom| {
+            let mut p = UserAssetPosition::default();
+
             let market = MARKETS.load(deps.storage, &denom)?;
+            p.max_ltv = market.max_loan_to_value;
+            p.liquidation_threshold = market.liquidation_threshold;
 
-            let collateral_amount = if ps.collateral_amount_scaled.is_zero() {
-                Uint128::zero()
-            } else {
-                get_underlying_liquidity_amount(ps.collateral_amount_scaled, &market, block_time)?
-            };
+            if let Some(collateral) = COLLATERALS.may_load(deps.storage, (user_address, &denom))? {
+                if collateral.enabled && !collateral.amount_scaled.is_zero() {
+                    p.collateral_amount = get_underlying_liquidity_amount(
+                        collateral.amount_scaled,
+                        &market,
+                        block_time,
+                    )?;
+                }
+            }
 
-            let debt_amount = if ps.debt_amount_scaled.is_zero() {
-                Uint128::zero()
-            } else {
-                get_underlying_debt_amount(ps.debt_amount_scaled, &market, block_time)?
-            };
+            if let Some(debt) = DEBTS.may_load(deps.storage, (user_address, &denom))? {
+                if !debt.amount_scaled.is_zero() {
+                    p.debt_amount =
+                        get_underlying_debt_amount(debt.amount_scaled, &market, block_time)?;
+                    p.uncollateralized_debt = debt.uncollateralized;
+                }
+            }
 
-            let asset_price = oracle::helpers::query_price(&deps.querier, oracle_address, &denom)?;
-
-            let p = UserAssetPosition {
-                collateral_amount,
-                debt_amount,
-                uncollateralized_debt: ps.uncollateralized_debt,
-                max_ltv: market.max_loan_to_value,
-                liquidation_threshold: market.liquidation_threshold,
-                asset_price,
-            };
+            p.asset_price = oracle::helpers::query_price(&deps.querier, oracle_address, &denom)?;
 
             Ok((denom, p))
         })

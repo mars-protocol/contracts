@@ -1,8 +1,6 @@
 use std::str;
 
-use cosmwasm_std::{
-    Addr, Decimal, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult, Uint128,
-};
+use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Order, Response, StdResult, Uint128};
 
 use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
@@ -15,12 +13,15 @@ use mars_outpost::red_bank::{
 
 use crate::accounts::get_user_position;
 use crate::error::ContractError;
-use crate::events::{build_collateral_position_changed_event, build_debt_position_changed_event};
+use crate::events::build_collateral_position_changed_event;
 use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
     get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
 };
-use crate::state::{COLLATERALS, CONFIG, DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
+use crate::state::{
+    deduct_collateral, deduct_debt, increment_collateral, increment_debt, COLLATERALS, CONFIG,
+    DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS,
+};
 
 pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, ContractError> {
     // Destructuring a struct’s fields into separate variables in order to force
@@ -296,8 +297,10 @@ pub fn update_uncollateralized_loan_limit(
     let current_uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
         .may_load(deps.storage, (&user_address, &denom))?
         .unwrap_or_else(Uint128::zero);
-    let current_collateral_amount_scaled =
-        COLLATERALS.may_load(deps.storage, (&user_address, &denom))?.unwrap_or_else(Uint128::zero);
+    let current_collateral_amount_scaled = COLLATERALS
+        .may_load(deps.storage, (&user_address, &denom))?
+        .map(|collateral| collateral.amount_scaled)
+        .unwrap_or_else(Uint128::zero);
     if current_uncollateralized_loan_limit.is_zero() && !current_collateral_amount_scaled.is_zero()
     {
         return Err(ContractError::UserHasCollateralizedDebt {});
@@ -360,26 +363,20 @@ pub fn deposit(
         });
     }
 
+    // Update the depositor's collateral position
     let mut events = vec![];
-
-    let mint_amount =
+    let deposit_amount_scaled =
         get_scaled_liquidity_amount(deposit_amount, &market, env.block.time.seconds())?;
+    increment_collateral(
+        deps.storage,
+        &user_address,
+        &denom,
+        deposit_amount_scaled,
+        true,
+        Some(&mut events),
+    )?;
 
-    COLLATERALS.update(deps.storage, (&user_address, &denom), |amount_scaled| {
-        let amount_scaled = amount_scaled.unwrap_or_else(Uint128::zero);
-
-        if amount_scaled.is_zero() {
-            events.push(build_collateral_position_changed_event(
-                &denom,
-                true,
-                user_address.to_string(),
-            ));
-        }
-
-        amount_scaled.checked_add(mint_amount).map_err(StdError::overflow)
-    })?;
-
-    // update market: total collateral amount, indexes, and interest rates
+    // Update market: total collateral amount, indexes, and interest rates
     let config = CONFIG.load(deps.storage)?;
     let protocol_rewards_collector_address = address_provider::helpers::query_address(
         deps.as_ref(),
@@ -393,7 +390,7 @@ pub fn deposit(
         &mut market,
     )?;
     update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, &mut events)?;
-    market.collateral_total_scaled += mint_amount;
+    market.collateral_total_scaled += deposit_amount_scaled;
     MARKETS.save(deps.storage, &denom, &market)?;
 
     if market.liquidity_index.is_zero() {
@@ -406,7 +403,8 @@ pub fn deposit(
         .add_attribute("denom", denom)
         .add_attribute("sender", sender_address)
         .add_attribute("user", user_address.as_str())
-        .add_attribute("amount", deposit_amount))
+        .add_attribute("amount", deposit_amount)
+        .add_attribute("amount_scaled", deposit_amount_scaled))
 }
 
 /// Burns sent maAsset in exchange of underlying asset
@@ -430,6 +428,7 @@ pub fn withdraw(
 
     let withdrawer_balance_scaled_before = COLLATERALS
         .may_load(deps.storage, (&withdrawer_addr, &denom))?
+        .map(|collateral| collateral.amount_scaled)
         .unwrap_or_else(Uint128::zero);
     let withdrawer_balance_before = get_underlying_liquidity_amount(
         withdrawer_balance_scaled_before,
@@ -510,24 +509,15 @@ pub fn withdraw(
     let withdrawer_balance_after = withdrawer_balance_before.checked_sub(withdraw_amount)?;
     let withdrawer_balance_scaled_after =
         get_scaled_liquidity_amount(withdrawer_balance_after, &market, env.block.time.seconds())?;
-
-    let burn_amount =
+    let withdraw_amount_scaled =
         withdrawer_balance_scaled_before.checked_sub(withdrawer_balance_scaled_after)?;
-
-    if withdrawer_balance_scaled_after.is_zero() {
-        COLLATERALS.remove(deps.storage, (&withdrawer_addr, &denom));
-        events.push(build_collateral_position_changed_event(
-            &denom,
-            false,
-            withdrawer_addr.to_string(),
-        ));
-    } else {
-        COLLATERALS.save(
-            deps.storage,
-            (&withdrawer_addr, &denom),
-            &withdrawer_balance_scaled_after,
-        )?;
-    }
+    deduct_collateral(
+        deps.storage,
+        &withdrawer_addr,
+        &denom,
+        withdraw_amount_scaled,
+        Some(&mut events),
+    )?;
 
     // update market: total collateral amount, indexes, and interest rates
     apply_accumulated_interests(
@@ -537,7 +527,7 @@ pub fn withdraw(
         &mut market,
     )?;
     update_interest_rates(&deps, &env, &mut market, withdraw_amount, &denom, &mut events)?;
-    market.collateral_total_scaled -= burn_amount;
+    market.collateral_total_scaled -= withdraw_amount_scaled;
     MARKETS.save(deps.storage, &denom, &market)?;
 
     // send underlying asset to user or another recipient
@@ -554,8 +544,8 @@ pub fn withdraw(
         .add_attribute("denom", denom)
         .add_attribute("user", withdrawer_addr.as_str())
         .add_attribute("recipient", recipient_address.as_str())
-        .add_attribute("burn_amount", burn_amount)
-        .add_attribute("withdraw_amount", withdraw_amount))
+        .add_attribute("amount", withdraw_amount)
+        .add_attribute("amount_scaled", withdraw_amount_scaled))
 }
 
 /// Add debt for the borrower and send the borrowed funds
@@ -605,8 +595,8 @@ pub fn borrow(
     let oracle_address = &addresses[&MarsContract::Oracle];
 
     // Check if user can borrow specified amount
-    let mut uncollateralized_debt = false;
-    if uncollateralized_loan_limit.is_zero() {
+    let uncollateralized = !uncollateralized_loan_limit.is_zero();
+    if uncollateralized {
         // Collateralized loan: check max ltv is not exceeded
         let user_position = get_user_position(
             deps.as_ref(),
@@ -629,14 +619,13 @@ pub fn borrow(
         if total_debt_in_base_asset_after_borrow > user_position.max_debt_in_base_asset {
             return Err(ContractError::BorrowAmountExceedsGivenCollateral {});
         }
-    } else {
-        // Uncollateralized loan: check borrow amount plus debt does not exceed uncollateralized loan limit
-        uncollateralized_debt = true;
-
+    }
+    // Uncollateralized loan: check borrow amount plus debt does not exceed uncollateralized loan limit
+    {
         let borrower_debt =
             DEBTS.may_load(deps.storage, (&borrower_address, &denom))?.unwrap_or(Debt {
                 amount_scaled: Uint128::zero(),
-                uncollateralized: uncollateralized_debt,
+                uncollateralized,
             });
 
         let asset_market = MARKETS.load(deps.storage, &denom)?;
@@ -661,29 +650,20 @@ pub fn borrow(
         &mut borrow_market,
     )?;
 
-    // Set new debt
+    // Update user debt position
     let borrow_amount_scaled =
         get_scaled_debt_amount(borrow_amount, &borrow_market, env.block.time.seconds())?;
-    DEBTS.update(deps.storage, (&borrower_address, &denom), |debt| -> StdResult<_> {
-        let mut debt = debt.unwrap_or(Debt {
-            amount_scaled: Uint128::zero(),
-            uncollateralized: uncollateralized_debt,
-        });
+    increment_debt(
+        deps.storage,
+        &borrower_address,
+        &denom,
+        borrow_amount_scaled,
+        uncollateralized,
+        Some(&mut events),
+    )?;
 
-        if debt.amount_scaled.is_zero() {
-            events.push(build_debt_position_changed_event(
-                &denom,
-                true,
-                borrower_address.to_string(),
-            ));
-        }
-
-        debt.amount_scaled = debt.amount_scaled.checked_add(borrow_amount_scaled)?;
-        Ok(debt)
-    })?;
-
+    // Update market
     borrow_market.debt_total_scaled += borrow_amount_scaled;
-
     update_interest_rates(&deps, &env, &mut borrow_market, borrow_amount, &denom, &mut events)?;
     MARKETS.save(deps.storage, &denom, &borrow_market)?;
 
@@ -743,7 +723,7 @@ pub fn repay(
     }
 
     // Check new debt
-    let mut debt = DEBTS
+    let debt = DEBTS
         .may_load(deps.storage, (&user_address, &denom))?
         .ok_or(ContractError::CannotRepayZeroDebt {})?;
 
@@ -779,21 +759,15 @@ pub fn repay(
         debt_amount_after = debt_amount_before - repay_amount;
     }
 
+    // Update the user's debt position
     let debt_amount_scaled_after =
         get_scaled_debt_amount(debt_amount_after, &market, env.block.time.seconds())?;
-    debt.amount_scaled = debt_amount_scaled_after;
-    if debt.amount_scaled.is_zero() {
-        DEBTS.remove(deps.storage, (&user_address, &denom));
-        events.push(build_debt_position_changed_event(&denom, false, user_address.to_string()));
-    } else {
-        DEBTS.save(deps.storage, (&user_address, &denom), &debt)?;
-    }
-
     let debt_amount_scaled_delta =
         debt_amount_scaled_before.checked_sub(debt_amount_scaled_after)?;
+    deduct_debt(deps.storage, &user_address, &denom, debt_amount_scaled_delta, Some(&mut events))?;
 
+    // Update market
     market.debt_total_scaled = market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
-
     update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, &mut events)?;
     MARKETS.save(deps.storage, &denom, &market)?;
 
@@ -839,14 +813,18 @@ pub fn liquidate(
         });
     }
 
-    // check if user has available collateral in specified collateral asset to be liquidated
-    let user_collateral_balance_scaled = COLLATERALS
+    // check if user has collateral in the specified denom available to be liquidated
+    let user_collateral = COLLATERALS
         .may_load(deps.storage, (&user_address, &collateral_denom))?
-        .ok_or_else(|| ContractError::CannotLiquidateWhenCollateralUnset {
-            denom: collateral_denom.clone(),
-        })?;
+        .ok_or(ContractError::CannotLiquidateWhenNoCollateralBalance {})?;
+    if !user_collateral.enabled {
+        return Err(ContractError::CannotLiquidateWhenCollateralUnset {
+            denom: collateral_denom,
+        });
+    }
+
     let user_collateral_balance = get_underlying_liquidity_amount(
-        user_collateral_balance_scaled,
+        user_collateral.amount_scaled,
         &collateral_market,
         block_time,
     )?;
@@ -855,10 +833,9 @@ pub fn liquidate(
     }
 
     // check if user has outstanding debt in the deposited asset that needs to be repayed
-    let mut user_debt = DEBTS.load(deps.storage, (&user_address, &debt_denom))?;
-    if user_debt.amount_scaled.is_zero() {
-        return Err(ContractError::CannotLiquidateWhenNoDebtBalance {});
-    }
+    let user_debt = DEBTS
+        .may_load(deps.storage, (&user_address, &debt_denom))?
+        .ok_or(ContractError::CannotLiquidateWhenNoDebtBalance {})?;
 
     // 2. Compute health factor
     let config = CONFIG.load(deps.storage)?;
@@ -925,21 +902,20 @@ pub fn liquidate(
         &collateral_market,
         block_time,
     )?;
-    COLLATERALS.update(deps.storage, (&user_address, &collateral_denom), |amount_scaled| {
-        amount_scaled
-            .unwrap_or_else(Uint128::zero)
-            .checked_add(collateral_amount_to_liquidate_scaled)
-            .map_err(StdError::overflow)
-    })?;
-    COLLATERALS.update(
+    deduct_collateral(
         deps.storage,
-        (&liquidator_address, &collateral_denom),
-        |amount_scaled| {
-            amount_scaled
-                .unwrap_or_else(Uint128::zero)
-                .checked_add(collateral_amount_to_liquidate_scaled)
-                .map_err(StdError::overflow)
-        },
+        &user_address,
+        &collateral_denom,
+        collateral_amount_to_liquidate_scaled,
+        None,
+    )?;
+    increment_collateral(
+        deps.storage,
+        &liquidator_address,
+        &collateral_denom,
+        collateral_amount_to_liquidate_scaled,
+        true,
+        None,
     )?;
 
     // 5. Compute and update user new debt
@@ -950,22 +926,14 @@ pub fn liquidate(
         &debt_market,
         env.block.time.seconds(),
     )?;
-
-    // Compute delta so it can be substracted to total debt
     let debt_amount_scaled_delta =
         user_debt.amount_scaled.checked_sub(user_debt_asset_debt_amount_scaled_after)?;
-
-    user_debt.amount_scaled = user_debt_asset_debt_amount_scaled_after;
-
-    DEBTS.save(deps.storage, (&user_address, &debt_denom), &user_debt)?;
-
-    let debt_market_debt_total_scaled_after =
-        debt_market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
+    deduct_debt(deps.storage, &user_address, &debt_denom, debt_amount_scaled_delta, None)?;
 
     // 6. Update markets depending on whether the collateral and debt markets are the same
-    // and whether the liquidator receives ma_tokens (no change in liquidity) or underlying asset
-    // (changes liquidity)
     let mut events = vec![];
+    let debt_market_debt_total_scaled_after =
+        debt_market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
     if collateral_and_debt_are_the_same_asset {
         // NOTE: for the sake of clarity copy attributes from collateral market and
         // give generic naming. Debt market could have been used as well
@@ -1083,4 +1051,71 @@ fn liquidation_compute_amounts(
     let refund_amount = sent_debt_asset_amount - debt_amount_to_repay;
 
     Ok((debt_amount_to_repay, collateral_amount_to_liquidate, refund_amount))
+}
+
+pub fn update_asset_collateral_status(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    denom: String,
+    enable: bool,
+) -> Result<Response, ContractError> {
+    let user_address = info.sender;
+
+    let mut events = vec![];
+
+    let mut collateral =
+        COLLATERALS.may_load(deps.storage, (&user_address, &denom))?.ok_or_else(|| {
+            ContractError::UserNoCollateralBalance {
+                user_address: user_address.to_string(),
+                denom: denom.clone(),
+            }
+        })?;
+
+    if !collateral.enabled && enable {
+        collateral.enabled = true;
+        COLLATERALS.save(deps.storage, (&user_address, &denom), &collateral)?;
+        events.push(build_collateral_position_changed_event(
+            &denom,
+            true,
+            user_address.to_string(),
+        ));
+    }
+
+    if collateral.enabled && !enable {
+        collateral.enabled = false;
+        COLLATERALS.save(deps.storage, (&user_address, &denom), &collateral)?;
+        events.push(build_collateral_position_changed_event(
+            &denom,
+            false,
+            user_address.to_string(),
+        ));
+
+        // check health factor after disabling collateral
+        let config = CONFIG.load(deps.storage)?;
+        let oracle_address = address_provider::helpers::query_address(
+            deps.as_ref(),
+            &config.address_provider_address,
+            MarsContract::Oracle,
+        )?;
+        let user_position = get_user_position(
+            deps.as_ref(),
+            env.block.time.seconds(),
+            &user_address,
+            &oracle_address,
+        )?;
+        // if health factor is less than one after disabling collateral we can't process further
+        if let UserHealthStatus::Borrowing(health_factor) = user_position.health_status {
+            if health_factor < Decimal::one() {
+                return Err(ContractError::InvalidHealthFactorAfterDisablingCollateral {});
+            }
+        }
+    }
+
+    Ok(Response::new()
+        .add_events(events)
+        .add_attribute("action", "update_asset_collateral_status")
+        .add_attribute("user", user_address.as_str())
+        .add_attribute("denom", denom)
+        .add_attribute("enabled", enable.to_string()))
 }

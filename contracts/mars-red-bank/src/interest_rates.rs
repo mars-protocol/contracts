@@ -7,7 +7,7 @@ use mars_outpost::red_bank::{update_market_interest_rates_with_model, Market};
 
 use crate::error::ContractError;
 use crate::events::build_interests_updated_event;
-use crate::state::COLLATERALS;
+use crate::state::increment_collateral;
 
 /// Scaling factor used to keep more precision during division / multiplication by index.
 pub const SCALING_FACTOR: Uint128 = Uint128::new(1_000_000);
@@ -82,20 +82,18 @@ pub fn apply_accumulated_interests(
     let accrued_protocol_rewards = borrow_interest_accrued * market.reserve_factor;
 
     if accrued_protocol_rewards > Uint128::zero() {
-        let mint_amount = compute_scaled_amount(
+        let accrued_protocol_rewards_scaled = compute_scaled_amount(
             accrued_protocol_rewards,
             market.liquidity_index,
             ScalingOperation::Truncate,
         )?;
-        COLLATERALS.update(
+        increment_collateral(
             storage,
-            (protocol_rewards_collector_address, &market.denom),
-            |amount_scaled| {
-                amount_scaled
-                    .unwrap_or_else(Uint128::zero)
-                    .checked_add(mint_amount)
-                    .map_err(StdError::overflow)
-            },
+            protocol_rewards_collector_address,
+            &market.denom,
+            accrued_protocol_rewards_scaled,
+            false,
+            None,
         )?;
     }
 
@@ -224,7 +222,9 @@ pub fn compute_underlying_amount(
 
     // Descale by SCALING_FACTOR which is introduced when scaling the amount
     match scaling_operation {
-        ScalingOperation::Truncate => Ok(before_scaling_factor.checked_div(SCALING_FACTOR)?),
+        ScalingOperation::Truncate => {
+            before_scaling_factor.checked_div(SCALING_FACTOR).map_err(StdError::divide_by_zero)
+        }
         ScalingOperation::Ceil => {
             math::uint128_checked_div_with_ceil(before_scaling_factor, SCALING_FACTOR)
         }

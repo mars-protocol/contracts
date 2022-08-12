@@ -3,7 +3,9 @@ use cw_storage_plus::Bound;
 
 use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
-use mars_outpost::red_bank::{CoinScaled, Config, Market, UserPositionResponse};
+use mars_outpost::red_bank::{
+    CollateralResponse, Config, DebtResponse, Market, UserPositionResponse,
+};
 
 use crate::accounts::get_user_position;
 use crate::interest_rates::{
@@ -43,7 +45,7 @@ pub fn query_markets(
         .collect()
 }
 
-pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<Vec<CoinScaled>> {
+pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<Vec<DebtResponse>> {
     DEBTS
         .prefix(&user_address)
         .range(deps.storage, None, None, Order::Ascending)
@@ -55,7 +57,7 @@ pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<Ve
             let amount =
                 get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
 
-            Ok(CoinScaled {
+            Ok(DebtResponse {
                 denom,
                 amount_scaled,
                 amount,
@@ -69,7 +71,7 @@ pub fn query_user_asset_debt(
     env: Env,
     user_address: Addr,
     denom: String,
-) -> StdResult<CoinScaled> {
+) -> StdResult<DebtResponse> {
     let market = MARKETS.load(deps.storage, &denom)?;
 
     let amount_scaled = DEBTS
@@ -79,7 +81,7 @@ pub fn query_user_asset_debt(
 
     let amount = get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
 
-    Ok(CoinScaled {
+    Ok(DebtResponse {
         denom,
         amount_scaled,
         amount,
@@ -90,21 +92,26 @@ pub fn query_user_collateral(
     deps: Deps,
     env: Env,
     user_address: Addr,
-) -> StdResult<Vec<CoinScaled>> {
+) -> StdResult<Vec<CollateralResponse>> {
     COLLATERALS
         .prefix(&user_address)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|item| {
-            let (denom, amount_scaled) = item?;
+            let (denom, collateral) = item?;
 
             let market = MARKETS.load(deps.storage, &denom)?;
-            let amount =
-                get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
 
-            Ok(CoinScaled {
+            let amount = get_underlying_debt_amount(
+                collateral.amount_scaled,
+                &market,
+                env.block.time.seconds(),
+            )?;
+
+            Ok(CollateralResponse {
                 denom,
-                amount_scaled,
+                amount_scaled: collateral.amount_scaled,
                 amount,
+                enabled: collateral.enabled,
             })
         })
         .collect()
@@ -115,18 +122,23 @@ pub fn query_user_asset_collateral(
     env: Env,
     user_address: Addr,
     denom: String,
-) -> StdResult<CoinScaled> {
+) -> StdResult<CollateralResponse> {
     let market = MARKETS.load(deps.storage, &denom)?;
 
-    let amount_scaled =
-        COLLATERALS.may_load(deps.storage, (&user_address, &denom))?.unwrap_or_else(Uint128::zero);
+    let collateral =
+        COLLATERALS.may_load(deps.storage, (&user_address, &denom))?.unwrap_or_default();
 
-    let amount = get_underlying_liquidity_amount(amount_scaled, &market, env.block.time.seconds())?;
+    let amount = get_underlying_liquidity_amount(
+        collateral.amount_scaled,
+        &market,
+        env.block.time.seconds(),
+    )?;
 
-    Ok(CoinScaled {
+    Ok(CollateralResponse {
         denom,
-        amount_scaled,
+        amount_scaled: collateral.amount_scaled,
         amount,
+        enabled: collateral.enabled,
     })
 }
 
