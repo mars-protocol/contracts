@@ -14,8 +14,6 @@ pub struct Config {
     pub owner: Addr,
     /// Address provider returns addresses for all protocol contracts
     pub address_provider_address: Addr,
-    /// maToken code id used to instantiate new tokens
-    pub ma_token_code_id: u64,
     /// Maximum percentage of outstanding debt that can be covered by a liquidator
     pub close_factor: Decimal,
 }
@@ -27,22 +25,11 @@ impl Config {
     }
 }
 
-/// RedBank global state
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct GlobalState {
-    /// Market count
-    pub market_count: u32,
-}
-
 /// Asset markets
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Market {
-    /// Market index (Bit position on data)
-    pub index: u32,
     /// Denom of the asset
     pub denom: String,
-    /// maToken contract address
-    pub ma_token_address: Addr,
 
     /// Max base asset that can be borrowed per "base asset" collateral when using the asset as collateral
     pub max_loan_to_value: Decimal,
@@ -68,6 +55,8 @@ pub struct Market {
     /// Timestamp (seconds) where indexes and where last updated
     pub indexes_last_updated: u64,
 
+    /// Total collateral scaled for the market's currency
+    pub collateral_total_scaled: Uint128,
     /// Total debt scaled for the market's currency
     pub debt_total_scaled: Uint128,
 
@@ -118,9 +107,7 @@ impl Default for Market {
         };
 
         Market {
-            index: 0,
             denom: "".to_string(),
-            ma_token_address: crate::helpers::zero_address(),
             liquidity_index: Decimal::one(),
             borrow_index: Decimal::one(),
             borrow_rate: Default::default(),
@@ -128,6 +115,7 @@ impl Default for Market {
             max_loan_to_value: Default::default(),
             reserve_factor: Default::default(),
             indexes_last_updated: 0,
+            collateral_total_scaled: Default::default(),
             debt_total_scaled: Default::default(),
             liquidation_threshold: Decimal::one(),
             liquidation_bonus: Decimal::zero(),
@@ -151,26 +139,6 @@ pub enum MarketError {
     },
 }
 
-/// Data for individual users
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct User {
-    /// bits representing borrowed assets. 1 on the corresponding bit means asset is
-    /// being borrowed
-    pub borrowed_assets: Uint128,
-    /// bits representing collateral assets. 1 on the corresponding bit means asset is
-    /// being used as collateral
-    pub collateral_assets: Uint128,
-}
-
-impl Default for User {
-    fn default() -> Self {
-        User {
-            borrowed_assets: Uint128::zero(),
-            collateral_assets: Uint128::zero(),
-        }
-    }
-}
-
 /// Debt for each asset and user
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Debt {
@@ -188,42 +156,14 @@ pub enum UserHealthStatus {
     Borrowing(Decimal),
 }
 
-// We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ConfigResponse {
-    pub owner: Addr,
-    pub address_provider_address: Addr,
-    pub ma_token_code_id: u64,
-    pub market_count: u32,
-    pub close_factor: Decimal,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct UserDebtResponse {
-    pub debts: Vec<UserAssetDebtResponse>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct UserAssetDebtResponse {
+pub struct CoinScaled {
     /// Asset denom
     pub denom: String,
-    /// Scaled debt amount stored in contract state
+    /// Scaled amount stored in contract state
     pub amount_scaled: Uint128,
     /// Underlying asset amount that is actually owed at the current block
     pub amount: Uint128,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct UserCollateralResponse {
-    pub collateral: Vec<UserAssetCollateralResponse>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct UserAssetCollateralResponse {
-    /// Asset denom
-    pub denom: String,
-    /// Wether the user is using asset as collateral or not
-    pub enabled: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

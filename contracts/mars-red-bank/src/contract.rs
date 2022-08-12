@@ -1,10 +1,11 @@
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+};
+use cw_utils::must_pay;
 
 use mars_outpost::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::error::ContractError;
-use crate::helpers::get_denom_amount_from_coins;
 use crate::{execute, query};
 
 #[entry_point]
@@ -30,16 +31,12 @@ pub fn execute(
         } => execute::update_config(deps, env, info, config),
         ExecuteMsg::InitAsset {
             denom,
-            asset_params,
-            asset_symbol,
-        } => execute::init_asset(deps, env, info, denom, asset_params, asset_symbol),
-        ExecuteMsg::InitAssetTokenCallback {
-            denom,
-        } => execute::init_asset_token_callback(deps, env, info, denom),
+            params,
+        } => execute::init_asset(deps, env, info, denom, params),
         ExecuteMsg::UpdateAsset {
             denom,
-            asset_params,
-        } => execute::update_asset(deps, env, info, denom, asset_params),
+            params,
+        } => execute::update_asset(deps, env, info, denom, params),
         ExecuteMsg::UpdateUncollateralizedLoanLimit {
             user_address,
             denom,
@@ -54,7 +51,7 @@ pub fn execute(
             denom,
             on_behalf_of,
         } => {
-            let deposit_amount = get_denom_amount_from_coins(&info.funds, &denom)?;
+            let deposit_amount = must_pay(&info, &denom)?;
             let depositor_address = info.sender.clone();
             execute::deposit(
                 deps,
@@ -81,19 +78,17 @@ pub fn execute(
             on_behalf_of,
         } => {
             let repayer_address = info.sender.clone();
-            let repay_amount = get_denom_amount_from_coins(&info.funds, &denom)?;
-
+            let repay_amount = must_pay(&info, &denom)?;
             execute::repay(deps, env, info, repayer_address, on_behalf_of, denom, repay_amount)
         }
         ExecuteMsg::Liquidate {
             collateral_denom,
             debt_denom,
             user_address,
-            receive_ma_token,
         } => {
             let sender = info.sender.clone();
             let user_addr = deps.api.addr_validate(&user_address)?;
-            let sent_debt_asset_amount = get_denom_amount_from_coins(&info.funds, &debt_denom)?;
+            let sent_debt_asset_amount = must_pay(&info, &debt_denom)?;
             execute::liquidate(
                 deps,
                 env,
@@ -103,29 +98,8 @@ pub fn execute(
                 debt_denom,
                 user_addr,
                 sent_debt_asset_amount,
-                receive_ma_token,
             )
         }
-        ExecuteMsg::UpdateAssetCollateralStatus {
-            denom,
-            enable,
-        } => execute::update_asset_collateral_status(deps, env, info, denom, enable),
-        ExecuteMsg::FinalizeLiquidityTokenTransfer {
-            sender_address,
-            recipient_address,
-            sender_previous_balance,
-            recipient_previous_balance,
-            amount,
-        } => execute::finalize_liquidity_token_transfer(
-            deps,
-            env,
-            info,
-            sender_address,
-            recipient_address,
-            sender_previous_balance,
-            recipient_previous_balance,
-            amount,
-        ),
     }
 }
 
@@ -157,7 +131,14 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             user_address,
         } => {
             let address = deps.api.addr_validate(&user_address)?;
-            to_binary(&query::query_user_collateral(deps, address)?)
+            to_binary(&query::query_user_collateral(deps, env, address)?)
+        }
+        QueryMsg::UserAssetCollateral {
+            user_address,
+            denom,
+        } => {
+            let address = deps.api.addr_validate(&user_address)?;
+            to_binary(&query::query_user_asset_collateral(deps, env, address, denom)?)
         }
         QueryMsg::UncollateralizedLoanLimit {
             user_address,
@@ -175,14 +156,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             amount,
         } => to_binary(&query::query_scaled_debt_amount(deps, env, denom, amount)?),
         QueryMsg::UnderlyingLiquidityAmount {
-            ma_token_address,
+            denom,
             amount_scaled,
-        } => to_binary(&query::query_underlying_liquidity_amount(
-            deps,
-            env,
-            ma_token_address,
-            amount_scaled,
-        )?),
+        } => to_binary(&query::query_underlying_liquidity_amount(deps, env, denom, amount_scaled)?),
         QueryMsg::UnderlyingDebtAmount {
             denom,
             amount_scaled,

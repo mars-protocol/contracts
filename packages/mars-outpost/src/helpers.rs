@@ -1,35 +1,8 @@
-use cosmwasm_std::{
-    coins, to_binary, Addr, Api, BankMsg, CosmosMsg, Decimal, QuerierWrapper, QueryRequest,
-    StdError, StdResult, Uint128, WasmQuery,
-};
-
-use crate::error::MarsError;
-use cw20::{BalanceResponse, Cw20QueryMsg, TokenInfoResponse};
 use std::convert::TryInto;
 
-// CW20
-pub fn cw20_get_balance(
-    querier: &QuerierWrapper,
-    token_address: Addr,
-    balance_address: Addr,
-) -> StdResult<Uint128> {
-    let query: BalanceResponse = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-        contract_addr: token_address.into(),
-        msg: to_binary(&Cw20QueryMsg::Balance {
-            address: balance_address.into(),
-        })?,
-    }))?;
+use cosmwasm_std::{coins, Addr, Api, BankMsg, CosmosMsg, Decimal, StdError, StdResult, Uint128};
 
-    Ok(query.balance)
-}
-
-pub fn cw20_get_total_supply(querier: &QuerierWrapper, token_address: Addr) -> StdResult<Uint128> {
-    let res: TokenInfoResponse = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-        contract_addr: token_address.into(),
-        msg: to_binary(&Cw20QueryMsg::TokenInfo {})?,
-    }))?;
-    Ok(res.total_supply)
-}
+use crate::error::MarsError;
 
 pub fn build_send_asset_msg(recipient_addr: &Addr, denom: &str, amount: Uint128) -> CosmosMsg {
     CosmosMsg::Bank(BankMsg::Send {

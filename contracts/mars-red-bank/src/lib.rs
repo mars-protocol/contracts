@@ -2,7 +2,6 @@ mod accounts;
 pub mod error;
 mod events;
 pub mod execute;
-mod helpers;
 mod interest_rates;
 pub mod query;
 pub mod state;

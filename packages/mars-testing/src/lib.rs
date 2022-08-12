@@ -1,4 +1,3 @@
-mod cw20_querier;
 /// cosmwasm_std::testing overrides and custom test helpers
 mod helpers;
 mod incentives_querier;

@@ -1,16 +1,13 @@
 use std::str;
 
-use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, Response, StdError, StdResult, Uint128,
-    WasmMsg,
-};
-use cw20::Cw20ExecuteMsg;
+use cosmwasm_std::{Addr, Decimal, DepsMut, Env, Event, StdError, StdResult, Storage, Uint128};
 
 use mars_outpost::math;
 use mars_outpost::red_bank::{update_market_interest_rates_with_model, Market};
 
 use crate::error::ContractError;
 use crate::events::build_interests_updated_event;
+use crate::state::COLLATERALS;
 
 /// Scaling factor used to keep more precision during division / multiplication by index.
 pub const SCALING_FACTOR: Uint128 = Uint128::new(1_000_000);
@@ -19,20 +16,24 @@ const SECONDS_PER_YEAR: u64 = 31536000u64;
 
 /// Calculates accumulated interest for the time between last time market index was updated
 /// and current block.
+///
 /// Applies desired side effects:
+///
 /// 1. Updates market borrow and liquidity indices.
-/// 2. If there are any protocol rewards, builds a mint to the rewards collector and adds it
-///    to the returned response
+/// 2. If there are any protocol rewards, increments the reward collector contract's collateral
+///    scaled amount.
+///
 /// NOTE: it does not save the market to store
+///
 /// WARNING: For a given block, this function should be called before updating interest rates
 /// as it would apply the new interest rates instead of the ones that were valid during
 /// the period between indexes_last_updated and current_block
 pub fn apply_accumulated_interests(
+    storage: &mut dyn Storage,
     env: &Env,
     protocol_rewards_collector_address: &Addr,
     market: &mut Market,
-    mut response: Response,
-) -> StdResult<Response> {
+) -> StdResult<()> {
     let current_timestamp = env.block.time.seconds();
     let previous_borrow_index = market.borrow_index;
 
@@ -86,16 +87,19 @@ pub fn apply_accumulated_interests(
             market.liquidity_index,
             ScalingOperation::Truncate,
         )?;
-        response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: market.ma_token_address.clone().into(),
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
-                recipient: protocol_rewards_collector_address.into(),
-                amount: mint_amount,
-            })?,
-            funds: vec![],
-        }))
+        COLLATERALS.update(
+            storage,
+            (protocol_rewards_collector_address, &market.denom),
+            |amount_scaled| {
+                amount_scaled
+                    .unwrap_or_else(Uint128::zero)
+                    .checked_add(mint_amount)
+                    .map_err(StdError::overflow)
+            },
+        )?;
     }
-    Ok(response)
+
+    Ok(())
 }
 
 pub fn calculate_applied_linear_interest_rate(
@@ -284,8 +288,8 @@ pub fn update_interest_rates(
     market: &mut Market,
     liquidity_taken: Uint128,
     denom: &str,
-    mut response: Response,
-) -> Result<Response, ContractError> {
+    events: &mut Vec<Event>,
+) -> Result<(), ContractError> {
     // compute utilization rate
     let contract_current_balance = deps.querier.query_balance(&env.contract.address, denom)?.amount;
     if contract_current_balance < liquidity_taken {
@@ -303,8 +307,9 @@ pub fn update_interest_rates(
 
     update_market_interest_rates_with_model(env, market, current_utilization_rate)?;
 
-    response = response.add_event(build_interests_updated_event(denom, market));
-    Ok(response)
+    events.push(build_interests_updated_event(denom, market));
+
+    Ok(())
 }
 
 #[cfg(test)]

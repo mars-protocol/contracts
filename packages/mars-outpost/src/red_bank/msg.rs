@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Decimal, Uint128};
+use cosmwasm_std::{Decimal, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -24,18 +24,7 @@ pub enum ExecuteMsg {
         /// Asset related info
         denom: String,
         /// Asset parameters
-        asset_params: InitOrUpdateAssetParams,
-        /// Asset symbol to be used in maToken name and description. If non is provided,
-        /// denom will be used for native and token symbol will be used for cw20. Mostly
-        /// useful for native assets since it's denom (e.g.: uluna, uusd) does not match it's
-        /// user facing symbol (LUNA, UST) which should be used in maToken's attributes
-        /// for the sake of consistency
-        asset_symbol: Option<String>,
-    },
-
-    /// Callback sent from maToken contract after instantiated
-    InitAssetTokenCallback {
-        denom: String,
+        params: InitOrUpdateAssetParams,
     },
 
     /// Update an asset on the money market (only owner can call)
@@ -43,7 +32,7 @@ pub enum ExecuteMsg {
         /// Asset related info
         denom: String,
         /// Asset parameters
-        asset_params: InitOrUpdateAssetParams,
+        params: InitOrUpdateAssetParams,
     },
 
     /// Update uncollateralized loan limit for a given user and asset.
@@ -101,6 +90,10 @@ pub enum ExecuteMsg {
 
     /// Liquidate under-collateralized native loans. Coins used to repay must be sent in the
     /// transaction this call is made.
+    ///
+    /// NOTE: The liquidator receives collateral shares. If the liquidator wishes to receive the
+    /// underlying asset, they need to send a separate `ExecuteMsg::Withdraw` after the liquiation
+    /// is completed.
     Liquidate {
         /// Denom of the collateral asset, which liquidator gets from the borrower
         collateral_denom: String,
@@ -108,34 +101,6 @@ pub enum ExecuteMsg {
         debt_denom: String,
         /// The address of the borrower getting liquidated
         user_address: String,
-        /// Whether the liquidator gets liquidated collateral in maToken (true) or
-        /// the underlying collateral asset (false)
-        receive_ma_token: bool,
-    },
-
-    /// Update (enable / disable) asset as collateral for the caller
-    UpdateAssetCollateralStatus {
-        /// Asset to update status for
-        denom: String,
-        /// Option to enable (true) / disable (false) asset as collateral
-        enable: bool,
-    },
-
-    /// Called by liquidity token (maToken). Validate liquidity token transfer is valid
-    /// and update collateral status
-    FinalizeLiquidityTokenTransfer {
-        /// Token sender. Address is trusted because it should have been verified in
-        /// the token contract
-        sender_address: Addr,
-        /// Token recipient. Address is trusted because it should have been verified in
-        /// the token contract
-        recipient_address: Addr,
-        /// Sender's balance before the token transfer
-        sender_previous_balance: Uint128,
-        /// Recipient's balance before the token transfer
-        recipient_previous_balance: Uint128,
-        /// Transfer amount
-        amount: Uint128,
     },
 }
 
@@ -143,7 +108,6 @@ pub enum ExecuteMsg {
 pub struct CreateOrUpdateConfig {
     pub owner: Option<String>,
     pub address_provider_address: Option<String>,
-    pub ma_token_code_id: Option<u64>,
     pub close_factor: Option<Decimal>,
 }
 
@@ -197,21 +161,26 @@ pub enum QueryMsg {
         denom: String,
     },
 
-    /// Get all debt positions for a user. Returns UsetDebtResponse
+    /// Get all debt positions for a user. Returns Vec<CoinScaled>
     UserDebt {
         user_address: String,
     },
 
-    /// Get user debt position for a specific asset. Returns UserAssetDebtResponse
+    /// Get user debt position for a specific asset. Returns CoinScaled
     UserAssetDebt {
         user_address: String,
         denom: String,
     },
 
-    /// Get info about whether or not user is using each asset as collateral.
-    /// Returns UserCollateralResponse
+    /// Get all collateral positions for a user. Returns Vec<CoinScaled>
     UserCollateral {
         user_address: String,
+    },
+
+    /// Get user collateral positions for a specific asset. Returns CoinScaled
+    UserAssetCollateral {
+        user_address: String,
+        denom: String,
     },
 
     /// Get user position. Returns UserPositionResponse
@@ -233,9 +202,9 @@ pub enum QueryMsg {
         amount: Uint128,
     },
 
-    /// Get underlying asset amount for a given maToken balance.
+    /// Get underlying asset amount for a given denom.
     UnderlyingLiquidityAmount {
-        ma_token_address: String,
+        denom: String,
         amount_scaled: Uint128,
     },
 

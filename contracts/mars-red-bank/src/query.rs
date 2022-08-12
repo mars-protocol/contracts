@@ -3,36 +3,20 @@ use cw_storage_plus::Bound;
 
 use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
-use mars_outpost::red_bank::{
-    ConfigResponse, Market, UserAssetCollateralResponse, UserAssetDebtResponse,
-    UserCollateralResponse, UserDebtResponse, UserPositionResponse,
-};
+use mars_outpost::red_bank::{CoinScaled, Config, Market, UserPositionResponse};
 
 use crate::accounts::get_user_position;
-use crate::helpers::get_bit;
 use crate::interest_rates::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
     get_underlying_liquidity_amount,
 };
-use crate::state::{
-    CONFIG, DEBTS, GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_MA_TOKEN, UNCOLLATERALIZED_LOAN_LIMITS,
-    USERS,
-};
+use crate::state::{COLLATERALS, CONFIG, DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
 
 const DEFAULT_LIMIT: u32 = 5;
 const MAX_LIMIT: u32 = 10;
 
-pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
-    let config = CONFIG.load(deps.storage)?;
-    let money_market = GLOBAL_STATE.load(deps.storage)?;
-
-    Ok(ConfigResponse {
-        owner: config.owner,
-        address_provider_address: config.address_provider_address,
-        ma_token_code_id: config.ma_token_code_id,
-        market_count: money_market.market_count,
-        close_factor: config.close_factor,
-    })
+pub fn query_config(deps: Deps) -> StdResult<Config> {
+    CONFIG.load(deps.storage)
 }
 
 pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
@@ -59,36 +43,25 @@ pub fn query_markets(
         .collect()
 }
 
-pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<UserDebtResponse> {
-    let user = USERS.may_load(deps.storage, &user_address)?.unwrap_or_default();
-
-    let debts: StdResult<Vec<_>> = MARKETS
+pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<Vec<CoinScaled>> {
+    DEBTS
+        .prefix(&user_address)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|item| {
-            let (denom, market) = item?;
+            let (denom, debt) = item?;
 
-            let is_borrowing_asset = get_bit(user.borrowed_assets, market.index)?;
-            let (amount_scaled, amount) = if is_borrowing_asset {
-                let debt = DEBTS.load(deps.storage, (&denom, &user_address))?;
-                let amount_scaled = debt.amount_scaled;
-                let amount =
-                    get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
-                (amount_scaled, amount)
-            } else {
-                (Uint128::zero(), Uint128::zero())
-            };
+            let market = MARKETS.load(deps.storage, &denom)?;
+            let amount_scaled = debt.amount_scaled;
+            let amount =
+                get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
 
-            Ok(UserAssetDebtResponse {
+            Ok(CoinScaled {
                 denom,
                 amount_scaled,
                 amount,
             })
         })
-        .collect();
-
-    Ok(UserDebtResponse {
-        debts: debts?,
-    })
+        .collect()
 }
 
 pub fn query_user_asset_debt(
@@ -96,43 +69,64 @@ pub fn query_user_asset_debt(
     env: Env,
     user_address: Addr,
     denom: String,
-) -> StdResult<UserAssetDebtResponse> {
+) -> StdResult<CoinScaled> {
     let market = MARKETS.load(deps.storage, &denom)?;
 
-    let (amount_scaled, amount) = match DEBTS.may_load(deps.storage, (&denom, &user_address))? {
-        Some(debt) => {
-            let amount_scaled = debt.amount_scaled;
-            let amount =
-                get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
-            (amount_scaled, amount)
-        }
+    let amount_scaled = DEBTS
+        .may_load(deps.storage, (&user_address, &denom))?
+        .map(|debt| debt.amount_scaled)
+        .unwrap_or_else(Uint128::zero);
 
-        None => (Uint128::zero(), Uint128::zero()),
-    };
+    let amount = get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
 
-    Ok(UserAssetDebtResponse {
+    Ok(CoinScaled {
         denom,
         amount_scaled,
         amount,
     })
 }
 
-pub fn query_user_collateral(deps: Deps, address: Addr) -> StdResult<UserCollateralResponse> {
-    let user = USERS.may_load(deps.storage, &address)?.unwrap_or_default();
-
-    let collateral: StdResult<Vec<_>> = MARKETS
+pub fn query_user_collateral(
+    deps: Deps,
+    env: Env,
+    user_address: Addr,
+) -> StdResult<Vec<CoinScaled>> {
+    COLLATERALS
+        .prefix(&user_address)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|item| {
-            let (denom, market) = item?;
-            Ok(UserAssetCollateralResponse {
+            let (denom, amount_scaled) = item?;
+
+            let market = MARKETS.load(deps.storage, &denom)?;
+            let amount =
+                get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
+
+            Ok(CoinScaled {
                 denom,
-                enabled: get_bit(user.collateral_assets, market.index)?,
+                amount_scaled,
+                amount,
             })
         })
-        .collect();
+        .collect()
+}
 
-    Ok(UserCollateralResponse {
-        collateral: collateral?,
+pub fn query_user_asset_collateral(
+    deps: Deps,
+    env: Env,
+    user_address: Addr,
+    denom: String,
+) -> StdResult<CoinScaled> {
+    let market = MARKETS.load(deps.storage, &denom)?;
+
+    let amount_scaled =
+        COLLATERALS.may_load(deps.storage, (&user_address, &denom))?.unwrap_or_else(Uint128::zero);
+
+    let amount = get_underlying_liquidity_amount(amount_scaled, &market, env.block.time.seconds())?;
+
+    Ok(CoinScaled {
+        denom,
+        amount_scaled,
+        amount,
     })
 }
 
@@ -176,11 +170,9 @@ pub fn query_scaled_debt_amount(
 pub fn query_underlying_liquidity_amount(
     deps: Deps,
     env: Env,
-    ma_token_address: String,
+    denom: String,
     amount_scaled: Uint128,
 ) -> StdResult<Uint128> {
-    let ma_token_address = deps.api.addr_validate(&ma_token_address)?;
-    let denom = MARKET_DENOMS_BY_MA_TOKEN.load(deps.storage, &ma_token_address)?;
     let market = MARKETS.load(deps.storage, &denom)?;
     get_underlying_liquidity_amount(amount_scaled, &market, env.block.time.seconds())
 }
@@ -201,21 +193,13 @@ pub fn query_user_position(
     address: Addr,
 ) -> Result<UserPositionResponse, MarsError> {
     let config = CONFIG.load(deps.storage)?;
-    let global_state = GLOBAL_STATE.load(deps.storage)?;
-    let user = USERS.may_load(deps.storage, &address)?.unwrap_or_default();
     let oracle_address = address_provider::helpers::query_address(
         deps,
         &config.address_provider_address,
         MarsContract::Oracle,
     )?;
-    let user_position = get_user_position(
-        deps,
-        env.block.time.seconds(),
-        &address,
-        &oracle_address,
-        &user,
-        global_state.market_count,
-    )?;
+    let user_position =
+        get_user_position(deps, env.block.time.seconds(), &address, &oracle_address)?;
 
     Ok(UserPositionResponse {
         total_collateral_in_base_asset: user_position.total_collateral_in_base_asset,

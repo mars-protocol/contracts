@@ -4,22 +4,17 @@ use cosmwasm_std::{
     Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
     SystemResult, Uint128, WasmQuery,
 };
-use cw20::Cw20QueryMsg;
 use osmo_bindings::{OsmosisQuery, PoolStateResponse, SpotPriceResponse, Swap};
 
-use crate::mock_address_provider;
-use crate::osmosis_querier::OsmosisQuerier;
-use mars_outpost::{address_provider, incentives, ma_token, oracle};
+use mars_outpost::{address_provider, incentives, oracle};
 
-use super::{
-    cw20_querier::{mock_token_info_response, Cw20Querier},
-    incentives_querier::IncentivesQuerier,
-    oracle_querier::OracleQuerier,
-};
+use crate::incentives_querier::IncentivesQuerier;
+use crate::mock_address_provider;
+use crate::oracle_querier::OracleQuerier;
+use crate::osmosis_querier::OsmosisQuerier;
 
 pub struct MarsMockQuerier {
     base: MockQuerier<Empty>,
-    cw20_querier: Cw20Querier,
     oracle_querier: OracleQuerier,
     incentives_querier: IncentivesQuerier,
     osmosis_querier: OsmosisQuerier,
@@ -51,7 +46,6 @@ impl MarsMockQuerier {
     pub fn new(base: MockQuerier<Empty>) -> Self {
         MarsMockQuerier {
             base,
-            cw20_querier: Cw20Querier::default(),
             oracle_querier: OracleQuerier::default(),
             incentives_querier: IncentivesQuerier::default(),
             osmosis_querier: OsmosisQuerier::default(),
@@ -62,36 +56,6 @@ impl MarsMockQuerier {
     pub fn set_contract_balances(&mut self, contract_balances: &[Coin]) {
         let contract_addr = Addr::unchecked(MOCK_CONTRACT_ADDR);
         self.base.update_balance(contract_addr.to_string(), contract_balances.to_vec());
-    }
-
-    /// Set mock querier balances results for a given cw20 token
-    pub fn set_cw20_balances(&mut self, cw20_address: Addr, balances: &[(Addr, Uint128)]) {
-        self.cw20_querier.balances.insert(cw20_address, balances.iter().cloned().collect());
-    }
-
-    /// Set mock querier so that it returns a specific total supply on the token info query
-    /// for a given cw20 token (note this will override existing token info with default
-    /// values for the rest of the fields)
-    #[allow(clippy::or_fun_call)]
-    pub fn set_cw20_total_supply(&mut self, cw20_address: Addr, total_supply: Uint128) {
-        let token_info = self
-            .cw20_querier
-            .token_info_responses
-            .entry(cw20_address)
-            .or_insert(mock_token_info_response());
-
-        token_info.total_supply = total_supply;
-    }
-
-    #[allow(clippy::or_fun_call)]
-    pub fn set_cw20_symbol(&mut self, cw20_address: Addr, symbol: String) {
-        let token_info = self
-            .cw20_querier
-            .token_info_responses
-            .entry(cw20_address)
-            .or_insert(mock_token_info_response());
-
-        token_info.symbol = symbol;
     }
 
     pub fn set_oracle_price(&mut self, denom: &str, price: Decimal) {
@@ -123,18 +87,6 @@ impl MarsMockQuerier {
                 msg,
             }) => {
                 let contract_addr = Addr::unchecked(contract_addr);
-
-                // Cw20 Queries
-                let parse_cw20_query: StdResult<Cw20QueryMsg> = from_binary(msg);
-                if let Ok(cw20_query) = parse_cw20_query {
-                    return self.cw20_querier.handle_cw20_query(&contract_addr, cw20_query);
-                }
-
-                // MaToken Queries
-                let parse_ma_token_query: StdResult<ma_token::msg::QueryMsg> = from_binary(msg);
-                if let Ok(ma_token_query) = parse_ma_token_query {
-                    return self.cw20_querier.handle_ma_token_query(&contract_addr, ma_token_query);
-                }
 
                 // Address Provider Queries
                 let parse_address_provider_query: StdResult<address_provider::QueryMsg> =
