@@ -516,6 +516,11 @@ pub fn withdraw(
 
     if withdrawer_balance_scaled_after.is_zero() {
         COLLATERALS.remove(deps.storage, (&withdrawer_addr, &denom));
+        events.push(build_collateral_position_changed_event(
+            &denom,
+            false,
+            withdrawer_addr.to_string(),
+        ));
     } else {
         COLLATERALS.save(
             deps.storage,
