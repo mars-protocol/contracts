@@ -31,12 +31,12 @@ pub fn execute(
         } => execute::update_config(deps, env, info, config),
         ExecuteMsg::InitAsset {
             denom,
-            params,
-        } => execute::init_asset(deps, env, info, denom, params),
+            asset_params,
+        } => execute::init_asset(deps, env, info, denom, asset_params),
         ExecuteMsg::UpdateAsset {
             denom,
-            params,
-        } => execute::update_asset(deps, env, info, denom, params),
+            asset_params,
+        } => execute::update_asset(deps, env, info, denom, asset_params),
         ExecuteMsg::UpdateUncollateralizedLoanLimit {
             user_address,
             denom,

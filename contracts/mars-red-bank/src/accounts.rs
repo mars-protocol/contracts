@@ -17,16 +17,28 @@ pub struct UserPosition {
     pub max_debt_in_base_asset: Uint128,
     pub weighted_liquidation_threshold_in_base_asset: Uint128,
     pub health_status: UserHealthStatus,
-    pub prices: HashMap<String, Decimal>,
+    pub asset_positions: HashMap<String, UserAssetPosition>,
 }
 
 impl UserPosition {
     /// Gets asset price used to build the position for a given reference
     pub fn get_asset_price(&self, denom: &str) -> Result<Decimal, ContractError> {
-        self.prices.get(denom).copied().ok_or_else(|| ContractError::PriceNotFound {
-            denom: denom.to_string(),
+        self.asset_positions.get(denom).map(|ap| ap.asset_price).ok_or_else(|| {
+            ContractError::PriceNotFound {
+                denom: denom.to_string(),
+            }
         })
     }
+}
+
+#[derive(Default)]
+pub struct UserAssetPosition {
+    pub collateral_amount: Uint128,
+    pub debt_amount: Uint128,
+    pub uncollateralized_debt: bool,
+    pub max_ltv: Decimal,
+    pub liquidation_threshold: Decimal,
+    pub asset_price: Decimal,
 }
 
 /// Calculates the user data across the markets.
@@ -79,11 +91,6 @@ pub fn get_user_position(
         UserHealthStatus::Borrowing(health_factor)
     };
 
-    let prices = user_asset_positions
-        .into_iter()
-        .map(|(denom, position)| (denom, position.asset_price))
-        .collect();
-
     let user_position = UserPosition {
         total_collateral_in_base_asset,
         total_debt_in_base_asset,
@@ -91,20 +98,10 @@ pub fn get_user_position(
         max_debt_in_base_asset,
         weighted_liquidation_threshold_in_base_asset,
         health_status,
-        prices,
+        asset_positions: user_asset_positions,
     };
 
     Ok(user_position)
-}
-
-#[derive(Default)]
-pub struct UserAssetPosition {
-    pub collateral_amount: Uint128,
-    pub debt_amount: Uint128,
-    pub uncollateralized_debt: bool,
-    pub max_ltv: Decimal,
-    pub liquidation_threshold: Decimal,
-    pub asset_price: Decimal,
 }
 
 /// Goes through assets user has a position in and returns a HashMap mapping the asset denoms to the

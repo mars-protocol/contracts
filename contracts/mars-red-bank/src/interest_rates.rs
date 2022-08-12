@@ -222,9 +222,7 @@ pub fn compute_underlying_amount(
 
     // Descale by SCALING_FACTOR which is introduced when scaling the amount
     match scaling_operation {
-        ScalingOperation::Truncate => {
-            before_scaling_factor.checked_div(SCALING_FACTOR).map_err(StdError::divide_by_zero)
-        }
+        ScalingOperation::Truncate => Ok(before_scaling_factor.checked_div(SCALING_FACTOR)?),
         ScalingOperation::Ceil => {
             math::uint128_checked_div_with_ceil(before_scaling_factor, SCALING_FACTOR)
         }

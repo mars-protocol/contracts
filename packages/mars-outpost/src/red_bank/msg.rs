@@ -24,7 +24,7 @@ pub enum ExecuteMsg {
         /// Asset related info
         denom: String,
         /// Asset parameters
-        params: InitOrUpdateAssetParams,
+        asset_params: InitOrUpdateAssetParams,
     },
 
     /// Update an asset on the money market (only owner can call)
@@ -32,7 +32,7 @@ pub enum ExecuteMsg {
         /// Asset related info
         denom: String,
         /// Asset parameters
-        params: InitOrUpdateAssetParams,
+        asset_params: InitOrUpdateAssetParams,
     },
 
     /// Update uncollateralized loan limit for a given user and asset.
@@ -90,10 +90,6 @@ pub enum ExecuteMsg {
 
     /// Liquidate under-collateralized native loans. Coins used to repay must be sent in the
     /// transaction this call is made.
-    ///
-    /// NOTE: The liquidator receives collateral shares. If the liquidator wishes to receive the
-    /// underlying asset, they need to send a separate `ExecuteMsg::Withdraw` after the liquiation
-    /// is completed.
     Liquidate {
         /// Denom of the collateral asset, which liquidator gets from the borrower
         collateral_denom: String,
