@@ -160,46 +160,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw2"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04cf4639517490dd36b333bbd6c4fbd92e325fd0acf4683b41753bc5eb63bfc1"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "cw20"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cb782b8f110819a4eb5dbbcfed25ffba49ec16bbe32b4ad8da50a5ce68fec05"
-dependencies = [
- "cosmwasm-std",
- "cw-utils",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "cw20-base"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0306e606581f4fb45e82bcbb7f0333179ed53dd949c6523f01a99b4bfc1475a0"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "cw20",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "der"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -385,7 +345,6 @@ version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
- "cw20",
  "mars-outpost",
  "mars-testing",
  "schemars",
@@ -425,7 +384,6 @@ name = "mars-outpost"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "cw2",
  "mars-testing",
  "schemars",
  "serde",
@@ -480,14 +438,8 @@ name = "mars-testing"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "cw2",
- "cw20",
- "cw20-base",
  "mars-outpost",
  "osmo-bindings",
- "schemars",
- "serde",
- "thiserror",
 ]
 
 [[package]]

@@ -25,14 +25,6 @@ keywords = ["mars", "cosmwasm"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../mars-outpost" }
-
 cosmwasm-std = "1.0"
-cw2 = "0.13"
-cw20 = "0.13"
-cw20-base = { version = "0.13", features = ["library"] }
-schemars = "0.8.8"
-serde = { version = "1.0.137", default-features = false, features = ["derive"] }
-thiserror = "1.0.31"
-
+mars-outpost = { path = "../mars-outpost" }
 osmo-bindings = { git = "https://github.com/osmosis-labs/bindings", tag = "v0.6.0" }
