@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
 };
-use cw_utils::must_pay;
+use cw_utils::{must_pay, one_coin};
 
 use mars_outpost::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
@@ -83,21 +83,20 @@ pub fn execute(
         }
         ExecuteMsg::Liquidate {
             collateral_denom,
-            debt_denom,
             user_address,
         } => {
             let sender = info.sender.clone();
             let user_addr = deps.api.addr_validate(&user_address)?;
-            let sent_debt_asset_amount = must_pay(&info, &debt_denom)?;
+            let sent_debt_asset = one_coin(&info)?;
             execute::liquidate(
                 deps,
                 env,
                 info,
                 sender,
                 collateral_denom,
-                debt_denom,
+                sent_debt_asset.denom,
                 user_addr,
-                sent_debt_asset_amount,
+                sent_debt_asset.amount,
             )
         }
     }

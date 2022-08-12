@@ -160,18 +160,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw0"
-version = "0.10.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ae676b6cced78a3d38ad4b01ab4ed66fc78ac191c3c0d6bfd5372cb2efd473b"
-dependencies = [
- "cosmwasm-std",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "cw2"
 version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -406,22 +394,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-ma-token"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "cw0",
- "cw2",
- "cw20",
- "cw20-base",
- "mars-outpost",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "mars-oracle-base"
 version = "0.1.0"
 dependencies = [
@@ -454,8 +426,6 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw2",
- "cw20",
- "cw20-base",
  "mars-testing",
  "schemars",
  "serde",
@@ -468,8 +438,7 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
- "cw20",
- "cw20-base",
+ "cw-utils",
  "mars-outpost",
  "mars-testing",
  "schemars",

@@ -97,8 +97,6 @@ pub enum ExecuteMsg {
     Liquidate {
         /// Denom of the collateral asset, which liquidator gets from the borrower
         collateral_denom: String,
-        /// Denom of the debt asset
-        debt_denom: String,
         /// The address of the borrower getting liquidated
         user_address: String,
     },
