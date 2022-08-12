@@ -98,7 +98,7 @@ pub fn init_asset(
     env: Env,
     info: MessageInfo,
     denom: String,
-    params: InitOrUpdateAssetParams,
+    asset_params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
@@ -109,7 +109,7 @@ pub fn init_asset(
     let market_option = MARKETS.may_load(deps.storage, &denom)?;
     match market_option {
         None => {
-            let new_market = create_market(env.block.time.seconds(), &denom, params)?;
+            let new_market = create_market(env.block.time.seconds(), &denom, asset_params)?;
 
             // Save new market
             MARKETS.save(deps.storage, &denom, &new_market)?;
@@ -188,7 +188,7 @@ pub fn update_asset(
     env: Env,
     info: MessageInfo,
     denom: String,
-    params: InitOrUpdateAssetParams,
+    asset_params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
@@ -196,80 +196,84 @@ pub fn update_asset(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    let mut market =
-        MARKETS.may_load(deps.storage, &denom)?.ok_or(ContractError::AssetNotInitialized {})?;
+    let market_option = MARKETS.may_load(deps.storage, &denom)?;
+    match market_option {
+        None => Err(ContractError::AssetNotInitialized {}),
+        Some(mut market) => {
+            // Destructuring a struct’s fields into separate variables in order to force
+            // compile error if we add more params
+            let InitOrUpdateAssetParams {
+                initial_borrow_rate: _,
+                max_loan_to_value,
+                reserve_factor,
+                liquidation_threshold,
+                liquidation_bonus,
+                interest_rate_model_params,
+                active,
+                deposit_enabled,
+                borrow_enabled,
+            } = asset_params;
 
-    // Destructuring a struct’s fields into separate variables in order to force
-    // compile error if we add more params
-    let InitOrUpdateAssetParams {
-        initial_borrow_rate: _,
-        max_loan_to_value,
-        reserve_factor,
-        liquidation_threshold,
-        liquidation_bonus,
-        interest_rate_model_params,
-        active,
-        deposit_enabled,
-        borrow_enabled,
-    } = params;
+            // If reserve factor or interest rates are updated we update indexes with
+            // current values before applying the change to prevent applying this
+            // new params to a period where they were not valid yet. Interests rates are
+            // recalculated after changes are applied.
+            let should_update_interest_rates = (reserve_factor.is_some()
+                && reserve_factor.unwrap() != market.reserve_factor)
+                || interest_rate_model_params.is_some();
 
-    // If reserve factor or interest rates are updated we update indexes with
-    // current values before applying the change to prevent applying this
-    // new params to a period where they were not valid yet. Interests rates are
-    // recalculated after changes are applied.
-    let should_update_interest_rates = (reserve_factor.is_some()
-        && reserve_factor.unwrap() != market.reserve_factor)
-        || interest_rate_model_params.is_some();
+            if should_update_interest_rates {
+                let protocol_rewards_collector_address = address_provider::helpers::query_address(
+                    deps.as_ref(),
+                    &config.address_provider_address,
+                    MarsContract::ProtocolRewardsCollector,
+                )?;
+                apply_accumulated_interests(
+                    deps.storage,
+                    &env,
+                    &protocol_rewards_collector_address,
+                    &mut market,
+                )?;
+            }
 
-    if should_update_interest_rates {
-        let protocol_rewards_collector_address = address_provider::helpers::query_address(
-            deps.as_ref(),
-            &config.address_provider_address,
-            MarsContract::ProtocolRewardsCollector,
-        )?;
-        apply_accumulated_interests(
-            deps.storage,
-            &env,
-            &protocol_rewards_collector_address,
-            &mut market,
-        )?;
+            let mut updated_market = Market {
+                max_loan_to_value: max_loan_to_value.unwrap_or(market.max_loan_to_value),
+                reserve_factor: reserve_factor.unwrap_or(market.reserve_factor),
+                liquidation_threshold: liquidation_threshold
+                    .unwrap_or(market.liquidation_threshold),
+                liquidation_bonus: liquidation_bonus.unwrap_or(market.liquidation_bonus),
+                active: active.unwrap_or(market.active),
+                deposit_enabled: deposit_enabled.unwrap_or(market.deposit_enabled),
+                borrow_enabled: borrow_enabled.unwrap_or(market.borrow_enabled),
+                ..market
+            };
+
+            if let Some(params) = interest_rate_model_params {
+                updated_market.interest_rate_model =
+                    init_interest_rate_model(params, env.block.time.seconds())?;
+            }
+
+            updated_market.validate()?;
+
+            let mut events = vec![];
+            if should_update_interest_rates {
+                update_interest_rates(
+                    &deps,
+                    &env,
+                    &mut updated_market,
+                    Uint128::zero(),
+                    &denom,
+                    &mut events,
+                )?;
+            }
+            MARKETS.save(deps.storage, &denom, &updated_market)?;
+
+            Ok(Response::new()
+                .add_events(events)
+                .add_attribute("action", "update_asset")
+                .add_attribute("denom", &denom))
+        }
     }
-
-    let mut updated_market = Market {
-        max_loan_to_value: max_loan_to_value.unwrap_or(market.max_loan_to_value),
-        reserve_factor: reserve_factor.unwrap_or(market.reserve_factor),
-        liquidation_threshold: liquidation_threshold.unwrap_or(market.liquidation_threshold),
-        liquidation_bonus: liquidation_bonus.unwrap_or(market.liquidation_bonus),
-        active: active.unwrap_or(market.active),
-        deposit_enabled: deposit_enabled.unwrap_or(market.deposit_enabled),
-        borrow_enabled: borrow_enabled.unwrap_or(market.borrow_enabled),
-        ..market
-    };
-
-    if let Some(params) = interest_rate_model_params {
-        updated_market.interest_rate_model =
-            init_interest_rate_model(params, env.block.time.seconds())?;
-    }
-
-    updated_market.validate()?;
-
-    let mut events = vec![];
-    if should_update_interest_rates {
-        update_interest_rates(
-            &deps,
-            &env,
-            &mut updated_market,
-            Uint128::zero(),
-            &denom,
-            &mut events,
-        )?;
-    }
-    MARKETS.save(deps.storage, &denom, &updated_market)?;
-
-    Ok(Response::new()
-        .add_events(events)
-        .add_attribute("action", "update_asset")
-        .add_attribute("denom", &denom))
 }
 
 pub fn update_uncollateralized_loan_limit(

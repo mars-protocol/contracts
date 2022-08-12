@@ -58,6 +58,7 @@ pub fn query_user_debt(
             let (denom, debt) = item?;
 
             let market = MARKETS.load(deps.storage, &denom)?;
+
             let amount =
                 get_underlying_debt_amount(debt.amount_scaled, &market, env.block.time.seconds())?;
 

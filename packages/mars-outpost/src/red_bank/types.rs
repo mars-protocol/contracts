@@ -158,13 +158,13 @@ pub enum UserHealthStatus {
 pub struct Collateral {
     /// Scaled collateral amount
     pub amount_scaled: Uint128,
-    /// Whether this collateral is active
+    /// Whether this collateral is enabled
     ///
-    /// Active collaterals count towards the user's health factor, but is susceptible to
-    /// liquidations. On the other hand, inactive collaterals cannot be liquidated, but they don't
+    /// Enabled collaterals count towards the user's health factor, but is susceptible to
+    /// liquidations. On the other hand, disabled collaterals cannot be liquidated, but they don't
     /// add to the user's health factor.
     ///
-    /// When making a new fresh deposit, this is set to `true` be default. The user can optionally
+    /// When making a new fresh deposit, this is set to `true` by default. The user can optionally
     /// invoke the `update_asset_collateral_status` to configure this setting.
     pub enabled: bool,
 }
