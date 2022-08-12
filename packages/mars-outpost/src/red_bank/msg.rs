@@ -178,12 +178,12 @@ pub enum QueryMsg {
         denom: String,
     },
 
-    /// Get all collateral positions for a user. Returns Vec<UserCollateralResponse>
+    /// Get all collateral positions for a user. Returns Vec<UserAssetCollateralResponse>
     UserCollateral {
         user_address: String,
     },
 
-    /// Get user collateral positions for a specific asset. Returns UserCollateralResponse
+    /// Get user collateral positions for a specific asset. Returns UserAssetCollateralResponse
     UserAssetCollateral {
         user_address: String,
         denom: String,

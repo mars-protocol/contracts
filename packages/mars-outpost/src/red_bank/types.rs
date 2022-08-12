@@ -148,6 +148,13 @@ pub struct Debt {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum UserHealthStatus {
+    NotBorrowing,
+    Borrowing(Decimal),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Collateral {
     /// Scaled collateral amount
     pub amount_scaled: Uint128,
@@ -166,14 +173,14 @@ pub struct Collateral {
 pub struct UserAssetDebtResponse {
     /// Asset denom
     pub denom: String,
-    /// Scaled amount stored in contract state
+    /// Scaled debt amount stored in contract state
     pub amount_scaled: Uint128,
     /// Underlying asset amount that is actually owed at the current block
     pub amount: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct UserCollateralResponse {
+pub struct UserAssetCollateralResponse {
     /// Asset denom
     pub denom: String,
     /// Scaled amount stored in contract state
@@ -182,13 +189,6 @@ pub struct UserCollateralResponse {
     pub amount: Uint128,
     /// Whether this collateral is enabled
     pub enabled: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum UserHealthStatus {
-    NotBorrowing,
-    Borrowing(Decimal),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

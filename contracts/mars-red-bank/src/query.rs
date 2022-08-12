@@ -4,7 +4,8 @@ use cw_storage_plus::Bound;
 use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
 use mars_outpost::red_bank::{
-    Collateral, Config, Market, UserAssetDebtResponse, UserCollateralResponse, UserPositionResponse,
+    Collateral, Config, Market, UserAssetCollateralResponse, UserAssetDebtResponse,
+    UserPositionResponse,
 };
 
 use crate::accounts::get_user_position;
@@ -95,7 +96,7 @@ pub fn query_user_collateral(
     deps: Deps,
     env: Env,
     user_address: Addr,
-) -> StdResult<Vec<UserCollateralResponse>> {
+) -> StdResult<Vec<UserAssetCollateralResponse>> {
     COLLATERALS
         .prefix(&user_address)
         .range(deps.storage, None, None, Order::Ascending)
@@ -110,7 +111,7 @@ pub fn query_user_collateral(
                 env.block.time.seconds(),
             )?;
 
-            Ok(UserCollateralResponse {
+            Ok(UserAssetCollateralResponse {
                 denom,
                 amount_scaled: collateral.amount_scaled,
                 amount,
@@ -125,7 +126,7 @@ pub fn query_user_asset_collateral(
     env: Env,
     user_address: Addr,
     denom: String,
-) -> StdResult<UserCollateralResponse> {
+) -> StdResult<UserAssetCollateralResponse> {
     let market = MARKETS.load(deps.storage, &denom)?;
 
     let collateral =
@@ -142,7 +143,7 @@ pub fn query_user_asset_collateral(
         env.block.time.seconds(),
     )?;
 
-    Ok(UserCollateralResponse {
+    Ok(UserAssetCollateralResponse {
         denom,
         amount_scaled: collateral.amount_scaled,
         amount,
