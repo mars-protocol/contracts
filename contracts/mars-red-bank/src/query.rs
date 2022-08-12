@@ -4,7 +4,7 @@ use cw_storage_plus::Bound;
 use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
 use mars_outpost::red_bank::{
-    CollateralResponse, Config, DebtResponse, Market, UserPositionResponse,
+    Collateral, Config, Market, UserAssetDebtResponse, UserCollateralResponse, UserPositionResponse,
 };
 
 use crate::accounts::get_user_position;
@@ -45,7 +45,11 @@ pub fn query_markets(
         .collect()
 }
 
-pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<Vec<DebtResponse>> {
+pub fn query_user_debt(
+    deps: Deps,
+    env: Env,
+    user_address: Addr,
+) -> StdResult<Vec<UserAssetDebtResponse>> {
     DEBTS
         .prefix(&user_address)
         .range(deps.storage, None, None, Order::Ascending)
@@ -53,13 +57,12 @@ pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<Ve
             let (denom, debt) = item?;
 
             let market = MARKETS.load(deps.storage, &denom)?;
-            let amount_scaled = debt.amount_scaled;
             let amount =
-                get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
+                get_underlying_debt_amount(debt.amount_scaled, &market, env.block.time.seconds())?;
 
-            Ok(DebtResponse {
+            Ok(UserAssetDebtResponse {
                 denom,
-                amount_scaled,
+                amount_scaled: debt.amount_scaled,
                 amount,
             })
         })
@@ -71,7 +74,7 @@ pub fn query_user_asset_debt(
     env: Env,
     user_address: Addr,
     denom: String,
-) -> StdResult<DebtResponse> {
+) -> StdResult<UserAssetDebtResponse> {
     let market = MARKETS.load(deps.storage, &denom)?;
 
     let amount_scaled = DEBTS
@@ -81,7 +84,7 @@ pub fn query_user_asset_debt(
 
     let amount = get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
 
-    Ok(DebtResponse {
+    Ok(UserAssetDebtResponse {
         denom,
         amount_scaled,
         amount,
@@ -92,7 +95,7 @@ pub fn query_user_collateral(
     deps: Deps,
     env: Env,
     user_address: Addr,
-) -> StdResult<Vec<CollateralResponse>> {
+) -> StdResult<Vec<UserCollateralResponse>> {
     COLLATERALS
         .prefix(&user_address)
         .range(deps.storage, None, None, Order::Ascending)
@@ -107,7 +110,7 @@ pub fn query_user_collateral(
                 env.block.time.seconds(),
             )?;
 
-            Ok(CollateralResponse {
+            Ok(UserCollateralResponse {
                 denom,
                 amount_scaled: collateral.amount_scaled,
                 amount,
@@ -122,11 +125,16 @@ pub fn query_user_asset_collateral(
     env: Env,
     user_address: Addr,
     denom: String,
-) -> StdResult<CollateralResponse> {
+) -> StdResult<UserCollateralResponse> {
     let market = MARKETS.load(deps.storage, &denom)?;
 
     let collateral =
-        COLLATERALS.may_load(deps.storage, (&user_address, &denom))?.unwrap_or_default();
+        COLLATERALS.may_load(deps.storage, (&user_address, &denom))?.unwrap_or_else(|| {
+            Collateral {
+                amount_scaled: Uint128::zero(),
+                enabled: false,
+            }
+        });
 
     let amount = get_underlying_liquidity_amount(
         collateral.amount_scaled,
@@ -134,7 +142,7 @@ pub fn query_user_asset_collateral(
         env.block.time.seconds(),
     )?;
 
-    Ok(CollateralResponse {
+    Ok(UserCollateralResponse {
         denom,
         amount_scaled: collateral.amount_scaled,
         amount,
@@ -147,12 +155,16 @@ pub fn query_uncollateralized_loan_limit(
     user_address: Addr,
     denom: String,
 ) -> StdResult<Uint128> {
-    UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&user_address, &denom))?.ok_or_else(|| {
-        StdError::not_found(format!(
+    let uncollateralized_loan_limit =
+        UNCOLLATERALIZED_LOAN_LIMITS.load(deps.storage, (&user_address, &denom));
+
+    match uncollateralized_loan_limit {
+        Ok(limit) => Ok(limit),
+        Err(_) => Err(StdError::not_found(format!(
             "No uncollateralized loan approved for user_address: {} on asset: {}",
             user_address, denom
-        ))
-    })
+        ))),
+    }
 }
 
 pub fn query_scaled_liquidity_amount(

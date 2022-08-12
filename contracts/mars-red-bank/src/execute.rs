@@ -1080,9 +1080,7 @@ pub fn update_asset_collateral_status(
             true,
             user_address.to_string(),
         ));
-    }
-
-    if collateral.enabled && !enable {
+    } else if collateral.enabled && !enable {
         collateral.enabled = false;
         COLLATERALS.save(deps.storage, (&user_address, &denom), &collateral)?;
         events.push(build_collateral_position_changed_event(

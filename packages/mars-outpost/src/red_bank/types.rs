@@ -139,7 +139,15 @@ pub enum MarketError {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Debt {
+    /// Scaled debt amount
+    pub amount_scaled: Uint128,
+    /// Marker for uncollateralized debt
+    pub uncollateralized: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Collateral {
     /// Scaled collateral amount
     pub amount_scaled: Uint128,
@@ -154,16 +162,18 @@ pub struct Collateral {
     pub enabled: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct Debt {
-    /// Scaled debt amount
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct UserAssetDebtResponse {
+    /// Asset denom
+    pub denom: String,
+    /// Scaled amount stored in contract state
     pub amount_scaled: Uint128,
-    /// Marker for uncollateralized debt
-    pub uncollateralized: bool,
+    /// Underlying asset amount that is actually owed at the current block
+    pub amount: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CollateralResponse {
+pub struct UserCollateralResponse {
     /// Asset denom
     pub denom: String,
     /// Scaled amount stored in contract state
@@ -172,16 +182,6 @@ pub struct CollateralResponse {
     pub amount: Uint128,
     /// Whether this collateral is enabled
     pub enabled: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct DebtResponse {
-    /// Asset denom
-    pub denom: String,
-    /// Scaled amount stored in contract state
-    pub amount_scaled: Uint128,
-    /// Underlying asset amount that is actually owed at the current block
-    pub amount: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

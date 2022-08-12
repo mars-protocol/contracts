@@ -1,4 +1,3 @@
-use std::any::type_name;
 use std::fmt;
 use std::str::FromStr;
 
@@ -45,7 +44,7 @@ impl FromStr for MarsContract {
             "red_bank" => Ok(MarsContract::RedBank),
             "fee_collector" => Ok(MarsContract::FeeCollector),
             "safety_fund" => Ok(MarsContract::SafetyFund),
-            _ => Err(StdError::parse_err(type_name::<MarsContract>(), s)),
+            _ => Err(StdError::parse_err("MarsContract", s)),
         }
     }
 }

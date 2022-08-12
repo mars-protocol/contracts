@@ -1,8 +1,7 @@
-use std::convert::TryInto;
-
 use cosmwasm_std::{coins, Addr, Api, BankMsg, CosmosMsg, Decimal, StdError, StdResult, Uint128};
 
 use crate::error::MarsError;
+use std::convert::TryInto;
 
 pub fn build_send_asset_msg(recipient_addr: &Addr, denom: &str, amount: Uint128) -> CosmosMsg {
     CosmosMsg::Bank(BankMsg::Send {
