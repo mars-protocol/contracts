@@ -392,6 +392,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-health"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "mars-outpost",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-incentives"
 version = "1.0.0"
 dependencies = [
