@@ -185,7 +185,7 @@ where
         let price_source = self.price_sources.load(deps.storage, denom.clone())?;
         Ok(PriceResponse {
             denom: denom.clone(),
-            price: price_source.query_price(&deps.querier, env, &denom, &cfg.base_denom)?,
+            price: price_source.query_price(&deps.querier, &env.block, &denom, &cfg.base_denom)?,
         })
     }
 
@@ -208,7 +208,7 @@ where
                 let (k, v) = item?;
                 Ok(PriceResponse {
                     denom: k.clone(),
-                    price: v.query_price(&deps.querier, env.clone(), &k, &cfg.base_denom)?,
+                    price: v.query_price(&deps.querier, &env.block, &k, &cfg.base_denom)?,
                 })
             })
             .collect()

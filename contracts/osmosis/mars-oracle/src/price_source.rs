@@ -1,6 +1,6 @@
 use std::fmt;
 
-use cosmwasm_std::{Decimal, Env, QuerierWrapper, StdError, StdResult};
+use cosmwasm_std::{BlockInfo, Decimal, QuerierWrapper, StdError, StdResult};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -53,8 +53,8 @@ impl fmt::Display for OsmosisPriceSource {
             } => format!("spot:{}", pool_id),
             OsmosisPriceSource::Twap {
                 pool_id,
-                ..
-            } => format!("twap:{}", pool_id),
+                window_size,
+            } => format!("twap:{}:{}", pool_id, window_size),
             OsmosisPriceSource::LiquidityToken {
                 pool_id,
             } => format!("liquidity_token:{}", pool_id),
@@ -103,7 +103,7 @@ impl PriceSource<OsmosisQuery> for OsmosisPriceSource {
     fn query_price(
         &self,
         querier: &QuerierWrapper<OsmosisQuery>,
-        env: Env,
+        block: &BlockInfo,
         denom: &str,
         base_denom: &str,
     ) -> StdResult<Decimal> {
@@ -118,7 +118,7 @@ impl PriceSource<OsmosisQuery> for OsmosisPriceSource {
                 pool_id,
                 window_size,
             } => {
-                let current_block_time = env.block.time.seconds();
+                let current_block_time = block.time.seconds();
                 let start_time = current_block_time - window_size;
                 helpers::query_osmosis_twap_price(querier, *pool_id, denom, base_denom, start_time)
             }
