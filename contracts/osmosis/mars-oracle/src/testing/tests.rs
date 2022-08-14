@@ -6,7 +6,7 @@ use mars_outpost::error::MarsError;
 use mars_outpost::oracle::{Config, PriceResponse, QueryMsg};
 use mars_testing::mock_info;
 
-use osmo_bindings::{SpotPriceResponse, Swap};
+use osmo_bindings::{ArithmeticTwapToNowResponse, SpotPriceResponse, Swap};
 
 use super::helpers;
 use crate::contract::entry::execute;
@@ -414,6 +414,37 @@ fn querying_price_spot() {
         },
     );
     assert_eq!(res.price, Decimal::from_ratio(88888u128, 12345u128));
+}
+
+#[test]
+fn querying_price_twap() {
+    let mut deps = helpers::setup_test();
+
+    helpers::set_price_source(
+        deps.as_mut(),
+        "umars",
+        OsmosisPriceSource::Twap {
+            pool_id: 89,
+            window_size: 86400,
+        },
+    );
+
+    deps.querier.set_twap_price(
+        89,
+        "uosmo",
+        "umars",
+        ArithmeticTwapToNowResponse {
+            twap: Decimal::from_ratio(77777u128, 12345u128),
+        },
+    );
+
+    let res: PriceResponse = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Price {
+            denom: "umars".to_string(),
+        },
+    );
+    assert_eq!(res.price, Decimal::from_ratio(77777u128, 12345u128));
 }
 
 #[test]
