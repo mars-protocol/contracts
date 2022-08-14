@@ -38,7 +38,7 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn query(deps: Deps<OsmosisQuery>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-        OsmosisOracle::default().query(deps, msg)
+    pub fn query(deps: Deps<OsmosisQuery>, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+        OsmosisOracle::default().query(deps, env, msg)
     }
 }

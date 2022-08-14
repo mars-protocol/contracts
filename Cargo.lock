@@ -485,7 +485,6 @@ dependencies = [
  "cw-storage-plus",
  "mars-outpost",
  "mars-testing",
- "osmo-bindings",
  "schemars",
  "serde",
  "thiserror",
@@ -530,7 +529,6 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 [[package]]
 name = "osmo-bindings"
 version = "0.6.0"
-source = "git+https://github.com/osmosis-labs/bindings?tag=v0.6.0#ddde6ac5d21c02abd2e859ae568dd31f88c58fb8"
 dependencies = [
  "cosmwasm-std",
  "schemars",
