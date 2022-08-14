@@ -9,27 +9,39 @@ import {
   writeArtifact,
 } from "./deploy_helpers.js";
 
-  // TO RUN, SET THE DESIRED NETWORK BELOW AND RUN
-  // npm run deploy
+// TO RUN, SET THE DESIRED NETWORK BELOW AND RUN
+// npm run deploy
 
-let NETWORK_TO_DEPLOY_TO: 'localosmosis' | 'osmo-test-4' | 'osmosis-1'
-NETWORK_TO_DEPLOY_TO = 'osmo-test-4'
+console.log(process.env)
+
+requiredEnvironmentVariables([
+  'NETWORK_TO_DEPLOY_TO',
+  'MARS_DENOM',
+  'OSMOSIS_DENOM',
+  'PREFIX',
+  'SAFETY_FUND_FEE_SHARE',
+  'CHANNEL_ID',
+  'TIMEOUT_REVISION',
+  'REWARD_COLLECTOR_TIMEOUT_BLOCKS',
+  'REWARD_COLLECTOR_TIMEOUT_SECONDS'
+])
 
 // CONSTANTS
-const MARS_DENOM = 'umars'
-const OSMOSIS_DENOM = 'uosmo'
-const PREFIX = 'osmo'
-const SAFETY_FUND_FEE_SHARE = 0.2
+const NETWORK_TO_DEPLOY_TO = process.env.NETWORK_TO_DEPLOY_TO 
+const MARS_DENOM =  process.env.MARS_DENOM 
+const OSMOSIS_DENOM = process.env.OSMOSIS_DENOM 
+const PREFIX = process.env.CHAIN_PREFIX 
+const SAFETY_FUND_FEE_SHARE = process.env.SAFETY_FUND_FEE_SHARE
 const SAFETY_FUND_DENOM = OSMOSIS_DENOM
 const FEE_COLLECTOR_DENOM = OSMOSIS_DENOM
-const CHANNEL_ID = 'channel-1'
-const TIMEOUT_REVISION = 1
-const REWARD_COLLECTOR_TIMEOUT_BLOCKS = 10
-const REWARD_COLLECTOR_TIMEOUT_SECONDS = 60
+const CHANNEL_ID = process.env.CHANNEL_ID 
+const TIMEOUT_REVISION = process.env.TIMEOUT_REVISION 
+const REWARD_COLLECTOR_TIMEOUT_BLOCKS = process.env.REWARD_COLLECTOR_TIMEOUT_BLOCKS 
+const REWARD_COLLECTOR_TIMEOUT_SECONDS = process.env.REWARD_COLLECTOR_TIMEOUT_SECONDS
 
-  let chain_id: string
-  let rpc_endpoint: string
-  let deployer_wallet_mnemonic: string
+let chain_id: string
+let rpc_endpoint: string
+let deployer_wallet_mnemonic: string
 
 
 async function main() {
@@ -589,6 +601,17 @@ console.log(`${chain_id} :: Red Bank uatom market config : `, await client.query
 
     network.smokeTest = true
     writeArtifact(network, chain_id);
+  }
+}
+
+function requiredEnvironmentVariables(envVars: string[]) {
+  let missing = envVars.filter((v) => process.env[v] === undefined)
+
+  if (missing.length > 0) {
+    console.error(
+      `Required environment variables are not set: ${missing.join(', ')}`
+    )
+    process.exit(1)
   }
 }
 
