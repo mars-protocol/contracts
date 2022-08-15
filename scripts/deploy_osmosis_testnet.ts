@@ -303,8 +303,17 @@ async function main() {
       "mars-protocol-rewards-collector",
       "auto"
     )
-
     network.protocolRewardsCollectorContractAddress = protocolRewardsCollectorContractAddress
+
+    // set osmo : atom route
+    await client.execute(deployerAddress, network.protocolRewardsCollectorContractAddress, {
+      set_route : {
+        denom_in : OSMOSIS_DENOM,
+        denom_out : ATOM_DENOM,
+        route: [{denom_out : ATOM_DENOM, pool_id: 1}]
+      }
+    }, 'auto')
+
     writeArtifact(network, chain_id);
   }
   console.log(`${chain_id} :: Protocol Rewards Collector Contract Address : ${network.protocolRewardsCollectorContractAddress}`);
