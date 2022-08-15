@@ -296,6 +296,7 @@ async function main() {
         "timeout_blocks" : REWARD_COLLECTOR_TIMEOUT_BLOCKS,
         "timeout_seconds" : REWARD_COLLECTOR_TIMEOUT_SECONDS
     } 
+
     const { contractAddress: protocolRewardsCollectorContractAddress } = await client.instantiate(
       deployerAddress,
       network.protocolRewardsCollectorCodeId,
@@ -305,7 +306,8 @@ async function main() {
     )
     network.protocolRewardsCollectorContractAddress = protocolRewardsCollectorContractAddress
 
-    // set osmo : atom route
+    // set osmo : atom route 
+    // todo search for correct pool and create if does not exist.
     await client.execute(deployerAddress, network.protocolRewardsCollectorContractAddress, {
       set_route : {
         denom_in : OSMOSIS_DENOM,

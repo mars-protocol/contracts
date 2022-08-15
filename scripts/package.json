@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "deploy": "node --loader ts-node/esm deploy_osmosis_testnet.ts"
+    "deploy:osmosis": "node --loader ts-node/esm deploy/osmosis.ts"
   },
   "dependencies": {
     "@cosmjs/amino": "^0.28.4",
