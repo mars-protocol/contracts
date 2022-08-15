@@ -27,17 +27,18 @@ requiredEnvironmentVariables([
 ])
 
 // CONSTANTS
-const NETWORK_TO_DEPLOY_TO = process.env.NETWORK_TO_DEPLOY_TO 
-const MARS_DENOM =  process.env.MARS_DENOM 
-const OSMOSIS_DENOM = process.env.OSMOSIS_DENOM 
-const PREFIX = process.env.CHAIN_PREFIX 
-const SAFETY_FUND_FEE_SHARE = process.env.SAFETY_FUND_FEE_SHARE
+const NETWORK_TO_DEPLOY_TO = process.env.NETWORK_TO_DEPLOY_TO! 
+const MARS_DENOM =  process.env.MARS_DENOM! 
+const OSMOSIS_DENOM = process.env.OSMOSIS_DENOM! 
+const ATOM_DENOM = process.env.ATOM_DENOM!
+const PREFIX = process.env.CHAIN_PREFIX! 
+const SAFETY_FUND_FEE_SHARE = process.env.SAFETY_FUND_FEE_SHARE!
 const SAFETY_FUND_DENOM = OSMOSIS_DENOM
 const FEE_COLLECTOR_DENOM = OSMOSIS_DENOM
-const CHANNEL_ID = process.env.CHANNEL_ID 
-const TIMEOUT_REVISION = process.env.TIMEOUT_REVISION 
-const REWARD_COLLECTOR_TIMEOUT_BLOCKS = process.env.REWARD_COLLECTOR_TIMEOUT_BLOCKS 
-const REWARD_COLLECTOR_TIMEOUT_SECONDS = process.env.REWARD_COLLECTOR_TIMEOUT_SECONDS
+const CHANNEL_ID = process.env.CHANNEL_ID! 
+const TIMEOUT_REVISION = process.env.TIMEOUT_REVISION! 
+const REWARD_COLLECTOR_TIMEOUT_BLOCKS = process.env.REWARD_COLLECTOR_TIMEOUT_BLOCKS! 
+const REWARD_COLLECTOR_TIMEOUT_SECONDS = process.env.REWARD_COLLECTOR_TIMEOUT_SECONDS!
 
 let chain_id: string
 let rpc_endpoint: string
@@ -55,14 +56,13 @@ async function main() {
     rpc_endpoint = 'https://rpc-test.osmosis.zone'
     deployer_wallet_mnemonic = 'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process'
   } else {
-    chain_id = 'osmosis-1'
-    rpc_endpoint = 'https://rpc.osmosis.zone'
-    deployer_wallet_mnemonic = ''
+    console.error(`ERROR: Currently these scripts are intended for LocalOsmosis and 'osmo-test-4' testnet environents only, ${NETWORK_TO_DEPLOY_TO} deployment not yet supported`)
+    process.exit(1)
   }
 
   console.log(`deploying to chain id: ${chain_id}`)
 
-  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(deployer_wallet_mnemonic, { prefix: "osmo" });
+  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(deployer_wallet_mnemonic, { prefix: PREFIX });
 
   const accounts = await wallet.getAccounts()
   const deployerAddress = accounts[0].address
@@ -73,7 +73,7 @@ async function main() {
   }
   const client = await SigningCosmWasmClient.connectWithSigner(rpc_endpoint, wallet, clientOption);
 
-  const accountBalance = await client.getBalance(deployerAddress, "uosmo")
+  const accountBalance = await client.getBalance(deployerAddress, OSMOSIS_DENOM)
   console.log(`uosmo account balance is: ${accountBalance.amount} (${Number(accountBalance.amount) / 1e6} OSMO)`)
   if (Number(accountBalance.amount) < 1_000000 && chain_id === "osmo-test-4") {
     console.log("get more OSMO tokens at: https://faucet.osmosis.zone/#/")
@@ -86,7 +86,6 @@ async function main() {
   let network = readArtifact(chain_id);
   console.log("network:", network);
 
-  let gasFee: StdFee
   let uploadResult: UploadResult
   let result: InstantiateResult | ExecuteResult
   let msg: Record<string, unknown>
@@ -195,7 +194,7 @@ async function main() {
 /*********************************************************************************************************** */
 
   if (!network.addressProviderContractAddress) {
-    msg = {"owner": deployerAddress, "prefix": 'osmo'};
+    msg = {"owner": deployerAddress, "prefix": PREFIX};
     const { contractAddress: addressProviderContractAddress } = await client.instantiate(
         deployerAddress,
         network.addressProviderCodeId,
@@ -264,7 +263,7 @@ async function main() {
 
   if (!network.oracleContractAddress) {
 
-    msg = {"owner":deployerAddress, "base_denom": 'uomso' };
+    msg = {"owner":deployerAddress, "base_denom": OSMOSIS_DENOM };
     const { contractAddress: oracleContractAddress } = await client.instantiate(
       deployerAddress,
       network.oracleCodeId,
@@ -304,6 +303,7 @@ async function main() {
       "mars-protocol-rewards-collector",
       "auto"
     )
+
     network.protocolRewardsCollectorContractAddress = protocolRewardsCollectorContractAddress
     writeArtifact(network, chain_id);
   }
@@ -370,7 +370,7 @@ async function main() {
 
     msg = {
       "init_asset": {
-        "denom": "uosmo",
+        "denom": OSMOSIS_DENOM,
         "asset_params": {
             "initial_borrow_rate": "0.1",
             "max_loan_to_value": "0.55",
@@ -405,7 +405,7 @@ async function main() {
   }
   console.log(`${chain_id} :: Red Bank config : `, await client.queryContractSmart(network.redBankContractAddress, {"config":{}}));
   console.log(`${chain_id} :: Red Bank markets list : `, await client.queryContractSmart(network.redBankContractAddress, {"markets":{}}));
-  console.log(`${chain_id} :: Red Bank uosmo market config : `, await client.queryContractSmart(network.redBankContractAddress, {"market":{ "denom": "uosmo" } }));
+  console.log(`${chain_id} :: Red Bank uosmo market config : `, await client.queryContractSmart(network.redBankContractAddress, {"market":{ "denom": OSMOSIS_DENOM } }));
 
 /*********************************************************************************************************** */
 /*********************************************************************************************************** */
@@ -416,7 +416,7 @@ async function main() {
 if(!network.uatomRedBankMarketInitialised) {
   msg = {
     "init_asset": {
-      "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+      "denom": ATOM_DENOM,
       "asset_params": {
           "initial_borrow_rate": "0.1",
           "max_loan_to_value": "0.65",
@@ -463,7 +463,7 @@ console.log(`${chain_id} :: Red Bank uatom market config : `, await client.query
 
     msg = {
       "set_price_source": {
-        "denom": "uosmo",
+        "denom": OSMOSIS_DENOM,
         "price_source": {
             "fixed": { "price": "1.0" }
           }
@@ -480,7 +480,7 @@ console.log(`${chain_id} :: Red Bank uatom market config : `, await client.query
 
   msg = {
     "price": {
-        "denom": "uosmo"
+        "denom": OSMOSIS_DENOM
     }
   }
   console.log(`${chain_id} :: uosmo oracle price :  ${await client.queryContractSmart(network.oracleContractAddress, msg)}`);
@@ -494,7 +494,7 @@ console.log(`${chain_id} :: Red Bank uatom market config : `, await client.query
   if(!network.uatomOraclePriceSet) {
     msg = {
         "set_price_source": {
-            "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+            "denom": ATOM_DENOM,
             "price_source": {
                 "fixed": { "price": "1.5" }
             }
@@ -511,7 +511,7 @@ console.log(`${chain_id} :: Red Bank uatom market config : `, await client.query
 
   msg = {
     "price": {
-        "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"
+        "denom": ATOM_DENOM
     }
   }
   console.log(`${chain_id} :: uatom oracle price :  ${await client.queryContractSmart(network.oracleContractAddress, msg)}`);
@@ -527,9 +527,9 @@ console.log(`${chain_id} :: Red Bank uatom market config : `, await client.query
     /*********************************************************************************************************** */
 
 
-    msg = { "deposit": { "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2" } }
+    msg = { "deposit": { "denom": ATOM_DENOM } }
     coins = [{
-        "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+        "denom":ATOM_DENOM,
         "amount": "1000000"
     }]
 
@@ -548,7 +548,7 @@ console.log(`${chain_id} :: Red Bank uatom market config : `, await client.query
 
     msg = {
       "borrow": {
-        "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+        "denom": ATOM_DENOM,
         "amount": "300000"
       }
     }
@@ -566,9 +566,9 @@ console.log(`${chain_id} :: Red Bank uatom market config : `, await client.query
     /*********************************************************************************************************** */
     /*********************************************************************************************************** */
 
-    msg = { "repay": { "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2" } }
+    msg = { "repay": { "denom": ATOM_DENOM } }
     coins = [{
-        "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+        "denom": ATOM_DENOM,
         "amount": "300005"
     }]
 
@@ -587,7 +587,7 @@ console.log(`${chain_id} :: Red Bank uatom market config : `, await client.query
 
     msg = {
       "withdraw": {
-        "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+        "denom": ATOM_DENOM,
         "amount": "1000000"
       }
     }
