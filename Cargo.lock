@@ -529,6 +529,7 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 [[package]]
 name = "osmo-bindings"
 version = "0.6.0"
+source = "git+https://github.com/osmosis-labs/bindings#9b9278f3be4fa9271ef00c91ff51753233fe33a2"
 dependencies = [
  "cosmwasm-std",
  "schemars",
