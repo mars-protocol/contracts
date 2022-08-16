@@ -114,7 +114,7 @@ fn test_deposit_but_no_funds() {
         mock.credit_manager.clone(),
         &ExecuteMsg::UpdateCreditAccount {
             token_id: token_id.clone(),
-            actions: vec![Action::Deposit(coin_info.to_coin(deposit_amount.clone()))],
+            actions: vec![Action::Deposit(coin_info.to_coin(deposit_amount))],
         },
         &[],
     );
@@ -165,10 +165,10 @@ fn test_deposit_but_not_enough_funds() {
         user.clone(),
         mock.credit_manager.clone(),
         &ExecuteMsg::UpdateCreditAccount {
-            token_id: token_id.clone(),
+            token_id,
             actions: vec![Action::Deposit(coin_info.to_coin(Uint128::from(350u128)))],
         },
-        &[Coin::new(250u128, coin_info.denom.clone())],
+        &[Coin::new(250u128, coin_info.denom)],
     );
 
     assert_err(
@@ -221,7 +221,7 @@ fn test_can_only_deposit_allowed_assets() {
             token_id: token_id.clone(),
             actions: vec![Action::Deposit(not_allowed_coin.clone())],
         },
-        &[Coin::new(234u128, coin_info.denom.clone())],
+        &[Coin::new(234u128, coin_info.denom)],
     );
 
     assert_err(res, NotWhitelisted(not_allowed_coin.denom));
@@ -269,7 +269,7 @@ fn test_extra_funds_received() {
     let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
     let token_id = get_token_id(res);
 
-    let extra_funds = Coin::new(25u128, uatom_info.denom.clone());
+    let extra_funds = Coin::new(25u128, uatom_info.denom);
     let res = app.execute_contract(
         user.clone(),
         mock.credit_manager.clone(),
@@ -277,10 +277,7 @@ fn test_extra_funds_received() {
             token_id: token_id.clone(),
             actions: vec![Action::Deposit(uosmo_info.to_coin(Uint128::from(234u128)))],
         },
-        &[
-            Coin::new(234u128, uosmo_info.denom.clone()),
-            extra_funds.clone(),
-        ],
+        &[Coin::new(234u128, uosmo_info.denom), extra_funds.clone()],
     );
 
     assert_err(res, ExtraFundsReceived(Coins::from(vec![extra_funds])));
@@ -345,7 +342,7 @@ fn test_deposit_success() {
 
     let coin = app
         .wrap()
-        .query_balance(mock.credit_manager, coin_info.denom.clone())
+        .query_balance(mock.credit_manager, coin_info.denom)
         .unwrap();
     assert_eq!(coin.amount, deposit_amount)
 }
@@ -418,7 +415,7 @@ fn test_multiple_deposit_actions() {
 
     let coin = app
         .wrap()
-        .query_balance(mock.credit_manager.clone(), uosmo_info.denom.clone())
+        .query_balance(mock.credit_manager.clone(), uosmo_info.denom)
         .unwrap();
     assert_eq!(coin.amount, uosmo_amount);
 
@@ -432,6 +429,6 @@ fn test_multiple_deposit_actions() {
 fn assert_present(res: &PositionResponse, coin: &CoinInfo, amount: Uint128, total_val: Decimal) {
     res.coins
         .iter()
-        .find(|item| item.denom == coin.denom && &item.amount == &amount && item.value == total_val)
+        .find(|item| item.denom == coin.denom && item.amount == amount && item.value == total_val)
         .unwrap();
 }

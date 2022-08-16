@@ -66,18 +66,13 @@ fn test_normal_base_cw721_actions_can_still_be_taken() {
 }
 
 // Double checking ownership by querying NFT account-nft for correct owner
-fn assert_owner_is_correct(
-    app: &mut BasicApp,
-    contract_addr: &Addr,
-    user: &Addr,
-    token_id: &String,
-) {
+fn assert_owner_is_correct(app: &mut BasicApp, contract_addr: &Addr, user: &Addr, token_id: &str) {
     let owner_res: OwnerOfResponse = app
         .wrap()
         .query_wasm_smart(
             contract_addr,
             &QueryMsg::OwnerOf {
-                token_id: token_id.clone(),
+                token_id: token_id.to_string(),
                 include_expired: None,
             },
         )
@@ -87,12 +82,12 @@ fn assert_owner_is_correct(
 }
 
 fn get_token_id(res: AppResponse) -> String {
-    let attr: Vec<&String> = res
+    let attr: Vec<&str> = res
         .events
         .iter()
         .flat_map(|event| &event.attributes)
         .filter(|attr| attr.key == "token_id")
-        .map(|attr| &attr.value)
+        .map(|attr| attr.value.as_str())
         .collect();
 
     assert_eq!(attr.len(), 1);

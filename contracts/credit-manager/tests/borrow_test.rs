@@ -67,14 +67,14 @@ fn test_can_only_borrow_what_is_whitelisted() {
 
     let mock = setup_credit_manager(&mut app, &owner, vec![coin_info], vec![]);
     let user = Addr::unchecked("user");
-    let res = mock_create_credit_account(&mut app, &mock.credit_manager.clone(), &user).unwrap();
+    let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
     let token_id = get_token_id(res);
 
     let res = app.execute_contract(
         user.clone(),
-        mock.credit_manager.clone(),
+        mock.credit_manager,
         &UpdateCreditAccount {
-            token_id: token_id.clone(),
+            token_id,
             actions: vec![Borrow(Coin {
                 denom: "usomething".to_string(),
                 amount: Uint128::from(234u128),
@@ -121,7 +121,7 @@ fn test_borrowing_zero_does_nothing() {
 
     assert_err(res, ContractError::NoAmount);
 
-    let position = query_position(&mut app, &mock.credit_manager, &token_id);
+    let position = query_position(&app, &mock.credit_manager, &token_id);
     assert_eq!(position.coins.len(), 0);
     assert_eq!(position.debt_shares.len(), 0);
 }
@@ -155,7 +155,7 @@ fn test_success_when_new_debt_asset() {
     let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
     let token_id = get_token_id(res);
 
-    let config = query_config(&mut app, &mock.credit_manager.clone());
+    let config = query_config(&app, &mock.credit_manager.clone());
 
     fund_red_bank(
         &mut app,
@@ -163,7 +163,7 @@ fn test_success_when_new_debt_asset() {
         vec![Coin::new(1000u128, coin_info.denom.clone())],
     );
 
-    let position = query_position(&mut app, &mock.credit_manager, &token_id);
+    let position = query_position(&app, &mock.credit_manager, &token_id);
     assert_eq!(position.coins.len(), 0);
     assert_eq!(position.debt_shares.len(), 0);
     app.execute_contract(
@@ -186,7 +186,7 @@ fn test_success_when_new_debt_asset() {
     )
     .unwrap();
 
-    let position = query_position(&mut app, &mock.credit_manager, &token_id);
+    let position = query_position(&app, &mock.credit_manager, &token_id);
     assert_eq!(position.coins.len(), 1);
     let asset_res = position.coins.first().unwrap();
     assert_eq!(
@@ -281,7 +281,7 @@ fn test_debt_shares_with_debt_amount() {
     let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user_b).unwrap();
     let token_id_b = get_token_id(res);
 
-    let config = query_config(&mut app, &mock.credit_manager.clone());
+    let config = query_config(&app, &mock.credit_manager.clone());
 
     fund_red_bank(
         &mut app,
@@ -304,7 +304,7 @@ fn test_debt_shares_with_debt_amount() {
     .unwrap();
 
     let interim_red_bank_debt = query_red_bank_debt(
-        &mut app,
+        &app,
         &mock.credit_manager,
         &config.red_bank,
         &coin_info.denom,
@@ -325,7 +325,7 @@ fn test_debt_shares_with_debt_amount() {
     .unwrap();
 
     let token_a_shares = Uint128::from(50u128).mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED);
-    let position = query_position(&mut app, &mock.credit_manager, &token_id_a);
+    let position = query_position(&app, &mock.credit_manager, &token_id_a);
     let debt_position_a = position.debt_shares.first().unwrap();
     assert_eq!(debt_position_a.shares, token_a_shares.clone());
     assert_eq!(debt_position_a.denom, coin_info.denom);
@@ -333,7 +333,7 @@ fn test_debt_shares_with_debt_amount() {
     let token_b_shares = Uint128::from(50u128)
         .mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED)
         .multiply_ratio(Uint128::from(50u128), interim_red_bank_debt.amount);
-    let position = query_position(&mut app, &mock.credit_manager, &token_id_b);
+    let position = query_position(&app, &mock.credit_manager, &token_id_b);
     let debt_position_b = position.debt_shares.first().unwrap();
     assert_eq!(debt_position_b.shares, token_b_shares.clone());
     assert_eq!(debt_position_b.denom, coin_info.denom);
@@ -351,7 +351,7 @@ fn test_debt_shares_with_debt_amount() {
     );
 
     let red_bank_debt = query_red_bank_debt(
-        &mut app,
+        &app,
         &mock.credit_manager,
         &config.red_bank,
         &coin_info.denom,

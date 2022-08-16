@@ -18,7 +18,7 @@ fn test_update_config_works_with_full_config() {
     let code_id = app.store_code(mock_contract());
     let contract_addr = instantiate(&mut app, &original_owner, code_id);
 
-    let original_config = query_config(&mut app, &contract_addr.clone());
+    let original_config = query_config(&app, &contract_addr.clone());
     let original_allowed_vaults = query_allowed_vaults(&mut app, &contract_addr.clone());
     let original_allowed_assets = query_allowed_assets(&mut app, &contract_addr.clone());
 
@@ -46,7 +46,7 @@ fn test_update_config_works_with_full_config() {
     )
     .unwrap();
 
-    let new_config = query_config(&mut app, &contract_addr.clone());
+    let new_config = query_config(&app, &contract_addr.clone());
     let new_queried_allowed_vaults = query_allowed_vaults(&mut app, &contract_addr.clone());
     let new_queried_allowed_assets = query_allowed_assets(&mut app, &contract_addr.clone());
 
@@ -76,7 +76,7 @@ fn test_update_config_works_with_some_config() {
     let code_id = app.store_code(mock_contract());
     let contract_addr = instantiate(&mut app, &original_owner, code_id);
 
-    let original_config = query_config(&mut app, &contract_addr.clone());
+    let original_config = query_config(&app, &contract_addr.clone());
     let original_allowed_vaults = query_allowed_vaults(&mut app, &contract_addr.clone());
     let original_allowed_assets = query_allowed_assets(&mut app, &contract_addr.clone());
 
@@ -97,7 +97,7 @@ fn test_update_config_works_with_some_config() {
     )
     .unwrap();
 
-    let new_config = query_config(&mut app, &contract_addr.clone());
+    let new_config = query_config(&app, &contract_addr.clone());
     let new_queried_allowed_vaults = query_allowed_vaults(&mut app, &contract_addr.clone());
     let new_queried_allowed_assets = query_allowed_assets(&mut app, &contract_addr.clone());
 
@@ -121,9 +121,9 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
     let code_id = app.store_code(mock_contract());
     let contract_addr = instantiate(&mut app, &original_owner, code_id);
 
-    let original_config = query_config(&mut app, &contract_addr.clone());
-    let original_allowed_vaults = query_allowed_vaults(&mut app, &contract_addr.clone());
-    let original_allowed_assets = query_allowed_assets(&mut app, &contract_addr.clone());
+    let original_config = query_config(&app, &contract_addr);
+    let original_allowed_vaults = query_allowed_vaults(&mut app, &contract_addr);
+    let original_allowed_assets = query_allowed_assets(&mut app, &contract_addr);
 
     app.execute_contract(
         original_owner.clone(),
@@ -135,9 +135,9 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
     )
     .unwrap();
 
-    let new_config = query_config(&mut app, &contract_addr.clone());
-    let new_queried_allowed_vaults = query_allowed_vaults(&mut app, &contract_addr.clone());
-    let new_queried_allowed_assets = query_allowed_assets(&mut app, &contract_addr.clone());
+    let new_config = query_config(&app, &contract_addr);
+    let new_queried_allowed_vaults = query_allowed_vaults(&mut app, &contract_addr);
+    let new_queried_allowed_assets = query_allowed_assets(&mut app, &contract_addr);
 
     assert_eq!(new_config.account_nft, original_config.account_nft);
     assert_eq!(new_config.owner, original_config.owner);

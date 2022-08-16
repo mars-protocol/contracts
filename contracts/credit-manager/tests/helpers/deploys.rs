@@ -71,11 +71,11 @@ pub fn setup_nft_contract(app: &mut App, owner: &Addr, manager_contract_addr: &A
         )
         .unwrap();
 
-    transfer_nft_contract_ownership(app, owner, &nft_contract_addr, &manager_contract_addr);
+    transfer_nft_contract_ownership(app, owner, &nft_contract_addr, manager_contract_addr);
     nft_contract_addr
 }
 
-pub fn setup_oracle(app: &mut App, coins: &Vec<CoinInfo>) -> Addr {
+pub fn setup_oracle(app: &mut App, coins: &[CoinInfo]) -> Addr {
     let contract_code_id = app.store_code(mock_oracle_contract());
     app.instantiate_contract(
         contract_code_id,
@@ -96,7 +96,7 @@ pub fn setup_oracle(app: &mut App, coins: &Vec<CoinInfo>) -> Addr {
     .unwrap()
 }
 
-pub fn setup_red_bank(app: &mut App, coins: &Vec<CoinInfo>) -> Addr {
+pub fn setup_red_bank(app: &mut App, coins: &[CoinInfo]) -> Addr {
     let contract_code_id = app.store_code(mock_red_bank_contract());
     app.instantiate_contract(
         contract_code_id,
@@ -127,7 +127,7 @@ pub fn fund_red_bank(app: &mut BasicApp, red_bank_addr: String, funds: Vec<Coin>
 }
 
 pub fn setup_credit_manager(
-    mut app: &mut App,
+    app: &mut App,
     owner: &Addr,
     allowed_coins: Vec<CoinInfo>,
     allowed_vaults: Vec<String>,
@@ -157,7 +157,7 @@ pub fn setup_credit_manager(
         )
         .unwrap();
 
-    let nft = setup_nft_contract(&mut app, &owner, &credit_manager);
+    let nft = setup_nft_contract(app, owner, &credit_manager);
     MockEnv {
         credit_manager,
         oracle,

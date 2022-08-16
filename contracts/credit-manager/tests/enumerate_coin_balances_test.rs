@@ -131,7 +131,7 @@ fn test_pagination_on_all_coin_balances_query_works() {
             mock.credit_manager.clone(),
             &QueryMsg::AllCoinBalances {
                 start_after: None,
-                limit: Some(58 as u32),
+                limit: Some(58u32),
             },
         )
         .unwrap();
@@ -145,7 +145,7 @@ fn test_pagination_on_all_coin_balances_query_works() {
             mock.credit_manager.clone(),
             &QueryMsg::AllCoinBalances {
                 start_after: None,
-                limit: Some(2 as u32),
+                limit: Some(2u32),
             },
         )
         .unwrap();

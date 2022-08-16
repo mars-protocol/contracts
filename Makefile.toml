@@ -26,7 +26,7 @@ args = ["fmt", "--all", "--check"]
 
 [tasks.clippy]
 command = "cargo"
-args = ["clippy", "--", "-D", "warnings"]
+args = ["clippy", "--tests", "--", "-D", "warnings"]
 
 [tasks.all-github-actions]
 dependencies = [

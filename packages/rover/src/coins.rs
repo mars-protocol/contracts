@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 /// Pending integration into cosmwasm_std: https://github.com/CosmWasm/cosmwasm/issues/1377#issuecomment-1204232193
 /// Copying from here: https://github.com/mars-protocol/cw-coins/blob/main/src/lib.rs
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Coins(pub BTreeMap<String, Uint128>);
 
 impl From<Vec<Coin>> for Coins {

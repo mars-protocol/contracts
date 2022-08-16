@@ -84,13 +84,9 @@ fn test_pagination_on_all_debt_shares_query_works() {
         vec![],
     );
 
-    let config = query_config(&mut app, &mock.credit_manager.clone());
+    let config = query_config(&app, &mock.credit_manager.clone());
 
-    fund_red_bank(
-        &mut app,
-        config.red_bank.clone(),
-        mock_coin_infos.to_coins(1000),
-    );
+    fund_red_bank(&mut app, config.red_bank, mock_coin_infos.to_coins(1000));
 
     let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user_a).unwrap();
     let token_id_a = get_token_id(res);
@@ -170,7 +166,7 @@ fn test_pagination_on_all_debt_shares_query_works() {
             mock.credit_manager.clone(),
             &QueryMsg::AllDebtShares {
                 start_after: None,
-                limit: Some(58 as u32),
+                limit: Some(58u32),
             },
         )
         .unwrap();
@@ -184,7 +180,7 @@ fn test_pagination_on_all_debt_shares_query_works() {
             mock.credit_manager.clone(),
             &QueryMsg::AllDebtShares {
                 start_after: None,
-                limit: Some(2 as u32),
+                limit: Some(2u32),
             },
         )
         .unwrap();
@@ -265,7 +261,7 @@ fn test_pagination_on_all_debt_shares_query_works() {
         .map(|coin| SharesResponseItem {
             token_id: token_id_a.clone(),
             denom: coin.denom.clone(),
-            shares: Uint128::from(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED),
+            shares: DEFAULT_DEBT_UNITS_PER_COIN_BORROWED,
         })
         .collect::<Vec<SharesResponseItem>>();
 
@@ -274,7 +270,7 @@ fn test_pagination_on_all_debt_shares_query_works() {
         .map(|coin| SharesResponseItem {
             token_id: token_id_b.clone(),
             denom: coin.denom.clone(),
-            shares: Uint128::from(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED),
+            shares: DEFAULT_DEBT_UNITS_PER_COIN_BORROWED,
         })
         .collect::<Vec<SharesResponseItem>>();
 
@@ -283,7 +279,7 @@ fn test_pagination_on_all_debt_shares_query_works() {
         .map(|coin| SharesResponseItem {
             token_id: token_id_c.clone(),
             denom: coin.denom.clone(),
-            shares: Uint128::from(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED),
+            shares: DEFAULT_DEBT_UNITS_PER_COIN_BORROWED,
         })
         .collect::<Vec<SharesResponseItem>>();
 

@@ -29,7 +29,7 @@ fn test_owner_set_on_instantiate() {
 
     let res: ConfigResponse = app
         .wrap()
-        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
+        .query_wasm_smart(contract_addr, &QueryMsg::Config {})
         .unwrap();
 
     assert_eq!(owner, res.owner);
@@ -49,14 +49,8 @@ fn test_raises_on_invalid_owner_addr() {
         oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
-    let instantiate_res = app.instantiate_contract(
-        manager_code_id,
-        owner.clone(),
-        &msg,
-        &[],
-        "mock-contract",
-        None,
-    );
+    let instantiate_res =
+        app.instantiate_contract(manager_code_id, owner, &msg, &[], "mock-contract", None);
 
     if instantiate_res.is_ok() {
         panic!("Should have thrown an error");
@@ -88,7 +82,7 @@ fn test_nft_contract_addr_not_set_on_instantiate() {
 
     let res: ConfigResponse = app
         .wrap()
-        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
+        .query_wasm_smart(contract_addr, &QueryMsg::Config {})
         .unwrap();
 
     assert_eq!(res.account_nft, None);
@@ -128,7 +122,7 @@ fn test_allowed_vaults_set_on_instantiate() {
     let vaults_res: Vec<String> = app
         .wrap()
         .query_wasm_smart(
-            contract_addr.clone(),
+            contract_addr,
             &QueryMsg::AllowedVaults {
                 start_after: None,
                 limit: None,
@@ -153,14 +147,8 @@ fn test_raises_on_invalid_vaults_addr() {
         oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
-    let instantiate_res = app.instantiate_contract(
-        manager_code_id,
-        owner.clone(),
-        &msg,
-        &[],
-        "mock-contract",
-        None,
-    );
+    let instantiate_res =
+        app.instantiate_contract(manager_code_id, owner, &msg, &[], "mock-contract", None);
 
     if instantiate_res.is_ok() {
         panic!("Should have thrown an error");
@@ -202,7 +190,7 @@ fn test_allowed_coins_set_on_instantiate() {
     let coins_res: Vec<String> = app
         .wrap()
         .query_wasm_smart(
-            contract_addr.clone(),
+            contract_addr,
             &QueryMsg::AllowedCoins {
                 start_after: None,
                 limit: None,
@@ -229,12 +217,12 @@ fn test_red_bank_set_on_instantiate() {
     };
 
     let contract_addr = app
-        .instantiate_contract(code_id, owner.clone(), &msg, &[], "mock-account-nft", None)
+        .instantiate_contract(code_id, owner, &msg, &[], "mock-account-nft", None)
         .unwrap();
 
     let res: ConfigResponse = app
         .wrap()
-        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
+        .query_wasm_smart(contract_addr, &QueryMsg::Config {})
         .unwrap();
 
     assert_eq!(red_bank_addr, res.red_bank);
@@ -254,14 +242,8 @@ fn test_raises_on_invalid_red_bank_addr() {
         oracle: OracleBase::new("oracle_contract".to_string()),
     };
 
-    let instantiate_res = app.instantiate_contract(
-        manager_code_id,
-        owner.clone(),
-        &msg,
-        &[],
-        "mock-contract",
-        None,
-    );
+    let instantiate_res =
+        app.instantiate_contract(manager_code_id, owner, &msg, &[], "mock-contract", None);
 
     if instantiate_res.is_ok() {
         panic!("Should have thrown an error");
@@ -284,12 +266,12 @@ fn test_oracle_set_on_instantiate() {
     };
 
     let contract_addr = app
-        .instantiate_contract(code_id, owner.clone(), &msg, &[], "mock-account-nft", None)
+        .instantiate_contract(code_id, owner, &msg, &[], "mock-account-nft", None)
         .unwrap();
 
     let res: ConfigResponse = app
         .wrap()
-        .query_wasm_smart(contract_addr.clone(), &QueryMsg::Config {})
+        .query_wasm_smart(contract_addr, &QueryMsg::Config {})
         .unwrap();
 
     assert_eq!(oracle_contract, res.oracle);
@@ -309,14 +291,8 @@ fn test_raises_on_invalid_oracle_addr() {
         oracle: OracleBase::new("%%%INVALID%%%".to_string()),
     };
 
-    let instantiate_res = app.instantiate_contract(
-        manager_code_id,
-        owner.clone(),
-        &msg,
-        &[],
-        "mock-contract",
-        None,
-    );
+    let instantiate_res =
+        app.instantiate_contract(manager_code_id, owner, &msg, &[], "mock-contract", None);
 
     if instantiate_res.is_ok() {
         panic!("Should have thrown an error");

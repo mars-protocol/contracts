@@ -58,7 +58,7 @@ fn test_pagination_on_allowed_coins_query_works() {
     };
 
     let contract_addr = app
-        .instantiate_contract(code_id, owner.clone(), &msg, &[], "mock-contract", None)
+        .instantiate_contract(code_id, owner, &msg, &[], "mock-contract", None)
         .unwrap();
 
     let coins_res: Vec<String> = app
@@ -67,7 +67,7 @@ fn test_pagination_on_allowed_coins_query_works() {
             contract_addr.clone(),
             &QueryMsg::AllowedCoins {
                 start_after: None,
-                limit: Some(58 as u32),
+                limit: Some(58u32),
             },
         )
         .unwrap();
@@ -81,7 +81,7 @@ fn test_pagination_on_allowed_coins_query_works() {
             contract_addr.clone(),
             &QueryMsg::AllowedCoins {
                 start_after: None,
-                limit: Some(2 as u32),
+                limit: Some(2u32),
             },
         )
         .unwrap();
@@ -125,7 +125,7 @@ fn test_pagination_on_allowed_coins_query_works() {
     let coins_res_d: Vec<String> = app
         .wrap()
         .query_wasm_smart(
-            contract_addr.clone(),
+            contract_addr,
             &QueryMsg::AllowedCoins {
                 start_after: Some(coins_res_c.last().unwrap().clone()),
                 limit: None,

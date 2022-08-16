@@ -72,8 +72,8 @@ fn test_only_assets_with_no_debts() {
     assert_eq!(health.total_debts_value, Decimal::zero());
     assert_eq!(health.lqdt_health_factor, None);
     assert_eq!(health.max_ltv_health_factor, None);
-    assert_eq!(health.liquidatable, false);
-    assert_eq!(health.above_max_ltv, false);
+    assert!(!health.liquidatable);
+    assert!(!health.above_max_ltv);
 }
 
 /// Step 1: User deposits 12 luna (100 price) and borrows 2 luna
@@ -113,11 +113,11 @@ fn test_terra_ragnarok() {
     let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
     let token_id = get_token_id(res);
 
-    let config = query_config(&mut app, &mock.credit_manager.clone());
+    let config = query_config(&app, &mock.credit_manager.clone());
 
     fund_red_bank(
         &mut app,
-        config.red_bank.clone(),
+        config.red_bank,
         vec![Coin::new(1000u128, "uluna")],
     );
 
@@ -157,8 +157,8 @@ fn test_terra_ragnarok() {
         health.max_ltv_health_factor,
         Some(assets_value * coin_info.max_ltv / debts_value)
     );
-    assert_eq!(health.liquidatable, false);
-    assert_eq!(health.above_max_ltv, false);
+    assert!(!health.liquidatable);
+    assert!(!health.above_max_ltv);
 
     price_change(
         &mut app,
@@ -178,8 +178,8 @@ fn test_terra_ragnarok() {
     assert_eq!(health.total_debts_value, Decimal::zero());
     assert_eq!(health.lqdt_health_factor, None);
     assert_eq!(health.max_ltv_health_factor, None);
-    assert_eq!(health.liquidatable, false);
-    assert_eq!(health.above_max_ltv, false);
+    assert!(!health.liquidatable);
+    assert!(!health.above_max_ltv);
 }
 
 /// Action: User borrows 100 osmo (at price of 1). Zero deposits.
@@ -208,11 +208,11 @@ fn test_debts_no_assets() {
     let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
     let token_id = get_token_id(res);
 
-    let config = query_config(&mut app, &mock.credit_manager.clone());
+    let config = query_config(&app, &mock.credit_manager.clone());
 
     fund_red_bank(
         &mut app,
-        config.red_bank.clone(),
+        config.red_bank,
         vec![Coin::new(1000u128, coin_info.denom.clone())],
     );
 
@@ -239,8 +239,8 @@ fn test_debts_no_assets() {
     assert_eq!(health.total_debts_value, Decimal::zero());
     assert_eq!(health.lqdt_health_factor, None);
     assert_eq!(health.max_ltv_health_factor, None);
-    assert_eq!(health.liquidatable, false);
-    assert_eq!(health.above_max_ltv, false);
+    assert!(!health.liquidatable);
+    assert!(!health.above_max_ltv);
 }
 
 /// Step 1: User deposits 300 osmo and borrows 50 (at price of 2.3654)
@@ -282,11 +282,11 @@ fn test_cannot_borrow_more_than_healthy() {
     let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
     let token_id = get_token_id(res);
 
-    let config = query_config(&mut app, &mock.credit_manager.clone());
+    let config = query_config(&app, &mock.credit_manager.clone());
 
     fund_red_bank(
         &mut app,
-        config.red_bank.clone(),
+        config.red_bank,
         vec![Coin::new(1000u128, coin_info.denom.clone())],
     );
 
@@ -325,8 +325,8 @@ fn test_cannot_borrow_more_than_healthy() {
         health.max_ltv_health_factor,
         Some(assets_value * coin_info.max_ltv / debts_value)
     );
-    assert_eq!(health.liquidatable, false);
-    assert_eq!(health.above_max_ltv, false);
+    assert!(!health.liquidatable);
+    assert!(!health.above_max_ltv);
 
     app.execute_contract(
         user.clone(),
@@ -365,8 +365,8 @@ fn test_cannot_borrow_more_than_healthy() {
         health.max_ltv_health_factor,
         Some(assets_value * coin_info.max_ltv / debts_value)
     );
-    assert_eq!(health.liquidatable, false);
-    assert_eq!(health.above_max_ltv, false);
+    assert!(!health.liquidatable);
+    assert!(!health.above_max_ltv);
 }
 
 /// Step 1: User deposits 300 osmo (2.3654) and borrows 50 atom (price 10.2)
@@ -414,11 +414,11 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
     let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
     let token_id = get_token_id(res);
 
-    let config = query_config(&mut app, &mock.credit_manager.clone());
+    let config = query_config(&app, &mock.credit_manager.clone());
 
     fund_red_bank(
         &mut app,
-        config.red_bank.clone(),
+        config.red_bank,
         vec![Coin::new(1000u128, "uatom")],
     );
 
@@ -437,8 +437,8 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
     .unwrap();
 
     let health = query_health(&app, &mock.credit_manager, &token_id);
-    assert_eq!(health.liquidatable, false);
-    assert_eq!(health.above_max_ltv, false);
+    assert!(!health.liquidatable);
+    assert!(!health.above_max_ltv);
 
     price_change(
         &mut app,
@@ -450,8 +450,8 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
     );
 
     let health = query_health(&app, &mock.credit_manager, &token_id);
-    assert_eq!(health.liquidatable, false);
-    assert_eq!(health.above_max_ltv, true);
+    assert!(!health.liquidatable);
+    assert!(health.above_max_ltv);
 
     let res = app.execute_contract(
         user.clone(),
@@ -475,8 +475,8 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
     );
 
     let health = query_health(&app, &mock.credit_manager, &token_id);
-    assert_eq!(health.liquidatable, true);
-    assert_eq!(health.above_max_ltv, true);
+    assert!(health.liquidatable);
+    assert!(health.above_max_ltv);
 }
 
 /// Actions: User deposits 300 osmo (5265478965.412365487125 price)
@@ -519,11 +519,11 @@ fn test_assets_and_ltv_lqdt_adjusted_value() {
     let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
     let token_id = get_token_id(res);
 
-    let config = query_config(&mut app, &mock.credit_manager.clone());
+    let config = query_config(&app, &mock.credit_manager.clone());
 
     fund_red_bank(
         &mut app,
-        config.red_bank.clone(),
+        config.red_bank,
         vec![Coin::new(1000u128, "uatom")],
     );
 
@@ -580,8 +580,8 @@ fn test_assets_and_ltv_lqdt_adjusted_value() {
                 .div(uatom_info.price.mul(borrowed_amount_dec + Decimal::one()))
         )
     );
-    assert_eq!(health.liquidatable, false);
-    assert_eq!(health.above_max_ltv, false);
+    assert!(!health.liquidatable);
+    assert!(!health.above_max_ltv);
 }
 
 /// User A: Borrows 30 osmo
@@ -632,7 +632,7 @@ fn test_debt_value() {
     let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user_b).unwrap();
     let token_id_b = get_token_id(res);
 
-    let config = query_config(&mut app, &mock.credit_manager.clone());
+    let config = query_config(&app, &mock.credit_manager.clone());
 
     fund_red_bank(
         &mut app,
@@ -660,7 +660,7 @@ fn test_debt_value() {
     .unwrap();
 
     let interim_red_bank_debt = query_red_bank_debt(
-        &mut app,
+        &app,
         &mock.credit_manager,
         &config.red_bank,
         &uatom_info.denom,
@@ -689,11 +689,11 @@ fn test_debt_value() {
     assert_eq!(position_a.debt_shares.len(), 2);
 
     let health = query_health(&app, &mock.credit_manager, &token_id_a);
-    assert_eq!(health.above_max_ltv, false);
-    assert_eq!(health.liquidatable, false);
+    assert!(!health.above_max_ltv);
+    assert!(!health.liquidatable);
 
     let red_bank_atom_debt = query_red_bank_debt(
-        &mut app,
+        &app,
         &mock.credit_manager,
         &config.red_bank,
         &uatom_info.denom,
@@ -768,7 +768,7 @@ fn test_debt_value() {
     );
 }
 
-fn price_change(app: &mut BasicApp, mock: &MockEnv, coin: CoinPrice) -> () {
+fn price_change(app: &mut BasicApp, mock: &MockEnv, coin: CoinPrice) {
     app.execute_contract(
         Addr::unchecked("anyone"),
         mock.oracle.clone(),
@@ -778,9 +778,6 @@ fn price_change(app: &mut BasicApp, mock: &MockEnv, coin: CoinPrice) -> () {
     .unwrap();
 }
 
-fn find_by_denom<'a>(denom: &'a str, shares: &'a Vec<DebtSharesValue>) -> &'a DebtSharesValue {
-    shares
-        .iter()
-        .find(|item| item.denom == denom.to_string())
-        .unwrap()
+fn find_by_denom<'a>(denom: &'a str, shares: &'a [DebtSharesValue]) -> &'a DebtSharesValue {
+    shares.iter().find(|item| item.denom == *denom).unwrap()
 }

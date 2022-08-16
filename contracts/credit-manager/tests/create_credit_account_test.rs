@@ -100,7 +100,7 @@ fn test_create_credit_account() {
         .query_wasm_smart(
             config_res.account_nft.unwrap(),
             &NftQueryMsg::OwnerOf {
-                token_id: token_id.to_string(),
+                token_id,
                 include_expired: None,
             },
         )

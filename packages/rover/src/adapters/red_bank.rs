@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use mock_red_bank::msg::{ExecuteMsg, QueryMsg, UserAssetDebtResponse};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct RedBankBase<T>(T);
 
 impl<T> RedBankBase<T> {

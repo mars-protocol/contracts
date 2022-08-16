@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::adapters::{OracleUnchecked, RedBankUnchecked};
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
 pub struct InstantiateMsg {
     /// The address with privileged access to update config
     pub owner: String,
@@ -18,7 +18,7 @@ pub struct InstantiateMsg {
 }
 
 /// Used when you want to update fields on Instantiate config
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug, Default)]
 pub struct ConfigUpdates {
     pub account_nft: Option<String>,
     pub owner: Option<String>,
