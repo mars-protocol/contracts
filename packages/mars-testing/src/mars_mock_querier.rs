@@ -5,10 +5,12 @@ use cosmwasm_std::{
     SystemResult, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
-use osmo_bindings::{OsmosisQuery, PoolStateResponse, SpotPriceResponse, Swap};
+use osmo_bindings::{
+    ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Swap,
+};
 
 use crate::mock_address_provider;
-use crate::osmosis_querier::OsmosisQuerier;
+use crate::osmosis_querier::{OsmosisQuerier, PriceKey};
 use mars_outpost::{address_provider, incentives, ma_token, oracle};
 
 use super::{
@@ -114,6 +116,21 @@ impl MarsMockQuerier {
 
     pub fn set_spot_price(&mut self, swap: Swap, spot_price: SpotPriceResponse) {
         self.osmosis_querier.spot_prices.insert(swap.into(), spot_price);
+    }
+
+    pub fn set_twap_price(
+        &mut self,
+        id: u64,
+        quote_asset_denom: &str,
+        base_asset_denom: &str,
+        twap_price: ArithmeticTwapToNowResponse,
+    ) {
+        let price_key = PriceKey {
+            pool_id: id,
+            denom_in: base_asset_denom.to_string(),
+            denom_out: quote_asset_denom.to_string(),
+        };
+        self.osmosis_querier.twap_prices.insert(price_key, twap_price);
     }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {

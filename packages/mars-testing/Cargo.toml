@@ -35,4 +35,5 @@ schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = "1.0.31"
 
-osmo-bindings = { git = "https://github.com/osmosis-labs/bindings", tag = "v0.6.0" }
+# FIXME: update with new tag when available
+osmo-bindings = { git = "https://github.com/osmosis-labs/bindings" }

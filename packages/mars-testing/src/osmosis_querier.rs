@@ -1,17 +1,19 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
-use osmo_bindings::{OsmosisQuery, PoolStateResponse, SpotPriceResponse, Swap};
+use osmo_bindings::{
+    ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Swap,
+};
 
 // NOTE: We can't use osmo_bindings::Swap (as key) for HashMap because it doesn't implement Hash
-#[derive(Eq, PartialEq, Hash, Clone)]
-pub struct SpotPriceKey {
+#[derive(Eq, PartialEq, Hash, Clone, Debug)]
+pub struct PriceKey {
     pub pool_id: u64,
     pub denom_in: String,
     pub denom_out: String,
 }
 
-impl From<Swap> for SpotPriceKey {
+impl From<Swap> for PriceKey {
     fn from(swap: Swap) -> Self {
         Self {
             pool_id: swap.pool_id,
@@ -24,7 +26,8 @@ impl From<Swap> for SpotPriceKey {
 #[derive(Clone, Default)]
 pub struct OsmosisQuerier {
     pub pools: HashMap<u64, PoolStateResponse>,
-    pub spot_prices: HashMap<SpotPriceKey, SpotPriceResponse>,
+    pub spot_prices: HashMap<PriceKey, SpotPriceResponse>,
+    pub twap_prices: HashMap<PriceKey, ArithmeticTwapToNowResponse>,
 }
 
 impl OsmosisQuerier {
@@ -51,6 +54,29 @@ impl OsmosisQuerier {
                 })
                 .into(),
             },
+            OsmosisQuery::ArithmeticTwapToNow {
+                id,
+                quote_asset_denom,
+                base_asset_denom,
+                ..
+            } => {
+                let price_key = PriceKey {
+                    pool_id: id,
+                    denom_in: base_asset_denom,
+                    denom_out: quote_asset_denom,
+                };
+                match self.twap_prices.get(&price_key) {
+                    Some(twap_price_response) => to_binary(&twap_price_response).into(),
+                    None => Err(SystemError::InvalidRequest {
+                        error: format!(
+                            "ArithmeticTwapToNowResponse is not found for price key: {:?}",
+                            price_key
+                        ),
+                        request: Default::default(),
+                    })
+                    .into(),
+                }
+            }
             _ => {
                 panic!("[mock]: Unsupported Osmosis query");
             }
