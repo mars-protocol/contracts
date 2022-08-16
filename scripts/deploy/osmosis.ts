@@ -1,7 +1,7 @@
 import { ExecuteResult, InstantiateResult, SigningCosmWasmClient, UploadResult, SigningCosmWasmClientOptions } from "@cosmjs/cosmwasm-stargate";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { calculateFee, GasPrice, StdFee, Coin } from "@cosmjs/stargate";
-
+import 'dotenv/config.js'
 import { Event } from "@cosmjs/stargate/build/logs";
 import * as fs from "fs";
 import {
@@ -12,13 +12,11 @@ import {
 // TO RUN, SET THE DESIRED NETWORK BELOW AND RUN
 // npm run deploy
 
-console.log(process.env)
-
 requiredEnvironmentVariables([
   'NETWORK_TO_DEPLOY_TO',
   'MARS_DENOM',
   'OSMOSIS_DENOM',
-  'PREFIX',
+  'CHAIN_PREFIX',
   'SAFETY_FUND_FEE_SHARE',
   'CHANNEL_ID',
   'TIMEOUT_REVISION',
@@ -286,15 +284,15 @@ async function main() {
 
     msg = { 
         "owner": deployerAddress, 
-        "prefix" : PREFIX,
+        "prefix" : String(PREFIX),
         "address_provider": network.addressProviderContractAddress, 
         "safety_tax_rate": String(SAFETY_FUND_FEE_SHARE),
-        "safety_fund_denom" : SAFETY_FUND_DENOM,
-        "fee_collector_denom" : FEE_COLLECTOR_DENOM,
-        "channel_id" : CHANNEL_ID,
-        "timeout_revision": TIMEOUT_REVISION, // todo update when larrys updates merged
-        "timeout_blocks" : REWARD_COLLECTOR_TIMEOUT_BLOCKS,
-        "timeout_seconds" : REWARD_COLLECTOR_TIMEOUT_SECONDS
+        "safety_fund_denom" : String(SAFETY_FUND_DENOM),
+        "fee_collector_denom" : String(FEE_COLLECTOR_DENOM),
+        "channel_id" : String(CHANNEL_ID),
+        "timeout_revision": Number(TIMEOUT_REVISION), 
+        "timeout_blocks" : Number(REWARD_COLLECTOR_TIMEOUT_BLOCKS),
+        "timeout_seconds" : Number(REWARD_COLLECTOR_TIMEOUT_SECONDS)
     } 
 
     const { contractAddress: protocolRewardsCollectorContractAddress } = await client.instantiate(
