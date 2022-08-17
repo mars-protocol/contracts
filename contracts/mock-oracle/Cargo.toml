@@ -2,7 +2,7 @@
 name = "mock-oracle"
 version = "1.0.0"
 authors = ["larry_0x <larry@delphidigital.io>", "grod220 <gabe.r@delphilabs.io>"]
-edition = "2018"
+edition = "2021"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/mars-protocol/rover"
 

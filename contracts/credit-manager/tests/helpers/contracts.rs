@@ -16,7 +16,7 @@ pub fn mock_app() -> App {
     App::default()
 }
 
-pub fn mock_contract() -> Box<dyn Contract<Empty>> {
+pub fn mock_rover_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(execute, instantiate, query);
     Box::new(contract)
 }

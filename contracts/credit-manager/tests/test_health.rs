@@ -1,19 +1,14 @@
 use std::ops::{Add, Div, Mul};
 
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
-use cw_multi_test::{App, BasicApp, Executor};
 
 use credit_manager::borrow::DEFAULT_DEBT_UNITS_PER_COIN_BORROWED;
-use mock_oracle::msg::{CoinPrice, ExecuteMsg as OracleExecuteMsg};
+use mock_oracle::msg::CoinPrice;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{Borrow, Deposit};
-use rover::msg::query::{CoinShares, DebtSharesValue};
-use rover::msg::{ExecuteMsg, QueryMsg};
+use rover::msg::query::DebtSharesValue;
 
-use crate::helpers::{
-    assert_err, fund_red_bank, get_token_id, mock_app, mock_create_credit_account, query_config,
-    query_health, query_position, query_red_bank_debt, setup_credit_manager, CoinInfo, MockEnv,
-};
+use crate::helpers::{assert_err, AccountToFund, CoinInfo, MockEnv};
 
 pub mod helpers;
 
@@ -24,14 +19,6 @@ pub mod helpers;
 ///         above_max_ltv: false
 #[test]
 fn test_only_assets_with_no_debts() {
-    let user = Addr::unchecked("user");
-    let mut app = App::new(|router, _, storage| {
-        router
-            .bank
-            .init_balance(storage, &user, vec![Coin::new(300u128, "uosmo")])
-            .unwrap();
-    });
-
     let coin_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(25u128, 2).unwrap(),
@@ -39,34 +26,31 @@ fn test_only_assets_with_no_debts() {
         liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
     };
 
-    let mock = setup_credit_manager(
-        &mut app,
-        &Addr::unchecked("owner"),
-        vec![coin_info.clone()],
-        vec![],
-    );
-
-    let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
-    let token_id = get_token_id(res);
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[coin_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![Coin::new(300u128, coin_info.denom.clone())],
+        })
+        .build()
+        .unwrap();
+    let token_id = mock.create_credit_account(&user).unwrap();
 
     let deposit_amount = Uint128::from(300u128);
-
-    app.execute_contract(
-        user.clone(),
-        mock.credit_manager.clone(),
-        &ExecuteMsg::UpdateCreditAccount {
-            token_id: token_id.clone(),
-            actions: vec![Deposit(coin_info.to_coin(deposit_amount))],
-        },
-        &[Coin::new(deposit_amount.into(), "uosmo")],
+    mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![Deposit(coin_info.to_coin(deposit_amount))],
+        &[Coin::new(deposit_amount.into(), coin_info.denom.clone())],
     )
     .unwrap();
 
-    let position = query_position(&app, &mock.credit_manager, &token_id);
+    let position = mock.query_position(&token_id);
     assert_eq!(position.coins.len(), 1);
     assert_eq!(position.debt_shares.len(), 0);
 
-    let health = query_health(&app, &mock.credit_manager, &token_id);
+    let health = mock.query_health(&token_id);
     let assets_value = coin_info.price * Decimal::from_atomics(deposit_amount, 0).unwrap();
     assert_eq!(health.total_assets_value, assets_value);
     assert_eq!(health.total_debts_value, Decimal::zero());
@@ -88,14 +72,6 @@ fn test_only_assets_with_no_debts() {
 ///         above_max_ltv: false
 #[test]
 fn test_terra_ragnarok() {
-    let user = Addr::unchecked("user");
-    let mut app = App::new(|router, _, storage| {
-        router
-            .bank
-            .init_balance(storage, &user, vec![Coin::new(300u128, "uluna")])
-            .unwrap();
-    });
-
     let coin_info = CoinInfo {
         denom: "uluna".to_string(),
         price: Decimal::from_atomics(100u128, 0).unwrap(),
@@ -103,45 +79,36 @@ fn test_terra_ragnarok() {
         liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
     };
 
-    let mock = setup_credit_manager(
-        &mut app,
-        &Addr::unchecked("owner"),
-        vec![coin_info.clone()],
-        vec![],
-    );
-
-    let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
-    let token_id = get_token_id(res);
-
-    let config = query_config(&app, &mock.credit_manager.clone());
-
-    fund_red_bank(
-        &mut app,
-        config.red_bank,
-        vec![Coin::new(1000u128, "uluna")],
-    );
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[coin_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![Coin::new(300u128, coin_info.denom.clone())],
+        })
+        .build()
+        .unwrap();
+    let token_id = mock.create_credit_account(&user).unwrap();
 
     let deposit_amount = Uint128::from(12u128);
     let borrow_amount = Uint128::from(2u128);
-    app.execute_contract(
-        user.clone(),
-        mock.credit_manager.clone(),
-        &ExecuteMsg::UpdateCreditAccount {
-            token_id: token_id.clone(),
-            actions: vec![
-                Deposit(coin_info.to_coin(deposit_amount)),
-                Borrow(coin_info.to_coin(borrow_amount)),
-            ],
-        },
-        &[Coin::new(deposit_amount.into(), "uluna")],
+
+    mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![
+            Deposit(coin_info.to_coin(deposit_amount)),
+            Borrow(coin_info.to_coin(borrow_amount)),
+        ],
+        &[Coin::new(deposit_amount.into(), coin_info.denom.clone())],
     )
     .unwrap();
 
-    let position = query_position(&app, &mock.credit_manager, &token_id);
+    let position = mock.query_position(&token_id);
     assert_eq!(position.coins.len(), 1);
     assert_eq!(position.debt_shares.len(), 1);
 
-    let health = query_health(&app, &mock.credit_manager, &token_id);
+    let health = mock.query_health(&token_id);
     let assets_value =
         coin_info.price * Decimal::from_atomics(deposit_amount + borrow_amount, 0).unwrap();
     assert_eq!(health.total_assets_value, assets_value);
@@ -160,20 +127,16 @@ fn test_terra_ragnarok() {
     assert!(!health.liquidatable);
     assert!(!health.above_max_ltv);
 
-    price_change(
-        &mut app,
-        &mock,
-        CoinPrice {
-            denom: coin_info.denom,
-            price: Decimal::zero(),
-        },
-    );
+    mock.price_change(CoinPrice {
+        denom: coin_info.denom,
+        price: Decimal::zero(),
+    });
 
-    let position = query_position(&app, &mock.credit_manager, &token_id);
+    let position = mock.query_position(&token_id);
     assert_eq!(position.coins.len(), 1);
     assert_eq!(position.debt_shares.len(), 1);
 
-    let health = query_health(&app, &mock.credit_manager, &token_id);
+    let health = mock.query_health(&token_id);
     assert_eq!(health.total_assets_value, Decimal::zero());
     assert_eq!(health.total_debts_value, Decimal::zero());
     assert_eq!(health.lqdt_health_factor, None);
@@ -189,52 +152,39 @@ fn test_terra_ragnarok() {
 ///         above_max_ltv: true
 #[test]
 fn test_debts_no_assets() {
-    let user = Addr::unchecked("user");
-    let mut app = mock_app();
-
     let coin_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::one(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
     };
-
-    let mock = setup_credit_manager(
-        &mut app,
-        &Addr::unchecked("owner"),
-        vec![coin_info.clone()],
-        vec![],
-    );
-    let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
-    let token_id = get_token_id(res);
-
-    let config = query_config(&app, &mock.credit_manager.clone());
-
-    fund_red_bank(
-        &mut app,
-        config.red_bank,
-        vec![Coin::new(1000u128, coin_info.denom.clone())],
-    );
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[coin_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![Coin::new(300u128, coin_info.denom.clone())],
+        })
+        .build()
+        .unwrap();
+    let token_id = mock.create_credit_account(&user).unwrap();
 
     let borrowed_amount = Uint128::from(100u128);
-    let res = app.execute_contract(
-        user.clone(),
-        mock.credit_manager.clone(),
-        &ExecuteMsg::UpdateCreditAccount {
-            token_id: token_id.clone(),
-            actions: vec![Borrow(coin_info.to_coin(borrowed_amount))],
-        },
+    let res = mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![Borrow(coin_info.to_coin(borrowed_amount))],
         &[],
     );
 
     assert_err(res, ContractError::AboveMaxLTV);
 
-    let position = query_position(&app, &mock.credit_manager, &token_id);
+    let position = mock.query_position(&token_id);
     assert_eq!(position.token_id, token_id);
     assert_eq!(position.coins.len(), 0);
     assert_eq!(position.debt_shares.len(), 0);
 
-    let health = query_health(&app, &mock.credit_manager, &token_id);
+    let health = mock.query_health(&token_id);
     assert_eq!(health.total_assets_value, Decimal::zero());
     assert_eq!(health.total_debts_value, Decimal::zero());
     assert_eq!(health.lqdt_health_factor, None);
@@ -257,14 +207,6 @@ fn test_debts_no_assets() {
 ///         AboveMaxLtv error thrown
 #[test]
 fn test_cannot_borrow_more_than_healthy() {
-    let user = Addr::unchecked("user");
-    let mut app = App::new(|router, _, storage| {
-        router
-            .bank
-            .init_balance(storage, &user, vec![Coin::new(300u128, "uosmo")])
-            .unwrap();
-    });
-
     let coin_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(23654u128, 4).unwrap(),
@@ -272,34 +214,24 @@ fn test_cannot_borrow_more_than_healthy() {
         liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
     };
 
-    let mock = setup_credit_manager(
-        &mut app,
-        &Addr::unchecked("owner"),
-        vec![coin_info.clone()],
-        vec![],
-    );
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[coin_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![Coin::new(300u128, coin_info.denom.clone())],
+        })
+        .build()
+        .unwrap();
+    let token_id = mock.create_credit_account(&user).unwrap();
 
-    let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
-    let token_id = get_token_id(res);
-
-    let config = query_config(&app, &mock.credit_manager.clone());
-
-    fund_red_bank(
-        &mut app,
-        config.red_bank,
-        vec![Coin::new(1000u128, coin_info.denom.clone())],
-    );
-
-    app.execute_contract(
-        user.clone(),
-        mock.credit_manager.clone(),
-        &ExecuteMsg::UpdateCreditAccount {
-            token_id: token_id.clone(),
-            actions: vec![
-                Deposit(coin_info.to_coin(Uint128::from(300u128))),
-                Borrow(coin_info.to_coin(Uint128::from(50u128))),
-            ],
-        },
+    mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![
+            Deposit(coin_info.to_coin(Uint128::from(300u128))),
+            Borrow(coin_info.to_coin(Uint128::from(50u128))),
+        ],
         &[Coin::new(
             Uint128::from(300u128).into(),
             coin_info.denom.clone(),
@@ -307,12 +239,12 @@ fn test_cannot_borrow_more_than_healthy() {
     )
     .unwrap();
 
-    let position = query_position(&app, &mock.credit_manager, &token_id);
+    let position = mock.query_position(&token_id);
     assert_eq!(position.token_id, token_id);
     assert_eq!(position.coins.len(), 1);
     assert_eq!(position.debt_shares.len(), 1);
 
-    let health = query_health(&app, &mock.credit_manager, &token_id);
+    let health = mock.query_health(&token_id);
     let assets_value = Decimal::from_atomics(82789u128, 2).unwrap();
     assert_eq!(health.total_assets_value, assets_value);
     let debts_value = Decimal::from_atomics(1206354u128, 4).unwrap();
@@ -328,31 +260,25 @@ fn test_cannot_borrow_more_than_healthy() {
     assert!(!health.liquidatable);
     assert!(!health.above_max_ltv);
 
-    app.execute_contract(
-        user.clone(),
-        mock.credit_manager.clone(),
-        &ExecuteMsg::UpdateCreditAccount {
-            token_id: token_id.clone(),
-            actions: vec![Borrow(coin_info.to_coin(Uint128::from(100u128)))],
-        },
+    mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![Borrow(coin_info.to_coin(Uint128::from(100u128)))],
         &[],
     )
     .unwrap();
 
-    let res = app.execute_contract(
-        user.clone(),
-        mock.credit_manager.clone(),
-        &ExecuteMsg::UpdateCreditAccount {
-            token_id: token_id.clone(),
-            actions: vec![Borrow(coin_info.to_coin(Uint128::from(150u128)))],
-        },
+    let res = mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![Borrow(coin_info.to_coin(Uint128::from(150u128)))],
         &[],
     );
 
     assert_err(res, ContractError::AboveMaxLTV);
 
     // All valid on step 2 as well (meaning step 3 did not go through)
-    let health = query_health(&app, &mock.credit_manager, &token_id);
+    let health = mock.query_health(&token_id);
     let assets_value = Decimal::from_atomics(106443u128, 2).unwrap();
     assert_eq!(health.total_assets_value, assets_value);
     let debts_value = Decimal::from_atomics(3595408u128, 4).unwrap();
@@ -382,21 +308,12 @@ fn test_cannot_borrow_more_than_healthy() {
 ///         above_max_ltv: true
 #[test]
 fn test_cannot_borrow_more_but_not_liquidatable() {
-    let user = Addr::unchecked("user");
-    let mut app = App::new(|router, _, storage| {
-        router
-            .bank
-            .init_balance(storage, &user, vec![Coin::new(300u128, "uosmo")])
-            .unwrap();
-    });
-
     let uosmo_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(23654u128, 4).unwrap(),
         max_ltv: Decimal::from_atomics(5u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
     };
-
     let uatom_info = CoinInfo {
         denom: "uatom".to_string(),
         price: Decimal::from_atomics(102u128, 1).unwrap(),
@@ -404,77 +321,56 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
         liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
     };
 
-    let mock = setup_credit_manager(
-        &mut app,
-        &Addr::unchecked("owner"),
-        vec![uosmo_info.clone(), uatom_info.clone()],
-        vec![],
-    );
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![Coin::new(300u128, uosmo_info.denom.clone())],
+        })
+        .build()
+        .unwrap();
+    let token_id = mock.create_credit_account(&user).unwrap();
 
-    let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
-    let token_id = get_token_id(res);
-
-    let config = query_config(&app, &mock.credit_manager.clone());
-
-    fund_red_bank(
-        &mut app,
-        config.red_bank,
-        vec![Coin::new(1000u128, "uatom")],
-    );
-
-    app.execute_contract(
-        user.clone(),
-        mock.credit_manager.clone(),
-        &ExecuteMsg::UpdateCreditAccount {
-            token_id: token_id.clone(),
-            actions: vec![
-                Deposit(uosmo_info.to_coin(Uint128::from(300u128))),
-                Borrow(uatom_info.to_coin(Uint128::from(50u128))),
-            ],
-        },
-        &[Coin::new(300, "uosmo")],
+    mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![
+            Deposit(uosmo_info.to_coin(Uint128::from(300u128))),
+            Borrow(uatom_info.to_coin(Uint128::from(50u128))),
+        ],
+        &[Coin::new(300, uosmo_info.denom)],
     )
     .unwrap();
 
-    let health = query_health(&app, &mock.credit_manager, &token_id);
+    let health = mock.query_health(&token_id);
     assert!(!health.liquidatable);
     assert!(!health.above_max_ltv);
 
-    price_change(
-        &mut app,
-        &mock,
-        CoinPrice {
-            denom: uatom_info.denom.clone(),
-            price: Decimal::from_atomics(24u128, 0).unwrap(),
-        },
-    );
+    mock.price_change(CoinPrice {
+        denom: uatom_info.denom.clone(),
+        price: Decimal::from_atomics(24u128, 0).unwrap(),
+    });
 
-    let health = query_health(&app, &mock.credit_manager, &token_id);
+    let health = mock.query_health(&token_id);
     assert!(!health.liquidatable);
     assert!(health.above_max_ltv);
 
-    let res = app.execute_contract(
-        user.clone(),
-        mock.credit_manager.clone(),
-        &ExecuteMsg::UpdateCreditAccount {
-            token_id: token_id.clone(),
-            actions: vec![Borrow(uatom_info.to_coin(Uint128::from(2u128)))],
-        },
+    let res = mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![Borrow(uatom_info.to_coin(Uint128::from(2u128)))],
         &[],
     );
 
     assert_err(res, ContractError::AboveMaxLTV);
 
-    price_change(
-        &mut app,
-        &mock,
-        CoinPrice {
-            denom: uatom_info.denom,
-            price: Decimal::from_atomics(35u128, 0).unwrap(),
-        },
-    );
+    mock.price_change(CoinPrice {
+        denom: uatom_info.denom,
+        price: Decimal::from_atomics(35u128, 0).unwrap(),
+    });
 
-    let health = query_health(&app, &mock.credit_manager, &token_id);
+    let health = mock.query_health(&token_id);
     assert!(health.liquidatable);
     assert!(health.above_max_ltv);
 }
@@ -487,21 +383,12 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
 ///         above_max_ltv: false
 #[test]
 fn test_assets_and_ltv_lqdt_adjusted_value() {
-    let user = Addr::unchecked("user");
-    let mut app = App::new(|router, _, storage| {
-        router
-            .bank
-            .init_balance(storage, &user, vec![Coin::new(300u128, "uosmo")])
-            .unwrap();
-    });
-
     let uosmo_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(5265478965412365487125u128, 12).unwrap(),
         max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
     };
-
     let uatom_info = CoinInfo {
         denom: "uatom".to_string(),
         price: Decimal::from_atomics(7012302005u128, 3).unwrap(),
@@ -509,47 +396,36 @@ fn test_assets_and_ltv_lqdt_adjusted_value() {
         liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
     };
 
-    let mock = setup_credit_manager(
-        &mut app,
-        &Addr::unchecked("owner"),
-        vec![uosmo_info.clone(), uatom_info.clone()],
-        vec![],
-    );
-
-    let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user).unwrap();
-    let token_id = get_token_id(res);
-
-    let config = query_config(&app, &mock.credit_manager.clone());
-
-    fund_red_bank(
-        &mut app,
-        config.red_bank,
-        vec![Coin::new(1000u128, "uatom")],
-    );
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![Coin::new(300u128, uosmo_info.denom.clone())],
+        })
+        .build()
+        .unwrap();
+    let token_id = mock.create_credit_account(&user).unwrap();
 
     let deposit_amount = Uint128::from(298u128);
     let borrowed_amount = Uint128::from(49u128);
-
-    app.execute_contract(
-        user.clone(),
-        mock.credit_manager.clone(),
-        &ExecuteMsg::UpdateCreditAccount {
-            token_id: token_id.clone(),
-            actions: vec![
-                Deposit(uosmo_info.to_coin(deposit_amount)),
-                Borrow(uatom_info.to_coin(borrowed_amount)),
-            ],
-        },
-        &[Coin::new(deposit_amount.into(), "uosmo")],
+    mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![
+            Deposit(uosmo_info.to_coin(deposit_amount)),
+            Borrow(uatom_info.to_coin(borrowed_amount)),
+        ],
+        &[Coin::new(deposit_amount.into(), uosmo_info.denom.clone())],
     )
     .unwrap();
 
-    let position = query_position(&app, &mock.credit_manager, &token_id);
+    let position = mock.query_position(&token_id);
     assert_eq!(position.token_id, token_id);
     assert_eq!(position.coins.len(), 2);
     assert_eq!(position.debt_shares.len(), 1);
 
-    let health = query_health(&app, &mock.credit_manager, &token_id);
+    let health = mock.query_health(&token_id);
     let deposit_amount_dec = Decimal::from_atomics(deposit_amount, 0).unwrap();
     let borrowed_amount_dec = Decimal::from_atomics(borrowed_amount, 0).unwrap();
     assert_eq!(
@@ -592,26 +468,12 @@ fn test_assets_and_ltv_lqdt_adjusted_value() {
 /// Test validates User A's debt value & health factors
 #[test]
 fn test_debt_value() {
-    let user_a = Addr::unchecked("user_a");
-    let user_b = Addr::unchecked("user_b");
-    let mut app = App::new(|router, _, storage| {
-        router
-            .bank
-            .init_balance(storage, &user_a, vec![Coin::new(300u128, "uosmo")])
-            .unwrap();
-        router
-            .bank
-            .init_balance(storage, &user_b, vec![Coin::new(140u128, "uosmo")])
-            .unwrap();
-    });
-
     let uosmo_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(5265478965412365487125u128, 12).unwrap(),
         max_ltv: Decimal::from_atomics(3u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(5u128, 1).unwrap(),
     };
-
     let uatom_info = CoinInfo {
         denom: "uatom".to_string(),
         price: Decimal::from_atomics(7012302005u128, 3).unwrap(),
@@ -619,85 +481,71 @@ fn test_debt_value() {
         liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
     };
 
-    let mock = setup_credit_manager(
-        &mut app,
-        &Addr::unchecked("owner"),
-        vec![uosmo_info.clone(), uatom_info.clone()],
-        vec![],
-    );
-
-    let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user_a).unwrap();
-    let token_id_a = get_token_id(res);
-
-    let res = mock_create_credit_account(&mut app, &mock.credit_manager, &user_b).unwrap();
-    let token_id_b = get_token_id(res);
-
-    let config = query_config(&app, &mock.credit_manager.clone());
-
-    fund_red_bank(
-        &mut app,
-        config.red_bank.clone(),
-        vec![Coin::new(1000u128, "uatom"), Coin::new(1000u128, "uosmo")],
-    );
+    let user_a = Addr::unchecked("user_a");
+    let user_b = Addr::unchecked("user_b");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user_a.clone(),
+            funds: vec![Coin::new(300u128, uosmo_info.denom.clone())],
+        })
+        .fund_account(AccountToFund {
+            addr: user_b.clone(),
+            funds: vec![Coin::new(140u128, uosmo_info.denom.clone())],
+        })
+        .build()
+        .unwrap();
+    let token_id_a = mock.create_credit_account(&user_a).unwrap();
+    let token_id_b = mock.create_credit_account(&user_b).unwrap();
 
     let user_a_deposit_amount_osmo = Uint128::from(298u128);
     let user_a_borrowed_amount_atom = Uint128::from(49u128);
     let user_a_borrowed_amount_osmo = Uint128::from(30u128);
 
-    app.execute_contract(
-        user_a.clone(),
-        mock.credit_manager.clone(),
-        &ExecuteMsg::UpdateCreditAccount {
-            token_id: token_id_a.clone(),
-            actions: vec![
-                Borrow(uatom_info.to_coin(user_a_borrowed_amount_atom)),
-                Borrow(uosmo_info.to_coin(user_a_borrowed_amount_osmo)),
-                Deposit(uosmo_info.to_coin(user_a_deposit_amount_osmo)),
-            ],
-        },
-        &[Coin::new(user_a_deposit_amount_osmo.into(), "uosmo")],
+    mock.update_credit_account(
+        &token_id_a,
+        &user_a,
+        vec![
+            Borrow(uatom_info.to_coin(user_a_borrowed_amount_atom)),
+            Borrow(uosmo_info.to_coin(user_a_borrowed_amount_osmo)),
+            Deposit(uosmo_info.to_coin(user_a_deposit_amount_osmo)),
+        ],
+        &[Coin::new(
+            user_a_deposit_amount_osmo.into(),
+            uosmo_info.denom.clone(),
+        )],
     )
     .unwrap();
 
-    let interim_red_bank_debt = query_red_bank_debt(
-        &app,
-        &mock.credit_manager,
-        &config.red_bank,
-        &uatom_info.denom,
-    );
+    let interim_red_bank_debt = mock.query_red_bank_debt(&uatom_info.denom);
 
     let user_b_deposit_amount = Uint128::from(101u128);
     let user_b_borrowed_amount_atom = Uint128::from(24u128);
 
-    app.execute_contract(
-        user_b.clone(),
-        mock.credit_manager.clone(),
-        &ExecuteMsg::UpdateCreditAccount {
-            token_id: token_id_b.clone(),
-            actions: vec![
-                Borrow(uatom_info.to_coin(user_b_borrowed_amount_atom)),
-                Deposit(uosmo_info.to_coin(user_b_deposit_amount)),
-            ],
-        },
-        &[Coin::new(user_b_deposit_amount.into(), "uosmo")],
+    mock.update_credit_account(
+        &token_id_b,
+        &user_b,
+        vec![
+            Borrow(uatom_info.to_coin(user_b_borrowed_amount_atom)),
+            Deposit(uosmo_info.to_coin(user_b_deposit_amount)),
+        ],
+        &[Coin::new(
+            user_b_deposit_amount.into(),
+            uosmo_info.denom.clone(),
+        )],
     )
     .unwrap();
 
-    let position_a = query_position(&app, &mock.credit_manager, &token_id_a);
+    let position_a = mock.query_position(&token_id_a);
     assert_eq!(position_a.token_id, token_id_a);
     assert_eq!(position_a.coins.len(), 2);
     assert_eq!(position_a.debt_shares.len(), 2);
 
-    let health = query_health(&app, &mock.credit_manager, &token_id_a);
+    let health = mock.query_health(&token_id_a);
     assert!(!health.above_max_ltv);
     assert!(!health.liquidatable);
 
-    let red_bank_atom_debt = query_red_bank_debt(
-        &app,
-        &mock.credit_manager,
-        &config.red_bank,
-        &uatom_info.denom,
-    );
+    let red_bank_atom_debt = mock.query_red_bank_debt(&uatom_info.denom);
 
     let user_a_debt_shares_atom =
         user_a_borrowed_amount_atom.mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED);
@@ -706,7 +554,7 @@ fn test_debt_value() {
         find_by_denom(&uatom_info.denom, &position_a.debt_shares).shares
     );
 
-    let position_b = query_position(&app, &mock.credit_manager, &token_id_b);
+    let position_b = mock.query_position(&token_id_b);
     let user_b_debt_shares_atom = user_a_debt_shares_atom
         .multiply_ratio(user_b_borrowed_amount_atom, interim_red_bank_debt.amount);
     assert_eq!(
@@ -714,13 +562,7 @@ fn test_debt_value() {
         find_by_denom(&uatom_info.denom, &position_b.debt_shares).shares
     );
 
-    let red_bank_atom_res: CoinShares = app
-        .wrap()
-        .query_wasm_smart(
-            &mock.credit_manager,
-            &QueryMsg::TotalDebtShares(uatom_info.denom.clone()),
-        )
-        .unwrap();
+    let red_bank_atom_res = mock.query_total_debt_shares(&uatom_info.denom);
 
     assert_eq!(
         red_bank_atom_res.shares,
@@ -766,16 +608,6 @@ fn test_debt_value() {
         health.max_ltv_health_factor,
         Some(ltv_adjusted_assets_value.div(total_debt_value))
     );
-}
-
-fn price_change(app: &mut BasicApp, mock: &MockEnv, coin: CoinPrice) {
-    app.execute_contract(
-        Addr::unchecked("anyone"),
-        mock.oracle.clone(),
-        &OracleExecuteMsg::ChangePrice(coin),
-        &[],
-    )
-    .unwrap();
 }
 
 fn find_by_denom<'a>(denom: &'a str, shares: &'a [DebtSharesValue]) -> &'a DebtSharesValue {

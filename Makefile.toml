@@ -32,8 +32,8 @@ args = ["clippy", "--tests", "--", "-D", "warnings"]
 dependencies = [
     "check",
     "build",
-    "rust-optimizer",
     "test",
     "fmt",
     "clippy",
+    "rust-optimizer",
 ]
