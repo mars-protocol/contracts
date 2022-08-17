@@ -78,11 +78,13 @@ fn test_deposit_native_asset() {
         ]
     );
 
+    // collateral status of the depositor should have been updated
     let collateral = COLLATERALS
         .load(deps.as_ref().storage, (&Addr::unchecked("depositor"), "somecoin"))
         .unwrap();
     assert_eq!(collateral.amount_scaled, expected_mint_amount);
 
+    // market should have been updated
     let market = MARKETS.load(&deps.storage, "somecoin").unwrap();
     assert_eq!(market.borrow_rate, expected_params.borrow_rate);
     assert_eq!(market.liquidity_rate, expected_params.liquidity_rate);
@@ -226,13 +228,16 @@ fn test_deposit_on_behalf_of() {
         ]
     );
 
+    // collateral status of the depositor should NOT have been updated
     let err = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, "somecoin")).unwrap_err();
     assert_eq!(err, StdError::not_found(type_name::<Collateral>()));
 
+    // collateral status of the recipient should have been updated
     let collateral =
         COLLATERALS.load(deps.as_ref().storage, (&another_user_addr, "somecoin")).unwrap();
     assert_eq!(collateral.amount_scaled, expected_mint_amount);
 
+    // market should have been updated
     let market = MARKETS.load(deps.as_ref().storage, "somecoin").unwrap();
     assert_eq!(market.collateral_total_scaled, expected_mint_amount);
 }
