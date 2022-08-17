@@ -1,11 +1,11 @@
 use cosmwasm_std::{Addr, Decimal, Uint128};
 
-use mars_outpost::red_bank::{Debt, Market, UserAssetDebtResponse};
+use mars_outpost::red_bank::{Collateral, Debt, Market, UserAssetDebtResponse};
 use mars_testing::{mock_env, MockEnvParams};
 
 use crate::interest_rates::{get_scaled_debt_amount, get_underlying_debt_amount};
 use crate::query::{query_user_asset_debt, query_user_collateral, query_user_debt};
-use crate::state::DEBTS;
+use crate::state::{COLLATERALS, DEBTS};
 
 use super::helpers::{th_init_market, th_setup};
 
@@ -34,6 +34,28 @@ fn test_query_collateral() {
             ..Default::default()
         },
     );
+
+    // set the user's collateral positions
+    COLLATERALS
+        .save(
+            deps.as_mut().storage,
+            (&user_addr, "uosmo"),
+            &Collateral {
+                amount_scaled: Uint128::new(100),
+                enabled: true,
+            },
+        )
+        .unwrap();
+    COLLATERALS
+        .save(
+            deps.as_mut().storage,
+            (&user_addr, "uusd"),
+            &Collateral {
+                amount_scaled: Uint128::new(200),
+                enabled: true,
+            },
+        )
+        .unwrap();
 
     // Assert markets correctly return collateral status
     let res = query_user_collateral(deps.as_ref(), env, user_addr).unwrap();
