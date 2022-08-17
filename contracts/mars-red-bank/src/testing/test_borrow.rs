@@ -75,7 +75,7 @@ fn test_borrow_and_repay() {
     // should get index 1
     let market_2_initial = th_init_market(deps.as_mut(), "uusd", &mock_market_2);
     // should get index 2
-    let _market_collateral = th_init_market(deps.as_mut(), "uatom", &mock_market_3);
+    th_init_market(deps.as_mut(), "uatom", &mock_market_3);
 
     let borrower_addr = Addr::unchecked("borrower");
 
