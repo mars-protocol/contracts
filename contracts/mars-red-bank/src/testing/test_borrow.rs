@@ -7,7 +7,7 @@ use cosmwasm_std::{
 use cw_utils::PaymentError;
 
 use mars_outpost::math;
-use mars_outpost::red_bank::{Debt, ExecuteMsg, Market};
+use mars_outpost::red_bank::{Collateral, Debt, ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use crate::contract::execute;
@@ -84,7 +84,10 @@ fn test_borrow_and_repay() {
         .save(
             deps.as_mut().storage,
             (&borrower_addr, "uatom"),
-            &(Uint128::new(10000) * SCALING_FACTOR),
+            &Collateral {
+                amount_scaled: Uint128::new(10000) * SCALING_FACTOR,
+                enabled: true,
+            },
         )
         .unwrap();
 
@@ -541,7 +544,10 @@ fn test_repay_on_behalf_of() {
         .save(
             deps.as_mut().storage,
             (&borrower_addr, "depositedcoinnative"),
-            &(Uint128::new(10000) * SCALING_FACTOR),
+            &Collateral {
+                amount_scaled: Uint128::new(10000) * SCALING_FACTOR,
+                enabled: true,
+            },
         )
         .unwrap();
 
@@ -640,7 +646,14 @@ fn test_borrow_uusd() {
     // Set user as having the market_collateral deposited
     let deposit_amount_scaled = Uint128::new(110_000) * SCALING_FACTOR;
     COLLATERALS
-        .save(deps.as_mut().storage, (&borrower_addr, "uusd"), &deposit_amount_scaled)
+        .save(
+            deps.as_mut().storage,
+            (&borrower_addr, "uusd"),
+            &Collateral {
+                amount_scaled: deposit_amount_scaled,
+                enabled: true,
+            },
+        )
         .unwrap();
 
     // borrow with insufficient collateral, should fail
@@ -720,7 +733,10 @@ fn test_borrow_full_liquidity_and_then_repay() {
         .save(
             deps.as_mut().storage,
             (&borrower_addr, "uusd"),
-            &(Uint128::new(deposit_amount) * SCALING_FACTOR),
+            &Collateral {
+                amount_scaled: Uint128::new(deposit_amount) * SCALING_FACTOR,
+                enabled: true,
+            },
         )
         .unwrap();
 
@@ -830,9 +846,36 @@ fn test_borrow_collateral_check() {
     let balance_3 = Uint128::new(3_000_000) * SCALING_FACTOR;
 
     // Set the borrower's collateral shares
-    COLLATERALS.save(deps.as_mut().storage, (&borrower_addr, "uatom"), &balance_1).unwrap();
-    COLLATERALS.save(deps.as_mut().storage, (&borrower_addr, "uosmo"), &balance_2).unwrap();
-    COLLATERALS.save(deps.as_mut().storage, (&borrower_addr, "uusd"), &balance_3).unwrap();
+    COLLATERALS
+        .save(
+            deps.as_mut().storage,
+            (&borrower_addr, "uatom"),
+            &Collateral {
+                amount_scaled: balance_1,
+                enabled: true,
+            },
+        )
+        .unwrap();
+    COLLATERALS
+        .save(
+            deps.as_mut().storage,
+            (&borrower_addr, "uosmo"),
+            &Collateral {
+                amount_scaled: balance_2,
+                enabled: true,
+            },
+        )
+        .unwrap();
+    COLLATERALS
+        .save(
+            deps.as_mut().storage,
+            (&borrower_addr, "uusd"),
+            &Collateral {
+                amount_scaled: balance_3,
+                enabled: true,
+            },
+        )
+        .unwrap();
 
     let max_borrow_allowed_in_base_asset = (market_1_initial.max_loan_to_value
         * compute_underlying_amount(
@@ -961,7 +1004,14 @@ fn test_borrow_and_send_funds_to_another_user() {
     // Set user as having the market_collateral deposited
     let deposit_amount_scaled = Uint128::new(100_000) * SCALING_FACTOR;
     COLLATERALS
-        .save(deps.as_mut().storage, (&borrower_addr, "uusd"), &deposit_amount_scaled)
+        .save(
+            deps.as_mut().storage,
+            (&borrower_addr, "uusd"),
+            &Collateral {
+                amount_scaled: deposit_amount_scaled,
+                enabled: true,
+            },
+        )
         .unwrap();
 
     let borrow_amount = Uint128::from(1000u128);

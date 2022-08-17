@@ -599,7 +599,7 @@ pub fn borrow(
 
     // Check if user can borrow specified amount
     let uncollateralized = !uncollateralized_loan_limit.is_zero();
-    if uncollateralized {
+    if !uncollateralized {
         // Collateralized loan: check max ltv is not exceeded
         let user_position = get_user_position(
             deps.as_ref(),
@@ -622,9 +622,8 @@ pub fn borrow(
         if total_debt_in_base_asset_after_borrow > user_position.max_debt_in_base_asset {
             return Err(ContractError::BorrowAmountExceedsGivenCollateral {});
         }
-    }
-    // Uncollateralized loan: check borrow amount plus debt does not exceed uncollateralized loan limit
-    {
+    } else {
+        // Uncollateralized loan: check borrow amount plus debt does not exceed uncollateralized loan limit
         let borrower_debt =
             DEBTS.may_load(deps.storage, (&borrower_address, &denom))?.unwrap_or(Debt {
                 amount_scaled: Uint128::zero(),
