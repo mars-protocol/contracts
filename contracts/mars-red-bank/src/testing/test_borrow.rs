@@ -4,7 +4,6 @@ use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{
     attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, StdError, SubMsg, Uint128,
 };
-use cw_utils::PaymentError;
 
 use mars_outpost::math;
 use mars_outpost::red_bank::{Collateral, Debt, ExecuteMsg, Market};
@@ -294,7 +293,12 @@ fn test_borrow_and_repay() {
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, ContractError::Payment(PaymentError::NoFunds {}));
+    assert_eq!(
+        error_res,
+        ContractError::InvalidCoinsSent {
+            denom: "uusd".to_string()
+        }
+    );
 
     // *
     // Repay some uusd debt

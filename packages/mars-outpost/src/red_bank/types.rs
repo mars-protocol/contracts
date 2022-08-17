@@ -197,7 +197,7 @@ pub struct UserAssetCollateralResponse {
     pub amount_scaled: Uint128,
     /// Underlying asset amount that is actually owed at the current block
     pub amount: Uint128,
-    /// Whether this collateral is enabled
+    /// Wether the user is using asset as collateral or not
     pub enabled: bool,
 }
 

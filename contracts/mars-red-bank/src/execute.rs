@@ -899,6 +899,7 @@ pub fn liquidate(
         )?;
 
     // 4. Update collateral positions and market; transfer collateral shares to the liquidator
+    let mut events = vec![];
     let collateral_amount_to_liquidate_scaled = get_scaled_liquidity_amount(
         collateral_amount_to_liquidate,
         &collateral_market,
@@ -909,7 +910,7 @@ pub fn liquidate(
         &user_address,
         &collateral_denom,
         collateral_amount_to_liquidate_scaled,
-        None,
+        Some(&mut events),
     )?;
     increment_collateral(
         deps.storage,
@@ -917,7 +918,7 @@ pub fn liquidate(
         &collateral_denom,
         collateral_amount_to_liquidate_scaled,
         true,
-        None,
+        Some(&mut events),
     )?;
 
     // 5. Compute and update user new debt
@@ -933,7 +934,6 @@ pub fn liquidate(
     deduct_debt(deps.storage, &user_address, &debt_denom, debt_amount_scaled_delta, None)?;
 
     // 6. Update markets depending on whether the collateral and debt markets are the same
-    let mut events = vec![];
     let debt_market_debt_total_scaled_after =
         debt_market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
     if collateral_and_debt_are_the_same_asset {

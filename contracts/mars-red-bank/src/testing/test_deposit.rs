@@ -3,7 +3,6 @@ use std::any::type_name;
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{attr, coin, Addr, Decimal, StdError, Uint128};
 
-use cw_utils::PaymentError;
 use mars_outpost::red_bank::{Collateral, ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
@@ -102,7 +101,12 @@ fn test_deposit_native_asset() {
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-    assert_eq!(error_res, ContractError::Payment(PaymentError::MultipleDenoms {}));
+    assert_eq!(
+        error_res,
+        ContractError::InvalidCoinsSent {
+            denom: "somecoin2".to_string()
+        }
+    );
 
     // empty deposit fails
     let info = mock_info("depositor", &[]);
@@ -111,7 +115,12 @@ fn test_deposit_native_asset() {
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, ContractError::Payment(PaymentError::NoFunds {}));
+    assert_eq!(
+        error_res,
+        ContractError::InvalidCoinsSent {
+            denom: "somecoin".to_string()
+        }
+    );
 }
 
 #[test]

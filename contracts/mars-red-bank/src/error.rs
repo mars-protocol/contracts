@@ -1,7 +1,6 @@
 use thiserror::Error;
 
 use cosmwasm_std::{OverflowError, StdError};
-use cw_utils::PaymentError;
 
 use mars_outpost::error::MarsError;
 use mars_outpost::red_bank::{InterestRateModelError, MarketError};
@@ -16,9 +15,6 @@ pub enum ContractError {
 
     #[error("{0}")]
     Overflow(#[from] OverflowError),
-
-    #[error("{0}")]
-    Payment(#[from] PaymentError),
 
     #[error("{0}")]
     Market(#[from] MarketError),
