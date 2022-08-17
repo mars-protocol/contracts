@@ -524,35 +524,10 @@ fn test_withdraw_total_balance() {
 
     assert_eq!(
         res.messages,
-        vec![
-            // SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-            //     contract_addr: "matoken".to_string(),
-            //     msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
-            //         recipient: "protocol_rewards_collector".to_string(),
-            //         amount: compute_scaled_amount(
-            //             expected_params.protocol_rewards_to_distribute,
-            //             expected_params.liquidity_index,
-            //             ScalingOperation::Truncate
-            //         )
-            //         .unwrap(),
-            //     })
-            //     .unwrap(),
-            //     funds: vec![]
-            // })),
-            // SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-            //     contract_addr: "matoken".to_string(),
-            //     msg: to_binary(&ma_token::msg::ExecuteMsg::Burn {
-            //         user: withdrawer_addr.to_string(),
-            //         amount: withdrawer_balance_scaled.into(),
-            //     })
-            //     .unwrap(),
-            //     funds: vec![]
-            // })),
-            SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-                to_address: withdrawer_addr.to_string(),
-                amount: coins(withdrawer_balance.u128(), "somecoin")
-            })),
-        ]
+        vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+            to_address: withdrawer_addr.to_string(),
+            amount: coins(withdrawer_balance.u128(), "somecoin")
+        })),]
     );
     assert_eq!(
         res.attributes,
@@ -573,15 +548,18 @@ fn test_withdraw_total_balance() {
         ]
     );
 
+    // market should have been updated
+    assert_eq!(market.collateral_total_scaled, Uint128::zero());
     assert_eq!(market.borrow_rate, expected_params.borrow_rate);
     assert_eq!(market.liquidity_rate, expected_params.liquidity_rate);
     assert_eq!(market.liquidity_index, expected_params.liquidity_index);
     assert_eq!(market.borrow_index, expected_params.borrow_index);
 
-    // User should have unset bit for collateral after full withdraw
+    // collateral status of the user should have been deleted after a full withdrawal
     let err = COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, "somecoin")).unwrap_err();
     assert_eq!(err, StdError::not_found(type_name::<Collateral>()));
 
+    // collateral status of the rewards collector should have been updated
     let collateral = COLLATERALS
         .load(deps.as_ref().storage, (&Addr::unchecked("protocol_rewards_collector"), "somecoin"))
         .unwrap();
@@ -592,7 +570,4 @@ fn test_withdraw_total_balance() {
     )
     .unwrap();
     assert_eq!(collateral.amount_scaled, expected);
-
-    let market = MARKETS.load(deps.as_ref().storage, "somecoin").unwrap();
-    assert_eq!(market.collateral_total_scaled, Uint128::zero());
 }
