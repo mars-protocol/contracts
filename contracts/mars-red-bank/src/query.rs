@@ -5,7 +5,7 @@ use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
 use mars_outpost::red_bank::{
     Collateral, Config, Market, UserAssetCollateralResponse, UserAssetDebtResponse,
-    UserPositionResponse,
+    UserCollateralResponse, UserDebtResponse, UserPositionResponse,
 };
 
 use crate::accounts::get_user_position;
@@ -46,12 +46,8 @@ pub fn query_markets(
         .collect()
 }
 
-pub fn query_user_debt(
-    deps: Deps,
-    env: Env,
-    user_address: Addr,
-) -> StdResult<Vec<UserAssetDebtResponse>> {
-    DEBTS
+pub fn query_user_debt(deps: Deps, env: Env, user_address: Addr) -> StdResult<UserDebtResponse> {
+    let debts = DEBTS
         .prefix(&user_address)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|item| {
@@ -68,7 +64,11 @@ pub fn query_user_debt(
                 amount,
             })
         })
-        .collect()
+        .collect::<StdResult<_>>();
+
+    Ok(UserDebtResponse {
+        debts: debts?,
+    })
 }
 
 pub fn query_user_asset_debt(
@@ -97,8 +97,8 @@ pub fn query_user_collateral(
     deps: Deps,
     env: Env,
     user_address: Addr,
-) -> StdResult<Vec<UserAssetCollateralResponse>> {
-    COLLATERALS
+) -> StdResult<UserCollateralResponse> {
+    let collateral = COLLATERALS
         .prefix(&user_address)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|item| {
@@ -119,7 +119,11 @@ pub fn query_user_collateral(
                 enabled: collateral.enabled,
             })
         })
-        .collect()
+        .collect::<StdResult<_>>();
+
+    Ok(UserCollateralResponse {
+        collateral: collateral?,
+    })
 }
 
 pub fn query_user_asset_collateral(

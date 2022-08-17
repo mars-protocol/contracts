@@ -170,6 +170,11 @@ pub struct Collateral {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct UserDebtResponse {
+    pub debts: Vec<UserAssetDebtResponse>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct UserAssetDebtResponse {
     /// Asset denom
     pub denom: String,
@@ -177,6 +182,11 @@ pub struct UserAssetDebtResponse {
     pub amount_scaled: Uint128,
     /// Underlying asset amount that is actually owed at the current block
     pub amount: Uint128,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct UserCollateralResponse {
+    pub collateral: Vec<UserAssetCollateralResponse>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

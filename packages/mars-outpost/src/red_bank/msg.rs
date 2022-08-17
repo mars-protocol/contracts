@@ -163,7 +163,7 @@ pub enum QueryMsg {
         denom: String,
     },
 
-    /// Get all debt positions for a user. Returns Vec<UserAssetDebtResponse>
+    /// Get all debt positions for a user. Returns UserDebtResponse
     UserDebt {
         user_address: String,
     },
@@ -174,7 +174,7 @@ pub enum QueryMsg {
         denom: String,
     },
 
-    /// Get all collateral positions for a user. Returns Vec<UserAssetCollateralResponse>
+    /// Get all collateral positions for a user. Returns UserCollateralResponse
     UserCollateral {
         user_address: String,
     },
