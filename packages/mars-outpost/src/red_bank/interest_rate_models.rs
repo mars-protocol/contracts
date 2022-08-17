@@ -1,11 +1,10 @@
+use cosmwasm_std::{Decimal, Env, StdError, StdResult};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::math;
-use cosmwasm_std::{Decimal, Env, StdError, StdResult};
-
-use super::Market;
+use crate::red_bank::Market;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

@@ -6,7 +6,7 @@ use mars_outpost::error::MarsError;
 use mars_outpost::oracle::{Config, PriceResponse, QueryMsg};
 use mars_testing::mock_info;
 
-use osmo_bindings::{SpotPriceResponse, Swap};
+use osmo_bindings::{ArithmeticTwapToNowResponse, SpotPriceResponse, Swap};
 
 use super::helpers;
 use crate::contract::entry::execute;
@@ -152,6 +152,80 @@ fn setting_price_source_spot() {
         res.price_source,
         OsmosisPriceSource::Spot {
             pool_id: 89,
+        }
+    );
+}
+
+#[test]
+fn setting_price_source_twap() {
+    let mut deps = helpers::setup_test();
+
+    let mut set_price_source_twap = |denom: &str, pool_id: u64, window_size| {
+        execute(
+            deps.as_mut(),
+            mock_env(),
+            mock_info("owner"),
+            ExecuteMsg::SetPriceSource {
+                denom: denom.to_string(),
+                price_source: OsmosisPriceSource::Twap {
+                    pool_id,
+                    window_size,
+                },
+            },
+        )
+    };
+
+    // attempting to use a pool that does not contain the denom of interest; should fail
+    let err = set_price_source_twap("umars", 1, 86400).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "pool 1 does not contain umars".to_string()
+        }
+    );
+
+    // attempting to use a pool that does not contain the base denom, uosmo; should fail
+    let err = set_price_source_twap("uatom", 64, 86400).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "pool 64 does not contain the base denom uosmo".to_string()
+        }
+    );
+
+    // attempting to use a pool that contains more than two assets; should fail
+    let err = set_price_source_twap("uusdc", 3333, 86400).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "expecting pool 3333 to contain exactly two coins; found 3".to_string()
+        }
+    );
+
+    // attempting to set window_size bigger than 172800 sec (48h)
+    let err = set_price_source_twap("umars", 89, 172801).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "expecting window size to be within 172800 sec".to_string()
+        }
+    );
+
+    // properly set spot price source
+    let res = set_price_source_twap("umars", 89, 86400).unwrap();
+    assert_eq!(res.messages.len(), 0);
+
+    let res: PriceSourceResponse = helpers::query(
+        deps.as_ref(),
+        QueryMsg::PriceSource {
+            denom: "umars".to_string(),
+        },
+    );
+    assert_eq!(
+        res.price_source,
+        OsmosisPriceSource::Twap {
+            pool_id: 89,
+            window_size: 86400
         }
     );
 }
@@ -340,6 +414,37 @@ fn querying_price_spot() {
         },
     );
     assert_eq!(res.price, Decimal::from_ratio(88888u128, 12345u128));
+}
+
+#[test]
+fn querying_price_twap() {
+    let mut deps = helpers::setup_test();
+
+    helpers::set_price_source(
+        deps.as_mut(),
+        "umars",
+        OsmosisPriceSource::Twap {
+            pool_id: 89,
+            window_size: 86400,
+        },
+    );
+
+    deps.querier.set_twap_price(
+        89,
+        "uosmo",
+        "umars",
+        ArithmeticTwapToNowResponse {
+            twap: Decimal::from_ratio(77777u128, 12345u128),
+        },
+    );
+
+    let res: PriceResponse = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Price {
+            denom: "umars".to_string(),
+        },
+    );
+    assert_eq!(res.price, Decimal::from_ratio(77777u128, 12345u128));
 }
 
 #[test]

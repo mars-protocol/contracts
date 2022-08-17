@@ -371,7 +371,7 @@ pub fn query_underlying_asset_balance(
 
     let query: Uint128 = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: config.red_bank_address.into(),
-        msg: to_binary(&red_bank::msg::QueryMsg::UnderlyingLiquidityAmount {
+        msg: to_binary(&red_bank::QueryMsg::UnderlyingLiquidityAmount {
             ma_token_address: env.contract.address.into(),
             amount_scaled: balance,
         })?,
@@ -812,7 +812,7 @@ mod tests {
             vec![
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("red_bank"),
-                    msg: to_binary(&red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
+                    msg: to_binary(&red_bank::ExecuteMsg::FinalizeLiquidityTokenTransfer {
                         sender_address: Addr::unchecked(&addr1),
                         recipient_address: Addr::unchecked(&addr2),
                         sender_previous_balance: amount1,
@@ -1087,7 +1087,7 @@ mod tests {
                 SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: String::from("red_bank"),
                     msg: to_binary(
-                        &mars_outpost::red_bank::msg::ExecuteMsg::FinalizeLiquidityTokenTransfer {
+                        &mars_outpost::red_bank::ExecuteMsg::FinalizeLiquidityTokenTransfer {
                             sender_address: Addr::unchecked(&addr1),
                             recipient_address: Addr::unchecked(&contract),
                             sender_previous_balance: amount1,

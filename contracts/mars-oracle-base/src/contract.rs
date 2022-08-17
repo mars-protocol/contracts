@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CustomQuery, Deps, DepsMut, MessageInfo, Order, Response, StdResult,
+    to_binary, Addr, Binary, CustomQuery, Deps, DepsMut, Env, MessageInfo, Order, Response,
+    StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
 
@@ -78,7 +79,7 @@ where
         }
     }
 
-    pub fn query(&self, deps: Deps<C>, msg: QueryMsg) -> StdResult<Binary> {
+    pub fn query(&self, deps: Deps<C>, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
             QueryMsg::Config {} => to_binary(&self.query_config(deps)?),
             QueryMsg::PriceSource {
@@ -90,11 +91,11 @@ where
             } => to_binary(&self.query_price_sources(deps, start_after, limit)?),
             QueryMsg::Price {
                 denom,
-            } => to_binary(&self.query_price(deps, denom)?),
+            } => to_binary(&self.query_price(deps, env, denom)?),
             QueryMsg::Prices {
                 start_after,
                 limit,
-            } => to_binary(&self.query_prices(deps, start_after, limit)?),
+            } => to_binary(&self.query_prices(deps, env, start_after, limit)?),
         }
     }
 
@@ -179,18 +180,19 @@ where
             .collect()
     }
 
-    fn query_price(&self, deps: Deps<C>, denom: String) -> StdResult<PriceResponse> {
+    fn query_price(&self, deps: Deps<C>, env: Env, denom: String) -> StdResult<PriceResponse> {
         let cfg = self.config.load(deps.storage)?;
         let price_source = self.price_sources.load(deps.storage, denom.clone())?;
         Ok(PriceResponse {
             denom: denom.clone(),
-            price: price_source.query_price(&deps.querier, &denom, &cfg.base_denom)?,
+            price: price_source.query_price(&deps.querier, &env.block, &denom, &cfg.base_denom)?,
         })
     }
 
     fn query_prices(
         &self,
         deps: Deps<C>,
+        env: Env,
         start_after: Option<String>,
         limit: Option<u32>,
     ) -> StdResult<Vec<PriceResponse>> {
@@ -206,7 +208,7 @@ where
                 let (k, v) = item?;
                 Ok(PriceResponse {
                     denom: k.clone(),
-                    price: v.query_price(&deps.querier, &k, &cfg.base_denom)?,
+                    price: v.query_price(&deps.querier, &env.block, &k, &cfg.base_denom)?,
                 })
             })
             .collect()

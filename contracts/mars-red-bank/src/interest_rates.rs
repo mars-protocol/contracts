@@ -7,8 +7,7 @@ use cosmwasm_std::{
 use cw20::Cw20ExecuteMsg;
 
 use mars_outpost::math;
-use mars_outpost::red_bank::interest_rate_models::update_market_interest_rates_with_model;
-use mars_outpost::red_bank::Market;
+use mars_outpost::red_bank::{update_market_interest_rates_with_model, Market};
 
 use crate::error::ContractError;
 use crate::events::build_interests_updated_event;
