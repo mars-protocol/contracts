@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 
 use mars_outpost::math;
-use mars_outpost::red_bank::{Debt, ExecuteMsg, Market};
+use mars_outpost::red_bank::{Collateral, Debt, ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use crate::contract::execute;
@@ -47,7 +47,14 @@ fn test_withdraw_native() {
     let seconds_elapsed = 2000u64;
 
     COLLATERALS
-        .save(deps.as_mut().storage, (&withdrawer_addr, "somecoin"), &initial_deposit_amount_scaled)
+        .save(
+            deps.as_mut().storage,
+            (&withdrawer_addr, "somecoin"),
+            &Collateral {
+                amount_scaled: initial_deposit_amount_scaled,
+                enabled: true,
+            },
+        )
         .unwrap();
 
     let market_initial = th_init_market(deps.as_mut(), "somecoin", &mock_market);
@@ -63,7 +70,7 @@ fn test_withdraw_native() {
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
     let market = MARKETS.load(&deps.storage, "somecoin").unwrap();
-    let amount_scaled =
+    let collateral =
         COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, "somecoin")).unwrap();
 
     let expected_params = th_get_expected_indices_and_rates(
@@ -113,7 +120,7 @@ fn test_withdraw_native() {
     );
     assert_eq!(res.events, vec![th_build_interests_updated_event("somecoin", &expected_params)]);
 
-    assert_eq!(amount_scaled, expected_withdraw_amount_scaled_remaining);
+    assert_eq!(collateral.amount_scaled, expected_withdraw_amount_scaled_remaining);
 
     assert_eq!(market.borrow_rate, expected_params.borrow_rate);
     assert_eq!(market.liquidity_rate, expected_params.liquidity_rate);
@@ -135,7 +142,14 @@ fn test_withdraw_and_send_funds_to_another_user() {
     deps.querier.set_contract_balances(&coins(initial_available_liquidity.u128(), denom));
     let ma_token_balance_scaled = Uint128::new(2_000_000) * SCALING_FACTOR;
     COLLATERALS
-        .save(deps.as_mut().storage, (&withdrawer_addr, denom), &ma_token_balance_scaled)
+        .save(
+            deps.as_mut().storage,
+            (&withdrawer_addr, denom),
+            &Collateral {
+                amount_scaled: ma_token_balance_scaled,
+                enabled: true,
+            },
+        )
         .unwrap();
 
     let mock_market = Market {
@@ -187,7 +201,7 @@ fn test_withdraw_and_send_funds_to_another_user() {
 
     // complete withdrawn, collateral amount should have been deleted
     let err = COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, denom)).unwrap_err();
-    assert_eq!(err, StdError::not_found(type_name::<Uint128>()));
+    assert_eq!(err, StdError::not_found(type_name::<Collateral>()));
 
     let market = MARKETS.load(deps.as_ref().storage, denom).unwrap();
     assert_eq!(market.collateral_total_scaled, Uint128::zero());
@@ -207,7 +221,10 @@ fn test_withdraw_cannot_exceed_balance() {
         .save(
             deps.as_mut().storage,
             (&Addr::unchecked("withdrawer"), "somecoin"),
-            &Uint128::new(200),
+            &Collateral {
+                amount_scaled: Uint128::new(200),
+                enabled: true,
+            },
         )
         .unwrap();
 
@@ -297,10 +314,24 @@ fn test_withdraw_if_health_factor_not_met() {
 
     // Initialize user with market_1 and market_3 as collaterals
     COLLATERALS
-        .save(deps.as_mut().storage, (&withdrawer_addr, "token1"), &ma_token_1_balance_scaled)
+        .save(
+            deps.as_mut().storage,
+            (&withdrawer_addr, "token1"),
+            &Collateral {
+                amount_scaled: ma_token_1_balance_scaled,
+                enabled: true,
+            },
+        )
         .unwrap();
     COLLATERALS
-        .save(deps.as_mut().storage, (&withdrawer_addr, "token3"), &ma_token_3_balance_scaled)
+        .save(
+            deps.as_mut().storage,
+            (&withdrawer_addr, "token3"),
+            &Collateral {
+                amount_scaled: ma_token_3_balance_scaled,
+                enabled: true,
+            },
+        )
         .unwrap();
 
     // Set user to have positive debt amount in debt asset
@@ -409,9 +440,9 @@ fn test_withdraw_if_health_factor_not_met() {
             })),]
         );
 
-        let amount_scaled =
+        let collateral =
             COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, "token3")).unwrap();
-        assert_eq!(amount_scaled, ma_token_3_balance_scaled - withdraw_amount_scaled);
+        assert_eq!(collateral.amount_scaled, ma_token_3_balance_scaled - withdraw_amount_scaled);
 
         let market = MARKETS.load(deps.as_ref().storage, "token3").unwrap();
         assert_eq!(
@@ -446,7 +477,14 @@ fn test_withdraw_total_balance() {
     let seconds_elapsed = 2000u64;
 
     COLLATERALS
-        .save(deps.as_mut().storage, (&withdrawer_addr, "somecoin"), &withdrawer_balance_scaled)
+        .save(
+            deps.as_mut().storage,
+            (&withdrawer_addr, "somecoin"),
+            &Collateral {
+                amount_scaled: withdrawer_balance_scaled,
+                enabled: true,
+            },
+        )
         .unwrap();
 
     let market_initial = th_init_market(deps.as_mut(), "somecoin", &mock_market);
@@ -542,9 +580,9 @@ fn test_withdraw_total_balance() {
 
     // User should have unset bit for collateral after full withdraw
     let err = COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, "somecoin")).unwrap_err();
-    assert_eq!(err, StdError::not_found(type_name::<Uint128>()));
+    assert_eq!(err, StdError::not_found(type_name::<Collateral>()));
 
-    let amount_scaled = COLLATERALS
+    let collateral = COLLATERALS
         .load(deps.as_ref().storage, (&Addr::unchecked("protocol_rewards_collector"), "somecoin"))
         .unwrap();
     let expected = compute_scaled_amount(
@@ -553,7 +591,7 @@ fn test_withdraw_total_balance() {
         ScalingOperation::Truncate,
     )
     .unwrap();
-    assert_eq!(amount_scaled, expected);
+    assert_eq!(collateral.amount_scaled, expected);
 
     let market = MARKETS.load(deps.as_ref().storage, "somecoin").unwrap();
     assert_eq!(market.collateral_total_scaled, Uint128::zero());

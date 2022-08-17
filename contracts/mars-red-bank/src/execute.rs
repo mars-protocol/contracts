@@ -547,8 +547,8 @@ pub fn withdraw(
         .add_attribute("denom", denom)
         .add_attribute("user", withdrawer_addr.as_str())
         .add_attribute("recipient", recipient_address.as_str())
-        .add_attribute("amount", withdraw_amount)
-        .add_attribute("amount_scaled", withdraw_amount_scaled))
+        .add_attribute("burn_amount", withdraw_amount_scaled)
+        .add_attribute("withdraw_amount", withdraw_amount))
 }
 
 /// Add debt for the borrower and send the borrowed funds
