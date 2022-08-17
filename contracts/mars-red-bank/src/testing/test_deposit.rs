@@ -4,7 +4,7 @@ use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{attr, coin, Addr, Decimal, StdError, Uint128};
 
 use cw_utils::PaymentError;
-use mars_outpost::red_bank::{ExecuteMsg, Market};
+use mars_outpost::red_bank::{Collateral, ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use crate::contract::execute;
@@ -78,10 +78,10 @@ fn test_deposit_native_asset() {
         ]
     );
 
-    let amount_scaled = COLLATERALS
+    let collateral = COLLATERALS
         .load(deps.as_ref().storage, (&Addr::unchecked("depositor"), "somecoin"))
         .unwrap();
-    assert_eq!(amount_scaled, expected_mint_amount);
+    assert_eq!(collateral.amount_scaled, expected_mint_amount);
 
     let market = MARKETS.load(&deps.storage, "somecoin").unwrap();
     assert_eq!(market.borrow_rate, expected_params.borrow_rate);
@@ -227,11 +227,11 @@ fn test_deposit_on_behalf_of() {
     );
 
     let err = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, "somecoin")).unwrap_err();
-    assert_eq!(err, StdError::not_found(type_name::<Uint128>()));
+    assert_eq!(err, StdError::not_found(type_name::<Collateral>()));
 
-    let amount_scaled =
+    let collateral =
         COLLATERALS.load(deps.as_ref().storage, (&another_user_addr, "somecoin")).unwrap();
-    assert_eq!(amount_scaled, expected_mint_amount);
+    assert_eq!(collateral.amount_scaled, expected_mint_amount);
 
     let market = MARKETS.load(deps.as_ref().storage, "somecoin").unwrap();
     assert_eq!(market.collateral_total_scaled, expected_mint_amount);

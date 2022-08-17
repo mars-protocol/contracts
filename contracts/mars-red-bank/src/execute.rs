@@ -407,8 +407,7 @@ pub fn deposit(
         .add_attribute("denom", denom)
         .add_attribute("sender", sender_address)
         .add_attribute("user", user_address.as_str())
-        .add_attribute("amount", deposit_amount)
-        .add_attribute("amount_scaled", deposit_amount_scaled))
+        .add_attribute("amount", deposit_amount))
 }
 
 /// Burns sent maAsset in exchange of underlying asset
