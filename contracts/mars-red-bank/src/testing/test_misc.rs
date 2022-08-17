@@ -258,15 +258,6 @@ fn test_update_asset_collateral() {
     let info = mock_info(user_addr.as_str(), &[]);
 
     {
-        // // Set second asset as collateral
-        // let mut user = User::default();
-        // set_bit(&mut user.collateral_assets, market_2_initial.index).unwrap();
-        // USERS.save(deps.as_mut().storage, &user_addr, &user).unwrap();
-
-        // // Set the querier to return zero for the first asset
-        // deps.querier
-        //     .set_cw20_balances(ma_token_addr_1.clone(), &[(user_addr.clone(), Uint128::zero())]);
-
         // attempt to enable asset 1 as collateral, which the user doesn't currently has a position in
         let update_msg = ExecuteMsg::UpdateAssetCollateralStatus {
             denom: denom_1.to_string(),
