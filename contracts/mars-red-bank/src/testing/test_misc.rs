@@ -3,19 +3,18 @@ use cosmwasm_std::{attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, SubMsg,
 
 use mars_outpost::error::MarsError;
 use mars_outpost::math;
-use mars_outpost::red_bank::{Debt, ExecuteMsg, Market, User, UserHealthStatus};
+use mars_outpost::red_bank::{Collateral, Debt, ExecuteMsg, Market, UserHealthStatus};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use crate::accounts::get_user_position;
 use crate::contract::execute;
 use crate::error::ContractError;
 use crate::events::build_debt_position_changed_event;
-use crate::helpers::{get_bit, set_bit};
 use crate::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_debt_amount,
     get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
 };
-use crate::state::{DEBTS, UNCOLLATERALIZED_LOAN_LIMITS, USERS};
+use crate::state::{COLLATERALS, DEBTS, UNCOLLATERALIZED_LOAN_LIMITS};
 
 use super::helpers::{
     th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
@@ -28,7 +27,6 @@ fn test_uncollateralized_loan_limits() {
     let mut deps = th_setup(&[coin(available_liquidity.into(), "somecoin")]);
 
     let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
         borrow_index: Decimal::from_ratio(12u128, 10u128),
         liquidity_index: Decimal::from_ratio(8u128, 10u128),
         borrow_rate: Decimal::from_ratio(20u128, 100u128),
@@ -48,13 +46,30 @@ fn test_uncollateralized_loan_limits() {
     // Check that borrowers with uncollateralized debt cannot get an uncollateralized loan limit
     let existing_borrower_addr = Addr::unchecked("existing_borrower");
 
-    let mut existing_borrower = User::default();
-    set_bit(&mut existing_borrower.borrowed_assets, 0).unwrap();
-    USERS.save(&mut deps.storage, &existing_borrower_addr, &existing_borrower).unwrap();
+    // set user to have some debt collateralized by "somecoin"
+    COLLATERALS
+        .save(
+            deps.as_mut().storage,
+            (&existing_borrower_addr, "somecoin"),
+            &Collateral {
+                amount_scaled: Uint128::new(100),
+                enabled: true,
+            },
+        )
+        .unwrap();
+    DEBTS
+        .save(
+            deps.as_mut().storage,
+            (&existing_borrower_addr, "somecoin"),
+            &Debt {
+                amount_scaled: Uint128::new(50),
+                uncollateralized: false,
+            },
+        )
+        .unwrap();
 
     let update_limit_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
         denom: "somecoin".to_string(),
-
         user_address: existing_borrower_addr.to_string(),
         new_limit: initial_uncollateralized_loan_limit,
     };
@@ -85,12 +100,8 @@ fn test_uncollateralized_loan_limits() {
 
     // check user's limit has been updated to the appropriate amount
     let limit =
-        UNCOLLATERALIZED_LOAN_LIMITS.load(&deps.storage, ("somecoin", &borrower_addr)).unwrap();
+        UNCOLLATERALIZED_LOAN_LIMITS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
     assert_eq!(limit, initial_uncollateralized_loan_limit);
-
-    // check user's uncollateralized debt flag is true (limit > 0)
-    let debt = DEBTS.load(&deps.storage, ("somecoin", &borrower_addr)).unwrap();
-    assert!(debt.uncollateralized);
 
     // Borrow asset
     block_time += 1000_u64;
@@ -142,10 +153,8 @@ fn test_uncollateralized_loan_limits() {
     );
 
     // Check debt
-    let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
-    assert!(get_bit(user.borrowed_assets, 0).unwrap());
-
-    let debt = DEBTS.load(&deps.storage, ("somecoin", &borrower_addr)).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
+    assert!(debt.uncollateralized);
 
     let expected_debt_scaled_after_borrow = compute_scaled_amount(
         initial_borrow_amount,
@@ -194,11 +203,11 @@ fn test_uncollateralized_loan_limits() {
 
     // check user's allowance is zero
     let allowance =
-        UNCOLLATERALIZED_LOAN_LIMITS.load(&deps.storage, ("somecoin", &borrower_addr)).unwrap();
+        UNCOLLATERALIZED_LOAN_LIMITS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
     assert_eq!(allowance, Uint128::zero());
 
     // check user's uncollateralized debt flag is false (limit == 0)
-    let debt = DEBTS.load(&deps.storage, ("somecoin", &borrower_addr)).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
     assert!(!debt.uncollateralized);
 }
 
@@ -209,9 +218,7 @@ fn test_update_asset_collateral() {
     let user_addr = Addr::unchecked(String::from("user"));
 
     let denom_1 = "depositedcoin1";
-    let ma_token_addr_1 = Addr::unchecked("matoken1");
     let mock_market_1 = Market {
-        ma_token_address: ma_token_addr_1.clone(),
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
         max_loan_to_value: Decimal::from_ratio(40u128, 100u128),
@@ -219,9 +226,7 @@ fn test_update_asset_collateral() {
         ..Default::default()
     };
     let denom_2 = "depositedcoin2";
-    let ma_token_addr_2 = Addr::unchecked("matoken2");
     let mock_market_2 = Market {
-        ma_token_address: ma_token_addr_2.clone(),
         liquidity_index: Decimal::from_ratio(1u128, 2u128),
         borrow_index: Decimal::one(),
         max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
@@ -229,9 +234,7 @@ fn test_update_asset_collateral() {
         ..Default::default()
     };
     let denom_3 = "depositedcoin3";
-    let ma_token_addr_3 = Addr::unchecked("matoken3");
     let mock_market_3 = Market {
-        ma_token_address: ma_token_addr_3.clone(),
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::from_ratio(2u128, 1u128),
         max_loan_to_value: Decimal::from_ratio(20u128, 100u128),
@@ -255,16 +258,16 @@ fn test_update_asset_collateral() {
     let info = mock_info(user_addr.as_str(), &[]);
 
     {
-        // Set second asset as collateral
-        let mut user = User::default();
-        set_bit(&mut user.collateral_assets, market_2_initial.index).unwrap();
-        USERS.save(deps.as_mut().storage, &user_addr, &user).unwrap();
+        // // Set second asset as collateral
+        // let mut user = User::default();
+        // set_bit(&mut user.collateral_assets, market_2_initial.index).unwrap();
+        // USERS.save(deps.as_mut().storage, &user_addr, &user).unwrap();
 
-        // Set the querier to return zero for the first asset
-        deps.querier
-            .set_cw20_balances(ma_token_addr_1.clone(), &[(user_addr.clone(), Uint128::zero())]);
+        // // Set the querier to return zero for the first asset
+        // deps.querier
+        //     .set_cw20_balances(ma_token_addr_1.clone(), &[(user_addr.clone(), Uint128::zero())]);
 
-        // Enable first market index which is currently disabled as collateral and ma-token balance is 0
+        // attempt to enable asset 1 as collateral, which the user doesn't currently has a position in
         let update_msg = ExecuteMsg::UpdateAssetCollateralStatus {
             denom: denom_1.to_string(),
             enable: true,
@@ -279,56 +282,66 @@ fn test_update_asset_collateral() {
             }
         );
 
-        let user = USERS.load(&deps.storage, &user_addr).unwrap();
-        let market_1_collateral = get_bit(user.collateral_assets, market_1_initial.index).unwrap();
-        // Balance for first asset is zero so don't update bit
-        assert!(!market_1_collateral);
+        // the user should still not having a position in asset 1
+        let collateral = COLLATERALS.may_load(&deps.storage, (&user_addr, denom_1)).unwrap();
+        assert!(collateral.is_none());
 
-        // Set the querier to return balance more than zero for the first asset
-        deps.querier.set_cw20_balances(
-            ma_token_addr_1.clone(),
-            &[(user_addr.clone(), Uint128::new(100_000))],
-        );
+        // give the user a collateral position in asset 1 and set it *disabled* as collateral
+        COLLATERALS
+            .save(
+                deps.as_mut().storage,
+                (&user_addr, denom_1),
+                &Collateral {
+                    amount_scaled: Uint128::new(100_000),
+                    enabled: false,
+                },
+            )
+            .unwrap();
 
-        // Enable first market index which is currently disabled as collateral and ma-token balance is more than 0
+        // Enable asset 1 as collateral which is currently disabled
         let _res = execute(deps.as_mut(), env.clone(), info.clone(), update_msg).unwrap();
-        let user = USERS.load(&deps.storage, &user_addr).unwrap();
-        let market_1_collateral = get_bit(user.collateral_assets, market_1_initial.index).unwrap();
-        // Balance for first asset is more than zero so update bit
-        assert!(market_1_collateral);
 
-        // Disable second market index
-        let update_msg = ExecuteMsg::UpdateAssetCollateralStatus {
-            denom: denom_2.to_string(),
-            enable: false,
-        };
-        let _res = execute(deps.as_mut(), env.clone(), info.clone(), update_msg).unwrap();
-        let user = USERS.load(&deps.storage, &user_addr).unwrap();
-        let market_2_collateral = get_bit(user.collateral_assets, market_2_initial.index).unwrap();
-        assert!(!market_2_collateral);
+        let collateral = COLLATERALS.load(&deps.storage, (&user_addr, denom_1)).unwrap();
+        assert!(collateral.enabled);
+
+        // // Disable second market index
+        // let update_msg = ExecuteMsg::UpdateAssetCollateralStatus {
+        //     denom: denom_2.to_string(),
+        //     enable: false,
+        // };
+        // let _res = execute(deps.as_mut(), env.clone(), info.clone(), update_msg).unwrap();
+
+        // let user = USERS.load(&deps.storage, &user_addr).unwrap();
+        // let market_2_collateral = get_bit(user.collateral_assets, market_2_initial.index).unwrap();
+        // assert!(!market_2_collateral);
     }
 
     // User's health factor can't be less than 1 after disabling collateral
     {
         // Initialize user with market_1 and market_2 as collaterals
         // User borrows market_3
-        let mut user = User::default();
-        set_bit(&mut user.collateral_assets, market_1_initial.index).unwrap();
-        set_bit(&mut user.collateral_assets, market_2_initial.index).unwrap();
-        set_bit(&mut user.borrowed_assets, market_3_initial.index).unwrap();
-        USERS.save(deps.as_mut().storage, &user_addr, &user).unwrap();
-
-        // Set the querier to return collateral balances (ma_token_1 and ma_token_2)
         let ma_token_1_balance_scaled = Uint128::new(150_000) * SCALING_FACTOR;
-        deps.querier.set_cw20_balances(
-            ma_token_addr_1.clone(),
-            &[(user_addr.clone(), ma_token_1_balance_scaled.into())],
-        );
         let ma_token_2_balance_scaled = Uint128::new(220_000) * SCALING_FACTOR;
-        deps.querier.set_cw20_balances(
-            ma_token_addr_2.clone(),
-            &[(user_addr.clone(), ma_token_2_balance_scaled.into())],
-        );
+        COLLATERALS
+            .save(
+                deps.as_mut().storage,
+                (&user_addr, denom_1),
+                &Collateral {
+                    amount_scaled: ma_token_1_balance_scaled,
+                    enabled: true,
+                },
+            )
+            .unwrap();
+        COLLATERALS
+            .save(
+                deps.as_mut().storage,
+                (&user_addr, denom_2),
+                &Collateral {
+                    amount_scaled: ma_token_2_balance_scaled,
+                    enabled: true,
+                },
+            )
+            .unwrap();
 
         // Calculate maximum debt for the user to have valid health factor
         let token_1_weighted_lt_in_base_asset = compute_underlying_amount(
@@ -366,15 +379,13 @@ fn test_update_asset_collateral() {
             amount_scaled: token_3_debt_scaled,
             uncollateralized: false,
         };
-        DEBTS.save(deps.as_mut().storage, (denom_3, &user_addr), &debt).unwrap();
+        DEBTS.save(deps.as_mut().storage, (&user_addr, denom_3), &debt).unwrap();
 
         let user_position = get_user_position(
             deps.as_ref(),
             env.block.time.seconds(),
             &user_addr,
             &Addr::unchecked("oracle"),
-            &user,
-            3,
         )
         .unwrap();
         // Should have valid health factor

@@ -312,19 +312,11 @@ pub fn update_uncollateralized_loan_limit(
 
     UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (&user_address, &denom), &new_limit)?;
 
-    DEBTS.update(
-        deps.storage,
-        (&user_address, &denom),
-        |debt_opt: Option<Debt>| -> StdResult<_> {
-            let mut debt = debt_opt.unwrap_or(Debt {
-                amount_scaled: Uint128::zero(),
-                uncollateralized: false,
-            });
-            // if limit == 0 then uncollateralized = false, otherwise uncollateralized = true
-            debt.uncollateralized = !new_limit.is_zero();
-            Ok(debt)
-        },
-    )?;
+    // if the debt position exists, update its uncollateralization status
+    if let Some(mut debt) = DEBTS.may_load(deps.storage, (&user_address, &denom))? {
+        debt.uncollateralized = !new_limit.is_zero();
+        DEBTS.save(deps.storage, (&user_address, &denom), &debt)?;
+    }
 
     Ok(Response::new()
         .add_attribute("action", "update_uncollateralized_loan_limit")
