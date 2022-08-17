@@ -202,7 +202,7 @@ fn test_init_asset() {
         update_threshold_seconds: 1,
         update_threshold_txs: 1,
     };
-    let params = InitOrUpdateAssetParams {
+    let asset_params = InitOrUpdateAssetParams {
         initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
         max_loan_to_value: Some(Decimal::from_ratio(8u128, 10u128)),
         reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
@@ -220,7 +220,7 @@ fn test_init_asset() {
     {
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            params: params.clone(),
+            asset_params: asset_params.clone(),
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -229,15 +229,15 @@ fn test_init_asset() {
 
     // init asset with empty params
     {
-        let empty_params = InitOrUpdateAssetParams {
+        let empty_asset_params = InitOrUpdateAssetParams {
             max_loan_to_value: None,
             liquidation_threshold: None,
             liquidation_bonus: None,
-            ..params.clone()
+            ..asset_params.clone()
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            params: empty_params,
+            asset_params: empty_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -246,13 +246,13 @@ fn test_init_asset() {
 
     // init asset with max_loan_to_value greater than 1
     {
-        let invalid_params = InitOrUpdateAssetParams {
+        let invalid_asset_params = InitOrUpdateAssetParams {
             max_loan_to_value: Some(Decimal::from_ratio(11u128, 10u128)),
-            ..params.clone()
+            ..asset_params.clone()
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            params: invalid_params,
+            asset_params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -271,13 +271,13 @@ fn test_init_asset() {
 
     // init asset with liquidation_threshold greater than 1
     {
-        let invalid_params = InitOrUpdateAssetParams {
+        let invalid_asset_params = InitOrUpdateAssetParams {
             liquidation_threshold: Some(Decimal::from_ratio(11u128, 10u128)),
-            ..params.clone()
+            ..asset_params.clone()
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            params: invalid_params,
+            asset_params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -296,13 +296,13 @@ fn test_init_asset() {
 
     // init asset with liquidation_bonus greater than 1
     {
-        let invalid_params = InitOrUpdateAssetParams {
+        let invalid_asset_params = InitOrUpdateAssetParams {
             liquidation_bonus: Some(Decimal::from_ratio(11u128, 10u128)),
-            ..params.clone()
+            ..asset_params.clone()
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            params: invalid_params,
+            asset_params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -321,14 +321,14 @@ fn test_init_asset() {
 
     // init asset where LTV >= liquidity threshold
     {
-        let invalid_params = InitOrUpdateAssetParams {
+        let invalid_asset_params = InitOrUpdateAssetParams {
             max_loan_to_value: Some(Decimal::from_ratio(5u128, 10u128)),
             liquidation_threshold: Some(Decimal::from_ratio(5u128, 10u128)),
-            ..params.clone()
+            ..asset_params.clone()
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            params: invalid_params,
+            asset_params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -348,15 +348,15 @@ fn test_init_asset() {
             max_borrow_rate: Decimal::from_ratio(4u128, 10u128),
             ..dynamic_ir_params.clone()
         };
-        let invalid_params = InitOrUpdateAssetParams {
+        let invalid_asset_params = InitOrUpdateAssetParams {
             interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
                 invalid_dynamic_ir_params,
             )),
-            ..params.clone()
+            ..asset_params.clone()
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            params: invalid_params,
+            asset_params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -375,15 +375,15 @@ fn test_init_asset() {
             optimal_utilization_rate: Decimal::from_ratio(11u128, 10u128),
             ..dynamic_ir_params.clone()
         };
-        let invalid_params = InitOrUpdateAssetParams {
+        let invalid_asset_params = InitOrUpdateAssetParams {
             interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
                 invalid_dynamic_ir_params,
             )),
-            ..params.clone()
+            ..asset_params.clone()
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            params: invalid_params,
+            asset_params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -399,7 +399,7 @@ fn test_init_asset() {
     {
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            params: params.clone(),
+            asset_params: asset_params.clone(),
         };
         let info = mock_info("owner", &[]);
         let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -417,7 +417,7 @@ fn test_init_asset() {
     {
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            params: params.clone(),
+            asset_params: asset_params.clone(),
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -454,7 +454,7 @@ fn test_update_asset() {
         update_threshold_seconds: 1,
     };
 
-    let params = InitOrUpdateAssetParams {
+    let asset_params = InitOrUpdateAssetParams {
         initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
         max_loan_to_value: Some(Decimal::from_ratio(50u128, 100u128)),
         reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
@@ -472,7 +472,7 @@ fn test_update_asset() {
     {
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            params: params.clone(),
+            asset_params: asset_params.clone(),
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -483,7 +483,7 @@ fn test_update_asset() {
     {
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            params: params.clone(),
+            asset_params: asset_params.clone(),
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -494,7 +494,7 @@ fn test_update_asset() {
     {
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            params: params.clone(),
+            asset_params: asset_params.clone(),
         };
         let info = mock_info("owner", &[]);
         let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -502,13 +502,13 @@ fn test_update_asset() {
 
     // update asset with max_loan_to_value greater than 1
     {
-        let invalid_params = InitOrUpdateAssetParams {
+        let invalid_asset_params = InitOrUpdateAssetParams {
             max_loan_to_value: Some(Decimal::from_ratio(11u128, 10u128)),
-            ..params.clone()
+            ..asset_params.clone()
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            params: invalid_params,
+            asset_params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -527,13 +527,13 @@ fn test_update_asset() {
 
     // update asset with liquidation_threshold greater than 1
     {
-        let invalid_params = InitOrUpdateAssetParams {
+        let invalid_asset_params = InitOrUpdateAssetParams {
             liquidation_threshold: Some(Decimal::from_ratio(11u128, 10u128)),
-            ..params.clone()
+            ..asset_params.clone()
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            params: invalid_params,
+            asset_params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -552,13 +552,13 @@ fn test_update_asset() {
 
     // update asset with liquidation_bonus greater than 1
     {
-        let invalid_params = InitOrUpdateAssetParams {
+        let invalid_asset_params = InitOrUpdateAssetParams {
             liquidation_bonus: Some(Decimal::from_ratio(11u128, 10u128)),
-            ..params.clone()
+            ..asset_params.clone()
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            params: invalid_params,
+            asset_params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -577,14 +577,14 @@ fn test_update_asset() {
 
     // update asset where LTV >= liquidity threshold
     {
-        let invalid_params = InitOrUpdateAssetParams {
+        let invalid_asset_params = InitOrUpdateAssetParams {
             max_loan_to_value: Some(Decimal::from_ratio(6u128, 10u128)),
             liquidation_threshold: Some(Decimal::from_ratio(5u128, 10u128)),
-            ..params
+            ..asset_params
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            params: invalid_params,
+            asset_params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -604,15 +604,15 @@ fn test_update_asset() {
             max_borrow_rate: Decimal::from_ratio(4u128, 10u128),
             ..dynamic_ir_params
         };
-        let invalid_params = InitOrUpdateAssetParams {
+        let invalid_asset_params = InitOrUpdateAssetParams {
             interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
                 invalid_dynamic_ir_params.clone(),
             )),
-            ..params
+            ..asset_params
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            params: invalid_params,
+            asset_params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -631,15 +631,15 @@ fn test_update_asset() {
             optimal_utilization_rate: Decimal::from_ratio(11u128, 10u128),
             ..dynamic_ir_params
         };
-        let invalid_params = InitOrUpdateAssetParams {
+        let invalid_asset_params = InitOrUpdateAssetParams {
             interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
                 invalid_dynamic_ir_params.clone(),
             )),
-            ..params
+            ..asset_params
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            params: invalid_params,
+            asset_params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -663,7 +663,7 @@ fn test_update_asset() {
             update_threshold_txs: 1,
             update_threshold_seconds: 1,
         };
-        let params = InitOrUpdateAssetParams {
+        let asset_params = InitOrUpdateAssetParams {
             initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
             max_loan_to_value: Some(Decimal::from_ratio(60u128, 100u128)),
             reserve_factor: Some(Decimal::from_ratio(10u128, 100u128)),
@@ -678,7 +678,7 @@ fn test_update_asset() {
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            params: params.clone(),
+            asset_params: asset_params.clone(),
         };
         let info = mock_info("owner", &[]);
         let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -689,10 +689,10 @@ fn test_update_asset() {
         );
 
         let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();
-        assert_eq!(params.max_loan_to_value.unwrap(), new_market.max_loan_to_value);
-        assert_eq!(params.reserve_factor.unwrap(), new_market.reserve_factor);
-        assert_eq!(params.liquidation_threshold.unwrap(), new_market.liquidation_threshold);
-        assert_eq!(params.liquidation_bonus.unwrap(), new_market.liquidation_bonus);
+        assert_eq!(asset_params.max_loan_to_value.unwrap(), new_market.max_loan_to_value);
+        assert_eq!(asset_params.reserve_factor.unwrap(), new_market.reserve_factor);
+        assert_eq!(asset_params.liquidation_threshold.unwrap(), new_market.liquidation_threshold);
+        assert_eq!(asset_params.liquidation_bonus.unwrap(), new_market.liquidation_bonus);
         assert_eq!(
             InterestRateModel::Dynamic {
                 params: dynamic_ir_params,
@@ -709,7 +709,7 @@ fn test_update_asset() {
     {
         let market_before = MARKETS.load(&deps.storage, "someasset").unwrap();
 
-        let empty_params = InitOrUpdateAssetParams {
+        let empty_asset_params = InitOrUpdateAssetParams {
             initial_borrow_rate: None,
             max_loan_to_value: None,
             reserve_factor: None,
@@ -722,7 +722,7 @@ fn test_update_asset() {
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            params: empty_params,
+            asset_params: empty_asset_params,
         };
         let info = mock_info("owner", &[]);
         let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -794,7 +794,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
         update_threshold_seconds: 1,
     };
 
-    let params_with_dynamic_ir = InitOrUpdateAssetParams {
+    let asset_params_with_dynamic_ir = InitOrUpdateAssetParams {
         initial_borrow_rate: Some(Decimal::from_ratio(15u128, 100u128)),
         max_loan_to_value: Some(Decimal::from_ratio(50u128, 100u128)),
         reserve_factor: Some(Decimal::from_ratio(2u128, 100u128)),
@@ -810,7 +810,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
 
     let msg = ExecuteMsg::InitAsset {
         denom: "someasset".to_string(),
-        params: params_with_dynamic_ir.clone(),
+        asset_params: asset_params_with_dynamic_ir.clone(),
     };
     let info = mock_info("owner", &[]);
     let env = mock_env_at_block_time(1_000_000);
@@ -835,13 +835,13 @@ fn test_update_asset_with_new_interest_rate_model_params() {
         slope_1: Decimal::from_ratio(8u128, 100u128),
         slope_2: Decimal::from_ratio(48u128, 100u128),
     };
-    let params_with_linear_ir = InitOrUpdateAssetParams {
+    let asset_params_with_linear_ir = InitOrUpdateAssetParams {
         interest_rate_model_params: Some(InterestRateModelParams::Linear(linear_ir_params.clone())),
-        ..params_with_dynamic_ir
+        ..asset_params_with_dynamic_ir
     };
     let msg = ExecuteMsg::UpdateAsset {
         denom: "someasset".to_string(),
-        params: params_with_linear_ir.clone(),
+        asset_params: asset_params_with_linear_ir.clone(),
     };
     let info = mock_info("owner", &[]);
     let env = mock_env_at_block_time(2_000_000);
@@ -920,7 +920,7 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
         },
     );
 
-    let params = InitOrUpdateAssetParams {
+    let asset_params = InitOrUpdateAssetParams {
         initial_borrow_rate: None,
         max_loan_to_value: None,
         reserve_factor: Some(Decimal::from_ratio(2_u128, 10_u128)),
@@ -933,7 +933,7 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
     };
     let msg = ExecuteMsg::UpdateAsset {
         denom: "somecoin".to_string(),
-        params: params,
+        asset_params: asset_params,
     };
     let info = mock_info("owner", &[]);
     let env = mock_env_at_block_time(1_500_000);
@@ -996,9 +996,10 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
         ScalingOperation::Truncate,
     )
     .unwrap();
+
     // the rewards collector contract should have received collateral shares
-    let amount_scaled = COLLATERALS
+    let collateral = COLLATERALS
         .load(deps.as_ref().storage, (&Addr::unchecked("protocol_rewards_collector"), "somecoin"))
         .unwrap();
-    assert_eq!(amount_scaled, expected_protocol_rewards_scaled);
+    assert_eq!(collateral.amount_scaled, expected_protocol_rewards_scaled);
 }
