@@ -6,7 +6,7 @@ use thiserror::Error;
 use crate::math;
 use crate::red_bank::Market;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum InterestRateModel {
     Dynamic {
@@ -18,7 +18,7 @@ pub enum InterestRateModel {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum InterestRateModelParams {
     Dynamic(DynamicInterestRateModelParams),
@@ -34,7 +34,7 @@ impl InterestRateModelParams {
     }
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum InterestRateModelError {
     #[error("max_borrow_rate should be greater than or equal to min_borrow_rate. max_borrow_rate: {max_borrow_rate:?}, min_borrow_rate: {min_borrow_rate:?}")]
     InvalidMinMaxBorrowRate {
@@ -135,7 +135,7 @@ pub fn get_liquidity_rate(
 
 // DYNAMIC
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct DynamicInterestRateModelParams {
     /// Minimum borrow rate
     pub min_borrow_rate: Decimal,
@@ -179,7 +179,7 @@ impl DynamicInterestRateModelParams {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct DynamicInterestRateModelState {
     pub txs_since_last_borrow_rate_update: u32,
     pub borrow_rate_last_updated: u64,
@@ -233,7 +233,7 @@ pub fn dynamic_get_borrow_rate(
 // LINEAR
 
 /// Linear interest rate model
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct LinearInterestRateModelParams {
     /// Optimal utilization rate
     pub optimal_utilization_rate: Decimal,

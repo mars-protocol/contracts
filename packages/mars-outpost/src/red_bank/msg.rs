@@ -4,13 +4,13 @@ use serde::{Deserialize, Serialize};
 
 use super::interest_rate_models::InterestRateModelParams;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct InstantiateMsg {
     /// Market configuration
     pub config: CreateOrUpdateConfig,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[allow(clippy::large_enum_variant)]
 pub enum ExecuteMsg {
@@ -139,7 +139,7 @@ pub enum ExecuteMsg {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct CreateOrUpdateConfig {
     pub owner: Option<String>,
     pub address_provider_address: Option<String>,
@@ -147,7 +147,7 @@ pub struct CreateOrUpdateConfig {
     pub close_factor: Option<Decimal>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct InitOrUpdateAssetParams {
     /// Initial borrow rate
     pub initial_borrow_rate: Option<Decimal>,
@@ -173,7 +173,7 @@ pub struct InitOrUpdateAssetParams {
     pub borrow_enabled: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     /// Get config

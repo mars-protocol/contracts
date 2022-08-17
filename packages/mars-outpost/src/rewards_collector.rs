@@ -7,7 +7,7 @@ use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
 
 /// Global configuration
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Config<T> {
     /// Contract owner
     pub owner: T,
@@ -68,7 +68,7 @@ impl From<Config<Addr>> for Config<String> {
     }
 }
 
-#[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct CreateOrUpdateConfig {
     /// Contract owner
     pub owner: Option<String>,
@@ -136,7 +136,7 @@ pub enum ExecuteMsg<Route, CustomMsg> {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     /// Get config parameters; response: `Config<String>`
@@ -153,7 +153,7 @@ pub enum QueryMsg {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct RouteResponse<Route> {
     pub denom_in: String,
     pub denom_out: String,

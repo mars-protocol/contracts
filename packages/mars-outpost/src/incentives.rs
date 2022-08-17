@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::{Addr, Decimal, Uint128};
 
 /// Global configuration
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Config {
     /// Contract owner
     pub owner: Addr,
@@ -13,7 +13,7 @@ pub struct Config {
 }
 
 /// Incentive Metadata for a given incentive
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct AssetIncentive {
     /// How much MARS per second is emitted to be then distributed to all maToken holders
     pub emission_per_second: Uint128,
@@ -24,7 +24,7 @@ pub struct AssetIncentive {
 }
 
 /// Response to AssetIncentive query
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct AssetIncentiveResponse {
     /// Existing asset incentive for a given address. Will return None if it doesn't exist
     pub asset_incentive: Option<AssetIncentive>,
@@ -35,7 +35,7 @@ pub mod msg {
     use schemars::JsonSchema;
     use serde::{Deserialize, Serialize};
 
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
     pub struct InstantiateMsg {
         /// Contract owner
         pub owner: String,
@@ -82,7 +82,7 @@ pub mod msg {
         ExecuteCosmosMsg(CosmosMsg),
     }
 
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
     #[serde(rename_all = "snake_case")]
     pub enum QueryMsg {
         /// Query contract config

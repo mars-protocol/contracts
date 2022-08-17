@@ -74,9 +74,9 @@ fn test_withdraw_native() {
     let expected_params = th_get_expected_indices_and_rates(
         &market_initial,
         mock_market.indexes_last_updated + seconds_elapsed,
-        initial_available_liquidity.into(),
+        initial_available_liquidity,
         TestUtilizationDeltaInfo {
-            less_liquidity: withdraw_amount.into(),
+            less_liquidity: withdraw_amount,
             ..Default::default()
         },
     );
@@ -119,7 +119,7 @@ fn test_withdraw_native() {
                 contract_addr: "matoken".to_string(),
                 msg: to_binary(&ma_token::msg::ExecuteMsg::Burn {
                     user: withdrawer_addr.to_string(),
-                    amount: expected_burn_amount.into(),
+                    amount: expected_burn_amount,
                 })
                 .unwrap(),
                 funds: vec![]
@@ -213,7 +213,7 @@ fn test_withdraw_and_send_funds_to_another_user() {
                 contract_addr: ma_token_addr.to_string(),
                 msg: to_binary(&ma_token::msg::ExecuteMsg::Burn {
                     user: withdrawer_addr.to_string(),
-                    amount: ma_token_balance_scaled.into(),
+                    amount: ma_token_balance_scaled,
                 })
                 .unwrap(),
                 funds: vec![]
@@ -291,7 +291,7 @@ fn test_cannot_withdraw_if_market_inactive() {
         amount: Some(Uint128::new(2000)),
         recipient: None,
     };
-    let error_res = execute(deps.as_mut(), env.clone(), info.clone(), msg.clone()).unwrap_err();
+    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(
         error_res,
         ContractError::MarketNotActive {
@@ -351,12 +351,12 @@ fn test_withdraw_if_health_factor_not_met() {
     let ma_token_1_balance_scaled = Uint128::new(100_000) * SCALING_FACTOR;
     deps.querier.set_cw20_balances(
         ma_token_1_addr,
-        &[(withdrawer_addr.clone(), ma_token_1_balance_scaled.into())],
+        &[(withdrawer_addr.clone(), ma_token_1_balance_scaled)],
     );
     let ma_token_3_balance_scaled = Uint128::new(600_000) * SCALING_FACTOR;
     deps.querier.set_cw20_balances(
         ma_token_3_addr,
-        &[(withdrawer_addr.clone(), ma_token_3_balance_scaled.into())],
+        &[(withdrawer_addr.clone(), ma_token_3_balance_scaled)],
     );
 
     // Set user to have positive debt amount in debt asset
@@ -464,7 +464,7 @@ fn test_withdraw_if_health_factor_not_met() {
                     contract_addr: "matoken3".to_string(),
                     msg: to_binary(&ma_token::msg::ExecuteMsg::Burn {
                         user: withdrawer_addr.to_string(),
-                        amount: withdraw_amount_scaled.into(),
+                        amount: withdraw_amount_scaled,
                     })
                     .unwrap(),
                     funds: vec![]
@@ -501,7 +501,7 @@ fn test_withdraw_total_balance() {
 
     deps.querier.set_cw20_balances(
         Addr::unchecked("matoken"),
-        &[(Addr::unchecked("withdrawer"), withdrawer_balance_scaled.into())],
+        &[(Addr::unchecked("withdrawer"), withdrawer_balance_scaled)],
     );
 
     let market_initial = th_init_market(deps.as_mut(), "somecoin", &mock_market);
@@ -545,7 +545,7 @@ fn test_withdraw_total_balance() {
         mock_market.indexes_last_updated + seconds_elapsed,
         initial_available_liquidity,
         TestUtilizationDeltaInfo {
-            less_liquidity: withdrawer_balance.into(),
+            less_liquidity: withdrawer_balance,
             ..Default::default()
         },
     );
@@ -571,7 +571,7 @@ fn test_withdraw_total_balance() {
                 contract_addr: "matoken".to_string(),
                 msg: to_binary(&ma_token::msg::ExecuteMsg::Burn {
                     user: withdrawer_addr.to_string(),
-                    amount: withdrawer_balance_scaled.into(),
+                    amount: withdrawer_balance_scaled,
                 })
                 .unwrap(),
                 funds: vec![]

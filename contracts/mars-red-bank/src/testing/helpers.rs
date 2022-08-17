@@ -135,10 +135,10 @@ pub(super) fn th_get_expected_indices_and_rates(
         )
         .unwrap();
 
-        let user_new_debt = if Uint128::from(delta_info.less_debt) >= user_current_debt {
+        let user_new_debt = if delta_info.less_debt >= user_current_debt {
             Uint128::zero()
         } else {
-            user_current_debt - Uint128::from(delta_info.less_debt)
+            user_current_debt - delta_info.less_debt
         };
 
         let user_new_debt_scaled =
@@ -164,8 +164,8 @@ pub(super) fn th_get_expected_indices_and_rates(
         ScalingOperation::Ceil,
     )
     .unwrap();
-    let contract_current_balance = Uint128::from(initial_liquidity);
-    let liquidity_taken = Uint128::from(delta_info.less_liquidity);
+    let contract_current_balance = initial_liquidity;
+    let liquidity_taken = delta_info.less_liquidity;
     let dec_liquidity_total = contract_current_balance - liquidity_taken;
     let expected_utilization_rate =
         Decimal::from_ratio(dec_debt_total, dec_liquidity_total + dec_debt_total);
@@ -185,7 +185,7 @@ pub(super) fn th_get_expected_indices_and_rates(
         borrow_rate: market_copy.borrow_rate,
         liquidity_rate: market_copy.liquidity_rate,
         protocol_rewards_to_distribute: expected_protocol_rewards_to_distribute,
-        less_debt_scaled: less_debt_scaled,
+        less_debt_scaled,
     }
 }
 

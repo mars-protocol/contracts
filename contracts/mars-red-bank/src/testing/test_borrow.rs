@@ -151,7 +151,7 @@ fn test_borrow_and_repay() {
 
     let debt = DEBTS.load(&deps.storage, ("uosmo", &borrower_addr)).unwrap();
     let expected_debt_scaled_1_after_borrow = compute_scaled_amount(
-        Uint128::from(borrow_amount),
+        borrow_amount,
         expected_params_uosmo.borrow_index,
         ScalingOperation::Ceil,
     )
@@ -200,7 +200,7 @@ fn test_borrow_and_repay() {
 
     let expected_debt_scaled_1_after_borrow_again = expected_debt_scaled_1_after_borrow
         + compute_scaled_amount(
-            Uint128::from(borrow_amount),
+            borrow_amount,
             expected_params_uosmo.borrow_index,
             ScalingOperation::Ceil,
         )
@@ -273,7 +273,7 @@ fn test_borrow_and_repay() {
     let market_2_after_borrow_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
 
     let expected_debt_scaled_2_after_borrow_2 = compute_scaled_amount(
-        Uint128::from(borrow_amount),
+        borrow_amount,
         expected_params_uusd.borrow_index,
         ScalingOperation::Ceil,
     )
@@ -359,7 +359,7 @@ fn test_borrow_and_repay() {
 
     let expected_debt_scaled_2_after_repay_some_2 = expected_debt_scaled_2_after_borrow_2
         - compute_scaled_amount(
-            Uint128::from(repay_amount),
+            repay_amount,
             expected_params_uusd.borrow_index,
             ScalingOperation::Ceil,
         )
@@ -531,7 +531,7 @@ fn test_cannot_repay_if_market_inactive() {
         denom: "somecoin".to_string(),
         on_behalf_of: None,
     };
-    let error_res = execute(deps.as_mut(), env.clone(), info.clone(), msg.clone()).unwrap_err();
+    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(
         error_res,
         ContractError::MarketNotActive {
@@ -611,7 +611,7 @@ fn test_repay_on_behalf_of() {
         denom: String::from("borrowedcoinnative"),
         on_behalf_of: Some(borrower_addr.to_string()),
     };
-    let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+    let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
     // 'user' should not be saved
     let _user = USERS.load(&deps.storage, &user_addr).unwrap_err();
@@ -659,7 +659,7 @@ fn test_repay_uncollateralized_loan_on_behalf_of() {
         denom: "somecoin".to_string(),
         on_behalf_of: Some(another_user_addr.to_string()),
     };
-    let error_res = execute(deps.as_mut(), env.clone(), info.clone(), msg.clone()).unwrap_err();
+    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(error_res, ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {});
 }
 
@@ -693,10 +693,8 @@ fn test_borrow_uusd() {
 
     // Set the querier to return collateral balance
     let deposit_coin_address = Addr::unchecked("matoken");
-    deps.querier.set_cw20_balances(
-        deposit_coin_address,
-        &[(borrower_addr.clone(), deposit_amount_scaled.into())],
-    );
+    deps.querier
+        .set_cw20_balances(deposit_coin_address, &[(borrower_addr.clone(), deposit_amount_scaled)]);
 
     // borrow with insufficient collateral, should fail
     let new_block_time = 120u64;
@@ -785,7 +783,7 @@ fn test_borrow_full_liquidity_and_then_repay() {
     let deposit_coin_address = Addr::unchecked("matoken");
     deps.querier.set_cw20_balances(
         deposit_coin_address,
-        &[(borrower_addr.clone(), Uint128::new(deposit_amount) * SCALING_FACTOR)],
+        &[(borrower_addr, Uint128::new(deposit_amount) * SCALING_FACTOR)],
     );
 
     // Borrow full liquidity
@@ -820,7 +818,7 @@ fn test_borrow_full_liquidity_and_then_repay() {
             amount: 100u128.into(),
             recipient: None,
         };
-        let error_res = execute(deps.as_mut(), env, info.clone(), msg).unwrap_err();
+        let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(error_res, ContractError::OperationExceedsAvailableLiquidity {});
     }
 
@@ -910,11 +908,9 @@ fn test_borrow_collateral_check() {
     let balance_3 = Uint128::new(3_000_000) * SCALING_FACTOR;
 
     // Set the querier to return a certain collateral balance
-    deps.querier
-        .set_cw20_balances(ma_token_address_1, &[(borrower_addr.clone(), balance_1.into())]);
-    deps.querier
-        .set_cw20_balances(ma_token_address_2, &[(borrower_addr.clone(), balance_2.into())]);
-    deps.querier.set_cw20_balances(ma_token_address_3, &[(borrower_addr, balance_3.into())]);
+    deps.querier.set_cw20_balances(ma_token_address_1, &[(borrower_addr.clone(), balance_1)]);
+    deps.querier.set_cw20_balances(ma_token_address_2, &[(borrower_addr.clone(), balance_2)]);
+    deps.querier.set_cw20_balances(ma_token_address_3, &[(borrower_addr, balance_3)]);
 
     let max_borrow_allowed_in_base_asset = (market_1_initial.max_loan_to_value
         * compute_underlying_amount(
@@ -987,7 +983,7 @@ fn test_cannot_borrow_if_market_not_active() {
         amount: Uint128::new(1000),
         recipient: None,
     };
-    let error_res = execute(deps.as_mut(), env.clone(), info.clone(), msg.clone()).unwrap_err();
+    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(
         error_res,
         ContractError::MarketNotActive {
@@ -1016,7 +1012,7 @@ fn test_cannot_borrow_if_market_not_enabled() {
         amount: Uint128::new(1000),
         recipient: None,
     };
-    let error_res = execute(deps.as_mut(), env.clone(), info.clone(), msg.clone()).unwrap_err();
+    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(
         error_res,
         ContractError::BorrowNotEnabled {
@@ -1051,10 +1047,8 @@ fn test_borrow_and_send_funds_to_another_user() {
 
     // Set the querier to return collateral balance
     let deposit_coin_address = Addr::unchecked("matoken");
-    deps.querier.set_cw20_balances(
-        deposit_coin_address,
-        &[(borrower_addr.clone(), deposit_amount_scaled.into())],
-    );
+    deps.querier
+        .set_cw20_balances(deposit_coin_address, &[(borrower_addr.clone(), deposit_amount_scaled)]);
 
     let borrow_amount = Uint128::from(1000u128);
     let msg = ExecuteMsg::Borrow {

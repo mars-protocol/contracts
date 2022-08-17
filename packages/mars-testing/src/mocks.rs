@@ -64,7 +64,7 @@ pub fn mock_dependencies(
 ) -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     let contract_addr = Addr::unchecked(MOCK_CONTRACT_ADDR);
     let custom_querier: MarsMockQuerier =
-        MarsMockQuerier::new(MockQuerier::new(&[(&contract_addr.to_string(), contract_balance)]));
+        MarsMockQuerier::new(MockQuerier::new(&[(contract_addr.as_ref(), contract_balance)]));
 
     OwnedDeps {
         storage: MockStorage::default(),

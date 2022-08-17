@@ -6,7 +6,7 @@ use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
 
 use mars_outpost::address_provider::MarsContract;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MarsContractKey(pub Vec<u8>);
 
 impl From<MarsContract> for MarsContractKey {
