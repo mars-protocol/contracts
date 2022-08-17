@@ -477,7 +477,7 @@ fn test_set_new_asset_incentive_user_non_zero_balance() {
             ..Default::default()
         });
 
-        let info = mock_info(&ma_asset_address.to_string(), &[]);
+        let info = mock_info(ma_asset_address.as_ref(), &[]);
 
         execute_balance_change(
             deps.as_mut(),

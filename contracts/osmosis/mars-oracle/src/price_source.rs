@@ -13,7 +13,7 @@ use crate::helpers;
 /// 48 hours in seconds
 const TWO_DAYS_IN_SECONDS: u64 = 172800u64;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum OsmosisPriceSource {
     /// Returns a fixed value;

@@ -70,7 +70,7 @@ fn test_deposit_native_asset() {
             contract_addr: "matoken".to_string(),
             msg: to_binary(&Cw20ExecuteMsg::Mint {
                 recipient: "depositor".to_string(),
-                amount: expected_mint_amount.into(),
+                amount: expected_mint_amount,
             })
             .unwrap(),
             funds: vec![]
@@ -165,7 +165,7 @@ fn test_cannot_deposit_if_market_not_active() {
         denom: String::from("somecoin"),
         on_behalf_of: None,
     };
-    let error_res = execute(deps.as_mut(), env.clone(), info.clone(), msg.clone()).unwrap_err();
+    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(
         error_res,
         ContractError::MarketNotActive {
@@ -193,7 +193,7 @@ fn test_cannot_deposit_if_market_not_enabled() {
         denom: String::from("somecoin"),
         on_behalf_of: None,
     };
-    let error_res = execute(deps.as_mut(), env.clone(), info.clone(), msg.clone()).unwrap_err();
+    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(
         error_res,
         ContractError::DepositNotEnabled {
@@ -227,7 +227,7 @@ fn test_deposit_on_behalf_of() {
         denom: String::from("somecoin"),
         on_behalf_of: Some(another_user_addr.to_string()),
     };
-    let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+    let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
     let expected_mint_amount = compute_scaled_amount(
         Uint128::from(deposit_amount),
@@ -250,7 +250,7 @@ fn test_deposit_on_behalf_of() {
             contract_addr: "matoken".to_string(),
             msg: to_binary(&Cw20ExecuteMsg::Mint {
                 recipient: another_user_addr.to_string(),
-                amount: expected_mint_amount.into(),
+                amount: expected_mint_amount,
             })
             .unwrap(),
             funds: vec![]

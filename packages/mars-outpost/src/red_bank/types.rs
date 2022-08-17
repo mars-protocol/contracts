@@ -8,7 +8,7 @@ use crate::helpers::decimal_param_le_one;
 use crate::red_bank;
 
 /// Global configuration
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Config {
     /// Contract owner
     pub owner: Addr,
@@ -28,14 +28,14 @@ impl Config {
 }
 
 /// RedBank global state
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct GlobalState {
     /// Market count
     pub market_count: u32,
 }
 
 /// Asset markets
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Market {
     /// Market index (Bit position on data)
     pub index: u32,
@@ -152,7 +152,7 @@ pub enum MarketError {
 }
 
 /// Data for individual users
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct User {
     /// bits representing borrowed assets. 1 on the corresponding bit means asset is
     /// being borrowed
@@ -172,7 +172,7 @@ impl Default for User {
 }
 
 /// Debt for each asset and user
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Debt {
     /// Scaled debt amount
     pub amount_scaled: Uint128,
@@ -181,7 +181,7 @@ pub struct Debt {
     pub uncollateralized: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum UserHealthStatus {
     NotBorrowing,
@@ -189,7 +189,7 @@ pub enum UserHealthStatus {
 }
 
 // We define a custom struct for each query response
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ConfigResponse {
     pub owner: Addr,
     pub address_provider_address: Addr,
@@ -198,12 +198,12 @@ pub struct ConfigResponse {
     pub close_factor: Decimal,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct UserDebtResponse {
     pub debts: Vec<UserAssetDebtResponse>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct UserAssetDebtResponse {
     /// Asset denom
     pub denom: String,
@@ -213,12 +213,12 @@ pub struct UserAssetDebtResponse {
     pub amount: Uint128,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct UserCollateralResponse {
     pub collateral: Vec<UserAssetCollateralResponse>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct UserAssetCollateralResponse {
     /// Asset denom
     pub denom: String,
@@ -226,7 +226,7 @@ pub struct UserAssetCollateralResponse {
     pub enabled: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct UserPositionResponse {
     pub total_collateral_in_base_asset: Uint128,
     pub total_debt_in_base_asset: Uint128,

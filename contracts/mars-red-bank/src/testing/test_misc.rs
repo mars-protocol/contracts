@@ -109,8 +109,8 @@ fn test_uncollateralized_loan_limits() {
         block_time,
         available_liquidity,
         TestUtilizationDeltaInfo {
-            less_liquidity: initial_borrow_amount.into(),
-            more_debt: initial_borrow_amount.into(),
+            less_liquidity: initial_borrow_amount,
+            more_debt: initial_borrow_amount,
             ..Default::default()
         },
     );
@@ -231,7 +231,7 @@ fn test_update_asset_collateral() {
     let denom_3 = "depositedcoin3";
     let ma_token_addr_3 = Addr::unchecked("matoken3");
     let mock_market_3 = Market {
-        ma_token_address: ma_token_addr_3.clone(),
+        ma_token_address: ma_token_addr_3,
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::from_ratio(2u128, 1u128),
         max_loan_to_value: Decimal::from_ratio(20u128, 100u128),
@@ -320,15 +320,11 @@ fn test_update_asset_collateral() {
 
         // Set the querier to return collateral balances (ma_token_1 and ma_token_2)
         let ma_token_1_balance_scaled = Uint128::new(150_000) * SCALING_FACTOR;
-        deps.querier.set_cw20_balances(
-            ma_token_addr_1.clone(),
-            &[(user_addr.clone(), ma_token_1_balance_scaled.into())],
-        );
+        deps.querier
+            .set_cw20_balances(ma_token_addr_1, &[(user_addr.clone(), ma_token_1_balance_scaled)]);
         let ma_token_2_balance_scaled = Uint128::new(220_000) * SCALING_FACTOR;
-        deps.querier.set_cw20_balances(
-            ma_token_addr_2.clone(),
-            &[(user_addr.clone(), ma_token_2_balance_scaled.into())],
-        );
+        deps.querier
+            .set_cw20_balances(ma_token_addr_2, &[(user_addr.clone(), ma_token_2_balance_scaled)]);
 
         // Calculate maximum debt for the user to have valid health factor
         let token_1_weighted_lt_in_base_asset = compute_underlying_amount(
@@ -385,7 +381,7 @@ fn test_update_asset_collateral() {
             denom: denom_2.to_string(),
             enable: false,
         };
-        let res_error = execute(deps.as_mut(), env.clone(), info, update_msg).unwrap_err();
+        let res_error = execute(deps.as_mut(), env, info, update_msg).unwrap_err();
         assert_eq!(res_error, ContractError::InvalidHealthFactorAfterDisablingCollateral {})
     }
 }

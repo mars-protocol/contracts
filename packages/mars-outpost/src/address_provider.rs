@@ -61,7 +61,7 @@ impl FromStr for MarsContract {
 ///    can do this update as part of the deployment
 /// 4. Update the owner of the address provider contract at the end of deployment to be either a. the
 ///    multisig or b. the gov/council contract
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct InstantiateMsg {
     /// The contract's owner
     pub owner: String,
@@ -69,7 +69,7 @@ pub struct InstantiateMsg {
     pub prefix: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     /// Set addresses for contracts
@@ -83,7 +83,7 @@ pub enum ExecuteMsg {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     /// Get config; returns `Config`
@@ -101,7 +101,7 @@ pub enum QueryMsg {
 
 pub type Config = InstantiateMsg;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct AddressResponseItem {
     /// The contract
     pub contract: MarsContract,

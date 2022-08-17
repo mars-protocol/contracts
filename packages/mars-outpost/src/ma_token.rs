@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::Addr;
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
 pub struct Config {
     pub red_bank_address: Addr,
     pub incentives_address: Addr,
@@ -33,7 +33,7 @@ pub mod msg {
     }
 
     /// Hook to be called after token initialization
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
     pub struct InitHook {
         pub msg: Binary,
         pub contract_addr: String,
@@ -124,7 +124,7 @@ pub mod msg {
         UploadLogo(Logo),
     }
 
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
     #[serde(rename_all = "snake_case")]
     pub enum QueryMsg {
         /// Returns the current balance of the given address, 0 if unset.
@@ -181,7 +181,7 @@ pub mod msg {
         },
     }
 
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
     pub struct BalanceAndTotalSupplyResponse {
         pub balance: Uint128,
         pub total_supply: Uint128,

@@ -141,7 +141,7 @@ fn test_update_config() {
     let config = CreateOrUpdateConfig {
         owner: None,
         close_factor: Some(close_factor),
-        ..init_config.clone()
+        ..init_config
     };
     let msg = ExecuteMsg::UpdateConfig {
         config,
@@ -367,13 +367,13 @@ fn test_init_asset() {
         let invalid_dynamic_ir_params = DynamicInterestRateModelParams {
             min_borrow_rate: Decimal::from_ratio(5u128, 10u128),
             max_borrow_rate: Decimal::from_ratio(4u128, 10u128),
-            ..dynamic_ir_params.clone()
+            ..dynamic_ir_params
         };
         let invalid_asset_params = InitOrUpdateAssetParams {
             interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
                 invalid_dynamic_ir_params,
             )),
-            ..asset_params.clone()
+            ..asset_params
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
@@ -395,13 +395,13 @@ fn test_init_asset() {
     {
         let invalid_dynamic_ir_params = DynamicInterestRateModelParams {
             optimal_utilization_rate: Decimal::from_ratio(11u128, 10u128),
-            ..dynamic_ir_params.clone()
+            ..dynamic_ir_params
         };
         let invalid_asset_params = InitOrUpdateAssetParams {
             interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
                 invalid_dynamic_ir_params,
             )),
-            ..asset_params.clone()
+            ..asset_params
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
@@ -490,7 +490,7 @@ fn test_init_asset() {
     {
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            asset_params: asset_params.clone(),
+            asset_params,
             asset_symbol: None,
         };
         let info = mock_info("owner", &[]);
@@ -518,7 +518,7 @@ fn test_init_asset() {
             denom: "someasset".to_string(),
         };
         let info = mock_info("mtokencontract", &[]);
-        let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+        let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(error_res, MarsError::Unauthorized {}.into());
     }
 }
@@ -542,16 +542,14 @@ fn test_init_asset_with_msg_symbol() {
         reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
         liquidation_threshold: Some(Decimal::one()),
         liquidation_bonus: Some(Decimal::zero()),
-        interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
-            dynamic_ir_params.clone(),
-        )),
+        interest_rate_model_params: Some(InterestRateModelParams::Dynamic(dynamic_ir_params)),
         active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
     };
     let msg = ExecuteMsg::InitAsset {
         denom: "someasset".to_string(),
-        asset_params: asset_params.clone(),
+        asset_params,
         asset_symbol: Some("COIN".to_string()),
     };
     let info = mock_info("owner", &[]);
@@ -782,7 +780,7 @@ fn test_update_asset() {
         };
         let invalid_asset_params = InitOrUpdateAssetParams {
             interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
-                invalid_dynamic_ir_params.clone(),
+                invalid_dynamic_ir_params,
             )),
             ..asset_params
         };
@@ -809,7 +807,7 @@ fn test_update_asset() {
         };
         let invalid_asset_params = InitOrUpdateAssetParams {
             interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
-                invalid_dynamic_ir_params.clone(),
+                invalid_dynamic_ir_params,
             )),
             ..asset_params
         };
@@ -968,7 +966,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
     };
     let info = mock_info("owner", &[]);
     let env = mock_env(MockEnvParams::default());
-    instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+    instantiate(deps.as_mut(), env, info, msg).unwrap();
 
     let dynamic_ir_params = DynamicInterestRateModelParams {
         min_borrow_rate: Decimal::from_ratio(10u128, 100u128),
@@ -1029,7 +1027,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
     };
     let msg = ExecuteMsg::UpdateAsset {
         denom: "someasset".to_string(),
-        asset_params: asset_params_with_linear_ir.clone(),
+        asset_params: asset_params_with_linear_ir,
     };
     let info = mock_info("owner", &[]);
     let env = mock_env_at_block_time(2_000_000);
@@ -1073,7 +1071,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
 
 #[test]
 fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
-    let asset_liquidity = Uint128::from(10_000_000_000000_u128);
+    let asset_liquidity = Uint128::from(10_000_000_000_000_u128);
     let mut deps = th_setup(&[coin(asset_liquidity.into(), "somecoin")]);
 
     let ma_token_address = Addr::unchecked("ma_token");
@@ -1088,7 +1086,7 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
         params: linear_ir_model_params.clone(),
     };
 
-    let asset_initial_debt = Uint128::new(2_000_000_000000);
+    let asset_initial_debt = Uint128::new(2_000_000_000_000);
     let market_before = th_init_market(
         deps.as_mut(),
         "somecoin",
@@ -1105,8 +1103,8 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
                 ScalingOperation::Ceil,
             )
             .unwrap(),
-            ma_token_address: ma_token_address,
-            interest_rate_model: linear_ir_model.clone(),
+            ma_token_address,
+            interest_rate_model: linear_ir_model,
             ..Default::default()
         },
     );
@@ -1124,7 +1122,7 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
     };
     let msg = ExecuteMsg::UpdateAsset {
         denom: "somecoin".to_string(),
-        asset_params: asset_params,
+        asset_params,
     };
     let info = mock_info("owner", &[]);
     let env = mock_env_at_block_time(1_500_000);
