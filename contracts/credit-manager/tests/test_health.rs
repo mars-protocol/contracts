@@ -2,7 +2,7 @@ use std::ops::{Add, Div, Mul};
 
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 
-use credit_manager::borrow::DEFAULT_DEBT_UNITS_PER_COIN_BORROWED;
+use credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use mock_oracle::msg::CoinPrice;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{Borrow, Deposit};
@@ -548,7 +548,7 @@ fn test_debt_value() {
     let red_bank_atom_debt = mock.query_red_bank_debt(&uatom_info.denom);
 
     let user_a_debt_shares_atom =
-        user_a_borrowed_amount_atom.mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED);
+        user_a_borrowed_amount_atom.mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED);
     assert_eq!(
         user_a_debt_shares_atom,
         find_by_denom(&uatom_info.denom, &position_a.debt_shares).shares

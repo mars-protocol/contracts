@@ -22,20 +22,20 @@ pub type Oracle = OracleBase<Addr>;
 
 impl From<Oracle> for OracleUnchecked {
     fn from(oracle: Oracle) -> Self {
-        Self(oracle.0.to_string())
+        Self(oracle.address().to_string())
     }
 }
 
 impl OracleUnchecked {
     pub fn check(&self, api: &dyn Api) -> StdResult<Oracle> {
-        Ok(OracleBase::new(api.addr_validate(&self.0)?))
+        Ok(OracleBase::new(api.addr_validate(self.address())?))
     }
 }
 
 impl Oracle {
     pub fn query_price(&self, querier: &QuerierWrapper, denom: &str) -> StdResult<Decimal> {
         querier.query_wasm_smart(
-            self.0.to_string(),
+            self.address().to_string(),
             &QueryMsg::AssetPrice {
                 denom: denom.to_string(),
             },

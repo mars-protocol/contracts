@@ -6,4 +6,5 @@ pub mod execute;
 pub mod health;
 pub mod instantiate;
 pub mod query;
+pub mod repay;
 pub mod state;

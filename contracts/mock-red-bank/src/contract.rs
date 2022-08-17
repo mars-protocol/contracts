@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 
-use crate::execute::execute_borrow;
+use crate::execute::{borrow, repay};
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::query::{query_debt, query_market};
 use crate::state::COIN_MARKET_INFO;
@@ -28,10 +28,8 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> StdResult<Response> {
     match msg {
-        ExecuteMsg::Borrow {
-            coin,
-            recipient: _recipient,
-        } => execute_borrow(deps, info, coin),
+        ExecuteMsg::Borrow { coin, .. } => borrow(deps, info, coin),
+        ExecuteMsg::Repay { denom, .. } => repay(deps, info, denom),
     }
 }
 

@@ -2,7 +2,7 @@ use std::ops::{Mul, Sub};
 
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 
-use credit_manager::borrow::DEFAULT_DEBT_UNITS_PER_COIN_BORROWED;
+use credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{Borrow, Deposit};
 
@@ -103,6 +103,42 @@ fn test_borrowing_zero_does_nothing() {
 }
 
 #[test]
+fn test_cannot_borrow_above_max_ltv() {
+    let coin_info = CoinInfo {
+        denom: "uosmo".to_string(),
+        price: Decimal::from_atomics(25u128, 2).unwrap(),
+        max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
+    };
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[coin_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![Coin::new(300u128, coin_info.denom.clone())],
+        })
+        .build()
+        .unwrap();
+    let token_id = mock.create_credit_account(&user).unwrap();
+
+    let position = mock.query_position(&token_id);
+    assert_eq!(position.coins.len(), 0);
+    assert_eq!(position.debt_shares.len(), 0);
+
+    let res = mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![
+            Deposit(coin_info.to_coin(Uint128::from(300u128))),
+            Borrow(coin_info.to_coin(Uint128::from(700u128))),
+        ],
+        &[Coin::new(300u128, coin_info.denom)],
+    );
+
+    assert_err(res, ContractError::AboveMaxLTV);
+}
+
+#[test]
 fn test_success_when_new_debt_asset() {
     let coin_info = CoinInfo {
         denom: "uosmo".to_string(),
@@ -159,7 +195,7 @@ fn test_success_when_new_debt_asset() {
     assert_eq!(position.debt_shares.len(), 1);
     assert_eq!(
         debt_shares_res.shares,
-        Uint128::from(42u128).mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED)
+        Uint128::from(42u128).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)
     );
     assert_eq!(debt_shares_res.denom, coin_info.denom);
     let debt_amount = Uint128::from(42u128) + Uint128::new(1u128); // simulated yield
@@ -181,7 +217,7 @@ fn test_success_when_new_debt_asset() {
     let res = mock.query_total_debt_shares(&coin_info.denom);
     assert_eq!(
         res.shares,
-        Uint128::from(42u128).mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED)
+        Uint128::from(42u128).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)
     );
 }
 
@@ -234,14 +270,14 @@ fn test_debt_shares_with_debt_amount() {
     )
     .unwrap();
 
-    let token_a_shares = Uint128::from(50u128).mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED);
+    let token_a_shares = Uint128::from(50u128).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED);
     let position = mock.query_position(&token_id_a);
     let debt_position_a = position.debt_shares.first().unwrap();
     assert_eq!(debt_position_a.shares, token_a_shares.clone());
     assert_eq!(debt_position_a.denom, coin_info.denom);
 
     let token_b_shares = Uint128::from(50u128)
-        .mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED)
+        .mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)
         .multiply_ratio(Uint128::from(50u128), interim_red_bank_debt.amount);
     let position = mock.query_position(&token_id_b);
     let debt_position_b = position.debt_shares.first().unwrap();

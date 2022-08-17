@@ -13,6 +13,7 @@ use rover::msg::instantiate::ConfigUpdates;
 use crate::borrow::borrow;
 use crate::deposit::deposit;
 use crate::health::assert_below_max_ltv;
+use crate::repay::repay;
 use crate::state::{ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, ORACLE, OWNER, RED_BANK};
 
 pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Response> {
@@ -131,6 +132,10 @@ pub fn dispatch_actions(
                 token_id: token_id.to_string(),
                 coin: coin.clone(),
             }),
+            Action::Repay(coin) => callbacks.push(CallbackMsg::Repay {
+                token_id: token_id.to_string(),
+                coin: coin.clone(),
+            }),
         }
     }
 
@@ -166,6 +171,7 @@ pub fn execute_callback(
     }
     match callback {
         CallbackMsg::Borrow { coin, token_id } => borrow(deps, env, &token_id, coin),
+        CallbackMsg::Repay { token_id, coin } => repay(deps, env, &token_id, coin),
         CallbackMsg::AssertBelowMaxLTV { token_id } => {
             assert_below_max_ltv(deps.as_ref(), env, &token_id)
         }

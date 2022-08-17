@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, Coin, Uint128};
 
-use credit_manager::borrow::DEFAULT_DEBT_UNITS_PER_COIN_BORROWED;
+use credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use rover::msg::execute::Action;
 use rover::msg::query::CoinShares;
 
@@ -172,7 +172,7 @@ fn test_pagination_on_all_total_debt_shares_query_works() {
         .iter()
         .map(|coin| CoinShares {
             denom: coin.denom.clone(),
-            shares: DEFAULT_DEBT_UNITS_PER_COIN_BORROWED,
+            shares: DEFAULT_DEBT_SHARES_PER_COIN_BORROWED,
         })
         .collect::<Vec<CoinShares>>();
 
@@ -180,7 +180,7 @@ fn test_pagination_on_all_total_debt_shares_query_works() {
         .iter()
         .map(|coin| CoinShares {
             denom: coin.denom.clone(),
-            shares: DEFAULT_DEBT_UNITS_PER_COIN_BORROWED,
+            shares: DEFAULT_DEBT_SHARES_PER_COIN_BORROWED,
         })
         .collect::<Vec<CoinShares>>();
 
@@ -188,7 +188,7 @@ fn test_pagination_on_all_total_debt_shares_query_works() {
         .iter()
         .map(|coin| CoinShares {
             denom: coin.denom.clone(),
-            shares: DEFAULT_DEBT_UNITS_PER_COIN_BORROWED,
+            shares: DEFAULT_DEBT_SHARES_PER_COIN_BORROWED,
         })
         .collect::<Vec<CoinShares>>();
 

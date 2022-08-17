@@ -31,7 +31,7 @@ impl From<RedBank> for RedBankUnchecked {
 
 impl RedBankUnchecked {
     pub fn check(&self, api: &dyn Api) -> StdResult<RedBank> {
-        Ok(RedBankBase(api.addr_validate(&self.0)?))
+        Ok(RedBankBase(api.addr_validate(self.address())?))
     }
 }
 
@@ -39,12 +39,24 @@ impl RedBank {
     /// Generate message for borrowing a specified amount of coin
     pub fn borrow_msg(&self, coin: &Coin) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: self.0.to_string(),
+            contract_addr: self.address().to_string(),
             msg: to_binary(&ExecuteMsg::Borrow {
                 coin: coin.clone(),
                 recipient: None,
             })?,
             funds: vec![],
+        }))
+    }
+
+    /// Generate message for repaying a specified amount of coin
+    pub fn repay_msg(&self, coin: &Coin) -> StdResult<CosmosMsg> {
+        Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: self.address().to_string(),
+            msg: to_binary(&ExecuteMsg::Repay {
+                denom: coin.denom.clone(),
+                on_behalf_of: None,
+            })?,
+            funds: vec![coin.clone()],
         }))
     }
 
@@ -56,7 +68,7 @@ impl RedBank {
     ) -> StdResult<Uint128> {
         let response: UserAssetDebtResponse =
             querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-                contract_addr: self.0.to_string(),
+                contract_addr: self.address().to_string(),
                 msg: to_binary(&QueryMsg::UserAssetDebt {
                     user_address: user_address.to_string(),
                     denom: denom.to_string(),

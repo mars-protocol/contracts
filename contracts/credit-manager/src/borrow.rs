@@ -5,7 +5,7 @@ use rover::error::{ContractError, ContractResult};
 use crate::deposit::assert_coin_is_whitelisted;
 use crate::state::{COIN_BALANCES, DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES};
 
-pub static DEFAULT_DEBT_UNITS_PER_COIN_BORROWED: Uint128 = Uint128::new(1_000_000);
+pub static DEFAULT_DEBT_SHARES_PER_COIN_BORROWED: Uint128 = Uint128::new(1_000_000);
 
 /// calculate by how many the user's debt units should be increased
 /// if total debt is zero, then we define 1 unit of coin borrowed = 1,000,000 debt unit
@@ -25,7 +25,7 @@ pub fn borrow(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractRe
 
     let debt_shares_to_add = if total_debt_amount.is_zero() {
         coin.amount
-            .checked_mul(DEFAULT_DEBT_UNITS_PER_COIN_BORROWED)
+            .checked_mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)
             .map_err(StdError::overflow)?
     } else {
         TOTAL_DEBT_SHARES

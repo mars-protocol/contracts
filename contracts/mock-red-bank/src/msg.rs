@@ -21,6 +21,10 @@ pub enum ExecuteMsg {
         coin: Coin,
         recipient: Option<String>,
     },
+    Repay {
+        denom: String,
+        on_behalf_of: Option<String>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

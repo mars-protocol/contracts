@@ -33,9 +33,10 @@ pub enum ExecuteMsg {
 pub enum Action {
     /// Deposit native coin of specified type and amount. Verifies if the correct amount is sent with transaction.
     Deposit(Coin),
-
     /// Borrow coin of specified amount from Red Bank
     Borrow(Coin),
+    /// Repay coin of specified amount back to Red Bank
+    Repay(Coin),
 }
 
 /// Internal actions made by the contract with pre-validated inputs
@@ -45,6 +46,9 @@ pub enum CallbackMsg {
     /// Borrow specified amount of coin from Red Bank;
     /// Increase the token's asset amount and debt shares;
     Borrow { token_id: String, coin: Coin },
+    /// Repay coin of specified amount back to Red Bank;
+    /// Decrement the token's asset amount and debt shares;
+    Repay { token_id: String, coin: Coin },
     /// Calculate the account's max loan-to-value health factor. If above 1,
     /// emits a `position_changed` event. If 1 or below, raises an error.
     AssertBelowMaxLTV { token_id: String },

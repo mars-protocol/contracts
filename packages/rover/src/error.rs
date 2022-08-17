@@ -37,6 +37,9 @@ pub enum ContractError {
     #[error("No coin amount set for action")]
     NoAmount,
 
+    #[error("No debt to repay")]
+    NoDebt,
+
     #[error("{user:?} is not the owner of {token_id:?}")]
     NotTokenOwner { user: String, token_id: String },
 
