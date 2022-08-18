@@ -1,5 +1,4 @@
-use crate::error::MarsHealthResult;
-use cosmwasm_std::{Addr, Decimal, QuerierWrapper};
+use cosmwasm_std::{Addr, Decimal, QuerierWrapper, StdResult};
 use mars_outpost::oracle::{PriceResponse, QueryMsg as OracleQueryMsg};
 use mars_outpost::red_bank::{Market, QueryMsg as RedBankQueryMsg};
 
@@ -18,16 +17,16 @@ impl<'a> MarsQuerier<'a> {
         }
     }
 
-    pub fn query_market(&self, denom: &str) -> MarsHealthResult<Market> {
-        Ok(self.querier.query_wasm_smart(
+    pub fn query_market(&self, denom: &str) -> StdResult<Market> {
+        self.querier.query_wasm_smart(
             self.redbank_addr.clone(),
             &RedBankQueryMsg::Market {
                 denom: denom.to_string(),
             },
-        )?)
+        )
     }
 
-    pub fn query_price(&self, denom: &str) -> MarsHealthResult<Decimal> {
+    pub fn query_price(&self, denom: &str) -> StdResult<Decimal> {
         let PriceResponse {
             price,
             ..
