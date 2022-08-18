@@ -26,6 +26,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
 mars-outpost = { path = "../mars-outpost" }
+mars-testing = { path = "../mars-testing" }
 
 cosmwasm-std = "1.0"
 thiserror = "1.0.31"

@@ -143,6 +143,157 @@ impl Health {
     }
 }
 
-        self.max_ltv_hf > Decimal::one()
+#[cfg(test)]
+mod tests {
+    use std::vec;
+
+    use cosmwasm_std::{coins, testing::MockQuerier, Uint128};
+    use mars_outpost::red_bank::Market;
+    use mars_testing::MarsMockQuerier;
+
+    use super::*;
+    // Action:
+    //      - User deposits 300 osmo
+    //
+    // Expected Result:
+    //      - Health: MarsHealthError::TotalDebtIsZero
+    #[test]
+    fn test_collateral_no_debt() {
+        let positions = vec![AssetPosition {
+            denom: "osmo".to_string(),
+            collateral_amount: Decimal::from_atomics(300u128, 0).unwrap(),
+            price: Decimal::from_atomics(23654u128, 4).unwrap(),
+            ..Default::default()
+        }];
+
+        let health = Health::compute_health(&positions).unwrap();
+
+        assert_eq!(health.total_collateral_value, Decimal::from_atomics(70962u128, 2).unwrap());
+        assert_eq!(health.total_debt_value, Decimal::zero());
+        assert_eq!(health.max_ltv_health_factor, None);
+        assert_eq!(health.liquidation_health_factor, None);
+        assert!(!health.is_liquidatable());
+        assert!(health.is_healthy());
+    }
+
+    // Action: User requested to borrrow 100 osmo. Zero deposits
+    // Collateral:  [0]
+    // Debt:        [100 OSMO]
+    #[test]
+    fn test_debt_no_collateral() {
+        let positions = vec![AssetPosition {
+            denom: "osmo".to_string(),
+            debt_amount: Decimal::from_atomics(100u128, 0).unwrap(),
+            collateral_amount: Decimal::zero(),
+            price: Decimal::from_atomics(23654u128, 4).unwrap(),
+            max_ltv: Decimal::from_atomics(50u128, 2).unwrap(),
+            liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
+        }];
+
+        let health = Health::compute_health(&positions).unwrap();
+
+        assert_eq!(health.total_collateral_value, Decimal::zero());
+        assert_eq!(health.total_debt_value, Decimal::from_atomics(23654u128, 2).unwrap());
+        assert_eq!(health.liquidation_health_factor, Some(Decimal::zero()));
+        assert_eq!(health.max_ltv_health_factor, Some(Decimal::zero()));
+        assert!(health.is_liquidatable());
+        assert!(!health.is_healthy());
+    }
+
+    // Step 1: User deposits 300 OSMO
+    //         User borrows 50 OSMO
+    // Collateral:  [300 OSMO]
+    // Debt:        [50 OSMO]
+    #[test]
+    fn test_healthy_health_factor_1() {
+        let positions = vec![AssetPosition {
+            denom: "osmo".to_string(),
+            debt_amount: Decimal::from_atomics(50u128, 0).unwrap(),
+            collateral_amount: Decimal::from_atomics(300u128, 0).unwrap(),
+            price: Decimal::from_atomics(23654u128, 4).unwrap(),
+            max_ltv: Decimal::from_atomics(50u128, 2).unwrap(),
+            liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
+        }];
+
+        let health = Health::compute_health(&positions).unwrap();
+
+        assert_eq!(
+            health.total_collateral_value,
+            Decimal::from_atomics(Uint128::new(70962), 2).unwrap()
+        );
+        assert_eq!(health.total_debt_value, Decimal::from_atomics(11827u128, 2).unwrap());
+        assert_eq!(
+            health.liquidation_health_factor,
+            Some(Decimal::from_atomics(33u128, 1).unwrap())
+        );
+        assert_eq!(health.max_ltv_health_factor, Some(Decimal::from_atomics(3u128, 0).unwrap()));
+        assert!(!health.is_liquidatable());
+        assert!(health.is_healthy());
+    }
+
+    // Step 1: User deposits 300 OSMO
+    //         User borrows 50 ATOM
+    // Collateral:  [300 OSMO]
+    // Debt:        [50 OSMO]
+    #[test]
+    fn test_healthy_health_factor_2() {
+        let mock_querier = mock_setup();
+
+        let collateral = coins(300, "osmo");
+        let debt = coins(50, "osmo");
+
+        let health = Health::compute_from_coins(
+            &QuerierWrapper::new(&mock_querier),
+            &Addr::unchecked("oracle"),
+            &Addr::unchecked("red_bank"),
+            &collateral,
+            &debt,
+        )
+        .unwrap();
+
+        assert_eq!(
+            health.total_collateral_value,
+            Decimal::from_atomics(Uint128::new(70962), 2).unwrap()
+        );
+        assert_eq!(health.total_debt_value, Decimal::from_atomics(11827u128, 2).unwrap());
+        assert_eq!(
+            health.liquidation_health_factor,
+            Some(Decimal::from_atomics(33u128, 1).unwrap())
+        );
+        assert_eq!(health.max_ltv_health_factor, Some(Decimal::from_atomics(3u128, 0).unwrap()));
+        assert!(!health.is_liquidatable());
+        assert!(health.is_healthy());
+    }
+
+    //  ----------------------------------------
+    //  |  ASSET  |  PRICE  |  MAX LTV  |  LT  |
+    //  ----------------------------------------
+    //  |  OSMO   | 2.3654  |    50     |  55  |
+    //  ----------------------------------------
+    //  |  ATOM   |   10.2  |    70     |  75  |
+    //  ----------------------------------------
+    fn mock_setup() -> MarsMockQuerier {
+        let mut mock_querier = MarsMockQuerier::new(MockQuerier::new(&[]));
+        // Set Markets
+        let osmo_market = Market {
+            denom: "osmo".to_string(),
+            max_loan_to_value: Decimal::from_atomics(50u128, 2).unwrap(),
+            liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
+            ..Default::default()
+        };
+        mock_querier.set_redbank_market(osmo_market);
+        let atom_market = Market {
+            denom: "atom".to_string(),
+            max_loan_to_value: Decimal::from_atomics(70u128, 2).unwrap(),
+            liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
+            ..Default::default()
+        };
+        mock_querier.set_redbank_market(atom_market);
+
+        // Set prices in the oracle
+        mock_querier.set_oracle_price("osmo", Decimal::from_atomics(23654u128, 4).unwrap());
+        mock_querier.set_oracle_price("atom", Decimal::from_atomics(102u128, 1).unwrap());
+
+        mock_querier
     }
 }
