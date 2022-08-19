@@ -192,7 +192,7 @@ pub enum UserHealthStatus {
 }
 
 /// User asset settlement
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct UserAssetPosition {
     pub denom: String,
     pub collateral_amount: Uint128,

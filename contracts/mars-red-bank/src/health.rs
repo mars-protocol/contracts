@@ -55,10 +55,10 @@ pub fn assert_health_after_withdraw(
         .ok_or(StdError::GenericErr {
             msg: "No User Balance".to_string(),
         })?
-        .collateral_amount
-        .checked_sub(amount)?;
+        .collateral_amount -= amount;
 
-    Ok(get_position_health(&positions)?.is_healthy())
+    let health = get_position_health(&positions)?;
+    Ok(health.is_healthy())
 }
 
 /// Check the Health Factor for a given user
@@ -73,18 +73,23 @@ pub fn assert_health_after_borrow(
 ) -> StdResult<bool> {
     let mut positions = get_assets_positions_map(deps, env, user, user_addr, oracle_addr)?;
     // Update position to compute health factor after borrow
-    positions
-        .entry(denom.to_string())
-        .or_insert(UserAssetPosition {
-            denom: denom.to_string(),
-            debt_amount: amount,
-            asset_price: oracle::helpers::query_price(&deps.querier, oracle_addr, denom)?,
-            ..Default::default()
-        })
-        .debt_amount
-        .checked_add(amount)?;
+    match positions.get_mut(denom) {
+        Some(p) => p.debt_amount += amount,
+        None => {
+            positions.insert(
+                denom.to_string(),
+                UserAssetPosition {
+                    denom: denom.to_string(),
+                    debt_amount: amount,
+                    asset_price: oracle::helpers::query_price(&deps.querier, oracle_addr, denom)?,
+                    ..Default::default()
+                }
+            );
+        }
+    }
 
-    Ok(get_position_health(&positions)?.is_healthy())
+    let health = get_position_health(&positions)?;
+    Ok(health.is_healthy())
 }
 
 /// Assert Health of a given User Position

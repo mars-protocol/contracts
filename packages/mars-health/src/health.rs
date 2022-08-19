@@ -139,7 +139,7 @@ impl Health {
 
     #[inline]
     pub fn is_healthy(&self) -> bool {
-        self.liquidation_health_factor.map_or(true, |hf| hf > Decimal::one())
+        self.max_ltv_health_factor.map_or(true, |hf| hf > Decimal::one())
     }
 }
 
