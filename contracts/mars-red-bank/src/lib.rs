@@ -1,4 +1,4 @@
-mod accounts;
+mod health;
 pub mod error;
 mod events;
 pub mod execute;

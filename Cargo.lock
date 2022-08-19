@@ -480,6 +480,7 @@ dependencies = [
  "cw-storage-plus",
  "cw20",
  "cw20-base",
+ "mars-health",
  "mars-outpost",
  "mars-testing",
  "schemars",
