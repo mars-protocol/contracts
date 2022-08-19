@@ -11,20 +11,6 @@ use crate::interest_rates::{get_underlying_debt_amount, get_underlying_liquidity
 use crate::state::{DEBTS, GLOBAL_STATE};
 
 /// Check the Health Factor for a given user
-pub fn assert_health(
-    deps: &Deps,
-    env: &Env,
-    user: &User,
-    user_addr: &Addr,
-    oracle_addr: &Addr,
-) -> StdResult<bool> {
-    let positions = get_assets_positions_map(deps, env, user, user_addr, oracle_addr)?;
-    let health = get_position_health(&positions)?;
-
-    Ok(health.is_healthy())
-}
-
-/// Check the Health Factor for a given user
 pub fn assert_liquidation(
     deps: &Deps,
     env: &Env,
@@ -38,7 +24,7 @@ pub fn assert_liquidation(
     Ok((health.is_liquidatable(), positions))
 }
 
-/// Check the Health Factor for a given user
+/// Check the Health Factor for a given user after a withdraw
 pub fn assert_health_after_withdraw(
     deps: &Deps,
     env: &Env,
@@ -49,6 +35,7 @@ pub fn assert_health_after_withdraw(
     amount: Uint128,
 ) -> StdResult<bool> {
     let mut positions = get_assets_positions_map(deps, env, user, user_addr, oracle_addr)?;
+
     // Update position to compute health factor after withdraw
     positions
         .get_mut(denom)
@@ -58,10 +45,10 @@ pub fn assert_health_after_withdraw(
         .collateral_amount -= amount;
 
     let health = get_position_health(&positions)?;
-    Ok(health.is_healthy())
+    Ok(!health.is_liquidatable())
 }
 
-/// Check the Health Factor for a given user
+/// Check the Health Factor for a given user after a borrow
 pub fn assert_health_after_borrow(
     deps: &Deps,
     env: &Env,
@@ -72,6 +59,7 @@ pub fn assert_health_after_borrow(
     amount: Uint128,
 ) -> StdResult<bool> {
     let mut positions = get_assets_positions_map(deps, env, user, user_addr, oracle_addr)?;
+    
     // Update position to compute health factor after borrow
     match positions.get_mut(denom) {
         Some(p) => p.debt_amount += amount,

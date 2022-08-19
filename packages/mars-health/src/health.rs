@@ -134,7 +134,7 @@ impl Health {
 
     #[inline]
     pub fn is_liquidatable(&self) -> bool {
-        self.liquidation_health_factor.map_or(false, |hf| hf <= Decimal::one())
+        self.liquidation_health_factor.map_or(false, |hf| hf < Decimal::one())
     }
 
     #[inline]

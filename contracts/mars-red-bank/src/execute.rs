@@ -14,15 +14,13 @@ use mars_outpost::helpers::{
 };
 use mars_outpost::red_bank::{
     init_interest_rate_model, Config, CreateOrUpdateConfig, Debt, ExecuteMsg, GlobalState,
-    InitOrUpdateAssetParams, InstantiateMsg, Market, User
+    InitOrUpdateAssetParams, InstantiateMsg, Market, User,
 };
 use mars_outpost::{ma_token, math};
 
 use crate::error::ContractError;
 use crate::events::{build_collateral_position_changed_event, build_debt_position_changed_event};
-use crate::health::{
-    assert_health, assert_health_after_borrow, assert_health_after_withdraw, assert_liquidation,
-};
+use crate::health::{assert_health_after_borrow, assert_health_after_withdraw, assert_liquidation};
 use crate::helpers::{get_bit, set_bit, unset_bit};
 use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
@@ -1416,7 +1414,10 @@ pub fn update_asset_collateral_status(
             MarsContract::Oracle,
         )?;
 
-        if !assert_health(&deps.as_ref(), &env, &user, &user_addr, &oracle_addr)? {
+        let (liquidatable, _) =
+            assert_liquidation(&deps.as_ref(), &env, &user, &user_addr, &oracle_addr)?;
+
+        if liquidatable {
             return Err(ContractError::InvalidHealthFactorAfterDisablingCollateral {});
         }
 
@@ -1457,13 +1458,11 @@ pub fn finalize_liquidity_token_transfer(
         &config.address_provider_address,
         MarsContract::Oracle,
     )?;
-    if assert_health(
-        &deps.as_ref(),
-        &env,
-        &from_user,
-        &from_address,
-        &oracle_address,
-    )? {
+
+    let (liquidatable, _) =
+        assert_liquidation(&deps.as_ref(), &env, &from_user, &from_address, &oracle_address)?;
+
+    if liquidatable {
         return Err(ContractError::CannotTransferTokenWhenInvalidHealthFactor {});
     }
 

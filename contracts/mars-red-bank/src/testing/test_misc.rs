@@ -367,11 +367,10 @@ fn test_update_asset_collateral() {
         let positions =
             health::get_assets_positions_map(&deps.as_ref(), &env, &user, &user_addr, &Addr::unchecked("oracle"))
                 .unwrap();
-
         let health = health::get_position_health(&positions).unwrap();
 
         // Should have valid health factor
-        assert!(health.is_healthy());
+        assert_eq!(health.liquidation_health_factor.unwrap(), Decimal::one());
 
         // Disable second market index
         let update_msg = ExecuteMsg::UpdateAssetCollateralStatus {
