@@ -1,5 +1,5 @@
 [package]
-name = "mars-rewards-collector-osmosis"
+name = "mars-oracle-osmosis"
 version = "0.1.0"
 authors = [
   "Spike Spiegel <spikeonmars@protonmail.com>",
@@ -27,7 +27,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
 mars-outpost = { path = "../../../packages/mars-outpost", version = "0.1.0" }
-mars-rewards-collector-base = { path = "../../mars-rewards-collector-base", version = "0.1.0" }
+mars-oracle-base = { path = "../base", version = "0.1.0" }
 cosmwasm-std = "1.0"
 cw-storage-plus = "0.13"
 schemars = "0.8.8"
