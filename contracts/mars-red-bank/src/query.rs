@@ -208,7 +208,7 @@ pub fn query_user_position(
         MarsContract::Oracle,
     )?;
     let positions =
-        health::get_assets_positions_map(&deps, &env, &user, &address, &oracle_address)?;
+        health::get_user_positions_map(&deps, &env, &user, &address, &oracle_address)?;
 
     let health = health::get_position_health(&positions)?;
     let health_status = if let (Some(max_ltv_hf), Some(liq_threshold_hf)) =

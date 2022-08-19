@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{Addr, Decimal, Deps, Env, StdError, StdResult, Uint128};
-use mars_health::health::{AssetPosition, Health};
+use mars_health::health::{Position as HealthPosition, Health};
 use mars_outpost::helpers::cw20_get_balance;
 use mars_outpost::oracle;
-use mars_outpost::red_bank::{Debt, User, UserAssetPosition};
+use mars_outpost::red_bank::{Debt, User, Position};
 
 use crate::helpers::{get_bit, get_market_from_index};
 use crate::interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount};
@@ -17,8 +17,8 @@ pub fn assert_liquidation(
     user: &User,
     user_addr: &Addr,
     oracle_addr: &Addr,
-) -> StdResult<(bool, HashMap<String, UserAssetPosition>)> {
-    let positions = get_assets_positions_map(deps, env, user, user_addr, oracle_addr)?;
+) -> StdResult<(bool, HashMap<String, Position>)> {
+    let positions = get_user_positions_map(deps, env, user, user_addr, oracle_addr)?;
     let health = get_position_health(&positions)?;
 
     Ok((health.is_liquidatable(), positions))
@@ -34,7 +34,7 @@ pub fn assert_health_after_withdraw(
     denom: &str,
     amount: Uint128,
 ) -> StdResult<bool> {
-    let mut positions = get_assets_positions_map(deps, env, user, user_addr, oracle_addr)?;
+    let mut positions = get_user_positions_map(deps, env, user, user_addr, oracle_addr)?;
 
     // Update position to compute health factor after withdraw
     positions
@@ -58,7 +58,7 @@ pub fn assert_health_after_borrow(
     denom: &str,
     amount: Uint128,
 ) -> StdResult<bool> {
-    let mut positions = get_assets_positions_map(deps, env, user, user_addr, oracle_addr)?;
+    let mut positions = get_user_positions_map(deps, env, user, user_addr, oracle_addr)?;
     
     // Update position to compute health factor after borrow
     match positions.get_mut(denom) {
@@ -66,7 +66,7 @@ pub fn assert_health_after_borrow(
         None => {
             positions.insert(
                 denom.to_string(),
-                UserAssetPosition {
+                Position {
                     denom: denom.to_string(),
                     debt_amount: amount,
                     asset_price: oracle::helpers::query_price(&deps.querier, oracle_addr, denom)?,
@@ -81,7 +81,7 @@ pub fn assert_health_after_borrow(
 }
 
 /// Assert Health of a given User Position
-pub fn get_position_health(positions: &HashMap<String, UserAssetPosition>) -> StdResult<Health> {
+pub fn get_position_health(positions: &HashMap<String, Position>) -> StdResult<Health> {
     let positions = positions
         .values()
         .map(|p| {
@@ -91,7 +91,7 @@ pub fn get_position_health(positions: &HashMap<String, UserAssetPosition>) -> St
                 Decimal::from_ratio(p.debt_amount, 1u128)
             };
 
-            AssetPosition {
+            HealthPosition {
                 denom: p.denom.clone(),
                 collateral_amount: Decimal::from_ratio(p.collateral_amount, 1u128),
                 debt_amount,
@@ -108,14 +108,14 @@ pub fn get_position_health(positions: &HashMap<String, UserAssetPosition>) -> St
 /// Goes through assets user has a position in and returns a vec containing the scaled debt
 /// (denominated in the asset), a result from a specified computation for the current collateral
 /// (denominated in asset) and some metadata to be used by the caller.
-pub fn get_asset_positions(
+pub fn get_user_positions(
     deps: &Deps,
     env: &Env,
     user: &User,
     user_addr: &Addr,
     oracle_addr: &Addr,
-) -> StdResult<Vec<UserAssetPosition>> {
-    let mut ret: Vec<UserAssetPosition> = vec![];
+) -> StdResult<Vec<Position>> {
+    let mut ret: Vec<Position> = vec![];
     let global_state = GLOBAL_STATE.load(deps.storage)?;
 
     for i in 0_u32..global_state.market_count {
@@ -163,7 +163,7 @@ pub fn get_asset_positions(
 
         let asset_price = oracle::helpers::query_price(&deps.querier, oracle_addr, &denom)?;
 
-        let user_asset_position = UserAssetPosition {
+        let user_asset_position = Position {
             denom,
             collateral_amount,
             debt_amount,
@@ -178,14 +178,14 @@ pub fn get_asset_positions(
     Ok(ret)
 }
 
-pub fn get_assets_positions_map(
+pub fn get_user_positions_map(
     deps: &Deps,
     env: &Env,
     user: &User,
     user_addr: &Addr,
     oracle_addr: &Addr,
-) -> StdResult<HashMap<String, UserAssetPosition>> {
-    Ok(get_asset_positions(deps, env, user, user_addr, oracle_addr)?
+) -> StdResult<HashMap<String, Position>> {
+    Ok(get_user_positions(deps, env, user, user_addr, oracle_addr)?
         .into_iter()
         .map(|p| (p.denom.clone(), p))
         .collect())

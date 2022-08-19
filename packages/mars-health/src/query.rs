@@ -5,21 +5,21 @@ use mars_outpost::red_bank::{Market, QueryMsg as RedBankQueryMsg};
 pub struct MarsQuerier<'a> {
     querier: &'a QuerierWrapper<'a>,
     oracle_addr: Addr,
-    redbank_addr: Addr,
+    red_bank_addr: Addr,
 }
 
 impl<'a> MarsQuerier<'a> {
-    pub fn new(querier: &'a QuerierWrapper, oracle_addr: Addr, redbank_addr: Addr) -> Self {
+    pub fn new(querier: &'a QuerierWrapper, oracle_addr: Addr, red_bank_addr: Addr) -> Self {
         MarsQuerier {
             querier,
             oracle_addr,
-            redbank_addr,
+            red_bank_addr,
         }
     }
 
     pub fn query_market(&self, denom: &str) -> StdResult<Market> {
         self.querier.query_wasm_smart(
-            self.redbank_addr.clone(),
+            self.red_bank_addr.clone(),
             &RedBankQueryMsg::Market {
                 denom: denom.to_string(),
             },

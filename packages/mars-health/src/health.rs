@@ -4,7 +4,7 @@ use mars_outpost::{math::divide_decimal_by_decimal, red_bank::Market};
 use std::collections::HashMap;
 
 #[derive(Default, Debug, Clone)]
-pub struct AssetPosition {
+pub struct Position {
     pub denom: String,
     pub price: Decimal,
     pub collateral_amount: Decimal,
@@ -36,12 +36,12 @@ impl Health {
     pub fn compute_from_coins(
         querier: &QuerierWrapper,
         oracle_addr: &Addr,
-        redbank_addr: &Addr,
+        red_bank_addr: &Addr,
         collateral: &[Coin],
         debt: &[Coin],
     ) -> StdResult<Health> {
-        let mut positions: HashMap<String, AssetPosition> = HashMap::new();
-        let querier = MarsQuerier::new(querier, oracle_addr.clone(), redbank_addr.clone());
+        let mut positions: HashMap<String, Position> = HashMap::new();
+        let querier = MarsQuerier::new(querier, oracle_addr.clone(), red_bank_addr.clone());
 
         collateral.iter().try_for_each::<_, StdResult<_>>(|c| {
             match positions.get_mut(&c.denom) {
@@ -57,7 +57,7 @@ impl Health {
 
                     positions.insert(
                         c.denom.clone(),
-                        AssetPosition {
+                        Position {
                             denom: c.denom.clone(),
                             collateral_amount: Decimal::from_ratio(c.amount, 1u128),
                             debt_amount: Decimal::zero(),
@@ -85,7 +85,7 @@ impl Health {
 
                     positions.insert(
                         c.denom.clone(),
-                        AssetPosition {
+                        Position {
                             denom: c.denom.clone(),
                             collateral_amount: Decimal::zero(),
                             debt_amount: Decimal::from_ratio(c.amount, 1u128),
@@ -103,7 +103,7 @@ impl Health {
     }
 
     /// Compute the health of a collection of `AssetPosition`
-    pub fn compute_health(positions: &[AssetPosition]) -> StdResult<Health> {
+    pub fn compute_health(positions: &[Position]) -> StdResult<Health> {
         let mut health = positions.iter().try_fold::<_, _, StdResult<Health>>(
             Health::default(),
             |mut h, p| {
@@ -159,7 +159,7 @@ mod tests {
     //      - Health: MarsHealthError::TotalDebtIsZero
     #[test]
     fn test_collateral_no_debt() {
-        let positions = vec![AssetPosition {
+        let positions = vec![Position {
             denom: "osmo".to_string(),
             collateral_amount: Decimal::from_atomics(300u128, 0).unwrap(),
             price: Decimal::from_atomics(23654u128, 4).unwrap(),
@@ -181,7 +181,7 @@ mod tests {
     // Debt:        [100 OSMO]
     #[test]
     fn test_debt_no_collateral() {
-        let positions = vec![AssetPosition {
+        let positions = vec![Position {
             denom: "osmo".to_string(),
             debt_amount: Decimal::from_atomics(100u128, 0).unwrap(),
             collateral_amount: Decimal::zero(),
@@ -206,7 +206,7 @@ mod tests {
     // Debt:        [50 OSMO]
     #[test]
     fn test_healthy_health_factor_1() {
-        let positions = vec![AssetPosition {
+        let positions = vec![Position {
             denom: "osmo".to_string(),
             debt_amount: Decimal::from_atomics(50u128, 0).unwrap(),
             collateral_amount: Decimal::from_atomics(300u128, 0).unwrap(),

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{Coin, Deps, StdError, StdResult, Uint128};
 
-use mars_outpost::red_bank::{Market, UserAssetPosition};
+use mars_outpost::red_bank::{Market, Position};
 
 use crate::error::ContractError;
 use crate::state::{MARKETS, MARKET_DENOMS_BY_INDEX};
@@ -58,7 +58,7 @@ pub fn unset_bit(bitmap: &mut Uint128, index: u32) -> StdResult<()> {
 }
 
 pub fn get_uncollaterized_debt(
-    positions: &HashMap<String, UserAssetPosition>,
+    positions: &HashMap<String, Position>,
 ) -> StdResult<Uint128> {
     positions.values().try_fold(Uint128::zero(), |total, p| {
         if p.uncollateralized_debt {
