@@ -12,10 +12,8 @@ use mars_outpost::error::MarsError;
 use mars_outpost::helpers::zero_address;
 use mars_outpost::ma_token;
 use mars_outpost::red_bank::{
-    get_liquidity_rate, linear_get_borrow_rate, ConfigResponse, CreateOrUpdateConfig,
-    DynamicInterestRateModelParams, DynamicInterestRateModelState, ExecuteMsg,
-    InitOrUpdateAssetParams, InstantiateMsg, InterestRateModel, InterestRateModelError,
-    InterestRateModelParams, LinearInterestRateModelParams, Market, MarketError, QueryMsg,
+    ConfigResponse, CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
+    InterestRateModel, Market, QueryMsg,
 };
 use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, MockEnvParams};
 
@@ -206,25 +204,20 @@ fn test_init_asset() {
     let info = mock_info("owner", &[]);
     instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-    let dynamic_ir_params = DynamicInterestRateModelParams {
-        min_borrow_rate: Decimal::from_ratio(5u128, 100u128),
-        max_borrow_rate: Decimal::from_ratio(50u128, 100u128),
-        kp_1: Decimal::from_ratio(3u128, 1u128),
-        optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
-        kp_augmentation_threshold: Decimal::from_ratio(2000u128, 1u128),
-        kp_2: Decimal::from_ratio(2u128, 1u128),
-        update_threshold_seconds: 1,
-        update_threshold_txs: 1,
+    let ir_model = InterestRateModel {
+        optimal_utilization_rate: Decimal::one(),
+        base: Decimal::percent(5),
+        slope_1: Decimal::zero(),
+        slope_2: Decimal::zero(),
     };
+
     let asset_params = InitOrUpdateAssetParams {
         initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
         max_loan_to_value: Some(Decimal::from_ratio(8u128, 10u128)),
         reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
         liquidation_threshold: Some(Decimal::one()),
         liquidation_bonus: Some(Decimal::zero()),
-        interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
-            dynamic_ir_params.clone(),
-        )),
+        interest_rate_model: Some(ir_model.clone()),
         active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
@@ -276,14 +269,12 @@ fn test_init_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::Market(
-                MarsError::InvalidParam {
-                    param_name: "max_loan_to_value".to_string(),
-                    invalid_value: "1.1".to_string(),
-                    predicate: "<= 1".to_string(),
-                }
-                .into()
-            )
+            MarsError::InvalidParam {
+                param_name: "max_loan_to_value".to_string(),
+                invalid_value: "1.1".to_string(),
+                predicate: "<= 1".to_string(),
+            }
+            .into()
         );
     }
 
@@ -302,14 +293,12 @@ fn test_init_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::Market(
-                MarsError::InvalidParam {
-                    param_name: "liquidation_threshold".to_string(),
-                    invalid_value: "1.1".to_string(),
-                    predicate: "<= 1".to_string(),
-                }
-                .into()
-            )
+            MarsError::InvalidParam {
+                param_name: "liquidation_threshold".to_string(),
+                invalid_value: "1.1".to_string(),
+                predicate: "<= 1".to_string(),
+            }
+            .into()
         );
     }
 
@@ -328,14 +317,12 @@ fn test_init_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::Market(
-                MarsError::InvalidParam {
-                    param_name: "liquidation_bonus".to_string(),
-                    invalid_value: "1.1".to_string(),
-                    predicate: "<= 1".to_string(),
-                }
-                .into()
-            )
+            MarsError::InvalidParam {
+                param_name: "liquidation_bonus".to_string(),
+                invalid_value: "1.1".to_string(),
+                predicate: "<= 1".to_string(),
+            }
+            .into()
         );
     }
 
@@ -355,52 +342,22 @@ fn test_init_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::Market(MarketError::InvalidLiquidationThreshold {
-                liquidation_threshold: Decimal::from_ratio(1u128, 2u128),
-                max_loan_to_value: Decimal::from_ratio(1u128, 2u128)
-            })
-        );
-    }
-
-    // init asset where min borrow rate >= max borrow rate
-    {
-        let invalid_dynamic_ir_params = DynamicInterestRateModelParams {
-            min_borrow_rate: Decimal::from_ratio(5u128, 10u128),
-            max_borrow_rate: Decimal::from_ratio(4u128, 10u128),
-            ..dynamic_ir_params
-        };
-        let invalid_asset_params = InitOrUpdateAssetParams {
-            interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
-                invalid_dynamic_ir_params,
-            )),
-            ..asset_params
-        };
-        let msg = ExecuteMsg::InitAsset {
-            denom: "someasset".to_string(),
-            asset_params: invalid_asset_params,
-            asset_symbol: None,
-        };
-        let info = mock_info("owner", &[]);
-        let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-        assert_eq!(
-            error_res,
-            ContractError::InterestRateModel(InterestRateModelError::InvalidMinMaxBorrowRate {
-                min_borrow_rate: Decimal::from_ratio(5u128, 10u128),
-                max_borrow_rate: Decimal::from_ratio(4u128, 10u128)
-            })
+            MarsError::InvalidParam {
+                param_name: "liquidation_threshold".to_string(),
+                invalid_value: "0.5".to_string(),
+                predicate: "> 0.5 (max LTV)".to_string()
+            }
+            .into()
         );
     }
 
     // init asset where optimal utilization rate > 1
     {
-        let invalid_dynamic_ir_params = DynamicInterestRateModelParams {
-            optimal_utilization_rate: Decimal::from_ratio(11u128, 10u128),
-            ..dynamic_ir_params
-        };
         let invalid_asset_params = InitOrUpdateAssetParams {
-            interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
-                invalid_dynamic_ir_params,
-            )),
+            interest_rate_model: Some(InterestRateModel {
+                optimal_utilization_rate: Decimal::percent(110),
+                ..ir_model
+            }),
             ..asset_params
         };
         let msg = ExecuteMsg::InitAsset {
@@ -412,9 +369,12 @@ fn test_init_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::InterestRateModel(
-                InterestRateModelError::InvalidOptimalUtilizationRate {}
-            )
+            MarsError::InvalidParam {
+                param_name: "optimal_utilization_rate".to_string(),
+                invalid_value: "1.1".to_string(),
+                predicate: "<= 1".to_string()
+            }
+            .into()
         );
     }
 
@@ -526,23 +486,18 @@ fn test_init_asset() {
 #[test]
 fn test_init_asset_with_msg_symbol() {
     let mut deps = th_setup(&[]);
-    let dynamic_ir_params = DynamicInterestRateModelParams {
-        min_borrow_rate: Decimal::from_ratio(5u128, 100u128),
-        max_borrow_rate: Decimal::from_ratio(50u128, 100u128),
-        kp_1: Decimal::from_ratio(3u128, 1u128),
-        optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
-        kp_augmentation_threshold: Decimal::from_ratio(2000u128, 1u128),
-        kp_2: Decimal::from_ratio(2u128, 1u128),
-        update_threshold_seconds: 1,
-        update_threshold_txs: 1,
-    };
     let asset_params = InitOrUpdateAssetParams {
         initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
         max_loan_to_value: Some(Decimal::from_ratio(8u128, 10u128)),
         reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
         liquidation_threshold: Some(Decimal::one()),
         liquidation_bonus: Some(Decimal::zero()),
-        interest_rate_model_params: Some(InterestRateModelParams::Dynamic(dynamic_ir_params)),
+        interest_rate_model: Some(InterestRateModel {
+            optimal_utilization_rate: Decimal::one(),
+            base: Decimal::percent(5),
+            slope_1: Decimal::zero(),
+            slope_2: Decimal::zero(),
+        }),
         active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
@@ -615,16 +570,11 @@ fn test_update_asset() {
     let info = mock_info("owner", &[]);
     instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-    let dynamic_ir_params = DynamicInterestRateModelParams {
-        min_borrow_rate: Decimal::from_ratio(5u128, 100u128),
-        max_borrow_rate: Decimal::from_ratio(50u128, 100u128),
-        kp_1: Decimal::from_ratio(3u128, 1u128),
-        optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
-        kp_augmentation_threshold: Decimal::from_ratio(2000u128, 1u128),
-        kp_2: Decimal::from_ratio(2u128, 1u128),
-
-        update_threshold_txs: 1,
-        update_threshold_seconds: 1,
+    let ir_model = InterestRateModel {
+        optimal_utilization_rate: Decimal::one(),
+        base: Decimal::percent(5),
+        slope_1: Decimal::zero(),
+        slope_2: Decimal::zero(),
     };
 
     let asset_params = InitOrUpdateAssetParams {
@@ -633,9 +583,7 @@ fn test_update_asset() {
         reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
         liquidation_threshold: Some(Decimal::from_ratio(80u128, 100u128)),
         liquidation_bonus: Some(Decimal::from_ratio(10u128, 100u128)),
-        interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
-            dynamic_ir_params.clone(),
-        )),
+        interest_rate_model: Some(ir_model.clone()),
         active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
@@ -688,14 +636,12 @@ fn test_update_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::Market(
-                MarsError::InvalidParam {
-                    param_name: "max_loan_to_value".to_string(),
-                    invalid_value: "1.1".to_string(),
-                    predicate: "<= 1".to_string(),
-                }
-                .into()
-            )
+            MarsError::InvalidParam {
+                param_name: "max_loan_to_value".to_string(),
+                invalid_value: "1.1".to_string(),
+                predicate: "<= 1".to_string(),
+            }
+            .into()
         );
     }
 
@@ -713,14 +659,12 @@ fn test_update_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::Market(
-                MarsError::InvalidParam {
-                    param_name: "liquidation_threshold".to_string(),
-                    invalid_value: "1.1".to_string(),
-                    predicate: "<= 1".to_string(),
-                }
-                .into()
-            )
+            MarsError::InvalidParam {
+                param_name: "liquidation_threshold".to_string(),
+                invalid_value: "1.1".to_string(),
+                predicate: "<= 1".to_string(),
+            }
+            .into()
         );
     }
 
@@ -738,14 +682,12 @@ fn test_update_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::Market(
-                MarsError::InvalidParam {
-                    param_name: "liquidation_bonus".to_string(),
-                    invalid_value: "1.1".to_string(),
-                    predicate: "<= 1".to_string(),
-                }
-                .into()
-            )
+            MarsError::InvalidParam {
+                param_name: "liquidation_bonus".to_string(),
+                invalid_value: "1.1".to_string(),
+                predicate: "<= 1".to_string(),
+            }
+            .into()
         );
     }
 
@@ -764,51 +706,22 @@ fn test_update_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::Market(MarketError::InvalidLiquidationThreshold {
-                liquidation_threshold: Decimal::from_ratio(1u128, 2u128),
-                max_loan_to_value: Decimal::from_ratio(6u128, 10u128)
-            })
-        );
-    }
-
-    // update asset where min borrow rate >= max borrow rate
-    {
-        let invalid_dynamic_ir_params = DynamicInterestRateModelParams {
-            min_borrow_rate: Decimal::from_ratio(5u128, 10u128),
-            max_borrow_rate: Decimal::from_ratio(4u128, 10u128),
-            ..dynamic_ir_params
-        };
-        let invalid_asset_params = InitOrUpdateAssetParams {
-            interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
-                invalid_dynamic_ir_params,
-            )),
-            ..asset_params
-        };
-        let msg = ExecuteMsg::UpdateAsset {
-            denom: "someasset".to_string(),
-            asset_params: invalid_asset_params,
-        };
-        let info = mock_info("owner", &[]);
-        let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-        assert_eq!(
-            error_res,
-            ContractError::InterestRateModel(InterestRateModelError::InvalidMinMaxBorrowRate {
-                min_borrow_rate: Decimal::from_ratio(5u128, 10u128),
-                max_borrow_rate: Decimal::from_ratio(4u128, 10u128)
-            })
+            MarsError::InvalidParam {
+                param_name: "liquidation_threshold".to_string(),
+                invalid_value: "0.5".to_string(),
+                predicate: "> 0.6 (max LTV)".to_string()
+            }
+            .into()
         );
     }
 
     // update asset where optimal utilization rate > 1
     {
-        let invalid_dynamic_ir_params = DynamicInterestRateModelParams {
-            optimal_utilization_rate: Decimal::from_ratio(11u128, 10u128),
-            ..dynamic_ir_params
-        };
         let invalid_asset_params = InitOrUpdateAssetParams {
-            interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
-                invalid_dynamic_ir_params,
-            )),
+            interest_rate_model: Some(InterestRateModel {
+                optimal_utilization_rate: Decimal::percent(110),
+                ..ir_model
+            }),
             ..asset_params
         };
         let msg = ExecuteMsg::UpdateAsset {
@@ -819,33 +732,24 @@ fn test_update_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            ContractError::InterestRateModel(
-                InterestRateModelError::InvalidOptimalUtilizationRate {}
-            )
+            MarsError::InvalidParam {
+                param_name: "optimal_utilization_rate".to_string(),
+                invalid_value: "1.1".to_string(),
+                predicate: "<= 1".to_string()
+            }
+            .into()
         );
     }
 
     // update asset with new params
     {
-        let dynamic_ir_params = DynamicInterestRateModelParams {
-            min_borrow_rate: Decimal::from_ratio(5u128, 100u128),
-            max_borrow_rate: Decimal::from_ratio(50u128, 100u128),
-            kp_1: Decimal::from_ratio(3u128, 1u128),
-            optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
-            kp_augmentation_threshold: Decimal::from_ratio(2000u128, 1u128),
-            kp_2: Decimal::from_ratio(2u128, 1u128),
-            update_threshold_txs: 1,
-            update_threshold_seconds: 1,
-        };
         let asset_params = InitOrUpdateAssetParams {
             initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
             max_loan_to_value: Some(Decimal::from_ratio(60u128, 100u128)),
             reserve_factor: Some(Decimal::from_ratio(10u128, 100u128)),
             liquidation_threshold: Some(Decimal::from_ratio(90u128, 100u128)),
             liquidation_bonus: Some(Decimal::from_ratio(12u128, 100u128)),
-            interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
-                dynamic_ir_params.clone(),
-            )),
+            interest_rate_model: Some(ir_model.clone()),
             active: Some(true),
             deposit_enabled: Some(true),
             borrow_enabled: Some(true),
@@ -863,16 +767,7 @@ fn test_update_asset() {
         assert_eq!(asset_params.reserve_factor.unwrap(), new_market.reserve_factor);
         assert_eq!(asset_params.liquidation_threshold.unwrap(), new_market.liquidation_threshold);
         assert_eq!(asset_params.liquidation_bonus.unwrap(), new_market.liquidation_bonus);
-        assert_eq!(
-            InterestRateModel::Dynamic {
-                params: dynamic_ir_params,
-                state: DynamicInterestRateModelState {
-                    txs_since_last_borrow_rate_update: 1,
-                    borrow_rate_last_updated: env.block.time.seconds(),
-                }
-            },
-            new_market.interest_rate_model
-        );
+        assert_eq!(asset_params.interest_rate_model.unwrap(), new_market.interest_rate_model);
 
         let new_market_denom = MARKET_DENOMS_BY_INDEX.load(&deps.storage, 0).unwrap();
         assert_eq!("someasset", &new_market_denom);
@@ -898,7 +793,7 @@ fn test_update_asset() {
             reserve_factor: None,
             liquidation_threshold: None,
             liquidation_bonus: None,
-            interest_rate_model_params: None,
+            interest_rate_model: None,
             active: None,
             deposit_enabled: None,
             borrow_enabled: None,
@@ -921,33 +816,7 @@ fn test_update_asset() {
         assert_eq!(market_before.reserve_factor, new_market.reserve_factor);
         assert_eq!(market_before.liquidation_threshold, new_market.liquidation_threshold);
         assert_eq!(market_before.liquidation_bonus, new_market.liquidation_bonus);
-        if let InterestRateModel::Dynamic {
-            params: market_dynamic_ir_params,
-            state: market_dynamic_ir_state,
-        } = new_market.interest_rate_model
-        {
-            assert_eq!(dynamic_ir_params.min_borrow_rate, market_dynamic_ir_params.min_borrow_rate);
-            assert_eq!(dynamic_ir_params.max_borrow_rate, market_dynamic_ir_params.max_borrow_rate);
-            assert_eq!(dynamic_ir_params.kp_1, market_dynamic_ir_params.kp_1);
-            assert_eq!(
-                dynamic_ir_params.kp_augmentation_threshold,
-                market_dynamic_ir_params.kp_augmentation_threshold
-            );
-            assert_eq!(dynamic_ir_params.kp_2, market_dynamic_ir_params.kp_2);
-            assert_eq!(
-                dynamic_ir_params.update_threshold_txs,
-                market_dynamic_ir_params.update_threshold_txs
-            );
-            assert_eq!(
-                dynamic_ir_params.update_threshold_seconds,
-                market_dynamic_ir_params.update_threshold_seconds
-            );
-
-            assert_eq!(1, market_dynamic_ir_state.txs_since_last_borrow_rate_update);
-            assert_eq!(env.block.time.seconds(), market_dynamic_ir_state.borrow_rate_last_updated);
-        } else {
-            panic!("INCORRECT STRATEGY")
-        }
+        assert_eq!(market_before.interest_rate_model, new_market.interest_rate_model);
     }
 }
 
@@ -968,26 +837,20 @@ fn test_update_asset_with_new_interest_rate_model_params() {
     let env = mock_env(MockEnvParams::default());
     instantiate(deps.as_mut(), env, info, msg).unwrap();
 
-    let dynamic_ir_params = DynamicInterestRateModelParams {
-        min_borrow_rate: Decimal::from_ratio(10u128, 100u128),
-        max_borrow_rate: Decimal::from_ratio(60u128, 100u128),
-        kp_1: Decimal::from_ratio(4u128, 1u128),
-        optimal_utilization_rate: Decimal::from_ratio(90u128, 100u128),
-        kp_augmentation_threshold: Decimal::from_ratio(2000u128, 1u128),
-        kp_2: Decimal::from_ratio(3u128, 1u128),
-        update_threshold_txs: 1,
-        update_threshold_seconds: 1,
+    let ir_model = InterestRateModel {
+        optimal_utilization_rate: Decimal::one(),
+        base: Decimal::percent(5),
+        slope_1: Decimal::zero(),
+        slope_2: Decimal::zero(),
     };
 
-    let asset_params_with_dynamic_ir = InitOrUpdateAssetParams {
+    let asset_params = InitOrUpdateAssetParams {
         initial_borrow_rate: Some(Decimal::from_ratio(15u128, 100u128)),
         max_loan_to_value: Some(Decimal::from_ratio(50u128, 100u128)),
         reserve_factor: Some(Decimal::from_ratio(2u128, 100u128)),
         liquidation_threshold: Some(Decimal::from_ratio(80u128, 100u128)),
         liquidation_bonus: Some(Decimal::from_ratio(10u128, 100u128)),
-        interest_rate_model_params: Some(InterestRateModelParams::Dynamic(
-            dynamic_ir_params.clone(),
-        )),
+        interest_rate_model: Some(ir_model.clone()),
         active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
@@ -995,7 +858,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
 
     let msg = ExecuteMsg::InitAsset {
         denom: "someasset".to_string(),
-        asset_params: asset_params_with_dynamic_ir.clone(),
+        asset_params: asset_params.clone(),
         asset_symbol: None,
     };
     let info = mock_info("owner", &[]);
@@ -1004,30 +867,20 @@ fn test_update_asset_with_new_interest_rate_model_params() {
 
     // Verify if IR model is saved correctly
     let market_before = MARKETS.load(&deps.storage, "someasset").unwrap();
-    assert_eq!(
-        market_before.interest_rate_model,
-        InterestRateModel::Dynamic {
-            params: dynamic_ir_params,
-            state: DynamicInterestRateModelState {
-                txs_since_last_borrow_rate_update: 0,
-                borrow_rate_last_updated: 1_000_000
-            }
-        }
-    );
+    assert_eq!(market_before.interest_rate_model, ir_model);
 
-    let linear_ir_params = LinearInterestRateModelParams {
-        optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
-        base: Decimal::from_ratio(0u128, 100u128),
-        slope_1: Decimal::from_ratio(8u128, 100u128),
-        slope_2: Decimal::from_ratio(48u128, 100u128),
+    // new IR model has a fixed borrow rate of 69%
+    let new_ir_model = InterestRateModel {
+        base: Decimal::percent(69),
+        ..ir_model
     };
-    let asset_params_with_linear_ir = InitOrUpdateAssetParams {
-        interest_rate_model_params: Some(InterestRateModelParams::Linear(linear_ir_params.clone())),
-        ..asset_params_with_dynamic_ir
+    let asset_params_with_new_ir_model = InitOrUpdateAssetParams {
+        interest_rate_model: Some(new_ir_model.clone()),
+        ..asset_params
     };
     let msg = ExecuteMsg::UpdateAsset {
         denom: "someasset".to_string(),
-        asset_params: asset_params_with_linear_ir,
+        asset_params: asset_params_with_new_ir_model,
     };
     let info = mock_info("owner", &[]);
     let env = mock_env_at_block_time(2_000_000);
@@ -1035,12 +888,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
 
     // Verify if IR model is updated
     let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();
-    assert_eq!(
-        new_market.interest_rate_model,
-        InterestRateModel::Linear {
-            params: linear_ir_params.clone()
-        }
-    );
+    assert_eq!(new_market.interest_rate_model, new_ir_model);
 
     // Indices should have been updated using previous interest rate
     let expected_indices = th_get_expected_indices(&market_before, 2_000_000);
@@ -1049,8 +897,10 @@ fn test_update_asset_with_new_interest_rate_model_params() {
     assert_eq!(new_market.indexes_last_updated, 2_000_000);
 
     // Interest rate should have been recomputed using new strategy and values
-    let expected_borrow_rate = linear_get_borrow_rate(&linear_ir_params, Decimal::zero()).unwrap();
-    let expected_liquidity_rate = Decimal::zero(); // zero utilization rate
+    let expected_borrow_rate = new_ir_model.get_borrow_rate(Decimal::zero()).unwrap();
+    let expected_liquidity_rate = new_ir_model
+        .get_liquidity_rate(expected_borrow_rate, Decimal::zero(), Decimal::percent(2))
+        .unwrap();
     assert_eq!(new_market.borrow_rate, expected_borrow_rate);
     assert_eq!(new_market.liquidity_rate, expected_liquidity_rate);
 
@@ -1076,14 +926,11 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
 
     let ma_token_address = Addr::unchecked("ma_token");
 
-    let linear_ir_model_params = LinearInterestRateModelParams {
+    let ir_model = InterestRateModel {
         optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
         base: Decimal::zero(),
         slope_1: Decimal::from_ratio(1_u128, 2_u128),
         slope_2: Decimal::from_ratio(2_u128, 1_u128),
-    };
-    let linear_ir_model = InterestRateModel::Linear {
-        params: linear_ir_model_params.clone(),
     };
 
     let asset_initial_debt = Uint128::new(2_000_000_000_000);
@@ -1104,7 +951,7 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
             )
             .unwrap(),
             ma_token_address,
-            interest_rate_model: linear_ir_model,
+            interest_rate_model: ir_model.clone(),
             ..Default::default()
         },
     );
@@ -1115,7 +962,7 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
         reserve_factor: Some(Decimal::from_ratio(2_u128, 10_u128)),
         liquidation_threshold: None,
         liquidation_bonus: None,
-        interest_rate_model_params: None,
+        interest_rate_model: None,
         active: None,
         deposit_enabled: None,
         borrow_enabled: None,
@@ -1147,15 +994,15 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
     let expected_utilization_rate =
         Decimal::from_ratio(expected_debt, expected_liquidity + expected_debt);
 
-    let expected_borrow_rate =
-        linear_get_borrow_rate(&linear_ir_model_params, expected_utilization_rate).unwrap();
+    let expected_borrow_rate = ir_model.get_borrow_rate(expected_utilization_rate).unwrap();
 
-    let expected_liquidity_rate = get_liquidity_rate(
-        expected_borrow_rate,
-        expected_utilization_rate,
-        new_market.reserve_factor,
-    )
-    .unwrap();
+    let expected_liquidity_rate = ir_model
+        .get_liquidity_rate(
+            expected_borrow_rate,
+            expected_utilization_rate,
+            new_market.reserve_factor,
+        )
+        .unwrap();
 
     assert_eq!(new_market.borrow_rate, expected_borrow_rate);
     assert_eq!(new_market.liquidity_rate, expected_liquidity_rate);

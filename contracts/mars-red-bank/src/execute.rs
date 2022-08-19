@@ -13,8 +13,8 @@ use mars_outpost::helpers::{
     build_send_asset_msg, cw20_get_balance, option_string_to_addr, zero_address,
 };
 use mars_outpost::red_bank::{
-    init_interest_rate_model, Config, CreateOrUpdateConfig, Debt, ExecuteMsg, GlobalState,
-    InitOrUpdateAssetParams, InstantiateMsg, Market, User, UserHealthStatus,
+    Config, CreateOrUpdateConfig, Debt, ExecuteMsg, GlobalState, InitOrUpdateAssetParams,
+    InstantiateMsg, Market, User, UserHealthStatus,
 };
 use mars_outpost::{ma_token, math};
 
@@ -222,7 +222,7 @@ pub fn create_market(
         reserve_factor,
         liquidation_threshold,
         liquidation_bonus,
-        interest_rate_model_params,
+        interest_rate_model,
         active,
         deposit_enabled,
         borrow_enabled,
@@ -234,7 +234,7 @@ pub fn create_market(
         && reserve_factor.is_some()
         && liquidation_threshold.is_some()
         && liquidation_bonus.is_some()
-        && interest_rate_model_params.is_some()
+        && interest_rate_model.is_some()
         && active.is_some()
         && deposit_enabled.is_some()
         && borrow_enabled.is_some();
@@ -257,10 +257,7 @@ pub fn create_market(
         debt_total_scaled: Uint128::zero(),
         liquidation_threshold: liquidation_threshold.unwrap(),
         liquidation_bonus: liquidation_bonus.unwrap(),
-        interest_rate_model: init_interest_rate_model(
-            interest_rate_model_params.unwrap(),
-            block_time,
-        )?,
+        interest_rate_model: interest_rate_model.unwrap(),
         active: active.unwrap(),
         deposit_enabled: deposit_enabled.unwrap(),
         borrow_enabled: borrow_enabled.unwrap(),
@@ -322,7 +319,7 @@ pub fn update_asset(
                 reserve_factor,
                 liquidation_threshold,
                 liquidation_bonus,
-                interest_rate_model_params,
+                interest_rate_model,
                 active,
                 deposit_enabled,
                 borrow_enabled,
@@ -334,7 +331,7 @@ pub fn update_asset(
             // recalculated after changes are applied.
             let should_update_interest_rates = (reserve_factor.is_some()
                 && reserve_factor.unwrap() != market.reserve_factor)
-                || interest_rate_model_params.is_some();
+                || interest_rate_model.is_some();
 
             let mut response = Response::new();
 
@@ -358,16 +355,12 @@ pub fn update_asset(
                 liquidation_threshold: liquidation_threshold
                     .unwrap_or(market.liquidation_threshold),
                 liquidation_bonus: liquidation_bonus.unwrap_or(market.liquidation_bonus),
+                interest_rate_model: interest_rate_model.unwrap_or(market.interest_rate_model),
                 active: active.unwrap_or(market.active),
                 deposit_enabled: deposit_enabled.unwrap_or(market.deposit_enabled),
                 borrow_enabled: borrow_enabled.unwrap_or(market.borrow_enabled),
                 ..market
             };
-
-            if let Some(params) = interest_rate_model_params {
-                updated_market.interest_rate_model =
-                    init_interest_rate_model(params, env.block.time.seconds())?;
-            }
 
             updated_market.validate()?;
 

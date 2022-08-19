@@ -4,9 +4,7 @@ use cosmwasm_std::{
     SubMsg, Uint128, WasmMsg,
 };
 
-use mars_outpost::red_bank::{
-    Debt, ExecuteMsg, InterestRateModel, LinearInterestRateModelParams, Market, User,
-};
+use mars_outpost::red_bank::{Debt, ExecuteMsg, InterestRateModel, Market, User};
 use mars_outpost::{ma_token, math};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
@@ -71,6 +69,14 @@ fn test_liquidate() {
     deps.querier.set_oracle_price("debt", debt_price);
     deps.querier.set_oracle_price("umars", umars_price);
 
+    // for the test to pass, we need an interest rate model that gives non-zero rates
+    let mock_ir_model = InterestRateModel {
+        optimal_utilization_rate: Decimal::one(),
+        base: Decimal::percent(5),
+        slope_1: Decimal::zero(),
+        slope_2: Decimal::zero(),
+    };
+
     let collateral_market_ma_token_addr = Addr::unchecked("ma_collateral");
     let collateral_market = Market {
         ma_token_address: collateral_market_ma_token_addr.clone(),
@@ -82,6 +88,7 @@ fn test_liquidate() {
         borrow_index: Decimal::one(),
         borrow_rate: Decimal::from_ratio(2u128, 10u128),
         liquidity_rate: Decimal::from_ratio(2u128, 10u128),
+        interest_rate_model: mock_ir_model.clone(),
         reserve_factor: Decimal::from_ratio(2u128, 100u128),
         indexes_last_updated: 0,
         ..Default::default()
@@ -95,6 +102,7 @@ fn test_liquidate() {
         borrow_index: Decimal::from_ratio(14u128, 10u128),
         borrow_rate: Decimal::from_ratio(2u128, 10u128),
         liquidity_rate: Decimal::from_ratio(2u128, 10u128),
+        interest_rate_model: mock_ir_model,
         reserve_factor: Decimal::from_ratio(3u128, 100u128),
         indexes_last_updated: 0,
         ..Default::default()
@@ -762,13 +770,6 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
     // initialize market
     deps.querier.set_oracle_price("the_asset", asset_price);
 
-    let interest_rate_params = LinearInterestRateModelParams {
-        optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
-        base: Decimal::from_ratio(0u128, 100u128),
-        slope_1: Decimal::from_ratio(10u128, 100u128),
-        slope_2: Decimal::one(),
-    };
-
     let asset_market = Market {
         ma_token_address: ma_token_address.clone(),
         max_loan_to_value: asset_max_ltv,
@@ -781,8 +782,11 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         liquidity_rate: Decimal::from_ratio(2u128, 10u128),
         reserve_factor: Decimal::from_ratio(2u128, 100u128),
         indexes_last_updated: 0,
-        interest_rate_model: InterestRateModel::Linear {
-            params: interest_rate_params,
+        interest_rate_model: InterestRateModel {
+            optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
+            base: Decimal::from_ratio(0u128, 100u128),
+            slope_1: Decimal::from_ratio(10u128, 100u128),
+            slope_2: Decimal::one(),
         },
         ..Default::default()
     };

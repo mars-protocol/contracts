@@ -7,7 +7,7 @@ use cosmwasm_std::{
 use cw20::Cw20ExecuteMsg;
 
 use mars_outpost::math;
-use mars_outpost::red_bank::{update_market_interest_rates_with_model, Market};
+use mars_outpost::red_bank::Market;
 
 use crate::error::ContractError;
 use crate::events::build_interests_updated_event;
@@ -301,7 +301,7 @@ pub fn update_interest_rates(
         Decimal::zero()
     };
 
-    update_market_interest_rates_with_model(env, market, current_utilization_rate)?;
+    market.update_interest_rates(current_utilization_rate)?;
 
     response = response.add_event(build_interests_updated_event(denom, market));
     Ok(response)

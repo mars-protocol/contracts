@@ -1,9 +1,7 @@
+use cosmwasm_std::{OverflowError, StdError};
 use thiserror::Error;
 
-use cosmwasm_std::{OverflowError, StdError};
-
 use mars_outpost::error::MarsError;
-use mars_outpost::red_bank::{InterestRateModelError, MarketError};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
@@ -15,12 +13,6 @@ pub enum ContractError {
 
     #[error("{0}")]
     Overflow(#[from] OverflowError),
-
-    #[error("{0}")]
-    Market(#[from] MarketError),
-
-    #[error("{0}")]
-    InterestRateModel(#[from] InterestRateModelError),
 
     #[error("Price not found for asset: {denom:?}")]
     PriceNotFound {
