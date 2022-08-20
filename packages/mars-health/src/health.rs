@@ -1,5 +1,5 @@
 use crate::query::MarsQuerier;
-use cosmwasm_std::{Addr, Coin, Decimal, QuerierWrapper, StdResult};
+use cosmwasm_std::{Addr, Coin, Decimal, QuerierWrapper, StdError, StdResult, Uint128};
 use mars_outpost::{math::divide_decimal_by_decimal, red_bank::Market};
 use std::collections::HashMap;
 
@@ -30,10 +30,8 @@ pub struct Health {
 }
 
 impl Health {
-    /// Compute the health of a token's position
-    /// max_tvl = maximum loan to value
-    /// lqdt = liquidation threshold
-    pub fn compute_from_coins(
+    /// Compute the health from coins (collateral and debt)
+    pub fn compute_health_from_coins(
         querier: &QuerierWrapper,
         oracle_addr: &Addr,
         red_bank_addr: &Addr,
@@ -43,10 +41,10 @@ impl Health {
         let mut positions: HashMap<String, Position> = HashMap::new();
         let querier = MarsQuerier::new(querier, oracle_addr.clone(), red_bank_addr.clone());
 
-        collateral.iter().try_for_each::<_, StdResult<_>>(|c| {
+        collateral.iter().try_for_each(|c| -> StdResult<_> {
             match positions.get_mut(&c.denom) {
                 Some(p) => {
-                    p.collateral_amount = Decimal::from_ratio(c.amount, 1u128);
+                    p.collateral_amount += to_decimal(c.amount)?;
                 }
                 None => {
                     let Market {
@@ -59,7 +57,7 @@ impl Health {
                         c.denom.clone(),
                         Position {
                             denom: c.denom.clone(),
-                            collateral_amount: Decimal::from_ratio(c.amount, 1u128),
+                            collateral_amount: to_decimal(c.amount)?,
                             debt_amount: Decimal::zero(),
                             price: querier.query_price(&c.denom)?,
                             max_ltv: max_loan_to_value,
@@ -71,10 +69,10 @@ impl Health {
             Ok(())
         })?;
 
-        debt.iter().try_for_each::<_, StdResult<_>>(|c| {
+        debt.iter().try_for_each(|c| -> StdResult<_> {
             match positions.get_mut(&c.denom) {
                 Some(p) => {
-                    p.debt_amount = Decimal::from_ratio(c.amount, 1u128);
+                    p.debt_amount += to_decimal(c.amount)?;
                 }
                 None => {
                     let Market {
@@ -88,7 +86,7 @@ impl Health {
                         Position {
                             denom: c.denom.clone(),
                             collateral_amount: Decimal::zero(),
-                            debt_amount: Decimal::from_ratio(c.amount, 1u128),
+                            debt_amount: to_decimal(c.amount)?,
                             price: querier.query_price(&c.denom)?,
                             max_ltv: max_loan_to_value,
                             liquidation_threshold,
@@ -102,7 +100,7 @@ impl Health {
         Self::compute_health(&positions.into_values().collect::<Vec<_>>())
     }
 
-    /// Compute the health of a collection of `AssetPosition`
+    /// Compute the health for a Position
     pub fn compute_health(positions: &[Position]) -> StdResult<Health> {
         let mut health = positions.iter().try_fold::<_, _, StdResult<Health>>(
             Health::default(),
@@ -138,11 +136,22 @@ impl Health {
     }
 
     #[inline]
-    pub fn is_healthy(&self) -> bool {
-        self.max_ltv_health_factor.map_or(true, |hf| hf > Decimal::one())
+    pub fn is_above_max_ltv(&self) -> bool {
+        self.max_ltv_health_factor.map_or(true, |hf| hf < Decimal::one())
     }
 }
 
+/// helper function to convert `Uint128` to `Decimal`.
+/// Maps `CheckFromRatioError` to `StdError` 
+pub fn to_decimal(x: Uint128) -> StdResult<Decimal> {
+    Decimal::checked_from_ratio(x, 1u128).map_err(|_e| StdError::Overflow {
+        source: cosmwasm_std::OverflowError {
+            operation: cosmwasm_std::OverflowOperation::Mul,
+            operand1: x.to_string(),
+            operand2: "".to_string(),
+        },
+    })
+}
 #[cfg(test)]
 mod tests {
     use std::vec;
@@ -173,7 +182,7 @@ mod tests {
         assert_eq!(health.max_ltv_health_factor, None);
         assert_eq!(health.liquidation_health_factor, None);
         assert!(!health.is_liquidatable());
-        assert!(health.is_healthy());
+        assert!(health.is_above_max_ltv());
     }
 
     // Action: User requested to borrrow 100 osmo. Zero deposits
@@ -197,7 +206,7 @@ mod tests {
         assert_eq!(health.liquidation_health_factor, Some(Decimal::zero()));
         assert_eq!(health.max_ltv_health_factor, Some(Decimal::zero()));
         assert!(health.is_liquidatable());
-        assert!(!health.is_healthy());
+        assert!(health.is_above_max_ltv());
     }
 
     // Step 1: User deposits 300 OSMO
@@ -228,7 +237,7 @@ mod tests {
         );
         assert_eq!(health.max_ltv_health_factor, Some(Decimal::from_atomics(3u128, 0).unwrap()));
         assert!(!health.is_liquidatable());
-        assert!(health.is_healthy());
+        assert!(!health.is_above_max_ltv());
     }
 
     // Step 1: User deposits 300 OSMO
@@ -242,7 +251,7 @@ mod tests {
         let collateral = coins(300, "osmo");
         let debt = coins(50, "osmo");
 
-        let health = Health::compute_from_coins(
+        let health = Health::compute_health_from_coins(
             &QuerierWrapper::new(&mock_querier),
             &Addr::unchecked("oracle"),
             &Addr::unchecked("red_bank"),
@@ -262,7 +271,7 @@ mod tests {
         );
         assert_eq!(health.max_ltv_health_factor, Some(Decimal::from_atomics(3u128, 0).unwrap()));
         assert!(!health.is_liquidatable());
-        assert!(health.is_healthy());
+        assert!(!health.is_above_max_ltv());
     }
 
     //  ----------------------------------------

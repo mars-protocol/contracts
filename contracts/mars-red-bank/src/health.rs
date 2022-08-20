@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{Addr, Decimal, Deps, Env, StdError, StdResult, Uint128};
-use mars_health::health::{Position as HealthPosition, Health};
+use mars_health::health::{Health, Position as HealthPosition};
 use mars_outpost::helpers::cw20_get_balance;
 use mars_outpost::oracle;
-use mars_outpost::red_bank::{Debt, User, Position};
+use mars_outpost::red_bank::{Debt, Position, User};
 
 use crate::helpers::{get_bit, get_market_from_index};
 use crate::interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount};
@@ -59,25 +59,20 @@ pub fn assert_health_after_borrow(
     amount: Uint128,
 ) -> StdResult<bool> {
     let mut positions = get_user_positions_map(deps, env, user, user_addr, oracle_addr)?;
-    
+
     // Update position to compute health factor after borrow
-    match positions.get_mut(denom) {
-        Some(p) => p.debt_amount += amount,
-        None => {
-            positions.insert(
-                denom.to_string(),
-                Position {
-                    denom: denom.to_string(),
-                    debt_amount: amount,
-                    asset_price: oracle::helpers::query_price(&deps.querier, oracle_addr, denom)?,
-                    ..Default::default()
-                }
-            );
-        }
-    }
+    positions
+        .entry(denom.to_string())
+        .or_insert(Position {
+            denom: denom.to_string(),
+            debt_amount: Uint128::zero(),
+            asset_price: oracle::helpers::query_price(&deps.querier, oracle_addr, denom)?,
+            ..Default::default()
+        })
+        .debt_amount += amount;
 
     let health = get_position_health(&positions)?;
-    Ok(health.is_healthy())
+    Ok(!health.is_above_max_ltv())
 }
 
 /// Assert Health of a given User Position
