@@ -11,7 +11,7 @@ use crate::interest_rates::{get_underlying_debt_amount, get_underlying_liquidity
 use crate::state::{DEBTS, GLOBAL_STATE};
 
 /// Check the Health Factor for a given user
-pub fn assert_liquidation(
+pub fn assert_liquidatable(
     deps: &Deps,
     env: &Env,
     user: &User,
@@ -19,7 +19,7 @@ pub fn assert_liquidation(
     oracle_addr: &Addr,
 ) -> StdResult<(bool, HashMap<String, Position>)> {
     let positions = get_user_positions_map(deps, env, user, user_addr, oracle_addr)?;
-    let health = get_position_health(&positions)?;
+    let health = compute_position_health(&positions)?;
 
     Ok((health.is_liquidatable(), positions))
 }
@@ -44,7 +44,7 @@ pub fn assert_health_after_withdraw(
         })?
         .collateral_amount -= amount;
 
-    let health = get_position_health(&positions)?;
+    let health = compute_position_health(&positions)?;
     Ok(!health.is_liquidatable())
 }
 
@@ -71,12 +71,12 @@ pub fn assert_health_after_borrow(
         })
         .debt_amount += amount;
 
-    let health = get_position_health(&positions)?;
+    let health = compute_position_health(&positions)?;
     Ok(!health.is_above_max_ltv())
 }
 
 /// Assert Health of a given User Position
-pub fn get_position_health(positions: &HashMap<String, Position>) -> StdResult<Health> {
+pub fn compute_position_health(positions: &HashMap<String, Position>) -> StdResult<Health> {
     let positions = positions
         .values()
         .map(|p| {

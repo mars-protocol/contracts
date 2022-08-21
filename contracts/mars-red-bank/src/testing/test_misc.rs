@@ -367,7 +367,7 @@ fn test_update_asset_collateral() {
         let positions =
             health::get_user_positions_map(&deps.as_ref(), &env, &user, &user_addr, &Addr::unchecked("oracle"))
                 .unwrap();
-        let health = health::get_position_health(&positions).unwrap();
+        let health = health::compute_position_health(&positions).unwrap();
 
         // Should have valid health factor
         assert_eq!(health.liquidation_health_factor.unwrap(), Decimal::one());

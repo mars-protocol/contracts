@@ -20,7 +20,7 @@ use mars_outpost::{ma_token, math};
 
 use crate::error::ContractError;
 use crate::events::{build_collateral_position_changed_event, build_debt_position_changed_event};
-use crate::health::{assert_health_after_borrow, assert_health_after_withdraw, assert_liquidation};
+use crate::health::{assert_health_after_borrow, assert_health_after_withdraw, assert_liquidatable};
 use crate::helpers::{get_bit, set_bit, unset_bit};
 use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
@@ -1025,7 +1025,7 @@ pub fn liquidate(
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
     let (liquidatable, assets_positions) =
-        assert_liquidation(&deps.as_ref(), &env, &user, &user_addr, oracle_addr)?;
+        assert_liquidatable(&deps.as_ref(), &env, &user, &user_addr, oracle_addr)?;
 
     if !liquidatable {
         return Err(ContractError::CannotLiquidateHealthyPosition {});
@@ -1415,7 +1415,7 @@ pub fn update_asset_collateral_status(
         )?;
 
         let (liquidatable, _) =
-            assert_liquidation(&deps.as_ref(), &env, &user, &user_addr, &oracle_addr)?;
+            assert_liquidatable(&deps.as_ref(), &env, &user, &user_addr, &oracle_addr)?;
 
         if liquidatable {
             return Err(ContractError::InvalidHealthFactorAfterDisablingCollateral {});
@@ -1460,7 +1460,7 @@ pub fn finalize_liquidity_token_transfer(
     )?;
 
     let (liquidatable, _) =
-        assert_liquidation(&deps.as_ref(), &env, &from_user, &from_address, &oracle_address)?;
+        assert_liquidatable(&deps.as_ref(), &env, &from_user, &from_address, &oracle_address)?;
 
     if liquidatable {
         return Err(ContractError::CannotTransferTokenWhenInvalidHealthFactor {});
