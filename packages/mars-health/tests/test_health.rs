@@ -140,8 +140,14 @@ fn test_healthy_health_factor() {
 
     assert_eq!(health.total_collateral_value, Decimal::from_atomics(172962u128, 2).unwrap());
     assert_eq!(health.total_debt_value, Decimal::from_atomics(23654u128, 2).unwrap());
-    assert_eq!(health.max_ltv_health_factor, Some(Decimal::from_atomics(4518516952735266762u128, 18).unwrap()));
-    assert_eq!(health.liquidation_health_factor, Some(Decimal::from_atomics(4884125306502071531u128, 18).unwrap()));
+    assert_eq!(
+        health.max_ltv_health_factor,
+        Some(Decimal::from_atomics(4518516952735266762u128, 18).unwrap())
+    );
+    assert_eq!(
+        health.liquidation_health_factor,
+        Some(Decimal::from_atomics(4884125306502071531u128, 18).unwrap())
+    );
     assert!(!health.is_liquidatable());
     assert!(!health.is_above_max_ltv());
 }
@@ -166,7 +172,7 @@ fn test_above_max_ltv_not_liquidatable() {
         },
         Position {
             denom: "atom".to_string(),
-            debt_amount: Decimal::from_atomics(50u128,0 ).unwrap(),
+            debt_amount: Decimal::from_atomics(50u128, 0).unwrap(),
             collateral_amount: Decimal::from_atomics(50u128, 0).unwrap(),
             price: Decimal::from_atomics(24u128, 0).unwrap(),
             max_ltv: Decimal::from_atomics(70u128, 2).unwrap(),
@@ -179,7 +185,10 @@ fn test_above_max_ltv_not_liquidatable() {
     assert_eq!(health.total_collateral_value, Decimal::from_atomics(190962u128, 2).unwrap());
     assert_eq!(health.total_debt_value, Decimal::from_atomics(1200u128, 0).unwrap());
     assert_eq!(health.max_ltv_health_factor, Some(Decimal::from_atomics(995675u128, 6).unwrap()));
-    assert_eq!(health.liquidation_health_factor, Some(Decimal::from_atomics(10752425u128, 7).unwrap()));
+    assert_eq!(
+        health.liquidation_health_factor,
+        Some(Decimal::from_atomics(10752425u128, 7).unwrap())
+    );
     assert!(!health.is_liquidatable());
     assert!(health.is_above_max_ltv());
 }
@@ -204,7 +213,7 @@ fn test_liquidatable() {
         },
         Position {
             denom: "atom".to_string(),
-            debt_amount: Decimal::from_atomics(50u128,0 ).unwrap(),
+            debt_amount: Decimal::from_atomics(50u128, 0).unwrap(),
             collateral_amount: Decimal::from_atomics(50u128, 0).unwrap(),
             price: Decimal::from_atomics(35u128, 0).unwrap(),
             max_ltv: Decimal::from_atomics(70u128, 2).unwrap(),
@@ -216,8 +225,14 @@ fn test_liquidatable() {
 
     assert_eq!(health.total_collateral_value, Decimal::from_atomics(245962u128, 2).unwrap());
     assert_eq!(health.total_debt_value, Decimal::from_atomics(1750u128, 0).unwrap());
-    assert_eq!(health.max_ltv_health_factor, Some(Decimal::from_atomics(902748571428571428u128, 18).unwrap()));
-    assert_eq!(health.liquidation_health_factor, Some(Decimal::from_atomics(973023428571428571u128, 18).unwrap()));
+    assert_eq!(
+        health.max_ltv_health_factor,
+        Some(Decimal::from_atomics(902748571428571428u128, 18).unwrap())
+    );
+    assert_eq!(
+        health.liquidation_health_factor,
+        Some(Decimal::from_atomics(973023428571428571u128, 18).unwrap())
+    );
     assert!(health.is_liquidatable());
     assert!(health.is_above_max_ltv());
 }

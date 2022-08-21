@@ -364,9 +364,14 @@ fn test_update_asset_collateral() {
         };
         DEBTS.save(deps.as_mut().storage, (denom_3, &user_addr), &debt).unwrap();
 
-        let positions =
-            health::get_user_positions_map(&deps.as_ref(), &env, &user, &user_addr, &Addr::unchecked("oracle"))
-                .unwrap();
+        let positions = health::get_user_positions_map(
+            &deps.as_ref(),
+            &env,
+            &user,
+            &user_addr,
+            &Addr::unchecked("oracle"),
+        )
+        .unwrap();
         let health = health::compute_position_health(&positions).unwrap();
 
         // Should have valid health factor

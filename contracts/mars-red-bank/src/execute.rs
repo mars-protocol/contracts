@@ -20,7 +20,9 @@ use mars_outpost::{ma_token, math};
 
 use crate::error::ContractError;
 use crate::events::{build_collateral_position_changed_event, build_debt_position_changed_event};
-use crate::health::{assert_health_after_borrow, assert_health_after_withdraw, assert_liquidatable};
+use crate::health::{
+    assert_health_after_borrow, assert_health_after_withdraw, assert_liquidatable,
+};
 use crate::helpers::{get_bit, set_bit, unset_bit};
 use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,

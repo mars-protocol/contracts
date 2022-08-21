@@ -57,9 +57,7 @@ pub fn unset_bit(bitmap: &mut Uint128, index: u32) -> StdResult<()> {
     Ok(())
 }
 
-pub fn get_uncollaterized_debt(
-    positions: &HashMap<String, Position>,
-) -> StdResult<Uint128> {
+pub fn get_uncollaterized_debt(positions: &HashMap<String, Position>) -> StdResult<Uint128> {
     positions.values().try_fold(Uint128::zero(), |total, p| {
         if p.uncollateralized_debt {
             total.checked_add(p.debt_amount)?;

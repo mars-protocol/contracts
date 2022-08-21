@@ -185,7 +185,7 @@ pub struct Debt {
 #[serde(rename_all = "snake_case")]
 pub enum UserHealthStatus {
     NotBorrowing,
-    Borrowing{
+    Borrowing {
         max_ltv_hf: Decimal,
         liq_threshold_hf: Decimal,
     },

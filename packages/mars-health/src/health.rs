@@ -142,7 +142,7 @@ impl Health {
 }
 
 /// helper function to convert `Uint128` to `Decimal`.
-/// Maps `CheckFromRatioError` to `StdError` 
+/// Maps `CheckFromRatioError` to `StdError`
 pub fn to_decimal(x: Uint128) -> StdResult<Decimal> {
     Decimal::checked_from_ratio(x, 1u128).map_err(|_e| StdError::Overflow {
         source: cosmwasm_std::OverflowError {
