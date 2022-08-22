@@ -11,7 +11,7 @@ Follow these instructions to verify that the smart contracts that exist on chain
 1. Find the code ID of the contract you wish to verify.
 
     This can be found on the smart contract's page on [Terra Finder](https://finder.terra.money/).
-    
+
 2. Get the SHA256 checksum of the code ID's wasm binary:
     - One way to do this is to get the checksum directly from the blockchain:
 
@@ -99,7 +99,7 @@ echo "NETWORK=testnet" >> .env
 
 # ensure the deploy_config.ts has a cw20_code_id specified for above network
 
-node --loader ts-node/esm deploy.ts
+node --loader ts-node/esm index.ts
 ```
 
 ## Testing
