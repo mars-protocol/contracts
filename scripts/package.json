@@ -5,7 +5,10 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "deploy:osmosis": "node --loader ts-node/esm deploy/osmosis.ts"
+    "deploy:osmosis": "node --loader ts-node/esm deploy/osmosis.ts",
+    "test": "jest --testTimeout=20000 && npm run lint && npm run format-check",
+    "format": "prettier --write .",
+    "lint": "tsc && eslint . --ext .ts"
   },
   "dependencies": {
     "@cosmjs/amino": "^0.28.4",
@@ -27,6 +30,8 @@
     "ts-custom-error": "^3.2.0"
   },
   "devDependencies": {
+    "@types/node": "^18.7.9",
+    "@typescript-eslint/eslint-plugin": "^5.33.1",
     "eslint": "^7.24.0",
     "ts-node": "^10.8.0",
     "typescript": "^4.3.5"

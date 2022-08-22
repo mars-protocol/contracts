@@ -1,17 +1,18 @@
-import { LocalTerra, MnemonicKey } from "@terra-money/terra.js";
-import { join } from "path";
-import { strictEqual } from "assert";
-import "dotenv/config.js";
+import { LocalTerra, MnemonicKey } from '@terra-money/terra.js';
+import { join } from 'path';
+import { strictEqual } from 'assert';
+import 'dotenv/config.js';
 import {
   deployContract,
   executeContract,
-  instantiateContract, Logger,
+  instantiateContract,
+  Logger,
   queryContract,
   setGasAdjustment,
   toEncodedBinary,
   uploadContract,
-} from "../helpers.js";
-import { queryBalanceCw20, queryBalanceNative } from "./test_helpers.js";
+} from '../helpers.js';
+import { queryBalanceCw20, queryBalanceNative } from './test_helpers.js';
 
 // TYPES
 
@@ -54,22 +55,28 @@ async function expectPromiseToFail(promise: Promise<any>) {
     failed = true;
   }
   if (!failed) {
-    throw new Error("expecting to fail but was successful?!");
+    throw new Error('expecting to fail but was successful?!');
   }
 }
 
 async function recordTwapSnapshots(logger?: Logger) {
-  const result = await executeContract(terra, charlie, oracle, {
-    record_twap_snapshots: {
-      assets: [
-        {
-          cw20: {
-            contract_addr: anchorToken,
+  const result = await executeContract(
+    terra,
+    charlie,
+    oracle,
+    {
+      record_twap_snapshots: {
+        assets: [
+          {
+            cw20: {
+              contract_addr: anchorToken,
+            },
           },
-        },
-      ],
+        ],
+      },
     },
-  }, { logger: logger });
+    { logger: logger },
+  );
   const timestamp = parseInt(result.logs[0].eventsByType.from_contract.timestamp[0]);
   const cumulativePrice = parseInt(result.logs[0].eventsByType.wasm.price_cumulative[0]);
   return { timestamp, cumulativePrice };
@@ -91,113 +98,118 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
 // MAIN
 
 (async () => {
-  console.log("deployer:", deployer.key.accAddress);
-  console.log("alice:   ", alice.key.accAddress);
-  console.log("bob:     ", bob.key.accAddress);
-  console.log("charlie: ", charlie.key.accAddress);
+  console.log('deployer:', deployer.key.accAddress);
+  console.log('alice:   ', alice.key.accAddress);
+  console.log('bob:     ', bob.key.accAddress);
+  console.log('charlie: ', charlie.key.accAddress);
 
-  const logger = new Logger()
+  const logger = new Logger();
 
-  process.stdout.write("deploying anchor token... ");
-  const cw20CodeId = await uploadContract(
-    terra,
-    deployer,
-    join(ASTROPORT_ARTIFACTS_PATH, "astroport_token.wasm")
-  );
+  process.stdout.write('deploying anchor token... ');
+  const cw20CodeId = await uploadContract(terra, deployer, join(ASTROPORT_ARTIFACTS_PATH, 'astroport_token.wasm'));
   anchorToken = await instantiateContract(terra, deployer, cw20CodeId, {
-    name: "Anchor Token",
-    symbol: "ANC",
+    name: 'Anchor Token',
+    symbol: 'ANC',
     decimals: 6,
     initial_balances: [
       {
         address: alice.key.accAddress,
-        amount: "10000000000",
+        amount: '10000000000',
       },
       {
         address: bob.key.accAddress,
-        amount: "10000000000",
+        amount: '10000000000',
       },
     ],
   });
-  console.log("success!");
+  console.log('success!');
 
-  process.stdout.write("deploying astroport factory... ");
-  const pairCodeId = await uploadContract(
+  process.stdout.write('deploying astroport factory... ');
+  const pairCodeId = await uploadContract(terra, deployer, join(ASTROPORT_ARTIFACTS_PATH, 'astroport_pair.wasm'));
+  astroportGenerator = new MnemonicKey().accAddress;
+  astroportFactory = await deployContract(terra, deployer, join(ASTROPORT_ARTIFACTS_PATH, 'astroport_factory.wasm'), {
+    owner: deployer.key.accAddress,
+    token_code_id: cw20CodeId,
+    generator_address: astroportGenerator,
+    pair_configs: [
+      {
+        code_id: pairCodeId,
+        pair_type: { xyk: {} },
+        total_fee_bps: 30, // 30 bps = 0.3% swap fee
+        maker_fee_bps: 0,
+      },
+    ],
+  });
+  console.log('success!');
+
+  process.stdout.write('creating astroport ANC-UST pair... ');
+  const result1 = await executeContract(
     terra,
     deployer,
-    join(ASTROPORT_ARTIFACTS_PATH, "astroport_pair.wasm")
-  );
-  astroportGenerator = new MnemonicKey().accAddress
-  astroportFactory = await deployContract(
-    terra,
-    deployer,
-    join(ASTROPORT_ARTIFACTS_PATH, "astroport_factory.wasm"),
+    astroportFactory,
     {
-      owner: deployer.key.accAddress,
-      token_code_id: cw20CodeId,
-      generator_address: astroportGenerator,
-      pair_configs: [
-        {
-          code_id: pairCodeId,
-          pair_type: { xyk: {} },
-          total_fee_bps: 30, // 30 bps = 0.3% swap fee
-          maker_fee_bps: 0,
-        },
-      ],
-    }
-  );
-  console.log("success!");
-
-  process.stdout.write("creating astroport ANC-UST pair... ");
-  const result1 = await executeContract(terra, deployer, astroportFactory, {
-    create_pair: {
-      pair_type: { xyk: {} },
-      asset_infos: [
-        {
-          native_token: {
-            denom: "uusd",
+      create_pair: {
+        pair_type: { xyk: {} },
+        asset_infos: [
+          {
+            native_token: {
+              denom: 'uusd',
+            },
           },
-        },
-        {
-          token: {
-            contract_addr: anchorToken,
+          {
+            token: {
+              contract_addr: anchorToken,
+            },
           },
-        },
-      ],
+        ],
+      },
     },
-  }, { logger: logger });
+    { logger: logger },
+  );
   astroportPair = result1.logs[0].eventsByType.from_contract.pair_contract_addr[0];
   astroportLiquidityToken = result1.logs[0].eventsByType.from_contract.liquidity_token_addr[0];
-  console.log("success!");
+  console.log('success!');
 
-  process.stdout.write("creating astroport LUNA-UST pair... ");
-  const result2 = await executeContract(terra, deployer, astroportFactory, {
-    create_pair: {
-      pair_type: { xyk: {} },
-      asset_infos: [
-        {
-          native_token: {
-            denom: "uluna",
+  process.stdout.write('creating astroport LUNA-UST pair... ');
+  const result2 = await executeContract(
+    terra,
+    deployer,
+    astroportFactory,
+    {
+      create_pair: {
+        pair_type: { xyk: {} },
+        asset_infos: [
+          {
+            native_token: {
+              denom: 'uluna',
+            },
           },
-        },
-        {
-          native_token: {
-            denom: "uusd",
+          {
+            native_token: {
+              denom: 'uusd',
+            },
           },
-        },
-      ],
+        ],
+      },
     },
-  }, { logger: logger });
+    { logger: logger },
+  );
   const astroportPair2 = result2.logs[0].eventsByType.from_contract.pair_contract_addr[0];
-  console.log("success!");
+  console.log('success!');
 
-  process.stdout.write("alice provides initial liquidity to astroport pair... ");
-  await executeContract(terra, alice, anchorToken, {
-    increase_allowance: {
-      amount: "69000000",
-      spender: astroportPair,
+  process.stdout.write('alice provides initial liquidity to astroport pair... ');
+  await executeContract(
+    terra,
+    alice,
+    anchorToken,
+    {
+      increase_allowance: {
+        amount: '69000000',
+        spender: astroportPair,
+      },
     },
-  }, { logger: logger });
+    { logger: logger },
+  );
   await executeContract(
     terra,
     alice,
@@ -211,32 +223,60 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
                 contract_addr: anchorToken,
               },
             },
-            amount: "69000000",
+            amount: '69000000',
           },
           {
             info: {
               native_token: {
-                denom: "uusd",
+                denom: 'uusd',
               },
             },
-            amount: "420000000",
+            amount: '420000000',
           },
         ],
       },
     },
-    { coins: "420000000uusd", logger: logger }
+    { coins: '420000000uusd', logger: logger },
   );
-  console.log("success!");
+  console.log('success!');
 
-  process.stdout.write("deploying mars oracle... ");
-  oracle = await deployContract(terra, deployer, "../artifacts/mars_oracle.wasm", {
+  process.stdout.write('deploying mars oracle... ');
+  oracle = await deployContract(terra, deployer, '../artifacts/mars_oracle.wasm', {
     owner: deployer.key.accAddress,
   });
-  console.log("success!");
+  console.log('success!');
 
-  process.stdout.write("configure spot price source with invalid pair, should fail... ");
+  process.stdout.write('configure spot price source with invalid pair, should fail... ');
   await expectPromiseToFail(
-    executeContract(terra, deployer, oracle, {
+    executeContract(
+      terra,
+      deployer,
+      oracle,
+      {
+        set_asset: {
+          asset: {
+            cw20: {
+              contract_addr: anchorToken,
+            },
+          },
+          price_source: {
+            astroport_spot: {
+              pair_address: astroportPair2, // we set price source for ANC but use the addr of LUNA-UST pair
+            },
+          },
+        },
+      },
+      { logger: logger },
+    ),
+  );
+  console.log('success!');
+
+  process.stdout.write('properly configure spot price source, should succeed... ');
+  await executeContract(
+    terra,
+    deployer,
+    oracle,
+    {
       set_asset: {
         asset: {
           cw20: {
@@ -245,64 +285,60 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
         },
         price_source: {
           astroport_spot: {
-            pair_address: astroportPair2, // we set price source for ANC but use the addr of LUNA-UST pair
+            pair_address: astroportPair,
           },
         },
       },
-    }, { logger: logger })
+    },
+    { logger: logger },
   );
-  console.log("success!");
+  console.log('success!');
 
-  process.stdout.write("properly configure spot price source, should succeed... ");
-  await executeContract(terra, deployer, oracle, {
-    set_asset: {
-      asset: {
-        cw20: {
-          contract_addr: anchorToken,
+  process.stdout.write('configure UST price source... ');
+  await executeContract(
+    terra,
+    deployer,
+    oracle,
+    {
+      set_asset: {
+        asset: {
+          native: {
+            denom: 'uusd',
+          },
         },
-      },
-      price_source: {
-        astroport_spot: {
-          pair_address: astroportPair,
+        price_source: {
+          fixed: {
+            price: '1',
+          },
         },
       },
     },
-  }, { logger: logger });
-  console.log("success!");
+    { logger: logger },
+  );
+  console.log('success!');
 
-  process.stdout.write("configure UST price source... ");
-  await executeContract(terra, deployer, oracle, {
-    set_asset: {
-      asset: {
-        native: {
-          denom: "uusd",
+  process.stdout.write('configure liquidity token price source... ');
+  await executeContract(
+    terra,
+    deployer,
+    oracle,
+    {
+      set_asset: {
+        asset: {
+          cw20: {
+            contract_addr: astroportLiquidityToken,
+          },
         },
-      },
-      price_source: {
-        fixed: {
-          price: "1",
+        price_source: {
+          astroport_liquidity_token: {
+            pair_address: astroportPair,
+          },
         },
       },
     },
-  }, { logger: logger });
-  console.log("success!");
-
-  process.stdout.write("configure liquidity token price source... ");
-  await executeContract(terra, deployer, oracle, {
-    set_asset: {
-      asset: {
-        cw20: {
-          contract_addr: astroportLiquidityToken,
-        },
-      },
-      price_source: {
-        astroport_liquidity_token: {
-          pair_address: astroportPair,
-        },
-      },
-    },
-  }, { logger: logger });
-  console.log("success!");
+    { logger: logger },
+  );
+  console.log('success!');
 
   // currently there are 69000000 uANC + 420000000 uusd in the pair. we calculating spot price by
   // attempting to swap PROBE_AMOUNT = 1000000 uANC to uusd
@@ -312,9 +348,9 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
   // = 6000000
   // spotPrice = returnAmount / probeAmount = 6000000 / 1000000 = 6
   // we see the spot price is slightly less than the simple quotient (420 / 69 = 6.087) due to slippage
-  process.stdout.write("querying spot price... ");
-  await assertOraclePrice(anchorToken, "6");
-  console.log("success!");
+  process.stdout.write('querying spot price... ');
+  await assertOraclePrice(anchorToken, '6');
+  console.log('success!');
 
   // uanc price: 6 uusd
   // uanc depth = 69000000
@@ -322,9 +358,9 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
   // uusd depth = 420000000
   // liquidity token supply = sqrt(69000000 * 420000000) = 170235131
   // liquidity token price = (6 * 69000000 + 1 * 420000000) / 170235131 = 4.89910628376700929(0)
-  process.stdout.write("querying liquidity token price... ");
-  await assertOraclePrice(astroportLiquidityToken, "4.89910628376700929");
-  console.log("success!");
+  process.stdout.write('querying liquidity token price... ');
+  await assertOraclePrice(astroportLiquidityToken, '4.89910628376700929');
+  console.log('success!');
 
   // bob swap 1000000 uANC for uusd
   //
@@ -338,63 +374,75 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
   // remaining pool balances:
   // uANC: 69000000 + 1000000 = 70000000
   // uusd: 420000000 - 5981999 = 414018001
-  process.stdout.write("bob performs a swap to alter the price... ");
-  await executeContract(terra, bob, anchorToken, {
-    send: {
-      contract: astroportPair,
-      amount: "1000000",
-      msg: toEncodedBinary({
-        swap: {
-          max_spread: "0.02"
-        },
-      }),
+  process.stdout.write('bob performs a swap to alter the price... ');
+  await executeContract(
+    terra,
+    bob,
+    anchorToken,
+    {
+      send: {
+        contract: astroportPair,
+        amount: '1000000',
+        msg: toEncodedBinary({
+          swap: {
+            max_spread: '0.02',
+          },
+        }),
+      },
     },
-  }, { logger: logger });
-  const poolUusdDepth = await queryBalanceNative(terra, astroportPair, "uusd");
+    { logger: logger },
+  );
+  const poolUusdDepth = await queryBalanceNative(terra, astroportPair, 'uusd');
   strictEqual(poolUusdDepth, 414018000);
   const poolUancDepth = await queryBalanceCw20(terra, astroportPair, anchorToken);
   strictEqual(poolUancDepth, 70000000);
-  console.log("success!");
+  console.log('success!');
 
   // kValue = 70000000 * 414018001 = 28981260070000000
   // returnAmount = poolUusdDepth - kvalue / (poolUancDepth + offerUancAmount)
   // = 414018001 - 28981260070000000 / (70000000 + 1000000)
   // = 5831239
   // spotPrice = returnAmount / probeAmount = 5831239 / 1000000 = 5.831239
-  process.stdout.write("querying spot price... ");
-  await assertOraclePrice(anchorToken, "5.831239");
-  console.log("success!");
+  process.stdout.write('querying spot price... ');
+  await assertOraclePrice(anchorToken, '5.831239');
+  console.log('success!');
 
-  process.stdout.write("configuring TWAP price source... ");
-  await executeContract(terra, deployer, oracle, {
-    set_asset: {
-      asset: {
-        cw20: {
-          contract_addr: anchorToken,
+  process.stdout.write('configuring TWAP price source... ');
+  await executeContract(
+    terra,
+    deployer,
+    oracle,
+    {
+      set_asset: {
+        asset: {
+          cw20: {
+            contract_addr: anchorToken,
+          },
         },
-      },
-      price_source: {
-        astroport_twap: {
-          pair_address: astroportPair,
-          asset_address: anchorToken,
-          window_size: 30,
-          tolerance: 5, // will calculate average price over 30 +/- 5 seconds
+        price_source: {
+          astroport_twap: {
+            pair_address: astroportPair,
+            asset_address: anchorToken,
+            window_size: 30,
+            tolerance: 5, // will calculate average price over 30 +/- 5 seconds
+          },
         },
       },
     },
-  }, { logger: logger });
-  console.log("success!");
+    { logger: logger },
+  );
+  console.log('success!');
 
   let snapshots: Snapshot[] = [];
 
-  process.stdout.write("recoding TWAP snapshot... ");
+  process.stdout.write('recoding TWAP snapshot... ');
   snapshots.push(await recordTwapSnapshots());
-  console.log("success!");
+  console.log('success!');
 
   // currently there is one snapshot, so querying price should fail
-  process.stdout.write("expecting price query to fail... ");
-  await expectPromiseToFail(assertOraclePrice(anchorToken, "0"));
-  console.log("success!");
+  process.stdout.write('expecting price query to fail... ');
+  await expectPromiseToFail(assertOraclePrice(anchorToken, '0'));
+  console.log('success!');
 
   // This line will probably fail, but it's not because of a smart contract bug, but rather of a
   // particularity in the way Terra LCD works.
@@ -416,38 +464,44 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
   //
   // The solution is simple: modify `createTransaction` function in helpers to explicitly feed in a
   // gas limit, so that LCD does not need to estimate it. The transaction should be successful.
-  process.stdout.write("recoding TWAP snapshot... ");
+  process.stdout.write('recoding TWAP snapshot... ');
   snapshots.push(await recordTwapSnapshots());
-  console.log("success!");
+  console.log('success!');
 
   // currently there are two snapshots, but their timestamps are too close, so query should still fail
-  process.stdout.write("expecting price query to fail... ");
-  await expectPromiseToFail(assertOraclePrice(anchorToken, "0"));
-  console.log("success!");
+  process.stdout.write('expecting price query to fail... ');
+  await expectPromiseToFail(assertOraclePrice(anchorToken, '0'));
+  console.log('success!');
 
   // execute 3 swaps, and take a snapshot after each one
   for (let i = 0; i < 3; i++) {
-    process.stdout.write("bob performs a swap to alter the price... ");
-    await executeContract(terra, bob, anchorToken, {
-      send: {
-        contract: astroportPair,
-        amount: "1000000",
-        msg: toEncodedBinary({
-          swap: {},
-        }),
+    process.stdout.write('bob performs a swap to alter the price... ');
+    await executeContract(
+      terra,
+      bob,
+      anchorToken,
+      {
+        send: {
+          contract: astroportPair,
+          amount: '1000000',
+          msg: toEncodedBinary({
+            swap: {},
+          }),
+        },
       },
-    }, { logger: logger });
-    console.log("success!");
+      { logger: logger },
+    );
+    console.log('success!');
 
-    process.stdout.write("recoding TWAP snapshot... ");
+    process.stdout.write('recoding TWAP snapshot... ');
     snapshots.push(await recordTwapSnapshots());
-    console.log("success!");
+    console.log('success!');
   }
 
   // take a final snapshot
-  process.stdout.write("recoding TWAP snapshot... ");
+  process.stdout.write('recoding TWAP snapshot... ');
   snapshots.push(await recordTwapSnapshots());
-  console.log("success!");
+  console.log('success!');
 
   // we have taken 6 snapshots. we query the average price immediately after the 6th snapshot was
   // taken, so the timestamp and cumulative price at the time of our query should be the same as the
@@ -479,11 +533,11 @@ async function assertOraclePrice(token: string, expectedPrice: string) {
   const period = snapshotEnd.timestamp - snapshotStart.timestamp;
   const expectedPrice = cumPriceDelta / period;
 
-  process.stdout.write("querying TWAP average price... ");
+  process.stdout.write('querying TWAP average price... ');
   await assertOraclePrice(anchorToken, expectedPrice.toString());
-  console.log("success!");
+  console.log('success!');
 
-  console.log("OK");
+  console.log('OK');
 
-  logger.showGasConsumption()
+  logger.showGasConsumption();
 })();

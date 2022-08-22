@@ -1,222 +1,212 @@
-import {
-  LCDClient,
-  LocalTerra,
-  MnemonicKey,
-  Wallet
-} from "@terra-money/terra.js"
+import { LCDClient, LocalTerra, MnemonicKey, Wallet } from '@terra-money/terra.js';
 import {
   deployContract,
-  executeContract, Logger,
+  executeContract,
+  Logger,
   queryContract,
   setTimeoutDuration,
-  uploadContract
-} from "../helpers.js"
-import { strict as assert } from "assert"
+  uploadContract,
+} from '../helpers.js';
+import { strict as assert } from 'assert';
 import {
   borrowNative,
   depositNative,
   queryMaAssetAddress,
   setAssetOraclePriceSource,
-  transferCw20
-} from "./test_helpers.js"
+  transferCw20,
+} from './test_helpers.js';
 
 // CONSTS
 
-const USD_COLLATERAL = 100_000_000000
-const LUNA_COLLATERAL = 100_000_000000
-const USD_BORROW = 100_000_000000
-const MA_TOKEN_SCALING_FACTOR = 1_000_000
+const USD_COLLATERAL = 100_000_000000;
+const LUNA_COLLATERAL = 100_000_000000;
+const USD_BORROW = 100_000_000000;
+const MA_TOKEN_SCALING_FACTOR = 1_000_000;
 
 // HELPERS
 
-async function checkCollateral(
-  terra: LCDClient,
-  wallet: Wallet,
-  redBank: string,
-  denom: string,
-  enabled: boolean,
-) {
-  const collateral = await queryContract(terra, redBank,
-    { user_collateral: { user_address: wallet.key.accAddress } }
-  )
+async function checkCollateral(terra: LCDClient, wallet: Wallet, redBank: string, denom: string, enabled: boolean) {
+  const collateral = await queryContract(terra, redBank, { user_collateral: { user_address: wallet.key.accAddress } });
 
   for (const c of collateral.collateral) {
     if (c.denom == denom && c.enabled == enabled) {
-      return true
+      return true;
     }
   }
-  return false
+  return false;
 }
 
 // TESTS
 
-async function testHealthFactorChecks(
-  terra: LocalTerra,
-  redBank: string,
-  maLuna: string,
-  logger?: Logger
-) {
-  const provider = terra.wallets.test2
-  const borrower = terra.wallets.test3
-  const recipient = terra.wallets.test4
+async function testHealthFactorChecks(terra: LocalTerra, redBank: string, maLuna: string, logger?: Logger) {
+  const provider = terra.wallets.test2;
+  const borrower = terra.wallets.test3;
+  const recipient = terra.wallets.test4;
 
-  console.log("provider provides USD")
+  console.log('provider provides USD');
 
-  await depositNative(terra, provider, redBank, "uusd", USD_COLLATERAL, logger)
+  await depositNative(terra, provider, redBank, 'uusd', USD_COLLATERAL, logger);
 
-  console.log("borrower provides Luna")
+  console.log('borrower provides Luna');
 
-  await depositNative(terra, borrower, redBank, "uluna", LUNA_COLLATERAL, logger)
+  await depositNative(terra, borrower, redBank, 'uluna', LUNA_COLLATERAL, logger);
 
-  console.log("borrower borrows USD")
+  console.log('borrower borrows USD');
 
-  await borrowNative(terra, borrower, redBank, "uusd", USD_BORROW, logger)
+  await borrowNative(terra, borrower, redBank, 'uusd', USD_BORROW, logger);
 
-  console.log("transferring the entire maToken balance should fail")
+  console.log('transferring the entire maToken balance should fail');
 
   await assert.rejects(
     transferCw20(terra, borrower, maLuna, recipient.key.accAddress, LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR, logger),
     (error: any) => {
       return error.response.data.message.includes(
-        "Cannot make token transfer if it results in a health factor lower than 1 for the sender"
-      )
-    }
-  )
+        'Cannot make token transfer if it results in a health factor lower than 1 for the sender',
+      );
+    },
+  );
 
-  console.log("transferring a small amount of the maToken balance should work")
+  console.log('transferring a small amount of the maToken balance should work');
 
-  assert(await checkCollateral(terra, recipient, redBank, "uluna", false))
+  assert(await checkCollateral(terra, recipient, redBank, 'uluna', false));
 
-  await transferCw20(terra, borrower, maLuna, recipient.key.accAddress,
-    Math.floor(LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR / 100),
-    logger
-  )
+  await transferCw20(
+    terra,
+    borrower,
+    maLuna,
+    recipient.key.accAddress,
+    Math.floor((LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR) / 100),
+    logger,
+  );
 
-  assert(await checkCollateral(terra, recipient, redBank, "uluna", true))
+  assert(await checkCollateral(terra, recipient, redBank, 'uluna', true));
 }
 
-async function testCollateralStatusChanges(
-  terra: LocalTerra,
-  redBank: string,
-  maLuna: string,
-  logger?: Logger
-) {
-  const provider = terra.wallets.test5
-  const recipient = terra.wallets.test6
+async function testCollateralStatusChanges(terra: LocalTerra, redBank: string, maLuna: string, logger?: Logger) {
+  const provider = terra.wallets.test5;
+  const recipient = terra.wallets.test6;
 
-  console.log("provider provides Luna")
+  console.log('provider provides Luna');
 
-  await depositNative(terra, provider, redBank, "uluna", LUNA_COLLATERAL, logger)
+  await depositNative(terra, provider, redBank, 'uluna', LUNA_COLLATERAL, logger);
 
-  assert(await checkCollateral(terra, provider, redBank, "uluna", true))
-  assert(await checkCollateral(terra, recipient, redBank, "uluna", false))
+  assert(await checkCollateral(terra, provider, redBank, 'uluna', true));
+  assert(await checkCollateral(terra, recipient, redBank, 'uluna', false));
 
-  console.log("transferring all maTokens to recipient should enable that asset as collateral")
+  console.log('transferring all maTokens to recipient should enable that asset as collateral');
 
-  await transferCw20(terra, provider, maLuna, recipient.key.accAddress, LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR, logger)
+  await transferCw20(
+    terra,
+    provider,
+    maLuna,
+    recipient.key.accAddress,
+    LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR,
+    logger,
+  );
 
-  assert(await checkCollateral(terra, provider, redBank, "uluna", false))
-  assert(await checkCollateral(terra, recipient, redBank, "uluna", true))
+  assert(await checkCollateral(terra, provider, redBank, 'uluna', false));
+  assert(await checkCollateral(terra, recipient, redBank, 'uluna', true));
 }
 
-async function testTransferCollateral(
-  terra: LocalTerra,
-  redBank: string,
-  maLuna: string,
-  logger?: Logger
-) {
-  const provider = terra.wallets.test7
-  const borrower = terra.wallets.test8
-  const recipient = terra.wallets.test9
+async function testTransferCollateral(terra: LocalTerra, redBank: string, maLuna: string, logger?: Logger) {
+  const provider = terra.wallets.test7;
+  const borrower = terra.wallets.test8;
+  const recipient = terra.wallets.test9;
 
-  console.log("provider provides USD")
+  console.log('provider provides USD');
 
-  await depositNative(terra, provider, redBank, "uusd", USD_COLLATERAL, logger)
+  await depositNative(terra, provider, redBank, 'uusd', USD_COLLATERAL, logger);
 
-  console.log("borrower provides Luna")
+  console.log('borrower provides Luna');
 
-  await depositNative(terra, borrower, redBank, "uluna", LUNA_COLLATERAL, logger)
+  await depositNative(terra, borrower, redBank, 'uluna', LUNA_COLLATERAL, logger);
 
-  console.log("borrower borrows USD")
+  console.log('borrower borrows USD');
 
-  await borrowNative(terra, borrower, redBank, "uusd", USD_COLLATERAL / 100, logger)
+  await borrowNative(terra, borrower, redBank, 'uusd', USD_COLLATERAL / 100, logger);
 
-  console.log("disabling Luna as collateral should fail")
+  console.log('disabling Luna as collateral should fail');
 
-  assert(await checkCollateral(terra, borrower, redBank, "uluna", true))
+  assert(await checkCollateral(terra, borrower, redBank, 'uluna', true));
 
   await assert.rejects(
-    executeContract(terra, borrower, redBank,
+    executeContract(
+      terra,
+      borrower,
+      redBank,
       {
         update_asset_collateral_status: {
-          asset: { native: { denom: "uluna" } },
+          asset: { native: { denom: 'uluna' } },
           enable: false,
-        }
+        },
       },
-      { logger: logger }
+      { logger: logger },
     ),
     (error: any) => {
       return error.response.data.message.includes(
-        "User's health factor can't be less than 1 after disabling collateral"
-      )
-    }
-  )
+        "User's health factor can't be less than 1 after disabling collateral",
+      );
+    },
+  );
 
-  console.log("transfer maLuna")
+  console.log('transfer maLuna');
 
-  await transferCw20(terra, borrower, maLuna, recipient.key.accAddress,
-    Math.floor(LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR / 100),
-    logger
-  )
+  await transferCw20(
+    terra,
+    borrower,
+    maLuna,
+    recipient.key.accAddress,
+    Math.floor((LUNA_COLLATERAL * MA_TOKEN_SCALING_FACTOR) / 100),
+    logger,
+  );
 }
 
 // MAIN
 
 (async () => {
-  setTimeoutDuration(0)
+  setTimeoutDuration(0);
 
-  const logger = new Logger()
+  const logger = new Logger();
 
-  const terra = new LocalTerra()
+  const terra = new LocalTerra();
 
   // addresses
-  const deployer = terra.wallets.test1
+  const deployer = terra.wallets.test1;
   // mock contract addresses
-  const protocolRewardsCollector = new MnemonicKey().accAddress
+  const protocolRewardsCollector = new MnemonicKey().accAddress;
 
-  console.log("upload contracts")
+  console.log('upload contracts');
 
-  const addressProvider = await deployContract(terra, deployer, "../artifacts/mars_address_provider.wasm",
-    { owner: deployer.key.accAddress }
-  )
+  const addressProvider = await deployContract(terra, deployer, '../artifacts/mars_address_provider.wasm', {
+    owner: deployer.key.accAddress,
+  });
 
-  const incentives = await deployContract(terra, deployer, "../artifacts/mars_incentives.wasm",
-    {
+  const incentives = await deployContract(terra, deployer, '../artifacts/mars_incentives.wasm', {
+    owner: deployer.key.accAddress,
+    address_provider_address: addressProvider,
+  });
+
+  const oracle = await deployContract(terra, deployer, '../artifacts/mars_oracle.wasm', {
+    owner: deployer.key.accAddress,
+  });
+
+  const maTokenCodeId = await uploadContract(terra, deployer, '../artifacts/mars_ma_token.wasm');
+
+  const redBank = await deployContract(terra, deployer, '../artifacts/mars_red_bank.wasm', {
+    config: {
       owner: deployer.key.accAddress,
-      address_provider_address: addressProvider
-    }
-  )
+      address_provider_address: addressProvider,
+      safety_fund_fee_share: '0.1',
+      treasury_fee_share: '0.2',
+      ma_token_code_id: maTokenCodeId,
+      close_factor: '0.5',
+    },
+  });
 
-  const oracle = await deployContract(terra, deployer, "../artifacts/mars_oracle.wasm",
-    { owner: deployer.key.accAddress }
-  )
-
-  const maTokenCodeId = await uploadContract(terra, deployer, "../artifacts/mars_ma_token.wasm")
-
-  const redBank = await deployContract(terra, deployer, "../artifacts/mars_red_bank.wasm",
-    {
-      config: {
-        owner: deployer.key.accAddress,
-        address_provider_address: addressProvider,
-        safety_fund_fee_share: "0.1",
-        treasury_fee_share: "0.2",
-        ma_token_code_id: maTokenCodeId,
-        close_factor: "0.5",
-      }
-    }
-  )
-
-  await executeContract(terra, deployer, addressProvider,
+  await executeContract(
+    terra,
+    deployer,
+    addressProvider,
     {
       update_config: {
         config: {
@@ -226,104 +216,102 @@ async function testTransferCollateral(
           red_bank_address: redBank,
           protocol_rewards_collector_address: protocolRewardsCollector,
           protocol_admin_address: deployer.key.accAddress,
-        }
-      }
+        },
+      },
     },
-    { logger: logger }
-  )
+    { logger: logger },
+  );
 
-  console.log("init assets")
+  console.log('init assets');
 
   // uluna
-  await executeContract(terra, deployer, redBank,
+  await executeContract(
+    terra,
+    deployer,
+    redBank,
     {
       init_asset: {
-        asset: { native: { denom: "uluna" } },
+        asset: { native: { denom: 'uluna' } },
         asset_params: {
-          initial_borrow_rate: "0.1",
-          max_loan_to_value: "0.55",
-          reserve_factor: "0.2",
-          liquidation_threshold: "0.65",
-          liquidation_bonus: "0.1",
+          initial_borrow_rate: '0.1',
+          max_loan_to_value: '0.55',
+          reserve_factor: '0.2',
+          liquidation_threshold: '0.65',
+          liquidation_bonus: '0.1',
           interest_rate_model_params: {
             dynamic: {
-              min_borrow_rate: "0.0",
-              max_borrow_rate: "2.0",
-              kp_1: "0.02",
-              optimal_utilization_rate: "0.7",
-              kp_augmentation_threshold: "0.15",
-              kp_2: "0.05",
+              min_borrow_rate: '0.0',
+              max_borrow_rate: '2.0',
+              kp_1: '0.02',
+              optimal_utilization_rate: '0.7',
+              kp_augmentation_threshold: '0.15',
+              kp_2: '0.05',
               update_threshold_txs: 5,
               update_threshold_seconds: 600,
-            }
+            },
           },
           active: true,
           deposit_enabled: true,
-          borrow_enabled: true
-        }
-      }
+          borrow_enabled: true,
+        },
+      },
     },
-    { logger: logger }
-  )
+    { logger: logger },
+  );
 
-  await setAssetOraclePriceSource(terra, deployer, oracle,
-    { native: { denom: "uluna" } },
-    25,
-    logger
-  )
+  await setAssetOraclePriceSource(terra, deployer, oracle, { native: { denom: 'uluna' } }, 25, logger);
 
   // uusd
-  await executeContract(terra, deployer, redBank,
+  await executeContract(
+    terra,
+    deployer,
+    redBank,
     {
       init_asset: {
-        asset: { native: { denom: "uusd" } },
+        asset: { native: { denom: 'uusd' } },
         asset_params: {
-          initial_borrow_rate: "0.2",
-          max_loan_to_value: "0.75",
-          reserve_factor: "0.2",
-          liquidation_threshold: "0.85",
-          liquidation_bonus: "0.1",
+          initial_borrow_rate: '0.2',
+          max_loan_to_value: '0.75',
+          reserve_factor: '0.2',
+          liquidation_threshold: '0.85',
+          liquidation_bonus: '0.1',
           interest_rate_model_params: {
             dynamic: {
-              min_borrow_rate: "0.0",
-              max_borrow_rate: "1.0",
-              kp_1: "0.04",
-              optimal_utilization_rate: "0.9",
-              kp_augmentation_threshold: "0.15",
-              kp_2: "0.07",
+              min_borrow_rate: '0.0',
+              max_borrow_rate: '1.0',
+              kp_1: '0.04',
+              optimal_utilization_rate: '0.9',
+              kp_augmentation_threshold: '0.15',
+              kp_2: '0.07',
               update_threshold_txs: 5,
               update_threshold_seconds: 600,
-            }
+            },
           },
           active: true,
           deposit_enabled: true,
-          borrow_enabled: true
-        }
-      }
+          borrow_enabled: true,
+        },
+      },
     },
-    { logger: logger }
-  )
+    { logger: logger },
+  );
 
-  await setAssetOraclePriceSource(terra, deployer, oracle,
-    { native: { denom: "uusd" } },
-    1,
-    logger
-  )
+  await setAssetOraclePriceSource(terra, deployer, oracle, { native: { denom: 'uusd' } }, 1, logger);
 
-  const maLuna = await queryMaAssetAddress(terra, redBank, { native: { denom: "uluna" } })
+  const maLuna = await queryMaAssetAddress(terra, redBank, { native: { denom: 'uluna' } });
 
   // tests
 
-  console.log("testHealthFactorChecks")
-  await testHealthFactorChecks(terra, redBank, maLuna, logger)
+  console.log('testHealthFactorChecks');
+  await testHealthFactorChecks(terra, redBank, maLuna, logger);
 
-  console.log("testCollateralStatusChanges")
-  await testCollateralStatusChanges(terra, redBank, maLuna, logger)
+  console.log('testCollateralStatusChanges');
+  await testCollateralStatusChanges(terra, redBank, maLuna, logger);
 
-  console.log("testTransferCollateral")
-  await testTransferCollateral(terra, redBank, maLuna, logger)
+  console.log('testTransferCollateral');
+  await testTransferCollateral(terra, redBank, maLuna, logger);
 
-  console.log("OK")
+  console.log('OK');
 
-  logger.showGasConsumption()
-})()
+  logger.showGasConsumption();
+})();

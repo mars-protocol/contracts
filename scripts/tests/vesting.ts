@@ -1,25 +1,17 @@
-import {
-  LocalTerra,
-  MnemonicKey
-} from "@terra-money/terra.js";
-import { join } from "path";
-import { strictEqual } from "assert";
-import "dotenv/config.js";
+import { LocalTerra, MnemonicKey } from '@terra-money/terra.js';
+import { join } from 'path';
+import { strictEqual } from 'assert';
+import 'dotenv/config.js';
 import {
   deployContract,
-  executeContract, Logger,
+  executeContract,
+  Logger,
   queryContract,
   setTimeoutDuration,
   toEncodedBinary,
   uploadContract,
-} from "../helpers.js";
-import {
-  getBlockHeight,
-  mintCw20,
-  queryBalanceCw20,
-  waitUntilBlockHeight,
-  castVote
-} from "./test_helpers.js";
+} from '../helpers.js';
+import { getBlockHeight, mintCw20, queryBalanceCw20, waitUntilBlockHeight, castVote } from './test_helpers.js';
 
 // CONSTS
 
@@ -46,9 +38,9 @@ const JOHN_WALLET_MARS_BALANCE = 600_000000; // Mars tokens in john's wallet
 // MAIN
 
 (async () => {
-  setTimeoutDuration(0)
+  setTimeoutDuration(0);
 
-  const logger = new Logger()
+  const logger = new Logger();
 
   const terra = new LocalTerra();
 
@@ -59,30 +51,22 @@ const JOHN_WALLET_MARS_BALANCE = 600_000000; // Mars tokens in john's wallet
   const john = terra.wallets.test4; // a user who stakes MARS and vote for proposal
   const admin = terra.wallets.test5; // protocol admin
   // mock contract addresses
-  const astroportGenerator = new MnemonicKey().accAddress
+  const astroportGenerator = new MnemonicKey().accAddress;
 
-  console.log("deployer:", deployer.key.accAddress);
-  console.log("alice:   ", alice.key.accAddress);
-  console.log("bob:     ", bob.key.accAddress);
-  console.log("john:   ", john.key.accAddress);
-  console.log("admin:   ", admin.key.accAddress);
+  console.log('deployer:', deployer.key.accAddress);
+  console.log('alice:   ', alice.key.accAddress);
+  console.log('bob:     ', bob.key.accAddress);
+  console.log('john:   ', john.key.accAddress);
+  console.log('admin:   ', admin.key.accAddress);
 
-  process.stdout.write("deploying astroport... ");
+  process.stdout.write('deploying astroport... ');
 
-  const tokenCodeID = await uploadContract(
-    terra,
-    deployer,
-    join(ASTROPORT_ARTIFACTS_PATH, "astroport_token.wasm")
-  );
-  const pairCodeID = await uploadContract(
-    terra,
-    deployer,
-    join(ASTROPORT_ARTIFACTS_PATH, "astroport_pair.wasm")
-  );
+  const tokenCodeID = await uploadContract(terra, deployer, join(ASTROPORT_ARTIFACTS_PATH, 'astroport_token.wasm'));
+  const pairCodeID = await uploadContract(terra, deployer, join(ASTROPORT_ARTIFACTS_PATH, 'astroport_pair.wasm'));
   const astroportFactory = await deployContract(
     terra,
     deployer,
-    join(ASTROPORT_ARTIFACTS_PATH, "astroport_factory.wasm"),
+    join(ASTROPORT_ARTIFACTS_PATH, 'astroport_factory.wasm'),
     {
       owner: deployer.key.accAddress,
       token_code_id: tokenCodeID,
@@ -95,181 +79,167 @@ const JOHN_WALLET_MARS_BALANCE = 600_000000; // Mars tokens in john's wallet
           maker_fee_bps: 0,
         },
       ],
-    }
+    },
   );
 
-  console.log("done!");
+  console.log('done!');
 
-  process.stdout.write("deploying address provider... ");
+  process.stdout.write('deploying address provider... ');
 
-  const addressProvider = await deployContract(
-    terra,
-    deployer,
-    "../artifacts/mars_address_provider.wasm",
-    {
-      owner: deployer.key.accAddress,
-    }
-  );
+  const addressProvider = await deployContract(terra, deployer, '../artifacts/mars_address_provider.wasm', {
+    owner: deployer.key.accAddress,
+  });
 
-  console.log("done!");
+  console.log('done!');
 
-  process.stdout.write("deploying council... ");
+  process.stdout.write('deploying council... ');
 
-  const council = await deployContract(
-    terra,
-    deployer,
-    "../artifacts/mars_council.wasm",
-    {
-      config: {
-        address_provider_address: addressProvider,
-        proposal_voting_period: PROPOSAL_VOTING_PERIOD,
-        proposal_effective_delay: PROPOSAL_EFFECTIVE_DELAY,
-        proposal_expiration_period: 3000,
-        proposal_required_deposit: String(PROPOSAL_REQUIRED_DEPOSIT),
-        proposal_required_quorum: String(PROPOSAL_REQUIRED_QUORUM),
-        proposal_required_threshold: "0.5",
-      },
-    }
-  );
-
-  console.log("done!");
-
-  process.stdout.write("deploying staking... ");
-
-  const staking = await deployContract(
-    terra,
-    deployer,
-    "../artifacts/mars_staking.wasm",
-    {
-      config: {
-        owner: deployer.key.accAddress,
-        address_provider_address: addressProvider,
-        astroport_factory_address: astroportFactory,
-        astroport_max_spread: "0.05",
-        cooldown_duration: COOLDOWN_DURATION_SECONDS,
-      },
-    }
-  );
-
-  console.log("done!");
-
-  process.stdout.write("deploying vesting... ");
-
-  const vesting = await deployContract(
-    terra,
-    deployer,
-    "../artifacts/mars_vesting.wasm",
-    {
+  const council = await deployContract(terra, deployer, '../artifacts/mars_council.wasm', {
+    config: {
       address_provider_address: addressProvider,
-      unlock_schedule: {
-        start_time: 1893452400, // 2030-01-01
-        cliff: 15552000,        // 180 days
-        duration: 94608000,     // 3 years
-      }
-    }
-  );
+      proposal_voting_period: PROPOSAL_VOTING_PERIOD,
+      proposal_effective_delay: PROPOSAL_EFFECTIVE_DELAY,
+      proposal_expiration_period: 3000,
+      proposal_required_deposit: String(PROPOSAL_REQUIRED_DEPOSIT),
+      proposal_required_quorum: String(PROPOSAL_REQUIRED_QUORUM),
+      proposal_required_threshold: '0.5',
+    },
+  });
 
-  console.log("done!");
+  console.log('done!');
 
-  process.stdout.write("deploying mars token... ");
+  process.stdout.write('deploying staking... ');
 
-  const mars = await deployContract(
+  const staking = await deployContract(terra, deployer, '../artifacts/mars_staking.wasm', {
+    config: {
+      owner: deployer.key.accAddress,
+      address_provider_address: addressProvider,
+      astroport_factory_address: astroportFactory,
+      astroport_max_spread: '0.05',
+      cooldown_duration: COOLDOWN_DURATION_SECONDS,
+    },
+  });
+
+  console.log('done!');
+
+  process.stdout.write('deploying vesting... ');
+
+  const vesting = await deployContract(terra, deployer, '../artifacts/mars_vesting.wasm', {
+    address_provider_address: addressProvider,
+    unlock_schedule: {
+      start_time: 1893452400, // 2030-01-01
+      cliff: 15552000, // 180 days
+      duration: 94608000, // 3 years
+    },
+  });
+
+  console.log('done!');
+
+  process.stdout.write('deploying mars token... ');
+
+  const mars = await deployContract(terra, deployer, join(CW_PLUS_ARTIFACTS_PATH, 'cw20_base.wasm'), {
+    name: 'Mars',
+    symbol: 'MARS',
+    decimals: 6,
+    initial_balances: [],
+    mint: { minter: deployer.key.accAddress },
+  });
+
+  console.log('done!');
+
+  process.stdout.write('deploying xmars token... ');
+
+  const xMars = await deployContract(terra, deployer, '../artifacts/mars_xmars_token.wasm', {
+    name: 'xMars',
+    symbol: 'xMARS',
+    decimals: 6,
+    initial_balances: [],
+    mint: { minter: staking },
+  });
+
+  console.log('done!');
+
+  process.stdout.write('updating address provider... ');
+
+  await executeContract(
     terra,
     deployer,
-    join(CW_PLUS_ARTIFACTS_PATH, "cw20_base.wasm"),
+    addressProvider,
     {
-      name: "Mars",
-      symbol: "MARS",
-      decimals: 6,
-      initial_balances: [],
-      mint: { minter: deployer.key.accAddress },
-    }
-  );
-
-  console.log("done!");
-
-  process.stdout.write("deploying xmars token... ");
-
-  const xMars = await deployContract(
-    terra,
-    deployer,
-    "../artifacts/mars_xmars_token.wasm",
-    {
-      name: "xMars",
-      symbol: "xMARS",
-      decimals: 6,
-      initial_balances: [],
-      mint: { minter: staking },
-    }
-  );
-
-  console.log("done!");
-
-  process.stdout.write("updating address provider... ");
-
-  await executeContract(terra, deployer, addressProvider, {
-    update_config: {
-      config: {
-        owner: deployer.key.accAddress,
-        council_address: council,
-        mars_token_address: mars,
-        staking_address: staking,
-        vesting_address: vesting,
-        xmars_token_address: xMars,
-        protocol_admin_address: admin.key.accAddress,
+      update_config: {
+        config: {
+          owner: deployer.key.accAddress,
+          council_address: council,
+          mars_token_address: mars,
+          staking_address: staking,
+          vesting_address: vesting,
+          xmars_token_address: xMars,
+          protocol_admin_address: admin.key.accAddress,
+        },
       },
     },
-  }, { logger: logger });
+    { logger: logger },
+  );
 
-  console.log("done!");
+  console.log('done!');
 
-  process.stdout.write("mint Mars tokens for alice and admin... ");
+  process.stdout.write('mint Mars tokens for alice and admin... ');
 
   await mintCw20(terra, deployer, mars, alice.key.accAddress, ALICE_MARS_BALANCE, logger);
   await mintCw20(terra, deployer, mars, bob.key.accAddress, BOB_WALLET_MARS_BALANCE, logger);
   await mintCw20(terra, deployer, mars, john.key.accAddress, JOHN_WALLET_MARS_BALANCE, logger);
   await mintCw20(terra, deployer, mars, admin.key.accAddress, BOB_VESTING_MARS_BALANCE, logger);
 
-  console.log("done!");
+  console.log('done!');
 
   // TESTS
 
   {
-    process.stdout.write(
-      "bob stakes Mars available in his wallet and receives the same amount of xMars... "
+    process.stdout.write('bob stakes Mars available in his wallet and receives the same amount of xMars... ');
+
+    await executeContract(
+      terra,
+      bob,
+      mars,
+      {
+        send: {
+          contract: staking,
+          amount: String(BOB_WALLET_MARS_BALANCE),
+          msg: toEncodedBinary({ stake: {} }),
+        },
+      },
+      { logger: logger },
     );
 
-    await executeContract(terra, bob, mars, {
-      send: {
-        contract: staking,
-        amount: String(BOB_WALLET_MARS_BALANCE),
-        msg: toEncodedBinary({ stake: {} }),
-      },
-    }, { logger: logger });
-
-    console.log("success!");
+    console.log('success!');
   }
 
   {
-    process.stdout.write("admin creates an allocation for bob... ");
+    process.stdout.write('admin creates an allocation for bob... ');
 
     // `BOB_VESTING_MARS_BALANCE` of Mars tokens are staked; same amount of xMars should be minted
-    const txResult = await executeContract(terra, admin, mars, {
-      send: {
-        contract: vesting,
-        amount: String(BOB_VESTING_MARS_BALANCE),
-        msg: toEncodedBinary({
-          create_allocation: {
-            user_address: bob.key.accAddress,
-            vest_schedule: {
-              start_time: 1614556800, // 2021-03-01
-              cliff: 15552000,        // 180 days
-              duration: 94608000,     // 3 years
-            }
-          },
-        }),
+    const txResult = await executeContract(
+      terra,
+      admin,
+      mars,
+      {
+        send: {
+          contract: vesting,
+          amount: String(BOB_VESTING_MARS_BALANCE),
+          msg: toEncodedBinary({
+            create_allocation: {
+              user_address: bob.key.accAddress,
+              vest_schedule: {
+                start_time: 1614556800, // 2021-03-01
+                cliff: 15552000, // 180 days
+                duration: 94608000, // 3 years
+              },
+            },
+          }),
+        },
       },
-    }, { logger: logger });
+      { logger: logger },
+    );
 
     // the block height where bob performed the staking action
     const height = await getBlockHeight(terra, txResult);
@@ -281,7 +251,7 @@ const JOHN_WALLET_MARS_BALANCE = 600_000000; // Mars tokens in john's wallet
         block: height - 1,
       },
     });
-    strictEqual(votingPowerBefore, "0");
+    strictEqual(votingPowerBefore, '0');
 
     // at or after the height, bob should have `BOB_VESTING_MARS_BALANCE` voting power
     const votingPowerAfter: string = await queryContract(terra, vesting, {
@@ -292,163 +262,177 @@ const JOHN_WALLET_MARS_BALANCE = 600_000000; // Mars tokens in john's wallet
     });
     strictEqual(votingPowerAfter, String(BOB_VESTING_MARS_BALANCE));
 
-    console.log("success!");
+    console.log('success!');
   }
 
   {
-    process.stdout.write("alice submits first governance proposal... ");
+    process.stdout.write('alice submits first governance proposal... ');
 
-    const submitProposalResult = await executeContract(terra, alice, mars, {
-      send: {
-        contract: council,
-        amount: String(PROPOSAL_REQUIRED_DEPOSIT),
-        msg: toEncodedBinary({
-          submit_proposal: {
-            title: "Test 1",
-            description: "This is a test",
-            link: "https://twitter.com/",
-            messages: [],
-          },
-        }),
+    const submitProposalResult = await executeContract(
+      terra,
+      alice,
+      mars,
+      {
+        send: {
+          contract: council,
+          amount: String(PROPOSAL_REQUIRED_DEPOSIT),
+          msg: toEncodedBinary({
+            submit_proposal: {
+              title: 'Test 1',
+              description: 'This is a test',
+              link: 'https://twitter.com/',
+              messages: [],
+            },
+          }),
+        },
       },
-    }, { logger: logger });
-    let blockHeight = await getBlockHeight(terra, submitProposalResult)
-    const aliceProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD
-    const aliceProposalEffectiveDelayEnd = aliceProposalVotingPeriodEnd + PROPOSAL_EFFECTIVE_DELAY
-    const proposalId = parseInt(
-      submitProposalResult.logs[0].eventsByType.wasm.proposal_id[0]
+      { logger: logger },
     );
+    let blockHeight = await getBlockHeight(terra, submitProposalResult);
+    const aliceProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD;
+    const aliceProposalEffectiveDelayEnd = aliceProposalVotingPeriodEnd + PROPOSAL_EFFECTIVE_DELAY;
+    const proposalId = parseInt(submitProposalResult.logs[0].eventsByType.wasm.proposal_id[0]);
 
-    console.log("success!");
+    console.log('success!');
 
-    process.stdout.write("bob votes for the governance proposal... ");
+    process.stdout.write('bob votes for the governance proposal... ');
 
-    const castVoteResult =await castVote(terra, bob, council, proposalId, "for", logger)
+    const castVoteResult = await castVote(terra, bob, council, proposalId, 'for', logger);
 
-    console.log("success!");
+    console.log('success!');
 
     process.stdout.write("council correctly calculates bob's total voting power... ");
 
-    const bobVotingPower = parseInt(
-      castVoteResult.logs[0].eventsByType.wasm.voting_power[0]
-    );
+    const bobVotingPower = parseInt(castVoteResult.logs[0].eventsByType.wasm.voting_power[0]);
     strictEqual(bobVotingPower, BOB_WALLET_MARS_BALANCE + BOB_VESTING_MARS_BALANCE);
 
-    console.log("success!");
+    console.log('success!');
 
-    process.stdout.write("wait for voting periods to end...")
+    process.stdout.write('wait for voting periods to end...');
 
-    await waitUntilBlockHeight(terra, aliceProposalVotingPeriodEnd)
-    await executeContract(terra, deployer, council, { end_proposal: { proposal_id: proposalId } }, { logger: logger })
-    await waitUntilBlockHeight(terra, aliceProposalEffectiveDelayEnd)
+    await waitUntilBlockHeight(terra, aliceProposalVotingPeriodEnd);
+    await executeContract(terra, deployer, council, { end_proposal: { proposal_id: proposalId } }, { logger: logger });
+    await waitUntilBlockHeight(terra, aliceProposalEffectiveDelayEnd);
 
-    console.log("success!");
+    console.log('success!');
   }
 
   {
-    process.stdout.write(
-      "john stakes Mars available in his wallet and receives the same amount of xMars... "
+    process.stdout.write('john stakes Mars available in his wallet and receives the same amount of xMars... ');
+
+    await executeContract(
+      terra,
+      john,
+      mars,
+      {
+        send: {
+          contract: staking,
+          amount: String(JOHN_WALLET_MARS_BALANCE),
+          msg: toEncodedBinary({ stake: {} }),
+        },
+      },
+      { logger: logger },
     );
 
-    await executeContract(terra, john, mars, {
-      send: {
-        contract: staking,
-        amount: String(JOHN_WALLET_MARS_BALANCE),
-        msg: toEncodedBinary({ stake: {} }),
-      },
-    }, { logger: logger });
-
-    console.log("success!");
+    console.log('success!');
   }
 
   {
-    process.stdout.write("alice submits second governance proposal... ");
+    process.stdout.write('alice submits second governance proposal... ');
 
-    const submitProposalResult = await executeContract(terra, alice, mars, {
-      send: {
-        contract: council,
-        amount: String(PROPOSAL_REQUIRED_DEPOSIT),
-        msg: toEncodedBinary({
-          submit_proposal: {
-            title: "Test 2",
-            description: "This is a test",
-            link: "https://twitter.com/",
-            messages: [],
-          },
-        }),
+    const submitProposalResult = await executeContract(
+      terra,
+      alice,
+      mars,
+      {
+        send: {
+          contract: council,
+          amount: String(PROPOSAL_REQUIRED_DEPOSIT),
+          msg: toEncodedBinary({
+            submit_proposal: {
+              title: 'Test 2',
+              description: 'This is a test',
+              link: 'https://twitter.com/',
+              messages: [],
+            },
+          }),
+        },
       },
-    }, { logger: logger });
-    let blockHeight = await getBlockHeight(terra, submitProposalResult)
-    const aliceProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD
-    const aliceProposalEffectiveDelayEnd = aliceProposalVotingPeriodEnd + PROPOSAL_EFFECTIVE_DELAY
-    const proposalId = parseInt(
-      submitProposalResult.logs[0].eventsByType.wasm.proposal_id[0]
+      { logger: logger },
     );
+    let blockHeight = await getBlockHeight(terra, submitProposalResult);
+    const aliceProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD;
+    const aliceProposalEffectiveDelayEnd = aliceProposalVotingPeriodEnd + PROPOSAL_EFFECTIVE_DELAY;
+    const proposalId = parseInt(submitProposalResult.logs[0].eventsByType.wasm.proposal_id[0]);
 
-    console.log("success!");
+    console.log('success!');
 
-    process.stdout.write("john vote for proposal...")
+    process.stdout.write('john vote for proposal...');
 
-    await castVote(terra, john, council, proposalId, "for", logger)
+    await castVote(terra, john, council, proposalId, 'for', logger);
 
-    console.log("success!");
+    console.log('success!');
 
-    process.stdout.write("proposal is rejected...")
+    process.stdout.write('proposal is rejected...');
 
-    await waitUntilBlockHeight(terra, aliceProposalVotingPeriodEnd)
-    await executeContract(terra, deployer, council, { end_proposal: { proposal_id: proposalId } }, { logger: logger })
-    const aliceProposalStatus = await queryContract(terra, council, { proposal: { proposal_id: proposalId } })
-    strictEqual(aliceProposalStatus.status, "rejected")
-    await waitUntilBlockHeight(terra, aliceProposalEffectiveDelayEnd)
+    await waitUntilBlockHeight(terra, aliceProposalVotingPeriodEnd);
+    await executeContract(terra, deployer, council, { end_proposal: { proposal_id: proposalId } }, { logger: logger });
+    const aliceProposalStatus = await queryContract(terra, council, { proposal: { proposal_id: proposalId } });
+    strictEqual(aliceProposalStatus.status, 'rejected');
+    await waitUntilBlockHeight(terra, aliceProposalEffectiveDelayEnd);
 
-    console.log("success!");
+    console.log('success!');
   }
 
   {
-    process.stdout.write("alice submits third governance proposal... ");
+    process.stdout.write('alice submits third governance proposal... ');
 
-    const submitProposalResult = await executeContract(terra, alice, mars, {
-      send: {
-        contract: council,
-        amount: String(PROPOSAL_REQUIRED_DEPOSIT),
-        msg: toEncodedBinary({
-          submit_proposal: {
-            title: "Test 3",
-            description: "This is a test",
-            link: "https://twitter.com/",
-            messages: [],
-          },
-        }),
+    const submitProposalResult = await executeContract(
+      terra,
+      alice,
+      mars,
+      {
+        send: {
+          contract: council,
+          amount: String(PROPOSAL_REQUIRED_DEPOSIT),
+          msg: toEncodedBinary({
+            submit_proposal: {
+              title: 'Test 3',
+              description: 'This is a test',
+              link: 'https://twitter.com/',
+              messages: [],
+            },
+          }),
+        },
       },
-    }, { logger: logger });
-    let blockHeight = await getBlockHeight(terra, submitProposalResult)
-    const aliceProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD
-    const aliceProposalEffectiveDelayEnd = aliceProposalVotingPeriodEnd + PROPOSAL_EFFECTIVE_DELAY
-    const proposalId = parseInt(
-      submitProposalResult.logs[0].eventsByType.wasm.proposal_id[0]
+      { logger: logger },
     );
+    let blockHeight = await getBlockHeight(terra, submitProposalResult);
+    const aliceProposalVotingPeriodEnd = blockHeight + PROPOSAL_VOTING_PERIOD;
+    const aliceProposalEffectiveDelayEnd = aliceProposalVotingPeriodEnd + PROPOSAL_EFFECTIVE_DELAY;
+    const proposalId = parseInt(submitProposalResult.logs[0].eventsByType.wasm.proposal_id[0]);
 
-    console.log("success!");
+    console.log('success!');
 
-    process.stdout.write("bob and john vote for proposal...")
+    process.stdout.write('bob and john vote for proposal...');
 
-    await castVote(terra, bob, council, proposalId, "for", logger)
-    await castVote(terra, john, council, proposalId, "for", logger)
+    await castVote(terra, bob, council, proposalId, 'for', logger);
+    await castVote(terra, john, council, proposalId, 'for', logger);
 
-    console.log("success!");
+    console.log('success!');
 
-    process.stdout.write("proposal is passed...")
+    process.stdout.write('proposal is passed...');
 
-    await waitUntilBlockHeight(terra, aliceProposalVotingPeriodEnd)
-    await executeContract(terra, deployer, council, { end_proposal: { proposal_id: proposalId } }, { logger: logger })
-    const aliceProposalStatus = await queryContract(terra, council, { proposal: { proposal_id: proposalId } })
-    strictEqual(aliceProposalStatus.status, "passed")
-    await waitUntilBlockHeight(terra, aliceProposalEffectiveDelayEnd)
+    await waitUntilBlockHeight(terra, aliceProposalVotingPeriodEnd);
+    await executeContract(terra, deployer, council, { end_proposal: { proposal_id: proposalId } }, { logger: logger });
+    const aliceProposalStatus = await queryContract(terra, council, { proposal: { proposal_id: proposalId } });
+    strictEqual(aliceProposalStatus.status, 'passed');
+    await waitUntilBlockHeight(terra, aliceProposalEffectiveDelayEnd);
 
-    console.log("success!");
+    console.log('success!');
   }
 
-  console.log("OK");
+  console.log('OK');
 
-  logger.showGasConsumption()
+  logger.showGasConsumption();
 })();
