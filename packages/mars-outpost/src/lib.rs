@@ -2,6 +2,7 @@
 pub mod address_provider;
 pub mod cw20_core;
 pub mod incentives;
+pub mod liquidation_filter;
 pub mod ma_token;
 pub mod oracle;
 pub mod red_bank;

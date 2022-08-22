@@ -416,6 +416,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-liquidation-filter"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw20",
+ "mars-outpost",
+ "mars-testing",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-ma-token"
 version = "0.1.0"
 dependencies = [

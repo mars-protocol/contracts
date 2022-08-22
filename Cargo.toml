@@ -6,6 +6,7 @@ members = [
   "contracts/mars-oracle/*",
   "contracts/mars-red-bank",
   "contracts/mars-rewards-collector/*",
+  "contracts/mars-liquidation-filter",
   "packages/*"
 ]
 
