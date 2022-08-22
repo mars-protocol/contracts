@@ -1,7 +1,7 @@
 use crate::query::MarsQuerier;
 use cosmwasm_std::{Addr, Coin, Decimal, QuerierWrapper, StdError, StdResult, Uint128};
 use mars_outpost::{math::divide_decimal_by_decimal, red_bank::Market};
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
 #[derive(Default, Debug, Clone)]
 pub struct Position {
@@ -21,12 +21,28 @@ pub struct Health {
     pub total_collateral_value: Decimal,
     /// The sum of the value of all colletarals adjusted by their Max LTV
     pub max_ltv_adjusted_collateral: Decimal,
-    /// The sum of the vallue of all colletarals adjusted by their Liquidation Threshold
+    /// The sum of the value of all colletarals adjusted by their Liquidation Threshold
     pub lqdt_threshold_adjusted_collateral: Decimal,
     /// The sum of the value of all collaterals multiplied by their max LTV, over the total value of debt
     pub max_ltv_health_factor: Option<Decimal>,
     /// The sum of the value of all collaterals multiplied by their liquidation threshold over the total value of debt
     pub liquidation_health_factor: Option<Decimal>,
+}
+
+impl fmt::Display for Health {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Customize so only `x` and `y` are denoted.
+        write!(
+            f,
+            "(total_debt_value: {}, total_collateral_value: {},  max_ltv_adjusted_collateral: {}, lqdt_threshold_adjusted_collateral: {}, max_ltv_health_factor: {}, liquidation_health_factor: {})",
+            self.total_debt_value,
+            self.total_collateral_value,
+            self.max_ltv_adjusted_collateral,
+            self.lqdt_threshold_adjusted_collateral,
+            self.max_ltv_health_factor.map_or("n/a".to_string(), |x| x.to_string()),
+            self.liquidation_health_factor.map_or("n/a".to_string(), |x| x.to_string())
+        )
+    }
 }
 
 impl Health {

@@ -75,11 +75,12 @@ pub fn assert_health_after_borrow(
     Ok(!health.is_above_max_ltv())
 }
 
-/// Assert Health of a given User Position
+/// Compute Health of a given User Position
 pub fn compute_position_health(positions: &HashMap<String, Position>) -> StdResult<Health> {
     let positions = positions
         .values()
         .map(|p| {
+            // if this asset is flagged as "uncollateralized" for a user, then it won't count towards their health factor
             let debt_amount = if p.uncollateralized_debt {
                 Decimal::zero()
             } else {
