@@ -83,7 +83,7 @@ fn test_pagination_on_all_total_debt_shares_query_works() {
                     Action::Deposit(coin.clone()),
                     Action::Borrow(Coin {
                         denom: coin.denom.clone(),
-                        amount: Uint128::from(1u128),
+                        amount: Uint128::new(1),
                     }),
                 ]
             })
@@ -103,7 +103,7 @@ fn test_pagination_on_all_total_debt_shares_query_works() {
                     Action::Deposit(coin.clone()),
                     Action::Borrow(Coin {
                         denom: coin.denom.clone(),
-                        amount: Uint128::from(1u128),
+                        amount: Uint128::new(1),
                     }),
                 ]
             })
@@ -123,7 +123,7 @@ fn test_pagination_on_all_total_debt_shares_query_works() {
                     Action::Deposit(coin.clone()),
                     Action::Borrow(Coin {
                         denom: coin.denom.clone(),
-                        amount: Uint128::from(1u128),
+                        amount: Uint128::new(1),
                     }),
                 ]
             })

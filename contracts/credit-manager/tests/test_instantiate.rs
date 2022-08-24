@@ -1,4 +1,6 @@
-use crate::helpers::{assert_contents_equal, CoinInfo, MockEnv};
+use crate::helpers::{
+    assert_contents_equal, uatom_info, ujake_info, uosmo_info, CoinInfo, MockEnv,
+};
 use cosmwasm_std::Decimal;
 
 pub mod helpers;
@@ -57,26 +59,11 @@ fn test_raises_on_invalid_vaults_addr() {
 #[test]
 fn test_allowed_coins_set_on_instantiate() {
     let allowed_coins = vec![
-        CoinInfo {
-            denom: "uosmo".to_string(),
-            price: Decimal::from_atomics(25u128, 2).unwrap(),
-            max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-            liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-        },
-        CoinInfo {
-            denom: "uatom".to_string(),
-            price: Decimal::from_atomics(25u128, 2).unwrap(),
-            max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-            liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-        },
+        uosmo_info(),
+        uatom_info(),
+        ujake_info(),
         CoinInfo {
             denom: "umars".to_string(),
-            price: Decimal::from_atomics(25u128, 2).unwrap(),
-            max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-            liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-        },
-        CoinInfo {
-            denom: "ujake".to_string(),
             price: Decimal::from_atomics(25u128, 2).unwrap(),
             max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),

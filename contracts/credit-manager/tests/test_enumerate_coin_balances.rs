@@ -154,7 +154,7 @@ fn test_pagination_on_all_coin_balances_query_works() {
         .map(|coin| CoinBalanceResponseItem {
             token_id: token_id_a.clone(),
             denom: coin.denom.clone(),
-            amount: Uint128::from(1u128),
+            amount: Uint128::new(1),
         })
         .collect::<Vec<CoinBalanceResponseItem>>();
 
@@ -163,7 +163,7 @@ fn test_pagination_on_all_coin_balances_query_works() {
         .map(|coin| CoinBalanceResponseItem {
             token_id: token_id_b.clone(),
             denom: coin.denom.clone(),
-            amount: Uint128::from(1u128),
+            amount: Uint128::new(1),
         })
         .collect::<Vec<CoinBalanceResponseItem>>();
 
@@ -172,7 +172,7 @@ fn test_pagination_on_all_coin_balances_query_works() {
         .map(|coin| CoinBalanceResponseItem {
             token_id: token_id_c.clone(),
             denom: coin.denom.clone(),
-            amount: Uint128::from(1u128),
+            amount: Uint128::new(1),
         })
         .collect::<Vec<CoinBalanceResponseItem>>();
 

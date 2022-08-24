@@ -31,8 +31,10 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Action {
-    /// Deposit native coin of specified type and amount. Verifies if the correct amount is sent with transaction.
+    /// Deposit coin of specified denom and amount. Verifies if the correct amount is sent with transaction.
     Deposit(Coin),
+    /// Withdraw coin of specified denom and amount
+    Withdraw(Coin),
     /// Borrow coin of specified amount from Red Bank
     Borrow(Coin),
     /// Repay coin of specified amount back to Red Bank
@@ -43,6 +45,13 @@ pub enum Action {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CallbackMsg {
+    /// Withdraw specified amount of coin from credit account;
+    /// Decrement the token's asset amount;
+    Withdraw {
+        token_id: String,
+        coin: Coin,
+        recipient: Addr,
+    },
     /// Borrow specified amount of coin from Red Bank;
     /// Increase the token's asset amount and debt shares;
     Borrow { token_id: String, coin: Coin },

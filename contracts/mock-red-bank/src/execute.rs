@@ -11,7 +11,7 @@ pub fn borrow(deps: DepsMut, info: MessageInfo, coin: Coin) -> StdResult<Respons
         (info.sender.clone(), coin.denom.clone()),
         &debt_amount
             .checked_add(coin.amount)?
-            .checked_add(Uint128::from(1u128))?, // The extra unit is simulated accrued interest
+            .checked_add(Uint128::new(1))?, // The extra unit is simulated accrued interest
     )?;
 
     let transfer_msg = CosmosMsg::Bank(BankMsg::Send {

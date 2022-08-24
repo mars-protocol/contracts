@@ -15,6 +15,7 @@ use crate::deposit::deposit;
 use crate::health::assert_below_max_ltv;
 use crate::repay::repay;
 use crate::state::{ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, ORACLE, OWNER, RED_BANK};
+use crate::withdraw::withdraw;
 
 pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Response> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
@@ -128,6 +129,11 @@ pub fn dispatch_actions(
             Action::Deposit(coin) => {
                 response = deposit(deps.storage, response, token_id, coin, &mut received_coins)?;
             }
+            Action::Withdraw(coin) => callbacks.push(CallbackMsg::Withdraw {
+                token_id: token_id.to_string(),
+                coin: coin.clone(),
+                recipient: info.sender.clone(),
+            }),
             Action::Borrow(coin) => callbacks.push(CallbackMsg::Borrow {
                 token_id: token_id.to_string(),
                 coin: coin.clone(),
@@ -170,6 +176,11 @@ pub fn execute_callback(
         return Err(ContractError::ExternalInvocation);
     }
     match callback {
+        CallbackMsg::Withdraw {
+            token_id,
+            coin,
+            recipient,
+        } => withdraw(deps, &token_id, coin, recipient),
         CallbackMsg::Borrow { coin, token_id } => borrow(deps, env, &token_id, coin),
         CallbackMsg::Repay { token_id, coin } => repay(deps, env, &token_id, coin),
         CallbackMsg::AssertBelowMaxLTV { token_id } => {

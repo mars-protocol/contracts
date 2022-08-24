@@ -1,31 +1,28 @@
-use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::OverflowOperation::Sub;
+use cosmwasm_std::{Addr, Coin, OverflowError, Uint128};
 
-use rover::coins::Coins;
-use rover::error::ContractError::{
-    ExtraFundsReceived, FundsMismatch, NotTokenOwner, NotWhitelisted,
-};
+use rover::error::ContractError;
+use rover::error::ContractError::{NotTokenOwner, NotWhitelisted};
 use rover::msg::execute::Action;
-use rover::msg::query::PositionResponse;
 
-use crate::helpers::{
-    assert_err, uatom_info, ujake_info, uosmo_info, AccountToFund, CoinInfo, MockEnv,
-};
+use crate::helpers::{assert_err, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv};
 
 pub mod helpers;
 
 #[test]
-fn test_only_owner_of_token_can_deposit() {
+fn test_only_owner_of_token_can_withdraw() {
+    let coin_info = uosmo_info();
+    let owner = Addr::unchecked("owner");
     let mut mock = MockEnv::new().build().unwrap();
-    let user = Addr::unchecked("user");
-    let token_id = mock.create_credit_account(&user).unwrap();
+    let token_id = mock.create_credit_account(&owner).unwrap();
 
     let another_user = Addr::unchecked("another_user");
     let res = mock.update_credit_account(
         &token_id,
         &another_user,
-        vec![Action::Deposit(Coin {
-            denom: "uosmo".to_string(),
-            amount: Uint128::zero(),
+        vec![Action::Withdraw(Coin {
+            denom: coin_info.denom,
+            amount: Uint128::new(382),
         })],
         &[],
     );
@@ -34,62 +31,65 @@ fn test_only_owner_of_token_can_deposit() {
         res,
         NotTokenOwner {
             user: another_user.into(),
-            token_id,
+            token_id: token_id.clone(),
         },
-    )
-}
-
-#[test]
-fn test_deposit_nothing() {
-    let coin_info = uosmo_info();
-
-    let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
-        .build()
-        .unwrap();
-    let user = Addr::unchecked("user");
-    let token_id = mock.create_credit_account(&user).unwrap();
-
-    let res = mock.query_position(&token_id);
-    assert_eq!(res.coins.len(), 0);
-
-    mock.update_credit_account(
-        &token_id,
-        &user,
-        vec![Action::Deposit(coin_info.to_coin(Uint128::zero()))],
-        &[],
-    )
-    .unwrap();
+    );
 
     let res = mock.query_position(&token_id);
     assert_eq!(res.coins.len(), 0);
 }
 
 #[test]
-fn test_deposit_but_no_funds() {
+fn test_withdraw_nothing() {
     let coin_info = uosmo_info();
-
+    let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[coin_info.clone()])
         .build()
         .unwrap();
-    let user = Addr::unchecked("user");
     let token_id = mock.create_credit_account(&user).unwrap();
 
-    let deposit_amount = Uint128::new(234);
     let res = mock.update_credit_account(
         &token_id,
         &user,
-        vec![Action::Deposit(coin_info.to_coin(deposit_amount))],
+        vec![Action::Withdraw(Coin {
+            denom: coin_info.denom,
+            amount: Uint128::new(0),
+        })],
+        &[],
+    );
+
+    assert_err(res, ContractError::NoAmount);
+
+    let res = mock.query_position(&token_id);
+    assert_eq!(res.coins.len(), 0);
+}
+
+#[test]
+fn test_withdraw_but_no_funds() {
+    let coin_info = uosmo_info();
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[coin_info.clone()])
+        .build()
+        .unwrap();
+    let token_id = mock.create_credit_account(&user).unwrap();
+
+    let withdraw_amount = Uint128::new(234);
+    let res = mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![Action::Withdraw(coin_info.to_coin(withdraw_amount))],
         &[],
     );
 
     assert_err(
         res,
-        FundsMismatch {
-            expected: deposit_amount,
-            received: Uint128::zero(),
-        },
+        ContractError::Overflow(OverflowError {
+            operation: Sub,
+            operand1: "0".to_string(),
+            operand2: "234".to_string(),
+        }),
     );
 
     let res = mock.query_position(&token_id);
@@ -97,9 +97,8 @@ fn test_deposit_but_no_funds() {
 }
 
 #[test]
-fn test_deposit_but_not_enough_funds() {
+fn test_withdraw_but_not_enough_funds() {
     let coin_info = uosmo_info();
-
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[coin_info.clone()])
@@ -114,21 +113,28 @@ fn test_deposit_but_not_enough_funds() {
     let res = mock.update_credit_account(
         &token_id,
         &user,
-        vec![Action::Deposit(coin_info.to_coin(Uint128::new(350)))],
-        &[Coin::new(250u128, coin_info.denom)],
+        vec![
+            Action::Deposit(coin_info.to_coin(Uint128::new(300))),
+            Action::Withdraw(coin_info.to_coin(Uint128::new(400))),
+        ],
+        &[Coin::new(300u128, coin_info.denom)],
     );
 
     assert_err(
         res,
-        FundsMismatch {
-            expected: Uint128::new(350),
-            received: Uint128::new(250),
-        },
+        ContractError::Overflow(OverflowError {
+            operation: Sub,
+            operand1: "300".to_string(),
+            operand2: "400".to_string(),
+        }),
     );
+
+    let res = mock.query_position(&token_id);
+    assert_eq!(res.coins.len(), 0);
 }
 
 #[test]
-fn test_can_only_deposit_allowed_assets() {
+fn test_can_only_withdraw_allowed_assets() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -142,12 +148,14 @@ fn test_can_only_deposit_allowed_assets() {
     let token_id = mock.create_credit_account(&user).unwrap();
 
     let not_allowed_coin = ujake_info().to_coin(Uint128::new(234));
-
     let res = mock.update_credit_account(
         &token_id,
         &user,
-        vec![Action::Deposit(not_allowed_coin.clone())],
-        &[Coin::new(250u128, coin_info.denom)],
+        vec![
+            Action::Deposit(coin_info.to_coin(Uint128::new(234))),
+            Action::Withdraw(not_allowed_coin.clone()),
+        ],
+        &[Coin::new(234u128, coin_info.denom)],
     );
 
     assert_err(res, NotWhitelisted(not_allowed_coin.denom));
@@ -157,42 +165,40 @@ fn test_can_only_deposit_allowed_assets() {
 }
 
 #[test]
-fn test_extra_funds_received() {
-    let uosmo_info = uosmo_info();
-    let uatom_info = uatom_info();
-
+fn test_cannot_withdraw_more_than_healthy() {
+    let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .allowed_coins(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![
-                Coin::new(300u128, uosmo_info.denom.clone()),
-                Coin::new(250u128, uatom_info.denom.clone()),
-            ],
+            funds: vec![Coin::new(300u128, coin_info.denom.clone())],
         })
         .build()
         .unwrap();
     let token_id = mock.create_credit_account(&user).unwrap();
 
-    let extra_funds = Coin::new(25u128, uatom_info.denom);
+    let deposit_amount = Uint128::new(200);
     let res = mock.update_credit_account(
         &token_id,
         &user,
-        vec![Action::Deposit(uosmo_info.to_coin(Uint128::new(234)))],
-        &[Coin::new(234u128, uosmo_info.denom), extra_funds.clone()],
+        vec![
+            Action::Deposit(coin_info.to_coin(deposit_amount)),
+            Action::Borrow(coin_info.to_coin(Uint128::new(400))),
+            Action::Withdraw(coin_info.to_coin(Uint128::new(50))),
+        ],
+        &[Coin::new(200u128, coin_info.denom)],
     );
 
-    assert_err(res, ExtraFundsReceived(Coins::from(vec![extra_funds])));
+    assert_err(res, ContractError::AboveMaxLTV);
 
     let res = mock.query_position(&token_id);
     assert_eq!(res.coins.len(), 0);
 }
 
 #[test]
-fn test_deposit_success() {
+fn test_withdraw_success() {
     let coin_info = uosmo_info();
-
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[coin_info.clone()])
@@ -208,28 +214,23 @@ fn test_deposit_success() {
     mock.update_credit_account(
         &token_id,
         &user,
-        vec![Action::Deposit(coin_info.to_coin(deposit_amount))],
+        vec![
+            Action::Deposit(coin_info.to_coin(deposit_amount)),
+            Action::Withdraw(coin_info.to_coin(deposit_amount)),
+        ],
         &[Coin::new(deposit_amount.into(), coin_info.denom.clone())],
     )
     .unwrap();
 
     let res = mock.query_position(&token_id);
-    let assets_res = res.coins.first().unwrap();
-    assert_eq!(res.coins.len(), 1);
-    assert_eq!(assets_res.amount, deposit_amount);
-    assert_eq!(assets_res.denom, coin_info.denom);
-    assert_eq!(assets_res.price, coin_info.price);
-    assert_eq!(
-        assets_res.value,
-        coin_info.price * Decimal::from_atomics(deposit_amount, 0).unwrap()
-    );
+    assert_eq!(res.coins.len(), 0);
 
     let coin = mock.query_balance(&mock.rover, &coin_info.denom);
-    assert_eq!(coin.amount, deposit_amount)
+    assert_eq!(coin.amount, Uint128::zero())
 }
 
 #[test]
-fn test_multiple_deposit_actions() {
+fn test_multiple_withdraw_actions() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
 
@@ -239,8 +240,8 @@ fn test_multiple_deposit_actions() {
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![
-                Coin::new(300u128, uosmo_info.denom.clone()),
-                Coin::new(50u128, uatom_info.denom.clone()),
+                Coin::new(234u128, uosmo_info.denom.clone()),
+                Coin::new(25u128, uatom_info.denom.clone()),
             ],
         })
         .build()
@@ -266,21 +267,61 @@ fn test_multiple_deposit_actions() {
 
     let res = mock.query_position(&token_id);
     assert_eq!(res.coins.len(), 2);
-    let uosmo_value = Decimal::from_atomics(uosmo_amount, 0).unwrap() * uosmo_info.price;
-    assert_present(&res, &uosmo_info, uosmo_amount, uosmo_value);
-    let uatom_value = Decimal::from_atomics(uatom_amount, 0).unwrap() * uatom_info.price;
-    assert_present(&res, &uatom_info, uatom_amount, uatom_value);
+
+    let coin = mock.query_balance(&user, &uosmo_info.denom);
+    assert_eq!(coin.amount, Uint128::zero());
+
+    let coin = mock.query_balance(&user, &uatom_info.denom);
+    assert_eq!(coin.amount, Uint128::zero());
+
+    mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![Action::Withdraw(uosmo_info.to_coin(uosmo_amount))],
+        &[],
+    )
+    .unwrap();
+
+    let res = mock.query_position(&token_id);
+    assert_eq!(res.coins.len(), 1);
 
     let coin = mock.query_balance(&mock.rover, &uosmo_info.denom);
+    assert_eq!(coin.amount, Uint128::zero());
+
+    let coin = mock.query_balance(&user, &uosmo_info.denom);
     assert_eq!(coin.amount, uosmo_amount);
 
-    let coin = mock.query_balance(&mock.rover, &uatom_info.denom);
-    assert_eq!(coin.amount, uatom_amount);
-}
+    mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![Action::Withdraw(uatom_info.to_coin(Uint128::new(20)))],
+        &[],
+    )
+    .unwrap();
 
-fn assert_present(res: &PositionResponse, coin: &CoinInfo, amount: Uint128, total_val: Decimal) {
-    res.coins
-        .iter()
-        .find(|item| item.denom == coin.denom && item.amount == amount && item.value == total_val)
-        .unwrap();
+    let res = mock.query_position(&token_id);
+    assert_eq!(res.coins.len(), 1);
+
+    let coin = mock.query_balance(&mock.rover, &uatom_info.denom);
+    assert_eq!(coin.amount, Uint128::new(5));
+
+    let coin = mock.query_balance(&user, &uatom_info.denom);
+    assert_eq!(coin.amount, Uint128::new(20));
+
+    mock.update_credit_account(
+        &token_id,
+        &user,
+        vec![Action::Withdraw(uatom_info.to_coin(Uint128::new(5)))],
+        &[],
+    )
+    .unwrap();
+
+    let res = mock.query_position(&token_id);
+    assert_eq!(res.coins.len(), 0);
+
+    let coin = mock.query_balance(&mock.rover, &uatom_info.denom);
+    assert_eq!(coin.amount, Uint128::zero());
+
+    let coin = mock.query_balance(&user, &uatom_info.denom);
+    assert_eq!(coin.amount, uatom_amount);
 }

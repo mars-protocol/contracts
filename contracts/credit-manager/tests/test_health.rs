@@ -8,7 +8,7 @@ use rover::error::ContractError;
 use rover::msg::execute::Action::{Borrow, Deposit};
 use rover::msg::query::DebtSharesValue;
 
-use crate::helpers::{assert_err, AccountToFund, CoinInfo, MockEnv};
+use crate::helpers::{assert_err, ujake_info, uosmo_info, AccountToFund, CoinInfo, MockEnv};
 
 pub mod helpers;
 
@@ -19,12 +19,7 @@ pub mod helpers;
 ///         above_max_ltv: false
 #[test]
 fn test_only_assets_with_no_debts() {
-    let coin_info = CoinInfo {
-        denom: "uosmo".to_string(),
-        price: Decimal::from_atomics(25u128, 2).unwrap(),
-        max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-        liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-    };
+    let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -37,7 +32,7 @@ fn test_only_assets_with_no_debts() {
         .unwrap();
     let token_id = mock.create_credit_account(&user).unwrap();
 
-    let deposit_amount = Uint128::from(300u128);
+    let deposit_amount = Uint128::new(300);
     mock.update_credit_account(
         &token_id,
         &user,
@@ -90,8 +85,8 @@ fn test_terra_ragnarok() {
         .unwrap();
     let token_id = mock.create_credit_account(&user).unwrap();
 
-    let deposit_amount = Uint128::from(12u128);
-    let borrow_amount = Uint128::from(2u128);
+    let deposit_amount = Uint128::new(12);
+    let borrow_amount = Uint128::new(2);
 
     mock.update_credit_account(
         &token_id,
@@ -113,8 +108,8 @@ fn test_terra_ragnarok() {
         coin_info.price * Decimal::from_atomics(deposit_amount + borrow_amount, 0).unwrap();
     assert_eq!(health.total_assets_value, assets_value);
     // Note: Simulated yield from mock_red_bank makes debt position more expensive
-    let debts_value = coin_info.price
-        * Decimal::from_atomics(borrow_amount.add(Uint128::from(1u128)), 0).unwrap();
+    let debts_value =
+        coin_info.price * Decimal::from_atomics(borrow_amount.add(Uint128::new(1)), 0).unwrap();
     assert_eq!(health.total_debts_value, debts_value);
     assert_eq!(
         health.lqdt_health_factor,
@@ -152,12 +147,7 @@ fn test_terra_ragnarok() {
 ///         above_max_ltv: true
 #[test]
 fn test_debts_no_assets() {
-    let coin_info = CoinInfo {
-        denom: "uosmo".to_string(),
-        price: Decimal::one(),
-        max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
-        liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-    };
+    let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[coin_info.clone()])
@@ -169,7 +159,7 @@ fn test_debts_no_assets() {
         .unwrap();
     let token_id = mock.create_credit_account(&user).unwrap();
 
-    let borrowed_amount = Uint128::from(100u128);
+    let borrowed_amount = Uint128::new(100);
     let res = mock.update_credit_account(
         &token_id,
         &user,
@@ -207,12 +197,7 @@ fn test_debts_no_assets() {
 ///         AboveMaxLtv error thrown
 #[test]
 fn test_cannot_borrow_more_than_healthy() {
-    let coin_info = CoinInfo {
-        denom: "uosmo".to_string(),
-        price: Decimal::from_atomics(23654u128, 4).unwrap(),
-        max_ltv: Decimal::from_atomics(5u128, 1).unwrap(),
-        liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
-    };
+    let coin_info = ujake_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -229,13 +214,10 @@ fn test_cannot_borrow_more_than_healthy() {
         &token_id,
         &user,
         vec![
-            Deposit(coin_info.to_coin(Uint128::from(300u128))),
-            Borrow(coin_info.to_coin(Uint128::from(50u128))),
+            Deposit(coin_info.to_coin(Uint128::new(300))),
+            Borrow(coin_info.to_coin(Uint128::new(50))),
         ],
-        &[Coin::new(
-            Uint128::from(300u128).into(),
-            coin_info.denom.clone(),
-        )],
+        &[Coin::new(Uint128::new(300).into(), coin_info.denom.clone())],
     )
     .unwrap();
 
@@ -263,7 +245,7 @@ fn test_cannot_borrow_more_than_healthy() {
     mock.update_credit_account(
         &token_id,
         &user,
-        vec![Borrow(coin_info.to_coin(Uint128::from(100u128)))],
+        vec![Borrow(coin_info.to_coin(Uint128::new(100)))],
         &[],
     )
     .unwrap();
@@ -271,7 +253,7 @@ fn test_cannot_borrow_more_than_healthy() {
     let res = mock.update_credit_account(
         &token_id,
         &user,
-        vec![Borrow(coin_info.to_coin(Uint128::from(150u128)))],
+        vec![Borrow(coin_info.to_coin(Uint128::new(150)))],
         &[],
     );
 
@@ -336,8 +318,8 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
         &token_id,
         &user,
         vec![
-            Deposit(uosmo_info.to_coin(Uint128::from(300u128))),
-            Borrow(uatom_info.to_coin(Uint128::from(50u128))),
+            Deposit(uosmo_info.to_coin(Uint128::new(300))),
+            Borrow(uatom_info.to_coin(Uint128::new(50))),
         ],
         &[Coin::new(300, uosmo_info.denom)],
     )
@@ -359,7 +341,7 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
     let res = mock.update_credit_account(
         &token_id,
         &user,
-        vec![Borrow(uatom_info.to_coin(Uint128::from(2u128)))],
+        vec![Borrow(uatom_info.to_coin(Uint128::new(2)))],
         &[],
     );
 
@@ -407,8 +389,8 @@ fn test_assets_and_ltv_lqdt_adjusted_value() {
         .unwrap();
     let token_id = mock.create_credit_account(&user).unwrap();
 
-    let deposit_amount = Uint128::from(298u128);
-    let borrowed_amount = Uint128::from(49u128);
+    let deposit_amount = Uint128::new(298);
+    let borrowed_amount = Uint128::new(49);
     mock.update_credit_account(
         &token_id,
         &user,
@@ -498,9 +480,9 @@ fn test_debt_value() {
     let token_id_a = mock.create_credit_account(&user_a).unwrap();
     let token_id_b = mock.create_credit_account(&user_b).unwrap();
 
-    let user_a_deposit_amount_osmo = Uint128::from(298u128);
-    let user_a_borrowed_amount_atom = Uint128::from(49u128);
-    let user_a_borrowed_amount_osmo = Uint128::from(30u128);
+    let user_a_deposit_amount_osmo = Uint128::new(298);
+    let user_a_borrowed_amount_atom = Uint128::new(49);
+    let user_a_borrowed_amount_osmo = Uint128::new(30);
 
     mock.update_credit_account(
         &token_id_a,
@@ -519,8 +501,8 @@ fn test_debt_value() {
 
     let interim_red_bank_debt = mock.query_red_bank_debt(&uatom_info.denom);
 
-    let user_b_deposit_amount = Uint128::from(101u128);
-    let user_b_borrowed_amount_atom = Uint128::from(24u128);
+    let user_b_deposit_amount = Uint128::new(101);
+    let user_b_borrowed_amount_atom = Uint128::new(24);
 
     mock.update_credit_account(
         &token_id_b,

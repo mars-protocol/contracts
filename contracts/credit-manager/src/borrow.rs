@@ -1,9 +1,9 @@
-use cosmwasm_std::{Coin, DepsMut, Env, Response, StdError, StdResult, Uint128};
+use cosmwasm_std::{Coin, DepsMut, Env, Response, Uint128};
 
 use rover::error::{ContractError, ContractResult};
 
-use crate::deposit::assert_coin_is_whitelisted;
-use crate::state::{COIN_BALANCES, DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES};
+use crate::state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES};
+use crate::utils::{assert_coin_is_whitelisted, increment_coin_balance};
 
 pub static DEFAULT_DEBT_SHARES_PER_COIN_BORROWED: Uint128 = Uint128::new(1_000_000);
 
@@ -17,7 +17,7 @@ pub fn borrow(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractRe
         return Err(ContractError::NoAmount);
     }
 
-    assert_coin_is_whitelisted(deps.storage, &coin.denom)?;
+    assert_coin_is_whitelisted(deps.storage, &coin)?;
 
     let red_bank = RED_BANK.load(deps.storage)?;
     let total_debt_amount =
@@ -25,42 +25,28 @@ pub fn borrow(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractRe
 
     let debt_shares_to_add = if total_debt_amount.is_zero() {
         coin.amount
-            .checked_mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)
-            .map_err(StdError::overflow)?
+            .checked_mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)?
     } else {
         TOTAL_DEBT_SHARES
             .load(deps.storage, &coin.denom)?
             .checked_multiply_ratio(coin.amount, total_debt_amount)?
     };
 
-    TOTAL_DEBT_SHARES.update(deps.storage, &coin.denom, |shares| -> StdResult<_> {
+    TOTAL_DEBT_SHARES.update(deps.storage, &coin.denom, |shares| {
         shares
             .unwrap_or_else(Uint128::zero)
             .checked_add(debt_shares_to_add)
-            .map_err(StdError::overflow)
+            .map_err(ContractError::Overflow)
     })?;
 
-    DEBT_SHARES.update(
-        deps.storage,
-        (token_id, &coin.denom),
-        |shares| -> StdResult<_> {
-            shares
-                .unwrap_or_else(Uint128::zero)
-                .checked_add(debt_shares_to_add)
-                .map_err(StdError::overflow)
-        },
-    )?;
+    DEBT_SHARES.update(deps.storage, (token_id, &coin.denom), |shares| {
+        shares
+            .unwrap_or_else(Uint128::zero)
+            .checked_add(debt_shares_to_add)
+            .map_err(ContractError::Overflow)
+    })?;
 
-    COIN_BALANCES.update(
-        deps.storage,
-        (token_id, &coin.denom),
-        |current_amount| -> StdResult<_> {
-            current_amount
-                .unwrap_or_else(Uint128::zero)
-                .checked_add(coin.amount)
-                .map_err(StdError::overflow)
-        },
-    )?;
+    increment_coin_balance(deps.storage, token_id, &coin)?;
 
     Ok(Response::new()
         .add_message(red_bank.borrow_msg(&coin)?)

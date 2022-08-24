@@ -415,7 +415,7 @@ impl MockEnvBuilder {
             .unwrap_or_else(|| self.setup_red_bank())
     }
 
-    pub fn setup_red_bank(&mut self) -> RedBankBase<Addr> {
+    fn setup_red_bank(&mut self) -> RedBankBase<Addr> {
         let contract_code_id = self.app.store_code(mock_red_bank_contract());
         let addr = self
             .app
