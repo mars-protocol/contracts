@@ -3,7 +3,7 @@ use cosmwasm_std::{Addr, Coin, Decimal, QuerierWrapper, StdError, StdResult, Uin
 use mars_outpost::{math::divide_decimal_by_decimal, red_bank::Market};
 use std::{collections::HashMap, fmt};
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Position {
     pub denom: String,
     pub price: Decimal,
@@ -31,7 +31,6 @@ pub struct Health {
 
 impl fmt::Display for Health {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // Customize so only `x` and `y` are denoted.
         write!(
             f,
             "(total_debt_value: {}, total_collateral_value: {},  max_ltv_adjusted_collateral: {}, lqdt_threshold_adjusted_collateral: {}, max_ltv_health_factor: {}, liquidation_health_factor: {})",
@@ -54,8 +53,59 @@ impl Health {
         collateral: &[Coin],
         debt: &[Coin],
     ) -> StdResult<Health> {
-        let mut positions: HashMap<String, Position> = HashMap::new();
         let querier = MarsQuerier::new(querier, oracle_addr.clone(), red_bank_addr.clone());
+        let positions = Self::positions_from_coins(&querier, collateral, debt)?;
+
+        Self::compute_health(&positions.into_values().collect::<Vec<_>>())
+    }
+
+    /// Compute the health for a Position
+    pub fn compute_health(positions: &[Position]) -> StdResult<Health> {
+        let mut health = positions.iter().try_fold::<_, _, StdResult<Health>>(
+            Health::default(),
+            |mut h, p| {
+                let collateral_value = p.collateral_amount.checked_mul(p.price)?;
+                h.total_debt_value += p.debt_amount.checked_mul(p.price)?;
+                h.total_collateral_value += collateral_value;
+                h.max_ltv_adjusted_collateral += collateral_value.checked_mul(p.max_ltv)?;
+                h.lqdt_threshold_adjusted_collateral +=
+                    collateral_value.checked_mul(p.liquidation_threshold)?;
+                Ok(h)
+            },
+        )?;
+
+        // If there aren't any debts a health factor can't be computed (divide by zero)
+        if health.total_debt_value > Decimal::zero() {
+            health.max_ltv_health_factor = Some(divide_decimal_by_decimal(
+                health.max_ltv_adjusted_collateral,
+                health.total_debt_value,
+            )?);
+            health.liquidation_health_factor = Some(divide_decimal_by_decimal(
+                health.lqdt_threshold_adjusted_collateral,
+                health.total_debt_value,
+            )?);
+        }
+
+        Ok(health)
+    }
+
+    #[inline]
+    pub fn is_liquidatable(&self) -> bool {
+        self.liquidation_health_factor.map_or(false, |hf| hf < Decimal::one())
+    }
+
+    #[inline]
+    pub fn is_above_max_ltv(&self) -> bool {
+        self.max_ltv_health_factor.map_or(false, |hf| hf < Decimal::one())
+    }
+
+    /// Convert a collection of coins (Collateral and debts) to a map of `Position`
+    pub fn positions_from_coins(
+        querier: &MarsQuerier,
+        collateral: &[Coin],
+        debt: &[Coin],
+    ) -> StdResult<HashMap<String, Position>> {
+        let mut positions: HashMap<String, Position> = HashMap::new();
 
         collateral.iter().try_for_each(|c| -> StdResult<_> {
             match positions.get_mut(&c.denom) {
@@ -112,48 +162,7 @@ impl Health {
             }
             Ok(())
         })?;
-
-        Self::compute_health(&positions.into_values().collect::<Vec<_>>())
-    }
-
-    /// Compute the health for a Position
-    pub fn compute_health(positions: &[Position]) -> StdResult<Health> {
-        let mut health = positions.iter().try_fold::<_, _, StdResult<Health>>(
-            Health::default(),
-            |mut h, p| {
-                let collateral_value = p.collateral_amount.checked_mul(p.price)?;
-                h.total_debt_value += p.debt_amount.checked_mul(p.price)?;
-                h.total_collateral_value += collateral_value;
-                h.max_ltv_adjusted_collateral += collateral_value.checked_mul(p.max_ltv)?;
-                h.lqdt_threshold_adjusted_collateral +=
-                    collateral_value.checked_mul(p.liquidation_threshold)?;
-                Ok(h)
-            },
-        )?;
-
-        // If there aren't any debts a health factor can't be computed (divide by zero)
-        if health.total_debt_value > Decimal::zero() {
-            health.max_ltv_health_factor = Some(divide_decimal_by_decimal(
-                health.max_ltv_adjusted_collateral,
-                health.total_debt_value,
-            )?);
-            health.liquidation_health_factor = Some(divide_decimal_by_decimal(
-                health.lqdt_threshold_adjusted_collateral,
-                health.total_debt_value,
-            )?);
-        }
-
-        Ok(health)
-    }
-
-    #[inline]
-    pub fn is_liquidatable(&self) -> bool {
-        self.liquidation_health_factor.map_or(false, |hf| hf < Decimal::one())
-    }
-
-    #[inline]
-    pub fn is_above_max_ltv(&self) -> bool {
-        self.max_ltv_health_factor.map_or(false, |hf| hf < Decimal::one())
+        Ok(positions)
     }
 }
 

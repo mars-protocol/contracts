@@ -1,2 +1,2 @@
 pub mod health;
-mod query;
+pub mod query;

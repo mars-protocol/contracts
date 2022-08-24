@@ -21,7 +21,8 @@ use mars_outpost::{ma_token, math};
 use crate::error::ContractError;
 use crate::events::{build_collateral_position_changed_event, build_debt_position_changed_event};
 use crate::health::{
-    assert_below_max_ltv_after_borrow, assert_below_liq_threshold_after_withdraw, assert_liquidatable,
+    assert_below_liq_threshold_after_withdraw, assert_below_max_ltv_after_borrow,
+    assert_liquidatable,
 };
 use crate::helpers::{get_bit, set_bit, unset_bit};
 use crate::interest_rates::{
