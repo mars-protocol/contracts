@@ -6,7 +6,7 @@ import {
   SigningCosmWasmClientOptions,
 } from '@cosmjs/cosmwasm-stargate';
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import { calculateFee, GasPrice, StdFee, Coin } from '@cosmjs/stargate';
+import { GasPrice, Coin } from '@cosmjs/stargate';
 import 'dotenv/config.js';
 import { Event } from '@cosmjs/stargate/build/logs';
 import * as fs from 'fs';
@@ -86,7 +86,7 @@ async function main() {
   const ARTIFACTS_PATH = '../artifacts/';
 
   // network : stores contract addresses
-  let network = readArtifact(chain_id);
+  const network = readArtifact(chain_id);
   console.log('network:', network);
 
   let uploadResult: UploadResult;
@@ -649,7 +649,7 @@ async function main() {
 }
 
 function requiredEnvironmentVariables(envVars: string[]) {
-  let missing = envVars.filter((v) => process.env[v] === undefined);
+  const missing = envVars.filter((v) => process.env[v] === undefined);
 
   if (missing.length > 0) {
     console.error(`Required environment variables are not set: ${missing.join(', ')}`);
