@@ -21,7 +21,7 @@ use mars_outpost::{ma_token, math};
 use crate::error::ContractError;
 use crate::events::{build_collateral_position_changed_event, build_debt_position_changed_event};
 use crate::health::{
-    assert_health_after_borrow, assert_health_after_withdraw, assert_liquidatable,
+    assert_below_max_ltv_after_borrow, assert_below_liq_threshold_after_withdraw, assert_liquidatable,
 };
 use crate::helpers::{get_bit, set_bit, unset_bit};
 use crate::interest_rates::{
@@ -621,7 +621,7 @@ pub fn withdraw(
     // otherwise no reasons to block the withdraw
     if asset_as_collateral
         && user_is_borrowing
-        && !assert_health_after_withdraw(
+        && !assert_below_liq_threshold_after_withdraw(
             &deps.as_ref(),
             &env,
             &withdrawer,
@@ -753,7 +753,7 @@ pub fn borrow(
     // Check if user can borrow specified amount
     let mut uncollateralized_debt = false;
     if uncollateralized_loan_limit.is_zero() {
-        if !assert_health_after_borrow(
+        if !assert_below_max_ltv_after_borrow(
             &deps.as_ref(),
             &env,
             &user,

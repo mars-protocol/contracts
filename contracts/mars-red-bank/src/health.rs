@@ -25,14 +25,14 @@ pub fn assert_liquidatable(
 }
 
 /// Check the Health Factor for a given user after a withdraw
-pub fn assert_health_after_withdraw(
+pub fn assert_below_liq_threshold_after_withdraw(
     deps: &Deps,
     env: &Env,
     user: &User,
     user_addr: &Addr,
     oracle_addr: &Addr,
     denom: &str,
-    amount: Uint128,
+    withdraw_amount: Uint128,
 ) -> StdResult<bool> {
     let mut positions = get_user_positions_map(deps, env, user, user_addr, oracle_addr)?;
 
@@ -42,21 +42,21 @@ pub fn assert_health_after_withdraw(
         .ok_or(StdError::GenericErr {
             msg: "No User Balance".to_string(),
         })?
-        .collateral_amount -= amount;
+        .collateral_amount -= withdraw_amount;
 
     let health = compute_position_health(&positions)?;
     Ok(!health.is_liquidatable())
 }
 
 /// Check the Health Factor for a given user after a borrow
-pub fn assert_health_after_borrow(
+pub fn assert_below_max_ltv_after_borrow(
     deps: &Deps,
     env: &Env,
     user: &User,
     user_addr: &Addr,
     oracle_addr: &Addr,
     denom: &str,
-    amount: Uint128,
+    borrow_amount: Uint128,
 ) -> StdResult<bool> {
     let mut positions = get_user_positions_map(deps, env, user, user_addr, oracle_addr)?;
 
@@ -69,7 +69,7 @@ pub fn assert_health_after_borrow(
             asset_price: oracle::helpers::query_price(&deps.querier, oracle_addr, denom)?,
             ..Default::default()
         })
-        .debt_amount += amount;
+        .debt_amount += borrow_amount;
 
     let health = compute_position_health(&positions)?;
     Ok(!health.is_above_max_ltv())
@@ -80,7 +80,7 @@ pub fn compute_position_health(positions: &HashMap<String, Position>) -> StdResu
     let positions = positions
         .values()
         .map(|p| {
-            // if this asset is flagged as "uncollateralized" for a user, then it won't count towards their health factor
+            // if it is an "uncollateralized" debt, then it won't count towards their health factor
             let debt_amount = if p.uncollateralized_debt {
                 Decimal::zero()
             } else {
