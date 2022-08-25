@@ -37,12 +37,16 @@ pub fn assert_below_liq_threshold_after_withdraw(
     let mut positions = get_user_positions_map(deps, env, user, user_addr, oracle_addr)?;
 
     // Update position to compute health factor after withdraw
-    positions
-        .get_mut(denom)
-        .ok_or(StdError::GenericErr {
-            msg: "No User Balance".to_string(),
-        })?
-        .collateral_amount -= withdraw_amount;
+    match positions.get_mut(denom) {
+        Some(p) => {
+            p.collateral_amount = p.collateral_amount.checked_sub(withdraw_amount)?;
+        }
+        None => {
+            return Err(StdError::GenericErr {
+                msg: "No User Balance".to_string(),
+            })
+        }
+    }
 
     let health = compute_position_health(&positions)?;
     Ok(!health.is_liquidatable())

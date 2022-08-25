@@ -22,7 +22,7 @@ pub struct Health {
     /// The sum of the value of all colletarals adjusted by their Max LTV
     pub max_ltv_adjusted_collateral: Decimal,
     /// The sum of the value of all colletarals adjusted by their Liquidation Threshold
-    pub lqdt_threshold_adjusted_collateral: Decimal,
+    pub liquidation_threshold_adjusted_collateral: Decimal,
     /// The sum of the value of all collaterals multiplied by their max LTV, over the total value of debt
     pub max_ltv_health_factor: Option<Decimal>,
     /// The sum of the value of all collaterals multiplied by their liquidation threshold over the total value of debt
@@ -37,7 +37,7 @@ impl fmt::Display for Health {
             self.total_debt_value,
             self.total_collateral_value,
             self.max_ltv_adjusted_collateral,
-            self.lqdt_threshold_adjusted_collateral,
+            self.liquidation_threshold_adjusted_collateral,
             self.max_ltv_health_factor.map_or("n/a".to_string(), |x| x.to_string()),
             self.liquidation_health_factor.map_or("n/a".to_string(), |x| x.to_string())
         )
@@ -68,7 +68,7 @@ impl Health {
                 h.total_debt_value += p.debt_amount.checked_mul(p.price)?;
                 h.total_collateral_value += collateral_value;
                 h.max_ltv_adjusted_collateral += collateral_value.checked_mul(p.max_ltv)?;
-                h.lqdt_threshold_adjusted_collateral +=
+                h.liquidation_threshold_adjusted_collateral +=
                     collateral_value.checked_mul(p.liquidation_threshold)?;
                 Ok(h)
             },
@@ -81,7 +81,7 @@ impl Health {
                 health.total_debt_value,
             )?);
             health.liquidation_health_factor = Some(divide_decimal_by_decimal(
-                health.lqdt_threshold_adjusted_collateral,
+                health.liquidation_threshold_adjusted_collateral,
                 health.total_debt_value,
             )?);
         }
@@ -135,25 +135,25 @@ impl Health {
             Ok(())
         })?;
 
-        debt.iter().try_for_each(|c| -> StdResult<_> {
-            match positions.get_mut(&c.denom) {
+        debt.iter().try_for_each(|d| -> StdResult<_> {
+            match positions.get_mut(&d.denom) {
                 Some(p) => {
-                    p.debt_amount += to_decimal(c.amount)?;
+                    p.debt_amount += to_decimal(d.amount)?;
                 }
                 None => {
                     let Market {
                         max_loan_to_value,
                         liquidation_threshold,
                         ..
-                    } = querier.query_market(&c.denom)?;
+                    } = querier.query_market(&d.denom)?;
 
                     positions.insert(
-                        c.denom.clone(),
+                        d.denom.clone(),
                         Position {
-                            denom: c.denom.clone(),
+                            denom: d.denom.clone(),
                             collateral_amount: Decimal::zero(),
-                            debt_amount: to_decimal(c.amount)?,
-                            price: querier.query_price(&c.denom)?,
+                            debt_amount: to_decimal(d.amount)?,
+                            price: querier.query_price(&d.denom)?,
                             max_ltv: max_loan_to_value,
                             liquidation_threshold,
                         },

@@ -229,7 +229,7 @@ pub fn query_user_position(
             + Decimal::from_ratio(total_uncollateralized_debt, 1u128),
         total_collateralized_debt: health.total_debt_value,
         weighted_max_ltv_collateral: health.max_ltv_adjusted_collateral,
-        weighted_liquidation_threshold_collateral: health.lqdt_threshold_adjusted_collateral,
+        weighted_liquidation_threshold_collateral: health.liquidation_threshold_adjusted_collateral,
         health_status,
     })
 }
