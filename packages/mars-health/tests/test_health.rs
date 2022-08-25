@@ -6,9 +6,7 @@ use std::vec;
 // than zero, and debt is zero
 //
 // Action:  User deposits 300 osmo
-// Health:  collateral value: 709,62
-///         debt value: 0
-///         liquidatable: false
+/// Health: liquidatable: false
 ///         above_max_ltv: false
 #[test]
 fn test_collateral_no_debt() {
@@ -33,9 +31,7 @@ fn test_collateral_no_debt() {
 // and debt is greater than zero
 //
 // Action:  User borrows 100 osmo
-// Health:  collateral value: 0
-///         debt value: 709,62
-///         liquidatable: true
+// Health:  liquidatable: true
 ///         above_max_ltv: true
 #[test]
 fn test_debt_no_collateral() {
@@ -61,14 +57,10 @@ fn test_debt_no_collateral() {
 /// Test Terra Ragnarok case (collateral and debt are zero)
 /// Position:  Collateral: [(atom:10)]
 ///            Debt: [(atom:2)]
-/// Health:    collateral value: 102
-///            debt value 20.4
-///            liquidatable: false
+/// Health:    liquidatable: false
 ///            above_max_ltv: false
 /// New price: atom price goes to zero
-/// Health:    collateral value: 0
-///            debt value 0
-///            liquidatable: false
+/// Health:    liquidatable: false
 ///            above_max_ltv: false
 #[test]
 fn test_no_collateral_no_debt() {
@@ -111,9 +103,7 @@ fn test_no_collateral_no_debt() {
 /// Test to compute a healthy position (not liquidatable and below max ltv)
 /// Position: User Collateral: [(atom:100), (osmo:300)]
 ///           User Debt: [(osmo:100)]
-/// Health:   collateral value: 809.62
-///           debt value 236.54
-///           liquidatable: false
+/// Health:   liquidatable: false
 ///           above_max_ltv: false
 #[test]
 fn test_healthy_health_factor() {
@@ -155,10 +145,8 @@ fn test_healthy_health_factor() {
 /// Test to compute a position that is not liquidatable but above max ltv
 /// Position: User Collateral: [(atom:50), (osmo:300)]
 ///           User Debt: [(atom:50)]
-/// Health:   collateral value: 809.62
-///           debt value 236.54
-///           liquidatable: false
-///           above_max_ltv: false
+/// Health:   liquidatable: false
+///           above_max_ltv: true
 #[test]
 fn test_above_max_ltv_not_liquidatable() {
     let positions = vec![
@@ -196,10 +184,8 @@ fn test_above_max_ltv_not_liquidatable() {
 /// Test to compute a position that is liquidatable and above max tlv
 /// Position: User Collateral: [(atom:50), (osmo:300)]
 ///           User Debt: [(atom:50)]
-/// Health:   collateral value: 809.62
-///           debt value 236.54
-///           liquidatable: false
-///           above_max_ltv: false
+/// Health:   liquidatable: true
+///           above_max_ltv: trie
 #[test]
 fn test_liquidatable() {
     let positions = vec![
