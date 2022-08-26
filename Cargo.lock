@@ -392,6 +392,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-health"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "mars-outpost",
+ "mars-testing",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-incentives"
 version = "1.0.0"
 dependencies = [
@@ -470,6 +480,7 @@ dependencies = [
  "cw-storage-plus",
  "cw20",
  "cw20-base",
+ "mars-health",
  "mars-outpost",
  "mars-testing",
  "schemars",

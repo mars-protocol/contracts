@@ -29,6 +29,7 @@ library = []
 
 [dependencies]
 mars-outpost = { path = "../../packages/mars-outpost", version = "0.1.0" }
+mars-health = { path = "../../packages/mars-health", version = "0.1.0" }
 cosmwasm-std = "1.0"
 cw20 = "0.13"
 cw20-base = { version = "0.13", features = ["library"] }

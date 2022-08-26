@@ -185,7 +185,22 @@ pub struct Debt {
 #[serde(rename_all = "snake_case")]
 pub enum UserHealthStatus {
     NotBorrowing,
-    Borrowing(Decimal),
+    Borrowing {
+        max_ltv_hf: Decimal,
+        liq_threshold_hf: Decimal,
+    },
+}
+
+/// User asset settlement
+#[derive(Default, Debug)]
+pub struct Position {
+    pub denom: String,
+    pub collateral_amount: Uint128,
+    pub debt_amount: Uint128,
+    pub uncollateralized_debt: bool,
+    pub max_ltv: Decimal,
+    pub liquidation_threshold: Decimal,
+    pub asset_price: Decimal,
 }
 
 // We define a custom struct for each query response
@@ -228,11 +243,11 @@ pub struct UserAssetCollateralResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct UserPositionResponse {
-    pub total_collateral_in_base_asset: Uint128,
-    pub total_debt_in_base_asset: Uint128,
+    pub total_collateral_value: Decimal,
+    pub total_debt_value: Decimal,
     /// Total debt minus the uncollateralized debt
-    pub total_collateralized_debt_in_base_asset: Uint128,
-    pub max_debt_in_base_asset: Uint128,
-    pub weighted_liquidation_threshold_in_base_asset: Uint128,
+    pub total_collateralized_debt: Decimal,
+    pub weighted_max_ltv_collateral: Decimal,
+    pub weighted_liquidation_threshold_collateral: Decimal,
     pub health_status: UserHealthStatus,
 }
