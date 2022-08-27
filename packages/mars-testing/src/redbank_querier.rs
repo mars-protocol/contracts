@@ -1,10 +1,11 @@
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult};
-use mars_outpost::red_bank::{Market, QueryMsg};
+use mars_outpost::red_bank::{Market, QueryMsg, UserPositionResponse};
 use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct RedBankQuerier {
     pub markets: HashMap<String, Market>,
+    pub users_positions: HashMap<String, UserPositionResponse>,
 }
 
 impl RedBankQuerier {
@@ -15,6 +16,14 @@ impl RedBankQuerier {
             } => match self.markets.get(&denom) {
                 Some(market) => to_binary(&market).into(),
                 None => Err(format!("[mock]: could not find the market for {}", denom)).into(),
+            },
+            QueryMsg::UserPosition {
+                user_address,
+            } => match self.users_positions.get(&user_address) {
+                Some(market) => to_binary(&market).into(),
+                None => {
+                    Err(format!("[mock]: could not find the position for {}", user_address)).into()
+                }
             },
             _ => Err("[mock]: Unsupported red_bank query".to_string()).into(),
         };

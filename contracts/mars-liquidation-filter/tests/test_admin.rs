@@ -1,17 +1,15 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
-use cosmwasm_std::{
-    attr, coins, Addr, BankMsg, Coin, CosmosMsg, Decimal, OverflowError, OverflowOperation,
-    Response, StdError, SubMsg, Timestamp, Uint128,
-};
+use cosmwasm_std::{Addr, SubMsg};
+use mars_liquidation_filter::contract::{execute, instantiate};
+use mars_liquidation_filter::state::CONFIG;
+use mars_liquidation_filter::ContractError;
 
+use crate::helpers::setup_test;
 use mars_outpost::error::MarsError;
 use mars_outpost::liquidation_filter::msg::{ExecuteMsg, InstantiateMsg};
-use mars_testing::{mock_dependencies, MockEnvParams};
+use mars_testing::mock_dependencies;
 
-use crate::contract::{execute, instantiate};
-use crate::error::ContractError;
-use crate::state::CONFIG;
-use crate::testing::helpers::setup_test;
+mod helpers;
 
 // init
 #[test]

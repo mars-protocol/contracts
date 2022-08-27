@@ -124,6 +124,14 @@ impl MarsMockQuerier {
         self.redbank_querier.markets.insert(market.denom.clone(), market);
     }
 
+    pub fn set_redbank_user_position(
+        &mut self,
+        user_address: String,
+        position: red_bank::UserPositionResponse,
+    ) {
+        self.redbank_querier.users_positions.insert(user_address, position);
+    }
+
     pub fn set_twap_price(
         &mut self,
         id: u64,

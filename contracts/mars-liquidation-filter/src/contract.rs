@@ -77,6 +77,11 @@ pub fn execute_liquidate(
 
     let mut messages = vec![];
     for liquidate in array {
+        let coin = info.funds.iter().find(|&c| c.denom == liquidate.debt_denom.clone()).ok_or(
+            ContractError::RequiredCoin {
+                denom: liquidate.debt_denom.clone(),
+            },
+        )?;
         let user_position_response =
             query_user_position(deps.as_ref(), &red_bank_addr, &liquidate.user_address)?;
         if let UserHealthStatus::Borrowing {
@@ -85,12 +90,6 @@ pub fn execute_liquidate(
         } = user_position_response.health_status
         {
             if liq_threshold_hf < Decimal::one() {
-                let coin =
-                    info.funds.iter().find(|&c| c.denom == liquidate.debt_denom.clone()).ok_or(
-                        ContractError::RequiredCoin {
-                            denom: liquidate.debt_denom.clone(),
-                        },
-                    )?;
                 let liq_msg = liquidate_msg(&red_bank_addr, &liquidate, coin)?;
                 messages.push(liq_msg);
             }
@@ -126,7 +125,12 @@ pub fn liquidate_msg(
 ) -> StdResult<CosmosMsg> {
     Ok(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: red_bank_addr.into(),
-        msg: to_binary(liquidate)?,
+        msg: to_binary(&red_bank::ExecuteMsg::Liquidate {
+            collateral_denom: liquidate.collateral_denom.clone(),
+            debt_denom: liquidate.debt_denom.clone(),
+            user_address: liquidate.user_address.clone(),
+            receive_ma_token: liquidate.receive_ma_token,
+        })?,
         funds: vec![coin.clone()],
     }))
 }
