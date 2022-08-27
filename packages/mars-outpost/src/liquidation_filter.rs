@@ -17,14 +17,14 @@ pub struct Config {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Liquidate {
     /// Denom of the collateral asset, which liquidator gets from the borrower
-    collateral_denom: String,
+    pub collateral_denom: String,
     /// Denom of the debt asset
-    debt_denom: String,
+    pub debt_denom: String,
     /// The address of the borrower getting liquidated
-    user_address: String,
+    pub user_address: String,
     /// Whether the liquidator gets liquidated collateral in maToken (true) or
     /// the underlying collateral asset (false)
-    receive_ma_token: bool,
+    pub receive_ma_token: bool,
 }
 
 pub mod msg {

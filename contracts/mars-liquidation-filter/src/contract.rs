@@ -1,12 +1,18 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{attr, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+    attr, to_binary, Addr, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo,
+    Response, StdResult, WasmMsg,
+};
+use mars_outpost::address_provider::MarsContract;
+use mars_outpost::{address_provider, red_bank};
 
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 
 use mars_outpost::liquidation_filter::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_outpost::liquidation_filter::{Config, Liquidate};
+use mars_outpost::red_bank::UserHealthStatus;
 
 use crate::error::ContractError;
 use crate::state::CONFIG;
@@ -54,7 +60,7 @@ pub fn execute_liquidate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    _array: Vec<Liquidate>,
+    array: Vec<Liquidate>,
 ) -> Result<Response, ContractError> {
     // only owner can call this
     let config = CONFIG.load(deps.storage)?;
@@ -63,8 +69,66 @@ pub fn execute_liquidate(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    let response = Response::new().add_attributes(vec![attr("action", "set_asset_incentive")]);
+    let red_bank_addr = address_provider::helpers::query_address(
+        deps.as_ref(),
+        &config.address_provider,
+        MarsContract::RedBank,
+    )?;
+
+    let mut messages = vec![];
+    for liquidate in array {
+        let user_position_response =
+            query_user_position(deps.as_ref(), &red_bank_addr, &liquidate.user_address)?;
+        if let UserHealthStatus::Borrowing {
+            liq_threshold_hf,
+            ..
+        } = user_position_response.health_status
+        {
+            if liq_threshold_hf < Decimal::one() {
+                let coin =
+                    info.funds.iter().find(|&c| c.denom == liquidate.debt_denom.clone()).ok_or(
+                        ContractError::RequiredCoin {
+                            denom: liquidate.debt_denom.clone(),
+                        },
+                    )?;
+                let liq_msg = liquidate_msg(&red_bank_addr, &liquidate, coin)?;
+                messages.push(liq_msg);
+            }
+        }
+    }
+
+    let response = Response::new()
+        .add_attributes(vec![attr("action", "outposts/mars-liquidation-filter/liquidate_many")])
+        .add_messages(messages);
+
     Ok(response)
+}
+
+fn query_user_position(
+    deps: Deps<impl cosmwasm_std::CustomQuery>,
+    red_bank_addr: &Addr,
+    user: &str,
+) -> StdResult<red_bank::UserPositionResponse> {
+    let res: red_bank::UserPositionResponse = deps.querier.query_wasm_smart(
+        red_bank_addr,
+        &red_bank::QueryMsg::UserPosition {
+            user_address: user.to_string(),
+        },
+    )?;
+
+    Ok(res)
+}
+
+pub fn liquidate_msg(
+    red_bank_addr: &Addr,
+    liquidate: &Liquidate,
+    coin: &Coin,
+) -> StdResult<CosmosMsg> {
+    Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: red_bank_addr.into(),
+        msg: to_binary(liquidate)?,
+        funds: vec![coin.clone()],
+    }))
 }
 
 pub fn execute_update_config(
@@ -86,7 +150,8 @@ pub fn execute_update_config(
 
     CONFIG.save(deps.storage, &config)?;
 
-    let response = Response::new().add_attribute("action", "update_config");
+    let response =
+        Response::new().add_attribute("action", "outposts/mars-liquidation-filter/update_config");
 
     Ok(response)
 }

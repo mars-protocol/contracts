@@ -14,4 +14,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     FromUtf8(#[from] FromUtf8Error),
+
+    #[error("Required coin to be sent: {denom:?}")]
+    RequiredCoin {
+        denom: String,
+    },
 }
