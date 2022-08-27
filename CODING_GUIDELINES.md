@@ -1,28 +1,29 @@
 # Coding Guidelines
+
 This document provides details about the coding guidelines and requirements.
 
 ## Project structure
 
 ```
 contracts
-  mars-incentives
-    src
-      testing
-        mod.rs
-        helpers.rs
-        tests.rs
-      lib.rs
-      contract.rs
-      ...
-  mars-oracle
-    base
-    osmosis
-  mars-red-bank
-  ...
+├── mars-incentives
+│   ├── src
+│   │   ├── lib.rs
+│   │   ├── contract.rs
+│   │   ├── error.rs
+│   │   ├── helpers.rs
+│   │   └── state.rs
+│   └── tests
+│       ├── helpers.rs
+│       └── test_incentives.rs
+├── mars-oracle
+│   ├── base
+│   └── osmosis
+└── mars-red-bank
 packages
-  mars-outpost
-  mars-testing
-...
+├── mars-outpost
+└── mars-testing
+..
 ```
 
 - All contracts should be placed in `contracts` directory. Chain specific contracts should have `base` directory for common code and chain (for example `osmosis`) directory for its implementation.
@@ -35,21 +36,22 @@ packages
   - `execute.rs` which contains the execute functions,
   - `query.rs` which contains the query functions.
 - Use things in `execute` / `query` with module prefix for example: `execute::deposit()`, `query::query_market()`.
-- Place all unit tests in separate directory "testing" (see how modules/imports work for this directory https://doc.rust-lang.org/book/ch11-03-test-organization.html).
+- Place all unit tests in separate directory "tests" (see how modules/imports work for this directory https://doc.rust-lang.org/book/ch11-03-test-organization.html).
   One test file prefixed with `test_` (test_ONE_OF_EXECUTE_MSG.rs) should contain all test cases for single executed message.
 
 ### Packages
 
 To simplify importing module things from packages, for example:
+
 ```
 packages
-  mars-outpost
-    src
-      red-bank
-        mod.rs
-        thing_one.rs
-        thing_two.rs
-        thing_three.rs
+└── mars-outpost
+    └── src
+        └── red-bank
+            ├── mod.rs
+            ├── thing_one.rs
+            ├── thing_two.rs
+            └── thing_three.rs
 ...
 ```
 
@@ -75,7 +77,6 @@ use mars_outpost::red_bank::*;
 
 ### Naming
 
-- `sender` name for str, `sender_addr` (if the type is `Addr`).
 - Variables of `Addr` type should be named `something_addr`; it unchecked variant (of `String` type) should be named `something` (without the `*_addr` suffix).
 - Query messages related to a single asset should be named `QueryMsg::Something` (singular), while their corresponding enumerative queries for all assets should be named `QueryMsg::Somethings` (plural).
 
