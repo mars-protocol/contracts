@@ -127,11 +127,6 @@ pub enum ContractError {
         denom: String,
     },
 
-    #[error("Cannot perform operation. Market for {denom:?} is not active")]
-    MarketNotActive {
-        denom: String,
-    },
-
     #[error("Cannot liquidate. Debt asset {denom:?}")]
     LiquidationNotAllowedWhenDebtMarketInactive {
         denom: String,

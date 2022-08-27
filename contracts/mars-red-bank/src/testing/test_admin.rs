@@ -218,7 +218,6 @@ fn test_init_asset() {
         liquidation_threshold: Some(Decimal::one()),
         liquidation_bonus: Some(Decimal::zero()),
         interest_rate_model: Some(ir_model.clone()),
-        active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
     };
@@ -498,7 +497,6 @@ fn test_init_asset_with_msg_symbol() {
             slope_1: Decimal::zero(),
             slope_2: Decimal::zero(),
         }),
-        active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
     };
@@ -584,7 +582,6 @@ fn test_update_asset() {
         liquidation_threshold: Some(Decimal::from_ratio(80u128, 100u128)),
         liquidation_bonus: Some(Decimal::from_ratio(10u128, 100u128)),
         interest_rate_model: Some(ir_model.clone()),
-        active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
     };
@@ -750,7 +747,6 @@ fn test_update_asset() {
             liquidation_threshold: Some(Decimal::from_ratio(90u128, 100u128)),
             liquidation_bonus: Some(Decimal::from_ratio(12u128, 100u128)),
             interest_rate_model: Some(ir_model.clone()),
-            active: Some(true),
             deposit_enabled: Some(true),
             borrow_enabled: Some(true),
         };
@@ -794,7 +790,6 @@ fn test_update_asset() {
             liquidation_threshold: None,
             liquidation_bonus: None,
             interest_rate_model: None,
-            active: None,
             deposit_enabled: None,
             borrow_enabled: None,
         };
@@ -851,7 +846,6 @@ fn test_update_asset_with_new_interest_rate_model_params() {
         liquidation_threshold: Some(Decimal::from_ratio(80u128, 100u128)),
         liquidation_bonus: Some(Decimal::from_ratio(10u128, 100u128)),
         interest_rate_model: Some(ir_model.clone()),
-        active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
     };
@@ -963,7 +957,6 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
         liquidation_threshold: None,
         liquidation_bonus: None,
         interest_rate_model: None,
-        active: None,
         deposit_enabled: None,
         borrow_enabled: None,
     };

@@ -223,7 +223,7 @@ fn test_liquidate() {
         );
     }
 
-    // trying to liquidate when collateral market inactive
+    /*// trying to liquidate when collateral market inactive
     {
         let env = mock_env(MockEnvParams::default());
         let info = mock_info(liquidator_address.as_str(), &coins(100, "debt"));
@@ -275,7 +275,7 @@ fn test_liquidate() {
 
         debt_market.active = true;
         MARKETS.save(&mut deps.storage, "debt", &debt_market).unwrap();
-    }
+    }*/
 
     // Perform first successful liquidation receiving ma_token in return
     {

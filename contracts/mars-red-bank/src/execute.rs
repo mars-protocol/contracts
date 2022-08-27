@@ -226,7 +226,6 @@ pub fn create_market(
         liquidation_threshold,
         liquidation_bonus,
         interest_rate_model,
-        active,
         deposit_enabled,
         borrow_enabled,
     } = params;
@@ -238,7 +237,6 @@ pub fn create_market(
         && liquidation_threshold.is_some()
         && liquidation_bonus.is_some()
         && interest_rate_model.is_some()
-        && active.is_some()
         && deposit_enabled.is_some()
         && borrow_enabled.is_some();
 
@@ -261,7 +259,6 @@ pub fn create_market(
         liquidation_threshold: liquidation_threshold.unwrap(),
         liquidation_bonus: liquidation_bonus.unwrap(),
         interest_rate_model: interest_rate_model.unwrap(),
-        active: active.unwrap(),
         deposit_enabled: deposit_enabled.unwrap(),
         borrow_enabled: borrow_enabled.unwrap(),
     };
@@ -323,7 +320,6 @@ pub fn update_asset(
                 liquidation_threshold,
                 liquidation_bonus,
                 interest_rate_model,
-                active,
                 deposit_enabled,
                 borrow_enabled,
             } = asset_params;
@@ -359,7 +355,6 @@ pub fn update_asset(
                     .unwrap_or(market.liquidation_threshold),
                 liquidation_bonus: liquidation_bonus.unwrap_or(market.liquidation_bonus),
                 interest_rate_model: interest_rate_model.unwrap_or(market.interest_rate_model),
-                active: active.unwrap_or(market.active),
                 deposit_enabled: deposit_enabled.unwrap_or(market.deposit_enabled),
                 borrow_enabled: borrow_enabled.unwrap_or(market.borrow_enabled),
                 ..market
@@ -462,11 +457,6 @@ pub fn deposit(
     };
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
-    if !market.active {
-        return Err(ContractError::MarketNotActive {
-            denom,
-        });
-    }
     if !market.deposit_enabled {
         return Err(ContractError::DepositNotEnabled {
             denom,
@@ -547,12 +537,6 @@ pub fn withdraw(
     let withdrawer_addr = info.sender;
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
-
-    if !market.active {
-        return Err(ContractError::MarketNotActive {
-            denom,
-        });
-    }
 
     let asset_ma_addr = market.ma_token_address.clone();
     let withdrawer_balance_scaled_before =
@@ -707,11 +691,6 @@ pub fn borrow(
     // Load market and user state
     let mut borrow_market = MARKETS.load(deps.storage, &denom)?;
 
-    if !borrow_market.active {
-        return Err(ContractError::MarketNotActive {
-            denom,
-        });
-    }
     if !borrow_market.borrow_enabled {
         return Err(ContractError::BorrowNotEnabled {
             denom,
@@ -858,14 +837,6 @@ pub fn repay(
         sender_address.clone()
     };
 
-    let mut market = MARKETS.load(deps.storage, &denom)?;
-
-    if !market.active {
-        return Err(ContractError::MarketNotActive {
-            denom,
-        });
-    }
-
     // Cannot repay zero amount
     if repay_amount.is_zero() {
         return Err(ContractError::InvalidRepayAmount {
@@ -887,6 +858,8 @@ pub fn repay(
         &config.address_provider_address,
         MarsContract::ProtocolRewardsCollector,
     )?;
+
+    let mut market = MARKETS.load(deps.storage, &denom)?;
 
     let mut response = Response::new();
 
@@ -971,15 +944,8 @@ pub fn liquidate(
         }
     };
 
-    let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
-
-    if !collateral_market.active {
-        return Err(ContractError::MarketNotActive {
-            denom: collateral_denom,
-        });
-    }
-
     let mut user = USERS.load(deps.storage, &user_addr)?;
+    let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
     let using_collateral_asset_as_collateral =
         get_bit(user.collateral_assets, collateral_market.index)?;
     if !using_collateral_asset_as_collateral {
@@ -1034,12 +1000,6 @@ pub fn liquidate(
     } else {
         collateral_market.clone()
     };
-
-    if !debt_market.active {
-        return Err(ContractError::MarketNotActive {
-            denom: debt_denom,
-        });
-    }
 
     // 3. Compute debt to repay and collateral to liquidate
     let collateral_price = assets_positions
