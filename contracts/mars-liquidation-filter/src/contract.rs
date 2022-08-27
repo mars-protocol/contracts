@@ -46,19 +46,43 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::LiquidateMany {
-            array,
-        } => execute_liquidate(deps, env, info, array),
         ExecuteMsg::UpdateConfig {
             owner,
             address_provider,
         } => Ok(execute_update_config(deps, env, info, owner, address_provider)?),
+        ExecuteMsg::LiquidateMany {
+            array,
+        } => execute_liquidate(deps, info, array),
     }
 }
 
-pub fn execute_liquidate(
+fn execute_update_config(
     deps: DepsMut,
     _env: Env,
+    info: MessageInfo,
+    owner: Option<String>,
+    address_provider: Option<String>,
+) -> Result<Response, MarsError> {
+    let mut config = CONFIG.load(deps.storage)?;
+
+    if info.sender != config.owner {
+        return Err(MarsError::Unauthorized {});
+    };
+
+    config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
+    config.address_provider =
+        option_string_to_addr(deps.api, address_provider, config.address_provider)?;
+
+    CONFIG.save(deps.storage, &config)?;
+
+    let response =
+        Response::new().add_attribute("action", "outposts/mars-liquidation-filter/update_config");
+
+    Ok(response)
+}
+
+fn execute_liquidate(
+    deps: DepsMut,
     info: MessageInfo,
     array: Vec<Liquidate>,
 ) -> Result<Response, ContractError> {
@@ -82,15 +106,17 @@ pub fn execute_liquidate(
                 denom: liquidate.debt_denom.clone(),
             },
         )?;
+
         let user_position_response =
             query_user_position(deps.as_ref(), &red_bank_addr, &liquidate.user_address)?;
+
         if let UserHealthStatus::Borrowing {
             liq_threshold_hf,
             ..
         } = user_position_response.health_status
         {
             if liq_threshold_hf < Decimal::one() {
-                let liq_msg = liquidate_msg(&red_bank_addr, &liquidate, coin)?;
+                let liq_msg = to_red_bank_liquidate_msg(&red_bank_addr, &liquidate, coin)?;
                 messages.push(liq_msg);
             }
         }
@@ -118,7 +144,7 @@ fn query_user_position(
     Ok(res)
 }
 
-pub fn liquidate_msg(
+fn to_red_bank_liquidate_msg(
     red_bank_addr: &Addr,
     liquidate: &Liquidate,
     coin: &Coin,
@@ -135,31 +161,6 @@ pub fn liquidate_msg(
     }))
 }
 
-pub fn execute_update_config(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    owner: Option<String>,
-    address_provider: Option<String>,
-) -> Result<Response, MarsError> {
-    let mut config = CONFIG.load(deps.storage)?;
-
-    if info.sender != config.owner {
-        return Err(MarsError::Unauthorized {});
-    };
-
-    config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
-    config.address_provider =
-        option_string_to_addr(deps.api, address_provider, config.address_provider)?;
-
-    CONFIG.save(deps.storage, &config)?;
-
-    let response =
-        Response::new().add_attribute("action", "outposts/mars-liquidation-filter/update_config");
-
-    Ok(response)
-}
-
 // QUERIES
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -169,7 +170,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-pub fn query_config(deps: Deps) -> StdResult<Config> {
+fn query_config(deps: Deps) -> StdResult<Config> {
     let config = CONFIG.load(deps.storage)?;
     Ok(config)
 }
