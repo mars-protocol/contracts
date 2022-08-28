@@ -221,6 +221,7 @@ fn test_init_asset() {
         active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
+        deposit_cap: None,
     };
 
     // non owner is not authorized
@@ -398,6 +399,9 @@ fn test_init_asset() {
         let denom = MARKET_DENOMS_BY_INDEX.load(&deps.storage, 0).unwrap();
         assert_eq!("someasset", &denom);
 
+        // should have unlimited deposit cap
+        assert_eq!(market.deposit_cap, Uint128::MAX);
+
         // Should have market count of 1
         let money_market = GLOBAL_STATE.load(&deps.storage).unwrap();
         assert_eq!(money_market.market_count, 1);
@@ -501,6 +505,7 @@ fn test_init_asset_with_msg_symbol() {
         active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
+        deposit_cap: None,
     };
     let msg = ExecuteMsg::InitAsset {
         denom: "someasset".to_string(),
@@ -587,6 +592,7 @@ fn test_update_asset() {
         active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
+        deposit_cap: None,
     };
 
     // non owner is not authorized
@@ -753,6 +759,7 @@ fn test_update_asset() {
             active: Some(true),
             deposit_enabled: Some(true),
             borrow_enabled: Some(true),
+            deposit_cap: Some(Uint128::new(10_000_000)),
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
@@ -797,6 +804,7 @@ fn test_update_asset() {
             active: None,
             deposit_enabled: None,
             borrow_enabled: None,
+            deposit_cap: None
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
@@ -816,6 +824,7 @@ fn test_update_asset() {
         assert_eq!(market_before.reserve_factor, new_market.reserve_factor);
         assert_eq!(market_before.liquidation_threshold, new_market.liquidation_threshold);
         assert_eq!(market_before.liquidation_bonus, new_market.liquidation_bonus);
+        assert_eq!(market_before.deposit_cap, new_market.deposit_cap);
         assert_eq!(market_before.interest_rate_model, new_market.interest_rate_model);
     }
 }
@@ -854,6 +863,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
         active: Some(true),
         deposit_enabled: Some(true),
         borrow_enabled: Some(true),
+        deposit_cap: None,
     };
 
     let msg = ExecuteMsg::InitAsset {
@@ -966,6 +976,7 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
         active: None,
         deposit_enabled: None,
         borrow_enabled: None,
+        deposit_cap: None
     };
     let msg = ExecuteMsg::UpdateAsset {
         denom: "somecoin".to_string(),

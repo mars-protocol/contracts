@@ -171,6 +171,8 @@ pub struct InitOrUpdateAssetParams {
     pub deposit_enabled: Option<bool>,
     /// If false cannot borrow
     pub borrow_enabled: Option<bool>,
+    /// Deposit Cap defined in terms of the asset (Unlimited by default)
+    pub deposit_cap: Option<Uint128>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
