@@ -24,12 +24,12 @@ This section documents the API changes compared to the Terra Classic deployment,
 + }
 ```
 
-The `Market` struct is updated accordingly:
+The `Market` struct is updated accordingly. Note that this struct is the response type is the response type for the `market` and `markets` queries methods:
 
 ```diff
   pub struct Market {
--     pub interest_rate_model: red_bank::InterestRateModel,
-+     pub interest_rate_model: InterestRateModel,
+-     pub interest_rate_model: red_bank::InterestRateModel, # old
++     pub interest_rate_model: InterestRateModel,           # new
   }
 ```
 
