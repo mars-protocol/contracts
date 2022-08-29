@@ -14,7 +14,7 @@ use mars_outpost::helpers::{
 };
 use mars_outpost::red_bank::{
     Config, CreateOrUpdateConfig, Debt, ExecuteMsg, GlobalState, InitOrUpdateAssetParams,
-    InstantiateMsg, Market, User, UserHealthStatus,
+    InstantiateMsg, Market, User,
 };
 use mars_outpost::{ma_token, math};
 
