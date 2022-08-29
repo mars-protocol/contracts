@@ -8,16 +8,6 @@ members = [
   "contracts/mars-rewards-collector/*",
   "packages/*"
 ]
-default-members = [
-  "contracts/mars-address-provider",
-  "contracts/mars-incentives",
-  "contracts/mars-ma-token",
-  "contracts/mars-oracle/*",
-  "contracts/mars-red-bank",
-  "contracts/mars-rewards-collector/*",
-  "packages/mars-outpost",
-  "packages/mars-health"
-]
 
 [profile.release]
 opt-level = 3
