@@ -1,15 +1,15 @@
-use cosmwasm_std::{Addr, Deps, Env, Order, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdError, StdResult, Uint128};
 use cw_storage_plus::Bound;
 
 use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
 use mars_outpost::red_bank::{
     ConfigResponse, Market, UserAssetCollateralResponse, UserAssetDebtResponse,
-    UserCollateralResponse, UserDebtResponse, UserPositionResponse,
+    UserCollateralResponse, UserDebtResponse, UserHealthStatus, UserPositionResponse,
 };
 
-use crate::accounts::get_user_position;
-use crate::helpers::get_bit;
+use crate::health;
+use crate::helpers::{get_bit, get_uncollaterized_debt};
 use crate::interest_rates::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
     get_underlying_liquidity_amount,
@@ -201,30 +201,35 @@ pub fn query_user_position(
     address: Addr,
 ) -> Result<UserPositionResponse, MarsError> {
     let config = CONFIG.load(deps.storage)?;
-    let global_state = GLOBAL_STATE.load(deps.storage)?;
     let user = USERS.may_load(deps.storage, &address)?.unwrap_or_default();
     let oracle_address = address_provider::helpers::query_address(
         deps,
         &config.address_provider_address,
         MarsContract::Oracle,
     )?;
-    let user_position = get_user_position(
-        deps,
-        env.block.time.seconds(),
-        &address,
-        &oracle_address,
-        &user,
-        global_state.market_count,
-    )?;
+    let positions = health::get_user_positions_map(&deps, &env, &user, &address, &oracle_address)?;
+
+    let health = health::compute_position_health(&positions)?;
+    let health_status = if let (Some(max_ltv_hf), Some(liq_threshold_hf)) =
+        (health.max_ltv_health_factor, health.liquidation_health_factor)
+    {
+        UserHealthStatus::Borrowing {
+            max_ltv_hf,
+            liq_threshold_hf,
+        }
+    } else {
+        UserHealthStatus::NotBorrowing
+    };
+
+    let total_uncollateralized_debt = get_uncollaterized_debt(&positions)?;
 
     Ok(UserPositionResponse {
-        total_collateral_in_base_asset: user_position.total_collateral_in_base_asset,
-        total_debt_in_base_asset: user_position.total_debt_in_base_asset,
-        total_collateralized_debt_in_base_asset: user_position
-            .total_collateralized_debt_in_base_asset,
-        max_debt_in_base_asset: user_position.max_debt_in_base_asset,
-        weighted_liquidation_threshold_in_base_asset: user_position
-            .weighted_liquidation_threshold_in_base_asset,
-        health_status: user_position.health_status,
+        total_collateral_value: health.total_collateral_value,
+        total_debt_value: health.total_debt_value
+            + Decimal::from_ratio(total_uncollateralized_debt, 1u128),
+        total_collateralized_debt: health.total_debt_value,
+        weighted_max_ltv_collateral: health.max_ltv_adjusted_collateral,
+        weighted_liquidation_threshold_collateral: health.liquidation_threshold_adjusted_collateral,
+        health_status,
     })
 }

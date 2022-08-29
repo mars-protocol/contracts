@@ -32,7 +32,7 @@ impl OracleQuerier {
                 }
             }
 
-            _ => Err("[mock]: Unsupported address provider query").into(),
+            _ => Err("[mock]: Unsupported oracle query").into(),
         };
 
         Ok(ret).into()

@@ -3,13 +3,13 @@ use cosmwasm_std::{attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, SubMsg,
 
 use mars_outpost::error::MarsError;
 use mars_outpost::math;
-use mars_outpost::red_bank::{Debt, ExecuteMsg, Market, User, UserHealthStatus};
+use mars_outpost::red_bank::{Debt, ExecuteMsg, Market, User};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
-use crate::accounts::get_user_position;
 use crate::contract::execute;
 use crate::error::ContractError;
 use crate::events::build_debt_position_changed_event;
+use crate::health;
 use crate::helpers::{get_bit, set_bit};
 use crate::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_debt_amount,
@@ -364,17 +364,18 @@ fn test_update_asset_collateral() {
         };
         DEBTS.save(deps.as_mut().storage, (denom_3, &user_addr), &debt).unwrap();
 
-        let user_position = get_user_position(
-            deps.as_ref(),
-            env.block.time.seconds(),
+        let positions = health::get_user_positions_map(
+            &deps.as_ref(),
+            &env,
+            &user,
             &user_addr,
             &Addr::unchecked("oracle"),
-            &user,
-            3,
         )
         .unwrap();
+        let health = health::compute_position_health(&positions).unwrap();
+
         // Should have valid health factor
-        assert_eq!(user_position.health_status, UserHealthStatus::Borrowing(Decimal::one()));
+        assert_eq!(health.liquidation_health_factor.unwrap(), Decimal::one());
 
         // Disable second market index
         let update_msg = ExecuteMsg::UpdateAssetCollateralStatus {

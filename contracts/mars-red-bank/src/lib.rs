@@ -1,7 +1,7 @@
-mod accounts;
 pub mod error;
 mod events;
 pub mod execute;
+mod health;
 mod helpers;
 mod interest_rates;
 pub mod query;

@@ -9,9 +9,9 @@ use osmo_bindings::{
     ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Swap,
 };
 
-use crate::mock_address_provider;
 use crate::osmosis_querier::{OsmosisQuerier, PriceKey};
-use mars_outpost::{address_provider, incentives, ma_token, oracle};
+use crate::{mock_address_provider, redbank_querier::RedBankQuerier};
+use mars_outpost::{address_provider, incentives, ma_token, oracle, red_bank};
 
 use super::{
     cw20_querier::{mock_token_info_response, Cw20Querier},
@@ -25,6 +25,7 @@ pub struct MarsMockQuerier {
     oracle_querier: OracleQuerier,
     incentives_querier: IncentivesQuerier,
     osmosis_querier: OsmosisQuerier,
+    redbank_querier: RedBankQuerier,
 }
 
 impl Querier for MarsMockQuerier {
@@ -57,6 +58,7 @@ impl MarsMockQuerier {
             oracle_querier: OracleQuerier::default(),
             incentives_querier: IncentivesQuerier::default(),
             osmosis_querier: OsmosisQuerier::default(),
+            redbank_querier: RedBankQuerier::default(),
         }
     }
 
@@ -118,6 +120,10 @@ impl MarsMockQuerier {
         self.osmosis_querier.spot_prices.insert(swap.into(), spot_price);
     }
 
+    pub fn set_redbank_market(&mut self, market: red_bank::Market) {
+        self.redbank_querier.markets.insert(market.denom.clone(), market);
+    }
+
     pub fn set_twap_price(
         &mut self,
         id: u64,
@@ -173,6 +179,11 @@ impl MarsMockQuerier {
                 let parse_incentives_query: StdResult<incentives::msg::QueryMsg> = from_binary(msg);
                 if let Ok(incentives_query) = parse_incentives_query {
                     return self.incentives_querier.handle_query(&contract_addr, incentives_query);
+                }
+
+                // RedBank Queries
+                if let Ok(redbank_query) = from_binary::<red_bank::QueryMsg>(msg) {
+                    return self.redbank_querier.handle_query(redbank_query);
                 }
 
                 panic!("[mock]: Unsupported wasm query: {:?}", msg);
