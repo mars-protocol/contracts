@@ -4,7 +4,7 @@
 
 This section documents the API changes compared to the Terra Classic deployment, found in the [`mars-core`](https://github.com/mars-protocol/mars-core) repository. This section is **not comprehensive**, as the changes are numerous. Changelog for later version start here should be made comprehensive.
 
-* (#53) Several unnecessary parameters in Red Bank's execute messages are removed:
+* ([#53](https://github.com/mars-protocol/outposts/pull/53)) Several unnecessary parameters in Red Bank's execute messages are removed:
 
 ```diff
 pub struct ExecuteMsg {
@@ -25,7 +25,7 @@ pub struct ExecuteMsg {
 }
 ```
 
-* (#46) The dynamic interest rate model is removed. The `InterestRateModel` struct is simplified:
+* ([#46](https://github.com/mars-protocol/outposts/pull/46)) The dynamic interest rate model is removed. The `InterestRateModel` struct is simplified:
 
 ```diff
 - pub enum InterestRateModel {
