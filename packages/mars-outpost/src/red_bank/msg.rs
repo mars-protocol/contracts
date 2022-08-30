@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, Decimal, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::interest_rate_models::InterestRateModelParams;
+use crate::red_bank::InterestRateModel;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -163,7 +163,7 @@ pub struct InitOrUpdateAssetParams {
     pub liquidation_bonus: Option<Decimal>,
 
     /// Interest rate strategy to calculate borrow_rate and liquidity_rate
-    pub interest_rate_model_params: Option<InterestRateModelParams>,
+    pub interest_rate_model: Option<InterestRateModel>,
 
     /// If false cannot do any action (deposit/withdraw/borrow/repay/liquidate)
     pub active: Option<bool>,

@@ -1,13 +1,8 @@
 use cosmwasm_std::testing::{MockApi, MockStorage};
 use cosmwasm_std::{Coin, Decimal, DepsMut, Event, OwnedDeps, StdResult, Uint128};
 
-use mars_outpost::red_bank::{
-    update_market_interest_rates_with_model, CreateOrUpdateConfig, GlobalState, InstantiateMsg,
-    Market,
-};
-use mars_testing::{
-    mock_dependencies, mock_env, mock_env_at_block_time, mock_info, MarsMockQuerier, MockEnvParams,
-};
+use mars_outpost::red_bank::{CreateOrUpdateConfig, GlobalState, InstantiateMsg, Market};
+use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
 
 use crate::contract::instantiate;
 use crate::interest_rates::{
@@ -172,12 +167,7 @@ pub(super) fn th_get_expected_indices_and_rates(
 
     // interest rates (make a copy and update those values to get the expeted irs)
     let mut market_copy = market.clone();
-    update_market_interest_rates_with_model(
-        &mock_env_at_block_time(block_time),
-        &mut market_copy,
-        expected_utilization_rate,
-    )
-    .unwrap();
+    market_copy.update_interest_rates(expected_utilization_rate).unwrap();
 
     TestInterestResults {
         borrow_index: expected_indices.borrow,
