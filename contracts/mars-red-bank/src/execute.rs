@@ -449,8 +449,7 @@ pub fn update_uncollateralized_loan_limit(
 pub fn deposit(
     deps: DepsMut,
     env: Env,
-    _info: MessageInfo,
-    sender_address: Addr,
+    info: MessageInfo,
     on_behalf_of: Option<String>,
     denom: String,
     deposit_amount: Uint128,
@@ -458,7 +457,7 @@ pub fn deposit(
     let user_address = if let Some(address) = on_behalf_of {
         deps.api.addr_validate(&address)?
     } else {
-        sender_address.clone()
+        info.sender.clone()
     };
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
@@ -520,7 +519,7 @@ pub fn deposit(
     response = response
         .add_attribute("action", "deposit")
         .add_attribute("denom", denom)
-        .add_attribute("sender", sender_address)
+        .add_attribute("sender", info.sender)
         .add_attribute("user", user_address.as_str())
         .add_attribute("amount", deposit_amount)
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -839,8 +838,7 @@ pub fn borrow(
 pub fn repay(
     deps: DepsMut,
     env: Env,
-    _info: MessageInfo,
-    sender_address: Addr,
+    info: MessageInfo,
     on_behalf_of: Option<String>,
     denom: String,
     repay_amount: Uint128,
@@ -855,7 +853,7 @@ pub fn repay(
             _ => on_behalf_of_addr,
         }
     } else {
-        sender_address.clone()
+        info.sender.clone()
     };
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
@@ -940,7 +938,7 @@ pub fn repay(
     response = response
         .add_attribute("action", "repay")
         .add_attribute("denom", denom)
-        .add_attribute("sender", sender_address)
+        .add_attribute("sender", info.sender)
         .add_attribute("user", user_address)
         .add_attribute("amount", repay_amount.checked_sub(refund_amount)?);
     Ok(response)
@@ -950,8 +948,7 @@ pub fn repay(
 pub fn liquidate(
     mut deps: DepsMut,
     env: Env,
-    _info: MessageInfo,
-    liquidator_address: Addr,
+    info: MessageInfo,
     collateral_denom: String,
     debt_denom: String,
     user_addr: Addr,
@@ -1074,7 +1071,7 @@ pub fn liquidate(
             deps.branch(),
             block_time,
             &user_addr,
-            &liquidator_address,
+            &info.sender,
             &collateral_denom,
             &collateral_market,
             collateral_amount_to_liquidate,
@@ -1085,7 +1082,7 @@ pub fn liquidate(
             deps.branch(),
             &env,
             &user_addr,
-            &liquidator_address,
+            &info.sender,
             &collateral_denom,
             &collateral_market,
             collateral_amount_to_liquidate,
@@ -1207,11 +1204,8 @@ pub fn liquidate(
     // 7. Build response
     // refund sent amount in excess of actual debt amount to liquidate
     if refund_amount > Uint128::zero() {
-        response = response.add_message(build_send_asset_msg(
-            &liquidator_address,
-            &debt_denom,
-            refund_amount,
-        ));
+        response =
+            response.add_message(build_send_asset_msg(&info.sender, &debt_denom, refund_amount));
     }
 
     response = response
@@ -1219,7 +1213,7 @@ pub fn liquidate(
         .add_attribute("collateral_denom", collateral_denom)
         .add_attribute("debt_denom", debt_denom)
         .add_attribute("user", user_addr.as_str())
-        .add_attribute("liquidator", liquidator_address.as_str())
+        .add_attribute("liquidator", info.sender)
         .add_attribute("collateral_amount_liquidated", collateral_amount_to_liquidate.to_string())
         .add_attribute("debt_amount_repaid", debt_amount_to_repay.to_string())
         .add_attribute("refund_amount", refund_amount.to_string());

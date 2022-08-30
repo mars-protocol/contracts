@@ -1,4 +1,5 @@
 use cosmwasm_std::{OverflowError, StdError};
+use cw_utils::PaymentError;
 use thiserror::Error;
 
 use mars_outpost::error::MarsError;
@@ -10,6 +11,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Mars(#[from] MarsError),
+
+    #[error("{0}")]
+    Payment(#[from] PaymentError),
 
     #[error("{0}")]
     Overflow(#[from] OverflowError),
@@ -139,11 +143,6 @@ pub enum ContractError {
 
     #[error("User's health factor can't be less than 1 after disabling collateral")]
     InvalidHealthFactorAfterDisablingCollateral {},
-
-    #[error("Invalid coins sent. Only one coin is accepted: {denom:?}")]
-    InvalidCoinsSent {
-        denom: String,
-    },
 
     #[error("Cannot update uncollateralized loan limit because user has collateralized debt")]
     UserHasCollateralizedDebt {},
