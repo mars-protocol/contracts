@@ -864,13 +864,6 @@ pub fn repay(
         });
     }
 
-    // Cannot repay zero amount
-    if repay_amount.is_zero() {
-        return Err(ContractError::InvalidRepayAmount {
-            denom,
-        });
-    }
-
     // Check new debt
     let mut debt = DEBTS.load(deps.storage, (&denom, &user_address))?;
 

@@ -77,11 +77,6 @@ pub enum ContractError {
     #[error("Borrow amount exceeds uncollateralized loan limit given existing debt")]
     BorrowAmountExceedsUncollateralizedLoanLimit {},
 
-    #[error("Repay amount must be greater than 0 {denom:?}")]
-    InvalidRepayAmount {
-        denom: String,
-    },
-
     #[error("Cannot repay 0 debt")]
     CannotRepayZeroDebt {},
 
