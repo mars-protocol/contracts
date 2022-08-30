@@ -51,8 +51,8 @@ pub fn execute(
             address_provider,
         } => Ok(execute_update_config(deps, env, info, owner, address_provider)?),
         ExecuteMsg::LiquidateMany {
-            array,
-        } => execute_liquidate(deps, info, array),
+            liquidations,
+        } => execute_liquidate(deps, info, liquidations),
     }
 }
 
@@ -84,14 +84,9 @@ fn execute_update_config(
 fn execute_liquidate(
     deps: DepsMut,
     info: MessageInfo,
-    array: Vec<Liquidate>,
+    liquidations: Vec<Liquidate>,
 ) -> Result<Response, ContractError> {
-    // only owner can call this
     let config = CONFIG.load(deps.storage)?;
-    let owner = config.owner;
-    if info.sender != owner {
-        return Err(MarsError::Unauthorized {}.into());
-    }
 
     let red_bank_addr = address_provider::helpers::query_address(
         deps.as_ref(),
@@ -100,7 +95,7 @@ fn execute_liquidate(
     )?;
 
     let mut messages = vec![];
-    for liquidate in array {
+    for liquidate in liquidations {
         let coin = info.funds.iter().find(|&c| c.denom == liquidate.debt_denom.clone()).ok_or(
             ContractError::RequiredCoin {
                 denom: liquidate.debt_denom.clone(),

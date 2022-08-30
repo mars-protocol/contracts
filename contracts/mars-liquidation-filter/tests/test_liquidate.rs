@@ -35,7 +35,7 @@ fn test_liquidate_many_accounts_if_missing_debt_coin() {
 
     let info = mock_info("owner", &[coin(1234u128, "uosmo")]);
     let msg = ExecuteMsg::LiquidateMany {
-        array: vec![
+        liquidations: vec![
             Liquidate {
                 collateral_denom: "uatom".to_string(),
                 debt_denom: "uosmo".to_string(),
@@ -98,7 +98,7 @@ fn test_liquidate_many_accounts() {
         ],
     );
     let msg = ExecuteMsg::LiquidateMany {
-        array: vec![
+        liquidations: vec![
             Liquidate {
                 collateral_denom: "uatom".to_string(),
                 debt_denom: "umars".to_string(),

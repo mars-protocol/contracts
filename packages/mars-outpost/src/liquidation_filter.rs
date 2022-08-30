@@ -45,7 +45,7 @@ pub mod msg {
     pub enum ExecuteMsg {
         /// Set emission per second for an asset to holders of its maToken
         LiquidateMany {
-            array: Vec<Liquidate>,
+            liquidations: Vec<Liquidate>,
         },
 
         /// Update contract config (only callable by owner)
