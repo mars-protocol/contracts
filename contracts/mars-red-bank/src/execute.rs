@@ -481,7 +481,7 @@ pub fn deposit(
     let total_deposits = query_total_deposits(&deps.querier, &market.ma_token_address)?;
     if total_deposits.checked_add(deposit_amount)? > market.deposit_cap {
         return Err(ContractError::DepositCapExceeded {
-            denom
+            denom,
         });
     }
 

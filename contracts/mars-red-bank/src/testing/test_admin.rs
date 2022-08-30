@@ -804,7 +804,7 @@ fn test_update_asset() {
             active: None,
             deposit_enabled: None,
             borrow_enabled: None,
-            deposit_cap: None
+            deposit_cap: None,
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
@@ -976,7 +976,7 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
         active: None,
         deposit_enabled: None,
         borrow_enabled: None,
-        deposit_cap: None
+        deposit_cap: None,
     };
     let msg = ExecuteMsg::UpdateAsset {
         denom: "somecoin".to_string(),
