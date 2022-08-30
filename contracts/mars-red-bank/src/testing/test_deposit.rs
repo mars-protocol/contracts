@@ -301,7 +301,7 @@ fn test_exceeding_deposit_cap() {
 
     assert_eq!(
         err,
-        ContractError::DepositCapCannotBeExceeded {
+        ContractError::DepositCapExceeded {
             denom: "somecoin".to_string()
         }
     );

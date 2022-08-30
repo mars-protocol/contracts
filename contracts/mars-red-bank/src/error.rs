@@ -56,8 +56,8 @@ pub enum ContractError {
         denom: String,
     },
 
-    #[error("Deposit Cap cannot be exceeded for {denom:?}")]
-    DepositCapCannotBeExceeded {
+    #[error("Deposit Cap exceeded for {denom:?}")]
+    DepositCapExceeded {
         denom: String,
     },
 
