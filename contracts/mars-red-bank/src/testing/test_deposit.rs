@@ -147,40 +147,11 @@ fn test_cannot_deposit_if_no_market() {
 }
 
 #[test]
-fn test_cannot_deposit_if_market_not_active() {
-    let mut deps = th_setup(&[]);
-
-    let mock_market = Market {
-        ma_token_address: Addr::unchecked("ma_somecoin"),
-        active: false,
-        deposit_enabled: true,
-        ..Default::default()
-    };
-    th_init_market(deps.as_mut(), "somecoin", &mock_market);
-
-    // Check error when deposit not allowed on market
-    let env = mock_env(MockEnvParams::default());
-    let info = cosmwasm_std::testing::mock_info("depositor", &[coin(110000, "somecoin")]);
-    let msg = ExecuteMsg::Deposit {
-        denom: String::from("somecoin"),
-        on_behalf_of: None,
-    };
-    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ContractError::MarketNotActive {
-            denom: "somecoin".to_string()
-        }
-    );
-}
-
-#[test]
 fn test_cannot_deposit_if_market_not_enabled() {
     let mut deps = th_setup(&[]);
 
     let mock_market = Market {
         ma_token_address: Addr::unchecked("ma_somecoin"),
-        active: true,
         deposit_enabled: false,
         ..Default::default()
     };

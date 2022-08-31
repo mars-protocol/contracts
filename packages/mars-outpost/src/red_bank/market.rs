@@ -42,8 +42,6 @@ pub struct Market {
     /// Total debt scaled for the market's currency
     pub debt_total_scaled: Uint128,
 
-    /// If false cannot do any action (deposit/withdraw/borrow/repay/liquidate)
-    pub active: bool,
     /// If false cannot deposit
     pub deposit_enabled: bool,
     /// If false cannot borrow
@@ -67,7 +65,6 @@ impl Default for Market {
             liquidation_threshold: Decimal::one(),
             liquidation_bonus: Decimal::zero(),
             interest_rate_model: InterestRateModel::default(),
-            active: true,
             deposit_enabled: true,
             borrow_enabled: true,
         }

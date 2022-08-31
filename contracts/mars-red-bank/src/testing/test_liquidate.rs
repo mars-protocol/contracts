@@ -223,60 +223,6 @@ fn test_liquidate() {
         );
     }
 
-    // trying to liquidate when collateral market inactive
-    {
-        let env = mock_env(MockEnvParams::default());
-        let info = mock_info(liquidator_address.as_str(), &coins(100, "debt"));
-        let liquidate_msg = ExecuteMsg::Liquidate {
-            collateral_denom: "collateral".to_string(),
-            debt_denom: "debt".to_string(),
-            user_address: user_address.to_string(),
-            receive_ma_token: true,
-        };
-
-        let mut collateral_market = MARKETS.load(&deps.storage, "collateral").unwrap();
-        collateral_market.active = false;
-        MARKETS.save(&mut deps.storage, "collateral", &collateral_market).unwrap();
-
-        let error_res = execute(deps.as_mut(), env, info, liquidate_msg).unwrap_err();
-        assert_eq!(
-            error_res,
-            ContractError::MarketNotActive {
-                denom: "collateral".to_string()
-            }
-        );
-
-        collateral_market.active = true;
-        MARKETS.save(&mut deps.storage, "collateral", &collateral_market).unwrap();
-    }
-
-    // trying to liquidate when debt market inactive
-    {
-        let env = mock_env(MockEnvParams::default());
-        let info = mock_info(liquidator_address.as_str(), &coins(100, "debt"));
-        let liquidate_msg = ExecuteMsg::Liquidate {
-            collateral_denom: "collateral".to_string(),
-            debt_denom: "debt".to_string(),
-            user_address: user_address.to_string(),
-            receive_ma_token: true,
-        };
-
-        let mut debt_market = MARKETS.load(&deps.storage, "debt").unwrap();
-        debt_market.active = false;
-        MARKETS.save(&mut deps.storage, "debt", &debt_market).unwrap();
-
-        let error_res = execute(deps.as_mut(), env, info, liquidate_msg).unwrap_err();
-        assert_eq!(
-            error_res,
-            ContractError::MarketNotActive {
-                denom: "debt".to_string()
-            }
-        );
-
-        debt_market.active = true;
-        MARKETS.save(&mut deps.storage, "debt", &debt_market).unwrap();
-    }
-
     // Perform first successful liquidation receiving ma_token in return
     {
         let liquidate_msg = ExecuteMsg::Liquidate {
