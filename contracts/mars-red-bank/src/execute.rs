@@ -933,7 +933,6 @@ pub fn liquidate(
     debt_denom: String,
     user_addr: Addr,
     sent_debt_asset_amount: Uint128,
-    receive_ma_token: bool,
 ) -> Result<Response, ContractError> {
     let block_time = env.block.time.seconds();
 
@@ -1033,29 +1032,16 @@ pub fn liquidate(
 
     // 4. Update collateral positions and market depending on whether the liquidator elects to
     // receive ma_tokens or the underlying asset
-    if receive_ma_token {
-        response = process_ma_token_transfer_to_liquidator(
-            deps.branch(),
-            block_time,
-            &user_addr,
-            &info.sender,
-            &collateral_denom,
-            &collateral_market,
-            collateral_amount_to_liquidate,
-            response,
-        )?;
-    } else {
-        response = process_underlying_asset_transfer_to_liquidator(
-            deps.branch(),
-            &env,
-            &user_addr,
-            &info.sender,
-            &collateral_denom,
-            &collateral_market,
-            collateral_amount_to_liquidate,
-            response,
-        )?;
-    }
+    response = process_ma_token_transfer_to_liquidator(
+        deps.branch(),
+        block_time,
+        &user_addr,
+        &info.sender,
+        &collateral_denom,
+        &collateral_market,
+        collateral_amount_to_liquidate,
+        response,
+    )?;
 
     // if max collateral to liquidate equals the user's balance then unset collateral bit
     if collateral_amount_to_liquidate == user_collateral_balance {
@@ -1106,45 +1092,17 @@ pub fn liquidate(
 
         asset_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
 
-        let mut less_liquidity = refund_amount;
-
-        if !receive_ma_token {
-            less_liquidity = less_liquidity.checked_add(collateral_amount_to_liquidate)?;
-        };
-
         response = update_interest_rates(
             &deps,
             &env,
             &mut asset_market_after,
-            less_liquidity,
+            refund_amount,
             denom,
             response,
         )?;
 
         MARKETS.save(deps.storage, denom, &asset_market_after)?;
     } else {
-        if !receive_ma_token {
-            let mut collateral_market_after = collateral_market;
-
-            response = apply_accumulated_interests(
-                &env,
-                protocol_rewards_collector_address,
-                &mut collateral_market_after,
-                response,
-            )?;
-
-            response = update_interest_rates(
-                &deps,
-                &env,
-                &mut collateral_market_after,
-                collateral_amount_to_liquidate,
-                &collateral_denom,
-                response,
-            )?;
-
-            MARKETS.save(deps.storage, &collateral_denom, &collateral_market_after)?;
-        }
-
         let mut debt_market_after = debt_market;
 
         response = apply_accumulated_interests(
@@ -1227,50 +1185,6 @@ fn process_ma_token_transfer_to_liquidator(
         })?,
         funds: vec![],
     }));
-
-    Ok(response)
-}
-
-/// Burn ma_tokens from user and send underlying asset to liquidator
-/// Returns response with added messages and events
-pub fn process_underlying_asset_transfer_to_liquidator(
-    deps: DepsMut,
-    env: &Env,
-    user_addr: &Addr,
-    liquidator_addr: &Addr,
-    collateral_denom: &str,
-    collateral_market: &Market,
-    collateral_amount_to_liquidate: Uint128,
-    mut response: Response,
-) -> Result<Response, ContractError> {
-    let block_time = env.block.time.seconds();
-
-    // Ensure contract has enough collateral to send back underlying asset
-    let contract_collateral_balance =
-        deps.querier.query_balance(&env.contract.address, collateral_denom)?.amount;
-
-    if contract_collateral_balance < collateral_amount_to_liquidate {
-        return Err(ContractError::CannotLiquidateWhenNotEnoughCollateral {});
-    }
-
-    let collateral_amount_to_liquidate_scaled =
-        get_scaled_liquidity_amount(collateral_amount_to_liquidate, collateral_market, block_time)?;
-
-    response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: collateral_market.ma_token_address.to_string(),
-        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::Burn {
-            user: user_addr.to_string(),
-
-            amount: collateral_amount_to_liquidate_scaled,
-        })?,
-        funds: vec![],
-    }));
-
-    response = response.add_message(build_send_asset_msg(
-        liquidator_addr,
-        collateral_denom,
-        collateral_amount_to_liquidate,
-    ));
 
     Ok(response)
 }
