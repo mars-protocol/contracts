@@ -5,14 +5,12 @@ use cosmwasm_std::{coin, from_binary, Addr, Decimal, Deps, OwnedDeps};
 
 use osmo_bindings::{OsmosisQuery, PoolStateResponse, Step};
 
-use mars_outpost::rewards_collector::{Config, QueryMsg};
+use mars_outpost::rewards_collector::{Config, ExecuteMsg, QueryMsg};
+use mars_rewards_collector_osmosis::contract::entry;
+use mars_rewards_collector_osmosis::OsmosisRoute;
 use mars_testing::{mock_info, MarsMockQuerier};
 
-use crate::contract::entry;
-use crate::msg::ExecuteMsg;
-use crate::OsmosisRoute;
-
-pub(super) fn mock_config() -> Config<Addr> {
+pub fn mock_config() -> Config<Addr> {
     Config {
         owner: Addr::unchecked("owner"),
         address_provider: Addr::unchecked("address_provider"),
@@ -26,7 +24,7 @@ pub(super) fn mock_config() -> Config<Addr> {
     }
 }
 
-pub(super) fn mock_routes() -> HashMap<(&'static str, &'static str), OsmosisRoute> {
+pub fn mock_routes() -> HashMap<(&'static str, &'static str), OsmosisRoute> {
     let mut map = HashMap::new();
 
     // uosmo -> umars
@@ -71,7 +69,7 @@ pub(super) fn mock_routes() -> HashMap<(&'static str, &'static str), OsmosisRout
     map
 }
 
-pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, OsmosisQuery> {
+pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, OsmosisQuery> {
     let mut deps = OwnedDeps::<_, _, _, OsmosisQuery> {
         storage: MockStorage::default(),
         api: MockApi::default(),
@@ -135,6 +133,6 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, O
     deps
 }
 
-pub(super) fn query<T: serde::de::DeserializeOwned>(deps: Deps<OsmosisQuery>, msg: QueryMsg) -> T {
+pub fn query<T: serde::de::DeserializeOwned>(deps: Deps<OsmosisQuery>, msg: QueryMsg) -> T {
     from_binary(&entry::query(deps, mock_env(), msg).unwrap()).unwrap()
 }

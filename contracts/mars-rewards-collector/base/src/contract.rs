@@ -209,7 +209,7 @@ where
 
         Ok(Response::new()
             .add_message(withdraw_msg)
-            .add_attribute("action", "mars/rewards-collector/withdraw_from_red_bank")
+            .add_attribute("action", "outposts/rewards-collector/withdraw_from_red_bank")
             .add_attribute("denom", denom)
             .add_attribute("amount", stringify_option_amount(amount)))
     }
@@ -250,7 +250,7 @@ where
 
         Ok(Response::new()
             .add_messages(messages)
-            .add_attribute("action", "mars/rewards-collector/swap_asset")
+            .add_attribute("action", "outposts/rewards-collector/swap_asset")
             .add_attribute("denom", denom)
             .add_attribute("amount_safety_fund", amount_safety_fund)
             .add_attribute("amount_fee_collector", amount_fee_collector))
@@ -304,7 +304,7 @@ where
 
         Ok(Response::new()
             .add_message(transfer_msg)
-            .add_attribute("action", "mars/rewards-collector/distribute_rewards")
+            .add_attribute("action", "outposts/rewards-collector/distribute_rewards")
             .add_attribute("denom", denom)
             .add_attribute("amount", amount_to_distribute)
             .add_attribute("to", to_address))
@@ -324,7 +324,7 @@ where
 
         Ok(Response::new()
             .add_message(msg)
-            .add_attribute("action", "mars/rewards-collector/execute_cosmos_msg"))
+            .add_attribute("action", "outposts/rewards-collector/execute_cosmos_msg"))
     }
 
     fn query_config(&self, deps: Deps<Q>) -> StdResult<Config<String>> {

@@ -3,9 +3,7 @@ use mars_address_provider::contract::execute;
 use mars_address_provider::error::ContractError;
 use mars_address_provider::state::CONTRACTS;
 
-use mars_outpost::address_provider::{
-    AddressResponseItem, ExecuteMsg, MarsContract, QueryMsg,
-};
+use mars_outpost::address_provider::{AddressResponseItem, ExecuteMsg, MarsContract, QueryMsg};
 
 use crate::helpers::{th_query, th_setup};
 

@@ -69,7 +69,7 @@ pub fn set_address(
     CONTRACTS.save(deps.storage, contract.into(), &address)?;
 
     Ok(Response::new()
-        .add_attribute("action", "mars/address-provider/address_set")
+        .add_attribute("action", "outposts/address-provider/set_address")
         .add_attribute("contract", contract.to_string())
         .add_attribute("address", address))
 }
@@ -87,7 +87,7 @@ pub fn transfer_ownership(
     })?;
 
     Ok(Response::new()
-        .add_attribute("action", "mars/address-provider/ownership_transferred")
+        .add_attribute("action", "outposts/address-provider/transfer_ownership")
         .add_attribute("previous_owner", sender)
         .add_attribute("new_owner", new_owner))
 }
