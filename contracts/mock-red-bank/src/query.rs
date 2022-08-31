@@ -1,7 +1,8 @@
 use cosmwasm_std::{Deps, StdResult};
+use mars_outpost::red_bank::Market;
 
 use crate::helpers::load_debt_amount;
-use crate::msg::{Market, UserAssetDebtResponse};
+use crate::msg::UserAssetDebtResponse;
 use crate::state::COIN_MARKET_INFO;
 
 pub fn query_debt(
@@ -19,5 +20,6 @@ pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
     Ok(Market {
         max_loan_to_value: market_info.max_ltv,
         liquidation_threshold: market_info.liquidation_threshold,
+        ..Default::default()
     })
 }

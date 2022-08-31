@@ -86,7 +86,7 @@ fn test_borrowing_zero_does_nothing() {
 
     let position = mock.query_position(&token_id);
     assert_eq!(position.coins.len(), 0);
-    assert_eq!(position.debt_shares.len(), 0);
+    assert_eq!(position.debt.len(), 0);
 }
 
 #[test]
@@ -105,7 +105,7 @@ fn test_cannot_borrow_above_max_ltv() {
 
     let position = mock.query_position(&token_id);
     assert_eq!(position.coins.len(), 0);
-    assert_eq!(position.debt_shares.len(), 0);
+    assert_eq!(position.debt.len(), 0);
 
     let res = mock.update_credit_account(
         &token_id,
@@ -136,7 +136,7 @@ fn test_success_when_new_debt_asset() {
 
     let position = mock.query_position(&token_id);
     assert_eq!(position.coins.len(), 0);
-    assert_eq!(position.debt_shares.len(), 0);
+    assert_eq!(position.debt.len(), 0);
     mock.update_credit_account(
         &token_id,
         &user,
@@ -168,8 +168,8 @@ fn test_success_when_new_debt_asset() {
         coin_info.price * Decimal::from_atomics(342u128, 0).unwrap()
     );
 
-    let debt_shares_res = position.debt_shares.first().unwrap();
-    assert_eq!(position.debt_shares.len(), 1);
+    let debt_shares_res = position.debt.first().unwrap();
+    assert_eq!(position.debt.len(), 1);
     assert_eq!(
         debt_shares_res.shares,
         Uint128::new(42).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)
@@ -177,7 +177,7 @@ fn test_success_when_new_debt_asset() {
     assert_eq!(debt_shares_res.denom, coin_info.denom);
     let debt_amount = Uint128::new(42u128) + Uint128::new(1); // simulated yield
     assert_eq!(
-        debt_shares_res.total_value,
+        debt_shares_res.value,
         coin_info.price * Decimal::from_atomics(debt_amount, 0).unwrap()
     );
 
@@ -244,7 +244,7 @@ fn test_debt_shares_with_debt_amount() {
 
     let token_a_shares = Uint128::new(50).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED);
     let position = mock.query_position(&token_id_a);
-    let debt_position_a = position.debt_shares.first().unwrap();
+    let debt_position_a = position.debt.first().unwrap();
     assert_eq!(debt_position_a.shares, token_a_shares.clone());
     assert_eq!(debt_position_a.denom, coin_info.denom);
 
@@ -252,7 +252,7 @@ fn test_debt_shares_with_debt_amount() {
         .mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)
         .multiply_ratio(Uint128::new(50), interim_red_bank_debt.amount);
     let position = mock.query_position(&token_id_b);
-    let debt_position_b = position.debt_shares.first().unwrap();
+    let debt_position_b = position.debt.first().unwrap();
     assert_eq!(debt_position_b.shares, token_b_shares.clone());
     assert_eq!(debt_position_b.denom, coin_info.denom);
 
@@ -269,7 +269,7 @@ fn test_debt_shares_with_debt_amount() {
         .amount
         .multiply_ratio(debt_position_a.shares, total.shares);
     assert_eq!(
-        debt_position_a.total_value,
+        debt_position_a.value,
         coin_info.price * Decimal::from_atomics(a_amount_owed, 0).unwrap()
     );
 
@@ -277,7 +277,7 @@ fn test_debt_shares_with_debt_amount() {
         .amount
         .multiply_ratio(debt_position_b.shares, total.shares);
     assert_eq!(
-        debt_position_b.total_value,
+        debt_position_b.value,
         coin_info.price * Decimal::from_atomics(b_amount_owed, 0).unwrap()
     );
 
@@ -291,6 +291,6 @@ fn test_debt_shares_with_debt_amount() {
     let total_owed = Decimal::from_atomics(a_amount_owed + b_amount_owed, 0).unwrap();
     assert_eq!(
         total_owed * coin_info.price,
-        debt_position_a.total_value + debt_position_b.total_value
+        debt_position_a.value + debt_position_b.value
     )
 }

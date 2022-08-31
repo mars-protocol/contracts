@@ -1,4 +1,7 @@
-# Based on https://github.com/actions-rs/example/blob/master/.github/workflows/quickstart.yml
+# NOTE: after Mars outposts publishes external crate, this workflow should revert to:
+# https://github.com/mars-protocol/rover/blob/8824233d4106eb71ee41a9c7a84b4b94a2bad072/.github/workflows/main.yml
+# Rust optimizer does not support local package dependencies from other workspaces. For this reason it is
+# temporarily disabled until it can be replaced by a crates.io dep.
 
 on: pull_request
 
@@ -11,7 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          path: rover
+
+      - name: Checkout mars-outposts
+        uses: actions/checkout@v3
+        with:
+          repository: mars-protocol/outposts
+          token: ${{ secrets.TEMP_ACCESS_TOKEN }}
+          path: outposts
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -25,32 +37,28 @@ jobs:
         uses: davidB/rust-cargo-make@v1
 
       - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command: make
-          args: check
+        working-directory: rover
+        run: cargo make check
 
       - name: Compile WASM contract
-        uses: actions-rs/cargo@v1
-        with:
-          command: make
-          args: build
-        env:
-          RUSTFLAGS: "-C link-arg=-s"
-
-
-      - name: Run Rust-Optimizer
-        uses: actions-rs/cargo@v1
-        with:
-          command: make
-          args: rust-optimizer
+        working-directory: rover
+        run: cargo make build
 
   test:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          path: rover
+
+      - name: Checkout mars-outposts
+        uses: actions/checkout@v3
+        with:
+          repository: mars-protocol/outposts
+          token: ${{ secrets.TEMP_ACCESS_TOKEN }}
+          path: outposts
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -63,10 +71,8 @@ jobs:
         uses: davidB/rust-cargo-make@v1
 
       - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: make
-          args: test
+        working-directory: rover
+        run: cargo make test
         env:
           RUST_BACKTRACE: 1
 
@@ -75,7 +81,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          path: rover
+
+      - name: Checkout mars-outposts
+        uses: actions/checkout@v3
+        with:
+          repository: mars-protocol/outposts
+          token: ${{ secrets.TEMP_ACCESS_TOKEN }}
+          path: outposts
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -88,14 +103,10 @@ jobs:
       - name: Install cargo make
         uses: davidB/rust-cargo-make@v1
 
-      - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: make
-          args: fmt
+      - name: Run tests
+        working-directory: rover
+        run: cargo make fmt
 
       - name: Run cargo clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: make
-          args: clippy
+        working-directory: rover
+        run: cargo make clippy

@@ -13,13 +13,12 @@ use mock_red_bank::msg::QueryMsg::UserAssetDebt;
 use mock_red_bank::msg::{
     CoinMarketInfo, InstantiateMsg as RedBankInstantiateMsg, UserAssetDebtResponse,
 };
-
 use rover::adapters::{OracleBase, RedBankBase};
-use rover::health::Health;
 use rover::msg::execute::{Action, CallbackMsg};
 use rover::msg::instantiate::ConfigUpdates;
 use rover::msg::query::{
-    CoinBalanceResponseItem, CoinShares, ConfigResponse, PositionResponse, SharesResponseItem,
+    CoinBalanceResponseItem, ConfigResponse, DebtShares, HealthResponse,
+    PositionsWithValueResponse, SharesResponseItem,
 };
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
@@ -157,19 +156,19 @@ impl MockEnv {
     // Queries
     //--------------------------------------------------------------------------------------------------
 
-    pub fn query_position(&self, token_id: &str) -> PositionResponse {
+    pub fn query_position(&self, token_id: &str) -> PositionsWithValueResponse {
         self.app
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
-                &QueryMsg::Position {
+                &QueryMsg::Positions {
                     token_id: token_id.to_string(),
                 },
             )
             .unwrap()
     }
 
-    pub fn query_health(&self, token_id: &str) -> Health {
+    pub fn query_health(&self, token_id: &str) -> HealthResponse {
         self.app
             .wrap()
             .query_wasm_smart(
@@ -252,7 +251,7 @@ impl MockEnv {
         &self,
         start_after: Option<String>,
         limit: Option<u32>,
-    ) -> Vec<CoinShares> {
+    ) -> Vec<DebtShares> {
         self.app
             .wrap()
             .query_wasm_smart(
@@ -262,7 +261,7 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_total_debt_shares(&self, denom: &str) -> CoinShares {
+    pub fn query_total_debt_shares(&self, denom: &str) -> DebtShares {
         self.app
             .wrap()
             .query_wasm_smart(

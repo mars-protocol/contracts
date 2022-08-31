@@ -5,7 +5,7 @@ use rover::error::ContractError::{
     ExtraFundsReceived, FundsMismatch, NotTokenOwner, NotWhitelisted,
 };
 use rover::msg::execute::Action;
-use rover::msg::query::PositionResponse;
+use rover::msg::query::PositionsWithValueResponse;
 
 use crate::helpers::{
     assert_err, uatom_info, ujake_info, uosmo_info, AccountToFund, CoinInfo, MockEnv,
@@ -278,7 +278,12 @@ fn test_multiple_deposit_actions() {
     assert_eq!(coin.amount, uatom_amount);
 }
 
-fn assert_present(res: &PositionResponse, coin: &CoinInfo, amount: Uint128, total_val: Decimal) {
+fn assert_present(
+    res: &PositionsWithValueResponse,
+    coin: &CoinInfo,
+    amount: Uint128,
+    total_val: Decimal,
+) {
     res.coins
         .iter()
         .find(|item| item.denom == coin.denom && item.amount == amount && item.value == total_val)

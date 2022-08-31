@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, Coin, Uint128};
 
 use credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use rover::msg::execute::Action;
-use rover::msg::query::CoinShares;
+use rover::msg::query::DebtShares;
 
 use crate::helpers::{build_mock_coin_infos, AccountToFund, MockEnv};
 
@@ -144,13 +144,13 @@ fn test_pagination_on_all_total_debt_shares_query_works() {
 
     let all_total_debt_shares_res_a = mock.query_all_total_debt_shares(None, None);
 
-    let CoinShares { denom, .. } = all_total_debt_shares_res_a.last().unwrap().clone();
+    let DebtShares { denom, .. } = all_total_debt_shares_res_a.last().unwrap().clone();
     let all_total_debt_shares_res_b = mock.query_all_total_debt_shares(Some(denom), None);
 
-    let CoinShares { denom, .. } = all_total_debt_shares_res_b.last().unwrap().clone();
+    let DebtShares { denom, .. } = all_total_debt_shares_res_b.last().unwrap().clone();
     let all_total_debt_shares_res_c = mock.query_all_total_debt_shares(Some(denom), None);
 
-    let CoinShares { denom, .. } = all_total_debt_shares_res_c.last().unwrap().clone();
+    let DebtShares { denom, .. } = all_total_debt_shares_res_c.last().unwrap().clone();
     let all_total_debt_shares_res_d = mock.query_all_total_debt_shares(Some(denom), None);
 
     // Assert default is observed
@@ -160,7 +160,7 @@ fn test_pagination_on_all_total_debt_shares_query_works() {
 
     assert_eq!(all_total_debt_shares_res_d.len(), 2);
 
-    let combined_res: Vec<CoinShares> = all_total_debt_shares_res_a
+    let combined_res: Vec<DebtShares> = all_total_debt_shares_res_a
         .iter()
         .cloned()
         .chain(all_total_debt_shares_res_b.iter().cloned())
@@ -170,29 +170,29 @@ fn test_pagination_on_all_total_debt_shares_query_works() {
 
     let user_a_response_items = user_a_coins
         .iter()
-        .map(|coin| CoinShares {
+        .map(|coin| DebtShares {
             denom: coin.denom.clone(),
             shares: DEFAULT_DEBT_SHARES_PER_COIN_BORROWED,
         })
-        .collect::<Vec<CoinShares>>();
+        .collect::<Vec<DebtShares>>();
 
     let user_b_response_items = user_b_coins
         .iter()
-        .map(|coin| CoinShares {
+        .map(|coin| DebtShares {
             denom: coin.denom.clone(),
             shares: DEFAULT_DEBT_SHARES_PER_COIN_BORROWED,
         })
-        .collect::<Vec<CoinShares>>();
+        .collect::<Vec<DebtShares>>();
 
     let user_c_response_items = user_c_coins
         .iter()
-        .map(|coin| CoinShares {
+        .map(|coin| DebtShares {
             denom: coin.denom.clone(),
             shares: DEFAULT_DEBT_SHARES_PER_COIN_BORROWED,
         })
-        .collect::<Vec<CoinShares>>();
+        .collect::<Vec<DebtShares>>();
 
-    let combined_starting_vals: Vec<CoinShares> = user_a_response_items
+    let combined_starting_vals: Vec<DebtShares> = user_a_response_items
         .iter()
         .cloned()
         .chain(user_b_response_items)

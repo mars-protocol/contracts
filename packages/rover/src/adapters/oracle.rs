@@ -1,4 +1,5 @@
-use cosmwasm_std::{Addr, Api, Decimal, QuerierWrapper, StdResult};
+use cosmwasm_std::{Addr, Api, QuerierWrapper, StdResult};
+use mars_outpost::oracle::PriceResponse;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -33,10 +34,10 @@ impl OracleUnchecked {
 }
 
 impl Oracle {
-    pub fn query_price(&self, querier: &QuerierWrapper, denom: &str) -> StdResult<Decimal> {
+    pub fn query_price(&self, querier: &QuerierWrapper, denom: &str) -> StdResult<PriceResponse> {
         querier.query_wasm_smart(
             self.address().to_string(),
-            &QueryMsg::AssetPrice {
+            &QueryMsg::Price {
                 denom: denom.to_string(),
             },
         )

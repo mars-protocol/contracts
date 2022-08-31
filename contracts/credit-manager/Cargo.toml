@@ -15,6 +15,7 @@ library = []
 
 [dependencies]
 account-nft = { version = "0.1", path = "../account-nft", features = ["library"] }
+mars-health = { version = "0.1", path = "../../../outposts/packages/mars-health" }
 mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features = ["library"] }
 mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }
 rover = { version = "0.1", path = "../../packages/rover" }

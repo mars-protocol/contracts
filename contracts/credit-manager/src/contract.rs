@@ -1,7 +1,8 @@
 use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
-use rover::error::ContractResult;
 
+use rover::error::ContractResult;
+use rover::msg::query::HealthResponse;
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::execute::{create_credit_account, dispatch_actions, execute_callback, update_config};
@@ -9,7 +10,7 @@ use crate::health::compute_health;
 use crate::instantiate::store_config;
 use crate::query::{
     query_all_assets, query_all_debt_shares, query_all_total_debt_shares, query_allowed_coins,
-    query_allowed_vaults, query_config, query_position, query_total_debt_shares,
+    query_allowed_vaults, query_config, query_position_with_value, query_total_debt_shares,
 };
 
 const CONTRACT_NAME: &str = "crates.io:rover-credit-manager";
@@ -54,8 +55,12 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         QueryMsg::AllowedCoins { start_after, limit } => {
             to_binary(&query_allowed_coins(deps, start_after, limit)?)
         }
-        QueryMsg::Position { token_id } => to_binary(&query_position(deps, &env, &token_id)?),
-        QueryMsg::Health { token_id } => to_binary(&compute_health(deps, &env, &token_id)?),
+        QueryMsg::Positions { token_id } => {
+            to_binary(&query_position_with_value(deps, &env, &token_id)?)
+        }
+        QueryMsg::Health { token_id } => {
+            to_binary::<HealthResponse>(&Into::into(compute_health(deps, &env, &token_id)?))
+        }
         QueryMsg::AllCoinBalances { start_after, limit } => {
             to_binary(&query_all_assets(deps, start_after, limit)?)
         }

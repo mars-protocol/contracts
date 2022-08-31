@@ -1,4 +1,5 @@
-use cosmwasm_std::{Decimal, Uint128};
+use cosmwasm_std::{Coin, Decimal, Uint128};
+use mars_health::health::Health;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -17,9 +18,9 @@ pub enum QueryMsg {
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    /// The entire position represented by token. Response type: `PositionResponse`
-    Position { token_id: String },
-    /// The health of the entire position represented by token. Response type: `Health`
+    /// All positions represented by token with value. Response type: `PositionsWithValueResponse`
+    Positions { token_id: String },
+    /// The health of the account represented by token. Response type: `HealthResponse`
     Health { token_id: String },
     /// Enumerate coin balances for all token positions. Response type: `Vec<CoinBalanceResponseItem>`
     /// start_after accepts (token_id, denom)
@@ -61,9 +62,23 @@ pub struct SharesResponseItem {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct CoinShares {
+pub struct DebtShares {
     pub denom: String,
     pub shares: Uint128,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct DebtSharesValue {
+    pub denom: String,
+    /// number of shares in debt pool
+    pub shares: Uint128,
+    /// amount of coins
+    pub amount: Uint128,
+    /// price per coin
+    pub price: Decimal,
+    /// price * amount
+    pub value: Decimal,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -75,23 +90,23 @@ pub struct CoinValue {
     pub value: Decimal,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct DebtSharesValue {
-    pub denom: String,
-    pub shares: Uint128,
-    pub total_value: Decimal,
+pub struct Positions {
+    pub token_id: String,
+    pub coins: Vec<Coin>,
+    pub debt: Vec<DebtShares>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct PositionResponse {
+pub struct PositionsWithValueResponse {
     /// Unique NFT token id that represents the cross-margin account. The owner of this NFT, owns the account.
     pub token_id: String,
-    /// All coin balances with its value
+    /// All coin balances value
     pub coins: Vec<CoinValue>,
-    /// All debt positions with its value
-    pub debt_shares: Vec<DebtSharesValue>,
+    /// All debt positions with value
+    pub debt: Vec<DebtSharesValue>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -101,4 +116,32 @@ pub struct ConfigResponse {
     pub account_nft: Option<String>,
     pub red_bank: String,
     pub oracle: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct HealthResponse {
+    pub total_debt_value: Decimal,
+    pub total_collateral_value: Decimal,
+    pub max_ltv_adjusted_collateral: Decimal,
+    pub liquidation_threshold_adjusted_collateral: Decimal,
+    pub max_ltv_health_factor: Option<Decimal>,
+    pub liquidation_health_factor: Option<Decimal>,
+    pub liquidatable: bool,
+    pub above_max_ltv: bool,
+}
+
+impl From<Health> for HealthResponse {
+    fn from(h: Health) -> Self {
+        Self {
+            total_debt_value: h.total_debt_value,
+            total_collateral_value: h.total_collateral_value,
+            max_ltv_adjusted_collateral: h.max_ltv_adjusted_collateral,
+            liquidation_threshold_adjusted_collateral: h.liquidation_threshold_adjusted_collateral,
+            max_ltv_health_factor: h.max_ltv_health_factor,
+            liquidation_health_factor: h.liquidation_health_factor,
+            liquidatable: h.is_liquidatable(),
+            above_max_ltv: h.is_above_max_ltv(),
+        }
+    }
 }

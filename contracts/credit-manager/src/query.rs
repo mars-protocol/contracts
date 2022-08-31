@@ -1,10 +1,10 @@
-use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdResult, Uint128};
+use cosmwasm_std::{Addr, Coin, Deps, Env, Order, StdResult};
 use cw_storage_plus::Bound;
 
 use rover::error::ContractResult;
 use rover::msg::query::{
-    CoinBalanceResponseItem, CoinShares, CoinValue, ConfigResponse, DebtSharesValue,
-    PositionResponse, SharesResponseItem,
+    CoinBalanceResponseItem, ConfigResponse, DebtShares, DebtSharesValue, Positions,
+    PositionsWithValueResponse, SharesResponseItem,
 };
 use rover::{Denom, NftTokenId};
 
@@ -12,6 +12,7 @@ use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, COIN_BALANCES, DEBT_SHARES, ORACLE, OWNER,
     RED_BANK, TOTAL_DEBT_SHARES,
 };
+use crate::utils::{coin_value, debt_shares_to_amount};
 
 const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
@@ -27,18 +28,50 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     })
 }
 
-pub fn query_position(
+pub fn query_position(deps: Deps, token_id: NftTokenId) -> ContractResult<Positions> {
+    Ok(Positions {
+        token_id: token_id.to_string(),
+        coins: query_coin_balances(deps, token_id)?,
+        debt: query_debt_shares(deps, token_id)?,
+    })
+}
+
+pub fn query_position_with_value(
     deps: Deps,
     env: &Env,
-    token_id: NftTokenId,
-) -> ContractResult<PositionResponse> {
-    let coin_asset_values = get_coin_balances_values(deps, token_id)?;
-    let debt_shares_values = get_debt_shares_values(deps, env, token_id)?;
+    token_id: &str,
+) -> ContractResult<PositionsWithValueResponse> {
+    let Positions {
+        token_id,
+        coins,
+        debt,
+    } = query_position(deps, token_id)?;
 
-    Ok(PositionResponse {
-        token_id: token_id.to_string(),
-        coins: coin_asset_values,
-        debt_shares: debt_shares_values,
+    let coin_balances_value = coins
+        .iter()
+        .map(|coin| coin_value(&deps, coin))
+        .collect::<ContractResult<Vec<_>>>()?;
+
+    let debt_with_values = debt
+        .iter()
+        .map(|item| {
+            let coin =
+                debt_shares_to_amount(deps, &env.contract.address, &item.denom, item.shares)?;
+            let cv = coin_value(&deps, &coin)?;
+            Ok(DebtSharesValue {
+                denom: cv.denom,
+                shares: item.shares,
+                amount: cv.amount,
+                price: cv.price,
+                value: cv.value,
+            })
+        })
+        .collect::<ContractResult<Vec<_>>>()?;
+
+    Ok(PositionsWithValueResponse {
+        token_id,
+        coins: coin_balances_value,
+        debt: debt_with_values,
     })
 }
 
@@ -65,63 +98,24 @@ pub fn query_all_assets(
         .collect())
 }
 
-fn get_debt_shares_values(
-    deps: Deps,
-    env: &Env,
-    token_id: NftTokenId,
-) -> ContractResult<Vec<DebtSharesValue>> {
-    let oracle = ORACLE.load(deps.storage)?;
-
+fn query_debt_shares(deps: Deps, token_id: NftTokenId) -> ContractResult<Vec<DebtShares>> {
     DEBT_SHARES
         .prefix(token_id)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|res| {
             let (denom, shares) = res?;
-            // total shares of debt issued for denom
-            let total_debt_shares = TOTAL_DEBT_SHARES
-                .load(deps.storage, &denom)
-                .unwrap_or(Uint128::zero());
-
-            // total rover debt amount in Redbank for asset
-            let red_bank = RED_BANK.load(deps.storage)?;
-            let total_debt_amount =
-                red_bank.query_debt(&deps.querier, &env.contract.address, &denom)?;
-
-            // amount of debt for token's position
-            // NOTE: Given the nature of integers, the debt is rounded down. This means that the
-            //       remaining share owners will take a small hit of the remainder.
-            let owed = total_debt_amount.checked_multiply_ratio(shares, total_debt_shares)?;
-            let owed_dec = Decimal::from_atomics(owed, 0)?;
-
-            // debt value of token's position
-            let coin_price = oracle.query_price(&deps.querier, &denom)?;
-            let position_debt_value = coin_price.checked_mul(owed_dec)?;
-
-            Ok(DebtSharesValue {
-                total_value: position_debt_value,
-                denom,
-                shares,
-            })
+            Ok(DebtShares { denom, shares })
         })
         .collect()
 }
 
-fn get_coin_balances_values(deps: Deps, token_id: &str) -> ContractResult<Vec<CoinValue>> {
-    let oracle = ORACLE.load(deps.storage)?;
+fn query_coin_balances(deps: Deps, token_id: &str) -> ContractResult<Vec<Coin>> {
     COIN_BALANCES
         .prefix(token_id)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|item| {
             let (denom, amount) = item?;
-            let price = oracle.query_price(&deps.querier, &denom)?;
-            let decimal_amount = Decimal::from_atomics(amount, 0)?;
-            let value = price.checked_mul(decimal_amount)?;
-            Ok(CoinValue {
-                denom,
-                amount,
-                price,
-                value,
-            })
+            Ok(Coin { denom, amount })
         })
         .collect()
 }
@@ -198,9 +192,9 @@ pub fn query_allowed_coins(
         .collect::<StdResult<Vec<_>>>()
 }
 
-pub fn query_total_debt_shares(deps: Deps, denom: Denom) -> StdResult<CoinShares> {
+pub fn query_total_debt_shares(deps: Deps, denom: Denom) -> StdResult<DebtShares> {
     let shares = TOTAL_DEBT_SHARES.load(deps.storage, denom)?;
-    Ok(CoinShares {
+    Ok(DebtShares {
         denom: denom.to_string(),
         shares,
     })
@@ -210,7 +204,7 @@ pub fn query_all_total_debt_shares(
     deps: Deps,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<CoinShares>> {
+) -> StdResult<Vec<DebtShares>> {
     let start = start_after
         .as_ref()
         .map(|denom| Bound::exclusive(denom.as_str()));
@@ -222,7 +216,7 @@ pub fn query_all_total_debt_shares(
         .take(limit)
         .collect::<StdResult<Vec<_>>>()?
         .iter()
-        .map(|(denom, shares)| CoinShares {
+        .map(|(denom, shares)| DebtShares {
             denom: denom.to_string(),
             shares: *shares,
         })

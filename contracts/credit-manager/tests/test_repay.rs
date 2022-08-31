@@ -200,7 +200,7 @@ fn test_successful_repay() {
 
     let position = mock.query_position(&token_id);
     assert_eq!(position.coins.len(), 0);
-    assert_eq!(position.debt_shares.len(), 0);
+    assert_eq!(position.debt.len(), 0);
 
     mock.update_credit_account(
         &token_id,
@@ -229,8 +229,8 @@ fn test_successful_repay() {
     let expected_net_asset_amount = Uint128::new(330); // Deposit + Borrow - Repay
     assert_eq!(asset_res.amount, expected_net_asset_amount);
 
-    let debt_shares_res = position.debt_shares.first().unwrap();
-    assert_eq!(position.debt_shares.len(), 1);
+    let debt_shares_res = position.debt.first().unwrap();
+    assert_eq!(position.debt.len(), 1);
     assert_eq!(debt_shares_res.denom, coin_info.denom);
 
     let former_total_debt_shares = Uint128::new(50).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED);
@@ -268,7 +268,7 @@ fn test_successful_repay() {
     assert_eq!(asset_res.amount, expected_net_asset_amount);
 
     // Full debt repaid and purged from storage
-    assert_eq!(position.debt_shares.len(), 0);
+    assert_eq!(position.debt.len(), 0);
 
     let res = mock.query_total_debt_shares(&coin_info.denom);
     assert_eq!(res.shares, Uint128::zero());
@@ -317,7 +317,7 @@ fn test_pays_max_debt_when_attempting_to_repay_more_than_owed() {
     let expected_net_asset_amount = Uint128::new(299); // Deposit + Borrow - Repay - interest
     assert_eq!(asset_res.amount, expected_net_asset_amount);
 
-    assert_eq!(position.debt_shares.len(), 0);
+    assert_eq!(position.debt.len(), 0);
 
     let res = mock.query_total_debt_shares(&coin_info.denom);
     assert_eq!(res.shares, Uint128::zero());
