@@ -4,7 +4,6 @@ use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
 use mars_outpost::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::error::ContractError;
-use crate::helpers::get_denom_amount_from_coins;
 use crate::{execute, query};
 
 #[entry_point]
@@ -51,20 +50,10 @@ pub fn execute(
             )
         }
         ExecuteMsg::Deposit {
-            denom,
             on_behalf_of,
         } => {
-            let deposit_amount = get_denom_amount_from_coins(&info.funds, &denom)?;
-            let depositor_address = info.sender.clone();
-            execute::deposit(
-                deps,
-                env,
-                info,
-                depositor_address,
-                on_behalf_of,
-                denom,
-                deposit_amount,
-            )
+            let sent_coin = cw_utils::one_coin(&info)?;
+            execute::deposit(deps, env, info, on_behalf_of, sent_coin.denom, sent_coin.amount)
         }
         ExecuteMsg::Withdraw {
             denom,
@@ -77,32 +66,26 @@ pub fn execute(
             recipient: recipient_address,
         } => execute::borrow(deps, env, info, denom, amount, recipient_address),
         ExecuteMsg::Repay {
-            denom,
             on_behalf_of,
         } => {
-            let repayer_address = info.sender.clone();
-            let repay_amount = get_denom_amount_from_coins(&info.funds, &denom)?;
-
-            execute::repay(deps, env, info, repayer_address, on_behalf_of, denom, repay_amount)
+            let sent_coin = cw_utils::one_coin(&info)?;
+            execute::repay(deps, env, info, on_behalf_of, sent_coin.denom, sent_coin.amount)
         }
         ExecuteMsg::Liquidate {
             collateral_denom,
-            debt_denom,
             user_address,
             receive_ma_token,
         } => {
-            let sender = info.sender.clone();
             let user_addr = deps.api.addr_validate(&user_address)?;
-            let sent_debt_asset_amount = get_denom_amount_from_coins(&info.funds, &debt_denom)?;
+            let sent_coin = cw_utils::one_coin(&info)?;
             execute::liquidate(
                 deps,
                 env,
                 info,
-                sender,
                 collateral_denom,
-                debt_denom,
+                sent_coin.denom,
                 user_addr,
-                sent_debt_asset_amount,
+                sent_coin.amount,
                 receive_ma_token,
             )
         }

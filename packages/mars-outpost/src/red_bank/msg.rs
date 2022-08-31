@@ -62,8 +62,6 @@ pub enum ExecuteMsg {
     /// Deposit native coins. Deposited coins must be sent in the transaction
     /// this call is made
     Deposit {
-        /// Denom used (e.g: uluna, uusd)
-        denom: String,
         /// Address that will receive the maTokens
         on_behalf_of: Option<String>,
     },
@@ -93,8 +91,6 @@ pub enum ExecuteMsg {
     /// Repay native coins loan. Coins used to repay must be sent in the
     /// transaction this call is made.
     Repay {
-        /// Denom used (e.g: uluna, uusd)
-        denom: String,
         /// Repay the funds for the user
         on_behalf_of: Option<String>,
     },
@@ -104,8 +100,6 @@ pub enum ExecuteMsg {
     Liquidate {
         /// Denom of the collateral asset, which liquidator gets from the borrower
         collateral_denom: String,
-        /// Denom of the debt asset
-        debt_denom: String,
         /// The address of the borrower getting liquidated
         user_address: String,
         /// Whether the liquidator gets liquidated collateral in maToken (true) or

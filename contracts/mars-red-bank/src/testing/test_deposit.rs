@@ -5,6 +5,7 @@ use cosmwasm_std::{
     attr, coin, to_binary, Addr, CosmosMsg, Decimal, StdError, SubMsg, Uint128, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
+use cw_utils::PaymentError;
 
 use mars_outpost::red_bank::{ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
@@ -48,7 +49,6 @@ fn test_deposit_native_asset() {
     let env = mock_env_at_block_time(10000100);
     let info = cosmwasm_std::testing::mock_info("depositor", &[coin(deposit_amount, "somecoin")]);
     let msg = ExecuteMsg::Deposit {
-        denom: String::from("somecoin"),
         on_behalf_of: None,
     };
     let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -110,30 +110,18 @@ fn test_deposit_native_asset() {
         &[coin(100, "somecoin1"), coin(200, "somecoin2")],
     );
     let msg = ExecuteMsg::Deposit {
-        denom: String::from("somecoin2"),
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ContractError::InvalidCoinsSent {
-            denom: "somecoin2".to_string()
-        }
-    );
+    assert_eq!(error_res, PaymentError::MultipleDenoms {}.into());
 
     // empty deposit fails
     let info = mock_info("depositor", &[]);
     let msg = ExecuteMsg::Deposit {
-        denom: String::from("somecoin"),
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ContractError::InvalidCoinsSent {
-            denom: "somecoin".to_string()
-        }
-    );
+    assert_eq!(error_res, PaymentError::NoFunds {}.into());
 }
 
 #[test]
@@ -143,7 +131,6 @@ fn test_cannot_deposit_if_no_market() {
 
     let info = cosmwasm_std::testing::mock_info("depositer", &[coin(110000, "somecoin")]);
     let msg = ExecuteMsg::Deposit {
-        denom: String::from("somecoin"),
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
@@ -165,7 +152,6 @@ fn test_cannot_deposit_if_market_not_enabled() {
     let env = mock_env(MockEnvParams::default());
     let info = cosmwasm_std::testing::mock_info("depositor", &[coin(110000, "somecoin")]);
     let msg = ExecuteMsg::Deposit {
-        denom: String::from("somecoin"),
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
@@ -202,7 +188,6 @@ fn test_deposit_on_behalf_of() {
         &[coin(deposit_amount, "somecoin")],
     );
     let msg = ExecuteMsg::Deposit {
-        denom: String::from("somecoin"),
         on_behalf_of: Some(another_user_addr.to_string()),
     };
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
@@ -266,7 +251,6 @@ fn test_exceeding_deposit_cap() {
     let env = mock_env_at_block_time(10000100);
     let info = cosmwasm_std::testing::mock_info("depositor", &[coin(deposit_amount, "somecoin")]);
     let msg = ExecuteMsg::Deposit {
-        denom: String::from("somecoin"),
         on_behalf_of: None,
     };
     let err = execute(deps.as_mut(), env, info, msg).unwrap_err();

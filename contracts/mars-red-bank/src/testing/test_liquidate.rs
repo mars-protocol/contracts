@@ -3,6 +3,7 @@ use cosmwasm_std::{
     attr, coin, coins, to_binary, Addr, BankMsg, CosmosMsg, Decimal, Response, StdError, StdResult,
     SubMsg, Uint128, WasmMsg,
 };
+use cw_utils::PaymentError;
 
 use mars_outpost::red_bank::{Debt, ExecuteMsg, InterestRateModel, Market, User};
 use mars_outpost::{ma_token, math};
@@ -132,7 +133,6 @@ fn test_liquidate() {
 
         let liquidate_msg = ExecuteMsg::Liquidate {
             collateral_denom: "collateral".to_string(),
-            debt_denom: "debt".to_string(),
             user_address: user_address.to_string(),
             receive_ma_token: true,
         };
@@ -171,7 +171,6 @@ fn test_liquidate() {
 
         let liquidate_msg = ExecuteMsg::Liquidate {
             collateral_denom: "collateral".to_string(),
-            debt_denom: "debt".to_string(),
             user_address: user_address.to_string(),
             receive_ma_token: true,
         };
@@ -207,7 +206,6 @@ fn test_liquidate() {
     {
         let liquidate_msg = ExecuteMsg::Liquidate {
             collateral_denom: "collateral".to_string(),
-            debt_denom: "debt".to_string(),
             user_address: user_address.to_string(),
             receive_ma_token: true,
         };
@@ -215,19 +213,13 @@ fn test_liquidate() {
         let env = mock_env(MockEnvParams::default());
         let info = mock_info(liquidator_address.as_str(), &[]);
         let error_res = execute(deps.as_mut(), env, info, liquidate_msg).unwrap_err();
-        assert_eq!(
-            error_res,
-            ContractError::InvalidCoinsSent {
-                denom: "debt".to_string()
-            }
-        );
+        assert_eq!(error_res, PaymentError::NoFunds {}.into());
     }
 
     // Perform first successful liquidation receiving ma_token in return
     {
         let liquidate_msg = ExecuteMsg::Liquidate {
             collateral_denom: "collateral".to_string(),
-            debt_denom: "debt".to_string(),
             user_address: user_address.to_string(),
             receive_ma_token: true,
         };
@@ -351,7 +343,6 @@ fn test_liquidate() {
     {
         let liquidate_msg = ExecuteMsg::Liquidate {
             collateral_denom: "collateral".to_string(),
-            debt_denom: "debt".to_string(),
             user_address: user_address.to_string(),
             receive_ma_token: false,
         };
@@ -525,7 +516,6 @@ fn test_liquidate() {
 
         let liquidate_msg = ExecuteMsg::Liquidate {
             collateral_denom: "collateral".to_string(),
-            debt_denom: "debt".to_string(),
             user_address: user_address.to_string(),
             receive_ma_token: false,
         };
@@ -666,17 +656,11 @@ fn test_liquidate() {
         );
         let msg = ExecuteMsg::Liquidate {
             collateral_denom: "collateral".to_string(),
-            debt_denom: "somecoin2".to_string(),
             user_address: user_address.to_string(),
             receive_ma_token: false,
         };
         let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-        assert_eq!(
-            error_res,
-            ContractError::InvalidCoinsSent {
-                denom: "somecoin2".to_string()
-            }
-        );
+        assert_eq!(error_res, PaymentError::MultipleDenoms {}.into());
     }
 }
 
@@ -772,7 +756,6 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let debt_to_repay = Uint128::from(400_000_u64);
         let liquidate_msg = ExecuteMsg::Liquidate {
             collateral_denom: "the_asset".to_string(),
-            debt_denom: "the_asset".to_string(),
             user_address: user_address.to_string(),
             receive_ma_token: true,
         };
@@ -915,7 +898,6 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let debt_to_repay = Uint128::from(400_000_u64);
         let liquidate_msg = ExecuteMsg::Liquidate {
             collateral_denom: "the_asset".to_string(),
-            debt_denom: "the_asset".to_string(),
             user_address: user_address.to_string(),
             receive_ma_token: false,
         };
@@ -1062,7 +1044,6 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
 
         let liquidate_msg = ExecuteMsg::Liquidate {
             collateral_denom: "the_asset".to_string(),
-            debt_denom: "the_asset".to_string(),
             user_address: user_address.to_string(),
             receive_ma_token: true,
         };
@@ -1217,7 +1198,6 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
 
         let liquidate_msg = ExecuteMsg::Liquidate {
             collateral_denom: "the_asset".to_string(),
-            debt_denom: "the_asset".to_string(),
             user_address: user_address.to_string(),
             receive_ma_token: false,
         };
@@ -1479,7 +1459,6 @@ fn test_liquidation_health_factor_check() {
 
     let liquidate_msg = ExecuteMsg::Liquidate {
         collateral_denom: "collateral".to_string(),
-        debt_denom: "debt".to_string(),
         user_address: healthy_user_address.to_string(),
         receive_ma_token: true,
     };
@@ -1530,7 +1509,6 @@ fn test_liquidate_if_collateral_disabled() {
 
     let liquidate_msg = ExecuteMsg::Liquidate {
         collateral_denom: "collateral2".to_string(),
-        debt_denom: "debt".to_string(),
         user_address: user_address.to_string(),
         receive_ma_token: true,
     };

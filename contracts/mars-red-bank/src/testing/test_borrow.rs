@@ -1,6 +1,7 @@
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128};
 
+use cw_utils::PaymentError;
 use mars_outpost::math;
 use mars_outpost::red_bank::{ExecuteMsg, Market, User};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
@@ -302,16 +303,10 @@ fn test_borrow_and_repay() {
     let env = mock_env_at_block_time(block_time);
     let info = mock_info("borrower", &[]);
     let msg = ExecuteMsg::Repay {
-        denom: String::from("uusd"),
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ContractError::InvalidCoinsSent {
-            denom: "uusd".to_string()
-        }
-    );
+    assert_eq!(error_res, PaymentError::NoFunds {}.into());
 
     // *
     // Repay some uusd debt
@@ -321,7 +316,6 @@ fn test_borrow_and_repay() {
     let env = mock_env_at_block_time(block_time);
     let info = cosmwasm_std::testing::mock_info("borrower", &[coin(repay_amount.into(), "uusd")]);
     let msg = ExecuteMsg::Repay {
-        denom: String::from("uusd"),
         on_behalf_of: None,
     };
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
@@ -399,7 +393,6 @@ fn test_borrow_and_repay() {
     let env = mock_env_at_block_time(block_time);
     let info = cosmwasm_std::testing::mock_info("borrower", &[coin(repay_amount, "uusd")]);
     let msg = ExecuteMsg::Repay {
-        denom: String::from("uusd"),
         on_behalf_of: None,
     };
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
@@ -439,7 +432,6 @@ fn test_borrow_and_repay() {
     let env = mock_env(MockEnvParams::default());
     let info = cosmwasm_std::testing::mock_info("borrower", &[coin(2000, "uusd")]);
     let msg = ExecuteMsg::Repay {
-        denom: String::from("uusd"),
         on_behalf_of: None,
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
@@ -465,7 +457,6 @@ fn test_borrow_and_repay() {
     let env = mock_env_at_block_time(block_time);
     let info = cosmwasm_std::testing::mock_info("borrower", &[coin(repay_amount.u128(), "uosmo")]);
     let msg = ExecuteMsg::Repay {
-        denom: String::from("uosmo"),
         on_behalf_of: None,
     };
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
@@ -580,7 +571,6 @@ fn test_repay_on_behalf_of() {
         &[coin(repay_amount, "borrowedcoinnative")],
     );
     let msg = ExecuteMsg::Repay {
-        denom: String::from("borrowedcoinnative"),
         on_behalf_of: Some(borrower_addr.to_string()),
     };
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
@@ -628,7 +618,6 @@ fn test_repay_uncollateralized_loan_on_behalf_of() {
     let env = mock_env(MockEnvParams::default());
     let info = cosmwasm_std::testing::mock_info(repayer_addr.as_str(), &[coin(110000, "somecoin")]);
     let msg = ExecuteMsg::Repay {
-        denom: "somecoin".to_string(),
         on_behalf_of: Some(another_user_addr.to_string()),
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
@@ -799,7 +788,6 @@ fn test_borrow_full_liquidity_and_then_repay() {
         let env = mock_env_at_block_time(new_block_time);
         let info = cosmwasm_std::testing::mock_info("borrower", &[coin(2000, "uusd")]);
         let msg = ExecuteMsg::Repay {
-            denom: String::from("uusd"),
             on_behalf_of: None,
         };
         // check that repay succeeds
