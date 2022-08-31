@@ -46,6 +46,8 @@ pub struct Market {
     pub deposit_enabled: bool,
     /// If false cannot borrow
     pub borrow_enabled: bool,
+    /// Deposit Cap (defined in terms of the asset)
+    pub deposit_cap: Uint128,
 }
 
 impl Default for Market {
@@ -67,6 +69,8 @@ impl Default for Market {
             interest_rate_model: InterestRateModel::default(),
             deposit_enabled: true,
             borrow_enabled: true,
+            // By default the cap should be unlimited (no cap)
+            deposit_cap: Uint128::MAX,
         }
     }
 }

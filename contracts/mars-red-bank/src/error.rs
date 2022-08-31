@@ -56,6 +56,11 @@ pub enum ContractError {
         denom: String,
     },
 
+    #[error("Deposit Cap exceeded for {denom:?}")]
+    DepositCapExceeded {
+        denom: String,
+    },
+
     #[error("Cannot have 0 as liquidity index")]
     InvalidLiquidityIndex {},
 

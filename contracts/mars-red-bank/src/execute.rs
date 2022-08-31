@@ -24,7 +24,7 @@ use crate::health::{
     assert_below_liq_threshold_after_withdraw, assert_below_max_ltv_after_borrow,
     assert_liquidatable,
 };
-use crate::helpers::{get_bit, set_bit, unset_bit};
+use crate::helpers::{get_bit, query_total_deposits, set_bit, unset_bit};
 use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
     get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
@@ -228,6 +228,7 @@ pub fn create_market(
         interest_rate_model,
         deposit_enabled,
         borrow_enabled,
+        deposit_cap,
     } = params;
 
     // All fields should be available
@@ -261,6 +262,8 @@ pub fn create_market(
         interest_rate_model: interest_rate_model.unwrap(),
         deposit_enabled: deposit_enabled.unwrap(),
         borrow_enabled: borrow_enabled.unwrap(),
+        // if not specified, deposit cap is set to unlimited
+        deposit_cap: deposit_cap.unwrap_or(Uint128::MAX),
     };
 
     new_market.validate()?;
@@ -322,6 +325,7 @@ pub fn update_asset(
                 interest_rate_model,
                 deposit_enabled,
                 borrow_enabled,
+                deposit_cap,
             } = asset_params;
 
             // If reserve factor or interest rates are updated we update indexes with
@@ -357,6 +361,7 @@ pub fn update_asset(
                 interest_rate_model: interest_rate_model.unwrap_or(market.interest_rate_model),
                 deposit_enabled: deposit_enabled.unwrap_or(market.deposit_enabled),
                 borrow_enabled: borrow_enabled.unwrap_or(market.borrow_enabled),
+                deposit_cap: deposit_cap.unwrap_or(market.deposit_cap),
                 ..market
             };
 
@@ -445,20 +450,29 @@ pub fn deposit(
     deps: DepsMut,
     env: Env,
     _info: MessageInfo,
-    sender_address: Addr,
+    sender_addr: Addr,
     on_behalf_of: Option<String>,
     denom: String,
     deposit_amount: Uint128,
 ) -> Result<Response, ContractError> {
-    let user_address = if let Some(address) = on_behalf_of {
+    let user_addr = if let Some(address) = on_behalf_of {
         deps.api.addr_validate(&address)?
     } else {
-        sender_address.clone()
+        sender_addr.clone()
     };
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
     if !market.deposit_enabled {
         return Err(ContractError::DepositNotEnabled {
+            denom,
+        });
+    }
+
+    let total_scaled_deposits = query_total_deposits(&deps.querier, &market.ma_token_address)?;
+    let total_deposits =
+        get_underlying_liquidity_amount(total_scaled_deposits, &market, env.block.time.seconds())?;
+    if total_deposits.checked_add(deposit_amount)? > market.deposit_cap {
+        return Err(ContractError::DepositCapExceeded {
             denom,
         });
     }
@@ -470,17 +484,17 @@ pub fn deposit(
         });
     }
 
-    let mut user = USERS.may_load(deps.storage, &user_address)?.unwrap_or_default();
+    let mut user = USERS.may_load(deps.storage, &user_addr)?.unwrap_or_default();
 
     let mut response = Response::new();
     let has_deposited_asset = get_bit(user.collateral_assets, market.index)?;
     if !has_deposited_asset {
         set_bit(&mut user.collateral_assets, market.index)?;
-        USERS.save(deps.storage, &user_address, &user)?;
+        USERS.save(deps.storage, &user_addr, &user)?;
         response = response.add_event(build_collateral_position_changed_event(
             &denom,
             true,
-            user_address.to_string(),
+            user_addr.to_string(),
         ));
     }
 
@@ -510,13 +524,13 @@ pub fn deposit(
     response = response
         .add_attribute("action", "deposit")
         .add_attribute("denom", denom)
-        .add_attribute("sender", sender_address)
-        .add_attribute("user", user_address.as_str())
+        .add_attribute("sender", sender_addr)
+        .add_attribute("user", user_addr.as_str())
         .add_attribute("amount", deposit_amount)
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: market.ma_token_address.into(),
             msg: to_binary(&Cw20ExecuteMsg::Mint {
-                recipient: user_address.into(),
+                recipient: user_addr.into(),
                 amount: mint_amount,
             })?,
             funds: vec![],
