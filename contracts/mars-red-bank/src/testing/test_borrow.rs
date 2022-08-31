@@ -504,33 +504,6 @@ fn test_borrow_and_repay() {
 }
 
 #[test]
-fn test_cannot_repay_if_market_inactive() {
-    let mut deps = th_setup(&[]);
-
-    let mock_market = Market {
-        ma_token_address: Addr::unchecked("ma_somecoin"),
-        active: false,
-        deposit_enabled: true,
-        borrow_enabled: true,
-        ..Default::default()
-    };
-    let _market = th_init_market(deps.as_mut(), "somecoin", &mock_market);
-
-    let env = mock_env(MockEnvParams::default());
-    let info = cosmwasm_std::testing::mock_info("borrower", &[coin(110000, "somecoin")]);
-    let msg = ExecuteMsg::Repay {
-        on_behalf_of: None,
-    };
-    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ContractError::MarketNotActive {
-            denom: "somecoin".to_string()
-        }
-    );
-}
-
-#[test]
 fn test_repay_on_behalf_of() {
     let available_liquidity_native = Uint128::from(1000000000u128);
     let mut deps = th_setup(&[coin(available_liquidity_native.into(), "borrowedcoinnative")]);
@@ -951,41 +924,11 @@ fn test_borrow_collateral_check() {
 }
 
 #[test]
-fn test_cannot_borrow_if_market_not_active() {
-    let mut deps = th_setup(&[]);
-
-    let mock_market = Market {
-        ma_token_address: Addr::unchecked("ma_somecoin"),
-        active: false,
-        borrow_enabled: true,
-        ..Default::default()
-    };
-    th_init_market(deps.as_mut(), "somecoin", &mock_market);
-
-    // Check error when borrowing not allowed on market
-    let env = mock_env(MockEnvParams::default());
-    let info = cosmwasm_std::testing::mock_info("borrower", &[coin(110000, "somecoin")]);
-    let msg = ExecuteMsg::Borrow {
-        denom: "somecoin".to_string(),
-        amount: Uint128::new(1000),
-        recipient: None,
-    };
-    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ContractError::MarketNotActive {
-            denom: "somecoin".to_string()
-        }
-    );
-}
-
-#[test]
 fn test_cannot_borrow_if_market_not_enabled() {
     let mut deps = th_setup(&[]);
 
     let mock_market = Market {
         ma_token_address: Addr::unchecked("ma_somecoin"),
-        active: true,
         borrow_enabled: false,
         ..Default::default()
     };

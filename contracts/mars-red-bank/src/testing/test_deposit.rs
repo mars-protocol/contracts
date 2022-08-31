@@ -26,9 +26,12 @@ fn test_deposit_native_asset() {
     let initial_liquidity = Uint128::from(10000000_u128);
     let mut deps = th_setup(&[coin(initial_liquidity.into(), "somecoin")]);
     let reserve_factor = Decimal::from_ratio(1u128, 10u128);
+    let ma_token_addr = Addr::unchecked("matoken");
+
+    deps.querier.set_cw20_total_supply(ma_token_addr.clone(), Uint128::new(10_000_000));
 
     let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
+        ma_token_address: ma_token_addr,
         liquidity_index: Decimal::from_ratio(11u128, 10u128),
         max_loan_to_value: Decimal::one(),
         borrow_index: Decimal::from_ratio(1u128, 1u128),
@@ -37,6 +40,7 @@ fn test_deposit_native_asset() {
         reserve_factor,
         debt_total_scaled: Uint128::new(10_000_000) * SCALING_FACTOR,
         indexes_last_updated: 10000000,
+        deposit_cap: Uint128::new(12_000_000),
         ..Default::default()
     };
     let market = th_init_market(deps.as_mut(), "somecoin", &mock_market);
@@ -134,39 +138,11 @@ fn test_cannot_deposit_if_no_market() {
 }
 
 #[test]
-fn test_cannot_deposit_if_market_not_active() {
-    let mut deps = th_setup(&[]);
-
-    let mock_market = Market {
-        ma_token_address: Addr::unchecked("ma_somecoin"),
-        active: false,
-        deposit_enabled: true,
-        ..Default::default()
-    };
-    th_init_market(deps.as_mut(), "somecoin", &mock_market);
-
-    // Check error when deposit not allowed on market
-    let env = mock_env(MockEnvParams::default());
-    let info = cosmwasm_std::testing::mock_info("depositor", &[coin(110000, "somecoin")]);
-    let msg = ExecuteMsg::Deposit {
-        on_behalf_of: None,
-    };
-    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ContractError::MarketNotActive {
-            denom: "somecoin".to_string()
-        }
-    );
-}
-
-#[test]
 fn test_cannot_deposit_if_market_not_enabled() {
     let mut deps = th_setup(&[]);
 
     let mock_market = Market {
         ma_token_address: Addr::unchecked("ma_somecoin"),
-        active: true,
         deposit_enabled: false,
         ..Default::default()
     };
@@ -191,9 +167,12 @@ fn test_cannot_deposit_if_market_not_enabled() {
 fn test_deposit_on_behalf_of() {
     let initial_liquidity = 10000000;
     let mut deps = th_setup(&[coin(initial_liquidity, "somecoin")]);
+    let ma_token_addr = Addr::unchecked("matoken");
+
+    deps.querier.set_cw20_total_supply(ma_token_addr.clone(), Uint128::new(10_000_000));
 
     let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
+        ma_token_address: ma_token_addr,
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
         ..Default::default()
@@ -249,5 +228,37 @@ fn test_deposit_on_behalf_of() {
             attr("user", another_user_addr),
             attr("amount", deposit_amount.to_string()),
         ]
+    );
+}
+
+#[test]
+fn test_exceeding_deposit_cap() {
+    let initial_liquidity = Uint128::from(10_000_000u128);
+    let mut deps = th_setup(&[coin(initial_liquidity.into(), "somecoin")]);
+    let ma_token_addr = Addr::unchecked("matoken");
+
+    // Set the scaled total supply of the maToken `somecoin`
+    deps.querier.set_cw20_total_supply(ma_token_addr.clone(), Uint128::new(9_000_000_000_000));
+
+    let mock_market = Market {
+        ma_token_address: ma_token_addr,
+        deposit_cap: Uint128::new(10_000_000),
+        ..Default::default()
+    };
+    th_init_market(deps.as_mut(), "somecoin", &mock_market);
+
+    let deposit_amount = 1_000_001;
+    let env = mock_env_at_block_time(10000100);
+    let info = cosmwasm_std::testing::mock_info("depositor", &[coin(deposit_amount, "somecoin")]);
+    let msg = ExecuteMsg::Deposit {
+        on_behalf_of: None,
+    };
+    let err = execute(deps.as_mut(), env, info, msg).unwrap_err();
+
+    assert_eq!(
+        err,
+        ContractError::DepositCapExceeded {
+            denom: "somecoin".to_string()
+        }
     );
 }

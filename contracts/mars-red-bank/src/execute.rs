@@ -24,7 +24,7 @@ use crate::health::{
     assert_below_liq_threshold_after_withdraw, assert_below_max_ltv_after_borrow,
     assert_liquidatable,
 };
-use crate::helpers::{get_bit, set_bit, unset_bit};
+use crate::helpers::{get_bit, query_total_deposits, set_bit, unset_bit};
 use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
     get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
@@ -226,9 +226,9 @@ pub fn create_market(
         liquidation_threshold,
         liquidation_bonus,
         interest_rate_model,
-        active,
         deposit_enabled,
         borrow_enabled,
+        deposit_cap,
     } = params;
 
     // All fields should be available
@@ -238,7 +238,6 @@ pub fn create_market(
         && liquidation_threshold.is_some()
         && liquidation_bonus.is_some()
         && interest_rate_model.is_some()
-        && active.is_some()
         && deposit_enabled.is_some()
         && borrow_enabled.is_some();
 
@@ -261,9 +260,10 @@ pub fn create_market(
         liquidation_threshold: liquidation_threshold.unwrap(),
         liquidation_bonus: liquidation_bonus.unwrap(),
         interest_rate_model: interest_rate_model.unwrap(),
-        active: active.unwrap(),
         deposit_enabled: deposit_enabled.unwrap(),
         borrow_enabled: borrow_enabled.unwrap(),
+        // if not specified, deposit cap is set to unlimited
+        deposit_cap: deposit_cap.unwrap_or(Uint128::MAX),
     };
 
     new_market.validate()?;
@@ -323,9 +323,9 @@ pub fn update_asset(
                 liquidation_threshold,
                 liquidation_bonus,
                 interest_rate_model,
-                active,
                 deposit_enabled,
                 borrow_enabled,
+                deposit_cap,
             } = asset_params;
 
             // If reserve factor or interest rates are updated we update indexes with
@@ -359,9 +359,9 @@ pub fn update_asset(
                     .unwrap_or(market.liquidation_threshold),
                 liquidation_bonus: liquidation_bonus.unwrap_or(market.liquidation_bonus),
                 interest_rate_model: interest_rate_model.unwrap_or(market.interest_rate_model),
-                active: active.unwrap_or(market.active),
                 deposit_enabled: deposit_enabled.unwrap_or(market.deposit_enabled),
                 borrow_enabled: borrow_enabled.unwrap_or(market.borrow_enabled),
+                deposit_cap: deposit_cap.unwrap_or(market.deposit_cap),
                 ..market
             };
 
@@ -454,20 +454,24 @@ pub fn deposit(
     denom: String,
     deposit_amount: Uint128,
 ) -> Result<Response, ContractError> {
-    let user_address = if let Some(address) = on_behalf_of {
+    let user_addr = if let Some(address) = on_behalf_of {
         deps.api.addr_validate(&address)?
     } else {
         info.sender.clone()
     };
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
-    if !market.active {
-        return Err(ContractError::MarketNotActive {
+    if !market.deposit_enabled {
+        return Err(ContractError::DepositNotEnabled {
             denom,
         });
     }
-    if !market.deposit_enabled {
-        return Err(ContractError::DepositNotEnabled {
+
+    let total_scaled_deposits = query_total_deposits(&deps.querier, &market.ma_token_address)?;
+    let total_deposits =
+        get_underlying_liquidity_amount(total_scaled_deposits, &market, env.block.time.seconds())?;
+    if total_deposits.checked_add(deposit_amount)? > market.deposit_cap {
+        return Err(ContractError::DepositCapExceeded {
             denom,
         });
     }
@@ -479,17 +483,17 @@ pub fn deposit(
         });
     }
 
-    let mut user = USERS.may_load(deps.storage, &user_address)?.unwrap_or_default();
+    let mut user = USERS.may_load(deps.storage, &user_addr)?.unwrap_or_default();
 
     let mut response = Response::new();
     let has_deposited_asset = get_bit(user.collateral_assets, market.index)?;
     if !has_deposited_asset {
         set_bit(&mut user.collateral_assets, market.index)?;
-        USERS.save(deps.storage, &user_address, &user)?;
+        USERS.save(deps.storage, &user_addr, &user)?;
         response = response.add_event(build_collateral_position_changed_event(
             &denom,
             true,
-            user_address.to_string(),
+            user_addr.to_string(),
         ));
     }
 
@@ -520,12 +524,12 @@ pub fn deposit(
         .add_attribute("action", "deposit")
         .add_attribute("denom", denom)
         .add_attribute("sender", info.sender)
-        .add_attribute("user", user_address.as_str())
+        .add_attribute("user", user_addr.as_str())
         .add_attribute("amount", deposit_amount)
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: market.ma_token_address.into(),
             msg: to_binary(&Cw20ExecuteMsg::Mint {
-                recipient: user_address.into(),
+                recipient: user_addr.into(),
                 amount: mint_amount,
             })?,
             funds: vec![],
@@ -546,12 +550,6 @@ pub fn withdraw(
     let withdrawer_addr = info.sender;
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
-
-    if !market.active {
-        return Err(ContractError::MarketNotActive {
-            denom,
-        });
-    }
 
     let asset_ma_addr = market.ma_token_address.clone();
     let withdrawer_balance_scaled_before =
@@ -706,11 +704,6 @@ pub fn borrow(
     // Load market and user state
     let mut borrow_market = MARKETS.load(deps.storage, &denom)?;
 
-    if !borrow_market.active {
-        return Err(ContractError::MarketNotActive {
-            denom,
-        });
-    }
     if !borrow_market.borrow_enabled {
         return Err(ContractError::BorrowNotEnabled {
             denom,
@@ -856,14 +849,6 @@ pub fn repay(
         info.sender.clone()
     };
 
-    let mut market = MARKETS.load(deps.storage, &denom)?;
-
-    if !market.active {
-        return Err(ContractError::MarketNotActive {
-            denom,
-        });
-    }
-
     // Check new debt
     let mut debt = DEBTS.load(deps.storage, (&denom, &user_address))?;
 
@@ -878,6 +863,8 @@ pub fn repay(
         &config.address_provider_address,
         MarsContract::ProtocolRewardsCollector,
     )?;
+
+    let mut market = MARKETS.load(deps.storage, &denom)?;
 
     let mut response = Response::new();
 
@@ -961,15 +948,8 @@ pub fn liquidate(
         }
     };
 
-    let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
-
-    if !collateral_market.active {
-        return Err(ContractError::MarketNotActive {
-            denom: collateral_denom,
-        });
-    }
-
     let mut user = USERS.load(deps.storage, &user_addr)?;
+    let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
     let using_collateral_asset_as_collateral =
         get_bit(user.collateral_assets, collateral_market.index)?;
     if !using_collateral_asset_as_collateral {
@@ -1024,12 +1004,6 @@ pub fn liquidate(
     } else {
         collateral_market.clone()
     };
-
-    if !debt_market.active {
-        return Err(ContractError::MarketNotActive {
-            denom: debt_denom,
-        });
-    }
 
     // 3. Compute debt to repay and collateral to liquidate
     let collateral_price = assets_positions

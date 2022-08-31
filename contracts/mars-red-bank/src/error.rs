@@ -60,6 +60,11 @@ pub enum ContractError {
         denom: String,
     },
 
+    #[error("Deposit Cap exceeded for {denom:?}")]
+    DepositCapExceeded {
+        denom: String,
+    },
+
     #[error("Cannot have 0 as liquidity index")]
     InvalidLiquidityIndex {},
 
@@ -123,11 +128,6 @@ pub enum ContractError {
 
     #[error("Borrow for {denom:?} is not enabled")]
     BorrowNotEnabled {
-        denom: String,
-    },
-
-    #[error("Cannot perform operation. Market for {denom:?} is not active")]
-    MarketNotActive {
         denom: String,
     },
 

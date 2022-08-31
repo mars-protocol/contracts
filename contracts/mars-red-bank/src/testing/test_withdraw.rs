@@ -272,35 +272,6 @@ fn test_withdraw_cannot_exceed_balance() {
 }
 
 #[test]
-fn test_cannot_withdraw_if_market_inactive() {
-    let mut deps = th_setup(&[]);
-
-    let mock_market = Market {
-        ma_token_address: Addr::unchecked("ma_somecoin"),
-        active: false,
-        deposit_enabled: true,
-        borrow_enabled: true,
-        ..Default::default()
-    };
-    let _market = th_init_market(deps.as_mut(), "somecoin", &mock_market);
-
-    let env = mock_env(MockEnvParams::default());
-    let info = cosmwasm_std::testing::mock_info("withdrawer", &[coin(110000, "somecoin")]);
-    let msg = ExecuteMsg::Withdraw {
-        denom: "somecoin".to_string(),
-        amount: Some(Uint128::new(2000)),
-        recipient: None,
-    };
-    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ContractError::MarketNotActive {
-            denom: "somecoin".to_string()
-        }
-    );
-}
-
-#[test]
 fn test_withdraw_if_health_factor_not_met() {
     let initial_available_liquidity = Uint128::from(10000000u128);
     let mut deps = th_setup(&[coin(initial_available_liquidity.into(), "token3")]);
