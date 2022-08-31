@@ -98,8 +98,8 @@ pub enum ExecuteMsg {
     /// Liquidate under-collateralized native loans. Coins used to repay must be sent in the
     /// transaction this call is made.
     ///
-    /// The liquidator will receive collateral shares. To get the underlying asset, dispatch a
-    /// `withdraw` execute message.
+    /// The liquidator will receive collateral shares. To get the underlying asset, consider sending
+    /// a separate `withdraw` execute message.
     Liquidate {
         /// Denom of the collateral asset, which liquidator gets from the borrower
         collateral_denom: String,
