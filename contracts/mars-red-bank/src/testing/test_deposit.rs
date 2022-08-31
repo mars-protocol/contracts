@@ -281,7 +281,8 @@ fn test_exceeding_deposit_cap() {
     let mut deps = th_setup(&[coin(initial_liquidity.into(), "somecoin")]);
     let ma_token_addr = Addr::unchecked("matoken");
 
-    deps.querier.set_cw20_total_supply(ma_token_addr.clone(), Uint128::new(9_000_000));
+    // Set the scaled total supply of the maToken `somecoin`
+    deps.querier.set_cw20_total_supply(ma_token_addr.clone(), Uint128::new(9_000_000_000_000));
 
     let mock_market = Market {
         ma_token_address: ma_token_addr,

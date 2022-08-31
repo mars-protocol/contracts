@@ -478,7 +478,9 @@ pub fn deposit(
         });
     }
 
-    let total_deposits = query_total_deposits(&deps.querier, &market.ma_token_address)?;
+    let total_scaled_deposits = query_total_deposits(&deps.querier, &market.ma_token_address)?;
+    let total_deposits =
+        get_underlying_liquidity_amount(total_scaled_deposits, &market, env.block.time.seconds())?;
     if total_deposits.checked_add(deposit_amount)? > market.deposit_cap {
         return Err(ContractError::DepositCapExceeded {
             denom,
