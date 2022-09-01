@@ -74,7 +74,6 @@ pub fn execute(
         ExecuteMsg::Liquidate {
             collateral_denom,
             user_address,
-            receive_ma_token,
         } => {
             let user_addr = deps.api.addr_validate(&user_address)?;
             let sent_coin = cw_utils::one_coin(&info)?;
@@ -86,7 +85,6 @@ pub fn execute(
                 sent_coin.denom,
                 user_addr,
                 sent_coin.amount,
-                receive_ma_token,
             )
         }
         ExecuteMsg::UpdateAssetCollateralStatus {
