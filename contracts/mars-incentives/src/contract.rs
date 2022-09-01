@@ -77,7 +77,7 @@ pub fn execute_set_asset_incentive(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    ma_token_address: String,
+    ma_token: String,
     emission_per_second: Uint128,
 ) -> Result<Response, ContractError> {
     // only owner can call this
@@ -88,16 +88,14 @@ pub fn execute_set_asset_incentive(
     }
 
     // use lower case address to prevent duplicate assets
-    let ma_token_address = ma_token_address.to_lowercase();
-    let ma_asset_address = deps.api.addr_validate(&ma_token_address)?;
+    let ma_token = ma_token.to_lowercase();
+    let ma_asset_addr = deps.api.addr_validate(&ma_token)?;
 
-    let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &ma_asset_address)? {
+    let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &ma_asset_addr)? {
         Some(mut asset_incentive) => {
             // Update index up to now
-            let total_supply = mars_outpost::helpers::cw20_get_total_supply(
-                &deps.querier,
-                ma_asset_address.clone(),
-            )?;
+            let total_supply =
+                mars_outpost::helpers::cw20_get_total_supply(&deps.querier, ma_asset_addr.clone())?;
             asset_incentive_update_index(
                 &mut asset_incentive,
                 total_supply,
@@ -116,11 +114,11 @@ pub fn execute_set_asset_incentive(
         },
     };
 
-    ASSET_INCENTIVES.save(deps.storage, &ma_asset_address, &new_asset_incentive)?;
+    ASSET_INCENTIVES.save(deps.storage, &ma_asset_addr, &new_asset_incentive)?;
 
     let response = Response::new().add_attributes(vec![
-        attr("action", "set_asset_incentive"),
-        attr("ma_asset", ma_token_address),
+        attr("action", "outposts/incentives/set_asset_incentive"),
+        attr("ma_asset", ma_token),
         attr("emission_per_second", emission_per_second),
     ]);
     Ok(response)
@@ -130,12 +128,12 @@ pub fn execute_balance_change(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    user_address: Addr,
+    user_addr: Addr,
     user_balance_before: Uint128,
     total_supply_before: Uint128,
 ) -> Result<Response, ContractError> {
-    let ma_token_address = info.sender;
-    let mut asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &ma_token_address)? {
+    let ma_token_addr = info.sender;
+    let mut asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &ma_token_addr)? {
         // If there are no incentives,
         // an empty successful response is returned as the
         // success of the call is needed for the call that triggered the change to
@@ -150,10 +148,10 @@ pub fn execute_balance_change(
         total_supply_before,
         env.block.time.seconds(),
     )?;
-    ASSET_INCENTIVES.save(deps.storage, &ma_token_address, &asset_incentive)?;
+    ASSET_INCENTIVES.save(deps.storage, &ma_token_addr, &asset_incentive)?;
 
     // Check if user has accumulated uncomputed rewards (which means index is not up to date)
-    let user_asset_index_key = USER_ASSET_INDICES.key((&user_address, &ma_token_address));
+    let user_asset_index_key = USER_ASSET_INDICES.key((&user_addr, &ma_token_addr));
 
     let user_asset_index =
         user_asset_index_key.may_load(deps.storage)?.unwrap_or_else(Decimal::zero);
@@ -172,7 +170,7 @@ pub fn execute_balance_change(
         if !accrued_rewards.is_zero() {
             USER_UNCLAIMED_REWARDS.update(
                 deps.storage,
-                &user_address,
+                &user_addr,
                 |ur: Option<Uint128>| -> StdResult<Uint128> {
                     match ur {
                         Some(unclaimed_rewards) => Ok(unclaimed_rewards + accrued_rewards),
@@ -186,9 +184,9 @@ pub fn execute_balance_change(
     }
 
     let response = Response::new().add_attributes(vec![
-        attr("action", "balance_change"),
-        attr("ma_asset", ma_token_address),
-        attr("user", user_address),
+        attr("action", "outposts/incentives/balance_change"),
+        attr("ma_asset", ma_token_addr),
+        attr("user", user_addr),
         attr("rewards_accrued", accrued_rewards),
         attr("asset_index", asset_incentive.index.to_string()),
     ]);
@@ -238,7 +236,7 @@ pub fn execute_claim_rewards(
     };
 
     response = response.add_attributes(vec![
-        attr("action", "claim_rewards"),
+        attr("action", "outposts/incentives/claim_rewards"),
         attr("user", user_addr),
         attr("mars_rewards", total_unclaimed_rewards),
     ]);
@@ -264,7 +262,7 @@ pub fn execute_update_config(
 
     CONFIG.save(deps.storage, &config)?;
 
-    let response = Response::new().add_attribute("action", "update_config");
+    let response = Response::new().add_attribute("action", "outposts/incentives/update_config");
 
     Ok(response)
 }
@@ -281,7 +279,9 @@ pub fn execute_execute_cosmos_msg(
         return Err(MarsError::Unauthorized {});
     }
 
-    let response = Response::new().add_attribute("action", "execute_cosmos_msg").add_message(msg);
+    let response = Response::new()
+        .add_attribute("action", "outposts/incentives/execute_cosmos_msg")
+        .add_message(msg);
 
     Ok(response)
 }
@@ -306,24 +306,17 @@ pub fn query_config(deps: Deps) -> StdResult<Config> {
     Ok(config)
 }
 
-pub fn query_asset_incentive(
-    deps: Deps,
-    ma_token_address_unchecked: String,
-) -> StdResult<AssetIncentiveResponse> {
-    let ma_token_address = deps.api.addr_validate(&ma_token_address_unchecked)?;
-    let option_asset_incentive = ASSET_INCENTIVES.may_load(deps.storage, &ma_token_address)?;
+pub fn query_asset_incentive(deps: Deps, ma_token: String) -> StdResult<AssetIncentiveResponse> {
+    let ma_token_addr = deps.api.addr_validate(&ma_token)?;
+    let option_asset_incentive = ASSET_INCENTIVES.may_load(deps.storage, &ma_token_addr)?;
     Ok(AssetIncentiveResponse {
         asset_incentive: option_asset_incentive,
     })
 }
 
-pub fn query_user_unclaimed_rewards(
-    deps: Deps,
-    env: Env,
-    user_address_unchecked: String,
-) -> StdResult<Uint128> {
-    let user_address = deps.api.addr_validate(&user_address_unchecked)?;
-    let (unclaimed_rewards, _) = compute_user_unclaimed_rewards(deps, &env, &user_address)?;
+pub fn query_user_unclaimed_rewards(deps: Deps, env: Env, user: String) -> StdResult<Uint128> {
+    let user_addr = deps.api.addr_validate(&user)?;
+    let (unclaimed_rewards, _) = compute_user_unclaimed_rewards(deps, &env, &user_addr)?;
 
     Ok(unclaimed_rewards)
 }
