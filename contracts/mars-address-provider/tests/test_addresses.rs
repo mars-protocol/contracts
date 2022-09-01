@@ -1,25 +1,16 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
+use mars_address_provider::contract::execute;
+use mars_address_provider::error::ContractError;
+use mars_address_provider::state::CONTRACTS;
 
-use mars_outpost::address_provider::{
-    AddressResponseItem, Config, ExecuteMsg, MarsContract, QueryMsg,
-};
+use mars_outpost::address_provider::{AddressResponseItem, ExecuteMsg, MarsContract, QueryMsg};
 
-use crate::contract::execute;
-use crate::error::ContractError;
-use crate::state::{CONFIG, CONTRACTS};
+use crate::helpers::{th_query, th_setup};
 
-use super::helpers::{th_query, th_setup};
-
-#[test]
-fn proper_initialization() {
-    let deps = th_setup();
-
-    let config: Config = th_query(deps.as_ref(), QueryMsg::Config {});
-    assert_eq!(config.owner, "owner".to_string());
-}
+mod helpers;
 
 #[test]
-fn setting_address() {
+fn test_setting_address() {
     let mut deps = th_setup();
 
     let msg = ExecuteMsg::SetAddress {
@@ -39,26 +30,7 @@ fn setting_address() {
 }
 
 #[test]
-fn transferring_ownership() {
-    let mut deps = th_setup();
-
-    let msg = ExecuteMsg::TransferOwnership {
-        new_owner: "larry".to_string(),
-    };
-
-    // non-owner cannot transfer ownership
-    let err = execute(deps.as_mut(), mock_env(), mock_info("jake", &[]), msg.clone()).unwrap_err();
-    assert_eq!(err, ContractError::Unauthorized);
-
-    // owner can transfer ownership
-    execute(deps.as_mut(), mock_env(), mock_info("owner", &[]), msg).unwrap();
-
-    let config = CONFIG.load(deps.as_ref().storage).unwrap();
-    assert_eq!(config.owner, "larry".to_string());
-}
-
-#[test]
-fn querying_addresses() {
+fn test_querying_addresses() {
     let mut deps = th_setup();
 
     CONTRACTS
