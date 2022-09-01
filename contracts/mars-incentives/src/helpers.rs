@@ -13,7 +13,7 @@ use crate::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS}
 /// Total supply is the total (liquidity) token supply during the period being computed.
 /// Note that this method does not commit updates to state as that should be executed by the
 /// caller
-pub(crate) fn asset_incentive_update_index(
+pub fn asset_incentive_update_index(
     asset_incentive: &mut AssetIncentive,
     total_supply: Uint128,
     current_block_time: u64,
@@ -34,7 +34,7 @@ pub(crate) fn asset_incentive_update_index(
     Ok(())
 }
 
-pub(crate) fn asset_incentive_compute_index(
+pub fn asset_incentive_compute_index(
     previous_index: Decimal,
     emission_per_second: Uint128,
     total_supply: Uint128,
@@ -59,7 +59,7 @@ pub(crate) fn asset_incentive_compute_index(
 /// Computes user accrued rewards using the difference between asset_incentive index and
 /// user current index
 /// asset_incentives index should be up to date.
-pub(crate) fn user_compute_accrued_rewards(
+pub fn user_compute_accrued_rewards(
     user_balance: Uint128,
     user_asset_index: Decimal,
     asset_incentive_index: Decimal,
@@ -71,7 +71,7 @@ pub(crate) fn user_compute_accrued_rewards(
 
 /// Result of querying and updating the status of the user and a give asset incentives in order to
 /// compute unclaimed rewards.
-pub(crate) struct UserAssetIncentiveStatus {
+pub struct UserAssetIncentiveStatus {
     /// Address of the ma token that's the incentives target
     pub ma_token_address: Addr,
     /// Current user index's value on the contract store (not updated by current asset index)
@@ -81,7 +81,7 @@ pub(crate) struct UserAssetIncentiveStatus {
     pub asset_incentive_updated: AssetIncentive,
 }
 
-pub(crate) fn compute_user_unclaimed_rewards(
+pub fn compute_user_unclaimed_rewards(
     deps: Deps,
     env: &Env,
     user_address: &Addr,

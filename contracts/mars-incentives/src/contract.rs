@@ -119,7 +119,7 @@ pub fn execute_set_asset_incentive(
     ASSET_INCENTIVES.save(deps.storage, &ma_asset_address, &new_asset_incentive)?;
 
     let response = Response::new().add_attributes(vec![
-        attr("action", "set_asset_incentive"),
+        attr("action", "outposts/incentives/set_asset_incentive"),
         attr("ma_asset", ma_token_address),
         attr("emission_per_second", emission_per_second),
     ]);
@@ -186,7 +186,7 @@ pub fn execute_balance_change(
     }
 
     let response = Response::new().add_attributes(vec![
-        attr("action", "balance_change"),
+        attr("action", "outposts/incentives/balance_change"),
         attr("ma_asset", ma_token_address),
         attr("user", user_address),
         attr("rewards_accrued", accrued_rewards),
@@ -238,7 +238,7 @@ pub fn execute_claim_rewards(
     };
 
     response = response.add_attributes(vec![
-        attr("action", "claim_rewards"),
+        attr("action", "outposts/incentives/claim_rewards"),
         attr("user", user_addr),
         attr("mars_rewards", total_unclaimed_rewards),
     ]);
@@ -264,7 +264,7 @@ pub fn execute_update_config(
 
     CONFIG.save(deps.storage, &config)?;
 
-    let response = Response::new().add_attribute("action", "update_config");
+    let response = Response::new().add_attribute("action", "outposts/incentives/update_config");
 
     Ok(response)
 }
@@ -281,7 +281,9 @@ pub fn execute_execute_cosmos_msg(
         return Err(MarsError::Unauthorized {});
     }
 
-    let response = Response::new().add_attribute("action", "execute_cosmos_msg").add_message(msg);
+    let response = Response::new()
+        .add_attribute("action", "outposts/incentives/execute_cosmos_msg")
+        .add_message(msg);
 
     Ok(response)
 }
