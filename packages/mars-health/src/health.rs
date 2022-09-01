@@ -53,7 +53,7 @@ impl Health {
         collateral: &[Coin],
         debt: &[Coin],
     ) -> StdResult<Health> {
-        let querier = MarsQuerier::new(querier, oracle_addr.clone(), red_bank_addr.clone());
+        let querier = MarsQuerier::new(querier, oracle_addr, red_bank_addr);
         let positions = Self::positions_from_coins(&querier, collateral, debt)?;
 
         Self::compute_health(&positions.into_values().collect::<Vec<_>>())

@@ -1,15 +1,19 @@
 use cosmwasm_std::{Addr, Decimal, QuerierWrapper, StdResult};
-use mars_outpost::oracle::{PriceResponse, QueryMsg as OracleQueryMsg};
-use mars_outpost::red_bank::{Market, QueryMsg as RedBankQueryMsg};
+use mars_outpost::oracle::{self, PriceResponse};
+use mars_outpost::red_bank::{self, Market};
 
 pub struct MarsQuerier<'a> {
     querier: &'a QuerierWrapper<'a>,
-    oracle_addr: Addr,
-    red_bank_addr: Addr,
+    oracle_addr: &'a Addr,
+    red_bank_addr: &'a Addr,
 }
 
 impl<'a> MarsQuerier<'a> {
-    pub fn new(querier: &'a QuerierWrapper, oracle_addr: Addr, red_bank_addr: Addr) -> Self {
+    pub fn new(
+        querier: &'a QuerierWrapper,
+        oracle_addr: &'a Addr,
+        red_bank_addr: &'a Addr,
+    ) -> Self {
         MarsQuerier {
             querier,
             oracle_addr,
@@ -19,8 +23,8 @@ impl<'a> MarsQuerier<'a> {
 
     pub fn query_market(&self, denom: &str) -> StdResult<Market> {
         self.querier.query_wasm_smart(
-            self.red_bank_addr.clone(),
-            &RedBankQueryMsg::Market {
+            self.red_bank_addr,
+            &red_bank::QueryMsg::Market {
                 denom: denom.to_string(),
             },
         )
@@ -31,8 +35,8 @@ impl<'a> MarsQuerier<'a> {
             price,
             ..
         } = self.querier.query_wasm_smart(
-            self.oracle_addr.clone(),
-            &OracleQueryMsg::Price {
+            self.oracle_addr,
+            &oracle::QueryMsg::Price {
                 denom: denom.to_string(),
             },
         )?;

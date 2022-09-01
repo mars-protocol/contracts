@@ -15,7 +15,7 @@ fn test_from_coins_to_positions() {
     let red_bank_addr = Addr::unchecked("red_bank");
     let mock_querier = mock_setup();
     let querier_wrapper = QuerierWrapper::new(&mock_querier);
-    let querier = MarsQuerier::new(&querier_wrapper, oracle_addr, red_bank_addr);
+    let querier = MarsQuerier::new(&querier_wrapper, &oracle_addr, &red_bank_addr);
 
     // 1. Collateral and no debt
     let collateral = coins(300, "osmo");
