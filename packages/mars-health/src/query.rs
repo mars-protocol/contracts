@@ -23,7 +23,7 @@ impl<'a> MarsQuerier<'a> {
 
     pub fn query_market(&self, denom: &str) -> StdResult<Market> {
         self.querier.query_wasm_smart(
-            self.red_bank_addr.clone(),
+            self.red_bank_addr,
             &red_bank::QueryMsg::Market {
                 denom: denom.to_string(),
             },
@@ -35,7 +35,7 @@ impl<'a> MarsQuerier<'a> {
             price,
             ..
         } = self.querier.query_wasm_smart(
-            self.oracle_addr.clone(),
+            self.oracle_addr,
             &oracle::QueryMsg::Price {
                 denom: denom.to_string(),
             },
