@@ -102,11 +102,11 @@ where
     fn update_config(
         &self,
         deps: DepsMut<C>,
-        sender: Addr,
+        sender_addr: Addr,
         owner: Option<String>,
     ) -> ContractResult<Response> {
         let mut cfg = self.config.load(deps.storage)?;
-        if sender != cfg.owner {
+        if sender_addr != cfg.owner {
             return Err(MarsError::Unauthorized {}.into());
         };
 
@@ -114,18 +114,18 @@ where
 
         self.config.save(deps.storage, &cfg)?;
 
-        Ok(Response::new().add_attribute("action", "mars/oracle/update_config"))
+        Ok(Response::new().add_attribute("action", "outposts/oracle/update_config"))
     }
 
     fn set_price_source(
         &self,
         deps: DepsMut<C>,
-        sender: Addr,
+        sender_addr: Addr,
         denom: String,
         price_source: P,
     ) -> ContractResult<Response> {
         let cfg = self.config.load(deps.storage)?;
-        if sender != cfg.owner {
+        if sender_addr != cfg.owner {
             return Err(MarsError::Unauthorized {}.into());
         }
 
@@ -134,7 +134,7 @@ where
         self.price_sources.save(deps.storage, denom.clone(), &price_source)?;
 
         Ok(Response::new()
-            .add_attribute("action", "mars/oracle/set_price_source")
+            .add_attribute("action", "outposts/oracle/set_price_source")
             .add_attribute("denom", denom)
             .add_attribute("price_source", price_source.to_string()))
     }

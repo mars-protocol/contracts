@@ -7,7 +7,7 @@ use osmo_bindings::{
 use mars_oracle_base::{ContractError, ContractResult};
 
 /// Assert the Osmosis pool indicated by `pool_id` contains exactly two assets, and they are OSMO and `denom`
-pub(crate) fn assert_osmosis_pool_assets(
+pub fn assert_osmosis_pool_assets(
     querier: &QuerierWrapper<OsmosisQuery>,
     pool_id: u64,
     denom: &str,
@@ -41,7 +41,7 @@ pub(crate) fn assert_osmosis_pool_assets(
 }
 
 /// Query the spot price of a coin, denominated in OSMO
-pub(crate) fn query_osmosis_spot_price(
+pub fn query_osmosis_spot_price(
     querier: &QuerierWrapper<OsmosisQuery>,
     pool_id: u64,
     denom: &str,
@@ -53,7 +53,7 @@ pub(crate) fn query_osmosis_spot_price(
 }
 
 /// Query an Osmosis pool's coin depths and the supply of of liquidity token
-pub(crate) fn query_osmosis_pool(
+pub fn query_osmosis_pool(
     querier: &QuerierWrapper<OsmosisQuery>,
     pool_id: u64,
 ) -> StdResult<PoolStateResponse> {
@@ -64,7 +64,7 @@ pub(crate) fn query_osmosis_pool(
 
 /// Query the twap price of a coin, denominated in OSMO.
 /// `start_time` must be within 48 hours of current block time.
-pub(crate) fn query_osmosis_twap_price(
+pub fn query_osmosis_twap_price(
     querier: &QuerierWrapper<OsmosisQuery>,
     pool_id: u64,
     denom: &str,
