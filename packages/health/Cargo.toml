@@ -23,8 +23,8 @@ keywords = ["mars", "cosmwasm", "health"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../mars-outpost" }
+mars-outpost = { path = "../outpost" }
 cosmwasm-std = "1.0"
 
 [dev-dependencies]
-mars-testing = { path = "../mars-testing" }
+mars-testing = { path = "../testing" }

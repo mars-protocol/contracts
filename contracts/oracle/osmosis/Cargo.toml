@@ -1,5 +1,5 @@
 [package]
-name = "mars-rewards-collector-osmosis"
+name = "mars-oracle-osmosis"
 version = "0.1.0"
 authors = [
   "Spike Spiegel <spikeonmars@protonmail.com>",
@@ -26,8 +26,8 @@ crate-type = ["cdylib", "rlib"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../../../packages/mars-outpost", version = "0.1.0" }
-mars-rewards-collector-base = { path = "../base", version = "0.1.0" }
+mars-outpost = { path = "../../../packages/outpost", version = "0.1.0" }
+mars-oracle-base = { path = "../base", version = "0.1.0" }
 cosmwasm-std = "1.0"
 cw-storage-plus = "0.13"
 schemars = "0.8.8"
@@ -38,4 +38,4 @@ thiserror = "1.0.31"
 osmo-bindings = { git = "https://github.com/osmosis-labs/bindings" }
 
 [dev-dependencies]
-mars-testing = { path = "../../../packages/mars-testing", version = "0.1.0" }
+mars-testing = { path = "../../../packages/testing", version = "0.1.0" }

@@ -1,5 +1,5 @@
 [package]
-name = "mars-testing"
+name = "mars-outpost"
 version = "0.1.0"
 authors = [
   "Ahmad Kaouk <ahmad@delphilabs.io>",
@@ -9,7 +9,7 @@ authors = [
   "Harry Scholes"
 ]
 edition = "2018"
-description = "Utilities for testing Mars outpost contracts"
+description = "Mars is a fully automated, on-chain credit protocol governed by a decentralised community of users and developers"
 license = "GPL-3.0"
 repository = "https://github.com/mars-protocol/mars-core"
 homepage = "https://marsprotocol.io"
@@ -25,8 +25,6 @@ keywords = ["mars", "cosmwasm"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../mars-outpost" }
-
 cosmwasm-std = "1.0"
 cw2 = "0.13"
 cw20 = "0.13"
@@ -35,5 +33,5 @@ schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = "1.0.31"
 
-# FIXME: update with new tag when available
-osmo-bindings = { git = "https://github.com/osmosis-labs/bindings" }
+[dev-dependencies]
+mars-testing = { path = "../testing" }

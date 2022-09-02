@@ -2,10 +2,10 @@
 name = "mars-address-provider"
 version = "0.1.0"
 authors = [
-  "Spike Spiegel <spikeonmars@protonmail.com>",
   "larry_0x <larry@delphidigital.io>",
   "Piotr Babel <piotr@delphilabs.io>",
-  "Ahmad Kaouk <ahmad@delphilabs.io>",
+  "Spike Spiegel <spikeonmars@protonmail.com>",
+  "Ahmad Kaouk",
   "Harry Scholes"
 ]
 edition = "2018"
@@ -28,7 +28,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-mars-outpost = { path = "../../packages/mars-outpost", version = "0.1.0" }
+mars-outpost = { path = "../../packages/outpost", version = "0.1.0" }
 cosmwasm-std = "1.0"
 cw-storage-plus = "0.13"
 thiserror = "1.0.31"

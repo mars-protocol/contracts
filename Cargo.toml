@@ -1,11 +1,11 @@
 [workspace]
 members = [
-  "contracts/mars-address-provider",
-  "contracts/mars-incentives",
-  "contracts/mars-ma-token",
-  "contracts/mars-oracle/*",
-  "contracts/mars-red-bank",
-  "contracts/mars-rewards-collector/*",
+  "contracts/address-provider",
+  "contracts/incentives",
+  "contracts/ma-token",
+  "contracts/oracle/*",
+  "contracts/red-bank",
+  "contracts/rewards-collector/*",
   "packages/*"
 ]
 

@@ -1,11 +1,11 @@
 [package]
-name = "mars-rewards-collector-base"
+name = "mars-oracle-base"
 version = "0.1.0"
 authors = [
-  "Ahmad Kaouk <ahmad@delphilabs.io>",
   "Spike Spiegel <spikeonmars@protonmail.com>",
   "larry_0x <larry@delphidigital.io>",
   "Piotr Babel <piotr@delphilabs.io>",
+  "Ahmad Kaouk <ahmad@delphilabs.io>",
   "Harry Scholes"
 ]
 edition = "2018"
@@ -26,12 +26,9 @@ crate-type = ["cdylib", "rlib"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../../../packages/mars-outpost", version = "0.1.0" }
-cosmwasm-std = { version = "1.0", features = ["stargate"] }
+mars-outpost = { path = "../../../packages/outpost", version = "0.1.0" }
+cosmwasm-std = "1.0"
 cw-storage-plus = "0.13"
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = "1.0.31"
-
-[dev-dependencies]
-mars-testing = { version = "0.1.0", path = "../../../packages/mars-testing" }

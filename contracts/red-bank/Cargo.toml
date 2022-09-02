@@ -1,11 +1,11 @@
 [package]
-name = "mars-incentives"
-version = "1.0.0"
+name = "mars-red-bank"
+version = "0.1.0"
 authors = [
+  "Ahmad Kaouk <ahmad@delphilabs.io>",
   "Spike Spiegel <spikeonmars@protonmail.com>",
   "larry_0x <larry@delphidigital.io>",
-  "Piotr Babel <piotr@delphilabs.io>",
-  "Ahmad Kaouk <ahmad@delphilabs.io>",
+  "Piotr Babel",
   "Harry Scholes"
 ]
 edition = "2018"
@@ -24,20 +24,20 @@ crate-type = ["cdylib", "rlib"]
 [features]
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
-
+# use library feature to disable all instantiate/execute/query exports
 library = []
 
 [dependencies]
-mars-outpost = { path = "../../packages/mars-outpost", version = "0.1.0" }
-
-cw20 = "0.13"
-cw-storage-plus = "0.13"
-
+mars-outpost = { path = "../../packages/outpost", version = "0.1.0" }
+mars-health = { path = "../../packages/health", version = "0.1.0" }
 cosmwasm-std = "1.0"
-
+cw20 = "0.13"
+cw20-base = { version = "0.13", features = ["library"] }
+cw-storage-plus = "0.13"
+cw-utils = "0.13"
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = "1.0.31"
 
 [dev-dependencies]
-mars-testing = { version = "0.1.0", path = "../../packages/mars-testing" }
+mars-testing = { path = "../../packages/testing", version = "0.1.0" }
