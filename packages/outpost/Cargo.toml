@@ -1,21 +1,21 @@
 [package]
-name = "mars-health"
+name = "mars-outpost"
 version = "0.1.0"
 authors = [
-  "Ahmad Kaouk <ahmad@delphilabs.io>",
-  "Gabe Rodriguez",
   "larry_0x <larry@delphidigital.io>",
   "Piotr Babel <piotr@delphilabs.io>",
+  "Spike Spiegel <spikeonmars@protonmail.com>",
+  "Ahmad Kaouk",
+  "Harry Scholes"
 ]
-
-edition = "2018"
-description = "Helper functions to compute the health factor"
+edition = "2021"
+description = "Mars is a fully automated, on-chain credit protocol governed by a decentralised community of users and developers"
 license = "GPL-3.0"
 repository = "https://github.com/mars-protocol/outposts"
 homepage = "https://marsprotocol.io"
 documentation = "https://docs.marsprotocol.io/mars-protocol/developers/protocol-overview"
 readme = "README.md"
-keywords = ["mars", "cosmwasm", "health"]
+keywords = ["mars", "cosmwasm"]
 
 [features]
 # for quicker tests, cargo test --lib
@@ -23,8 +23,12 @@ keywords = ["mars", "cosmwasm", "health"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../mars-outpost" }
 cosmwasm-std = "1.0"
+cw20 = "0.14"
+cw20-base = { version = "0.14", features = ["library"] }
+schemars = "0.8"
+serde = { version = "1.0.144", default-features = false, features = ["derive"] }
+thiserror = "1.0.33"
 
 [dev-dependencies]
-mars-testing = { path = "../mars-testing" }
+mars-testing = { path = "../testing" }

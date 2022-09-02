@@ -1,0 +1,34 @@
+[package]
+name = "mars-address-provider"
+version = "0.1.0"
+authors = [
+  "larry_0x <larry@delphidigital.io>",
+  "Piotr Babel <piotr@delphilabs.io>",
+  "Spike Spiegel <spikeonmars@protonmail.com>",
+  "Ahmad Kaouk",
+  "Harry Scholes"
+]
+edition = "2021"
+
+exclude = [
+  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "contract.wasm",
+  "hash.txt",
+]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+mars-outpost = { path = "../../packages/outpost", version = "0.1.0" }
+
+cosmwasm-std = "1.0"
+cw-storage-plus = "0.14"
+thiserror = "1.0.33"
+
+[dev-dependencies]
+serde = "1.0.144"

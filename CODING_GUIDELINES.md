@@ -6,7 +6,7 @@ This document provides details about the coding guidelines and requirements.
 
 ```
 contracts
-├── mars-incentives
+├── incentives
 │   ├── src
 │   │   ├── lib.rs
 │   │   ├── contract.rs
@@ -16,13 +16,13 @@ contracts
 │   └── tests
 │       ├── helpers.rs
 │       └── test_incentives.rs
-├── mars-oracle
+├── oracle
 │   ├── base
 │   └── osmosis
-└── mars-red-bank
+└── red-bank
 packages
-├── mars-outpost
-└── mars-testing
+├── outpost
+└── testing
 ..
 ```
 
@@ -45,7 +45,7 @@ To simplify importing module things from packages, for example:
 
 ```
 packages
-└── mars-outpost
+└── outpost
     └── src
         └── red-bank
             ├── mod.rs
@@ -86,12 +86,12 @@ use mars_outpost::red_bank::*;
 key: "action", value: PROJECT_NAME/CONTRACT-NAME/EXECUTE_MSG
 ``
 
-- Contract name should use hyphens (e.g. mars-incentives).
+- Contract name should use hyphens (e.g. rewards-collector).
 - Everything else should be snake case (e.g. user_address).
 
 ```rust
 Response::new()
-    .add_attribute(”action”, "outposts/mars-incentives/balance_change")
+    .add_attribute(”action”, "outposts/rewards-collector/balance_change")
     .add_attribute(”ma_asset”, "ma_token_address")
     .add_attribute(”user”, "user_address")
 ```

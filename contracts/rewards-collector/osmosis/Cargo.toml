@@ -2,21 +2,19 @@
 name = "mars-rewards-collector-osmosis"
 version = "0.1.0"
 authors = [
-  "Spike Spiegel <spikeonmars@protonmail.com>",
   "larry_0x <larry@delphidigital.io>",
   "Piotr Babel <piotr@delphilabs.io>",
-  "Ahmad Kaouk <ahmad@delphilabs.io>",
+  "Spike Spiegel <spikeonmars@protonmail.com>",
+  "Ahmad Kaouk",
   "Harry Scholes"
 ]
-edition = "2018"
+edition = "2021"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
   "contract.wasm",
   "hash.txt",
 ]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -26,16 +24,17 @@ crate-type = ["cdylib", "rlib"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../../../packages/mars-outpost", version = "0.1.0" }
+mars-outpost = { path = "../../../packages/outpost", version = "0.1.0" }
 mars-rewards-collector-base = { path = "../base", version = "0.1.0" }
+
 cosmwasm-std = "1.0"
-cw-storage-plus = "0.13"
-schemars = "0.8.8"
-serde = { version = "1.0.137", default-features = false, features = ["derive"] }
-thiserror = "1.0.31"
+cw-storage-plus = "0.14"
+schemars = "0.8"
+serde = { version = "1.0.144", default-features = false, features = ["derive"] }
+thiserror = "1.0.33"
 
 # FIXME: update with new tag when available
 osmo-bindings = { git = "https://github.com/osmosis-labs/bindings" }
 
 [dev-dependencies]
-mars-testing = { path = "../../../packages/mars-testing", version = "0.1.0" }
+mars-testing = { path = "../../../packages/testing", version = "0.1.0" }
