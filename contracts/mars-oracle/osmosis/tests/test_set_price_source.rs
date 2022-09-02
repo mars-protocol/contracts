@@ -3,47 +3,17 @@ use cosmwasm_std::Decimal;
 
 use mars_oracle_base::ContractError;
 use mars_outpost::error::MarsError;
-use mars_outpost::oracle::{Config, PriceResponse, QueryMsg};
+use mars_outpost::oracle::QueryMsg;
 use mars_testing::mock_info;
 
-use osmo_bindings::{ArithmeticTwapToNowResponse, SpotPriceResponse, Swap};
+use mars_oracle_osmosis::contract::entry::execute;
+use mars_oracle_osmosis::msg::{ExecuteMsg, PriceSourceResponse};
+use mars_oracle_osmosis::OsmosisPriceSource;
 
-use super::helpers;
-use crate::contract::entry::execute;
-use crate::msg::{ExecuteMsg, PriceSourceResponse};
-use crate::OsmosisPriceSource;
-
-#[test]
-fn instantiating() {
-    let deps = helpers::setup_test();
-
-    let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
-    assert_eq!(cfg.owner, "owner".to_string());
-    assert_eq!(cfg.base_denom, "uosmo".to_string());
-}
+mod helpers;
 
 #[test]
-fn updating_config() {
-    let mut deps = helpers::setup_test();
-
-    let msg = ExecuteMsg::UpdateConfig {
-        owner: Some("new_owner".to_string()),
-    };
-
-    // non-owner cannot update
-    let err = execute(deps.as_mut(), mock_env(), mock_info("jake"), msg.clone()).unwrap_err();
-    assert_eq!(err, MarsError::Unauthorized {}.into());
-
-    // owner can update
-    let res = execute(deps.as_mut(), mock_env(), mock_info("owner"), msg).unwrap();
-    assert_eq!(res.messages.len(), 0);
-
-    let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
-    assert_eq!(cfg.owner, "new_owner".to_string());
-}
-
-#[test]
-fn setting_price_source_by_non_owner() {
+fn test_setting_price_source_by_non_owner() {
     let mut deps = helpers::setup_test();
 
     let err = execute(
@@ -62,7 +32,7 @@ fn setting_price_source_by_non_owner() {
 }
 
 #[test]
-fn setting_price_source_fixed() {
+fn test_setting_price_source_fixed() {
     let mut deps = helpers::setup_test();
 
     let res = execute(
@@ -94,7 +64,7 @@ fn setting_price_source_fixed() {
 }
 
 #[test]
-fn setting_price_source_spot() {
+fn test_setting_price_source_spot() {
     let mut deps = helpers::setup_test();
 
     let mut set_price_source_spot = |denom: &str, pool_id: u64| {
@@ -157,7 +127,7 @@ fn setting_price_source_spot() {
 }
 
 #[test]
-fn setting_price_source_twap() {
+fn test_setting_price_source_twap() {
     let mut deps = helpers::setup_test();
 
     let mut set_price_source_twap = |denom: &str, pool_id: u64, window_size| {
@@ -231,7 +201,7 @@ fn setting_price_source_twap() {
 }
 
 #[test]
-fn setting_price_source_liquidity_token() {
+fn test_setting_price_source_liquidity_token() {
     let mut deps = helpers::setup_test();
 
     let res = execute(
@@ -263,7 +233,7 @@ fn setting_price_source_liquidity_token() {
 }
 
 #[test]
-fn querying_price_source() {
+fn test_querying_price_source() {
     let mut deps = helpers::setup_test();
 
     helpers::set_price_source(
@@ -359,164 +329,6 @@ fn querying_price_source() {
                     price: Decimal::one()
                 }
             }
-        ]
-    );
-}
-
-#[test]
-fn querying_price_fixed() {
-    let mut deps = helpers::setup_test();
-
-    helpers::set_price_source(
-        deps.as_mut(),
-        "uosmo",
-        OsmosisPriceSource::Fixed {
-            price: Decimal::one(),
-        },
-    );
-
-    let res: PriceResponse = helpers::query(
-        deps.as_ref(),
-        QueryMsg::Price {
-            denom: "uosmo".to_string(),
-        },
-    );
-    assert_eq!(res.price, Decimal::one());
-}
-
-#[test]
-fn querying_price_spot() {
-    let mut deps = helpers::setup_test();
-
-    helpers::set_price_source(
-        deps.as_mut(),
-        "umars",
-        OsmosisPriceSource::Spot {
-            pool_id: 89,
-        },
-    );
-
-    deps.querier.set_spot_price(
-        Swap {
-            pool_id: 89,
-            denom_in: "umars".to_string(),
-            denom_out: "uosmo".to_string(),
-        },
-        SpotPriceResponse {
-            price: Decimal::from_ratio(88888u128, 12345u128),
-        },
-    );
-
-    let res: PriceResponse = helpers::query(
-        deps.as_ref(),
-        QueryMsg::Price {
-            denom: "umars".to_string(),
-        },
-    );
-    assert_eq!(res.price, Decimal::from_ratio(88888u128, 12345u128));
-}
-
-#[test]
-fn querying_price_twap() {
-    let mut deps = helpers::setup_test();
-
-    helpers::set_price_source(
-        deps.as_mut(),
-        "umars",
-        OsmosisPriceSource::Twap {
-            pool_id: 89,
-            window_size: 86400,
-        },
-    );
-
-    deps.querier.set_twap_price(
-        89,
-        "uosmo",
-        "umars",
-        ArithmeticTwapToNowResponse {
-            twap: Decimal::from_ratio(77777u128, 12345u128),
-        },
-    );
-
-    let res: PriceResponse = helpers::query(
-        deps.as_ref(),
-        QueryMsg::Price {
-            denom: "umars".to_string(),
-        },
-    );
-    assert_eq!(res.price, Decimal::from_ratio(77777u128, 12345u128));
-}
-
-#[test]
-fn querying_all_prices() {
-    let mut deps = helpers::setup_test();
-
-    helpers::set_price_source(
-        deps.as_mut(),
-        "uosmo",
-        OsmosisPriceSource::Fixed {
-            price: Decimal::one(),
-        },
-    );
-    helpers::set_price_source(
-        deps.as_mut(),
-        "uatom",
-        OsmosisPriceSource::Spot {
-            pool_id: 1,
-        },
-    );
-    helpers::set_price_source(
-        deps.as_mut(),
-        "umars",
-        OsmosisPriceSource::Spot {
-            pool_id: 89,
-        },
-    );
-
-    deps.querier.set_spot_price(
-        Swap {
-            pool_id: 1,
-            denom_in: "uatom".to_string(),
-            denom_out: "uosmo".to_string(),
-        },
-        SpotPriceResponse {
-            price: Decimal::from_ratio(77777u128, 12345u128),
-        },
-    );
-    deps.querier.set_spot_price(
-        Swap {
-            pool_id: 89,
-            denom_in: "umars".to_string(),
-            denom_out: "uosmo".to_string(),
-        },
-        SpotPriceResponse {
-            price: Decimal::from_ratio(88888u128, 12345u128),
-        },
-    );
-
-    // NOTE: responses are ordered alphabetically by denom
-    let res: Vec<PriceResponse> = helpers::query(
-        deps.as_ref(),
-        QueryMsg::Prices {
-            start_after: None,
-            limit: None,
-        },
-    );
-    assert_eq!(
-        res,
-        vec![
-            PriceResponse {
-                denom: "uatom".to_string(),
-                price: Decimal::from_ratio(77777u128, 12345u128),
-            },
-            PriceResponse {
-                denom: "umars".to_string(),
-                price: Decimal::from_ratio(88888u128, 12345u128),
-            },
-            PriceResponse {
-                denom: "uosmo".to_string(),
-                price: Decimal::one(),
-            },
         ]
     );
 }
