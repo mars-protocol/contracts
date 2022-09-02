@@ -10,16 +10,18 @@ use cw_utils::PaymentError;
 use mars_outpost::red_bank::{ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
-use crate::contract::execute;
-use crate::error::ContractError;
-use crate::events::build_collateral_position_changed_event;
-use crate::helpers::get_bit;
-use crate::interest_rates::{compute_scaled_amount, ScalingOperation, SCALING_FACTOR};
-use crate::state::{MARKETS, USERS};
+use mars_red_bank::contract::execute;
+use mars_red_bank::error::ContractError;
+use mars_red_bank::events::build_collateral_position_changed_event;
+use mars_red_bank::helpers::get_bit;
+use mars_red_bank::interest_rates::{compute_scaled_amount, ScalingOperation, SCALING_FACTOR};
+use mars_red_bank::state::{MARKETS, USERS};
 
-use super::helpers::{
+use helpers::{
     th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
 };
+
+mod helpers;
 
 #[test]
 fn test_deposit_native_asset() {

@@ -6,21 +6,23 @@ use mars_outpost::math;
 use mars_outpost::red_bank::{Debt, ExecuteMsg, Market, User};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
-use crate::contract::execute;
-use crate::error::ContractError;
-use crate::events::build_debt_position_changed_event;
-use crate::health;
-use crate::helpers::{get_bit, set_bit};
-use crate::interest_rates::{
+use mars_red_bank::contract::execute;
+use mars_red_bank::error::ContractError;
+use mars_red_bank::events::build_debt_position_changed_event;
+use mars_red_bank::health;
+use mars_red_bank::helpers::{get_bit, set_bit};
+use mars_red_bank::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_debt_amount,
     get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
 };
-use crate::state::{DEBTS, UNCOLLATERALIZED_LOAN_LIMITS, USERS};
+use mars_red_bank::state::{DEBTS, UNCOLLATERALIZED_LOAN_LIMITS, USERS};
 
-use super::helpers::{
+use helpers::{
     th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
     TestUtilizationDeltaInfo,
 };
+
+mod helpers;
 
 #[test]
 fn test_uncollateralized_loan_limits() {

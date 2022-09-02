@@ -17,12 +17,16 @@ use mars_outpost::red_bank::{
 };
 use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, MockEnvParams};
 
-use crate::contract::{execute, instantiate, query};
-use crate::error::ContractError;
-use crate::interest_rates::{compute_scaled_amount, compute_underlying_amount, ScalingOperation};
-use crate::state::{CONFIG, GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_INDEX};
+use mars_red_bank::contract::{execute, instantiate, query};
+use mars_red_bank::error::ContractError;
+use mars_red_bank::interest_rates::{
+    compute_scaled_amount, compute_underlying_amount, ScalingOperation,
+};
+use mars_red_bank::state::{CONFIG, GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_INDEX};
 
-use super::helpers::{th_get_expected_indices, th_init_market, th_setup};
+use crate::helpers::{th_get_expected_indices, th_init_market, th_setup};
+
+mod helpers;
 
 #[test]
 fn test_proper_initialization() {
