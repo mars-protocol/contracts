@@ -2,22 +2,20 @@
 name = "mars-testing"
 version = "0.1.0"
 authors = [
-  "Ahmad Kaouk <ahmad@delphilabs.io>",
-  "Spike Spiegel <spikeonmars@protonmail.com>",
   "larry_0x <larry@delphidigital.io>",
-  "Piotr Babel",
+  "Piotr Babel <piotr@delphilabs.io>",
+  "Spike Spiegel <spikeonmars@protonmail.com>",
+  "Ahmad Kaouk",
   "Harry Scholes"
 ]
-edition = "2018"
+edition = "2021"
 description = "Utilities for testing Mars outpost contracts"
 license = "GPL-3.0"
-repository = "https://github.com/mars-protocol/mars-core"
+repository = "https://github.com/mars-protocol/outposts"
 homepage = "https://marsprotocol.io"
 documentation = "https://docs.marsprotocol.io/mars-protocol/developers/protocol-overview"
 readme = "README.md"
 keywords = ["mars", "cosmwasm"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
 # for quicker tests, cargo test --lib
@@ -28,12 +26,11 @@ backtraces = ["cosmwasm-std/backtraces"]
 mars-outpost = { path = "../outpost" }
 
 cosmwasm-std = "1.0"
-cw2 = "0.13"
-cw20 = "0.13"
-cw20-base = { version = "0.13", features = ["library"] }
-schemars = "0.8.8"
-serde = { version = "1.0.137", default-features = false, features = ["derive"] }
-thiserror = "1.0.31"
+cw20 = "0.14"
+cw20-base = { version = "0.14", features = ["library"] }
+schemars = "0.8"
+serde = { version = "1.0.144", default-features = false, features = ["derive"] }
+thiserror = "1.0.33"
 
 # FIXME: update with new tag when available
 osmo-bindings = { git = "https://github.com/osmosis-labs/bindings" }

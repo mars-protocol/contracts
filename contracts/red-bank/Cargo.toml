@@ -2,13 +2,13 @@
 name = "mars-red-bank"
 version = "0.1.0"
 authors = [
-  "Ahmad Kaouk <ahmad@delphilabs.io>",
-  "Spike Spiegel <spikeonmars@protonmail.com>",
   "larry_0x <larry@delphidigital.io>",
-  "Piotr Babel",
+  "Piotr Babel <piotr@delphilabs.io>",
+  "Spike Spiegel <spikeonmars@protonmail.com>",
+  "Ahmad Kaouk",
   "Harry Scholes"
 ]
-edition = "2018"
+edition = "2021"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -16,28 +16,24 @@ exclude = [
   "hash.txt",
 ]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [features]
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
-# use library feature to disable all instantiate/execute/query exports
-library = []
 
 [dependencies]
 mars-outpost = { path = "../../packages/outpost", version = "0.1.0" }
 mars-health = { path = "../../packages/health", version = "0.1.0" }
+
 cosmwasm-std = "1.0"
-cw20 = "0.13"
-cw20-base = { version = "0.13", features = ["library"] }
-cw-storage-plus = "0.13"
-cw-utils = "0.13"
-schemars = "0.8.8"
-serde = { version = "1.0.137", default-features = false, features = ["derive"] }
-thiserror = "1.0.31"
+cw20 = "0.14"
+cw20-base = { version = "0.14", features = ["library"] }
+cw-storage-plus = "0.14"
+cw-utils = "0.14"
+serde = { version = "1.0.144", default-features = false, features = ["derive"] }
+thiserror = "1.0.33"
 
 [dev-dependencies]
 mars-testing = { path = "../../packages/testing", version = "0.1.0" }
