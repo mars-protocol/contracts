@@ -127,81 +127,76 @@ pub fn init_asset(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    let mut money_market = GLOBAL_STATE.load(deps.storage)?;
-
-    let market_option = MARKETS.may_load(deps.storage, &denom)?;
-    match market_option {
-        None => {
-            let market_idx = money_market.market_count;
-            let new_market =
-                create_market(env.block.time.seconds(), market_idx, &denom, asset_params)?;
-
-            // Save new market
-            MARKETS.save(deps.storage, &denom, &new_market)?;
-
-            // Save index to reference mapping
-            MARKET_DENOMS_BY_INDEX.save(deps.storage, market_idx, &denom)?;
-
-            // Increment market count
-            money_market.market_count += 1;
-            GLOBAL_STATE.save(deps.storage, &money_market)?;
-
-            let symbol = asset_symbol_option.unwrap_or_else(|| denom.clone());
-
-            // Prepare response, should instantiate an maToken
-            // and use the Register hook.
-            // A new maToken should be created which callbacks this contract in order to be registered.
-            let addresses = address_provider::helpers::query_addresses(
-                deps.as_ref(),
-                &config.address_provider,
-                vec![MarsContract::Incentives, MarsContract::ProtocolAdmin],
-            )?;
-            // TODO: protocol admin may be a marshub address, which can't be validated into `Addr`
-            let protocol_admin_addr = &addresses[&MarsContract::ProtocolAdmin];
-            let incentives_addr = &addresses[&MarsContract::Incentives];
-
-            let token_symbol = format!("ma{}", symbol);
-
-            let res = Response::new()
-                .add_attribute("action", "init_asset")
-                .add_attribute("denom", &denom)
-                .add_message(CosmosMsg::Wasm(WasmMsg::Instantiate {
-                    admin: Some(protocol_admin_addr.to_string()),
-                    code_id: config.ma_token_code_id,
-                    msg: to_binary(&ma_token::msg::InstantiateMsg {
-                        name: format!("Mars {} Liquidity Token", symbol),
-                        symbol: token_symbol.clone(),
-                        decimals: 6,
-                        initial_balances: vec![],
-                        mint: Some(MinterResponse {
-                            minter: env.contract.address.to_string(),
-                            cap: None,
-                        }),
-                        marketing: Some(InstantiateMarketingInfo {
-                            project: Some(String::from("Mars Protocol")),
-                            description: Some(format!(
-                                "Interest earning token representing deposits for {}",
-                                symbol
-                            )),
-                            marketing: Some(protocol_admin_addr.to_string()),
-                            logo: None,
-                        }),
-                        init_hook: Some(ma_token::msg::InitHook {
-                            contract_addr: env.contract.address.to_string(),
-                            msg: to_binary(&ExecuteMsg::InitAssetTokenCallback {
-                                denom,
-                            })?,
-                        }),
-                        red_bank_address: env.contract.address.to_string(),
-                        incentives_address: incentives_addr.into(),
-                    })?,
-                    funds: vec![],
-                    label: token_symbol,
-                }));
-            Ok(res)
-        }
-        Some(_) => Err(ContractError::AssetAlreadyInitialized {}),
+    if MARKETS.may_load(deps.storage, &denom)?.is_some() {
+        return Err(ContractError::AssetAlreadyInitialized {});
     }
+
+    let mut money_market = GLOBAL_STATE.load(deps.storage)?;
+    let market_idx = money_market.market_count;
+    let new_market = create_market(env.block.time.seconds(), market_idx, &denom, asset_params)?;
+
+    // Save new market
+    MARKETS.save(deps.storage, &denom, &new_market)?;
+
+    // Save index to reference mapping
+    MARKET_DENOMS_BY_INDEX.save(deps.storage, market_idx, &denom)?;
+
+    // Increment market count
+    money_market.market_count += 1;
+    GLOBAL_STATE.save(deps.storage, &money_market)?;
+
+    let symbol = asset_symbol_option.unwrap_or_else(|| denom.clone());
+
+    // Prepare response, should instantiate an maToken
+    // and use the Register hook.
+    // A new maToken should be created which callbacks this contract in order to be registered.
+    let addresses = address_provider::helpers::query_addresses(
+        deps.as_ref(),
+        &config.address_provider,
+        vec![MarsContract::Incentives, MarsContract::ProtocolAdmin],
+    )?;
+    // TODO: protocol admin may be a marshub address, which can't be validated into `Addr`
+    let protocol_admin_addr = &addresses[&MarsContract::ProtocolAdmin];
+    let incentives_addr = &addresses[&MarsContract::Incentives];
+
+    let token_symbol = format!("ma{}", symbol);
+
+    Ok(Response::new()
+        .add_message(CosmosMsg::Wasm(WasmMsg::Instantiate {
+            admin: Some(protocol_admin_addr.to_string()),
+            code_id: config.ma_token_code_id,
+            msg: to_binary(&ma_token::msg::InstantiateMsg {
+                name: format!("Mars {} Liquidity Token", symbol),
+                symbol: token_symbol.clone(),
+                decimals: 6,
+                initial_balances: vec![],
+                mint: Some(MinterResponse {
+                    minter: env.contract.address.to_string(),
+                    cap: None,
+                }),
+                marketing: Some(InstantiateMarketingInfo {
+                    project: Some(String::from("Mars Protocol")),
+                    description: Some(format!(
+                        "Interest earning token representing deposits for {}",
+                        symbol
+                    )),
+                    marketing: Some(protocol_admin_addr.to_string()),
+                    logo: None,
+                }),
+                init_hook: Some(ma_token::msg::InitHook {
+                    contract_addr: env.contract.address.to_string(),
+                    msg: to_binary(&ExecuteMsg::InitAssetTokenCallback {
+                        denom: denom.clone(),
+                    })?,
+                }),
+                red_bank_address: env.contract.address.to_string(),
+                incentives_address: incentives_addr.into(),
+            })?,
+            funds: vec![],
+            label: token_symbol,
+        }))
+        .add_attribute("action", "outposts/red-bank/init_asset")
+        .add_attribute("denom", denom))
 }
 
 /// Initialize new market
