@@ -108,7 +108,7 @@ pub fn update_config(
 
     CONFIG.save(deps.storage, &config)?;
 
-    Ok(Response::new().add_attribute("action", "update_config"))
+    Ok(Response::new().add_attribute("action", "outposts/red-bank/update_config"))
 }
 
 /// Initialize asset if not exist.
@@ -281,7 +281,7 @@ pub fn init_asset_token_callback(
         // save ma token contract to reference mapping
         MARKET_DENOMS_BY_MA_TOKEN.save(deps.storage, &ma_contract_addr, &denom)?;
 
-        Ok(Response::new().add_attribute("action", "init_asset_token_callback"))
+        Ok(Response::new().add_attribute("action", "outposts/red-bank/init_asset_token_callback"))
     } else {
         // Can do this only once
         Err(MarsError::Unauthorized {}.into())
@@ -371,7 +371,9 @@ pub fn update_asset(
             }
             MARKETS.save(deps.storage, &denom, &updated_market)?;
 
-            Ok(response.add_attribute("action", "update_asset").add_attribute("denom", &denom))
+            Ok(response
+                .add_attribute("action", "outposts/red-bank/update_asset")
+                .add_attribute("denom", &denom))
         }
     }
 }
@@ -422,7 +424,7 @@ pub fn update_uncollateralized_loan_limit(
     })?;
 
     Ok(Response::new()
-        .add_attribute("action", "update_uncollateralized_loan_limit")
+        .add_attribute("action", "outposts/red-bank/update_uncollateralized_loan_limit")
         .add_attribute("user", user_addr)
         .add_attribute("denom", denom)
         .add_attribute("new_allowance", new_limit))
@@ -507,7 +509,7 @@ pub fn deposit(
             })?,
             funds: vec![],
         }))
-        .add_attribute("action", "deposit")
+        .add_attribute("action", "outposts/red-bank/deposit")
         .add_attribute("denom", denom)
         .add_attribute("sender", info.sender)
         .add_attribute("user", user_addr)
@@ -644,7 +646,7 @@ pub fn withdraw(
 
     Ok(response
         .add_message(build_send_asset_msg(&recipient_addr, &denom, withdraw_amount))
-        .add_attribute("action", "withdraw")
+        .add_attribute("action", "outposts/red-bank/withdraw")
         .add_attribute("denom", denom)
         .add_attribute("user", withdrawer_addr)
         .add_attribute("recipient", recipient_addr)
@@ -783,7 +785,7 @@ pub fn borrow(
 
     Ok(response
         .add_message(build_send_asset_msg(&recipient_addr, &denom, borrow_amount))
-        .add_attribute("action", "borrow")
+        .add_attribute("action", "outposts/red-bank/borrow")
         .add_attribute("denom", denom)
         .add_attribute("user", borrower_addr)
         .add_attribute("recipient", recipient_addr)
@@ -874,7 +876,7 @@ pub fn repay(
     }
 
     Ok(response
-        .add_attribute("action", "repay")
+        .add_attribute("action", "outposts/red-bank/repay")
         .add_attribute("denom", denom)
         .add_attribute("sender", info.sender)
         .add_attribute("user", user_addr)
@@ -1091,7 +1093,7 @@ pub fn liquidate(
     }
 
     Ok(response
-        .add_attribute("action", "liquidate")
+        .add_attribute("action", "outposts/red-bank/liquidate")
         .add_attribute("collateral_denom", collateral_denom)
         .add_attribute("debt_denom", debt_denom)
         .add_attribute("user", user_addr.as_str())
@@ -1251,7 +1253,7 @@ pub fn update_asset_collateral_status(
     }
 
     Ok(Response::new()
-        .add_attribute("action", "update_asset_collateral_status")
+        .add_attribute("action", "outposts/red-bank/update_asset_collateral_status")
         .add_attribute("user", user_addr.as_str())
         .add_attribute("denom", denom)
         .add_attribute("has_collateral", has_collateral_asset.to_string())
@@ -1317,6 +1319,6 @@ pub fn finalize_liquidity_token_transfer(
     }
 
     Ok(Response::new()
-        .add_attribute("action", "finalize_liquidity_token_transfer")
+        .add_attribute("action", "outposts/red-bank/finalize_liquidity_token_transfer")
         .add_events(events))
 }
