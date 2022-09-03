@@ -108,8 +108,7 @@ pub fn update_config(
 
     CONFIG.save(deps.storage, &config)?;
 
-    let res = Response::new().add_attribute("action", "update_config");
-    Ok(res)
+    Ok(Response::new().add_attribute("action", "update_config"))
 }
 
 /// Initialize asset if not exist.
@@ -282,8 +281,7 @@ pub fn init_asset_token_callback(
         // save ma token contract to reference mapping
         MARKET_DENOMS_BY_MA_TOKEN.save(deps.storage, &ma_contract_addr, &denom)?;
 
-        let res = Response::new().add_attribute("action", "init_asset_token_callback");
-        Ok(res)
+        Ok(Response::new().add_attribute("action", "init_asset_token_callback"))
     } else {
         // Can do this only once
         Err(MarsError::Unauthorized {}.into())
@@ -373,10 +371,7 @@ pub fn update_asset(
             }
             MARKETS.save(deps.storage, &denom, &updated_market)?;
 
-            response =
-                response.add_attribute("action", "update_asset").add_attribute("denom", &denom);
-
-            Ok(response)
+            Ok(response.add_attribute("action", "update_asset").add_attribute("denom", &denom))
         }
     }
 }
@@ -426,12 +421,11 @@ pub fn update_uncollateralized_loan_limit(
         Ok(debt)
     })?;
 
-    let res = Response::new()
+    Ok(Response::new()
         .add_attribute("action", "update_uncollateralized_loan_limit")
         .add_attribute("user", user_addr)
         .add_attribute("denom", denom)
-        .add_attribute("new_allowance", new_limit);
-    Ok(res)
+        .add_attribute("new_allowance", new_limit))
 }
 
 /// Execute deposits and mint corresponding ma_tokens
@@ -504,22 +498,20 @@ pub fn deposit(
     let mint_amount =
         get_scaled_liquidity_amount(deposit_amount, &market, env.block.time.seconds())?;
 
-    response = response
-        .add_attribute("action", "deposit")
-        .add_attribute("denom", denom)
-        .add_attribute("sender", info.sender)
-        .add_attribute("user", user_addr.as_str())
-        .add_attribute("amount", deposit_amount)
+    Ok(response
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: market.ma_token_address.into(),
             msg: to_binary(&Cw20ExecuteMsg::Mint {
-                recipient: user_addr.into(),
+                recipient: user_addr.to_string(),
                 amount: mint_amount,
             })?,
             funds: vec![],
-        }));
-
-    Ok(response)
+        }))
+        .add_attribute("action", "deposit")
+        .add_attribute("denom", denom)
+        .add_attribute("sender", info.sender)
+        .add_attribute("user", user_addr)
+        .add_attribute("amount", deposit_amount))
 }
 
 /// Burns sent maAsset in exchange of underlying asset
@@ -649,16 +641,15 @@ pub fn withdraw(
     } else {
         withdrawer_addr.clone()
     };
-    response = response.add_message(build_send_asset_msg(&recipient_addr, &denom, withdraw_amount));
 
-    response = response
+    Ok(response
+        .add_message(build_send_asset_msg(&recipient_addr, &denom, withdraw_amount))
         .add_attribute("action", "withdraw")
         .add_attribute("denom", denom)
         .add_attribute("user", withdrawer_addr)
         .add_attribute("recipient", recipient_addr)
         .add_attribute("burn_amount", burn_amount)
-        .add_attribute("withdraw_amount", withdraw_amount);
-    Ok(response)
+        .add_attribute("withdraw_amount", withdraw_amount))
 }
 
 /// Add debt for the borrower and send the borrowed funds
@@ -789,15 +780,14 @@ pub fn borrow(
     } else {
         borrower_addr.clone()
     };
-    response = response.add_message(build_send_asset_msg(&recipient_addr, &denom, borrow_amount));
 
-    response = response
+    Ok(response
+        .add_message(build_send_asset_msg(&recipient_addr, &denom, borrow_amount))
         .add_attribute("action", "borrow")
         .add_attribute("denom", denom)
         .add_attribute("user", borrower_addr)
         .add_attribute("recipient", recipient_addr)
-        .add_attribute("amount", borrow_amount);
-    Ok(response)
+        .add_attribute("amount", borrow_amount))
 }
 
 /// Handle the repay of native tokens. Refund extra funds if they exist
@@ -883,13 +873,12 @@ pub fn repay(
         ));
     }
 
-    response = response
+    Ok(response
         .add_attribute("action", "repay")
         .add_attribute("denom", denom)
         .add_attribute("sender", info.sender)
         .add_attribute("user", user_addr)
-        .add_attribute("amount", repay_amount.checked_sub(refund_amount)?);
-    Ok(response)
+        .add_attribute("amount", repay_amount.checked_sub(refund_amount)?))
 }
 
 /// Execute loan liquidations on under-collateralized loans
@@ -1101,7 +1090,7 @@ pub fn liquidate(
             response.add_message(build_send_asset_msg(&info.sender, &debt_denom, refund_amount));
     }
 
-    response = response
+    Ok(response
         .add_attribute("action", "liquidate")
         .add_attribute("collateral_denom", collateral_denom)
         .add_attribute("debt_denom", debt_denom)
@@ -1109,8 +1098,7 @@ pub fn liquidate(
         .add_attribute("liquidator", info.sender)
         .add_attribute("collateral_amount_liquidated", collateral_amount_to_liquidate.to_string())
         .add_attribute("debt_amount_repaid", debt_amount_to_repay.to_string())
-        .add_attribute("refund_amount", refund_amount.to_string());
-    Ok(response)
+        .add_attribute("refund_amount", refund_amount.to_string()))
 }
 
 /// Transfer ma tokens from user to liquidator
@@ -1144,7 +1132,7 @@ fn process_ma_token_transfer_to_liquidator(
     let collateral_amount_to_liquidate_scaled =
         get_scaled_liquidity_amount(collateral_amount_to_liquidate, collateral_market, block_time)?;
 
-    response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+    Ok(response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: collateral_market.ma_token_address.to_string(),
         msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
             sender: user_addr.to_string(),
@@ -1152,9 +1140,7 @@ fn process_ma_token_transfer_to_liquidator(
             amount: collateral_amount_to_liquidate_scaled,
         })?,
         funds: vec![],
-    }));
-
-    Ok(response)
+    })))
 }
 
 /// Computes debt to repay (in debt asset),
@@ -1264,14 +1250,13 @@ pub fn update_asset_collateral_status(
         events.push(build_collateral_position_changed_event(&denom, false, user_addr.to_string()));
     }
 
-    let res = Response::new()
+    Ok(Response::new()
         .add_attribute("action", "update_asset_collateral_status")
         .add_attribute("user", user_addr.as_str())
         .add_attribute("denom", denom)
         .add_attribute("has_collateral", has_collateral_asset.to_string())
         .add_attribute("enable", enable.to_string())
-        .add_events(events);
-    Ok(res)
+        .add_events(events))
 }
 
 /// Update uncollateralized loan limit by a given amount in base asset
@@ -1331,8 +1316,7 @@ pub fn finalize_liquidity_token_transfer(
         }
     }
 
-    let res = Response::new()
+    Ok(Response::new()
         .add_attribute("action", "finalize_liquidity_token_transfer")
-        .add_events(events);
-    Ok(res)
+        .add_events(events))
 }
