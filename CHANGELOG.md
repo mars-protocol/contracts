@@ -4,7 +4,67 @@
 
 This section documents the API changes compared to the Terra Classic deployment, found in the [`mars-core`](https://github.com/mars-protocol/mars-core) repository. This section is **not comprehensive**, as the changes are numerous. Changelog for later version start here should be made comprehensive.
 
-* ([#55](https://github.com/mars-protocol/outposts/issues/27)) Red Bank: the option for the liquidator to request receiving the underlying asset is removed. Now the liquidator always receives collateral shares. To withdraw the underlying asset, dispatch another `ExecuteMsg::Withdraw`.
+* ([#61](https://github.com/mars-protocol/outposts/pull/61)) Red Bank: Implement variable naming convension.
+
+```diff
+pub struct CreateOrUpdateConfig {
+    pub owner: Option<String>,
+-   pub address_provider_address: Option<String>,
++   pub address_provider: Option<String>,
+    pub ma_token_code_id: Option<u64>,
+    pub close_factor: Option<Decimal>,
+}
+
+pub struct ConfigResponse {
+    pub owner: String,
+-   pub address_provider_address: Addr,
++   pub address_provider: String,
+    pub ma_token_code_id: u64,
+    pub market_count: u32,
+    pub close_factor: Decimal,
+}
+
+pub struct ExecuteMsg {
+    UpdateUncollateralizedLoanLimit {
+-       user_address: String,
++       user: String,
+        denom: String,
+        new_limit: Uint128,
+    },
+    Liquidate {
+-       user_address: String,
++       user: String,
+        collateral_denom: String,
+    }
+}
+
+pub struct QueryMsg {
+    UncollateralizedLoanLimit {
+-       user_address: String,
++       user: String,
+        denom: String,
+    },
+    UserDebt {
+-       user_address: String,
++       user: String,
+    },
+    UserAssetDebt {
+-       user_address: String,
++       user: String,
+        denom: String,
+    },
+    UserCollateral {
+-       user_address: String,
++       user: String,
+    },
+    UserPosition {
+-       user_address: String,
++       user: String,
+    },
+}
+```
+
+* ([#55](https://github.com/mars-protocol/outposts/pull/55)) Red Bank: the option for the liquidator to request receiving the underlying asset is removed. Now the liquidator always receives collateral shares. To withdraw the underlying asset, dispatch another `ExecuteMsg::Withdraw`.
 
 ```diff
 pub struct ExecuteMsg {
