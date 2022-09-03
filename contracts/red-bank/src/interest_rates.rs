@@ -29,7 +29,7 @@ const SECONDS_PER_YEAR: u64 = 31536000u64;
 /// the period between indexes_last_updated and current_block
 pub fn apply_accumulated_interests(
     env: &Env,
-    protocol_rewards_collector_address: &Addr,
+    rewards_collector_addr: &Addr,
     market: &mut Market,
     mut response: Response,
 ) -> StdResult<Response> {
@@ -89,7 +89,7 @@ pub fn apply_accumulated_interests(
         response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: market.ma_token_address.clone().into(),
             msg: to_binary(&Cw20ExecuteMsg::Mint {
-                recipient: protocol_rewards_collector_address.into(),
+                recipient: rewards_collector_addr.into(),
                 amount: mint_amount,
             })?,
             funds: vec![],

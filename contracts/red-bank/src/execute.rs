@@ -39,14 +39,14 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
     // compile error if we add more params
     let CreateOrUpdateConfig {
         owner,
-        address_provider_address,
+        address_provider,
         ma_token_code_id,
         close_factor,
     } = msg.config;
 
     // All fields should be available
     let available = owner.is_some()
-        && address_provider_address.is_some()
+        && address_provider.is_some()
         && ma_token_code_id.is_some()
         && close_factor.is_some();
 
@@ -56,11 +56,7 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
 
     let config = Config {
         owner: option_string_to_addr(deps.api, owner, zero_address())?,
-        address_provider_address: option_string_to_addr(
-            deps.api,
-            address_provider_address,
-            zero_address(),
-        )?,
+        address_provider: option_string_to_addr(deps.api, address_provider, zero_address())?,
         ma_token_code_id: ma_token_code_id.unwrap(),
         close_factor: close_factor.unwrap(),
     };
@@ -96,15 +92,15 @@ pub fn update_config(
     // compile error if we add more params
     let CreateOrUpdateConfig {
         owner,
-        address_provider_address,
+        address_provider,
         ma_token_code_id,
         close_factor,
     } = new_config;
 
     // Update config
     config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
-    config.address_provider_address =
-        option_string_to_addr(deps.api, address_provider_address, config.address_provider_address)?;
+    config.address_provider =
+        option_string_to_addr(deps.api, address_provider, config.address_provider)?;
     config.ma_token_code_id = ma_token_code_id.unwrap_or(config.ma_token_code_id);
     config.close_factor = close_factor.unwrap_or(config.close_factor);
 
@@ -159,12 +155,12 @@ pub fn init_asset(
             // A new maToken should be created which callbacks this contract in order to be registered.
             let addresses = address_provider::helpers::query_addresses(
                 deps.as_ref(),
-                &config.address_provider_address,
+                &config.address_provider,
                 vec![MarsContract::Incentives, MarsContract::ProtocolAdmin],
             )?;
             // TODO: protocol admin may be a marshub address, which can't be validated into `Addr`
-            let protocol_admin_address = &addresses[&MarsContract::ProtocolAdmin];
-            let incentives_address = &addresses[&MarsContract::Incentives];
+            let protocol_admin_addr = &addresses[&MarsContract::ProtocolAdmin];
+            let incentives_addr = &addresses[&MarsContract::Incentives];
 
             let token_symbol = format!("ma{}", symbol);
 
@@ -172,7 +168,7 @@ pub fn init_asset(
                 .add_attribute("action", "init_asset")
                 .add_attribute("denom", &denom)
                 .add_message(CosmosMsg::Wasm(WasmMsg::Instantiate {
-                    admin: Some(protocol_admin_address.to_string()),
+                    admin: Some(protocol_admin_addr.to_string()),
                     code_id: config.ma_token_code_id,
                     msg: to_binary(&ma_token::msg::InstantiateMsg {
                         name: format!("Mars {} Liquidity Token", symbol),
@@ -189,7 +185,7 @@ pub fn init_asset(
                                 "Interest earning token representing deposits for {}",
                                 symbol
                             )),
-                            marketing: Some(protocol_admin_address.to_string()),
+                            marketing: Some(protocol_admin_addr.to_string()),
                             logo: None,
                         }),
                         init_hook: Some(ma_token::msg::InitHook {
@@ -199,7 +195,7 @@ pub fn init_asset(
                             })?,
                         }),
                         red_bank_address: env.contract.address.to_string(),
-                        incentives_address: incentives_address.into(),
+                        incentives_address: incentives_addr.into(),
                     })?,
                     funds: vec![],
                     label: token_symbol,
@@ -339,14 +335,14 @@ pub fn update_asset(
             let mut response = Response::new();
 
             if should_update_interest_rates {
-                let protocol_rewards_collector_address = address_provider::helpers::query_address(
+                let protocol_rewards_collector_addr = address_provider::helpers::query_address(
                     deps.as_ref(),
-                    &config.address_provider_address,
+                    &config.address_provider,
                     MarsContract::ProtocolRewardsCollector,
                 )?;
                 response = apply_accumulated_interests(
                     &env,
-                    &protocol_rewards_collector_address,
+                    &protocol_rewards_collector_addr,
                     &mut market,
                     response,
                 )?;
@@ -392,7 +388,7 @@ pub fn update_uncollateralized_loan_limit(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    user_address: Addr,
+    user_addr: Addr,
     denom: String,
     new_limit: Uint128,
 ) -> Result<Response, ContractError> {
@@ -405,9 +401,9 @@ pub fn update_uncollateralized_loan_limit(
     }
 
     // Check that the user has no collateralized debt
-    if let Some(user) = USERS.may_load(deps.storage, &user_address)? {
+    if let Some(user) = USERS.may_load(deps.storage, &user_addr)? {
         let previous_uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
-            .may_load(deps.storage, (&denom, &user_address))?
+            .may_load(deps.storage, (&denom, &user_addr))?
             .unwrap_or_else(Uint128::zero);
 
         if previous_uncollateralized_loan_limit == Uint128::zero() {
@@ -421,27 +417,23 @@ pub fn update_uncollateralized_loan_limit(
         };
     }
 
-    UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (&denom, &user_address), &new_limit)?;
+    UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (&denom, &user_addr), &new_limit)?;
 
-    DEBTS.update(
-        deps.storage,
-        (&denom, &user_address),
-        |debt_opt: Option<Debt>| -> StdResult<_> {
-            let mut debt = debt_opt.unwrap_or(Debt {
-                amount_scaled: Uint128::zero(),
-                uncollateralized: false,
-            });
-            // if limit == 0 then uncollateralized = false, otherwise uncollateralized = true
-            debt.uncollateralized = !new_limit.is_zero();
-            Ok(debt)
-        },
-    )?;
+    DEBTS.update(deps.storage, (&denom, &user_addr), |debt_opt: Option<Debt>| -> StdResult<_> {
+        let mut debt = debt_opt.unwrap_or(Debt {
+            amount_scaled: Uint128::zero(),
+            uncollateralized: false,
+        });
+        // if limit == 0 then uncollateralized = false, otherwise uncollateralized = true
+        debt.uncollateralized = !new_limit.is_zero();
+        Ok(debt)
+    })?;
 
     let res = Response::new()
         .add_attribute("action", "update_uncollateralized_loan_limit")
-        .add_attribute("user", user_address.as_str())
+        .add_attribute("user", user_addr)
         .add_attribute("denom", denom)
-        .add_attribute("new_allowance", new_limit.to_string());
+        .add_attribute("new_allowance", new_limit);
     Ok(res)
 }
 
@@ -500,17 +492,12 @@ pub fn deposit(
     let config = CONFIG.load(deps.storage)?;
 
     // update indexes and interest rates
-    let protocol_rewards_collector_address = address_provider::helpers::query_address(
+    let rewards_collector_addr = address_provider::helpers::query_address(
         deps.as_ref(),
-        &config.address_provider_address,
+        &config.address_provider,
         MarsContract::ProtocolRewardsCollector,
     )?;
-    response = apply_accumulated_interests(
-        &env,
-        &protocol_rewards_collector_address,
-        &mut market,
-        response,
-    )?;
+    response = apply_accumulated_interests(&env, &rewards_collector_addr, &mut market, response)?;
     response = update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, response)?;
     MARKETS.save(deps.storage, &denom, &market)?;
 
@@ -545,7 +532,7 @@ pub fn withdraw(
     info: MessageInfo,
     denom: String,
     amount: Option<Uint128>,
-    recipient_address: Option<String>,
+    recipient: Option<String>,
 ) -> Result<Response, ContractError> {
     let withdrawer_addr = info.sender;
 
@@ -586,10 +573,10 @@ pub fn withdraw(
 
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
-        &config.address_provider_address,
+        &config.address_provider,
         vec![MarsContract::Oracle, MarsContract::ProtocolRewardsCollector],
     )?;
-    let protocol_rewards_collector_address = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
     let mut withdrawer = match USERS.may_load(deps.storage, &withdrawer_addr)? {
@@ -599,7 +586,7 @@ pub fn withdraw(
             // storage (If this happens the protocol did something wrong). The exception is
             // the protocol_rewards_collector which gets minted token without depositing
             // nor receiving a transfer from another user.
-            if withdrawer_addr != *protocol_rewards_collector_address {
+            if withdrawer_addr != *rewards_collector_addr {
                 return Err(ContractError::ExistingUserPositionRequired {});
             }
             User::default()
@@ -639,12 +626,7 @@ pub fn withdraw(
     }
 
     // update indexes and interest rates
-    response = apply_accumulated_interests(
-        &env,
-        protocol_rewards_collector_address,
-        &mut market,
-        response,
-    )?;
+    response = apply_accumulated_interests(&env, rewards_collector_addr, &mut market, response)?;
     response = update_interest_rates(&deps, &env, &mut market, withdraw_amount, &denom, response)?;
     MARKETS.save(deps.storage, &denom, &market)?;
 
@@ -665,19 +647,18 @@ pub fn withdraw(
     }));
 
     // send underlying asset to user or another recipient
-    let recipient_address = if let Some(address) = recipient_address {
-        deps.api.addr_validate(&address)?
+    let recipient_addr = if let Some(recipient) = recipient {
+        deps.api.addr_validate(&recipient)?
     } else {
         withdrawer_addr.clone()
     };
-    response =
-        response.add_message(build_send_asset_msg(&recipient_address, &denom, withdraw_amount));
+    response = response.add_message(build_send_asset_msg(&recipient_addr, &denom, withdraw_amount));
 
     response = response
         .add_attribute("action", "withdraw")
         .add_attribute("denom", denom)
-        .add_attribute("user", withdrawer_addr.as_str())
-        .add_attribute("recipient", recipient_address.as_str())
+        .add_attribute("user", withdrawer_addr)
+        .add_attribute("recipient", recipient_addr)
         .add_attribute("burn_amount", burn_amount)
         .add_attribute("withdraw_amount", withdraw_amount);
     Ok(response)
@@ -690,7 +671,7 @@ pub fn borrow(
     info: MessageInfo,
     denom: String,
     borrow_amount: Uint128,
-    recipient_address: Option<String>,
+    recipient: Option<String>,
 ) -> Result<Response, ContractError> {
     let borrower_addr = info.sender;
 
@@ -730,10 +711,10 @@ pub fn borrow(
 
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
-        &config.address_provider_address,
+        &config.address_provider,
         vec![MarsContract::Oracle, MarsContract::ProtocolRewardsCollector],
     )?;
-    let protocol_rewards_collector_address = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
     // Check if user can borrow specified amount
@@ -775,12 +756,8 @@ pub fn borrow(
 
     let mut response = Response::new();
 
-    response = apply_accumulated_interests(
-        &env,
-        protocol_rewards_collector_address,
-        &mut borrow_market,
-        response,
-    )?;
+    response =
+        apply_accumulated_interests(&env, rewards_collector_addr, &mut borrow_market, response)?;
 
     // Set borrowing asset for user
     if !is_borrowing_asset {
@@ -810,19 +787,18 @@ pub fn borrow(
     MARKETS.save(deps.storage, &denom, &borrow_market)?;
 
     // Send borrow amount to borrower or another recipient
-    let recipient_address = if let Some(address) = recipient_address {
-        deps.api.addr_validate(&address)?
+    let recipient_addr = if let Some(recipient) = recipient {
+        deps.api.addr_validate(&recipient)?
     } else {
         borrower_addr.clone()
     };
-    response =
-        response.add_message(build_send_asset_msg(&recipient_address, &denom, borrow_amount));
+    response = response.add_message(build_send_asset_msg(&recipient_addr, &denom, borrow_amount));
 
     response = response
         .add_attribute("action", "borrow")
         .add_attribute("denom", denom)
-        .add_attribute("user", borrower_addr.as_str())
-        .add_attribute("recipient", recipient_address.as_str())
+        .add_attribute("user", borrower_addr)
+        .add_attribute("recipient", recipient_addr)
         .add_attribute("amount", borrow_amount);
     Ok(response)
 }
@@ -836,7 +812,7 @@ pub fn repay(
     denom: String,
     repay_amount: Uint128,
 ) -> Result<Response, ContractError> {
-    let user_address = if let Some(address) = on_behalf_of {
+    let user_addr = if let Some(address) = on_behalf_of {
         let on_behalf_of_addr = deps.api.addr_validate(&address)?;
         // Uncollateralized loans should not have 'on behalf of' because it creates accounting complexity for them
         match UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&denom, &on_behalf_of_addr))? {
@@ -850,7 +826,7 @@ pub fn repay(
     };
 
     // Check new debt
-    let mut debt = DEBTS.load(deps.storage, (&denom, &user_address))?;
+    let mut debt = DEBTS.load(deps.storage, (&denom, &user_addr))?;
 
     if debt.amount_scaled.is_zero() {
         return Err(ContractError::CannotRepayZeroDebt {});
@@ -858,9 +834,9 @@ pub fn repay(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let protocol_rewards_collector_address = address_provider::helpers::query_address(
+    let rewards_collector_addr = address_provider::helpers::query_address(
         deps.as_ref(),
-        &config.address_provider_address,
+        &config.address_provider,
         MarsContract::ProtocolRewardsCollector,
     )?;
 
@@ -868,12 +844,7 @@ pub fn repay(
 
     let mut response = Response::new();
 
-    response = apply_accumulated_interests(
-        &env,
-        &protocol_rewards_collector_address,
-        &mut market,
-        response,
-    )?;
+    response = apply_accumulated_interests(&env, &rewards_collector_addr, &mut market, response)?;
 
     let debt_amount_scaled_before = debt.amount_scaled;
     let debt_amount_before =
@@ -884,7 +855,7 @@ pub fn repay(
     let mut debt_amount_after = Uint128::zero();
     if repay_amount > debt_amount_before {
         refund_amount = repay_amount - debt_amount_before;
-        let refund_msg = build_send_asset_msg(&user_address, &denom, refund_amount);
+        let refund_msg = build_send_asset_msg(&user_addr, &denom, refund_amount);
         response = response.add_message(refund_msg);
     } else {
         debt_amount_after = debt_amount_before - repay_amount;
@@ -893,7 +864,7 @@ pub fn repay(
     let debt_amount_scaled_after =
         get_scaled_debt_amount(debt_amount_after, &market, env.block.time.seconds())?;
     debt.amount_scaled = debt_amount_scaled_after;
-    DEBTS.save(deps.storage, (&denom, &user_address), &debt)?;
+    DEBTS.save(deps.storage, (&denom, &user_addr), &debt)?;
 
     let debt_amount_scaled_delta =
         debt_amount_scaled_before.checked_sub(debt_amount_scaled_after)?;
@@ -905,13 +876,13 @@ pub fn repay(
 
     if debt.amount_scaled.is_zero() {
         // Remove asset from borrowed assets
-        let mut user = USERS.load(deps.storage, &user_address)?;
+        let mut user = USERS.load(deps.storage, &user_addr)?;
         unset_bit(&mut user.borrowed_assets, market.index)?;
-        USERS.save(deps.storage, &user_address, &user)?;
+        USERS.save(deps.storage, &user_addr, &user)?;
         response = response.add_event(build_debt_position_changed_event(
             &denom,
             false,
-            user_address.to_string(),
+            user_addr.to_string(),
         ));
     }
 
@@ -919,7 +890,7 @@ pub fn repay(
         .add_attribute("action", "repay")
         .add_attribute("denom", denom)
         .add_attribute("sender", info.sender)
-        .add_attribute("user", user_address)
+        .add_attribute("user", user_addr)
         .add_attribute("amount", repay_amount.checked_sub(refund_amount)?);
     Ok(response)
 }
@@ -983,10 +954,10 @@ pub fn liquidate(
 
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
-        &config.address_provider_address,
+        &config.address_provider,
         vec![MarsContract::Oracle, MarsContract::ProtocolRewardsCollector],
     )?;
-    let protocol_rewards_collector_address = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
     let (liquidatable, assets_positions) =
@@ -1085,7 +1056,7 @@ pub fn liquidate(
 
         response = apply_accumulated_interests(
             &env,
-            protocol_rewards_collector_address,
+            rewards_collector_addr,
             &mut asset_market_after,
             response,
         )?;
@@ -1107,7 +1078,7 @@ pub fn liquidate(
 
         response = apply_accumulated_interests(
             &env,
-            protocol_rewards_collector_address,
+            rewards_collector_addr,
             &mut debt_market_after,
             response,
         )?;
@@ -1269,7 +1240,7 @@ pub fn update_asset_collateral_status(
             ));
         } else {
             return Err(ContractError::UserNoCollateralBalance {
-                user_address: user_addr.to_string(),
+                user: user_addr.to_string(),
                 denom,
             });
         }
@@ -1281,7 +1252,7 @@ pub fn update_asset_collateral_status(
         let config = CONFIG.load(deps.storage)?;
         let oracle_addr = address_provider::helpers::query_address(
             deps.as_ref(),
-            &config.address_provider_address,
+            &config.address_provider,
             MarsContract::Oracle,
         )?;
 
@@ -1324,14 +1295,14 @@ pub fn finalize_liquidity_token_transfer(
     // Check user health factor is above 1
     let mut from_user = USERS.load(deps.storage, &from_address)?;
     let config = CONFIG.load(deps.storage)?;
-    let oracle_address = address_provider::helpers::query_address(
+    let oracle_addr = address_provider::helpers::query_address(
         deps.as_ref(),
-        &config.address_provider_address,
+        &config.address_provider,
         MarsContract::Oracle,
     )?;
 
     let (liquidatable, _) =
-        assert_liquidatable(&deps.as_ref(), &env, &from_user, &from_address, &oracle_address)?;
+        assert_liquidatable(&deps.as_ref(), &env, &from_user, &from_address, &oracle_addr)?;
 
     if liquidatable {
         return Err(ContractError::CannotTransferTokenWhenInvalidHealthFactor {});

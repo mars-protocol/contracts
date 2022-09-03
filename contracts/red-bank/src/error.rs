@@ -28,11 +28,9 @@ pub enum ContractError {
         denom: String,
     },
 
-    #[error(
-        "User address {user_address:?} has no balance in specified collateral asset {denom:?}"
-    )]
+    #[error("User address {user:?} has no balance in specified collateral asset {denom:?}")]
     UserNoCollateralBalance {
-        user_address: String,
+        user: String,
         denom: String,
     },
 

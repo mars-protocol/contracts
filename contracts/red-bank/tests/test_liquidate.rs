@@ -133,8 +133,8 @@ fn test_liquidate() {
         );
 
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let env = mock_env(MockEnvParams::default());
@@ -170,8 +170,8 @@ fn test_liquidate() {
             .unwrap();
 
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let env = mock_env(MockEnvParams::default());
@@ -204,8 +204,8 @@ fn test_liquidate() {
     // trying to liquidate without sending funds should fail
     {
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let env = mock_env(MockEnvParams::default());
@@ -217,8 +217,8 @@ fn test_liquidate() {
     // Perform first successful liquidation
     {
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let collateral_market_before = MARKETS.load(&deps.storage, "collateral").unwrap();
@@ -338,8 +338,8 @@ fn test_liquidate() {
     // Perform second successful liquidation sending an excess amount (should refund)
     {
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let collateral_market_before = MARKETS.load(&deps.storage, "collateral").unwrap();
@@ -492,8 +492,8 @@ fn test_liquidate() {
         DEBTS.save(deps.as_mut().storage, ("debt", &user_address), &debt).unwrap();
 
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let collateral_market_before = MARKETS.load(&deps.storage, "collateral").unwrap();
@@ -629,8 +629,8 @@ fn test_liquidate() {
             &[coin(100, "somecoin1"), coin(200, "somecoin2")],
         );
         let msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
         let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(error_res, PaymentError::MultipleDenoms {}.into());
@@ -728,8 +728,8 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
     {
         let debt_to_repay = Uint128::from(400_000_u64);
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "the_asset".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let asset_market_before = MARKETS.load(&deps.storage, "the_asset").unwrap();
@@ -869,8 +869,8 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
     {
         let debt_to_repay = Uint128::from(400_000_u64);
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "the_asset".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let asset_market_before = MARKETS.load(&deps.storage, "the_asset").unwrap();
@@ -1011,8 +1011,8 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let expected_refund_amount = debt_to_repay - expected_less_debt;
 
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "the_asset".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let asset_market_before = MARKETS.load(&deps.storage, "the_asset").unwrap();
@@ -1164,8 +1164,8 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let expected_refund_amount = debt_to_repay - expected_less_debt;
 
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "the_asset".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let asset_market_before = MARKETS.load(&deps.storage, "the_asset").unwrap();
@@ -1379,8 +1379,8 @@ fn test_liquidation_health_factor_check() {
     let debt_to_cover = Uint128::from(1_000_000u64);
 
     let liquidate_msg = ExecuteMsg::Liquidate {
+        user: healthy_user_address.to_string(),
         collateral_denom: "collateral".to_string(),
-        user_address: healthy_user_address.to_string(),
     };
 
     let env = mock_env(MockEnvParams::default());
@@ -1428,8 +1428,8 @@ fn test_liquidate_if_collateral_disabled() {
     let debt_to_cover = Uint128::from(1_000_000u64);
 
     let liquidate_msg = ExecuteMsg::Liquidate {
+        user: user_address.to_string(),
         collateral_denom: "collateral2".to_string(),
-        user_address: user_address.to_string(),
     };
 
     let env = mock_env(MockEnvParams::default());

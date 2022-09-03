@@ -1,23 +1,21 @@
+use cosmwasm_std::testing::{MockQuerier, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, from_slice,
-    testing::{MockQuerier, MOCK_CONTRACT_ADDR},
-    Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
-    SystemResult, Uint128, WasmQuery,
+    from_binary, from_slice, Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest,
+    StdResult, SystemError, SystemResult, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
 use osmo_bindings::{
     ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Swap,
 };
 
-use crate::osmosis_querier::{OsmosisQuerier, PriceKey};
-use crate::{mock_address_provider, redbank_querier::RedBankQuerier};
 use mars_outpost::{address_provider, incentives, ma_token, oracle, red_bank};
 
-use super::{
-    cw20_querier::{mock_token_info_response, Cw20Querier},
-    incentives_querier::IncentivesQuerier,
-    oracle_querier::OracleQuerier,
-};
+use crate::cw20_querier::{mock_token_info_response, Cw20Querier};
+use crate::incentives_querier::IncentivesQuerier;
+use crate::mock_address_provider;
+use crate::oracle_querier::OracleQuerier;
+use crate::osmosis_querier::{OsmosisQuerier, PriceKey};
+use crate::red_bank_querier::RedBankQuerier;
 
 pub struct MarsMockQuerier {
     base: MockQuerier<Empty>,

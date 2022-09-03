@@ -11,7 +11,7 @@ pub struct Config {
     /// Contract owner
     pub owner: Addr,
     /// Address provider returns addresses for all protocol contracts
-    pub address_provider_address: Addr,
+    pub address_provider: Addr,
     /// maToken code id used to instantiate new tokens
     pub ma_token_code_id: u64,
     /// Maximum percentage of outstanding debt that can be covered by a liquidator
@@ -87,8 +87,8 @@ pub struct Position {
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ConfigResponse {
-    pub owner: Addr,
-    pub address_provider_address: Addr,
+    pub owner: String,
+    pub address_provider: String,
     pub ma_token_code_id: u64,
     pub market_count: u32,
     pub close_factor: Decimal,

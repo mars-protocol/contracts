@@ -19,7 +19,7 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
     let info = mock_info("owner");
     let config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
-        address_provider_address: Some("address_provider".to_string()),
+        address_provider: Some("address_provider".to_string()),
         ma_token_code_id: Some(1u64),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };

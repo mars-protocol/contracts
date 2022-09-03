@@ -16,7 +16,7 @@ mod oracle_querier;
 #[cfg(not(target_arch = "wasm32"))]
 mod osmosis_querier;
 #[cfg(not(target_arch = "wasm32"))]
-mod redbank_querier;
+mod red_bank_querier;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use helpers::*;

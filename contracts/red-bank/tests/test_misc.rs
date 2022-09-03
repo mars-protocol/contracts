@@ -56,8 +56,7 @@ fn test_uncollateralized_loan_limits() {
 
     let update_limit_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
         denom: "somecoin".to_string(),
-
-        user_address: existing_borrower_addr.to_string(),
+        user: existing_borrower_addr.to_string(),
         new_limit: initial_uncollateralized_loan_limit,
     };
     let update_limit_env = mock_env_at_block_time(block_time);
@@ -70,7 +69,7 @@ fn test_uncollateralized_loan_limits() {
 
     let update_limit_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
         denom: "somecoin".to_string(),
-        user_address: borrower_addr.to_string(),
+        user: borrower_addr.to_string(),
         new_limit: initial_uncollateralized_loan_limit,
     };
 
@@ -186,8 +185,8 @@ fn test_uncollateralized_loan_limits() {
 
     // Set limit to zero
     let update_allowance_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
+        user: borrower_addr.to_string(),
         denom: "somecoin".to_string(),
-        user_address: borrower_addr.to_string(),
         new_limit: Uint128::zero(),
     };
     let allowance_env = mock_env_at_block_time(block_time);
@@ -276,7 +275,7 @@ fn test_update_asset_collateral() {
         assert_eq!(
             error_res,
             ContractError::UserNoCollateralBalance {
-                user_address: user_addr.to_string(),
+                user: user_addr.to_string(),
                 denom: denom_1.to_string()
             }
         );
