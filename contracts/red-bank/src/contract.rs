@@ -26,7 +26,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::UpdateConfig {
             config,
-        } => execute::update_config(deps, env, info, config),
+        } => execute::update_config(deps, info, config),
         ExecuteMsg::InitAsset {
             denom,
             asset_params,
@@ -34,7 +34,7 @@ pub fn execute(
         } => execute::init_asset(deps, env, info, denom, asset_params, asset_symbol),
         ExecuteMsg::InitAssetTokenCallback {
             denom,
-        } => execute::init_asset_token_callback(deps, env, info, denom),
+        } => execute::init_asset_token_callback(deps, info, denom),
         ExecuteMsg::UpdateAsset {
             denom,
             asset_params,
@@ -45,9 +45,7 @@ pub fn execute(
             new_limit,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            execute::update_uncollateralized_loan_limit(
-                deps, env, info, user_addr, denom, new_limit,
-            )
+            execute::update_uncollateralized_loan_limit(deps, info, user_addr, denom, new_limit)
         }
         ExecuteMsg::Deposit {
             on_behalf_of,

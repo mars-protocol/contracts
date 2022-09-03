@@ -78,7 +78,6 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
 /// Update config
 pub fn update_config(
     deps: DepsMut,
-    _env: Env,
     info: MessageInfo,
     new_config: CreateOrUpdateConfig,
 ) -> Result<Response, ContractError> {
@@ -269,7 +268,6 @@ pub fn create_market(
 
 pub fn init_asset_token_callback(
     deps: DepsMut,
-    _env: Env,
     info: MessageInfo,
     denom: String,
 ) -> Result<Response, ContractError> {
@@ -386,7 +384,6 @@ pub fn update_asset(
 /// Update uncollateralized loan limit by a given amount in base asset
 pub fn update_uncollateralized_loan_limit(
     deps: DepsMut,
-    _env: Env,
     info: MessageInfo,
     user_addr: Addr,
     denom: String,
