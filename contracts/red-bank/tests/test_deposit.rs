@@ -85,7 +85,7 @@ fn test_deposit_native_asset() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "deposit"),
+            attr("action", "outposts/red-bank/deposit"),
             attr("denom", "somecoin"),
             attr("sender", "depositor"),
             attr("user", "depositor"),
@@ -224,7 +224,7 @@ fn test_deposit_on_behalf_of() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "deposit"),
+            attr("action", "outposts/red-bank/deposit"),
             attr("denom", "somecoin"),
             attr("sender", depositor_addr),
             attr("user", another_user_addr),

@@ -447,7 +447,10 @@ fn test_init_asset() {
             })),]
         );
 
-        assert_eq!(res.attributes, vec![attr("action", "init_asset"), attr("denom", "someasset")]);
+        assert_eq!(
+            res.attributes,
+            vec![attr("action", "outposts/red-bank/init_asset"), attr("denom", "someasset")]
+        );
     }
 
     // can't init more than once
@@ -783,7 +786,7 @@ fn test_update_asset() {
 
         assert_eq!(
             res.attributes,
-            vec![attr("action", "update_asset"), attr("denom", "someasset")],
+            vec![attr("action", "outposts/red-bank/update_asset"), attr("denom", "someasset")],
         );
     }
 

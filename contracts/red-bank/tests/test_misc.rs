@@ -127,7 +127,7 @@ fn test_uncollateralized_loan_limits() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "borrow"),
+            attr("action", "outposts/red-bank/borrow"),
             attr("denom", "somecoin"),
             attr("user", "borrower"),
             attr("recipient", "borrower"),

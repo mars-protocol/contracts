@@ -135,7 +135,7 @@ fn test_withdraw_native() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "withdraw"),
+            attr("action", "outposts/red-bank/withdraw"),
             attr("denom", "somecoin"),
             attr("user", "withdrawer"),
             attr("recipient", "withdrawer"),
@@ -229,7 +229,7 @@ fn test_withdraw_and_send_funds_to_another_user() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "withdraw"),
+            attr("action", "outposts/red-bank/withdraw"),
             attr("denom", denom.to_string()),
             attr("user", withdrawer_addr),
             attr("recipient", another_user_addr),
@@ -558,7 +558,7 @@ fn test_withdraw_total_balance() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "withdraw"),
+            attr("action", "outposts/red-bank/withdraw"),
             attr("denom", "somecoin"),
             attr("user", "withdrawer"),
             attr("recipient", "withdrawer"),

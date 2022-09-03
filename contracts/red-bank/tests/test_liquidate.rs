@@ -293,7 +293,7 @@ fn test_liquidate() {
         mars_testing::assert_eq_vec(
             res.attributes,
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "collateral"),
                 attr("debt_denom", "debt"),
                 attr("user", user_address.as_str()),
@@ -439,7 +439,7 @@ fn test_liquidate() {
 
         mars_testing::assert_eq_vec(
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "collateral"),
                 attr("debt_denom", "debt"),
                 attr("user", user_address.as_str()),
@@ -581,7 +581,7 @@ fn test_liquidate() {
 
         mars_testing::assert_eq_vec(
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "collateral"),
                 attr("debt_denom", "debt"),
                 attr("user", user_address.as_str()),
@@ -804,7 +804,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         mars_testing::assert_eq_vec(
             res.attributes,
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "the_asset"),
                 attr("debt_denom", "the_asset"),
                 attr("user", user_address.as_str()),
@@ -944,7 +944,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         mars_testing::assert_eq_vec(
             res.attributes,
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "the_asset"),
                 attr("debt_denom", "the_asset"),
                 attr("user", user_address.as_str()),
@@ -1091,7 +1091,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         mars_testing::assert_eq_vec(
             res.attributes,
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "the_asset"),
                 attr("debt_denom", "the_asset"),
                 attr("user", user_address.as_str()),
@@ -1244,7 +1244,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         mars_testing::assert_eq_vec(
             res.attributes,
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "the_asset"),
                 attr("debt_denom", "the_asset"),
                 attr("user", user_address.as_str()),

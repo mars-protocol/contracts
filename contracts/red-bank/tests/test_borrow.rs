@@ -133,7 +133,7 @@ fn test_borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "borrow"),
+            attr("action", "outposts/red-bank/borrow"),
             attr("denom", "uosmo"),
             attr("user", "borrower"),
             attr("recipient", "borrower"),
@@ -257,7 +257,7 @@ fn test_borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "borrow"),
+            attr("action", "outposts/red-bank/borrow"),
             attr("denom", "uusd"),
             attr("user", "borrower"),
             attr("recipient", "borrower"),
@@ -337,7 +337,7 @@ fn test_borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "repay"),
+            attr("action", "outposts/red-bank/repay"),
             attr("denom", "uusd"),
             attr("sender", "borrower"),
             attr("user", "borrower"),
@@ -403,7 +403,7 @@ fn test_borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "repay"),
+            attr("action", "outposts/red-bank/repay"),
             attr("denom", "uusd"),
             attr("sender", "borrower"),
             attr("user", "borrower"),
@@ -481,7 +481,7 @@ fn test_borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "repay"),
+            attr("action", "outposts/red-bank/repay"),
             attr("denom", "uosmo"),
             attr("sender", "borrower"),
             attr("user", "borrower"),
@@ -597,7 +597,7 @@ fn test_repay_on_behalf_of() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "repay"),
+            attr("action", "outposts/red-bank/repay"),
             attr("denom", "borrowedcoinnative"),
             attr("sender", "user"),
             attr("user", "borrower"),
@@ -1025,7 +1025,7 @@ fn test_borrow_and_send_funds_to_another_user() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "borrow"),
+            attr("action", "outposts/red-bank/borrow"),
             attr("denom", "uusd"),
             attr("user", borrower_addr),
             attr("recipient", another_user_addr),
