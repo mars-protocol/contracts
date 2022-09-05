@@ -3,12 +3,14 @@ use cosmwasm_std::{Addr, Decimal, Uint128};
 use mars_outpost::red_bank::{Debt, Market, User, UserAssetDebtResponse};
 use mars_testing::{mock_env, MockEnvParams};
 
-use crate::helpers::set_bit;
-use crate::interest_rates::{get_scaled_debt_amount, get_underlying_debt_amount};
-use crate::query::{query_user_asset_debt, query_user_collateral, query_user_debt};
-use crate::state::{DEBTS, USERS};
+use mars_red_bank::helpers::set_bit;
+use mars_red_bank::interest_rates::{get_scaled_debt_amount, get_underlying_debt_amount};
+use mars_red_bank::query::{query_user_asset_debt, query_user_collateral, query_user_debt};
+use mars_red_bank::state::{DEBTS, USERS};
 
-use super::helpers::{th_init_market, th_setup};
+use helpers::{th_init_market, th_setup};
+
+mod helpers;
 
 #[test]
 fn test_query_collateral() {

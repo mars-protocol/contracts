@@ -2,7 +2,7 @@ use cosmwasm_std::{Decimal, Uint128};
 use mars_outpost::red_bank::Position;
 use std::collections::HashMap;
 
-use crate::health::compute_position_health;
+use mars_red_bank::health::compute_position_health;
 
 #[test]
 fn test_health_position() {

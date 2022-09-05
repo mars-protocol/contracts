@@ -4,22 +4,22 @@ use cosmwasm_std::{Coin, Decimal, DepsMut, Event, OwnedDeps, StdResult, Uint128}
 use mars_outpost::red_bank::{CreateOrUpdateConfig, GlobalState, InstantiateMsg, Market};
 use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
 
-use crate::contract::instantiate;
-use crate::interest_rates::{
+use mars_red_bank::contract::instantiate;
+use mars_red_bank::interest_rates::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     ScalingOperation,
 };
-use crate::state::{GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_INDEX, MARKET_DENOMS_BY_MA_TOKEN};
+use mars_red_bank::state::{
+    GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_INDEX, MARKET_DENOMS_BY_MA_TOKEN,
+};
 
-pub(super) fn th_setup(
-    contract_balances: &[Coin],
-) -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
+pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     let mut deps = mock_dependencies(contract_balances);
     let env = mock_env(MockEnvParams::default());
     let info = mock_info("owner");
     let config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
-        address_provider_address: Some("address_provider".to_string()),
+        address_provider: Some("address_provider".to_string()),
         ma_token_code_id: Some(1u64),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
@@ -33,7 +33,7 @@ pub(super) fn th_setup(
     deps
 }
 
-pub(super) fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {
+pub fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {
     let mut index = 0;
 
     GLOBAL_STATE
@@ -62,7 +62,7 @@ pub(super) fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Mar
 }
 
 #[derive(Default, Debug)]
-pub(super) struct TestInterestResults {
+pub struct TestInterestResults {
     pub borrow_index: Decimal,
     pub liquidity_index: Decimal,
     pub borrow_rate: Decimal,
@@ -71,7 +71,7 @@ pub(super) struct TestInterestResults {
     pub less_debt_scaled: Uint128,
 }
 
-pub(super) fn th_build_interests_updated_event(denom: &str, ir: &TestInterestResults) -> Event {
+pub fn th_build_interests_updated_event(denom: &str, ir: &TestInterestResults) -> Event {
     Event::new("interests_updated")
         .add_attribute("denom", denom)
         .add_attribute("borrow_index", ir.borrow_index.to_string())
@@ -82,7 +82,7 @@ pub(super) fn th_build_interests_updated_event(denom: &str, ir: &TestInterestRes
 
 /// Deltas to be using in expected indices/rates results
 #[derive(Default, Debug)]
-pub(super) struct TestUtilizationDeltaInfo {
+pub struct TestUtilizationDeltaInfo {
     pub less_liquidity: Uint128,
     pub more_debt: Uint128,
     pub less_debt: Uint128,
@@ -92,7 +92,7 @@ pub(super) struct TestUtilizationDeltaInfo {
 
 /// Takes a market before an action (ie: a borrow) among some test parameters
 /// used in that action and computes the expected indices and rates after that action.
-pub(super) fn th_get_expected_indices_and_rates(
+pub fn th_get_expected_indices_and_rates(
     market: &Market,
     block_time: u64,
     initial_liquidity: Uint128,
@@ -181,7 +181,7 @@ pub(super) fn th_get_expected_indices_and_rates(
 
 /// Compute protocol income to be distributed (using values up to the instant
 /// before the contract call is made)
-pub(super) fn th_get_expected_protocol_rewards(
+pub fn th_get_expected_protocol_rewards(
     market: &Market,
     expected_indices: &TestExpectedIndices,
 ) -> Uint128 {
@@ -207,12 +207,12 @@ pub(super) fn th_get_expected_protocol_rewards(
 }
 
 /// Expected results for applying accumulated interest
-pub(super) struct TestExpectedIndices {
+pub struct TestExpectedIndices {
     pub liquidity: Decimal,
     pub borrow: Decimal,
 }
 
-pub(super) fn th_get_expected_indices(market: &Market, block_time: u64) -> TestExpectedIndices {
+pub fn th_get_expected_indices(market: &Market, block_time: u64) -> TestExpectedIndices {
     let seconds_elapsed = block_time - market.indexes_last_updated;
     // market indices
     let expected_liquidity_index = calculate_applied_linear_interest_rate(

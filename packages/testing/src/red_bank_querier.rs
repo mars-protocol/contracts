@@ -18,12 +18,10 @@ impl RedBankQuerier {
                 None => Err(format!("[mock]: could not find the market for {}", denom)).into(),
             },
             QueryMsg::UserPosition {
-                user_address,
-            } => match self.users_positions.get(&user_address) {
+                user,
+            } => match self.users_positions.get(&user) {
                 Some(market) => to_binary(&market).into(),
-                None => {
-                    Err(format!("[mock]: could not find the position for {}", user_address)).into()
-                }
+                None => Err(format!("[mock]: could not find the position for {}", user)).into(),
             },
             _ => Err("[mock]: Unsupported red_bank query".to_string()).into(),
         };

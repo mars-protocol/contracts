@@ -17,12 +17,16 @@ use mars_outpost::red_bank::{
 };
 use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, MockEnvParams};
 
-use crate::contract::{execute, instantiate, query};
-use crate::error::ContractError;
-use crate::interest_rates::{compute_scaled_amount, compute_underlying_amount, ScalingOperation};
-use crate::state::{CONFIG, GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_INDEX};
+use mars_red_bank::contract::{execute, instantiate, query};
+use mars_red_bank::error::ContractError;
+use mars_red_bank::interest_rates::{
+    compute_scaled_amount, compute_underlying_amount, ScalingOperation,
+};
+use mars_red_bank::state::{CONFIG, GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_INDEX};
 
-use super::helpers::{th_get_expected_indices, th_init_market, th_setup};
+use crate::helpers::{th_get_expected_indices, th_init_market, th_setup};
+
+mod helpers;
 
 #[test]
 fn test_proper_initialization() {
@@ -32,7 +36,7 @@ fn test_proper_initialization() {
     // Config with base params valid (just update the rest)
     let base_config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
-        address_provider_address: Some("address_provider".to_string()),
+        address_provider: Some("address_provider".to_string()),
         ma_token_code_id: Some(10u64),
         close_factor: None,
     };
@@ -42,7 +46,7 @@ fn test_proper_initialization() {
     // *
     let empty_config = CreateOrUpdateConfig {
         owner: None,
-        address_provider_address: None,
+        address_provider: None,
         ma_token_code_id: None,
         close_factor: None,
     };
@@ -111,7 +115,7 @@ fn test_update_config() {
     let mut close_factor = Decimal::from_ratio(1u128, 4u128);
     let init_config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
-        address_provider_address: Some("address_provider".to_string()),
+        address_provider: Some("address_provider".to_string()),
         ma_token_code_id: Some(20u64),
         close_factor: Some(close_factor),
     };
@@ -162,7 +166,7 @@ fn test_update_config() {
     close_factor = Decimal::from_ratio(1u128, 20u128);
     let config = CreateOrUpdateConfig {
         owner: Some("new_owner".to_string()),
-        address_provider_address: Some("new_address_provider".to_string()),
+        address_provider: Some("new_address_provider".to_string()),
         ma_token_code_id: Some(40u64),
         close_factor: Some(close_factor),
     };
@@ -179,10 +183,7 @@ fn test_update_config() {
     let new_config = CONFIG.load(&deps.storage).unwrap();
 
     assert_eq!(new_config.owner, Addr::unchecked("new_owner"));
-    assert_eq!(
-        new_config.address_provider_address,
-        Addr::unchecked(config.address_provider_address.unwrap())
-    );
+    assert_eq!(new_config.address_provider, Addr::unchecked(config.address_provider.unwrap()));
     assert_eq!(new_config.ma_token_code_id, config.ma_token_code_id.unwrap());
     assert_eq!(new_config.close_factor, config.close_factor.unwrap());
 }
@@ -194,7 +195,7 @@ fn test_init_asset() {
 
     let config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
-        address_provider_address: Some("address_provider".to_string()),
+        address_provider: Some("address_provider".to_string()),
         ma_token_code_id: Some(5u64),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
@@ -446,7 +447,10 @@ fn test_init_asset() {
             })),]
         );
 
-        assert_eq!(res.attributes, vec![attr("action", "init_asset"), attr("denom", "someasset")]);
+        assert_eq!(
+            res.attributes,
+            vec![attr("action", "outposts/red-bank/init_asset"), attr("denom", "someasset")]
+        );
     }
 
     // can't init more than once
@@ -563,7 +567,7 @@ fn test_update_asset() {
 
     let config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
-        address_provider_address: Some("address_provider".to_string()),
+        address_provider: Some("address_provider".to_string()),
         ma_token_code_id: Some(5u64),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
@@ -782,7 +786,7 @@ fn test_update_asset() {
 
         assert_eq!(
             res.attributes,
-            vec![attr("action", "update_asset"), attr("denom", "someasset")],
+            vec![attr("action", "outposts/red-bank/update_asset"), attr("denom", "someasset")],
         );
     }
 
@@ -830,7 +834,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
 
     let config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
-        address_provider_address: Some("address_provider".to_string()),
+        address_provider: Some("address_provider".to_string()),
         ma_token_code_id: Some(5u64),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };

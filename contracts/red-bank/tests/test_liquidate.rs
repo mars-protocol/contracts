@@ -9,20 +9,22 @@ use mars_outpost::red_bank::{Debt, ExecuteMsg, InterestRateModel, Market, User};
 use mars_outpost::{ma_token, math};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
-use crate::contract::execute;
-use crate::error::ContractError;
-use crate::events::build_collateral_position_changed_event;
-use crate::helpers::{get_bit, set_bit};
-use crate::interest_rates::{
+use mars_red_bank::contract::execute;
+use mars_red_bank::error::ContractError;
+use mars_red_bank::events::build_collateral_position_changed_event;
+use mars_red_bank::helpers::{get_bit, set_bit};
+use mars_red_bank::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
     ScalingOperation, SCALING_FACTOR,
 };
-use crate::state::{CONFIG, DEBTS, MARKETS, USERS};
+use mars_red_bank::state::{CONFIG, DEBTS, MARKETS, USERS};
 
-use super::helpers::{
+use helpers::{
     th_build_interests_updated_event, th_get_expected_indices, th_get_expected_indices_and_rates,
     th_init_market, th_setup, TestUtilizationDeltaInfo,
 };
+
+mod helpers;
 
 #[test]
 fn test_liquidate() {
@@ -131,8 +133,8 @@ fn test_liquidate() {
         );
 
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let env = mock_env(MockEnvParams::default());
@@ -168,8 +170,8 @@ fn test_liquidate() {
             .unwrap();
 
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let env = mock_env(MockEnvParams::default());
@@ -202,8 +204,8 @@ fn test_liquidate() {
     // trying to liquidate without sending funds should fail
     {
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let env = mock_env(MockEnvParams::default());
@@ -215,8 +217,8 @@ fn test_liquidate() {
     // Perform first successful liquidation
     {
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let collateral_market_before = MARKETS.load(&deps.storage, "collateral").unwrap();
@@ -291,7 +293,7 @@ fn test_liquidate() {
         mars_testing::assert_eq_vec(
             res.attributes,
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "collateral"),
                 attr("debt_denom", "debt"),
                 attr("user", user_address.as_str()),
@@ -336,8 +338,8 @@ fn test_liquidate() {
     // Perform second successful liquidation sending an excess amount (should refund)
     {
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let collateral_market_before = MARKETS.load(&deps.storage, "collateral").unwrap();
@@ -437,7 +439,7 @@ fn test_liquidate() {
 
         mars_testing::assert_eq_vec(
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "collateral"),
                 attr("debt_denom", "debt"),
                 attr("user", user_address.as_str()),
@@ -490,8 +492,8 @@ fn test_liquidate() {
         DEBTS.save(deps.as_mut().storage, ("debt", &user_address), &debt).unwrap();
 
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let collateral_market_before = MARKETS.load(&deps.storage, "collateral").unwrap();
@@ -579,7 +581,7 @@ fn test_liquidate() {
 
         mars_testing::assert_eq_vec(
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "collateral"),
                 attr("debt_denom", "debt"),
                 attr("user", user_address.as_str()),
@@ -627,8 +629,8 @@ fn test_liquidate() {
             &[coin(100, "somecoin1"), coin(200, "somecoin2")],
         );
         let msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "collateral".to_string(),
-            user_address: user_address.to_string(),
         };
         let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(error_res, PaymentError::MultipleDenoms {}.into());
@@ -726,8 +728,8 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
     {
         let debt_to_repay = Uint128::from(400_000_u64);
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "the_asset".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let asset_market_before = MARKETS.load(&deps.storage, "the_asset").unwrap();
@@ -802,7 +804,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         mars_testing::assert_eq_vec(
             res.attributes,
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "the_asset"),
                 attr("debt_denom", "the_asset"),
                 attr("user", user_address.as_str()),
@@ -867,8 +869,8 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
     {
         let debt_to_repay = Uint128::from(400_000_u64);
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "the_asset".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let asset_market_before = MARKETS.load(&deps.storage, "the_asset").unwrap();
@@ -942,7 +944,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         mars_testing::assert_eq_vec(
             res.attributes,
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "the_asset"),
                 attr("debt_denom", "the_asset"),
                 attr("user", user_address.as_str()),
@@ -1009,8 +1011,8 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let expected_refund_amount = debt_to_repay - expected_less_debt;
 
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "the_asset".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let asset_market_before = MARKETS.load(&deps.storage, "the_asset").unwrap();
@@ -1089,7 +1091,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         mars_testing::assert_eq_vec(
             res.attributes,
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "the_asset"),
                 attr("debt_denom", "the_asset"),
                 attr("user", user_address.as_str()),
@@ -1162,8 +1164,8 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let expected_refund_amount = debt_to_repay - expected_less_debt;
 
         let liquidate_msg = ExecuteMsg::Liquidate {
+            user: user_address.to_string(),
             collateral_denom: "the_asset".to_string(),
-            user_address: user_address.to_string(),
         };
 
         let asset_market_before = MARKETS.load(&deps.storage, "the_asset").unwrap();
@@ -1242,7 +1244,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         mars_testing::assert_eq_vec(
             res.attributes,
             vec![
-                attr("action", "liquidate"),
+                attr("action", "outposts/red-bank/liquidate"),
                 attr("collateral_denom", "the_asset"),
                 attr("debt_denom", "the_asset"),
                 attr("user", user_address.as_str()),
@@ -1377,8 +1379,8 @@ fn test_liquidation_health_factor_check() {
     let debt_to_cover = Uint128::from(1_000_000u64);
 
     let liquidate_msg = ExecuteMsg::Liquidate {
+        user: healthy_user_address.to_string(),
         collateral_denom: "collateral".to_string(),
-        user_address: healthy_user_address.to_string(),
     };
 
     let env = mock_env(MockEnvParams::default());
@@ -1426,8 +1428,8 @@ fn test_liquidate_if_collateral_disabled() {
     let debt_to_cover = Uint128::from(1_000_000u64);
 
     let liquidate_msg = ExecuteMsg::Liquidate {
+        user: user_address.to_string(),
         collateral_denom: "collateral2".to_string(),
-        user_address: user_address.to_string(),
     };
 
     let env = mock_env(MockEnvParams::default());

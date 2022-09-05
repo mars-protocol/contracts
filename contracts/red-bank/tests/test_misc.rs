@@ -6,21 +6,23 @@ use mars_outpost::math;
 use mars_outpost::red_bank::{Debt, ExecuteMsg, Market, User};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
-use crate::contract::execute;
-use crate::error::ContractError;
-use crate::events::build_debt_position_changed_event;
-use crate::health;
-use crate::helpers::{get_bit, set_bit};
-use crate::interest_rates::{
+use mars_red_bank::contract::execute;
+use mars_red_bank::error::ContractError;
+use mars_red_bank::events::build_debt_position_changed_event;
+use mars_red_bank::health;
+use mars_red_bank::helpers::{get_bit, set_bit};
+use mars_red_bank::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_debt_amount,
     get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
 };
-use crate::state::{DEBTS, UNCOLLATERALIZED_LOAN_LIMITS, USERS};
+use mars_red_bank::state::{DEBTS, UNCOLLATERALIZED_LOAN_LIMITS, USERS};
 
-use super::helpers::{
+use helpers::{
     th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
     TestUtilizationDeltaInfo,
 };
+
+mod helpers;
 
 #[test]
 fn test_uncollateralized_loan_limits() {
@@ -54,8 +56,7 @@ fn test_uncollateralized_loan_limits() {
 
     let update_limit_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
         denom: "somecoin".to_string(),
-
-        user_address: existing_borrower_addr.to_string(),
+        user: existing_borrower_addr.to_string(),
         new_limit: initial_uncollateralized_loan_limit,
     };
     let update_limit_env = mock_env_at_block_time(block_time);
@@ -68,7 +69,7 @@ fn test_uncollateralized_loan_limits() {
 
     let update_limit_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
         denom: "somecoin".to_string(),
-        user_address: borrower_addr.to_string(),
+        user: borrower_addr.to_string(),
         new_limit: initial_uncollateralized_loan_limit,
     };
 
@@ -126,7 +127,7 @@ fn test_uncollateralized_loan_limits() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "borrow"),
+            attr("action", "outposts/red-bank/borrow"),
             attr("denom", "somecoin"),
             attr("user", "borrower"),
             attr("recipient", "borrower"),
@@ -184,8 +185,8 @@ fn test_uncollateralized_loan_limits() {
 
     // Set limit to zero
     let update_allowance_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
+        user: borrower_addr.to_string(),
         denom: "somecoin".to_string(),
-        user_address: borrower_addr.to_string(),
         new_limit: Uint128::zero(),
     };
     let allowance_env = mock_env_at_block_time(block_time);
@@ -274,7 +275,7 @@ fn test_update_asset_collateral() {
         assert_eq!(
             error_res,
             ContractError::UserNoCollateralBalance {
-                user_address: user_addr.to_string(),
+                user: user_addr.to_string(),
                 denom: denom_1.to_string()
             }
         );

@@ -52,7 +52,7 @@ pub enum ExecuteMsg {
     /// collateralized (only owner can call)
     UpdateUncollateralizedLoanLimit {
         /// Address that receives the credit
-        user_address: String,
+        user: String,
         /// Asset the user receives the credit in
         denom: String,
         /// Limit for the uncolateralize loan.
@@ -101,10 +101,10 @@ pub enum ExecuteMsg {
     /// The liquidator will receive collateral shares. To get the underlying asset, consider sending
     /// a separate `withdraw` execute message.
     Liquidate {
+        /// The address of the borrower getting liquidated
+        user: String,
         /// Denom of the collateral asset, which liquidator gets from the borrower
         collateral_denom: String,
-        /// The address of the borrower getting liquidated
-        user_address: String,
     },
 
     /// Update (enable / disable) asset as collateral for the caller
@@ -136,7 +136,7 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct CreateOrUpdateConfig {
     pub owner: Option<String>,
-    pub address_provider_address: Option<String>,
+    pub address_provider: Option<String>,
     pub ma_token_code_id: Option<u64>,
     pub close_factor: Option<Decimal>,
 }
@@ -187,30 +187,30 @@ pub enum QueryMsg {
     /// Get uncollateralized limit for given asset and user.
     /// Returns UncollateralizedLoanLimitResponse
     UncollateralizedLoanLimit {
-        user_address: String,
+        user: String,
         denom: String,
     },
 
     /// Get all debt positions for a user. Returns UsetDebtResponse
     UserDebt {
-        user_address: String,
+        user: String,
     },
 
     /// Get user debt position for a specific asset. Returns UserAssetDebtResponse
     UserAssetDebt {
-        user_address: String,
+        user: String,
         denom: String,
     },
 
     /// Get info about whether or not user is using each asset as collateral.
     /// Returns UserCollateralResponse
     UserCollateral {
-        user_address: String,
+        user: String,
     },
 
     /// Get user position. Returns UserPositionResponse
     UserPosition {
-        user_address: String,
+        user: String,
     },
 
     /// Get liquidity scaled amount for a given underlying asset amount
