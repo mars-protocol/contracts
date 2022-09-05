@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
+use crate::extensions::Stringify;
 use cosmwasm_std::{Coin, StdError, StdResult, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -23,6 +24,15 @@ impl From<Vec<Coin>> for Coins {
 impl From<&[Coin]> for Coins {
     fn from(coins: &[Coin]) -> Self {
         coins.to_vec().into()
+    }
+}
+
+impl Stringify for &[Coin] {
+    fn to_string(&self) -> String {
+        self.iter()
+            .map(|coin| coin.clone().denom)
+            .collect::<Vec<String>>()
+            .join(", ")
     }
 }
 

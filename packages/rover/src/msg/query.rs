@@ -3,14 +3,16 @@ use mars_health::health::Health;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::adapters::{VaultPosition, VaultUnchecked};
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     /// Owner & account nft address. Response type: `ConfigResponse`
     Config,
-    /// Whitelisted vaults. Response type: `Vec<String>`
+    /// Whitelisted vaults. Response type: `Vec<VaultUnchecked>`
     AllowedVaults {
-        start_after: Option<String>,
+        start_after: Option<VaultUnchecked>,
         limit: Option<u32>,
     },
     /// Whitelisted coins. Response type: `Vec<String>`
@@ -40,6 +42,20 @@ pub enum QueryMsg {
     /// start_after accepts denom string
     AllTotalDebtShares {
         start_after: Option<String>,
+        limit: Option<u32>,
+    },
+    /// Enumerate all vault positions. Response type: `Vec<VaultPositionResponseItem>`
+    /// start_after accepts (token_id, addr)
+    AllVaultPositions {
+        start_after: Option<(String, String)>,
+        limit: Option<u32>,
+    },
+    /// Get total vault coin balance in Rover for vault `Uint128`
+    TotalVaultCoinBalance { vault: VaultUnchecked },
+    /// Enumerate all total vault coin balances. Response type: `Vec<VaultWithBalance>`
+    /// start_after accepts vault addr
+    AllTotalVaultCoinBalances {
+        start_after: Option<VaultUnchecked>,
         limit: Option<u32>,
     },
 }
@@ -96,6 +112,29 @@ pub struct Positions {
     pub token_id: String,
     pub coins: Vec<Coin>,
     pub debt: Vec<DebtShares>,
+    pub vault_positions: Vec<VaultPositionWithAddr>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct VaultPositionResponseItem {
+    pub token_id: String,
+    pub addr: String,
+    pub vault_position: VaultPosition,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct VaultWithBalance {
+    pub vault: VaultUnchecked,
+    pub balance: Uint128,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct VaultPositionWithAddr {
+    pub addr: String,
+    pub position: VaultPosition,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -107,6 +146,9 @@ pub struct PositionsWithValueResponse {
     pub coins: Vec<CoinValue>,
     /// All debt positions with value
     pub debt: Vec<DebtSharesValue>,
+    // TODO: After pricing method is complete, add to response
+    /// All vault positions
+    pub vault_positions: Vec<VaultPositionWithAddr>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

@@ -1,6 +1,6 @@
 use cosmwasm_std::Addr;
 
-use rover::adapters::{OracleBase, RedBankBase};
+use rover::adapters::{OracleBase, RedBankBase, VaultBase};
 use rover::msg::instantiate::ConfigUpdates;
 
 use crate::helpers::MockEnv;
@@ -36,10 +36,10 @@ fn test_update_config_works_with_full_config() {
     let original_allowed_vaults = mock.query_allowed_vaults(None, None);
     let original_allowed_coins = mock.query_allowed_coins(None, None);
 
-    let new_nft_contract = mock.setup_new_nft_contract().unwrap();
+    let new_nft_contract = mock.deploy_nft_contract().unwrap();
     let new_owner = Addr::unchecked("new_owner");
     let new_red_bank = RedBankBase::new("new_red_bank".to_string());
-    let new_allowed_vaults = vec!["vault_contract_1".to_string()];
+    let new_allowed_vaults = vec![VaultBase::new("vault_contract_1".to_string())];
     let new_allowed_coins = vec!["uosmo".to_string()];
     let new_oracle = OracleBase::new("new_oracle".to_string());
 
@@ -86,8 +86,8 @@ fn test_update_config_works_with_some_config() {
     let original_allowed_vaults = mock.query_allowed_vaults(None, None);
     let original_allowed_coins = mock.query_allowed_coins(None, None);
 
-    let new_nft_contract = mock.setup_new_nft_contract().unwrap();
-    let new_allowed_vaults = vec!["vault_contract_1".to_string()];
+    let new_nft_contract = mock.deploy_nft_contract().unwrap();
+    let new_allowed_vaults = vec![VaultBase::new("vault_contract_1".to_string())];
 
     mock.update_config(
         &Addr::unchecked(original_config.owner.clone()),

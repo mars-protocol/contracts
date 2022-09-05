@@ -1,7 +1,8 @@
-use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, StdResult, WasmMsg};
+use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, StdResult, Uint128, WasmMsg};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::adapters::{Vault, VaultUnchecked};
 use crate::msg::instantiate::ConfigUpdates;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -39,6 +40,11 @@ pub enum Action {
     Borrow(Coin),
     /// Repay coin of specified amount back to Red Bank
     Repay(Coin),
+    /// Deposit coins into vault strategy
+    VaultDeposit {
+        vault: VaultUnchecked,
+        coins: Vec<Coin>,
+    },
 }
 
 /// Internal actions made by the contract with pre-validated inputs
@@ -53,14 +59,28 @@ pub enum CallbackMsg {
         recipient: Addr,
     },
     /// Borrow specified amount of coin from Red Bank;
-    /// Increase the token's asset amount and debt shares;
+    /// Increase the token's coin amount and debt shares;
     Borrow { token_id: String, coin: Coin },
     /// Repay coin of specified amount back to Red Bank;
-    /// Decrement the token's asset amount and debt shares;
+    /// Decrement the token's coin amount and debt shares;
     Repay { token_id: String, coin: Coin },
     /// Calculate the account's max loan-to-value health factor. If above 1,
     /// emits a `position_changed` event. If 1 or below, raises an error.
     AssertBelowMaxLTV { token_id: String },
+    /// Adds list of coins to a vault strategy
+    VaultDeposit {
+        token_id: String,
+        vault: Vault,
+        coins: Vec<Coin>,
+    },
+    /// Used to update the account balance of vault coins after a deposit
+    UpdateVaultCoinBalance {
+        vault: Vault,
+        /// Account that needs vault coin balance adjustment
+        token_id: String,
+        /// Total vault coin balance in Rover
+        previous_total_balance: Uint128,
+    },
 }
 
 impl CallbackMsg {

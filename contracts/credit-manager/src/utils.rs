@@ -1,14 +1,34 @@
 use cosmwasm_std::{Addr, Coin, Decimal, Deps, Storage, Uint128};
+use rover::adapters::Vault;
 
 use rover::error::{ContractError, ContractResult};
 use rover::msg::query::CoinValue;
 
-use crate::state::{ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, TOTAL_DEBT_SHARES};
+use crate::state::{
+    ALLOWED_COINS, ALLOWED_VAULTS, COIN_BALANCES, ORACLE, RED_BANK, TOTAL_DEBT_SHARES,
+};
 
 pub fn assert_coin_is_whitelisted(storage: &mut dyn Storage, coin: &Coin) -> ContractResult<()> {
     let is_whitelisted = ALLOWED_COINS.has(storage, &coin.denom);
     if !is_whitelisted {
         return Err(ContractError::NotWhitelisted(coin.denom.clone()));
+    }
+    Ok(())
+}
+
+pub fn assert_coins_are_whitelisted(
+    storage: &mut dyn Storage,
+    assets: &[Coin],
+) -> ContractResult<()> {
+    assets
+        .iter()
+        .try_for_each(|asset| assert_coin_is_whitelisted(storage, asset))
+}
+
+pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> ContractResult<()> {
+    let is_whitelisted = ALLOWED_VAULTS.has(storage, vault.address());
+    if !is_whitelisted {
+        return Err(ContractError::NotWhitelisted(vault.address().to_string()));
     }
     Ok(())
 }

@@ -1,44 +1,12 @@
-use crate::helpers::MockEnv;
+use cosmwasm_std::testing::MockApi;
+
+use crate::helpers::{assert_contents_equal, build_mock_vaults, MockEnv};
 
 pub mod helpers;
 
 #[test]
 fn test_pagination_on_allowed_vaults_query_works() {
-    let allowed_vaults = vec![
-        "addr1".to_string(),
-        "addr2".to_string(),
-        "addr3".to_string(),
-        "addr4".to_string(),
-        "addr5".to_string(),
-        "addr6".to_string(),
-        "addr7".to_string(),
-        "addr8".to_string(),
-        "addr9".to_string(),
-        "addr10".to_string(),
-        "addr11".to_string(),
-        "addr12".to_string(),
-        "addr13".to_string(),
-        "addr14".to_string(),
-        "addr15".to_string(),
-        "addr16".to_string(),
-        "addr17".to_string(),
-        "addr18".to_string(),
-        "addr19".to_string(),
-        "addr20".to_string(),
-        "addr21".to_string(),
-        "addr22".to_string(),
-        "addr23".to_string(),
-        "addr24".to_string(),
-        "addr25".to_string(),
-        "addr26".to_string(),
-        "addr27".to_string(),
-        "addr28".to_string(),
-        "addr29".to_string(),
-        "addr30".to_string(),
-        "addr31".to_string(),
-        "addr32".to_string(),
-    ];
-
+    let allowed_vaults = build_mock_vaults(32);
     let mock = MockEnv::new()
         .allowed_vaults(&allowed_vaults)
         .build()
@@ -66,14 +34,24 @@ fn test_pagination_on_allowed_vaults_query_works() {
 
     assert_eq!(vaults_res_d.len(), 2);
 
-    let combined: Vec<String> = vaults_res_a
+    let combined = vaults_res_a
         .iter()
         .cloned()
         .chain(vaults_res_b.iter().cloned())
         .chain(vaults_res_c.iter().cloned())
         .chain(vaults_res_d.iter().cloned())
-        .collect();
+        .map(|v| v.check(&MockApi::default()).unwrap())
+        .map(|v| v.query_vault_info(&mock.app.wrap()).unwrap())
+        .map(|info| info.token_denom)
+        .collect::<Vec<_>>();
 
     assert_eq!(combined.len(), allowed_vaults.len());
-    assert!(allowed_vaults.iter().all(|item| combined.contains(item)));
+
+    assert_contents_equal(
+        allowed_vaults
+            .iter()
+            .map(|v| v.lp_token_denom.clone())
+            .collect(),
+        combined,
+    )
 }

@@ -1,8 +1,8 @@
 use cosmwasm_std::{Addr, Empty, Uint128};
 use cw_storage_plus::{Item, Map};
 
-use rover::adapters::{Oracle, RedBank};
-use rover::{Denom, NftTokenId, Shares};
+use rover::adapters::{Oracle, RedBank, VaultPosition};
+use rover::{Denom, NftTokenId, Shares, VaultAddr};
 
 // Contract config
 pub const OWNER: Item<Addr> = Item::new("owner");
@@ -16,3 +16,5 @@ pub const ORACLE: Item<Oracle> = Item::new("oracle");
 pub const COIN_BALANCES: Map<(NftTokenId, Denom), Uint128> = Map::new("coin_balance");
 pub const DEBT_SHARES: Map<(NftTokenId, Denom), Shares> = Map::new("debt_shares");
 pub const TOTAL_DEBT_SHARES: Map<Denom, Shares> = Map::new("total_debt_shares");
+pub const VAULT_POSITIONS: Map<(NftTokenId, VaultAddr), VaultPosition> =
+    Map::new("vault_positions");

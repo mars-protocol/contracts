@@ -1,7 +1,7 @@
 [package]
-name = "mock-red-bank"
+name = "mock-vault"
 version = "1.0.0"
-authors = ["larry_0x <larry@delphidigital.io>, grod220 <gabe.r@delphilabs.io>"]
+authors = ["larry_0x <larry@delphidigital.io>", "grod220 <gabe.r@delphilabs.io>"]
 edition = "2021"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/mars-protocol/rover"
@@ -14,9 +14,10 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-mars-outpost = { version = "0.1", path = "../../../outposts/packages/outpost" }
+rover = { version = "0.1", path = "../../packages/rover" }
 
 cosmwasm-std = "1.0"
 cw-storage-plus = "0.14"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
+thiserror = "1.0"

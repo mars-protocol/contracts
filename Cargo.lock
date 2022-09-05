@@ -143,9 +143,11 @@ dependencies = [
  "cw2 0.14.0",
  "cw721",
  "cw721-base",
+ "itertools",
  "mars-health",
  "mock-oracle",
  "mock-red-bank",
+ "mock-vault",
  "rover",
  "schemars",
  "serde",
@@ -285,28 +287,29 @@ dependencies = [
 
 [[package]]
 name = "cw20"
-version = "0.13.4"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cb782b8f110819a4eb5dbbcfed25ffba49ec16bbe32b4ad8da50a5ce68fec05"
+checksum = "4f446f59c519fbac5ab8b9f6c7f8dcaa05ee761703971406b28221ea778bb737"
 dependencies = [
  "cosmwasm-std",
- "cw-utils 0.13.4",
+ "cw-utils 0.14.0",
  "schemars",
  "serde",
 ]
 
 [[package]]
 name = "cw20-base"
-version = "0.13.4"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0306e606581f4fb45e82bcbb7f0333179ed53dd949c6523f01a99b4bfc1475a0"
+checksum = "e39bf97c985a50f2e340833137b3f14999f58708c4ca9928cd8f87d530c4109c"
 dependencies = [
  "cosmwasm-std",
- "cw-storage-plus 0.13.4",
- "cw-utils 0.13.4",
- "cw2 0.13.4",
+ "cw-storage-plus 0.14.0",
+ "cw-utils 0.14.0",
+ "cw2 0.14.0",
  "cw20",
  "schemars",
+ "semver",
  "serde",
  "thiserror",
 ]
@@ -540,7 +543,6 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
  "mars-outpost",
- "thiserror",
 ]
 
 [[package]]
@@ -548,7 +550,6 @@ name = "mars-outpost"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "cw2 0.13.4",
  "cw20",
  "cw20-base",
  "schemars",
@@ -576,6 +577,18 @@ dependencies = [
  "mars-outpost",
  "schemars",
  "serde",
+]
+
+[[package]]
+name = "mock-vault"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus 0.14.0",
+ "rover",
+ "schemars",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -838,18 +851,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.32"
+version = "1.0.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5f6586b7f764adc0231f4c79be7b920e766bb2f3e51b3661cdb263828f19994"
+checksum = "8c1b05ca9d106ba7d2e31a9dab4a64e7be2cce415321966ea3132c49a656e252"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.32"
+version = "1.0.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12bafc5b54507e0149cdf1b145a5d80ab80a90bcd9275df43d4fff68460f6c21"
+checksum = "e8f2591983642de85c921015f3f070c665a197ed69e417af436115e3a1407487"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -9,8 +9,10 @@ use crate::execute::{create_credit_account, dispatch_actions, execute_callback, 
 use crate::health::compute_health;
 use crate::instantiate::store_config;
 use crate::query::{
-    query_all_assets, query_all_debt_shares, query_all_total_debt_shares, query_allowed_coins,
+    query_all_coin_balances, query_all_debt_shares, query_all_total_debt_shares,
+    query_all_total_vault_coin_balances, query_all_vault_positions, query_allowed_coins,
     query_allowed_vaults, query_config, query_position_with_value, query_total_debt_shares,
+    query_total_vault_coin_balance,
 };
 
 const CONTRACT_NAME: &str = "crates.io:rover-credit-manager";
@@ -62,7 +64,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             to_binary::<HealthResponse>(&Into::into(compute_health(deps, &env, &token_id)?))
         }
         QueryMsg::AllCoinBalances { start_after, limit } => {
-            to_binary(&query_all_assets(deps, start_after, limit)?)
+            to_binary(&query_all_coin_balances(deps, start_after, limit)?)
         }
         QueryMsg::AllDebtShares { start_after, limit } => {
             to_binary(&query_all_debt_shares(deps, start_after, limit)?)
@@ -70,6 +72,17 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         QueryMsg::TotalDebtShares(denom) => to_binary(&query_total_debt_shares(deps, &denom)?),
         QueryMsg::AllTotalDebtShares { start_after, limit } => {
             to_binary(&query_all_total_debt_shares(deps, start_after, limit)?)
+        }
+        QueryMsg::TotalVaultCoinBalance { vault } => to_binary(&query_total_vault_coin_balance(
+            deps,
+            &vault,
+            &env.contract.address,
+        )?),
+        QueryMsg::AllTotalVaultCoinBalances { start_after, limit } => to_binary(
+            &query_all_total_vault_coin_balances(deps, &env.contract.address, start_after, limit)?,
+        ),
+        QueryMsg::AllVaultPositions { start_after, limit } => {
+            to_binary(&query_all_vault_positions(deps, start_after, limit)?)
         }
     };
     res.map_err(Into::into)

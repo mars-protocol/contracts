@@ -1,6 +1,7 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
+use cosmwasm_std::testing::MockApi;
 use cosmwasm_std::{Addr, Coin, Uint128};
 use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
@@ -13,18 +14,20 @@ use mock_red_bank::msg::QueryMsg::UserAssetDebt;
 use mock_red_bank::msg::{
     CoinMarketInfo, InstantiateMsg as RedBankInstantiateMsg, UserAssetDebtResponse,
 };
-use rover::adapters::{OracleBase, RedBankBase};
+use mock_vault::contract::DEFAULT_VAULT_TOKEN_PREFUND;
+use mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
+use rover::adapters::{OracleBase, RedBankBase, Vault, VaultBase, VaultUnchecked};
 use rover::msg::execute::{Action, CallbackMsg};
 use rover::msg::instantiate::ConfigUpdates;
 use rover::msg::query::{
     CoinBalanceResponseItem, ConfigResponse, DebtShares, HealthResponse,
-    PositionsWithValueResponse, SharesResponseItem,
+    PositionsWithValueResponse, SharesResponseItem, VaultPositionResponseItem, VaultWithBalance,
 };
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::helpers::{
     mock_account_nft_contract, mock_oracle_contract, mock_red_bank_contract, mock_rover_contract,
-    AccountToFund, CoinInfo,
+    mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo,
 };
 
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000u128);
@@ -37,12 +40,13 @@ pub struct MockEnv {
 pub struct MockEnvBuilder {
     pub app: BasicApp,
     pub owner: Option<Addr>,
-    pub allowed_vaults: Option<Vec<String>>,
+    pub allowed_vaults: Option<Vec<VaultTestInfo>>,
+    pub pre_deployed_vaults: Option<Vec<VaultUnchecked>>,
     pub allowed_coins: Option<Vec<CoinInfo>>,
     pub oracle: Option<OracleBase<Addr>>,
     pub red_bank: Option<RedBankBase<Addr>>,
-    pub setup_nft_contract: bool,
-    pub setup_nft_contract_owner: bool,
+    pub deploy_nft_contract: bool,
+    pub set_nft_contract_owner: bool,
     pub accounts_to_fund: Vec<AccountToFund>,
 }
 
@@ -53,11 +57,12 @@ impl MockEnv {
             app: App::default(),
             owner: None,
             allowed_vaults: None,
+            pre_deployed_vaults: None,
             allowed_coins: None,
             oracle: None,
             red_bank: None,
-            setup_nft_contract: true,
-            setup_nft_contract_owner: true,
+            deploy_nft_contract: true,
+            set_nft_contract_owner: true,
             accounts_to_fund: vec![],
         }
     }
@@ -97,8 +102,8 @@ impl MockEnv {
         )
     }
 
-    pub fn setup_new_nft_contract(&mut self) -> AnyResult<Addr> {
-        let nft_contract = setup_nft_contract(&mut self.app, &self.rover.clone());
+    pub fn deploy_nft_contract(&mut self) -> AnyResult<Addr> {
+        let nft_contract = deploy_nft_contract(&mut self.app, &self.rover.clone());
         propose_new_nft_contract_owner(
             &mut self.app,
             nft_contract.clone(),
@@ -193,9 +198,9 @@ impl MockEnv {
 
     pub fn query_allowed_vaults(
         &self,
-        start_after: Option<String>,
+        start_after: Option<VaultUnchecked>,
         limit: Option<u32>,
-    ) -> Vec<String> {
+    ) -> Vec<VaultUnchecked> {
         self.app
             .wrap()
             .query_wasm_smart(
@@ -203,6 +208,21 @@ impl MockEnv {
                 &QueryMsg::AllowedVaults { start_after, limit },
             )
             .unwrap()
+    }
+
+    pub fn get_vault(&self, vault: &VaultTestInfo) -> VaultUnchecked {
+        self.query_allowed_vaults(None, Some(30)) // Max limit
+            .iter()
+            .find(|v| {
+                let info = v
+                    .check(&MockApi::default())
+                    .unwrap()
+                    .query_vault_info(&self.app.wrap())
+                    .unwrap();
+                vault.lp_token_denom == info.token_denom
+            })
+            .unwrap()
+            .clone()
     }
 
     pub fn query_allowed_coins(
@@ -284,6 +304,54 @@ impl MockEnv {
             )
             .unwrap()
     }
+
+    pub fn query_preview_redeem(&self, vault: &VaultUnchecked, shares: Uint128) -> Vec<Coin> {
+        vault
+            .check(&MockApi::default())
+            .unwrap()
+            .query_redeem_preview(&self.app.wrap(), shares)
+            .unwrap()
+    }
+
+    pub fn query_total_vault_coin_balance(&self, vault: &VaultUnchecked) -> Uint128 {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.rover.clone(),
+                &QueryMsg::TotalVaultCoinBalance {
+                    vault: vault.clone(),
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_all_vault_positions(
+        &self,
+        start_after: Option<(String, String)>,
+        limit: Option<u32>,
+    ) -> Vec<VaultPositionResponseItem> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.rover.clone(),
+                &QueryMsg::AllVaultPositions { start_after, limit },
+            )
+            .unwrap()
+    }
+
+    pub fn query_all_total_vault_coin_balances(
+        &self,
+        start_after: Option<VaultUnchecked>,
+        limit: Option<u32>,
+    ) -> Vec<VaultWithBalance> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.rover.clone(),
+                &QueryMsg::AllTotalVaultCoinBalances { start_after, limit },
+            )
+            .unwrap()
+    }
 }
 
 impl MockEnvBuilder {
@@ -316,31 +384,35 @@ impl MockEnvBuilder {
     fn deploy_nft_contract(&mut self, rover: &Addr) {
         let nft_contract_owner = Addr::unchecked("original_nft_contract_owner");
 
-        if self.setup_nft_contract {
-            let nft_contract = setup_nft_contract(&mut self.app, &nft_contract_owner);
-            if self.setup_nft_contract_owner {
+        if self.deploy_nft_contract {
+            let nft_contract = deploy_nft_contract(&mut self.app, &nft_contract_owner);
+            if self.set_nft_contract_owner {
                 propose_new_nft_contract_owner(
                     &mut self.app,
                     nft_contract.clone(),
                     &nft_contract_owner,
                     rover,
                 );
-                // Update config to save new nft_contract
-                self.app
-                    .execute_contract(
-                        self.get_owner(),
-                        rover.clone(),
-                        &ExecuteMsg::UpdateConfig {
-                            new_config: ConfigUpdates {
-                                account_nft: Some(nft_contract.to_string()),
-                                ..Default::default()
-                            },
-                        },
-                        &[],
-                    )
-                    .unwrap();
+                self.update_config(
+                    rover,
+                    ConfigUpdates {
+                        account_nft: Some(nft_contract.to_string()),
+                        ..Default::default()
+                    },
+                )
             }
         }
+    }
+
+    pub fn update_config(&mut self, rover: &Addr, new_config: ConfigUpdates) {
+        self.app
+            .execute_contract(
+                self.get_owner(),
+                rover.clone(),
+                &ExecuteMsg::UpdateConfig { new_config },
+                &[],
+            )
+            .unwrap();
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -357,13 +429,17 @@ impl MockEnvBuilder {
             .map(|info| info.denom.clone())
             .collect();
 
+        let mut allowed_vaults = vec![];
+        allowed_vaults.extend(self.deploy_vaults());
+        allowed_vaults.extend(self.pre_deployed_vaults.clone().unwrap_or_default());
+
         self.app.instantiate_contract(
             code_id,
             self.get_owner(),
             &InstantiateMsg {
                 owner: self.get_owner().to_string(),
                 allowed_coins,
-                allowed_vaults: self.get_allowed_vaults(),
+                allowed_vaults,
                 red_bank,
                 oracle,
             },
@@ -380,10 +456,14 @@ impl MockEnvBuilder {
     }
 
     fn get_oracle(&mut self) -> OracleBase<Addr> {
-        self.oracle.clone().unwrap_or_else(|| self.setup_oracle())
+        if self.oracle.is_none() {
+            let addr = self.deploy_oracle();
+            self.oracle = Some(addr);
+        }
+        self.oracle.clone().unwrap()
     }
 
-    fn setup_oracle(&mut self) -> OracleBase<Addr> {
+    fn deploy_oracle(&mut self) -> OracleBase<Addr> {
         let contract_code_id = self.app.store_code(mock_oracle_contract());
         let addr = self
             .app
@@ -409,12 +489,14 @@ impl MockEnvBuilder {
     }
 
     fn get_red_bank(&mut self) -> RedBankBase<Addr> {
-        self.red_bank
-            .clone()
-            .unwrap_or_else(|| self.setup_red_bank())
+        if self.red_bank.is_none() {
+            let addr = self.deploy_red_bank();
+            self.red_bank = Some(addr);
+        }
+        self.red_bank.clone().unwrap()
     }
 
-    fn setup_red_bank(&mut self) -> RedBankBase<Addr> {
+    pub fn deploy_red_bank(&mut self) -> RedBankBase<Addr> {
         let contract_code_id = self.app.store_code(mock_red_bank_contract());
         let addr = self
             .app
@@ -455,8 +537,50 @@ impl MockEnvBuilder {
         RedBankBase::new(addr)
     }
 
-    fn get_allowed_vaults(&self) -> Vec<String> {
-        self.allowed_vaults.clone().unwrap_or_default()
+    fn deploy_vault(&mut self, vault: &VaultTestInfo) -> Vault {
+        let code_id = self.app.store_code(mock_vault_contract());
+        let oracle = self.get_oracle().into();
+        let addr = self
+            .app
+            .instantiate_contract(
+                code_id,
+                Addr::unchecked("vault-instantiator"),
+                &VaultInstantiateMsg {
+                    lp_token_denom: vault.clone().lp_token_denom,
+                    lockup: vault.lockup,
+                    asset_denoms: vault.clone().asset_denoms,
+                    oracle,
+                },
+                &[],
+                "mock-vault",
+                None,
+            )
+            .unwrap();
+        self.fund_vault(&addr, &vault.lp_token_denom);
+        VaultBase::new(addr)
+    }
+
+    /// cw-multi-test does not yet have the ability to mint sdk coins. For this reason,
+    /// this contract expects to be pre-funded with vault tokens and it will simulate the mint.
+    fn fund_vault(&mut self, vault_addr: &Addr, denom: &str) {
+        self.app
+            .sudo(SudoMsg::Bank(BankSudo::Mint {
+                to_address: vault_addr.to_string(),
+                amount: vec![Coin {
+                    denom: denom.into(),
+                    amount: DEFAULT_VAULT_TOKEN_PREFUND,
+                }],
+            }))
+            .unwrap();
+    }
+
+    fn deploy_vaults(&mut self) -> Vec<VaultUnchecked> {
+        self.allowed_vaults
+            .clone()
+            .unwrap_or_default()
+            .iter()
+            .map(|v| self.deploy_vault(v).into())
+            .collect()
     }
 
     fn get_allowed_coins(&self) -> Vec<CoinInfo> {
@@ -477,7 +601,7 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn allowed_vaults(&mut self, allowed_vaults: &[String]) -> &mut Self {
+    pub fn allowed_vaults(&mut self, allowed_vaults: &[VaultTestInfo]) -> &mut Self {
         self.allowed_vaults = Some(allowed_vaults.to_vec());
         self
     }
@@ -498,12 +622,21 @@ impl MockEnvBuilder {
     }
 
     pub fn no_nft_contract(&mut self) -> &mut Self {
-        self.setup_nft_contract = false;
+        self.deploy_nft_contract = false;
         self
     }
 
     pub fn no_nft_contract_owner(&mut self) -> &mut Self {
-        self.setup_nft_contract_owner = false;
+        self.set_nft_contract_owner = false;
+        self
+    }
+
+    pub fn pre_deployed_vaults(&mut self, vaults: &[&str]) -> &mut Self {
+        let vaults = vaults
+            .iter()
+            .map(|v| VaultBase::new(v.to_string()))
+            .collect::<Vec<_>>();
+        self.pre_deployed_vaults = Some(vaults);
         self
     }
 }
@@ -512,7 +645,7 @@ impl MockEnvBuilder {
 // Shared utils between MockBuilder & MockEnv
 //--------------------------------------------------------------------------------------------------
 
-fn setup_nft_contract(app: &mut App, owner: &Addr) -> Addr {
+fn deploy_nft_contract(app: &mut App, owner: &Addr) -> Addr {
     let nft_contract_code_id = app.store_code(mock_account_nft_contract());
     app.instantiate_contract(
         nft_contract_code_id,

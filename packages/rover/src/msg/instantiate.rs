@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::adapters::{OracleUnchecked, RedBankUnchecked};
+use crate::adapters::{OracleUnchecked, RedBankUnchecked, VaultUnchecked};
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
 pub struct InstantiateMsg {
@@ -10,7 +10,7 @@ pub struct InstantiateMsg {
     /// Whitelisted coin denoms approved by governance
     pub allowed_coins: Vec<String>,
     /// Whitelisted vaults approved by governance that implement credit manager's vault interface
-    pub allowed_vaults: Vec<String>,
+    pub allowed_vaults: Vec<VaultUnchecked>,
     /// The Mars Protocol money market contract where we borrow assets from
     pub red_bank: RedBankUnchecked,
     /// The Mars Protocol oracle contract. We read prices of assets here.
@@ -23,7 +23,7 @@ pub struct ConfigUpdates {
     pub account_nft: Option<String>,
     pub owner: Option<String>,
     pub allowed_coins: Option<Vec<String>>,
-    pub allowed_vaults: Option<Vec<String>>,
+    pub allowed_vaults: Option<Vec<VaultUnchecked>>,
     pub red_bank: Option<RedBankUnchecked>,
     pub oracle: Option<OracleUnchecked>,
 }

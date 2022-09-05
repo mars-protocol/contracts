@@ -1,8 +1,10 @@
-use cosmwasm_std::{Addr, Api, QuerierWrapper, StdResult};
+use cosmwasm_std::{Addr, Api, Coin, Decimal, QuerierWrapper, StdResult};
 use mars_outpost::oracle::PriceResponse;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::ops::Add;
 
+use crate::error::ContractResult;
 use mock_oracle::msg::QueryMsg;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -41,5 +43,24 @@ impl Oracle {
                 denom: denom.to_string(),
             },
         )
+    }
+
+    pub fn query_total_value(
+        &self,
+        querier: &QuerierWrapper,
+        coins: &[Coin],
+    ) -> ContractResult<Decimal> {
+        Ok(coins
+            .iter()
+            .map(|coin| {
+                let res = self.query_price(querier, &coin.denom)?;
+                let asset_amount_dec = Decimal::from_atomics(coin.amount, 0)?;
+                Ok(res.price.checked_mul(asset_amount_dec)?)
+            })
+            .collect::<ContractResult<Vec<_>>>()?
+            .iter()
+            .fold(Decimal::zero(), |total_value, amount| {
+                total_value.add(amount)
+            }))
     }
 }

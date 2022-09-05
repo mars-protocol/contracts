@@ -11,6 +11,9 @@ use mock_oracle::contract::{
 use mock_red_bank::contract::{
     execute as redBankExecute, instantiate as redBankInstantiate, query as redBankQuery,
 };
+use mock_vault::contract::{
+    execute as vaultExecute, instantiate as vaultInstantiate, query as vaultQuery,
+};
 
 pub fn mock_app() -> App {
     App::default()
@@ -33,5 +36,10 @@ pub fn mock_red_bank_contract() -> Box<dyn Contract<Empty>> {
 
 pub fn mock_oracle_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(oracleExecute, oracleInstantiate, oracleQuery);
+    Box::new(contract)
+}
+
+pub fn mock_vault_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(vaultExecute, vaultInstantiate, vaultQuery);
     Box::new(contract)
 }

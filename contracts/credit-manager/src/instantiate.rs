@@ -10,8 +10,8 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> StdResult<()> {
     ORACLE.save(deps.storage, &msg.oracle.check(deps.api)?)?;
 
     msg.allowed_vaults.iter().try_for_each(|unchecked| {
-        let vault = deps.api.addr_validate(unchecked)?;
-        ALLOWED_VAULTS.save(deps.storage, &vault, &Empty {})
+        let vault = unchecked.check(deps.api)?;
+        ALLOWED_VAULTS.save(deps.storage, vault.address(), &Empty {})
     })?;
 
     msg.allowed_coins

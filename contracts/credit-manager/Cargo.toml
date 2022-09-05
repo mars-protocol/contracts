@@ -15,9 +15,10 @@ library = []
 
 [dependencies]
 account-nft = { version = "0.1", path = "../account-nft", features = ["library"] }
-mars-health = { version = "0.1", path = "../../../outposts/packages/mars-health" }
+mars-health = { version = "0.1", path = "../../../outposts/packages/health" }
 mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features = ["library"] }
 mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }
+mock-vault = { version = "1.0", path = "../../contracts/mock-vault", features = ["library"] }
 rover = { version = "0.1", path = "../../packages/rover" }
 
 cosmwasm-std = "1.0"
@@ -31,3 +32,4 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 [dev-dependencies]
 anyhow = "1"
 cw-multi-test = "0.14"
+itertools = "0.10"

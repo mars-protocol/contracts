@@ -4,18 +4,19 @@ use cosmwasm_std::{
 use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg;
 
-use account_nft::msg::ExecuteMsg as NftExecuteMsg;
-use rover::coins::Coins;
-use rover::error::{ContractError, ContractResult};
-use rover::msg::execute::{Action, CallbackMsg};
-use rover::msg::instantiate::ConfigUpdates;
-
 use crate::borrow::borrow;
 use crate::deposit::deposit;
 use crate::health::assert_below_max_ltv;
 use crate::repay::repay;
 use crate::state::{ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, ORACLE, OWNER, RED_BANK};
+use crate::vault::{deposit_into_vault, update_vault_coin_balance};
 use crate::withdraw::withdraw;
+use account_nft::msg::ExecuteMsg as NftExecuteMsg;
+use rover::coins::Coins;
+use rover::error::{ContractError, ContractResult};
+use rover::extensions::Stringify;
+use rover::msg::execute::{Action, CallbackMsg};
+use rover::msg::instantiate::ConfigUpdates;
 
 pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Response> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
@@ -86,12 +87,12 @@ pub fn update_config(
 
     if let Some(vaults) = new_config.allowed_vaults {
         vaults.iter().try_for_each(|unchecked| {
-            let vault = deps.api.addr_validate(unchecked)?;
-            ALLOWED_VAULTS.save(deps.storage, &vault, &Empty {})
+            let vault = unchecked.check(deps.api)?;
+            ALLOWED_VAULTS.save(deps.storage, vault.address(), &Empty {})
         })?;
         response = response
             .add_attribute("key", "allowed_vaults")
-            .add_attribute("value", vaults.join(", "));
+            .add_attribute("value", vaults.to_string())
     }
 
     if let Some(unchecked) = new_config.red_bank {
@@ -142,6 +143,14 @@ pub fn dispatch_actions(
                 token_id: token_id.to_string(),
                 coin: coin.clone(),
             }),
+            Action::VaultDeposit {
+                vault,
+                coins: assets,
+            } => callbacks.push(CallbackMsg::VaultDeposit {
+                token_id: token_id.to_string(),
+                vault: vault.check(deps.api)?,
+                coins: assets.clone(),
+            }),
         }
     }
 
@@ -186,6 +195,22 @@ pub fn execute_callback(
         CallbackMsg::AssertBelowMaxLTV { token_id } => {
             assert_below_max_ltv(deps.as_ref(), env, &token_id)
         }
+        CallbackMsg::VaultDeposit {
+            token_id,
+            vault,
+            coins,
+        } => deposit_into_vault(deps, &env.contract.address, &token_id, vault, &coins),
+        CallbackMsg::UpdateVaultCoinBalance {
+            vault,
+            token_id,
+            previous_total_balance,
+        } => update_vault_coin_balance(
+            deps,
+            vault,
+            &token_id,
+            previous_total_balance,
+            &env.contract.address,
+        ),
     }
 }
 

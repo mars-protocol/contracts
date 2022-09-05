@@ -46,8 +46,14 @@ pub enum ContractError {
     #[error("{0} is not whitelisted")]
     NotWhitelisted(String),
 
+    #[error("Expected vault coins in exchange for deposit, but none were sent")]
+    NoVaultCoinsReceived,
+
     #[error("{0}")]
     Overflow(#[from] OverflowError),
+
+    #[error("{0}")]
+    RequirementsNotMet(String),
 
     #[error("{0}")]
     Std(#[from] StdError),
