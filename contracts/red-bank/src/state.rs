@@ -12,6 +12,5 @@ pub const MARKETS: Map<&str, Market> = Map::new("markets");
 pub const MARKET_DENOMS_BY_INDEX: Map<u32, String> = Map::new("market_denoms_by_index");
 pub const MARKET_DENOMS_BY_MA_TOKEN: Map<&Addr, String> = Map::new("market_denoms_by_ma_token");
 
-pub const DEBTS: Map<(&str, &Addr), Debt> = Map::new("debts");
-pub const UNCOLLATERALIZED_LOAN_LIMITS: Map<(&str, &Addr), Uint128> =
-    Map::new("uncollateralized_loan_limits");
+pub const DEBTS: Map<(&Addr, &str), Debt> = Map::new("debts");
+pub const UNCOLLATERALIZED_LOAN_LIMITS: Map<(&Addr, &str), Uint128> = Map::new("limits");

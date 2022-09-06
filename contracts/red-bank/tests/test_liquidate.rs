@@ -160,11 +160,11 @@ fn test_liquidate() {
             amount_scaled: Uint128::new(10_000) * SCALING_FACTOR,
             uncollateralized: true,
         };
-        DEBTS.save(deps.as_mut().storage, ("debt", &user_address), &debt).unwrap();
+        DEBTS.save(deps.as_mut().storage, (&user_address, "debt"), &debt).unwrap();
         DEBTS
             .save(
                 deps.as_mut().storage,
-                ("uncollateralized_debt", &user_address),
+                (&user_address, "uncollateralized_debt"),
                 &uncollateralized_debt,
             )
             .unwrap();
@@ -191,11 +191,11 @@ fn test_liquidate() {
             amount_scaled: Uint128::new(10_000) * SCALING_FACTOR,
             uncollateralized: true,
         };
-        DEBTS.save(deps.as_mut().storage, ("debt", &user_address), &debt).unwrap();
+        DEBTS.save(deps.as_mut().storage, (&user_address, "debt"), &debt).unwrap();
         DEBTS
             .save(
                 deps.as_mut().storage,
-                ("uncollateralized_debt", &user_address),
+                (&user_address, "uncollateralized_debt"),
                 &uncollateralized_debt,
             )
             .unwrap();
@@ -325,7 +325,7 @@ fn test_liquidate() {
         assert!(get_bit(user.borrowed_assets, debt_market_before.index).unwrap());
 
         // check user's debt decreased by the appropriate amount
-        let debt = DEBTS.load(&deps.storage, ("debt", &user_address)).unwrap();
+        let debt = DEBTS.load(&deps.storage, (&user_address, "debt")).unwrap();
         let expected_less_debt_scaled = expected_debt_rates.less_debt_scaled;
         expected_user_debt_scaled -= expected_less_debt_scaled;
         assert_eq!(expected_user_debt_scaled, debt.amount_scaled);
@@ -462,7 +462,7 @@ fn test_liquidate() {
         assert!(get_bit(user.borrowed_assets, debt_market_initial.index).unwrap());
 
         // check user's debt decreased by the appropriate amount
-        let debt = DEBTS.load(&deps.storage, ("debt", &user_address)).unwrap();
+        let debt = DEBTS.load(&deps.storage, (&user_address, "debt")).unwrap();
         let expected_less_debt_scaled = expected_debt_rates.less_debt_scaled;
         expected_user_debt_scaled -= expected_less_debt_scaled;
         assert_eq!(expected_user_debt_scaled, debt.amount_scaled);
@@ -489,7 +489,7 @@ fn test_liquidate() {
             amount_scaled: expected_user_debt_scaled,
             uncollateralized: false,
         };
-        DEBTS.save(deps.as_mut().storage, ("debt", &user_address), &debt).unwrap();
+        DEBTS.save(deps.as_mut().storage, (&user_address, "debt"), &debt).unwrap();
 
         let liquidate_msg = ExecuteMsg::Liquidate {
             user: user_address.to_string(),
@@ -611,7 +611,7 @@ fn test_liquidate() {
         assert!(get_bit(user.borrowed_assets, debt_market_initial.index).unwrap());
 
         // check user's debt decreased by the appropriate amount
-        let debt = DEBTS.load(&deps.storage, ("debt", &user_address)).unwrap();
+        let debt = DEBTS.load(&deps.storage, (&user_address, "debt")).unwrap();
         let expected_less_debt_scaled = expected_debt_rates.less_debt_scaled;
         expected_user_debt_scaled -= expected_less_debt_scaled;
         assert_eq!(expected_user_debt_scaled, debt.amount_scaled);
@@ -721,7 +721,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             amount_scaled: initial_user_debt_scaled,
             uncollateralized: false,
         };
-        DEBTS.save(deps.as_mut().storage, ("the_asset", &user_address), &debt).unwrap();
+        DEBTS.save(deps.as_mut().storage, (&user_address, "the_asset"), &debt).unwrap();
     }
 
     // Perform partial liquidation
@@ -837,7 +837,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         assert!(get_bit(liquidator.collateral_assets, asset_market_before.index).unwrap());
 
         // check user's debt decreased by the appropriate amount
-        let debt = DEBTS.load(&deps.storage, ("the_asset", &user_address)).unwrap();
+        let debt = DEBTS.load(&deps.storage, (&user_address, "the_asset")).unwrap();
 
         let expected_less_debt_scaled = expected_rates.less_debt_scaled;
 
@@ -857,7 +857,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             amount_scaled: initial_user_debt_scaled,
             uncollateralized: false,
         };
-        DEBTS.save(deps.as_mut().storage, ("the_asset", &user_address), &debt).unwrap();
+        DEBTS.save(deps.as_mut().storage, (&user_address, "the_asset"), &debt).unwrap();
 
         MARKETS.save(deps.as_mut().storage, "the_asset", &asset_market_initial).unwrap();
 
@@ -966,7 +966,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         assert!(get_bit(user.borrowed_assets, asset_market_before.index).unwrap());
 
         // check user's debt decreased by the appropriate amount
-        let debt = DEBTS.load(&deps.storage, ("the_asset", &user_address)).unwrap();
+        let debt = DEBTS.load(&deps.storage, (&user_address, "the_asset")).unwrap();
 
         let expected_less_debt_scaled = expected_rates.less_debt_scaled;
 
@@ -986,7 +986,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             amount_scaled: initial_user_debt_scaled,
             uncollateralized: false,
         };
-        DEBTS.save(deps.as_mut().storage, ("the_asset", &user_address), &debt).unwrap();
+        DEBTS.save(deps.as_mut().storage, (&user_address, "the_asset"), &debt).unwrap();
 
         MARKETS.save(deps.as_mut().storage, "the_asset", &asset_market_initial).unwrap();
 
@@ -1117,7 +1117,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         assert!(get_bit(user.borrowed_assets, asset_market_before.index).unwrap());
 
         // check user's debt decreased by the appropriate amount
-        let debt = DEBTS.load(&deps.storage, ("the_asset", &user_address)).unwrap();
+        let debt = DEBTS.load(&deps.storage, (&user_address, "the_asset")).unwrap();
 
         let expected_less_debt_scaled = expected_rates.less_debt_scaled;
 
@@ -1137,7 +1137,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             amount_scaled: initial_user_debt_scaled,
             uncollateralized: false,
         };
-        DEBTS.save(deps.as_mut().storage, ("the_asset", &user_address), &debt).unwrap();
+        DEBTS.save(deps.as_mut().storage, (&user_address, "the_asset"), &debt).unwrap();
 
         MARKETS.save(deps.as_mut().storage, "the_asset", &asset_market_initial).unwrap();
 
@@ -1277,7 +1277,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         assert!(get_bit(liquidator.collateral_assets, asset_market_before.index).unwrap());
 
         // check user's debt decreased by the appropriate amount
-        let debt = DEBTS.load(&deps.storage, ("the_asset", &user_address)).unwrap();
+        let debt = DEBTS.load(&deps.storage, (&user_address, "the_asset")).unwrap();
 
         let expected_less_debt_scaled = expected_rates.less_debt_scaled;
 
@@ -1365,11 +1365,11 @@ fn test_liquidation_health_factor_check() {
         amount_scaled: Uint128::new(10_000) * SCALING_FACTOR,
         uncollateralized: true,
     };
-    DEBTS.save(deps.as_mut().storage, ("debt", &healthy_user_address), &healthy_user_debt).unwrap();
+    DEBTS.save(deps.as_mut().storage, (&healthy_user_address, "debt"), &healthy_user_debt).unwrap();
     DEBTS
         .save(
             deps.as_mut().storage,
-            ("uncollateralized_debt", &healthy_user_address),
+            (&healthy_user_address, "uncollateralized_debt"),
             &uncollateralized_debt,
         )
         .unwrap();
@@ -1519,11 +1519,11 @@ fn test_finalize_liquidity_token_transfer() {
             amount_scaled: Uint128::new(10_000) * SCALING_FACTOR,
             uncollateralized: true,
         };
-        DEBTS.save(deps.as_mut().storage, ("debtcoin", &sender_address), &debt).unwrap();
+        DEBTS.save(deps.as_mut().storage, (&sender_address, "debtcoin"), &debt).unwrap();
         DEBTS
             .save(
                 deps.as_mut().storage,
-                ("uncollateralized_debt", &sender_address),
+                (&sender_address, "uncollateralized_debt"),
                 &uncollateralized_debt,
             )
             .unwrap();
@@ -1556,11 +1556,11 @@ fn test_finalize_liquidity_token_transfer() {
             amount_scaled: Uint128::new(10_000u128) * SCALING_FACTOR,
             uncollateralized: true,
         };
-        DEBTS.save(deps.as_mut().storage, ("debtcoin", &sender_address), &debt).unwrap();
+        DEBTS.save(deps.as_mut().storage, (&sender_address, "debtcoin"), &debt).unwrap();
         DEBTS
             .save(
                 deps.as_mut().storage,
-                ("uncollateralized_debt", &sender_address),
+                (&sender_address, "uncollateralized_debt"),
                 &uncollateralized_debt,
             )
             .unwrap();

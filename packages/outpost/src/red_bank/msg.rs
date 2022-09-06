@@ -184,28 +184,49 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
 
-    /// Get uncollateralized limit for given asset and user.
+    /// Get uncollateralized limit for given user and asset.
     /// Returns UncollateralizedLoanLimitResponse
     UncollateralizedLoanLimit {
         user: String,
         denom: String,
     },
 
-    /// Get all debt positions for a user. Returns UsetDebtResponse
-    UserDebt {
+    /// Get all uncollateralized limits for a given user.
+    /// Returns Vec<UncollateralizedLoanLimitResponse>
+    UncollateralizedLoanLimits {
         user: String,
+        start_after: Option<String>,
+        limit: Option<u32>,
     },
 
-    /// Get user debt position for a specific asset. Returns UserAssetDebtResponse
-    UserAssetDebt {
+    /// Get user debt position for a specific asset. Returns UserDebtResponse
+    UserDebt {
         user: String,
         denom: String,
     },
 
-    /// Get info about whether or not user is using each asset as collateral.
-    /// Returns UserCollateralResponse
+    /// Get all debt positions for a user. Returns UserDebtsResponse
+    UserDebts {
+        user: String,
+        // TODO: Given the current approach Red Bank uses to track user positions (bitarrays),
+        // pagination is not possible. This will be addressed in an upcoming PR.
+        // start_after: Option<String>,
+        // limit: Option<u32>,
+    },
+
+    /// Get user collateral position for a specific asset. Returns UserCollateralResponse
     UserCollateral {
         user: String,
+        denom: String,
+    },
+
+    /// Get all collateral positions for a user. Returns UserCollateralsResponse
+    UserCollaterals {
+        user: String,
+        // TODO: Given the current approach Red Bank uses to track user positions (bitarrays),
+        // pagination is not possible. This will be addressed in an upcoming PR.
+        // start_after: Option<String>,
+        // limit: Option<u32>,
     },
 
     /// Get user position. Returns UserPositionResponse

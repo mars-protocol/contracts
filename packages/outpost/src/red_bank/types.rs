@@ -95,12 +95,15 @@ pub struct ConfigResponse {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct UserDebtResponse {
-    pub debts: Vec<UserAssetDebtResponse>,
+pub struct UncollateralizedLoanLimitResponse {
+    /// Asset denom
+    pub denom: String,
+    /// Uncollateralized loan limit in this asset
+    pub limit: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct UserAssetDebtResponse {
+pub struct UserDebtResponse {
     /// Asset denom
     pub denom: String,
     /// Scaled debt amount stored in contract state
@@ -109,13 +112,9 @@ pub struct UserAssetDebtResponse {
     pub amount: Uint128,
 }
 
+// TODO: In an upcoming PR, we will also include `amount_scaled` and `amount` in this response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct UserCollateralResponse {
-    pub collateral: Vec<UserAssetCollateralResponse>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct UserAssetCollateralResponse {
     /// Asset denom
     pub denom: String,
     /// Wether the user is using asset as collateral or not
