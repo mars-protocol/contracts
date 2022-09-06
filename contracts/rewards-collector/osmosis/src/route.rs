@@ -1,12 +1,14 @@
 use std::fmt;
 
-use cosmwasm_std::{CosmosMsg, QuerierWrapper, QueryRequest, Uint128};
+use cosmwasm_std::{CosmosMsg, Decimal, QuerierWrapper, QueryRequest, StdResult, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mars_rewards_collector_base::{ContractError, ContractResult, Route};
 
-use osmo_bindings::{OsmosisMsg, OsmosisQuery, PoolStateResponse, Step, Swap, SwapAmountWithLimit};
+use osmo_bindings::{
+    OsmosisMsg, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Step, Swap, SwapAmountWithLimit,
+};
 
 use crate::helpers::hashset;
 
@@ -101,6 +103,7 @@ impl Route<OsmosisMsg, OsmosisQuery> for OsmosisRoute {
     /// Build a CosmosMsg that swaps given an input denom and amount
     fn build_swap_msg(
         &self,
+        querier: &QuerierWrapper<OsmosisQuery>,
         denom_in: &str,
         amount: Uint128,
     ) -> ContractResult<CosmosMsg<OsmosisMsg>> {
@@ -113,13 +116,36 @@ impl Route<OsmosisMsg, OsmosisQuery> for OsmosisRoute {
                 reason: "the route must contain at least one step".to_string(),
             })?;
 
+        // FIXME: move to config, the value - percentage
+        let slippage = Decimal::from_atomics(3u128, 2u32).unwrap();
+        let mut prev_denom_in = denom_in;
+        let mut cumulative_price = Decimal::one();
+        for step in steps {
+            let price =
+                query_osmosis_spot_price(querier, step.pool_id, prev_denom_in, &step.denom_out)?;
+            cumulative_price *= price;
+            prev_denom_in = &step.denom_out;
+        }
+        let min_output = ((Decimal::one() - slippage) * amount) * cumulative_price;
+
         Ok(CosmosMsg::Custom(OsmosisMsg::Swap {
             first: first_swap,
             route: steps[1..].to_vec(),
             amount: SwapAmountWithLimit::ExactIn {
                 input: amount,
-                min_output: Uint128::zero(), // TODO: implement slippage tolerance
+                min_output,
             },
         }))
     }
+}
+
+fn query_osmosis_spot_price(
+    querier: &QuerierWrapper<OsmosisQuery>,
+    pool_id: u64,
+    denom_id: &str,
+    denom_out: &str,
+) -> StdResult<Decimal> {
+    let query = OsmosisQuery::spot_price(pool_id, denom_id, denom_out);
+    let res: SpotPriceResponse = querier.query(&QueryRequest::Custom(query))?;
+    Ok(res.price)
 }

@@ -236,7 +236,7 @@ where
             messages.push(
                 self.routes
                     .load(deps.storage, (denom.clone(), cfg.safety_fund_denom))?
-                    .build_swap_msg(&denom, amount_safety_fund)?,
+                    .build_swap_msg(&deps.querier, &denom, amount_safety_fund)?,
             );
         }
 
@@ -244,7 +244,7 @@ where
             messages.push(
                 self.routes
                     .load(deps.storage, (denom.clone(), cfg.fee_collector_denom))?
-                    .build_swap_msg(&denom, amount_fee_collector)?,
+                    .build_swap_msg(&deps.querier, &denom, amount_fee_collector)?,
             );
         }
 

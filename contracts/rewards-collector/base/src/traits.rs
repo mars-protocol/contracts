@@ -21,5 +21,10 @@ where
     ) -> ContractResult<()>;
 
     /// Build a message for executing the trade, given an input denom and amount
-    fn build_swap_msg(&self, denom_in: &str, amount: Uint128) -> ContractResult<CosmosMsg<M>>;
+    fn build_swap_msg(
+        &self,
+        querier: &QuerierWrapper<Q>,
+        denom_in: &str,
+        amount: Uint128,
+    ) -> ContractResult<CosmosMsg<M>>;
 }
