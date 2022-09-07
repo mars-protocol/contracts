@@ -392,7 +392,7 @@ pub fn update_uncollateralized_loan_limit(
     // Check that the user has no collateralized debt
     if let Some(user) = USERS.may_load(deps.storage, &user_addr)? {
         let previous_uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
-            .may_load(deps.storage, (&denom, &user_addr))?
+            .may_load(deps.storage, (&user_addr, &denom))?
             .unwrap_or_else(Uint128::zero);
 
         if previous_uncollateralized_loan_limit.is_zero() {
@@ -406,9 +406,9 @@ pub fn update_uncollateralized_loan_limit(
         };
     }
 
-    UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (&denom, &user_addr), &new_limit)?;
+    UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (&user_addr, &denom), &new_limit)?;
 
-    DEBTS.update(deps.storage, (&denom, &user_addr), |debt_opt: Option<Debt>| -> StdResult<_> {
+    DEBTS.update(deps.storage, (&user_addr, &denom), |debt_opt: Option<Debt>| -> StdResult<_> {
         let mut debt = debt_opt.unwrap_or(Debt {
             amount_scaled: Uint128::zero(),
             uncollateralized: false,
@@ -677,7 +677,7 @@ pub fn borrow(
     }
 
     let uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
-        .may_load(deps.storage, (&denom, &borrower_addr))?
+        .may_load(deps.storage, (&borrower_addr, &denom))?
         .unwrap_or_else(Uint128::zero);
     let mut user: User = match USERS.may_load(deps.storage, &borrower_addr)? {
         Some(user) => user,
@@ -721,7 +721,7 @@ pub fn borrow(
         uncollateralized_debt = true;
 
         let borrower_debt =
-            DEBTS.may_load(deps.storage, (&denom, &borrower_addr))?.unwrap_or(Debt {
+            DEBTS.may_load(deps.storage, (&borrower_addr, &denom))?.unwrap_or(Debt {
                 amount_scaled: Uint128::zero(),
                 uncollateralized: uncollateralized_debt,
             });
@@ -756,14 +756,14 @@ pub fn borrow(
     }
 
     // Set new debt
-    let mut debt = DEBTS.may_load(deps.storage, (&denom, &borrower_addr))?.unwrap_or(Debt {
+    let mut debt = DEBTS.may_load(deps.storage, (&borrower_addr, &denom))?.unwrap_or(Debt {
         amount_scaled: Uint128::zero(),
         uncollateralized: uncollateralized_debt,
     });
     let borrow_amount_scaled =
         get_scaled_debt_amount(borrow_amount, &borrow_market, env.block.time.seconds())?;
     debt.amount_scaled = debt.amount_scaled.checked_add(borrow_amount_scaled)?;
-    DEBTS.save(deps.storage, (&denom, &borrower_addr), &debt)?;
+    DEBTS.save(deps.storage, (&borrower_addr, &denom), &debt)?;
 
     borrow_market.debt_total_scaled += borrow_amount_scaled;
 
@@ -799,7 +799,7 @@ pub fn repay(
     let user_addr = if let Some(address) = on_behalf_of {
         let on_behalf_of_addr = deps.api.addr_validate(&address)?;
         // Uncollateralized loans should not have 'on behalf of' because it creates accounting complexity for them
-        match UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&denom, &on_behalf_of_addr))? {
+        match UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&on_behalf_of_addr, &denom))? {
             Some(limit) if !limit.is_zero() => {
                 return Err(ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {})
             }
@@ -810,7 +810,7 @@ pub fn repay(
     };
 
     // Check new debt
-    let mut debt = DEBTS.load(deps.storage, (&denom, &user_addr))?;
+    let mut debt = DEBTS.load(deps.storage, (&user_addr, &denom))?;
 
     if debt.amount_scaled.is_zero() {
         return Err(ContractError::CannotRepayZeroDebt {});
@@ -848,7 +848,7 @@ pub fn repay(
     let debt_amount_scaled_after =
         get_scaled_debt_amount(debt_amount_after, &market, env.block.time.seconds())?;
     debt.amount_scaled = debt_amount_scaled_after;
-    DEBTS.save(deps.storage, (&denom, &user_addr), &debt)?;
+    DEBTS.save(deps.storage, (&user_addr, &denom), &debt)?;
 
     let debt_amount_scaled_delta =
         debt_amount_scaled_before.checked_sub(debt_amount_scaled_after)?;
@@ -894,7 +894,7 @@ pub fn liquidate(
     // If user (contract) has a positive uncollateralized limit then the user
     // cannot be liquidated
     if let Some(limit) =
-        UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&debt_denom, &user_addr))?
+        UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&user_addr, &debt_denom))?
     {
         if !limit.is_zero() {
             return Err(ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});
@@ -927,7 +927,7 @@ pub fn liquidate(
     }
 
     // check if user has outstanding debt in the deposited asset that needs to be repayed
-    let mut user_debt = DEBTS.load(deps.storage, (&debt_denom, &user_addr))?;
+    let mut user_debt = DEBTS.load(deps.storage, (&user_addr, &debt_denom))?;
     if user_debt.amount_scaled.is_zero() {
         return Err(ContractError::CannotLiquidateWhenNoDebtBalance {});
     }
@@ -1023,7 +1023,7 @@ pub fn liquidate(
 
     user_debt.amount_scaled = user_debt_asset_debt_amount_scaled_after;
 
-    DEBTS.save(deps.storage, (&debt_denom, &user_addr), &user_debt)?;
+    DEBTS.save(deps.storage, (&user_addr, &debt_denom), &user_debt)?;
 
     let debt_market_debt_total_scaled_after =
         debt_market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;

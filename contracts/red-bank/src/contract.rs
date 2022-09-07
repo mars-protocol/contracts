@@ -119,31 +119,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             start_after,
             limit,
         } => to_binary(&query::query_markets(deps, start_after, limit)?),
-        QueryMsg::UserDebt {
-            user,
-        } => {
-            let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_debt(deps, env, user_addr)?)
-        }
-        QueryMsg::UserAssetDebt {
-            user,
-            denom,
-        } => {
-            let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_asset_debt(deps, env, user_addr, denom)?)
-        }
-        QueryMsg::UserCollateral {
-            user,
-        } => {
-            let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_collateral(deps, user_addr)?)
-        }
-        QueryMsg::UserPosition {
-            user,
-        } => {
-            let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_position(deps, env, user_addr)?)
-        }
         QueryMsg::UncollateralizedLoanLimit {
             user,
             denom,
@@ -151,6 +126,56 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             let user_addr = deps.api.addr_validate(&user)?;
             to_binary(&query::query_uncollateralized_loan_limit(deps, user_addr, denom)?)
         }
+        QueryMsg::UncollateralizedLoanLimits {
+            user,
+            start_after,
+            limit,
+        } => {
+            let user_addr = deps.api.addr_validate(&user)?;
+            to_binary(&query::query_uncollateralized_loan_limits(
+                deps,
+                user_addr,
+                start_after,
+                limit,
+            )?)
+        }
+        QueryMsg::UserDebt {
+            user,
+            denom,
+        } => {
+            let user_addr = deps.api.addr_validate(&user)?;
+            to_binary(&query::query_user_debt(deps, env, user_addr, denom)?)
+        }
+        QueryMsg::UserDebts {
+            user,
+            // start_after,
+            // limit,
+        } => {
+            let user_addr = deps.api.addr_validate(&user)?;
+            to_binary(&query::query_user_debts(deps, env, user_addr)?)
+        }
+        QueryMsg::UserCollateral {
+            user,
+            denom,
+        } => {
+            let user_addr = deps.api.addr_validate(&user)?;
+            to_binary(&query::query_user_collateral(deps, user_addr, denom)?)
+        }
+        QueryMsg::UserCollaterals {
+            user,
+            // start_after,
+            // limit,
+        } => {
+            let user_addr = deps.api.addr_validate(&user)?;
+            to_binary(&query::query_user_collaterals(deps, user_addr)?)
+        }
+        QueryMsg::UserPosition {
+            user,
+        } => {
+            let user_addr = deps.api.addr_validate(&user)?;
+            to_binary(&query::query_user_position(deps, env, user_addr)?)
+        }
+
         QueryMsg::ScaledLiquidityAmount {
             denom,
             amount,

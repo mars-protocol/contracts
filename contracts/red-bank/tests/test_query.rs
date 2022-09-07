@@ -1,11 +1,11 @@
 use cosmwasm_std::{Addr, Decimal, Uint128};
 
-use mars_outpost::red_bank::{Debt, Market, User, UserAssetDebtResponse};
+use mars_outpost::red_bank::{Debt, Market, User, UserDebtResponse};
 use mars_testing::{mock_env, MockEnvParams};
 
 use mars_red_bank::helpers::set_bit;
 use mars_red_bank::interest_rates::{get_scaled_debt_amount, get_underlying_debt_amount};
-use mars_red_bank::query::{query_user_asset_debt, query_user_collateral, query_user_debt};
+use mars_red_bank::query::{query_user_collaterals, query_user_debt, query_user_debts};
 use mars_red_bank::state::{DEBTS, USERS};
 
 use helpers::{th_init_market, th_setup};
@@ -42,22 +42,22 @@ fn test_query_collateral() {
     USERS.save(deps.as_mut().storage, &user_addr, &user).unwrap();
 
     // Assert markets correctly return collateral status
-    let res = query_user_collateral(deps.as_ref(), user_addr.clone()).unwrap();
-    assert_eq!(res.collateral[0].denom, String::from("uosmo"));
-    assert!(!res.collateral[0].enabled);
-    assert_eq!(res.collateral[1].denom, String::from("uusd"));
-    assert!(res.collateral[1].enabled);
+    let collaterals = query_user_collaterals(deps.as_ref(), user_addr.clone()).unwrap();
+    assert_eq!(collaterals[0].denom, String::from("uosmo"));
+    assert!(!collaterals[0].enabled);
+    assert_eq!(collaterals[1].denom, String::from("uusd"));
+    assert!(collaterals[1].enabled);
 
     // Set first market as collateral
     set_bit(&mut user.collateral_assets, market_1_initial.index).unwrap();
     USERS.save(deps.as_mut().storage, &user_addr, &user).unwrap();
 
     // Assert markets correctly return collateral status
-    let res = query_user_collateral(deps.as_ref(), user_addr).unwrap();
-    assert_eq!(res.collateral[0].denom, String::from("uosmo"));
-    assert!(res.collateral[0].enabled);
-    assert_eq!(res.collateral[1].denom, String::from("uusd"));
-    assert!(res.collateral[1].enabled);
+    let collaterals = query_user_collaterals(deps.as_ref(), user_addr).unwrap();
+    assert_eq!(collaterals[0].denom, String::from("uosmo"));
+    assert!(collaterals[0].enabled);
+    assert_eq!(collaterals[1].denom, String::from("uusd"));
+    assert!(collaterals[1].enabled);
 }
 
 #[test]
@@ -117,7 +117,7 @@ fn test_query_user_debt() {
         amount_scaled: debt_amount_scaled_1,
         uncollateralized: false,
     };
-    DEBTS.save(deps.as_mut().storage, ("coin_1", &user_addr), &debt_1).unwrap();
+    DEBTS.save(deps.as_mut().storage, (&user_addr, "coin_1"), &debt_1).unwrap();
 
     // Save debt for market 3
     let debt_amount_3 = Uint128::new(2221u128);
@@ -133,28 +133,28 @@ fn test_query_user_debt() {
         amount_scaled: debt_amount_scaled_3,
         uncollateralized: false,
     };
-    DEBTS.save(deps.as_mut().storage, ("coin_3", &user_addr), &debt_3).unwrap();
+    DEBTS.save(deps.as_mut().storage, (&user_addr, "coin_3"), &debt_3).unwrap();
 
-    let res = query_user_debt(deps.as_ref(), env, user_addr).unwrap();
+    let debts = query_user_debts(deps.as_ref(), env, user_addr).unwrap();
     assert_eq!(
-        res.debts[0],
-        UserAssetDebtResponse {
+        debts[0],
+        UserDebtResponse {
             denom: "coin_1".to_string(),
             amount_scaled: debt_amount_scaled_1,
             amount: debt_amount_at_query_1,
         }
     );
     assert_eq!(
-        res.debts[1],
-        UserAssetDebtResponse {
+        debts[1],
+        UserDebtResponse {
             denom: "coin_2".to_string(),
             amount_scaled: Uint128::zero(),
             amount: Uint128::zero()
         }
     );
     assert_eq!(
-        res.debts[2],
-        UserAssetDebtResponse {
+        debts[2],
+        UserDebtResponse {
             denom: "coin_3".to_string(),
             amount_scaled: debt_amount_scaled_3,
             amount: debt_amount_at_query_3
@@ -209,20 +209,16 @@ fn test_query_user_asset_debt() {
         amount_scaled: debt_amount_scaled_1,
         uncollateralized: false,
     };
-    DEBTS.save(deps.as_mut().storage, ("coin_1", &user_addr), &debt_1).unwrap();
+    DEBTS.save(deps.as_mut().storage, (&user_addr, "coin_1"), &debt_1).unwrap();
 
     // Check asset with existing debt
     {
-        let res = query_user_asset_debt(
-            deps.as_ref(),
-            env.clone(),
-            user_addr.clone(),
-            "coin_1".to_string(),
-        )
-        .unwrap();
+        let res =
+            query_user_debt(deps.as_ref(), env.clone(), user_addr.clone(), "coin_1".to_string())
+                .unwrap();
         assert_eq!(
             res,
-            UserAssetDebtResponse {
+            UserDebtResponse {
                 denom: "coin_1".to_string(),
                 amount_scaled: debt_amount_scaled_1,
                 amount: debt_amount_at_query_1
@@ -232,11 +228,10 @@ fn test_query_user_asset_debt() {
 
     // Check asset with no debt
     {
-        let res =
-            query_user_asset_debt(deps.as_ref(), env, user_addr, "coin_2".to_string()).unwrap();
+        let res = query_user_debt(deps.as_ref(), env, user_addr, "coin_2".to_string()).unwrap();
         assert_eq!(
             res,
-            UserAssetDebtResponse {
+            UserDebtResponse {
                 denom: "coin_2".to_string(),
                 amount_scaled: Uint128::zero(),
                 amount: Uint128::zero()

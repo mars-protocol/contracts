@@ -86,11 +86,11 @@ fn test_uncollateralized_loan_limits() {
 
     // check user's limit has been updated to the appropriate amount
     let limit =
-        UNCOLLATERALIZED_LOAN_LIMITS.load(&deps.storage, ("somecoin", &borrower_addr)).unwrap();
+        UNCOLLATERALIZED_LOAN_LIMITS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
     assert_eq!(limit, initial_uncollateralized_loan_limit);
 
     // check user's uncollateralized debt flag is true (limit > 0)
-    let debt = DEBTS.load(&deps.storage, ("somecoin", &borrower_addr)).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
     assert!(debt.uncollateralized);
 
     // Borrow asset
@@ -146,7 +146,7 @@ fn test_uncollateralized_loan_limits() {
     let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
     assert!(get_bit(user.borrowed_assets, 0).unwrap());
 
-    let debt = DEBTS.load(&deps.storage, ("somecoin", &borrower_addr)).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
 
     let expected_debt_scaled_after_borrow = compute_scaled_amount(
         initial_borrow_amount,
@@ -195,11 +195,11 @@ fn test_uncollateralized_loan_limits() {
 
     // check user's allowance is zero
     let allowance =
-        UNCOLLATERALIZED_LOAN_LIMITS.load(&deps.storage, ("somecoin", &borrower_addr)).unwrap();
+        UNCOLLATERALIZED_LOAN_LIMITS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
     assert_eq!(allowance, Uint128::zero());
 
     // check user's uncollateralized debt flag is false (limit == 0)
-    let debt = DEBTS.load(&deps.storage, ("somecoin", &borrower_addr)).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
     assert!(!debt.uncollateralized);
 }
 
@@ -363,7 +363,7 @@ fn test_update_asset_collateral() {
             amount_scaled: token_3_debt_scaled,
             uncollateralized: false,
         };
-        DEBTS.save(deps.as_mut().storage, (denom_3, &user_addr), &debt).unwrap();
+        DEBTS.save(deps.as_mut().storage, (&user_addr, denom_3), &debt).unwrap();
 
         let positions = health::get_user_positions_map(
             &deps.as_ref(),

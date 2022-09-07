@@ -343,9 +343,9 @@ fn test_withdraw_if_health_factor_not_met() {
         amount_scaled: Uint128::new(200_000) * SCALING_FACTOR,
         uncollateralized: true,
     };
-    DEBTS.save(deps.as_mut().storage, ("token2", &withdrawer_addr), &debt).unwrap();
+    DEBTS.save(deps.as_mut().storage, (&withdrawer_addr, "token2"), &debt).unwrap();
     DEBTS
-        .save(deps.as_mut().storage, ("token3", &withdrawer_addr), &uncollateralized_debt)
+        .save(deps.as_mut().storage, (&withdrawer_addr, "token3"), &uncollateralized_debt)
         .unwrap();
 
     // Set the querier to return native exchange rates

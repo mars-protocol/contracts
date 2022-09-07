@@ -148,7 +148,7 @@ pub fn get_user_positions(
 
         let (debt_amount, uncollateralized_debt) = if user_is_borrowing {
             // query debt
-            let user_debt: Debt = DEBTS.load(deps.storage, (&denom, user_addr))?;
+            let user_debt: Debt = DEBTS.load(deps.storage, (user_addr, &denom))?;
 
             let debt_amount = get_underlying_debt_amount(
                 user_debt.amount_scaled,

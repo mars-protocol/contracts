@@ -1,10 +1,60 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
 ## v1.0.0-rc0
 
 This section documents the API changes compared to the Terra Classic deployment, found in the [`mars-core`](https://github.com/mars-protocol/mars-core) repository. This section is **not comprehensive**, as the changes are numerous. Changelog for later version start here should be made comprehensive.
 
-* ([#61](https://github.com/mars-protocol/outposts/pull/61)) Red Bank: Implement variable naming convension.
+- ([#63](https://github.com/mars-protocol/outposts/pull/63)) Red Bank: Rename a few query functions:
+
+| old query        | new query         | description                                    |
+| ---------------- | ----------------- | ---------------------------------------------- |
+| `MarketList`     | `Markets`         | list all markets                               |
+| `UserAssetDebt`  | `UserDebt`        | a user's debt position in a single asset       |
+| `UserDebt`       | `UserDebts`       | a user's debt positions in all assets          |
+| -                | `UserCollateral`  | a user's collateral position in a single asset |
+| `UserCollateral` | `UserCollaterals` | a user's collateral positions in all assets    |
+
+- ([#63](https://github.com/mars-protocol/outposts/pull/63)) Red Bank: Changes to a few query response types:
+
+Response to `Markets`:
+
+```typescript
+// old
+type MarketsResponse = {
+  market_list: Market[];
+};
+
+// new
+type MarketResponse = Market[];
+```
+
+Response to `UserDebts`:
+
+```typescript
+// old
+type UserDebtsResponse = {
+  debts: UserDebtResponse[];
+};
+
+// new
+type UserDebtsResponse = UserDebtResponse[];
+```
+
+Response to `UserCollaterals`:
+
+```typescript
+// old
+type UserCollateralsResponse = {
+  collaterals: UserCollateralResponse[];
+};
+
+// new
+type UserCollateralsResponse = UserCollateralResponse[];
+```
+
+- ([#61](https://github.com/mars-protocol/outposts/pull/61)) Red Bank: Implement variable naming convension.
 
 ```diff
 pub struct CreateOrUpdateConfig {
@@ -64,7 +114,7 @@ pub struct QueryMsg {
 }
 ```
 
-* ([#55](https://github.com/mars-protocol/outposts/pull/55)) Red Bank: the option for the liquidator to request receiving the underlying asset is removed. Now the liquidator always receives collateral shares. To withdraw the underlying asset, dispatch another `ExecuteMsg::Withdraw`.
+- ([#55](https://github.com/mars-protocol/outposts/pull/55)) Red Bank: the option for the liquidator to request receiving the underlying asset is removed. Now the liquidator always receives collateral shares. To withdraw the underlying asset, dispatch another `ExecuteMsg::Withdraw`.
 
 ```diff
 pub struct ExecuteMsg {
@@ -76,7 +126,7 @@ pub struct ExecuteMsg {
 }
 ```
 
-* ([#53](https://github.com/mars-protocol/outposts/pull/53)) Red Bank: Several unnecessary parameters in the execute message are removed:
+- ([#53](https://github.com/mars-protocol/outposts/pull/53)) Red Bank: Several unnecessary parameters in the execute message are removed:
 
 ```diff
 pub struct ExecuteMsg {
@@ -97,7 +147,7 @@ pub struct ExecuteMsg {
 }
 ```
 
-* ([#46](https://github.com/mars-protocol/outposts/pull/46)) Red Bank: the dynamic interest rate model is removed. The `InterestRateModel` struct is simplified:
+- ([#46](https://github.com/mars-protocol/outposts/pull/46)) Red Bank: the dynamic interest rate model is removed. The `InterestRateModel` struct is simplified:
 
 ```diff
 - pub enum InterestRateModel {

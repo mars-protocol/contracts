@@ -152,7 +152,7 @@ fn test_borrow_and_repay() {
     assert!(get_bit(user.borrowed_assets, 0).unwrap());
     assert!(!get_bit(user.borrowed_assets, 1).unwrap());
 
-    let debt = DEBTS.load(&deps.storage, ("uosmo", &borrower_addr)).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uosmo")).unwrap();
     let expected_debt_scaled_1_after_borrow = compute_scaled_amount(
         borrow_amount,
         expected_params_uosmo.borrow_index,
@@ -198,7 +198,7 @@ fn test_borrow_and_repay() {
             ..Default::default()
         },
     );
-    let debt = DEBTS.load(&deps.storage, ("uosmo", &borrower_addr)).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uosmo")).unwrap();
     let market_1_after_borrow_again = MARKETS.load(&deps.storage, "uosmo").unwrap();
 
     let expected_debt_scaled_1_after_borrow_again = expected_debt_scaled_1_after_borrow
@@ -272,7 +272,7 @@ fn test_borrow_and_repay() {
         ]
     );
 
-    let debt2 = DEBTS.load(&deps.storage, ("uusd", &borrower_addr)).unwrap();
+    let debt2 = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
     let market_2_after_borrow_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
 
     let expected_debt_scaled_2_after_borrow_2 = compute_scaled_amount(
@@ -350,7 +350,7 @@ fn test_borrow_and_repay() {
     assert!(get_bit(user.borrowed_assets, 0).unwrap());
     assert!(get_bit(user.borrowed_assets, 1).unwrap());
 
-    let debt2 = DEBTS.load(&deps.storage, ("uusd", &borrower_addr)).unwrap();
+    let debt2 = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
     let market_2_after_repay_some_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
 
     let expected_debt_scaled_2_after_repay_some_2 = expected_debt_scaled_2_after_borrow_2
@@ -422,7 +422,7 @@ fn test_borrow_and_repay() {
     assert!(get_bit(user.borrowed_assets, 0).unwrap());
     assert!(!get_bit(user.borrowed_assets, 1).unwrap());
 
-    let debt2 = DEBTS.load(&deps.storage, ("uusd", &borrower_addr)).unwrap();
+    let debt2 = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
     let market_2_after_repay_all_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
 
     assert_eq!(Uint128::zero(), debt2.amount_scaled);
@@ -499,7 +499,7 @@ fn test_borrow_and_repay() {
     assert!(!get_bit(user.borrowed_assets, 0).unwrap());
     assert!(!get_bit(user.borrowed_assets, 1).unwrap());
 
-    let debt1 = DEBTS.load(&deps.storage, ("uosmo", &borrower_addr)).unwrap();
+    let debt1 = DEBTS.load(&deps.storage, (&borrower_addr, "uosmo")).unwrap();
     let market_1_after_repay_1 = MARKETS.load(&deps.storage, "uosmo").unwrap();
     assert_eq!(Uint128::zero(), debt1.amount_scaled);
     assert_eq!(Uint128::zero(), market_1_after_repay_1.debt_total_scaled);
@@ -581,11 +581,11 @@ fn test_repay_on_behalf_of() {
     let _user = USERS.load(&deps.storage, &user_addr).unwrap_err();
 
     // Debt for 'user' should not exist
-    let debt = DEBTS.may_load(&deps.storage, ("borrowedcoinnative", &user_addr)).unwrap();
+    let debt = DEBTS.may_load(&deps.storage, (&user_addr, "borrowedcoinnative")).unwrap();
     assert!(debt.is_none());
 
     // Debt for 'borrower' should be repayed
-    let debt = DEBTS.load(&deps.storage, ("borrowedcoinnative", &borrower_addr)).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "borrowedcoinnative")).unwrap();
     assert_eq!(debt.amount_scaled, Uint128::zero());
 
     // 'borrower' should have unset bit for debt after full repay
@@ -614,7 +614,7 @@ fn test_repay_uncollateralized_loan_on_behalf_of() {
     let another_user_addr = Addr::unchecked("another_user");
 
     UNCOLLATERALIZED_LOAN_LIMITS
-        .save(deps.as_mut().storage, ("somecoin", &another_user_addr), &Uint128::new(1000u128))
+        .save(deps.as_mut().storage, (&another_user_addr, "somecoin"), &Uint128::new(1000u128))
         .unwrap();
 
     let env = mock_env(MockEnvParams::default());
@@ -700,7 +700,7 @@ fn test_borrow_uusd() {
     let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
     assert!(get_bit(user.borrowed_assets, 0).unwrap());
 
-    let debt = DEBTS.load(&deps.storage, ("uusd", &borrower_addr)).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
 
     assert_eq!(
         valid_amount,
@@ -999,7 +999,7 @@ fn test_borrow_and_send_funds_to_another_user() {
     assert!(get_bit(user.borrowed_assets, market.index).unwrap());
 
     // Debt for 'borrower' should exist
-    let debt = DEBTS.load(&deps.storage, ("uusd", &borrower_addr)).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
     assert_eq!(
         borrow_amount,
         compute_underlying_amount(
@@ -1011,7 +1011,7 @@ fn test_borrow_and_send_funds_to_another_user() {
     );
 
     // Debt for 'another_user' should not exist
-    let debt = DEBTS.may_load(&deps.storage, ("uusd", &another_user_addr)).unwrap();
+    let debt = DEBTS.may_load(&deps.storage, (&another_user_addr, "uusd")).unwrap();
     assert!(debt.is_none());
 
     // Check msgs and attributes (funds should be sent to 'another_user')
