@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use cosmwasm_std::testing::{MockApi, MockStorage};
 use cosmwasm_std::{Coin, Decimal, DepsMut, Event, OwnedDeps, StdResult, Uint128};
 

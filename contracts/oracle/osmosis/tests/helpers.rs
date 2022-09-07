@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::marker::PhantomData;
 
 use cosmwasm_std::testing::{mock_env, MockApi, MockQuerier, MockStorage};
