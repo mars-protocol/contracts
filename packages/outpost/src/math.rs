@@ -11,7 +11,7 @@ pub fn uint128_checked_div_with_ceil(
 ) -> StdResult<Uint128> {
     let mut result = numerator.checked_div(denominator)?;
 
-    if numerator.checked_rem(denominator)? > Uint128::zero() {
+    if !numerator.checked_rem(denominator)?.is_zero() {
         result += Uint128::from(1_u128);
     }
 

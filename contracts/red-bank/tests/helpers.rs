@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use cosmwasm_std::testing::{MockApi, MockStorage};
 use cosmwasm_std::{Coin, Decimal, DepsMut, Event, OwnedDeps, StdResult, Uint128};
 
@@ -98,13 +100,11 @@ pub fn th_get_expected_indices_and_rates(
     initial_liquidity: Uint128,
     delta_info: TestUtilizationDeltaInfo,
 ) -> TestInterestResults {
-    if delta_info.more_debt > Uint128::zero() && delta_info.less_debt > Uint128::zero() {
+    if !delta_info.more_debt.is_zero() && !delta_info.less_debt.is_zero() {
         panic!("Cannot have more debt and less debt at the same time");
     }
 
-    if delta_info.less_debt > Uint128::zero()
-        && delta_info.user_current_debt_scaled == Uint128::zero()
-    {
+    if !delta_info.less_debt.is_zero() && delta_info.user_current_debt_scaled.is_zero() {
         panic!("Cannot have less debt with 0 current user debt scaled");
     }
 
@@ -122,7 +122,7 @@ pub fn th_get_expected_indices_and_rates(
     .unwrap();
 
     // When repaying, new computed index is used to get current debt and deduct amount
-    let less_debt_scaled = if delta_info.less_debt > Uint128::zero() {
+    let less_debt_scaled = if !delta_info.less_debt.is_zero() {
         let user_current_debt = compute_underlying_amount(
             delta_info.user_current_debt_scaled,
             expected_indices.borrow,

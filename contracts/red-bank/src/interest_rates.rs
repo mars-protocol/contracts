@@ -39,14 +39,14 @@ pub fn apply_accumulated_interests(
     if market.indexes_last_updated < current_timestamp {
         let time_elapsed = current_timestamp - market.indexes_last_updated;
 
-        if market.borrow_rate > Decimal::zero() {
+        if !market.borrow_rate.is_zero() {
             market.borrow_index = calculate_applied_linear_interest_rate(
                 market.borrow_index,
                 market.borrow_rate,
                 time_elapsed,
             )?;
         }
-        if market.liquidity_rate > Decimal::zero() {
+        if !market.liquidity_rate.is_zero() {
             market.liquidity_index = calculate_applied_linear_interest_rate(
                 market.liquidity_index,
                 market.liquidity_rate,
@@ -79,7 +79,7 @@ pub fn apply_accumulated_interests(
 
     let accrued_protocol_rewards = borrow_interest_accrued * market.reserve_factor;
 
-    if accrued_protocol_rewards > Uint128::zero() {
+    if !accrued_protocol_rewards.is_zero() {
         let mint_amount = compute_scaled_amount(
             accrued_protocol_rewards,
             market.liquidity_index,
@@ -234,7 +234,7 @@ pub fn get_updated_borrow_index(market: &Market, timestamp: u64) -> StdResult<De
     if market.indexes_last_updated < timestamp {
         let time_elapsed = timestamp - market.indexes_last_updated;
 
-        if market.borrow_rate > Decimal::zero() {
+        if !market.borrow_rate.is_zero() {
             let updated_index = calculate_applied_linear_interest_rate(
                 market.borrow_index,
                 market.borrow_rate,
@@ -260,7 +260,7 @@ pub fn get_updated_liquidity_index(market: &Market, timestamp: u64) -> StdResult
     if market.indexes_last_updated < timestamp {
         let time_elapsed = timestamp - market.indexes_last_updated;
 
-        if market.liquidity_rate > Decimal::zero() {
+        if !market.liquidity_rate.is_zero() {
             let updated_index = calculate_applied_linear_interest_rate(
                 market.liquidity_index,
                 market.liquidity_rate,
@@ -296,7 +296,7 @@ pub fn update_interest_rates(
     let total_debt =
         get_underlying_debt_amount(market.debt_total_scaled, market, env.block.time.seconds())?;
 
-    let current_utilization_rate = if total_debt > Uint128::zero() {
+    let current_utilization_rate = if !total_debt.is_zero() {
         let liquidity_and_debt = available_liquidity.checked_add(total_debt)?;
         Decimal::from_ratio(total_debt, liquidity_and_debt)
     } else {

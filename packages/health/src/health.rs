@@ -75,7 +75,7 @@ impl Health {
         )?;
 
         // If there aren't any debts a health factor can't be computed (divide by zero)
-        if health.total_debt_value > Decimal::zero() {
+        if !health.total_debt_value.is_zero() {
             health.max_ltv_health_factor = Some(divide_decimal_by_decimal(
                 health.max_ltv_adjusted_collateral,
                 health.total_debt_value,

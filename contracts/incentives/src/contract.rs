@@ -226,7 +226,7 @@ pub fn execute_claim_rewards(
     USER_UNCLAIMED_REWARDS.save(deps.storage, &user_addr, &Uint128::zero())?;
 
     let mut response = Response::new();
-    if total_unclaimed_rewards > Uint128::zero() {
+    if !total_unclaimed_rewards.is_zero() {
         let config = CONFIG.load(deps.storage)?;
         // Build message to send mars to the user
         response = response.add_message(CosmosMsg::Bank(BankMsg::Send {

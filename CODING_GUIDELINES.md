@@ -82,18 +82,18 @@ use mars_outpost::red_bank::*;
 
 ### Attributes for indexing
 
-``
+```
 key: "action", value: PROJECT_NAME/CONTRACT-NAME/EXECUTE_MSG
-``
+```
 
 - Contract name should use hyphens (e.g. rewards-collector).
 - Everything else should be snake case (e.g. user_address).
 
 ```rust
 Response::new()
-    .add_attribute(”action”, "outposts/rewards-collector/balance_change")
-    .add_attribute(”ma_asset”, "ma_token_address")
-    .add_attribute(”user”, "user_address")
+    .add_attribute("action", "outposts/rewards-collector/balance_change")
+    .add_attribute("ma_asset", "ma_token_address")
+    .add_attribute("user", "user_address")
 ```
 
 ### Panics (out of gas)
@@ -140,6 +140,31 @@ pub enum ContractError {
 
 Don’t generate schema files - if there is a request from frontend team we can generate schema.
 
+### Zero comparisons
+
+To compare a `Uint128` or `Decimal` to zero, use the built-in `is_zero` method:
+
+```rust
+let a = cosmwasm_std::Uint128::new(some_number);
+let b = cosmwasm_std::Decimal::percent(some_number);
+
+// NOT recommended
+if a == Uint128::zero() {
+  // ...
+}
+if b > Decimal::zero() {
+  // ...
+}
+
+// recommended
+if a.is_zero() {
+  // ...
+}
+if !b.is_zero() {
+  // ...
+}
+```
+
 ## Modularization
 
 In case of chain specific logic, make the whole contract a portable object with a generic:
@@ -178,11 +203,30 @@ Finally, in order to create the contract for a specific chain, we simply plug th
 type ContractForOsmosis = BaseContract<OsmosisAdapter>;
 ```
 
+## Testing
+
+### Test helpers
+
+Each file in the `tests` folder is [treated as an individual crate](https://doc.rust-lang.org/book/ch11-03-test-organization.html#the-tests-directory). As a result of this, if a file only contains helper functions to be used by other files, and does not contain any tests that use these functions in itself, the Rust compiler will raise "function defined but not used" errors. Consider adding the following line at the top of the file to suppress this warning:
+
+```rust
+#![allow(dead_code)]
+```
+
+### Doc tests
+
+If a crate does not contain documentations to be tested, considering adding the following configuration in `Cargo.toml` to disable doc-tests:
+
+```toml
+[lib]
+doctest = false
+```
+
 ## CI/CD
 
 Setting up a pipeline with strict checks helps ensure only linted+tested code merged.
 
-- Setup a task runner. *Cargo make* is recommended. Here’s an example: [https://github.com/mars-protocol/rover/blob/master/Makefile.toml](https://github.com/mars-protocol/rover/blob/master/Makefile.toml). Tasks to test for:
+- Setup a task runner. _Cargo make_ is recommended. Here’s an example: [https://github.com/mars-protocol/rover/blob/master/Makefile.toml](https://github.com/mars-protocol/rover/blob/master/Makefile.toml). Tasks to test for:
   - Building
   - Linting
   - Formatting

@@ -398,7 +398,7 @@ pub fn update_uncollateralized_loan_limit(
             .may_load(deps.storage, (&denom, &user_addr))?
             .unwrap_or_else(Uint128::zero);
 
-        if previous_uncollateralized_loan_limit == Uint128::zero() {
+        if previous_uncollateralized_loan_limit.is_zero() {
             let asset_market = MARKETS.load(deps.storage, &denom)?;
 
             let is_borrowing_asset = get_bit(user.borrowed_assets, asset_market.index)?;
@@ -1085,7 +1085,7 @@ pub fn liquidate(
 
     // 7. Build response
     // refund sent amount in excess of actual debt amount to liquidate
-    if refund_amount > Uint128::zero() {
+    if !refund_amount.is_zero() {
         msgs.push(build_send_asset_msg(&info.sender, &debt_denom, refund_amount));
     }
 
@@ -1215,7 +1215,7 @@ pub fn update_asset_collateral_status(
         let collateral_ma_address = collateral_market.ma_token_address;
         let user_collateral_balance =
             cw20_get_balance(&deps.querier, collateral_ma_address, user_addr.clone())?;
-        if user_collateral_balance > Uint128::zero() {
+        if !user_collateral_balance.is_zero() {
             // enable collateral asset
             set_bit(&mut user.collateral_assets, collateral_market.index)?;
             USERS.save(deps.storage, &user_addr, &user)?;
