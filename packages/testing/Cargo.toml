@@ -17,6 +17,9 @@ documentation = "https://docs.marsprotocol.io/mars-protocol/developers/protocol-
 readme = "README.md"
 keywords = ["mars", "cosmwasm"]
 
+[lib]
+doctest = false
+
 [features]
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
