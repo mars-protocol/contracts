@@ -2,7 +2,8 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
 use osmo_bindings::{
-    ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Swap,
+    ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Step, Swap,
+    SwapResponse,
 };
 
 // NOTE: We can't use osmo_bindings::Swap (as key) for HashMap because it doesn't implement Hash
@@ -28,6 +29,8 @@ pub struct OsmosisQuerier {
     pub pools: HashMap<u64, PoolStateResponse>,
     pub spot_prices: HashMap<PriceKey, SpotPriceResponse>,
     pub twap_prices: HashMap<PriceKey, ArithmeticTwapToNowResponse>,
+    /// key comes from `prepare_estimate_swap_key` function
+    pub estimate_swaps: HashMap<String, SwapResponse>,
 }
 
 impl OsmosisQuerier {
@@ -77,11 +80,38 @@ impl OsmosisQuerier {
                     .into(),
                 }
             }
+            OsmosisQuery::EstimateSwap {
+                first,
+                route,
+                ..
+            } => {
+                let routes_key = Self::prepare_estimate_swap_key(&first, &route);
+                match self.estimate_swaps.get(&routes_key) {
+                    Some(swap_response) => to_binary(&swap_response).into(),
+                    None => Err(SystemError::InvalidRequest {
+                        error: format!("SwapResponse is not found for routes: {:?}", routes_key),
+                        request: Default::default(),
+                    })
+                    .into(),
+                }
+            }
             _ => {
                 panic!("[mock]: Unsupported Osmosis query");
             }
         };
 
         Ok(res).into()
+    }
+
+    pub fn prepare_estimate_swap_key(first: &Swap, route: &[Step]) -> String {
+        let routes: Vec<_> = vec![Step {
+            pool_id: first.pool_id,
+            denom_out: first.denom_out.clone(),
+        }]
+        .iter()
+        .chain(route)
+        .map(|step| format!("{}.{}", step.pool_id, step.denom_out))
+        .collect();
+        routes.join(",")
     }
 }

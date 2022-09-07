@@ -27,6 +27,8 @@ pub struct Config<T> {
     pub timeout_blocks: u64,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: u64,
+    /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
+    pub slippage_tolerance: Decimal,
 }
 
 impl<T> Config<T> {
@@ -48,6 +50,7 @@ impl Config<String> {
             timeout_revision: self.timeout_revision,
             timeout_blocks: self.timeout_blocks,
             timeout_seconds: self.timeout_seconds,
+            slippage_tolerance: self.slippage_tolerance,
         })
     }
 }
@@ -64,6 +67,7 @@ impl From<Config<Addr>> for Config<String> {
             timeout_revision: cfg.timeout_revision,
             timeout_blocks: cfg.timeout_blocks,
             timeout_seconds: cfg.timeout_seconds,
+            slippage_tolerance: cfg.slippage_tolerance,
         }
     }
 }
@@ -88,6 +92,8 @@ pub struct CreateOrUpdateConfig {
     pub timeout_blocks: Option<u64>,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: Option<u64>,
+    /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
+    pub slippage_tolerance: Option<Decimal>,
 }
 
 pub type InstantiateMsg = Config<String>;

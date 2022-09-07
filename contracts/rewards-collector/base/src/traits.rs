@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use cosmwasm_std::{CosmosMsg, CustomMsg, CustomQuery, QuerierWrapper, Uint128};
+use cosmwasm_std::{CosmosMsg, CustomMsg, CustomQuery, Decimal, Env, QuerierWrapper, Uint128};
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -23,8 +23,10 @@ where
     /// Build a message for executing the trade, given an input denom and amount
     fn build_swap_msg(
         &self,
+        env: &Env,
         querier: &QuerierWrapper<Q>,
         denom_in: &str,
         amount: Uint128,
+        slippage_tolerance: Decimal,
     ) -> ContractResult<CosmosMsg<M>>;
 }

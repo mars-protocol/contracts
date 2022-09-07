@@ -21,6 +21,7 @@ pub fn mock_config() -> Config<Addr> {
         timeout_revision: 1,
         timeout_blocks: 50,
         timeout_seconds: 300,
+        slippage_tolerance: Decimal::percent(3),
     }
 }
 
