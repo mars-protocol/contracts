@@ -5,7 +5,8 @@ use cosmwasm_std::{
 };
 use cw20::Cw20QueryMsg;
 use osmo_bindings::{
-    ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Swap,
+    ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Step, Swap,
+    SwapResponse,
 };
 
 use mars_outpost::{address_provider, incentives, ma_token, oracle, red_bank};
@@ -116,6 +117,16 @@ impl MarsMockQuerier {
 
     pub fn set_spot_price(&mut self, swap: Swap, spot_price: SpotPriceResponse) {
         self.osmosis_querier.spot_prices.insert(swap.into(), spot_price);
+    }
+
+    pub fn set_estimate_swap(
+        &mut self,
+        first_swap: &Swap,
+        route: &[Step],
+        swap_response: SwapResponse,
+    ) {
+        let key = OsmosisQuerier::prepare_estimate_swap_key(first_swap, route);
+        self.osmosis_querier.estimate_swaps.insert(key, swap_response);
     }
 
     pub fn set_redbank_market(&mut self, market: red_bank::Market) {

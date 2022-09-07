@@ -138,6 +138,7 @@ where
             timeout_revision,
             timeout_blocks,
             timeout_seconds,
+            slippage_tolerance,
         } = new_cfg;
 
         cfg.owner = option_string_to_addr(deps.api, owner, cfg.owner)?;
@@ -150,6 +151,7 @@ where
         cfg.timeout_revision = timeout_revision.unwrap_or(cfg.timeout_revision);
         cfg.timeout_blocks = timeout_blocks.unwrap_or(cfg.timeout_blocks);
         cfg.timeout_seconds = timeout_seconds.unwrap_or(cfg.timeout_seconds);
+        cfg.slippage_tolerance = slippage_tolerance.unwrap_or(cfg.slippage_tolerance);
 
         cfg.validate()?;
 
@@ -236,7 +238,13 @@ where
             messages.push(
                 self.routes
                     .load(deps.storage, (denom.clone(), cfg.safety_fund_denom))?
-                    .build_swap_msg(&denom, amount_safety_fund)?,
+                    .build_swap_msg(
+                        &env,
+                        &deps.querier,
+                        &denom,
+                        amount_safety_fund,
+                        cfg.slippage_tolerance,
+                    )?,
             );
         }
 
@@ -244,7 +252,13 @@ where
             messages.push(
                 self.routes
                     .load(deps.storage, (denom.clone(), cfg.fee_collector_denom))?
-                    .build_swap_msg(&denom, amount_fee_collector)?,
+                    .build_swap_msg(
+                        &env,
+                        &deps.querier,
+                        &denom,
+                        amount_fee_collector,
+                        cfg.slippage_tolerance,
+                    )?,
             );
         }
 
@@ -253,7 +267,8 @@ where
             .add_attribute("action", "outposts/rewards-collector/swap_asset")
             .add_attribute("denom", denom)
             .add_attribute("amount_safety_fund", amount_safety_fund)
-            .add_attribute("amount_fee_collector", amount_fee_collector))
+            .add_attribute("amount_fee_collector", amount_fee_collector)
+            .add_attribute("slippage_tolerance", cfg.slippage_tolerance.to_string()))
     }
 
     fn distribute_rewards(

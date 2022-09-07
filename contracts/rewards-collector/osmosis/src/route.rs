@@ -1,12 +1,17 @@
 use std::fmt;
 
-use cosmwasm_std::{CosmosMsg, QuerierWrapper, QueryRequest, Uint128};
+use cosmwasm_std::{
+    Addr, CosmosMsg, Decimal, Env, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mars_rewards_collector_base::{ContractError, ContractResult, Route};
 
-use osmo_bindings::{OsmosisMsg, OsmosisQuery, PoolStateResponse, Step, Swap, SwapAmountWithLimit};
+use osmo_bindings::{
+    OsmosisMsg, OsmosisQuery, PoolStateResponse, Step, Swap, SwapAmount, SwapAmountWithLimit,
+    SwapResponse,
+};
 
 use crate::helpers::hashset;
 
@@ -101,8 +106,11 @@ impl Route<OsmosisMsg, OsmosisQuery> for OsmosisRoute {
     /// Build a CosmosMsg that swaps given an input denom and amount
     fn build_swap_msg(
         &self,
+        env: &Env,
+        querier: &QuerierWrapper<OsmosisQuery>,
         denom_in: &str,
         amount: Uint128,
+        slippage_tolerance: Decimal,
     ) -> ContractResult<CosmosMsg<OsmosisMsg>> {
         let steps = &self.0;
 
@@ -113,13 +121,40 @@ impl Route<OsmosisMsg, OsmosisQuery> for OsmosisRoute {
                 reason: "the route must contain at least one step".to_string(),
             })?;
 
+        let out_amount =
+            estimate_swap_out_amount(querier, &env.contract.address, &first_swap, steps, amount)?;
+        let min_out_amount = (Decimal::one() - slippage_tolerance) * out_amount;
+
         Ok(CosmosMsg::Custom(OsmosisMsg::Swap {
             first: first_swap,
             route: steps[1..].to_vec(),
             amount: SwapAmountWithLimit::ExactIn {
                 input: amount,
-                min_output: Uint128::zero(), // TODO: implement slippage tolerance
+                min_output: min_out_amount,
             },
         }))
+    }
+}
+
+fn estimate_swap_out_amount(
+    querier: &QuerierWrapper<OsmosisQuery>,
+    contract_addr: &Addr,
+    first_swap: &Swap,
+    steps: &[Step],
+    amount: Uint128,
+) -> StdResult<Uint128> {
+    let query = OsmosisQuery::EstimateSwap {
+        sender: contract_addr.into(),
+        first: first_swap.clone(),
+        route: steps[1..].to_vec(),
+        amount: SwapAmount::In(amount),
+    };
+
+    let res: SwapResponse = querier.query(&QueryRequest::Custom(query))?;
+    match res.amount {
+        SwapAmount::Out(out_amount) => Ok(out_amount),
+        _ => Err(StdError::GenericErr {
+            msg: "Can't be `SwapAmount::In if query is built with this type".to_string(),
+        }),
     }
 }
