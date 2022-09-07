@@ -82,18 +82,18 @@ use mars_outpost::red_bank::*;
 
 ### Attributes for indexing
 
-``
+```
 key: "action", value: PROJECT_NAME/CONTRACT-NAME/EXECUTE_MSG
-``
+```
 
 - Contract name should use hyphens (e.g. rewards-collector).
 - Everything else should be snake case (e.g. user_address).
 
 ```rust
 Response::new()
-    .add_attribute(”action”, "outposts/rewards-collector/balance_change")
-    .add_attribute(”ma_asset”, "ma_token_address")
-    .add_attribute(”user”, "user_address")
+    .add_attribute("action", "outposts/rewards-collector/balance_change")
+    .add_attribute("ma_asset", "ma_token_address")
+    .add_attribute("user", "user_address")
 ```
 
 ### Panics (out of gas)
@@ -140,6 +140,31 @@ pub enum ContractError {
 
 Don’t generate schema files - if there is a request from frontend team we can generate schema.
 
+### Zero comparisons
+
+To compare a `Uint128` or `Decimal` to zero, use the built-in `is_zero` method:
+
+```rust
+let a = cosmwasm_std::Uint128::new(some_number);
+let b = cosmwasm_std::Decimal::percent(some_number);
+
+// NOT recommended
+if a == Uint128::zero() {
+  // ...
+}
+if b > Decimal::zero() {
+  // ...
+}
+
+// recommended
+if a.is_zero() {
+  // ...
+}
+if !b.is_zero() {
+  // ...
+}
+```
+
 ## Modularization
 
 In case of chain specific logic, make the whole contract a portable object with a generic:
@@ -182,7 +207,7 @@ type ContractForOsmosis = BaseContract<OsmosisAdapter>;
 
 Setting up a pipeline with strict checks helps ensure only linted+tested code merged.
 
-- Setup a task runner. *Cargo make* is recommended. Here’s an example: [https://github.com/mars-protocol/rover/blob/master/Makefile.toml](https://github.com/mars-protocol/rover/blob/master/Makefile.toml). Tasks to test for:
+- Setup a task runner. _Cargo make_ is recommended. Here’s an example: [https://github.com/mars-protocol/rover/blob/master/Makefile.toml](https://github.com/mars-protocol/rover/blob/master/Makefile.toml). Tasks to test for:
   - Building
   - Linting
   - Formatting
