@@ -1,10 +1,28 @@
-use cosmwasm_std::{Decimal, QuerierWrapper, QueryRequest, StdResult};
+use cosmwasm_std::{Decimal, QuerierWrapper, QueryRequest, StdError, StdResult};
 
 use osmo_bindings::{
     ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse,
 };
+use osmosis_std::types::osmosis::gamm::v1beta1::{GammQuerier, Pool};
+use prost::{DecodeError, Message};
 
 use mars_oracle_base::{ContractError, ContractResult};
+
+pub fn assert_osmosis_xyk_pool(
+    querier: &QuerierWrapper<OsmosisQuery>,
+    pool_id: u64,
+    denom: &str,
+    base_denom: &str,
+) -> ContractResult<()> {
+    let pool_res = GammQuerier::new(querier).pool(pool_id)?;
+    let pool = pool_res.pool.ok_or(StdError::NotFound {
+        kind: "osmosis_std::types::osmosis::gamm::v1beta1::Pool".to_string(),
+    })?;
+    let pool_res: Result<Pool, DecodeError> = Message::decode(pool.value.as_slice());
+    let pool = pool_res.map_err(|_| StdError::generic_err(format!("can't decode to pool")))?;
+
+    Ok(())
+}
 
 /// Assert the Osmosis pool indicated by `pool_id` contains exactly two assets, and they are OSMO and `denom`
 pub fn assert_osmosis_pool_assets(

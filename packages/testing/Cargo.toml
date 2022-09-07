@@ -37,3 +37,4 @@ thiserror = "1.0.33"
 
 # FIXME: update with new tag when available
 osmo-bindings = { git = "https://github.com/osmosis-labs/bindings" }
+osmosis-std = "0.1.6"

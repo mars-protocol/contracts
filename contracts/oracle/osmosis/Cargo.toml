@@ -36,6 +36,9 @@ thiserror = "1.0.33"
 
 # FIXME: update with new tag when available
 osmo-bindings = { git = "https://github.com/osmosis-labs/bindings" }
+osmosis-std = "0.1.6"
+prost = {version = "0.10.4", default-features = false, features = ["prost-derive"]}
+prost-types = {version = "0.10.1", default-features = false}
 
 [dev-dependencies]
 mars-testing = { path = "../../../packages/testing", version = "0.1.0" }
