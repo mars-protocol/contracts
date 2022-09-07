@@ -205,7 +205,7 @@ pub enum QueryMsg {
         denom: String,
     },
 
-    /// Get all debt positions for a user. Returns UserDebtsResponse
+    /// Get all debt positions for a user. Returns Vec<UserDebtResponse>
     UserDebts {
         user: String,
         // TODO: Given the current approach Red Bank uses to track user positions (bitarrays),
@@ -220,7 +220,7 @@ pub enum QueryMsg {
         denom: String,
     },
 
-    /// Get all collateral positions for a user. Returns UserCollateralsResponse
+    /// Get all collateral positions for a user. Returns Vec<UserCollateralResponse>
     UserCollaterals {
         user: String,
         // TODO: Given the current approach Red Bank uses to track user positions (bitarrays),
