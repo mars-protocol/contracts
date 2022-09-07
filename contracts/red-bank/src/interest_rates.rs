@@ -1,8 +1,7 @@
 use std::str;
 
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, Response, StdError, StdResult, Uint128,
-    WasmMsg,
+    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, Event, StdError, StdResult, Uint128, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
 
@@ -31,8 +30,8 @@ pub fn apply_accumulated_interests(
     env: &Env,
     rewards_collector_addr: &Addr,
     market: &mut Market,
-    mut response: Response,
-) -> StdResult<Response> {
+    msgs: &mut Vec<CosmosMsg>,
+) -> StdResult<()> {
     let current_timestamp = env.block.time.seconds();
     let previous_borrow_index = market.borrow_index;
 
@@ -86,16 +85,17 @@ pub fn apply_accumulated_interests(
             market.liquidity_index,
             ScalingOperation::Truncate,
         )?;
-        response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+        msgs.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: market.ma_token_address.clone().into(),
             msg: to_binary(&Cw20ExecuteMsg::Mint {
                 recipient: rewards_collector_addr.into(),
                 amount: mint_amount,
             })?,
             funds: vec![],
-        }))
+        }));
     }
-    Ok(response)
+
+    Ok(())
 }
 
 pub fn calculate_applied_linear_interest_rate(
@@ -284,16 +284,18 @@ pub fn update_interest_rates(
     market: &mut Market,
     liquidity_taken: Uint128,
     denom: &str,
-    mut response: Response,
-) -> Result<Response, ContractError> {
+    events: &mut Vec<Event>,
+) -> Result<(), ContractError> {
     // compute utilization rate
     let contract_current_balance = deps.querier.query_balance(&env.contract.address, denom)?.amount;
     if contract_current_balance < liquidity_taken {
         return Err(ContractError::OperationExceedsAvailableLiquidity {});
     }
+
     let available_liquidity = contract_current_balance - liquidity_taken;
     let total_debt =
         get_underlying_debt_amount(market.debt_total_scaled, market, env.block.time.seconds())?;
+
     let current_utilization_rate = if total_debt > Uint128::zero() {
         let liquidity_and_debt = available_liquidity.checked_add(total_debt)?;
         Decimal::from_ratio(total_debt, liquidity_and_debt)
@@ -302,9 +304,9 @@ pub fn update_interest_rates(
     };
 
     market.update_interest_rates(current_utilization_rate)?;
+    events.push(build_interests_updated_event(denom, market));
 
-    response = response.add_event(build_interests_updated_event(denom, market));
-    Ok(response)
+    Ok(())
 }
 
 #[cfg(test)]
