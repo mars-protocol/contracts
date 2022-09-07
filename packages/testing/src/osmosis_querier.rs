@@ -112,6 +112,7 @@ impl OsmosisQuerier {
         .chain(route)
         .map(|step| format!("{}.{}", step.pool_id, step.denom_out))
         .collect();
-        routes.join(",")
+        let routes = routes.join(",");
+        format!("{},{}", first.denom_in, routes)
     }
 }
