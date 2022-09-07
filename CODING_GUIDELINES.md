@@ -178,6 +178,25 @@ Finally, in order to create the contract for a specific chain, we simply plug th
 type ContractForOsmosis = BaseContract<OsmosisAdapter>;
 ```
 
+## Testing
+
+### Test helpers
+
+Each file in the `tests` folder is [treated as an individual crate](https://doc.rust-lang.org/book/ch11-03-test-organization.html#the-tests-directory). As a result of this, if a file only contains helper functions to be used by other files, and does not contain any tests that use these functions in itself, the Rust compiler will raise "function defined but not used" errors. Consider adding the following line at the top of the file to suppress this warning:
+
+```rust
+#![allow(dead_code)]
+```
+
+### Doc tests
+
+If a crate does not contain documentations to be tested, considering adding the following configuration in `Cargo.toml` to disable doc-tests:
+
+```toml
+[lib]
+doctest = false
+```
+
 ## CI/CD
 
 Setting up a pipeline with strict checks helps ensure only linted+tested code merged.
