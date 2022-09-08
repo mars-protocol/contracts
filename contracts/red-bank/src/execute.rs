@@ -1,8 +1,8 @@
 use std::str;
 
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
-    WasmMsg,
+    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Order, Response, StdResult,
+    Uint128, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, MinterResponse};
 use cw20_base::msg::InstantiateMarketingInfo;
@@ -429,14 +429,6 @@ pub fn deposit(
         });
     }
 
-    // TODO: this error is never reached (already checked by cw_utils::one_coin), consider removing
-    // Cannot deposit zero amount
-    if deposit_amount.is_zero() {
-        return Err(ContractError::InvalidDepositAmount {
-            denom,
-        });
-    }
-
     // Update the user's collateral status
     // TODO: Currently, the logic is:
     // - If the user already has a collateral position, do nothing;
@@ -502,17 +494,19 @@ pub fn withdraw(
     let asset_ma_addr = market.ma_token_address.clone();
     let withdrawer_balance_scaled_before =
         cw20_get_balance(&deps.querier, asset_ma_addr, withdrawer_addr.clone())?;
+
+    if withdrawer_balance_scaled_before.is_zero() {
+        return Err(ContractError::UserNoCollateralBalance {
+            user: withdrawer_addr.into(),
+            denom,
+        });
+    }
+
     let withdrawer_balance_before = get_underlying_liquidity_amount(
         withdrawer_balance_scaled_before,
         &market,
         env.block.time.seconds(),
     )?;
-
-    if withdrawer_balance_scaled_before.is_zero() {
-        return Err(ContractError::UserNoBalance {
-            denom,
-        });
-    }
 
     let withdraw_amount = match amount {
         Some(amount) => {
@@ -540,32 +534,33 @@ pub fn withdraw(
     let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
-    // let mut withdrawer = match USERS.may_load(deps.storage, &withdrawer_addr)? {
-    //     Some(user) => user,
-    //     None => {
-    //         // No address should withdraw without an existing user position already in
-    //         // storage (If this happens the protocol did something wrong). The exception is
-    //         // the protocol_rewards_collector which gets minted token without depositing
-    //         // nor receiving a transfer from another user.
-    //         if withdrawer_addr != *rewards_collector_addr {
-    //             return Err(ContractError::ExistingUserPositionRequired {});
-    //         }
-    //         User::default()
-    //     }
-    // };
-    // let asset_as_collateral = get_bit(withdrawer.collateral_assets, market.index)?;
-    // let user_is_borrowing = !withdrawer.borrowed_assets.is_zero();
+    // NOTE: this load command currently doesn't work for the rewards collector, which doesn't have
+    // a collateral position. however, this will be automatically solved in a later PR, once we
+    // remove maToken and store collateral shares here in Red Bank.
+    let collateral = COLLATERALS.load(deps.storage, (&withdrawer_addr, &denom))?;
+
+    // the user is borrowing if, in the DEBTS map, there is at least one denom stored under the
+    // withdrawer address prefix
+    // TODO: extract this to a helper function?
+    let user_is_borrowing = DEBTS
+        .prefix(&withdrawer_addr)
+        .range(deps.storage, None, None, Order::Ascending)
+        .next()
+        .is_some();
 
     // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
     // otherwise no reasons to block the withdraw
-    if !assert_below_liq_threshold_after_withdraw(
-        &deps.as_ref(),
-        &env,
-        &withdrawer_addr,
-        oracle_addr,
-        &denom,
-        withdraw_amount,
-    )? {
+    if collateral.enabled
+        && user_is_borrowing
+        && !assert_below_liq_threshold_after_withdraw(
+            &deps.as_ref(),
+            &env,
+            &withdrawer_addr,
+            oracle_addr,
+            &denom,
+            withdraw_amount,
+        )?
+    {
         return Err(ContractError::InvalidHealthFactorAfterWithdraw {});
     }
 
@@ -835,7 +830,9 @@ pub fn liquidate(
     };
 
     // check if the user has enabled the collateral asset as collateral
-    let collateral = COLLATERALS.load(deps.storage, (&user_addr, &collateral_denom))?;
+    let collateral = COLLATERALS
+        .may_load(deps.storage, (&user_addr, &collateral_denom))?
+        .ok_or(ContractError::CannotLiquidateWhenNoCollateralBalance {})?;
     if !collateral.enabled {
         return Err(ContractError::CannotLiquidateWhenCollateralUnset {
             denom: collateral_denom,
@@ -844,25 +841,28 @@ pub fn liquidate(
 
     // check if user has available collateral in specified collateral asset to be liquidated
     let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
+    dbg!(&collateral_market);
     let user_collateral_balance_scaled = cw20_get_balance(
         &deps.querier,
         collateral_market.ma_token_address.clone(),
         user_addr.clone(),
     )?;
+    dbg!(user_collateral_balance_scaled);
     let user_collateral_balance = get_underlying_liquidity_amount(
         user_collateral_balance_scaled,
         &collateral_market,
         block_time,
     )?;
+    dbg!(user_collateral_balance);
     if user_collateral_balance.is_zero() {
         return Err(ContractError::CannotLiquidateWhenNoCollateralBalance {});
     }
 
     // check if user has outstanding debt in the deposited asset that needs to be repayed
-    let mut user_debt = DEBTS.load(deps.storage, (&user_addr, &debt_denom))?;
-    if user_debt.amount_scaled.is_zero() {
-        return Err(ContractError::CannotLiquidateWhenNoDebtBalance {});
-    }
+    let mut user_debt = DEBTS
+        .may_load(deps.storage, (&user_addr, &debt_denom))?
+        .ok_or(ContractError::CannotLiquidateWhenNoDebtBalance {})?;
+    dbg!(&user_debt);
 
     // 2. Compute health factor
     let config = CONFIG.load(deps.storage)?;
@@ -877,18 +877,22 @@ pub fn liquidate(
 
     let (liquidatable, assets_positions) =
         assert_liquidatable(&deps.as_ref(), &env, &user_addr, oracle_addr)?;
+    dbg!(liquidatable);
 
     if !liquidatable {
         return Err(ContractError::CannotLiquidateHealthyPosition {});
     }
 
     let collateral_and_debt_are_the_same_asset = debt_denom == collateral_denom;
+    dbg!(collateral_and_debt_are_the_same_asset);
 
     let debt_market = if !collateral_and_debt_are_the_same_asset {
+        dbg!(&debt_denom);
         MARKETS.load(deps.storage, &debt_denom)?
     } else {
         collateral_market.clone()
     };
+    dbg!(&debt_market);
 
     // 3. Compute debt to repay and collateral to liquidate
     let collateral_price = assets_positions
