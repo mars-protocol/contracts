@@ -25,13 +25,6 @@ impl Config {
     }
 }
 
-/// RedBank global state
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct GlobalState {
-    /// Market count
-    pub market_count: u32,
-}
-
 // TODO: Once maToken is removed, the scaled collateral amount will be stored in this struct
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Collateral {
@@ -77,13 +70,13 @@ pub struct Position {
     pub asset_price: Decimal,
 }
 
-// We define a custom struct for each query response
+// TODO: This is just Config but with Strings instead of Addrs. Consider implement Config with a
+// generic? I.e. Config<T> where T = String or Addr
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ConfigResponse {
     pub owner: String,
     pub address_provider: String,
     pub ma_token_code_id: u64,
-    pub market_count: u32,
     pub close_factor: Decimal,
 }
 

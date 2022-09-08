@@ -13,8 +13,8 @@ use mars_outpost::helpers::{
     build_send_asset_msg, cw20_get_balance, option_string_to_addr, zero_address,
 };
 use mars_outpost::red_bank::{
-    Collateral, Config, CreateOrUpdateConfig, Debt, ExecuteMsg, GlobalState,
-    InitOrUpdateAssetParams, InstantiateMsg, Market,
+    Collateral, Config, CreateOrUpdateConfig, Debt, ExecuteMsg, InitOrUpdateAssetParams,
+    InstantiateMsg, Market,
 };
 use mars_outpost::{ma_token, math};
 
@@ -29,8 +29,7 @@ use crate::interest_rates::{
     get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
 };
 use crate::state::{
-    COLLATERALS, CONFIG, DEBTS, GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_MA_TOKEN,
-    UNCOLLATERALIZED_LOAN_LIMITS,
+    COLLATERALS, CONFIG, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN, UNCOLLATERALIZED_LOAN_LIMITS,
 };
 
 pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, ContractError> {
@@ -63,13 +62,6 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
     config.validate()?;
 
     CONFIG.save(deps.storage, &config)?;
-
-    GLOBAL_STATE.save(
-        deps.storage,
-        &GlobalState {
-            market_count: 0,
-        },
-    )?;
 
     Ok(Response::default())
 }
@@ -130,15 +122,8 @@ pub fn init_asset(
         return Err(ContractError::AssetAlreadyInitialized {});
     }
 
-    let mut money_market = GLOBAL_STATE.load(deps.storage)?;
     let new_market = create_market(env.block.time.seconds(), &denom, asset_params)?;
-
-    // Save new market
     MARKETS.save(deps.storage, &denom, &new_market)?;
-
-    // Increment market count
-    money_market.market_count += 1;
-    GLOBAL_STATE.save(deps.storage, &money_market)?;
 
     let symbol = asset_symbol_option.unwrap_or_else(|| denom.clone());
 
@@ -766,11 +751,9 @@ pub fn repay(
     };
 
     // Check new debt
-    let mut debt = DEBTS.load(deps.storage, (&user_addr, &denom))?;
-
-    if debt.amount_scaled.is_zero() {
-        return Err(ContractError::CannotRepayZeroDebt {});
-    }
+    let mut debt = DEBTS
+        .may_load(deps.storage, (&user_addr, &denom))?
+        .ok_or(ContractError::CannotRepayZeroDebt {})?;
 
     let config = CONFIG.load(deps.storage)?;
 

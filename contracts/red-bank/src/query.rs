@@ -15,8 +15,7 @@ use crate::interest_rates::{
     get_underlying_liquidity_amount,
 };
 use crate::state::{
-    COLLATERALS, CONFIG, DEBTS, GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_MA_TOKEN,
-    UNCOLLATERALIZED_LOAN_LIMITS,
+    COLLATERALS, CONFIG, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN, UNCOLLATERALIZED_LOAN_LIMITS,
 };
 
 const DEFAULT_LIMIT: u32 = 5;
@@ -24,13 +23,10 @@ const MAX_LIMIT: u32 = 10;
 
 pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
-    let money_market = GLOBAL_STATE.load(deps.storage)?;
-
     Ok(ConfigResponse {
         owner: config.owner.to_string(),
         address_provider: config.address_provider.to_string(),
         ma_token_code_id: config.ma_token_code_id,
-        market_count: money_market.market_count,
         close_factor: config.close_factor,
     })
 }
