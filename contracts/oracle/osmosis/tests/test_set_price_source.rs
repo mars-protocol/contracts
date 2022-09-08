@@ -108,6 +108,15 @@ fn test_setting_price_source_spot() {
         }
     );
 
+    // attempting to use not XYK pool
+    let err = set_price_source_spot("uion", 4444).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "pool 4444 is not XYK".to_string()
+        }
+    );
+
     // properly set spot price source
     let res = set_price_source_spot("umars", 89).unwrap();
     assert_eq!(res.messages.len(), 0);
@@ -169,6 +178,15 @@ fn test_setting_price_source_twap() {
         err,
         ContractError::InvalidPriceSource {
             reason: "expecting pool 3333 to contain exactly two coins; found 3".to_string()
+        }
+    );
+
+    // attempting to use not XYK pool
+    let err = set_price_source_twap("uion", 4444, 86400).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "pool 4444 is not XYK".to_string()
         }
     );
 

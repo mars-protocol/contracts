@@ -76,12 +76,16 @@ impl PriceSource<OsmosisQuery> for OsmosisPriceSource {
             } => Ok(()),
             OsmosisPriceSource::Spot {
                 pool_id,
-            } => helpers::assert_osmosis_pool_assets(querier, *pool_id, denom, base_denom),
+            } => {
+                helpers::assert_osmosis_pool_assets(querier, *pool_id, denom, base_denom)?;
+                helpers::assert_osmosis_xyk_pool(querier, *pool_id)
+            }
             OsmosisPriceSource::Twap {
                 pool_id,
                 window_size,
             } => {
                 helpers::assert_osmosis_pool_assets(querier, *pool_id, denom, base_denom)?;
+                helpers::assert_osmosis_xyk_pool(querier, *pool_id)?;
 
                 if *window_size > TWO_DAYS_IN_SECONDS {
                     Err(ContractError::InvalidPriceSource {

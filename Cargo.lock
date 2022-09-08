@@ -538,6 +538,8 @@ dependencies = [
  "mars-outpost",
  "osmo-bindings",
  "osmosis-std",
+ "prost",
+ "prost-types",
  "schemars",
  "serde",
  "thiserror",
