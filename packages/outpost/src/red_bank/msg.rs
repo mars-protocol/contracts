@@ -200,12 +200,16 @@ pub enum QueryMsg {
     },
 
     /// Get user debt position for a specific asset. Returns UserDebtResponse
+    ///
+    /// If the user does not have a debt position in the specified asset, returns zero.
     UserDebt {
         user: String,
         denom: String,
     },
 
     /// Get all debt positions for a user. Returns Vec<UserDebtResponse>
+    ///
+    /// Only assets in which the user has debt positions are included in the response.
     UserDebts {
         user: String,
         start_after: Option<String>,
@@ -213,12 +217,17 @@ pub enum QueryMsg {
     },
 
     /// Get user collateral position for a specific asset. Returns UserCollateralResponse
+    ///
+    /// If the user does not have a collateral position in the specified asset, returns zero.
     UserCollateral {
         user: String,
         denom: String,
     },
 
     /// Get all collateral positions for a user. Returns Vec<UserCollateralResponse>
+    ///
+    /// Only assets in which the user has collateral positions (whether enabled or not) are included
+    /// in the response.
     UserCollaterals {
         user: String,
         start_after: Option<String>,
