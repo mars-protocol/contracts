@@ -32,24 +32,17 @@ pub struct GlobalState {
     pub market_count: u32,
 }
 
-/// Data for individual users
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct User {
-    /// bits representing borrowed assets. 1 on the corresponding bit means asset is
-    /// being borrowed
-    pub borrowed_assets: Uint128,
-    /// bits representing collateral assets. 1 on the corresponding bit means asset is
-    /// being used as collateral
-    pub collateral_assets: Uint128,
-}
-
-impl Default for User {
-    fn default() -> Self {
-        User {
-            borrowed_assets: Uint128::zero(),
-            collateral_assets: Uint128::zero(),
-        }
-    }
+// TODO: Once maToken is removed, the scaled collateral amount will be stored in this struct
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+pub struct Collateral {
+    /// Whether this asset is enabled as collateral
+    ///
+    /// Set to true by default, unless the user explicitly disables it by invoking the
+    /// `update_asset_collateral_status` execute method.
+    ///
+    /// If disabled, the asset will not be subject to liquidation, but will not be considered when
+    /// evaluting the user's health factor either.
+    pub enabled: bool,
 }
 
 /// Debt for each asset and user
