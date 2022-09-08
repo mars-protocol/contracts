@@ -131,8 +131,7 @@ pub fn init_asset(
     }
 
     let mut money_market = GLOBAL_STATE.load(deps.storage)?;
-    let market_idx = money_market.market_count;
-    let new_market = create_market(env.block.time.seconds(), market_idx, &denom, asset_params)?;
+    let new_market = create_market(env.block.time.seconds(), &denom, asset_params)?;
 
     // Save new market
     MARKETS.save(deps.storage, &denom, &new_market)?;
@@ -198,7 +197,6 @@ pub fn init_asset(
 /// Initialize new market
 pub fn create_market(
     block_time: u64,
-    index: u32,
     denom: &str,
     params: InitOrUpdateAssetParams,
 ) -> Result<Market, ContractError> {
@@ -231,7 +229,6 @@ pub fn create_market(
     }
 
     let new_market = Market {
-        index,
         denom: denom.to_string(),
         ma_token_address: Addr::unchecked(""),
         borrow_index: Decimal::one(),
