@@ -6,6 +6,29 @@ All notable changes to this project will be documented in this file.
 
 This section documents the API changes compared to the Terra Classic deployment, found in the [`mars-core`](https://github.com/mars-protocol/mars-core) repository. This section is **not comprehensive**, as the changes are numerous. Changelog for later version start here should be made comprehensive.
 
+- ([#69](https://github.com/mars-protocol/outposts/pull/69/files)) Red Bank: `Market` no longer includes an index:
+
+```diff
+struct Market {
+-   pub index: u64,
+    pub denom: String,
+    pub ma_token_address: Addr,
+    // ....
+}
+```
+
+- ([#69](https://github.com/mars-protocol/outposts/pull/69/files)) Red Bank: The total number of markets is no longer returned in `ConfigResponse`:
+
+```diff
+struct ConfigResponse {
+    pub owner: String,
+    pub address_provider: String,
+    pub ma_token_code_id: u64,
+    pub close_factor: Decimal,
+-   pub market_count: u64,
+}
+```
+
 - ([#69](https://github.com/mars-protocol/outposts/pull/69/files)) Red Bank: Previously, the enumerative queries `user_debts` and `user_collaterals` return the user's debt or collateral amounts in **every single asset that Red Bank supports**. Now they will only return the assets **for which the user has non-zero amounts deposited or borrowed**.
 
 Additionally, the two queries now support pagination:
