@@ -13,10 +13,10 @@ pub const DEBTS: Map<(&Addr, &str), Debt> = Map::new("debts");
 
 pub const UNCOLLATERALIZED_LOAN_LIMITS: Map<(&Addr, &str), Uint128> = Map::new("limits");
 
-/// Return true is the user is borrowing a non-zero amount in _any_ asset; false if the user is not
-/// borrowing any asset.
+/// Return `true` if the user is borrowing a non-zero amount in _any_ asset; return `false` if the
+/// user is not borrowing any asset.
 ///
-/// the user is borrowing if, in the DEBTS map, there is at least one denom stored under the user
+/// The user is borrowing if, in the `DEBTS` map, there is at least one denom stored under the user
 /// address prefix.
 pub fn user_is_borrowing(store: &dyn Storage, addr: &Addr) -> bool {
     DEBTS.prefix(addr).range(store, None, None, Order::Ascending).next().is_some()
