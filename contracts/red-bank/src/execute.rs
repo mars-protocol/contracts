@@ -841,19 +841,16 @@ pub fn liquidate(
 
     // check if user has available collateral in specified collateral asset to be liquidated
     let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
-    dbg!(&collateral_market);
     let user_collateral_balance_scaled = cw20_get_balance(
         &deps.querier,
         collateral_market.ma_token_address.clone(),
         user_addr.clone(),
     )?;
-    dbg!(user_collateral_balance_scaled);
     let user_collateral_balance = get_underlying_liquidity_amount(
         user_collateral_balance_scaled,
         &collateral_market,
         block_time,
     )?;
-    dbg!(user_collateral_balance);
     if user_collateral_balance.is_zero() {
         return Err(ContractError::CannotLiquidateWhenNoCollateralBalance {});
     }
@@ -862,7 +859,6 @@ pub fn liquidate(
     let mut user_debt = DEBTS
         .may_load(deps.storage, (&user_addr, &debt_denom))?
         .ok_or(ContractError::CannotLiquidateWhenNoDebtBalance {})?;
-    dbg!(&user_debt);
 
     // 2. Compute health factor
     let config = CONFIG.load(deps.storage)?;
@@ -877,22 +873,18 @@ pub fn liquidate(
 
     let (liquidatable, assets_positions) =
         assert_liquidatable(&deps.as_ref(), &env, &user_addr, oracle_addr)?;
-    dbg!(liquidatable);
 
     if !liquidatable {
         return Err(ContractError::CannotLiquidateHealthyPosition {});
     }
 
     let collateral_and_debt_are_the_same_asset = debt_denom == collateral_denom;
-    dbg!(collateral_and_debt_are_the_same_asset);
 
     let debt_market = if !collateral_and_debt_are_the_same_asset {
-        dbg!(&debt_denom);
         MARKETS.load(deps.storage, &debt_denom)?
     } else {
         collateral_market.clone()
     };
-    dbg!(&debt_market);
 
     // 3. Compute debt to repay and collateral to liquidate
     let collateral_price = assets_positions
