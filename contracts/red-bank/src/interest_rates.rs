@@ -1,8 +1,8 @@
 use std::str;
 
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, Response, StdError, StdResult, Uint128,
-    WasmMsg,
+    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, Event, Response, StdError, StdResult,
+    Uint128, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
 
@@ -10,7 +10,6 @@ use mars_outpost::math;
 use mars_outpost::red_bank::Market;
 
 use crate::error::ContractError;
-use crate::events::build_interests_updated_event;
 
 /// Scaling factor used to keep more precision during division / multiplication by index.
 pub const SCALING_FACTOR: Uint128 = Uint128::new(1_000_000);
@@ -284,7 +283,7 @@ pub fn update_interest_rates(
     market: &mut Market,
     liquidity_taken: Uint128,
     denom: &str,
-    mut response: Response,
+    response: Response,
 ) -> Result<Response, ContractError> {
     // compute utilization rate
     let contract_current_balance = deps.querier.query_balance(&env.contract.address, denom)?.amount;
@@ -303,8 +302,16 @@ pub fn update_interest_rates(
 
     market.update_interest_rates(current_utilization_rate)?;
 
-    response = response.add_event(build_interests_updated_event(denom, market));
-    Ok(response)
+    Ok(response.add_event(build_interests_updated_event(denom, market)))
+}
+
+pub fn build_interests_updated_event(denom: &str, market: &Market) -> Event {
+    Event::new("interests_updated")
+        .add_attribute("denom", denom)
+        .add_attribute("borrow_index", market.borrow_index.to_string())
+        .add_attribute("liquidity_index", market.liquidity_index.to_string())
+        .add_attribute("borrow_rate", market.borrow_rate.to_string())
+        .add_attribute("liquidity_rate", market.liquidity_rate.to_string())
 }
 
 #[cfg(test)]

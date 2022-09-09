@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
 use cosmwasm_std::testing::{MockApi, MockStorage};
-use cosmwasm_std::{Coin, Decimal, DepsMut, Event, OwnedDeps, StdResult, Uint128};
+use cosmwasm_std::{Addr, Coin, Decimal, Deps, DepsMut, Event, OwnedDeps, Uint128};
 
-use mars_outpost::red_bank::{CreateOrUpdateConfig, GlobalState, InstantiateMsg, Market};
+use mars_outpost::red_bank::{Collateral, CreateOrUpdateConfig, Debt, InstantiateMsg, Market};
 use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
 
 use mars_red_bank::contract::instantiate;
@@ -11,9 +11,51 @@ use mars_red_bank::interest_rates::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     ScalingOperation,
 };
-use mars_red_bank::state::{
-    GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_INDEX, MARKET_DENOMS_BY_MA_TOKEN,
-};
+use mars_red_bank::state::{COLLATERALS, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN};
+
+pub fn set_collateral(deps: DepsMut, user_addr: &Addr, denom: &str, enabled: bool) {
+    let collateral = Collateral {
+        enabled,
+    };
+    COLLATERALS.save(deps.storage, (user_addr, denom), &collateral).unwrap();
+}
+
+pub fn unset_collateral(deps: DepsMut, user_addr: &Addr, denom: &str) {
+    COLLATERALS.remove(deps.storage, (user_addr, denom));
+}
+
+pub fn set_debt(
+    deps: DepsMut,
+    user_addr: &Addr,
+    denom: &str,
+    amount_scaled: impl Into<Uint128>,
+    uncollateralized: bool,
+) {
+    let debt = Debt {
+        amount_scaled: amount_scaled.into(),
+        uncollateralized,
+    };
+    DEBTS.save(deps.storage, (user_addr, denom), &debt).unwrap();
+}
+
+/// Find if a user has a debt position in the specified asset
+pub fn has_debt_position(deps: Deps, user_addr: &Addr, denom: &str) -> bool {
+    DEBTS.may_load(deps.storage, (user_addr, denom)).unwrap().is_some()
+}
+
+/// Find if a user has a collateral position in the specified asset, regardless of whether enabled
+pub fn has_collateral_position(deps: Deps, user_addr: &Addr, denom: &str) -> bool {
+    COLLATERALS.may_load(deps.storage, (user_addr, denom)).unwrap().is_some()
+}
+
+/// Find whether a user has a collateral position AND has it enabled in the specified asset
+pub fn has_collateral_enabled(deps: Deps, user_addr: &Addr, denom: &str) -> bool {
+    COLLATERALS
+        .may_load(deps.storage, (user_addr, denom))
+        .unwrap()
+        .map(|collateral| collateral.enabled)
+        .unwrap_or(false)
+}
 
 pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     let mut deps = mock_dependencies(contract_balances);
@@ -36,25 +78,12 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
 }
 
 pub fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {
-    let mut index = 0;
-
-    GLOBAL_STATE
-        .update(deps.storage, |mut mm: GlobalState| -> StdResult<GlobalState> {
-            index = mm.market_count;
-            mm.market_count += 1;
-            Ok(mm)
-        })
-        .unwrap();
-
     let new_market = Market {
-        index,
         denom: denom.to_string(),
         ..market.clone()
     };
 
     MARKETS.save(deps.storage, denom, &new_market).unwrap();
-
-    MARKET_DENOMS_BY_INDEX.save(deps.storage, index, &denom.to_string()).unwrap();
 
     MARKET_DENOMS_BY_MA_TOKEN
         .save(deps.storage, &new_market.ma_token_address, &denom.to_string())

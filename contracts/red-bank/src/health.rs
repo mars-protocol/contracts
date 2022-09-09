@@ -1,24 +1,22 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-use cosmwasm_std::{Addr, Decimal, Deps, Env, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdError, StdResult, Uint128};
 use mars_health::health::{Health, Position as HealthPosition};
 use mars_outpost::helpers::cw20_get_balance;
 use mars_outpost::oracle;
-use mars_outpost::red_bank::{Debt, Position, User};
+use mars_outpost::red_bank::Position;
 
-use crate::helpers::{get_bit, get_market_from_index};
 use crate::interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount};
-use crate::state::{DEBTS, GLOBAL_STATE};
+use crate::state::{COLLATERALS, DEBTS, MARKETS};
 
 /// Check the Health Factor for a given user
 pub fn assert_liquidatable(
     deps: &Deps,
     env: &Env,
-    user: &User,
     user_addr: &Addr,
     oracle_addr: &Addr,
 ) -> StdResult<(bool, HashMap<String, Position>)> {
-    let positions = get_user_positions_map(deps, env, user, user_addr, oracle_addr)?;
+    let positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
     let health = compute_position_health(&positions)?;
 
     Ok((health.is_liquidatable(), positions))
@@ -28,13 +26,12 @@ pub fn assert_liquidatable(
 pub fn assert_below_liq_threshold_after_withdraw(
     deps: &Deps,
     env: &Env,
-    user: &User,
     user_addr: &Addr,
     oracle_addr: &Addr,
     denom: &str,
     withdraw_amount: Uint128,
 ) -> StdResult<bool> {
-    let mut positions = get_user_positions_map(deps, env, user, user_addr, oracle_addr)?;
+    let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
 
     // Update position to compute health factor after withdraw
     match positions.get_mut(denom) {
@@ -56,13 +53,12 @@ pub fn assert_below_liq_threshold_after_withdraw(
 pub fn assert_below_max_ltv_after_borrow(
     deps: &Deps,
     env: &Env,
-    user: &User,
     user_addr: &Addr,
     oracle_addr: &Addr,
     denom: &str,
     borrow_amount: Uint128,
 ) -> StdResult<bool> {
-    let mut positions = get_user_positions_map(deps, env, user, user_addr, oracle_addr)?;
+    let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
 
     // Update position to compute health factor after borrow
     positions
@@ -105,88 +101,73 @@ pub fn compute_position_health(positions: &HashMap<String, Position>) -> StdResu
     Health::compute_health(&positions)
 }
 
-/// Goes through assets user has a position in and returns a vec containing the scaled debt
-/// (denominated in the asset), a result from a specified computation for the current collateral
-/// (denominated in asset) and some metadata to be used by the caller.
-pub fn get_user_positions(
-    deps: &Deps,
-    env: &Env,
-    user: &User,
-    user_addr: &Addr,
-    oracle_addr: &Addr,
-) -> StdResult<Vec<Position>> {
-    let mut ret: Vec<Position> = vec![];
-    let global_state = GLOBAL_STATE.load(deps.storage)?;
-
-    for i in 0_u32..global_state.market_count {
-        let user_is_using_as_collateral = get_bit(user.collateral_assets, i)?;
-        let user_is_borrowing = get_bit(user.borrowed_assets, i)?;
-        if !(user_is_using_as_collateral || user_is_borrowing) {
-            continue;
-        }
-
-        let (denom, market) = get_market_from_index(deps, i)?;
-
-        let (collateral_amount, max_ltv, liquidation_threshold) = if user_is_using_as_collateral {
-            // query asset balance (ma_token contract gives back a scaled value)
-            let asset_balance_scaled = cw20_get_balance(
-                &deps.querier,
-                market.ma_token_address.clone(),
-                user_addr.clone(),
-            )?;
-
-            let collateral_amount = get_underlying_liquidity_amount(
-                asset_balance_scaled,
-                &market,
-                env.block.time.seconds(),
-            )?;
-
-            (collateral_amount, market.max_loan_to_value, market.liquidation_threshold)
-        } else {
-            (Uint128::zero(), Decimal::zero(), Decimal::zero())
-        };
-
-        let (debt_amount, uncollateralized_debt) = if user_is_borrowing {
-            // query debt
-            let user_debt: Debt = DEBTS.load(deps.storage, (user_addr, &denom))?;
-
-            let debt_amount = get_underlying_debt_amount(
-                user_debt.amount_scaled,
-                &market,
-                env.block.time.seconds(),
-            )?;
-
-            (debt_amount, user_debt.uncollateralized)
-        } else {
-            (Uint128::zero(), false)
-        };
-
-        let asset_price = oracle::helpers::query_price(&deps.querier, oracle_addr, &denom)?;
-
-        let user_asset_position = Position {
-            denom,
-            collateral_amount,
-            debt_amount,
-            uncollateralized_debt,
-            max_ltv,
-            liquidation_threshold,
-            asset_price,
-        };
-        ret.push(user_asset_position);
-    }
-
-    Ok(ret)
-}
-
+/// Goes through assets user has a position in and returns a HashMap mapping the asset denoms to the
+/// scaled amounts, and some metadata to be used by the caller.
 pub fn get_user_positions_map(
     deps: &Deps,
     env: &Env,
-    user: &User,
     user_addr: &Addr,
     oracle_addr: &Addr,
 ) -> StdResult<HashMap<String, Position>> {
-    Ok(get_user_positions(deps, env, user, user_addr, oracle_addr)?
+    let block_time = env.block.time.seconds();
+
+    // Find all denoms that the user has a collateral or debt position in
+    let collateral_denoms = COLLATERALS
+        .prefix(user_addr)
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<StdResult<Vec<_>>>()?;
+    let debt_denoms = DEBTS
+        .prefix(user_addr)
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<StdResult<Vec<_>>>()?;
+
+    // Collect the denoms into a hashset so that there are no dups
+    let mut denoms = HashSet::new();
+    denoms.extend(collateral_denoms);
+    denoms.extend(debt_denoms);
+
+    // Enumerate the denoms, compute underlying debt and collateral amount, and query the prices.
+    // Finally, collect the results into a hashmap indexed by the denoms.
+    denoms
         .into_iter()
-        .map(|p| (p.denom.clone(), p))
-        .collect())
+        .map(|denom| {
+            let market = MARKETS.load(deps.storage, &denom)?;
+
+            let collateral_amount = match COLLATERALS.may_load(deps.storage, (user_addr, &denom))? {
+                Some(collateral) if collateral.enabled => {
+                    let amount_scaled = cw20_get_balance(
+                        &deps.querier,
+                        market.ma_token_address.clone(),
+                        user_addr.clone(),
+                    )?;
+                    get_underlying_liquidity_amount(amount_scaled, &market, block_time)?
+                }
+                _ => Uint128::zero(),
+            };
+
+            let (debt_amount, uncollateralized_debt) =
+                match DEBTS.may_load(deps.storage, (user_addr, &denom))? {
+                    Some(debt) => {
+                        let debt_amount =
+                            get_underlying_debt_amount(debt.amount_scaled, &market, block_time)?;
+                        (debt_amount, debt.uncollateralized)
+                    }
+                    None => (Uint128::zero(), false),
+                };
+
+            let asset_price = oracle::helpers::query_price(&deps.querier, oracle_addr, &denom)?;
+
+            let position = Position {
+                denom: denom.clone(),
+                collateral_amount,
+                debt_amount,
+                uncollateralized_debt,
+                max_ltv: market.max_loan_to_value,
+                liquidation_threshold: market.liquidation_threshold,
+                asset_price,
+            };
+
+            Ok((denom, position))
+        })
+        .collect()
 }

@@ -8,8 +8,6 @@ use crate::red_bank::InterestRateModel;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Market {
-    /// Market index (Bit position on data)
-    pub index: u32,
     /// Denom of the asset
     pub denom: String,
     /// maToken contract address
@@ -53,7 +51,6 @@ pub struct Market {
 impl Default for Market {
     fn default() -> Self {
         Market {
-            index: 0,
             denom: "".to_string(),
             ma_token_address: crate::helpers::zero_address(),
             borrow_index: Decimal::one(),

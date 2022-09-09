@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, BlockInfo, Decimal, Deps, Env, Order, StdError, StdResult, Uint128};
 use cw_storage_plus::Bound;
 
 use mars_outpost::address_provider::{self, MarsContract};
@@ -9,14 +9,13 @@ use mars_outpost::red_bank::{
 };
 
 use crate::health;
-use crate::helpers::{get_bit, get_uncollaterized_debt};
+use crate::helpers::get_uncollaterized_debt;
 use crate::interest_rates::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
     get_underlying_liquidity_amount,
 };
 use crate::state::{
-    CONFIG, DEBTS, GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_MA_TOKEN, UNCOLLATERALIZED_LOAN_LIMITS,
-    USERS,
+    COLLATERALS, CONFIG, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN, UNCOLLATERALIZED_LOAN_LIMITS,
 };
 
 const DEFAULT_LIMIT: u32 = 5;
@@ -24,13 +23,10 @@ const MAX_LIMIT: u32 = 10;
 
 pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
-    let money_market = GLOBAL_STATE.load(deps.storage)?;
-
     Ok(ConfigResponse {
         owner: config.owner.to_string(),
         address_provider: config.address_provider.to_string(),
         ma_token_code_id: config.ma_token_code_id,
-        market_count: money_market.market_count,
         close_factor: config.close_factor,
     })
 }
@@ -96,7 +92,7 @@ pub fn query_uncollateralized_loan_limits(
 
 pub fn query_user_debt(
     deps: Deps,
-    env: Env,
+    block: &BlockInfo,
     user_addr: Addr,
     denom: String,
 ) -> StdResult<UserDebtResponse> {
@@ -105,8 +101,7 @@ pub fn query_user_debt(
     let (amount_scaled, amount) = match DEBTS.may_load(deps.storage, (&user_addr, &denom))? {
         Some(debt) => {
             let amount_scaled = debt.amount_scaled;
-            let amount =
-                get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
+            let amount = get_underlying_debt_amount(amount_scaled, &market, block.time.seconds())?;
             (amount_scaled, amount)
         }
 
@@ -120,24 +115,29 @@ pub fn query_user_debt(
     })
 }
 
-pub fn query_user_debts(deps: Deps, env: Env, user_addr: Addr) -> StdResult<Vec<UserDebtResponse>> {
-    let user = USERS.may_load(deps.storage, &user_addr)?.unwrap_or_default();
+pub fn query_user_debts(
+    deps: Deps,
+    block: &BlockInfo,
+    user_addr: Addr,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> StdResult<Vec<UserDebtResponse>> {
+    let block_time = block.time.seconds();
 
-    MARKETS
-        .range(deps.storage, None, None, Order::Ascending)
+    let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+
+    DEBTS
+        .prefix(&user_addr)
+        .range(deps.storage, start, None, Order::Ascending)
+        .take(limit)
         .map(|item| {
-            let (denom, market) = item?;
+            let (denom, debt) = item?;
 
-            let is_borrowing_asset = get_bit(user.borrowed_assets, market.index)?;
-            let (amount_scaled, amount) = if is_borrowing_asset {
-                let debt = DEBTS.load(deps.storage, (&user_addr, &denom))?;
-                let amount_scaled = debt.amount_scaled;
-                let amount =
-                    get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
-                (amount_scaled, amount)
-            } else {
-                (Uint128::zero(), Uint128::zero())
-            };
+            let market = MARKETS.load(deps.storage, &denom)?;
+
+            let amount_scaled = debt.amount_scaled;
+            let amount = get_underlying_debt_amount(amount_scaled, &market, block_time)?;
 
             Ok(UserDebtResponse {
                 denom,
@@ -153,27 +153,40 @@ pub fn query_user_collateral(
     user_addr: Addr,
     denom: String,
 ) -> StdResult<UserCollateralResponse> {
-    let user = USERS.may_load(deps.storage, &user_addr)?.unwrap_or_default();
-    let market = MARKETS.load(deps.storage, &denom)?;
+    let enabled = match COLLATERALS.may_load(deps.storage, (&user_addr, &denom))? {
+        Some(collateral) => {
+            // TODO: For now, we just return whether the collateral is enabled.
+            // Once maToken is removed, we will compute the underlying collateral amount here,
+            // similar as with the `query_user_debt` query.
+            collateral.enabled
+        }
+        None => false,
+    };
+
     Ok(UserCollateralResponse {
         denom,
-        enabled: get_bit(user.collateral_assets, market.index)?,
+        enabled,
     })
 }
 
 pub fn query_user_collaterals(
     deps: Deps,
     user_addr: Addr,
+    start_after: Option<String>,
+    limit: Option<u32>,
 ) -> StdResult<Vec<UserCollateralResponse>> {
-    let user = USERS.may_load(deps.storage, &user_addr)?.unwrap_or_default();
+    let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
-    MARKETS
-        .range(deps.storage, None, None, Order::Ascending)
+    COLLATERALS
+        .prefix(&user_addr)
+        .range(deps.storage, start, None, Order::Ascending)
+        .take(limit)
         .map(|item| {
-            let (denom, market) = item?;
+            let (denom, collateral) = item?;
             Ok(UserCollateralResponse {
                 denom,
-                enabled: get_bit(user.collateral_assets, market.index)?,
+                enabled: collateral.enabled,
             })
         })
         .collect()
@@ -227,15 +240,15 @@ pub fn query_user_position(
     user_addr: Addr,
 ) -> Result<UserPositionResponse, MarsError> {
     let config = CONFIG.load(deps.storage)?;
-    let user = USERS.may_load(deps.storage, &user_addr)?.unwrap_or_default();
     let oracle_addr = address_provider::helpers::query_address(
         deps,
         &config.address_provider,
         MarsContract::Oracle,
     )?;
-    let positions = health::get_user_positions_map(&deps, &env, &user, &user_addr, &oracle_addr)?;
 
+    let positions = health::get_user_positions_map(&deps, &env, &user_addr, &oracle_addr)?;
     let health = health::compute_position_health(&positions)?;
+
     let health_status = if let (Some(max_ltv_hf), Some(liq_threshold_hf)) =
         (health.max_ltv_health_factor, health.liquidation_health_factor)
     {
@@ -247,6 +260,8 @@ pub fn query_user_position(
         UserHealthStatus::NotBorrowing
     };
 
+    // TODO: This probably doesn't do what it's intended to do.
+    // See: https://github.com/mars-protocol/outposts/issues/68
     let total_uncollateralized_debt = get_uncollaterized_debt(&positions)?;
 
     Ok(UserPositionResponse {

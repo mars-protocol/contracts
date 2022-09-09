@@ -3,21 +3,20 @@ use cosmwasm_std::{attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, SubMsg,
 
 use mars_outpost::error::MarsError;
 use mars_outpost::math;
-use mars_outpost::red_bank::{Debt, ExecuteMsg, Market, User};
+use mars_outpost::red_bank::{Debt, ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
-use mars_red_bank::events::build_debt_position_changed_event;
 use mars_red_bank::health;
-use mars_red_bank::helpers::{get_bit, set_bit};
 use mars_red_bank::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_debt_amount,
     get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
 };
-use mars_red_bank::state::{DEBTS, UNCOLLATERALIZED_LOAN_LIMITS, USERS};
+use mars_red_bank::state::{DEBTS, UNCOLLATERALIZED_LOAN_LIMITS};
 
 use helpers::{
+    has_collateral_enabled, has_collateral_position, has_debt_position, set_collateral, set_debt,
     th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
     TestUtilizationDeltaInfo,
 };
@@ -49,10 +48,7 @@ fn test_uncollateralized_loan_limits() {
 
     // Check that borrowers with uncollateralized debt cannot get an uncollateralized loan limit
     let existing_borrower_addr = Addr::unchecked("existing_borrower");
-
-    let mut existing_borrower = User::default();
-    set_bit(&mut existing_borrower.borrowed_assets, 0).unwrap();
-    USERS.save(&mut deps.storage, &existing_borrower_addr, &existing_borrower).unwrap();
+    set_debt(deps.as_mut(), &existing_borrower_addr, "somecoin", 123u128, false);
 
     let update_limit_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
         denom: "somecoin".to_string(),
@@ -134,17 +130,10 @@ fn test_uncollateralized_loan_limits() {
             attr("amount", initial_borrow_amount.to_string()),
         ]
     );
-    assert_eq!(
-        res.events,
-        vec![
-            build_debt_position_changed_event("somecoin", true, "borrower".to_string()),
-            th_build_interests_updated_event("somecoin", &expected_params)
-        ]
-    );
+    assert_eq!(res.events, vec![th_build_interests_updated_event("somecoin", &expected_params)]);
 
     // Check debt
-    let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
-    assert!(get_bit(user.borrowed_assets, 0).unwrap());
+    assert!(has_debt_position(deps.as_ref(), &borrower_addr, "somecoin"));
 
     let debt = DEBTS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
 
@@ -257,9 +246,7 @@ fn test_update_asset_collateral() {
 
     {
         // Set second asset as collateral
-        let mut user = User::default();
-        set_bit(&mut user.collateral_assets, market_2_initial.index).unwrap();
-        USERS.save(deps.as_mut().storage, &user_addr, &user).unwrap();
+        set_collateral(deps.as_mut(), &user_addr, &market_2_initial.denom, true);
 
         // Set the querier to return zero for the first asset
         deps.querier
@@ -280,10 +267,8 @@ fn test_update_asset_collateral() {
             }
         );
 
-        let user = USERS.load(&deps.storage, &user_addr).unwrap();
-        let market_1_collateral = get_bit(user.collateral_assets, market_1_initial.index).unwrap();
         // Balance for first asset is zero so don't update bit
-        assert!(!market_1_collateral);
+        assert!(!has_collateral_position(deps.as_ref(), &user_addr, &market_1_initial.denom));
 
         // Set the querier to return balance more than zero for the first asset
         deps.querier.set_cw20_balances(
@@ -292,32 +277,24 @@ fn test_update_asset_collateral() {
         );
 
         // Enable first market index which is currently disabled as collateral and ma-token balance is more than 0
-        let _res = execute(deps.as_mut(), env.clone(), info.clone(), update_msg).unwrap();
-        let user = USERS.load(&deps.storage, &user_addr).unwrap();
-        let market_1_collateral = get_bit(user.collateral_assets, market_1_initial.index).unwrap();
-        // Balance for first asset is more than zero so update bit
-        assert!(market_1_collateral);
+        execute(deps.as_mut(), env.clone(), info.clone(), update_msg).unwrap();
+        assert!(has_collateral_enabled(deps.as_ref(), &user_addr, &market_1_initial.denom));
 
         // Disable second market index
         let update_msg = ExecuteMsg::UpdateAssetCollateralStatus {
             denom: denom_2.to_string(),
             enable: false,
         };
-        let _res = execute(deps.as_mut(), env.clone(), info.clone(), update_msg).unwrap();
-        let user = USERS.load(&deps.storage, &user_addr).unwrap();
-        let market_2_collateral = get_bit(user.collateral_assets, market_2_initial.index).unwrap();
-        assert!(!market_2_collateral);
+        execute(deps.as_mut(), env.clone(), info.clone(), update_msg).unwrap();
+        assert!(!has_collateral_enabled(deps.as_ref(), &user_addr, &market_2_initial.denom));
     }
 
     // User's health factor can't be less than 1 after disabling collateral
     {
         // Initialize user with market_1 and market_2 as collaterals
-        // User borrows market_3
-        let mut user = User::default();
-        set_bit(&mut user.collateral_assets, market_1_initial.index).unwrap();
-        set_bit(&mut user.collateral_assets, market_2_initial.index).unwrap();
-        set_bit(&mut user.borrowed_assets, market_3_initial.index).unwrap();
-        USERS.save(deps.as_mut().storage, &user_addr, &user).unwrap();
+        // User borrows market_3, which will be set up later in the test
+        set_collateral(deps.as_mut(), &user_addr, &market_1_initial.denom, true);
+        set_collateral(deps.as_mut(), &user_addr, &market_2_initial.denom, true);
 
         // Set the querier to return collateral balances (ma_token_1 and ma_token_2)
         let ma_token_1_balance_scaled = Uint128::new(150_000) * SCALING_FACTOR;
@@ -368,7 +345,6 @@ fn test_update_asset_collateral() {
         let positions = health::get_user_positions_map(
             &deps.as_ref(),
             &env,
-            &user,
             &user_addr,
             &Addr::unchecked("oracle"),
         )

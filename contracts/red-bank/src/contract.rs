@@ -144,15 +144,15 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             denom,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_debt(deps, env, user_addr, denom)?)
+            to_binary(&query::query_user_debt(deps, &env.block, user_addr, denom)?)
         }
         QueryMsg::UserDebts {
             user,
-            // start_after,
-            // limit,
+            start_after,
+            limit,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_debts(deps, env, user_addr)?)
+            to_binary(&query::query_user_debts(deps, &env.block, user_addr, start_after, limit)?)
         }
         QueryMsg::UserCollateral {
             user,
@@ -163,11 +163,11 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         }
         QueryMsg::UserCollaterals {
             user,
-            // start_after,
-            // limit,
+            start_after,
+            limit,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_collaterals(deps, user_addr)?)
+            to_binary(&query::query_user_collaterals(deps, user_addr, start_after, limit)?)
         }
         QueryMsg::UserPosition {
             user,
@@ -175,7 +175,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             let user_addr = deps.api.addr_validate(&user)?;
             to_binary(&query::query_user_position(deps, env, user_addr)?)
         }
-
         QueryMsg::ScaledLiquidityAmount {
             denom,
             amount,

@@ -3,22 +3,20 @@ use cosmwasm_std::{attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, SubMsg,
 
 use cw_utils::PaymentError;
 use mars_outpost::math;
-use mars_outpost::red_bank::{ExecuteMsg, Market, User};
+use mars_outpost::red_bank::{ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
-use mars_red_bank::events::build_debt_position_changed_event;
-use mars_red_bank::helpers::{get_bit, set_bit};
 use mars_red_bank::interest_rates::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     ScalingOperation, SCALING_FACTOR,
 };
-use mars_red_bank::state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS, USERS};
+use mars_red_bank::state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
 
 use helpers::{
-    th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
-    TestUtilizationDeltaInfo,
+    has_collateral_position, has_debt_position, set_collateral, th_build_interests_updated_event,
+    th_get_expected_indices_and_rates, th_init_market, th_setup, TestUtilizationDeltaInfo,
 };
 
 mod helpers;
@@ -72,20 +70,14 @@ fn test_borrow_and_repay() {
         ..Default::default()
     };
 
-    // should get index 0
     let market_1_initial = th_init_market(deps.as_mut(), "uosmo", &mock_market_1);
-    // should get index 1
     let market_2_initial = th_init_market(deps.as_mut(), "uusd", &mock_market_2);
-    // should get index 2
-    let market_collateral = th_init_market(deps.as_mut(), "uatom", &mock_market_3);
+    th_init_market(deps.as_mut(), "uatom", &mock_market_3);
 
     let borrower_addr = Addr::unchecked("borrower");
 
     // Set user as having the market_collateral deposited
-    let mut user = User::default();
-
-    set_bit(&mut user.collateral_assets, market_collateral.index).unwrap();
-    USERS.save(deps.as_mut().storage, &borrower_addr, &user).unwrap();
+    set_collateral(deps.as_mut(), &borrower_addr, "uatom", true);
 
     // Set the querier to return a certain collateral balance
     let deposit_coin_address = Addr::unchecked("ma-uatom");
@@ -140,17 +132,11 @@ fn test_borrow_and_repay() {
             attr("amount", borrow_amount.to_string()),
         ]
     );
-    assert_eq!(
-        res.events,
-        vec![
-            build_debt_position_changed_event("uosmo", true, "borrower".to_string()),
-            th_build_interests_updated_event("uosmo", &expected_params_uosmo)
-        ]
-    );
+    assert_eq!(res.events, vec![th_build_interests_updated_event("uosmo", &expected_params_uosmo)]);
 
-    let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
-    assert!(get_bit(user.borrowed_assets, 0).unwrap());
-    assert!(!get_bit(user.borrowed_assets, 1).unwrap());
+    // user should have a debt position in `uosmo` but not in `uusd`
+    assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uosmo"));
+    assert!(!has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
     let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uosmo")).unwrap();
     let expected_debt_scaled_1_after_borrow = compute_scaled_amount(
@@ -184,9 +170,9 @@ fn test_borrow_and_repay() {
 
     execute(deps.as_mut(), env, info, msg).unwrap();
 
-    let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
-    assert!(get_bit(user.borrowed_assets, 0).unwrap());
-    assert!(!get_bit(user.borrowed_assets, 1).unwrap());
+    // user should have a debt position in `uosmo` but not in `uusd`
+    assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uosmo"));
+    assert!(!has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
     let expected_params_uosmo = th_get_expected_indices_and_rates(
         &market_1_after_borrow,
@@ -231,9 +217,9 @@ fn test_borrow_and_repay() {
     };
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
-    let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
-    assert!(get_bit(user.borrowed_assets, 0).unwrap());
-    assert!(get_bit(user.borrowed_assets, 1).unwrap());
+    // user should have debt positions in both `uosmo` and `uusd`
+    assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uosmo"));
+    assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
     let expected_params_uusd = th_get_expected_indices_and_rates(
         &market_2_initial,
@@ -264,13 +250,7 @@ fn test_borrow_and_repay() {
             attr("amount", borrow_amount.to_string()),
         ]
     );
-    assert_eq!(
-        res.events,
-        vec![
-            build_debt_position_changed_event("uusd", true, "borrower".to_string()),
-            th_build_interests_updated_event("uusd", &expected_params_uusd)
-        ]
-    );
+    assert_eq!(res.events, vec![th_build_interests_updated_event("uusd", &expected_params_uusd)]);
 
     let debt2 = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
     let market_2_after_borrow_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
@@ -346,9 +326,9 @@ fn test_borrow_and_repay() {
     );
     assert_eq!(res.events, vec![th_build_interests_updated_event("uusd", &expected_params_uusd)]);
 
-    let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
-    assert!(get_bit(user.borrowed_assets, 0).unwrap());
-    assert!(get_bit(user.borrowed_assets, 1).unwrap());
+    // user should have debt positions in both `uosmo` and `uusd`
+    assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uosmo"));
+    assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
     let debt2 = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
     let market_2_after_repay_some_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
@@ -410,22 +390,13 @@ fn test_borrow_and_repay() {
             attr("amount", repay_amount.to_string()),
         ]
     );
-    assert_eq!(
-        res.events,
-        vec![
-            th_build_interests_updated_event("uusd", &expected_params_uusd),
-            build_debt_position_changed_event("uusd", false, "borrower".to_string()),
-        ]
-    );
+    assert_eq!(res.events, vec![th_build_interests_updated_event("uusd", &expected_params_uusd),]);
 
-    let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
-    assert!(get_bit(user.borrowed_assets, 0).unwrap());
-    assert!(!get_bit(user.borrowed_assets, 1).unwrap());
+    // user should no longer has a debt position in uusd
+    assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uosmo"));
+    assert!(!has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
-    let debt2 = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
     let market_2_after_repay_all_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
-
-    assert_eq!(Uint128::zero(), debt2.amount_scaled);
     assert_eq!(Uint128::zero(), market_2_after_repay_all_2.debt_total_scaled);
 
     // *
@@ -490,18 +461,14 @@ fn test_borrow_and_repay() {
     );
     assert_eq!(
         res.events,
-        vec![
-            th_build_interests_updated_event("uosmo", &expected_params_uosmo),
-            build_debt_position_changed_event("uosmo", false, "borrower".to_string()),
-        ]
+        vec![th_build_interests_updated_event("uosmo", &expected_params_uosmo),]
     );
-    let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
-    assert!(!get_bit(user.borrowed_assets, 0).unwrap());
-    assert!(!get_bit(user.borrowed_assets, 1).unwrap());
 
-    let debt1 = DEBTS.load(&deps.storage, (&borrower_addr, "uosmo")).unwrap();
+    // user should no longer has a debt position in either asset
+    assert!(!has_debt_position(deps.as_ref(), &borrower_addr, "uosmo"));
+    assert!(!has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
+
     let market_1_after_repay_1 = MARKETS.load(&deps.storage, "uosmo").unwrap();
-    assert_eq!(Uint128::zero(), debt1.amount_scaled);
     assert_eq!(Uint128::zero(), market_1_after_repay_1.debt_total_scaled);
 }
 
@@ -535,10 +502,7 @@ fn test_repay_on_behalf_of() {
     let user_addr = Addr::unchecked("user");
 
     // Set user as having the market_1_initial (collateral) deposited
-    let mut user = User::default();
-
-    set_bit(&mut user.collateral_assets, market_1_initial.index).unwrap();
-    USERS.save(deps.as_mut().storage, &borrower_addr, &user).unwrap();
+    set_collateral(deps.as_mut(), &borrower_addr, &market_1_initial.denom, true);
 
     // Set the querier to return a certain collateral balance
     let deposit_coin_address = Addr::unchecked("matoken1");
@@ -560,8 +524,7 @@ fn test_repay_on_behalf_of() {
     };
     let _res = execute(deps.as_mut(), env, info, msg).unwrap();
 
-    let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
-    assert!(get_bit(user.borrowed_assets, market_2_initial.index).unwrap());
+    assert!(has_debt_position(deps.as_ref(), &borrower_addr, &market_2_initial.denom));
 
     // *
     // 'user' repays debt on behalf of 'borrower'
@@ -577,20 +540,12 @@ fn test_repay_on_behalf_of() {
     };
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
-    // 'user' should not be saved
-    let _user = USERS.load(&deps.storage, &user_addr).unwrap_err();
+    // 'user' should not have positions in either the collateral or debt asset
+    assert!(!has_collateral_position(deps.as_ref(), &user_addr, &market_1_initial.denom));
+    assert!(!has_debt_position(deps.as_ref(), &user_addr, &market_2_initial.denom));
 
-    // Debt for 'user' should not exist
-    let debt = DEBTS.may_load(&deps.storage, (&user_addr, "borrowedcoinnative")).unwrap();
-    assert!(debt.is_none());
-
-    // Debt for 'borrower' should be repayed
-    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "borrowedcoinnative")).unwrap();
-    assert_eq!(debt.amount_scaled, Uint128::zero());
-
-    // 'borrower' should have unset bit for debt after full repay
-    let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
-    assert!(!get_bit(user.borrowed_assets, market_2_initial.index).unwrap());
+    // Debt for 'borrower' should be repayed in full, with the position deleted
+    assert!(!has_debt_position(deps.as_ref(), &borrower_addr, &market_2_initial.denom));
 
     // Check msgs and attributes
     assert_eq!(res.messages, vec![]);
@@ -650,9 +605,7 @@ fn test_borrow_uusd() {
 
     // Set user as having the market_collateral deposited
     let deposit_amount_scaled = Uint128::new(110_000) * SCALING_FACTOR;
-    let mut user = User::default();
-    set_bit(&mut user.collateral_assets, market.index).unwrap();
-    USERS.save(deps.as_mut().storage, &borrower_addr, &user).unwrap();
+    set_collateral(deps.as_mut(), &borrower_addr, "uusd", true);
 
     // Set the querier to return collateral balance
     let deposit_coin_address = Addr::unchecked("matoken");
@@ -697,8 +650,7 @@ fn test_borrow_uusd() {
 
     let market_after_borrow = MARKETS.load(&deps.storage, "uusd").unwrap();
 
-    let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
-    assert!(get_bit(user.borrowed_assets, 0).unwrap());
+    assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
     let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
 
@@ -734,13 +686,11 @@ fn test_borrow_full_liquidity_and_then_repay() {
         indexes_last_updated: block_time,
         ..Default::default()
     };
-    let market = th_init_market(deps.as_mut(), "uusd", &mock_market);
+    th_init_market(deps.as_mut(), "uusd", &mock_market);
 
     // User should have amount of collateral more than initial liquidity in order to borrow full liquidity
     let deposit_amount = initial_liquidity + 1000u128;
-    let mut user = User::default();
-    set_bit(&mut user.collateral_assets, market.index).unwrap();
-    USERS.save(deps.as_mut().storage, &borrower_addr, &user).unwrap();
+    set_collateral(deps.as_mut(), &borrower_addr, "uusd", true);
 
     // Set the querier to return collateral balance
     let deposit_coin_address = Addr::unchecked("matoken");
@@ -853,13 +803,9 @@ fn test_borrow_collateral_check() {
     let borrower_addr = Addr::unchecked("borrower");
 
     // Set user as having all the markets as collateral
-    let mut user = User::default();
-
-    set_bit(&mut user.collateral_assets, market_1_initial.index).unwrap();
-    set_bit(&mut user.collateral_assets, market_2_initial.index).unwrap();
-    set_bit(&mut user.collateral_assets, market_3_initial.index).unwrap();
-
-    USERS.save(deps.as_mut().storage, &borrower_addr, &user).unwrap();
+    set_collateral(deps.as_mut(), &borrower_addr, &market_1_initial.denom, true);
+    set_collateral(deps.as_mut(), &borrower_addr, &market_2_initial.denom, true);
+    set_collateral(deps.as_mut(), &borrower_addr, &market_3_initial.denom, true);
 
     let ma_token_address_1 = Addr::unchecked("matoken1");
     let ma_token_address_2 = Addr::unchecked("matoken2");
@@ -973,9 +919,7 @@ fn test_borrow_and_send_funds_to_another_user() {
 
     // Set user as having the market_collateral deposited
     let deposit_amount_scaled = Uint128::new(100_000) * SCALING_FACTOR;
-    let mut user = User::default();
-    set_bit(&mut user.collateral_assets, market.index).unwrap();
-    USERS.save(deps.as_mut().storage, &borrower_addr, &user).unwrap();
+    set_collateral(deps.as_mut(), &borrower_addr, &market.denom, true);
 
     // Set the querier to return collateral balance
     let deposit_coin_address = Addr::unchecked("matoken");
@@ -995,8 +939,7 @@ fn test_borrow_and_send_funds_to_another_user() {
     let market_after_borrow = MARKETS.load(&deps.storage, "uusd").unwrap();
 
     // 'borrower' has bit set for the borrowed asset of the market
-    let user = USERS.load(&deps.storage, &borrower_addr).unwrap();
-    assert!(get_bit(user.borrowed_assets, market.index).unwrap());
+    assert!(has_debt_position(deps.as_ref(), &borrower_addr, &market.denom));
 
     // Debt for 'borrower' should exist
     let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();

@@ -23,11 +23,6 @@ pub enum ContractError {
         denom: String,
     },
 
-    #[error("User has no balance (asset: {denom:?})")]
-    UserNoBalance {
-        denom: String,
-    },
-
     #[error("User address {user:?} has no balance in specified collateral asset {denom:?}")]
     UserNoCollateralBalance {
         user: String,
@@ -41,9 +36,6 @@ pub enum ContractError {
         denom: String,
     },
 
-    #[error("Sender requires to have an existing user position")]
-    ExistingUserPositionRequired {},
-
     #[error("User's health factor can't be less than 1 after withdraw")]
     InvalidHealthFactorAfterWithdraw {},
 
@@ -52,11 +44,6 @@ pub enum ContractError {
 
     #[error("Asset not initialized")]
     AssetNotInitialized {},
-
-    #[error("Deposit amount must be greater than 0 {denom:?}")]
-    InvalidDepositAmount {
-        denom: String,
-    },
 
     #[error("Deposit Cap exceeded for {denom:?}")]
     DepositCapExceeded {
@@ -70,9 +57,6 @@ pub enum ContractError {
     InvalidBorrowAmount {
         denom: String,
     },
-
-    #[error("Address has no collateral deposited")]
-    UserNoCollateral {},
 
     #[error("Borrow amount exceeds maximum allowed given current collateral value")]
     BorrowAmountExceedsGivenCollateral {},

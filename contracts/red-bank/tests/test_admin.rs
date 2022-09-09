@@ -22,7 +22,7 @@ use mars_red_bank::error::ContractError;
 use mars_red_bank::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, ScalingOperation,
 };
-use mars_red_bank::state::{CONFIG, GLOBAL_STATE, MARKETS, MARKET_DENOMS_BY_INDEX};
+use mars_red_bank::state::{CONFIG, MARKETS};
 
 use crate::helpers::{th_get_expected_indices, th_init_market, th_setup};
 
@@ -101,7 +101,6 @@ fn test_proper_initialization() {
     let res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
     let value: ConfigResponse = from_binary(&res).unwrap();
     assert_eq!(10, value.ma_token_code_id);
-    assert_eq!(0, value.market_count);
 }
 
 #[test]
@@ -392,19 +391,9 @@ fn test_init_asset() {
         // should have asset market with Canonical default address
         let market = MARKETS.load(&deps.storage, "someasset").unwrap();
         assert_eq!(zero_address(), market.ma_token_address);
-        // should have 0 index
-        assert_eq!(0, market.index);
-
-        // should store reference in market index
-        let denom = MARKET_DENOMS_BY_INDEX.load(&deps.storage, 0).unwrap();
-        assert_eq!("someasset", &denom);
 
         // should have unlimited deposit cap
         assert_eq!(market.deposit_cap, Uint128::MAX);
-
-        // Should have market count of 1
-        let money_market = GLOBAL_STATE.load(&deps.storage).unwrap();
-        assert_eq!(money_market.market_count, 1);
 
         // should instantiate a liquidity token
         assert_eq!(
@@ -424,7 +413,7 @@ fn test_init_asset() {
                     init_hook: Some(ma_token::msg::InitHook {
                         contract_addr: MOCK_CONTRACT_ADDR.to_string(),
                         msg: to_binary(&ExecuteMsg::InitAssetTokenCallback {
-                            denom,
+                            denom: "someasset".to_string(),
                         })
                         .unwrap()
                     }),
@@ -756,7 +745,7 @@ fn test_update_asset() {
             reserve_factor: Some(Decimal::from_ratio(10u128, 100u128)),
             liquidation_threshold: Some(Decimal::from_ratio(90u128, 100u128)),
             liquidation_bonus: Some(Decimal::from_ratio(12u128, 100u128)),
-            interest_rate_model: Some(ir_model.clone()),
+            interest_rate_model: Some(ir_model),
             deposit_enabled: Some(true),
             borrow_enabled: Some(true),
             deposit_cap: Some(Uint128::new(10_000_000)),
@@ -766,28 +755,20 @@ fn test_update_asset() {
             asset_params: asset_params.clone(),
         };
         let info = mock_info("owner", &[]);
+
         let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+        assert_eq!(res.messages, vec![],);
+        assert_eq!(
+            res.attributes,
+            vec![attr("action", "outposts/red-bank/update_asset"), attr("denom", "someasset")],
+        );
 
         let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();
-        assert_eq!(0, new_market.index);
         assert_eq!(asset_params.max_loan_to_value.unwrap(), new_market.max_loan_to_value);
         assert_eq!(asset_params.reserve_factor.unwrap(), new_market.reserve_factor);
         assert_eq!(asset_params.liquidation_threshold.unwrap(), new_market.liquidation_threshold);
         assert_eq!(asset_params.liquidation_bonus.unwrap(), new_market.liquidation_bonus);
         assert_eq!(asset_params.interest_rate_model.unwrap(), new_market.interest_rate_model);
-
-        let new_market_denom = MARKET_DENOMS_BY_INDEX.load(&deps.storage, 0).unwrap();
-        assert_eq!("someasset", &new_market_denom);
-
-        let new_money_market = GLOBAL_STATE.load(&deps.storage).unwrap();
-        assert_eq!(new_money_market.market_count, 1);
-
-        assert_eq!(res.messages, vec![],);
-
-        assert_eq!(
-            res.attributes,
-            vec![attr("action", "outposts/red-bank/update_asset"), attr("denom", "someasset")],
-        );
     }
 
     // update asset with empty params
@@ -810,14 +791,13 @@ fn test_update_asset() {
             asset_params: empty_asset_params,
         };
         let info = mock_info("owner", &[]);
-        let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+        let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
         // no interest updated event
         assert_eq!(res.events.len(), 0);
 
         let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();
         // should keep old params
-        assert_eq!(0, new_market.index);
         assert_eq!(market_before.borrow_rate, new_market.borrow_rate);
         assert_eq!(market_before.max_loan_to_value, new_market.max_loan_to_value);
         assert_eq!(market_before.reserve_factor, new_market.reserve_factor);
