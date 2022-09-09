@@ -1,11 +1,11 @@
 use std::any::type_name;
+use std::str::FromStr;
 
-use cosmwasm_std::{Decimal, QuerierWrapper, QueryRequest, StdError, StdResult};
+use cosmwasm_std::{Decimal, QuerierWrapper, StdError, StdResult};
 
-use osmo_bindings::{
-    ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse,
-};
-use osmosis_std::types::osmosis::gamm::v1beta1::{GammQuerier, Pool};
+use osmosis_std::shim::Timestamp;
+use osmosis_std::types::osmosis::gamm::twap::v1beta1::TwapQuerier;
+use osmosis_std::types::osmosis::gamm::v1beta1::{GammQuerier, Pool, PoolAsset};
 use prost::{DecodeError, Message};
 
 use mars_oracle_base::{ContractError, ContractResult};
@@ -13,42 +13,46 @@ use mars_outpost::error::MarsError;
 
 /// Assert the Osmosis pool indicated by `pool_id` contains exactly two assets, and they are OSMO and `denom`
 pub fn assert_osmosis_pool_assets(
-    querier: &QuerierWrapper<OsmosisQuery>,
+    querier: &QuerierWrapper,
     pool_id: u64,
     denom: &str,
     base_denom: &str,
 ) -> ContractResult<()> {
     let pool = query_osmosis_pool(querier, pool_id)?;
 
-    if pool.assets.len() != 2 {
+    if pool.pool_assets.len() != 2 {
         return Err(ContractError::InvalidPriceSource {
             reason: format!(
                 "expecting pool {} to contain exactly two coins; found {}",
                 pool_id,
-                pool.assets.len()
+                pool.pool_assets.len()
             ),
         });
     }
 
-    if !pool.has_denom(base_denom) {
+    if !has_denom(base_denom, &pool.pool_assets) {
         return Err(ContractError::InvalidPriceSource {
             reason: format!("pool {} does not contain the base denom {}", pool_id, base_denom),
         });
     }
 
-    if !pool.has_denom(denom) {
+    if !has_denom(denom, &pool.pool_assets) {
         return Err(ContractError::InvalidPriceSource {
             reason: format!("pool {} does not contain {}", pool_id, denom),
+        });
+    }
+
+    if pool.pool_assets[0].weight != pool.pool_assets[1].weight {
+        return Err(ContractError::InvalidPriceSource {
+            reason: format!("assets in pool {} do not have equal weights", pool_id),
         });
     }
 
     Ok(())
 }
 
-pub fn assert_osmosis_xyk_pool(
-    querier: &QuerierWrapper<OsmosisQuery>,
-    pool_id: u64,
-) -> ContractResult<()> {
+/// Query an Osmosis pool's coin depths and the supply of of liquidity token
+fn query_osmosis_pool(querier: &QuerierWrapper, pool_id: u64) -> StdResult<Pool> {
     let pool_res = GammQuerier::new(querier).pool(pool_id)?;
     let pool_type = type_name::<Pool>();
     let pool = pool_res.pool.ok_or_else(|| StdError::not_found(pool_type))?;
@@ -56,49 +60,49 @@ pub fn assert_osmosis_xyk_pool(
     let pool = pool_res.map_err(|_| MarsError::Deserialize {
         target_type: pool_type.to_string(),
     })?;
+    Ok(pool)
+}
 
-    // NOTE: It is safe because we execute `assert_osmosis_pool_assets` before
-    if pool.pool_assets[0].weight != pool.pool_assets[1].weight {
-        return Err(ContractError::InvalidPriceSource {
-            reason: format!("assets in pool {} do not have equal weights", pool_id),
-        });
-    }
-    Ok(())
+fn has_denom(denom: &str, pool_assets: &[PoolAsset]) -> bool {
+    pool_assets.iter().flat_map(|asset| &asset.token).any(|coin| coin.denom == denom)
 }
 
 /// Query the spot price of a coin, denominated in OSMO
 pub fn query_osmosis_spot_price(
-    querier: &QuerierWrapper<OsmosisQuery>,
+    querier: &QuerierWrapper,
     pool_id: u64,
     denom: &str,
     base_denom: &str,
 ) -> StdResult<Decimal> {
-    let query = OsmosisQuery::spot_price(pool_id, denom, base_denom);
-    let res: SpotPriceResponse = querier.query(&QueryRequest::Custom(query))?;
-    Ok(res.price)
-}
-
-/// Query an Osmosis pool's coin depths and the supply of of liquidity token
-pub fn query_osmosis_pool(
-    querier: &QuerierWrapper<OsmosisQuery>,
-    pool_id: u64,
-) -> StdResult<PoolStateResponse> {
-    querier.query(&QueryRequest::Custom(OsmosisQuery::PoolState {
-        id: pool_id,
-    }))
+    let spot_price_res =
+        GammQuerier::new(querier).spot_price(pool_id, denom.to_string(), base_denom.to_string())?;
+    let price = Decimal::from_str(&spot_price_res.spot_price)?;
+    Ok(price)
 }
 
 /// Query the twap price of a coin, denominated in OSMO.
 /// `start_time` must be within 48 hours of current block time.
 pub fn query_osmosis_twap_price(
-    querier: &QuerierWrapper<OsmosisQuery>,
+    querier: &QuerierWrapper,
     pool_id: u64,
     denom: &str,
     base_denom: &str,
     start_time: u64,
+    end_time: u64,
 ) -> StdResult<Decimal> {
-    // NOTE: quote_asset_denom in TWAP is base_denom (OSMO)
-    let query = OsmosisQuery::arithmetic_twap_to_now(pool_id, base_denom, denom, start_time as i64);
-    let res: ArithmeticTwapToNowResponse = querier.query(&QueryRequest::Custom(query))?;
-    Ok(res.twap)
+    let arithmetic_twap_res = TwapQuerier::new(querier).get_arithmetic_twap(
+        pool_id,
+        denom.to_string(),
+        base_denom.to_string(),
+        Some(Timestamp {
+            seconds: start_time as i64,
+            nanos: 0,
+        }),
+        Some(Timestamp {
+            seconds: end_time as i64,
+            nanos: 0,
+        }),
+    )?;
+    let price = Decimal::from_str(&arithmetic_twap_res.arithmetic_twap)?;
+    Ok(price)
 }

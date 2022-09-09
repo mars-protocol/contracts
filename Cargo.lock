@@ -462,8 +462,7 @@ dependencies = [
  "mars-oracle-base",
  "mars-outpost",
  "mars-testing",
- "osmo-bindings",
- "osmosis-std",
+ "osmosis-std 0.1.6 (git+https://github.com/osmosis-labs/osmosis-rust?branch=osmosis-main-clone)",
  "prost",
  "prost-types",
  "schemars",
@@ -537,7 +536,7 @@ dependencies = [
  "cw20-base",
  "mars-outpost",
  "osmo-bindings",
- "osmosis-std",
+ "osmosis-std 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "prost",
  "prost-types",
  "schemars",
@@ -568,7 +567,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80c1bdede8290528b7051f4234245226716642c137492a07753cd1b586122ed1"
 dependencies = [
  "cosmwasm-std",
- "osmosis-std-derive",
+ "osmosis-std-derive 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "prost",
+ "prost-types",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "osmosis-std"
+version = "0.1.6"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=osmosis-main-clone#4121bfe92932cbf9183625fb883f97b5b740b2a4"
+dependencies = [
+ "cosmwasm-std",
+ "osmosis-std-derive 0.1.6 (git+https://github.com/osmosis-labs/osmosis-rust?branch=osmosis-main-clone)",
  "prost",
  "prost-types",
  "schemars",
@@ -580,6 +592,17 @@ name = "osmosis-std-derive"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd00742262f2da0c80789f0c343424ad4a9611bafb6f97ad335511c50c6aeb48"
+dependencies = [
+ "itertools",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "osmosis-std-derive"
+version = "0.1.6"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=osmosis-main-clone#4121bfe92932cbf9183625fb883f97b5b740b2a4"
 dependencies = [
  "itertools",
  "proc-macro2",

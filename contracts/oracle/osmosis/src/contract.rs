@@ -1,12 +1,11 @@
+use cosmwasm_std::Empty;
 use mars_oracle_base::OracleBase;
-
-use osmo_bindings::OsmosisQuery;
 
 use crate::OsmosisPriceSource;
 
 /// The Osmosis oracle contract inherits logics from the base oracle contract, with the Osmosis query
 /// and price source plugins
-pub type OsmosisOracle<'a> = OracleBase<'a, OsmosisPriceSource, OsmosisQuery>;
+pub type OsmosisOracle<'a> = OracleBase<'a, OsmosisPriceSource, Empty>;
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
@@ -19,7 +18,7 @@ pub mod entry {
 
     #[entry_point]
     pub fn instantiate(
-        deps: DepsMut<OsmosisQuery>,
+        deps: DepsMut,
         _env: Env,
         _info: MessageInfo,
         msg: InstantiateMsg,
@@ -29,7 +28,7 @@ pub mod entry {
 
     #[entry_point]
     pub fn execute(
-        deps: DepsMut<OsmosisQuery>,
+        deps: DepsMut,
         _env: Env,
         info: MessageInfo,
         msg: ExecuteMsg<OsmosisPriceSource>,
@@ -38,7 +37,7 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn query(deps: Deps<OsmosisQuery>, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         OsmosisOracle::default().query(deps, env, msg)
     }
 }
