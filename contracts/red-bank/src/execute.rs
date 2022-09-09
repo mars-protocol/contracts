@@ -1,8 +1,8 @@
 use std::str;
 
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Order, Response, StdResult,
-    Uint128, WasmMsg,
+    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
+    WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, MinterResponse};
 use cw20_base::msg::InstantiateMarketingInfo;
@@ -29,7 +29,8 @@ use crate::interest_rates::{
     get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
 };
 use crate::state::{
-    COLLATERALS, CONFIG, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN, UNCOLLATERALIZED_LOAN_LIMITS,
+    user_is_borrowing, COLLATERALS, CONFIG, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN,
+    UNCOLLATERALIZED_LOAN_LIMITS,
 };
 
 pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, ContractError> {
@@ -539,19 +540,10 @@ pub fn withdraw(
     // remove maToken and store collateral shares here in Red Bank.
     let collateral = COLLATERALS.load(deps.storage, (&withdrawer_addr, &denom))?;
 
-    // the user is borrowing if, in the DEBTS map, there is at least one denom stored under the
-    // withdrawer address prefix
-    // TODO: extract this to a helper function?
-    let user_is_borrowing = DEBTS
-        .prefix(&withdrawer_addr)
-        .range(deps.storage, None, None, Order::Ascending)
-        .next()
-        .is_some();
-
     // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
     // otherwise no reasons to block the withdraw
     if collateral.enabled
-        && user_is_borrowing
+        && user_is_borrowing(deps.storage, &withdrawer_addr)
         && !assert_below_liq_threshold_after_withdraw(
             &deps.as_ref(),
             &env,
