@@ -8,6 +8,8 @@ use osmo_bindings::{
     ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Step, Swap,
     SwapResponse,
 };
+use osmosis_std::types::osmosis::gamm::v1beta1::{QueryPoolRequest, QueryPoolResponse};
+use prost::{DecodeError, Message};
 
 use mars_outpost::{address_provider, incentives, ma_token, oracle, red_bank};
 
@@ -39,7 +41,7 @@ impl Querier for MarsMockQuerier {
             }
         };
 
-        // Custom Osmosis Queries
+        // Custom Osmosis Queries for osmosis-bindings
         let parse_osmosis_query: StdResult<QueryRequest<OsmosisQuery>> = from_slice(bin_request);
         if let Ok(QueryRequest::Custom(osmosis_query)) = parse_osmosis_query {
             return self.osmosis_querier.handle_query(osmosis_query);
@@ -111,8 +113,12 @@ impl MarsMockQuerier {
             .insert(Addr::unchecked(user_address), unclaimed_rewards);
     }
 
-    pub fn set_pool_state(&mut self, pool_id: u64, pool_state: PoolStateResponse) {
+    pub fn set_pool_state_response(&mut self, pool_id: u64, pool_state: PoolStateResponse) {
         self.osmosis_querier.pools.insert(pool_id, pool_state);
+    }
+
+    pub fn set_query_pool_response(&mut self, pool_id: u64, pool_response: QueryPoolResponse) {
+        self.osmosis_querier.pool_responses.insert(pool_id, pool_response);
     }
 
     pub fn set_spot_price(&mut self, swap: Swap, spot_price: SpotPriceResponse) {
@@ -204,6 +210,19 @@ impl MarsMockQuerier {
                 }
 
                 panic!("[mock]: Unsupported wasm query: {:?}", msg);
+            }
+
+            QueryRequest::Stargate {
+                data,
+                path,
+            } => {
+                let parse_osmosis_query: Result<QueryPoolRequest, DecodeError> =
+                    Message::decode(data.as_slice());
+                if let Ok(osmosis_query) = parse_osmosis_query {
+                    return self.osmosis_querier.handle_query_pool_request(osmosis_query);
+                }
+
+                panic!("[mock]: Unsupported stargate query, path: {:?}", path);
             }
 
             _ => self.base.handle_query(request),

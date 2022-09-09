@@ -5,6 +5,7 @@ use osmo_bindings::{
     ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Step, Swap,
     SwapResponse,
 };
+use osmosis_std::types::osmosis::gamm::v1beta1::{QueryPoolRequest, QueryPoolResponse};
 
 // NOTE: We can't use osmo_bindings::Swap (as key) for HashMap because it doesn't implement Hash
 #[derive(Eq, PartialEq, Hash, Clone, Debug)]
@@ -26,7 +27,12 @@ impl From<Swap> for PriceKey {
 
 #[derive(Clone, Default)]
 pub struct OsmosisQuerier {
+    // NOTE: two types of deps used, will be simplified when all feature including TWAP is in osmosis-rust
+    // osmosis-bindings
     pub pools: HashMap<u64, PoolStateResponse>,
+    // osmosis-rust
+    pub pool_responses: HashMap<u64, QueryPoolResponse>,
+
     pub spot_prices: HashMap<PriceKey, SpotPriceResponse>,
     pub twap_prices: HashMap<PriceKey, ArithmeticTwapToNowResponse>,
     /// key comes from `prepare_estimate_swap_key` function
@@ -114,5 +120,18 @@ impl OsmosisQuerier {
         .collect();
         let routes = routes.join(",");
         format!("{},{}", first.denom_in, routes)
+    }
+
+    pub fn handle_query_pool_request(&self, request: QueryPoolRequest) -> QuerierResult {
+        let pool_id = request.pool_id;
+        let res: ContractResult<Binary> = match self.pool_responses.get(&pool_id) {
+            Some(query_pool_response) => to_binary(&query_pool_response).into(),
+            None => Err(SystemError::InvalidRequest {
+                error: format!("QueryPoolResponse is not found for pool id: {}", pool_id),
+                request: Default::default(),
+            })
+            .into(),
+        };
+        Ok(res).into()
     }
 }

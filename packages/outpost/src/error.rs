@@ -24,6 +24,11 @@ pub enum MarsError {
         invalid_value: String,
         predicate: String,
     },
+
+    #[error("Failed to deserialize RPC query response for: {target_type}")]
+    Deserialize {
+        target_type: String,
+    },
 }
 
 impl From<MarsError> for StdError {

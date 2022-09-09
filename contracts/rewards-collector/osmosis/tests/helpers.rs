@@ -84,28 +84,28 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier, OsmosisQ
     };
 
     // set up pools for the mock osmosis querier
-    deps.querier.set_pool_state(
+    deps.querier.set_pool_state_response(
         1,
         PoolStateResponse {
             assets: vec![coin(1, "uatom"), coin(1, "uosmo")],
             shares: coin(1, "uLP"),
         },
     );
-    deps.querier.set_pool_state(
+    deps.querier.set_pool_state_response(
         68,
         PoolStateResponse {
             assets: vec![coin(1, "uatom"), coin(1, "uusdc")],
             shares: coin(1, "uLP"),
         },
     );
-    deps.querier.set_pool_state(
+    deps.querier.set_pool_state_response(
         69,
         PoolStateResponse {
             assets: vec![coin(1, "uosmo"), coin(1, "uusdc")],
             shares: coin(1, "uLP"),
         },
     );
-    deps.querier.set_pool_state(
+    deps.querier.set_pool_state_response(
         420,
         PoolStateResponse {
             assets: vec![coin(1, "uosmo"), coin(1, "umars")],

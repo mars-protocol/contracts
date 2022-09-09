@@ -34,8 +34,11 @@ schemars = "0.8"
 serde = { version = "1.0.144", default-features = false, features = ["derive"] }
 thiserror = "1.0.33"
 
-# FIXME: update with new tag when available
+# FIXME: update with new tag when available, two types of deps used for osmosis, will be simplified when all feature including TWAP is in osmosis-rust
 osmo-bindings = { git = "https://github.com/osmosis-labs/bindings" }
+osmosis-std = "0.1.6"
+prost = { version = "0.10", default-features = false, features = ["prost-derive"] }
+prost-types = { version = "0.10", default-features = false }
 
 [dev-dependencies]
 mars-testing = { path = "../../../packages/testing", version = "0.1.0" }
