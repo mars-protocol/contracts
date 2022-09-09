@@ -1,3 +1,5 @@
+use std::any::type_name;
+
 use cosmwasm_std::{Decimal, QuerierWrapper, QueryRequest, StdError, StdResult};
 
 use osmo_bindings::{
@@ -7,6 +9,7 @@ use osmosis_std::types::osmosis::gamm::v1beta1::{GammQuerier, Pool};
 use prost::{DecodeError, Message};
 
 use mars_oracle_base::{ContractError, ContractResult};
+use mars_outpost::error::MarsError;
 
 /// Assert the Osmosis pool indicated by `pool_id` contains exactly two assets, and they are OSMO and `denom`
 pub fn assert_osmosis_pool_assets(
@@ -47,16 +50,17 @@ pub fn assert_osmosis_xyk_pool(
     pool_id: u64,
 ) -> ContractResult<()> {
     let pool_res = GammQuerier::new(querier).pool(pool_id)?;
-    let pool = pool_res.pool.ok_or(StdError::NotFound {
-        kind: "osmosis_std::types::osmosis::gamm::v1beta1::Pool".to_string(),
-    })?;
+    let pool_type = type_name::<Pool>();
+    let pool = pool_res.pool.ok_or_else(|| StdError::not_found(pool_type))?;
     let pool_res: Result<Pool, DecodeError> = Message::decode(pool.value.as_slice());
-    let pool = pool_res.map_err(|_| StdError::generic_err("can't decode to pool".to_string()))?;
+    let pool = pool_res.map_err(|_| MarsError::Deserialize {
+        target_type: pool_type.to_string(),
+    })?;
 
     // NOTE: It is safe because we execute `assert_osmosis_pool_assets` before
     if pool.pool_assets[0].weight != pool.pool_assets[1].weight {
         return Err(ContractError::InvalidPriceSource {
-            reason: format!("pool {} is not XYK", pool_id),
+            reason: format!("assets in pool {} do not have equal weights", pool_id),
         });
     }
     Ok(())

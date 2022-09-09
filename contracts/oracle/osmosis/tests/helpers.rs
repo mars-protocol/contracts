@@ -123,10 +123,10 @@ fn prepare_query_pool_response(
     }
 }
 
-fn prepare_pool_assets(assets: &[Coin], weights: &[u64]) -> Vec<PoolAsset> {
-    assert_eq!(assets.len(), weights.len());
+fn prepare_pool_assets(coins: &[Coin], weights: &[u64]) -> Vec<PoolAsset> {
+    assert_eq!(coins.len(), weights.len());
 
-    assets
+    coins
         .iter()
         .zip(weights)
         .map(|zipped| {

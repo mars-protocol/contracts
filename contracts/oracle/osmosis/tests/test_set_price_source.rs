@@ -113,7 +113,7 @@ fn test_setting_price_source_spot() {
     assert_eq!(
         err,
         ContractError::InvalidPriceSource {
-            reason: "pool 4444 is not XYK".to_string()
+            reason: "assets in pool 4444 do not have equal weights".to_string()
         }
     );
 
@@ -186,7 +186,7 @@ fn test_setting_price_source_twap() {
     assert_eq!(
         err,
         ContractError::InvalidPriceSource {
-            reason: "pool 4444 is not XYK".to_string()
+            reason: "assets in pool 4444 do not have equal weights".to_string()
         }
     );
 
