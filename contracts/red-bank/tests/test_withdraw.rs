@@ -3,23 +3,21 @@ use cosmwasm_std::{
     attr, coin, coins, to_binary, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128, WasmMsg,
 };
 
-use mars_outpost::red_bank::{Debt, ExecuteMsg, Market, User};
+use mars_outpost::red_bank::{Debt, ExecuteMsg, Market};
 use mars_outpost::{ma_token, math};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
-use mars_red_bank::events::build_collateral_position_changed_event;
-use mars_red_bank::helpers::{get_bit, set_bit};
 use mars_red_bank::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
     get_updated_borrow_index, get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
 };
-use mars_red_bank::state::{DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN, USERS};
+use mars_red_bank::state::{DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN};
 
 use helpers::{
-    th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
-    TestUtilizationDeltaInfo,
+    has_collateral_position, set_collateral, th_build_interests_updated_event,
+    th_get_expected_indices_and_rates, th_init_market, th_setup, TestUtilizationDeltaInfo,
 };
 
 mod helpers;
@@ -32,6 +30,7 @@ fn test_withdraw_native() {
 
     let initial_liquidity_index = Decimal::from_ratio(15u128, 10u128);
     let mock_market = Market {
+        denom: "somecoin".to_string(),
         ma_token_address: Addr::unchecked("matoken"),
         liquidity_index: initial_liquidity_index,
         borrow_index: Decimal::from_ratio(2u128, 1u128),
@@ -57,9 +56,10 @@ fn test_withdraw_native() {
         .save(deps.as_mut().storage, &Addr::unchecked("matoken"), &"somecoin".to_string())
         .unwrap();
 
+    // for this test, we assume the user has NOT enabled the asset as collateral
+    // the health factor check should have been skipped (no need to set mock oracle price)
     let withdrawer_addr = Addr::unchecked("withdrawer");
-    let user = User::default();
-    USERS.save(deps.as_mut().storage, &withdrawer_addr, &user).unwrap();
+    set_collateral(deps.as_mut(), &withdrawer_addr, &mock_market.denom, false);
 
     let msg = ExecuteMsg::Withdraw {
         denom: "somecoin".to_string(),
@@ -183,8 +183,8 @@ fn test_withdraw_and_send_funds_to_another_user() {
         .save(deps.as_mut().storage, &ma_token_addr, &denom.to_string())
         .unwrap();
 
-    let user = User::default();
-    USERS.save(deps.as_mut().storage, &withdrawer_addr, &user).unwrap();
+    // assume the user has a collateral position but not enabled
+    set_collateral(deps.as_mut(), &withdrawer_addr, denom, false);
 
     let msg = ExecuteMsg::Withdraw {
         denom: denom.to_string(),
@@ -197,8 +197,7 @@ fn test_withdraw_and_send_funds_to_another_user() {
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
     // User should have unset bit for collateral after full withdraw
-    let user = USERS.load(&deps.storage, &withdrawer_addr).unwrap();
-    assert!(!get_bit(user.collateral_assets, market_initial.index).unwrap());
+    assert!(!has_collateral_position(deps.as_ref(), &withdrawer_addr, &market_initial.denom));
 
     let withdraw_amount = compute_underlying_amount(
         ma_token_balance_scaled,
@@ -313,12 +312,9 @@ fn test_withdraw_if_health_factor_not_met() {
     let market_3_initial = th_init_market(deps.as_mut(), "token3", &market_3);
 
     // Initialize user with market_1 and market_3 as collaterals
-    // User borrows market_2
-    let mut user = User::default();
-    set_bit(&mut user.collateral_assets, market_1_initial.index).unwrap();
-    set_bit(&mut user.collateral_assets, market_3_initial.index).unwrap();
-    set_bit(&mut user.borrowed_assets, market_2_initial.index).unwrap();
-    USERS.save(deps.as_mut().storage, &withdrawer_addr, &user).unwrap();
+    // User borrows market_2; the debt position will be configured later in the test
+    set_collateral(deps.as_mut(), &withdrawer_addr, &market_1_initial.denom, true);
+    set_collateral(deps.as_mut(), &withdrawer_addr, &market_3_initial.denom, true);
 
     // Set the querier to return collateral balances (ma_token_1 and ma_token_3)
     let ma_token_1_balance_scaled = Uint128::new(100_000) * SCALING_FACTOR;
@@ -484,11 +480,7 @@ fn test_withdraw_total_balance() {
 
     // Mark the market as collateral for the user
     let withdrawer_addr = Addr::unchecked("withdrawer");
-    let mut user = User::default();
-    set_bit(&mut user.collateral_assets, market_initial.index).unwrap();
-    USERS.save(deps.as_mut().storage, &withdrawer_addr, &user).unwrap();
-    // Check if user has set bit for collateral
-    assert!(get_bit(user.collateral_assets, market_initial.index).unwrap());
+    set_collateral(deps.as_mut(), &withdrawer_addr, &market_initial.denom, true);
 
     let msg = ExecuteMsg::Withdraw {
         denom: "somecoin".to_string(),
@@ -566,65 +558,13 @@ fn test_withdraw_total_balance() {
             attr("withdraw_amount", withdrawer_balance.to_string()),
         ]
     );
-    assert_eq!(
-        res.events,
-        vec![
-            build_collateral_position_changed_event("somecoin", false, "withdrawer".to_string()),
-            th_build_interests_updated_event("somecoin", &expected_params)
-        ]
-    );
+    assert_eq!(res.events, vec![th_build_interests_updated_event("somecoin", &expected_params)]);
 
     assert_eq!(market.borrow_rate, expected_params.borrow_rate);
     assert_eq!(market.liquidity_rate, expected_params.liquidity_rate);
     assert_eq!(market.liquidity_index, expected_params.liquidity_index);
     assert_eq!(market.borrow_index, expected_params.borrow_index);
 
-    // User should have unset bit for collateral after full withdraw
-    let user = USERS.load(&deps.storage, &withdrawer_addr).unwrap();
-    assert!(!get_bit(user.collateral_assets, market_initial.index).unwrap());
-}
-
-#[test]
-fn test_withdraw_without_existing_position() {
-    // Withdraw native token
-    let initial_available_liquidity = Uint128::from(12000000u128);
-    let mut deps = th_setup(&[coin(initial_available_liquidity.into(), "somecoin")]);
-
-    deps.querier.set_cw20_balances(
-        Addr::unchecked("matoken"),
-        &[
-            (Addr::unchecked("withdrawer"), Uint128::new(2_000_000) * SCALING_FACTOR),
-            (
-                Addr::unchecked("protocol_rewards_collector"),
-                Uint128::new(2_000_000) * SCALING_FACTOR,
-            ),
-        ],
-    );
-
-    let market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
-        ..Default::default()
-    };
-    th_init_market(deps.as_mut(), "somecoin", &market);
-
-    let msg = ExecuteMsg::Withdraw {
-        denom: "somecoin".to_string(),
-        amount: None,
-        recipient: None,
-    };
-
-    // normal address cannot withdraw without an existing position
-    {
-        let info = mock_info("withdrawer", &[]);
-        let env = mock_env(MockEnvParams::default());
-        let error = execute(deps.as_mut(), env, info, msg.clone()).unwrap_err();
-        assert_eq!(error, ContractError::ExistingUserPositionRequired {});
-    }
-
-    // protocol_rewards_collector can withdraw without an existing position
-    {
-        let info = mock_info("protocol_rewards_collector", &[]);
-        let env = mock_env(MockEnvParams::default());
-        execute(deps.as_mut(), env, info, msg).unwrap();
-    }
+    // User's collateral position should have been deleted after full withdraw
+    assert!(!has_collateral_position(deps.as_ref(), &withdrawer_addr, &market_initial.denom));
 }

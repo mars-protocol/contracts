@@ -12,10 +12,8 @@ use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
-use mars_red_bank::events::build_collateral_position_changed_event;
-use mars_red_bank::helpers::get_bit;
 use mars_red_bank::interest_rates::{compute_scaled_amount, ScalingOperation, SCALING_FACTOR};
-use mars_red_bank::state::{MARKETS, USERS};
+use mars_red_bank::state::{COLLATERALS, MARKETS};
 
 use helpers::{
     th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
@@ -92,13 +90,7 @@ fn test_deposit_native_asset() {
             attr("amount", deposit_amount.to_string()),
         ]
     );
-    assert_eq!(
-        res.events,
-        vec![
-            build_collateral_position_changed_event("somecoin", true, "depositor".to_string()),
-            th_build_interests_updated_event("somecoin", &expected_params)
-        ]
-    );
+    assert_eq!(res.events, vec![th_build_interests_updated_event("somecoin", &expected_params)]);
 
     let market = MARKETS.load(&deps.storage, "somecoin").unwrap();
     assert_eq!(market.borrow_rate, expected_params.borrow_rate);
@@ -201,12 +193,14 @@ fn test_deposit_on_behalf_of() {
     )
     .unwrap();
 
-    // 'depositor' should not be saved
-    let _user = USERS.load(&deps.storage, &depositor_addr).unwrap_err();
+    // 'depositor' should not have created a new collateral position
+    let opt = COLLATERALS.may_load(deps.as_ref().storage, (&depositor_addr, "somecoin")).unwrap();
+    assert!(opt.is_none());
 
-    // 'another_user' should have collateral bit set
-    let user = USERS.load(&deps.storage, &another_user_addr).unwrap();
-    assert!(get_bit(user.collateral_assets, market.index).unwrap());
+    // 'another_user' should have created a new collateral position
+    let collateral =
+        COLLATERALS.load(deps.as_ref().storage, (&another_user_addr, "somecoin")).unwrap();
+    assert!(collateral.enabled);
 
     // recipient should be `another_user`
     assert_eq!(
