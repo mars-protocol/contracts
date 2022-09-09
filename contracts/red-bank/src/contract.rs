@@ -144,7 +144,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             denom,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_debt(deps, env, user_addr, denom)?)
+            to_binary(&query::query_user_debt(deps, &env.block, user_addr, denom)?)
         }
         QueryMsg::UserDebts {
             user,
@@ -152,7 +152,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             limit,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_debts(deps, env, user_addr, start_after, limit)?)
+            to_binary(&query::query_user_debts(deps, &env.block, user_addr, start_after, limit)?)
         }
         QueryMsg::UserCollateral {
             user,

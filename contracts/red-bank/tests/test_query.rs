@@ -125,7 +125,7 @@ fn test_query_user_debt() {
     };
     DEBTS.save(deps.as_mut().storage, (&user_addr, "coin_3"), &debt_3).unwrap();
 
-    let debts = query_user_debts(deps.as_ref(), env, user_addr, None, None).unwrap();
+    let debts = query_user_debts(deps.as_ref(), &env.block, user_addr, None, None).unwrap();
     assert_eq!(debts.len(), 2);
     assert_eq!(
         debts[0],
@@ -192,7 +192,7 @@ fn test_query_user_asset_debt() {
     // Check asset with existing debt
     {
         let res =
-            query_user_debt(deps.as_ref(), env.clone(), user_addr.clone(), "coin_1".to_string())
+            query_user_debt(deps.as_ref(), &env.block, user_addr.clone(), "coin_1".to_string())
                 .unwrap();
         assert_eq!(
             res,
@@ -206,7 +206,8 @@ fn test_query_user_asset_debt() {
 
     // Check asset with no debt
     {
-        let res = query_user_debt(deps.as_ref(), env, user_addr, "coin_2".to_string()).unwrap();
+        let res =
+            query_user_debt(deps.as_ref(), &env.block, user_addr, "coin_2".to_string()).unwrap();
         assert_eq!(
             res,
             UserDebtResponse {

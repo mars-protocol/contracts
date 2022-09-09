@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, BlockInfo, Decimal, Deps, Env, Order, StdError, StdResult, Uint128};
 use cw_storage_plus::Bound;
 
 use mars_outpost::address_provider::{self, MarsContract};
@@ -92,7 +92,7 @@ pub fn query_uncollateralized_loan_limits(
 
 pub fn query_user_debt(
     deps: Deps,
-    env: Env,
+    block: &BlockInfo,
     user_addr: Addr,
     denom: String,
 ) -> StdResult<UserDebtResponse> {
@@ -101,8 +101,7 @@ pub fn query_user_debt(
     let (amount_scaled, amount) = match DEBTS.may_load(deps.storage, (&user_addr, &denom))? {
         Some(debt) => {
             let amount_scaled = debt.amount_scaled;
-            let amount =
-                get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?;
+            let amount = get_underlying_debt_amount(amount_scaled, &market, block.time.seconds())?;
             (amount_scaled, amount)
         }
 
@@ -118,11 +117,13 @@ pub fn query_user_debt(
 
 pub fn query_user_debts(
     deps: Deps,
-    env: Env,
+    block: &BlockInfo,
     user_addr: Addr,
     start_after: Option<String>,
     limit: Option<u32>,
 ) -> StdResult<Vec<UserDebtResponse>> {
+    let block_time = block.time.seconds();
+
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
@@ -135,12 +136,12 @@ pub fn query_user_debts(
 
             let market = MARKETS.load(deps.storage, &denom)?;
 
-            let amount =
-                get_underlying_debt_amount(debt.amount_scaled, &market, env.block.time.seconds())?;
+            let amount_scaled = debt.amount_scaled;
+            let amount = get_underlying_debt_amount(amount_scaled, &market, block_time)?;
 
             Ok(UserDebtResponse {
                 denom,
-                amount_scaled: debt.amount_scaled,
+                amount_scaled,
                 amount,
             })
         })
