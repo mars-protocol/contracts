@@ -19,5 +19,5 @@ pub const UNCOLLATERALIZED_LOAN_LIMITS: Map<(&Addr, &str), Uint128> = Map::new("
 /// the user is borrowing if, in the DEBTS map, there is at least one denom stored under the user
 /// address prefix.
 pub fn user_is_borrowing(store: &dyn Storage, addr: &Addr) -> bool {
-    DEBTS.prefix(&addr).range(store, None, None, Order::Ascending).next().is_some()
+    DEBTS.prefix(addr).range(store, None, None, Order::Ascending).next().is_some()
 }
