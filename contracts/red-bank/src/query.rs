@@ -90,8 +90,6 @@ pub fn query_uncollateralized_loan_limits(
         .collect()
 }
 
-/// NOTE: If the user does not have a debt position in the specified asset, this function returns
-/// the default value, instead of throwing a "not found" error.
 pub fn query_user_debt(
     deps: Deps,
     env: Env,
@@ -118,7 +116,6 @@ pub fn query_user_debt(
     })
 }
 
-/// NOTE: Only assets that the user has debt positions in are included in the response.
 pub fn query_user_debts(
     deps: Deps,
     env: Env,
@@ -150,8 +147,6 @@ pub fn query_user_debts(
         .collect()
 }
 
-/// NOTE: If the user does not have a collateral position in the specified asset, this function
-/// returns the default value, instead of throwing a "not found" error.
 pub fn query_user_collateral(
     deps: Deps,
     user_addr: Addr,
@@ -173,8 +168,6 @@ pub fn query_user_collateral(
     })
 }
 
-/// NOTE: Only assets that the user has collateral positions in (whether enabled or not) are
-/// included in the response.
 pub fn query_user_collaterals(
     deps: Deps,
     user_addr: Addr,
