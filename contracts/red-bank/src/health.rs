@@ -134,19 +134,15 @@ pub fn get_user_positions_map(
             let market = MARKETS.load(deps.storage, &denom)?;
 
             let collateral_amount = match COLLATERALS.may_load(deps.storage, (user_addr, &denom))? {
-                Some(collateral) => {
-                    if collateral.enabled {
-                        let amount_scaled = cw20_get_balance(
-                            &deps.querier,
-                            market.ma_token_address.clone(),
-                            user_addr.clone(),
-                        )?;
-                        get_underlying_liquidity_amount(amount_scaled, &market, block_time)?
-                    } else {
-                        Uint128::zero()
-                    }
+                Some(collateral) if collateral.enabled => {
+                    let amount_scaled = cw20_get_balance(
+                        &deps.querier,
+                        market.ma_token_address.clone(),
+                        user_addr.clone(),
+                    )?;
+                    get_underlying_liquidity_amount(amount_scaled, &market, block_time)?
                 }
-                None => Uint128::zero(),
+                _ => Uint128::zero(),
             };
 
             let (debt_amount, uncollateralized_debt) =
