@@ -125,7 +125,6 @@ pub fn get_user_positions_map(
     let mut denoms = HashSet::new();
     denoms.extend(collateral_denoms);
     denoms.extend(debt_denoms);
-    dbg!(&denoms);
 
     // Enumerate the denoms, compute underlying debt and collateral amount, and query the prices.
     // Finally, collect the results into a hashmap indexed by the denoms.
