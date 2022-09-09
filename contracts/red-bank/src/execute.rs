@@ -912,8 +912,7 @@ pub fn liquidate(
             sent_debt_asset_amount,
         )?;
 
-    // 4. Update collateral positions and market depending on whether the liquidator elects to
-    // receive ma_tokens or the underlying asset
+    // 4. Update collateral positions and market
     let collateral_amount_to_liquidate_scaled = get_scaled_liquidity_amount(
         collateral_amount_to_liquidate,
         &collateral_market,
