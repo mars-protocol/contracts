@@ -1079,8 +1079,8 @@ pub fn update_asset_collateral_status(
         COLLATERALS.may_load(deps.storage, (&user_addr, &denom))?.unwrap_or_default();
 
     let collateral_market = MARKETS.load(deps.storage, &denom)?;
-    let has_collateral_asset = collateral.enabled;
-    if !has_collateral_asset && enable {
+
+    if !collateral.enabled && enable {
         let collateral_ma_address = collateral_market.ma_token_address;
         let user_collateral_balance =
             cw20_get_balance(&deps.querier, collateral_ma_address, user_addr.clone())?;
@@ -1094,7 +1094,7 @@ pub fn update_asset_collateral_status(
                 denom,
             });
         }
-    } else if has_collateral_asset && !enable {
+    } else if collateral.enabled && !enable {
         // disable collateral asset
         collateral.enabled = false;
         COLLATERALS.save(deps.storage, (&user_addr, &denom), &collateral)?;
@@ -1119,7 +1119,6 @@ pub fn update_asset_collateral_status(
         .add_attribute("action", "outposts/red-bank/update_asset_collateral_status")
         .add_attribute("user", user_addr.as_str())
         .add_attribute("denom", denom)
-        .add_attribute("has_collateral", has_collateral_asset.to_string())
         .add_attribute("enable", enable.to_string()))
 }
 
