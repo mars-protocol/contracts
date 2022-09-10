@@ -4,12 +4,9 @@ use cosmwasm_std::{
     StdResult, SystemError, SystemResult, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
-use osmo_bindings::{
-    ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Step, Swap,
-    SwapResponse,
-};
-use osmosis_std::types::osmosis::gamm::v1beta1::{QueryPoolRequest, QueryPoolResponse};
-use prost::{DecodeError, Message};
+use osmo_bindings::{OsmosisQuery, PoolStateResponse, Step, Swap, SwapResponse};
+use osmosis_std::types::osmosis::gamm::twap::v1beta1::GetArithmeticTwapResponse;
+use osmosis_std::types::osmosis::gamm::v1beta1::{QueryPoolResponse, QuerySpotPriceResponse};
 
 use mars_outpost::{address_provider, incentives, ma_token, oracle, red_bank};
 
@@ -121,8 +118,34 @@ impl MarsMockQuerier {
         self.osmosis_querier.pool_responses.insert(pool_id, pool_response);
     }
 
-    pub fn set_spot_price(&mut self, swap: Swap, spot_price: SpotPriceResponse) {
-        self.osmosis_querier.spot_prices.insert(swap.into(), spot_price);
+    pub fn set_spot_price(
+        &mut self,
+        id: u64,
+        base_asset_denom: &str,
+        quote_asset_denom: &str,
+        spot_price: QuerySpotPriceResponse,
+    ) {
+        let price_key = PriceKey {
+            pool_id: id,
+            denom_in: base_asset_denom.to_string(),
+            denom_out: quote_asset_denom.to_string(),
+        };
+        self.osmosis_querier.spot_prices.insert(price_key, spot_price);
+    }
+
+    pub fn set_twap_price(
+        &mut self,
+        id: u64,
+        base_asset_denom: &str,
+        quote_asset_denom: &str,
+        twap_price: GetArithmeticTwapResponse,
+    ) {
+        let price_key = PriceKey {
+            pool_id: id,
+            denom_in: base_asset_denom.to_string(),
+            denom_out: quote_asset_denom.to_string(),
+        };
+        self.osmosis_querier.twap_prices.insert(price_key, twap_price);
     }
 
     pub fn set_estimate_swap(
@@ -145,21 +168,6 @@ impl MarsMockQuerier {
         position: red_bank::UserPositionResponse,
     ) {
         self.redbank_querier.users_positions.insert(user_address, position);
-    }
-
-    pub fn set_twap_price(
-        &mut self,
-        id: u64,
-        quote_asset_denom: &str,
-        base_asset_denom: &str,
-        twap_price: ArithmeticTwapToNowResponse,
-    ) {
-        let price_key = PriceKey {
-            pool_id: id,
-            denom_in: base_asset_denom.to_string(),
-            denom_out: quote_asset_denom.to_string(),
-        };
-        self.osmosis_querier.twap_prices.insert(price_key, twap_price);
     }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
@@ -213,13 +221,11 @@ impl MarsMockQuerier {
             }
 
             QueryRequest::Stargate {
-                data,
                 path,
+                data,
             } => {
-                let parse_osmosis_query: Result<QueryPoolRequest, DecodeError> =
-                    Message::decode(data.as_slice());
-                if let Ok(osmosis_query) = parse_osmosis_query {
-                    return self.osmosis_querier.handle_query_pool_request(osmosis_query);
+                if let Ok(querier_res) = self.osmosis_querier.handle_stargate_query(path, data) {
+                    return querier_res;
                 }
 
                 panic!("[mock]: Unsupported stargate query, path: {:?}", path);

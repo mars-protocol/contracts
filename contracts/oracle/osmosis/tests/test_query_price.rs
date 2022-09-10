@@ -1,8 +1,8 @@
 use cosmwasm_std::Decimal;
+use osmosis_std::types::osmosis::gamm::twap::v1beta1::GetArithmeticTwapResponse;
+use osmosis_std::types::osmosis::gamm::v1beta1::QuerySpotPriceResponse;
 
 use mars_outpost::oracle::{PriceResponse, QueryMsg};
-
-use osmo_bindings::{ArithmeticTwapToNowResponse, SpotPriceResponse, Swap};
 
 use mars_oracle_osmosis::OsmosisPriceSource;
 
@@ -42,13 +42,11 @@ fn test_querying_price_spot() {
     );
 
     deps.querier.set_spot_price(
-        Swap {
-            pool_id: 89,
-            denom_in: "umars".to_string(),
-            denom_out: "uosmo".to_string(),
-        },
-        SpotPriceResponse {
-            price: Decimal::from_ratio(88888u128, 12345u128),
+        89,
+        "umars",
+        "uosmo",
+        QuerySpotPriceResponse {
+            spot_price: Decimal::from_ratio(88888u128, 12345u128).to_string(),
         },
     );
 
@@ -76,10 +74,10 @@ fn test_querying_price_twap() {
 
     deps.querier.set_twap_price(
         89,
-        "uosmo",
         "umars",
-        ArithmeticTwapToNowResponse {
-            twap: Decimal::from_ratio(77777u128, 12345u128),
+        "uosmo",
+        GetArithmeticTwapResponse {
+            arithmetic_twap: Decimal::from_ratio(77777u128, 12345u128).to_string(),
         },
     );
 
@@ -119,23 +117,19 @@ fn test_querying_all_prices() {
     );
 
     deps.querier.set_spot_price(
-        Swap {
-            pool_id: 1,
-            denom_in: "uatom".to_string(),
-            denom_out: "uosmo".to_string(),
-        },
-        SpotPriceResponse {
-            price: Decimal::from_ratio(77777u128, 12345u128),
+        1,
+        "uatom",
+        "uosmo",
+        QuerySpotPriceResponse {
+            spot_price: Decimal::from_ratio(77777u128, 12345u128).to_string(),
         },
     );
     deps.querier.set_spot_price(
-        Swap {
-            pool_id: 89,
-            denom_in: "umars".to_string(),
-            denom_out: "uosmo".to_string(),
-        },
-        SpotPriceResponse {
-            price: Decimal::from_ratio(88888u128, 12345u128),
+        89,
+        "umars",
+        "uosmo",
+        QuerySpotPriceResponse {
+            spot_price: Decimal::from_ratio(88888u128, 12345u128).to_string(),
         },
     );
 

@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
-use osmo_bindings::{
-    ArithmeticTwapToNowResponse, OsmosisQuery, PoolStateResponse, SpotPriceResponse, Step, Swap,
-    SwapResponse,
+use osmo_bindings::{OsmosisQuery, PoolStateResponse, Step, Swap, SwapResponse};
+use osmosis_std::types::osmosis::gamm::twap::v1beta1::{
+    GetArithmeticTwapRequest, GetArithmeticTwapResponse,
 };
-use osmosis_std::types::osmosis::gamm::v1beta1::{QueryPoolRequest, QueryPoolResponse};
+use osmosis_std::types::osmosis::gamm::v1beta1::{
+    QueryPoolRequest, QueryPoolResponse, QuerySpotPriceRequest, QuerySpotPriceResponse,
+};
+use prost::{DecodeError, Message};
 
 // NOTE: We can't use osmo_bindings::Swap (as key) for HashMap because it doesn't implement Hash
 #[derive(Eq, PartialEq, Hash, Clone, Debug)]
@@ -33,8 +36,8 @@ pub struct OsmosisQuerier {
     // osmosis-rust
     pub pool_responses: HashMap<u64, QueryPoolResponse>,
 
-    pub spot_prices: HashMap<PriceKey, SpotPriceResponse>,
-    pub twap_prices: HashMap<PriceKey, ArithmeticTwapToNowResponse>,
+    pub spot_prices: HashMap<PriceKey, QuerySpotPriceResponse>,
+    pub twap_prices: HashMap<PriceKey, GetArithmeticTwapResponse>,
     /// key comes from `prepare_estimate_swap_key` function
     pub estimate_swaps: HashMap<String, SwapResponse>,
 }
@@ -52,40 +55,6 @@ impl OsmosisQuerier {
                 })
                 .into(),
             },
-            OsmosisQuery::SpotPrice {
-                swap,
-                ..
-            } => match self.spot_prices.get(&swap.clone().into()) {
-                Some(spot_price_response) => to_binary(&spot_price_response).into(),
-                None => Err(SystemError::InvalidRequest {
-                    error: format!("SpotPriceResponse is not found for swap: {:?}", swap),
-                    request: Default::default(),
-                })
-                .into(),
-            },
-            OsmosisQuery::ArithmeticTwapToNow {
-                id,
-                quote_asset_denom,
-                base_asset_denom,
-                ..
-            } => {
-                let price_key = PriceKey {
-                    pool_id: id,
-                    denom_in: base_asset_denom,
-                    denom_out: quote_asset_denom,
-                };
-                match self.twap_prices.get(&price_key) {
-                    Some(twap_price_response) => to_binary(&twap_price_response).into(),
-                    None => Err(SystemError::InvalidRequest {
-                        error: format!(
-                            "ArithmeticTwapToNowResponse is not found for price key: {:?}",
-                            price_key
-                        ),
-                        request: Default::default(),
-                    })
-                    .into(),
-                }
-            }
             OsmosisQuery::EstimateSwap {
                 first,
                 route,
@@ -122,12 +91,80 @@ impl OsmosisQuerier {
         format!("{},{}", first.denom_in, routes)
     }
 
-    pub fn handle_query_pool_request(&self, request: QueryPoolRequest) -> QuerierResult {
+    pub fn handle_stargate_query(&self, path: &str, data: &Binary) -> Result<QuerierResult, ()> {
+        if path == "/osmosis.gamm.v1beta1.Query/Pool" {
+            let parse_osmosis_query: Result<QueryPoolRequest, DecodeError> =
+                Message::decode(data.as_slice());
+            if let Ok(osmosis_query) = parse_osmosis_query {
+                return Ok(self.handle_query_pool_request(osmosis_query));
+            }
+        }
+
+        if path == "/osmosis.gamm.v1beta1.Query/SpotPrice" {
+            let parse_osmosis_query: Result<QuerySpotPriceRequest, DecodeError> =
+                Message::decode(data.as_slice());
+            if let Ok(osmosis_query) = parse_osmosis_query {
+                return Ok(self.handle_query_spot_request(osmosis_query));
+            }
+        }
+
+        if path == "/osmosis.gamm.twap.v1beta1.Query/GetArithmeticTwap" {
+            let parse_osmosis_query: Result<GetArithmeticTwapRequest, DecodeError> =
+                Message::decode(data.as_slice());
+            if let Ok(osmosis_query) = parse_osmosis_query {
+                return Ok(self.handle_query_twap_request(osmosis_query));
+            }
+        }
+
+        Err(())
+    }
+
+    fn handle_query_pool_request(&self, request: QueryPoolRequest) -> QuerierResult {
         let pool_id = request.pool_id;
         let res: ContractResult<Binary> = match self.pool_responses.get(&pool_id) {
-            Some(query_pool_response) => to_binary(&query_pool_response).into(),
+            Some(query_response) => to_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
                 error: format!("QueryPoolResponse is not found for pool id: {}", pool_id),
+                request: Default::default(),
+            })
+            .into(),
+        };
+        Ok(res).into()
+    }
+
+    fn handle_query_spot_request(&self, request: QuerySpotPriceRequest) -> QuerierResult {
+        let price_key = PriceKey {
+            pool_id: request.pool_id,
+            denom_in: request.base_asset_denom,
+            denom_out: request.quote_asset_denom,
+        };
+        let res: ContractResult<Binary> = match self.spot_prices.get(&price_key) {
+            Some(query_response) => to_binary(&query_response).into(),
+            None => Err(SystemError::InvalidRequest {
+                error: format!(
+                    "QuerySpotPriceResponse is not found for price key: {:?}",
+                    price_key
+                ),
+                request: Default::default(),
+            })
+            .into(),
+        };
+        Ok(res).into()
+    }
+
+    fn handle_query_twap_request(&self, request: GetArithmeticTwapRequest) -> QuerierResult {
+        let price_key = PriceKey {
+            pool_id: request.pool_id,
+            denom_in: request.base_asset,
+            denom_out: request.quote_asset,
+        };
+        let res: ContractResult<Binary> = match self.twap_prices.get(&price_key) {
+            Some(query_response) => to_binary(&query_response).into(),
+            None => Err(SystemError::InvalidRequest {
+                error: format!(
+                    "GetArithmeticTwapResponse is not found for price key: {:?}",
+                    price_key
+                ),
                 request: Default::default(),
             })
             .into(),

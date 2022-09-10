@@ -37,7 +37,6 @@ thiserror = "1.0.33"
 # FIXME: update with crates version if osmosis-main-clone branch merged
 osmosis-std = { git = "https://github.com/osmosis-labs/osmosis-rust", package = "osmosis-std", branch = "osmosis-main-clone" }
 prost = { version = "0.10", default-features = false, features = ["prost-derive"] }
-prost-types = { version = "0.10", default-features = false }
 
 [dev-dependencies]
 mars-testing = { path = "../../../packages/testing", version = "0.1.0" }
