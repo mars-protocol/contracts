@@ -1,40 +1,36 @@
 use std::fmt;
 
-use cosmwasm_std::{
-    Addr, CosmosMsg, Decimal, Env, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
-};
+use cosmwasm_std::{CosmosMsg, Decimal, Empty, Env, QuerierWrapper, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mars_rewards_collector_base::{ContractError, ContractResult, Route};
 
-use osmo_bindings::{
-    OsmosisMsg, OsmosisQuery, PoolStateResponse, Step, Swap, SwapAmount, SwapAmountWithLimit,
-    SwapResponse,
-};
+use osmosis_std::types::cosmos::base::v1beta1::Coin;
+use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
 
-use crate::helpers::hashset;
+use crate::helpers::{has_denom, hashset, query_estimate_swap_out_amount, query_osmosis_pool};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct OsmosisRoute(pub Vec<Step>);
+pub struct OsmosisRoute(pub Vec<SwapAmountInRoute>);
 
 impl fmt::Display for OsmosisRoute {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = self
             .0
             .iter()
-            .map(|step| format!("{}:{}", step.pool_id, step.denom_out))
+            .map(|step| format!("{}:{}", step.pool_id, step.token_out_denom))
             .collect::<Vec<_>>()
             .join("|");
         write!(f, "{}", s)
     }
 }
 
-impl Route<OsmosisMsg, OsmosisQuery> for OsmosisRoute {
+impl Route<Empty, Empty> for OsmosisRoute {
     // Perform basic validation of the swap steps
     fn validate(
         &self,
-        querier: &QuerierWrapper<OsmosisQuery>,
+        querier: &QuerierWrapper,
         denom_in: &str,
         denom_out: &str,
     ) -> ContractResult<()> {
@@ -53,12 +49,9 @@ impl Route<OsmosisMsg, OsmosisQuery> for OsmosisRoute {
         let mut prev_denom_out = denom_in;
         let mut seen_denoms = hashset(&[denom_in]);
         for (i, step) in steps.iter().enumerate() {
-            let pool_state: PoolStateResponse =
-                querier.query(&QueryRequest::Custom(OsmosisQuery::PoolState {
-                    id: step.pool_id,
-                }))?;
+            let pool = query_osmosis_pool(querier, step.pool_id)?;
 
-            if !pool_state.has_denom(prev_denom_out) {
+            if !has_denom(prev_denom_out, &pool.pool_assets) {
                 return Err(ContractError::InvalidRoute {
                     reason: format!(
                         "step {}: pool {} does not contain input denom {}",
@@ -69,25 +62,28 @@ impl Route<OsmosisMsg, OsmosisQuery> for OsmosisRoute {
                 });
             }
 
-            if !pool_state.has_denom(&step.denom_out) {
+            if !has_denom(&step.token_out_denom, &pool.pool_assets) {
                 return Err(ContractError::InvalidRoute {
                     reason: format!(
                         "step {}: pool {} does not contain output denom {}",
                         i + 1,
                         step.pool_id,
-                        &step.denom_out
+                        &step.token_out_denom
                     ),
                 });
             }
 
-            if seen_denoms.contains(step.denom_out.as_str()) {
+            if seen_denoms.contains(step.token_out_denom.as_str()) {
                 return Err(ContractError::InvalidRoute {
-                    reason: format!("route contains a loop: denom {} seen twice", step.denom_out),
+                    reason: format!(
+                        "route contains a loop: denom {} seen twice",
+                        step.token_out_denom
+                    ),
                 });
             }
 
-            prev_denom_out = &step.denom_out;
-            seen_denoms.insert(&step.denom_out);
+            prev_denom_out = &step.token_out_denom;
+            seen_denoms.insert(&step.token_out_denom);
         }
 
         // the route's final output denom must match the desired output denom
@@ -107,54 +103,36 @@ impl Route<OsmosisMsg, OsmosisQuery> for OsmosisRoute {
     fn build_swap_msg(
         &self,
         env: &Env,
-        querier: &QuerierWrapper<OsmosisQuery>,
+        querier: &QuerierWrapper,
         denom_in: &str,
         amount: Uint128,
         slippage_tolerance: Decimal,
-    ) -> ContractResult<CosmosMsg<OsmosisMsg>> {
+    ) -> ContractResult<CosmosMsg> {
         let steps = &self.0;
 
-        let first_swap = steps
-            .first()
-            .map(|step| Swap::new(step.pool_id, denom_in, &step.denom_out))
-            .ok_or(ContractError::InvalidRoute {
-                reason: "the route must contain at least one step".to_string(),
-            })?;
+        let first_swap = steps.first().ok_or(ContractError::InvalidRoute {
+            reason: "the route must contain at least one step".to_string(),
+        })?;
 
-        let out_amount =
-            estimate_swap_out_amount(querier, &env.contract.address, &first_swap, steps, amount)?;
+        let out_amount = query_estimate_swap_out_amount(
+            querier,
+            &env.contract.address,
+            first_swap.pool_id,
+            amount,
+            steps,
+        )?;
         let min_out_amount = (Decimal::one() - slippage_tolerance) * out_amount;
 
-        Ok(CosmosMsg::Custom(OsmosisMsg::Swap {
-            first: first_swap,
-            route: steps[1..].to_vec(),
-            amount: SwapAmountWithLimit::ExactIn {
-                input: amount,
-                min_output: min_out_amount,
-            },
-        }))
-    }
-}
-
-fn estimate_swap_out_amount(
-    querier: &QuerierWrapper<OsmosisQuery>,
-    contract_addr: &Addr,
-    first_swap: &Swap,
-    steps: &[Step],
-    amount: Uint128,
-) -> StdResult<Uint128> {
-    let query = OsmosisQuery::EstimateSwap {
-        sender: contract_addr.into(),
-        first: first_swap.clone(),
-        route: steps[1..].to_vec(),
-        amount: SwapAmount::In(amount),
-    };
-
-    let res: SwapResponse = querier.query(&QueryRequest::Custom(query))?;
-    match res.amount {
-        SwapAmount::Out(out_amount) => Ok(out_amount),
-        _ => Err(StdError::GenericErr {
-            msg: "Can't be `SwapAmount::In if query is built with this type".to_string(),
-        }),
+        let swap_msg: CosmosMsg = MsgSwapExactAmountIn {
+            sender: env.contract.address.to_string(),
+            routes: steps.to_vec(),
+            token_in: Some(Coin {
+                denom: denom_in.to_string(),
+                amount: amount.to_string(),
+            }),
+            token_out_min_amount: min_out_amount.to_string(),
+        }
+        .into();
+        Ok(swap_msg)
     }
 }

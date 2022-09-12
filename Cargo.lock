@@ -521,6 +521,8 @@ dependencies = [
  "mars-rewards-collector-base",
  "mars-testing",
  "osmo-bindings",
+ "osmosis-std",
+ "prost",
  "schemars",
  "serde",
  "thiserror",
