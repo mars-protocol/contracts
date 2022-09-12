@@ -1,12 +1,10 @@
 use std::fmt;
 
-use cosmwasm_std::{BlockInfo, Decimal, QuerierWrapper, StdError, StdResult};
+use cosmwasm_std::{BlockInfo, Decimal, Empty, QuerierWrapper, StdError, StdResult};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mars_oracle_base::{ContractError, ContractResult, PriceSource};
-
-use osmo_bindings::OsmosisQuery;
 
 use crate::helpers;
 
@@ -63,10 +61,10 @@ impl fmt::Display for OsmosisPriceSource {
     }
 }
 
-impl PriceSource<OsmosisQuery> for OsmosisPriceSource {
+impl PriceSource<Empty> for OsmosisPriceSource {
     fn validate(
         &self,
-        querier: &QuerierWrapper<OsmosisQuery>,
+        querier: &QuerierWrapper,
         denom: &str,
         base_denom: &str,
     ) -> ContractResult<()> {
@@ -76,16 +74,12 @@ impl PriceSource<OsmosisQuery> for OsmosisPriceSource {
             } => Ok(()),
             OsmosisPriceSource::Spot {
                 pool_id,
-            } => {
-                helpers::assert_osmosis_pool_assets(querier, *pool_id, denom, base_denom)?;
-                helpers::assert_osmosis_xyk_pool(querier, *pool_id)
-            }
+            } => helpers::assert_osmosis_pool_assets(querier, *pool_id, denom, base_denom),
             OsmosisPriceSource::Twap {
                 pool_id,
                 window_size,
             } => {
                 helpers::assert_osmosis_pool_assets(querier, *pool_id, denom, base_denom)?;
-                helpers::assert_osmosis_xyk_pool(querier, *pool_id)?;
 
                 if *window_size > TWO_DAYS_IN_SECONDS {
                     Err(ContractError::InvalidPriceSource {
@@ -106,7 +100,7 @@ impl PriceSource<OsmosisQuery> for OsmosisPriceSource {
 
     fn query_price(
         &self,
-        querier: &QuerierWrapper<OsmosisQuery>,
+        querier: &QuerierWrapper,
         block: &BlockInfo,
         denom: &str,
         base_denom: &str,
@@ -124,7 +118,14 @@ impl PriceSource<OsmosisQuery> for OsmosisPriceSource {
             } => {
                 let current_block_time = block.time.seconds();
                 let start_time = current_block_time - window_size;
-                helpers::query_osmosis_twap_price(querier, *pool_id, denom, base_denom, start_time)
+                helpers::query_osmosis_twap_price(
+                    querier,
+                    *pool_id,
+                    denom,
+                    base_denom,
+                    start_time,
+                    current_block_time,
+                )
             }
             OsmosisPriceSource::LiquidityToken {
                 ..

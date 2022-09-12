@@ -1,3 +1,5 @@
+extern crate core;
+
 #[cfg(not(target_arch = "wasm32"))]
 mod cw20_querier;
 /// cosmwasm_std::testing overrides and custom test helpers
