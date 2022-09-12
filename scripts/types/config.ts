@@ -33,4 +33,5 @@ export interface AssetConfig {
   deposit_cap: string
   deposit_enabled: boolean
   borrow_enabled: boolean
+  symbol: string
 }

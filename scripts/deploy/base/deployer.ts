@@ -178,20 +178,11 @@ export class Deployer {
     printYellow('Address Provider update completed')
     this.storage.execute.addressProviderUpdated = true
 
-    // leaving all console.log code for debugging purposes - not needed to be displayed at each run
-
-    // console.log(
-    //     `${this.config.chainId} :: Address Provider config : `,
-    //     await this.client.queryContractSmart(
-    //         this.storage.addresses.addressProvider!,
-    //         { config: {} }
-    //     )
-    // )
   }
 
   async initializeAsset(assetConfig: AssetConfig) {
     if (this.storage.execute.assetsInitialized.includes(assetConfig.denom)) {
-      printBlue(`${assetConfig.denom} already initialized.`)
+      printBlue(`${assetConfig.symbol} already initialized.`)
       return
     }
 
@@ -220,7 +211,7 @@ export class Deployer {
 
     await this.client.execute(this.deployerAddress, this.storage.addresses.redBank!, msg, 'auto')
 
-    printYellow(`${assetConfig.denom} initialized`)
+    printYellow(`${assetConfig.symbol} initialized`)
 
     this.storage.execute.assetsInitialized.push(assetConfig.denom)
   }

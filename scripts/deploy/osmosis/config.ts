@@ -56,10 +56,11 @@ export const osmoAsset: AssetConfig = {
   deposit_cap: '1000000000',
   deposit_enabled: true,
   borrow_enabled: true,
+  symbol: 'OSMO'
 }
 
 export const atomAsset: AssetConfig = {
-  denom: 'uatom',
+  denom: 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2',
   initial_borrow_rate: '0.1',
   max_loan_to_value: '0.65',
   reserve_factor: '0.2',
@@ -74,4 +75,5 @@ export const atomAsset: AssetConfig = {
   deposit_cap: '1000000000',
   deposit_enabled: true,
   borrow_enabled: true,
+  symbol: 'ATOM'
 }
