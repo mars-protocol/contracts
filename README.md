@@ -36,21 +36,44 @@ Follow these instructions to verify that the smart contracts that exist on chain
 3. Get the SHA256 checksum of a smart contract's wasm binary built from source code. To do this, first clone this repo, checkout a particular release, compile the smart contracts using the same version of [rust-optimizer](https://github.com/CosmWasm/rust-optimizer) listed in the [releases](https://github.com/mars-protocol/mars-core/releases), and verify the checksum written to `artifacts/checksums.txt`.
 4. Finally, verify that the two checksums are identical.
 
-## Building
+## Deploy scripts overview and set up 
+When the scripts run for the first time, it will upload code IDs for each contract, instantiate each contract, initialize assets, and run 4 tests (deposit, borrow, repay, withdraw). After the first run, the code will only run deposit, borrow, repay, and withdraw tests. To rerun everything, delete the osmo-test-4.json file in the artifacts folder to clear the storage.
 
-### Smart contracts
+Everything related to deployment must be ran from the `scripts` directory:
 ```
-./scripts/build_artifacts.sh
+cd scripts 
 ```
+Set up yarn:
+```
+yarn install 
+```
+Create the build folder: 
+```
+yarn build 
+```
+Compile all contracts: 
+```
+yarn compile 
+```
+This compiles and optimizes all contracts, storing them in `/artifacts` directory along with `checksum.txt` which contains sha256 hashes of each of the `.wasm` files (The script just uses CosmWasm's [rust-optimizer](https://github.com/CosmWasm/rust-optimizer)).
 
-Compiles and optimizes all contracts, storing them in `/artifacts` directory along with `checksum.txt` which contains sha256 hashes of each of the `.wasm` files (The script just uses CosmWasm's [rust-optimizer](https://github.com/CosmWasm/rust-optimizer)).
-
-### Schemas
+Formating must be done before running lint: 
 ```
-./scripts/build_schema.sh
+yarn format 
 ```
+Linting: 
+```
+yarn lint 
+```
+Now you're ready to deploy for an outpost.
 
-Is equivalent of running `cargo schema` in each of the smart contracts in `/contracts` directory, which creates JSON schema files for relevant contract calls, quieries and query responses (See: [cosmwams-schema](https://github.com/CosmWasm/cosmwasm/tree/main/packages/schema).
+## Deploying Outposts 
+Each outpost has a config file for its respective deployment and assets 
+
+For Osmosis: 
+```
+yarn deploy:osmosis 
+```
 
 ## Linting
 `rustfmt` is used to format any Rust source code:
@@ -65,43 +88,6 @@ cargo fmt
 cargo +nightly clippy --tests --all-features -- -D warnings
 ```
 
-## Setup for Node.js scripts
-
-Node.js scripts are used for deploying and integration testing. These scripts must be run from the `scripts` directory.
-
-Setup:
-
-```
-cd scripts
-npm install
-```
-
-TypeScript scripts must be executed with `ts-node` using:
-
-```
-node --loader ts-node/esm <script>.ts
-```
-
-
-## Deploying
-```
-# build the smart contracts
-./scripts/build_artifacts.sh
-
-cd scripts
-npm install
-
-# set the deploying wallet
-echo "TEST_MAIN=<MNEMONIC_OF_YOUR_DEPLOYING_WALLET>" >> .env
-
-# set the network, defaults to LocalTerra if unset
-echo "NETWORK=testnet" >> .env
-
-# ensure the deploy_config.ts has a cw20_code_id specified for above network
-
-node --loader ts-node/esm index.ts
-```
-
 ## Testing
 ### Unit tests
 
@@ -114,30 +100,6 @@ cargo test
 ```
 
 ### Integration tests
-
-#### Local Terra
-Integration tests require LocalTerra to be running:
-
-```
-git clone https://github.com/terra-money/LocalTerra.git
-cd LocalTerra
-docker compose up
-```
-
-Adjust the `timeout_*` config items in `LocalTerra/config/config.toml` to `250ms` to make the test run faster:
-
-```
-sed -E -I .bak '/timeout_(propose|prevote|precommit|commit)/s/[0-9]+m?s/250ms/' config/config.toml
-```
-
-#### Environment variables
-Required environment variables (can be set in `scripts/.env`):
-
-```sh
-CW_PLUS_ARTIFACTS_PATH # path to cw-plus artifacts (example cw20-base.wasm)
-ASTROPORT_ARTIFACTS_PATH # path to astroport artifacts
-MARS_MOCKS_ARTIFACTS_PATH # path to mars-mocks artifacts
-```
 
 #### Running a single integration test
 ```
