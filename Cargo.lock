@@ -460,6 +460,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-oracle-base",
+ "mars-osmosis",
  "mars-outpost",
  "mars-testing",
  "osmosis-std",
@@ -467,6 +468,16 @@ dependencies = [
  "schemars",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "mars-osmosis"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "mars-outpost",
+ "osmosis-std",
+ "prost",
 ]
 
 [[package]]
@@ -517,6 +528,7 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
+ "mars-osmosis",
  "mars-outpost",
  "mars-rewards-collector-base",
  "mars-testing",

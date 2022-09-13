@@ -1,12 +1,8 @@
 [package]
-name = "mars-rewards-collector-osmosis"
+name = "mars-osmosis"
 version = "0.1.0"
 authors = [
-  "larry_0x <larry@delphidigital.io>",
-  "Piotr Babel <piotr@delphilabs.io>",
-  "Spike Spiegel <spikeonmars@protonmail.com>",
-  "Ahmad Kaouk",
-  "Harry Scholes"
+  "Piotr Babel <piotr@delphilabs.io>"
 ]
 edition = "2021"
 
@@ -25,19 +21,9 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../../../packages/outpost", version = "0.1.0" }
-mars-osmosis = { path = "../../../packages/chains/osmosis", version = "0.1.0" }
-mars-rewards-collector-base = { path = "../base", version = "0.1.0" }
-
+mars-outpost = { path = "../../outpost" }
 cosmwasm-std = "1.0"
-cw-storage-plus = "0.14"
-schemars = "0.8"
-serde = { version = "1.0.144", default-features = false, features = ["derive"] }
-thiserror = "1.0.33"
 
 # FIXME: update with crates version if osmosis-main-clone branch merged
 osmosis-std = { git = "https://github.com/osmosis-labs/osmosis-rust", package = "osmosis-std", branch = "osmosis-main-clone" }
 prost = { version = "0.10", default-features = false, features = ["prost-derive"] }
-
-[dev-dependencies]
-mars-testing = { path = "../../../packages/testing", version = "0.1.0" }

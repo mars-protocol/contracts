@@ -6,7 +6,10 @@ members = [
   "contracts/oracle/*",
   "contracts/red-bank",
   "contracts/rewards-collector/*",
-  "packages/*"
+  "packages/health",
+  "packages/outpost",
+  "packages/testing",
+  "packages/chains/*",
 ]
 
 [profile.release]
