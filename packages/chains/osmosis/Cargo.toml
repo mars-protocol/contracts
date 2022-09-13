@@ -1,14 +1,17 @@
 [package]
-name = "mars-rewards-collector-osmosis"
+name = "mars-osmosis"
 version = "0.1.0"
 authors = [
-  "larry_0x <larry@delphidigital.io>",
-  "Piotr Babel <piotr@delphilabs.io>",
-  "Spike Spiegel <spikeonmars@protonmail.com>",
-  "Ahmad Kaouk",
-  "Harry Scholes"
+  "Piotr Babel <piotr@delphilabs.io>"
 ]
 edition = "2021"
+description = "Utilities for Osmosis chain interaction"
+license = "GPL-3.0"
+repository = "https://github.com/mars-protocol/outposts"
+homepage = "https://marsprotocol.io"
+documentation = "https://docs.marsprotocol.io/mars-protocol/developers/protocol-overview"
+readme = "README.md"
+keywords = ["mars", "cosmwasm"]
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -25,24 +28,12 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../../../packages/outpost", version = "0.1.0" }
-mars-osmosis = { path = "../../../packages/chains/osmosis", version = "0.1.0" }
-mars-rewards-collector-base = { path = "../base", version = "0.1.0" }
-
-cosmwasm-std = "1.1"
-cw2 = "0.15"
-cw-storage-plus = "0.15"
-schemars = "0.8"
-serde = { version = "1.0", default-features = false, features = ["derive"] }
-thiserror = "1.0"
+mars-outpost = { path = "../../outpost" }
+cosmwasm-std = "1.0"
 
 # FIXME: update with crates version if osmosis-main-clone branch merged
 osmosis-std = { git = "https://github.com/osmosis-labs/osmosis-rust", package = "osmosis-std", branch = "osmosis-main-clone" }
 prost = { version = "0.10", default-features = false, features = ["prost-derive"] }
-
-[dev-dependencies]
-mars-testing = { path = "../../../packages/testing", version = "0.1.0" }
-cosmwasm-schema = "1.1"
 
 [profile.release]
 overflow-checks = true
