@@ -1,19 +1,13 @@
 use std::str;
 
-use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
-    WasmMsg,
-};
-use cw20::{Cw20ExecuteMsg, MinterResponse};
-use cw20_base::msg::InstantiateMarketingInfo;
+use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 
 use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::{build_send_asset_msg, option_string_to_addr, zero_address};
 use mars_outpost::math;
 use mars_outpost::red_bank::{
-    Collateral, Config, CreateOrUpdateConfig, Debt, ExecuteMsg, InitOrUpdateAssetParams,
-    InstantiateMsg, Market,
+    Config, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg, Market,
 };
 
 use crate::error::ContractError;
@@ -26,10 +20,7 @@ use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
     get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
 };
-use crate::state::{
-    user_is_borrowing, COLLATERALS, CONFIG, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN,
-    UNCOLLATERALIZED_LOAN_LIMITS,
-};
+use crate::state::{COLLATERALS, CONFIG, DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
 use crate::user::User;
 
 pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, ContractError> {
