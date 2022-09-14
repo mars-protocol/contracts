@@ -103,4 +103,24 @@ impl Market {
 
         Ok(())
     }
+
+    pub fn increase_collateral(&mut self, amount_scaled: Uint128) -> StdResult<()> {
+        self.collateral_total_scaled = self.collateral_total_scaled.checked_add(amount_scaled)?;
+        Ok(())
+    }
+
+    pub fn increase_debt(&mut self, amount_scaled: Uint128) -> StdResult<()> {
+        self.debt_total_scaled = self.debt_total_scaled.checked_add(amount_scaled)?;
+        Ok(())
+    }
+
+    pub fn decrease_collateral(&mut self, amount_scaled: Uint128) -> StdResult<()> {
+        self.collateral_total_scaled = self.collateral_total_scaled.checked_sub(amount_scaled)?;
+        Ok(())
+    }
+
+    pub fn decrease_debt(&mut self, amount_scaled: Uint128) -> StdResult<()> {
+        self.debt_total_scaled = self.debt_total_scaled.checked_sub(amount_scaled)?;
+        Ok(())
+    }
 }
