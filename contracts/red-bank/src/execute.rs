@@ -9,21 +9,19 @@ use cw20_base::msg::InstantiateMarketingInfo;
 
 use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
-use mars_outpost::helpers::{
-    build_send_asset_msg, cw20_get_balance, option_string_to_addr, zero_address,
-};
+use mars_outpost::helpers::{build_send_asset_msg, option_string_to_addr, zero_address};
+use mars_outpost::math;
 use mars_outpost::red_bank::{
     Collateral, Config, CreateOrUpdateConfig, Debt, ExecuteMsg, InitOrUpdateAssetParams,
     InstantiateMsg, Market,
 };
-use mars_outpost::{ma_token, math};
 
 use crate::error::ContractError;
 use crate::health::{
     assert_below_liq_threshold_after_withdraw, assert_below_max_ltv_after_borrow,
     assert_liquidatable,
 };
-use crate::helpers::query_total_deposits;
+
 use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
     get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
@@ -39,15 +37,11 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
     let CreateOrUpdateConfig {
         owner,
         address_provider,
-        ma_token_code_id,
         close_factor,
     } = msg.config;
 
     // All fields should be available
-    let available = owner.is_some()
-        && address_provider.is_some()
-        && ma_token_code_id.is_some()
-        && close_factor.is_some();
+    let available = owner.is_some() && address_provider.is_some() && close_factor.is_some();
 
     if !available {
         return Err(MarsError::InstantiateParamsUnavailable {}.into());
@@ -56,7 +50,6 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
     let config = Config {
         owner: option_string_to_addr(deps.api, owner, zero_address())?,
         address_provider: option_string_to_addr(deps.api, address_provider, zero_address())?,
-        ma_token_code_id: ma_token_code_id.unwrap(),
         close_factor: close_factor.unwrap(),
     };
 
@@ -84,7 +77,6 @@ pub fn update_config(
     let CreateOrUpdateConfig {
         owner,
         address_provider,
-        ma_token_code_id,
         close_factor,
     } = new_config;
 
@@ -92,7 +84,6 @@ pub fn update_config(
     config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
     config.address_provider =
         option_string_to_addr(deps.api, address_provider, config.address_provider)?;
-    config.ma_token_code_id = ma_token_code_id.unwrap_or(config.ma_token_code_id);
     config.close_factor = close_factor.unwrap_or(config.close_factor);
 
     // Validate config
