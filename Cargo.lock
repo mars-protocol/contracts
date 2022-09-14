@@ -430,18 +430,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-ma-token"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "cw2",
- "cw20",
- "cw20-base",
- "mars-outpost",
-]
-
-[[package]]
 name = "mars-oracle-base"
 version = "0.1.0"
 dependencies = [

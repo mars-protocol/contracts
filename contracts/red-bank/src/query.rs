@@ -215,11 +215,9 @@ pub fn query_scaled_debt_amount(
 pub fn query_underlying_liquidity_amount(
     deps: Deps,
     env: Env,
-    ma_token: String,
+    denom: String,
     amount_scaled: Uint128,
 ) -> StdResult<Uint128> {
-    let ma_token_addr = deps.api.addr_validate(&ma_token)?;
-    let denom = MARKET_DENOMS_BY_MA_TOKEN.load(deps.storage, &ma_token_addr)?;
     let market = MARKETS.load(deps.storage, &denom)?;
     get_underlying_liquidity_amount(amount_scaled, &market, env.block.time.seconds())
 }

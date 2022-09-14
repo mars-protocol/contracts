@@ -2,7 +2,6 @@
 members = [
   "contracts/address-provider",
   "contracts/incentives",
-  "contracts/ma-token",
   "contracts/oracle/*",
   "contracts/red-bank",
   "contracts/rewards-collector/*",
