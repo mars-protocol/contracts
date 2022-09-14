@@ -12,8 +12,6 @@ pub struct Config {
     pub owner: Addr,
     /// Address provider returns addresses for all protocol contracts
     pub address_provider: Addr,
-    /// maToken code id used to instantiate new tokens
-    pub ma_token_code_id: u64,
     /// Maximum percentage of outstanding debt that can be covered by a liquidator
     pub close_factor: Decimal,
 }
@@ -28,6 +26,9 @@ impl Config {
 // TODO: Once maToken is removed, the scaled collateral amount will be stored in this struct
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Collateral {
+    /// Scaled collateral amount
+    pub amount_scaled: Uint128,
+
     /// Whether this asset is enabled as collateral
     ///
     /// Set to true by default, unless the user explicitly disables it by invoking the
@@ -76,7 +77,6 @@ pub struct Position {
 pub struct ConfigResponse {
     pub owner: String,
     pub address_provider: String,
-    pub ma_token_code_id: u64,
     pub close_factor: Decimal,
 }
 
