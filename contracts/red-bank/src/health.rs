@@ -7,11 +7,11 @@ use mars_outpost::oracle;
 use mars_outpost::red_bank::Position;
 
 use crate::interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount};
-use crate::state::{COLLATERALS, DEBTS, MARKETS};
+use crate::state::{uncollateral_loan_limit, COLLATERALS, DEBTS, MARKETS};
 
 /// Check the Health Factor for a given user
 pub fn assert_liquidatable(
-    deps: &Deps,
+    deps: Deps,
     env: &Env,
     user_addr: &Addr,
     oracle_addr: &Addr,
@@ -24,7 +24,7 @@ pub fn assert_liquidatable(
 
 /// Check the Health Factor for a given user after a withdraw
 pub fn assert_below_liq_threshold_after_withdraw(
-    deps: &Deps,
+    deps: Deps,
     env: &Env,
     user_addr: &Addr,
     oracle_addr: &Addr,
@@ -51,7 +51,7 @@ pub fn assert_below_liq_threshold_after_withdraw(
 
 /// Check the Health Factor for a given user after a borrow
 pub fn assert_below_max_ltv_after_borrow(
-    deps: &Deps,
+    deps: Deps,
     env: &Env,
     user_addr: &Addr,
     oracle_addr: &Addr,
@@ -79,22 +79,14 @@ pub fn assert_below_max_ltv_after_borrow(
 pub fn compute_position_health(positions: &HashMap<String, Position>) -> StdResult<Health> {
     let positions = positions
         .values()
-        .map(|p| {
-            // if it is an "uncollateralized" debt, then it won't count towards their health factor
-            let debt_amount = if p.uncollateralized_debt {
-                Decimal::zero()
-            } else {
-                Decimal::from_ratio(p.debt_amount, 1u128)
-            };
-
-            HealthPosition {
-                denom: p.denom.clone(),
-                collateral_amount: Decimal::from_ratio(p.collateral_amount, 1u128),
-                debt_amount,
-                price: p.asset_price,
-                max_ltv: p.max_ltv,
-                liquidation_threshold: p.liquidation_threshold,
-            }
+        // TODO: we can implement From<Position> for HealthPosition
+        .map(|p| HealthPosition {
+            denom: p.denom.clone(),
+            collateral_amount: Decimal::from_ratio(p.collateral_amount, 1u128),
+            debt_amount: Decimal::from_ratio(p.debt_amount, 1u128),
+            price: p.asset_price,
+            max_ltv: p.max_ltv,
+            liquidation_threshold: p.liquidation_threshold,
         })
         .collect::<Vec<_>>();
 
@@ -104,7 +96,7 @@ pub fn compute_position_health(positions: &HashMap<String, Position>) -> StdResu
 /// Goes through assets user has a position in and returns a HashMap mapping the asset denoms to the
 /// scaled amounts, and some metadata to be used by the caller.
 pub fn get_user_positions_map(
-    deps: &Deps,
+    deps: Deps,
     env: &Env,
     user_addr: &Addr,
     oracle_addr: &Addr,
@@ -145,15 +137,14 @@ pub fn get_user_positions_map(
                 _ => Uint128::zero(),
             };
 
-            let (debt_amount, uncollateralized_debt) =
-                match DEBTS.may_load(deps.storage, (user_addr, &denom))? {
-                    Some(debt) => {
-                        let debt_amount =
-                            get_underlying_debt_amount(debt.amount_scaled, &market, block_time)?;
-                        (debt_amount, debt.uncollateralized)
-                    }
-                    None => (Uint128::zero(), false),
-                };
+            let debt_amount = match DEBTS.may_load(deps.storage, (user_addr, &denom))? {
+                Some(amount_scaled) => {
+                    let amount = get_underlying_debt_amount(amount_scaled, &market, block_time)?;
+                    let limit = uncollateral_loan_limit(deps.storage, user_addr, &denom)?;
+                    amount.saturating_sub(limit)
+                }
+                None => Uint128::zero(),
+            };
 
             let asset_price = oracle::helpers::query_price(&deps.querier, oracle_addr, &denom)?;
 
@@ -161,7 +152,6 @@ pub fn get_user_positions_map(
                 denom: denom.clone(),
                 collateral_amount,
                 debt_amount,
-                uncollateralized_debt,
                 max_ltv: market.max_loan_to_value,
                 liquidation_threshold: market.liquidation_threshold,
                 asset_price,

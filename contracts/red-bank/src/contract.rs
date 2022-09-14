@@ -45,7 +45,9 @@ pub fn execute(
             new_limit,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            execute::update_uncollateralized_loan_limit(deps, info, user_addr, denom, new_limit)
+            execute::update_uncollateralized_loan_limit(
+                deps, env, info, user_addr, denom, new_limit,
+            )
         }
         ExecuteMsg::Deposit {
             on_behalf_of,

@@ -13,8 +13,8 @@ use mars_outpost::helpers::{
     build_send_asset_msg, cw20_get_balance, option_string_to_addr, zero_address,
 };
 use mars_outpost::red_bank::{
-    Collateral, Config, CreateOrUpdateConfig, Debt, ExecuteMsg, InitOrUpdateAssetParams,
-    InstantiateMsg, Market,
+    Collateral, Config, CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
+    Market,
 };
 use mars_outpost::{ma_token, math};
 
@@ -355,6 +355,7 @@ pub fn update_asset(
 /// Update uncollateralized loan limit by a given amount in base asset
 pub fn update_uncollateralized_loan_limit(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     user_addr: Addr,
     denom: String,
@@ -368,29 +369,18 @@ pub fn update_uncollateralized_loan_limit(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    // Check that the user has no collateralized debt
-    let current_limit = UNCOLLATERALIZED_LOAN_LIMITS
-        .may_load(deps.storage, (&user_addr, &denom))?
-        .unwrap_or_else(Uint128::zero);
-    let current_debt = DEBTS
-        .may_load(deps.storage, (&user_addr, &denom))?
-        .map(|debt| debt.amount_scaled)
-        .unwrap_or_else(Uint128::zero);
-    if current_limit.is_zero() && !current_debt.is_zero() {
-        return Err(ContractError::UserHasCollateralizedDebt {});
-    }
-
     UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (&user_addr, &denom), &new_limit)?;
 
-    DEBTS.update(deps.storage, (&user_addr, &denom), |debt_opt: Option<Debt>| -> StdResult<_> {
-        let mut debt = debt_opt.unwrap_or(Debt {
-            amount_scaled: Uint128::zero(),
-            uncollateralized: false,
-        });
-        // if limit == 0 then uncollateralized = false, otherwise uncollateralized = true
-        debt.uncollateralized = !new_limit.is_zero();
-        Ok(debt)
-    })?;
+    // The user's position must be healthy after updating the uncollateralized loan limit
+    let oracle_addr = address_provider::helpers::query_address(
+        deps.as_ref(),
+        &config.address_provider,
+        MarsContract::Oracle,
+    )?;
+    let (liquidatable, _) = assert_liquidatable(deps.as_ref(), &env, &user_addr, &oracle_addr)?;
+    if liquidatable {
+        return Err(ContractError::InvalidHealthFactorAfterSettingUncollateralizedLoanLimit {});
+    }
 
     Ok(Response::new()
         .add_attribute("action", "outposts/red-bank/update_uncollateralized_loan_limit")
@@ -545,7 +535,7 @@ pub fn withdraw(
     if collateral.enabled
         && user_is_borrowing(deps.storage, &withdrawer_addr)
         && !assert_below_liq_threshold_after_withdraw(
-            &deps.as_ref(),
+            deps.as_ref(),
             &env,
             &withdrawer_addr,
             oracle_addr,
@@ -628,10 +618,6 @@ pub fn borrow(
         });
     }
 
-    let uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
-        .may_load(deps.storage, (&borrower_addr, &denom))?
-        .unwrap_or_else(Uint128::zero);
-
     let config = CONFIG.load(deps.storage)?;
 
     let addresses = address_provider::helpers::query_addresses(
@@ -643,39 +629,15 @@ pub fn borrow(
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
     // Check if user can borrow specified amount
-    let mut uncollateralized_debt = false;
-    if uncollateralized_loan_limit.is_zero() {
-        if !assert_below_max_ltv_after_borrow(
-            &deps.as_ref(),
-            &env,
-            &borrower_addr,
-            oracle_addr,
-            &denom,
-            borrow_amount,
-        )? {
-            return Err(ContractError::BorrowAmountExceedsGivenCollateral {});
-        }
-    } else {
-        // Uncollateralized loan: check borrow amount plus debt does not exceed uncollateralized loan limit
-        uncollateralized_debt = true;
-
-        let borrower_debt =
-            DEBTS.may_load(deps.storage, (&borrower_addr, &denom))?.unwrap_or(Debt {
-                amount_scaled: Uint128::zero(),
-                uncollateralized: uncollateralized_debt,
-            });
-
-        let asset_market = MARKETS.load(deps.storage, &denom)?;
-        let debt_amount = get_underlying_debt_amount(
-            borrower_debt.amount_scaled,
-            &asset_market,
-            env.block.time.seconds(),
-        )?;
-
-        let debt_after_borrow = debt_amount.checked_add(borrow_amount)?;
-        if debt_after_borrow > uncollateralized_loan_limit {
-            return Err(ContractError::BorrowAmountExceedsUncollateralizedLoanLimit {});
-        }
+    if !assert_below_max_ltv_after_borrow(
+        deps.as_ref(),
+        &env,
+        &borrower_addr,
+        oracle_addr,
+        &denom,
+        borrow_amount,
+    )? {
+        return Err(ContractError::BorrowAmountExceedsGivenCollateral {});
     }
 
     let mut response = Response::new();
@@ -684,14 +646,12 @@ pub fn borrow(
         apply_accumulated_interests(&env, rewards_collector_addr, &mut borrow_market, response)?;
 
     // Set new debt
-    let mut debt = DEBTS.may_load(deps.storage, (&borrower_addr, &denom))?.unwrap_or(Debt {
-        amount_scaled: Uint128::zero(),
-        uncollateralized: uncollateralized_debt,
-    });
+    let mut debt_amount_scaled =
+        DEBTS.may_load(deps.storage, (&borrower_addr, &denom))?.unwrap_or_else(Uint128::zero);
     let borrow_amount_scaled =
         get_scaled_debt_amount(borrow_amount, &borrow_market, env.block.time.seconds())?;
-    debt.amount_scaled = debt.amount_scaled.checked_add(borrow_amount_scaled)?;
-    DEBTS.save(deps.storage, (&borrower_addr, &denom), &debt)?;
+    debt_amount_scaled = debt_amount_scaled.checked_add(borrow_amount_scaled)?;
+    DEBTS.save(deps.storage, (&borrower_addr, &denom), &debt_amount_scaled)?;
 
     borrow_market.debt_total_scaled += borrow_amount_scaled;
 
@@ -725,20 +685,13 @@ pub fn repay(
     repay_amount: Uint128,
 ) -> Result<Response, ContractError> {
     let user_addr = if let Some(address) = on_behalf_of {
-        let on_behalf_of_addr = deps.api.addr_validate(&address)?;
-        // Uncollateralized loans should not have 'on behalf of' because it creates accounting complexity for them
-        match UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&on_behalf_of_addr, &denom))? {
-            Some(limit) if !limit.is_zero() => {
-                return Err(ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {})
-            }
-            _ => on_behalf_of_addr,
-        }
+        deps.api.addr_validate(&address)?
     } else {
         info.sender.clone()
     };
 
     // Check new debt
-    let mut debt = DEBTS
+    let debt_amount_scaled_before = DEBTS
         .may_load(deps.storage, (&user_addr, &denom))?
         .ok_or(ContractError::CannotRepayZeroDebt {})?;
 
@@ -756,9 +709,8 @@ pub fn repay(
 
     response = apply_accumulated_interests(&env, &rewards_collector_addr, &mut market, response)?;
 
-    let debt_amount_scaled_before = debt.amount_scaled;
     let debt_amount_before =
-        get_underlying_debt_amount(debt.amount_scaled, &market, env.block.time.seconds())?;
+        get_underlying_debt_amount(debt_amount_scaled_before, &market, env.block.time.seconds())?;
 
     // If repay amount exceeds debt, refund any excess amounts
     let mut refund_amount = Uint128::zero();
@@ -773,7 +725,6 @@ pub fn repay(
 
     let debt_amount_scaled_after =
         get_scaled_debt_amount(debt_amount_after, &market, env.block.time.seconds())?;
-    debt.amount_scaled = debt_amount_scaled_after;
 
     let debt_amount_scaled_delta =
         debt_amount_scaled_before.checked_sub(debt_amount_scaled_after)?;
@@ -784,10 +735,10 @@ pub fn repay(
     MARKETS.save(deps.storage, &denom, &market)?;
 
     // TODO: this logic can be extracted to a helper function to simplify the content of `excute.rs`
-    if debt.amount_scaled.is_zero() {
+    if debt_amount_scaled_after.is_zero() {
         DEBTS.remove(deps.storage, (&user_addr, &denom));
     } else {
-        DEBTS.save(deps.storage, (&user_addr, &denom), &debt)?;
+        DEBTS.save(deps.storage, (&user_addr, &denom), &debt_amount_scaled_after)?;
     }
 
     Ok(response
@@ -848,7 +799,7 @@ pub fn liquidate(
     }
 
     // check if user has outstanding debt in the deposited asset that needs to be repayed
-    let mut user_debt = DEBTS
+    let user_debt_amount_scaled = DEBTS
         .may_load(deps.storage, (&user_addr, &debt_denom))?
         .ok_or(ContractError::CannotLiquidateWhenNoDebtBalance {})?;
 
@@ -864,7 +815,7 @@ pub fn liquidate(
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
     let (liquidatable, assets_positions) =
-        assert_liquidatable(&deps.as_ref(), &env, &user_addr, oracle_addr)?;
+        assert_liquidatable(deps.as_ref(), &env, &user_addr, oracle_addr)?;
 
     if !liquidatable {
         return Err(ContractError::CannotLiquidateHealthyPosition {});
@@ -891,7 +842,7 @@ pub fn liquidate(
     let mut response = Response::new();
 
     let user_debt_asset_total_debt =
-        get_underlying_debt_amount(user_debt.amount_scaled, &debt_market, block_time)?;
+        get_underlying_debt_amount(user_debt_amount_scaled, &debt_market, block_time)?;
 
     let (debt_amount_to_repay, collateral_amount_to_liquidate, refund_amount) =
         liquidation_compute_amounts(
@@ -937,11 +888,13 @@ pub fn liquidate(
 
     // Compute delta so it can be substracted to total debt
     let debt_amount_scaled_delta =
-        user_debt.amount_scaled.checked_sub(user_debt_asset_debt_amount_scaled_after)?;
+        user_debt_amount_scaled.checked_sub(user_debt_asset_debt_amount_scaled_after)?;
 
-    user_debt.amount_scaled = user_debt_asset_debt_amount_scaled_after;
-
-    DEBTS.save(deps.storage, (&user_addr, &debt_denom), &user_debt)?;
+    DEBTS.save(
+        deps.storage,
+        (&user_addr, &debt_denom),
+        &user_debt_asset_debt_amount_scaled_after,
+    )?;
 
     let debt_market_debt_total_scaled_after =
         debt_market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
@@ -1107,8 +1060,7 @@ pub fn update_asset_collateral_status(
             MarsContract::Oracle,
         )?;
 
-        let (liquidatable, _) =
-            assert_liquidatable(&deps.as_ref(), &env, &user_addr, &oracle_addr)?;
+        let (liquidatable, _) = assert_liquidatable(deps.as_ref(), &env, &user_addr, &oracle_addr)?;
 
         if liquidatable {
             return Err(ContractError::InvalidHealthFactorAfterDisablingCollateral {});
@@ -1144,7 +1096,7 @@ pub fn finalize_liquidity_token_transfer(
         MarsContract::Oracle,
     )?;
 
-    let (liquidatable, _) = assert_liquidatable(&deps.as_ref(), &env, &from_address, &oracle_addr)?;
+    let (liquidatable, _) = assert_liquidatable(deps.as_ref(), &env, &from_address, &oracle_addr)?;
 
     if liquidatable {
         return Err(ContractError::CannotTransferTokenWhenInvalidHealthFactor {});

@@ -38,16 +38,6 @@ pub struct Collateral {
     pub enabled: bool,
 }
 
-/// Debt for each asset and user
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct Debt {
-    /// Scaled debt amount
-    pub amount_scaled: Uint128,
-
-    /// Marker for uncollateralized debt
-    pub uncollateralized: bool,
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum UserHealthStatus {
@@ -64,7 +54,6 @@ pub struct Position {
     pub denom: String,
     pub collateral_amount: Uint128,
     pub debt_amount: Uint128,
-    pub uncollateralized_debt: bool,
     pub max_ltv: Decimal,
     pub liquidation_threshold: Decimal,
     pub asset_price: Decimal,
@@ -110,9 +99,8 @@ pub struct UserCollateralResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct UserPositionResponse {
     pub total_collateral_value: Decimal,
+    /// Value of debt that is above the user's uncollateralized loan limit
     pub total_debt_value: Decimal,
-    /// Total debt minus the uncollateralized debt
-    pub total_collateralized_debt: Decimal,
     pub weighted_max_ltv_collateral: Decimal,
     pub weighted_liquidation_threshold_collateral: Decimal,
     pub health_status: UserHealthStatus,

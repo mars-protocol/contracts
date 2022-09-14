@@ -121,9 +121,6 @@ pub enum ContractError {
     #[error("User's health factor can't be less than 1 after disabling collateral")]
     InvalidHealthFactorAfterDisablingCollateral {},
 
-    #[error("Cannot update uncollateralized loan limit because user has collateralized debt")]
-    UserHasCollateralizedDebt {},
-
-    #[error("Cannot repay uncollateralized loan on behalf of another user")]
-    CannotRepayUncollateralizedLoanOnBehalfOf {},
+    #[error("User's health factor can't be less than 1 after setting uncollateralized loan limit")]
+    InvalidHealthFactorAfterSettingUncollateralizedLoanLimit {},
 }
