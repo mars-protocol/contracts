@@ -436,7 +436,7 @@ pub fn withdraw(
         && !assert_below_liq_threshold_after_withdraw(
             &deps.as_ref(),
             &env,
-            &withdrawer.address(),
+            withdrawer.address(),
             oracle_addr,
             &denom,
             withdraw_amount,
@@ -609,7 +609,7 @@ pub fn repay(
 
     // Check new debt
     let debt = DEBTS
-        .may_load(deps.storage, (&user.address(), &denom))?
+        .may_load(deps.storage, (user.address(), &denom))?
         .ok_or(ContractError::CannotRepayZeroDebt {})?;
 
     let config = CONFIG.load(deps.storage)?;
