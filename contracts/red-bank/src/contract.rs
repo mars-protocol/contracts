@@ -29,16 +29,12 @@ pub fn execute(
         } => execute::update_config(deps, info, config),
         ExecuteMsg::InitAsset {
             denom,
-            asset_params,
-            asset_symbol,
-        } => execute::init_asset(deps, env, info, denom, asset_params, asset_symbol),
-        ExecuteMsg::InitAssetTokenCallback {
-            denom,
-        } => execute::init_asset_token_callback(deps, info, denom),
+            params,
+        } => execute::init_asset(deps, env, info, denom, params),
         ExecuteMsg::UpdateAsset {
             denom,
-            asset_params,
-        } => execute::update_asset(deps, env, info, denom, asset_params),
+            params,
+        } => execute::update_asset(deps, env, info, denom, params),
         ExecuteMsg::UpdateUncollateralizedLoanLimit {
             user,
             denom,
@@ -89,22 +85,6 @@ pub fn execute(
             denom,
             enable,
         } => execute::update_asset_collateral_status(deps, env, info, denom, enable),
-        ExecuteMsg::FinalizeLiquidityTokenTransfer {
-            sender_address,
-            recipient_address,
-            sender_previous_balance,
-            recipient_previous_balance,
-            amount,
-        } => execute::finalize_liquidity_token_transfer(
-            deps,
-            env,
-            info,
-            sender_address,
-            recipient_address,
-            sender_previous_balance,
-            recipient_previous_balance,
-            amount,
-        ),
     }
 }
 
@@ -184,14 +164,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             amount,
         } => to_binary(&query::query_scaled_debt_amount(deps, env, denom, amount)?),
         QueryMsg::UnderlyingLiquidityAmount {
-            ma_token_address,
+            denom,
             amount_scaled,
-        } => to_binary(&query::query_underlying_liquidity_amount(
-            deps,
-            env,
-            ma_token_address,
-            amount_scaled,
-        )?),
+        } => to_binary(&query::query_underlying_liquidity_amount(deps, env, denom, amount_scaled)?),
         QueryMsg::UnderlyingDebtAmount {
             denom,
             amount_scaled,
