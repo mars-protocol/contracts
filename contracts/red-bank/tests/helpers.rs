@@ -3,7 +3,7 @@
 use cosmwasm_std::testing::{MockApi, MockStorage};
 use cosmwasm_std::{Addr, Coin, Decimal, Deps, DepsMut, Event, OwnedDeps, Uint128};
 
-use mars_outpost::red_bank::{Collateral, CreateOrUpdateConfig, Debt, InstantiateMsg, Market};
+use mars_outpost::red_bank::{Collateral, CreateOrUpdateConfig, InstantiateMsg, Market};
 use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
 
 use mars_red_bank::contract::instantiate;
@@ -11,7 +11,9 @@ use mars_red_bank::interest_rates::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     ScalingOperation,
 };
-use mars_red_bank::state::{COLLATERALS, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN};
+use mars_red_bank::state::{
+    COLLATERALS, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN, UNCOLLATERALIZED_LOAN_LIMITS,
+};
 
 pub fn set_collateral(deps: DepsMut, user_addr: &Addr, denom: &str, enabled: bool) {
     let collateral = Collateral {
@@ -24,18 +26,8 @@ pub fn unset_collateral(deps: DepsMut, user_addr: &Addr, denom: &str) {
     COLLATERALS.remove(deps.storage, (user_addr, denom));
 }
 
-pub fn set_debt(
-    deps: DepsMut,
-    user_addr: &Addr,
-    denom: &str,
-    amount_scaled: impl Into<Uint128>,
-    uncollateralized: bool,
-) {
-    let debt = Debt {
-        amount_scaled: amount_scaled.into(),
-        uncollateralized,
-    };
-    DEBTS.save(deps.storage, (user_addr, denom), &debt).unwrap();
+pub fn set_debt(deps: DepsMut, user_addr: &Addr, denom: &str, amount_scaled: impl Into<Uint128>) {
+    DEBTS.save(deps.storage, (user_addr, denom), &amount_scaled.into()).unwrap();
 }
 
 /// Find if a user has a debt position in the specified asset
@@ -55,6 +47,15 @@ pub fn has_collateral_enabled(deps: Deps, user_addr: &Addr, denom: &str) -> bool
         .unwrap()
         .map(|collateral| collateral.enabled)
         .unwrap_or(false)
+}
+
+pub fn set_uncollatateralized_loan_limit(
+    deps: DepsMut,
+    user_addr: &Addr,
+    denom: &str,
+    limit: impl Into<Uint128>,
+) {
+    UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (user_addr, denom), &limit.into()).unwrap();
 }
 
 pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
