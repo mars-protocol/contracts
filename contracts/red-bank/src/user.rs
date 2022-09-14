@@ -53,6 +53,15 @@ impl<'a> User<'a> {
         DEBTS.load(store, (self.0, denom))
     }
 
+    /// Load the user's scaled debt amount; default to zero if not borrowing.
+    pub fn debt_amount_scaled(&self, store: &dyn Storage, denom: &str) -> StdResult<Uint128> {
+        let amount_scaled = DEBTS
+            .may_load(store, (self.0, denom))?
+            .map(|debt| debt.amount_scaled)
+            .unwrap_or_else(Uint128::zero);
+        Ok(amount_scaled)
+    }
+
     /// Load the user's uncollateralized loan limit. Return zero if the user has not been given an
     /// uncollateralized loan limit.
     pub fn uncollateralized_loan_limit(

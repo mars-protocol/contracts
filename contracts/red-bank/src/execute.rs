@@ -361,8 +361,6 @@ pub fn deposit(
         });
     }
 
-    user.increase_collateral(deps.storage, &denom, mint_amount)?;
-
     let mut response = Response::new();
 
     let config = CONFIG.load(deps.storage)?;
@@ -487,13 +485,13 @@ pub fn withdraw(
 
     // send underlying asset to user or another recipient
     let recipient_addr = if let Some(recipient) = recipient {
-        deps.api.addr_validate(&recipient)?
+        &deps.api.addr_validate(&recipient)?
     } else {
-        withdrawer.address().clone()
+        withdrawer.address()
     };
 
     Ok(response
-        .add_message(build_send_asset_msg(&recipient_addr, &denom, withdraw_amount))
+        .add_message(build_send_asset_msg(recipient_addr, &denom, withdraw_amount))
         .add_attribute("action", "outposts/red-bank/withdraw")
         .add_attribute("denom", denom)
         .add_attribute("user", withdrawer)
@@ -511,7 +509,7 @@ pub fn borrow(
     borrow_amount: Uint128,
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
-    let borrower_addr = info.sender;
+    let borrower = User(&info.sender);
 
     // Cannot borrow zero amount
     if borrow_amount.is_zero() {
@@ -529,9 +527,7 @@ pub fn borrow(
         });
     }
 
-    let uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
-        .may_load(deps.storage, (&borrower_addr, &denom))?
-        .unwrap_or_else(Uint128::zero);
+    let uncollateralized_loan_limit = borrower.uncollateralized_loan_limit(deps.storage, &denom)?;
 
     let config = CONFIG.load(deps.storage)?;
 
@@ -549,7 +545,7 @@ pub fn borrow(
         if !assert_below_max_ltv_after_borrow(
             &deps.as_ref(),
             &env,
-            &borrower_addr,
+            borrower.address(),
             oracle_addr,
             &denom,
             borrow_amount,
@@ -560,15 +556,11 @@ pub fn borrow(
         // Uncollateralized loan: check borrow amount plus debt does not exceed uncollateralized loan limit
         uncollateralized_debt = true;
 
-        let borrower_debt =
-            DEBTS.may_load(deps.storage, (&borrower_addr, &denom))?.unwrap_or(Debt {
-                amount_scaled: Uint128::zero(),
-                uncollateralized: uncollateralized_debt,
-            });
+        let debt_amount_scaled = borrower.debt_amount_scaled(deps.storage, &denom)?;
 
         let asset_market = MARKETS.load(deps.storage, &denom)?;
         let debt_amount = get_underlying_debt_amount(
-            borrower_debt.amount_scaled,
+            debt_amount_scaled,
             &asset_market,
             env.block.time.seconds(),
         )?;
@@ -581,20 +573,14 @@ pub fn borrow(
 
     let mut response = Response::new();
 
-    response =
-        apply_accumulated_interests(&env, rewards_collector_addr, &mut borrow_market, response)?;
+    apply_accumulated_interests(deps.storage, &env, rewards_collector_addr, &mut borrow_market)?;
 
     // Set new debt
-    let mut debt = DEBTS.may_load(deps.storage, (&borrower_addr, &denom))?.unwrap_or(Debt {
-        amount_scaled: Uint128::zero(),
-        uncollateralized: uncollateralized_debt,
-    });
     let borrow_amount_scaled =
         get_scaled_debt_amount(borrow_amount, &borrow_market, env.block.time.seconds())?;
-    debt.amount_scaled = debt.amount_scaled.checked_add(borrow_amount_scaled)?;
-    DEBTS.save(deps.storage, (&borrower_addr, &denom), &debt)?;
 
-    borrow_market.debt_total_scaled += borrow_amount_scaled;
+    borrow_market.increase_debt(borrow_amount_scaled)?;
+    borrower.increase_debt(deps.storage, &denom, borrow_amount_scaled, uncollateralized_debt)?;
 
     response =
         update_interest_rates(&deps, &env, &mut borrow_market, borrow_amount, &denom, response)?;
@@ -602,16 +588,16 @@ pub fn borrow(
 
     // Send borrow amount to borrower or another recipient
     let recipient_addr = if let Some(recipient) = recipient {
-        deps.api.addr_validate(&recipient)?
+        &deps.api.addr_validate(&recipient)?
     } else {
-        borrower_addr.clone()
+        borrower.address()
     };
 
     Ok(response
-        .add_message(build_send_asset_msg(&recipient_addr, &denom, borrow_amount))
+        .add_message(build_send_asset_msg(recipient_addr, &denom, borrow_amount))
         .add_attribute("action", "outposts/red-bank/borrow")
         .add_attribute("denom", denom)
-        .add_attribute("user", borrower_addr)
+        .add_attribute("user", borrower)
         .add_attribute("recipient", recipient_addr)
         .add_attribute("amount", borrow_amount))
 }
