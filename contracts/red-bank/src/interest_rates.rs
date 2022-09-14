@@ -1,15 +1,14 @@
 use std::str;
 
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, Event, Response, StdError, StdResult,
-    Uint128, WasmMsg,
+    Addr, Decimal, DepsMut, Env, Event, Response, StdError, StdResult, Storage, Uint128,
 };
-use cw20::Cw20ExecuteMsg;
 
 use mars_outpost::math;
 use mars_outpost::red_bank::Market;
 
 use crate::error::ContractError;
+use crate::user::User;
 
 /// Scaling factor used to keep more precision during division / multiplication by index.
 pub const SCALING_FACTOR: Uint128 = Uint128::new(1_000_000);
@@ -27,11 +26,11 @@ const SECONDS_PER_YEAR: u64 = 31536000u64;
 /// as it would apply the new interest rates instead of the ones that were valid during
 /// the period between indexes_last_updated and current_block
 pub fn apply_accumulated_interests(
+    store: &mut dyn Storage,
     env: &Env,
     rewards_collector_addr: &Addr,
     market: &mut Market,
-    mut response: Response,
-) -> StdResult<Response> {
+) -> StdResult<()> {
     let current_timestamp = env.block.time.seconds();
     let previous_borrow_index = market.borrow_index;
 
@@ -85,16 +84,10 @@ pub fn apply_accumulated_interests(
             market.liquidity_index,
             ScalingOperation::Truncate,
         )?;
-        response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: market.ma_token_address.clone().into(),
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
-                recipient: rewards_collector_addr.into(),
-                amount: mint_amount,
-            })?,
-            funds: vec![],
-        }))
+        User(rewards_collector_addr).increase_collateral(store, &market.denom, mint_amount)?;
     }
-    Ok(response)
+
+    Ok(())
 }
 
 pub fn calculate_applied_linear_interest_rate(
