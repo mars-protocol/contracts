@@ -28,7 +28,6 @@ impl Config {
 pub struct Collateral {
     /// Scaled collateral amount
     pub amount_scaled: Uint128,
-
     /// Whether this asset is enabled as collateral
     ///
     /// Set to true by default, unless the user explicitly disables it by invoking the
@@ -40,11 +39,10 @@ pub struct Collateral {
 }
 
 /// Debt for each asset and user
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Debt {
     /// Scaled debt amount
     pub amount_scaled: Uint128,
-
     /// Marker for uncollateralized debt
     pub uncollateralized: bool,
 }
@@ -96,6 +94,8 @@ pub struct UserDebtResponse {
     pub amount_scaled: Uint128,
     /// Underlying asset amount that is actually owed at the current block
     pub amount: Uint128,
+    /// Marker for uncollateralized debt
+    pub uncollateralized: bool,
 }
 
 // TODO: In an upcoming PR, we will also include `amount_scaled` and `amount` in this response
