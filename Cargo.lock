@@ -474,8 +474,6 @@ name = "mars-outpost"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "cw20",
- "cw20-base",
  "mars-testing",
  "schemars",
  "serde",
@@ -531,8 +529,6 @@ name = "mars-testing"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "cw20",
- "cw20-base",
  "mars-outpost",
  "osmo-bindings",
  "osmosis-std",
