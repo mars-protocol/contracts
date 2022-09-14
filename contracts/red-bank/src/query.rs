@@ -14,9 +14,7 @@ use crate::interest_rates::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
     get_underlying_liquidity_amount,
 };
-use crate::state::{
-    COLLATERALS, CONFIG, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN, UNCOLLATERALIZED_LOAN_LIMITS,
-};
+use crate::state::{COLLATERALS, CONFIG, DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
 
 const DEFAULT_LIMIT: u32 = 5;
 const MAX_LIMIT: u32 = 10;
@@ -26,7 +24,6 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     Ok(ConfigResponse {
         owner: config.owner.to_string(),
         address_provider: config.address_provider.to_string(),
-        ma_token_code_id: config.ma_token_code_id,
         close_factor: config.close_factor,
     })
 }
