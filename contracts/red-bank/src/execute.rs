@@ -101,8 +101,7 @@ pub fn init_asset(
     env: Env,
     info: MessageInfo,
     denom: String,
-    asset_params: InitOrUpdateAssetParams,
-    asset_symbol_option: Option<String>,
+    params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
@@ -114,10 +113,8 @@ pub fn init_asset(
         return Err(ContractError::AssetAlreadyInitialized {});
     }
 
-    let new_market = create_market(env.block.time.seconds(), &denom, asset_params)?;
+    let new_market = create_market(env.block.time.seconds(), &denom, params)?;
     MARKETS.save(deps.storage, &denom, &new_market)?;
-
-    let symbol = asset_symbol_option.unwrap_or_else(|| denom.clone());
 
     // Prepare response, should instantiate an maToken
     // and use the Register hook.
@@ -131,42 +128,7 @@ pub fn init_asset(
     let protocol_admin_addr = &addresses[&MarsContract::ProtocolAdmin];
     let incentives_addr = &addresses[&MarsContract::Incentives];
 
-    let token_symbol = format!("ma{}", symbol);
-
     Ok(Response::new()
-        .add_message(CosmosMsg::Wasm(WasmMsg::Instantiate {
-            admin: Some(protocol_admin_addr.to_string()),
-            code_id: config.ma_token_code_id,
-            msg: to_binary(&ma_token::msg::InstantiateMsg {
-                name: format!("Mars {} Liquidity Token", symbol),
-                symbol: token_symbol.clone(),
-                decimals: 6,
-                initial_balances: vec![],
-                mint: Some(MinterResponse {
-                    minter: env.contract.address.to_string(),
-                    cap: None,
-                }),
-                marketing: Some(InstantiateMarketingInfo {
-                    project: Some(String::from("Mars Protocol")),
-                    description: Some(format!(
-                        "Interest earning token representing deposits for {}",
-                        symbol
-                    )),
-                    marketing: Some(protocol_admin_addr.to_string()),
-                    logo: None,
-                }),
-                init_hook: Some(ma_token::msg::InitHook {
-                    contract_addr: env.contract.address.to_string(),
-                    msg: to_binary(&ExecuteMsg::InitAssetTokenCallback {
-                        denom: denom.clone(),
-                    })?,
-                }),
-                red_bank_address: env.contract.address.to_string(),
-                incentives_address: incentives_addr.into(),
-            })?,
-            funds: vec![],
-            label: token_symbol,
-        }))
         .add_attribute("action", "outposts/red-bank/init_asset")
         .add_attribute("denom", denom))
 }
@@ -207,7 +169,6 @@ pub fn create_market(
 
     let new_market = Market {
         denom: denom.to_string(),
-        ma_token_address: Addr::unchecked(""),
         borrow_index: Decimal::one(),
         liquidity_index: Decimal::one(),
         borrow_rate: borrow_rate.unwrap(),
@@ -215,6 +176,7 @@ pub fn create_market(
         max_loan_to_value: max_loan_to_value.unwrap(),
         reserve_factor: reserve_factor.unwrap(),
         indexes_last_updated: block_time,
+        collateral_total_scaled: Uint128::zero(),
         debt_total_scaled: Uint128::zero(),
         liquidation_threshold: liquidation_threshold.unwrap(),
         liquidation_bonus: liquidation_bonus.unwrap(),
@@ -230,36 +192,13 @@ pub fn create_market(
     Ok(new_market)
 }
 
-pub fn init_asset_token_callback(
-    deps: DepsMut,
-    info: MessageInfo,
-    denom: String,
-) -> Result<Response, ContractError> {
-    let mut market = MARKETS.load(deps.storage, &denom)?;
-
-    if market.ma_token_address == zero_address() {
-        let ma_contract_addr = info.sender;
-
-        market.ma_token_address = ma_contract_addr.clone();
-        MARKETS.save(deps.storage, &denom, &market)?;
-
-        // save ma token contract to reference mapping
-        MARKET_DENOMS_BY_MA_TOKEN.save(deps.storage, &ma_contract_addr, &denom)?;
-
-        Ok(Response::new().add_attribute("action", "outposts/red-bank/init_asset_token_callback"))
-    } else {
-        // Can do this only once
-        Err(MarsError::Unauthorized {}.into())
-    }
-}
-
 /// Update asset with new params.
 pub fn update_asset(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
     denom: String,
-    asset_params: InitOrUpdateAssetParams,
+    params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
@@ -283,7 +222,7 @@ pub fn update_asset(
                 deposit_enabled,
                 borrow_enabled,
                 deposit_cap,
-            } = asset_params;
+            } = params;
 
             // If reserve factor or interest rates are updated we update indexes with
             // current values before applying the change to prevent applying this
