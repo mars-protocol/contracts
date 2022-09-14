@@ -947,31 +947,16 @@ pub fn update_asset_collateral_status(
     denom: String,
     enable: bool,
 ) -> Result<Response, ContractError> {
-    let user_addr = info.sender;
+    let user = User(&info.sender);
     let mut collateral =
-        COLLATERALS.may_load(deps.storage, (&user_addr, &denom))?.unwrap_or_default();
+        COLLATERALS.may_load(deps.storage, (user.address(), &denom))?.ok_or_else(|| {
+            ContractError::UserNoCollateralBalance {
+                user: user.into(),
+                denom: denom.clone(),
+            }
+        })?;
 
-    let collateral_market = MARKETS.load(deps.storage, &denom)?;
-
-    if !collateral.enabled && enable {
-        let collateral_ma_address = collateral_market.ma_token_address;
-        let user_collateral_balance =
-            cw20_get_balance(&deps.querier, collateral_ma_address, user_addr.clone())?;
-        if !user_collateral_balance.is_zero() {
-            // enable collateral asset
-            collateral.enabled = true;
-            COLLATERALS.save(deps.storage, (&user_addr, &denom), &collateral)?;
-        } else {
-            return Err(ContractError::UserNoCollateralBalance {
-                user: user_addr.to_string(),
-                denom,
-            });
-        }
-    } else if collateral.enabled && !enable {
-        // disable collateral asset
-        collateral.enabled = false;
-        COLLATERALS.save(deps.storage, (&user_addr, &denom), &collateral)?;
-
+    if collateral.enabled && !enable {
         // check health factor after disabling collateral
         let config = CONFIG.load(deps.storage)?;
         let oracle_addr = address_provider::helpers::query_address(
@@ -981,16 +966,19 @@ pub fn update_asset_collateral_status(
         )?;
 
         let (liquidatable, _) =
-            assert_liquidatable(&deps.as_ref(), &env, &user_addr, &oracle_addr)?;
+            assert_liquidatable(&deps.as_ref(), &env, user.address(), &oracle_addr)?;
 
         if liquidatable {
             return Err(ContractError::InvalidHealthFactorAfterDisablingCollateral {});
         }
     }
 
+    collateral.enabled = enable;
+    COLLATERALS.save(deps.storage, (user.address(), &denom), &collateral)?;
+
     Ok(Response::new()
         .add_attribute("action", "outposts/red-bank/update_asset_collateral_status")
-        .add_attribute("user", user_addr.as_str())
+        .add_attribute("user", user)
         .add_attribute("denom", denom)
         .add_attribute("enable", enable.to_string()))
 }
