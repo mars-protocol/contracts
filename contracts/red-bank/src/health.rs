@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdResult, Uint128};
 use mars_health::health::{Health, Position as HealthPosition};
 use mars_outpost::helpers::cw20_get_balance;
 use mars_outpost::oracle;
@@ -10,69 +10,35 @@ use crate::interest_rates::{get_underlying_debt_amount, get_underlying_liquidity
 use crate::state::{uncollateral_loan_limit, COLLATERALS, DEBTS, MARKETS};
 
 /// Check the Health Factor for a given user
-pub fn assert_liquidatable(
+pub fn is_liquidatable(
     deps: Deps,
     env: &Env,
     user_addr: &Addr,
     oracle_addr: &Addr,
-) -> StdResult<(bool, HashMap<String, Position>)> {
+) -> StdResult<bool> {
+    let (_, health) = get_user_positions_health(deps, env, user_addr, oracle_addr)?;
+    Ok(health.is_liquidatable())
+}
+
+pub fn is_above_max_ltv(
+    deps: Deps,
+    env: &Env,
+    user_addr: &Addr,
+    oracle_addr: &Addr,
+) -> StdResult<bool> {
+    let (_, health) = get_user_positions_health(deps, env, user_addr, oracle_addr)?;
+    Ok(health.is_above_max_ltv())
+}
+
+pub fn get_user_positions_health(
+    deps: Deps,
+    env: &Env,
+    user_addr: &Addr,
+    oracle_addr: &Addr,
+) -> StdResult<(HashMap<String, Position>, Health)> {
     let positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
     let health = compute_position_health(&positions)?;
-
-    Ok((health.is_liquidatable(), positions))
-}
-
-/// Check the Health Factor for a given user after a withdraw
-pub fn assert_below_liq_threshold_after_withdraw(
-    deps: Deps,
-    env: &Env,
-    user_addr: &Addr,
-    oracle_addr: &Addr,
-    denom: &str,
-    withdraw_amount: Uint128,
-) -> StdResult<bool> {
-    let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
-
-    // Update position to compute health factor after withdraw
-    match positions.get_mut(denom) {
-        Some(p) => {
-            p.collateral_amount = p.collateral_amount.checked_sub(withdraw_amount)?;
-        }
-        None => {
-            return Err(StdError::GenericErr {
-                msg: "No User Balance".to_string(),
-            })
-        }
-    }
-
-    let health = compute_position_health(&positions)?;
-    Ok(!health.is_liquidatable())
-}
-
-/// Check the Health Factor for a given user after a borrow
-pub fn assert_below_max_ltv_after_borrow(
-    deps: Deps,
-    env: &Env,
-    user_addr: &Addr,
-    oracle_addr: &Addr,
-    denom: &str,
-    borrow_amount: Uint128,
-) -> StdResult<bool> {
-    let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
-
-    // Update position to compute health factor after borrow
-    positions
-        .entry(denom.to_string())
-        .or_insert(Position {
-            denom: denom.to_string(),
-            debt_amount: Uint128::zero(),
-            asset_price: oracle::helpers::query_price(&deps.querier, oracle_addr, denom)?,
-            ..Default::default()
-        })
-        .debt_amount += borrow_amount;
-
-    let health = compute_position_health(&positions)?;
-    Ok(!health.is_above_max_ltv())
+    Ok((positions, health))
 }
 
 /// Compute Health of a given User Position

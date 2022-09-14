@@ -30,6 +30,10 @@ pub fn set_debt(deps: DepsMut, user_addr: &Addr, denom: &str, amount_scaled: imp
     DEBTS.save(deps.storage, (user_addr, denom), &amount_scaled.into()).unwrap();
 }
 
+pub fn unset_debt(deps: DepsMut, user_addr: &Addr, denom: &str) {
+    DEBTS.remove(deps.storage, (user_addr, denom))
+}
+
 /// Find if a user has a debt position in the specified asset
 pub fn has_debt_position(deps: Deps, user_addr: &Addr, denom: &str) -> bool {
     DEBTS.may_load(deps.storage, (user_addr, denom)).unwrap().is_some()

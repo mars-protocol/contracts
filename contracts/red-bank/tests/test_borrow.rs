@@ -12,7 +12,7 @@ use mars_red_bank::interest_rates::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     ScalingOperation, SCALING_FACTOR,
 };
-use mars_red_bank::state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
+use mars_red_bank::state::{DEBTS, MARKETS};
 
 use helpers::{
     has_collateral_position, has_debt_position, set_collateral, th_build_interests_updated_event,
@@ -138,7 +138,7 @@ fn test_borrow_and_repay() {
     assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uosmo"));
     assert!(!has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
-    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uosmo")).unwrap();
+    let debt_amount_scaled = DEBTS.load(&deps.storage, (&borrower_addr, "uosmo")).unwrap();
     let expected_debt_scaled_1_after_borrow = compute_scaled_amount(
         borrow_amount,
         expected_params_uosmo.borrow_index,
@@ -148,7 +148,7 @@ fn test_borrow_and_repay() {
 
     let market_1_after_borrow = MARKETS.load(&deps.storage, "uosmo").unwrap();
 
-    assert_eq!(expected_debt_scaled_1_after_borrow, debt.amount_scaled);
+    assert_eq!(expected_debt_scaled_1_after_borrow, debt_amount_scaled);
     assert_eq!(expected_debt_scaled_1_after_borrow, market_1_after_borrow.debt_total_scaled);
     assert_eq!(expected_params_uosmo.borrow_rate, market_1_after_borrow.borrow_rate);
     assert_eq!(expected_params_uosmo.liquidity_rate, market_1_after_borrow.liquidity_rate);
@@ -184,7 +184,7 @@ fn test_borrow_and_repay() {
             ..Default::default()
         },
     );
-    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uosmo")).unwrap();
+    let debt_amount_scaled = DEBTS.load(&deps.storage, (&borrower_addr, "uosmo")).unwrap();
     let market_1_after_borrow_again = MARKETS.load(&deps.storage, "uosmo").unwrap();
 
     let expected_debt_scaled_1_after_borrow_again = expected_debt_scaled_1_after_borrow
@@ -194,7 +194,7 @@ fn test_borrow_and_repay() {
             ScalingOperation::Ceil,
         )
         .unwrap();
-    assert_eq!(expected_debt_scaled_1_after_borrow_again, debt.amount_scaled);
+    assert_eq!(expected_debt_scaled_1_after_borrow_again, debt_amount_scaled);
     assert_eq!(
         expected_debt_scaled_1_after_borrow_again,
         market_1_after_borrow_again.debt_total_scaled
@@ -205,7 +205,6 @@ fn test_borrow_and_repay() {
     // *
     // Borrow uusd
     // *
-
     let borrow_amount = Uint128::from(4000u128);
     let block_time = market_1_after_borrow_again.indexes_last_updated + 3000u64;
     let env = mock_env_at_block_time(block_time);
@@ -252,7 +251,7 @@ fn test_borrow_and_repay() {
     );
     assert_eq!(res.events, vec![th_build_interests_updated_event("uusd", &expected_params_uusd)]);
 
-    let debt2 = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
+    let debt2_amount_scaled = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
     let market_2_after_borrow_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
 
     let expected_debt_scaled_2_after_borrow_2 = compute_scaled_amount(
@@ -261,7 +260,7 @@ fn test_borrow_and_repay() {
         ScalingOperation::Ceil,
     )
     .unwrap();
-    assert_eq!(expected_debt_scaled_2_after_borrow_2, debt2.amount_scaled);
+    assert_eq!(expected_debt_scaled_2_after_borrow_2, debt2_amount_scaled);
     assert_eq!(expected_debt_scaled_2_after_borrow_2, market_2_after_borrow_2.debt_total_scaled);
     assert_eq!(expected_params_uusd.borrow_rate, market_2_after_borrow_2.borrow_rate);
     assert_eq!(expected_params_uusd.liquidity_rate, market_2_after_borrow_2.liquidity_rate);
@@ -330,7 +329,7 @@ fn test_borrow_and_repay() {
     assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uosmo"));
     assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
-    let debt2 = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
+    let debt2_amount_scaled = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
     let market_2_after_repay_some_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
 
     let expected_debt_scaled_2_after_repay_some_2 = expected_debt_scaled_2_after_borrow_2
@@ -340,7 +339,7 @@ fn test_borrow_and_repay() {
             ScalingOperation::Ceil,
         )
         .unwrap();
-    assert_eq!(expected_debt_scaled_2_after_repay_some_2, debt2.amount_scaled);
+    assert_eq!(expected_debt_scaled_2_after_repay_some_2, debt2_amount_scaled);
     assert_eq!(
         expected_debt_scaled_2_after_repay_some_2,
         market_2_after_repay_some_2.debt_total_scaled
@@ -562,26 +561,6 @@ fn test_repay_on_behalf_of() {
 }
 
 #[test]
-fn test_repay_uncollateralized_loan_on_behalf_of() {
-    let mut deps = th_setup(&[]);
-
-    let repayer_addr = Addr::unchecked("repayer");
-    let another_user_addr = Addr::unchecked("another_user");
-
-    UNCOLLATERALIZED_LOAN_LIMITS
-        .save(deps.as_mut().storage, (&another_user_addr, "somecoin"), &Uint128::new(1000u128))
-        .unwrap();
-
-    let env = mock_env(MockEnvParams::default());
-    let info = cosmwasm_std::testing::mock_info(repayer_addr.as_str(), &[coin(110000, "somecoin")]);
-    let msg = ExecuteMsg::Repay {
-        on_behalf_of: Some(another_user_addr.to_string()),
-    };
-    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {});
-}
-
-#[test]
 fn test_borrow_uusd() {
     let initial_liquidity = 10000000;
     let mut deps = th_setup(&[coin(initial_liquidity, "uusd")]);
@@ -652,12 +631,12 @@ fn test_borrow_uusd() {
 
     assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
-    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
+    let debt_amount_scaled = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
 
     assert_eq!(
         valid_amount,
         compute_underlying_amount(
-            debt.amount_scaled,
+            debt_amount_scaled,
             market_after_borrow.borrow_index,
             ScalingOperation::Ceil
         )
@@ -942,11 +921,11 @@ fn test_borrow_and_send_funds_to_another_user() {
     assert!(has_debt_position(deps.as_ref(), &borrower_addr, &market.denom));
 
     // Debt for 'borrower' should exist
-    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
+    let debt_amount_scaled = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
     assert_eq!(
         borrow_amount,
         compute_underlying_amount(
-            debt.amount_scaled,
+            debt_amount_scaled,
             market_after_borrow.borrow_index,
             ScalingOperation::Ceil
         )

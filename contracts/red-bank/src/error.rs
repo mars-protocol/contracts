@@ -61,17 +61,11 @@ pub enum ContractError {
     #[error("Borrow amount exceeds maximum allowed given current collateral value")]
     BorrowAmountExceedsGivenCollateral {},
 
-    #[error("Borrow amount exceeds uncollateralized loan limit given existing debt")]
-    BorrowAmountExceedsUncollateralizedLoanLimit {},
-
     #[error("Cannot repay 0 debt")]
     CannotRepayZeroDebt {},
 
     #[error("Amount to repay is greater than total debt")]
     CannotRepayMoreThanDebt {},
-
-    #[error("User has a positive uncollateralized loan limit and thus cannot be liquidated")]
-    CannotLiquidateWhenPositiveUncollateralizedLoanLimit {},
 
     #[error("User can't be liquidated for asset {denom:?} not being used as collateral")]
     CannotLiquidateWhenCollateralUnset {

@@ -19,10 +19,7 @@ use mars_outpost::red_bank::{
 use mars_outpost::{ma_token, math};
 
 use crate::error::ContractError;
-use crate::health::{
-    assert_below_liq_threshold_after_withdraw, assert_below_max_ltv_after_borrow,
-    assert_liquidatable,
-};
+use crate::health::{get_user_positions_health, is_above_max_ltv, is_liquidatable};
 use crate::helpers::query_total_deposits;
 use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
@@ -369,7 +366,11 @@ pub fn update_uncollateralized_loan_limit(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (&user_addr, &denom), &new_limit)?;
+    if new_limit.is_zero() {
+        UNCOLLATERALIZED_LOAN_LIMITS.remove(deps.storage, (&user_addr, &denom));
+    } else {
+        UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (&user_addr, &denom), &new_limit)?;
+    }
 
     // The user's position must be healthy after updating the uncollateralized loan limit
     let oracle_addr = address_provider::helpers::query_address(
@@ -377,8 +378,8 @@ pub fn update_uncollateralized_loan_limit(
         &config.address_provider,
         MarsContract::Oracle,
     )?;
-    let (liquidatable, _) = assert_liquidatable(deps.as_ref(), &env, &user_addr, &oracle_addr)?;
-    if liquidatable {
+
+    if is_liquidatable(deps.as_ref(), &env, &user_addr, &oracle_addr)? {
         return Err(ContractError::InvalidHealthFactorAfterSettingUncollateralizedLoanLimit {});
     }
 
@@ -530,22 +531,6 @@ pub fn withdraw(
     // remove maToken and store collateral shares here in Red Bank.
     let collateral = COLLATERALS.load(deps.storage, (&withdrawer_addr, &denom))?;
 
-    // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
-    // otherwise no reasons to block the withdraw
-    if collateral.enabled
-        && user_is_borrowing(deps.storage, &withdrawer_addr)
-        && !assert_below_liq_threshold_after_withdraw(
-            deps.as_ref(),
-            &env,
-            &withdrawer_addr,
-            oracle_addr,
-            &denom,
-            withdraw_amount,
-        )?
-    {
-        return Err(ContractError::InvalidHealthFactorAfterWithdraw {});
-    }
-
     let mut response = Response::new();
 
     // update indexes and interest rates
@@ -572,6 +557,16 @@ pub fn withdraw(
     // if the user's maToken amount is reduced to zero, then delete the collateral position
     if withdrawer_balance_scaled_after.is_zero() {
         COLLATERALS.remove(deps.storage, (&withdrawer_addr, &denom));
+    }
+
+    // once market and user collateral has been updated, assert that the user's position is below
+    // liquidation threshold
+    // only check if the collateral was previously enabled, and the user is borrowing some assets
+    if collateral.enabled
+        && user_is_borrowing(deps.as_ref().storage, &withdrawer_addr)
+        && is_liquidatable(deps.as_ref(), &env, &withdrawer_addr, oracle_addr)?
+    {
+        return Err(ContractError::InvalidHealthFactorAfterWithdraw {});
     }
 
     // send underlying asset to user or another recipient
@@ -628,18 +623,6 @@ pub fn borrow(
     let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
-    // Check if user can borrow specified amount
-    if !assert_below_max_ltv_after_borrow(
-        deps.as_ref(),
-        &env,
-        &borrower_addr,
-        oracle_addr,
-        &denom,
-        borrow_amount,
-    )? {
-        return Err(ContractError::BorrowAmountExceedsGivenCollateral {});
-    }
-
     let mut response = Response::new();
 
     response =
@@ -658,6 +641,11 @@ pub fn borrow(
     response =
         update_interest_rates(&deps, &env, &mut borrow_market, borrow_amount, &denom, response)?;
     MARKETS.save(deps.storage, &denom, &borrow_market)?;
+
+    // once market and user debt has been updated, assert the user position is below max LTV
+    if is_above_max_ltv(deps.as_ref(), &env, &borrower_addr, oracle_addr)? {
+        return Err(ContractError::BorrowAmountExceedsGivenCollateral {});
+    }
 
     // Send borrow amount to borrower or another recipient
     let recipient_addr = if let Some(recipient) = recipient {
@@ -762,16 +750,6 @@ pub fn liquidate(
     let block_time = env.block.time.seconds();
 
     // 1. Validate liquidation
-    // If user (contract) has a positive uncollateralized limit then the user
-    // cannot be liquidated
-    if let Some(limit) =
-        UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&user_addr, &debt_denom))?
-    {
-        if !limit.is_zero() {
-            return Err(ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});
-        }
-    };
-
     // check if the user has enabled the collateral asset as collateral
     let collateral = COLLATERALS
         .may_load(deps.storage, (&user_addr, &collateral_denom))?
@@ -814,10 +792,10 @@ pub fn liquidate(
     let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
-    let (liquidatable, assets_positions) =
-        assert_liquidatable(deps.as_ref(), &env, &user_addr, oracle_addr)?;
+    let (positions, health) =
+        get_user_positions_health(deps.as_ref(), &env, &user_addr, oracle_addr)?;
 
-    if !liquidatable {
+    if !health.is_liquidatable() {
         return Err(ContractError::CannotLiquidateHealthyPosition {});
     }
 
@@ -830,11 +808,11 @@ pub fn liquidate(
     };
 
     // 3. Compute debt to repay and collateral to liquidate
-    let collateral_price = assets_positions
+    let collateral_price = positions
         .get(&collateral_denom)
         .ok_or(ContractError::CannotLiquidateWhenNoCollateralBalance {})?
         .asset_price;
-    let debt_price = assets_positions
+    let debt_price = positions
         .get(&debt_denom)
         .ok_or(ContractError::CannotLiquidateWhenNoDebtBalance {})?
         .asset_price;
@@ -1060,9 +1038,7 @@ pub fn update_asset_collateral_status(
             MarsContract::Oracle,
         )?;
 
-        let (liquidatable, _) = assert_liquidatable(deps.as_ref(), &env, &user_addr, &oracle_addr)?;
-
-        if liquidatable {
+        if is_liquidatable(deps.as_ref(), &env, &user_addr, &oracle_addr)? {
             return Err(ContractError::InvalidHealthFactorAfterDisablingCollateral {});
         }
     }
@@ -1096,9 +1072,7 @@ pub fn finalize_liquidity_token_transfer(
         MarsContract::Oracle,
     )?;
 
-    let (liquidatable, _) = assert_liquidatable(deps.as_ref(), &env, &from_address, &oracle_addr)?;
-
-    if liquidatable {
+    if is_liquidatable(deps.as_ref(), &env, &from_address, &oracle_addr)? {
         return Err(ContractError::CannotTransferTokenWhenInvalidHealthFactor {});
     }
 

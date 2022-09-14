@@ -1,196 +1,24 @@
 use cosmwasm_std::testing::mock_info;
-use cosmwasm_std::{attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128};
+use cosmwasm_std::{Addr, Decimal, Uint128};
 
-use mars_outpost::error::MarsError;
 use mars_outpost::math;
-use mars_outpost::red_bank::{Debt, ExecuteMsg, Market};
-use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
+use mars_outpost::red_bank::{ExecuteMsg, Market};
+use mars_testing::{mock_env, MockEnvParams};
 
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
 use mars_red_bank::health;
 use mars_red_bank::interest_rates::{
-    compute_scaled_amount, compute_underlying_amount, get_scaled_debt_amount,
-    get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
+    compute_underlying_amount, get_scaled_debt_amount, get_updated_liquidity_index,
+    ScalingOperation, SCALING_FACTOR,
 };
-use mars_red_bank::state::{DEBTS, UNCOLLATERALIZED_LOAN_LIMITS};
 
 use helpers::{
-    has_collateral_enabled, has_collateral_position, has_debt_position, set_collateral, set_debt,
-    th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
-    TestUtilizationDeltaInfo,
+    has_collateral_enabled, has_collateral_position, set_collateral, set_debt, th_init_market,
+    th_setup,
 };
 
 mod helpers;
-
-#[test]
-fn test_uncollateralized_loan_limits() {
-    let available_liquidity = Uint128::from(2000000000u128);
-    let mut deps = th_setup(&[coin(available_liquidity.into(), "somecoin")]);
-
-    let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
-        borrow_index: Decimal::from_ratio(12u128, 10u128),
-        liquidity_index: Decimal::from_ratio(8u128, 10u128),
-        borrow_rate: Decimal::from_ratio(20u128, 100u128),
-        liquidity_rate: Decimal::from_ratio(10u128, 100u128),
-        reserve_factor: Decimal::from_ratio(1u128, 10u128),
-        debt_total_scaled: Uint128::zero(),
-        indexes_last_updated: 10000000,
-        ..Default::default()
-    };
-
-    // should get index 0
-    let market_initial = th_init_market(deps.as_mut(), "somecoin", &mock_market);
-
-    let mut block_time = mock_market.indexes_last_updated + 10000u64;
-    let initial_uncollateralized_loan_limit = Uint128::from(2400_u128);
-
-    // Check that borrowers with uncollateralized debt cannot get an uncollateralized loan limit
-    let existing_borrower_addr = Addr::unchecked("existing_borrower");
-    set_debt(deps.as_mut(), &existing_borrower_addr, "somecoin", 123u128, false);
-
-    let update_limit_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
-        denom: "somecoin".to_string(),
-        user: existing_borrower_addr.to_string(),
-        new_limit: initial_uncollateralized_loan_limit,
-    };
-    let update_limit_env = mock_env_at_block_time(block_time);
-    let info = mock_info("owner", &[]);
-    let err = execute(deps.as_mut(), update_limit_env.clone(), info, update_limit_msg).unwrap_err();
-    assert_eq!(err, ContractError::UserHasCollateralizedDebt {});
-
-    // Update uncollateralized loan limit for users without collateralized loans
-    let borrower_addr = Addr::unchecked("borrower");
-
-    let update_limit_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
-        denom: "somecoin".to_string(),
-        user: borrower_addr.to_string(),
-        new_limit: initial_uncollateralized_loan_limit,
-    };
-
-    // update limit as unauthorized user, should fail
-    let info = mock_info("random", &[]);
-    let error_res =
-        execute(deps.as_mut(), update_limit_env.clone(), info, update_limit_msg.clone())
-            .unwrap_err();
-    assert_eq!(error_res, MarsError::Unauthorized {}.into());
-
-    // Update borrower limit as owner
-    let info = mock_info("owner", &[]);
-    execute(deps.as_mut(), update_limit_env, info, update_limit_msg).unwrap();
-
-    // check user's limit has been updated to the appropriate amount
-    let limit =
-        UNCOLLATERALIZED_LOAN_LIMITS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
-    assert_eq!(limit, initial_uncollateralized_loan_limit);
-
-    // check user's uncollateralized debt flag is true (limit > 0)
-    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
-    assert!(debt.uncollateralized);
-
-    // Borrow asset
-    block_time += 1000_u64;
-    let initial_borrow_amount = initial_uncollateralized_loan_limit.multiply_ratio(1_u64, 2_u64);
-    let borrow_msg = ExecuteMsg::Borrow {
-        denom: "somecoin".to_string(),
-        amount: initial_borrow_amount,
-        recipient: None,
-    };
-    let borrow_env = mock_env_at_block_time(block_time);
-    let info = mock_info("borrower", &[]);
-    let res = execute(deps.as_mut(), borrow_env, info, borrow_msg).unwrap();
-
-    let expected_params = th_get_expected_indices_and_rates(
-        &market_initial,
-        block_time,
-        available_liquidity,
-        TestUtilizationDeltaInfo {
-            less_liquidity: initial_borrow_amount,
-            more_debt: initial_borrow_amount,
-            ..Default::default()
-        },
-    );
-
-    assert_eq!(
-        res.messages,
-        vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-            to_address: borrower_addr.to_string(),
-            amount: coins(initial_borrow_amount.u128(), "somecoin")
-        }))]
-    );
-
-    assert_eq!(
-        res.attributes,
-        vec![
-            attr("action", "outposts/red-bank/borrow"),
-            attr("denom", "somecoin"),
-            attr("user", "borrower"),
-            attr("recipient", "borrower"),
-            attr("amount", initial_borrow_amount.to_string()),
-        ]
-    );
-    assert_eq!(res.events, vec![th_build_interests_updated_event("somecoin", &expected_params)]);
-
-    // Check debt
-    assert!(has_debt_position(deps.as_ref(), &borrower_addr, "somecoin"));
-
-    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
-
-    let expected_debt_scaled_after_borrow = compute_scaled_amount(
-        initial_borrow_amount,
-        expected_params.borrow_index,
-        ScalingOperation::Ceil,
-    )
-    .unwrap();
-
-    assert_eq!(expected_debt_scaled_after_borrow, debt.amount_scaled);
-
-    // Borrow an amount less than initial limit but exceeding current limit
-    let remaining_limit = initial_uncollateralized_loan_limit - initial_borrow_amount;
-    let exceeding_limit = remaining_limit + Uint128::from(100_u64);
-
-    block_time += 1000_u64;
-    let borrow_msg = ExecuteMsg::Borrow {
-        denom: "somecoin".to_string(),
-        amount: exceeding_limit,
-        recipient: None,
-    };
-    let borrow_env = mock_env_at_block_time(block_time);
-    let info = mock_info("borrower", &[]);
-    let error_res = execute(deps.as_mut(), borrow_env, info, borrow_msg).unwrap_err();
-    assert_eq!(error_res, ContractError::BorrowAmountExceedsUncollateralizedLoanLimit {});
-
-    // Borrow a valid amount given uncollateralized loan limit
-    block_time += 1000_u64;
-    let borrow_msg = ExecuteMsg::Borrow {
-        denom: "somecoin".to_string(),
-        amount: remaining_limit - Uint128::from(20_u128),
-        recipient: None,
-    };
-    let borrow_env = mock_env_at_block_time(block_time);
-    let info = mock_info("borrower", &[]);
-    execute(deps.as_mut(), borrow_env, info, borrow_msg).unwrap();
-
-    // Set limit to zero
-    let update_allowance_msg = ExecuteMsg::UpdateUncollateralizedLoanLimit {
-        user: borrower_addr.to_string(),
-        denom: "somecoin".to_string(),
-        new_limit: Uint128::zero(),
-    };
-    let allowance_env = mock_env_at_block_time(block_time);
-    let info = mock_info("owner", &[]);
-    execute(deps.as_mut(), allowance_env, info, update_allowance_msg).unwrap();
-
-    // check user's allowance is zero
-    let allowance =
-        UNCOLLATERALIZED_LOAN_LIMITS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
-    assert_eq!(allowance, Uint128::zero());
-
-    // check user's uncollateralized debt flag is false (limit == 0)
-    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
-    assert!(!debt.uncollateralized);
-}
 
 #[test]
 fn test_update_asset_collateral() {
@@ -336,14 +164,10 @@ fn test_update_asset_collateral() {
         .unwrap();
 
         // Set user to have max debt for valid health factor
-        let debt = Debt {
-            amount_scaled: token_3_debt_scaled,
-            uncollateralized: false,
-        };
-        DEBTS.save(deps.as_mut().storage, (&user_addr, denom_3), &debt).unwrap();
+        set_debt(deps.as_mut(), &user_addr, denom_3, token_3_debt_scaled);
 
         let positions = health::get_user_positions_map(
-            &deps.as_ref(),
+            deps.as_ref(),
             &env,
             &user_addr,
             &Addr::unchecked("oracle"),

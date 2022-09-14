@@ -1,11 +1,10 @@
 use cosmwasm_std::{Addr, Decimal, Uint128};
 
-use mars_outpost::red_bank::{Debt, Market, UserDebtResponse};
+use mars_outpost::red_bank::{Market, UserDebtResponse};
 use mars_testing::{mock_env, MockEnvParams};
 
 use mars_red_bank::interest_rates::{get_scaled_debt_amount, get_underlying_debt_amount};
 use mars_red_bank::query::{query_user_collaterals, query_user_debt, query_user_debts};
-use mars_red_bank::state::DEBTS;
 
 use helpers::{set_collateral, th_init_market, th_setup};
 
@@ -103,11 +102,7 @@ fn test_query_user_debt() {
         env.block.time.seconds(),
     )
     .unwrap();
-    let debt_1 = Debt {
-        amount_scaled: debt_amount_scaled_1,
-        uncollateralized: false,
-    };
-    DEBTS.save(deps.as_mut().storage, (&user_addr, "coin_1"), &debt_1).unwrap();
+    helpers::set_debt(deps.as_mut(), &user_addr, "coin_1", debt_amount_scaled_1);
 
     // Save debt for market 3
     let debt_amount_3 = Uint128::new(2221u128);
@@ -119,11 +114,7 @@ fn test_query_user_debt() {
         env.block.time.seconds(),
     )
     .unwrap();
-    let debt_3 = Debt {
-        amount_scaled: debt_amount_scaled_3,
-        uncollateralized: false,
-    };
-    DEBTS.save(deps.as_mut().storage, (&user_addr, "coin_3"), &debt_3).unwrap();
+    helpers::set_debt(deps.as_mut(), &user_addr, "coin_3", debt_amount_scaled_3);
 
     let debts = query_user_debts(deps.as_ref(), &env.block, user_addr, None, None).unwrap();
     assert_eq!(debts.len(), 2);
@@ -183,11 +174,7 @@ fn test_query_user_asset_debt() {
         env.block.time.seconds(),
     )
     .unwrap();
-    let debt_1 = Debt {
-        amount_scaled: debt_amount_scaled_1,
-        uncollateralized: false,
-    };
-    DEBTS.save(deps.as_mut().storage, (&user_addr, "coin_1"), &debt_1).unwrap();
+    helpers::set_debt(deps.as_mut(), &user_addr, "coin_1", debt_amount_scaled_1);
 
     // Check asset with existing debt
     {

@@ -3,7 +3,7 @@ use cosmwasm_std::{
     attr, coin, coins, to_binary, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128, WasmMsg,
 };
 
-use mars_outpost::red_bank::{Debt, ExecuteMsg, Market};
+use mars_outpost::red_bank::{ExecuteMsg, Market};
 use mars_outpost::{ma_token, math};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
@@ -13,7 +13,7 @@ use mars_red_bank::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
     get_updated_borrow_index, get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
 };
-use mars_red_bank::state::{DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN};
+use mars_red_bank::state::{MARKETS, MARKET_DENOMS_BY_MA_TOKEN};
 
 use helpers::{
     has_collateral_position, set_collateral, th_build_interests_updated_event,
@@ -331,18 +331,17 @@ fn test_withdraw_if_health_factor_not_met() {
     // Set user to have positive debt amount in debt asset
     // Uncollateralized debt shouldn't count for health factor
     let token_2_debt_scaled = Uint128::new(200_000) * SCALING_FACTOR;
-    let debt = Debt {
-        amount_scaled: token_2_debt_scaled,
-        uncollateralized: false,
-    };
-    let uncollateralized_debt = Debt {
-        amount_scaled: Uint128::new(200_000) * SCALING_FACTOR,
-        uncollateralized: true,
-    };
-    DEBTS.save(deps.as_mut().storage, (&withdrawer_addr, "token2"), &debt).unwrap();
-    DEBTS
-        .save(deps.as_mut().storage, (&withdrawer_addr, "token3"), &uncollateralized_debt)
-        .unwrap();
+    let token_3_debt_scaled = Uint128::new(200_000) * SCALING_FACTOR;
+    helpers::set_debt(deps.as_mut(), &withdrawer_addr, "token2", token_2_debt_scaled);
+    helpers::set_debt(deps.as_mut(), &withdrawer_addr, "token3", token_3_debt_scaled);
+
+    // User has debt in token3, but below the uncollateralized loan limit
+    helpers::set_uncollatateralized_loan_limit(
+        deps.as_mut(),
+        &withdrawer_addr,
+        "token3",
+        u128::MAX,
+    );
 
     // Set the querier to return native exchange rates
     let token_1_exchange_rate = Decimal::from_ratio(3u128, 1u128);
