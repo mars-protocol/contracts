@@ -147,31 +147,40 @@ pub fn query_user_debts(
 
 pub fn query_user_collateral(
     deps: Deps,
+    block: &BlockInfo,
     user_addr: Addr,
     denom: String,
 ) -> StdResult<UserCollateralResponse> {
-    let enabled = match COLLATERALS.may_load(deps.storage, (&user_addr, &denom))? {
-        Some(collateral) => {
-            // TODO: For now, we just return whether the collateral is enabled.
-            // Once maToken is removed, we will compute the underlying collateral amount here,
-            // similar as with the `query_user_debt` query.
-            collateral.enabled
-        }
-        None => false,
-    };
+    let block_time = block.time.seconds();
+    let market = MARKETS.load(deps.storage, &denom)?;
+
+    let (amount_scaled, amount, enabled) = COLLATERALS
+        .may_load(deps.storage, (&user_addr, &denom))?
+        .map(|collateral| -> StdResult<_> {
+            let amount_scaled = collateral.amount_scaled;
+            let amount = get_underlying_liquidity_amount(amount_scaled, &market, block_time)?;
+            Ok((amount_scaled, amount, collateral.enabled))
+        })
+        .transpose()?
+        .unwrap_or_else(|| (Uint128::zero(), Uint128::zero(), false));
 
     Ok(UserCollateralResponse {
         denom,
+        amount_scaled,
+        amount,
         enabled,
     })
 }
 
 pub fn query_user_collaterals(
     deps: Deps,
+    block: &BlockInfo,
     user_addr: Addr,
     start_after: Option<String>,
     limit: Option<u32>,
 ) -> StdResult<Vec<UserCollateralResponse>> {
+    let block_time = block.time.seconds();
+
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
@@ -181,8 +190,16 @@ pub fn query_user_collaterals(
         .take(limit)
         .map(|item| {
             let (denom, collateral) = item?;
+
+            let market = MARKETS.load(deps.storage, &denom)?;
+
+            let amount_scaled = collateral.amount_scaled;
+            let amount = get_underlying_liquidity_amount(amount_scaled, &market, block_time)?;
+
             Ok(UserCollateralResponse {
                 denom,
+                amount_scaled,
+                amount,
                 enabled: collateral.enabled,
             })
         })

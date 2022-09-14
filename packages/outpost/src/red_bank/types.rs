@@ -103,6 +103,10 @@ pub struct UserDebtResponse {
 pub struct UserCollateralResponse {
     /// Asset denom
     pub denom: String,
+    /// Scaled collateral amount stored in contract state
+    pub amount_scaled: Uint128,
+    /// Underlying asset amount that is actually deposited at the current block
+    pub amount: Uint128,
     /// Wether the user is using asset as collateral or not
     pub enabled: bool,
 }

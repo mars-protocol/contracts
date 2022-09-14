@@ -139,7 +139,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             denom,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_collateral(deps, user_addr, denom)?)
+            to_binary(&query::query_user_collateral(deps, &env.block, user_addr, denom)?)
         }
         QueryMsg::UserCollaterals {
             user,
@@ -147,7 +147,13 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             limit,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_collaterals(deps, user_addr, start_after, limit)?)
+            to_binary(&query::query_user_collaterals(
+                deps,
+                &env.block,
+                user_addr,
+                start_after,
+                limit,
+            )?)
         }
         QueryMsg::UserPosition {
             user,
