@@ -108,18 +108,6 @@ pub fn init_asset(
     let new_market = create_market(env.block.time.seconds(), &denom, params)?;
     MARKETS.save(deps.storage, &denom, &new_market)?;
 
-    // Prepare response, should instantiate an maToken
-    // and use the Register hook.
-    // A new maToken should be created which callbacks this contract in order to be registered.
-    let addresses = address_provider::helpers::query_addresses(
-        deps.as_ref(),
-        &config.address_provider,
-        vec![MarsContract::Incentives, MarsContract::ProtocolAdmin],
-    )?;
-    // TODO: protocol admin may be a marshub address, which can't be validated into `Addr`
-    let protocol_admin_addr = &addresses[&MarsContract::ProtocolAdmin];
-    let incentives_addr = &addresses[&MarsContract::Incentives];
-
     Ok(Response::new()
         .add_attribute("action", "outposts/red-bank/init_asset")
         .add_attribute("denom", denom))
@@ -713,7 +701,7 @@ pub fn liquidate(
     }
 
     // check if user has outstanding debt in the deposited asset that needs to be repayed
-    let mut user_debt = DEBTS
+    let user_debt = DEBTS
         .may_load(deps.storage, (&user_addr, &debt_denom))?
         .ok_or(ContractError::CannotLiquidateWhenNoDebtBalance {})?;
 
