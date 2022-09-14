@@ -611,22 +611,22 @@ pub fn repay(
     denom: String,
     repay_amount: Uint128,
 ) -> Result<Response, ContractError> {
-    let user_addr = if let Some(address) = on_behalf_of {
+    let user = if let Some(address) = on_behalf_of {
         let on_behalf_of_addr = deps.api.addr_validate(&address)?;
         // Uncollateralized loans should not have 'on behalf of' because it creates accounting complexity for them
         match UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&on_behalf_of_addr, &denom))? {
             Some(limit) if !limit.is_zero() => {
                 return Err(ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {})
             }
-            _ => on_behalf_of_addr,
+            _ => User(&on_behalf_of_addr),
         }
     } else {
-        info.sender.clone()
+        User(&info.sender)
     };
 
     // Check new debt
     let mut debt = DEBTS
-        .may_load(deps.storage, (&user_addr, &denom))?
+        .may_load(deps.storage, (&user.address(), &denom))?
         .ok_or(ContractError::CannotRepayZeroDebt {})?;
 
     let config = CONFIG.load(deps.storage)?;
@@ -641,7 +641,7 @@ pub fn repay(
 
     let mut response = Response::new();
 
-    response = apply_accumulated_interests(&env, &rewards_collector_addr, &mut market, response)?;
+    apply_accumulated_interests(deps.storage, &env, &rewards_collector_addr, &mut market)?;
 
     let debt_amount_scaled_before = debt.amount_scaled;
     let debt_amount_before =
@@ -652,7 +652,7 @@ pub fn repay(
     let mut debt_amount_after = Uint128::zero();
     if repay_amount > debt_amount_before {
         refund_amount = repay_amount - debt_amount_before;
-        let refund_msg = build_send_asset_msg(&user_addr, &denom, refund_amount);
+        let refund_msg = build_send_asset_msg(user.address(), &denom, refund_amount);
         response = response.add_message(refund_msg);
     } else {
         debt_amount_after = debt_amount_before - repay_amount;
@@ -660,28 +660,21 @@ pub fn repay(
 
     let debt_amount_scaled_after =
         get_scaled_debt_amount(debt_amount_after, &market, env.block.time.seconds())?;
-    debt.amount_scaled = debt_amount_scaled_after;
 
     let debt_amount_scaled_delta =
         debt_amount_scaled_before.checked_sub(debt_amount_scaled_after)?;
 
-    market.debt_total_scaled = market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
+    market.decrease_debt(debt_amount_scaled_delta)?;
+    user.decrease_debt(deps.storage, &denom, debt_amount_scaled_delta)?;
 
     response = update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, response)?;
     MARKETS.save(deps.storage, &denom, &market)?;
-
-    // TODO: this logic can be extracted to a helper function to simplify the content of `excute.rs`
-    if debt.amount_scaled.is_zero() {
-        DEBTS.remove(deps.storage, (&user_addr, &denom));
-    } else {
-        DEBTS.save(deps.storage, (&user_addr, &denom), &debt)?;
-    }
 
     Ok(response
         .add_attribute("action", "outposts/red-bank/repay")
         .add_attribute("denom", denom)
         .add_attribute("sender", info.sender)
-        .add_attribute("user", user_addr)
+        .add_attribute("user", user)
         .add_attribute("amount", repay_amount.checked_sub(refund_amount)?))
 }
 
@@ -696,16 +689,14 @@ pub fn liquidate(
     sent_debt_asset_amount: Uint128,
 ) -> Result<Response, ContractError> {
     let block_time = env.block.time.seconds();
+    let user = User(&user_addr);
+    let liquidator = User(&info.sender);
 
     // 1. Validate liquidation
     // If user (contract) has a positive uncollateralized limit then the user
     // cannot be liquidated
-    if let Some(limit) =
-        UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&user_addr, &debt_denom))?
-    {
-        if !limit.is_zero() {
-            return Err(ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});
-        }
+    if !user.uncollateralized_loan_limit(deps.storage, &debt_denom)?.is_zero() {
+        return Err(ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});
     };
 
     // check if the user has enabled the collateral asset as collateral
@@ -720,11 +711,7 @@ pub fn liquidate(
 
     // check if user has available collateral in specified collateral asset to be liquidated
     let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
-    let user_collateral_balance_scaled = cw20_get_balance(
-        &deps.querier,
-        collateral_market.ma_token_address.clone(),
-        user_addr.clone(),
-    )?;
+    let user_collateral_balance_scaled = collateral.amount_scaled;
     let user_collateral_balance = get_underlying_liquidity_amount(
         user_collateral_balance_scaled,
         &collateral_market,
@@ -798,15 +785,16 @@ pub fn liquidate(
         block_time,
     )?;
 
-    response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: collateral_market.ma_token_address.to_string(),
-        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
-            sender: user_addr.to_string(),
-            recipient: info.sender.to_string(),
-            amount: collateral_amount_to_liquidate_scaled,
-        })?,
-        funds: vec![],
-    }));
+    user.decrease_collateral(
+        deps.storage,
+        &collateral_denom,
+        collateral_amount_to_liquidate_scaled,
+    )?;
+    liquidator.increase_collateral(
+        deps.storage,
+        &collateral_denom,
+        collateral_amount_to_liquidate_scaled,
+    )?;
 
     // if max collateral to liquidate equals the user's balance, delete the collateral position
     if collateral_amount_to_liquidate_scaled == user_collateral_balance_scaled {
@@ -826,9 +814,7 @@ pub fn liquidate(
     let debt_amount_scaled_delta =
         user_debt.amount_scaled.checked_sub(user_debt_asset_debt_amount_scaled_after)?;
 
-    user_debt.amount_scaled = user_debt_asset_debt_amount_scaled_after;
-
-    DEBTS.save(deps.storage, (&user_addr, &debt_denom), &user_debt)?;
+    user.decrease_debt(deps.storage, &debt_denom, debt_amount_scaled_delta)?;
 
     let debt_market_debt_total_scaled_after =
         debt_market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
@@ -842,11 +828,11 @@ pub fn liquidate(
         let mut asset_market_after = collateral_market;
         let denom = &collateral_denom;
 
-        response = apply_accumulated_interests(
+        apply_accumulated_interests(
+            deps.storage,
             &env,
             rewards_collector_addr,
             &mut asset_market_after,
-            response,
         )?;
 
         asset_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
@@ -864,11 +850,11 @@ pub fn liquidate(
     } else {
         let mut debt_market_after = debt_market;
 
-        response = apply_accumulated_interests(
+        apply_accumulated_interests(
+            deps.storage,
             &env,
             rewards_collector_addr,
             &mut debt_market_after,
-            response,
         )?;
 
         debt_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
