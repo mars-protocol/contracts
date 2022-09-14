@@ -84,6 +84,7 @@ pub fn apply_accumulated_interests(
             market.liquidity_index,
             ScalingOperation::Truncate,
         )?;
+        market.increase_collateral(mint_amount);
         User(rewards_collector_addr).increase_collateral(store, &market.denom, mint_amount)?;
     }
 

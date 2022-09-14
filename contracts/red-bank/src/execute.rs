@@ -30,6 +30,7 @@ use crate::state::{
     user_is_borrowing, COLLATERALS, CONFIG, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN,
     UNCOLLATERALIZED_LOAN_LIMITS,
 };
+use crate::user::User;
 
 pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, ContractError> {
     // Destructuring a struct’s fields into separate variables in order to force
@@ -240,11 +241,11 @@ pub fn update_asset(
                     &config.address_provider,
                     MarsContract::ProtocolRewardsCollector,
                 )?;
-                response = apply_accumulated_interests(
+                apply_accumulated_interests(
+                    deps.storage,
                     &env,
                     &protocol_rewards_collector_addr,
                     &mut market,
-                    response,
                 )?;
             }
 
@@ -338,10 +339,10 @@ pub fn deposit(
     denom: String,
     deposit_amount: Uint128,
 ) -> Result<Response, ContractError> {
-    let user_addr = if let Some(address) = on_behalf_of {
-        deps.api.addr_validate(&address)?
+    let user = if let Some(address) = on_behalf_of {
+        User(&deps.api.addr_validate(&address)?)
     } else {
-        info.sender.clone()
+        User(&info.sender)
     };
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
@@ -351,7 +352,7 @@ pub fn deposit(
         });
     }
 
-    let total_scaled_deposits = query_total_deposits(&deps.querier, &market.ma_token_address)?;
+    let total_scaled_deposits = market.collateral_total_scaled;
     let total_deposits =
         get_underlying_liquidity_amount(total_scaled_deposits, &market, env.block.time.seconds())?;
     if total_deposits.checked_add(deposit_amount)? > market.deposit_cap {
@@ -360,18 +361,7 @@ pub fn deposit(
         });
     }
 
-    // Update the user's collateral status
-    // TODO: Currently, the logic is:
-    // - If the user already has a collateral position, do nothing;
-    // - If not, initialize a new one with `enable` default to `true`.
-    // We don't increment the user's collateral shares here, as the collateral shares are tokenized
-    // as maTokens.
-    // Once maToken is removed, we increment the user's collateral shares here.
-    COLLATERALS.update(deps.storage, (&user_addr, &denom), |collateral| -> StdResult<_> {
-        Ok(collateral.unwrap_or(Collateral {
-            enabled: true,
-        }))
-    })?;
+    user.increase_collateral(deps.storage, &denom, mint_amount)?;
 
     let mut response = Response::new();
 
@@ -383,9 +373,8 @@ pub fn deposit(
         &config.address_provider,
         MarsContract::ProtocolRewardsCollector,
     )?;
-    response = apply_accumulated_interests(&env, &rewards_collector_addr, &mut market, response)?;
+    apply_accumulated_interests(deps.storage, &env, &rewards_collector_addr, &mut market)?;
     response = update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, response)?;
-    MARKETS.save(deps.storage, &denom, &market)?;
 
     if market.liquidity_index.is_zero() {
         return Err(ContractError::InvalidLiquidityIndex {});
@@ -393,19 +382,16 @@ pub fn deposit(
     let mint_amount =
         get_scaled_liquidity_amount(deposit_amount, &market, env.block.time.seconds())?;
 
+    user.increase_collateral(deps.storage, &denom, mint_amount)?;
+
+    market.increase_collateral(mint_amount)?;
+    MARKETS.save(deps.storage, &denom, &market);
+
     Ok(response
-        .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: market.ma_token_address.into(),
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
-                recipient: user_addr.to_string(),
-                amount: mint_amount,
-            })?,
-            funds: vec![],
-        }))
         .add_attribute("action", "outposts/red-bank/deposit")
         .add_attribute("denom", denom)
         .add_attribute("sender", info.sender)
-        .add_attribute("user", user_addr)
+        .add_attribute("user", user)
         .add_attribute("amount", deposit_amount))
 }
 
@@ -418,17 +404,16 @@ pub fn withdraw(
     amount: Option<Uint128>,
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
-    let withdrawer_addr = info.sender;
+    let withdrawer = User(&info.sender);
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
 
-    let asset_ma_addr = market.ma_token_address.clone();
-    let withdrawer_balance_scaled_before =
-        cw20_get_balance(&deps.querier, asset_ma_addr, withdrawer_addr.clone())?;
+    let collateral = withdrawer.collateral(deps.storage, &denom)?;
+    let withdrawer_balance_scaled_before = collateral.amount_scaled;
 
     if withdrawer_balance_scaled_before.is_zero() {
         return Err(ContractError::UserNoCollateralBalance {
-            user: withdrawer_addr.into(),
+            user: withdrawer.into(),
             denom,
         });
     }
@@ -465,19 +450,14 @@ pub fn withdraw(
     let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
-    // NOTE: this load command currently doesn't work for the rewards collector, which doesn't have
-    // a collateral position. however, this will be automatically solved in a later PR, once we
-    // remove maToken and store collateral shares here in Red Bank.
-    let collateral = COLLATERALS.load(deps.storage, (&withdrawer_addr, &denom))?;
-
     // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
     // otherwise no reasons to block the withdraw
     if collateral.enabled
-        && user_is_borrowing(deps.storage, &withdrawer_addr)
+        && withdrawer.is_borrowing(deps.storage)
         && !assert_below_liq_threshold_after_withdraw(
             &deps.as_ref(),
             &env,
-            &withdrawer_addr,
+            &withdrawer.address(),
             oracle_addr,
             &denom,
             withdraw_amount,
@@ -489,9 +469,8 @@ pub fn withdraw(
     let mut response = Response::new();
 
     // update indexes and interest rates
-    response = apply_accumulated_interests(&env, rewards_collector_addr, &mut market, response)?;
+    apply_accumulated_interests(deps.storage, &env, rewards_collector_addr, &mut market)?;
     response = update_interest_rates(&deps, &env, &mut market, withdraw_amount, &denom, response)?;
-    MARKETS.save(deps.storage, &denom, &market)?;
 
     // burn maToken
     let withdrawer_balance_after = withdrawer_balance_before.checked_sub(withdraw_amount)?;
@@ -500,32 +479,24 @@ pub fn withdraw(
 
     let burn_amount =
         withdrawer_balance_scaled_before.checked_sub(withdrawer_balance_scaled_after)?;
-    response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: market.ma_token_address.to_string(),
-        msg: to_binary(&ma_token::msg::ExecuteMsg::Burn {
-            user: withdrawer_addr.to_string(),
-            amount: burn_amount,
-        })?,
-        funds: vec![],
-    }));
 
-    // if the user's maToken amount is reduced to zero, then delete the collateral position
-    if withdrawer_balance_scaled_after.is_zero() {
-        COLLATERALS.remove(deps.storage, (&withdrawer_addr, &denom));
-    }
+    withdrawer.decrease_collateral(deps.storage, &denom, burn_amount)?;
+
+    market.decrease_collateral(burn_amount)?;
+    MARKETS.save(deps.storage, &denom, &market)?;
 
     // send underlying asset to user or another recipient
     let recipient_addr = if let Some(recipient) = recipient {
         deps.api.addr_validate(&recipient)?
     } else {
-        withdrawer_addr.clone()
+        withdrawer.address().clone()
     };
 
     Ok(response
         .add_message(build_send_asset_msg(&recipient_addr, &denom, withdraw_amount))
         .add_attribute("action", "outposts/red-bank/withdraw")
         .add_attribute("denom", denom)
-        .add_attribute("user", withdrawer_addr)
+        .add_attribute("user", withdrawer)
         .add_attribute("recipient", recipient_addr)
         .add_attribute("burn_amount", burn_amount)
         .add_attribute("withdraw_amount", withdraw_amount))
