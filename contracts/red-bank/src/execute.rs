@@ -318,8 +318,10 @@ pub fn deposit(
     denom: String,
     deposit_amount: Uint128,
 ) -> Result<Response, ContractError> {
+    let user_addr: Addr;
     let user = if let Some(address) = on_behalf_of {
-        User(&deps.api.addr_validate(&address)?)
+        user_addr = deps.api.addr_validate(&address)?;
+        User(&user_addr)
     } else {
         User(&info.sender)
     };
@@ -362,13 +364,13 @@ pub fn deposit(
     user.increase_collateral(deps.storage, &denom, mint_amount)?;
 
     market.increase_collateral(mint_amount)?;
-    MARKETS.save(deps.storage, &denom, &market);
+    MARKETS.save(deps.storage, &denom, &market)?;
 
     Ok(response
         .add_attribute("action", "outposts/red-bank/deposit")
         .add_attribute("denom", denom)
-        .add_attribute("sender", info.sender)
         .add_attribute("user", user)
+        .add_attribute("sender", info.sender)
         .add_attribute("amount", deposit_amount))
 }
 
@@ -463,14 +465,15 @@ pub fn withdraw(
     MARKETS.save(deps.storage, &denom, &market)?;
 
     // send underlying asset to user or another recipient
+    // TODO: maybe cloning can be avoided here?
     let recipient_addr = if let Some(recipient) = recipient {
-        &deps.api.addr_validate(&recipient)?
+        deps.api.addr_validate(&recipient)?
     } else {
-        withdrawer.address()
+        withdrawer.address().clone()
     };
 
     Ok(response
-        .add_message(build_send_asset_msg(recipient_addr, &denom, withdraw_amount))
+        .add_message(build_send_asset_msg(&recipient_addr, &denom, withdraw_amount))
         .add_attribute("action", "outposts/red-bank/withdraw")
         .add_attribute("denom", denom)
         .add_attribute("user", withdrawer)
@@ -566,14 +569,15 @@ pub fn borrow(
     MARKETS.save(deps.storage, &denom, &borrow_market)?;
 
     // Send borrow amount to borrower or another recipient
+    // TODO: maybe cloning can be avoided here?
     let recipient_addr = if let Some(recipient) = recipient {
-        &deps.api.addr_validate(&recipient)?
+        deps.api.addr_validate(&recipient)?
     } else {
-        borrower.address()
+        borrower.address().clone()
     };
 
     Ok(response
-        .add_message(build_send_asset_msg(recipient_addr, &denom, borrow_amount))
+        .add_message(build_send_asset_msg(&recipient_addr, &denom, borrow_amount))
         .add_attribute("action", "outposts/red-bank/borrow")
         .add_attribute("denom", denom)
         .add_attribute("user", borrower)
@@ -590,21 +594,21 @@ pub fn repay(
     denom: String,
     repay_amount: Uint128,
 ) -> Result<Response, ContractError> {
+    let user_addr: Addr;
     let user = if let Some(address) = on_behalf_of {
-        let on_behalf_of_addr = deps.api.addr_validate(&address)?;
+        user_addr = deps.api.addr_validate(&address)?;
+        let user = User(&user_addr);
         // Uncollateralized loans should not have 'on behalf of' because it creates accounting complexity for them
-        match UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&on_behalf_of_addr, &denom))? {
-            Some(limit) if !limit.is_zero() => {
-                return Err(ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {})
-            }
-            _ => User(&on_behalf_of_addr),
+        if !user.uncollateralized_loan_limit(deps.storage, &denom)?.is_zero() {
+            return Err(ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {});
         }
+        user
     } else {
         User(&info.sender)
     };
 
     // Check new debt
-    let mut debt = DEBTS
+    let debt = DEBTS
         .may_load(deps.storage, (&user.address(), &denom))?
         .ok_or(ContractError::CannotRepayZeroDebt {})?;
 
@@ -652,8 +656,8 @@ pub fn repay(
     Ok(response
         .add_attribute("action", "outposts/red-bank/repay")
         .add_attribute("denom", denom)
-        .add_attribute("sender", info.sender)
         .add_attribute("user", user)
+        .add_attribute("sender", info.sender)
         .add_attribute("amount", repay_amount.checked_sub(refund_amount)?))
 }
 
