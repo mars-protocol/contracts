@@ -8,21 +8,21 @@ use crate::state::{
     ALLOWED_COINS, ALLOWED_VAULTS, COIN_BALANCES, ORACLE, RED_BANK, TOTAL_DEBT_SHARES,
 };
 
-pub fn assert_coin_is_whitelisted(storage: &mut dyn Storage, coin: &Coin) -> ContractResult<()> {
-    let is_whitelisted = ALLOWED_COINS.has(storage, &coin.denom);
+pub fn assert_coin_is_whitelisted(storage: &mut dyn Storage, denom: &str) -> ContractResult<()> {
+    let is_whitelisted = ALLOWED_COINS.has(storage, denom);
     if !is_whitelisted {
-        return Err(ContractError::NotWhitelisted(coin.denom.clone()));
+        return Err(ContractError::NotWhitelisted(denom.to_string()));
     }
     Ok(())
 }
 
 pub fn assert_coins_are_whitelisted(
     storage: &mut dyn Storage,
-    assets: &[Coin],
+    denoms: Vec<&str>,
 ) -> ContractResult<()> {
-    assets
+    denoms
         .iter()
-        .try_for_each(|asset| assert_coin_is_whitelisted(storage, asset))
+        .try_for_each(|denom| assert_coin_is_whitelisted(storage, denom))
 }
 
 pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> ContractResult<()> {

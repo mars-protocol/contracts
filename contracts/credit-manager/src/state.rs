@@ -1,6 +1,7 @@
 use cosmwasm_std::{Addr, Decimal, Empty, Uint128};
 use cw_storage_plus::{Item, Map};
 
+use rover::adapters::swap::Swapper;
 use rover::adapters::{Oracle, RedBank, VaultPosition};
 use rover::{Denom, NftTokenId, Shares, VaultAddr};
 
@@ -13,6 +14,7 @@ pub const RED_BANK: Item<RedBank> = Item::new("red_bank");
 pub const ORACLE: Item<Oracle> = Item::new("oracle");
 pub const MAX_LIQUIDATION_BONUS: Item<Decimal> = Item::new("max_liquidation_bonus");
 pub const MAX_CLOSE_FACTOR: Item<Decimal> = Item::new("max_close_factor");
+pub const SWAPPER: Item<Swapper> = Item::new("swapper");
 
 // Positions
 pub const COIN_BALANCES: Map<(NftTokenId, Denom), Uint128> = Map::new("coin_balance");

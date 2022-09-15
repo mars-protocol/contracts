@@ -160,6 +160,7 @@ pub struct ConfigResponse {
     pub oracle: String,
     pub max_liquidation_bonus: Decimal,
     pub max_close_factor: Decimal,
+    pub swapper: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

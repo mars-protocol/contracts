@@ -13,7 +13,7 @@ pub fn repay(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractRes
         return Err(ContractError::NoAmount);
     }
 
-    assert_coin_is_whitelisted(deps.storage, &coin)?;
+    assert_coin_is_whitelisted(deps.storage, &coin.denom)?;
 
     // Ensure repayment does not exceed max debt on account
     let (debt_amount, debt_shares) = current_debt_for_denom(deps.as_ref(), &env, token_id, &coin)?;

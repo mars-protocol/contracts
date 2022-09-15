@@ -8,7 +8,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
- "cw-multi-test",
+ "cw-multi-test 0.14.0",
  "cw-storage-plus 0.14.0",
  "cw721",
  "cw721-base",
@@ -138,7 +138,7 @@ dependencies = [
  "account-nft",
  "anyhow",
  "cosmwasm-std",
- "cw-multi-test",
+ "cw-multi-test 0.14.0",
  "cw-storage-plus 0.14.0",
  "cw2 0.14.0",
  "cw721",
@@ -151,6 +151,7 @@ dependencies = [
  "rover",
  "schemars",
  "serde",
+ "swapper-mock",
 ]
 
 [[package]]
@@ -192,6 +193,25 @@ dependencies = [
  "rand_core 0.5.1",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "cw-multi-test"
+version = "0.13.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3f9a8ab7c3c29ec93cb7a39ce4b14a05e053153b4a17ef7cf2246af1b7c087e"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus 0.13.4",
+ "cw-utils 0.13.4",
+ "derivative",
+ "itertools",
+ "prost",
+ "schemars",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -598,6 +618,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
+name = "osmo-bindings"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d29a49bf5df140714e63e3a13b6d6c7b7903620c4e3451476bb59cf50c1c7f88"
+dependencies = [
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "osmo-bindings-test"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f96719fd1b214bb8aecbe066bb9965052cae11df4f540978122ab243d9f0a15e"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std",
+ "cw-multi-test 0.13.4",
+ "cw-storage-plus 0.13.4",
+ "itertools",
+ "osmo-bindings",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "pkcs8"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -837,6 +885,50 @@ name = "subtle"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
+
+[[package]]
+name = "swapper-base"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus 0.14.0",
+ "rover",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "swapper-mock"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std",
+ "cw-multi-test 0.14.0",
+ "cw-storage-plus 0.14.0",
+ "rover",
+ "schemars",
+ "serde",
+ "swapper-base",
+ "thiserror",
+]
+
+[[package]]
+name = "swapper-osmosis"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std",
+ "cw-multi-test 0.13.4",
+ "cw-storage-plus 0.14.0",
+ "osmo-bindings",
+ "osmo-bindings-test",
+ "rover",
+ "schemars",
+ "serde",
+ "swapper-base",
+ "thiserror",
+]
 
 [[package]]
 name = "syn"

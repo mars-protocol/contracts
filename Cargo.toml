@@ -1,5 +1,13 @@
 [workspace]
-members = ["packages/*", "contracts/*"]
+members = [
+    "contracts/account-nft",
+    "contracts/credit-manager",
+    "contracts/mock-oracle",
+    "contracts/mock-red-bank",
+    "contracts/mock-vault",
+    "contracts/swapper/*",
+    "packages/*",
+]
 
 [profile.release.package.rover]
 codegen-units = 1

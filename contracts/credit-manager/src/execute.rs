@@ -11,10 +11,12 @@ use crate::liquidate::{assert_health_factor_improved, liquidate_coin};
 use crate::repay::repay;
 use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE,
-    OWNER, RED_BANK,
+    OWNER, RED_BANK, SWAPPER,
 };
 use crate::vault::{deposit_into_vault, update_vault_coin_balance};
 
+use crate::swap::swap_exact_in;
+use crate::update_coin_balances::update_coin_balances;
 use crate::withdraw::withdraw;
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use rover::coins::Coins;
@@ -114,6 +116,13 @@ pub fn update_config(
             .add_attribute("value", unchecked.address());
     }
 
+    if let Some(unchecked) = new_config.swapper {
+        SWAPPER.save(deps.storage, &unchecked.check(deps.api)?)?;
+        response = response
+            .add_attribute("key", "swapper")
+            .add_attribute("value", unchecked.address());
+    }
+
     if let Some(bonus) = new_config.max_liquidation_bonus {
         MAX_LIQUIDATION_BONUS.save(deps.storage, &bonus)?;
         response = response
@@ -179,6 +188,16 @@ pub fn dispatch_actions(
                 liquidatee_token_id: liquidatee_token_id.to_string(),
                 debt_coin: debt_coin.clone(),
                 request_coin_denom: request_coin_denom.clone(),
+            }),
+            Action::SwapExactIn {
+                coin_in,
+                denom_out,
+                slippage,
+            } => callbacks.push(CallbackMsg::SwapExactIn {
+                token_id: token_id.to_string(),
+                coin_in: coin_in.clone(),
+                denom_out: denom_out.to_string(),
+                slippage: *slippage,
             }),
         }
     }
@@ -257,6 +276,16 @@ pub fn execute_callback(
             token_id,
             previous_health_factor,
         } => assert_health_factor_improved(deps.as_ref(), env, &token_id, previous_health_factor),
+        CallbackMsg::SwapExactIn {
+            token_id,
+            coin_in,
+            denom_out,
+            slippage,
+        } => swap_exact_in(deps, env, &token_id, coin_in, &denom_out, slippage),
+        CallbackMsg::UpdateCoinBalances {
+            token_id,
+            previous_balances,
+        } => update_coin_balances(deps, env, &token_id, &previous_balances),
     }
 }
 

@@ -14,6 +14,9 @@ use mock_red_bank::contract::{
 use mock_vault::contract::{
     execute as vaultExecute, instantiate as vaultInstantiate, query as vaultQuery,
 };
+use swapper_mock::contract::{
+    execute as swapperExecute, instantiate as swapperInstantiate, query as swapperQuery,
+};
 
 pub fn mock_app() -> App {
     App::default()
@@ -41,5 +44,10 @@ pub fn mock_oracle_contract() -> Box<dyn Contract<Empty>> {
 
 pub fn mock_vault_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(vaultExecute, vaultInstantiate, vaultQuery);
+    Box::new(contract)
+}
+
+pub fn mock_swapper_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(swapperExecute, swapperInstantiate, swapperQuery);
     Box::new(contract)
 }

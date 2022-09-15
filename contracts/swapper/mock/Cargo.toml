@@ -1,0 +1,28 @@
+[package]
+name = "swapper-mock"
+version = "0.1.0"
+authors = ["grod220 <gabe.r@delphilabs.io>"]
+edition = "2021"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/mars-protocol/rover"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+library = []
+
+[dependencies]
+rover = { version = "0.1", path = "../../../packages/rover" }
+swapper-base = { path = "../base", version = "0.1" }
+
+cosmwasm-std = "1.0"
+cw-storage-plus = "0.14"
+schemars = "0.8"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+thiserror = "1.0"
+
+[dev-dependencies]
+anyhow = "1"
+cw-multi-test = "0.14"

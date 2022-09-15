@@ -21,7 +21,8 @@ pub fn deposit_into_vault(
     vault: Vault,
     coins: &[Coin],
 ) -> ContractResult<Response> {
-    assert_coins_are_whitelisted(deps.storage, coins)?;
+    let denoms = coins.iter().map(|c| c.denom.as_str()).collect();
+    assert_coins_are_whitelisted(deps.storage, denoms)?;
     assert_vault_is_whitelisted(deps.storage, &vault)?;
     assert_denoms_match_vault_reqs(deps.querier, &vault, coins)?;
 

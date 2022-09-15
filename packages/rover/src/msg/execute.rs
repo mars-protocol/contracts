@@ -62,6 +62,12 @@ pub enum Action {
         /// The coin they wish to acquire from the liquidatee (amount returned will include the bonus)
         request_coin_denom: String,
     },
+    /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
+    SwapExactIn {
+        coin_in: Coin,
+        denom_out: String,
+        slippage: Decimal,
+    },
 }
 
 /// Internal actions made by the contract with pre-validated inputs
@@ -109,6 +115,20 @@ pub enum CallbackMsg {
     AssertHealthFactorImproved {
         token_id: String,
         previous_health_factor: Decimal,
+    },
+    /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
+    SwapExactIn {
+        token_id: String,
+        coin_in: Coin,
+        denom_out: String,
+        slippage: Decimal,
+    },
+    /// Used to update the coin balance of account after an async action
+    UpdateCoinBalances {
+        /// Account that needs coin balance adjustment
+        token_id: String,
+        /// Total balances for coins in Rover prior to withdraw
+        previous_balances: Vec<Coin>,
     },
 }
 

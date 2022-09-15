@@ -2,7 +2,7 @@ use std::mem::take;
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::testing::MockApi;
-use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{coins, Addr, Coin, Decimal, Uint128};
 use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 
@@ -16,6 +16,10 @@ use mock_red_bank::msg::{
 };
 use mock_vault::contract::DEFAULT_VAULT_TOKEN_PREFUND;
 use mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
+use rover::adapters::swap::QueryMsg::EstimateExactInSwap;
+use rover::adapters::swap::{
+    EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg, Swapper, SwapperBase,
+};
 use rover::adapters::{OracleBase, RedBankBase, Vault, VaultBase, VaultUnchecked};
 use rover::msg::execute::{Action, CallbackMsg};
 use rover::msg::instantiate::ConfigUpdates;
@@ -27,7 +31,7 @@ use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::helpers::{
     mock_account_nft_contract, mock_oracle_contract, mock_red_bank_contract, mock_rover_contract,
-    mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo,
+    mock_swapper_contract, mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo,
 };
 
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000u128);
@@ -90,6 +94,19 @@ impl MockEnv {
                 actions,
             },
             send_funds,
+        )
+    }
+
+    pub fn invoke_callback(
+        &mut self,
+        sender: &Addr,
+        callback: CallbackMsg,
+    ) -> AnyResult<AppResponse> {
+        self.app.execute_contract(
+            sender.clone(),
+            self.rover.clone(),
+            &ExecuteMsg::Callback(callback),
+            &[],
         )
     }
 
@@ -356,6 +373,24 @@ impl MockEnv {
             )
             .unwrap()
     }
+
+    pub fn query_swap_estimate(
+        &self,
+        coin_in: &Coin,
+        denom_out: &str,
+    ) -> EstimateExactInSwapResponse {
+        let config = self.query_config();
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                config.swapper,
+                &EstimateExactInSwap {
+                    coin_in: coin_in.clone(),
+                    denom_out: denom_out.to_string(),
+                },
+            )
+            .unwrap()
+    }
 }
 
 impl MockEnvBuilder {
@@ -427,6 +462,7 @@ impl MockEnvBuilder {
         let code_id = self.app.store_code(mock_rover_contract());
         let oracle = self.get_oracle().into();
         let red_bank = self.get_red_bank().into();
+        let swapper = self.deploy_swapper().into();
         let allowed_coins = self
             .get_allowed_coins()
             .iter()
@@ -450,6 +486,7 @@ impl MockEnvBuilder {
                 oracle,
                 max_liquidation_bonus,
                 max_close_factor,
+                swapper,
             },
             &[],
             "mock-rover-contract",
@@ -566,6 +603,31 @@ impl MockEnvBuilder {
             .unwrap();
         self.fund_vault(&addr, &vault.lp_token_denom);
         VaultBase::new(addr)
+    }
+
+    fn deploy_swapper(&mut self) -> Swapper {
+        let code_id = self.app.store_code(mock_swapper_contract());
+        let addr = self
+            .app
+            .instantiate_contract(
+                code_id,
+                Addr::unchecked("swapper-instantiator"),
+                &SwapperInstantiateMsg {
+                    owner: self.get_owner().to_string(),
+                },
+                &[],
+                "mock-vault",
+                None,
+            )
+            .unwrap();
+        // Fund with osmo to simulate swaps
+        self.app
+            .sudo(SudoMsg::Bank(BankSudo::Mint {
+                to_address: addr.to_string(),
+                amount: coins(1_000_000, "uosmo"),
+            }))
+            .unwrap();
+        SwapperBase::new(addr)
     }
 
     /// cw-multi-test does not yet have the ability to mint sdk coins. For this reason,

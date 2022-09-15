@@ -10,7 +10,7 @@ pub fn withdraw(
     coin: Coin,
     recipient: Addr,
 ) -> ContractResult<Response> {
-    assert_coin_is_whitelisted(deps.storage, &coin)?;
+    assert_coin_is_whitelisted(deps.storage, &coin.denom)?;
 
     if coin.amount.is_zero() {
         return Err(ContractError::NoAmount);

@@ -1,5 +1,6 @@
 use cosmwasm_std::{Addr, Decimal};
 
+use rover::adapters::swap::SwapperBase;
 use rover::adapters::{OracleBase, RedBankBase, VaultBase};
 use rover::msg::instantiate::ConfigUpdates;
 
@@ -23,6 +24,7 @@ fn test_only_owner_can_update_config() {
             oracle: None,
             max_liquidation_bonus: None,
             max_close_factor: None,
+            swapper: None,
         },
     );
 
@@ -46,6 +48,7 @@ fn test_update_config_works_with_full_config() {
     let new_oracle = OracleBase::new("new_oracle".to_string());
     let new_liq_bonus = Decimal::from_atomics(17u128, 2).unwrap();
     let new_close_factor = Decimal::from_atomics(32u128, 2).unwrap();
+    let new_swapper = SwapperBase::new("new_swapper".to_string());
 
     mock.update_config(
         &Addr::unchecked(original_config.owner.clone()),
@@ -58,6 +61,7 @@ fn test_update_config_works_with_full_config() {
             oracle: Some(new_oracle.clone()),
             max_liquidation_bonus: Some(new_liq_bonus),
             max_close_factor: Some(new_close_factor),
+            swapper: Some(new_swapper.clone()),
         },
     )
     .unwrap();
@@ -95,6 +99,9 @@ fn test_update_config_works_with_full_config() {
         new_config.max_close_factor,
         original_config.max_close_factor
     );
+
+    assert_eq!(&new_config.swapper, new_swapper.address());
+    assert_ne!(new_config.swapper, original_config.swapper);
 }
 
 #[test]
@@ -165,4 +172,5 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
         new_config.max_close_factor,
         original_config.max_close_factor
     );
+    assert_eq!(new_config.swapper, original_config.swapper);
 }

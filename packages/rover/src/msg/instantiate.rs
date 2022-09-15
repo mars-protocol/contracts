@@ -2,6 +2,7 @@ use cosmwasm_std::Decimal;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::adapters::swap::SwapperUnchecked;
 use crate::adapters::{OracleUnchecked, RedBankUnchecked, VaultUnchecked};
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
@@ -20,6 +21,8 @@ pub struct InstantiateMsg {
     pub max_liquidation_bonus: Decimal,
     /// The maximum percent a liquidator can decrease the debt amount of the liquidatee
     pub max_close_factor: Decimal,
+    /// Helper contract for making swaps
+    pub swapper: SwapperUnchecked,
 }
 
 /// Used when you want to update fields on Instantiate config
@@ -33,4 +36,5 @@ pub struct ConfigUpdates {
     pub oracle: Option<OracleUnchecked>,
     pub max_liquidation_bonus: Option<Decimal>,
     pub max_close_factor: Option<Decimal>,
+    pub swapper: Option<SwapperUnchecked>,
 }

@@ -30,6 +30,8 @@ schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
+swapper-mock = { version = "0.1", path = "../../contracts/swapper/mock", features = ["library"] }
+
 anyhow = "1"
 cw-multi-test = "0.14"
 itertools = "0.10"

@@ -12,7 +12,7 @@ pub fn deposit(
     coin: &Coin,
     received_coins: &mut Coins,
 ) -> ContractResult<Response> {
-    assert_coin_is_whitelisted(storage, coin)?;
+    assert_coin_is_whitelisted(storage, &coin.denom)?;
 
     if coin.amount.is_zero() {
         return Ok(response);
