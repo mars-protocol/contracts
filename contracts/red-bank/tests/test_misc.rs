@@ -29,7 +29,6 @@ fn test_uncollateralized_loan_limits() {
     let mut deps = th_setup(&[coin(available_liquidity.into(), "somecoin")]);
 
     let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
         borrow_index: Decimal::from_ratio(12u128, 10u128),
         liquidity_index: Decimal::from_ratio(8u128, 10u128),
         borrow_rate: Decimal::from_ratio(20u128, 100u128),
@@ -199,9 +198,7 @@ fn test_update_asset_collateral() {
     let user_addr = Addr::unchecked(String::from("user"));
 
     let denom_1 = "depositedcoin1";
-    let ma_token_addr_1 = Addr::unchecked("matoken1");
     let mock_market_1 = Market {
-        ma_token_address: ma_token_addr_1.clone(),
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
         max_loan_to_value: Decimal::from_ratio(40u128, 100u128),
@@ -209,9 +206,7 @@ fn test_update_asset_collateral() {
         ..Default::default()
     };
     let denom_2 = "depositedcoin2";
-    let ma_token_addr_2 = Addr::unchecked("matoken2");
     let mock_market_2 = Market {
-        ma_token_address: ma_token_addr_2.clone(),
         liquidity_index: Decimal::from_ratio(1u128, 2u128),
         borrow_index: Decimal::one(),
         max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
@@ -219,9 +214,7 @@ fn test_update_asset_collateral() {
         ..Default::default()
     };
     let denom_3 = "depositedcoin3";
-    let ma_token_addr_3 = Addr::unchecked("matoken3");
     let mock_market_3 = Market {
-        ma_token_address: ma_token_addr_3,
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::from_ratio(2u128, 1u128),
         max_loan_to_value: Decimal::from_ratio(20u128, 100u128),
@@ -246,13 +239,9 @@ fn test_update_asset_collateral() {
 
     {
         // Set second asset as collateral
-        set_collateral(deps.as_mut(), &user_addr, &market_2_initial.denom, true);
+        set_collateral(deps.as_mut(), &user_addr, &market_2_initial.denom, Uint128::new(123), true);
 
-        // Set the querier to return zero for the first asset
-        deps.querier
-            .set_cw20_balances(ma_token_addr_1.clone(), &[(user_addr.clone(), Uint128::zero())]);
-
-        // Enable first market index which is currently disabled as collateral and ma-token balance is 0
+        // Enable denom 1 as collateral in which the user currently doesn't have a position in
         let update_msg = ExecuteMsg::UpdateAssetCollateralStatus {
             denom: denom_1.to_string(),
             enable: true,
@@ -271,10 +260,7 @@ fn test_update_asset_collateral() {
         assert!(!has_collateral_position(deps.as_ref(), &user_addr, &market_1_initial.denom));
 
         // Set the querier to return balance more than zero for the first asset
-        deps.querier.set_cw20_balances(
-            ma_token_addr_1.clone(),
-            &[(user_addr.clone(), Uint128::new(100_000))],
-        );
+        set_collateral(deps.as_mut(), &user_addr, denom_1, Uint128::new(100_000), false);
 
         // Enable first market index which is currently disabled as collateral and ma-token balance is more than 0
         execute(deps.as_mut(), env.clone(), info.clone(), update_msg).unwrap();
@@ -293,16 +279,22 @@ fn test_update_asset_collateral() {
     {
         // Initialize user with market_1 and market_2 as collaterals
         // User borrows market_3, which will be set up later in the test
-        set_collateral(deps.as_mut(), &user_addr, &market_1_initial.denom, true);
-        set_collateral(deps.as_mut(), &user_addr, &market_2_initial.denom, true);
-
-        // Set the querier to return collateral balances (ma_token_1 and ma_token_2)
         let ma_token_1_balance_scaled = Uint128::new(150_000) * SCALING_FACTOR;
-        deps.querier
-            .set_cw20_balances(ma_token_addr_1, &[(user_addr.clone(), ma_token_1_balance_scaled)]);
+        set_collateral(
+            deps.as_mut(),
+            &user_addr,
+            &market_1_initial.denom,
+            ma_token_1_balance_scaled,
+            true,
+        );
         let ma_token_2_balance_scaled = Uint128::new(220_000) * SCALING_FACTOR;
-        deps.querier
-            .set_cw20_balances(ma_token_addr_2, &[(user_addr.clone(), ma_token_2_balance_scaled)]);
+        set_collateral(
+            deps.as_mut(),
+            &user_addr,
+            &market_2_initial.denom,
+            ma_token_2_balance_scaled,
+            true,
+        );
 
         // Calculate maximum debt for the user to have valid health factor
         let token_1_weighted_lt_in_base_asset = compute_underlying_amount(

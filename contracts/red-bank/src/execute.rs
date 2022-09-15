@@ -931,6 +931,7 @@ pub fn update_asset_collateral_status(
     enable: bool,
 ) -> Result<Response, ContractError> {
     let user = User(&info.sender);
+
     let mut collateral =
         COLLATERALS.may_load(deps.storage, (user.address(), &denom))?.ok_or_else(|| {
             ContractError::UserNoCollateralBalance {
@@ -939,8 +940,14 @@ pub fn update_asset_collateral_status(
             }
         })?;
 
-    if collateral.enabled && !enable {
-        // check health factor after disabling collateral
+    let previously_enabled = collateral.enabled;
+
+    collateral.enabled = enable;
+    COLLATERALS.save(deps.storage, (user.address(), &denom), &collateral)?;
+
+    // if the collateral was previously enabled, but is not disabled, it is necessary to ensure the
+    // user is not liquidatable after disabling
+    if previously_enabled && !enable {
         let config = CONFIG.load(deps.storage)?;
         let oracle_addr = address_provider::helpers::query_address(
             deps.as_ref(),
@@ -955,9 +962,6 @@ pub fn update_asset_collateral_status(
             return Err(ContractError::InvalidHealthFactorAfterDisablingCollateral {});
         }
     }
-
-    collateral.enabled = enable;
-    COLLATERALS.save(deps.storage, (user.address(), &denom), &collateral)?;
 
     Ok(Response::new()
         .add_attribute("action", "outposts/red-bank/update_asset_collateral_status")
