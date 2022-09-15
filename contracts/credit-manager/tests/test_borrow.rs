@@ -117,7 +117,13 @@ fn test_cannot_borrow_above_max_ltv() {
         &[Coin::new(300u128, coin_info.denom)],
     );
 
-    assert_err(res, ContractError::AboveMaxLTV);
+    assert_err(
+        res,
+        ContractError::AboveMaxLTV {
+            token_id,
+            max_ltv_health_factor: "0.998573466476462196".to_string(),
+        },
+    );
 }
 
 #[test]

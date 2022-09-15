@@ -158,6 +158,8 @@ pub struct ConfigResponse {
     pub account_nft: Option<String>,
     pub red_bank: String,
     pub oracle: String,
+    pub max_liquidation_bonus: Decimal,
+    pub max_close_factor: Decimal,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

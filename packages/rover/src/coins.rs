@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-use crate::extensions::Stringify;
 use cosmwasm_std::{Coin, StdError, StdResult, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::extensions::Stringify;
 
 /// Pending integration into cosmwasm_std: https://github.com/CosmWasm/cosmwasm/issues/1377#issuecomment-1204232193
 /// Copying from here: https://github.com/mars-protocol/cw-coins/blob/main/src/lib.rs

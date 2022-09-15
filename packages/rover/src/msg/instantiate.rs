@@ -1,3 +1,4 @@
+use cosmwasm_std::Decimal;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -15,6 +16,10 @@ pub struct InstantiateMsg {
     pub red_bank: RedBankUnchecked,
     /// The Mars Protocol oracle contract. We read prices of assets here.
     pub oracle: OracleUnchecked,
+    /// The maximum percent a liquidator can profit from a liquidation action
+    pub max_liquidation_bonus: Decimal,
+    /// The maximum percent a liquidator can decrease the debt amount of the liquidatee
+    pub max_close_factor: Decimal,
 }
 
 /// Used when you want to update fields on Instantiate config
@@ -26,4 +31,6 @@ pub struct ConfigUpdates {
     pub allowed_vaults: Option<Vec<VaultUnchecked>>,
     pub red_bank: Option<RedBankUnchecked>,
     pub oracle: Option<OracleUnchecked>,
+    pub max_liquidation_bonus: Option<Decimal>,
+    pub max_close_factor: Option<Decimal>,
 }

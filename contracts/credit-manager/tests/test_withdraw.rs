@@ -190,7 +190,13 @@ fn test_cannot_withdraw_more_than_healthy() {
         &[Coin::new(200u128, coin_info.denom)],
     );
 
-    assert_err(res, ContractError::AboveMaxLTV);
+    assert_err(
+        res,
+        ContractError::AboveMaxLTV {
+            token_id: token_id.clone(),
+            max_ltv_health_factor: "0.960099750623441396".to_string(),
+        },
+    );
 
     let res = mock.query_position(&token_id);
     assert_eq!(res.coins.len(), 0);

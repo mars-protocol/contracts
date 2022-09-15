@@ -2,7 +2,7 @@ use std::mem::take;
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::testing::MockApi;
-use cosmwasm_std::{Addr, Coin, Uint128};
+use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 
@@ -48,6 +48,8 @@ pub struct MockEnvBuilder {
     pub deploy_nft_contract: bool,
     pub set_nft_contract_owner: bool,
     pub accounts_to_fund: Vec<AccountToFund>,
+    pub max_liquidation_bonus: Option<Decimal>,
+    pub max_close_factor: Option<Decimal>,
 }
 
 #[allow(clippy::new_ret_no_self)]
@@ -64,6 +66,8 @@ impl MockEnv {
             deploy_nft_contract: true,
             set_nft_contract_owner: true,
             accounts_to_fund: vec![],
+            max_liquidation_bonus: None,
+            max_close_factor: None,
         }
     }
 
@@ -428,6 +432,8 @@ impl MockEnvBuilder {
             .iter()
             .map(|info| info.denom.clone())
             .collect();
+        let max_liquidation_bonus = self.get_max_liquidation_bonus();
+        let max_close_factor = self.get_max_close_factor();
 
         let mut allowed_vaults = vec![];
         allowed_vaults.extend(self.deploy_vaults());
@@ -442,6 +448,8 @@ impl MockEnvBuilder {
                 allowed_vaults,
                 red_bank,
                 oracle,
+                max_liquidation_bonus,
+                max_close_factor,
             },
             &[],
             "mock-rover-contract",
@@ -587,6 +595,16 @@ impl MockEnvBuilder {
         self.allowed_coins.clone().unwrap_or_default()
     }
 
+    fn get_max_liquidation_bonus(&self) -> Decimal {
+        self.max_liquidation_bonus
+            .unwrap_or_else(|| Decimal::from_atomics(5u128, 2).unwrap()) // 5%
+    }
+
+    fn get_max_close_factor(&self) -> Decimal {
+        self.max_close_factor
+            .unwrap_or_else(|| Decimal::from_atomics(5u128, 1).unwrap()) // 50%
+    }
+
     //--------------------------------------------------------------------------------------------------
     // Setter functions
     //--------------------------------------------------------------------------------------------------
@@ -637,6 +655,16 @@ impl MockEnvBuilder {
             .map(|v| VaultBase::new(v.to_string()))
             .collect::<Vec<_>>();
         self.pre_deployed_vaults = Some(vaults);
+        self
+    }
+
+    pub fn max_liquidation_bonus(&mut self, bonus: Decimal) -> &mut Self {
+        self.max_liquidation_bonus = Some(bonus);
+        self
+    }
+
+    pub fn max_close_factor(&mut self, cf: Decimal) -> &mut Self {
+        self.max_close_factor = Some(cf);
         self
     }
 }

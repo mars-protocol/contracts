@@ -133,3 +133,19 @@ fn test_raises_on_invalid_oracle_addr() {
         panic!("Should have thrown an error");
     }
 }
+
+#[test]
+fn test_max_liq_bonus_set_on_instantiate() {
+    let mock = MockEnv::new().build().unwrap();
+    let res = mock.query_config();
+    let mock_default = Decimal::from_atomics(5u128, 2).unwrap();
+    assert_eq!(mock_default, res.max_liquidation_bonus);
+}
+
+#[test]
+fn test_max_close_factor_set_on_instantiate() {
+    let mock = MockEnv::new().build().unwrap();
+    let res = mock.query_config();
+    let mock_default = Decimal::from_atomics(5u128, 1).unwrap();
+    assert_eq!(mock_default, res.max_close_factor);
+}

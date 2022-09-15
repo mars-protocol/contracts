@@ -37,7 +37,10 @@ pub fn assert_below_max_ltv(
     let health = compute_health(deps, &env, token_id)?;
 
     if health.is_above_max_ltv() {
-        return Err(ContractError::AboveMaxLTV);
+        return Err(ContractError::AboveMaxLTV {
+            token_id: token_id.to_string(),
+            max_ltv_health_factor: val_or_na(health.max_ltv_health_factor),
+        });
     }
 
     let event = Event::new("position_changed")
@@ -48,12 +51,12 @@ pub fn assert_below_max_ltv(
         .add_attribute("debts_value", health.total_debt_value.to_string())
         .add_attribute(
             "lqdt_health_factor",
-            val_or_not_applicable(health.liquidation_health_factor),
+            val_or_na(health.liquidation_health_factor),
         )
         .add_attribute("liquidatable", health.is_liquidatable().to_string())
         .add_attribute(
             "max_ltv_health_factor",
-            val_or_not_applicable(health.max_ltv_health_factor),
+            val_or_na(health.max_ltv_health_factor),
         )
         .add_attribute("above_max_ltv", health.is_above_max_ltv().to_string());
 
@@ -62,6 +65,6 @@ pub fn assert_below_max_ltv(
         .add_event(event))
 }
 
-fn val_or_not_applicable(opt: Option<Decimal>) -> String {
+pub fn val_or_na(opt: Option<Decimal>) -> String {
     opt.map_or_else(|| "n/a".to_string(), |dec| dec.to_string())
 }

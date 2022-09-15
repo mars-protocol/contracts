@@ -7,9 +7,14 @@ use cw721_base::QueryMsg;
 use crate::borrow::borrow;
 use crate::deposit::deposit;
 use crate::health::assert_below_max_ltv;
+use crate::liquidate::{assert_health_factor_improved, liquidate_coin};
 use crate::repay::repay;
-use crate::state::{ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, ORACLE, OWNER, RED_BANK};
+use crate::state::{
+    ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE,
+    OWNER, RED_BANK,
+};
 use crate::vault::{deposit_into_vault, update_vault_coin_balance};
+
 use crate::withdraw::withdraw;
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use rover::coins::Coins;
@@ -109,6 +114,20 @@ pub fn update_config(
             .add_attribute("value", unchecked.address());
     }
 
+    if let Some(bonus) = new_config.max_liquidation_bonus {
+        MAX_LIQUIDATION_BONUS.save(deps.storage, &bonus)?;
+        response = response
+            .add_attribute("key", "max_liquidation_bonus")
+            .add_attribute("value", bonus.to_string());
+    }
+
+    if let Some(cf) = new_config.max_close_factor {
+        MAX_CLOSE_FACTOR.save(deps.storage, &cf)?;
+        response = response
+            .add_attribute("key", "max_close_factor")
+            .add_attribute("value", cf.to_string());
+    }
+
     Ok(response)
 }
 
@@ -150,6 +169,16 @@ pub fn dispatch_actions(
                 token_id: token_id.to_string(),
                 vault: vault.check(deps.api)?,
                 coins: assets.clone(),
+            }),
+            Action::LiquidateCoin {
+                liquidatee_token_id,
+                debt_coin,
+                request_coin_denom,
+            } => callbacks.push(CallbackMsg::LiquidateCoin {
+                liquidator_token_id: token_id.to_string(),
+                liquidatee_token_id: liquidatee_token_id.to_string(),
+                debt_coin: debt_coin.clone(),
+                request_coin_denom: request_coin_denom.clone(),
             }),
         }
     }
@@ -211,6 +240,23 @@ pub fn execute_callback(
             previous_total_balance,
             &env.contract.address,
         ),
+        CallbackMsg::LiquidateCoin {
+            liquidator_token_id,
+            liquidatee_token_id,
+            debt_coin,
+            request_coin_denom,
+        } => liquidate_coin(
+            deps,
+            env,
+            &liquidator_token_id,
+            &liquidatee_token_id,
+            debt_coin,
+            &request_coin_denom,
+        ),
+        CallbackMsg::AssertHealthFactorImproved {
+            token_id,
+            previous_health_factor,
+        } => assert_health_factor_improved(deps.as_ref(), env, &token_id, previous_health_factor),
     }
 }
 

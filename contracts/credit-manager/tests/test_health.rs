@@ -167,7 +167,13 @@ fn test_debts_no_assets() {
         &[],
     );
 
-    assert_err(res, ContractError::AboveMaxLTV);
+    assert_err(
+        res,
+        ContractError::AboveMaxLTV {
+            token_id: token_id.clone(),
+            max_ltv_health_factor: "0.693069306930693069".to_string(),
+        },
+    );
 
     let position = mock.query_position(&token_id);
     assert_eq!(position.token_id, token_id);
@@ -257,7 +263,13 @@ fn test_cannot_borrow_more_than_healthy() {
         &[],
     );
 
-    assert_err(res, ContractError::AboveMaxLTV);
+    assert_err(
+        res,
+        ContractError::AboveMaxLTV {
+            token_id: token_id.clone(),
+            max_ltv_health_factor: "0.990099009900990099".to_string(),
+        },
+    );
 
     // All valid on step 2 as well (meaning step 3 did not go through)
     let health = mock.query_health(&token_id);
@@ -345,7 +357,13 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
         &[],
     );
 
-    assert_err(res, ContractError::AboveMaxLTV);
+    assert_err(
+        res,
+        ContractError::AboveMaxLTV {
+            token_id: token_id.clone(),
+            max_ltv_health_factor: "0.947847222222222222".to_string(),
+        },
+    );
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom,

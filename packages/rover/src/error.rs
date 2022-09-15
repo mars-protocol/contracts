@@ -10,8 +10,14 @@ pub type ContractResult<T> = Result<T, ContractError>;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
-    #[error("Actions resulted in exceeding maximum allowed loan-to-value")]
-    AboveMaxLTV,
+    #[error("Actions resulted in exceeding maximum allowed loan-to-value. Max LTV health factor: {max_ltv_health_factor:?}")]
+    AboveMaxLTV {
+        token_id: String,
+        max_ltv_health_factor: String,
+    },
+
+    #[error("{0} is not an available coin to request")]
+    CoinNotAvailable(String),
 
     #[error("{0}")]
     CheckedFromRatioError(#[from] CheckedFromRatioError),
@@ -34,11 +40,24 @@ pub enum ContractError {
         received: Uint128,
     },
 
+    #[error(
+        "Actions did not result in improved health factor: before: {prev_hf:?}, after: {new_hf:?}"
+    )]
+    HealthNotImproved { prev_hf: String, new_hf: String },
+
     #[error("No coin amount set for action")]
     NoAmount,
 
     #[error("No debt to repay")]
     NoDebt,
+
+    #[error(
+        "{token_id:?} is not a liquidatable credit account. Health factor: {lqdt_health_factor:?}."
+    )]
+    NotLiquidatable {
+        token_id: String,
+        lqdt_health_factor: String,
+    },
 
     #[error("{user:?} is not the owner of {token_id:?}")]
     NotTokenOwner { user: String, token_id: String },
