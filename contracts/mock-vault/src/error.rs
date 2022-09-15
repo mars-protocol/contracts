@@ -12,4 +12,10 @@ pub enum ContractError {
 
     #[error("{0}")]
     CheckedMultiply(#[from] CheckedMultiplyRatioError),
+
+    #[error("You must request an unlock first")]
+    UnlockRequired,
+
+    #[error("Vault token not sent")]
+    VaultTokenNotSent,
 }

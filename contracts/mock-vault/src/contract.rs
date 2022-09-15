@@ -9,6 +9,7 @@ use crate::error::ContractError;
 use crate::msg::InstantiateMsg;
 use crate::query::{query_coins_for_shares, query_vault_info};
 use crate::state::{ASSETS, CHAIN_BANK, LOCKUP_TIME, LP_TOKEN_DENOM, ORACLE};
+use crate::withdraw::{withdraw, withdraw_force};
 
 pub const STARTING_VAULT_SHARES: Uint128 = Uint128::new(1_000_000);
 
@@ -42,6 +43,8 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Deposit {} => deposit(deps, info),
+        ExecuteMsg::Withdraw => withdraw(deps, info),
+        ExecuteMsg::ForceWithdraw => withdraw_force(deps, info),
     }
 }
 

@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    BalanceResponse, BankQuery, Coin, Deps, DepsMut, Env, QueryRequest, Response, StdResult,
+    Addr, BalanceResponse, BankQuery, Coin, Deps, DepsMut, Env, QueryRequest, Response, StdResult,
 };
 
 use rover::error::ContractResult;
@@ -7,15 +7,22 @@ use rover::NftTokenId;
 
 use crate::utils::{decrement_coin_balance, increment_coin_balance};
 
-pub fn query_balance(deps: Deps, env: &Env, denom: &str) -> StdResult<Coin> {
+pub fn query_balance(deps: Deps, addr: &Addr, denom: &str) -> StdResult<Coin> {
     let res: BalanceResponse = deps.querier.query(&QueryRequest::Bank(BankQuery::Balance {
-        address: env.contract.address.to_string(),
+        address: addr.to_string(),
         denom: denom.to_string(),
     }))?;
     Ok(Coin {
         denom: denom.to_string(),
         amount: res.amount.amount,
     })
+}
+
+pub fn query_balances(deps: Deps, addr: &Addr, denoms: &[&str]) -> StdResult<Vec<Coin>> {
+    denoms
+        .iter()
+        .map(|denom| query_balance(deps, addr, denom))
+        .collect()
 }
 
 pub fn update_coin_balances(
@@ -27,35 +34,33 @@ pub fn update_coin_balances(
     let mut response = Response::new();
 
     for prev in previous_balances {
-        let curr = query_balance(deps.as_ref(), &env, &prev.denom)?;
+        let curr = query_balance(deps.as_ref(), &env.contract.address, &prev.denom)?;
         if prev.amount > curr.amount {
-            let new_amount = prev.amount.checked_sub(curr.amount)?;
+            let amount_to_reduce = prev.amount.checked_sub(curr.amount)?;
             decrement_coin_balance(
                 deps.storage,
                 token_id,
                 &Coin {
                     denom: curr.denom.clone(),
-                    amount: new_amount,
+                    amount: amount_to_reduce,
                 },
             )?;
             response = response
-                .clone()
                 .add_attribute("denom", curr.denom.clone())
-                .add_attribute("decremented", new_amount);
+                .add_attribute("decremented", amount_to_reduce);
         } else {
-            let new_amount = curr.amount.checked_sub(prev.amount)?;
+            let amount_to_increment = curr.amount.checked_sub(prev.amount)?;
             increment_coin_balance(
                 deps.storage,
                 token_id,
                 &Coin {
                     denom: curr.denom.clone(),
-                    amount: new_amount,
+                    amount: amount_to_increment,
                 },
             )?;
             response = response
-                .clone()
                 .add_attribute("denom", curr.denom.clone())
-                .add_attribute("incremented", new_amount);
+                .add_attribute("incremented", amount_to_increment);
         }
     }
 

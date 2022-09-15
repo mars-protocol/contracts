@@ -8,6 +8,11 @@ use serde::{Deserialize, Serialize};
 pub enum ExecuteMsg {
     /// Enters list of `Vec<Coin>` into a vault strategy in exchange for vault tokens.
     Deposit,
+    /// Withdraw underlying coins in vault by exchanging vault `Coin`
+    Withdraw,
+    /// A privileged action only to be used by Rover. Same as `Withdraw` except it bypasses any lockup period
+    /// restrictions on the vault. Used only in the case position is unhealthy and requires immediate liquidation.
+    ForceWithdraw,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

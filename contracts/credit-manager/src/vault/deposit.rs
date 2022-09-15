@@ -10,9 +10,8 @@ use rover::msg::ExecuteMsg;
 use rover::NftTokenId;
 
 use crate::state::VAULT_POSITIONS;
-use crate::utils::{
-    assert_coins_are_whitelisted, assert_vault_is_whitelisted, decrement_coin_balance,
-};
+use crate::utils::{assert_coins_are_whitelisted, decrement_coin_balance};
+use crate::vault::utils::assert_vault_is_whitelisted;
 
 pub fn deposit_into_vault(
     deps: DepsMut,

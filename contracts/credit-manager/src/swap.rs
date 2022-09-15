@@ -6,7 +6,7 @@ use rover::msg::ExecuteMsg;
 use rover::NftTokenId;
 
 use crate::state::SWAPPER;
-use crate::update_coin_balances::query_balance;
+use crate::update_coin_balances::query_balances;
 use crate::utils::{assert_coins_are_whitelisted, decrement_coin_balance};
 
 pub fn swap_exact_in(
@@ -26,13 +26,13 @@ pub fn swap_exact_in(
     decrement_coin_balance(deps.storage, token_id, &coin_in)?;
 
     // Updates coin balances for account after the swap has taken place
-    let previous_balance = query_balance(deps.as_ref(), &env, denom_out)?;
+    let previous_balances = query_balances(deps.as_ref(), &env.contract.address, &[denom_out])?;
     let update_coin_balance_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         funds: vec![],
         msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateCoinBalances {
             token_id: token_id.to_string(),
-            previous_balances: vec![previous_balance],
+            previous_balances,
         }))?,
     });
 

@@ -31,13 +31,11 @@ pub fn query_vault_info(deps: Deps) -> StdResult<VaultInfo> {
 }
 
 pub fn get_all_vault_coins(storage: &dyn Storage) -> StdResult<Vec<Coin>> {
-    Ok(ASSETS
+    ASSETS
         .range(storage, None, None, Order::Ascending)
-        .collect::<StdResult<Vec<_>>>()?
-        .iter()
-        .map(|(denom, amount)| Coin {
-            denom: denom.clone(),
-            amount: *amount,
+        .map(|res| {
+            let (denom, amount) = res?;
+            Ok(Coin { denom, amount })
         })
-        .collect::<Vec<_>>())
+        .collect()
 }

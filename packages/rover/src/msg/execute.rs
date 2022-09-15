@@ -45,6 +45,11 @@ pub enum Action {
         vault: VaultUnchecked,
         coins: Vec<Coin>,
     },
+    /// Withdraw underlying coins from vault
+    VaultWithdraw {
+        vault: VaultUnchecked,
+        amount: Uint128,
+    },
     /// Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt
     /// denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the
     /// liquidatee should have a balance of. The amount returned to liquidator will be the request coin
@@ -103,6 +108,19 @@ pub enum CallbackMsg {
         token_id: String,
         /// Total vault coin balance in Rover
         previous_total_balance: Uint128,
+    },
+    /// Exchanges vault LP shares for assets
+    VaultWithdraw {
+        token_id: String,
+        vault: Vault,
+        amount: Uint128,
+    },
+    /// A privileged action only to be used by Rover. Same as `VaultWithdraw` except it bypasses any lockup period
+    /// restrictions on the vault. Used only in the case position is unhealthy and requires immediate liquidation.
+    VaultForceWithdraw {
+        token_id: String,
+        vault: Vault,
+        amount: Uint128,
     },
     /// Pay back debts of a liquidatable rover account for a bonus
     LiquidateCoin {

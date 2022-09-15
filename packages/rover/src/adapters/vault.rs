@@ -71,6 +71,30 @@ impl Vault {
         Ok(deposit_msg)
     }
 
+    pub fn withdraw_msg(
+        &self,
+        querier: &QuerierWrapper,
+        amount: Uint128,
+        force: bool,
+    ) -> StdResult<CosmosMsg> {
+        let vault_info = self.query_vault_info(querier)?;
+        let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: self.address().to_string(),
+            funds: vec![Coin {
+                denom: vault_info.token_denom,
+                amount,
+            }],
+            msg: to_binary(
+                &(if force {
+                    ExecuteMsg::ForceWithdraw {}
+                } else {
+                    ExecuteMsg::Withdraw {}
+                }),
+            )?,
+        });
+        Ok(withdraw_msg)
+    }
+
     pub fn query_vault_info(&self, querier: &QuerierWrapper) -> StdResult<VaultInfo> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: self.0.to_string(),
