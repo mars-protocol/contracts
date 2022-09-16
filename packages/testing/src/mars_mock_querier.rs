@@ -4,9 +4,10 @@ use cosmwasm_std::{
     StdResult, SystemError, SystemResult, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
-use osmo_bindings::{OsmosisQuery, PoolStateResponse, Step, Swap, SwapResponse};
 use osmosis_std::types::osmosis::gamm::twap::v1beta1::GetArithmeticTwapResponse;
-use osmosis_std::types::osmosis::gamm::v1beta1::{QueryPoolResponse, QuerySpotPriceResponse};
+use osmosis_std::types::osmosis::gamm::v1beta1::{
+    QueryPoolResponse, QuerySpotPriceResponse, QuerySwapExactAmountInResponse, SwapAmountInRoute,
+};
 
 use mars_outpost::{address_provider, incentives, ma_token, oracle, red_bank};
 
@@ -37,12 +38,6 @@ impl Querier for MarsMockQuerier {
                 })
             }
         };
-
-        // Custom Osmosis Queries for osmosis-bindings
-        let parse_osmosis_query: StdResult<QueryRequest<OsmosisQuery>> = from_slice(bin_request);
-        if let Ok(QueryRequest::Custom(osmosis_query)) = parse_osmosis_query {
-            return self.osmosis_querier.handle_query(osmosis_query);
-        }
 
         self.handle_query(&request)
     }
@@ -110,12 +105,8 @@ impl MarsMockQuerier {
             .insert(Addr::unchecked(user_address), unclaimed_rewards);
     }
 
-    pub fn set_pool_state_response(&mut self, pool_id: u64, pool_state: PoolStateResponse) {
-        self.osmosis_querier.pools.insert(pool_id, pool_state);
-    }
-
     pub fn set_query_pool_response(&mut self, pool_id: u64, pool_response: QueryPoolResponse) {
-        self.osmosis_querier.pool_responses.insert(pool_id, pool_response);
+        self.osmosis_querier.pools.insert(pool_id, pool_response);
     }
 
     pub fn set_spot_price(
@@ -148,14 +139,14 @@ impl MarsMockQuerier {
         self.osmosis_querier.twap_prices.insert(price_key, twap_price);
     }
 
-    pub fn set_estimate_swap(
-        &mut self,
-        first_swap: &Swap,
-        route: &[Step],
-        swap_response: SwapResponse,
-    ) {
-        let key = OsmosisQuerier::prepare_estimate_swap_key(first_swap, route);
-        self.osmosis_querier.estimate_swaps.insert(key, swap_response);
+    pub fn set_estimate_swap(&mut self, amount: Uint128, route: &[SwapAmountInRoute]) {
+        let key = OsmosisQuerier::prepare_estimate_swap_key(route);
+        self.osmosis_querier.estimate_swaps.insert(
+            key,
+            QuerySwapExactAmountInResponse {
+                token_out_amount: amount.to_string(),
+            },
+        );
     }
 
     pub fn set_redbank_market(&mut self, market: red_bank::Market) {

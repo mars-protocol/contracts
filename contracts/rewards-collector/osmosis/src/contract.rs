@@ -1,12 +1,11 @@
+use cosmwasm_std::Empty;
 use mars_rewards_collector_base::CollectorBase;
-
-use osmo_bindings::{OsmosisMsg, OsmosisQuery};
 
 use crate::OsmosisRoute;
 
 /// The Osmosis rewards collector contract inherits logics from the base oracle contract, with the
 /// Osmosis custom msg, query, and swap route plugins
-pub type OsmosisCollector<'a> = CollectorBase<'a, OsmosisRoute, OsmosisMsg, OsmosisQuery>;
+pub type OsmosisCollector<'a> = CollectorBase<'a, OsmosisRoute, Empty, Empty>;
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
@@ -20,7 +19,7 @@ pub mod entry {
 
     #[entry_point]
     pub fn instantiate(
-        deps: DepsMut<OsmosisQuery>,
+        deps: DepsMut,
         _env: Env,
         _info: MessageInfo,
         msg: InstantiateMsg,
@@ -30,16 +29,16 @@ pub mod entry {
 
     #[entry_point]
     pub fn execute(
-        deps: DepsMut<OsmosisQuery>,
+        deps: DepsMut,
         env: Env,
         info: MessageInfo,
         msg: ExecuteMsg,
-    ) -> ContractResult<Response<OsmosisMsg>> {
+    ) -> ContractResult<Response> {
         OsmosisCollector::default().execute(deps, env, info, msg)
     }
 
     #[entry_point]
-    pub fn query(deps: Deps<OsmosisQuery>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         OsmosisCollector::default().query(deps, msg)
     }
 }
