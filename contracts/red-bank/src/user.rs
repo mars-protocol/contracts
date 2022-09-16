@@ -4,7 +4,7 @@ use mars_outpost::red_bank::{Collateral, Debt};
 
 use crate::state::{COLLATERALS, DEBTS, UNCOLLATERALIZED_LOAN_LIMITS};
 
-/// A helper class providing an intuitive UI for managing user positions in the contract store.
+/// A helper class providing an intuitive API for managing user positions in the contract store.
 ///
 /// For example, to increase a user's debt shares, instead of:
 ///
