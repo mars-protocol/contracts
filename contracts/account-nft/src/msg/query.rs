@@ -1,23 +1,23 @@
 use std::convert::TryInto;
 
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::StdError;
 use cw721_base::QueryMsg as ParentQueryMsg;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
     //--------------------------------------------------------------------------------------------------
     // Extended messages
     //--------------------------------------------------------------------------------------------------
-    ProposedNewOwner,
+    #[returns(String)]
+    ProposedNewOwner {},
 
     //--------------------------------------------------------------------------------------------------
     // Base cw721 messages
     //--------------------------------------------------------------------------------------------------
     /// Return the owner of the given token, error if token does not exist
-    /// Return type: OwnerOfResponse
+    #[returns(cw721::OwnerOfResponse)]
     OwnerOf {
         token_id: String,
         /// unset or false will filter out expired approvals, you must set to true to see them
@@ -25,7 +25,7 @@ pub enum QueryMsg {
     },
 
     /// Return operator that can access all of the owner's tokens.
-    /// Return type: `ApprovalResponse`
+    #[returns(cw721::ApprovalResponse)]
     Approval {
         token_id: String,
         spender: String,
@@ -33,14 +33,14 @@ pub enum QueryMsg {
     },
 
     /// Return approvals that a token has
-    /// Return type: `ApprovalsResponse`
+    #[returns(cw721::ApprovalsResponse)]
     Approvals {
         token_id: String,
         include_expired: Option<bool>,
     },
 
     /// List all operators that can access all of the owner's tokens
-    /// Return type: `OperatorsResponse`
+    #[returns(cw721::OperatorsResponse)]
     AllOperators {
         owner: String,
         /// unset or false will filter out expired items, you must set to true to see them
@@ -49,20 +49,21 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
     /// Total number of tokens issued
-    NumTokens,
+    #[returns(cw721::NumTokensResponse)]
+    NumTokens {},
 
     /// With MetaData Extension.
-    /// Returns top-level metadata about the contract: `ContractInfoResponse`
-    ContractInfo,
+    /// Returns top-level metadata about the contract
+    #[returns(cw721::ContractInfoResponse)]
+    ContractInfo {},
     /// With MetaData Extension.
     /// Returns metadata about one particular token, based on *ERC721 Metadata JSON Schema*
-    /// but directly from the contract: `NftInfoResponse`
-    NftInfo {
-        token_id: String,
-    },
+    /// but directly from the contract
+    #[returns(cw721::NftInfoResponse<cosmwasm_std::Empty>)]
+    NftInfo { token_id: String },
     /// With MetaData Extension.
-    /// Returns the result of both `NftInfo` and `OwnerOf` as one query as an optimization
-    /// for clients: `AllNftInfo`
+    /// Returns the result of both `NftInfo` and `OwnerOf` as one query as an optimization for clients
+    #[returns(cw721::AllNftInfoResponse<cosmwasm_std::Empty>)]
     AllNftInfo {
         token_id: String,
         /// unset or false will filter out expired approvals, you must set to true to see them
@@ -71,7 +72,7 @@ pub enum QueryMsg {
 
     /// With Enumerable extension.
     /// Returns all tokens owned by the given address, [] if unset.
-    /// Return type: TokensResponse.
+    #[returns(cw721::TokensResponse)]
     Tokens {
         owner: String,
         start_after: Option<String>,
@@ -80,13 +81,15 @@ pub enum QueryMsg {
     /// With Enumerable extension.
     /// Requires pagination. Lists all token_ids controlled by the contract.
     /// Return type: TokensResponse.
+    #[returns(cw721::TokensResponse)]
     AllTokens {
         start_after: Option<String>,
         limit: Option<u32>,
     },
 
     /// Return the minter
-    Minter,
+    #[returns(cw721_base::MinterResponse)]
+    Minter {},
 }
 
 impl TryInto<ParentQueryMsg> for QueryMsg {

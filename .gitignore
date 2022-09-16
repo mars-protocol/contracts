@@ -14,6 +14,7 @@ node_modules
 .idea
 
 # build artifacts
+build
 artifacts
 
 # private scripts that I don't want to commit are prefixed by an underscore

@@ -54,7 +54,7 @@ fn test_proposed_owner_can_accept_ownership() {
 
     let res: MinterResponse = app
         .wrap()
-        .query_wasm_smart(contract_addr, &QueryMsg::Minter)
+        .query_wasm_smart(contract_addr, &QueryMsg::Minter {})
         .unwrap();
 
     assert_eq!(res.minter, new_owner)
@@ -78,7 +78,7 @@ fn test_only_proposed_owner_can_accept() {
 
 fn query_pending_owner(app: &BasicApp, contract_addr: &Addr) -> StdResult<String> {
     app.wrap()
-        .query_wasm_smart(contract_addr, &QueryMsg::ProposedNewOwner)
+        .query_wasm_smart(contract_addr, &QueryMsg::ProposedNewOwner {})
 }
 
 fn propose_new_owner(
@@ -105,7 +105,7 @@ fn accept_proposed_owner(
     app.execute_contract(
         sender.clone(),
         contract_addr.clone(),
-        &ExtendedExecuteMsg::AcceptOwnership,
+        &ExtendedExecuteMsg::AcceptOwnership {},
         &[],
     )
 }

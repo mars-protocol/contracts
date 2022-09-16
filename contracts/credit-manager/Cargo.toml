@@ -21,11 +21,12 @@ mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", featu
 mock-vault = { version = "1.0", path = "../../contracts/mock-vault", features = ["library"] }
 rover = { version = "0.1", path = "../../packages/rover" }
 
-cosmwasm-std = "1.0"
-cw2 = "0.14"
+cosmwasm-schema = "1.1"
+cosmwasm-std = "1.1"
+cw2 = "0.15"
 cw721 = "0.13"
 cw721-base = { version = "0.13", features = ["library"] }
-cw-storage-plus = "0.14"
+cw-storage-plus = "0.15"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 
@@ -33,5 +34,5 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 swapper-mock = { version = "0.1", path = "../../contracts/swapper/mock", features = ["library"] }
 
 anyhow = "1"
-cw-multi-test = "0.14"
+cw-multi-test = "0.15"
 itertools = "0.10"

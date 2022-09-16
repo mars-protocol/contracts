@@ -10,10 +10,18 @@ command = "cargo"
 args = ["build", "--release", "--target", "wasm32-unknown-unknown", "--locked"]
 
 [tasks.rust-optimizer]
-script = """docker run --rm -v "$(pwd)":/code \
+script = """
+if [[ $(arch) == 'arm64' ]]; then
+  docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.6
+  cosmwasm/workspace-optimizer-arm64:0.12.8
+else
+  docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/workspace-optimizer:0.12.8
+fi
 """
 
 [tasks.test]
@@ -37,3 +45,22 @@ dependencies = [
     "clippy",
     "rust-optimizer",
 ]
+
+[tasks.generate-all-schemas]
+script = """
+    rm -rf schema
+    rm -rf schemas
+    mkdir schemas
+
+    array=( credit-manager account-nft mock-red-bank mock-vault mock-oracle swapper-base )
+    for i in "${array[@]}"
+    do
+      :
+      echo "$i"
+      cargo run --package "$i" --example schema
+      mkdir schemas/"$i"
+      mv schema/"$i".json schemas/"$i"/"$i".json
+    done
+
+    rm -rf schema
+"""

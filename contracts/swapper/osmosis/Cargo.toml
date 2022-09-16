@@ -17,8 +17,8 @@ library = []
 rover = { version = "0.1", path = "../../../packages/rover" }
 swapper-base = { path = "../base", version = "0.1" }
 
-cosmwasm-std = "1.0"
-cw-storage-plus = "0.14"
+cosmwasm-std = "1.1"
+cw-storage-plus = "0.15"
 osmo-bindings = "0.5"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }

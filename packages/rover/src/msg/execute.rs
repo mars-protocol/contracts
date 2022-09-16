@@ -5,14 +5,14 @@ use serde::{Deserialize, Serialize};
 use crate::adapters::{Vault, VaultUnchecked};
 use crate::msg::instantiate::ConfigUpdates;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     //--------------------------------------------------------------------------------------------------
     // Public messages
     //--------------------------------------------------------------------------------------------------
     /// Mints NFT representing a credit account for user. User can have many.
-    CreateCreditAccount,
+    CreateCreditAccount {},
     /// Update user's position on their credit account
     UpdateCreditAccount {
         token_id: String,
@@ -29,7 +29,7 @@ pub enum ExecuteMsg {
 }
 
 /// The list of actions that users can perform on their positions
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Action {
     /// Deposit coin of specified denom and amount. Verifies if the correct amount is sent with transaction.
@@ -76,7 +76,7 @@ pub enum Action {
 }
 
 /// Internal actions made by the contract with pre-validated inputs
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CallbackMsg {
     /// Withdraw specified amount of coin from credit account;

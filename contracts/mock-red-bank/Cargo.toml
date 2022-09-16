@@ -16,7 +16,8 @@ library = []
 [dependencies]
 mars-outpost = { version = "0.1", path = "../../../outposts/packages/outpost" }
 
-cosmwasm-std = "1.0"
+cosmwasm-schema = "1.1"
+cosmwasm-std = "1.1"
 cw-storage-plus = "0.14"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }

@@ -1,3 +1,4 @@
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -10,7 +11,7 @@ pub struct Config<T> {
 
 pub type InstantiateMsg = Config<String>;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg<Route> {
     /// Update contract config
@@ -38,21 +39,24 @@ pub enum ExecuteMsg<Route> {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
-    /// Query contract config. Returns `Config<String>`
+    /// Query contract config
+    #[returns(Config<String>)]
     Config {},
-    /// Get route for swapping an input denom into an output denom; response: `RouteResponse`
+    /// Get route for swapping an input denom into an output denom
+    #[returns(RouteResponse<cosmwasm_std::Empty>)]
     Route { denom_in: String, denom_out: String },
-    /// Enumerate all swapper routes; response: `RoutesResponse`
+    /// Enumerate all swapper routes
+    #[returns(RoutesResponse<cosmwasm_std::Empty>)]
     Routes {
         start_after: Option<(String, String)>,
         limit: Option<u32>,
     },
     /// Return current spot price swapping In for Out
     /// Warning: Do not use this as an oracle price feed. Use Mars-Oracle for pricing.
-    /// Returns `EstimateExactInSwapResponse`
+    #[returns(EstimateExactInSwapResponse)]
     EstimateExactInSwap { coin_in: Coin, denom_out: String },
 }
 

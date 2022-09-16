@@ -1,0 +1,135 @@
+{
+  "contract_name": "mock-oracle",
+  "contract_version": "1.0.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "type": "object",
+    "required": [
+      "coins"
+    ],
+    "properties": {
+      "coins": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/CoinPrice"
+        }
+      }
+    },
+    "definitions": {
+      "CoinPrice": {
+        "type": "object",
+        "required": [
+          "denom",
+          "price"
+        ],
+        "properties": {
+          "denom": {
+            "type": "string"
+          },
+          "price": {
+            "$ref": "#/definitions/Decimal"
+          }
+        }
+      },
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+        "type": "string"
+      }
+    }
+  },
+  "execute": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ExecuteMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "change_price"
+        ],
+        "properties": {
+          "change_price": {
+            "$ref": "#/definitions/CoinPrice"
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "CoinPrice": {
+        "type": "object",
+        "required": [
+          "denom",
+          "price"
+        ],
+        "properties": {
+          "denom": {
+            "type": "string"
+          },
+          "price": {
+            "$ref": "#/definitions/Decimal"
+          }
+        }
+      },
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+        "type": "string"
+      }
+    }
+  },
+  "query": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "QueryMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "price"
+        ],
+        "properties": {
+          "price": {
+            "type": "object",
+            "required": [
+              "denom"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "migrate": null,
+  "sudo": null,
+  "responses": {
+    "price": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PriceResponse",
+      "type": "object",
+      "required": [
+        "denom",
+        "price"
+      ],
+      "properties": {
+        "denom": {
+          "type": "string"
+        },
+        "price": {
+          "$ref": "#/definitions/Decimal"
+        }
+      },
+      "definitions": {
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
-use cosmwasm_std::{
-    to_binary, to_vec, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
-};
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+
 use mars_outpost::oracle::PriceResponse;
 
 use crate::msg::{CoinPrice, ExecuteMsg, InstantiateMsg, QueryMsg};
@@ -40,10 +41,6 @@ fn change_price(deps: DepsMut, coin: CoinPrice) -> StdResult<Response> {
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Price { denom } => to_binary(&query_price(deps, denom)?),
-        _ => Err(StdError::generic_err(format!(
-            "[mock] unimplemented query: {}",
-            String::from_utf8(to_vec(&msg)?)?
-        ))),
     }
 }
 

@@ -17,7 +17,7 @@ pub enum ExecuteMsg {
     ProposeNewOwner { new_owner: String },
 
     /// Accept the proposed ownership transfer
-    AcceptOwnership,
+    AcceptOwnership {},
 
     /// Mint a new NFT to the specified user; can only be called by the contract minter
     Mint { user: String },

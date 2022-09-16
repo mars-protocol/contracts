@@ -66,7 +66,7 @@ pub fn update_config(
         let accept_ownership_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: addr_str.clone(),
             funds: vec![],
-            msg: to_binary(&NftExecuteMsg::AcceptOwnership)?,
+            msg: to_binary(&NftExecuteMsg::AcceptOwnership {})?,
         });
 
         response = response

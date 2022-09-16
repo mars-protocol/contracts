@@ -1,0 +1,8 @@
+{
+  "accountNft": "osmo1zwxt98d4w6dc7nwgh5znmqf2kglyax4gg9hr3497lmfywfcckppsgw3hkx",
+  "mockRedBank": "osmo1zqsgw96drq3cav4kwfecfy26zyl0wt6zpkh9xwfj08smt6acq45skrakkp",
+  "mockOracle": "osmo1dqfzp4vqyfcz0f6yuajvky9gwaxnpw2kmh447z0wy37k40hl8g8sdwq9qp",
+  "mockVault": "osmo1m7cx2r6czyqmqc7nt8zhlk8y63ewk23wfg3tvng9askeztzt7f7qq294hz",
+  "swapper": "osmo1dkg8rkhgtvav3aufth6ud49pz5ces6vqg5vwdgthlhgtutq74q8qrrt2wd",
+  "creditManager": "osmo1zf26ahe5gqjtvnedh7ems7naf2wtw3z4ll6atf3t0hptal8ss4vq2mlx6w"
+}

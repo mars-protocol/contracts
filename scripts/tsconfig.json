@@ -1,20 +1,20 @@
 {
   "compilerOptions": {
-    "target": "es2021",
-    "lib": ["esnext"],
+    "target": "ES2021",
+    "lib": ["ES2021"],
     "types": ["jest", "node"],
-    "module": "esnext",
+    "module": "NodeNext",
     "declaration": true,
     "noImplicitAny": true,
     "removeComments": true,
     "experimentalDecorators": true,
-    "rootDir": ".",
+    "outDir": "./build",
     "sourceMap": true,
     "noEmitOnError": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "noEmit": true,
+    "noEmit": false,
     "moduleResolution": "node",
     "isolatedModules": true,
     "resolveJsonModule": true,
@@ -28,5 +28,5 @@
     "skipLibCheck": true
   },
   "include": ["**/*.ts", "**/*.tsx", "types.d.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "./build/**/*", "types/generated/**/*"]
 }

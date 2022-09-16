@@ -182,6 +182,7 @@ fn test_success_when_new_debt_asset() {
     );
     assert_eq!(debt_shares_res.denom, coin_info.denom);
     let debt_amount = Uint128::new(42u128) + Uint128::new(1); // simulated yield
+    assert_eq!(debt_shares_res.amount, debt_amount);
     assert_eq!(
         debt_shares_res.value,
         coin_info.price * Decimal::from_atomics(debt_amount, 0).unwrap()

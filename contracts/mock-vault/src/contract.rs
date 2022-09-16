@@ -1,3 +1,6 @@
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
+
 use cosmwasm_std::{
     to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
 };
@@ -43,15 +46,15 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Deposit {} => deposit(deps, info),
-        ExecuteMsg::Withdraw => withdraw(deps, info),
-        ExecuteMsg::ForceWithdraw => withdraw_force(deps, info),
+        ExecuteMsg::Withdraw {} => withdraw(deps, info),
+        ExecuteMsg::ForceWithdraw {} => withdraw_force(deps, info),
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Info => to_binary(&query_vault_info(deps)?),
+        QueryMsg::Info {} => to_binary(&query_vault_info(deps)?),
         QueryMsg::PreviewRedeem { shares } => {
             to_binary(&query_coins_for_shares(deps.storage, shares)?)
         }

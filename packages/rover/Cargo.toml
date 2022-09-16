@@ -15,8 +15,9 @@ mars-outpost = { version = "0.1", path = "../../../outposts/packages/outpost" }
 mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }
 mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features = ["library"] }
 
-cosmwasm-std = "1.0"
-cw-storage-plus = "0.14"
+cosmwasm-schema = "1.1"
+cosmwasm-std = "1.1"
+cw-storage-plus = "0.15"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = "1.0"

@@ -7,7 +7,7 @@ use rover::adapters::swap::{EstimateExactInSwapResponse, ExecuteMsg, Instantiate
 
 pub const MOCK_SWAP_RESULT: Uint128 = Uint128::new(1337);
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn instantiate(
     _deps: DepsMut,
     _env: Env,
@@ -17,7 +17,7 @@ pub fn instantiate(
     Ok(Response::default())
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -36,7 +36,7 @@ pub fn execute(
     }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config { .. } => unimplemented!("not implemented"),

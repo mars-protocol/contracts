@@ -16,8 +16,9 @@ library = []
 [dependencies]
 rover = { version = "0.1", path = "../../../packages/rover" }
 
-cosmwasm-std = "1.0"
-cw-storage-plus = "0.14"
+cosmwasm-schema = "1.1"
+cosmwasm-std = "1.1"
+cw-storage-plus = "0.15"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = "1.0"
