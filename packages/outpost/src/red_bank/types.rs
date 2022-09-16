@@ -23,7 +23,6 @@ impl Config {
     }
 }
 
-// TODO: Once maToken is removed, the scaled collateral amount will be stored in this struct
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Collateral {
     /// Scaled collateral amount
@@ -98,7 +97,6 @@ pub struct UserDebtResponse {
     pub uncollateralized: bool,
 }
 
-// TODO: In an upcoming PR, we will also include `amount_scaled` and `amount` in this response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct UserCollateralResponse {
     /// Asset denom
