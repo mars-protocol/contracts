@@ -358,12 +358,12 @@ pub fn deposit(
     if market.liquidity_index.is_zero() {
         return Err(ContractError::InvalidLiquidityIndex {});
     }
-    let mint_amount =
+    let deposit_amount_scaled =
         get_scaled_liquidity_amount(deposit_amount, &market, env.block.time.seconds())?;
 
-    user.increase_collateral(deps.storage, &denom, mint_amount)?;
+    user.increase_collateral(deps.storage, &denom, deposit_amount_scaled)?;
 
-    market.increase_collateral(mint_amount)?;
+    market.increase_collateral(deposit_amount_scaled)?;
     MARKETS.save(deps.storage, &denom, &market)?;
 
     Ok(response
@@ -456,12 +456,12 @@ pub fn withdraw(
     let withdrawer_balance_scaled_after =
         get_scaled_liquidity_amount(withdrawer_balance_after, &market, env.block.time.seconds())?;
 
-    let burn_amount =
+    let withdraw_amount_scaled =
         withdrawer_balance_scaled_before.checked_sub(withdrawer_balance_scaled_after)?;
 
-    withdrawer.decrease_collateral(deps.storage, &denom, burn_amount)?;
+    withdrawer.decrease_collateral(deps.storage, &denom, withdraw_amount_scaled)?;
 
-    market.decrease_collateral(burn_amount)?;
+    market.decrease_collateral(withdraw_amount_scaled)?;
     MARKETS.save(deps.storage, &denom, &market)?;
 
     // send underlying asset to user or another recipient
@@ -477,7 +477,7 @@ pub fn withdraw(
         .add_attribute("denom", denom)
         .add_attribute("user", withdrawer)
         .add_attribute("recipient", recipient_addr)
-        .add_attribute("burn_amount", burn_amount)
+        .add_attribute("withdraw_amount_scaled", withdraw_amount_scaled)
         .add_attribute("withdraw_amount", withdraw_amount))
 }
 

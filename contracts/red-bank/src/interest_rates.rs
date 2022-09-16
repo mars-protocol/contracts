@@ -79,13 +79,17 @@ pub fn apply_accumulated_interests(
     let accrued_protocol_rewards = borrow_interest_accrued * market.reserve_factor;
 
     if !accrued_protocol_rewards.is_zero() {
-        let mint_amount = compute_scaled_amount(
+        let reward_amount_scaled = compute_scaled_amount(
             accrued_protocol_rewards,
             market.liquidity_index,
             ScalingOperation::Truncate,
         )?;
-        market.increase_collateral(mint_amount)?;
-        User(rewards_collector_addr).increase_collateral(store, &market.denom, mint_amount)?;
+        User(rewards_collector_addr).increase_collateral(
+            store,
+            &market.denom,
+            reward_amount_scaled,
+        )?;
+        market.increase_collateral(reward_amount_scaled)?;
     }
 
     Ok(())
