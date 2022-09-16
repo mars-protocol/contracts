@@ -98,10 +98,9 @@ impl<'a> User<'a> {
     ) -> StdResult<()> {
         COLLATERALS.update(store, (self.0, denom), |opt| -> StdResult<_> {
             match opt {
-                Some(mut collateral) => {
-                    collateral.amount_scaled =
-                        collateral.amount_scaled.checked_add(amount_scaled)?;
-                    Ok(collateral)
+                Some(mut col) => {
+                    col.amount_scaled = col.amount_scaled.checked_add(amount_scaled)?;
+                    Ok(col)
                 }
                 None => Ok(Collateral {
                     amount_scaled,
