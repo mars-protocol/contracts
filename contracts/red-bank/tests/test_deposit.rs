@@ -247,8 +247,8 @@ fn depositing_without_existing_position() {
         vec![
             attr("action", "outposts/red-bank/deposit"),
             attr("denom", denom),
-            attr("user", &depositor_addr),
             attr("sender", &depositor_addr),
+            attr("user", &depositor_addr),
             attr("amount", deposit_amount.to_string()),
         ]
     );

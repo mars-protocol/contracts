@@ -369,8 +369,8 @@ pub fn deposit(
     Ok(response
         .add_attribute("action", "outposts/red-bank/deposit")
         .add_attribute("denom", denom)
+        .add_attribute("sender", &info.sender)
         .add_attribute("user", user)
-        .add_attribute("sender", info.sender)
         .add_attribute("amount", deposit_amount))
 }
 
@@ -656,8 +656,8 @@ pub fn repay(
     Ok(response
         .add_attribute("action", "outposts/red-bank/repay")
         .add_attribute("denom", denom)
+        .add_attribute("sender", &info.sender)
         .add_attribute("user", user)
-        .add_attribute("sender", info.sender)
         .add_attribute("amount", repay_amount.checked_sub(refund_amount)?))
 }
 
