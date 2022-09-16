@@ -185,7 +185,7 @@ fn withdrawing_partially() {
             attr("denom", denom),
             attr("user", &withdrawer_addr),
             attr("recipient", &withdrawer_addr),
-            attr("burn_amount", expected_burn_amount.to_string()),
+            attr("withdraw_amount_scaled", expected_burn_amount.to_string()),
             attr("withdraw_amount", withdraw_amount.to_string()),
         ]
     );
@@ -271,7 +271,7 @@ fn withdrawing_completely() {
             attr("denom", denom),
             attr("user", &withdrawer_addr),
             attr("recipient", &withdrawer_addr),
-            attr("burn_amount", withdrawer_balance_scaled.to_string()),
+            attr("withdraw_amount_scaled", withdrawer_balance_scaled.to_string()),
             attr("withdraw_amount", withdrawer_balance.to_string()),
         ]
     );
@@ -339,7 +339,7 @@ fn withdrawing_to_another_user() {
             attr("denom", denom.to_string()),
             attr("user", &withdrawer_addr),
             attr("recipient", &recipient_addr),
-            attr("burn_amount", withdrawer_balance_scaled.to_string()),
+            attr("withdraw_amount_scaled", withdrawer_balance_scaled.to_string()),
             attr("withdraw_amount", withdraw_amount.to_string()),
         ]
     );
