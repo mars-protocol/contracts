@@ -4,7 +4,6 @@ use cosmwasm_std::{
     StdResult, SystemError, SystemResult, Uint128, WasmQuery,
 };
 
-use osmo_bindings::{OsmosisQuery, PoolStateResponse, Step, Swap, SwapResponse};
 use osmosis_std::types::osmosis::gamm::twap::v1beta1::GetArithmeticTwapResponse;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
     QueryPoolResponse, QuerySpotPriceResponse, QuerySwapExactAmountInResponse, SwapAmountInRoute,
