@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::mock_env;
 
-use osmo_bindings::Step;
+use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
 
 use mars_outpost::error::MarsError;
 use mars_outpost::rewards_collector::{QueryMsg, RouteResponse};
@@ -19,13 +19,13 @@ fn test_setting_route() {
     let mut deps = helpers::setup_test();
 
     let steps = vec![
-        Step {
+        SwapAmountInRoute {
             pool_id: 1,
-            denom_out: "uosmo".to_string(),
+            token_out_denom: "uosmo".to_string(),
         },
-        Step {
+        SwapAmountInRoute {
             pool_id: 420,
-            denom_out: "umars".to_string(),
+            token_out_denom: "umars".to_string(),
         },
     ];
 
@@ -134,13 +134,13 @@ fn test_validating_route() {
 
     // invalid - the pool must contain the input denom
     let route = OsmosisRoute(vec![
-        Step {
+        SwapAmountInRoute {
             pool_id: 68,
-            denom_out: "uusdc".to_string(),
+            token_out_denom: "uusdc".to_string(),
         },
-        Step {
+        SwapAmountInRoute {
             pool_id: 420,
-            denom_out: "umars".to_string(), // 420 is OSMO-MARS pool; but the previous step's output is USDC
+            token_out_denom: "umars".to_string(), // 420 is OSMO-MARS pool; but the previous step's output is USDC
         },
     ]);
     assert_eq!(
@@ -152,13 +152,13 @@ fn test_validating_route() {
 
     // invalid - the pool must contain the output denom
     let route = OsmosisRoute(vec![
-        Step {
+        SwapAmountInRoute {
             pool_id: 1,
-            denom_out: "uosmo".to_string(),
+            token_out_denom: "uosmo".to_string(),
         },
-        Step {
+        SwapAmountInRoute {
             pool_id: 69,
-            denom_out: "umars".to_string(), // 69 is OSMO-USDC pool; but this step's output is MARS
+            token_out_denom: "umars".to_string(), // 69 is OSMO-USDC pool; but this step's output is MARS
         },
     ]);
     assert_eq!(
@@ -171,21 +171,21 @@ fn test_validating_route() {
     // invalid - route contains a loop
     // this examle: ATOM -> OSMO -> USDC -> OSMO -> MARS
     let route = OsmosisRoute(vec![
-        Step {
+        SwapAmountInRoute {
             pool_id: 1,
-            denom_out: "uosmo".to_string(),
+            token_out_denom: "uosmo".to_string(),
         },
-        Step {
+        SwapAmountInRoute {
             pool_id: 69,
-            denom_out: "uusdc".to_string(),
+            token_out_denom: "uusdc".to_string(),
         },
-        Step {
+        SwapAmountInRoute {
             pool_id: 69,
-            denom_out: "uosmo".to_string(),
+            token_out_denom: "uosmo".to_string(),
         },
-        Step {
+        SwapAmountInRoute {
             pool_id: 420,
-            denom_out: "umars".to_string(),
+            token_out_denom: "umars".to_string(),
         },
     ]);
     assert_eq!(
@@ -197,13 +197,13 @@ fn test_validating_route() {
 
     // invalid - route's final output denom does not match the desired output
     let route = OsmosisRoute(vec![
-        Step {
+        SwapAmountInRoute {
             pool_id: 1,
-            denom_out: "uosmo".to_string(),
+            token_out_denom: "uosmo".to_string(),
         },
-        Step {
+        SwapAmountInRoute {
             pool_id: 69,
-            denom_out: "uusdc".to_string(),
+            token_out_denom: "uusdc".to_string(),
         },
     ]);
     assert_eq!(
@@ -216,13 +216,13 @@ fn test_validating_route() {
 
     // valid
     let route = OsmosisRoute(vec![
-        Step {
+        SwapAmountInRoute {
             pool_id: 1,
-            denom_out: "uosmo".to_string(),
+            token_out_denom: "uosmo".to_string(),
         },
-        Step {
+        SwapAmountInRoute {
             pool_id: 420,
-            denom_out: "umars".to_string(),
+            token_out_denom: "umars".to_string(),
         },
     ]);
     assert_eq!(route.validate(q, "uatom", "umars"), Ok(()));
@@ -231,13 +231,13 @@ fn test_validating_route() {
 #[test]
 fn test_stringifying_route() {
     let route = OsmosisRoute(vec![
-        Step {
+        SwapAmountInRoute {
             pool_id: 1,
-            denom_out: "uosmo".to_string(),
+            token_out_denom: "uosmo".to_string(),
         },
-        Step {
+        SwapAmountInRoute {
             pool_id: 420,
-            denom_out: "umars".to_string(),
+            token_out_denom: "umars".to_string(),
         },
     ]);
     assert_eq!(route.to_string(), "1:uosmo|420:umars".to_string());

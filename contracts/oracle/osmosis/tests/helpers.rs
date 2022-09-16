@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use std::any::type_name;
 use std::marker::PhantomData;
 
 use cosmwasm_std::testing::{mock_env, MockApi, MockQuerier, MockStorage};
@@ -105,7 +106,7 @@ fn prepare_query_pool_response(
 
     QueryPoolResponse {
         pool: Some(Any {
-            type_url: "osmosis_std::types::osmosis::gamm::v1beta1::Pool".to_string(),
+            type_url: type_name::<Pool>().to_string(),
             value: buf,
         }),
     }
