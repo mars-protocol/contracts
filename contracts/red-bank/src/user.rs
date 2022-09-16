@@ -129,7 +129,7 @@ impl<'a> User<'a> {
                     uncollateralized,
                 }),
                 None => Ok(Debt {
-                    amount_scaled: Uint128::zero(),
+                    amount_scaled,
                     uncollateralized,
                 }),
             }

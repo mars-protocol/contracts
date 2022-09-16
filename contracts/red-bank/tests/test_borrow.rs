@@ -1,11 +1,9 @@
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128};
-
 use cw_utils::PaymentError;
+
 use mars_outpost::math;
 use mars_outpost::red_bank::{ExecuteMsg, Market};
-use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
-
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
 use mars_red_bank::interest_rates::{
@@ -13,6 +11,7 @@ use mars_red_bank::interest_rates::{
     ScalingOperation, SCALING_FACTOR,
 };
 use mars_red_bank::state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
+use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use helpers::{
     has_collateral_position, has_debt_position, set_collateral, th_build_interests_updated_event,
@@ -41,7 +40,6 @@ fn test_borrow_and_repay() {
     deps.querier.set_oracle_price("uusd", Decimal::one());
 
     let mock_market_1 = Market {
-        ma_token_address: Addr::unchecked("ma-uosmo"),
         borrow_index: Decimal::from_ratio(12u128, 10u128),
         liquidity_index: Decimal::from_ratio(8u128, 10u128),
         borrow_rate: Decimal::from_ratio(20u128, 100u128),
@@ -52,13 +50,11 @@ fn test_borrow_and_repay() {
         ..Default::default()
     };
     let mock_market_2 = Market {
-        ma_token_address: Addr::unchecked("ma-uusd"),
         borrow_index: Decimal::one(),
         liquidity_index: Decimal::one(),
         ..Default::default()
     };
     let mock_market_3 = Market {
-        ma_token_address: Addr::unchecked("ma-uatom"),
         borrow_index: Decimal::one(),
         liquidity_index: Decimal::from_ratio(11u128, 10u128),
         max_loan_to_value: Decimal::from_ratio(7u128, 10u128),
@@ -77,13 +73,12 @@ fn test_borrow_and_repay() {
     let borrower_addr = Addr::unchecked("borrower");
 
     // Set user as having the market_collateral deposited
-    set_collateral(deps.as_mut(), &borrower_addr, "uatom", true);
-
-    // Set the querier to return a certain collateral balance
-    let deposit_coin_address = Addr::unchecked("ma-uatom");
-    deps.querier.set_cw20_balances(
-        deposit_coin_address,
-        &[(borrower_addr.clone(), Uint128::new(10000) * SCALING_FACTOR)],
+    set_collateral(
+        deps.as_mut(),
+        &borrower_addr,
+        "uatom",
+        Uint128::new(10000) * SCALING_FACTOR,
+        true,
     );
 
     // *
@@ -481,14 +476,12 @@ fn test_repay_on_behalf_of() {
     deps.querier.set_oracle_price("borrowedcoinnative", Decimal::one());
 
     let mock_market_1 = Market {
-        ma_token_address: Addr::unchecked("matoken1"),
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
         max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
         ..Default::default()
     };
     let mock_market_2 = Market {
-        ma_token_address: Addr::unchecked("matoken2"),
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
         max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
@@ -502,13 +495,12 @@ fn test_repay_on_behalf_of() {
     let user_addr = Addr::unchecked("user");
 
     // Set user as having the market_1_initial (collateral) deposited
-    set_collateral(deps.as_mut(), &borrower_addr, &market_1_initial.denom, true);
-
-    // Set the querier to return a certain collateral balance
-    let deposit_coin_address = Addr::unchecked("matoken1");
-    deps.querier.set_cw20_balances(
-        deposit_coin_address,
-        &[(borrower_addr.clone(), Uint128::new(10000) * SCALING_FACTOR)],
+    set_collateral(
+        deps.as_mut(),
+        &borrower_addr,
+        &market_1_initial.denom,
+        Uint128::new(10000) * SCALING_FACTOR,
+        true,
     );
 
     // *
@@ -591,7 +583,6 @@ fn test_borrow_uusd() {
     let ltv = Decimal::from_ratio(7u128, 10u128);
 
     let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
         liquidity_index: Decimal::one(),
         max_loan_to_value: ltv,
         borrow_index: Decimal::from_ratio(20u128, 10u128),
@@ -605,12 +596,7 @@ fn test_borrow_uusd() {
 
     // Set user as having the market_collateral deposited
     let deposit_amount_scaled = Uint128::new(110_000) * SCALING_FACTOR;
-    set_collateral(deps.as_mut(), &borrower_addr, "uusd", true);
-
-    // Set the querier to return collateral balance
-    let deposit_coin_address = Addr::unchecked("matoken");
-    deps.querier
-        .set_cw20_balances(deposit_coin_address, &[(borrower_addr.clone(), deposit_amount_scaled)]);
+    set_collateral(deps.as_mut(), &borrower_addr, "uusd", deposit_amount_scaled, true);
 
     // borrow with insufficient collateral, should fail
     let new_block_time = 120u64;
@@ -675,7 +661,6 @@ fn test_borrow_full_liquidity_and_then_repay() {
     let ltv = Decimal::one();
 
     let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
         liquidity_index: Decimal::one(),
         max_loan_to_value: ltv,
         borrow_index: Decimal::one(),
@@ -690,13 +675,12 @@ fn test_borrow_full_liquidity_and_then_repay() {
 
     // User should have amount of collateral more than initial liquidity in order to borrow full liquidity
     let deposit_amount = initial_liquidity + 1000u128;
-    set_collateral(deps.as_mut(), &borrower_addr, "uusd", true);
-
-    // Set the querier to return collateral balance
-    let deposit_coin_address = Addr::unchecked("matoken");
-    deps.querier.set_cw20_balances(
-        deposit_coin_address,
-        &[(borrower_addr, Uint128::new(deposit_amount) * SCALING_FACTOR)],
+    set_collateral(
+        deps.as_mut(),
+        &borrower_addr,
+        "uusd",
+        Uint128::new(deposit_amount) * SCALING_FACTOR,
+        true,
     );
 
     // Borrow full liquidity
@@ -769,7 +753,6 @@ fn test_borrow_collateral_check() {
     // NOTE: base asset price (asset3) should be set to 1 by the oracle helper
 
     let mock_market_1 = Market {
-        ma_token_address: Addr::unchecked("matoken1"),
         max_loan_to_value: Decimal::from_ratio(8u128, 10u128),
         debt_total_scaled: Uint128::zero(),
         liquidity_index: Decimal::one(),
@@ -777,7 +760,6 @@ fn test_borrow_collateral_check() {
         ..Default::default()
     };
     let mock_market_2 = Market {
-        ma_token_address: Addr::unchecked("matoken2"),
         max_loan_to_value: Decimal::from_ratio(6u128, 10u128),
         debt_total_scaled: Uint128::zero(),
         liquidity_index: Decimal::one(),
@@ -785,7 +767,6 @@ fn test_borrow_collateral_check() {
         ..Default::default()
     };
     let mock_market_3 = Market {
-        ma_token_address: Addr::unchecked("matoken3"),
         max_loan_to_value: Decimal::from_ratio(4u128, 10u128),
         debt_total_scaled: Uint128::zero(),
         liquidity_index: Decimal::one(),
@@ -802,23 +783,14 @@ fn test_borrow_collateral_check() {
 
     let borrower_addr = Addr::unchecked("borrower");
 
-    // Set user as having all the markets as collateral
-    set_collateral(deps.as_mut(), &borrower_addr, &market_1_initial.denom, true);
-    set_collateral(deps.as_mut(), &borrower_addr, &market_2_initial.denom, true);
-    set_collateral(deps.as_mut(), &borrower_addr, &market_3_initial.denom, true);
-
-    let ma_token_address_1 = Addr::unchecked("matoken1");
-    let ma_token_address_2 = Addr::unchecked("matoken2");
-    let ma_token_address_3 = Addr::unchecked("matoken3");
-
     let balance_1 = Uint128::new(4_000_000) * SCALING_FACTOR;
     let balance_2 = Uint128::new(7_000_000) * SCALING_FACTOR;
     let balance_3 = Uint128::new(3_000_000) * SCALING_FACTOR;
 
-    // Set the querier to return a certain collateral balance
-    deps.querier.set_cw20_balances(ma_token_address_1, &[(borrower_addr.clone(), balance_1)]);
-    deps.querier.set_cw20_balances(ma_token_address_2, &[(borrower_addr.clone(), balance_2)]);
-    deps.querier.set_cw20_balances(ma_token_address_3, &[(borrower_addr, balance_3)]);
+    // Set user as having all the markets as collateral
+    set_collateral(deps.as_mut(), &borrower_addr, &market_1_initial.denom, balance_1, true);
+    set_collateral(deps.as_mut(), &borrower_addr, &market_2_initial.denom, balance_2, true);
+    set_collateral(deps.as_mut(), &borrower_addr, &market_3_initial.denom, balance_3, true);
 
     let max_borrow_allowed_in_base_asset = (market_1_initial.max_loan_to_value
         * compute_underlying_amount(
@@ -876,7 +848,6 @@ fn test_cannot_borrow_if_market_not_enabled() {
     let mut deps = th_setup(&[]);
 
     let mock_market = Market {
-        ma_token_address: Addr::unchecked("ma_somecoin"),
         borrow_enabled: false,
         ..Default::default()
     };
@@ -908,7 +879,6 @@ fn test_borrow_and_send_funds_to_another_user() {
     let another_user_addr = Addr::unchecked("another_user");
 
     let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
         max_loan_to_value: Decimal::from_ratio(5u128, 10u128),
@@ -919,12 +889,7 @@ fn test_borrow_and_send_funds_to_another_user() {
 
     // Set user as having the market_collateral deposited
     let deposit_amount_scaled = Uint128::new(100_000) * SCALING_FACTOR;
-    set_collateral(deps.as_mut(), &borrower_addr, &market.denom, true);
-
-    // Set the querier to return collateral balance
-    let deposit_coin_address = Addr::unchecked("matoken");
-    deps.querier
-        .set_cw20_balances(deposit_coin_address, &[(borrower_addr.clone(), deposit_amount_scaled)]);
+    set_collateral(deps.as_mut(), &borrower_addr, &market.denom, deposit_amount_scaled, true);
 
     let borrow_amount = Uint128::from(1000u128);
     let msg = ExecuteMsg::Borrow {
