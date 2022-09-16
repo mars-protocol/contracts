@@ -16,7 +16,7 @@ use crate::state::{COLLATERALS, DEBTS, UNCOLLATERALIZED_LOAN_LIMITS};
 /// })?;
 /// ```
 ///
-/// The `User` class allows you simply do
+/// The `User` struct allows you simply do
 ///
 /// ```rust
 /// let user = User(&user_addr);
