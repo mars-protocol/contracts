@@ -54,7 +54,7 @@ fn test_liquidate() {
     let second_block_time = 16_000_000;
 
     // Global debt for the debt market
-    let expected_global_collateral_scaled = Uint128::new(1_500_000_0000) * SCALING_FACTOR;
+    let expected_global_collateral_scaled = Uint128::new(1_500_000_000) * SCALING_FACTOR;
     let mut expected_global_debt_scaled = Uint128::new(1_800_000_000) * SCALING_FACTOR;
     let mut expected_global_reward_scaled = Uint128::zero(); // can be any number, but just using zero for now for convenience
 

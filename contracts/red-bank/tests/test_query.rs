@@ -74,7 +74,7 @@ fn test_query_collateral() {
                 enabled: false,
             },
             UserCollateralResponse {
-                denom: market_2.denom.clone(),
+                denom: market_2.denom,
                 amount_scaled: amount_2 * SCALING_FACTOR,
                 amount: amount_2,
                 enabled: true,

@@ -385,7 +385,7 @@ fn test_init_asset() {
             params,
         };
         let info = mock_info("owner", &[]);
-        let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+        let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(error_res, ContractError::AssetAlreadyInitialized {});
     }
 }
