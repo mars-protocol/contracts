@@ -6,6 +6,100 @@ All notable changes to this project will be documented in this file.
 
 This section documents the API changes compared to the Terra Classic deployment, found in the [`mars-core`](https://github.com/mars-protocol/mars-core) repository. This section is **not comprehensive**, as the changes are numerous. Changelog for later version start here should be made comprehensive.
 
+- ([#76](https://github.com/mars-protocol/outposts/pull/76/files)) Red Bank: Execute messages for creating and updating markets have been simplified:
+
+```diff
+enum ExecuteMsg {
+    InitAsset {
+        denom: String,
+-       asset_params: InitOrUpdateAssetParams,
+-       asset_symbol: Option<String>,
++       params: InitOrUpdateAssetParams,
+    },
+    UpdateAsset {
+        denom: String,
+-       asset_params: InitOrUpdateAssetParams,
++       params: InitOrUpdateAssetParams,
+    },
+}
+```
+
+- ([#76](https://github.com/mars-protocol/outposts/pull/76/files)) Red Bank: `underlying_liquidity_amount` query now takes the asset's denom instead of the maToken contract address:
+
+```diff
+enum QueryMsg {
+    UnderlyingLiquidityAmount {
+-       ma_token_address: String,
++       denom: String,
+        amount_scaled: Uint128,
+    },
+}
+```
+
+- ([#76](https://github.com/mars-protocol/outposts/pull/76/files)) Red Bank: `market` query now no longer returns the maToken address. Additionally, it now returns the total scaled amount of collateral. The frontend should now query this method instead of the maToken's total supply:
+
+```diff
+struct Market {
+    pub denom: String,
+-   pub ma_token_address: Addr,
+    pub max_loan_to_value: Decimal,
+    pub liquidation_threshold: Decimal,
+    pub liquidation_bonus: Decimal,
+    pub reserve_factor: Decimal,
+    pub interest_rate_model: InterestRateModel,
+    pub borrow_index: Decimal,
+    pub liquidity_index: Decimal,
+    pub borrow_rate: Decimal,
+    pub liquidity_rate: Decimal,
+    pub indexes_last_updated: u64,
++   pub collateral_total_scaled: Uint128,
+    pub debt_total_scaled: Uint128,
+    pub deposit_enabled: bool,
+    pub borrow_enabled: bool,
+    pub deposit_cap: Uint128,
+}
+```
+
+- ([#76](https://github.com/mars-protocol/outposts/pull/76/files)) Red Bank: `user_collateral` query now returns the collateral scaled amount and amount. The frontend should now query this method instead of the maToken contracts:
+
+```diff
+struct UserCollateralResponse {
+    pub denom: String,
++   pub amount_scaled: Uint128,
++   pub amount: Uint128,
+    pub enabled: bool,
+}
+```
+
+- ([#76](https://github.com/mars-protocol/outposts/pull/76/files)) Red Bank: `user_debt` query now returns whether the debt is being borrowed as uncollateralized loan:
+
+```diff
+struct UserDebtResponse {
+    pub denom: String,
+    pub amount_scaled: Uint128,
+    pub amount: Uint128,
++   pub uncollateralized: bool,
+}
+```
+
+- ([#76](https://github.com/mars-protocol/outposts/pull/76/files)) Red Bank: Parameters related to maToken have been removed from instantiate message, the `update_config` execute message, and the response type for config query:
+
+```diff
+struct CreateOrUpdateConfig {
+    pub owner: Option<String>,
+    pub address_provider: Option<String>,
+-   pub ma_token_code_id: Option<u64>,
+    pub close_factor: Option<Decimal>,
+}
+
+struct Config {
+    pub owner: Addr,
+    pub address_provider: Addr,
+-   pub ma_token_code_id: u64,
+    pub close_factor: Decimal,
+}
+```
+
 - ([#69](https://github.com/mars-protocol/outposts/pull/69/files)) Red Bank: `Market` no longer includes an index:
 
 ```diff
