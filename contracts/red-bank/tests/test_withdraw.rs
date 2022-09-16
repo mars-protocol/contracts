@@ -324,7 +324,7 @@ fn withdrawing_to_another_user() {
     )
     .unwrap();
 
-    // Check if maToken is received by `another_user`
+    // check if the withdrew funds are properly sent to the designated recipient
     assert_eq!(
         res.messages,
         vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {

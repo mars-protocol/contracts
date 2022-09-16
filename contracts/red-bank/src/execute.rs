@@ -451,7 +451,7 @@ pub fn withdraw(
     apply_accumulated_interests(deps.storage, &env, rewards_collector_addr, &mut market)?;
     response = update_interest_rates(&deps, &env, &mut market, withdraw_amount, &denom, response)?;
 
-    // burn maToken
+    // reduce the withdrawer's scaled collateral amount
     let withdrawer_balance_after = withdrawer_balance_before.checked_sub(withdraw_amount)?;
     let withdrawer_balance_scaled_after =
         get_scaled_liquidity_amount(withdrawer_balance_after, &market, env.block.time.seconds())?;

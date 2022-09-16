@@ -59,8 +59,7 @@ pub enum ExecuteMsg {
     Withdraw {
         /// Asset to withdraw
         denom: String,
-        /// Amount to be withdrawn. If None is specified, the full maToken balance will be
-        /// burned in exchange for the equivalent asset amount.
+        /// Amount to be withdrawn. If None is specified, the full amount will be withdrawn.
         amount: Option<Uint128>,
         /// The address where the withdrawn amount is sent
         recipient: Option<String>,
@@ -215,7 +214,9 @@ pub enum QueryMsg {
         amount: Uint128,
     },
 
-    /// Get underlying asset amount for a given maToken balance.
+    /// Get underlying asset amount for a given asset and scaled amount.
+    /// (i.e. How much underlying asset will be released if withdrawing by burning a given scaled
+    /// collateral amount stored in state.)
     UnderlyingLiquidityAmount {
         denom: String,
         amount_scaled: Uint128,
