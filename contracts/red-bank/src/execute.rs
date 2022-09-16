@@ -465,7 +465,6 @@ pub fn withdraw(
     MARKETS.save(deps.storage, &denom, &market)?;
 
     // send underlying asset to user or another recipient
-    // TODO: maybe cloning can be avoided here?
     let recipient_addr = if let Some(recipient) = recipient {
         deps.api.addr_validate(&recipient)?
     } else {
@@ -569,7 +568,6 @@ pub fn borrow(
     MARKETS.save(deps.storage, &denom, &borrow_market)?;
 
     // Send borrow amount to borrower or another recipient
-    // TODO: maybe cloning can be avoided here?
     let recipient_addr = if let Some(recipient) = recipient {
         deps.api.addr_validate(&recipient)?
     } else {
