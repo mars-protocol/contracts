@@ -1,7 +1,7 @@
 [workspace]
 members = [
   "contracts/address-provider",
-  "contracts/incentives",
+  # "contracts/incentives",
   "contracts/oracle/*",
   "contracts/red-bank",
   "contracts/rewards-collector/*",
