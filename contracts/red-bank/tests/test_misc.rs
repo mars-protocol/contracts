@@ -13,7 +13,7 @@ use mars_red_bank::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_debt_amount,
     get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
 };
-use mars_red_bank::state::{DEBTS, UNCOLLATERALIZED_LOAN_LIMITS};
+use mars_red_bank::state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
 
 use helpers::{
     has_collateral_enabled, has_collateral_position, has_debt_position, set_collateral, set_debt,
@@ -111,6 +111,10 @@ fn test_uncollateralized_loan_limits() {
         },
     );
 
+    let market = MARKETS.load(deps.as_ref().storage, "somecoin").unwrap();
+    let expected_borrow_amount_scaled =
+        get_scaled_debt_amount(initial_borrow_amount, &market, block_time).unwrap();
+
     assert_eq!(
         res.messages,
         vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
@@ -123,10 +127,11 @@ fn test_uncollateralized_loan_limits() {
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/borrow"),
-            attr("denom", "somecoin"),
-            attr("user", "borrower"),
+            attr("sender", "borrower"),
             attr("recipient", "borrower"),
-            attr("amount", initial_borrow_amount.to_string()),
+            attr("denom", "somecoin"),
+            attr("amount", initial_borrow_amount),
+            attr("amount_scaled", expected_borrow_amount_scaled),
         ]
     );
     assert_eq!(res.events, vec![th_build_interests_updated_event("somecoin", &expected_params)]);

@@ -182,11 +182,11 @@ fn withdrawing_partially() {
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/withdraw"),
-            attr("denom", denom),
-            attr("user", &withdrawer_addr),
+            attr("sender", &withdrawer_addr),
             attr("recipient", &withdrawer_addr),
-            attr("withdraw_amount_scaled", expected_burn_amount.to_string()),
-            attr("withdraw_amount", withdraw_amount.to_string()),
+            attr("denom", denom),
+            attr("amount", withdraw_amount),
+            attr("amount_scaled", expected_burn_amount),
         ]
     );
     assert_eq!(res.events, vec![th_build_interests_updated_event(denom, &expected_params)]);
@@ -268,11 +268,11 @@ fn withdrawing_completely() {
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/withdraw"),
-            attr("denom", denom),
-            attr("user", &withdrawer_addr),
+            attr("sender", &withdrawer_addr),
             attr("recipient", &withdrawer_addr),
-            attr("withdraw_amount_scaled", withdrawer_balance_scaled.to_string()),
-            attr("withdraw_amount", withdrawer_balance.to_string()),
+            attr("denom", denom),
+            attr("amount", withdrawer_balance.to_string()),
+            attr("amount_scaled", withdrawer_balance_scaled.to_string()),
         ]
     );
     assert_eq!(res.events, vec![th_build_interests_updated_event(denom, &expected_params)]);
@@ -336,11 +336,11 @@ fn withdrawing_to_another_user() {
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/withdraw"),
-            attr("denom", denom.to_string()),
-            attr("user", &withdrawer_addr),
+            attr("sender", &withdrawer_addr),
             attr("recipient", &recipient_addr),
-            attr("withdraw_amount_scaled", withdrawer_balance_scaled.to_string()),
-            attr("withdraw_amount", withdraw_amount.to_string()),
+            attr("denom", denom.to_string()),
+            attr("amount", withdraw_amount.to_string()),
+            attr("amount_scaled", withdrawer_balance_scaled.to_string()),
         ]
     );
 

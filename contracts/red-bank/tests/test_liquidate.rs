@@ -262,16 +262,14 @@ fn test_liquidate() {
             res.attributes,
             vec![
                 attr("action", "outposts/red-bank/liquidate"),
-                attr("collateral_denom", "collateral"),
-                attr("debt_denom", "debt"),
                 attr("user", user_addr.as_str()),
                 attr("liquidator", liquidator_addr.as_str()),
-                attr(
-                    "collateral_amount_liquidated",
-                    expected_liquidated_collateral_amount.to_string(),
-                ),
-                attr("debt_amount_repaid", first_debt_to_repay.to_string()),
-                attr("refund_amount", "0"),
+                attr("collateral_denom", "collateral"),
+                attr("collateral_amount", expected_liquidated_collateral_amount),
+                attr("collateral_amount_scaled", expected_liquidated_collateral_amount_scaled),
+                attr("debt_denom", "debt"),
+                attr("debt_amount", first_debt_to_repay),
+                attr("debt_amount_scaled", expected_debt_rates.less_debt_scaled),
             ],
         );
         assert_eq!(
@@ -399,13 +397,14 @@ fn test_liquidate() {
         mars_testing::assert_eq_vec(
             vec![
                 attr("action", "outposts/red-bank/liquidate"),
-                attr("collateral_denom", "collateral"),
-                attr("debt_denom", "debt"),
                 attr("user", user_addr.as_str()),
                 attr("liquidator", liquidator_addr.as_str()),
-                attr("collateral_amount_liquidated", expected_liquidated_collateral_amount),
-                attr("debt_amount_repaid", expected_less_debt.to_string()),
-                attr("refund_amount", expected_refund_amount.to_string()),
+                attr("collateral_denom", "collateral"),
+                attr("collateral_amount", expected_liquidated_collateral_amount),
+                attr("collateral_amount_scaled", expected_liquidated_collateral_amount_scaled),
+                attr("debt_denom", "debt"),
+                attr("debt_amount", expected_less_debt),
+                attr("debt_amount_scaled", expected_debt_rates.less_debt_scaled),
             ],
             res.attributes,
         );
@@ -549,13 +548,14 @@ fn test_liquidate() {
         mars_testing::assert_eq_vec(
             vec![
                 attr("action", "outposts/red-bank/liquidate"),
-                attr("collateral_denom", "collateral"),
-                attr("debt_denom", "debt"),
                 attr("user", user_addr.as_str()),
                 attr("liquidator", liquidator_addr.as_str()),
-                attr("collateral_amount_liquidated", user_collateral_balance.to_string()),
-                attr("debt_amount_repaid", expected_less_debt.to_string()),
-                attr("refund_amount", expected_refund_amount.to_string()),
+                attr("collateral_denom", "collateral"),
+                attr("collateral_amount", user_collateral_balance),
+                attr("collateral_amount_scaled", expected_liquidated_collateral_amount_scaled),
+                attr("debt_denom", "debt"),
+                attr("debt_amount", expected_less_debt),
+                attr("debt_amount_scaled", expected_debt_rates.less_debt_scaled),
             ],
             res.attributes,
         );
@@ -747,13 +747,14 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             res.attributes,
             vec![
                 attr("action", "outposts/red-bank/liquidate"),
-                attr("collateral_denom", denom),
-                attr("debt_denom", denom),
                 attr("user", user_addr.as_str()),
                 attr("liquidator", liquidator_addr.as_str()),
-                attr("collateral_amount_liquidated", expected_liquidated_amount.to_string()),
-                attr("debt_amount_repaid", debt_to_repay.to_string()),
-                attr("refund_amount", "0"),
+                attr("collateral_denom", denom),
+                attr("collateral_amount", expected_liquidated_amount),
+                attr("collateral_amount_scaled", expected_liquidated_amount_scaled),
+                attr("debt_denom", denom),
+                attr("debt_amount", debt_to_repay),
+                attr("debt_amount_scaled", expected_rates.less_debt_scaled),
             ],
         );
         assert_eq!(res.events, vec![th_build_interests_updated_event(denom, &expected_rates)]);
@@ -900,13 +901,14 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             res.attributes,
             vec![
                 attr("action", "outposts/red-bank/liquidate"),
-                attr("collateral_denom", denom),
-                attr("debt_denom", denom),
                 attr("user", user_addr.as_str()),
                 attr("liquidator", liquidator_addr.as_str()),
-                attr("collateral_amount_liquidated", expected_liquidated_amount.to_string()),
-                attr("debt_amount_repaid", expected_less_debt.to_string()),
-                attr("refund_amount", expected_refund_amount),
+                attr("collateral_denom", denom),
+                attr("collateral_amount", expected_liquidated_amount),
+                attr("collateral_amount_scaled", expected_liquidated_amount_scaled),
+                attr("debt_denom", denom),
+                attr("debt_amount", expected_less_debt),
+                attr("debt_amount_scaled", expected_rates.less_debt_scaled),
             ],
         );
         assert_eq!(res.events, vec![th_build_interests_updated_event(denom, &expected_rates),],);

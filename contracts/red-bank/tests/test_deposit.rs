@@ -246,10 +246,11 @@ fn depositing_without_existing_position() {
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/deposit"),
-            attr("denom", denom),
             attr("sender", &depositor_addr),
-            attr("user", &depositor_addr),
+            attr("on_behalf_of", &depositor_addr),
+            attr("denom", denom),
             attr("amount", deposit_amount.to_string()),
+            attr("amount_scaled", expected_mint_amount),
         ]
     );
     assert_eq!(res.events, vec![th_build_interests_updated_event(denom, &expected_params)]);

@@ -368,10 +368,11 @@ pub fn deposit(
 
     Ok(response
         .add_attribute("action", "outposts/red-bank/deposit")
-        .add_attribute("denom", denom)
         .add_attribute("sender", &info.sender)
-        .add_attribute("user", user)
-        .add_attribute("amount", deposit_amount))
+        .add_attribute("on_behalf_of", user)
+        .add_attribute("denom", denom)
+        .add_attribute("amount", deposit_amount)
+        .add_attribute("amount_scaled", deposit_amount_scaled))
 }
 
 /// Burns sent maAsset in exchange of underlying asset
@@ -474,11 +475,11 @@ pub fn withdraw(
     Ok(response
         .add_message(build_send_asset_msg(&recipient_addr, &denom, withdraw_amount))
         .add_attribute("action", "outposts/red-bank/withdraw")
-        .add_attribute("denom", denom)
-        .add_attribute("user", withdrawer)
+        .add_attribute("sender", withdrawer)
         .add_attribute("recipient", recipient_addr)
-        .add_attribute("withdraw_amount_scaled", withdraw_amount_scaled)
-        .add_attribute("withdraw_amount", withdraw_amount))
+        .add_attribute("denom", denom)
+        .add_attribute("amount", withdraw_amount)
+        .add_attribute("amount_scaled", withdraw_amount_scaled))
 }
 
 /// Add debt for the borrower and send the borrowed funds
@@ -577,10 +578,11 @@ pub fn borrow(
     Ok(response
         .add_message(build_send_asset_msg(&recipient_addr, &denom, borrow_amount))
         .add_attribute("action", "outposts/red-bank/borrow")
-        .add_attribute("denom", denom)
-        .add_attribute("user", borrower)
+        .add_attribute("sender", borrower)
         .add_attribute("recipient", recipient_addr)
-        .add_attribute("amount", borrow_amount))
+        .add_attribute("denom", denom)
+        .add_attribute("amount", borrow_amount)
+        .add_attribute("amount_scaled", borrow_amount_scaled))
 }
 
 /// Handle the repay of native tokens. Refund extra funds if they exist
@@ -653,10 +655,11 @@ pub fn repay(
 
     Ok(response
         .add_attribute("action", "outposts/red-bank/repay")
-        .add_attribute("denom", denom)
         .add_attribute("sender", &info.sender)
-        .add_attribute("user", user)
-        .add_attribute("amount", repay_amount.checked_sub(refund_amount)?))
+        .add_attribute("on_behalf_of", user)
+        .add_attribute("denom", denom)
+        .add_attribute("amount", repay_amount.checked_sub(refund_amount)?)
+        .add_attribute("amount_scaled", debt_amount_scaled_delta))
 }
 
 /// Execute loan liquidations on under-collateralized loans
@@ -861,13 +864,14 @@ pub fn liquidate(
 
     Ok(response
         .add_attribute("action", "outposts/red-bank/liquidate")
+        .add_attribute("user", user)
+        .add_attribute("liquidator", liquidator)
         .add_attribute("collateral_denom", collateral_denom)
+        .add_attribute("collateral_amount", collateral_amount_to_liquidate)
+        .add_attribute("collateral_amount_scaled", collateral_amount_to_liquidate_scaled)
         .add_attribute("debt_denom", debt_denom)
-        .add_attribute("user", user_addr.as_str())
-        .add_attribute("liquidator", info.sender)
-        .add_attribute("collateral_amount_liquidated", collateral_amount_to_liquidate.to_string())
-        .add_attribute("debt_amount_repaid", debt_amount_to_repay.to_string())
-        .add_attribute("refund_amount", refund_amount.to_string()))
+        .add_attribute("debt_amount", debt_amount_to_repay)
+        .add_attribute("debt_amount_scaled", debt_amount_scaled_delta))
 }
 
 /// Computes debt to repay (in debt asset),

@@ -109,6 +109,13 @@ fn test_borrow_and_repay() {
         },
     );
 
+    let expected_debt_scaled_1_after_borrow = compute_scaled_amount(
+        borrow_amount,
+        expected_params_uosmo.borrow_index,
+        ScalingOperation::Ceil,
+    )
+    .unwrap();
+
     // check correct messages and logging
     assert_eq!(
         res.messages,
@@ -121,10 +128,11 @@ fn test_borrow_and_repay() {
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/borrow"),
-            attr("denom", "uosmo"),
-            attr("user", "borrower"),
+            attr("sender", "borrower"),
             attr("recipient", "borrower"),
+            attr("denom", "uosmo"),
             attr("amount", borrow_amount.to_string()),
+            attr("amount_scaled", expected_debt_scaled_1_after_borrow),
         ]
     );
     assert_eq!(res.events, vec![th_build_interests_updated_event("uosmo", &expected_params_uosmo)]);
@@ -134,16 +142,9 @@ fn test_borrow_and_repay() {
     assert!(!has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
     let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uosmo")).unwrap();
-    let expected_debt_scaled_1_after_borrow = compute_scaled_amount(
-        borrow_amount,
-        expected_params_uosmo.borrow_index,
-        ScalingOperation::Ceil,
-    )
-    .unwrap();
+    assert_eq!(expected_debt_scaled_1_after_borrow, debt.amount_scaled);
 
     let market_1_after_borrow = MARKETS.load(&deps.storage, "uosmo").unwrap();
-
-    assert_eq!(expected_debt_scaled_1_after_borrow, debt.amount_scaled);
     assert_eq!(expected_debt_scaled_1_after_borrow, market_1_after_borrow.debt_total_scaled);
     assert_eq!(expected_params_uosmo.borrow_rate, market_1_after_borrow.borrow_rate);
     assert_eq!(expected_params_uosmo.liquidity_rate, market_1_after_borrow.liquidity_rate);
@@ -227,6 +228,13 @@ fn test_borrow_and_repay() {
         },
     );
 
+    let expected_debt_scaled_2_after_borrow_2 = compute_scaled_amount(
+        borrow_amount,
+        expected_params_uusd.borrow_index,
+        ScalingOperation::Ceil,
+    )
+    .unwrap();
+
     // check correct messages and logging
     assert_eq!(
         res.messages,
@@ -239,24 +247,19 @@ fn test_borrow_and_repay() {
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/borrow"),
-            attr("denom", "uusd"),
-            attr("user", "borrower"),
+            attr("sender", "borrower"),
             attr("recipient", "borrower"),
+            attr("denom", "uusd"),
             attr("amount", borrow_amount.to_string()),
+            attr("amount_scaled", expected_debt_scaled_2_after_borrow_2),
         ]
     );
     assert_eq!(res.events, vec![th_build_interests_updated_event("uusd", &expected_params_uusd)]);
 
     let debt2 = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
-    let market_2_after_borrow_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
-
-    let expected_debt_scaled_2_after_borrow_2 = compute_scaled_amount(
-        borrow_amount,
-        expected_params_uusd.borrow_index,
-        ScalingOperation::Ceil,
-    )
-    .unwrap();
     assert_eq!(expected_debt_scaled_2_after_borrow_2, debt2.amount_scaled);
+
+    let market_2_after_borrow_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
     assert_eq!(expected_debt_scaled_2_after_borrow_2, market_2_after_borrow_2.debt_total_scaled);
     assert_eq!(expected_params_uusd.borrow_rate, market_2_after_borrow_2.borrow_rate);
     assert_eq!(expected_params_uusd.liquidity_rate, market_2_after_borrow_2.liquidity_rate);
@@ -308,15 +311,23 @@ fn test_borrow_and_repay() {
         },
     );
 
+    let expected_repay_amount_scaled = compute_scaled_amount(
+        repay_amount,
+        expected_params_uusd.borrow_index,
+        ScalingOperation::Ceil,
+    )
+    .unwrap();
+
     assert_eq!(res.messages, vec![]);
     assert_eq!(
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/repay"),
-            attr("denom", "uusd"),
             attr("sender", "borrower"),
-            attr("user", "borrower"),
+            attr("on_behalf_of", "borrower"),
+            attr("denom", "uusd"),
             attr("amount", repay_amount.to_string()),
+            attr("amount_scaled", expected_repay_amount_scaled),
         ]
     );
     assert_eq!(res.events, vec![th_build_interests_updated_event("uusd", &expected_params_uusd)]);
@@ -328,13 +339,8 @@ fn test_borrow_and_repay() {
     let debt2 = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
     let market_2_after_repay_some_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
 
-    let expected_debt_scaled_2_after_repay_some_2 = expected_debt_scaled_2_after_borrow_2
-        - compute_scaled_amount(
-            repay_amount,
-            expected_params_uusd.borrow_index,
-            ScalingOperation::Ceil,
-        )
-        .unwrap();
+    let expected_debt_scaled_2_after_repay_some_2 =
+        expected_debt_scaled_2_after_borrow_2 - expected_repay_amount_scaled;
     assert_eq!(expected_debt_scaled_2_after_repay_some_2, debt2.amount_scaled);
     assert_eq!(
         expected_debt_scaled_2_after_repay_some_2,
@@ -379,10 +385,11 @@ fn test_borrow_and_repay() {
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/repay"),
-            attr("denom", "uusd"),
             attr("sender", "borrower"),
-            attr("user", "borrower"),
+            attr("on_behalf_of", "borrower"),
+            attr("denom", "uusd"),
             attr("amount", repay_amount.to_string()),
+            attr("amount_scaled", expected_debt_scaled_2_after_repay_some_2),
         ]
     );
     assert_eq!(res.events, vec![th_build_interests_updated_event("uusd", &expected_params_uusd),]);
@@ -448,10 +455,11 @@ fn test_borrow_and_repay() {
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/repay"),
-            attr("denom", "uosmo"),
             attr("sender", "borrower"),
-            attr("user", "borrower"),
+            attr("on_behalf_of", "borrower"),
+            attr("denom", "uosmo"),
             attr("amount", (repay_amount - expected_refund_amount).to_string()),
+            attr("amount_scaled", expected_debt_scaled_1_after_borrow_again),
         ]
     );
     assert_eq!(
@@ -545,10 +553,11 @@ fn test_repay_on_behalf_of() {
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/repay"),
-            attr("denom", "borrowedcoinnative"),
             attr("sender", "user"),
-            attr("user", "borrower"),
+            attr("on_behalf_of", "borrower"),
+            attr("denom", "borrowedcoinnative"),
             attr("amount", repay_amount.to_string()),
+            attr("amount_scaled", Uint128::new(repay_amount) * SCALING_FACTOR),
         ]
     );
 }
@@ -934,10 +943,11 @@ fn test_borrow_and_send_funds_to_another_user() {
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/borrow"),
-            attr("denom", "uusd"),
-            attr("user", borrower_addr),
+            attr("sender", borrower_addr),
             attr("recipient", another_user_addr),
+            attr("denom", "uusd"),
             attr("amount", borrow_amount.to_string()),
+            attr("amount_scaled", borrow_amount * SCALING_FACTOR),
         ]
     );
 }
