@@ -1,12 +1,13 @@
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{
-    attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, StdResult, SubMsg, Uint128,
+    attr, coin, coins, to_binary, Addr, BankMsg, CosmosMsg, Decimal, StdResult, SubMsg, Uint128,
+    WasmMsg,
 };
 use cw_utils::PaymentError;
 
 use mars_outpost::address_provider::MarsContract;
-use mars_outpost::math;
 use mars_outpost::red_bank::{Debt, ExecuteMsg, InterestRateModel, Market};
+use mars_outpost::{incentives, math};
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
 use mars_red_bank::interest_rates::{
@@ -256,7 +257,57 @@ fn test_liquidate() {
         )
         .unwrap();
 
-        assert_eq!(res.messages, vec![]);
+        // there should be up to three messages updating indices at the incentives contract, in the
+        // order:
+        // - collateral denom, user
+        // - collatreal denom, liquidator
+        // - debt denom, rewards collector (if rewards accrued > 0)
+        //
+        // NOTE that we don't expect a message to update rewards collector's index of the
+        // **collateral** asset, because the liquidation action does NOT change the collateral
+        // asset's utilization rate, it's interest rate does not need to be updated.
+        assert_eq!(
+            res.messages,
+            vec![
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: user_addr.clone(),
+                        denom: collateral_market_initial.denom.clone(),
+                        user_amount_scaled_before: expected_user_collateral_scaled,
+                        total_amount_scaled_before: collateral_market_initial
+                            .collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: liquidator_addr.clone(),
+                        denom: collateral_market_initial.denom.clone(),
+                        user_amount_scaled_before: expected_liquidator_collateral_scaled,
+                        total_amount_scaled_before: collateral_market_initial
+                            .collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: Addr::unchecked(
+                            MarsContract::ProtocolRewardsCollector.to_string()
+                        ),
+                        denom: debt_market_initial.denom.clone(),
+                        user_amount_scaled_before: expected_total_reward_scaled,
+                        total_amount_scaled_before: debt_market_initial.collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+            ]
+        );
 
         mars_testing::assert_eq_vec(
             res.attributes,
@@ -388,10 +439,49 @@ fn test_liquidate() {
 
         assert_eq!(
             res.messages,
-            vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-                to_address: liquidator_addr.to_string(),
-                amount: coins(expected_refund_amount.u128(), "debt")
-            })),]
+            vec![
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: user_addr.clone(),
+                        denom: collateral_market_before.denom.clone(),
+                        user_amount_scaled_before: expected_user_collateral_scaled,
+                        total_amount_scaled_before: collateral_market_before
+                            .collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: liquidator_addr.clone(),
+                        denom: collateral_market_before.denom.clone(),
+                        user_amount_scaled_before: expected_liquidator_collateral_scaled,
+                        total_amount_scaled_before: collateral_market_before
+                            .collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: Addr::unchecked(
+                            MarsContract::ProtocolRewardsCollector.to_string()
+                        ),
+                        denom: debt_market_before.denom.clone(),
+                        user_amount_scaled_before: expected_total_reward_scaled,
+                        total_amount_scaled_before: debt_market_before.collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+                    to_address: liquidator_addr.to_string(),
+                    amount: coins(expected_refund_amount.u128(), "debt")
+                })),
+            ]
         );
 
         mars_testing::assert_eq_vec(
@@ -479,7 +569,9 @@ fn test_liquidate() {
         let collateral_market_before = MARKETS.load(&deps.storage, "collateral").unwrap();
         let debt_market_before = MARKETS.load(&deps.storage, "debt").unwrap();
 
-        let block_time = second_block_time;
+        // let some time elapse since the last liquidation, so that there is a non-zero amount of
+        // protocol rewards accrued
+        let block_time = second_block_time + 12345;
         let env = mock_env_at_block_time(block_time);
         let info = mock_info(liquidator_addr.as_str(), &coins(debt_to_repay.u128(), "debt"));
         let res = execute(deps.as_mut(), env, info, liquidate_msg).unwrap();
@@ -539,10 +631,49 @@ fn test_liquidate() {
 
         assert_eq!(
             res.messages,
-            vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-                to_address: liquidator_addr.to_string(),
-                amount: coins(expected_refund_amount.u128(), "debt")
-            }))]
+            vec![
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: user_addr.clone(),
+                        denom: collateral_market_before.denom.clone(),
+                        user_amount_scaled_before: user_collateral_balance_scaled,
+                        total_amount_scaled_before: collateral_market_before
+                            .collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: liquidator_addr.clone(),
+                        denom: collateral_market_before.denom.clone(),
+                        user_amount_scaled_before: expected_liquidator_collateral_scaled,
+                        total_amount_scaled_before: collateral_market_before
+                            .collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: Addr::unchecked(
+                            MarsContract::ProtocolRewardsCollector.to_string()
+                        ),
+                        denom: debt_market_before.denom.clone(),
+                        user_amount_scaled_before: expected_total_reward_scaled,
+                        total_amount_scaled_before: debt_market_before.collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+                    to_address: liquidator_addr.to_string(),
+                    amount: coins(expected_refund_amount.u128(), "debt")
+                })),
+            ]
         );
 
         mars_testing::assert_eq_vec(
@@ -741,7 +872,50 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         )
         .unwrap();
 
-        assert_eq!(res.messages, vec![]);
+        // there should be three messages updating indices at the incentives contract, in the order:
+        // - rewards collector
+        // - user
+        // - liquidator
+        assert_eq!(
+            res.messages,
+            vec![
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: user_addr.clone(),
+                        denom: asset_market_before.denom.clone(),
+                        user_amount_scaled_before: initial_user_collateral_scaled,
+                        total_amount_scaled_before: asset_market_before.collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: liquidator_addr.clone(),
+                        denom: asset_market_before.denom.clone(),
+                        user_amount_scaled_before: Uint128::zero(),
+                        total_amount_scaled_before: asset_market_before.collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: Addr::unchecked(
+                            MarsContract::ProtocolRewardsCollector.to_string()
+                        ),
+                        denom: asset_market_before.denom.clone(),
+                        user_amount_scaled_before: Uint128::zero(),
+                        total_amount_scaled_before: asset_market_before.collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+            ]
+        );
 
         mars_testing::assert_eq_vec(
             res.attributes,
@@ -891,10 +1065,47 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
 
         assert_eq!(
             res.messages,
-            vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-                to_address: liquidator_addr.to_string(),
-                amount: coins(expected_refund_amount.u128(), denom)
-            })),]
+            vec![
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: user_addr.clone(),
+                        denom: asset_market_before.denom.clone(),
+                        user_amount_scaled_before: initial_user_collateral_scaled,
+                        total_amount_scaled_before: asset_market_before.collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: liquidator_addr.clone(),
+                        denom: asset_market_before.denom.clone(),
+                        user_amount_scaled_before: Uint128::zero(),
+                        total_amount_scaled_before: asset_market_before.collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(WasmMsg::Execute {
+                    contract_addr: MarsContract::Incentives.to_string(),
+                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                        user_addr: Addr::unchecked(
+                            MarsContract::ProtocolRewardsCollector.to_string()
+                        ),
+                        denom: asset_market_before.denom.clone(),
+                        user_amount_scaled_before: Uint128::zero(),
+                        total_amount_scaled_before: asset_market_before.collateral_total_scaled,
+                    })
+                    .unwrap(),
+                    funds: vec![]
+                }),
+                SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+                    to_address: liquidator_addr.to_string(),
+                    amount: coins(expected_refund_amount.u128(), denom)
+                })),
+            ]
         );
 
         mars_testing::assert_eq_vec(
