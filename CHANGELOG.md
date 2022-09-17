@@ -6,6 +6,52 @@ All notable changes to this project will be documented in this file.
 
 This section documents the API changes compared to the Terra Classic deployment, found in the [`mars-core`](https://github.com/mars-protocol/mars-core) repository. This section is **not comprehensive**, as the changes are numerous. Changelog for later version start here should be made comprehensive.
 
+- ([#79](https://github.com/mars-protocol/outposts/pull/79/files)) Incentives: The `user_address` parameter in `QueryMsg::UserUnclaimedRewards` is renamed to just `user` in accordance with the [coding guildelines](./CODING_GUIDELINES.md):
+
+```diff
+enum QueryMsg {
+    UserUnclaimedRewards {
+-       user_address: String,
++       user: String,
+    },
+}
+```
+
+- ([#79](https://github.com/mars-protocol/outposts/pull/79/files)) Incentives: "maToken address" is replaced with the asset denom in the execute and query messages related to asset incentive:
+
+```diff
+enum ExecuteMsg {
+    SetAssetIncentive {
+-       ma_token_address: String,
++       denom: String,
+        emission_per_second: Uint128,
+    },
+}
+
+enum QueryMsg {
+    AssetIncentive {
+-       ma_token_address: String,
++       denom: String,
+    },
+}
+```
+
+- ([#79](https://github.com/mars-protocol/outposts/pull/79/files)) Incentives: A new `address_provider` field is added to the instantiate message and config response:
+
+```diff
+struct InstantiateMsg {
+    pub owner: String,
++   pub address_provider: String,
+    pub mars_denom: String,
+}
+
+struct Config {
+    pub owner: Addr,
++   pub address_provider: Addr,
+    pub mars_denom: String,
+}
+```
+
 - ([#76](https://github.com/mars-protocol/outposts/pull/76/files)) Red Bank: Execute messages for creating and updating markets have been simplified:
 
 ```diff
