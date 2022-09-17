@@ -93,7 +93,7 @@ impl<'a> User<'a> {
     /// If the user does not already have a collateral amount, the asset is enabled as collateral by
     /// default. To disable, send a separate `update_asset_collateral_status` execute message.
     ///
-    /// This may be invoked when the user makes a deposit.
+    /// This may be invoked if a user makes a deposit, or when a liquidator liquidates a position.
     pub fn increase_collateral(
         &self,
         store: &mut dyn Storage,
@@ -132,7 +132,7 @@ impl<'a> User<'a> {
     ///
     /// If reduced to zero, delete the collateral position from contract storage.
     ///
-    /// This may be invoked when the user makes a withdrawal.
+    /// This may be invoked if a user makes a withdrawal, or gets liquidated.
     pub fn decrease_collateral(
         &self,
         store: &mut dyn Storage,
