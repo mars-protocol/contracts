@@ -29,8 +29,6 @@ mars-outpost = { path = "../../packages/outpost", version = "0.1.0" }
 mars-health = { path = "../../packages/health", version = "0.1.0" }
 
 cosmwasm-std = "1.0"
-cw20 = "0.14"
-cw20-base = { version = "0.14", features = ["library"] }
 cw-storage-plus = "0.14"
 cw-utils = "0.14"
 serde = { version = "1.0.144", default-features = false, features = ["derive"] }

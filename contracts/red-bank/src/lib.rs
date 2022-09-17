@@ -7,3 +7,4 @@ pub mod helpers;
 pub mod interest_rates;
 pub mod query;
 pub mod state;
+pub mod user;

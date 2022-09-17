@@ -11,10 +11,17 @@ use mars_red_bank::interest_rates::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     ScalingOperation,
 };
-use mars_red_bank::state::{COLLATERALS, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN};
+use mars_red_bank::state::{COLLATERALS, DEBTS, MARKETS};
 
-pub fn set_collateral(deps: DepsMut, user_addr: &Addr, denom: &str, enabled: bool) {
+pub fn set_collateral(
+    deps: DepsMut,
+    user_addr: &Addr,
+    denom: &str,
+    amount_scaled: Uint128,
+    enabled: bool,
+) {
     let collateral = Collateral {
+        amount_scaled,
         enabled,
     };
     COLLATERALS.save(deps.storage, (user_addr, denom), &collateral).unwrap();
@@ -64,7 +71,6 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
     let config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
-        ma_token_code_id: Some(1u64),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
@@ -84,10 +90,6 @@ pub fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {
     };
 
     MARKETS.save(deps.storage, denom, &new_market).unwrap();
-
-    MARKET_DENOMS_BY_MA_TOKEN
-        .save(deps.storage, &new_market.ma_token_address, &denom.to_string())
-        .unwrap();
 
     new_market
 }

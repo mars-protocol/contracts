@@ -1,2 +1,3 @@
 # Incentives
-Manage MARS incentives for maToken holders (depositors).
+
+Manage MARS incentives for depositors.

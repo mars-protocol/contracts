@@ -1,16 +1,7 @@
-use std::any::type_name;
-
-use cosmwasm_std::testing::{mock_info, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{
-    attr, coin, from_binary, to_binary, Addr, CosmosMsg, Decimal, Event, StdError, SubMsg, Uint128,
-    WasmMsg,
-};
-use cw20::MinterResponse;
-use cw20_base::msg::InstantiateMarketingInfo;
+use cosmwasm_std::testing::mock_info;
+use cosmwasm_std::{attr, coin, from_binary, Addr, Decimal, Event, Uint128};
 
 use mars_outpost::error::MarsError;
-use mars_outpost::helpers::zero_address;
-use mars_outpost::ma_token;
 use mars_outpost::red_bank::{
     ConfigResponse, CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
     InterestRateModel, Market, QueryMsg,
@@ -22,7 +13,7 @@ use mars_red_bank::error::ContractError;
 use mars_red_bank::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, ScalingOperation,
 };
-use mars_red_bank::state::{CONFIG, MARKETS};
+use mars_red_bank::state::{COLLATERALS, CONFIG, MARKETS};
 
 use crate::helpers::{th_get_expected_indices, th_init_market, th_setup};
 
@@ -37,7 +28,6 @@ fn test_proper_initialization() {
     let base_config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
-        ma_token_code_id: Some(10u64),
         close_factor: None,
     };
 
@@ -47,7 +37,6 @@ fn test_proper_initialization() {
     let empty_config = CreateOrUpdateConfig {
         owner: None,
         address_provider: None,
-        ma_token_code_id: None,
         close_factor: None,
     };
     let msg = InstantiateMsg {
@@ -100,7 +89,8 @@ fn test_proper_initialization() {
     // it worked, let's query the state
     let res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
     let value: ConfigResponse = from_binary(&res).unwrap();
-    assert_eq!(10, value.ma_token_code_id);
+    assert_eq!(value.owner, "owner");
+    assert_eq!(value.address_provider, "address_provider");
 }
 
 #[test]
@@ -115,7 +105,6 @@ fn test_update_config() {
     let init_config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
-        ma_token_code_id: Some(20u64),
         close_factor: Some(close_factor),
     };
     let msg = InstantiateMsg {
@@ -166,7 +155,6 @@ fn test_update_config() {
     let config = CreateOrUpdateConfig {
         owner: Some("new_owner".to_string()),
         address_provider: Some("new_address_provider".to_string()),
-        ma_token_code_id: Some(40u64),
         close_factor: Some(close_factor),
     };
     let msg = ExecuteMsg::UpdateConfig {
@@ -183,7 +171,6 @@ fn test_update_config() {
 
     assert_eq!(new_config.owner, Addr::unchecked("new_owner"));
     assert_eq!(new_config.address_provider, Addr::unchecked(config.address_provider.unwrap()));
-    assert_eq!(new_config.ma_token_code_id, config.ma_token_code_id.unwrap());
     assert_eq!(new_config.close_factor, config.close_factor.unwrap());
 }
 
@@ -195,7 +182,6 @@ fn test_init_asset() {
     let config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
-        ma_token_code_id: Some(5u64),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
@@ -211,7 +197,7 @@ fn test_init_asset() {
         slope_2: Decimal::zero(),
     };
 
-    let asset_params = InitOrUpdateAssetParams {
+    let params = InitOrUpdateAssetParams {
         initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
         max_loan_to_value: Some(Decimal::from_ratio(8u128, 10u128)),
         reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
@@ -227,8 +213,7 @@ fn test_init_asset() {
     {
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            asset_params: asset_params.clone(),
-            asset_symbol: None,
+            params: params.clone(),
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -241,13 +226,11 @@ fn test_init_asset() {
             max_loan_to_value: None,
             liquidation_threshold: None,
             liquidation_bonus: None,
-            ..asset_params.clone()
+            ..params.clone()
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-
-            asset_params: empty_asset_params,
-            asset_symbol: None,
+            params: empty_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -258,12 +241,11 @@ fn test_init_asset() {
     {
         let invalid_asset_params = InitOrUpdateAssetParams {
             max_loan_to_value: Some(Decimal::from_ratio(11u128, 10u128)),
-            ..asset_params.clone()
+            ..params.clone()
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            asset_params: invalid_asset_params,
-            asset_symbol: None,
+            params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -282,12 +264,11 @@ fn test_init_asset() {
     {
         let invalid_asset_params = InitOrUpdateAssetParams {
             liquidation_threshold: Some(Decimal::from_ratio(11u128, 10u128)),
-            ..asset_params.clone()
+            ..params.clone()
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            asset_params: invalid_asset_params,
-            asset_symbol: None,
+            params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -306,12 +287,11 @@ fn test_init_asset() {
     {
         let invalid_asset_params = InitOrUpdateAssetParams {
             liquidation_bonus: Some(Decimal::from_ratio(11u128, 10u128)),
-            ..asset_params.clone()
+            ..params.clone()
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            asset_params: invalid_asset_params,
-            asset_symbol: None,
+            params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -331,12 +311,11 @@ fn test_init_asset() {
         let invalid_asset_params = InitOrUpdateAssetParams {
             max_loan_to_value: Some(Decimal::from_ratio(5u128, 10u128)),
             liquidation_threshold: Some(Decimal::from_ratio(5u128, 10u128)),
-            ..asset_params.clone()
+            ..params.clone()
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            asset_params: invalid_asset_params,
-            asset_symbol: None,
+            params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -358,12 +337,11 @@ fn test_init_asset() {
                 optimal_utilization_rate: Decimal::percent(110),
                 ..ir_model
             }),
-            ..asset_params
+            ..params
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            asset_params: invalid_asset_params,
-            asset_symbol: None,
+            params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -382,59 +360,17 @@ fn test_init_asset() {
     {
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            asset_params: asset_params.clone(),
-            asset_symbol: None,
+            params: params.clone(),
         };
         let info = mock_info("owner", &[]);
         let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         // should have asset market with Canonical default address
         let market = MARKETS.load(&deps.storage, "someasset").unwrap();
-        assert_eq!(zero_address(), market.ma_token_address);
+        assert_eq!(market.denom, "someasset");
 
         // should have unlimited deposit cap
         assert_eq!(market.deposit_cap, Uint128::MAX);
-
-        // should instantiate a liquidity token
-        assert_eq!(
-            res.messages,
-            vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Instantiate {
-                admin: Some("protocol_admin".to_string()),
-                code_id: 5u64,
-                msg: to_binary(&ma_token::msg::InstantiateMsg {
-                    name: String::from("Mars someasset Liquidity Token"),
-                    symbol: String::from("masomeasset"),
-                    decimals: 6,
-                    initial_balances: vec![],
-                    mint: Some(MinterResponse {
-                        minter: MOCK_CONTRACT_ADDR.to_string(),
-                        cap: None,
-                    }),
-                    init_hook: Some(ma_token::msg::InitHook {
-                        contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-                        msg: to_binary(&ExecuteMsg::InitAssetTokenCallback {
-                            denom: "someasset".to_string(),
-                        })
-                        .unwrap()
-                    }),
-                    marketing: Some(InstantiateMarketingInfo {
-                        project: Some("Mars Protocol".to_string()),
-                        description: Some(
-                            "Interest earning token representing deposits for someasset"
-                                .to_string()
-                        ),
-
-                        marketing: Some("protocol_admin".to_string()),
-                        logo: None,
-                    }),
-                    red_bank_address: MOCK_CONTRACT_ADDR.to_string(),
-                    incentives_address: "incentives".to_string(),
-                })
-                .unwrap(),
-                funds: vec![],
-                label: "masomeasset".to_string()
-            })),]
-        );
 
         assert_eq!(
             res.attributes,
@@ -446,106 +382,12 @@ fn test_init_asset() {
     {
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            asset_params,
-            asset_symbol: None,
+            params,
         };
         let info = mock_info("owner", &[]);
-        let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+        let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(error_res, ContractError::AssetAlreadyInitialized {});
     }
-
-    // callback comes back with created token
-    {
-        let msg = ExecuteMsg::InitAssetTokenCallback {
-            denom: "someasset".to_string(),
-        };
-        let info = mock_info("mtokencontract", &[]);
-        execute(deps.as_mut(), env.clone(), info, msg).unwrap();
-
-        // should have asset market with contract address
-        let market = MARKETS.load(&deps.storage, "someasset").unwrap();
-        assert_eq!(Addr::unchecked("mtokencontract"), market.ma_token_address);
-        assert_eq!(Decimal::one(), market.liquidity_index);
-    }
-
-    // calling this again should not be allowed
-    {
-        let msg = ExecuteMsg::InitAssetTokenCallback {
-            denom: "someasset".to_string(),
-        };
-        let info = mock_info("mtokencontract", &[]);
-        let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-        assert_eq!(error_res, MarsError::Unauthorized {}.into());
-    }
-}
-
-#[test]
-fn test_init_asset_with_msg_symbol() {
-    let mut deps = th_setup(&[]);
-    let asset_params = InitOrUpdateAssetParams {
-        initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
-        max_loan_to_value: Some(Decimal::from_ratio(8u128, 10u128)),
-        reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
-        liquidation_threshold: Some(Decimal::one()),
-        liquidation_bonus: Some(Decimal::zero()),
-        interest_rate_model: Some(InterestRateModel {
-            optimal_utilization_rate: Decimal::one(),
-            base: Decimal::percent(5),
-            slope_1: Decimal::zero(),
-            slope_2: Decimal::zero(),
-        }),
-        deposit_enabled: Some(true),
-        borrow_enabled: Some(true),
-        deposit_cap: None,
-    };
-    let msg = ExecuteMsg::InitAsset {
-        denom: "someasset".to_string(),
-        asset_params,
-        asset_symbol: Some("COIN".to_string()),
-    };
-    let info = mock_info("owner", &[]);
-    let env = mock_env(MockEnvParams::default());
-    let res = execute(deps.as_mut(), env, info, msg).unwrap();
-
-    // should instantiate a liquidity token
-    assert_eq!(
-        res.messages,
-        vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Instantiate {
-            admin: Some("protocol_admin".to_string()),
-            code_id: 1u64,
-            msg: to_binary(&ma_token::msg::InstantiateMsg {
-                name: String::from("Mars COIN Liquidity Token"),
-                symbol: String::from("maCOIN"),
-                decimals: 6,
-                initial_balances: vec![],
-                mint: Some(MinterResponse {
-                    minter: MOCK_CONTRACT_ADDR.to_string(),
-                    cap: None,
-                }),
-                init_hook: Some(ma_token::msg::InitHook {
-                    contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-                    msg: to_binary(&ExecuteMsg::InitAssetTokenCallback {
-                        denom: "someasset".to_string(),
-                    })
-                    .unwrap()
-                }),
-                marketing: Some(InstantiateMarketingInfo {
-                    project: Some("Mars Protocol".to_string()),
-                    description: Some(
-                        "Interest earning token representing deposits for COIN".to_string()
-                    ),
-
-                    marketing: Some("protocol_admin".to_string()),
-                    logo: None,
-                }),
-                red_bank_address: MOCK_CONTRACT_ADDR.to_string(),
-                incentives_address: "incentives".to_string(),
-            })
-            .unwrap(),
-            funds: vec![],
-            label: "maCOIN".to_string()
-        })),]
-    );
 }
 
 #[test]
@@ -557,7 +399,6 @@ fn test_update_asset() {
     let config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
-        ma_token_code_id: Some(5u64),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
@@ -573,7 +414,7 @@ fn test_update_asset() {
         slope_2: Decimal::zero(),
     };
 
-    let asset_params = InitOrUpdateAssetParams {
+    let params = InitOrUpdateAssetParams {
         initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
         max_loan_to_value: Some(Decimal::from_ratio(50u128, 100u128)),
         reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
@@ -589,7 +430,7 @@ fn test_update_asset() {
     {
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            asset_params: asset_params.clone(),
+            params: params.clone(),
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -600,7 +441,7 @@ fn test_update_asset() {
     {
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            asset_params: asset_params.clone(),
+            params: params.clone(),
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -611,8 +452,7 @@ fn test_update_asset() {
     {
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),
-            asset_params: asset_params.clone(),
-            asset_symbol: None,
+            params: params.clone(),
         };
         let info = mock_info("owner", &[]);
         let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -622,11 +462,11 @@ fn test_update_asset() {
     {
         let invalid_asset_params = InitOrUpdateAssetParams {
             max_loan_to_value: Some(Decimal::from_ratio(11u128, 10u128)),
-            ..asset_params.clone()
+            ..params.clone()
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            asset_params: invalid_asset_params,
+            params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -645,11 +485,11 @@ fn test_update_asset() {
     {
         let invalid_asset_params = InitOrUpdateAssetParams {
             liquidation_threshold: Some(Decimal::from_ratio(11u128, 10u128)),
-            ..asset_params.clone()
+            ..params.clone()
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            asset_params: invalid_asset_params,
+            params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -668,11 +508,11 @@ fn test_update_asset() {
     {
         let invalid_asset_params = InitOrUpdateAssetParams {
             liquidation_bonus: Some(Decimal::from_ratio(11u128, 10u128)),
-            ..asset_params.clone()
+            ..params.clone()
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            asset_params: invalid_asset_params,
+            params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -692,11 +532,11 @@ fn test_update_asset() {
         let invalid_asset_params = InitOrUpdateAssetParams {
             max_loan_to_value: Some(Decimal::from_ratio(6u128, 10u128)),
             liquidation_threshold: Some(Decimal::from_ratio(5u128, 10u128)),
-            ..asset_params
+            ..params
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            asset_params: invalid_asset_params,
+            params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -718,11 +558,11 @@ fn test_update_asset() {
                 optimal_utilization_rate: Decimal::percent(110),
                 ..ir_model
             }),
-            ..asset_params
+            ..params
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            asset_params: invalid_asset_params,
+            params: invalid_asset_params,
         };
         let info = mock_info("owner", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
@@ -739,7 +579,7 @@ fn test_update_asset() {
 
     // update asset with new params
     {
-        let asset_params = InitOrUpdateAssetParams {
+        let params = InitOrUpdateAssetParams {
             initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
             max_loan_to_value: Some(Decimal::from_ratio(60u128, 100u128)),
             reserve_factor: Some(Decimal::from_ratio(10u128, 100u128)),
@@ -752,7 +592,7 @@ fn test_update_asset() {
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            asset_params: asset_params.clone(),
+            params: params.clone(),
         };
         let info = mock_info("owner", &[]);
 
@@ -764,11 +604,11 @@ fn test_update_asset() {
         );
 
         let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();
-        assert_eq!(asset_params.max_loan_to_value.unwrap(), new_market.max_loan_to_value);
-        assert_eq!(asset_params.reserve_factor.unwrap(), new_market.reserve_factor);
-        assert_eq!(asset_params.liquidation_threshold.unwrap(), new_market.liquidation_threshold);
-        assert_eq!(asset_params.liquidation_bonus.unwrap(), new_market.liquidation_bonus);
-        assert_eq!(asset_params.interest_rate_model.unwrap(), new_market.interest_rate_model);
+        assert_eq!(params.max_loan_to_value.unwrap(), new_market.max_loan_to_value);
+        assert_eq!(params.reserve_factor.unwrap(), new_market.reserve_factor);
+        assert_eq!(params.liquidation_threshold.unwrap(), new_market.liquidation_threshold);
+        assert_eq!(params.liquidation_bonus.unwrap(), new_market.liquidation_bonus);
+        assert_eq!(params.interest_rate_model.unwrap(), new_market.interest_rate_model);
     }
 
     // update asset with empty params
@@ -788,7 +628,7 @@ fn test_update_asset() {
         };
         let msg = ExecuteMsg::UpdateAsset {
             denom: "someasset".to_string(),
-            asset_params: empty_asset_params,
+            params: empty_asset_params,
         };
         let info = mock_info("owner", &[]);
         let res = execute(deps.as_mut(), env, info, msg).unwrap();
@@ -815,7 +655,6 @@ fn test_update_asset_with_new_interest_rate_model_params() {
     let config = CreateOrUpdateConfig {
         owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
-        ma_token_code_id: Some(5u64),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
@@ -832,7 +671,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
         slope_2: Decimal::zero(),
     };
 
-    let asset_params = InitOrUpdateAssetParams {
+    let params = InitOrUpdateAssetParams {
         initial_borrow_rate: Some(Decimal::from_ratio(15u128, 100u128)),
         max_loan_to_value: Some(Decimal::from_ratio(50u128, 100u128)),
         reserve_factor: Some(Decimal::from_ratio(2u128, 100u128)),
@@ -846,8 +685,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
 
     let msg = ExecuteMsg::InitAsset {
         denom: "someasset".to_string(),
-        asset_params: asset_params.clone(),
-        asset_symbol: None,
+        params: params.clone(),
     };
     let info = mock_info("owner", &[]);
     let env = mock_env_at_block_time(1_000_000);
@@ -864,11 +702,11 @@ fn test_update_asset_with_new_interest_rate_model_params() {
     };
     let asset_params_with_new_ir_model = InitOrUpdateAssetParams {
         interest_rate_model: Some(new_ir_model.clone()),
-        ..asset_params
+        ..params
     };
     let msg = ExecuteMsg::UpdateAsset {
         denom: "someasset".to_string(),
-        asset_params: asset_params_with_new_ir_model,
+        params: asset_params_with_new_ir_model,
     };
     let info = mock_info("owner", &[]);
     let env = mock_env_at_block_time(2_000_000);
@@ -912,8 +750,6 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
     let asset_liquidity = Uint128::from(10_000_000_000_000_u128);
     let mut deps = th_setup(&[coin(asset_liquidity.into(), "somecoin")]);
 
-    let ma_token_address = Addr::unchecked("ma_token");
-
     let ir_model = InterestRateModel {
         optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
         base: Decimal::zero(),
@@ -938,13 +774,12 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
                 ScalingOperation::Ceil,
             )
             .unwrap(),
-            ma_token_address,
             interest_rate_model: ir_model.clone(),
             ..Default::default()
         },
     );
 
-    let asset_params = InitOrUpdateAssetParams {
+    let params = InitOrUpdateAssetParams {
         initial_borrow_rate: None,
         max_loan_to_value: None,
         reserve_factor: Some(Decimal::from_ratio(2_u128, 10_u128)),
@@ -957,7 +792,7 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
     };
     let msg = ExecuteMsg::UpdateAsset {
         denom: "somecoin".to_string(),
-        asset_params,
+        params,
     };
     let info = mock_info("owner", &[]);
     let env = mock_env_at_block_time(1_500_000);
@@ -1013,36 +848,18 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
     )
     .unwrap();
     let interest_accrued = current_debt_total - asset_initial_debt;
-    let expected_protocol_rewards = interest_accrued * market_before.reserve_factor;
-    // mint message is sent because debt is non zero
-    assert_eq!(
-        res.messages,
-        vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: market_before.ma_token_address.to_string(),
-            msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
-                recipient: "protocol_rewards_collector".to_string(),
-                amount: compute_scaled_amount(
-                    expected_protocol_rewards,
-                    new_market.liquidity_index,
-                    ScalingOperation::Truncate
-                )
-                .unwrap()
-            })
-            .unwrap(),
-            funds: vec![]
-        })),]
-    );
-}
+    let expected_rewards = interest_accrued * market_before.reserve_factor;
+    let expected_rewards_scaled = compute_scaled_amount(
+        expected_rewards,
+        new_market.liquidity_index,
+        ScalingOperation::Truncate,
+    )
+    .unwrap();
 
-#[test]
-fn test_init_asset_callback_cannot_be_called_on_its_own() {
-    let mut deps = th_setup(&[]);
-
-    let env = mock_env(MockEnvParams::default());
-    let info = mock_info("mtokencontract", &[]);
-    let msg = ExecuteMsg::InitAssetTokenCallback {
-        denom: "uluna".to_string(),
-    };
-    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, StdError::not_found(type_name::<Market>()).into());
+    // the rewards collector previously did not have a collateral possition
+    // now it should have one with the expected rewards scaled amount
+    let collateral = COLLATERALS
+        .load(deps.as_ref().storage, (&Addr::unchecked("protocol_rewards_collector"), "somecoin"))
+        .unwrap();
+    assert_eq!(collateral.amount_scaled, expected_rewards_scaled);
 }

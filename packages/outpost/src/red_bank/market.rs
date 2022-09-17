@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Decimal, StdResult, Uint128};
+use cosmwasm_std::{Decimal, StdResult, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -10,8 +10,6 @@ use crate::red_bank::InterestRateModel;
 pub struct Market {
     /// Denom of the asset
     pub denom: String,
-    /// maToken contract address
-    pub ma_token_address: Addr,
 
     /// Max base asset that can be borrowed per "base asset" collateral when using the asset as collateral
     pub max_loan_to_value: Decimal,
@@ -37,6 +35,8 @@ pub struct Market {
     /// Timestamp (seconds) where indexes and where last updated
     pub indexes_last_updated: u64,
 
+    /// Total collateral scaled for the market's currency
+    pub collateral_total_scaled: Uint128,
     /// Total debt scaled for the market's currency
     pub debt_total_scaled: Uint128,
 
@@ -52,7 +52,6 @@ impl Default for Market {
     fn default() -> Self {
         Market {
             denom: "".to_string(),
-            ma_token_address: crate::helpers::zero_address(),
             borrow_index: Decimal::one(),
             liquidity_index: Decimal::one(),
             borrow_rate: Decimal::zero(),
@@ -60,6 +59,7 @@ impl Default for Market {
             max_loan_to_value: Decimal::zero(),
             reserve_factor: Decimal::zero(),
             indexes_last_updated: 0,
+            collateral_total_scaled: Uint128::zero(),
             debt_total_scaled: Uint128::zero(),
             liquidation_threshold: Decimal::one(),
             liquidation_bonus: Decimal::zero(),
@@ -101,6 +101,26 @@ impl Market {
             self.reserve_factor,
         )?;
 
+        Ok(())
+    }
+
+    pub fn increase_collateral(&mut self, amount_scaled: Uint128) -> StdResult<()> {
+        self.collateral_total_scaled = self.collateral_total_scaled.checked_add(amount_scaled)?;
+        Ok(())
+    }
+
+    pub fn increase_debt(&mut self, amount_scaled: Uint128) -> StdResult<()> {
+        self.debt_total_scaled = self.debt_total_scaled.checked_add(amount_scaled)?;
+        Ok(())
+    }
+
+    pub fn decrease_collateral(&mut self, amount_scaled: Uint128) -> StdResult<()> {
+        self.collateral_total_scaled = self.collateral_total_scaled.checked_sub(amount_scaled)?;
+        Ok(())
+    }
+
+    pub fn decrease_debt(&mut self, amount_scaled: Uint128) -> StdResult<()> {
+        self.debt_total_scaled = self.debt_total_scaled.checked_sub(amount_scaled)?;
         Ok(())
     }
 }

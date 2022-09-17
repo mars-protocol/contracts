@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 
 use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdError, StdResult, Uint128};
 use mars_health::health::{Health, Position as HealthPosition};
-use mars_outpost::helpers::cw20_get_balance;
 use mars_outpost::oracle;
 use mars_outpost::red_bank::Position;
 
@@ -135,11 +134,7 @@ pub fn get_user_positions_map(
 
             let collateral_amount = match COLLATERALS.may_load(deps.storage, (user_addr, &denom))? {
                 Some(collateral) if collateral.enabled => {
-                    let amount_scaled = cw20_get_balance(
-                        &deps.querier,
-                        market.ma_token_address.clone(),
-                        user_addr.clone(),
-                    )?;
+                    let amount_scaled = collateral.amount_scaled;
                     get_underlying_liquidity_amount(amount_scaled, &market, block_time)?
                 }
                 _ => Uint128::zero(),

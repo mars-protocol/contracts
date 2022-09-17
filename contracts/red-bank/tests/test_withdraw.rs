@@ -1,82 +1,140 @@
-use cosmwasm_std::testing::mock_info;
+use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
 use cosmwasm_std::{
-    attr, coin, coins, to_binary, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128, WasmMsg,
+    attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, OwnedDeps, SubMsg, Uint128,
 };
 
-use mars_outpost::red_bank::{Debt, ExecuteMsg, Market};
-use mars_outpost::{ma_token, math};
-use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
-
+use mars_outpost::address_provider::MarsContract;
+use mars_outpost::math;
+use mars_outpost::red_bank::{Collateral, Debt, ExecuteMsg, Market};
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
 use mars_red_bank::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
     get_updated_borrow_index, get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
 };
-use mars_red_bank::state::{DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN};
+use mars_red_bank::state::{COLLATERALS, DEBTS, MARKETS};
+use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 
 use helpers::{
     has_collateral_position, set_collateral, th_build_interests_updated_event,
-    th_get_expected_indices_and_rates, th_init_market, th_setup, TestUtilizationDeltaInfo,
+    th_get_expected_indices_and_rates, th_setup, TestUtilizationDeltaInfo,
 };
 
 mod helpers;
 
-#[test]
-fn test_withdraw_native() {
-    // Withdraw native token
-    let initial_available_liquidity = Uint128::from(12000000u128);
-    let mut deps = th_setup(&[coin(initial_available_liquidity.into(), "somecoin")]);
+struct TestSuite {
+    deps: OwnedDeps<MockStorage, MockApi, MarsMockQuerier>,
+    denom: &'static str,
+    withdrawer_addr: Addr,
+    initial_market: Market,
+    initial_liquidity: Uint128,
+}
 
-    let initial_liquidity_index = Decimal::from_ratio(15u128, 10u128);
-    let mock_market = Market {
-        denom: "somecoin".to_string(),
-        ma_token_address: Addr::unchecked("matoken"),
-        liquidity_index: initial_liquidity_index,
+fn setup_test() -> TestSuite {
+    let denom = "uosmo";
+    let initial_liquidity = Uint128::new(12_000_000);
+
+    let mut deps = th_setup(&[coin(initial_liquidity.u128(), denom)]);
+
+    let market = Market {
+        denom: denom.to_string(),
+        reserve_factor: Decimal::from_ratio(1u128, 10u128),
         borrow_index: Decimal::from_ratio(2u128, 1u128),
+        liquidity_index: Decimal::from_ratio(15u128, 10u128),
         borrow_rate: Decimal::from_ratio(20u128, 100u128),
         liquidity_rate: Decimal::from_ratio(10u128, 100u128),
-        reserve_factor: Decimal::from_ratio(1u128, 10u128),
-
-        debt_total_scaled: Uint128::new(10_000_000) * SCALING_FACTOR,
         indexes_last_updated: 10000000,
+        collateral_total_scaled: Uint128::new(2_000_000) * SCALING_FACTOR,
+        debt_total_scaled: Uint128::new(10_000_000) * SCALING_FACTOR,
         ..Default::default()
     };
-    let withdraw_amount = Uint128::from(20000u128);
-    let seconds_elapsed = 2000u64;
 
-    let initial_deposit_amount_scaled = Uint128::new(2_000_000) * SCALING_FACTOR;
-    deps.querier.set_cw20_balances(
-        Addr::unchecked("matoken"),
-        &[(Addr::unchecked("withdrawer"), initial_deposit_amount_scaled)],
+    MARKETS.save(deps.as_mut().storage, denom, &market).unwrap();
+
+    TestSuite {
+        deps,
+        denom,
+        withdrawer_addr: Addr::unchecked("larry"),
+        initial_market: market,
+        initial_liquidity,
+    }
+}
+
+#[test]
+fn withdrawing_more_than_balance() {
+    let TestSuite {
+        mut deps,
+        denom,
+        withdrawer_addr,
+        ..
+    } = setup_test();
+
+    // give withdrawer a small collateral position
+    set_collateral(deps.as_mut(), &withdrawer_addr, denom, Uint128::new(200), false);
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(withdrawer_addr.as_str(), &[]),
+        ExecuteMsg::Withdraw {
+            denom: denom.to_string(),
+            amount: Some(Uint128::from(2000u128)),
+            recipient: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidWithdrawAmount {
+            denom: denom.to_string()
+        }
     );
+}
 
-    let market_initial = th_init_market(deps.as_mut(), "somecoin", &mock_market);
-    MARKET_DENOMS_BY_MA_TOKEN
-        .save(deps.as_mut().storage, &Addr::unchecked("matoken"), &"somecoin".to_string())
-        .unwrap();
+#[test]
+fn withdrawing_partially() {
+    let TestSuite {
+        mut deps,
+        denom,
+        withdrawer_addr,
+        initial_market,
+        initial_liquidity,
+    } = setup_test();
 
+    let block_time = initial_market.indexes_last_updated + 2000;
+    let withdraw_amount = Uint128::new(20_000);
+
+    // create a collateral position for the user
     // for this test, we assume the user has NOT enabled the asset as collateral
     // the health factor check should have been skipped (no need to set mock oracle price)
-    let withdrawer_addr = Addr::unchecked("withdrawer");
-    set_collateral(deps.as_mut(), &withdrawer_addr, &mock_market.denom, false);
+    let initial_deposit_amount_scaled = initial_market.collateral_total_scaled;
+    set_collateral(
+        deps.as_mut(),
+        &withdrawer_addr,
+        &initial_market.denom,
+        initial_deposit_amount_scaled,
+        false,
+    );
 
-    let msg = ExecuteMsg::Withdraw {
-        denom: "somecoin".to_string(),
-        amount: Some(withdraw_amount),
-        recipient: None,
-    };
+    let res = execute(
+        deps.as_mut(),
+        mock_env_at_block_time(block_time),
+        mock_info(withdrawer_addr.as_str(), &[]),
+        ExecuteMsg::Withdraw {
+            denom: denom.to_string(),
+            amount: Some(withdraw_amount),
+            recipient: None,
+        },
+    )
+    .unwrap();
 
-    let env = mock_env_at_block_time(mock_market.indexes_last_updated + seconds_elapsed);
-    let info = mock_info("withdrawer", &[]);
-    let res = execute(deps.as_mut(), env, info, msg).unwrap();
+    let market = MARKETS.load(deps.as_ref().storage, denom).unwrap();
 
-    let market = MARKETS.load(&deps.storage, "somecoin").unwrap();
-
+    // compute expected market parameters
     let expected_params = th_get_expected_indices_and_rates(
-        &market_initial,
-        mock_market.indexes_last_updated + seconds_elapsed,
-        initial_available_liquidity,
+        &initial_market,
+        block_time,
+        initial_liquidity,
         TestUtilizationDeltaInfo {
             less_liquidity: withdraw_amount,
             ..Default::default()
@@ -91,424 +149,108 @@ fn test_withdraw_native() {
     .unwrap();
 
     let expected_withdraw_amount_remaining = expected_deposit_balance - withdraw_amount;
+
     let expected_withdraw_amount_scaled_remaining = compute_scaled_amount(
         expected_withdraw_amount_remaining,
         expected_params.liquidity_index,
         ScalingOperation::Truncate,
     )
     .unwrap();
+
     let expected_burn_amount =
         initial_deposit_amount_scaled - expected_withdraw_amount_scaled_remaining;
 
-    assert_eq!(
-        res.messages,
-        vec![
-            SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: "matoken".to_string(),
-                msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
-                    recipient: "protocol_rewards_collector".to_string(),
-                    amount: compute_scaled_amount(
-                        expected_params.protocol_rewards_to_distribute,
-                        market.liquidity_index,
-                        ScalingOperation::Truncate
-                    )
-                    .unwrap(),
-                })
-                .unwrap(),
-                funds: vec![]
-            })),
-            SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: "matoken".to_string(),
-                msg: to_binary(&ma_token::msg::ExecuteMsg::Burn {
-                    user: withdrawer_addr.to_string(),
-                    amount: expected_burn_amount,
-                })
-                .unwrap(),
-                funds: vec![]
-            })),
-            SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-                to_address: withdrawer_addr.to_string(),
-                amount: coins(withdraw_amount.u128(), "somecoin")
-            })),
-        ]
-    );
-    assert_eq!(
-        res.attributes,
-        vec![
-            attr("action", "outposts/red-bank/withdraw"),
-            attr("denom", "somecoin"),
-            attr("user", "withdrawer"),
-            attr("recipient", "withdrawer"),
-            attr("burn_amount", expected_burn_amount.to_string()),
-            attr("withdraw_amount", withdraw_amount.to_string()),
-        ]
-    );
-    assert_eq!(res.events, vec![th_build_interests_updated_event("somecoin", &expected_params)]);
-
-    assert_eq!(market.borrow_rate, expected_params.borrow_rate);
-    assert_eq!(market.liquidity_rate, expected_params.liquidity_rate);
-    assert_eq!(market.liquidity_index, expected_params.liquidity_index);
-    assert_eq!(market.borrow_index, expected_params.borrow_index);
-}
-
-#[test]
-fn test_withdraw_and_send_funds_to_another_user() {
-    // Withdraw cw20 token
-    let mut deps = th_setup(&[]);
-    let denom = "somecoin";
-    let initial_available_liquidity = Uint128::from(12000000u128);
-
-    let ma_token_addr = Addr::unchecked("matoken");
-
-    let withdrawer_addr = Addr::unchecked("withdrawer");
-    let another_user_addr = Addr::unchecked("another_user");
-
-    deps.querier.set_contract_balances(&coins(initial_available_liquidity.u128(), denom));
-    let ma_token_balance_scaled = Uint128::new(2_000_000) * SCALING_FACTOR;
-    deps.querier.set_cw20_balances(
-        ma_token_addr.clone(),
-        &[(withdrawer_addr.clone(), ma_token_balance_scaled)],
-    );
-
-    let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
-        liquidity_index: Decimal::one(),
-        borrow_index: Decimal::one(),
-        reserve_factor: Decimal::zero(),
-        ..Default::default()
-    };
-
-    let market_initial = th_init_market(deps.as_mut(), denom, &mock_market);
-    MARKET_DENOMS_BY_MA_TOKEN
-        .save(deps.as_mut().storage, &ma_token_addr, &denom.to_string())
-        .unwrap();
-
-    // assume the user has a collateral position but not enabled
-    set_collateral(deps.as_mut(), &withdrawer_addr, denom, false);
-
-    let msg = ExecuteMsg::Withdraw {
-        denom: denom.to_string(),
-        amount: None,
-        recipient: Some(another_user_addr.to_string()),
-    };
-
-    let env = mock_env(MockEnvParams::default());
-    let info = mock_info("withdrawer", &[]);
-    let res = execute(deps.as_mut(), env, info, msg).unwrap();
-
-    // User should have unset bit for collateral after full withdraw
-    assert!(!has_collateral_position(deps.as_ref(), &withdrawer_addr, &market_initial.denom));
-
-    let withdraw_amount = compute_underlying_amount(
-        ma_token_balance_scaled,
-        market_initial.liquidity_index,
+    let expected_rewards_amount_scaled = compute_scaled_amount(
+        expected_params.protocol_rewards_to_distribute,
+        market.liquidity_index,
         ScalingOperation::Truncate,
     )
     .unwrap();
 
-    // Check if maToken is received by `another_user`
+    let expected_total_collateral_amount_scaled = initial_market.collateral_total_scaled
+        - expected_burn_amount
+        + expected_rewards_amount_scaled;
+
     assert_eq!(
         res.messages,
-        vec![
-            SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: ma_token_addr.to_string(),
-                msg: to_binary(&ma_token::msg::ExecuteMsg::Burn {
-                    user: withdrawer_addr.to_string(),
-                    amount: ma_token_balance_scaled,
-                })
-                .unwrap(),
-                funds: vec![]
-            })),
-            SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-                to_address: another_user_addr.to_string(),
-                amount: coins(withdraw_amount.u128(), denom)
-            }))
-        ]
+        vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+            to_address: withdrawer_addr.to_string(),
+            amount: coins(withdraw_amount.u128(), denom)
+        })),]
     );
     assert_eq!(
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/withdraw"),
-            attr("denom", denom.to_string()),
-            attr("user", withdrawer_addr),
-            attr("recipient", another_user_addr),
-            attr("burn_amount", ma_token_balance_scaled.to_string()),
-            attr("withdraw_amount", withdraw_amount.to_string()),
+            attr("sender", &withdrawer_addr),
+            attr("recipient", &withdrawer_addr),
+            attr("denom", denom),
+            attr("amount", withdraw_amount),
+            attr("amount_scaled", expected_burn_amount),
         ]
     );
+    assert_eq!(res.events, vec![th_build_interests_updated_event(denom, &expected_params)]);
+
+    // market parameters should have been updated
+    assert_eq!(market.borrow_index, expected_params.borrow_index);
+    assert_eq!(market.liquidity_index, expected_params.liquidity_index);
+    assert_eq!(market.borrow_rate, expected_params.borrow_rate);
+    assert_eq!(market.liquidity_rate, expected_params.liquidity_rate);
+
+    // the market's total collateral scaled amount should have been decreased
+    assert_eq!(market.collateral_total_scaled, expected_total_collateral_amount_scaled);
+
+    // the user's collateral scaled amount should have been decreased
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, denom)).unwrap();
+    assert_eq!(collateral.amount_scaled, expected_withdraw_amount_scaled_remaining);
+
+    // the reward collector's collateral scaled amount should have been increased
+    let rewards_addr = Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string());
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&rewards_addr, denom)).unwrap();
+    assert_eq!(collateral.amount_scaled, expected_rewards_amount_scaled);
 }
 
 #[test]
-fn test_withdraw_cannot_exceed_balance() {
-    let mut deps = th_setup(&[]);
-    let env = mock_env(MockEnvParams::default());
+fn withdrawing_completely() {
+    let TestSuite {
+        mut deps,
+        denom,
+        withdrawer_addr,
+        initial_market,
+        initial_liquidity,
+    } = setup_test();
 
-    let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
-        liquidity_index: Decimal::from_ratio(15u128, 10u128),
-        ..Default::default()
-    };
+    let block_time = initial_market.indexes_last_updated + 2000;
 
-    deps.querier.set_cw20_balances(
-        Addr::unchecked("matoken"),
-        &[(Addr::unchecked("withdrawer"), Uint128::new(200u128))],
-    );
-
-    th_init_market(deps.as_mut(), "somecoin", &mock_market);
-
-    let msg = ExecuteMsg::Withdraw {
-        denom: "somecoin".to_string(),
-        amount: Some(Uint128::from(2000u128)),
-        recipient: None,
-    };
-
-    let info = mock_info("withdrawer", &[]);
-    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ContractError::InvalidWithdrawAmount {
-            denom: "somecoin".to_string()
-        }
-    );
-}
-
-#[test]
-fn test_withdraw_if_health_factor_not_met() {
-    let initial_available_liquidity = Uint128::from(10000000u128);
-    let mut deps = th_setup(&[coin(initial_available_liquidity.into(), "token3")]);
-
-    let withdrawer_addr = Addr::unchecked("withdrawer");
-
-    // Initialize markets
-    let ma_token_1_addr = Addr::unchecked("matoken1");
-    let market_1 = Market {
-        ma_token_address: ma_token_1_addr.clone(),
-        liquidity_index: Decimal::one(),
-        borrow_index: Decimal::one(),
-        max_loan_to_value: Decimal::from_ratio(40u128, 100u128),
-        liquidation_threshold: Decimal::from_ratio(60u128, 100u128),
-        ..Default::default()
-    };
-    let ma_token_2_addr = Addr::unchecked("matoken2");
-    let market_2 = Market {
-        ma_token_address: ma_token_2_addr,
-        liquidity_index: Decimal::one(),
-        borrow_index: Decimal::one(),
-        max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
-        liquidation_threshold: Decimal::from_ratio(80u128, 100u128),
-        ..Default::default()
-    };
-    let ma_token_3_addr = Addr::unchecked("matoken3");
-    let market_3 = Market {
-        ma_token_address: ma_token_3_addr.clone(),
-        liquidity_index: Decimal::one(),
-        borrow_index: Decimal::one(),
-        max_loan_to_value: Decimal::from_ratio(20u128, 100u128),
-        liquidation_threshold: Decimal::from_ratio(40u128, 100u128),
-        ..Default::default()
-    };
-    let market_1_initial = th_init_market(deps.as_mut(), "token1", &market_1);
-    let market_2_initial = th_init_market(deps.as_mut(), "token2", &market_2);
-    let market_3_initial = th_init_market(deps.as_mut(), "token3", &market_3);
-
-    // Initialize user with market_1 and market_3 as collaterals
-    // User borrows market_2; the debt position will be configured later in the test
-    set_collateral(deps.as_mut(), &withdrawer_addr, &market_1_initial.denom, true);
-    set_collateral(deps.as_mut(), &withdrawer_addr, &market_3_initial.denom, true);
-
-    // Set the querier to return collateral balances (ma_token_1 and ma_token_3)
-    let ma_token_1_balance_scaled = Uint128::new(100_000) * SCALING_FACTOR;
-    deps.querier.set_cw20_balances(
-        ma_token_1_addr,
-        &[(withdrawer_addr.clone(), ma_token_1_balance_scaled)],
-    );
-    let ma_token_3_balance_scaled = Uint128::new(600_000) * SCALING_FACTOR;
-    deps.querier.set_cw20_balances(
-        ma_token_3_addr,
-        &[(withdrawer_addr.clone(), ma_token_3_balance_scaled)],
-    );
-
-    // Set user to have positive debt amount in debt asset
-    // Uncollateralized debt shouldn't count for health factor
-    let token_2_debt_scaled = Uint128::new(200_000) * SCALING_FACTOR;
-    let debt = Debt {
-        amount_scaled: token_2_debt_scaled,
-        uncollateralized: false,
-    };
-    let uncollateralized_debt = Debt {
-        amount_scaled: Uint128::new(200_000) * SCALING_FACTOR,
-        uncollateralized: true,
-    };
-    DEBTS.save(deps.as_mut().storage, (&withdrawer_addr, "token2"), &debt).unwrap();
-    DEBTS
-        .save(deps.as_mut().storage, (&withdrawer_addr, "token3"), &uncollateralized_debt)
-        .unwrap();
-
-    // Set the querier to return native exchange rates
-    let token_1_exchange_rate = Decimal::from_ratio(3u128, 1u128);
-    let token_2_exchange_rate = Decimal::from_ratio(2u128, 1u128);
-    let token_3_exchange_rate = Decimal::from_ratio(1u128, 1u128);
-
-    deps.querier.set_oracle_price("token1", token_1_exchange_rate);
-    deps.querier.set_oracle_price("token2", token_2_exchange_rate);
-    deps.querier.set_oracle_price("token3", token_3_exchange_rate);
-
-    let env = mock_env(MockEnvParams::default());
-    let info = mock_info("withdrawer", &[]);
-
-    // Calculate how much to withdraw to have health factor equal to one
-    let how_much_to_withdraw = {
-        let token_1_weighted_lt_in_base_asset = compute_underlying_amount(
-            ma_token_1_balance_scaled,
-            get_updated_liquidity_index(&market_1_initial, env.block.time.seconds()).unwrap(),
-            ScalingOperation::Truncate,
-        )
-        .unwrap()
-            * market_1_initial.liquidation_threshold
-            * token_1_exchange_rate;
-        let token_3_weighted_lt_in_base_asset = compute_underlying_amount(
-            ma_token_3_balance_scaled,
-            get_updated_liquidity_index(&market_3_initial, env.block.time.seconds()).unwrap(),
-            ScalingOperation::Truncate,
-        )
-        .unwrap()
-            * market_3_initial.liquidation_threshold
-            * token_3_exchange_rate;
-        let weighted_liquidation_threshold_in_base_asset =
-            token_1_weighted_lt_in_base_asset + token_3_weighted_lt_in_base_asset;
-
-        let total_collateralized_debt_in_base_asset = compute_underlying_amount(
-            token_2_debt_scaled,
-            get_updated_borrow_index(&market_2_initial, env.block.time.seconds()).unwrap(),
-            ScalingOperation::Ceil,
-        )
-        .unwrap()
-            * token_2_exchange_rate;
-
-        // How much to withdraw in base asset to have health factor equal to one
-        let how_much_to_withdraw_in_base_asset = math::divide_uint128_by_decimal(
-            weighted_liquidation_threshold_in_base_asset - total_collateralized_debt_in_base_asset,
-            market_3_initial.liquidation_threshold,
-        )
-        .unwrap();
-        math::divide_uint128_by_decimal(how_much_to_withdraw_in_base_asset, token_3_exchange_rate)
-            .unwrap()
-    };
-
-    // Withdraw token3 with failure
-    // The withdraw amount needs to be a little bit greater to have health factor less than one
-    {
-        let withdraw_amount = how_much_to_withdraw + Uint128::from(10u128);
-        let msg = ExecuteMsg::Withdraw {
-            denom: "token3".to_string(),
-            amount: Some(withdraw_amount),
-            recipient: None,
-        };
-        let error_res = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
-        assert_eq!(error_res, ContractError::InvalidHealthFactorAfterWithdraw {});
-    }
-
-    // Withdraw token3 with success
-    // The withdraw amount needs to be a little bit smaller to have health factor greater than one
-    {
-        let withdraw_amount = how_much_to_withdraw - Uint128::from(10u128);
-        let msg = ExecuteMsg::Withdraw {
-            denom: "token3".to_string(),
-            amount: Some(withdraw_amount),
-            recipient: None,
-        };
-        let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
-
-        let withdraw_amount_scaled = get_scaled_liquidity_amount(
-            withdraw_amount,
-            &market_3_initial,
-            env.block.time.seconds(),
-        )
-        .unwrap();
-
-        assert_eq!(
-            res.messages,
-            vec![
-                SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-                    contract_addr: "matoken3".to_string(),
-                    msg: to_binary(&ma_token::msg::ExecuteMsg::Burn {
-                        user: withdrawer_addr.to_string(),
-                        amount: withdraw_amount_scaled,
-                    })
-                    .unwrap(),
-                    funds: vec![]
-                })),
-                SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-                    to_address: withdrawer_addr.to_string(),
-                    amount: coins(withdraw_amount.u128(), "token3")
-                })),
-            ]
-        );
-    }
-}
-
-#[test]
-fn test_withdraw_total_balance() {
-    // Withdraw native token
-    let initial_available_liquidity = Uint128::from(12000000u128);
-    let mut deps = th_setup(&[coin(initial_available_liquidity.into(), "somecoin")]);
-
-    let initial_liquidity_index = Decimal::from_ratio(15u128, 10u128);
-    let mock_market = Market {
-        ma_token_address: Addr::unchecked("matoken"),
-        liquidity_index: initial_liquidity_index,
-        borrow_index: Decimal::from_ratio(2u128, 1u128),
-        borrow_rate: Decimal::from_ratio(20u128, 100u128),
-        liquidity_rate: Decimal::from_ratio(10u128, 100u128),
-        reserve_factor: Decimal::from_ratio(1u128, 10u128),
-        debt_total_scaled: Uint128::new(10_000_000) * SCALING_FACTOR,
-        indexes_last_updated: 10000000,
-        ..Default::default()
-    };
+    // create a collateral position for the withdrawer
     let withdrawer_balance_scaled = Uint128::new(123_456) * SCALING_FACTOR;
-    let seconds_elapsed = 2000u64;
+    set_collateral(deps.as_mut(), &withdrawer_addr, denom, withdrawer_balance_scaled, true);
 
-    deps.querier.set_cw20_balances(
-        Addr::unchecked("matoken"),
-        &[(Addr::unchecked("withdrawer"), withdrawer_balance_scaled)],
-    );
+    let res = execute(
+        deps.as_mut(),
+        mock_env_at_block_time(block_time),
+        mock_info(withdrawer_addr.as_str(), &[]),
+        ExecuteMsg::Withdraw {
+            denom: denom.to_string(),
+            amount: None,
+            recipient: None,
+        },
+    )
+    .unwrap();
 
-    let market_initial = th_init_market(deps.as_mut(), "somecoin", &mock_market);
-    MARKET_DENOMS_BY_MA_TOKEN
-        .save(deps.as_mut().storage, &Addr::unchecked("matoken"), &"somecoin".to_string())
-        .unwrap();
-
-    // Mark the market as collateral for the user
-    let withdrawer_addr = Addr::unchecked("withdrawer");
-    set_collateral(deps.as_mut(), &withdrawer_addr, &market_initial.denom, true);
-
-    let msg = ExecuteMsg::Withdraw {
-        denom: "somecoin".to_string(),
-        amount: None,
-        recipient: None,
-    };
-
-    let env = mock_env_at_block_time(mock_market.indexes_last_updated + seconds_elapsed);
-    let info = mock_info("withdrawer", &[]);
-    let res = execute(deps.as_mut(), env, info, msg).unwrap();
-
-    let market = MARKETS.load(&deps.storage, "somecoin").unwrap();
+    let market = MARKETS.load(&deps.storage, denom).unwrap();
 
     let withdrawer_balance = compute_underlying_amount(
         withdrawer_balance_scaled,
-        get_updated_liquidity_index(
-            &market_initial,
-            market_initial.indexes_last_updated + seconds_elapsed,
-        )
-        .unwrap(),
+        get_updated_liquidity_index(&initial_market, block_time).unwrap(),
         ScalingOperation::Truncate,
     )
     .unwrap();
 
     let expected_params = th_get_expected_indices_and_rates(
-        &market_initial,
-        mock_market.indexes_last_updated + seconds_elapsed,
-        initial_available_liquidity,
+        &initial_market,
+        block_time,
+        initial_liquidity,
         TestUtilizationDeltaInfo {
             less_liquidity: withdrawer_balance,
             ..Default::default()
@@ -517,54 +259,344 @@ fn test_withdraw_total_balance() {
 
     assert_eq!(
         res.messages,
-        vec![
-            SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: "matoken".to_string(),
-                msg: to_binary(&ma_token::msg::ExecuteMsg::Mint {
-                    recipient: "protocol_rewards_collector".to_string(),
-                    amount: compute_scaled_amount(
-                        expected_params.protocol_rewards_to_distribute,
-                        expected_params.liquidity_index,
-                        ScalingOperation::Truncate
-                    )
-                    .unwrap(),
-                })
-                .unwrap(),
-                funds: vec![]
-            })),
-            SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: "matoken".to_string(),
-                msg: to_binary(&ma_token::msg::ExecuteMsg::Burn {
-                    user: withdrawer_addr.to_string(),
-                    amount: withdrawer_balance_scaled,
-                })
-                .unwrap(),
-                funds: vec![]
-            })),
-            SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-                to_address: withdrawer_addr.to_string(),
-                amount: coins(withdrawer_balance.u128(), "somecoin")
-            })),
-        ]
+        vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+            to_address: withdrawer_addr.to_string(),
+            amount: coins(withdrawer_balance.u128(), denom)
+        })),]
     );
     assert_eq!(
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/withdraw"),
-            attr("denom", "somecoin"),
-            attr("user", "withdrawer"),
-            attr("recipient", "withdrawer"),
-            attr("burn_amount", withdrawer_balance_scaled.to_string()),
-            attr("withdraw_amount", withdrawer_balance.to_string()),
+            attr("sender", &withdrawer_addr),
+            attr("recipient", &withdrawer_addr),
+            attr("denom", denom),
+            attr("amount", withdrawer_balance.to_string()),
+            attr("amount_scaled", withdrawer_balance_scaled.to_string()),
         ]
     );
-    assert_eq!(res.events, vec![th_build_interests_updated_event("somecoin", &expected_params)]);
+    assert_eq!(res.events, vec![th_build_interests_updated_event(denom, &expected_params)]);
 
+    assert_eq!(market.borrow_index, expected_params.borrow_index);
+    assert_eq!(market.liquidity_index, expected_params.liquidity_index);
     assert_eq!(market.borrow_rate, expected_params.borrow_rate);
     assert_eq!(market.liquidity_rate, expected_params.liquidity_rate);
-    assert_eq!(market.liquidity_index, expected_params.liquidity_index);
-    assert_eq!(market.borrow_index, expected_params.borrow_index);
 
-    // User's collateral position should have been deleted after full withdraw
-    assert!(!has_collateral_position(deps.as_ref(), &withdrawer_addr, &market_initial.denom));
+    // withdrawer's collateral position should have been deleted after full withdraw
+    assert!(!has_collateral_position(deps.as_ref(), &withdrawer_addr, denom));
+}
+
+#[test]
+fn withdrawing_to_another_user() {
+    let TestSuite {
+        mut deps,
+        denom,
+        withdrawer_addr,
+        initial_market,
+        ..
+    } = setup_test();
+
+    let block_time = initial_market.indexes_last_updated + 2000;
+    let recipient_addr = Addr::unchecked("jake");
+
+    // create a collateral position for the withdrawer
+    let withdrawer_balance_scaled = Uint128::new(123_456) * SCALING_FACTOR;
+    set_collateral(deps.as_mut(), &withdrawer_addr, denom, withdrawer_balance_scaled, true);
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env_at_block_time(block_time),
+        mock_info(withdrawer_addr.as_str(), &[]),
+        ExecuteMsg::Withdraw {
+            denom: denom.to_string(),
+            amount: None,
+            recipient: Some(recipient_addr.to_string()),
+        },
+    )
+    .unwrap();
+
+    let market = MARKETS.load(deps.as_ref().storage, denom).unwrap();
+
+    let withdraw_amount = compute_underlying_amount(
+        withdrawer_balance_scaled,
+        market.liquidity_index,
+        ScalingOperation::Truncate,
+    )
+    .unwrap();
+
+    // check if the withdrew funds are properly sent to the designated recipient
+    assert_eq!(
+        res.messages,
+        vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+            to_address: recipient_addr.to_string(),
+            amount: coins(withdraw_amount.u128(), denom)
+        }))]
+    );
+    assert_eq!(
+        res.attributes,
+        vec![
+            attr("action", "outposts/red-bank/withdraw"),
+            attr("sender", &withdrawer_addr),
+            attr("recipient", &recipient_addr),
+            attr("denom", denom.to_string()),
+            attr("amount", withdraw_amount.to_string()),
+            attr("amount_scaled", withdrawer_balance_scaled.to_string()),
+        ]
+    );
+
+    // withdrawer's collateral position should have been deleted after full withdraw
+    assert!(!has_collateral_position(deps.as_ref(), &withdrawer_addr, denom));
+}
+
+struct HealthCheckTestSuite {
+    deps: OwnedDeps<MockStorage, MockApi, MarsMockQuerier>,
+    denoms: [&'static str; 3],
+    markets: [Market; 3],
+    prices: [Decimal; 3],
+    collaterals: [Collateral; 3],
+    debts: [Debt; 3],
+    withdrawer_addr: Addr,
+}
+
+fn setup_health_check_test() -> HealthCheckTestSuite {
+    let denoms = ["uatom", "uosmo", "umars"];
+    let initial_liquidity = Uint128::from(10000000u128);
+
+    let mut deps = th_setup(&[coin(initial_liquidity.into(), denoms[2])]);
+
+    let withdrawer_addr = Addr::unchecked("withdrawer");
+
+    let markets = [
+        Market {
+            liquidity_index: Decimal::one(),
+            borrow_index: Decimal::one(),
+            max_loan_to_value: Decimal::from_ratio(40u128, 100u128),
+            liquidation_threshold: Decimal::from_ratio(60u128, 100u128),
+            collateral_total_scaled: Uint128::new(100_000) * SCALING_FACTOR,
+            ..Default::default()
+        },
+        Market {
+            liquidity_index: Decimal::one(),
+            borrow_index: Decimal::one(),
+            max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
+            liquidation_threshold: Decimal::from_ratio(80u128, 100u128),
+            collateral_total_scaled: Uint128::new(100_000) * SCALING_FACTOR,
+            ..Default::default()
+        },
+        Market {
+            liquidity_index: Decimal::one(),
+            borrow_index: Decimal::one(),
+            max_loan_to_value: Decimal::from_ratio(20u128, 100u128),
+            liquidation_threshold: Decimal::from_ratio(40u128, 100u128),
+            collateral_total_scaled: Uint128::new(100_000) * SCALING_FACTOR,
+            ..Default::default()
+        },
+    ];
+
+    let prices = [
+        Decimal::from_ratio(3u128, 1u128),
+        Decimal::from_ratio(2u128, 1u128),
+        Decimal::from_ratio(1u128, 1u128),
+    ];
+
+    let collaterals = [
+        Collateral {
+            amount_scaled: Uint128::new(100_000) * SCALING_FACTOR,
+            enabled: true,
+        },
+        Collateral {
+            amount_scaled: Uint128::zero(),
+            enabled: false,
+        },
+        Collateral {
+            amount_scaled: Uint128::new(600_000) * SCALING_FACTOR,
+            enabled: true,
+        },
+    ];
+
+    let debts = [
+        Debt {
+            amount_scaled: Uint128::zero(),
+            uncollateralized: false,
+        },
+        Debt {
+            amount_scaled: Uint128::new(200_000) * SCALING_FACTOR,
+            uncollateralized: false,
+        },
+        Debt {
+            amount_scaled: Uint128::new(200_000) * SCALING_FACTOR,
+            uncollateralized: true,
+        },
+    ];
+
+    denoms
+        .iter()
+        .zip(markets.iter())
+        .try_for_each(|(denom, market)| MARKETS.save(deps.as_mut().storage, denom, market))
+        .unwrap();
+
+    denoms
+        .iter()
+        .zip(prices.iter())
+        .for_each(|(denom, price)| deps.querier.set_oracle_price(denom, *price));
+
+    denoms.iter().zip(collaterals.iter()).for_each(|(denom, collateral)| {
+        if !collateral.amount_scaled.is_zero() {
+            COLLATERALS.save(deps.as_mut().storage, (&withdrawer_addr, denom), collateral).unwrap();
+        }
+    });
+
+    denoms.iter().zip(debts.iter()).for_each(|(denom, debt)| {
+        if !debt.amount_scaled.is_zero() {
+            DEBTS.save(deps.as_mut().storage, (&withdrawer_addr, denom), debt).unwrap();
+        }
+    });
+
+    HealthCheckTestSuite {
+        deps,
+        denoms,
+        markets,
+        prices,
+        collaterals,
+        debts,
+        withdrawer_addr,
+    }
+}
+
+/// Calculate how much to withdraw to have health factor equal to one
+fn how_much_to_withdraw(suite: &HealthCheckTestSuite, block_time: u64) -> Uint128 {
+    let HealthCheckTestSuite {
+        markets,
+        prices,
+        collaterals,
+        debts,
+        ..
+    } = suite;
+
+    let token_1_weighted_lt_in_base_asset = compute_underlying_amount(
+        collaterals[0].amount_scaled,
+        get_updated_liquidity_index(&markets[0], block_time).unwrap(),
+        ScalingOperation::Truncate,
+    )
+    .unwrap()
+        * markets[0].liquidation_threshold
+        * prices[0];
+
+    let token_3_weighted_lt_in_base_asset = compute_underlying_amount(
+        collaterals[2].amount_scaled,
+        get_updated_liquidity_index(&markets[2], block_time).unwrap(),
+        ScalingOperation::Truncate,
+    )
+    .unwrap()
+        * markets[2].liquidation_threshold
+        * prices[2];
+
+    let weighted_liquidation_threshold_in_base_asset =
+        token_1_weighted_lt_in_base_asset + token_3_weighted_lt_in_base_asset;
+
+    let total_collateralized_debt_in_base_asset = compute_underlying_amount(
+        debts[1].amount_scaled,
+        get_updated_borrow_index(&markets[1], block_time).unwrap(),
+        ScalingOperation::Ceil,
+    )
+    .unwrap()
+        * prices[1];
+
+    // How much to withdraw in base asset to have health factor equal to one
+    let how_much_to_withdraw_in_base_asset = math::divide_uint128_by_decimal(
+        weighted_liquidation_threshold_in_base_asset - total_collateralized_debt_in_base_asset,
+        markets[2].liquidation_threshold,
+    )
+    .unwrap();
+
+    math::divide_uint128_by_decimal(how_much_to_withdraw_in_base_asset, prices[2]).unwrap()
+}
+
+#[test]
+fn withdrawing_if_health_factor_not_met() {
+    let suite = setup_health_check_test();
+
+    let env = mock_env();
+    let block_time = env.block.time.seconds();
+
+    let max_withdraw_amount = how_much_to_withdraw(&suite, block_time);
+
+    let HealthCheckTestSuite {
+        mut deps,
+        denoms,
+        withdrawer_addr,
+        ..
+    } = suite;
+
+    // withdraw token3 with failure
+    // the withdraw amount needs to be a little bit greater to have health factor less than one
+    let withdraw_amount = max_withdraw_amount + Uint128::from(10u128);
+
+    let err = execute(
+        deps.as_mut(),
+        env,
+        mock_info(withdrawer_addr.as_str(), &[]),
+        ExecuteMsg::Withdraw {
+            denom: denoms[2].to_string(),
+            amount: Some(withdraw_amount),
+            recipient: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::InvalidHealthFactorAfterWithdraw {});
+}
+
+#[test]
+fn withdrawing_if_health_factor_met() {
+    let suite = setup_health_check_test();
+
+    let env = mock_env();
+    let block_time = env.block.time.seconds();
+
+    let max_withdraw_amount = how_much_to_withdraw(&suite, block_time);
+
+    let HealthCheckTestSuite {
+        mut deps,
+        denoms,
+        markets,
+        collaterals,
+        withdrawer_addr,
+        ..
+    } = suite;
+
+    // withdraw token3 with success
+    // the withdraw amount needs to be a little bit smaller to have health factor greater than one
+    let withdraw_amount = max_withdraw_amount - Uint128::from(10u128);
+
+    let res = execute(
+        deps.as_mut(),
+        env,
+        mock_info(withdrawer_addr.as_str(), &[]),
+        ExecuteMsg::Withdraw {
+            denom: denoms[2].to_string(),
+            amount: Some(withdraw_amount),
+            recipient: None,
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        res.messages,
+        vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+            to_address: withdrawer_addr.to_string(),
+            amount: coins(withdraw_amount.u128(), denoms[2])
+        }))],
+    );
+
+    let expected_withdraw_amount_scaled =
+        get_scaled_liquidity_amount(withdraw_amount, &markets[2], block_time).unwrap();
+    let expected_withdrawer_balance_after =
+        collaterals[2].amount_scaled - expected_withdraw_amount_scaled;
+    let expected_collateral_total_amount_scaled_after =
+        markets[2].collateral_total_scaled - expected_withdraw_amount_scaled;
+
+    let col = COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, denoms[2])).unwrap();
+    assert_eq!(col.amount_scaled, expected_withdrawer_balance_after);
+
+    let market = MARKETS.load(deps.as_ref().storage, denoms[2]).unwrap();
+    assert_eq!(market.collateral_total_scaled, expected_collateral_total_amount_scaled_after);
 }

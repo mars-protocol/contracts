@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Decimal, Uint128};
+use cosmwasm_std::{Decimal, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -24,18 +24,7 @@ pub enum ExecuteMsg {
         /// Asset related info
         denom: String,
         /// Asset parameters
-        asset_params: InitOrUpdateAssetParams,
-        /// Asset symbol to be used in maToken name and description. If non is provided,
-        /// denom will be used for native and token symbol will be used for cw20. Mostly
-        /// useful for native assets since it's denom (e.g.: uluna, uusd) does not match it's
-        /// user facing symbol (LUNA, UST) which should be used in maToken's attributes
-        /// for the sake of consistency
-        asset_symbol: Option<String>,
-    },
-
-    /// Callback sent from maToken contract after instantiated
-    InitAssetTokenCallback {
-        denom: String,
+        params: InitOrUpdateAssetParams,
     },
 
     /// Update an asset on the money market (only owner can call)
@@ -43,7 +32,7 @@ pub enum ExecuteMsg {
         /// Asset related info
         denom: String,
         /// Asset parameters
-        asset_params: InitOrUpdateAssetParams,
+        params: InitOrUpdateAssetParams,
     },
 
     /// Update uncollateralized loan limit for a given user and asset.
@@ -70,8 +59,7 @@ pub enum ExecuteMsg {
     Withdraw {
         /// Asset to withdraw
         denom: String,
-        /// Amount to be withdrawn. If None is specified, the full maToken balance will be
-        /// burned in exchange for the equivalent asset amount.
+        /// Amount to be withdrawn. If None is specified, the full amount will be withdrawn.
         amount: Option<Uint128>,
         /// The address where the withdrawn amount is sent
         recipient: Option<String>,
@@ -114,30 +102,12 @@ pub enum ExecuteMsg {
         /// Option to enable (true) / disable (false) asset as collateral
         enable: bool,
     },
-
-    /// Called by liquidity token (maToken). Validate liquidity token transfer is valid
-    /// and update collateral status
-    FinalizeLiquidityTokenTransfer {
-        /// Token sender. Address is trusted because it should have been verified in
-        /// the token contract
-        sender_address: Addr,
-        /// Token recipient. Address is trusted because it should have been verified in
-        /// the token contract
-        recipient_address: Addr,
-        /// Sender's balance before the token transfer
-        sender_previous_balance: Uint128,
-        /// Recipient's balance before the token transfer
-        recipient_previous_balance: Uint128,
-        /// Transfer amount
-        amount: Uint128,
-    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct CreateOrUpdateConfig {
     pub owner: Option<String>,
     pub address_provider: Option<String>,
-    pub ma_token_code_id: Option<u64>,
     pub close_factor: Option<Decimal>,
 }
 
@@ -244,9 +214,11 @@ pub enum QueryMsg {
         amount: Uint128,
     },
 
-    /// Get underlying asset amount for a given maToken balance.
+    /// Get underlying asset amount for a given asset and scaled amount.
+    /// (i.e. How much underlying asset will be released if withdrawing by burning a given scaled
+    /// collateral amount stored in state.)
     UnderlyingLiquidityAmount {
-        ma_token_address: String,
+        denom: String,
         amount_scaled: Uint128,
     },
 

@@ -186,35 +186,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw20"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f446f59c519fbac5ab8b9f6c7f8dcaa05ee761703971406b28221ea778bb737"
-dependencies = [
- "cosmwasm-std",
- "cw-utils",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "cw20-base"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e39bf97c985a50f2e340833137b3f14999f58708c4ca9928cd8f87d530c4109c"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "cw20",
- "schemars",
- "semver",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "der"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -419,29 +390,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-incentives"
-version = "1.0.0"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "mars-outpost",
- "mars-testing",
- "thiserror",
-]
-
-[[package]]
-name = "mars-ma-token"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "cw2",
- "cw20",
- "cw20-base",
- "mars-outpost",
-]
-
-[[package]]
 name = "mars-oracle-base"
 version = "0.1.0"
 dependencies = [
@@ -474,8 +422,6 @@ name = "mars-outpost"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "cw20",
- "cw20-base",
  "mars-testing",
  "schemars",
  "serde",
@@ -489,8 +435,6 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
- "cw20",
- "cw20-base",
  "mars-health",
  "mars-outpost",
  "mars-testing",
@@ -532,8 +476,6 @@ name = "mars-testing"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "cw20",
- "cw20-base",
  "mars-outpost",
  "osmosis-std",
  "prost",

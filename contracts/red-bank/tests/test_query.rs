@@ -1,9 +1,11 @@
+use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{Addr, Decimal, Uint128};
 
-use mars_outpost::red_bank::{Debt, Market, UserDebtResponse};
-use mars_testing::{mock_env, MockEnvParams};
+use mars_outpost::red_bank::{Debt, Market, UserCollateralResponse, UserDebtResponse};
 
-use mars_red_bank::interest_rates::{get_scaled_debt_amount, get_underlying_debt_amount};
+use mars_red_bank::interest_rates::{
+    get_scaled_debt_amount, get_underlying_debt_amount, SCALING_FACTOR,
+};
 use mars_red_bank::query::{query_user_collaterals, query_user_debt, query_user_debts};
 use mars_red_bank::state::DEBTS;
 
@@ -18,7 +20,7 @@ fn test_query_collateral() {
     let user_addr = Addr::unchecked("user");
 
     // Setup first market containing a CW20 asset
-    let market_1_initial = th_init_market(
+    let market_1 = th_init_market(
         deps.as_mut(),
         "uosmo",
         &Market {
@@ -27,7 +29,7 @@ fn test_query_collateral() {
     );
 
     // Setup second market containing a native asset
-    let market_2_initial = th_init_market(
+    let market_2 = th_init_market(
         deps.as_mut(),
         "uusd",
         &Market {
@@ -35,25 +37,50 @@ fn test_query_collateral() {
         },
     );
 
+    let amount_1 = Uint128::new(12345);
+    let amount_2 = Uint128::new(54321);
+
+    let env = mock_env();
+
     // Create and enable a collateral position for the 2nd asset
-    set_collateral(deps.as_mut(), &user_addr, &market_2_initial.denom, true);
+    set_collateral(deps.as_mut(), &user_addr, &market_2.denom, amount_2 * SCALING_FACTOR, true);
 
     // Assert markets correctly return collateral status
-    let collaterals = query_user_collaterals(deps.as_ref(), user_addr.clone(), None, None).unwrap();
-    assert_eq!(collaterals.len(), 1);
-    assert_eq!(collaterals[0].denom, String::from("uusd"));
-    assert!(collaterals[0].enabled);
+    let collaterals =
+        query_user_collaterals(deps.as_ref(), &env.block, user_addr.clone(), None, None).unwrap();
+    assert_eq!(
+        collaterals,
+        vec![UserCollateralResponse {
+            denom: market_2.denom.clone(),
+            amount_scaled: amount_2 * SCALING_FACTOR,
+            amount: amount_2,
+            enabled: true,
+        }]
+    );
 
     // Create a collateral position for the 1st asset, but not enabled
-    set_collateral(deps.as_mut(), &user_addr, &market_1_initial.denom, false);
+    set_collateral(deps.as_mut(), &user_addr, &market_1.denom, amount_1 * SCALING_FACTOR, false);
 
     // Assert markets correctly return collateral status
-    let collaterals = query_user_collaterals(deps.as_ref(), user_addr, None, None).unwrap();
-    assert_eq!(collaterals.len(), 2);
-    assert_eq!(collaterals[0].denom, String::from("uosmo"));
-    assert!(!collaterals[0].enabled);
-    assert_eq!(collaterals[1].denom, String::from("uusd"));
-    assert!(collaterals[1].enabled);
+    let collaterals =
+        query_user_collaterals(deps.as_ref(), &env.block, user_addr, None, None).unwrap();
+    assert_eq!(
+        collaterals,
+        vec![
+            UserCollateralResponse {
+                denom: market_1.denom,
+                amount_scaled: amount_1 * SCALING_FACTOR,
+                amount: amount_1,
+                enabled: false,
+            },
+            UserCollateralResponse {
+                denom: market_2.denom,
+                amount_scaled: amount_2 * SCALING_FACTOR,
+                amount: amount_2,
+                enabled: true,
+            }
+        ]
+    );
 }
 
 #[test]
@@ -91,7 +118,7 @@ fn test_query_user_debt() {
         },
     );
 
-    let env = mock_env(MockEnvParams::default());
+    let env = mock_env();
 
     // Save debt for market 1
     let debt_amount_1 = Uint128::new(1234000u128);
@@ -133,6 +160,7 @@ fn test_query_user_debt() {
             denom: "coin_1".to_string(),
             amount_scaled: debt_amount_scaled_1,
             amount: debt_amount_at_query_1,
+            uncollateralized: false,
         }
     );
     assert_eq!(
@@ -140,7 +168,8 @@ fn test_query_user_debt() {
         UserDebtResponse {
             denom: "coin_3".to_string(),
             amount_scaled: debt_amount_scaled_3,
-            amount: debt_amount_at_query_3
+            amount: debt_amount_at_query_3,
+            uncollateralized: false,
         }
     );
 }
@@ -171,7 +200,7 @@ fn test_query_user_asset_debt() {
         },
     );
 
-    let env = mock_env(MockEnvParams::default());
+    let env = mock_env();
 
     // Save debt for market 1
     let debt_amount_1 = Uint128::new(1234567u128);
@@ -199,7 +228,8 @@ fn test_query_user_asset_debt() {
             UserDebtResponse {
                 denom: "coin_1".to_string(),
                 amount_scaled: debt_amount_scaled_1,
-                amount: debt_amount_at_query_1
+                amount: debt_amount_at_query_1,
+                uncollateralized: false,
             }
         );
     }
@@ -213,7 +243,8 @@ fn test_query_user_asset_debt() {
             UserDebtResponse {
                 denom: "coin_2".to_string(),
                 amount_scaled: Uint128::zero(),
-                amount: Uint128::zero()
+                amount: Uint128::zero(),
+                uncollateralized: false,
             }
         );
     }

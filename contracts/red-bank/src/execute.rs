@@ -1,37 +1,27 @@
 use std::str;
 
-use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
-    WasmMsg,
-};
-use cw20::{Cw20ExecuteMsg, MinterResponse};
-use cw20_base::msg::InstantiateMarketingInfo;
+use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 
 use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
-use mars_outpost::helpers::{
-    build_send_asset_msg, cw20_get_balance, option_string_to_addr, zero_address,
-};
+use mars_outpost::helpers::{build_send_asset_msg, option_string_to_addr, zero_address};
+use mars_outpost::math;
 use mars_outpost::red_bank::{
-    Collateral, Config, CreateOrUpdateConfig, Debt, ExecuteMsg, InitOrUpdateAssetParams,
-    InstantiateMsg, Market,
+    Config, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg, Market,
 };
-use mars_outpost::{ma_token, math};
 
 use crate::error::ContractError;
 use crate::health::{
     assert_below_liq_threshold_after_withdraw, assert_below_max_ltv_after_borrow,
     assert_liquidatable,
 };
-use crate::helpers::query_total_deposits;
+
 use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
     get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
 };
-use crate::state::{
-    user_is_borrowing, COLLATERALS, CONFIG, DEBTS, MARKETS, MARKET_DENOMS_BY_MA_TOKEN,
-    UNCOLLATERALIZED_LOAN_LIMITS,
-};
+use crate::state::{COLLATERALS, CONFIG, DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
+use crate::user::User;
 
 pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, ContractError> {
     // Destructuring a struct’s fields into separate variables in order to force
@@ -39,15 +29,11 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
     let CreateOrUpdateConfig {
         owner,
         address_provider,
-        ma_token_code_id,
         close_factor,
     } = msg.config;
 
     // All fields should be available
-    let available = owner.is_some()
-        && address_provider.is_some()
-        && ma_token_code_id.is_some()
-        && close_factor.is_some();
+    let available = owner.is_some() && address_provider.is_some() && close_factor.is_some();
 
     if !available {
         return Err(MarsError::InstantiateParamsUnavailable {}.into());
@@ -56,7 +42,6 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
     let config = Config {
         owner: option_string_to_addr(deps.api, owner, zero_address())?,
         address_provider: option_string_to_addr(deps.api, address_provider, zero_address())?,
-        ma_token_code_id: ma_token_code_id.unwrap(),
         close_factor: close_factor.unwrap(),
     };
 
@@ -84,7 +69,6 @@ pub fn update_config(
     let CreateOrUpdateConfig {
         owner,
         address_provider,
-        ma_token_code_id,
         close_factor,
     } = new_config;
 
@@ -92,7 +76,6 @@ pub fn update_config(
     config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
     config.address_provider =
         option_string_to_addr(deps.api, address_provider, config.address_provider)?;
-    config.ma_token_code_id = ma_token_code_id.unwrap_or(config.ma_token_code_id);
     config.close_factor = close_factor.unwrap_or(config.close_factor);
 
     // Validate config
@@ -110,8 +93,7 @@ pub fn init_asset(
     env: Env,
     info: MessageInfo,
     denom: String,
-    asset_params: InitOrUpdateAssetParams,
-    asset_symbol_option: Option<String>,
+    params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
@@ -123,59 +105,10 @@ pub fn init_asset(
         return Err(ContractError::AssetAlreadyInitialized {});
     }
 
-    let new_market = create_market(env.block.time.seconds(), &denom, asset_params)?;
+    let new_market = create_market(env.block.time.seconds(), &denom, params)?;
     MARKETS.save(deps.storage, &denom, &new_market)?;
 
-    let symbol = asset_symbol_option.unwrap_or_else(|| denom.clone());
-
-    // Prepare response, should instantiate an maToken
-    // and use the Register hook.
-    // A new maToken should be created which callbacks this contract in order to be registered.
-    let addresses = address_provider::helpers::query_addresses(
-        deps.as_ref(),
-        &config.address_provider,
-        vec![MarsContract::Incentives, MarsContract::ProtocolAdmin],
-    )?;
-    // TODO: protocol admin may be a marshub address, which can't be validated into `Addr`
-    let protocol_admin_addr = &addresses[&MarsContract::ProtocolAdmin];
-    let incentives_addr = &addresses[&MarsContract::Incentives];
-
-    let token_symbol = format!("ma{}", symbol);
-
     Ok(Response::new()
-        .add_message(CosmosMsg::Wasm(WasmMsg::Instantiate {
-            admin: Some(protocol_admin_addr.to_string()),
-            code_id: config.ma_token_code_id,
-            msg: to_binary(&ma_token::msg::InstantiateMsg {
-                name: format!("Mars {} Liquidity Token", symbol),
-                symbol: token_symbol.clone(),
-                decimals: 6,
-                initial_balances: vec![],
-                mint: Some(MinterResponse {
-                    minter: env.contract.address.to_string(),
-                    cap: None,
-                }),
-                marketing: Some(InstantiateMarketingInfo {
-                    project: Some(String::from("Mars Protocol")),
-                    description: Some(format!(
-                        "Interest earning token representing deposits for {}",
-                        symbol
-                    )),
-                    marketing: Some(protocol_admin_addr.to_string()),
-                    logo: None,
-                }),
-                init_hook: Some(ma_token::msg::InitHook {
-                    contract_addr: env.contract.address.to_string(),
-                    msg: to_binary(&ExecuteMsg::InitAssetTokenCallback {
-                        denom: denom.clone(),
-                    })?,
-                }),
-                red_bank_address: env.contract.address.to_string(),
-                incentives_address: incentives_addr.into(),
-            })?,
-            funds: vec![],
-            label: token_symbol,
-        }))
         .add_attribute("action", "outposts/red-bank/init_asset")
         .add_attribute("denom", denom))
 }
@@ -216,7 +149,6 @@ pub fn create_market(
 
     let new_market = Market {
         denom: denom.to_string(),
-        ma_token_address: Addr::unchecked(""),
         borrow_index: Decimal::one(),
         liquidity_index: Decimal::one(),
         borrow_rate: borrow_rate.unwrap(),
@@ -224,6 +156,7 @@ pub fn create_market(
         max_loan_to_value: max_loan_to_value.unwrap(),
         reserve_factor: reserve_factor.unwrap(),
         indexes_last_updated: block_time,
+        collateral_total_scaled: Uint128::zero(),
         debt_total_scaled: Uint128::zero(),
         liquidation_threshold: liquidation_threshold.unwrap(),
         liquidation_bonus: liquidation_bonus.unwrap(),
@@ -239,36 +172,13 @@ pub fn create_market(
     Ok(new_market)
 }
 
-pub fn init_asset_token_callback(
-    deps: DepsMut,
-    info: MessageInfo,
-    denom: String,
-) -> Result<Response, ContractError> {
-    let mut market = MARKETS.load(deps.storage, &denom)?;
-
-    if market.ma_token_address == zero_address() {
-        let ma_contract_addr = info.sender;
-
-        market.ma_token_address = ma_contract_addr.clone();
-        MARKETS.save(deps.storage, &denom, &market)?;
-
-        // save ma token contract to reference mapping
-        MARKET_DENOMS_BY_MA_TOKEN.save(deps.storage, &ma_contract_addr, &denom)?;
-
-        Ok(Response::new().add_attribute("action", "outposts/red-bank/init_asset_token_callback"))
-    } else {
-        // Can do this only once
-        Err(MarsError::Unauthorized {}.into())
-    }
-}
-
 /// Update asset with new params.
 pub fn update_asset(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
     denom: String,
-    asset_params: InitOrUpdateAssetParams,
+    params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
@@ -292,7 +202,7 @@ pub fn update_asset(
                 deposit_enabled,
                 borrow_enabled,
                 deposit_cap,
-            } = asset_params;
+            } = params;
 
             // If reserve factor or interest rates are updated we update indexes with
             // current values before applying the change to prevent applying this
@@ -310,11 +220,11 @@ pub fn update_asset(
                     &config.address_provider,
                     MarsContract::ProtocolRewardsCollector,
                 )?;
-                response = apply_accumulated_interests(
+                apply_accumulated_interests(
+                    deps.storage,
                     &env,
                     &protocol_rewards_collector_addr,
                     &mut market,
-                    response,
                 )?;
             }
 
@@ -408,10 +318,12 @@ pub fn deposit(
     denom: String,
     deposit_amount: Uint128,
 ) -> Result<Response, ContractError> {
-    let user_addr = if let Some(address) = on_behalf_of {
-        deps.api.addr_validate(&address)?
+    let user_addr: Addr;
+    let user = if let Some(address) = on_behalf_of {
+        user_addr = deps.api.addr_validate(&address)?;
+        User(&user_addr)
     } else {
-        info.sender.clone()
+        User(&info.sender)
     };
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
@@ -421,7 +333,7 @@ pub fn deposit(
         });
     }
 
-    let total_scaled_deposits = query_total_deposits(&deps.querier, &market.ma_token_address)?;
+    let total_scaled_deposits = market.collateral_total_scaled;
     let total_deposits =
         get_underlying_liquidity_amount(total_scaled_deposits, &market, env.block.time.seconds())?;
     if total_deposits.checked_add(deposit_amount)? > market.deposit_cap {
@@ -429,19 +341,6 @@ pub fn deposit(
             denom,
         });
     }
-
-    // Update the user's collateral status
-    // TODO: Currently, the logic is:
-    // - If the user already has a collateral position, do nothing;
-    // - If not, initialize a new one with `enable` default to `true`.
-    // We don't increment the user's collateral shares here, as the collateral shares are tokenized
-    // as maTokens.
-    // Once maToken is removed, we increment the user's collateral shares here.
-    COLLATERALS.update(deps.storage, (&user_addr, &denom), |collateral| -> StdResult<_> {
-        Ok(collateral.unwrap_or(Collateral {
-            enabled: true,
-        }))
-    })?;
 
     let mut response = Response::new();
 
@@ -453,30 +352,27 @@ pub fn deposit(
         &config.address_provider,
         MarsContract::ProtocolRewardsCollector,
     )?;
-    response = apply_accumulated_interests(&env, &rewards_collector_addr, &mut market, response)?;
+    apply_accumulated_interests(deps.storage, &env, &rewards_collector_addr, &mut market)?;
     response = update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, response)?;
-    MARKETS.save(deps.storage, &denom, &market)?;
 
     if market.liquidity_index.is_zero() {
         return Err(ContractError::InvalidLiquidityIndex {});
     }
-    let mint_amount =
+    let deposit_amount_scaled =
         get_scaled_liquidity_amount(deposit_amount, &market, env.block.time.seconds())?;
 
+    user.increase_collateral(deps.storage, &denom, deposit_amount_scaled)?;
+
+    market.increase_collateral(deposit_amount_scaled)?;
+    MARKETS.save(deps.storage, &denom, &market)?;
+
     Ok(response
-        .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: market.ma_token_address.into(),
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
-                recipient: user_addr.to_string(),
-                amount: mint_amount,
-            })?,
-            funds: vec![],
-        }))
         .add_attribute("action", "outposts/red-bank/deposit")
+        .add_attribute("sender", &info.sender)
+        .add_attribute("on_behalf_of", user)
         .add_attribute("denom", denom)
-        .add_attribute("sender", info.sender)
-        .add_attribute("user", user_addr)
-        .add_attribute("amount", deposit_amount))
+        .add_attribute("amount", deposit_amount)
+        .add_attribute("amount_scaled", deposit_amount_scaled))
 }
 
 /// Burns sent maAsset in exchange of underlying asset
@@ -488,17 +384,16 @@ pub fn withdraw(
     amount: Option<Uint128>,
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
-    let withdrawer_addr = info.sender;
+    let withdrawer = User(&info.sender);
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
 
-    let asset_ma_addr = market.ma_token_address.clone();
-    let withdrawer_balance_scaled_before =
-        cw20_get_balance(&deps.querier, asset_ma_addr, withdrawer_addr.clone())?;
+    let collateral = withdrawer.collateral(deps.storage, &denom)?;
+    let withdrawer_balance_scaled_before = collateral.amount_scaled;
 
     if withdrawer_balance_scaled_before.is_zero() {
         return Err(ContractError::UserNoCollateralBalance {
-            user: withdrawer_addr.into(),
+            user: withdrawer.into(),
             denom,
         });
     }
@@ -535,19 +430,14 @@ pub fn withdraw(
     let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
-    // NOTE: this load command currently doesn't work for the rewards collector, which doesn't have
-    // a collateral position. however, this will be automatically solved in a later PR, once we
-    // remove maToken and store collateral shares here in Red Bank.
-    let collateral = COLLATERALS.load(deps.storage, (&withdrawer_addr, &denom))?;
-
     // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
     // otherwise no reasons to block the withdraw
     if collateral.enabled
-        && user_is_borrowing(deps.storage, &withdrawer_addr)
+        && withdrawer.is_borrowing(deps.storage)
         && !assert_below_liq_threshold_after_withdraw(
             &deps.as_ref(),
             &env,
-            &withdrawer_addr,
+            withdrawer.address(),
             oracle_addr,
             &denom,
             withdraw_amount,
@@ -559,46 +449,37 @@ pub fn withdraw(
     let mut response = Response::new();
 
     // update indexes and interest rates
-    response = apply_accumulated_interests(&env, rewards_collector_addr, &mut market, response)?;
+    apply_accumulated_interests(deps.storage, &env, rewards_collector_addr, &mut market)?;
     response = update_interest_rates(&deps, &env, &mut market, withdraw_amount, &denom, response)?;
-    MARKETS.save(deps.storage, &denom, &market)?;
 
-    // burn maToken
+    // reduce the withdrawer's scaled collateral amount
     let withdrawer_balance_after = withdrawer_balance_before.checked_sub(withdraw_amount)?;
     let withdrawer_balance_scaled_after =
         get_scaled_liquidity_amount(withdrawer_balance_after, &market, env.block.time.seconds())?;
 
-    let burn_amount =
+    let withdraw_amount_scaled =
         withdrawer_balance_scaled_before.checked_sub(withdrawer_balance_scaled_after)?;
-    response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: market.ma_token_address.to_string(),
-        msg: to_binary(&ma_token::msg::ExecuteMsg::Burn {
-            user: withdrawer_addr.to_string(),
-            amount: burn_amount,
-        })?,
-        funds: vec![],
-    }));
 
-    // if the user's maToken amount is reduced to zero, then delete the collateral position
-    if withdrawer_balance_scaled_after.is_zero() {
-        COLLATERALS.remove(deps.storage, (&withdrawer_addr, &denom));
-    }
+    withdrawer.decrease_collateral(deps.storage, &denom, withdraw_amount_scaled)?;
+
+    market.decrease_collateral(withdraw_amount_scaled)?;
+    MARKETS.save(deps.storage, &denom, &market)?;
 
     // send underlying asset to user or another recipient
     let recipient_addr = if let Some(recipient) = recipient {
         deps.api.addr_validate(&recipient)?
     } else {
-        withdrawer_addr.clone()
+        withdrawer.address().clone()
     };
 
     Ok(response
         .add_message(build_send_asset_msg(&recipient_addr, &denom, withdraw_amount))
         .add_attribute("action", "outposts/red-bank/withdraw")
-        .add_attribute("denom", denom)
-        .add_attribute("user", withdrawer_addr)
+        .add_attribute("sender", withdrawer)
         .add_attribute("recipient", recipient_addr)
-        .add_attribute("burn_amount", burn_amount)
-        .add_attribute("withdraw_amount", withdraw_amount))
+        .add_attribute("denom", denom)
+        .add_attribute("amount", withdraw_amount)
+        .add_attribute("amount_scaled", withdraw_amount_scaled))
 }
 
 /// Add debt for the borrower and send the borrowed funds
@@ -610,7 +491,7 @@ pub fn borrow(
     borrow_amount: Uint128,
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
-    let borrower_addr = info.sender;
+    let borrower = User(&info.sender);
 
     // Cannot borrow zero amount
     if borrow_amount.is_zero() {
@@ -628,9 +509,7 @@ pub fn borrow(
         });
     }
 
-    let uncollateralized_loan_limit = UNCOLLATERALIZED_LOAN_LIMITS
-        .may_load(deps.storage, (&borrower_addr, &denom))?
-        .unwrap_or_else(Uint128::zero);
+    let uncollateralized_loan_limit = borrower.uncollateralized_loan_limit(deps.storage, &denom)?;
 
     let config = CONFIG.load(deps.storage)?;
 
@@ -648,7 +527,7 @@ pub fn borrow(
         if !assert_below_max_ltv_after_borrow(
             &deps.as_ref(),
             &env,
-            &borrower_addr,
+            borrower.address(),
             oracle_addr,
             &denom,
             borrow_amount,
@@ -659,15 +538,11 @@ pub fn borrow(
         // Uncollateralized loan: check borrow amount plus debt does not exceed uncollateralized loan limit
         uncollateralized_debt = true;
 
-        let borrower_debt =
-            DEBTS.may_load(deps.storage, (&borrower_addr, &denom))?.unwrap_or(Debt {
-                amount_scaled: Uint128::zero(),
-                uncollateralized: uncollateralized_debt,
-            });
+        let debt_amount_scaled = borrower.debt_amount_scaled(deps.storage, &denom)?;
 
         let asset_market = MARKETS.load(deps.storage, &denom)?;
         let debt_amount = get_underlying_debt_amount(
-            borrower_debt.amount_scaled,
+            debt_amount_scaled,
             &asset_market,
             env.block.time.seconds(),
         )?;
@@ -680,20 +555,14 @@ pub fn borrow(
 
     let mut response = Response::new();
 
-    response =
-        apply_accumulated_interests(&env, rewards_collector_addr, &mut borrow_market, response)?;
+    apply_accumulated_interests(deps.storage, &env, rewards_collector_addr, &mut borrow_market)?;
 
     // Set new debt
-    let mut debt = DEBTS.may_load(deps.storage, (&borrower_addr, &denom))?.unwrap_or(Debt {
-        amount_scaled: Uint128::zero(),
-        uncollateralized: uncollateralized_debt,
-    });
     let borrow_amount_scaled =
         get_scaled_debt_amount(borrow_amount, &borrow_market, env.block.time.seconds())?;
-    debt.amount_scaled = debt.amount_scaled.checked_add(borrow_amount_scaled)?;
-    DEBTS.save(deps.storage, (&borrower_addr, &denom), &debt)?;
 
-    borrow_market.debt_total_scaled += borrow_amount_scaled;
+    borrow_market.increase_debt(borrow_amount_scaled)?;
+    borrower.increase_debt(deps.storage, &denom, borrow_amount_scaled, uncollateralized_debt)?;
 
     response =
         update_interest_rates(&deps, &env, &mut borrow_market, borrow_amount, &denom, response)?;
@@ -703,16 +572,17 @@ pub fn borrow(
     let recipient_addr = if let Some(recipient) = recipient {
         deps.api.addr_validate(&recipient)?
     } else {
-        borrower_addr.clone()
+        borrower.address().clone()
     };
 
     Ok(response
         .add_message(build_send_asset_msg(&recipient_addr, &denom, borrow_amount))
         .add_attribute("action", "outposts/red-bank/borrow")
-        .add_attribute("denom", denom)
-        .add_attribute("user", borrower_addr)
+        .add_attribute("sender", borrower)
         .add_attribute("recipient", recipient_addr)
-        .add_attribute("amount", borrow_amount))
+        .add_attribute("denom", denom)
+        .add_attribute("amount", borrow_amount)
+        .add_attribute("amount_scaled", borrow_amount_scaled))
 }
 
 /// Handle the repay of native tokens. Refund extra funds if they exist
@@ -724,22 +594,22 @@ pub fn repay(
     denom: String,
     repay_amount: Uint128,
 ) -> Result<Response, ContractError> {
-    let user_addr = if let Some(address) = on_behalf_of {
-        let on_behalf_of_addr = deps.api.addr_validate(&address)?;
+    let user_addr: Addr;
+    let user = if let Some(address) = on_behalf_of {
+        user_addr = deps.api.addr_validate(&address)?;
+        let user = User(&user_addr);
         // Uncollateralized loans should not have 'on behalf of' because it creates accounting complexity for them
-        match UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&on_behalf_of_addr, &denom))? {
-            Some(limit) if !limit.is_zero() => {
-                return Err(ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {})
-            }
-            _ => on_behalf_of_addr,
+        if !user.uncollateralized_loan_limit(deps.storage, &denom)?.is_zero() {
+            return Err(ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {});
         }
+        user
     } else {
-        info.sender.clone()
+        User(&info.sender)
     };
 
     // Check new debt
-    let mut debt = DEBTS
-        .may_load(deps.storage, (&user_addr, &denom))?
+    let debt = DEBTS
+        .may_load(deps.storage, (user.address(), &denom))?
         .ok_or(ContractError::CannotRepayZeroDebt {})?;
 
     let config = CONFIG.load(deps.storage)?;
@@ -754,7 +624,7 @@ pub fn repay(
 
     let mut response = Response::new();
 
-    response = apply_accumulated_interests(&env, &rewards_collector_addr, &mut market, response)?;
+    apply_accumulated_interests(deps.storage, &env, &rewards_collector_addr, &mut market)?;
 
     let debt_amount_scaled_before = debt.amount_scaled;
     let debt_amount_before =
@@ -765,7 +635,7 @@ pub fn repay(
     let mut debt_amount_after = Uint128::zero();
     if repay_amount > debt_amount_before {
         refund_amount = repay_amount - debt_amount_before;
-        let refund_msg = build_send_asset_msg(&user_addr, &denom, refund_amount);
+        let refund_msg = build_send_asset_msg(user.address(), &denom, refund_amount);
         response = response.add_message(refund_msg);
     } else {
         debt_amount_after = debt_amount_before - repay_amount;
@@ -773,29 +643,23 @@ pub fn repay(
 
     let debt_amount_scaled_after =
         get_scaled_debt_amount(debt_amount_after, &market, env.block.time.seconds())?;
-    debt.amount_scaled = debt_amount_scaled_after;
 
     let debt_amount_scaled_delta =
         debt_amount_scaled_before.checked_sub(debt_amount_scaled_after)?;
 
-    market.debt_total_scaled = market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
+    market.decrease_debt(debt_amount_scaled_delta)?;
+    user.decrease_debt(deps.storage, &denom, debt_amount_scaled_delta)?;
 
     response = update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, response)?;
     MARKETS.save(deps.storage, &denom, &market)?;
 
-    // TODO: this logic can be extracted to a helper function to simplify the content of `excute.rs`
-    if debt.amount_scaled.is_zero() {
-        DEBTS.remove(deps.storage, (&user_addr, &denom));
-    } else {
-        DEBTS.save(deps.storage, (&user_addr, &denom), &debt)?;
-    }
-
     Ok(response
         .add_attribute("action", "outposts/red-bank/repay")
+        .add_attribute("sender", &info.sender)
+        .add_attribute("on_behalf_of", user)
         .add_attribute("denom", denom)
-        .add_attribute("sender", info.sender)
-        .add_attribute("user", user_addr)
-        .add_attribute("amount", repay_amount.checked_sub(refund_amount)?))
+        .add_attribute("amount", repay_amount.checked_sub(refund_amount)?)
+        .add_attribute("amount_scaled", debt_amount_scaled_delta))
 }
 
 /// Execute loan liquidations on under-collateralized loans
@@ -809,16 +673,14 @@ pub fn liquidate(
     sent_debt_asset_amount: Uint128,
 ) -> Result<Response, ContractError> {
     let block_time = env.block.time.seconds();
+    let user = User(&user_addr);
+    let liquidator = User(&info.sender);
 
     // 1. Validate liquidation
     // If user (contract) has a positive uncollateralized limit then the user
     // cannot be liquidated
-    if let Some(limit) =
-        UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&user_addr, &debt_denom))?
-    {
-        if !limit.is_zero() {
-            return Err(ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});
-        }
+    if !user.uncollateralized_loan_limit(deps.storage, &debt_denom)?.is_zero() {
+        return Err(ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});
     };
 
     // check if the user has enabled the collateral asset as collateral
@@ -833,11 +695,7 @@ pub fn liquidate(
 
     // check if user has available collateral in specified collateral asset to be liquidated
     let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
-    let user_collateral_balance_scaled = cw20_get_balance(
-        &deps.querier,
-        collateral_market.ma_token_address.clone(),
-        user_addr.clone(),
-    )?;
+    let user_collateral_balance_scaled = collateral.amount_scaled;
     let user_collateral_balance = get_underlying_liquidity_amount(
         user_collateral_balance_scaled,
         &collateral_market,
@@ -848,7 +706,7 @@ pub fn liquidate(
     }
 
     // check if user has outstanding debt in the deposited asset that needs to be repayed
-    let mut user_debt = DEBTS
+    let user_debt = DEBTS
         .may_load(deps.storage, (&user_addr, &debt_denom))?
         .ok_or(ContractError::CannotLiquidateWhenNoDebtBalance {})?;
 
@@ -911,15 +769,16 @@ pub fn liquidate(
         block_time,
     )?;
 
-    response = response.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: collateral_market.ma_token_address.to_string(),
-        msg: to_binary(&mars_outpost::ma_token::msg::ExecuteMsg::TransferOnLiquidation {
-            sender: user_addr.to_string(),
-            recipient: info.sender.to_string(),
-            amount: collateral_amount_to_liquidate_scaled,
-        })?,
-        funds: vec![],
-    }));
+    user.decrease_collateral(
+        deps.storage,
+        &collateral_denom,
+        collateral_amount_to_liquidate_scaled,
+    )?;
+    liquidator.increase_collateral(
+        deps.storage,
+        &collateral_denom,
+        collateral_amount_to_liquidate_scaled,
+    )?;
 
     // if max collateral to liquidate equals the user's balance, delete the collateral position
     if collateral_amount_to_liquidate_scaled == user_collateral_balance_scaled {
@@ -939,9 +798,7 @@ pub fn liquidate(
     let debt_amount_scaled_delta =
         user_debt.amount_scaled.checked_sub(user_debt_asset_debt_amount_scaled_after)?;
 
-    user_debt.amount_scaled = user_debt_asset_debt_amount_scaled_after;
-
-    DEBTS.save(deps.storage, (&user_addr, &debt_denom), &user_debt)?;
+    user.decrease_debt(deps.storage, &debt_denom, debt_amount_scaled_delta)?;
 
     let debt_market_debt_total_scaled_after =
         debt_market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
@@ -955,11 +812,11 @@ pub fn liquidate(
         let mut asset_market_after = collateral_market;
         let denom = &collateral_denom;
 
-        response = apply_accumulated_interests(
+        apply_accumulated_interests(
+            deps.storage,
             &env,
             rewards_collector_addr,
             &mut asset_market_after,
-            response,
         )?;
 
         asset_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
@@ -977,11 +834,11 @@ pub fn liquidate(
     } else {
         let mut debt_market_after = debt_market;
 
-        response = apply_accumulated_interests(
+        apply_accumulated_interests(
+            deps.storage,
             &env,
             rewards_collector_addr,
             &mut debt_market_after,
-            response,
         )?;
 
         debt_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
@@ -1007,13 +864,14 @@ pub fn liquidate(
 
     Ok(response
         .add_attribute("action", "outposts/red-bank/liquidate")
+        .add_attribute("user", user)
+        .add_attribute("liquidator", liquidator)
         .add_attribute("collateral_denom", collateral_denom)
+        .add_attribute("collateral_amount", collateral_amount_to_liquidate)
+        .add_attribute("collateral_amount_scaled", collateral_amount_to_liquidate_scaled)
         .add_attribute("debt_denom", debt_denom)
-        .add_attribute("user", user_addr.as_str())
-        .add_attribute("liquidator", info.sender)
-        .add_attribute("collateral_amount_liquidated", collateral_amount_to_liquidate.to_string())
-        .add_attribute("debt_amount_repaid", debt_amount_to_repay.to_string())
-        .add_attribute("refund_amount", refund_amount.to_string()))
+        .add_attribute("debt_amount", debt_amount_to_repay)
+        .add_attribute("debt_amount_scaled", debt_amount_scaled_delta))
 }
 
 /// Computes debt to repay (in debt asset),
@@ -1074,32 +932,24 @@ pub fn update_asset_collateral_status(
     denom: String,
     enable: bool,
 ) -> Result<Response, ContractError> {
-    let user_addr = info.sender;
+    let user = User(&info.sender);
+
     let mut collateral =
-        COLLATERALS.may_load(deps.storage, (&user_addr, &denom))?.unwrap_or_default();
+        COLLATERALS.may_load(deps.storage, (user.address(), &denom))?.ok_or_else(|| {
+            ContractError::UserNoCollateralBalance {
+                user: user.into(),
+                denom: denom.clone(),
+            }
+        })?;
 
-    let collateral_market = MARKETS.load(deps.storage, &denom)?;
+    let previously_enabled = collateral.enabled;
 
-    if !collateral.enabled && enable {
-        let collateral_ma_address = collateral_market.ma_token_address;
-        let user_collateral_balance =
-            cw20_get_balance(&deps.querier, collateral_ma_address, user_addr.clone())?;
-        if !user_collateral_balance.is_zero() {
-            // enable collateral asset
-            collateral.enabled = true;
-            COLLATERALS.save(deps.storage, (&user_addr, &denom), &collateral)?;
-        } else {
-            return Err(ContractError::UserNoCollateralBalance {
-                user: user_addr.to_string(),
-                denom,
-            });
-        }
-    } else if collateral.enabled && !enable {
-        // disable collateral asset
-        collateral.enabled = false;
-        COLLATERALS.save(deps.storage, (&user_addr, &denom), &collateral)?;
+    collateral.enabled = enable;
+    COLLATERALS.save(deps.storage, (user.address(), &denom), &collateral)?;
 
-        // check health factor after disabling collateral
+    // if the collateral was previously enabled, but is not disabled, it is necessary to ensure the
+    // user is not liquidatable after disabling
+    if previously_enabled && !enable {
         let config = CONFIG.load(deps.storage)?;
         let oracle_addr = address_provider::helpers::query_address(
             deps.as_ref(),
@@ -1108,7 +958,7 @@ pub fn update_asset_collateral_status(
         )?;
 
         let (liquidatable, _) =
-            assert_liquidatable(&deps.as_ref(), &env, &user_addr, &oracle_addr)?;
+            assert_liquidatable(&deps.as_ref(), &env, user.address(), &oracle_addr)?;
 
         if liquidatable {
             return Err(ContractError::InvalidHealthFactorAfterDisablingCollateral {});
@@ -1117,56 +967,7 @@ pub fn update_asset_collateral_status(
 
     Ok(Response::new()
         .add_attribute("action", "outposts/red-bank/update_asset_collateral_status")
-        .add_attribute("user", user_addr.as_str())
+        .add_attribute("user", user)
         .add_attribute("denom", denom)
         .add_attribute("enable", enable.to_string()))
-}
-
-/// Update uncollateralized loan limit by a given amount in base asset
-pub fn finalize_liquidity_token_transfer(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    from_address: Addr,
-    to_address: Addr,
-    from_previous_balance: Uint128,
-    to_previous_balance: Uint128,
-    amount: Uint128,
-) -> Result<Response, ContractError> {
-    // Get liquidity token market
-    let denom = MARKET_DENOMS_BY_MA_TOKEN.load(deps.storage, &info.sender)?;
-
-    // Check user health factor is above 1
-    let config = CONFIG.load(deps.storage)?;
-    let oracle_addr = address_provider::helpers::query_address(
-        deps.as_ref(),
-        &config.address_provider,
-        MarsContract::Oracle,
-    )?;
-
-    let (liquidatable, _) = assert_liquidatable(&deps.as_ref(), &env, &from_address, &oracle_addr)?;
-
-    if liquidatable {
-        return Err(ContractError::CannotTransferTokenWhenInvalidHealthFactor {});
-    }
-
-    // Update users's positions
-    if from_address != to_address {
-        if from_previous_balance.checked_sub(amount)?.is_zero() {
-            COLLATERALS.remove(deps.storage, (&from_address, &denom));
-        }
-
-        if to_previous_balance.is_zero() && !amount.is_zero() {
-            COLLATERALS.save(
-                deps.storage,
-                (&to_address, &denom),
-                &Collateral {
-                    enabled: true,
-                },
-            )?;
-        }
-    }
-
-    Ok(Response::new()
-        .add_attribute("action", "outposts/red-bank/finalize_liquidity_token_transfer"))
 }

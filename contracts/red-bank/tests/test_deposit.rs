@@ -1,65 +1,230 @@
 use std::any::type_name;
 
-use cosmwasm_std::testing::mock_info;
-use cosmwasm_std::{
-    attr, coin, to_binary, Addr, CosmosMsg, Decimal, StdError, SubMsg, Uint128, WasmMsg,
-};
-use cw20::Cw20ExecuteMsg;
+use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
+use cosmwasm_std::{attr, coin, coins, Addr, Decimal, OwnedDeps, StdError, StdResult, Uint128};
 use cw_utils::PaymentError;
 
-use mars_outpost::red_bank::{ExecuteMsg, Market};
-use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
-
+use mars_outpost::red_bank::{Collateral, ExecuteMsg, Market};
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
 use mars_red_bank::interest_rates::{compute_scaled_amount, ScalingOperation, SCALING_FACTOR};
 use mars_red_bank::state::{COLLATERALS, MARKETS};
+use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 
 use helpers::{
-    th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
+    set_collateral, th_build_interests_updated_event, th_get_expected_indices_and_rates, th_setup,
 };
 
 mod helpers;
 
-#[test]
-fn test_deposit_native_asset() {
-    let initial_liquidity = Uint128::from(10000000_u128);
-    let mut deps = th_setup(&[coin(initial_liquidity.into(), "somecoin")]);
-    let reserve_factor = Decimal::from_ratio(1u128, 10u128);
-    let ma_token_addr = Addr::unchecked("matoken");
+struct TestSuite {
+    deps: OwnedDeps<MockStorage, MockApi, MarsMockQuerier>,
+    denom: &'static str,
+    depositor_addr: Addr,
+    initial_market: Market,
+    initial_liquidity: Uint128,
+}
 
-    deps.querier.set_cw20_total_supply(ma_token_addr.clone(), Uint128::new(10_000_000));
+fn setup_test() -> TestSuite {
+    let denom = "uosmo";
+    let initial_liquidity = Uint128::new(10_000_000);
 
-    let mock_market = Market {
-        ma_token_address: ma_token_addr,
+    let mut deps = th_setup(&[coin(initial_liquidity.u128(), denom)]);
+
+    let market = Market {
+        denom: denom.to_string(),
         liquidity_index: Decimal::from_ratio(11u128, 10u128),
         max_loan_to_value: Decimal::one(),
         borrow_index: Decimal::from_ratio(1u128, 1u128),
         borrow_rate: Decimal::from_ratio(10u128, 100u128),
         liquidity_rate: Decimal::from_ratio(10u128, 100u128),
-        reserve_factor,
+        reserve_factor: Decimal::from_ratio(1u128, 10u128),
+        collateral_total_scaled: Uint128::new(10_000_000) * SCALING_FACTOR,
         debt_total_scaled: Uint128::new(10_000_000) * SCALING_FACTOR,
         indexes_last_updated: 10000000,
         deposit_cap: Uint128::new(12_000_000),
         ..Default::default()
     };
-    let market = th_init_market(deps.as_mut(), "somecoin", &mock_market);
 
+    MARKETS.save(deps.as_mut().storage, denom, &market).unwrap();
+
+    TestSuite {
+        deps,
+        denom,
+        depositor_addr: Addr::unchecked("larry"),
+        initial_market: market,
+        initial_liquidity,
+    }
+}
+
+#[test]
+fn depositing_with_no_coin_sent() {
+    let TestSuite {
+        mut deps,
+        depositor_addr,
+        ..
+    } = setup_test();
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(depositor_addr.as_str(), &[]),
+        ExecuteMsg::Deposit {
+            on_behalf_of: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, PaymentError::NoFunds {}.into());
+}
+
+#[test]
+fn depositing_with_multiple_coins_sent() {
+    let TestSuite {
+        mut deps,
+        depositor_addr,
+        ..
+    } = setup_test();
+
+    let sent_coins = vec![coin(123, "uatom"), coin(456, "uosmo")];
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(depositor_addr.as_str(), &sent_coins),
+        ExecuteMsg::Deposit {
+            on_behalf_of: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, PaymentError::MultipleDenoms {}.into());
+}
+
+#[test]
+fn depositing_to_non_existent_market() {
+    let TestSuite {
+        mut deps,
+        depositor_addr,
+        ..
+    } = setup_test();
+
+    // there isn't a market for this denom
+    let false_denom = "usteak";
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(depositor_addr.as_str(), &coins(123, false_denom)),
+        ExecuteMsg::Deposit {
+            on_behalf_of: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, StdError::not_found(type_name::<Market>()).into());
+}
+
+#[test]
+fn depositing_to_disabled_market() {
+    let TestSuite {
+        mut deps,
+        denom,
+        depositor_addr,
+        ..
+    } = setup_test();
+
+    // disable the market
+    MARKETS
+        .update(deps.as_mut().storage, denom, |opt| -> StdResult<_> {
+            let mut market = opt.unwrap();
+            market.deposit_enabled = false;
+            Ok(market)
+        })
+        .unwrap();
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(depositor_addr.as_str(), &coins(123, denom)),
+        ExecuteMsg::Deposit {
+            on_behalf_of: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::DepositNotEnabled {
+            denom: denom.to_string(),
+        }
+    );
+}
+
+#[test]
+fn depositing_above_cap() {
+    let TestSuite {
+        mut deps,
+        denom,
+        depositor_addr,
+        ..
+    } = setup_test();
+
+    // set a deposit cap
+    MARKETS
+        .update(deps.as_mut().storage, denom, |opt| -> StdResult<_> {
+            let mut market = opt.unwrap();
+            market.collateral_total_scaled = Uint128::new(9_000_000) * SCALING_FACTOR;
+            market.deposit_cap = Uint128::new(10_000_000);
+            Ok(market)
+        })
+        .unwrap();
+
+    // try deposit with a big amount, should fail
+    let err = execute(
+        deps.as_mut(),
+        mock_env_at_block_time(10000100),
+        mock_info(depositor_addr.as_str(), &coins(1_000_001, denom)),
+        ExecuteMsg::Deposit {
+            on_behalf_of: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::DepositCapExceeded {
+            denom: denom.to_string()
+        }
+    );
+
+    // deposit a smaller amount, should work
+    let result = execute(
+        deps.as_mut(),
+        mock_env_at_block_time(10000100),
+        mock_info(depositor_addr.as_str(), &coins(123, denom)),
+        ExecuteMsg::Deposit {
+            on_behalf_of: None,
+        },
+    );
+    assert!(result.is_ok());
+}
+
+#[test]
+fn depositing_without_existing_position() {
+    let TestSuite {
+        mut deps,
+        denom,
+        depositor_addr,
+        initial_market,
+        initial_liquidity,
+    } = setup_test();
+
+    let block_time = 10000100;
     let deposit_amount = 110000;
-    let env = mock_env_at_block_time(10000100);
-    let info = cosmwasm_std::testing::mock_info("depositor", &[coin(deposit_amount, "somecoin")]);
-    let msg = ExecuteMsg::Deposit {
-        on_behalf_of: None,
-    };
-    let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
+    // compute expected market parameters
     let expected_params = th_get_expected_indices_and_rates(
-        &market,
-        env.block.time.seconds(),
+        &initial_market,
+        block_time,
         initial_liquidity,
         Default::default(),
     );
-
     let expected_mint_amount = compute_scaled_amount(
         Uint128::from(deposit_amount),
         expected_params.liquidity_index,
@@ -67,194 +232,155 @@ fn test_deposit_native_asset() {
     )
     .unwrap();
 
-    // mints coin_amount/liquidity_index
-    assert_eq!(
-        res.messages,
-        vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: "matoken".to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
-                recipient: "depositor".to_string(),
-                amount: expected_mint_amount,
-            })
-            .unwrap(),
-            funds: vec![]
-        }))]
-    );
+    let res = execute(
+        deps.as_mut(),
+        mock_env_at_block_time(block_time),
+        mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
+        ExecuteMsg::Deposit {
+            on_behalf_of: None,
+        },
+    )
+    .unwrap();
+    assert_eq!(res.messages, vec![]);
     assert_eq!(
         res.attributes,
         vec![
             attr("action", "outposts/red-bank/deposit"),
-            attr("denom", "somecoin"),
-            attr("sender", "depositor"),
-            attr("user", "depositor"),
+            attr("sender", &depositor_addr),
+            attr("on_behalf_of", &depositor_addr),
+            attr("denom", denom),
             attr("amount", deposit_amount.to_string()),
+            attr("amount_scaled", expected_mint_amount),
         ]
     );
-    assert_eq!(res.events, vec![th_build_interests_updated_event("somecoin", &expected_params)]);
+    assert_eq!(res.events, vec![th_build_interests_updated_event(denom, &expected_params)]);
 
-    let market = MARKETS.load(&deps.storage, "somecoin").unwrap();
+    // indexes and interest rates should have been updated
+    let market = MARKETS.load(deps.as_ref().storage, denom).unwrap();
+    assert_eq!(market.borrow_index, expected_params.borrow_index);
+    assert_eq!(market.liquidity_index, expected_params.liquidity_index);
     assert_eq!(market.borrow_rate, expected_params.borrow_rate);
     assert_eq!(market.liquidity_rate, expected_params.liquidity_rate);
-    assert_eq!(market.liquidity_index, expected_params.liquidity_index);
-    assert_eq!(market.borrow_index, expected_params.borrow_index);
 
-    // send many native coins
-    let info = cosmwasm_std::testing::mock_info(
-        "depositor",
-        &[coin(100, "somecoin1"), coin(200, "somecoin2")],
-    );
-    let msg = ExecuteMsg::Deposit {
-        on_behalf_of: None,
-    };
-    let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-    assert_eq!(error_res, PaymentError::MultipleDenoms {}.into());
+    // total collateral amount should have been updated
+    let expected = initial_market.collateral_total_scaled + expected_mint_amount;
+    assert_eq!(market.collateral_total_scaled, expected);
 
-    // empty deposit fails
-    let info = mock_info("depositor", &[]);
-    let msg = ExecuteMsg::Deposit {
-        on_behalf_of: None,
-    };
-    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, PaymentError::NoFunds {}.into());
-}
-
-#[test]
-fn test_cannot_deposit_if_no_market() {
-    let mut deps = th_setup(&[]);
-    let env = mock_env(MockEnvParams::default());
-
-    let info = cosmwasm_std::testing::mock_info("depositer", &[coin(110000, "somecoin")]);
-    let msg = ExecuteMsg::Deposit {
-        on_behalf_of: None,
-    };
-    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, StdError::not_found(type_name::<Market>()).into());
-}
-
-#[test]
-fn test_cannot_deposit_if_market_not_enabled() {
-    let mut deps = th_setup(&[]);
-
-    let mock_market = Market {
-        ma_token_address: Addr::unchecked("ma_somecoin"),
-        deposit_enabled: false,
-        ..Default::default()
-    };
-    th_init_market(deps.as_mut(), "somecoin", &mock_market);
-
-    // Check error when deposit not allowed on market
-    let env = mock_env(MockEnvParams::default());
-    let info = cosmwasm_std::testing::mock_info("depositor", &[coin(110000, "somecoin")]);
-    let msg = ExecuteMsg::Deposit {
-        on_behalf_of: None,
-    };
-    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
+    // the depositor previously did not have a collateral position
+    // a position should have been created with the correct scaled amount, and enabled by default
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, denom)).unwrap();
     assert_eq!(
-        error_res,
-        ContractError::DepositNotEnabled {
-            denom: "somecoin".to_string()
+        collateral,
+        Collateral {
+            amount_scaled: expected_mint_amount,
+            enabled: true
         }
     );
 }
 
 #[test]
-fn test_deposit_on_behalf_of() {
-    let initial_liquidity = 10000000;
-    let mut deps = th_setup(&[coin(initial_liquidity, "somecoin")]);
-    let ma_token_addr = Addr::unchecked("matoken");
+fn depositing_with_existing_position() {
+    let TestSuite {
+        mut deps,
+        denom,
+        depositor_addr,
+        initial_market,
+        initial_liquidity,
+    } = setup_test();
 
-    deps.querier.set_cw20_total_supply(ma_token_addr.clone(), Uint128::new(10_000_000));
+    // create a collateral position for the user, with the `enabled` parameter as false
+    let collateral_amount_scaled = Uint128::new(123456);
+    set_collateral(deps.as_mut(), &depositor_addr, denom, collateral_amount_scaled, false);
 
-    let mock_market = Market {
-        ma_token_address: ma_token_addr,
-        liquidity_index: Decimal::one(),
-        borrow_index: Decimal::one(),
-        ..Default::default()
-    };
-    let market = th_init_market(deps.as_mut(), "somecoin", &mock_market);
-
-    let depositor_addr = Addr::unchecked("depositor");
-    let another_user_addr = Addr::unchecked("another_user");
+    let block_time = 10000100;
     let deposit_amount = 110000;
-    let env = mock_env(MockEnvParams::default());
-    let info = cosmwasm_std::testing::mock_info(
-        depositor_addr.as_str(),
-        &[coin(deposit_amount, "somecoin")],
-    );
-    let msg = ExecuteMsg::Deposit {
-        on_behalf_of: Some(another_user_addr.to_string()),
-    };
-    let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
+    // compute expected market parameters
+    let expected_params = th_get_expected_indices_and_rates(
+        &initial_market,
+        block_time,
+        initial_liquidity,
+        Default::default(),
+    );
     let expected_mint_amount = compute_scaled_amount(
         Uint128::from(deposit_amount),
-        market.liquidity_index,
+        expected_params.liquidity_index,
         ScalingOperation::Truncate,
     )
     .unwrap();
 
-    // 'depositor' should not have created a new collateral position
-    let opt = COLLATERALS.may_load(deps.as_ref().storage, (&depositor_addr, "somecoin")).unwrap();
-    assert!(opt.is_none());
+    execute(
+        deps.as_mut(),
+        mock_env_at_block_time(block_time),
+        mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
+        ExecuteMsg::Deposit {
+            on_behalf_of: None,
+        },
+    )
+    .unwrap();
 
-    // 'another_user' should have created a new collateral position
-    let collateral =
-        COLLATERALS.load(deps.as_ref().storage, (&another_user_addr, "somecoin")).unwrap();
-    assert!(collateral.enabled);
-
-    // recipient should be `another_user`
+    // the depositor's scaled collateral amount should have been increased
+    // however, the `enabled` status should not been affected
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, denom)).unwrap();
+    let expected = collateral_amount_scaled + expected_mint_amount;
     assert_eq!(
-        res.messages,
-        vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: "matoken".to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
-                recipient: another_user_addr.to_string(),
-                amount: expected_mint_amount,
-            })
-            .unwrap(),
-            funds: vec![]
-        }))]
-    );
-    assert_eq!(
-        res.attributes,
-        vec![
-            attr("action", "outposts/red-bank/deposit"),
-            attr("denom", "somecoin"),
-            attr("sender", depositor_addr),
-            attr("user", another_user_addr),
-            attr("amount", deposit_amount.to_string()),
-        ]
+        collateral,
+        Collateral {
+            amount_scaled: expected,
+            enabled: false
+        }
     );
 }
 
 #[test]
-fn test_exceeding_deposit_cap() {
-    let initial_liquidity = Uint128::from(10_000_000u128);
-    let mut deps = th_setup(&[coin(initial_liquidity.into(), "somecoin")]);
-    let ma_token_addr = Addr::unchecked("matoken");
+fn depositing_on_behalf_of() {
+    let TestSuite {
+        mut deps,
+        denom,
+        depositor_addr,
+        initial_market,
+        initial_liquidity,
+    } = setup_test();
 
-    // Set the scaled total supply of the maToken `somecoin`
-    deps.querier.set_cw20_total_supply(ma_token_addr.clone(), Uint128::new(9_000_000_000_000));
+    let deposit_amount = 123456u128;
+    let on_behalf_of_addr = Addr::unchecked("jake");
 
-    let mock_market = Market {
-        ma_token_address: ma_token_addr,
-        deposit_cap: Uint128::new(10_000_000),
-        ..Default::default()
-    };
-    th_init_market(deps.as_mut(), "somecoin", &mock_market);
+    // compute expected market parameters
+    let block_time = 10000300;
+    let expected_params = th_get_expected_indices_and_rates(
+        &initial_market,
+        block_time,
+        initial_liquidity,
+        Default::default(),
+    );
+    let expected_mint_amount = compute_scaled_amount(
+        Uint128::from(deposit_amount),
+        expected_params.liquidity_index,
+        ScalingOperation::Truncate,
+    )
+    .unwrap();
 
-    let deposit_amount = 1_000_001;
-    let env = mock_env_at_block_time(10000100);
-    let info = cosmwasm_std::testing::mock_info("depositor", &[coin(deposit_amount, "somecoin")]);
-    let msg = ExecuteMsg::Deposit {
-        on_behalf_of: None,
-    };
-    let err = execute(deps.as_mut(), env, info, msg).unwrap_err();
+    execute(
+        deps.as_mut(),
+        mock_env_at_block_time(block_time),
+        mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
+        ExecuteMsg::Deposit {
+            on_behalf_of: Some(on_behalf_of_addr.clone().into()),
+        },
+    )
+    .unwrap();
 
+    // depositor should not have created a new collateral position
+    let opt = COLLATERALS.may_load(deps.as_ref().storage, (&depositor_addr, denom)).unwrap();
+    assert!(opt.is_none());
+
+    // the recipient should have created a new collateral position
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
     assert_eq!(
-        err,
-        ContractError::DepositCapExceeded {
-            denom: "somecoin".to_string()
+        collateral,
+        Collateral {
+            amount_scaled: expected_mint_amount,
+            enabled: true,
         }
     );
 }
