@@ -120,6 +120,16 @@ impl MarsMockQuerier {
         self.redbank_querier.markets.insert(market.denom.clone(), market);
     }
 
+    pub fn set_red_bank_user_collateral(
+        &mut self,
+        user: impl Into<String>,
+        collateral: red_bank::UserCollateralResponse,
+    ) {
+        self.redbank_querier
+            .users_denoms_collaterals
+            .insert((user.into(), collateral.denom.clone()), collateral);
+    }
+
     pub fn set_redbank_user_position(
         &mut self,
         user_address: String,

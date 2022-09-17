@@ -131,7 +131,7 @@ pub fn compute_user_unclaimed_rewards(
         if user_asset_index != asset_incentive.index {
             // Compute user accrued rewards and update user index
             let asset_accrued_rewards = user_compute_accrued_rewards(
-                market.collateral_total_scaled,
+                collateral.amount_scaled,
                 user_asset_index,
                 asset_incentive.index,
             )?;
