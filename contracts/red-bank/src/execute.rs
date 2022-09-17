@@ -836,11 +836,17 @@ pub fn liquidate(
         block_time,
     )?;
 
-    response = user.transfer_collateral(
+    response = user.decrease_collateral(
         deps.storage,
         &collateral_market,
         collateral_amount_to_liquidate_scaled,
-        &liquidator,
+        incentives_addr,
+        response,
+    )?;
+    response = liquidator.increase_collateral(
+        deps.storage,
+        &collateral_market,
+        collateral_amount_to_liquidate_scaled,
         incentives_addr,
         response,
     )?;
