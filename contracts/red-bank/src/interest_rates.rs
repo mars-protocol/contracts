@@ -28,9 +28,11 @@ const SECONDS_PER_YEAR: u64 = 31536000u64;
 pub fn apply_accumulated_interests(
     store: &mut dyn Storage,
     env: &Env,
-    rewards_collector_addr: &Addr,
     market: &mut Market,
-) -> StdResult<()> {
+    rewards_collector_addr: &Addr,
+    incentives_addr: &Addr,
+    mut response: Response,
+) -> StdResult<Response> {
     let current_timestamp = env.block.time.seconds();
     let previous_borrow_index = market.borrow_index;
 
@@ -84,15 +86,17 @@ pub fn apply_accumulated_interests(
             market.liquidity_index,
             ScalingOperation::Truncate,
         )?;
-        User(rewards_collector_addr).increase_collateral(
+        response = User(rewards_collector_addr).increase_collateral(
             store,
-            &market.denom,
+            &market,
             reward_amount_scaled,
+            incentives_addr,
+            response,
         )?;
         market.increase_collateral(reward_amount_scaled)?;
     }
 
-    Ok(())
+    Ok(response)
 }
 
 pub fn calculate_applied_linear_interest_rate(
