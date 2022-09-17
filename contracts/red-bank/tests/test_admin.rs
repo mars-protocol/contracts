@@ -859,7 +859,7 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
     // the rewards collector previously did not have a collateral possition
     // now it should have one with the expected rewards scaled amount
     let collateral = COLLATERALS
-        .load(deps.as_ref().storage, (&Addr::unchecked("protocol_rewards_collector"), "somecoin"))
+        .load(deps.as_ref().storage, (&Addr::unchecked("rewards_collector"), "somecoin"))
         .unwrap();
     assert_eq!(collateral.amount_scaled, expected_rewards_scaled);
 }

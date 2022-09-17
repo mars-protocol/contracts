@@ -205,7 +205,7 @@ fn withdrawing_partially() {
     assert_eq!(collateral.amount_scaled, expected_withdraw_amount_scaled_remaining);
 
     // the reward collector's collateral scaled amount should have been increased
-    let rewards_addr = Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string());
+    let rewards_addr = Addr::unchecked(MarsContract::RewardsCollector.to_string());
     let collateral = COLLATERALS.load(deps.as_ref().storage, (&rewards_addr, denom)).unwrap();
     assert_eq!(collateral.amount_scaled, expected_rewards_amount_scaled);
 }

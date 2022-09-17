@@ -218,7 +218,7 @@ pub fn update_asset(
                 let protocol_rewards_collector_addr = address_provider::helpers::query_address(
                     deps.as_ref(),
                     &config.address_provider,
-                    MarsContract::ProtocolRewardsCollector,
+                    MarsContract::RewardsCollector,
                 )?;
                 apply_accumulated_interests(
                     deps.storage,
@@ -350,7 +350,7 @@ pub fn deposit(
     let rewards_collector_addr = address_provider::helpers::query_address(
         deps.as_ref(),
         &config.address_provider,
-        MarsContract::ProtocolRewardsCollector,
+        MarsContract::RewardsCollector,
     )?;
     apply_accumulated_interests(deps.storage, &env, &rewards_collector_addr, &mut market)?;
     response = update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, response)?;
@@ -425,9 +425,9 @@ pub fn withdraw(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Oracle, MarsContract::ProtocolRewardsCollector],
+        vec![MarsContract::Oracle, MarsContract::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
     // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
@@ -516,9 +516,9 @@ pub fn borrow(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Oracle, MarsContract::ProtocolRewardsCollector],
+        vec![MarsContract::Oracle, MarsContract::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
     // Check if user can borrow specified amount
@@ -617,7 +617,7 @@ pub fn repay(
     let rewards_collector_addr = address_provider::helpers::query_address(
         deps.as_ref(),
         &config.address_provider,
-        MarsContract::ProtocolRewardsCollector,
+        MarsContract::RewardsCollector,
     )?;
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
@@ -716,9 +716,9 @@ pub fn liquidate(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Oracle, MarsContract::ProtocolRewardsCollector],
+        vec![MarsContract::Oracle, MarsContract::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
     let (liquidatable, assets_positions) =

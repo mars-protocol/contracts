@@ -304,7 +304,7 @@ fn test_liquidate() {
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
-                (&Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()), "debt"),
+                (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "debt"),
             )
             .unwrap();
         assert_eq!(collateral.amount_scaled, expected_total_reward_scaled);
@@ -440,7 +440,7 @@ fn test_liquidate() {
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
-                (&Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()), "debt"),
+                (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "debt"),
             )
             .unwrap();
         assert_eq!(collateral.amount_scaled, expected_total_reward_scaled);
@@ -775,7 +775,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
-                (&Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()), "the_asset"),
+                (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "the_asset"),
             )
             .unwrap();
         assert_eq!(collateral.amount_scaled, expected_reward_amount_scaled);
@@ -818,7 +818,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         unset_collateral(deps.as_mut(), &liquidator_addr, &asset_market_initial.denom);
         unset_collateral(
             deps.as_mut(),
-            &Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()),
+            &Addr::unchecked(MarsContract::RewardsCollector.to_string()),
             &asset_market_initial.denom,
         );
 
@@ -929,7 +929,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
-                (&Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()), "the_asset"),
+                (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "the_asset"),
             )
             .unwrap();
         assert_eq!(collateral.amount_scaled, expected_reward_amount_scaled);
