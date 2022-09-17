@@ -242,7 +242,7 @@ fn test_set_new_asset_incentive_user_non_zero_balance() {
     let mut deps = setup_test();
     let user_addr = Addr::unchecked("user");
 
-    // set cw20 balance for user
+    // set collateral shares for user
     let denom = "uosmo";
     let total_supply = Uint128::new(100_000);
     let user_balance = Uint128::new(10_000);
@@ -292,7 +292,7 @@ fn test_set_new_asset_incentive_user_non_zero_balance() {
 
         let unclaimed_rewards =
             query_user_unclaimed_rewards(deps.as_ref(), env, "user".to_string()).unwrap();
-        // 100_000 s * 100 MARS/s * 1/10th cw20 supply
+        // 100_000 s * 100 MARS/s * 1/10th of total deposit
         let expected_unclaimed_rewards = Uint128::new(1_000_000);
         assert_eq!(unclaimed_rewards, expected_unclaimed_rewards);
     }
@@ -343,9 +343,9 @@ fn test_set_new_asset_incentive_user_non_zero_balance() {
         let unclaimed_rewards =
             query_user_unclaimed_rewards(deps.as_ref(), env, "user".to_string()).unwrap();
         let expected_unclaimed_rewards = Uint128::new(
-            // 200_000 s * 100 MARS/s * 1/10th cw20 supply +
+            // 200_000 s * 100 MARS/s * 1/10th of total deposit +
             2_000_000 +
-                // 100_000 s * 100 MARS/s * 1/4 cw20 supply
+                // 100_000 s * 100 MARS/s * 1/4 of total deposit
                 2_500_000,
         );
         assert_eq!(unclaimed_rewards, expected_unclaimed_rewards);
