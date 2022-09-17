@@ -5,11 +5,13 @@ use cosmwasm_std::{
     MessageInfo, Response, StdResult, Uint128,
 };
 
+use mars_outpost::address_provider::MarsContract;
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 
 use mars_outpost::incentives::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_outpost::incentives::{AssetIncentive, AssetIncentiveResponse, Config};
+use mars_outpost::{address_provider, red_bank};
 
 use crate::error::ContractError;
 use crate::helpers::{
@@ -28,6 +30,7 @@ pub fn instantiate(
 ) -> StdResult<Response> {
     let config = Config {
         owner: deps.api.addr_validate(&msg.owner)?,
+        address_provider: deps.api.addr_validate(&msg.address_provider)?,
         mars_denom: msg.mars_denom,
     };
 
@@ -47,26 +50,29 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::SetAssetIncentive {
-            ma_token_address,
+            denom,
             emission_per_second,
-        } => execute_set_asset_incentive(deps, env, info, ma_token_address, emission_per_second),
+        } => execute_set_asset_incentive(deps, env, info, denom, emission_per_second),
         ExecuteMsg::BalanceChange {
-            user_address,
-            user_balance_before,
-            total_supply_before,
+            user_addr,
+            denom,
+            user_amount_scaled_before,
+            total_amount_scaled_before,
         } => execute_balance_change(
             deps,
             env,
             info,
-            user_address,
-            user_balance_before,
-            total_supply_before,
+            user_addr,
+            denom,
+            user_amount_scaled_before,
+            total_amount_scaled_before,
         ),
         ExecuteMsg::ClaimRewards {} => execute_claim_rewards(deps, env, info),
         ExecuteMsg::UpdateConfig {
             owner,
+            address_provider,
             mars_denom,
-        } => Ok(execute_update_config(deps, env, info, owner, mars_denom)?),
+        } => Ok(execute_update_config(deps, env, info, owner, address_provider, mars_denom)?),
         ExecuteMsg::ExecuteCosmosMsg(cosmos_msg) => {
             Ok(execute_execute_cosmos_msg(deps, env, info, cosmos_msg)?)
         }
@@ -77,7 +83,7 @@ pub fn execute_set_asset_incentive(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    ma_token: String,
+    denom: String,
     emission_per_second: Uint128,
 ) -> Result<Response, ContractError> {
     // only owner can call this
@@ -87,18 +93,25 @@ pub fn execute_set_asset_incentive(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    // use lower case address to prevent duplicate assets
-    let ma_token = ma_token.to_lowercase();
-    let ma_asset_addr = deps.api.addr_validate(&ma_token)?;
+    let red_bank_addr = address_provider::helpers::query_address(
+        deps.as_ref(),
+        &config.address_provider,
+        MarsContract::RedBank,
+    )?;
 
-    let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &ma_asset_addr)? {
+    let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &denom)? {
         Some(mut asset_incentive) => {
+            let market: red_bank::Market = deps.querier.query_wasm_smart(
+                &red_bank_addr,
+                &red_bank::QueryMsg::Market {
+                    denom: denom.clone(),
+                },
+            )?;
+
             // Update index up to now
-            let total_supply =
-                mars_outpost::helpers::cw20_get_total_supply(&deps.querier, ma_asset_addr.clone())?;
             asset_incentive_update_index(
                 &mut asset_incentive,
-                total_supply,
+                market.collateral_total_scaled,
                 env.block.time.seconds(),
             )?;
 
@@ -114,11 +127,11 @@ pub fn execute_set_asset_incentive(
         },
     };
 
-    ASSET_INCENTIVES.save(deps.storage, &ma_asset_addr, &new_asset_incentive)?;
+    ASSET_INCENTIVES.save(deps.storage, &denom, &new_asset_incentive)?;
 
     let response = Response::new().add_attributes(vec![
         attr("action", "outposts/incentives/set_asset_incentive"),
-        attr("ma_asset", ma_token),
+        attr("denom", denom),
         attr("emission_per_second", emission_per_second),
     ]);
     Ok(response)
@@ -129,11 +142,17 @@ pub fn execute_balance_change(
     env: Env,
     info: MessageInfo,
     user_addr: Addr,
-    user_balance_before: Uint128,
-    total_supply_before: Uint128,
+    denom: String,
+    user_amount_scaled_before: Uint128,
+    total_amount_scaled_before: Uint128,
 ) -> Result<Response, ContractError> {
-    let ma_token_addr = info.sender;
-    let mut asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &ma_token_addr)? {
+    // this method can only be invoked by the Red Bank contract
+    let red_bank_addr = query_red_bank_address(deps.as_ref())?;
+    if info.sender != red_bank_addr {
+        return Err(MarsError::Unauthorized {}.into());
+    }
+
+    let mut asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &denom)? {
         // If there are no incentives,
         // an empty successful response is returned as the
         // success of the call is needed for the call that triggered the change to
@@ -145,13 +164,13 @@ pub fn execute_balance_change(
 
     asset_incentive_update_index(
         &mut asset_incentive,
-        total_supply_before,
+        total_amount_scaled_before,
         env.block.time.seconds(),
     )?;
-    ASSET_INCENTIVES.save(deps.storage, &ma_token_addr, &asset_incentive)?;
+    ASSET_INCENTIVES.save(deps.storage, &denom, &asset_incentive)?;
 
     // Check if user has accumulated uncomputed rewards (which means index is not up to date)
-    let user_asset_index_key = USER_ASSET_INDICES.key((&user_addr, &ma_token_addr));
+    let user_asset_index_key = USER_ASSET_INDICES.key((&user_addr, &denom));
 
     let user_asset_index =
         user_asset_index_key.may_load(deps.storage)?.unwrap_or_else(Decimal::zero);
@@ -161,7 +180,7 @@ pub fn execute_balance_change(
     if user_asset_index != asset_incentive.index {
         // Compute user accrued rewards and update state
         accrued_rewards = user_compute_accrued_rewards(
-            user_balance_before,
+            user_amount_scaled_before,
             user_asset_index,
             asset_incentive.index,
         )?;
@@ -185,7 +204,7 @@ pub fn execute_balance_change(
 
     let response = Response::new().add_attributes(vec![
         attr("action", "outposts/incentives/balance_change"),
-        attr("ma_asset", ma_token_addr),
+        attr("denom", denom),
         attr("user", user_addr),
         attr("rewards_accrued", accrued_rewards),
         attr("asset_index", asset_incentive.index.to_string()),
@@ -199,9 +218,10 @@ pub fn execute_claim_rewards(
     env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
+    let red_bank_addr = query_red_bank_address(deps.as_ref())?;
     let user_addr = info.sender;
     let (total_unclaimed_rewards, user_asset_incentive_statuses_to_update) =
-        compute_user_unclaimed_rewards(deps.as_ref(), &env, &user_addr)?;
+        compute_user_unclaimed_rewards(deps.as_ref(), &env, &red_bank_addr, &user_addr)?;
 
     // Commit updated asset_incentives and user indexes
     for user_asset_incentive_status in user_asset_incentive_statuses_to_update {
@@ -209,14 +229,14 @@ pub fn execute_claim_rewards(
 
         ASSET_INCENTIVES.save(
             deps.storage,
-            &user_asset_incentive_status.ma_token_address,
+            &user_asset_incentive_status.denom,
             &asset_incentive_updated,
         )?;
 
         if asset_incentive_updated.index != user_asset_incentive_status.user_index_current {
             USER_ASSET_INDICES.save(
                 deps.storage,
-                (&user_addr, &user_asset_incentive_status.ma_token_address),
+                (&user_addr, &user_asset_incentive_status.denom),
                 &asset_incentive_updated.index,
             )?
         }
@@ -249,6 +269,7 @@ pub fn execute_update_config(
     _env: Env,
     info: MessageInfo,
     owner: Option<String>,
+    address_provider: Option<String>,
     mars_denom: Option<String>,
 ) -> Result<Response, MarsError> {
     let mut config = CONFIG.load(deps.storage)?;
@@ -258,6 +279,8 @@ pub fn execute_update_config(
     };
 
     config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
+    config.address_provider =
+        option_string_to_addr(deps.api, address_provider, config.address_provider)?;
     config.mars_denom = mars_denom.unwrap_or(config.mars_denom);
 
     CONFIG.save(deps.storage, &config)?;
@@ -293,11 +316,11 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::AssetIncentive {
-            ma_token_address,
-        } => to_binary(&query_asset_incentive(deps, ma_token_address)?),
+            denom,
+        } => to_binary(&query_asset_incentive(deps, denom)?),
         QueryMsg::UserUnclaimedRewards {
-            user_address,
-        } => to_binary(&query_user_unclaimed_rewards(deps, env, user_address)?),
+            user,
+        } => to_binary(&query_user_unclaimed_rewards(deps, env, user)?),
     }
 }
 
@@ -306,17 +329,25 @@ pub fn query_config(deps: Deps) -> StdResult<Config> {
     Ok(config)
 }
 
-pub fn query_asset_incentive(deps: Deps, ma_token: String) -> StdResult<AssetIncentiveResponse> {
-    let ma_token_addr = deps.api.addr_validate(&ma_token)?;
-    let option_asset_incentive = ASSET_INCENTIVES.may_load(deps.storage, &ma_token_addr)?;
+pub fn query_asset_incentive(deps: Deps, denom: String) -> StdResult<AssetIncentiveResponse> {
+    let option_asset_incentive = ASSET_INCENTIVES.may_load(deps.storage, &denom)?;
     Ok(AssetIncentiveResponse {
         asset_incentive: option_asset_incentive,
     })
 }
 
 pub fn query_user_unclaimed_rewards(deps: Deps, env: Env, user: String) -> StdResult<Uint128> {
+    let red_bank_addr = query_red_bank_address(deps)?;
     let user_addr = deps.api.addr_validate(&user)?;
-    let (unclaimed_rewards, _) = compute_user_unclaimed_rewards(deps, &env, &user_addr)?;
+    let (unclaimed_rewards, _) =
+        compute_user_unclaimed_rewards(deps, &env, &red_bank_addr, &user_addr)?;
 
     Ok(unclaimed_rewards)
+}
+
+// TODO: this can be abstracted away using the approach suggested here:
+// https://github.com/mars-protocol/outposts/issues/77
+fn query_red_bank_address(deps: Deps) -> StdResult<Addr> {
+    let config = CONFIG.load(deps.storage)?;
+    address_provider::helpers::query_address(deps, &config.address_provider, MarsContract::RedBank)
 }

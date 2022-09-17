@@ -63,7 +63,7 @@ impl MarsMockQuerier {
     }
 
     pub fn set_incentives_address(&mut self, address: Addr) {
-        self.incentives_querier.incentives_address = address;
+        self.incentives_querier.incentives_addr = address;
     }
 
     pub fn set_unclaimed_rewards(&mut self, user_address: String, unclaimed_rewards: Uint128) {
