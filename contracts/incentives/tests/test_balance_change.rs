@@ -1,6 +1,7 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::{attr, Addr, Decimal, Response, Timestamp, Uint128};
 
+use mars_outpost::error::MarsError;
 use mars_outpost::incentives::msg::ExecuteMsg;
 use mars_outpost::incentives::AssetIncentive;
 use mars_outpost::red_bank::{Market, UserCollateralResponse};
@@ -13,6 +14,26 @@ use mars_incentives::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIME
 use crate::helpers::setup_test;
 
 mod helpers;
+
+#[test]
+fn test_balance_change_unauthorized() {
+    let mut deps = setup_test();
+
+    // the `balance_change` method can only be invoked by Red Bank contract
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("jake", &[]), // not Red Bank
+        ExecuteMsg::BalanceChange {
+            user_addr: Addr::unchecked("user"),
+            denom: "uosmo".to_string(),
+            user_amount_scaled_before: Uint128::new(100000),
+            total_amount_scaled_before: Uint128::new(100000),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, MarsError::Unauthorized {}.into());
+}
 
 #[test]
 fn test_execute_balance_change_noops() {
