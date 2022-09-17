@@ -227,8 +227,8 @@ pub fn update_asset(
                     deps.storage,
                     &env,
                     &mut market,
-                    &rewards_collector_addr,
-                    &incentives_addr,
+                    rewards_collector_addr,
+                    incentives_addr,
                     response,
                 )?;
             }
@@ -364,8 +364,8 @@ pub fn deposit(
         deps.storage,
         &env,
         &mut market,
-        &rewards_collector_addr,
-        &incentives_addr,
+        rewards_collector_addr,
+        incentives_addr,
         response,
     )?;
 
@@ -381,7 +381,7 @@ pub fn deposit(
         deps.storage,
         &market,
         deposit_amount_scaled,
-        &incentives_addr,
+        incentives_addr,
         response,
     )?;
 
@@ -480,8 +480,8 @@ pub fn withdraw(
         deps.storage,
         &env,
         &mut market,
-        &rewards_collector_addr,
-        &incentives_addr,
+        rewards_collector_addr,
+        incentives_addr,
         response,
     )?;
 
@@ -499,7 +499,7 @@ pub fn withdraw(
         deps.storage,
         &market,
         withdraw_amount_scaled,
-        &incentives_addr,
+        incentives_addr,
         response,
     )?;
 

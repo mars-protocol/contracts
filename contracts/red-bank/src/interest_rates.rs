@@ -88,7 +88,7 @@ pub fn apply_accumulated_interests(
         )?;
         response = User(rewards_collector_addr).increase_collateral(
             store,
-            &market,
+            market,
             reward_amount_scaled,
             incentives_addr,
             response,

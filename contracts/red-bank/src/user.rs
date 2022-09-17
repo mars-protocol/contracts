@@ -204,12 +204,12 @@ impl<'a> User<'a> {
 
         let sender_msg = self.build_incentives_balance_changed_msg(
             incentives_addr,
-            &market,
+            market,
             sender_balance_before,
         )?;
         let recipient_msg = recipient.build_incentives_balance_changed_msg(
             incentives_addr,
-            &market,
+            market,
             recipient_balance_before,
         )?;
 
