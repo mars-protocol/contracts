@@ -221,7 +221,7 @@ pub fn execute_claim_rewards(
     let red_bank_addr = query_red_bank_address(deps.as_ref())?;
     let user_addr = info.sender;
     let (total_unclaimed_rewards, user_asset_incentive_statuses_to_update) =
-        compute_user_unclaimed_rewards(deps.as_ref(), &env, &red_bank_addr, &user_addr)?;
+        compute_user_unclaimed_rewards(deps.as_ref(), &env.block, &red_bank_addr, &user_addr)?;
 
     // Commit updated asset_incentives and user indexes
     for user_asset_incentive_status in user_asset_incentive_statuses_to_update {
@@ -340,7 +340,7 @@ pub fn query_user_unclaimed_rewards(deps: Deps, env: Env, user: String) -> StdRe
     let red_bank_addr = query_red_bank_address(deps)?;
     let user_addr = deps.api.addr_validate(&user)?;
     let (unclaimed_rewards, _) =
-        compute_user_unclaimed_rewards(deps, &env, &red_bank_addr, &user_addr)?;
+        compute_user_unclaimed_rewards(deps, &env.block, &red_bank_addr, &user_addr)?;
 
     Ok(unclaimed_rewards)
 }

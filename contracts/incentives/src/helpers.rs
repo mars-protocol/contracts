@@ -1,5 +1,6 @@
 use cosmwasm_std::{
-    Addr, Decimal, Deps, Env, Order, OverflowError, OverflowOperation, StdError, StdResult, Uint128,
+    Addr, BlockInfo, Decimal, Deps, Order, OverflowError, OverflowOperation, StdError, StdResult,
+    Uint128,
 };
 
 use mars_outpost::incentives::AssetIncentive;
@@ -83,7 +84,7 @@ pub struct UserAssetIncentiveStatus {
 
 pub fn compute_user_unclaimed_rewards(
     deps: Deps,
-    env: &Env, // TODO: should take &BlockInfo here
+    block: &BlockInfo,
     red_bank_addr: &Addr,
     user_addr: &Addr,
 ) -> StdResult<(Uint128, Vec<UserAssetIncentiveStatus>)> {
@@ -121,7 +122,7 @@ pub fn compute_user_unclaimed_rewards(
         asset_incentive_update_index(
             &mut asset_incentive,
             market.collateral_total_scaled,
-            env.block.time.seconds(),
+            block.time.seconds(),
         )?;
 
         let user_asset_index = USER_ASSET_INDICES
