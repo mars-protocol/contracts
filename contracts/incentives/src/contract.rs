@@ -345,8 +345,6 @@ pub fn query_user_unclaimed_rewards(deps: Deps, env: Env, user: String) -> StdRe
     Ok(unclaimed_rewards)
 }
 
-// TODO: this can be abstracted away using the approach suggested here:
-// https://github.com/mars-protocol/outposts/issues/77
 fn query_red_bank_address(deps: Deps) -> StdResult<Addr> {
     let config = CONFIG.load(deps.storage)?;
     address_provider::helpers::query_address(deps, &config.address_provider, MarsContract::RedBank)
