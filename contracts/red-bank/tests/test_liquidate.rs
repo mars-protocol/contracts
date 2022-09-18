@@ -260,7 +260,7 @@ fn test_liquidate() {
         // there should be up to three messages updating indices at the incentives contract, in the
         // order:
         // - collateral denom, user
-        // - collatreal denom, liquidator
+        // - collateral denom, liquidator
         // - debt denom, rewards collector (if rewards accrued > 0)
         //
         // NOTE that we don't expect a message to update rewards collector's index of the
