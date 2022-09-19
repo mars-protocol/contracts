@@ -10,6 +10,7 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
 
     let msg = InstantiateMsg {
         owner: String::from("owner"),
+        address_provider: String::from("address_provider"),
         mars_denom: String::from("umars"),
     };
     let info = mock_info("owner", &[]);

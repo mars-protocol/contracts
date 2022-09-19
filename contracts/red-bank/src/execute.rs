@@ -215,16 +215,21 @@ pub fn update_asset(
             let mut response = Response::new();
 
             if should_update_interest_rates {
-                let protocol_rewards_collector_addr = address_provider::helpers::query_address(
+                let addresses = address_provider::helpers::query_addresses(
                     deps.as_ref(),
                     &config.address_provider,
-                    MarsContract::RewardsCollector,
+                    vec![MarsContract::Incentives, MarsContract::RewardsCollector],
                 )?;
-                apply_accumulated_interests(
+                let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
+                let incentives_addr = &addresses[&MarsContract::Incentives];
+
+                response = apply_accumulated_interests(
                     deps.storage,
                     &env,
-                    &protocol_rewards_collector_addr,
                     &mut market,
+                    rewards_collector_addr,
+                    incentives_addr,
+                    response,
                 )?;
             }
 
@@ -347,12 +352,23 @@ pub fn deposit(
     let config = CONFIG.load(deps.storage)?;
 
     // update indexes and interest rates
-    let rewards_collector_addr = address_provider::helpers::query_address(
+    let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        MarsContract::RewardsCollector,
+        vec![MarsContract::Incentives, MarsContract::RewardsCollector],
     )?;
-    apply_accumulated_interests(deps.storage, &env, &rewards_collector_addr, &mut market)?;
+    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
+    let incentives_addr = &addresses[&MarsContract::Incentives];
+
+    response = apply_accumulated_interests(
+        deps.storage,
+        &env,
+        &mut market,
+        rewards_collector_addr,
+        incentives_addr,
+        response,
+    )?;
+
     response = update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, response)?;
 
     if market.liquidity_index.is_zero() {
@@ -361,7 +377,13 @@ pub fn deposit(
     let deposit_amount_scaled =
         get_scaled_liquidity_amount(deposit_amount, &market, env.block.time.seconds())?;
 
-    user.increase_collateral(deps.storage, &denom, deposit_amount_scaled)?;
+    response = user.increase_collateral(
+        deps.storage,
+        &market,
+        deposit_amount_scaled,
+        incentives_addr,
+        response,
+    )?;
 
     market.increase_collateral(deposit_amount_scaled)?;
     MARKETS.save(deps.storage, &denom, &market)?;
@@ -425,9 +447,14 @@ pub fn withdraw(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Oracle, MarsContract::RewardsCollector],
+        vec![
+            MarsContract::Oracle,
+            MarsContract::Incentives,
+            MarsContract::RewardsCollector,
+        ],
     )?;
     let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
+    let incentives_addr = &addresses[&MarsContract::Incentives];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
     // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
@@ -449,7 +476,15 @@ pub fn withdraw(
     let mut response = Response::new();
 
     // update indexes and interest rates
-    apply_accumulated_interests(deps.storage, &env, rewards_collector_addr, &mut market)?;
+    response = apply_accumulated_interests(
+        deps.storage,
+        &env,
+        &mut market,
+        rewards_collector_addr,
+        incentives_addr,
+        response,
+    )?;
+
     response = update_interest_rates(&deps, &env, &mut market, withdraw_amount, &denom, response)?;
 
     // reduce the withdrawer's scaled collateral amount
@@ -460,7 +495,13 @@ pub fn withdraw(
     let withdraw_amount_scaled =
         withdrawer_balance_scaled_before.checked_sub(withdrawer_balance_scaled_after)?;
 
-    withdrawer.decrease_collateral(deps.storage, &denom, withdraw_amount_scaled)?;
+    response = withdrawer.decrease_collateral(
+        deps.storage,
+        &market,
+        withdraw_amount_scaled,
+        incentives_addr,
+        response,
+    )?;
 
     market.decrease_collateral(withdraw_amount_scaled)?;
     MARKETS.save(deps.storage, &denom, &market)?;
@@ -516,9 +557,14 @@ pub fn borrow(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Oracle, MarsContract::RewardsCollector],
+        vec![
+            MarsContract::Oracle,
+            MarsContract::Incentives,
+            MarsContract::RewardsCollector,
+        ],
     )?;
     let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
+    let incentives_addr = &addresses[&MarsContract::Incentives];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
     // Check if user can borrow specified amount
@@ -555,7 +601,14 @@ pub fn borrow(
 
     let mut response = Response::new();
 
-    apply_accumulated_interests(deps.storage, &env, rewards_collector_addr, &mut borrow_market)?;
+    response = apply_accumulated_interests(
+        deps.storage,
+        &env,
+        &mut borrow_market,
+        rewards_collector_addr,
+        incentives_addr,
+        response,
+    )?;
 
     // Set new debt
     let borrow_amount_scaled =
@@ -614,17 +667,26 @@ pub fn repay(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let rewards_collector_addr = address_provider::helpers::query_address(
+    let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        MarsContract::RewardsCollector,
+        vec![MarsContract::Incentives, MarsContract::RewardsCollector],
     )?;
+    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
+    let incentives_addr = &addresses[&MarsContract::Incentives];
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
 
     let mut response = Response::new();
 
-    apply_accumulated_interests(deps.storage, &env, &rewards_collector_addr, &mut market)?;
+    response = apply_accumulated_interests(
+        deps.storage,
+        &env,
+        &mut market,
+        rewards_collector_addr,
+        incentives_addr,
+        response,
+    )?;
 
     let debt_amount_scaled_before = debt.amount_scaled;
     let debt_amount_before =
@@ -716,9 +778,14 @@ pub fn liquidate(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Oracle, MarsContract::RewardsCollector],
+        vec![
+            MarsContract::Oracle,
+            MarsContract::Incentives,
+            MarsContract::RewardsCollector,
+        ],
     )?;
     let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
+    let incentives_addr = &addresses[&MarsContract::Incentives];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
     let (liquidatable, assets_positions) =
@@ -769,15 +836,19 @@ pub fn liquidate(
         block_time,
     )?;
 
-    user.decrease_collateral(
+    response = user.decrease_collateral(
         deps.storage,
-        &collateral_denom,
+        &collateral_market,
         collateral_amount_to_liquidate_scaled,
+        incentives_addr,
+        response,
     )?;
-    liquidator.increase_collateral(
+    response = liquidator.increase_collateral(
         deps.storage,
-        &collateral_denom,
+        &collateral_market,
         collateral_amount_to_liquidate_scaled,
+        incentives_addr,
+        response,
     )?;
 
     // if max collateral to liquidate equals the user's balance, delete the collateral position
@@ -812,11 +883,13 @@ pub fn liquidate(
         let mut asset_market_after = collateral_market;
         let denom = &collateral_denom;
 
-        apply_accumulated_interests(
+        response = apply_accumulated_interests(
             deps.storage,
             &env,
-            rewards_collector_addr,
             &mut asset_market_after,
+            rewards_collector_addr,
+            incentives_addr,
+            response,
         )?;
 
         asset_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
@@ -834,11 +907,13 @@ pub fn liquidate(
     } else {
         let mut debt_market_after = debt_market;
 
-        apply_accumulated_interests(
+        response = apply_accumulated_interests(
             deps.storage,
             &env,
-            rewards_collector_addr,
             &mut debt_market_after,
+            rewards_collector_addr,
+            incentives_addr,
+            response,
         )?;
 
         debt_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;

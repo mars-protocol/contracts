@@ -1,11 +1,12 @@
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
 use cosmwasm_std::{
-    attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, OwnedDeps, SubMsg, Uint128,
+    attr, coin, coins, to_binary, Addr, BankMsg, CosmosMsg, Decimal, OwnedDeps, SubMsg, Uint128,
+    WasmMsg,
 };
 
 use mars_outpost::address_provider::MarsContract;
-use mars_outpost::math;
 use mars_outpost::red_bank::{Collateral, Debt, ExecuteMsg, Market};
+use mars_outpost::{incentives, math};
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
 use mars_red_bank::interest_rates::{
@@ -173,10 +174,35 @@ fn withdrawing_partially() {
 
     assert_eq!(
         res.messages,
-        vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-            to_address: withdrawer_addr.to_string(),
-            amount: coins(withdraw_amount.u128(), denom)
-        })),]
+        vec![
+            SubMsg::new(WasmMsg::Execute {
+                contract_addr: MarsContract::Incentives.to_string(),
+                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    user_addr: Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()),
+                    denom: denom.to_string(),
+                    user_amount_scaled_before: Uint128::zero(),
+                    total_amount_scaled_before: initial_market.collateral_total_scaled,
+                })
+                .unwrap(),
+                funds: vec![],
+            }),
+            SubMsg::new(WasmMsg::Execute {
+                contract_addr: MarsContract::Incentives.to_string(),
+                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    user_addr: withdrawer_addr.clone(),
+                    denom: denom.to_string(),
+                    user_amount_scaled_before: initial_deposit_amount_scaled,
+                    total_amount_scaled_before: initial_market.collateral_total_scaled
+                        + expected_rewards_amount_scaled,
+                })
+                .unwrap(),
+                funds: vec![],
+            }),
+            SubMsg::new(BankMsg::Send {
+                to_address: withdrawer_addr.to_string(),
+                amount: coins(withdraw_amount.u128(), denom)
+            })
+        ]
     );
     assert_eq!(
         res.attributes,
@@ -257,12 +283,44 @@ fn withdrawing_completely() {
         },
     );
 
+    let expected_rewards_amount_scaled = compute_scaled_amount(
+        expected_params.protocol_rewards_to_distribute,
+        market.liquidity_index,
+        ScalingOperation::Truncate,
+    )
+    .unwrap();
+
     assert_eq!(
         res.messages,
-        vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-            to_address: withdrawer_addr.to_string(),
-            amount: coins(withdrawer_balance.u128(), denom)
-        })),]
+        vec![
+            SubMsg::new(WasmMsg::Execute {
+                contract_addr: MarsContract::Incentives.to_string(),
+                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    user_addr: Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()),
+                    denom: denom.to_string(),
+                    user_amount_scaled_before: Uint128::zero(),
+                    total_amount_scaled_before: initial_market.collateral_total_scaled,
+                })
+                .unwrap(),
+                funds: vec![],
+            }),
+            SubMsg::new(WasmMsg::Execute {
+                contract_addr: MarsContract::Incentives.to_string(),
+                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    user_addr: withdrawer_addr.clone(),
+                    denom: denom.to_string(),
+                    user_amount_scaled_before: withdrawer_balance_scaled,
+                    total_amount_scaled_before: initial_market.collateral_total_scaled
+                        + expected_rewards_amount_scaled,
+                })
+                .unwrap(),
+                funds: vec![],
+            }),
+            SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+                to_address: withdrawer_addr.to_string(),
+                amount: coins(withdrawer_balance.u128(), denom)
+            })),
+        ]
     );
     assert_eq!(
         res.attributes,
@@ -293,7 +351,7 @@ fn withdrawing_to_another_user() {
         denom,
         withdrawer_addr,
         initial_market,
-        ..
+        initial_liquidity,
     } = setup_test();
 
     let block_time = initial_market.indexes_last_updated + 2000;
@@ -324,13 +382,55 @@ fn withdrawing_to_another_user() {
     )
     .unwrap();
 
+    let expected_params = th_get_expected_indices_and_rates(
+        &initial_market,
+        block_time,
+        initial_liquidity,
+        TestUtilizationDeltaInfo {
+            less_liquidity: withdraw_amount,
+            ..Default::default()
+        },
+    );
+
+    let expected_rewards_amount_scaled = compute_scaled_amount(
+        expected_params.protocol_rewards_to_distribute,
+        market.liquidity_index,
+        ScalingOperation::Truncate,
+    )
+    .unwrap();
+
     // check if the withdrew funds are properly sent to the designated recipient
     assert_eq!(
         res.messages,
-        vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-            to_address: recipient_addr.to_string(),
-            amount: coins(withdraw_amount.u128(), denom)
-        }))]
+        vec![
+            SubMsg::new(WasmMsg::Execute {
+                contract_addr: MarsContract::Incentives.to_string(),
+                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    user_addr: Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()),
+                    denom: denom.to_string(),
+                    user_amount_scaled_before: Uint128::zero(),
+                    total_amount_scaled_before: initial_market.collateral_total_scaled,
+                })
+                .unwrap(),
+                funds: vec![],
+            }),
+            SubMsg::new(WasmMsg::Execute {
+                contract_addr: MarsContract::Incentives.to_string(),
+                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    user_addr: withdrawer_addr.clone(),
+                    denom: denom.to_string(),
+                    user_amount_scaled_before: withdrawer_balance_scaled,
+                    total_amount_scaled_before: initial_market.collateral_total_scaled
+                        + expected_rewards_amount_scaled,
+                })
+                .unwrap(),
+                funds: vec![],
+            }),
+            SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+                to_address: recipient_addr.to_string(),
+                amount: coins(withdraw_amount.u128(), denom)
+            }))
+        ]
     );
     assert_eq!(
         res.attributes,
@@ -368,6 +468,7 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
 
     let markets = [
         Market {
+            denom: denoms[0].to_string(),
             liquidity_index: Decimal::one(),
             borrow_index: Decimal::one(),
             max_loan_to_value: Decimal::from_ratio(40u128, 100u128),
@@ -376,6 +477,7 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
             ..Default::default()
         },
         Market {
+            denom: denoms[1].to_string(),
             liquidity_index: Decimal::one(),
             borrow_index: Decimal::one(),
             max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
@@ -384,6 +486,7 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
             ..Default::default()
         },
         Market {
+            denom: denoms[2].to_string(),
             liquidity_index: Decimal::one(),
             borrow_index: Decimal::one(),
             max_loan_to_value: Decimal::from_ratio(20u128, 100u128),
@@ -579,12 +682,30 @@ fn withdrawing_if_health_factor_met() {
         },
     )
     .unwrap();
+
+    // NOTE: For this particular test, we have set the borrow interest rate at zero, so there no
+    // protocol reward accrued, and hence no message to update the reward collector's index at the
+    // incentives contract.
     assert_eq!(
         res.messages,
-        vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-            to_address: withdrawer_addr.to_string(),
-            amount: coins(withdraw_amount.u128(), denoms[2])
-        }))],
+        vec![
+            SubMsg::new(WasmMsg::Execute {
+                contract_addr: MarsContract::Incentives.to_string(),
+                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    user_addr: withdrawer_addr.clone(),
+                    denom: denoms[2].to_string(),
+                    user_amount_scaled_before: collaterals[2].amount_scaled,
+                    // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
+                    total_amount_scaled_before: markets[2].collateral_total_scaled,
+                })
+                .unwrap(),
+                funds: vec![],
+            }),
+            SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+                to_address: withdrawer_addr.to_string(),
+                amount: coins(withdraw_amount.u128(), denoms[2])
+            }))
+        ],
     );
 
     let expected_withdraw_amount_scaled =

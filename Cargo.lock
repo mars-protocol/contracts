@@ -390,6 +390,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-incentives"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "mars-outpost",
+ "mars-testing",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-oracle-base"
 version = "0.1.0"
 dependencies = [

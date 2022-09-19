@@ -7,6 +7,6 @@ use mars_outpost::incentives::{AssetIncentive, Config};
 pub const CONFIG: Item<Config> = Item::new("config");
 
 // namespaces (for buckets)
-pub const ASSET_INCENTIVES: Map<&Addr, AssetIncentive> = Map::new("asset_incentives");
-pub const USER_ASSET_INDICES: Map<(&Addr, &Addr), Decimal> = Map::new("user_asset_indices");
-pub const USER_UNCLAIMED_REWARDS: Map<&Addr, Uint128> = Map::new("user_unclaimed_rewards");
+pub const ASSET_INCENTIVES: Map<&str, AssetIncentive> = Map::new("incentives");
+pub const USER_ASSET_INDICES: Map<(&Addr, &str), Decimal> = Map::new("indices");
+pub const USER_UNCLAIMED_REWARDS: Map<&Addr, Uint128> = Map::new("unclaimed_rewards");

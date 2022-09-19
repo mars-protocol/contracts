@@ -6,13 +6,14 @@ use cosmwasm_std::{
 
 use mars_outpost::incentives::msg::ExecuteMsg;
 use mars_outpost::incentives::AssetIncentive;
+use mars_outpost::red_bank::{Market, UserCollateralResponse};
 use mars_testing::MockEnvParams;
 
 use mars_incentives::contract::{execute, query_user_unclaimed_rewards};
+use mars_incentives::helpers::{asset_incentive_compute_index, user_compute_accrued_rewards};
 use mars_incentives::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
 use crate::helpers::setup_test;
-use mars_incentives::helpers::{asset_incentive_compute_index, user_compute_accrued_rewards};
 
 mod helpers;
 
@@ -20,49 +21,76 @@ mod helpers;
 fn test_execute_claim_rewards() {
     // SETUP
     let mut deps = setup_test();
-    let user_address = Addr::unchecked("user");
+    let user_addr = Addr::unchecked("user");
 
     let previous_unclaimed_rewards = Uint128::new(50_000);
-    let ma_asset_total_supply = Uint128::new(100_000);
-    let ma_asset_user_balance = Uint128::new(10_000);
-    let ma_zero_total_supply = Uint128::new(200_000);
-    let ma_zero_user_balance = Uint128::new(10_000);
-    let ma_no_user_total_supply = Uint128::new(100_000);
-    let ma_no_user_balance = Uint128::zero();
+    let asset_total_supply = Uint128::new(100_000);
+    let asset_user_balance = Uint128::new(10_000);
+    let zero_total_supply = Uint128::new(200_000);
+    let zero_user_balance = Uint128::new(10_000);
+    let no_user_total_supply = Uint128::new(100_000);
+    let no_user_user_balance = Uint128::zero();
     let time_start = 500_000_u64;
     let time_contract_call = 600_000_u64;
 
     // addresses
-    // ma_asset with ongoing rewards
-    let ma_asset_address = Addr::unchecked("ma_asset");
-    // ma_asset with no pending rewards but with user index (so it had active incentives
+    // denom of an asset with ongoing rewards
+    let asset_denom = "asset";
+    // denom of an asset with no pending rewards but with user index (so it had active incentives
     // at some point)
-    let ma_zero_address = Addr::unchecked("ma_zero");
-    // ma_asset where the user never had a balance during an active
+    let zero_denom = "zero";
+    // denom of an asset where the user never had a balance during an active
     // incentive -> hence no associated index
-    let ma_no_user_address = Addr::unchecked("ma_no_user");
+    let no_user_denom = "no_user";
 
-    deps.querier.set_cw20_total_supply(ma_asset_address.clone(), ma_asset_total_supply);
-    deps.querier.set_cw20_total_supply(ma_zero_address.clone(), ma_zero_total_supply);
-    deps.querier.set_cw20_total_supply(ma_no_user_address.clone(), ma_no_user_total_supply);
-    deps.querier.set_cw20_balances(
-        ma_asset_address.clone(),
-        &[(user_address.clone(), ma_asset_user_balance)],
+    deps.querier.set_redbank_market(Market {
+        denom: asset_denom.to_string(),
+        collateral_total_scaled: asset_total_supply,
+        ..Default::default()
+    });
+    deps.querier.set_redbank_market(Market {
+        denom: zero_denom.to_string(),
+        collateral_total_scaled: zero_total_supply,
+        ..Default::default()
+    });
+    deps.querier.set_redbank_market(Market {
+        denom: no_user_denom.to_string(),
+        collateral_total_scaled: no_user_total_supply,
+        ..Default::default()
+    });
+    deps.querier.set_red_bank_user_collateral(
+        &user_addr,
+        UserCollateralResponse {
+            denom: asset_denom.to_string(),
+            amount_scaled: asset_user_balance,
+            amount: Uint128::zero(), // doesn't matter for this test
+            enabled: true,
+        },
     );
-    deps.querier.set_cw20_balances(
-        ma_zero_address.clone(),
-        &[(user_address.clone(), ma_zero_user_balance)],
+    deps.querier.set_red_bank_user_collateral(
+        &user_addr,
+        UserCollateralResponse {
+            denom: zero_denom.to_string(),
+            amount_scaled: zero_user_balance,
+            amount: Uint128::zero(), // doesn't matter for this test
+            enabled: true,
+        },
     );
-    deps.querier.set_cw20_balances(
-        ma_no_user_address.clone(),
-        &[(user_address.clone(), ma_no_user_balance)],
+    deps.querier.set_red_bank_user_collateral(
+        &user_addr,
+        UserCollateralResponse {
+            denom: no_user_denom.to_string(),
+            amount_scaled: no_user_user_balance,
+            amount: Uint128::zero(), // doesn't matter for this test
+            enabled: true,
+        },
     );
 
     // incentives
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            &ma_asset_address,
+            asset_denom,
             &AssetIncentive {
                 emission_per_second: Uint128::new(100),
                 index: Decimal::one(),
@@ -73,7 +101,7 @@ fn test_execute_claim_rewards() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            &ma_zero_address,
+            zero_denom,
             &AssetIncentive {
                 emission_per_second: Uint128::zero(),
                 index: Decimal::one(),
@@ -84,7 +112,7 @@ fn test_execute_claim_rewards() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            &ma_no_user_address,
+            no_user_denom,
             &AssetIncentive {
                 emission_per_second: Uint128::new(200),
                 index: Decimal::one(),
@@ -95,48 +123,43 @@ fn test_execute_claim_rewards() {
 
     // user indices
     USER_ASSET_INDICES
-        .save(deps.as_mut().storage, (&user_address, &ma_asset_address), &Decimal::one())
+        .save(deps.as_mut().storage, (&user_addr, asset_denom), &Decimal::one())
         .unwrap();
 
     USER_ASSET_INDICES
-        .save(
-            deps.as_mut().storage,
-            (&user_address, &ma_zero_address),
-            &Decimal::from_ratio(1_u128, 2_u128),
-        )
+        .save(deps.as_mut().storage, (&user_addr, zero_denom), &Decimal::from_ratio(1_u128, 2_u128))
         .unwrap();
 
     // unclaimed_rewards
     USER_UNCLAIMED_REWARDS
-        .save(deps.as_mut().storage, &user_address, &previous_unclaimed_rewards)
+        .save(deps.as_mut().storage, &user_addr, &previous_unclaimed_rewards)
         .unwrap();
 
-    let expected_ma_asset_incentive_index = asset_incentive_compute_index(
+    let expected_asset_incentive_index = asset_incentive_compute_index(
         Decimal::one(),
         Uint128::new(100),
-        ma_asset_total_supply,
+        asset_total_supply,
         time_start,
         time_contract_call,
     )
     .unwrap();
 
-    let expected_ma_asset_accrued_rewards = user_compute_accrued_rewards(
-        ma_asset_user_balance,
+    let expected_asset_accrued_rewards = user_compute_accrued_rewards(
+        asset_user_balance,
         Decimal::one(),
-        expected_ma_asset_incentive_index,
+        expected_asset_incentive_index,
     )
     .unwrap();
 
-    let expected_ma_zero_accrued_rewards = user_compute_accrued_rewards(
-        ma_zero_user_balance,
+    let expected_zero_accrued_rewards = user_compute_accrued_rewards(
+        zero_user_balance,
         Decimal::from_ratio(1_u128, 2_u128),
         Decimal::one(),
     )
     .unwrap();
 
-    let expected_accrued_rewards = previous_unclaimed_rewards
-        + expected_ma_asset_accrued_rewards
-        + expected_ma_zero_accrued_rewards;
+    let expected_accrued_rewards =
+        previous_unclaimed_rewards + expected_asset_accrued_rewards + expected_zero_accrued_rewards;
 
     // MSG
     let info = mock_info("user", &[]);
@@ -172,7 +195,7 @@ fn test_execute_claim_rewards() {
     assert_eq!(
         res.messages,
         vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-            to_address: user_address.to_string(),
+            to_address: user_addr.to_string(),
             amount: coins(expected_accrued_rewards.u128(), "umars".to_string())
         }))]
     );
@@ -186,39 +209,36 @@ fn test_execute_claim_rewards() {
         ]
     );
 
-    // ma_asset and ma_zero incentives get updated, ma_no_user does not
-    let ma_asset_incentive =
-        ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_asset_address).unwrap();
-    assert_eq!(ma_asset_incentive.index, expected_ma_asset_incentive_index);
-    assert_eq!(ma_asset_incentive.last_updated, time_contract_call);
+    // asset and zero incentives get updated, no_user does not
+    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, asset_denom).unwrap();
+    assert_eq!(asset_incentive.index, expected_asset_incentive_index);
+    assert_eq!(asset_incentive.last_updated, time_contract_call);
 
-    let ma_zero_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_zero_address).unwrap();
-    assert_eq!(ma_zero_incentive.index, Decimal::one());
-    assert_eq!(ma_zero_incentive.last_updated, time_contract_call);
+    let zero_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, zero_denom).unwrap();
+    assert_eq!(zero_incentive.index, Decimal::one());
+    assert_eq!(zero_incentive.last_updated, time_contract_call);
 
-    let ma_no_user_incentive =
-        ASSET_INCENTIVES.load(deps.as_ref().storage, &ma_no_user_address).unwrap();
-    assert_eq!(ma_no_user_incentive.index, Decimal::one());
-    assert_eq!(ma_no_user_incentive.last_updated, time_start);
+    let no_user_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, no_user_denom).unwrap();
+    assert_eq!(no_user_incentive.index, Decimal::one());
+    assert_eq!(no_user_incentive.last_updated, time_start);
 
-    // user's ma_asset and ma_zero indices are updated
-    let user_ma_asset_index =
-        USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_address, &ma_asset_address)).unwrap();
-    assert_eq!(user_ma_asset_index, expected_ma_asset_incentive_index);
+    // user's asset and zero indices are updated
+    let user_asset_index =
+        USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_addr, asset_denom)).unwrap();
+    assert_eq!(user_asset_index, expected_asset_incentive_index);
 
-    let user_ma_zero_index =
-        USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_address, &ma_zero_address)).unwrap();
-    assert_eq!(user_ma_zero_index, Decimal::one());
+    let user_zero_index =
+        USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_addr, zero_denom)).unwrap();
+    assert_eq!(user_zero_index, Decimal::one());
 
-    // user's ma_no_user does not get updated
-    let user_ma_no_user_index = USER_ASSET_INDICES
-        .may_load(deps.as_ref().storage, (&user_address, &ma_no_user_address))
-        .unwrap();
-    assert_eq!(user_ma_no_user_index, None);
+    // user's no_user does not get updated
+    let user_no_user_index =
+        USER_ASSET_INDICES.may_load(deps.as_ref().storage, (&user_addr, no_user_denom)).unwrap();
+    assert_eq!(user_no_user_index, None);
 
     // user rewards are cleared
     let user_unclaimed_rewards =
-        USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, &user_address).unwrap();
+        USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, &user_addr).unwrap();
     assert_eq!(user_unclaimed_rewards, Uint128::zero())
 }
 

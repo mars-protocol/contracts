@@ -8,6 +8,8 @@ use cosmwasm_std::{Addr, Decimal, Uint128};
 pub struct Config {
     /// Contract owner
     pub owner: Addr,
+    /// Address provider
+    pub address_provider: Addr,
     /// Mars Token Denom
     pub mars_denom: String,
 }
@@ -15,7 +17,7 @@ pub struct Config {
 /// Incentive Metadata for a given incentive
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct AssetIncentive {
-    /// How much MARS per second is emitted to be then distributed to all maToken holders
+    /// How much MARS per second is emitted to be then distributed to all Red Bank depositors
     pub emission_per_second: Uint128,
     /// Total MARS assigned for distribution since the start of the incentive
     pub index: Decimal,
@@ -30,6 +32,7 @@ pub struct AssetIncentiveResponse {
     pub asset_incentive: Option<AssetIncentive>,
 }
 
+// TODO: according to coding guideline, these types shouldn't be in a `msg` closure
 pub mod msg {
     use cosmwasm_std::{Addr, CosmosMsg, Uint128};
     use schemars::JsonSchema;
@@ -39,6 +42,8 @@ pub mod msg {
     pub struct InstantiateMsg {
         /// Contract owner
         pub owner: String,
+        /// Address provider
+        pub address_provider: String,
         /// Mars token denom
         pub mars_denom: String,
     }
@@ -46,12 +51,12 @@ pub mod msg {
     #[derive(Serialize, Deserialize, Clone, Debug, JsonSchema)]
     #[serde(rename_all = "snake_case")]
     pub enum ExecuteMsg {
-        /// Set emission per second for an asset to holders of its maToken
+        /// Set emission per second for an asset to its depositor at Red Bank
         SetAssetIncentive {
-            /// maToken address associated with the incentives
-            ma_token_address: String,
-            /// How many MARS will be assigned per second to be distributed among all maToken
-            /// holders
+            /// Asset denom associated with the incentives
+            denom: String,
+            /// How many MARS will be assigned per second to be distributed among all Red Bank
+            /// depositors
             emission_per_second: Uint128,
         },
 
@@ -59,13 +64,15 @@ pub mod msg {
         /// Sent from an external contract, triggered on user balance changes.
         /// Will return an empty response if no incentive is applied for the asset
         BalanceChange {
-            /// User address. Address is trusted as it must be validated by the maToken
+            /// User address. Address is trusted as it must be validated by the Red Bank
             /// contract before calling this method
-            user_address: Addr,
-            /// User maToken balance up to the instant before the change
-            user_balance_before: Uint128,
-            /// Total maToken supply up to the instant before the change
-            total_supply_before: Uint128,
+            user_addr: Addr,
+            /// Denom of the asset of which deposited balance is changed
+            denom: String,
+            /// The user's scaled collateral amount up to the instant before the change
+            user_amount_scaled_before: Uint128,
+            /// The market's total scaled collateral amount up to the instant before the change
+            total_amount_scaled_before: Uint128,
         },
 
         /// Claim rewards. MARS rewards accrued by the user will be staked into xMARS before
@@ -75,6 +82,7 @@ pub mod msg {
         /// Update contract config (only callable by owner)
         UpdateConfig {
             owner: Option<String>,
+            address_provider: Option<String>,
             mars_denom: Option<String>,
         },
 
@@ -88,14 +96,14 @@ pub mod msg {
         /// Query contract config
         Config {},
 
-        /// Query info about asset incentive for a given maToken
+        /// Query info about asset incentive for a given denom
         AssetIncentive {
-            ma_token_address: String,
+            denom: String,
         },
 
         /// Query user current unclaimed rewards
         UserUnclaimedRewards {
-            user_address: String,
+            user: String,
         },
     }
 }
