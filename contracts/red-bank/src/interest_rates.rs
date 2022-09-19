@@ -19,7 +19,7 @@ const SECONDS_PER_YEAR: u64 = 31536000u64;
 /// and current block.
 /// Applies desired side effects:
 /// 1. Updates market borrow and liquidity indices.
-/// 2. If there are any protocol rewards, builds a mint to the rewards collector and adds it
+/// 2. If there are any protocol revenue, builds a mint to the revenue collector and adds it
 ///    to the returned response
 /// NOTE: it does not save the market to store
 /// WARNING: For a given block, this function should be called before updating interest rates
@@ -29,7 +29,7 @@ pub fn apply_accumulated_interests(
     store: &mut dyn Storage,
     env: &Env,
     market: &mut Market,
-    rewards_collector_addr: &Addr,
+    revenue_collector_addr: &Addr,
     incentives_addr: &Addr,
     mut response: Response,
 ) -> StdResult<Response> {
@@ -78,22 +78,22 @@ pub fn apply_accumulated_interests(
         Uint128::zero()
     };
 
-    let accrued_protocol_rewards = borrow_interest_accrued * market.reserve_factor;
+    let accrued_protocol_revenue = borrow_interest_accrued * market.reserve_factor;
 
-    if !accrued_protocol_rewards.is_zero() {
-        let reward_amount_scaled = compute_scaled_amount(
-            accrued_protocol_rewards,
+    if !accrued_protocol_revenue.is_zero() {
+        let revenue_amount_scaled = compute_scaled_amount(
+            accrued_protocol_revenue,
             market.liquidity_index,
             ScalingOperation::Truncate,
         )?;
-        response = User(rewards_collector_addr).increase_collateral(
+        response = User(revenue_collector_addr).increase_collateral(
             store,
             market,
-            reward_amount_scaled,
+            revenue_amount_scaled,
             incentives_addr,
             response,
         )?;
-        market.increase_collateral(reward_amount_scaled)?;
+        market.increase_collateral(revenue_amount_scaled)?;
     }
 
     Ok(response)

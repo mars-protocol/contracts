@@ -261,9 +261,9 @@ fn test_liquidate() {
         // order:
         // - collateral denom, user
         // - collateral denom, liquidator
-        // - debt denom, rewards collector (if rewards accrued > 0)
+        // - debt denom, revenue collector (if revenue accrued > 0)
         //
-        // NOTE that we don't expect a message to update rewards collector's index of the
+        // NOTE that we don't expect a message to update revenue collector's index of the
         // **collateral** asset, because the liquidation action does NOT change the collateral
         // asset's utilization rate, it's interest rate does not need to be updated.
         assert_eq!(
@@ -348,7 +348,7 @@ fn test_liquidate() {
         expected_global_debt_scaled -= expected_less_debt_scaled;
         assert_eq!(expected_global_debt_scaled, debt_market_after.debt_total_scaled);
 
-        // rewards collector's collateral scaled amount **of the debt asset** should have been correctly increased
+        // revenue collector's collateral scaled amount **of the debt asset** should have been correctly increased
         expected_total_reward_scaled += expected_reward_amount_scaled;
         let collateral = COLLATERALS
             .load(
@@ -521,7 +521,7 @@ fn test_liquidate() {
         expected_global_debt_scaled -= expected_less_debt_scaled;
         assert_eq!(expected_global_debt_scaled, debt_market_after.debt_total_scaled);
 
-        // rewards collector's collateral scaled amount **of the debt asset** should have been correctly increased
+        // revenue collector's collateral scaled amount **of the debt asset** should have been correctly increased
         expected_total_reward_scaled += expected_reward_amount_scaled;
         let collateral = COLLATERALS
             .load(
@@ -566,7 +566,7 @@ fn test_liquidate() {
         let debt_market_before = MARKETS.load(&deps.storage, "debt").unwrap();
 
         // let some time elapse since the last liquidation, so that there is a non-zero amount of
-        // protocol rewards accrued
+        // protocol revenue accrued
         let block_time = second_block_time + 12345;
         let env = mock_env_at_block_time(block_time);
         let info = mock_info(liquidator_addr.as_str(), &coins(debt_to_repay.u128(), "debt"));
@@ -867,7 +867,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         .unwrap();
 
         // there should be three messages updating indices at the incentives contract, in the order:
-        // - rewards collector
+        // - revenue collector
         // - user
         // - liquidator
         assert_eq!(
@@ -937,7 +937,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             COLLATERALS.load(deps.as_ref().storage, (&liquidator_addr, "the_asset")).unwrap();
         assert_eq!(collateral.amount_scaled, expected_liquidated_amount_scaled);
 
-        // rewards collector's collateral scaled amount **of the debt asset** should have been correctly increased
+        // revenue collector's collateral scaled amount **of the debt asset** should have been correctly increased
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
@@ -1126,7 +1126,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             COLLATERALS.load(deps.as_ref().storage, (&liquidator_addr, "the_asset")).unwrap();
         assert_eq!(collateral.amount_scaled, expected_liquidated_amount_scaled);
 
-        // rewards collector's collateral scaled amount **of the debt asset** should have been correctly increased
+        // revenue collector's collateral scaled amount **of the debt asset** should have been correctly increased
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,

@@ -116,7 +116,7 @@ pub struct InitOrUpdateAssetParams {
     /// Initial borrow rate
     pub initial_borrow_rate: Option<Decimal>,
 
-    /// Portion of the borrow rate that is kept as protocol rewards
+    /// Portion of the borrow rate that is kept as protocol revenue
     pub reserve_factor: Option<Decimal>,
     /// Max uusd that can be borrowed per uusd of collateral when using the asset as collateral
     pub max_loan_to_value: Option<Decimal>,

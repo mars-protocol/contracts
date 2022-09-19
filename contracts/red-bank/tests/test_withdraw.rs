@@ -695,7 +695,7 @@ fn withdrawing_if_health_factor_met() {
                     user_addr: withdrawer_addr.clone(),
                     denom: denoms[2].to_string(),
                     user_amount_scaled_before: collaterals[2].amount_scaled,
-                    // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
+                    // NOTE: Protocol revenue accrued is zero, so here it's initial total supply
                     total_amount_scaled_before: markets[2].collateral_total_scaled,
                 })
                 .unwrap(),

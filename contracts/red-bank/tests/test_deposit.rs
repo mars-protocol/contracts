@@ -258,7 +258,7 @@ fn depositing_without_existing_position() {
                 user_addr: depositor_addr.clone(),
                 denom: initial_market.denom.clone(),
                 user_amount_scaled_before: Uint128::zero(),
-                // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
+                // NOTE: Protocol revenue accrued is zero, so here it's initial total supply
                 total_amount_scaled_before: initial_market.collateral_total_scaled,
             })
             .unwrap(),
@@ -353,7 +353,7 @@ fn depositing_with_existing_position() {
                 user_addr: depositor_addr.clone(),
                 denom: initial_market.denom.clone(),
                 user_amount_scaled_before: collateral_amount_scaled,
-                // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
+                // NOTE: Protocol revenue accrued is zero, so here it's initial total supply
                 total_amount_scaled_before: initial_market.collateral_total_scaled,
             })
             .unwrap(),
@@ -419,7 +419,7 @@ fn depositing_on_behalf_of() {
     .unwrap();
 
     // NOTE: For this test, the accrued protocol reward is non-zero, so we do expect a message to
-    // update the index of the rewards collector.
+    // update the index of the revenue collector.
     assert_eq!(
         res.messages,
         vec![
@@ -440,8 +440,8 @@ fn depositing_on_behalf_of() {
                     user_addr: on_behalf_of_addr.clone(),
                     denom: initial_market.denom.clone(),
                     user_amount_scaled_before: Uint128::zero(),
-                    // NOTE: New collateral shares were minted to the rewards collector first, so
-                    // for the depositor this should be initial total supply + rewards shares minted
+                    // NOTE: New collateral shares were minted to the revenue collector first, so
+                    // for the depositor this should be initial total supply + shares minted
                     total_amount_scaled_before: initial_market.collateral_total_scaled
                         + expected_reward_amount_scaled,
                 })

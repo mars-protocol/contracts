@@ -157,7 +157,7 @@ where
 
         self.config.save(deps.storage, &cfg)?;
 
-        Ok(Response::new().add_attribute("action", "mars/rewards-collector/update_config"))
+        Ok(Response::new().add_attribute("action", "mars/revenue-collector/update_config"))
     }
 
     fn set_route(
@@ -179,7 +179,7 @@ where
         self.routes.save(deps.storage, (denom_in.clone(), denom_out.clone()), &route)?;
 
         Ok(Response::new()
-            .add_attribute("action", "mars/rewards-collector/set_instructions")
+            .add_attribute("action", "mars/revenue-collector/set_instructions")
             .add_attribute("denom_in", denom_in)
             .add_attribute("denom_out", denom_out)
             .add_attribute("route", route.to_string()))
@@ -211,7 +211,7 @@ where
 
         Ok(Response::new()
             .add_message(withdraw_msg)
-            .add_attribute("action", "outposts/rewards-collector/withdraw_from_red_bank")
+            .add_attribute("action", "outposts/revenue-collector/withdraw_from_red_bank")
             .add_attribute("denom", denom)
             .add_attribute("amount", stringify_option_amount(amount)))
     }
@@ -264,7 +264,7 @@ where
 
         Ok(Response::new()
             .add_messages(messages)
-            .add_attribute("action", "outposts/rewards-collector/swap_asset")
+            .add_attribute("action", "outposts/revenue-collector/swap_asset")
             .add_attribute("denom", denom)
             .add_attribute("amount_safety_fund", amount_safety_fund)
             .add_attribute("amount_fee_collector", amount_fee_collector)
@@ -319,7 +319,7 @@ where
 
         Ok(Response::new()
             .add_message(transfer_msg)
-            .add_attribute("action", "outposts/rewards-collector/distribute_rewards")
+            .add_attribute("action", "outposts/revenue-collector/distribute_rewards")
             .add_attribute("denom", denom)
             .add_attribute("amount", amount_to_distribute)
             .add_attribute("to", to_address))
@@ -339,7 +339,7 @@ where
 
         Ok(Response::new()
             .add_message(msg)
-            .add_attribute("action", "outposts/rewards-collector/execute_cosmos_msg"))
+            .add_attribute("action", "outposts/revenue-collector/execute_cosmos_msg"))
     }
 
     fn query_config(&self, deps: Deps<Q>) -> StdResult<Config<String>> {

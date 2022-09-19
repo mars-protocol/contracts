@@ -849,21 +849,21 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
     )
     .unwrap();
     let interest_accrued = current_debt_total - asset_initial_debt;
-    let expected_rewards = interest_accrued * market_before.reserve_factor;
-    let expected_rewards_scaled = compute_scaled_amount(
-        expected_rewards,
+    let expected_revenue = interest_accrued * market_before.reserve_factor;
+    let expected_revenue_scaled = compute_scaled_amount(
+        expected_revenue,
         new_market.liquidity_index,
         ScalingOperation::Truncate,
     )
     .unwrap();
 
-    // the rewards collector previously did not have a collateral possition
-    // now it should have one with the expected rewards scaled amount
+    // the revenue collector previously did not have a collateral possition
+    // now it should have one with the expected scaled amount
     let collateral = COLLATERALS
         .load(
             deps.as_ref().storage,
             (&Addr::unchecked(MarsContract::RevenueCollector.to_string()), "somecoin"),
         )
         .unwrap();
-    assert_eq!(collateral.amount_scaled, expected_rewards_scaled);
+    assert_eq!(collateral.amount_scaled, expected_revenue_scaled);
 }

@@ -3,7 +3,7 @@ use mars_revenue_collector_base::CollectorBase;
 
 use crate::OsmosisRoute;
 
-/// The Osmosis rewards collector contract inherits logics from the base oracle contract, with the
+/// The Osmosis revenue collector contract inherits logics from the base oracle contract, with the
 /// Osmosis custom msg, query, and swap route plugins
 pub type OsmosisCollector<'a> = CollectorBase<'a, OsmosisRoute, Empty, Empty>;
 

@@ -18,7 +18,7 @@ pub struct Market {
     /// Bonus amount of collateral liquidator get when repaying user's debt (Will get collateral
     /// from user in an amount equal to debt repayed + bonus)
     pub liquidation_bonus: Decimal,
-    /// Portion of the borrow rate that is kept as protocol rewards
+    /// Portion of the borrow rate that is kept as protocol revenue
     pub reserve_factor: Decimal,
 
     /// model (params + internal state) that defines how interest rate behaves
