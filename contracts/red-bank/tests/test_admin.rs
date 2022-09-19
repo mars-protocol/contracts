@@ -1,6 +1,7 @@
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{attr, coin, from_binary, Addr, Decimal, Event, Uint128};
 
+use mars_outpost::address_provider::MarsContract;
 use mars_outpost::error::MarsError;
 use mars_outpost::red_bank::{
     ConfigResponse, CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
@@ -859,7 +860,10 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
     // the rewards collector previously did not have a collateral possition
     // now it should have one with the expected rewards scaled amount
     let collateral = COLLATERALS
-        .load(deps.as_ref().storage, (&Addr::unchecked("rewards_collector"), "somecoin"))
+        .load(
+            deps.as_ref().storage,
+            (&Addr::unchecked(MarsContract::RevenueCollector.to_string()), "somecoin"),
+        )
         .unwrap();
     assert_eq!(collateral.amount_scaled, expected_rewards_scaled);
 }

@@ -426,7 +426,7 @@ fn depositing_on_behalf_of() {
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsContract::Incentives.to_string(),
                 msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
-                    user_addr: Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()),
+                    user_addr: Addr::unchecked(MarsContract::RevenueCollector.to_string()),
                     denom: initial_market.denom.clone(),
                     user_amount_scaled_before: Uint128::zero(),
                     total_amount_scaled_before: initial_market.collateral_total_scaled,

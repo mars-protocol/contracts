@@ -1,3 +1,4 @@
+use std::any::type_name;
 use std::fmt;
 use std::str::FromStr;
 
@@ -11,7 +12,7 @@ pub enum MarsContract {
     Incentives,
     Oracle,
     RedBank,
-    RewardsCollector,
+    RevenueCollector,
     /// Protocol admin is an ICS-27 interchain account controlled by Mars Hub's x/gov module.
     /// This account will take the owner and admin roles of outpost contracts.
     ///
@@ -41,7 +42,7 @@ impl fmt::Display for MarsContract {
             MarsContract::Oracle => "oracle",
             MarsContract::ProtocolAdmin => "protocol_admin",
             MarsContract::RedBank => "red_bank",
-            MarsContract::RewardsCollector => "rewards_collector",
+            MarsContract::RevenueCollector => "revenue_collector",
             MarsContract::SafetyFund => "safety_fund",
         };
         write!(f, "{}", s)
@@ -58,9 +59,9 @@ impl FromStr for MarsContract {
             "oracle" => Ok(MarsContract::Oracle),
             "protocol_admin" => Ok(MarsContract::ProtocolAdmin),
             "red_bank" => Ok(MarsContract::RedBank),
-            "rewards_collector" => Ok(MarsContract::RewardsCollector),
+            "revenue_collector" => Ok(MarsContract::RevenueCollector),
             "safety_fund" => Ok(MarsContract::SafetyFund),
-            _ => Err(StdError::parse_err("MarsContract", s)),
+            _ => Err(StdError::parse_err(type_name::<Self>(), s)),
         }
     }
 }
