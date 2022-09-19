@@ -1,6 +1,6 @@
 use std::ops::{Add, Mul, Sub};
 
-use cosmwasm_std::{Addr, Coin, Decimal, OverflowError, OverflowOperation, Uint128};
+use cosmwasm_std::{coin, coins, Addr, Decimal, OverflowError, OverflowOperation, Uint128};
 
 use credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use rover::error::ContractError;
@@ -17,13 +17,13 @@ fn test_only_token_owner_can_repay() {
     let coin_info = uosmo_info();
     let owner = Addr::unchecked("owner");
     let mut mock = MockEnv::new().build().unwrap();
-    let token_id = mock.create_credit_account(&owner).unwrap();
+    let account_id = mock.create_credit_account(&owner).unwrap();
 
     let another_user = Addr::unchecked("another_user");
     let res = mock.update_credit_account(
-        &token_id,
+        &account_id,
         &another_user,
-        vec![Repay(coin_info.to_coin(Uint128::new(12312u128)))],
+        vec![Repay(coin_info.to_coin(12312))],
         &[],
     );
 
@@ -31,7 +31,7 @@ fn test_only_token_owner_can_repay() {
         res,
         ContractError::NotTokenOwner {
             user: another_user.into(),
-            token_id,
+            account_id,
         },
     )
 }
@@ -41,15 +41,12 @@ fn test_can_only_repay_what_is_whitelisted() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().allowed_coins(&[coin_info]).build().unwrap();
-    let token_id = mock.create_credit_account(&user).unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(
-        &token_id,
+        &account_id,
         &user,
-        vec![Repay(Coin {
-            denom: "usomething".to_string(),
-            amount: Uint128::new(234),
-        })],
+        vec![Repay(coin(234, "usomething"))],
         &[],
     );
 
@@ -67,14 +64,10 @@ fn test_repaying_zero_raises() {
         .allowed_coins(&[coin_info.clone()])
         .build()
         .unwrap();
-    let token_id = mock.create_credit_account(&user).unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
 
-    let res = mock.update_credit_account(
-        &token_id,
-        &user,
-        vec![Repay(coin_info.to_coin(Uint128::zero()))],
-        &[],
-    );
+    let res =
+        mock.update_credit_account(&account_id, &user, vec![Repay(coin_info.to_coin(0))], &[]);
 
     assert_err(res, ContractError::NoAmount)
 }
@@ -97,39 +90,39 @@ fn test_raises_when_repaying_what_is_not_owed() {
         .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user_a.clone(),
-            funds: vec![Coin::new(300u128, uatom_info.denom.clone())],
+            funds: coins(300, uatom_info.denom.clone()),
         })
         .fund_account(AccountToFund {
             addr: user_b.clone(),
-            funds: vec![Coin::new(100u128, uatom_info.denom.clone())],
+            funds: coins(100, uatom_info.denom.clone()),
         })
         .build()
         .unwrap();
 
-    let token_id_a = mock.create_credit_account(&user_a).unwrap();
-    let token_id_b = mock.create_credit_account(&user_b).unwrap();
+    let account_id_a = mock.create_credit_account(&user_a).unwrap();
+    let account_id_b = mock.create_credit_account(&user_b).unwrap();
 
     // Seeding uatom with existing total debt shares from another user
     mock.update_credit_account(
-        &token_id_b,
+        &account_id_b,
         &user_b,
         vec![
-            Deposit(uatom_info.to_coin(Uint128::new(100))),
-            Borrow(uatom_info.to_coin(Uint128::new(12))),
+            Deposit(uatom_info.to_coin(100)),
+            Borrow(uatom_info.to_coin(12)),
         ],
-        &[uatom_info.to_coin(Uint128::new(100))],
+        &[uatom_info.to_coin(100)],
     )
     .unwrap();
 
     let res = mock.update_credit_account(
-        &token_id_a,
+        &account_id_a,
         &user_a,
         vec![
-            Deposit(uatom_info.to_coin(Uint128::new(300))),
-            Borrow(uosmo_info.to_coin(Uint128::new(42))),
-            Repay(uatom_info.to_coin(Uint128::new(42))),
+            Deposit(uatom_info.to_coin(300)),
+            Borrow(uosmo_info.to_coin(42)),
+            Repay(uatom_info.to_coin(42)),
         ],
-        &[uatom_info.to_coin(Uint128::new(300))],
+        &[uatom_info.to_coin(300)],
     );
 
     assert_err(res, ContractError::NoDebt)
@@ -152,23 +145,23 @@ fn test_raises_when_not_enough_assets_to_repay() {
         .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![Coin::new(300u128, uatom_info.denom.clone())],
+            funds: coins(300, uatom_info.denom.clone()),
         })
         .build()
         .unwrap();
 
-    let token_id_a = mock.create_credit_account(&user).unwrap();
+    let account_id_a = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(
-        &token_id_a,
+        &account_id_a,
         &user,
         vec![
-            Deposit(uatom_info.to_coin(Uint128::new(300))),
-            Borrow(uosmo_info.to_coin(Uint128::new(50))),
-            Withdraw(uosmo_info.to_coin(Uint128::new(10))),
-            Repay(uosmo_info.to_coin(Uint128::new(50))),
+            Deposit(uatom_info.to_coin(300)),
+            Borrow(uosmo_info.to_coin(50)),
+            Withdraw(uosmo_info.to_coin(10)),
+            Repay(uosmo_info.to_coin(50)),
         ],
-        &[uatom_info.to_coin(Uint128::new(300))],
+        &[uatom_info.to_coin(300)],
     );
 
     assert_err(
@@ -191,39 +184,34 @@ fn test_successful_repay() {
         .allowed_coins(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![Coin::new(300u128, coin_info.denom.clone())],
+            funds: coins(300, coin_info.denom.clone()),
         })
         .build()
         .unwrap();
 
-    let token_id = mock.create_credit_account(&user).unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
 
-    let position = mock.query_position(&token_id);
+    let position = mock.query_position(&account_id);
     assert_eq!(position.coins.len(), 0);
     assert_eq!(position.debt.len(), 0);
 
     mock.update_credit_account(
-        &token_id,
+        &account_id,
         &user,
         vec![
-            Deposit(coin_info.to_coin(Uint128::new(300))),
-            Borrow(coin_info.to_coin(Uint128::new(50))),
+            Deposit(coin_info.to_coin(300)),
+            Borrow(coin_info.to_coin(50)),
         ],
-        &[Coin::new(300u128, coin_info.denom.clone())],
+        &[coin(300, coin_info.denom.clone())],
     )
     .unwrap();
 
     let interim_red_bank_debt = mock.query_red_bank_debt(&coin_info.denom);
 
-    mock.update_credit_account(
-        &token_id,
-        &user,
-        vec![Repay(coin_info.to_coin(Uint128::new(20)))],
-        &[],
-    )
-    .unwrap();
+    mock.update_credit_account(&account_id, &user, vec![Repay(coin_info.to_coin(20))], &[])
+        .unwrap();
 
-    let position = mock.query_position(&token_id);
+    let position = mock.query_position(&account_id);
     assert_eq!(position.coins.len(), 1);
     let asset_res = position.coins.first().unwrap();
     let expected_net_asset_amount = Uint128::new(330); // Deposit + Borrow - Repay
@@ -254,14 +242,14 @@ fn test_successful_repay() {
     );
 
     mock.update_credit_account(
-        &token_id,
+        &account_id,
         &user,
-        vec![Repay(coin_info.to_coin(Uint128::new(31)))], // Interest accrued paid back as well
+        vec![Repay(coin_info.to_coin(31))], // Interest accrued paid back as well
         &[],
     )
     .unwrap();
 
-    let position = mock.query_position(&token_id);
+    let position = mock.query_position(&account_id);
     assert_eq!(position.coins.len(), 1);
     let asset_res = position.coins.first().unwrap();
     let expected_net_asset_amount = Uint128::new(299); // Deposit + Borrow - full repay - interest
@@ -292,26 +280,26 @@ fn test_pays_max_debt_when_attempting_to_repay_more_than_owed() {
         .allowed_coins(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![Coin::new(300u128, coin_info.denom.clone())],
+            funds: coins(300, coin_info.denom.clone()),
         })
         .build()
         .unwrap();
 
-    let token_id = mock.create_credit_account(&user).unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
 
     mock.update_credit_account(
-        &token_id,
+        &account_id,
         &user,
         vec![
-            Deposit(coin_info.to_coin(Uint128::new(300))),
-            Borrow(coin_info.to_coin(Uint128::new(50))),
-            Repay(coin_info.to_coin(Uint128::new(75))),
+            Deposit(coin_info.to_coin(300)),
+            Borrow(coin_info.to_coin(50)),
+            Repay(coin_info.to_coin(75)),
         ],
-        &[Coin::new(300u128, coin_info.denom.clone())],
+        &[coin(300, coin_info.denom.clone())],
     )
     .unwrap();
 
-    let position = mock.query_position(&token_id);
+    let position = mock.query_position(&account_id);
     assert_eq!(position.coins.len(), 1);
     let asset_res = position.coins.first().unwrap();
     let expected_net_asset_amount = Uint128::new(299); // Deposit + Borrow - Repay - interest

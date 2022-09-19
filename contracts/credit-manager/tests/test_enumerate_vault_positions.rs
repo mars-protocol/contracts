@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::MockApi;
-use cosmwasm_std::{Addr, Api, Coin, Uint128};
+use cosmwasm_std::{coin, Addr, Api};
 use itertools::Itertools;
 
 use rover::adapters::VaultBase;
@@ -25,22 +25,22 @@ fn test_pagination_on_all_vault_positions_query_works() {
         .fund_account(AccountToFund {
             addr: user_a.clone(),
             funds: vec![
-                Coin::new(1000u128, uosmo.denom.clone()),
-                Coin::new(1000u128, uatom.denom.clone()),
+                coin(1000, uosmo.denom.clone()),
+                coin(1000, uatom.denom.clone()),
             ],
         })
         .fund_account(AccountToFund {
             addr: user_b.clone(),
             funds: vec![
-                Coin::new(1000u128, uosmo.denom.clone()),
-                Coin::new(1000u128, uatom.denom.clone()),
+                coin(1000, uosmo.denom.clone()),
+                coin(1000, uatom.denom.clone()),
             ],
         })
         .fund_account(AccountToFund {
             addr: user_c.clone(),
             funds: vec![
-                Coin::new(1000u128, uosmo.denom.clone()),
-                Coin::new(1000u128, uatom.denom.clone()),
+                coin(1000, uosmo.denom.clone()),
+                coin(1000, uatom.denom.clone()),
             ],
         })
         .allowed_coins(&[uosmo.clone(), uatom.clone()])
@@ -49,53 +49,41 @@ fn test_pagination_on_all_vault_positions_query_works() {
         .unwrap();
 
     let mut actions = vec![
-        Action::Deposit(uatom.to_coin(Uint128::new(220))),
-        Action::Deposit(uosmo.to_coin(Uint128::new(220))),
+        Action::Deposit(uatom.to_coin(220)),
+        Action::Deposit(uosmo.to_coin(220)),
     ];
 
     all_vaults.iter().for_each(|v| {
         actions.extend([Action::VaultDeposit {
             vault: mock.get_vault(v),
-            coins: vec![
-                uatom.to_coin(Uint128::new(10)),
-                uosmo.to_coin(Uint128::new(10)),
-            ],
+            coins: vec![uatom.to_coin(10), uosmo.to_coin(10)],
         }]);
     });
 
-    let token_id_a = mock.create_credit_account(&user_a).unwrap();
+    let account_id_a = mock.create_credit_account(&user_a).unwrap();
     mock.update_credit_account(
-        &token_id_a,
+        &account_id_a,
         &user_a,
         actions.clone(),
-        &[
-            uatom.to_coin(Uint128::new(220)),
-            uosmo.to_coin(Uint128::new(220)),
-        ],
+        &[uatom.to_coin(220), uosmo.to_coin(220)],
     )
     .unwrap();
 
-    let token_id_b = mock.create_credit_account(&user_b).unwrap();
+    let account_id_b = mock.create_credit_account(&user_b).unwrap();
     mock.update_credit_account(
-        &token_id_b,
+        &account_id_b,
         &user_b,
         actions.clone(),
-        &[
-            uatom.to_coin(Uint128::new(220)),
-            uosmo.to_coin(Uint128::new(220)),
-        ],
+        &[uatom.to_coin(220), uosmo.to_coin(220)],
     )
     .unwrap();
 
-    let token_id_c = mock.create_credit_account(&user_c).unwrap();
+    let account_id_c = mock.create_credit_account(&user_c).unwrap();
     mock.update_credit_account(
-        &token_id_c,
+        &account_id_c,
         &user_c,
         actions,
-        &[
-            uatom.to_coin(Uint128::new(220)),
-            uosmo.to_coin(Uint128::new(220)),
-        ],
+        &[uatom.to_coin(220), uosmo.to_coin(220)],
     )
     .unwrap();
 
@@ -109,14 +97,14 @@ fn test_pagination_on_all_vault_positions_query_works() {
 
     let vaults_res_a = mock.query_all_vault_positions(None, None);
     let item = vaults_res_a.last().unwrap();
-    let vaults_res_b =
-        mock.query_all_vault_positions(Some((item.token_id.clone(), item.addr.clone())), Some(30));
+    let vaults_res_b = mock
+        .query_all_vault_positions(Some((item.account_id.clone(), item.addr.clone())), Some(30));
     let item = vaults_res_b.last().unwrap();
-    let vaults_res_c =
-        mock.query_all_vault_positions(Some((item.token_id.clone(), item.addr.clone())), Some(30));
+    let vaults_res_c = mock
+        .query_all_vault_positions(Some((item.account_id.clone(), item.addr.clone())), Some(30));
     let item = vaults_res_c.last().unwrap();
     let vaults_res_d =
-        mock.query_all_vault_positions(Some((item.token_id.clone(), item.addr.clone())), None);
+        mock.query_all_vault_positions(Some((item.account_id.clone(), item.addr.clone())), None);
 
     // Assert default is observed
     assert_eq!(vaults_res_a.len(), 10);

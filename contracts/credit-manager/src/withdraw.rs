@@ -6,7 +6,7 @@ use crate::utils::{assert_coin_is_whitelisted, decrement_coin_balance};
 
 pub fn withdraw(
     deps: DepsMut,
-    token_id: &str,
+    account_id: &str,
     coin: Coin,
     recipient: Addr,
 ) -> ContractResult<Response> {
@@ -16,7 +16,7 @@ pub fn withdraw(
         return Err(ContractError::NoAmount);
     }
 
-    decrement_coin_balance(deps.storage, token_id, &coin)?;
+    decrement_coin_balance(deps.storage, account_id, &coin)?;
 
     // send coin to recipient
     let transfer_msg = CosmosMsg::Bank(BankMsg::Send {

@@ -12,7 +12,7 @@ pub type ContractResult<T> = Result<T, ContractError>;
 pub enum ContractError {
     #[error("Actions resulted in exceeding maximum allowed loan-to-value. Max LTV health factor: {max_ltv_health_factor:?}")]
     AboveMaxLTV {
-        token_id: String,
+        account_id: String,
         max_ltv_health_factor: String,
     },
 
@@ -52,15 +52,15 @@ pub enum ContractError {
     NoDebt,
 
     #[error(
-        "{token_id:?} is not a liquidatable credit account. Health factor: {lqdt_health_factor:?}."
+        "{account_id:?} is not a liquidatable credit account. Health factor: {lqdt_health_factor:?}."
     )]
     NotLiquidatable {
-        token_id: String,
+        account_id: String,
         lqdt_health_factor: String,
     },
 
-    #[error("{user:?} is not the owner of {token_id:?}")]
-    NotTokenOwner { user: String, token_id: String },
+    #[error("{user:?} is not the owner of {account_id:?}")]
+    NotTokenOwner { user: String, account_id: String },
 
     #[error("{0} is not whitelisted")]
     NotWhitelisted(String),

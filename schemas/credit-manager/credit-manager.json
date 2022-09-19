@@ -1,6 +1,6 @@
 {
   "contract_name": "credit-manager",
-  "contract_version": "0.1.0",
+  "contract_version": "1.0.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -122,18 +122,18 @@
           "update_credit_account": {
             "type": "object",
             "required": [
-              "actions",
-              "token_id"
+              "account_id",
+              "actions"
             ],
             "properties": {
+              "account_id": {
+                "type": "string"
+              },
               "actions": {
                 "type": "array",
                 "items": {
                   "$ref": "#/definitions/Action"
                 }
-              },
-              "token_id": {
-                "type": "string"
               }
             }
           }
@@ -295,7 +295,7 @@
                 "type": "object",
                 "required": [
                   "debt_coin",
-                  "liquidatee_token_id",
+                  "liquidatee_account_id",
                   "request_coin_denom"
                 ],
                 "properties": {
@@ -307,7 +307,7 @@
                       }
                     ]
                   },
-                  "liquidatee_token_id": {
+                  "liquidatee_account_id": {
                     "description": "The credit account id of the one with a liquidation threshold health factor 1 or below",
                     "type": "string"
                   },
@@ -368,19 +368,19 @@
               "withdraw": {
                 "type": "object",
                 "required": [
+                  "account_id",
                   "coin",
-                  "recipient",
-                  "token_id"
+                  "recipient"
                 ],
                 "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
                   "coin": {
                     "$ref": "#/definitions/Coin"
                   },
                   "recipient": {
                     "$ref": "#/definitions/Addr"
-                  },
-                  "token_id": {
-                    "type": "string"
                   }
                 }
               }
@@ -397,15 +397,15 @@
               "borrow": {
                 "type": "object",
                 "required": [
-                  "coin",
-                  "token_id"
+                  "account_id",
+                  "coin"
                 ],
                 "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
                   "coin": {
                     "$ref": "#/definitions/Coin"
-                  },
-                  "token_id": {
-                    "type": "string"
                   }
                 }
               }
@@ -422,15 +422,15 @@
               "repay": {
                 "type": "object",
                 "required": [
-                  "coin",
-                  "token_id"
+                  "account_id",
+                  "coin"
                 ],
                 "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
                   "coin": {
                     "$ref": "#/definitions/Coin"
-                  },
-                  "token_id": {
-                    "type": "string"
                   }
                 }
               }
@@ -447,10 +447,10 @@
               "assert_below_max_l_t_v": {
                 "type": "object",
                 "required": [
-                  "token_id"
+                  "account_id"
                 ],
                 "properties": {
-                  "token_id": {
+                  "account_id": {
                     "type": "string"
                   }
                 }
@@ -468,19 +468,19 @@
               "vault_deposit": {
                 "type": "object",
                 "required": [
+                  "account_id",
                   "coins",
-                  "token_id",
                   "vault"
                 ],
                 "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
                   "coins": {
                     "type": "array",
                     "items": {
                       "$ref": "#/definitions/Coin"
                     }
-                  },
-                  "token_id": {
-                    "type": "string"
                   },
                   "vault": {
                     "$ref": "#/definitions/VaultBase_for_Addr"
@@ -500,11 +500,15 @@
               "update_vault_coin_balance": {
                 "type": "object",
                 "required": [
+                  "account_id",
                   "previous_total_balance",
-                  "token_id",
                   "vault"
                 ],
                 "properties": {
+                  "account_id": {
+                    "description": "Account that needs vault coin balance adjustment",
+                    "type": "string"
+                  },
                   "previous_total_balance": {
                     "description": "Total vault coin balance in Rover",
                     "allOf": [
@@ -512,10 +516,6 @@
                         "$ref": "#/definitions/Uint128"
                       }
                     ]
-                  },
-                  "token_id": {
-                    "description": "Account that needs vault coin balance adjustment",
-                    "type": "string"
                   },
                   "vault": {
                     "$ref": "#/definitions/VaultBase_for_Addr"
@@ -535,16 +535,16 @@
               "vault_withdraw": {
                 "type": "object",
                 "required": [
+                  "account_id",
                   "amount",
-                  "token_id",
                   "vault"
                 ],
                 "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
                   "amount": {
                     "$ref": "#/definitions/Uint128"
-                  },
-                  "token_id": {
-                    "type": "string"
                   },
                   "vault": {
                     "$ref": "#/definitions/VaultBase_for_Addr"
@@ -564,16 +564,16 @@
               "vault_force_withdraw": {
                 "type": "object",
                 "required": [
+                  "account_id",
                   "amount",
-                  "token_id",
                   "vault"
                 ],
                 "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
                   "amount": {
                     "$ref": "#/definitions/Uint128"
-                  },
-                  "token_id": {
-                    "type": "string"
                   },
                   "vault": {
                     "$ref": "#/definitions/VaultBase_for_Addr"
@@ -594,18 +594,18 @@
                 "type": "object",
                 "required": [
                   "debt_coin",
-                  "liquidatee_token_id",
-                  "liquidator_token_id",
+                  "liquidatee_account_id",
+                  "liquidator_account_id",
                   "request_coin_denom"
                 ],
                 "properties": {
                   "debt_coin": {
                     "$ref": "#/definitions/Coin"
                   },
-                  "liquidatee_token_id": {
+                  "liquidatee_account_id": {
                     "type": "string"
                   },
-                  "liquidator_token_id": {
+                  "liquidator_account_id": {
                     "type": "string"
                   },
                   "request_coin_denom": {
@@ -626,15 +626,15 @@
               "assert_health_factor_improved": {
                 "type": "object",
                 "required": [
-                  "previous_health_factor",
-                  "token_id"
+                  "account_id",
+                  "previous_health_factor"
                 ],
                 "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
                   "previous_health_factor": {
                     "$ref": "#/definitions/Decimal"
-                  },
-                  "token_id": {
-                    "type": "string"
                   }
                 }
               }
@@ -651,12 +651,15 @@
               "swap_exact_in": {
                 "type": "object",
                 "required": [
+                  "account_id",
                   "coin_in",
                   "denom_out",
-                  "slippage",
-                  "token_id"
+                  "slippage"
                 ],
                 "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
                   "coin_in": {
                     "$ref": "#/definitions/Coin"
                   },
@@ -665,9 +668,6 @@
                   },
                   "slippage": {
                     "$ref": "#/definitions/Decimal"
-                  },
-                  "token_id": {
-                    "type": "string"
                   }
                 }
               }
@@ -684,20 +684,20 @@
               "update_coin_balances": {
                 "type": "object",
                 "required": [
-                  "previous_balances",
-                  "token_id"
+                  "account_id",
+                  "previous_balances"
                 ],
                 "properties": {
+                  "account_id": {
+                    "description": "Account that needs coin balance adjustment",
+                    "type": "string"
+                  },
                   "previous_balances": {
                     "description": "Total balances for coins in Rover prior to withdraw",
                     "type": "array",
                     "items": {
                       "$ref": "#/definitions/Coin"
                     }
-                  },
-                  "token_id": {
-                    "description": "Account that needs coin balance adjustment",
-                    "type": "string"
                   }
                 }
               }
@@ -924,10 +924,10 @@
           "positions": {
             "type": "object",
             "required": [
-              "token_id"
+              "account_id"
             ],
             "properties": {
-              "token_id": {
+              "account_id": {
                 "type": "string"
               }
             },
@@ -946,10 +946,10 @@
           "health": {
             "type": "object",
             "required": [
-              "token_id"
+              "account_id"
             ],
             "properties": {
-              "token_id": {
+              "account_id": {
                 "type": "string"
               }
             },
@@ -959,7 +959,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Enumerate coin balances for all token positions; start_after accepts (token_id, denom)",
+        "description": "Enumerate coin balances for all token positions; start_after accepts (account_id, denom)",
         "type": "object",
         "required": [
           "all_coin_balances"
@@ -999,7 +999,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Enumerate debt shares for all token positions; start_after accepts (token_id, denom)",
+        "description": "Enumerate debt shares for all token positions; start_after accepts (account_id, denom)",
         "type": "object",
         "required": [
           "all_debt_shares"
@@ -1082,7 +1082,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Enumerate all vault positions; start_after accepts (token_id, addr)",
+        "description": "Enumerate all vault positions; start_after accepts (account_id, addr)",
         "type": "object",
         "required": [
           "all_vault_positions"
@@ -1198,18 +1198,18 @@
         "CoinBalanceResponseItem": {
           "type": "object",
           "required": [
+            "account_id",
             "amount",
-            "denom",
-            "token_id"
+            "denom"
           ],
           "properties": {
+            "account_id": {
+              "type": "string"
+            },
             "amount": {
               "$ref": "#/definitions/Uint128"
             },
             "denom": {
-              "type": "string"
-            },
-            "token_id": {
               "type": "string"
             }
           }
@@ -1231,19 +1231,19 @@
         "SharesResponseItem": {
           "type": "object",
           "required": [
+            "account_id",
             "denom",
-            "shares",
-            "token_id"
+            "shares"
           ],
           "properties": {
+            "account_id": {
+              "type": "string"
+            },
             "denom": {
               "type": "string"
             },
             "shares": {
               "$ref": "#/definitions/Uint128"
-            },
-            "token_id": {
-              "type": "string"
             }
           }
         },
@@ -1344,15 +1344,15 @@
         "VaultPositionResponseItem": {
           "type": "object",
           "required": [
+            "account_id",
             "addr",
-            "token_id",
             "vault_position"
           ],
           "properties": {
-            "addr": {
+            "account_id": {
               "type": "string"
             },
-            "token_id": {
+            "addr": {
               "type": "string"
             },
             "vault_position": {
@@ -1492,12 +1492,16 @@
       "title": "PositionsWithValueResponse",
       "type": "object",
       "required": [
+        "account_id",
         "coins",
         "debt",
-        "token_id",
         "vault_positions"
       ],
       "properties": {
+        "account_id": {
+          "description": "Unique NFT token id that represents the cross-margin account. The owner of this NFT, owns the account.",
+          "type": "string"
+        },
         "coins": {
           "description": "All coin balances value",
           "type": "array",
@@ -1511,10 +1515,6 @@
           "items": {
             "$ref": "#/definitions/DebtSharesValue"
           }
-        },
-        "token_id": {
-          "description": "Unique NFT token id that represents the cross-margin account. The owner of this NFT, owns the account.",
-          "type": "string"
         },
         "vault_positions": {
           "description": "All vault positions",

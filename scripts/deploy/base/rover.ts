@@ -52,7 +52,7 @@ export class Rover {
       [{ deposit: { amount, denom: this.config.baseDenom } }],
       [{ amount, denom: this.config.baseDenom }],
     )
-    const positions = await this.query.positions({ tokenId: this.accountId! })
+    const positions = await this.query.positions({ accountId: this.accountId! })
     assert.equal(positions.coins.length, 1)
     assert.equal(positions.coins[0].amount, amount)
     assert.equal(positions.coins[0].denom, this.config.baseDenom)
@@ -61,10 +61,10 @@ export class Rover {
 
   async withdraw() {
     const amount = this.config.withdrawAmount.toString()
-    const positionsBefore = await this.query.positions({ tokenId: this.accountId! })
+    const positionsBefore = await this.query.positions({ accountId: this.accountId! })
     const beforeWithdraw = parseFloat(positionsBefore.coins[0].amount)
     await this.updateCreditAccount([{ withdraw: { amount, denom: this.config.baseDenom } }])
-    const positionsAfter = await this.query.positions({ tokenId: this.accountId! })
+    const positionsAfter = await this.query.positions({ accountId: this.accountId! })
     const afterWithdraw = parseFloat(positionsAfter.coins[0].amount)
     assert.equal(beforeWithdraw - afterWithdraw, amount)
     printGreen(`Withdrew: ${amount} ${this.config.baseDenom}`)
@@ -73,7 +73,7 @@ export class Rover {
   async borrow() {
     const amount = this.config.borrowAmount.toString()
     await this.updateCreditAccount([{ borrow: { amount, denom: this.config.baseDenom } }])
-    const positions = await this.query.positions({ tokenId: this.accountId! })
+    const positions = await this.query.positions({ accountId: this.accountId! })
     assert.equal(positions.debt.length, 1)
     assert.equal(positions.debt[0].denom, this.config.baseDenom)
     printGreen(`Borrowed from RedBank: ${amount} ${this.config.baseDenom}`)
@@ -82,7 +82,7 @@ export class Rover {
   async repay() {
     const amount = this.config.repayAmount.toString()
     await this.updateCreditAccount([{ repay: { amount, denom: this.config.baseDenom } }])
-    const positions = await this.query.positions({ tokenId: this.accountId! })
+    const positions = await this.query.positions({ accountId: this.accountId! })
     printGreen(
       `Repaid to RedBank: ${amount} ${this.config.baseDenom}. Debt remaining: ${positions.debt[0].amount} ${positions.debt[0].denom}`,
     )
@@ -91,7 +91,7 @@ export class Rover {
   async swap() {
     const amount = this.config.swapAmount.toString()
     printBlue(`Swapping ${amount} ${this.config.baseDenom} for ${this.config.secondaryDenom}`)
-    const prevPositions = await this.query.positions({ tokenId: this.accountId! })
+    const prevPositions = await this.query.positions({ accountId: this.accountId! })
     printBlue(
       `Previous account balance: ${prevPositions.coins[0].amount} ${prevPositions.coins[0].denom}`,
     )
@@ -105,7 +105,7 @@ export class Rover {
       },
     ])
     printGreen(`Swap successful`)
-    const newPositions = await this.query.positions({ tokenId: this.accountId! })
+    const newPositions = await this.query.positions({ accountId: this.accountId! })
     printGreen(
       `New account balance: ${newPositions.coins[0].amount} ${newPositions.coins[0].denom}, ${newPositions.coins[1].amount} ${newPositions.coins[1].denom}`,
     )
@@ -121,7 +121,7 @@ export class Rover {
         },
       },
     ])
-    const positions = await this.query.positions({ tokenId: this.accountId! })
+    const positions = await this.query.positions({ accountId: this.accountId! })
     assert.equal(positions.vault_positions.length, 1)
     assert.equal(positions.vault_positions[0].addr, this.storage.addresses.mockVault)
     assert.equal(positions.vault_positions[0].position, this.config.baseDenom)
@@ -134,7 +134,7 @@ export class Rover {
 
   private async updateCreditAccount(actions: Action[], funds?: Coin[]) {
     await this.exec.updateCreditAccount(
-      { actions, tokenId: this.accountId! },
+      { actions, accountId: this.accountId! },
       'auto',
       undefined,
       funds,

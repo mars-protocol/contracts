@@ -26,17 +26,17 @@ pub enum QueryMsg {
     },
     /// All positions represented by token with value
     #[returns(PositionsWithValueResponse)]
-    Positions { token_id: String },
+    Positions { account_id: String },
     /// The health of the account represented by token
     #[returns(HealthResponse)]
-    Health { token_id: String },
-    /// Enumerate coin balances for all token positions; start_after accepts (token_id, denom)
+    Health { account_id: String },
+    /// Enumerate coin balances for all token positions; start_after accepts (account_id, denom)
     #[returns(Vec<CoinBalanceResponseItem>)]
     AllCoinBalances {
         start_after: Option<(String, String)>,
         limit: Option<u32>,
     },
-    /// Enumerate debt shares for all token positions; start_after accepts (token_id, denom)
+    /// Enumerate debt shares for all token positions; start_after accepts (account_id, denom)
     #[returns(Vec<SharesResponseItem>)]
     AllDebtShares {
         start_after: Option<(String, String)>,
@@ -51,7 +51,7 @@ pub enum QueryMsg {
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    /// Enumerate all vault positions; start_after accepts (token_id, addr)
+    /// Enumerate all vault positions; start_after accepts (account_id, addr)
     #[returns(Vec<VaultPositionResponseItem>)]
     AllVaultPositions {
         start_after: Option<(String, String)>,
@@ -71,7 +71,7 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct CoinBalanceResponseItem {
-    pub token_id: String,
+    pub account_id: String,
     pub denom: String,
     pub amount: Uint128,
 }
@@ -79,7 +79,7 @@ pub struct CoinBalanceResponseItem {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct SharesResponseItem {
-    pub token_id: String,
+    pub account_id: String,
     pub denom: String,
     pub shares: Uint128,
 }
@@ -117,7 +117,7 @@ pub struct CoinValue {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct Positions {
-    pub token_id: String,
+    pub account_id: String,
     pub coins: Vec<Coin>,
     pub debt: Vec<DebtShares>,
     pub vault_positions: Vec<VaultPositionWithAddr>,
@@ -126,7 +126,7 @@ pub struct Positions {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct VaultPositionResponseItem {
-    pub token_id: String,
+    pub account_id: String,
     pub addr: String,
     pub vault_position: VaultPosition,
 }
@@ -149,7 +149,7 @@ pub struct VaultPositionWithAddr {
 #[serde(rename_all = "snake_case")]
 pub struct PositionsWithValueResponse {
     /// Unique NFT token id that represents the cross-margin account. The owner of this NFT, owns the account.
-    pub token_id: String,
+    pub account_id: String,
     /// All coin balances value
     pub coins: Vec<CoinValue>,
     /// All debt positions with value

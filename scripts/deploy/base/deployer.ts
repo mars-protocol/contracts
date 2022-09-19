@@ -55,7 +55,7 @@ export class Deployer {
     const { contractAddress } = await this.cwClient.instantiate(
       this.deployerAddr,
       codeId,
-      msg,
+      msg as Record<string, unknown>,
       `mars-${name}`,
       'auto',
     )

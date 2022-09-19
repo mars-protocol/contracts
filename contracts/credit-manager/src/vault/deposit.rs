@@ -7,7 +7,6 @@ use rover::error::{ContractError, ContractResult};
 use rover::extensions::Stringify;
 use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg;
-use rover::NftTokenId;
 
 use crate::state::VAULT_POSITIONS;
 use crate::utils::{assert_coins_are_whitelisted, decrement_coin_balance};
@@ -16,7 +15,7 @@ use crate::vault::utils::assert_vault_is_whitelisted;
 pub fn deposit_into_vault(
     deps: DepsMut,
     rover_addr: &Addr,
-    token_id: NftTokenId,
+    account_id: &str,
     vault: Vault,
     coins: &[Coin],
 ) -> ContractResult<Response> {
@@ -27,7 +26,7 @@ pub fn deposit_into_vault(
 
     // Decrement token's coin balance amount
     coins.iter().try_for_each(|coin| -> ContractResult<_> {
-        decrement_coin_balance(deps.storage, token_id, coin)?;
+        decrement_coin_balance(deps.storage, account_id, coin)?;
         Ok(())
     })?;
 
@@ -37,7 +36,7 @@ pub fn deposit_into_vault(
         funds: vec![],
         msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateVaultCoinBalance {
             vault: vault.clone(),
-            token_id: token_id.to_string(),
+            account_id: account_id.to_string(),
             previous_total_balance: current_balance,
         }))?,
     });
@@ -51,7 +50,7 @@ pub fn deposit_into_vault(
 pub fn update_vault_coin_balance(
     deps: DepsMut,
     vault: Vault,
-    token_id: &str,
+    account_id: &str,
     previous_total_balance: Uint128,
     rover_addr: &Addr,
 ) -> ContractResult<Response> {
@@ -67,7 +66,7 @@ pub fn update_vault_coin_balance(
     // Increment token's vault position
     VAULT_POSITIONS.update(
         deps.storage,
-        (token_id, vault.address().clone()),
+        (account_id, vault.address().clone()),
         |position_opt| -> ContractResult<_> {
             let p = position_opt.unwrap_or_default();
             match vault_info.lockup {

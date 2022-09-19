@@ -3,7 +3,6 @@ use cosmwasm_std::{
 };
 
 use rover::error::ContractResult;
-use rover::NftTokenId;
 
 use crate::utils::{decrement_coin_balance, increment_coin_balance};
 
@@ -28,7 +27,7 @@ pub fn query_balances(deps: Deps, addr: &Addr, denoms: &[&str]) -> StdResult<Vec
 pub fn update_coin_balances(
     deps: DepsMut,
     env: Env,
-    token_id: NftTokenId,
+    account_id: &str,
     previous_balances: &[Coin],
 ) -> ContractResult<Response> {
     let mut response = Response::new();
@@ -39,7 +38,7 @@ pub fn update_coin_balances(
             let amount_to_reduce = prev.amount.checked_sub(curr.amount)?;
             decrement_coin_balance(
                 deps.storage,
-                token_id,
+                account_id,
                 &Coin {
                     denom: curr.denom.clone(),
                     amount: amount_to_reduce,
@@ -52,7 +51,7 @@ pub fn update_coin_balances(
             let amount_to_increment = curr.amount.checked_sub(prev.amount)?;
             increment_coin_balance(
                 deps.storage,
-                token_id,
+                account_id,
                 &Coin {
                     denom: curr.denom.clone(),
                     amount: amount_to_increment,

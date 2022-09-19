@@ -41,9 +41,10 @@ pub fn execute(
         ExecuteMsg::CreateCreditAccount {} => create_credit_account(deps, info.sender),
         ExecuteMsg::UpdateConfig { new_config } => update_config(deps, info, new_config),
         ExecuteMsg::Callback(callback) => execute_callback(deps, info, env, callback),
-        ExecuteMsg::UpdateCreditAccount { token_id, actions } => {
-            dispatch_actions(deps, env, info, &token_id, &actions)
-        }
+        ExecuteMsg::UpdateCreditAccount {
+            account_id,
+            actions,
+        } => dispatch_actions(deps, env, info, &account_id, &actions),
     }
 }
 
@@ -57,11 +58,11 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         QueryMsg::AllowedCoins { start_after, limit } => {
             to_binary(&query_allowed_coins(deps, start_after, limit)?)
         }
-        QueryMsg::Positions { token_id } => {
-            to_binary(&query_position_with_value(deps, &env, &token_id)?)
+        QueryMsg::Positions { account_id } => {
+            to_binary(&query_position_with_value(deps, &env, &account_id)?)
         }
-        QueryMsg::Health { token_id } => {
-            to_binary::<HealthResponse>(&Into::into(compute_health(deps, &env, &token_id)?))
+        QueryMsg::Health { account_id } => {
+            to_binary::<HealthResponse>(&Into::into(compute_health(deps, &env, &account_id)?))
         }
         QueryMsg::AllCoinBalances { start_after, limit } => {
             to_binary(&query_all_coin_balances(deps, start_after, limit)?)

@@ -1,6 +1,6 @@
 [package]
 name = "account-nft"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["larry_0x <larry@delphidigital.io>, grod220 <gabe.r@delphilabs.io>"]
 edition = "2021"
 license = "GPL-3.0-or-later"
@@ -15,8 +15,8 @@ library = []
 
 [dependencies]
 cw-storage-plus = "0.15"
-cw721 = "0.13"
-cw721-base = { version = "0.13", features = ["library"] }
+cw721 = "0.15"
+cw721-base = { version = "0.15", features = ["library"] }
 cosmwasm-schema = "1.1"
 cosmwasm-std = "1.1"
 schemars = "0.8"

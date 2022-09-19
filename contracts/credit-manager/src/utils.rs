@@ -24,10 +24,10 @@ pub fn assert_coins_are_whitelisted(
 
 pub fn increment_coin_balance(
     storage: &mut dyn Storage,
-    token_id: &str,
+    account_id: &str,
     coin: &Coin,
 ) -> ContractResult<Uint128> {
-    COIN_BALANCES.update(storage, (token_id, &coin.denom), |value_opt| {
+    COIN_BALANCES.update(storage, (account_id, &coin.denom), |value_opt| {
         value_opt
             .unwrap_or_else(Uint128::zero)
             .checked_add(coin.amount)
@@ -37,10 +37,10 @@ pub fn increment_coin_balance(
 
 pub fn decrement_coin_balance(
     storage: &mut dyn Storage,
-    token_id: &str,
+    account_id: &str,
     coin: &Coin,
 ) -> ContractResult<Uint128> {
-    let path = COIN_BALANCES.key((token_id, &coin.denom));
+    let path = COIN_BALANCES.key((account_id, &coin.denom));
     let value_opt = path.may_load(storage)?;
     let new_value = value_opt
         .unwrap_or_else(Uint128::zero)

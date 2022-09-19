@@ -1,5 +1,5 @@
 use cosmwasm_std::OverflowOperation::Sub;
-use cosmwasm_std::{Addr, Coin, OverflowError, Uint128};
+use cosmwasm_std::{coin, Addr, OverflowError, Uint128};
 
 use mock_vault::contract::STARTING_VAULT_SHARES;
 use rover::adapters::VaultBase;
@@ -18,11 +18,11 @@ fn test_only_owner_of_token_can_withdraw_from_vault() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().build().unwrap();
 
-    let token_id = mock.create_credit_account(&user).unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
 
     let bad_guy = Addr::unchecked("bad_guy");
     let res = mock.update_credit_account(
-        &token_id,
+        &account_id,
         &bad_guy,
         vec![VaultWithdraw {
             vault: VaultBase::new("some_vault".to_string()),
@@ -35,7 +35,7 @@ fn test_only_owner_of_token_can_withdraw_from_vault() {
         res,
         NotTokenOwner {
             user: bad_guy.into(),
-            token_id,
+            account_id,
         },
     )
 }
@@ -45,10 +45,10 @@ fn test_can_only_take_action_on_whitelisted_vaults() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().build().unwrap();
 
-    let token_id = mock.create_credit_account(&user).unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(
-        &token_id,
+        &account_id,
         &user,
         vec![VaultWithdraw {
             vault: VaultBase::new("not_allowed_vault".to_string()),
@@ -77,36 +77,30 @@ fn test_no_unlocked_vault_coins_to_withdraw() {
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![Coin::new(300u128, "uatom"), Coin::new(500u128, "uosmo")],
+            funds: vec![coin(300, "uatom"), coin(500, "uosmo")],
         })
         .build()
         .unwrap();
 
     let vault = mock.get_vault(&leverage_vault);
-    let token_id = mock.create_credit_account(&user).unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(
-        &token_id,
+        &account_id,
         &user,
         vec![
-            Deposit(Coin {
-                denom: uatom.denom,
-                amount: Uint128::from(200u128),
-            }),
-            Deposit(Coin {
-                denom: uosmo.denom,
-                amount: Uint128::from(200u128),
-            }),
+            Deposit(coin(200, uatom.denom)),
+            Deposit(coin(200, uosmo.denom)),
             VaultDeposit {
                 vault: vault.clone(),
-                coins: vec![Coin::new(100u128, "uatom"), Coin::new(100u128, "uosmo")],
+                coins: vec![coin(100, "uatom"), coin(100, "uosmo")],
             },
             VaultWithdraw {
                 vault,
                 amount: STARTING_VAULT_SHARES,
             },
         ],
-        &[Coin::new(200u128, "uatom"), Coin::new(200u128, "uosmo")],
+        &[coin(200, "uatom"), coin(200, "uosmo")],
     );
 
     assert_err(
@@ -134,12 +128,12 @@ fn test_force_withdraw_can_only_be_called_by_rover() {
         .unwrap();
 
     let vault = mock.get_vault(&leverage_vault);
-    let token_id = mock.create_credit_account(&user).unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.invoke_callback(
         &user.clone(),
         CallbackMsg::VaultForceWithdraw {
-            token_id,
+            account_id,
             vault: VaultBase::new(Addr::unchecked(vault.address().clone())),
             amount: STARTING_VAULT_SHARES,
         },
@@ -164,37 +158,31 @@ fn test_force_withdraw_breaks_lock() {
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![Coin::new(300u128, "uatom"), Coin::new(500u128, "uosmo")],
+            funds: vec![coin(300, "uatom"), coin(500, "uosmo")],
         })
         .build()
         .unwrap();
 
     let vault = mock.get_vault(&leverage_vault);
-    let token_id = mock.create_credit_account(&user).unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
 
     mock.update_credit_account(
-        &token_id,
+        &account_id,
         &user,
         vec![
-            Deposit(Coin {
-                denom: uatom.denom,
-                amount: Uint128::from(200u128),
-            }),
-            Deposit(Coin {
-                denom: uosmo.denom,
-                amount: Uint128::from(200u128),
-            }),
+            Deposit(coin(200, uatom.denom)),
+            Deposit(coin(200, uosmo.denom)),
             VaultDeposit {
                 vault: vault.clone(),
-                coins: vec![Coin::new(100u128, "uatom"), Coin::new(100u128, "uosmo")],
+                coins: vec![coin(100, "uatom"), coin(100, "uosmo")],
             },
         ],
-        &[Coin::new(200u128, "uatom"), Coin::new(200u128, "uosmo")],
+        &[coin(200, "uatom"), coin(200, "uosmo")],
     )
     .unwrap();
 
     // Assert token's position
-    let res = mock.query_position(&token_id);
+    let res = mock.query_position(&account_id);
     assert_eq!(res.vault_positions.len(), 1);
     let v = res.vault_positions.first().unwrap();
     assert_eq!(v.position.locked, STARTING_VAULT_SHARES);
@@ -202,7 +190,7 @@ fn test_force_withdraw_breaks_lock() {
     mock.invoke_callback(
         &mock.rover.clone(),
         CallbackMsg::VaultForceWithdraw {
-            token_id: token_id.clone(),
+            account_id: account_id.clone(),
             vault: VaultBase::new(Addr::unchecked(vault.address().clone())),
             amount: STARTING_VAULT_SHARES,
         },
@@ -210,7 +198,7 @@ fn test_force_withdraw_breaks_lock() {
     .unwrap();
 
     // Assert token's updated position
-    let res = mock.query_position(&token_id);
+    let res = mock.query_position(&account_id);
     assert_eq!(res.vault_positions.len(), 0);
     let atom = get_coin("uatom", &res.coins);
     assert_eq!(atom.amount, Uint128::from(200u128));
@@ -245,37 +233,31 @@ fn test_withdraw_with_unlocked_vault_coins() {
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![Coin::new(300u128, "uatom"), Coin::new(500u128, "uosmo")],
+            funds: vec![coin(300, "uatom"), coin(500, "uosmo")],
         })
         .build()
         .unwrap();
 
     let vault = mock.get_vault(&leverage_vault);
-    let token_id = mock.create_credit_account(&user).unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
 
     mock.update_credit_account(
-        &token_id,
+        &account_id,
         &user,
         vec![
-            Deposit(Coin {
-                denom: uatom.denom,
-                amount: Uint128::from(200u128),
-            }),
-            Deposit(Coin {
-                denom: uosmo.denom,
-                amount: Uint128::from(200u128),
-            }),
+            Deposit(coin(200, uatom.denom)),
+            Deposit(coin(200, uosmo.denom)),
             VaultDeposit {
                 vault: vault.clone(),
-                coins: vec![Coin::new(100u128, "uatom"), Coin::new(100u128, "uosmo")],
+                coins: vec![coin(100, "uatom"), coin(100, "uosmo")],
             },
         ],
-        &[Coin::new(200u128, "uatom"), Coin::new(200u128, "uosmo")],
+        &[coin(200, "uatom"), coin(200, "uosmo")],
     )
     .unwrap();
 
     // Assert token's position
-    let res = mock.query_position(&token_id);
+    let res = mock.query_position(&account_id);
     assert_eq!(res.vault_positions.len(), 1);
     let v = res.vault_positions.first().unwrap();
     assert_eq!(v.position.unlocked, STARTING_VAULT_SHARES);
@@ -295,7 +277,7 @@ fn test_withdraw_with_unlocked_vault_coins() {
     assert_eq!(STARTING_VAULT_SHARES, lp_balance.amount);
 
     mock.update_credit_account(
-        &token_id,
+        &account_id,
         &user,
         vec![VaultWithdraw {
             vault,
@@ -306,7 +288,7 @@ fn test_withdraw_with_unlocked_vault_coins() {
     .unwrap();
 
     // Assert token's updated position
-    let res = mock.query_position(&token_id);
+    let res = mock.query_position(&account_id);
     assert_eq!(res.vault_positions.len(), 0);
     let atom = get_coin("uatom", &res.coins);
     assert_eq!(atom.amount, Uint128::from(200u128));

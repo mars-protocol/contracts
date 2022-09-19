@@ -15,12 +15,12 @@ pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> 
 
 pub fn decrement_vault_position(
     storage: &mut dyn Storage,
-    token_id: &str,
+    account_id: &str,
     vault: &Vault,
     amount: Uint128,
     force: bool,
 ) -> ContractResult<VaultPosition> {
-    let path = VAULT_POSITIONS.key((token_id, vault.address().clone()));
+    let path = VAULT_POSITIONS.key((account_id, vault.address().clone()));
     let mut position = path.load(storage)?;
 
     // Force indicates that the vault is one with a required lockup that needs to be broken

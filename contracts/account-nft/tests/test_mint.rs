@@ -1,6 +1,6 @@
 use std::fmt::Error;
 
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Empty};
 use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg;
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
@@ -71,7 +71,7 @@ fn assert_owner_is_correct(app: &mut BasicApp, contract_addr: &Addr, user: &Addr
         .wrap()
         .query_wasm_smart(
             contract_addr,
-            &QueryMsg::OwnerOf {
+            &QueryMsg::<Empty>::OwnerOf {
                 token_id: token_id.to_string(),
                 include_expired: None,
             },

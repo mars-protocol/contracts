@@ -81,7 +81,7 @@ impl MockEnv {
 
     pub fn update_credit_account(
         &mut self,
-        token_id: &str,
+        account_id: &str,
         sender: &Addr,
         actions: Vec<Action>,
         send_funds: &[Coin],
@@ -90,7 +90,7 @@ impl MockEnv {
             sender.clone(),
             self.rover.clone(),
             &ExecuteMsg::UpdateCreditAccount {
-                token_id: token_id.to_string(),
+                account_id: account_id.to_string(),
                 actions,
             },
             send_funds,
@@ -141,10 +141,10 @@ impl MockEnv {
             &ExecuteMsg::CreateCreditAccount {},
             &[],
         )?;
-        Ok(self.get_token_id(res))
+        Ok(self.get_account_id(res))
     }
 
-    fn get_token_id(&mut self, res: AppResponse) -> String {
+    fn get_account_id(&mut self, res: AppResponse) -> String {
         let attr: Vec<&String> = res
             .events
             .iter()
@@ -182,25 +182,25 @@ impl MockEnv {
     // Queries
     //--------------------------------------------------------------------------------------------------
 
-    pub fn query_position(&self, token_id: &str) -> PositionsWithValueResponse {
+    pub fn query_position(&self, account_id: &str) -> PositionsWithValueResponse {
         self.app
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
                 &QueryMsg::Positions {
-                    token_id: token_id.to_string(),
+                    account_id: account_id.to_string(),
                 },
             )
             .unwrap()
     }
 
-    pub fn query_health(&self, token_id: &str) -> HealthResponse {
+    pub fn query_health(&self, account_id: &str) -> HealthResponse {
         self.app
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
                 &QueryMsg::Health {
-                    token_id: token_id.to_string(),
+                    account_id: account_id.to_string(),
                 },
             )
             .unwrap()
@@ -573,7 +573,7 @@ impl MockEnvBuilder {
                     amount: self
                         .get_allowed_coins()
                         .iter()
-                        .map(|info| info.to_coin(DEFAULT_RED_BANK_COIN_BALANCE))
+                        .map(|info| info.to_coin(DEFAULT_RED_BANK_COIN_BALANCE.u128()))
                         .collect(),
                 }))
                 .unwrap();

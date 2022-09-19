@@ -3,7 +3,6 @@ use cosmwasm_std::{to_binary, Coin, CosmosMsg, Decimal, DepsMut, Env, Response, 
 use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg;
-use rover::NftTokenId;
 
 use crate::state::SWAPPER;
 use crate::update_coin_balances::query_balances;
@@ -12,7 +11,7 @@ use crate::utils::{assert_coins_are_whitelisted, decrement_coin_balance};
 pub fn swap_exact_in(
     deps: DepsMut,
     env: Env,
-    token_id: NftTokenId,
+    account_id: &str,
     coin_in: Coin,
     denom_out: &str,
     slippage: Decimal,
@@ -23,7 +22,7 @@ pub fn swap_exact_in(
         return Err(ContractError::NoAmount);
     }
 
-    decrement_coin_balance(deps.storage, token_id, &coin_in)?;
+    decrement_coin_balance(deps.storage, account_id, &coin_in)?;
 
     // Updates coin balances for account after the swap has taken place
     let previous_balances = query_balances(deps.as_ref(), &env.contract.address, &[denom_out])?;
@@ -31,7 +30,7 @@ pub fn swap_exact_in(
         contract_addr: env.contract.address.to_string(),
         funds: vec![],
         msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateCoinBalances {
-            token_id: token_id.to_string(),
+            account_id: account_id.to_string(),
             previous_balances,
         }))?,
     });

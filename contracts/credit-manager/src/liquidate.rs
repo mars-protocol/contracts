@@ -5,7 +5,6 @@ use mars_health::health::Health;
 
 use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::CallbackMsg;
-use rover::NftTokenId;
 
 use crate::health::{compute_health, val_or_na};
 use crate::repay::current_debt_for_denom;
@@ -15,16 +14,16 @@ use crate::utils::{decrement_coin_balance, increment_coin_balance, IntoUint128};
 pub fn liquidate_coin(
     deps: DepsMut,
     env: Env,
-    liquidator_token_id: &str,
-    liquidatee_token_id: &str,
+    liquidator_account_id: &str,
+    liquidatee_account_id: &str,
     debt_coin: Coin,
     request_coin_denom: &str,
 ) -> ContractResult<Response> {
     // Assert the liquidatee's credit account is liquidatable
-    let health = compute_health(deps.as_ref(), &env, liquidatee_token_id)?;
+    let health = compute_health(deps.as_ref(), &env, liquidatee_account_id)?;
     if !health.is_liquidatable() {
         return Err(ContractError::NotLiquidatable {
-            token_id: liquidatee_token_id.to_string(),
+            account_id: liquidatee_account_id.to_string(),
             lqdt_health_factor: val_or_na(health.liquidation_health_factor),
         });
     }
@@ -32,7 +31,7 @@ pub fn liquidate_coin(
     let (debt, request) = calculate_liquidation_request(
         &deps,
         &env,
-        liquidatee_token_id,
+        liquidatee_account_id,
         &debt_coin,
         request_coin_denom,
         &health,
@@ -40,21 +39,21 @@ pub fn liquidate_coin(
 
     // Transfer debt coin from liquidator's coin balance to liquidatee
     // Will be used to pay off the debt via CallbackMsg::Repay {}
-    decrement_coin_balance(deps.storage, liquidator_token_id, &debt)?;
-    increment_coin_balance(deps.storage, liquidatee_token_id, &debt)?;
+    decrement_coin_balance(deps.storage, liquidator_account_id, &debt)?;
+    increment_coin_balance(deps.storage, liquidatee_account_id, &debt)?;
     let repay_msg = (CallbackMsg::Repay {
-        token_id: liquidatee_token_id.to_string(),
+        account_id: liquidatee_account_id.to_string(),
         coin: debt.clone(),
     })
     .into_cosmos_msg(&env.contract.address)?;
 
     // Transfer requested coin from liquidatee to liquidator
-    decrement_coin_balance(deps.storage, liquidatee_token_id, &request)?;
-    increment_coin_balance(deps.storage, liquidator_token_id, &request)?;
+    decrement_coin_balance(deps.storage, liquidatee_account_id, &request)?;
+    increment_coin_balance(deps.storage, liquidator_account_id, &request)?;
 
     // Ensure health factor has improved as a consequence of liquidation event
     let assert_healthier_msg = (CallbackMsg::AssertHealthFactorImproved {
-        token_id: liquidatee_token_id.to_string(),
+        account_id: liquidatee_account_id.to_string(),
         previous_health_factor: health.liquidation_health_factor.unwrap(), // safe unwrap given it was liquidatable
     })
     .into_cosmos_msg(&env.contract.address)?;
@@ -63,7 +62,7 @@ pub fn liquidate_coin(
         .add_message(repay_msg)
         .add_message(assert_healthier_msg)
         .add_attribute("action", "rover/credit_manager/liquidate")
-        .add_attribute("liquidatee_token_id", liquidatee_token_id)
+        .add_attribute("liquidatee_account_id", liquidatee_account_id)
         .add_attribute("debt_repaid_denom", debt.denom)
         .add_attribute("debt_repaid_amount", debt.amount)
         .add_attribute("request_coin_denom", request.denom)
@@ -78,14 +77,14 @@ pub fn liquidate_coin(
 fn calculate_liquidation_request(
     deps: &DepsMut,
     env: &Env,
-    liquidatee_token_id: &str,
+    liquidatee_account_id: &str,
     debt_coin: &Coin,
     request_coin: &str,
     health: &Health,
 ) -> ContractResult<(Coin, Coin)> {
     // Ensure debt repaid does not exceed liquidatee's total debt for denom
     let (total_debt_amount, _) =
-        current_debt_for_denom(deps.as_ref(), env, liquidatee_token_id, debt_coin)?;
+        current_debt_for_denom(deps.as_ref(), env, liquidatee_account_id, debt_coin)?;
 
     // Ensure debt amount does not exceed close factor % of the liquidatee's total debt value
     let close_factor = MAX_CLOSE_FACTOR.load(deps.storage)?;
@@ -97,7 +96,7 @@ fn calculate_liquidation_request(
     // Calculate the maximum debt possible to repay given liquidatee's request coin balance
     // FORMULA: debt amount = request value / (1 + liquidation bonus %) / debt price
     let liquidatee_balance = COIN_BALANCES
-        .load(deps.storage, (liquidatee_token_id, request_coin))
+        .load(deps.storage, (liquidatee_account_id, request_coin))
         .map_err(|_| ContractError::CoinNotAvailable(request_coin.to_string()))?;
     let request_res = oracle.query_price(&deps.querier, request_coin)?;
     let balance_dec = Decimal::from_atomics(liquidatee_balance, 0)?;
@@ -143,10 +142,10 @@ fn calculate_liquidation_request(
 pub fn assert_health_factor_improved(
     deps: Deps,
     env: Env,
-    token_id: NftTokenId,
+    account_id: &str,
     prev_hf: Decimal,
 ) -> ContractResult<Response> {
-    let health = compute_health(deps, &env, token_id)?;
+    let health = compute_health(deps, &env, account_id)?;
     if let Some(hf) = health.liquidation_health_factor {
         if prev_hf > hf {
             return Err(ContractError::HealthNotImproved {

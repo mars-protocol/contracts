@@ -12,7 +12,7 @@ use crate::msg::{ExecuteMsg, QueryMsg};
 use crate::query::query_proposed_new_owner;
 
 // Extending CW721 base contract
-pub type Parent<'a> = Cw721Contract<'a, Empty, Empty>;
+pub type Parent<'a> = Cw721Contract<'a, Empty, Empty, Empty, Empty>;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

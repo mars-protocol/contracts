@@ -1,6 +1,6 @@
 [package]
 name = "credit-manager"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["grod220 <gabe.r@delphilabs.io>, larry_0x <larry@delphidigital.io>"]
 edition = "2021"
 license = "GPL-3.0-or-later"
@@ -14,24 +14,24 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-account-nft = { version = "0.1", path = "../account-nft", features = ["library"] }
+account-nft = { version = "1.0", path = "../account-nft", features = ["library"] }
 mars-health = { version = "0.1", path = "../../../outposts/packages/health" }
 mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features = ["library"] }
 mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }
 mock-vault = { version = "1.0", path = "../../contracts/mock-vault", features = ["library"] }
-rover = { version = "0.1", path = "../../packages/rover" }
+rover = { version = "1.0", path = "../../packages/rover" }
 
 cosmwasm-schema = "1.1"
 cosmwasm-std = "1.1"
 cw2 = "0.15"
-cw721 = "0.13"
-cw721-base = { version = "0.13", features = ["library"] }
+cw721 = "0.15"
+cw721-base = { version = "0.15", features = ["library"] }
 cw-storage-plus = "0.15"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-swapper-mock = { version = "0.1", path = "../../contracts/swapper/mock", features = ["library"] }
+swapper-mock = { version = "1.0", path = "../../contracts/swapper/mock", features = ["library"] }
 
 anyhow = "1"
 cw-multi-test = "0.15"

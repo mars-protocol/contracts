@@ -144,10 +144,10 @@ pub fn dispatch_actions(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    token_id: &str,
+    account_id: &str,
     actions: &[Action],
 ) -> ContractResult<Response> {
-    assert_is_token_owner(&deps, &info.sender, token_id)?;
+    assert_is_token_owner(&deps, &info.sender, account_id)?;
 
     let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];
@@ -156,36 +156,42 @@ pub fn dispatch_actions(
     for action in actions {
         match action {
             Action::Deposit(coin) => {
-                response = deposit(deps.storage, response, token_id, coin, &mut received_coins)?;
+                response = deposit(
+                    deps.storage,
+                    response,
+                    account_id,
+                    coin,
+                    &mut received_coins,
+                )?;
             }
             Action::Withdraw(coin) => callbacks.push(CallbackMsg::Withdraw {
-                token_id: token_id.to_string(),
+                account_id: account_id.to_string(),
                 coin: coin.clone(),
                 recipient: info.sender.clone(),
             }),
             Action::Borrow(coin) => callbacks.push(CallbackMsg::Borrow {
-                token_id: token_id.to_string(),
+                account_id: account_id.to_string(),
                 coin: coin.clone(),
             }),
             Action::Repay(coin) => callbacks.push(CallbackMsg::Repay {
-                token_id: token_id.to_string(),
+                account_id: account_id.to_string(),
                 coin: coin.clone(),
             }),
             Action::VaultDeposit {
                 vault,
                 coins: assets,
             } => callbacks.push(CallbackMsg::VaultDeposit {
-                token_id: token_id.to_string(),
+                account_id: account_id.to_string(),
                 vault: vault.check(deps.api)?,
                 coins: assets.clone(),
             }),
             Action::LiquidateCoin {
-                liquidatee_token_id,
+                liquidatee_account_id,
                 debt_coin,
                 request_coin_denom,
             } => callbacks.push(CallbackMsg::LiquidateCoin {
-                liquidator_token_id: token_id.to_string(),
-                liquidatee_token_id: liquidatee_token_id.to_string(),
+                liquidator_account_id: account_id.to_string(),
+                liquidatee_account_id: liquidatee_account_id.to_string(),
                 debt_coin: debt_coin.clone(),
                 request_coin_denom: request_coin_denom.clone(),
             }),
@@ -194,13 +200,13 @@ pub fn dispatch_actions(
                 denom_out,
                 slippage,
             } => callbacks.push(CallbackMsg::SwapExactIn {
-                token_id: token_id.to_string(),
+                account_id: account_id.to_string(),
                 coin_in: coin_in.clone(),
                 denom_out: denom_out.to_string(),
                 slippage: *slippage,
             }),
             Action::VaultWithdraw { vault, amount } => callbacks.push(CallbackMsg::VaultWithdraw {
-                token_id: token_id.to_string(),
+                account_id: account_id.to_string(),
                 vault: vault.check(deps.api)?,
                 amount: *amount,
             }),
@@ -215,7 +221,7 @@ pub fn dispatch_actions(
 
     // after user selected actions, we assert LTV is healthy; if not, throw error and revert all actions
     callbacks.extend([CallbackMsg::AssertBelowMaxLTV {
-        token_id: token_id.to_string(),
+        account_id: account_id.to_string(),
     }]);
 
     let callback_msgs = callbacks
@@ -239,77 +245,77 @@ pub fn execute_callback(
     }
     match callback {
         CallbackMsg::Withdraw {
-            token_id,
+            account_id,
             coin,
             recipient,
-        } => withdraw(deps, &token_id, coin, recipient),
-        CallbackMsg::Borrow { coin, token_id } => borrow(deps, env, &token_id, coin),
-        CallbackMsg::Repay { token_id, coin } => repay(deps, env, &token_id, coin),
-        CallbackMsg::AssertBelowMaxLTV { token_id } => {
-            assert_below_max_ltv(deps.as_ref(), env, &token_id)
+        } => withdraw(deps, &account_id, coin, recipient),
+        CallbackMsg::Borrow { coin, account_id } => borrow(deps, env, &account_id, coin),
+        CallbackMsg::Repay { account_id, coin } => repay(deps, env, &account_id, coin),
+        CallbackMsg::AssertBelowMaxLTV { account_id } => {
+            assert_below_max_ltv(deps.as_ref(), env, &account_id)
         }
         CallbackMsg::VaultDeposit {
-            token_id,
+            account_id,
             vault,
             coins,
-        } => deposit_into_vault(deps, &env.contract.address, &token_id, vault, &coins),
+        } => deposit_into_vault(deps, &env.contract.address, &account_id, vault, &coins),
         CallbackMsg::UpdateVaultCoinBalance {
             vault,
-            token_id,
+            account_id,
             previous_total_balance,
         } => update_vault_coin_balance(
             deps,
             vault,
-            &token_id,
+            &account_id,
             previous_total_balance,
             &env.contract.address,
         ),
         CallbackMsg::LiquidateCoin {
-            liquidator_token_id,
-            liquidatee_token_id,
+            liquidator_account_id,
+            liquidatee_account_id,
             debt_coin,
             request_coin_denom,
         } => liquidate_coin(
             deps,
             env,
-            &liquidator_token_id,
-            &liquidatee_token_id,
+            &liquidator_account_id,
+            &liquidatee_account_id,
             debt_coin,
             &request_coin_denom,
         ),
         CallbackMsg::AssertHealthFactorImproved {
-            token_id,
+            account_id,
             previous_health_factor,
-        } => assert_health_factor_improved(deps.as_ref(), env, &token_id, previous_health_factor),
+        } => assert_health_factor_improved(deps.as_ref(), env, &account_id, previous_health_factor),
         CallbackMsg::SwapExactIn {
-            token_id,
+            account_id,
             coin_in,
             denom_out,
             slippage,
-        } => swap_exact_in(deps, env, &token_id, coin_in, &denom_out, slippage),
+        } => swap_exact_in(deps, env, &account_id, coin_in, &denom_out, slippage),
         CallbackMsg::UpdateCoinBalances {
-            token_id,
+            account_id,
             previous_balances,
-        } => update_coin_balances(deps, env, &token_id, &previous_balances),
+        } => update_coin_balances(deps, env, &account_id, &previous_balances),
         CallbackMsg::VaultWithdraw {
-            token_id,
+            account_id,
             vault,
             amount,
-        } => withdraw_from_vault(deps, env, &token_id, vault, amount, false),
+        } => withdraw_from_vault(deps, env, &account_id, vault, amount, false),
         CallbackMsg::VaultForceWithdraw {
-            token_id,
+            account_id,
             vault,
             amount,
-        } => withdraw_from_vault(deps, env, &token_id, vault, amount, true),
+        } => withdraw_from_vault(deps, env, &account_id, vault, amount, true),
     }
 }
 
-pub fn assert_is_token_owner(deps: &DepsMut, user: &Addr, token_id: &str) -> ContractResult<()> {
+pub fn assert_is_token_owner(deps: &DepsMut, user: &Addr, account_id: &str) -> ContractResult<()> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
     let owner_res: OwnerOfResponse = deps.querier.query_wasm_smart(
         contract_addr,
-        &QueryMsg::OwnerOf {
-            token_id: token_id.to_string(),
+        &QueryMsg::<Empty>::OwnerOf {
+            token_id: account_id.to_string(),
             include_expired: None,
         },
     )?;
@@ -317,7 +323,7 @@ pub fn assert_is_token_owner(deps: &DepsMut, user: &Addr, token_id: &str) -> Con
     if user != &owner_res.owner {
         return Err(ContractError::NotTokenOwner {
             user: user.to_string(),
-            token_id: token_id.to_string(),
+            account_id: account_id.to_string(),
         });
     }
 

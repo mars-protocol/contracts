@@ -15,7 +15,7 @@ pub enum ExecuteMsg {
     CreateCreditAccount {},
     /// Update user's position on their credit account
     UpdateCreditAccount {
-        token_id: String,
+        account_id: String,
         actions: Vec<Action>,
     },
 
@@ -60,7 +60,7 @@ pub enum Action {
     /// - The value of the debt repaid exceeds the maximum close factor %
     LiquidateCoin {
         /// The credit account id of the one with a liquidation threshold health factor 1 or below
-        liquidatee_token_id: String,
+        liquidatee_account_id: String,
         /// The coin debt that the liquidator wishes to pay back on behalf of the liquidatee.
         /// The liquidator must already have these assets in their credit account.
         debt_coin: Coin,
@@ -82,22 +82,22 @@ pub enum CallbackMsg {
     /// Withdraw specified amount of coin from credit account;
     /// Decrement the token's asset amount;
     Withdraw {
-        token_id: String,
+        account_id: String,
         coin: Coin,
         recipient: Addr,
     },
     /// Borrow specified amount of coin from Red Bank;
     /// Increase the token's coin amount and debt shares;
-    Borrow { token_id: String, coin: Coin },
+    Borrow { account_id: String, coin: Coin },
     /// Repay coin of specified amount back to Red Bank;
     /// Decrement the token's coin amount and debt shares;
-    Repay { token_id: String, coin: Coin },
+    Repay { account_id: String, coin: Coin },
     /// Calculate the account's max loan-to-value health factor. If above 1,
     /// emits a `position_changed` event. If 1 or below, raises an error.
-    AssertBelowMaxLTV { token_id: String },
+    AssertBelowMaxLTV { account_id: String },
     /// Adds list of coins to a vault strategy
     VaultDeposit {
-        token_id: String,
+        account_id: String,
         vault: Vault,
         coins: Vec<Coin>,
     },
@@ -105,38 +105,38 @@ pub enum CallbackMsg {
     UpdateVaultCoinBalance {
         vault: Vault,
         /// Account that needs vault coin balance adjustment
-        token_id: String,
+        account_id: String,
         /// Total vault coin balance in Rover
         previous_total_balance: Uint128,
     },
     /// Exchanges vault LP shares for assets
     VaultWithdraw {
-        token_id: String,
+        account_id: String,
         vault: Vault,
         amount: Uint128,
     },
     /// A privileged action only to be used by Rover. Same as `VaultWithdraw` except it bypasses any lockup period
     /// restrictions on the vault. Used only in the case position is unhealthy and requires immediate liquidation.
     VaultForceWithdraw {
-        token_id: String,
+        account_id: String,
         vault: Vault,
         amount: Uint128,
     },
     /// Pay back debts of a liquidatable rover account for a bonus
     LiquidateCoin {
-        liquidator_token_id: String,
-        liquidatee_token_id: String,
+        liquidator_account_id: String,
+        liquidatee_account_id: String,
         debt_coin: Coin,
         request_coin_denom: String,
     },
     /// Determine health factor improved as a consequence of liquidation event
     AssertHealthFactorImproved {
-        token_id: String,
+        account_id: String,
         previous_health_factor: Decimal,
     },
     /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
     SwapExactIn {
-        token_id: String,
+        account_id: String,
         coin_in: Coin,
         denom_out: String,
         slippage: Decimal,
@@ -144,7 +144,7 @@ pub enum CallbackMsg {
     /// Used to update the coin balance of account after an async action
     UpdateCoinBalances {
         /// Account that needs coin balance adjustment
-        token_id: String,
+        account_id: String,
         /// Total balances for coins in Rover prior to withdraw
         previous_balances: Vec<Coin>,
     },

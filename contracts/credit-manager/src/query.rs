@@ -8,7 +8,6 @@ use rover::msg::query::{
     PositionsWithValueResponse, SharesResponseItem, VaultPositionResponseItem,
     VaultPositionWithAddr, VaultWithBalance,
 };
-use rover::{Denom, NftTokenId};
 
 use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, COIN_BALANCES, DEBT_SHARES, MAX_CLOSE_FACTOR,
@@ -33,26 +32,26 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     })
 }
 
-pub fn query_position(deps: Deps, token_id: NftTokenId) -> ContractResult<Positions> {
+pub fn query_position(deps: Deps, account_id: &str) -> ContractResult<Positions> {
     Ok(Positions {
-        token_id: token_id.to_string(),
-        coins: query_coin_balances(deps, token_id)?,
-        debt: query_debt_shares(deps, token_id)?,
-        vault_positions: get_vault_positions(deps, token_id)?,
+        account_id: account_id.to_string(),
+        coins: query_coin_balances(deps, account_id)?,
+        debt: query_debt_shares(deps, account_id)?,
+        vault_positions: get_vault_positions(deps, account_id)?,
     })
 }
 
 pub fn query_position_with_value(
     deps: Deps,
     env: &Env,
-    token_id: &str,
+    account_id: &str,
 ) -> ContractResult<PositionsWithValueResponse> {
     let Positions {
-        token_id,
+        account_id,
         coins,
         debt,
         vault_positions,
-    } = query_position(deps, token_id)?;
+    } = query_position(deps, account_id)?;
 
     let coin_balances_value = coins
         .iter()
@@ -76,7 +75,7 @@ pub fn query_position_with_value(
         .collect::<ContractResult<Vec<_>>>()?;
 
     Ok(PositionsWithValueResponse {
-        token_id,
+        account_id,
         coins: coin_balances_value,
         debt: debt_with_values,
         vault_positions, // TODO: add vault values here
@@ -90,7 +89,7 @@ pub fn query_all_coin_balances(
 ) -> StdResult<Vec<CoinBalanceResponseItem>> {
     let start = start_after
         .as_ref()
-        .map(|(token_id, denom)| Bound::exclusive((token_id.as_str(), denom.as_str())));
+        .map(|(account_id, denom)| Bound::exclusive((account_id.as_str(), denom.as_str())));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
     Ok(COIN_BALANCES
@@ -98,17 +97,17 @@ pub fn query_all_coin_balances(
         .take(limit)
         .collect::<StdResult<Vec<_>>>()?
         .iter()
-        .map(|((token_id, denom), amount)| CoinBalanceResponseItem {
-            token_id: token_id.to_string(),
+        .map(|((account_id, denom), amount)| CoinBalanceResponseItem {
+            account_id: account_id.to_string(),
             denom: denom.to_string(),
             amount: *amount,
         })
         .collect())
 }
 
-fn query_debt_shares(deps: Deps, token_id: NftTokenId) -> ContractResult<Vec<DebtShares>> {
+fn query_debt_shares(deps: Deps, account_id: &str) -> ContractResult<Vec<DebtShares>> {
     DEBT_SHARES
-        .prefix(token_id)
+        .prefix(account_id)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|res| {
             let (denom, shares) = res?;
@@ -117,9 +116,9 @@ fn query_debt_shares(deps: Deps, token_id: NftTokenId) -> ContractResult<Vec<Deb
         .collect()
 }
 
-fn query_coin_balances(deps: Deps, token_id: &str) -> ContractResult<Vec<Coin>> {
+fn query_coin_balances(deps: Deps, account_id: &str) -> ContractResult<Vec<Coin>> {
     COIN_BALANCES
-        .prefix(token_id)
+        .prefix(account_id)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|item| {
             let (denom, amount) = item?;
@@ -135,7 +134,7 @@ pub fn query_all_debt_shares(
 ) -> StdResult<Vec<SharesResponseItem>> {
     let start = start_after
         .as_ref()
-        .map(|(token_id, denom)| Bound::exclusive((token_id.as_str(), denom.as_str())));
+        .map(|(account_id, denom)| Bound::exclusive((account_id.as_str(), denom.as_str())));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
     Ok(DEBT_SHARES
@@ -143,8 +142,8 @@ pub fn query_all_debt_shares(
         .take(limit)
         .collect::<StdResult<Vec<_>>>()?
         .iter()
-        .map(|((token_id, denom), shares)| SharesResponseItem {
-            token_id: token_id.to_string(),
+        .map(|((account_id, denom), shares)| SharesResponseItem {
+            account_id: account_id.to_string(),
             denom: denom.to_string(),
             shares: *shares,
         })
@@ -179,12 +178,9 @@ pub fn query_allowed_vaults(
         .collect()
 }
 
-fn get_vault_positions(
-    deps: Deps,
-    token_id: NftTokenId,
-) -> ContractResult<Vec<VaultPositionWithAddr>> {
+fn get_vault_positions(deps: Deps, account_id: &str) -> ContractResult<Vec<VaultPositionWithAddr>> {
     VAULT_POSITIONS
-        .prefix(token_id)
+        .prefix(account_id)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|res| {
             let (a, p) = res?;
@@ -205,9 +201,9 @@ pub fn query_all_vault_positions(
     limit: Option<u32>,
 ) -> StdResult<Vec<VaultPositionResponseItem>> {
     let start = match &start_after {
-        Some((token_id, unchecked)) => {
+        Some((account_id, unchecked)) => {
             let addr = deps.api.addr_validate(unchecked)?;
-            Some(Bound::exclusive((token_id.as_str(), addr)))
+            Some(Bound::exclusive((account_id.as_str(), addr)))
         }
         None => None,
     };
@@ -220,8 +216,8 @@ pub fn query_all_vault_positions(
         .collect::<StdResult<Vec<_>>>()?
         .iter()
         .map(
-            |((token_id, addr), vault_position)| VaultPositionResponseItem {
-                token_id: token_id.clone(),
+            |((account_id, addr), vault_position)| VaultPositionResponseItem {
+                account_id: account_id.clone(),
                 addr: addr.to_string(),
                 vault_position: vault_position.clone(),
             },
@@ -248,7 +244,7 @@ pub fn query_allowed_coins(
         .collect::<StdResult<Vec<_>>>()
 }
 
-pub fn query_total_debt_shares(deps: Deps, denom: Denom) -> StdResult<DebtShares> {
+pub fn query_total_debt_shares(deps: Deps, denom: &str) -> StdResult<DebtShares> {
     let shares = TOTAL_DEBT_SHARES.load(deps.storage, denom)?;
     Ok(DebtShares {
         denom: denom.to_string(),

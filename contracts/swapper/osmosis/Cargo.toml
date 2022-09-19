@@ -1,6 +1,6 @@
 [package]
 name = "swapper-osmosis"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["grod220 <gabe.r@delphilabs.io>"]
 edition = "2021"
 license = "GPL-3.0-or-later"
@@ -14,8 +14,8 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-rover = { version = "0.1", path = "../../../packages/rover" }
-swapper-base = { path = "../base", version = "0.1" }
+rover = { version = "1.0", path = "../../../packages/rover" }
+swapper-base = { path = "../base", version = "1.0" }
 
 cosmwasm-std = "1.1"
 cw-storage-plus = "0.15"

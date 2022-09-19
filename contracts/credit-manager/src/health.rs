@@ -2,14 +2,13 @@ use cosmwasm_std::{Decimal, Deps, Env, Event, Response};
 use mars_health::health::Health;
 
 use rover::error::{ContractError, ContractResult};
-use rover::NftTokenId;
 
 use crate::query::query_position;
 use crate::state::{ORACLE, RED_BANK};
 use crate::utils::debt_shares_to_amount;
 
-pub fn compute_health(deps: Deps, env: &Env, token_id: NftTokenId) -> ContractResult<Health> {
-    let res = query_position(deps, token_id)?;
+pub fn compute_health(deps: Deps, env: &Env, account_id: &str) -> ContractResult<Health> {
+    let res = query_position(deps, account_id)?;
     let debt_amounts = res
         .debt
         .iter()
@@ -29,16 +28,12 @@ pub fn compute_health(deps: Deps, env: &Env, token_id: NftTokenId) -> ContractRe
     Ok(health)
 }
 
-pub fn assert_below_max_ltv(
-    deps: Deps,
-    env: Env,
-    token_id: NftTokenId,
-) -> ContractResult<Response> {
-    let health = compute_health(deps, &env, token_id)?;
+pub fn assert_below_max_ltv(deps: Deps, env: Env, account_id: &str) -> ContractResult<Response> {
+    let health = compute_health(deps, &env, account_id)?;
 
     if health.is_above_max_ltv() {
         return Err(ContractError::AboveMaxLTV {
-            token_id: token_id.to_string(),
+            account_id: account_id.to_string(),
             max_ltv_health_factor: val_or_na(health.max_ltv_health_factor),
         });
     }
@@ -46,7 +41,7 @@ pub fn assert_below_max_ltv(
     let event = Event::new("position_changed")
         .add_attribute("timestamp", env.block.time.seconds().to_string())
         .add_attribute("height", env.block.height.to_string())
-        .add_attribute("token_id", token_id)
+        .add_attribute("account_id", account_id)
         .add_attribute("assets_value", health.total_collateral_value.to_string())
         .add_attribute("debts_value", health.total_debt_value.to_string())
         .add_attribute(

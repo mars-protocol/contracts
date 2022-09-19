@@ -1,6 +1,6 @@
 [package]
 name = "rover"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["larry_0x <larry@delphidigital.io>", "Gabe R. <gabe.r@delphilabs.io>"]
 edition = "2021"
 license = "GPL-3.0-or-later"

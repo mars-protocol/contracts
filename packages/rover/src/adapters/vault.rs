@@ -9,7 +9,6 @@ use crate::adapters::Oracle;
 use crate::error::ContractResult;
 use crate::extensions::Stringify;
 use crate::msg::vault::{ExecuteMsg, QueryMsg, VaultInfo};
-use crate::Shares;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, Default)]
 #[serde(rename_all = "snake_case")]
@@ -125,7 +124,7 @@ impl Vault {
     pub fn query_redeem_preview(
         &self,
         querier: &QuerierWrapper,
-        shares: Shares,
+        shares: Uint128,
     ) -> StdResult<Vec<Coin>> {
         let response: Vec<Coin> = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: self.0.to_string(),

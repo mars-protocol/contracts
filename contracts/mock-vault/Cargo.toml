@@ -14,7 +14,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-rover = { version = "0.1", path = "../../packages/rover" }
+rover = { version = "1.0", path = "../../packages/rover" }
 
 cosmwasm-schema = "1.1"
 cosmwasm-std = "1.1"

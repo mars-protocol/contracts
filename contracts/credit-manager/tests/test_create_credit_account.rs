@@ -1,5 +1,5 @@
 use crate::helpers::MockEnv;
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Empty};
 use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg as NftQueryMsg;
 
@@ -33,7 +33,7 @@ fn test_create_credit_account_success() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let user = Addr::unchecked("user");
-    let token_id = mock.create_credit_account(&user).unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
 
     // Double checking ownership by querying NFT account-nft for correct owner
     let config = mock.query_config();
@@ -43,8 +43,8 @@ fn test_create_credit_account_success() {
         .wrap()
         .query_wasm_smart(
             config.account_nft.unwrap(),
-            &NftQueryMsg::OwnerOf {
-                token_id,
+            &NftQueryMsg::<Empty>::OwnerOf {
+                token_id: account_id,
                 include_expired: None,
             },
         )

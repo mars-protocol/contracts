@@ -12,7 +12,7 @@ pub static DEFAULT_DEBT_SHARES_PER_COIN_BORROWED: Uint128 = Uint128::new(1_000_0
 /// else, get debt ownership % and multiply by total existing shares
 ///
 /// increment total debt shares, token debt shares, and asset amount
-pub fn borrow(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractResult<Response> {
+pub fn borrow(deps: DepsMut, env: Env, account_id: &str, coin: Coin) -> ContractResult<Response> {
     if coin.amount.is_zero() {
         return Err(ContractError::NoAmount);
     }
@@ -39,14 +39,14 @@ pub fn borrow(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractRe
             .map_err(ContractError::Overflow)
     })?;
 
-    DEBT_SHARES.update(deps.storage, (token_id, &coin.denom), |shares| {
+    DEBT_SHARES.update(deps.storage, (account_id, &coin.denom), |shares| {
         shares
             .unwrap_or_else(Uint128::zero)
             .checked_add(debt_shares_to_add)
             .map_err(ContractError::Overflow)
     })?;
 
-    increment_coin_balance(deps.storage, token_id, &coin)?;
+    increment_coin_balance(deps.storage, account_id, &coin)?;
 
     Ok(Response::new()
         .add_message(red_bank.borrow_msg(&coin)?)

@@ -3,12 +3,11 @@ use std::cmp::min;
 use cosmwasm_std::{Coin, Deps, DepsMut, Env, Response, Uint128};
 
 use rover::error::{ContractError, ContractResult};
-use rover::Shares;
 
 use crate::state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES};
 use crate::utils::{assert_coin_is_whitelisted, debt_shares_to_amount, decrement_coin_balance};
 
-pub fn repay(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractResult<Response> {
+pub fn repay(deps: DepsMut, env: Env, account_id: &str, coin: Coin) -> ContractResult<Response> {
     if coin.amount.is_zero() {
         return Err(ContractError::NoAmount);
     }
@@ -16,7 +15,8 @@ pub fn repay(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractRes
     assert_coin_is_whitelisted(deps.storage, &coin.denom)?;
 
     // Ensure repayment does not exceed max debt on account
-    let (debt_amount, debt_shares) = current_debt_for_denom(deps.as_ref(), &env, token_id, &coin)?;
+    let (debt_amount, debt_shares) =
+        current_debt_for_denom(deps.as_ref(), &env, account_id, &coin)?;
     let amount_to_repay = min(debt_amount, coin.amount);
     let shares_to_repay = debt_amount_to_shares(
         deps.as_ref(),
@@ -29,11 +29,11 @@ pub fn repay(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractRes
 
     // Decrement token's debt position
     if amount_to_repay == debt_amount {
-        DEBT_SHARES.remove(deps.storage, (token_id, &coin.denom));
+        DEBT_SHARES.remove(deps.storage, (account_id, &coin.denom));
     } else {
         DEBT_SHARES.save(
             deps.storage,
-            (token_id, &coin.denom),
+            (account_id, &coin.denom),
             &debt_shares.checked_sub(shares_to_repay)?,
         )?;
     }
@@ -48,7 +48,7 @@ pub fn repay(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractRes
 
     decrement_coin_balance(
         deps.storage,
-        token_id,
+        account_id,
         &Coin {
             denom: coin.denom.clone(),
             amount: amount_to_repay,
@@ -68,7 +68,7 @@ pub fn repay(deps: DepsMut, env: Env, token_id: &str, coin: Coin) -> ContractRes
         .add_attribute("coins_repaid", amount_to_repay))
 }
 
-fn debt_amount_to_shares(deps: Deps, env: &Env, coin: &Coin) -> ContractResult<Shares> {
+fn debt_amount_to_shares(deps: Deps, env: &Env, coin: &Coin) -> ContractResult<Uint128> {
     let red_bank = RED_BANK.load(deps.storage)?;
     let total_debt_shares = TOTAL_DEBT_SHARES.load(deps.storage, &coin.denom)?;
     let total_debt_amount =
@@ -81,11 +81,11 @@ fn debt_amount_to_shares(deps: Deps, env: &Env, coin: &Coin) -> ContractResult<S
 pub fn current_debt_for_denom(
     deps: Deps,
     env: &Env,
-    token_id: &str,
+    account_id: &str,
     coin: &Coin,
-) -> ContractResult<(Uint128, Shares)> {
+) -> ContractResult<(Uint128, Uint128)> {
     let debt_shares = DEBT_SHARES
-        .load(deps.storage, (token_id, &coin.denom))
+        .load(deps.storage, (account_id, &coin.denom))
         .map_err(|_| ContractError::NoDebt)?;
     let coin = debt_shares_to_amount(deps, &env.contract.address, &coin.denom, debt_shares)?;
     Ok((coin.amount, debt_shares))

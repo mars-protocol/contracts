@@ -1,6 +1,6 @@
 [package]
 name = "swapper-base"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["grod220 <gabe.r@delphilabs.io>"]
 edition = "2021"
 license = "GPL-3.0-or-later"
@@ -14,7 +14,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-rover = { version = "0.1", path = "../../../packages/rover" }
+rover = { version = "1.0", path = "../../../packages/rover" }
 
 cosmwasm-schema = "1.1"
 cosmwasm-std = "1.1"

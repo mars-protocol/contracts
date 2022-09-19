@@ -8,7 +8,7 @@ use crate::utils::{assert_coin_is_whitelisted, increment_coin_balance};
 pub fn deposit(
     storage: &mut dyn Storage,
     response: Response,
-    nft_token_id: &str,
+    account_id: &str,
     coin: &Coin,
     received_coins: &mut Coins,
 ) -> ContractResult<Response> {
@@ -22,7 +22,7 @@ pub fn deposit(
 
     received_coins.deduct(coin)?;
 
-    increment_coin_balance(storage, nft_token_id, coin)?;
+    increment_coin_balance(storage, account_id, coin)?;
 
     Ok(response
         .add_attribute("action", "rover/credit_manager/callback/deposit")

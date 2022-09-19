@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::StdError;
+use cosmwasm_std::{Empty, StdError};
 use cw721_base::QueryMsg as ParentQueryMsg;
 
 #[cw_serde]
@@ -92,10 +92,10 @@ pub enum QueryMsg {
     Minter {},
 }
 
-impl TryInto<ParentQueryMsg> for QueryMsg {
+impl TryInto<ParentQueryMsg<Empty>> for QueryMsg {
     type Error = StdError;
 
-    fn try_into(self) -> Result<ParentQueryMsg, Self::Error> {
+    fn try_into(self) -> Result<ParentQueryMsg<Empty>, Self::Error> {
         match self {
             QueryMsg::OwnerOf {
                 token_id,

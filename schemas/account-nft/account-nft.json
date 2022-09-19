@@ -1,6 +1,6 @@
 {
   "contract_name": "account-nft",
-  "contract_version": "0.1.0",
+  "contract_version": "1.0.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -24,7 +24,8 @@
         "description": "Symbol of the NFT contract",
         "type": "string"
       }
-    }
+    },
+    "additionalProperties": false
   },
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -317,7 +318,8 @@
             ],
             "properties": {
               "never": {
-                "type": "object"
+                "type": "object",
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -677,6 +679,7 @@
           ]
         }
       },
+      "additionalProperties": false,
       "definitions": {
         "Approval": {
           "type": "object",
@@ -697,7 +700,8 @@
               "description": "Account that can transfer/send the token",
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "Empty": {
           "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
@@ -742,7 +746,8 @@
               ],
               "properties": {
                 "never": {
-                  "type": "object"
+                  "type": "object",
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
@@ -770,7 +775,8 @@
                 "null"
               ]
             }
-          }
+          },
+          "additionalProperties": false
         },
         "OwnerOfResponse": {
           "type": "object",
@@ -790,7 +796,8 @@
               "description": "Owner of the token",
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "Timestamp": {
           "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
@@ -821,6 +828,7 @@
           }
         }
       },
+      "additionalProperties": false,
       "definitions": {
         "Approval": {
           "type": "object",
@@ -841,7 +849,8 @@
               "description": "Account that can transfer/send the token",
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "Expiration": {
           "description": "Expiration represents a point in time when some event happens. It can compare with a BlockInfo and will return is_expired() == true once the condition is hit (and for every block in the future)",
@@ -882,7 +891,8 @@
               ],
               "properties": {
                 "never": {
-                  "type": "object"
+                  "type": "object",
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
@@ -918,7 +928,8 @@
             "type": "string"
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     "approval": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -932,6 +943,7 @@
           "$ref": "#/definitions/Approval"
         }
       },
+      "additionalProperties": false,
       "definitions": {
         "Approval": {
           "type": "object",
@@ -952,7 +964,8 @@
               "description": "Account that can transfer/send the token",
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "Expiration": {
           "description": "Expiration represents a point in time when some event happens. It can compare with a BlockInfo and will return is_expired() == true once the condition is hit (and for every block in the future)",
@@ -993,7 +1006,8 @@
               ],
               "properties": {
                 "never": {
-                  "type": "object"
+                  "type": "object",
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
@@ -1029,6 +1043,7 @@
           }
         }
       },
+      "additionalProperties": false,
       "definitions": {
         "Approval": {
           "type": "object",
@@ -1049,7 +1064,8 @@
               "description": "Account that can transfer/send the token",
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "Expiration": {
           "description": "Expiration represents a point in time when some event happens. It can compare with a BlockInfo and will return is_expired() == true once the condition is hit (and for every block in the future)",
@@ -1090,7 +1106,8 @@
               ],
               "properties": {
                 "never": {
-                  "type": "object"
+                  "type": "object",
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
@@ -1126,7 +1143,8 @@
         "symbol": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "minter": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1140,7 +1158,8 @@
         "minter": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "nft_info": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1166,6 +1185,7 @@
           ]
         }
       },
+      "additionalProperties": false,
       "definitions": {
         "Empty": {
           "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
@@ -1186,7 +1206,8 @@
           "format": "uint64",
           "minimum": 0.0
         }
-      }
+      },
+      "additionalProperties": false
     },
     "owner_of": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1209,6 +1230,7 @@
           "type": "string"
         }
       },
+      "additionalProperties": false,
       "definitions": {
         "Approval": {
           "type": "object",
@@ -1229,7 +1251,8 @@
               "description": "Account that can transfer/send the token",
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "Expiration": {
           "description": "Expiration represents a point in time when some event happens. It can compare with a BlockInfo and will return is_expired() == true once the condition is hit (and for every block in the future)",
@@ -1270,7 +1293,8 @@
               ],
               "properties": {
                 "never": {
-                  "type": "object"
+                  "type": "object",
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
@@ -1311,7 +1335,8 @@
             "type": "string"
           }
         }
-      }
+      },
+      "additionalProperties": false
     }
   }
 }

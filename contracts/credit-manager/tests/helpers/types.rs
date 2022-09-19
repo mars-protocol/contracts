@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{coin, Addr, Coin, Decimal};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -24,10 +24,7 @@ pub struct VaultTestInfo {
 }
 
 impl CoinInfo {
-    pub fn to_coin(&self, amount: Uint128) -> Coin {
-        Coin {
-            denom: self.denom.clone(),
-            amount,
-        }
+    pub fn to_coin(&self, amount: u128) -> Coin {
+        coin(amount, self.denom.clone())
     }
 }
