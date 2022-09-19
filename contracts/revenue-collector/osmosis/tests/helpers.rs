@@ -12,9 +12,9 @@ use osmosis_std::types::osmosis::gamm::v1beta1::{
 };
 use prost::Message;
 
-use mars_outpost::rewards_collector::{Config, ExecuteMsg, QueryMsg};
-use mars_rewards_collector_osmosis::contract::entry;
-use mars_rewards_collector_osmosis::OsmosisRoute;
+use mars_outpost::revenue_collector::{Config, ExecuteMsg, QueryMsg};
+use mars_revenue_collector_osmosis::contract::entry;
+use mars_revenue_collector_osmosis::OsmosisRoute;
 use mars_testing::{mock_info, MarsMockQuerier};
 
 pub fn mock_config() -> Config<Addr> {

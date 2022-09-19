@@ -5,4 +5,4 @@ pub mod incentives;
 pub mod math;
 pub mod oracle;
 pub mod red_bank;
-pub mod rewards_collector;
+pub mod revenue_collector;

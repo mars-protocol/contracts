@@ -1,5 +1,5 @@
 use cosmwasm_std::Empty;
-use mars_rewards_collector_base::CollectorBase;
+use mars_revenue_collector_base::CollectorBase;
 
 use crate::OsmosisRoute;
 
@@ -11,8 +11,8 @@ pub type OsmosisCollector<'a> = CollectorBase<'a, OsmosisRoute, Empty, Empty>;
 pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 
-    use mars_outpost::rewards_collector::{InstantiateMsg, QueryMsg};
-    use mars_rewards_collector_base::ContractResult;
+    use mars_outpost::revenue_collector::{InstantiateMsg, QueryMsg};
+    use mars_revenue_collector_base::ContractResult;
 
     use super::*;
     use crate::msg::ExecuteMsg;

@@ -10,7 +10,7 @@ use mars_outpost::address_provider::{self, MarsContract};
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 use mars_outpost::red_bank;
-use mars_outpost::rewards_collector::{
+use mars_outpost::revenue_collector::{
     Config, CreateOrUpdateConfig, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
     RoutesResponse,
 };

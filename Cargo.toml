@@ -4,7 +4,7 @@ members = [
   "contracts/incentives",
   "contracts/oracle/*",
   "contracts/red-bank",
-  "contracts/rewards-collector/*",
+  "contracts/revenue-collector/*",
   "packages/*"
 ]
 

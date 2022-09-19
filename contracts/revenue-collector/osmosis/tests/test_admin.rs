@@ -2,10 +2,10 @@ use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{BankMsg, Coin, CosmosMsg, Decimal, SubMsg, Uint128};
 
 use mars_outpost::error::MarsError;
-use mars_outpost::rewards_collector::{Config, CreateOrUpdateConfig, QueryMsg};
-use mars_rewards_collector_base::ContractError;
-use mars_rewards_collector_osmosis::contract::entry::{execute, instantiate};
-use mars_rewards_collector_osmosis::msg::ExecuteMsg;
+use mars_outpost::revenue_collector::{Config, CreateOrUpdateConfig, QueryMsg};
+use mars_revenue_collector_base::ContractError;
+use mars_revenue_collector_osmosis::contract::entry::{execute, instantiate};
+use mars_revenue_collector_osmosis::msg::ExecuteMsg;
 use mars_testing::mock_info;
 
 use crate::helpers::mock_config;

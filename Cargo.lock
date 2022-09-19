@@ -454,7 +454,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-rewards-collector-base"
+name = "mars-revenue-collector-base"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
@@ -467,13 +467,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-rewards-collector-osmosis"
+name = "mars-revenue-collector-osmosis"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-outpost",
- "mars-rewards-collector-base",
+ "mars-revenue-collector-base",
  "mars-testing",
  "osmosis-std",
  "prost",
