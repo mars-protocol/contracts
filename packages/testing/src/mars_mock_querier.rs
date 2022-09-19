@@ -63,7 +63,7 @@ impl MarsMockQuerier {
     }
 
     pub fn set_incentives_address(&mut self, address: Addr) {
-        self.incentives_querier.incentives_address = address;
+        self.incentives_querier.incentives_addr = address;
     }
 
     pub fn set_unclaimed_rewards(&mut self, user_address: String, unclaimed_rewards: Uint128) {
@@ -118,6 +118,16 @@ impl MarsMockQuerier {
 
     pub fn set_redbank_market(&mut self, market: red_bank::Market) {
         self.redbank_querier.markets.insert(market.denom.clone(), market);
+    }
+
+    pub fn set_red_bank_user_collateral(
+        &mut self,
+        user: impl Into<String>,
+        collateral: red_bank::UserCollateralResponse,
+    ) {
+        self.redbank_querier
+            .users_denoms_collaterals
+            .insert((user.into(), collateral.denom.clone()), collateral);
     }
 
     pub fn set_redbank_user_position(

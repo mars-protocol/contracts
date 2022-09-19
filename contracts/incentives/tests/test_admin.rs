@@ -20,6 +20,7 @@ fn test_proper_initialization() {
     let info = mock_info("sender", &[]);
     let msg = InstantiateMsg {
         owner: String::from("owner"),
+        address_provider: String::from("address_provider"),
         mars_denom: String::from("umars"),
     };
 
@@ -41,6 +42,7 @@ fn test_update_config() {
     // *
     let msg = ExecuteMsg::UpdateConfig {
         owner: None,
+        address_provider: None,
         mars_denom: None,
     };
     let info = mock_info("somebody", &[]);
@@ -52,6 +54,7 @@ fn test_update_config() {
     // *
     let msg = ExecuteMsg::UpdateConfig {
         owner: Some(String::from("new_owner")),
+        address_provider: None,
         mars_denom: None,
     };
     let info = mock_info("owner", &[]);

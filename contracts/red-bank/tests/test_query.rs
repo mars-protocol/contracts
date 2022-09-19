@@ -19,7 +19,7 @@ fn test_query_collateral() {
 
     let user_addr = Addr::unchecked("user");
 
-    // Setup first market containing a CW20 asset
+    // Setup first market
     let market_1 = th_init_market(
         deps.as_mut(),
         "uosmo",
@@ -28,7 +28,7 @@ fn test_query_collateral() {
         },
     );
 
-    // Setup second market containing a native asset
+    // Setup second market
     let market_2 = th_init_market(
         deps.as_mut(),
         "uusd",

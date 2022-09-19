@@ -1,9 +1,14 @@
 use std::any::type_name;
 
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
-use cosmwasm_std::{attr, coin, coins, Addr, Decimal, OwnedDeps, StdError, StdResult, Uint128};
+use cosmwasm_std::{
+    attr, coin, coins, to_binary, Addr, Decimal, OwnedDeps, StdError, StdResult, SubMsg, Uint128,
+    WasmMsg,
+};
 use cw_utils::PaymentError;
 
+use mars_outpost::address_provider::MarsContract;
+use mars_outpost::incentives;
 use mars_outpost::red_bank::{Collateral, ExecuteMsg, Market};
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
@@ -241,7 +246,25 @@ fn depositing_without_existing_position() {
         },
     )
     .unwrap();
-    assert_eq!(res.messages, vec![]);
+
+    // NOTE: For this particular test, the borrow interest accrued was so low that the accrued
+    // protocol reward is rounded down to zero. Therefore we don't expect a message to update the
+    // index of the reward collector.
+    assert_eq!(
+        res.messages,
+        vec![SubMsg::new(WasmMsg::Execute {
+            contract_addr: MarsContract::Incentives.to_string(),
+            msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                user_addr: depositor_addr.clone(),
+                denom: initial_market.denom.clone(),
+                user_amount_scaled_before: Uint128::zero(),
+                // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
+                total_amount_scaled_before: initial_market.collateral_total_scaled,
+            })
+            .unwrap(),
+            funds: vec![]
+        })]
+    );
     assert_eq!(
         res.attributes,
         vec![
@@ -309,7 +332,7 @@ fn depositing_with_existing_position() {
     )
     .unwrap();
 
-    execute(
+    let res = execute(
         deps.as_mut(),
         mock_env_at_block_time(block_time),
         mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
@@ -318,6 +341,25 @@ fn depositing_with_existing_position() {
         },
     )
     .unwrap();
+
+    // NOTE: For this particular test, the borrow interest accrued was so low that the accrued
+    // protocol reward is rounded down to zero. Therefore we don't expect a message to update the
+    // index of the reward collector.
+    assert_eq!(
+        res.messages,
+        vec![SubMsg::new(WasmMsg::Execute {
+            contract_addr: MarsContract::Incentives.to_string(),
+            msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                user_addr: depositor_addr.clone(),
+                denom: initial_market.denom.clone(),
+                user_amount_scaled_before: collateral_amount_scaled,
+                // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
+                total_amount_scaled_before: initial_market.collateral_total_scaled,
+            })
+            .unwrap(),
+            funds: vec![]
+        })]
+    );
 
     // the depositor's scaled collateral amount should have been increased
     // however, the `enabled` status should not been affected
@@ -359,8 +401,14 @@ fn depositing_on_behalf_of() {
         ScalingOperation::Truncate,
     )
     .unwrap();
+    let expected_reward_amount_scaled = compute_scaled_amount(
+        expected_params.protocol_rewards_to_distribute,
+        expected_params.liquidity_index,
+        ScalingOperation::Truncate,
+    )
+    .unwrap();
 
-    execute(
+    let res = execute(
         deps.as_mut(),
         mock_env_at_block_time(block_time),
         mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
@@ -369,6 +417,39 @@ fn depositing_on_behalf_of() {
         },
     )
     .unwrap();
+
+    // NOTE: For this test, the accrued protocol reward is non-zero, so we do expect a message to
+    // update the index of the rewards collector.
+    assert_eq!(
+        res.messages,
+        vec![
+            SubMsg::new(WasmMsg::Execute {
+                contract_addr: MarsContract::Incentives.to_string(),
+                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    user_addr: Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()),
+                    denom: initial_market.denom.clone(),
+                    user_amount_scaled_before: Uint128::zero(),
+                    total_amount_scaled_before: initial_market.collateral_total_scaled,
+                })
+                .unwrap(),
+                funds: vec![]
+            }),
+            SubMsg::new(WasmMsg::Execute {
+                contract_addr: MarsContract::Incentives.to_string(),
+                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    user_addr: on_behalf_of_addr.clone(),
+                    denom: initial_market.denom.clone(),
+                    user_amount_scaled_before: Uint128::zero(),
+                    // NOTE: New collateral shares were minted to the rewards collector first, so
+                    // for the depositor this should be initial total supply + rewards shares minted
+                    total_amount_scaled_before: initial_market.collateral_total_scaled
+                        + expected_reward_amount_scaled,
+                })
+                .unwrap(),
+                funds: vec![]
+            })
+        ]
+    );
 
     // depositor should not have created a new collateral position
     let opt = COLLATERALS.may_load(deps.as_ref().storage, (&depositor_addr, denom)).unwrap();

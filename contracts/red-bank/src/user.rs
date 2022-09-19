@@ -1,6 +1,9 @@
-use cosmwasm_std::{Addr, Order, StdResult, Storage, Uint128};
+use cosmwasm_std::{
+    to_binary, Addr, CosmosMsg, Order, Response, StdResult, Storage, Uint128, WasmMsg,
+};
 
-use mars_outpost::red_bank::{Collateral, Debt};
+use mars_outpost::incentives;
+use mars_outpost::red_bank::{Collateral, Debt, Market};
 
 use crate::state::{COLLATERALS, DEBTS, UNCOLLATERALIZED_LOAN_LIMITS};
 
@@ -84,7 +87,8 @@ impl<'a> User<'a> {
         DEBTS.prefix(self.0).range(store, None, None, Order::Ascending).next().is_some()
     }
 
-    /// Increase a user's collateral shares by the specified amount.
+    /// Increase a user's collateral shares by the specified amount. Returns a message to inform the
+    /// incentives contract to update the user's index.
     ///
     /// If the user does not already have a collateral amount, the asset is enabled as collateral by
     /// default. To disable, send a separate `update_asset_collateral_status` execute message.
@@ -93,12 +97,17 @@ impl<'a> User<'a> {
     pub fn increase_collateral(
         &self,
         store: &mut dyn Storage,
-        denom: &str,
+        market: &Market,
         amount_scaled: Uint128,
-    ) -> StdResult<()> {
-        COLLATERALS.update(store, (self.0, denom), |opt| -> StdResult<_> {
+        incentives_addr: &Addr,
+        response: Response,
+    ) -> StdResult<Response> {
+        let mut amount_scaled_before = Uint128::zero();
+
+        COLLATERALS.update(store, (self.0, &market.denom), |opt| -> StdResult<_> {
             match opt {
                 Some(mut col) => {
+                    amount_scaled_before = col.amount_scaled;
                     col.amount_scaled = col.amount_scaled.checked_add(amount_scaled)?;
                     Ok(col)
                 }
@@ -108,7 +117,71 @@ impl<'a> User<'a> {
                 }),
             }
         })?;
-        Ok(())
+
+        let msg = self.build_incentives_balance_changed_msg(
+            incentives_addr,
+            market,
+            amount_scaled_before,
+        )?;
+
+        Ok(response.add_message(msg))
+    }
+
+    /// Decrease a user's collateral shares by the specified amount. Returns a message to inform the
+    /// incentives contract to update the user's index.
+    ///
+    /// If reduced to zero, delete the collateral position from contract storage.
+    ///
+    /// This may be invoked if a user makes a withdrawal, or gets liquidated.
+    pub fn decrease_collateral(
+        &self,
+        store: &mut dyn Storage,
+        market: &Market,
+        amount_scaled: Uint128,
+        incentives_addr: &Addr,
+        response: Response,
+    ) -> StdResult<Response> {
+        let mut collateral = COLLATERALS.load(store, (self.0, &market.denom))?;
+
+        let amount_scaled_before = collateral.amount_scaled;
+        collateral.amount_scaled = collateral.amount_scaled.checked_sub(amount_scaled)?;
+
+        if collateral.amount_scaled.is_zero() {
+            COLLATERALS.remove(store, (self.0, &market.denom));
+        } else {
+            COLLATERALS.save(store, (self.0, &market.denom), &collateral)?;
+        }
+
+        let msg = self.build_incentives_balance_changed_msg(
+            incentives_addr,
+            market,
+            amount_scaled_before,
+        )?;
+
+        Ok(response.add_message(msg))
+    }
+
+    /// For internal use by the struct only.
+    ///
+    /// Create an execute message to inform the incentive contract to update the user's index upon a
+    /// change in the user's scaled collateral amount.
+    fn build_incentives_balance_changed_msg(
+        &self,
+        incentives_addr: &Addr,
+        market: &Market,
+        user_amount_scaled_before: Uint128,
+    ) -> StdResult<CosmosMsg> {
+        Ok(WasmMsg::Execute {
+            contract_addr: incentives_addr.into(),
+            msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                user_addr: self.address().clone(),
+                denom: market.denom.clone(),
+                user_amount_scaled_before,
+                total_amount_scaled_before: market.collateral_total_scaled,
+            })?,
+            funds: vec![],
+        }
+        .into())
     }
 
     /// Increase a user's debt shares by the specified amount.
@@ -133,29 +206,6 @@ impl<'a> User<'a> {
                 }),
             }
         })?;
-        Ok(())
-    }
-
-    /// Decrease a user's collateral shares by the specified amount. If reduced to zero, delete the
-    /// collateral position from contract storage.
-    ///
-    /// This may be invoked if a user makes a withdrawal, or gets liquidated.
-    pub fn decrease_collateral(
-        &self,
-        store: &mut dyn Storage,
-        denom: &str,
-        amount_scaled: Uint128,
-    ) -> StdResult<()> {
-        let mut collateral = COLLATERALS.load(store, (self.0, denom))?;
-
-        collateral.amount_scaled = collateral.amount_scaled.checked_sub(amount_scaled)?;
-
-        if collateral.amount_scaled.is_zero() {
-            COLLATERALS.remove(store, (self.0, denom));
-        } else {
-            COLLATERALS.save(store, (self.0, denom), &collateral)?;
-        }
-
         Ok(())
     }
 
