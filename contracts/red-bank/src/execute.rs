@@ -1,3 +1,4 @@
+use std::cmp::min;
 use std::str;
 
 use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
@@ -732,7 +733,7 @@ pub fn liquidate(
     collateral_denom: String,
     debt_denom: String,
     user_addr: Addr,
-    sent_debt_asset_amount: Uint128,
+    sent_debt_amount: Uint128,
 ) -> Result<Response, ContractError> {
     let block_time = env.block.time.seconds();
     let user = User(&user_addr);
@@ -746,10 +747,10 @@ pub fn liquidate(
     };
 
     // check if the user has enabled the collateral asset as collateral
-    let collateral = COLLATERALS
+    let user_collateral = COLLATERALS
         .may_load(deps.storage, (&user_addr, &collateral_denom))?
         .ok_or(ContractError::CannotLiquidateWhenNoCollateralBalance {})?;
-    if !collateral.enabled {
+    if !user_collateral.enabled {
         return Err(ContractError::CannotLiquidateWhenCollateralUnset {
             denom: collateral_denom,
         });
@@ -757,15 +758,6 @@ pub fn liquidate(
 
     // check if user has available collateral in specified collateral asset to be liquidated
     let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
-    let user_collateral_balance_scaled = collateral.amount_scaled;
-    let user_collateral_balance = get_underlying_liquidity_amount(
-        user_collateral_balance_scaled,
-        &collateral_market,
-        block_time,
-    )?;
-    if user_collateral_balance.is_zero() {
-        return Err(ContractError::CannotLiquidateWhenNoCollateralBalance {});
-    }
 
     // check if user has outstanding debt in the deposited asset that needs to be repayed
     let user_debt = DEBTS
@@ -815,27 +807,26 @@ pub fn liquidate(
 
     let mut response = Response::new();
 
-    let user_debt_asset_total_debt =
+    let user_debt_amount =
         get_underlying_debt_amount(user_debt.amount_scaled, &debt_market, block_time)?;
 
-    let (debt_amount_to_repay, collateral_amount_to_liquidate, refund_amount) =
-        liquidation_compute_amounts(
-            collateral_price,
-            debt_price,
-            config.close_factor,
-            user_collateral_balance,
-            collateral_market.liquidation_bonus,
-            user_debt_asset_total_debt,
-            sent_debt_asset_amount,
-        )?;
-
-    // 4. Update collateral positions and market
-    let collateral_amount_to_liquidate_scaled = get_scaled_liquidity_amount(
+    let (
+        debt_amount_to_repay,
         collateral_amount_to_liquidate,
+        collateral_amount_to_liquidate_scaled,
+        refund_amount,
+    ) = liquidation_compute_amounts(
+        user_collateral.amount_scaled,
+        user_debt_amount,
+        sent_debt_amount,
         &collateral_market,
+        collateral_price,
+        debt_price,
         block_time,
+        config.close_factor,
     )?;
 
+    // 4. Transfer collateral shares from the user to the liquidator
     response = user.decrease_collateral(
         deps.storage,
         &collateral_market,
@@ -851,23 +842,14 @@ pub fn liquidate(
         response,
     )?;
 
-    // if max collateral to liquidate equals the user's balance, delete the collateral position
-    if collateral_amount_to_liquidate_scaled == user_collateral_balance_scaled {
-        COLLATERALS.remove(deps.storage, (&user_addr, &collateral_denom));
-    }
-
-    // 5. Compute and update user new debt
-    let user_debt_asset_debt_amount_after =
-        user_debt_asset_total_debt.checked_sub(debt_amount_to_repay)?;
-    let user_debt_asset_debt_amount_scaled_after = get_scaled_debt_amount(
-        user_debt_asset_debt_amount_after,
-        &debt_market,
-        env.block.time.seconds(),
-    )?;
+    // 5. Reduce the user's debt shares
+    let user_debt_amount_after = user_debt_amount.checked_sub(debt_amount_to_repay)?;
+    let user_debt_amount_scaled_after =
+        get_scaled_debt_amount(user_debt_amount_after, &debt_market, block_time)?;
 
     // Compute delta so it can be substracted to total debt
     let debt_amount_scaled_delta =
-        user_debt.amount_scaled.checked_sub(user_debt_asset_debt_amount_scaled_after)?;
+        user_debt.amount_scaled.checked_sub(user_debt_amount_scaled_after)?;
 
     user.decrease_debt(deps.storage, &debt_denom, debt_amount_scaled_delta)?;
 
@@ -953,50 +935,53 @@ pub fn liquidate(
 /// collateral to liquidate (in collateral asset) and
 /// amount to refund the liquidator (in debt asset)
 fn liquidation_compute_amounts(
+    user_collateral_amount_scaled: Uint128,
+    user_debt_amount: Uint128,
+    sent_debt_amount: Uint128,
+    collateral_market: &Market,
     collateral_price: Decimal,
     debt_price: Decimal,
+    block_time: u64,
     close_factor: Decimal,
-    user_collateral_balance: Uint128,
-    liquidation_bonus: Decimal,
-    user_debt_asset_total_debt: Uint128,
-    sent_debt_asset_amount: Uint128,
-) -> StdResult<(Uint128, Uint128, Uint128)> {
+) -> StdResult<(Uint128, Uint128, Uint128, Uint128)> {
     // Debt: Only up to a fraction of the total debt (determined by the close factor) can be
     // repayed.
-    let max_repayable_debt = close_factor * user_debt_asset_total_debt;
+    let mut debt_amount_to_repay = min(sent_debt_amount, close_factor * user_debt_amount);
 
-    let mut debt_amount_to_repay = if sent_debt_asset_amount > max_repayable_debt {
-        max_repayable_debt
-    } else {
-        sent_debt_asset_amount
-    };
-
-    // Collateral: debt to repay in base asset times the liquidation
-    // bonus
-    let debt_amount_to_repay_in_base_asset = debt_amount_to_repay * debt_price;
-    let collateral_amount_to_liquidate_in_base_asset =
-        debt_amount_to_repay_in_base_asset * (Decimal::one() + liquidation_bonus);
+    // Collateral: debt to repay in base asset times the liquidation bonus
     let mut collateral_amount_to_liquidate = math::divide_uint128_by_decimal(
-        collateral_amount_to_liquidate_in_base_asset,
+        debt_amount_to_repay * debt_price * (Decimal::one() + collateral_market.liquidation_bonus),
         collateral_price,
     )?;
+    let mut collateral_amount_to_liquidate_scaled =
+        get_scaled_liquidity_amount(collateral_amount_to_liquidate, collateral_market, block_time)?;
 
     // If collateral amount to liquidate is higher than user_collateral_balance,
     // liquidate the full balance and adjust the debt amount to repay accordingly
-    if collateral_amount_to_liquidate > user_collateral_balance {
-        collateral_amount_to_liquidate = user_collateral_balance;
+    if collateral_amount_to_liquidate_scaled > user_collateral_amount_scaled {
+        collateral_amount_to_liquidate_scaled = user_collateral_amount_scaled;
+        collateral_amount_to_liquidate = get_underlying_liquidity_amount(
+            collateral_amount_to_liquidate_scaled,
+            collateral_market,
+            block_time,
+        )?;
         debt_amount_to_repay = math::divide_uint128_by_decimal(
             math::divide_uint128_by_decimal(
                 collateral_amount_to_liquidate * collateral_price,
                 debt_price,
             )?,
-            Decimal::one() + liquidation_bonus,
-        )?
+            Decimal::one() + collateral_market.liquidation_bonus,
+        )?;
     }
 
-    let refund_amount = sent_debt_asset_amount - debt_amount_to_repay;
+    let refund_amount = sent_debt_amount - debt_amount_to_repay;
 
-    Ok((debt_amount_to_repay, collateral_amount_to_liquidate, refund_amount))
+    Ok((
+        debt_amount_to_repay,
+        collateral_amount_to_liquidate,
+        collateral_amount_to_liquidate_scaled,
+        refund_amount,
+    ))
 }
 
 /// Update (enable / disable) collateral asset for specific user
