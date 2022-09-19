@@ -18,6 +18,9 @@ use mars_outpost::rewards_collector::{
 use crate::helpers::{stringify_option_amount, unwrap_option_amount};
 use crate::{ContractError, ContractResult, Route};
 
+pub const CONTRACT_NAME: &str = "crates.io:mars-rewards-collector-base";
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 const DEFAULT_LIMIT: u32 = 5;
 const MAX_LIMIT: u32 = 10;
 
@@ -60,6 +63,8 @@ where
     Q: CustomQuery,
 {
     pub fn instantiate(&self, deps: DepsMut<Q>, msg: InstantiateMsg) -> ContractResult<Response> {
+        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
         let cfg = msg.check(deps.api)?;
         cfg.validate()?;
 

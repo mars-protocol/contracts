@@ -19,6 +19,9 @@ use crate::helpers::{
 };
 use crate::state::{ASSET_INCENTIVES, CONFIG, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
+pub const CONTRACT_NAME: &str = "crates.io:mars-incentives";
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 // INIT
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -28,6 +31,8 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
     let config = Config {
         owner: deps.api.addr_validate(&msg.owner)?,
         address_provider: deps.api.addr_validate(&msg.address_provider)?,

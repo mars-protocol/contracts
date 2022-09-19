@@ -375,6 +375,7 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
+ "cw2",
  "mars-outpost",
  "serde",
  "thiserror",
@@ -395,6 +396,7 @@ version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
+ "cw2",
  "mars-outpost",
  "mars-testing",
  "thiserror",
@@ -406,6 +408,7 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
+ "cw2",
  "mars-outpost",
  "schemars",
  "serde",
@@ -446,6 +449,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
+ "cw2",
  "mars-health",
  "mars-outpost",
  "mars-testing",
@@ -459,6 +463,7 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
+ "cw2",
  "mars-outpost",
  "mars-testing",
  "schemars",
