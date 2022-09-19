@@ -7,7 +7,7 @@ use crate::OsmosisPriceSource;
 /// and price source plugins
 pub type OsmosisOracle<'a> = OracleBase<'a, OsmosisPriceSource, Empty>;
 
-pub const CONTRACT_NAME: &str = "crates.io:mars-oracle-base";
+pub const CONTRACT_NAME: &str = "crates.io:mars-oracle-osmosis";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(not(feature = "library"))]
