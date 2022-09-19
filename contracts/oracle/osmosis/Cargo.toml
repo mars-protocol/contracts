@@ -29,6 +29,7 @@ mars-outpost = { path = "../../../packages/outpost", version = "0.1.0" }
 mars-oracle-base = { path = "../base", version = "0.1.0" }
 
 cosmwasm-std = "1.0"
+cw2 = "0.14"
 cw-storage-plus = "0.14"
 schemars = "0.8"
 serde = { version = "1.0.144", default-features = false, features = ["derive"] }

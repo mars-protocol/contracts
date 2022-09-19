@@ -15,9 +15,6 @@ use mars_outpost::oracle::{
 use crate::error::ContractResult;
 use crate::PriceSource;
 
-pub const CONTRACT_NAME: &str = "crates.io:mars-oracle-base";
-pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
 
@@ -54,8 +51,6 @@ where
     C: CustomQuery,
 {
     pub fn instantiate(&self, deps: DepsMut<C>, msg: InstantiateMsg) -> StdResult<Response> {
-        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
         self.config.save(
             deps.storage,
             &Config {

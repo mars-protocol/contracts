@@ -7,6 +7,9 @@ use crate::OsmosisPriceSource;
 /// and price source plugins
 pub type OsmosisOracle<'a> = OracleBase<'a, OsmosisPriceSource, Empty>;
 
+pub const CONTRACT_NAME: &str = "crates.io:mars-oracle-base";
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[cfg(not(feature = "library"))]
 pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
@@ -23,6 +26,7 @@ pub mod entry {
         _info: MessageInfo,
         msg: InstantiateMsg,
     ) -> StdResult<Response> {
+        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
         OsmosisOracle::default().instantiate(deps, msg)
     }
 
