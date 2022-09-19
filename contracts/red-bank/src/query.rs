@@ -267,8 +267,8 @@ pub fn query_user_position(
     };
 
     Ok(UserPositionResponse {
-        total_collateral_value: health.total_collateral_value,
-        total_debt_value: health.total_debt_value,
+        total_enabled_collateral: health.total_collateral_value,
+        total_collateralized_debt: health.total_debt_value,
         weighted_max_ltv_collateral: health.max_ltv_adjusted_collateral,
         weighted_liquidation_threshold_collateral: health.liquidation_threshold_adjusted_collateral,
         health_status,
