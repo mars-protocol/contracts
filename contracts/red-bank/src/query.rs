@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, BlockInfo, Decimal, Deps, Env, Order, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdError, StdResult, Uint128};
 use cw_storage_plus::Bound;
 
 use mars_outpost::address_provider::{self, MarsContract};
@@ -9,7 +9,6 @@ use mars_outpost::red_bank::{
 };
 
 use crate::health;
-use crate::helpers::get_uncollaterized_debt;
 use crate::interest_rates::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
     get_underlying_liquidity_amount,
@@ -267,15 +266,9 @@ pub fn query_user_position(
         UserHealthStatus::NotBorrowing
     };
 
-    // TODO: This probably doesn't do what it's intended to do.
-    // See: https://github.com/mars-protocol/outposts/issues/68
-    let total_uncollateralized_debt = get_uncollaterized_debt(&positions)?;
-
     Ok(UserPositionResponse {
         total_collateral_value: health.total_collateral_value,
-        total_debt_value: health.total_debt_value
-            + Decimal::from_ratio(total_uncollateralized_debt, 1u128),
-        total_collateralized_debt: health.total_debt_value,
+        total_debt_value: health.total_debt_value,
         weighted_max_ltv_collateral: health.max_ltv_adjusted_collateral,
         weighted_liquidation_threshold_collateral: health.liquidation_threshold_adjusted_collateral,
         health_status,
