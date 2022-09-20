@@ -6,6 +6,20 @@ All notable changes to this project will be documented in this file.
 
 This section documents the API changes compared to the Terra Classic deployment, found in the [`mars-core`](https://github.com/mars-protocol/mars-core) repository. This section is **not comprehensive**, as the changes are numerous. Changelog for later version start here should be made comprehensive.
 
+- ([#81](https://github.com/mars-protocol/outposts/pull/79/files)) Red Bank: The `total_debt_value` field in `UserPositionResponse` is removed, as previously the calculation of this value was erroneous. Additionally, `total_collateral_value` is renamed to `total_enabled_collateral`.
+
+```diff
+struct UserPositionResponse {
+-   pub total_collateral_value: Decimal,
++   pub total_enabled_collateral: Decimal,
+-   pub total_debt_value: Decimal,
+    pub total_collateralized_debt: Decimal,
+    pub weighted_max_ltv_collateral: Decimal,
+    pub weighted_liquidation_threshold_collateral: Decimal,
+    pub health_status: UserHealthStatus,
+}
+```
+
 - ([#79](https://github.com/mars-protocol/outposts/pull/79/files)) Incentives: The `user_address` parameter in `QueryMsg::UserUnclaimedRewards` is renamed to just `user` in accordance with the [coding guildelines](./CODING_GUIDELINES.md):
 
 ```diff

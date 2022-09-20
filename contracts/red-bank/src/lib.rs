@@ -3,7 +3,6 @@ pub mod contract;
 pub mod error;
 pub mod execute;
 pub mod health;
-pub mod helpers;
 pub mod interest_rates;
 pub mod query;
 pub mod state;
