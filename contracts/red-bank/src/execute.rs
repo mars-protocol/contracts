@@ -224,9 +224,9 @@ pub fn update_asset(
                 let addresses = address_provider::helpers::query_addresses(
                     deps.as_ref(),
                     &config.address_provider,
-                    vec![MarsContract::Incentives, MarsContract::ProtocolRewardsCollector],
+                    vec![MarsContract::Incentives, MarsContract::RewardsCollector],
                 )?;
-                let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
+                let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
                 let incentives_addr = &addresses[&MarsContract::Incentives];
 
                 response = apply_accumulated_interests(
@@ -361,9 +361,9 @@ pub fn deposit(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Incentives, MarsContract::ProtocolRewardsCollector],
+        vec![MarsContract::Incentives, MarsContract::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
     let incentives_addr = &addresses[&MarsContract::Incentives];
 
     response = apply_accumulated_interests(
@@ -453,13 +453,9 @@ pub fn withdraw(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![
-            MarsContract::Oracle,
-            MarsContract::Incentives,
-            MarsContract::ProtocolRewardsCollector,
-        ],
+        vec![MarsContract::Oracle, MarsContract::Incentives, MarsContract::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
     let incentives_addr = &addresses[&MarsContract::Incentives];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
@@ -563,13 +559,9 @@ pub fn borrow(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![
-            MarsContract::Oracle,
-            MarsContract::Incentives,
-            MarsContract::ProtocolRewardsCollector,
-        ],
+        vec![MarsContract::Oracle, MarsContract::Incentives, MarsContract::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
     let incentives_addr = &addresses[&MarsContract::Incentives];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 
@@ -676,9 +668,9 @@ pub fn repay(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Incentives, MarsContract::ProtocolRewardsCollector],
+        vec![MarsContract::Incentives, MarsContract::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
     let incentives_addr = &addresses[&MarsContract::Incentives];
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
@@ -775,13 +767,9 @@ pub fn liquidate(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![
-            MarsContract::Oracle,
-            MarsContract::Incentives,
-            MarsContract::ProtocolRewardsCollector,
-        ],
+        vec![MarsContract::Oracle, MarsContract::Incentives, MarsContract::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::ProtocolRewardsCollector];
+    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
     let incentives_addr = &addresses[&MarsContract::Incentives];
     let oracle_addr = &addresses[&MarsContract::Oracle];
 

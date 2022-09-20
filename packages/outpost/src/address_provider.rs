@@ -1,3 +1,4 @@
+use std::any::type_name;
 use std::fmt;
 use std::str::FromStr;
 
@@ -10,22 +11,38 @@ use serde::{Deserialize, Serialize};
 pub enum MarsContract {
     Incentives,
     Oracle,
-    ProtocolAdmin,
-    ProtocolRewardsCollector,
     RedBank,
+    RewardsCollector,
+    /// Protocol admin is an ICS-27 interchain account controlled by Mars Hub's x/gov module.
+    /// This account will take the owner and admin roles of outpost contracts.
+    ///
+    /// Owner means the account who can invoke certain priviliged execute methods on a contract,
+    /// such as updating the config.
+    /// Admin means the account who can migrate a contract.
+    ProtocolAdmin,
+    /// The `fee_collector` module account controlled by Mars Hub's x/distribution module.
+    /// Funds sent to this account will be distributed as staking rewards.
+    ///
+    /// NOTE: This is a Mars Hub address with the `mars` bech32 prefix, which may not be recognized
+    /// by the `api.addr_validate` method.
     FeeCollector,
+    /// The module account controlled by the by Mars Hub's x/safety module.
+    /// Funds sent to this account will be deposited into the safety fund.
+    ///
+    /// NOTE: This is a Mars Hub address with the `mars` bech32 prefix, which may not be recognized
+    /// by the `api.addr_validate` method.
     SafetyFund,
 }
 
 impl fmt::Display for MarsContract {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
+            MarsContract::FeeCollector => "fee_collector",
             MarsContract::Incentives => "incentives",
             MarsContract::Oracle => "oracle",
             MarsContract::ProtocolAdmin => "protocol_admin",
-            MarsContract::ProtocolRewardsCollector => "protocol_rewards_collector",
             MarsContract::RedBank => "red_bank",
-            MarsContract::FeeCollector => "fee_collector",
+            MarsContract::RewardsCollector => "rewards_collector",
             MarsContract::SafetyFund => "safety_fund",
         };
         write!(f, "{}", s)
@@ -37,14 +54,14 @@ impl FromStr for MarsContract {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            "fee_collector" => Ok(MarsContract::FeeCollector),
             "incentives" => Ok(MarsContract::Incentives),
             "oracle" => Ok(MarsContract::Oracle),
             "protocol_admin" => Ok(MarsContract::ProtocolAdmin),
-            "protocol_rewards_collector" => Ok(MarsContract::ProtocolRewardsCollector),
             "red_bank" => Ok(MarsContract::RedBank),
-            "fee_collector" => Ok(MarsContract::FeeCollector),
+            "rewards_collector" => Ok(MarsContract::RewardsCollector),
             "safety_fund" => Ok(MarsContract::SafetyFund),
-            _ => Err(StdError::parse_err("MarsContract", s)),
+            _ => Err(StdError::parse_err(type_name::<Self>(), s)),
         }
     }
 }
