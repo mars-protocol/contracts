@@ -4,6 +4,8 @@ import * as fs from 'fs'
 import { printBlue, printGreen, printRed, printYellow } from '../../utils/chalk'
 import { ARTIFACTS_PATH, Storage } from './storage'
 import { InstantiateMsgs } from '../../types/msg'
+import { writeFile } from 'fs/promises'
+import { join, resolve } from 'path'
 
 export class Deployer {
   constructor(
@@ -136,6 +138,14 @@ export class Deployer {
 
     printGreen(
       `${this.config.chainId} :: Rewards Collector Contract Address : ${this.storage.addresses.rewardsCollector}`,
+    )
+  }
+
+  async saveDeploymentAddrsToFile() {
+    const addressesDir = resolve(join(__dirname, '../../../deploy/addresses'))
+    await writeFile(
+      `${addressesDir}/${this.config.chainId}.json`,
+      JSON.stringify(this.storage.addresses),
     )
   }
 

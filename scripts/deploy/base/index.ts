@@ -22,6 +22,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.instantiateIncentives()
     await deployer.instantiateOracle()
     await deployer.instantiateRewards()
+    await deployer.saveDeploymentAddrsToFile()
 
     // setup
     await deployer.updateAddressProvider()
