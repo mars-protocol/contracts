@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Decimal, Uint128};
+use cosmwasm_std::{Decimal, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -7,16 +7,16 @@ use crate::helpers::decimal_param_le_one;
 
 /// Global configuration
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct Config {
+pub struct Config<T> {
     /// Contract owner
-    pub owner: Addr,
+    pub owner: T,
     /// Address provider returns addresses for all protocol contracts
-    pub address_provider: Addr,
+    pub address_provider: T,
     /// Maximum percentage of outstanding debt that can be covered by a liquidator
     pub close_factor: Decimal,
 }
 
-impl Config {
+impl<T> Config<T> {
     pub fn validate(&self) -> Result<(), MarsError> {
         decimal_param_le_one(self.close_factor, "close_factor")?;
         Ok(())
@@ -68,14 +68,7 @@ pub struct Position {
     pub asset_price: Decimal,
 }
 
-// TODO: This is just Config but with Strings instead of Addrs. Consider implement Config with a
-// generic? I.e. Config<T> where T = String or Addr
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct ConfigResponse {
-    pub owner: String,
-    pub address_provider: String,
-    pub close_factor: Decimal,
-}
+pub type ConfigResponse = Config<String>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct UncollateralizedLoanLimitResponse {

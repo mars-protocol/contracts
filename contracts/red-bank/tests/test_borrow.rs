@@ -709,7 +709,7 @@ fn test_borrow_full_liquidity_and_then_repay() {
             ScalingOperation::Ceil,
         )
         .unwrap();
-        assert_eq!(debt_total, initial_liquidity.into());
+        assert_eq!(debt_total.u128(), initial_liquidity);
     }
 
     let new_block_time = 12000u64;

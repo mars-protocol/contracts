@@ -188,7 +188,7 @@ fn withdrawing_partially() {
             }),
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsContract::Incentives.to_string(),
-                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     denom: denom.to_string(),
                     user_amount_scaled_before: initial_deposit_amount_scaled,
@@ -306,7 +306,7 @@ fn withdrawing_completely() {
             }),
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsContract::Incentives.to_string(),
-                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     denom: denom.to_string(),
                     user_amount_scaled_before: withdrawer_balance_scaled,
@@ -416,7 +416,7 @@ fn withdrawing_to_another_user() {
             }),
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsContract::Incentives.to_string(),
-                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     denom: denom.to_string(),
                     user_amount_scaled_before: withdrawer_balance_scaled,
@@ -691,7 +691,7 @@ fn withdrawing_if_health_factor_met() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsContract::Incentives.to_string(),
-                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     denom: denoms[2].to_string(),
                     user_amount_scaled_before: collaterals[2].amount_scaled,

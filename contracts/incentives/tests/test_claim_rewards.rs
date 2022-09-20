@@ -4,8 +4,8 @@ use cosmwasm_std::{
     SubMsg, Timestamp, Uint128,
 };
 
-use mars_outpost::incentives::msg::ExecuteMsg;
 use mars_outpost::incentives::AssetIncentive;
+use mars_outpost::incentives::ExecuteMsg;
 use mars_outpost::red_bank::{Market, UserCollateralResponse};
 use mars_testing::MockEnvParams;
 

@@ -98,7 +98,7 @@ pub struct CreateOrUpdateConfig {
 
 pub type InstantiateMsg = Config<String>;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg<Route, CustomMsg> {
     /// Update contract config

@@ -28,10 +28,10 @@ backtraces = ["cosmwasm-std/backtraces"]
 [dependencies]
 mars-outpost = { path = "../outpost" }
 
-cosmwasm-std = "1.0"
+cosmwasm-std = "1.1"
 schemars = "0.8"
-serde = { version = "1.0.144", default-features = false, features = ["derive"] }
-thiserror = "1.0.33"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+thiserror = "1.0"
 
 # FIXME: update with crates version if osmosis-main-clone branch merged
 osmosis-std = { git = "https://github.com/osmosis-labs/osmosis-rust", package = "osmosis-std", branch = "osmosis-main-clone" }
