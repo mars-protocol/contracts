@@ -254,7 +254,7 @@ fn depositing_without_existing_position() {
         res.messages,
         vec![SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsContract::Incentives.to_string(),
-            msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
                 denom: initial_market.denom.clone(),
                 user_amount_scaled_before: Uint128::zero(),
@@ -349,7 +349,7 @@ fn depositing_with_existing_position() {
         res.messages,
         vec![SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsContract::Incentives.to_string(),
-            msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
                 denom: initial_market.denom.clone(),
                 user_amount_scaled_before: collateral_amount_scaled,
@@ -425,7 +425,7 @@ fn depositing_on_behalf_of() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsContract::Incentives.to_string(),
-                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()),
                     denom: initial_market.denom.clone(),
                     user_amount_scaled_before: Uint128::zero(),
@@ -436,7 +436,7 @@ fn depositing_on_behalf_of() {
             }),
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsContract::Incentives.to_string(),
-                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: on_behalf_of_addr.clone(),
                     denom: initial_market.denom.clone(),
                     user_amount_scaled_before: Uint128::zero(),

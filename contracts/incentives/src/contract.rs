@@ -9,8 +9,8 @@ use mars_outpost::address_provider::MarsContract;
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 
-use mars_outpost::incentives::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_outpost::incentives::{AssetIncentive, AssetIncentiveResponse, Config};
+use mars_outpost::incentives::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_outpost::{address_provider, red_bank};
 
 use crate::error::ContractError;

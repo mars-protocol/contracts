@@ -27,7 +27,10 @@ backtraces = ["cosmwasm-std/backtraces"]
 [dependencies]
 mars-outpost = { path = "../outpost" }
 
-cosmwasm-std = "1.0"
+cosmwasm-std = "1.1"
 
 [dev-dependencies]
 mars-testing = { path = "../testing" }
+
+[profile.release]
+overflow-checks = true
