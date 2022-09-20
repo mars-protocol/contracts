@@ -27,13 +27,13 @@ backtraces = ["cosmwasm-std/backtraces"]
 [dependencies]
 mars-outpost = { path = "../../packages/outpost", version = "0.1.0" }
 
-cosmwasm-std = "1.0"
-cw2 = "0.14"
-cw-storage-plus = "0.14"
-thiserror = "1.0.33"
+cosmwasm-std = "1.1"
+cw2 = "0.15"
+cw-storage-plus = "0.15"
+thiserror = "1.0"
 
 [dev-dependencies]
-serde = "1.0.144"
+serde = "1.0"
 
 [profile.release]
 overflow-checks = true
