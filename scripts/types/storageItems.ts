@@ -3,7 +3,6 @@ export interface StorageItems {
     redBank?: number
     rewardsCollector?: number
     addressProvider?: number
-    maToken?: number
     incentives?: number
     oracle?: number
   }

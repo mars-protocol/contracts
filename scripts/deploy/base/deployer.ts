@@ -60,6 +60,7 @@ export class Deployer {
       `mars-${name}`,
       'auto',
     )
+
     this.storage.addresses[name] = redBankContractAddress
     printGreen(
       `${this.config.chainId} :: ${name} Contract Address : ${this.storage.addresses[name]}`,
@@ -79,7 +80,6 @@ export class Deployer {
       config: {
         owner: this.deployerAddress,
         address_provider: this.storage.addresses.addressProvider!,
-        ma_token_code_id: this.storage.codeIds.maToken!,
         close_factor: '0.5',
       },
     }
@@ -89,7 +89,7 @@ export class Deployer {
   async instantiateIncentives() {
     const msg = {
       owner: this.deployerAddress,
-      address_provider: this.storage.addresses.incentives!,
+      address_provider: this.storage.addresses.addressProvider!,
       mars_denom: this.config.marsDenom,
     }
     await this.instantiate('incentives', this.storage.codeIds.incentives!, msg)
@@ -177,7 +177,6 @@ export class Deployer {
     }
     printYellow('Address Provider update completed')
     this.storage.execute.addressProviderUpdated = true
-
   }
 
   async initializeAsset(assetConfig: AssetConfig) {

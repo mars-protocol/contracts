@@ -8,7 +8,6 @@ export type InstantiateMsgs =
 export interface RedBankInstantiateMsg {
   config: {
     owner: string
-    ma_token_code_id: number
     address_provider: string
     close_factor: string
   }
