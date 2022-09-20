@@ -2,8 +2,8 @@ use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::{attr, Decimal, Timestamp, Uint128};
 
 use mars_outpost::error::MarsError;
-use mars_outpost::incentives::msg::ExecuteMsg;
 use mars_outpost::incentives::AssetIncentive;
+use mars_outpost::incentives::ExecuteMsg;
 use mars_outpost::red_bank::Market;
 use mars_testing::MockEnvParams;
 

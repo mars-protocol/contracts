@@ -2,7 +2,7 @@ use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::{attr, Addr, BankMsg, Coin, CosmosMsg, SubMsg, Uint128};
 
 use mars_outpost::error::MarsError;
-use mars_outpost::incentives::msg::{ExecuteMsg, InstantiateMsg};
+use mars_outpost::incentives::{ExecuteMsg, InstantiateMsg};
 use mars_testing::mock_dependencies;
 
 use mars_incentives::contract::{execute, instantiate};

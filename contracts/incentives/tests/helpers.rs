@@ -2,7 +2,7 @@ use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
 use cosmwasm_std::OwnedDeps;
 use mars_incentives::contract::instantiate;
 
-use mars_outpost::incentives::msg::InstantiateMsg;
+use mars_outpost::incentives::InstantiateMsg;
 use mars_testing::{mock_dependencies, MarsMockQuerier};
 
 pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {

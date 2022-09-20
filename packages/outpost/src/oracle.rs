@@ -70,7 +70,6 @@ pub struct PriceSourceResponse<T> {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-
 pub struct PriceResponse {
     pub denom: String,
     pub price: Decimal,

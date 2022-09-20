@@ -163,7 +163,7 @@ impl MarsMockQuerier {
                 }
 
                 // Incentives Queries
-                let parse_incentives_query: StdResult<incentives::msg::QueryMsg> = from_binary(msg);
+                let parse_incentives_query: StdResult<incentives::QueryMsg> = from_binary(msg);
                 if let Ok(incentives_query) = parse_incentives_query {
                     return self.incentives_querier.handle_query(&contract_addr, incentives_query);
                 }

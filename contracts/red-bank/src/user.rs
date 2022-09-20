@@ -173,7 +173,7 @@ impl<'a> User<'a> {
     ) -> StdResult<CosmosMsg> {
         Ok(WasmMsg::Execute {
             contract_addr: incentives_addr.into(),
-            msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: self.address().clone(),
                 denom: market.denom.clone(),
                 user_amount_scaled_before,
