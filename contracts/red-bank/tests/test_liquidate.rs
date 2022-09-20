@@ -608,26 +608,11 @@ fn test_liquidate() {
             },
         );
 
-        let expected_collateral_rates = th_get_expected_indices_and_rates(
-            &collateral_market_before,
-            block_time,
-            available_liquidity_collateral, // this is the same as before as it comes from mocks
-            TestUtilizationDeltaInfo {
-                less_liquidity: user_collateral_balance,
-                ..Default::default()
-            },
-        );
-
         let debt_market_after = MARKETS.load(&deps.storage, "debt").unwrap();
 
-        // NOTE: expected_liquidated_collateral_amount_scaled should be equal user_collateral_balance_scaled
-        // but there are rounding errors
-        let expected_liquidated_collateral_amount_scaled = compute_scaled_amount(
-            user_collateral_balance,
-            expected_collateral_rates.liquidity_index,
-            ScalingOperation::Truncate,
-        )
-        .unwrap();
+        // since this is a full liquidation, the full amount of user's collateral shares should have
+        // been transferred to the liquidator
+        let expected_liquidated_collateral_amount_scaled = user_collateral_balance_scaled;
 
         assert_eq!(
             res.messages,
@@ -695,13 +680,8 @@ fn test_liquidate() {
             vec![th_build_interests_updated_event("debt", &expected_debt_rates),]
         );
 
-        // check user doesn't have deposited collateral asset and
-        // still has outstanding debt in debt asset
-        // TODO: Here the collateral position should be deleted if the contract behaves as designed.
-        // However, due to a rounding error described in https://github.com/mars-protocol/outposts/issues/41,
-        // the user will still have a dust amount of collateral shares left, leading to the position
-        // not being deleted. This will be addresses in a follow-up PR.
-        assert!(has_collateral_position(deps.as_ref(), &user_addr, "collateral"));
+        // since this is a full liquidation, the user's collateral position should have been deleted
+        assert!(!has_collateral_position(deps.as_ref(), &user_addr, "collateral"));
 
         // liquidator's collateral scaled amount should have been correctly increased
         let collateral =
