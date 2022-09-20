@@ -7,6 +7,9 @@ use crate::OsmosisRoute;
 /// Osmosis custom msg, query, and swap route plugins
 pub type OsmosisCollector<'a> = CollectorBase<'a, OsmosisRoute, Empty, Empty>;
 
+pub const CONTRACT_NAME: &str = "crates.io:mars-rewards-collector-osmosis";
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[cfg(not(feature = "library"))]
 pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
@@ -24,6 +27,7 @@ pub mod entry {
         _info: MessageInfo,
         msg: InstantiateMsg,
     ) -> ContractResult<Response> {
+        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
         OsmosisCollector::default().instantiate(deps, msg)
     }
 

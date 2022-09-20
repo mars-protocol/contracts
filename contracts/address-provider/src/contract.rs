@@ -16,6 +16,9 @@ use crate::helpers::{assert_owner, assert_valid_addr};
 use crate::key::MarsContractKey;
 use crate::state::{CONFIG, CONTRACTS};
 
+pub const CONTRACT_NAME: &str = "crates.io:mars-address-provider";
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
 
@@ -28,6 +31,8 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
     assert_valid_addr(deps.api, &msg.owner, &msg.prefix)?;
 
     CONFIG.save(deps.storage, &msg)?;
