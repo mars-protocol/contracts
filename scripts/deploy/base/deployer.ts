@@ -120,8 +120,8 @@ export class Deployer {
     }
     await this.instantiate('rewardsCollector', this.storage.codeIds.rewardsCollector!, msg)
 
-    // The pool query was removed from the Stargate whitelist.. PoolType() query will be added in later 
-    // For now, this test is taken out of the scripts since it doesnt effect any other results 
+    // The pool query was removed from the Stargate whitelist.. PoolType() query will be added in later
+    // For now, this test is taken out of the scripts since it doesnt effect any other results
 
     // await this.client.execute(
     //   this.deployerAddress,

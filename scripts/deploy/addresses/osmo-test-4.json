@@ -1,1 +1,7 @@
-{"addressProvider":"osmo1xqfqw8n9stp8tag7t627gz2ehud8u4lskzumpsxefjn9qxzzk00q29srcs","redBank":"osmo1w0vhcadnd56y9nx62w7hpnr74m5jpqmcz4mgnrc7ffqehy3s8v8qhmr2mv","incentives":"osmo1yldqg95t3t3hq6zd0sj2qyyy7tcm8dr8j8ttl8u4fr94jjdp30msmu5qdv","oracle":"osmo17fcl2yh0p3dk8wathv6vund4ryjs6e2j7spyf3yfc7xl3ym9j8fs6z9ex2","rewardsCollector":"osmo1r8tnqepaz6yh45dyppurw0nzs44yyhwad79qzs8uz98zhwqnfxmstgwpx5"}
+{
+  "addressProvider": "osmo1xqfqw8n9stp8tag7t627gz2ehud8u4lskzumpsxefjn9qxzzk00q29srcs",
+  "redBank": "osmo1w0vhcadnd56y9nx62w7hpnr74m5jpqmcz4mgnrc7ffqehy3s8v8qhmr2mv",
+  "incentives": "osmo1yldqg95t3t3hq6zd0sj2qyyy7tcm8dr8j8ttl8u4fr94jjdp30msmu5qdv",
+  "oracle": "osmo17fcl2yh0p3dk8wathv6vund4ryjs6e2j7spyf3yfc7xl3ym9j8fs6z9ex2",
+  "rewardsCollector": "osmo1r8tnqepaz6yh45dyppurw0nzs44yyhwad79qzs8uz98zhwqnfxmstgwpx5"
+}
