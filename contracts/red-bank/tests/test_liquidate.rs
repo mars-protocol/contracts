@@ -296,9 +296,7 @@ fn test_liquidate() {
                 SubMsg::new(WasmMsg::Execute {
                     contract_addr: MarsContract::Incentives.to_string(),
                     msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
-                        user_addr: Addr::unchecked(
-                            MarsContract::ProtocolRewardsCollector.to_string()
-                        ),
+                        user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                         denom: debt_market_initial.denom.clone(),
                         user_amount_scaled_before: expected_total_reward_scaled,
                         total_amount_scaled_before: debt_market_initial.collateral_total_scaled,
@@ -355,7 +353,7 @@ fn test_liquidate() {
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
-                (&Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()), "debt"),
+                (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "debt"),
             )
             .unwrap();
         assert_eq!(collateral.amount_scaled, expected_total_reward_scaled);
@@ -467,9 +465,7 @@ fn test_liquidate() {
                 SubMsg::new(WasmMsg::Execute {
                     contract_addr: MarsContract::Incentives.to_string(),
                     msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
-                        user_addr: Addr::unchecked(
-                            MarsContract::ProtocolRewardsCollector.to_string()
-                        ),
+                        user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                         denom: debt_market_before.denom.clone(),
                         user_amount_scaled_before: expected_total_reward_scaled,
                         total_amount_scaled_before: debt_market_before.collateral_total_scaled,
@@ -530,7 +526,7 @@ fn test_liquidate() {
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
-                (&Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()), "debt"),
+                (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "debt"),
             )
             .unwrap();
         assert_eq!(collateral.amount_scaled, expected_total_reward_scaled);
@@ -644,9 +640,7 @@ fn test_liquidate() {
                 SubMsg::new(WasmMsg::Execute {
                     contract_addr: MarsContract::Incentives.to_string(),
                     msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
-                        user_addr: Addr::unchecked(
-                            MarsContract::ProtocolRewardsCollector.to_string()
-                        ),
+                        user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                         denom: debt_market_before.denom.clone(),
                         user_amount_scaled_before: expected_total_reward_scaled,
                         total_amount_scaled_before: debt_market_before.collateral_total_scaled,
@@ -884,9 +878,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
                 SubMsg::new(WasmMsg::Execute {
                     contract_addr: MarsContract::Incentives.to_string(),
                     msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
-                        user_addr: Addr::unchecked(
-                            MarsContract::ProtocolRewardsCollector.to_string()
-                        ),
+                        user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                         denom: asset_market_before.denom.clone(),
                         user_amount_scaled_before: Uint128::zero(),
                         total_amount_scaled_before: asset_market_before.collateral_total_scaled,
@@ -929,7 +921,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
-                (&Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()), "the_asset"),
+                (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "the_asset"),
             )
             .unwrap();
         assert_eq!(collateral.amount_scaled, expected_reward_amount_scaled);
@@ -972,7 +964,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         unset_collateral(deps.as_mut(), &liquidator_addr, &asset_market_initial.denom);
         unset_collateral(
             deps.as_mut(),
-            &Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()),
+            &Addr::unchecked(MarsContract::RewardsCollector.to_string()),
             &asset_market_initial.denom,
         );
 
@@ -1071,9 +1063,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
                 SubMsg::new(WasmMsg::Execute {
                     contract_addr: MarsContract::Incentives.to_string(),
                     msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
-                        user_addr: Addr::unchecked(
-                            MarsContract::ProtocolRewardsCollector.to_string()
-                        ),
+                        user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                         denom: asset_market_before.denom.clone(),
                         user_amount_scaled_before: Uint128::zero(),
                         total_amount_scaled_before: asset_market_before.collateral_total_scaled,
@@ -1120,7 +1110,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
-                (&Addr::unchecked(MarsContract::ProtocolRewardsCollector.to_string()), "the_asset"),
+                (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "the_asset"),
             )
             .unwrap();
         assert_eq!(collateral.amount_scaled, expected_reward_amount_scaled);
