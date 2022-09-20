@@ -41,3 +41,6 @@ prost = { version = "0.10", default-features = false, features = ["prost-derive"
 
 [dev-dependencies]
 mars-testing = { path = "../../../packages/testing", version = "0.1.0" }
+
+[profile.release]
+overflow-checks = true

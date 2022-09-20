@@ -34,3 +34,6 @@ thiserror = "1.0.33"
 
 [dev-dependencies]
 serde = "1.0.144"
+
+[profile.release]
+overflow-checks = true

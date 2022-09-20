@@ -31,3 +31,6 @@ cosmwasm-std = "1.0"
 
 [dev-dependencies]
 mars-testing = { path = "../testing" }
+
+[profile.release]
+overflow-checks = true

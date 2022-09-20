@@ -37,3 +37,6 @@ thiserror = "1.0.33"
 
 [dev-dependencies]
 mars-testing = { path = "../../packages/testing", version = "0.1.0" }
+
+[profile.release]
+overflow-checks = true
