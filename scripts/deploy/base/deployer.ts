@@ -122,6 +122,7 @@ export class Deployer {
 
     // The pool query was removed from the Stargate whitelist.. PoolType() query will be added in later
     // For now, this test is taken out of the scripts since it doesnt effect any other results
+    // For reference: https://github.com/osmosis-labs/osmosis/pull/2738
 
     // await this.client.execute(
     //   this.deployerAddress,
