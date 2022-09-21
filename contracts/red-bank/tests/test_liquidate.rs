@@ -295,7 +295,7 @@ fn test_liquidate() {
                 }),
                 SubMsg::new(WasmMsg::Execute {
                     contract_addr: MarsContract::Incentives.to_string(),
-                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                         denom: debt_market_initial.denom.clone(),
                         user_amount_scaled_before: expected_total_reward_scaled,
@@ -464,7 +464,7 @@ fn test_liquidate() {
                 }),
                 SubMsg::new(WasmMsg::Execute {
                     contract_addr: MarsContract::Incentives.to_string(),
-                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                         denom: debt_market_before.denom.clone(),
                         user_amount_scaled_before: expected_total_reward_scaled,
@@ -639,7 +639,7 @@ fn test_liquidate() {
                 }),
                 SubMsg::new(WasmMsg::Execute {
                     contract_addr: MarsContract::Incentives.to_string(),
-                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                         denom: debt_market_before.denom.clone(),
                         user_amount_scaled_before: expected_total_reward_scaled,
@@ -877,7 +877,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
                 }),
                 SubMsg::new(WasmMsg::Execute {
                     contract_addr: MarsContract::Incentives.to_string(),
-                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                         denom: asset_market_before.denom.clone(),
                         user_amount_scaled_before: Uint128::zero(),
@@ -1062,7 +1062,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
                 }),
                 SubMsg::new(WasmMsg::Execute {
                     contract_addr: MarsContract::Incentives.to_string(),
-                    msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                    msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                         denom: asset_market_before.denom.clone(),
                         user_amount_scaled_before: Uint128::zero(),

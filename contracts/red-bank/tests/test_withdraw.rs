@@ -177,7 +177,7 @@ fn withdrawing_partially() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsContract::Incentives.to_string(),
-                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
@@ -295,7 +295,7 @@ fn withdrawing_completely() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsContract::Incentives.to_string(),
-                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
@@ -405,7 +405,7 @@ fn withdrawing_to_another_user() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsContract::Incentives.to_string(),
-                msg: to_binary(&incentives::msg::ExecuteMsg::BalanceChange {
+                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
