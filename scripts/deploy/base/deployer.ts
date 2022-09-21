@@ -4,6 +4,8 @@ import * as fs from 'fs'
 import { printBlue, printGreen, printRed, printYellow } from '../../utils/chalk'
 import { ARTIFACTS_PATH, Storage } from './storage'
 import { InstantiateMsgs } from '../../types/msg'
+import { writeFile } from 'fs/promises'
+import { join, resolve } from 'path'
 
 export class Deployer {
   constructor(
@@ -60,6 +62,7 @@ export class Deployer {
       `mars-${name}`,
       'auto',
     )
+
     this.storage.addresses[name] = redBankContractAddress
     printGreen(
       `${this.config.chainId} :: ${name} Contract Address : ${this.storage.addresses[name]}`,
@@ -79,7 +82,6 @@ export class Deployer {
       config: {
         owner: this.deployerAddress,
         address_provider: this.storage.addresses.addressProvider!,
-        ma_token_code_id: this.storage.codeIds.maToken!,
         close_factor: '0.5',
       },
     }
@@ -89,7 +91,7 @@ export class Deployer {
   async instantiateIncentives() {
     const msg = {
       owner: this.deployerAddress,
-      address_provider: this.storage.addresses.incentives!,
+      address_provider: this.storage.addresses.addressProvider!,
       mars_denom: this.config.marsDenom,
     }
     await this.instantiate('incentives', this.storage.codeIds.incentives!, msg)
@@ -118,24 +120,33 @@ export class Deployer {
     }
     await this.instantiate('rewardsCollector', this.storage.codeIds.rewardsCollector!, msg)
 
-    // set osmo : atom route
-    // add in search for correct pool and create if it does not exist
+    // The pool query was removed from the Stargate whitelist.. PoolType() query will be added in later
+    // For now, this test is taken out of the scripts since it doesnt effect any other results
+    // For reference: https://github.com/osmosis-labs/osmosis/pull/2738
 
-    await this.client.execute(
-      this.deployerAddress,
-      this.storage.addresses.rewardsCollector!,
-      {
-        set_route: {
-          denom_in: this.config.baseAssetDenom,
-          denom_out: this.config.atomDenom,
-          route: [{ denom_out: this.config.atomDenom, pool_id: 1 }],
-        },
-      },
-      'auto',
-    )
+    // await this.client.execute(
+    //   this.deployerAddress,
+    //   this.storage.addresses.rewardsCollector!,
+    //   {
+    //     set_route: {
+    //       denom_in: this.config.baseAssetDenom,
+    //       denom_out: this.config.atomDenom,
+    //       route: [{ token_out_denom: this.config.atomDenom, pool_id: 1 }],
+    //     },
+    //   },
+    //   'auto',
+    // )
 
     printGreen(
       `${this.config.chainId} :: Rewards Collector Contract Address : ${this.storage.addresses.rewardsCollector}`,
+    )
+  }
+
+  async saveDeploymentAddrsToFile() {
+    const addressesDir = resolve(join(__dirname, '../../../deploy/addresses'))
+    await writeFile(
+      `${addressesDir}/${this.config.chainId}.json`,
+      JSON.stringify(this.storage.addresses),
     )
   }
 
@@ -177,7 +188,6 @@ export class Deployer {
     }
     printYellow('Address Provider update completed')
     this.storage.execute.addressProviderUpdated = true
-
   }
 
   async initializeAsset(assetConfig: AssetConfig) {
@@ -189,7 +199,7 @@ export class Deployer {
     const msg = {
       init_asset: {
         denom: assetConfig.denom,
-        asset_params: {
+        params: {
           initial_borrow_rate: assetConfig.initial_borrow_rate,
           max_loan_to_value: assetConfig.max_loan_to_value,
           reserve_factor: assetConfig.reserve_factor,

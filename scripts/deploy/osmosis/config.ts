@@ -56,7 +56,7 @@ export const osmoAsset: AssetConfig = {
   deposit_cap: '1000000000',
   deposit_enabled: true,
   borrow_enabled: true,
-  symbol: 'OSMO'
+  symbol: 'OSMO',
 }
 
 export const atomAsset: AssetConfig = {
@@ -75,5 +75,5 @@ export const atomAsset: AssetConfig = {
   deposit_cap: '1000000000',
   deposit_enabled: true,
   borrow_enabled: true,
-  symbol: 'ATOM'
+  symbol: 'ATOM',
 }

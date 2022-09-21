@@ -12,7 +12,6 @@ export const taskRunner = async (config: DeploymentConfig) => {
     // Upload contracts
     await deployer.upload('redBank', 'mars_red_bank.wasm')
     await deployer.upload('addressProvider', 'mars_address_provider.wasm')
-    await deployer.upload('maToken', 'mars_ma_token.wasm')
     await deployer.upload('incentives', 'mars_incentives.wasm')
     await deployer.upload('oracle', `mars_oracle_${config.chainName}.wasm`)
     await deployer.upload('rewardsCollector', `mars_rewards_collector_${config.chainName}.wasm`)
@@ -23,6 +22,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.instantiateIncentives()
     await deployer.instantiateOracle()
     await deployer.instantiateRewards()
+    await deployer.saveDeploymentAddrsToFile()
 
     // setup
     await deployer.updateAddressProvider()
