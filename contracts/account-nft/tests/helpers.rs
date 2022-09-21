@@ -40,3 +40,19 @@ pub fn mint_action(
         &[],
     )
 }
+
+pub fn burn_action(
+    app: &mut BasicApp,
+    sender: &Addr,
+    contract_addr: &Addr,
+    token_id: &str,
+) -> AnyResult<AppResponse> {
+    app.execute_contract(
+        sender.clone(),
+        contract_addr.clone(),
+        &ExtendedExecuteMsg::Burn {
+            token_id: token_id.to_string(),
+        },
+        &[],
+    )
+}

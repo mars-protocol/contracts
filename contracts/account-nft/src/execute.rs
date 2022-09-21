@@ -2,7 +2,7 @@ use cosmwasm_std::{DepsMut, Empty, Env, Event, MessageInfo, Response};
 use cw721_base::{ContractError, MintMsg};
 
 use crate::contract::Parent;
-use crate::state::PENDING_OWNER;
+use crate::state::{NEXT_ID, PENDING_OWNER};
 
 pub fn mint(
     deps: DepsMut,
@@ -10,15 +10,16 @@ pub fn mint(
     info: MessageInfo,
     user: &str,
 ) -> Result<Response, ContractError> {
-    let parent = Parent::default();
-    let num_tokens = parent.token_count(deps.storage)?;
+    let next_id = NEXT_ID.load(deps.storage)?;
     let mint_msg_override = MintMsg {
-        token_id: (num_tokens + 1).to_string(),
+        token_id: next_id.to_string(),
         owner: user.to_string(),
         token_uri: None,
         extension: Empty {},
     };
-    parent.mint(deps, env, info, mint_msg_override)
+    NEXT_ID.save(deps.storage, &(next_id + 1))?;
+
+    Parent::default().mint(deps, env, info, mint_msg_override)
 }
 
 pub fn propose_new_owner(

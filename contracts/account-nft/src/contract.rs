@@ -10,6 +10,7 @@ use cw721_base::{ContractError, Cw721Contract, InstantiateMsg};
 use crate::execute::{accept_ownership, mint, propose_new_owner};
 use crate::msg::{ExecuteMsg, QueryMsg};
 use crate::query::query_proposed_new_owner;
+use crate::state::NEXT_ID;
 
 // Extending CW721 base contract
 pub type Parent<'a> = Cw721Contract<'a, Empty, Empty, Empty, Empty>;
@@ -21,6 +22,7 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
+    NEXT_ID.save(deps.storage, &1)?;
     Parent::default().instantiate(deps, env, info, msg)
 }
 

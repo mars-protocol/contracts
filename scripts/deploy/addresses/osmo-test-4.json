@@ -1,8 +1,8 @@
 {
-  "accountNft": "osmo1cs0f9yv3smthukxdag6k3z06j2vhar26l63arkxuupec6lj0e7lst9els8",
-  "mockRedBank": "osmo1fswlsmvw7du33gqgnp9jmthlcxfzmu66ph8wlf8xuw4lz8gtt6fqmx6tt3",
-  "mockOracle": "osmo1kgrrj45k4udlw7d4flaamsrq0633q4pa5rlyueffua0kcx2llsmsddrs9d",
-  "mockVault": "osmo1hssy7afj5ye3zt9p67wh7py2lmkyx2vy3jxpc7p6fpqtqkgyvn7sltg6sn",
-  "swapper": "osmo10dpyf07zpn769e9e0kfkgqllw6yc3wvvpl5efmg5lpc6l7pkl9xs0g2zem",
-  "creditManager": "osmo1wla04nzxlugq7v0k6fkez6625uctt3tpwfxzgh0lavgpslw4supsm4qw38"
+  "accountNft": "osmo16v3mvsdnkh4c6ykc885n3x5ay9e36akdzxcl2g93698rqw007xxqesld8w",
+  "mockRedBank": "osmo1xrnx0q3x7kwzss53fry0dwwsc7pff6aq628l6n0rmvegkalp4y7qzl7j7z",
+  "mockOracle": "osmo1r9u2tfq8n5xpn2g0fq8ha0rj0cyp2fzr5w9jvcqwt3r8lxdfm6yszmtza5",
+  "mockVault": "osmo1gg4rpug7vwrnq0ask0k7nmw23z6wl8c8fr7jmup9pdpaal9uc5nqq7lyrm",
+  "swapper": "osmo1ak4x8k2h7s6pq5dnlncmgsmx2nqcaplpfxlmklx2ln7qn6dtny8q70apjv",
+  "creditManager": "osmo1963xgmt8agyc6q4k2vhf980kffq6ukkj9mgtwdxxnpj3dak2akdq20z9dw"
 }

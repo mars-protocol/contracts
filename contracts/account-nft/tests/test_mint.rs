@@ -2,12 +2,13 @@ use std::fmt::Error;
 
 use cosmwasm_std::{Addr, Empty};
 use cw721::OwnerOfResponse;
-use cw721_base::QueryMsg;
+use cw721_base::ContractError::Unauthorized;
+use cw721_base::{ContractError, QueryMsg};
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 
 use account_nft::msg::ExecuteMsg as ExtendedExecuteMsg;
 
-use crate::helpers::{instantiate_mock_nft_contract, mint_action};
+use crate::helpers::{burn_action, instantiate_mock_nft_contract, mint_action};
 
 pub mod helpers;
 
@@ -37,16 +38,56 @@ fn test_id_incrementer() {
 }
 
 #[test]
-fn test_only_owner_can_mint() {
+fn test_id_incrementer_works_despite_burns() {
+    let mut app = App::default();
+    let owner = Addr::unchecked("owner");
+    let contract_addr = instantiate_mock_nft_contract(&mut app, &owner);
+
+    let user = Addr::unchecked("user");
+    let res = mint_action(&mut app, &owner, &contract_addr, &user).unwrap();
+    let token_id_1 = get_token_id(res);
+    assert_eq!(token_id_1, "1");
+    let res = mint_action(&mut app, &owner, &contract_addr, &user).unwrap();
+    let token_id_2 = get_token_id(res);
+    assert_eq!(token_id_2, "2");
+
+    burn_action(&mut app, &user, &contract_addr, &token_id_1).unwrap();
+    burn_action(&mut app, &user, &contract_addr, &token_id_2).unwrap();
+
+    let res = mint_action(&mut app, &owner, &contract_addr, &user).unwrap();
+    let token_id = get_token_id(res);
+    assert_eq!(token_id, "3");
+    assert_owner_is_correct(&mut app, &contract_addr, &user, &token_id);
+}
+
+#[test]
+fn test_only_contract_owner_can_mint() {
     let mut app = App::default();
     let owner = Addr::unchecked("owner");
     let contract_addr = instantiate_mock_nft_contract(&mut app, &owner);
 
     let bad_guy = Addr::unchecked("bad_guy");
     let res = mint_action(&mut app, &bad_guy, &contract_addr, &bad_guy);
-    if res.is_ok() {
-        panic!("Unauthorized access to minting function");
-    }
+    let err: ContractError = res.unwrap_err().downcast().unwrap();
+    assert_eq!(err, Unauthorized {})
+}
+
+#[test]
+fn test_only_token_owner_can_burn() {
+    let mut app = App::default();
+    let owner = Addr::unchecked("owner");
+    let contract_addr = instantiate_mock_nft_contract(&mut app, &owner);
+
+    let user = Addr::unchecked("user");
+    let res = mint_action(&mut app, &owner, &contract_addr, &user).unwrap();
+    let token_id = get_token_id(res);
+
+    let bad_guy = Addr::unchecked("bad_guy");
+    let res = burn_action(&mut app, &bad_guy, &contract_addr, &token_id);
+    let err: ContractError = res.unwrap_err().downcast().unwrap();
+    assert_eq!(err, Unauthorized {});
+
+    burn_action(&mut app, &user, &contract_addr, &token_id).unwrap();
 }
 
 #[test]
