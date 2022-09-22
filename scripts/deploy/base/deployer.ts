@@ -157,7 +157,7 @@ export class Deployer {
     }
     const addressesToSet = [
       {
-        contract: 'protocol_rewards_collector',
+        contract: 'rewards_collector',
         address: this.storage.addresses.rewardsCollector,
       },
       {
