@@ -146,13 +146,17 @@ pub enum QueryMsg {
     /// Get config parameters
     #[returns(Config<String>)]
     Config {},
-    /// Get routes for swapping an input denom into an output denom
+    /// Get routes for swapping an input denom into an output denom.
+    ///
+    /// NOTE: The response type of this query is chain-specific.
     #[returns(RouteResponse<String>)]
     Route {
         denom_in: String,
         denom_out: String,
     },
-    /// Enumerate all swap routes
+    /// Enumerate all swap routes.
+    ///
+    /// NOTE: The response type of this query is chain-specific.
     #[returns(Vec<RouteResponse<String>>)]
     Routes {
         start_after: Option<(String, String)>,

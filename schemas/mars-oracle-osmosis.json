@@ -1,0 +1,432 @@
+{
+  "contract_name": "mars-oracle-osmosis",
+  "contract_version": "0.1.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "type": "object",
+    "required": [
+      "base_denom",
+      "owner"
+    ],
+    "properties": {
+      "base_denom": {
+        "description": "The asset in which prices are denominated in",
+        "type": "string"
+      },
+      "owner": {
+        "description": "The contract's owner, who can update config and price sources",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "execute": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ExecuteMsg",
+    "oneOf": [
+      {
+        "description": "Update contract config",
+        "type": "object",
+        "required": [
+          "update_config"
+        ],
+        "properties": {
+          "update_config": {
+            "type": "object",
+            "properties": {
+              "owner": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Specify the price source to be used for a coin\n\nNOTE: The input parameters for method are chain-specific.",
+        "type": "object",
+        "required": [
+          "set_price_source"
+        ],
+        "properties": {
+          "set_price_source": {
+            "type": "object",
+            "required": [
+              "denom",
+              "price_source"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "price_source": {
+                "$ref": "#/definitions/OsmosisPriceSource"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+        "type": "string"
+      },
+      "OsmosisPriceSource": {
+        "oneOf": [
+          {
+            "description": "Returns a fixed value;",
+            "type": "object",
+            "required": [
+              "fixed"
+            ],
+            "properties": {
+              "fixed": {
+                "type": "object",
+                "required": [
+                  "price"
+                ],
+                "properties": {
+                  "price": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Osmosis spot price quoted in OSMO\n\nNOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO",
+            "type": "object",
+            "required": [
+              "spot"
+            ],
+            "properties": {
+              "spot": {
+                "type": "object",
+                "required": [
+                  "pool_id"
+                ],
+                "properties": {
+                  "pool_id": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Osmosis twap price quoted in OSMO\n\nNOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO",
+            "type": "object",
+            "required": [
+              "twap"
+            ],
+            "properties": {
+              "twap": {
+                "type": "object",
+                "required": [
+                  "pool_id",
+                  "window_size"
+                ],
+                "properties": {
+                  "pool_id": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  },
+                  "window_size": {
+                    "description": "Window size in seconds representing the entire window for which 'average' price is calculated. Value should be <= 172800 sec (48 hours).",
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Osmosis liquidity token",
+            "type": "object",
+            "required": [
+              "liquidity_token"
+            ],
+            "properties": {
+              "liquidity_token": {
+                "type": "object",
+                "required": [
+                  "pool_id"
+                ],
+                "properties": {
+                  "pool_id": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "query": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "QueryMsg",
+    "oneOf": [
+      {
+        "description": "Query contract config.",
+        "type": "object",
+        "required": [
+          "config"
+        ],
+        "properties": {
+          "config": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Query a coin's price source.\n\nNOTE: The response type of this query is chain-specific.",
+        "type": "object",
+        "required": [
+          "price_source"
+        ],
+        "properties": {
+          "price_source": {
+            "type": "object",
+            "required": [
+              "denom"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Enumerate all coins' price sources.\n\nNOTE: The response type of this query is chain-specific.",
+        "type": "object",
+        "required": [
+          "price_sources"
+        ],
+        "properties": {
+          "price_sources": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Query a coin's price.\n\nNOTE: This query may be dependent on block time (e.g. if the price source is TWAP), so may not work properly with time travel queries on archive nodes.",
+        "type": "object",
+        "required": [
+          "price"
+        ],
+        "properties": {
+          "price": {
+            "type": "object",
+            "required": [
+              "denom"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Enumerate all coins' prices.\n\nNOTE: This query may be dependent on block time (e.g. if the price source is TWAP), so may not work properly with time travel queries on archive nodes.",
+        "type": "object",
+        "required": [
+          "prices"
+        ],
+        "properties": {
+          "prices": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "migrate": null,
+  "sudo": null,
+  "responses": {
+    "config": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Config_for_String",
+      "type": "object",
+      "required": [
+        "base_denom",
+        "owner"
+      ],
+      "properties": {
+        "base_denom": {
+          "description": "The asset in which prices are denominated in",
+          "type": "string"
+        },
+        "owner": {
+          "description": "The contract's owner, who can update config and price sources",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "price": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PriceResponse",
+      "type": "object",
+      "required": [
+        "denom",
+        "price"
+      ],
+      "properties": {
+        "denom": {
+          "type": "string"
+        },
+        "price": {
+          "$ref": "#/definitions/Decimal"
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        }
+      }
+    },
+    "price_source": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PriceSourceResponse_for_String",
+      "type": "object",
+      "required": [
+        "denom",
+        "price_source"
+      ],
+      "properties": {
+        "denom": {
+          "type": "string"
+        },
+        "price_source": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "price_sources": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_PriceSourceResponse_for_String",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/PriceSourceResponse_for_String"
+      },
+      "definitions": {
+        "PriceSourceResponse_for_String": {
+          "type": "object",
+          "required": [
+            "denom",
+            "price_source"
+          ],
+          "properties": {
+            "denom": {
+              "type": "string"
+            },
+            "price_source": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "prices": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_PriceResponse",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/PriceResponse"
+      },
+      "definitions": {
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        },
+        "PriceResponse": {
+          "type": "object",
+          "required": [
+            "denom",
+            "price"
+          ],
+          "properties": {
+            "denom": {
+              "type": "string"
+            },
+            "price": {
+              "$ref": "#/definitions/Decimal"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}
