@@ -35,3 +35,7 @@ export interface AssetConfig {
   borrow_enabled: boolean
   symbol: string
 }
+
+export interface MultisigConfig { 
+  address: string, 
+}
