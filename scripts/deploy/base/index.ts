@@ -1,10 +1,10 @@
 import { setupDeployer } from './setupDeployer'
-import { DeploymentConfig } from '../../types/config'
+import { DeploymentConfig, MultisigConfig } from '../../types/config'
 import { printRed } from '../../utils/chalk'
 import { atomAsset, osmoAsset } from '../osmosis/config'
 
-export const taskRunner = async (config: DeploymentConfig) => {
-  const deployer = await setupDeployer(config)
+export const taskRunner = async (config: DeploymentConfig, multisig: MultisigConfig) => {
+  const deployer = await setupDeployer(config, multisig)
 
   try {
     await deployer.assertDeployerBalance()
@@ -35,6 +35,22 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.executeBorrow()
     await deployer.executeRepay()
     await deployer.executeWithdraw()
+
+    //update owner to multisig address 
+    await deployer.executeUpdateConfigIncentives()
+    await deployer.executeUpdateConfigRedBank()
+    await deployer.executeUpdateConfigOracle()
+    await deployer.executeUpdateConfigRewards()
+    await deployer.executeUpdateConfigAddressProvider()
+
+    //asset multisig is the owner
+    await deployer.assertMultisigIncentives()
+    await deployer.assertMultisigRedBank()
+    await deployer.assertMultisigOracle()
+    await deployer.assertMultisigRewards()
+    await deployer.assertMultisigAddressProvider()
+
+
   } catch (e) {
     printRed(e)
   } finally {

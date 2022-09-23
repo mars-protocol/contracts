@@ -17,12 +17,12 @@ read User4Key
 echo what is user5 PubKey?
 read User5Key
 
-osmosisd keys add \ user1 \ --pubkey=$DaneKey
-osmosisd keys add \ user2 \ --pubkey=$LukeKey
-osmosisd keys add \ user3 \ --pubkey=$BriannaKey
-osmosisd keys add \ user4 \ --pubkey=$GabeKey
-osmosisd keys add \ user5 \ --pubkey=$BobKey
+osmosisd keys add user1 --pubkey=$User1Key
+osmosisd keys add user2 --pubkey=$User2Key
+osmosisd keys add user3 --pubkey=$User3Key
+osmosisd keys add user4 --pubkey=$User4Key
+osmosisd keys add user5 --pubkey=$User5Key
 
-osmosisd keys add \ mars_testnet_multisig \ --multisig=user1,user2,user3,user4,user5 \ --multisig-threshold=3
+osmosisd keys add mars_testnet_multisig --multisig=user1,user2,user3,user4,user5 --multisig-threshold=3
 
 osmosisd keys show mars_testnet_multisig

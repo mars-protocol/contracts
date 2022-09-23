@@ -41,3 +41,7 @@ export interface RewardsInstantiateMsg {
   fee_collector_denom: string
   channel_id: string
 }
+
+export interface UpdateOwner { 
+  owner: string
+}
