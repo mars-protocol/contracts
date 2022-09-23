@@ -36,44 +36,51 @@ Follow these instructions to verify that the smart contracts that exist on chain
 3. Get the SHA256 checksum of a smart contract's wasm binary built from source code. To do this, first clone this repo, checkout a particular release, compile the smart contracts using the same version of [rust-optimizer](https://github.com/CosmWasm/rust-optimizer) listed in the [releases](https://github.com/mars-protocol/mars-core/releases), and verify the checksum written to `artifacts/checksums.txt`.
 4. Finally, verify that the two checksums are identical.
 
-## Deploy scripts overview and set up 
+## Deploy scripts overview and set up
 When the scripts run for the first time, it will upload code IDs for each contract, instantiate each contract, initialize assets, and run 4 tests (deposit, borrow, repay, withdraw). After the first run, the code will only run deposit, borrow, repay, and withdraw tests. To rerun everything, delete the osmo-test-4.json file in the artifacts folder to clear the storage.
 
 Everything related to deployment must be ran from the `scripts` directory:
 ```
-cd scripts 
+cd scripts
 ```
 Set up yarn:
 ```
-yarn install 
+yarn install
 ```
-Create the build folder: 
+Create the build folder:
 ```
-yarn build 
+yarn build
 ```
-Compile all contracts: 
+Compile all contracts:
 ```
-yarn compile 
+yarn compile
 ```
 This compiles and optimizes all contracts, storing them in `/artifacts` directory along with `checksum.txt` which contains sha256 hashes of each of the `.wasm` files (The script just uses CosmWasm's [rust-optimizer](https://github.com/CosmWasm/rust-optimizer)).
 
-Formating must be done before running lint: 
+Formating must be done before running lint:
 ```
-yarn format 
+yarn format
 ```
-Linting: 
+Linting:
 ```
-yarn lint 
+yarn lint
 ```
 Now you're ready to deploy for an outpost.
 
-## Deploying Outposts 
-Each outpost has a config file for its respective deployment and assets 
+## Deploying Outposts
+Each outpost has a config file for its respective deployment and assets
 
-For Osmosis: 
+For Osmosis:
 ```
-yarn deploy:osmosis 
+yarn deploy:osmosis
 ```
+
+## Schemas
+```
+cargo make --makefile Makefile.toml generate-all-schemas
+```
+
+Creates JSON schema files for relevant contract calls, queries and query responses (See: [cosmwams-schema](https://github.com/CosmWasm/cosmwasm/tree/main/packages/schema)).
 
 ## Linting
 `rustfmt` is used to format any Rust source code:
