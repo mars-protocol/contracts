@@ -36,6 +36,6 @@ export interface AssetConfig {
   symbol: string
 }
 
-export interface MultisigConfig { 
-  address: string, 
+export interface MultisigConfig {
+  address: string
 }

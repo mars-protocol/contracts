@@ -36,12 +36,12 @@ export const taskRunner = async (config: DeploymentConfig, multisig: MultisigCon
     await deployer.executeRepay()
     await deployer.executeWithdraw()
 
-    //update owner to multisig address 
-    await deployer.executeUpdateConfigIncentives()
-    await deployer.executeUpdateConfigRedBank()
-    await deployer.executeUpdateConfigOracle()
-    await deployer.executeUpdateConfigRewards()
-    await deployer.executeUpdateConfigAddressProvider()
+    //update owner to multisig address
+    await deployer.updateIncentivesContractOwner()
+    await deployer.updateRedBankContractOwner()
+    await deployer.updateOracleContractOwner()
+    await deployer.updateRewardsContractOwner()
+    await deployer.updateAddressProviderContractOwner()
 
     //asset multisig is the owner
     await deployer.assertMultisigIncentives()
@@ -49,8 +49,6 @@ export const taskRunner = async (config: DeploymentConfig, multisig: MultisigCon
     await deployer.assertMultisigOracle()
     await deployer.assertMultisigRewards()
     await deployer.assertMultisigAddressProvider()
-
-
   } catch (e) {
     printRed(e)
   } finally {

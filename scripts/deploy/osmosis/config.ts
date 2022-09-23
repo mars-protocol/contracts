@@ -78,6 +78,6 @@ export const atomAsset: AssetConfig = {
   symbol: 'ATOM',
 }
 
-export const osmosisMultisig: MultisigConfig = { 
-  address: 'osmo1zwt8al0cev8gfs8esxq5h340m6edjanwmvt7wy'
+export const osmosisMultisig: MultisigConfig = {
+  address: 'osmo1zwt8al0cev8gfs8esxq5h340m6edjanwmvt7wy',
 }

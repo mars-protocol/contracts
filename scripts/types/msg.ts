@@ -42,6 +42,6 @@ export interface RewardsInstantiateMsg {
   channel_id: string
 }
 
-export interface UpdateOwner { 
+export interface UpdateOwner {
   owner: string
 }
