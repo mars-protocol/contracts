@@ -42,13 +42,6 @@ export const taskRunner = async (config: DeploymentConfig, multisig: MultisigCon
     await deployer.updateOracleContractOwner()
     await deployer.updateRewardsContractOwner()
     await deployer.updateAddressProviderContractOwner()
-
-    //asset multisig is the owner
-    await deployer.assertMultisigIncentives()
-    await deployer.assertMultisigRedBank()
-    await deployer.assertMultisigOracle()
-    await deployer.assertMultisigRewards()
-    await deployer.assertMultisigAddressProvider()
   } catch (e) {
     printRed(e)
   } finally {
