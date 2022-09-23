@@ -16,8 +16,7 @@
     "@cosmjs/cosmwasm-stargate": "^0.28.4",
     "@cosmjs/proto-signing": "^0.28.13",
     "@cosmjs/stargate": "^0.28.13",
-    "chalk": "4.1.2",
-    "dotenv": "^16.0.2"
+    "chalk": "4.1.2"
   },
   "devDependencies": {
     "@types/node": "^18.7.14",

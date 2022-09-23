@@ -53,7 +53,7 @@ make install
 yarn get-pubkey
 ```
 
-Note: Your wallet must be active and have made atleast one transaction to return a public key.
+Note: Your wallet must be active and have made at least one transaction to return a public key.
 
 This will return a JSON that had your pubkey. Copy your pubkey in the following format:
 
