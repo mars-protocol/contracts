@@ -1,12 +1,11 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
 
 /// Global configuration
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct Config<T> {
     /// Contract owner
     pub owner: T,
@@ -23,7 +22,8 @@ impl<T> Config<T> {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
+#[derive(Default)]
 pub struct Collateral {
     /// Scaled collateral amount
     pub amount_scaled: Uint128,
@@ -38,7 +38,8 @@ pub struct Collateral {
 }
 
 /// Debt for each asset and user
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
+#[derive(Default)]
 pub struct Debt {
     /// Scaled debt amount
     pub amount_scaled: Uint128,
@@ -46,8 +47,7 @@ pub struct Debt {
     pub uncollateralized: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum UserHealthStatus {
     NotBorrowing,
     Borrowing {
@@ -70,7 +70,7 @@ pub struct Position {
 
 pub type ConfigResponse = Config<String>;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct UncollateralizedLoanLimitResponse {
     /// Asset denom
     pub denom: String,
@@ -78,7 +78,7 @@ pub struct UncollateralizedLoanLimitResponse {
     pub limit: Uint128,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct UserDebtResponse {
     /// Asset denom
     pub denom: String,
@@ -90,7 +90,7 @@ pub struct UserDebtResponse {
     pub uncollateralized: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct UserCollateralResponse {
     /// Asset denom
     pub denom: String,
@@ -102,7 +102,7 @@ pub struct UserCollateralResponse {
     pub enabled: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct UserPositionResponse {
     /// Total value of all enabled collateral assets.
     /// If an asset is disabled as collateral, it will not be included in this value.

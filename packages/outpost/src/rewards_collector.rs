@@ -1,13 +1,11 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Api, CosmosMsg, Decimal, StdResult, Uint128};
 
 use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
 
 /// Global configuration
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct Config<T> {
     /// Contract owner
     pub owner: T,
@@ -72,7 +70,8 @@ impl From<Config<Addr>> for Config<String> {
     }
 }
 
-#[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
+#[derive(Default)]
 pub struct CreateOrUpdateConfig {
     /// Contract owner
     pub owner: Option<String>,
@@ -98,8 +97,7 @@ pub struct CreateOrUpdateConfig {
 
 pub type InstantiateMsg = Config<String>;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg<Route, CustomMsg> {
     /// Update contract config
     UpdateConfig {
@@ -142,24 +140,27 @@ pub enum ExecuteMsg<Route, CustomMsg> {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
-    /// Get config parameters; response: `Config<String>`
+    /// Get config parameters
+    #[returns(Config<String>)]
     Config {},
-    /// Get routes for swapping an input denom into an output denom; response: `RouteResponse`
+    /// Get routes for swapping an input denom into an output denom
+    #[returns(RouteResponse<String>)]
     Route {
         denom_in: String,
         denom_out: String,
     },
-    /// Enumerate all swap routes; response: `RoutesResponse`
+    /// Enumerate all swap routes
+    #[returns(Vec<RouteResponse<String>>)]
     Routes {
         start_after: Option<(String, String)>,
         limit: Option<u32>,
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct RouteResponse<Route> {
     pub denom_in: String,
     pub denom_out: String,

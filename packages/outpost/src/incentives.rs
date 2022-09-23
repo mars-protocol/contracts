@@ -1,10 +1,8 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, CosmosMsg, Decimal, Uint128};
 
 /// Global configuration
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct Config {
     /// Contract owner
     pub owner: Addr,
@@ -15,7 +13,7 @@ pub struct Config {
 }
 
 /// Incentive Metadata for a given incentive
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct AssetIncentive {
     /// How much MARS per second is emitted to be then distributed to all Red Bank depositors
     pub emission_per_second: Uint128,
@@ -26,13 +24,13 @@ pub struct AssetIncentive {
 }
 
 /// Response to AssetIncentive query
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct AssetIncentiveResponse {
     /// Existing asset incentive for a given address. Will return None if it doesn't exist
     pub asset_incentive: Option<AssetIncentive>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct InstantiateMsg {
     /// Contract owner
     pub owner: String,
@@ -42,8 +40,7 @@ pub struct InstantiateMsg {
     pub mars_denom: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     /// Set emission per second for an asset to its depositor at Red Bank
     SetAssetIncentive {
@@ -84,18 +81,21 @@ pub enum ExecuteMsg {
     ExecuteCosmosMsg(CosmosMsg),
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Query contract config
+    #[returns(Config)]
     Config {},
 
     /// Query info about asset incentive for a given denom
+    #[returns(AssetIncentiveResponse)]
     AssetIncentive {
         denom: String,
     },
 
     /// Query user current unclaimed rewards
+    #[returns(Uint128)]
     UserUnclaimedRewards {
         user: String,
     },

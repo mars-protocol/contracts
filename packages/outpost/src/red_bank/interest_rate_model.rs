@@ -1,12 +1,12 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, StdError, StdResult};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
 use crate::math;
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
+#[derive(Eq, Default)]
 pub struct InterestRateModel {
     /// Optimal utilization rate
     pub optimal_utilization_rate: Decimal,

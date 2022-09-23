@@ -1,17 +1,18 @@
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Decimal, Uint128};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
-use crate::red_bank::InterestRateModel;
+use crate::red_bank::{
+    ConfigResponse, InterestRateModel, Market, UncollateralizedLoanLimitResponse,
+    UserCollateralResponse, UserDebtResponse, UserPositionResponse,
+};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct InstantiateMsg {
     /// Market configuration
     pub config: CreateOrUpdateConfig,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 #[allow(clippy::large_enum_variant)]
 pub enum ExecuteMsg {
     /// Update contract config (only owner can call)
@@ -104,14 +105,14 @@ pub enum ExecuteMsg {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct CreateOrUpdateConfig {
     pub owner: Option<String>,
     pub address_provider: Option<String>,
     pub close_factor: Option<Decimal>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct InitOrUpdateAssetParams {
     /// Initial borrow rate
     pub initial_borrow_rate: Option<Decimal>,
@@ -137,71 +138,80 @@ pub struct InitOrUpdateAssetParams {
     pub deposit_cap: Option<Uint128>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Get config
+    #[returns(ConfigResponse)]
     Config {},
 
     /// Get asset market
+    #[returns(Market)]
     Market {
         denom: String,
     },
 
-    /// Enumerate markets with pagination. Returns Vec<Market>
+    /// Enumerate markets with pagination
+    #[returns(Vec<Market>)]
     Markets {
         start_after: Option<String>,
         limit: Option<u32>,
     },
 
-    /// Get uncollateralized limit for given user and asset.
-    /// Returns UncollateralizedLoanLimitResponse
+    /// Get uncollateralized limit for given user and asset
+    #[returns(UncollateralizedLoanLimitResponse)]
     UncollateralizedLoanLimit {
         user: String,
         denom: String,
     },
 
-    /// Get all uncollateralized limits for a given user.
-    /// Returns Vec<UncollateralizedLoanLimitResponse>
+    /// Get all uncollateralized limits for a given user
+    #[returns(Vec<UncollateralizedLoanLimitResponse>)]
     UncollateralizedLoanLimits {
         user: String,
         start_after: Option<String>,
         limit: Option<u32>,
     },
 
-    /// Get user debt position for a specific asset. Returns UserDebtResponse
+    /// Get user debt position for a specific asset
+    #[returns(UserDebtResponse)]
     UserDebt {
         user: String,
         denom: String,
     },
 
-    /// Get all debt positions for a user. Returns Vec<UserDebtResponse>
+    /// Get all debt positions for a user
+    #[returns(Vec<UserDebtResponse>)]
     UserDebts {
         user: String,
         start_after: Option<String>,
         limit: Option<u32>,
     },
 
-    /// Get user collateral position for a specific asset. Returns UserCollateralResponse
+    /// Get user collateral position for a specific asset
+    #[returns(UserCollateralResponse)]
     UserCollateral {
         user: String,
         denom: String,
     },
 
-    /// Get all collateral positions for a user. Returns Vec<UserCollateralResponse>
+    /// Get all collateral positions for a user
+    #[returns(Vec<UserCollateralResponse>)]
     UserCollaterals {
         user: String,
         start_after: Option<String>,
         limit: Option<u32>,
     },
 
-    /// Get user position. Returns UserPositionResponse
+    /// Get user position
+    #[returns(UserPositionResponse)]
     UserPosition {
         user: String,
     },
 
-    /// Get liquidity scaled amount for a given underlying asset amount
-    /// (i.e: how much maTokens will get minted if the given amount is deposited)
+    /// Get liquidity scaled amount for a given underlying asset amount.
+    /// (i.e: how much scaled collateral is added if the given amount is deposited)
+    #[returns(Uint128)]
     ScaledLiquidityAmount {
         denom: String,
         amount: Uint128,
@@ -209,6 +219,7 @@ pub enum QueryMsg {
 
     /// Get equivalent scaled debt for a given underlying asset amount.
     /// (i.e: how much scaled debt is added if the given amount is borrowed)
+    #[returns(Uint128)]
     ScaledDebtAmount {
         denom: String,
         amount: Uint128,
@@ -217,6 +228,7 @@ pub enum QueryMsg {
     /// Get underlying asset amount for a given asset and scaled amount.
     /// (i.e. How much underlying asset will be released if withdrawing by burning a given scaled
     /// collateral amount stored in state.)
+    #[returns(Uint128)]
     UnderlyingLiquidityAmount {
         denom: String,
         amount_scaled: Uint128,
@@ -225,6 +237,7 @@ pub enum QueryMsg {
     /// Get underlying debt amount for a given asset and scaled amounts.
     /// (i.e: How much underlying asset needs to be repaid to cancel a given scaled debt
     /// amount stored in state)
+    #[returns(Uint128)]
     UnderlyingDebtAmount {
         denom: String,
         amount_scaled: Uint128,
