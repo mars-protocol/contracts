@@ -59,4 +59,4 @@ This will return a JSON that had your pubkey. Copy your pubkey in the following 
 yarn create-multisig 
 ```
 
-3. Update the config with the new multisig address. 
+3. Update the config with the new multisig address in scripts/deploy/osmosis/config.
