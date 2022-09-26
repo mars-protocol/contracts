@@ -64,10 +64,16 @@ This will return a JSON that had your pubkey. Copy your pubkey in the following 
 }'
 ```
 
-2. To create the multisig, each multisig owner's pubkey needs to be gathered. Then run the following:
+2. For each public key, run the following command: 
 
 ```
-yarn create-multisig
+osmosisd keys add [user_name] --pubkey=[public_key]
+```
+Note: The public key must be entered exactly as shown in step 1 and this step must be completed for each address on the same local network.
+
+3. Add all addresses to one multisig account: 
+```
+osmosisd keys add mars_testnet_multisig --multisig=[user_name1],[user_name2],[user_name3],[user_name4],[user_name5] --multisig-threshold=3
 ```
 
-3. Update the config with the new multisig address in scripts/deploy/osmosis/config.
+4. Update the config with the new multisig address located in scripts/deploy/osmosis/config.
