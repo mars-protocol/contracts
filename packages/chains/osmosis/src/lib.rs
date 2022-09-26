@@ -1,24 +1,42 @@
-use std::any::type_name;
 use std::str::FromStr;
 
-use cosmwasm_std::{Addr, Decimal, QuerierWrapper, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, Decimal, Empty, QuerierWrapper, QueryRequest, StdResult, Uint128};
 
-use mars_outpost::error::MarsError;
 use osmosis_std::shim::Timestamp;
+use osmosis_std::types::cosmos::base::v1beta1::Coin;
 use osmosis_std::types::osmosis::gamm::twap::v1beta1::TwapQuerier;
-use osmosis_std::types::osmosis::gamm::v1beta1::{GammQuerier, Pool, PoolAsset, SwapAmountInRoute};
-use prost::{DecodeError, Message};
+use osmosis_std::types::osmosis::gamm::v1beta1::{
+    GammQuerier, PoolAsset, PoolParams, QueryPoolRequest, SwapAmountInRoute,
+};
+
+use serde::{Deserialize, Serialize};
+
+// NOTE: Use custom Pool (`id` type as String) due to problem with json (de)serialization discrepancy between go and rust side.
+// https://github.com/osmosis-labs/osmosis-rust/issues/42
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct Pool {
+    pub id: String,
+    pub address: String,
+    pub pool_params: Option<PoolParams>,
+    pub future_pool_governor: String,
+    pub pool_assets: Vec<PoolAsset>,
+    pub total_shares: Option<Coin>,
+    pub total_weight: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct QueryPoolResponse {
+    pub pool: Pool,
+}
 
 /// Query an Osmosis pool's coin depths and the supply of of liquidity token
 pub fn query_pool(querier: &QuerierWrapper, pool_id: u64) -> StdResult<Pool> {
-    let pool_res = GammQuerier::new(querier).pool(pool_id)?;
-    let pool_type = type_name::<Pool>();
-    let pool = pool_res.pool.ok_or_else(|| StdError::not_found(pool_type))?;
-    let pool_res: Result<Pool, DecodeError> = Message::decode(pool.value.as_slice());
-    let pool = pool_res.map_err(|_| MarsError::Deserialize {
-        target_type: pool_type.to_string(),
-    })?;
-    Ok(pool)
+    let req: QueryRequest<Empty> = QueryPoolRequest {
+        pool_id,
+    }
+    .into();
+    let res: QueryPoolResponse = querier.query(&req)?;
+    Ok(res.pool)
 }
 
 pub fn has_denom(denom: &str, pool_assets: &[PoolAsset]) -> bool {

@@ -489,7 +489,6 @@ dependencies = [
  "mars-outpost",
  "mars-testing",
  "osmosis-std",
- "prost",
  "schemars",
  "serde",
  "thiserror",
@@ -502,7 +501,7 @@ dependencies = [
  "cosmwasm-std",
  "mars-outpost",
  "osmosis-std",
- "prost",
+ "serde",
 ]
 
 [[package]]
@@ -556,7 +555,6 @@ dependencies = [
  "mars-rewards-collector-base",
  "mars-testing",
  "osmosis-std",
- "prost",
  "schemars",
  "serde",
  "thiserror",
@@ -567,6 +565,7 @@ name = "mars-testing"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
+ "mars-osmosis",
  "mars-outpost",
  "osmosis-std",
  "prost",
