@@ -55,19 +55,30 @@ yarn get-pubkey
 
 Note: Your wallet must be active and have made at least one transaction to return a public key.
 
-This will return a JSON that had your pubkey. Copy your pubkey in the following format:
+This will return a JSON that has your pubkey. Copy your pubkey in the following format:
 
-```JSON
+```
 '{
     "@type": "/cosmos.crypto.secp256k1.PubKey",
     "key": "alkfjadfyeohiskvbskjas,jdla"
 }'
 ```
 
-2. To create the multisig, each multisig owner's pubkey needs to be gathered. Then run the following:
+2. Add each public key to the keys list on your local network. 
 
 ```
-yarn create-multisig
+osmosisd keys add insert_user_name --pubkey=insert_pub_key
+```
+Note: The public key must be entered with the same exact syntax as shown in step 1 & all public keys for the multisig must be added on the same local network
+
+3. Generate the multisig
+```
+osmosisd keys add mars_testnet_multisig --multisig=username1,username2,username3,username4,username5 --multisig-threshold=3
 ```
 
-3. Update the config with the new multisig address in scripts/deploy/osmosis/config.
+4. Assert it was completed corrreclty
+```
+osmosisd keys show mars_testnet_multisig
+``` 
+
+5. Update the config with the new multisig address in scripts/deploy/osmosis/config.
