@@ -1,10 +1,6 @@
+use crate::red_bank::InterestRateModel;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Decimal, Uint128};
-
-use crate::red_bank::{
-    ConfigResponse, InterestRateModel, Market, UncollateralizedLoanLimitResponse,
-    UserCollateralResponse, UserDebtResponse, UserPositionResponse,
-};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -142,31 +138,31 @@ pub struct InitOrUpdateAssetParams {
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Get config
-    #[returns(ConfigResponse)]
+    #[returns(crate::red_bank::ConfigResponse)]
     Config {},
 
     /// Get asset market
-    #[returns(Market)]
+    #[returns(crate::red_bank::Market)]
     Market {
         denom: String,
     },
 
     /// Enumerate markets with pagination
-    #[returns(Vec<Market>)]
+    #[returns(Vec<crate::red_bank::Market>)]
     Markets {
         start_after: Option<String>,
         limit: Option<u32>,
     },
 
     /// Get uncollateralized limit for given user and asset
-    #[returns(UncollateralizedLoanLimitResponse)]
+    #[returns(crate::red_bank::UncollateralizedLoanLimitResponse)]
     UncollateralizedLoanLimit {
         user: String,
         denom: String,
     },
 
     /// Get all uncollateralized limits for a given user
-    #[returns(Vec<UncollateralizedLoanLimitResponse>)]
+    #[returns(Vec<crate::red_bank::UncollateralizedLoanLimitResponse>)]
     UncollateralizedLoanLimits {
         user: String,
         start_after: Option<String>,
@@ -174,14 +170,14 @@ pub enum QueryMsg {
     },
 
     /// Get user debt position for a specific asset
-    #[returns(UserDebtResponse)]
+    #[returns(crate::red_bank::UserDebtResponse)]
     UserDebt {
         user: String,
         denom: String,
     },
 
     /// Get all debt positions for a user
-    #[returns(Vec<UserDebtResponse>)]
+    #[returns(Vec<crate::red_bank::UserDebtResponse>)]
     UserDebts {
         user: String,
         start_after: Option<String>,
@@ -189,14 +185,14 @@ pub enum QueryMsg {
     },
 
     /// Get user collateral position for a specific asset
-    #[returns(UserCollateralResponse)]
+    #[returns(crate::red_bank::UserCollateralResponse)]
     UserCollateral {
         user: String,
         denom: String,
     },
 
     /// Get all collateral positions for a user
-    #[returns(Vec<UserCollateralResponse>)]
+    #[returns(Vec<crate::red_bank::UserCollateralResponse>)]
     UserCollaterals {
         user: String,
         start_after: Option<String>,
@@ -204,7 +200,7 @@ pub enum QueryMsg {
     },
 
     /// Get user position
-    #[returns(UserPositionResponse)]
+    #[returns(crate::red_bank::UserPositionResponse)]
     UserPosition {
         user: String,
     },
