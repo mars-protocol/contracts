@@ -58,7 +58,8 @@ script = """
       :
       echo "$i"
       cargo run --package "$i" --example schema
-      mv schema/"$i".json schemas/"$i".json
+      mkdir schemas/"$i"
+      mv schema/"$i".json schemas/"$i"/"$i".json
     done
 
     rm -rf schema

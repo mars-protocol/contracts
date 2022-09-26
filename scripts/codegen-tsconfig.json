@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["codegen"],
+  "exclude": ["deploy", "types", "utils", "build"]
+}
