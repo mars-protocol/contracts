@@ -1,4 +1,4 @@
-import { DeploymentConfig, AssetConfig } from '../../types/config'
+import { DeploymentConfig, AssetConfig, MultisigConfig } from '../../types/config'
 
 export const osmosisTestnetConfig: DeploymentConfig = {
   chainName: 'osmosis',
@@ -11,6 +11,8 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   rewardCollectorTimeoutBlocks: 10,
   rewardCollectorTimeoutSeconds: 60,
   rpcEndpoint: 'https://rpc-test.osmosis.zone',
+  // permissioned testnet: 
+  // rpcEndpoint: 'http://137.184.6.241:26657/',
   safetyFundFeeShare: '0.2',
   timeoutRevision: 1,
   deployerMnemonic:
@@ -76,4 +78,8 @@ export const atomAsset: AssetConfig = {
   deposit_enabled: true,
   borrow_enabled: true,
   symbol: 'ATOM',
+}
+
+export const osmosisMultisig: MultisigConfig = {
+  address: 'osmo1zwt8al0cev8gfs8esxq5h340m6edjanwmvt7wy',
 }

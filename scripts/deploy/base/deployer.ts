@@ -1,4 +1,4 @@
-import { AssetConfig, DeploymentConfig } from '../../types/config'
+import { AssetConfig, DeploymentConfig, MultisigConfig } from '../../types/config'
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
 import * as fs from 'fs'
 import { printBlue, printGreen, printRed, printYellow } from '../../utils/chalk'
@@ -6,6 +6,7 @@ import { ARTIFACTS_PATH, Storage } from './storage'
 import { InstantiateMsgs } from '../../types/msg'
 import { writeFile } from 'fs/promises'
 import { join, resolve } from 'path'
+import assert from 'assert'
 
 export class Deployer {
   constructor(
@@ -13,6 +14,7 @@ export class Deployer {
     public client: SigningCosmWasmClient,
     public deployerAddress: string,
     private storage: Storage,
+    public multisig: MultisigConfig,
   ) {}
 
   async saveStorage() {
@@ -61,6 +63,7 @@ export class Deployer {
       msg,
       `mars-${name}`,
       'auto',
+      { admin: this.multisig.address },
     )
 
     this.storage.addresses[name] = redBankContractAddress
@@ -170,7 +173,7 @@ export class Deployer {
       },
       {
         contract: 'protocol_admin',
-        address: this.deployerAddress,
+        address: this.multisig.address,
       },
       {
         contract: 'red_bank',
@@ -330,5 +333,104 @@ export class Deployer {
     console.log(await this.client.queryContractSmart(this.storage.addresses.redBank!, msgTwo))
 
     printGreen('ALL TESTS HAVE BEEN SUCCESSFUL')
+  }
+
+  async updateIncentivesContractOwner() {
+    const msg = {
+      update_config: {
+        owner: this.multisig.address,
+      },
+    }
+    await this.client.execute(this.deployerAddress, this.storage.addresses.incentives!, msg, 'auto')
+    printYellow('Owner updated to Mutlisig for Incentives')
+    const incentivesConfig = (await this.client.queryContractSmart(
+      this.storage.addresses.incentives!,
+      {
+        config: {},
+      },
+    )) as { owner: string; prefix: string }
+
+    assert.equal(incentivesConfig.owner, this.multisig.address)
+  }
+
+  async updateRedBankContractOwner() {
+    const msg = {
+      update_config: {
+        config: {
+          owner: this.multisig.address,
+        },
+      },
+    }
+    await this.client.execute(this.deployerAddress, this.storage.addresses.redBank!, msg, 'auto')
+    printYellow('Owner updated to Mutlisig for Red Bank')
+    const redbankConfig = (await this.client.queryContractSmart(this.storage.addresses.redBank!, {
+      config: {},
+    })) as { owner: string; prefix: string }
+
+    assert.equal(redbankConfig.owner, this.multisig.address)
+  }
+
+  async updateOracleContractOwner() {
+    const msg = {
+      update_config: {
+        owner: this.multisig.address,
+      },
+    }
+    await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
+    printYellow('Owner updated to Mutlisig for Oracle')
+    const oracleConfig = (await this.client.queryContractSmart(this.storage.addresses.oracle!, {
+      config: {},
+    })) as { owner: string; prefix: string }
+
+    assert.equal(oracleConfig.owner, this.multisig.address)
+  }
+
+  async updateRewardsContractOwner() {
+    const msg = {
+      update_config: {
+        new_cfg: {
+          owner: this.multisig.address,
+        },
+      },
+    }
+    await this.client.execute(
+      this.deployerAddress,
+      this.storage.addresses.rewardsCollector!,
+      msg,
+      'auto',
+    )
+    printYellow('Owner updated to Mutlisig for Rewards Collector')
+    const rewardsConfig = (await this.client.queryContractSmart(
+      this.storage.addresses.rewardsCollector!,
+      {
+        config: {},
+      },
+    )) as { owner: string; prefix: string }
+
+    assert.equal(rewardsConfig.owner, this.multisig.address)
+  }
+
+  async updateAddressProviderContractOwner() {
+    const msg = {
+      transfer_ownership: {
+        new_owner: this.multisig.address,
+      },
+    }
+    await this.client.execute(
+      this.deployerAddress,
+      this.storage.addresses.addressProvider!,
+      msg,
+      'auto',
+    )
+    printYellow('Owner updated to Mutlisig for Rewards Collector')
+    const addressProviderConfig = (await this.client.queryContractSmart(
+      this.storage.addresses.addressProvider!,
+      {
+        config: {},
+      },
+    )) as { owner: string; prefix: string }
+
+    assert.equal(addressProviderConfig.owner, this.multisig.address)
+    printGreen('It is confirmed that all contracts have transferred ownership to the Multisig')
   }
 }
