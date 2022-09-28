@@ -5,7 +5,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mars_oracle_base::{ContractError, ContractResult, PriceSource};
-use mars_osmosis::{query_spot_price, query_twap_price};
+use mars_osmosis::helpers::{query_spot_price, query_twap_price};
 
 use crate::helpers;
 

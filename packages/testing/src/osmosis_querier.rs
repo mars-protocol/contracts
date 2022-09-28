@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
-use mars_osmosis::QueryPoolResponse;
+use mars_osmosis::helpers::QueryPoolResponse;
 use osmosis_std::types::osmosis::gamm::twap::v1beta1::{
     GetArithmeticTwapRequest, GetArithmeticTwapResponse,
 };

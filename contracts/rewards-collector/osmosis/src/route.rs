@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use mars_rewards_collector_base::{ContractError, ContractResult, Route};
 
-use mars_osmosis::{has_denom, query_estimate_swap_out_amount, query_pool};
+use mars_osmosis::helpers::{has_denom, query_estimate_swap_out_amount, query_pool};
 use osmosis_std::types::cosmos::base::v1beta1::Coin;
 use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
 

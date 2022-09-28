@@ -1,7 +1,7 @@
 use cosmwasm_std::QuerierWrapper;
 
 use mars_oracle_base::{ContractError, ContractResult};
-use mars_osmosis::{has_denom, query_pool};
+use mars_osmosis::helpers::{has_denom, query_pool};
 
 /// Assert the Osmosis pool indicated by `pool_id` contains exactly two assets, and they are OSMO and `denom`
 pub fn assert_osmosis_pool_assets(

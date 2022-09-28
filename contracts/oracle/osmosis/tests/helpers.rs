@@ -13,7 +13,7 @@ use mars_oracle_osmosis::contract::entry;
 use mars_oracle_osmosis::msg::ExecuteMsg;
 use mars_oracle_osmosis::OsmosisPriceSource;
 
-use mars_osmosis::{Pool, QueryPoolResponse};
+use mars_osmosis::helpers::{Pool, QueryPoolResponse};
 
 pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     let mut deps = OwnedDeps::<_, _, _> {

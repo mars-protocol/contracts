@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use cosmwasm_std::testing::{mock_env, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{coin, from_binary, Addr, Coin, Decimal, Deps, OwnedDeps};
 
-use mars_osmosis::{Pool, QueryPoolResponse};
+use mars_osmosis::helpers::{Pool, QueryPoolResponse};
 use osmosis_std::types::osmosis::gamm::v1beta1::{PoolAsset, SwapAmountInRoute};
 
 use mars_outpost::rewards_collector::{Config, ExecuteMsg, QueryMsg};
