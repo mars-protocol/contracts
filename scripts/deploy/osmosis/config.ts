@@ -42,9 +42,8 @@ export const osmosisTestMultisig: DeploymentConfig = {
   slippage_tolerance: '0.5',
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
-  multisigAddr: 'osmo1jklpvl3446z5qw58cvq8hqvthzjtsfvs9j65tq'
+  multisigAddr: 'osmo1jklpvl3446z5qw58cvq8hqvthzjtsfvs9j65tq',
 }
-
 
 export const osmosisLocalConfig: DeploymentConfig = {
   chainName: 'osmosis',
@@ -104,12 +103,12 @@ export const atomAsset: AssetConfig = {
   symbol: 'ATOM',
 }
 
-export const atomOracle: OracleConfig = { 
+export const atomOracle: OracleConfig = {
   denom: 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2',
-  price: '1.5'
+  price: '1.5',
 }
 
-export const osmoOracle: OracleConfig = { 
+export const osmoOracle: OracleConfig = {
   denom: 'uosmo',
-  price: '1.5'
+  price: '1.5',
 }

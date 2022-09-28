@@ -15,7 +15,7 @@ export interface DeploymentConfig {
   slippage_tolerance: string
   base_asset_symbol: string
   second_asset_symbol: string
-  multisigAddr?: string 
+  multisigAddr?: string
 }
 
 export interface AssetConfig {
@@ -37,9 +37,9 @@ export interface AssetConfig {
   symbol: string
 }
 
-export interface OracleConfig { 
+export interface OracleConfig {
   denom: string
-  price: string 
+  price: string
 }
 
 export interface MultisigConfig {
