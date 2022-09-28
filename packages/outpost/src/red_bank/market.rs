@@ -1,12 +1,11 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, StdResult, Uint128};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
 use crate::red_bank::InterestRateModel;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct Market {
     /// Denom of the asset
     pub denom: String,

@@ -4,6 +4,8 @@
   "license": "GPL-3.0",
   "scripts": {
     "deploy:osmosis": "yarn build && node build/deploy/osmosis/index.js",
+    "generate-types": "yarn rust-schema && tsc --project codegen-tsconfig.json && rm -rf types/generated && node build/codegen && node build/codegen/insertIgnores.js",
+    "rust-schema": "cd ../ && cargo make generate-all-schemas && cd scripts",
     "compile": "./build_artifacts.sh",
     "build": "tsc",
     "lint": "yarn format-check && eslint . && yarn build",
@@ -16,7 +18,10 @@
     "@cosmjs/cosmwasm-stargate": "^0.28.4",
     "@cosmjs/proto-signing": "^0.28.13",
     "@cosmjs/stargate": "^0.28.13",
-    "chalk": "4.1.2"
+    "@cosmwasm/ts-codegen": "^0.16.4",
+    "chalk": "4.1.2",
+    "cosmjs-types": "^0.5.1",
+    "prepend-file": "^2.0.1"
   },
   "devDependencies": {
     "@types/node": "^18.7.14",

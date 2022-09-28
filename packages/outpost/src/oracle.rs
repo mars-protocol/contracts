@@ -1,8 +1,7 @@
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Decimal;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct Config<T> {
     /// The contract's owner, who can update config and price sources
     pub owner: T,
@@ -12,8 +11,7 @@ pub struct Config<T> {
 
 pub type InstantiateMsg = Config<String>;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg<T> {
     /// Update contract config
     UpdateConfig {
@@ -28,48 +26,53 @@ pub enum ExecuteMsg<T> {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
-    /// Query contract config. Returns `Config<String>`
+    /// Query contract config.
+    #[returns(Config<String>)]
     Config {},
-    /// Query a coin's price source. Returns `PriceSourceResponse`
+    /// Query a coin's price source.
     ///
     /// NOTE: The response type of this query is chain-specific.
+    #[returns(PriceSourceResponse<String>)]
     PriceSource {
         denom: String,
     },
-    /// Enumerate all coins' price sources. Returns `Vec<PriceSourceResponse>`
+    /// Enumerate all coins' price sources.
     ///
     /// NOTE: The response type of this query is chain-specific.
+    #[returns(Vec<PriceSourceResponse<String>>)]
     PriceSources {
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    /// Query a coin's price; returns `PriceResponse`
+    /// Query a coin's price.
     ///
     /// NOTE: This query may be dependent on block time (e.g. if the price source is TWAP), so may not
     /// work properly with time travel queries on archive nodes.
+    #[returns(PriceResponse)]
     Price {
         denom: String,
     },
-    /// Enumerate all coins' prices. Returns `Vec<PriceResponse>`
+    /// Enumerate all coins' prices.
     ///
     /// NOTE: This query may be dependent on block time (e.g. if the price source is TWAP), so may not
     /// work properly with time travel queries on archive nodes.
+    #[returns(Vec<PriceResponse>)]
     Prices {
         start_after: Option<String>,
         limit: Option<u32>,
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct PriceSourceResponse<T> {
     pub denom: String,
     pub price_source: T,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct PriceResponse {
     pub denom: String,
     pub price: Decimal,

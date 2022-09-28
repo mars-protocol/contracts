@@ -1,0 +1,342 @@
+{
+  "contract_name": "mars-address-provider",
+  "contract_version": "0.1.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "description": "Essentially, mars-address-provider is a required init param for all other contracts, so it needs to be initialised first (Only owner can be set on initialization). So the deployment looks like this:\n\n1. Init the address provider 2. Init all other contracts, passing in the address provider address (not ALL contracts need this but many do) 3. Update the address provider, with an update config call to contain all the other contract addresses from step 2, this is why we need it to be owned by an EOA (externally owned account) - so we can do this update as part of the deployment 4. Update the owner of the address provider contract at the end of deployment to be either a. the multisig or b. the gov/council contract",
+    "type": "object",
+    "required": [
+      "owner",
+      "prefix"
+    ],
+    "properties": {
+      "owner": {
+        "description": "The contract's owner",
+        "type": "string"
+      },
+      "prefix": {
+        "description": "The address prefix of the chain this contract is deployed on",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "execute": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ExecuteMsg",
+    "oneOf": [
+      {
+        "description": "Set addresses for contracts",
+        "type": "object",
+        "required": [
+          "set_address"
+        ],
+        "properties": {
+          "set_address": {
+            "type": "object",
+            "required": [
+              "address",
+              "contract"
+            ],
+            "properties": {
+              "address": {
+                "type": "string"
+              },
+              "contract": {
+                "$ref": "#/definitions/MarsContract"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Propose to transfer the contract's ownership to another account",
+        "type": "object",
+        "required": [
+          "transfer_ownership"
+        ],
+        "properties": {
+          "transfer_ownership": {
+            "type": "object",
+            "required": [
+              "new_owner"
+            ],
+            "properties": {
+              "new_owner": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "MarsContract": {
+        "type": "string",
+        "enum": [
+          "incentives",
+          "oracle",
+          "red_bank",
+          "rewards_collector",
+          "protocol_admin",
+          "fee_collector",
+          "safety_fund"
+        ]
+      }
+    }
+  },
+  "query": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "QueryMsg",
+    "oneOf": [
+      {
+        "description": "Get config",
+        "type": "object",
+        "required": [
+          "config"
+        ],
+        "properties": {
+          "config": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Get a single address",
+        "type": "object",
+        "required": [
+          "address"
+        ],
+        "properties": {
+          "address": {
+            "$ref": "#/definitions/MarsContract"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Get a list of addresses",
+        "type": "object",
+        "required": [
+          "addresses"
+        ],
+        "properties": {
+          "addresses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MarsContract"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Query all stored contracts with pagination",
+        "type": "object",
+        "required": [
+          "all_addresses"
+        ],
+        "properties": {
+          "all_addresses": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/MarsContract"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "MarsContract": {
+        "type": "string",
+        "enum": [
+          "incentives",
+          "oracle",
+          "red_bank",
+          "rewards_collector",
+          "protocol_admin",
+          "fee_collector",
+          "safety_fund"
+        ]
+      }
+    }
+  },
+  "migrate": null,
+  "sudo": null,
+  "responses": {
+    "address": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AddressResponseItem",
+      "type": "object",
+      "required": [
+        "address",
+        "contract"
+      ],
+      "properties": {
+        "address": {
+          "description": "The contract's address",
+          "type": "string"
+        },
+        "contract": {
+          "description": "The contract",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MarsContract"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "MarsContract": {
+          "type": "string",
+          "enum": [
+            "incentives",
+            "oracle",
+            "red_bank",
+            "rewards_collector",
+            "protocol_admin",
+            "fee_collector",
+            "safety_fund"
+          ]
+        }
+      }
+    },
+    "addresses": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_AddressResponseItem",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/AddressResponseItem"
+      },
+      "definitions": {
+        "AddressResponseItem": {
+          "type": "object",
+          "required": [
+            "address",
+            "contract"
+          ],
+          "properties": {
+            "address": {
+              "description": "The contract's address",
+              "type": "string"
+            },
+            "contract": {
+              "description": "The contract",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/MarsContract"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "MarsContract": {
+          "type": "string",
+          "enum": [
+            "incentives",
+            "oracle",
+            "red_bank",
+            "rewards_collector",
+            "protocol_admin",
+            "fee_collector",
+            "safety_fund"
+          ]
+        }
+      }
+    },
+    "all_addresses": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_AddressResponseItem",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/AddressResponseItem"
+      },
+      "definitions": {
+        "AddressResponseItem": {
+          "type": "object",
+          "required": [
+            "address",
+            "contract"
+          ],
+          "properties": {
+            "address": {
+              "description": "The contract's address",
+              "type": "string"
+            },
+            "contract": {
+              "description": "The contract",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/MarsContract"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "MarsContract": {
+          "type": "string",
+          "enum": [
+            "incentives",
+            "oracle",
+            "red_bank",
+            "rewards_collector",
+            "protocol_admin",
+            "fee_collector",
+            "safety_fund"
+          ]
+        }
+      }
+    },
+    "config": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "InstantiateMsg",
+      "description": "Essentially, mars-address-provider is a required init param for all other contracts, so it needs to be initialised first (Only owner can be set on initialization). So the deployment looks like this:\n\n1. Init the address provider 2. Init all other contracts, passing in the address provider address (not ALL contracts need this but many do) 3. Update the address provider, with an update config call to contain all the other contract addresses from step 2, this is why we need it to be owned by an EOA (externally owned account) - so we can do this update as part of the deployment 4. Update the owner of the address provider contract at the end of deployment to be either a. the multisig or b. the gov/council contract",
+      "type": "object",
+      "required": [
+        "owner",
+        "prefix"
+      ],
+      "properties": {
+        "owner": {
+          "description": "The contract's owner",
+          "type": "string"
+        },
+        "prefix": {
+          "description": "The address prefix of the chain this contract is deployed on",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

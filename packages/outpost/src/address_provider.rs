@@ -2,12 +2,11 @@ use std::any::type_name;
 use std::fmt;
 use std::str::FromStr;
 
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::StdError;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Copy, Eq, Hash)]
 pub enum MarsContract {
     Incentives,
     Oracle,
@@ -78,7 +77,7 @@ impl FromStr for MarsContract {
 ///    can do this update as part of the deployment
 /// 4. Update the owner of the address provider contract at the end of deployment to be either a. the
 ///    multisig or b. the gov/council contract
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct InstantiateMsg {
     /// The contract's owner
     pub owner: String,
@@ -86,8 +85,7 @@ pub struct InstantiateMsg {
     pub prefix: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     /// Set addresses for contracts
     SetAddress {
@@ -100,16 +98,20 @@ pub enum ExecuteMsg {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
-    /// Get config; returns `Config`
+    /// Get config
+    #[returns(Config)]
     Config {},
-    /// Get a single address; returns `AddressResponseItem`
+    /// Get a single address
+    #[returns(AddressResponseItem)]
     Address(MarsContract),
-    /// Get a list of addresses; returns `Vec<AddressResponseItem>`
+    /// Get a list of addresses
+    #[returns(Vec<AddressResponseItem>)]
     Addresses(Vec<MarsContract>),
-    /// Query all stored contracts with pagination; returns `Vec<AddressResponseItem>`
+    /// Query all stored contracts with pagination
+    #[returns(Vec<AddressResponseItem>)]
     AllAddresses {
         start_after: Option<MarsContract>,
         limit: Option<u32>,
@@ -118,7 +120,7 @@ pub enum QueryMsg {
 
 pub type Config = InstantiateMsg;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct AddressResponseItem {
     /// The contract
     pub contract: MarsContract,
