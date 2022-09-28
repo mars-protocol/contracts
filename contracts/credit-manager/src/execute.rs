@@ -7,7 +7,6 @@ use cw721_base::QueryMsg;
 use crate::borrow::borrow;
 use crate::deposit::deposit;
 use crate::health::assert_below_max_ltv;
-use crate::liquidate::{assert_health_factor_improved, liquidate_coin};
 use crate::repay::repay;
 use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE,
@@ -15,15 +14,16 @@ use crate::state::{
 };
 use crate::vault::{deposit_into_vault, update_vault_coin_balance, withdraw_from_vault};
 
+use crate::liquidate::{assert_health_factor_improved, liquidate_coin};
 use crate::swap::swap_exact_in;
 use crate::update_coin_balances::update_coin_balances;
 use crate::withdraw::withdraw;
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use rover::coins::Coins;
 use rover::error::{ContractError, ContractResult};
-use rover::extensions::Stringify;
 use rover::msg::execute::{Action, CallbackMsg};
 use rover::msg::instantiate::ConfigUpdates;
+use rover::traits::Stringify;
 
 pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Response> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
@@ -95,7 +95,7 @@ pub fn update_config(
     if let Some(vaults) = new_config.allowed_vaults {
         vaults.iter().try_for_each(|unchecked| {
             let vault = unchecked.check(deps.api)?;
-            ALLOWED_VAULTS.save(deps.storage, vault.address(), &Empty {})
+            ALLOWED_VAULTS.save(deps.storage, &vault.address, &Empty {})
         })?;
         response = response
             .add_attribute("key", "allowed_vaults")

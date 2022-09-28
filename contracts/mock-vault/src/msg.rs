@@ -1,10 +1,9 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::cw_serde;
 
 use rover::adapters::OracleUnchecked;
 
 // Remaining messages in packages/rover/msg/vault
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
+#[cw_serde]
 pub struct InstantiateMsg {
     /// Denom for vault LP share token
     pub lp_token_denom: String,

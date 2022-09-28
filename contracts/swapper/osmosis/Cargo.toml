@@ -17,11 +17,11 @@ library = []
 rover = { version = "1.0", path = "../../../packages/rover" }
 swapper-base = { path = "../base", version = "1.0" }
 
+cosmwasm-schema = "1.1"
 cosmwasm-std = "1.1"
 cw-storage-plus = "0.15"
 osmo-bindings = "0.5"
 schemars = "0.8"
-serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = "1.0"
 
 [dev-dependencies]

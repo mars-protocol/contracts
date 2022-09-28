@@ -1,15 +1,14 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, StdError, StdResult, Uint128};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
-use crate::extensions::Stringify;
+use crate::traits::{Denoms, Stringify};
 
 /// Pending integration into cosmwasm_std: https://github.com/CosmWasm/cosmwasm/issues/1377#issuecomment-1204232193
 /// Copying from here: https://github.com/mars-protocol/cw-coins/blob/main/src/lib.rs
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct Coins(pub BTreeMap<String, Uint128>);
 
 impl From<Vec<Coin>> for Coins {
@@ -34,6 +33,12 @@ impl Stringify for &[Coin] {
             .map(|coin| coin.clone().denom)
             .collect::<Vec<String>>()
             .join(", ")
+    }
+}
+
+impl Denoms for Vec<Coin> {
+    fn to_denoms(&self) -> Vec<&str> {
+        self.iter().map(|c| c.denom.as_str()).collect()
     }
 }
 

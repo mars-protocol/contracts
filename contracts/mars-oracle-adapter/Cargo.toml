@@ -1,0 +1,30 @@
+[package]
+name = "mars-oracle-adapter"
+version = "1.0.0"
+authors = ["grod220 <gabe.r@delphilabs.io>"]
+edition = "2021"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/mars-protocol/rover"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+library = []
+
+[dependencies]
+mars-outpost = { version = "0.1", path = "../../../outposts/packages/outpost" }
+rover = { version = "1.0", path = "../../packages/rover" }
+
+cosmwasm-schema = "1.1"
+cosmwasm-std = "1.1"
+cw-storage-plus = "0.15"
+thiserror = "1.0"
+
+[dev-dependencies]
+mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features = ["library"] }
+mock-vault = { version = "1.0", path = "../../contracts/mock-vault", features = ["library"] }
+
+anyhow = "1"
+cw-multi-test = "0.15"

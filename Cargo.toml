@@ -2,11 +2,14 @@
 members = [
     "contracts/account-nft",
     "contracts/credit-manager",
+    "contracts/swapper/*",
+    "contracts/mars-oracle-adapter",
+    "packages/*",
+
+#    Mock contracts
     "contracts/mock-oracle",
     "contracts/mock-red-bank",
     "contracts/mock-vault",
-    "contracts/swapper/*",
-    "packages/*",
 ]
 
 [profile.release.package.rover]

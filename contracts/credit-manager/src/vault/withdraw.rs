@@ -4,6 +4,7 @@ use rover::adapters::Vault;
 use rover::error::ContractResult;
 use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg as RoverExecuteMsg;
+use rover::traits::Denoms;
 
 use crate::update_coin_balances::query_balances;
 use crate::vault::utils::{assert_vault_is_whitelisted, decrement_vault_position};
@@ -25,13 +26,11 @@ pub fn withdraw_from_vault(
 
     // Updates coin balances for account after a vault withdraw has taken place
     let vault_info = vault.query_vault_info(&deps.querier)?;
-    let denoms = vault_info
-        .coins
-        .iter()
-        .map(|v| v.denom.as_str())
-        .collect::<Vec<_>>();
-    let previous_balances =
-        query_balances(deps.as_ref(), &env.contract.address, denoms.as_slice())?;
+    let previous_balances = query_balances(
+        deps.as_ref(),
+        &env.contract.address,
+        &vault_info.coins.to_denoms(),
+    )?;
     let update_coin_balance_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         funds: vec![],

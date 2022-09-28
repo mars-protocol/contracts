@@ -5,10 +5,9 @@ import { ARTIFACTS_PATH, Storage } from './storage'
 import fs from 'fs'
 import { InstantiateMsgs } from '../../types/instantiateMsgs'
 import { InstantiateMsg as NftInstantiateMsg } from '../../types/generated/account-nft/AccountNft.types'
-import { InstantiateMsg as RedBankInstantiateMsg } from '../../types/generated/mock-red-bank/MockRedBank.types'
 import { InstantiateMsg as VaultInstantiateMsg } from '../../types/generated/mock-vault/MockVault.types'
 import { InstantiateMsg as SwapperInstantiateMsg } from '../../types/generated/swapper-base/SwapperBase.types'
-import { InstantiateMsg as OracleInstantiateMsg } from '../../types/generated/mock-oracle/MockOracle.types'
+import { InstantiateMsg as OracleAdapterInstantiateMsg } from '../../types/generated/mars-oracle-adapter/MarsOracleAdapter.types'
 import { InstantiateMsg as RoverInstantiateMsg } from '../../types/generated/credit-manager/CreditManager.types'
 import { Rover } from './rover'
 import { AccountNftClient } from '../../types/generated/account-nft/AccountNft.client'
@@ -55,7 +54,8 @@ export class Deployer {
     const { contractAddress } = await this.cwClient.instantiate(
       this.deployerAddr,
       codeId,
-      msg as Record<string, unknown>,
+      // @ts-expect-error expecting generic record
+      msg,
       `mars-${name}`,
       'auto',
     )
@@ -74,32 +74,28 @@ export class Deployer {
     await this.instantiate('accountNft', this.storage.codeIds.accountNft!, msg)
   }
 
-  async instantiateMockRedBank() {
-    const msg: RedBankInstantiateMsg = {
-      coins: this.config.mockRedbankCoins,
-    }
-    await this.instantiate('mockRedBank', this.storage.codeIds.mockRedBank!, msg)
-    printBlue(`Seeding funds in RedBank: ${JSON.stringify(this.config.seededFundsForMockRedBank)}`)
-    await this.transferFunds(
-      this.storage.addresses.mockRedBank!,
-      this.config.seededFundsForMockRedBank,
-    )
-  }
-
-  async instantiateMockOracle() {
-    const msg: OracleInstantiateMsg = {
-      coins: this.config.oraclePrices,
-    }
-    await this.instantiate('mockOracle', this.storage.codeIds.mockOracle!, msg)
-  }
-
   async instantiateMockVault() {
     const msg: VaultInstantiateMsg = {
       asset_denoms: [this.config.baseDenom],
-      lp_token_denom: 'xCompounder',
-      oracle: this.storage.addresses.mockOracle!,
+      lp_token_denom: this.config.vaultTokenDenom,
+      oracle: this.config.oracleAddr,
     }
     await this.instantiate('mockVault', this.storage.codeIds.mockVault!, msg)
+  }
+
+  async instantiateMarsOracleAdapter() {
+    const msg: OracleAdapterInstantiateMsg = {
+      oracle: this.config.oracleAddr,
+      owner: this.deployerAddr,
+      vault_pricing: [
+        {
+          addr: this.storage.addresses.mockVault!,
+          denom: this.config.vaultTokenDenom,
+          method: 'preview_redeem',
+        },
+      ],
+    }
+    await this.instantiate('marsOracleAdapter', this.storage.codeIds.marsOracleAdapter!, msg)
   }
 
   async instantiateSwapper() {
@@ -134,10 +130,10 @@ export class Deployer {
   async instantiateCreditManager() {
     const msg: RoverInstantiateMsg = {
       allowed_coins: [this.config.baseDenom, this.config.secondaryDenom],
-      allowed_vaults: [this.storage.addresses.mockVault!],
-      oracle: this.storage.addresses.mockOracle!,
+      allowed_vaults: [{ address: this.storage.addresses.mockVault! }],
+      oracle: this.config.oracleAddr,
       owner: this.deployerAddr,
-      red_bank: this.storage.addresses.mockRedBank!,
+      red_bank: this.config.redBankAddr,
       max_close_factor: this.config.maxCloseFactor.toString(),
       max_liquidation_bonus: this.config.maxLiquidationBonus.toString(),
       swapper: this.storage.addresses.swapper!,

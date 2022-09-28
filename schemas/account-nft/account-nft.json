@@ -47,7 +47,8 @@
               "new_owner": {
                 "type": "string"
               }
-            }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -60,7 +61,8 @@
         ],
         "properties": {
           "accept_ownership": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -81,7 +83,8 @@
               "user": {
                 "type": "string"
               }
-            }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -106,7 +109,8 @@
               "token_id": {
                 "type": "string"
               }
-            }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -135,7 +139,8 @@
               "token_id": {
                 "type": "string"
               }
-            }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -170,7 +175,8 @@
               "token_id": {
                 "type": "string"
               }
-            }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -195,7 +201,8 @@
               "token_id": {
                 "type": "string"
               }
-            }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -226,7 +233,8 @@
               "operator": {
                 "type": "string"
               }
-            }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -247,7 +255,8 @@
               "operator": {
                 "type": "string"
               }
-            }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -268,7 +277,8 @@
               "token_id": {
                 "type": "string"
               }
-            }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false

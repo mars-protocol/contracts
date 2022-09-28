@@ -2,11 +2,11 @@ use cosmwasm_std::{
     to_binary, Addr, Coin, CosmosMsg, DepsMut, QuerierWrapper, Response, Uint128, WasmMsg,
 };
 
-use rover::adapters::{Vault, VaultPosition};
+use rover::adapters::{Vault, VaultPositionState};
 use rover::error::{ContractError, ContractResult};
-use rover::extensions::Stringify;
 use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg;
+use rover::traits::Stringify;
 
 use crate::state::VAULT_POSITIONS;
 use crate::utils::{assert_coins_are_whitelisted, decrement_coin_balance};
@@ -66,15 +66,15 @@ pub fn update_vault_coin_balance(
     // Increment token's vault position
     VAULT_POSITIONS.update(
         deps.storage,
-        (account_id, vault.address().clone()),
+        (account_id, vault.address),
         |position_opt| -> ContractResult<_> {
             let p = position_opt.unwrap_or_default();
             match vault_info.lockup {
-                None => Ok(VaultPosition {
+                None => Ok(VaultPositionState {
                     unlocked: p.unlocked.checked_add(diff)?,
                     locked: p.locked,
                 }),
-                Some(_) => Ok(VaultPosition {
+                Some(_) => Ok(VaultPositionState {
                     unlocked: p.unlocked,
                     locked: p.locked.checked_add(diff)?,
                 }),

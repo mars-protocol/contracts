@@ -1,10 +1,9 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Api, Coin, CosmosMsg, Decimal, Empty, StdResult, WasmMsg};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::adapters::swap::ExecuteMsg;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct SwapperBase<T>(T);
 
 impl<T> SwapperBase<T> {

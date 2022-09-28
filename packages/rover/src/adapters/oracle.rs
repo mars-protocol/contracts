@@ -1,13 +1,15 @@
-use cosmwasm_std::{Addr, Api, Coin, Decimal, QuerierWrapper, StdResult};
-use mars_outpost::oracle::PriceResponse;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use std::ops::Add;
 
-use crate::error::ContractResult;
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{Addr, Api, Coin, Decimal, QuerierWrapper, StdResult};
+use mars_outpost::oracle::PriceResponse;
+
 use mock_oracle::msg::QueryMsg;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+use crate::error::ContractResult;
+use crate::traits::IntoDecimal;
+
+#[cw_serde]
 pub struct OracleBase<T>(T);
 
 impl<T> OracleBase<T> {
@@ -54,8 +56,7 @@ impl Oracle {
             .iter()
             .map(|coin| {
                 let res = self.query_price(querier, &coin.denom)?;
-                let asset_amount_dec = Decimal::from_atomics(coin.amount, 0)?;
-                Ok(res.price.checked_mul(asset_amount_dec)?)
+                Ok(res.price.checked_mul(coin.amount.to_dec()?)?)
             })
             .collect::<ContractResult<Vec<_>>>()?
             .iter()

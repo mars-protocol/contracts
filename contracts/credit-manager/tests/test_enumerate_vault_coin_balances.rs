@@ -1,4 +1,3 @@
-use cosmwasm_std::testing::MockApi;
 use cosmwasm_std::{coin, Addr};
 
 use rover::msg::execute::Action;
@@ -95,15 +94,15 @@ fn test_pagination_on_all_vault_coin_balances_query_works() {
 
     let vaults_res_a = mock.query_all_total_vault_coin_balances(None, None);
     let vaults_res_b = mock.query_all_total_vault_coin_balances(
-        Some(vaults_res_a.last().unwrap().clone().vault),
+        Some(vaults_res_a.last().unwrap().clone().vault.into()),
         None,
     );
     let vaults_res_c = mock.query_all_total_vault_coin_balances(
-        Some(vaults_res_b.last().unwrap().clone().vault),
+        Some(vaults_res_b.last().unwrap().clone().vault.into()),
         None,
     );
     let vaults_res_d = mock.query_all_total_vault_coin_balances(
-        Some(vaults_res_c.last().unwrap().clone().vault),
+        Some(vaults_res_c.last().unwrap().clone().vault.into()),
         None,
     );
 
@@ -119,8 +118,7 @@ fn test_pagination_on_all_vault_coin_balances_query_works() {
         .chain(vaults_res_b.iter().cloned())
         .chain(vaults_res_c.iter().cloned())
         .chain(vaults_res_d.iter().cloned())
-        .map(|v| v.vault.check(&MockApi::default()).unwrap())
-        .map(|v| v.query_vault_info(&mock.app.wrap()).unwrap())
+        .map(|v| v.vault.query_vault_info(&mock.app.wrap()).unwrap())
         .map(|info| info.token_denom)
         .collect::<Vec<_>>();
 

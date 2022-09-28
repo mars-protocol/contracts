@@ -13,17 +13,15 @@ export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProp
   try {
     // Upload contracts
     await deployer.upload('accountNft', wasmFile('account_nft'))
-    await deployer.upload('mockRedBank', wasmFile('mock_red_bank'))
     await deployer.upload('mockVault', wasmFile('mock_vault'))
-    await deployer.upload('mockOracle', wasmFile('mock_oracle'))
+    await deployer.upload('marsOracleAdapter', wasmFile('mars_oracle_adapter'))
     await deployer.upload('swapper', wasmFile(swapperContractName))
     await deployer.upload('creditManager', wasmFile('credit_manager'))
 
     // Instantiate contracts
     await deployer.instantiateNftContract()
-    await deployer.instantiateMockRedBank()
-    await deployer.instantiateMockOracle()
     await deployer.instantiateMockVault()
+    await deployer.instantiateMarsOracleAdapter()
     await deployer.instantiateSwapper()
     await deployer.instantiateCreditManager()
     await deployer.transferNftContractOwnership()

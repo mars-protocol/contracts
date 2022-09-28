@@ -39,3 +39,7 @@ pub fn get_all_vault_coins(storage: &dyn Storage) -> StdResult<Vec<Coin>> {
         })
         .collect()
 }
+
+pub fn query_vault_coins_issued(storage: &dyn Storage) -> StdResult<Uint128> {
+    TOTAL_VAULT_SHARES.load(storage)
+}

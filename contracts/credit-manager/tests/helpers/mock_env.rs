@@ -24,8 +24,8 @@ use rover::adapters::{OracleBase, RedBankBase, Vault, VaultBase, VaultUnchecked}
 use rover::msg::execute::{Action, CallbackMsg};
 use rover::msg::instantiate::ConfigUpdates;
 use rover::msg::query::{
-    CoinBalanceResponseItem, ConfigResponse, DebtShares, HealthResponse,
-    PositionsWithValueResponse, SharesResponseItem, VaultPositionResponseItem, VaultWithBalance,
+    CoinBalanceResponseItem, ConfigResponse, DebtShares, HealthResponse, Positions,
+    SharesResponseItem, VaultPositionResponseItem, VaultWithBalance,
 };
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
@@ -34,7 +34,7 @@ use crate::helpers::{
     mock_swapper_contract, mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo,
 };
 
-pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000u128);
+pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000);
 
 pub struct MockEnv {
     pub app: BasicApp,
@@ -182,7 +182,7 @@ impl MockEnv {
     // Queries
     //--------------------------------------------------------------------------------------------------
 
-    pub fn query_position(&self, account_id: &str) -> PositionsWithValueResponse {
+    pub fn query_positions(&self, account_id: &str) -> Positions {
         self.app
             .wrap()
             .query_wasm_smart(
@@ -330,7 +330,7 @@ impl MockEnv {
         vault
             .check(&MockApi::default())
             .unwrap()
-            .query_redeem_preview(&self.app.wrap(), shares)
+            .query_preview_redeem(&self.app.wrap(), shares)
             .unwrap()
     }
 

@@ -1,12 +1,10 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::adapters::{Vault, VaultUnchecked};
 use crate::msg::instantiate::ConfigUpdates;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     //--------------------------------------------------------------------------------------------------
     // Public messages
@@ -29,8 +27,7 @@ pub enum ExecuteMsg {
 }
 
 /// The list of actions that users can perform on their positions
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum Action {
     /// Deposit coin of specified denom and amount. Verifies if the correct amount is sent with transaction.
     Deposit(Coin),
@@ -76,8 +73,7 @@ pub enum Action {
 }
 
 /// Internal actions made by the contract with pre-validated inputs
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum CallbackMsg {
     /// Withdraw specified amount of coin from credit account;
     /// Decrement the token's asset amount;
@@ -101,7 +97,7 @@ pub enum CallbackMsg {
         vault: Vault,
         coins: Vec<Coin>,
     },
-    /// Used to update the account balance of vault coins after a deposit
+    /// Used to update the account balance of vault coins after a vault action has taken place
     UpdateVaultCoinBalance {
         vault: Vault,
         /// Account that needs vault coin balance adjustment

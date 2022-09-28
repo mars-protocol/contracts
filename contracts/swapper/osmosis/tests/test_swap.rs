@@ -5,6 +5,7 @@ use osmo_bindings_test::{OsmosisApp, OsmosisError, Pool};
 
 use rover::adapters::swap::ExecuteMsg;
 use rover::error::ContractError as RoverError;
+use rover::traits::IntoDecimal;
 use swapper_base::ContractError;
 use swapper_base::Route;
 use swapper_osmosis::route::OsmosisRoute;
@@ -112,7 +113,7 @@ fn test_swap_exact_in_slippage_too_high() {
         &ExecuteMsg::<OsmosisRoute>::SwapExactIn {
             coin_in: coin(1_000_000, "mars"),
             denom_out: "osmo".to_string(),
-            slippage: Decimal::from_atomics(1u128, 0).unwrap(),
+            slippage: 1.to_dec().unwrap(),
         },
         &[coin(1_000_000, "mars")],
     )

@@ -27,8 +27,6 @@ cw2 = "0.15"
 cw721 = "0.15"
 cw721-base = { version = "0.15", features = ["library"] }
 cw-storage-plus = "0.15"
-schemars = "0.8"
-serde = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 swapper-mock = { version = "1.0", path = "../../contracts/swapper/mock", features = ["library"] }

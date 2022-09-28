@@ -11,7 +11,7 @@ use crate::instantiate::store_config;
 use crate::query::{
     query_all_coin_balances, query_all_debt_shares, query_all_total_debt_shares,
     query_all_total_vault_coin_balances, query_all_vault_positions, query_allowed_coins,
-    query_allowed_vaults, query_config, query_position_with_value, query_total_debt_shares,
+    query_allowed_vaults, query_config, query_positions, query_total_debt_shares,
     query_total_vault_coin_balance,
 };
 
@@ -27,7 +27,7 @@ pub fn instantiate(
 ) -> ContractResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     store_config(deps, &msg)?;
-    Ok(Response::new().add_attribute("method", "instantiate"))
+    Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -58,9 +58,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         QueryMsg::AllowedCoins { start_after, limit } => {
             to_binary(&query_allowed_coins(deps, start_after, limit)?)
         }
-        QueryMsg::Positions { account_id } => {
-            to_binary(&query_position_with_value(deps, &env, &account_id)?)
-        }
+        QueryMsg::Positions { account_id } => to_binary(&query_positions(deps, &env, &account_id)?),
         QueryMsg::Health { account_id } => {
             to_binary::<HealthResponse>(&Into::into(compute_health(deps, &env, &account_id)?))
         }

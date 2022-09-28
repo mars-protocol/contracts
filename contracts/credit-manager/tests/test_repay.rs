@@ -5,6 +5,7 @@ use cosmwasm_std::{coin, coins, Addr, Decimal, OverflowError, OverflowOperation,
 use credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{Borrow, Deposit, Repay, Withdraw};
+use rover::traits::IntoDecimal;
 
 use crate::helpers::{
     assert_err, uosmo_info, AccountToFund, CoinInfo, MockEnv, DEFAULT_RED_BANK_COIN_BALANCE,
@@ -78,7 +79,7 @@ fn test_raises_when_repaying_what_is_not_owed() {
 
     let uatom_info = CoinInfo {
         denom: "atom".to_string(),
-        price: Decimal::from_atomics(9u128, 0).unwrap(),
+        price: 9.to_dec().unwrap(),
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(85u128, 2).unwrap(),
     };
@@ -134,7 +135,7 @@ fn test_raises_when_not_enough_assets_to_repay() {
 
     let uatom_info = CoinInfo {
         denom: "atom".to_string(),
-        price: Decimal::from_atomics(9u128, 0).unwrap(),
+        price: 9.to_dec().unwrap(),
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(85u128, 2).unwrap(),
     };
@@ -191,9 +192,9 @@ fn test_successful_repay() {
 
     let account_id = mock.create_credit_account(&user).unwrap();
 
-    let position = mock.query_position(&account_id);
+    let position = mock.query_positions(&account_id);
     assert_eq!(position.coins.len(), 0);
-    assert_eq!(position.debt.len(), 0);
+    assert_eq!(position.debts.len(), 0);
 
     mock.update_credit_account(
         &account_id,
@@ -211,14 +212,14 @@ fn test_successful_repay() {
     mock.update_credit_account(&account_id, &user, vec![Repay(coin_info.to_coin(20))], &[])
         .unwrap();
 
-    let position = mock.query_position(&account_id);
+    let position = mock.query_positions(&account_id);
     assert_eq!(position.coins.len(), 1);
     let asset_res = position.coins.first().unwrap();
     let expected_net_asset_amount = Uint128::new(330); // Deposit + Borrow - Repay
     assert_eq!(asset_res.amount, expected_net_asset_amount);
 
-    let debt_shares_res = position.debt.first().unwrap();
-    assert_eq!(position.debt.len(), 1);
+    let debt_shares_res = position.debts.first().unwrap();
+    assert_eq!(position.debts.len(), 1);
     assert_eq!(debt_shares_res.denom, coin_info.denom);
 
     let former_total_debt_shares = Uint128::new(50).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED);
@@ -249,14 +250,14 @@ fn test_successful_repay() {
     )
     .unwrap();
 
-    let position = mock.query_position(&account_id);
+    let position = mock.query_positions(&account_id);
     assert_eq!(position.coins.len(), 1);
     let asset_res = position.coins.first().unwrap();
     let expected_net_asset_amount = Uint128::new(299); // Deposit + Borrow - full repay - interest
     assert_eq!(asset_res.amount, expected_net_asset_amount);
 
     // Full debt repaid and purged from storage
-    assert_eq!(position.debt.len(), 0);
+    assert_eq!(position.debts.len(), 0);
 
     let res = mock.query_total_debt_shares(&coin_info.denom);
     assert_eq!(res.shares, Uint128::zero());
@@ -299,13 +300,13 @@ fn test_pays_max_debt_when_attempting_to_repay_more_than_owed() {
     )
     .unwrap();
 
-    let position = mock.query_position(&account_id);
+    let position = mock.query_positions(&account_id);
     assert_eq!(position.coins.len(), 1);
     let asset_res = position.coins.first().unwrap();
     let expected_net_asset_amount = Uint128::new(299); // Deposit + Borrow - Repay - interest
     assert_eq!(asset_res.amount, expected_net_asset_amount);
 
-    assert_eq!(position.debt.len(), 0);
+    assert_eq!(position.debts.len(), 0);
 
     let res = mock.query_total_debt_shares(&coin_info.denom);
     assert_eq!(res.shares, Uint128::zero());

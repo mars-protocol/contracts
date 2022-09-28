@@ -6,7 +6,8 @@ use credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use mock_oracle::msg::CoinPrice;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{Borrow, Deposit};
-use rover::msg::query::DebtSharesValue;
+use rover::msg::query::DebtAmount;
+use rover::traits::IntoDecimal;
 
 use crate::helpers::{assert_err, ujake_info, uosmo_info, AccountToFund, CoinInfo, MockEnv};
 
@@ -41,12 +42,12 @@ fn test_only_assets_with_no_debts() {
     )
     .unwrap();
 
-    let position = mock.query_position(&account_id);
+    let position = mock.query_positions(&account_id);
     assert_eq!(position.coins.len(), 1);
-    assert_eq!(position.debt.len(), 0);
+    assert_eq!(position.debts.len(), 0);
 
     let health = mock.query_health(&account_id);
-    let assets_value = coin_info.price * Decimal::from_atomics(deposit_amount, 0).unwrap();
+    let assets_value = coin_info.price * deposit_amount.to_dec().unwrap();
     assert_eq!(health.total_collateral_value, assets_value);
     assert_eq!(health.total_debt_value, Decimal::zero());
     assert_eq!(health.liquidation_health_factor, None);
@@ -69,7 +70,7 @@ fn test_only_assets_with_no_debts() {
 fn test_terra_ragnarok() {
     let coin_info = CoinInfo {
         denom: "uluna".to_string(),
-        price: Decimal::from_atomics(100u128, 0).unwrap(),
+        price: 100.to_dec().unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
     };
@@ -99,17 +100,15 @@ fn test_terra_ragnarok() {
     )
     .unwrap();
 
-    let position = mock.query_position(&account_id);
+    let position = mock.query_positions(&account_id);
     assert_eq!(position.coins.len(), 1);
-    assert_eq!(position.debt.len(), 1);
+    assert_eq!(position.debts.len(), 1);
 
     let health = mock.query_health(&account_id);
-    let assets_value =
-        coin_info.price * Decimal::from_atomics(deposit_amount + borrow_amount, 0).unwrap();
+    let assets_value = coin_info.price * (deposit_amount + borrow_amount).to_dec().unwrap();
     assert_eq!(health.total_collateral_value, assets_value);
     // Note: Simulated yield from mock_red_bank makes debt position more expensive
-    let debts_value =
-        coin_info.price * Decimal::from_atomics(borrow_amount.add(Uint128::new(1)), 0).unwrap();
+    let debts_value = coin_info.price * borrow_amount.add(Uint128::new(1)).to_dec().unwrap();
     assert_eq!(health.total_debt_value, debts_value);
     assert_eq!(
         health.liquidation_health_factor,
@@ -127,9 +126,9 @@ fn test_terra_ragnarok() {
         price: Decimal::zero(),
     });
 
-    let position = mock.query_position(&account_id);
+    let position = mock.query_positions(&account_id);
     assert_eq!(position.coins.len(), 1);
-    assert_eq!(position.debt.len(), 1);
+    assert_eq!(position.debts.len(), 1);
 
     let health = mock.query_health(&account_id);
     assert_eq!(health.total_collateral_value, Decimal::zero());
@@ -174,10 +173,10 @@ fn test_debts_no_assets() {
         },
     );
 
-    let position = mock.query_position(&account_id);
+    let position = mock.query_positions(&account_id);
     assert_eq!(position.account_id, account_id);
     assert_eq!(position.coins.len(), 0);
-    assert_eq!(position.debt.len(), 0);
+    assert_eq!(position.debts.len(), 0);
 
     let health = mock.query_health(&account_id);
     assert_eq!(health.total_collateral_value, Decimal::zero());
@@ -226,10 +225,10 @@ fn test_cannot_borrow_more_than_healthy() {
     )
     .unwrap();
 
-    let position = mock.query_position(&account_id);
+    let position = mock.query_positions(&account_id);
     assert_eq!(position.account_id, account_id);
     assert_eq!(position.coins.len(), 1);
-    assert_eq!(position.debt.len(), 1);
+    assert_eq!(position.debts.len(), 1);
 
     let health = mock.query_health(&account_id);
     let assets_value = Decimal::from_atomics(82789u128, 2).unwrap();
@@ -342,7 +341,7 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom.clone(),
-        price: Decimal::from_atomics(24u128, 0).unwrap(),
+        price: 24.to_dec().unwrap(),
     });
 
     let health = mock.query_health(&account_id);
@@ -362,7 +361,7 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom,
-        price: Decimal::from_atomics(35u128, 0).unwrap(),
+        price: 35.to_dec().unwrap(),
     });
 
     let health = mock.query_health(&account_id);
@@ -415,14 +414,14 @@ fn test_assets_and_ltv_lqdt_adjusted_value() {
     )
     .unwrap();
 
-    let position = mock.query_position(&account_id);
+    let position = mock.query_positions(&account_id);
     assert_eq!(position.account_id, account_id);
     assert_eq!(position.coins.len(), 2);
-    assert_eq!(position.debt.len(), 1);
+    assert_eq!(position.debts.len(), 1);
 
     let health = mock.query_health(&account_id);
-    let deposit_amount_dec = Decimal::from_atomics(deposit_amount, 0).unwrap();
-    let borrowed_amount_dec = Decimal::from_atomics(borrowed_amount, 0).unwrap();
+    let deposit_amount_dec = deposit_amount.to_dec().unwrap();
+    let borrowed_amount_dec = borrowed_amount.to_dec().unwrap();
     assert_eq!(
         health.total_collateral_value,
         uosmo_info.price * deposit_amount_dec + uatom_info.price * borrowed_amount_dec
@@ -531,10 +530,10 @@ fn test_debt_value() {
     )
     .unwrap();
 
-    let position_a = mock.query_position(&account_id_a);
+    let position_a = mock.query_positions(&account_id_a);
     assert_eq!(position_a.account_id, account_id_a);
     assert_eq!(position_a.coins.len(), 2);
-    assert_eq!(position_a.debt.len(), 2);
+    assert_eq!(position_a.debts.len(), 2);
 
     let health = mock.query_health(&account_id_a);
     assert!(!health.above_max_ltv);
@@ -546,15 +545,15 @@ fn test_debt_value() {
         user_a_borrowed_amount_atom.mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED);
     assert_eq!(
         user_a_debt_shares_atom,
-        find_by_denom(&uatom_info.denom, &position_a.debt).shares
+        find_by_denom(&uatom_info.denom, &position_a.debts).shares
     );
 
-    let position_b = mock.query_position(&account_id_b);
+    let position_b = mock.query_positions(&account_id_b);
     let user_b_debt_shares_atom = user_a_debt_shares_atom
         .multiply_ratio(user_b_borrowed_amount_atom, interim_red_bank_debt.amount);
     assert_eq!(
         user_b_debt_shares_atom,
-        find_by_denom(&uatom_info.denom, &position_b.debt).shares
+        find_by_denom(&uatom_info.denom, &position_b.debts).shares
     );
 
     let red_bank_atom_res = mock.query_total_debt_shares(&uatom_info.denom);
@@ -567,22 +566,19 @@ fn test_debt_value() {
     let user_a_owed_atom = red_bank_atom_debt
         .amount
         .multiply_ratio(user_a_debt_shares_atom, red_bank_atom_res.shares);
-    let user_a_owed_atom_value =
-        uatom_info.price * Decimal::from_atomics(user_a_owed_atom, 0).unwrap();
+    let user_a_owed_atom_value = uatom_info.price * user_a_owed_atom.to_dec().unwrap();
 
-    let osmo_borrowed_amount_dec =
-        Decimal::from_atomics(user_a_borrowed_amount_osmo + Uint128::new(1u128), 0).unwrap();
+    let osmo_borrowed_amount_dec = (user_a_borrowed_amount_osmo + Uint128::one())
+        .to_dec()
+        .unwrap();
     let osmo_debt_value = uosmo_info.price * osmo_borrowed_amount_dec;
 
     let total_debt_value = user_a_owed_atom_value.add(osmo_debt_value);
     assert_eq!(health.total_debt_value, total_debt_value);
 
-    let user_a_deposit_amount_osmo_dec =
-        Decimal::from_atomics(user_a_deposit_amount_osmo, 0).unwrap();
-    let user_a_borrowed_amount_osmo_dec =
-        Decimal::from_atomics(user_a_borrowed_amount_osmo, 0).unwrap();
-    let user_a_borrowed_amount_atom_dec =
-        Decimal::from_atomics(user_a_borrowed_amount_atom, 0).unwrap();
+    let user_a_deposit_amount_osmo_dec = user_a_deposit_amount_osmo.to_dec().unwrap();
+    let user_a_borrowed_amount_osmo_dec = user_a_borrowed_amount_osmo.to_dec().unwrap();
+    let user_a_borrowed_amount_atom_dec = user_a_borrowed_amount_atom.to_dec().unwrap();
 
     let lqdt_adjusted_assets_value = (uosmo_info.price
         * user_a_deposit_amount_osmo_dec
@@ -605,6 +601,8 @@ fn test_debt_value() {
     );
 }
 
-fn find_by_denom<'a>(denom: &'a str, shares: &'a [DebtSharesValue]) -> &'a DebtSharesValue {
+fn find_by_denom<'a>(denom: &'a str, shares: &'a [DebtAmount]) -> &'a DebtAmount {
     shares.iter().find(|item| item.denom == *denom).unwrap()
 }
+
+// TODO: Test vault positions taken into account

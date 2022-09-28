@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, Decimal, Empty, Uint128};
 use cw_storage_plus::{Item, Map};
 
 use rover::adapters::swap::Swapper;
-use rover::adapters::{Oracle, RedBank, VaultPosition};
+use rover::adapters::{Oracle, RedBank, VaultPositionState};
 
 // Contract config
 pub const OWNER: Item<Addr> = Item::new("owner");
@@ -19,4 +19,4 @@ pub const SWAPPER: Item<Swapper> = Item::new("swapper");
 pub const COIN_BALANCES: Map<(&str, &str), Uint128> = Map::new("coin_balance"); // Map<(AccountId, Denom), Amount>
 pub const DEBT_SHARES: Map<(&str, &str), Uint128> = Map::new("debt_shares"); // Map<(AccountId, Denom), Shares>
 pub const TOTAL_DEBT_SHARES: Map<&str, Uint128> = Map::new("total_debt_shares"); // Map<Denom, Shares>
-pub const VAULT_POSITIONS: Map<(&str, Addr), VaultPosition> = Map::new("vault_positions"); // Map<(AccountId, VaultAddr), VaultPosition>
+pub const VAULT_POSITIONS: Map<(&str, Addr), VaultPositionState> = Map::new("vault_positions"); // Map<(AccountId, VaultAddr), VaultPositionState>

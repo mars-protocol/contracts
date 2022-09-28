@@ -1,9 +1,8 @@
-use cosmwasm_std::{Addr, Coin, Decimal, Deps, Storage, Uint128};
+use cosmwasm_std::{Addr, Coin, Deps, Storage, Uint128};
 
 use rover::error::{ContractError, ContractResult};
-use rover::msg::query::CoinValue;
 
-use crate::state::{ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, TOTAL_DEBT_SHARES};
+use crate::state::{ALLOWED_COINS, COIN_BALANCES, RED_BANK, TOTAL_DEBT_SHARES};
 
 pub fn assert_coin_is_whitelisted(storage: &mut dyn Storage, denom: &str) -> ContractResult<()> {
     let is_whitelisted = ALLOWED_COINS.has(storage, denom);
@@ -77,27 +76,4 @@ pub fn debt_shares_to_amount(
         denom: denom.to_string(),
         amount,
     })
-}
-
-pub fn coin_value(deps: &Deps, coin: &Coin) -> ContractResult<CoinValue> {
-    let oracle = ORACLE.load(deps.storage)?;
-    let res = oracle.query_price(&deps.querier, &coin.denom)?;
-    let decimal_amount = Decimal::from_atomics(coin.amount, 0)?;
-    let value = res.price.checked_mul(decimal_amount)?;
-    Ok(CoinValue {
-        denom: coin.denom.clone(),
-        amount: coin.amount,
-        price: res.price,
-        value,
-    })
-}
-
-pub trait IntoUint128 {
-    fn uint128(&self) -> Uint128;
-}
-
-impl IntoUint128 for Decimal {
-    fn uint128(&self) -> Uint128 {
-        *self * Uint128::new(1)
-    }
 }

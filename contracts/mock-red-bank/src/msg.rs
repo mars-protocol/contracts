@@ -1,22 +1,19 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Decimal, Uint128};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
+#[cw_serde]
 pub struct InstantiateMsg {
     pub coins: Vec<CoinMarketInfo>,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
+#[cw_serde]
 pub struct CoinMarketInfo {
     pub denom: String,
     pub max_ltv: Decimal,
     pub liquidation_threshold: Decimal,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     Borrow {
         coin: Coin,
@@ -37,7 +34,7 @@ pub enum QueryMsg {
     Market { denom: String },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct UserAssetDebtResponse {
     pub denom: String,
     pub amount: Uint128,

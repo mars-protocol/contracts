@@ -1,11 +1,11 @@
-use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{coin, coins, Addr, Coin, Uint128};
 
 use rover::coins::Coins;
 use rover::error::ContractError::{
     ExtraFundsReceived, FundsMismatch, NotTokenOwner, NotWhitelisted,
 };
 use rover::msg::execute::Action;
-use rover::msg::query::PositionsWithValueResponse;
+use rover::msg::query::Positions;
 
 use crate::helpers::{
     assert_err, uatom_info, ujake_info, uosmo_info, AccountToFund, CoinInfo, MockEnv,
@@ -47,7 +47,7 @@ fn test_deposit_nothing() {
     let user = Addr::unchecked("user");
     let account_id = mock.create_credit_account(&user).unwrap();
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 
     mock.update_credit_account(
@@ -58,7 +58,7 @@ fn test_deposit_nothing() {
     )
     .unwrap();
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 }
 
@@ -89,7 +89,7 @@ fn test_deposit_but_no_funds() {
         },
     );
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 }
 
@@ -149,7 +149,7 @@ fn test_can_only_deposit_allowed_assets() {
 
     assert_err(res, NotWhitelisted(not_allowed_coin.denom));
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 }
 
@@ -182,7 +182,7 @@ fn test_extra_funds_received() {
 
     assert_err(res, ExtraFundsReceived(Coins::from(vec![extra_funds])));
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 }
 
@@ -210,16 +210,11 @@ fn test_deposit_success() {
     )
     .unwrap();
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     let assets_res = res.coins.first().unwrap();
     assert_eq!(res.coins.len(), 1);
     assert_eq!(assets_res.amount, deposit_amount);
     assert_eq!(assets_res.denom, coin_info.denom);
-    assert_eq!(assets_res.price, coin_info.price);
-    assert_eq!(
-        assets_res.value,
-        coin_info.price * Decimal::from_atomics(deposit_amount, 0).unwrap()
-    );
 
     let coin = mock.query_balance(&mock.rover, &coin_info.denom);
     assert_eq!(coin.amount, deposit_amount)
@@ -261,12 +256,10 @@ fn test_multiple_deposit_actions() {
     )
     .unwrap();
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 2);
-    let uosmo_value = Decimal::from_atomics(uosmo_amount, 0).unwrap() * uosmo_info.price;
-    assert_present(&res, &uosmo_info, uosmo_amount, uosmo_value);
-    let uatom_value = Decimal::from_atomics(uatom_amount, 0).unwrap() * uatom_info.price;
-    assert_present(&res, &uatom_info, uatom_amount, uatom_value);
+    assert_present(&res, &uosmo_info, uosmo_amount);
+    assert_present(&res, &uatom_info, uatom_amount);
 
     let coin = mock.query_balance(&mock.rover, &uosmo_info.denom);
     assert_eq!(coin.amount, uosmo_amount);
@@ -275,14 +268,9 @@ fn test_multiple_deposit_actions() {
     assert_eq!(coin.amount, uatom_amount);
 }
 
-fn assert_present(
-    res: &PositionsWithValueResponse,
-    coin: &CoinInfo,
-    amount: Uint128,
-    total_val: Decimal,
-) {
+fn assert_present(res: &Positions, coin: &CoinInfo, amount: Uint128) {
     res.coins
         .iter()
-        .find(|item| item.denom == coin.denom && item.amount == amount && item.value == total_val)
+        .find(|item| item.denom == coin.denom && item.amount == amount)
         .unwrap();
 }

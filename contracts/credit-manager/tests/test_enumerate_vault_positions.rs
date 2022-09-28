@@ -1,8 +1,6 @@
-use cosmwasm_std::testing::MockApi;
-use cosmwasm_std::{coin, Addr, Api};
+use cosmwasm_std::{coin, Addr};
 use itertools::Itertools;
 
-use rover::adapters::VaultBase;
 use rover::msg::execute::Action;
 
 use crate::helpers::{
@@ -97,14 +95,29 @@ fn test_pagination_on_all_vault_positions_query_works() {
 
     let vaults_res_a = mock.query_all_vault_positions(None, None);
     let item = vaults_res_a.last().unwrap();
-    let vaults_res_b = mock
-        .query_all_vault_positions(Some((item.account_id.clone(), item.addr.clone())), Some(30));
+    let vaults_res_b = mock.query_all_vault_positions(
+        Some((
+            item.account_id.clone(),
+            item.position.vault.address.to_string(),
+        )),
+        Some(30),
+    );
     let item = vaults_res_b.last().unwrap();
-    let vaults_res_c = mock
-        .query_all_vault_positions(Some((item.account_id.clone(), item.addr.clone())), Some(30));
+    let vaults_res_c = mock.query_all_vault_positions(
+        Some((
+            item.account_id.clone(),
+            item.position.vault.address.to_string(),
+        )),
+        Some(30),
+    );
     let item = vaults_res_c.last().unwrap();
-    let vaults_res_d =
-        mock.query_all_vault_positions(Some((item.account_id.clone(), item.addr.clone())), None);
+    let vaults_res_d = mock.query_all_vault_positions(
+        Some((
+            item.account_id.clone(),
+            item.position.vault.address.to_string(),
+        )),
+        None,
+    );
 
     // Assert default is observed
     assert_eq!(vaults_res_a.len(), 10);
@@ -118,8 +131,7 @@ fn test_pagination_on_all_vault_positions_query_works() {
         .chain(vaults_res_b.iter().cloned())
         .chain(vaults_res_c.iter().cloned())
         .chain(vaults_res_d.iter().cloned())
-        .map(|v| VaultBase::new(MockApi::default().addr_validate(v.addr.as_str()).unwrap()))
-        .map(|v| v.query_vault_info(&mock.app.wrap()).unwrap())
+        .map(|v| v.position.vault.query_vault_info(&mock.app.wrap()).unwrap())
         .map(|info| info.token_denom)
         .collect::<Vec<_>>();
 

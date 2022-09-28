@@ -1,9 +1,13 @@
 import { DeploymentConfig } from '../../types/config'
-import { coins } from '@cosmjs/stargate'
+
+const uatom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
 
 export const osmosisTestnetConfig: DeploymentConfig = {
+  // Get the latest addresses from: https://github.com/mars-protocol/outposts/blob/master/scripts/deploy/addresses/osmo-test-4.json
+  oracleAddr: 'osmo1kgv8rr9eglkv52hwf0v96cs5s7ztw06tx3a6zrrcrwgmuuru36cqgmz2xa',
+  redBankAddr: 'osmo1dkn4vr75uep4gmd0gatuu7zlapahps7kdapy8wwztcygdu5wy8lqtw2yuj',
   baseDenom: 'uosmo',
-  secondaryDenom: 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2', // uatom
+  secondaryDenom: uatom,
   chainId: 'osmo-test-4',
   chainPrefix: 'osmo',
   deployerMnemonic:
@@ -11,9 +15,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   rpcEndpoint: 'https://rpc-test.osmosis.zone',
   defaultGasPrice: 0.1,
   startingAmountForTestUser: 1e6,
-  mockRedbankCoins: [{ denom: 'uosmo', max_ltv: '0.8', liquidation_threshold: '0.9' }],
-  seededFundsForMockRedBank: coins(100, 'uosmo'),
-  oraclePrices: [{ denom: 'uosmo', price: '12.1' }],
+  vaultTokenDenom: 'xCompounder',
   maxCloseFactor: 0.6,
   maxLiquidationBonus: 0.05,
   depositAmount: 100,
@@ -23,7 +25,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   swapRoute: {
     steps: [
       {
-        denom_out: 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2',
+        denom_out: uatom,
         pool_id: 1,
       },
     ],

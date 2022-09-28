@@ -221,7 +221,7 @@ fn test_swap_successful() {
     assert_eq!(osmo_balance, MOCK_SWAP_RESULT);
 
     // assert account position
-    let position = mock.query_position(&account_id);
+    let position = mock.query_positions(&account_id);
     assert_eq!(position.coins.len(), 1);
     assert_eq!(position.coins.first().unwrap().denom, osmo_info.denom);
     assert_eq!(position.coins.first().unwrap().amount, MOCK_SWAP_RESULT);

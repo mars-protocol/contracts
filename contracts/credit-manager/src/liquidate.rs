@@ -5,11 +5,12 @@ use mars_health::health::Health;
 
 use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::CallbackMsg;
+use rover::traits::{IntoDecimal, IntoUint128};
 
 use crate::health::{compute_health, val_or_na};
 use crate::repay::current_debt_for_denom;
 use crate::state::{COIN_BALANCES, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE};
-use crate::utils::{decrement_coin_balance, increment_coin_balance, IntoUint128};
+use crate::utils::{decrement_coin_balance, increment_coin_balance};
 
 pub fn liquidate_coin(
     deps: DepsMut,
@@ -99,8 +100,9 @@ fn calculate_liquidation_request(
         .load(deps.storage, (liquidatee_account_id, request_coin))
         .map_err(|_| ContractError::CoinNotAvailable(request_coin.to_string()))?;
     let request_res = oracle.query_price(&deps.querier, request_coin)?;
-    let balance_dec = Decimal::from_atomics(liquidatee_balance, 0)?;
-    let max_request_value = request_res.price.checked_mul(balance_dec)?;
+    let max_request_value = request_res
+        .price
+        .checked_mul(liquidatee_balance.to_dec()?)?;
     let liq_bonus_rate = MAX_LIQUIDATION_BONUS.load(deps.storage)?;
     let request_coin_adjusted_max_debt = max_request_value
         .div(liq_bonus_rate.add(Decimal::one()))
@@ -119,7 +121,7 @@ fn calculate_liquidation_request(
 
     // Calculate exact request coin amount to give to liquidator
     // FORMULA: request amount = (1 + liquidation bonus %) * debt value / request coin price
-    let debt_amount_dec = Decimal::from_atomics(final_debt_to_repay, 0)?;
+    let debt_amount_dec = final_debt_to_repay.to_dec()?;
     let request_amount = liq_bonus_rate
         .add(Decimal::one())
         .checked_mul(debt_res.price.checked_mul(debt_amount_dec)?)?

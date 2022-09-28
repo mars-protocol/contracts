@@ -1,32 +1,41 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, Decimal, QuerierWrapper,
-    QueryRequest, StdResult, Uint128, WasmMsg, WasmQuery,
+    to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, Decimal, OverflowError,
+    QuerierWrapper, QueryRequest, StdResult, Uint128, WasmMsg, WasmQuery,
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::adapters::Oracle;
 use crate::error::ContractResult;
-use crate::extensions::Stringify;
 use crate::msg::vault::{ExecuteMsg, QueryMsg, VaultInfo};
+use crate::traits::Stringify;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, Default)]
-#[serde(rename_all = "snake_case")]
-pub struct VaultPosition {
+#[cw_serde]
+#[derive(Default)]
+pub struct VaultPositionState {
     pub unlocked: Uint128,
     pub locked: Uint128,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct VaultBase<T>(T);
+impl VaultPositionState {
+    pub fn total(&self) -> Result<Uint128, OverflowError> {
+        self.locked.checked_add(self.unlocked)
+    }
+}
+
+#[cw_serde]
+pub struct VaultPosition {
+    pub vault: Vault,
+    pub state: VaultPositionState,
+}
+
+#[cw_serde]
+pub struct VaultBase<T> {
+    pub address: T,
+}
 
 impl<T> VaultBase<T> {
-    pub fn new(address: T) -> VaultBase<T> {
-        VaultBase(address)
-    }
-
-    pub fn address(&self) -> &T {
-        &self.0
+    pub fn new(address: T) -> Self {
+        Self { address }
     }
 }
 
@@ -35,26 +44,30 @@ pub type Vault = VaultBase<Addr>;
 
 impl From<&Vault> for VaultUnchecked {
     fn from(vault: &Vault) -> Self {
-        Self(vault.address().to_string())
+        Self {
+            address: vault.address.to_string(),
+        }
     }
 }
 
 impl VaultUnchecked {
     pub fn check(&self, api: &dyn Api) -> StdResult<Vault> {
-        Ok(VaultBase(api.addr_validate(&self.0)?))
+        Ok(VaultBase::new(api.addr_validate(&self.address)?))
     }
 }
 
 impl From<Vault> for VaultUnchecked {
     fn from(v: Vault) -> Self {
-        Self(v.0.to_string())
+        Self {
+            address: v.address.to_string(),
+        }
     }
 }
 
 impl Stringify for Vec<VaultUnchecked> {
     fn to_string(&self) -> String {
         self.iter()
-            .map(|v| v.address().clone())
+            .map(|v| v.address.clone())
             .collect::<Vec<String>>()
             .join(", ")
     }
@@ -63,7 +76,7 @@ impl Stringify for Vec<VaultUnchecked> {
 impl Vault {
     pub fn deposit_msg(&self, funds: &[Coin]) -> StdResult<CosmosMsg> {
         let deposit_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: self.address().to_string(),
+            contract_addr: self.address.to_string(),
             funds: funds.to_vec(),
             msg: to_binary(&ExecuteMsg::Deposit {})?,
         });
@@ -78,7 +91,7 @@ impl Vault {
     ) -> StdResult<CosmosMsg> {
         let vault_info = self.query_vault_info(querier)?;
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: self.address().to_string(),
+            contract_addr: self.address.to_string(),
             funds: vec![Coin {
                 denom: vault_info.token_denom,
                 amount,
@@ -96,7 +109,7 @@ impl Vault {
 
     pub fn query_vault_info(&self, querier: &QuerierWrapper) -> StdResult<VaultInfo> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-            contract_addr: self.0.to_string(),
+            contract_addr: self.address.to_string(),
             msg: to_binary(&QueryMsg::Info {})?,
         }))
     }
@@ -117,19 +130,25 @@ impl Vault {
         addr: &Addr,
     ) -> ContractResult<Decimal> {
         let balance = self.query_balance(querier, addr)?;
-        let assets = self.query_redeem_preview(querier, balance)?;
+        let assets = self.query_preview_redeem(querier, balance)?;
         oracle.query_total_value(querier, &assets)
     }
 
-    pub fn query_redeem_preview(
+    pub fn query_preview_redeem(
         &self,
         querier: &QuerierWrapper,
-        shares: Uint128,
+        amount: Uint128,
     ) -> StdResult<Vec<Coin>> {
-        let response: Vec<Coin> = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-            contract_addr: self.0.to_string(),
-            msg: to_binary(&QueryMsg::PreviewRedeem { shares })?,
-        }))?;
-        Ok(response)
+        querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: self.address.to_string(),
+            msg: to_binary(&QueryMsg::PreviewRedeem { amount })?,
+        }))
+    }
+
+    pub fn query_total_vault_coins_issued(&self, querier: &QuerierWrapper) -> StdResult<Uint128> {
+        querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: self.address.to_string(),
+            msg: to_binary(&QueryMsg::TotalVaultCoinsIssued {})?,
+        }))
     }
 }

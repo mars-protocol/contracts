@@ -74,8 +74,8 @@ export class Rover {
     const amount = this.config.borrowAmount.toString()
     await this.updateCreditAccount([{ borrow: { amount, denom: this.config.baseDenom } }])
     const positions = await this.query.positions({ accountId: this.accountId! })
-    assert.equal(positions.debt.length, 1)
-    assert.equal(positions.debt[0].denom, this.config.baseDenom)
+    assert.equal(positions.debts.length, 1)
+    assert.equal(positions.debts[0].denom, this.config.baseDenom)
     printGreen(`Borrowed from RedBank: ${amount} ${this.config.baseDenom}`)
   }
 
@@ -84,7 +84,7 @@ export class Rover {
     await this.updateCreditAccount([{ repay: { amount, denom: this.config.baseDenom } }])
     const positions = await this.query.positions({ accountId: this.accountId! })
     printGreen(
-      `Repaid to RedBank: ${amount} ${this.config.baseDenom}. Debt remaining: ${positions.debt[0].amount} ${positions.debt[0].denom}`,
+      `Repaid to RedBank: ${amount} ${this.config.baseDenom}. Debt remaining: ${positions.debts[0].amount} ${positions.debts[0].denom}`,
     )
   }
 
@@ -117,17 +117,18 @@ export class Rover {
       {
         vault_deposit: {
           coins: [{ amount, denom: this.config.baseDenom }],
-          vault: this.storage.addresses.mockVault!,
+          vault: { address: this.storage.addresses.mockVault! },
         },
       },
     ])
     const positions = await this.query.positions({ accountId: this.accountId! })
-    assert.equal(positions.vault_positions.length, 1)
-    assert.equal(positions.vault_positions[0].addr, this.storage.addresses.mockVault)
-    assert.equal(positions.vault_positions[0].position, this.config.baseDenom)
+    assert.equal(positions.vaults.length, 1)
+    assert.equal(positions.vaults[0].vault.address, this.storage.addresses.mockVault)
+    assert.equal(positions.vaults[0].state.locked, 123)
+    assert.equal(positions.vaults[0].state.unlocked, 123)
     printGreen(
       `Deposit into vault: ${amount} ${this.config.baseDenom}, Vault Postition: ${JSON.stringify(
-        positions.vault_positions[0].position,
+        positions.vaults[0],
       )}`,
     )
   }

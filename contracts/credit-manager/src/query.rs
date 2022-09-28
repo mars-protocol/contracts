@@ -4,16 +4,15 @@ use cw_storage_plus::Bound;
 use rover::adapters::{Vault, VaultBase, VaultPosition, VaultUnchecked};
 use rover::error::ContractResult;
 use rover::msg::query::{
-    CoinBalanceResponseItem, ConfigResponse, DebtShares, DebtSharesValue, Positions,
-    PositionsWithValueResponse, SharesResponseItem, VaultPositionResponseItem,
-    VaultPositionWithAddr, VaultWithBalance,
+    CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, Positions, SharesResponseItem,
+    VaultPositionResponseItem, VaultWithBalance,
 };
 
 use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, COIN_BALANCES, DEBT_SHARES, MAX_CLOSE_FACTOR,
     MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES, VAULT_POSITIONS,
 };
-use crate::utils::{coin_value, debt_shares_to_amount};
+use crate::utils::debt_shares_to_amount;
 
 const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
@@ -32,53 +31,12 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     })
 }
 
-pub fn query_position(deps: Deps, account_id: &str) -> ContractResult<Positions> {
+pub fn query_positions(deps: Deps, env: &Env, account_id: &str) -> ContractResult<Positions> {
     Ok(Positions {
         account_id: account_id.to_string(),
         coins: query_coin_balances(deps, account_id)?,
-        debt: query_debt_shares(deps, account_id)?,
-        vault_positions: get_vault_positions(deps, account_id)?,
-    })
-}
-
-pub fn query_position_with_value(
-    deps: Deps,
-    env: &Env,
-    account_id: &str,
-) -> ContractResult<PositionsWithValueResponse> {
-    let Positions {
-        account_id,
-        coins,
-        debt,
-        vault_positions,
-    } = query_position(deps, account_id)?;
-
-    let coin_balances_value = coins
-        .iter()
-        .map(|coin| coin_value(&deps, coin))
-        .collect::<ContractResult<Vec<_>>>()?;
-
-    let debt_with_values = debt
-        .iter()
-        .map(|item| {
-            let coin =
-                debt_shares_to_amount(deps, &env.contract.address, &item.denom, item.shares)?;
-            let cv = coin_value(&deps, &coin)?;
-            Ok(DebtSharesValue {
-                denom: cv.denom,
-                shares: item.shares,
-                amount: cv.amount,
-                price: cv.price,
-                value: cv.value,
-            })
-        })
-        .collect::<ContractResult<Vec<_>>>()?;
-
-    Ok(PositionsWithValueResponse {
-        account_id,
-        coins: coin_balances_value,
-        debt: debt_with_values,
-        vault_positions, // TODO: add vault values here
+        debts: query_debt_amounts(deps, env, account_id)?,
+        vaults: get_vault_positions(deps, account_id)?,
     })
 }
 
@@ -105,13 +63,18 @@ pub fn query_all_coin_balances(
         .collect())
 }
 
-fn query_debt_shares(deps: Deps, account_id: &str) -> ContractResult<Vec<DebtShares>> {
+fn query_debt_amounts(deps: Deps, env: &Env, account_id: &str) -> ContractResult<Vec<DebtAmount>> {
     DEBT_SHARES
         .prefix(account_id)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|res| {
             let (denom, shares) = res?;
-            Ok(DebtShares { denom, shares })
+            let coin = debt_shares_to_amount(deps, &env.contract.address, &denom, shares)?;
+            Ok(DebtAmount {
+                denom,
+                shares,
+                amount: coin.amount,
+            })
         })
         .collect()
 }
@@ -161,7 +124,7 @@ pub fn query_allowed_vaults(
     let start = match &start_after {
         Some(unchecked) => {
             vault = unchecked.check(deps.api)?;
-            Some(Bound::exclusive(vault.address()))
+            Some(Bound::exclusive(&vault.address))
         }
         None => None,
     };
@@ -178,18 +141,15 @@ pub fn query_allowed_vaults(
         .collect()
 }
 
-fn get_vault_positions(deps: Deps, account_id: &str) -> ContractResult<Vec<VaultPositionWithAddr>> {
+fn get_vault_positions(deps: Deps, account_id: &str) -> ContractResult<Vec<VaultPosition>> {
     VAULT_POSITIONS
         .prefix(account_id)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|res| {
-            let (a, p) = res?;
-            Ok(VaultPositionWithAddr {
-                addr: a.to_string(),
-                position: VaultPosition {
-                    unlocked: p.unlocked,
-                    locked: p.locked,
-                },
+            let (addr, position) = res?;
+            Ok(VaultPosition {
+                vault: VaultBase::new(addr),
+                state: position,
             })
         })
         .collect()
@@ -215,13 +175,13 @@ pub fn query_all_vault_positions(
         .take(limit)
         .collect::<StdResult<Vec<_>>>()?
         .iter()
-        .map(
-            |((account_id, addr), vault_position)| VaultPositionResponseItem {
-                account_id: account_id.clone(),
-                addr: addr.to_string(),
-                vault_position: vault_position.clone(),
+        .map(|((account_id, addr), state)| VaultPositionResponseItem {
+            account_id: account_id.clone(),
+            position: VaultPosition {
+                vault: VaultBase::new(addr.clone()),
+                state: state.clone(),
             },
-        )
+        })
         .collect())
 }
 
@@ -294,7 +254,7 @@ pub fn query_all_total_vault_coin_balances(
     let start = match &start_after {
         Some(unchecked) => {
             vault = unchecked.check(deps.api)?;
-            Some(Bound::exclusive(vault.address()))
+            Some(Bound::exclusive(&vault.address))
         }
         None => None,
     };
@@ -306,13 +266,9 @@ pub fn query_all_total_vault_coin_balances(
         .take(limit)
         .map(|res| {
             let addr = res?;
-            let unchecked = VaultBase::new(addr.to_string());
-            let vault = unchecked.check(deps.api)?;
+            let vault = VaultBase::new(addr);
             let balance = vault.query_balance(&deps.querier, rover_addr)?;
-            Ok(VaultWithBalance {
-                vault: vault.into(),
-                balance,
-            })
+            Ok(VaultWithBalance { vault, balance })
         })
         .collect()
 }

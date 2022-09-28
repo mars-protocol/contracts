@@ -52,7 +52,7 @@ script = """
     rm -rf schemas
     mkdir schemas
 
-    array=( credit-manager account-nft mock-red-bank mock-vault mock-oracle swapper-base )
+    array=( credit-manager account-nft swapper-base mars-oracle-adapter mock-red-bank mock-vault mock-oracle )
     for i in "${array[@]}"
     do
       :

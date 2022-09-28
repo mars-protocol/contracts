@@ -1,13 +1,12 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, QueryRequest, StdResult, Uint128,
     WasmMsg, WasmQuery,
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use mock_red_bank::msg::{ExecuteMsg, QueryMsg, UserAssetDebtResponse};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct RedBankBase<T>(T);
 
 impl<T> RedBankBase<T> {

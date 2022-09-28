@@ -1,9 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct Config<T> {
     /// The contract's owner, who can update config
     pub owner: T,
@@ -11,8 +9,7 @@ pub struct Config<T> {
 
 pub type InstantiateMsg = Config<String>;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg<Route> {
     /// Update contract config
     UpdateConfig { owner: Option<String> },
@@ -60,7 +57,7 @@ pub enum QueryMsg {
     EstimateExactInSwap { coin_in: Coin, denom_out: String },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct RouteResponse<Route> {
     pub denom_in: String,
     pub denom_out: String,
@@ -69,7 +66,7 @@ pub struct RouteResponse<Route> {
 
 pub type RoutesResponse<Route> = Vec<RouteResponse<Route>>;
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
+#[cw_serde]
 pub struct EstimateExactInSwapResponse {
     pub amount: Uint128,
 }

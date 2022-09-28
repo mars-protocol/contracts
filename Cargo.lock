@@ -13,8 +13,6 @@ dependencies = [
  "cw-storage-plus 0.15.0",
  "cw721",
  "cw721-base",
- "schemars",
- "serde",
 ]
 
 [[package]]
@@ -185,8 +183,6 @@ dependencies = [
  "mock-red-bank",
  "mock-vault",
  "rover",
- "schemars",
- "serde",
  "swapper-mock",
 ]
 
@@ -577,12 +573,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-oracle-adapter"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test 0.15.0",
+ "cw-storage-plus 0.15.0",
+ "mars-outpost",
+ "mock-oracle",
+ "mock-vault",
+ "rover",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-outpost"
 version = "0.1.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
- "schemars",
- "serde",
  "thiserror",
 ]
 
@@ -594,8 +605,6 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 0.15.0",
  "mars-outpost",
- "schemars",
- "serde",
 ]
 
 [[package]]
@@ -606,8 +615,6 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 0.15.0",
  "mars-outpost",
- "schemars",
- "serde",
 ]
 
 [[package]]
@@ -618,8 +625,6 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 0.15.0",
  "rover",
- "schemars",
- "serde",
  "thiserror",
 ]
 
@@ -748,8 +753,6 @@ dependencies = [
  "mars-outpost",
  "mock-oracle",
  "mock-red-bank",
- "schemars",
- "serde",
  "thiserror",
 ]
 
@@ -932,8 +935,6 @@ dependencies = [
  "cw-multi-test 0.15.0",
  "cw-storage-plus 0.15.0",
  "rover",
- "schemars",
- "serde",
  "swapper-base",
  "thiserror",
 ]
@@ -943,6 +944,7 @@ name = "swapper-osmosis"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test 0.13.4",
  "cw-storage-plus 0.15.0",
@@ -950,7 +952,6 @@ dependencies = [
  "osmo-bindings-test",
  "rover",
  "schemars",
- "serde",
  "swapper-base",
  "thiserror",
 ]

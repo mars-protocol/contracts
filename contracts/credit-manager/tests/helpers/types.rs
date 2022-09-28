@@ -1,14 +1,13 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{coin, Addr, Coin, Decimal};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
+#[cw_serde]
 pub struct AccountToFund {
     pub addr: Addr,
     pub funds: Vec<Coin>,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
+#[cw_serde]
 pub struct CoinInfo {
     pub denom: String,
     pub price: Decimal,
@@ -16,7 +15,7 @@ pub struct CoinInfo {
     pub liquidation_threshold: Decimal,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
+#[cw_serde]
 pub struct VaultTestInfo {
     pub lp_token_denom: String,
     pub lockup: Option<u64>,

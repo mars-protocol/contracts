@@ -1,13 +1,12 @@
-import { CoinMarketInfo } from './generated/mock-red-bank/MockRedBank.types'
-import { Coin } from '@cosmjs/amino'
-import { CoinPrice } from './generated/mock-oracle/MockOracle.types'
-
 export interface DeploymentConfig {
+  oracleAddr: string
+  redBankAddr: string
   baseDenom: string
   secondaryDenom: string
   chainPrefix: string
   rpcEndpoint: string
   deployerMnemonic: string
+  vaultTokenDenom: string
   chainId: string
   defaultGasPrice: number
   startingAmountForTestUser: number
@@ -18,9 +17,6 @@ export interface DeploymentConfig {
   slippage: number
   swapRoute: { steps: { denom_out: string; pool_id: number }[] }
   withdrawAmount: number
-  mockRedbankCoins: CoinMarketInfo[]
-  seededFundsForMockRedBank: Coin[]
-  oraclePrices: CoinPrice[]
   maxCloseFactor: number
   maxLiquidationBonus: number
 }

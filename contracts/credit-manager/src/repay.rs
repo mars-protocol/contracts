@@ -78,6 +78,7 @@ fn debt_amount_to_shares(deps: Deps, env: &Env, coin: &Coin) -> ContractResult<U
 }
 
 /// Get token's current total debt for denom
+/// Returns -> (debt amount, debt shares)
 pub fn current_debt_for_denom(
     deps: Deps,
     env: &Env,

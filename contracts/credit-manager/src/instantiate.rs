@@ -18,7 +18,7 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> StdResult<()> {
 
     msg.allowed_vaults.iter().try_for_each(|unchecked| {
         let vault = unchecked.check(deps.api)?;
-        ALLOWED_VAULTS.save(deps.storage, vault.address(), &Empty {})
+        ALLOWED_VAULTS.save(deps.storage, &vault.address, &Empty {})
     })?;
 
     msg.allowed_coins

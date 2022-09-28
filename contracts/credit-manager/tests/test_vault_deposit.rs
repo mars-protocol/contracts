@@ -232,19 +232,15 @@ fn test_successful_deposit_into_locked_vault() {
     let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.lp_token_denom);
     assert_eq!(STARTING_VAULT_SHARES, lp_balance.amount);
 
-    let res = mock.query_position(&account_id);
-    assert_eq!(res.vault_positions.len(), 1);
+    let res = mock.query_positions(&account_id);
+    assert_eq!(res.vaults.len(), 1);
     assert_eq!(
         STARTING_VAULT_SHARES,
-        res.vault_positions.first().unwrap().position.locked
+        res.vaults.first().unwrap().state.locked
     );
-    assert_eq!(
-        Uint128::zero(),
-        res.vault_positions.first().unwrap().position.unlocked
-    );
+    assert_eq!(Uint128::zero(), res.vaults.first().unwrap().state.unlocked);
 
-    let assets =
-        mock.query_preview_redeem(&vault, res.vault_positions.first().unwrap().position.locked);
+    let assets = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().state.locked);
 
     let osmo_withdraw = assets.iter().find(|coin| coin.denom == "uosmo").unwrap();
     assert_eq!(osmo_withdraw.amount, Uint128::new(120));
@@ -301,21 +297,15 @@ fn test_successful_deposit_into_unlocked_vault() {
     let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.lp_token_denom);
     assert_eq!(STARTING_VAULT_SHARES, lp_balance.amount);
 
-    let res = mock.query_position(&account_id);
-    assert_eq!(res.vault_positions.len(), 1);
+    let res = mock.query_positions(&account_id);
+    assert_eq!(res.vaults.len(), 1);
     assert_eq!(
         STARTING_VAULT_SHARES,
-        res.vault_positions.first().unwrap().position.unlocked
+        res.vaults.first().unwrap().state.unlocked
     );
-    assert_eq!(
-        Uint128::zero(),
-        res.vault_positions.first().unwrap().position.locked
-    );
+    assert_eq!(Uint128::zero(), res.vaults.first().unwrap().state.locked);
 
-    let assets = mock.query_preview_redeem(
-        &vault,
-        res.vault_positions.first().unwrap().position.unlocked,
-    );
+    let assets = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().state.unlocked);
 
     let osmo_withdraw = assets.iter().find(|coin| coin.denom == "uosmo").unwrap();
     assert_eq!(osmo_withdraw.amount, Uint128::new(120));

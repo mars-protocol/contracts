@@ -10,7 +10,7 @@ use rover::msg::vault::{ExecuteMsg, QueryMsg};
 use crate::deposit::deposit;
 use crate::error::ContractError;
 use crate::msg::InstantiateMsg;
-use crate::query::{query_coins_for_shares, query_vault_info};
+use crate::query::{query_coins_for_shares, query_vault_coins_issued, query_vault_info};
 use crate::state::{ASSETS, CHAIN_BANK, LOCKUP_TIME, LP_TOKEN_DENOM, ORACLE};
 use crate::withdraw::{withdraw, withdraw_force};
 
@@ -55,8 +55,9 @@ pub fn execute(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Info {} => to_binary(&query_vault_info(deps)?),
-        QueryMsg::PreviewRedeem { shares } => {
-            to_binary(&query_coins_for_shares(deps.storage, shares)?)
+        QueryMsg::PreviewRedeem { amount } => {
+            to_binary(&query_coins_for_shares(deps.storage, amount)?)
         }
+        QueryMsg::TotalVaultCoinsIssued {} => to_binary(&query_vault_coins_issued(deps.storage)?),
     }
 }

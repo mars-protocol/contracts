@@ -2,18 +2,19 @@ use cosmwasm_std::{Decimal, Deps, Env, Event, Response};
 use mars_health::health::Health;
 
 use rover::error::{ContractError, ContractResult};
+use rover::traits::Coins;
 
-use crate::query::query_position;
+use crate::query::query_positions;
 use crate::state::{ORACLE, RED_BANK};
-use crate::utils::debt_shares_to_amount;
+use crate::vault::simulate_withdraw;
 
 pub fn compute_health(deps: Deps, env: &Env, account_id: &str) -> ContractResult<Health> {
-    let res = query_position(deps, account_id)?;
-    let debt_amounts = res
-        .debt
-        .iter()
-        .map(|item| debt_shares_to_amount(deps, &env.contract.address, &item.denom, item.shares))
-        .collect::<ContractResult<Vec<_>>>()?;
+    let res = query_positions(deps, env, account_id)?;
+    let coins_if_withdrawn = simulate_withdraw(&deps, &res.vaults)?;
+
+    let mut collateral = Vec::with_capacity(res.coins.len() + coins_if_withdrawn.len());
+    collateral.extend(res.coins);
+    collateral.extend(coins_if_withdrawn);
 
     let oracle = ORACLE.load(deps.storage)?;
     let red_bank = RED_BANK.load(deps.storage)?;
@@ -21,8 +22,8 @@ pub fn compute_health(deps: Deps, env: &Env, account_id: &str) -> ContractResult
         &deps.querier,
         oracle.address(),
         red_bank.address(),
-        &res.coins,
-        debt_amounts.as_slice(),
+        &collateral,
+        &res.debts.to_coins(),
     )?;
 
     Ok(health)

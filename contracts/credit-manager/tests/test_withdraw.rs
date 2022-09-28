@@ -32,7 +32,7 @@ fn test_only_owner_of_token_can_withdraw() {
         },
     );
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 }
 
@@ -55,7 +55,7 @@ fn test_withdraw_nothing() {
 
     assert_err(res, ContractError::NoAmount);
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 }
 
@@ -85,7 +85,7 @@ fn test_withdraw_but_no_funds() {
         }),
     );
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 }
 
@@ -122,7 +122,7 @@ fn test_withdraw_but_not_enough_funds() {
         }),
     );
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 }
 
@@ -153,7 +153,7 @@ fn test_can_only_withdraw_allowed_assets() {
 
     assert_err(res, NotWhitelisted(not_allowed_coin.denom));
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 }
 
@@ -190,7 +190,7 @@ fn test_cannot_withdraw_more_than_healthy() {
         },
     );
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 }
 
@@ -220,7 +220,7 @@ fn test_withdraw_success() {
     )
     .unwrap();
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 
     let coin = mock.query_balance(&mock.rover, &coin_info.denom);
@@ -263,7 +263,7 @@ fn test_multiple_withdraw_actions() {
     )
     .unwrap();
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 2);
 
     let coin = mock.query_balance(&user, &uosmo_info.denom);
@@ -280,7 +280,7 @@ fn test_multiple_withdraw_actions() {
     )
     .unwrap();
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 1);
 
     let coin = mock.query_balance(&mock.rover, &uosmo_info.denom);
@@ -297,7 +297,7 @@ fn test_multiple_withdraw_actions() {
     )
     .unwrap();
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 1);
 
     let coin = mock.query_balance(&mock.rover, &uatom_info.denom);
@@ -314,7 +314,7 @@ fn test_multiple_withdraw_actions() {
     )
     .unwrap();
 
-    let res = mock.query_position(&account_id);
+    let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);
 
     let coin = mock.query_balance(&mock.rover, &uatom_info.denom);

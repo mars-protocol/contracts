@@ -1,5 +1,5 @@
 use cosmwasm_std::OverflowOperation::Sub;
-use cosmwasm_std::{coin, Addr, OverflowError, Uint128};
+use cosmwasm_std::{coin, Addr, Coin, OverflowError, Uint128};
 
 use mock_vault::contract::STARTING_VAULT_SHARES;
 use rover::adapters::VaultBase;
@@ -7,7 +7,6 @@ use rover::error::ContractError;
 use rover::error::ContractError::{NotTokenOwner, NotWhitelisted};
 use rover::msg::execute::Action::{Deposit, VaultDeposit, VaultWithdraw};
 use rover::msg::execute::CallbackMsg;
-use rover::msg::query::CoinValue;
 
 use crate::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv, VaultTestInfo};
 
@@ -134,7 +133,7 @@ fn test_force_withdraw_can_only_be_called_by_rover() {
         &user.clone(),
         CallbackMsg::VaultForceWithdraw {
             account_id,
-            vault: VaultBase::new(Addr::unchecked(vault.address().clone())),
+            vault: VaultBase::new(Addr::unchecked(vault.address)),
             amount: STARTING_VAULT_SHARES,
         },
     );
@@ -182,24 +181,24 @@ fn test_force_withdraw_breaks_lock() {
     .unwrap();
 
     // Assert token's position
-    let res = mock.query_position(&account_id);
-    assert_eq!(res.vault_positions.len(), 1);
-    let v = res.vault_positions.first().unwrap();
-    assert_eq!(v.position.locked, STARTING_VAULT_SHARES);
+    let res = mock.query_positions(&account_id);
+    assert_eq!(res.vaults.len(), 1);
+    let v = res.vaults.first().unwrap();
+    assert_eq!(v.state.locked, STARTING_VAULT_SHARES);
 
     mock.invoke_callback(
         &mock.rover.clone(),
         CallbackMsg::VaultForceWithdraw {
             account_id: account_id.clone(),
-            vault: VaultBase::new(Addr::unchecked(vault.address().clone())),
+            vault: VaultBase::new(Addr::unchecked(vault.address)),
             amount: STARTING_VAULT_SHARES,
         },
     )
     .unwrap();
 
     // Assert token's updated position
-    let res = mock.query_position(&account_id);
-    assert_eq!(res.vault_positions.len(), 0);
+    let res = mock.query_positions(&account_id);
+    assert_eq!(res.vaults.len(), 0);
     let atom = get_coin("uatom", &res.coins);
     assert_eq!(atom.amount, Uint128::from(200u128));
     let osmo = get_coin("uosmo", &res.coins);
@@ -257,10 +256,10 @@ fn test_withdraw_with_unlocked_vault_coins() {
     .unwrap();
 
     // Assert token's position
-    let res = mock.query_position(&account_id);
-    assert_eq!(res.vault_positions.len(), 1);
-    let v = res.vault_positions.first().unwrap();
-    assert_eq!(v.position.unlocked, STARTING_VAULT_SHARES);
+    let res = mock.query_positions(&account_id);
+    assert_eq!(res.vaults.len(), 1);
+    let v = res.vaults.first().unwrap();
+    assert_eq!(v.state.unlocked, STARTING_VAULT_SHARES);
     let atom = get_coin("uatom", &res.coins);
     assert_eq!(atom.amount, Uint128::from(100u128));
     let osmo = get_coin("uosmo", &res.coins);
@@ -288,8 +287,8 @@ fn test_withdraw_with_unlocked_vault_coins() {
     .unwrap();
 
     // Assert token's updated position
-    let res = mock.query_position(&account_id);
-    assert_eq!(res.vault_positions.len(), 0);
+    let res = mock.query_positions(&account_id);
+    assert_eq!(res.vaults.len(), 0);
     let atom = get_coin("uatom", &res.coins);
     assert_eq!(atom.amount, Uint128::from(200u128));
     let osmo = get_coin("uosmo", &res.coins);
@@ -306,6 +305,6 @@ fn test_withdraw_with_unlocked_vault_coins() {
     assert_eq!(Uint128::zero(), lp_balance.amount);
 }
 
-fn get_coin(denom: &str, coins: &[CoinValue]) -> CoinValue {
+fn get_coin(denom: &str, coins: &[Coin]) -> Coin {
     coins.iter().find(|cv| cv.denom == denom).unwrap().clone()
 }
