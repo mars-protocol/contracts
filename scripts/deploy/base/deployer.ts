@@ -16,14 +16,6 @@ export class Deployer {
     private storage: Storage,
   ) {}
 
-  async setPermissions() { 
-    if (this.config.multisigAddr){
-      this.storage.owner= this.config.multisigAddr
-    } else { 
-      this.storage.owner = this.deployerAddress
-    }
-  }
-
   async saveStorage() {
     await this.storage.save()
   }
@@ -58,6 +50,11 @@ export class Deployer {
   }
 
   async instantiate(name: keyof Storage['addresses'], codeId: number, msg: InstantiateMsgs) {
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
     if (this.storage.addresses[name]) {
       printBlue(`Contract already instantiated :: ${name} :: ${this.storage.addresses[name]}`)
       return
@@ -80,6 +77,11 @@ export class Deployer {
   }
 
   async instantiateAddressProvider() {
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
     const msg = {
       owner: this.storage.owner,
       prefix: this.config.chainPrefix,
@@ -88,6 +90,11 @@ export class Deployer {
   }
 
   async instantiateRedBank() {
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
     const msg = {
       config: {
         owner: this.storage.owner,
@@ -99,6 +106,11 @@ export class Deployer {
   }
 
   async instantiateIncentives() {
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
     const msg = {
       owner: this.storage.owner,
       address_provider: this.storage.addresses.addressProvider!,
@@ -108,6 +120,11 @@ export class Deployer {
   }
 
   async instantiateOracle() {
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
     const msg = {
       owner: this.storage.owner,
       base_denom: this.config.baseAssetDenom,
@@ -116,6 +133,11 @@ export class Deployer {
   }
 
   async instantiateRewards() {
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
     const msg = {
       owner: this.storage.owner,
       address_provider: this.storage.addresses.addressProvider!,
@@ -157,6 +179,11 @@ export class Deployer {
   }
 
   async updateAddressProvider() {
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
     if (this.storage.execute.addressProviderUpdated) {
       printBlue('Addresses already updated.')
       return
@@ -338,6 +365,11 @@ export class Deployer {
   }
 
   async updateIncentivesContractOwner() {
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
     const msg = {
       update_config: {
         owner: this.storage.owner,
@@ -356,6 +388,11 @@ export class Deployer {
   }
 
   async updateRedBankContractOwner() {
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
     const msg = {
       update_config: {
         config: {
@@ -373,6 +410,11 @@ export class Deployer {
   }
 
   async updateOracleContractOwner() {
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
     const msg = {
       update_config: {
         owner: this.storage.owner,
@@ -388,6 +430,11 @@ export class Deployer {
   }
 
   async updateRewardsContractOwner() {
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
     const msg = {
       update_config: {
         new_cfg: {
@@ -413,6 +460,11 @@ export class Deployer {
   }
 
   async updateAddressProviderContractOwner() {
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
     const msg = {
       transfer_ownership: {
         new_owner: this.storage.owner,

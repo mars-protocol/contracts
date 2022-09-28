@@ -8,14 +8,14 @@ export class Storage implements StorageItems {
   public addresses: StorageItems['addresses']
   public codeIds: StorageItems['codeIds']
   public execute: StorageItems['execute']
-  public owner!: StorageItems['owner']
+  public owner: StorageItems['owner']
   private readonly chainId: string
 
   constructor(chainId: string, items: StorageItems) {
     this.addresses = items.addresses
     this.codeIds = items.codeIds
     this.execute = items.execute
-    this.owner! = items.owner
+    this.owner = items.owner
     this.chainId = chainId
   }
 
@@ -25,7 +25,7 @@ export class Storage implements StorageItems {
       const items = JSON.parse(data) as StorageItems
       return new this(chainId, items)
     } catch (e) {
-      return new this(chainId, { owner, addresses: {}, codeIds: {}, execute: { assetsInitialized: [] } })
+      return new this(chainId, { addresses: {}, codeIds: {}, execute: { assetsInitialized: [] } })
     }
   }
 

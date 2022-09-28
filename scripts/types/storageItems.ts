@@ -22,5 +22,5 @@ export interface StorageItems {
     smokeTest?: boolean
   }
 
-  owner: string
+  owner?: string
 }

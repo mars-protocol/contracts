@@ -7,7 +7,6 @@ export const taskRunner = async (config: DeploymentConfig) => {
   const deployer = await setupDeployer(config)
 
   try {
-    await deployer.setPermissions()
     await deployer.saveStorage()
     await deployer.assertDeployerBalance()
 
