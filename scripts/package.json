@@ -4,6 +4,7 @@
   "license": "GPL-3.0",
   "scripts": {
     "deploy:osmosis": "yarn build && node build/deploy/osmosis/index.js",
+    "deploy:osmosis-main": "yarn build && node build/deploy/osmosis/index.js",
     "deploy:osmosisMulti": "yarn build && node build/deploy/osmosis/indexMulti.js",
     "generate-types": "yarn rust-schema && tsc --project codegen-tsconfig.json && rm -rf types/generated && node build/codegen && node build/codegen/insertIgnores.js",
     "rust-schema": "cd ../ && cargo make generate-all-schemas && cd scripts",

@@ -16,6 +16,14 @@ export class Deployer {
     private storage: Storage,
   ) {}
 
+  async setPermissions() { 
+    if (this.config.multisigAddr){
+      this.storage.owner= this.config.multisigAddr
+    } else { 
+      this.storage.owner = this.deployerAddress
+    }
+  }
+
   async saveStorage() {
     await this.storage.save()
   }
@@ -426,7 +434,7 @@ export class Deployer {
       config: {},
     })) as { owner: string; prefix: string }
 
-    assert.equal(oracleConfig.owner, this.storage.owner)
+    assert.equal(oracleConfig.owner, this.storage.owner,)
   }
 
   async updateRewardsContractOwner() {
