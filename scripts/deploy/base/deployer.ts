@@ -218,7 +218,6 @@ export class Deployer {
           deposit_enabled: assetConfig.deposit_enabled,
           borrow_enabled: assetConfig.borrow_enabled,
         },
-        asset_symbol: this.config.base_asset_symbol,
       },
     }
 
@@ -258,7 +257,7 @@ export class Deployer {
   }
 
   async executeDeposit() {
-    const msg = { deposit: { denom: this.config.atomDenom } }
+    const msg = { deposit: {} }
     const coins = [
       {
         denom: this.config.atomDenom,
@@ -296,7 +295,7 @@ export class Deployer {
   }
 
   async executeRepay() {
-    const msg = { repay: { denom: this.config.atomDenom } }
+    const msg = { repay: {} }
     const coins = [
       {
         denom: this.config.atomDenom,
