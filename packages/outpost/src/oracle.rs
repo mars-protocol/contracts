@@ -24,6 +24,10 @@ pub enum ExecuteMsg<T> {
         denom: String,
         price_source: T,
     },
+    /// Remove price source for a coin
+    RemovePriceSource {
+        denom: String,
+    },
 }
 
 #[cw_serde]
