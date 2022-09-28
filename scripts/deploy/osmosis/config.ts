@@ -4,8 +4,8 @@ const uatom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5
 
 export const osmosisTestnetConfig: DeploymentConfig = {
   // Get the latest addresses from: https://github.com/mars-protocol/outposts/blob/master/scripts/deploy/addresses/osmo-test-4.json
-  oracleAddr: 'osmo1kgv8rr9eglkv52hwf0v96cs5s7ztw06tx3a6zrrcrwgmuuru36cqgmz2xa',
-  redBankAddr: 'osmo1dkn4vr75uep4gmd0gatuu7zlapahps7kdapy8wwztcygdu5wy8lqtw2yuj',
+  oracleAddr: 'osmo1y3y3ek83hyc4y2te8kytymg599q9sycv9dsufysapra5gglpr4ys25nh94',
+  redBankAddr: 'osmo1w5rqrdhut890jplmsqnr8gj3uf0wq6lj5rfdnhrtl63lpf6e7v6qalrhhn',
   baseDenom: 'uosmo',
   secondaryDenom: uatom,
   chainId: 'osmo-test-4',
