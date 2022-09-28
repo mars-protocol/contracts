@@ -11,7 +11,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   rewardCollectorTimeoutBlocks: 10,
   rewardCollectorTimeoutSeconds: 60,
   rpcEndpoint: 'https://rpc-test.osmosis.zone',
-  // permissioned testnet: 
+  // permissioned testnet:
   // rpcEndpoint: 'http://137.184.6.241:26657/',
   safetyFundFeeShare: '0.2',
   timeoutRevision: 1,

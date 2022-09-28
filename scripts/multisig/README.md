@@ -64,21 +64,24 @@ This will return a JSON that has your pubkey. Copy your pubkey in the following 
 }'
 ```
 
-2. Add each public key to the keys list on your local network. 
+2. Add each public key to the keys list on your local network.
 
 ```
 osmosisd keys add insert_user_name --pubkey=insert_pub_key
 ```
+
 Note: The public key must be entered with the same exact syntax as shown in step 1 & all public keys for the multisig must be added on the same local network
 
 3. Generate the multisig
+
 ```
 osmosisd keys add mars_testnet_multisig --multisig=username1,username2,username3,username4,username5 --multisig-threshold=3
 ```
 
 4. Assert it was completed corrreclty
+
 ```
 osmosisd keys show mars_testnet_multisig
-``` 
+```
 
 5. Update the config with the new multisig address in scripts/deploy/osmosis/config.
