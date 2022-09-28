@@ -1,4 +1,4 @@
-import { DeploymentConfig, AssetConfig } from '../../types/config'
+import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/config'
 
 export const osmosisTestnetConfig: DeploymentConfig = {
   chainName: 'osmosis',
@@ -102,4 +102,14 @@ export const atomAsset: AssetConfig = {
   deposit_enabled: true,
   borrow_enabled: true,
   symbol: 'ATOM',
+}
+
+export const atomOracle: OracleConfig = { 
+  denom: 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2',
+  price: '1.5'
+}
+
+export const osmoOracle: OracleConfig = { 
+  denom: 'uosmo',
+  price: '1.5'
 }

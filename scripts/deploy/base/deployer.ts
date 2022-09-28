@@ -1,4 +1,4 @@
-import { AssetConfig, DeploymentConfig } from '../../types/config'
+import { AssetConfig, DeploymentConfig, OracleConfig } from '../../types/config'
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
 import * as fs from 'fs'
 import { printBlue, printGreen, printRed, printYellow } from '../../utils/chalk'
@@ -258,7 +258,7 @@ export class Deployer {
     this.storage.execute.assetsInitialized.push(assetConfig.denom)
   }
 
-  async setOraclePrice() {
+  async setOraclePrice(oracleConfig: OracleConfig) {
     if (this.storage.execute.oraclePriceSet) {
       printBlue(`${this.config.second_asset_symbol} Oracle Price already set`)
       return
@@ -266,9 +266,9 @@ export class Deployer {
 
     const msg = {
       set_price_source: {
-        denom: this.config.atomDenom,
+        denom: oracleConfig.denom,
         price_source: {
-          fixed: { price: '1.5' },
+          fixed: { price: oracleConfig.price },
         },
       },
     }

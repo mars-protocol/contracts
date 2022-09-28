@@ -1,7 +1,7 @@
 import { setupDeployer } from './setupDeployer'
 import { DeploymentConfig } from '../../types/config'
 import { printRed } from '../../utils/chalk'
-import { atomAsset, osmoAsset } from '../osmosis/config'
+import { atomAsset, osmoAsset, osmoOracle, atomOracle } from '../osmosis/config'
 
 export const taskRunner = async (config: DeploymentConfig) => {
   const deployer = await setupDeployer(config)
@@ -29,7 +29,8 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.updateAddressProvider()
     await deployer.initializeAsset(osmoAsset)
     await deployer.initializeAsset(atomAsset)
-    await deployer.setOraclePrice()
+    await deployer.setOraclePrice(atomOracle)
+    await deployer.setOraclePrice(osmoOracle)
 
     //execute actions
     await deployer.executeDeposit()

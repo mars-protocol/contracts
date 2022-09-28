@@ -37,6 +37,11 @@ export interface AssetConfig {
   symbol: string
 }
 
+export interface OracleConfig { 
+  denom: string
+  price: string 
+}
+
 export interface MultisigConfig {
   address: string
   useMultisig: boolean
