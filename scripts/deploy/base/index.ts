@@ -1,12 +1,14 @@
 import { setupDeployer } from './setupDeployer'
-import { DeploymentConfig, MultisigConfig } from '../../types/config'
+import { DeploymentConfig } from '../../types/config'
 import { printRed } from '../../utils/chalk'
 import { atomAsset, osmoAsset } from '../osmosis/config'
 
-export const taskRunner = async (config: DeploymentConfig, multisig: MultisigConfig) => {
-  const deployer = await setupDeployer(config, multisig)
+export const taskRunner = async (config: DeploymentConfig) => {
+  const deployer = await setupDeployer(config)
 
   try {
+    await deployer.setPermissions()
+    await deployer.saveStorage()
     await deployer.assertDeployerBalance()
 
     // Upload contracts

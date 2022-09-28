@@ -15,6 +15,7 @@ export interface DeploymentConfig {
   slippage_tolerance: string
   base_asset_symbol: string
   second_asset_symbol: string
+  multisigAddr?: string 
 }
 
 export interface AssetConfig {
@@ -38,4 +39,5 @@ export interface AssetConfig {
 
 export interface MultisigConfig {
   address: string
+  useMultisig: boolean
 }

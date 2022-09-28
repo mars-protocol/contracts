@@ -4,6 +4,7 @@
   "license": "GPL-3.0",
   "scripts": {
     "deploy:osmosis": "yarn build && node build/deploy/osmosis/index.js",
+    "deploy:osmosis-main": "yarn build && node build/deploy/osmosis/index.js",
     "generate-types": "yarn rust-schema && tsc --project codegen-tsconfig.json && rm -rf types/generated && node build/codegen && node build/codegen/insertIgnores.js",
     "rust-schema": "cd ../ && cargo make generate-all-schemas && cd scripts",
     "compile": "./build_artifacts.sh",
@@ -11,8 +12,7 @@
     "lint": "yarn format-check && eslint . && yarn build",
     "format": "prettier --write .",
     "format-check": "prettier --ignore-path .gitignore --check .",
-    "get-pubkey": "./multisig/get_pubkey.sh",
-    "create-multisig": "./multisig/create_multisig.sh"
+    "get-pubkey": "./multisig/get_pubkey.sh"
   },
   "dependencies": {
     "@cosmjs/cosmwasm-stargate": "^0.28.4",
