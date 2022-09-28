@@ -4,9 +4,10 @@ use cosmwasm_std::{
     StdResult, SystemError, SystemResult, Uint128, WasmQuery,
 };
 
+use mars_osmosis::helpers::QueryPoolResponse;
 use osmosis_std::types::osmosis::gamm::twap::v1beta1::GetArithmeticTwapResponse;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
-    QueryPoolResponse, QuerySpotPriceResponse, QuerySwapExactAmountInResponse, SwapAmountInRoute,
+    QuerySpotPriceResponse, QuerySwapExactAmountInResponse, SwapAmountInRoute,
 };
 
 use mars_outpost::{address_provider, incentives, oracle, red_bank};

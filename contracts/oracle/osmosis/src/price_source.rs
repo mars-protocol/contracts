@@ -5,6 +5,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mars_oracle_base::{ContractError, ContractResult, PriceSource};
+use mars_osmosis::helpers::{query_spot_price, query_twap_price};
 
 use crate::helpers;
 
@@ -111,14 +112,14 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             } => Ok(*price),
             OsmosisPriceSource::Spot {
                 pool_id,
-            } => helpers::query_osmosis_spot_price(querier, *pool_id, denom, base_denom),
+            } => query_spot_price(querier, *pool_id, denom, base_denom),
             OsmosisPriceSource::Twap {
                 pool_id,
                 window_size,
             } => {
                 let current_block_time = block.time.seconds();
                 let start_time = current_block_time - window_size;
-                helpers::query_osmosis_twap_price(
+                query_twap_price(
                     querier,
                     *pool_id,
                     denom,

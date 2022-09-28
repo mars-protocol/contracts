@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
+use mars_osmosis::helpers::QueryPoolResponse;
 use osmosis_std::types::osmosis::gamm::twap::v1beta1::{
     GetArithmeticTwapRequest, GetArithmeticTwapResponse,
 };
 use osmosis_std::types::osmosis::gamm::v1beta1::{
-    QueryPoolRequest, QueryPoolResponse, QuerySpotPriceRequest, QuerySpotPriceResponse,
-    QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse, SwapAmountInRoute,
+    QueryPoolRequest, QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest,
+    QuerySwapExactAmountInResponse, SwapAmountInRoute,
 };
 use prost::{DecodeError, Message};
 

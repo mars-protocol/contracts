@@ -123,22 +123,18 @@ export class Deployer {
     }
     await this.instantiate('rewardsCollector', this.storage.codeIds.rewardsCollector!, msg)
 
-    // The pool query was removed from the Stargate whitelist.. PoolType() query will be added in later
-    // For now, this test is taken out of the scripts since it doesnt effect any other results
-    // For reference: https://github.com/osmosis-labs/osmosis/pull/2738
-
-    // await this.client.execute(
-    //   this.deployerAddress,
-    //   this.storage.addresses.rewardsCollector!,
-    //   {
-    //     set_route: {
-    //       denom_in: this.config.baseAssetDenom,
-    //       denom_out: this.config.atomDenom,
-    //       route: [{ token_out_denom: this.config.atomDenom, pool_id: 1 }],
-    //     },
-    //   },
-    //   'auto',
-    // )
+    await this.client.execute(
+      this.deployerAddress,
+      this.storage.addresses.rewardsCollector!,
+      {
+        set_route: {
+          denom_in: this.config.baseAssetDenom,
+          denom_out: this.config.atomDenom,
+          route: [{ token_out_denom: this.config.atomDenom, pool_id: 1 }],
+        },
+      },
+      'auto',
+    )
 
     printGreen(
       `${this.config.chainId} :: Rewards Collector Contract Address : ${this.storage.addresses.rewardsCollector}`,

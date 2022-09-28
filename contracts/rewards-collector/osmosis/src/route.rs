@@ -6,10 +6,11 @@ use serde::{Deserialize, Serialize};
 
 use mars_rewards_collector_base::{ContractError, ContractResult, Route};
 
+use mars_osmosis::helpers::{has_denom, query_estimate_swap_out_amount, query_pool};
 use osmosis_std::types::cosmos::base::v1beta1::Coin;
 use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
 
-use crate::helpers::{has_denom, hashset, query_estimate_swap_out_amount, query_osmosis_pool};
+use crate::helpers::hashset;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct OsmosisRoute(pub Vec<SwapAmountInRoute>);
@@ -49,7 +50,7 @@ impl Route<Empty, Empty> for OsmosisRoute {
         let mut prev_denom_out = denom_in;
         let mut seen_denoms = hashset(&[denom_in]);
         for (i, step) in steps.iter().enumerate() {
-            let pool = query_osmosis_pool(querier, step.pool_id)?;
+            let pool = query_pool(querier, step.pool_id)?;
 
             if !has_denom(prev_denom_out, &pool.pool_assets) {
                 return Err(ContractError::InvalidRoute {
