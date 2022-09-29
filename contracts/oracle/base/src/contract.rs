@@ -76,6 +76,9 @@ where
                 denom,
                 price_source,
             } => self.set_price_source(deps, info.sender, denom, price_source),
+            ExecuteMsg::RemovePriceSource {
+                denom,
+            } => self.remove_price_source(deps, info.sender, denom),
         }
     }
 
@@ -137,6 +140,24 @@ where
             .add_attribute("action", "outposts/oracle/set_price_source")
             .add_attribute("denom", denom)
             .add_attribute("price_source", price_source.to_string()))
+    }
+
+    fn remove_price_source(
+        &self,
+        deps: DepsMut<C>,
+        sender_addr: Addr,
+        denom: String,
+    ) -> ContractResult<Response> {
+        let cfg = self.config.load(deps.storage)?;
+        if sender_addr != cfg.owner {
+            return Err(MarsError::Unauthorized {}.into());
+        }
+
+        self.price_sources.remove(deps.storage, denom.clone());
+
+        Ok(Response::new()
+            .add_attribute("action", "outposts/oracle/remove_price_source")
+            .add_attribute("denom", denom))
     }
 
     fn query_config(&self, deps: Deps<C>) -> StdResult<Config<String>> {
