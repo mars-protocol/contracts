@@ -15,7 +15,7 @@ pub type InstantiateMsg = Config<String>;
 pub enum ExecuteMsg<T> {
     /// Update contract config
     UpdateConfig {
-        owner: Option<String>,
+        owner: String,
     },
     /// Specify the price source to be used for a coin
     ///
