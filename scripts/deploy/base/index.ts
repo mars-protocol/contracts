@@ -18,6 +18,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.upload('rewardsCollector', `mars_rewards_collector_${config.chainName}.wasm`)
 
     // Instantiate contracts
+    await deployer.setOwnerAddr()
     await deployer.instantiateAddressProvider()
     await deployer.instantiateRedBank()
     await deployer.instantiateIncentives()
