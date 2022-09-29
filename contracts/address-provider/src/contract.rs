@@ -84,12 +84,13 @@ pub fn transfer_ownership(
     sender: Addr,
     new_owner: String,
 ) -> Result<Response, ContractError> {
-    CONFIG.update(deps.storage, |mut config| -> Result<_, ContractError> {
-        assert_owner(&sender, &config.owner)?;
+    let mut config = CONFIG.load(deps.storage)?;
 
-        config.owner = new_owner.clone();
-        Ok(config)
-    })?;
+    assert_owner(&sender, &config.owner)?;
+    assert_valid_addr(deps.api, &new_owner, &config.prefix)?;
+
+    config.owner = new_owner.clone();
+    CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::new()
         .add_attribute("action", "outposts/address-provider/transfer_ownership")
