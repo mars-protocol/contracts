@@ -110,5 +110,5 @@ export const atomOracle: OracleConfig = {
 
 export const osmoOracle: OracleConfig = {
   denom: 'uosmo',
-  price: '1.5',
+  price: '1.0',
 }
