@@ -23,7 +23,7 @@ fn test_updating_config() {
     let mut deps = helpers::setup_test();
 
     let msg = ExecuteMsg::UpdateConfig {
-        owner: Some("new_owner".to_string()),
+        owner: "new_owner".to_string(),
     };
 
     // non-owner cannot update

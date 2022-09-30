@@ -219,38 +219,6 @@ fn test_setting_price_source_twap() {
 }
 
 #[test]
-fn test_setting_price_source_liquidity_token() {
-    let mut deps = helpers::setup_test();
-
-    let res = execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info("owner"),
-        ExecuteMsg::SetPriceSource {
-            denom: "gamm/pool/89".to_string(),
-            price_source: OsmosisPriceSource::LiquidityToken {
-                pool_id: 89,
-            },
-        },
-    )
-    .unwrap();
-    assert_eq!(res.messages.len(), 0);
-
-    let res: PriceSourceResponse = helpers::query(
-        deps.as_ref(),
-        QueryMsg::PriceSource {
-            denom: "gamm/pool/89".to_string(),
-        },
-    );
-    assert_eq!(
-        res.price_source,
-        OsmosisPriceSource::LiquidityToken {
-            pool_id: 89,
-        }
-    );
-}
-
-#[test]
 fn test_querying_price_source() {
     let mut deps = helpers::setup_test();
 
@@ -272,13 +240,6 @@ fn test_querying_price_source() {
         deps.as_mut(),
         "umars",
         OsmosisPriceSource::Spot {
-            pool_id: 89,
-        },
-    );
-    helpers::set_price_source(
-        deps.as_mut(),
-        "gamm/pool/89",
-        OsmosisPriceSource::LiquidityToken {
             pool_id: 89,
         },
     );
@@ -311,15 +272,15 @@ fn test_querying_price_source() {
         res,
         vec![
             PriceSourceResponse {
-                denom: "gamm/pool/89".to_string(),
-                price_source: OsmosisPriceSource::LiquidityToken {
-                    pool_id: 89
-                }
-            },
-            PriceSourceResponse {
                 denom: "uatom".to_string(),
                 price_source: OsmosisPriceSource::Spot {
                     pool_id: 1
+                }
+            },
+            PriceSourceResponse {
+                denom: "umars".to_string(),
+                price_source: OsmosisPriceSource::Spot {
+                    pool_id: 89
                 }
             }
         ]

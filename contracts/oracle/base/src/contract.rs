@@ -7,7 +7,6 @@ use cosmwasm_std::{
 use cw_storage_plus::{Bound, Item, Map};
 
 use mars_outpost::error::MarsError;
-use mars_outpost::helpers::option_string_to_addr;
 use mars_outpost::oracle::{
     Config, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse, QueryMsg,
 };
@@ -106,14 +105,14 @@ where
         &self,
         deps: DepsMut<C>,
         sender_addr: Addr,
-        owner: Option<String>,
+        owner: String,
     ) -> ContractResult<Response> {
         let mut cfg = self.config.load(deps.storage)?;
         if sender_addr != cfg.owner {
             return Err(MarsError::Unauthorized {}.into());
         };
 
-        cfg.owner = option_string_to_addr(deps.api, owner, cfg.owner)?;
+        cfg.owner = deps.api.addr_validate(&owner)?;
 
         self.config.save(deps.storage, &cfg)?;
 

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use cosmwasm_std::{BlockInfo, Decimal, Empty, QuerierWrapper, StdError, StdResult};
+use cosmwasm_std::{BlockInfo, Decimal, Empty, QuerierWrapper, StdResult};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -35,10 +35,6 @@ pub enum OsmosisPriceSource {
         /// Value should be <= 172800 sec (48 hours).
         window_size: u64,
     },
-    /// Osmosis liquidity token
-    LiquidityToken {
-        pool_id: u64,
-    },
 }
 
 impl fmt::Display for OsmosisPriceSource {
@@ -54,9 +50,6 @@ impl fmt::Display for OsmosisPriceSource {
                 pool_id,
                 window_size,
             } => format!("twap:{}:{}", pool_id, window_size),
-            OsmosisPriceSource::LiquidityToken {
-                pool_id,
-            } => format!("liquidity_token:{}", pool_id),
         };
         write!(f, "{}", label)
     }
@@ -93,9 +86,6 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                     Ok(())
                 }
             }
-            OsmosisPriceSource::LiquidityToken {
-                ..
-            } => Ok(()),
         }
     }
 
@@ -128,9 +118,6 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                     current_block_time,
                 )
             }
-            OsmosisPriceSource::LiquidityToken {
-                ..
-            } => Err(StdError::generic_err("Unimplemented")),
         }
     }
 }

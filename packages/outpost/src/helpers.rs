@@ -22,6 +22,18 @@ pub fn option_string_to_addr(
     }
 }
 
+pub fn decimal_param_lt_one(param_value: Decimal, param_name: &str) -> Result<(), MarsError> {
+    if !param_value.lt(&Decimal::one()) {
+        Err(MarsError::InvalidParam {
+            param_name: param_name.to_string(),
+            invalid_value: param_value.to_string(),
+            predicate: "< 1".to_string(),
+        })
+    } else {
+        Ok(())
+    }
+}
+
 pub fn decimal_param_le_one(param_value: Decimal, param_name: &str) -> Result<(), MarsError> {
     if !param_value.le(&Decimal::one()) {
         Err(MarsError::InvalidParam {

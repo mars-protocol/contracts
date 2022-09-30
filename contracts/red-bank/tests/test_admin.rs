@@ -238,6 +238,29 @@ fn test_init_asset() {
         assert_eq!(error_res, MarsError::InstantiateParamsUnavailable {}.into());
     }
 
+    // init asset with reserve_factor equal to 1
+    {
+        let invalid_asset_params = InitOrUpdateAssetParams {
+            reserve_factor: Some(Decimal::one()),
+            ..params.clone()
+        };
+        let msg = ExecuteMsg::InitAsset {
+            denom: "someasset".to_string(),
+            params: invalid_asset_params,
+        };
+        let info = mock_info("owner", &[]);
+        let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+        assert_eq!(
+            error_res,
+            MarsError::InvalidParam {
+                param_name: "reserve_factor".to_string(),
+                invalid_value: "1".to_string(),
+                predicate: "< 1".to_string(),
+            }
+            .into()
+        );
+    }
+
     // init asset with max_loan_to_value greater than 1
     {
         let invalid_asset_params = InitOrUpdateAssetParams {
