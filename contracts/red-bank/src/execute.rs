@@ -695,7 +695,7 @@ pub fn repay(
     let mut debt_amount_after = Uint128::zero();
     if repay_amount > debt_amount_before {
         refund_amount = repay_amount - debt_amount_before;
-        let refund_msg = build_send_asset_msg(user.address(), &denom, refund_amount);
+        let refund_msg = build_send_asset_msg(&info.sender, &denom, refund_amount);
         response = response.add_message(refund_msg);
     } else {
         debt_amount_after = debt_amount_before - repay_amount;
