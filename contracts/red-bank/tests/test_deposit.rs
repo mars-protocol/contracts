@@ -465,3 +465,65 @@ fn depositing_on_behalf_of() {
         }
     );
 }
+
+#[test]
+fn depositing_on_behalf_of_cannot_enable_collateral() {
+    let TestSuite {
+        mut deps,
+        denom,
+        depositor_addr,
+        ..
+    } = setup_test();
+
+    deps.querier.set_oracle_price(denom, Decimal::one());
+
+    let on_behalf_of_addr = Addr::unchecked("jake");
+
+    let block_time = 10000300;
+
+    // 'on_behalf_of_addr' deposit funds to their own account
+    execute(
+        deps.as_mut(),
+        mock_env_at_block_time(block_time),
+        mock_info(on_behalf_of_addr.as_str(), &coins(1u128, denom)),
+        ExecuteMsg::Deposit {
+            on_behalf_of: None,
+        },
+    )
+    .unwrap();
+
+    // 'on_behalf_of_addr' should have collateral enabled
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
+    assert_eq!(collateral.enabled, true);
+
+    // 'on_behalf_of_addr' disables asset as collateral
+    execute(
+        deps.as_mut(),
+        mock_env_at_block_time(block_time),
+        mock_info(on_behalf_of_addr.as_str(), &[]),
+        ExecuteMsg::UpdateAssetCollateralStatus {
+            denom: denom.to_string(),
+            enable: false,
+        },
+    )
+    .unwrap();
+
+    // verify asset is disabled as collateral for 'on_behalf_of_addr'
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
+    assert_eq!(collateral.enabled, false);
+
+    // 'depositor_addr' deposits a small amount of funds to 'on_behalf_of_addr' to enable his asset as collateral
+    execute(
+        deps.as_mut(),
+        mock_env_at_block_time(block_time),
+        mock_info(depositor_addr.as_str(), &coins(1u128, denom)),
+        ExecuteMsg::Deposit {
+            on_behalf_of: Some(on_behalf_of_addr.to_string()),
+        },
+    )
+    .unwrap();
+
+    // 'on_behalf_of_addr' doesn't have the asset enabled as collateral
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
+    assert_eq!(collateral.enabled, false);
+}
