@@ -476,28 +476,21 @@ fn test_borrow_and_repay() {
 }
 
 #[test]
-fn test_repay_on_behalf_of() {
-    let available_liquidity_native = Uint128::from(1000000000u128);
-    let mut deps = th_setup(&[coin(available_liquidity_native.into(), "borrowedcoinnative")]);
+fn test_repay_without_refund_on_behalf_of() {
+    let mut deps = th_setup(&[coin(1000000000u128, "borrowedcoinnative")]);
 
     deps.querier.set_oracle_price("depositedcoinnative", Decimal::one());
     deps.querier.set_oracle_price("borrowedcoinnative", Decimal::one());
 
-    let mock_market_1 = Market {
-        liquidity_index: Decimal::one(),
-        borrow_index: Decimal::one(),
-        max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
-        ..Default::default()
-    };
-    let mock_market_2 = Market {
+    let mock_market = Market {
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
         max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
         ..Default::default()
     };
 
-    let market_1_initial = th_init_market(deps.as_mut(), "depositedcoinnative", &mock_market_1); // collateral
-    let market_2_initial = th_init_market(deps.as_mut(), "borrowedcoinnative", &mock_market_2);
+    let market_1_initial = th_init_market(deps.as_mut(), "depositedcoinnative", &mock_market); // collateral
+    let market_2_initial = th_init_market(deps.as_mut(), "borrowedcoinnative", &mock_market);
 
     let borrower_addr = Addr::unchecked("borrower");
     let user_addr = Addr::unchecked("user");
@@ -558,6 +551,93 @@ fn test_repay_on_behalf_of() {
             attr("denom", "borrowedcoinnative"),
             attr("amount", repay_amount.to_string()),
             attr("amount_scaled", Uint128::new(repay_amount) * SCALING_FACTOR),
+        ]
+    );
+}
+
+#[test]
+fn test_repay_with_refund_on_behalf_of() {
+    let mut deps = th_setup(&[coin(1000000000u128, "borrowedcoinnative")]);
+
+    deps.querier.set_oracle_price("depositedcoinnative", Decimal::one());
+    deps.querier.set_oracle_price("borrowedcoinnative", Decimal::one());
+
+    let mock_market = Market {
+        liquidity_index: Decimal::one(),
+        borrow_index: Decimal::one(),
+        max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
+        ..Default::default()
+    };
+
+    let market_1_initial = th_init_market(deps.as_mut(), "depositedcoinnative", &mock_market); // collateral
+    let market_2_initial = th_init_market(deps.as_mut(), "borrowedcoinnative", &mock_market);
+
+    let borrower_addr = Addr::unchecked("borrower");
+    let user_addr = Addr::unchecked("user");
+
+    // Set user as having the market_1_initial (collateral) deposited
+    set_collateral(
+        deps.as_mut(),
+        &borrower_addr,
+        &market_1_initial.denom,
+        Uint128::new(10000) * SCALING_FACTOR,
+        true,
+    );
+
+    // *
+    // 'borrower' borrows native coin
+    // *
+    let borrow_amount = 4000u128;
+    let env = mock_env(MockEnvParams::default());
+    let info = mock_info(borrower_addr.as_str(), &[]);
+    let msg = ExecuteMsg::Borrow {
+        denom: String::from("borrowedcoinnative"),
+        amount: Uint128::from(borrow_amount),
+        recipient: None,
+    };
+    let _res = execute(deps.as_mut(), env, info, msg).unwrap();
+
+    assert!(has_debt_position(deps.as_ref(), &borrower_addr, &market_2_initial.denom));
+
+    // *
+    // 'user' repays part of the debt on behalf of 'borrower'
+    // *
+    let refund_amount = 800u128;
+    let repay_amount = borrow_amount + refund_amount;
+    let env = mock_env(MockEnvParams::default());
+    let info = cosmwasm_std::testing::mock_info(
+        user_addr.as_str(),
+        &[coin(repay_amount, "borrowedcoinnative")],
+    );
+    let msg = ExecuteMsg::Repay {
+        on_behalf_of: Some(borrower_addr.to_string()),
+    };
+    let res = execute(deps.as_mut(), env, info, msg).unwrap();
+
+    // 'user' should not have positions in either the collateral or debt asset
+    assert!(!has_collateral_position(deps.as_ref(), &user_addr, &market_1_initial.denom));
+    assert!(!has_debt_position(deps.as_ref(), &user_addr, &market_2_initial.denom));
+
+    // Debt for 'borrower' should be partially repayed
+    assert!(!has_debt_position(deps.as_ref(), &borrower_addr, &market_2_initial.denom));
+
+    // Check msgs and attributes
+    assert_eq!(
+        res.messages,
+        vec![SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
+            to_address: user_addr.to_string(),
+            amount: coins(refund_amount, "borrowedcoinnative")
+        }))]
+    );
+    assert_eq!(
+        res.attributes,
+        vec![
+            attr("action", "outposts/red-bank/repay"),
+            attr("sender", "user"),
+            attr("on_behalf_of", "borrower"),
+            attr("denom", "borrowedcoinnative"),
+            attr("amount", borrow_amount.to_string()),
+            attr("amount_scaled", Uint128::new(borrow_amount) * SCALING_FACTOR),
         ]
     );
 }
