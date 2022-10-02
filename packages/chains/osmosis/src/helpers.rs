@@ -4,16 +4,16 @@ use cosmwasm_std::{Addr, Decimal, Empty, QuerierWrapper, QueryRequest, StdResult
 
 use osmosis_std::shim::Timestamp;
 use osmosis_std::types::cosmos::base::v1beta1::Coin;
-use osmosis_std::types::osmosis::gamm::twap::v1beta1::TwapQuerier;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
     GammQuerier, PoolAsset, PoolParams, QueryPoolRequest, SwapAmountInRoute,
 };
+use osmosis_std::types::osmosis::twap::v1beta1::TwapQuerier;
 
 use serde::{Deserialize, Serialize};
 
 // NOTE: Use custom Pool (`id` type as String) due to problem with json (de)serialization discrepancy between go and rust side.
 // https://github.com/osmosis-labs/osmosis-rust/issues/42
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct Pool {
     pub id: String,
     pub address: String,
@@ -24,7 +24,7 @@ pub struct Pool {
     pub total_weight: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct QueryPoolResponse {
     pub pool: Pool,
 }
@@ -64,18 +64,13 @@ pub fn query_twap_price(
     denom: &str,
     base_denom: &str,
     start_time: u64,
-    end_time: u64,
 ) -> StdResult<Decimal> {
-    let arithmetic_twap_res = TwapQuerier::new(querier).get_arithmetic_twap(
+    let arithmetic_twap_res = TwapQuerier::new(querier).arithmetic_twap_to_now(
         pool_id,
         denom.to_string(),
         base_denom.to_string(),
         Some(Timestamp {
             seconds: start_time as i64,
-            nanos: 0,
-        }),
-        Some(Timestamp {
-            seconds: end_time as i64,
             nanos: 0,
         }),
     )?;

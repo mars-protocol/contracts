@@ -2,12 +2,12 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
 use mars_osmosis::helpers::QueryPoolResponse;
-use osmosis_std::types::osmosis::gamm::twap::v1beta1::{
-    GetArithmeticTwapRequest, GetArithmeticTwapResponse,
-};
 use osmosis_std::types::osmosis::gamm::v1beta1::{
     QueryPoolRequest, QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest,
     QuerySwapExactAmountInResponse, SwapAmountInRoute,
+};
+use osmosis_std::types::osmosis::twap::v1beta1::{
+    ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse,
 };
 use prost::{DecodeError, Message};
 
@@ -24,7 +24,7 @@ pub struct OsmosisQuerier {
     pub pools: HashMap<u64, QueryPoolResponse>,
 
     pub spot_prices: HashMap<PriceKey, QuerySpotPriceResponse>,
-    pub twap_prices: HashMap<PriceKey, GetArithmeticTwapResponse>,
+    pub twap_prices: HashMap<PriceKey, ArithmeticTwapToNowResponse>,
 
     /// key comes from `prepare_estimate_swap_key` function
     pub estimate_swaps: HashMap<String, QuerySwapExactAmountInResponse>,
@@ -48,8 +48,8 @@ impl OsmosisQuerier {
             }
         }
 
-        if path == "/osmosis.gamm.twap.v1beta1.Query/GetArithmeticTwap" {
-            let parse_osmosis_query: Result<GetArithmeticTwapRequest, DecodeError> =
+        if path == "/osmosis.twap.v1beta1.Query/ArithmeticTwapToNow" {
+            let parse_osmosis_query: Result<ArithmeticTwapToNowRequest, DecodeError> =
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
                 return Ok(self.handle_query_twap_request(osmosis_query));
@@ -100,7 +100,7 @@ impl OsmosisQuerier {
         Ok(res).into()
     }
 
-    fn handle_query_twap_request(&self, request: GetArithmeticTwapRequest) -> QuerierResult {
+    fn handle_query_twap_request(&self, request: ArithmeticTwapToNowRequest) -> QuerierResult {
         let price_key = PriceKey {
             pool_id: request.pool_id,
             denom_in: request.base_asset,
@@ -110,7 +110,7 @@ impl OsmosisQuerier {
             Some(query_response) => to_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
                 error: format!(
-                    "GetArithmeticTwapResponse is not found for price key: {:?}",
+                    "ArithmeticTwapToNowResponse is not found for price key: {:?}",
                     price_key
                 ),
                 request: Default::default(),
