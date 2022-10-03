@@ -1,17 +1,15 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
-use mars_osmosis::helpers::QueryPoolResponse;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
-    QueryPoolRequest, QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest,
-    QuerySwapExactAmountInResponse, SwapAmountInRoute,
+    QueryPoolRequest, QueryPoolResponse, QuerySpotPriceRequest, QuerySpotPriceResponse,
+    QuerySwapExactAmountInRequest, QuerySwapExactAmountInResponse, SwapAmountInRoute,
 };
 use osmosis_std::types::osmosis::twap::v1beta1::{
     ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse,
 };
 use prost::{DecodeError, Message};
 
-// NOTE: We can't use osmo_bindings::Swap (as key) for HashMap because it doesn't implement Hash
 #[derive(Eq, PartialEq, Hash, Clone, Debug)]
 pub struct PriceKey {
     pub pool_id: u64,

@@ -1,17 +1,22 @@
 #![allow(dead_code)]
 
+use std::any::type_name;
 use std::collections::HashMap;
 
 use cosmwasm_std::testing::{mock_env, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{coin, from_binary, Addr, Coin, Decimal, Deps, OwnedDeps};
+use osmosis_std::shim::Any;
 
-use mars_osmosis::helpers::{Pool, QueryPoolResponse};
-use osmosis_std::types::osmosis::gamm::v1beta1::{PoolAsset, SwapAmountInRoute};
+use osmosis_std::types::osmosis::gamm::v1beta1::{
+    Pool, PoolAsset, QueryPoolResponse, SwapAmountInRoute,
+};
 
 use mars_outpost::rewards_collector::{Config, ExecuteMsg, QueryMsg};
 use mars_rewards_collector_osmosis::contract::entry;
 use mars_rewards_collector_osmosis::OsmosisRoute;
 use mars_testing::{mock_info, MarsMockQuerier};
+
+use prost::Message;
 
 pub fn mock_config() -> Config<Addr> {
     Config {
@@ -153,7 +158,7 @@ fn prepare_query_pool_response(
 ) -> QueryPoolResponse {
     let pool = Pool {
         address: "address".to_string(),
-        id: pool_id.to_string(),
+        id: pool_id,
         pool_params: None,
         future_pool_governor: "future_pool_governor".to_string(),
         total_shares: Some(osmosis_std::types::cosmos::base::v1beta1::Coin {
@@ -163,8 +168,15 @@ fn prepare_query_pool_response(
         pool_assets: prepare_pool_assets(assets, weights),
         total_weight: "".to_string(),
     };
+
+    let mut buf = vec![];
+    pool.encode(&mut buf).unwrap();
+
     QueryPoolResponse {
-        pool,
+        pool: Some(Any {
+            type_url: type_name::<Pool>().to_string(),
+            value: buf,
+        }),
     }
 }
 
