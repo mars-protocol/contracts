@@ -12,7 +12,7 @@ use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmoun
 
 use crate::helpers::hashset;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct OsmosisRoute(pub Vec<SwapAmountInRoute>);
 
 impl fmt::Display for OsmosisRoute {

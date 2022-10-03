@@ -5,10 +5,10 @@ use cosmwasm_std::{
 };
 
 use mars_osmosis::helpers::QueryPoolResponse;
-use osmosis_std::types::osmosis::gamm::twap::v1beta1::GetArithmeticTwapResponse;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
     QuerySpotPriceResponse, QuerySwapExactAmountInResponse, SwapAmountInRoute,
 };
+use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
 use mars_outpost::{address_provider, incentives, oracle, red_bank};
 
@@ -97,7 +97,7 @@ impl MarsMockQuerier {
         id: u64,
         base_asset_denom: &str,
         quote_asset_denom: &str,
-        twap_price: GetArithmeticTwapResponse,
+        twap_price: ArithmeticTwapToNowResponse,
     ) {
         let price_key = PriceKey {
             pool_id: id,
