@@ -735,13 +735,9 @@ pub fn liquidate(
 ) -> Result<Response, ContractError> {
     let block_time = env.block.time.seconds();
     let user = User(&user_addr);
-    let recipient_addr: Addr;
-    let recipient = if let Some(address) = recipient {
-        recipient_addr = deps.api.addr_validate(&address)?;
-        User(&recipient_addr)
-    } else {
-        User(&info.sender)
-    };
+    // The recipient address for receiving underlying collateral
+    let recipient_addr = option_string_to_addr(deps.api, recipient, info.sender.clone())?;
+    let recipient = User(&recipient_addr);
 
     // 1. Validate liquidation
     // If user (contract) has a positive uncollateralized limit then the user
