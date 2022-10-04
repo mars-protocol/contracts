@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
-use cosmwasm_std::{attr, Addr, BankMsg, Coin, CosmosMsg, SubMsg, Uint128};
+use cosmwasm_std::{Addr, SubMsg};
 
 use mars_outpost::error::MarsError;
 use mars_outpost::incentives::{ExecuteMsg, InstantiateMsg};
@@ -66,34 +66,4 @@ fn test_update_config() {
     let new_config = CONFIG.load(deps.as_ref().storage).unwrap();
     assert_eq!(new_config.owner, Addr::unchecked("new_owner"));
     assert_eq!(new_config.mars_denom, "umars".to_string());
-}
-
-#[test]
-fn test_execute_cosmos_msg() {
-    let mut deps = setup_test();
-
-    let bank = BankMsg::Send {
-        to_address: "destination".to_string(),
-        amount: vec![Coin {
-            denom: "uluna".to_string(),
-            amount: Uint128::new(123456u128),
-        }],
-    };
-    let cosmos_msg = CosmosMsg::Bank(bank);
-    let msg = ExecuteMsg::ExecuteCosmosMsg(cosmos_msg.clone());
-
-    // *
-    // non owner is not authorized
-    // *
-    let info = mock_info("somebody", &[]);
-    let error_res = execute(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
-    assert_eq!(error_res, ContractError::Mars(MarsError::Unauthorized {}));
-
-    // *
-    // can execute Cosmos msg
-    // *
-    let info = mock_info("owner", &[]);
-    let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-    assert_eq!(res.messages, vec![SubMsg::new(cosmos_msg)]);
-    assert_eq!(res.attributes, vec![attr("action", "outposts/incentives/execute_cosmos_msg")]);
 }

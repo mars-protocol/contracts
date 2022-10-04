@@ -73,7 +73,7 @@ where
         deps: DepsMut<Q>,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<R, M>,
+        msg: ExecuteMsg<R>,
     ) -> ContractResult<Response<M>> {
         match msg {
             ExecuteMsg::UpdateConfig {
@@ -96,9 +96,6 @@ where
                 denom,
                 amount,
             } => self.swap_asset(deps, env, denom, amount),
-            ExecuteMsg::ExecuteCosmosMsg {
-                cosmos_msg,
-            } => self.execute_cosmos_msg(deps, info.sender, cosmos_msg),
         }
     }
 
@@ -323,23 +320,6 @@ where
             .add_attribute("denom", denom)
             .add_attribute("amount", amount_to_distribute)
             .add_attribute("to", to_address))
-    }
-
-    fn execute_cosmos_msg(
-        &self,
-        deps: DepsMut<Q>,
-        sender: Addr,
-        msg: CosmosMsg<M>,
-    ) -> ContractResult<Response<M>> {
-        let cfg = self.config.load(deps.storage)?;
-
-        if sender != cfg.owner {
-            return Err(MarsError::Unauthorized {}.into());
-        }
-
-        Ok(Response::new()
-            .add_message(msg)
-            .add_attribute("action", "outposts/rewards-collector/execute_cosmos_msg"))
     }
 
     fn query_config(&self, deps: Deps<Q>) -> StdResult<Config<String>> {
