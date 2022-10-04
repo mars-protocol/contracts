@@ -4,6 +4,8 @@ use cosmwasm_std::{Addr, Api, CosmosMsg, Decimal, StdResult, Uint128};
 use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
 
+const MAX_SLIPPAGE_TOLERANCE: u64 = 50;
+
 /// Global configuration
 #[cw_serde]
 pub struct Config<T> {
@@ -32,6 +34,15 @@ pub struct Config<T> {
 impl<T> Config<T> {
     pub fn validate(&self) -> Result<(), MarsError> {
         decimal_param_le_one(self.safety_tax_rate, "safety_tax_rate")?;
+
+        if self.slippage_tolerance > Decimal::percent(MAX_SLIPPAGE_TOLERANCE) {
+            return Err(MarsError::InvalidParam {
+                param_name: "slippage_tolerance".to_string(),
+                invalid_value: self.slippage_tolerance.to_string(),
+                predicate: format!("<= {}", Decimal::percent(MAX_SLIPPAGE_TOLERANCE)),
+            });
+        }
+
         Ok(())
     }
 }
