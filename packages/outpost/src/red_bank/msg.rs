@@ -90,6 +90,8 @@ pub enum ExecuteMsg {
         user: String,
         /// Denom of the collateral asset, which liquidator gets from the borrower
         collateral_denom: String,
+        /// The address for receiving underlying collateral
+        recipient: Option<String>,
     },
 
     /// Update (enable / disable) asset as collateral for the caller

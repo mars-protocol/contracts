@@ -134,6 +134,7 @@ fn test_liquidate() {
         let liquidate_msg = ExecuteMsg::Liquidate {
             user: user_addr.to_string(),
             collateral_denom: "collateral".to_string(),
+            recipient: None,
         };
 
         let env = mock_env(MockEnvParams::default());
@@ -169,6 +170,7 @@ fn test_liquidate() {
         let liquidate_msg = ExecuteMsg::Liquidate {
             user: user_addr.to_string(),
             collateral_denom: "collateral".to_string(),
+            recipient: None,
         };
 
         let env = mock_env(MockEnvParams::default());
@@ -202,6 +204,7 @@ fn test_liquidate() {
         let liquidate_msg = ExecuteMsg::Liquidate {
             user: user_addr.to_string(),
             collateral_denom: "collateral".to_string(),
+            recipient: None,
         };
 
         let env = mock_env(MockEnvParams::default());
@@ -215,6 +218,7 @@ fn test_liquidate() {
         let liquidate_msg = ExecuteMsg::Liquidate {
             user: user_addr.to_string(),
             collateral_denom: "collateral".to_string(),
+            recipient: None,
         };
 
         let block_time = first_block_time;
@@ -313,6 +317,7 @@ fn test_liquidate() {
                 attr("action", "outposts/red-bank/liquidate"),
                 attr("user", user_addr.as_str()),
                 attr("liquidator", liquidator_addr.as_str()),
+                attr("recipient", liquidator_addr.as_str()),
                 attr("collateral_denom", "collateral"),
                 attr("collateral_amount", expected_liquidated_collateral_amount),
                 attr("collateral_amount_scaled", expected_liquidated_collateral_amount_scaled),
@@ -368,6 +373,7 @@ fn test_liquidate() {
         let liquidate_msg = ExecuteMsg::Liquidate {
             user: user_addr.to_string(),
             collateral_denom: "collateral".to_string(),
+            recipient: None,
         };
 
         let collateral_market_before = MARKETS.load(&deps.storage, "collateral").unwrap();
@@ -485,6 +491,7 @@ fn test_liquidate() {
                 attr("action", "outposts/red-bank/liquidate"),
                 attr("user", user_addr.as_str()),
                 attr("liquidator", liquidator_addr.as_str()),
+                attr("recipient", liquidator_addr.as_str()),
                 attr("collateral_denom", "collateral"),
                 attr("collateral_amount", expected_liquidated_collateral_amount),
                 attr("collateral_amount_scaled", expected_liquidated_collateral_amount_scaled),
@@ -560,6 +567,7 @@ fn test_liquidate() {
         let liquidate_msg = ExecuteMsg::Liquidate {
             user: user_addr.to_string(),
             collateral_denom: "collateral".to_string(),
+            recipient: None,
         };
 
         let collateral_market_before = MARKETS.load(&deps.storage, "collateral").unwrap();
@@ -660,6 +668,7 @@ fn test_liquidate() {
                 attr("action", "outposts/red-bank/liquidate"),
                 attr("user", user_addr.as_str()),
                 attr("liquidator", liquidator_addr.as_str()),
+                attr("recipient", liquidator_addr.as_str()),
                 attr("collateral_denom", "collateral"),
                 attr("collateral_amount", user_collateral_balance),
                 attr("collateral_amount_scaled", expected_liquidated_collateral_amount_scaled),
@@ -704,6 +713,7 @@ fn test_liquidate() {
         let msg = ExecuteMsg::Liquidate {
             user: user_addr.to_string(),
             collateral_denom: "collateral".to_string(),
+            recipient: None,
         };
         let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
         assert_eq!(error_res, PaymentError::MultipleDenoms {}.into());
@@ -800,6 +810,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let liquidate_msg = ExecuteMsg::Liquidate {
             user: user_addr.to_string(),
             collateral_denom: denom.to_string(),
+            recipient: None,
         };
 
         let asset_market_before = MARKETS.load(&deps.storage, denom).unwrap();
@@ -895,6 +906,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
                 attr("action", "outposts/red-bank/liquidate"),
                 attr("user", user_addr.as_str()),
                 attr("liquidator", liquidator_addr.as_str()),
+                attr("recipient", liquidator_addr.as_str()),
                 attr("collateral_denom", denom),
                 attr("collateral_amount", expected_liquidated_amount),
                 attr("collateral_amount_scaled", expected_liquidated_amount_scaled),
@@ -990,6 +1002,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let liquidate_msg = ExecuteMsg::Liquidate {
             user: user_addr.to_string(),
             collateral_denom: denom.to_string(),
+            recipient: None,
         };
 
         let asset_market_before = MARKETS.load(&deps.storage, denom).unwrap();
@@ -1084,6 +1097,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
                 attr("action", "outposts/red-bank/liquidate"),
                 attr("user", user_addr.as_str()),
                 attr("liquidator", liquidator_addr.as_str()),
+                attr("recipient", liquidator_addr.as_str()),
                 attr("collateral_denom", denom),
                 attr("collateral_amount", expected_liquidated_amount),
                 attr("collateral_amount_scaled", expected_liquidated_amount_scaled),
@@ -1216,6 +1230,7 @@ fn test_liquidation_health_factor_check() {
     let liquidate_msg = ExecuteMsg::Liquidate {
         user: healthy_user_addr.to_string(),
         collateral_denom: "collateral".to_string(),
+        recipient: None,
     };
 
     let env = mock_env(MockEnvParams::default());
@@ -1256,6 +1271,7 @@ fn test_liquidate_if_collateral_disabled() {
     let liquidate_msg = ExecuteMsg::Liquidate {
         user: user_addr.to_string(),
         collateral_denom: "collateral2".to_string(),
+        recipient: None,
     };
 
     let env = mock_env(MockEnvParams::default());

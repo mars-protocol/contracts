@@ -731,10 +731,17 @@ pub fn liquidate(
     debt_denom: String,
     user_addr: Addr,
     sent_debt_amount: Uint128,
+    recipient: Option<String>,
 ) -> Result<Response, ContractError> {
     let block_time = env.block.time.seconds();
     let user = User(&user_addr);
-    let liquidator = User(&info.sender);
+    let recipient_addr: Addr;
+    let recipient = if let Some(address) = recipient {
+        recipient_addr = deps.api.addr_validate(&address)?;
+        User(&recipient_addr)
+    } else {
+        User(&info.sender)
+    };
 
     // 1. Validate liquidation
     // If user (contract) has a positive uncollateralized limit then the user
@@ -827,7 +834,7 @@ pub fn liquidate(
         incentives_addr,
         response,
     )?;
-    response = liquidator.increase_collateral(
+    response = recipient.increase_collateral(
         deps.storage,
         &collateral_market,
         collateral_amount_to_liquidate_scaled,
@@ -915,7 +922,8 @@ pub fn liquidate(
     Ok(response
         .add_attribute("action", "outposts/red-bank/liquidate")
         .add_attribute("user", user)
-        .add_attribute("liquidator", liquidator)
+        .add_attribute("liquidator", info.sender.to_string())
+        .add_attribute("recipient", recipient)
         .add_attribute("collateral_denom", collateral_denom)
         .add_attribute("collateral_amount", collateral_amount_to_liquidate)
         .add_attribute("collateral_amount_scaled", collateral_amount_to_liquidate_scaled)
