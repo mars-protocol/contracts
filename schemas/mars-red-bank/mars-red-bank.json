@@ -326,6 +326,13 @@
                 "description": "Denom of the collateral asset, which liquidator gets from the borrower",
                 "type": "string"
               },
+              "recipient": {
+                "description": "The address for receiving underlying collateral",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "user": {
                 "description": "The address of the borrower getting liquidated",
                 "type": "string"
