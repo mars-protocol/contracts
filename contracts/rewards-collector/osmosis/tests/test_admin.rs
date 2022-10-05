@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::{BankMsg, Coin, CosmosMsg, Decimal, SubMsg, Uint128};
+use cosmwasm_std::Decimal;
 
 use mars_outpost::error::MarsError;
 use mars_outpost::rewards_collector::{Config, CreateOrUpdateConfig, QueryMsg};
@@ -103,29 +103,4 @@ fn test_updating_config() {
 
     let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
     assert_eq!(cfg.safety_tax_rate, Decimal::percent(69));
-}
-
-#[test]
-fn test_executing_cosmos_msg() {
-    let mut deps = helpers::setup_test();
-
-    let cosmos_msg = CosmosMsg::Bank(BankMsg::Send {
-        to_address: "destination".to_string(),
-        amount: vec![Coin {
-            denom: "uluna".to_string(),
-            amount: Uint128::new(123456),
-        }],
-    });
-    let msg = ExecuteMsg::ExecuteCosmosMsg {
-        cosmos_msg: cosmos_msg.clone(),
-    };
-
-    // non-owner is not authorized
-    let err = execute(deps.as_mut(), mock_env(), mock_info("jake"), msg.clone()).unwrap_err();
-    assert_eq!(err, MarsError::Unauthorized {}.into());
-
-    // owner can execute cosmos msg
-    let res = execute(deps.as_mut(), mock_env(), mock_info("owner"), msg).unwrap();
-    assert_eq!(res.messages.len(), 1);
-    assert_eq!(res.messages[0], SubMsg::new(cosmos_msg));
 }

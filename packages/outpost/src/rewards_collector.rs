@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Api, CosmosMsg, Decimal, StdResult, Uint128};
+use cosmwasm_std::{Addr, Api, Decimal, StdResult, Uint128};
 
 use crate::error::MarsError;
 use crate::helpers::decimal_param_le_one;
@@ -109,7 +109,7 @@ pub struct CreateOrUpdateConfig {
 pub type InstantiateMsg = Config<String>;
 
 #[cw_serde]
-pub enum ExecuteMsg<Route, CustomMsg> {
+pub enum ExecuteMsg<Route> {
     /// Update contract config
     UpdateConfig {
         new_cfg: CreateOrUpdateConfig,
@@ -143,11 +143,6 @@ pub enum ExecuteMsg<Route, CustomMsg> {
     SwapAsset {
         denom: String,
         amount: Option<Uint128>,
-    },
-
-    /// Execute Cosmos msg (only callable by owner)
-    ExecuteCosmosMsg {
-        cosmos_msg: CosmosMsg<CustomMsg>,
     },
 }
 

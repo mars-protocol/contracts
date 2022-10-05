@@ -78,9 +78,6 @@ pub fn execute(
             address_provider,
             mars_denom,
         } => Ok(execute_update_config(deps, env, info, owner, address_provider, mars_denom)?),
-        ExecuteMsg::ExecuteCosmosMsg(cosmos_msg) => {
-            Ok(execute_execute_cosmos_msg(deps, env, info, cosmos_msg)?)
-        }
     }
 }
 
@@ -291,25 +288,6 @@ pub fn execute_update_config(
     CONFIG.save(deps.storage, &config)?;
 
     let response = Response::new().add_attribute("action", "outposts/incentives/update_config");
-
-    Ok(response)
-}
-
-pub fn execute_execute_cosmos_msg(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    msg: CosmosMsg,
-) -> Result<Response, MarsError> {
-    let config = CONFIG.load(deps.storage)?;
-
-    if info.sender != config.owner {
-        return Err(MarsError::Unauthorized {});
-    }
-
-    let response = Response::new()
-        .add_attribute("action", "outposts/incentives/execute_cosmos_msg")
-        .add_message(msg);
 
     Ok(response)
 }

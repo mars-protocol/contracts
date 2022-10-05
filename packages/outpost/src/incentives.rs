@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, CosmosMsg, Decimal, Uint128};
+use cosmwasm_std::{Addr, Decimal, Uint128};
 
 /// Global configuration
 #[cw_serde]
@@ -76,9 +76,6 @@ pub enum ExecuteMsg {
         address_provider: Option<String>,
         mars_denom: Option<String>,
     },
-
-    /// Execute Cosmos msg (only callable by owner)
-    ExecuteCosmosMsg(CosmosMsg),
 }
 
 #[cw_serde]
