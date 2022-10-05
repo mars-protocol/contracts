@@ -35,9 +35,9 @@ impl<T> Config<T> {
     pub fn validate(&self) -> Result<(), MarsError> {
         decimal_param_le_one(self.safety_tax_rate, "safety_tax_rate")?;
 
-        integer_param_gt_zero(self.timeout_revision as usize, "timeout_revision")?;
-        integer_param_gt_zero(self.timeout_blocks as usize, "timeout_blocks")?;
-        integer_param_gt_zero(self.timeout_seconds as usize, "timeout_seconds")?;
+        integer_param_gt_zero(self.timeout_revision, "timeout_revision")?;
+        integer_param_gt_zero(self.timeout_blocks, "timeout_blocks")?;
+        integer_param_gt_zero(self.timeout_seconds, "timeout_seconds")?;
 
         if self.slippage_tolerance > Decimal::percent(MAX_SLIPPAGE_TOLERANCE_PERCENTAGE) {
             return Err(MarsError::InvalidParam {
