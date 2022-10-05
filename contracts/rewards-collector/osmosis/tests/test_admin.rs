@@ -104,3 +104,75 @@ fn test_updating_config() {
     let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
     assert_eq!(cfg.safety_tax_rate, Decimal::percent(69));
 }
+
+#[test]
+fn test_updating_config_if_invalid_timeout_revision() {
+    let mut deps = helpers::setup_test();
+
+    let invalid_cfg = CreateOrUpdateConfig {
+        timeout_revision: Some(0),
+        ..Default::default()
+    };
+
+    let info = mock_info("owner");
+    let msg = ExecuteMsg::UpdateConfig {
+        new_cfg: invalid_cfg,
+    };
+    let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::Mars(MarsError::InvalidParam {
+            param_name: "timeout_revision".to_string(),
+            invalid_value: "0".to_string(),
+            predicate: "> 0".to_string(),
+        })
+    );
+}
+
+#[test]
+fn test_updating_config_if_invalid_timeout_blocks() {
+    let mut deps = helpers::setup_test();
+
+    let invalid_cfg = CreateOrUpdateConfig {
+        timeout_blocks: Some(0),
+        ..Default::default()
+    };
+
+    let info = mock_info("owner");
+    let msg = ExecuteMsg::UpdateConfig {
+        new_cfg: invalid_cfg,
+    };
+    let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::Mars(MarsError::InvalidParam {
+            param_name: "timeout_blocks".to_string(),
+            invalid_value: "0".to_string(),
+            predicate: "> 0".to_string(),
+        })
+    );
+}
+
+#[test]
+fn test_updating_config_if_invalid_timeout_seconds() {
+    let mut deps = helpers::setup_test();
+
+    let invalid_cfg = CreateOrUpdateConfig {
+        timeout_seconds: Some(0),
+        ..Default::default()
+    };
+
+    let info = mock_info("owner");
+    let msg = ExecuteMsg::UpdateConfig {
+        new_cfg: invalid_cfg,
+    };
+    let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::Mars(MarsError::InvalidParam {
+            param_name: "timeout_seconds".to_string(),
+            invalid_value: "0".to_string(),
+            predicate: "> 0".to_string(),
+        })
+    );
+}
