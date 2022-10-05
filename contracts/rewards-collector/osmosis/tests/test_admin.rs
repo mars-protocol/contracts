@@ -37,6 +37,30 @@ fn test_instantiating() {
 }
 
 #[test]
+fn test_updating_config_if_invalid_slippage() {
+    let mut deps = helpers::setup_test();
+
+    let invalid_cfg = CreateOrUpdateConfig {
+        slippage_tolerance: Some(Decimal::percent(51u64)),
+        ..Default::default()
+    };
+
+    let info = mock_info("owner");
+    let msg = ExecuteMsg::UpdateConfig {
+        new_cfg: invalid_cfg.clone(),
+    };
+    let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::Mars(MarsError::InvalidParam {
+            param_name: "slippage_tolerance".to_string(),
+            invalid_value: "0.51".to_string(),
+            predicate: "<= 0.5".to_string(),
+        })
+    );
+}
+
+#[test]
 fn test_updating_config() {
     let mut deps = helpers::setup_test();
 
