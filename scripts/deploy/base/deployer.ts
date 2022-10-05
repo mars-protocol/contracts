@@ -130,7 +130,7 @@ export class Deployer {
         set_route: {
           denom_in: this.config.baseAssetDenom,
           denom_out: this.config.atomDenom,
-          route: [{ token_out_denom: this.config.atomDenom, pool_id: 1 }],
+          route: [{ token_out_denom: this.config.atomDenom, pool_id: '1' }],
         },
       },
       'auto',

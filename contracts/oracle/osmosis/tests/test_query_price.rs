@@ -1,6 +1,6 @@
 use cosmwasm_std::Decimal;
-use osmosis_std::types::osmosis::gamm::twap::v1beta1::GetArithmeticTwapResponse;
 use osmosis_std::types::osmosis::gamm::v1beta1::QuerySpotPriceResponse;
+use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
 use mars_outpost::oracle::{PriceResponse, QueryMsg};
 
@@ -76,7 +76,7 @@ fn test_querying_price_twap() {
         89,
         "umars",
         "uosmo",
-        GetArithmeticTwapResponse {
+        ArithmeticTwapToNowResponse {
             arithmetic_twap: Decimal::from_ratio(77777u128, 12345u128).to_string(),
         },
     );

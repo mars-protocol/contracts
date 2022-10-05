@@ -107,16 +107,8 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 pool_id,
                 window_size,
             } => {
-                let current_block_time = block.time.seconds();
-                let start_time = current_block_time - window_size;
-                query_twap_price(
-                    querier,
-                    *pool_id,
-                    denom,
-                    base_denom,
-                    start_time,
-                    current_block_time,
-                )
+                let start_time = block.time.seconds() - window_size;
+                query_twap_price(querier, *pool_id, denom, base_denom, start_time)
             }
         }
     }
