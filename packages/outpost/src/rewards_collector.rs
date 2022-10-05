@@ -2,7 +2,7 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Api, Decimal, StdResult, Uint128};
 
 use crate::error::MarsError;
-use crate::helpers::decimal_param_le_one;
+use crate::helpers::{decimal_param_le_one, integer_param_gt_zero};
 
 const MAX_SLIPPAGE_TOLERANCE_PERCENTAGE: u64 = 50;
 
@@ -34,6 +34,10 @@ pub struct Config<T> {
 impl<T> Config<T> {
     pub fn validate(&self) -> Result<(), MarsError> {
         decimal_param_le_one(self.safety_tax_rate, "safety_tax_rate")?;
+
+        integer_param_gt_zero(self.timeout_revision, "timeout_revision")?;
+        integer_param_gt_zero(self.timeout_blocks, "timeout_blocks")?;
+        integer_param_gt_zero(self.timeout_seconds, "timeout_seconds")?;
 
         if self.slippage_tolerance > Decimal::percent(MAX_SLIPPAGE_TOLERANCE_PERCENTAGE) {
             return Err(MarsError::InvalidParam {

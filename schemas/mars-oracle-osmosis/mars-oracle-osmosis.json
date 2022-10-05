@@ -35,12 +35,12 @@
         "properties": {
           "update_config": {
             "type": "object",
+            "required": [
+              "owner"
+            ],
             "properties": {
               "owner": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -67,6 +67,28 @@
               },
               "price_source": {
                 "$ref": "#/definitions/OsmosisPriceSource"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Remove price source for a coin",
+        "type": "object",
+        "required": [
+          "remove_price_source"
+        ],
+        "properties": {
+          "remove_price_source": {
+            "type": "object",
+            "required": [
+              "denom"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -147,29 +169,6 @@
                   },
                   "window_size": {
                     "description": "Window size in seconds representing the entire window for which 'average' price is calculated. Value should be <= 172800 sec (48 hours).",
-                    "type": "integer",
-                    "format": "uint64",
-                    "minimum": 0.0
-                  }
-                }
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "description": "Osmosis liquidity token",
-            "type": "object",
-            "required": [
-              "liquidity_token"
-            ],
-            "properties": {
-              "liquidity_token": {
-                "type": "object",
-                "required": [
-                  "pool_id"
-                ],
-                "properties": {
-                  "pool_id": {
                     "type": "integer",
                     "format": "uint64",
                     "minimum": 0.0

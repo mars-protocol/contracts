@@ -46,6 +46,18 @@ pub fn decimal_param_le_one(param_value: Decimal, param_name: &str) -> Result<()
     }
 }
 
+pub fn integer_param_gt_zero(param_value: u64, param_name: &str) -> Result<(), MarsError> {
+    if !param_value.gt(&0) {
+        Err(MarsError::InvalidParam {
+            param_name: param_name.to_string(),
+            invalid_value: param_value.to_string(),
+            predicate: "> 0".to_string(),
+        })
+    } else {
+        Ok(())
+    }
+}
+
 pub fn zero_address() -> Addr {
     Addr::unchecked("")
 }
