@@ -246,7 +246,7 @@ pub fn query_user_position(
     user_addr: Addr,
 ) -> Result<UserPositionResponse, MarsError> {
     let config = CONFIG.load(deps.storage)?;
-    let oracle_addr = address_provider::helpers::query_address(
+    let oracle_addr = address_provider::helpers::query_contract_address(
         deps,
         &config.address_provider,
         MarsContract::Oracle,

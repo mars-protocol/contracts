@@ -1,9 +1,10 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
+use cosmwasm_std::Addr;
 use mars_address_provider::contract::execute;
 use mars_address_provider::error::ContractError;
 use mars_address_provider::state::CONTRACTS;
 
-use mars_outpost::address_provider::{AddressResponseItem, ExecuteMsg, MarsContract, QueryMsg};
+use mars_outpost::address_provider::{ContractAddressResponse, ExecuteMsg, MarsContract, QueryMsg};
 
 use crate::helpers::{th_query, th_setup};
 
@@ -13,7 +14,7 @@ mod helpers;
 fn test_setting_address() {
     let mut deps = th_setup();
 
-    let msg = ExecuteMsg::SetAddress {
+    let msg = ExecuteMsg::SetContractAddress {
         contract: MarsContract::RedBank,
         address: "red_bank".to_string(),
     };
@@ -34,46 +35,50 @@ fn test_querying_addresses() {
     let mut deps = th_setup();
 
     CONTRACTS
-        .save(deps.as_mut().storage, MarsContract::Incentives.into(), &"incentives".to_string())
+        .save(
+            deps.as_mut().storage,
+            MarsContract::Incentives.into(),
+            &Addr::unchecked("incentives"),
+        )
         .unwrap();
     CONTRACTS
-        .save(deps.as_mut().storage, MarsContract::Oracle.into(), &"oracle".to_string())
+        .save(deps.as_mut().storage, MarsContract::Oracle.into(), &Addr::unchecked("oracle"))
         .unwrap();
     CONTRACTS
-        .save(deps.as_mut().storage, MarsContract::RedBank.into(), &"red_bank".to_string())
+        .save(deps.as_mut().storage, MarsContract::RedBank.into(), &Addr::unchecked("red_bank"))
         .unwrap();
 
-    let res: AddressResponseItem =
-        th_query(deps.as_ref(), QueryMsg::Address(MarsContract::Incentives));
+    let res: ContractAddressResponse =
+        th_query(deps.as_ref(), QueryMsg::ContractAddress(MarsContract::Incentives));
     assert_eq!(
         res,
-        AddressResponseItem {
+        ContractAddressResponse {
             contract: MarsContract::Incentives,
-            address: "incentives".to_string()
+            address: Addr::unchecked("incentives")
         }
     );
 
-    let res: Vec<AddressResponseItem> = th_query(
+    let res: Vec<ContractAddressResponse> = th_query(
         deps.as_ref(),
-        QueryMsg::Addresses(vec![MarsContract::Incentives, MarsContract::RedBank]),
+        QueryMsg::ContractAddresses(vec![MarsContract::Incentives, MarsContract::RedBank]),
     );
     assert_eq!(
         res,
         vec![
-            AddressResponseItem {
+            ContractAddressResponse {
                 contract: MarsContract::Incentives,
-                address: "incentives".to_string()
+                address: Addr::unchecked("incentives")
             },
-            AddressResponseItem {
+            ContractAddressResponse {
                 contract: MarsContract::RedBank,
-                address: "red_bank".to_string()
+                address: Addr::unchecked("red_bank")
             }
         ]
     );
 
-    let res: Vec<AddressResponseItem> = th_query(
+    let res: Vec<ContractAddressResponse> = th_query(
         deps.as_ref(),
-        QueryMsg::AllAddresses {
+        QueryMsg::AllContractAddresses {
             start_after: None,
             limit: Some(2),
         },
@@ -81,29 +86,29 @@ fn test_querying_addresses() {
     assert_eq!(
         res,
         vec![
-            AddressResponseItem {
+            ContractAddressResponse {
                 contract: MarsContract::Incentives,
-                address: "incentives".to_string()
+                address: Addr::unchecked("incentives")
             },
-            AddressResponseItem {
+            ContractAddressResponse {
                 contract: MarsContract::Oracle,
-                address: "oracle".to_string()
+                address: Addr::unchecked("oracle")
             }
         ]
     );
 
-    let res: Vec<AddressResponseItem> = th_query(
+    let res: Vec<ContractAddressResponse> = th_query(
         deps.as_ref(),
-        QueryMsg::AllAddresses {
+        QueryMsg::AllContractAddresses {
             start_after: Some(MarsContract::Oracle),
             limit: None,
         },
     );
     assert_eq!(
         res,
-        vec![AddressResponseItem {
+        vec![ContractAddressResponse {
             contract: MarsContract::RedBank,
-            address: "red_bank".to_string()
+            address: Addr::unchecked("red_bank")
         }]
     );
 }

@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::{Bound, Item, Map};
 
-use mars_outpost::address_provider::{self, MarsContract};
+use mars_outpost::address_provider::{self, MarsContract, MarsGov};
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 use mars_outpost::red_bank;
@@ -190,7 +190,7 @@ where
     ) -> ContractResult<Response<M>> {
         let cfg = self.config.load(deps.storage)?;
 
-        let red_bank_addr = address_provider::helpers::query_address(
+        let red_bank_addr = address_provider::helpers::query_contract_address(
             deps.as_ref(),
             &cfg.address_provider,
             MarsContract::RedBank,
@@ -278,16 +278,16 @@ where
         let cfg = self.config.load(deps.storage)?;
 
         let to_address = if denom == cfg.safety_fund_denom {
-            address_provider::helpers::query_address(
+            address_provider::helpers::query_gov_address(
                 deps.as_ref(),
                 &cfg.address_provider,
-                MarsContract::SafetyFund,
+                MarsGov::SafetyFund,
             )?
         } else if denom == cfg.fee_collector_denom {
-            address_provider::helpers::query_address(
+            address_provider::helpers::query_gov_address(
                 deps.as_ref(),
                 &cfg.address_provider,
-                MarsContract::FeeCollector,
+                MarsGov::FeeCollector,
             )?
         } else {
             return Err(ContractError::AssetNotEnabledForDistribution {
@@ -300,7 +300,7 @@ where
 
         let transfer_msg = CosmosMsg::Ibc(IbcMsg::Transfer {
             channel_id: cfg.channel_id,
-            to_address: to_address.to_string(),
+            to_address: to_address.clone(),
             amount: Coin {
                 denom: denom.clone(),
                 amount: amount_to_distribute,

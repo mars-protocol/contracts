@@ -1,6 +1,6 @@
 use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, QuerierResult};
 
-use mars_outpost::address_provider::{AddressResponseItem, QueryMsg};
+use mars_outpost::address_provider::{ContractAddressResponse, GovAddressResponse, QueryMsg};
 
 // NOTE: Addresses here are all hardcoded as we always use those to target a specific contract
 // in tests. This module implicitly supposes those are used.
@@ -15,23 +15,31 @@ pub fn handle_query(contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
     }
 
     let ret: ContractResult<Binary> = match query {
-        QueryMsg::Address(contract) => {
-            let res = AddressResponseItem {
+        QueryMsg::ContractAddress(contract) => {
+            let res = ContractAddressResponse {
                 contract,
-                address: contract.to_string(),
+                address: Addr::unchecked(contract.to_string()),
             };
             to_binary(&res).into()
         }
 
-        QueryMsg::Addresses(contracts) => {
+        QueryMsg::ContractAddresses(contracts) => {
             let addresses = contracts
                 .into_iter()
-                .map(|contract| AddressResponseItem {
+                .map(|contract| ContractAddressResponse {
                     contract,
-                    address: contract.to_string(),
+                    address: Addr::unchecked(contract.to_string()),
                 })
                 .collect::<Vec<_>>();
             to_binary(&addresses).into()
+        }
+
+        QueryMsg::GovAddress(gov) => {
+            let res = GovAddressResponse {
+                gov,
+                address: gov.to_string(),
+            };
+            to_binary(&res).into()
         }
 
         _ => panic!("[mock]: Unsupported address provider query"),

@@ -95,7 +95,7 @@ pub fn execute_set_asset_incentive(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    let red_bank_addr = address_provider::helpers::query_address(
+    let red_bank_addr = address_provider::helpers::query_contract_address(
         deps.as_ref(),
         &config.address_provider,
         MarsContract::RedBank,
@@ -330,5 +330,9 @@ pub fn query_user_unclaimed_rewards(deps: Deps, env: Env, user: String) -> StdRe
 
 fn query_red_bank_address(deps: Deps) -> StdResult<Addr> {
     let config = CONFIG.load(deps.storage)?;
-    address_provider::helpers::query_address(deps, &config.address_provider, MarsContract::RedBank)
+    address_provider::helpers::query_contract_address(
+        deps,
+        &config.address_provider,
+        MarsContract::RedBank,
+    )
 }
