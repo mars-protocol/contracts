@@ -156,23 +156,23 @@ export class Deployer {
     }
     const addressesToSet = [
       {
-        contract: 'rewards_collector',
+        local: 'rewards_collector',
         address: this.storage.addresses.rewardsCollector,
       },
       {
-        contract: 'incentives',
+        local: 'incentives',
         address: this.storage.addresses.incentives,
       },
       {
-        contract: 'oracle',
+        local: 'oracle',
         address: this.storage.addresses.oracle,
       },
       {
-        contract: 'protocol_admin',
+        local: 'protocol_admin',
         address: this.multisig.address,
       },
       {
-        contract: 'red_bank',
+        local: 'red_bank',
         address: this.storage.addresses.redBank,
       },
     ]
@@ -181,7 +181,7 @@ export class Deployer {
       await this.client.execute(
         this.deployerAddress,
         this.storage.addresses.addressProvider!,
-        { set_address: addrObj },
+        { set_local_address: addrObj },
         'auto',
       )
     }
