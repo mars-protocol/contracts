@@ -46,9 +46,9 @@ impl fmt::Display for MarsLocal {
         let s = match self {
             MarsLocal::Incentives => "incentives",
             MarsLocal::Oracle => "oracle",
+            MarsLocal::ProtocolAdmin => "protocol_admin",
             MarsLocal::RedBank => "red_bank",
             MarsLocal::RewardsCollector => "rewards_collector",
-            MarsLocal::ProtocolAdmin => "protocol_admin",
         };
         write!(f, "{}", s)
     }
@@ -71,9 +71,9 @@ impl FromStr for MarsLocal {
         match s {
             "incentives" => Ok(MarsLocal::Incentives),
             "oracle" => Ok(MarsLocal::Oracle),
+            "protocol_admin" => Ok(MarsLocal::ProtocolAdmin),
             "red_bank" => Ok(MarsLocal::RedBank),
             "rewards_collector" => Ok(MarsLocal::RewardsCollector),
-            "protocol_admin" => Ok(MarsLocal::ProtocolAdmin),
             _ => Err(StdError::parse_err(type_name::<Self>(), s)),
         }
     }

@@ -80,7 +80,7 @@ pub fn set_local_address(
 
     Ok(Response::new()
         .add_attribute("action", "outposts/address-provider/set_local_address")
-        .add_attribute("contract", local.to_string())
+        .add_attribute("local", local.to_string())
         .add_attribute("address", address))
 }
 
@@ -99,7 +99,7 @@ pub fn set_remote_address(
 
     Ok(Response::new()
         .add_attribute("action", "outposts/address-provider/set_remote_address")
-        .add_attribute("gov", remote.to_string())
+        .add_attribute("remote", remote.to_string())
         .add_attribute("address", address))
 }
 
@@ -128,14 +128,14 @@ pub fn transfer_ownership(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::LocalAddress(contract) => to_binary(&query_local_address(deps, contract)?),
-        QueryMsg::LocalAddresses(contracts) => to_binary(&query_local_addresses(deps, contracts)?),
+        QueryMsg::LocalAddress(local) => to_binary(&query_local_address(deps, local)?),
+        QueryMsg::LocalAddresses(locals) => to_binary(&query_local_addresses(deps, locals)?),
         QueryMsg::AllLocalAddresses {
             start_after,
             limit,
         } => to_binary(&query_all_local_addresses(deps, start_after, limit)?),
-        QueryMsg::RemoteAddress(gov) => to_binary(&query_remote_address(deps, gov)?),
-        QueryMsg::RemoteAddresses(gov) => to_binary(&query_remote_addresses(deps, gov)?),
+        QueryMsg::RemoteAddress(remote) => to_binary(&query_remote_address(deps, remote)?),
+        QueryMsg::RemoteAddresses(remotes) => to_binary(&query_remote_addresses(deps, remotes)?),
         QueryMsg::AllRemoteAddresses {
             start_after,
             limit,
@@ -158,10 +158,7 @@ fn query_local_addresses(
     deps: Deps,
     locals: Vec<MarsLocal>,
 ) -> StdResult<Vec<LocalAddressResponse>> {
-    locals
-        .into_iter()
-        .map(|contract| query_local_address(deps, contract))
-        .collect::<StdResult<Vec<_>>>()
+    locals.into_iter().map(|local| query_local_address(deps, local)).collect::<StdResult<Vec<_>>>()
 }
 
 fn query_all_local_addresses(
