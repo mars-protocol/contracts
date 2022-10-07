@@ -2,10 +2,10 @@ use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::Addr;
 use mars_address_provider::contract::execute;
 use mars_address_provider::error::ContractError;
-use mars_address_provider::state::{CONTRACTS, GOVERNANCE};
+use mars_address_provider::state::{LOCAL_ADDRESSES, REMOTE_ADDRESSES};
 
 use mars_outpost::address_provider::{
-    ContractAddressResponse, ExecuteMsg, GovAddressResponse, MarsContract, MarsGov, QueryMsg,
+    ExecuteMsg, LocalAddressResponse, MarsLocal, MarsRemote, QueryMsg, RemoteAddressResponse,
 };
 
 use crate::helpers::{th_query, th_setup};
@@ -13,11 +13,11 @@ use crate::helpers::{th_query, th_setup};
 mod helpers;
 
 #[test]
-fn test_setting_contract_address() {
+fn test_setting_local_address() {
     let mut deps = th_setup();
 
-    let msg = ExecuteMsg::SetContractAddress {
-        contract: MarsContract::RedBank,
+    let msg = ExecuteMsg::SetLocalAddress {
+        local: MarsLocal::RedBank,
         address: "red_bank".to_string(),
     };
 
@@ -28,59 +28,55 @@ fn test_setting_contract_address() {
     // owner can set address
     execute(deps.as_mut(), mock_env(), mock_info("owner", &[]), msg).unwrap();
 
-    let address = CONTRACTS.load(deps.as_ref().storage, MarsContract::RedBank.into()).unwrap();
+    let address = LOCAL_ADDRESSES.load(deps.as_ref().storage, MarsLocal::RedBank.into()).unwrap();
     assert_eq!(address, "red_bank".to_string());
 }
 
 #[test]
-fn test_querying_contract_addresses() {
+fn test_querying_local_addresses() {
     let mut deps = th_setup();
 
-    CONTRACTS
-        .save(
-            deps.as_mut().storage,
-            MarsContract::Incentives.into(),
-            &Addr::unchecked("incentives"),
-        )
+    LOCAL_ADDRESSES
+        .save(deps.as_mut().storage, MarsLocal::Incentives.into(), &Addr::unchecked("incentives"))
         .unwrap();
-    CONTRACTS
-        .save(deps.as_mut().storage, MarsContract::Oracle.into(), &Addr::unchecked("oracle"))
+    LOCAL_ADDRESSES
+        .save(deps.as_mut().storage, MarsLocal::Oracle.into(), &Addr::unchecked("oracle"))
         .unwrap();
-    CONTRACTS
-        .save(deps.as_mut().storage, MarsContract::RedBank.into(), &Addr::unchecked("red_bank"))
+    LOCAL_ADDRESSES
+        .save(deps.as_mut().storage, MarsLocal::RedBank.into(), &Addr::unchecked("red_bank"))
         .unwrap();
 
-    let res: ContractAddressResponse =
-        th_query(deps.as_ref(), QueryMsg::ContractAddress(MarsContract::Incentives));
+    let res: LocalAddressResponse =
+        th_query(deps.as_ref(), QueryMsg::LocalAddress(MarsLocal::Incentives));
     assert_eq!(
         res,
-        ContractAddressResponse {
-            contract: MarsContract::Incentives,
+        LocalAddressResponse {
+            local: MarsLocal::Incentives,
             address: Addr::unchecked("incentives")
         }
     );
 
-    let res: Vec<ContractAddressResponse> = th_query(
+    let res: Vec<LocalAddressResponse> = th_query(
         deps.as_ref(),
-        QueryMsg::ContractAddresses(vec![MarsContract::Incentives, MarsContract::RedBank]),
+        QueryMsg::LocalAddresses(vec![MarsLocal::Incentives, MarsLocal::RedBank]),
     );
     assert_eq!(
         res,
         vec![
-            ContractAddressResponse {
-                contract: MarsContract::Incentives,
+            LocalAddressResponse {
+                local: MarsLocal::Incentives,
                 address: Addr::unchecked("incentives")
             },
-            ContractAddressResponse {
-                contract: MarsContract::RedBank,
+            LocalAddressResponse {
+                local: MarsLocal::RedBank,
                 address: Addr::unchecked("red_bank")
             }
         ]
     );
 
-    let res: Vec<ContractAddressResponse> = th_query(
+    let res: Vec<LocalAddressResponse> = th_query(
         deps.as_ref(),
-        QueryMsg::AllContractAddresses {
+        QueryMsg::AllLocalAddresses {
             start_after: None,
             limit: Some(2),
         },
@@ -88,39 +84,39 @@ fn test_querying_contract_addresses() {
     assert_eq!(
         res,
         vec![
-            ContractAddressResponse {
-                contract: MarsContract::Incentives,
+            LocalAddressResponse {
+                local: MarsLocal::Incentives,
                 address: Addr::unchecked("incentives")
             },
-            ContractAddressResponse {
-                contract: MarsContract::Oracle,
+            LocalAddressResponse {
+                local: MarsLocal::Oracle,
                 address: Addr::unchecked("oracle")
             }
         ]
     );
 
-    let res: Vec<ContractAddressResponse> = th_query(
+    let res: Vec<LocalAddressResponse> = th_query(
         deps.as_ref(),
-        QueryMsg::AllContractAddresses {
-            start_after: Some(MarsContract::Oracle),
+        QueryMsg::AllLocalAddresses {
+            start_after: Some(MarsLocal::Oracle),
             limit: None,
         },
     );
     assert_eq!(
         res,
-        vec![ContractAddressResponse {
-            contract: MarsContract::RedBank,
+        vec![LocalAddressResponse {
+            local: MarsLocal::RedBank,
             address: Addr::unchecked("red_bank")
         }]
     );
 }
 
 #[test]
-fn test_setting_governance_address() {
+fn test_setting_remote_address() {
     let mut deps = th_setup();
 
-    let msg = ExecuteMsg::SetGovAddress {
-        gov: MarsGov::SafetyFund,
+    let msg = ExecuteMsg::SetRemoteAddress {
+        remote: MarsRemote::SafetyFund,
         address: "mars_safety_fund".to_string(),
     };
 
@@ -131,86 +127,80 @@ fn test_setting_governance_address() {
     // owner can set address
     execute(deps.as_mut(), mock_env(), mock_info("owner", &[]), msg).unwrap();
 
-    let address = GOVERNANCE.load(deps.as_ref().storage, MarsGov::SafetyFund.into()).unwrap();
+    let address =
+        REMOTE_ADDRESSES.load(deps.as_ref().storage, MarsRemote::SafetyFund.into()).unwrap();
     assert_eq!(address, "mars_safety_fund".to_string());
 }
 
 #[test]
-fn test_querying_governance_addresses() {
+fn test_querying_remote_addresses() {
     let mut deps = th_setup();
 
-    GOVERNANCE
+    REMOTE_ADDRESSES
+        .save(deps.as_mut().storage, MarsRemote::SafetyFund.into(), &"mars_safety_fund".to_string())
+        .unwrap();
+    REMOTE_ADDRESSES
         .save(
             deps.as_mut().storage,
-            MarsGov::ProtocolAdmin.into(),
-            &"mars_protocol_admin".to_string(),
-        )
-        .unwrap();
-    GOVERNANCE
-        .save(deps.as_mut().storage, MarsGov::SafetyFund.into(), &"mars_safety_fund".to_string())
-        .unwrap();
-    GOVERNANCE
-        .save(
-            deps.as_mut().storage,
-            MarsGov::FeeCollector.into(),
+            MarsRemote::FeeCollector.into(),
             &"mars_fee_collector".to_string(),
         )
         .unwrap();
 
-    let res: GovAddressResponse =
-        th_query(deps.as_ref(), QueryMsg::GovAddress(MarsGov::FeeCollector));
+    let res: RemoteAddressResponse =
+        th_query(deps.as_ref(), QueryMsg::RemoteAddress(MarsRemote::FeeCollector));
     assert_eq!(
         res,
-        GovAddressResponse {
-            gov: MarsGov::FeeCollector,
+        RemoteAddressResponse {
+            remote: MarsRemote::FeeCollector,
             address: "mars_fee_collector".to_string()
         }
     );
 
-    let res: Vec<GovAddressResponse> = th_query(
+    let res: Vec<RemoteAddressResponse> = th_query(
         deps.as_ref(),
-        QueryMsg::GovAddresses(vec![MarsGov::FeeCollector, MarsGov::SafetyFund]),
+        QueryMsg::RemoteAddresses(vec![MarsRemote::FeeCollector, MarsRemote::SafetyFund]),
     );
     assert_eq!(
         res,
         vec![
-            GovAddressResponse {
-                gov: MarsGov::FeeCollector,
+            RemoteAddressResponse {
+                remote: MarsRemote::FeeCollector,
                 address: "mars_fee_collector".to_string()
             },
-            GovAddressResponse {
-                gov: MarsGov::SafetyFund,
+            RemoteAddressResponse {
+                remote: MarsRemote::SafetyFund,
                 address: "mars_safety_fund".to_string()
             }
         ]
     );
 
-    let res: Vec<GovAddressResponse> = th_query(
+    let res: Vec<RemoteAddressResponse> = th_query(
         deps.as_ref(),
-        QueryMsg::AllGovAddresses {
+        QueryMsg::AllRemoteAddresses {
             start_after: None,
             limit: Some(1),
         },
     );
     assert_eq!(
         res,
-        vec![GovAddressResponse {
-            gov: MarsGov::FeeCollector,
+        vec![RemoteAddressResponse {
+            remote: MarsRemote::FeeCollector,
             address: "mars_fee_collector".to_string()
         },]
     );
 
-    let res: Vec<GovAddressResponse> = th_query(
+    let res: Vec<RemoteAddressResponse> = th_query(
         deps.as_ref(),
-        QueryMsg::AllGovAddresses {
-            start_after: Some(MarsGov::ProtocolAdmin),
+        QueryMsg::AllRemoteAddresses {
+            start_after: Some(MarsRemote::FeeCollector),
             limit: None,
         },
     );
     assert_eq!(
         res,
-        vec![GovAddressResponse {
-            gov: MarsGov::SafetyFund,
+        vec![RemoteAddressResponse {
+            remote: MarsRemote::SafetyFund,
             address: "mars_safety_fund".to_string()
         }]
     );

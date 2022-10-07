@@ -3,7 +3,7 @@ use std::str;
 
 use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 
-use mars_outpost::address_provider::{self, MarsContract};
+use mars_outpost::address_provider::{self, MarsLocal};
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::{build_send_asset_msg, option_string_to_addr, zero_address};
 use mars_outpost::math;
@@ -221,13 +221,13 @@ pub fn update_asset(
             let mut response = Response::new();
 
             if should_update_interest_rates {
-                let addresses = address_provider::helpers::query_contract_addresses(
+                let addresses = address_provider::helpers::query_local_addresses(
                     deps.as_ref(),
                     &config.address_provider,
-                    vec![MarsContract::Incentives, MarsContract::RewardsCollector],
+                    vec![MarsLocal::Incentives, MarsLocal::RewardsCollector],
                 )?;
-                let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
-                let incentives_addr = &addresses[&MarsContract::Incentives];
+                let rewards_collector_addr = &addresses[&MarsLocal::RewardsCollector];
+                let incentives_addr = &addresses[&MarsLocal::Incentives];
 
                 response = apply_accumulated_interests(
                     deps.storage,
@@ -358,13 +358,13 @@ pub fn deposit(
     let config = CONFIG.load(deps.storage)?;
 
     // update indexes and interest rates
-    let addresses = address_provider::helpers::query_contract_addresses(
+    let addresses = address_provider::helpers::query_local_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Incentives, MarsContract::RewardsCollector],
+        vec![MarsLocal::Incentives, MarsLocal::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
-    let incentives_addr = &addresses[&MarsContract::Incentives];
+    let rewards_collector_addr = &addresses[&MarsLocal::RewardsCollector];
+    let incentives_addr = &addresses[&MarsLocal::Incentives];
 
     response = apply_accumulated_interests(
         deps.storage,
@@ -450,14 +450,14 @@ pub fn withdraw(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let addresses = address_provider::helpers::query_contract_addresses(
+    let addresses = address_provider::helpers::query_local_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Oracle, MarsContract::Incentives, MarsContract::RewardsCollector],
+        vec![MarsLocal::Oracle, MarsLocal::Incentives, MarsLocal::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
-    let incentives_addr = &addresses[&MarsContract::Incentives];
-    let oracle_addr = &addresses[&MarsContract::Oracle];
+    let rewards_collector_addr = &addresses[&MarsLocal::RewardsCollector];
+    let incentives_addr = &addresses[&MarsLocal::Incentives];
+    let oracle_addr = &addresses[&MarsLocal::Oracle];
 
     // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
     // otherwise no reasons to block the withdraw
@@ -556,14 +556,14 @@ pub fn borrow(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let addresses = address_provider::helpers::query_contract_addresses(
+    let addresses = address_provider::helpers::query_local_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Oracle, MarsContract::Incentives, MarsContract::RewardsCollector],
+        vec![MarsLocal::Oracle, MarsLocal::Incentives, MarsLocal::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
-    let incentives_addr = &addresses[&MarsContract::Incentives];
-    let oracle_addr = &addresses[&MarsContract::Oracle];
+    let rewards_collector_addr = &addresses[&MarsLocal::RewardsCollector];
+    let incentives_addr = &addresses[&MarsLocal::Incentives];
+    let oracle_addr = &addresses[&MarsLocal::Oracle];
 
     // Check if user can borrow specified amount
     let mut uncollateralized_debt = false;
@@ -665,13 +665,13 @@ pub fn repay(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let addresses = address_provider::helpers::query_contract_addresses(
+    let addresses = address_provider::helpers::query_local_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Incentives, MarsContract::RewardsCollector],
+        vec![MarsLocal::Incentives, MarsLocal::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
-    let incentives_addr = &addresses[&MarsContract::Incentives];
+    let rewards_collector_addr = &addresses[&MarsLocal::RewardsCollector];
+    let incentives_addr = &addresses[&MarsLocal::Incentives];
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
 
@@ -767,14 +767,14 @@ pub fn liquidate(
     // 2. Compute health factor
     let config = CONFIG.load(deps.storage)?;
 
-    let addresses = address_provider::helpers::query_contract_addresses(
+    let addresses = address_provider::helpers::query_local_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Oracle, MarsContract::Incentives, MarsContract::RewardsCollector],
+        vec![MarsLocal::Oracle, MarsLocal::Incentives, MarsLocal::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
-    let incentives_addr = &addresses[&MarsContract::Incentives];
-    let oracle_addr = &addresses[&MarsContract::Oracle];
+    let rewards_collector_addr = &addresses[&MarsLocal::RewardsCollector];
+    let incentives_addr = &addresses[&MarsLocal::Incentives];
+    let oracle_addr = &addresses[&MarsLocal::Oracle];
 
     let (liquidatable, assets_positions) =
         assert_liquidatable(&deps.as_ref(), &env, &user_addr, oracle_addr)?;
@@ -1008,10 +1008,10 @@ pub fn update_asset_collateral_status(
     // user is not liquidatable after disabling
     if previously_enabled && !enable {
         let config = CONFIG.load(deps.storage)?;
-        let oracle_addr = address_provider::helpers::query_contract_address(
+        let oracle_addr = address_provider::helpers::query_local_address(
             deps.as_ref(),
             &config.address_provider,
-            MarsContract::Oracle,
+            MarsLocal::Oracle,
         )?;
 
         let (liquidatable, _) =

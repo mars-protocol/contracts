@@ -7,7 +7,7 @@ use cosmwasm_std::{
 };
 use cw_utils::PaymentError;
 
-use mars_outpost::address_provider::MarsContract;
+use mars_outpost::address_provider::MarsLocal;
 use mars_outpost::incentives;
 use mars_outpost::red_bank::{Collateral, ExecuteMsg, Market};
 use mars_red_bank::contract::execute;
@@ -253,7 +253,7 @@ fn depositing_without_existing_position() {
     assert_eq!(
         res.messages,
         vec![SubMsg::new(WasmMsg::Execute {
-            contract_addr: MarsContract::Incentives.to_string(),
+            contract_addr: MarsLocal::Incentives.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
                 denom: initial_market.denom.clone(),
@@ -348,7 +348,7 @@ fn depositing_with_existing_position() {
     assert_eq!(
         res.messages,
         vec![SubMsg::new(WasmMsg::Execute {
-            contract_addr: MarsContract::Incentives.to_string(),
+            contract_addr: MarsLocal::Incentives.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
                 denom: initial_market.denom.clone(),
@@ -424,9 +424,9 @@ fn depositing_on_behalf_of() {
         res.messages,
         vec![
             SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsContract::Incentives.to_string(),
+                contract_addr: MarsLocal::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
-                    user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
+                    user_addr: Addr::unchecked(MarsLocal::RewardsCollector.to_string()),
                     denom: initial_market.denom.clone(),
                     user_amount_scaled_before: Uint128::zero(),
                     total_amount_scaled_before: initial_market.collateral_total_scaled,
@@ -435,7 +435,7 @@ fn depositing_on_behalf_of() {
                 funds: vec![]
             }),
             SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsContract::Incentives.to_string(),
+                contract_addr: MarsLocal::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: on_behalf_of_addr.clone(),
                     denom: initial_market.denom.clone(),

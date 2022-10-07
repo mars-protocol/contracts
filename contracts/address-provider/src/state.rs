@@ -6,5 +6,5 @@ use mars_outpost::address_provider::Config;
 use crate::key::MarsAddressKey;
 
 pub const CONFIG: Item<Config> = Item::new("config");
-pub const CONTRACTS: Map<MarsAddressKey, Addr> = Map::new("contracts");
-pub const GOVERNANCE: Map<MarsAddressKey, String> = Map::new("governance");
+pub const LOCAL_ADDRESSES: Map<MarsAddressKey, Addr> = Map::new("local_addresses");
+pub const REMOTE_ADDRESSES: Map<MarsAddressKey, String> = Map::new("remote_addresses");

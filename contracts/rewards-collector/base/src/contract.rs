@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::{Bound, Item, Map};
 
-use mars_outpost::address_provider::{self, MarsContract, MarsGov};
+use mars_outpost::address_provider::{self, MarsLocal, MarsRemote};
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 use mars_outpost::red_bank;
@@ -190,10 +190,10 @@ where
     ) -> ContractResult<Response<M>> {
         let cfg = self.config.load(deps.storage)?;
 
-        let red_bank_addr = address_provider::helpers::query_contract_address(
+        let red_bank_addr = address_provider::helpers::query_local_address(
             deps.as_ref(),
             &cfg.address_provider,
-            MarsContract::RedBank,
+            MarsLocal::RedBank,
         )?;
 
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -278,16 +278,16 @@ where
         let cfg = self.config.load(deps.storage)?;
 
         let to_address = if denom == cfg.safety_fund_denom {
-            address_provider::helpers::query_gov_address(
+            address_provider::helpers::query_remote_address(
                 deps.as_ref(),
                 &cfg.address_provider,
-                MarsGov::SafetyFund,
+                MarsRemote::SafetyFund,
             )?
         } else if denom == cfg.fee_collector_denom {
-            address_provider::helpers::query_gov_address(
+            address_provider::helpers::query_remote_address(
                 deps.as_ref(),
                 &cfg.address_provider,
-                MarsGov::FeeCollector,
+                MarsRemote::FeeCollector,
             )?
         } else {
             return Err(ContractError::AssetNotEnabledForDistribution {

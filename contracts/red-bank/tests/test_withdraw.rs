@@ -4,7 +4,7 @@ use cosmwasm_std::{
     WasmMsg,
 };
 
-use mars_outpost::address_provider::MarsContract;
+use mars_outpost::address_provider::MarsLocal;
 use mars_outpost::red_bank::{Collateral, Debt, ExecuteMsg, Market};
 use mars_outpost::{incentives, math};
 use mars_red_bank::contract::execute;
@@ -176,9 +176,9 @@ fn withdrawing_partially() {
         res.messages,
         vec![
             SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsContract::Incentives.to_string(),
+                contract_addr: MarsLocal::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
-                    user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
+                    user_addr: Addr::unchecked(MarsLocal::RewardsCollector.to_string()),
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
                     total_amount_scaled_before: initial_market.collateral_total_scaled,
@@ -187,7 +187,7 @@ fn withdrawing_partially() {
                 funds: vec![],
             }),
             SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsContract::Incentives.to_string(),
+                contract_addr: MarsLocal::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     denom: denom.to_string(),
@@ -231,7 +231,7 @@ fn withdrawing_partially() {
     assert_eq!(collateral.amount_scaled, expected_withdraw_amount_scaled_remaining);
 
     // the reward collector's collateral scaled amount should have been increased
-    let rewards_addr = Addr::unchecked(MarsContract::RewardsCollector.to_string());
+    let rewards_addr = Addr::unchecked(MarsLocal::RewardsCollector.to_string());
     let collateral = COLLATERALS.load(deps.as_ref().storage, (&rewards_addr, denom)).unwrap();
     assert_eq!(collateral.amount_scaled, expected_rewards_amount_scaled);
 }
@@ -294,9 +294,9 @@ fn withdrawing_completely() {
         res.messages,
         vec![
             SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsContract::Incentives.to_string(),
+                contract_addr: MarsLocal::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
-                    user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
+                    user_addr: Addr::unchecked(MarsLocal::RewardsCollector.to_string()),
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
                     total_amount_scaled_before: initial_market.collateral_total_scaled,
@@ -305,7 +305,7 @@ fn withdrawing_completely() {
                 funds: vec![],
             }),
             SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsContract::Incentives.to_string(),
+                contract_addr: MarsLocal::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     denom: denom.to_string(),
@@ -404,9 +404,9 @@ fn withdrawing_to_another_user() {
         res.messages,
         vec![
             SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsContract::Incentives.to_string(),
+                contract_addr: MarsLocal::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
-                    user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
+                    user_addr: Addr::unchecked(MarsLocal::RewardsCollector.to_string()),
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
                     total_amount_scaled_before: initial_market.collateral_total_scaled,
@@ -415,7 +415,7 @@ fn withdrawing_to_another_user() {
                 funds: vec![],
             }),
             SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsContract::Incentives.to_string(),
+                contract_addr: MarsLocal::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     denom: denom.to_string(),
@@ -690,7 +690,7 @@ fn withdrawing_if_health_factor_met() {
         res.messages,
         vec![
             SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsContract::Incentives.to_string(),
+                contract_addr: MarsLocal::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     denom: denoms[2].to_string(),

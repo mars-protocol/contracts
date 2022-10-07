@@ -1,7 +1,7 @@
 use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdError, StdResult, Uint128};
 use cw_storage_plus::Bound;
 
-use mars_outpost::address_provider::{self, MarsContract};
+use mars_outpost::address_provider::{self, MarsLocal};
 use mars_outpost::error::MarsError;
 use mars_outpost::red_bank::{
     Collateral, ConfigResponse, Debt, Market, UncollateralizedLoanLimitResponse,
@@ -246,10 +246,10 @@ pub fn query_user_position(
     user_addr: Addr,
 ) -> Result<UserPositionResponse, MarsError> {
     let config = CONFIG.load(deps.storage)?;
-    let oracle_addr = address_provider::helpers::query_contract_address(
+    let oracle_addr = address_provider::helpers::query_local_address(
         deps,
         &config.address_provider,
-        MarsContract::Oracle,
+        MarsLocal::Oracle,
     )?;
 
     let positions = health::get_user_positions_map(&deps, &env, &user_addr, &oracle_addr)?;

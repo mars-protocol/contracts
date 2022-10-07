@@ -5,7 +5,7 @@ use cosmwasm_std::{
     MessageInfo, Response, StdResult, Uint128,
 };
 
-use mars_outpost::address_provider::MarsContract;
+use mars_outpost::address_provider::MarsLocal;
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 
@@ -95,10 +95,10 @@ pub fn execute_set_asset_incentive(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    let red_bank_addr = address_provider::helpers::query_contract_address(
+    let red_bank_addr = address_provider::helpers::query_local_address(
         deps.as_ref(),
         &config.address_provider,
-        MarsContract::RedBank,
+        MarsLocal::RedBank,
     )?;
 
     let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &denom)? {
@@ -330,9 +330,9 @@ pub fn query_user_unclaimed_rewards(deps: Deps, env: Env, user: String) -> StdRe
 
 fn query_red_bank_address(deps: Deps) -> StdResult<Addr> {
     let config = CONFIG.load(deps.storage)?;
-    address_provider::helpers::query_contract_address(
+    address_provider::helpers::query_local_address(
         deps,
         &config.address_provider,
-        MarsContract::RedBank,
+        MarsLocal::RedBank,
     )
 }

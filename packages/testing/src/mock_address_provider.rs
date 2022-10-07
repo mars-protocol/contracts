@@ -1,6 +1,6 @@
 use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, QuerierResult};
 
-use mars_outpost::address_provider::{ContractAddressResponse, GovAddressResponse, QueryMsg};
+use mars_outpost::address_provider::{LocalAddressResponse, QueryMsg, RemoteAddressResponse};
 
 // NOTE: Addresses here are all hardcoded as we always use those to target a specific contract
 // in tests. This module implicitly supposes those are used.
@@ -15,29 +15,29 @@ pub fn handle_query(contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
     }
 
     let ret: ContractResult<Binary> = match query {
-        QueryMsg::ContractAddress(contract) => {
-            let res = ContractAddressResponse {
-                contract,
-                address: Addr::unchecked(contract.to_string()),
+        QueryMsg::LocalAddress(local) => {
+            let res = LocalAddressResponse {
+                local,
+                address: Addr::unchecked(local.to_string()),
             };
             to_binary(&res).into()
         }
 
-        QueryMsg::ContractAddresses(contracts) => {
-            let addresses = contracts
+        QueryMsg::LocalAddresses(locals) => {
+            let addresses = locals
                 .into_iter()
-                .map(|contract| ContractAddressResponse {
-                    contract,
-                    address: Addr::unchecked(contract.to_string()),
+                .map(|local| LocalAddressResponse {
+                    local,
+                    address: Addr::unchecked(local.to_string()),
                 })
                 .collect::<Vec<_>>();
             to_binary(&addresses).into()
         }
 
-        QueryMsg::GovAddress(gov) => {
-            let res = GovAddressResponse {
-                gov,
-                address: gov.to_string(),
+        QueryMsg::RemoteAddress(remote) => {
+            let res = RemoteAddressResponse {
+                remote,
+                address: remote.to_string(),
             };
             to_binary(&res).into()
         }

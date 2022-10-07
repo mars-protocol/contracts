@@ -4,38 +4,38 @@ use std::str::FromStr;
 use cosmwasm_std::{StdError, StdResult};
 use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
 
-use mars_outpost::address_provider::{MarsContract, MarsGov};
+use mars_outpost::address_provider::{MarsLocal, MarsRemote};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MarsAddressKey(pub Vec<u8>);
 
-impl From<MarsContract> for MarsAddressKey {
-    fn from(contract: MarsContract) -> Self {
-        Self(contract.to_string().into_bytes())
+impl From<MarsLocal> for MarsAddressKey {
+    fn from(local: MarsLocal) -> Self {
+        Self(local.to_string().into_bytes())
     }
 }
 
-impl From<MarsGov> for MarsAddressKey {
-    fn from(gov: MarsGov) -> Self {
-        Self(gov.to_string().into_bytes())
+impl From<MarsRemote> for MarsAddressKey {
+    fn from(remote: MarsRemote) -> Self {
+        Self(remote.to_string().into_bytes())
     }
 }
 
-impl TryFrom<MarsAddressKey> for MarsContract {
+impl TryFrom<MarsAddressKey> for MarsLocal {
     type Error = StdError;
 
     fn try_from(key: MarsAddressKey) -> Result<Self, Self::Error> {
         let s = String::from_utf8(key.0)?;
-        MarsContract::from_str(&s)
+        MarsLocal::from_str(&s)
     }
 }
 
-impl TryFrom<MarsAddressKey> for MarsGov {
+impl TryFrom<MarsAddressKey> for MarsRemote {
     type Error = StdError;
 
     fn try_from(key: MarsAddressKey) -> Result<Self, Self::Error> {
         let s = String::from_utf8(key.0)?;
-        MarsGov::from_str(&s)
+        MarsRemote::from_str(&s)
     }
 }
 

@@ -5,20 +5,15 @@ use std::str::FromStr;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, StdError};
 
-/// Contracts deployed on one chain
+/// Addresses of the current chain
 #[cw_serde]
 #[derive(Copy, Eq, Hash)]
-pub enum MarsContract {
+pub enum MarsLocal {
     Incentives,
     Oracle,
     RedBank,
     RewardsCollector,
-}
 
-/// Governance accounts, modules
-#[cw_serde]
-#[derive(Copy, Eq, Hash)]
-pub enum MarsGov {
     /// Protocol admin is an ICS-27 interchain account controlled by Mars Hub's x/gov module.
     /// This account will take the owner and admin roles of outpost contracts.
     ///
@@ -26,6 +21,12 @@ pub enum MarsGov {
     /// such as updating the config.
     /// Admin means the account who can migrate a contract.
     ProtocolAdmin,
+}
+
+/// Addresses that aren't on the current chain
+#[cw_serde]
+#[derive(Copy, Eq, Hash)]
+pub enum MarsRemote {
     /// The `fee_collector` module account controlled by Mars Hub's x/distribution module.
     /// Funds sent to this account will be distributed as staking rewards.
     ///
@@ -40,51 +41,51 @@ pub enum MarsGov {
     SafetyFund,
 }
 
-impl fmt::Display for MarsContract {
+impl fmt::Display for MarsLocal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            MarsContract::Incentives => "incentives",
-            MarsContract::Oracle => "oracle",
-            MarsContract::RedBank => "red_bank",
-            MarsContract::RewardsCollector => "rewards_collector",
+            MarsLocal::Incentives => "incentives",
+            MarsLocal::Oracle => "oracle",
+            MarsLocal::RedBank => "red_bank",
+            MarsLocal::RewardsCollector => "rewards_collector",
+            MarsLocal::ProtocolAdmin => "protocol_admin",
         };
         write!(f, "{}", s)
     }
 }
 
-impl fmt::Display for MarsGov {
+impl fmt::Display for MarsRemote {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            MarsGov::ProtocolAdmin => "protocol_admin",
-            MarsGov::FeeCollector => "fee_collector",
-            MarsGov::SafetyFund => "safety_fund",
+            MarsRemote::FeeCollector => "fee_collector",
+            MarsRemote::SafetyFund => "safety_fund",
         };
         write!(f, "{}", s)
     }
 }
 
-impl FromStr for MarsContract {
+impl FromStr for MarsLocal {
     type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "incentives" => Ok(MarsContract::Incentives),
-            "oracle" => Ok(MarsContract::Oracle),
-            "red_bank" => Ok(MarsContract::RedBank),
-            "rewards_collector" => Ok(MarsContract::RewardsCollector),
+            "incentives" => Ok(MarsLocal::Incentives),
+            "oracle" => Ok(MarsLocal::Oracle),
+            "red_bank" => Ok(MarsLocal::RedBank),
+            "rewards_collector" => Ok(MarsLocal::RewardsCollector),
+            "protocol_admin" => Ok(MarsLocal::ProtocolAdmin),
             _ => Err(StdError::parse_err(type_name::<Self>(), s)),
         }
     }
 }
 
-impl FromStr for MarsGov {
+impl FromStr for MarsRemote {
     type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "fee_collector" => Ok(MarsGov::FeeCollector),
-            "protocol_admin" => Ok(MarsGov::ProtocolAdmin),
-            "safety_fund" => Ok(MarsGov::SafetyFund),
+            "fee_collector" => Ok(MarsRemote::FeeCollector),
+            "safety_fund" => Ok(MarsRemote::SafetyFund),
             _ => Err(StdError::parse_err(type_name::<Self>(), s)),
         }
     }
@@ -112,14 +113,14 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    /// Set addresses for contracts
-    SetContractAddress {
-        contract: MarsContract,
+    /// Set local address
+    SetLocalAddress {
+        local: MarsLocal,
         address: String,
     },
-    /// Set addresses for governance
-    SetGovAddress {
-        gov: MarsGov,
+    /// Set remote address
+    SetRemoteAddress {
+        remote: MarsRemote,
         address: String,
     },
     /// Propose to transfer the contract's ownership to another account
@@ -135,29 +136,29 @@ pub enum QueryMsg {
     #[returns(Config)]
     Config {},
 
-    /// Get a single address for a contract
-    #[returns(ContractAddressResponse)]
-    ContractAddress(MarsContract),
-    /// Get a list of addresses for some contracts
-    #[returns(Vec<ContractAddressResponse>)]
-    ContractAddresses(Vec<MarsContract>),
-    /// Query all stored contracts with pagination
-    #[returns(Vec<ContractAddressResponse>)]
-    AllContractAddresses {
-        start_after: Option<MarsContract>,
+    /// Get a single local address
+    #[returns(LocalAddressResponse)]
+    LocalAddress(MarsLocal),
+    /// Get a list of local addresses
+    #[returns(Vec<LocalAddressResponse>)]
+    LocalAddresses(Vec<MarsLocal>),
+    /// Query all stored local addresses with pagination
+    #[returns(Vec<LocalAddressResponse>)]
+    AllLocalAddresses {
+        start_after: Option<MarsLocal>,
         limit: Option<u32>,
     },
 
-    /// Get a single governance address
-    #[returns(GovAddressResponse)]
-    GovAddress(MarsGov),
-    /// Get a list of governance addresses
-    #[returns(Vec<GovAddressResponse>)]
-    GovAddresses(Vec<MarsGov>),
-    /// Query all stored governance addresses with pagination
-    #[returns(Vec<GovAddressResponse>)]
-    AllGovAddresses {
-        start_after: Option<MarsGov>,
+    /// Get a single remote address
+    #[returns(RemoteAddressResponse)]
+    RemoteAddress(MarsRemote),
+    /// Get a list of remote addresses
+    #[returns(Vec<RemoteAddressResponse>)]
+    RemoteAddresses(Vec<MarsRemote>),
+    /// Query all stored remote addresses with pagination
+    #[returns(Vec<RemoteAddressResponse>)]
+    AllRemoteAddresses {
+        start_after: Option<MarsRemote>,
         limit: Option<u32>,
     },
 }
@@ -165,59 +166,59 @@ pub enum QueryMsg {
 pub type Config = InstantiateMsg;
 
 #[cw_serde]
-pub struct ContractAddressResponse {
-    /// The contract
-    pub contract: MarsContract,
-    /// The contract's address
+pub struct LocalAddressResponse {
+    /// Local address
+    pub local: MarsLocal,
+    /// Validated address on the current chain
     pub address: Addr,
 }
 
 #[cw_serde]
-pub struct GovAddressResponse {
-    /// The governance account, module
-    pub gov: MarsGov,
-    /// The governance's address
+pub struct RemoteAddressResponse {
+    /// Remote address
+    pub remote: MarsRemote,
+    /// Address not on the current chain
     pub address: String,
 }
 
 pub mod helpers {
     use std::collections::HashMap;
 
-    use super::{ContractAddressResponse, MarsContract, QueryMsg};
-    use crate::address_provider::{GovAddressResponse, MarsGov};
+    use super::{LocalAddressResponse, MarsLocal, QueryMsg};
+    use crate::address_provider::{MarsRemote, RemoteAddressResponse};
     use cosmwasm_std::{Addr, Deps, StdResult};
 
-    pub fn query_contract_address(
+    pub fn query_local_address(
         deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
-        contract: MarsContract,
+        contract: MarsLocal,
     ) -> StdResult<Addr> {
-        let res: ContractAddressResponse = deps
+        let res: LocalAddressResponse = deps
             .querier
-            .query_wasm_smart(address_provider_addr, &QueryMsg::ContractAddress(contract))?;
+            .query_wasm_smart(address_provider_addr, &QueryMsg::LocalAddress(contract))?;
 
         Ok(res.address)
     }
 
-    pub fn query_contract_addresses(
+    pub fn query_local_addresses(
         deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
-        contracts: Vec<MarsContract>,
-    ) -> StdResult<HashMap<MarsContract, Addr>> {
-        let res: Vec<ContractAddressResponse> = deps
+        contracts: Vec<MarsLocal>,
+    ) -> StdResult<HashMap<MarsLocal, Addr>> {
+        let res: Vec<LocalAddressResponse> = deps
             .querier
-            .query_wasm_smart(address_provider_addr, &QueryMsg::ContractAddresses(contracts))?;
+            .query_wasm_smart(address_provider_addr, &QueryMsg::LocalAddresses(contracts))?;
 
-        Ok(res.iter().map(|item| (item.contract, item.address.clone())).collect())
+        Ok(res.iter().map(|item| (item.local, item.address.clone())).collect())
     }
 
-    pub fn query_gov_address(
+    pub fn query_remote_address(
         deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
-        gov: MarsGov,
+        gov: MarsRemote,
     ) -> StdResult<String> {
-        let res: GovAddressResponse =
-            deps.querier.query_wasm_smart(address_provider_addr, &QueryMsg::GovAddress(gov))?;
+        let res: RemoteAddressResponse =
+            deps.querier.query_wasm_smart(address_provider_addr, &QueryMsg::RemoteAddress(gov))?;
 
         Ok(res.address)
     }
