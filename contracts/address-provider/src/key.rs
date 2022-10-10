@@ -4,27 +4,27 @@ use std::str::FromStr;
 use cosmwasm_std::{StdError, StdResult};
 use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
 
-use mars_outpost::address_provider::MarsContract;
+use mars_outpost::address_provider::MarsAddressType;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct MarsContractKey(pub Vec<u8>);
+pub struct MarsAddressTypeKey(pub Vec<u8>);
 
-impl From<MarsContract> for MarsContractKey {
-    fn from(contract: MarsContract) -> Self {
-        Self(contract.to_string().into_bytes())
+impl From<MarsAddressType> for MarsAddressTypeKey {
+    fn from(address_type: MarsAddressType) -> Self {
+        Self(address_type.to_string().into_bytes())
     }
 }
 
-impl TryFrom<MarsContractKey> for MarsContract {
+impl TryFrom<MarsAddressTypeKey> for MarsAddressType {
     type Error = StdError;
 
-    fn try_from(key: MarsContractKey) -> Result<Self, Self::Error> {
+    fn try_from(key: MarsAddressTypeKey) -> Result<Self, Self::Error> {
         let s = String::from_utf8(key.0)?;
-        MarsContract::from_str(&s)
+        MarsAddressType::from_str(&s)
     }
 }
 
-impl<'a> PrimaryKey<'a> for MarsContractKey {
+impl<'a> PrimaryKey<'a> for MarsAddressTypeKey {
     type Prefix = ();
     type SubPrefix = ();
     type Suffix = Self;
@@ -35,13 +35,13 @@ impl<'a> PrimaryKey<'a> for MarsContractKey {
     }
 }
 
-impl<'a> Prefixer<'a> for MarsContractKey {
+impl<'a> Prefixer<'a> for MarsAddressTypeKey {
     fn prefix(&self) -> Vec<Key> {
         vec![Key::Ref(&self.0)]
     }
 }
 
-impl KeyDeserialize for MarsContractKey {
+impl KeyDeserialize for MarsAddressTypeKey {
     type Output = Self;
 
     #[inline(always)]

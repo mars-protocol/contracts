@@ -15,20 +15,20 @@ pub fn handle_query(contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
     }
 
     let ret: ContractResult<Binary> = match query {
-        QueryMsg::Address(contract) => {
+        QueryMsg::Address(address_type) => {
             let res = AddressResponseItem {
-                contract,
-                address: contract.to_string(),
+                address_type,
+                address: address_type.to_string(),
             };
             to_binary(&res).into()
         }
 
-        QueryMsg::Addresses(contracts) => {
-            let addresses = contracts
+        QueryMsg::Addresses(address_types) => {
+            let addresses = address_types
                 .into_iter()
-                .map(|contract| AddressResponseItem {
-                    contract,
-                    address: contract.to_string(),
+                .map(|address_type| AddressResponseItem {
+                    address_type,
+                    address: address_type.to_string(),
                 })
                 .collect::<Vec<_>>();
             to_binary(&addresses).into()

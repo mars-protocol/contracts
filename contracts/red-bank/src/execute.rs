@@ -3,7 +3,7 @@ use std::str;
 
 use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 
-use mars_outpost::address_provider::{self, MarsContract};
+use mars_outpost::address_provider::{self, MarsAddressType};
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::{build_send_asset_msg, option_string_to_addr, zero_address};
 use mars_outpost::math;
@@ -224,10 +224,10 @@ pub fn update_asset(
                 let addresses = address_provider::helpers::query_addresses(
                     deps.as_ref(),
                     &config.address_provider,
-                    vec![MarsContract::Incentives, MarsContract::RewardsCollector],
+                    vec![MarsAddressType::Incentives, MarsAddressType::RewardsCollector],
                 )?;
-                let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
-                let incentives_addr = &addresses[&MarsContract::Incentives];
+                let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
+                let incentives_addr = &addresses[&MarsAddressType::Incentives];
 
                 response = apply_accumulated_interests(
                     deps.storage,
@@ -361,10 +361,10 @@ pub fn deposit(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Incentives, MarsContract::RewardsCollector],
+        vec![MarsAddressType::Incentives, MarsAddressType::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
-    let incentives_addr = &addresses[&MarsContract::Incentives];
+    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
+    let incentives_addr = &addresses[&MarsAddressType::Incentives];
 
     response = apply_accumulated_interests(
         deps.storage,
@@ -453,11 +453,15 @@ pub fn withdraw(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Oracle, MarsContract::Incentives, MarsContract::RewardsCollector],
+        vec![
+            MarsAddressType::Oracle,
+            MarsAddressType::Incentives,
+            MarsAddressType::RewardsCollector,
+        ],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
-    let incentives_addr = &addresses[&MarsContract::Incentives];
-    let oracle_addr = &addresses[&MarsContract::Oracle];
+    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
+    let incentives_addr = &addresses[&MarsAddressType::Incentives];
+    let oracle_addr = &addresses[&MarsAddressType::Oracle];
 
     // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
     // otherwise no reasons to block the withdraw
@@ -559,11 +563,15 @@ pub fn borrow(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Oracle, MarsContract::Incentives, MarsContract::RewardsCollector],
+        vec![
+            MarsAddressType::Oracle,
+            MarsAddressType::Incentives,
+            MarsAddressType::RewardsCollector,
+        ],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
-    let incentives_addr = &addresses[&MarsContract::Incentives];
-    let oracle_addr = &addresses[&MarsContract::Oracle];
+    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
+    let incentives_addr = &addresses[&MarsAddressType::Incentives];
+    let oracle_addr = &addresses[&MarsAddressType::Oracle];
 
     // Check if user can borrow specified amount
     let mut uncollateralized_debt = false;
@@ -668,10 +676,10 @@ pub fn repay(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Incentives, MarsContract::RewardsCollector],
+        vec![MarsAddressType::Incentives, MarsAddressType::RewardsCollector],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
-    let incentives_addr = &addresses[&MarsContract::Incentives];
+    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
+    let incentives_addr = &addresses[&MarsAddressType::Incentives];
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
 
@@ -770,11 +778,15 @@ pub fn liquidate(
     let addresses = address_provider::helpers::query_addresses(
         deps.as_ref(),
         &config.address_provider,
-        vec![MarsContract::Oracle, MarsContract::Incentives, MarsContract::RewardsCollector],
+        vec![
+            MarsAddressType::Oracle,
+            MarsAddressType::Incentives,
+            MarsAddressType::RewardsCollector,
+        ],
     )?;
-    let rewards_collector_addr = &addresses[&MarsContract::RewardsCollector];
-    let incentives_addr = &addresses[&MarsContract::Incentives];
-    let oracle_addr = &addresses[&MarsContract::Oracle];
+    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
+    let incentives_addr = &addresses[&MarsAddressType::Incentives];
+    let oracle_addr = &addresses[&MarsAddressType::Oracle];
 
     let (liquidatable, assets_positions) =
         assert_liquidatable(&deps.as_ref(), &env, &user_addr, oracle_addr)?;
@@ -1011,7 +1023,7 @@ pub fn update_asset_collateral_status(
         let oracle_addr = address_provider::helpers::query_address(
             deps.as_ref(),
             &config.address_provider,
-            MarsContract::Oracle,
+            MarsAddressType::Oracle,
         )?;
 
         let (liquidatable, _) =

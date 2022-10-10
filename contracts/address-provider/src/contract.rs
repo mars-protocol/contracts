@@ -8,13 +8,13 @@ use cosmwasm_std::{
 
 use cw_storage_plus::Bound;
 use mars_outpost::address_provider::{
-    AddressResponseItem, Config, ExecuteMsg, InstantiateMsg, MarsContract, QueryMsg,
+    AddressResponseItem, Config, ExecuteMsg, InstantiateMsg, MarsAddressType, QueryMsg,
 };
 
 use crate::error::ContractError;
 use crate::helpers::{assert_owner, assert_valid_addr};
-use crate::key::MarsContractKey;
-use crate::state::{CONFIG, CONTRACTS};
+use crate::key::MarsAddressTypeKey;
+use crate::state::{ADDRESSES, CONFIG};
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-address-provider";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -51,7 +51,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::SetAddress {
-            contract,
+            address_type: contract,
             address,
         } => set_address(deps, info.sender, contract, address),
         ExecuteMsg::TransferOwnership {
@@ -63,7 +63,7 @@ pub fn execute(
 pub fn set_address(
     deps: DepsMut,
     sender: Addr,
-    contract: MarsContract,
+    address_type: MarsAddressType,
     address: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
@@ -71,11 +71,11 @@ pub fn set_address(
     assert_owner(&sender, &config.owner)?;
     assert_valid_addr(deps.api, &address, &config.prefix)?;
 
-    CONTRACTS.save(deps.storage, contract.into(), &address)?;
+    ADDRESSES.save(deps.storage, address_type.into(), &address)?;
 
     Ok(Response::new()
         .add_attribute("action", "outposts/address-provider/set_address")
-        .add_attribute("contract", contract.to_string())
+        .add_attribute("address_type", address_type.to_string())
         .add_attribute("address", address))
 }
 
@@ -104,8 +104,8 @@ pub fn transfer_ownership(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::Address(contract) => to_binary(&query_address(deps, contract)?),
-        QueryMsg::Addresses(contracts) => to_binary(&query_addresses(deps, contracts)?),
+        QueryMsg::Address(address_type) => to_binary(&query_address(deps, address_type)?),
+        QueryMsg::Addresses(address_types) => to_binary(&query_addresses(deps, address_types)?),
         QueryMsg::AllAddresses {
             start_after,
             limit,
@@ -117,38 +117,38 @@ fn query_config(deps: Deps) -> StdResult<Config> {
     CONFIG.load(deps.storage)
 }
 
-fn query_address(deps: Deps, contract: MarsContract) -> StdResult<AddressResponseItem> {
+fn query_address(deps: Deps, address_type: MarsAddressType) -> StdResult<AddressResponseItem> {
     Ok(AddressResponseItem {
-        contract,
-        address: CONTRACTS.load(deps.storage, contract.into())?,
+        address_type,
+        address: ADDRESSES.load(deps.storage, address_type.into())?,
     })
 }
 
 fn query_addresses(
     deps: Deps,
-    contracts: Vec<MarsContract>,
+    address_types: Vec<MarsAddressType>,
 ) -> StdResult<Vec<AddressResponseItem>> {
-    contracts
+    address_types
         .into_iter()
-        .map(|contract| query_address(deps, contract))
+        .map(|address_type| query_address(deps, address_type))
         .collect::<StdResult<Vec<_>>>()
 }
 
 fn query_all_addresses(
     deps: Deps,
-    start_after: Option<MarsContract>,
+    start_after: Option<MarsAddressType>,
     limit: Option<u32>,
 ) -> StdResult<Vec<AddressResponseItem>> {
-    let start = start_after.map(MarsContractKey::from).map(Bound::exclusive);
+    let start = start_after.map(MarsAddressTypeKey::from).map(Bound::exclusive);
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
-    CONTRACTS
+    ADDRESSES
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
         .map(|item| {
             let (k, v) = item?;
             Ok(AddressResponseItem {
-                contract: k.try_into()?,
+                address_type: k.try_into()?,
                 address: v,
             })
         })

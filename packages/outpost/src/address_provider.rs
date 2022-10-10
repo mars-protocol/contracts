@@ -7,7 +7,7 @@ use cosmwasm_std::StdError;
 
 #[cw_serde]
 #[derive(Copy, Eq, Hash)]
-pub enum MarsContract {
+pub enum MarsAddressType {
     Incentives,
     Oracle,
     RedBank,
@@ -33,33 +33,33 @@ pub enum MarsContract {
     SafetyFund,
 }
 
-impl fmt::Display for MarsContract {
+impl fmt::Display for MarsAddressType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            MarsContract::FeeCollector => "fee_collector",
-            MarsContract::Incentives => "incentives",
-            MarsContract::Oracle => "oracle",
-            MarsContract::ProtocolAdmin => "protocol_admin",
-            MarsContract::RedBank => "red_bank",
-            MarsContract::RewardsCollector => "rewards_collector",
-            MarsContract::SafetyFund => "safety_fund",
+            MarsAddressType::FeeCollector => "fee_collector",
+            MarsAddressType::Incentives => "incentives",
+            MarsAddressType::Oracle => "oracle",
+            MarsAddressType::ProtocolAdmin => "protocol_admin",
+            MarsAddressType::RedBank => "red_bank",
+            MarsAddressType::RewardsCollector => "rewards_collector",
+            MarsAddressType::SafetyFund => "safety_fund",
         };
         write!(f, "{}", s)
     }
 }
 
-impl FromStr for MarsContract {
+impl FromStr for MarsAddressType {
     type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "fee_collector" => Ok(MarsContract::FeeCollector),
-            "incentives" => Ok(MarsContract::Incentives),
-            "oracle" => Ok(MarsContract::Oracle),
-            "protocol_admin" => Ok(MarsContract::ProtocolAdmin),
-            "red_bank" => Ok(MarsContract::RedBank),
-            "rewards_collector" => Ok(MarsContract::RewardsCollector),
-            "safety_fund" => Ok(MarsContract::SafetyFund),
+            "fee_collector" => Ok(MarsAddressType::FeeCollector),
+            "incentives" => Ok(MarsAddressType::Incentives),
+            "oracle" => Ok(MarsAddressType::Oracle),
+            "protocol_admin" => Ok(MarsAddressType::ProtocolAdmin),
+            "red_bank" => Ok(MarsAddressType::RedBank),
+            "rewards_collector" => Ok(MarsAddressType::RewardsCollector),
+            "safety_fund" => Ok(MarsAddressType::SafetyFund),
             _ => Err(StdError::parse_err(type_name::<Self>(), s)),
         }
     }
@@ -87,9 +87,9 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    /// Set addresses for contracts
+    /// Set address
     SetAddress {
-        contract: MarsContract,
+        address_type: MarsAddressType,
         address: String,
     },
     /// Propose to transfer the contract's ownership to another account
@@ -106,14 +106,14 @@ pub enum QueryMsg {
     Config {},
     /// Get a single address
     #[returns(AddressResponseItem)]
-    Address(MarsContract),
+    Address(MarsAddressType),
     /// Get a list of addresses
     #[returns(Vec<AddressResponseItem>)]
-    Addresses(Vec<MarsContract>),
-    /// Query all stored contracts with pagination
+    Addresses(Vec<MarsAddressType>),
+    /// Query all stored addresses with pagination
     #[returns(Vec<AddressResponseItem>)]
     AllAddresses {
-        start_after: Option<MarsContract>,
+        start_after: Option<MarsAddressType>,
         limit: Option<u32>,
     },
 }
@@ -122,22 +122,22 @@ pub type Config = InstantiateMsg;
 
 #[cw_serde]
 pub struct AddressResponseItem {
-    /// The contract
-    pub contract: MarsContract,
-    /// The contract's address
+    /// The type of address
+    pub address_type: MarsAddressType,
+    /// Address value
     pub address: String,
 }
 
 pub mod helpers {
     use std::collections::HashMap;
 
-    use super::{AddressResponseItem, MarsContract, QueryMsg};
+    use super::{AddressResponseItem, MarsAddressType, QueryMsg};
     use cosmwasm_std::{Addr, Deps, StdResult};
 
     pub fn query_address(
         deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
-        contract: MarsContract,
+        contract: MarsAddressType,
     ) -> StdResult<Addr> {
         let res: AddressResponseItem =
             deps.querier.query_wasm_smart(address_provider_addr, &QueryMsg::Address(contract))?;
@@ -148,127 +148,14 @@ pub mod helpers {
     pub fn query_addresses(
         deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
-        contracts: Vec<MarsContract>,
-    ) -> StdResult<HashMap<MarsContract, Addr>> {
+        contracts: Vec<MarsAddressType>,
+    ) -> StdResult<HashMap<MarsAddressType, Addr>> {
         let res: Vec<AddressResponseItem> = deps
             .querier
             .query_wasm_smart(address_provider_addr, &QueryMsg::Addresses(contracts))?;
 
-        res.iter().map(|item| Ok((item.contract, deps.api.addr_validate(&item.address)?))).collect()
-    }
-}
-
-// TESTS
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use cosmwasm_std::testing::{MockApi, MockStorage};
-    use cosmwasm_std::{
-        from_binary, from_slice, to_binary, Addr, Binary, ContractResult, Empty, OwnedDeps,
-        Querier, QuerierResult, QueryRequest, StdResult, SystemError, WasmQuery,
-    };
-
-    #[test]
-    fn test_query_address() {
-        let deps = OwnedDeps::<_, _, _, Empty> {
-            storage: MockStorage::default(),
-            api: MockApi::default(),
-            querier: AddressProviderMockQuerier {},
-            custom_query_type: Default::default(),
-        };
-
-        // Correctly set address is returned
-        let address = helpers::query_address(
-            deps.as_ref(),
-            &Addr::unchecked("address_provider"),
-            MarsContract::RedBank,
-        )
-        .unwrap();
-
-        assert_eq!(address, "red_bank".to_string());
-    }
-
-    #[test]
-    fn test_query_addresses() {
-        let deps = OwnedDeps::<_, _, _, Empty> {
-            storage: MockStorage::default(),
-            api: MockApi::default(),
-            querier: AddressProviderMockQuerier {},
-            custom_query_type: Default::default(),
-        };
-
-        // Correctly set addresses are returned
-        let addresses = helpers::query_addresses(
-            deps.as_ref(),
-            &Addr::unchecked("address_provider"),
-            vec![MarsContract::Oracle, MarsContract::RedBank],
-        )
-        .unwrap();
-
-        assert_eq!(addresses[&MarsContract::Oracle], "oracle".to_string());
-        assert_eq!(addresses[&MarsContract::RedBank], "red_bank".to_string());
-    }
-
-    #[derive(Clone, Copy)]
-    pub struct AddressProviderMockQuerier {}
-
-    impl Querier for AddressProviderMockQuerier {
-        fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-            let request: QueryRequest<Empty> = match from_slice(bin_request) {
-                Ok(v) => v,
-                Err(e) => {
-                    return Err(SystemError::InvalidRequest {
-                        error: format!("Parsing query request: {}", e),
-                        request: bin_request.into(),
-                    })
-                    .into()
-                }
-            };
-            self.handle_query(&request)
-        }
-    }
-
-    impl AddressProviderMockQuerier {
-        pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
-            if let QueryRequest::Wasm(WasmQuery::Smart {
-                contract_addr: _,
-                msg,
-            }) = request
-            {
-                let query: StdResult<QueryMsg> = from_binary(msg);
-
-                if let Ok(query) = query {
-                    let ret: ContractResult<Binary> = match query {
-                        QueryMsg::Address(contract) => {
-                            let res = AddressResponseItem {
-                                contract,
-                                address: contract.to_string(),
-                            };
-
-                            to_binary(&res).into()
-                        }
-
-                        QueryMsg::Addresses(contracts) => {
-                            let addresses = contracts
-                                .into_iter()
-                                .map(|contract| AddressResponseItem {
-                                    contract,
-                                    address: contract.to_string(),
-                                })
-                                .collect::<Vec<_>>();
-
-                            to_binary(&addresses).into()
-                        }
-
-                        _ => panic!("[mock]: Unsupported address provider query"),
-                    };
-
-                    return Ok(ret).into();
-                }
-            }
-
-            panic!("[mock]: Unsupported wasm query");
-        }
+        res.iter()
+            .map(|item| Ok((item.address_type, deps.api.addr_validate(&item.address)?)))
+            .collect()
     }
 }

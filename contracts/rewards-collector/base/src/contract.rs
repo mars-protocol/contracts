@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::{Bound, Item, Map};
 
-use mars_outpost::address_provider::{self, MarsContract};
+use mars_outpost::address_provider::{self, MarsAddressType};
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 use mars_outpost::red_bank;
@@ -193,7 +193,7 @@ where
         let red_bank_addr = address_provider::helpers::query_address(
             deps.as_ref(),
             &cfg.address_provider,
-            MarsContract::RedBank,
+            MarsAddressType::RedBank,
         )?;
 
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -281,13 +281,13 @@ where
             address_provider::helpers::query_address(
                 deps.as_ref(),
                 &cfg.address_provider,
-                MarsContract::SafetyFund,
+                MarsAddressType::SafetyFund,
             )?
         } else if denom == cfg.fee_collector_denom {
             address_provider::helpers::query_address(
                 deps.as_ref(),
                 &cfg.address_provider,
-                MarsContract::FeeCollector,
+                MarsAddressType::FeeCollector,
             )?
         } else {
             return Err(ContractError::AssetNotEnabledForDistribution {

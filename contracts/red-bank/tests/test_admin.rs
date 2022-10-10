@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{attr, coin, from_binary, Addr, Decimal, Event, Uint128};
 
-use mars_outpost::address_provider::MarsContract;
+use mars_outpost::address_provider::MarsAddressType;
 use mars_outpost::error::MarsError;
 use mars_outpost::red_bank::{
     ConfigResponse, CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
@@ -885,7 +885,7 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
     let collateral = COLLATERALS
         .load(
             deps.as_ref().storage,
-            (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "somecoin"),
+            (&Addr::unchecked(MarsAddressType::RewardsCollector.to_string()), "somecoin"),
         )
         .unwrap();
     assert_eq!(collateral.amount_scaled, expected_rewards_scaled);
