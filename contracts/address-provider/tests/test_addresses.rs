@@ -10,23 +10,54 @@ use crate::helpers::{th_query, th_setup};
 mod helpers;
 
 #[test]
-fn test_setting_address() {
+fn test_setting_address_if_unauthorized() {
     let mut deps = th_setup();
 
     let msg = ExecuteMsg::SetAddress {
         address_type: MarsAddressType::RedBank,
-        address: "red_bank".to_string(),
+        address: "osmo_red_bank".to_string(),
     };
 
-    // non-owner cannot set address
-    let err = execute(deps.as_mut(), mock_env(), mock_info("jake", &[]), msg.clone()).unwrap_err();
+    let err =
+        execute(deps.as_mut(), mock_env(), mock_info("osmo_jake", &[]), msg.clone()).unwrap_err();
     assert_eq!(err, ContractError::Unauthorized);
 
     // owner can set address
-    execute(deps.as_mut(), mock_env(), mock_info("owner", &[]), msg).unwrap();
+    execute(deps.as_mut(), mock_env(), mock_info("osmo_owner", &[]), msg).unwrap();
 
     let address = ADDRESSES.load(deps.as_ref().storage, MarsAddressType::RedBank.into()).unwrap();
-    assert_eq!(address, "red_bank".to_string());
+    assert_eq!(address, "osmo_red_bank".to_string());
+}
+
+#[test]
+fn test_setting_address_if_invalid_remote_address() {
+    let mut deps = th_setup();
+
+    let invalid_address = "mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3ze575".to_string();
+    let msg = ExecuteMsg::SetAddress {
+        address_type: MarsAddressType::SafetyFund,
+        address: invalid_address.clone(),
+    };
+
+    let err = execute(deps.as_mut(), mock_env(), mock_info("osmo_owner", &[]), msg).unwrap_err();
+    assert_eq!(err, ContractError::InvalidAddress(invalid_address));
+}
+
+#[test]
+fn test_setting_address() {
+    let mut deps = th_setup();
+
+    let invalid_address = "mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575".to_string();
+    let msg = ExecuteMsg::SetAddress {
+        address_type: MarsAddressType::SafetyFund,
+        address: invalid_address.clone(),
+    };
+
+    execute(deps.as_mut(), mock_env(), mock_info("osmo_owner", &[]), msg).unwrap();
+
+    let address =
+        ADDRESSES.load(deps.as_ref().storage, MarsAddressType::SafetyFund.into()).unwrap();
+    assert_eq!(address, "mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575".to_string());
 }
 
 #[test]

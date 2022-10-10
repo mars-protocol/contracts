@@ -31,6 +31,7 @@ cosmwasm-std = "1.1"
 cw2 = "0.15"
 cw-storage-plus = "0.15"
 thiserror = "1.0"
+bech32 = "0.9"
 
 [dev-dependencies]
 serde = "1.0"

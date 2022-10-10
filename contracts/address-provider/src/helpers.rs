@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Api, StdResult};
+use cosmwasm_std::{Addr, Api};
 
 use crate::error::ContractError;
 
@@ -6,11 +6,16 @@ use crate::error::ContractError;
 ///
 /// NOTE: The `deps.api.addr_validate` function can only verify addresses of the current chain, e.g.
 /// a contract on Osmosis can only verify addresses with the `osmo1` prefix. If the provided address
-/// does not start with this prefix, we simply skip the assertion. In such cases, the caller is responsible
-/// in making sure the provided address is valid
-pub(crate) fn assert_valid_addr(api: &dyn Api, human: &str, prefix: &str) -> StdResult<()> {
+/// does not start with this prefix, we use bech32 decoding (valid address should be successfully decoded).
+pub(crate) fn assert_valid_addr(
+    api: &dyn Api,
+    human: &str,
+    prefix: &str,
+) -> Result<(), ContractError> {
     if human.starts_with(prefix) {
         api.addr_validate(human)?;
+    } else {
+        bech32::decode(human).map_err(|_| ContractError::InvalidAddress(human.to_string()))?;
     }
     Ok(())
 }
