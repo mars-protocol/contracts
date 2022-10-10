@@ -30,6 +30,7 @@ cw-storage-plus = "0.15"
 
 [dev-dependencies]
 swapper-mock = { version = "1.0", path = "../../contracts/swapper/mock", features = ["library"] }
+mars-outpost = { version = "0.1", path = "../../../outposts/packages/outpost" }
 
 anyhow = "1"
 cw-multi-test = "0.15"

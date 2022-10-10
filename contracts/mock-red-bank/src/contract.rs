@@ -3,9 +3,11 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 
 use crate::execute::{borrow, repay};
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::InstantiateMsg;
 use crate::query::{query_debt, query_market};
 use crate::state::COIN_MARKET_INFO;
+
+use mars_outpost::red_bank;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -25,21 +27,20 @@ pub fn execute(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    msg: ExecuteMsg,
+    msg: red_bank::ExecuteMsg,
 ) -> StdResult<Response> {
     match msg {
-        ExecuteMsg::Borrow { coin, .. } => borrow(deps, info, coin),
-        ExecuteMsg::Repay { denom, .. } => repay(deps, info, denom),
+        red_bank::ExecuteMsg::Borrow { denom, amount, .. } => borrow(deps, info, denom, amount),
+        red_bank::ExecuteMsg::Repay { .. } => repay(deps, info),
+        _ => unimplemented!("Msg not supported!"),
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: red_bank::QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::UserAssetDebt {
-            user_address,
-            denom,
-        } => to_binary(&query_debt(deps, user_address, denom)?),
-        QueryMsg::Market { denom } => to_binary(&query_market(deps, denom)?),
+        red_bank::QueryMsg::UserDebt { user, denom } => to_binary(&query_debt(deps, user, denom)?),
+        red_bank::QueryMsg::Market { denom } => to_binary(&query_market(deps, denom)?),
+        _ => unimplemented!("Query not supported!"),
     }
 }

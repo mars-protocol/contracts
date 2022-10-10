@@ -7,13 +7,12 @@ use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
+use mars_outpost::red_bank::QueryMsg::UserDebt;
+use mars_outpost::red_bank::UserDebtResponse;
 use mock_oracle::msg::{
     CoinPrice, ExecuteMsg as OracleExecuteMsg, InstantiateMsg as OracleInstantiateMsg,
 };
-use mock_red_bank::msg::QueryMsg::UserAssetDebt;
-use mock_red_bank::msg::{
-    CoinMarketInfo, InstantiateMsg as RedBankInstantiateMsg, UserAssetDebtResponse,
-};
+use mock_red_bank::msg::{CoinMarketInfo, InstantiateMsg as RedBankInstantiateMsg};
 use mock_vault::contract::DEFAULT_VAULT_TOKEN_PREFUND;
 use mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
 use rover::adapters::swap::QueryMsg::EstimateExactInSwap;
@@ -312,14 +311,14 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_red_bank_debt(&self, denom: &str) -> UserAssetDebtResponse {
+    pub fn query_red_bank_debt(&self, denom: &str) -> UserDebtResponse {
         let config = self.query_config();
         self.app
             .wrap()
             .query_wasm_smart(
                 config.red_bank,
-                &UserAssetDebt {
-                    user_address: self.rover.to_string(),
+                &UserDebt {
+                    user: self.rover.to_string(),
                     denom: denom.into(),
                 },
             )

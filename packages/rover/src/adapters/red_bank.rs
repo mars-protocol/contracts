@@ -4,7 +4,7 @@ use cosmwasm_std::{
     WasmMsg, WasmQuery,
 };
 
-use mock_red_bank::msg::{ExecuteMsg, QueryMsg, UserAssetDebtResponse};
+use mars_outpost::red_bank;
 
 #[cw_serde]
 pub struct RedBankBase<T>(T);
@@ -39,8 +39,9 @@ impl RedBank {
     pub fn borrow_msg(&self, coin: &Coin) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
-            msg: to_binary(&ExecuteMsg::Borrow {
-                coin: coin.clone(),
+            msg: to_binary(&red_bank::ExecuteMsg::Borrow {
+                denom: coin.denom.to_string(),
+                amount: coin.amount,
                 recipient: None,
             })?,
             funds: vec![],
@@ -51,10 +52,7 @@ impl RedBank {
     pub fn repay_msg(&self, coin: &Coin) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
-            msg: to_binary(&ExecuteMsg::Repay {
-                denom: coin.denom.clone(),
-                on_behalf_of: None,
-            })?,
+            msg: to_binary(&red_bank::ExecuteMsg::Repay { on_behalf_of: None })?,
             funds: vec![coin.clone()],
         }))
     }
@@ -65,11 +63,11 @@ impl RedBank {
         user_address: &Addr,
         denom: &str,
     ) -> StdResult<Uint128> {
-        let response: UserAssetDebtResponse =
+        let response: red_bank::UserDebtResponse =
             querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: self.address().to_string(),
-                msg: to_binary(&QueryMsg::UserAssetDebt {
-                    user_address: user_address.to_string(),
+                msg: to_binary(&red_bank::QueryMsg::UserDebt {
+                    user: user_address.to_string(),
                     denom: denom.to_string(),
                 })?,
             }))?;

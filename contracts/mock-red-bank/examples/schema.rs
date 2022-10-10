@@ -1,5 +1,6 @@
 use cosmwasm_schema::write_api;
-use mock_red_bank::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_outpost::red_bank::{ExecuteMsg, QueryMsg};
+use mock_red_bank::msg::InstantiateMsg;
 
 fn main() {
     write_api! {

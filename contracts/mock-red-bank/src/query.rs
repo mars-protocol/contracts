@@ -1,18 +1,20 @@
-use cosmwasm_std::{Deps, StdResult};
+use cosmwasm_std::{Deps, StdResult, Uint128};
 use mars_outpost::red_bank::Market;
 
 use crate::helpers::load_debt_amount;
-use crate::msg::UserAssetDebtResponse;
 use crate::state::COIN_MARKET_INFO;
 
-pub fn query_debt(
-    deps: Deps,
-    user_address: String,
-    denom: String,
-) -> StdResult<UserAssetDebtResponse> {
-    let user_addr = deps.api.addr_validate(&user_address)?;
+use mars_outpost::red_bank::UserDebtResponse;
+
+pub fn query_debt(deps: Deps, user: String, denom: String) -> StdResult<UserDebtResponse> {
+    let user_addr = deps.api.addr_validate(&user)?;
     let amount = load_debt_amount(deps.storage, &user_addr, &denom)?;
-    Ok(UserAssetDebtResponse { denom, amount })
+    Ok(UserDebtResponse {
+        denom,
+        amount,
+        amount_scaled: Uint128::zero(),
+        uncollateralized: false,
+    })
 }
 
 pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
