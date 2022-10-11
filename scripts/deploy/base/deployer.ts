@@ -156,23 +156,23 @@ export class Deployer {
     }
     const addressesToSet = [
       {
-        contract: 'rewards_collector',
+        address_type: 'rewards_collector',
         address: this.storage.addresses.rewardsCollector,
       },
       {
-        contract: 'incentives',
+        address_type: 'incentives',
         address: this.storage.addresses.incentives,
       },
       {
-        contract: 'oracle',
+        address_type: 'oracle',
         address: this.storage.addresses.oracle,
       },
       {
-        contract: 'protocol_admin',
+        address_type: 'protocol_admin',
         address: this.multisig.address,
       },
       {
-        contract: 'red_bank',
+        address_type: 'red_bank',
         address: this.storage.addresses.redBank,
       },
     ]
