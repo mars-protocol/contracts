@@ -14,7 +14,7 @@ pub fn th_setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         mock_env(),
         mock_info("deployer", &[]),
         InstantiateMsg {
-            owner: "owner".to_string(),
+            owner: "osmo_owner".to_string(),
             prefix: "osmo".to_string(),
         },
     )

@@ -5,7 +5,7 @@ use cosmwasm_std::{
 };
 use cw_utils::PaymentError;
 
-use mars_outpost::address_provider::MarsContract;
+use mars_outpost::address_provider::MarsAddressType;
 use mars_outpost::red_bank::{Debt, ExecuteMsg, InterestRateModel, Market};
 use mars_outpost::{incentives, math};
 use mars_red_bank::contract::execute;
@@ -275,7 +275,7 @@ fn test_liquidate() {
             res.messages,
             vec![
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: user_addr.clone(),
                         denom: collateral_market_initial.denom.clone(),
@@ -287,7 +287,7 @@ fn test_liquidate() {
                     funds: vec![]
                 }),
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: liquidator_addr.clone(),
                         denom: collateral_market_initial.denom.clone(),
@@ -299,9 +299,9 @@ fn test_liquidate() {
                     funds: vec![]
                 }),
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
-                        user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
+                        user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                         denom: debt_market_initial.denom.clone(),
                         user_amount_scaled_before: expected_total_reward_scaled,
                         total_amount_scaled_before: debt_market_initial.collateral_total_scaled,
@@ -359,7 +359,7 @@ fn test_liquidate() {
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
-                (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "debt"),
+                (&Addr::unchecked(MarsAddressType::RewardsCollector.to_string()), "debt"),
             )
             .unwrap();
         assert_eq!(collateral.amount_scaled, expected_total_reward_scaled);
@@ -446,7 +446,7 @@ fn test_liquidate() {
             res.messages,
             vec![
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: user_addr.clone(),
                         denom: collateral_market_before.denom.clone(),
@@ -458,7 +458,7 @@ fn test_liquidate() {
                     funds: vec![]
                 }),
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: liquidator_addr.clone(),
                         denom: collateral_market_before.denom.clone(),
@@ -470,9 +470,9 @@ fn test_liquidate() {
                     funds: vec![]
                 }),
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
-                        user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
+                        user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                         denom: debt_market_before.denom.clone(),
                         user_amount_scaled_before: expected_total_reward_scaled,
                         total_amount_scaled_before: debt_market_before.collateral_total_scaled,
@@ -534,7 +534,7 @@ fn test_liquidate() {
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
-                (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "debt"),
+                (&Addr::unchecked(MarsAddressType::RewardsCollector.to_string()), "debt"),
             )
             .unwrap();
         assert_eq!(collateral.amount_scaled, expected_total_reward_scaled);
@@ -623,7 +623,7 @@ fn test_liquidate() {
             res.messages,
             vec![
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: user_addr.clone(),
                         denom: collateral_market_before.denom.clone(),
@@ -635,7 +635,7 @@ fn test_liquidate() {
                     funds: vec![]
                 }),
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: liquidator_addr.clone(),
                         denom: collateral_market_before.denom.clone(),
@@ -647,9 +647,9 @@ fn test_liquidate() {
                     funds: vec![]
                 }),
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
-                        user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
+                        user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                         denom: debt_market_before.denom.clone(),
                         user_amount_scaled_before: expected_total_reward_scaled,
                         total_amount_scaled_before: debt_market_before.collateral_total_scaled,
@@ -866,7 +866,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             res.messages,
             vec![
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: user_addr.clone(),
                         denom: asset_market_before.denom.clone(),
@@ -877,7 +877,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
                     funds: vec![]
                 }),
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: liquidator_addr.clone(),
                         denom: asset_market_before.denom.clone(),
@@ -888,9 +888,9 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
                     funds: vec![]
                 }),
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
-                        user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
+                        user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                         denom: asset_market_before.denom.clone(),
                         user_amount_scaled_before: Uint128::zero(),
                         total_amount_scaled_before: asset_market_before.collateral_total_scaled,
@@ -934,7 +934,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
-                (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "the_asset"),
+                (&Addr::unchecked(MarsAddressType::RewardsCollector.to_string()), "the_asset"),
             )
             .unwrap();
         assert_eq!(collateral.amount_scaled, expected_reward_amount_scaled);
@@ -977,7 +977,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         unset_collateral(deps.as_mut(), &liquidator_addr, &asset_market_initial.denom);
         unset_collateral(
             deps.as_mut(),
-            &Addr::unchecked(MarsContract::RewardsCollector.to_string()),
+            &Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
             &asset_market_initial.denom,
         );
 
@@ -1053,7 +1053,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
             res.messages,
             vec![
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: user_addr.clone(),
                         denom: asset_market_before.denom.clone(),
@@ -1064,7 +1064,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
                     funds: vec![]
                 }),
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                         user_addr: liquidator_addr.clone(),
                         denom: asset_market_before.denom.clone(),
@@ -1075,9 +1075,9 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
                     funds: vec![]
                 }),
                 SubMsg::new(WasmMsg::Execute {
-                    contract_addr: MarsContract::Incentives.to_string(),
+                    contract_addr: MarsAddressType::Incentives.to_string(),
                     msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
-                        user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
+                        user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                         denom: asset_market_before.denom.clone(),
                         user_amount_scaled_before: Uint128::zero(),
                         total_amount_scaled_before: asset_market_before.collateral_total_scaled,
@@ -1125,7 +1125,7 @@ fn test_liquidate_with_same_asset_for_debt_and_collateral() {
         let collateral = COLLATERALS
             .load(
                 deps.as_ref().storage,
-                (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "the_asset"),
+                (&Addr::unchecked(MarsAddressType::RewardsCollector.to_string()), "the_asset"),
             )
             .unwrap();
         assert_eq!(collateral.amount_scaled, expected_reward_amount_scaled);
@@ -1298,7 +1298,7 @@ fn test_liquidate_with_recipient_for_underlying_collateral() {
         res.messages,
         vec![
             SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsContract::Incentives.to_string(),
+                contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: user_addr.clone(),
                     denom: collateral_market_initial.denom.clone(),
@@ -1309,7 +1309,7 @@ fn test_liquidate_with_recipient_for_underlying_collateral() {
                 funds: vec![]
             }),
             SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsContract::Incentives.to_string(),
+                contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: recipient_addr.clone(),
                     denom: collateral_market_initial.denom.clone(),
@@ -1320,9 +1320,9 @@ fn test_liquidate_with_recipient_for_underlying_collateral() {
                 funds: vec![]
             }),
             SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsContract::Incentives.to_string(),
+                contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
-                    user_addr: Addr::unchecked(MarsContract::RewardsCollector.to_string()),
+                    user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                     denom: debt_market_initial.denom.clone(),
                     user_amount_scaled_before: expected_total_reward_scaled,
                     total_amount_scaled_before: debt_market_initial.collateral_total_scaled,
@@ -1376,7 +1376,7 @@ fn test_liquidate_with_recipient_for_underlying_collateral() {
     let collateral = COLLATERALS
         .load(
             deps.as_ref().storage,
-            (&Addr::unchecked(MarsContract::RewardsCollector.to_string()), "debt"),
+            (&Addr::unchecked(MarsAddressType::RewardsCollector.to_string()), "debt"),
         )
         .unwrap();
     assert_eq!(collateral.amount_scaled, expected_total_reward_scaled);
