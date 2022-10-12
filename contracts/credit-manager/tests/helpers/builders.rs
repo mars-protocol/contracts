@@ -21,9 +21,9 @@ pub fn build_mock_vaults(count: usize) -> Vec<VaultTestInfo> {
         .into_iter()
         .map(|i| {
             VaultTestInfo {
-                lp_token_denom: format!("vault_{}", i),
+                denom: format!("vault_{}", i),
                 lockup: Some(1_209_600), // 14 days
-                asset_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+                underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
             }
         })
         .collect()

@@ -1,6 +1,7 @@
 use cosmwasm_std::{Addr, Decimal, Empty, Uint128};
 use cw_storage_plus::{Item, Map};
 
+use crate::vault::RequestTempStorage;
 use rover::adapters::swap::Swapper;
 use rover::adapters::{Oracle, RedBank, VaultPositionState};
 
@@ -20,3 +21,7 @@ pub const COIN_BALANCES: Map<(&str, &str), Uint128> = Map::new("coin_balance"); 
 pub const DEBT_SHARES: Map<(&str, &str), Uint128> = Map::new("debt_shares"); // Map<(AccountId, Denom), Shares>
 pub const TOTAL_DEBT_SHARES: Map<&str, Uint128> = Map::new("total_debt_shares"); // Map<Denom, Shares>
 pub const VAULT_POSITIONS: Map<(&str, Addr), VaultPositionState> = Map::new("vault_positions"); // Map<(AccountId, VaultAddr), VaultPositionState>
+
+// Temporary state to save variables to be used on reply handling
+pub const VAULT_REQUEST_TEMP_STORAGE: Item<RequestTempStorage> =
+    Item::new("vault_request_temp_var");

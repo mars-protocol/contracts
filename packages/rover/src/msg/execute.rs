@@ -47,6 +47,13 @@ pub enum Action {
         vault: VaultUnchecked,
         amount: Uint128,
     },
+    /// Requests unlocking of shares for a vault with a required lock period
+    VaultRequestUnlock {
+        vault: VaultUnchecked,
+        amount: Uint128,
+    },
+    /// Withdraws the assets for unlocking position id from vault. Required time must have elapsed.
+    VaultWithdrawUnlocked { id: Uint128, vault: VaultUnchecked },
     /// Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt
     /// denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the
     /// liquidatee should have a balance of. The amount returned to liquidator will be the request coin
@@ -117,6 +124,18 @@ pub enum CallbackMsg {
         account_id: String,
         vault: Vault,
         amount: Uint128,
+    },
+    /// Requests unlocking of shares for a vault with a lock period
+    VaultRequestUnlock {
+        account_id: String,
+        vault: Vault,
+        amount: Uint128,
+    },
+    /// Withdraws assets from vault for a locked position having a lockup period that has been fulfilled
+    VaultWithdrawUnlocked {
+        account_id: String,
+        vault: Vault,
+        position_id: Uint128,
     },
     /// Pay back debts of a liquidatable rover account for a bonus
     LiquidateCoin {

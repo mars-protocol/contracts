@@ -1,9 +1,10 @@
-use cosmwasm_std::{Coin, Deps, Storage, Uint128};
+use cosmwasm_std::{Addr, Coin, Deps, StdResult, Storage};
 
-use rover::adapters::{Vault, VaultPosition, VaultPositionState};
+use rover::adapters::{Vault, VaultPosition, VaultPositionState, VaultPositionUpdate};
 use rover::error::{ContractError, ContractResult};
 
 use crate::state::{ALLOWED_VAULTS, VAULT_POSITIONS};
+use crate::update_coin_balances::query_balances;
 
 pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> ContractResult<()> {
     let is_whitelisted = ALLOWED_VAULTS.has(storage, &vault.address);
@@ -13,31 +14,56 @@ pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> 
     Ok(())
 }
 
-pub fn decrement_vault_position(
+pub fn update_vault_position(
     storage: &mut dyn Storage,
     account_id: &str,
-    vault: &Vault,
-    amount: Uint128,
-    force: bool,
+    vault_addr: &Addr,
+    update: VaultPositionUpdate,
 ) -> ContractResult<VaultPositionState> {
-    let path = VAULT_POSITIONS.key((account_id, vault.address.clone()));
-    let mut position = path.load(storage)?;
+    let path = VAULT_POSITIONS.key((account_id, vault_addr.clone()));
+    let mut new_position = path.may_load(storage)?.unwrap_or_default();
 
-    // Force indicates that the vault is one with a required lockup that needs to be broken
-    // In this case, we'll need to withdraw from the locked bucket
-    if force {
-        position.locked = position.locked.checked_sub(amount)?;
-    } else {
-        position.unlocked = position.unlocked.checked_sub(amount)?;
+    match update {
+        VaultPositionUpdate::DecrementUnlocked(amount) => {
+            new_position.unlocked = new_position.unlocked.checked_sub(amount)?;
+        }
+        VaultPositionUpdate::IncrementUnlocked(amount) => {
+            new_position.unlocked = new_position.unlocked.checked_add(amount)?;
+        }
+        VaultPositionUpdate::DecrementLocked(amount) => {
+            new_position.locked = new_position.locked.checked_sub(amount)?;
+        }
+        VaultPositionUpdate::IncrementLocked(amount) => {
+            new_position.locked = new_position.locked.checked_add(amount)?;
+        }
+        VaultPositionUpdate::AddUnlocking(position) => {
+            new_position.unlocking.push(position);
+        }
+        VaultPositionUpdate::RemoveUnlocking(id) => new_position.unlocking.retain(|p| p.id != id),
     }
 
-    if position == VaultPositionState::default() {
+    if new_position == VaultPositionState::default() {
         path.remove(storage);
     } else {
-        path.save(storage, &position)?;
+        path.save(storage, &new_position)?;
     }
+    Ok(new_position)
+}
 
-    Ok(position)
+/// Returns the denoms you may receive on a withdraw
+/// Inferred by vault entry requirements
+pub fn query_withdraw_denom_balances(
+    deps: Deps,
+    rover_addr: &Addr,
+    vault: &Vault,
+) -> StdResult<Vec<Coin>> {
+    let vault_info = vault.query_info(&deps.querier)?;
+    let denoms = vault_info
+        .accepts
+        .iter()
+        .flat_map(|v| v.iter().map(|s| s.as_str()))
+        .collect::<Vec<_>>();
+    query_balances(deps, rover_addr, denoms.as_slice())
 }
 
 /// Does a simulated withdraw from multiple vault positions to see what assets would be returned

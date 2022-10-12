@@ -89,8 +89,50 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "description": "Some vaults have lockup periods (typically between 1-14 days). This action sends vault `Coin` which is locked for vault lockup period and available to `Unlock` after that time has elapsed. On response, vault sends back `unlocking_position_created` event with attribute `id` representing the new unlocking coins position.",
+        "type": "object",
+        "required": [
+          "request_unlock"
+        ],
+        "properties": {
+          "request_unlock": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Withdraw assets in vault that have been unlocked for given unlocking position",
+        "type": "object",
+        "required": [
+          "withdraw_unlocked"
+        ],
+        "properties": {
+          "withdraw_unlocked": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/Uint128"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       }
-    ]
+    ],
+    "definitions": {
+      "Uint128": {
+        "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+        "type": "string"
+      }
+    }
   },
   "query": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -145,6 +187,49 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "description": "The vault positions that this address has requested to unlock",
+        "type": "object",
+        "required": [
+          "unlocking_positions_for_addr"
+        ],
+        "properties": {
+          "unlocking_positions_for_addr": {
+            "type": "object",
+            "required": [
+              "addr"
+            ],
+            "properties": {
+              "addr": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "unlocking_position"
+        ],
+        "properties": {
+          "unlocking_position": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/Uint128"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       }
     ],
     "definitions": {
@@ -162,15 +247,18 @@
       "title": "VaultInfo",
       "type": "object",
       "required": [
-        "coins",
-        "token_denom"
+        "accepts",
+        "vault_coin_denom"
       ],
       "properties": {
-        "coins": {
-          "description": "Coins required to enter vault. Amount will be proportional to the share of which it should occupy in the group (e.g. { denom: osmo, amount: 1 }, { denom: atom, amount: 1 } indicate a 50-50 split)",
+        "accepts": {
+          "description": "Coin denoms required to enter vault. Multiple vectors indicate the vault accepts more than one combination to enter.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Coin"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "lockup": {
@@ -182,33 +270,12 @@
           "format": "uint64",
           "minimum": 0.0
         },
-        "token_denom": {
+        "vault_coin_denom": {
           "description": "Denom of vault token",
           "type": "string"
         }
       },
-      "additionalProperties": false,
-      "definitions": {
-        "Coin": {
-          "type": "object",
-          "required": [
-            "amount",
-            "denom"
-          ],
-          "properties": {
-            "amount": {
-              "$ref": "#/definitions/Uint128"
-            },
-            "denom": {
-              "type": "string"
-            }
-          }
-        },
-        "Uint128": {
-          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
-          "type": "string"
-        }
-      }
+      "additionalProperties": false
     },
     "preview_redeem": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -244,6 +311,122 @@
       "title": "Uint128",
       "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
       "type": "string"
+    },
+    "unlocking_position": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UnlockingPosition",
+      "type": "object",
+      "required": [
+        "amount",
+        "id",
+        "unlocked_at"
+      ],
+      "properties": {
+        "amount": {
+          "description": "Number of vault tokens",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Uint128"
+            }
+          ]
+        },
+        "id": {
+          "description": "Unique identifier representing the unlocking position. Needed for `ExecuteMsg::Unlock {}` call.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Uint128"
+            }
+          ]
+        },
+        "unlocked_at": {
+          "description": "Absolute time when position unlocks in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Timestamp": {
+          "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Uint64"
+            }
+          ]
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        },
+        "Uint64": {
+          "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "unlocking_positions_for_addr": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_UnlockingPosition",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/UnlockingPosition"
+      },
+      "definitions": {
+        "Timestamp": {
+          "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Uint64"
+            }
+          ]
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        },
+        "Uint64": {
+          "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
+          "type": "string"
+        },
+        "UnlockingPosition": {
+          "type": "object",
+          "required": [
+            "amount",
+            "id",
+            "unlocked_at"
+          ],
+          "properties": {
+            "amount": {
+              "description": "Number of vault tokens",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Uint128"
+                }
+              ]
+            },
+            "id": {
+              "description": "Unique identifier representing the unlocking position. Needed for `ExecuteMsg::Unlock {}` call.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Uint128"
+                }
+              ]
+            },
+            "unlocked_at": {
+              "description": "Absolute time when position unlocks in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC)",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Timestamp"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      }
     }
   }
 }

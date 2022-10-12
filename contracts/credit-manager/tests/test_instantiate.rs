@@ -33,19 +33,19 @@ fn test_nft_contract_addr_not_set_on_instantiate() {
 fn test_allowed_vaults_set_on_instantiate() {
     let allowed_vaults = vec![
         VaultTestInfo {
-            lp_token_denom: "vault_contract_1".to_string(),
+            denom: "vault_contract_1".to_string(),
             lockup: None,
-            asset_denoms: vec![],
+            underlying_denoms: vec![],
         },
         VaultTestInfo {
-            lp_token_denom: "vault_contract_2".to_string(),
+            denom: "vault_contract_2".to_string(),
             lockup: None,
-            asset_denoms: vec![],
+            underlying_denoms: vec![],
         },
         VaultTestInfo {
-            lp_token_denom: "vault_contract_3".to_string(),
+            denom: "vault_contract_3".to_string(),
             lockup: None,
-            asset_denoms: vec![],
+            underlying_denoms: vec![],
         },
     ];
 
@@ -55,11 +55,11 @@ fn test_allowed_vaults_set_on_instantiate() {
         .unwrap();
     let res = mock.query_allowed_vaults(None, None);
     assert_contents_equal(
-        res,
-        allowed_vaults
+        &res,
+        &allowed_vaults
             .iter()
             .map(|info| mock.get_vault(info))
-            .collect(),
+            .collect::<Vec<_>>(),
     );
 }
 
@@ -94,11 +94,11 @@ fn test_allowed_coins_set_on_instantiate() {
 
     let res = mock.query_allowed_coins(None, None);
     assert_contents_equal(
-        res,
-        allowed_coins
+        &res,
+        &allowed_coins
             .iter()
             .map(|info| info.denom.clone())
-            .collect(),
+            .collect::<Vec<_>>(),
     )
 }
 

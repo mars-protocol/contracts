@@ -131,8 +131,8 @@ fn test_pagination_on_all_vault_positions_query_works() {
         .chain(vaults_res_b.iter().cloned())
         .chain(vaults_res_c.iter().cloned())
         .chain(vaults_res_d.iter().cloned())
-        .map(|v| v.position.vault.query_vault_info(&mock.app.wrap()).unwrap())
-        .map(|info| info.token_denom)
+        .map(|v| v.position.vault.query_info(&mock.app.wrap()).unwrap())
+        .map(|info| info.vault_coin_denom)
         .collect::<Vec<_>>();
 
     let deduped = combined.iter().unique().cloned().collect::<Vec<_>>();
@@ -140,10 +140,10 @@ fn test_pagination_on_all_vault_positions_query_works() {
     assert_eq!(deduped.len(), all_vaults.len());
 
     assert_contents_equal(
-        all_vaults
+        &all_vaults
             .iter()
-            .map(|v| v.lp_token_denom.clone())
-            .collect(),
-        deduped,
+            .map(|v| v.denom.clone())
+            .collect::<Vec<_>>(),
+        &deduped,
     )
 }

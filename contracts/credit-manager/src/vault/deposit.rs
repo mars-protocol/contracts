@@ -2,15 +2,14 @@ use cosmwasm_std::{
     to_binary, Addr, Coin, CosmosMsg, DepsMut, QuerierWrapper, Response, Uint128, WasmMsg,
 };
 
-use rover::adapters::{Vault, VaultPositionState};
+use rover::adapters::{Vault, VaultPositionUpdate};
 use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg;
 use rover::traits::Stringify;
 
-use crate::state::VAULT_POSITIONS;
-use crate::utils::{assert_coins_are_whitelisted, decrement_coin_balance};
-use crate::vault::utils::assert_vault_is_whitelisted;
+use crate::utils::{assert_coins_are_whitelisted, contents_equal, decrement_coin_balance};
+use crate::vault::utils::{assert_vault_is_whitelisted, update_vault_position};
 
 pub fn deposit_into_vault(
     deps: DepsMut,
@@ -61,24 +60,15 @@ pub fn update_vault_coin_balance(
     }
 
     let diff = current_balance.checked_sub(previous_total_balance)?;
-    let vault_info = vault.query_vault_info(&deps.querier)?;
+    let vault_info = vault.query_info(&deps.querier)?;
 
-    // Increment token's vault position
-    VAULT_POSITIONS.update(
+    update_vault_position(
         deps.storage,
-        (account_id, vault.address),
-        |position_opt| -> ContractResult<_> {
-            let p = position_opt.unwrap_or_default();
-            match vault_info.lockup {
-                None => Ok(VaultPositionState {
-                    unlocked: p.unlocked.checked_add(diff)?,
-                    locked: p.locked,
-                }),
-                Some(_) => Ok(VaultPositionState {
-                    unlocked: p.unlocked,
-                    locked: p.locked.checked_add(diff)?,
-                }),
-            }
+        account_id,
+        &vault.address,
+        match vault_info.lockup {
+            None => VaultPositionUpdate::IncrementUnlocked(diff),
+            Some(_) => VaultPositionUpdate::IncrementLocked(diff),
         },
     )?;
 
@@ -93,20 +83,27 @@ pub fn update_vault_coin_balance(
 pub fn assert_denoms_match_vault_reqs(
     querier: QuerierWrapper,
     vault: &Vault,
-    assets: &[Coin],
+    coins: &[Coin],
 ) -> ContractResult<()> {
-    let vault_info = vault.query_vault_info(&querier)?;
+    let vault_info = vault.query_info(&querier)?;
 
-    let all_req_coins_present = vault_info
-        .coins
+    // Check if coins match one of the accepted combinations for vault
+    let denoms = coins.iter().map(|c| c.denom.clone()).collect::<Vec<_>>();
+    let matched_combo = vault_info
+        .accepts
         .iter()
-        .all(|coin| assets.iter().any(|req_coin| req_coin.denom == coin.denom));
+        .any(|combo| contents_equal(combo, &denoms));
 
-    if !all_req_coins_present || assets.len() != vault_info.coins.len() {
+    if !matched_combo {
         return Err(ContractError::RequirementsNotMet(format!(
             "Required assets: {} -- do not match given assets: {}",
-            vault_info.coins.as_slice().to_string(),
-            assets.to_string()
+            vault_info
+                .accepts
+                .iter()
+                .map(|v| v.join(", "))
+                .collect::<Vec<_>>()
+                .join(" or "),
+            coins.to_string()
         )));
     }
     Ok(())

@@ -13,6 +13,12 @@ pub enum ContractError {
     #[error("{0}")]
     CheckedMultiply(#[from] CheckedMultiplyRatioError),
 
+    #[error("This vault does not require a lockup, just withdraw directly")]
+    NoLockupTime,
+
+    #[error("There is more time left on the lock period")]
+    UnlockNotReady,
+
     #[error("You must request an unlock first")]
     UnlockRequired,
 

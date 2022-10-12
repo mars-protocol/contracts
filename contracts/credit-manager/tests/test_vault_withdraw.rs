@@ -65,9 +65,9 @@ fn test_no_unlocked_vault_coins_to_withdraw() {
     let uosmo = uosmo_info();
 
     let leverage_vault = VaultTestInfo {
-        lp_token_denom: "uleverage".to_string(),
+        denom: "uleverage".to_string(),
         lockup: Some(213231),
-        asset_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
     };
 
     let user = Addr::unchecked("user");
@@ -115,9 +115,9 @@ fn test_no_unlocked_vault_coins_to_withdraw() {
 #[test]
 fn test_force_withdraw_can_only_be_called_by_rover() {
     let leverage_vault = VaultTestInfo {
-        lp_token_denom: "uleverage".to_string(),
+        denom: "uleverage".to_string(),
         lockup: Some(213231),
-        asset_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
     };
 
     let user = Addr::unchecked("user");
@@ -146,9 +146,9 @@ fn test_force_withdraw_breaks_lock() {
     let uosmo = uosmo_info();
 
     let leverage_vault = VaultTestInfo {
-        lp_token_denom: "uleverage".to_string(),
+        denom: "uleverage".to_string(),
         lockup: Some(213231),
-        asset_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
     };
 
     let user = Addr::unchecked("user");
@@ -211,7 +211,7 @@ fn test_force_withdraw_breaks_lock() {
     assert_eq!(osmo.amount, Uint128::from(200u128));
 
     // Assert Rover does not have the vault tokens anymore
-    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.lp_token_denom);
+    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
     assert_eq!(Uint128::zero(), lp_balance.amount);
 }
 
@@ -221,9 +221,9 @@ fn test_withdraw_with_unlocked_vault_coins() {
     let uosmo = uosmo_info();
 
     let leverage_vault = VaultTestInfo {
-        lp_token_denom: "uleverage".to_string(),
+        denom: "uleverage".to_string(),
         lockup: None,
-        asset_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
     };
 
     let user = Addr::unchecked("user");
@@ -272,7 +272,7 @@ fn test_withdraw_with_unlocked_vault_coins() {
     assert_eq!(osmo.amount, Uint128::from(100u128));
 
     // Assert Rover has the vault tokens
-    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.lp_token_denom);
+    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
     assert_eq!(STARTING_VAULT_SHARES, lp_balance.amount);
 
     mock.update_credit_account(
@@ -301,7 +301,7 @@ fn test_withdraw_with_unlocked_vault_coins() {
     assert_eq!(osmo.amount, Uint128::from(200u128));
 
     // Assert Rover does not have the vault tokens anymore
-    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.lp_token_denom);
+    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
     assert_eq!(Uint128::zero(), lp_balance.amount);
 }
 

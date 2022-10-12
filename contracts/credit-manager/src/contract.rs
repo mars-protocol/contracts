@@ -1,7 +1,10 @@
-use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{
+    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
+};
 use cw2::set_contract_version;
 
-use rover::error::ContractResult;
+use rover::adapters::VAULT_REQUEST_REPLY_ID;
+use rover::error::{ContractError, ContractResult};
 use rover::msg::query::HealthResponse;
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
@@ -14,6 +17,7 @@ use crate::query::{
     query_allowed_vaults, query_config, query_positions, query_total_debt_shares,
     query_total_vault_coin_balance,
 };
+use crate::vault::handle_unlock_request_reply;
 
 const CONTRACT_NAME: &str = "crates.io:rover-credit-manager";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -45,6 +49,14 @@ pub fn execute(
             account_id,
             actions,
         } => dispatch_actions(deps, env, info, &account_id, &actions),
+    }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(deps: DepsMut, _: Env, reply: Reply) -> ContractResult<Response> {
+    match reply.id {
+        VAULT_REQUEST_REPLY_ID => handle_unlock_request_reply(deps, reply),
+        id => Err(ContractError::ReplyIdError(id)),
     }
 }
 

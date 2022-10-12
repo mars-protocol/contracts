@@ -12,7 +12,10 @@ use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE,
     OWNER, RED_BANK, SWAPPER,
 };
-use crate::vault::{deposit_into_vault, update_vault_coin_balance, withdraw_from_vault};
+use crate::vault::{
+    deposit_into_vault, request_unlock_from_vault, update_vault_coin_balance, withdraw_from_vault,
+    withdraw_unlocked_from_vault,
+};
 
 use crate::liquidate::{assert_health_factor_improved, liquidate_coin};
 use crate::swap::swap_exact_in;
@@ -210,6 +213,20 @@ pub fn dispatch_actions(
                 vault: vault.check(deps.api)?,
                 amount: *amount,
             }),
+            Action::VaultRequestUnlock { vault, amount } => {
+                callbacks.push(CallbackMsg::VaultRequestUnlock {
+                    account_id: account_id.to_string(),
+                    vault: vault.check(deps.api)?,
+                    amount: *amount,
+                })
+            }
+            Action::VaultWithdrawUnlocked { id, vault } => {
+                callbacks.push(CallbackMsg::VaultWithdrawUnlocked {
+                    account_id: account_id.to_string(),
+                    vault: vault.check(deps.api)?,
+                    position_id: *id,
+                })
+            }
         }
     }
 
@@ -307,6 +324,16 @@ pub fn execute_callback(
             vault,
             amount,
         } => withdraw_from_vault(deps, env, &account_id, vault, amount, true),
+        CallbackMsg::VaultRequestUnlock {
+            account_id,
+            vault,
+            amount,
+        } => request_unlock_from_vault(deps, &account_id, vault, amount),
+        CallbackMsg::VaultWithdrawUnlocked {
+            account_id,
+            vault,
+            position_id,
+        } => withdraw_unlocked_from_vault(deps, env, &account_id, vault, position_id),
     }
 }
 

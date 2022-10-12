@@ -41,9 +41,9 @@ fn test_only_account_owner_can_take_action() {
 fn test_all_deposit_coins_are_whitelisted() {
     let uatom = uatom_info();
     let leverage_vault = VaultTestInfo {
-        lp_token_denom: "uleverage".to_string(),
+        denom: "uleverage".to_string(),
         lockup: None,
-        asset_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
     };
 
     let user = Addr::unchecked("user");
@@ -75,9 +75,9 @@ fn test_vault_is_whitelisted() {
     let uosmo = uosmo_info();
 
     let leverage_vault = VaultTestInfo {
-        lp_token_denom: "uleverage".to_string(),
+        denom: "uleverage".to_string(),
         lockup: None,
-        asset_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
     };
 
     let user = Addr::unchecked("user");
@@ -111,9 +111,9 @@ fn test_deposited_coins_match_vault_requirements() {
     let uosmo = uosmo_info();
 
     let leverage_vault = VaultTestInfo {
-        lp_token_denom: "uleverage".to_string(),
+        denom: "uleverage".to_string(),
         lockup: None,
-        asset_denoms: vec!["uatom".to_string(), "ujake".to_string()],
+        underlying_denoms: vec!["uatom".to_string(), "ujake".to_string()],
     };
 
     let user = Addr::unchecked("user");
@@ -149,9 +149,9 @@ fn test_fails_if_not_enough_funds_for_deposit() {
     let uosmo = uosmo_info();
 
     let leverage_vault = VaultTestInfo {
-        lp_token_denom: "uleverage".to_string(),
+        denom: "uleverage".to_string(),
         lockup: None,
-        asset_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
     };
 
     let user = Addr::unchecked("user");
@@ -193,9 +193,9 @@ fn test_successful_deposit_into_locked_vault() {
     let uosmo = uosmo_info();
 
     let leverage_vault = VaultTestInfo {
-        lp_token_denom: "uleverage".to_string(),
+        denom: "uleverage".to_string(),
         lockup: Some(1_209_600u64),
-        asset_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
     };
 
     let user = Addr::unchecked("user");
@@ -229,7 +229,7 @@ fn test_successful_deposit_into_locked_vault() {
     )
     .unwrap();
 
-    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.lp_token_denom);
+    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
     assert_eq!(STARTING_VAULT_SHARES, lp_balance.amount);
 
     let res = mock.query_positions(&account_id);
@@ -250,7 +250,7 @@ fn test_successful_deposit_into_locked_vault() {
     let balance = mock.query_total_vault_coin_balance(&vault);
     assert_eq!(balance, STARTING_VAULT_SHARES);
 
-    let vault_token_balance = mock.query_balance(&mock.rover, &leverage_vault.lp_token_denom);
+    let vault_token_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
     assert_eq!(vault_token_balance.amount, STARTING_VAULT_SHARES)
 }
 
@@ -260,9 +260,9 @@ fn test_successful_deposit_into_unlocked_vault() {
     let uosmo = uosmo_info();
 
     let leverage_vault = VaultTestInfo {
-        lp_token_denom: "uleverage".to_string(),
+        denom: "uleverage".to_string(),
         lockup: None,
-        asset_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
     };
 
     let user = Addr::unchecked("user");
@@ -294,7 +294,7 @@ fn test_successful_deposit_into_unlocked_vault() {
     )
     .unwrap();
 
-    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.lp_token_denom);
+    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
     assert_eq!(STARTING_VAULT_SHARES, lp_balance.amount);
 
     let res = mock.query_positions(&account_id);
@@ -315,6 +315,6 @@ fn test_successful_deposit_into_unlocked_vault() {
     let balance = mock.query_total_vault_coin_balance(&vault);
     assert_eq!(balance, STARTING_VAULT_SHARES);
 
-    let vault_token_balance = mock.query_balance(&mock.rover, &leverage_vault.lp_token_denom);
+    let vault_token_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
     assert_eq!(vault_token_balance.amount, STARTING_VAULT_SHARES)
 }

@@ -1,19 +1,42 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, Decimal, OverflowError,
-    QuerierWrapper, QueryRequest, StdResult, Uint128, WasmMsg, WasmQuery,
+    QuerierWrapper, QueryRequest, StdResult, SubMsg, Uint128, WasmMsg, WasmQuery,
 };
 
 use crate::adapters::Oracle;
 use crate::error::ContractResult;
-use crate::msg::vault::{ExecuteMsg, QueryMsg, VaultInfo};
+use crate::msg::vault::{ExecuteMsg, QueryMsg, UnlockingPosition, VaultInfo};
 use crate::traits::Stringify;
+
+pub const VAULT_REQUEST_REPLY_ID: u64 = 10_001;
 
 #[cw_serde]
 #[derive(Default)]
 pub struct VaultPositionState {
     pub unlocked: Uint128,
     pub locked: Uint128,
+    pub unlocking: Vec<VaultUnlockingId>,
+}
+
+#[cw_serde]
+pub enum VaultPositionUpdate {
+    DecrementUnlocked(Uint128),
+    IncrementUnlocked(Uint128),
+    DecrementLocked(Uint128),
+    IncrementLocked(Uint128),
+    AddUnlocking(VaultUnlockingId),
+    RemoveUnlocking(UnlockingId),
+}
+
+pub type UnlockingId = Uint128;
+
+#[cw_serde]
+pub struct VaultUnlockingId {
+    /// Unique identifier representing the unlocking position. Needed for `ExecuteMsg::WithdrawUnlocked {}` call.
+    pub id: UnlockingId,
+    /// Number of vault tokens
+    pub amount: Uint128,
 }
 
 impl VaultPositionState {
@@ -29,6 +52,7 @@ pub struct VaultPosition {
 }
 
 #[cw_serde]
+#[derive(Eq, Hash)]
 pub struct VaultBase<T> {
     pub address: T,
 }
@@ -89,11 +113,11 @@ impl Vault {
         amount: Uint128,
         force: bool,
     ) -> StdResult<CosmosMsg> {
-        let vault_info = self.query_vault_info(querier)?;
+        let vault_info = self.query_info(querier)?;
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address.to_string(),
             funds: vec![Coin {
-                denom: vault_info.token_denom,
+                denom: vault_info.vault_coin_denom,
                 amount,
             }],
             msg: to_binary(
@@ -107,18 +131,50 @@ impl Vault {
         Ok(withdraw_msg)
     }
 
-    pub fn query_vault_info(&self, querier: &QuerierWrapper) -> StdResult<VaultInfo> {
+    pub fn request_unlock_msg(&self, funds: &[Coin]) -> StdResult<SubMsg> {
+        let request_msg = SubMsg::reply_on_success(
+            CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: self.address.to_string(),
+                funds: funds.to_vec(),
+                msg: to_binary(&ExecuteMsg::RequestUnlock {})?,
+            }),
+            VAULT_REQUEST_REPLY_ID,
+        );
+        Ok(request_msg)
+    }
+
+    pub fn withdraw_unlocked_msg(&self, position_id: Uint128) -> StdResult<CosmosMsg> {
+        let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: self.address.to_string(),
+            funds: vec![],
+            msg: to_binary(&ExecuteMsg::WithdrawUnlocked { id: position_id })?,
+        });
+        Ok(withdraw_msg)
+    }
+
+    pub fn query_info(&self, querier: &QuerierWrapper) -> StdResult<VaultInfo> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: self.address.to_string(),
             msg: to_binary(&QueryMsg::Info {})?,
         }))
     }
 
+    pub fn query_unlocking_position_info(
+        &self,
+        querier: &QuerierWrapper,
+        id: Uint128,
+    ) -> StdResult<UnlockingPosition> {
+        querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: self.address.to_string(),
+            msg: to_binary(&QueryMsg::UnlockingPosition { id })?,
+        }))
+    }
+
     pub fn query_balance(&self, querier: &QuerierWrapper, addr: &Addr) -> StdResult<Uint128> {
-        let vault_info = self.query_vault_info(querier)?;
+        let vault_info = self.query_info(querier)?;
         let res: BalanceResponse = querier.query(&QueryRequest::Bank(BankQuery::Balance {
             address: addr.to_string(),
-            denom: vault_info.token_denom,
+            denom: vault_info.vault_coin_denom,
         }))?;
         Ok(res.amount.amount)
     }

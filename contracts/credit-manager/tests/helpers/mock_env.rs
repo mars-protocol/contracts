@@ -26,6 +26,8 @@ use rover::msg::query::{
     CoinBalanceResponseItem, ConfigResponse, DebtShares, HealthResponse, Positions,
     SharesResponseItem, VaultPositionResponseItem, VaultWithBalance,
 };
+use rover::msg::vault::QueryMsg::UnlockingPositionsForAddr;
+use rover::msg::vault::UnlockingPosition;
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::helpers::{
@@ -237,9 +239,9 @@ impl MockEnv {
                 let info = v
                     .check(&MockApi::default())
                     .unwrap()
-                    .query_vault_info(&self.app.wrap())
+                    .query_info(&self.app.wrap())
                     .unwrap();
-                vault.lp_token_denom == info.token_denom
+                vault.denom == info.vault_coin_denom
             })
             .unwrap()
             .clone()
@@ -330,6 +332,34 @@ impl MockEnv {
             .check(&MockApi::default())
             .unwrap()
             .query_preview_redeem(&self.app.wrap(), shares)
+            .unwrap()
+    }
+
+    pub fn query_unlocking_position_info(
+        &self,
+        vault: &VaultUnchecked,
+        id: Uint128,
+    ) -> UnlockingPosition {
+        vault
+            .check(&MockApi::default())
+            .unwrap()
+            .query_unlocking_position_info(&self.app.wrap(), id)
+            .unwrap()
+    }
+
+    pub fn query_unlocking_positions(
+        &self,
+        vault: &VaultUnchecked,
+        manager_contract_addr: &Addr,
+    ) -> Vec<UnlockingPosition> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                vault.address.to_string(),
+                &UnlockingPositionsForAddr {
+                    addr: manager_contract_addr.to_string(),
+                },
+            )
             .unwrap()
     }
 
@@ -590,9 +620,9 @@ impl MockEnvBuilder {
                 code_id,
                 Addr::unchecked("vault-instantiator"),
                 &VaultInstantiateMsg {
-                    lp_token_denom: vault.clone().lp_token_denom,
+                    lp_token_denom: vault.clone().denom,
                     lockup: vault.lockup,
-                    asset_denoms: vault.clone().asset_denoms,
+                    asset_denoms: vault.clone().underlying_denoms,
                     oracle,
                 },
                 &[],
@@ -600,7 +630,7 @@ impl MockEnvBuilder {
                 None,
             )
             .unwrap();
-        self.fund_vault(&addr, &vault.lp_token_denom);
+        self.fund_vault(&addr, &vault.denom);
         VaultBase::new(addr)
     }
 

@@ -51,6 +51,9 @@ pub enum ContractError {
     #[error("No debt to repay")]
     NoDebt,
 
+    #[error("Position {0} was not a valid position for this account id in this vault")]
+    NoPositionMatch(String),
+
     #[error(
         "{account_id:?} is not a liquidatable credit account. Health factor: {lqdt_health_factor:?}."
     )]
@@ -71,6 +74,9 @@ pub enum ContractError {
     #[error("{0}")]
     Overflow(#[from] OverflowError),
 
+    #[error("Reply id: {0} not valid")]
+    ReplyIdError(u64),
+
     #[error("{0}")]
     RequirementsNotMet(String),
 
@@ -79,4 +85,7 @@ pub enum ContractError {
 
     #[error("{user:?} is not authorized to {action:?}")]
     Unauthorized { user: String, action: String },
+
+    #[error("There is more time left on the lock period")]
+    UnlockNotReady,
 }

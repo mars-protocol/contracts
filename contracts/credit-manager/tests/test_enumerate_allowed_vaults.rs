@@ -41,17 +41,17 @@ fn test_pagination_on_allowed_vaults_query_works() {
         .chain(vaults_res_c.iter().cloned())
         .chain(vaults_res_d.iter().cloned())
         .map(|v| v.check(&MockApi::default()).unwrap())
-        .map(|v| v.query_vault_info(&mock.app.wrap()).unwrap())
-        .map(|info| info.token_denom)
+        .map(|v| v.query_info(&mock.app.wrap()).unwrap())
+        .map(|info| info.vault_coin_denom)
         .collect::<Vec<_>>();
 
     assert_eq!(combined.len(), allowed_vaults.len());
 
     assert_contents_equal(
-        allowed_vaults
+        &allowed_vaults
             .iter()
-            .map(|v| v.lp_token_denom.clone())
-            .collect(),
-        combined,
+            .map(|v| v.denom.clone())
+            .collect::<Vec<_>>(),
+        &combined,
     )
 }

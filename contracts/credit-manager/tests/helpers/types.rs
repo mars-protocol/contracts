@@ -17,9 +17,9 @@ pub struct CoinInfo {
 
 #[cw_serde]
 pub struct VaultTestInfo {
-    pub lp_token_denom: String,
+    pub denom: String,
     pub lockup: Option<u64>,
-    pub asset_denoms: Vec<String>,
+    pub underlying_denoms: Vec<String>,
 }
 
 impl CoinInfo {

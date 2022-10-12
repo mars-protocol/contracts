@@ -1,5 +1,7 @@
 use anyhow::Result as AnyResult;
+use credit_manager::utils::contents_equal;
 use cw_multi_test::AppResponse;
+use std::hash::Hash;
 
 use rover::error::ContractError;
 
@@ -13,8 +15,9 @@ pub fn assert_err(res: AnyResult<AppResponse>, err: ContractError) {
     }
 }
 
-pub fn assert_contents_equal<T: PartialEq>(vec_a: Vec<T>, vec_b: Vec<T>) {
-    assert_eq!(vec_a.len(), vec_b.len());
-    assert!(vec_a.iter().all(|item| vec_b.contains(item)));
-    assert!(vec_b.iter().all(|item| vec_a.contains(item)));
+pub fn assert_contents_equal<T>(vec_a: &[T], vec_b: &[T])
+where
+    T: Eq + Hash,
+{
+    assert!(contents_equal(vec_a, vec_b))
 }

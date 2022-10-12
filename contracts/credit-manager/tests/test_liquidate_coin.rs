@@ -75,9 +75,9 @@ fn test_vault_positions_contribute_to_health() {
     let uatom_info = uatom_info();
 
     let leverage_vault = VaultTestInfo {
-        lp_token_denom: "uleverage".to_string(),
+        denom: "uleverage".to_string(),
         lockup: None,
-        asset_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
     };
 
     let liquidatee = Addr::unchecked("liquidatee");

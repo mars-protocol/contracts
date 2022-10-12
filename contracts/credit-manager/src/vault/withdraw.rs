@@ -1,13 +1,13 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, Uint128, WasmMsg};
 
-use rover::adapters::Vault;
+use rover::adapters::{Vault, VaultPositionUpdate};
 use rover::error::ContractResult;
 use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg as RoverExecuteMsg;
-use rover::traits::Denoms;
 
-use crate::update_coin_balances::query_balances;
-use crate::vault::utils::{assert_vault_is_whitelisted, decrement_vault_position};
+use crate::vault::utils::{
+    assert_vault_is_whitelisted, query_withdraw_denom_balances, update_vault_position,
+};
 
 pub fn withdraw_from_vault(
     deps: DepsMut,
@@ -19,18 +19,25 @@ pub fn withdraw_from_vault(
 ) -> ContractResult<Response> {
     assert_vault_is_whitelisted(deps.storage, &vault)?;
 
-    decrement_vault_position(deps.storage, account_id, &vault, amount, force)?;
+    // Force indicates that the vault is one with a required lockup that needs to be broken
+    // In this case, we'll need to withdraw from the locked bucket
+    update_vault_position(
+        deps.storage,
+        account_id,
+        &vault.address,
+        if force {
+            VaultPositionUpdate::DecrementLocked(amount)
+        } else {
+            VaultPositionUpdate::DecrementUnlocked(amount)
+        },
+    )?;
 
     // Sends vault coins to vault in exchange for underlying assets
     let withdraw_msg = vault.withdraw_msg(&deps.querier, amount, force)?;
 
     // Updates coin balances for account after a vault withdraw has taken place
-    let vault_info = vault.query_vault_info(&deps.querier)?;
-    let previous_balances = query_balances(
-        deps.as_ref(),
-        &env.contract.address,
-        &vault_info.coins.to_denoms(),
-    )?;
+    let previous_balances =
+        query_withdraw_denom_balances(deps.as_ref(), &env.contract.address, &vault)?;
     let update_coin_balance_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         funds: vec![],

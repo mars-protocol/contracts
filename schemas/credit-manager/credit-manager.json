@@ -300,6 +300,58 @@
             "additionalProperties": false
           },
           {
+            "description": "Requests unlocking of shares for a vault with a required lock period",
+            "type": "object",
+            "required": [
+              "vault_request_unlock"
+            ],
+            "properties": {
+              "vault_request_unlock": {
+                "type": "object",
+                "required": [
+                  "amount",
+                  "vault"
+                ],
+                "properties": {
+                  "amount": {
+                    "$ref": "#/definitions/Uint128"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Withdraws the assets for unlocking position id from vault. Required time must have elapsed.",
+            "type": "object",
+            "required": [
+              "vault_withdraw_unlocked"
+            ],
+            "properties": {
+              "vault_withdraw_unlocked": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "vault"
+                ],
+                "properties": {
+                  "id": {
+                    "$ref": "#/definitions/Uint128"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the liquidatee should have a balance of. The amount returned to liquidator will be the request coin of the amount that precisely matches the value of the debt + a liquidation bonus. The debt amount will be adjusted down if: - Exceeds liquidatee's total debt for denom - Not enough liquidatee request coin balance to match - The value of the debt repaid exceeds the maximum close factor %",
             "type": "object",
             "required": [
@@ -597,6 +649,66 @@
                     "type": "string"
                   },
                   "amount": {
+                    "$ref": "#/definitions/Uint128"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Requests unlocking of shares for a vault with a lock period",
+            "type": "object",
+            "required": [
+              "vault_request_unlock"
+            ],
+            "properties": {
+              "vault_request_unlock": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "amount",
+                  "vault"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "$ref": "#/definitions/Uint128"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Withdraws assets from vault for a locked position having a lockup period that has been fulfilled",
+            "type": "object",
+            "required": [
+              "vault_withdraw_unlocked"
+            ],
+            "properties": {
+              "vault_withdraw_unlocked": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "position_id",
+                  "vault"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "position_id": {
                     "$ref": "#/definitions/Uint128"
                   },
                   "vault": {
@@ -1452,7 +1564,8 @@
           "type": "object",
           "required": [
             "locked",
-            "unlocked"
+            "unlocked",
+            "unlocking"
           ],
           "properties": {
             "locked": {
@@ -1460,6 +1573,38 @@
             },
             "unlocked": {
               "$ref": "#/definitions/Uint128"
+            },
+            "unlocking": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/VaultUnlockingId"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "VaultUnlockingId": {
+          "type": "object",
+          "required": [
+            "amount",
+            "id"
+          ],
+          "properties": {
+            "amount": {
+              "description": "Number of vault tokens",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Uint128"
+                }
+              ]
+            },
+            "id": {
+              "description": "Unique identifier representing the unlocking position. Needed for `ExecuteMsg::WithdrawUnlocked {}` call.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Uint128"
+                }
+              ]
             }
           },
           "additionalProperties": false
@@ -1722,7 +1867,8 @@
           "type": "object",
           "required": [
             "locked",
-            "unlocked"
+            "unlocked",
+            "unlocking"
           ],
           "properties": {
             "locked": {
@@ -1730,6 +1876,38 @@
             },
             "unlocked": {
               "$ref": "#/definitions/Uint128"
+            },
+            "unlocking": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/VaultUnlockingId"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "VaultUnlockingId": {
+          "type": "object",
+          "required": [
+            "amount",
+            "id"
+          ],
+          "properties": {
+            "amount": {
+              "description": "Number of vault tokens",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Uint128"
+                }
+              ]
+            },
+            "id": {
+              "description": "Unique identifier representing the unlocking position. Needed for `ExecuteMsg::WithdrawUnlocked {}` call.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Uint128"
+                }
+              ]
             }
           },
           "additionalProperties": false
