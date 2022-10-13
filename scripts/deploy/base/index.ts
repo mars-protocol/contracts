@@ -1,6 +1,6 @@
 import { setupDeployer } from './setupDeployer'
 import { printRed, printYellow } from '../../utils/chalk'
-import { DeploymentConfig } from '../../types/config'
+import { DeploymentConfig, VaultType } from '../../types/config'
 import { wasmFile } from '../../utils/environment'
 
 export interface TaskRunnerProps {
@@ -38,9 +38,12 @@ export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProp
     // await rover.swap()
     await rover.withdraw()
 
-    // TODO: Use after token factory is launched and integrated into mock_vault
-    //       or Apollo vaults are on testnet
-    // await rover.vaultDeposit()
+    await rover.vaultDeposit()
+    if (config.vaultType === VaultType.UNLOCKED) {
+      await rover.vaultWithdraw()
+    } else {
+      await rover.vaultRequestUnlock()
+    }
 
     printYellow('COMPLETE')
   } catch (e) {

@@ -1,6 +1,7 @@
-import { DeploymentConfig } from '../../types/config'
+import { DeploymentConfig, VaultType } from '../../types/config'
 
 const uatom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
+const udig = 'ibc/307E5C96C8F60D1CBEE269A9A86C0834E1DB06F2B3788AE4F716EDB97A48B97D'
 
 export const osmosisTestnetConfig: DeploymentConfig = {
   // Get the latest addresses from: https://github.com/mars-protocol/outposts/blob/master/scripts/deploy/addresses/osmo-test-4.json
@@ -15,7 +16,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   rpcEndpoint: 'https://rpc-test.osmosis.zone',
   defaultGasPrice: 0.1,
   startingAmountForTestUser: 1e6,
-  vaultTokenDenom: 'xCompounder',
+  vaultTokenDenom: udig,
   maxCloseFactor: 0.6,
   maxLiquidationBonus: 0.05,
   depositAmount: 100,
@@ -32,4 +33,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   },
   slippage: 0.4,
   withdrawAmount: 12,
+  vaultDepositAmount: 10,
+  vaultType: VaultType.UNLOCKED,
+  vaultWithdrawAmount: 1_000_000,
 }

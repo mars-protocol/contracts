@@ -13,7 +13,7 @@ import { Rover } from './rover'
 import { AccountNftClient } from '../../types/generated/account-nft/AccountNft.client'
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing'
 import { getAddress, getWallet, setupClient } from './setupDeployer'
-import { coins } from '@cosmjs/stargate'
+import { coin } from '@cosmjs/stargate'
 import { Coin } from '@cosmjs/amino'
 import { writeFile } from 'fs/promises'
 import { join, resolve } from 'path'
@@ -81,6 +81,18 @@ export class Deployer {
       oracle: this.config.oracleAddr,
     }
     await this.instantiate('mockVault', this.storage.codeIds.mockVault!, msg)
+
+    // Temporary until Token Factory is integrated into Cosmwasm or Apollo Vaults are in testnet
+    if (!this.storage.actions.seedMockVault) {
+      printBlue('Seeding mock vault')
+      await this.transferCoin(
+        this.storage.addresses.mockVault!,
+        coin(10_000_000, this.config.vaultTokenDenom),
+      )
+      this.storage.actions.seedMockVault = true
+    } else {
+      printGray('Mock vault already seeded')
+    }
   }
 
   async instantiateMarsOracleAdapter() {
@@ -104,27 +116,31 @@ export class Deployer {
     }
     await this.instantiate('swapper', this.storage.codeIds.swapper!, msg)
 
-    await this.transferFunds(this.storage.addresses.swapper!, [
-      { denom: this.config.baseDenom, amount: '100' },
-    ])
+    if (!this.storage.actions.setRouteAndSeedSwapper) {
+      printBlue(`Seeding swapper w/ ${this.config.baseDenom}`)
+      await this.transferCoin(this.storage.addresses.swapper!, coin(100, this.config.baseDenom))
 
-    const swapClient = new SwapperBaseClient(
-      this.cwClient,
-      this.deployerAddr,
-      this.storage.addresses.swapper!,
-    )
-    printBlue(
-      `Setting ${this.config.baseDenom}-${this.config.secondaryDenom} route for swap contract`,
-    )
-    await swapClient.setRoute({
-      denomIn: this.config.baseDenom,
-      denomOut: this.config.secondaryDenom,
-      route: this.config.swapRoute,
-    })
+      const swapClient = new SwapperBaseClient(
+        this.cwClient,
+        this.deployerAddr,
+        this.storage.addresses.swapper!,
+      )
+      printBlue(
+        `Setting ${this.config.baseDenom}-${this.config.secondaryDenom} route for swap contract`,
+      )
+      await swapClient.setRoute({
+        denomIn: this.config.baseDenom,
+        denomOut: this.config.secondaryDenom,
+        route: this.config.swapRoute,
+      })
 
-    const swapQuery = new SwapperBaseQueryClient(this.cwClient, this.storage.addresses.swapper!)
-    const routes = await swapQuery.routes({})
-    assert.equal(routes.length, 1)
+      const swapQuery = new SwapperBaseQueryClient(this.cwClient, this.storage.addresses.swapper!)
+      const routes = await swapQuery.routes({})
+      assert.equal(routes.length, 1)
+      this.storage.actions.setRouteAndSeedSwapper = true
+    } else {
+      printGray('Swap contract already seeded with funds')
+    }
   }
 
   async instantiateCreditManager() {
@@ -168,9 +184,9 @@ export class Deployer {
   async newUserRoverClient() {
     const { client, address } = await this.generateNewAddress()
     printBlue(`New user: ${address}`)
-    await this.transferFunds(
+    await this.transferCoin(
       address,
-      coins(this.config.startingAmountForTestUser, this.config.baseDenom),
+      coin(this.config.startingAmountForTestUser, this.config.baseDenom),
     )
     return this.getRoverClient(address, client)
   }
@@ -183,9 +199,9 @@ export class Deployer {
     )
   }
 
-  private async transferFunds(recipient: string, coins: Coin[]) {
-    await this.cwClient.sendTokens(this.deployerAddr, recipient, coins, 'auto')
-    const balance = await this.cwClient.getBalance(recipient, this.config.baseDenom)
+  private async transferCoin(recipient: string, coin: Coin) {
+    await this.cwClient.sendTokens(this.deployerAddr, recipient, [coin], 'auto')
+    const balance = await this.cwClient.getBalance(recipient, coin.denom)
     printBlue(`New balance: ${balance.amount} ${balance.denom}`)
   }
 

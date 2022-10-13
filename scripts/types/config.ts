@@ -1,3 +1,8 @@
+export enum VaultType {
+  LOCKED,
+  UNLOCKED,
+}
+
 export interface DeploymentConfig {
   oracleAddr: string
   redBankAddr: string
@@ -19,4 +24,7 @@ export interface DeploymentConfig {
   withdrawAmount: number
   maxCloseFactor: number
   maxLiquidationBonus: number
+  vaultDepositAmount: number
+  vaultWithdrawAmount: number
+  vaultType: VaultType
 }

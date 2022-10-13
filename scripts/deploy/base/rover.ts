@@ -25,7 +25,7 @@ export class Rover {
     private userAddr: string,
     private storage: Storage,
     private config: DeploymentConfig,
-    cwClient: SigningCosmWasmClient,
+    private cwClient: SigningCosmWasmClient,
   ) {
     this.exec = new CreditManagerClient(cwClient, userAddr, storage.addresses.creditManager!)
     this.query = new CreditManagerQueryClient(cwClient, storage.addresses.creditManager!)
@@ -56,7 +56,7 @@ export class Rover {
     assert.equal(positions.coins.length, 1)
     assert.equal(positions.coins[0].amount, amount)
     assert.equal(positions.coins[0].denom, this.config.baseDenom)
-    printGreen(`Deposited: ${amount} ${this.config.baseDenom}`)
+    printGreen(`Deposited into credit account: ${amount} ${this.config.baseDenom}`)
   }
 
   async withdraw() {
@@ -112,25 +112,94 @@ export class Rover {
   }
 
   async vaultDeposit() {
-    const amount = '10'
+    const oldRoverBalance = await this.cwClient.getBalance(
+      this.storage.addresses.creditManager!,
+      this.config.vaultTokenDenom,
+    )
     await this.updateCreditAccount([
       {
         vault_deposit: {
-          coins: [{ amount, denom: this.config.baseDenom }],
+          coins: [
+            { amount: this.config.vaultDepositAmount.toString(), denom: this.config.baseDenom },
+          ],
           vault: { address: this.storage.addresses.mockVault! },
         },
       },
     ])
     const positions = await this.query.positions({ accountId: this.accountId! })
     assert.equal(positions.vaults.length, 1)
-    assert.equal(positions.vaults[0].vault.address, this.storage.addresses.mockVault)
-    assert.equal(positions.vaults[0].state.locked, 123)
-    assert.equal(positions.vaults[0].state.unlocked, 123)
-    printGreen(
-      `Deposit into vault: ${amount} ${this.config.baseDenom}, Vault Postition: ${JSON.stringify(
-        positions.vaults[0],
-      )}`,
+    const state = await this.getVaultBalance(this.storage.addresses.mockVault!)
+    assert(state.locked > 0 || state.unlocked > 0)
+    const newRoverBalance = await this.cwClient.getBalance(
+      this.storage.addresses.creditManager!,
+      this.config.vaultTokenDenom,
     )
+    const newAmount = parseInt(newRoverBalance.amount) - parseInt(oldRoverBalance.amount)
+    assert(newAmount === state.locked || newAmount === state.unlocked)
+
+    printGreen(
+      `Deposited ${this.config.vaultDepositAmount} ${
+        this.config.baseDenom
+      } in exchange for vault tokens: ${JSON.stringify(positions.vaults[0])}`,
+    )
+  }
+
+  async vaultWithdraw() {
+    const oldBalance = await this.getAccountBalance(this.config.baseDenom)
+    await this.updateCreditAccount([
+      {
+        vault_withdraw: {
+          amount: this.config.vaultWithdrawAmount.toString(),
+          vault: { address: this.storage.addresses.mockVault! },
+        },
+      },
+    ])
+    const newBalance = await this.getAccountBalance(this.config.baseDenom)
+    assert(newBalance > oldBalance)
+    printGreen(
+      `Withdrew ${newBalance - oldBalance} ${this.config.baseDenom} in exchange for ${
+        this.config.vaultWithdrawAmount
+      } ${this.config.vaultTokenDenom}`,
+    )
+  }
+
+  async vaultRequestUnlock() {
+    const oldBalance = await this.getVaultBalance(this.storage.addresses.mockVault!)
+    await this.updateCreditAccount([
+      {
+        vault_request_unlock: {
+          amount: this.config.vaultWithdrawAmount.toString(),
+          vault: { address: this.storage.addresses.mockVault! },
+        },
+      },
+    ])
+    const newBalance = await this.getVaultBalance(this.storage.addresses.mockVault!)
+    assert(newBalance.locked < oldBalance.locked)
+    assert.equal(newBalance.unlocking.length, 1)
+
+    printGreen(
+      `Requested unlock: ID #${newBalance.unlocking[0].id}, amount: ${
+        newBalance.unlocking[0].amount
+      } in exchange for: ${oldBalance.locked - newBalance.locked} ${this.config.vaultTokenDenom}`,
+    )
+  }
+
+  private async getAccountBalance(denom: string) {
+    const positions = await this.query.positions({ accountId: this.accountId! })
+    const coin = positions.coins.find((c) => c.denom === denom)
+    if (!coin) throw new Error(`No balance of ${denom}`)
+    return parseInt(coin.amount)
+  }
+
+  private async getVaultBalance(vaultAddr: string) {
+    const positions = await this.query.positions({ accountId: this.accountId! })
+    const vault = positions.vaults.find((p) => p.vault.address === vaultAddr)
+    if (!vault) throw new Error(`No balance for ${vaultAddr}`)
+    return {
+      locked: parseInt(vault.state.locked),
+      unlocked: parseInt(vault.state.unlocked),
+      unlocking: vault.state.unlocking,
+    }
   }
 
   private async updateCreditAccount(actions: Action[], funds?: Coin[]) {
