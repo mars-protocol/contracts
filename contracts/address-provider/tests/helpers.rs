@@ -29,5 +29,5 @@ pub fn th_query<T: serde::de::DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T 
 }
 
 pub fn instantiate_address_provider(app: &mut BasicApp) -> Addr {
-    mars_testing::mock_multitest::instantiate_address_provider(app)
+    mars_testing::multitest::mock_multitest::deploy_address_provider(app)
 }
