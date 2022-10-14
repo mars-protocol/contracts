@@ -25,4 +25,4 @@ pub use mars_mock_querier::MarsMockQuerier;
 #[cfg(not(target_arch = "wasm32"))]
 pub use mocks::*;
 
-pub mod mock_multitest;
+pub mod multitest;
