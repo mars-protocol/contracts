@@ -1,0 +1,37 @@
+[package]
+name = "mars-integration-tests"
+version = "0.1.0"
+authors = [
+  "Piotr Babel <piotr@delphilabs.io>"
+]
+edition = "2021"
+description = "Mars outposts integration tests"
+license = "GPL-3.0"
+repository = "https://github.com/mars-protocol/outposts"
+homepage = "https://marsprotocol.io"
+documentation = "https://docs.marsprotocol.io/mars-protocol/developers/protocol-overview"
+readme = "README.md"
+keywords = ["mars", "cosmwasm"]
+
+exclude = [
+  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "contract.wasm",
+  "hash.txt",
+]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest = false
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+mars-outpost = { path = "../packages/outpost" }
+cosmwasm-std = "1.1"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+osmosis-std = "0.12"
+
+[profile.release]
+overflow-checks = true
