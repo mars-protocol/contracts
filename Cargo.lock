@@ -521,6 +521,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-integration-tests"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "mars-outpost",
+ "osmosis-std",
+ "serde",
+]
+
+[[package]]
 name = "mars-oracle-base"
 version = "0.1.0"
 dependencies = [
@@ -619,6 +629,7 @@ dependencies = [
 name = "mars-testing"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "cosmwasm-std",
  "cw-multi-test",
  "mars-address-provider",
