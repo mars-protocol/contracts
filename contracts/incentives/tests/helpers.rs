@@ -21,5 +21,6 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
 }
 
 pub fn instantiate_incentives(app: &mut BasicApp) -> Addr {
-    mars_testing::multitest::mock_multitest::deploy_incentives(app)
+    // mars_testing::integration::mock_multitest::deploy_incentives(app)
+    unimplemented!()
 }
