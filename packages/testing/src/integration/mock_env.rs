@@ -13,10 +13,9 @@ use mars_outpost::red_bank::{
 };
 use mars_outpost::{address_provider, incentives, oracle, red_bank, rewards_collector};
 use std::mem::take;
-use std::ops::Add;
 
 pub struct MockEnv {
-    pub app: BasicApp,
+    pub app: App,
     pub owner: Addr,
     pub address_provider: AddressProvider,
     pub incentives: Incentives,
@@ -25,27 +24,36 @@ pub struct MockEnv {
     pub rewards_collector: RewardsCollector,
 }
 
+#[derive(Clone)]
 pub struct AddressProvider {
     contract_addr: Addr,
 }
 
+#[derive(Clone)]
 pub struct Incentives {
     contract_addr: Addr,
 }
 
+#[derive(Clone)]
 pub struct Oracle {
     contract_addr: Addr,
 }
 
+#[derive(Clone)]
 pub struct RedBank {
     contract_addr: Addr,
 }
 
+#[derive(Clone)]
 pub struct RewardsCollector {
     contract_addr: Addr,
 }
 
 impl MockEnv {
+    pub fn increment_by_blocks(&mut self, num_of_blocks: u64) {
+        self.app.update_block(|block| block.height += num_of_blocks)
+    }
+
     pub fn fund_account(&mut self, addr: &Addr, coins: &[Coin]) {
         self.app
             .sudo(SudoMsg::Bank(BankSudo::Mint {
@@ -281,12 +289,12 @@ pub struct MockEnvBuilder {
 }
 
 impl MockEnvBuilder {
-    fn new(admin: Option<String>, owner: Addr) -> Self {
+    pub fn new(admin: Option<String>, owner: Addr) -> Self {
         Self {
             app: App::default(),
             admin,
             owner,
-            chain_prefix: "uosmo".to_string(),
+            chain_prefix: "".to_string(), // empty prefix for multitest because deployed contracts have addresses such as contract1, contract2 etc which are invalid in address-provider
             mars_denom: "umars".to_string(),
             base_denom: "uosmo".to_string(),
             close_factor: Decimal::percent(80),
@@ -472,9 +480,9 @@ impl MockEnvBuilder {
                     safety_fund_denom: self.safety_fund_denom.clone(),
                     fee_collector_denom: self.fee_collector_denom.clone(),
                     channel_id: "0".to_string(),
-                    timeout_revision: 0,
-                    timeout_blocks: 0,
-                    timeout_seconds: 0,
+                    timeout_revision: 1,
+                    timeout_blocks: 150,
+                    timeout_seconds: 900,
                     slippage_tolerance: self.slippage_tolerance,
                 },
                 &[],
