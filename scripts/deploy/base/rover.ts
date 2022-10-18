@@ -70,6 +70,9 @@ export class Rover {
     printGreen(`Withdrew: ${amount} ${this.config.baseDenom}`)
   }
 
+  // If this fails, it's likely because Red Bank has not whitelisted uncollateralized borrows.
+  // Need to issue this msg from Red Bank admin:
+  // {"update_uncollateralized_loan_limit": {"user":"[rover addr]","denom":"uosmo","new_limit":"1000000000"} }
   async borrow() {
     const amount = this.config.borrowAmount.toString()
     await this.updateCreditAccount([{ borrow: { amount, denom: this.config.baseDenom } }])

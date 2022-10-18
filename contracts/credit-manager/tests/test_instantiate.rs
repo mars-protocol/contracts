@@ -120,15 +120,18 @@ fn test_raises_on_invalid_red_bank_addr() {
 
 #[test]
 fn test_oracle_set_on_instantiate() {
-    let oracle_contract = "oracle_contract_456".to_string();
-    let mock = MockEnv::new().oracle(&oracle_contract).build().unwrap();
+    let oracle_adapter_contract = "oracle_contract_456".to_string();
+    let mock = MockEnv::new()
+        .oracle_adapter(&oracle_adapter_contract)
+        .build()
+        .unwrap();
     let res = mock.query_config();
-    assert_eq!(oracle_contract, res.oracle);
+    assert_eq!(oracle_adapter_contract, res.oracle);
 }
 
 #[test]
 fn test_raises_on_invalid_oracle_addr() {
-    let mock = MockEnv::new().oracle("%%%INVALID%%%").build();
+    let mock = MockEnv::new().oracle_adapter("%%%INVALID%%%").build();
     if mock.is_ok() {
         panic!("Should have thrown an error");
     }

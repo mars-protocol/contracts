@@ -5,7 +5,7 @@ pub mod deposit;
 pub mod execute;
 pub mod health;
 pub mod instantiate;
-pub mod liquidate;
+pub mod liquidate_coin;
 pub mod query;
 pub mod repay;
 pub mod state;

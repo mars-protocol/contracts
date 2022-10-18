@@ -26,9 +26,9 @@ pub fn query_vault_info(deps: Deps) -> StdResult<VaultInfo> {
     let all_coins = get_all_vault_coins(deps.storage)?;
     let accepted_denoms = all_coins.iter().map(|c| c.denom.clone()).collect();
     Ok(VaultInfo {
-        accepts: vec![accepted_denoms],
+        accepts: accepted_denoms,
         lockup: LOCKUP_TIME.load(deps.storage)?,
-        vault_coin_denom: LP_TOKEN_DENOM.load(deps.storage)?,
+        token_denom: LP_TOKEN_DENOM.load(deps.storage)?,
     })
 }
 
@@ -42,7 +42,7 @@ pub fn get_all_vault_coins(storage: &dyn Storage) -> StdResult<Vec<Coin>> {
         .collect()
 }
 
-pub fn query_unlocking_position(deps: Deps, id: Uint128) -> StdResult<UnlockingPosition> {
+pub fn query_unlocking_position(deps: Deps, id: u64) -> StdResult<UnlockingPosition> {
     UNLOCKING_COINS
         .range(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?

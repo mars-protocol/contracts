@@ -53,7 +53,7 @@ pub enum Action {
         amount: Uint128,
     },
     /// Withdraws the assets for unlocking position id from vault. Required time must have elapsed.
-    VaultWithdrawUnlocked { id: Uint128, vault: VaultUnchecked },
+    VaultWithdrawUnlocked { id: u64, vault: VaultUnchecked },
     /// Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt
     /// denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the
     /// liquidatee should have a balance of. The amount returned to liquidator will be the request coin
@@ -70,6 +70,15 @@ pub enum Action {
         debt_coin: Coin,
         /// The coin they wish to acquire from the liquidatee (amount returned will include the bonus)
         request_coin_denom: String,
+    },
+    /// Pay back debt of a liquidatable rover account for a via liquidating a vault position.
+    /// Similar to LiquidateCoin {} msg and will make similar adjustments to the request.
+    /// The vault position will be withdrawn (and force withdrawn if a locked vault position) and
+    /// the underlying assets will transferred to the liquidator.
+    LiquidateVault {
+        liquidatee_account_id: String,
+        debt_coin: Coin,
+        request_vault: VaultUnchecked,
     },
     /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
     SwapExactIn {
@@ -135,7 +144,7 @@ pub enum CallbackMsg {
     VaultWithdrawUnlocked {
         account_id: String,
         vault: Vault,
-        position_id: Uint128,
+        position_id: u64,
     },
     /// Pay back debts of a liquidatable rover account for a bonus
     LiquidateCoin {
@@ -143,6 +152,12 @@ pub enum CallbackMsg {
         liquidatee_account_id: String,
         debt_coin: Coin,
         request_coin_denom: String,
+    },
+    LiquidateVault {
+        liquidator_account_id: String,
+        liquidatee_account_id: String,
+        debt_coin: Coin,
+        request_vault: Vault,
     },
     /// Determine health factor improved as a consequence of liquidation event
     AssertHealthFactorImproved {

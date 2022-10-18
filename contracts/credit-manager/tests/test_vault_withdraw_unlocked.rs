@@ -36,10 +36,7 @@ fn test_only_owner_can_withdraw_unlocked_for_account() {
     let res = mock.update_credit_account(
         &account_id,
         &bad_guy,
-        vec![VaultWithdrawUnlocked {
-            id: Uint128::new(423),
-            vault,
-        }],
+        vec![VaultWithdrawUnlocked { id: 423, vault }],
         &[],
     );
 
@@ -63,10 +60,7 @@ fn test_can_only_take_action_on_whitelisted_vaults() {
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![VaultWithdrawUnlocked {
-            id: Uint128::new(234),
-            vault,
-        }],
+        vec![VaultWithdrawUnlocked { id: 234, vault }],
         &[],
     );
 

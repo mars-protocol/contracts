@@ -147,7 +147,7 @@ export class Deployer {
     const msg: RoverInstantiateMsg = {
       allowed_coins: [this.config.baseDenom, this.config.secondaryDenom],
       allowed_vaults: [{ address: this.storage.addresses.mockVault! }],
-      oracle: this.config.oracleAddr,
+      oracle: this.storage.addresses.marsOracleAdapter!,
       owner: this.deployerAddr,
       red_bank: this.config.redBankAddr,
       max_close_factor: this.config.maxCloseFactor.toString(),

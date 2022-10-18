@@ -1,6 +1,6 @@
 use std::ops::{Add, Div};
 
-use cosmwasm_std::{Coin, Decimal, Deps, DepsMut, Env, Response, StdError};
+use cosmwasm_std::{Coin, Decimal, Deps, DepsMut, Env, Response, StdError, Uint128};
 use mars_health::health::Health;
 
 use rover::error::{ContractError, ContractResult};
@@ -20,22 +20,17 @@ pub fn liquidate_coin(
     debt_coin: Coin,
     request_coin_denom: &str,
 ) -> ContractResult<Response> {
-    // Assert the liquidatee's credit account is liquidatable
-    let health = compute_health(deps.as_ref(), &env, liquidatee_account_id)?;
-    if !health.is_liquidatable() {
-        return Err(ContractError::NotLiquidatable {
-            account_id: liquidatee_account_id.to_string(),
-            lqdt_health_factor: val_or_na(health.liquidation_health_factor),
-        });
-    }
+    let request_coin_balance = COIN_BALANCES
+        .load(deps.storage, (liquidatee_account_id, request_coin_denom))
+        .map_err(|_| ContractError::CoinNotAvailable(request_coin_denom.to_string()))?;
 
-    let (debt, request) = calculate_liquidation_request(
+    let (health, debt, request) = calculate_liquidation(
         &deps,
         &env,
         liquidatee_account_id,
         &debt_coin,
         request_coin_denom,
-        &health,
+        request_coin_balance,
     )?;
 
     // Transfer debt coin from liquidator's coin balance to liquidatee
@@ -62,7 +57,7 @@ pub fn liquidate_coin(
     Ok(Response::new()
         .add_message(repay_msg)
         .add_message(assert_healthier_msg)
-        .add_attribute("action", "rover/credit_manager/liquidate")
+        .add_attribute("action", "rover/credit_manager/liquidate_coin")
         .add_attribute("liquidatee_account_id", liquidatee_account_id)
         .add_attribute("debt_repaid_denom", debt.denom)
         .add_attribute("debt_repaid_amount", debt.amount)
@@ -75,14 +70,24 @@ pub fn liquidate_coin(
 /// - Exceeds liquidatee's total debt for denom
 /// - Not enough liquidatee request coin balance to match
 /// - The value of the debt repaid exceeds the maximum close factor %
-fn calculate_liquidation_request(
+/// Returns -> (Health, Debt Coin, Request Coin)
+pub fn calculate_liquidation(
     deps: &DepsMut,
     env: &Env,
     liquidatee_account_id: &str,
     debt_coin: &Coin,
     request_coin: &str,
-    health: &Health,
-) -> ContractResult<(Coin, Coin)> {
+    request_coin_balance: Uint128,
+) -> ContractResult<(Health, Coin, Coin)> {
+    // Assert the liquidatee's credit account is liquidatable
+    let health = compute_health(deps.as_ref(), env, liquidatee_account_id)?;
+    if !health.is_liquidatable() {
+        return Err(ContractError::NotLiquidatable {
+            account_id: liquidatee_account_id.to_string(),
+            lqdt_health_factor: val_or_na(health.liquidation_health_factor),
+        });
+    }
+
     // Ensure debt repaid does not exceed liquidatee's total debt for denom
     let (total_debt_amount, _) =
         current_debt_for_denom(deps.as_ref(), env, liquidatee_account_id, debt_coin)?;
@@ -96,13 +101,10 @@ fn calculate_liquidation_request(
 
     // Calculate the maximum debt possible to repay given liquidatee's request coin balance
     // FORMULA: debt amount = request value / (1 + liquidation bonus %) / debt price
-    let liquidatee_balance = COIN_BALANCES
-        .load(deps.storage, (liquidatee_account_id, request_coin))
-        .map_err(|_| ContractError::CoinNotAvailable(request_coin.to_string()))?;
     let request_res = oracle.query_price(&deps.querier, request_coin)?;
     let max_request_value = request_res
         .price
-        .checked_mul(liquidatee_balance.to_dec()?)?;
+        .checked_mul(request_coin_balance.to_dec()?)?;
     let liq_bonus_rate = MAX_LIQUIDATION_BONUS.load(deps.storage)?;
     let request_coin_adjusted_max_debt = max_request_value
         .div(liq_bonus_rate.add(Decimal::one()))
@@ -121,15 +123,15 @@ fn calculate_liquidation_request(
 
     // Calculate exact request coin amount to give to liquidator
     // FORMULA: request amount = (1 + liquidation bonus %) * debt value / request coin price
-    let debt_amount_dec = final_debt_to_repay.to_dec()?;
     let request_amount = liq_bonus_rate
         .add(Decimal::one())
-        .checked_mul(debt_res.price.checked_mul(debt_amount_dec)?)?
+        .checked_mul(debt_res.price.checked_mul(final_debt_to_repay.to_dec()?)?)?
         .div(request_res.price)
         .uint128();
 
-    // (Debt Coin, Request Coin)
+    // (Health, Debt Coin, Request Coin)
     Ok((
+        health,
         Coin {
             denom: debt_coin.denom.clone(),
             amount: final_debt_to_repay,

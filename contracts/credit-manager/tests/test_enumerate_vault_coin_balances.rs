@@ -119,7 +119,7 @@ fn test_pagination_on_all_vault_coin_balances_query_works() {
         .chain(vaults_res_c.iter().cloned())
         .chain(vaults_res_d.iter().cloned())
         .map(|v| v.vault.query_info(&mock.app.wrap()).unwrap())
-        .map(|info| info.vault_coin_denom)
+        .map(|info| info.token_denom)
         .collect::<Vec<_>>();
 
     assert_eq!(combined.len(), all_vaults.len());

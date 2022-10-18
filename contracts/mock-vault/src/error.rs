@@ -16,6 +16,9 @@ pub enum ContractError {
     #[error("This vault does not require a lockup, just withdraw directly")]
     NoLockupTime,
 
+    #[error("Lockup position {0} not found")]
+    LockupPositionNotFound(u64),
+
     #[error("There is more time left on the lock period")]
     UnlockNotReady,
 

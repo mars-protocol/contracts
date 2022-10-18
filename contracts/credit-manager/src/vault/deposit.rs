@@ -2,11 +2,10 @@ use cosmwasm_std::{
     to_binary, Addr, Coin, CosmosMsg, DepsMut, QuerierWrapper, Response, Uint128, WasmMsg,
 };
 
-use rover::adapters::{Vault, VaultPositionUpdate};
+use rover::adapters::{UpdateType, Vault, VaultPositionUpdate};
 use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg;
-use rover::traits::Stringify;
 
 use crate::utils::{assert_coins_are_whitelisted, contents_equal, decrement_coin_balance};
 use crate::vault::utils::{assert_vault_is_whitelisted, update_vault_position};
@@ -67,8 +66,14 @@ pub fn update_vault_coin_balance(
         account_id,
         &vault.address,
         match vault_info.lockup {
-            None => VaultPositionUpdate::IncrementUnlocked(diff),
-            Some(_) => VaultPositionUpdate::IncrementLocked(diff),
+            None => VaultPositionUpdate::Unlocked {
+                amount: diff,
+                kind: UpdateType::Increment,
+            },
+            Some(_) => VaultPositionUpdate::Locked {
+                amount: diff,
+                kind: UpdateType::Increment,
+            },
         },
     )?;
 
@@ -87,23 +92,14 @@ pub fn assert_denoms_match_vault_reqs(
 ) -> ContractResult<()> {
     let vault_info = vault.query_info(&querier)?;
 
-    // Check if coins match one of the accepted combinations for vault
-    let denoms = coins.iter().map(|c| c.denom.clone()).collect::<Vec<_>>();
-    let matched_combo = vault_info
-        .accepts
-        .iter()
-        .any(|combo| contents_equal(combo, &denoms));
+    let given_denoms = coins.iter().map(|c| c.denom.clone()).collect::<Vec<_>>();
+    let fulfills_reqs = contents_equal(&vault_info.accepts, &given_denoms);
 
-    if !matched_combo {
+    if !fulfills_reqs {
         return Err(ContractError::RequirementsNotMet(format!(
             "Required assets: {} -- do not match given assets: {}",
-            vault_info
-                .accepts
-                .iter()
-                .map(|v| v.join(", "))
-                .collect::<Vec<_>>()
-                .join(" or "),
-            coins.to_string()
+            vault_info.accepts.join(", "),
+            given_denoms.join(", ")
         )));
     }
     Ok(())

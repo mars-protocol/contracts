@@ -14,4 +14,4 @@ pub const ORACLE: Item<Oracle> = Item::new("oracle");
 pub const CHAIN_BANK: Item<Uint128> = Item::new("chain_bank");
 
 pub const UNLOCKING_COINS: Map<Addr, Vec<UnlockingPosition>> = Map::new("unlocking_coins");
-pub const NEXT_UNLOCK_ID: Item<Uint128> = Item::new("next_unlock_id");
+pub const NEXT_UNLOCK_ID: Item<u64> = Item::new("next_unlock_id");

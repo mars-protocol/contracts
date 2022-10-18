@@ -13,11 +13,11 @@ use crate::state::{
     OWNER, RED_BANK, SWAPPER,
 };
 use crate::vault::{
-    deposit_into_vault, request_unlock_from_vault, update_vault_coin_balance, withdraw_from_vault,
-    withdraw_unlocked_from_vault,
+    deposit_into_vault, liquidate_vault, request_unlock_from_vault, update_vault_coin_balance,
+    withdraw_from_vault, withdraw_unlocked_from_vault,
 };
 
-use crate::liquidate::{assert_health_factor_improved, liquidate_coin};
+use crate::liquidate_coin::{assert_health_factor_improved, liquidate_coin};
 use crate::swap::swap_exact_in;
 use crate::update_coin_balances::update_coin_balances;
 use crate::withdraw::withdraw;
@@ -198,6 +198,16 @@ pub fn dispatch_actions(
                 debt_coin: debt_coin.clone(),
                 request_coin_denom: request_coin_denom.clone(),
             }),
+            Action::LiquidateVault {
+                liquidatee_account_id,
+                debt_coin,
+                request_vault,
+            } => callbacks.push(CallbackMsg::LiquidateVault {
+                liquidator_account_id: account_id.to_string(),
+                liquidatee_account_id: liquidatee_account_id.to_string(),
+                debt_coin: debt_coin.clone(),
+                request_vault: request_vault.check(deps.api)?,
+            }),
             Action::SwapExactIn {
                 coin_in,
                 denom_out,
@@ -299,6 +309,19 @@ pub fn execute_callback(
             &liquidatee_account_id,
             debt_coin,
             &request_coin_denom,
+        ),
+        CallbackMsg::LiquidateVault {
+            liquidator_account_id,
+            liquidatee_account_id,
+            debt_coin,
+            request_vault,
+        } => liquidate_vault(
+            deps,
+            env,
+            &liquidator_account_id,
+            &liquidatee_account_id,
+            debt_coin,
+            request_vault,
         ),
         CallbackMsg::AssertHealthFactorImproved {
             account_id,

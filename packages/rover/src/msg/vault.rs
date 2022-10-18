@@ -14,13 +14,18 @@ pub enum ExecuteMsg {
     /// A privileged action only to be used by Rover. Same as `Withdraw` except it bypasses any lockup period
     /// restrictions on the vault. Used only in the case position is unhealthy and requires immediate liquidation.
     ForceWithdraw {},
+    /// Force withdraw from a position that is already unlocking (Unlock has already been called)
+    ForceWithdrawUnlocking {
+        lockup_id: u64,
+        amount: Option<Uint128>,
+    },
     /// Some vaults have lockup periods (typically between 1-14 days). This action sends vault `Coin`
     /// which is locked for vault lockup period and available to `Unlock` after that time has elapsed.
     /// On response, vault sends back `unlocking_position_created` event with attribute `id` representing
     /// the new unlocking coins position.
     RequestUnlock {},
     /// Withdraw assets in vault that have been unlocked for given unlocking position
-    WithdrawUnlocked { id: Uint128 },
+    WithdrawUnlocked { id: u64 },
 }
 
 #[cw_serde]
@@ -41,16 +46,15 @@ pub enum QueryMsg {
     #[returns(Vec<UnlockingPosition>)]
     UnlockingPositionsForAddr { addr: String },
     #[returns(UnlockingPosition)]
-    UnlockingPosition { id: Uint128 },
+    UnlockingPosition { id: u64 },
 }
 
 #[cw_serde]
 pub struct VaultInfo {
     /// Denom of vault token
-    pub vault_coin_denom: String,
-    /// Coin denoms required to enter vault.
-    /// Multiple vectors indicate the vault accepts more than one combination to enter.
-    pub accepts: Vec<Vec<String>>,
+    pub token_denom: String,
+    /// Coin denoms required to enter vault
+    pub accepts: Vec<String>,
     /// Time in seconds for unlock period
     pub lockup: Option<u64>,
 }
@@ -58,7 +62,7 @@ pub struct VaultInfo {
 #[cw_serde]
 pub struct UnlockingPosition {
     /// Unique identifier representing the unlocking position. Needed for `ExecuteMsg::Unlock {}` call.
-    pub id: Uint128,
+    pub id: u64,
     /// Number of vault tokens
     pub amount: Uint128,
     /// Absolute time when position unlocks in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC)

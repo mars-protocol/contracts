@@ -132,7 +132,7 @@ fn test_pagination_on_all_vault_positions_query_works() {
         .chain(vaults_res_c.iter().cloned())
         .chain(vaults_res_d.iter().cloned())
         .map(|v| v.position.vault.query_info(&mock.app.wrap()).unwrap())
-        .map(|info| info.vault_coin_denom)
+        .map(|info| info.token_denom)
         .collect::<Vec<_>>();
 
     let deduped = combined.iter().unique().cloned().collect::<Vec<_>>();

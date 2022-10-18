@@ -6,15 +6,15 @@ use rover::traits::Coins;
 
 use crate::query::query_positions;
 use crate::state::{ORACLE, RED_BANK};
-use crate::vault::simulate_withdraw;
+use crate::vault::get_priceable_coins;
 
 pub fn compute_health(deps: Deps, env: &Env, account_id: &str) -> ContractResult<Health> {
     let res = query_positions(deps, env, account_id)?;
-    let coins_if_withdrawn = simulate_withdraw(&deps, &res.vaults)?;
+    let priceable_coins = get_priceable_coins(&deps, &res.vaults)?;
 
-    let mut collateral = Vec::with_capacity(res.coins.len() + coins_if_withdrawn.len());
+    let mut collateral = Vec::with_capacity(res.coins.len() + priceable_coins.len());
     collateral.extend(res.coins);
-    collateral.extend(coins_if_withdrawn);
+    collateral.extend(priceable_coins);
 
     let oracle = ORACLE.load(deps.storage)?;
     let red_bank = RED_BANK.load(deps.storage)?;

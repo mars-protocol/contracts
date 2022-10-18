@@ -4,6 +4,7 @@ use std::hash::Hash;
 
 use rover::error::{ContractError, ContractResult};
 use rover::msg::query::CoinValue;
+use rover::traits::IntoDecimal;
 
 use crate::state::{ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, TOTAL_DEBT_SHARES};
 
@@ -84,8 +85,7 @@ pub fn debt_shares_to_amount(
 pub fn coin_value(deps: &Deps, coin: &Coin) -> ContractResult<CoinValue> {
     let oracle = ORACLE.load(deps.storage)?;
     let res = oracle.query_price(&deps.querier, &coin.denom)?;
-    let decimal_amount = Decimal::from_atomics(coin.amount, 0)?;
-    let value = res.price.checked_mul(decimal_amount)?;
+    let value = res.price.checked_mul(coin.amount.to_dec()?)?;
     Ok(CoinValue {
         denom: coin.denom.clone(),
         amount: coin.amount,

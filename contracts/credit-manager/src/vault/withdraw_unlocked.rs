@@ -1,11 +1,13 @@
-use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, Uint128, WasmMsg};
+use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, WasmMsg};
 
-use rover::adapters::{Vault, VaultPositionUpdate};
+use rover::adapters::{UpdateType, Vault, VaultPositionUpdate};
 use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::CallbackMsg;
+use rover::msg::vault::UnlockingPosition;
 use rover::msg::ExecuteMsg;
 
 use crate::state::VAULT_POSITIONS;
+use crate::vault::get_unlocking_position;
 use crate::vault::utils::{
     assert_vault_is_whitelisted, query_withdraw_denom_balances, update_vault_position,
 };
@@ -15,21 +17,15 @@ pub fn withdraw_unlocked_from_vault(
     env: Env,
     account_id: &str,
     vault: Vault,
-    position_id: Uint128,
+    position_id: u64,
 ) -> ContractResult<Response> {
     assert_vault_is_whitelisted(deps.storage, &vault)?;
 
     let vault_position = VAULT_POSITIONS.load(deps.storage, (account_id, vault.address.clone()))?;
-
-    let matching_unlock = vault_position
-        .unlocking
-        .iter()
-        .find(|p| p.id == position_id)
-        .ok_or_else(|| ContractError::NoPositionMatch(position_id.to_string()))?;
-
-    let matching_unlock = vault.query_unlocking_position_info(&deps.querier, matching_unlock.id)?;
-
-    if matching_unlock.unlocked_at > env.block.time {
+    let matching_unlock = get_unlocking_position(position_id, &vault_position)?;
+    let UnlockingPosition { unlocked_at, .. } =
+        vault.query_unlocking_position_info(&deps.querier, matching_unlock.id)?;
+    if unlocked_at > env.block.time {
         return Err(ContractError::UnlockNotReady {});
     }
 
@@ -37,7 +33,11 @@ pub fn withdraw_unlocked_from_vault(
         deps.storage,
         account_id,
         &vault.address,
-        VaultPositionUpdate::RemoveUnlocking(position_id),
+        VaultPositionUpdate::Unlocking {
+            id: position_id,
+            amount: matching_unlock.amount,
+            kind: UpdateType::Decrement,
+        },
     )?;
 
     // Updates coin balances for account after the withdraw has taken place

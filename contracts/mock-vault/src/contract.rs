@@ -15,7 +15,7 @@ use crate::query::{
     query_vault_coins_issued, query_vault_info,
 };
 use crate::state::{ASSETS, CHAIN_BANK, LOCKUP_TIME, LP_TOKEN_DENOM, NEXT_UNLOCK_ID, ORACLE};
-use crate::unlock::{request_unlock, withdraw_unlocked};
+use crate::unlock::{request_unlock, withdraw_unlocked, withdraw_unlocking_force};
 use crate::withdraw::{withdraw, withdraw_force};
 
 pub const STARTING_VAULT_SHARES: Uint128 = Uint128::new(1_000_000);
@@ -38,7 +38,7 @@ pub fn instantiate(
     ORACLE.save(deps.storage, &msg.oracle.check(deps.api)?)?;
     LP_TOKEN_DENOM.save(deps.storage, &msg.lp_token_denom)?;
     CHAIN_BANK.save(deps.storage, &DEFAULT_VAULT_TOKEN_PREFUND)?;
-    NEXT_UNLOCK_ID.save(deps.storage, &Uint128::new(1))?;
+    NEXT_UNLOCK_ID.save(deps.storage, &1)?;
     Ok(Response::default())
 }
 
@@ -53,8 +53,11 @@ pub fn execute(
         ExecuteMsg::Deposit {} => deposit(deps, info),
         ExecuteMsg::Withdraw {} => withdraw(deps, info),
         ExecuteMsg::ForceWithdraw {} => withdraw_force(deps, info),
+        ExecuteMsg::ForceWithdrawUnlocking { lockup_id, amount } => {
+            withdraw_unlocking_force(deps, &info.sender, lockup_id, amount)
+        }
         ExecuteMsg::RequestUnlock {} => request_unlock(deps, env, info),
-        ExecuteMsg::WithdrawUnlocked { id } => withdraw_unlocked(deps, env, info, id),
+        ExecuteMsg::WithdrawUnlocked { id } => withdraw_unlocked(deps, env, &info.sender, id),
     }
 }
 

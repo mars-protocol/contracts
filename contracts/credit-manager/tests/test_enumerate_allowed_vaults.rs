@@ -42,7 +42,7 @@ fn test_pagination_on_allowed_vaults_query_works() {
         .chain(vaults_res_d.iter().cloned())
         .map(|v| v.check(&MockApi::default()).unwrap())
         .map(|v| v.query_info(&mock.app.wrap()).unwrap())
-        .map(|info| info.vault_coin_denom)
+        .map(|info| info.token_denom)
         .collect::<Vec<_>>();
 
     assert_eq!(combined.len(), allowed_vaults.len());

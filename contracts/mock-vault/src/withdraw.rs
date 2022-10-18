@@ -12,18 +12,18 @@ pub fn withdraw(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractEr
         return Err(ContractError::UnlockRequired {});
     }
     let vault_tokens = get_vault_token(deps.storage, info.funds.clone())?;
-    _exchange(deps.storage, info.sender, vault_tokens.amount)
+    _exchange(deps.storage, &info.sender, vault_tokens.amount)
 }
 
 pub fn withdraw_force(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
     let vault_tokens = get_vault_token(deps.storage, info.funds.clone())?;
-    _exchange(deps.storage, info.sender, vault_tokens.amount)
+    _exchange(deps.storage, &info.sender, vault_tokens.amount)
 }
 
 /// Swap shares for underlying assets
 pub fn _exchange(
     storage: &mut dyn Storage,
-    send_to: Addr,
+    send_to: &Addr,
     shares: Uint128,
 ) -> Result<Response, ContractError> {
     let coins = query_coins_for_shares(storage, shares)?;

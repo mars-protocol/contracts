@@ -4,11 +4,11 @@ use mock_oracle::msg::CoinPrice;
 use rover::error::ContractError;
 use rover::error::ContractError::{AboveMaxLTV, NotLiquidatable};
 use rover::msg::execute::Action::{Borrow, Deposit, LiquidateCoin, VaultDeposit};
-use rover::msg::query::DebtAmount;
 use rover::traits::IntoDecimal;
 
 use crate::helpers::{
-    assert_err, get_coin, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv, VaultTestInfo,
+    assert_err, get_coin, get_debt, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv,
+    VaultTestInfo,
 };
 
 pub mod helpers;
@@ -99,14 +99,14 @@ fn test_vault_positions_contribute_to_health() {
         &liquidatee,
         vec![
             Deposit(uatom_info.to_coin(200)),
-            Deposit(uosmo_info.to_coin(400)),
+            Deposit(uosmo_info.to_coin(401)),
             VaultDeposit {
                 vault,
                 coins: vec![coin(200, "uatom"), coin(400, "uosmo")],
             },
             Borrow(uatom_info.to_coin(14)),
         ],
-        &[coin(200, "uatom"), coin(400, "uosmo")],
+        &[coin(200, "uatom"), coin(401, "uosmo")],
     )
     .unwrap();
 
@@ -131,7 +131,7 @@ fn test_vault_positions_contribute_to_health() {
         res,
         NotLiquidatable {
             account_id: liquidatee_account_id,
-            lqdt_health_factor: "18.04".to_string(),
+            lqdt_health_factor: "18.053".to_string(),
         },
     )
 }
@@ -763,14 +763,3 @@ fn test_debt_amount_no_adjustment() {
 // - Withdraw
 #[test]
 fn test_liquidate_with_no_deposited_funds() {}
-
-#[test]
-fn test_liquidate_with_vault_position() {}
-
-fn get_debt(denom: &str, coins: &[DebtAmount]) -> DebtAmount {
-    coins
-        .iter()
-        .find(|coin| coin.denom.as_str() == denom)
-        .unwrap()
-        .clone()
-}

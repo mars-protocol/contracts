@@ -1,6 +1,6 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, Uint128, WasmMsg};
 
-use rover::adapters::{Vault, VaultPositionUpdate};
+use rover::adapters::{UpdateType, Vault, VaultPositionUpdate};
 use rover::error::ContractResult;
 use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg as RoverExecuteMsg;
@@ -26,9 +26,15 @@ pub fn withdraw_from_vault(
         account_id,
         &vault.address,
         if force {
-            VaultPositionUpdate::DecrementLocked(amount)
+            VaultPositionUpdate::Locked {
+                amount,
+                kind: UpdateType::Decrement,
+            }
         } else {
-            VaultPositionUpdate::DecrementUnlocked(amount)
+            VaultPositionUpdate::Unlocked {
+                amount,
+                kind: UpdateType::Decrement,
+            }
         },
     )?;
 

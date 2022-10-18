@@ -1,8 +1,6 @@
-use std::str::FromStr;
-
 use crate::msg::vault::UNLOCKING_POSITION_CREATED_EVENT_TYPE;
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Coin, Reply, StdError, StdResult, SubMsgResult, Uint128};
+use cosmwasm_std::{Coin, Reply, StdError, StdResult, SubMsgResult};
 
 // https://github.com/CosmWasm/wasmd/blob/main/EVENTS.md#standard-events-in-xwasm
 const CONTRACT_ADDR_KEY: &str = "_contract_addr";
@@ -16,7 +14,7 @@ pub struct AssetTransferMsg {
 
 #[cw_serde]
 pub struct UnlockEvent {
-    pub id: Uint128,
+    pub id: u64,
     pub vault_addr: String,
 }
 
@@ -52,7 +50,9 @@ impl AttrParse for Reply {
                     .value;
 
                 Ok(UnlockEvent {
-                    id: Uint128::from_str(id)?,
+                    id: id
+                        .parse::<u64>()
+                        .map_err(|_| StdError::generic_err("Could not parse id from reply"))?,
                     vault_addr: contract_addr.to_string(),
                 })
             }

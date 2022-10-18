@@ -16,23 +16,36 @@ pub const VAULT_REQUEST_REPLY_ID: u64 = 10_001;
 pub struct VaultPositionState {
     pub unlocked: Uint128,
     pub locked: Uint128,
-    pub unlocking: Vec<VaultUnlockingId>,
+    pub unlocking: Vec<VaultUnlockingPosition>,
+}
+
+#[cw_serde]
+pub enum UpdateType {
+    Increment,
+    Decrement,
 }
 
 #[cw_serde]
 pub enum VaultPositionUpdate {
-    DecrementUnlocked(Uint128),
-    IncrementUnlocked(Uint128),
-    DecrementLocked(Uint128),
-    IncrementLocked(Uint128),
-    AddUnlocking(VaultUnlockingId),
-    RemoveUnlocking(UnlockingId),
+    Unlocked {
+        amount: Uint128,
+        kind: UpdateType,
+    },
+    Locked {
+        amount: Uint128,
+        kind: UpdateType,
+    },
+    Unlocking {
+        id: UnlockingId,
+        amount: Uint128,
+        kind: UpdateType,
+    },
 }
 
-pub type UnlockingId = Uint128;
+pub type UnlockingId = u64;
 
 #[cw_serde]
-pub struct VaultUnlockingId {
+pub struct VaultUnlockingPosition {
     /// Unique identifier representing the unlocking position. Needed for `ExecuteMsg::WithdrawUnlocked {}` call.
     pub id: UnlockingId,
     /// Number of vault tokens
@@ -41,7 +54,10 @@ pub struct VaultUnlockingId {
 
 impl VaultPositionState {
     pub fn total(&self) -> Result<Uint128, OverflowError> {
-        self.locked.checked_add(self.unlocked)
+        let total_unlocking = self.unlocking.iter().map(|u| u.amount).sum();
+        self.locked
+            .checked_add(self.unlocked)?
+            .checked_add(total_unlocking)
     }
 }
 
@@ -117,7 +133,7 @@ impl Vault {
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address.to_string(),
             funds: vec![Coin {
-                denom: vault_info.vault_coin_denom,
+                denom: vault_info.token_denom,
                 amount,
             }],
             msg: to_binary(
@@ -127,6 +143,19 @@ impl Vault {
                     ExecuteMsg::Withdraw {}
                 }),
             )?,
+        });
+        Ok(withdraw_msg)
+    }
+
+    pub fn force_withdraw_unlocking_msg(
+        &self,
+        lockup_id: u64,
+        amount: Option<Uint128>,
+    ) -> StdResult<CosmosMsg> {
+        let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: self.address.to_string(),
+            funds: vec![],
+            msg: to_binary(&ExecuteMsg::ForceWithdrawUnlocking { lockup_id, amount })?,
         });
         Ok(withdraw_msg)
     }
@@ -143,7 +172,7 @@ impl Vault {
         Ok(request_msg)
     }
 
-    pub fn withdraw_unlocked_msg(&self, position_id: Uint128) -> StdResult<CosmosMsg> {
+    pub fn withdraw_unlocked_msg(&self, position_id: u64) -> StdResult<CosmosMsg> {
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address.to_string(),
             funds: vec![],
@@ -162,7 +191,7 @@ impl Vault {
     pub fn query_unlocking_position_info(
         &self,
         querier: &QuerierWrapper,
-        id: Uint128,
+        id: u64,
     ) -> StdResult<UnlockingPosition> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: self.address.to_string(),
@@ -174,7 +203,7 @@ impl Vault {
         let vault_info = self.query_info(querier)?;
         let res: BalanceResponse = querier.query(&QueryRequest::Bank(BankQuery::Balance {
             address: addr.to_string(),
-            denom: vault_info.vault_coin_denom,
+            denom: vault_info.token_denom,
         }))?;
         Ok(res.amount.amount)
     }

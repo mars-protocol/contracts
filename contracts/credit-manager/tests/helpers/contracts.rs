@@ -1,53 +1,70 @@
 use cosmwasm_std::Empty;
 use cw_multi_test::{App, Contract, ContractWrapper};
 
-use account_nft::contract::{
-    execute as cw721Execute, instantiate as cw721Instantiate, query as cw721Query,
-};
-use credit_manager::contract::{execute, instantiate, query, reply};
-use mock_oracle::contract::{
-    execute as oracleExecute, instantiate as oracleInstantiate, query as oracleQuery,
-};
-use mock_red_bank::contract::{
-    execute as redBankExecute, instantiate as redBankInstantiate, query as redBankQuery,
-};
-use mock_vault::contract::{
-    execute as vaultExecute, instantiate as vaultInstantiate, query as vaultQuery,
-};
-use swapper_mock::contract::{
-    execute as swapperExecute, instantiate as swapperInstantiate, query as swapperQuery,
-};
-
 pub fn mock_app() -> App {
     App::default()
 }
 
 pub fn mock_rover_contract() -> Box<dyn Contract<Empty>> {
-    let contract = ContractWrapper::new(execute, instantiate, query).with_reply(reply);
+    let contract = ContractWrapper::new(
+        credit_manager::contract::execute,
+        credit_manager::contract::instantiate,
+        credit_manager::contract::query,
+    )
+    .with_reply(credit_manager::contract::reply);
     Box::new(contract)
 }
 
 pub fn mock_account_nft_contract() -> Box<dyn Contract<Empty>> {
-    let contract = ContractWrapper::new(cw721Execute, cw721Instantiate, cw721Query);
+    let contract = ContractWrapper::new(
+        account_nft::contract::execute,
+        account_nft::contract::instantiate,
+        account_nft::contract::query,
+    );
     Box::new(contract)
 }
 
 pub fn mock_red_bank_contract() -> Box<dyn Contract<Empty>> {
-    let contract = ContractWrapper::new(redBankExecute, redBankInstantiate, redBankQuery);
+    let contract = ContractWrapper::new(
+        mock_red_bank::contract::execute,
+        mock_red_bank::contract::instantiate,
+        mock_red_bank::contract::query,
+    );
     Box::new(contract)
 }
 
 pub fn mock_oracle_contract() -> Box<dyn Contract<Empty>> {
-    let contract = ContractWrapper::new(oracleExecute, oracleInstantiate, oracleQuery);
+    let contract = ContractWrapper::new(
+        mock_oracle::contract::execute,
+        mock_oracle::contract::instantiate,
+        mock_oracle::contract::query,
+    );
+    Box::new(contract)
+}
+
+pub fn mock_oracle_adapter_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        mars_oracle_adapter::contract::execute,
+        mars_oracle_adapter::contract::instantiate,
+        mars_oracle_adapter::contract::query,
+    );
     Box::new(contract)
 }
 
 pub fn mock_vault_contract() -> Box<dyn Contract<Empty>> {
-    let contract = ContractWrapper::new(vaultExecute, vaultInstantiate, vaultQuery);
+    let contract = ContractWrapper::new(
+        mock_vault::contract::execute,
+        mock_vault::contract::instantiate,
+        mock_vault::contract::query,
+    );
     Box::new(contract)
 }
 
 pub fn mock_swapper_contract() -> Box<dyn Contract<Empty>> {
-    let contract = ContractWrapper::new(swapperExecute, swapperInstantiate, swapperQuery);
+    let contract = ContractWrapper::new(
+        swapper_mock::contract::execute,
+        swapper_mock::contract::instantiate,
+        swapper_mock::contract::query,
+    );
     Box::new(contract)
 }

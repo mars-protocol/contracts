@@ -2,7 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, DepsMut, Reply, Response, Uint128};
 
 use crate::state::VAULT_REQUEST_TEMP_STORAGE;
-use rover::adapters::{Vault, VaultPositionUpdate, VaultUnlockingId};
+use rover::adapters::{UpdateType, Vault, VaultPositionUpdate};
 use rover::error::{ContractError, ContractResult};
 use rover::extensions::AttrParse;
 
@@ -38,7 +38,7 @@ pub fn request_unlock_from_vault(
     )?;
 
     let request_unlock_msg = vault.request_unlock_msg(&[Coin {
-        denom: vault_info.vault_coin_denom,
+        denom: vault_info.token_denom,
         amount,
     }])?;
 
@@ -58,17 +58,21 @@ pub fn handle_unlock_request_reply(deps: DepsMut, reply: Reply) -> ContractResul
         deps.storage,
         &account_id,
         &vault_addr,
-        VaultPositionUpdate::AddUnlocking(VaultUnlockingId {
+        VaultPositionUpdate::Unlocking {
             id: unlock_event.id,
             amount,
-        }),
+            kind: UpdateType::Increment,
+        },
     )?;
 
     update_vault_position(
         deps.storage,
         &account_id,
         &vault_addr,
-        VaultPositionUpdate::DecrementLocked(amount),
+        VaultPositionUpdate::Locked {
+            amount,
+            kind: UpdateType::Decrement,
+        },
     )?;
 
     VAULT_REQUEST_TEMP_STORAGE.remove(deps.storage);

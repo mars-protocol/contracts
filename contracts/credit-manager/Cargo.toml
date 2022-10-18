@@ -17,6 +17,7 @@ library = []
 account-nft = { version = "1.0", path = "../account-nft", features = ["library"] }
 mars-health = { version = "0.1", path = "../../../outposts/packages/health" }
 mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features = ["library"] }
+mars-oracle-adapter = { version = "1.0", path = "../../contracts/mars-oracle-adapter", features = ["library"] }
 mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }
 mock-vault = { version = "1.0", path = "../../contracts/mock-vault", features = ["library"] }
 rover = { version = "1.0", path = "../../packages/rover" }
