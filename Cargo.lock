@@ -522,7 +522,6 @@ name = "mars-osmosis"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "mars-outpost",
  "osmosis-std",
  "serde",
 ]

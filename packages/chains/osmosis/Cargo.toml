@@ -19,6 +19,5 @@ backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
 cosmwasm-std = { workspace = true }
-mars-outpost = { workspace = true }
 osmosis-std  = { workspace = true }
 serde        = { workspace = true }
