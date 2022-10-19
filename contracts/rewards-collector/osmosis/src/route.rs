@@ -140,7 +140,7 @@ pub fn query_swap_out_amount(
     amount: Uint128,
     steps: &[SwapAmountInRoute],
 ) -> StdResult<Uint128> {
-    let window_size = 172800u64;
+    let window_size = 1800u64; // 30 min
     let start_time = block.time.seconds() - window_size;
 
     let mut price = Decimal::one();

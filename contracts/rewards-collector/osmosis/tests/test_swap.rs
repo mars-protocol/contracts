@@ -1,6 +1,5 @@
 use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{CosmosMsg, Decimal, SubMsg, Uint128};
-use std::ops::Mul;
 
 use mars_outpost::math::divide_uint128_by_decimal;
 use mars_outpost::rewards_collector::{Config, QueryMsg};
