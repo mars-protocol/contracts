@@ -15,12 +15,12 @@ if [[ $(arch) == 'arm64' ]]; then
   docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/workspace-optimizer-arm64:0.12.8
+  cosmwasm/workspace-optimizer-arm64:0.12.9
 else
   docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/workspace-optimizer:0.12.8
+  cosmwasm/workspace-optimizer:0.12.9
 fi
 """
 
@@ -38,29 +38,28 @@ args = ["clippy", "--tests", "--", "-D", "warnings"]
 
 [tasks.all-github-actions]
 dependencies = [
-    "check",
-    "build",
-    "test",
-    "fmt",
-    "clippy",
-    "rust-optimizer",
+  "check",
+  "build",
+  "test",
+  "fmt",
+  "clippy",
+  "rust-optimizer",
 ]
 
 [tasks.generate-all-schemas]
 script = """
-    rm -rf schema
-    rm -rf schemas
-    mkdir schemas
+  rm -rf schema
+  rm -rf schemas
+  mkdir schemas
 
-    array=( mars-address-provider mars-incentives mars-oracle-osmosis mars-red-bank mars-rewards-collector-osmosis)
-    for i in "${array[@]}"
-    do
-      :
-      echo "$i"
-      cargo run --package "$i" --example schema
-      mkdir schemas/"$i"
-      mv schema/"$i".json schemas/"$i"/"$i".json
-    done
+  array=( mars-address-provider mars-incentives mars-oracle-osmosis mars-red-bank mars-rewards-collector-osmosis )
+  for i in "${array[@]}"
+  do:
+    echo "$i"
+    cargo run --package "$i" --example schema
+    mkdir schemas/"$i"
+    mv schema/"$i".json schemas/"$i"/"$i".json
+  done
 
-    rm -rf schema
+  rm -rf schema
 """
