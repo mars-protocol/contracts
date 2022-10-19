@@ -1,12 +1,13 @@
 use std::fmt;
 
-use cosmwasm_std::{CosmosMsg, Decimal, Empty, Env, QuerierWrapper, Uint128};
+use cosmwasm_std::{BlockInfo, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, StdResult, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mars_rewards_collector_base::{ContractError, ContractResult, Route};
 
-use mars_osmosis::helpers::{has_denom, query_estimate_swap_out_amount, query_pool};
+use mars_osmosis::helpers::{has_denom, query_pool, query_twap_price};
+use mars_outpost::math::divide_uint128_by_decimal;
 use osmosis_std::types::cosmos::base::v1beta1::Coin;
 use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
 
@@ -111,17 +112,11 @@ impl Route<Empty, Empty> for OsmosisRoute {
     ) -> ContractResult<CosmosMsg> {
         let steps = &self.0;
 
-        let first_swap = steps.first().ok_or(ContractError::InvalidRoute {
+        steps.first().ok_or(ContractError::InvalidRoute {
             reason: "the route must contain at least one step".to_string(),
         })?;
 
-        let out_amount = query_estimate_swap_out_amount(
-            querier,
-            &env.contract.address,
-            first_swap.pool_id,
-            amount,
-            steps,
-        )?;
+        let out_amount = query_swap_out_amount(querier, &env.block, denom_in, amount, steps)?;
         let min_out_amount = (Decimal::one() - slippage_tolerance) * out_amount;
 
         let swap_msg: CosmosMsg = MsgSwapExactAmountIn {
@@ -136,4 +131,28 @@ impl Route<Empty, Empty> for OsmosisRoute {
         .into();
         Ok(swap_msg)
     }
+}
+
+pub fn query_swap_out_amount(
+    querier: &QuerierWrapper,
+    block: &BlockInfo,
+    denom_in: &str,
+    amount: Uint128,
+    steps: &[SwapAmountInRoute],
+) -> StdResult<Uint128> {
+    let window_size = 172800u64;
+    let start_time = block.time.seconds() - window_size;
+
+    let mut price = Decimal::one();
+    let mut denom_in = denom_in.to_string();
+    for step in steps {
+        let step_price =
+            query_twap_price(querier, step.pool_id, &denom_in, &step.token_out_denom, start_time)?;
+        price = price.checked_mul(step_price)?;
+        denom_in = step.token_out_denom.clone();
+    }
+
+    let out_amount = divide_uint128_by_decimal(amount, price)?;
+
+    Ok(out_amount)
 }
