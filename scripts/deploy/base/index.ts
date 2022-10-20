@@ -1,6 +1,6 @@
 import { setupDeployer } from './setupDeployer'
 import { DeploymentConfig, MultisigConfig } from '../../types/config'
-import { printRed } from '../../utils/chalk'
+import { printGreen, printYellow, printRed } from '../../utils/chalk'
 import { atomAsset, osmoAsset } from '../osmosis/config'
 
 export const taskRunner = async (config: DeploymentConfig, multisig: MultisigConfig) => {
@@ -30,13 +30,16 @@ export const taskRunner = async (config: DeploymentConfig, multisig: MultisigCon
     await deployer.initializeAsset(atomAsset)
     await deployer.setOraclePrice()
 
-    //execute actions
+    // execute actions
+    printYellow('Testing...')
     await deployer.executeDeposit()
     await deployer.executeBorrow()
     await deployer.executeRepay()
     await deployer.executeWithdraw()
+    await deployer.executeRewardsSwap()
+    printGreen('ALL TESTS HAVE BEEN SUCCESSFUL')
 
-    //update owner to multisig address
+    // update owner to multisig address
     await deployer.updateIncentivesContractOwner()
     await deployer.updateRedBankContractOwner()
     await deployer.updateOracleContractOwner()
