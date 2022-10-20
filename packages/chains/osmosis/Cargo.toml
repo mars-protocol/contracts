@@ -1,26 +1,15 @@
 [package]
-name = "mars-osmosis"
-version = "0.1.0"
-authors = [
-  "Piotr Babel <piotr@delphilabs.io>"
-]
-edition = "2021"
-description = "Utilities for Osmosis chain interaction"
-license = "GPL-3.0"
-repository = "https://github.com/mars-protocol/outposts"
-homepage = "https://marsprotocol.io"
-documentation = "https://docs.marsprotocol.io/mars-protocol/developers/protocol-overview"
-readme = "README.md"
-keywords = ["mars", "cosmwasm"]
-
-exclude = [
-  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
-  "contract.wasm",
-  "hash.txt",
-]
+name          = "mars-osmosis"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+license       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
 
 [lib]
-crate-type = ["cdylib", "rlib"]
 doctest = false
 
 [features]
@@ -28,10 +17,6 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../../outpost" }
-cosmwasm-std = "1.1"
-serde = { version = "1.0", default-features = false, features = ["derive"] }
-osmosis-std = "0.12"
-
-[profile.release]
-overflow-checks = true
+cosmwasm-std = { workspace = true }
+osmosis-std  = { workspace = true }
+serde        = { workspace = true }

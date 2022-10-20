@@ -1,20 +1,13 @@
 [package]
-name = "mars-incentives"
-version = "1.0.0"
-authors = [
-  "larry_0x <larry@delphidigital.io>",
-  "Piotr Babel <piotr@delphilabs.io>",
-  "Spike Spiegel <spikeonmars@protonmail.com>",
-  "Ahmad Kaouk",
-  "Harry Scholes"
-]
-edition = "2021"
-
-exclude = [
-  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
-  "contract.wasm",
-  "hash.txt",
-]
+name          = "mars-incentives"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+license       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -25,16 +18,12 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../../packages/outpost", version = "0.1.0" }
-
-cosmwasm-std = "1.1"
-cw2 = "0.15"
-cw-storage-plus = "0.15"
-thiserror = "1.0"
+cosmwasm-std    = { workspace = true }
+cw2             = { workspace = true }
+cw-storage-plus = { workspace = true }
+mars-outpost    = { workspace = true }
+thiserror       = { workspace = true }
 
 [dev-dependencies]
-mars-testing = { version = "0.1.0", path = "../../packages/testing" }
-cosmwasm-schema = "1.1"
-
-[profile.release]
-overflow-checks = true
+cosmwasm-schema = { workspace = true }
+mars-testing    = { workspace = true }

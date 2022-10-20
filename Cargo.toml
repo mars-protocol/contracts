@@ -5,11 +5,44 @@ members = [
   "contracts/oracle/*",
   "contracts/red-bank",
   "contracts/rewards-collector/*",
+  "packages/chains/*",
   "packages/health",
   "packages/outpost",
   "packages/testing",
-  "packages/chains/*",
 ]
+
+[workspace.package]
+version       = "0.1.0"
+authors       = [
+  "Larry Engineer <larry@delphidigital.io>",
+  "Piotr Babel <piotr@delphilabs.io>",
+  "Spike Spiegel <spikeonmars@protonmail.com>",
+  "Ahmad Kaouk",
+  "Harry Scholes",
+]
+edition       = "2021"
+license       = "GPL-3.0"
+repository    = "https://github.com/mars-protocol/outposts"
+homepage      = "https://marsprotocol.io"
+documentation = "https://docs.marsprotocol.io/"
+keywords      = ["mars", "cosmos", "cosmwasm"]
+
+[workspace.dependencies]
+cosmwasm-schema             = "1.1"
+cosmwasm-std                = "1.1"
+cw2                         = "0.15"
+cw-storage-plus             = "0.15"
+cw-utils                    = "0.15"
+mars-health                 = { version = "0.1.0", path = "./packages/health" }
+mars-oracle-base            = { version = "0.1.0", path = "./contracts/oracle/base" }
+mars-osmosis                = { version = "0.1.0", path = "./packages/chains/osmosis" }
+mars-outpost                = { version = "0.1.0", path = "./packages/outpost" }
+mars-rewards-collector-base = { version = "0.1.0", path = "./contracts/rewards-collector/base" }
+mars-testing                = { version = "0.1.0", path = "./packages/testing" }
+osmosis-std                 = "0.12"
+schemars                    = "0.8"
+serde                       = { version = "1.0", default-features = false, features = ["derive"] }
+thiserror                   = "1.0"
 
 [profile.release]
 opt-level = 3

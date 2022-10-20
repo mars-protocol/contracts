@@ -476,7 +476,7 @@ dependencies = [
 
 [[package]]
 name = "mars-incentives"
-version = "1.0.0"
+version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -522,7 +522,6 @@ name = "mars-osmosis"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "mars-outpost",
  "osmosis-std",
  "serde",
 ]

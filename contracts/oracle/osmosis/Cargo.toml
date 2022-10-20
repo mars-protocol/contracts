@@ -1,20 +1,13 @@
 [package]
-name = "mars-oracle-osmosis"
-version = "0.1.0"
-authors = [
-  "larry_0x <larry@delphidigital.io>",
-  "Piotr Babel <piotr@delphilabs.io>",
-  "Spike Spiegel <spikeonmars@protonmail.com>",
-  "Ahmad Kaouk",
-  "Harry Scholes"
-]
-edition = "2021"
-
-exclude = [
-  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
-  "contract.wasm",
-  "hash.txt",
-]
+name          = "mars-oracle-osmosis"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+license       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -25,21 +18,17 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../../../packages/outpost", version = "0.1.0" }
-mars-osmosis = { path = "../../../packages/chains/osmosis", version = "0.1.0" }
-mars-oracle-base = { path = "../base", version = "0.1.0" }
-
-cosmwasm-std = "1.1"
-cw2 = "0.15"
-cw-storage-plus = "0.15"
-schemars = "0.8"
-serde = { version = "1.0", default-features = false, features = ["derive"] }
-thiserror = "1.0"
-osmosis-std = "0.12"
+cosmwasm-std     = { workspace = true }
+cw2              = { workspace = true }
+cw-storage-plus  = { workspace = true }
+mars-oracle-base = { workspace = true }
+mars-osmosis     = { workspace = true }
+mars-outpost     = { workspace = true }
+osmosis-std      = { workspace = true }
+schemars         = { workspace = true }
+serde            = { workspace = true }
+thiserror        = { workspace = true }
 
 [dev-dependencies]
-mars-testing = { path = "../../../packages/testing", version = "0.1.0" }
-cosmwasm-schema = "1.1"
-
-[profile.release]
-overflow-checks = true
+cosmwasm-schema = { workspace = true }
+mars-testing    = { workspace = true }
