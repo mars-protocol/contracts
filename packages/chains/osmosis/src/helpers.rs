@@ -1,11 +1,11 @@
 use std::str::FromStr;
 
-use cosmwasm_std::{Addr, Decimal, Empty, QuerierWrapper, QueryRequest, StdResult, Uint128};
+use cosmwasm_std::{Decimal, Empty, QuerierWrapper, QueryRequest, StdResult};
 
 use osmosis_std::shim::Timestamp;
 use osmosis_std::types::cosmos::base::v1beta1::Coin;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
-    GammQuerier, PoolAsset, PoolParams, QueryPoolRequest, SwapAmountInRoute,
+    GammQuerier, PoolAsset, PoolParams, QueryPoolRequest,
 };
 use osmosis_std::types::osmosis::twap::v1beta1::TwapQuerier;
 
@@ -76,22 +76,4 @@ pub fn query_twap_price(
     )?;
     let price = Decimal::from_str(&arithmetic_twap_res.arithmetic_twap)?;
     Ok(price)
-}
-
-/// Estimates how much receives for input amount
-pub fn query_estimate_swap_out_amount(
-    querier: &QuerierWrapper,
-    contract_addr: &Addr,
-    pool_id: u64,
-    amount: Uint128,
-    steps: &[SwapAmountInRoute],
-) -> StdResult<Uint128> {
-    let exact_amount_in_res = GammQuerier::new(querier).estimate_swap_exact_amount_in(
-        contract_addr.to_string(),
-        pool_id,
-        amount.to_string(),
-        steps.to_vec(),
-    )?;
-    let token_out_amount = Uint128::from_str(&exact_amount_in_res.token_out_amount)?;
-    Ok(token_out_amount)
 }

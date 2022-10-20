@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
 use mars_osmosis::helpers::QueryPoolResponse;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
-    QueryPoolRequest, QuerySpotPriceRequest, QuerySpotPriceResponse, QuerySwapExactAmountInRequest,
-    QuerySwapExactAmountInResponse, SwapAmountInRoute,
+    QueryPoolRequest, QuerySpotPriceRequest, QuerySpotPriceResponse,
 };
 use osmosis_std::types::osmosis::twap::v1beta1::{
     ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse,
@@ -24,9 +23,6 @@ pub struct OsmosisQuerier {
 
     pub spot_prices: HashMap<PriceKey, QuerySpotPriceResponse>,
     pub twap_prices: HashMap<PriceKey, ArithmeticTwapToNowResponse>,
-
-    /// key comes from `prepare_estimate_swap_key` function
-    pub estimate_swaps: HashMap<String, QuerySwapExactAmountInResponse>,
 }
 
 impl OsmosisQuerier {
@@ -52,14 +48,6 @@ impl OsmosisQuerier {
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
                 return Ok(self.handle_query_twap_request(osmosis_query));
-            }
-        }
-
-        if path == "/osmosis.gamm.v1beta1.Query/EstimateSwapExactAmountIn" {
-            let parse_osmosis_query: Result<QuerySwapExactAmountInRequest, DecodeError> =
-                Message::decode(data.as_slice());
-            if let Ok(osmosis_query) = parse_osmosis_query {
-                return Ok(self.handle_query_estimate_request(osmosis_query));
             }
         }
 
@@ -117,30 +105,5 @@ impl OsmosisQuerier {
             .into(),
         };
         Ok(res).into()
-    }
-
-    fn handle_query_estimate_request(
-        &self,
-        request: QuerySwapExactAmountInRequest,
-    ) -> QuerierResult {
-        let routes_key = Self::prepare_estimate_swap_key(&request.routes);
-        let res: ContractResult<Binary> = match self.estimate_swaps.get(&routes_key) {
-            Some(query_response) => to_binary(&query_response).into(),
-            None => Err(SystemError::InvalidRequest {
-                error: format!(
-                    "QuerySwapExactAmountInRequest is not found for routes: {:?}",
-                    routes_key
-                ),
-                request: Default::default(),
-            })
-            .into(),
-        };
-        Ok(res).into()
-    }
-
-    pub fn prepare_estimate_swap_key(route: &[SwapAmountInRoute]) -> String {
-        let routes: Vec<_> =
-            route.iter().map(|step| format!("{}.{}", step.pool_id, step.token_out_denom)).collect();
-        routes.join(",")
     }
 }
