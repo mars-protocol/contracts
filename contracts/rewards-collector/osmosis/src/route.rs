@@ -13,7 +13,7 @@ use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmoun
 
 use crate::helpers::hashset;
 
-/// 10 min in seconds
+/// 10 min in seconds (Risk Team recommendation)
 const TWAP_WINDOW_SIZE_SECONDS: u64 = 600u64;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

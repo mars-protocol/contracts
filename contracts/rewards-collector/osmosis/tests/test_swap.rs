@@ -14,6 +14,33 @@ use mars_testing::mock_info;
 mod helpers;
 
 #[test]
+fn test_swapping_asset_if_quering_price_fails() {
+    let mut deps = helpers::setup_test();
+
+    // Only pool_1 set, missing pool_69 and pool_420
+    deps.querier.set_twap_price(
+        1,
+        "uatom",
+        "uosmo",
+        ArithmeticTwapToNowResponse {
+            arithmetic_twap: Decimal::from_ratio(125u128, 10u128).to_string(),
+        },
+    );
+
+    // Should fail because can't query price (missing price for pools) for calculating min out amount
+    execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("jake"),
+        ExecuteMsg::SwapAsset {
+            denom: "uatom".to_string(),
+            amount: Some(Uint128::new(42069)),
+        },
+    )
+    .unwrap_err();
+}
+
+#[test]
 fn test_swapping_asset() {
     let mut deps = helpers::setup_test();
 
