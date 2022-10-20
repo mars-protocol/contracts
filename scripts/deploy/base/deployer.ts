@@ -128,9 +128,9 @@ export class Deployer {
       this.storage.addresses.rewardsCollector!,
       {
         set_route: {
-          denom_in: this.config.baseAssetDenom,
-          denom_out: this.config.atomDenom,
-          route: [{ token_out_denom: this.config.atomDenom, pool_id: '1' }],
+          denom_in: this.config.atomDenom,
+          denom_out: this.config.baseAssetDenom,
+          route: [{ token_out_denom: this.config.baseAssetDenom, pool_id: '1' }],
         },
       },
       'auto',
@@ -326,8 +326,69 @@ export class Deployer {
 
     const msgTwo = { user_position: { user: this.deployerAddress } }
     console.log(await this.client.queryContractSmart(this.storage.addresses.redBank!, msgTwo))
+  }
 
-    printGreen('ALL TESTS HAVE BEEN SUCCESSFUL')
+  async executeRewardsSwap() {
+    // Send some coins to the contract
+    const coins = [
+      {
+        denom: this.config.atomDenom,
+        amount: '2000000',
+      },
+    ]
+    await this.client.sendTokens(
+      this.deployerAddress,
+      this.storage.addresses.rewardsCollector!,
+      coins,
+      'auto',
+    )
+
+    // Check contract balance before swap
+    const atomBalanceBefore = await this.client.getBalance(
+      this.storage.addresses.rewardsCollector!,
+      this.config.atomDenom,
+    )
+    const baseAssetBalanceBefore = await this.client.getBalance(
+      this.storage.addresses.rewardsCollector!,
+      this.config.baseAssetDenom,
+    )
+    printYellow(
+      `Rewards Collector balance:
+      ${atomBalanceBefore.amount} ${atomBalanceBefore.denom}
+      ${baseAssetBalanceBefore.amount} ${baseAssetBalanceBefore.denom}`,
+    )
+
+    // Execute swap
+    const msg = {
+      swap_asset: {
+        denom: this.config.atomDenom,
+      },
+    }
+    await this.client.execute(
+      this.deployerAddress,
+      this.storage.addresses.rewardsCollector!,
+      msg,
+      'auto',
+    )
+    // Check contract balance after swap
+    const atomBalanceAfter = await this.client.getBalance(
+      this.storage.addresses.rewardsCollector!,
+      this.config.atomDenom,
+    )
+    const baseAssetBalanceAfter = await this.client.getBalance(
+      this.storage.addresses.rewardsCollector!,
+      this.config.baseAssetDenom,
+    )
+    printYellow(
+      `Swap executed. Rewards Collector balance:
+      ${atomBalanceAfter.amount} ${atomBalanceAfter.denom},
+      ${baseAssetBalanceAfter.amount} ${baseAssetBalanceAfter.denom}`,
+    )
+
+    // swapped all atom balance
+    assert.equal(Number(atomBalanceAfter.amount), 0)
+    // base asset balance should be greater after swap
+    assert(Number(baseAssetBalanceAfter.amount) > Number(baseAssetBalanceBefore.amount))
   }
 
   async updateIncentivesContractOwner() {

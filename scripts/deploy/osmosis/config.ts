@@ -17,7 +17,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   timeoutRevision: 1,
   deployerMnemonic:
     'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
-  slippage_tolerance: '0.5',
+  slippage_tolerance: '0.05',
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
 }
@@ -37,7 +37,7 @@ export const osmosisLocalConfig: DeploymentConfig = {
   timeoutRevision: 1,
   deployerMnemonic:
     'notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius',
-  slippage_tolerance: '0.5',
+  slippage_tolerance: '0.05',
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
 }

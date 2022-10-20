@@ -5,9 +5,7 @@ use cosmwasm_std::{
 };
 
 use mars_osmosis::helpers::QueryPoolResponse;
-use osmosis_std::types::osmosis::gamm::v1beta1::{
-    QuerySpotPriceResponse, QuerySwapExactAmountInResponse, SwapAmountInRoute,
-};
+use osmosis_std::types::osmosis::gamm::v1beta1::QuerySpotPriceResponse;
 use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
 use mars_outpost::{address_provider, incentives, oracle, red_bank};
@@ -105,16 +103,6 @@ impl MarsMockQuerier {
             denom_out: quote_asset_denom.to_string(),
         };
         self.osmosis_querier.twap_prices.insert(price_key, twap_price);
-    }
-
-    pub fn set_estimate_swap(&mut self, amount: Uint128, route: &[SwapAmountInRoute]) {
-        let key = OsmosisQuerier::prepare_estimate_swap_key(route);
-        self.osmosis_querier.estimate_swaps.insert(
-            key,
-            QuerySwapExactAmountInResponse {
-                token_out_amount: amount.to_string(),
-            },
-        );
     }
 
     pub fn set_redbank_market(&mut self, market: red_bank::Market) {

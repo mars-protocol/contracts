@@ -1,16 +1,20 @@
 use std::fmt;
 
-use cosmwasm_std::{CosmosMsg, Decimal, Empty, Env, QuerierWrapper, Uint128};
+use cosmwasm_std::{BlockInfo, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, StdResult, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mars_rewards_collector_base::{ContractError, ContractResult, Route};
 
-use mars_osmosis::helpers::{has_denom, query_estimate_swap_out_amount, query_pool};
+use mars_osmosis::helpers::{has_denom, query_pool, query_twap_price};
+use mars_outpost::math::divide_uint128_by_decimal;
 use osmosis_std::types::cosmos::base::v1beta1::Coin;
 use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
 
 use crate::helpers::hashset;
+
+/// 10 min in seconds (Risk Team recommendation)
+const TWAP_WINDOW_SIZE_SECONDS: u64 = 600u64;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct OsmosisRoute(pub Vec<SwapAmountInRoute>);
@@ -111,17 +115,11 @@ impl Route<Empty, Empty> for OsmosisRoute {
     ) -> ContractResult<CosmosMsg> {
         let steps = &self.0;
 
-        let first_swap = steps.first().ok_or(ContractError::InvalidRoute {
+        steps.first().ok_or(ContractError::InvalidRoute {
             reason: "the route must contain at least one step".to_string(),
         })?;
 
-        let out_amount = query_estimate_swap_out_amount(
-            querier,
-            &env.contract.address,
-            first_swap.pool_id,
-            amount,
-            steps,
-        )?;
+        let out_amount = query_out_amount(querier, &env.block, denom_in, amount, steps)?;
         let min_out_amount = (Decimal::one() - slippage_tolerance) * out_amount;
 
         let swap_msg: CosmosMsg = MsgSwapExactAmountIn {
@@ -136,4 +134,33 @@ impl Route<Empty, Empty> for OsmosisRoute {
         .into();
         Ok(swap_msg)
     }
+}
+
+/// Query how much amount of denom_out we get for denom_in.
+///
+/// Example calculation:
+/// If we want to swap atom to usdc and configured routes are [pool_1 (atom/osmo), pool_69 (osmo/usdc)] (no direct pool of atom/usdc):
+/// 1) query pool_1 to get price for atom/osmo
+/// 2) query pool_69 to get price for osmo/usdc
+/// 3) atom/usdc = (price for atom/osmo) * (price for osmo/usdc)
+/// 4) out_amount = (atom amount) / (price for atom/usdc) = usdc amount
+fn query_out_amount(
+    querier: &QuerierWrapper,
+    block: &BlockInfo,
+    denom_in: &str,
+    amount: Uint128,
+    steps: &[SwapAmountInRoute],
+) -> StdResult<Uint128> {
+    let start_time = block.time.seconds() - TWAP_WINDOW_SIZE_SECONDS;
+
+    let mut price = Decimal::one();
+    let mut denom_in = denom_in.to_string();
+    for step in steps {
+        let step_price =
+            query_twap_price(querier, step.pool_id, &denom_in, &step.token_out_denom, start_time)?;
+        price = price.checked_mul(step_price)?;
+        denom_in = step.token_out_denom.clone();
+    }
+
+    divide_uint128_by_decimal(amount, price)
 }
