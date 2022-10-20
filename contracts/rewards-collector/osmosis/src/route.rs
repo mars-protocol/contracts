@@ -13,6 +13,9 @@ use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmoun
 
 use crate::helpers::hashset;
 
+/// 10 min in seconds
+const TWAP_WINDOW_SIZE_SECONDS: u64 = 600u64;
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct OsmosisRoute(pub Vec<SwapAmountInRoute>);
 
@@ -116,7 +119,7 @@ impl Route<Empty, Empty> for OsmosisRoute {
             reason: "the route must contain at least one step".to_string(),
         })?;
 
-        let out_amount = query_swap_out_amount(querier, &env.block, denom_in, amount, steps)?;
+        let out_amount = query_out_amount(querier, &env.block, denom_in, amount, steps)?;
         let min_out_amount = (Decimal::one() - slippage_tolerance) * out_amount;
 
         let swap_msg: CosmosMsg = MsgSwapExactAmountIn {
@@ -133,15 +136,22 @@ impl Route<Empty, Empty> for OsmosisRoute {
     }
 }
 
-pub fn query_swap_out_amount(
+/// Query how much amount of denom_out we get for denom_in.
+///
+/// Example calculation:
+/// If we want to swap atom to usdc and configured routes are [pool_1 (atom/osmo), pool_69 (osmo/usdc)] (no direct pool of atom/usdc):
+/// 1) query pool_1 to get price for atom/osmo
+/// 2) query pool_69 to get price for osmo/usdc
+/// 3) atom/usdc = (price for atom/osmo) * (price for osmo/usdc)
+/// 4) out_amount = (atom amount) / (price for atom/usdc) = usdc amount
+fn query_out_amount(
     querier: &QuerierWrapper,
     block: &BlockInfo,
     denom_in: &str,
     amount: Uint128,
     steps: &[SwapAmountInRoute],
 ) -> StdResult<Uint128> {
-    let window_size = 1800u64; // 30 min
-    let start_time = block.time.seconds() - window_size;
+    let start_time = block.time.seconds() - TWAP_WINDOW_SIZE_SECONDS;
 
     let mut price = Decimal::one();
     let mut denom_in = denom_in.to_string();
@@ -152,7 +162,5 @@ pub fn query_swap_out_amount(
         denom_in = step.token_out_denom.clone();
     }
 
-    let out_amount = divide_uint128_by_decimal(amount, price)?;
-
-    Ok(out_amount)
+    divide_uint128_by_decimal(amount, price)
 }
