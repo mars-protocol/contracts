@@ -224,6 +224,26 @@ impl RedBank {
         )
     }
 
+    pub fn update_uncollateralized_loan_limit(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        user: &Addr,
+        denom: &str,
+        new_limit: Uint128,
+    ) -> AnyResult<AppResponse> {
+        env.app.execute_contract(
+            sender.clone(),
+            self.contract_addr.clone(),
+            &red_bank::ExecuteMsg::UpdateUncollateralizedLoanLimit {
+                user: user.to_string(),
+                denom: denom.to_string(),
+                new_limit,
+            },
+            &[],
+        )
+    }
+
     pub fn query_market(&self, env: &mut MockEnv, denom: &str) -> Market {
         env.app
             .wrap()
@@ -274,6 +294,32 @@ impl RedBank {
                 self.contract_addr.clone(),
                 &red_bank::QueryMsg::UserPosition {
                     user: user.to_string(),
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_scaled_liquidity_amount(&self, env: &mut MockEnv, coin: Coin) -> Uint128 {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::ScaledLiquidityAmount {
+                    denom: coin.denom,
+                    amount: coin.amount,
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_scaled_debt_amount(&self, env: &mut MockEnv, coin: Coin) -> Uint128 {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::ScaledDebtAmount {
+                    denom: coin.denom,
+                    amount: coin.amount,
                 },
             )
             .unwrap()
