@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::integration::mock_contracts::{
     mock_address_provider_contract, mock_incentives_contract, mock_oracle_osmosis_contract,
     mock_red_bank_contract, mock_rewards_collector_osmosis_contract,
@@ -26,32 +28,36 @@ pub struct MockEnv {
 
 #[derive(Clone)]
 pub struct AddressProvider {
-    contract_addr: Addr,
+    pub contract_addr: Addr,
 }
 
 #[derive(Clone)]
 pub struct Incentives {
-    contract_addr: Addr,
+    pub contract_addr: Addr,
 }
 
 #[derive(Clone)]
 pub struct Oracle {
-    contract_addr: Addr,
+    pub contract_addr: Addr,
 }
 
 #[derive(Clone)]
 pub struct RedBank {
-    contract_addr: Addr,
+    pub contract_addr: Addr,
 }
 
 #[derive(Clone)]
 pub struct RewardsCollector {
-    contract_addr: Addr,
+    pub contract_addr: Addr,
 }
 
 impl MockEnv {
     pub fn increment_by_blocks(&mut self, num_of_blocks: u64) {
-        self.app.update_block(|block| block.height += num_of_blocks)
+        self.app.update_block(|block| {
+            block.height += num_of_blocks;
+            // assume block time = 6 sec
+            block.time = block.time.plus_seconds(num_of_blocks * 6);
+        })
     }
 
     pub fn fund_account(&mut self, addr: &Addr, coins: &[Coin]) {
@@ -176,6 +182,25 @@ impl RedBank {
                 on_behalf_of: None,
             },
             &[coin],
+        )
+    }
+
+    pub fn withdraw(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        denom: &str,
+        amount: Option<Uint128>,
+    ) -> AnyResult<AppResponse> {
+        env.app.execute_contract(
+            sender.clone(),
+            self.contract_addr.clone(),
+            &red_bank::ExecuteMsg::Withdraw {
+                denom: denom.to_string(),
+                amount,
+                recipient: None,
+            },
+            &[],
         )
     }
 
