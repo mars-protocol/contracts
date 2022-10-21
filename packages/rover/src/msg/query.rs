@@ -17,6 +17,12 @@ pub enum QueryMsg {
         start_after: Option<VaultUnchecked>,
         limit: Option<u32>,
     },
+    /// Deposit caps on vault deposits
+    #[returns(Vec<crate::msg::instantiate::VaultInstantiateConfig>)]
+    DepositCaps {
+        start_after: Option<VaultUnchecked>,
+        limit: Option<u32>,
+    },
     /// Whitelisted coins
     #[returns(Vec<String>)]
     AllowedCoins {

@@ -140,9 +140,15 @@ fn calculate_preview_redeem(
                 Ok(new_total)
             })?;
 
+    let price = if total_value.is_zero() {
+        Decimal::zero()
+    } else {
+        total_value.checked_div(total_issued.to_dec()?)?
+    };
+
     Ok(PriceResponse {
         denom: info.denom.clone(),
-        price: total_value.checked_div(total_issued.to_dec()?)?,
+        price,
     })
 }
 

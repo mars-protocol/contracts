@@ -1,5 +1,6 @@
 use crate::helpers::CoinInfo;
-use cosmwasm_std::Decimal;
+use crate::helpers::VaultTestInfo;
+use cosmwasm_std::{coin, Decimal};
 
 pub fn uosmo_info() -> CoinInfo {
     CoinInfo {
@@ -24,5 +25,22 @@ pub fn ujake_info() -> CoinInfo {
         price: Decimal::from_atomics(23654u128, 4).unwrap(),
         max_ltv: Decimal::from_atomics(5u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
+    }
+}
+
+pub fn locked_vault_info() -> VaultTestInfo {
+    generate_mock_vault(Some(1_209_600)) // 14 days)
+}
+
+pub fn unlocked_vault_info() -> VaultTestInfo {
+    generate_mock_vault(None)
+}
+
+fn generate_mock_vault(lockup: Option<u64>) -> VaultTestInfo {
+    VaultTestInfo {
+        denom: "uleverage".to_string(),
+        lockup,
+        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+        deposit_cap: coin(10_000_000, "uusdc"),
     }
 }

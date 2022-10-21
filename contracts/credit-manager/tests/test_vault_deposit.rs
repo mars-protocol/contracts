@@ -6,7 +6,10 @@ use rover::adapters::VaultBase;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{Deposit, VaultDeposit};
 
-use crate::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv, VaultTestInfo};
+use crate::helpers::{
+    assert_err, locked_vault_info, uatom_info, unlocked_vault_info, uosmo_info, AccountToFund,
+    MockEnv, VaultTestInfo,
+};
 
 pub mod helpers;
 
@@ -40,11 +43,7 @@ fn test_only_account_owner_can_take_action() {
 #[test]
 fn test_all_deposit_coins_are_whitelisted() {
     let uatom = uatom_info();
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: None,
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -73,12 +72,7 @@ fn test_all_deposit_coins_are_whitelisted() {
 fn test_vault_is_whitelisted() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: None,
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -114,6 +108,7 @@ fn test_deposited_coins_match_vault_requirements() {
         denom: "uleverage".to_string(),
         lockup: None,
         underlying_denoms: vec!["uatom".to_string(), "ujake".to_string()],
+        deposit_cap: coin(1_000_000, "uusdc"),
     };
 
     let user = Addr::unchecked("user");
@@ -147,12 +142,7 @@ fn test_deposited_coins_match_vault_requirements() {
 fn test_fails_if_not_enough_funds_for_deposit() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: None,
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -191,12 +181,7 @@ fn test_fails_if_not_enough_funds_for_deposit() {
 fn test_successful_deposit_into_locked_vault() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: Some(1_209_600u64),
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -258,12 +243,7 @@ fn test_successful_deposit_into_locked_vault() {
 fn test_successful_deposit_into_unlocked_vault() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: None,
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -317,4 +297,86 @@ fn test_successful_deposit_into_unlocked_vault() {
 
     let vault_token_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
     assert_eq!(vault_token_balance.amount, STARTING_VAULT_SHARES)
+}
+
+#[test]
+fn test_vault_deposit_must_be_under_cap() {
+    let uatom = uatom_info();
+    let uosmo = uosmo_info();
+    let leverage_vault = unlocked_vault_info();
+
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[uatom.clone(), uosmo.clone()])
+        .allowed_vaults(&[leverage_vault.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![coin(9_600_000, "uatom"), coin(18_500_000, "uosmo")],
+        })
+        .build()
+        .unwrap();
+
+    let vault = mock.get_vault(&leverage_vault);
+    let account_id = mock.create_credit_account(&user).unwrap();
+
+    // Vault deposit A ✅
+    //   new total value = 9_500_000
+    //   left to deposit = 2_845_000
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![
+            Deposit(coin(7_000_000, uatom.denom.clone())),
+            Deposit(coin(10_000_000, uosmo.denom.clone())),
+            VaultDeposit {
+                vault: vault.clone(),
+                coins: vec![coin(7_000_000, "uatom"), coin(10_000_000, "uosmo")],
+            },
+        ],
+        &[coin(7_000_000, "uatom"), coin(10_000_000, "uosmo")],
+    )
+    .unwrap();
+
+    // Vault deposit B ✅
+    //   new total value = 9_850_000
+    //   left to deposit = 2_495_000
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![
+            Deposit(coin(100_000, uatom.denom.clone())),
+            Deposit(coin(1_000_000, uosmo.denom.clone())),
+            VaultDeposit {
+                vault: vault.clone(),
+                coins: vec![coin(100_000, "uatom"), coin(1_000_000, "uosmo")],
+            },
+        ],
+        &[coin(100_000, "uatom"), coin(1_000_000, "uosmo")],
+    )
+    .unwrap();
+
+    // Vault deposit C 🚫
+    //   new total value = 14_225_000
+    //   left to deposit = -1_880_000
+    let res = mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![
+            Deposit(coin(2_500_000, uatom.denom)),
+            Deposit(coin(7_500_000, uosmo.denom)),
+            VaultDeposit {
+                vault,
+                coins: vec![coin(2_500_000, "uatom"), coin(7_500_000, "uosmo")],
+            },
+        ],
+        &[coin(2_500_000, "uatom"), coin(7_500_000, "uosmo")],
+    );
+
+    assert_err(
+        res,
+        ContractError::AboveVaultDepositCap {
+            new_value: "14224999.999999999999394422".to_string(),
+            maximum: "12345000".to_string(),
+        },
+    );
 }

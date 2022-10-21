@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Decimal;
+use cosmwasm_std::{Coin, Decimal};
 
 use crate::adapters::swap::SwapperUnchecked;
 use crate::adapters::{OracleUnchecked, RedBankUnchecked, VaultUnchecked};
@@ -11,7 +11,8 @@ pub struct InstantiateMsg {
     /// Whitelisted coin denoms approved by governance
     pub allowed_coins: Vec<String>,
     /// Whitelisted vaults approved by governance that implement credit manager's vault interface
-    pub allowed_vaults: Vec<VaultUnchecked>,
+    /// Includes a deposit cap that enforces a TLV limit for risk mitigation
+    pub allowed_vaults: Vec<VaultInstantiateConfig>,
     /// The Mars Protocol money market contract where we borrow assets from
     pub red_bank: RedBankUnchecked,
     /// The Mars Protocol oracle contract. We read prices of assets here.
@@ -22,6 +23,12 @@ pub struct InstantiateMsg {
     pub max_close_factor: Decimal,
     /// Helper contract for making swaps
     pub swapper: SwapperUnchecked,
+}
+
+#[cw_serde]
+pub struct VaultInstantiateConfig {
+    pub vault: VaultUnchecked,
+    pub deposit_cap: Coin,
 }
 
 /// Used when you want to update fields on Instantiate config

@@ -127,7 +127,7 @@ fn deploy_oracle(app: &mut BasicApp) -> OracleBase<Addr> {
             code_id,
             Addr::unchecked("oracle_contract_owner"),
             &OracleInstantiateMsg {
-                coins: vec![
+                prices: vec![
                     CoinPrice {
                         denom: "uosmo".to_string(),
                         price: Decimal::from_atomics(25u128, 2).unwrap(),

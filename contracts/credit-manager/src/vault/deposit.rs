@@ -1,5 +1,6 @@
 use cosmwasm_std::{
-    to_binary, Addr, Coin, CosmosMsg, DepsMut, QuerierWrapper, Response, Uint128, WasmMsg,
+    coin, to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Uint128,
+    WasmMsg,
 };
 
 use rover::adapters::{UpdateType, Vault, VaultPositionUpdate};
@@ -7,6 +8,7 @@ use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg;
 
+use crate::state::{ORACLE, VAULT_DEPOSIT_CAPS};
 use crate::utils::{assert_coins_are_whitelisted, contents_equal, decrement_coin_balance};
 use crate::vault::utils::{assert_vault_is_whitelisted, update_vault_position};
 
@@ -21,6 +23,7 @@ pub fn deposit_into_vault(
     assert_coins_are_whitelisted(deps.storage, denoms)?;
     assert_vault_is_whitelisted(deps.storage, &vault)?;
     assert_denoms_match_vault_reqs(deps.querier, &vault, coins)?;
+    assert_deposit_is_under_cap(deps.as_ref(), &vault, coins, rover_addr)?;
 
     // Decrement token's coin balance amount
     coins.iter().try_for_each(|coin| -> ContractResult<_> {
@@ -102,5 +105,39 @@ pub fn assert_denoms_match_vault_reqs(
             given_denoms.join(", ")
         )));
     }
+    Ok(())
+}
+
+pub fn assert_deposit_is_under_cap(
+    deps: Deps,
+    vault: &Vault,
+    coins: &[Coin],
+    rover_addr: &Addr,
+) -> ContractResult<()> {
+    let oracle = ORACLE.load(deps.storage)?;
+    let deposit_request_value = oracle.query_total_value(&deps.querier, coins)?;
+
+    let deposit_cap = VAULT_DEPOSIT_CAPS.load(deps.storage, &vault.address)?;
+    let deposit_cap_value = oracle.query_total_value(&deps.querier, &[deposit_cap])?;
+
+    let vault_info = vault.query_info(&deps.querier)?;
+    let rover_vault_coin_balance = vault.query_balance(&deps.querier, rover_addr)?;
+    let rover_vault_coins_value = oracle.query_total_value(
+        &deps.querier,
+        &[coin(
+            rover_vault_coin_balance.u128(),
+            vault_info.token_denom,
+        )],
+    )?;
+
+    let new_total_vault_value = rover_vault_coins_value.checked_add(deposit_request_value)?;
+
+    if new_total_vault_value > deposit_cap_value {
+        return Err(ContractError::AboveVaultDepositCap {
+            new_value: new_total_vault_value.to_string(),
+            maximum: deposit_cap_value.to_string(),
+        });
+    }
+
     Ok(())
 }

@@ -1,7 +1,8 @@
 use crate::helpers::{
-    assert_contents_equal, uatom_info, ujake_info, uosmo_info, CoinInfo, MockEnv, VaultTestInfo,
+    assert_contents_equal, uatom_info, ujake_info, unlocked_vault_info, uosmo_info, CoinInfo,
+    MockEnv, VaultTestInfo,
 };
-use cosmwasm_std::Decimal;
+use cosmwasm_std::{coin, Decimal};
 
 pub mod helpers;
 
@@ -36,16 +37,19 @@ fn test_allowed_vaults_set_on_instantiate() {
             denom: "vault_contract_1".to_string(),
             lockup: None,
             underlying_denoms: vec![],
+            deposit_cap: coin(1_000_000, "uusdc"),
         },
         VaultTestInfo {
             denom: "vault_contract_2".to_string(),
             lockup: None,
             underlying_denoms: vec![],
+            deposit_cap: coin(1_000_000, "uusdc"),
         },
         VaultTestInfo {
             denom: "vault_contract_3".to_string(),
             lockup: None,
             underlying_denoms: vec![],
+            deposit_cap: coin(1_000_000, "uusdc"),
         },
     ];
 
@@ -66,7 +70,7 @@ fn test_allowed_vaults_set_on_instantiate() {
 #[test]
 fn test_raises_on_invalid_vaults_addr() {
     let mock = MockEnv::new()
-        .pre_deployed_vaults(&["%%%INVALID%%%"])
+        .pre_deployed_vault("%%%INVALID%%%", &unlocked_vault_info())
         .build();
 
     if mock.is_ok() {

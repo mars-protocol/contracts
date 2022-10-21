@@ -7,8 +7,8 @@ use rover::msg::execute::Action::{Borrow, Deposit, LiquidateCoin, VaultDeposit};
 use rover::traits::IntoDecimal;
 
 use crate::helpers::{
-    assert_err, get_coin, get_debt, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv,
-    VaultTestInfo,
+    assert_err, get_coin, get_debt, uatom_info, ujake_info, unlocked_vault_info, uosmo_info,
+    AccountToFund, MockEnv,
 };
 
 pub mod helpers;
@@ -73,12 +73,7 @@ fn test_can_only_liquidate_unhealthy_accounts() {
 fn test_vault_positions_contribute_to_health() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: None,
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = unlocked_vault_info();
 
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()

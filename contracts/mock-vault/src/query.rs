@@ -59,5 +59,8 @@ pub fn query_unlocking_positions(deps: Deps, addr: String) -> StdResult<Vec<Unlo
 }
 
 pub fn query_vault_coins_issued(storage: &dyn Storage) -> StdResult<Uint128> {
-    TOTAL_VAULT_SHARES.load(storage)
+    let amount_issued = TOTAL_VAULT_SHARES
+        .may_load(storage)?
+        .unwrap_or(Uint128::zero());
+    Ok(amount_issued)
 }

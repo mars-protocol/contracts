@@ -7,17 +7,16 @@ use rover::adapters::VaultUnchecked;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{Deposit, VaultDeposit, VaultRequestUnlock};
 
-use crate::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv, VaultTestInfo};
+use crate::helpers::{
+    assert_err, locked_vault_info, uatom_info, unlocked_vault_info, uosmo_info, AccountToFund,
+    MockEnv,
+};
 
 pub mod helpers;
 
 #[test]
 fn test_only_owner_can_request_unlocked() {
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: Some(1_209_600), // 14 days
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -71,11 +70,7 @@ fn test_can_only_take_action_on_whitelisted_vaults() {
 
 #[test]
 fn test_request_when_unnecessary() {
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: None,
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -106,11 +101,7 @@ fn test_request_when_unnecessary() {
 
 #[test]
 fn test_no_funds_for_request() {
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: Some(1_209_600), // 14 days
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -154,11 +145,7 @@ fn test_not_enough_funds_for_request() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
 
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: Some(1_209_600), // 14 days
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -215,11 +202,7 @@ fn test_request_unlocked() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
 
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: Some(1_209_600), // 14 days
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()

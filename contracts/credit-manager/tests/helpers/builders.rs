@@ -1,4 +1,4 @@
-use cosmwasm_std::Decimal;
+use cosmwasm_std::{coin, Decimal};
 
 use rover::traits::IntoDecimal;
 
@@ -24,6 +24,7 @@ pub fn build_mock_vaults(count: usize) -> Vec<VaultTestInfo> {
                 denom: format!("vault_{}", i),
                 lockup: Some(1_209_600), // 14 days
                 underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+                deposit_cap: coin(10000000, "uusdc"),
             }
         })
         .collect()

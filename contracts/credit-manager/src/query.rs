@@ -3,6 +3,7 @@ use cw_storage_plus::Bound;
 
 use rover::adapters::{Vault, VaultBase, VaultPosition, VaultUnchecked};
 use rover::error::ContractResult;
+use rover::msg::instantiate::VaultInstantiateConfig;
 use rover::msg::query::{
     CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, Positions, SharesResponseItem,
     VaultPositionResponseItem, VaultWithBalance,
@@ -10,7 +11,8 @@ use rover::msg::query::{
 
 use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, COIN_BALANCES, DEBT_SHARES, MAX_CLOSE_FACTOR,
-    MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES, VAULT_POSITIONS,
+    MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES, VAULT_DEPOSIT_CAPS,
+    VAULT_POSITIONS,
 };
 use crate::utils::debt_shares_to_amount;
 
@@ -137,6 +139,35 @@ pub fn query_allowed_vaults(
         .map(|res| {
             let addr = res?;
             Ok(VaultBase::new(addr.to_string()))
+        })
+        .collect()
+}
+
+pub fn query_vault_deposit_caps(
+    deps: Deps,
+    start_after: Option<VaultUnchecked>,
+    limit: Option<u32>,
+) -> StdResult<Vec<VaultInstantiateConfig>> {
+    let vault: Vault;
+    let start = match &start_after {
+        Some(unchecked) => {
+            vault = unchecked.check(deps.api)?;
+            Some(Bound::exclusive(&vault.address))
+        }
+        None => None,
+    };
+
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+
+    VAULT_DEPOSIT_CAPS
+        .range(deps.storage, start, None, Order::Ascending)
+        .take(limit)
+        .map(|res| {
+            let (addr, deposit_cap) = res?;
+            Ok(VaultInstantiateConfig {
+                vault: VaultBase::new(addr.to_string()),
+                deposit_cap,
+            })
         })
         .collect()
 }

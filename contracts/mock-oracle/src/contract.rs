@@ -14,7 +14,7 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    for item in msg.coins {
+    for item in msg.prices {
         COIN_PRICE.save(deps.storage, item.denom, &item.price)?
     }
     Ok(Response::default())

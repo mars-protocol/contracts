@@ -16,6 +16,9 @@ pub enum ContractError {
         max_ltv_health_factor: String,
     },
 
+    #[error("Vault deposit would result in exceeding limit. With deposit: {new_value:?}, Maximum: {maximum:?}")]
+    AboveVaultDepositCap { new_value: String, maximum: String },
+
     #[error("{0} is not an available coin to request")]
     CoinNotAvailable(String),
 

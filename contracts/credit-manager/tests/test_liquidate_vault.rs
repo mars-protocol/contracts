@@ -11,8 +11,8 @@ use rover::msg::execute::Action::{
 use rover::traits::IntoDecimal;
 
 use crate::helpers::{
-    assert_err, get_coin, get_debt, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv,
-    VaultTestInfo,
+    assert_err, get_coin, get_debt, locked_vault_info, uatom_info, ujake_info, unlocked_vault_info,
+    uosmo_info, AccountToFund, MockEnv,
 };
 
 pub mod helpers;
@@ -24,12 +24,7 @@ pub mod helpers;
 fn test_liquidatee_must_have_the_request_vault_position() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: None,
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = unlocked_vault_info();
 
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
@@ -78,12 +73,7 @@ fn test_liquidatee_must_have_the_request_vault_position() {
 fn test_liquidatee_is_not_liquidatable() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: None,
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = unlocked_vault_info();
 
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
@@ -142,12 +132,7 @@ fn test_liquidator_does_not_have_debt_coin_in_credit_account() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
     let ujake = ujake_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: None,
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = unlocked_vault_info();
 
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
@@ -213,12 +198,7 @@ fn test_liquidate_unlocked_vault() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
     let ujake = ujake_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: None,
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = unlocked_vault_info();
 
     let liquidatee = Addr::unchecked("liquidatee");
     let liquidator = Addr::unchecked("liquidator");
@@ -307,12 +287,7 @@ fn test_liquidate_locked_vault() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
     let ujake = ujake_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: Some(123021212),
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = locked_vault_info();
 
     let liquidatee = Addr::unchecked("liquidatee");
     let liquidator = Addr::unchecked("liquidator");
@@ -407,12 +382,7 @@ fn test_liquidate_unlocking_priority() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
     let ujake = ujake_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: Some(123021212),
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = locked_vault_info();
 
     let liquidatee = Addr::unchecked("liquidatee");
     let liquidator = Addr::unchecked("liquidator");
@@ -520,12 +490,7 @@ fn test_liquidation_calculation_adjustment() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
     let ujake = ujake_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: None,
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = unlocked_vault_info();
 
     let liquidatee = Addr::unchecked("liquidatee");
     let liquidator = Addr::unchecked("liquidator");

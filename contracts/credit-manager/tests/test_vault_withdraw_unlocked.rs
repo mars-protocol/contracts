@@ -10,18 +10,14 @@ use rover::msg::execute::Action::{
 use rover::msg::query::Positions;
 
 use crate::helpers::{
-    assert_err, get_coin, uatom_info, uosmo_info, AccountToFund, MockEnv, VaultTestInfo,
+    assert_err, get_coin, locked_vault_info, uatom_info, uosmo_info, AccountToFund, MockEnv,
 };
 
 pub mod helpers;
 
 #[test]
 fn test_only_owner_can_withdraw_unlocked_for_account() {
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: Some(1_209_600), // 14 days
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -71,12 +67,7 @@ fn test_can_only_take_action_on_whitelisted_vaults() {
 fn test_not_owner_of_unlocking_position() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: Some(1_209_600), // 14 days
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = locked_vault_info();
 
     let user_a = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -148,12 +139,7 @@ fn test_not_owner_of_unlocking_position() {
 fn test_unlocking_position_not_ready() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: Some(1_209_600), // 14 days
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -209,12 +195,7 @@ fn test_unlocking_position_not_ready() {
 fn test_withdraw_unlock_success() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: Some(1_209_600), // 14 days
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
-    };
+    let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()

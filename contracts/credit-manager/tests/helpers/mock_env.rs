@@ -5,13 +5,13 @@ use cosmwasm_std::testing::MockApi;
 use cosmwasm_std::{coins, Addr, Coin, Decimal, Uint128};
 use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
+use mars_outpost::red_bank::QueryMsg::UserDebt;
+use mars_outpost::red_bank::UserDebtResponse;
 
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use mars_oracle_adapter::msg::{
     InstantiateMsg as OracleAdapterInstantiateMsg, PricingMethod, VaultPricingInfo,
 };
-use mars_outpost::red_bank::QueryMsg::UserDebt;
-use mars_outpost::red_bank::UserDebtResponse;
 use mock_oracle::msg::{
     CoinPrice, ExecuteMsg as OracleExecuteMsg, InstantiateMsg as OracleInstantiateMsg,
 };
@@ -22,9 +22,9 @@ use rover::adapters::swap::QueryMsg::EstimateExactInSwap;
 use rover::adapters::swap::{
     EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg, Swapper, SwapperBase,
 };
-use rover::adapters::{OracleBase, RedBankBase, Vault, VaultBase, VaultUnchecked};
+use rover::adapters::{OracleBase, RedBankBase, VaultBase, VaultUnchecked};
 use rover::msg::execute::{Action, CallbackMsg};
-use rover::msg::instantiate::ConfigUpdates;
+use rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
 use rover::msg::query::{
     CoinBalanceResponseItem, ConfigResponse, DebtShares, HealthResponse, Positions,
     SharesResponseItem, VaultPositionResponseItem, VaultWithBalance,
@@ -51,7 +51,7 @@ pub struct MockEnvBuilder {
     pub app: BasicApp,
     pub owner: Option<Addr>,
     pub allowed_vaults: Option<Vec<VaultTestInfo>>,
-    pub pre_deployed_vaults: Option<Vec<VaultUnchecked>>,
+    pub pre_deployed_vaults: Option<Vec<VaultInstantiateConfig>>,
     pub allowed_coins: Option<Vec<CoinInfo>>,
     pub oracle: Option<OracleBase<Addr>>,
     pub oracle_adapter: Option<OracleBase<Addr>>,
@@ -234,6 +234,20 @@ impl MockEnv {
             .query_wasm_smart(
                 self.rover.clone(),
                 &QueryMsg::AllowedVaults { start_after, limit },
+            )
+            .unwrap()
+    }
+
+    pub fn query_deposit_caps(
+        &self,
+        start_after: Option<VaultUnchecked>,
+        limit: Option<u32>,
+    ) -> Vec<VaultInstantiateConfig> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.rover.clone(),
+                &QueryMsg::DepositCaps { start_after, limit },
             )
             .unwrap()
     }
@@ -548,21 +562,24 @@ impl MockEnvBuilder {
 
     fn deploy_oracle(&mut self) -> OracleBase<Addr> {
         let contract_code_id = self.app.store_code(mock_oracle_contract());
+        let mut prices: Vec<CoinPrice> = self
+            .get_allowed_coins()
+            .iter()
+            .map(|item| CoinPrice {
+                denom: item.denom.clone(),
+                price: item.price,
+            })
+            .collect();
+        prices.push(CoinPrice {
+            denom: "uusdc".to_string(),
+            price: Decimal::from_atomics(12345u128, 4).unwrap(),
+        });
         let addr = self
             .app
             .instantiate_contract(
                 contract_code_id,
                 Addr::unchecked("oracle_contract_owner"),
-                &OracleInstantiateMsg {
-                    coins: self
-                        .get_allowed_coins()
-                        .iter()
-                        .map(|item| CoinPrice {
-                            denom: item.denom.clone(),
-                            price: item.price,
-                        })
-                        .collect(),
-                },
+                &OracleInstantiateMsg { prices },
                 &[],
                 "mock-oracle",
                 None,
@@ -571,7 +588,7 @@ impl MockEnvBuilder {
         OracleBase::new(addr)
     }
 
-    fn get_oracle_adapter(&mut self, vaults: Vec<VaultUnchecked>) -> OracleBase<Addr> {
+    fn get_oracle_adapter(&mut self, vaults: Vec<VaultInstantiateConfig>) -> OracleBase<Addr> {
         if self.oracle_adapter.is_none() {
             let addr = self.deploy_oracle_adapter(vaults);
             self.oracle_adapter = Some(addr);
@@ -579,7 +596,7 @@ impl MockEnvBuilder {
         self.oracle_adapter.clone().unwrap()
     }
 
-    fn deploy_oracle_adapter(&mut self, vaults: Vec<VaultUnchecked>) -> OracleBase<Addr> {
+    fn deploy_oracle_adapter(&mut self, vaults: Vec<VaultInstantiateConfig>) -> OracleBase<Addr> {
         let owner = Addr::unchecked("oracle_adapter_contract_owner");
         let contract_code_id = self.app.store_code(mock_oracle_adapter_contract());
         let oracle = self.get_oracle().into();
@@ -588,15 +605,15 @@ impl MockEnvBuilder {
         } else {
             vaults
                 .into_iter()
-                .map(|v| {
+                .map(|config| {
                     let info: VaultInfo = self
                         .app
                         .wrap()
-                        .query_wasm_smart(v.address.clone(), &VaultInfoMsg {})
+                        .query_wasm_smart(config.vault.address.clone(), &VaultInfoMsg {})
                         .unwrap();
                     VaultPricingInfo {
                         denom: info.token_denom,
-                        addr: Addr::unchecked(v.address),
+                        addr: Addr::unchecked(config.vault.address),
                         method: PricingMethod::PreviewRedeem,
                     }
                 })
@@ -669,7 +686,7 @@ impl MockEnvBuilder {
         RedBankBase::new(addr)
     }
 
-    fn deploy_vault(&mut self, vault: &VaultTestInfo) -> Vault {
+    fn deploy_vault(&mut self, vault: &VaultTestInfo) -> VaultInstantiateConfig {
         let code_id = self.app.store_code(mock_vault_contract());
         let oracle = self.get_oracle().into();
         let addr = self
@@ -689,7 +706,10 @@ impl MockEnvBuilder {
             )
             .unwrap();
         self.fund_vault(&addr, &vault.denom);
-        VaultBase::new(addr)
+        VaultInstantiateConfig {
+            vault: VaultBase::new(addr.to_string()),
+            deposit_cap: vault.deposit_cap.clone(),
+        }
     }
 
     fn deploy_swapper(&mut self) -> Swapper {
@@ -731,12 +751,12 @@ impl MockEnvBuilder {
             .unwrap();
     }
 
-    fn deploy_vaults(&mut self) -> Vec<VaultUnchecked> {
+    fn deploy_vaults(&mut self) -> Vec<VaultInstantiateConfig> {
         self.allowed_vaults
             .clone()
             .unwrap_or_default()
             .iter()
-            .map(|v| self.deploy_vault(v).into())
+            .map(|v| self.deploy_vault(v))
             .collect()
     }
 
@@ -798,12 +818,19 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn pre_deployed_vaults(&mut self, vaults: &[&str]) -> &mut Self {
-        let vaults = vaults
-            .iter()
-            .map(|v| VaultBase::new(v.to_string()))
-            .collect::<Vec<_>>();
-        self.pre_deployed_vaults = Some(vaults);
+    pub fn pre_deployed_vault(&mut self, address: &str, info: &VaultTestInfo) -> &mut Self {
+        let config = VaultInstantiateConfig {
+            vault: VaultBase::new(address.to_string()),
+            deposit_cap: info.deposit_cap.clone(),
+        };
+        let new_list = match self.pre_deployed_vaults.clone() {
+            None => Some(vec![config]),
+            Some(mut curr) => {
+                curr.push(config);
+                Some(curr)
+            }
+        };
+        self.pre_deployed_vaults = new_list;
         self
     }
 

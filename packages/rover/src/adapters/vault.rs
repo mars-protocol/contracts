@@ -1,11 +1,9 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, Decimal, OverflowError,
+    to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, OverflowError,
     QuerierWrapper, QueryRequest, StdResult, SubMsg, Uint128, WasmMsg, WasmQuery,
 };
 
-use crate::adapters::Oracle;
-use crate::error::ContractResult;
 use crate::msg::vault::{ExecuteMsg, QueryMsg, UnlockingPosition, VaultInfo};
 use crate::traits::Stringify;
 
@@ -206,17 +204,6 @@ impl Vault {
             denom: vault_info.token_denom,
         }))?;
         Ok(res.amount.amount)
-    }
-
-    pub fn query_total_value(
-        &self,
-        querier: &QuerierWrapper,
-        oracle: &Oracle,
-        addr: &Addr,
-    ) -> ContractResult<Decimal> {
-        let balance = self.query_balance(querier, addr)?;
-        let assets = self.query_preview_redeem(querier, balance)?;
-        oracle.query_total_value(querier, &assets)
     }
 
     pub fn query_preview_redeem(

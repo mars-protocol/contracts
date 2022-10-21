@@ -9,7 +9,7 @@ pub struct CoinPrice {
 
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub coins: Vec<CoinPrice>,
+    pub prices: Vec<CoinPrice>,
 }
 
 #[cw_serde]

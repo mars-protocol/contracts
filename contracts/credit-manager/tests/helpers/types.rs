@@ -20,6 +20,7 @@ pub struct VaultTestInfo {
     pub denom: String,
     pub lockup: Option<u64>,
     pub underlying_denoms: Vec<String>,
+    pub deposit_cap: Coin,
 }
 
 impl CoinInfo {
