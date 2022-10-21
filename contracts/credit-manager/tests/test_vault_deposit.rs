@@ -2,7 +2,7 @@ use cosmwasm_std::OverflowOperation::Sub;
 use cosmwasm_std::{coin, coins, Addr, OverflowError, Uint128};
 
 use mock_vault::contract::STARTING_VAULT_SHARES;
-use rover::adapters::VaultBase;
+use rover::adapters::vault::VaultBase;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{Deposit, VaultDeposit};
 
@@ -221,11 +221,14 @@ fn test_successful_deposit_into_locked_vault() {
     assert_eq!(res.vaults.len(), 1);
     assert_eq!(
         STARTING_VAULT_SHARES,
-        res.vaults.first().unwrap().state.locked
+        res.vaults.first().unwrap().amount.locked()
     );
-    assert_eq!(Uint128::zero(), res.vaults.first().unwrap().state.unlocked);
+    assert_eq!(
+        Uint128::zero(),
+        res.vaults.first().unwrap().amount.unlocked()
+    );
 
-    let assets = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().state.locked);
+    let assets = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().amount.locked());
 
     let osmo_withdraw = assets.iter().find(|coin| coin.denom == "uosmo").unwrap();
     assert_eq!(osmo_withdraw.amount, Uint128::new(120));
@@ -281,11 +284,11 @@ fn test_successful_deposit_into_unlocked_vault() {
     assert_eq!(res.vaults.len(), 1);
     assert_eq!(
         STARTING_VAULT_SHARES,
-        res.vaults.first().unwrap().state.unlocked
+        res.vaults.first().unwrap().amount.unlocked()
     );
-    assert_eq!(Uint128::zero(), res.vaults.first().unwrap().state.locked);
+    assert_eq!(Uint128::zero(), res.vaults.first().unwrap().amount.locked());
 
-    let assets = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().state.unlocked);
+    let assets = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().amount.unlocked());
 
     let osmo_withdraw = assets.iter().find(|coin| coin.denom == "uosmo").unwrap();
     assert_eq!(osmo_withdraw.amount, Uint128::new(120));

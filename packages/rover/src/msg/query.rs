@@ -2,7 +2,7 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Decimal, Uint128};
 use mars_health::health::Health;
 
-use crate::adapters::{Vault, VaultPosition, VaultUnchecked};
+use crate::adapters::vault::{Vault, VaultPosition, VaultUnchecked};
 use crate::traits::Coins;
 
 #[cw_serde]

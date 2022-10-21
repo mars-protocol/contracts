@@ -19,7 +19,7 @@ rover = { version = "1.0", path = "../../packages/rover" }
 
 cosmwasm-schema = "1.1"
 cosmwasm-std = "1.1"
-cw-storage-plus = "0.15"
+cw-storage-plus = "0.16"
 thiserror = "1.0"
 
 [dev-dependencies]
@@ -27,4 +27,4 @@ mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features 
 mock-vault = { version = "1.0", path = "../../contracts/mock-vault", features = ["library"] }
 
 anyhow = "1"
-cw-multi-test = "0.15"
+cw-multi-test = "0.16"

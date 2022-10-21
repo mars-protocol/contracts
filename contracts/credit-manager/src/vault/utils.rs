@@ -3,9 +3,8 @@ use cosmwasm_std::{
 };
 
 use mars_oracle_adapter::msg::QueryMsg::PriceableUnderlying;
-use rover::adapters::{
-    UpdateType, Vault, VaultPosition, VaultPositionState, VaultPositionUpdate,
-    VaultUnlockingPosition,
+use rover::adapters::vault::{
+    Total, Vault, VaultPosition, VaultPositionAmount, VaultPositionUpdate,
 };
 use rover::error::{ContractError, ContractResult};
 
@@ -25,51 +24,20 @@ pub fn update_vault_position(
     account_id: &str,
     vault_addr: &Addr,
     update: VaultPositionUpdate,
-) -> ContractResult<VaultPositionState> {
+) -> ContractResult<VaultPositionAmount> {
     let path = VAULT_POSITIONS.key((account_id, vault_addr.clone()));
-    let mut new_position = path.may_load(storage)?.unwrap_or_default();
+    let mut amount = path
+        .may_load(storage)?
+        .unwrap_or_else(|| update.default_amount());
 
-    match update {
-        VaultPositionUpdate::Unlocked { amount, kind } => match kind {
-            UpdateType::Increment => {
-                new_position.unlocked = new_position.unlocked.checked_add(amount)?;
-            }
-            UpdateType::Decrement => {
-                new_position.unlocked = new_position.unlocked.checked_sub(amount)?;
-            }
-        },
-        VaultPositionUpdate::Locked { amount, kind } => match kind {
-            UpdateType::Increment => {
-                new_position.locked = new_position.locked.checked_add(amount)?;
-            }
-            UpdateType::Decrement => {
-                new_position.locked = new_position.locked.checked_sub(amount)?;
-            }
-        },
-        VaultPositionUpdate::Unlocking { id, amount, kind } => match kind {
-            UpdateType::Increment => {
-                new_position
-                    .unlocking
-                    .push(VaultUnlockingPosition { id, amount });
-            }
-            UpdateType::Decrement => {
-                let mut matching_unlock = get_unlocking_position(id, &new_position)?;
-                matching_unlock.amount = matching_unlock.amount.checked_sub(amount)?;
+    amount.update(update)?;
 
-                new_position.unlocking.retain(|p| p.id != id);
-                if !matching_unlock.amount.is_zero() {
-                    new_position.unlocking.push(matching_unlock);
-                }
-            }
-        },
-    }
-
-    if new_position == VaultPositionState::default() {
+    if amount.total().is_zero() {
         path.remove(storage);
     } else {
-        path.save(storage, &new_position)?;
+        path.save(storage, &amount)?;
     }
-    Ok(new_position)
+    Ok(amount)
 }
 
 /// Returns the denoms received on a withdraw, inferred by vault entry requirements
@@ -93,7 +61,7 @@ pub fn get_priceable_coins(deps: &Deps, positions: &[VaultPosition]) -> Contract
     let mut coins: Vec<Coin> = vec![];
     for p in positions {
         let vault_info = p.vault.query_info(&deps.querier)?;
-        let total_vault_coins = p.state.total()?;
+        let total_vault_coins = p.amount.total();
         let priceable_coins: Vec<Coin> =
             deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: oracle.address().to_string(),
@@ -104,16 +72,4 @@ pub fn get_priceable_coins(deps: &Deps, positions: &[VaultPosition]) -> Contract
         coins.extend(priceable_coins)
     }
     Ok(coins)
-}
-
-pub fn get_unlocking_position(
-    position_id: u64,
-    vault_position: &VaultPositionState,
-) -> ContractResult<VaultUnlockingPosition> {
-    vault_position
-        .unlocking
-        .iter()
-        .find(|p| p.id == position_id)
-        .ok_or_else(|| ContractError::NoPositionMatch(position_id.to_string()))
-        .cloned()
 }

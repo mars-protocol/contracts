@@ -382,69 +382,6 @@ fn test_liquidator_left_in_unhealthy_state() {
 }
 
 #[test]
-fn test_liquidatee_not_healthier_after_liquidation() {
-    let uosmo_info = uosmo_info();
-    let uatom_info = uatom_info();
-    let liquidator = Addr::unchecked("liquidator");
-    let liquidatee = Addr::unchecked("liquidatee");
-    let mut mock = MockEnv::new()
-        // an absurdly high liquidation bonus
-        .max_liquidation_bonus(Decimal::from_atomics(8u128, 1).unwrap())
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
-        .fund_account(AccountToFund {
-            addr: liquidatee.clone(),
-            funds: coins(300, uosmo_info.denom.clone()),
-        })
-        .fund_account(AccountToFund {
-            addr: liquidator.clone(),
-            funds: coins(300, uatom_info.denom.clone()),
-        })
-        .build()
-        .unwrap();
-    let liquidatee_account_id = mock.create_credit_account(&liquidatee).unwrap();
-
-    mock.update_credit_account(
-        &liquidatee_account_id,
-        &liquidatee,
-        vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(uatom_info.to_coin(100)),
-        ],
-        &[Coin::new(300, uosmo_info.denom.clone())],
-    )
-    .unwrap();
-
-    mock.price_change(CoinPrice {
-        denom: uatom_info.denom.clone(),
-        price: 20.to_dec().unwrap(),
-    });
-
-    let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
-
-    let res = mock.update_credit_account(
-        &liquidator_account_id,
-        &liquidator,
-        vec![
-            Deposit(uatom_info.to_coin(50)),
-            LiquidateCoin {
-                liquidatee_account_id: liquidatee_account_id.clone(),
-                debt_coin: uatom_info.to_coin(50),
-                request_coin_denom: uosmo_info.denom,
-            },
-        ],
-        &[uatom_info.to_coin(50)],
-    );
-
-    assert_err(
-        res,
-        ContractError::HealthNotImproved {
-            prev_hf: "0.920049504950495049".to_string(),
-            new_hf: "0.910272727272727272".to_string(),
-        },
-    )
-}
-
-#[test]
 fn test_debt_amount_adjusted_to_close_factor_max() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();

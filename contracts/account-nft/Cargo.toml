@@ -14,7 +14,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cw-storage-plus = "0.15"
+cw-storage-plus = "0.16"
 cw721 = "0.15"
 cw721-base = { version = "0.15", features = ["library"] }
 cosmwasm-schema = "1.1"
@@ -22,4 +22,4 @@ cosmwasm-std = "1.1"
 
 [dev-dependencies]
 anyhow = "1"
-cw-multi-test = "0.15"
+cw-multi-test = "0.16"

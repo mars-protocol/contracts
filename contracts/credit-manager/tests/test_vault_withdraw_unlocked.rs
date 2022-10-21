@@ -2,7 +2,7 @@ use cosmwasm_std::StdError::NotFound;
 use cosmwasm_std::{coin, Addr, Uint128};
 
 use mock_vault::contract::STARTING_VAULT_SHARES;
-use rover::adapters::VaultUnchecked;
+use rover::adapters::vault::VaultUnchecked;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{
     Deposit, VaultDeposit, VaultRequestUnlock, VaultWithdrawUnlocked,
@@ -108,8 +108,8 @@ fn test_not_owner_of_unlocking_position() {
         .vaults
         .first()
         .unwrap()
-        .state
-        .unlocking
+        .amount
+        .unlocking()
         .first()
         .unwrap()
         .id;
@@ -129,9 +129,7 @@ fn test_not_owner_of_unlocking_position() {
 
     assert_err(
         res,
-        ContractError::Std(NotFound {
-            kind: "rover::adapters::vault::VaultPositionState".to_string(),
-        }),
+        ContractError::Std(NotFound { kind: "rover::adapters::vault::amount::VaultPositionAmountBase<rover::adapters::vault::amount::VaultAmount, rover::adapters::vault::amount::LockingVaultAmount>".to_string() }),
     );
 }
 
@@ -176,7 +174,14 @@ fn test_unlocking_position_not_ready() {
 
     let Positions { vaults, .. } = mock.query_positions(&account_id);
 
-    let position_id = vaults.first().unwrap().state.unlocking.first().unwrap().id;
+    let position_id = vaults
+        .first()
+        .unwrap()
+        .amount
+        .unlocking()
+        .first()
+        .unwrap()
+        .id;
 
     let res = mock.update_credit_account(
         &account_id,
@@ -240,7 +245,14 @@ fn test_withdraw_unlock_success() {
 
     let Positions { vaults, .. } = mock.query_positions(&account_id);
 
-    let position_id = vaults.first().unwrap().state.unlocking.first().unwrap().id;
+    let position_id = vaults
+        .first()
+        .unwrap()
+        .amount
+        .unlocking()
+        .first()
+        .unwrap()
+        .id;
 
     mock.update_credit_account(
         &account_id,

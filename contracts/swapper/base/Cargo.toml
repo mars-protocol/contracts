@@ -18,7 +18,7 @@ rover = { version = "1.0", path = "../../../packages/rover" }
 
 cosmwasm-schema = "1.1"
 cosmwasm-std = "1.1"
-cw-storage-plus = "0.15"
+cw-storage-plus = "0.16"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = "1.0"

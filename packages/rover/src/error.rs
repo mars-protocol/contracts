@@ -48,6 +48,9 @@ pub enum ContractError {
     )]
     HealthNotImproved { prev_hf: String, new_hf: String },
 
+    #[error("Issued incorrect action for vault type")]
+    MismatchedVaultType,
+
     #[error("No coin amount set for action")]
     NoAmount,
 

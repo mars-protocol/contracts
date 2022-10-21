@@ -1,10 +1,11 @@
 use cosmwasm_std::{Addr, Decimal};
 
 use rover::adapters::swap::SwapperBase;
-use rover::adapters::{OracleBase, RedBankBase, VaultBase};
+use rover::adapters::vault::VaultBase;
+use rover::adapters::{OracleBase, RedBankBase};
 use rover::msg::instantiate::ConfigUpdates;
 
-use crate::helpers::MockEnv;
+use crate::helpers::{locked_vault_info, uatom_info, uosmo_info, MockEnv};
 
 pub mod helpers;
 
@@ -139,6 +140,36 @@ fn test_update_config_works_with_some_config() {
     assert_eq!(new_config.owner, original_config.owner);
     assert_eq!(original_allowed_coins, new_queried_allowed_coins);
     assert_eq!(new_config.red_bank, original_config.red_bank);
+}
+
+#[test]
+fn test_update_config_removes_properly() {
+    let uatom = uatom_info();
+    let uosmo = uosmo_info();
+    let leverage_vault = locked_vault_info();
+
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[uatom, uosmo])
+        .allowed_vaults(&[leverage_vault])
+        .build()
+        .unwrap();
+
+    mock.update_config(
+        &Addr::unchecked(mock.query_config().owner),
+        ConfigUpdates {
+            allowed_coins: Some(vec![]),
+            allowed_vaults: Some(vec![]),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    let new_allowed_vaults = mock.query_allowed_vaults(None, None);
+    let new_allowed_coins = mock.query_allowed_coins(None, None);
+
+    // All allowed vaults and coins removed
+    assert_eq!(new_allowed_vaults.len(), 0);
+    assert_eq!(new_allowed_coins.len(), 0);
 }
 
 #[test]

@@ -18,4 +18,4 @@ mars-outpost = { version = "0.1", path = "../../../outposts/packages/outpost" }
 
 cosmwasm-schema = "1.1"
 cosmwasm-std = "1.1"
-cw-storage-plus = "0.15"
+cw-storage-plus = "0.16"

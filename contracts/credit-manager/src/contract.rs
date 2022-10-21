@@ -3,7 +3,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 
-use rover::adapters::VAULT_REQUEST_REPLY_ID;
+use rover::adapters::vault::VAULT_REQUEST_REPLY_ID;
 use rover::error::{ContractError, ContractResult};
 use rover::msg::query::HealthResponse;
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};

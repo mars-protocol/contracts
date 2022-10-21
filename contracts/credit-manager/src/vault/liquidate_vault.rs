@@ -1,12 +1,14 @@
+use std::cmp::min;
+
 use cosmwasm_std::{
     to_binary, Coin, CosmosMsg, DepsMut, Env, QuerierWrapper, Response, Storage, Uint128, WasmMsg,
 };
-use std::cmp::min;
 
-use rover::adapters::{UpdateType, Vault, VaultPositionState, VaultPositionUpdate};
+use rover::adapters::vault::{
+    Total, UnlockingChange, UpdateType, Vault, VaultPositionAmount, VaultPositionUpdate,
+};
 use rover::error::ContractResult;
 use rover::msg::execute::CallbackMsg;
-use rover::msg::vault::VaultInfo;
 use rover::msg::ExecuteMsg;
 use rover::traits::Denoms;
 
@@ -29,13 +31,13 @@ pub fn liquidate_vault(
         deps.storage,
         (liquidatee_account_id, request_vault.address.clone()),
     )?;
-    let (_health, debt, request) = calculate_liquidation(
+    let (debt, request) = calculate_liquidation(
         &deps,
         &env,
         liquidatee_account_id,
         &debt_coin,
         &vault_info.token_denom,
-        liquidatee_position.total()?,
+        liquidatee_position.total(),
     )?;
 
     // Transfer debt coin from liquidator's coin balance to liquidatee
@@ -53,7 +55,6 @@ pub fn liquidate_vault(
         &deps.querier,
         liquidatee_account_id,
         &request_vault,
-        &vault_info,
         &liquidatee_position,
         request.amount,
     )?;
@@ -74,19 +75,10 @@ pub fn liquidate_vault(
         }))?,
     });
 
-    // TODO: Reviewing with Davide on whether this is necessary
-    // // Ensure health factor has improved as a consequence of liquidation event
-    // let assert_healthier_msg = (CallbackMsg::AssertHealthFactorImproved {
-    //     account_id: liquidatee_account_id.to_string(),
-    //     previous_health_factor: health.liquidation_health_factor.unwrap(),
-    // })
-    // .into_cosmos_msg(&env.contract.address)?;
-
     Ok(Response::new()
         .add_message(repay_msg)
         .add_messages(vault_withdraw_msgs)
         .add_message(update_coin_balance_msg)
-        // .add_message(assert_healthier_msg)
         .add_attribute("action", "rover/credit_manager/liquidate_vault")
         .add_attribute("liquidatee_account_id", liquidatee_account_id)
         .add_attribute("debt_repaid_denom", debt.denom)
@@ -101,64 +93,57 @@ fn get_vault_withdraw_msgs(
     querier: &QuerierWrapper,
     liquidatee_account_id: &str,
     request_vault: &Vault,
-    vault_info: &VaultInfo,
-    liquidatee_position: &VaultPositionState,
+    liquidatee_position: &VaultPositionAmount,
     amount: Uint128,
 ) -> ContractResult<Vec<CosmosMsg>> {
     let mut total_to_liquidate = amount;
     let mut vault_withdraw_msgs = vec![];
 
-    // No vault lockup indicates it's an unlocked vault. Should liquidate from the UNLOCKED bucket.
-    if vault_info.lockup.is_none() {
-        update_vault_position(
-            storage,
-            liquidatee_account_id,
-            &request_vault.address,
-            VaultPositionUpdate::Unlocked {
-                amount: total_to_liquidate,
-                kind: UpdateType::Decrement,
-            },
-        )?;
-
-        let msg = request_vault.withdraw_msg(querier, total_to_liquidate, false)?;
-        vault_withdraw_msgs.push(msg);
-    } else {
-        // A locking vault can have two different positions: LOCKED & UNLOCKING
-        // Priority goes to force withdrawing the unlocking buckets
-        for u in &liquidatee_position.unlocking {
-            let amount = min(u.amount, total_to_liquidate);
+    match liquidatee_position {
+        VaultPositionAmount::Unlocked(_) => {
             update_vault_position(
                 storage,
                 liquidatee_account_id,
                 &request_vault.address,
-                VaultPositionUpdate::Unlocking {
-                    id: u.id,
-                    amount,
-                    kind: UpdateType::Decrement,
-                },
+                VaultPositionUpdate::Unlocked(UpdateType::Decrement(total_to_liquidate)),
             )?;
 
-            let msg = request_vault.force_withdraw_unlocking_msg(u.id, Some(amount))?;
+            let msg = request_vault.withdraw_msg(querier, total_to_liquidate, false)?;
             vault_withdraw_msgs.push(msg);
-
-            total_to_liquidate = total_to_liquidate.checked_sub(amount)?;
         }
+        VaultPositionAmount::Locking(amount) => {
+            // A locking vault can have two different positions: LOCKED & UNLOCKING
+            // Priority goes to force withdrawing the unlocking buckets
+            for u in amount.unlocking.positions() {
+                let amount = min(u.amount, total_to_liquidate);
 
-        // If unlocking positions have been exhausted, liquidate from LOCKED bucket
-        if !total_to_liquidate.is_zero() {
-            update_vault_position(
-                storage,
-                liquidatee_account_id,
-                &request_vault.address,
-                VaultPositionUpdate::Locked {
-                    amount: total_to_liquidate,
-                    kind: UpdateType::Decrement,
-                },
-            )?;
+                update_vault_position(
+                    storage,
+                    liquidatee_account_id,
+                    &request_vault.address,
+                    VaultPositionUpdate::Unlocking(UnlockingChange::Decrement { id: u.id, amount }),
+                )?;
 
-            let msg = request_vault.withdraw_msg(querier, total_to_liquidate, true)?;
-            vault_withdraw_msgs.push(msg);
+                let msg = request_vault.force_withdraw_unlocking_msg(u.id, Some(amount))?;
+                vault_withdraw_msgs.push(msg);
+
+                total_to_liquidate = total_to_liquidate.checked_sub(amount)?;
+            }
+
+            // If unlocking positions have been exhausted, liquidate from LOCKED bucket
+            if !total_to_liquidate.is_zero() {
+                update_vault_position(
+                    storage,
+                    liquidatee_account_id,
+                    &request_vault.address,
+                    VaultPositionUpdate::Locked(UpdateType::Decrement(total_to_liquidate)),
+                )?;
+
+                let msg = request_vault.withdraw_msg(querier, total_to_liquidate, true)?;
+                vault_withdraw_msgs.push(msg);
+            }
         }
     }
+
     Ok(vault_withdraw_msgs)
 }

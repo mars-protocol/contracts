@@ -2,7 +2,7 @@ use cosmwasm_std::OverflowOperation::Sub;
 use cosmwasm_std::{coin, Addr, Coin, OverflowError, Uint128};
 
 use mock_vault::contract::STARTING_VAULT_SHARES;
-use rover::adapters::VaultBase;
+use rover::adapters::vault::VaultBase;
 use rover::error::ContractError;
 use rover::error::ContractError::{NotTokenOwner, NotWhitelisted};
 use rover::msg::execute::Action::{Deposit, VaultDeposit, VaultWithdraw};
@@ -89,10 +89,6 @@ fn test_no_unlocked_vault_coins_to_withdraw() {
         vec![
             Deposit(coin(200, uatom.denom)),
             Deposit(coin(200, uosmo.denom)),
-            VaultDeposit {
-                vault: vault.clone(),
-                coins: vec![coin(100, "uatom"), coin(100, "uosmo")],
-            },
             VaultWithdraw {
                 vault,
                 amount: STARTING_VAULT_SHARES,
@@ -175,7 +171,7 @@ fn test_force_withdraw_breaks_lock() {
     let res = mock.query_positions(&account_id);
     assert_eq!(res.vaults.len(), 1);
     let v = res.vaults.first().unwrap();
-    assert_eq!(v.state.locked, STARTING_VAULT_SHARES);
+    assert_eq!(v.amount.locked(), STARTING_VAULT_SHARES);
 
     mock.invoke_callback(
         &mock.rover.clone(),
@@ -246,7 +242,7 @@ fn test_withdraw_with_unlocked_vault_coins() {
     let res = mock.query_positions(&account_id);
     assert_eq!(res.vaults.len(), 1);
     let v = res.vaults.first().unwrap();
-    assert_eq!(v.state.unlocked, STARTING_VAULT_SHARES);
+    assert_eq!(v.amount.unlocked(), STARTING_VAULT_SHARES);
     let atom = get_coin("uatom", &res.coins);
     assert_eq!(atom.amount, Uint128::from(100u128));
     let osmo = get_coin("uosmo", &res.coins);

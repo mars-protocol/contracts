@@ -3,10 +3,11 @@ use cosmwasm_std::{
     WasmMsg,
 };
 
-use rover::adapters::{UpdateType, Vault, VaultPositionUpdate};
+use rover::adapters::vault::{UpdateType, Vault, VaultPositionUpdate};
 use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg;
+use rover::traits::Denoms;
 
 use crate::state::{ORACLE, VAULT_DEPOSIT_CAPS};
 use crate::utils::{assert_coins_are_whitelisted, contents_equal, decrement_coin_balance};
@@ -17,13 +18,12 @@ pub fn deposit_into_vault(
     rover_addr: &Addr,
     account_id: &str,
     vault: Vault,
-    coins: &[Coin],
+    coins: Vec<Coin>,
 ) -> ContractResult<Response> {
-    let denoms = coins.iter().map(|c| c.denom.as_str()).collect();
-    assert_coins_are_whitelisted(deps.storage, denoms)?;
+    assert_coins_are_whitelisted(deps.storage, coins.to_denoms())?;
     assert_vault_is_whitelisted(deps.storage, &vault)?;
-    assert_denoms_match_vault_reqs(deps.querier, &vault, coins)?;
-    assert_deposit_is_under_cap(deps.as_ref(), &vault, coins, rover_addr)?;
+    assert_denoms_match_vault_reqs(deps.querier, &vault, &coins)?;
+    assert_deposit_is_under_cap(deps.as_ref(), &vault, &coins, rover_addr)?;
 
     // Decrement token's coin balance amount
     coins.iter().try_for_each(|coin| -> ContractResult<_> {
@@ -43,7 +43,7 @@ pub fn deposit_into_vault(
     });
 
     Ok(Response::new()
-        .add_message(vault.deposit_msg(coins)?)
+        .add_message(vault.deposit_msg(&coins)?)
         .add_message(update_vault_balance_msg)
         .add_attribute("action", "rover/credit_manager/vault/deposit"))
 }
@@ -69,14 +69,8 @@ pub fn update_vault_coin_balance(
         account_id,
         &vault.address,
         match vault_info.lockup {
-            None => VaultPositionUpdate::Unlocked {
-                amount: diff,
-                kind: UpdateType::Increment,
-            },
-            Some(_) => VaultPositionUpdate::Locked {
-                amount: diff,
-                kind: UpdateType::Increment,
-            },
+            None => VaultPositionUpdate::Unlocked(UpdateType::Increment(diff)),
+            Some(_) => VaultPositionUpdate::Locked(UpdateType::Increment(diff)),
         },
     )?;
 

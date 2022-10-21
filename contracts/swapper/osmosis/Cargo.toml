@@ -19,7 +19,7 @@ swapper-base = { path = "../base", version = "1.0" }
 
 cosmwasm-schema = "1.1"
 cosmwasm-std = "1.1"
-cw-storage-plus = "0.15"
+cw-storage-plus = "0.16"
 osmo-bindings = "0.5"
 schemars = "0.8"
 thiserror = "1.0"

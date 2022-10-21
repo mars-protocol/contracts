@@ -2,7 +2,8 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Decimal};
 
 use crate::adapters::swap::SwapperUnchecked;
-use crate::adapters::{OracleUnchecked, RedBankUnchecked, VaultUnchecked};
+use crate::adapters::vault::VaultUnchecked;
+use crate::adapters::{OracleUnchecked, RedBankUnchecked};
 
 #[cw_serde]
 pub struct InstantiateMsg {

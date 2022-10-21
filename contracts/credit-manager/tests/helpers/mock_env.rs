@@ -22,7 +22,8 @@ use rover::adapters::swap::QueryMsg::EstimateExactInSwap;
 use rover::adapters::swap::{
     EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg, Swapper, SwapperBase,
 };
-use rover::adapters::{OracleBase, RedBankBase, VaultBase, VaultUnchecked};
+use rover::adapters::vault::{VaultBase, VaultUnchecked};
+use rover::adapters::{OracleBase, RedBankBase};
 use rover::msg::execute::{Action, CallbackMsg};
 use rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
 use rover::msg::query::{

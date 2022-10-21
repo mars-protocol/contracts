@@ -1,44 +1,16 @@
+use std::hash::Hash;
+
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, OverflowError,
-    QuerierWrapper, QueryRequest, StdResult, SubMsg, Uint128, WasmMsg, WasmQuery,
+    to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, QuerierWrapper,
+    QueryRequest, StdResult, SubMsg, Uint128, WasmMsg, WasmQuery,
 };
 
+use crate::adapters::vault::VaultPositionAmount;
 use crate::msg::vault::{ExecuteMsg, QueryMsg, UnlockingPosition, VaultInfo};
 use crate::traits::Stringify;
 
 pub const VAULT_REQUEST_REPLY_ID: u64 = 10_001;
-
-#[cw_serde]
-#[derive(Default)]
-pub struct VaultPositionState {
-    pub unlocked: Uint128,
-    pub locked: Uint128,
-    pub unlocking: Vec<VaultUnlockingPosition>,
-}
-
-#[cw_serde]
-pub enum UpdateType {
-    Increment,
-    Decrement,
-}
-
-#[cw_serde]
-pub enum VaultPositionUpdate {
-    Unlocked {
-        amount: Uint128,
-        kind: UpdateType,
-    },
-    Locked {
-        amount: Uint128,
-        kind: UpdateType,
-    },
-    Unlocking {
-        id: UnlockingId,
-        amount: Uint128,
-        kind: UpdateType,
-    },
-}
 
 pub type UnlockingId = u64;
 
@@ -50,19 +22,10 @@ pub struct VaultUnlockingPosition {
     pub amount: Uint128,
 }
 
-impl VaultPositionState {
-    pub fn total(&self) -> Result<Uint128, OverflowError> {
-        let total_unlocking = self.unlocking.iter().map(|u| u.amount).sum();
-        self.locked
-            .checked_add(self.unlocked)?
-            .checked_add(total_unlocking)
-    }
-}
-
 #[cw_serde]
 pub struct VaultPosition {
     pub vault: Vault,
-    pub state: VaultPositionState,
+    pub amount: VaultPositionAmount,
 }
 
 #[cw_serde]

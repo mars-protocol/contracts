@@ -3,7 +3,7 @@ use cosmwasm_std::StdError::NotFound;
 use cosmwasm_std::{Addr, OverflowError, Uint128};
 
 use mock_oracle::msg::CoinPrice;
-use rover::adapters::VaultBase;
+use rover::adapters::vault::VaultBase;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{
     Borrow, Deposit, LiquidateVault, VaultDeposit, VaultRequestUnlock,
@@ -63,9 +63,7 @@ fn test_liquidatee_must_have_the_request_vault_position() {
 
     assert_err(
         res,
-        ContractError::Std(NotFound {
-            kind: "rover::adapters::vault::VaultPositionState".to_string(),
-        }),
+        ContractError::Std(NotFound { kind: "rover::adapters::vault::amount::VaultPositionAmountBase<rover::adapters::vault::amount::VaultAmount, rover::adapters::vault::amount::LockingVaultAmount>".to_string() }),
     )
 }
 
@@ -261,7 +259,7 @@ fn test_liquidate_unlocked_vault() {
     // Assert liquidatee's new position
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.vaults.len(), 1);
-    let vault_balance = position.vaults.first().unwrap().state.unlocked;
+    let vault_balance = position.vaults.first().unwrap().amount.unlocked();
     assert_eq!(vault_balance, Uint128::new(300_000)); // Vault position liquidated by 70%
 
     assert_eq!(position.coins.len(), 1);
@@ -354,10 +352,10 @@ fn test_liquidate_locked_vault() {
     // Assert liquidatee's new position
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.vaults.len(), 1);
-    let vault_state = position.vaults.first().unwrap().state.clone();
+    let vault_amount = position.vaults.first().unwrap().amount.clone();
     // Vault position liquidated by 70%. Unlocking first, then locked bucket.
-    assert_eq!(vault_state.unlocking.len(), 0);
-    assert_eq!(vault_state.locked, Uint128::new(300_000));
+    assert_eq!(vault_amount.unlocking().len(), 0);
+    assert_eq!(vault_amount.locked(), Uint128::new(300_000));
 
     assert_eq!(position.coins.len(), 1);
     let jake_balance = get_coin("ujake", &position.coins);
@@ -457,12 +455,12 @@ fn test_liquidate_unlocking_priority() {
     // Assert liquidatee's new position
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.vaults.len(), 1);
-    let vault_state = position.vaults.first().unwrap().state.clone();
-    assert_eq!(vault_state.unlocked, Uint128::zero());
-    assert_eq!(vault_state.locked, Uint128::new(90_000));
-    assert_eq!(vault_state.unlocking.len(), 1);
+    let vault_amount = position.vaults.first().unwrap().amount.clone();
+    assert_eq!(vault_amount.unlocked(), Uint128::zero());
+    assert_eq!(vault_amount.locked(), Uint128::new(90_000));
+    assert_eq!(vault_amount.unlocking().len(), 1);
     assert_eq!(
-        vault_state.unlocking.first().unwrap().amount,
+        vault_amount.unlocking().first().unwrap().amount,
         Uint128::new(210_000)
     );
 
@@ -555,7 +553,7 @@ fn test_liquidation_calculation_adjustment() {
     // Assert liquidatee's new position
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.vaults.len(), 1);
-    let vault_balance = position.vaults.first().unwrap().state.unlocked;
+    let vault_balance = position.vaults.first().unwrap().amount.unlocked();
     assert_eq!(vault_balance, Uint128::new(20_000)); // Vault position liquidated by 98%
 
     assert_eq!(position.coins.len(), 1);

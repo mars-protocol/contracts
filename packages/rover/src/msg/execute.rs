@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
 
-use crate::adapters::{Vault, VaultUnchecked};
+use crate::adapters::vault::{Vault, VaultUnchecked};
 use crate::msg::instantiate::ConfigUpdates;
 
 #[cw_serde]
@@ -158,11 +158,6 @@ pub enum CallbackMsg {
         liquidatee_account_id: String,
         debt_coin: Coin,
         request_vault: Vault,
-    },
-    /// Determine health factor improved as a consequence of liquidation event
-    AssertHealthFactorImproved {
-        account_id: String,
-        previous_health_factor: Decimal,
     },
     /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
     SwapExactIn {

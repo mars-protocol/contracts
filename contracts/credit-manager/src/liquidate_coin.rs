@@ -1,7 +1,6 @@
 use std::ops::{Add, Div};
 
-use cosmwasm_std::{Coin, Decimal, Deps, DepsMut, Env, Response, StdError, Uint128};
-use mars_health::health::Health;
+use cosmwasm_std::{Coin, Decimal, DepsMut, Env, Response, StdError, Uint128};
 
 use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::CallbackMsg;
@@ -24,7 +23,7 @@ pub fn liquidate_coin(
         .load(deps.storage, (liquidatee_account_id, request_coin_denom))
         .map_err(|_| ContractError::CoinNotAvailable(request_coin_denom.to_string()))?;
 
-    let (health, debt, request) = calculate_liquidation(
+    let (debt, request) = calculate_liquidation(
         &deps,
         &env,
         liquidatee_account_id,
@@ -47,16 +46,8 @@ pub fn liquidate_coin(
     decrement_coin_balance(deps.storage, liquidatee_account_id, &request)?;
     increment_coin_balance(deps.storage, liquidator_account_id, &request)?;
 
-    // Ensure health factor has improved as a consequence of liquidation event
-    let assert_healthier_msg = (CallbackMsg::AssertHealthFactorImproved {
-        account_id: liquidatee_account_id.to_string(),
-        previous_health_factor: health.liquidation_health_factor.unwrap(), // safe unwrap given it was liquidatable
-    })
-    .into_cosmos_msg(&env.contract.address)?;
-
     Ok(Response::new()
         .add_message(repay_msg)
-        .add_message(assert_healthier_msg)
         .add_attribute("action", "rover/credit_manager/liquidate_coin")
         .add_attribute("liquidatee_account_id", liquidatee_account_id)
         .add_attribute("debt_repaid_denom", debt.denom)
@@ -70,7 +61,7 @@ pub fn liquidate_coin(
 /// - Exceeds liquidatee's total debt for denom
 /// - Not enough liquidatee request coin balance to match
 /// - The value of the debt repaid exceeds the maximum close factor %
-/// Returns -> (Health, Debt Coin, Request Coin)
+/// Returns -> (Debt Coin, Request Coin)
 pub fn calculate_liquidation(
     deps: &DepsMut,
     env: &Env,
@@ -78,7 +69,7 @@ pub fn calculate_liquidation(
     debt_coin: &Coin,
     request_coin: &str,
     request_coin_balance: Uint128,
-) -> ContractResult<(Health, Coin, Coin)> {
+) -> ContractResult<(Coin, Coin)> {
     // Assert the liquidatee's credit account is liquidatable
     let health = compute_health(deps.as_ref(), env, liquidatee_account_id)?;
     if !health.is_liquidatable() {
@@ -129,9 +120,8 @@ pub fn calculate_liquidation(
         .div(request_res.price)
         .uint128();
 
-    // (Health, Debt Coin, Request Coin)
+    // (Debt Coin, Request Coin)
     Ok((
-        health,
         Coin {
             denom: debt_coin.denom.clone(),
             amount: final_debt_to_repay,
@@ -141,28 +131,4 @@ pub fn calculate_liquidation(
             amount: request_amount,
         },
     ))
-}
-
-pub fn assert_health_factor_improved(
-    deps: Deps,
-    env: Env,
-    account_id: &str,
-    prev_hf: Decimal,
-) -> ContractResult<Response> {
-    let health = compute_health(deps, &env, account_id)?;
-    if let Some(hf) = health.liquidation_health_factor {
-        if prev_hf > hf {
-            return Err(ContractError::HealthNotImproved {
-                prev_hf: prev_hf.to_string(),
-                new_hf: hf.to_string(),
-            });
-        }
-    }
-    Ok(Response::new()
-        .add_attribute(
-            "action",
-            "rover/credit_manager/assert_health_factor_improved",
-        )
-        .add_attribute("prev_hf", prev_hf.to_string())
-        .add_attribute("new_hf", val_or_na(health.liquidation_health_factor)))
 }

@@ -37,3 +37,16 @@ impl IntoDecimal for u128 {
         Decimal::from_atomics(*self, 0)
     }
 }
+
+pub trait FallbackStr {
+    fn fallback(&self, fallback: &str) -> String;
+}
+
+impl FallbackStr for String {
+    fn fallback(&self, fallback: &str) -> String {
+        match self {
+            s if !s.is_empty() => s.clone(),
+            _ => fallback.to_string(),
+        }
+    }
+}

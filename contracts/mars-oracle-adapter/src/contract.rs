@@ -1,14 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::Order::Ascending;
 use cosmwasm_std::{
     to_binary, Addr, Binary, Coin, Decimal, Deps, DepsMut, Env, MessageInfo, Order, Response,
-    StdResult, Storage,
+    StdResult,
 };
 use cw_storage_plus::Bound;
 use mars_outpost::oracle::PriceResponse;
 
-use rover::adapters::{Oracle, VaultBase};
+use rover::adapters::vault::VaultBase;
+use rover::adapters::Oracle;
 use rover::traits::IntoDecimal;
 
 use crate::error::{ContractError, ContractResult};
@@ -192,7 +192,7 @@ pub fn update_config(
     }
 
     if let Some(vault_pricing) = new_config.vault_pricing {
-        clear_map(deps.storage)?;
+        VAULT_PRICING_INFO.clear(deps.storage);
         for info in &vault_pricing {
             VAULT_PRICING_INFO.save(deps.storage, &info.denom, info)?;
         }
@@ -211,15 +211,4 @@ pub fn update_config(
     }
 
     Ok(response)
-}
-
-fn clear_map(storage: &mut dyn Storage) -> ContractResult<()> {
-    VAULT_PRICING_INFO
-        .range(storage, None, None, Ascending)
-        .collect::<StdResult<Vec<_>>>()?
-        .iter()
-        .for_each(|(denom, _)| {
-            VAULT_PRICING_INFO.remove(storage, denom);
-        });
-    Ok(())
 }

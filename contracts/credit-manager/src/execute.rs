@@ -17,7 +17,7 @@ use crate::vault::{
     withdraw_from_vault, withdraw_unlocked_from_vault,
 };
 
-use crate::liquidate_coin::{assert_health_factor_improved, liquidate_coin};
+use crate::liquidate_coin::liquidate_coin;
 use crate::swap::swap_exact_in;
 use crate::update_coin_balances::update_coin_balances;
 use crate::withdraw::withdraw;
@@ -26,7 +26,7 @@ use rover::coins::Coins;
 use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::{Action, CallbackMsg};
 use rover::msg::instantiate::ConfigUpdates;
-use rover::traits::Stringify;
+use rover::traits::{FallbackStr, Stringify};
 
 pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Response> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
@@ -87,22 +87,25 @@ pub fn update_config(
     }
 
     if let Some(coins) = new_config.allowed_coins {
+        ALLOWED_COINS.clear(deps.storage);
         coins
             .iter()
             .try_for_each(|denom| ALLOWED_COINS.save(deps.storage, denom, &Empty {}))?;
+
         response = response
             .add_attribute("key", "allowed_coins")
-            .add_attribute("value", coins.join(", "));
+            .add_attribute("value", coins.join(", ").fallback("None"));
     }
 
     if let Some(vaults) = new_config.allowed_vaults {
+        ALLOWED_VAULTS.clear(deps.storage);
         vaults.iter().try_for_each(|unchecked| {
             let vault = unchecked.check(deps.api)?;
             ALLOWED_VAULTS.save(deps.storage, &vault.address, &Empty {})
         })?;
         response = response
             .add_attribute("key", "allowed_vaults")
-            .add_attribute("value", vaults.to_string())
+            .add_attribute("value", vaults.to_string().fallback("None"))
     }
 
     if let Some(unchecked) = new_config.red_bank {
@@ -285,7 +288,7 @@ pub fn execute_callback(
             account_id,
             vault,
             coins,
-        } => deposit_into_vault(deps, &env.contract.address, &account_id, vault, &coins),
+        } => deposit_into_vault(deps, &env.contract.address, &account_id, vault, coins),
         CallbackMsg::UpdateVaultCoinBalance {
             vault,
             account_id,
@@ -323,10 +326,6 @@ pub fn execute_callback(
             debt_coin,
             request_vault,
         ),
-        CallbackMsg::AssertHealthFactorImproved {
-            account_id,
-            previous_health_factor,
-        } => assert_health_factor_improved(deps.as_ref(), env, &account_id, previous_health_factor),
         CallbackMsg::SwapExactIn {
             account_id,
             coin_in,

@@ -3,7 +3,7 @@ use cosmwasm_std::{coin, coins, Addr, OverflowError, Uint128};
 use cw_multi_test::{BankSudo, SudoMsg};
 
 use mock_vault::contract::STARTING_VAULT_SHARES;
-use rover::adapters::VaultUnchecked;
+use rover::adapters::vault::VaultUnchecked;
 use rover::error::ContractError;
 use rover::msg::execute::Action::{Deposit, VaultDeposit, VaultRequestUnlock};
 
@@ -240,7 +240,7 @@ fn test_request_unlocked() {
     // Assert token's position with Rover
     let res = mock.query_positions(&account_id);
     assert_eq!(res.vaults.len(), 1);
-    let unlocking = res.vaults.first().unwrap().state.unlocking.clone();
+    let unlocking = res.vaults.first().unwrap().amount.unlocking();
     assert_eq!(unlocking.len(), 1);
     let first = unlocking.first().unwrap();
     assert_eq!(first.amount, STARTING_VAULT_SHARES);

@@ -15,7 +15,8 @@ use mock_vault::contract::{
     DEFAULT_VAULT_TOKEN_PREFUND,
 };
 use mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
-use rover::adapters::{OracleBase, OracleUnchecked, VaultBase};
+use rover::adapters::vault::VaultBase;
+use rover::adapters::{OracleBase, OracleUnchecked};
 
 pub fn mock_vault_info() -> VaultTestInfo {
     VaultTestInfo {
