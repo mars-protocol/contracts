@@ -1,6 +1,5 @@
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
-use cosmwasm_std::{Addr, OwnedDeps};
-use cw_multi_test::BasicApp;
+use cosmwasm_std::OwnedDeps;
 use mars_incentives::contract::instantiate;
 
 use mars_outpost::incentives::InstantiateMsg;
@@ -18,9 +17,4 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
     deps
-}
-
-pub fn instantiate_incentives(app: &mut BasicApp) -> Addr {
-    // mars_testing::integration::mock_multitest::deploy_incentives(app)
-    unimplemented!()
 }
