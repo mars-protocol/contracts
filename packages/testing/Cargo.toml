@@ -19,18 +19,18 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cosmwasm-std  = { workspace = true }
-cw-multi-test = { version = "0.15" }
-osmosis-std   = { workspace = true }
-mars-address-provider = { path = "../../contracts/address-provider", version = "0.1.0" }
-mars-incentives = { path = "../../contracts/incentives", version = "1.0.0" }
-mars-outpost  = { workspace = true }
-mars-oracle-osmosis = { path = "../../contracts/oracle/osmosis", version = "0.1.0" }
-mars-osmosis  = { workspace = true }
-mars-red-bank = { path = "../../contracts/red-bank", version = "0.1.0" }
-mars-rewards-collector-osmosis = { path = "../../contracts/rewards-collector/osmosis", version = "0.1.0" }
-prost         = { version = "0.11", default-features = false, features = ["prost-derive"] }
-schemars      = { workspace = true }
-serde         = { workspace = true }
-thiserror     = { workspace = true }
-anyhow        = "1.0"
+anyhow                         = "1.0"
+cosmwasm-std                   = { workspace = true }
+cw-multi-test                  = "0.15"
+osmosis-std                    = { workspace = true }
+mars-address-provider          = { version = "0.1.0", path = "../../contracts/address-provider" }
+mars-incentives                = { version = "0.1.0", path = "../../contracts/incentives" }
+mars-outpost                   = { workspace = true }
+mars-oracle-osmosis            = { version = "0.1.0", path = "../../contracts/oracle/osmosis" }
+mars-osmosis                   = { workspace = true }
+mars-red-bank                  = { version = "0.1.0", path = "../../contracts/red-bank" }
+mars-rewards-collector-osmosis = { version = "0.1.0", path = "../../contracts/rewards-collector/osmosis" }
+prost                          = { version = "0.11", default-features = false, features = ["prost-derive"] }
+schemars                       = { workspace = true }
+serde                          = { workspace = true }
+thiserror                      = { workspace = true }
