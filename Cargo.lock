@@ -490,7 +490,6 @@ dependencies = [
  "cw-storage-plus",
  "cw2",
  "mars-outpost",
- "mars-testing",
  "serde",
  "thiserror",
 ]
