@@ -17,11 +17,9 @@ doctest = false
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
 
-[dependencies]
+[dev-dependencies]
 cosmwasm-std = { workspace = true }
 mars-outpost = { workspace = true }
+mars-testing = { workspace = true }
 osmosis-std  = { workspace = true }
 serde        = { workspace = true }
-
-[dev-dependencies]
-mars-testing = { workspace = true }
