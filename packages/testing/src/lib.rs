@@ -25,4 +25,5 @@ pub use mars_mock_querier::MarsMockQuerier;
 #[cfg(not(target_arch = "wasm32"))]
 pub use mocks::*;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub mod integration;
