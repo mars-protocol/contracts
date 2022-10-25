@@ -29,6 +29,12 @@ jobs:
         env:
           RUST_BACKTRACE: 1
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+
       - name: Compile WASM contract
         uses: actions-rs/cargo@v1
         with:
