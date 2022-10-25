@@ -1,13 +1,12 @@
 use std::fmt;
 
-use cosmwasm_std::{BlockInfo, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, StdResult, Uint128};
+use cosmwasm_std::{BlockInfo, CosmosMsg, Decimal, Empty, Env, Fraction, QuerierWrapper, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mars_rewards_collector_base::{ContractError, ContractResult, Route};
 
 use mars_osmosis::helpers::{has_denom, query_pool, query_twap_price};
-use mars_outpost::math::divide_uint128_by_decimal;
 use osmosis_std::types::cosmos::base::v1beta1::Coin;
 use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
 
@@ -143,14 +142,14 @@ impl Route<Empty, Empty> for OsmosisRoute {
 /// 1) query pool_1 to get price for atom/osmo
 /// 2) query pool_69 to get price for osmo/usdc
 /// 3) atom/usdc = (price for atom/osmo) * (price for osmo/usdc)
-/// 4) out_amount = (atom amount) / (price for atom/usdc) = usdc amount
+/// 4) out_amount = (atom amount) * (price for atom/usdc) = usdc amount
 fn query_out_amount(
     querier: &QuerierWrapper,
     block: &BlockInfo,
     denom_in: &str,
     amount: Uint128,
     steps: &[SwapAmountInRoute],
-) -> StdResult<Uint128> {
+) -> ContractResult<Uint128> {
     let start_time = block.time.seconds() - TWAP_WINDOW_SIZE_SECONDS;
 
     let mut price = Decimal::one();
@@ -162,5 +161,6 @@ fn query_out_amount(
         denom_in = step.token_out_denom.clone();
     }
 
-    divide_uint128_by_decimal(amount, price)
+    let out_amount = amount.checked_multiply_ratio(price.numerator(), price.denominator())?;
+    Ok(out_amount)
 }

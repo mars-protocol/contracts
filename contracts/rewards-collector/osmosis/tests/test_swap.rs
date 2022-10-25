@@ -1,7 +1,6 @@
 use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{CosmosMsg, Decimal, SubMsg, Uint128};
+use cosmwasm_std::{CosmosMsg, Decimal, Fraction, SubMsg, Uint128};
 
-use mars_outpost::math::divide_uint128_by_decimal;
 use mars_outpost::rewards_collector::{Config, QueryMsg};
 use osmosis_std::types::cosmos::base::v1beta1::Coin;
 use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
@@ -90,7 +89,8 @@ fn test_swapping_asset() {
     let safety_fund_input = Uint128::new(10517);
     // pool_1 price * pool_69 price
     let uatom_uusdc_price = uatom_uosmo_price * uosmo_uusdc_price;
-    let out_amount = divide_uint128_by_decimal(safety_fund_input, uatom_uusdc_price).unwrap();
+    let out_amount = safety_fund_input
+        .multiply_ratio(uatom_uusdc_price.numerator(), uatom_uusdc_price.denominator());
     let safety_fund_min_output = (Decimal::one() - cfg.slippage_tolerance) * out_amount;
     // denom_in: "uatom"
     let fee_collector_route = vec![
@@ -106,7 +106,8 @@ fn test_swapping_asset() {
     let fee_collector_input = Uint128::new(31552);
     // pool_1 price * pool_420 price
     let uatom_umars_price = uatom_uosmo_price * uosmo_umars_price;
-    let out_amount = divide_uint128_by_decimal(fee_collector_input, uatom_umars_price).unwrap();
+    let out_amount = fee_collector_input
+        .multiply_ratio(uatom_umars_price.numerator(), uatom_umars_price.denominator());
     let fee_collector_min_output = (Decimal::one() - cfg.slippage_tolerance) * out_amount;
 
     let res = execute(

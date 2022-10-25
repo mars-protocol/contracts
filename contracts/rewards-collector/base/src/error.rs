@@ -1,4 +1,4 @@
-use cosmwasm_std::{OverflowError, StdError, Uint128};
+use cosmwasm_std::{CheckedMultiplyRatioError, OverflowError, StdError, Uint128};
 use thiserror::Error;
 
 use mars_outpost::error::MarsError;
@@ -13,6 +13,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Overflow(#[from] OverflowError),
+
+    #[error("{0}")]
+    CheckedMultiplyRatio(#[from] CheckedMultiplyRatioError),
 
     #[error("Asset is not enabled for distribution: {denom}")]
     AssetNotEnabledForDistribution {

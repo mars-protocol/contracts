@@ -68,10 +68,11 @@ impl OsmosisQuerier {
     }
 
     fn handle_query_spot_request(&self, request: QuerySpotPriceRequest) -> QuerierResult {
+        // NOTE: base_asset (denom_in) for Spot is quoting asset
         let price_key = PriceKey {
             pool_id: request.pool_id,
-            denom_in: request.base_asset_denom,
-            denom_out: request.quote_asset_denom,
+            denom_in: request.quote_asset_denom,
+            denom_out: request.base_asset_denom,
         };
         let res: ContractResult<Binary> = match self.spot_prices.get(&price_key) {
             Some(query_response) => to_binary(&query_response).into(),
