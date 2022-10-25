@@ -21,6 +21,9 @@ jobs:
           target: wasm32-unknown-unknown
           override: true
 
+      - name: Install cargo make
+        uses: davidB/rust-cargo-make@v1
+
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
@@ -29,11 +32,16 @@ jobs:
         env:
           RUST_BACKTRACE: 1
 
+      - name: Run test coverage
+        working-directory: outposts
+        run: cargo make coverage
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+          files: target/lcov.info
 
       - name: Compile WASM contract
         uses: actions-rs/cargo@v1
