@@ -33,7 +33,6 @@ jobs:
           RUST_BACKTRACE: 1
 
       - name: Run test coverage
-        working-directory: outposts
         run: cargo make coverage
 
       - name: Upload coverage to Codecov
