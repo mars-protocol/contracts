@@ -89,6 +89,22 @@ impl Incentives {
             .unwrap();
     }
 
+    pub fn balance_change(&self, env: &mut MockEnv, denom: &str, user_addr: &Addr) {
+        env.app
+            .execute_contract(
+                env.owner.clone(),
+                self.contract_addr.clone(),
+                &incentives::ExecuteMsg::BalanceChange {
+                    user_addr: user_addr.clone(),
+                    denom: denom.to_string(),
+                    user_amount_scaled_before: Default::default(),
+                    total_amount_scaled_before: Default::default()
+                },
+                &[],
+            )
+            .unwrap();
+    }
+
     pub fn claim_rewards(&self, env: &mut MockEnv, sender: &Addr) -> AnyResult<AppResponse> {
         env.app.execute_contract(
             sender.clone(),
