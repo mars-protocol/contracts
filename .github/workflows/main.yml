@@ -19,6 +19,7 @@ jobs:
           profile: minimal
           toolchain: stable
           target: wasm32-unknown-unknown
+          components: llvm-tools-preview
           override: true
 
       - name: Install cargo make
