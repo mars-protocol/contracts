@@ -60,6 +60,14 @@ impl MockEnv {
         })
     }
 
+    pub fn increment_by_time(&mut self, seconds: u64) {
+        self.app.update_block(|block| {
+            block.height += seconds / 6;
+            // assume block time = 6 sec
+            block.time = block.time.plus_seconds(seconds);
+        })
+    }
+
     pub fn fund_account(&mut self, addr: &Addr, coins: &[Coin]) {
         self.app
             .sudo(SudoMsg::Bank(BankSudo::Mint {
@@ -83,22 +91,6 @@ impl Incentives {
                 &incentives::ExecuteMsg::SetAssetIncentive {
                     denom: denom.to_string(),
                     emission_per_second: emission_per_second.into(),
-                },
-                &[],
-            )
-            .unwrap();
-    }
-
-    pub fn balance_change(&self, env: &mut MockEnv, denom: &str, user_addr: &Addr) {
-        env.app
-            .execute_contract(
-                env.owner.clone(),
-                self.contract_addr.clone(),
-                &incentives::ExecuteMsg::BalanceChange {
-                    user_addr: user_addr.clone(),
-                    denom: denom.to_string(),
-                    user_amount_scaled_before: Default::default(),
-                    total_amount_scaled_before: Default::default()
                 },
                 &[],
             )
