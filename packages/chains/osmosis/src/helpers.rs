@@ -47,11 +47,17 @@ pub fn has_denom(denom: &str, pool_assets: &[PoolAsset]) -> bool {
 pub fn query_spot_price(
     querier: &QuerierWrapper,
     pool_id: u64,
-    denom: &str,
     base_denom: &str,
+    quote_denom: &str,
 ) -> StdResult<Decimal> {
-    let spot_price_res =
-        GammQuerier::new(querier).spot_price(pool_id, denom.to_string(), base_denom.to_string())?;
+    // NOTE: Currency pair consists of base and quote asset (base/quote). Spot query has it swapped.
+    // For example:
+    // if we want to check the price ATOM/OSMO then we pass base_asset = OSMO, quote_asset = ATOM
+    let spot_price_res = GammQuerier::new(querier).spot_price(
+        pool_id,
+        quote_denom.to_string(),
+        base_denom.to_string(),
+    )?;
     let price = Decimal::from_str(&spot_price_res.spot_price)?;
     Ok(price)
 }
@@ -61,14 +67,14 @@ pub fn query_spot_price(
 pub fn query_twap_price(
     querier: &QuerierWrapper,
     pool_id: u64,
-    denom: &str,
     base_denom: &str,
+    quote_denom: &str,
     start_time: u64,
 ) -> StdResult<Decimal> {
     let arithmetic_twap_res = TwapQuerier::new(querier).arithmetic_twap_to_now(
         pool_id,
-        denom.to_string(),
         base_denom.to_string(),
+        quote_denom.to_string(),
         Some(Timestamp {
             seconds: start_time as i64,
             nanos: 0,
