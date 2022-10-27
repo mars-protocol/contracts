@@ -1,3 +1,7 @@
+extend= [
+  { path = "coverage_grcov.makefile.toml" }
+]
+
 [config]
 default_to_workspace = false
 
@@ -27,6 +31,9 @@ fi
 [tasks.test]
 command = "cargo"
 args = ["test", "--locked"]
+
+[tasks.coverage]
+alias="coverage_grcov"
 
 [tasks.fmt]
 command = "cargo"
