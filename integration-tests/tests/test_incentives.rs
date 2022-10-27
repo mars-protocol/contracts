@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Addr, Uint128, Uint64};
+use cosmwasm_std::{coin, Addr, Uint128};
 
 use mars_testing::integration::mock_env::MockEnvBuilder;
 
@@ -21,7 +21,6 @@ fn test_rewards_claim() {
     let user = Addr::unchecked("user_a");
     let funded_amt = 10_000_000_000u128;
     mock_env.fund_account(&user, &[coin(funded_amt, "uusdc")]);
-    // mock_env.fund_account(&user, &[coin(funded_amt, "umars")]);
 
     // fund incentives contract
     mock_env.fund_account(&incentives.contract_addr, &[coin(funded_amt, "umars")]);
