@@ -21,7 +21,6 @@ backtraces = ["cosmwasm-std/backtraces"]
 [dependencies]
 anyhow                         = "1.0"
 cosmwasm-std                   = { workspace = true }
-cw-multi-test                  = "0.15"
 osmosis-std                    = { workspace = true }
 mars-address-provider          = { version = "0.1.0", path = "../../contracts/address-provider" }
 mars-incentives                = { version = "0.1.0", path = "../../contracts/incentives" }
@@ -34,3 +33,6 @@ prost                          = { version = "0.11", default-features = false, f
 schemars                       = { workspace = true }
 serde                          = { workspace = true }
 thiserror                      = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+cw-multi-test = "0.15"
