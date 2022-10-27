@@ -11,15 +11,9 @@ pub enum QueryMsg {
     /// Owner & account nft address
     #[returns(ConfigResponse)]
     Config {},
-    /// Whitelisted vaults
-    #[returns(Vec<VaultUnchecked>)]
-    AllowedVaults {
-        start_after: Option<VaultUnchecked>,
-        limit: Option<u32>,
-    },
-    /// Deposit caps on vault deposits
+    /// Configs on vaults
     #[returns(Vec<crate::msg::instantiate::VaultInstantiateConfig>)]
-    DepositCaps {
+    VaultConfigs {
         start_after: Option<VaultUnchecked>,
         limit: Option<u32>,
     },

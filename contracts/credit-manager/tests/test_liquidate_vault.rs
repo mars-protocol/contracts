@@ -150,7 +150,7 @@ fn test_liquidator_does_not_have_debt_coin_in_credit_account() {
         &liquidatee_account_id,
         &liquidatee,
         vec![
-            Deposit(uatom.to_coin(200)),
+            Deposit(uatom.to_coin(300)),
             Deposit(uosmo.to_coin(400)),
             VaultDeposit {
                 vault,
@@ -158,7 +158,7 @@ fn test_liquidator_does_not_have_debt_coin_in_credit_account() {
             },
             Borrow(ujake.to_coin(175)),
         ],
-        &[uatom.to_coin(200), uosmo.to_coin(400)],
+        &[uatom.to_coin(300), uosmo.to_coin(400)],
     )
     .unwrap();
 
@@ -222,7 +222,7 @@ fn test_liquidate_unlocked_vault() {
         &liquidatee_account_id,
         &liquidatee,
         vec![
-            Deposit(uatom.to_coin(200)),
+            Deposit(uatom.to_coin(300)),
             Deposit(uosmo.to_coin(400)),
             VaultDeposit {
                 vault,
@@ -230,7 +230,7 @@ fn test_liquidate_unlocked_vault() {
             },
             Borrow(ujake.to_coin(175)),
         ],
-        &[uatom.to_coin(200), uosmo.to_coin(400)],
+        &[uatom.to_coin(300), uosmo.to_coin(400)],
     )
     .unwrap();
 
@@ -262,9 +262,11 @@ fn test_liquidate_unlocked_vault() {
     let vault_balance = position.vaults.first().unwrap().amount.unlocked();
     assert_eq!(vault_balance, Uint128::new(300_000)); // Vault position liquidated by 70%
 
-    assert_eq!(position.coins.len(), 1);
+    assert_eq!(position.coins.len(), 2);
     let jake_balance = get_coin("ujake", &position.coins);
     assert_eq!(jake_balance.amount, Uint128::new(175));
+    let atom_balance = get_coin("uatom", &position.coins);
+    assert_eq!(atom_balance.amount, Uint128::new(100));
 
     assert_eq!(position.debts.len(), 1);
     let atom_debt = get_debt("ujake", &position.debts);
@@ -311,7 +313,7 @@ fn test_liquidate_locked_vault() {
         &liquidatee_account_id,
         &liquidatee,
         vec![
-            Deposit(uatom.to_coin(200)),
+            Deposit(uatom.to_coin(300)),
             Deposit(uosmo.to_coin(400)),
             VaultDeposit {
                 vault: vault.clone(),
@@ -323,7 +325,7 @@ fn test_liquidate_locked_vault() {
                 amount: Uint128::new(100_000),
             },
         ],
-        &[uatom.to_coin(200), uosmo.to_coin(400)],
+        &[uatom.to_coin(300), uosmo.to_coin(400)],
     )
     .unwrap();
 
@@ -357,9 +359,11 @@ fn test_liquidate_locked_vault() {
     assert_eq!(vault_amount.unlocking().len(), 0);
     assert_eq!(vault_amount.locked(), Uint128::new(300_000));
 
-    assert_eq!(position.coins.len(), 1);
+    assert_eq!(position.coins.len(), 2);
     let jake_balance = get_coin("ujake", &position.coins);
     assert_eq!(jake_balance.amount, Uint128::new(175));
+    let atom_balance = get_coin("uatom", &position.coins);
+    assert_eq!(atom_balance.amount, Uint128::new(100));
 
     assert_eq!(position.debts.len(), 1);
     let atom_debt = get_debt("ujake", &position.debts);
@@ -406,7 +410,7 @@ fn test_liquidate_unlocking_priority() {
         &liquidatee_account_id,
         &liquidatee,
         vec![
-            Deposit(uatom.to_coin(200)),
+            Deposit(uatom.to_coin(300)),
             Deposit(uosmo.to_coin(400)),
             VaultDeposit {
                 vault: vault.clone(),
@@ -426,7 +430,7 @@ fn test_liquidate_unlocking_priority() {
                 amount: Uint128::new(700_000),
             },
         ],
-        &[uatom.to_coin(200), uosmo.to_coin(400)],
+        &[uatom.to_coin(300), uosmo.to_coin(400)],
     )
     .unwrap();
 
@@ -464,9 +468,11 @@ fn test_liquidate_unlocking_priority() {
         Uint128::new(210_000)
     );
 
-    assert_eq!(position.coins.len(), 1);
+    assert_eq!(position.coins.len(), 2);
     let jake_balance = get_coin("ujake", &position.coins);
     assert_eq!(jake_balance.amount, Uint128::new(175));
+    let atom_balance = get_coin("uatom", &position.coins);
+    assert_eq!(atom_balance.amount, Uint128::new(100));
 
     assert_eq!(position.debts.len(), 1);
     let atom_debt = get_debt("ujake", &position.debts);
@@ -514,7 +520,7 @@ fn test_liquidation_calculation_adjustment() {
         &liquidatee_account_id,
         &liquidatee,
         vec![
-            Deposit(uatom.to_coin(200)),
+            Deposit(uatom.to_coin(300)),
             Deposit(uosmo.to_coin(400)),
             VaultDeposit {
                 vault,
@@ -522,7 +528,7 @@ fn test_liquidation_calculation_adjustment() {
             },
             Borrow(ujake.to_coin(175)),
         ],
-        &[uatom.to_coin(200), uosmo.to_coin(400)],
+        &[uatom.to_coin(300), uosmo.to_coin(400)],
     )
     .unwrap();
 
@@ -556,9 +562,11 @@ fn test_liquidation_calculation_adjustment() {
     let vault_balance = position.vaults.first().unwrap().amount.unlocked();
     assert_eq!(vault_balance, Uint128::new(20_000)); // Vault position liquidated by 98%
 
-    assert_eq!(position.coins.len(), 1);
+    assert_eq!(position.coins.len(), 2);
     let jake_balance = get_coin("ujake", &position.coins);
     assert_eq!(jake_balance.amount, Uint128::new(175));
+    let atom_balance = get_coin("uatom", &position.coins);
+    assert_eq!(atom_balance.amount, Uint128::new(100));
 
     assert_eq!(position.debts.len(), 1);
     let atom_debt = get_debt("ujake", &position.debts);

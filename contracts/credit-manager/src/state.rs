@@ -1,17 +1,16 @@
-use cosmwasm_std::{Addr, Coin, Decimal, Empty, Uint128};
+use cosmwasm_std::{Addr, Decimal, Empty, Uint128};
 use cw_storage_plus::{Item, Map};
 
 use crate::vault::RequestTempStorage;
 use rover::adapters::swap::Swapper;
-use rover::adapters::vault::VaultPositionAmount;
+use rover::adapters::vault::{VaultConfig, VaultPositionAmount};
 use rover::adapters::{Oracle, RedBank};
 
 // Contract config
 pub const OWNER: Item<Addr> = Item::new("owner");
 pub const ACCOUNT_NFT: Item<Addr> = Item::new("account_nft");
 pub const ALLOWED_COINS: Map<&str, Empty> = Map::new("allowed_coins");
-pub const ALLOWED_VAULTS: Map<&Addr, Empty> = Map::new("allowed_vaults");
-pub const VAULT_DEPOSIT_CAPS: Map<&Addr, Coin> = Map::new("vault_deposit_caps");
+pub const VAULT_CONFIGS: Map<&Addr, VaultConfig> = Map::new("vault_configs");
 pub const RED_BANK: Item<RedBank> = Item::new("red_bank");
 pub const ORACLE: Item<Oracle> = Item::new("oracle");
 pub const MAX_LIQUIDATION_BONUS: Item<Decimal> = Item::new("max_liquidation_bonus");

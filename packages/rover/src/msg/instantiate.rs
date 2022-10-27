@@ -1,9 +1,10 @@
-use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Coin, Decimal};
-
 use crate::adapters::swap::SwapperUnchecked;
+use crate::adapters::vault::VaultConfig;
 use crate::adapters::vault::VaultUnchecked;
 use crate::adapters::{OracleUnchecked, RedBankUnchecked};
+use crate::traits::Stringify;
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::Decimal;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -29,7 +30,25 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub struct VaultInstantiateConfig {
     pub vault: VaultUnchecked,
-    pub deposit_cap: Coin,
+    pub config: VaultConfig,
+}
+
+impl Stringify for Vec<VaultInstantiateConfig> {
+    fn to_string(&self) -> String {
+        self.iter()
+            .map(|v| {
+                format!(
+                    "addr: {}, deposit_cap: {}, max_ltv: {}, liquidation_threshold: {}, whitelisted: {}",
+                    v.vault.address,
+                    v.config.deposit_cap,
+                    v.config.max_ltv,
+                    v.config.liquidation_threshold,
+                    v.config.whitelisted
+                )
+            })
+            .collect::<Vec<String>>()
+            .join(" :: ")
+    }
 }
 
 /// Used when you want to update fields on Instantiate config
@@ -39,7 +58,7 @@ pub struct ConfigUpdates {
     pub account_nft: Option<String>,
     pub owner: Option<String>,
     pub allowed_coins: Option<Vec<String>>,
-    pub allowed_vaults: Option<Vec<VaultUnchecked>>,
+    pub vault_configs: Option<Vec<VaultInstantiateConfig>>,
     pub red_bank: Option<RedBankUnchecked>,
     pub oracle: Option<OracleUnchecked>,
     pub max_liquidation_bonus: Option<Decimal>,

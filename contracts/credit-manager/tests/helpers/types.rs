@@ -21,6 +21,8 @@ pub struct VaultTestInfo {
     pub lockup: Option<u64>,
     pub underlying_denoms: Vec<String>,
     pub deposit_cap: Coin,
+    pub max_ltv: Decimal,
+    pub liquidation_threshold: Decimal,
 }
 
 impl CoinInfo {

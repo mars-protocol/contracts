@@ -8,12 +8,14 @@ use rover::adapters::vault::{
 };
 use rover::error::{ContractError, ContractResult};
 
-use crate::state::{ALLOWED_VAULTS, ORACLE, VAULT_POSITIONS};
+use crate::state::{ORACLE, VAULT_CONFIGS, VAULT_POSITIONS};
 use crate::update_coin_balances::query_balances;
 
 pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> ContractResult<()> {
-    let is_whitelisted = ALLOWED_VAULTS.has(storage, &vault.address);
-    if !is_whitelisted {
+    let config = VAULT_CONFIGS
+        .may_load(storage, &vault.address)?
+        .and_then(|config| config.whitelisted.then_some(true));
+    if config.is_none() {
         return Err(ContractError::NotWhitelisted(vault.address.to_string()));
     }
     Ok(())

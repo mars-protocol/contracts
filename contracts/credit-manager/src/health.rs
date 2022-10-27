@@ -1,32 +1,69 @@
-use cosmwasm_std::{Decimal, Deps, Env, Event, Response};
-use mars_health::health::Health;
+use cosmwasm_std::{Coin, Decimal, Deps, Env, Event, Response};
+use mars_health::health::{Health, Position};
+use mars_health::query::MarsQuerier;
 
+use rover::adapters::vault::{Total, VaultPosition};
+use rover::adapters::{Oracle, RedBank};
 use rover::error::{ContractError, ContractResult};
-use rover::traits::Coins;
+use rover::traits::{Coins, IntoDecimal};
 
 use crate::query::query_positions;
-use crate::state::{ORACLE, RED_BANK};
-use crate::vault::get_priceable_coins;
+use crate::state::{ORACLE, RED_BANK, VAULT_CONFIGS};
 
+// Given Red Bank and Mars-Oracle does not have knowledge of vaults,
+// we cannot use Health::compute_health_from_coins() and must assemble positions manually
 pub fn compute_health(deps: Deps, env: &Env, account_id: &str) -> ContractResult<Health> {
-    let res = query_positions(deps, env, account_id)?;
-    let priceable_coins = get_priceable_coins(&deps, &res.vaults)?;
-
-    let mut collateral = Vec::with_capacity(res.coins.len() + priceable_coins.len());
-    collateral.extend(res.coins);
-    collateral.extend(priceable_coins);
-
     let oracle = ORACLE.load(deps.storage)?;
     let red_bank = RED_BANK.load(deps.storage)?;
-    let health = Health::compute_health_from_coins(
-        &deps.querier,
-        oracle.address(),
-        red_bank.address(),
-        &collateral,
-        &res.debts.to_coins(),
-    )?;
 
+    let res = query_positions(deps, env, account_id)?;
+
+    let mut positions: Vec<Position> = vec![];
+    let coin_positions =
+        get_positions_for_coins(&deps, &res.coins, &res.debts.to_coins(), &oracle, &red_bank)?;
+    positions.extend(coin_positions);
+    let vault_positions = get_positions_for_vaults(&deps, &res.vaults, &oracle)?;
+    positions.extend(vault_positions);
+
+    let health = Health::compute_health(&positions)?;
     Ok(health)
+}
+
+fn get_positions_for_coins(
+    deps: &Deps,
+    collateral: &[Coin],
+    debt: &[Coin],
+    oracle: &Oracle,
+    red_bank: &RedBank,
+) -> ContractResult<Vec<Position>> {
+    let querier = MarsQuerier::new(&deps.querier, oracle.address(), red_bank.address());
+    let positions = Health::positions_from_coins(&querier, collateral, debt)?
+        .into_values()
+        .collect();
+    Ok(positions)
+}
+
+fn get_positions_for_vaults(
+    deps: &Deps,
+    vaults: &[VaultPosition],
+    oracle: &Oracle,
+) -> ContractResult<Vec<Position>> {
+    vaults
+        .iter()
+        .map(|v| {
+            let info = v.vault.query_info(&deps.querier)?;
+            let query_res = oracle.query_price(&deps.querier, &info.token_denom)?;
+            let config = VAULT_CONFIGS.load(deps.storage, &v.vault.address)?;
+            Ok(Position {
+                denom: query_res.denom,
+                price: query_res.price,
+                collateral_amount: v.amount.total().to_dec()?,
+                debt_amount: Decimal::zero(),
+                max_ltv: config.max_ltv,
+                liquidation_threshold: config.liquidation_threshold,
+            })
+        })
+        .collect()
 }
 
 pub fn assert_below_max_ltv(deps: Deps, env: Env, account_id: &str) -> ContractResult<Response> {

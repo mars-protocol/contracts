@@ -10,8 +10,8 @@ use rover::msg::query::{
 };
 
 use crate::state::{
-    ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, COIN_BALANCES, DEBT_SHARES, MAX_CLOSE_FACTOR,
-    MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES, VAULT_DEPOSIT_CAPS,
+    ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, DEBT_SHARES, MAX_CLOSE_FACTOR,
+    MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES, VAULT_CONFIGS,
     VAULT_POSITIONS,
 };
 use crate::utils::debt_shares_to_amount;
@@ -115,35 +115,7 @@ pub fn query_all_debt_shares(
         .collect())
 }
 
-/// NOTE: This implementation of the query function assumes the map `ALLOWED_VAULTS` only saves `Empty`.
-/// If a vault is to be removed from the whitelist, the map must remove the corresponding key.
-pub fn query_allowed_vaults(
-    deps: Deps,
-    start_after: Option<VaultUnchecked>,
-    limit: Option<u32>,
-) -> StdResult<Vec<VaultUnchecked>> {
-    let vault: Vault;
-    let start = match &start_after {
-        Some(unchecked) => {
-            vault = unchecked.check(deps.api)?;
-            Some(Bound::exclusive(&vault.address))
-        }
-        None => None,
-    };
-
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-
-    ALLOWED_VAULTS
-        .keys(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .map(|res| {
-            let addr = res?;
-            Ok(VaultBase::new(addr.to_string()))
-        })
-        .collect()
-}
-
-pub fn query_vault_deposit_caps(
+pub fn query_vault_configs(
     deps: Deps,
     start_after: Option<VaultUnchecked>,
     limit: Option<u32>,
@@ -159,14 +131,14 @@ pub fn query_vault_deposit_caps(
 
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
-    VAULT_DEPOSIT_CAPS
+    VAULT_CONFIGS
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
         .map(|res| {
-            let (addr, deposit_cap) = res?;
+            let (addr, config) = res?;
             Ok(VaultInstantiateConfig {
                 vault: VaultBase::new(addr.to_string()),
-                deposit_cap,
+                config,
             })
         })
         .collect()
@@ -292,7 +264,7 @@ pub fn query_all_total_vault_coin_balances(
 
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
-    ALLOWED_VAULTS
+    VAULT_CONFIGS
         .keys(deps.storage, start, None, Order::Ascending)
         .take(limit)
         .map(|res| {

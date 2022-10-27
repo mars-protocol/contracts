@@ -22,7 +22,7 @@ use rover::adapters::swap::QueryMsg::EstimateExactInSwap;
 use rover::adapters::swap::{
     EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg, Swapper, SwapperBase,
 };
-use rover::adapters::vault::{VaultBase, VaultUnchecked};
+use rover::adapters::vault::{VaultBase, VaultConfig, VaultUnchecked};
 use rover::adapters::{OracleBase, RedBankBase};
 use rover::msg::execute::{Action, CallbackMsg};
 use rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
@@ -225,21 +225,7 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_allowed_vaults(
-        &self,
-        start_after: Option<VaultUnchecked>,
-        limit: Option<u32>,
-    ) -> Vec<VaultUnchecked> {
-        self.app
-            .wrap()
-            .query_wasm_smart(
-                self.rover.clone(),
-                &QueryMsg::AllowedVaults { start_after, limit },
-            )
-            .unwrap()
-    }
-
-    pub fn query_deposit_caps(
+    pub fn query_vault_configs(
         &self,
         start_after: Option<VaultUnchecked>,
         limit: Option<u32>,
@@ -248,16 +234,17 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
-                &QueryMsg::DepositCaps { start_after, limit },
+                &QueryMsg::VaultConfigs { start_after, limit },
             )
             .unwrap()
     }
 
     pub fn get_vault(&self, vault: &VaultTestInfo) -> VaultUnchecked {
-        self.query_allowed_vaults(None, Some(30)) // Max limit
+        self.query_vault_configs(None, Some(30)) // Max limit
             .iter()
             .find(|v| {
                 let info = v
+                    .vault
                     .check(&MockApi::default())
                     .unwrap()
                     .query_info(&self.app.wrap())
@@ -265,6 +252,7 @@ impl MockEnv {
                 vault.denom == info.token_denom
             })
             .unwrap()
+            .vault
             .clone()
     }
 
@@ -709,7 +697,12 @@ impl MockEnvBuilder {
         self.fund_vault(&addr, &vault.denom);
         VaultInstantiateConfig {
             vault: VaultBase::new(addr.to_string()),
-            deposit_cap: vault.deposit_cap.clone(),
+            config: VaultConfig {
+                deposit_cap: vault.deposit_cap.clone(),
+                max_ltv: vault.max_ltv,
+                liquidation_threshold: vault.liquidation_threshold,
+                whitelisted: true,
+            },
         }
     }
 
@@ -822,7 +815,12 @@ impl MockEnvBuilder {
     pub fn pre_deployed_vault(&mut self, address: &str, info: &VaultTestInfo) -> &mut Self {
         let config = VaultInstantiateConfig {
             vault: VaultBase::new(address.to_string()),
-            deposit_cap: info.deposit_cap.clone(),
+            config: VaultConfig {
+                deposit_cap: info.deposit_cap.clone(),
+                max_ltv: info.max_ltv,
+                liquidation_threshold: info.liquidation_threshold,
+                whitelisted: true,
+            },
         };
         let new_list = match self.pre_deployed_vaults.clone() {
             None => Some(vec![config]),

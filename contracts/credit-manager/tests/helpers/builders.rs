@@ -25,6 +25,8 @@ pub fn build_mock_vaults(count: usize) -> Vec<VaultTestInfo> {
                 lockup: Some(1_209_600), // 14 days
                 underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
                 deposit_cap: coin(10000000, "uusdc"),
+                max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
             }
         })
         .collect()

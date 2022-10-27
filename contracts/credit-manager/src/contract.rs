@@ -14,8 +14,8 @@ use crate::instantiate::store_config;
 use crate::query::{
     query_all_coin_balances, query_all_debt_shares, query_all_total_debt_shares,
     query_all_total_vault_coin_balances, query_all_vault_positions, query_allowed_coins,
-    query_allowed_vaults, query_config, query_positions, query_total_debt_shares,
-    query_total_vault_coin_balance, query_vault_deposit_caps,
+    query_config, query_positions, query_total_debt_shares, query_total_vault_coin_balance,
+    query_vault_configs,
 };
 use crate::vault::handle_unlock_request_reply;
 
@@ -64,11 +64,8 @@ pub fn reply(deps: DepsMut, _: Env, reply: Reply) -> ContractResult<Response> {
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
     let res = match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::AllowedVaults { start_after, limit } => {
-            to_binary(&query_allowed_vaults(deps, start_after, limit)?)
-        }
-        QueryMsg::DepositCaps { start_after, limit } => {
-            to_binary(&query_vault_deposit_caps(deps, start_after, limit)?)
+        QueryMsg::VaultConfigs { start_after, limit } => {
+            to_binary(&query_vault_configs(deps, start_after, limit)?)
         }
         QueryMsg::AllowedCoins { start_after, limit } => {
             to_binary(&query_allowed_coins(deps, start_after, limit)?)

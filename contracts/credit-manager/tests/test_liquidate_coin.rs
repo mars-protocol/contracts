@@ -126,7 +126,7 @@ fn test_vault_positions_contribute_to_health() {
         res,
         NotLiquidatable {
             account_id: liquidatee_account_id,
-            lqdt_health_factor: "18.053".to_string(),
+            lqdt_health_factor: "14.853".to_string(),
         },
     )
 }

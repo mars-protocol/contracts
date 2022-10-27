@@ -9,7 +9,7 @@ use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg;
 use rover::traits::Denoms;
 
-use crate::state::{ORACLE, VAULT_DEPOSIT_CAPS};
+use crate::state::{ORACLE, VAULT_CONFIGS};
 use crate::utils::{assert_coins_are_whitelisted, contents_equal, decrement_coin_balance};
 use crate::vault::utils::{assert_vault_is_whitelisted, update_vault_position};
 
@@ -111,8 +111,8 @@ pub fn assert_deposit_is_under_cap(
     let oracle = ORACLE.load(deps.storage)?;
     let deposit_request_value = oracle.query_total_value(&deps.querier, coins)?;
 
-    let deposit_cap = VAULT_DEPOSIT_CAPS.load(deps.storage, &vault.address)?;
-    let deposit_cap_value = oracle.query_total_value(&deps.querier, &[deposit_cap])?;
+    let config = VAULT_CONFIGS.load(deps.storage, &vault.address)?;
+    let deposit_cap_value = oracle.query_total_value(&deps.querier, &[config.deposit_cap])?;
 
     let vault_info = vault.query_info(&deps.querier)?;
     let rover_vault_coin_balance = vault.query_balance(&deps.querier, rover_addr)?;

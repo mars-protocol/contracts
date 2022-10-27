@@ -9,8 +9,8 @@ use crate::deposit::deposit;
 use crate::health::assert_below_max_ltv;
 use crate::repay::repay;
 use crate::state::{
-    ACCOUNT_NFT, ALLOWED_COINS, ALLOWED_VAULTS, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE,
-    OWNER, RED_BANK, SWAPPER,
+    ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK,
+    SWAPPER, VAULT_CONFIGS,
 };
 use crate::vault::{
     deposit_into_vault, liquidate_vault, request_unlock_from_vault, update_vault_coin_balance,
@@ -97,15 +97,16 @@ pub fn update_config(
             .add_attribute("value", coins.join(", ").fallback("None"));
     }
 
-    if let Some(vaults) = new_config.allowed_vaults {
-        ALLOWED_VAULTS.clear(deps.storage);
-        vaults.iter().try_for_each(|unchecked| {
-            let vault = unchecked.check(deps.api)?;
-            ALLOWED_VAULTS.save(deps.storage, &vault.address, &Empty {})
+    if let Some(configs) = new_config.vault_configs {
+        VAULT_CONFIGS.clear(deps.storage);
+        configs.iter().try_for_each(|v| -> ContractResult<_> {
+            v.config.check()?;
+            let vault = v.vault.check(deps.api)?;
+            Ok(VAULT_CONFIGS.save(deps.storage, &vault.address, &v.config)?)
         })?;
         response = response
-            .add_attribute("key", "allowed_vaults")
-            .add_attribute("value", vaults.to_string().fallback("None"))
+            .add_attribute("key", "vault_configs")
+            .add_attribute("value", configs.to_string().fallback("None"))
     }
 
     if let Some(unchecked) = new_config.red_bank {

@@ -1,5 +1,5 @@
 use cosmwasm_std::OverflowOperation::Sub;
-use cosmwasm_std::{coin, coins, Addr, OverflowError, Uint128};
+use cosmwasm_std::{coin, coins, Addr, Decimal, OverflowError, Uint128};
 
 use mock_vault::contract::STARTING_VAULT_SHARES;
 use rover::adapters::vault::VaultBase;
@@ -109,6 +109,8 @@ fn test_deposited_coins_match_vault_requirements() {
         lockup: None,
         underlying_denoms: vec!["uatom".to_string(), "ujake".to_string()],
         deposit_cap: coin(1_000_000, "uusdc"),
+        max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
     };
 
     let user = Addr::unchecked("user");
