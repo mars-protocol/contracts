@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Addr, BlockInfo, Uint128, Uint64};
+use cosmwasm_std::{coin, Addr, Uint128, Uint64};
 
 use mars_testing::integration::mock_env::MockEnvBuilder;
 
