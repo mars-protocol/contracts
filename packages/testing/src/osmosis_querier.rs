@@ -68,7 +68,7 @@ impl OsmosisQuerier {
     }
 
     fn handle_query_spot_request(&self, request: QuerySpotPriceRequest) -> QuerierResult {
-        // NOTE: base_asset (denom_in) for Spot is quoting asset
+        // NOTE: Currency pair consists of base and quote asset (base/quote). Spot query has it swapped.
         let price_key = PriceKey {
             pool_id: request.pool_id,
             denom_in: request.quote_asset_denom,

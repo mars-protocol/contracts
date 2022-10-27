@@ -50,7 +50,7 @@ pub fn query_spot_price(
     base_denom: &str,
     quote_denom: &str,
 ) -> StdResult<Decimal> {
-    // NOTE: base_asset for Spot is quoting asset
+    // NOTE: Currency pair consists of base and quote asset (base/quote). Spot query has it swapped.
     // For example:
     // if we want to check the price ATOM/OSMO then we pass base_asset = OSMO, quote_asset = ATOM
     let spot_price_res = GammQuerier::new(querier).spot_price(
