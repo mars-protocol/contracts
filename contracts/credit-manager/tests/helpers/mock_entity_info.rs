@@ -1,6 +1,7 @@
 use crate::helpers::CoinInfo;
 use crate::helpers::VaultTestInfo;
 use cosmwasm_std::{coin, Decimal};
+use cw_utils::Duration;
 
 pub fn uosmo_info() -> CoinInfo {
     CoinInfo {
@@ -28,19 +29,29 @@ pub fn ujake_info() -> CoinInfo {
     }
 }
 
+pub fn lp_token_info() -> CoinInfo {
+    CoinInfo {
+        denom: "ugamm22".to_string(),
+        price: Decimal::from_atomics(9874u128, 3).unwrap(),
+        max_ltv: Decimal::from_atomics(63u128, 2).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(68u128, 2).unwrap(),
+    }
+}
+
 pub fn locked_vault_info() -> VaultTestInfo {
-    generate_mock_vault(Some(1_209_600)) // 14 days)
+    generate_mock_vault(Some(Duration::Time(1_209_600))) // 14 days)
 }
 
 pub fn unlocked_vault_info() -> VaultTestInfo {
     generate_mock_vault(None)
 }
 
-fn generate_mock_vault(lockup: Option<u64>) -> VaultTestInfo {
+pub fn generate_mock_vault(lockup: Option<Duration>) -> VaultTestInfo {
+    let lp_token = lp_token_info();
     VaultTestInfo {
-        denom: "uleverage".to_string(),
+        vault_token_denom: "uleverage".to_string(),
         lockup,
-        underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+        denom_req: lp_token.denom,
         deposit_cap: coin(10_000_000, "uusdc"),
         max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),

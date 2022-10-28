@@ -34,25 +34,25 @@ fn test_nft_contract_addr_not_set_on_instantiate() {
 fn test_allowed_vaults_set_on_instantiate() {
     let allowed_vaults = vec![
         VaultTestInfo {
-            denom: "vault_contract_1".to_string(),
+            vault_token_denom: "vault_contract_1".to_string(),
             lockup: None,
-            underlying_denoms: vec![],
+            denom_req: "lp_denom_123".to_string(),
             deposit_cap: coin(1_000_000, "uusdc"),
             max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
         },
         VaultTestInfo {
-            denom: "vault_contract_2".to_string(),
+            vault_token_denom: "vault_contract_2".to_string(),
             lockup: None,
-            underlying_denoms: vec![],
+            denom_req: "lp_denom_123".to_string(),
             deposit_cap: coin(1_000_000, "uusdc"),
             max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
         },
         VaultTestInfo {
-            denom: "vault_contract_3".to_string(),
+            vault_token_denom: "vault_contract_3".to_string(),
             lockup: None,
-            underlying_denoms: vec![],
+            denom_req: "lp_denom_123".to_string(),
             deposit_cap: coin(1_000_000, "uusdc"),
             max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
@@ -90,12 +90,12 @@ fn test_raises_on_invalid_vaults_config() {
         .pre_deployed_vault(
             "addr_123",
             &VaultTestInfo {
-                denom: "uleverage".to_string(),
+                vault_token_denom: "uleverage".to_string(),
                 lockup: None,
-                underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
                 deposit_cap: coin(10_000_000, "uusdc"),
                 max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
                 liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
+                denom_req: "lp_denom_123".to_string(),
             },
         )
         .build();
@@ -108,12 +108,12 @@ fn test_raises_on_invalid_vaults_config() {
         .pre_deployed_vault(
             "addr_123",
             &VaultTestInfo {
-                denom: "uleverage".to_string(),
+                vault_token_denom: "uleverage".to_string(),
                 lockup: None,
-                underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
                 deposit_cap: coin(10_000_000, "uusdc"),
                 max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
                 liquidation_threshold: Decimal::from_atomics(9u128, 0).unwrap(),
+                denom_req: "lp_denom_123".to_string(),
             },
         )
         .build();

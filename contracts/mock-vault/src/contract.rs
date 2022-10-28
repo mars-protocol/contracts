@@ -1,19 +1,20 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
-};
+use cosmwasm_std::{coin, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, Uint128};
 
-use rover::msg::vault::{ExecuteMsg, QueryMsg};
+use cosmos_vault_standard::extensions::lockup::{LockupExecuteMsg, LockupQueryMsg};
+use cosmos_vault_standard::msg::{ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, QueryMsg};
 
 use crate::deposit::deposit;
-use crate::error::ContractError;
+use crate::error::ContractResult;
 use crate::msg::InstantiateMsg;
 use crate::query::{
-    query_coins_for_shares, query_unlocking_position, query_unlocking_positions,
-    query_vault_coins_issued, query_vault_info,
+    query_coins_for_shares, query_lockup, query_lockup_duration, query_lockups, query_vault_info,
+    query_vault_token_supply,
 };
-use crate::state::{ASSETS, CHAIN_BANK, LOCKUP_TIME, LP_TOKEN_DENOM, NEXT_UNLOCK_ID, ORACLE};
+use crate::state::{
+    CHAIN_BANK, COIN_BALANCE, LOCKUP_TIME, NEXT_LOCKUP_ID, ORACLE, VAULT_TOKEN_DENOM,
+};
 use crate::unlock::{request_unlock, withdraw_unlocked, withdraw_unlocking_force};
 use crate::withdraw::{withdraw, withdraw_force};
 
@@ -29,15 +30,13 @@ pub fn instantiate(
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
-) -> StdResult<Response> {
-    for denom in msg.asset_denoms {
-        ASSETS.save(deps.storage, denom, &Uint128::zero())?;
-    }
+) -> ContractResult<Response> {
+    COIN_BALANCE.save(deps.storage, &coin(0, msg.req_denom))?;
     LOCKUP_TIME.save(deps.storage, &msg.lockup)?;
     ORACLE.save(deps.storage, &msg.oracle.check(deps.api)?)?;
-    LP_TOKEN_DENOM.save(deps.storage, &msg.lp_token_denom)?;
+    VAULT_TOKEN_DENOM.save(deps.storage, &msg.vault_token_denom)?;
     CHAIN_BANK.save(deps.storage, &DEFAULT_VAULT_TOKEN_PREFUND)?;
-    NEXT_UNLOCK_ID.save(deps.storage, &1)?;
+    NEXT_LOCKUP_ID.save(deps.storage, &1)?;
     Ok(Response::default())
 }
 
@@ -47,30 +46,43 @@ pub fn execute(
     env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+) -> ContractResult<Response> {
     match msg {
-        ExecuteMsg::Deposit {} => deposit(deps, info),
-        ExecuteMsg::Withdraw {} => withdraw(deps, info),
-        ExecuteMsg::ForceWithdraw {} => withdraw_force(deps, info),
-        ExecuteMsg::ForceWithdrawUnlocking { lockup_id, amount } => {
-            withdraw_unlocking_force(deps, &info.sender, lockup_id, amount)
-        }
-        ExecuteMsg::RequestUnlock {} => request_unlock(deps, env, info),
-        ExecuteMsg::WithdrawUnlocked { id } => withdraw_unlocked(deps, env, &info.sender, id),
+        ExecuteMsg::Deposit { .. } => deposit(deps, info),
+        ExecuteMsg::Redeem { .. } => withdraw(deps, info),
+        ExecuteMsg::VaultExtension(ext) => match ext {
+            ExtensionExecuteMsg::Lockup(lockup_msg) => match lockup_msg {
+                LockupExecuteMsg::WithdrawUnlocked { lockup_id, .. } => {
+                    withdraw_unlocked(deps, env, &info.sender, lockup_id)
+                }
+                LockupExecuteMsg::Unlock { .. } => request_unlock(deps, env, info),
+                LockupExecuteMsg::ForceWithdraw { .. } => withdraw_force(deps, info),
+                LockupExecuteMsg::ForceWithdrawUnlocking {
+                    lockup_id, amount, ..
+                } => withdraw_unlocking_force(deps, &info.sender, lockup_id, amount),
+            },
+        },
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
+    let res = match msg {
+        QueryMsg::TotalVaultTokenSupply {} => to_binary(&query_vault_token_supply(deps.storage)?),
         QueryMsg::Info {} => to_binary(&query_vault_info(deps)?),
         QueryMsg::PreviewRedeem { amount } => {
             to_binary(&query_coins_for_shares(deps.storage, amount)?)
         }
-        QueryMsg::TotalVaultCoinsIssued {} => to_binary(&query_vault_coins_issued(deps.storage)?),
-        QueryMsg::UnlockingPositionsForAddr { addr } => {
-            to_binary(&query_unlocking_positions(deps, addr)?)
-        }
-        QueryMsg::UnlockingPosition { id } => to_binary(&query_unlocking_position(deps, id)?),
-    }
+        QueryMsg::VaultExtension(ext) => match ext {
+            ExtensionQueryMsg::Lockup(lockup_msg) => match lockup_msg {
+                LockupQueryMsg::Lockups { owner, .. } => to_binary(&query_lockups(deps, owner)?),
+                LockupQueryMsg::Lockup { lockup_id, .. } => {
+                    to_binary(&query_lockup(deps, lockup_id)?)
+                }
+                LockupQueryMsg::LockupDuration {} => to_binary(&query_lockup_duration(deps)?),
+            },
+        },
+        _ => unimplemented!(),
+    };
+    res.map_err(Into::into)
 }

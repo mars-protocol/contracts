@@ -2,7 +2,7 @@ use anyhow::Result as AnyResult;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{coin, Addr, Coin, Decimal};
 use cw_multi_test::{AppResponse, BankSudo, BasicApp, ContractWrapper, Executor, SudoMsg};
-
+use cw_utils::Duration;
 use mars_oracle_adapter::contract::{execute, instantiate, query};
 use mars_oracle_adapter::error::ContractError;
 use mars_oracle_adapter::msg::{InstantiateMsg, PricingMethod, VaultPricingInfo};
@@ -22,7 +22,7 @@ pub fn mock_vault_info() -> VaultTestInfo {
     VaultTestInfo {
         vault_coin_denom: "yOSMO_ATOM".to_string(),
         lockup: None,
-        underlying_assets: vec!["uosmo".to_string(), "uatom".to_string()],
+        req_denom: "GAMM_LP_12352".to_string(),
         pricing_method: PricingMethod::PreviewRedeem,
     }
 }
@@ -54,8 +54,8 @@ pub fn instantiate_oracle_adapter(app: &mut BasicApp) -> Addr {
 #[cw_serde]
 pub struct VaultTestInfo {
     pub vault_coin_denom: String,
-    pub lockup: Option<u64>,
-    pub underlying_assets: Vec<String>,
+    pub lockup: Option<Duration>,
+    pub req_denom: String,
     pub pricing_method: PricingMethod,
 }
 
@@ -72,9 +72,9 @@ fn deploy_vault(
             code_id,
             Addr::unchecked("vault-instantiator"),
             &VaultInstantiateMsg {
-                lp_token_denom: vault.clone().vault_coin_denom,
+                vault_token_denom: vault.clone().vault_coin_denom,
                 lockup: vault.lockup,
-                asset_denoms: vault.clone().underlying_assets,
+                req_denom: vault.clone().req_denom,
                 oracle,
             },
             &[],
@@ -84,9 +84,10 @@ fn deploy_vault(
         .unwrap();
 
     let vault_pricing_info = VaultPricingInfo {
-        denom: vault.vault_coin_denom,
+        vault_coin_denom: vault.vault_coin_denom,
         addr,
         method: vault.pricing_method,
+        req_denom: vault.req_denom,
     };
     fund_vault(app, &vault_pricing_info);
     vault_pricing_info
@@ -98,7 +99,7 @@ fn fund_vault(app: &mut BasicApp, vault: &VaultPricingInfo) {
     app.sudo(SudoMsg::Bank(BankSudo::Mint {
         to_address: vault.addr.to_string(),
         amount: vec![Coin {
-            denom: vault.denom.clone(),
+            denom: vault.vault_coin_denom.clone(),
             amount: DEFAULT_VAULT_TOKEN_PREFUND,
         }],
     }))
@@ -107,15 +108,15 @@ fn fund_vault(app: &mut BasicApp, vault: &VaultPricingInfo) {
 
 fn starting_vault_deposit(app: &mut BasicApp, vault_info: &VaultPricingInfo) {
     let user = Addr::unchecked("some_user_xyz");
-    let coins_to_deposit = vec![coin(120_042, "uosmo"), coin(32_343, "uatom")];
+    let coin_to_deposit = coin(120_042, "GAMM_LP_12352");
     app.sudo(SudoMsg::Bank(BankSudo::Mint {
         to_address: user.to_string(),
-        amount: coins_to_deposit.clone(),
+        amount: vec![coin_to_deposit.clone()],
     }))
     .unwrap();
 
     let vault = VaultBase::new(vault_info.addr.clone());
-    let deposit_msg = vault.deposit_msg(&coins_to_deposit).unwrap();
+    let deposit_msg = vault.deposit_msg(&coin_to_deposit).unwrap();
     app.execute(user, deposit_msg).unwrap();
 }
 
@@ -136,6 +137,10 @@ fn deploy_oracle(app: &mut BasicApp) -> OracleBase<Addr> {
                     CoinPrice {
                         denom: "uatom".to_string(),
                         price: Decimal::from_atomics(10u128, 1).unwrap(),
+                    },
+                    CoinPrice {
+                        denom: "GAMM_LP_12352".to_string(),
+                        price: Decimal::from_atomics(8745u128, 2).unwrap(),
                     },
                 ],
             },

@@ -1,64 +1,61 @@
 use cosmwasm_std::{Coin, Deps, Order, StdError, StdResult, Storage, Uint128};
+use cw_utils::Duration;
 
-use rover::msg::vault::{UnlockingPosition, VaultInfo};
+use cosmos_vault_standard::extensions::lockup::Lockup;
+use cosmos_vault_standard::msg::{AssetsResponse, VaultInfo};
 
-use crate::state::{ASSETS, LOCKUP_TIME, LP_TOKEN_DENOM, TOTAL_VAULT_SHARES, UNLOCKING_COINS};
+use crate::error::ContractError::NotLockingVault;
+use crate::error::ContractResult;
+use crate::state::{COIN_BALANCE, LOCKUPS, LOCKUP_TIME, TOTAL_VAULT_SHARES, VAULT_TOKEN_DENOM};
 
-pub fn query_coins_for_shares(storage: &dyn Storage, shares: Uint128) -> StdResult<Vec<Coin>> {
+pub fn query_coins_for_shares(
+    storage: &dyn Storage,
+    shares: Uint128,
+) -> ContractResult<AssetsResponse> {
     let total_shares_opt = TOTAL_VAULT_SHARES.may_load(storage)?;
+    let balance = COIN_BALANCE.load(storage)?;
     match total_shares_opt {
-        None => Ok(vec![]),
-        Some(total_vault_shares) => {
-            let all_vault_coins = get_all_vault_coins(storage)?;
-            let coins_for_shares = all_vault_coins
-                .iter()
-                .map(|asset| Coin {
-                    denom: asset.clone().denom,
-                    amount: asset.amount.multiply_ratio(shares, total_vault_shares),
-                })
-                .collect::<Vec<Coin>>();
-            Ok(coins_for_shares)
-        }
+        Some(total_vault_shares) if !total_vault_shares.is_zero() => Ok(AssetsResponse {
+            coin: Coin {
+                denom: balance.denom,
+                amount: balance.amount.multiply_ratio(shares, total_vault_shares),
+            },
+        }),
+        _ => Ok(AssetsResponse { coin: balance }),
     }
 }
 
-pub fn query_vault_info(deps: Deps) -> StdResult<VaultInfo> {
-    let all_coins = get_all_vault_coins(deps.storage)?;
-    let accepted_denoms = all_coins.iter().map(|c| c.denom.clone()).collect();
+pub fn query_vault_info(deps: Deps) -> ContractResult<VaultInfo> {
+    let req_denom = COIN_BALANCE.load(deps.storage)?.denom;
+    let vault_token_denom = VAULT_TOKEN_DENOM.load(deps.storage)?;
     Ok(VaultInfo {
-        accepts: accepted_denoms,
-        lockup: LOCKUP_TIME.load(deps.storage)?,
-        token_denom: LP_TOKEN_DENOM.load(deps.storage)?,
+        req_denom,
+        vault_token_denom,
     })
 }
 
-pub fn get_all_vault_coins(storage: &dyn Storage) -> StdResult<Vec<Coin>> {
-    ASSETS
-        .range(storage, None, None, Order::Ascending)
-        .map(|res| {
-            let (denom, amount) = res?;
-            Ok(Coin { denom, amount })
-        })
-        .collect()
+pub fn query_lockup_duration(deps: Deps) -> ContractResult<Duration> {
+    let res = LOCKUP_TIME.load(deps.storage)?.ok_or(NotLockingVault)?;
+    Ok(res)
 }
 
-pub fn query_unlocking_position(deps: Deps, id: u64) -> StdResult<UnlockingPosition> {
-    UNLOCKING_COINS
+pub fn query_lockup(deps: Deps, id: u64) -> ContractResult<Lockup> {
+    Ok(LOCKUPS
         .range(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?
         .into_iter()
         .flat_map(|(_, positions)| positions)
         .find(|p| p.id == id)
-        .ok_or_else(|| StdError::generic_err("Id not found"))
+        .ok_or_else(|| StdError::generic_err("Id not found"))?)
 }
 
-pub fn query_unlocking_positions(deps: Deps, addr: String) -> StdResult<Vec<UnlockingPosition>> {
+pub fn query_lockups(deps: Deps, addr: String) -> ContractResult<Vec<Lockup>> {
     let addr = deps.api.addr_validate(addr.as_str())?;
-    let res = UNLOCKING_COINS.load(deps.storage, addr)?;
+    let res = LOCKUPS.load(deps.storage, addr)?;
     Ok(res)
 }
 
-pub fn query_vault_coins_issued(storage: &dyn Storage) -> StdResult<Uint128> {
+pub fn query_vault_token_supply(storage: &dyn Storage) -> ContractResult<Uint128> {
     let amount_issued = TOTAL_VAULT_SHARES
         .may_load(storage)?
         .unwrap_or(Uint128::zero());

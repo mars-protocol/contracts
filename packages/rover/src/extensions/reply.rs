@@ -1,4 +1,6 @@
-use crate::msg::vault::UNLOCKING_POSITION_CREATED_EVENT_TYPE;
+use cosmos_vault_standard::extensions::lockup::{
+    UNLOCKING_POSITION_ATTR_KEY, UNLOCKING_POSITION_CREATED_EVENT_TYPE,
+};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Reply, StdError, StdResult, SubMsgResult};
 
@@ -38,7 +40,7 @@ impl AttrParse for Reply {
                 let id = &unlock_event
                     .attributes
                     .iter()
-                    .find(|x| x.key == "id")
+                    .find(|x| x.key == UNLOCKING_POSITION_ATTR_KEY)
                     .ok_or_else(|| StdError::generic_err("No id attribute"))?
                     .value;
 

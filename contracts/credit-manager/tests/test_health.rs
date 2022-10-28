@@ -604,5 +604,3 @@ fn test_debt_value() {
 fn find_by_denom<'a>(denom: &'a str, shares: &'a [DebtAmount]) -> &'a DebtAmount {
     shares.iter().find(|item| item.denom == *denom).unwrap()
 }
-
-// TODO: Test vault positions taken into account

@@ -1,5 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{coin, Addr, Coin, Decimal};
+use cw_utils::Duration;
 
 #[cw_serde]
 pub struct AccountToFund {
@@ -17,9 +18,9 @@ pub struct CoinInfo {
 
 #[cw_serde]
 pub struct VaultTestInfo {
-    pub denom: String,
-    pub lockup: Option<u64>,
-    pub underlying_denoms: Vec<String>,
+    pub vault_token_denom: String,
+    pub lockup: Option<Duration>,
+    pub denom_req: String,
     pub deposit_cap: Coin,
     pub max_ltv: Decimal,
     pub liquidation_threshold: Decimal,

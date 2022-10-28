@@ -10,7 +10,6 @@ use rover::adapters::vault::{
 use rover::error::ContractResult;
 use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg;
-use rover::traits::Denoms;
 
 use crate::liquidate_coin::calculate_liquidation;
 use crate::state::VAULT_POSITIONS;
@@ -36,7 +35,7 @@ pub fn liquidate_vault(
         &env,
         liquidatee_account_id,
         &debt_coin,
-        &vault_info.token_denom,
+        &vault_info.vault_token_denom,
         liquidatee_position.total(),
     )?;
 
@@ -60,11 +59,10 @@ pub fn liquidate_vault(
     )?;
 
     // Update coin balances of liquidator after withdraws have been made
-    let coins_from_withdraw = request_vault.query_preview_redeem(&deps.querier, request.amount)?;
     let previous_balances = query_balances(
         deps.as_ref(),
         &env.contract.address,
-        &coins_from_withdraw.to_denoms(),
+        &[vault_info.req_denom.as_str()],
     )?;
     let update_coin_balance_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
@@ -116,6 +114,10 @@ fn get_vault_withdraw_msgs(
             // Priority goes to force withdrawing the unlocking buckets
             for u in amount.unlocking.positions() {
                 let amount = min(u.amount, total_to_liquidate);
+
+                if amount.is_zero() {
+                    break;
+                }
 
                 update_vault_position(
                     storage,

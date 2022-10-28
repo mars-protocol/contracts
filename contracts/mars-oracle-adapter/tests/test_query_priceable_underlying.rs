@@ -43,9 +43,7 @@ fn test_vault_coin_preview_redeem() {
         )
         .unwrap();
 
-    assert_eq!(coins.len(), 2);
-    assert_eq!(coins[0].denom, "uatom".to_string());
-    assert_eq!(coins[0].amount, Uint128::new(32));
-    assert_eq!(coins[1].denom, "uosmo".to_string());
-    assert_eq!(coins[1].amount, Uint128::new(120));
+    assert_eq!(coins.len(), 1);
+    assert_eq!(coins[0].denom, "GAMM_LP_12352".to_string());
+    assert_eq!(coins[0].amount, Uint128::new(120));
 }

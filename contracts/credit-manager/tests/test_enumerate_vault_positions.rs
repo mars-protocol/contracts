@@ -1,18 +1,17 @@
-use cosmwasm_std::{coin, Addr};
+use cosmwasm_std::Addr;
 use itertools::Itertools;
 
 use rover::msg::execute::Action;
 
 use crate::helpers::{
-    assert_contents_equal, build_mock_vaults, uatom_info, uosmo_info, AccountToFund, MockEnv,
+    assert_contents_equal, build_mock_vaults, lp_token_info, AccountToFund, MockEnv,
 };
 
 pub mod helpers;
 
 #[test]
 fn test_pagination_on_all_vault_positions_query_works() {
-    let uatom = uatom_info();
-    let uosmo = uosmo_info();
+    let lp_token = lp_token_info();
 
     let user_a = Addr::unchecked("user_a");
     let user_b = Addr::unchecked("user_b");
@@ -22,39 +21,27 @@ fn test_pagination_on_all_vault_positions_query_works() {
     let mut mock = MockEnv::new()
         .fund_account(AccountToFund {
             addr: user_a.clone(),
-            funds: vec![
-                coin(1000, uosmo.denom.clone()),
-                coin(1000, uatom.denom.clone()),
-            ],
+            funds: vec![lp_token.to_coin(1000)],
         })
         .fund_account(AccountToFund {
             addr: user_b.clone(),
-            funds: vec![
-                coin(1000, uosmo.denom.clone()),
-                coin(1000, uatom.denom.clone()),
-            ],
+            funds: vec![lp_token.to_coin(1000)],
         })
         .fund_account(AccountToFund {
             addr: user_c.clone(),
-            funds: vec![
-                coin(1000, uosmo.denom.clone()),
-                coin(1000, uatom.denom.clone()),
-            ],
+            funds: vec![lp_token.to_coin(1000)],
         })
-        .allowed_coins(&[uosmo.clone(), uatom.clone()])
+        .allowed_coins(&[lp_token.clone()])
         .allowed_vaults(&all_vaults)
         .build()
         .unwrap();
 
-    let mut actions = vec![
-        Action::Deposit(uatom.to_coin(220)),
-        Action::Deposit(uosmo.to_coin(220)),
-    ];
+    let mut actions = vec![Action::Deposit(lp_token.to_coin(220))];
 
     all_vaults.iter().for_each(|v| {
-        actions.extend([Action::VaultDeposit {
+        actions.extend([Action::EnterVault {
             vault: mock.get_vault(v),
-            coins: vec![uatom.to_coin(10), uosmo.to_coin(10)],
+            coin: lp_token.to_coin(10),
         }]);
     });
 
@@ -63,7 +50,7 @@ fn test_pagination_on_all_vault_positions_query_works() {
         &account_id_a,
         &user_a,
         actions.clone(),
-        &[uatom.to_coin(220), uosmo.to_coin(220)],
+        &[lp_token.to_coin(220)],
     )
     .unwrap();
 
@@ -72,18 +59,13 @@ fn test_pagination_on_all_vault_positions_query_works() {
         &account_id_b,
         &user_b,
         actions.clone(),
-        &[uatom.to_coin(220), uosmo.to_coin(220)],
+        &[lp_token.to_coin(220)],
     )
     .unwrap();
 
     let account_id_c = mock.create_credit_account(&user_c).unwrap();
-    mock.update_credit_account(
-        &account_id_c,
-        &user_c,
-        actions,
-        &[uatom.to_coin(220), uosmo.to_coin(220)],
-    )
-    .unwrap();
+    mock.update_credit_account(&account_id_c, &user_c, actions, &[lp_token.to_coin(220)])
+        .unwrap();
 
     let vaults_res = mock.query_all_vault_positions(None, Some(58_u32));
     // Assert maximum is observed
@@ -132,7 +114,7 @@ fn test_pagination_on_all_vault_positions_query_works() {
         .chain(vaults_res_c.iter().cloned())
         .chain(vaults_res_d.iter().cloned())
         .map(|v| v.position.vault.query_info(&mock.app.wrap()).unwrap())
-        .map(|info| info.token_denom)
+        .map(|info| info.vault_token_denom)
         .collect::<Vec<_>>();
 
     let deduped = combined.iter().unique().cloned().collect::<Vec<_>>();
@@ -142,7 +124,7 @@ fn test_pagination_on_all_vault_positions_query_works() {
     assert_contents_equal(
         &all_vaults
             .iter()
-            .map(|v| v.denom.clone())
+            .map(|v| v.vault_token_denom.clone())
             .collect::<Vec<_>>(),
         &deduped,
     )

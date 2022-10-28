@@ -1,8 +1,9 @@
 use cosmwasm_std::{coin, Decimal};
+use cw_utils::Duration;
 
 use rover::traits::IntoDecimal;
 
-use crate::helpers::{CoinInfo, VaultTestInfo};
+use crate::helpers::{lp_token_info, CoinInfo, VaultTestInfo};
 
 pub fn build_mock_coin_infos(count: usize) -> Vec<CoinInfo> {
     (1..=count)
@@ -17,16 +18,17 @@ pub fn build_mock_coin_infos(count: usize) -> Vec<CoinInfo> {
 }
 
 pub fn build_mock_vaults(count: usize) -> Vec<VaultTestInfo> {
+    let lp_token = lp_token_info();
     (1..=count)
         .into_iter()
         .map(|i| {
             VaultTestInfo {
-                denom: format!("vault_{}", i),
-                lockup: Some(1_209_600), // 14 days
-                underlying_denoms: vec!["uatom".to_string(), "uosmo".to_string()],
+                vault_token_denom: format!("vault_{}", i),
+                lockup: Some(Duration::Time(1_209_600)), // 14 days
+                denom_req: lp_token.denom.clone(),
                 deposit_cap: coin(10000000, "uusdc"),
-                max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
-                liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
+                max_ltv: lp_token.max_ltv,
+                liquidation_threshold: lp_token.liquidation_threshold,
             }
         })
         .collect()

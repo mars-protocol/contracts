@@ -9,7 +9,7 @@ use crate::vault::utils::{
     assert_vault_is_whitelisted, query_withdraw_denom_balances, update_vault_position,
 };
 
-pub fn withdraw_from_vault(
+pub fn exit_vault(
     deps: DepsMut,
     env: Env,
     account_id: &str,

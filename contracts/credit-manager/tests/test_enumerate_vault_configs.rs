@@ -45,7 +45,7 @@ fn test_pagination_on_allowed_vaults_query_works() {
         .chain(vaults_res_d.iter().cloned())
         .map(|v| v.vault.check(&MockApi::default()).unwrap())
         .map(|v| v.query_info(&mock.app.wrap()).unwrap())
-        .map(|info| info.token_denom)
+        .map(|info| info.vault_token_denom)
         .collect::<Vec<_>>();
 
     assert_eq!(combined.len(), allowed_vaults.len());
@@ -53,7 +53,7 @@ fn test_pagination_on_allowed_vaults_query_works() {
     assert_contents_equal(
         &allowed_vaults
             .iter()
-            .map(|v| v.denom.clone())
+            .map(|v| v.vault_token_denom.clone())
             .collect::<Vec<_>>(),
         &combined,
     )

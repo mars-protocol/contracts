@@ -2,13 +2,13 @@ use cosmwasm_std::{BankMsg, Coin, CosmosMsg, DepsMut, MessageInfo, Response, Std
 
 use crate::contract::STARTING_VAULT_SHARES;
 use crate::error::ContractError;
-use crate::query::get_all_vault_coins;
-use crate::state::{ASSETS, CHAIN_BANK, LP_TOKEN_DENOM, ORACLE, TOTAL_VAULT_SHARES};
+use crate::error::ContractError::WrongDenomSent;
+use crate::state::{CHAIN_BANK, COIN_BALANCE, ORACLE, TOTAL_VAULT_SHARES, VAULT_TOKEN_DENOM};
 
 pub fn deposit(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
     let total_shares_opt = TOTAL_VAULT_SHARES.may_load(deps.storage)?;
     let oracle = ORACLE.load(deps.storage)?;
-    let all_vault_assets = get_all_vault_coins(deps.storage)?;
+    let balance = COIN_BALANCE.load(deps.storage)?;
 
     let shares_to_add = match total_shares_opt {
         None => {
@@ -16,7 +16,7 @@ pub fn deposit(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractErr
             STARTING_VAULT_SHARES
         }
         Some(total_shares) => {
-            let total_vault_value = oracle.query_total_value(&deps.querier, &all_vault_assets)?;
+            let total_vault_value = oracle.query_total_value(&deps.querier, &[balance])?;
             let assets_value = oracle.query_total_value(&deps.querier, &info.funds)?;
             let shares_to_add = total_shares
                 .checked_multiply_ratio(assets_value.atomics(), total_vault_value.atomics())?;
@@ -25,18 +25,20 @@ pub fn deposit(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractErr
         }
     };
 
-    info.funds.iter().try_for_each(|asset| -> StdResult<()> {
-        ASSETS.update(
-            deps.storage,
-            asset.clone().denom,
-            |current_amount| -> StdResult<_> {
-                Ok(current_amount.unwrap_or(Uint128::zero()) + asset.amount)
-            },
-        )?;
-        Ok(())
-    })?;
+    let balance = COIN_BALANCE.load(deps.storage)?;
+    let amount_deposited = match info.funds.first() {
+        Some(c) if c.denom == balance.denom => c.amount,
+        _ => return Err(WrongDenomSent),
+    };
+    COIN_BALANCE.save(
+        deps.storage,
+        &Coin {
+            denom: balance.denom,
+            amount: balance.amount + amount_deposited,
+        },
+    )?;
 
-    // Send vault tokens to
+    // Send vault tokens to user
     let minted = mock_lp_token_mint(deps, shares_to_add)?;
     let transfer_msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: info.sender.to_string(),
@@ -47,7 +49,7 @@ pub fn deposit(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractErr
 }
 
 fn mock_lp_token_mint(deps: DepsMut, amount: Uint128) -> StdResult<Coin> {
-    let denom = LP_TOKEN_DENOM.load(deps.storage)?;
+    let denom = VAULT_TOKEN_DENOM.load(deps.storage)?;
 
     CHAIN_BANK.update(deps.storage, |bank_amount| -> StdResult<_> {
         Ok(bank_amount - amount)

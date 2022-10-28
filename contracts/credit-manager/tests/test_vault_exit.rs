@@ -5,12 +5,12 @@ use mock_vault::contract::STARTING_VAULT_SHARES;
 use rover::adapters::vault::VaultBase;
 use rover::error::ContractError;
 use rover::error::ContractError::{NotTokenOwner, NotWhitelisted};
-use rover::msg::execute::Action::{Deposit, VaultDeposit, VaultWithdraw};
+use rover::msg::execute::Action::{Deposit, EnterVault, ExitVault};
 use rover::msg::execute::CallbackMsg;
 
 use crate::helpers::{
-    assert_err, locked_vault_info, uatom_info, unlocked_vault_info, uosmo_info, AccountToFund,
-    MockEnv,
+    assert_err, locked_vault_info, lp_token_info, uatom_info, unlocked_vault_info, uosmo_info,
+    AccountToFund, MockEnv,
 };
 
 pub mod helpers;
@@ -26,7 +26,7 @@ fn test_only_owner_of_token_can_withdraw_from_vault() {
     let res = mock.update_credit_account(
         &account_id,
         &bad_guy,
-        vec![VaultWithdraw {
+        vec![ExitVault {
             vault: VaultBase::new("some_vault".to_string()),
             amount: STARTING_VAULT_SHARES,
         }],
@@ -52,7 +52,7 @@ fn test_can_only_take_action_on_whitelisted_vaults() {
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![VaultWithdraw {
+        vec![ExitVault {
             vault: VaultBase::new("not_allowed_vault".to_string()),
             amount: STARTING_VAULT_SHARES,
         }],
@@ -89,7 +89,7 @@ fn test_no_unlocked_vault_coins_to_withdraw() {
         vec![
             Deposit(coin(200, uatom.denom)),
             Deposit(coin(200, uosmo.denom)),
-            VaultWithdraw {
+            ExitVault {
                 vault,
                 amount: STARTING_VAULT_SHARES,
             },
@@ -122,7 +122,7 @@ fn test_force_withdraw_can_only_be_called_by_rover() {
 
     let res = mock.invoke_callback(
         &user.clone(),
-        CallbackMsg::VaultForceWithdraw {
+        CallbackMsg::ForceExitVault {
             account_id,
             vault: VaultBase::new(Addr::unchecked(vault.address)),
             amount: STARTING_VAULT_SHARES,
@@ -133,18 +133,16 @@ fn test_force_withdraw_can_only_be_called_by_rover() {
 
 #[test]
 fn test_force_withdraw_breaks_lock() {
-    let uatom = uatom_info();
-    let uosmo = uosmo_info();
-
+    let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom.clone(), uosmo.clone()])
+        .allowed_coins(&[lp_token.clone()])
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![coin(300, "uatom"), coin(500, "uosmo")],
+            funds: vec![lp_token.to_coin(300)],
         })
         .build()
         .unwrap();
@@ -156,14 +154,13 @@ fn test_force_withdraw_breaks_lock() {
         &account_id,
         &user,
         vec![
-            Deposit(coin(200, uatom.denom)),
-            Deposit(coin(200, uosmo.denom)),
-            VaultDeposit {
+            Deposit(lp_token.to_coin(200)),
+            EnterVault {
                 vault: vault.clone(),
-                coins: vec![coin(100, "uatom"), coin(100, "uosmo")],
+                coin: lp_token.to_coin(100),
             },
         ],
-        &[coin(200, "uatom"), coin(200, "uosmo")],
+        &[lp_token.to_coin(200)],
     )
     .unwrap();
 
@@ -175,7 +172,7 @@ fn test_force_withdraw_breaks_lock() {
 
     mock.invoke_callback(
         &mock.rover.clone(),
-        CallbackMsg::VaultForceWithdraw {
+        CallbackMsg::ForceExitVault {
             account_id: account_id.clone(),
             vault: VaultBase::new(Addr::unchecked(vault.address)),
             amount: STARTING_VAULT_SHARES,
@@ -186,36 +183,30 @@ fn test_force_withdraw_breaks_lock() {
     // Assert token's updated position
     let res = mock.query_positions(&account_id);
     assert_eq!(res.vaults.len(), 0);
-    let atom = get_coin("uatom", &res.coins);
-    assert_eq!(atom.amount, Uint128::from(200u128));
-    let osmo = get_coin("uosmo", &res.coins);
-    assert_eq!(osmo.amount, Uint128::from(200u128));
+    let lp = get_coin(&lp_token.denom, &res.coins);
+    assert_eq!(lp.amount, Uint128::from(200u128));
 
     // Assert Rover indeed has those on hand in the bank
-    let atom = mock.query_balance(&mock.rover, "uatom");
+    let atom = mock.query_balance(&mock.rover, &lp_token.denom);
     assert_eq!(atom.amount, Uint128::from(200u128));
-    let osmo = mock.query_balance(&mock.rover, "uosmo");
-    assert_eq!(osmo.amount, Uint128::from(200u128));
 
     // Assert Rover does not have the vault tokens anymore
-    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
+    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.vault_token_denom);
     assert_eq!(Uint128::zero(), lp_balance.amount);
 }
 
 #[test]
 fn test_withdraw_with_unlocked_vault_coins() {
-    let uatom = uatom_info();
-    let uosmo = uosmo_info();
-
+    let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom.clone(), uosmo.clone()])
+        .allowed_coins(&[lp_token.clone()])
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![coin(300, "uatom"), coin(500, "uosmo")],
+            funds: vec![lp_token.to_coin(300)],
         })
         .build()
         .unwrap();
@@ -227,14 +218,13 @@ fn test_withdraw_with_unlocked_vault_coins() {
         &account_id,
         &user,
         vec![
-            Deposit(coin(200, uatom.denom)),
-            Deposit(coin(200, uosmo.denom)),
-            VaultDeposit {
+            Deposit(lp_token.to_coin(200)),
+            EnterVault {
                 vault: vault.clone(),
-                coins: vec![coin(100, "uatom"), coin(100, "uosmo")],
+                coin: lp_token.to_coin(100),
             },
         ],
-        &[coin(200, "uatom"), coin(200, "uosmo")],
+        &[lp_token.to_coin(200)],
     )
     .unwrap();
 
@@ -243,25 +233,21 @@ fn test_withdraw_with_unlocked_vault_coins() {
     assert_eq!(res.vaults.len(), 1);
     let v = res.vaults.first().unwrap();
     assert_eq!(v.amount.unlocked(), STARTING_VAULT_SHARES);
-    let atom = get_coin("uatom", &res.coins);
-    assert_eq!(atom.amount, Uint128::from(100u128));
-    let osmo = get_coin("uosmo", &res.coins);
-    assert_eq!(osmo.amount, Uint128::from(100u128));
+    let lp = get_coin(&lp_token.denom, &res.coins);
+    assert_eq!(lp.amount, Uint128::from(100u128));
 
     // Assert Rover's totals
-    let atom = mock.query_balance(&mock.rover, "uatom");
-    assert_eq!(atom.amount, Uint128::from(100u128));
-    let osmo = mock.query_balance(&mock.rover, "uosmo");
-    assert_eq!(osmo.amount, Uint128::from(100u128));
+    let lp = mock.query_balance(&mock.rover, &lp_token.denom);
+    assert_eq!(lp.amount, Uint128::from(100u128));
 
     // Assert Rover has the vault tokens
-    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
+    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.vault_token_denom);
     assert_eq!(STARTING_VAULT_SHARES, lp_balance.amount);
 
     mock.update_credit_account(
         &account_id,
         &user,
-        vec![VaultWithdraw {
+        vec![ExitVault {
             vault,
             amount: STARTING_VAULT_SHARES,
         }],
@@ -272,19 +258,15 @@ fn test_withdraw_with_unlocked_vault_coins() {
     // Assert token's updated position
     let res = mock.query_positions(&account_id);
     assert_eq!(res.vaults.len(), 0);
-    let atom = get_coin("uatom", &res.coins);
-    assert_eq!(atom.amount, Uint128::from(200u128));
-    let osmo = get_coin("uosmo", &res.coins);
-    assert_eq!(osmo.amount, Uint128::from(200u128));
+    let lp = get_coin(&lp_token.denom, &res.coins);
+    assert_eq!(lp.amount, Uint128::from(200u128));
 
     // Assert Rover indeed has those on hand in the bank
-    let atom = mock.query_balance(&mock.rover, "uatom");
-    assert_eq!(atom.amount, Uint128::from(200u128));
-    let osmo = mock.query_balance(&mock.rover, "uosmo");
-    assert_eq!(osmo.amount, Uint128::from(200u128));
+    let lp = mock.query_balance(&mock.rover, &lp_token.denom);
+    assert_eq!(lp.amount, Uint128::from(200u128));
 
     // Assert Rover does not have the vault tokens anymore
-    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
+    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.vault_token_denom);
     assert_eq!(Uint128::zero(), lp_balance.amount);
 }
 

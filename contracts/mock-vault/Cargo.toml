@@ -15,8 +15,10 @@ library = []
 
 [dependencies]
 rover = { version = "1.0", path = "../../packages/rover" }
+cosmos-vault-standard = { path = "../../packages/cosmos-vault-standard", features = ["lockup"] }
 
 cosmwasm-schema = "1.1"
 cosmwasm-std = "1.1"
 cw-storage-plus = "0.16"
+cw-utils = "0.16"
 thiserror = "1.0"

@@ -1,17 +1,18 @@
-use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_std::{Addr, Coin, Uint128};
 use cw_storage_plus::{Item, Map};
+use cw_utils::Duration;
 
+use cosmos_vault_standard::extensions::lockup::Lockup;
 use rover::adapters::Oracle;
-use rover::msg::vault::UnlockingPosition;
 
-pub const LP_TOKEN_DENOM: Item<String> = Item::new("lp_token_denom");
+pub const VAULT_TOKEN_DENOM: Item<String> = Item::new("vault_token_denom");
 pub const TOTAL_VAULT_SHARES: Item<Uint128> = Item::new("total_vault_shares");
-pub const LOCKUP_TIME: Item<Option<u64>> = Item::new("lockup_time");
-pub const ASSETS: Map<String, Uint128> = Map::new("assets"); // Denom -> Amount
+pub const LOCKUP_TIME: Item<Option<Duration>> = Item::new("lockup_time");
 pub const ORACLE: Item<Oracle> = Item::new("oracle");
+
+pub const COIN_BALANCE: Item<Coin> = Item::new("underlying_coin");
+pub const LOCKUPS: Map<Addr, Vec<Lockup>> = Map::new("lockups");
+pub const NEXT_LOCKUP_ID: Item<u64> = Item::new("next_lockup_id");
 
 // Used for mock LP token minting
 pub const CHAIN_BANK: Item<Uint128> = Item::new("chain_bank");
-
-pub const UNLOCKING_COINS: Map<Addr, Vec<UnlockingPosition>> = Map::new("unlocking_coins");
-pub const NEXT_UNLOCK_ID: Item<u64> = Item::new("next_unlock_id");

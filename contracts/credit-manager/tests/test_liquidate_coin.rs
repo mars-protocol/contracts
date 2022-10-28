@@ -1,14 +1,14 @@
-use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, OverflowError, OverflowOperation, Uint128};
+use cosmwasm_std::{coins, Addr, Coin, Decimal, OverflowError, OverflowOperation, Uint128};
 
 use mock_oracle::msg::CoinPrice;
 use rover::error::ContractError;
 use rover::error::ContractError::{AboveMaxLTV, NotLiquidatable};
-use rover::msg::execute::Action::{Borrow, Deposit, LiquidateCoin, VaultDeposit};
+use rover::msg::execute::Action::{Borrow, Deposit, EnterVault, LiquidateCoin};
 use rover::traits::IntoDecimal;
 
 use crate::helpers::{
-    assert_err, get_coin, get_debt, uatom_info, ujake_info, unlocked_vault_info, uosmo_info,
-    AccountToFund, MockEnv,
+    assert_err, get_coin, get_debt, lp_token_info, uatom_info, ujake_info, unlocked_vault_info,
+    uosmo_info, AccountToFund, MockEnv,
 };
 
 pub mod helpers;
@@ -71,17 +71,17 @@ fn test_can_only_liquidate_unhealthy_accounts() {
 
 #[test]
 fn test_vault_positions_contribute_to_health() {
-    let uosmo_info = uosmo_info();
-    let uatom_info = uatom_info();
+    let atom_info = uatom_info();
+    let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom_info.clone(), uosmo_info.clone()])
+        .allowed_coins(&[lp_token.clone(), atom_info.clone()])
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
-            funds: vec![coin(300, "uatom"), coin(500, "uosmo")],
+            funds: vec![lp_token.to_coin(500)],
         })
         .build()
         .unwrap();
@@ -93,15 +93,14 @@ fn test_vault_positions_contribute_to_health() {
         &liquidatee_account_id,
         &liquidatee,
         vec![
-            Deposit(uatom_info.to_coin(200)),
-            Deposit(uosmo_info.to_coin(401)),
-            VaultDeposit {
+            Deposit(lp_token.to_coin(220)),
+            EnterVault {
                 vault,
-                coins: vec![coin(200, "uatom"), coin(400, "uosmo")],
+                coin: lp_token.to_coin(200),
             },
-            Borrow(uatom_info.to_coin(14)),
+            Borrow(atom_info.to_coin(14)),
         ],
-        &[coin(200, "uatom"), coin(401, "uosmo")],
+        &[lp_token.to_coin(220)],
     )
     .unwrap();
 
@@ -116,8 +115,8 @@ fn test_vault_positions_contribute_to_health() {
         &liquidator,
         vec![LiquidateCoin {
             liquidatee_account_id: liquidatee_account_id.clone(),
-            debt_coin: uatom_info.to_coin(10),
-            request_coin_denom: uosmo_info.denom,
+            debt_coin: atom_info.to_coin(10),
+            request_coin_denom: atom_info.denom,
         }],
         &[],
     );
@@ -126,7 +125,7 @@ fn test_vault_positions_contribute_to_health() {
         res,
         NotLiquidatable {
             account_id: liquidatee_account_id,
-            lqdt_health_factor: "14.853".to_string(),
+            lqdt_health_factor: "101.94976".to_string(),
         },
     )
 }

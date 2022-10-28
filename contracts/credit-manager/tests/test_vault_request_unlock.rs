@@ -1,15 +1,15 @@
 use cosmwasm_std::OverflowOperation::Sub;
-use cosmwasm_std::{coin, coins, Addr, OverflowError, Uint128};
+use cosmwasm_std::{coins, Addr, OverflowError, Uint128};
 use cw_multi_test::{BankSudo, SudoMsg};
+use cw_utils::{Duration, Expiration};
 
 use mock_vault::contract::STARTING_VAULT_SHARES;
 use rover::adapters::vault::VaultUnchecked;
 use rover::error::ContractError;
-use rover::msg::execute::Action::{Deposit, VaultDeposit, VaultRequestUnlock};
+use rover::msg::execute::Action::{Deposit, EnterVault, RequestVaultUnlock};
 
 use crate::helpers::{
-    assert_err, locked_vault_info, uatom_info, unlocked_vault_info, uosmo_info, AccountToFund,
-    MockEnv,
+    assert_err, locked_vault_info, lp_token_info, unlocked_vault_info, AccountToFund, MockEnv,
 };
 
 pub mod helpers;
@@ -31,7 +31,7 @@ fn test_only_owner_can_request_unlocked() {
     let res = mock.update_credit_account(
         &account_id,
         &bad_guy,
-        vec![VaultRequestUnlock {
+        vec![RequestVaultUnlock {
             vault,
             amount: STARTING_VAULT_SHARES,
         }],
@@ -58,7 +58,7 @@ fn test_can_only_take_action_on_whitelisted_vaults() {
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![VaultRequestUnlock {
+        vec![RequestVaultUnlock {
             vault,
             amount: STARTING_VAULT_SHARES,
         }],
@@ -84,7 +84,7 @@ fn test_request_when_unnecessary() {
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![VaultRequestUnlock {
+        vec![RequestVaultUnlock {
             vault,
             amount: STARTING_VAULT_SHARES,
         }],
@@ -116,14 +116,14 @@ fn test_no_funds_for_request() {
     mock.app
         .sudo(SudoMsg::Bank(BankSudo::Mint {
             to_address: mock.rover.clone().to_string(),
-            amount: coins(5_000_000, leverage_vault.denom),
+            amount: coins(5_000_000, leverage_vault.vault_token_denom),
         }))
         .unwrap();
 
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![VaultRequestUnlock {
+        vec![RequestVaultUnlock {
             vault,
             amount: STARTING_VAULT_SHARES,
         }],
@@ -142,18 +142,16 @@ fn test_no_funds_for_request() {
 
 #[test]
 fn test_not_enough_funds_for_request() {
-    let uatom = uatom_info();
-    let uosmo = uosmo_info();
-
+    let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom.clone(), uosmo.clone()])
+        .allowed_coins(&[lp_token.clone()])
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![coin(300, "uatom"), coin(500, "uosmo")],
+            funds: vec![lp_token.to_coin(300)],
         })
         .build()
         .unwrap();
@@ -165,7 +163,7 @@ fn test_not_enough_funds_for_request() {
     mock.app
         .sudo(SudoMsg::Bank(BankSudo::Mint {
             to_address: mock.rover.clone().to_string(),
-            amount: coins(5_000_000, leverage_vault.denom),
+            amount: coins(5_000_000, leverage_vault.vault_token_denom),
         }))
         .unwrap();
 
@@ -173,18 +171,17 @@ fn test_not_enough_funds_for_request() {
         &account_id,
         &user,
         vec![
-            Deposit(coin(200, uatom.denom)),
-            Deposit(coin(400, uosmo.denom)),
-            VaultDeposit {
+            Deposit(lp_token.to_coin(200)),
+            EnterVault {
                 vault: vault.clone(),
-                coins: vec![coin(23, "uatom"), coin(120, "uosmo")],
+                coin: lp_token.to_coin(23),
             },
-            VaultRequestUnlock {
+            RequestVaultUnlock {
                 vault,
                 amount: STARTING_VAULT_SHARES + Uint128::new(100),
             },
         ],
-        &[coin(200, "uatom"), coin(400, "uosmo")],
+        &[lp_token.to_coin(200)],
     );
 
     assert_err(
@@ -199,18 +196,16 @@ fn test_not_enough_funds_for_request() {
 
 #[test]
 fn test_request_unlocked() {
-    let uatom = uatom_info();
-    let uosmo = uosmo_info();
-
+    let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom.clone(), uosmo.clone()])
+        .allowed_coins(&[lp_token.clone()])
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![coin(300, "uatom"), coin(500, "uosmo")],
+            funds: vec![lp_token.to_coin(200)],
         })
         .build()
         .unwrap();
@@ -222,18 +217,17 @@ fn test_request_unlocked() {
         &account_id,
         &user,
         vec![
-            Deposit(coin(200, uatom.denom)),
-            Deposit(coin(400, uosmo.denom)),
-            VaultDeposit {
+            Deposit(lp_token.to_coin(200)),
+            EnterVault {
                 vault: vault.clone(),
-                coins: vec![coin(23, "uatom"), coin(120, "uosmo")],
+                coin: lp_token.to_coin(23),
             },
-            VaultRequestUnlock {
+            RequestVaultUnlock {
                 vault: vault.clone(),
                 amount: STARTING_VAULT_SHARES,
             },
         ],
-        &[coin(200, "uatom"), coin(400, "uosmo")],
+        &[lp_token.to_coin(200)],
     )
     .unwrap();
 
@@ -244,20 +238,31 @@ fn test_request_unlocked() {
     assert_eq!(unlocking.len(), 1);
     let first = unlocking.first().unwrap();
     assert_eq!(first.amount, STARTING_VAULT_SHARES);
-    let expected_unlock_time =
-        mock.app.block_info().time.seconds() + leverage_vault.lockup.unwrap();
-    let unlocking_position = mock.query_unlocking_position_info(&vault, first.id);
-    assert_eq!(
-        unlocking_position.unlocked_at.seconds(),
-        expected_unlock_time
-    );
 
-    // Assert Rover's position w/ Vault
-    let res = mock.query_unlocking_positions(&vault, &mock.rover);
-    assert_eq!(res.len(), 1);
-    assert_eq!(res.first().unwrap().amount, STARTING_VAULT_SHARES);
-    assert_eq!(
-        res.first().unwrap().unlocked_at.seconds(),
-        expected_unlock_time
-    );
+    match leverage_vault.lockup.unwrap() {
+        Duration::Height(_) => panic!("wrong type of duration"),
+        Duration::Time(s) => {
+            let expected_unlock_time = mock.app.block_info().time.seconds() + s;
+            let unlocking_position = mock.query_lockup(&vault, first.id);
+
+            match unlocking_position.release_at {
+                Expiration::AtTime(t) => {
+                    assert_eq!(t.seconds(), expected_unlock_time);
+                }
+                _ => panic!("Wrong type of expiration"),
+            }
+
+            // Assert Rover's position w/ Vault
+            let res = mock.query_lockups(&vault, &mock.rover);
+
+            match res.first().unwrap().release_at {
+                Expiration::AtTime(t) => {
+                    assert_eq!(res.len(), 1);
+                    assert_eq!(res.first().unwrap().coin.amount, STARTING_VAULT_SHARES);
+                    assert_eq!(t.seconds(), expected_unlock_time);
+                }
+                _ => panic!("Wrong type of expiration"),
+            }
+        }
+    }
 }

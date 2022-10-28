@@ -28,3 +28,4 @@ mock-vault = { version = "1.0", path = "../../contracts/mock-vault", features = 
 
 anyhow = "1"
 cw-multi-test = "0.16"
+cw-utils = "0.16"

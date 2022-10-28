@@ -22,11 +22,12 @@ mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", featu
 mock-vault = { version = "1.0", path = "../../contracts/mock-vault", features = ["library"] }
 rover = { version = "1.0", path = "../../packages/rover" }
 
+cosmos-vault-standard = { path = "../../packages/cosmos-vault-standard", features = ["lockup"] }
 cosmwasm-schema = "1.1"
 cosmwasm-std = "1.1"
 cw2 = "0.16"
-cw721 = "0.15"
-cw721-base = { version = "0.15", features = ["library"] }
+cw721 = "0.16"
+cw721-base = { version = "0.16", features = ["library"] }
 cw-storage-plus = "0.16"
 
 [dev-dependencies]
@@ -35,4 +36,5 @@ mars-outpost = { version = "0.1", path = "../../../outposts/packages/outpost" }
 
 anyhow = "1"
 cw-multi-test = "0.16"
+cw-utils = "0.16"
 itertools = "0.10"

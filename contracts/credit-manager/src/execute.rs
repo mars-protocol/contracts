@@ -13,8 +13,8 @@ use crate::state::{
     SWAPPER, VAULT_CONFIGS,
 };
 use crate::vault::{
-    deposit_into_vault, liquidate_vault, request_unlock_from_vault, update_vault_coin_balance,
-    withdraw_from_vault, withdraw_unlocked_from_vault,
+    enter_vault, exit_vault, exit_vault_unlocked, liquidate_vault, request_vault_unlock,
+    update_vault_coin_balance,
 };
 
 use crate::liquidate_coin::liquidate_coin;
@@ -184,13 +184,13 @@ pub fn dispatch_actions(
                 account_id: account_id.to_string(),
                 coin: coin.clone(),
             }),
-            Action::VaultDeposit {
+            Action::EnterVault {
                 vault,
-                coins: assets,
-            } => callbacks.push(CallbackMsg::VaultDeposit {
+                coin: assets,
+            } => callbacks.push(CallbackMsg::EnterVault {
                 account_id: account_id.to_string(),
                 vault: vault.check(deps.api)?,
-                coins: assets.clone(),
+                coin: assets.clone(),
             }),
             Action::LiquidateCoin {
                 liquidatee_account_id,
@@ -222,20 +222,20 @@ pub fn dispatch_actions(
                 denom_out: denom_out.to_string(),
                 slippage: *slippage,
             }),
-            Action::VaultWithdraw { vault, amount } => callbacks.push(CallbackMsg::VaultWithdraw {
+            Action::ExitVault { vault, amount } => callbacks.push(CallbackMsg::ExitVault {
                 account_id: account_id.to_string(),
                 vault: vault.check(deps.api)?,
                 amount: *amount,
             }),
-            Action::VaultRequestUnlock { vault, amount } => {
-                callbacks.push(CallbackMsg::VaultRequestUnlock {
+            Action::RequestVaultUnlock { vault, amount } => {
+                callbacks.push(CallbackMsg::RequestVaultUnlock {
                     account_id: account_id.to_string(),
                     vault: vault.check(deps.api)?,
                     amount: *amount,
                 })
             }
-            Action::VaultWithdrawUnlocked { id, vault } => {
-                callbacks.push(CallbackMsg::VaultWithdrawUnlocked {
+            Action::ExitVaultUnlocked { id, vault } => {
+                callbacks.push(CallbackMsg::ExitVaultUnlocked {
                     account_id: account_id.to_string(),
                     vault: vault.check(deps.api)?,
                     position_id: *id,
@@ -285,11 +285,11 @@ pub fn execute_callback(
         CallbackMsg::AssertBelowMaxLTV { account_id } => {
             assert_below_max_ltv(deps.as_ref(), env, &account_id)
         }
-        CallbackMsg::VaultDeposit {
+        CallbackMsg::EnterVault {
             account_id,
             vault,
-            coins,
-        } => deposit_into_vault(deps, &env.contract.address, &account_id, vault, coins),
+            coin,
+        } => enter_vault(deps, &env.contract.address, &account_id, vault, coin),
         CallbackMsg::UpdateVaultCoinBalance {
             vault,
             account_id,
@@ -337,26 +337,26 @@ pub fn execute_callback(
             account_id,
             previous_balances,
         } => update_coin_balances(deps, env, &account_id, &previous_balances),
-        CallbackMsg::VaultWithdraw {
+        CallbackMsg::ExitVault {
             account_id,
             vault,
             amount,
-        } => withdraw_from_vault(deps, env, &account_id, vault, amount, false),
-        CallbackMsg::VaultForceWithdraw {
+        } => exit_vault(deps, env, &account_id, vault, amount, false),
+        CallbackMsg::ForceExitVault {
             account_id,
             vault,
             amount,
-        } => withdraw_from_vault(deps, env, &account_id, vault, amount, true),
-        CallbackMsg::VaultRequestUnlock {
+        } => exit_vault(deps, env, &account_id, vault, amount, true),
+        CallbackMsg::RequestVaultUnlock {
             account_id,
             vault,
             amount,
-        } => request_unlock_from_vault(deps, &account_id, vault, amount),
-        CallbackMsg::VaultWithdrawUnlocked {
+        } => request_vault_unlock(deps, &account_id, vault, amount),
+        CallbackMsg::ExitVaultUnlocked {
             account_id,
             vault,
             position_id,
-        } => withdraw_unlocked_from_vault(deps, env, &account_id, vault, position_id),
+        } => exit_vault_unlocked(deps, env, &account_id, vault, position_id),
     }
 }
 

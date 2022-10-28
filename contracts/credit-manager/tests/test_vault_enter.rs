@@ -1,14 +1,14 @@
 use cosmwasm_std::OverflowOperation::Sub;
-use cosmwasm_std::{coin, coins, Addr, Decimal, OverflowError, Uint128};
+use cosmwasm_std::{coin, Addr, OverflowError, Uint128};
 
 use mock_vault::contract::STARTING_VAULT_SHARES;
 use rover::adapters::vault::VaultBase;
 use rover::error::ContractError;
-use rover::msg::execute::Action::{Deposit, VaultDeposit};
+use rover::msg::execute::Action::{Deposit, EnterVault};
 
 use crate::helpers::{
-    assert_err, locked_vault_info, uatom_info, unlocked_vault_info, uosmo_info, AccountToFund,
-    MockEnv, VaultTestInfo,
+    assert_err, locked_vault_info, lp_token_info, uatom_info, unlocked_vault_info, uosmo_info,
+    AccountToFund, MockEnv,
 };
 
 pub mod helpers;
@@ -24,9 +24,9 @@ fn test_only_account_owner_can_take_action() {
     let res = mock.update_credit_account(
         &account_id,
         &bad_guy,
-        vec![VaultDeposit {
+        vec![EnterVault {
             vault: VaultBase::new("xyz".to_string()),
-            coins: vec![],
+            coin: coin(1, "uosmo"),
         }],
         &[],
     );
@@ -41,13 +41,12 @@ fn test_only_account_owner_can_take_action() {
 }
 
 #[test]
-fn test_all_deposit_coins_are_whitelisted() {
-    let uatom = uatom_info();
+fn test_deposit_denom_is_whitelisted() {
+    let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom])
         .allowed_vaults(&[leverage_vault.clone()])
         .build()
         .unwrap();
@@ -58,14 +57,14 @@ fn test_all_deposit_coins_are_whitelisted() {
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![VaultDeposit {
+        vec![EnterVault {
             vault,
-            coins: vec![coin(200, "uatom"), coin(400, "uosmo")],
+            coin: coin(200, lp_token.denom.clone()),
         }],
         &[],
     );
 
-    assert_err(res, ContractError::NotWhitelisted("uosmo".to_string()));
+    assert_err(res, ContractError::NotWhitelisted(lp_token.denom));
 }
 
 #[test]
@@ -86,9 +85,9 @@ fn test_vault_is_whitelisted() {
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![VaultDeposit {
+        vec![EnterVault {
             vault: VaultBase::new("unknown_vault".to_string()),
-            coins: coins(200, "uatom"),
+            coin: coin(200, "uatom"),
         }],
         &[],
     );
@@ -100,22 +99,13 @@ fn test_vault_is_whitelisted() {
 }
 
 #[test]
-fn test_deposited_coins_match_vault_requirements() {
+fn test_deposited_coin_matches_vault_requirements() {
     let uatom = uatom_info();
-    let uosmo = uosmo_info();
-
-    let leverage_vault = VaultTestInfo {
-        denom: "uleverage".to_string(),
-        lockup: None,
-        underlying_denoms: vec!["uatom".to_string(), "ujake".to_string()],
-        deposit_cap: coin(1_000_000, "uusdc"),
-        max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
-        liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
-    };
+    let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom, uosmo])
+        .allowed_coins(&[uatom])
         .allowed_vaults(&[leverage_vault.clone()])
         .build()
         .unwrap();
@@ -125,9 +115,9 @@ fn test_deposited_coins_match_vault_requirements() {
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![VaultDeposit {
+        vec![EnterVault {
             vault: mock.get_vault(&leverage_vault),
-            coins: vec![coin(200, "uatom"), coin(200, "uosmo")],
+            coin: coin(200, "uatom"),
         }],
         &[],
     );
@@ -135,24 +125,23 @@ fn test_deposited_coins_match_vault_requirements() {
     assert_err(
         res,
         ContractError::RequirementsNotMet(
-            "Required assets: uatom, ujake -- do not match given assets: uatom, uosmo".to_string(),
+            "Required coin: ugamm22 -- does not match given coin: uatom".to_string(),
         ),
     );
 }
 
 #[test]
 fn test_fails_if_not_enough_funds_for_deposit() {
-    let uatom = uatom_info();
-    let uosmo = uosmo_info();
+    let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom, uosmo])
+        .allowed_coins(&[lp_token.clone()])
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![coin(300, "uatom"), coin(500, "uosmo")],
+            funds: vec![lp_token.to_coin(300)],
         })
         .build()
         .unwrap();
@@ -162,9 +151,9 @@ fn test_fails_if_not_enough_funds_for_deposit() {
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![VaultDeposit {
+        vec![EnterVault {
             vault: mock.get_vault(&leverage_vault),
-            coins: vec![coin(200, "uatom"), coin(200, "uosmo")],
+            coin: coin(200, lp_token.denom),
         }],
         &[],
     );
@@ -181,17 +170,16 @@ fn test_fails_if_not_enough_funds_for_deposit() {
 
 #[test]
 fn test_successful_deposit_into_locked_vault() {
-    let uatom = uatom_info();
-    let uosmo = uosmo_info();
+    let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom.clone(), uosmo.clone()])
+        .allowed_coins(&[lp_token.clone()])
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![coin(300, "uatom"), coin(500, "uosmo")],
+            funds: vec![lp_token.to_coin(300)],
         })
         .build()
         .unwrap();
@@ -205,18 +193,17 @@ fn test_successful_deposit_into_locked_vault() {
         &account_id,
         &user,
         vec![
-            Deposit(coin(200, uatom.denom)),
-            Deposit(coin(400, uosmo.denom)),
-            VaultDeposit {
+            Deposit(lp_token.to_coin(200)),
+            EnterVault {
                 vault: vault.clone(),
-                coins: vec![coin(23, "uatom"), coin(120, "uosmo")],
+                coin: lp_token.to_coin(23),
             },
         ],
-        &[coin(200, "uatom"), coin(400, "uosmo")],
+        &[lp_token.to_coin(200)],
     )
     .unwrap();
 
-    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
+    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.vault_token_denom);
     assert_eq!(STARTING_VAULT_SHARES, lp_balance.amount);
 
     let res = mock.query_positions(&account_id);
@@ -231,32 +218,28 @@ fn test_successful_deposit_into_locked_vault() {
     );
 
     let assets = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().amount.locked());
-
-    let osmo_withdraw = assets.iter().find(|coin| coin.denom == "uosmo").unwrap();
-    assert_eq!(osmo_withdraw.amount, Uint128::new(120));
-    let atom_withdraw = assets.iter().find(|coin| coin.denom == "uatom").unwrap();
-    assert_eq!(atom_withdraw.amount, Uint128::new(23));
+    assert_eq!(assets.coin.denom, lp_token.denom);
+    assert_eq!(assets.coin.amount, Uint128::new(23));
 
     let balance = mock.query_total_vault_coin_balance(&vault);
     assert_eq!(balance, STARTING_VAULT_SHARES);
 
-    let vault_token_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
+    let vault_token_balance = mock.query_balance(&mock.rover, &leverage_vault.vault_token_denom);
     assert_eq!(vault_token_balance.amount, STARTING_VAULT_SHARES)
 }
 
 #[test]
 fn test_successful_deposit_into_unlocked_vault() {
-    let uatom = uatom_info();
-    let uosmo = uosmo_info();
+    let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom.clone(), uosmo.clone()])
+        .allowed_coins(&[lp_token.clone()])
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![coin(300, "uatom"), coin(500, "uosmo")],
+            funds: vec![lp_token.to_coin(300)],
         })
         .build()
         .unwrap();
@@ -268,18 +251,17 @@ fn test_successful_deposit_into_unlocked_vault() {
         &account_id,
         &user,
         vec![
-            Deposit(coin(200, uatom.denom)),
-            Deposit(coin(400, uosmo.denom)),
-            VaultDeposit {
+            Deposit(lp_token.to_coin(200)),
+            EnterVault {
                 vault: vault.clone(),
-                coins: vec![coin(23, "uatom"), coin(120, "uosmo")],
+                coin: lp_token.to_coin(23),
             },
         ],
-        &[coin(200, "uatom"), coin(400, "uosmo")],
+        &[lp_token.to_coin(200)],
     )
     .unwrap();
 
-    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
+    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.vault_token_denom);
     assert_eq!(STARTING_VAULT_SHARES, lp_balance.amount);
 
     let res = mock.query_positions(&account_id);
@@ -291,32 +273,28 @@ fn test_successful_deposit_into_unlocked_vault() {
     assert_eq!(Uint128::zero(), res.vaults.first().unwrap().amount.locked());
 
     let assets = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().amount.unlocked());
-
-    let osmo_withdraw = assets.iter().find(|coin| coin.denom == "uosmo").unwrap();
-    assert_eq!(osmo_withdraw.amount, Uint128::new(120));
-    let atom_withdraw = assets.iter().find(|coin| coin.denom == "uatom").unwrap();
-    assert_eq!(atom_withdraw.amount, Uint128::new(23));
+    assert_eq!(assets.coin.denom, lp_token.denom);
+    assert_eq!(assets.coin.amount, Uint128::new(23));
 
     let balance = mock.query_total_vault_coin_balance(&vault);
     assert_eq!(balance, STARTING_VAULT_SHARES);
 
-    let vault_token_balance = mock.query_balance(&mock.rover, &leverage_vault.denom);
+    let vault_token_balance = mock.query_balance(&mock.rover, &leverage_vault.vault_token_denom);
     assert_eq!(vault_token_balance.amount, STARTING_VAULT_SHARES)
 }
 
 #[test]
 fn test_vault_deposit_must_be_under_cap() {
-    let uatom = uatom_info();
-    let uosmo = uosmo_info();
+    let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom.clone(), uosmo.clone()])
+        .allowed_coins(&[lp_token.clone()])
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![coin(9_600_000, "uatom"), coin(18_500_000, "uosmo")],
+            funds: vec![lp_token.to_coin(3_300_000)],
         })
         .build()
         .unwrap();
@@ -325,62 +303,59 @@ fn test_vault_deposit_must_be_under_cap() {
     let account_id = mock.create_credit_account(&user).unwrap();
 
     // Vault deposit A ✅
-    //   new total value = 9_500_000
-    //   left to deposit = 2_845_000
+    //   new total value = 6_911_800
+    //   left to deposit = 5_433_200
     mock.update_credit_account(
         &account_id,
         &user,
         vec![
-            Deposit(coin(7_000_000, uatom.denom.clone())),
-            Deposit(coin(10_000_000, uosmo.denom.clone())),
-            VaultDeposit {
+            Deposit(lp_token.to_coin(700_000)),
+            EnterVault {
                 vault: vault.clone(),
-                coins: vec![coin(7_000_000, "uatom"), coin(10_000_000, "uosmo")],
+                coin: lp_token.to_coin(700_000),
             },
         ],
-        &[coin(7_000_000, "uatom"), coin(10_000_000, "uosmo")],
+        &[lp_token.to_coin(700_000)],
     )
     .unwrap();
 
     // Vault deposit B ✅
-    //   new total value = 9_850_000
-    //   left to deposit = 2_495_000
+    //   new total value = 7_899_200
+    //   left to deposit = 4_445_800
     mock.update_credit_account(
         &account_id,
         &user,
         vec![
-            Deposit(coin(100_000, uatom.denom.clone())),
-            Deposit(coin(1_000_000, uosmo.denom.clone())),
-            VaultDeposit {
+            Deposit(lp_token.to_coin(100_000)),
+            EnterVault {
                 vault: vault.clone(),
-                coins: vec![coin(100_000, "uatom"), coin(1_000_000, "uosmo")],
+                coin: lp_token.to_coin(100_000),
             },
         ],
-        &[coin(100_000, "uatom"), coin(1_000_000, "uosmo")],
+        &[lp_token.to_coin(100_000)],
     )
     .unwrap();
 
     // Vault deposit C 🚫
-    //   new total value = 14_225_000
-    //   left to deposit = -1_880_000
+    //   new total value = 32_584_200
+    //   left to deposit = -20_239_200
     let res = mock.update_credit_account(
         &account_id,
         &user,
         vec![
-            Deposit(coin(2_500_000, uatom.denom)),
-            Deposit(coin(7_500_000, uosmo.denom)),
-            VaultDeposit {
+            Deposit(lp_token.to_coin(2_500_000)),
+            EnterVault {
                 vault,
-                coins: vec![coin(2_500_000, "uatom"), coin(7_500_000, "uosmo")],
+                coin: lp_token.to_coin(2_500_000),
             },
         ],
-        &[coin(2_500_000, "uatom"), coin(7_500_000, "uosmo")],
+        &[lp_token.to_coin(2_500_000)],
     );
 
     assert_err(
         res,
         ContractError::AboveVaultDepositCap {
-            new_value: "14224999.999999999999394422".to_string(),
+            new_value: "32584199.999999999998984572".to_string(),
             maximum: "12345000".to_string(),
         },
     );

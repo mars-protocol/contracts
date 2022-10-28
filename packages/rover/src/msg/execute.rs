@@ -38,22 +38,19 @@ pub enum Action {
     /// Repay coin of specified amount back to Red Bank
     Repay(Coin),
     /// Deposit coins into vault strategy
-    VaultDeposit {
-        vault: VaultUnchecked,
-        coins: Vec<Coin>,
-    },
+    EnterVault { vault: VaultUnchecked, coin: Coin },
     /// Withdraw underlying coins from vault
-    VaultWithdraw {
+    ExitVault {
         vault: VaultUnchecked,
         amount: Uint128,
     },
     /// Requests unlocking of shares for a vault with a required lock period
-    VaultRequestUnlock {
+    RequestVaultUnlock {
         vault: VaultUnchecked,
         amount: Uint128,
     },
     /// Withdraws the assets for unlocking position id from vault. Required time must have elapsed.
-    VaultWithdrawUnlocked { id: u64, vault: VaultUnchecked },
+    ExitVaultUnlocked { id: u64, vault: VaultUnchecked },
     /// Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt
     /// denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the
     /// liquidatee should have a balance of. The amount returned to liquidator will be the request coin
@@ -107,11 +104,17 @@ pub enum CallbackMsg {
     /// Calculate the account's max loan-to-value health factor. If above 1,
     /// emits a `position_changed` event. If 1 or below, raises an error.
     AssertBelowMaxLTV { account_id: String },
-    /// Adds list of coins to a vault strategy
-    VaultDeposit {
+    /// Adds coin to a vault strategy
+    EnterVault {
         account_id: String,
         vault: Vault,
-        coins: Vec<Coin>,
+        coin: Coin,
+    },
+    /// Exchanges vault LP shares for assets
+    ExitVault {
+        account_id: String,
+        vault: Vault,
+        amount: Uint128,
     },
     /// Used to update the account balance of vault coins after a vault action has taken place
     UpdateVaultCoinBalance {
@@ -121,27 +124,21 @@ pub enum CallbackMsg {
         /// Total vault coin balance in Rover
         previous_total_balance: Uint128,
     },
-    /// Exchanges vault LP shares for assets
-    VaultWithdraw {
-        account_id: String,
-        vault: Vault,
-        amount: Uint128,
-    },
     /// A privileged action only to be used by Rover. Same as `VaultWithdraw` except it bypasses any lockup period
     /// restrictions on the vault. Used only in the case position is unhealthy and requires immediate liquidation.
-    VaultForceWithdraw {
+    ForceExitVault {
         account_id: String,
         vault: Vault,
         amount: Uint128,
     },
     /// Requests unlocking of shares for a vault with a lock period
-    VaultRequestUnlock {
+    RequestVaultUnlock {
         account_id: String,
         vault: Vault,
         amount: Uint128,
     },
     /// Withdraws assets from vault for a locked position having a lockup period that has been fulfilled
-    VaultWithdrawUnlocked {
+    ExitVaultUnlocked {
         account_id: String,
         vault: Vault,
         position_id: u64,

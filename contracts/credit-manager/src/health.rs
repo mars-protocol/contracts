@@ -52,7 +52,7 @@ fn get_positions_for_vaults(
         .iter()
         .map(|v| {
             let info = v.vault.query_info(&deps.querier)?;
-            let query_res = oracle.query_price(&deps.querier, &info.token_denom)?;
+            let query_res = oracle.query_price(&deps.querier, &info.vault_token_denom)?;
             let config = VAULT_CONFIGS.load(deps.storage, &v.vault.address)?;
             Ok(Position {
                 denom: query_res.denom,

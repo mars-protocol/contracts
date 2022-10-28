@@ -16,7 +16,7 @@ pub struct RequestTempStorage {
     pub amount: Uint128,
 }
 
-pub fn request_unlock_from_vault(
+pub fn request_vault_unlock(
     deps: DepsMut,
     account_id: &str,
     vault: Vault,
@@ -24,12 +24,11 @@ pub fn request_unlock_from_vault(
 ) -> ContractResult<Response> {
     assert_vault_is_whitelisted(deps.storage, &vault)?;
 
-    let vault_info = vault.query_info(&deps.querier)?;
-    if vault_info.lockup.is_none() {
-        return Err(ContractError::RequirementsNotMet(
+    vault.query_lockup_duration(&deps.querier).map_err(|_| {
+        ContractError::RequirementsNotMet(
             "This vault does not require lockup. Call withdraw directly.".to_string(),
-        ));
-    }
+        )
+    })?;
 
     VAULT_REQUEST_TEMP_STORAGE.save(
         deps.storage,
@@ -39,10 +38,11 @@ pub fn request_unlock_from_vault(
         },
     )?;
 
-    let request_unlock_msg = vault.request_unlock_msg(&[Coin {
-        denom: vault_info.token_denom,
+    let vault_info = vault.query_info(&deps.querier)?;
+    let request_unlock_msg = vault.request_unlock_msg(Coin {
+        denom: vault_info.vault_token_denom,
         amount,
-    }])?;
+    })?;
 
     Ok(Response::new()
         .add_submessage(request_unlock_msg)

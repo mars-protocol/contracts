@@ -1,9 +1,9 @@
+use cosmos_vault_standard::extensions::lockup::Lockup;
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, WasmMsg};
 
 use rover::adapters::vault::{UnlockingChange, Vault, VaultPositionUpdate};
 use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::CallbackMsg;
-use rover::msg::vault::UnlockingPosition;
 use rover::msg::ExecuteMsg;
 
 use crate::state::VAULT_POSITIONS;
@@ -11,7 +11,7 @@ use crate::vault::utils::{
     assert_vault_is_whitelisted, query_withdraw_denom_balances, update_vault_position,
 };
 
-pub fn withdraw_unlocked_from_vault(
+pub fn exit_vault_unlocked(
     deps: DepsMut,
     env: Env,
     account_id: &str,
@@ -24,9 +24,8 @@ pub fn withdraw_unlocked_from_vault(
     let matching_unlock = vault_position
         .get_unlocking_position(position_id)
         .ok_or_else(|| ContractError::NoPositionMatch(position_id.to_string()))?;
-    let UnlockingPosition { unlocked_at, .. } =
-        vault.query_unlocking_position_info(&deps.querier, matching_unlock.id)?;
-    if unlocked_at > env.block.time {
+    let Lockup { release_at, .. } = vault.query_lockup(&deps.querier, matching_unlock.id)?;
+    if !release_at.is_expired(&env.block) {
         return Err(ContractError::UnlockNotReady {});
     }
 

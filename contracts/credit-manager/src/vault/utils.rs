@@ -1,14 +1,9 @@
-use cosmwasm_std::{
-    coin, to_binary, Addr, Coin, Deps, QueryRequest, StdResult, Storage, WasmQuery,
-};
+use cosmwasm_std::{Addr, Coin, Deps, StdResult, Storage};
 
-use mars_oracle_adapter::msg::QueryMsg::PriceableUnderlying;
-use rover::adapters::vault::{
-    Total, Vault, VaultPosition, VaultPositionAmount, VaultPositionUpdate,
-};
+use rover::adapters::vault::{Total, Vault, VaultPositionAmount, VaultPositionUpdate};
 use rover::error::{ContractError, ContractResult};
 
-use crate::state::{ORACLE, VAULT_CONFIGS, VAULT_POSITIONS};
+use crate::state::{VAULT_CONFIGS, VAULT_POSITIONS};
 use crate::update_coin_balances::query_balances;
 
 pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> ContractResult<()> {
@@ -42,36 +37,12 @@ pub fn update_vault_position(
     Ok(amount)
 }
 
-/// Returns the denoms received on a withdraw, inferred by vault entry requirements
+/// Returns the total vault token balance for rover
 pub fn query_withdraw_denom_balances(
     deps: Deps,
     rover_addr: &Addr,
     vault: &Vault,
 ) -> StdResult<Vec<Coin>> {
     let vault_info = vault.query_info(&deps.querier)?;
-    let denoms = vault_info
-        .accepts
-        .iter()
-        .map(String::as_str)
-        .collect::<Vec<_>>();
-    query_balances(deps, rover_addr, &denoms)
-}
-
-/// Returns the mars-oracle accepted priceable coins
-pub fn get_priceable_coins(deps: &Deps, positions: &[VaultPosition]) -> ContractResult<Vec<Coin>> {
-    let oracle = ORACLE.load(deps.storage)?;
-    let mut coins: Vec<Coin> = vec![];
-    for p in positions {
-        let vault_info = p.vault.query_info(&deps.querier)?;
-        let total_vault_coins = p.amount.total();
-        let priceable_coins: Vec<Coin> =
-            deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-                contract_addr: oracle.address().to_string(),
-                msg: to_binary(&PriceableUnderlying {
-                    coin: coin(total_vault_coins.u128(), vault_info.token_denom),
-                })?,
-            }))?;
-        coins.extend(priceable_coins)
-    }
-    Ok(coins)
+    query_balances(deps, rover_addr, &[vault_info.req_denom.as_str()])
 }

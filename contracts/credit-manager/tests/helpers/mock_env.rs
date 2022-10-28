@@ -2,13 +2,17 @@ use std::mem::take;
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::testing::MockApi;
-use cosmwasm_std::{coins, Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{coins, Addr, Coin, Decimal, Empty, Uint128};
 use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_outpost::red_bank::QueryMsg::UserDebt;
 use mars_outpost::red_bank::UserDebtResponse;
 
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
+use cosmos_vault_standard::extensions::lockup::Lockup;
+use cosmos_vault_standard::extensions::lockup::LockupQueryMsg::Lockups;
+use cosmos_vault_standard::msg::QueryMsg::{Info as VaultInfoMsg, VaultExtension};
+use cosmos_vault_standard::msg::{AssetsResponse, ExtensionQueryMsg, VaultInfo};
 use mars_oracle_adapter::msg::{
     InstantiateMsg as OracleAdapterInstantiateMsg, PricingMethod, VaultPricingInfo,
 };
@@ -30,8 +34,6 @@ use rover::msg::query::{
     CoinBalanceResponseItem, ConfigResponse, DebtShares, HealthResponse, Positions,
     SharesResponseItem, VaultPositionResponseItem, VaultWithBalance,
 };
-use rover::msg::vault::QueryMsg::{Info as VaultInfoMsg, UnlockingPositionsForAddr};
-use rover::msg::vault::{UnlockingPosition, VaultInfo};
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::helpers::{
@@ -249,7 +251,7 @@ impl MockEnv {
                     .unwrap()
                     .query_info(&self.app.wrap())
                     .unwrap();
-                vault.denom == info.token_denom
+                vault.vault_token_denom == info.vault_token_denom
             })
             .unwrap()
             .vault
@@ -336,7 +338,7 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_preview_redeem(&self, vault: &VaultUnchecked, shares: Uint128) -> Vec<Coin> {
+    pub fn query_preview_redeem(&self, vault: &VaultUnchecked, shares: Uint128) -> AssetsResponse {
         vault
             .check(&MockApi::default())
             .unwrap()
@@ -344,30 +346,24 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_unlocking_position_info(
-        &self,
-        vault: &VaultUnchecked,
-        id: u64,
-    ) -> UnlockingPosition {
+    pub fn query_lockup(&self, vault: &VaultUnchecked, id: u64) -> Lockup {
         vault
             .check(&MockApi::default())
             .unwrap()
-            .query_unlocking_position_info(&self.app.wrap(), id)
+            .query_lockup(&self.app.wrap(), id)
             .unwrap()
     }
 
-    pub fn query_unlocking_positions(
-        &self,
-        vault: &VaultUnchecked,
-        manager_contract_addr: &Addr,
-    ) -> Vec<UnlockingPosition> {
+    pub fn query_lockups(&self, vault: &VaultUnchecked, addr: &Addr) -> Vec<Lockup> {
         self.app
             .wrap()
             .query_wasm_smart(
                 vault.address.to_string(),
-                &UnlockingPositionsForAddr {
-                    addr: manager_contract_addr.to_string(),
-                },
+                &VaultExtension(ExtensionQueryMsg::Lockup(Lockups {
+                    owner: addr.to_string(),
+                    start_after: None,
+                    limit: None,
+                })),
             )
             .unwrap()
     }
@@ -598,12 +594,13 @@ impl MockEnvBuilder {
                     let info: VaultInfo = self
                         .app
                         .wrap()
-                        .query_wasm_smart(config.vault.address.clone(), &VaultInfoMsg {})
+                        .query_wasm_smart(config.vault.address.clone(), &VaultInfoMsg::<Empty> {})
                         .unwrap();
                     VaultPricingInfo {
-                        denom: info.token_denom,
+                        vault_coin_denom: info.vault_token_denom,
                         addr: Addr::unchecked(config.vault.address),
                         method: PricingMethod::PreviewRedeem,
+                        req_denom: info.req_denom,
                     }
                 })
                 .collect()
@@ -684,9 +681,9 @@ impl MockEnvBuilder {
                 code_id,
                 Addr::unchecked("vault-instantiator"),
                 &VaultInstantiateMsg {
-                    lp_token_denom: vault.clone().denom,
+                    vault_token_denom: vault.clone().vault_token_denom,
                     lockup: vault.lockup,
-                    asset_denoms: vault.clone().underlying_denoms,
+                    req_denom: vault.clone().denom_req,
                     oracle,
                 },
                 &[],
@@ -694,7 +691,7 @@ impl MockEnvBuilder {
                 None,
             )
             .unwrap();
-        self.fund_vault(&addr, &vault.denom);
+        self.fund_vault(&addr, &vault.vault_token_denom);
         VaultInstantiateConfig {
             vault: VaultBase::new(addr.to_string()),
             config: VaultConfig {

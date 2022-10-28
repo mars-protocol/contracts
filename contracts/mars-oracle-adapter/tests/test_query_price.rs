@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul};
+use std::ops::{Div, Mul};
 
 use cosmwasm_std::{Decimal, Uint128};
 use cw_multi_test::App;
@@ -46,17 +46,11 @@ fn test_vault_coin_preview_redeem() {
         )
         .unwrap();
 
-    let uatom_price = Decimal::from_atomics(10u128, 1).unwrap();
-    let atom_in_vault = Uint128::new(32_343);
-    let vaults_atom_value = atom_in_vault.to_dec().unwrap().mul(uatom_price);
+    let lp_token_price = Decimal::from_atomics(8745u128, 2).unwrap();
+    let lp_token_in_vault = Uint128::new(120_042);
+    let vaults_value = lp_token_in_vault.to_dec().unwrap().mul(lp_token_price);
 
-    let uosmo_price = Decimal::from_atomics(25u128, 2).unwrap();
-    let osmo_in_vault = Uint128::new(120_042);
-    let vaults_osmo_value = osmo_in_vault.to_dec().unwrap().mul(uosmo_price);
-
-    let price_per_vault_coin = vaults_atom_value
-        .add(vaults_osmo_value)
-        .div(STARTING_VAULT_SHARES);
+    let price_per_vault_coin = vaults_value.div(STARTING_VAULT_SHARES);
 
     assert_eq!(res.price, price_per_vault_coin)
 }

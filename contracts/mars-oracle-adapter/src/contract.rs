@@ -35,7 +35,7 @@ pub fn instantiate(
     ORACLE.save(deps.storage, &oracle)?;
 
     for info in msg.vault_pricing {
-        VAULT_PRICING_INFO.save(deps.storage, &info.denom, &info)?;
+        VAULT_PRICING_INFO.save(deps.storage, &info.vault_coin_denom, &info)?;
     }
 
     Ok(Response::default())
@@ -100,7 +100,8 @@ fn query_priceable_underlying(deps: Deps, coin: Coin) -> ContractResult<Vec<Coin
         Some(info) => match info.method {
             PricingMethod::PreviewRedeem => {
                 let vault = VaultBase::new(info.addr);
-                Ok(vault.query_preview_redeem(&deps.querier, coin.amount)?)
+                let res = vault.query_preview_redeem(&deps.querier, coin.amount)?;
+                Ok(vec![res.coin])
             }
         },
         _ => Ok(vec![coin]),
@@ -129,25 +130,20 @@ fn calculate_preview_redeem(
     vault: &VaultBase<Addr>,
 ) -> ContractResult<PriceResponse> {
     let total_issued = vault.query_total_vault_coins_issued(&deps.querier)?;
-    let coins = vault.query_preview_redeem(&deps.querier, total_issued)?;
-    let total_value =
-        coins
-            .iter()
-            .try_fold(Decimal::zero(), |total, coin| -> ContractResult<_> {
-                let res = oracle.query_price(&deps.querier, &coin.denom)?;
-                let value = res.price.checked_mul(coin.amount.to_dec()?)?;
-                let new_total = total.checked_add(value)?;
-                Ok(new_total)
-            })?;
+    let assets_res = vault.query_preview_redeem(&deps.querier, total_issued)?;
+    let price_res = oracle.query_price(&deps.querier, &assets_res.coin.denom)?;
+    let value = price_res
+        .price
+        .checked_mul(assets_res.coin.amount.to_dec()?)?;
 
-    let price = if total_value.is_zero() {
+    let price = if value.is_zero() || total_issued.is_zero() {
         Decimal::zero()
     } else {
-        total_value.checked_div(total_issued.to_dec()?)?
+        value.checked_div(total_issued.to_dec()?)?
     };
 
     Ok(PriceResponse {
-        denom: info.denom.clone(),
+        denom: info.vault_coin_denom.clone(),
         price,
     })
 }
@@ -194,14 +190,14 @@ pub fn update_config(
     if let Some(vault_pricing) = new_config.vault_pricing {
         VAULT_PRICING_INFO.clear(deps.storage);
         for info in &vault_pricing {
-            VAULT_PRICING_INFO.save(deps.storage, &info.denom, info)?;
+            VAULT_PRICING_INFO.save(deps.storage, &info.vault_coin_denom, info)?;
         }
         let value_str = if vault_pricing.is_empty() {
             "None".to_string()
         } else {
             vault_pricing
                 .into_iter()
-                .map(|info| info.denom)
+                .map(|info| info.vault_coin_denom)
                 .collect::<Vec<_>>()
                 .join(", ")
         };
