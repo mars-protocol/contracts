@@ -19,11 +19,20 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cosmwasm-std = { workspace = true }
-osmosis-std  = { workspace = true }
-mars-outpost = { workspace = true }
-mars-osmosis = { workspace = true }
-prost        = { version = "0.11", default-features = false, features = ["prost-derive"] }
-schemars     = { workspace = true }
-serde        = { workspace = true }
-thiserror    = { workspace = true }
+anyhow                         = "1.0"
+cosmwasm-std                   = { workspace = true }
+osmosis-std                    = { workspace = true }
+mars-address-provider          = { version = "0.1.0", path = "../../contracts/address-provider" }
+mars-incentives                = { version = "0.1.0", path = "../../contracts/incentives" }
+mars-outpost                   = { workspace = true }
+mars-oracle-osmosis            = { version = "0.1.0", path = "../../contracts/oracle/osmosis" }
+mars-osmosis                   = { workspace = true }
+mars-red-bank                  = { version = "0.1.0", path = "../../contracts/red-bank" }
+mars-rewards-collector-osmosis = { version = "0.1.0", path = "../../contracts/rewards-collector/osmosis" }
+prost                          = { version = "0.11", default-features = false, features = ["prost-derive"] }
+schemars                       = { workspace = true }
+serde                          = { workspace = true }
+thiserror                      = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+cw-multi-test = "0.15"

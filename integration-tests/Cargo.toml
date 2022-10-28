@@ -1,0 +1,25 @@
+[package]
+name          = "mars-integration-tests"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+license       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest = false
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dev-dependencies]
+cosmwasm-std = { workspace = true }
+mars-outpost = { workspace = true }
+mars-testing = { workspace = true }
+osmosis-std  = { workspace = true }
+serde        = { workspace = true }
