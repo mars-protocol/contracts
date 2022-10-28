@@ -1,11 +1,13 @@
 use std::fmt;
 
-use cosmwasm_std::{BlockInfo, Decimal, Empty, QuerierWrapper, StdResult};
+use cosmwasm_std::{
+    BlockInfo, Decimal, Decimal256, Empty, Isqrt, QuerierWrapper, StdResult, Uint128, Uint256,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mars_oracle_base::{ContractError, ContractResult, PriceSource};
-use mars_osmosis::helpers::{query_spot_price, query_twap_price};
+use mars_osmosis::helpers::{query_pool, query_spot_price, query_twap_price, Pool};
 
 use crate::helpers;
 
@@ -35,6 +37,10 @@ pub enum OsmosisPriceSource {
         /// Value should be <= 172800 sec (48 hours).
         window_size: u64,
     },
+    /// Osmosis LP token (of an XYK pool) price quoted in OSMO
+    XykLiquidityToken {
+        pool_id: u64,
+    },
 }
 
 impl fmt::Display for OsmosisPriceSource {
@@ -50,6 +56,9 @@ impl fmt::Display for OsmosisPriceSource {
                 pool_id,
                 window_size,
             } => format!("twap:{}:{}", pool_id, window_size),
+            OsmosisPriceSource::XykLiquidityToken {
+                pool_id,
+            } => format!("xyk_liquidity_token:{}", pool_id),
         };
         write!(f, "{}", label)
     }
@@ -68,12 +77,16 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             } => Ok(()),
             OsmosisPriceSource::Spot {
                 pool_id,
-            } => helpers::assert_osmosis_pool_assets(querier, *pool_id, denom, base_denom),
+            } => {
+                let pool = query_pool(querier, *pool_id)?;
+                helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)
+            }
             OsmosisPriceSource::Twap {
                 pool_id,
                 window_size,
             } => {
-                helpers::assert_osmosis_pool_assets(querier, *pool_id, denom, base_denom)?;
+                let pool = query_pool(querier, *pool_id)?;
+                helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
 
                 if *window_size > TWO_DAYS_IN_SECONDS {
                     Err(ContractError::InvalidPriceSource {
@@ -85,6 +98,12 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 } else {
                     Ok(())
                 }
+            }
+            OsmosisPriceSource::XykLiquidityToken {
+                pool_id,
+            } => {
+                let pool = query_pool(querier, *pool_id)?;
+                helpers::assert_osmosis_xyk_pool(&pool)
             }
         }
     }
@@ -110,6 +129,43 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 let start_time = block.time.seconds() - window_size;
                 query_twap_price(querier, *pool_id, denom, base_denom, start_time)
             }
+            OsmosisPriceSource::XykLiquidityToken {
+                pool_id,
+            } => self.query_xyk_liquidity_token_price(querier, block, *pool_id, base_denom),
         }
+    }
+}
+
+impl OsmosisPriceSource {
+    /// The calculation of the value of liquidity token, see: https://blog.alphafinance.io/fair-lp-token-pricing/.
+    /// This formulation avoids a potential sandwich attack that distorts asset prices by a flashloan.
+    ///
+    /// NOTE: Price sources must exist for both assets in the pool.
+    fn query_xyk_liquidity_token_price(
+        &self,
+        querier: &QuerierWrapper,
+        block: &BlockInfo,
+        pool_id: u64,
+        base_denom: &str,
+    ) -> StdResult<Decimal> {
+        // XYK pool asserted during price source creation
+        let pool = query_pool(querier, pool_id)?;
+
+        let coin0 = Pool::unwrap_coin(&pool.pool_assets[0].token)?;
+        let coin1 = Pool::unwrap_coin(&pool.pool_assets[1].token)?;
+
+        let coin0_price = self.query_price(querier, block, &coin0.denom, base_denom)?;
+        let coin1_price = self.query_price(querier, block, &coin1.denom, base_denom)?;
+
+        let coin0_value = Uint256::from_uint128(coin0.amount) * Decimal256::from(coin0_price);
+        let coin1_value = Uint256::from_uint128(coin1.amount) * Decimal256::from(coin1_price);
+
+        // We need to use Uint256, because Uint128 * Uint128 may overflow the 128-bit limit
+        let pool_value_u256 = Uint256::from(2u8) * (coin0_value * coin1_value).isqrt();
+        let pool_value_u128 = Uint128::try_from(pool_value_u256)?;
+
+        let total_shares = Pool::unwrap_coin(&pool.total_shares)?.amount;
+
+        Ok(Decimal::from_ratio(pool_value_u128, total_shares))
     }
 }

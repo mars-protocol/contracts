@@ -1,6 +1,8 @@
 use std::str::FromStr;
 
-use cosmwasm_std::{Decimal, Empty, QuerierWrapper, QueryRequest, StdResult};
+use cosmwasm_std::{
+    coin, Decimal, Empty, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
+};
 
 use osmosis_std::shim::Timestamp;
 use osmosis_std::types::cosmos::base::v1beta1::Coin;
@@ -22,6 +24,19 @@ pub struct Pool {
     pub pool_assets: Vec<PoolAsset>,
     pub total_shares: Option<Coin>,
     pub total_weight: String,
+}
+
+impl Pool {
+    /// Unwraps Osmosis coin into Cosmwasm coin
+    pub fn unwrap_coin(osmosis_coin: &Option<Coin>) -> StdResult<cosmwasm_std::Coin> {
+        let osmosis_coin = match osmosis_coin {
+            None => return Err(StdError::generic_err("missing coin")), // just in case, it shouldn't happen
+            Some(osmosis_coin) => osmosis_coin,
+        };
+        let cosmwasm_coin =
+            coin(Uint128::from_str(&osmosis_coin.amount)?.u128(), &osmosis_coin.denom);
+        Ok(cosmwasm_coin)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
