@@ -1,13 +1,15 @@
 use std::fmt;
 
 use cosmwasm_std::{
-    BlockInfo, Decimal, Decimal256, Empty, Isqrt, QuerierWrapper, StdResult, Uint128, Uint256,
+    Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, StdResult, Uint128, Uint256,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mars_oracle_base::{ContractError, ContractResult, PriceSource};
 use mars_osmosis::helpers::{query_pool, query_spot_price, query_twap_price, Pool};
+use mars_outpost::oracle;
+use mars_outpost::oracle::PriceResponse;
 
 use crate::helpers;
 
@@ -110,8 +112,8 @@ impl PriceSource<Empty> for OsmosisPriceSource {
 
     fn query_price(
         &self,
-        querier: &QuerierWrapper,
-        block: &BlockInfo,
+        deps: &Deps,
+        env: &Env,
         denom: &str,
         base_denom: &str,
     ) -> StdResult<Decimal> {
@@ -121,17 +123,17 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             } => Ok(*price),
             OsmosisPriceSource::Spot {
                 pool_id,
-            } => query_spot_price(querier, *pool_id, denom, base_denom),
+            } => query_spot_price(&deps.querier, *pool_id, denom, base_denom),
             OsmosisPriceSource::Twap {
                 pool_id,
                 window_size,
             } => {
-                let start_time = block.time.seconds() - window_size;
-                query_twap_price(querier, *pool_id, denom, base_denom, start_time)
+                let start_time = env.block.time.seconds() - window_size;
+                query_twap_price(&deps.querier, *pool_id, denom, base_denom, start_time)
             }
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
-            } => self.query_xyk_liquidity_token_price(querier, block, *pool_id, base_denom),
+            } => self.query_xyk_liquidity_token_price(deps, env, *pool_id),
         }
     }
 }
@@ -143,22 +145,33 @@ impl OsmosisPriceSource {
     /// NOTE: Price sources must exist for both assets in the pool.
     fn query_xyk_liquidity_token_price(
         &self,
-        querier: &QuerierWrapper,
-        block: &BlockInfo,
+        deps: &Deps,
+        env: &Env,
         pool_id: u64,
-        base_denom: &str,
     ) -> StdResult<Decimal> {
         // XYK pool asserted during price source creation
-        let pool = query_pool(querier, pool_id)?;
+        let pool = query_pool(&deps.querier, pool_id)?;
 
         let coin0 = Pool::unwrap_coin(&pool.pool_assets[0].token)?;
         let coin1 = Pool::unwrap_coin(&pool.pool_assets[1].token)?;
 
-        let coin0_price = self.query_price(querier, block, &coin0.denom, base_denom)?;
-        let coin1_price = self.query_price(querier, block, &coin1.denom, base_denom)?;
+        let coin0_price_res: PriceResponse = deps.querier.query_wasm_smart(
+            env.contract.address.to_string(),
+            &oracle::QueryMsg::Price {
+                denom: coin0.denom,
+            },
+        )?;
+        let coin1_price_res: PriceResponse = deps.querier.query_wasm_smart(
+            env.contract.address.to_string(),
+            &oracle::QueryMsg::Price {
+                denom: coin1.denom,
+            },
+        )?;
 
-        let coin0_value = Uint256::from_uint128(coin0.amount) * Decimal256::from(coin0_price);
-        let coin1_value = Uint256::from_uint128(coin1.amount) * Decimal256::from(coin1_price);
+        let coin0_value =
+            Uint256::from_uint128(coin0.amount) * Decimal256::from(coin0_price_res.price);
+        let coin1_value =
+            Uint256::from_uint128(coin1.amount) * Decimal256::from(coin1_price_res.price);
 
         // We need to use Uint256, because Uint128 * Uint128 may overflow the 128-bit limit
         let pool_value_u256 = Uint256::from(2u8) * (coin0_value * coin1_value).isqrt();

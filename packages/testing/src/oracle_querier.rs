@@ -9,12 +9,7 @@ pub struct OracleQuerier {
 }
 
 impl OracleQuerier {
-    pub fn handle_query(&self, contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
-        let oracle = Addr::unchecked("oracle");
-        if *contract_addr != oracle {
-            panic!("[mock]: Oracle request made to {} shoud be {}", contract_addr, oracle);
-        }
-
+    pub fn handle_query(&self, _contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
         let ret: ContractResult<Binary> = match query {
             QueryMsg::Price {
                 denom,

@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use cosmwasm_std::{BlockInfo, CustomQuery, Decimal, QuerierWrapper, StdResult};
+use cosmwasm_std::{CustomQuery, Decimal, Deps, Env, QuerierWrapper, StdResult};
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -22,8 +22,8 @@ where
     /// Query the price of an asset based on the given price source
     fn query_price(
         &self,
-        querier: &QuerierWrapper<C>,
-        block: &BlockInfo,
+        deps: &Deps<C>,
+        env: &Env,
         denom: &str,
         base_denom: &str,
     ) -> StdResult<Decimal>;

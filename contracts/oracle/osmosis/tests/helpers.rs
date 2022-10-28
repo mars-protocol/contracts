@@ -3,7 +3,7 @@
 use std::marker::PhantomData;
 
 use cosmwasm_std::testing::{mock_env, MockApi, MockQuerier, MockStorage};
-use cosmwasm_std::{coin, from_binary, Coin, Deps, DepsMut, OwnedDeps};
+use cosmwasm_std::{coin, from_binary, Coin, Deps, DepsMut, OwnedDeps, StdError};
 use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
 
 use mars_outpost::oracle::{InstantiateMsg, QueryMsg};
@@ -80,7 +80,7 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     deps
 }
 
-fn prepare_query_pool_response(
+pub fn prepare_query_pool_response(
     pool_id: u64,
     assets: &[Coin],
     weights: &[u64],
@@ -137,4 +137,8 @@ pub fn set_price_source(deps: DepsMut, denom: &str, price_source: OsmosisPriceSo
 
 pub fn query<T: serde::de::DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
     from_binary(&entry::query(deps, mock_env(), msg).unwrap()).unwrap()
+}
+
+pub fn query_err(deps: Deps, msg: QueryMsg) -> StdError {
+    entry::query(deps, mock_env(), msg).unwrap_err()
 }
