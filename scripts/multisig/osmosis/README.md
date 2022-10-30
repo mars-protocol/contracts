@@ -190,20 +190,20 @@ _Note: The multisig must have at least one tx against it for the address to exis
 
 **Note:** 
 
-```chain_id``` is the id of the chain you are looking to broadcast this transaction on 
+```CHAINID``` is the id of the chain you are looking to broadcast this transaction on 
    * osmosis testnet - osmo-test-4
    * osmosis mainnet - osmosis-1
 
-```node_address``` is the "https://rpc-" of a node on the network you want to execute the transaction
+```NODE``` is the "https://rpc-" of a node on the network you want to execute the transaction
    * osmosis testnet - https://rpc-test.osmosis.zone:443
    * osmosis mainnet - TBD
 
-```account_number``` and ```sequence_number``` can be found by running: 
+```ACCOUNT``` and ```SEQUENCE``` can be found by running: 
    ```
    osmosisd query account \
-   --node=[node_address] \
-   --chain-id=[chain_id] \
-   [multisig_address]
+   --node=$NODE \
+   --chain-id=$CHAINID \
+   $MULTI
    ```
 For the multisig address osmo1jklpvl3446z5qw58cvq8hqvthzjtsfvs9j65tq: 
 * sequence = 0 
