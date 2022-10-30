@@ -1,15 +1,16 @@
 # Osmosis Multisig Overview
 
-The multisig on Osmosis is set to have 5 mutlisig holders with a threshold of 3, meaning that 3 signitures are needed for any transaction to pass. 
+The multisig on Osmosis is set to have 5 multisig holders with a threshold of 3, meaning that 3 signitures are needed for any transaction to pass. 
 
 ## Set up Osmosisd 
 
 Osmosisd is the daemon for the osmosis blockchain. To install, following this documentation: https://docs.osmosis.zone/osmosis-core/osmosisd/
 
 ## Set up the multisig on your local network 
-_Steps 2-4 must be completed by each multisig holder to properly set up their local keyring in their machine._ 
+_Steps 2-4 must be completed by ALL multisig holders to properly set up their local keyring in their machine._ 
 
-1. Generate the public keys of each of the 5 multisig holder's wallets. In order to generate a public key, the wallet must be active and have made at least one transaction on teh specified network to return a public key.
+1. Generate the public keys of each of the 5 multisig holder's wallets. In order to generate a public key, the wallet must be active and have made at least one transaction on the specified network to return a public key.
+   
    For testnet, go to: 
     
    ```https://lcd-test.osmosis.zone/cosmos/auth/v1beta1/accounts/INSERT_YOUR_WALLET_ADDRESS```
@@ -80,7 +81,33 @@ _Note: The multisig must have at least one tx against it for the address to exis
    ```
 4. Distribute the ```[unsignedTx_filename].json``` file to all signers. 
 
-5. Complete the multisign. There must be a total of 3 signers for the transaction to be successful.
+5. Individually sign the transaction.
+   Signing over a node:
+   ```
+   osmosisd tx sign \
+    [unsignedTx_filename].json \
+    --multisig=[multisig_address] \
+    --from=[your_wallet_address] \
+    --output-document=[name]sig.json \
+    --chain-id=[chain_id]
+   --node=[node_address]
+   ```
+   Or do an offline sign mode: 
+
+   _Recommended when signing many transactions in a sequence before they are executed._
+   ```
+   osmosisd tx sign \
+    [unsignedTx_filename].json \
+    --multisig=[multisig_address] \
+    --from=[your_wallet_address] \
+    --output-document=[name]sig.json \
+    --chain-id=[chain_id]
+    --offline 
+    --sequence=[current account sequence] 
+    --account=[account number] 
+   ```
+
+6. Complete the multisign. There must be a total of 3 signers for the transaction to be successful.
    Signing over a node:
    ```
    osmosisd tx multisign \
@@ -105,7 +132,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
    --sequence=[current_account_sequence]
    --account=[acount_number] 
    ```
-6. Broadcast the transaction. 
+7. Broadcast the transaction. 
    ```
    osmosisd tx broadcast [signedTx_filename].json \
     --chain-id=[chain_id] \
