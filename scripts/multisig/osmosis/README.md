@@ -1,12 +1,12 @@
-## Osmosis Multisig Overview
+# Osmosis Multisig Overview
 
 The multisig on Osmosis is set to have 5 mutlisig holders with a threshold of 3, meaning that 3 signitures are needed for any transaction to pass. 
 
-### Set up Osmosisd 
+## Set up Osmosisd 
 
 Osmosisd is the daemon for the osmosis blockchain. To install, following this documentation: https://docs.osmosis.zone/osmosis-core/osmosisd/
 
-### Set up the multisig on your local network 
+## Set up the multisig on your local network 
 Steps 2-4 must be completed by each multisig holder to properly set up their local keyring in their machine. 
 
 1. Generate the public keys of each of the 5 multisig holder's wallets. In order to generate a public key, the wallet must be active and have made at least one transaction on teh specified network to return a public key.
@@ -45,7 +45,7 @@ Steps 2-4 must be completed by each multisig holder to properly set up their loc
    ```
 5. Update the config with the new mutlisig address in ```outposts/scripts/deploy/osmosis/config```, which will set the owner and admin of the smart contracts to the multisig upon deployment. 
 
-### Signing a TX with the multisig (Migrate Msg Example)
+## Signing a TX with the multisig - Migrate Msg Example
 Note: The multisig must have at least one tx against it for the address to exist in Osmosis' state. 
 
 1. If the multisig has no txs against it, send some tokens to the account. 
@@ -110,8 +110,9 @@ Note: The multisig must have at least one tx against it for the address to exist
    osmosisd tx broadcast [signedTx_filename].json \
     --chain-id=[chain_id] \
     --broadcast-mode=block
+    --node=https://rpc-test.osmosis.zone:443
    ```
-   
+
 **Note:** 
 
 ```chain_id``` is the id of the chain you are looking to broadcast this transaction on 
@@ -129,3 +130,4 @@ Note: The multisig must have at least one tx against it for the address to exist
    --chain-id=[chain_id] \
    [multisig_address]
    ```
+## Signing a TX with the multisig - Execute Msg Example
