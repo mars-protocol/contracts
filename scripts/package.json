@@ -11,8 +11,8 @@
     "lint": "yarn format-check && eslint . && yarn build",
     "format": "prettier --write .",
     "format-check": "prettier --ignore-path .gitignore --check .",
-    "get-pubkey": "./multisig/get_pubkey.sh",
-    "create-multisig": "./multisig/create_multisig.sh"
+    "get-pubkey": "multisig/get_pubkey.sh",
+    "create-multisig": "multisig/create_multisig.sh"
   },
   "dependencies": {
     "@cosmjs/cosmwasm-stargate": "^0.28.4",
