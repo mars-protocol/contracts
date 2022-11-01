@@ -5,7 +5,7 @@ use crate::integration::mock_contracts::{
     mock_red_bank_contract, mock_rewards_collector_osmosis_contract,
 };
 use crate::mock_env;
-use crate::osmosis_querier::PriceKey;
+use crate::osmosis_querier::{OsmosisQuerier, PriceKey};
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
@@ -28,6 +28,7 @@ pub struct MockEnv {
     pub oracle: Oracle,
     pub red_bank: RedBank,
     pub rewards_collector: RewardsCollector,
+    pub osmosis_querier: OsmosisQuerier,
 }
 
 #[derive(Clone)]
@@ -83,6 +84,21 @@ impl MockEnv {
 
     pub fn query_balance(&self, addr: &Addr, denom: &str) -> StdResult<Coin> {
         self.app.wrap().query_balance(addr, denom)
+    }
+
+    pub fn set_spot_price(
+        &mut self,
+        id: u64,
+        base_asset_denom: &str,
+        quote_asset_denom: &str,
+        spot_price: QuerySpotPriceResponse,
+    ) {
+        let price_key = PriceKey {
+            pool_id: id,
+            denom_in: base_asset_denom.to_string(),
+            denom_out: quote_asset_denom.to_string(),
+        };
+        self.osmosis_querier.spot_prices.insert(price_key, spot_price);
     }
 }
 
@@ -185,6 +201,18 @@ impl Oracle {
             .query_wasm_smart(
                 self.contract_addr.clone(),
                 &oracle::QueryMsg::Price {
+                    denom: denom.to_string(),
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_price_source(&self, env: &mut MockEnv, denom: &str) -> Uint128 {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &oracle::QueryMsg::PriceSource {
                     denom: denom.to_string(),
                 },
             )
@@ -520,6 +548,11 @@ impl MockEnvBuilder {
             },
             rewards_collector: RewardsCollector {
                 contract_addr: rewards_collector_addr,
+            },
+            osmosis_querier: OsmosisQuerier {
+                pools: Default::default(),
+                spot_prices: Default::default(),
+                twap_prices: Default::default(),
             },
         }
     }
