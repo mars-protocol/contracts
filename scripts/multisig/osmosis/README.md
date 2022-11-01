@@ -11,22 +11,10 @@ _Steps 2-4 must be completed by ALL multisig holders to properly set up their lo
 
 1. Generate the public keys of each of the 5 multisig holder's wallets. In order to generate a public key, the wallet must be active and have made at least one transaction on the specified network to return a public key.
    
-   For testnet, go to: 
-    
-   ```https://lcd-test.osmosis.zone/cosmos/auth/v1beta1/accounts/INSERT_YOUR_WALLET_ADDRESS```
-
-    For mainnet, go to: 
-   
-    ```https://osmosis-api.polkachu.com/cosmos/auth/v1beta1/accounts/INSERT_YOUR_WALLET_ADDRESS```
-    
-    These websites will return a JSON that has your pubkey. Copy your pubkey in the following format: 
-    ```
-   '{
-    "@type": "/cosmos.crypto.secp256k1.PubKey",
-    "key": "alkfjadfyeohiskvbskjas,jdla"
-    }'
-    ```
-   
+   ```
+   osmosisd query account [address] --node=[node_URL]
+   ```
+      
 2. Add each public key to the keys list in your local network.
 
     ```
@@ -97,7 +85,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
    export ADDR=(your_wallet_address)
    ```
    
-2. If the multisig has no txs against it, send some tokens to the account.
+2. If the multisig has no txs against it, send some tokens to the account. Otherwise, the account does not exist in Osmosis' state. 
 
 3. Assert that you have both your own wallet and multisig wallet in your keyring. 
    ```
@@ -205,8 +193,5 @@ _Note: The multisig must have at least one tx against it for the address to exis
    --chain-id=$CHAINID \
    $MULTI
    ```
-For the multisig address osmo1jklpvl3446z5qw58cvq8hqvthzjtsfvs9j65tq: 
-* sequence = 0 
-* account number = 274573
 
 ## Signing a TX with the multisig - Execute Msg Example
