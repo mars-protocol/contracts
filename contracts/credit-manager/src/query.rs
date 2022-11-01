@@ -202,7 +202,7 @@ pub fn query_allowed_coins(
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
     ALLOWED_COINS
-        .keys(deps.storage, start, None, Order::Ascending)
+        .items(deps.storage, start, None, Order::Ascending)
         .take(limit)
         .collect::<StdResult<Vec<_>>>()
 }

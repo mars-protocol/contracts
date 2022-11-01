@@ -187,6 +187,7 @@ dependencies = [
  "cosmos-vault-standard",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-item-set",
  "cw-multi-test 0.16.0",
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
@@ -257,6 +258,16 @@ dependencies = [
  "cw20 0.13.4",
  "schemars",
  "serde",
+]
+
+[[package]]
+name = "cw-item-set"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05dad9dc2e6e9ab784bb5598d8528f4afe014b7b0ec05e1f466fe2e11aca368c"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus 0.16.0",
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, Empty};
+use cosmwasm_std::DepsMut;
 
 use rover::error::ContractResult;
 use rover::msg::InstantiateMsg;
@@ -27,7 +27,7 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
 
     msg.allowed_coins
         .iter()
-        .try_for_each(|denom| ALLOWED_COINS.save(deps.storage, denom, &Empty {}))?;
+        .try_for_each(|denom| ALLOWED_COINS.insert(deps.storage, denom).map(|_| ()))?;
 
     Ok(())
 }

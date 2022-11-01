@@ -9,7 +9,7 @@ use rover::traits::IntoDecimal;
 use crate::state::{ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, TOTAL_DEBT_SHARES};
 
 pub fn assert_coin_is_whitelisted(storage: &mut dyn Storage, denom: &str) -> ContractResult<()> {
-    let is_whitelisted = ALLOWED_COINS.has(storage, denom);
+    let is_whitelisted = ALLOWED_COINS.contains(storage, denom);
     if !is_whitelisted {
         return Err(ContractError::NotWhitelisted(denom.to_string()));
     }

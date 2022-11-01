@@ -28,6 +28,7 @@ cosmwasm-std = "1.1"
 cw2 = "0.16"
 cw721 = "0.16"
 cw721-base = { version = "0.16", features = ["library"] }
+cw-item-set = { version = "0.6", default-features = false, features = ["iterator"] }
 cw-storage-plus = "0.16"
 
 [dev-dependencies]

@@ -90,7 +90,7 @@ pub fn update_config(
         ALLOWED_COINS.clear(deps.storage);
         coins
             .iter()
-            .try_for_each(|denom| ALLOWED_COINS.save(deps.storage, denom, &Empty {}))?;
+            .try_for_each(|denom| ALLOWED_COINS.insert(deps.storage, denom).map(|_| ()))?;
 
         response = response
             .add_attribute("key", "allowed_coins")
