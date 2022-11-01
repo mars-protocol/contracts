@@ -1,6 +1,8 @@
 use crate::helpers::default_asset_params;
 use cosmwasm_std::{Addr, Uint128};
 use mars_testing::integration::mock_env::MockEnvBuilder;
+use osmosis_std::types::osmosis::gamm::v1beta1::QuerySpotPriceResponse;
+use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
 mod helpers;
 

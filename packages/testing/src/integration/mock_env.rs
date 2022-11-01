@@ -4,16 +4,20 @@ use crate::integration::mock_contracts::{
     mock_address_provider_contract, mock_incentives_contract, mock_oracle_osmosis_contract,
     mock_red_bank_contract, mock_rewards_collector_osmosis_contract,
 };
+use crate::mock_env;
+use crate::osmosis_querier::PriceKey;
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSource;
+use mars_osmosis::helpers::query_spot_price;
 use mars_outpost::address_provider::MarsAddressType;
 use mars_outpost::red_bank::{
     CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, UserCollateralResponse,
     UserDebtResponse, UserPositionResponse,
 };
 use mars_outpost::{address_provider, incentives, oracle, red_bank, rewards_collector};
+use osmosis_std::types::osmosis::gamm::v1beta1::QuerySpotPriceResponse;
 use std::mem::take;
 
 pub struct MockEnv {
