@@ -1,0 +1,51 @@
+[tasks.generate-all-schemas]
+script_runner = "@rust"
+script = '''
+use std::fs;
+use std::process::Command;
+
+fn main() -> std::io::Result<()> {
+    fs::remove_dir_all("schema");
+    fs::remove_dir_all("schemas");
+    fs::create_dir("schemas")?;
+    println!("Done");
+
+    let contracts = vec![
+        "credit-manager",
+        "account-nft",
+        "swapper-base",
+        "mars-oracle-adapter",
+        "mock-red-bank",
+        "mock-vault",
+        "mock-oracle",
+    ];
+
+    for contract in contracts {
+        println!("{}", contract);
+
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("--package")
+            .arg(contract)
+            .arg("--example")
+            .arg("schema")
+            .output()
+            .expect("failed to execute process");
+
+        println!("status: {}", output.status);
+        println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+        println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+
+        fs::create_dir(format!("schemas/{}", contract))?;
+
+        fs::rename(
+            format!("schema/{}.json", contract),
+            format!("schemas/{}/{}.json", contract, contract),
+        )?;
+    }
+
+    fs::remove_dir_all("schema");
+
+    Ok(())
+}
+'''

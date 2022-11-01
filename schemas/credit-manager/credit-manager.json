@@ -25,10 +25,10 @@
         }
       },
       "allowed_vaults": {
-        "description": "Whitelisted vaults approved by governance that implement credit manager's vault interface",
+        "description": "Whitelisted vaults approved by governance that implement credit manager's vault interface Includes a deposit cap that enforces a TLV limit for risk mitigation",
         "type": "array",
         "items": {
-          "$ref": "#/definitions/VaultBase_for_String"
+          "$ref": "#/definitions/VaultInstantiateConfig"
         }
       },
       "max_close_factor": {
@@ -78,6 +78,21 @@
     },
     "additionalProperties": false,
     "definitions": {
+      "Coin": {
+        "type": "object",
+        "required": [
+          "amount",
+          "denom"
+        ],
+        "properties": {
+          "amount": {
+            "$ref": "#/definitions/Uint128"
+          },
+          "denom": {
+            "type": "string"
+          }
+        }
+      },
       "Decimal": {
         "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
         "type": "string"
@@ -91,6 +106,10 @@
       "SwapperBase_for_String": {
         "type": "string"
       },
+      "Uint128": {
+        "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+        "type": "string"
+      },
       "VaultBase_for_String": {
         "type": "object",
         "required": [
@@ -99,6 +118,46 @@
         "properties": {
           "address": {
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VaultConfig": {
+        "type": "object",
+        "required": [
+          "deposit_cap",
+          "liquidation_threshold",
+          "max_ltv",
+          "whitelisted"
+        ],
+        "properties": {
+          "deposit_cap": {
+            "$ref": "#/definitions/Coin"
+          },
+          "liquidation_threshold": {
+            "$ref": "#/definitions/Decimal"
+          },
+          "max_ltv": {
+            "$ref": "#/definitions/Decimal"
+          },
+          "whitelisted": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VaultInstantiateConfig": {
+        "type": "object",
+        "required": [
+          "config",
+          "vault"
+        ],
+        "properties": {
+          "config": {
+            "$ref": "#/definitions/VaultConfig"
+          },
+          "vault": {
+            "$ref": "#/definitions/VaultBase_for_String"
           }
         },
         "additionalProperties": false
@@ -248,21 +307,18 @@
             "description": "Deposit coins into vault strategy",
             "type": "object",
             "required": [
-              "vault_deposit"
+              "enter_vault"
             ],
             "properties": {
-              "vault_deposit": {
+              "enter_vault": {
                 "type": "object",
                 "required": [
-                  "coins",
+                  "coin",
                   "vault"
                 ],
                 "properties": {
-                  "coins": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/definitions/Coin"
-                    }
+                  "coin": {
+                    "$ref": "#/definitions/Coin"
                   },
                   "vault": {
                     "$ref": "#/definitions/VaultBase_for_String"
@@ -277,10 +333,10 @@
             "description": "Withdraw underlying coins from vault",
             "type": "object",
             "required": [
-              "vault_withdraw"
+              "exit_vault"
             ],
             "properties": {
-              "vault_withdraw": {
+              "exit_vault": {
                 "type": "object",
                 "required": [
                   "amount",
@@ -303,10 +359,10 @@
             "description": "Requests unlocking of shares for a vault with a required lock period",
             "type": "object",
             "required": [
-              "vault_request_unlock"
+              "request_vault_unlock"
             ],
             "properties": {
-              "vault_request_unlock": {
+              "request_vault_unlock": {
                 "type": "object",
                 "required": [
                   "amount",
@@ -329,10 +385,10 @@
             "description": "Withdraws the assets for unlocking position id from vault. Required time must have elapsed.",
             "type": "object",
             "required": [
-              "vault_withdraw_unlocked"
+              "exit_vault_unlocked"
             ],
             "properties": {
-              "vault_withdraw_unlocked": {
+              "exit_vault_unlocked": {
                 "type": "object",
                 "required": [
                   "id",
@@ -340,7 +396,9 @@
                 ],
                 "properties": {
                   "id": {
-                    "$ref": "#/definitions/Uint128"
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
                   },
                   "vault": {
                     "$ref": "#/definitions/VaultBase_for_String"
@@ -381,6 +439,36 @@
                   "request_coin_denom": {
                     "description": "The coin they wish to acquire from the liquidatee (amount returned will include the bonus)",
                     "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a vault position. Similar to LiquidateCoin {} msg and will make similar adjustments to the request. The vault position will be withdrawn (and force withdrawn if a locked vault position) and the underlying assets will transferred to the liquidator.",
+            "type": "object",
+            "required": [
+              "liquidate_vault"
+            ],
+            "properties": {
+              "liquidate_vault": {
+                "type": "object",
+                "required": [
+                  "debt_coin",
+                  "liquidatee_account_id",
+                  "request_vault"
+                ],
+                "properties": {
+                  "debt_coin": {
+                    "$ref": "#/definitions/Coin"
+                  },
+                  "liquidatee_account_id": {
+                    "type": "string"
+                  },
+                  "request_vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
                   }
                 },
                 "additionalProperties": false
@@ -532,28 +620,55 @@
             "additionalProperties": false
           },
           {
-            "description": "Adds list of coins to a vault strategy",
+            "description": "Adds coin to a vault strategy",
             "type": "object",
             "required": [
-              "vault_deposit"
+              "enter_vault"
             ],
             "properties": {
-              "vault_deposit": {
+              "enter_vault": {
                 "type": "object",
                 "required": [
                   "account_id",
-                  "coins",
+                  "coin",
                   "vault"
                 ],
                 "properties": {
                   "account_id": {
                     "type": "string"
                   },
-                  "coins": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/definitions/Coin"
-                    }
+                  "coin": {
+                    "$ref": "#/definitions/Coin"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Exchanges vault LP shares for assets",
+            "type": "object",
+            "required": [
+              "exit_vault"
+            ],
+            "properties": {
+              "exit_vault": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "amount",
+                  "vault"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "$ref": "#/definitions/Uint128"
                   },
                   "vault": {
                     "$ref": "#/definitions/VaultBase_for_Addr"
@@ -601,43 +716,13 @@
             "additionalProperties": false
           },
           {
-            "description": "Exchanges vault LP shares for assets",
-            "type": "object",
-            "required": [
-              "vault_withdraw"
-            ],
-            "properties": {
-              "vault_withdraw": {
-                "type": "object",
-                "required": [
-                  "account_id",
-                  "amount",
-                  "vault"
-                ],
-                "properties": {
-                  "account_id": {
-                    "type": "string"
-                  },
-                  "amount": {
-                    "$ref": "#/definitions/Uint128"
-                  },
-                  "vault": {
-                    "$ref": "#/definitions/VaultBase_for_Addr"
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
-          },
-          {
             "description": "A privileged action only to be used by Rover. Same as `VaultWithdraw` except it bypasses any lockup period restrictions on the vault. Used only in the case position is unhealthy and requires immediate liquidation.",
             "type": "object",
             "required": [
-              "vault_force_withdraw"
+              "force_exit_vault"
             ],
             "properties": {
-              "vault_force_withdraw": {
+              "force_exit_vault": {
                 "type": "object",
                 "required": [
                   "account_id",
@@ -664,10 +749,10 @@
             "description": "Requests unlocking of shares for a vault with a lock period",
             "type": "object",
             "required": [
-              "vault_request_unlock"
+              "request_vault_unlock"
             ],
             "properties": {
-              "vault_request_unlock": {
+              "request_vault_unlock": {
                 "type": "object",
                 "required": [
                   "account_id",
@@ -694,10 +779,10 @@
             "description": "Withdraws assets from vault for a locked position having a lockup period that has been fulfilled",
             "type": "object",
             "required": [
-              "vault_withdraw_unlocked"
+              "exit_vault_unlocked"
             ],
             "properties": {
-              "vault_withdraw_unlocked": {
+              "exit_vault_unlocked": {
                 "type": "object",
                 "required": [
                   "account_id",
@@ -709,7 +794,9 @@
                     "type": "string"
                   },
                   "position_id": {
-                    "$ref": "#/definitions/Uint128"
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
                   },
                   "vault": {
                     "$ref": "#/definitions/VaultBase_for_Addr"
@@ -755,24 +842,31 @@
             "additionalProperties": false
           },
           {
-            "description": "Determine health factor improved as a consequence of liquidation event",
             "type": "object",
             "required": [
-              "assert_health_factor_improved"
+              "liquidate_vault"
             ],
             "properties": {
-              "assert_health_factor_improved": {
+              "liquidate_vault": {
                 "type": "object",
                 "required": [
-                  "account_id",
-                  "previous_health_factor"
+                  "debt_coin",
+                  "liquidatee_account_id",
+                  "liquidator_account_id",
+                  "request_vault"
                 ],
                 "properties": {
-                  "account_id": {
+                  "debt_coin": {
+                    "$ref": "#/definitions/Coin"
+                  },
+                  "liquidatee_account_id": {
                     "type": "string"
                   },
-                  "previous_health_factor": {
-                    "$ref": "#/definitions/Decimal"
+                  "liquidator_account_id": {
+                    "type": "string"
+                  },
+                  "request_vault": {
+                    "$ref": "#/definitions/VaultBase_for_Addr"
                   }
                 },
                 "additionalProperties": false
@@ -881,15 +975,6 @@
               "type": "string"
             }
           },
-          "allowed_vaults": {
-            "type": [
-              "array",
-              "null"
-            ],
-            "items": {
-              "$ref": "#/definitions/VaultBase_for_String"
-            }
-          },
           "max_close_factor": {
             "anyOf": [
               {
@@ -945,6 +1030,15 @@
                 "type": "null"
               }
             ]
+          },
+          "vault_configs": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/definitions/VaultInstantiateConfig"
+            }
           }
         },
         "additionalProperties": false
@@ -989,6 +1083,46 @@
           }
         },
         "additionalProperties": false
+      },
+      "VaultConfig": {
+        "type": "object",
+        "required": [
+          "deposit_cap",
+          "liquidation_threshold",
+          "max_ltv",
+          "whitelisted"
+        ],
+        "properties": {
+          "deposit_cap": {
+            "$ref": "#/definitions/Coin"
+          },
+          "liquidation_threshold": {
+            "$ref": "#/definitions/Decimal"
+          },
+          "max_ltv": {
+            "$ref": "#/definitions/Decimal"
+          },
+          "whitelisted": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VaultInstantiateConfig": {
+        "type": "object",
+        "required": [
+          "config",
+          "vault"
+        ],
+        "properties": {
+          "config": {
+            "$ref": "#/definitions/VaultConfig"
+          },
+          "vault": {
+            "$ref": "#/definitions/VaultBase_for_String"
+          }
+        },
+        "additionalProperties": false
       }
     }
   },
@@ -1011,13 +1145,13 @@
         "additionalProperties": false
       },
       {
-        "description": "Whitelisted vaults",
+        "description": "Configs on vaults",
         "type": "object",
         "required": [
-          "allowed_vaults"
+          "vault_configs"
         ],
         "properties": {
-          "allowed_vaults": {
+          "vault_configs": {
             "type": "object",
             "properties": {
               "limit": {
@@ -1512,9 +1646,34 @@
           "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
           "type": "string"
         },
+        "LockingVaultAmount": {
+          "type": "object",
+          "required": [
+            "locked",
+            "unlocking"
+          ],
+          "properties": {
+            "locked": {
+              "$ref": "#/definitions/VaultAmount"
+            },
+            "unlocking": {
+              "$ref": "#/definitions/UnlockingPositions"
+            }
+          },
+          "additionalProperties": false
+        },
         "Uint128": {
           "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
           "type": "string"
+        },
+        "UnlockingPositions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VaultUnlockingPosition"
+          }
+        },
+        "VaultAmount": {
+          "$ref": "#/definitions/Uint128"
         },
         "VaultBase_for_Addr": {
           "type": "object",
@@ -1531,18 +1690,46 @@
         "VaultPosition": {
           "type": "object",
           "required": [
-            "state",
+            "amount",
             "vault"
           ],
           "properties": {
-            "state": {
-              "$ref": "#/definitions/VaultPositionState"
+            "amount": {
+              "$ref": "#/definitions/VaultPositionAmountBase_for_VaultAmount_and_LockingVaultAmount"
             },
             "vault": {
               "$ref": "#/definitions/VaultBase_for_Addr"
             }
           },
           "additionalProperties": false
+        },
+        "VaultPositionAmountBase_for_VaultAmount_and_LockingVaultAmount": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "unlocked"
+              ],
+              "properties": {
+                "unlocked": {
+                  "$ref": "#/definitions/VaultAmount"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "locking"
+              ],
+              "properties": {
+                "locking": {
+                  "$ref": "#/definitions/LockingVaultAmount"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
         },
         "VaultPositionResponseItem": {
           "type": "object",
@@ -1560,30 +1747,7 @@
           },
           "additionalProperties": false
         },
-        "VaultPositionState": {
-          "type": "object",
-          "required": [
-            "locked",
-            "unlocked",
-            "unlocking"
-          ],
-          "properties": {
-            "locked": {
-              "$ref": "#/definitions/Uint128"
-            },
-            "unlocked": {
-              "$ref": "#/definitions/Uint128"
-            },
-            "unlocking": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/VaultUnlockingId"
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        "VaultUnlockingId": {
+        "VaultUnlockingPosition": {
           "type": "object",
           "required": [
             "amount",
@@ -1600,11 +1764,9 @@
             },
             "id": {
               "description": "Unique identifier representing the unlocking position. Needed for `ExecuteMsg::WithdrawUnlocked {}` call.",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Uint128"
-                }
-              ]
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
             }
           },
           "additionalProperties": false
@@ -1617,28 +1779,6 @@
       "type": "array",
       "items": {
         "type": "string"
-      }
-    },
-    "allowed_vaults": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Array_of_VaultBase_for_String",
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/VaultBase_for_String"
-      },
-      "definitions": {
-        "VaultBase_for_String": {
-          "type": "object",
-          "required": [
-            "address"
-          ],
-          "properties": {
-            "address": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        }
       }
     },
     "config": {
@@ -1831,9 +1971,34 @@
           },
           "additionalProperties": false
         },
+        "LockingVaultAmount": {
+          "type": "object",
+          "required": [
+            "locked",
+            "unlocking"
+          ],
+          "properties": {
+            "locked": {
+              "$ref": "#/definitions/VaultAmount"
+            },
+            "unlocking": {
+              "$ref": "#/definitions/UnlockingPositions"
+            }
+          },
+          "additionalProperties": false
+        },
         "Uint128": {
           "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
           "type": "string"
+        },
+        "UnlockingPositions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VaultUnlockingPosition"
+          }
+        },
+        "VaultAmount": {
+          "$ref": "#/definitions/Uint128"
         },
         "VaultBase_for_Addr": {
           "type": "object",
@@ -1850,12 +2015,12 @@
         "VaultPosition": {
           "type": "object",
           "required": [
-            "state",
+            "amount",
             "vault"
           ],
           "properties": {
-            "state": {
-              "$ref": "#/definitions/VaultPositionState"
+            "amount": {
+              "$ref": "#/definitions/VaultPositionAmountBase_for_VaultAmount_and_LockingVaultAmount"
             },
             "vault": {
               "$ref": "#/definitions/VaultBase_for_Addr"
@@ -1863,30 +2028,35 @@
           },
           "additionalProperties": false
         },
-        "VaultPositionState": {
-          "type": "object",
-          "required": [
-            "locked",
-            "unlocked",
-            "unlocking"
-          ],
-          "properties": {
-            "locked": {
-              "$ref": "#/definitions/Uint128"
+        "VaultPositionAmountBase_for_VaultAmount_and_LockingVaultAmount": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "unlocked"
+              ],
+              "properties": {
+                "unlocked": {
+                  "$ref": "#/definitions/VaultAmount"
+                }
+              },
+              "additionalProperties": false
             },
-            "unlocked": {
-              "$ref": "#/definitions/Uint128"
-            },
-            "unlocking": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/VaultUnlockingId"
-              }
+            {
+              "type": "object",
+              "required": [
+                "locking"
+              ],
+              "properties": {
+                "locking": {
+                  "$ref": "#/definitions/LockingVaultAmount"
+                }
+              },
+              "additionalProperties": false
             }
-          },
-          "additionalProperties": false
+          ]
         },
-        "VaultUnlockingId": {
+        "VaultUnlockingPosition": {
           "type": "object",
           "required": [
             "amount",
@@ -1903,11 +2073,9 @@
             },
             "id": {
               "description": "Unique identifier representing the unlocking position. Needed for `ExecuteMsg::WithdrawUnlocked {}` call.",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Uint128"
-                }
-              ]
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
             }
           },
           "additionalProperties": false
@@ -1943,6 +2111,91 @@
       "title": "Uint128",
       "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
       "type": "string"
+    },
+    "vault_configs": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_VaultInstantiateConfig",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/VaultInstantiateConfig"
+      },
+      "definitions": {
+        "Coin": {
+          "type": "object",
+          "required": [
+            "amount",
+            "denom"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "denom": {
+              "type": "string"
+            }
+          }
+        },
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        },
+        "VaultBase_for_String": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "VaultConfig": {
+          "type": "object",
+          "required": [
+            "deposit_cap",
+            "liquidation_threshold",
+            "max_ltv",
+            "whitelisted"
+          ],
+          "properties": {
+            "deposit_cap": {
+              "$ref": "#/definitions/Coin"
+            },
+            "liquidation_threshold": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "max_ltv": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "whitelisted": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "VaultInstantiateConfig": {
+          "type": "object",
+          "required": [
+            "config",
+            "vault"
+          ],
+          "properties": {
+            "config": {
+              "$ref": "#/definitions/VaultConfig"
+            },
+            "vault": {
+              "$ref": "#/definitions/VaultBase_for_String"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
     }
   }
 }

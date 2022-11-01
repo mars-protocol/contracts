@@ -15,7 +15,7 @@ library = []
 
 [dependencies]
 account-nft = { version = "1.0", path = "../account-nft", features = ["library"] }
-mars-health = { version = "0.1", path = "../../../outposts/packages/health" }
+mars-health = { version = "0.1", path = "../../packages/health" }
 mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features = ["library"] }
 mars-oracle-adapter = { version = "1.0", path = "../../contracts/mars-oracle-adapter", features = ["library"] }
 mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }
@@ -32,7 +32,7 @@ cw-storage-plus = "0.16"
 
 [dev-dependencies]
 swapper-mock = { version = "1.0", path = "../../contracts/swapper/mock", features = ["library"] }
-mars-outpost = { version = "0.1", path = "../../../outposts/packages/outpost" }
+mars-outpost = { version = "0.1", path = "../../packages/outpost" }
 
 anyhow = "1"
 cw-multi-test = "0.16"

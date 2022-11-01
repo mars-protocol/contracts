@@ -10,8 +10,8 @@ repository = "https://github.com/mars-protocol/rover"
 doctest = false
 
 [dependencies]
-mars-health = { version = "0.1", path = "../../../outposts/packages/health" }
-mars-outpost = { version = "0.1", path = "../../../outposts/packages/outpost" }
+mars-health = { version = "0.1", path = "../../packages/health" }
+mars-outpost = { version = "0.1", path = "../../packages/outpost" }
 mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }
 mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features = ["library"] }
 

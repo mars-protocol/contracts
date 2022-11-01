@@ -1,0 +1,29 @@
+[package]
+name = "mars-health"
+version = "0.1.0"
+authors = [
+    "larry_0x <larry@delphidigital.io>",
+    "Piotr Babel <piotr@delphilabs.io>",
+    "Gabe Rodriguez <gabe.r@delphilabs.io>",
+    "Ahmad Kaouk"
+]
+edition = "2021"
+description = "Helper functions to compute the health factor"
+license = "GPL-3.0"
+repository = "https://github.com/mars-protocol/outposts"
+homepage = "https://marsprotocol.io"
+documentation = "https://docs.marsprotocol.io/mars-protocol/developers/protocol-overview"
+readme = "README.md"
+keywords = ["mars", "cosmwasm", "health"]
+
+[lib]
+doctest = false
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+mars-outpost = { path = "../outpost" }
+cosmwasm-std = "1.1"

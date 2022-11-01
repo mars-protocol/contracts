@@ -1,0 +1,31 @@
+[package]
+name = "mars-outpost"
+version = "0.1.0"
+authors = [
+    "larry_0x <larry@delphidigital.io>",
+    "Piotr Babel <piotr@delphilabs.io>",
+    "Spike Spiegel <spikeonmars@protonmail.com>",
+    "Ahmad Kaouk",
+    "Harry Scholes"
+]
+edition = "2021"
+description = "Mars is a fully automated, on-chain credit protocol governed by a decentralised community of users and developers"
+license = "GPL-3.0"
+repository = "https://github.com/mars-protocol/outposts"
+homepage = "https://marsprotocol.io"
+documentation = "https://docs.marsprotocol.io/mars-protocol/developers/protocol-overview"
+readme = "README.md"
+keywords = ["mars", "cosmwasm"]
+
+[lib]
+doctest = false
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+cosmwasm-std = "1.1"
+cosmwasm-schema = "1.1"
+thiserror = "1.0"

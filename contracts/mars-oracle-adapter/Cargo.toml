@@ -14,7 +14,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-mars-outpost = { version = "0.1", path = "../../../outposts/packages/outpost" }
+mars-outpost = { version = "0.1", path = "../../packages/outpost" }
 rover = { version = "1.0", path = "../../packages/rover" }
 
 cosmwasm-schema = "1.1"

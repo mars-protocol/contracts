@@ -7,10 +7,10 @@
     "title": "InstantiateMsg",
     "type": "object",
     "required": [
-      "coins"
+      "prices"
     ],
     "properties": {
-      "coins": {
+      "prices": {
         "type": "array",
         "items": {
           "$ref": "#/definitions/CoinPrice"

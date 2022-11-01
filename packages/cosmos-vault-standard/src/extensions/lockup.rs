@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Coin, Uint128};
-use cw_utils::{Duration, Expiration};
+use cw_utils::Expiration;
 
 #[cfg(feature = "cw20")]
 use cw20::Cw20Coin;
@@ -88,7 +88,7 @@ pub enum LockupQueryMsg {
     Lockup { lockup_id: u64 },
 
     /// Returns `cw_utils::Duration` duration of the lockup.
-    #[returns(Duration)]
+    #[returns(cw_utils::Duration)]
     LockupDuration {},
 }
 
