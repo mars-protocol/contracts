@@ -10,7 +10,7 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSource;
-use mars_osmosis::helpers::query_spot_price;
+use mars_osmosis::helpers::{query_spot_price, Pool, QueryPoolResponse};
 use mars_outpost::address_provider::MarsAddressType;
 use mars_outpost::red_bank::{
     CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, UserCollateralResponse,
@@ -99,6 +99,33 @@ impl MockEnv {
             denom_out: quote_asset_denom.to_string(),
         };
         self.osmosis_querier.spot_prices.insert(price_key, spot_price);
+    }
+
+    pub fn set_query_pool_response(&mut self, pool_id: u64, pool_response: QueryPoolResponse) {
+        self.osmosis_querier.pools.insert(pool_id, pool_response);
+    }
+
+    pub fn prepare_query_pool_response(
+        pool_id: u64,
+        assets: &[Coin],
+        weights: &[u64],
+        shares: &Coin,
+    ) -> QueryPoolResponse {
+        let pool = Pool {
+            address: "address".to_string(),
+            id: pool_id.to_string(),
+            pool_params: None,
+            future_pool_governor: "future_pool_governor".to_string(),
+            total_shares: Some(osmosis_std::types::cosmos::base::v1beta1::Coin {
+                denom: shares.denom.clone(),
+                amount: shares.amount.to_string(),
+            }),
+            pool_assets: prepare_pool_assets(assets, weights),
+            total_weight: "".to_string(),
+        };
+        QueryPoolResponse {
+            pool,
+        }
     }
 }
 
