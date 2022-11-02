@@ -74,7 +74,7 @@ fn deploy_vault(
             &VaultInstantiateMsg {
                 vault_token_denom: vault.clone().vault_coin_denom,
                 lockup: vault.lockup,
-                req_denom: vault.clone().req_denom,
+                base_token_denom: vault.clone().req_denom,
                 oracle,
             },
             &[],
@@ -87,7 +87,7 @@ fn deploy_vault(
         vault_coin_denom: vault.vault_coin_denom,
         addr,
         method: vault.pricing_method,
-        req_denom: vault.req_denom,
+        base_denom: vault.req_denom,
     };
     fund_vault(app, &vault_pricing_info);
     vault_pricing_info

@@ -63,7 +63,9 @@ fn test_liquidatee_must_have_the_request_vault_position() {
 
     assert_err(
         res,
-        ContractError::Std(NotFound { kind: "rover::adapters::vault::amount::VaultPositionAmountBase<rover::adapters::vault::amount::VaultAmount, rover::adapters::vault::amount::LockingVaultAmount>".to_string() }),
+        ContractError::Std(NotFound {
+            kind: "rover::adapters::vault::amount::VaultPositionAmount".to_string(),
+        }),
     )
 }
 
@@ -254,7 +256,7 @@ fn test_liquidate_unlocked_vault() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.vaults.len(), 1);
     let vault_balance = position.vaults.first().unwrap().amount.unlocked();
-    assert_eq!(vault_balance, Uint128::new(893_661)); // 1M - 106_339
+    assert_eq!(vault_balance, Uint128::new(893_660)); // 1M - 106_340
 
     assert_eq!(position.coins.len(), 1);
     let jake_balance = get_coin("ujake", &position.coins);
@@ -304,14 +306,10 @@ fn test_liquidate_locked_vault() {
         vec![
             Deposit(lp_token.to_coin(80)),
             EnterVault {
-                vault: vault.clone(),
+                vault,
                 coin: lp_token.to_coin(80),
             },
             Borrow(atom.to_coin(700)),
-            RequestVaultUnlock {
-                vault,
-                amount: Uint128::new(100_000),
-            },
         ],
         &[lp_token.to_coin(80)],
     )
@@ -343,9 +341,10 @@ fn test_liquidate_locked_vault() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.vaults.len(), 1);
     let vault_amount = position.vaults.first().unwrap().amount.clone();
-    // 930,473 vault tokens liquidated
-    assert_eq!(vault_amount.unlocking().len(), 0); // unlocking first: 100k - 100k = 0
-    assert_eq!(vault_amount.locked(), Uint128::new(69_527)); // then locked bucket: 900k - 830,473 = 69_527
+    // 1M - 930,474 vault tokens liquidated = 69,526
+    assert_eq!(vault_amount.locked(), Uint128::new(69_526));
+    assert_eq!(vault_amount.unlocking().positions().len(), 0);
+    assert_eq!(vault_amount.unlocked(), Uint128::zero());
 
     assert_eq!(position.coins.len(), 1);
     let atom_balance = get_coin("uatom", &position.coins);
@@ -365,6 +364,102 @@ fn test_liquidate_locked_vault() {
 
 #[test]
 fn test_liquidate_unlocking_priority() {
+    let lp_token = lp_token_info();
+    let ujake = ujake_info();
+    let leverage_vault = locked_vault_info();
+
+    let liquidatee = Addr::unchecked("liquidatee");
+    let liquidator = Addr::unchecked("liquidator");
+
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[lp_token.clone(), ujake.clone()])
+        .allowed_vaults(&[leverage_vault.clone()])
+        .fund_account(AccountToFund {
+            addr: liquidatee.clone(),
+            funds: vec![lp_token.to_coin(300)],
+        })
+        .fund_account(AccountToFund {
+            addr: liquidator.clone(),
+            funds: vec![ujake.to_coin(100)],
+        })
+        .build()
+        .unwrap();
+
+    let vault = mock.get_vault(&leverage_vault);
+    let liquidatee_account_id = mock.create_credit_account(&liquidatee).unwrap();
+
+    mock.update_credit_account(
+        &liquidatee_account_id,
+        &liquidatee,
+        vec![
+            Deposit(lp_token.to_coin(200)),
+            EnterVault {
+                vault: vault.clone(),
+                coin: lp_token.to_coin(200),
+            },
+            Borrow(ujake.to_coin(175)),
+            RequestVaultUnlock {
+                vault,
+                amount: Uint128::new(100_000),
+            },
+        ],
+        &[lp_token.to_coin(200)],
+    )
+    .unwrap();
+
+    mock.price_change(CoinPrice {
+        denom: ujake.denom.clone(),
+        price: Uint128::new(20).to_dec().unwrap(),
+    });
+
+    let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
+
+    mock.update_credit_account(
+        &liquidator_account_id,
+        &liquidator,
+        vec![
+            Deposit(ujake.to_coin(10)),
+            LiquidateVault {
+                liquidatee_account_id: liquidatee_account_id.clone(),
+                debt_coin: ujake.to_coin(10),
+                request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
+            },
+        ],
+        &[ujake.to_coin(10)],
+    )
+    .unwrap();
+
+    // Assert only unlocking position liquidated
+    let position = mock.query_positions(&liquidatee_account_id);
+    assert_eq!(position.vaults.len(), 1);
+    let vault_amount = position.vaults.first().unwrap().amount.clone();
+    assert_eq!(vault_amount.unlocked(), Uint128::zero());
+    assert_eq!(vault_amount.unlocking().positions().len(), 0);
+    assert_eq!(vault_amount.locked(), Uint128::new(900_000));
+
+    mock.update_credit_account(
+        &liquidator_account_id,
+        &liquidator,
+        vec![
+            Deposit(ujake.to_coin(10)),
+            LiquidateVault {
+                liquidatee_account_id: liquidatee_account_id.clone(),
+                debt_coin: ujake.to_coin(10),
+                request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
+            },
+        ],
+        &[ujake.to_coin(10)],
+    )
+    .unwrap();
+
+    // Assert locked positions can now be liquidated
+    let position = mock.query_positions(&liquidatee_account_id);
+    let vault_amount = position.vaults.first().unwrap().amount.clone();
+    assert!(vault_amount.locked() < Uint128::new(900_000));
+}
+
+#[test]
+fn test_liquidate_unlocking_liquidation_order() {
     let lp_token = lp_token_info();
     let ujake = ujake_info();
     let leverage_vault = locked_vault_info();
@@ -405,11 +500,15 @@ fn test_liquidate_unlocking_priority() {
             },
             RequestVaultUnlock {
                 vault: vault.clone(),
-                amount: Uint128::new(200_000),
+                amount: Uint128::new(50_000),
+            },
+            RequestVaultUnlock {
+                vault: vault.clone(),
+                amount: Uint128::new(100_000),
             },
             RequestVaultUnlock {
                 vault,
-                amount: Uint128::new(700_000),
+                amount: Uint128::new(840_000),
             },
         ],
         &[lp_token.to_coin(200)],
@@ -443,18 +542,33 @@ fn test_liquidate_unlocking_priority() {
     assert_eq!(position.vaults.len(), 1);
     let vault_amount = position.vaults.first().unwrap().amount.clone();
     assert_eq!(vault_amount.unlocked(), Uint128::zero());
-    assert_eq!(vault_amount.locked(), Uint128::new(90_000));
-    // Total liquidated: 106,339
-    // First bucket drained
-    // Second bucket partially liquidated
-    assert_eq!(vault_amount.unlocking().len(), 2);
+    assert_eq!(vault_amount.locked(), Uint128::zero());
+
+    // Total liquidated:                   21 LP tokens
+    // First bucket drained:               -2 (all)
+    // Second bucket drained:              -10 (all)
+    // Third bucket partially liquidated:  -10 (out of 20)
+    // Fourth bucket retained:             -0 (out of 168)
+    assert_eq!(vault_amount.unlocking().positions().len(), 2);
     assert_eq!(
-        vault_amount.unlocking().first().unwrap().amount,
-        Uint128::new(200_000 - (106_339 - 10_000))
+        vault_amount
+            .unlocking()
+            .positions()
+            .first()
+            .unwrap()
+            .coin
+            .amount,
+        Uint128::new(10)
     );
     assert_eq!(
-        vault_amount.unlocking().get(1).unwrap().amount,
-        Uint128::new(700_000)
+        vault_amount
+            .unlocking()
+            .positions()
+            .get(1)
+            .unwrap()
+            .coin
+            .amount,
+        Uint128::new(168)
     );
 
     assert_eq!(position.coins.len(), 1);
@@ -470,7 +584,7 @@ fn test_liquidate_unlocking_priority() {
     assert_eq!(position.coins.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let osmo_balance = get_coin(&lp_token.denom, &position.coins);
-    assert_eq!(osmo_balance.amount, Uint128::new(21));
+    assert_eq!(osmo_balance.amount, Uint128::new(22));
 }
 
 // NOTE: liquidation calculation+adjustments are quite complex, full cases in test_liquidate_coin.rs
@@ -544,7 +658,7 @@ fn test_liquidation_calculation_adjustment() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.vaults.len(), 1);
     let vault_balance = position.vaults.first().unwrap().amount.unlocked();
-    assert_eq!(vault_balance, Uint128::new(406)); // Vault position liquidated by 99%
+    assert_eq!(vault_balance, Uint128::new(405)); // Vault position liquidated by 99%
 
     assert_eq!(position.coins.len(), 1);
     let jake_balance = get_coin("ujake", &position.coins);

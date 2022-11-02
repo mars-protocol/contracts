@@ -1,66 +1,30 @@
-use cosmos_vault_standard::extensions::lockup::LockupExecuteMsg::{
-    ForceWithdraw, ForceWithdrawUnlocking, Unlock, WithdrawUnlocked,
-};
-use cosmos_vault_standard::extensions::lockup::LockupQueryMsg::{
-    Lockup as LockupQueryMsg, LockupDuration,
-};
-use cosmos_vault_standard::msg::{
-    AssetsResponse, ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, QueryMsg, VaultInfo,
+use cosmos_vault_standard::extensions::force_unlock::ForceUnlockExecuteMsg::{
+    ForceRedeem, ForceWithdrawUnlocking,
 };
 use std::hash::Hash;
 
-use cosmos_vault_standard::extensions::lockup::Lockup;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, Decimal, QuerierWrapper,
+    to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, QuerierWrapper,
     QueryRequest, StdResult, SubMsg, Uint128, WasmMsg, WasmQuery,
 };
 use cw_utils::Duration;
 
-use crate::adapters::vault::VaultPositionAmount;
-use crate::error::ContractError;
-use crate::error::ContractError::InvalidVaultConfig;
+use cosmos_vault_standard::extensions::lockup::Lockup;
+use cosmos_vault_standard::extensions::lockup::LockupExecuteMsg::{Unlock, WithdrawUnlocked};
+use cosmos_vault_standard::extensions::lockup::LockupQueryMsg::{
+    Lockup as LockupQueryMsg, LockupDuration,
+};
+use cosmos_vault_standard::msg::{
+    ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, QueryMsg, VaultInfo,
+};
+
 use crate::traits::Stringify;
 
 pub const VAULT_REQUEST_REPLY_ID: u64 = 10_001;
 
 type VaultExecuteMsg = ExecuteMsg<ExtensionExecuteMsg>;
 type VaultQueryMsg = QueryMsg<ExtensionQueryMsg>;
-
-#[cw_serde]
-pub struct VaultUnlockingPosition {
-    /// Unique identifier representing the unlocking position. Needed for `ExecuteMsg::WithdrawUnlocked {}` call.
-    pub id: u64,
-    /// Number of vault tokens
-    pub amount: Uint128,
-}
-
-#[cw_serde]
-pub struct VaultPosition {
-    pub vault: Vault,
-    pub amount: VaultPositionAmount,
-}
-
-#[cw_serde]
-pub struct VaultConfig {
-    pub deposit_cap: Coin,
-    pub max_ltv: Decimal,
-    pub liquidation_threshold: Decimal,
-    pub whitelisted: bool,
-}
-
-impl VaultConfig {
-    pub fn check(&self) -> Result<(), ContractError> {
-        let max_ltv_too_big = self.max_ltv > Decimal::one();
-        let lqt_too_big = self.liquidation_threshold > Decimal::one();
-        let max_ltv_bigger_than_lqt = self.max_ltv > self.liquidation_threshold;
-
-        if max_ltv_too_big || lqt_too_big || max_ltv_bigger_than_lqt {
-            return Err(InvalidVaultConfig {});
-        }
-        Ok(())
-    }
-}
 
 #[cw_serde]
 #[derive(Eq, Hash)]
@@ -113,7 +77,10 @@ impl Vault {
         let deposit_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address.to_string(),
             funds: vec![coin.clone()],
-            msg: to_binary(&VaultExecuteMsg::Deposit { recipient: None })?,
+            msg: to_binary(&VaultExecuteMsg::Deposit {
+                amount: coin.amount,
+                recipient: None,
+            })?,
         });
         Ok(deposit_msg)
     }
@@ -128,12 +95,12 @@ impl Vault {
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address.to_string(),
             funds: vec![Coin {
-                denom: vault_info.vault_token_denom,
+                denom: vault_info.vault_token,
                 amount,
             }],
             msg: to_binary(
                 &(if force {
-                    VaultExecuteMsg::VaultExtension(ExtensionExecuteMsg::Lockup(ForceWithdraw {
+                    VaultExecuteMsg::VaultExtension(ExtensionExecuteMsg::ForceUnlock(ForceRedeem {
                         recipient: None,
                         amount,
                     }))
@@ -157,7 +124,7 @@ impl Vault {
             contract_addr: self.address.to_string(),
             funds: vec![],
             msg: to_binary(&VaultExecuteMsg::VaultExtension(
-                ExtensionExecuteMsg::Lockup(ForceWithdrawUnlocking {
+                ExtensionExecuteMsg::ForceUnlock(ForceWithdrawUnlocking {
                     lockup_id,
                     amount,
                     recipient: None,
@@ -226,7 +193,7 @@ impl Vault {
         let vault_info = self.query_info(querier)?;
         let res: BalanceResponse = querier.query(&QueryRequest::Bank(BankQuery::Balance {
             address: addr.to_string(),
-            denom: vault_info.vault_token_denom,
+            denom: vault_info.vault_token,
         }))?;
         Ok(res.amount.amount)
     }
@@ -235,7 +202,7 @@ impl Vault {
         &self,
         querier: &QuerierWrapper,
         amount: Uint128,
-    ) -> StdResult<AssetsResponse> {
+    ) -> StdResult<Uint128> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: self.address.to_string(),
             msg: to_binary(&VaultQueryMsg::PreviewRedeem { amount })?,

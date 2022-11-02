@@ -5,6 +5,7 @@ use cosmwasm_std::{
 };
 
 use mars_outpost::red_bank;
+use mars_outpost::red_bank::Market;
 
 #[cw_serde]
 pub struct RedBankBase<T>(T);
@@ -72,5 +73,14 @@ impl RedBank {
                 })?,
             }))?;
         Ok(response.amount)
+    }
+
+    pub fn query_market(&self, querier: &QuerierWrapper, denom: &str) -> StdResult<Market> {
+        querier.query_wasm_smart(
+            self.address(),
+            &red_bank::QueryMsg::Market {
+                denom: denom.to_string(),
+            },
+        )
     }
 }

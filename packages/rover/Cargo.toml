@@ -15,7 +15,7 @@ mars-outpost = { version = "0.1", path = "../../packages/outpost" }
 mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }
 mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features = ["library"] }
 
-cosmos-vault-standard = { path = "../cosmos-vault-standard", features = ["lockup"] }
+cosmos-vault-standard = { git = "https://github.com/apollodao/cosmos-vault-standard", features = ["lockup", "force-unlock"] }
 cosmwasm-schema = "1.1"
 cosmwasm-std = "1.1"
 cw-storage-plus = "0.16"

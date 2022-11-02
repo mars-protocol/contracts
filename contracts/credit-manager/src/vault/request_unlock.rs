@@ -3,7 +3,7 @@ use cosmwasm_std::{Coin, DepsMut, Reply, Response, Uint128};
 
 use crate::state::VAULT_REQUEST_TEMP_STORAGE;
 use rover::adapters::vault::{
-    UnlockingChange, UpdateType, Vault, VaultPositionUpdate, VaultUnlockingPosition,
+    UnlockingChange, UpdateType, Vault, VaultBase, VaultPositionUpdate, VaultUnlockingPosition,
 };
 use rover::error::{ContractError, ContractResult};
 use rover::extensions::AttrParse;
@@ -30,6 +30,13 @@ pub fn request_vault_unlock(
         )
     })?;
 
+    update_vault_position(
+        deps.storage,
+        account_id,
+        &vault.address,
+        VaultPositionUpdate::Locked(UpdateType::Decrement(amount)),
+    )?;
+
     VAULT_REQUEST_TEMP_STORAGE.save(
         deps.storage,
         &RequestTempStorage {
@@ -40,7 +47,7 @@ pub fn request_vault_unlock(
 
     let vault_info = vault.query_info(&deps.querier)?;
     let request_unlock_msg = vault.request_unlock_msg(Coin {
-        denom: vault_info.vault_token_denom,
+        denom: vault_info.vault_token,
         amount,
     })?;
 
@@ -50,27 +57,24 @@ pub fn request_vault_unlock(
 }
 
 pub fn handle_unlock_request_reply(deps: DepsMut, reply: Reply) -> ContractResult<Response> {
-    let RequestTempStorage { account_id, amount } =
-        VAULT_REQUEST_TEMP_STORAGE.load(deps.storage)?;
-
+    let storage = VAULT_REQUEST_TEMP_STORAGE.load(deps.storage)?;
     let unlock_event = reply.parse_unlock_event()?;
     let vault_addr = deps.api.addr_validate(unlock_event.vault_addr.as_str())?;
+    let vault = VaultBase::new(vault_addr.clone());
+    let lockup = vault.query_lockup(&deps.querier, unlock_event.id)?;
+    let info = vault.query_info(&deps.querier)?;
 
     update_vault_position(
         deps.storage,
-        &account_id,
+        &storage.account_id,
         &vault_addr,
         VaultPositionUpdate::Unlocking(UnlockingChange::Add(VaultUnlockingPosition {
-            id: unlock_event.id,
-            amount,
+            id: lockup.id,
+            coin: Coin {
+                denom: info.base_token,
+                amount: lockup.base_token_amount,
+            },
         })),
-    )?;
-
-    update_vault_position(
-        deps.storage,
-        &account_id,
-        &vault_addr,
-        VaultPositionUpdate::Locked(UpdateType::Decrement(amount)),
     )?;
 
     VAULT_REQUEST_TEMP_STORAGE.remove(deps.storage);

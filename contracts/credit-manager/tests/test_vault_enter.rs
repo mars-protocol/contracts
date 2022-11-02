@@ -217,9 +217,8 @@ fn test_successful_deposit_into_locked_vault() {
         res.vaults.first().unwrap().amount.unlocked()
     );
 
-    let assets = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().amount.locked());
-    assert_eq!(assets.coin.denom, lp_token.denom);
-    assert_eq!(assets.coin.amount, Uint128::new(23));
+    let amount = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().amount.locked());
+    assert_eq!(amount, Uint128::new(23));
 
     let balance = mock.query_total_vault_coin_balance(&vault);
     assert_eq!(balance, STARTING_VAULT_SHARES);
@@ -272,9 +271,8 @@ fn test_successful_deposit_into_unlocked_vault() {
     );
     assert_eq!(Uint128::zero(), res.vaults.first().unwrap().amount.locked());
 
-    let assets = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().amount.unlocked());
-    assert_eq!(assets.coin.denom, lp_token.denom);
-    assert_eq!(assets.coin.amount, Uint128::new(23));
+    let amount = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().amount.unlocked());
+    assert_eq!(amount, Uint128::new(23));
 
     let balance = mock.query_total_vault_coin_balance(&vault);
     assert_eq!(balance, STARTING_VAULT_SHARES);

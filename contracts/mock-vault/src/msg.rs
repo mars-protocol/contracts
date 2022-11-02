@@ -8,7 +8,7 @@ pub struct InstantiateMsg {
     /// Denom for vault token
     pub vault_token_denom: String,
     /// Denom required for entry. Also denom received on withdraw.
-    pub req_denom: String,
+    pub base_token_denom: String,
     /// Duration of unlock period
     pub lockup: Option<Duration>,
     pub oracle: OracleUnchecked,

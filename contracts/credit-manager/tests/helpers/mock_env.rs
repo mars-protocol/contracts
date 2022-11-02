@@ -12,7 +12,7 @@ use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use cosmos_vault_standard::extensions::lockup::Lockup;
 use cosmos_vault_standard::extensions::lockup::LockupQueryMsg::Lockups;
 use cosmos_vault_standard::msg::QueryMsg::{Info as VaultInfoMsg, VaultExtension};
-use cosmos_vault_standard::msg::{AssetsResponse, ExtensionQueryMsg, VaultInfo};
+use cosmos_vault_standard::msg::{ExtensionQueryMsg, VaultInfo};
 use mars_oracle_adapter::msg::{
     InstantiateMsg as OracleAdapterInstantiateMsg, PricingMethod, VaultPricingInfo,
 };
@@ -251,7 +251,7 @@ impl MockEnv {
                     .unwrap()
                     .query_info(&self.app.wrap())
                     .unwrap();
-                vault.vault_token_denom == info.vault_token_denom
+                vault.vault_token_denom == info.vault_token
             })
             .unwrap()
             .vault
@@ -338,7 +338,7 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_preview_redeem(&self, vault: &VaultUnchecked, shares: Uint128) -> AssetsResponse {
+    pub fn query_preview_redeem(&self, vault: &VaultUnchecked, shares: Uint128) -> Uint128 {
         vault
             .check(&MockApi::default())
             .unwrap()
@@ -597,10 +597,10 @@ impl MockEnvBuilder {
                         .query_wasm_smart(config.vault.address.clone(), &VaultInfoMsg::<Empty> {})
                         .unwrap();
                     VaultPricingInfo {
-                        vault_coin_denom: info.vault_token_denom,
+                        vault_coin_denom: info.vault_token,
                         addr: Addr::unchecked(config.vault.address),
                         method: PricingMethod::PreviewRedeem,
-                        req_denom: info.req_denom,
+                        base_denom: info.base_token,
                     }
                 })
                 .collect()
@@ -683,7 +683,7 @@ impl MockEnvBuilder {
                 &VaultInstantiateMsg {
                     vault_token_denom: vault.clone().vault_token_denom,
                     lockup: vault.lockup,
-                    req_denom: vault.clone().denom_req,
+                    base_token_denom: vault.clone().base_token_denom,
                     oracle,
                 },
                 &[],

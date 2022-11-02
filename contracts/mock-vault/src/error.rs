@@ -21,6 +21,9 @@ pub enum ContractError {
     #[error("This vault is not a locking vault, action not allowed")]
     NotLockingVault,
 
+    #[error("Not allowed to perform action")]
+    Unauthorized,
+
     #[error("There is more time left on the lock period")]
     UnlockNotReady,
 

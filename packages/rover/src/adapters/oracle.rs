@@ -1,5 +1,3 @@
-use std::ops::Add;
-
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Coin, Decimal, QuerierWrapper, StdResult};
 use mars_outpost::oracle::PriceResponse;
@@ -60,8 +58,6 @@ impl Oracle {
             })
             .collect::<ContractResult<Vec<_>>>()?
             .iter()
-            .fold(Decimal::zero(), |total_value, amount| {
-                total_value.add(amount)
-            }))
+            .sum())
     }
 }

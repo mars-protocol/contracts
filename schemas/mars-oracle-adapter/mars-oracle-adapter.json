@@ -44,19 +44,19 @@
         "type": "object",
         "required": [
           "addr",
+          "base_denom",
           "method",
-          "req_denom",
           "vault_coin_denom"
         ],
         "properties": {
           "addr": {
             "$ref": "#/definitions/Addr"
           },
+          "base_denom": {
+            "type": "string"
+          },
           "method": {
             "$ref": "#/definitions/PricingMethod"
-          },
-          "req_denom": {
-            "type": "string"
           },
           "vault_coin_denom": {
             "type": "string"
@@ -141,19 +141,19 @@
         "type": "object",
         "required": [
           "addr",
+          "base_denom",
           "method",
-          "req_denom",
           "vault_coin_denom"
         ],
         "properties": {
           "addr": {
             "$ref": "#/definitions/Addr"
           },
+          "base_denom": {
+            "type": "string"
+          },
           "method": {
             "$ref": "#/definitions/PricingMethod"
-          },
-          "req_denom": {
-            "type": "string"
           },
           "vault_coin_denom": {
             "type": "string"
@@ -322,19 +322,19 @@
           "type": "object",
           "required": [
             "addr",
+            "base_denom",
             "method",
-            "req_denom",
             "vault_coin_denom"
           ],
           "properties": {
             "addr": {
               "$ref": "#/definitions/Addr"
             },
+            "base_denom": {
+              "type": "string"
+            },
             "method": {
               "$ref": "#/definitions/PricingMethod"
-            },
-            "req_denom": {
-              "type": "string"
             },
             "vault_coin_denom": {
               "type": "string"
@@ -430,19 +430,19 @@
       "type": "object",
       "required": [
         "addr",
+        "base_denom",
         "method",
-        "req_denom",
         "vault_coin_denom"
       ],
       "properties": {
         "addr": {
           "$ref": "#/definitions/Addr"
         },
+        "base_denom": {
+          "type": "string"
+        },
         "method": {
           "$ref": "#/definitions/PricingMethod"
-        },
-        "req_denom": {
-          "type": "string"
         },
         "vault_coin_denom": {
           "type": "string"

@@ -25,7 +25,7 @@ pub fn build_mock_vaults(count: usize) -> Vec<VaultTestInfo> {
             VaultTestInfo {
                 vault_token_denom: format!("vault_{}", i),
                 lockup: Some(Duration::Time(1_209_600)), // 14 days
-                denom_req: lp_token.denom.clone(),
+                base_token_denom: lp_token.denom.clone(),
                 deposit_cap: coin(10000000, "uusdc"),
                 max_ltv: lp_token.max_ltv,
                 liquidation_threshold: lp_token.liquidation_threshold,

@@ -1,4 +1,3 @@
-use cosmwasm_std::StdError::NotFound;
 use cosmwasm_std::{Addr, Uint128};
 use cw_utils::Duration;
 
@@ -68,13 +67,18 @@ fn test_not_owner_of_unlocking_position() {
     let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
-    let user_a = Addr::unchecked("user");
+    let user_a = Addr::unchecked("user_a");
+    let user_b = Addr::unchecked("user_b");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
         .allowed_vaults(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user_a.clone(),
             funds: vec![lp_token.to_coin(300)],
+        })
+        .fund_account(AccountToFund {
+            addr: user_b.clone(),
+            funds: vec![lp_token.to_coin(2)],
         })
         .build()
         .unwrap();
@@ -104,23 +108,30 @@ fn test_not_owner_of_unlocking_position() {
     assert_eq!(positions.vaults.len(), 1);
     let lockup_id = get_lockup_id(&positions);
 
-    let user_b = Addr::unchecked("user_b");
     let account_id_b = mock.create_credit_account(&user_b).unwrap();
 
     let res = mock.update_credit_account(
         &account_id_b,
         &user_b,
-        vec![ExitVaultUnlocked {
-            id: lockup_id,
-            vault,
-        }],
-        &[],
+        vec![
+            Deposit(lp_token.to_coin(2)),
+            EnterVault {
+                vault: vault.clone(),
+                coin: lp_token.to_coin(2),
+            },
+            RequestVaultUnlock {
+                vault: vault.clone(),
+                amount: STARTING_VAULT_SHARES,
+            },
+            ExitVaultUnlocked {
+                id: lockup_id, // ID from user_a not from user_b
+                vault,
+            },
+        ],
+        &[lp_token.to_coin(2)],
     );
 
-    assert_err(
-        res,
-        ContractError::Std(NotFound { kind: "rover::adapters::vault::amount::VaultPositionAmountBase<rover::adapters::vault::amount::VaultAmount, rover::adapters::vault::amount::LockingVaultAmount>".to_string() }),
-    );
+    assert_err(res, ContractError::NoPositionMatch(lockup_id.to_string()));
 }
 
 #[test]
@@ -386,6 +397,7 @@ fn get_lockup_id(positions: &Positions) -> u64 {
         .unwrap()
         .amount
         .unlocking()
+        .positions()
         .first()
         .unwrap()
         .id

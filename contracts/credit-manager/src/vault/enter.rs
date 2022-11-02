@@ -83,10 +83,10 @@ pub fn assert_denom_matches_vault_reqs(
     coin: &Coin,
 ) -> ContractResult<()> {
     let vault_info = vault.query_info(&querier)?;
-    if vault_info.req_denom != coin.denom {
+    if vault_info.base_token != coin.denom {
         return Err(ContractError::RequirementsNotMet(format!(
             "Required coin: {} -- does not match given coin: {}",
-            vault_info.req_denom, coin.denom
+            vault_info.base_token, coin.denom
         )));
     }
     Ok(())
@@ -108,10 +108,7 @@ pub fn assert_deposit_is_under_cap(
     let rover_vault_coin_balance = vault.query_balance(&deps.querier, rover_addr)?;
     let rover_vault_coins_value = oracle.query_total_value(
         &deps.querier,
-        &[c(
-            rover_vault_coin_balance.u128(),
-            vault_info.vault_token_denom,
-        )],
+        &[c(rover_vault_coin_balance.u128(), vault_info.vault_token)],
     )?;
 
     let new_total_vault_value = rover_vault_coins_value.checked_add(deposit_request_value)?;

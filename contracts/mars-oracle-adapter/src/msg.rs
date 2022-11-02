@@ -61,7 +61,7 @@ pub struct ConfigUpdates {
 #[cw_serde]
 pub struct VaultPricingInfo {
     pub vault_coin_denom: String,
-    pub req_denom: String,
+    pub base_denom: String,
     pub addr: Addr,
     pub method: PricingMethod,
 }

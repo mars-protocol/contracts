@@ -100,7 +100,7 @@ fn test_request_when_unnecessary() {
 }
 
 #[test]
-fn test_no_funds_for_request() {
+fn test_no_vault_tokens_for_request() {
     let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
@@ -141,7 +141,7 @@ fn test_no_funds_for_request() {
 }
 
 #[test]
-fn test_not_enough_funds_for_request() {
+fn test_not_enough_vault_tokens_for_request() {
     let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
@@ -235,9 +235,10 @@ fn test_request_unlocked() {
     let res = mock.query_positions(&account_id);
     assert_eq!(res.vaults.len(), 1);
     let unlocking = res.vaults.first().unwrap().amount.unlocking();
-    assert_eq!(unlocking.len(), 1);
-    let first = unlocking.first().unwrap();
-    assert_eq!(first.amount, STARTING_VAULT_SHARES);
+    assert_eq!(unlocking.positions().len(), 1);
+    let positions = unlocking.positions();
+    let first = positions.first().unwrap();
+    assert_eq!(first.coin.amount, Uint128::new(23));
 
     match leverage_vault.lockup.unwrap() {
         Duration::Height(_) => panic!("wrong type of duration"),
@@ -258,7 +259,7 @@ fn test_request_unlocked() {
             match res.first().unwrap().release_at {
                 Expiration::AtTime(t) => {
                     assert_eq!(res.len(), 1);
-                    assert_eq!(res.first().unwrap().coin.amount, STARTING_VAULT_SHARES);
+                    assert_eq!(res.first().unwrap().base_token_amount, Uint128::new(23));
                     assert_eq!(t.seconds(), expected_unlock_time);
                 }
                 _ => panic!("Wrong type of expiration"),

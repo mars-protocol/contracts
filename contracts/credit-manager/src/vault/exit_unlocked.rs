@@ -35,7 +35,7 @@ pub fn exit_vault_unlocked(
         &vault.address,
         VaultPositionUpdate::Unlocking(UnlockingChange::Decrement {
             id: position_id,
-            amount: matching_unlock.amount,
+            amount: matching_unlock.coin.amount,
         }),
     )?;
 

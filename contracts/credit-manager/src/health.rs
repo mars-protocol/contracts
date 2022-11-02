@@ -1,8 +1,9 @@
 use cosmwasm_std::{Coin, Decimal, Deps, Env, Event, Response};
 use mars_health::health::{Health, Position};
 use mars_health::query::MarsQuerier;
+use mars_outpost::red_bank::Market;
 
-use rover::adapters::vault::{Total, VaultPosition};
+use rover::adapters::vault::VaultPosition;
 use rover::adapters::{Oracle, RedBank};
 use rover::error::{ContractError, ContractResult};
 use rover::traits::{Coins, IntoDecimal};
@@ -48,22 +49,52 @@ fn get_positions_for_vaults(
     vaults: &[VaultPosition],
     oracle: &Oracle,
 ) -> ContractResult<Vec<Position>> {
-    vaults
+    let positions = vaults
         .iter()
         .map(|v| {
             let info = v.vault.query_info(&deps.querier)?;
-            let query_res = oracle.query_price(&deps.querier, &info.vault_token_denom)?;
+            let price_res = oracle.query_price(&deps.querier, &info.vault_token)?;
             let config = VAULT_CONFIGS.load(deps.storage, &v.vault.address)?;
-            Ok(Position {
-                denom: query_res.denom,
-                price: query_res.price,
-                collateral_amount: v.amount.total().to_dec()?,
+            let mut positions = vec![];
+
+            positions.push(Position {
+                denom: price_res.denom,
+                price: price_res.price,
+                collateral_amount: v
+                    .amount
+                    .unlocked()
+                    .checked_add(v.amount.locked())?
+                    .to_dec()?,
                 debt_amount: Decimal::zero(),
                 max_ltv: config.max_ltv,
                 liquidation_threshold: config.liquidation_threshold,
-            })
+            });
+
+            let red_bank = RED_BANK.load(deps.storage)?;
+            for u in v.amount.unlocking().positions() {
+                let price_res = oracle.query_price(&deps.querier, &u.coin.denom)?;
+                let Market {
+                    max_loan_to_value,
+                    liquidation_threshold,
+                    ..
+                } = red_bank.query_market(&deps.querier, &u.coin.denom)?;
+                positions.push(Position {
+                    denom: price_res.denom,
+                    price: price_res.price,
+                    collateral_amount: u.coin.amount.to_dec()?,
+                    debt_amount: Decimal::zero(),
+                    max_ltv: max_loan_to_value,
+                    liquidation_threshold,
+                })
+            }
+
+            Ok(positions)
         })
-        .collect()
+        .collect::<ContractResult<Vec<_>>>()?
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
+    Ok(positions)
 }
 
 pub fn assert_below_max_ltv(deps: Deps, env: Env, account_id: &str) -> ContractResult<Response> {

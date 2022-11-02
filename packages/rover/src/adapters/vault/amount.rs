@@ -1,55 +1,22 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Uint128;
-use std::ops::Add;
 
-use crate::adapters::vault::VaultUnlockingPosition;
+use crate::adapters::vault::{
+    UnlockingChange, UpdateType, VaultPositionUpdate, VaultUnlockingPosition,
+};
 use crate::error::{ContractError, ContractResult};
 
 #[cw_serde]
-pub enum UpdateType {
-    Increment(Uint128),
-    Decrement(Uint128),
-}
-
-#[cw_serde]
-pub enum UnlockingChange {
-    Add(VaultUnlockingPosition),
-    Decrement { id: u64, amount: Uint128 },
-}
-
-#[cw_serde]
-pub enum VaultPositionUpdate {
-    Unlocked(UpdateType),
-    Locked(UpdateType),
-    Unlocking(UnlockingChange),
-}
-
-impl VaultPositionUpdate {
-    pub fn default_amount(&self) -> VaultPositionAmount {
-        match self {
-            VaultPositionUpdate::Unlocked { .. } => {
-                VaultPositionAmount::Unlocked(VaultAmount(Uint128::zero()))
-            }
-            _ => VaultPositionAmount::Locking(LockingVaultAmount {
-                locked: VaultAmount(Uint128::zero()),
-                unlocking: UnlockingPositions(vec![]),
-            }),
-        }
-    }
-}
-
-pub type VaultPositionAmount = VaultPositionAmountBase<VaultAmount, LockingVaultAmount>;
-
-impl Total for VaultPositionAmount {
-    fn total(&self) -> Uint128 {
-        match self {
-            VaultPositionAmount::Unlocked(a) => a.total(),
-            VaultPositionAmount::Locking(a) => a.total(),
-        }
-    }
+pub enum VaultPositionAmount {
+    Unlocked(VaultAmount),
+    Locking(LockingVaultAmount),
 }
 
 impl VaultPositionAmount {
+    pub fn is_empty(&self) -> bool {
+        self.unlocked().is_zero() && self.locked().is_zero() && self.unlocking().is_empty()
+    }
+
     pub fn unlocked(&self) -> Uint128 {
         match self {
             VaultPositionAmount::Unlocked(amount) => amount.total(),
@@ -64,10 +31,10 @@ impl VaultPositionAmount {
         }
     }
 
-    pub fn unlocking(&self) -> Vec<VaultUnlockingPosition> {
+    pub fn unlocking(&self) -> UnlockingPositions {
         match self {
-            VaultPositionAmount::Locking(amount) => amount.unlocking.positions(),
-            _ => vec![],
+            VaultPositionAmount::Locking(amount) => amount.unlocking.clone(),
+            _ => UnlockingPositions(vec![]),
         }
     }
 
@@ -109,30 +76,18 @@ impl VaultPositionAmount {
     }
 }
 
-pub trait Total {
-    fn total(&self) -> Uint128;
-}
-
-#[cw_serde]
-pub enum VaultPositionAmountBase<U, L>
-where
-    U: Total,
-    L: Total,
-{
-    Unlocked(U),
-    Locking(L),
-}
-
 #[cw_serde]
 pub struct VaultAmount(Uint128);
 
-impl Total for VaultAmount {
-    fn total(&self) -> Uint128 {
+impl VaultAmount {
+    pub fn new(amount: Uint128) -> VaultAmount {
+        VaultAmount(amount)
+    }
+
+    pub fn total(&self) -> Uint128 {
         self.0
     }
-}
 
-impl VaultAmount {
     pub fn increment(&mut self, amount: Uint128) -> ContractResult<()> {
         self.0 = self.0.checked_add(amount)?;
         Ok(())
@@ -150,22 +105,24 @@ pub struct LockingVaultAmount {
     pub unlocking: UnlockingPositions,
 }
 
-impl Total for LockingVaultAmount {
-    fn total(&self) -> Uint128 {
-        self.locked.total().add(self.unlocking.total())
-    }
-}
-
 #[cw_serde]
 pub struct UnlockingPositions(Vec<VaultUnlockingPosition>);
 
 impl UnlockingPositions {
+    pub fn new(positions: Vec<VaultUnlockingPosition>) -> UnlockingPositions {
+        UnlockingPositions(positions)
+    }
+
     pub fn positions(&self) -> Vec<VaultUnlockingPosition> {
         self.0.clone()
     }
 
     pub fn total(&self) -> Uint128 {
-        self.0.iter().map(|u| u.amount).sum()
+        self.0.iter().map(|u| u.coin.amount).sum()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
     }
 
     pub fn add(&mut self, position: VaultUnlockingPosition) -> ContractResult<()> {
@@ -177,11 +134,11 @@ impl UnlockingPositions {
         let res = self.0.iter_mut().find(|p| p.id == id);
         match res {
             Some(p) => {
-                let new_amount = p.amount.checked_sub(amount)?;
+                let new_amount = p.coin.amount.checked_sub(amount)?;
                 if new_amount.is_zero() {
                     self.remove(id)?;
                 } else {
-                    p.amount = new_amount;
+                    p.coin.amount = new_amount;
                 }
             }
             None => return Err(ContractError::NoPositionMatch(id.to_string())),

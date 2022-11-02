@@ -6,23 +6,20 @@ use crate::error::ContractError::WrongDenomSent;
 use crate::state::{CHAIN_BANK, COIN_BALANCE, ORACLE, TOTAL_VAULT_SHARES, VAULT_TOKEN_DENOM};
 
 pub fn deposit(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
-    let total_shares_opt = TOTAL_VAULT_SHARES.may_load(deps.storage)?;
+    let total_shares = TOTAL_VAULT_SHARES.load(deps.storage)?;
     let oracle = ORACLE.load(deps.storage)?;
     let balance = COIN_BALANCE.load(deps.storage)?;
 
-    let shares_to_add = match total_shares_opt {
-        None => {
-            TOTAL_VAULT_SHARES.save(deps.storage, &STARTING_VAULT_SHARES)?;
-            STARTING_VAULT_SHARES
-        }
-        Some(total_shares) => {
-            let total_vault_value = oracle.query_total_value(&deps.querier, &[balance])?;
-            let assets_value = oracle.query_total_value(&deps.querier, &info.funds)?;
-            let shares_to_add = total_shares
-                .checked_multiply_ratio(assets_value.atomics(), total_vault_value.atomics())?;
-            TOTAL_VAULT_SHARES.save(deps.storage, &(total_shares + shares_to_add))?;
-            shares_to_add
-        }
+    let shares_to_add = if total_shares.is_zero() {
+        TOTAL_VAULT_SHARES.save(deps.storage, &STARTING_VAULT_SHARES)?;
+        STARTING_VAULT_SHARES
+    } else {
+        let total_vault_value = oracle.query_total_value(&deps.querier, &[balance])?;
+        let assets_value = oracle.query_total_value(&deps.querier, &info.funds)?;
+        let shares_to_add = total_shares
+            .checked_multiply_ratio(assets_value.atomics(), total_vault_value.atomics())?;
+        TOTAL_VAULT_SHARES.save(deps.storage, &(total_shares + shares_to_add))?;
+        shares_to_add
     };
 
     let balance = COIN_BALANCE.load(deps.storage)?;

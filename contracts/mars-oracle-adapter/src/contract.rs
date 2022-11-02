@@ -100,8 +100,11 @@ fn query_priceable_underlying(deps: Deps, coin: Coin) -> ContractResult<Vec<Coin
         Some(info) => match info.method {
             PricingMethod::PreviewRedeem => {
                 let vault = VaultBase::new(info.addr);
-                let res = vault.query_preview_redeem(&deps.querier, coin.amount)?;
-                Ok(vec![res.coin])
+                let amount = vault.query_preview_redeem(&deps.querier, coin.amount)?;
+                Ok(vec![Coin {
+                    denom: info.base_denom,
+                    amount,
+                }])
             }
         },
         _ => Ok(vec![coin]),
@@ -130,11 +133,9 @@ fn calculate_preview_redeem(
     vault: &VaultBase<Addr>,
 ) -> ContractResult<PriceResponse> {
     let total_issued = vault.query_total_vault_coins_issued(&deps.querier)?;
-    let assets_res = vault.query_preview_redeem(&deps.querier, total_issued)?;
-    let price_res = oracle.query_price(&deps.querier, &assets_res.coin.denom)?;
-    let value = price_res
-        .price
-        .checked_mul(assets_res.coin.amount.to_dec()?)?;
+    let amount = vault.query_preview_redeem(&deps.querier, total_issued)?;
+    let price_res = oracle.query_price(&deps.querier, &info.base_denom)?;
+    let value = price_res.price.checked_mul(amount.to_dec()?)?;
 
     let price = if value.is_zero() || total_issued.is_zero() {
         Decimal::zero()

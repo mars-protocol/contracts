@@ -19,8 +19,8 @@ pub struct CoinInfo {
 #[cw_serde]
 pub struct VaultTestInfo {
     pub vault_token_denom: String,
+    pub base_token_denom: String,
     pub lockup: Option<Duration>,
-    pub denom_req: String,
     pub deposit_cap: Coin,
     pub max_ltv: Decimal,
     pub liquidation_threshold: Decimal,

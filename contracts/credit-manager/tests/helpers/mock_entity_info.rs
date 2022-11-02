@@ -51,7 +51,7 @@ pub fn generate_mock_vault(lockup: Option<Duration>) -> VaultTestInfo {
     VaultTestInfo {
         vault_token_denom: "uleverage".to_string(),
         lockup,
-        denom_req: lp_token.denom,
+        base_token_denom: lp_token.denom,
         deposit_cap: coin(10_000_000, "uusdc"),
         max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
