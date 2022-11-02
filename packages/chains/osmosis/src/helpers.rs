@@ -98,3 +98,44 @@ pub fn query_twap_price(
     let price = Decimal::from_str(&arithmetic_twap_res.arithmetic_twap)?;
     Ok(price)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_unwrapping_coin() {
+        let pool = Pool {
+            id: "1111".to_string(),
+            address: "".to_string(),
+            pool_params: None,
+            future_pool_governor: "".to_string(),
+            pool_assets: vec![
+                PoolAsset {
+                    token: Some(Coin {
+                        denom: "denom_1".to_string(),
+                        amount: "123".to_string(),
+                    }),
+                    weight: "500".to_string(),
+                },
+                PoolAsset {
+                    token: Some(Coin {
+                        denom: "denom_2".to_string(),
+                        amount: "430".to_string(),
+                    }),
+                    weight: "500".to_string(),
+                },
+            ],
+            total_shares: None,
+            total_weight: "".to_string(),
+        };
+
+        let res_err = Pool::unwrap_coin(&pool.total_shares).unwrap_err();
+        assert_eq!(res_err, StdError::generic_err("missing coin"));
+
+        let res = Pool::unwrap_coin(&pool.pool_assets[0].token).unwrap();
+        assert_eq!(res, coin(123, "denom_1"));
+        let res = Pool::unwrap_coin(&pool.pool_assets[1].token).unwrap();
+        assert_eq!(res, coin(430, "denom_2"));
+    }
+}
