@@ -1,7 +1,7 @@
 use crate::helpers::default_asset_params;
-use cosmwasm_std::{Addr, coin, Decimal, Uint128};
+use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use mars_testing::integration::mock_env::MockEnvBuilder;
-use osmosis_std::types::osmosis::gamm::v1beta1::QuerySpotPriceResponse;
+use osmosis_std::types::osmosis::gamm::v1beta1::{Pool, QueryPoolResponse, QuerySpotPriceResponse};
 use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
 mod helpers;
@@ -18,14 +18,26 @@ fn spot_test() {
     red_bank.init_asset(&mut mock_env, "uatom", default_asset_params());
 
     //set up pools
-    mock_env.set_query_pool_response(
-        1,
+    let set = Pool {
+        address: "address".to_string(),
+        id: pool_id.to_string(),
+        pool_params: None,
+        future_pool_governor: "future_pool_governor".to_string(),
+        total_shares: Some(osmosis_std::types::cosmos::base::v1beta1::Coin {
+            denom: shares.denom.clone(),
+            amount: shares.amount.to_string(),
+        }),
+        pool_assets: prepare_pool_assets(assets, weights),
+        total_weight: "".to_string(),
+    };
+    let QueryPoolResponse {
+        pool,
+    };
 
-    )
+    mock_env.set_query_pool_response(1, {});
 
     //set up oracle with SPOT price source
     let oracle = mock_env.oracle.clone();
-
 
     oracle.set_price_source_spot(&mut mock_env, "umars", 89);
 
