@@ -1,20 +1,12 @@
 [package]
-name = "mars-health"
-version = "0.1.0"
-authors = [
-    "larry_0x <larry@delphidigital.io>",
-    "Piotr Babel <piotr@delphilabs.io>",
-    "Gabe Rodriguez <gabe.r@delphilabs.io>",
-    "Ahmad Kaouk"
-]
-edition = "2021"
-description = "Helper functions to compute the health factor"
-license = "GPL-3.0"
-repository = "https://github.com/mars-protocol/outposts"
-homepage = "https://marsprotocol.io"
-documentation = "https://docs.marsprotocol.io/mars-protocol/developers/protocol-overview"
-readme = "README.md"
-keywords = ["mars", "cosmwasm", "health"]
+name          = "mars-health"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
 
 [lib]
 doctest = false
@@ -25,5 +17,5 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-mars-outpost = { path = "../outpost" }
-cosmwasm-std = "1.1"
+mars-outpost = { workspace = true }
+cosmwasm-std = { workspace = true }

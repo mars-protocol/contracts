@@ -1,24 +1,27 @@
 [package]
-name = "mock-vault"
-version = "1.0.0"
-authors = ["larry_0x <larry@delphidigital.io>", "grod220 <gabe.r@delphilabs.io>"]
-edition = "2021"
-license = "GPL-3.0-or-later"
-repository = "https://github.com/mars-protocol/rover"
+name          = "mock-vault"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
-library = []
+library    = []
 
 [dependencies]
-rover = { version = "1.0", path = "../../packages/rover" }
-
-cosmos-vault-standard = { git = "https://github.com/apollodao/cosmos-vault-standard", features = ["lockup", "force-unlock"] }
-cosmwasm-schema = "1.1"
-cosmwasm-std = "1.1"
-cw-storage-plus = "0.16"
-cw-utils = "0.16"
-thiserror = "1.0"
+cosmos-vault-standard = { workspace = true }
+cosmwasm-schema       = { workspace = true }
+cosmwasm-std          = { workspace = true }
+cw-storage-plus       = { workspace = true }
+cw-utils              = { workspace = true }
+thiserror             = { workspace = true }
+rover                 = { workspace = true }

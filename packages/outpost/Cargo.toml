@@ -1,21 +1,12 @@
 [package]
-name = "mars-outpost"
-version = "0.1.0"
-authors = [
-    "larry_0x <larry@delphidigital.io>",
-    "Piotr Babel <piotr@delphilabs.io>",
-    "Spike Spiegel <spikeonmars@protonmail.com>",
-    "Ahmad Kaouk",
-    "Harry Scholes"
-]
-edition = "2021"
-description = "Mars is a fully automated, on-chain credit protocol governed by a decentralised community of users and developers"
-license = "GPL-3.0"
-repository = "https://github.com/mars-protocol/outposts"
-homepage = "https://marsprotocol.io"
-documentation = "https://docs.marsprotocol.io/mars-protocol/developers/protocol-overview"
-readme = "README.md"
-keywords = ["mars", "cosmwasm"]
+name          = "mars-outpost"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
 
 [lib]
 doctest = false
@@ -26,6 +17,6 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cosmwasm-std = "1.1"
-cosmwasm-schema = "1.1"
-thiserror = "1.0"
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+thiserror       = { workspace = true }

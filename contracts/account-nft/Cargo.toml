@@ -1,25 +1,29 @@
 [package]
-name = "account-nft"
-version = "1.0.0"
-authors = ["larry_0x <larry@delphidigital.io>, grod220 <gabe.r@delphilabs.io>"]
-edition = "2021"
-license = "GPL-3.0-or-later"
-repository = "https://github.com/mars-protocol/rover"
+name          = "account-nft"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
-library = []
+library    = []
 
 [dependencies]
-cw-storage-plus = "0.16"
-cw721 = "0.16"
-cw721-base = { version = "0.16", features = ["library"] }
-cosmwasm-schema = "1.1"
-cosmwasm-std = "1.1"
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+cw721           = { workspace = true }
+cw721-base      = { workspace = true }
+cw-storage-plus = { workspace = true }
 
 [dev-dependencies]
-anyhow = "1"
-cw-multi-test = "0.16"
+anyhow        = { workspace = true }
+cw-multi-test = { workspace = true }

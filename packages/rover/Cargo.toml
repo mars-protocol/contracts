@@ -1,25 +1,31 @@
 [package]
-name = "rover"
-version = "1.0.0"
-authors = ["larry_0x <larry@delphidigital.io>", "Gabe R. <gabe.r@delphilabs.io>"]
-edition = "2021"
-license = "GPL-3.0-or-later"
-repository = "https://github.com/mars-protocol/rover"
+name          = "rover"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
 
 [lib]
 doctest = false
 
-[dependencies]
-mars-health = { version = "0.1", path = "../../packages/health" }
-mars-outpost = { version = "0.1", path = "../../packages/outpost" }
-mock-red-bank = { version = "1.0", path = "../../contracts/mock-red-bank", features = ["library"] }
-mock-oracle = { version = "1.0", path = "../../contracts/mock-oracle", features = ["library"] }
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
 
-cosmos-vault-standard = { git = "https://github.com/apollodao/cosmos-vault-standard", features = ["lockup", "force-unlock"] }
-cosmwasm-schema = "1.1"
-cosmwasm-std = "1.1"
-cw-storage-plus = "0.16"
-cw-utils = "0.16"
-schemars = "0.8"
-serde = { version = "1.0", default-features = false, features = ["derive"] }
-thiserror = "1.0"
+[dependencies]
+cosmos-vault-standard = { workspace = true }
+cosmwasm-schema       = { workspace = true }
+cosmwasm-std          = { workspace = true }
+cw-storage-plus       = { workspace = true }
+cw-utils              = { workspace = true }
+mars-health           = { workspace = true }
+mock-oracle           = { workspace = true }
+mars-outpost          = { workspace = true }
+mock-red-bank         = { workspace = true }
+schemars              = { workspace = true }
+serde                 = { workspace = true }
+thiserror             = { workspace = true }

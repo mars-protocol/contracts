@@ -6,20 +6,65 @@ members = [
     "contracts/mars-oracle-adapter",
     "packages/*",
 
-#    Mock contracts
+    # Mock contracts
     "contracts/mock-oracle",
     "contracts/mock-red-bank",
     "contracts/mock-vault",
 ]
 
-[profile.release.package.rover]
-codegen-units = 1
-incremental = false
+[workspace.package]
+version       = "1.0.0"
+authors       = [
+    "grod220 <gabe.r@delphilabs.io>",
+    "larry_0x <larry@delphidigital.io>",
+    "Piotr Babel <piotr@delphilabs.io>",
+]
+edition       = "2021"
+repository    = "https://github.com/mars-protocol/rover"
+homepage      = "https://marsprotocol.io"
+documentation = "https://docs.marsprotocol.io/"
+keywords      = ["mars", "cosmos", "cosmwasm"]
+
+[workspace.dependencies]
+anyhow          = "1"
+cosmwasm-schema = "1.1"
+cosmwasm-std    = "1.1"
+cw2             = "0.16"
+cw721           = "0.16"
+cw721-base      = { version = "0.16", features = ["library"] }
+cw-item-set     = { version = "0.6", default-features = false, features = ["iterator"] }
+cw-multi-test   = "0.13"
+cw-utils        = "0.16"
+cw-storage-plus = "0.16"
+osmosis-std     = "0.12"
+schemars        = "0.8"
+serde           = { version = "1.0", default-features = false, features = ["derive"] }
+thiserror       = "1.0"
+
+# packages
+cosmos-vault-standard = { git = "https://github.com/apollodao/cosmos-vault-standard", features = ["lockup", "force-unlock"] }
+mars-health           = { version = "1.0.0", path = "./packages/health" }
+mars-outpost          = { version = "1.0.0", path = "./packages/outpost" }
+rover                 = { version = "1.0.0", path = "./packages/rover" }
+
+# contracts
+account-nft         = { version = "1.0.0", path = "./contracts/account-nft", features = ["library"] }
+mars-oracle-adapter = { version = "1.0.0", path = "./contracts/mars-oracle-adapter", features = ["library"] }
+swapper-base        = { version = "1.0.0", path = "./contracts/swapper/base" }
+
+# mocks
+mock-oracle   = { version = "1.0.0", path = "./contracts/mock-oracle", features = ["library"] }
+mock-red-bank = { version = "1.0.0", path = "./contracts/mock-red-bank", features = ["library"] }
+mock-vault    = { version = "1.0.0", path = "./contracts/mock-vault", features = ["library"] }
+swapper-mock  = { version = "1.0.0", path = "./contracts/swapper/mock", features = ["library"] }
 
 [profile.release]
-rpath = false
-lto = true
-overflow-checks = true
 opt-level = 3
 debug = false
+rpath = false
+lto = true
 debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true

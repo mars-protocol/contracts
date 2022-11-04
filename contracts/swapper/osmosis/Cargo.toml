@@ -1,30 +1,33 @@
 [package]
-name = "swapper-osmosis"
-version = "1.0.0"
-authors = ["grod220 <gabe.r@delphilabs.io>"]
-edition = "2021"
-license = "GPL-3.0-or-later"
-repository = "https://github.com/mars-protocol/rover"
+name          = "swapper-osmosis"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
-library = []
+library    = []
 
 [dependencies]
-rover = { version = "1.0", path = "../../../packages/rover" }
-swapper-base = { path = "../base", version = "1.0" }
-
-cosmwasm-schema = "1.1"
-cosmwasm-std = "1.1"
-cw-storage-plus = "0.16"
-osmo-bindings = "0.5"
-schemars = "0.8"
-thiserror = "1.0"
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+cw-storage-plus = { workspace = true }
+osmo-bindings   = "0.5"
+schemars        = { workspace = true }
+swapper-base    = { workspace = true }
+rover           = { workspace = true }
+thiserror       = { workspace = true }
 
 [dev-dependencies]
-anyhow = "1"
-cw-multi-test = "0.13"
+anyhow             = { workspace = true }
+cw-multi-test      = { workspace = true }
 osmo-bindings-test = "0.5"

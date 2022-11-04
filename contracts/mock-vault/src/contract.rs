@@ -65,6 +65,7 @@ pub fn execute(
                 ForceUnlockExecuteMsg::ForceWithdrawUnlocking {
                     lockup_id, amount, ..
                 } => withdraw_unlocking_force(deps, &info.sender, lockup_id, amount),
+                _ => unimplemented!(),
             },
         },
     }
