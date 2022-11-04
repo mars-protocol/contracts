@@ -1,8 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use cosmwasm_std::{
-    Addr, Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Deps, Env, QuerierWrapper,
-};
+use cosmwasm_std::{Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Env, QuerierWrapper};
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -28,7 +26,7 @@ where
     fn build_exact_in_swap_msg(
         &self,
         querier: &QuerierWrapper<Q>,
-        contract_addr: Addr,
+        env: &Env,
         coin_in: &Coin,
         slippage: Decimal,
     ) -> ContractResult<CosmosMsg<M>>;
@@ -36,8 +34,8 @@ where
     /// Query to get the estimate result of a swap
     fn estimate_exact_in_swap(
         &self,
-        deps: Deps<Q>,
-        env: Env,
-        coin_in: Coin,
+        querier: &QuerierWrapper<Q>,
+        env: &Env,
+        coin_in: &Coin,
     ) -> ContractResult<EstimateExactInSwapResponse>;
 }

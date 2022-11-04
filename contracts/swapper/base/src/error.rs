@@ -1,4 +1,4 @@
-use cosmwasm_std::{DecimalRangeExceeded, OverflowError, StdError};
+use cosmwasm_std::{CheckedMultiplyRatioError, DecimalRangeExceeded, OverflowError, StdError};
 use rover::error::ContractError as RoverError;
 use thiserror::Error;
 
@@ -12,6 +12,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Overflow(#[from] OverflowError),
+
+    #[error("{0}")]
+    CheckedMultiplyRatio(#[from] CheckedMultiplyRatioError),
 
     #[error("{denom_a:?}-{denom_b:?} is not an available pool")]
     PoolNotFound { denom_a: String, denom_b: String },

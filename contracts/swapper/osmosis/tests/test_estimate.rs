@@ -1,187 +1,185 @@
-use cosmwasm_std::{coin, Addr, StdError, StdResult, Uint128};
-use cw_multi_test::Executor;
-use osmo_bindings::Step;
-use osmo_bindings_test::{Pool as OsmoPool, Pool};
+use cosmwasm_std::{coin, Uint128};
+use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
+use osmosis_testing::{Gamm, Module, OsmosisTestApp, RunnerResult, Wasm};
 
 use rover::adapters::swap::{EstimateExactInSwapResponse, ExecuteMsg, QueryMsg};
 use swapper_osmosis::route::OsmosisRoute;
 
-use crate::helpers::instantiate_contract;
-use crate::helpers::mock_osmosis_app;
+use crate::helpers::{assert_err, instantiate_contract};
 
 pub mod helpers;
 
 #[test]
 fn test_error_on_route_not_found() {
-    let mut app = mock_osmosis_app();
-    let contract_addr = instantiate_contract(&mut app);
-    let res: StdResult<EstimateExactInSwapResponse> = app.wrap().query_wasm_smart(
-        contract_addr,
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
+    let owner = app
+        .init_account(&[coin(1_000_000_000_000, "uosmo")])
+        .unwrap();
+
+    let contract_addr = instantiate_contract(&wasm, &owner);
+
+    let res: RunnerResult<EstimateExactInSwapResponse> = wasm.query(
+        &contract_addr,
         &QueryMsg::EstimateExactInSwap {
             coin_in: coin(1000, "jake"),
             denom_out: "mars".to_string(),
         },
     );
 
-    match res {
-        Ok(_) => panic!("should have thrown an error"),
-        Err(err) => assert_eq!(
-            err,
-            StdError::generic_err(
-                "Querier contract error: swapper_osmosis::route::OsmosisRoute not found"
-            )
-        ),
-    }
+    assert_err(
+        res.unwrap_err(),
+        "swapper_osmosis::route::OsmosisRoute not found",
+    );
 }
 
 #[test]
+#[ignore] // FIXME: TWAP doesn't work on osmosis-testing - fix in progress
 fn test_estimate_swap_one_step() {
-    let mut app = mock_osmosis_app();
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
 
-    let coin_a = coin(6_000_000, "osmo");
-    let coin_b = coin(1_500_000, "atom");
-    let pool_id = 43;
-    let pool = OsmoPool::new(coin_a.clone(), coin_b.clone());
+    let signer = app
+        .init_account(&[
+            coin(1_000_000_000_000, "uatom"),
+            coin(1_000_000_000_000, "uosmo"),
+        ])
+        .unwrap();
 
-    app.init_modules(|router, _, storage| {
-        router.custom.set_pool(storage, pool_id, &pool).unwrap();
-    });
+    let contract_addr = instantiate_contract(&wasm, &signer);
 
-    let owner = Addr::unchecked("owner");
-    let contract_addr = instantiate_contract(&mut app);
+    let gamm = Gamm::new(&app);
+    let pool_atom_osmo = gamm
+        .create_basic_pool(
+            &[coin(1_500_000, "uatom"), coin(6_000_000, "uosmo")],
+            &signer,
+        )
+        .unwrap()
+        .data
+        .pool_id;
 
-    app.execute_contract(
-        owner,
-        contract_addr.clone(),
+    wasm.execute(
+        &contract_addr,
         &ExecuteMsg::SetRoute {
-            denom_in: "osmo".to_string(),
-            denom_out: "atom".to_string(),
-            route: OsmosisRoute {
-                steps: vec![Step {
-                    pool_id,
-                    denom_out: "atom".to_string(),
-                }],
-            },
+            denom_in: "uosmo".to_string(),
+            denom_out: "uatom".to_string(),
+            route: OsmosisRoute(vec![SwapAmountInRoute {
+                pool_id: pool_atom_osmo,
+                token_out_denom: "uatom".to_string(),
+            }]),
         },
         &[],
+        &signer,
     )
     .unwrap();
 
-    let res: EstimateExactInSwapResponse = app
-        .wrap()
-        .query_wasm_smart(
-            contract_addr,
+    let res: EstimateExactInSwapResponse = wasm
+        .query(
+            &contract_addr,
             &QueryMsg::EstimateExactInSwap {
-                coin_in: coin(1000, coin_a.denom),
-                denom_out: coin_b.denom,
+                coin_in: coin(1000, "uosmo"),
+                denom_out: "uatom".to_string(),
             },
         )
         .unwrap();
-
     assert_eq!(res.amount, Uint128::new(250));
 }
 
 #[test]
+#[ignore] // FIXME: TWAP doesn't work on osmosis-testing - fix in progress
 fn test_estimate_swap_multi_step() {
-    let mut app = mock_osmosis_app();
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
 
-    let coin_a = coin(6_000_000, "uatom");
-    let coin_b = coin(1_500_000, "uosmo");
-    let pool_id_x = 1;
-    let pool_x = Pool::new(coin_a.clone(), coin_b);
+    let signer = app
+        .init_account(&[
+            coin(1_000_000_000_000, "uatom"),
+            coin(1_000_000_000_000, "uosmo"),
+            coin(1_000_000_000_000, "umars"),
+            coin(1_000_000_000_000, "uusdc"),
+        ])
+        .unwrap();
 
-    let coin_c = coin(100_000, "uosmo");
-    let coin_d = coin(1_000_000, "umars");
-    let pool_id_y = 420;
-    let pool_y = Pool::new(coin_c, coin_d);
+    let contract_addr = instantiate_contract(&wasm, &signer);
 
-    let coin_e = coin(100_000, "uosmo");
-    let coin_f = coin(1_000_000, "uusdc");
-    let pool_id_z = 69;
-    let pool_z = Pool::new(coin_e, coin_f.clone());
+    let gamm = Gamm::new(&app);
+    let pool_atom_osmo = gamm
+        .create_basic_pool(
+            &[coin(6_000_000, "uatom"), coin(1_500_000, "uosmo")],
+            &signer,
+        )
+        .unwrap()
+        .data
+        .pool_id;
+    let pool_osmo_mars = gamm
+        .create_basic_pool(&[coin(100_000, "uosmo"), coin(1_000_000, "umars")], &signer)
+        .unwrap()
+        .data
+        .pool_id;
+    let pool_osmo_usdc = gamm
+        .create_basic_pool(&[coin(100_000, "uosmo"), coin(1_000_000, "uusdc")], &signer)
+        .unwrap()
+        .data
+        .pool_id;
 
-    app.init_modules(|router, _, storage| {
-        router.custom.set_pool(storage, pool_id_x, &pool_x).unwrap();
-        router.custom.set_pool(storage, pool_id_y, &pool_y).unwrap();
-        router.custom.set_pool(storage, pool_id_z, &pool_z).unwrap();
-    });
-
-    let owner = Addr::unchecked("owner");
-    let contract_addr = instantiate_contract(&mut app);
-
-    app.execute_contract(
-        owner.clone(),
-        contract_addr.clone(),
+    wasm.execute(
+        &contract_addr,
         &ExecuteMsg::SetRoute {
             denom_in: "uatom".to_string(),
             denom_out: "umars".to_string(),
-            route: OsmosisRoute {
-                steps: vec![
-                    Step {
-                        pool_id: 1,
-                        denom_out: "uosmo".to_string(),
-                    },
-                    Step {
-                        pool_id: 420,
-                        denom_out: "umars".to_string(),
-                    },
-                ],
-            },
+            route: OsmosisRoute(vec![
+                SwapAmountInRoute {
+                    pool_id: pool_atom_osmo,
+                    token_out_denom: "uosmo".to_string(),
+                },
+                SwapAmountInRoute {
+                    pool_id: pool_osmo_mars,
+                    token_out_denom: "umars".to_string(),
+                },
+            ]),
         },
         &[],
+        &signer,
     )
     .unwrap();
 
-    app.execute_contract(
-        owner.clone(),
-        contract_addr.clone(),
+    wasm.execute(
+        &contract_addr,
         &ExecuteMsg::SetRoute {
             denom_in: "uatom".to_string(),
             denom_out: "uusdc".to_string(),
-            route: OsmosisRoute {
-                steps: vec![
-                    Step {
-                        pool_id: 1,
-                        denom_out: "uosmo".to_string(),
-                    },
-                    Step {
-                        pool_id: 69,
-                        denom_out: "uusdc".to_string(),
-                    },
-                ],
-            },
+            route: OsmosisRoute(vec![
+                SwapAmountInRoute {
+                    pool_id: pool_atom_osmo,
+                    token_out_denom: "uosmo".to_string(),
+                },
+                SwapAmountInRoute {
+                    pool_id: pool_osmo_usdc,
+                    token_out_denom: "uusdc".to_string(),
+                },
+            ]),
         },
         &[],
+        &signer,
     )
     .unwrap();
 
-    app.execute_contract(
-        owner,
-        contract_addr.clone(),
-        &ExecuteMsg::SetRoute {
-            denom_in: "uosmo".to_string(),
-            denom_out: "umars".to_string(),
-            route: OsmosisRoute {
-                steps: vec![Step {
-                    pool_id: 420,
-                    denom_out: "umars".to_string(),
-                }],
-            },
-        },
-        &[],
-    )
-    .unwrap();
-
-    let res: EstimateExactInSwapResponse = app
-        .wrap()
-        .query_wasm_smart(
-            contract_addr,
+    // atom/usdc = (price for atom/osmo) * (price for osmo/usdc)
+    // usdc_out_amount = (atom amount) * (price for atom/usdc)
+    //
+    // 1 osmo = 4 atom => atom/osmo = 0.25
+    // 1 osmo = 10 usdc => osmo/usdc = 10
+    //
+    // atom/usdc = 0.25 * 10 = 2.5
+    // usdc_out_amount = 1000 * 2.5 = 2500
+    let res: EstimateExactInSwapResponse = wasm
+        .query(
+            &contract_addr,
             &QueryMsg::EstimateExactInSwap {
-                coin_in: coin(1000, coin_a.denom),
-                denom_out: coin_f.denom,
+                coin_in: coin(1000, "uatom"),
+                denom_out: "uusdc".to_string(),
             },
         )
         .unwrap();
-
-    assert_eq!(res.amount, Uint128::new(2484));
+    assert_eq!(res.amount, Uint128::new(2500));
 }

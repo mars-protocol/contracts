@@ -21,13 +21,13 @@ library    = []
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 cw-storage-plus = { workspace = true }
-osmo-bindings   = "0.5"
+mars-osmosis    = { version = "1.0.0", path = "../../../packages/chains/osmosis" }
+osmosis-std     = { workspace = true }
 schemars        = { workspace = true }
 swapper-base    = { workspace = true }
 rover           = { workspace = true }
 thiserror       = { workspace = true }
 
 [dev-dependencies]
-anyhow             = { workspace = true }
-cw-multi-test      = { workspace = true }
-osmo-bindings-test = "0.5"
+anyhow          = { workspace = true }
+osmosis-testing = { version = "0.12", git = "https://github.com/osmosis-labs/osmosis-rust" }

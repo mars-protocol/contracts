@@ -2,12 +2,21 @@ on: pull_request
 
 name: Main
 
+env:
+  # Directory with wasm files used by `tests`
+  ARTIFACTS_DIR_PATH: 'target/wasm32-unknown-unknown/release'
+
 jobs:
 
   check:
     name: Check
     runs-on: ubuntu-latest
     steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '>=1.18.0'
+
       - name: Checkout sources
         uses: actions/checkout@v3
 
@@ -25,16 +34,21 @@ jobs:
       - name: Compile workspace
         run: cargo make build
 
-      - name: Generate schemas
-        run: cargo make generate-all-schemas
-
       - name: Compile contracts to wasm
         run: cargo make rust-optimizer
+
+      - name: Generate schemas
+        run: cargo make generate-all-schemas
 
   test:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '>=1.18.0'
+
       - name: Checkout sources
         uses: actions/checkout@v3
 
@@ -44,9 +58,13 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+          target: wasm32-unknown-unknown
 
       - name: Install cargo make
         uses: davidB/rust-cargo-make@v1
+
+      - name: Compile workspace
+        run: cargo make build
 
       - name: Run tests
         run: cargo make test
@@ -55,6 +73,11 @@ jobs:
     name: Lints
     runs-on: ubuntu-latest
     steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '>=1.18.0'
+
       - name: Checkout sources
         uses: actions/checkout@v3
 

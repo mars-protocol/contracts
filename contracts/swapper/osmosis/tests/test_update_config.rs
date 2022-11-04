@@ -1,35 +1,43 @@
-use cosmwasm_std::Addr;
-use cw_multi_test::Executor;
+use cosmwasm_std::coin;
+use osmosis_testing::{Account, Module, OsmosisTestApp, Wasm};
 
 use rover::adapters::swap::{Config, ExecuteMsg, QueryMsg};
 use rover::error::ContractError as RoverError;
 use swapper_base::ContractError;
 use swapper_osmosis::route::OsmosisRoute;
 
-use crate::helpers::mock_osmosis_app;
 use crate::helpers::{assert_err, instantiate_contract};
 
 pub mod helpers;
 
 #[test]
 fn test_only_owner_can_update_config() {
-    let mut app = mock_osmosis_app();
-    let contract_addr = instantiate_contract(&mut app);
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
 
-    let bad_guy = Addr::unchecked("bad_guy");
-    let res = app.execute_contract(
-        bad_guy.clone(),
-        contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateConfig {
-            owner: Some(bad_guy.to_string()),
-        },
-        &[],
-    );
+    let accs = app
+        .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
+        .unwrap();
+    let owner = &accs[0];
+    let bad_guy = &accs[1];
+
+    let contract_addr = instantiate_contract(&wasm, owner);
+
+    let res_err = wasm
+        .execute(
+            &contract_addr,
+            &ExecuteMsg::<OsmosisRoute>::UpdateConfig {
+                owner: Some(bad_guy.address()),
+            },
+            &[],
+            bad_guy,
+        )
+        .unwrap_err();
 
     assert_err(
-        res,
+        res_err,
         ContractError::Rover(RoverError::Unauthorized {
-            user: bad_guy.to_string(),
+            user: bad_guy.address(),
             action: "update owner".to_string(),
         }),
     );
@@ -37,48 +45,49 @@ fn test_only_owner_can_update_config() {
 
 #[test]
 fn test_update_config_works_with_full_config() {
-    let owner = Addr::unchecked("owner");
-    let mut app = mock_osmosis_app();
-    let contract_addr = instantiate_contract(&mut app);
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
 
-    let new_owner = Addr::unchecked("new_owner");
-    app.execute_contract(
-        owner.clone(),
-        contract_addr.clone(),
+    let accs = app
+        .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
+        .unwrap();
+    let owner = &accs[0];
+    let new_owner = &accs[1];
+
+    let contract_addr = instantiate_contract(&wasm, owner);
+
+    wasm.execute(
+        &contract_addr,
         &ExecuteMsg::<OsmosisRoute>::UpdateConfig {
-            owner: Some(new_owner.to_string()),
+            owner: Some(new_owner.address()),
         },
         &[],
+        owner,
     )
     .unwrap();
 
-    let new_config: Config<String> = app
-        .wrap()
-        .query_wasm_smart(contract_addr.to_string(), &QueryMsg::Config {})
-        .unwrap();
-
-    assert_ne!(new_config.owner, owner.to_string());
-    assert_eq!(new_config.owner, new_owner.to_string());
+    let config: Config<String> = wasm.query(&contract_addr, &QueryMsg::Config {}).unwrap();
+    assert_eq!(config.owner, new_owner.address());
 }
 
 #[test]
 fn test_update_config_does_nothing_when_nothing_is_passed() {
-    let owner = Addr::unchecked("owner");
-    let mut app = mock_osmosis_app();
-    let contract_addr = instantiate_contract(&mut app);
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
+    let owner = app
+        .init_account(&[coin(1_000_000_000_000, "uosmo")])
+        .unwrap();
 
-    app.execute_contract(
-        owner.clone(),
-        contract_addr.clone(),
+    let contract_addr = instantiate_contract(&wasm, &owner);
+
+    wasm.execute(
+        &contract_addr,
         &ExecuteMsg::<OsmosisRoute>::UpdateConfig { owner: None },
         &[],
+        &owner,
     )
     .unwrap();
 
-    let new_config: Config<String> = app
-        .wrap()
-        .query_wasm_smart(contract_addr.to_string(), &QueryMsg::Config {})
-        .unwrap();
-
-    assert_eq!(new_config.owner, owner.to_string());
+    let config: Config<String> = wasm.query(&contract_addr, &QueryMsg::Config {}).unwrap();
+    assert_eq!(config.owner, owner.address());
 }

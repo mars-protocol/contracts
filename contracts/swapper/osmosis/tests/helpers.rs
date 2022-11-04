@@ -1,65 +1,62 @@
-use std::fmt::Debug;
+use std::fmt::Display;
+use std::str::FromStr;
 
-use anyhow::Result as AnyResult;
-use cosmwasm_std::Addr;
-use cosmwasm_std::CustomQuery;
-use cw_multi_test::{AppResponse, Executor};
-use cw_multi_test::{Contract, ContractWrapper};
-use osmo_bindings::{OsmosisMsg, OsmosisQuery};
-use osmo_bindings_test::OsmosisApp;
-use schemars::JsonSchema;
+use osmosis_testing::cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest;
+use osmosis_testing::{Account, Bank, OsmosisTestApp, RunnerError, SigningAccount, Wasm};
 
-use rover::adapters::swap::{Config, ExecuteMsg, InstantiateMsg, QueryMsg};
-use swapper_base::ContractError;
-use swapper_osmosis::contract::{execute, instantiate, query};
-use swapper_osmosis::route::OsmosisRoute;
+use rover::adapters::swap::InstantiateMsg;
 
-pub fn mock_osmosis_app() -> OsmosisApp {
-    OsmosisApp::default()
+const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+
+pub fn wasm_file() -> String {
+    let artifacts_dir =
+        std::env::var("ARTIFACTS_DIR_PATH").unwrap_or_else(|_| "artifacts".to_string());
+    let snaked_name = CONTRACT_NAME.replace('-', "_");
+    format!("../../../{}/{}.wasm", artifacts_dir, snaked_name)
 }
 
-pub fn mock_osmosis_contract<C, Q>() -> Box<dyn Contract<C, Q>>
-where
-    C: Clone + Debug + PartialEq + JsonSchema,
-    Q: CustomQuery,
-    ContractWrapper<
-        ExecuteMsg<OsmosisRoute>,
-        Config<String>,
-        QueryMsg,
-        ContractError,
-        ContractError,
-        ContractError,
-        OsmosisMsg,
-        OsmosisQuery,
-    >: Contract<C, Q>,
-{
-    let contract = ContractWrapper::new(execute, instantiate, query); //.with_reply(reply);
-    Box::new(contract)
-}
+pub fn instantiate_contract(wasm: &Wasm<OsmosisTestApp>, owner: &SigningAccount) -> String {
+    let wasm_byte_code = std::fs::read(wasm_file()).unwrap();
+    let code_id = wasm
+        .store_code(&wasm_byte_code, None, owner)
+        .unwrap()
+        .data
+        .code_id;
 
-pub fn assert_err(res: AnyResult<AppResponse>, err: ContractError) {
-    match res {
-        Ok(_) => panic!("Result was not an error"),
-        Err(generic_err) => {
-            let contract_err: ContractError = generic_err.downcast().unwrap();
-            assert_eq!(contract_err, err);
-        }
-    }
-}
-
-pub fn instantiate_contract(app: &mut OsmosisApp) -> Addr {
-    let owner = Addr::unchecked("owner");
-    let contract = mock_osmosis_contract();
-    let code_id = app.store_code(contract);
-    app.instantiate_contract(
+    wasm.instantiate(
         code_id,
-        owner.clone(),
         &InstantiateMsg {
-            owner: owner.to_string(),
+            owner: owner.address(),
         },
-        &[],
-        "mock-swapper-osmosis-contract",
         None,
+        Some("swapper-osmosis-contract"),
+        &[],
+        owner,
     )
     .unwrap()
+    .data
+    .address
+}
+
+pub fn query_balance(bank: &Bank<OsmosisTestApp>, addr: &str, denom: &str) -> u128 {
+    bank.query_balance(&QueryBalanceRequest {
+        address: addr.to_string(),
+        denom: denom.to_string(),
+    })
+    .unwrap()
+    .balance
+    .map(|c| u128::from_str(&c.amount).unwrap())
+    .unwrap_or(0)
+}
+
+pub fn assert_err(actual: RunnerError, expected: impl Display) {
+    match actual {
+        RunnerError::ExecuteError { msg } => {
+            assert!(msg.contains(&format!("{}", expected)))
+        }
+        RunnerError::QueryError { msg } => {
+            assert!(msg.contains(&format!("{}", expected)))
+        }
+        _ => panic!("Unhandled error"),
+    }
 }

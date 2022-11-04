@@ -166,7 +166,7 @@ where
         let route = self
             .routes
             .load(deps.storage, (coin_in.denom.clone(), denom_out))?;
-        route.estimate_exact_in_swap(deps, env, coin_in)
+        route.estimate_exact_in_swap(&deps.querier, &env, &coin_in)
     }
 
     fn swap_exact_in(
@@ -181,12 +181,7 @@ where
         let swap_msg = self
             .routes
             .load(deps.storage, (coin_in.denom.clone(), denom_out.clone()))?
-            .build_exact_in_swap_msg(
-                &deps.querier,
-                env.contract.address.clone(),
-                &coin_in,
-                slippage,
-            )?;
+            .build_exact_in_swap_msg(&deps.querier, &env, &coin_in, slippage)?;
 
         // Check balance of result of swapper and send back result to sender
         let transfer_msg = CosmosMsg::Wasm(WasmMsg::Execute {

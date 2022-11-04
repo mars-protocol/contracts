@@ -1,202 +1,182 @@
-use cosmwasm_std::{coin, Addr, Decimal, Querier, QuerierResult, QuerierWrapper, Uint128};
-use cw_multi_test::Executor;
-use osmo_bindings::Step;
-use osmo_bindings_test::{OsmosisApp, OsmosisError, Pool};
+use cosmwasm_std::{coin, Addr, Decimal};
+use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
+use osmosis_testing::{Account, Bank, Gamm, Module, OsmosisTestApp, Wasm};
 
 use rover::adapters::swap::ExecuteMsg;
 use rover::error::ContractError as RoverError;
-use rover::traits::IntoDecimal;
 use swapper_base::ContractError;
-use swapper_base::Route;
 use swapper_osmosis::route::OsmosisRoute;
 
-use crate::helpers::mock_osmosis_app;
-use crate::helpers::{assert_err, instantiate_contract};
+use crate::helpers::{assert_err, instantiate_contract, query_balance};
 
 pub mod helpers;
 
 #[test]
 fn test_transfer_callback_only_internal() {
-    let mut app = mock_osmosis_app();
-    let contract_addr = instantiate_contract(&mut app);
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
 
-    let bad_guy = Addr::unchecked("bad_guy");
-    let res = app.execute_contract(
-        bad_guy.clone(),
-        contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::TransferResult {
-            recipient: bad_guy.clone(),
-            denom_in: "mars".to_string(),
-            denom_out: "osmo".to_string(),
-        },
-        &[],
-    );
+    let accs = app
+        .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
+        .unwrap();
+    let owner = &accs[0];
+    let bad_guy = &accs[1];
+
+    let contract_addr = instantiate_contract(&wasm, owner);
+
+    let res_err = wasm
+        .execute(
+            &contract_addr,
+            &ExecuteMsg::<OsmosisRoute>::TransferResult {
+                recipient: Addr::unchecked(bad_guy.address()),
+                denom_in: "mars".to_string(),
+                denom_out: "osmo".to_string(),
+            },
+            &[],
+            bad_guy,
+        )
+        .unwrap_err();
 
     assert_err(
-        res,
+        res_err,
         ContractError::Rover(RoverError::Unauthorized {
-            user: bad_guy.to_string(),
+            user: bad_guy.address(),
             action: "transfer result".to_string(),
         }),
     );
 }
 
 #[test]
+#[ignore] // FIXME: TWAP doesn't work on osmosis-testing - fix in progress
 fn test_swap_exact_in_slippage_too_high() {
-    pub struct MockQuerier<'a> {
-        app: &'a OsmosisApp,
-    }
-    impl Querier for MockQuerier<'_> {
-        fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-            self.app.raw_query(bin_request)
-        }
-    }
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
 
-    let owner = Addr::unchecked("owner");
-    let whale = Addr::unchecked("whale");
-    let mut app = mock_osmosis_app();
-    let contract_addr = instantiate_contract(&mut app);
+    let signer = app
+        .init_account(&[
+            coin(1_000_000_000_000, "uosmo"),
+            coin(1_000_000_000_000, "umars"),
+        ])
+        .unwrap();
+    let whale = app.init_account(&[coin(1_000_000, "umars")]).unwrap();
 
-    let coin_a = coin(6_000_000, "mars");
-    let coin_b = coin(1_500_000, "osmo");
-    let pool_id_x = 43;
-    let pool_x = Pool::new(coin_a, coin_b.clone());
+    let contract_addr = instantiate_contract(&wasm, &signer);
 
-    app.init_modules(|router, _, storage| {
-        router.custom.set_pool(storage, pool_id_x, &pool_x).unwrap();
-        router
-            .bank
-            .init_balance(storage, &owner, vec![coin(10_000, "mars")])
-            .unwrap();
-        router
-            .bank
-            .init_balance(storage, &whale, vec![coin(1_000_000, "mars")])
-            .unwrap();
-    });
+    let gamm = Gamm::new(&app);
+    let pool_mars_osmo = gamm
+        .create_basic_pool(
+            &[coin(6_000_000, "umars"), coin(1_500_000, "uosmo")],
+            &signer,
+        )
+        .unwrap()
+        .data
+        .pool_id;
 
-    let route = OsmosisRoute {
-        steps: vec![Step {
-            pool_id: pool_id_x,
-            denom_out: coin_b.denom,
-        }],
-    };
+    let route = OsmosisRoute(vec![SwapAmountInRoute {
+        pool_id: pool_mars_osmo,
+        token_out_denom: "uosmo".to_string(),
+    }]);
 
-    app.execute_contract(
-        owner.clone(),
-        contract_addr.clone(),
+    wasm.execute(
+        &contract_addr,
         &ExecuteMsg::SetRoute {
-            denom_in: "mars".to_string(),
-            denom_out: "osmo".to_string(),
-            route: route.clone(),
+            denom_in: "umars".to_string(),
+            denom_out: "uosmo".to_string(),
+            route,
         },
         &[],
+        &signer,
     )
     .unwrap();
 
-    let querier = MockQuerier { app: &app };
-    let mock_querier = QuerierWrapper::new(&querier);
-
-    // Simulate real-time slippage by generating swapper message first, changing pool ratio, and then swapping with that message
-    let msg = route
-        .build_exact_in_swap_msg(
-            &mock_querier,
-            contract_addr.clone(),
-            &coin(10_000, "mars"),
-            Decimal::from_atomics(6u128, 2).unwrap(),
+    // whale does a huge trade
+    let res_err = wasm
+        .execute(
+            &contract_addr,
+            &ExecuteMsg::<OsmosisRoute>::SwapExactIn {
+                coin_in: coin(1_000_000, "umars"),
+                denom_out: "uosmo".to_string(),
+                slippage: Decimal::percent(5),
+            },
+            &[coin(1_000_000, "umars")],
+            &whale,
         )
-        .unwrap();
+        .unwrap_err();
 
-    // whale does a huge trade to make mars less valuable
-    app.execute_contract(
-        whale,
-        contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::SwapExactIn {
-            coin_in: coin(1_000_000, "mars"),
-            denom_out: "osmo".to_string(),
-            slippage: 1.to_dec().unwrap(),
-        },
-        &[coin(1_000_000, "mars")],
+    assert_err(
+        res_err,
+        "uosmo token is lesser than min amount: calculated amount is lesser than min amount",
     )
-    .unwrap();
-
-    // Resume initial user's trade but the output is less than slippage allowance
-    let res = app.execute(owner, msg);
-
-    let error: OsmosisError = res.unwrap_err().downcast().unwrap();
-    assert_eq!(error, OsmosisError::PriceTooLow);
 }
 
 #[test]
+#[ignore] // FIXME: TWAP doesn't work on osmosis-testing - fix in progress
 fn test_swap_exact_in_success() {
-    let owner = Addr::unchecked("owner");
-    let mut app = mock_osmosis_app();
-    let contract_addr = instantiate_contract(&mut app);
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
 
-    let coin_a = coin(6_000_000, "mars");
-    let coin_b = coin(1_500_000, "osmo");
-    let pool_id_x = 43;
-    let pool_x = Pool::new(coin_a, coin_b);
+    let signer = app
+        .init_account(&[
+            coin(1_000_000_000_000, "uosmo"),
+            coin(1_000_000_000_000, "umars"),
+        ])
+        .unwrap();
+    let user = app.init_account(&[coin(10_000, "umars")]).unwrap();
 
-    app.init_modules(|router, _, storage| {
-        router.custom.set_pool(storage, pool_id_x, &pool_x).unwrap();
-        router
-            .bank
-            .init_balance(storage, &owner, vec![coin(10_000, "mars")])
-            .unwrap();
-    });
+    let contract_addr = instantiate_contract(&wasm, &signer);
 
-    app.execute_contract(
-        owner.clone(),
-        contract_addr.clone(),
+    let gamm = Gamm::new(&app);
+    let pool_mars_osmo = gamm
+        .create_basic_pool(
+            &[coin(6_000_000, "umars"), coin(1_500_000, "uosmo")],
+            &signer,
+        )
+        .unwrap()
+        .data
+        .pool_id;
+
+    wasm.execute(
+        &contract_addr,
         &ExecuteMsg::SetRoute {
-            denom_in: "mars".to_string(),
-            denom_out: "osmo".to_string(),
-            route: OsmosisRoute {
-                steps: vec![Step {
-                    pool_id: pool_id_x,
-                    denom_out: "osmo".to_string(),
-                }],
-            },
+            denom_in: "umars".to_string(),
+            denom_out: "uosmo".to_string(),
+            route: OsmosisRoute(vec![SwapAmountInRoute {
+                pool_id: pool_mars_osmo,
+                token_out_denom: "uosmo".to_string(),
+            }]),
         },
         &[],
+        &signer,
     )
     .unwrap();
 
-    let mars_balance = app.wrap().query_balance(owner.to_string(), "mars").unwrap();
-    let osmo_balance = app.wrap().query_balance(owner.to_string(), "osmo").unwrap();
+    let bank = Bank::new(&app);
+    let osmo_balance = query_balance(&bank, &user.address(), "uosmo");
+    let mars_balance = query_balance(&bank, &user.address(), "umars");
+    assert_eq!(osmo_balance, 0);
+    assert_eq!(mars_balance, 10_000);
 
-    assert_eq!(mars_balance.amount, Uint128::new(10_000));
-    assert_eq!(osmo_balance.amount, Uint128::zero());
-
-    app.execute_contract(
-        owner.clone(),
-        contract_addr.clone(),
+    wasm.execute(
+        &contract_addr,
         &ExecuteMsg::<OsmosisRoute>::SwapExactIn {
-            coin_in: coin(10_000, "mars"),
-            denom_out: "osmo".to_string(),
-            slippage: Decimal::from_atomics(6u128, 2).unwrap(),
+            coin_in: coin(10_000, "umars"),
+            denom_out: "uosmo".to_string(),
+            slippage: Decimal::percent(6),
         },
-        &[coin(10_000, "mars")],
+        &[coin(10_000, "umars")],
+        &user,
     )
     .unwrap();
 
     // Assert user receives their new tokens
-    let mars_balance = app.wrap().query_balance(owner.to_string(), "mars").unwrap();
-    let osmo_balance = app.wrap().query_balance(owner.to_string(), "osmo").unwrap();
-
-    assert_eq!(mars_balance.amount, Uint128::zero());
-    assert_eq!(osmo_balance.amount, Uint128::new(2489));
+    let osmo_balance = query_balance(&bank, &user.address(), "uosmo");
+    let mars_balance = query_balance(&bank, &user.address(), "umars");
+    assert_eq!(osmo_balance, 2470);
+    assert_eq!(mars_balance, 0);
 
     // Assert no tokens in contract left over
-    let mars_balance = app
-        .wrap()
-        .query_balance(contract_addr.to_string(), "mars")
-        .unwrap();
-    let osmo_balance = app
-        .wrap()
-        .query_balance(contract_addr.to_string(), "osmo")
-        .unwrap();
-
-    assert_eq!(mars_balance.amount, Uint128::zero());
-    assert_eq!(osmo_balance.amount, Uint128::zero());
+    let osmo_balance = query_balance(&bank, &contract_addr, "uosmo");
+    let mars_balance = query_balance(&bank, &contract_addr, "umars");
+    assert_eq!(osmo_balance, 0);
+    assert_eq!(mars_balance, 0);
 }
