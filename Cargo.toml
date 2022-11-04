@@ -3,7 +3,7 @@ members = [
     "contracts/account-nft",
     "contracts/credit-manager",
     "contracts/swapper/*",
-    "contracts/mars-oracle-adapter",
+    "contracts/oracle-adapter",
     "packages/chains/*",
     "packages/health",
     "packages/outpost",
@@ -49,19 +49,19 @@ thiserror       = "1.0"
 cosmos-vault-standard = { git = "https://github.com/apollodao/cosmos-vault-standard", features = ["lockup", "force-unlock"] }
 mars-health           = { version = "1.0.0", path = "./packages/health" }
 mars-outpost          = { version = "1.0.0", path = "./packages/outpost" }
-rover                 = { version = "1.0.0", path = "./packages/rover" }
+mars-rover            = { version = "1.0.0", path = "./packages/rover" }
 
 # contracts
-account-nft         = { version = "1.0.0", path = "./contracts/account-nft", features = ["library"] }
-mars-oracle-adapter = { version = "1.0.0", path = "./contracts/mars-oracle-adapter", features = ["library"] }
-swapper-base        = { version = "1.0.0", path = "./contracts/swapper/base" }
+mars-account-nft    = { version = "1.0.0", path = "./contracts/account-nft", features = ["library"] }
+mars-oracle-adapter = { version = "1.0.0", path = "contracts/oracle-adapter", features = ["library"] }
+mars-swapper-base   = { version = "1.0.0", path = "./contracts/swapper/base" }
 
 # mocks
-mock-oracle   = { version = "1.0.0", path = "./contracts/mock-oracle", features = ["library"] }
-mock-red-bank = { version = "1.0.0", path = "./contracts/mock-red-bank", features = ["library"] }
-mock-vault    = { version = "1.0.0", path = "./contracts/mock-vault", features = ["library"] }
-mock-zapper    = { version = "1.0.0", path = "./contracts/mock-zapper", features = ["library"] }
-swapper-mock  = { version = "1.0.0", path = "./contracts/swapper/mock", features = ["library"] }
+mars-mock-oracle   = { version = "1.0.0", path = "./contracts/mock-oracle", features = ["library"] }
+mars-mock-red-bank = { version = "1.0.0", path = "./contracts/mock-red-bank", features = ["library"] }
+mars-mock-vault    = { version = "1.0.0", path = "./contracts/mock-vault", features = ["library"] }
+mars-mock-zapper   = { version = "1.0.0", path = "./contracts/mock-zapper", features = ["library"] }
+mars-swapper-mock  = { version = "1.0.0", path = "./contracts/swapper/mock", features = ["library"] }
 
 [profile.release]
 opt-level = 3

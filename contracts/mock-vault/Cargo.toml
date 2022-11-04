@@ -1,5 +1,5 @@
 [package]
-name          = "mock-vault"
+name          = "mars-mock-vault"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
@@ -23,5 +23,5 @@ cosmwasm-schema       = { workspace = true }
 cosmwasm-std          = { workspace = true }
 cw-storage-plus       = { workspace = true }
 cw-utils              = { workspace = true }
+mars-rover            = { workspace = true }
 thiserror             = { workspace = true }
-rover                 = { workspace = true }

@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Coin, Decimal};
-use rover::adapters::{Oracle, OracleUnchecked};
+use mars_rover::adapters::{Oracle, OracleUnchecked};
 
 #[cw_serde]
 pub struct CoinPrice {

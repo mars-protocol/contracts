@@ -2,11 +2,11 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, DepsMut, Reply, Response, Uint128};
 
 use crate::state::VAULT_REQUEST_TEMP_STORAGE;
-use rover::adapters::vault::{
+use mars_rover::adapters::vault::{
     UnlockingChange, UpdateType, Vault, VaultBase, VaultPositionUpdate, VaultUnlockingPosition,
 };
-use rover::error::{ContractError, ContractResult};
-use rover::extensions::AttrParse;
+use mars_rover::error::{ContractError, ContractResult};
+use mars_rover::extensions::AttrParse;
 
 use crate::vault::utils::{assert_vault_is_whitelisted, update_vault_position};
 

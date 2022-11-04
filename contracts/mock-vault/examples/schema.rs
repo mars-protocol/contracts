@@ -1,6 +1,6 @@
 use cosmos_vault_standard::msg::{ExecuteMsg, QueryMsg};
 use cosmwasm_schema::write_api;
-use mock_vault::msg::InstantiateMsg;
+use mars_mock_vault::msg::InstantiateMsg;
 
 fn main() {
     write_api! {

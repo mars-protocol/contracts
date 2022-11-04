@@ -2,9 +2,9 @@ use std::ops::{Add, Div};
 
 use cosmwasm_std::{Coin, CosmosMsg, Decimal, DepsMut, Env, Response, StdError, Storage, Uint128};
 
-use rover::error::{ContractError, ContractResult};
-use rover::msg::execute::CallbackMsg;
-use rover::traits::{IntoDecimal, IntoUint128};
+use mars_rover::error::{ContractError, ContractResult};
+use mars_rover::msg::execute::CallbackMsg;
+use mars_rover::traits::{IntoDecimal, IntoUint128};
 
 use crate::health::{compute_health, val_or_na};
 use crate::repay::current_debt_for_denom;

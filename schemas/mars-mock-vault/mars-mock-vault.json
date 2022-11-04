@@ -1,5 +1,5 @@
 {
-  "contract_name": "mock-vault",
+  "contract_name": "mars-mock-vault",
   "contract_version": "1.0.0",
   "idl_version": "1.0.0",
   "instantiate": {

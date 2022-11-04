@@ -2,8 +2,8 @@ use cosmwasm_std::{coin, Uint128};
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
 use osmosis_testing::{Gamm, Module, OsmosisTestApp, RunnerResult, Wasm};
 
-use rover::adapters::swap::{EstimateExactInSwapResponse, ExecuteMsg, QueryMsg};
-use swapper_osmosis::route::OsmosisRoute;
+use mars_rover::adapters::swap::{EstimateExactInSwapResponse, ExecuteMsg, QueryMsg};
+use mars_swapper_osmosis::route::OsmosisRoute;
 
 use crate::helpers::{assert_err, instantiate_contract};
 

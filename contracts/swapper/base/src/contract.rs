@@ -6,11 +6,11 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::{Bound, Item, Map};
 
-use rover::adapters::swap::{
+use mars_rover::adapters::swap::{
     Config, EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
     RoutesResponse,
 };
-use rover::error::ContractError as RoverError;
+use mars_rover::error::ContractError as RoverError;
 
 use crate::{ContractResult, Route};
 

@@ -1,10 +1,10 @@
 use cosmwasm_std::{Addr, Coin, Deps, Env, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
 
-use rover::adapters::vault::{Vault, VaultBase, VaultPosition, VaultUnchecked};
-use rover::error::ContractResult;
-use rover::msg::instantiate::VaultInstantiateConfig;
-use rover::msg::query::{
+use mars_rover::adapters::vault::{Vault, VaultBase, VaultPosition, VaultUnchecked};
+use mars_rover::error::ContractResult;
+use mars_rover::msg::instantiate::VaultInstantiateConfig;
+use mars_rover::msg::query::{
     CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, Positions, SharesResponseItem,
     VaultPositionResponseItem, VaultWithBalance,
 };

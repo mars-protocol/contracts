@@ -1,6 +1,6 @@
 use cosmwasm_schema::write_api;
 use cosmwasm_std::Empty;
-use rover::adapters::swap::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_rover::adapters::swap::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {

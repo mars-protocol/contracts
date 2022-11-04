@@ -1,5 +1,5 @@
 use cosmwasm_schema::write_api;
-use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {

@@ -3,10 +3,10 @@ use mars_health::health::{Health, Position};
 use mars_health::query::MarsQuerier;
 use mars_outpost::red_bank::Market;
 
-use rover::adapters::vault::VaultPosition;
-use rover::adapters::{Oracle, RedBank};
-use rover::error::{ContractError, ContractResult};
-use rover::traits::{Coins, IntoDecimal};
+use mars_rover::adapters::vault::VaultPosition;
+use mars_rover::adapters::{Oracle, RedBank};
+use mars_rover::error::{ContractError, ContractResult};
+use mars_rover::traits::{Coins, IntoDecimal};
 
 use crate::query::query_positions;
 use crate::state::{ORACLE, RED_BANK, VAULT_CONFIGS};

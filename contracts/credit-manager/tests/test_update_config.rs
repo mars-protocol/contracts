@@ -1,10 +1,10 @@
 use cosmwasm_std::{coin, Addr, Decimal};
 
-use rover::adapters::swap::SwapperBase;
-use rover::adapters::vault::{VaultBase, VaultConfig};
-use rover::adapters::{OracleBase, RedBankBase, ZapperBase};
-use rover::error::ContractError;
-use rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
+use mars_rover::adapters::swap::SwapperBase;
+use mars_rover::adapters::vault::{VaultBase, VaultConfig};
+use mars_rover::adapters::{OracleBase, RedBankBase, ZapperBase};
+use mars_rover::error::ContractError;
+use mars_rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
 
 use crate::helpers::{assert_err, locked_vault_info, uatom_info, uosmo_info, MockEnv};
 

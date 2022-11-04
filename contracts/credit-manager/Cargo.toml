@@ -1,5 +1,5 @@
 [package]
-name          = "credit-manager"
+name          = "mars-credit-manager"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
@@ -18,7 +18,6 @@ backtraces = ["cosmwasm-std/backtraces"]
 library    = []
 
 [dependencies]
-account-nft           = { workspace = true }
 cosmos-vault-standard = { workspace = true }
 cosmwasm-schema       = { workspace = true }
 cosmwasm-std          = { workspace = true }
@@ -27,18 +26,19 @@ cw721                 = { workspace = true }
 cw721-base            = { workspace = true }
 cw-item-set           = { workspace = true }
 cw-storage-plus       = { workspace = true }
+mars-account-nft      = { workspace = true }
 mars-health           = { workspace = true }
 mars-outpost          = { workspace = true }
 mars-oracle-adapter   = { workspace = true }
-rover                 = { workspace = true }
+mars-rover            = { workspace = true }
 
 [dev-dependencies]
-anyhow        = { workspace = true }
-cw-multi-test = { workspace = true }
-cw-utils      = { workspace = true }
-itertools     = "0.10"
-mock-oracle   = { workspace = true }
-mock-red-bank = { workspace = true }
-mock-vault    = { workspace = true }
-mock-zapper    = { workspace = true }
-swapper-mock  = { workspace = true }
+anyhow             = { workspace = true }
+cw-multi-test      = { workspace = true }
+cw-utils           = { workspace = true }
+itertools          = "0.10"
+mars-mock-oracle   = { workspace = true }
+mars-mock-red-bank = { workspace = true }
+mars-mock-vault    = { workspace = true }
+mars-mock-zapper   = { workspace = true }
+mars-swapper-mock  = { workspace = true }

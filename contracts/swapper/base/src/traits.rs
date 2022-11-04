@@ -4,7 +4,7 @@ use cosmwasm_std::{Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Env, Querie
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
-use rover::adapters::swap::EstimateExactInSwapResponse;
+use mars_rover::adapters::swap::EstimateExactInSwapResponse;
 
 use crate::ContractResult;
 

@@ -3,10 +3,10 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 
-use rover::adapters::vault::VAULT_REQUEST_REPLY_ID;
-use rover::error::{ContractError, ContractResult};
-use rover::msg::query::HealthResponse;
-use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_rover::adapters::vault::VAULT_REQUEST_REPLY_ID;
+use mars_rover::error::{ContractError, ContractResult};
+use mars_rover::msg::query::HealthResponse;
+use mars_rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::execute::{create_credit_account, dispatch_actions, execute_callback, update_config};
 use crate::health::compute_health;
@@ -20,7 +20,7 @@ use crate::query::{
 use crate::vault::handle_unlock_request_reply;
 use crate::zap::{estimate_provide_liquidity, estimate_withdraw_liquidity};
 
-const CONTRACT_NAME: &str = "crates.io:rover-credit-manager";
+const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -30,7 +30,11 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> ContractResult<Response> {
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    set_contract_version(
+        deps.storage,
+        &format!("crates.io:{}", CONTRACT_NAME),
+        CONTRACT_VERSION,
+    )?;
     store_config(deps, &msg)?;
     Ok(Response::default())
 }

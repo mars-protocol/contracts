@@ -1,7 +1,7 @@
 use cosmwasm_std::{coin, Decimal};
 use cw_utils::Duration;
 
-use rover::traits::IntoDecimal;
+use mars_rover::traits::IntoDecimal;
 
 use crate::helpers::{lp_token_info, CoinInfo, VaultTestInfo};
 

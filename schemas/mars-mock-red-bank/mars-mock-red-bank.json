@@ -1,5 +1,5 @@
 {
-  "contract_name": "mock-red-bank",
+  "contract_name": "mars-mock-red-bank",
   "contract_version": "1.0.0",
   "idl_version": "1.0.0",
   "instantiate": {

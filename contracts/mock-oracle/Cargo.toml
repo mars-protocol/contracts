@@ -1,5 +1,5 @@
 [package]
-name          = "mock-oracle"
+name          = "mars-mock-oracle"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }

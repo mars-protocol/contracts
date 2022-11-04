@@ -1,5 +1,5 @@
 {
-  "contract_name": "mock-oracle",
+  "contract_name": "mars-mock-oracle",
   "contract_version": "1.0.0",
   "idl_version": "1.0.0",
   "instantiate": {

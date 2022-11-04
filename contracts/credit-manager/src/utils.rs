@@ -6,11 +6,11 @@ use cosmwasm_std::{
     WasmMsg,
 };
 
-use rover::error::{ContractError, ContractResult};
-use rover::msg::execute::CallbackMsg;
-use rover::msg::query::CoinValue;
-use rover::msg::ExecuteMsg;
-use rover::traits::IntoDecimal;
+use mars_rover::error::{ContractError, ContractResult};
+use mars_rover::msg::execute::CallbackMsg;
+use mars_rover::msg::query::CoinValue;
+use mars_rover::msg::ExecuteMsg;
+use mars_rover::traits::IntoDecimal;
 
 use crate::state::{ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, TOTAL_DEBT_SHARES};
 use crate::update_coin_balances::query_balance;

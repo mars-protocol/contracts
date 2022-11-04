@@ -1,7 +1,7 @@
 use cosmwasm_std::DepsMut;
 
-use rover::error::ContractResult;
-use rover::msg::InstantiateMsg;
+use mars_rover::error::ContractResult;
+use mars_rover::msg::InstantiateMsg;
 
 use crate::state::{
     ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK, SWAPPER,

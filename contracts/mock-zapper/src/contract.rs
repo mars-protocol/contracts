@@ -6,7 +6,7 @@ use crate::error::ContractResult;
 use crate::execute::{provide_liquidity, withdraw_liquidity};
 use crate::query::{estimate_provide_liquidity, estimate_withdraw_liquidity};
 use crate::state::{COIN_BALANCES, ORACLE};
-use rover::msg::zapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_rover::msg::zapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 pub const STARTING_LP_POOL_TOKENS: Uint128 = Uint128::new(1_000_000);
 

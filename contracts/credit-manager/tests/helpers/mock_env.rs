@@ -10,33 +10,33 @@ use cosmwasm_std::{coins, Addr, Coin, Decimal, Empty, Uint128};
 use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 
-use account_nft::msg::ExecuteMsg as NftExecuteMsg;
+use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
+use mars_mock_oracle::msg::{
+    CoinPrice, ExecuteMsg as OracleExecuteMsg, InstantiateMsg as OracleInstantiateMsg,
+};
+use mars_mock_red_bank::msg::{CoinMarketInfo, InstantiateMsg as RedBankInstantiateMsg};
+use mars_mock_vault::contract::DEFAULT_VAULT_TOKEN_PREFUND;
+use mars_mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
 use mars_oracle_adapter::msg::{
     InstantiateMsg as OracleAdapterInstantiateMsg, PricingMethod, VaultPricingInfo,
 };
 use mars_outpost::red_bank::QueryMsg::UserDebt;
 use mars_outpost::red_bank::UserDebtResponse;
-use mock_oracle::msg::{
-    CoinPrice, ExecuteMsg as OracleExecuteMsg, InstantiateMsg as OracleInstantiateMsg,
-};
-use mock_red_bank::msg::{CoinMarketInfo, InstantiateMsg as RedBankInstantiateMsg};
-use mock_vault::contract::DEFAULT_VAULT_TOKEN_PREFUND;
-use mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
-use rover::adapters::swap::QueryMsg::EstimateExactInSwap;
-use rover::adapters::swap::{
+use mars_rover::adapters::swap::QueryMsg::EstimateExactInSwap;
+use mars_rover::adapters::swap::{
     EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg, Swapper, SwapperBase,
 };
-use rover::adapters::vault::{VaultBase, VaultConfig, VaultUnchecked};
-use rover::adapters::{OracleBase, OracleUnchecked, RedBankBase, Zapper, ZapperBase};
-use rover::msg::execute::{Action, CallbackMsg};
-use rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
-use rover::msg::query::{
+use mars_rover::adapters::vault::{VaultBase, VaultConfig, VaultUnchecked};
+use mars_rover::adapters::{OracleBase, OracleUnchecked, RedBankBase, Zapper, ZapperBase};
+use mars_rover::msg::execute::{Action, CallbackMsg};
+use mars_rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
+use mars_rover::msg::query::{
     CoinBalanceResponseItem, ConfigResponse, DebtShares, HealthResponse, Positions,
     SharesResponseItem, VaultPositionResponseItem, VaultWithBalance,
 };
-use rover::msg::zapper::QueryMsg::EstimateProvideLiquidity;
-use rover::msg::zapper::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
-use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_rover::msg::zapper::QueryMsg::EstimateProvideLiquidity;
+use mars_rover::msg::zapper::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
+use mars_rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::helpers::{
     lp_token_info, mock_account_nft_contract, mock_oracle_adapter_contract, mock_oracle_contract,

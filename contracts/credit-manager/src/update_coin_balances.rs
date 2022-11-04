@@ -3,7 +3,7 @@ use cosmwasm_std::{
     StdResult,
 };
 
-use rover::error::ContractResult;
+use mars_rover::error::ContractResult;
 
 use crate::utils::{decrement_coin_balance, increment_coin_balance};
 

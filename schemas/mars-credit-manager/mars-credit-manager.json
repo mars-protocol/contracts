@@ -1,5 +1,5 @@
 {
-  "contract_name": "credit-manager",
+  "contract_name": "mars-credit-manager",
   "contract_version": "1.0.0",
   "idl_version": "1.0.0",
   "instantiate": {

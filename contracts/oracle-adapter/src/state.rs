@@ -1,6 +1,6 @@
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
-use rover::adapters::Oracle;
+use mars_rover::adapters::Oracle;
 
 use crate::msg::VaultPricingInfo;
 

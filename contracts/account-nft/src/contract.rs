@@ -5,12 +5,16 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
+use cw2::set_contract_version;
 use cw721_base::{ContractError, Cw721Contract, InstantiateMsg};
 
 use crate::execute::{accept_ownership, mint, propose_new_owner};
 use crate::msg::{ExecuteMsg, QueryMsg};
 use crate::query::query_proposed_new_owner;
 use crate::state::NEXT_ID;
+
+const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // Extending CW721 base contract
 pub type Parent<'a> = Cw721Contract<'a, Empty, Empty, Empty, Empty>;
@@ -22,6 +26,11 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
+    set_contract_version(
+        deps.storage,
+        &format!("crates.io:{}", CONTRACT_NAME),
+        CONTRACT_VERSION,
+    )?;
     NEXT_ID.save(deps.storage, &1)?;
     Parent::default().instantiate(deps, env, info, msg)
 }

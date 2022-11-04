@@ -2,13 +2,13 @@ use cosmwasm_std::OverflowOperation::Sub;
 use cosmwasm_std::StdError::NotFound;
 use cosmwasm_std::{Addr, Decimal, OverflowError, Uint128};
 
-use mock_oracle::msg::CoinPrice;
-use rover::adapters::vault::VaultBase;
-use rover::error::ContractError;
-use rover::msg::execute::Action::{
+use mars_mock_oracle::msg::CoinPrice;
+use mars_rover::adapters::vault::VaultBase;
+use mars_rover::error::ContractError;
+use mars_rover::msg::execute::Action::{
     Borrow, Deposit, EnterVault, LiquidateVault, RequestVaultUnlock,
 };
-use rover::traits::IntoDecimal;
+use mars_rover::traits::IntoDecimal;
 
 use crate::helpers::{
     assert_err, get_coin, get_debt, locked_vault_info, lp_token_info, uatom_info, ujake_info,
@@ -64,7 +64,7 @@ fn test_liquidatee_must_have_the_request_vault_position() {
     assert_err(
         res,
         ContractError::Std(NotFound {
-            kind: "rover::adapters::vault::amount::VaultPositionAmount".to_string(),
+            kind: "mars_rover::adapters::vault::amount::VaultPositionAmount".to_string(),
         }),
     )
 }

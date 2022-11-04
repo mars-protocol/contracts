@@ -1,6 +1,6 @@
 use cosmwasm_std::{Coin, Decimal, DepsMut, Env, Response};
 
-use rover::error::{ContractError, ContractResult};
+use mars_rover::error::{ContractError, ContractResult};
 
 use crate::state::SWAPPER;
 use crate::utils::{assert_coins_are_whitelisted, decrement_coin_balance, update_balance_msg};

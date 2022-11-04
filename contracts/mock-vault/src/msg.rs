@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cw_utils::Duration;
-use rover::adapters::OracleUnchecked;
+use mars_rover::adapters::OracleUnchecked;
 
 // Remaining messages in cosmos-vault-standard
 #[cw_serde]

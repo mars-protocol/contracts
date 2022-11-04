@@ -1,11 +1,13 @@
 use cosmwasm_std::{Addr, Uint128};
 use cw_utils::Duration;
 
-use mock_vault::contract::STARTING_VAULT_SHARES;
-use rover::adapters::vault::VaultUnchecked;
-use rover::error::ContractError;
-use rover::msg::execute::Action::{Deposit, EnterVault, ExitVaultUnlocked, RequestVaultUnlock};
-use rover::msg::query::Positions;
+use mars_mock_vault::contract::STARTING_VAULT_SHARES;
+use mars_rover::adapters::vault::VaultUnchecked;
+use mars_rover::error::ContractError;
+use mars_rover::msg::execute::Action::{
+    Deposit, EnterVault, ExitVaultUnlocked, RequestVaultUnlock,
+};
+use mars_rover::msg::query::Positions;
 
 use crate::helpers::{
     assert_err, generate_mock_vault, get_coin, locked_vault_info, lp_token_info, AccountToFund,

@@ -3,10 +3,10 @@ use cosmwasm_std::StdError::GenericErr;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
 use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, Wasm};
 
-use rover::adapters::swap::{ExecuteMsg, QueryMsg, RouteResponse};
-use rover::error::ContractError as RoverError;
-use swapper_base::ContractError;
-use swapper_osmosis::route::OsmosisRoute;
+use mars_rover::adapters::swap::{ExecuteMsg, QueryMsg, RouteResponse};
+use mars_rover::error::ContractError as RoverError;
+use mars_swapper_base::ContractError;
+use mars_swapper_osmosis::route::OsmosisRoute;
 
 use crate::helpers::{assert_err, instantiate_contract};
 

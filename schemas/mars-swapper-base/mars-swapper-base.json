@@ -1,5 +1,5 @@
 {
-  "contract_name": "swapper-base",
+  "contract_name": "mars-swapper-base",
   "contract_version": "1.0.0",
   "idl_version": "1.0.0",
   "instantiate": {

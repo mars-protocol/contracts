@@ -6,7 +6,7 @@ use cw721_base::ContractError::Unauthorized;
 use cw721_base::{ContractError, QueryMsg};
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 
-use account_nft::msg::ExecuteMsg as ExtendedExecuteMsg;
+use mars_account_nft::msg::ExecuteMsg as ExtendedExecuteMsg;
 
 use crate::helpers::{burn_action, instantiate_mock_nft_contract, mint_action};
 

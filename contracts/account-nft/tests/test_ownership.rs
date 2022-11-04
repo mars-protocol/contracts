@@ -3,7 +3,7 @@ use cosmwasm_std::{Addr, StdResult};
 use cw721_base::MinterResponse;
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 
-use account_nft::msg::{ExecuteMsg as ExtendedExecuteMsg, QueryMsg};
+use mars_account_nft::msg::{ExecuteMsg as ExtendedExecuteMsg, QueryMsg};
 
 use crate::helpers::instantiate_mock_nft_contract;
 

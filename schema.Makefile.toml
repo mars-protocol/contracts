@@ -11,14 +11,14 @@ fn main() -> std::io::Result<()> {
     println!("Done");
 
     let contracts = vec![
-        "credit-manager",
-        "account-nft",
-        "swapper-base",
+        "mars-credit-manager",
+        "mars-account-nft",
+        "mars-swapper-base",
         "mars-oracle-adapter",
-        "mock-red-bank",
-        "mock-vault",
-        "mock-oracle",
-        "mock-zapper",
+        "mars-mock-red-bank",
+        "mars-mock-vault",
+        "mars-mock-oracle",
+        "mars-mock-zapper",
     ];
 
     for contract in contracts {

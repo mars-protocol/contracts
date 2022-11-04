@@ -1,10 +1,10 @@
 use cosmwasm_std::{coins, Addr, Coin, Decimal, OverflowError, OverflowOperation, Uint128};
 
-use mock_oracle::msg::CoinPrice;
-use rover::error::ContractError;
-use rover::error::ContractError::{AboveMaxLTV, NotLiquidatable};
-use rover::msg::execute::Action::{Borrow, Deposit, EnterVault, LiquidateCoin};
-use rover::traits::IntoDecimal;
+use mars_mock_oracle::msg::CoinPrice;
+use mars_rover::error::ContractError;
+use mars_rover::error::ContractError::{AboveMaxLTV, NotLiquidatable};
+use mars_rover::msg::execute::Action::{Borrow, Deposit, EnterVault, LiquidateCoin};
+use mars_rover::traits::IntoDecimal;
 
 use crate::helpers::{
     assert_err, get_coin, get_debt, lp_token_info, uatom_info, ujake_info, unlocked_vault_info,

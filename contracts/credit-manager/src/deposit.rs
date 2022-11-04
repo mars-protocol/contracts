@@ -1,7 +1,7 @@
 use cosmwasm_std::{Coin, Response, Storage, Uint128};
 
-use rover::coins::Coins;
-use rover::error::{ContractError, ContractResult};
+use mars_rover::coins::Coins;
+use mars_rover::error::{ContractError, ContractResult};
 
 use crate::utils::{assert_coin_is_whitelisted, increment_coin_balance};
 

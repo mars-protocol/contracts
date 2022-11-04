@@ -1,10 +1,10 @@
 use cosmwasm_std::coin;
 use osmosis_testing::{Account, Module, OsmosisTestApp, Wasm};
 
-use rover::adapters::swap::{Config, ExecuteMsg, QueryMsg};
-use rover::error::ContractError as RoverError;
-use swapper_base::ContractError;
-use swapper_osmosis::route::OsmosisRoute;
+use mars_rover::adapters::swap::{Config, ExecuteMsg, QueryMsg};
+use mars_rover::error::ContractError as RoverError;
+use mars_swapper_base::ContractError;
+use mars_swapper_osmosis::route::OsmosisRoute;
 
 use crate::helpers::{assert_err, instantiate_contract};
 

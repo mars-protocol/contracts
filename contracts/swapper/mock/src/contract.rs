@@ -3,7 +3,9 @@ use cosmwasm_std::{
     MessageInfo, Response, StdError, StdResult, Uint128,
 };
 
-use rover::adapters::swap::{EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_rover::adapters::swap::{
+    EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg,
+};
 
 pub const MOCK_SWAP_RESULT: Uint128 = Uint128::new(1337);
 

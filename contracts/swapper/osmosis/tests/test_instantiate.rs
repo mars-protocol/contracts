@@ -1,7 +1,7 @@
 use cosmwasm_std::coin;
 use osmosis_testing::{Account, Module, OsmosisTestApp, Wasm};
 
-use rover::adapters::swap::{Config, InstantiateMsg, QueryMsg};
+use mars_rover::adapters::swap::{Config, InstantiateMsg, QueryMsg};
 
 use crate::helpers::{instantiate_contract, wasm_file};
 

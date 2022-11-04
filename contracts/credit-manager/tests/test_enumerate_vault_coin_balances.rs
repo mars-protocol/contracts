@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, Uint128};
 
-use rover::msg::execute::Action;
+use mars_rover::msg::execute::Action;
 
 use crate::helpers::{
     assert_contents_equal, build_mock_vaults, lp_token_info, AccountToFund, MockEnv,

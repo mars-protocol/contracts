@@ -2,9 +2,9 @@ use cosmwasm_std::{Addr, Decimal, Uint128};
 use cw_item_set::Set;
 use cw_storage_plus::{Item, Map};
 
-use rover::adapters::swap::Swapper;
-use rover::adapters::vault::{VaultConfig, VaultPositionAmount};
-use rover::adapters::{Oracle, RedBank, Zapper};
+use mars_rover::adapters::swap::Swapper;
+use mars_rover::adapters::vault::{VaultConfig, VaultPositionAmount};
+use mars_rover::adapters::{Oracle, RedBank, Zapper};
 
 use crate::vault::RequestTempStorage;
 

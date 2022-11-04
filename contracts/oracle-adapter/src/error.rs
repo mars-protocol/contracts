@@ -1,7 +1,7 @@
 use cosmwasm_std::{CheckedFromRatioError, DecimalRangeExceeded, OverflowError, StdError};
 use thiserror::Error;
 
-use rover::error::ContractError as RoverError;
+use mars_rover::error::ContractError as RoverError;
 
 pub type ContractResult<T> = Result<T, ContractError>;
 

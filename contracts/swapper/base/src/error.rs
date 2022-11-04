@@ -1,5 +1,5 @@
 use cosmwasm_std::{CheckedMultiplyRatioError, DecimalRangeExceeded, OverflowError, StdError};
-use rover::error::ContractError as RoverError;
+use mars_rover::error::ContractError as RoverError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]

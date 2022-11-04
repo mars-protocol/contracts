@@ -2,11 +2,11 @@ use std::cmp::min;
 
 use cosmwasm_std::{Coin, DepsMut, Env, Response, Uint128};
 
-use rover::adapters::vault::{
+use mars_rover::adapters::vault::{
     UnlockingChange, UnlockingPositions, UpdateType, Vault, VaultPositionAmount,
     VaultPositionUpdate,
 };
-use rover::error::ContractResult;
+use mars_rover::error::ContractResult;
 
 use crate::liquidate_coin::{calculate_liquidation, repay_debt};
 use crate::state::VAULT_POSITIONS;

@@ -20,14 +20,15 @@ library    = []
 [dependencies]
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
+cw2             = { workspace = true }
 cw-storage-plus = { workspace = true }
 mars-outpost    = { workspace = true }
-rover           = { workspace = true }
+mars-rover      = { workspace = true }
 thiserror       = { workspace = true }
 
 [dev-dependencies]
-anyhow        = { workspace = true }
-cw-multi-test = { workspace = true }
-cw-utils      = { workspace = true }
-mock-oracle   = { workspace = true }
-mock-vault    = { workspace = true }
+anyhow           = { workspace = true }
+cw-multi-test    = { workspace = true }
+cw-utils         = { workspace = true }
+mars-mock-oracle = { workspace = true }
+mars-mock-vault  = { workspace = true }

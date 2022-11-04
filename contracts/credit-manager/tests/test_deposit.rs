@@ -1,11 +1,11 @@
 use cosmwasm_std::{coin, coins, Addr, Coin, Uint128};
 
-use rover::coins::Coins;
-use rover::error::ContractError::{
+use mars_rover::coins::Coins;
+use mars_rover::error::ContractError::{
     ExtraFundsReceived, FundsMismatch, NotTokenOwner, NotWhitelisted,
 };
-use rover::msg::execute::Action;
-use rover::msg::query::Positions;
+use mars_rover::msg::execute::Action;
+use mars_rover::msg::query::Positions;
 
 use crate::helpers::{
     assert_err, uatom_info, ujake_info, uosmo_info, AccountToFund, CoinInfo, MockEnv,

@@ -4,7 +4,7 @@ use std::str::FromStr;
 use osmosis_testing::cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest;
 use osmosis_testing::{Account, Bank, OsmosisTestApp, RunnerError, SigningAccount, Wasm};
 
-use rover::adapters::swap::InstantiateMsg;
+use mars_rover::adapters::swap::InstantiateMsg;
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 

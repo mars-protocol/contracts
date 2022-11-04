@@ -1,7 +1,7 @@
 use cosmwasm_std::{Addr, Coin, Deps, StdResult, Storage};
 
-use rover::adapters::vault::{Vault, VaultPositionAmount, VaultPositionUpdate};
-use rover::error::{ContractError, ContractResult};
+use mars_rover::adapters::vault::{Vault, VaultPositionAmount, VaultPositionUpdate};
+use mars_rover::error::{ContractError, ContractResult};
 
 use crate::state::{VAULT_CONFIGS, VAULT_POSITIONS};
 use crate::update_coin_balances::query_balance;

@@ -5,7 +5,7 @@ use mars_oracle_adapter::error::ContractError;
 use mars_oracle_adapter::msg::{
     ConfigResponse, ConfigUpdates, ExecuteMsg, QueryMsg, VaultPricingInfo,
 };
-use rover::adapters::{OracleBase, OracleUnchecked};
+use mars_rover::adapters::{OracleBase, OracleUnchecked};
 
 use crate::helpers::{assert_err, instantiate_oracle_adapter};
 

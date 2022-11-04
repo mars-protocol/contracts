@@ -3,10 +3,10 @@ use cosmwasm_std::{
     Uint128, WasmMsg,
 };
 
-use rover::adapters::vault::{UpdateType, Vault, VaultPositionUpdate};
-use rover::error::{ContractError, ContractResult};
-use rover::msg::execute::CallbackMsg;
-use rover::msg::ExecuteMsg;
+use mars_rover::adapters::vault::{UpdateType, Vault, VaultPositionUpdate};
+use mars_rover::error::{ContractError, ContractResult};
+use mars_rover::msg::execute::CallbackMsg;
+use mars_rover::msg::ExecuteMsg;
 
 use crate::state::{COIN_BALANCES, ORACLE, VAULT_CONFIGS};
 use crate::utils::{assert_coins_are_whitelisted, decrement_coin_balance};

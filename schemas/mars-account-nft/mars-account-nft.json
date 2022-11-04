@@ -1,5 +1,5 @@
 {
-  "contract_name": "account-nft",
+  "contract_name": "mars-account-nft",
   "contract_version": "1.0.0",
   "idl_version": "1.0.0",
   "instantiate": {

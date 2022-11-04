@@ -2,7 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Coin, Decimal, QuerierWrapper, StdResult};
 use mars_outpost::oracle::PriceResponse;
 
-use mock_oracle::msg::QueryMsg;
+use mars_mock_oracle::msg::QueryMsg;
 
 use crate::error::ContractResult;
 use crate::traits::IntoDecimal;

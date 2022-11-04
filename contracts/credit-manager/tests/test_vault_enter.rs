@@ -2,10 +2,10 @@ use cosmwasm_std::OverflowOperation::Sub;
 use cosmwasm_std::StdError::NotFound;
 use cosmwasm_std::{Addr, OverflowError, Uint128};
 
-use mock_vault::contract::STARTING_VAULT_SHARES;
-use rover::adapters::vault::VaultBase;
-use rover::error::ContractError;
-use rover::msg::execute::Action::{Deposit, EnterVault};
+use mars_mock_vault::contract::STARTING_VAULT_SHARES;
+use mars_rover::adapters::vault::VaultBase;
+use mars_rover::error::ContractError;
+use mars_rover::msg::execute::Action::{Deposit, EnterVault};
 
 use crate::helpers::{
     assert_err, locked_vault_info, lp_token_info, uatom_info, unlocked_vault_info, uosmo_info,

@@ -1,12 +1,15 @@
 use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response};
-
-use rover::adapters::swap::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use swapper_base::{ContractResult, SwapBase};
+use cw2::set_contract_version;
+use mars_rover::adapters::swap::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_swapper_base::{ContractResult, SwapBase};
 
 use crate::route::OsmosisRoute;
 
 /// The Osmosis swapper contract inherits logic from the base swapper contract
 pub type OsmosisSwap<'a> = SwapBase<'a, Empty, Empty, OsmosisRoute>;
+
+const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -15,6 +18,11 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> ContractResult<Response> {
+    set_contract_version(
+        deps.storage,
+        &format!("crates.io:{}", CONTRACT_NAME),
+        CONTRACT_VERSION,
+    )?;
     OsmosisSwap::default().instantiate(deps, msg)
 }
 

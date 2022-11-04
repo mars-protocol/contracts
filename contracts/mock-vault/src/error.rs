@@ -1,5 +1,5 @@
 use cosmwasm_std::{CheckedMultiplyRatioError, StdError};
-use rover::error::ContractError as RoverError;
+use mars_rover::error::ContractError as RoverError;
 use thiserror::Error;
 
 pub type ContractResult<T> = Result<T, ContractError>;

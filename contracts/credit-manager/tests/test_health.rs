@@ -2,12 +2,12 @@ use std::ops::{Add, Div, Mul};
 
 use cosmwasm_std::{coins, Addr, Coin, Decimal, Uint128};
 
-use credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
-use mock_oracle::msg::CoinPrice;
-use rover::error::ContractError;
-use rover::msg::execute::Action::{Borrow, Deposit};
-use rover::msg::query::DebtAmount;
-use rover::traits::IntoDecimal;
+use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
+use mars_mock_oracle::msg::CoinPrice;
+use mars_rover::error::ContractError;
+use mars_rover::msg::execute::Action::{Borrow, Deposit};
+use mars_rover::msg::query::DebtAmount;
+use mars_rover::traits::IntoDecimal;
 
 use crate::helpers::{assert_err, ujake_info, uosmo_info, AccountToFund, CoinInfo, MockEnv};
 

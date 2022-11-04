@@ -1,6 +1,6 @@
 use cosmwasm_std::{Coin, DepsMut, Env, Response, Uint128};
 
-use rover::error::{ContractError, ContractResult};
+use mars_rover::error::{ContractError, ContractResult};
 
 use crate::state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES};
 use crate::utils::{assert_coin_is_whitelisted, increment_coin_balance};

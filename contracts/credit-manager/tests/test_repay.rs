@@ -2,10 +2,10 @@ use std::ops::{Add, Mul, Sub};
 
 use cosmwasm_std::{coin, coins, Addr, Decimal, OverflowError, OverflowOperation, Uint128};
 
-use credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
-use rover::error::ContractError;
-use rover::msg::execute::Action::{Borrow, Deposit, Repay, Withdraw};
-use rover::traits::IntoDecimal;
+use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
+use mars_rover::error::ContractError;
+use mars_rover::msg::execute::Action::{Borrow, Deposit, Repay, Withdraw};
+use mars_rover::traits::IntoDecimal;
 
 use crate::helpers::{
     assert_err, uosmo_info, AccountToFund, CoinInfo, MockEnv, DEFAULT_RED_BANK_COIN_BALANCE,

@@ -4,12 +4,13 @@ use cosmwasm_std::{
     to_binary, Addr, Binary, Coin, Decimal, Deps, DepsMut, Env, MessageInfo, Order, Response,
     StdResult,
 };
+use cw2::set_contract_version;
 use cw_storage_plus::Bound;
 use mars_outpost::oracle::PriceResponse;
 
-use rover::adapters::vault::VaultBase;
-use rover::adapters::Oracle;
-use rover::traits::IntoDecimal;
+use mars_rover::adapters::vault::VaultBase;
+use mars_rover::adapters::Oracle;
+use mars_rover::traits::IntoDecimal;
 
 use crate::error::{ContractError, ContractResult};
 use crate::msg::{
@@ -17,6 +18,9 @@ use crate::msg::{
     VaultPricingInfo,
 };
 use crate::state::{ORACLE, OWNER, VAULT_PRICING_INFO};
+
+const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
@@ -28,6 +32,12 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
+    set_contract_version(
+        deps.storage,
+        &format!("crates.io:{}", CONTRACT_NAME),
+        CONTRACT_VERSION,
+    )?;
+
     let owner = deps.api.addr_validate(&msg.owner)?;
     OWNER.save(deps.storage, &owner)?;
 

@@ -1,9 +1,9 @@
 use cosmwasm_std::OverflowOperation::Sub;
 use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, OverflowError, Uint128};
 
-use rover::error::ContractError;
-use rover::msg::execute::Action::{Deposit, SwapExactIn};
-use swapper_mock::contract::MOCK_SWAP_RESULT;
+use mars_rover::error::ContractError;
+use mars_rover::msg::execute::Action::{Deposit, SwapExactIn};
+use mars_swapper_mock::contract::MOCK_SWAP_RESULT;
 
 use crate::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv};
 

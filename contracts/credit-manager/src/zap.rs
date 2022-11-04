@@ -1,7 +1,7 @@
 use cosmwasm_std::{Coin, Deps, DepsMut, Env, Response, Uint128};
 
-use rover::error::ContractResult;
-use rover::traits::Denoms;
+use mars_rover::error::ContractResult;
+use mars_rover::traits::Denoms;
 
 use crate::state::ZAPPER;
 use crate::utils::{

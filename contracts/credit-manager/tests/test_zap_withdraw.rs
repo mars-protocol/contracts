@@ -1,10 +1,10 @@
 use cosmwasm_std::OverflowOperation::Sub;
 use cosmwasm_std::{Addr, OverflowError, Uint128};
 
-use mock_zapper::contract::STARTING_LP_POOL_TOKENS;
-use rover::error::ContractError as RoverError;
-use rover::msg::execute::Action::{Deposit, ProvideLiquidity, WithdrawLiquidity};
-use rover::msg::instantiate::ConfigUpdates;
+use mars_mock_zapper::contract::STARTING_LP_POOL_TOKENS;
+use mars_rover::error::ContractError as RoverError;
+use mars_rover::msg::execute::Action::{Deposit, ProvideLiquidity, WithdrawLiquidity};
+use mars_rover::msg::instantiate::ConfigUpdates;
 
 use crate::helpers::{
     assert_err, get_coin, lp_token_info, uatom_info, uosmo_info, AccountToFund, MockEnv,

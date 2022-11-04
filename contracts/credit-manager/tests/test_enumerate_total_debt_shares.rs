@@ -1,8 +1,8 @@
 use cosmwasm_std::{coin, Addr};
 
-use credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
-use rover::msg::execute::Action;
-use rover::msg::query::DebtShares;
+use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
+use mars_rover::msg::execute::Action;
+use mars_rover::msg::query::DebtShares;
 
 use crate::helpers::{build_mock_coin_infos, AccountToFund, MockEnv};
 

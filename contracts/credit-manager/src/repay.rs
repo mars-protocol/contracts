@@ -2,7 +2,7 @@ use std::cmp::min;
 
 use cosmwasm_std::{Coin, Deps, DepsMut, Env, Response, Uint128};
 
-use rover::error::{ContractError, ContractResult};
+use mars_rover::error::{ContractError, ContractResult};
 
 use crate::state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES};
 use crate::utils::{assert_coin_is_whitelisted, debt_shares_to_amount, decrement_coin_balance};

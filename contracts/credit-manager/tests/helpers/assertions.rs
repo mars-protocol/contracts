@@ -1,9 +1,9 @@
 use anyhow::Result as AnyResult;
-use credit_manager::utils::contents_equal;
 use cw_multi_test::AppResponse;
+use mars_credit_manager::utils::contents_equal;
 use std::hash::Hash;
 
-use rover::error::ContractError;
+use mars_rover::error::ContractError;
 
 pub fn assert_err(res: AnyResult<AppResponse>, err: ContractError) {
     match res {

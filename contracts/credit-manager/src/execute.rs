@@ -22,12 +22,12 @@ use crate::swap::swap_exact_in;
 use crate::update_coin_balances::update_coin_balance;
 use crate::withdraw::withdraw;
 use crate::zap::{provide_liquidity, withdraw_liquidity};
-use account_nft::msg::ExecuteMsg as NftExecuteMsg;
-use rover::coins::Coins;
-use rover::error::{ContractError, ContractResult};
-use rover::msg::execute::{Action, CallbackMsg};
-use rover::msg::instantiate::ConfigUpdates;
-use rover::traits::{FallbackStr, Stringify};
+use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
+use mars_rover::coins::Coins;
+use mars_rover::error::{ContractError, ContractResult};
+use mars_rover::msg::execute::{Action, CallbackMsg};
+use mars_rover::msg::instantiate::ConfigUpdates;
+use mars_rover::traits::{FallbackStr, Stringify};
 
 pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Response> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;

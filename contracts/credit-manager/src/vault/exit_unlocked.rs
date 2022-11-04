@@ -1,10 +1,10 @@
 use cosmos_vault_standard::extensions::lockup::Lockup;
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, WasmMsg};
 
-use rover::adapters::vault::{UnlockingChange, Vault, VaultPositionUpdate};
-use rover::error::{ContractError, ContractResult};
-use rover::msg::execute::CallbackMsg;
-use rover::msg::ExecuteMsg;
+use mars_rover::adapters::vault::{UnlockingChange, Vault, VaultPositionUpdate};
+use mars_rover::error::{ContractError, ContractResult};
+use mars_rover::msg::execute::CallbackMsg;
+use mars_rover::msg::ExecuteMsg;
 
 use crate::state::VAULT_POSITIONS;
 use crate::vault::utils::{

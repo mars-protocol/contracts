@@ -3,10 +3,10 @@ use cosmwasm_std::{coins, Addr, OverflowError, Uint128};
 use cw_multi_test::{BankSudo, SudoMsg};
 use cw_utils::{Duration, Expiration};
 
-use mock_vault::contract::STARTING_VAULT_SHARES;
-use rover::adapters::vault::VaultUnchecked;
-use rover::error::ContractError;
-use rover::msg::execute::Action::{Deposit, EnterVault, RequestVaultUnlock};
+use mars_mock_vault::contract::STARTING_VAULT_SHARES;
+use mars_rover::adapters::vault::VaultUnchecked;
+use mars_rover::error::ContractError;
+use mars_rover::msg::execute::Action::{Deposit, EnterVault, RequestVaultUnlock};
 
 use crate::helpers::{
     assert_err, locked_vault_info, lp_token_info, unlocked_vault_info, AccountToFund, MockEnv,

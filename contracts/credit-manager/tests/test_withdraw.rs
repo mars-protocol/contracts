@@ -1,9 +1,9 @@
 use cosmwasm_std::OverflowOperation::Sub;
 use cosmwasm_std::{coin, coins, Addr, Coin, OverflowError, Uint128};
 
-use rover::error::ContractError;
-use rover::error::ContractError::{NotTokenOwner, NotWhitelisted};
-use rover::msg::execute::Action;
+use mars_rover::error::ContractError;
+use mars_rover::error::ContractError::{NotTokenOwner, NotWhitelisted};
+use mars_rover::msg::execute::Action;
 
 use crate::helpers::{assert_err, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv};
 

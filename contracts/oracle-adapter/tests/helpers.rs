@@ -3,20 +3,20 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{coin, Addr, Coin, Decimal};
 use cw_multi_test::{AppResponse, BankSudo, BasicApp, ContractWrapper, Executor, SudoMsg};
 use cw_utils::Duration;
-use mars_oracle_adapter::contract::{execute, instantiate, query};
-use mars_oracle_adapter::error::ContractError;
-use mars_oracle_adapter::msg::{InstantiateMsg, PricingMethod, VaultPricingInfo};
-use mock_oracle::contract::{
+use mars_mock_oracle::contract::{
     execute as oracleExecute, instantiate as oracleInstantiate, query as oracleQuery,
 };
-use mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
-use mock_vault::contract::{
+use mars_mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
+use mars_mock_vault::contract::{
     execute as vaultExecute, instantiate as vaultInstantiate, query as vaultQuery,
     DEFAULT_VAULT_TOKEN_PREFUND,
 };
-use mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
-use rover::adapters::vault::VaultBase;
-use rover::adapters::{OracleBase, OracleUnchecked};
+use mars_mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
+use mars_oracle_adapter::contract::{execute, instantiate, query};
+use mars_oracle_adapter::error::ContractError;
+use mars_oracle_adapter::msg::{InstantiateMsg, PricingMethod, VaultPricingInfo};
+use mars_rover::adapters::vault::VaultBase;
+use mars_rover::adapters::{OracleBase, OracleUnchecked};
 
 pub fn mock_vault_info() -> VaultTestInfo {
     VaultTestInfo {

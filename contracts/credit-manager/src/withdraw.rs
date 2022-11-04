@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, BankMsg, Coin, CosmosMsg, DepsMut, Response};
 
-use rover::error::{ContractError, ContractResult};
+use mars_rover::error::{ContractError, ContractResult};
 
 use crate::utils::{assert_coin_is_whitelisted, decrement_coin_balance};
 

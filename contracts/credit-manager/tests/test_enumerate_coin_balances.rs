@@ -1,7 +1,7 @@
 use cosmwasm_std::{coin, Addr, Uint128};
 
-use rover::msg::execute::Action;
-use rover::msg::query::CoinBalanceResponseItem;
+use mars_rover::msg::execute::Action;
+use mars_rover::msg::query::CoinBalanceResponseItem;
 
 use crate::helpers::{build_mock_coin_infos, AccountToFund, MockEnv};
 

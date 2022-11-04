@@ -1,5 +1,5 @@
 [package]
-name          = "mock-red-bank"
+name          = "mars-mock-red-bank"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
