@@ -1,4 +1,4 @@
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Uint128};
 
 use rover::msg::execute::Action;
 
@@ -40,7 +40,8 @@ fn test_pagination_on_all_vault_coin_balances_query_works() {
     all_vaults.iter().for_each(|v| {
         actions.extend([Action::EnterVault {
             vault: mock.get_vault(v),
-            coin: lp_token.to_coin(10),
+            denom: lp_token.denom.clone(),
+            amount: Some(Uint128::new(10)),
         }]);
     });
 

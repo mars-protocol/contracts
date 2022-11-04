@@ -18,6 +18,7 @@ fn main() -> std::io::Result<()> {
         "mock-red-bank",
         "mock-vault",
         "mock-oracle",
+        "mock-zapper",
     ];
 
     for contract in contracts {

@@ -270,6 +270,38 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "description": "Update the whitelist of addresses that can call ForceRedeem and ForceWithdrawUnlocking.",
+            "type": "object",
+            "required": [
+              "update_force_withdraw_whitelist"
+            ],
+            "properties": {
+              "update_force_withdraw_whitelist": {
+                "type": "object",
+                "required": [
+                  "add_addresses",
+                  "remove_addresses"
+                ],
+                "properties": {
+                  "add_addresses": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "remove_addresses": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },

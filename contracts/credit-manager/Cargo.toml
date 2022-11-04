@@ -40,4 +40,5 @@ itertools     = "0.10"
 mock-oracle   = { workspace = true }
 mock-red-bank = { workspace = true }
 mock-vault    = { workspace = true }
+mock-zapper    = { workspace = true }
 swapper-mock  = { workspace = true }

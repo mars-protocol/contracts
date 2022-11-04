@@ -4,7 +4,7 @@ use rover::adapters::vault::{Vault, VaultPositionAmount, VaultPositionUpdate};
 use rover::error::{ContractError, ContractResult};
 
 use crate::state::{VAULT_CONFIGS, VAULT_POSITIONS};
-use crate::update_coin_balances::query_balances;
+use crate::update_coin_balances::query_balance;
 
 pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> ContractResult<()> {
     let config = VAULT_CONFIGS
@@ -38,11 +38,11 @@ pub fn update_vault_position(
 }
 
 /// Returns the total vault token balance for rover
-pub fn query_withdraw_denom_balances(
+pub fn query_withdraw_denom_balance(
     deps: Deps,
     rover_addr: &Addr,
     vault: &Vault,
-) -> StdResult<Vec<Coin>> {
+) -> StdResult<Coin> {
     let vault_info = vault.query_info(&deps.querier)?;
-    query_balances(deps, rover_addr, &[vault_info.base_token.as_str()])
+    query_balance(&deps.querier, rover_addr, vault_info.base_token.as_str())
 }

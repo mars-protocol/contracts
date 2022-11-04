@@ -1,0 +1,23 @@
+[package]
+name = "mock-zapper"
+version = "1.0.0"
+authors = ["grod220 <gabe.r@delphilabs.io>"]
+edition = "2021"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/mars-protocol/rover"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+library = []
+
+[dependencies]
+rover = { version = "1.0", path = "../../packages/rover" }
+
+cosmwasm-schema = "1.1"
+cosmwasm-std = "1.1"
+cw-storage-plus = "0.16"
+cw-utils = "0.16"
+thiserror = "1.0"

@@ -125,7 +125,7 @@ pub fn assert_below_max_ltv(deps: Deps, env: Env, account_id: &str) -> ContractR
         .add_attribute("above_max_ltv", health.is_above_max_ltv().to_string());
 
     Ok(Response::new()
-        .add_attribute("action", "rover/credit_manager/callback/assert_health")
+        .add_attribute("action", "rover/credit-manager/callback/assert_health")
         .add_event(event))
 }
 

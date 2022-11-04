@@ -2,7 +2,7 @@ use cosmwasm_std::{coin, Addr, Decimal};
 
 use rover::adapters::swap::SwapperBase;
 use rover::adapters::vault::{VaultBase, VaultConfig};
-use rover::adapters::{OracleBase, RedBankBase};
+use rover::adapters::{OracleBase, RedBankBase, ZapperBase};
 use rover::error::ContractError;
 use rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
 
@@ -27,6 +27,7 @@ fn test_only_owner_can_update_config() {
             max_close_factor: None,
             swapper: None,
             vault_configs: None,
+            zapper: None,
         },
     );
 
@@ -59,6 +60,7 @@ fn test_raises_on_invalid_vaults_config() {
                     whitelisted: true,
                 },
             }]),
+            zapper: None,
         },
     );
 
@@ -84,6 +86,7 @@ fn test_raises_on_invalid_vaults_config() {
                     whitelisted: true,
                 },
             }]),
+            zapper: None,
         },
     );
 
@@ -111,6 +114,7 @@ fn test_update_config_works_with_full_config() {
     }];
     let new_allowed_coins = vec!["uosmo".to_string()];
     let new_oracle = OracleBase::new("new_oracle".to_string());
+    let new_zapper = ZapperBase::new("new_zapper".to_string());
     let new_liq_bonus = Decimal::from_atomics(17u128, 2).unwrap();
     let new_close_factor = Decimal::from_atomics(32u128, 2).unwrap();
     let new_swapper = SwapperBase::new("new_swapper".to_string());
@@ -127,6 +131,7 @@ fn test_update_config_works_with_full_config() {
             max_close_factor: Some(new_close_factor),
             swapper: Some(new_swapper.clone()),
             vault_configs: Some(new_vault_configs.clone()),
+            zapper: Some(new_zapper.clone()),
         },
     )
     .unwrap();
@@ -152,6 +157,9 @@ fn test_update_config_works_with_full_config() {
 
     assert_eq!(&new_config.oracle, new_oracle.address());
     assert_ne!(new_config.oracle, original_config.oracle);
+
+    assert_eq!(&new_config.zapper, new_zapper.address());
+    assert_ne!(new_config.zapper, original_config.zapper);
 
     assert_eq!(new_config.max_liquidation_bonus, new_liq_bonus);
     assert_ne!(
@@ -273,6 +281,7 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
     assert_eq!(new_queried_allowed_coins, original_allowed_coins);
     assert_eq!(new_config.red_bank, original_config.red_bank);
     assert_eq!(new_config.oracle, original_config.oracle);
+    assert_eq!(new_config.zapper, original_config.zapper);
     assert_eq!(
         new_config.max_liquidation_bonus,
         original_config.max_liquidation_bonus

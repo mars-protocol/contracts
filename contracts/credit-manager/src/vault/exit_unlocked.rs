@@ -8,7 +8,7 @@ use rover::msg::ExecuteMsg;
 
 use crate::state::VAULT_POSITIONS;
 use crate::vault::utils::{
-    assert_vault_is_whitelisted, query_withdraw_denom_balances, update_vault_position,
+    assert_vault_is_whitelisted, query_withdraw_denom_balance, update_vault_position,
 };
 
 pub fn exit_vault_unlocked(
@@ -40,14 +40,14 @@ pub fn exit_vault_unlocked(
     )?;
 
     // Updates coin balances for account after the withdraw has taken place
-    let previous_balances =
-        query_withdraw_denom_balances(deps.as_ref(), &env.contract.address, &vault)?;
+    let previous_balance =
+        query_withdraw_denom_balance(deps.as_ref(), &env.contract.address, &vault)?;
     let update_coin_balance_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         funds: vec![],
-        msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateCoinBalances {
+        msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
             account_id: account_id.to_string(),
-            previous_balances,
+            previous_balance,
         }))?,
     });
 
@@ -56,5 +56,5 @@ pub fn exit_vault_unlocked(
     Ok(Response::new()
         .add_message(withdraw_unlocked_msg)
         .add_message(update_coin_balance_msg)
-        .add_attribute("action", "rover/credit_manager/vault/unlock"))
+        .add_attribute("action", "rover/credit-manager/vault/unlock"))
 }

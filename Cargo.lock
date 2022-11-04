@@ -211,6 +211,7 @@ dependencies = [
  "mock-oracle",
  "mock-red-bank",
  "mock-vault",
+ "mock-zapper",
  "rover",
  "swapper-mock",
 ]
@@ -641,6 +642,18 @@ name = "mock-vault"
 version = "1.0.0"
 dependencies = [
  "cosmos-vault-standard",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.16.0",
+ "cw-utils 0.16.0",
+ "rover",
+ "thiserror",
+]
+
+[[package]]
+name = "mock-zapper"
+version = "1.0.0"
+dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 0.16.0",

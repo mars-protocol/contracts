@@ -10,7 +10,7 @@ use crate::health::assert_below_max_ltv;
 use crate::repay::repay;
 use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK,
-    SWAPPER, VAULT_CONFIGS,
+    SWAPPER, VAULT_CONFIGS, ZAPPER,
 };
 use crate::vault::{
     enter_vault, exit_vault, exit_vault_unlocked, liquidate_vault, request_vault_unlock,
@@ -19,8 +19,9 @@ use crate::vault::{
 
 use crate::liquidate_coin::liquidate_coin;
 use crate::swap::swap_exact_in;
-use crate::update_coin_balances::update_coin_balances;
+use crate::update_coin_balances::update_coin_balance;
 use crate::withdraw::withdraw;
+use crate::zap::{provide_liquidity, withdraw_liquidity};
 use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use rover::coins::Coins;
 use rover::error::{ContractError, ContractResult};
@@ -41,7 +42,7 @@ pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Respon
 
     Ok(Response::new()
         .add_message(nft_mint_msg)
-        .add_attribute("action", "rover/credit_manager/create_credit_account"))
+        .add_attribute("action", "rover/credit-manager/create_credit_account"))
 }
 
 pub fn update_config(
@@ -59,7 +60,7 @@ pub fn update_config(
     }
 
     let mut response =
-        Response::new().add_attribute("action", "rover/credit_manager/update_config");
+        Response::new().add_attribute("action", "rover/credit-manager/update_config");
 
     if let Some(addr_str) = new_config.account_nft {
         let validated = deps.api.addr_validate(&addr_str)?;
@@ -130,6 +131,13 @@ pub fn update_config(
             .add_attribute("value", unchecked.address());
     }
 
+    if let Some(unchecked) = new_config.zapper {
+        ZAPPER.save(deps.storage, &unchecked.check(deps.api)?)?;
+        response = response
+            .add_attribute("key", "zapper")
+            .add_attribute("value", unchecked.address());
+    }
+
     if let Some(bonus) = new_config.max_liquidation_bonus {
         MAX_LIQUIDATION_BONUS.save(deps.storage, &bonus)?;
         response = response
@@ -186,11 +194,13 @@ pub fn dispatch_actions(
             }),
             Action::EnterVault {
                 vault,
-                coin: assets,
+                denom,
+                amount,
             } => callbacks.push(CallbackMsg::EnterVault {
                 account_id: account_id.to_string(),
                 vault: vault.check(deps.api)?,
-                coin: assets.clone(),
+                denom: denom.to_string(),
+                amount: *amount,
             }),
             Action::LiquidateCoin {
                 liquidatee_account_id,
@@ -241,6 +251,22 @@ pub fn dispatch_actions(
                     position_id: *id,
                 })
             }
+            Action::ProvideLiquidity {
+                coins_in,
+                lp_token_out,
+                minimum_receive,
+            } => callbacks.push(CallbackMsg::ProvideLiquidity {
+                account_id: account_id.to_string(),
+                lp_token_out: lp_token_out.clone(),
+                coins_in: coins_in.clone(),
+                minimum_receive: *minimum_receive,
+            }),
+            Action::WithdrawLiquidity { lp_token } => {
+                callbacks.push(CallbackMsg::WithdrawLiquidity {
+                    account_id: account_id.to_string(),
+                    lp_token: lp_token.clone(),
+                })
+            }
         }
     }
 
@@ -288,8 +314,16 @@ pub fn execute_callback(
         CallbackMsg::EnterVault {
             account_id,
             vault,
-            coin,
-        } => enter_vault(deps, &env.contract.address, &account_id, vault, coin),
+            denom,
+            amount,
+        } => enter_vault(
+            deps,
+            &env.contract.address,
+            &account_id,
+            vault,
+            &denom,
+            amount,
+        ),
         CallbackMsg::UpdateVaultCoinBalance {
             vault,
             account_id,
@@ -333,10 +367,10 @@ pub fn execute_callback(
             denom_out,
             slippage,
         } => swap_exact_in(deps, env, &account_id, coin_in, &denom_out, slippage),
-        CallbackMsg::UpdateCoinBalances {
+        CallbackMsg::UpdateCoinBalance {
             account_id,
-            previous_balances,
-        } => update_coin_balances(deps, env, &account_id, &previous_balances),
+            previous_balance,
+        } => update_coin_balance(deps, env, &account_id, &previous_balance),
         CallbackMsg::ExitVault {
             account_id,
             vault,
@@ -357,6 +391,23 @@ pub fn execute_callback(
             vault,
             position_id,
         } => exit_vault_unlocked(deps, env, &account_id, vault, position_id),
+        CallbackMsg::ProvideLiquidity {
+            account_id,
+            coins_in,
+            lp_token_out,
+            minimum_receive,
+        } => provide_liquidity(
+            deps,
+            env,
+            &account_id,
+            coins_in,
+            &lp_token_out,
+            minimum_receive,
+        ),
+        CallbackMsg::WithdrawLiquidity {
+            account_id,
+            lp_token,
+        } => withdraw_liquidity(deps, env, &account_id, lp_token),
     }
 }
 

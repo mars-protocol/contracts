@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    coin as c, to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Uint128,
-    WasmMsg,
+    coin as c, to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Storage,
+    Uint128, WasmMsg,
 };
 
 use rover::adapters::vault::{UpdateType, Vault, VaultPositionUpdate};
@@ -8,7 +8,7 @@ use rover::error::{ContractError, ContractResult};
 use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg;
 
-use crate::state::{ORACLE, VAULT_CONFIGS};
+use crate::state::{COIN_BALANCES, ORACLE, VAULT_CONFIGS};
 use crate::utils::{assert_coins_are_whitelisted, decrement_coin_balance};
 use crate::vault::utils::{assert_vault_is_whitelisted, update_vault_position};
 
@@ -17,14 +17,21 @@ pub fn enter_vault(
     rover_addr: &Addr,
     account_id: &str,
     vault: Vault,
-    coin: Coin,
+    denom: &str,
+    amount_opt: Option<Uint128>,
 ) -> ContractResult<Response> {
-    assert_coins_are_whitelisted(deps.storage, vec![coin.denom.as_str()])?;
-    assert_vault_is_whitelisted(deps.storage, &vault)?;
-    assert_denom_matches_vault_reqs(deps.querier, &vault, &coin)?;
-    assert_deposit_is_under_cap(deps.as_ref(), &vault, &coin, rover_addr)?;
+    let amount = or_full_balance_default(deps.storage, amount_opt, account_id, denom)?;
+    let coin_to_enter = Coin {
+        denom: denom.to_string(),
+        amount,
+    };
 
-    decrement_coin_balance(deps.storage, account_id, &coin)?;
+    assert_coins_are_whitelisted(deps.storage, vec![denom])?;
+    assert_vault_is_whitelisted(deps.storage, &vault)?;
+    assert_denom_matches_vault_reqs(deps.querier, &vault, &coin_to_enter)?;
+    assert_deposit_is_under_cap(deps.as_ref(), &vault, &coin_to_enter, rover_addr)?;
+
+    decrement_coin_balance(deps.storage, account_id, &coin_to_enter)?;
 
     let current_balance = vault.query_balance(&deps.querier, rover_addr)?;
     let update_vault_balance_msg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -38,9 +45,22 @@ pub fn enter_vault(
     });
 
     Ok(Response::new()
-        .add_message(vault.deposit_msg(&coin)?)
+        .add_message(vault.deposit_msg(&coin_to_enter)?)
         .add_message(update_vault_balance_msg)
-        .add_attribute("action", "rover/credit_manager/vault/deposit"))
+        .add_attribute("action", "rover/credit-manager/vault/deposit"))
+}
+
+fn or_full_balance_default(
+    storage: &dyn Storage,
+    amount_opt: Option<Uint128>,
+    account_id: &str,
+    denom: &str,
+) -> ContractResult<Uint128> {
+    if let Some(a) = amount_opt {
+        Ok(a)
+    } else {
+        Ok(COIN_BALANCES.load(storage, (account_id, denom))?)
+    }
 }
 
 pub fn update_vault_coin_balance(
@@ -70,7 +90,7 @@ pub fn update_vault_coin_balance(
     )?;
 
     Ok(Response::new()
-        .add_attribute("action", "rover/credit_manager/vault/update_balance")
+        .add_attribute("action", "rover/credit-manager/vault/update_balance")
         .add_attribute(
             "amount_incremented",
             current_balance.checked_sub(previous_total_balance)?,

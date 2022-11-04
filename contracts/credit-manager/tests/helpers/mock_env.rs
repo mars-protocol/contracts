@@ -1,21 +1,21 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::testing::MockApi;
-use cosmwasm_std::{coins, Addr, Coin, Decimal, Empty, Uint128};
-use cw721_base::InstantiateMsg as NftInstantiateMsg;
-use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
-use mars_outpost::red_bank::QueryMsg::UserDebt;
-use mars_outpost::red_bank::UserDebtResponse;
-
-use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use cosmos_vault_standard::extensions::lockup::Lockup;
 use cosmos_vault_standard::extensions::lockup::LockupQueryMsg::Lockups;
 use cosmos_vault_standard::msg::QueryMsg::{Info as VaultInfoMsg, VaultExtension};
 use cosmos_vault_standard::msg::{ExtensionQueryMsg, VaultInfo};
+use cosmwasm_std::testing::MockApi;
+use cosmwasm_std::{coins, Addr, Coin, Decimal, Empty, Uint128};
+use cw721_base::InstantiateMsg as NftInstantiateMsg;
+use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
+
+use account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use mars_oracle_adapter::msg::{
     InstantiateMsg as OracleAdapterInstantiateMsg, PricingMethod, VaultPricingInfo,
 };
+use mars_outpost::red_bank::QueryMsg::UserDebt;
+use mars_outpost::red_bank::UserDebtResponse;
 use mock_oracle::msg::{
     CoinPrice, ExecuteMsg as OracleExecuteMsg, InstantiateMsg as OracleInstantiateMsg,
 };
@@ -27,19 +27,21 @@ use rover::adapters::swap::{
     EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg, Swapper, SwapperBase,
 };
 use rover::adapters::vault::{VaultBase, VaultConfig, VaultUnchecked};
-use rover::adapters::{OracleBase, RedBankBase};
+use rover::adapters::{OracleBase, OracleUnchecked, RedBankBase, Zapper, ZapperBase};
 use rover::msg::execute::{Action, CallbackMsg};
 use rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
 use rover::msg::query::{
     CoinBalanceResponseItem, ConfigResponse, DebtShares, HealthResponse, Positions,
     SharesResponseItem, VaultPositionResponseItem, VaultWithBalance,
 };
+use rover::msg::zapper::QueryMsg::EstimateProvideLiquidity;
+use rover::msg::zapper::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 use rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::helpers::{
-    mock_account_nft_contract, mock_oracle_adapter_contract, mock_oracle_contract,
+    lp_token_info, mock_account_nft_contract, mock_oracle_adapter_contract, mock_oracle_contract,
     mock_red_bank_contract, mock_rover_contract, mock_swapper_contract, mock_vault_contract,
-    AccountToFund, CoinInfo, VaultTestInfo,
+    mock_zapper_contract, AccountToFund, CoinInfo, VaultTestInfo,
 };
 
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000);
@@ -425,6 +427,20 @@ impl MockEnv {
             )
             .unwrap()
     }
+
+    pub fn estimate_provide_liquidity(&self, lp_token_out: &str, coins_in: &[Coin]) -> Uint128 {
+        let config = self.query_config();
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                config.zapper,
+                &EstimateProvideLiquidity {
+                    lp_token_out: lp_token_out.to_string(),
+                    coins_in: coins_in.to_vec(),
+                },
+            )
+            .unwrap()
+    }
 }
 
 impl MockEnvBuilder {
@@ -511,6 +527,7 @@ impl MockEnvBuilder {
         allowed_vaults.extend(self.pre_deployed_vaults.clone().unwrap_or_default());
 
         let oracle = self.get_oracle_adapter(allowed_vaults.clone()).into();
+        let zapper = self.deploy_zapper(&oracle)?.into();
 
         self.app.instantiate_contract(
             code_id,
@@ -524,6 +541,7 @@ impl MockEnvBuilder {
                 max_liquidation_bonus,
                 max_close_factor,
                 swapper,
+                zapper,
             },
             &[],
             "mock-rover-contract",
@@ -726,6 +744,33 @@ impl MockEnvBuilder {
             }))
             .unwrap();
         SwapperBase::new(addr)
+    }
+
+    fn deploy_zapper(&mut self, oracle: &OracleUnchecked) -> AnyResult<Zapper> {
+        let code_id = self.app.store_code(mock_zapper_contract());
+        let lp_token = lp_token_info();
+        let addr = self.app.instantiate_contract(
+            code_id,
+            Addr::unchecked("zapper-instantiator"),
+            &ZapperInstantiateMsg {
+                oracle: oracle.clone(),
+                lp_configs: vec![LpConfig {
+                    lp_token_denom: lp_token.denom.to_string(),
+                    lp_pair_denoms: ("uatom".to_string(), "uosmo".to_string()),
+                }],
+            },
+            &[],
+            "mock-vault",
+            None,
+        )?;
+        // Fund with lp tokens to simulate mints
+        self.app
+            .sudo(SudoMsg::Bank(BankSudo::Mint {
+                to_address: addr.to_string(),
+                amount: coins(10_000_000, lp_token.denom),
+            }))
+            .unwrap();
+        Ok(ZapperBase::new(addr))
     }
 
     /// cw-multi-test does not yet have the ability to mint sdk coins. For this reason,

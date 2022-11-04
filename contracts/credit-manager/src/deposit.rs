@@ -25,7 +25,7 @@ pub fn deposit(
     increment_coin_balance(storage, account_id, coin)?;
 
     Ok(response
-        .add_attribute("action", "rover/credit_manager/callback/deposit")
+        .add_attribute("action", "rover/credit-manager/callback/deposit")
         .add_attribute("deposit_received", coin.to_string()))
 }
 

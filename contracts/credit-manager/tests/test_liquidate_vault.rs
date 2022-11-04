@@ -95,7 +95,8 @@ fn test_liquidatee_is_not_liquidatable() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault,
-                coin: lp_token.to_coin(200),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(200)),
             },
         ],
         &[lp_token.to_coin(200)],
@@ -152,7 +153,8 @@ fn test_liquidator_does_not_have_debt_coin_in_credit_account() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault,
-                coin: lp_token.to_coin(200),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(200)),
             },
             Borrow(ujake.to_coin(175)),
         ],
@@ -222,7 +224,8 @@ fn test_liquidate_unlocked_vault() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault,
-                coin: lp_token.to_coin(200),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(200)),
             },
             Borrow(ujake.to_coin(175)),
         ],
@@ -307,7 +310,8 @@ fn test_liquidate_locked_vault() {
             Deposit(lp_token.to_coin(80)),
             EnterVault {
                 vault,
-                coin: lp_token.to_coin(80),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(80)),
             },
             Borrow(atom.to_coin(700)),
         ],
@@ -395,7 +399,8 @@ fn test_liquidate_unlocking_priority() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                coin: lp_token.to_coin(200),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(200)),
             },
             Borrow(ujake.to_coin(175)),
             RequestVaultUnlock {
@@ -491,7 +496,8 @@ fn test_liquidate_unlocking_liquidation_order() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                coin: lp_token.to_coin(200),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(200)),
             },
             Borrow(ujake.to_coin(175)),
             RequestVaultUnlock {
@@ -622,7 +628,8 @@ fn test_liquidation_calculation_adjustment() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault,
-                coin: lp_token.to_coin(200),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(200)),
             },
             Borrow(ujake.to_coin(175)),
         ],

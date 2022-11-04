@@ -10,6 +10,7 @@ members = [
     "contracts/mock-oracle",
     "contracts/mock-red-bank",
     "contracts/mock-vault",
+    "contracts/mock-zapper",
 ]
 
 [workspace.package]
@@ -56,6 +57,7 @@ swapper-base        = { version = "1.0.0", path = "./contracts/swapper/base" }
 mock-oracle   = { version = "1.0.0", path = "./contracts/mock-oracle", features = ["library"] }
 mock-red-bank = { version = "1.0.0", path = "./contracts/mock-red-bank", features = ["library"] }
 mock-vault    = { version = "1.0.0", path = "./contracts/mock-vault", features = ["library"] }
+mock-zapper    = { version = "1.0.0", path = "./contracts/mock-zapper", features = ["library"] }
 swapper-mock  = { version = "1.0.0", path = "./contracts/swapper/mock", features = ["library"] }
 
 [profile.release]

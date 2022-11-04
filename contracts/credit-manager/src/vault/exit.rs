@@ -6,7 +6,7 @@ use rover::msg::execute::CallbackMsg;
 use rover::msg::ExecuteMsg as RoverExecuteMsg;
 
 use crate::vault::utils::{
-    assert_vault_is_whitelisted, query_withdraw_denom_balances, update_vault_position,
+    assert_vault_is_whitelisted, query_withdraw_denom_balance, update_vault_position,
 };
 
 pub fn exit_vault(
@@ -36,21 +36,19 @@ pub fn exit_vault(
     let withdraw_msg = vault.withdraw_msg(&deps.querier, amount, force)?;
 
     // Updates coin balances for account after a vault withdraw has taken place
-    let previous_balances =
-        query_withdraw_denom_balances(deps.as_ref(), &env.contract.address, &vault)?;
+    let previous_balance =
+        query_withdraw_denom_balance(deps.as_ref(), &env.contract.address, &vault)?;
     let update_coin_balance_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         funds: vec![],
-        msg: to_binary(&RoverExecuteMsg::Callback(
-            CallbackMsg::UpdateCoinBalances {
-                account_id: account_id.to_string(),
-                previous_balances,
-            },
-        ))?,
+        msg: to_binary(&RoverExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
+            account_id: account_id.to_string(),
+            previous_balance,
+        }))?,
     });
 
     Ok(Response::new()
         .add_message(withdraw_msg)
         .add_message(update_coin_balance_msg)
-        .add_attribute("action", "rover/credit_manager/vault/withdraw"))
+        .add_attribute("action", "rover/credit-manager/vault/withdraw"))
 }

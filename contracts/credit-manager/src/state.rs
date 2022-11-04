@@ -4,7 +4,7 @@ use cw_storage_plus::{Item, Map};
 
 use rover::adapters::swap::Swapper;
 use rover::adapters::vault::{VaultConfig, VaultPositionAmount};
-use rover::adapters::{Oracle, RedBank};
+use rover::adapters::{Oracle, RedBank, Zapper};
 
 use crate::vault::RequestTempStorage;
 
@@ -18,6 +18,7 @@ pub const ORACLE: Item<Oracle> = Item::new("oracle");
 pub const MAX_LIQUIDATION_BONUS: Item<Decimal> = Item::new("max_liquidation_bonus");
 pub const MAX_CLOSE_FACTOR: Item<Decimal> = Item::new("max_close_factor");
 pub const SWAPPER: Item<Swapper> = Item::new("swapper");
+pub const ZAPPER: Item<Zapper> = Item::new("zapper");
 
 // Positions
 pub const COIN_BALANCES: Map<(&str, &str), Uint128> = Map::new("coin_balance"); // Map<(AccountId, Denom), Amount>

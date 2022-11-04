@@ -38,7 +38,12 @@ pub enum Action {
     /// Repay coin of specified amount back to Red Bank
     Repay(Coin),
     /// Deposit coins into vault strategy
-    EnterVault { vault: VaultUnchecked, coin: Coin },
+    /// If amount sent is None, Rover attempts to deposit the account's entire balance into the vault
+    EnterVault {
+        vault: VaultUnchecked,
+        denom: String,
+        amount: Option<Uint128>,
+    },
     /// Withdraw underlying coins from vault
     ExitVault {
         vault: VaultUnchecked,
@@ -83,6 +88,14 @@ pub enum Action {
         denom_out: String,
         slippage: Decimal,
     },
+    /// Add Vec<Coin> to liquidity pool in exchange for LP tokens
+    ProvideLiquidity {
+        coins_in: Vec<Coin>,
+        lp_token_out: String,
+        minimum_receive: Uint128,
+    },
+    /// Send LP token and withdraw corresponding reserve assets from pool
+    WithdrawLiquidity { lp_token: Coin },
 }
 
 /// Internal actions made by the contract with pre-validated inputs
@@ -108,7 +121,8 @@ pub enum CallbackMsg {
     EnterVault {
         account_id: String,
         vault: Vault,
-        coin: Coin,
+        denom: String,
+        amount: Option<Uint128>,
     },
     /// Exchanges vault LP shares for assets
     ExitVault {
@@ -164,12 +178,21 @@ pub enum CallbackMsg {
         slippage: Decimal,
     },
     /// Used to update the coin balance of account after an async action
-    UpdateCoinBalances {
+    UpdateCoinBalance {
         /// Account that needs coin balance adjustment
         account_id: String,
-        /// Total balances for coins in Rover prior to withdraw
-        previous_balances: Vec<Coin>,
+        /// Total balance for coin in Rover prior to withdraw
+        previous_balance: Coin,
     },
+    /// Add Vec<Coin> to liquidity pool in exchange for LP tokens
+    ProvideLiquidity {
+        account_id: String,
+        coins_in: Vec<Coin>,
+        lp_token_out: String,
+        minimum_receive: Uint128,
+    },
+    /// Send LP token and withdraw corresponding reserve assets from pool
+    WithdrawLiquidity { account_id: String, lp_token: Coin },
 }
 
 impl CallbackMsg {

@@ -1,6 +1,7 @@
 use crate::adapters::swap::SwapperUnchecked;
 use crate::adapters::vault::VaultConfig;
 use crate::adapters::vault::VaultUnchecked;
+use crate::adapters::ZapperUnchecked;
 use crate::adapters::{OracleUnchecked, RedBankUnchecked};
 use crate::traits::Stringify;
 use cosmwasm_schema::cw_serde;
@@ -25,6 +26,8 @@ pub struct InstantiateMsg {
     pub max_close_factor: Decimal,
     /// Helper contract for making swaps
     pub swapper: SwapperUnchecked,
+    /// Helper contract for adding/removing liquidity
+    pub zapper: ZapperUnchecked,
 }
 
 #[cw_serde]
@@ -64,4 +67,5 @@ pub struct ConfigUpdates {
     pub max_liquidation_bonus: Option<Decimal>,
     pub max_close_factor: Option<Decimal>,
     pub swapper: Option<SwapperUnchecked>,
+    pub zapper: Option<ZapperUnchecked>,
 }

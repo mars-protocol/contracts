@@ -14,3 +14,4 @@ pub mod update_coin_balances;
 pub mod utils;
 pub mod vault;
 pub mod withdraw;
+pub mod zap;

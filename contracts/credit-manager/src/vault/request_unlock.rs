@@ -53,7 +53,7 @@ pub fn request_vault_unlock(
 
     Ok(Response::new()
         .add_submessage(request_unlock_msg)
-        .add_attribute("action", "rover/credit_manager/vault/request_unlock"))
+        .add_attribute("action", "rover/credit-manager/vault/request_unlock"))
 }
 
 pub fn handle_unlock_request_reply(deps: DepsMut, reply: Reply) -> ContractResult<Response> {
@@ -81,6 +81,6 @@ pub fn handle_unlock_request_reply(deps: DepsMut, reply: Reply) -> ContractResul
 
     Ok(Response::new().add_attribute(
         "action",
-        "rover/credit_manager/vault/unlock_request/handle_reply",
+        "rover/credit-manager/vault/unlock_request/handle_reply",
     ))
 }

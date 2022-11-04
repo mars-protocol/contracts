@@ -26,6 +26,6 @@ pub fn withdraw(
 
     Ok(Response::new()
         .add_message(transfer_msg)
-        .add_attribute("action", "rover/credit_manager/callback/withdraw")
+        .add_attribute("action", "rover/credit-manager/callback/withdraw")
         .add_attribute("withdrawn", coin.to_string()))
 }

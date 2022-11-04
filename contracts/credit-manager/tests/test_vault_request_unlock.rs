@@ -174,7 +174,8 @@ fn test_not_enough_vault_tokens_for_request() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                coin: lp_token.to_coin(23),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(23)),
             },
             RequestVaultUnlock {
                 vault,
@@ -220,7 +221,8 @@ fn test_request_unlocked() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                coin: lp_token.to_coin(23),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(23)),
             },
             RequestVaultUnlock {
                 vault: vault.clone(),

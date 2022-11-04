@@ -63,7 +63,7 @@ pub fn repay(deps: DepsMut, env: Env, account_id: &str, coin: Coin) -> ContractR
 
     Ok(Response::new()
         .add_message(red_bank_repay_msg)
-        .add_attribute("action", "rover/credit_manager/repay")
+        .add_attribute("action", "rover/credit-manager/repay")
         .add_attribute("debt_shares_repaid", shares_to_repay)
         .add_attribute("coins_repaid", amount_to_repay))
 }

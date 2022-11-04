@@ -18,6 +18,7 @@ use crate::query::{
     query_vault_configs,
 };
 use crate::vault::handle_unlock_request_reply;
+use crate::zap::{estimate_provide_liquidity, estimate_withdraw_liquidity};
 
 const CONTRACT_NAME: &str = "crates.io:rover-credit-manager";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -94,6 +95,13 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         ),
         QueryMsg::AllVaultPositions { start_after, limit } => {
             to_binary(&query_all_vault_positions(deps, start_after, limit)?)
+        }
+        QueryMsg::EstimateProvideLiquidity {
+            lp_token_out,
+            coins_in,
+        } => to_binary(&estimate_provide_liquidity(deps, &lp_token_out, coins_in)?),
+        QueryMsg::EstimateWithdrawLiquidity { lp_token } => {
+            to_binary(&estimate_withdraw_liquidity(deps, lp_token)?)
         }
     };
     res.map_err(Into::into)

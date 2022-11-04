@@ -93,7 +93,8 @@ fn test_not_owner_of_unlocking_position() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                coin: lp_token.to_coin(23),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(23)),
             },
             RequestVaultUnlock {
                 vault: vault.clone(),
@@ -117,7 +118,8 @@ fn test_not_owner_of_unlocking_position() {
             Deposit(lp_token.to_coin(2)),
             EnterVault {
                 vault: vault.clone(),
-                coin: lp_token.to_coin(2),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(2)),
             },
             RequestVaultUnlock {
                 vault: vault.clone(),
@@ -160,7 +162,8 @@ fn test_unlocking_position_not_ready_time() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                coin: lp_token.to_coin(23),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(23)),
             },
             RequestVaultUnlock {
                 vault: vault.clone(),
@@ -213,7 +216,8 @@ fn test_unlocking_position_not_ready_blocks() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                coin: lp_token.to_coin(23),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(23)),
             },
             RequestVaultUnlock {
                 vault: vault.clone(),
@@ -266,7 +270,8 @@ fn test_withdraw_unlock_success_time_expiring() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                coin: lp_token.to_coin(200),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(200)),
             },
             RequestVaultUnlock {
                 vault: vault.clone(),
@@ -341,7 +346,8 @@ fn test_withdraw_unlock_success_block_expiring() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                coin: lp_token.to_coin(200),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(200)),
             },
             RequestVaultUnlock {
                 vault: vault.clone(),

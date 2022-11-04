@@ -68,3 +68,12 @@ pub fn mock_swapper_contract() -> Box<dyn Contract<Empty>> {
     );
     Box::new(contract)
 }
+
+pub fn mock_zapper_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        mock_zapper::contract::execute,
+        mock_zapper::contract::instantiate,
+        mock_zapper::contract::query,
+    );
+    Box::new(contract)
+}

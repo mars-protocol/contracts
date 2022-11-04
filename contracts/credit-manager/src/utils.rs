@@ -1,12 +1,19 @@
-use cosmwasm_std::{Addr, Coin, Decimal, Deps, Storage, Uint128};
 use std::collections::HashSet;
 use std::hash::Hash;
 
+use cosmwasm_std::{
+    to_binary, Addr, Coin, CosmosMsg, Decimal, Deps, QuerierWrapper, StdResult, Storage, Uint128,
+    WasmMsg,
+};
+
 use rover::error::{ContractError, ContractResult};
+use rover::msg::execute::CallbackMsg;
 use rover::msg::query::CoinValue;
+use rover::msg::ExecuteMsg;
 use rover::traits::IntoDecimal;
 
 use crate::state::{ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, TOTAL_DEBT_SHARES};
+use crate::update_coin_balances::query_balance;
 
 pub fn assert_coin_is_whitelisted(storage: &mut dyn Storage, denom: &str) -> ContractResult<()> {
     let is_whitelisted = ALLOWED_COINS.contains(storage, denom);
@@ -54,6 +61,35 @@ pub fn decrement_coin_balance(
         path.save(storage, &new_value)?;
     }
     Ok(new_value)
+}
+
+pub fn update_balance_msg(
+    querier: &QuerierWrapper,
+    rover_addr: &Addr,
+    account_id: &str,
+    denom: &str,
+) -> StdResult<CosmosMsg> {
+    let previous_balance = query_balance(querier, rover_addr, denom)?;
+    Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: rover_addr.to_string(),
+        funds: vec![],
+        msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
+            account_id: account_id.to_string(),
+            previous_balance,
+        }))?,
+    }))
+}
+
+pub fn update_balances_msgs(
+    querier: &QuerierWrapper,
+    rover_addr: &Addr,
+    account_id: &str,
+    denoms: Vec<&str>,
+) -> StdResult<Vec<CosmosMsg>> {
+    denoms
+        .iter()
+        .map(|denom| update_balance_msg(querier, rover_addr, account_id, denom))
+        .collect()
 }
 
 pub fn debt_shares_to_amount(

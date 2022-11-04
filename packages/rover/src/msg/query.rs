@@ -65,6 +65,15 @@ pub enum QueryMsg {
         start_after: Option<VaultUnchecked>,
         limit: Option<u32>,
     },
+    /// Estimate how many LP tokens received in exchange for coins provided for liquidity
+    #[returns(Uint128)]
+    EstimateProvideLiquidity {
+        lp_token_out: String,
+        coins_in: Vec<Coin>,
+    },
+    /// Estimate coins withdrawn if exchanged for LP tokens
+    #[returns(Vec<Coin>)]
+    EstimateWithdrawLiquidity { lp_token: Coin },
 }
 
 #[cw_serde]
@@ -150,6 +159,7 @@ pub struct ConfigResponse {
     pub max_liquidation_bonus: Decimal,
     pub max_close_factor: Decimal,
     pub swapper: String,
+    pub zapper: String,
 }
 
 #[cw_serde]

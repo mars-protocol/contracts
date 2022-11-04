@@ -5,7 +5,7 @@ use rover::msg::InstantiateMsg;
 
 use crate::state::{
     ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK, SWAPPER,
-    VAULT_CONFIGS,
+    VAULT_CONFIGS, ZAPPER,
 };
 
 pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
@@ -16,6 +16,7 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
     MAX_LIQUIDATION_BONUS.save(deps.storage, &msg.max_liquidation_bonus)?;
     MAX_CLOSE_FACTOR.save(deps.storage, &msg.max_close_factor)?;
     SWAPPER.save(deps.storage, &msg.swapper.check(deps.api)?)?;
+    ZAPPER.save(deps.storage, &msg.zapper.check(deps.api)?)?;
 
     msg.allowed_vaults
         .iter()
