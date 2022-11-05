@@ -21,4 +21,6 @@ export interface StorageItems {
     oraclePriceSet?: boolean
     smokeTest?: boolean
   }
+
+  owner?: string
 }

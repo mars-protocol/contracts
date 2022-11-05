@@ -74,6 +74,10 @@ For Osmosis:
 ```
 yarn deploy:osmosis
 ```
+For Osmosis multisig owned contracts:
+```
+yarn deploy:osmosisMulti
+```
 
 ## Schemas
 ```

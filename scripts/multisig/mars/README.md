@@ -7,4 +7,4 @@
 2. Clone the following repository:
    https://github.com/mars-protocol/hub/tags
 
-3.  `make install`
+3. `make install`
