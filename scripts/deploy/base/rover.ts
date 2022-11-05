@@ -62,32 +62,33 @@ export class Rover {
   async withdraw() {
     const amount = this.config.withdrawAmount.toString()
     const positionsBefore = await this.query.positions({ accountId: this.accountId! })
-    const beforeWithdraw = parseFloat(positionsBefore.coins[0].amount)
+    const beforeWithdraw = parseFloat(
+      positionsBefore.coins.find((c) => c.denom === this.config.baseDenom)!.amount,
+    )
     await this.updateCreditAccount([{ withdraw: { amount, denom: this.config.baseDenom } }])
     const positionsAfter = await this.query.positions({ accountId: this.accountId! })
-    const afterWithdraw = parseFloat(positionsAfter.coins[0].amount)
+    const afterWithdraw = parseFloat(
+      positionsAfter.coins.find((c) => c.denom === this.config.baseDenom)!.amount,
+    )
     assert.equal(beforeWithdraw - afterWithdraw, amount)
     printGreen(`Withdrew: ${amount} ${this.config.baseDenom}`)
   }
 
-  // If this fails, it's likely because Red Bank has not whitelisted uncollateralized borrows.
-  // Need to issue this msg from Red Bank admin:
-  // {"update_uncollateralized_loan_limit": {"user":"[rover addr]","denom":"uosmo","new_limit":"1000000000"} }
   async borrow() {
     const amount = this.config.borrowAmount.toString()
-    await this.updateCreditAccount([{ borrow: { amount, denom: this.config.baseDenom } }])
+    await this.updateCreditAccount([{ borrow: { amount, denom: this.config.secondaryDenom } }])
     const positions = await this.query.positions({ accountId: this.accountId! })
     assert.equal(positions.debts.length, 1)
-    assert.equal(positions.debts[0].denom, this.config.baseDenom)
-    printGreen(`Borrowed from RedBank: ${amount} ${this.config.baseDenom}`)
+    assert.equal(positions.debts[0].denom, this.config.secondaryDenom)
+    printGreen(`Borrowed from RedBank: ${amount} ${this.config.secondaryDenom}`)
   }
 
   async repay() {
     const amount = this.config.repayAmount.toString()
-    await this.updateCreditAccount([{ repay: { amount, denom: this.config.baseDenom } }])
+    await this.updateCreditAccount([{ repay: { amount, denom: this.config.secondaryDenom } }])
     const positions = await this.query.positions({ accountId: this.accountId! })
     printGreen(
-      `Repaid to RedBank: ${amount} ${this.config.baseDenom}. Debt remaining: ${positions.debts[0].amount} ${positions.debts[0].denom}`,
+      `Repaid to RedBank: ${amount} ${this.config.secondaryDenom}. Debt remaining: ${positions.debts[0].amount} ${positions.debts[0].denom}`,
     )
   }
 
@@ -114,6 +115,42 @@ export class Rover {
     )
   }
 
+  async zap() {
+    await this.updateCreditAccount([
+      {
+        provide_liquidity: {
+          coins_in: this.config.zap.map((c) => ({ denom: c.denom, amount: c.amount.toString() })),
+          lp_token_out: this.config.lpToken.denom,
+          minimum_receive: '1',
+        },
+      },
+    ])
+    const positions = await this.query.positions({ accountId: this.accountId! })
+    const lp_balance = positions.coins.find((c) => c.denom === this.config.lpToken.denom)!.amount
+    printGreen(
+      `Zapped ${this.config.zap.map((c) => c.denom).join(', ')} for LP token: ${lp_balance} ${
+        this.config.lpToken.denom
+      }`,
+    )
+  }
+
+  async unzap() {
+    const lpToken = { denom: this.config.lpToken.denom, amount: this.config.unzapAmount.toString() }
+    await this.updateCreditAccount([
+      {
+        withdraw_liquidity: {
+          lp_token: lpToken,
+        },
+      },
+    ])
+    const underlying = await this.query.estimateWithdrawLiquidity({ lpToken })
+    printGreen(
+      `Unzapped ${this.config.lpToken.denom} ${this.config.unzapAmount} for underlying: ${underlying
+        .map((c) => `${c.amount} ${c.denom}`)
+        .join(', ')}`,
+    )
+  }
+
   async vaultDeposit() {
     const oldRoverBalance = await this.cwClient.getBalance(
       this.storage.addresses.creditManager!,
@@ -121,10 +158,9 @@ export class Rover {
     )
     await this.updateCreditAccount([
       {
-        vault_deposit: {
-          coins: [
-            { amount: this.config.vaultDepositAmount.toString(), denom: this.config.baseDenom },
-          ],
+        enter_vault: {
+          amount: this.config.vaultDepositAmount.toString(),
+          denom: this.config.baseDenom,
           vault: { address: this.storage.addresses.mockVault! },
         },
       },
@@ -151,7 +187,7 @@ export class Rover {
     const oldBalance = await this.getAccountBalance(this.config.baseDenom)
     await this.updateCreditAccount([
       {
-        vault_withdraw: {
+        exit_vault: {
           amount: this.config.vaultWithdrawAmount.toString(),
           vault: { address: this.storage.addresses.mockVault! },
         },
@@ -170,7 +206,7 @@ export class Rover {
     const oldBalance = await this.getVaultBalance(this.storage.addresses.mockVault!)
     await this.updateCreditAccount([
       {
-        vault_request_unlock: {
+        request_vault_unlock: {
           amount: this.config.vaultWithdrawAmount.toString(),
           vault: { address: this.storage.addresses.mockVault! },
         },
@@ -182,7 +218,7 @@ export class Rover {
 
     printGreen(
       `Requested unlock: ID #${newBalance.unlocking[0].id}, amount: ${
-        newBalance.unlocking[0].amount
+        newBalance.unlocking[0].coin.amount
       } in exchange for: ${oldBalance.locked - newBalance.locked} ${this.config.vaultTokenDenom}`,
     )
   }
@@ -198,15 +234,27 @@ export class Rover {
     const positions = await this.query.positions({ accountId: this.accountId! })
     const vault = positions.vaults.find((p) => p.vault.address === vaultAddr)
     if (!vault) throw new Error(`No balance for ${vaultAddr}`)
-    return {
-      locked: parseInt(vault.state.locked),
-      unlocked: parseInt(vault.state.unlocked),
-      unlocking: vault.state.unlocking,
+
+    if ('unlocked' in vault.amount) {
+      return {
+        unlocked: parseInt(vault.amount.unlocked),
+        locked: 0,
+        unlocking: [],
+      }
+    } else {
+      return {
+        unlocked: 0,
+        locked: parseInt(vault.amount.locking.locked),
+        unlocking: vault.amount.locking.unlocking.map((lockup) => ({
+          id: lockup.id,
+          coin: { denom: lockup.coin.denom, amount: parseInt(lockup.coin.amount) },
+        })),
+      }
     }
   }
 
   private async updateCreditAccount(actions: Action[], funds?: Coin[]) {
-    await this.exec.updateCreditAccount(
+    return await this.exec.updateCreditAccount(
       { actions, accountId: this.accountId! },
       'auto',
       undefined,

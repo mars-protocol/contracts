@@ -16,6 +16,7 @@ export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProp
     await deployer.upload('mockVault', wasmFile('mock_vault'))
     await deployer.upload('marsOracleAdapter', wasmFile('mars_oracle_adapter'))
     await deployer.upload('swapper', wasmFile(swapperContractName))
+    await deployer.upload('mockZapper', wasmFile('mock_zapper'))
     await deployer.upload('creditManager', wasmFile('credit_manager'))
 
     // Instantiate contracts
@@ -23,8 +24,12 @@ export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProp
     await deployer.instantiateMockVault()
     await deployer.instantiateMarsOracleAdapter()
     await deployer.instantiateSwapper()
+    await deployer.instantiateZapper()
     await deployer.instantiateCreditManager()
     await deployer.transferNftContractOwnership()
+    await deployer.grantCreditLines()
+    await deployer.setupOraclePricesForZapDenoms()
+    await deployer.setupRedBankMarketsForZapDenoms()
     await deployer.saveDeploymentAddrsToFile()
 
     const rover = await deployer.newUserRoverClient()
@@ -37,6 +42,9 @@ export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProp
     // TODO: Osmosis-bindings need updating
     // await rover.swap()
     await rover.withdraw()
+
+    await rover.zap()
+    await rover.unzap()
 
     await rover.vaultDeposit()
     if (config.vaultType === VaultType.UNLOCKED) {

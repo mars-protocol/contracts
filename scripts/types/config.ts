@@ -1,3 +1,5 @@
+import { Coin } from './generated/credit-manager/CreditManager.types'
+
 export enum VaultType {
   LOCKED,
   UNLOCKED,
@@ -11,11 +13,13 @@ export interface DeploymentConfig {
   chainPrefix: string
   rpcEndpoint: string
   deployerMnemonic: string
+  redBankDeployerMnemonic: string
   vaultTokenDenom: string
   chainId: string
   defaultGasPrice: number
   startingAmountForTestUser: number
   depositAmount: number
+  toGrantCreditLines: Coin[]
   borrowAmount: number
   repayAmount: number
   swapAmount: number
@@ -24,7 +28,13 @@ export interface DeploymentConfig {
   withdrawAmount: number
   maxCloseFactor: number
   maxLiquidationBonus: number
-  vaultDepositAmount: number
-  vaultWithdrawAmount: number
   vaultType: VaultType
+  vaultDepositAmount: number
+  vaultDepositCap: Coin
+  vaultLiquidationThreshold: number
+  vaultMaxLTV: number
+  vaultWithdrawAmount: number
+  lpToken: { denom: string; price: number }
+  zap: { amount: number; denom: string; price: number }[]
+  unzapAmount: number
 }

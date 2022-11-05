@@ -7,6 +7,7 @@ import { InstantiateMsgs } from '../../types/instantiateMsgs'
 import { InstantiateMsg as NftInstantiateMsg } from '../../types/generated/account-nft/AccountNft.types'
 import { InstantiateMsg as VaultInstantiateMsg } from '../../types/generated/mock-vault/MockVault.types'
 import { InstantiateMsg as SwapperInstantiateMsg } from '../../types/generated/swapper-base/SwapperBase.types'
+import { InstantiateMsg as ZapperInstantiateMsg } from '../../types/generated/mock-zapper/MockZapper.types'
 import { InstantiateMsg as OracleAdapterInstantiateMsg } from '../../types/generated/mars-oracle-adapter/MarsOracleAdapter.types'
 import { InstantiateMsg as RoverInstantiateMsg } from '../../types/generated/credit-manager/CreditManager.types'
 import { Rover } from './rover'
@@ -54,7 +55,6 @@ export class Deployer {
     const { contractAddress } = await this.cwClient.instantiate(
       this.deployerAddr,
       codeId,
-      // @ts-expect-error expecting generic record
       msg,
       `mars-${name}`,
       'auto',
@@ -76,9 +76,9 @@ export class Deployer {
 
   async instantiateMockVault() {
     const msg: VaultInstantiateMsg = {
-      asset_denoms: [this.config.baseDenom],
-      lp_token_denom: this.config.vaultTokenDenom,
+      base_token_denom: this.config.baseDenom,
       oracle: this.config.oracleAddr,
+      vault_token_denom: this.config.vaultTokenDenom,
     }
     await this.instantiate('mockVault', this.storage.codeIds.mockVault!, msg)
 
@@ -102,8 +102,9 @@ export class Deployer {
       vault_pricing: [
         {
           addr: this.storage.addresses.mockVault!,
-          denom: this.config.vaultTokenDenom,
           method: 'preview_redeem',
+          base_denom: this.config.baseDenom,
+          vault_coin_denom: this.config.vaultTokenDenom,
         },
       ],
     }
@@ -143,16 +144,52 @@ export class Deployer {
     }
   }
 
+  async instantiateZapper() {
+    const msg: ZapperInstantiateMsg = {
+      oracle: this.storage.addresses.marsOracleAdapter!,
+      lp_configs: [
+        {
+          lp_token_denom: this.config.lpToken.denom,
+          lp_pair_denoms: [this.config.zap[0].denom, this.config.zap[1].denom],
+        },
+      ],
+    }
+    await this.instantiate('mockZapper', this.storage.codeIds.mockZapper!, msg)
+
+    // Temporary until Token Factory is integrated into Cosmwasm or Apollo Vaults are in testnet
+    if (!this.storage.actions.seedMockZapper) {
+      printBlue('Seeding mock zapper')
+      await this.transferCoin(
+        this.storage.addresses.mockZapper!,
+        coin(10_000_000, this.config.lpToken.denom),
+      )
+      this.storage.actions.seedMockZapper = true
+    } else {
+      printGray('Mock zapper already seeded')
+    }
+  }
+
   async instantiateCreditManager() {
     const msg: RoverInstantiateMsg = {
-      allowed_coins: [this.config.baseDenom, this.config.secondaryDenom],
-      allowed_vaults: [{ address: this.storage.addresses.mockVault! }],
+      allowed_coins: [this.config.baseDenom, this.config.secondaryDenom, this.config.lpToken.denom],
+      allowed_vaults: [
+        {
+          config: {
+            deposit_cap: this.config.vaultDepositCap,
+            liquidation_threshold: this.config.vaultLiquidationThreshold.toString(),
+            max_ltv: this.config.vaultMaxLTV.toString(),
+            whitelisted: true,
+          },
+          vault: { address: this.storage.addresses.mockVault! },
+        },
+      ],
       oracle: this.storage.addresses.marsOracleAdapter!,
       owner: this.deployerAddr,
       red_bank: this.config.redBankAddr,
       max_close_factor: this.config.maxCloseFactor.toString(),
       max_liquidation_bonus: this.config.maxLiquidationBonus.toString(),
       swapper: this.storage.addresses.swapper!,
+      zapper: this.storage.addresses.mockZapper!,
     }
     await this.instantiate('creditManager', this.storage.codeIds.creditManager!, msg)
   }
@@ -197,6 +234,117 @@ export class Deployer {
       `${addressesDir}/${this.config.chainId}.json`,
       JSON.stringify(this.storage.addresses),
     )
+  }
+
+  async grantCreditLines() {
+    if (this.storage.actions.grantedCreditLines) {
+      printGray('Credit lines already granted')
+      return
+    }
+
+    const wallet = await getWallet(this.config.redBankDeployerMnemonic, this.config.chainPrefix)
+    const client = await setupClient(this.config, wallet)
+    const addr = await getAddress(wallet)
+
+    for (const coin of this.config.toGrantCreditLines) {
+      const msg = {
+        update_uncollateralized_loan_limit: {
+          user: this.storage.addresses.creditManager,
+          denom: coin.denom,
+          new_limit: coin.amount.toString(),
+        },
+      }
+
+      printBlue(`Granting credit line to Rover for: ${coin.amount} ${coin.denom}`)
+      await client.execute(addr, this.config.redBankAddr, msg, 'auto')
+    }
+
+    this.storage.actions.grantedCreditLines = true
+  }
+
+  async setupOraclePricesForZapDenoms() {
+    if (this.storage.actions.oraclePricesSet) {
+      printGray('Oracle prices already set')
+      return
+    }
+
+    const { client, addr } = await this.getOutpostsDeployer()
+
+    for (const coin of this.config.zap
+      .map((c) => ({ denom: c.denom, price: c.price }))
+      .concat(this.config.lpToken)) {
+      try {
+        await client.queryContractSmart(this.config.oracleAddr, {
+          price: {
+            denom: coin.denom,
+          },
+        })
+        printGray(`Price for ${coin.denom} already set`)
+      } catch {
+        const msg = {
+          set_price_source: {
+            denom: coin.denom,
+            price_source: {
+              fixed: { price: coin.price.toString() },
+            },
+          },
+        }
+        console.log(JSON.stringify(msg))
+        printBlue(`Setting price for ${coin.denom}: ${coin.price}`)
+        await client.execute(addr, this.config.oracleAddr, msg, 'auto')
+      }
+    }
+    this.storage.actions.oraclePricesSet = true
+  }
+
+  async setupRedBankMarketsForZapDenoms() {
+    if (this.storage.actions.redBankMarketsSet) {
+      printGray('Red bank markets already set')
+      return
+    }
+    const { client, addr } = await this.getOutpostsDeployer()
+
+    for (const denom of this.config.zap.map((c) => c.denom).concat(this.config.lpToken.denom)) {
+      try {
+        await client.queryContractSmart(this.config.redBankAddr, {
+          market: {
+            denom,
+          },
+        })
+        printGray(`Market for ${denom} already set`)
+      } catch {
+        const msg = {
+          init_asset: {
+            denom,
+            initial_borrow_rate: '0.1',
+            max_loan_to_value: '0.65',
+            reserve_factor: '0.2',
+            liquidation_threshold: '0.7',
+            liquidation_bonus: '0.1',
+            interest_rate_model: {
+              optimal_utilization_rate: '0.1',
+              base: '0.3',
+              slope_1: '0.25',
+              slope_2: '0.3',
+            },
+            deposit_cap: '1000000000',
+            deposit_enabled: true,
+            borrow_enabled: true,
+            symbol: denom,
+          },
+        }
+        printBlue(`Setting market for ${denom}`)
+        await client.execute(addr, this.config.redBankAddr, msg, 'auto')
+      }
+    }
+    this.storage.actions.redBankMarketsSet = true
+  }
+
+  private async getOutpostsDeployer() {
+    const wallet = await getWallet(this.config.redBankDeployerMnemonic, this.config.chainPrefix)
+    const client = await setupClient(this.config, wallet)
+    const addr = await getAddress(wallet)
+    return { client, addr }
   }
 
   private async transferCoin(recipient: string, coin: Coin) {
