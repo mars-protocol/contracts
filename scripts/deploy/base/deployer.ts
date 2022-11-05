@@ -49,7 +49,7 @@ export class Deployer {
     printGreen(`${this.config.chainId} :: ${name} : ${this.storage.codeIds[name]}`)
   }
 
-  async setOwnerAddr(){
+  async setOwnerAddr() {
     if (this.config.multisigAddr) {
       this.storage.owner = this.config.multisigAddr
     } else {

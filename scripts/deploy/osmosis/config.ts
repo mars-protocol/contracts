@@ -37,7 +37,7 @@ export const osmosisTestMultisig: DeploymentConfig = {
   safetyFundFeeShare: '0.2',
   timeoutRevision: 1,
   deployerMnemonic:
-      'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
+    'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
   slippage_tolerance: '0.5',
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
