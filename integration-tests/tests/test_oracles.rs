@@ -68,11 +68,7 @@ fn set_twap_price() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[
-            coin(1_000_000_000_000, "uosmo"),
-            coin(1_000_000_000_000, "uatom"),
-            coin(1_000_000_000_000, "umars"),
-        ])
+        .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "uatom")])
         .unwrap();
 
     //compile and instantiate oracle contract
@@ -155,4 +151,83 @@ fn set_twap_price() {
     assert_eq!(price.price, Decimal::one()); //why does this work??
 
     assert_eq!(price.denom, "uosmo".to_string());
+}
+
+#[test]
+fn test_redbank_oracle() {
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
+
+    let signer = app
+        .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "uatom")])
+        .unwrap();
+
+    //compile and instantiate redbank contract
+    let wasm_byte_code = std::fs::read("../artifacts/mars_red_bank.wasm").unwrap();
+    let code_id = wasm.store_code(&wasm_byte_code, None, &signer).unwrap().data.code_id;
+    let oracle_addr = wasm
+        .instantiate(
+            code_id,
+            &InstantiateMsg {
+                owner: signer.address(),
+                base_denom: "uosmo".to_string(),
+            },
+            None,
+            None,
+            &[],
+            &signer,
+        )
+        .unwrap()
+        .data
+        .address;
+
+    //compile and instantiate oracle contract
+    let wasm_byte_code = std::fs::read("../artifacts/mars_oracle_osmosis.wasm").unwrap();
+    let code_id = wasm.store_code(&wasm_byte_code, None, &signer).unwrap().data.code_id;
+    let oracle_addr = wasm
+        .instantiate(
+            code_id,
+            &InstantiateMsg {
+                owner: signer.address(),
+                base_denom: "uosmo".to_string(),
+            },
+            None,
+            None,
+            &[],
+            &signer,
+        )
+        .unwrap()
+        .data
+        .address;
+
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::SetPriceSource {
+            denom: "uosmo".to_string(),
+            price_source: OsmosisPriceSource::Spot {
+                pool_id,
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+
+    let price_source: PriceSourceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::PriceSource {
+                denom: "uosmo".to_string(),
+            },
+        )
+        .unwrap();
+
+    assert_eq!(
+        price_source.price_source,
+        (OsmosisPriceSource::Spot {
+            pool_id
+        })
+    );
+
+    //add in red bank actions and test for oracle error msg
 }
