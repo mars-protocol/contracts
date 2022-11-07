@@ -14,6 +14,12 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
+      # min 1.18 required by osmosis-testing
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '>=1.18.0'
+
       - name: Checkout sources
         uses: actions/checkout@v2
 
