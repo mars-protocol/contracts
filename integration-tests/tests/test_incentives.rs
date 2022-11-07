@@ -6,12 +6,12 @@ use crate::helpers::default_asset_params;
 
 mod helpers;
 
-//Note: The incentives rewards for an indivdiual is calculated as follows:
+// Note: The incentives rewards for an indivdiual is calculated as follows:
 // (emissions_per_second) * (amount of seconds that the asset has been deposited into the redbank) * (amount of asset user deposited/ total amount of asset deposited)
 // this calculation is used to verify that the amount of rewards claimed is accurate in all the tests below
 
+// User A deposits usdc in the redbank and claims rewards after one day
 #[test]
-//User A deposits usdc in the redbank and claims rewards after one day
 fn test_rewards_claim() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
@@ -48,16 +48,17 @@ fn test_rewards_claim() {
 
     let balance = mock_env.query_balance(&user, "umars").unwrap();
     assert_eq!(balance.amount, Uint128::new(864000));
+    let mars_balance = incentives.query_balance(&mut mock_env, "umars").unwrap();
+    assert_eq!(mars_balance.amount, Uint128::new(9_999_136_000)); //10_000_000_000 - 864_000
 
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
     assert_eq!(rewards_balance, Uint128::zero());
 }
-
-#[test]
 // User A deposited usdc in the redbank when incentives were 5 emissions per second
 // Then claimed rewards after one day
 // Then user A later deposits osmo in the red bank when incentives were 10 emissions per second without withdrawing usdc
 // Then claimed rewards after one day again
+#[test]
 fn test_emissions_rates() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
@@ -127,11 +128,10 @@ fn test_emissions_rates() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
     assert_eq!(rewards_balance, Uint128::zero());
 }
-
-#[test]
 // User A deposits usdc in the redbank and claimed rewards after one day
 // Then withdraws usdc and checks rewards balance after one day
-fn test_withdraw() {
+#[test]
+fn test_no_incentives_accrued_after_withdraw() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
 
@@ -190,9 +190,8 @@ fn test_withdraw() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
     assert_eq!(rewards_balance, Uint128::zero());
 }
-
-#[test]
 // User A deposits usdc, osmo, and atom all with different emissions per second & claims rewards after one day
+#[test]
 fn test_multiple_assets() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
@@ -246,10 +245,8 @@ fn test_multiple_assets() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
     assert_eq!(rewards_balance, Uint128::new(1555200));
 }
-
-#[test]
 // User A holds usdc in the red bank while there are incentives then incentives are stopped and then incentives are restarted
-
+#[test]
 fn test_stopping_incentives() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
@@ -302,10 +299,9 @@ fn test_stopping_incentives() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
     assert_eq!(rewards_balance, Uint128::new(648000)); // (5*86400) + (5*43200)
 }
-
-#[test]
 // User A deposits half the amount user B deposits in the red bank
 // User A withdraws usdc after one day while user B holds usdc in the red bank
+#[test]
 fn test_multiple_users() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
@@ -371,9 +367,8 @@ fn test_multiple_users() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user_b);
     assert_eq!(rewards_balance, Uint128::new(720000)); // 288000 + (86400*5)
 }
-
-#[test]
 // User A attempts to claim rewards but there is not enough mars in the incentives contract
+#[test]
 fn test_insufficient_mars() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
@@ -406,23 +401,32 @@ fn test_insufficient_mars() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user_a);
     assert_eq!(rewards_balance, Uint128::zero());
 
+    let balance = mock_env.query_balance(&user_a, "umars").unwrap();
+    assert_eq!(balance.amount, Uint128::zero());
+
     mock_env.increment_by_time(86400); // 24 hours
 
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user_a);
     assert_eq!(rewards_balance, Uint128::new(432000)); // (86400*5)
 
-    incentives.claim_rewards(&mut mock_env, &user_a).unwrap();
-
     let balance = mock_env.query_balance(&user_a, "umars").unwrap();
-    assert_eq!(balance.amount, Uint128::new(432000));
+    assert_eq!(balance.amount, Uint128::zero());
+
+    incentives.claim_rewards(&mut mock_env, &user_a).unwrap();
 
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user_a);
     assert_eq!(rewards_balance, Uint128::zero());
 
+    let balance = mock_env.query_balance(&user_a, "umars").unwrap();
+    assert_eq!(balance.amount, Uint128::new(432000));
+
     mock_env.increment_by_time(86400); // 24 hours
 
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user_a);
     assert_eq!(rewards_balance, Uint128::new(432000)); // (86400*5)
+
+    let balance = mock_env.query_balance(&user_a, "umars").unwrap();
+    assert_eq!(balance.amount, Uint128::new(432000)); // balance just claimed
 
     incentives.claim_rewards(&mut mock_env, &user_a).unwrap_err();
 

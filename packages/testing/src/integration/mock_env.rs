@@ -117,6 +117,10 @@ impl Incentives {
             )
             .unwrap()
     }
+
+    pub fn query_balance(&self, env: &mut MockEnv, denom: &str) -> StdResult<Coin> {
+        env.app.wrap().query_balance(self.contract_addr.clone(), denom)
+    }
 }
 
 impl Oracle {
