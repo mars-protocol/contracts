@@ -107,7 +107,6 @@ pub mod osmosis {
             RunnerError::QueryError {
                 msg,
             } => {
-                println!("HELLO: {}", msg);
                 assert!(msg.contains(&format!("{}", expected)))
             }
             _ => panic!("Unhandled error"),

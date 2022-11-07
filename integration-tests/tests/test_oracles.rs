@@ -15,7 +15,11 @@ fn querying_xyk_lp_price_if_no_price_for_tokens() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[coin(1_000_000_000_000, "umars"), coin(1_000_000_000_000, "uatom")])
+        .init_account(&[
+            coin(1_000_000_000_000, "uosmo"),
+            coin(1_000_000_000_000, "umars"),
+            coin(1_000_000_000_000, "uatom"),
+        ])
         .unwrap();
 
     let contract_addr = instantiate_contract(
