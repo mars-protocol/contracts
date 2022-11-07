@@ -359,7 +359,7 @@ fn test_multiple_users() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user_b);
     assert_eq!(rewards_balance, Uint128::new(288000)); // (86400*5)/2 * (2/3)
 
-    //User A withdraws, user B holds
+    // User A withdraws, user B holds
 
     red_bank.withdraw(&mut mock_env, &user_a, "uusdc", None).unwrap();
 
