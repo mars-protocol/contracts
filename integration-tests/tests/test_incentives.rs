@@ -203,7 +203,7 @@ fn test_multiple_assets() {
     red_bank.init_asset(&mut mock_env, "uatom", default_asset_params());
     red_bank.init_asset(&mut mock_env, "umars", default_asset_params());
 
-    //set incentives
+    // set incentives
     let incentives = mock_env.incentives.clone();
     incentives.set_asset_incentive(&mut mock_env, "uusdc", 5);
     incentives.set_asset_incentive(&mut mock_env, "uatom", 10);
