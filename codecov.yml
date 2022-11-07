@@ -1,2 +1,3 @@
 ignore:
   - "packages/testing"  # ignore all testing files
+  - "integration-tests"
