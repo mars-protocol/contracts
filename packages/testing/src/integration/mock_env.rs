@@ -4,20 +4,16 @@ use crate::integration::mock_contracts::{
     mock_address_provider_contract, mock_incentives_contract, mock_oracle_osmosis_contract,
     mock_red_bank_contract, mock_rewards_collector_osmosis_contract,
 };
-use crate::mock_env;
-use crate::osmosis_querier::{OsmosisQuerier, PriceKey};
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSource;
-use mars_osmosis::helpers::{query_spot_price, Pool, QueryPoolResponse};
 use mars_outpost::address_provider::MarsAddressType;
 use mars_outpost::red_bank::{
     CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, UserCollateralResponse,
     UserDebtResponse, UserPositionResponse,
 };
 use mars_outpost::{address_provider, incentives, oracle, red_bank, rewards_collector};
-use osmosis_std::types::osmosis::gamm::v1beta1::QuerySpotPriceResponse;
 use std::mem::take;
 
 pub struct MockEnv {
@@ -28,7 +24,6 @@ pub struct MockEnv {
     pub oracle: Oracle,
     pub red_bank: RedBank,
     pub rewards_collector: RewardsCollector,
-    pub osmosis_querier: OsmosisQuerier,
 }
 
 #[derive(Clone)]
@@ -84,48 +79,6 @@ impl MockEnv {
 
     pub fn query_balance(&self, addr: &Addr, denom: &str) -> StdResult<Coin> {
         self.app.wrap().query_balance(addr, denom)
-    }
-
-    pub fn set_spot_price(
-        &mut self,
-        id: u64,
-        base_asset_denom: &str,
-        quote_asset_denom: &str,
-        spot_price: QuerySpotPriceResponse,
-    ) {
-        let price_key = PriceKey {
-            pool_id: id,
-            denom_in: base_asset_denom.to_string(),
-            denom_out: quote_asset_denom.to_string(),
-        };
-        self.osmosis_querier.spot_prices.insert(price_key, spot_price);
-    }
-
-    pub fn set_query_pool_response(&mut self, pool_id: u64, pool_response: QueryPoolResponse) {
-        self.osmosis_querier.pools.insert(pool_id, pool_response);
-    }
-
-    pub fn prepare_query_pool_response(
-        pool_id: u64,
-        assets: &[Coin],
-        weights: &[u64],
-        shares: &Coin,
-    ) -> QueryPoolResponse {
-        let pool = Pool {
-            address: "address".to_string(),
-            id: pool_id.to_string(),
-            pool_params: None,
-            future_pool_governor: "future_pool_governor".to_string(),
-            total_shares: Some(osmosis_std::types::cosmos::base::v1beta1::Coin {
-                denom: shares.denom.clone(),
-                amount: shares.amount.to_string(),
-            }),
-            pool_assets: prepare_pool_assets(assets, weights),
-            total_weight: "".to_string(),
-        };
-        QueryPoolResponse {
-            pool,
-        }
     }
 }
 
@@ -575,11 +528,6 @@ impl MockEnvBuilder {
             },
             rewards_collector: RewardsCollector {
                 contract_addr: rewards_collector_addr,
-            },
-            osmosis_querier: OsmosisQuerier {
-                pools: Default::default(),
-                spot_prices: Default::default(),
-                twap_prices: Default::default(),
             },
         }
     }
