@@ -7,7 +7,7 @@ use crate::helpers::default_asset_params;
 mod helpers;
 
 // Note: The incentives rewards for an indivdiual is calculated as follows:
-// (emissions_per_second) * (amount of seconds that the asset has been deposited into the redbank) * (amount of asset user deposited/ total amount of asset deposited)
+// (emissions_per_second) * (amount of seconds that the asset has been deposited into the redbank) * (amount of asset user deposited / total amount of asset deposited)
 // this calculation is used to verify that the amount of rewards claimed is accurate in all the tests below
 
 // User A deposits usdc in the redbank and claims rewards after one day
@@ -54,6 +54,7 @@ fn test_rewards_claim() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
     assert_eq!(rewards_balance, Uint128::zero());
 }
+
 // User A deposited usdc in the redbank when incentives were 5 emissions per second
 // Then claimed rewards after one day
 // Then user A later deposits osmo in the red bank when incentives were 10 emissions per second without withdrawing usdc
@@ -128,6 +129,7 @@ fn test_emissions_rates() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
     assert_eq!(rewards_balance, Uint128::zero());
 }
+
 // User A deposits usdc in the redbank and claimed rewards after one day
 // Then withdraws usdc and checks rewards balance after one day
 #[test]
@@ -190,6 +192,7 @@ fn test_no_incentives_accrued_after_withdraw() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
     assert_eq!(rewards_balance, Uint128::zero());
 }
+
 // User A deposits usdc, osmo, and atom all with different emissions per second & claims rewards after one day
 #[test]
 fn test_multiple_assets() {
@@ -245,6 +248,7 @@ fn test_multiple_assets() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
     assert_eq!(rewards_balance, Uint128::new(1555200));
 }
+
 // User A holds usdc in the red bank while there are incentives then incentives are stopped and then incentives are restarted
 #[test]
 fn test_stopping_incentives() {
@@ -299,6 +303,7 @@ fn test_stopping_incentives() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
     assert_eq!(rewards_balance, Uint128::new(648000)); // (5*86400) + (5*43200)
 }
+
 // User A deposits half the amount user B deposits in the red bank
 // User A withdraws usdc after one day while user B holds usdc in the red bank
 #[test]
@@ -367,6 +372,7 @@ fn test_multiple_users() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user_b);
     assert_eq!(rewards_balance, Uint128::new(720000)); // 288000 + (86400*5)
 }
+
 // User A attempts to claim rewards but there is not enough mars in the incentives contract
 #[test]
 fn test_insufficient_mars() {
@@ -376,11 +382,11 @@ fn test_insufficient_mars() {
     let red_bank = mock_env.red_bank.clone();
     red_bank.init_asset(&mut mock_env, "uusdc", default_asset_params());
 
-    //set incentives
+    // set incentives
     let incentives = mock_env.incentives.clone();
     incentives.set_asset_incentive(&mut mock_env, "uusdc", 5);
 
-    // fund user wallet accounti
+    // fund user wallet account
     let user_a = Addr::unchecked("user_a");
     let funded_amt_one = 10_000_000_000u128;
     let funded_amt_two = 500_000u128;
