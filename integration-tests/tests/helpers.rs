@@ -56,3 +56,61 @@ pub fn is_user_liquidatable(position: &UserPositionResponse) -> bool {
         } => liq_threshold_hf < Decimal::one(),
     }
 }
+
+pub mod osmosis {
+    use osmosis_testing::cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest;
+    use osmosis_testing::{Bank, OsmosisTestApp, RunnerError, SigningAccount, Wasm};
+    use serde::Serialize;
+    use std::fmt::Display;
+    use std::str::FromStr;
+
+    pub fn wasm_file(contract_name: &str) -> String {
+        let artifacts_dir =
+            std::env::var("ARTIFACTS_DIR_PATH").unwrap_or_else(|_| "artifacts".to_string());
+        let snaked_name = contract_name.replace('-', "_");
+        format!("../{}/{}.wasm", artifacts_dir, snaked_name)
+    }
+
+    pub fn instantiate_contract<M>(
+        wasm: &Wasm<OsmosisTestApp>,
+        owner: &SigningAccount,
+        contract_name: &str,
+        msg: &M,
+    ) -> String
+    where
+        M: ?Sized + Serialize,
+    {
+        let wasm_byte_code = std::fs::read(wasm_file(contract_name)).unwrap();
+        let code_id = wasm.store_code(&wasm_byte_code, None, owner).unwrap().data.code_id;
+
+        wasm.instantiate(code_id, msg, None, Some(contract_name), &[], owner).unwrap().data.address
+    }
+
+    pub fn query_balance(bank: &Bank<OsmosisTestApp>, addr: &str, denom: &str) -> u128 {
+        bank.query_balance(&QueryBalanceRequest {
+            address: addr.to_string(),
+            denom: denom.to_string(),
+        })
+        .unwrap()
+        .balance
+        .map(|c| u128::from_str(&c.amount).unwrap())
+        .unwrap_or(0)
+    }
+
+    pub fn assert_err(actual: RunnerError, expected: impl Display) {
+        match actual {
+            RunnerError::ExecuteError {
+                msg,
+            } => {
+                assert!(msg.contains(&format!("{}", expected)))
+            }
+            RunnerError::QueryError {
+                msg,
+            } => {
+                println!("HELLO: {}", msg);
+                assert!(msg.contains(&format!("{}", expected)))
+            }
+            _ => panic!("Unhandled error"),
+        }
+    }
+}

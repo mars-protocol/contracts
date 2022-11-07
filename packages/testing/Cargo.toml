@@ -25,7 +25,7 @@ osmosis-std                    = { workspace = true }
 mars-address-provider          = { version = "0.1.0", path = "../../contracts/address-provider" }
 mars-incentives                = { version = "0.1.0", path = "../../contracts/incentives" }
 mars-outpost                   = { workspace = true }
-mars-oracle-osmosis            = { version = "0.1.0", path = "../../contracts/oracle/osmosis" }
+mars-oracle-osmosis            = { workspace = true }
 mars-osmosis                   = { workspace = true }
 mars-red-bank                  = { version = "0.1.0", path = "../../contracts/red-bank" }
 mars-rewards-collector-osmosis = { version = "0.1.0", path = "../../contracts/rewards-collector/osmosis" }

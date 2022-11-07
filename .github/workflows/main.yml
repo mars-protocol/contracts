@@ -4,6 +4,10 @@ on: push
 
 name: Main
 
+env:
+  # Directory with wasm files used by `tests`
+  ARTIFACTS_DIR_PATH: 'target/wasm32-unknown-unknown/release'
+
 jobs:
 
   test:

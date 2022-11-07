@@ -18,8 +18,10 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dev-dependencies]
-cosmwasm-std = { workspace = true }
-mars-outpost = { workspace = true }
-mars-testing = { workspace = true }
-osmosis-std  = { workspace = true }
-serde        = { workspace = true }
+cosmwasm-std        = { workspace = true }
+mars-outpost        = { workspace = true }
+mars-oracle-osmosis = { workspace = true }
+mars-testing        = { workspace = true }
+osmosis-std         = { workspace = true }
+osmosis-testing     = { version = "0.12", git = "https://github.com/osmosis-labs/osmosis-rust" }
+serde               = { workspace = true }
