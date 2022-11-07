@@ -60,6 +60,14 @@ impl MockEnv {
         })
     }
 
+    pub fn increment_by_time(&mut self, seconds: u64) {
+        self.app.update_block(|block| {
+            block.height += seconds / 6;
+            // assume block time = 6 sec
+            block.time = block.time.plus_seconds(seconds);
+        })
+    }
+
     pub fn fund_account(&mut self, addr: &Addr, coins: &[Coin]) {
         self.app
             .sudo(SudoMsg::Bank(BankSudo::Mint {
