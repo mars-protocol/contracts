@@ -52,6 +52,11 @@ jobs:
     name: Lints
     runs-on: ubuntu-latest
     steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '>=1.18.0' # required by osmosis-testing
+
       - name: Checkout sources
         uses: actions/checkout@v2
 
