@@ -48,7 +48,7 @@ fn test_rewards_claim() {
 
     let balance = mock_env.query_balance(&user, "umars").unwrap();
     assert_eq!(balance.amount, Uint128::new(864000));
-    let mars_balance = incentives.query_balance(&mut mock_env, "umars").unwrap();
+    let mars_balance = mock_env.query_balance(&incentives.contract_addr, "umars").unwrap();
     assert_eq!(mars_balance.amount, Uint128::new(9_999_136_000)); //10_000_000_000 - 864_000
 
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
