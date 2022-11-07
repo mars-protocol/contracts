@@ -1,33 +1,33 @@
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, DepsMut, Empty, Env, MessageInfo, Response, StdResult, WasmMsg,
-};
-use cw721::OwnerOfResponse;
-use cw721_base::QueryMsg;
-
-use crate::borrow::borrow;
-use crate::deposit::deposit;
-use crate::health::assert_below_max_ltv;
-use crate::repay::repay;
-use crate::state::{
-    ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK,
-    SWAPPER, VAULT_CONFIGS, ZAPPER,
-};
-use crate::vault::{
-    enter_vault, exit_vault, exit_vault_unlocked, liquidate_vault, request_vault_unlock,
-    update_vault_coin_balance,
+    to_binary, Addr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
 
-use crate::liquidate_coin::liquidate_coin;
-use crate::swap::swap_exact_in;
-use crate::update_coin_balances::update_coin_balance;
-use crate::withdraw::withdraw;
-use crate::zap::{provide_liquidity, withdraw_liquidity};
 use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use mars_rover::coins::Coins;
 use mars_rover::error::{ContractError, ContractResult};
 use mars_rover::msg::execute::{Action, CallbackMsg};
 use mars_rover::msg::instantiate::ConfigUpdates;
 use mars_rover::traits::{FallbackStr, Stringify};
+
+use crate::borrow::borrow;
+use crate::deposit::deposit;
+use crate::health::assert_below_max_ltv;
+use crate::liquidate_coin::liquidate_coin;
+use crate::refund::refund_coin_balances;
+use crate::repay::repay;
+use crate::state::{
+    ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK,
+    SWAPPER, VAULT_CONFIGS, ZAPPER,
+};
+use crate::swap::swap_exact_in;
+use crate::update_coin_balances::update_coin_balance;
+use crate::utils::assert_is_token_owner;
+use crate::vault::{
+    assert_only_one_vault_position, enter_vault, exit_vault, exit_vault_unlocked, liquidate_vault,
+    request_vault_unlock, update_vault_coin_balance,
+};
+use crate::withdraw::withdraw;
+use crate::zap::{provide_liquidity, withdraw_liquidity};
 
 pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Response> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
@@ -267,6 +267,11 @@ pub fn dispatch_actions(
                     lp_token: lp_token.clone(),
                 })
             }
+            Action::RefundAllCoinBalances {} => {
+                callbacks.push(CallbackMsg::RefundAllCoinBalances {
+                    account_id: account_id.to_string(),
+                })
+            }
         }
     }
 
@@ -276,10 +281,16 @@ pub fn dispatch_actions(
         return Err(ContractError::ExtraFundsReceived(received_coins));
     }
 
-    // after user selected actions, we assert LTV is healthy; if not, throw error and revert all actions
-    callbacks.extend([CallbackMsg::AssertBelowMaxLTV {
-        account_id: account_id.to_string(),
-    }]);
+    callbacks.extend([
+        // Fields of Mars ONLY assertion. Only one vault position per credit account
+        CallbackMsg::AssertOneVaultPositionOnly {
+            account_id: account_id.to_string(),
+        },
+        // after user selected actions, we assert LTV is healthy; if not, throw error and revert all actions
+        CallbackMsg::AssertBelowMaxLTV {
+            account_id: account_id.to_string(),
+        },
+    ]);
 
     let callback_msgs = callbacks
         .iter()
@@ -408,25 +419,11 @@ pub fn execute_callback(
             account_id,
             lp_token,
         } => withdraw_liquidity(deps, env, &account_id, lp_token),
+        CallbackMsg::AssertOneVaultPositionOnly { account_id } => {
+            assert_only_one_vault_position(deps, &account_id)
+        }
+        CallbackMsg::RefundAllCoinBalances { account_id } => {
+            refund_coin_balances(deps, env, &account_id)
+        }
     }
-}
-
-pub fn assert_is_token_owner(deps: &DepsMut, user: &Addr, account_id: &str) -> ContractResult<()> {
-    let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
-    let owner_res: OwnerOfResponse = deps.querier.query_wasm_smart(
-        contract_addr,
-        &QueryMsg::<Empty>::OwnerOf {
-            token_id: account_id.to_string(),
-            include_expired: None,
-        },
-    )?;
-
-    if user != &owner_res.owner {
-        return Err(ContractError::NotTokenOwner {
-            user: user.to_string(),
-            account_id: account_id.to_string(),
-        });
-    }
-
-    Ok(())
 }

@@ -4,7 +4,7 @@
   "license": "GPL-3.0-or-later",
   "scripts": {
     "deploy:osmosis": "yarn build && node build/deploy/osmosis",
-    "generate-types": "yarn rust-schema && tsc --project codegen-tsconfig.json && rm -rf types/generated && node build/codegen && node build/codegen/insertIgnores.js",
+    "generate-types": "yarn rust-schema && tsc --project codegen-tsconfig.json && rm -rf types/generated && node build/codegen && node build/codegen/insertIgnores.js && yarn format",
     "rust-schema": "cd ../ && cargo make generate-all-schemas && cd scripts",
     "compile-wasm": "cd ../ && cargo make rust-optimizer && cd scripts",
     "build": "tsc",
@@ -23,12 +23,12 @@
     "prepend-file": "^2.0.1"
   },
   "devDependencies": {
-    "@babel/preset-env": "^7.19.4",
+    "@babel/preset-env": "^7.20.2",
     "@babel/preset-typescript": "^7.18.6",
-    "@types/jest": "^29.1.2",
+    "@types/jest": "^29.2.2",
     "@typescript-eslint/eslint-plugin": "^5.40.0",
     "@typescript-eslint/parser": "^5.40.0",
-    "eslint": "^8.25.0",
+    "eslint": "^8.27.0",
     "eslint-config-prettier": "^8.5.0",
     "jest": "^29.1.2",
     "prettier": "^2.7.1",

@@ -1,10 +1,10 @@
-import { InstantiateMsg as NftInstantiateMsg } from './generated/account-nft/AccountNft.types'
-import { InstantiateMsg as RedBankInstantiateMsg } from './generated/mock-red-bank/MockRedBank.types'
-import { InstantiateMsg as VaultInstantiateMsg } from './generated/mock-vault/MockVault.types'
-import { InstantiateMsg as OracleInstantiateMsg } from './generated/mock-oracle/MockOracle.types'
-import { InstantiateMsg as RoverInstantiateMsg } from './generated/credit-manager/CreditManager.types'
-import { InstantiateMsg as SwapperInstantiateMsg } from './generated/swapper-base/SwapperBase.types'
-import { InstantiateMsg as ZapperInstantiateMsg } from './generated/mock-zapper/MockZapper.types'
+import { InstantiateMsg as NftInstantiateMsg } from './generated/mars-account-nft/MarsAccountNft.types'
+import { InstantiateMsg as RedBankInstantiateMsg } from './generated/mars-mock-red-bank/MarsMockRedBank.types'
+import { InstantiateMsg as VaultInstantiateMsg } from './generated/mars-mock-vault/MarsMockVault.types'
+import { InstantiateMsg as OracleInstantiateMsg } from './generated/mars-mock-oracle/MarsMockOracle.types'
+import { InstantiateMsg as RoverInstantiateMsg } from './generated/mars-credit-manager/MarsCreditManager.types'
+import { InstantiateMsg as SwapperInstantiateMsg } from './generated/mars-swapper-base/MarsSwapperBase.types'
+import { InstantiateMsg as ZapperInstantiateMsg } from './generated/mars-mock-zapper/MarsMockZapper.types'
 
 export type InstantiateMsgs =
   | NftInstantiateMsg

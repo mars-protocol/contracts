@@ -8,6 +8,7 @@ use mars_rover::error::{ContractError, ContractResult};
 use mars_rover::msg::execute::CallbackMsg;
 use mars_rover::msg::ExecuteMsg;
 
+use crate::query::query_vault_positions;
 use crate::state::{COIN_BALANCES, ORACLE, VAULT_CONFIGS};
 use crate::utils::{assert_coins_are_whitelisted, decrement_coin_balance};
 use crate::vault::utils::{assert_vault_is_whitelisted, update_vault_position};
@@ -141,4 +142,16 @@ pub fn assert_deposit_is_under_cap(
     }
 
     Ok(())
+}
+
+pub fn assert_only_one_vault_position(deps: DepsMut, account_id: &str) -> ContractResult<Response> {
+    let vaults = query_vault_positions(deps.as_ref(), account_id)?;
+    if vaults.len() > 1 {
+        return Err(ContractError::OnlyOneVaultPositionAllowed);
+    }
+
+    Ok(Response::new().add_attribute(
+        "action",
+        "rover/credit-manager/callback/assert_only_one_vault_position",
+    ))
 }

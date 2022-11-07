@@ -4,25 +4,25 @@ import { printBlue, printGray, printGreen } from '../../utils/chalk'
 import { ARTIFACTS_PATH, Storage } from './storage'
 import fs from 'fs'
 import { InstantiateMsgs } from '../../types/instantiateMsgs'
-import { InstantiateMsg as NftInstantiateMsg } from '../../types/generated/account-nft/AccountNft.types'
-import { InstantiateMsg as VaultInstantiateMsg } from '../../types/generated/mock-vault/MockVault.types'
-import { InstantiateMsg as SwapperInstantiateMsg } from '../../types/generated/swapper-base/SwapperBase.types'
-import { InstantiateMsg as ZapperInstantiateMsg } from '../../types/generated/mock-zapper/MockZapper.types'
+import { InstantiateMsg as NftInstantiateMsg } from '../../types/generated/mars-account-nft/MarsAccountNft.types'
+import { InstantiateMsg as VaultInstantiateMsg } from '../../types/generated/mars-mock-vault/MarsMockVault.types'
+import { InstantiateMsg as SwapperInstantiateMsg } from '../../types/generated/mars-swapper-base/MarsSwapperBase.types'
+import { InstantiateMsg as ZapperInstantiateMsg } from '../../types/generated/mars-mock-zapper/MarsMockZapper.types'
+import { InstantiateMsg as RoverInstantiateMsg } from '../../types/generated/mars-credit-manager/MarsCreditManager.types'
 import { InstantiateMsg as OracleAdapterInstantiateMsg } from '../../types/generated/mars-oracle-adapter/MarsOracleAdapter.types'
-import { InstantiateMsg as RoverInstantiateMsg } from '../../types/generated/credit-manager/CreditManager.types'
 import { Rover } from './rover'
-import { AccountNftClient } from '../../types/generated/account-nft/AccountNft.client'
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing'
 import { getAddress, getWallet, setupClient } from './setupDeployer'
 import { coin } from '@cosmjs/stargate'
 import { Coin } from '@cosmjs/amino'
 import { writeFile } from 'fs/promises'
 import { join, resolve } from 'path'
-import {
-  SwapperBaseClient,
-  SwapperBaseQueryClient,
-} from '../../types/generated/swapper-base/SwapperBase.client'
 import assert from 'assert'
+import {
+  MarsSwapperBaseClient,
+  MarsSwapperBaseQueryClient,
+} from '../../types/generated/mars-swapper-base/MarsSwapperBase.client'
+import { MarsAccountNftClient } from '../../types/generated/mars-account-nft/MarsAccountNft.client'
 
 export class Deployer {
   constructor(
@@ -121,7 +121,7 @@ export class Deployer {
       printBlue(`Seeding swapper w/ ${this.config.baseDenom}`)
       await this.transferCoin(this.storage.addresses.swapper!, coin(100, this.config.baseDenom))
 
-      const swapClient = new SwapperBaseClient(
+      const swapClient = new MarsSwapperBaseClient(
         this.cwClient,
         this.deployerAddr,
         this.storage.addresses.swapper!,
@@ -135,7 +135,10 @@ export class Deployer {
         route: this.config.swapRoute,
       })
 
-      const swapQuery = new SwapperBaseQueryClient(this.cwClient, this.storage.addresses.swapper!)
+      const swapQuery = new MarsSwapperBaseQueryClient(
+        this.cwClient,
+        this.storage.addresses.swapper!,
+      )
       const routes = await swapQuery.routes({})
       assert.equal(routes.length, 1)
       this.storage.actions.setRouteAndSeedSwapper = true
@@ -196,7 +199,7 @@ export class Deployer {
 
   async transferNftContractOwnership() {
     if (!this.storage.actions.proposedNewOwner) {
-      const nftClient = new AccountNftClient(
+      const nftClient = new MarsAccountNftClient(
         this.cwClient,
         this.deployerAddr,
         this.storage.addresses.accountNft!,

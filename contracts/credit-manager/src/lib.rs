@@ -7,6 +7,7 @@ pub mod health;
 pub mod instantiate;
 pub mod liquidate_coin;
 pub mod query;
+pub mod refund;
 pub mod repay;
 pub mod state;
 pub mod swap;

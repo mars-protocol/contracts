@@ -582,6 +582,20 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "description": "Refunds all coin balances back to user wallet",
+            "type": "object",
+            "required": [
+              "refund_all_coin_balances"
+            ],
+            "properties": {
+              "refund_all_coin_balances": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },
@@ -1083,6 +1097,50 @@
                   },
                   "lp_token": {
                     "$ref": "#/definitions/Coin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Checks to ensure only one vault position is taken per credit account",
+            "type": "object",
+            "required": [
+              "assert_one_vault_position_only"
+            ],
+            "properties": {
+              "assert_one_vault_position_only": {
+                "type": "object",
+                "required": [
+                  "account_id"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Refunds all coin balances back to user wallet",
+            "type": "object",
+            "required": [
+              "refund_all_coin_balances"
+            ],
+            "properties": {
+              "refund_all_coin_balances": {
+                "type": "object",
+                "required": [
+                  "account_id"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
                   }
                 },
                 "additionalProperties": false

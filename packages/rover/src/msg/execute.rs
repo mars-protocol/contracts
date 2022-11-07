@@ -96,6 +96,8 @@ pub enum Action {
     },
     /// Send LP token and withdraw corresponding reserve assets from pool
     WithdrawLiquidity { lp_token: Coin },
+    /// Refunds all coin balances back to user wallet
+    RefundAllCoinBalances {},
 }
 
 /// Internal actions made by the contract with pre-validated inputs
@@ -193,6 +195,10 @@ pub enum CallbackMsg {
     },
     /// Send LP token and withdraw corresponding reserve assets from pool
     WithdrawLiquidity { account_id: String, lp_token: Coin },
+    /// Checks to ensure only one vault position is taken per credit account
+    AssertOneVaultPositionOnly { account_id: String },
+    /// Refunds all coin balances back to user wallet
+    RefundAllCoinBalances { account_id: String },
 }
 
 impl CallbackMsg {

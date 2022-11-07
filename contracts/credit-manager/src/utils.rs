@@ -2,9 +2,11 @@ use std::collections::HashSet;
 use std::hash::Hash;
 
 use cosmwasm_std::{
-    to_binary, Addr, Coin, CosmosMsg, Decimal, Deps, QuerierWrapper, StdResult, Storage, Uint128,
-    WasmMsg,
+    to_binary, Addr, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, QuerierWrapper, StdResult,
+    Storage, Uint128, WasmMsg,
 };
+use cw721::OwnerOfResponse;
+use cw721_base::QueryMsg;
 
 use mars_rover::error::{ContractError, ContractResult};
 use mars_rover::msg::execute::CallbackMsg;
@@ -12,8 +14,33 @@ use mars_rover::msg::query::CoinValue;
 use mars_rover::msg::ExecuteMsg;
 use mars_rover::traits::IntoDecimal;
 
-use crate::state::{ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, TOTAL_DEBT_SHARES};
+use crate::state::{
+    ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, TOTAL_DEBT_SHARES,
+};
 use crate::update_coin_balances::query_balance;
+
+pub fn assert_is_token_owner(deps: &DepsMut, user: &Addr, account_id: &str) -> ContractResult<()> {
+    let owner = query_nft_token_owner(deps.as_ref(), account_id)?;
+    if user != &owner {
+        return Err(ContractError::NotTokenOwner {
+            user: user.to_string(),
+            account_id: account_id.to_string(),
+        });
+    }
+    Ok(())
+}
+
+pub fn query_nft_token_owner(deps: Deps, account_id: &str) -> ContractResult<String> {
+    let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
+    let res: OwnerOfResponse = deps.querier.query_wasm_smart(
+        contract_addr,
+        &QueryMsg::<Empty>::OwnerOf {
+            token_id: account_id.to_string(),
+            include_expired: None,
+        },
+    )?;
+    Ok(res.owner)
+}
 
 pub fn assert_coin_is_whitelisted(storage: &mut dyn Storage, denom: &str) -> ContractResult<()> {
     let is_whitelisted = ALLOWED_COINS.contains(storage, denom);

@@ -1,8 +1,3 @@
-import {
-  CreditManagerClient,
-  CreditManagerQueryClient,
-} from '../../types/generated/credit-manager/CreditManager.client'
-import { AccountNftQueryClient } from '../../types/generated/account-nft/AccountNft.client'
 import { Storage } from './storage'
 import { DeploymentConfig } from '../../types/config'
 import { difference } from 'lodash'
@@ -10,15 +5,20 @@ import assert from 'assert'
 import { printBlue, printGreen } from '../../utils/chalk'
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
 import {
+  MarsCreditManagerClient,
+  MarsCreditManagerQueryClient,
+} from '../../types/generated/mars-credit-manager/MarsCreditManager.client'
+import { MarsAccountNftQueryClient } from '../../types/generated/mars-account-nft/MarsAccountNft.client'
+import {
   Action,
   Coin,
   ConfigUpdates,
-} from '../../types/generated/credit-manager/CreditManager.types'
+} from '../../types/generated/mars-credit-manager/MarsCreditManager.types'
 
 export class Rover {
-  private exec: CreditManagerClient
-  private query: CreditManagerQueryClient
-  private nft: AccountNftQueryClient
+  private exec: MarsCreditManagerClient
+  private query: MarsCreditManagerQueryClient
+  private nft: MarsAccountNftQueryClient
   private accountId?: string
 
   constructor(
@@ -27,9 +27,9 @@ export class Rover {
     private config: DeploymentConfig,
     private cwClient: SigningCosmWasmClient,
   ) {
-    this.exec = new CreditManagerClient(cwClient, userAddr, storage.addresses.creditManager!)
-    this.query = new CreditManagerQueryClient(cwClient, storage.addresses.creditManager!)
-    this.nft = new AccountNftQueryClient(cwClient, storage.addresses.accountNft!)
+    this.exec = new MarsCreditManagerClient(cwClient, userAddr, storage.addresses.creditManager!)
+    this.query = new MarsCreditManagerQueryClient(cwClient, storage.addresses.creditManager!)
+    this.nft = new MarsAccountNftQueryClient(cwClient, storage.addresses.accountNft!)
   }
 
   async updateConfig(newConfig: ConfigUpdates) {

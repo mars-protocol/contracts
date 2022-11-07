@@ -1,5 +1,3 @@
-import { Coin } from './generated/credit-manager/CreditManager.types'
-
 export enum VaultType {
   LOCKED,
   UNLOCKED,
@@ -19,7 +17,10 @@ export interface DeploymentConfig {
   defaultGasPrice: number
   startingAmountForTestUser: number
   depositAmount: number
-  toGrantCreditLines: Coin[]
+  toGrantCreditLines: {
+    amount: string
+    denom: string
+  }[]
   borrowAmount: number
   repayAmount: number
   swapAmount: number
@@ -30,7 +31,10 @@ export interface DeploymentConfig {
   maxLiquidationBonus: number
   vaultType: VaultType
   vaultDepositAmount: number
-  vaultDepositCap: Coin
+  vaultDepositCap: {
+    amount: string
+    denom: string
+  }
   vaultLiquidationThreshold: number
   vaultMaxLTV: number
   vaultWithdrawAmount: number

@@ -80,6 +80,9 @@ pub enum ContractError {
     #[error("Expected vault coins in exchange for deposit, but none were sent")]
     NoVaultCoinsReceived,
 
+    #[error("No more than one vault positions is allowed")]
+    OnlyOneVaultPositionAllowed,
+
     #[error("{0}")]
     Overflow(#[from] OverflowError),
 

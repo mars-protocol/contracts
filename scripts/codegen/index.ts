@@ -27,7 +27,7 @@ void (async function () {
             queryKeys: true,
           },
           messageComposer: {
-            enabled: false,
+            enabled: true,
           },
         },
       })

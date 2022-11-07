@@ -39,7 +39,7 @@ pub fn query_positions(deps: Deps, env: &Env, account_id: &str) -> ContractResul
         account_id: account_id.to_string(),
         coins: query_coin_balances(deps, account_id)?,
         debts: query_debt_amounts(deps, env, account_id)?,
-        vaults: get_vault_positions(deps, account_id)?,
+        vaults: query_vault_positions(deps, account_id)?,
     })
 }
 
@@ -82,7 +82,7 @@ fn query_debt_amounts(deps: Deps, env: &Env, account_id: &str) -> ContractResult
         .collect()
 }
 
-fn query_coin_balances(deps: Deps, account_id: &str) -> ContractResult<Vec<Coin>> {
+pub fn query_coin_balances(deps: Deps, account_id: &str) -> ContractResult<Vec<Coin>> {
     COIN_BALANCES
         .prefix(account_id)
         .range(deps.storage, None, None, Order::Ascending)
@@ -145,7 +145,7 @@ pub fn query_vault_configs(
         .collect()
 }
 
-fn get_vault_positions(deps: Deps, account_id: &str) -> ContractResult<Vec<VaultPosition>> {
+pub fn query_vault_positions(deps: Deps, account_id: &str) -> ContractResult<Vec<VaultPosition>> {
     VAULT_POSITIONS
         .prefix(account_id)
         .range(deps.storage, None, None, Order::Ascending)
