@@ -38,15 +38,16 @@ jobs:
       - name: Run tests
         run: cargo make test
 
-      - name: Run test coverage
-        run: cargo make coverage
+      # FIXME: enable when testing directories work as expected
+      #- name: Run test coverage
+      #  run: cargo make coverage
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3.1.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
-          files: target/lcov.info
+      #- name: Upload coverage to Codecov
+      #  uses: codecov/codecov-action@v3.1.1
+      #  with:
+      #    token: ${{ secrets.CODECOV_TOKEN }}
+      #    fail_ci_if_error: false
+      #    files: target/lcov.info
 
   lints:
     name: Lints
