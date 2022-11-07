@@ -257,7 +257,7 @@ fn test_stopping_incentives() {
     let red_bank = mock_env.red_bank.clone();
     red_bank.init_asset(&mut mock_env, "uusdc", default_asset_params());
 
-    //set incentives
+    // set incentives
     let incentives = mock_env.incentives.clone();
     incentives.set_asset_incentive(&mut mock_env, "uusdc", 5);
 
