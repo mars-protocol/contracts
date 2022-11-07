@@ -109,12 +109,12 @@ fn borrow_exact_liquidity() {
 
     // fund provider account with usdc
     let provider = Addr::unchecked("provider");
-    let funded_usdc = 10000_000_000u128;
+    let funded_usdc = 10_000_000_000_u128;
     mock_env.fund_account(&provider, &[coin(funded_usdc, "uusdc")]);
 
     // fund borrow account with large amount of atom
     let borrower = Addr::unchecked("borrower");
-    let funded_atom = 1000000_000_000u128;
+    let funded_atom = 1_000_000_000_000u128;
     mock_env.fund_account(&borrower, &[coin(funded_atom, "uatom")]);
 
     // provider deposits usdc

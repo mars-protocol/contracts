@@ -36,6 +36,7 @@ cw-storage-plus             = "0.15"
 cw-utils                    = "0.15"
 mars-health                 = { version = "0.1.0", path = "./packages/health" }
 mars-oracle-base            = { version = "0.1.0", path = "./contracts/oracle/base" }
+mars-oracle-osmosis         = { version = "0.1.0", path = "./contracts/oracle/osmosis" }
 mars-osmosis                = { version = "0.1.0", path = "./packages/chains/osmosis" }
 mars-outpost                = { version = "0.1.0", path = "./packages/outpost" }
 mars-rewards-collector-base = { version = "0.1.0", path = "./contracts/rewards-collector/base" }

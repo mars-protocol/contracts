@@ -50,7 +50,7 @@ fn test_setting_address() {
     let invalid_address = "mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575".to_string();
     let msg = ExecuteMsg::SetAddress {
         address_type: MarsAddressType::SafetyFund,
-        address: invalid_address.clone(),
+        address: invalid_address,
     };
 
     execute(deps.as_mut(), mock_env(), mock_info("osmo_owner", &[]), msg).unwrap();

@@ -100,5 +100,5 @@ fn test_removing_price_source() {
         },
     );
     assert_eq!(res.len(), 2);
-    assert_eq!(res.iter().find(|ps| ps.denom == "uatom".to_string()).is_none(), true)
+    assert!(!res.iter().any(|ps| &ps.denom == "uatom"))
 }

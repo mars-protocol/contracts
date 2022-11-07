@@ -41,19 +41,19 @@ fn liquidate_collateralized_loan() {
 
     // fund provider account with usdc
     let provider = Addr::unchecked("provider");
-    let funded_usdc = 1000000_000_000u128;
+    let funded_usdc = 1_000_000_000_000u128;
     mock_env.fund_account(&provider, &[coin(funded_usdc, "uusdc")]);
 
     // fund borrow account with atom and osmo
     let borrower = Addr::unchecked("borrower");
-    let funded_atom = 1250_000_000u128;
-    let funded_osmo = 15200_000_000u128;
+    let funded_atom = 1_250_000_000u128;
+    let funded_osmo = 15_200_000_000u128;
     mock_env.fund_account(&borrower, &[coin(funded_atom, "uatom")]);
     mock_env.fund_account(&borrower, &[coin(funded_osmo, "uosmo")]);
 
     // fund liquidator account with usdc
     let liquidator = Addr::unchecked("liquidator");
-    mock_env.fund_account(&liquidator, &[coin(1000000_000_000u128, "uusdc")]);
+    mock_env.fund_account(&liquidator, &[coin(1_000_000_000_000u128, "uusdc")]);
 
     // deposits collaterals
     red_bank.deposit(&mut mock_env, &provider, coin(funded_usdc, "uusdc")).unwrap();
@@ -212,12 +212,12 @@ fn liquidate_uncollateralized_loan() {
 
     // fund provider account with usdc
     let provider = Addr::unchecked("provider");
-    let funded_usdc = 1000000_000_000u128;
-    mock_env.fund_account(&provider, &[coin(1000000_000_000u128, "uusdc")]);
+    let funded_usdc = 1_000_000_000_000u128;
+    mock_env.fund_account(&provider, &[coin(1_000_000_000_000u128, "uusdc")]);
 
     // fund provider account with usdc
     let liquidator = Addr::unchecked("liquidator");
-    mock_env.fund_account(&liquidator, &[coin(1000000_000_000u128, "uusdc")]);
+    mock_env.fund_account(&liquidator, &[coin(1_000_000_000_000u128, "uusdc")]);
 
     // deposits usdc to redbank
     red_bank.deposit(&mut mock_env, &provider, coin(funded_usdc, "uusdc")).unwrap();
@@ -231,7 +231,7 @@ fn liquidate_uncollateralized_loan() {
             &owner,
             &borrower,
             "uusdc",
-            Uint128::from(10000_000_000u128),
+            Uint128::from(10_000_000_000u128),
         )
         .unwrap();
 

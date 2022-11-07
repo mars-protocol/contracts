@@ -47,7 +47,7 @@ fn test_updating_config_if_invalid_slippage() {
 
     let info = mock_info("owner");
     let msg = ExecuteMsg::UpdateConfig {
-        new_cfg: invalid_cfg.clone(),
+        new_cfg: invalid_cfg,
     };
     let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(
@@ -118,7 +118,7 @@ fn test_updating_config_if_invalid_timeout_revision() {
     let msg = ExecuteMsg::UpdateConfig {
         new_cfg: invalid_cfg,
     };
-    let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+    let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(
         err,
         ContractError::Mars(MarsError::InvalidParam {
@@ -142,7 +142,7 @@ fn test_updating_config_if_invalid_timeout_blocks() {
     let msg = ExecuteMsg::UpdateConfig {
         new_cfg: invalid_cfg,
     };
-    let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+    let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(
         err,
         ContractError::Mars(MarsError::InvalidParam {
@@ -166,7 +166,7 @@ fn test_updating_config_if_invalid_timeout_seconds() {
     let msg = ExecuteMsg::UpdateConfig {
         new_cfg: invalid_cfg,
     };
-    let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+    let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(
         err,
         ContractError::Mars(MarsError::InvalidParam {

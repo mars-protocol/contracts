@@ -494,7 +494,7 @@ fn depositing_on_behalf_of_cannot_enable_collateral() {
 
     // 'on_behalf_of_addr' should have collateral enabled
     let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
-    assert_eq!(collateral.enabled, true);
+    assert!(collateral.enabled);
 
     // 'on_behalf_of_addr' disables asset as collateral
     execute(
@@ -510,7 +510,7 @@ fn depositing_on_behalf_of_cannot_enable_collateral() {
 
     // verify asset is disabled as collateral for 'on_behalf_of_addr'
     let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
-    assert_eq!(collateral.enabled, false);
+    assert!(!collateral.enabled);
 
     // 'depositor_addr' deposits a small amount of funds to 'on_behalf_of_addr' to enable his asset as collateral
     execute(
@@ -525,5 +525,5 @@ fn depositing_on_behalf_of_cannot_enable_collateral() {
 
     // 'on_behalf_of_addr' doesn't have the asset enabled as collateral
     let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
-    assert_eq!(collateral.enabled, false);
+    assert!(!collateral.enabled);
 }
