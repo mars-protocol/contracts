@@ -286,7 +286,7 @@ fn test_stopping_incentives() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
     assert_eq!(rewards_balance, Uint128::new(432000));
 
-    //stop incentives
+    // stop incentives
     incentives.set_asset_incentive(&mut mock_env, "uusdc", 0);
 
     mock_env.increment_by_time(86400); // 24 hours
