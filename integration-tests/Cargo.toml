@@ -20,6 +20,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 cosmwasm-std        = { workspace = true }
 mars-outpost        = { workspace = true }
 mars-oracle-osmosis = { workspace = true }
+mars-oracle-base    = { workspace = true }
 mars-testing        = { workspace = true }
 osmosis-std         = { workspace = true }
 osmosis-testing     = { version = "0.12", git = "https://github.com/osmosis-labs/osmosis-rust" }

@@ -896,6 +896,7 @@ name = "mars-integration-tests"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
+ "mars-oracle-base",
  "mars-oracle-osmosis",
  "mars-outpost",
  "mars-testing",
