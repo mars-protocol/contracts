@@ -1,7 +1,6 @@
 {
   "name": "scripts",
   "version": "1.0.0",
-  "license": "GPL-3.0",
   "scripts": {
     "deploy:osmosis": "yarn build && node build/deploy/osmosis/index.js",
     "deploy:osmosis-multisig": "yarn build && node build/deploy/osmosis/multisig.js",
