@@ -604,55 +604,25 @@ fn test_oracle_with_redbank() {
         },
     );
 
-    let gamm = Gamm::new(&app);
-    let pool_liquidity = vec![Coin::new(2_000_000, "uatom"), Coin::new(1_000_000, "uosmo")];
-    let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
-
-    wasm.execute(
-        &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
-            denom: "uosmo".to_string(),
-            price_source: OsmosisPriceSource::Spot {
-                pool_id,
-            },
-        },
-        &[],
-        &signer,
-    )
-    .unwrap();
-
-    wasm.execute(
-        &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
-            denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Spot {
-                pool_id,
-            },
-        },
-        &[],
-        &signer,
-    )
-    .unwrap();
-
     wasm.execute(
         &red_bank_addr,
         &execute_red_bank::InitAsset {
             denom: "uosmo".to_string(),
             params: InitOrUpdateAssetParams {
-                initial_borrow_rate: Option::from(Decimal::from_str("0.1").unwrap()),
-                reserve_factor: Option::from(Decimal::from_str("0.55").unwrap()),
-                max_loan_to_value: Option::from(Decimal::from_str("0.2").unwrap()),
-                liquidation_threshold: Option::from(Decimal::from_str("0.89").unwrap()),
-                liquidation_bonus: Option::from(Decimal::from_str("0.6").unwrap()),
-                interest_rate_model: Option::from(InterestRateModel {
-                    optimal_utilization_rate: Default::default(),
-                    base: Decimal::from_str("0.6").unwrap(),
-                    slope_1: Decimal::from_str("0.6").unwrap(),
-                    slope_2: Decimal::from_str("0.6").unwrap(),
+                initial_borrow_rate: Some(Decimal::percent(10)),
+                reserve_factor: Some(Decimal::percent(20)),
+                max_loan_to_value: Some(Decimal::percent(60)),
+                liquidation_threshold: Some(Decimal::percent(80)),
+                liquidation_bonus: Some(Decimal::percent(10)),
+                interest_rate_model: Some(InterestRateModel {
+                    optimal_utilization_rate: Decimal::percent(10),
+                    base: Decimal::percent(30),
+                    slope_1: Decimal::percent(25),
+                    slope_2: Decimal::percent(30),
                 }),
-                deposit_enabled: Option::from(true),
-                borrow_enabled: Option::from(true),
-                deposit_cap: Option::from(Uint128::from(1_000_000_000u128)),
+                deposit_enabled: Some(true),
+                borrow_enabled: Some(true),
+                deposit_cap: None,
             },
         },
         &[],
@@ -686,12 +656,42 @@ fn test_oracle_with_redbank() {
     )
     .unwrap();
 
+    let gamm = Gamm::new(&app);
+    let pool_liquidity = vec![Coin::new(2_000_000, "uatom"), Coin::new(1_000_000, "uosmo")];
+    let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
+
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::SetPriceSource {
+            denom: "uosmo".to_string(),
+            price_source: OsmosisPriceSource::Spot {
+                pool_id,
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSource::Spot {
+                pool_id,
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+
     wasm.execute(
         &red_bank_addr,
         &Deposit {
             on_behalf_of: None,
         },
-        &[coin(1_000, "uosmo")],
+        &[coin(1_000_000_000_000, "uosmo")],
         &depositor,
     )
     .unwrap_err();
