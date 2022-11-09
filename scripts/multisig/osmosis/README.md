@@ -102,6 +102,8 @@ For `# zsh`:
    ```
    git clone https://github.com/mars-protocol/outposts.git
    
+   git checkout <commit-id> 
+   
    cd scripts 
    
    yarn compile
@@ -114,10 +116,49 @@ For `# zsh`:
    osmosisd query wasm code $CODEID $NODE download.wasm
    ```
    
-3. Check that the diff is empty between them. 
+3. Verify that the diff is empty between them. 
    ``` 
    diff artifacts/$CONTRACTNAME.wasm download.wasm 
    ```
+   
+## Query contract configs 
+
+``` shell
+# oracle
+
+QUERY='{"price_sources":{}}'
+osmosisd query wasm contract-state smart $ORACLEADDR "$QUERY" --output json | jq .
+
+
+QUERY='{"price":{"denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}}'
+osmosisd query wasm contract-state smart $ORACLEADDR "$QUERY" --output json | jq .
+
+# rewards-collector
+
+QUERY='{"route":{"denom_in":"uosmo","denom_out":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}}'
+osmosisd query wasm contract-state smart $REWARDSADDR "$QUERY" --output json | jq .
+
+
+QUERY='{"routes":{}}'
+osmosisd query wasm contract-state smart $REWARDSADDR "$QUERY" --output json | jq .
+
+
+QUERY='{"config":{}}'
+osmosisd query wasm contract-state smart $REWARDSADDR "$QUERY" --output json | jq .
+
+# red-bank
+
+QUERY='{"market":{"denom":"uosmo"}}'
+osmosisd query wasm contract-state smart $REDBANKADDR "$QUERY" --output json | jq .
+
+
+QUERY='{"underlying_liquidity_amount":{"denom":"uosmo","amount_scaled":"$AMOUNT"}}'
+osmosisd query wasm contract-state smart $REDBANKADDR "$QUERY" --output json | jq .
+
+
+QUERY='{"uncollateralized_loan_limits":{"user":"$ADDR"}}'
+osmosisd query wasm contract-state smart $REDBANKADDR "$QUERY" --output json | jq .
+```
 
 ## Signing a TX with the multisig - Migrate Msg Example
 
@@ -133,7 +174,17 @@ _Note: The multisig must have at least one tx against it for the address to exis
 
    If they're missing, follow steps 2-4 from the "Set up multisig on your local network" section.
 
-3. Initiate the multisig migrate tx. This can be done by any one of the multisig holders.
+3. Ensure the newly uploaded code has a migration entry point. 
+   ```rust
+   #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+   pub struct MigrateMsg {}
+   
+   #[cfg_attr(not(feature = "library"), entry_point)]
+   pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+   Ok(Response::default())
+   }
+   ```
+4. Initiate the multisig migrate tx. This can be done by any one of the multisig holders.
 
    Signing over a node:
 
@@ -159,9 +210,9 @@ _Note: The multisig must have at least one tx against it for the address to exis
    --account=$ACCOUNT
    ```
 
-4. Distribute the generated file to all signers.
+5. Distribute the generated file to all signers.
 
-5. Individually sign the transaction.
+6. Individually sign the transaction.
    Signing over a node:
 
    ```
@@ -190,7 +241,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
    --account=$ACCOUNT
    ```
 
-6. Complete the multisign. There must be a total of 3 signers for the transaction to be successful.
+7. Complete the multisign. There must be a total of 3 signers for the transaction to be successful.
    Signing over a node:
 
    ```
@@ -219,7 +270,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
    --account=$ACCOUNT
    ```
 
-7. Broadcast the transaction.
+8. Broadcast the transaction.
    ```
    osmosisd tx broadcast $SIGNED \
     --chain-id=$CHAINID \
@@ -319,3 +370,38 @@ $MULTI
     --node=$NODE
    ```
    
+## Examples of Execute Args:
+For this to be completed as a multisig tx, the flags and steps from the previous section must be used. 
+```shell
+# Red Bank 
+EXECUTE='{"deposit":{}}'
+osmosisd tx wasm execute $REDBANKADDR "$EXECUTE" 
+
+
+EXECUTE='{"update_uncollateralized_loan_limit":{"user":"$ADDR","denom":"$DENOM","new_limit":"1000000000"}}'
+osmosisd tx wasm execute $REDBANKADDR "$EXECUTE" 
+
+# Rewards Collector
+EXECUTE='{"update_config":{"new_cfg": {"safety_fund_denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2","fee_collector_denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}}}'
+osmosisd tx wasm execute $REWARDSADDR "$EXECUTE" 
+
+
+EXECUTE='{"set_route":{"denom_in":"uosmo","denom_out":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2","route":[{"token_out_denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2","pool_id":"1"}]}}'
+osmosisd tx wasm execute $REWARDSADDR "$EXECUTE" 
+
+
+EXECUTE='{"swap_asset":{"denom":"uosmo"}}'
+osmosisd tx wasm execute $REWARDSADDR "$EXECUTE" 
+
+# Oracle 
+EXECUTE='{"set_price_source":{"denom":"uosmo","price_source":{"fixed":{"price":"1.0"}}}}'
+osmosisd tx wasm execute $ORACLEADDR "$EXECUTE" 
+
+
+EXECUTE='{"set_price_source":{"denom":"uosmo","price_source":{"spot":{"pool_id":1}}}}'
+osmosisd tx wasm execute $ORACLEADDR "$EXECUTE" 
+
+
+EXECUTE='{"set_price_source":{"denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2","price_source":{"twap":{"pool_id":1,"window_size":86400}}}}'
+osmosisd tx wasm execute $ORACLEADDR "$EXECUTE" 
+```
