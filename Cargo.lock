@@ -644,9 +644,9 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.9.1"
+version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c90bf5f19754d10198ccb95b70664fc925bd1fc090a0fd9a6ebc54acc8cd6272"
+checksum = "a12e6657c4c97ebab115a42dcee77225f7f482cdd841cf7088c657a42e9e00e7"
 dependencies = [
  "atty",
  "humantime",
@@ -910,9 +910,9 @@ checksum = "fc7fcc620a3bff7cdd7a365be3376c97191aeaccc2a603e600951e452615bf89"
 
 [[package]]
 name = "libloading"
-version = "0.7.3"
+version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "efbc0f03f9a775e9f6aed295c6a1ba2253c5757a9e03d55c6caa46a681abcddd"
+checksum = "b67380fd3b2fbe7527a606e18729d21c6f3951633d0500574c4dc22d2d638b9f"
 dependencies = [
  "cfg-if",
  "winapi",
@@ -1218,7 +1218,7 @@ dependencies = [
 [[package]]
 name = "osmosis-std"
 version = "0.12.0"
-source = "git+https://github.com/osmosis-labs/osmosis-rust#28ffd12efce20ee36bb78505e5af136b26344b70"
+source = "git+https://github.com/osmosis-labs/osmosis-rust#9b010acf59d631cf099f2b45dbc011a4d99b37f8"
 dependencies = [
  "chrono",
  "cosmwasm-std",
@@ -1245,7 +1245,7 @@ dependencies = [
 [[package]]
 name = "osmosis-std-derive"
 version = "0.12.0"
-source = "git+https://github.com/osmosis-labs/osmosis-rust#28ffd12efce20ee36bb78505e5af136b26344b70"
+source = "git+https://github.com/osmosis-labs/osmosis-rust#9b010acf59d631cf099f2b45dbc011a4d99b37f8"
 dependencies = [
  "itertools",
  "proc-macro2",
@@ -1256,7 +1256,7 @@ dependencies = [
 [[package]]
 name = "osmosis-testing"
 version = "0.12.0"
-source = "git+https://github.com/osmosis-labs/osmosis-rust#28ffd12efce20ee36bb78505e5af136b26344b70"
+source = "git+https://github.com/osmosis-labs/osmosis-rust#9b010acf59d631cf099f2b45dbc011a4d99b37f8"
 dependencies = [
  "base64",
  "bindgen",
@@ -1403,9 +1403,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.6.0"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c4eb3267174b8c6c2f654116623910a0fef09c4753f8dd83db29c48a0df988b"
+checksum = "e076559ef8e241f2ae3479e36f97bd5741c0330689e217ad51ce2c76808b868a"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -1414,9 +1414,9 @@ dependencies = [
 
 [[package]]
 name = "regex-syntax"
-version = "0.6.27"
+version = "0.6.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3f87b73ce11b1619a3c6332f45341e0047173771e8b8b73f87bfeefb7b56244"
+checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 
 [[package]]
 name = "rfc6979"

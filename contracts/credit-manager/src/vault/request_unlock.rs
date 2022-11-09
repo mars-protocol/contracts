@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Coin, DepsMut, Reply, Response, Uint128};
+use cosmwasm_std::{Addr, Coin, DepsMut, Reply, Response, Uint128};
 
 use crate::state::VAULT_REQUEST_TEMP_STORAGE;
 use mars_rover::adapters::vault::{
@@ -14,6 +14,7 @@ use crate::vault::utils::{assert_vault_is_whitelisted, update_vault_position};
 pub struct RequestTempStorage {
     pub account_id: String,
     pub amount: Uint128,
+    pub vault_addr: Addr,
 }
 
 pub fn request_vault_unlock(
@@ -42,6 +43,7 @@ pub fn request_vault_unlock(
         &RequestTempStorage {
             account_id: account_id.to_string(),
             amount,
+            vault_addr: vault.address.clone(),
         },
     )?;
 
@@ -59,15 +61,14 @@ pub fn request_vault_unlock(
 pub fn handle_unlock_request_reply(deps: DepsMut, reply: Reply) -> ContractResult<Response> {
     let storage = VAULT_REQUEST_TEMP_STORAGE.load(deps.storage)?;
     let unlock_event = reply.parse_unlock_event()?;
-    let vault_addr = deps.api.addr_validate(unlock_event.vault_addr.as_str())?;
-    let vault = VaultBase::new(vault_addr.clone());
+    let vault = VaultBase::new(storage.vault_addr.clone());
     let lockup = vault.query_lockup(&deps.querier, unlock_event.id)?;
     let info = vault.query_info(&deps.querier)?;
 
     update_vault_position(
         deps.storage,
         &storage.account_id,
-        &vault_addr,
+        &storage.vault_addr,
         VaultPositionUpdate::Unlocking(UnlockingChange::Add(VaultUnlockingPosition {
             id: lockup.id,
             coin: Coin {

@@ -180,7 +180,10 @@ fn test_extra_funds_received() {
         &[coin(234, uosmo_info.denom), extra_funds.clone()],
     );
 
-    assert_err(res, ExtraFundsReceived(Coins::from(vec![extra_funds])));
+    assert_err(
+        res,
+        ExtraFundsReceived(Coins::try_from(vec![extra_funds]).unwrap()),
+    );
 
     let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);

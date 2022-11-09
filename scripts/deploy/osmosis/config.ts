@@ -20,6 +20,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   defaultGasPrice: 0.1,
   startingAmountForTestUser: 2e6,
   vaultTokenDenom: udig,
+  vaultLockup: { time: 86400 }, // 1 day
   maxCloseFactor: 0.6,
   maxLiquidationBonus: 0.05,
   depositAmount: 100,
@@ -28,23 +29,21 @@ export const osmosisTestnetConfig: DeploymentConfig = {
     { denom: uatom, amount: '100000000000' },
   ],
   borrowAmount: 10,
-  repayAmount: 3,
+  repayAmount: 8,
   swapAmount: 12,
-  swapRoute: {
-    steps: [
-      {
-        denom_out: uatom,
-        pool_id: 1,
-      },
-    ],
-  },
+  swapRoute: [
+    {
+      token_out_denom: uatom,
+      pool_id: '1',
+    },
+  ],
   slippage: 0.4,
   withdrawAmount: 12,
   vaultDepositAmount: 10,
   vaultDepositCap: { denom: 'uosmo', amount: '100000000000' },
   vaultMaxLTV: 0.65,
   vaultLiquidationThreshold: 0.75,
-  vaultType: VaultType.UNLOCKED,
+  vaultType: VaultType.LOCKED,
   vaultWithdrawAmount: 1_000_000,
   lpToken: { denom: ucro, price: 3 },
   zap: [

@@ -12,12 +12,12 @@ export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProp
   const deployer = await setupDeployer(config)
   try {
     // Upload contracts
-    await deployer.upload('accountNft', wasmFile('account_nft'))
-    await deployer.upload('mockVault', wasmFile('mock_vault'))
+    await deployer.upload('accountNft', wasmFile('mars_account_nft'))
+    await deployer.upload('mockVault', wasmFile('mars_mock_vault'))
     await deployer.upload('marsOracleAdapter', wasmFile('mars_oracle_adapter'))
     await deployer.upload('swapper', wasmFile(swapperContractName))
-    await deployer.upload('mockZapper', wasmFile('mock_zapper'))
-    await deployer.upload('creditManager', wasmFile('credit_manager'))
+    await deployer.upload('mockZapper', wasmFile('mars_mock_zapper'))
+    await deployer.upload('creditManager', wasmFile('mars_credit_manager'))
 
     // Instantiate contracts
     await deployer.instantiateNftContract()
@@ -39,19 +39,17 @@ export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProp
     await rover.deposit()
     await rover.borrow()
     await rover.repay()
-    // TODO: Osmosis-bindings need updating
-    // await rover.swap()
+    await rover.swap()
     await rover.withdraw()
-
     await rover.zap()
-    await rover.unzap()
-
     await rover.vaultDeposit()
     if (config.vaultType === VaultType.UNLOCKED) {
       await rover.vaultWithdraw()
     } else {
       await rover.vaultRequestUnlock()
     }
+
+    await rover.refundAllBalances()
 
     printYellow('COMPLETE')
   } catch (e) {

@@ -166,7 +166,7 @@ pub fn dispatch_actions(
 
     let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];
-    let mut received_coins = Coins::from(info.funds.as_slice());
+    let mut received_coins = Coins::try_from(info.funds)?;
 
     for action in actions {
         match action {

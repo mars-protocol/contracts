@@ -160,7 +160,7 @@ export class Rover {
       {
         enter_vault: {
           amount: this.config.vaultDepositAmount.toString(),
-          denom: this.config.baseDenom,
+          denom: this.config.lpToken.denom,
           vault: { address: this.storage.addresses.mockVault! },
         },
       },
@@ -178,8 +178,8 @@ export class Rover {
 
     printGreen(
       `Deposited ${this.config.vaultDepositAmount} ${
-        this.config.baseDenom
-      } in exchange for vault tokens: ${JSON.stringify(positions.vaults[0])}`,
+        this.config.lpToken.denom
+      } in exchange for vault tokens: ${JSON.stringify(positions.vaults[0].amount)}`,
     )
   }
 
@@ -219,8 +219,17 @@ export class Rover {
     printGreen(
       `Requested unlock: ID #${newBalance.unlocking[0].id}, amount: ${
         newBalance.unlocking[0].coin.amount
-      } in exchange for: ${oldBalance.locked - newBalance.locked} ${this.config.vaultTokenDenom}`,
+      } ${newBalance.unlocking[0].coin.denom} in exchange for: ${
+        oldBalance.locked - newBalance.locked
+      } ${this.config.vaultTokenDenom}`,
     )
+  }
+
+  async refundAllBalances() {
+    await this.updateCreditAccount([{ refund_all_coin_balances: {} }])
+    const positions = await this.query.positions({ accountId: this.accountId! })
+    assert.equal(positions.coins.length, 0)
+    printGreen(`Withdrew all balances back to wallet`)
   }
 
   private async getAccountBalance(denom: string) {

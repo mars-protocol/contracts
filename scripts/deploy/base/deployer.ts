@@ -76,9 +76,10 @@ export class Deployer {
 
   async instantiateMockVault() {
     const msg: VaultInstantiateMsg = {
-      base_token_denom: this.config.baseDenom,
+      base_token_denom: this.config.lpToken.denom,
       oracle: this.config.oracleAddr,
       vault_token_denom: this.config.vaultTokenDenom,
+      lockup: this.config.vaultLockup,
     }
     await this.instantiate('mockVault', this.storage.codeIds.mockVault!, msg)
 
@@ -117,10 +118,7 @@ export class Deployer {
     }
     await this.instantiate('swapper', this.storage.codeIds.swapper!, msg)
 
-    if (!this.storage.actions.setRouteAndSeedSwapper) {
-      printBlue(`Seeding swapper w/ ${this.config.baseDenom}`)
-      await this.transferCoin(this.storage.addresses.swapper!, coin(100, this.config.baseDenom))
-
+    if (!this.storage.actions.setRoute) {
       const swapClient = new MarsSwapperBaseClient(
         this.cwClient,
         this.deployerAddr,
@@ -132,6 +130,7 @@ export class Deployer {
       await swapClient.setRoute({
         denomIn: this.config.baseDenom,
         denomOut: this.config.secondaryDenom,
+        // @ts-expect-error ts-codegen incorrectly parses an array as an object
         route: this.config.swapRoute,
       })
 
@@ -141,7 +140,7 @@ export class Deployer {
       )
       const routes = await swapQuery.routes({})
       assert.equal(routes.length, 1)
-      this.storage.actions.setRouteAndSeedSwapper = true
+      this.storage.actions.setRoute = true
     } else {
       printGray('Swap contract already seeded with funds')
     }

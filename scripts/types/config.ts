@@ -1,3 +1,5 @@
+import { Duration } from './generated/mars-mock-vault/MarsMockVault.types'
+
 export enum VaultType {
   LOCKED,
   UNLOCKED,
@@ -13,6 +15,7 @@ export interface DeploymentConfig {
   deployerMnemonic: string
   redBankDeployerMnemonic: string
   vaultTokenDenom: string
+  vaultLockup?: Duration
   chainId: string
   defaultGasPrice: number
   startingAmountForTestUser: number
@@ -25,7 +28,7 @@ export interface DeploymentConfig {
   repayAmount: number
   swapAmount: number
   slippage: number
-  swapRoute: { steps: { denom_out: string; pool_id: number }[] }
+  swapRoute: { token_out_denom: string; pool_id: string }[]
   withdrawAmount: number
   maxCloseFactor: number
   maxLiquidationBonus: number

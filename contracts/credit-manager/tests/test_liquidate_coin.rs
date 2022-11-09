@@ -687,11 +687,5 @@ fn test_debt_amount_no_adjustment() {
     assert_eq!(osmo_balance.amount, Uint128::new(232));
 }
 
-// TODO: After swap is implemented, attempt to liquidate with no deposited funds:
-// - Borrow atom
-// - Liquidate and collect osmo
-// - Swap osmo for atom
-// - Repay debt
-// - Withdraw
 #[test]
 fn test_liquidate_with_no_deposited_funds() {}

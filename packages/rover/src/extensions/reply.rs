@@ -4,9 +4,6 @@ use cosmos_vault_standard::extensions::lockup::{
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Reply, StdError, StdResult, SubMsgResult};
 
-// https://github.com/CosmWasm/wasmd/blob/main/EVENTS.md#standard-events-in-xwasm
-const CONTRACT_ADDR_KEY: &str = "_contract_addr";
-
 #[cw_serde]
 pub struct AssetTransferMsg {
     pub recipient: String,
@@ -17,7 +14,6 @@ pub struct AssetTransferMsg {
 #[cw_serde]
 pub struct UnlockEvent {
     pub id: u64,
-    pub vault_addr: String,
 }
 
 pub trait AttrParse {
@@ -44,18 +40,10 @@ impl AttrParse for Reply {
                     .ok_or_else(|| StdError::generic_err("No id attribute"))?
                     .value;
 
-                let contract_addr = &unlock_event
-                    .attributes
-                    .iter()
-                    .find(|x| x.key == CONTRACT_ADDR_KEY)
-                    .ok_or_else(|| StdError::generic_err("No contract attribute"))?
-                    .value;
-
                 Ok(UnlockEvent {
                     id: id
                         .parse::<u64>()
                         .map_err(|_| StdError::generic_err("Could not parse id from reply"))?,
-                    vault_addr: contract_addr.to_string(),
                 })
             }
         }

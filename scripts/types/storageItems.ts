@@ -20,7 +20,7 @@ export interface StorageItems {
   actions: {
     proposedNewOwner?: boolean
     acceptedOwnership?: boolean
-    setRouteAndSeedSwapper?: boolean
+    setRoute?: boolean
     seedMockVault?: boolean
     seedMockZapper?: boolean
     grantedCreditLines?: boolean
