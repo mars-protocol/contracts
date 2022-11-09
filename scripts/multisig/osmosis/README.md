@@ -139,8 +139,8 @@ _Note: The multisig must have at least one tx against it for the address to exis
 
    ```
    osmosisd tx wasm migrate $CONTRACT $CODEID '{}' \
-   --from $MULTI \
-   --chain-id $CHAINID \
+   --from= $MULTI \
+   --chain-id= $CHAINID \
    --generate-only > $UNSIGNED \
    --node=$NODE
    ```
@@ -151,8 +151,8 @@ _Note: The multisig must have at least one tx against it for the address to exis
 
    ```
    osmosisd tx wasm migrate $CONTRACT $CODEID '{}' \
-   --from $MULTI \
-   --chain-id $CHAINID \
+   --from= $MULTI \
+   --chain-id= $CHAINID \
    --generate-only > $UNSIGNED \
    --offline \
    --sequence=$SEQUENCE \
@@ -261,8 +261,8 @@ $MULTI
 2. Initiate the multisig execute tx. This can be done by any one of the multisig holders.
    ```
    osmosisd tx wasm execute $CONTRACTADDR $ARGS \
-   --from $MULTI \
-   --chain-id $CHAINID \ 
+   --from= $MULTI \
+   --chain-id= $CHAINID \ 
    --generate-only > $UNSIGNED \ 
    --node=$NODE
    ```
