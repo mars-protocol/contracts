@@ -162,6 +162,8 @@ osmosisd query wasm contract-state smart $REDBANKADDR "$QUERY" --output json | j
 
 ## Signing a TX with the multisig - Migrate Msg Example
 
+Every multisig holder is responsible for verifying the contract's newly uploaded code for every migrate msg. 
+
 _Note: The multisig must have at least one tx against it for the address to exist in Osmosis' state._
 
 1. If the multisig has no txs against it, send some tokens to the account. Otherwise, the account does not exist in Osmosis' state.
@@ -278,7 +280,29 @@ _Note: The multisig must have at least one tx against it for the address to exis
     --node=$NODE
    ```
    Note: For the tx to be able to broadcast, the newly uploaded code needs to have a migration entry point, meaning you have to put an empty (returning Ok) migration method.
+ 
+9. Verify the new contract.
+   ```
+   git clone https://github.com/mars-protocol/outposts.git
+   
+   git checkout <commit-id> 
+   
+   cd scripts 
+   
+   yarn compile
+   ```
+   If on mac, use `yarn compile-mac` instead of `yarn compile`
+   
+   Note: The mac compatible version of the workspace-optimizer used to compile the contracts has only been upgraded to v0.12.8, which is not compatible with the Mars Protocol Outposts contracts. Until this version has been updated to v0.12.9, contracts cannot be compiled on a Mac.
 
+   ```  
+   osmosisd query wasm code $CODEID $NODE download.wasm
+   ```
+
+
+   ``` 
+   diff artifacts/$CONTRACTNAME.wasm download.wasm 
+   ```
 **Note:**
 
 `CHAINID` is the id of the chain you are looking to broadcast this transaction on
@@ -301,6 +325,7 @@ $MULTI
 ```
 
 ## Signing a TX with the multisig - Execute Msg Example
+Every multisig holder is responsible for verifying the execute msg inside the json file of their unsigned tx. 
 
 1. Assert that you have both your own wallet and multisig wallet in your keyring.
 
