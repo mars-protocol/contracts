@@ -113,7 +113,7 @@ For `# zsh`:
    Note: The mac compatible version of the workspace-optimizer used to compile the contracts has only been upgraded to v0.12.8, which is not compatible with the Mars Protocol Outposts contracts. Until this version has been updated to v0.12.9, contracts cannot be compiled on a Mac. 
 2. Download the wasm from the chain. 
    ```  
-   osmosisd query wasm code $CODEID $NODE download.wasm
+   osmosisd query wasm code $CODEID -- $NODE download.wasm
    ```
    
 3. Verify that the diff is empty between them. 
@@ -209,7 +209,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
    --generate-only > $UNSIGNED \
    --offline \
    --sequence=$SEQUENCE \
-   --account=$ACCOUNT
+   --account-number=$ACCOUNT
    ```
 
 5. Distribute the generated file to all signers.
@@ -250,7 +250,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
    osmosisd tx multisign \
    $UNSIGNED \
    $MULTI \
-   `$SINGER1`_sig.json `$SIGNER2`_sig.json $SIGNER3`_sig.json \
+   `$SINGER1`_sig.json `$SIGNER2`_sig.json `$SIGNER3`_sig.json \
    --output-document=$SIGNED \
    --chain-id=$CHAINID \
    --node=$NODE
@@ -264,7 +264,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
    osmosisd tx multisign \
    $UNSIGNED \
    $MULTI \
-   `$SINGER1`_sig.json `$SIGNER2`_sig.json $SIGNER3`_sig.json \
+   `$SINGER1`_sig.json `$SIGNER2`_sig.json `$SIGNER3`_sig.json \
    --output-document=$SIGNED \
    --chain-id=$CHAINID \
    --offline \
