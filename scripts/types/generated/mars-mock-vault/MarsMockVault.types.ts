@@ -116,28 +116,28 @@ export type ExtensionQueryMsg = {
 }
 export type LockupQueryMsg =
   | {
-      lockups: {
+      unlocking_positions: {
         limit?: number | null
         owner: string
         start_after?: number | null
       }
     }
   | {
-      lockup: {
+      unlocking_position: {
         lockup_id: number
       }
     }
   | {
       lockup_duration: {}
     }
-export interface VaultInfo {
+export interface VaultInfoResponse {
   base_token: string
   vault_token: string
 }
 export interface Empty {
   [k: string]: unknown
 }
-export interface VaultStandardInfo {
+export interface VaultStandardInfoResponse {
   extensions: string[]
   version: number
 }

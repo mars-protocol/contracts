@@ -79,6 +79,7 @@
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "ExecuteMsg",
+    "description": "The default ExecuteMsg variants that all vaults must implement. This enum can be extended with additional variants by defining an extension enum and then passing it as the generic argument `T` to this enum.",
     "oneOf": [
       {
         "description": "Called to deposit into the vault. Native assets are passed in the funds parameter.",
@@ -128,7 +129,7 @@
             ],
             "properties": {
               "amount": {
-                "description": "The amount of vault tokens sent to the contract. In the case that the vault token is a Cosmos native denom, we of course have this information in the info.funds, but if the vault implements the Cw4626 API, then we need this argument. We figured it's better to have one API for both types of vaults, so we require this argument.",
+                "description": "The amount of vault tokens sent to the contract. In the case that the vault token is a Cosmos native denom, we of course have this information in info.funds, but if the vault implements the Cw4626 API, then we need this argument. We figured it's better to have one API for both types of vaults, so we require this argument.",
                 "allOf": [
                   {
                     "$ref": "#/definitions/Uint128"
@@ -149,7 +150,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Support for custom extensions",
+        "description": "Called to execute functionality of any enabled extensions.",
         "type": "object",
         "required": [
           "vault_extension"
@@ -164,7 +165,7 @@
     ],
     "definitions": {
       "ExtensionExecuteMsg": {
-        "description": "Contains ExecuteMsgs of all enabled extensions. To enable extensions defined outside of this create, you can define your own `ExtensionExecuteMsg` type in your contract crate and pass it in as the generic parameter to ExecuteMsg",
+        "description": "Contains ExecuteMsgs of all enabled extensions. To enable extensions defined outside of this crate, you can define your own `ExtensionExecuteMsg` type in your contract crate and pass it in as the generic parameter to ExecuteMsg",
         "oneOf": [
           {
             "type": "object",
@@ -193,6 +194,7 @@
         ]
       },
       "ForceUnlockExecuteMsg": {
+        "description": "Additional ExecuteMsg variants for vaults that enable the ForceUnlock extension.",
         "oneOf": [
           {
             "description": "Can be called by whitelisted addresses to bypass the lockup and immediately return the base tokens. Used in the event of liquidation. The caller must pass the native vault tokens in the funds field.",
@@ -286,12 +288,14 @@
                 ],
                 "properties": {
                   "add_addresses": {
+                    "description": "Addresses to add to the whitelist.",
                     "type": "array",
                     "items": {
                       "type": "string"
                     }
                   },
                   "remove_addresses": {
+                    "description": "Addresses to remove from the whitelist.",
                     "type": "array",
                     "items": {
                       "type": "string"
@@ -306,6 +310,7 @@
         ]
       },
       "LockupExecuteMsg": {
+        "description": "Additional ExecuteMsg variants for vaults that enable the Lockup extension.",
         "oneOf": [
           {
             "description": "Unlock is called to initiate unlocking a locked position held by the vault. The caller must pass the native vault tokens in the funds field. Emits an event with type `UNLOCKING_POSITION_CREATED_EVENT_TYPE` with an attribute with key `UNLOCKING_POSITION_ATTR_KEY` containing an u64 lockup_id. Also encodes the u64 lockup ID as binary and returns it in the Response's data field, so that it can be read by SubMsg replies.\n\nLike Redeem, this takes an amount so that the same API can be used for CW4626 and native tokens.",
@@ -321,7 +326,12 @@
                 ],
                 "properties": {
                   "amount": {
-                    "$ref": "#/definitions/Uint128"
+                    "description": "The amount of vault tokens to unlock.",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Uint128"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -372,9 +382,10 @@
   "query": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "QueryMsg",
+    "description": "The default QueryMsg variants that all vaults must implement. This enum can be extended with additional variants by defining an extension enum and then passing it as the generic argument `T` to this enum.",
     "oneOf": [
       {
-        "description": "Returns `VaultStandardInfo` with information on the version of the vault standard used as well as any enabled extensions.",
+        "description": "Returns `VaultStandardInfoResponse` with information on the version of the vault standard used as well as any enabled extensions.",
         "type": "object",
         "required": [
           "vault_standard_info"
@@ -388,7 +399,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Returns `VaultInfo` representing vault requirements, lockup, & vault token denom.",
+        "description": "Returns `VaultInfoResponse` representing vault requirements, lockup, & vault token denom.",
         "type": "object",
         "required": [
           "info"
@@ -402,7 +413,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Returns `Uint128` amount of vault tokens that will be returned for the passed in assets.\n\nAllows an on-chain or off-chain user to simulate the effects of their deposit at the current block, given current on-chain conditions.\n\nMUST return as close to and no more than the exact amount of Vault shares that would be minted in a deposit call in the same transaction. I.e. deposit should return the same or more shares as previewDeposit if called in the same transaction.\n\nMUST NOT account for deposit limits like those returned from maxDeposit and should always act as though the deposit would be accepted, regardless if the user has enough tokens approved, etc.\n\nMUST be inclusive of deposit fees. Integrators should be aware of the existence of deposit fees.",
+        "description": "Returns `Uint128` amount of vault tokens that will be returned for the passed in `amount` of base tokens.\n\nAllows an on-chain or off-chain user to simulate the effects of their deposit at the current block, given current on-chain conditions.\n\nMust return as close to and no more than the exact amount of vault tokens that would be minted in a deposit call in the same transaction. I.e. Deposit should return the same or more vault tokens as PreviewDeposit if called in the same transaction.",
         "type": "object",
         "required": [
           "preview_deposit"
@@ -415,7 +426,12 @@
             ],
             "properties": {
               "amount": {
-                "$ref": "#/definitions/Uint128"
+                "description": "The amount of base tokens to preview depositing.",
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/Uint128"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -424,7 +440,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Returns the number of base tokens that would be redeemed in exchange `amount` for vault tokens. Used by Rover to calculate vault position values.",
+        "description": "Returns `Uint128` amount of base tokens that would be withdrawn in exchange for redeeming `amount` of vault tokens.\n\nAllows an on-chain or off-chain user to simulate the effects of their redeem at the current block, given current on-chain conditions.\n\nMust return as close to and no more than the exact amount of base tokens that would be withdrawn in a redeem call in the same transaction.",
         "type": "object",
         "required": [
           "preview_redeem"
@@ -437,7 +453,12 @@
             ],
             "properties": {
               "amount": {
-                "$ref": "#/definitions/Uint128"
+                "description": "The amount of vault tokens to preview redeeming.",
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/Uint128"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -474,7 +495,7 @@
         "additionalProperties": false
       },
       {
-        "description": "The amount of shares that the vault would exchange for the amount of assets provided, in an ideal scenario where all the conditions are met.\n\nUseful for display purposes and does not have to confer the exact amount of shares returned by the vault if the passed in assets were deposited. This calculation may not reflect the “per-user” price-per-share, and instead should reflect the “average-user’s” price-per-share, meaning what the average user should expect to see when exchanging to and from.",
+        "description": "The amount of vault tokens that the vault would exchange for the amount of assets provided, in an ideal scenario where all the conditions are met.\n\nUseful for display purposes and does not have to confer the exact amount of vault tokens returned by the vault if the passed in assets were deposited. This calculation should not reflect the \"per-user\" price-per-share, and instead should reflect the \"average-user’s\" price-per-share, meaning what the average user should expect to see when exchanging to and from.",
         "type": "object",
         "required": [
           "convert_to_shares"
@@ -487,7 +508,12 @@
             ],
             "properties": {
               "amount": {
-                "$ref": "#/definitions/Uint128"
+                "description": "The amount of base tokens to convert to vault tokens.",
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/Uint128"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -496,7 +522,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Returns the amount of base tokens that the Vault would exchange for the `amount` of shares provided, in an ideal scenario where all the conditions are met.\n\nUseful for display purposes and does not have to confer the exact amount of assets returned by the vault if the passed in shares were withdrawn. This calculation may not reflect the “per-user” price-per-share, and instead should reflect the “average-user’s” price-per-share, meaning what the average user should expect to see when exchanging to and from.",
+        "description": "Returns the amount of base tokens that the Vault would exchange for the `amount` of vault tokens provided, in an ideal scenario where all the conditions are met.\n\nUseful for display purposes and does not have to confer the exact amount of assets returned by the vault if the passed in vault tokens were redeemed. This calculation should not reflect the \"per-user\" price-per-share, and instead should reflect the \"average-user’s\" price-per-share, meaning what the average user should expect to see when exchanging to and from.",
         "type": "object",
         "required": [
           "convert_to_assets"
@@ -509,7 +535,12 @@
             ],
             "properties": {
               "amount": {
-                "$ref": "#/definitions/Uint128"
+                "description": "The amount of vault tokens to convert to base tokens.",
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/Uint128"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -518,7 +549,7 @@
         "additionalProperties": false
       },
       {
-        "description": "TODO: How to handle return derive? We must supply a type here, but we don't know it.",
+        "description": "Handle queries of any enabled extensions.",
         "type": "object",
         "required": [
           "vault_extension"
@@ -533,7 +564,7 @@
     ],
     "definitions": {
       "ExtensionQueryMsg": {
-        "description": "Contains QueryMsgs of all enabled extensions. To enable extensions defined outside of this create, you can define your own `ExtensionQueryMsg` type in your contract crate and pass it in as the generic parameter to QueryMsg",
+        "description": "Contains QueryMsgs of all enabled extensions. To enable extensions defined outside of this crate, you can define your own `ExtensionQueryMsg` type in your contract crate and pass it in as the generic parameter to QueryMsg",
         "oneOf": [
           {
             "type": "object",
@@ -550,15 +581,16 @@
         ]
       },
       "LockupQueryMsg": {
+        "description": "Additional QueryMsg variants for vaults that enable the Lockup extension.",
         "oneOf": [
           {
-            "description": "Returns a `Vec<Lockup>` containing all the currently unclaimed lockup positions for the `owner`.",
+            "description": "Returns a `Vec<UnlockingPosition>` containing all the currently unclaimed lockup positions for the `owner`.",
             "type": "object",
             "required": [
-              "lockups"
+              "unlocking_positions"
             ],
             "properties": {
-              "lockups": {
+              "unlocking_positions": {
                 "type": "object",
                 "required": [
                   "owner"
@@ -593,19 +625,20 @@
             "additionalProperties": false
           },
           {
-            "description": "Returns `Lockup` info about a specific lockup, by owner and ID.",
+            "description": "Returns an `UnlockingPosition` info about a specific lockup, by owner and ID.",
             "type": "object",
             "required": [
-              "lockup"
+              "unlocking_position"
             ],
             "properties": {
-              "lockup": {
+              "unlocking_position": {
                 "type": "object",
                 "required": [
                   "lockup_id"
                 ],
                 "properties": {
                   "lockup_id": {
+                    "description": "The ID of the lockup to query",
                     "type": "integer",
                     "format": "uint64",
                     "minimum": 0.0
@@ -617,7 +650,7 @@
             "additionalProperties": false
           },
           {
-            "description": "Returns `cw_utils::Duration` duration of the lockup.",
+            "description": "Returns `cw_utils::Duration` duration of the lockup of the vault.",
             "type": "object",
             "required": [
               "lockup_duration"
@@ -655,7 +688,7 @@
     },
     "info": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "VaultInfo",
+      "title": "VaultInfoResponse",
       "description": "Returned by QueryMsg::Info and contains information about this vault",
       "type": "object",
       "required": [
@@ -706,7 +739,7 @@
     },
     "vault_standard_info": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "VaultStandardInfo",
+      "title": "VaultStandardInfoResponse",
       "description": "Struct returned from QueryMsg::VaultStandardInfo with information about the used version of the vault standard and any extensions used.\n\nThis struct should be stored as an Item under the `vault_standard_info` key, so that other contracts can do a RawQuery and read it directly from storage instead of needing to do a costly SmartQuery.",
       "type": "object",
       "required": [
@@ -715,7 +748,7 @@
       ],
       "properties": {
         "extensions": {
-          "description": "A list of vault standard extensions used by the vault. E.g. [\"cw20\", \"lockup\", \"keeper\"]",
+          "description": "A list of vault standard extensions used by the vault. E.g. [\"lockup\", \"keeper\"]",
           "type": "array",
           "items": {
             "type": "string"

@@ -1,12 +1,11 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmos_vault_standard::extensions::lockup::Lockup;
-use cosmos_vault_standard::extensions::lockup::LockupQueryMsg::Lockups;
-use cosmos_vault_standard::msg::QueryMsg::{Info as VaultInfoMsg, VaultExtension};
-use cosmos_vault_standard::msg::{ExtensionQueryMsg, VaultInfo};
 use cosmwasm_std::testing::MockApi;
 use cosmwasm_std::{coins, Addr, Coin, Decimal, Empty, Uint128};
+use cosmwasm_vault_standard::extensions::lockup::{LockupQueryMsg, UnlockingPosition};
+use cosmwasm_vault_standard::msg::VaultStandardQueryMsg::{Info as VaultInfoMsg, VaultExtension};
+use cosmwasm_vault_standard::msg::{ExtensionQueryMsg, VaultInfoResponse};
 use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 
@@ -348,24 +347,30 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_lockup(&self, vault: &VaultUnchecked, id: u64) -> Lockup {
+    pub fn query_unlocking_position(&self, vault: &VaultUnchecked, id: u64) -> UnlockingPosition {
         vault
             .check(&MockApi::default())
             .unwrap()
-            .query_lockup(&self.app.wrap(), id)
+            .query_unlocking_position(&self.app.wrap(), id)
             .unwrap()
     }
 
-    pub fn query_lockups(&self, vault: &VaultUnchecked, addr: &Addr) -> Vec<Lockup> {
+    pub fn query_unlocking_positions(
+        &self,
+        vault: &VaultUnchecked,
+        addr: &Addr,
+    ) -> Vec<UnlockingPosition> {
         self.app
             .wrap()
             .query_wasm_smart(
                 vault.address.to_string(),
-                &VaultExtension(ExtensionQueryMsg::Lockup(Lockups {
-                    owner: addr.to_string(),
-                    start_after: None,
-                    limit: None,
-                })),
+                &VaultExtension(ExtensionQueryMsg::Lockup(
+                    LockupQueryMsg::UnlockingPositions {
+                        owner: addr.to_string(),
+                        start_after: None,
+                        limit: None,
+                    },
+                )),
             )
             .unwrap()
     }
@@ -609,7 +614,7 @@ impl MockEnvBuilder {
             vaults
                 .into_iter()
                 .map(|config| {
-                    let info: VaultInfo = self
+                    let info: VaultInfoResponse = self
                         .app
                         .wrap()
                         .query_wasm_smart(config.vault.address.clone(), &VaultInfoMsg::<Empty> {})

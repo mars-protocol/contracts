@@ -1,6 +1,5 @@
-use cosmos_vault_standard::extensions::lockup::Lockup;
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, WasmMsg};
-
+use cosmwasm_vault_standard::extensions::lockup::UnlockingPosition;
 use mars_rover::adapters::vault::{UnlockingChange, Vault, VaultPositionUpdate};
 use mars_rover::error::{ContractError, ContractResult};
 use mars_rover::msg::execute::CallbackMsg;
@@ -24,7 +23,8 @@ pub fn exit_vault_unlocked(
     let matching_unlock = vault_position
         .get_unlocking_position(position_id)
         .ok_or_else(|| ContractError::NoPositionMatch(position_id.to_string()))?;
-    let Lockup { release_at, .. } = vault.query_lockup(&deps.querier, matching_unlock.id)?;
+    let UnlockingPosition { release_at, .. } =
+        vault.query_unlocking_position(&deps.querier, matching_unlock.id)?;
     if !release_at.is_expired(&env.block) {
         return Err(ContractError::UnlockNotReady {});
     }

@@ -246,7 +246,7 @@ fn test_request_unlocked() {
         Duration::Height(_) => panic!("wrong type of duration"),
         Duration::Time(s) => {
             let expected_unlock_time = mock.app.block_info().time.seconds() + s;
-            let unlocking_position = mock.query_lockup(&vault, first.id);
+            let unlocking_position = mock.query_unlocking_position(&vault, first.id);
 
             match unlocking_position.release_at {
                 Expiration::AtTime(t) => {
@@ -256,7 +256,7 @@ fn test_request_unlocked() {
             }
 
             // Assert Rover's position w/ Vault
-            let res = mock.query_lockups(&vault, &mock.rover);
+            let res = mock.query_unlocking_positions(&vault, &mock.rover);
 
             match res.first().unwrap().release_at {
                 Expiration::AtTime(t) => {

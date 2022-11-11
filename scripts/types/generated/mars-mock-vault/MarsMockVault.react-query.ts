@@ -20,9 +20,9 @@ import {
   QueryMsg,
   ExtensionQueryMsg,
   LockupQueryMsg,
-  VaultInfo,
+  VaultInfoResponse,
   Empty,
-  VaultStandardInfo,
+  VaultStandardInfoResponse,
 } from './MarsMockVault.types'
 import { MarsMockVaultQueryClient, MarsMockVaultClient } from './MarsMockVault.client'
 export const marsMockVaultQueryKeys = {
@@ -209,24 +209,25 @@ export function useMarsMockVaultPreviewDepositQuery<TData = Uint128>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsMockVaultInfoQuery<TData> extends MarsMockVaultReactQuery<VaultInfo, TData> {}
-export function useMarsMockVaultInfoQuery<TData = VaultInfo>({
+export interface MarsMockVaultInfoQuery<TData>
+  extends MarsMockVaultReactQuery<VaultInfoResponse, TData> {}
+export function useMarsMockVaultInfoQuery<TData = VaultInfoResponse>({
   client,
   options,
 }: MarsMockVaultInfoQuery<TData>) {
-  return useQuery<VaultInfo, Error, TData>(
+  return useQuery<VaultInfoResponse, Error, TData>(
     marsMockVaultQueryKeys.info(client?.contractAddress),
     () => (client ? client.info() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
 export interface MarsMockVaultVaultStandardInfoQuery<TData>
-  extends MarsMockVaultReactQuery<VaultStandardInfo, TData> {}
-export function useMarsMockVaultVaultStandardInfoQuery<TData = VaultStandardInfo>({
+  extends MarsMockVaultReactQuery<VaultStandardInfoResponse, TData> {}
+export function useMarsMockVaultVaultStandardInfoQuery<TData = VaultStandardInfoResponse>({
   client,
   options,
 }: MarsMockVaultVaultStandardInfoQuery<TData>) {
-  return useQuery<VaultStandardInfo, Error, TData>(
+  return useQuery<VaultStandardInfoResponse, Error, TData>(
     marsMockVaultQueryKeys.vaultStandardInfo(client?.contractAddress),
     () => (client ? client.vaultStandardInfo() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },

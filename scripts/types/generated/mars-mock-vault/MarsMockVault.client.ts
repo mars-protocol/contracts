@@ -19,14 +19,14 @@ import {
   QueryMsg,
   ExtensionQueryMsg,
   LockupQueryMsg,
-  VaultInfo,
+  VaultInfoResponse,
   Empty,
-  VaultStandardInfo,
+  VaultStandardInfoResponse,
 } from './MarsMockVault.types'
 export interface MarsMockVaultReadOnlyInterface {
   contractAddress: string
-  vaultStandardInfo: () => Promise<VaultStandardInfo>
-  info: () => Promise<VaultInfo>
+  vaultStandardInfo: () => Promise<VaultStandardInfoResponse>
+  info: () => Promise<VaultInfoResponse>
   previewDeposit: ({ amount }: { amount: Uint128 }) => Promise<Uint128>
   previewRedeem: ({ amount }: { amount: Uint128 }) => Promise<Uint128>
   totalAssets: () => Promise<Uint128>
@@ -53,12 +53,12 @@ export class MarsMockVaultQueryClient implements MarsMockVaultReadOnlyInterface 
     this.vaultExtension = this.vaultExtension.bind(this)
   }
 
-  vaultStandardInfo = async (): Promise<VaultStandardInfo> => {
+  vaultStandardInfo = async (): Promise<VaultStandardInfoResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       vault_standard_info: {},
     })
   }
-  info = async (): Promise<VaultInfo> => {
+  info = async (): Promise<VaultInfoResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       info: {},
     })

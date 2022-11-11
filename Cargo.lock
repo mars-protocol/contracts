@@ -244,18 +244,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmos-vault-standard"
-version = "0.1.0"
-source = "git+https://github.com/apollodao/cosmos-vault-standard#5713cb127f92b26a6b6b6ecd85bc10ed49d94066"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-utils 0.16.0",
- "schemars",
- "serde",
-]
-
-[[package]]
 name = "cosmrs"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -347,6 +335,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b61fcfef87d15af0263e2e4d792af80355929674a3b4e29ffb3c898ec6e25852"
 dependencies = [
  "cosmwasm-std",
+ "serde",
+]
+
+[[package]]
+name = "cosmwasm-vault-standard"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d48847f2c22b96d9659ff9d0b67403ed1d5cbe5470e65d293c4c455de05b237b"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils 0.16.0",
+ "schemars",
  "serde",
 ]
 
@@ -946,9 +947,9 @@ name = "mars-credit-manager"
 version = "1.0.0"
 dependencies = [
  "anyhow",
- "cosmos-vault-standard",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cosmwasm-vault-standard",
  "cw-item-set",
  "cw-multi-test",
  "cw-storage-plus 0.16.0",
@@ -1001,9 +1002,9 @@ dependencies = [
 name = "mars-mock-vault"
 version = "1.0.0"
 dependencies = [
- "cosmos-vault-standard",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cosmwasm-vault-standard",
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "mars-rover",
@@ -1062,9 +1063,9 @@ dependencies = [
 name = "mars-rover"
 version = "1.0.0"
 dependencies = [
- "cosmos-vault-standard",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cosmwasm-vault-standard",
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "mars-health",
@@ -1195,9 +1196,9 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "os_str_bytes"
-version = "6.3.1"
+version = "6.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3baf96e39c5359d2eb0dd6ccb42c62b91d9678aa68160d261b9e0ccbf9e9dea9"
+checksum = "7b5bf27447411e9ee3ff51186bf7a08e16c341efdde93f4d823e8844429bed7e"
 
 [[package]]
 name = "osmosis-std"

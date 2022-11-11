@@ -1,13 +1,13 @@
-use cosmos_vault_standard::extensions::lockup::{
-    Lockup, UNLOCKING_POSITION_ATTR_KEY, UNLOCKING_POSITION_CREATED_EVENT_TYPE,
-};
 use cosmwasm_std::{
     Addr, BankMsg, Coin, CosmosMsg, DepsMut, Env, Event, MessageInfo, Response, StdResult, Uint128,
+};
+use cosmwasm_vault_standard::extensions::lockup::{
+    UnlockingPosition, UNLOCKING_POSITION_ATTR_KEY, UNLOCKING_POSITION_CREATED_EVENT_TYPE,
 };
 use cw_utils::{Duration, Expiration};
 
 use crate::error::ContractError;
-use crate::state::{COIN_BALANCE, LOCKUPS, LOCKUP_TIME, NEXT_LOCKUP_ID};
+use crate::state::{COIN_BALANCE, LOCKUP_TIME, NEXT_LOCKUP_ID, UNLOCKING_POSITIONS};
 use crate::withdraw::{get_vault_token, withdraw_state_update};
 
 pub fn request_unlock(
@@ -28,15 +28,15 @@ pub fn request_unlock(
         Duration::Time(s) => Expiration::AtTime(env.block.time.plus_seconds(s)),
     };
 
-    LOCKUPS.update(deps.storage, info.sender.clone(), |opt| -> StdResult<_> {
-        let mut lockups = opt.unwrap_or_default();
-        lockups.push(Lockup {
+    UNLOCKING_POSITIONS.update(deps.storage, info.sender.clone(), |opt| -> StdResult<_> {
+        let mut unlocking_positions = opt.unwrap_or_default();
+        unlocking_positions.push(UnlockingPosition {
             owner: info.sender.clone(),
             id: next_lockup_id,
             release_at,
             base_token_amount: lock_amount,
         });
-        Ok(lockups)
+        Ok(unlocking_positions)
     })?;
 
     NEXT_LOCKUP_ID.save(deps.storage, &(next_lockup_id + 1))?;
@@ -52,7 +52,7 @@ pub fn withdraw_unlocked(
     sender: &Addr,
     id: u64,
 ) -> Result<Response, ContractError> {
-    let lockups = LOCKUPS
+    let lockups = UNLOCKING_POSITIONS
         .may_load(deps.storage, sender.clone())?
         .ok_or(ContractError::UnlockRequired {})?;
 
@@ -71,7 +71,7 @@ pub fn withdraw_unlocked(
     }
 
     let remaining = lockups.into_iter().filter(|p| p.id != id).collect();
-    LOCKUPS.save(deps.storage, sender.clone(), &remaining)?;
+    UNLOCKING_POSITIONS.save(deps.storage, sender.clone(), &remaining)?;
 
     let underlying_coin = COIN_BALANCE.load(deps.storage)?;
     let transfer_msg = CosmosMsg::Bank(BankMsg::Send {
@@ -90,7 +90,7 @@ pub fn withdraw_unlocking_force(
     lockup_id: u64,
     amounts: Option<Uint128>,
 ) -> Result<Response, ContractError> {
-    let mut lockups = LOCKUPS.load(deps.storage, sender.clone())?;
+    let mut lockups = UNLOCKING_POSITIONS.load(deps.storage, sender.clone())?;
     let mut lockup = lockups
         .iter()
         .find(|p| p.id == lockup_id)
@@ -108,7 +108,7 @@ pub fn withdraw_unlocking_force(
         None => lockup.base_token_amount,
     };
 
-    LOCKUPS.save(deps.storage, sender.clone(), &lockups)?;
+    UNLOCKING_POSITIONS.save(deps.storage, sender.clone(), &lockups)?;
 
     let base_token = COIN_BALANCE.load(deps.storage)?;
     let transfer_msg = CosmosMsg::Bank(BankMsg::Send {

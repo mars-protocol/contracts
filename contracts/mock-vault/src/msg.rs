@@ -2,7 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cw_utils::Duration;
 use mars_rover::adapters::OracleUnchecked;
 
-// Remaining messages in cosmos-vault-standard
+// Remaining messages in cosmwasm-vault-standard
 #[cw_serde]
 pub struct InstantiateMsg {
     /// Denom for vault token

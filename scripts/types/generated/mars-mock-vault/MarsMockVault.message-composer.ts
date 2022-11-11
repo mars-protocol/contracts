@@ -21,9 +21,9 @@ import {
   QueryMsg,
   ExtensionQueryMsg,
   LockupQueryMsg,
-  VaultInfo,
+  VaultInfoResponse,
   Empty,
-  VaultStandardInfo,
+  VaultStandardInfoResponse,
 } from './MarsMockVault.types'
 export interface MarsMockVaultMessage {
   contractAddress: string
