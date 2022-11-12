@@ -686,25 +686,15 @@ fn test_oracle_with_redbank() {
     )
     .unwrap();
 
-    wasm.execute(
+    let res = wasm.execute(
         &red_bank_addr,
         &Deposit {
             on_behalf_of: None,
         },
-        &[coin(1_000_000_000_000, "uosmo")],
+        &[coin(1_000_000_000_000_000, "uosmo")],
         &depositor,
     )
     .unwrap_err();
 
-    // wasm.execute(
-    //     &red_bank_addr,
-    //     &execute_red_bank::Borrow {
-    //         denom: "uosmo".to_string(),
-    //         amount: Uint128::new(10000u128).into(),
-    //         recipient: None,
-    //     },
-    //     &[],
-    //     &signer,
-    // )
-    // .unwrap();
+    //failure due to insufficient funds
 }
