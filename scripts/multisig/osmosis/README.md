@@ -1,6 +1,6 @@
 # Osmosis Multisig Overview
 
-The multisig on Osmosis is set to have 5 multisig holders with a threshold of 3, meaning that 3 signitures are needed for any transaction to pass.
+The multisig on Osmosis is set to have 5 multisig holders with a threshold of 3, meaning that 3 signatures are needed for any transaction to pass.
 
 ## Set up Osmosisd
 
@@ -12,26 +12,26 @@ _Steps 2-4 must be completed by ALL multisig holders to properly set up their lo
    
 1. Generate the public keys of each of the 5 multisig holder's wallets. In order to generate a public key, the wallet must be active and have made at least one transaction on the specified network to return a public key.
 
-   ```
+   ```shell
    osmosisd query account [address] --node=[node_URL]
    ```
 
 2. Add each public key to the keys list in your local network.
 
-   ```
+   ```shell
    osmosisd keys add [name] --pubkey=[pubkey]
    ```
 
    Note: The pubkey must be entered with the same syntax as shown in Step 1.
 
 3. Generate the multisig.
-   ```
+   ```shell
    osmosisd keys add osmosis_multisig \
    --multisig=[name1],[name2],[name3],[name4],[name5] \
    --multisig-threshold=3
    ```
 4. Assert that it was completed correctly.
-   ```
+   ```shell
    osmosisd keys show osmosis_multisig
    ```
 5. Update the config with the new mutlisig address in `outposts/scripts/deploy/osmosis/config`, which will set the owner and admin of the smart contracts to the multisig upon deployment.
@@ -42,64 +42,47 @@ These variables change based on the network, transaction, time, and user. Theref
 For `# bash`:
 
    ```shell
-   # Network specific variables
-   export MULTI="multisig_address"
-   export CHAINID="chain_id_of_network"
-   export CONTRACT="contract_address_to_migrate"
-   export NODE="node_URL"
-   export ACCOUNT="account_number"
+   # Osmosis Testnet variables 
+   export OSMO_MULTI="osmo1nxs5fw53jwh7epqnj5ypyqkdhga4lnnmng6ln5" 
+   export OSMO_TEST_CHAINID="osmo-test-4" 
+   export OSMO_TEST_NODE="https://rpc-test.osmosis.zone:443" 
+   export OSMO_ACCOUNT="278179"
+   export OSMO_TEST_ADDR_PROVIDER="osmo1h5ljap7yajt8d8kejx0xsq46evxmalwgy78xfc5arrk3g3gwgkes7l06p8"
+   export OSMO_TEST_REDBANK="osmo1gtkcx8634wufu4awt42ng7srk05hpqxkfpjpvuj03f9g69qvr3ksn27j54" 
+   export OSMO_TEST_INCENTIVES="osmo12caxzc4699vde8lr3ut4tsdkvsvhzruvsxlrmd4v6tamyacdymdq7l8dsy"
+   export OSMO_TEST_ORACLE="osmo1eeg2uuuxk9agv8slskmhay3h5929vkfu9gfk0egwtfg9qs86w5dqty96cf"
+   export OSMO_TEST_REWARDS_COLLECTOR="osmo1xl7jguvkg807ya00s0l722nwcappfzyzrac3ug5tnjassnrmnfrs47wguz"
+   export OSMO_TEST_ADDR_PROVIDER_ID="3802"
+   export OSMO_TEST_REDBANK_ID="3801"
+   export OSMO_TEST_INCENTIVES_ID="3803"
+   export OSMO_TEST_ORACLE_ID="3804"
+   export OSMO_TEST_REWARDS_ID="3805"
 
-   # Transaction specific variables
+   # Transaction specific variables (must be created at time of transaction) 
    export CODEID="new_code_ID_to_migrate_to"
    export SEQUENCE="current_account_sequence"
    export UNSIGNED="unsignedTX_filename.JSON"
    export SIGNEDTX="signedTX_filenme.JSON"
-   export CONTRACTNAME="contract_name_from_cargo.TOML"
-   export CONTRACTADDR="contract_addr_bech32"
-   export ARGS="json_encoded_send_args"
+   export EXECUTE="msg_to_execute"
 
    # User specific variables
-   export NAME="your_name"
-   export SIGNER1="signer1"
-   export SIGNER2="signer2"
-   export SIGNER3="signer3"
-   export SIGNER4="signer4"
-   export SIGNER5="signer5"
-   export ADDR="your_wallet_address"
+   export SINGLE_SIGN="your_name.JSON" 
+   export OSMO_ADDR="your_wallet_address"
    ```
+**Note:**
 
-For `# zsh`:
+`OSMO_ACCOUNT` and `SEQUENCE` can be found by running:
 
-   ```shell
-   # Network specific variables
-   export MULTI=(multisig_address)
-   export CHAINID=(chain_id_of_network)
-   export CONTRACT=(contract_address_to_migrate)
-   export NODE=(node_URL)
-   export ACCOUNT=(account_number)
-
-   # Transaction specifc variables
-   export CODEID=(new_code_ID_to_migrate_to)
-   export SEQUENCE=(current_account_sequence)
-   export UNSIGNED=(unsignedTX_filename.JSON)
-   export SIGNED=(signedTX_filenme.JSON)
-   export CONTRACTNAME=(contract_name_from_cargo.TOML)
-   export CONTRACTADDR=(contract_addr_bech32)
-   export ARGS=(json_encoded_send_args)
-
-   # User specifc variables
-   export NAME=(your_name)
-   export SIGNER1=(signer1)
-   export SIGNER2=(signer2)
-   export SIGNER3=(signer3)
-   export SIGNER4=(signer4)
-   export SIGNER5=(signer5)
-   export ADDR=(your_wallet_address)
-   ```
+```
+osmosisd query account \
+--node=$OSMO_TEST_NODE \
+--chain-id=$OSMO_TEST_CHAINID \
+$OSMO_MULTI
+```
 
 ## Verifying Contracts 
 1. Get the wasm binary executable on your local machine. 
-   ```
+   ```shell
    git clone https://github.com/mars-protocol/outposts.git
    
    git checkout <commit-id> 
@@ -108,61 +91,61 @@ For `# zsh`:
    
    yarn compile
    ```
-   If on mac, use `yarn compile-mac` instead of `yarn compile` 
-
-   Note: The mac compatible version of the workspace-optimizer used to compile the contracts has only been upgraded to v0.12.8, which is not compatible with the Mars Protocol Outposts contracts. Until this version has been updated to v0.12.9, contracts cannot be compiled on a Mac. 
+   Note: Intel/Amd 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production and the wasm bytecode will not match up to an Intel compiled wasm file. 
 2. Download the wasm from the chain. 
-   ```  
+   ```shell  
    osmosisd query wasm code $CODEID -- $NODE download.wasm
    ```
    
-3. Verify that the diff is empty between them. 
-   ``` 
+3. Verify that the diff is empty between them. If any value is returned, then the wasm files differ. 
+   ```shell
    diff artifacts/$CONTRACTNAME.wasm download.wasm 
    ```
    
-## Query contract configs 
+## Query contract configs
 
-``` shell
-# oracle
+   * Red Bank Contract Config: 
+   ``` shell
+   QUERY='{"config": {}}'
+   osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
+   ```
+   * Oracle Config:
+   ``` shell
+   QUERY='{"config": {}}'
+   osmosisd query wasm contract-state smart $OSMO_TEST_ORACLE "$QUERY" --output json --node=$OSMO_TEST_NODE
+   ```
+   * Incentives Config:
+   ``` shell
+   QUERY='{"config": {}}'
+   osmosisd query wasm contract-state smart $OSMO_TEST_INCENTIVES "$QUERY" --output json --node=$OSMO_TEST_NODE
+   ```
+   * Address Provider Config:
+   ``` shell
+   QUERY='{"config": {}}'
+   osmosisd query wasm contract-state smart $OSMO_TEST_ADDR_PROVIDER "$QUERY" --output json --node=$OSMO_TEST_NODE
+  ```
+  * Rewards Collector Config:
+   ``` shell
+   QUERY='{"config": {}}'
+   osmosisd query wasm contract-state smart $OSMO_TEST_REWARDS_COLLECTOR "$QUERY" --output json --node=$OSMO_TEST_NODE
+   ```
+   * Verify OSMO and ATOM are initialized in the red bank market and have the correct params:
+   ``` shell
+   QUERY='{"market":{"denom":"uosmo"}}'
+   osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
+  
+   QUERY='{"market":{"denom":"uatom"}}'
+   osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
+   ```
+   * Verify Oracle Price Source is set correctly:
+   ``` shell
+   QUERY='{"price_sources":{}}'
+   osmosisd query wasm contract-state smart $OSMO_TEST_ORACLE "$QUERY" --output json --node=$OSMO_TEST_NODE
+   ```
 
-QUERY='{"price_sources":{}}'
-osmosisd query wasm contract-state smart $ORACLEADDR "$QUERY" --output json | jq .
+## Signing a TX with the multisig - Testnet Migrate Msg Example
 
-
-QUERY='{"price":{"denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}}'
-osmosisd query wasm contract-state smart $ORACLEADDR "$QUERY" --output json | jq .
-
-# rewards-collector
-
-QUERY='{"route":{"denom_in":"uosmo","denom_out":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}}'
-osmosisd query wasm contract-state smart $REWARDSADDR "$QUERY" --output json | jq .
-
-
-QUERY='{"routes":{}}'
-osmosisd query wasm contract-state smart $REWARDSADDR "$QUERY" --output json | jq .
-
-
-QUERY='{"config":{}}'
-osmosisd query wasm contract-state smart $REWARDSADDR "$QUERY" --output json | jq .
-
-# red-bank
-
-QUERY='{"market":{"denom":"uosmo"}}'
-osmosisd query wasm contract-state smart $REDBANKADDR "$QUERY" --output json | jq .
-
-
-QUERY='{"underlying_liquidity_amount":{"denom":"uosmo","amount_scaled":"$AMOUNT"}}'
-osmosisd query wasm contract-state smart $REDBANKADDR "$QUERY" --output json | jq .
-
-
-QUERY='{"uncollateralized_loan_limits":{"user":"$ADDR"}}'
-osmosisd query wasm contract-state smart $REDBANKADDR "$QUERY" --output json | jq .
-```
-
-## Signing a TX with the multisig - Migrate Msg Example
-
-Every multisig holder is responsible for verifying the contract's newly uploaded code for every migrate msg. 
+**Every multisig holder is responsible for verifying the contract's newly uploaded code for every migrate msg.** 
 
 _Note: The multisig must have at least one tx against it for the address to exist in Osmosis' state._
 
@@ -170,7 +153,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
 
 2. Assert that you have both your own wallet and multisig wallet in your keyring.
 
-   ```
+   ```shell
    osmosisd keys list
    ```
 
@@ -190,26 +173,26 @@ _Note: The multisig must have at least one tx against it for the address to exis
 
    Signing over a node:
 
-   ```
+   ```shell
    osmosisd tx wasm migrate $CONTRACT $CODEID '{}' \
-   --from= $MULTI \
-   --chain-id= $CHAINID \
+   --from=$OSMO_MULTI \
+   --chain-id=$OSMO_TEST_CHAINID \
    --generate-only > $UNSIGNED \
-   --node=$NODE
+   --node=$OSMO_TEST_NODE
    ```
 
    Or do an offline sign mode:
 
    _Recommended when signing many transactions in a sequence before they are executed._
 
-   ```
+   ```shell
    osmosisd tx wasm migrate $CONTRACT $CODEID '{}' \
-   --from= $MULTI \
-   --chain-id= $CHAINID \
+   --from=$OSMO_MULTI\
+   --chain-id=$OSMO_TEST_CHAINID \
    --generate-only > $UNSIGNED \
    --offline \
    --sequence=$SEQUENCE \
-   --account-number=$ACCOUNT
+   --account-number=$OSMO_ACCOUNT
    ```
 
 5. Distribute the generated file to all signers.
@@ -217,67 +200,67 @@ _Note: The multisig must have at least one tx against it for the address to exis
 6. Individually sign the transaction.
    Signing over a node:
 
-   ```
+   ```shell
    osmosisd tx sign \
    $UNSIGNED \
-   --multisig=$MULTI \
-   --from=$ADDR \
-   --output-document=$NAME_sig.json \
-   --chain-id=$CHAINID \
-   --node=$NODE
+   --multisig=$OSMO_MULTI \
+   --from=$OSMO_ADDR \
+   --output-document=$SINGLE_SIGN \
+   --chain-id=$OSMO_TEST_CHAINID \
+   --node=$OSMO_TEST_NODE
    ```
 
    Or do an offline sign mode:
 
    _Recommended when signing many transactions in a sequence before they are executed._
 
-   ```
+   ```shell
    osmosisd tx sign \
    $UNSIGNED \
-   --multisig=$MULTI \
-   --from=$ADDR \
-   --output-document=$NAME_sig.json \
-   --chain-id=$CHAINID \
+   --multisig=$OSMO_MULTI \
+   --from=$OSMO_ADDR \
+   --output-document=$SINGLE_SIGN \
+   --chain-id=$OSMO_TEST_CHAINID \
    --offline \
    --sequence=$SEQUENCE \
-   --account=$ACCOUNT
+   --account=$OSMO_ACCOUNT
    ```
 
 7. Complete the multisign. There must be a total of 3 signers for the transaction to be successful.
    Signing over a node:
 
-   ```
+   ```shell
    osmosisd tx multisign \
    $UNSIGNED \
-   $MULTI \
-   `$SINGER1`_sig.json `$SIGNER2`_sig.json `$SIGNER3`_sig.json \
+   $OSMO_MULTI \
+   `$SINGER1`.json `$SIGNER2`.json `$SIGNER3`.json \
    --output-document=$SIGNED \
-   --chain-id=$CHAINID \
-   --node=$NODE
+   --chain-id=$OSMO_TEST_CHAINID \
+   --node=$OSMO_TEST_NODE
    ```
 
    Or do an offline sign mode:
 
    _Recommended when signing many transactions in a sequence before they are executed._
 
-   ```
+   ```shell
    osmosisd tx multisign \
    $UNSIGNED \
-   $MULTI \
-   `$SINGER1`_sig.json `$SIGNER2`_sig.json `$SIGNER3`_sig.json \
+   $OSMO_MULTI \
+   `$SINGER1`.json `$SIGNER2`.json `$SIGNER3`.json \
    --output-document=$SIGNED \
-   --chain-id=$CHAINID \
+   --chain-id=$OSMO_TEST_CHAINID \
    --offline \
    --sequence=$SEQUENCE \
-   --account=$ACCOUNT
+   --account=$OSMO_ACCOUNT
    ```
 
 8. Broadcast the transaction.
-   ```
+   ```shell
    osmosisd tx broadcast $SIGNED \
-    --chain-id=$CHAINID \
+    --chain-id=$OSMO_TEST_CHAINID \
     --broadcast-mode=block
-    --node=$NODE
+    --node=$OSMO_TEST_NODE
    ```
    Note: For the tx to be able to broadcast, the newly uploaded code needs to have a migration entry point, meaning you have to put an empty (returning Ok) migration method.
  
@@ -291,40 +274,16 @@ _Note: The multisig must have at least one tx against it for the address to exis
    
    yarn compile
    ```
-   If on mac, use `yarn compile-mac` instead of `yarn compile`
-   
-   Note: The mac compatible version of the workspace-optimizer used to compile the contracts has only been upgraded to v0.12.8, which is not compatible with the Mars Protocol Outposts contracts. Until this version has been updated to v0.12.9, contracts cannot be compiled on a Mac.
-
+  
    ```  
-   osmosisd query wasm code $CODEID $NODE download.wasm
+   osmosisd query wasm code $CODEID $OSMO_TEST_NODE download.wasm
    ```
-
 
    ``` 
    diff artifacts/$CONTRACTNAME.wasm download.wasm 
    ```
-**Note:**
 
-`CHAINID` is the id of the chain you are looking to broadcast this transaction on
-
-- osmosis testnet - osmo-test-4
-- osmosis mainnet - osmosis-1
-
-`NODE` is the "https://rpc-" of a node on the network you want to execute the transaction
-
-- osmosis testnet - https://rpc-test.osmosis.zone:443
-- osmosis mainnet - TBD
-
-`ACCOUNT` and `SEQUENCE` can be found by running:
-
-```
-osmosisd query account \
---node=$NODE \
---chain-id=$CHAINID \
-$MULTI
-```
-
-## Signing a TX with the multisig - Execute Msg Example
+## Signing a TX with the multisig - Testnet Execute Msg Example
 Every multisig holder is responsible for verifying the execute msg inside the json file of their unsigned tx. 
 
 1. Assert that you have both your own wallet and multisig wallet in your keyring.
@@ -335,64 +294,47 @@ Every multisig holder is responsible for verifying the execute msg inside the js
    
    If they're missing, follow steps 2-4 from the "Set up multisig on your local network" section.
 2. Initiate the multisig execute tx. This can be done by any one of the multisig holders.
-   ```
-   osmosisd tx wasm execute $CONTRACTADDR $ARGS \
-   --from= $MULTI \
-   --chain-id= $CHAINID \ 
-   --generate-only > $UNSIGNED \ 
-   --node=$NODE
+
+   ```shell
+   osmosisd tx wasm execute $CONTRACTADDR $EXECUTE \
+   --from=$OSMO_MULTI \
+   --chain-id=$OSMO_TEST_CHAINID \
+   --generate-only > $UNSIGNED \
+   --node=$OSMO_TEST_NODE
    ```
    
 3. Distribute the generated file to all signers.
 
 4. Individually sign the transaction.
-   Signing over a node:
 
-   ```
+   ```shell
    osmosisd tx sign \
    $UNSIGNED \
-   --multisig=$MULTI \
-   --from=$ADDR \
-   --output-document=$NAME_sig.json \
-   --chain-id=$CHAINID \
-   --node=$NODE
+   --multisig=$OSMO_MULTI \
+   --from=$OSMO_ADDR \
+   --output-document=$SINGLE_SIGN \
+   --chain-id=$OSMO_TEST_CHAINID \
+   --node=$OSMO_TEST_NODE
    ```
 
 5. Complete the multisign. There must be a total of 3 signers for the transaction to be successful.
-   Signing over a node:
 
-   ```
+   ```shell
    osmosisd tx multisign \
    $UNSIGNED \
-   $MULTI \
-   `$SINGER1`_sig.json `$SIGNER2`_sig.json $SIGNER3`_sig.json \
+   $OSMO_MULTI \
+   `$SINGER1`.json `$SIGNER2`.json `$SIGNER3`.json \
    --output-document=$SIGNED \
-   --chain-id=$CHAINID \
-   --node=$NODE
-   ```
-
-   Or do an offline sign mode:
-
-   _Recommended when signing many transactions in a sequence before they are executed._
-
-   ```
-   osmosisd tx multisign \
-   $UNSIGNED \
-   $MULTI \
-   `$SINGER1`_sig.json `$SIGNER2`_sig.json $SIGNER3`_sig.json \
-   --output-document=$SIGNED \
-   --chain-id=$CHAINID \
-   --offline \
-   --sequence=$SEQUENCE \
-   --account=$ACCOUNT
+   --chain-id=$OSMO_TEST_CHAINID \
+   --node=$OSMO_TEST_NODE
    ```
 
 6. Broadcast the transaction.
-   ```
+   ```shell
    osmosisd tx broadcast $SIGNED \
-    --chain-id=$CHAINID \
+    --chain-id=$OSMO_TEST_CHAINID \
     --broadcast-mode=block
-    --node=$NODE
+    --node=$OSMO_TEST_NODE
    ```
    
 ## Examples of Execute Args:
