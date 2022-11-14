@@ -686,7 +686,7 @@ fn test_oracle_with_redbank() {
     )
     .unwrap();
 
-    let res = wasm.execute(
+    wasm.execute(
         &red_bank_addr,
         &Deposit {
             on_behalf_of: None,
