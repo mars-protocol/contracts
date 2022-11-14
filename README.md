@@ -5,36 +5,28 @@ This repository contains the source code for the core smart contracts of Mars Pr
 A bug bounty is currently open for these contracts. See details at: https://immunefi.com/bounty/marsprotocol/
 
 ## Verify contracts
+### For contracts deployed on the Osmosis chain:
+1. Install Osmosisd: https://docs.osmosis.zone/osmosis-core/osmosisd/
+2. Get the wasm binary executable on your local machine.
+   ```shell
+   git clone https://github.com/mars-protocol/outposts.git
+   
+   git checkout <commit-id> 
+   
+   cd scripts 
+   
+   yarn compile
+   ```
+   Note: Intel/Amd 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production and the wasm bytecode will not match up to an Intel compiled wasm file.
+3. Download the wasm from the chain.
+   ```shell  
+   osmosisd query wasm code $CODEID -- $NODE download.wasm
+   ```
 
-Follow these instructions to verify that the smart contracts that exist on chain correspond to a particular version of the contract's source code:
-
-1. Find the code ID of the contract you wish to verify.
-
-    This can be found on the smart contract's page on [Terra Finder](https://finder.terra.money/).
-
-2. Get the SHA256 checksum of the code ID's wasm binary:
-    - One way to do this is to get the checksum directly from the blockchain:
-
-    ```
-    curl "https://fcd.terra.dev/terra/wasm/v1beta1/codes/${CODE_ID}" \
-      | jq ".code_info.code_hash" \
-      | tr -d \" \
-      | base64 -d \
-      | hexdump -v -e '/1 "%02x"'
-    ```
-
-    - Alternatively, download the wasm byte code relating to the code ID from the blockchain and calculate its SHA256 checksum:
-
-    ```
-    curl "https://fcd.terra.dev/terra/wasm/v1beta1/codes/${CODE_ID}/byte_code" \
-      | jq ".byte_code" \
-      | tr -d \" \
-      | base64 -d \
-      | shasum -a 256
-    ```
-
-3. Get the SHA256 checksum of a smart contract's wasm binary built from source code. To do this, first clone this repo, checkout a particular release, compile the smart contracts using the same version of [rust-optimizer](https://github.com/CosmWasm/rust-optimizer) listed in the [releases](https://github.com/mars-protocol/mars-core/releases), and verify the checksum written to `artifacts/checksums.txt`.
-4. Finally, verify that the two checksums are identical.
+4. Verify that the diff is empty between them. If any value is returned, then the wasm files differ.
+   ```shell
+   diff artifacts/$CONTRACTNAME.wasm download.wasm 
+   ```
 
 ## Deploy scripts overview and set up
 When the scripts run for the first time, it will upload code IDs for each contract, instantiate each contract, initialize assets, and run 4 tests (deposit, borrow, repay, withdraw). After the first run, the code will only run deposit, borrow, repay, and withdraw tests. To rerun everything, delete the osmo-test-4.json file in the artifacts folder to clear the storage.
@@ -56,8 +48,9 @@ Compile all contracts:
 yarn compile
 ```
 This compiles and optimizes all contracts, storing them in `/artifacts` directory along with `checksum.txt` which contains sha256 hashes of each of the `.wasm` files (The script just uses CosmWasm's [rust-optimizer](https://github.com/CosmWasm/rust-optimizer)).
+Note: Intel/Amd 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production.
 
-Formating must be done before running lint:
+Formatting must be done before running lint:
 ```
 yarn format
 ```
@@ -76,7 +69,7 @@ yarn deploy:osmosis
 ```
 For Osmosis multisig owned contracts:
 ```
-yarn deploy:osmosisMulti
+yarn deploy:osmosis-multisig
 ```
 
 ## Schemas
