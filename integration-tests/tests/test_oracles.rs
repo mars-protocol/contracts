@@ -34,7 +34,7 @@ fn querying_xyk_lp_price_if_no_price_for_tokens() {
 
     let contract_addr = instantiate_contract(
         &wasm,
-        &signer,
+        signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
         &InstantiateMsg {
             owner: signer.address(),
@@ -573,7 +573,7 @@ fn test_oracle_with_redbank() {
 
     let oracle_addr = instantiate_contract(
         &wasm,
-        &signer,
+        signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
         &InstantiateMsg {
             owner: signer.address(),
@@ -583,7 +583,7 @@ fn test_oracle_with_redbank() {
 
     let addr_provider_addr = instantiate_contract(
         &wasm,
-        &signer,
+        signer,
         OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME,
         &addr_instantiate {
             owner: signer.address(),
@@ -593,7 +593,7 @@ fn test_oracle_with_redbank() {
 
     let red_bank_addr = instantiate_contract(
         &wasm,
-        &signer,
+        signer,
         OSMOSIS_RED_BANK_CONTRACT_NAME,
         &red_bank_instantiate {
             config: CreateOrUpdateConfig {
@@ -626,7 +626,7 @@ fn test_oracle_with_redbank() {
             },
         },
         &[],
-        &signer,
+        signer,
     )
     .unwrap();
 
@@ -652,7 +652,7 @@ fn test_oracle_with_redbank() {
             },
         },
         &[],
-        &signer,
+        signer,
     )
     .unwrap();
 
@@ -669,7 +669,7 @@ fn test_oracle_with_redbank() {
             },
         },
         &[],
-        &signer,
+        signer,
     )
     .unwrap();
 
@@ -682,7 +682,7 @@ fn test_oracle_with_redbank() {
             },
         },
         &[],
-        &signer,
+        signer,
     )
     .unwrap();
 
@@ -692,7 +692,7 @@ fn test_oracle_with_redbank() {
             on_behalf_of: None,
         },
         &[coin(1_000_000_000_000_000, "uosmo")],
-        &depositor,
+        depositor,
     )
     .unwrap_err();
 
