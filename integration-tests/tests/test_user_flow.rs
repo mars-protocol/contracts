@@ -100,9 +100,9 @@ fn borrow_exact_liquidity() {
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
 
     // setup oracle and red-bank
-    // let oracle = mock_env.oracle.clone();
-    // oracle.set_price_source_fixed(&mut mock_env, "uatom", Decimal::from_ratio(12u128, 1u128));
-    // oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::one());
+    let oracle = mock_env.oracle.clone();
+    oracle.set_price_source_fixed(&mut mock_env, "uatom", Decimal::from_ratio(12u128, 1u128));
+    oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::one());
     let red_bank = mock_env.red_bank.clone();
     red_bank.init_asset(&mut mock_env, "uatom", default_asset_params());
     red_bank.init_asset(&mut mock_env, "uusdc", default_asset_params());
