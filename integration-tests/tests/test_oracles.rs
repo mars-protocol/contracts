@@ -34,7 +34,7 @@ fn querying_xyk_lp_price_if_no_price_for_tokens() {
 
     let contract_addr = instantiate_contract(
         &wasm,
-        signer,
+        &signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
         &InstantiateMsg {
             owner: signer.address(),
