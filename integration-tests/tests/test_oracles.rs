@@ -658,7 +658,7 @@ fn test_oracle_with_redbank() {
 
     let gamm = Gamm::new(&app);
     let pool_liquidity = vec![Coin::new(2_000_000, "uatom"), Coin::new(1_000_000, "uosmo")];
-    let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
+    let pool_id = gamm.create_basic_pool(&pool_liquidity, signer).unwrap().data.pool_id;
 
     wasm.execute(
         &oracle_addr,
