@@ -134,7 +134,7 @@ $OSMO_MULTI
    QUERY='{"market":{"denom":"uosmo"}}'
    osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
   
-   QUERY='{"market":{"denom":"uatom"}}'
+   QUERY='{"market":{"denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}}'
    osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
    ```
    * Verify Oracle Price Source is set correctly:
@@ -166,7 +166,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
    
    #[cfg_attr(not(feature = "library"), entry_point)]
    pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
-   Ok(Response::default())
+    Ok(Response::default())
    }
    ```
 4. Initiate the multisig migrate tx. This can be done by any one of the multisig holders.
@@ -365,7 +365,7 @@ EXECUTE='{"set_price_source":{"denom":"uosmo","price_source":{"fixed":{"price":"
 osmosisd tx wasm execute $ORACLEADDR "$EXECUTE" 
 
 
-EXECUTE='{"set_price_source":{"denom":"uosmo","price_source":{"spot":{"pool_id":1}}}}'
+EXECUTE='{"set_price_source":{"denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2","price_source":{"spot":{"pool_id":1}}}}'
 osmosisd tx wasm execute $ORACLEADDR "$EXECUTE" 
 
 
