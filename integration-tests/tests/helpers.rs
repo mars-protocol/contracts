@@ -1,13 +1,11 @@
 #![allow(dead_code)]
 
-// mod test_oracles;
 
 use cosmwasm_std::Decimal;
 use mars_outpost::red_bank::{
     InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
 };
 
-//cw-multi-test helpers
 pub fn default_asset_params() -> InitOrUpdateAssetParams {
     InitOrUpdateAssetParams {
         initial_borrow_rate: Some(Decimal::percent(10)),

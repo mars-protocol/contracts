@@ -136,45 +136,6 @@ impl Oracle {
             .unwrap();
     }
 
-    pub fn set_price_source_spot(&self, env: &mut MockEnv, denom: &str, pool_id: u64) {
-        env.app
-            .execute_contract(
-                env.owner.clone(),
-                self.contract_addr.clone(),
-                &oracle::ExecuteMsg::SetPriceSource {
-                    denom: denom.to_string(),
-                    price_source: OsmosisPriceSource::Spot {
-                        pool_id,
-                    },
-                },
-                &[],
-            )
-            .unwrap();
-    }
-
-    pub fn set_price_source_twap(
-        &self,
-        env: &mut MockEnv,
-        denom: &str,
-        pool_id: u64,
-        window_size: u64,
-    ) {
-        env.app
-            .execute_contract(
-                env.owner.clone(),
-                self.contract_addr.clone(),
-                &oracle::ExecuteMsg::SetPriceSource {
-                    denom: denom.to_string(),
-                    price_source: OsmosisPriceSource::Twap {
-                        pool_id,
-                        window_size,
-                    },
-                },
-                &[],
-            )
-            .unwrap();
-    }
-
     pub fn query_asset_price(&self, env: &mut MockEnv, denom: &str) -> Uint128 {
         env.app
             .wrap()
