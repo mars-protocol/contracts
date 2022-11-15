@@ -5,6 +5,7 @@ use mars_outpost::red_bank::UserHealthStatus;
 use mars_testing::integration::mock_env::MockEnvBuilder;
 
 mod helpers;
+mod test_incentives;
 
 #[test]
 fn liquidate_collateralized_loan() {

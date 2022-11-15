@@ -22,6 +22,9 @@ mars-outpost        = { workspace = true }
 mars-oracle-osmosis = { workspace = true }
 mars-oracle-base    = { workspace = true }
 mars-testing        = { workspace = true }
+mars-rewards-collector-base = { workspace = true }
+mars-rewards-collector-osmosis = { version = "0.1.0", path = "../contracts/rewards-collector/osmosis" }
+mars-osmosis                = { workspace = true }
 osmosis-std         = { workspace = true }
 osmosis-testing     = { version = "0.12", git = "https://github.com/osmosis-labs/osmosis-rust" }
 serde               = { workspace = true }

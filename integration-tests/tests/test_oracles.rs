@@ -6,18 +6,25 @@ use mars_oracle_osmosis::OsmosisPriceSource;
 use mars_outpost::address_provider::InstantiateMsg as addr_instantiate;
 use mars_outpost::oracle::{ExecuteMsg, InstantiateMsg, PriceResponse, QueryMsg};
 use mars_outpost::red_bank::ExecuteMsg::Deposit;
+use mars_outpost::rewards_collector::ExecuteMsg::{SwapAsset, SetRoute};
+use mars_outpost::rewards_collector::InstantiateMsg as InstantiateRewards;
 use mars_outpost::red_bank::{CreateOrUpdateConfig, InstantiateMsg as red_bank_instantiate};
 use mars_outpost::red_bank::{
     ExecuteMsg as execute_red_bank, InitOrUpdateAssetParams, InterestRateModel,
 };
 use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, Wasm};
 use std::str::FromStr;
+use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountOutRoute;
+use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
+use crate::helpers::default_asset_params;
+use mars_rewards_collector_osmosis::OsmosisRoute;
 
 mod helpers;
 
 const OSMOSIS_ORACLE_CONTRACT_NAME: &str = "mars-oracle-osmosis";
 const OSMOSIS_RED_BANK_CONTRACT_NAME: &str = "mars-red-bank";
 const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
+const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
 
 #[test]
 fn querying_xyk_lp_price_if_no_price_for_tokens() {
@@ -207,32 +214,6 @@ fn set_spot_price() {
     let pool_liquidity = vec![Coin::new(2_000_000, "uatom"), Coin::new(1_000_000, "uosmo")];
     let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
 
-    let osmo_atom_pool = gamm.query_pool(pool_id).unwrap().pool_assets;
-
-    assert_eq!(
-        pool_liquidity
-            .into_iter()
-            .map(|c| c.into())
-            .collect::<Vec<osmosis_testing::osmosis_std::types::cosmos::base::v1beta1::Coin>>(),
-        osmo_atom_pool
-            .into_iter()
-            .map(|a| a.token.unwrap())
-            .collect::<Vec<osmosis_testing::osmosis_std::types::cosmos::base::v1beta1::Coin>>(),
-    );
-
-    wasm.execute(
-        &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
-            denom: "uosmo".to_string(),
-            price_source: OsmosisPriceSource::Spot {
-                pool_id,
-            },
-        },
-        &[],
-        &signer,
-    )
-    .unwrap();
-
     wasm.execute(
         &oracle_addr,
         &ExecuteMsg::SetPriceSource {
@@ -250,7 +231,7 @@ fn set_spot_price() {
         .query(
             &oracle_addr,
             &QueryMsg::PriceSource {
-                denom: "uosmo".to_string(),
+                denom: "uatom".to_string(),
             },
         )
         .unwrap();
@@ -275,6 +256,7 @@ fn set_spot_price() {
 
     assert_eq!(price.denom, "uatom".to_string());
 }
+
 // Set price source to spot for without creating a liquidity pool - should return an error
 #[test]
 fn set_spot_without_pools() {
@@ -295,14 +277,12 @@ fn set_spot_without_pools() {
         },
     );
 
-    let pool_id: u64 = 1;
-
     wasm.execute(
         &oracle_addr,
         &ExecuteMsg::SetPriceSource {
-            denom: "uosmo".to_string(),
+            denom: "uatom".to_string(),
             price_source: OsmosisPriceSource::Spot {
-                pool_id,
+                pool_id: 1u64,
             },
         },
         &[],
@@ -380,19 +360,6 @@ fn test_different_prices() {
     let gamm = Gamm::new(&app);
     let pool_liquidity = vec![Coin::new(98_000_000, "uatom"), Coin::new(1_764_000_000, "uosmo")];
     let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
-
-    wasm.execute(
-        &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
-            denom: "uosmo".to_string(),
-            price_source: OsmosisPriceSource::Spot {
-                pool_id,
-            },
-        },
-        &[],
-        &signer,
-    )
-    .unwrap();
 
     wasm.execute(
         &oracle_addr,
@@ -484,33 +451,6 @@ fn set_twap_price() {
     let pool_liquidity = vec![Coin::new(1_000_000, "uatom"), Coin::new(1_000_000, "uosmo")];
     let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
 
-    let osmo_atom_pool = gamm.query_pool(pool_id).unwrap().pool_assets;
-
-    assert_eq!(
-        pool_liquidity
-            .into_iter()
-            .map(|c| c.into())
-            .collect::<Vec<osmosis_testing::osmosis_std::types::cosmos::base::v1beta1::Coin>>(),
-        osmo_atom_pool
-            .into_iter()
-            .map(|a| a.token.unwrap())
-            .collect::<Vec<osmosis_testing::osmosis_std::types::cosmos::base::v1beta1::Coin>>(),
-    );
-
-    wasm.execute(
-        &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
-            denom: "uosmo".to_string(),
-            price_source: OsmosisPriceSource::Twap {
-                pool_id,
-                window_size: 1800, //30min
-            },
-        },
-        &[],
-        &signer,
-    )
-    .unwrap();
-
     wasm.execute(
         &oracle_addr,
         &ExecuteMsg::SetPriceSource {
@@ -555,6 +495,7 @@ fn set_twap_price() {
 
     assert_eq!(price.denom, "uatom".to_string());
 }
+
 // execute borrow action in red bank with an asset not in the oracle - should fail when attempting to query oracle
 #[test]
 fn test_oracle_with_redbank() {
@@ -608,22 +549,7 @@ fn test_oracle_with_redbank() {
         &red_bank_addr,
         &execute_red_bank::InitAsset {
             denom: "uosmo".to_string(),
-            params: InitOrUpdateAssetParams {
-                initial_borrow_rate: Some(Decimal::percent(10)),
-                reserve_factor: Some(Decimal::percent(20)),
-                max_loan_to_value: Some(Decimal::percent(60)),
-                liquidation_threshold: Some(Decimal::percent(80)),
-                liquidation_bonus: Some(Decimal::percent(10)),
-                interest_rate_model: Some(InterestRateModel {
-                    optimal_utilization_rate: Decimal::percent(10),
-                    base: Decimal::percent(30),
-                    slope_1: Decimal::percent(25),
-                    slope_2: Decimal::percent(30),
-                }),
-                deposit_enabled: Some(true),
-                borrow_enabled: Some(true),
-                deposit_cap: None,
-            },
+            params: default_asset_params(),
         },
         &[],
         signer,
@@ -634,22 +560,7 @@ fn test_oracle_with_redbank() {
         &red_bank_addr,
         &execute_red_bank::InitAsset {
             denom: "uatom".to_string(),
-            params: InitOrUpdateAssetParams {
-                initial_borrow_rate: Some(Decimal::percent(10)),
-                reserve_factor: Some(Decimal::percent(20)),
-                max_loan_to_value: Some(Decimal::percent(60)),
-                liquidation_threshold: Some(Decimal::percent(80)),
-                liquidation_bonus: Some(Decimal::percent(10)),
-                interest_rate_model: Some(InterestRateModel {
-                    optimal_utilization_rate: Decimal::percent(10),
-                    base: Decimal::percent(30),
-                    slope_1: Decimal::percent(25),
-                    slope_2: Decimal::percent(30),
-                }),
-                deposit_enabled: Some(true),
-                borrow_enabled: Some(true),
-                deposit_cap: None,
-            },
+            params: default_asset_params(),
         },
         &[],
         signer,
@@ -659,19 +570,6 @@ fn test_oracle_with_redbank() {
     let gamm = Gamm::new(&app);
     let pool_liquidity = vec![Coin::new(2_000_000, "uatom"), Coin::new(1_000_000, "uosmo")];
     let pool_id = gamm.create_basic_pool(&pool_liquidity, signer).unwrap().data.pool_id;
-
-    wasm.execute(
-        &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
-            denom: "uosmo".to_string(),
-            price_source: OsmosisPriceSource::Spot {
-                pool_id,
-            },
-        },
-        &[],
-        signer,
-    )
-    .unwrap();
 
     wasm.execute(
         &oracle_addr,
@@ -691,10 +589,122 @@ fn test_oracle_with_redbank() {
         &Deposit {
             on_behalf_of: None,
         },
-        &[coin(1_000_000_000_000_000, "uosmo")],
+        &[coin(1_000_000_000_000_000, "uatom")],
         depositor,
     )
     .unwrap_err();
 
     //failure due to insufficient funds
+}
+
+// Test a swap executed that changes the liquidity pool size and test how it corresponds to the price.
+#[test]
+#[ignore] // FIXME: Need to fund rewards contract
+fn test_liquidity_pool_size_change() {
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
+
+    let signer = app
+        .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "uatom")])
+        .unwrap();
+
+    let oracle_addr = instantiate_contract(
+        &wasm,
+        &signer,
+        OSMOSIS_ORACLE_CONTRACT_NAME,
+        &InstantiateMsg {
+            owner: signer.address(),
+            base_denom: "uosmo".to_string(),
+        },
+    );
+
+    let addr_provider_addr = instantiate_contract(
+        &wasm,
+        &signer,
+        OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME,
+        &addr_instantiate {
+            owner: signer.address(),
+            prefix: "osmo".to_string(),
+        },
+    );
+
+    let rewards_addr = instantiate_contract(
+        &wasm,
+        &signer,
+        OSMOSIS_REWARDS_CONTRACT_NAME,
+        &InstantiateRewards {
+            owner: (signer.address()),
+            address_provider: (addr_provider_addr),
+            safety_tax_rate: Decimal::percent(25),
+            safety_fund_denom: "uosmo".to_string(),
+            fee_collector_denom: "uosmo".to_string(),
+            channel_id: "channel-1".to_string(),
+            timeout_revision: 2,
+            timeout_blocks: 10,
+            timeout_seconds: 60,
+            slippage_tolerance: Decimal::new(Uint128::from(1u128)),
+        },
+    );
+
+    let gamm = Gamm::new(&app);
+    let pool_liquidity = vec![Coin::new(2_000_000, "uatom"), Coin::new(1_000_000, "uosmo")];
+    let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
+
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSource::Spot {
+                pool_id,
+            },
+        },
+        &[],
+        &signer,
+    )
+        .unwrap();
+
+    let price_source: PriceSourceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::PriceSource {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+
+    assert_eq!(
+        price_source.price_source,
+        (OsmosisPriceSource::Spot {
+            pool_id
+        })
+    );
+
+    let steps = vec![
+        SwapAmountInRoute{
+            pool_id,
+            token_out_denom: "uatom".to_string()
+        }
+    ];
+
+    wasm.execute(
+        &rewards_addr,
+        &SetRoute {
+            denom_in: "uosmo".to_string(),
+            denom_out: "uatom".to_string(),
+            route: OsmosisRoute(steps),
+        },
+        &[],
+        &signer,
+    ).unwrap();
+
+    wasm.execute(
+        &rewards_addr,
+        &SwapAsset::<OsmosisRoute> {
+            denom: "uatom".to_string(),
+            amount: Some(Uint128::new(10000)),
+        },
+        &[],
+        &signer,
+    ).unwrap();
+
 }
