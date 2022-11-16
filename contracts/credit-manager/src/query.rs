@@ -10,9 +10,8 @@ use mars_rover::msg::query::{
 };
 
 use crate::state::{
-    ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, DEBT_SHARES, MAX_CLOSE_FACTOR,
-    MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES, VAULT_CONFIGS,
-    VAULT_POSITIONS, ZAPPER,
+    ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, DEBT_SHARES, MAX_CLOSE_FACTOR, ORACLE, OWNER,
+    RED_BANK, SWAPPER, TOTAL_DEBT_SHARES, VAULT_CONFIGS, VAULT_POSITIONS, ZAPPER,
 };
 use crate::utils::debt_shares_to_amount;
 
@@ -27,7 +26,6 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
             .map(|addr| addr.to_string()),
         red_bank: RED_BANK.load(deps.storage)?.address().into(),
         oracle: ORACLE.load(deps.storage)?.address().into(),
-        max_liquidation_bonus: MAX_LIQUIDATION_BONUS.load(deps.storage)?,
         max_close_factor: MAX_CLOSE_FACTOR.load(deps.storage)?,
         swapper: SWAPPER.load(deps.storage)?.address().into(),
         zapper: ZAPPER.load(deps.storage)?.address().into(),

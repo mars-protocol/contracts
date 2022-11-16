@@ -22,7 +22,6 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   vaultTokenDenom: udig,
   vaultLockup: { time: 86400 }, // 1 day
   maxCloseFactor: 0.6,
-  maxLiquidationBonus: 0.05,
   depositAmount: 100,
   toGrantCreditLines: [
     { denom: 'uosmo', amount: '100000000000' },

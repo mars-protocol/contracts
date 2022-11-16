@@ -23,12 +23,16 @@
         "type": "object",
         "required": [
           "denom",
+          "liquidation_bonus",
           "liquidation_threshold",
           "max_ltv"
         ],
         "properties": {
           "denom": {
             "type": "string"
+          },
+          "liquidation_bonus": {
+            "$ref": "#/definitions/Decimal"
           },
           "liquidation_threshold": {
             "$ref": "#/definitions/Decimal"

@@ -21,6 +21,7 @@ import {
   VaultBaseForString,
   ExecuteMsg,
   Action,
+  VaultPositionType,
   CallbackMsg,
   Addr,
   ConfigUpdates,

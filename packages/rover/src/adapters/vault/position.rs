@@ -17,3 +17,10 @@ pub struct VaultPosition {
     pub vault: Vault,
     pub amount: VaultPositionAmount,
 }
+
+#[cw_serde]
+pub enum VaultPositionType {
+    UNLOCKED,
+    LOCKED,
+    UNLOCKING,
+}

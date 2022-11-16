@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
 
-use crate::adapters::vault::{Vault, VaultUnchecked};
+use crate::adapters::vault::{Vault, VaultPositionType, VaultUnchecked};
 use crate::msg::instantiate::ConfigUpdates;
 
 #[cw_serde]
@@ -77,10 +77,12 @@ pub enum Action {
     /// Similar to LiquidateCoin {} msg and will make similar adjustments to the request.
     /// The vault position will be withdrawn (and force withdrawn if a locked vault position) and
     /// the underlying assets will transferred to the liquidator.
+    /// The `VaultPositionType` will determine which bucket to liquidate from.
     LiquidateVault {
         liquidatee_account_id: String,
         debt_coin: Coin,
         request_vault: VaultUnchecked,
+        position_type: VaultPositionType,
     },
     /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
     SwapExactIn {
@@ -171,6 +173,7 @@ pub enum CallbackMsg {
         liquidatee_account_id: String,
         debt_coin: Coin,
         request_vault: Vault,
+        position_type: VaultPositionType,
     },
     /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
     SwapExactIn {

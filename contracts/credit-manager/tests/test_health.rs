@@ -73,6 +73,7 @@ fn test_terra_ragnarok() {
         price: 100.to_dec().unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
+        liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
     };
 
     let user = Addr::unchecked("user");
@@ -305,12 +306,14 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
         price: Decimal::from_atomics(23654u128, 4).unwrap(),
         max_ltv: Decimal::from_atomics(5u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
+        liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
     };
     let uatom_info = CoinInfo {
         denom: "uatom".to_string(),
         price: Decimal::from_atomics(102u128, 1).unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
+        liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
     };
 
     let user = Addr::unchecked("user");
@@ -382,12 +385,14 @@ fn test_assets_and_ltv_lqdt_adjusted_value() {
         price: Decimal::from_atomics(5265478965412365487125u128, 12).unwrap(),
         max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
+        liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
     };
     let uatom_info = CoinInfo {
         denom: "uatom".to_string(),
         price: Decimal::from_atomics(7012302005u128, 3).unwrap(),
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
+        liquidation_bonus: Decimal::from_atomics(12u128, 2).unwrap(),
     };
 
     let user = Addr::unchecked("user");
@@ -467,12 +472,14 @@ fn test_debt_value() {
         price: Decimal::from_atomics(5265478965412365487125u128, 12).unwrap(),
         max_ltv: Decimal::from_atomics(3u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(5u128, 1).unwrap(),
+        liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
     };
     let uatom_info = CoinInfo {
         denom: "uatom".to_string(),
         price: Decimal::from_atomics(7012302005u128, 3).unwrap(),
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
+        liquidation_bonus: Decimal::from_atomics(1u128, 1).unwrap(),
     };
 
     let user_a = Addr::unchecked("user_a");

@@ -134,6 +134,7 @@ fn test_allowed_coins_set_on_instantiate() {
             price: Decimal::from_atomics(25u128, 2).unwrap(),
             max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
+            liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
         },
     ];
     let mock = MockEnv::new()
@@ -184,14 +185,6 @@ fn test_raises_on_invalid_oracle_addr() {
     if mock.is_ok() {
         panic!("Should have thrown an error");
     }
-}
-
-#[test]
-fn test_max_liq_bonus_set_on_instantiate() {
-    let mock = MockEnv::new().build().unwrap();
-    let res = mock.query_config();
-    let mock_default = Decimal::from_atomics(5u128, 2).unwrap();
-    assert_eq!(mock_default, res.max_liquidation_bonus);
 }
 
 #[test]

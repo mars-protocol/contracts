@@ -16,7 +16,7 @@ pub fn repay(deps: DepsMut, env: Env, account_id: &str, coin: Coin) -> ContractR
 
     // Ensure repayment does not exceed max debt on account
     let (debt_amount, debt_shares) =
-        current_debt_for_denom(deps.as_ref(), &env, account_id, &coin)?;
+        current_debt_for_denom(deps.as_ref(), &env, account_id, &coin.denom)?;
     let amount_to_repay = min(debt_amount, coin.amount);
     let shares_to_repay = debt_amount_to_shares(
         deps.as_ref(),
@@ -83,11 +83,11 @@ pub fn current_debt_for_denom(
     deps: Deps,
     env: &Env,
     account_id: &str,
-    coin: &Coin,
+    denom: &str,
 ) -> ContractResult<(Uint128, Uint128)> {
     let debt_shares = DEBT_SHARES
-        .load(deps.storage, (account_id, &coin.denom))
+        .load(deps.storage, (account_id, denom))
         .map_err(|_| ContractError::NoDebt)?;
-    let coin = debt_shares_to_amount(deps, &env.contract.address, &coin.denom, debt_shares)?;
+    let coin = debt_shares_to_amount(deps, &env.contract.address, denom, debt_shares)?;
     Ok((coin.amount, debt_shares))
 }

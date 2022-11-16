@@ -8,7 +8,7 @@ use mars_rover::traits::{IntoDecimal, IntoUint128};
 
 use crate::health::{compute_health, val_or_na};
 use crate::repay::current_debt_for_denom;
-use crate::state::{COIN_BALANCES, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE};
+use crate::state::{COIN_BALANCES, MAX_CLOSE_FACTOR, ORACLE, RED_BANK};
 use crate::utils::{decrement_coin_balance, increment_coin_balance};
 
 pub fn liquidate_coin(
@@ -79,7 +79,7 @@ pub fn calculate_liquidation(
 
     // Ensure debt repaid does not exceed liquidatee's total debt for denom
     let (total_debt_amount, _) =
-        current_debt_for_denom(deps.as_ref(), env, liquidatee_account_id, debt_coin)?;
+        current_debt_for_denom(deps.as_ref(), env, liquidatee_account_id, &debt_coin.denom)?;
 
     // Ensure debt amount does not exceed close factor % of the liquidatee's total debt value
     let close_factor = MAX_CLOSE_FACTOR.load(deps.storage)?;
@@ -94,7 +94,11 @@ pub fn calculate_liquidation(
     let max_request_value = request_res
         .price
         .checked_mul(request_coin_balance.to_dec()?)?;
-    let liq_bonus_rate = MAX_LIQUIDATION_BONUS.load(deps.storage)?;
+
+    let liq_bonus_rate = RED_BANK
+        .load(deps.storage)?
+        .query_market(&deps.querier, &debt_coin.denom)?
+        .liquidation_bonus;
     let request_coin_adjusted_max_debt = max_request_value
         .div(liq_bonus_rate.add(Decimal::one()))
         .div(debt_res.price)
@@ -116,11 +120,11 @@ pub fn calculate_liquidation(
         .add(Decimal::one())
         .checked_mul(debt_res.price.checked_mul(final_debt_to_repay.to_dec()?)?)?
         .div(request_res.price)
-        .uint128()
         // Given the nature of integers, these operations will round down. This means the liquidation balance will get
         // closer and closer to 0, but never actually get there and stay as a single denom unit.
-        // The remediation for this is to round up at the very end of the calculation. Which adding 1 effectively does.
-        .checked_add(Uint128::new(1))?;
+        // The remediation for this is to round up at the very end of the calculation.
+        .ceil()
+        .uint128();
 
     // (Debt Coin, Request Coin)
     Ok((

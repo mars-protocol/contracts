@@ -22,6 +22,7 @@ pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
     Ok(Market {
         max_loan_to_value: market_info.max_ltv,
         liquidation_threshold: market_info.liquidation_threshold,
+        liquidation_bonus: market_info.liquidation_bonus,
         ..Default::default()
     })
 }

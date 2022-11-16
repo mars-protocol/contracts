@@ -189,7 +189,6 @@ export class Deployer {
       owner: this.deployerAddr,
       red_bank: this.config.redBankAddr,
       max_close_factor: this.config.maxCloseFactor.toString(),
-      max_liquidation_bonus: this.config.maxLiquidationBonus.toString(),
       swapper: this.storage.addresses.swapper!,
       zapper: this.storage.addresses.mockZapper!,
     }

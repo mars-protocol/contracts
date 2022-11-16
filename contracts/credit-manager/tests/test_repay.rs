@@ -82,6 +82,7 @@ fn test_raises_when_repaying_what_is_not_owed() {
         price: 9.to_dec().unwrap(),
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(85u128, 2).unwrap(),
+        liquidation_bonus: Decimal::from_atomics(1u128, 1).unwrap(),
     };
 
     let user_a = Addr::unchecked("user_a");
@@ -138,6 +139,7 @@ fn test_raises_when_not_enough_assets_to_repay() {
         price: 9.to_dec().unwrap(),
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(85u128, 2).unwrap(),
+        liquidation_bonus: Decimal::from_atomics(1u128, 1).unwrap(),
     };
 
     let user = Addr::unchecked("user");

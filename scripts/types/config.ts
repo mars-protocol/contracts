@@ -31,7 +31,6 @@ export interface DeploymentConfig {
   swapRoute: { token_out_denom: string; pool_id: string }[]
   withdrawAmount: number
   maxCloseFactor: number
-  maxLiquidationBonus: number
   vaultType: VaultType
   vaultDepositAmount: number
   vaultDepositCap: {

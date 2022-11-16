@@ -376,7 +376,7 @@ fn test_liquidator_left_in_unhealthy_state() {
         res,
         AboveMaxLTV {
             account_id: liquidator_account_id,
-            max_ltv_health_factor: "0.795375".to_string(),
+            max_ltv_health_factor: "0.805".to_string(),
         },
     )
 }
@@ -439,7 +439,7 @@ fn test_debt_amount_adjusted_to_close_factor_max() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.coins.len(), 2);
     let osmo_balance = get_coin("uosmo", &position.coins);
-    assert_eq!(osmo_balance.amount, Uint128::new(47));
+    assert_eq!(osmo_balance.amount, Uint128::new(36));
     let atom_balance = get_coin("uatom", &position.coins);
     assert_eq!(atom_balance.amount, Uint128::new(100));
 
@@ -454,7 +454,7 @@ fn test_debt_amount_adjusted_to_close_factor_max() {
     let atom_balance = get_coin("uatom", &position.coins);
     assert_eq!(atom_balance.amount, Uint128::new(40));
     let osmo_balance = get_coin("uosmo", &position.coins);
-    assert_eq!(osmo_balance.amount, Uint128::new(253));
+    assert_eq!(osmo_balance.amount, Uint128::new(264));
 }
 
 #[test]
@@ -517,7 +517,7 @@ fn test_debt_amount_adjusted_to_total_debt_for_denom() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.coins.len(), 3);
     let osmo_balance = get_coin("uosmo", &position.coins);
-    assert_eq!(osmo_balance.amount, Uint128::new(190));
+    assert_eq!(osmo_balance.amount, Uint128::new(180));
     let atom_balance = get_coin("uatom", &position.coins);
     assert_eq!(atom_balance.amount, Uint128::new(100));
     let jake_balance = get_coin("ujake", &position.coins);
@@ -534,7 +534,7 @@ fn test_debt_amount_adjusted_to_total_debt_for_denom() {
     let jake_balance = get_coin("ujake", &position.coins);
     assert_eq!(jake_balance.amount, Uint128::new(39));
     let osmo_balance = get_coin("uosmo", &position.coins);
-    assert_eq!(osmo_balance.amount, Uint128::new(110));
+    assert_eq!(osmo_balance.amount, Uint128::new(120));
 }
 
 #[test]
@@ -544,7 +544,6 @@ fn test_debt_amount_adjusted_to_max_allowed_by_request_coin() {
     let liquidator = Addr::unchecked("liquidator");
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
-        .max_close_factor(Decimal::from_atomics(1u128, 1).unwrap())
         .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
@@ -595,7 +594,7 @@ fn test_debt_amount_adjusted_to_max_allowed_by_request_coin() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.coins.len(), 2);
     let osmo_balance = get_coin("uosmo", &position.coins);
-    assert_eq!(osmo_balance.amount, Uint128::new(47));
+    assert_eq!(osmo_balance.amount, Uint128::new(36));
     let atom_balance = get_coin("uatom", &position.coins);
     assert_eq!(atom_balance.amount, Uint128::new(100));
 
@@ -610,7 +609,7 @@ fn test_debt_amount_adjusted_to_max_allowed_by_request_coin() {
     let atom_balance = get_coin("uatom", &position.coins);
     assert_eq!(atom_balance.amount, Uint128::new(47));
     let osmo_balance = get_coin("uosmo", &position.coins);
-    assert_eq!(osmo_balance.amount, Uint128::new(253));
+    assert_eq!(osmo_balance.amount, Uint128::new(264));
 }
 
 #[test]
@@ -671,7 +670,7 @@ fn test_debt_amount_no_adjustment() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.coins.len(), 2);
     let osmo_balance = get_coin("uosmo", &position.coins);
-    assert_eq!(osmo_balance.amount, Uint128::new(68));
+    assert_eq!(osmo_balance.amount, Uint128::new(58));
     let atom_balance = get_coin("uatom", &position.coins);
     assert_eq!(atom_balance.amount, Uint128::new(100));
 
@@ -684,7 +683,7 @@ fn test_debt_amount_no_adjustment() {
     assert_eq!(position.coins.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let osmo_balance = get_coin("uosmo", &position.coins);
-    assert_eq!(osmo_balance.amount, Uint128::new(232));
+    assert_eq!(osmo_balance.amount, Uint128::new(242));
 }
 
 #[test]

@@ -15,7 +15,6 @@ export interface InstantiateMsg {
   allowed_coins: string[]
   allowed_vaults: VaultInstantiateConfig[]
   max_close_factor: Decimal
-  max_liquidation_bonus: Decimal
   oracle: OracleBaseForString
   owner: string
   red_bank: RedBankBaseForString
@@ -107,6 +106,7 @@ export type Action =
       liquidate_vault: {
         debt_coin: Coin
         liquidatee_account_id: string
+        position_type: VaultPositionType
         request_vault: VaultBaseForString
       }
     }
@@ -132,6 +132,7 @@ export type Action =
   | {
       refund_all_coin_balances: {}
     }
+export type VaultPositionType = 'u_n_l_o_c_k_e_d' | 'l_o_c_k_e_d' | 'u_n_l_o_c_k_i_n_g'
 export type CallbackMsg =
   | {
       withdraw: {
@@ -213,6 +214,7 @@ export type CallbackMsg =
         debt_coin: Coin
         liquidatee_account_id: string
         liquidator_account_id: string
+        position_type: VaultPositionType
         request_vault: VaultBaseForAddr
       }
     }
@@ -259,7 +261,6 @@ export interface ConfigUpdates {
   account_nft?: string | null
   allowed_coins?: string[] | null
   max_close_factor?: Decimal | null
-  max_liquidation_bonus?: Decimal | null
   oracle?: OracleBaseForString | null
   owner?: string | null
   red_bank?: RedBankBaseForString | null
@@ -398,7 +399,6 @@ export type ArrayOfString = string[]
 export interface ConfigResponse {
   account_nft?: string | null
   max_close_factor: Decimal
-  max_liquidation_bonus: Decimal
   oracle: string
   owner: string
   red_bank: string

@@ -13,6 +13,7 @@ pub fn build_mock_coin_infos(count: usize) -> Vec<CoinInfo> {
             max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
             price: 10.to_dec().unwrap(),
+            liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
         })
         .collect()
 }

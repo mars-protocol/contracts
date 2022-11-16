@@ -11,6 +11,7 @@ export interface InstantiateMsg {
 }
 export interface CoinMarketInfo {
   denom: string
+  liquidation_bonus: Decimal
   liquidation_threshold: Decimal
   max_ltv: Decimal
 }

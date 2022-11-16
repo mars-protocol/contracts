@@ -15,7 +15,6 @@ pub const ALLOWED_COINS: Set<&str> = Set::new("allowed_coins");
 pub const VAULT_CONFIGS: Map<&Addr, VaultConfig> = Map::new("vault_configs");
 pub const RED_BANK: Item<RedBank> = Item::new("red_bank");
 pub const ORACLE: Item<Oracle> = Item::new("oracle");
-pub const MAX_LIQUIDATION_BONUS: Item<Decimal> = Item::new("max_liquidation_bonus");
 pub const MAX_CLOSE_FACTOR: Item<Decimal> = Item::new("max_close_factor");
 pub const SWAPPER: Item<Swapper> = Item::new("swapper");
 pub const ZAPPER: Item<Zapper> = Item::new("zapper");

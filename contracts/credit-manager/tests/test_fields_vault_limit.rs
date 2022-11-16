@@ -18,6 +18,7 @@ fn test_can_only_have_a_single_vault_position() {
         price: Decimal::from_atomics(121u128, 3).unwrap(),
         max_ltv: Decimal::from_atomics(4u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(5u128, 1).unwrap(),
+        liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
     };
     let degen_vault = VaultTestInfo {
         vault_token_denom: "udegen".to_string(),

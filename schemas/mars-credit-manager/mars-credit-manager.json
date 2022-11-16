@@ -10,7 +10,6 @@
       "allowed_coins",
       "allowed_vaults",
       "max_close_factor",
-      "max_liquidation_bonus",
       "oracle",
       "owner",
       "red_bank",
@@ -34,14 +33,6 @@
       },
       "max_close_factor": {
         "description": "The maximum percent a liquidator can decrease the debt amount of the liquidatee",
-        "allOf": [
-          {
-            "$ref": "#/definitions/Decimal"
-          }
-        ]
-      },
-      "max_liquidation_bonus": {
-        "description": "The maximum percent a liquidator can profit from a liquidation action",
         "allOf": [
           {
             "$ref": "#/definitions/Decimal"
@@ -469,7 +460,7 @@
             "additionalProperties": false
           },
           {
-            "description": "Pay back debt of a liquidatable rover account for a via liquidating a vault position. Similar to LiquidateCoin {} msg and will make similar adjustments to the request. The vault position will be withdrawn (and force withdrawn if a locked vault position) and the underlying assets will transferred to the liquidator.",
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a vault position. Similar to LiquidateCoin {} msg and will make similar adjustments to the request. The vault position will be withdrawn (and force withdrawn if a locked vault position) and the underlying assets will transferred to the liquidator. The `VaultPositionType` will determine which bucket to liquidate from.",
             "type": "object",
             "required": [
               "liquidate_vault"
@@ -480,6 +471,7 @@
                 "required": [
                   "debt_coin",
                   "liquidatee_account_id",
+                  "position_type",
                   "request_vault"
                 ],
                 "properties": {
@@ -488,6 +480,9 @@
                   },
                   "liquidatee_account_id": {
                     "type": "string"
+                  },
+                  "position_type": {
+                    "$ref": "#/definitions/VaultPositionType"
                   },
                   "request_vault": {
                     "$ref": "#/definitions/VaultBase_for_String"
@@ -954,6 +949,7 @@
                   "debt_coin",
                   "liquidatee_account_id",
                   "liquidator_account_id",
+                  "position_type",
                   "request_vault"
                 ],
                 "properties": {
@@ -965,6 +961,9 @@
                   },
                   "liquidator_account_id": {
                     "type": "string"
+                  },
+                  "position_type": {
+                    "$ref": "#/definitions/VaultPositionType"
                   },
                   "request_vault": {
                     "$ref": "#/definitions/VaultBase_for_Addr"
@@ -1194,16 +1193,6 @@
               }
             ]
           },
-          "max_liquidation_bonus": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/Decimal"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "oracle": {
             "anyOf": [
               {
@@ -1342,6 +1331,14 @@
           }
         },
         "additionalProperties": false
+      },
+      "VaultPositionType": {
+        "type": "string",
+        "enum": [
+          "u_n_l_o_c_k_e_d",
+          "l_o_c_k_e_d",
+          "u_n_l_o_c_k_i_n_g"
+        ]
       },
       "ZapperBase_for_String": {
         "type": "string"
@@ -2094,7 +2091,6 @@
       "type": "object",
       "required": [
         "max_close_factor",
-        "max_liquidation_bonus",
         "oracle",
         "owner",
         "red_bank",
@@ -2109,9 +2105,6 @@
           ]
         },
         "max_close_factor": {
-          "$ref": "#/definitions/Decimal"
-        },
-        "max_liquidation_bonus": {
           "$ref": "#/definitions/Decimal"
         },
         "oracle": {

@@ -14,6 +14,7 @@ pub struct CoinInfo {
     pub price: Decimal,
     pub max_ltv: Decimal,
     pub liquidation_threshold: Decimal,
+    pub liquidation_bonus: Decimal,
 }
 
 #[cw_serde]

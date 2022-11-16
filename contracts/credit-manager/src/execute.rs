@@ -16,8 +16,8 @@ use crate::liquidate_coin::liquidate_coin;
 use crate::refund::refund_coin_balances;
 use crate::repay::repay;
 use crate::state::{
-    ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_LIQUIDATION_BONUS, ORACLE, OWNER, RED_BANK,
-    SWAPPER, VAULT_CONFIGS, ZAPPER,
+    ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, ORACLE, OWNER, RED_BANK, SWAPPER, VAULT_CONFIGS,
+    ZAPPER,
 };
 use crate::swap::swap_exact_in;
 use crate::update_coin_balances::update_coin_balance;
@@ -138,13 +138,6 @@ pub fn update_config(
             .add_attribute("value", unchecked.address());
     }
 
-    if let Some(bonus) = new_config.max_liquidation_bonus {
-        MAX_LIQUIDATION_BONUS.save(deps.storage, &bonus)?;
-        response = response
-            .add_attribute("key", "max_liquidation_bonus")
-            .add_attribute("value", bonus.to_string());
-    }
-
     if let Some(cf) = new_config.max_close_factor {
         MAX_CLOSE_FACTOR.save(deps.storage, &cf)?;
         response = response
@@ -216,11 +209,13 @@ pub fn dispatch_actions(
                 liquidatee_account_id,
                 debt_coin,
                 request_vault,
+                position_type,
             } => callbacks.push(CallbackMsg::LiquidateVault {
                 liquidator_account_id: account_id.to_string(),
                 liquidatee_account_id: liquidatee_account_id.to_string(),
                 debt_coin: debt_coin.clone(),
                 request_vault: request_vault.check(deps.api)?,
+                position_type: position_type.clone(),
             }),
             Action::SwapExactIn {
                 coin_in,
@@ -364,6 +359,7 @@ pub fn execute_callback(
             liquidatee_account_id,
             debt_coin,
             request_vault,
+            position_type,
         } => liquidate_vault(
             deps,
             env,
@@ -371,6 +367,7 @@ pub fn execute_callback(
             &liquidatee_account_id,
             debt_coin,
             request_vault,
+            position_type,
         ),
         CallbackMsg::SwapExactIn {
             account_id,

@@ -11,4 +11,5 @@ pub struct CoinMarketInfo {
     pub denom: String,
     pub max_ltv: Decimal,
     pub liquidation_threshold: Decimal,
+    pub liquidation_bonus: Decimal,
 }

@@ -20,8 +20,6 @@ pub struct InstantiateMsg {
     pub red_bank: RedBankUnchecked,
     /// The Mars Protocol oracle contract. We read prices of assets here.
     pub oracle: OracleUnchecked,
-    /// The maximum percent a liquidator can profit from a liquidation action
-    pub max_liquidation_bonus: Decimal,
     /// The maximum percent a liquidator can decrease the debt amount of the liquidatee
     pub max_close_factor: Decimal,
     /// Helper contract for making swaps
@@ -64,7 +62,6 @@ pub struct ConfigUpdates {
     pub vault_configs: Option<Vec<VaultInstantiateConfig>>,
     pub red_bank: Option<RedBankUnchecked>,
     pub oracle: Option<OracleUnchecked>,
-    pub max_liquidation_bonus: Option<Decimal>,
     pub max_close_factor: Option<Decimal>,
     pub swapper: Option<SwapperUnchecked>,
     pub zapper: Option<ZapperUnchecked>,

@@ -3,10 +3,10 @@ use std::cmp::min;
 use cosmwasm_std::{Coin, DepsMut, Env, Response, Uint128};
 
 use mars_rover::adapters::vault::{
-    UnlockingChange, UnlockingPositions, UpdateType, Vault, VaultPositionAmount,
+    UnlockingChange, UnlockingPositions, UpdateType, Vault, VaultPositionAmount, VaultPositionType,
     VaultPositionUpdate,
 };
-use mars_rover::error::ContractResult;
+use mars_rover::error::{ContractError, ContractResult};
 
 use crate::liquidate_coin::{calculate_liquidation, repay_debt};
 use crate::state::VAULT_POSITIONS;
@@ -20,6 +20,7 @@ pub fn liquidate_vault(
     liquidatee_account_id: &str,
     debt_coin: Coin,
     request_vault: Vault,
+    position_type: VaultPositionType,
 ) -> ContractResult<Response> {
     let liquidatee_position = VAULT_POSITIONS.load(
         deps.storage,
@@ -27,40 +28,39 @@ pub fn liquidate_vault(
     )?;
 
     match liquidatee_position {
-        VaultPositionAmount::Unlocked(a) => liquidate_unlocked(
-            deps,
-            env,
-            liquidator_account_id,
-            liquidatee_account_id,
-            debt_coin,
-            request_vault,
-            a.total(),
-        ),
-        VaultPositionAmount::Locking(ref a) => {
-            // A locking vault can have two different positions: LOCKED & UNLOCKING
-            // Priority goes to force withdrawing the unlocking buckets
-            if !a.unlocking.positions().is_empty() {
-                liquidate_unlocking(
-                    deps,
-                    env,
-                    liquidator_account_id,
-                    liquidatee_account_id,
-                    debt_coin,
-                    request_vault,
-                    liquidatee_position.unlocking(),
-                )
-            } else {
-                liquidate_locked(
-                    deps,
-                    env,
-                    liquidator_account_id,
-                    liquidatee_account_id,
-                    debt_coin,
-                    request_vault,
-                    a.locked.total(),
-                )
-            }
-        }
+        VaultPositionAmount::Unlocked(a) => match position_type {
+            VaultPositionType::UNLOCKED => liquidate_unlocked(
+                deps,
+                env,
+                liquidator_account_id,
+                liquidatee_account_id,
+                debt_coin,
+                request_vault,
+                a.total(),
+            ),
+            _ => Err(ContractError::MismatchedVaultType),
+        },
+        VaultPositionAmount::Locking(ref a) => match position_type {
+            VaultPositionType::LOCKED => liquidate_locked(
+                deps,
+                env,
+                liquidator_account_id,
+                liquidatee_account_id,
+                debt_coin,
+                request_vault,
+                a.locked.total(),
+            ),
+            VaultPositionType::UNLOCKING => liquidate_unlocking(
+                deps,
+                env,
+                liquidator_account_id,
+                liquidatee_account_id,
+                debt_coin,
+                request_vault,
+                liquidatee_position.unlocking(),
+            ),
+            _ => Err(ContractError::MismatchedVaultType),
+        },
     }
 }
 
