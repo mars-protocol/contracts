@@ -2,8 +2,8 @@ use cosmwasm_std::{Addr, QuerierWrapper, Uint128};
 
 use crate::{ContractError, ContractResult};
 
-// follows cosmos SDK validation logic where denoms can be 3 - 128 characters long
-// and support letters, followed but either a letter, number, or separator ( ‘/' , ‘:' , ‘.’ , ‘_’ , or '-')
+/// follows cosmos SDK validation logic where denoms can be 3 - 128 characters long
+/// and support letters, followed but either a letter, number, or separator ( ‘/' , ‘:' , ‘.’ , ‘_’ , or '-')
 pub(crate) fn validate_native_denom(denom: String) -> ContractResult<String> {
     if denom.len() < 3 || denom.len() > 128 {
         return Err(ContractError::InvalidDenomLength { len: denom.len()});
@@ -21,10 +21,7 @@ pub(crate) fn validate_native_denom(denom: String) -> ContractResult<String> {
         }
     }
 
-    // set denom to be all lowercase and truncated before saving to contract
-    let new_denom = denom.to_lowercase().truncate(10).to_string();
-
-    Ok(new_denom)
+    Ok(denom)
 }
 
 /// For a denom with an optional Uint128 amount,

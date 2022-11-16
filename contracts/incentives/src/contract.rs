@@ -4,6 +4,7 @@ use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env,
     MessageInfo, Response, StdResult, Uint128,
 };
+use cosmwasm_std::StdError::GenericErr;
 
 use mars_outpost::address_provider::MarsAddressType;
 use mars_outpost::error::MarsError;
@@ -14,9 +15,7 @@ use mars_outpost::incentives::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_outpost::{address_provider, red_bank};
 
 use crate::error::ContractError;
-use crate::helpers::{
-    asset_incentive_update_index, compute_user_unclaimed_rewards, user_compute_accrued_rewards,
-};
+use crate::helpers::{asset_incentive_update_index, compute_user_unclaimed_rewards, user_compute_accrued_rewards, validate_native_denom};
 use crate::state::{ASSET_INCENTIVES, CONFIG, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-incentives";
@@ -38,6 +37,10 @@ pub fn instantiate(
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
         mars_denom: msg.mars_denom,
     };
+
+    if mars_denom != validate_native_denom(mars_denom).unwrap() {
+        return Err(std());
+    }
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -94,6 +97,8 @@ pub fn execute_set_asset_incentive(
     if info.sender != owner {
         return Err(MarsError::Unauthorized {}.into());
     }
+
+    let denom = validate_native_denom(denom).unwrap();
 
     let red_bank_addr = address_provider::helpers::query_address(
         deps.as_ref(),
@@ -153,6 +158,8 @@ pub fn execute_balance_change(
     if info.sender != red_bank_addr {
         return Err(MarsError::Unauthorized {}.into());
     }
+
+    let denom = validate_native_denom(denom).unwrap();
 
     let mut asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &denom)? {
         // If there are no incentives,
@@ -279,6 +286,10 @@ pub fn execute_update_config(
     if info.sender != config.owner {
         return Err(MarsError::Unauthorized {});
     };
+
+    if mars_denom != validate_native_denom(mars_denom::toString).unwrap() {
+        return Err(MarsError::Std((GenericErr)));
+    }
 
     config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
     config.address_provider =
