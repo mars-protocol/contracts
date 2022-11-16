@@ -14,20 +14,4 @@ pub enum ContractError {
 
     #[error("{0}")]
     FromUtf8(#[from] FromUtf8Error),
-
-    #[error("Invalid denom. Must be between 3 - 128, got ({len})")]
-    InvalidDenomLength {
-        len: usize,
-    },
-
-    #[error("Expected alphabetic ascii character in denom")]
-    InvalidDenomCharacter,
-
-    #[error("Invalid character ({c}) in denom")]
-    InvalidCharacter { c: char },
-
-    #[error("Invalid denom: {denom}")]
-    InvalidDenom {
-        denom: String,
-    },
 }
