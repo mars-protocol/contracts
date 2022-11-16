@@ -32,6 +32,22 @@ pub enum ContractError {
     InvalidRoute {
         reason: String,
     },
+
+    #[error("Invalid denom. Must be between 3 - 128, got ({len})")]
+    InvalidDenomLength {
+        len: usize,
+    },
+
+    #[error("Expected alphabetic ascii character in denom")]
+    InvalidDenomCharacter,
+
+    #[error("Invalid character ({c}) in denom")]
+    InvalidCharacter { c: char },
+
+    #[error("Invalid denom: {denom}")]
+    InvalidDenom {
+        denom: String,
+    },
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

@@ -15,7 +15,7 @@ use mars_outpost::rewards_collector::{
     RoutesResponse,
 };
 
-use crate::helpers::{stringify_option_amount, unwrap_option_amount};
+use crate::helpers::{stringify_option_amount, unwrap_option_amount, validate_native_denom};
 use crate::{ContractError, ContractResult, Route};
 
 const DEFAULT_LIMIT: u32 = 5;
@@ -138,6 +138,14 @@ where
             slippage_tolerance,
         } = new_cfg;
 
+        if safety_fund_denom != validate_native_denom(safety_fund_denom::toString).unwrap() {
+            return Err(ContractError::InvalidDenom {denom} );
+        }
+
+        if fee_collector_denom != validate_native_denom(fee_collector_denom::toString).unwrap() {
+            return Err(ContractError::InvalidDenom {denom} );
+        }
+
         cfg.owner = option_string_to_addr(deps.api, owner, cfg.owner)?;
         cfg.address_provider =
             option_string_to_addr(deps.api, address_provider, cfg.address_provider)?;
@@ -170,6 +178,9 @@ where
         if sender != cfg.owner {
             return Err(MarsError::Unauthorized {}.into());
         }
+
+        let denom_in = validate_native_denom(denom_in).unwrap();
+        let denom_out= validate_native_denom(denom_out).unwrap();
 
         route.validate(&deps.querier, &denom_in, &denom_out)?;
 
