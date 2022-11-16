@@ -3,7 +3,6 @@ use cosmwasm_std::{
     Uint128,
 };
 
-use crate::ContractError;
 use mars_outpost::incentives::AssetIncentive;
 use mars_outpost::red_bank;
 

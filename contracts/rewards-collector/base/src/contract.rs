@@ -8,14 +8,16 @@ use cw_storage_plus::{Bound, Item, Map};
 
 use mars_outpost::address_provider::{self, MarsAddressType};
 use mars_outpost::error::MarsError;
-use mars_outpost::helpers::{option_string_to_addr, validate_native_denom};
+use mars_outpost::helpers::option_string_to_addr;
 use mars_outpost::red_bank;
 use mars_outpost::rewards_collector::{
     Config, CreateOrUpdateConfig, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
     RoutesResponse,
 };
 
-use crate::helpers::{stringify_option_amount, unwrap_option_amount, validate_native_denom};
+use crate::helpers::{
+    stringify_option_amount, unwrap_option_amount, validate_native_denom_contract,
+};
 use crate::{ContractError, ContractResult, Route};
 
 const DEFAULT_LIMIT: u32 = 5;
@@ -171,8 +173,8 @@ where
             return Err(MarsError::Unauthorized {}.into());
         }
 
-        validate_native_denom(&denom_in)?;
-        validate_native_denom(&denom_out)?;
+        validate_native_denom_contract(&denom_in)?;
+        validate_native_denom_contract(&denom_out)?;
 
         route.validate(&deps.querier, &denom_in, &denom_out)?;
 

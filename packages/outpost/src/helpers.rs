@@ -64,6 +64,7 @@ pub fn zero_address() -> Addr {
 
 /// follows cosmos SDK validation logic where denoms can be 3 - 128 characters long
 /// and support letters, followed but either a letter, number, or separator ( ‘/' , ‘:' , ‘.’ , ‘_’ , or '-')
+/// reference: https://github.com/cosmos/cosmos-sdk/blob/7728516abfab950dc7a9120caad4870f1f962df5/types/coin.go#L865-L867
 pub fn validate_native_denom(denom: &str) -> Result<(), MarsError> {
     if denom.len() < 3 || denom.len() > 128 {
         return Err(MarsError::InvalidDenom {

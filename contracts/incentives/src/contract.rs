@@ -16,7 +16,6 @@ use mars_outpost::{address_provider, red_bank};
 use crate::error::ContractError;
 use crate::helpers::{
     asset_incentive_update_index, compute_user_unclaimed_rewards, user_compute_accrued_rewards,
-    validate_native_denom,
 };
 use crate::state::{ASSET_INCENTIVES, CONFIG, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
