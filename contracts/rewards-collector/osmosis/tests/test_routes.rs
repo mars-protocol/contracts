@@ -67,6 +67,37 @@ fn test_setting_route() {
 }
 
 #[test]
+fn test_incorrect_denom() {
+    let mut deps = helpers::setup_test();
+
+    let steps = vec![
+        SwapAmountInRoute {
+            pool_id: 1,
+            token_out_denom: "uosmo".to_string(),
+        },
+        SwapAmountInRoute {
+            pool_id: 420,
+            token_out_denom: "umars".to_string(),
+        },
+    ];
+
+    let msg = ExecuteMsg::SetRoute {
+        denom_in: "hadb%akdjb!".to_string(),
+        denom_out: "askd&7ab12d&".to_string(),
+        route: OsmosisRoute(steps.clone()),
+    };
+
+   let res = execute(deps.as_mut(), mock_env(), mock_info("owner"), msg);
+    assert_eq!(
+        res,
+        Err(ContractError::InvalidDenom {
+            reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -".to_string()
+        })
+    );
+
+}
+
+#[test]
 fn test_querying_routes() {
     let deps = helpers::setup_test();
 

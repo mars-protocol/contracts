@@ -1,8 +1,11 @@
-use cosmwasm_std::{Addr, BlockInfo, ContractResult, Decimal, Deps, Order, OverflowError, OverflowOperation, StdError, StdResult, Uint128};
+use cosmwasm_std::{
+    Addr, BlockInfo, Decimal, Deps, Order, OverflowError, OverflowOperation, StdError, StdResult,
+    Uint128,
+};
 
+use crate::ContractError;
 use mars_outpost::incentives::AssetIncentive;
 use mars_outpost::red_bank;
-use crate::{ContractError, ContractResult};
 
 use crate::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
@@ -145,29 +148,4 @@ pub fn compute_user_unclaimed_rewards(
     }
 
     Ok((total_unclaimed_rewards, user_asset_incentive_statuses_to_update))
-}
-
-/// follows cosmos SDK validation logic where denoms can be 3 - 128 characters long
-/// and support letters, followed but either a letter, number, or separator ( ‘/' , ‘:' , ‘.’ , ‘_’ , or '-')
-pub(crate) fn validate_native_denom(denom: String) -> Result<String, ContractError> {
-    if denom.len() < 3 || denom.len() > 128 {
-        return Err(ContractError::InvalidDenomLength { len: denom.len()});
-    }
-    let mut chars = denom.chars();
-    let first = chars.next().ok_or(DenomError::NonAlphabeticAscii)?;
-    if !first.is_ascii_alphabetic() {
-        return Err(ContractError::InvalidDenomCharacter);
-    }
-
-    for c in chars {
-        if !(c.is_ascii_alphanumeric() || c == '/' || c == ':' || c == '.' || c == '_' || c == '-')
-        {
-            return Err(ContractError::InvalidCharacter { c });
-        }
-    }
-
-    // set denom to be all lowercase and truncated before saving to contract
-    let new_denom = denom.to_lowercase().truncate(10).to_string();
-
-    Ok(new_denom)
 }

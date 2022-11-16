@@ -61,3 +61,35 @@ pub fn integer_param_gt_zero(param_value: u64, param_name: &str) -> Result<(), M
 pub fn zero_address() -> Addr {
     Addr::unchecked("")
 }
+
+/// follows cosmos SDK validation logic where denoms can be 3 - 128 characters long
+/// and support letters, followed but either a letter, number, or separator ( ‘/' , ‘:' , ‘.’ , ‘_’ , or '-')
+pub fn validate_native_denom(denom: &str) -> Result<(), MarsError> {
+    if denom.len() < 3 || denom.len() > 128 {
+        return Err(MarsError::InvalidDenom {
+            reason: "Invalid denom length".to_string(),
+        });
+    }
+
+    let mut chars = denom.chars();
+    let first = chars.next().ok_or(MarsError::InvalidDenom {
+        reason: "Cannot retrieve first character".to_string(),
+    })?;
+    if !first.is_ascii_alphabetic() {
+        return Err(MarsError::InvalidDenom {
+            reason: "First character is not ASCII alphabetic".to_string(),
+        });
+    }
+
+    for c in chars {
+        if !(c.is_ascii_alphanumeric() || c == '/' || c == ':' || c == '.' || c == '_' || c == '-')
+        {
+            return Err(MarsError::InvalidDenom {
+                reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
+                    .to_string(),
+            });
+        }
+    }
+
+    Ok(())
+}

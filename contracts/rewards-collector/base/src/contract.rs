@@ -8,7 +8,7 @@ use cw_storage_plus::{Bound, Item, Map};
 
 use mars_outpost::address_provider::{self, MarsAddressType};
 use mars_outpost::error::MarsError;
-use mars_outpost::helpers::option_string_to_addr;
+use mars_outpost::helpers::{option_string_to_addr, validate_native_denom};
 use mars_outpost::red_bank;
 use mars_outpost::rewards_collector::{
     Config, CreateOrUpdateConfig, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
@@ -138,14 +138,6 @@ where
             slippage_tolerance,
         } = new_cfg;
 
-        if safety_fund_denom != validate_native_denom(safety_fund_denom::toString).unwrap() {
-            return Err(ContractError::InvalidDenom {denom} );
-        }
-
-        if fee_collector_denom != validate_native_denom(fee_collector_denom::toString).unwrap() {
-            return Err(ContractError::InvalidDenom {denom} );
-        }
-
         cfg.owner = option_string_to_addr(deps.api, owner, cfg.owner)?;
         cfg.address_provider =
             option_string_to_addr(deps.api, address_provider, cfg.address_provider)?;
@@ -179,8 +171,8 @@ where
             return Err(MarsError::Unauthorized {}.into());
         }
 
-        let denom_in = validate_native_denom(denom_in).unwrap();
-        let denom_out= validate_native_denom(denom_out).unwrap();
+        validate_native_denom(&denom_in)?;
+        validate_native_denom(&denom_out)?;
 
         route.validate(&deps.querier, &denom_in, &denom_out)?;
 

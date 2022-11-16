@@ -1,45 +1,6 @@
-use std::io::stderr;
-use cosmwasm_std::{Addr, QuerierWrapper, Uint128, Api, Deps };
-use cosmwasm_std::testing::MockApi;
+use cosmwasm_std::{Addr, QuerierWrapper, Uint128};
 
 use crate::{ContractError, ContractResult};
-
-/// follows cosmos SDK validation logic where denoms can be 3 - 128 characters long
-/// and support letters, followed but either a letter, number, or separator ( ‘/' , ‘:' , ‘.’ , ‘_’ , or '-')
-pub(crate) fn validate_native_denom(denom: String) -> ContractResult<String> {
-    /// check for cw20 asset to validate
-    let api = MockApi::default();
-    let deps = Deps;
-    let addr = api.addr_validate(&denom)?;
-
-    if addr == denom {
-        let _info =  deps
-            .querier
-            .query_wasm_smart(addr.clone(), &cw20::Cw20QueryMsg::TokenInfo {})
-            .map_err(stderr())?;
-        Ok(denom)
-    }
-    /// check for native denom to validate
-    else {
-        if denom.len() < 3 || denom.len() > 128 {
-            return Err(ContractError::InvalidDenomLength { len: denom.len()});
-        }
-        let mut chars = denom.chars();
-        let first = chars.next().ok_or(DenomError::NonAlphabeticAscii)?;
-        if !first.is_ascii_alphabetic() {
-            return Err(ContractError::InvalidDenomCharacter);
-        }
-
-        for c in chars {
-            if !(c.is_ascii_alphanumeric() || c == '/' || c == ':' || c == '.' || c == '_' || c == '-')
-            {
-                return Err(ContractError::InvalidCharacter { c });
-            }
-        }
-
-        Ok(denom)
-    }
-}
 
 /// For a denom with an optional Uint128 amount,
 /// - if the amount is provided, assert that it is no larger than the available balance;
