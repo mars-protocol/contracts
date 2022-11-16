@@ -84,7 +84,7 @@ fn test_incorrect_denom() {
     let msg = ExecuteMsg::SetRoute {
         denom_in: "hadb%akdjb!".to_string(),
         denom_out: "askd&7ab12d&".to_string(),
-        route: OsmosisRoute(steps.clone()),
+        route: OsmosisRoute(steps),
     };
 
     let res = execute(deps.as_mut(), mock_env(), mock_info("owner"), msg);
@@ -115,7 +115,7 @@ fn test_invalid_denom() {
     let msg = ExecuteMsg::SetRoute {
         denom_in: "qw".to_string(),
         denom_out: "qwrouwetsdknfsljvnsdkjfhw".to_string(),
-        route: OsmosisRoute(steps.clone()),
+        route: OsmosisRoute(steps),
     };
 
     let res = execute(deps.as_mut(), mock_env(), mock_info("owner"), msg);
