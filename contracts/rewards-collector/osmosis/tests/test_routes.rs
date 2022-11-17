@@ -67,7 +67,7 @@ fn test_setting_route() {
 }
 
 #[test]
-fn test_incorrect_denom() {
+fn test_denom_with_invalid_char() {
     let mut deps = helpers::setup_test();
 
     let steps = vec![
@@ -90,15 +90,15 @@ fn test_incorrect_denom() {
     let res = execute(deps.as_mut(), mock_env(), mock_info("owner"), msg);
     assert_eq!(
         res,
-        Err(ContractError::InvalidDenom {
+        Err(ContractError::Mars(MarsError::InvalidDenom {
             reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
                 .to_string()
-        })
+        }))
     );
 }
 
 #[test]
-fn test_invalid_denom() {
+fn test_invalid_denom_length() {
     let mut deps = helpers::setup_test();
 
     let steps = vec![
@@ -121,9 +121,9 @@ fn test_invalid_denom() {
     let res = execute(deps.as_mut(), mock_env(), mock_info("owner"), msg);
     assert_eq!(
         res,
-        Err(ContractError::InvalidDenom {
+        Err(ContractError::Mars(MarsError::InvalidDenom {
             reason: "Invalid denom length".to_string(),
-        })
+        }))
     );
 }
 

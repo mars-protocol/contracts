@@ -30,39 +30,6 @@ pub(crate) fn stringify_option_amount(amount: Option<Uint128>) -> String {
     amount.map_or_else(|| "undefined".to_string(), |amount| amount.to_string())
 }
 
-/// follows cosmos SDK validation logic where denoms can be 3 - 128 characters long
-/// and support letters, followed but either a letter, number, or separator ( ‘/' , ‘:' , ‘.’ , ‘_’ , or '-')
-/// reference: https://github.com/cosmos/cosmos-sdk/blob/7728516abfab950dc7a9120caad4870f1f962df5/types/coin.go#L865-L867
-pub(crate) fn validate_native_denom_contract(denom: &str) -> Result<(), ContractError> {
-    if denom.len() < 3 || denom.len() > 128 {
-        return Err(ContractError::InvalidDenom {
-            reason: "Invalid denom length".to_string(),
-        });
-    }
-
-    let mut chars = denom.chars();
-    let first = chars.next().ok_or(ContractError::InvalidDenom {
-        reason: "Cannot retrieve first character".to_string(),
-    })?;
-    if !first.is_ascii_alphabetic() {
-        return Err(ContractError::InvalidDenom {
-            reason: "First character is not ASCII alphabetic".to_string(),
-        });
-    }
-
-    for c in chars {
-        if !(c.is_ascii_alphanumeric() || c == '/' || c == ':' || c == '.' || c == '_' || c == '-')
-        {
-            return Err(ContractError::InvalidDenom {
-                reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
-                    .to_string(),
-            });
-        }
-    }
-
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

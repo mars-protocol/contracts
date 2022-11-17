@@ -63,7 +63,7 @@ pub fn zero_address() -> Addr {
 }
 
 /// follows cosmos SDK validation logic where denoms can be 3 - 128 characters long
-/// and support letters, followed but either a letter, number, or separator ( ‘/' , ‘:' , ‘.’ , ‘_’ , or '-')
+/// and starts with a letter, followed but either a letter, number, or separator ( ‘/' , ‘:' , ‘.’ , ‘_’ , or '-')
 /// reference: https://github.com/cosmos/cosmos-sdk/blob/7728516abfab950dc7a9120caad4870f1f962df5/types/coin.go#L865-L867
 pub fn validate_native_denom(denom: &str) -> Result<(), MarsError> {
     if denom.len() < 3 || denom.len() > 128 {
@@ -73,9 +73,12 @@ pub fn validate_native_denom(denom: &str) -> Result<(), MarsError> {
     }
 
     let mut chars = denom.chars();
-    let first = chars.next().ok_or(MarsError::InvalidDenom {
-        reason: "Cannot retrieve first character".to_string(),
-    })?;
+    let first = chars
+        .next()
+        .ok_or(MarsError::InvalidDenom {
+            reason: "Cannot retrieve first character".to_string(),
+        })
+        .unwrap();
     if !first.is_ascii_alphabetic() {
         return Err(MarsError::InvalidDenom {
             reason: "First character is not ASCII alphabetic".to_string(),
