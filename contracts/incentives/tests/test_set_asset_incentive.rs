@@ -35,10 +35,6 @@ fn test_invalid_denom_for_incentives() {
     let mut deps = setup_test();
 
     let info = mock_info("owner", &[]);
-    let env = mars_testing::mock_env(MockEnvParams {
-        block_time: Timestamp::from_seconds(1_000_000),
-        ..Default::default()
-    });
     let msg = ExecuteMsg::SetAssetIncentive {
         denom: "adfnjg&akjsfn!".to_string(),
         emission_per_second: Uint128::new(100),
