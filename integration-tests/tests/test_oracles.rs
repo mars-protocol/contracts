@@ -1,23 +1,24 @@
+use crate::helpers::default_asset_params;
 use crate::helpers::osmosis::{assert_err, instantiate_contract};
 use cosmwasm_std::{coin, Coin, Decimal, Isqrt, Uint128};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::msg::PriceSourceResponse;
 use mars_oracle_osmosis::OsmosisPriceSource;
 use mars_outpost::address_provider::InstantiateMsg as addr_instantiate;
+use mars_outpost::incentives::InstantiateMsg as InstantiateIncentives;
 use mars_outpost::oracle::{ExecuteMsg, InstantiateMsg, PriceResponse, QueryMsg};
 use mars_outpost::red_bank::ExecuteMsg::Deposit;
-use mars_outpost::rewards_collector::ExecuteMsg::{SwapAsset, SetRoute};
-use mars_outpost::rewards_collector::InstantiateMsg as InstantiateRewards;
 use mars_outpost::red_bank::{CreateOrUpdateConfig, InstantiateMsg as red_bank_instantiate};
 use mars_outpost::red_bank::{
     ExecuteMsg as execute_red_bank, InitOrUpdateAssetParams, InterestRateModel,
 };
+use mars_outpost::rewards_collector::ExecuteMsg::{SetRoute, SwapAsset};
+use mars_outpost::rewards_collector::InstantiateMsg as InstantiateRewards;
+use mars_rewards_collector_osmosis::OsmosisRoute;
+use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
+use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountOutRoute;
 use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, Wasm};
 use std::str::FromStr;
-use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountOutRoute;
-use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
-use crate::helpers::default_asset_params;
-use mars_rewards_collector_osmosis::OsmosisRoute;
 
 mod helpers;
 
@@ -25,6 +26,7 @@ const OSMOSIS_ORACLE_CONTRACT_NAME: &str = "mars-oracle-osmosis";
 const OSMOSIS_RED_BANK_CONTRACT_NAME: &str = "mars-red-bank";
 const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
 const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
+const OSMOSIS_INCENTIVES_CONTRACT_NAME: &str = "mars-incentives";
 
 #[test]
 fn querying_xyk_lp_price_if_no_price_for_tokens() {
@@ -545,6 +547,17 @@ fn test_oracle_with_redbank() {
         },
     );
 
+    let incentives_addr = instantiate_contract(
+        &wasm,
+        signer,
+        OSMOSIS_INCENTIVES_CONTRACT_NAME,
+        &InstantiateIncentives {
+            owner: signer.address(),
+            address_provider: addr_provider_addr?,
+            mars_denom: "umars".to_string(),
+        },
+    );
+
     wasm.execute(
         &red_bank_addr,
         &execute_red_bank::InitAsset {
@@ -589,10 +602,10 @@ fn test_oracle_with_redbank() {
         &Deposit {
             on_behalf_of: None,
         },
-        &[coin(1_000_000_000_000_000, "uatom")],
+        &[coin(1_000_000, "uatom")],
         depositor,
     )
-    .unwrap_err();
+    .unwrap();
 
     //failure due to insufficient funds
 }
@@ -661,7 +674,7 @@ fn test_liquidity_pool_size_change() {
         &[],
         &signer,
     )
-        .unwrap();
+    .unwrap();
 
     let price_source: PriceSourceResponse = wasm
         .query(
@@ -679,12 +692,10 @@ fn test_liquidity_pool_size_change() {
         })
     );
 
-    let steps = vec![
-        SwapAmountInRoute{
-            pool_id,
-            token_out_denom: "uatom".to_string()
-        }
-    ];
+    let steps = vec![SwapAmountInRoute {
+        pool_id,
+        token_out_denom: "uatom".to_string(),
+    }];
 
     wasm.execute(
         &rewards_addr,
@@ -695,7 +706,8 @@ fn test_liquidity_pool_size_change() {
         },
         &[],
         &signer,
-    ).unwrap();
+    )
+    .unwrap();
 
     wasm.execute(
         &rewards_addr,
@@ -705,6 +717,6 @@ fn test_liquidity_pool_size_change() {
         },
         &[],
         &signer,
-    ).unwrap();
-
+    )
+    .unwrap();
 }
