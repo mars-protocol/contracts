@@ -10,6 +10,7 @@ use mars_testing::MockEnvParams;
 use mars_incentives::contract::{execute, execute_balance_change, query_user_unclaimed_rewards};
 use mars_incentives::helpers::{asset_incentive_compute_index, user_compute_accrued_rewards};
 use mars_incentives::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
+use mars_incentives::ContractError;
 
 use crate::helpers::setup_test;
 
@@ -33,6 +34,30 @@ fn test_balance_change_unauthorized() {
     )
     .unwrap_err();
     assert_eq!(err, MarsError::Unauthorized {}.into());
+}
+
+#[test]
+fn test_balance_change_incorrect_denom() {
+    let mut deps = setup_test();
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("red_bank", &[]),
+        ExecuteMsg::BalanceChange {
+            user_addr: Addr::unchecked("user"),
+            denom: "asfkfsk!sfn&%".to_string(),
+            user_amount_scaled_before: Uint128::new(100000),
+            total_amount_scaled_before: Uint128::new(100000),
+        },
+    );
+    assert_eq!(
+        err,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
+                .to_string()
+        }))
+    );
 }
 
 #[test]
