@@ -1,3 +1,5 @@
+extern crate core;
+
 use crate::helpers::instantiate_contract;
 use cosmwasm_std::coin;
 use mars_rover::adapters::swap::{ExecuteMsg, QueryMsg, RouteResponse};

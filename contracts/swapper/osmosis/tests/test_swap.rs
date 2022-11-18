@@ -7,7 +7,9 @@ use mars_rover::error::ContractError as RoverError;
 use mars_swapper_base::ContractError;
 use mars_swapper_osmosis::route::OsmosisRoute;
 
-use crate::helpers::{assert_err, instantiate_contract, query_balance};
+use crate::helpers::{
+    assert_err, instantiate_contract, query_balance, swap_to_create_twap_records,
+};
 
 pub mod helpers;
 
@@ -47,7 +49,6 @@ fn test_transfer_callback_only_internal() {
 }
 
 #[test]
-#[ignore] // FIXME: TWAP doesn't work on osmosis-testing - fix in progress
 fn test_swap_exact_in_slippage_too_high() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
@@ -71,6 +72,14 @@ fn test_swap_exact_in_slippage_too_high() {
         .unwrap()
         .data
         .pool_id;
+
+    swap_to_create_twap_records(
+        &app,
+        &signer,
+        pool_mars_osmo,
+        coin(10u128, "umars"),
+        "uosmo",
+    );
 
     let route = OsmosisRoute(vec![SwapAmountInRoute {
         pool_id: pool_mars_osmo,
@@ -110,7 +119,6 @@ fn test_swap_exact_in_slippage_too_high() {
 }
 
 #[test]
-#[ignore] // FIXME: TWAP doesn't work on osmosis-testing - fix in progress
 fn test_swap_exact_in_success() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
@@ -134,6 +142,14 @@ fn test_swap_exact_in_success() {
         .unwrap()
         .data
         .pool_id;
+
+    swap_to_create_twap_records(
+        &app,
+        &signer,
+        pool_mars_osmo,
+        coin(10u128, "umars"),
+        "uosmo",
+    );
 
     wasm.execute(
         &contract_addr,
