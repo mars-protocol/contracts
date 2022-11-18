@@ -259,7 +259,7 @@ fn set_spot_price() {
     assert_eq!(price.denom, "uatom".to_string());
 }
 
-// Set price source to spot for without creating a liquidity pool - should return an error
+// Set price source to spot without creating a liquidity pool - should return an error
 #[test]
 fn set_spot_without_pools() {
     let app = OsmosisTestApp::new();
@@ -341,7 +341,7 @@ fn incorrect_pool_for_spot_oracle() {
 
 // change pool liquidity and assert accurate price change on asset
 #[test]
-fn test_different_prices() {
+fn different_asset_prices() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -393,19 +393,6 @@ fn test_different_prices() {
     wasm.execute(
         &oracle_addr,
         &ExecuteMsg::SetPriceSource {
-            denom: "uosmo".to_string(),
-            price_source: OsmosisPriceSource::Spot {
-                pool_id,
-            },
-        },
-        &[],
-        &signer,
-    )
-    .unwrap();
-
-    wasm.execute(
-        &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
             denom: "uatom".to_string(),
             price_source: OsmosisPriceSource::Spot {
                 pool_id,
@@ -428,7 +415,7 @@ fn test_different_prices() {
     assert_eq!(price.price, Decimal::from_ratio(78u128, 13u128));
 }
 
-//assert oracle was correctly set to TWAP and assert prices are queried correctly
+// assert oracle was correctly set to TWAP and assert prices are queried correctly
 #[test]
 #[ignore] // FIXME: TWAP doesn't work on osmosis-testing - fix in progress
 fn set_twap_price() {
@@ -478,10 +465,10 @@ fn set_twap_price() {
 
     assert_eq!(
         price_source.price_source,
-        (OsmosisPriceSource::Twap {
+        OsmosisPriceSource::Twap {
             pool_id,
             window_size: 1800,
-        })
+        }
     );
 
     let price: PriceResponse = wasm
@@ -500,7 +487,7 @@ fn set_twap_price() {
 
 // execute borrow action in red bank with an asset not in the oracle - should fail when attempting to query oracle
 #[test]
-fn test_oracle_with_redbank() {
+fn redbank_should_fail_if_no_price() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -547,16 +534,16 @@ fn test_oracle_with_redbank() {
         },
     );
 
-    let incentives_addr = instantiate_contract(
-        &wasm,
-        signer,
-        OSMOSIS_INCENTIVES_CONTRACT_NAME,
-        &InstantiateIncentives {
-            owner: signer.address(),
-            address_provider: addr_provider_addr?,
-            mars_denom: "umars".to_string(),
-        },
-    );
+    // let incentives_addr = instantiate_contract(
+    //     &wasm,
+    //     signer,
+    //     OSMOSIS_INCENTIVES_CONTRACT_NAME,
+    //     &InstantiateIncentives {
+    //         owner: signer.address(),
+    //         address_provider: addr_provider_addr?,
+    //         mars_denom: "umars".to_string(),
+    //     },
+    // );
 
     wasm.execute(
         &red_bank_addr,
@@ -613,7 +600,7 @@ fn test_oracle_with_redbank() {
 // Test a swap executed that changes the liquidity pool size and test how it corresponds to the price.
 #[test]
 #[ignore] // FIXME: Need to fund rewards contract
-fn test_liquidity_pool_size_change() {
+fn liquidity_pool_size_change() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -687,9 +674,9 @@ fn test_liquidity_pool_size_change() {
 
     assert_eq!(
         price_source.price_source,
-        (OsmosisPriceSource::Spot {
+        OsmosisPriceSource::Spot {
             pool_id
-        })
+        }
     );
 
     let steps = vec![SwapAmountInRoute {
