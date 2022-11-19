@@ -1,4 +1,5 @@
 use cosmwasm_std::{coins, Addr, Api, BankMsg, CosmosMsg, Decimal, StdResult, Uint128};
+use std::collections::HashSet;
 
 use crate::error::MarsError;
 
@@ -86,8 +87,8 @@ pub fn validate_native_denom(denom: &str) -> Result<(), MarsError> {
     }
 
     for c in chars {
-        if !(c.is_ascii_alphanumeric() || c == '/' || c == ':' || c == '.' || c == '_' || c == '-')
-        {
+        let set = ['/', ':', '.', '_', '-'];
+        if !(c.is_ascii_alphanumeric() || set.contains(&c)) {
             return Err(MarsError::InvalidDenom {
                 reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
                     .to_string(),
