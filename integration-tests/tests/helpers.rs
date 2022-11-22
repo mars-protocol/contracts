@@ -7,7 +7,6 @@ use mars_outpost::red_bank::{
 
 pub fn default_asset_params() -> InitOrUpdateAssetParams {
     InitOrUpdateAssetParams {
-        initial_borrow_rate: Some(Decimal::percent(10)),
         reserve_factor: Some(Decimal::percent(20)),
         max_loan_to_value: Some(Decimal::percent(60)),
         liquidation_threshold: Some(Decimal::percent(80)),
@@ -30,7 +29,6 @@ pub fn default_asset_params_with(
     liquidation_bonus: Decimal,
 ) -> InitOrUpdateAssetParams {
     InitOrUpdateAssetParams {
-        initial_borrow_rate: Some(Decimal::percent(10)),
         reserve_factor: Some(Decimal::percent(20)),
         max_loan_to_value: Some(max_loan_to_value),
         liquidation_threshold: Some(liquidation_threshold),

@@ -199,7 +199,6 @@ fn test_init_asset() {
     };
 
     let params = InitOrUpdateAssetParams {
-        initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
         max_loan_to_value: Some(Decimal::from_ratio(8u128, 10u128)),
         reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
         liquidation_threshold: Some(Decimal::one()),
@@ -439,7 +438,6 @@ fn test_update_asset() {
     };
 
     let params = InitOrUpdateAssetParams {
-        initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
         max_loan_to_value: Some(Decimal::from_ratio(50u128, 100u128)),
         reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
         liquidation_threshold: Some(Decimal::from_ratio(80u128, 100u128)),
@@ -604,7 +602,6 @@ fn test_update_asset() {
     // update asset with new params
     {
         let params = InitOrUpdateAssetParams {
-            initial_borrow_rate: Some(Decimal::from_ratio(20u128, 100u128)),
             max_loan_to_value: Some(Decimal::from_ratio(60u128, 100u128)),
             reserve_factor: Some(Decimal::from_ratio(10u128, 100u128)),
             liquidation_threshold: Some(Decimal::from_ratio(90u128, 100u128)),
@@ -640,7 +637,6 @@ fn test_update_asset() {
         let market_before = MARKETS.load(&deps.storage, "someasset").unwrap();
 
         let empty_asset_params = InitOrUpdateAssetParams {
-            initial_borrow_rate: None,
             max_loan_to_value: None,
             reserve_factor: None,
             liquidation_threshold: None,
@@ -696,7 +692,6 @@ fn test_update_asset_with_new_interest_rate_model_params() {
     };
 
     let params = InitOrUpdateAssetParams {
-        initial_borrow_rate: Some(Decimal::from_ratio(15u128, 100u128)),
         max_loan_to_value: Some(Decimal::from_ratio(50u128, 100u128)),
         reserve_factor: Some(Decimal::from_ratio(2u128, 100u128)),
         liquidation_threshold: Some(Decimal::from_ratio(80u128, 100u128)),
@@ -804,7 +799,6 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
     );
 
     let params = InitOrUpdateAssetParams {
-        initial_borrow_rate: None,
         max_loan_to_value: None,
         reserve_factor: Some(Decimal::from_ratio(2_u128, 10_u128)),
         liquidation_threshold: None,

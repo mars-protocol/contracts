@@ -206,7 +206,6 @@ export class Deployer {
       init_asset: {
         denom: assetConfig.denom,
         params: {
-          initial_borrow_rate: assetConfig.initial_borrow_rate,
           max_loan_to_value: assetConfig.max_loan_to_value,
           reserve_factor: assetConfig.reserve_factor,
           liquidation_threshold: assetConfig.liquidation_threshold,
