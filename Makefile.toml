@@ -61,7 +61,7 @@ script = """
 
   array=( mars-address-provider mars-incentives mars-oracle-osmosis mars-red-bank mars-rewards-collector-osmosis )
   for i in "${array[@]}"
-  do:
+  do
     echo "$i"
     cargo run --package "$i" --example schema
     mkdir schemas/"$i"

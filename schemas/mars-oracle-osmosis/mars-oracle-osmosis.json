@@ -177,6 +177,29 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "description": "Osmosis LP token (of an XYK pool) price quoted in OSMO",
+            "type": "object",
+            "required": [
+              "xyk_liquidity_token"
+            ],
+            "properties": {
+              "xyk_liquidity_token": {
+                "type": "object",
+                "required": [
+                  "pool_id"
+                ],
+                "properties": {
+                  "pool_id": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
           }
         ]
       }
