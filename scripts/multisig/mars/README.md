@@ -37,7 +37,7 @@ _Steps 2-4 must be completed by ALL multisig holders to properly set up their lo
 3. Generate the multisig.
 
    ```bash
-   marsd keys add osmosis_multisig \
+   marsd keys add mars_multisig \
      --multisig=[name1],[name2],[name3],[name4],[name5] \
      --multisig-threshold=3
    ```
@@ -45,7 +45,7 @@ _Steps 2-4 must be completed by ALL multisig holders to properly set up their lo
 4. Assert that it was completed correctly.
 
    ```bash
-   marsd keys show osmosis_multisig
+   marsd keys show mars_multisig
    ```
 
 ## Set up environment variables
@@ -55,7 +55,7 @@ These variables change based on the network, transaction, time, and user. Theref
 For `bash`:
 
    ```bash
-   # Osmosis Testnet variables
+   # Mars Testnet variables
    export MARS_MULTI="mars15mwq8jc7sf0r8hu6phahfsmqg3fagt7ysyd3un"
    export MARS_TEST_NODE="https://testnet-rpc.marsprotocol.io:443"
    export MARS_TEST_VESTING="mars14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9smxjtde"
@@ -78,7 +78,7 @@ For `bash`:
 **Note:** `MARS_ACCOUNT` and `MARS_SEQUENCE` can be found by running:
 
 ```bash
-osmosisd query account $MARS_MULTI \
+marsd query account $MARS_MULTI \
   --node=$MARS_TEST_NODE \
   --chain-id=$MARS_TEST_CHAINID
 ```
@@ -140,9 +140,9 @@ osmosisd query account $MARS_MULTI \
 
 **Every multisig holder is responsible for verifying the contract's newly uploaded code for every migrate msg.**
 
-_Note: The multisig must have at least one tx against it for the address to exist in Osmosis' state._
+_Note: The multisig must have at least one tx against it for the address to exist in Mars' state._
 
-1. If the multisig has no txs against it, send some tokens to the account. Otherwise, the account does not exist in Osmosis' state.
+1. If the multisig has no txs against it, send some tokens to the account. Otherwise, the account does not exist in Mars' state.
 
 2. Assert that you have both your own wallet and multisig wallet in your keyring.
 
@@ -220,7 +220,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
 8. Broadcast the transaction.
 
    ```bash
-   osmosisd tx broadcast $SIGNED \
+   marsd tx broadcast $SIGNED \
      --chain-id=$OSMO_TEST_CHAINID \
      --broadcast-mode=block
      --node=$OSMO_TEST_NODE
@@ -282,7 +282,7 @@ Every multisig holder is responsible for verifying the execute msg inside the js
 4. Individually sign the transaction.
 
    ```bash
-   osmosisd tx sign $UNSIGNED \
+   marsd tx sign $UNSIGNED \
      --multisig=$MARS_MULTI \
      --from=$MARS_ADDR \
      --output-document=$SINGLE_SIGN \
