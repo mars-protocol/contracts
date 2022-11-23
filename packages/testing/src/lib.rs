@@ -16,4 +16,5 @@ pub use helpers::*;
 pub use mars_mock_querier::MarsMockQuerier;
 pub use mocks::*;
 
+mod denom_validator;
 pub mod integration;

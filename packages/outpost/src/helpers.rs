@@ -73,12 +73,7 @@ pub fn validate_native_denom(denom: &str) -> Result<(), MarsError> {
     }
 
     let mut chars = denom.chars();
-    let first = chars
-        .next()
-        .ok_or(MarsError::InvalidDenom {
-            reason: "Cannot retrieve first character".to_string(),
-        })
-        .unwrap();
+    let first = chars.next().unwrap();
     if !first.is_ascii_alphabetic() {
         return Err(MarsError::InvalidDenom {
             reason: "First character is not ASCII alphabetic".to_string(),
