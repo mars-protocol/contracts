@@ -1,0 +1,50 @@
+# disabled because `cargo tarpaulin` currently segfaults
+
+name: Coverage
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+
+env:
+  RUST_BACKTRACE: 1
+  # Directory with wasm files used by `tests`
+  ARTIFACTS_DIR_PATH: 'target/wasm32-unknown-unknown/release'
+
+jobs:
+  # job currently (1st Feb 2022) segfaults
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          profile: minimal
+          override: true
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo make
+        uses: davidB/rust-cargo-make@v1
+
+      - name: Compile workspace
+        run: cargo make build
+
+      - name: Generate coverage file
+        run: |
+          cargo install cargo-tarpaulin
+          cargo tarpaulin --workspace --out Xml --verbose --skip-clean
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: cobertura.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
