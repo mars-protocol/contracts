@@ -1,3 +1,14 @@
+comment: false
+
+coverage:
+  status:
+    project:
+      default:
+        threshold: 0.1%
+    patch:
+      default:
+        threshold: 0.1%
+
 ignore:
   - "packages/testing"  # ignore all testing files
   - "integration-tests"
