@@ -2,10 +2,9 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
 use mars_osmosis::helpers::QueryPoolResponse;
-use osmosis_std::types::osmosis::gamm::v1beta1::{
-    QueryPoolRequest, QuerySpotPriceRequest, QuerySpotPriceResponse,
-};
-use osmosis_std::types::osmosis::twap::v1beta1::{
+use osmosis_std::types::osmosis::gamm::v1beta1::QueryPoolRequest;
+use osmosis_std::types::osmosis::gamm::v2::{QuerySpotPriceRequest, QuerySpotPriceResponse};
+use osmosis_std::types::osmosis::twap::v2::{
     ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse,
 };
 use prost::{DecodeError, Message};
@@ -35,7 +34,7 @@ impl OsmosisQuerier {
             }
         }
 
-        if path == "/osmosis.gamm.v1beta1.Query/SpotPrice" {
+        if path == "/osmosis.gamm.v2.Query/SpotPrice" {
             let parse_osmosis_query: Result<QuerySpotPriceRequest, DecodeError> =
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
@@ -43,7 +42,7 @@ impl OsmosisQuerier {
             }
         }
 
-        if path == "/osmosis.twap.v1beta1.Query/ArithmeticTwapToNow" {
+        if path == "/osmosis.twap.v2.Query/ArithmeticTwapToNow" {
             let parse_osmosis_query: Result<ArithmeticTwapToNowRequest, DecodeError> =
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
@@ -68,11 +67,10 @@ impl OsmosisQuerier {
     }
 
     fn handle_query_spot_request(&self, request: QuerySpotPriceRequest) -> QuerierResult {
-        // NOTE: Currency pair consists of base and quote asset (base/quote). Spot query has it swapped.
         let price_key = PriceKey {
             pool_id: request.pool_id,
-            denom_in: request.quote_asset_denom,
-            denom_out: request.base_asset_denom,
+            denom_in: request.base_asset_denom,
+            denom_out: request.quote_asset_denom,
         };
         let res: ContractResult<Binary> = match self.spot_prices.get(&price_key) {
             Some(query_response) => to_binary(&query_response).into(),

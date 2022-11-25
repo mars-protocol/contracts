@@ -902,7 +902,7 @@ dependencies = [
  "mars-outpost",
  "mars-rewards-collector-base",
  "mars-testing",
- "osmosis-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "osmosis-std 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17)",
  "osmosis-testing",
  "serde",
 ]
@@ -931,7 +931,7 @@ dependencies = [
  "mars-osmosis",
  "mars-outpost",
  "mars-testing",
- "osmosis-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "osmosis-std 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17)",
  "schemars",
  "serde",
  "thiserror",
@@ -942,7 +942,7 @@ name = "mars-osmosis"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "osmosis-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "osmosis-std 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17)",
  "serde",
 ]
 
@@ -996,7 +996,7 @@ dependencies = [
  "mars-outpost",
  "mars-rewards-collector-base",
  "mars-testing",
- "osmosis-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "osmosis-std 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17)",
  "schemars",
  "serde",
  "thiserror",
@@ -1016,7 +1016,7 @@ dependencies = [
  "mars-outpost",
  "mars-red-bank",
  "mars-rewards-collector-osmosis",
- "osmosis-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "osmosis-std 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17)",
  "prost 0.11.0",
  "schemars",
  "serde",
@@ -1105,12 +1105,11 @@ checksum = "3baf96e39c5359d2eb0dd6ccb42c62b91d9678aa68160d261b9e0ccbf9e9dea9"
 [[package]]
 name = "osmosis-std"
 version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2b3792977036dc49cfc9af9fd7a6c021fd48dfffc8ebf09324201506c65a47a"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17#b3df85158eb52ad5d99f3580f4a128bbdaeffa17"
 dependencies = [
  "chrono",
  "cosmwasm-std",
- "osmosis-std-derive 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "osmosis-std-derive 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17)",
  "prost 0.11.0",
  "prost-types",
  "schemars",
@@ -1136,8 +1135,7 @@ dependencies = [
 [[package]]
 name = "osmosis-std-derive"
 version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c501f2b8ff88b1c60ab671d7b808e947f384fa2524fe4ec8c06f63ef4be29979"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17#b3df85158eb52ad5d99f3580f4a128bbdaeffa17"
 dependencies = [
  "itertools",
  "proc-macro2",

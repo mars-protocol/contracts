@@ -5,8 +5,8 @@ use cosmwasm_std::{
 };
 
 use mars_osmosis::helpers::QueryPoolResponse;
-use osmosis_std::types::osmosis::gamm::v1beta1::QuerySpotPriceResponse;
-use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
+use osmosis_std::types::osmosis::gamm::v2::QuerySpotPriceResponse;
+use osmosis_std::types::osmosis::twap::v2::ArithmeticTwapToNowResponse;
 
 use mars_outpost::{address_provider, incentives, oracle, red_bank};
 
