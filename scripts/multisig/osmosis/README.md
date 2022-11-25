@@ -52,11 +52,13 @@ For `# bash`:
    export OSMO_TEST_INCENTIVES="osmo12caxzc4699vde8lr3ut4tsdkvsvhzruvsxlrmd4v6tamyacdymdq7l8dsy"
    export OSMO_TEST_ORACLE="osmo1eeg2uuuxk9agv8slskmhay3h5929vkfu9gfk0egwtfg9qs86w5dqty96cf"
    export OSMO_TEST_REWARDS_COLLECTOR="osmo1xl7jguvkg807ya00s0l722nwcappfzyzrac3ug5tnjassnrmnfrs47wguz"
+   export OSMO_TEST_LIQUIDATION_FILTERER="osmo1djyfwh886gmwsdgr3w0jnzdgwudem9kqxte2f5mc20sxcmy029ss8r4ldq"
    export OSMO_TEST_ADDR_PROVIDER_ID="3802"
    export OSMO_TEST_REDBANK_ID="3801"
    export OSMO_TEST_INCENTIVES_ID="3803"
    export OSMO_TEST_ORACLE_ID="3804"
    export OSMO_TEST_REWARDS_ID="3805"
+   export OSMO_TEST_LIQUIDATION_FILTERER_ID="4009"
 
    # Transaction specific variables (must be created at time of transaction) 
    export CODEID="new_code_ID_to_migrate_to"
@@ -82,9 +84,15 @@ $OSMO_MULTI
 
 ## Verifying Contracts 
 1. Get the wasm binary executable on your local machine. 
+   For address-provider, incentives, oracle, red-bank, rewards-collector contracts: 
    ```shell
    git clone https://github.com/mars-protocol/outposts.git
-   
+   ```
+   For liquidation-filterer contract
+   ```shell
+   git clone https://github.com/mars-protocol/liquidation-helpers
+   ```
+   ```shell
    git checkout <commit-id> 
    
    cd scripts 
@@ -128,6 +136,11 @@ $OSMO_MULTI
    ``` shell
    QUERY='{"config": {}}'
    osmosisd query wasm contract-state smart $OSMO_TEST_REWARDS_COLLECTOR "$QUERY" --output json --node=$OSMO_TEST_NODE
+   ```
+  * Liquidation Filterer Config:
+   ``` shell
+   QUERY='{"config": {}}'
+   osmosisd query wasm contract-state smart $OSMO_TEST_LIQUIDATION_FILTERER "$QUERY" --output json --node=$OSMO_TEST_NODE
    ```
    * Verify OSMO and ATOM are initialized in the red bank market and have the correct params:
    ``` shell
