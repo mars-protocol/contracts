@@ -1,7 +1,7 @@
 use mars_outpost::error::MarsError::InvalidDenom;
 use mars_outpost::helpers::validate_native_denom;
 
-#[cfg(test)]
+#[test]
 fn length_below_three() {
     let res = validate_native_denom("su");
     assert_eq!(
@@ -12,7 +12,7 @@ fn length_below_three() {
     )
 }
 
-#[cfg(test)]
+#[test]
 fn length_above_128() {
     let res =
         validate_native_denom("fadjkvnrufbaalkefoi2934095sfonalf89o234u2sadsafsdbvsdrgweqraefsdgagqawfaf104hqflkqehf98348qfhdsfave3r23152wergfaefegqsacasfasfadvcadfsdsADsfaf324523");
@@ -24,7 +24,7 @@ fn length_above_128() {
     )
 }
 
-#[cfg(test)]
+#[test]
 fn first_char_not_alphabetical() {
     let res = validate_native_denom("7asdkjnfe7");
     assert_eq!(
@@ -35,7 +35,7 @@ fn first_char_not_alphabetical() {
     )
 }
 
-#[cfg(test)]
+#[test]
 fn invalid_character() {
     let res = validate_native_denom("fakjfh&asd!#");
     assert_eq!(
@@ -47,7 +47,7 @@ fn invalid_character() {
     )
 }
 
-#[cfg(test)]
+#[test]
 fn correct_denom() {
     let res = validate_native_denom("umars");
     assert_eq!(res, Ok(()),)
