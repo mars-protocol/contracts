@@ -523,7 +523,7 @@ fn redbank_should_fail_if_no_price() {
         &wasm,
         signer,
         OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME,
-        &addr_instantiate {
+        &InstantiateAddr {
             owner: signer.address(),
             prefix: "osmo".to_string(),
         },
@@ -533,7 +533,7 @@ fn redbank_should_fail_if_no_price() {
         &wasm,
         signer,
         OSMOSIS_RED_BANK_CONTRACT_NAME,
-        &red_bank_instantiate {
+        &InstantiateRedBank {
             config: CreateOrUpdateConfig {
                 owner: Some(signer.address()),
                 address_provider: Some(addr_provider_addr.clone()),
@@ -617,7 +617,7 @@ fn redbank_should_fail_if_no_price() {
 
     wasm.execute(
         &red_bank_addr,
-        &execute_red_bank::InitAsset {
+        &ExecuteRedBank::InitAsset {
             denom: "uosmo".to_string(),
             params: default_asset_params(),
         },
@@ -628,7 +628,7 @@ fn redbank_should_fail_if_no_price() {
 
     wasm.execute(
         &red_bank_addr,
-        &execute_red_bank::InitAsset {
+        &ExecuteRedBank::InitAsset {
             denom: "uatom".to_string(),
             params: default_asset_params(),
         },
@@ -708,7 +708,7 @@ fn oracle_querying_redbank() {
         &wasm,
         signer,
         OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME,
-        &addr_instantiate {
+        &InstantiateAddr {
             owner: signer.address(),
             prefix: "osmo".to_string(),
         },
@@ -718,7 +718,7 @@ fn oracle_querying_redbank() {
         &wasm,
         signer,
         OSMOSIS_RED_BANK_CONTRACT_NAME,
-        &red_bank_instantiate {
+        &InstantiateRedBank {
             config: CreateOrUpdateConfig {
                 owner: Some(signer.address()),
                 address_provider: Some(addr_provider_addr.clone()),
@@ -802,7 +802,7 @@ fn oracle_querying_redbank() {
 
     wasm.execute(
         &red_bank_addr,
-        &execute_red_bank::InitAsset {
+        &ExecuteRedBank::InitAsset {
             denom: "uosmo".to_string(),
             params: default_asset_params(),
         },
@@ -813,7 +813,7 @@ fn oracle_querying_redbank() {
 
     wasm.execute(
         &red_bank_addr,
-        &execute_red_bank::InitAsset {
+        &ExecuteRedBank::InitAsset {
             denom: "uatom".to_string(),
             params: default_asset_params(),
         },
