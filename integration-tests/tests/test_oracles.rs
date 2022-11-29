@@ -5,18 +5,13 @@ use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::msg::PriceSourceResponse;
 use mars_oracle_osmosis::OsmosisPriceSource;
 use mars_outpost::address_provider::ExecuteMsg::SetAddress;
-use mars_outpost::address_provider::{InstantiateMsg as addr_instantiate, MarsAddressType};
+use mars_outpost::address_provider::{InstantiateMsg as InstantiateAddr, MarsAddressType};
 use mars_outpost::incentives::InstantiateMsg as InstantiateIncentives;
 use mars_outpost::oracle::{ExecuteMsg, InstantiateMsg, PriceResponse, QueryMsg};
-use mars_outpost::red_bank::ExecuteMsg as execute_red_bank;
+use mars_outpost::red_bank::ExecuteMsg as ExecuteRedBank;
 use mars_outpost::red_bank::ExecuteMsg::{Borrow, Deposit};
-use mars_outpost::red_bank::{CreateOrUpdateConfig, InstantiateMsg as red_bank_instantiate};
-use mars_outpost::rewards_collector::ExecuteMsg::SetRoute;
+use mars_outpost::red_bank::{CreateOrUpdateConfig, InstantiateMsg as InstantiateRedBank};
 use mars_outpost::rewards_collector::InstantiateMsg as InstantiateRewards;
-use mars_rewards_collector_osmosis::OsmosisRoute;
-use osmosis_testing::osmosis_std::types::osmosis::gamm::v1beta1::{
-    MsgSwapExactAmountIn, SwapAmountInRoute,
-};
 use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, Wasm};
 use std::str::FromStr;
 
@@ -647,7 +642,7 @@ fn redbank_should_fail_if_no_price() {
     let pool_id = gamm.create_basic_pool(&pool_liquidity, signer).unwrap().data.pool_id;
 
     wasm.execute(
-        &oracle_addr.clone(),
+        &oracle_addr,
         &ExecuteMsg::SetPriceSource {
             denom: "uatom".to_string(),
             price_source: OsmosisPriceSource::Spot {
@@ -669,6 +664,7 @@ fn redbank_should_fail_if_no_price() {
     )
     .unwrap();
 
+    // execute msg should fail since it is attempting to query an asset from the oracle contract that doesn't have an LP pool set up
     wasm.execute(
         &red_bank_addr,
         &Borrow {
@@ -831,7 +827,7 @@ fn oracle_querying_redbank() {
     let pool_id = gamm.create_basic_pool(&pool_liquidity, signer).unwrap().data.pool_id;
 
     wasm.execute(
-        &oracle_addr.clone(),
+        &oracle_addr,
         &ExecuteMsg::SetPriceSource {
             denom: "uatom".to_string(),
             price_source: OsmosisPriceSource::Spot {
