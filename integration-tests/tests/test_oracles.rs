@@ -12,14 +12,8 @@ use mars_outpost::red_bank::ExecuteMsg as ExecuteRedBank;
 use mars_outpost::red_bank::ExecuteMsg::{Borrow, Deposit};
 use mars_outpost::red_bank::{CreateOrUpdateConfig, InstantiateMsg as InstantiateRedBank};
 use mars_outpost::rewards_collector::InstantiateMsg as InstantiateRewards;
-use osmosis_testing::osmosis_std::shim::Timestamp;
-use osmosis_testing::osmosis_std::types::osmosis::twap::v1beta1::{
-    ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse, TwapQuerier,
-};
 use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, Wasm};
 use std::str::FromStr;
-use std::time;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 mod helpers;
 
