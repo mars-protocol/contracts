@@ -82,10 +82,13 @@ pub fn query_twap_price(
     quote_denom: &str,
     start_time: u64,
 ) -> StdResult<Decimal> {
+    // NOTE: Currency pair consists of base and quote asset (base/quote). Twap query has it swapped.
+    // For example:
+    // if we want to check the price ATOM/OSMO then we pass base_asset = OSMO, quote_asset = ATOM
     let arithmetic_twap_res = TwapQuerier::new(querier).arithmetic_twap_to_now(
         pool_id,
-        base_denom.to_string(),
         quote_denom.to_string(),
+        base_denom.to_string(),
         Some(Timestamp {
             seconds: start_time as i64,
             nanos: 0,

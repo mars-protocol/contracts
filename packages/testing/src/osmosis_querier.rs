@@ -89,8 +89,8 @@ impl OsmosisQuerier {
     fn handle_query_twap_request(&self, request: ArithmeticTwapToNowRequest) -> QuerierResult {
         let price_key = PriceKey {
             pool_id: request.pool_id,
-            denom_in: request.base_asset,
-            denom_out: request.quote_asset,
+            denom_in: request.quote_asset,
+            denom_out: request.base_asset,
         };
         let res: ContractResult<Binary> = match self.twap_prices.get(&price_key) {
             Some(query_response) => to_binary(&query_response).into(),

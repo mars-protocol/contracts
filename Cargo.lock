@@ -902,7 +902,7 @@ dependencies = [
  "mars-outpost",
  "mars-rewards-collector-base",
  "mars-testing",
- "osmosis-std 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17)",
+ "osmosis-std",
  "osmosis-testing",
  "serde",
 ]
@@ -931,7 +931,7 @@ dependencies = [
  "mars-osmosis",
  "mars-outpost",
  "mars-testing",
- "osmosis-std 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17)",
+ "osmosis-std",
  "schemars",
  "serde",
  "thiserror",
@@ -942,7 +942,7 @@ name = "mars-osmosis"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "osmosis-std 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17)",
+ "osmosis-std",
  "serde",
 ]
 
@@ -996,7 +996,7 @@ dependencies = [
  "mars-outpost",
  "mars-rewards-collector-base",
  "mars-testing",
- "osmosis-std 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17)",
+ "osmosis-std",
  "schemars",
  "serde",
  "thiserror",
@@ -1016,7 +1016,7 @@ dependencies = [
  "mars-outpost",
  "mars-red-bank",
  "mars-rewards-collector-osmosis",
- "osmosis-std 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17)",
+ "osmosis-std",
  "prost 0.11.0",
  "schemars",
  "serde",
@@ -1105,26 +1105,11 @@ checksum = "3baf96e39c5359d2eb0dd6ccb42c62b91d9678aa68160d261b9e0ccbf9e9dea9"
 [[package]]
 name = "osmosis-std"
 version = "0.12.0"
-source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17#b3df85158eb52ad5d99f3580f4a128bbdaeffa17"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=osmosis-v13#660ba88d381dacb89fdcacdb44274566429ca56e"
 dependencies = [
  "chrono",
  "cosmwasm-std",
- "osmosis-std-derive 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17)",
- "prost 0.11.0",
- "prost-types",
- "schemars",
- "serde",
- "serde-cw-value",
-]
-
-[[package]]
-name = "osmosis-std"
-version = "0.12.0"
-source = "git+https://github.com/osmosis-labs/osmosis-rust#9b010acf59d631cf099f2b45dbc011a4d99b37f8"
-dependencies = [
- "chrono",
- "cosmwasm-std",
- "osmosis-std-derive 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust)",
+ "osmosis-std-derive",
  "prost 0.11.0",
  "prost-types",
  "schemars",
@@ -1135,18 +1120,7 @@ dependencies = [
 [[package]]
 name = "osmosis-std-derive"
 version = "0.12.0"
-source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=b3df85158eb52ad5d99f3580f4a128bbdaeffa17#b3df85158eb52ad5d99f3580f4a128bbdaeffa17"
-dependencies = [
- "itertools",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "osmosis-std-derive"
-version = "0.12.0"
-source = "git+https://github.com/osmosis-labs/osmosis-rust#9b010acf59d631cf099f2b45dbc011a4d99b37f8"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=osmosis-v13#660ba88d381dacb89fdcacdb44274566429ca56e"
 dependencies = [
  "itertools",
  "proc-macro2",
@@ -1157,13 +1131,13 @@ dependencies = [
 [[package]]
 name = "osmosis-testing"
 version = "0.12.0"
-source = "git+https://github.com/osmosis-labs/osmosis-rust#9b010acf59d631cf099f2b45dbc011a4d99b37f8"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=osmosis-v13#fb79d48810cfa80f1f74dffc1e04f0775fe1e152"
 dependencies = [
  "base64",
  "bindgen",
  "cosmrs",
  "cosmwasm-std",
- "osmosis-std 0.12.0 (git+https://github.com/osmosis-labs/osmosis-rust)",
+ "osmosis-std",
  "prost 0.11.0",
  "serde",
  "serde_json",
