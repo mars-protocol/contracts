@@ -9,7 +9,7 @@ Osmosisd is the daemon for the osmosis blockchain. To install, follow this docum
 ## Set up the multisig on your local network
 
 _Steps 2-4 must be completed by ALL multisig holders to properly set up their local keyring in their machine._
-   
+
 1. Generate the public keys of each of the 5 multisig holder's wallets. In order to generate a public key, the wallet must be active and have made at least one transaction on the specified network to return a public key.
 
    ```shell
@@ -36,19 +36,19 @@ _Steps 2-4 must be completed by ALL multisig holders to properly set up their lo
    ```
 5. Update the config with the new mutlisig address in `outposts/scripts/deploy/osmosis/config`, which will set the owner and admin of the smart contracts to the multisig upon deployment.
 
-## Set up environment variables 
+## Set up environment variables
 These variables change based on the network, transaction, time, and user. Therefore, they should be provided to the multisig holders before each transaction and updated as needed on your machine.
 
 For `# bash`:
 
    ```shell
-   # Osmosis Testnet variables 
-   export OSMO_MULTI="osmo1nxs5fw53jwh7epqnj5ypyqkdhga4lnnmng6ln5" 
-   export OSMO_TEST_CHAINID="osmo-test-4" 
-   export OSMO_TEST_NODE="https://rpc-test.osmosis.zone:443" 
+   # Osmosis Testnet variables
+   export OSMO_MULTI="osmo1nxs5fw53jwh7epqnj5ypyqkdhga4lnnmng6ln5"
+   export OSMO_TEST_CHAINID="osmo-test-4"
+   export OSMO_TEST_NODE="https://rpc-test.osmosis.zone:443"
    export OSMO_ACCOUNT="278179"
    export OSMO_TEST_ADDR_PROVIDER="osmo1h5ljap7yajt8d8kejx0xsq46evxmalwgy78xfc5arrk3g3gwgkes7l06p8"
-   export OSMO_TEST_REDBANK="osmo1gtkcx8634wufu4awt42ng7srk05hpqxkfpjpvuj03f9g69qvr3ksn27j54" 
+   export OSMO_TEST_REDBANK="osmo1gtkcx8634wufu4awt42ng7srk05hpqxkfpjpvuj03f9g69qvr3ksn27j54"
    export OSMO_TEST_INCENTIVES="osmo12caxzc4699vde8lr3ut4tsdkvsvhzruvsxlrmd4v6tamyacdymdq7l8dsy"
    export OSMO_TEST_ORACLE="osmo1eeg2uuuxk9agv8slskmhay3h5929vkfu9gfk0egwtfg9qs86w5dqty96cf"
    export OSMO_TEST_REWARDS_COLLECTOR="osmo1xl7jguvkg807ya00s0l722nwcappfzyzrac3ug5tnjassnrmnfrs47wguz"
@@ -60,7 +60,7 @@ For `# bash`:
    export OSMO_TEST_REWARDS_ID="3805"
    export OSMO_TEST_LIQUIDATION_FILTERER_ID="4009"
 
-   # Transaction specific variables (must be created at time of transaction) 
+   # Transaction specific variables (must be created at time of transaction)
    export CODEID="new_code_ID_to_migrate_to"
    export SEQUENCE="current_account_sequence"
    export UNSIGNED="unsignedTX_filename.JSON"
@@ -68,7 +68,7 @@ For `# bash`:
    export EXECUTE="msg_to_execute"
 
    # User specific variables
-   export SINGLE_SIGN="your_name.JSON" 
+   export SINGLE_SIGN="your_name.JSON"
    export OSMO_ADDR="your_wallet_address"
    ```
 **Note:**
@@ -82,9 +82,9 @@ osmosisd query account \
 $OSMO_MULTI
 ```
 
-## Verifying Contracts 
-1. Get the wasm binary executable on your local machine. 
-   For address-provider, incentives, oracle, red-bank, rewards-collector contracts: 
+## Verifying Contracts
+1. Get the wasm binary executable on your local machine.
+   For address-provider, incentives, oracle, red-bank, rewards-collector contracts:
    ```shell
    git clone https://github.com/mars-protocol/outposts.git
    ```
@@ -93,26 +93,26 @@ $OSMO_MULTI
    git clone https://github.com/mars-protocol/liquidation-helpers
    ```
    ```shell
-   git checkout <commit-id> 
-   
-   cd scripts 
-   
+   git checkout <commit-id>
+
+   cd scripts
+
    yarn compile
    ```
-   Note: Intel/Amd 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production and the wasm bytecode will not match up to an Intel compiled wasm file. 
-2. Download the wasm from the chain. 
-   ```shell  
+   Note: Intel/Amd 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production and the wasm bytecode will not match up to an Intel compiled wasm file.
+2. Download the wasm from the chain.
+   ```shell
    osmosisd query wasm code $CODEID -- $NODE download.wasm
    ```
-   
-3. Verify that the diff is empty between them. If any value is returned, then the wasm files differ. 
+
+3. Verify that the diff is empty between them. If any value is returned, then the wasm files differ.
    ```shell
-   diff artifacts/$CONTRACTNAME.wasm download.wasm 
+   diff artifacts/$CONTRACTNAME.wasm download.wasm
    ```
-   
+
 ## Query contract configs
 
-   * Red Bank Contract Config: 
+   * Red Bank Contract Config:
    ``` shell
    QUERY='{"config": {}}'
    osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
@@ -146,7 +146,7 @@ $OSMO_MULTI
    ``` shell
    QUERY='{"market":{"denom":"uosmo"}}'
    osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
-  
+
    QUERY='{"market":{"denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}}'
    osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
    ```
@@ -158,7 +158,7 @@ $OSMO_MULTI
 
 ## Signing a TX with the multisig - Testnet Migrate Msg Example
 
-**Every multisig holder is responsible for verifying the contract's newly uploaded code for every migrate msg.** 
+**Every multisig holder is responsible for verifying the contract's newly uploaded code for every migrate msg.**
 
 _Note: The multisig must have at least one tx against it for the address to exist in Osmosis' state._
 
@@ -172,11 +172,11 @@ _Note: The multisig must have at least one tx against it for the address to exis
 
    If they're missing, follow steps 2-4 from the "Set up multisig on your local network" section.
 
-3. Ensure the newly uploaded code has a migration entry point. 
+3. Ensure the newly uploaded code has a migration entry point.
    ```rust
    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
    pub struct MigrateMsg {}
-   
+
    #[cfg_attr(not(feature = "library"), entry_point)]
    pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     Ok(Response::default())
@@ -276,35 +276,35 @@ _Note: The multisig must have at least one tx against it for the address to exis
     --node=$OSMO_TEST_NODE
    ```
    Note: For the tx to be able to broadcast, the newly uploaded code needs to have a migration entry point, meaning you have to put an empty (returning Ok) migration method.
- 
+
 9. Verify the new contract.
    ```
    git clone https://github.com/mars-protocol/outposts.git
-   
-   git checkout <commit-id> 
-   
-   cd scripts 
-   
+
+   git checkout <commit-id>
+
+   cd scripts
+
    yarn compile
    ```
-  
-   ```  
+
+   ```
    osmosisd query wasm code $CODEID $OSMO_TEST_NODE download.wasm
    ```
 
-   ``` 
-   diff artifacts/$CONTRACTNAME.wasm download.wasm 
+   ```
+   diff artifacts/$CONTRACTNAME.wasm download.wasm
    ```
 
 ## Signing a TX with the multisig - Testnet Execute Msg Example
-Every multisig holder is responsible for verifying the execute msg inside the json file of their unsigned tx. 
+Every multisig holder is responsible for verifying the execute msg inside the json file of their unsigned tx.
 
 1. Assert that you have both your own wallet and multisig wallet in your keyring.
 
    ```
    osmosisd keys list
    ```
-   
+
    If they're missing, follow steps 2-4 from the "Set up multisig on your local network" section.
 2. Initiate the multisig execute tx. This can be done by any one of the multisig holders.
 
@@ -315,7 +315,7 @@ Every multisig holder is responsible for verifying the execute msg inside the js
    --generate-only > $UNSIGNED \
    --node=$OSMO_TEST_NODE
    ```
-   
+
 3. Distribute the generated file to all signers.
 
 4. Individually sign the transaction.
@@ -349,39 +349,39 @@ Every multisig holder is responsible for verifying the execute msg inside the js
     --broadcast-mode=block
     --node=$OSMO_TEST_NODE
    ```
-   
+
 ## Examples of Execute Args:
-For this to be completed as a multisig tx, the flags and steps from the previous section must be used. 
+For this to be completed as a multisig tx, the flags and steps from the previous section must be used.
 ```shell
-# Red Bank 
+# Red Bank
 EXECUTE='{"deposit":{}}'
-osmosisd tx wasm execute $REDBANKADDR "$EXECUTE" 
+osmosisd tx wasm execute $REDBANKADDR "$EXECUTE"
 
 
 EXECUTE='{"update_uncollateralized_loan_limit":{"user":"$ADDR","denom":"$DENOM","new_limit":"1000000000"}}'
-osmosisd tx wasm execute $REDBANKADDR "$EXECUTE" 
+osmosisd tx wasm execute $REDBANKADDR "$EXECUTE"
 
 # Rewards Collector
 EXECUTE='{"update_config":{"new_cfg": {"safety_fund_denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2","fee_collector_denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}}}'
-osmosisd tx wasm execute $REWARDSADDR "$EXECUTE" 
+osmosisd tx wasm execute $REWARDSADDR "$EXECUTE"
 
 
 EXECUTE='{"set_route":{"denom_in":"uosmo","denom_out":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2","route":[{"token_out_denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2","pool_id":"1"}]}}'
-osmosisd tx wasm execute $REWARDSADDR "$EXECUTE" 
+osmosisd tx wasm execute $REWARDSADDR "$EXECUTE"
 
 
 EXECUTE='{"swap_asset":{"denom":"uosmo"}}'
-osmosisd tx wasm execute $REWARDSADDR "$EXECUTE" 
+osmosisd tx wasm execute $REWARDSADDR "$EXECUTE"
 
-# Oracle 
+# Oracle
 EXECUTE='{"set_price_source":{"denom":"uosmo","price_source":{"fixed":{"price":"1.0"}}}}'
-osmosisd tx wasm execute $ORACLEADDR "$EXECUTE" 
+osmosisd tx wasm execute $ORACLEADDR "$EXECUTE"
 
 
 EXECUTE='{"set_price_source":{"denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2","price_source":{"spot":{"pool_id":1}}}}'
-osmosisd tx wasm execute $ORACLEADDR "$EXECUTE" 
+osmosisd tx wasm execute $ORACLEADDR "$EXECUTE"
 
 
 EXECUTE='{"set_price_source":{"denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2","price_source":{"twap":{"pool_id":1,"window_size":86400}}}}'
-osmosisd tx wasm execute $ORACLEADDR "$EXECUTE" 
+osmosisd tx wasm execute $ORACLEADDR "$EXECUTE"
 ```

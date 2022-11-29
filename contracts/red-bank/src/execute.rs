@@ -128,7 +128,6 @@ pub fn create_market(
     // Destructuring a struct’s fields into separate variables in order to force
     // compile error if we add more params
     let InitOrUpdateAssetParams {
-        initial_borrow_rate: borrow_rate,
         max_loan_to_value,
         reserve_factor,
         liquidation_threshold,
@@ -140,8 +139,7 @@ pub fn create_market(
     } = params;
 
     // All fields should be available
-    let available = borrow_rate.is_some()
-        && max_loan_to_value.is_some()
+    let available = max_loan_to_value.is_some()
         && reserve_factor.is_some()
         && liquidation_threshold.is_some()
         && liquidation_bonus.is_some()
@@ -157,7 +155,7 @@ pub fn create_market(
         denom: denom.to_string(),
         borrow_index: Decimal::one(),
         liquidity_index: Decimal::one(),
-        borrow_rate: borrow_rate.unwrap(),
+        borrow_rate: Decimal::zero(),
         liquidity_rate: Decimal::zero(),
         max_loan_to_value: max_loan_to_value.unwrap(),
         reserve_factor: reserve_factor.unwrap(),
@@ -199,7 +197,6 @@ pub fn update_asset(
             // Destructuring a struct’s fields into separate variables in order to force
             // compile error if we add more params
             let InitOrUpdateAssetParams {
-                initial_borrow_rate: _,
                 max_loan_to_value,
                 reserve_factor,
                 liquidation_threshold,

@@ -20,7 +20,6 @@ export interface DeploymentConfig {
 
 export interface AssetConfig {
   denom: string
-  initial_borrow_rate: string
   max_loan_to_value: string
   reserve_factor: string
   liquidation_threshold: string
