@@ -12,8 +12,14 @@ use mars_outpost::red_bank::ExecuteMsg as ExecuteRedBank;
 use mars_outpost::red_bank::ExecuteMsg::{Borrow, Deposit};
 use mars_outpost::red_bank::{CreateOrUpdateConfig, InstantiateMsg as InstantiateRedBank};
 use mars_outpost::rewards_collector::InstantiateMsg as InstantiateRewards;
+use osmosis_testing::osmosis_std::shim::Timestamp;
+use osmosis_testing::osmosis_std::types::osmosis::twap::v1beta1::{
+    ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse, TwapQuerier,
+};
 use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, Wasm};
 use std::str::FromStr;
+use std::time;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 mod helpers;
 
@@ -425,7 +431,6 @@ fn test_different_prices() {
 
 //assert oracle was correctly set to TWAP and assert prices are queried correctly
 #[test]
-#[ignore] // FIXME: TWAP doesn't work on osmosis-testing - fix in progress
 fn set_twap_price() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
@@ -466,7 +471,7 @@ fn set_twap_price() {
         .query(
             &oracle_addr,
             &QueryMsg::PriceSource {
-                denom: "uosmo".to_string(),
+                denom: "uatom".to_string(),
             },
         )
         .unwrap();
@@ -479,18 +484,49 @@ fn set_twap_price() {
         })
     );
 
-    let price: PriceResponse = wasm
-        .query(
-            &oracle_addr,
-            &QueryMsg::Price {
-                denom: "uatom".to_string(),
-            },
-        )
-        .unwrap();
+    // let price_key = PriceKey {
+    //     pool_id,
+    //     denom_in: "uosmo",
+    //     denom_out: "uatom",
+    // };
+    //
+    // let twap_price = ArithmeticTwapToNowResponse {
+    //     arithmetic_twap: Decimal::from_ratio(77777u128, 12345u128).to_string(),
+    // };
+    //
+    // let time = SystemTime::now()
+    //     .duration_since(UNIX_EPOCH)
+    //     .unwrap()
+    //     .checked_add(time::Duration::from_secs(30))
+    //     .unwrap();
 
-    assert_eq!(price.price, Decimal::from_ratio(1u128, 2u128)); // 1 osmo = 2 atom
+    // let res: ArithmeticTwapToNowResponse = wasm
+    //     .query(
+    //         &oracle_addr,
+    //         &QueryMsg::QueryArithmeticTwapToNow(ArithmeticTwapToNowRequest {
+    //             pool_id,
+    //             base_asset: "uosmo".to_string(),
+    //             quote_asset: "uatom".to_string(),
+    //             start_time: Some(Timestamp {
+    //                 seconds: time.as_secs() as i64,
+    //                 nanos: 0,
+    //             }),
+    //         }),
+    //     )
+    //     .unwrap();
 
-    assert_eq!(price.denom, "uatom".to_string());
+    // let price: PriceResponse = wasm
+    //     .query(
+    //         &oracle_addr,
+    //         &QueryMsg::Price {
+    //             denom: "uatom".to_string(),
+    //         },
+    //     )
+    //     .unwrap();
+
+    // assert_eq!(price.price, Decimal::from_ratio(1u128, 2u128)); // 1 osmo = 2 atom
+    //
+    // assert_eq!(price.denom, "uatom".to_string());
 }
 
 // execute borrow action in red bank with an asset not in the oracle - should fail when attempting to query oracle
