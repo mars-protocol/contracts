@@ -1,5 +1,5 @@
-use crate::helpers::default_asset_params;
 use crate::helpers::osmosis::{assert_err, instantiate_contract};
+use crate::helpers::{default_asset_params, swap_to_create_twap_records};
 use cosmwasm_std::{coin, Coin, Decimal, Isqrt, Uint128};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::msg::PriceSourceResponse;
@@ -444,7 +444,7 @@ fn set_twap_price() {
     );
 
     let gamm = Gamm::new(&app);
-    let pool_liquidity = vec![Coin::new(1_000_000, "uatom"), Coin::new(1_000_000, "uosmo")];
+    let pool_liquidity = vec![Coin::new(2_000_000_000, "uatom"), Coin::new(1_000_000_000, "uosmo")];
     let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
 
     wasm.execute(
@@ -453,13 +453,15 @@ fn set_twap_price() {
             denom: "uatom".to_string(),
             price_source: OsmosisPriceSource::Twap {
                 pool_id,
-                window_size: 1800, //30min
+                window_size: 10, //10 seconds = 2 swaps when each swap increases block time by 5 seconds
             },
         },
         &[],
         &signer,
     )
     .unwrap();
+
+    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom");
 
     let price_source: PriceSourceResponse = wasm
         .query(
@@ -474,53 +476,33 @@ fn set_twap_price() {
         price_source.price_source,
         (OsmosisPriceSource::Twap {
             pool_id,
-            window_size: 1800,
+            window_size: 10,
         })
     );
 
-    // let price_key = PriceKey {
-    //     pool_id,
-    //     denom_in: "uosmo",
-    //     denom_out: "uatom",
-    // };
-    //
-    // let twap_price = ArithmeticTwapToNowResponse {
-    //     arithmetic_twap: Decimal::from_ratio(77777u128, 12345u128).to_string(),
-    // };
-    //
-    // let time = SystemTime::now()
-    //     .duration_since(UNIX_EPOCH)
-    //     .unwrap()
-    //     .checked_add(time::Duration::from_secs(30))
-    //     .unwrap();
+    let price: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
 
-    // let res: ArithmeticTwapToNowResponse = wasm
-    //     .query(
-    //         &oracle_addr,
-    //         &QueryMsg::QueryArithmeticTwapToNow(ArithmeticTwapToNowRequest {
-    //             pool_id,
-    //             base_asset: "uosmo".to_string(),
-    //             quote_asset: "uatom".to_string(),
-    //             start_time: Some(Timestamp {
-    //                 seconds: time.as_secs() as i64,
-    //                 nanos: 0,
-    //             }),
-    //         }),
-    //     )
-    //     .unwrap();
+    assert_eq!(price.denom, "uatom".to_string());
 
-    // let price: PriceResponse = wasm
-    //     .query(
-    //         &oracle_addr,
-    //         &QueryMsg::Price {
-    //             denom: "uatom".to_string(),
-    //         },
-    //     )
-    //     .unwrap();
+    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom");
 
-    // assert_eq!(price.price, Decimal::from_ratio(1u128, 2u128)); // 1 osmo = 2 atom
-    //
-    // assert_eq!(price.denom, "uatom".to_string());
+    let price2: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+
+    assert_ne!(price.price, price2.price);
 }
 
 // execute borrow action in red bank with an asset not in the oracle - should fail when attempting to query oracle
