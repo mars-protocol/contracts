@@ -145,7 +145,7 @@ pub fn swap_n_times(
     }
 }
 
-fn swap(
+pub fn swap(
     app: &OsmosisTestApp,
     signer: &SigningAccount,
     pool_id: u64,

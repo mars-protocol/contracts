@@ -1,5 +1,5 @@
 use crate::helpers::osmosis::{assert_err, instantiate_contract};
-use crate::helpers::{default_asset_params, swap_to_create_twap_records};
+use crate::helpers::{default_asset_params, swap, swap_to_create_twap_records};
 use cosmwasm_std::{coin, Coin, Decimal, Isqrt, Uint128};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::msg::PriceSourceResponse;
@@ -872,4 +872,82 @@ fn oracle_querying_redbank() {
         depositor,
     )
     .unwrap();
+}
+
+// Test a swap executed that changes the liquidity pool size and test how it corresponds to the price.
+#[test]
+fn liquidity_pool_size_change() {
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
+
+    let signer = app
+        .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "uatom")])
+        .unwrap();
+
+    let oracle_addr = instantiate_contract(
+        &wasm,
+        &signer,
+        OSMOSIS_ORACLE_CONTRACT_NAME,
+        &InstantiateMsg {
+            owner: signer.address(),
+            base_denom: "uosmo".to_string(),
+        },
+    );
+
+    let gamm = Gamm::new(&app);
+    let pool_liquidity = vec![Coin::new(2_000_000, "uatom"), Coin::new(1_000_000, "uosmo")];
+    let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
+
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSource::Spot {
+                pool_id,
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+
+    let price_source: PriceSourceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::PriceSource {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+
+    assert_eq!(
+        price_source.price_source,
+        OsmosisPriceSource::Spot {
+            pool_id
+        }
+    );
+
+    let price: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+
+    assert_eq!(price.price, Decimal::from_ratio(1u128, 2u128));
+
+    swap(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom");
+
+    let price2: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+
+    assert_ne!(price.price, price2.price);
 }
