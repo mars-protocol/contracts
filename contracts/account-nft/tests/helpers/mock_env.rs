@@ -36,6 +36,13 @@ impl MockEnv {
             .unwrap()
     }
 
+    pub fn query_next_id(&mut self) -> u64 {
+        self.app
+            .wrap()
+            .query_wasm_smart(self.nft_contract.clone(), &QueryMsg::NextId {})
+            .unwrap()
+    }
+
     // Double checking ownership by querying NFT account-nft for correct owner
     pub fn assert_owner_is_correct(&mut self, user: &Addr, token_id: &str) {
         let owner_res: OwnerOfResponse = self
