@@ -1,13 +1,12 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Coin, Decimal, Deps, DepsMut, Env, MessageInfo, Order, Response,
-    StdResult,
+    to_binary, Addr, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
 };
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
-use mars_outpost::oracle::PriceResponse;
 
+use mars_outpost::oracle::PriceResponse;
 use mars_rover::adapters::vault::VaultBase;
 use mars_rover::adapters::Oracle;
 use mars_rover::traits::IntoDecimal;
@@ -67,9 +66,6 @@ pub fn execute(
 pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> ContractResult<Binary> {
     let res = match msg {
         QueryMsg::Price { denom } => to_binary(&query_price(deps, &denom)?),
-        QueryMsg::PriceableUnderlying { coin } => {
-            to_binary(&query_priceable_underlying(deps, coin)?)
-        }
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::PricingInfo { denom } => to_binary(&query_pricing_info(deps, &denom)?),
         QueryMsg::AllPricingInfo { start_after, limit } => {
@@ -102,23 +98,6 @@ fn query_all_pricing_info(
             Ok(info)
         })
         .collect::<StdResult<Vec<_>>>()
-}
-
-fn query_priceable_underlying(deps: Deps, coin: Coin) -> ContractResult<Vec<Coin>> {
-    let info_opt = VAULT_PRICING_INFO.may_load(deps.storage, &coin.denom)?;
-    match info_opt {
-        Some(info) => match info.method {
-            PricingMethod::PreviewRedeem => {
-                let vault = VaultBase::new(info.addr);
-                let amount = vault.query_preview_redeem(&deps.querier, coin.amount)?;
-                Ok(vec![Coin {
-                    denom: info.base_denom,
-                    amount,
-                }])
-            }
-        },
-        _ => Ok(vec![coin]),
-    }
 }
 
 fn query_price(deps: Deps, denom: &str) -> ContractResult<PriceResponse> {

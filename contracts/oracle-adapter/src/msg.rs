@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Coin, Decimal};
+use cosmwasm_std::{Addr, Decimal};
+
 use mars_rover::adapters::{Oracle, OracleUnchecked};
 
 #[cw_serde]
@@ -26,10 +27,6 @@ pub enum QueryMsg {
     /// If denom is vault coin, will retrieve priceable underlying before querying oracle
     #[returns(mars_outpost::oracle::PriceResponse)]
     Price { denom: String },
-
-    /// Converts vault coin to the mars-oracle accepted priceable coins
-    #[returns(Vec<Coin>)]
-    PriceableUnderlying { coin: Coin },
 
     #[returns(ConfigResponse)]
     Config {},
