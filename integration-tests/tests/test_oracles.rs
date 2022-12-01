@@ -1,4 +1,4 @@
-use crate::helpers::osmosis::{assert_err, instantiate_contract};
+use crate::helpers::osmosis::{assert_err, instantiate_all_contracts, instantiate_contract};
 use crate::helpers::{default_asset_params, swap, swap_to_create_twap_records};
 use cosmwasm_std::{coin, Coin, Decimal, Isqrt, Uint128};
 use mars_oracle_base::ContractError;
@@ -254,7 +254,7 @@ fn set_spot_price() {
     assert_eq!(price.denom, "uatom".to_string());
 }
 
-// Set price source to spot for without creating a liquidity pool - should return an error
+// set price source to spot for without creating a liquidity pool - should return an error
 #[test]
 fn set_spot_without_pools() {
     let app = OsmosisTestApp::new();
@@ -423,7 +423,7 @@ fn test_different_prices() {
     assert_eq!(price.price, Decimal::from_ratio(78u128, 13u128));
 }
 
-//assert oracle was correctly set to TWAP and assert prices are queried correctly
+// assert oracle was correctly set to TWAP and assert prices are queried correctly
 #[test]
 fn set_twap_price() {
     let app = OsmosisTestApp::new();
@@ -453,7 +453,7 @@ fn set_twap_price() {
             denom: "uatom".to_string(),
             price_source: OsmosisPriceSource::Twap {
                 pool_id,
-                window_size: 10, //10 seconds = 2 swaps when each swap increases block time by 5 seconds
+                window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
             },
         },
         &[],
@@ -502,7 +502,28 @@ fn set_twap_price() {
         )
         .unwrap();
 
-    assert_ne!(price.price, price2.price);
+    // since swaps were small, the prices should be the same within a 1% tolerance
+    let tolerance = Decimal::percent(1);
+
+    if !(price.price - price2.price < tolerance || price2.price - price.price < tolerance) {
+        panic!();
+    };
+
+    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom");
+
+    let price3: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+
+    // atom price should decrease after making these swaps
+    if !(price.price > price3.price) {
+        panic!();
+    };
 }
 
 // execute borrow action in red bank with an asset not in the oracle - should fail when attempting to query oracle
@@ -874,7 +895,7 @@ fn oracle_querying_redbank() {
     .unwrap();
 }
 
-// Test a swap executed that changes the liquidity pool size and test how it corresponds to the price.
+// test a swap executed that changes the liquidity pool size and test how it corresponds to the price.
 #[test]
 fn liquidity_pool_size_change() {
     let app = OsmosisTestApp::new();
@@ -950,4 +971,101 @@ fn liquidity_pool_size_change() {
         .unwrap();
 
     assert_ne!(price.price, price2.price);
+}
+
+// compare SPOT and TWAP prices
+#[test]
+fn compare_twap_spot() {
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
+
+    let signer = app
+        .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "uatom")])
+        .unwrap();
+
+    let oracle_addr = instantiate_contract(
+        &wasm,
+        &signer,
+        OSMOSIS_ORACLE_CONTRACT_NAME,
+        &InstantiateMsg {
+            owner: signer.address(),
+            base_denom: "uosmo".to_string(),
+        },
+    );
+
+    let gamm = Gamm::new(&app);
+    let pool_liquidity = vec![Coin::new(2_000_000_000, "uatom"), Coin::new(1_000_000_000, "uosmo")];
+    let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
+
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSource::Twap {
+                pool_id,
+                window_size: 10, //10 seconds = 2 swaps when each swap increases block time by 5 seconds
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+
+    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom");
+
+    let price_source: PriceSourceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::PriceSource {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+
+    assert_eq!(
+        price_source.price_source,
+        (OsmosisPriceSource::Twap {
+            pool_id,
+            window_size: 10,
+        })
+    );
+
+    let twap_price: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSource::Spot {
+                pool_id,
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+
+    let spot_price: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+
+    let tolerance = Decimal::percent(1);
+
+    if !(twap_price.price - spot_price.price < tolerance
+        || spot_price.price - twap_price.price < tolerance)
+    {
+        panic!();
+    };
 }

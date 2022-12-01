@@ -1,9 +1,13 @@
 #![allow(dead_code)]
 
 use cosmwasm_std::{Coin, Decimal};
+// use mars_outpost::address_provider::InstantiateMsg as InstantiateAddr;
+// use mars_outpost::incentives::InstantiateMsg as InstantiateIncentives;
+// use mars_outpost::red_bank::{CreateOrUpdateConfig, InstantiateMsg as InstantiateRedBank};
 use mars_outpost::red_bank::{
     InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
 };
+// use mars_outpost::rewards_collector::InstantiateMsg as InstantiateRewards;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
     MsgSwapExactAmountIn, MsgSwapExactAmountInResponse, SwapAmountInRoute,
 };
@@ -60,6 +64,9 @@ pub fn is_user_liquidatable(position: &UserPositionResponse) -> bool {
 }
 
 pub mod osmosis {
+    use cosmwasm_std::{Decimal, Uint128};
+    use mars_outpost::oracle::InstantiateMsg;
+    use mars_outpost::red_bank::CreateOrUpdateConfig;
     use osmosis_testing::cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest;
     use osmosis_testing::{Bank, OsmosisTestApp, RunnerError, SigningAccount, Wasm};
     use serde::Serialize;
@@ -114,6 +121,76 @@ pub mod osmosis {
             _ => panic!("Unhandled error"),
         }
     }
+
+    // pub fn instantiate_all_contracts(wasm: &Wasm<OsmosisTestApp>, owner: &SigningAccount) {
+    //     const OSMOSIS_ORACLE_CONTRACT_NAME: &str = "mars-oracle-osmosis";
+    //     const OSMOSIS_RED_BANK_CONTRACT_NAME: &str = "mars-red-bank";
+    //     const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
+    //     const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
+    //     const OSMOSIS_INCENTIVES_CONTRACT_NAME: &str = "mars-incentives";
+    //
+    //     let oracle_addr = instantiate_contract(
+    //         wasm,
+    //         owner,
+    //         OSMOSIS_ORACLE_CONTRACT_NAME,
+    //         &InstantiateMsg {
+    //             owner: signer.address(),
+    //             base_denom: "uosmo".to_string(),
+    //         },
+    //     );
+    //
+    //     let addr_provider_addr = instantiate_contract(
+    //         wasm,
+    //         owner,
+    //         OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME,
+    //         &InstantiateAddr {
+    //             owner: signer.address(),
+    //             prefix: "osmo".to_string(),
+    //         },
+    //     );
+    //
+    //     let red_bank_addr = instantiate_contract(
+    //         wasm,
+    //         owner,
+    //         OSMOSIS_RED_BANK_CONTRACT_NAME,
+    //         &InstantiateRedBank {
+    //             config: CreateOrUpdateConfig {
+    //                 owner: Some(signer.address()),
+    //                 address_provider: Some(addr_provider_addr.clone()),
+    //                 close_factor: Some(Decimal::percent(10)),
+    //             },
+    //         },
+    //     );
+    //
+    //     let incentives_addr = instantiate_contract(
+    //         wasm,
+    //         owner,
+    //         OSMOSIS_INCENTIVES_CONTRACT_NAME,
+    //         &InstantiateIncentives {
+    //             owner: signer.address(),
+    //             address_provider: addr_provider_addr.clone(),
+    //             mars_denom: "umars".to_string(),
+    //         },
+    //     );
+    //
+    //     let rewards_addr = instantiate_contract(
+    //         wasm,
+    //         owner,
+    //         OSMOSIS_REWARDS_CONTRACT_NAME,
+    //         &InstantiateRewards {
+    //             owner: (signer.address()),
+    //             address_provider: addr_provider_addr.clone(),
+    //             safety_tax_rate: Decimal::percent(25),
+    //             safety_fund_denom: "uosmo".to_string(),
+    //             fee_collector_denom: "uosmo".to_string(),
+    //             channel_id: "channel-1".to_string(),
+    //             timeout_revision: 2,
+    //             timeout_blocks: 10,
+    //             timeout_seconds: 60,
+    //             slippage_tolerance: Decimal::new(Uint128::from(1u128)),
+    //         },
+    //     );
+    // }
 }
 
 /// Every execution creates new block and block timestamp will +5 secs from last block

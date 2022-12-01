@@ -901,7 +901,6 @@ dependencies = [
  "mars-osmosis",
  "mars-outpost",
  "mars-rewards-collector-base",
- "mars-rewards-collector-osmosis",
  "mars-testing",
  "osmosis-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "osmosis-testing",
