@@ -98,7 +98,7 @@ pub fn update_config(
     Ok(response)
 }
 
-pub fn accept_ownership(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
+pub fn accept_minter_role(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     let previous_minter = Parent::default().minter.load(deps.storage)?;
 

@@ -20,7 +20,7 @@ fn test_only_minter_can_update_config() {
     );
 
     if res.is_ok() {
-        panic!("Non-owner should not be able to propose ownership transfer");
+        panic!("Non-minter should not be able to propose new minter");
     }
 }
 

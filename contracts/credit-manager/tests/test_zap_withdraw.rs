@@ -93,7 +93,7 @@ fn test_coins_out_must_be_whitelisted() {
     // update config to disallow denoms out
     let config = mock.query_config();
     mock.update_config(
-        &Addr::unchecked(config.owner),
+        &Addr::unchecked(config.admin.unwrap()),
         ConfigUpdates {
             allowed_coins: Some(vec![lp_token.denom.clone(), atom.denom]),
             ..Default::default()

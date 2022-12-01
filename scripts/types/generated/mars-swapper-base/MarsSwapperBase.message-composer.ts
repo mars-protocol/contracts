@@ -17,7 +17,7 @@ import {
   Empty,
   Coin,
   QueryMsg,
-  ConfigForString,
+  AdminResponse,
   EstimateExactInSwapResponse,
   RouteResponseForEmpty,
   ArrayOfRouteResponseForEmpty,
@@ -25,11 +25,11 @@ import {
 export interface MarsSwapperBaseMessage {
   contractAddress: string
   sender: string
-  updateConfig: (
+  updateAdmin: (
     {
-      owner,
+      admin,
     }: {
-      owner?: string
+      admin: string
     },
     funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
@@ -77,17 +77,17 @@ export class MarsSwapperBaseMessageComposer implements MarsSwapperBaseMessage {
   constructor(sender: string, contractAddress: string) {
     this.sender = sender
     this.contractAddress = contractAddress
-    this.updateConfig = this.updateConfig.bind(this)
+    this.updateAdmin = this.updateAdmin.bind(this)
     this.setRoute = this.setRoute.bind(this)
     this.swapExactIn = this.swapExactIn.bind(this)
     this.transferResult = this.transferResult.bind(this)
   }
 
-  updateConfig = (
+  updateAdmin = (
     {
-      owner,
+      admin,
     }: {
-      owner?: string
+      admin: string
     },
     funds?: Coin[],
   ): MsgExecuteContractEncodeObject => {
@@ -98,8 +98,8 @@ export class MarsSwapperBaseMessageComposer implements MarsSwapperBaseMessage {
         contract: this.contractAddress,
         msg: toUtf8(
           JSON.stringify({
-            update_config: {
-              owner,
+            update_admin: {
+              admin,
             },
           }),
         ),

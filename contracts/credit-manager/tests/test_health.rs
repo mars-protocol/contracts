@@ -643,7 +643,7 @@ fn test_delisted_assets_drop_max_ltv() {
     // Remove uosmo from the coin whitelist
     let res = mock.query_config();
     mock.update_config(
-        &Addr::unchecked(res.owner),
+        &Addr::unchecked(res.admin.unwrap()),
         ConfigUpdates {
             allowed_coins: Some(vec![uatom_info.denom]),
             ..Default::default()

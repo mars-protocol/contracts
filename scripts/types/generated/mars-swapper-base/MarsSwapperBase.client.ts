@@ -16,14 +16,14 @@ import {
   Empty,
   Coin,
   QueryMsg,
-  ConfigForString,
+  AdminResponse,
   EstimateExactInSwapResponse,
   RouteResponseForEmpty,
   ArrayOfRouteResponseForEmpty,
 } from './MarsSwapperBase.types'
 export interface MarsSwapperBaseReadOnlyInterface {
   contractAddress: string
-  config: () => Promise<ConfigForString>
+  admin: () => Promise<AdminResponse>
   route: ({
     denomIn,
     denomOut,
@@ -53,15 +53,15 @@ export class MarsSwapperBaseQueryClient implements MarsSwapperBaseReadOnlyInterf
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client
     this.contractAddress = contractAddress
-    this.config = this.config.bind(this)
+    this.admin = this.admin.bind(this)
     this.route = this.route.bind(this)
     this.routes = this.routes.bind(this)
     this.estimateExactInSwap = this.estimateExactInSwap.bind(this)
   }
 
-  config = async (): Promise<ConfigForString> => {
+  admin = async (): Promise<AdminResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      config: {},
+      admin: {},
     })
   }
   route = async ({
@@ -110,11 +110,11 @@ export class MarsSwapperBaseQueryClient implements MarsSwapperBaseReadOnlyInterf
 export interface MarsSwapperBaseInterface extends MarsSwapperBaseReadOnlyInterface {
   contractAddress: string
   sender: string
-  updateConfig: (
+  updateAdmin: (
     {
-      owner,
+      admin,
     }: {
-      owner?: string
+      admin: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -176,17 +176,17 @@ export class MarsSwapperBaseClient
     this.client = client
     this.sender = sender
     this.contractAddress = contractAddress
-    this.updateConfig = this.updateConfig.bind(this)
+    this.updateAdmin = this.updateAdmin.bind(this)
     this.setRoute = this.setRoute.bind(this)
     this.swapExactIn = this.swapExactIn.bind(this)
     this.transferResult = this.transferResult.bind(this)
   }
 
-  updateConfig = async (
+  updateAdmin = async (
     {
-      owner,
+      admin,
     }: {
-      owner?: string
+      admin: string
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -196,8 +196,8 @@ export class MarsSwapperBaseClient
       this.sender,
       this.contractAddress,
       {
-        update_config: {
-          owner,
+        update_admin: {
+          admin,
         },
       },
       fee,

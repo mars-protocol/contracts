@@ -10,7 +10,7 @@ use std::convert::TryInto;
 
 use crate::config::Config;
 use crate::error::ContractError;
-use crate::execute::{accept_ownership, burn, mint, update_config};
+use crate::execute::{accept_minter_role, burn, mint, update_config};
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::query::{query_config, query_next_id};
 use crate::state::{CONFIG, NEXT_ID};
@@ -67,7 +67,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::Mint { user } => mint(deps, env, info, &user),
         ExecuteMsg::UpdateConfig { updates } => update_config(deps, info, updates),
-        ExecuteMsg::AcceptMinterRole {} => accept_ownership(deps, info),
+        ExecuteMsg::AcceptMinterRole {} => accept_minter_role(deps, info),
         ExecuteMsg::Burn { token_id } => burn(deps, env, info, token_id),
         _ => Parent::default()
             .execute(deps, env, info, msg.try_into()?)

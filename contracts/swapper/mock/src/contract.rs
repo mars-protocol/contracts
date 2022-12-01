@@ -27,7 +27,7 @@ pub fn execute(
     msg: ExecuteMsg<Empty>,
 ) -> StdResult<Response> {
     match msg {
-        ExecuteMsg::UpdateConfig { .. } => unimplemented!("not implemented"),
+        ExecuteMsg::UpdateAdmin { .. } => unimplemented!("not implemented"),
         ExecuteMsg::SetRoute { .. } => unimplemented!("not implemented"),
         ExecuteMsg::TransferResult { .. } => unimplemented!("not implemented"),
         ExecuteMsg::SwapExactIn {
@@ -41,7 +41,7 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config { .. } => unimplemented!("not implemented"),
+        QueryMsg::Admin { .. } => unimplemented!("not implemented"),
         QueryMsg::Route { .. } => unimplemented!("not implemented"),
         QueryMsg::Routes { .. } => unimplemented!("not implemented"),
         QueryMsg::EstimateExactInSwap { .. } => to_binary(&estimate_exact_in_swap()),

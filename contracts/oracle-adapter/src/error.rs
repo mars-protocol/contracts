@@ -1,4 +1,5 @@
 use cosmwasm_std::{CheckedFromRatioError, DecimalRangeExceeded, OverflowError, StdError};
+use cw_controllers::AdminError;
 use thiserror::Error;
 
 use mars_rover::error::ContractError as RoverError;
@@ -7,6 +8,9 @@ pub type ContractResult<T> = Result<T, ContractError>;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
+    #[error("{0}")]
+    AdminError(#[from] AdminError),
+
     #[error("{0}")]
     CheckedFromRatioError(#[from] CheckedFromRatioError),
 

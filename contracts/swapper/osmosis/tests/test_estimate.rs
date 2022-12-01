@@ -15,11 +15,11 @@ pub mod helpers;
 fn test_error_on_route_not_found() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
-    let owner = app
+    let admin = app
         .init_account(&[coin(1_000_000_000_000, "uosmo")])
         .unwrap();
 
-    let contract_addr = instantiate_contract(&wasm, &owner);
+    let contract_addr = instantiate_contract(&wasm, &admin);
 
     let res: RunnerResult<EstimateExactInSwapResponse> = wasm.query(
         &contract_addr,

@@ -165,9 +165,10 @@ export interface VaultUnlockingPosition {
 export type ArrayOfString = string[]
 export interface ConfigResponse {
   account_nft?: string | null
+  admin?: string | null
   max_close_factor: Decimal
+  max_unlocking_positions: Uint128
   oracle: string
-  owner: string
   red_bank: string
   swapper: string
   zapper: string

@@ -4,10 +4,11 @@ use cosmwasm_std::{
     to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Deps,
     DepsMut, Env, MessageInfo, Order, Response, WasmMsg,
 };
-use cw_storage_plus::{Bound, Item, Map};
+use cw_controllers::{Admin, AdminResponse};
+use cw_storage_plus::{Bound, Map};
 
 use mars_rover::adapters::swap::{
-    Config, EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
+    EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
     RoutesResponse,
 };
 use mars_rover::error::ContractError as RoverError;
@@ -23,8 +24,8 @@ where
     M: CustomMsg,
     R: Route<M, Q>,
 {
-    /// The contract's config
-    pub config: Item<'a, Config<Addr>>,
+    /// The contract's admin who has special rights to update contract
+    pub admin: Admin<'a>,
     /// The trade route for each pair of input/output assets
     pub routes: Map<'a, (String, String), R>,
     /// Phantom data holds generics
@@ -40,7 +41,7 @@ where
 {
     fn default() -> Self {
         Self {
-            config: Item::new("config"),
+            admin: Admin::new("admin"),
             routes: Map::new("routes"),
             custom_query: PhantomData,
             custom_message: PhantomData,
@@ -59,13 +60,8 @@ where
         deps: DepsMut<Q>,
         msg: InstantiateMsg,
     ) -> ContractResult<Response<M>> {
-        self.config.save(
-            deps.storage,
-            &Config {
-                owner: deps.api.addr_validate(&msg.owner)?,
-            },
-        )?;
-
+        let validated = deps.api.addr_validate(&msg.admin)?;
+        self.admin.set(deps, Some(validated))?;
         Ok(Response::default())
     }
 
@@ -77,7 +73,7 @@ where
         msg: ExecuteMsg<R>,
     ) -> ContractResult<Response<M>> {
         match msg {
-            ExecuteMsg::UpdateConfig { owner } => self.update_config(deps, info.sender, owner),
+            ExecuteMsg::UpdateAdmin { admin } => self.update_admin(deps, info.sender, &admin),
             ExecuteMsg::SetRoute {
                 denom_in,
                 denom_out,
@@ -98,7 +94,7 @@ where
 
     pub fn query(&self, deps: Deps<Q>, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         let res = match msg {
-            QueryMsg::Config {} => to_binary(&self.query_config(deps)?),
+            QueryMsg::Admin {} => to_binary(&self.query_admin(deps)?),
             QueryMsg::EstimateExactInSwap { coin_in, denom_out } => {
                 to_binary(&self.estimate_exact_in_swap(deps, env, coin_in, denom_out)?)
             }
@@ -113,11 +109,8 @@ where
         res.map_err(Into::into)
     }
 
-    fn query_config(&self, deps: Deps<Q>) -> ContractResult<Config<String>> {
-        let cfg = self.config.load(deps.storage)?;
-        Ok(Config {
-            owner: cfg.owner.to_string(),
-        })
+    fn query_admin(&self, deps: Deps<Q>) -> ContractResult<AdminResponse> {
+        Ok(self.admin.query_admin(deps)?)
     }
 
     fn query_route(
@@ -251,15 +244,7 @@ where
         denom_out: String,
         route: R,
     ) -> ContractResult<Response<M>> {
-        let cfg = self.config.load(deps.storage)?;
-
-        if sender != cfg.owner {
-            return Err(RoverError::Unauthorized {
-                user: sender.to_string(),
-                action: "set route".to_string(),
-            }
-            .into());
-        };
+        self.admin.assert_admin(deps.as_ref(), &sender)?;
 
         route.validate(&deps.querier, &denom_in, &denom_out)?;
 
@@ -273,33 +258,19 @@ where
             .add_attribute("route", route.to_string()))
     }
 
-    fn update_config(
+    fn update_admin(
         &self,
         deps: DepsMut<Q>,
         sender: Addr,
-        owner: Option<String>,
+        admin: &str,
     ) -> ContractResult<Response<M>> {
-        let mut cfg = self.config.load(deps.storage)?;
-        if sender != cfg.owner {
-            return Err(RoverError::Unauthorized {
-                user: sender.to_string(),
-                action: "update owner".to_string(),
-            }
-            .into());
-        };
+        self.admin.assert_admin(deps.as_ref(), &sender)?;
+        let validated = deps.api.addr_validate(admin)?;
+        self.admin.set(deps, Some(validated))?;
 
-        let mut response =
-            Response::new().add_attribute("action", "rover/swapper-base/update_config");
-
-        if let Some(addr_str) = owner {
-            cfg.owner = deps.api.addr_validate(&addr_str)?;
-            response = response
-                .add_attribute("key", "owner")
-                .add_attribute("value", addr_str);
-        }
-
-        self.config.save(deps.storage, &cfg)?;
-
-        Ok(response)
+        Ok(Response::new()
+            .add_attribute("action", "rover/swapper-base/update_admin")
+            .add_attribute("key", "owner")
+            .add_attribute("value", admin))
     }
 }

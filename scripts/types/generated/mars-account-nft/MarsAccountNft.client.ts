@@ -34,6 +34,7 @@ import {
 export interface MarsAccountNftReadOnlyInterface {
   contractAddress: string
   config: () => Promise<ConfigBaseForString>
+  nextId: () => Promise<Uint64>
   ownerOf: ({
     includeExpired,
     tokenId,
@@ -104,6 +105,7 @@ export class MarsAccountNftQueryClient implements MarsAccountNftReadOnlyInterfac
     this.client = client
     this.contractAddress = contractAddress
     this.config = this.config.bind(this)
+    this.nextId = this.nextId.bind(this)
     this.ownerOf = this.ownerOf.bind(this)
     this.approval = this.approval.bind(this)
     this.approvals = this.approvals.bind(this)
@@ -120,6 +122,11 @@ export class MarsAccountNftQueryClient implements MarsAccountNftReadOnlyInterfac
   config = async (): Promise<ConfigBaseForString> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {},
+    })
+  }
+  nextId = async (): Promise<Uint64> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      next_id: {},
     })
   }
   ownerOf = async ({

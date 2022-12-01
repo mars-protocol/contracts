@@ -16,14 +16,11 @@ import {
   ExecuteMsg,
   ConfigUpdates,
   QueryMsg,
-  Uint128,
-  Coin,
   ArrayOfVaultPricingInfo,
   OracleBaseForAddr,
   ConfigResponse,
   Decimal,
   PriceResponse,
-  ArrayOfCoin,
 } from './MarsOracleAdapter.types'
 import { MarsOracleAdapterQueryClient, MarsOracleAdapterClient } from './MarsOracleAdapter.client'
 export const marsOracleAdapterQueryKeys = {
@@ -36,14 +33,6 @@ export const marsOracleAdapterQueryKeys = {
     [{ ...marsOracleAdapterQueryKeys.contract[0], address: contractAddress }] as const,
   price: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsOracleAdapterQueryKeys.address(contractAddress)[0], method: 'price', args }] as const,
-  priceableUnderlying: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
-    [
-      {
-        ...marsOracleAdapterQueryKeys.address(contractAddress)[0],
-        method: 'priceable_underlying',
-        args,
-      },
-    ] as const,
   config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       { ...marsOracleAdapterQueryKeys.address(contractAddress)[0], method: 'config', args },
@@ -125,28 +114,6 @@ export function useMarsOracleAdapterConfigQuery<TData = ConfigResponse>({
   return useQuery<ConfigResponse, Error, TData>(
     marsOracleAdapterQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
-    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
-  )
-}
-export interface MarsOracleAdapterPriceableUnderlyingQuery<TData>
-  extends MarsOracleAdapterReactQuery<ArrayOfCoin, TData> {
-  args: {
-    coin: Coin
-  }
-}
-export function useMarsOracleAdapterPriceableUnderlyingQuery<TData = ArrayOfCoin>({
-  client,
-  args,
-  options,
-}: MarsOracleAdapterPriceableUnderlyingQuery<TData>) {
-  return useQuery<ArrayOfCoin, Error, TData>(
-    marsOracleAdapterQueryKeys.priceableUnderlying(client?.contractAddress, args),
-    () =>
-      client
-        ? client.priceableUnderlying({
-            coin: args.coin,
-          })
-        : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }

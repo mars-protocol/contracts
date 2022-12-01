@@ -18,7 +18,7 @@ fn test_create_credit_account_fails_without_nft_contract_set() {
 
 #[test]
 fn test_create_credit_account_fails_without_nft_contract_owner() {
-    let mut mock = MockEnv::new().no_nft_contract_owner().build().unwrap();
+    let mut mock = MockEnv::new().no_nft_contract_minter().build().unwrap();
 
     let user = Addr::unchecked("user");
     let res = mock.create_credit_account(&user);

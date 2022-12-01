@@ -7,14 +7,13 @@ use mars_rover::error::ContractResult;
 use mars_rover::msg::instantiate::VaultInstantiateConfig;
 use mars_rover::msg::InstantiateMsg;
 
+use crate::state::ADMIN;
 use crate::state::{
-    ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, RED_BANK, SWAPPER,
+    ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, RED_BANK, SWAPPER,
     VAULT_CONFIGS, ZAPPER,
 };
 
 pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
-    let owner = deps.api.addr_validate(&msg.owner)?;
-    OWNER.save(deps.storage, &owner)?;
     RED_BANK.save(deps.storage, &msg.red_bank.check(deps.api)?)?;
     ORACLE.save(deps.storage, &msg.oracle.check(deps.api)?)?;
     SWAPPER.save(deps.storage, &msg.swapper.check(deps.api)?)?;
@@ -37,6 +36,9 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
     msg.allowed_coins
         .iter()
         .try_for_each(|denom| ALLOWED_COINS.insert(deps.storage, denom).map(|_| ()))?;
+
+    let admin = deps.api.addr_validate(&msg.admin)?;
+    ADMIN.set(deps, Some(admin))?;
 
     Ok(())
 }

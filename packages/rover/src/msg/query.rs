@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Decimal, Uint128};
+
 use mars_health::health::Health;
 
 use crate::adapters::vault::{Vault, VaultPosition, VaultUnchecked};
@@ -8,7 +9,7 @@ use crate::traits::Coins;
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    /// Owner & account nft address
+    /// Rover contract-level config
     #[returns(ConfigResponse)]
     Config {},
     /// Configs on vaults
@@ -152,7 +153,7 @@ pub struct VaultPositionValue {
 
 #[cw_serde]
 pub struct ConfigResponse {
-    pub owner: String,
+    pub admin: Option<String>,
     pub account_nft: Option<String>,
     pub red_bank: String,
     pub oracle: String,

@@ -21,10 +21,10 @@ fn test_transfer_callback_only_internal() {
     let accs = app
         .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
         .unwrap();
-    let owner = &accs[0];
+    let admin = &accs[0];
     let bad_guy = &accs[1];
 
-    let contract_addr = instantiate_contract(&wasm, owner);
+    let contract_addr = instantiate_contract(&wasm, admin);
 
     let res_err = wasm
         .execute(

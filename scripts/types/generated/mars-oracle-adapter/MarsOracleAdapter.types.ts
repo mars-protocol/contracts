@@ -9,8 +9,8 @@ export type OracleBaseForString = string
 export type Addr = string
 export type PricingMethod = 'preview_redeem'
 export interface InstantiateMsg {
+  admin: string
   oracle: OracleBaseForString
-  owner: string
   vault_pricing: VaultPricingInfo[]
 }
 export interface VaultPricingInfo {
@@ -25,19 +25,14 @@ export type ExecuteMsg = {
   }
 }
 export interface ConfigUpdates {
+  admin?: string | null
   oracle?: OracleBaseForString | null
-  owner?: string | null
   vault_pricing?: VaultPricingInfo[] | null
 }
 export type QueryMsg =
   | {
       price: {
         denom: string
-      }
-    }
-  | {
-      priceable_underlying: {
-        coin: Coin
       }
     }
   | {
@@ -54,21 +49,14 @@ export type QueryMsg =
         start_after?: string | null
       }
     }
-export type Uint128 = string
-export interface Coin {
-  amount: Uint128
-  denom: string
-  [k: string]: unknown
-}
 export type ArrayOfVaultPricingInfo = VaultPricingInfo[]
 export type OracleBaseForAddr = string
 export interface ConfigResponse {
+  admin?: Addr | null
   oracle: OracleBaseForAddr
-  owner: Addr
 }
 export type Decimal = string
 export interface PriceResponse {
   denom: string
   price: Decimal
 }
-export type ArrayOfCoin = Coin[]

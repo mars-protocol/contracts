@@ -42,7 +42,7 @@ pub fn instantiate_oracle_adapter(app: &mut BasicApp) -> Addr {
         &InstantiateMsg {
             oracle: oracle.into(),
             vault_pricing: vec![vault_pricing_info],
-            owner: owner.to_string(),
+            admin: owner.to_string(),
         },
         &[],
         "mars-oracle-adapter",

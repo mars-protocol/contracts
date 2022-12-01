@@ -1,9 +1,13 @@
 use cosmwasm_std::{CheckedMultiplyRatioError, DecimalRangeExceeded, OverflowError, StdError};
+use cw_controllers::AdminError;
 use mars_rover::error::ContractError as RoverError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
+    #[error("{0}")]
+    AdminError(#[from] AdminError),
+
     #[error("{0}")]
     DecimalRangeExceeded(#[from] DecimalRangeExceeded),
 

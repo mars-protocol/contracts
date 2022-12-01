@@ -11,12 +11,12 @@ use mars_rover::adapters::vault::VaultBase;
 use mars_rover::adapters::Oracle;
 use mars_rover::traits::IntoDecimal;
 
-use crate::error::{ContractError, ContractResult};
+use crate::error::ContractResult;
 use crate::msg::{
     ConfigResponse, ConfigUpdates, ExecuteMsg, InstantiateMsg, PricingMethod, QueryMsg,
     VaultPricingInfo,
 };
-use crate::state::{ORACLE, OWNER, VAULT_PRICING_INFO};
+use crate::state::{ADMIN, ORACLE, VAULT_PRICING_INFO};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -37,15 +37,15 @@ pub fn instantiate(
         CONTRACT_VERSION,
     )?;
 
-    let owner = deps.api.addr_validate(&msg.owner)?;
-    OWNER.save(deps.storage, &owner)?;
-
     let oracle = msg.oracle.check(deps.api)?;
     ORACLE.save(deps.storage, &oracle)?;
 
     for info in msg.vault_pricing {
         VAULT_PRICING_INFO.save(deps.storage, &info.vault_coin_denom, &info)?;
     }
+
+    let admin = deps.api.addr_validate(&msg.admin)?;
+    ADMIN.set(deps, Some(admin))?;
 
     Ok(Response::default())
 }
@@ -140,7 +140,7 @@ fn calculate_preview_redeem(
 
 fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
     Ok(ConfigResponse {
-        owner: OWNER.load(deps.storage)?,
+        admin: ADMIN.get(deps)?,
         oracle: ORACLE.load(deps.storage)?,
     })
 }
@@ -150,25 +150,10 @@ pub fn update_config(
     info: MessageInfo,
     new_config: ConfigUpdates,
 ) -> ContractResult<Response> {
-    let owner = OWNER.load(deps.storage)?;
-
-    if info.sender != owner {
-        return Err(ContractError::Unauthorized {
-            user: info.sender.into(),
-            action: "update config".to_string(),
-        });
-    }
+    ADMIN.assert_admin(deps.as_ref(), &info.sender)?;
 
     let mut response =
         Response::new().add_attribute("action", "rover/oracle-adapter/update_config");
-
-    if let Some(addr_str) = new_config.owner {
-        let validated = deps.api.addr_validate(&addr_str)?;
-        OWNER.save(deps.storage, &validated)?;
-        response = response
-            .add_attribute("key", "owner")
-            .add_attribute("value", addr_str);
-    }
 
     if let Some(unchecked) = new_config.oracle {
         ORACLE.save(deps.storage, &unchecked.check(deps.api)?)?;
@@ -194,6 +179,14 @@ pub fn update_config(
         response = response
             .add_attribute("key", "vault_pricing")
             .add_attribute("value", value_str);
+    }
+
+    if let Some(addr_str) = new_config.admin {
+        let validated = deps.api.addr_validate(&addr_str)?;
+        ADMIN.set(deps, Some(validated))?;
+        response = response
+            .add_attribute("key", "owner")
+            .add_attribute("value", addr_str);
     }
 
     Ok(response)

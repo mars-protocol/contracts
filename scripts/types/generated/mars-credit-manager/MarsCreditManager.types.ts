@@ -12,11 +12,12 @@ export type RedBankBaseForString = string
 export type SwapperBaseForString = string
 export type ZapperBaseForString = string
 export interface InstantiateMsg {
+  admin: string
   allowed_coins: string[]
   allowed_vaults: VaultInstantiateConfig[]
   max_close_factor: Decimal
+  max_unlocking_positions: Uint128
   oracle: OracleBaseForString
-  owner: string
   red_bank: RedBankBaseForString
   swapper: SwapperBaseForString
   zapper: ZapperBaseForString
@@ -181,13 +182,6 @@ export type CallbackMsg =
       }
     }
   | {
-      force_exit_vault: {
-        account_id: string
-        amount: Uint128
-        vault: VaultBaseForAddr
-      }
-    }
-  | {
       request_vault_unlock: {
         account_id: string
         amount: Uint128
@@ -259,11 +253,11 @@ export type CallbackMsg =
 export type Addr = string
 export interface ConfigUpdates {
   account_nft?: string | null
+  admin?: string | null
   allowed_coins?: string[] | null
   max_close_factor?: Decimal | null
+  max_unlocking_positions?: Uint128 | null
   oracle?: OracleBaseForString | null
-  owner?: string | null
-  red_bank?: RedBankBaseForString | null
   swapper?: SwapperBaseForString | null
   vault_configs?: VaultInstantiateConfig[] | null
   zapper?: ZapperBaseForString | null
@@ -398,9 +392,10 @@ export interface VaultUnlockingPosition {
 export type ArrayOfString = string[]
 export interface ConfigResponse {
   account_nft?: string | null
+  admin?: string | null
   max_close_factor: Decimal
+  max_unlocking_positions: Uint128
   oracle: string
-  owner: string
   red_bank: string
   swapper: string
   zapper: string

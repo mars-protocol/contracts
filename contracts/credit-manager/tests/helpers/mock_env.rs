@@ -54,7 +54,7 @@ pub struct MockEnv {
 
 pub struct MockEnvBuilder {
     pub app: BasicApp,
-    pub owner: Option<Addr>,
+    pub admin: Option<Addr>,
     pub allowed_vaults: Option<Vec<VaultTestInfo>>,
     pub pre_deployed_vaults: Option<Vec<VaultInstantiateConfig>>,
     pub allowed_coins: Option<Vec<CoinInfo>>,
@@ -62,7 +62,7 @@ pub struct MockEnvBuilder {
     pub oracle_adapter: Option<OracleBase<Addr>>,
     pub red_bank: Option<RedBankBase<Addr>>,
     pub deploy_nft_contract: bool,
-    pub set_nft_contract_owner: bool,
+    pub set_nft_contract_minter: bool,
     pub accounts_to_fund: Vec<AccountToFund>,
     pub max_close_factor: Option<Decimal>,
     pub max_unlocking_positions: Option<Uint128>,
@@ -73,7 +73,7 @@ impl MockEnv {
     pub fn new() -> MockEnvBuilder {
         MockEnvBuilder {
             app: App::default(),
-            owner: None,
+            admin: None,
             allowed_vaults: None,
             pre_deployed_vaults: None,
             allowed_coins: None,
@@ -81,7 +81,7 @@ impl MockEnv {
             oracle_adapter: None,
             red_bank: None,
             deploy_nft_contract: true,
-            set_nft_contract_owner: true,
+            set_nft_contract_minter: true,
             accounts_to_fund: vec![],
             max_close_factor: None,
             max_unlocking_positions: None,
@@ -484,7 +484,7 @@ impl MockEnvBuilder {
 
         if self.deploy_nft_contract {
             let nft_contract = deploy_nft_contract(&mut self.app, &nft_minter);
-            if self.set_nft_contract_owner {
+            if self.set_nft_contract_minter {
                 propose_new_nft_minter(&mut self.app, nft_contract.clone(), &nft_minter, rover);
                 self.update_config(
                     rover,
@@ -500,7 +500,7 @@ impl MockEnvBuilder {
     pub fn update_config(&mut self, rover: &Addr, new_config: ConfigUpdates) {
         self.app
             .execute_contract(
-                self.get_owner(),
+                self.get_admin(),
                 rover.clone(),
                 &ExecuteMsg::UpdateConfig { new_config },
                 &[],
@@ -533,9 +533,9 @@ impl MockEnvBuilder {
 
         self.app.instantiate_contract(
             code_id,
-            self.get_owner(),
+            self.get_admin(),
             &InstantiateMsg {
-                owner: self.get_owner().to_string(),
+                admin: self.get_admin().to_string(),
                 allowed_coins,
                 allowed_vaults,
                 red_bank,
@@ -551,10 +551,10 @@ impl MockEnvBuilder {
         )
     }
 
-    fn get_owner(&self) -> Addr {
-        self.owner
+    fn get_admin(&self) -> Addr {
+        self.admin
             .clone()
-            .unwrap_or_else(|| Addr::unchecked("owner"))
+            .unwrap_or_else(|| Addr::unchecked("admin"))
     }
 
     fn get_oracle(&mut self) -> OracleBase<Addr> {
@@ -583,7 +583,7 @@ impl MockEnvBuilder {
             .app
             .instantiate_contract(
                 contract_code_id,
-                Addr::unchecked("oracle_contract_owner"),
+                Addr::unchecked("oracle_contract_admin"),
                 &OracleInstantiateMsg { prices },
                 &[],
                 "mock-oracle",
@@ -602,7 +602,7 @@ impl MockEnvBuilder {
     }
 
     fn deploy_oracle_adapter(&mut self, vaults: Vec<VaultInstantiateConfig>) -> OracleBase<Addr> {
-        let owner = Addr::unchecked("oracle_adapter_contract_owner");
+        let admin = Addr::unchecked("oracle_adapter_contract_admin");
         let contract_code_id = self.app.store_code(mock_oracle_adapter_contract());
         let oracle = self.get_oracle().into();
         let vault_pricing = if self.pre_deployed_vaults.is_some() {
@@ -629,11 +629,11 @@ impl MockEnvBuilder {
             .app
             .instantiate_contract(
                 contract_code_id,
-                owner.clone(),
+                admin.clone(),
                 &OracleAdapterInstantiateMsg {
                     oracle,
                     vault_pricing,
-                    owner: owner.to_string(),
+                    admin: admin.to_string(),
                 },
                 &[],
                 "mars-oracle-adapter",
@@ -657,7 +657,7 @@ impl MockEnvBuilder {
             .app
             .instantiate_contract(
                 contract_code_id,
-                Addr::unchecked("red_bank_contract_owner"),
+                Addr::unchecked("red_bank_contract_admin"),
                 &RedBankInstantiateMsg {
                     coins: self
                         .get_allowed_coins()
@@ -732,7 +732,7 @@ impl MockEnvBuilder {
                 code_id,
                 Addr::unchecked("swapper-instantiator"),
                 &SwapperInstantiateMsg {
-                    owner: self.get_owner().to_string(),
+                    admin: self.get_admin().to_string(),
                 },
                 &[],
                 "mock-vault",
@@ -822,8 +822,8 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn owner(&mut self, owner: &str) -> &mut Self {
-        self.owner = Some(Addr::unchecked(owner));
+    pub fn admin(&mut self, admin: &str) -> &mut Self {
+        self.admin = Some(Addr::unchecked(admin));
         self
     }
 
@@ -852,8 +852,8 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn no_nft_contract_owner(&mut self) -> &mut Self {
-        self.set_nft_contract_owner = false;
+    pub fn no_nft_contract_minter(&mut self) -> &mut Self {
+        self.set_nft_contract_minter = false;
         self
     }
 

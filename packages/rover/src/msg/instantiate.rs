@@ -10,7 +10,7 @@ use cosmwasm_std::{Decimal, Uint128};
 #[cw_serde]
 pub struct InstantiateMsg {
     /// The address with privileged access to update config
-    pub owner: String,
+    pub admin: String,
     /// Whitelisted coin denoms approved by governance
     pub allowed_coins: Vec<String>,
     /// Whitelisted vaults approved by governance that implement credit manager's vault interface
@@ -61,7 +61,7 @@ impl Stringify for Vec<VaultInstantiateConfig> {
 #[derive(Default)]
 pub struct ConfigUpdates {
     pub account_nft: Option<String>,
-    pub owner: Option<String>,
+    pub admin: Option<String>,
     pub allowed_coins: Option<Vec<String>>,
     pub vault_configs: Option<Vec<VaultInstantiateConfig>>,
     pub oracle: Option<OracleUnchecked>,

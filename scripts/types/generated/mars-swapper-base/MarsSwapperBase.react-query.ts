@@ -16,7 +16,7 @@ import {
   Empty,
   Coin,
   QueryMsg,
-  ConfigForString,
+  AdminResponse,
   EstimateExactInSwapResponse,
   RouteResponseForEmpty,
   ArrayOfRouteResponseForEmpty,
@@ -30,8 +30,8 @@ export const marsSwapperBaseQueryKeys = {
   ] as const,
   address: (contractAddress: string | undefined) =>
     [{ ...marsSwapperBaseQueryKeys.contract[0], address: contractAddress }] as const,
-  config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
-    [{ ...marsSwapperBaseQueryKeys.address(contractAddress)[0], method: 'config', args }] as const,
+  admin: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [{ ...marsSwapperBaseQueryKeys.address(contractAddress)[0], method: 'admin', args }] as const,
   route: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsSwapperBaseQueryKeys.address(contractAddress)[0], method: 'route', args }] as const,
   routes: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
@@ -126,15 +126,15 @@ export function useMarsSwapperBaseRouteQuery<TData = RouteResponseForEmpty>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsSwapperBaseConfigQuery<TData>
-  extends MarsSwapperBaseReactQuery<ConfigForString, TData> {}
-export function useMarsSwapperBaseConfigQuery<TData = ConfigForString>({
+export interface MarsSwapperBaseAdminQuery<TData>
+  extends MarsSwapperBaseReactQuery<AdminResponse, TData> {}
+export function useMarsSwapperBaseAdminQuery<TData = AdminResponse>({
   client,
   options,
-}: MarsSwapperBaseConfigQuery<TData>) {
-  return useQuery<ConfigForString, Error, TData>(
-    marsSwapperBaseQueryKeys.config(client?.contractAddress),
-    () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
+}: MarsSwapperBaseAdminQuery<TData>) {
+  return useQuery<AdminResponse, Error, TData>(
+    marsSwapperBaseQueryKeys.admin(client?.contractAddress),
+    () => (client ? client.admin() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
@@ -211,10 +211,10 @@ export function useMarsSwapperBaseSetRouteMutation(
     options,
   )
 }
-export interface MarsSwapperBaseUpdateConfigMutation {
+export interface MarsSwapperBaseUpdateAdminMutation {
   client: MarsSwapperBaseClient
   msg: {
-    owner?: string
+    admin: string
   }
   args?: {
     fee?: number | StdFee | 'auto'
@@ -222,15 +222,14 @@ export interface MarsSwapperBaseUpdateConfigMutation {
     funds?: Coin[]
   }
 }
-export function useMarsSwapperBaseUpdateConfigMutation(
+export function useMarsSwapperBaseUpdateAdminMutation(
   options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsSwapperBaseUpdateConfigMutation>,
+    UseMutationOptions<ExecuteResult, Error, MarsSwapperBaseUpdateAdminMutation>,
     'mutationFn'
   >,
 ) {
-  return useMutation<ExecuteResult, Error, MarsSwapperBaseUpdateConfigMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) =>
-      client.updateConfig(msg, fee, memo, funds),
+  return useMutation<ExecuteResult, Error, MarsSwapperBaseUpdateAdminMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.updateAdmin(msg, fee, memo, funds),
     options,
   )
 }

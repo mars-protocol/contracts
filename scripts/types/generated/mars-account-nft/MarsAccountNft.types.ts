@@ -90,6 +90,9 @@ export type QueryMsg =
       config: {}
     }
   | {
+      next_id: {}
+    }
+  | {
       owner_of: {
         include_expired?: boolean | null
         token_id: string

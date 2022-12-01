@@ -6,7 +6,7 @@
  */
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from '@cosmjs/cosmwasm-stargate'
-import { StdFee } from '@cosmjs/amino'
+import { Coin, StdFee } from '@cosmjs/amino'
 import {
   OracleBaseForString,
   Addr,
@@ -16,19 +16,15 @@ import {
   ExecuteMsg,
   ConfigUpdates,
   QueryMsg,
-  Uint128,
-  Coin,
   ArrayOfVaultPricingInfo,
   OracleBaseForAddr,
   ConfigResponse,
   Decimal,
   PriceResponse,
-  ArrayOfCoin,
 } from './MarsOracleAdapter.types'
 export interface MarsOracleAdapterReadOnlyInterface {
   contractAddress: string
   price: ({ denom }: { denom: string }) => Promise<PriceResponse>
-  priceableUnderlying: ({ coin }: { coin: Coin }) => Promise<ArrayOfCoin>
   config: () => Promise<ConfigResponse>
   pricingInfo: ({ denom }: { denom: string }) => Promise<VaultPricingInfo>
   allPricingInfo: ({
@@ -47,7 +43,6 @@ export class MarsOracleAdapterQueryClient implements MarsOracleAdapterReadOnlyIn
     this.client = client
     this.contractAddress = contractAddress
     this.price = this.price.bind(this)
-    this.priceableUnderlying = this.priceableUnderlying.bind(this)
     this.config = this.config.bind(this)
     this.pricingInfo = this.pricingInfo.bind(this)
     this.allPricingInfo = this.allPricingInfo.bind(this)
@@ -57,13 +52,6 @@ export class MarsOracleAdapterQueryClient implements MarsOracleAdapterReadOnlyIn
     return this.client.queryContractSmart(this.contractAddress, {
       price: {
         denom,
-      },
-    })
-  }
-  priceableUnderlying = async ({ coin }: { coin: Coin }): Promise<ArrayOfCoin> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      priceable_underlying: {
-        coin,
       },
     })
   }

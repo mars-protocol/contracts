@@ -5,6 +5,7 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
+import { Coin } from '@cosmjs/amino'
 import { MsgExecuteContractEncodeObject } from 'cosmwasm'
 import { MsgExecuteContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx'
 import { toUtf8 } from '@cosmjs/encoding'
@@ -17,14 +18,11 @@ import {
   ExecuteMsg,
   ConfigUpdates,
   QueryMsg,
-  Uint128,
-  Coin,
   ArrayOfVaultPricingInfo,
   OracleBaseForAddr,
   ConfigResponse,
   Decimal,
   PriceResponse,
-  ArrayOfCoin,
 } from './MarsOracleAdapter.types'
 export interface MarsOracleAdapterMessage {
   contractAddress: string

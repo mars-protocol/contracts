@@ -409,6 +409,19 @@
         "additionalProperties": false
       },
       {
+        "type": "object",
+        "required": [
+          "next_id"
+        ],
+        "properties": {
+          "next_id": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Return the owner of the given token, error if token does not exist",
         "type": "object",
         "required": [
@@ -1237,6 +1250,13 @@
         }
       },
       "additionalProperties": false
+    },
+    "next_id": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "uint64",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
     },
     "nft_info": {
       "$schema": "http://json-schema.org/draft-07/schema#",

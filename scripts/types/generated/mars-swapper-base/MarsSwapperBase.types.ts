@@ -6,12 +6,12 @@
  */
 
 export interface InstantiateMsg {
-  owner: string
+  admin: string
 }
 export type ExecuteMsg =
   | {
-      update_config: {
-        owner?: string | null
+      update_admin: {
+        admin: string
       }
     }
   | {
@@ -48,7 +48,7 @@ export interface Coin {
 }
 export type QueryMsg =
   | {
-      config: {}
+      admin: {}
     }
   | {
       route: {
@@ -68,8 +68,8 @@ export type QueryMsg =
         denom_out: string
       }
     }
-export interface ConfigForString {
-  owner: string
+export interface AdminResponse {
+  admin?: string | null
 }
 export interface EstimateExactInSwapResponse {
   amount: Uint128
