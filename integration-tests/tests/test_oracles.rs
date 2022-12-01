@@ -286,6 +286,9 @@ fn set_spot_without_pools() {
         &signer,
     )
     .unwrap_err();
+
+    // returns a generic error:
+    // ExecuteError { msg: "failed to execute message; message index: 0: Generic error: Querier contract error: codespace: undefined, code: 1: execute wasm contract failed" }
 }
 
 // set price source to spot and query the price of an asset that is not in the pool - should return an error
@@ -709,6 +712,9 @@ fn redbank_should_fail_if_no_price() {
         depositor,
     )
     .unwrap_err();
+
+    // returns a generic error:
+    // ExecuteError { msg: "failed to execute message; message index: 0: Generic error: Querier contract error: codespace: undefined, code: 1: execute wasm contract failed" }
 }
 
 // execute borrow action in red bank to confirm the redbank is properly querying oracle
