@@ -1,6 +1,6 @@
 import { setupDeployer } from './setupDeployer'
 import { DeploymentConfig } from '../../types/config'
-import { printRed } from '../../utils/chalk'
+import { printGreen, printYellow, printRed } from '../../utils/chalk'
 import { atomAsset, osmoAsset, osmoOracle, atomOracle } from '../osmosis/config'
 
 export const taskRunner = async (config: DeploymentConfig) => {
@@ -34,20 +34,20 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.setOraclePrice(osmoOracle)
 
     // execute actions
-    // printYellow('Testing...')
-    // await deployer.executeDeposit()
-    // await deployer.executeBorrow()
-    // await deployer.executeRepay()
-    // await deployer.executeWithdraw()
-    // await deployer.executeRewardsSwap()
-    // printGreen('ALL TESTS HAVE BEEN SUCCESSFUL')
+    printYellow('Testing...')
+    await deployer.executeDeposit()
+    await deployer.executeBorrow()
+    await deployer.executeRepay()
+    await deployer.executeWithdraw()
+    await deployer.executeRewardsSwap()
+    printGreen('ALL TESTS HAVE BEEN SUCCESSFUL')
 
     // update owner to multisig address
-    // await deployer.updateIncentivesContractOwner()
-    // await deployer.updateRedBankContractOwner()
-    // await deployer.updateOracleContractOwner()
-    // await deployer.updateRewardsContractOwner()
-    // await deployer.updateAddressProviderContractOwner()
+    await deployer.updateIncentivesContractOwner()
+    await deployer.updateRedBankContractOwner()
+    await deployer.updateOracleContractOwner()
+    await deployer.updateRewardsContractOwner()
+    await deployer.updateAddressProviderContractOwner()
   } catch (e) {
     printRed(e)
   } finally {
