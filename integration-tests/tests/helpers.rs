@@ -1,9 +1,13 @@
 #![allow(dead_code)]
 
-use cosmwasm_std::Decimal;
+use cosmwasm_std::{Coin, Decimal};
 use mars_outpost::red_bank::{
     InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
 };
+use osmosis_std::types::osmosis::gamm::v1beta1::{
+    MsgSwapExactAmountIn, MsgSwapExactAmountInResponse, SwapAmountInRoute,
+};
+use osmosis_testing::{Account, ExecuteResponse, OsmosisTestApp, Runner, SigningAccount};
 
 pub fn default_asset_params() -> InitOrUpdateAssetParams {
     InitOrUpdateAssetParams {
@@ -110,4 +114,57 @@ pub mod osmosis {
             _ => panic!("Unhandled error"),
         }
     }
+}
+
+/// Every execution creates new block and block timestamp will +5 secs from last block
+/// (see https://github.com/osmosis-labs/osmosis-rust/issues/53#issuecomment-1311451418).
+///
+/// We need to swap n times to pass twap window size. Every swap moves block 5 sec so
+/// n = window_size / 5 sec.
+pub fn swap_to_create_twap_records(
+    app: &OsmosisTestApp,
+    signer: &SigningAccount,
+    pool_id: u64,
+    coin_in: Coin,
+    denom_out: &str,
+    window_size: u64,
+) {
+    let n = window_size / 5u64;
+    swap_n_times(app, signer, pool_id, coin_in, denom_out, n);
+}
+
+pub fn swap_n_times(
+    app: &OsmosisTestApp,
+    signer: &SigningAccount,
+    pool_id: u64,
+    coin_in: Coin,
+    denom_out: &str,
+    n: u64,
+) {
+    for _ in 0..n {
+        swap(app, signer, pool_id, coin_in.clone(), denom_out);
+    }
+}
+
+pub fn swap(
+    app: &OsmosisTestApp,
+    signer: &SigningAccount,
+    pool_id: u64,
+    coin_in: Coin,
+    denom_out: &str,
+) -> ExecuteResponse<MsgSwapExactAmountInResponse> {
+    app.execute::<_, MsgSwapExactAmountInResponse>(
+        MsgSwapExactAmountIn {
+            sender: signer.address(),
+            routes: vec![SwapAmountInRoute {
+                pool_id,
+                token_out_denom: denom_out.to_string(),
+            }],
+            token_in: Some(coin_in.into()),
+            token_out_min_amount: "1".to_string(),
+        },
+        MsgSwapExactAmountIn::TYPE_URL,
+        signer,
+    )
+    .unwrap()
 }

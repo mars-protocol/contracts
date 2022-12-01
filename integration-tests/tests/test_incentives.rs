@@ -1,12 +1,11 @@
 use cosmwasm_std::{coin, Addr, Uint128};
 
-use mars_testing::integration::mock_env::MockEnvBuilder;
-
 use crate::helpers::default_asset_params;
+use mars_testing::integration::mock_env::MockEnvBuilder;
 
 mod helpers;
 
-// Note: The incentives rewards for an indivdiual is calculated as follows:
+// Note: The incentives rewards for an individual is calculated as follows:
 // (emissions_per_second) * (amount of seconds that the asset has been deposited into the redbank) * (amount of asset user deposited / total amount of asset deposited)
 // this calculation is used to verify that the amount of rewards claimed is accurate in all the tests below
 

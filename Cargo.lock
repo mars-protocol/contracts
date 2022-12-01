@@ -896,8 +896,11 @@ name = "mars-integration-tests"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
+ "mars-oracle-base",
  "mars-oracle-osmosis",
+ "mars-osmosis",
  "mars-outpost",
+ "mars-rewards-collector-base",
  "mars-testing",
  "osmosis-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "osmosis-testing",
