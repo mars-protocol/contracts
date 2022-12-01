@@ -84,11 +84,26 @@ impl Vault {
         Ok(deposit_msg)
     }
 
-    pub fn withdraw_msg(
+    pub fn withdraw_msg(&self, querier: &QuerierWrapper, amount: Uint128) -> StdResult<CosmosMsg> {
+        let vault_info = self.query_info(querier)?;
+        let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: self.address.to_string(),
+            funds: vec![Coin {
+                denom: vault_info.vault_token,
+                amount,
+            }],
+            msg: to_binary(&ExecuteMsg::Redeem {
+                recipient: None,
+                amount,
+            })?,
+        });
+        Ok(withdraw_msg)
+    }
+
+    pub fn force_withdraw_locked_msg(
         &self,
         querier: &QuerierWrapper,
         amount: Uint128,
-        force: bool,
     ) -> StdResult<CosmosMsg> {
         let vault_info = self.query_info(querier)?;
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -97,19 +112,12 @@ impl Vault {
                 denom: vault_info.vault_token,
                 amount,
             }],
-            msg: to_binary(
-                &(if force {
-                    ExecuteMsg::VaultExtension(ExtensionExecuteMsg::ForceUnlock(ForceRedeem {
-                        recipient: None,
-                        amount,
-                    }))
-                } else {
-                    ExecuteMsg::Redeem {
-                        recipient: None,
-                        amount,
-                    }
+            msg: to_binary(&ExecuteMsg::VaultExtension(
+                ExtensionExecuteMsg::ForceUnlock(ForceRedeem {
+                    recipient: None,
+                    amount,
                 }),
-            )?,
+            ))?,
         });
         Ok(withdraw_msg)
     }

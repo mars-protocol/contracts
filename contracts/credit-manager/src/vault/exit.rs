@@ -15,7 +15,6 @@ pub fn exit_vault(
     account_id: &str,
     vault: Vault,
     amount: Uint128,
-    force: bool,
 ) -> ContractResult<Response> {
     assert_vault_is_whitelisted(deps.storage, &vault)?;
 
@@ -25,15 +24,11 @@ pub fn exit_vault(
         deps.storage,
         account_id,
         &vault.address,
-        if force {
-            VaultPositionUpdate::Locked(UpdateType::Decrement(amount))
-        } else {
-            VaultPositionUpdate::Unlocked(UpdateType::Decrement(amount))
-        },
+        VaultPositionUpdate::Unlocked(UpdateType::Decrement(amount)),
     )?;
 
     // Sends vault coins to vault in exchange for underlying assets
-    let withdraw_msg = vault.withdraw_msg(&deps.querier, amount, force)?;
+    let withdraw_msg = vault.withdraw_msg(&deps.querier, amount)?;
 
     // Updates coin balances for account after a vault withdraw has taken place
     let previous_balance =

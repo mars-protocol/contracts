@@ -376,12 +376,7 @@ pub fn execute_callback(
             account_id,
             vault,
             amount,
-        } => exit_vault(deps, env, &account_id, vault, amount, false),
-        CallbackMsg::ForceExitVault {
-            account_id,
-            vault,
-            amount,
-        } => exit_vault(deps, env, &account_id, vault, amount, true),
+        } => exit_vault(deps, env, &account_id, vault, amount),
         CallbackMsg::RequestVaultUnlock {
             account_id,
             vault,

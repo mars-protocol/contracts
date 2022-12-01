@@ -99,7 +99,7 @@ fn liquidate_unlocked(
         VaultPositionUpdate::Unlocked(UpdateType::Decrement(request.amount)),
     )?;
 
-    let vault_withdraw_msg = request_vault.withdraw_msg(&deps.querier, request.amount, false)?;
+    let vault_withdraw_msg = request_vault.withdraw_msg(&deps.querier, request.amount)?;
 
     let update_coin_balance_msg = update_balance_msg(
         &deps.querier,
@@ -225,7 +225,8 @@ fn liquidate_locked(
         VaultPositionUpdate::Locked(UpdateType::Decrement(request.amount)),
     )?;
 
-    let vault_withdraw_msg = request_vault.withdraw_msg(&deps.querier, request.amount, true)?;
+    let vault_withdraw_msg =
+        request_vault.force_withdraw_locked_msg(&deps.querier, request.amount)?;
 
     let update_coin_balance_msg = update_balance_msg(
         &deps.querier,

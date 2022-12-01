@@ -6,7 +6,6 @@ use mars_rover::adapters::vault::VaultBase;
 use mars_rover::error::ContractError;
 use mars_rover::error::ContractError::{NotTokenOwner, NotWhitelisted};
 use mars_rover::msg::execute::Action::{Deposit, EnterVault, ExitVault};
-use mars_rover::msg::execute::CallbackMsg;
 
 use crate::helpers::{
     assert_err, locked_vault_info, lp_token_info, uatom_info, unlocked_vault_info, uosmo_info,
@@ -105,95 +104,6 @@ fn test_no_unlocked_vault_coins_to_withdraw() {
             operand2: STARTING_VAULT_SHARES.to_string(),
         }),
     )
-}
-
-#[test]
-fn test_force_withdraw_can_only_be_called_by_rover() {
-    let leverage_vault = locked_vault_info();
-
-    let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .allowed_vaults(&[leverage_vault.clone()])
-        .build()
-        .unwrap();
-
-    let vault = mock.get_vault(&leverage_vault);
-    let account_id = mock.create_credit_account(&user).unwrap();
-
-    let res = mock.invoke_callback(
-        &user.clone(),
-        CallbackMsg::ForceExitVault {
-            account_id,
-            vault: VaultBase::new(Addr::unchecked(vault.address)),
-            amount: STARTING_VAULT_SHARES,
-        },
-    );
-    assert_err(res, ContractError::ExternalInvocation)
-}
-
-#[test]
-fn test_force_withdraw_breaks_lock() {
-    let lp_token = lp_token_info();
-    let leverage_vault = locked_vault_info();
-
-    let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
-        .fund_account(AccountToFund {
-            addr: user.clone(),
-            funds: vec![lp_token.to_coin(300)],
-        })
-        .build()
-        .unwrap();
-
-    let vault = mock.get_vault(&leverage_vault);
-    let account_id = mock.create_credit_account(&user).unwrap();
-
-    mock.update_credit_account(
-        &account_id,
-        &user,
-        vec![
-            Deposit(lp_token.to_coin(200)),
-            EnterVault {
-                vault: vault.clone(),
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(100)),
-            },
-        ],
-        &[lp_token.to_coin(200)],
-    )
-    .unwrap();
-
-    // Assert token's position
-    let res = mock.query_positions(&account_id);
-    assert_eq!(res.vaults.len(), 1);
-    let v = res.vaults.first().unwrap();
-    assert_eq!(v.amount.locked(), STARTING_VAULT_SHARES);
-
-    mock.invoke_callback(
-        &mock.rover.clone(),
-        CallbackMsg::ForceExitVault {
-            account_id: account_id.clone(),
-            vault: VaultBase::new(Addr::unchecked(vault.address)),
-            amount: STARTING_VAULT_SHARES,
-        },
-    )
-    .unwrap();
-
-    // Assert token's updated position
-    let res = mock.query_positions(&account_id);
-    assert_eq!(res.vaults.len(), 0);
-    let lp = get_coin(&lp_token.denom, &res.coins);
-    assert_eq!(lp.amount, Uint128::from(200u128));
-
-    // Assert Rover indeed has those on hand in the bank
-    let atom = mock.query_balance(&mock.rover, &lp_token.denom);
-    assert_eq!(atom.amount, Uint128::from(200u128));
-
-    // Assert Rover does not have the vault tokens anymore
-    let lp_balance = mock.query_balance(&mock.rover, &leverage_vault.vault_token_denom);
-    assert_eq!(Uint128::zero(), lp_balance.amount);
 }
 
 #[test]

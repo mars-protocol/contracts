@@ -142,13 +142,6 @@ pub enum CallbackMsg {
         /// Total vault coin balance in Rover
         previous_total_balance: Uint128,
     },
-    /// A privileged action only to be used by Rover. Same as `VaultWithdraw` except it bypasses any lockup period
-    /// restrictions on the vault. Used only in the case position is unhealthy and requires immediate liquidation.
-    ForceExitVault {
-        account_id: String,
-        vault: Vault,
-        amount: Uint128,
-    },
     /// Requests unlocking of shares for a vault with a lock period
     RequestVaultUnlock {
         account_id: String,
