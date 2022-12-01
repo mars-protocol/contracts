@@ -60,7 +60,6 @@ pub struct ConfigUpdates {
     pub owner: Option<String>,
     pub allowed_coins: Option<Vec<String>>,
     pub vault_configs: Option<Vec<VaultInstantiateConfig>>,
-    pub red_bank: Option<RedBankUnchecked>,
     pub oracle: Option<OracleUnchecked>,
     pub max_close_factor: Option<Decimal>,
     pub swapper: Option<SwapperUnchecked>,

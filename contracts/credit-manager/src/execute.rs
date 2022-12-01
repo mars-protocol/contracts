@@ -16,8 +16,7 @@ use crate::liquidate_coin::liquidate_coin;
 use crate::refund::refund_coin_balances;
 use crate::repay::repay;
 use crate::state::{
-    ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, ORACLE, OWNER, RED_BANK, SWAPPER, VAULT_CONFIGS,
-    ZAPPER,
+    ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, ORACLE, OWNER, SWAPPER, VAULT_CONFIGS, ZAPPER,
 };
 use crate::swap::swap_exact_in;
 use crate::update_coin_balances::update_coin_balance;
@@ -108,13 +107,6 @@ pub fn update_config(
         response = response
             .add_attribute("key", "vault_configs")
             .add_attribute("value", configs.to_string().fallback("None"))
-    }
-
-    if let Some(unchecked) = new_config.red_bank {
-        RED_BANK.save(deps.storage, &unchecked.check(deps.api)?)?;
-        response = response
-            .add_attribute("key", "red_bank")
-            .add_attribute("value", unchecked.address());
     }
 
     if let Some(unchecked) = new_config.oracle {

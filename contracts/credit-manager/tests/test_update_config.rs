@@ -2,7 +2,7 @@ use cosmwasm_std::{coin, Addr, Decimal};
 
 use mars_rover::adapters::swap::SwapperBase;
 use mars_rover::adapters::vault::{VaultBase, VaultConfig};
-use mars_rover::adapters::{OracleBase, RedBankBase, ZapperBase};
+use mars_rover::adapters::{OracleBase, ZapperBase};
 use mars_rover::error::ContractError;
 use mars_rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
 
@@ -21,7 +21,6 @@ fn test_only_owner_can_update_config() {
             account_nft: None,
             owner: Some(new_owner.to_string()),
             allowed_coins: None,
-            red_bank: None,
             oracle: None,
             max_close_factor: None,
             swapper: None,
@@ -45,7 +44,6 @@ fn test_raises_on_invalid_vaults_config() {
             account_nft: None,
             owner: None,
             allowed_coins: None,
-            red_bank: None,
             oracle: None,
             max_close_factor: None,
             swapper: None,
@@ -70,7 +68,6 @@ fn test_raises_on_invalid_vaults_config() {
             account_nft: None,
             owner: None,
             allowed_coins: None,
-            red_bank: None,
             oracle: None,
             max_close_factor: None,
             swapper: None,
@@ -99,7 +96,6 @@ fn test_update_config_works_with_full_config() {
 
     let new_nft_contract = mock.deploy_new_nft_contract().unwrap();
     let new_owner = Addr::unchecked("new_owner");
-    let new_red_bank = RedBankBase::new("new_red_bank".to_string());
     let new_vault_configs = vec![VaultInstantiateConfig {
         vault: VaultBase::new("vault_contract_3000".to_string()),
         config: VaultConfig {
@@ -121,7 +117,6 @@ fn test_update_config_works_with_full_config() {
             account_nft: Some(new_nft_contract.to_string()),
             owner: Some(new_owner.to_string()),
             allowed_coins: Some(new_allowed_coins.clone()),
-            red_bank: Some(new_red_bank.clone()),
             oracle: Some(new_oracle.clone()),
             max_close_factor: Some(new_close_factor),
             swapper: Some(new_swapper.clone()),
@@ -146,9 +141,6 @@ fn test_update_config_works_with_full_config() {
 
     assert_eq!(new_queried_allowed_coins, new_allowed_coins);
     assert_ne!(new_queried_allowed_coins, original_allowed_coins);
-
-    assert_eq!(&new_config.red_bank, new_red_bank.address());
-    assert_ne!(new_config.red_bank, original_config.red_bank);
 
     assert_eq!(&new_config.oracle, new_oracle.address());
     assert_ne!(new_config.oracle, original_config.oracle);
