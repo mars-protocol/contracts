@@ -9,7 +9,7 @@ use mars_rover::error::{ContractError, ContractResult};
 use mars_rover::traits::{Coins, IntoDecimal};
 
 use crate::query::query_positions;
-use crate::state::{ORACLE, RED_BANK, VAULT_CONFIGS};
+use crate::state::{ALLOWED_COINS, ORACLE, RED_BANK, VAULT_CONFIGS};
 
 // Given Red Bank and Mars-Oracle does not have knowledge of vaults,
 // we cannot use Health::compute_health_from_coins() and must assemble positions manually
@@ -40,6 +40,13 @@ fn get_positions_for_coins(
     let querier = MarsQuerier::new(&deps.querier, oracle.address(), red_bank.address());
     let positions = Health::positions_from_coins(&querier, collateral, debt)?
         .into_values()
+        // If coin has been de-listed, drop MaxLTV to zero
+        .map(|mut p| {
+            if !ALLOWED_COINS.contains(deps.storage, &p.denom) {
+                p.max_ltv = Decimal::zero();
+            }
+            p
+        })
         .collect();
     Ok(positions)
 }

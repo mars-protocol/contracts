@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, BankMsg, Coin, CosmosMsg, DepsMut, Response};
 
 use mars_rover::error::{ContractError, ContractResult};
 
-use crate::utils::{assert_coin_is_whitelisted, decrement_coin_balance};
+use crate::utils::decrement_coin_balance;
 
 pub fn withdraw(
     deps: DepsMut,
@@ -10,8 +10,6 @@ pub fn withdraw(
     coin: Coin,
     recipient: Addr,
 ) -> ContractResult<Response> {
-    assert_coin_is_whitelisted(deps.storage, &coin.denom)?;
-
     if coin.amount.is_zero() {
         return Err(ContractError::NoAmount);
     }

@@ -10,7 +10,7 @@ use mars_rover::msg::ExecuteMsg;
 
 use crate::query::query_vault_positions;
 use crate::state::{COIN_BALANCES, ORACLE, VAULT_CONFIGS};
-use crate::utils::{assert_coins_are_whitelisted, decrement_coin_balance};
+use crate::utils::{assert_coin_is_whitelisted, decrement_coin_balance};
 use crate::vault::utils::{assert_vault_is_whitelisted, update_vault_position};
 
 pub fn enter_vault(
@@ -27,7 +27,7 @@ pub fn enter_vault(
         amount,
     };
 
-    assert_coins_are_whitelisted(deps.storage, vec![denom])?;
+    assert_coin_is_whitelisted(deps.storage, denom)?;
     assert_vault_is_whitelisted(deps.storage, &vault)?;
     assert_denom_matches_vault_reqs(deps.querier, &vault, &coin_to_enter)?;
     assert_deposit_is_under_cap(deps.as_ref(), &vault, &coin_to_enter, rover_addr)?;

@@ -38,26 +38,6 @@ fn test_only_token_owner_can_repay() {
 }
 
 #[test]
-fn test_can_only_repay_what_is_whitelisted() {
-    let coin_info = uosmo_info();
-    let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().allowed_coins(&[coin_info]).build().unwrap();
-    let account_id = mock.create_credit_account(&user).unwrap();
-
-    let res = mock.update_credit_account(
-        &account_id,
-        &user,
-        vec![Repay(coin(234, "usomething"))],
-        &[],
-    );
-
-    assert_err(
-        res,
-        ContractError::NotWhitelisted(String::from("usomething")),
-    )
-}
-
-#[test]
 fn test_repaying_zero_raises() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");

@@ -3,7 +3,7 @@ use cosmwasm_std::{Coin, Decimal, DepsMut, Env, Response};
 use mars_rover::error::{ContractError, ContractResult};
 
 use crate::state::SWAPPER;
-use crate::utils::{assert_coins_are_whitelisted, decrement_coin_balance, update_balance_msg};
+use crate::utils::{assert_coin_is_whitelisted, decrement_coin_balance, update_balance_msg};
 
 pub fn swap_exact_in(
     deps: DepsMut,
@@ -13,7 +13,7 @@ pub fn swap_exact_in(
     denom_out: &str,
     slippage: Decimal,
 ) -> ContractResult<Response> {
-    assert_coins_are_whitelisted(deps.storage, vec![coin_in.denom.as_str(), denom_out])?;
+    assert_coin_is_whitelisted(deps.storage, denom_out)?;
 
     if coin_in.amount.is_zero() {
         return Err(ContractError::NoAmount);

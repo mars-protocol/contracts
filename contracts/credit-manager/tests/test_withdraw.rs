@@ -2,10 +2,10 @@ use cosmwasm_std::OverflowOperation::Sub;
 use cosmwasm_std::{coin, coins, Addr, Coin, OverflowError, Uint128};
 
 use mars_rover::error::ContractError;
-use mars_rover::error::ContractError::{NotTokenOwner, NotWhitelisted};
+use mars_rover::error::ContractError::NotTokenOwner;
 use mars_rover::msg::execute::Action;
 
-use crate::helpers::{assert_err, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv};
+use crate::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv};
 
 pub mod helpers;
 
@@ -121,37 +121,6 @@ fn test_withdraw_but_not_enough_funds() {
             operand2: "400".to_string(),
         }),
     );
-
-    let res = mock.query_positions(&account_id);
-    assert_eq!(res.coins.len(), 0);
-}
-
-#[test]
-fn test_can_only_withdraw_allowed_assets() {
-    let coin_info = uosmo_info();
-    let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
-        .fund_account(AccountToFund {
-            addr: user.clone(),
-            funds: coins(300, coin_info.denom.clone()),
-        })
-        .build()
-        .unwrap();
-    let account_id = mock.create_credit_account(&user).unwrap();
-
-    let not_allowed_coin = ujake_info().to_coin(234);
-    let res = mock.update_credit_account(
-        &account_id,
-        &user,
-        vec![
-            Action::Deposit(coin_info.to_coin(234)),
-            Action::Withdraw(not_allowed_coin.clone()),
-        ],
-        &[coin(234, coin_info.denom)],
-    );
-
-    assert_err(res, NotWhitelisted(not_allowed_coin.denom));
 
     let res = mock.query_positions(&account_id);
     assert_eq!(res.coins.len(), 0);

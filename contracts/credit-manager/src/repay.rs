@@ -5,14 +5,12 @@ use cosmwasm_std::{Coin, Deps, DepsMut, Env, Response, Uint128};
 use mars_rover::error::{ContractError, ContractResult};
 
 use crate::state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES};
-use crate::utils::{assert_coin_is_whitelisted, debt_shares_to_amount, decrement_coin_balance};
+use crate::utils::{debt_shares_to_amount, decrement_coin_balance};
 
 pub fn repay(deps: DepsMut, env: Env, account_id: &str, coin: Coin) -> ContractResult<Response> {
     if coin.amount.is_zero() {
         return Err(ContractError::NoAmount);
     }
-
-    assert_coin_is_whitelisted(deps.storage, &coin.denom)?;
 
     // Ensure repayment does not exceed max debt on account
     let (debt_amount, debt_shares) =

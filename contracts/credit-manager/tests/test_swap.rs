@@ -37,26 +37,6 @@ fn test_only_token_owner_can_swap_for_account() {
 }
 
 #[test]
-fn test_coin_in_must_be_whitelisted() {
-    let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().build().unwrap();
-    let account_id = mock.create_credit_account(&user).unwrap();
-
-    let res = mock.update_credit_account(
-        &account_id,
-        &user,
-        vec![SwapExactIn {
-            coin_in: coin(12, "mars"),
-            denom_out: "osmo".to_string(),
-            slippage: Decimal::from_atomics(6u128, 1).unwrap(),
-        }],
-        &[],
-    );
-
-    assert_err(res, ContractError::NotWhitelisted("mars".to_string()))
-}
-
-#[test]
 fn test_denom_out_must_be_whitelisted() {
     let osmo_info = uosmo_info();
 
