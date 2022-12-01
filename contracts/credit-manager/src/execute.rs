@@ -19,7 +19,8 @@ use crate::liquidate_coin::liquidate_coin;
 use crate::refund::refund_coin_balances;
 use crate::repay::repay;
 use crate::state::{
-    ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, ORACLE, OWNER, SWAPPER, VAULT_CONFIGS, ZAPPER,
+    ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, SWAPPER,
+    VAULT_CONFIGS, ZAPPER,
 };
 use crate::swap::swap_exact_in;
 use crate::update_coin_balances::update_coin_balance;
@@ -141,6 +142,13 @@ pub fn update_config(
         response = response
             .add_attribute("key", "max_close_factor")
             .add_attribute("value", cf.to_string());
+    }
+
+    if let Some(num) = new_config.max_unlocking_positions {
+        MAX_UNLOCKING_POSITIONS.save(deps.storage, &num)?;
+        response = response
+            .add_attribute("key", "max_unlocking_positions")
+            .add_attribute("value", num.to_string());
     }
 
     Ok(response)

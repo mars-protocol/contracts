@@ -1,9 +1,9 @@
-use cosmwasm_std::{Addr, Coin, Deps, StdResult, Storage};
+use cosmwasm_std::{Addr, Coin, Deps, StdResult, Storage, Uint128};
 
 use mars_rover::adapters::vault::{Vault, VaultPositionAmount, VaultPositionUpdate};
 use mars_rover::error::{ContractError, ContractResult};
 
-use crate::state::{VAULT_CONFIGS, VAULT_POSITIONS};
+use crate::state::{MAX_UNLOCKING_POSITIONS, VAULT_CONFIGS, VAULT_POSITIONS};
 use crate::update_coin_balances::query_balance;
 
 pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> ContractResult<()> {
@@ -12,6 +12,28 @@ pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> 
         .and_then(|config| config.whitelisted.then_some(true));
     if config.is_none() {
         return Err(ContractError::NotWhitelisted(vault.address.to_string()));
+    }
+    Ok(())
+}
+
+pub fn assert_under_max_unlocking_limit(
+    storage: &mut dyn Storage,
+    account_id: &str,
+    vault: &Vault,
+) -> ContractResult<()> {
+    let maximum = MAX_UNLOCKING_POSITIONS.load(storage)?;
+    let new_amount = VAULT_POSITIONS
+        .may_load(storage, (account_id, vault.address.clone()))?
+        .map(|p| p.unlocking().positions().len())
+        .map(|len| Uint128::from(len as u128))
+        .unwrap_or(Uint128::zero())
+        .checked_add(Uint128::one())?;
+
+    if new_amount > maximum {
+        return Err(ContractError::ExceedsMaxUnlockingPositions {
+            new_amount,
+            maximum,
+        });
     }
     Ok(())
 }

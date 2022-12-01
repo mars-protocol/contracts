@@ -31,6 +31,12 @@ pub enum ContractError {
     #[error("{0}")]
     DecimalRangeExceeded(#[from] DecimalRangeExceeded),
 
+    #[error("New unlocking positions: {new_amount:?}. Maximum: {maximum:?}.")]
+    ExceedsMaxUnlockingPositions {
+        new_amount: Uint128,
+        maximum: Uint128,
+    },
+
     #[error("Callbacks cannot be invoked externally")]
     ExternalInvocation,
 

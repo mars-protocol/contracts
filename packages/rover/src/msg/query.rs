@@ -157,6 +157,7 @@ pub struct ConfigResponse {
     pub red_bank: String,
     pub oracle: String,
     pub max_close_factor: Decimal,
+    pub max_unlocking_positions: Uint128,
     pub swapper: String,
     pub zapper: String,
 }

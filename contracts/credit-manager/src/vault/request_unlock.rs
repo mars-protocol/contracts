@@ -2,6 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Coin, DepsMut, Reply, Response, Uint128};
 
 use crate::state::VAULT_REQUEST_TEMP_STORAGE;
+use crate::vault::assert_under_max_unlocking_limit;
 use mars_rover::adapters::vault::{
     UnlockingChange, UpdateType, Vault, VaultBase, VaultPositionUpdate, VaultUnlockingPosition,
 };
@@ -24,12 +25,12 @@ pub fn request_vault_unlock(
     amount: Uint128,
 ) -> ContractResult<Response> {
     assert_vault_is_whitelisted(deps.storage, &vault)?;
-
     vault.query_lockup_duration(&deps.querier).map_err(|_| {
         ContractError::RequirementsNotMet(
             "This vault does not require lockup. Call withdraw directly.".to_string(),
         )
     })?;
+    assert_under_max_unlocking_limit(deps.storage, account_id, &vault)?;
 
     update_vault_position(
         deps.storage,

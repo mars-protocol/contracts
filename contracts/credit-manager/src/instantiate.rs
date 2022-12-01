@@ -8,7 +8,8 @@ use mars_rover::msg::instantiate::VaultInstantiateConfig;
 use mars_rover::msg::InstantiateMsg;
 
 use crate::state::{
-    ALLOWED_COINS, MAX_CLOSE_FACTOR, ORACLE, OWNER, RED_BANK, SWAPPER, VAULT_CONFIGS, ZAPPER,
+    ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, RED_BANK, SWAPPER,
+    VAULT_CONFIGS, ZAPPER,
 };
 
 pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
@@ -18,6 +19,7 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
     ORACLE.save(deps.storage, &msg.oracle.check(deps.api)?)?;
     SWAPPER.save(deps.storage, &msg.swapper.check(deps.api)?)?;
     ZAPPER.save(deps.storage, &msg.zapper.check(deps.api)?)?;
+    MAX_UNLOCKING_POSITIONS.save(deps.storage, &msg.max_unlocking_positions)?;
 
     assert_lte_to_one(&msg.max_close_factor)?;
     MAX_CLOSE_FACTOR.save(deps.storage, &msg.max_close_factor)?;

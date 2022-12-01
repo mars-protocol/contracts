@@ -269,3 +269,80 @@ fn test_request_unlocked() {
         }
     }
 }
+
+#[test]
+fn test_cannot_request_more_than_max() {
+    let lp_token = lp_token_info();
+    let leverage_vault = locked_vault_info();
+
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[lp_token.clone()])
+        .allowed_vaults(&[leverage_vault.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![lp_token.to_coin(200)],
+        })
+        .max_unlocking_positions(3)
+        .build()
+        .unwrap();
+
+    let vault = mock.get_vault(&leverage_vault);
+    let account_id = mock.create_credit_account(&user).unwrap();
+
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![
+            Deposit(lp_token.to_coin(200)),
+            EnterVault {
+                vault: vault.clone(),
+                denom: lp_token.denom.clone(),
+                amount: Some(Uint128::new(23)),
+            },
+        ],
+        &[lp_token.to_coin(200)],
+    )
+    .unwrap();
+
+    // First three positions are allowed (at max)
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![
+            RequestVaultUnlock {
+                vault: vault.clone(),
+                amount: Uint128::new(100),
+            },
+            RequestVaultUnlock {
+                vault: vault.clone(),
+                amount: Uint128::new(100),
+            },
+            RequestVaultUnlock {
+                vault: vault.clone(),
+                amount: Uint128::new(100),
+            },
+        ],
+        &[],
+    )
+    .unwrap();
+
+    // next one goes over max
+    let res = mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![RequestVaultUnlock {
+            vault,
+            amount: Uint128::new(100),
+        }],
+        &[],
+    );
+
+    assert_err(
+        res,
+        ContractError::ExceedsMaxUnlockingPositions {
+            new_amount: Uint128::new(4),
+            maximum: Uint128::new(3),
+        },
+    )
+}

@@ -5,7 +5,7 @@ use crate::adapters::ZapperUnchecked;
 use crate::adapters::{OracleUnchecked, RedBankUnchecked};
 use crate::traits::Stringify;
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Decimal;
+use cosmwasm_std::{Decimal, Uint128};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -22,6 +22,10 @@ pub struct InstantiateMsg {
     pub oracle: OracleUnchecked,
     /// The maximum percent a liquidator can decrease the debt amount of the liquidatee
     pub max_close_factor: Decimal,
+    /// The maximum number of unlocking positions an account can have simultaneously
+    /// Note: As health checking requires looping through each, this number must not be too large.
+    ///       If so, having too many could prevent the account from being liquidated due to gas constraints.
+    pub max_unlocking_positions: Uint128,
     /// Helper contract for making swaps
     pub swapper: SwapperUnchecked,
     /// Helper contract for adding/removing liquidity
@@ -62,6 +66,7 @@ pub struct ConfigUpdates {
     pub vault_configs: Option<Vec<VaultInstantiateConfig>>,
     pub oracle: Option<OracleUnchecked>,
     pub max_close_factor: Option<Decimal>,
+    pub max_unlocking_positions: Option<Uint128>,
     pub swapper: Option<SwapperUnchecked>,
     pub zapper: Option<ZapperUnchecked>,
 }

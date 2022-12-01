@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Addr, Decimal};
+use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 
 use mars_rover::adapters::swap::SwapperBase;
 use mars_rover::adapters::vault::{VaultBase, VaultConfig};
@@ -23,6 +23,7 @@ fn test_only_owner_can_update_config() {
             allowed_coins: None,
             oracle: None,
             max_close_factor: None,
+            max_unlocking_positions: None,
             swapper: None,
             vault_configs: None,
             zapper: None,
@@ -46,6 +47,7 @@ fn test_raises_on_invalid_vaults_config() {
             allowed_coins: None,
             oracle: None,
             max_close_factor: None,
+            max_unlocking_positions: None,
             swapper: None,
             vault_configs: Some(vec![VaultInstantiateConfig {
                 vault: VaultBase::new("vault_123".to_string()),
@@ -75,6 +77,7 @@ fn test_raises_on_invalid_vaults_config() {
             allowed_coins: None,
             oracle: None,
             max_close_factor: None,
+            max_unlocking_positions: None,
             swapper: None,
             vault_configs: Some(vec![VaultInstantiateConfig {
                 vault: VaultBase::new("vault_123".to_string()),
@@ -119,6 +122,7 @@ fn test_update_config_works_with_full_config() {
     let new_oracle = OracleBase::new("new_oracle".to_string());
     let new_zapper = ZapperBase::new("new_zapper".to_string());
     let new_close_factor = Decimal::from_atomics(32u128, 2).unwrap();
+    let new_unlocking_max = Uint128::new(321);
     let new_swapper = SwapperBase::new("new_swapper".to_string());
 
     mock.update_config(
@@ -129,6 +133,7 @@ fn test_update_config_works_with_full_config() {
             allowed_coins: Some(new_allowed_coins.clone()),
             oracle: Some(new_oracle.clone()),
             max_close_factor: Some(new_close_factor),
+            max_unlocking_positions: Some(new_unlocking_max),
             swapper: Some(new_swapper.clone()),
             vault_configs: Some(new_vault_configs.clone()),
             zapper: Some(new_zapper.clone()),
@@ -162,6 +167,12 @@ fn test_update_config_works_with_full_config() {
     assert_ne!(
         new_config.max_close_factor,
         original_config.max_close_factor
+    );
+
+    assert_eq!(new_config.max_unlocking_positions, new_unlocking_max);
+    assert_ne!(
+        new_config.max_unlocking_positions,
+        original_config.max_unlocking_positions
     );
 
     assert_eq!(&new_config.swapper, new_swapper.address());
@@ -312,6 +323,7 @@ fn test_raises_on_duplicate_vault_configs() {
             allowed_coins: None,
             oracle: None,
             max_close_factor: None,
+            max_unlocking_positions: None,
             swapper: None,
             vault_configs: Some(vec![
                 VaultInstantiateConfig {
@@ -361,6 +373,7 @@ fn test_raises_on_duplicate_coin_configs() {
             ]),
             oracle: None,
             max_close_factor: None,
+            max_unlocking_positions: None,
             swapper: None,
             vault_configs: None,
             zapper: None,

@@ -65,6 +65,7 @@ pub struct MockEnvBuilder {
     pub set_nft_contract_owner: bool,
     pub accounts_to_fund: Vec<AccountToFund>,
     pub max_close_factor: Option<Decimal>,
+    pub max_unlocking_positions: Option<Uint128>,
 }
 
 #[allow(clippy::new_ret_no_self)]
@@ -83,6 +84,7 @@ impl MockEnv {
             set_nft_contract_owner: true,
             accounts_to_fund: vec![],
             max_close_factor: None,
+            max_unlocking_positions: None,
         }
     }
 
@@ -520,6 +522,7 @@ impl MockEnvBuilder {
             .map(|info| info.denom.clone())
             .collect();
         let max_close_factor = self.get_max_close_factor();
+        let max_unlocking_positions = self.get_max_unlocking_positions();
 
         let mut allowed_vaults = vec![];
         allowed_vaults.extend(self.deploy_vaults());
@@ -538,6 +541,7 @@ impl MockEnvBuilder {
                 red_bank,
                 oracle,
                 max_close_factor,
+                max_unlocking_positions,
                 swapper,
                 zapper,
             },
@@ -804,6 +808,11 @@ impl MockEnvBuilder {
             .unwrap_or_else(|| Decimal::from_atomics(5u128, 1).unwrap()) // 50%
     }
 
+    fn get_max_unlocking_positions(&self) -> Uint128 {
+        self.max_unlocking_positions
+            .unwrap_or_else(|| Uint128::new(100))
+    }
+
     //--------------------------------------------------------------------------------------------------
     // Setter functions
     //--------------------------------------------------------------------------------------------------
@@ -871,6 +880,11 @@ impl MockEnvBuilder {
 
     pub fn max_close_factor(&mut self, cf: Decimal) -> &mut Self {
         self.max_close_factor = Some(cf);
+        self
+    }
+
+    pub fn max_unlocking_positions(&mut self, max: u128) -> &mut Self {
+        self.max_unlocking_positions = Some(Uint128::new(max));
         self
     }
 }
