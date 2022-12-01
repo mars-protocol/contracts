@@ -51,9 +51,6 @@ pub enum ContractError {
     #[error("{reason:?}")]
     InvalidConfig { reason: String },
 
-    #[error("Vault configuration has invalid values")]
-    InvalidVaultConfig {},
-
     #[error("Issued incorrect action for vault type")]
     MismatchedVaultType,
 

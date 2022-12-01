@@ -3,7 +3,6 @@ use cosmwasm_std::{coin, Addr, Decimal};
 use mars_rover::adapters::swap::SwapperBase;
 use mars_rover::adapters::vault::{VaultBase, VaultConfig};
 use mars_rover::adapters::{OracleBase, ZapperBase};
-use mars_rover::error::ContractError;
 use mars_rover::error::ContractError::InvalidConfig;
 use mars_rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
 
@@ -61,7 +60,12 @@ fn test_raises_on_invalid_vaults_config() {
         },
     );
 
-    assert_err(res, ContractError::InvalidVaultConfig {});
+    assert_err(
+        res,
+        InvalidConfig {
+            reason: "max ltv or liquidation threshold are invalid".to_string(),
+        },
+    );
 
     let res = mock.update_config(
         &Addr::unchecked(original_config.owner),
@@ -85,7 +89,12 @@ fn test_raises_on_invalid_vaults_config() {
         },
     );
 
-    assert_err(res, ContractError::InvalidVaultConfig {});
+    assert_err(
+        res,
+        InvalidConfig {
+            reason: "max ltv or liquidation threshold are invalid".to_string(),
+        },
+    );
 }
 
 #[test]
@@ -287,6 +296,81 @@ fn test_max_close_factor_validated_on_update() {
         res,
         InvalidConfig {
             reason: "value greater than one".to_string(),
+        },
+    );
+}
+
+#[test]
+fn test_raises_on_duplicate_vault_configs() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let original_config = mock.query_config();
+    let res = mock.update_config(
+        &Addr::unchecked(original_config.owner),
+        ConfigUpdates {
+            account_nft: None,
+            owner: None,
+            allowed_coins: None,
+            oracle: None,
+            max_close_factor: None,
+            swapper: None,
+            vault_configs: Some(vec![
+                VaultInstantiateConfig {
+                    vault: VaultBase::new("vault_123".to_string()),
+                    config: VaultConfig {
+                        deposit_cap: Default::default(),
+                        max_ltv: Default::default(),
+                        liquidation_threshold: Default::default(),
+                        whitelisted: true,
+                    },
+                },
+                VaultInstantiateConfig {
+                    vault: VaultBase::new("vault_123".to_string()),
+                    config: VaultConfig {
+                        deposit_cap: Default::default(),
+                        max_ltv: Default::default(),
+                        liquidation_threshold: Default::default(),
+                        whitelisted: false,
+                    },
+                },
+            ]),
+            zapper: None,
+        },
+    );
+
+    assert_err(
+        res,
+        InvalidConfig {
+            reason: "Duplicate vault configs present".to_string(),
+        },
+    );
+}
+
+#[test]
+fn test_raises_on_duplicate_coin_configs() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let original_config = mock.query_config();
+    let res = mock.update_config(
+        &Addr::unchecked(original_config.owner),
+        ConfigUpdates {
+            account_nft: None,
+            owner: None,
+            allowed_coins: Some(vec![
+                "uosmo".to_string(),
+                "uatom".to_string(),
+                "uosmo".to_string(),
+            ]),
+            oracle: None,
+            max_close_factor: None,
+            swapper: None,
+            vault_configs: None,
+            zapper: None,
+        },
+    );
+
+    assert_err(
+        res,
+        InvalidConfig {
+            reason: "Duplicate coin configs present".to_string(),
         },
     );
 }

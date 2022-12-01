@@ -1,8 +1,9 @@
-use crate::helpers::{
-    assert_contents_equal, uatom_info, ujake_info, unlocked_vault_info, uosmo_info, CoinInfo,
-    MockEnv, VaultTestInfo,
-};
 use cosmwasm_std::{coin, Decimal};
+
+use crate::helpers::{
+    assert_contents_equal, locked_vault_info, uatom_info, ujake_info, unlocked_vault_info,
+    uosmo_info, CoinInfo, MockEnv, VaultTestInfo,
+};
 
 pub mod helpers;
 
@@ -124,6 +125,17 @@ fn test_raises_on_invalid_vaults_config() {
 }
 
 #[test]
+fn test_duplicate_vaults_raises() {
+    let mock = MockEnv::new()
+        .pre_deployed_vault("addr_123", &locked_vault_info())
+        .pre_deployed_vault("addr_123", &unlocked_vault_info())
+        .build();
+    if mock.is_ok() {
+        panic!("Should have thrown an error");
+    }
+}
+
+#[test]
 fn test_allowed_coins_set_on_instantiate() {
     let allowed_coins = vec![
         uosmo_info(),
@@ -150,6 +162,15 @@ fn test_allowed_coins_set_on_instantiate() {
             .map(|info| info.denom.clone())
             .collect::<Vec<_>>(),
     )
+}
+
+#[test]
+fn test_duplicate_coins_raises() {
+    let allowed_coins = vec![uosmo_info(), uosmo_info(), uatom_info()];
+    let mock = MockEnv::new().allowed_coins(&allowed_coins).build();
+    if mock.is_ok() {
+        panic!("Should have thrown an error");
+    }
 }
 
 #[test]

@@ -12,7 +12,9 @@ use mars_rover::traits::{FallbackStr, Stringify};
 use crate::borrow::borrow;
 use crate::deposit::deposit;
 use crate::health::assert_below_max_ltv;
-use crate::instantiate::assert_lte_to_one;
+use crate::instantiate::{
+    assert_lte_to_one, assert_no_duplicate_coins, assert_no_duplicate_vaults,
+};
 use crate::liquidate_coin::liquidate_coin;
 use crate::refund::refund_coin_balances;
 use crate::repay::repay;
@@ -88,6 +90,7 @@ pub fn update_config(
     }
 
     if let Some(coins) = new_config.allowed_coins {
+        assert_no_duplicate_coins(&coins)?;
         ALLOWED_COINS.clear(deps.storage);
         coins
             .iter()
@@ -99,6 +102,7 @@ pub fn update_config(
     }
 
     if let Some(configs) = new_config.vault_configs {
+        assert_no_duplicate_vaults(&configs)?;
         VAULT_CONFIGS.clear(deps.storage);
         configs.iter().try_for_each(|v| -> ContractResult<_> {
             v.config.check()?;

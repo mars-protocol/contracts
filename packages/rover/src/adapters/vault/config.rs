@@ -2,7 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Decimal};
 
 use crate::error::ContractError;
-use crate::error::ContractError::InvalidVaultConfig;
+use crate::error::ContractError::InvalidConfig;
 
 #[cw_serde]
 pub struct VaultConfig {
@@ -19,7 +19,9 @@ impl VaultConfig {
         let max_ltv_bigger_than_lqt = self.max_ltv > self.liquidation_threshold;
 
         if max_ltv_too_big || lqt_too_big || max_ltv_bigger_than_lqt {
-            return Err(InvalidVaultConfig {});
+            return Err(InvalidConfig {
+                reason: "max ltv or liquidation threshold are invalid".to_string(),
+            });
         }
         Ok(())
     }
