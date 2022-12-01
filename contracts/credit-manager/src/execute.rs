@@ -21,7 +21,7 @@ use crate::state::{
 };
 use crate::swap::swap_exact_in;
 use crate::update_coin_balances::update_coin_balance;
-use crate::utils::assert_is_token_owner;
+use crate::utils::{assert_is_token_owner, assert_not_contract_in_config};
 use crate::vault::{
     assert_only_one_vault_position, enter_vault, exit_vault, exit_vault_unlocked, liquidate_vault,
     request_vault_unlock, update_vault_coin_balance,
@@ -156,6 +156,7 @@ pub fn dispatch_actions(
     actions: &[Action],
 ) -> ContractResult<Response> {
     assert_is_token_owner(&deps, &info.sender, account_id)?;
+    assert_not_contract_in_config(&deps.as_ref(), &info.sender)?;
 
     let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];

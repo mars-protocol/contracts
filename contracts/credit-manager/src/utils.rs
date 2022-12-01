@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::hash::Hash;
 
+use cosmwasm_std::Order::Ascending;
 use cosmwasm_std::{
     to_binary, Addr, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, QuerierWrapper, StdResult,
     Storage, Uint128, WasmMsg,
@@ -15,7 +16,8 @@ use mars_rover::msg::ExecuteMsg;
 use mars_rover::traits::IntoDecimal;
 
 use crate::state::{
-    ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, TOTAL_DEBT_SHARES,
+    ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES,
+    VAULT_CONFIGS, ZAPPER,
 };
 use crate::update_coin_balances::query_balance;
 
@@ -155,6 +157,37 @@ pub fn coin_value(deps: &Deps, coin: &Coin) -> ContractResult<CoinValue> {
         price: res.price,
         value,
     })
+}
+
+/// Contracts we call from Rover should not be attempting to execute actions.
+/// This assertion prevents a kind of reentrancy attack where a contract we call (that turned evil)
+/// can deposit into their own credit account and trick our state updates like update_coin_balances.rs
+/// which rely on pre-post querying of bank balances of Rover.
+/// NOTE: https://twitter.com/larry0x/status/1595919149381079041
+pub fn assert_not_contract_in_config(deps: &Deps, addr_to_flag: &Addr) -> ContractResult<()> {
+    let vault_addrs = VAULT_CONFIGS
+        .keys(deps.storage, None, None, Ascending)
+        .collect::<StdResult<Vec<_>>>()?;
+    let config_contracts = vec![
+        ACCOUNT_NFT.load(deps.storage)?,
+        RED_BANK.load(deps.storage)?.address().clone(),
+        ORACLE.load(deps.storage)?.address().clone(),
+        SWAPPER.load(deps.storage)?.address().clone(),
+        ZAPPER.load(deps.storage)?.address().clone(),
+    ];
+
+    let flagged_addr_in_config = config_contracts
+        .into_iter()
+        .chain(vault_addrs)
+        .any(|addr| addr == *addr_to_flag);
+
+    if flagged_addr_in_config {
+        return Err(ContractError::Unauthorized {
+            user: addr_to_flag.to_string(),
+            action: "execute actions on rover".to_string(),
+        });
+    }
+    Ok(())
 }
 
 pub trait IntoUint128 {

@@ -8,16 +8,20 @@ use mars_rover::adapters::{Oracle, RedBank, Zapper};
 
 use crate::vault::RequestTempStorage;
 
-// Contract config
-pub const OWNER: Item<Addr> = Item::new("owner");
+// Contract dependencies
+// NOTE: Ensure assert_not_contract_in_config() is updated when an external contract is added here
 pub const ACCOUNT_NFT: Item<Addr> = Item::new("account_nft");
-pub const ALLOWED_COINS: Set<&str> = Set::new("allowed_coins");
-pub const VAULT_CONFIGS: Map<&Addr, VaultConfig> = Map::new("vault_configs");
-pub const RED_BANK: Item<RedBank> = Item::new("red_bank");
 pub const ORACLE: Item<Oracle> = Item::new("oracle");
-pub const MAX_CLOSE_FACTOR: Item<Decimal> = Item::new("max_close_factor");
+pub const RED_BANK: Item<RedBank> = Item::new("red_bank");
 pub const SWAPPER: Item<Swapper> = Item::new("swapper");
+pub const VAULT_CONFIGS: Map<&Addr, VaultConfig> = Map::new("vault_configs");
 pub const ZAPPER: Item<Zapper> = Item::new("zapper");
+
+// Config
+pub const OWNER: Item<Addr> = Item::new("owner");
+pub const ALLOWED_COINS: Set<&str> = Set::new("allowed_coins");
+pub const MAX_CLOSE_FACTOR: Item<Decimal> = Item::new("max_close_factor");
+pub const MAX_UNLOCKING_POSITIONS: Item<Uint128> = Item::new("max_unlocking_positions");
 
 // Positions
 pub const COIN_BALANCES: Map<(&str, &str), Uint128> = Map::new("coin_balance"); // Map<(AccountId, Denom), Amount>
