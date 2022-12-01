@@ -194,3 +194,14 @@ fn test_max_close_factor_set_on_instantiate() {
     let mock_default = Decimal::from_atomics(5u128, 1).unwrap();
     assert_eq!(mock_default, res.max_close_factor);
 }
+
+#[test]
+fn test_max_close_factor_validated() {
+    let mock = MockEnv::new()
+        .max_close_factor(Decimal::from_atomics(1244u128, 3).unwrap())
+        .build();
+
+    if mock.is_ok() {
+        panic!("Should have thrown an error: Max close factor should be below 1");
+    }
+}

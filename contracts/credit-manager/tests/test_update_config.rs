@@ -4,6 +4,7 @@ use mars_rover::adapters::swap::SwapperBase;
 use mars_rover::adapters::vault::{VaultBase, VaultConfig};
 use mars_rover::adapters::{OracleBase, ZapperBase};
 use mars_rover::error::ContractError;
+use mars_rover::error::ContractError::InvalidConfig;
 use mars_rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
 
 use crate::helpers::{assert_err, locked_vault_info, uatom_info, uosmo_info, MockEnv};
@@ -268,4 +269,24 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
         original_config.max_close_factor
     );
     assert_eq!(new_config.swapper, original_config.swapper);
+}
+
+#[test]
+fn test_max_close_factor_validated_on_update() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let original_config = mock.query_config();
+    let res = mock.update_config(
+        &Addr::unchecked(original_config.owner),
+        ConfigUpdates {
+            max_close_factor: Some(Decimal::from_atomics(42u128, 1).unwrap()),
+            ..Default::default()
+        },
+    );
+
+    assert_err(
+        res,
+        InvalidConfig {
+            reason: "value greater than one".to_string(),
+        },
+    );
 }

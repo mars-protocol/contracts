@@ -12,6 +12,7 @@ use mars_rover::traits::{FallbackStr, Stringify};
 use crate::borrow::borrow;
 use crate::deposit::deposit;
 use crate::health::assert_below_max_ltv;
+use crate::instantiate::assert_lte_to_one;
 use crate::liquidate_coin::liquidate_coin;
 use crate::refund::refund_coin_balances;
 use crate::repay::repay;
@@ -131,6 +132,7 @@ pub fn update_config(
     }
 
     if let Some(cf) = new_config.max_close_factor {
+        assert_lte_to_one(&cf)?;
         MAX_CLOSE_FACTOR.save(deps.storage, &cf)?;
         response = response
             .add_attribute("key", "max_close_factor")

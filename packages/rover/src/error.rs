@@ -48,6 +48,9 @@ pub enum ContractError {
     )]
     HealthNotImproved { prev_hf: String, new_hf: String },
 
+    #[error("{reason:?}")]
+    InvalidConfig { reason: String },
+
     #[error("Vault configuration has invalid values")]
     InvalidVaultConfig {},
 

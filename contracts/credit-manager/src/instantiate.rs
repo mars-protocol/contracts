@@ -1,6 +1,6 @@
-use cosmwasm_std::DepsMut;
+use cosmwasm_std::{Decimal, DepsMut};
 
-use mars_rover::error::ContractResult;
+use mars_rover::error::{ContractError, ContractResult};
 use mars_rover::msg::InstantiateMsg;
 
 use crate::state::{
@@ -12,9 +12,11 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
     OWNER.save(deps.storage, &owner)?;
     RED_BANK.save(deps.storage, &msg.red_bank.check(deps.api)?)?;
     ORACLE.save(deps.storage, &msg.oracle.check(deps.api)?)?;
-    MAX_CLOSE_FACTOR.save(deps.storage, &msg.max_close_factor)?;
     SWAPPER.save(deps.storage, &msg.swapper.check(deps.api)?)?;
     ZAPPER.save(deps.storage, &msg.zapper.check(deps.api)?)?;
+
+    assert_lte_to_one(&msg.max_close_factor)?;
+    MAX_CLOSE_FACTOR.save(deps.storage, &msg.max_close_factor)?;
 
     msg.allowed_vaults
         .iter()
@@ -28,5 +30,14 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
         .iter()
         .try_for_each(|denom| ALLOWED_COINS.insert(deps.storage, denom).map(|_| ()))?;
 
+    Ok(())
+}
+
+pub fn assert_lte_to_one(dec: &Decimal) -> ContractResult<()> {
+    if dec > &Decimal::one() {
+        return Err(ContractError::InvalidConfig {
+            reason: "value greater than one".to_string(),
+        });
+    }
     Ok(())
 }
