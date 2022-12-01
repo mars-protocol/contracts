@@ -8,7 +8,7 @@ use osmosis_std::shim::Timestamp;
 use osmosis_std::types::cosmos::base::v1beta1::Coin;
 use osmosis_std::types::osmosis::gamm::v1beta1::{PoolAsset, PoolParams, QueryPoolRequest};
 use osmosis_std::types::osmosis::gamm::v2::GammQuerier;
-use osmosis_std::types::osmosis::twap::v2::TwapQuerier;
+use osmosis_std::types::osmosis::twap::v1beta1::TwapQuerier;
 
 use serde::{Deserialize, Serialize};
 
@@ -75,6 +75,7 @@ pub fn query_spot_price(
 
 /// Query the twap price of a coin, denominated in OSMO.
 /// `start_time` must be within 48 hours of current block time.
+#[allow(deprecated)] // FIXME: arithmetic_twap_to_now shouldn't be deprecated, make clippy happy for now
 pub fn query_twap_price(
     querier: &QuerierWrapper,
     pool_id: u64,
@@ -82,13 +83,10 @@ pub fn query_twap_price(
     quote_denom: &str,
     start_time: u64,
 ) -> StdResult<Decimal> {
-    // NOTE: Currency pair consists of base and quote asset (base/quote). Twap query has it swapped.
-    // For example:
-    // if we want to check the price ATOM/OSMO then we pass base_asset = OSMO, quote_asset = ATOM
     let arithmetic_twap_res = TwapQuerier::new(querier).arithmetic_twap_to_now(
         pool_id,
-        quote_denom.to_string(),
         base_denom.to_string(),
+        quote_denom.to_string(),
         Some(Timestamp {
             seconds: start_time as i64,
             nanos: 0,

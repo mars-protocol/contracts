@@ -4,7 +4,7 @@ use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError
 use mars_osmosis::helpers::QueryPoolResponse;
 use osmosis_std::types::osmosis::gamm::v1beta1::QueryPoolRequest;
 use osmosis_std::types::osmosis::gamm::v2::{QuerySpotPriceRequest, QuerySpotPriceResponse};
-use osmosis_std::types::osmosis::twap::v2::{
+use osmosis_std::types::osmosis::twap::v1beta1::{
     ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse,
 };
 use prost::{DecodeError, Message};
@@ -42,7 +42,7 @@ impl OsmosisQuerier {
             }
         }
 
-        if path == "/osmosis.twap.v2.Query/ArithmeticTwapToNow" {
+        if path == "/osmosis.twap.v1beta1.Query/ArithmeticTwapToNow" {
             let parse_osmosis_query: Result<ArithmeticTwapToNowRequest, DecodeError> =
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
@@ -89,8 +89,8 @@ impl OsmosisQuerier {
     fn handle_query_twap_request(&self, request: ArithmeticTwapToNowRequest) -> QuerierResult {
         let price_key = PriceKey {
             pool_id: request.pool_id,
-            denom_in: request.quote_asset,
-            denom_out: request.base_asset,
+            denom_in: request.base_asset,
+            denom_out: request.quote_asset,
         };
         let res: ContractResult<Binary> = match self.twap_prices.get(&price_key) {
             Some(query_response) => to_binary(&query_response).into(),

@@ -1,6 +1,6 @@
 use cosmwasm_std::{coin, Decimal};
 use osmosis_std::types::osmosis::gamm::v2::QuerySpotPriceResponse;
-use osmosis_std::types::osmosis::twap::v2::ArithmeticTwapToNowResponse;
+use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
 use mars_outpost::oracle::{PriceResponse, QueryMsg};
 
