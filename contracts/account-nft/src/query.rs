@@ -1,6 +1,7 @@
-use crate::state::PENDING_OWNER;
+use crate::config::UncheckedConfig;
+use crate::state::CONFIG;
 use cosmwasm_std::{Deps, StdResult};
 
-pub fn query_proposed_new_owner(deps: Deps) -> StdResult<String> {
-    Ok(PENDING_OWNER.load(deps.storage)?.into())
+pub fn query_config(deps: Deps) -> StdResult<UncheckedConfig> {
+    Ok(CONFIG.load(deps.storage)?.into())
 }

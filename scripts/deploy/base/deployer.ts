@@ -67,6 +67,8 @@ export class Deployer {
 
   async instantiateNftContract() {
     const msg: NftInstantiateMsg = {
+      credit_manager: this.storage.addresses.creditManager!,
+      max_value_for_burn: this.config.maxValueForBurn.toString(),
       minter: this.deployerAddr,
       name: 'credit-manger-accounts',
       symbol: 'rover-nft',

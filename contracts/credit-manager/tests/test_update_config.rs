@@ -97,7 +97,7 @@ fn test_update_config_works_with_full_config() {
     let original_allowed_coins = mock.query_allowed_coins(None, None);
     let original_vault_configs = mock.query_vault_configs(None, None);
 
-    let new_nft_contract = mock.deploy_nft_contract().unwrap();
+    let new_nft_contract = mock.deploy_new_nft_contract().unwrap();
     let new_owner = Addr::unchecked("new_owner");
     let new_red_bank = RedBankBase::new("new_red_bank".to_string());
     let new_vault_configs = vec![VaultInstantiateConfig {
@@ -173,7 +173,7 @@ fn test_update_config_works_with_some_config() {
     let original_allowed_coins = mock.query_allowed_coins(None, None);
     let original_vault_configs = mock.query_vault_configs(None, None);
 
-    let new_nft_contract = mock.deploy_nft_contract().unwrap();
+    let new_nft_contract = mock.deploy_new_nft_contract().unwrap();
     let new_vault_configs = vec![VaultInstantiateConfig {
         vault: VaultBase::new("vault_contract_1".to_string()),
         config: VaultConfig {

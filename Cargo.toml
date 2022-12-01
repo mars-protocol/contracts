@@ -14,6 +14,7 @@ members = [
     "contracts/mock-red-bank",
     "contracts/mock-vault",
     "contracts/mock-zapper",
+    "contracts/mock-credit-manager",
 ]
 
 [workspace.package]
@@ -37,7 +38,7 @@ cw2             = "0.16"
 cw721           = "0.16"
 cw721-base      = { version = "0.16", features = ["library"] }
 cw-item-set     = { version = "0.6", default-features = false, features = ["iterator"] }
-cw-multi-test   = "0.13"
+cw-multi-test   = "0.16"
 cw-utils        = "0.16"
 cw-storage-plus = "0.16"
 osmosis-std     = "0.12"
@@ -57,11 +58,12 @@ mars-oracle-adapter = { version = "1.0.0", path = "contracts/oracle-adapter", fe
 mars-swapper-base   = { version = "1.0.0", path = "./contracts/swapper/base" }
 
 # mocks
-mars-mock-oracle   = { version = "1.0.0", path = "./contracts/mock-oracle", features = ["library"] }
-mars-mock-red-bank = { version = "1.0.0", path = "./contracts/mock-red-bank", features = ["library"] }
-mars-mock-vault    = { version = "1.0.0", path = "./contracts/mock-vault", features = ["library"] }
-mars-mock-zapper   = { version = "1.0.0", path = "./contracts/mock-zapper", features = ["library"] }
-mars-swapper-mock  = { version = "1.0.0", path = "./contracts/swapper/mock", features = ["library"] }
+mars-mock-credit-manager  = { version = "1.0.0", path = "./contracts/mock-credit-manager", features = ["library"] }
+mars-mock-oracle          = { version = "1.0.0", path = "./contracts/mock-oracle", features = ["library"] }
+mars-mock-red-bank        = { version = "1.0.0", path = "./contracts/mock-red-bank", features = ["library"] }
+mars-mock-vault           = { version = "1.0.0", path = "./contracts/mock-vault", features = ["library"] }
+mars-mock-zapper          = { version = "1.0.0", path = "./contracts/mock-zapper", features = ["library"] }
+mars-swapper-mock         = { version = "1.0.0", path = "./contracts/swapper/mock", features = ["library"] }
 
 [profile.release]
 opt-level = 3

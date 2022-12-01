@@ -6,9 +6,10 @@ use cosmwasm_std::{coins, Addr, Coin, Decimal, Empty, Uint128};
 use cosmwasm_vault_standard::extensions::lockup::{LockupQueryMsg, UnlockingPosition};
 use cosmwasm_vault_standard::msg::VaultStandardQueryMsg::{Info as VaultInfoMsg, VaultExtension};
 use cosmwasm_vault_standard::msg::{ExtensionQueryMsg, VaultInfoResponse};
-use cw721_base::InstantiateMsg as NftInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
+use mars_account_nft::msg::InstantiateMsg as NftInstantiateMsg;
 
+use mars_account_nft::config::ConfigUpdates as NftConfigUpdates;
 use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use mars_mock_oracle::msg::{
     CoinPrice, ExecuteMsg as OracleExecuteMsg, InstantiateMsg as OracleInstantiateMsg,
@@ -133,12 +134,13 @@ impl MockEnv {
         )
     }
 
-    pub fn deploy_nft_contract(&mut self) -> AnyResult<Addr> {
-        let nft_contract = deploy_nft_contract(&mut self.app, &self.rover.clone());
-        propose_new_nft_contract_owner(
+    pub fn deploy_new_nft_contract(&mut self) -> AnyResult<Addr> {
+        let nft_minter = Addr::unchecked("original_nft_minter");
+        let nft_contract = deploy_nft_contract(&mut self.app, &nft_minter);
+        propose_new_nft_minter(
             &mut self.app,
             nft_contract.clone(),
-            &self.rover.clone(),
+            &nft_minter.clone(),
             &self.rover.clone(),
         );
         Ok(nft_contract)
@@ -476,17 +478,12 @@ impl MockEnvBuilder {
     }
 
     fn deploy_nft_contract(&mut self, rover: &Addr) {
-        let nft_contract_owner = Addr::unchecked("original_nft_contract_owner");
+        let nft_minter = Addr::unchecked("original_nft_minter");
 
         if self.deploy_nft_contract {
-            let nft_contract = deploy_nft_contract(&mut self.app, &nft_contract_owner);
+            let nft_contract = deploy_nft_contract(&mut self.app, &nft_minter);
             if self.set_nft_contract_owner {
-                propose_new_nft_contract_owner(
-                    &mut self.app,
-                    nft_contract.clone(),
-                    &nft_contract_owner,
-                    rover,
-                );
+                propose_new_nft_minter(&mut self.app, nft_contract.clone(), &nft_minter, rover);
                 self.update_config(
                     rover,
                     ConfigUpdates {
@@ -882,15 +879,16 @@ impl MockEnvBuilder {
 // Shared utils between MockBuilder & MockEnv
 //--------------------------------------------------------------------------------------------------
 
-fn deploy_nft_contract(app: &mut App, owner: &Addr) -> Addr {
+fn deploy_nft_contract(app: &mut App, minter: &Addr) -> Addr {
     let nft_contract_code_id = app.store_code(mock_account_nft_contract());
     app.instantiate_contract(
         nft_contract_code_id,
-        owner.clone(),
+        minter.clone(),
         &NftInstantiateMsg {
+            max_value_for_burn: Default::default(),
             name: "Rover Credit Account".to_string(),
             symbol: "RCA".to_string(),
-            minter: owner.to_string(),
+            minter: minter.to_string(),
         },
         &[],
         "manager-mock-account-nft",
@@ -899,15 +897,13 @@ fn deploy_nft_contract(app: &mut App, owner: &Addr) -> Addr {
     .unwrap()
 }
 
-fn propose_new_nft_contract_owner(
-    app: &mut App,
-    nft_contract: Addr,
-    nft_contract_owner: &Addr,
-    rover: &Addr,
-) {
-    let proposal_msg: NftExecuteMsg = NftExecuteMsg::ProposeNewOwner {
-        new_owner: rover.to_string(),
+fn propose_new_nft_minter(app: &mut App, nft_contract: Addr, old_minter: &Addr, new_minter: &Addr) {
+    let proposal_msg: NftExecuteMsg = NftExecuteMsg::UpdateConfig {
+        updates: NftConfigUpdates {
+            max_value_for_burn: None,
+            proposed_new_minter: Some(new_minter.into()),
+        },
     };
-    app.execute_contract(nft_contract_owner.clone(), nft_contract, &proposal_msg, &[])
+    app.execute_contract(old_minter.clone(), nft_contract, &proposal_msg, &[])
         .unwrap();
 }

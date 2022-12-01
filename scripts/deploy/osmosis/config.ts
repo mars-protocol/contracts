@@ -50,4 +50,5 @@ export const osmosisTestnetConfig: DeploymentConfig = {
     { denom: 'uosmo', amount: 3, price: 1 },
   ],
   unzapAmount: 1000000,
+  maxValueForBurn: 1000000,
 }

@@ -7,13 +7,22 @@
     "title": "InstantiateMsg",
     "type": "object",
     "required": [
+      "max_value_for_burn",
       "minter",
       "name",
       "symbol"
     ],
     "properties": {
+      "max_value_for_burn": {
+        "description": "The maximum amount of Debts + Collaterals for an account before burns are disallowed for the NFT. Meant to prevent accidental account deletions.",
+        "allOf": [
+          {
+            "$ref": "#/definitions/Decimal"
+          }
+        ]
+      },
       "minter": {
-        "description": "The minter is the only one who can create new NFTs. This is designed for a base NFT that is controlled by an external program or contract. You will likely replace this with custom logic in custom NFTs",
+        "description": "The minter is the only one who can create new NFTs. Initially this likely will be the contract deployer. However, this role should be transferred through a config update to the Credit Manager. It is separate because some blockchains are permissioned and contracts go through governance and are instantiated separately.",
         "type": "string"
       },
       "name": {
@@ -25,27 +34,33 @@
         "type": "string"
       }
     },
-    "additionalProperties": false
+    "additionalProperties": false,
+    "definitions": {
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+        "type": "string"
+      }
+    }
   },
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "ExecuteMsg",
     "oneOf": [
       {
-        "description": "Due to some chains being permissioned via governance, we must instantiate this contract first and give ownership access to Rover contract with this action after both are independently deployed.",
+        "description": "Update config in storage. Only minter can execute.",
         "type": "object",
         "required": [
-          "propose_new_owner"
+          "update_config"
         ],
         "properties": {
-          "propose_new_owner": {
+          "update_config": {
             "type": "object",
             "required": [
-              "new_owner"
+              "updates"
             ],
             "properties": {
-              "new_owner": {
-                "type": "string"
+              "updates": {
+                "$ref": "#/definitions/ConfigUpdates"
               }
             },
             "additionalProperties": false
@@ -54,13 +69,13 @@
         "additionalProperties": false
       },
       {
-        "description": "Accept the proposed ownership transfer",
+        "description": "Accept the proposed minter role. Only the proposed new minter can execute.",
         "type": "object",
         "required": [
-          "accept_ownership"
+          "accept_minter_role"
         ],
         "properties": {
-          "accept_ownership": {
+          "accept_minter_role": {
             "type": "object",
             "additionalProperties": false
           }
@@ -81,6 +96,28 @@
             ],
             "properties": {
               "user": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Burn an NFT the sender has access to. Will attempt to query the Credit Manager first to ensure the balance is below the config set threshold.",
+        "type": "object",
+        "required": [
+          "burn"
+        ],
+        "properties": {
+          "burn": {
+            "type": "object",
+            "required": [
+              "token_id"
+            ],
+            "properties": {
+              "token_id": {
                 "type": "string"
               }
             },
@@ -260,33 +297,37 @@
           }
         },
         "additionalProperties": false
-      },
-      {
-        "description": "Burn an NFT the sender has access to",
-        "type": "object",
-        "required": [
-          "burn"
-        ],
-        "properties": {
-          "burn": {
-            "type": "object",
-            "required": [
-              "token_id"
-            ],
-            "properties": {
-              "token_id": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
       }
     ],
     "definitions": {
       "Binary": {
         "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+        "type": "string"
+      },
+      "ConfigUpdates": {
+        "type": "object",
+        "properties": {
+          "max_value_for_burn": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "proposed_new_minter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
         "type": "string"
       },
       "Expiration": {
@@ -357,10 +398,10 @@
       {
         "type": "object",
         "required": [
-          "proposed_new_owner"
+          "config"
         ],
         "properties": {
-          "proposed_new_owner": {
+          "config": {
             "type": "object",
             "additionalProperties": false
           }
@@ -1138,6 +1179,32 @@
         }
       }
     },
+    "config": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ConfigBase_for_String",
+      "type": "object",
+      "required": [
+        "max_value_for_burn"
+      ],
+      "properties": {
+        "max_value_for_burn": {
+          "$ref": "#/definitions/Decimal"
+        },
+        "proposed_new_minter": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        }
+      }
+    },
     "contract_info": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "ContractInfoResponse",
@@ -1324,11 +1391,6 @@
           "type": "string"
         }
       }
-    },
-    "proposed_new_owner": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "String",
-      "type": "string"
     },
     "tokens": {
       "$schema": "http://json-schema.org/draft-07/schema#",

@@ -19,6 +19,7 @@ fn main() -> std::io::Result<()> {
         "mars-mock-vault",
         "mars-mock-oracle",
         "mars-mock-zapper",
+        "mars-mock-credit-manager",
     ];
 
     for contract in contracts {

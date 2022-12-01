@@ -20,12 +20,12 @@ export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProp
     await deployer.upload('creditManager', wasmFile('mars_credit_manager'))
 
     // Instantiate contracts
-    await deployer.instantiateNftContract()
     await deployer.instantiateMockVault()
     await deployer.instantiateMarsOracleAdapter()
     await deployer.instantiateSwapper()
     await deployer.instantiateZapper()
     await deployer.instantiateCreditManager()
+    await deployer.instantiateNftContract()
     await deployer.transferNftContractOwnership()
     await deployer.grantCreditLines()
     await deployer.setupOraclePricesForZapDenoms()

@@ -43,4 +43,5 @@ export interface DeploymentConfig {
   lpToken: { denom: string; price: number }
   zap: { amount: number; denom: string; price: number }[]
   unzapAmount: number
+  maxValueForBurn: number
 }

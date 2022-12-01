@@ -1,17 +1,18 @@
-use std::convert::TryInto;
-
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 use cw2::set_contract_version;
-use cw721_base::{ContractError, Cw721Contract, InstantiateMsg};
+use cw721_base::Cw721Contract;
+use std::convert::TryInto;
 
-use crate::execute::{accept_ownership, mint, propose_new_owner};
-use crate::msg::{ExecuteMsg, QueryMsg};
-use crate::query::query_proposed_new_owner;
-use crate::state::NEXT_ID;
+use crate::config::Config;
+use crate::error::ContractError;
+use crate::execute::{accept_ownership, burn, mint, update_config};
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::query::query_config;
+use crate::state::{CONFIG, NEXT_ID};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -32,7 +33,16 @@ pub fn instantiate(
         CONTRACT_VERSION,
     )?;
     NEXT_ID.save(deps.storage, &1)?;
-    Parent::default().instantiate(deps, env, info, msg)
+
+    CONFIG.save(
+        deps.storage,
+        &Config {
+            max_value_for_burn: msg.max_value_for_burn,
+            proposed_new_minter: None,
+        },
+    )?;
+
+    Parent::default().instantiate(deps, env, info, msg.into())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -44,16 +54,19 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint { user } => mint(deps, env, info, &user),
-        ExecuteMsg::ProposeNewOwner { new_owner } => propose_new_owner(deps, info, &new_owner),
-        ExecuteMsg::AcceptOwnership {} => accept_ownership(deps, info),
-        _ => Parent::default().execute(deps, env, info, msg.try_into()?),
+        ExecuteMsg::UpdateConfig { updates } => update_config(deps, info, updates),
+        ExecuteMsg::AcceptMinterRole {} => accept_ownership(deps, info),
+        ExecuteMsg::Burn { token_id } => burn(deps, env, info, token_id),
+        _ => Parent::default()
+            .execute(deps, env, info, msg.try_into()?)
+            .map_err(Into::into),
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::ProposedNewOwner {} => to_binary(&query_proposed_new_owner(deps)?),
+        QueryMsg::Config {} => to_binary(&query_config(deps)?),
         _ => Parent::default().query(deps, env, msg.try_into()?),
     }
 }
