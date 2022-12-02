@@ -436,6 +436,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-storage-plus"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ea7f23066698f2792fd6ede927dfe8297486537516e6f9993764986bcb89933"
+dependencies = [
+ "cosmwasm-std",
+ "k256",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "cw-utils"
 version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -452,13 +465,15 @@ dependencies = [
 
 [[package]]
 name = "cw-utils"
-version = "0.16.0"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6a84c6c1c0acc3616398eba50783934bd6c964bad6974241eaee3460c8f5b26"
+checksum = "b50d0cac456f98b4339b78e890fbe60e4dfe888c87abacc1129fc3fe34bbe20a"
 dependencies = [
+ "anyhow",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw2 0.16.0",
+ "k256",
  "schemars",
  "semver",
  "serde",
@@ -483,6 +498,19 @@ name = "cw2"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "91398113b806f4d2a8d5f8d05684704a20ffd5968bf87e3473e1973710b884ad"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.16.0",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw2"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03bdf3747540b47bc1bdaf50ba3aa5e4276ab0c2ce73e8b367ebe260cc37ff9c"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -907,8 +935,8 @@ dependencies = [
  "bech32",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 0.16.0",
- "cw2 0.16.0",
+ "cw-storage-plus 1.0.0",
+ "cw2 1.0.0",
  "mars-outpost",
  "serde",
  "thiserror",
@@ -929,8 +957,8 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 0.16.0",
- "cw2 0.16.0",
+ "cw-storage-plus 1.0.0",
+ "cw2 1.0.0",
  "mars-outpost",
  "mars-testing",
  "thiserror",
@@ -957,7 +985,7 @@ name = "mars-oracle-base"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "cw-storage-plus 0.16.0",
+ "cw-storage-plus 1.0.0",
  "mars-outpost",
  "schemars",
  "serde",
@@ -970,8 +998,8 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 0.16.0",
- "cw2 0.16.0",
+ "cw-storage-plus 1.0.0",
+ "cw2 1.0.0",
  "mars-oracle-base",
  "mars-osmosis",
  "mars-outpost",
@@ -1007,9 +1035,9 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 0.16.0",
- "cw-utils 0.16.0",
- "cw2 0.16.0",
+ "cw-storage-plus 1.0.0",
+ "cw-utils 1.0.0",
+ "cw2 1.0.0",
  "mars-health",
  "mars-outpost",
  "mars-testing",
@@ -1021,7 +1049,7 @@ name = "mars-rewards-collector-base"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
- "cw-storage-plus 0.16.0",
+ "cw-storage-plus 1.0.0",
  "mars-outpost",
  "mars-testing",
  "schemars",
@@ -1035,8 +1063,8 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 0.16.0",
- "cw2 0.16.0",
+ "cw-storage-plus 1.0.0",
+ "cw2 1.0.0",
  "mars-osmosis",
  "mars-outpost",
  "mars-rewards-collector-base",
