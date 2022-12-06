@@ -871,6 +871,12 @@
         "oracle": {
           "type": "string"
         },
+        "proposed_new_admin": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "red_bank": {
           "type": "string"
         },

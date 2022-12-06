@@ -2,7 +2,7 @@ use cosmwasm_std::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DecimalRangeExceeded, OverflowError,
     StdError, Uint128,
 };
-use cw_controllers::AdminError;
+use cw_controllers_admin_fork::AdminError;
 use thiserror::Error;
 
 use crate::coins::Coins;

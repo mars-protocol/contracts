@@ -20,9 +20,11 @@ use crate::utils::debt_shares_to_amount;
 const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
 
-pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
+pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
+    let admin_state = ADMIN.query(deps.storage)?;
     Ok(ConfigResponse {
-        admin: ADMIN.get(deps)?.map(Into::into),
+        admin: admin_state.admin,
+        proposed_new_admin: admin_state.proposed,
         account_nft: ACCOUNT_NFT
             .may_load(deps.storage)?
             .map(|addr| addr.to_string()),

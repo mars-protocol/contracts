@@ -15,7 +15,7 @@
   "dependencies": {
     "@cosmjs/cosmwasm-stargate": "^0.29.4",
     "@cosmjs/stargate": "^0.29.4",
-    "@cosmwasm/ts-codegen": "^0.23.0",
+    "@cosmwasm/ts-codegen": "^0.24.0",
     "chalk": "4.1.2",
     "cosmjs-types": "^0.5.2",
     "lodash": "^4.17.21",

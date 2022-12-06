@@ -8,6 +8,7 @@ members = [
     "packages/health",
     "packages/outpost",
     "packages/rover",
+    "packages/controllers",
 
     # Mock contracts
     "contracts/mock-oracle",
@@ -49,10 +50,11 @@ serde           = { version = "1.0", default-features = false, features = ["deri
 thiserror       = "1.0"
 
 # packages
-cosmwasm-vault-standard = { version = "0.1.0", features = ["lockup", "force-unlock"] }
-mars-health             = { version = "1.0.0", path = "./packages/health" }
-mars-outpost            = { version = "1.0.0", path = "./packages/outpost" }
-mars-rover              = { version = "1.0.0", path = "./packages/rover" }
+cosmwasm-vault-standard   = { version = "0.1.0", features = ["lockup", "force-unlock"] }
+cw-controllers-admin-fork = { version = "1.0.0", path = "./packages/controllers" }
+mars-health               = { version = "1.0.0", path = "./packages/health" }
+mars-outpost              = { version = "1.0.0", path = "./packages/outpost" }
+mars-rover                = { version = "1.0.0", path = "./packages/rover" }
 
 # contracts
 mars-account-nft    = { version = "1.0.0", path = "./contracts/account-nft", features = ["library"] }

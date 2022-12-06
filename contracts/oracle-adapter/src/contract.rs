@@ -6,6 +6,8 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
 
+use cw_controllers_admin_fork::AdminExecuteUpdate;
+use cw_controllers_admin_fork::AdminUpdate::InitializeAdmin;
 use mars_outpost::oracle::PriceResponse;
 use mars_rover::adapters::vault::VaultBase;
 use mars_rover::adapters::Oracle;
@@ -30,12 +32,15 @@ pub fn instantiate(
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
-) -> StdResult<Response> {
+) -> ContractResult<Response> {
     set_contract_version(
         deps.storage,
         &format!("crates.io:{}", CONTRACT_NAME),
         CONTRACT_VERSION,
     )?;
+
+    let admin = deps.api.addr_validate(&msg.admin)?;
+    ADMIN.update(deps.storage, InitializeAdmin { admin })?;
 
     let oracle = msg.oracle.check(deps.api)?;
     ORACLE.save(deps.storage, &oracle)?;
@@ -43,9 +48,6 @@ pub fn instantiate(
     for info in msg.vault_pricing {
         VAULT_PRICING_INFO.save(deps.storage, &info.vault_coin_denom, &info)?;
     }
-
-    let admin = deps.api.addr_validate(&msg.admin)?;
-    ADMIN.set(deps, Some(admin))?;
 
     Ok(Response::default())
 }
@@ -59,6 +61,7 @@ pub fn execute(
 ) -> ContractResult<Response> {
     match msg {
         ExecuteMsg::UpdateConfig { new_config } => update_config(deps, info, new_config),
+        ExecuteMsg::UpdateAdmin(update) => update_admin(deps, info, update),
     }
 }
 
@@ -139,8 +142,10 @@ fn calculate_preview_redeem(
 }
 
 fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
+    let res = ADMIN.query(deps.storage)?;
     Ok(ConfigResponse {
-        admin: ADMIN.get(deps)?,
+        admin: res.admin,
+        proposed_new_admin: res.proposed,
         oracle: ORACLE.load(deps.storage)?,
     })
 }
@@ -150,7 +155,7 @@ pub fn update_config(
     info: MessageInfo,
     new_config: ConfigUpdates,
 ) -> ContractResult<Response> {
-    ADMIN.assert_admin(deps.as_ref(), &info.sender)?;
+    ADMIN.assert_admin(deps.storage, &info.sender)?;
 
     let mut response =
         Response::new().add_attribute("action", "rover/oracle-adapter/update_config");
@@ -181,13 +186,13 @@ pub fn update_config(
             .add_attribute("value", value_str);
     }
 
-    if let Some(addr_str) = new_config.admin {
-        let validated = deps.api.addr_validate(&addr_str)?;
-        ADMIN.set(deps, Some(validated))?;
-        response = response
-            .add_attribute("key", "owner")
-            .add_attribute("value", addr_str);
-    }
-
     Ok(response)
+}
+
+pub fn update_admin(
+    deps: DepsMut,
+    info: MessageInfo,
+    update: AdminExecuteUpdate,
+) -> ContractResult<Response> {
+    Ok(ADMIN.execute_update(deps, info, update)?)
 }

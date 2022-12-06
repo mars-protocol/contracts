@@ -154,6 +154,7 @@ pub struct VaultPositionValue {
 #[cw_serde]
 pub struct ConfigResponse {
     pub admin: Option<String>,
+    pub proposed_new_admin: Option<String>,
     pub account_nft: Option<String>,
     pub red_bank: String,
     pub oracle: String,

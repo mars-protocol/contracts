@@ -18,20 +18,20 @@ backtraces = ["cosmwasm-std/backtraces"]
 library    = []
 
 [dependencies]
-cosmwasm-schema         = { workspace = true }
-cosmwasm-std            = { workspace = true }
-cosmwasm-vault-standard = { workspace = true }
-cw2                     = { workspace = true }
-cw721                   = { workspace = true }
-cw721-base              = { workspace = true }
-cw-controllers          = { workspace = true }
-cw-item-set             = { workspace = true }
-cw-storage-plus         = { workspace = true }
-mars-account-nft        = { workspace = true }
-mars-health             = { workspace = true }
-mars-outpost            = { workspace = true }
-mars-oracle-adapter     = { workspace = true }
-mars-rover              = { workspace = true }
+cosmwasm-schema           = { workspace = true }
+cosmwasm-std              = { workspace = true }
+cosmwasm-vault-standard   = { workspace = true }
+cw2                       = { workspace = true }
+cw721                     = { workspace = true }
+cw721-base                = { workspace = true }
+cw-controllers-admin-fork = { workspace = true }
+cw-item-set               = { workspace = true }
+cw-storage-plus           = { workspace = true }
+mars-account-nft          = { workspace = true }
+mars-health               = { workspace = true }
+mars-outpost              = { workspace = true }
+mars-oracle-adapter       = { workspace = true }
+mars-rover                = { workspace = true }
 
 [dev-dependencies]
 anyhow             = { workspace = true }

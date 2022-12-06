@@ -1,5 +1,5 @@
 use cosmwasm_std::{CheckedFromRatioError, DecimalRangeExceeded, OverflowError, StdError};
-use cw_controllers::AdminError;
+use cw_controllers_admin_fork::AdminError;
 use thiserror::Error;
 
 use mars_rover::error::ContractError as RoverError;

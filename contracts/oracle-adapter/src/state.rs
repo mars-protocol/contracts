@@ -1,4 +1,4 @@
-use cw_controllers::Admin;
+use cw_controllers_admin_fork::Admin;
 use cw_storage_plus::{Item, Map};
 use mars_rover::adapters::Oracle;
 

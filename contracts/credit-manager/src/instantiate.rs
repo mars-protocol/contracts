@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use cosmwasm_std::{Decimal, DepsMut};
 
+use cw_controllers_admin_fork::AdminUpdate::InitializeAdmin;
 use mars_rover::error::ContractError::InvalidConfig;
 use mars_rover::error::ContractResult;
 use mars_rover::msg::instantiate::VaultInstantiateConfig;
@@ -14,6 +15,9 @@ use crate::state::{
 };
 
 pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
+    let admin = deps.api.addr_validate(&msg.admin)?;
+    ADMIN.update(deps.storage, InitializeAdmin { admin })?;
+
     RED_BANK.save(deps.storage, &msg.red_bank.check(deps.api)?)?;
     ORACLE.save(deps.storage, &msg.oracle.check(deps.api)?)?;
     SWAPPER.save(deps.storage, &msg.swapper.check(deps.api)?)?;
@@ -36,9 +40,6 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
     msg.allowed_coins
         .iter()
         .try_for_each(|denom| ALLOWED_COINS.insert(deps.storage, denom).map(|_| ()))?;
-
-    let admin = deps.api.addr_validate(&msg.admin)?;
-    ADMIN.set(deps, Some(admin))?;
 
     Ok(())
 }

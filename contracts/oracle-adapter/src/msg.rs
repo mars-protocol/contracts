@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Decimal};
+use cw_controllers_admin_fork::AdminExecuteUpdate;
 
 use mars_rover::adapters::{Oracle, OracleUnchecked};
 
@@ -19,6 +20,7 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub enum ExecuteMsg {
     UpdateConfig { new_config: ConfigUpdates },
+    UpdateAdmin(AdminExecuteUpdate),
 }
 
 #[cw_serde]
@@ -43,14 +45,14 @@ pub enum QueryMsg {
 
 #[cw_serde]
 pub struct ConfigResponse {
-    pub admin: Option<Addr>,
+    pub admin: Option<String>,
+    pub proposed_new_admin: Option<String>,
     pub oracle: Oracle,
 }
 
 #[cw_serde]
 #[derive(Default)]
 pub struct ConfigUpdates {
-    pub admin: Option<String>,
     pub oracle: Option<OracleUnchecked>,
     pub vault_pricing: Option<Vec<VaultPricingInfo>>,
 }

@@ -61,7 +61,6 @@ impl Stringify for Vec<VaultInstantiateConfig> {
 #[derive(Default)]
 pub struct ConfigUpdates {
     pub account_nft: Option<String>,
-    pub admin: Option<String>,
     pub allowed_coins: Option<Vec<String>>,
     pub vault_configs: Option<Vec<VaultInstantiateConfig>>,
     pub oracle: Option<OracleUnchecked>,

@@ -407,6 +407,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-controllers-admin-fork"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "cw-item-set"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -937,7 +950,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-vault-standard",
- "cw-controllers",
+ "cw-controllers-admin-fork",
  "cw-item-set",
  "cw-multi-test",
  "cw-storage-plus",
@@ -1030,7 +1043,7 @@ dependencies = [
  "anyhow",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-controllers",
+ "cw-controllers-admin-fork",
  "cw-multi-test",
  "cw-storage-plus",
  "cw-utils",
@@ -1068,6 +1081,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-vault-standard",
  "cw-controllers",
+ "cw-controllers-admin-fork",
  "cw-storage-plus",
  "cw-utils",
  "mars-health",

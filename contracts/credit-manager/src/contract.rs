@@ -8,7 +8,7 @@ use mars_rover::error::{ContractError, ContractResult};
 use mars_rover::msg::query::HealthResponse;
 use mars_rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::execute::{create_credit_account, dispatch_actions, execute_callback, update_config};
+use crate::execute::{create_credit_account, dispatch_actions, execute_callback};
 use crate::health::compute_health;
 use crate::instantiate::store_config;
 use crate::query::{
@@ -17,6 +17,7 @@ use crate::query::{
     query_config, query_positions, query_total_debt_shares, query_total_vault_coin_balance,
     query_vault_configs,
 };
+use crate::update_config::{update_admin, update_config};
 use crate::vault::handle_unlock_request_reply;
 use crate::zap::{estimate_provide_liquidity, estimate_withdraw_liquidity};
 
@@ -49,6 +50,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::CreateCreditAccount {} => create_credit_account(deps, info.sender),
         ExecuteMsg::UpdateConfig { new_config } => update_config(deps, info, new_config),
+        ExecuteMsg::UpdateAdmin(update) => update_admin(deps, info, update),
         ExecuteMsg::Callback(callback) => execute_callback(deps, info, env, callback),
         ExecuteMsg::UpdateCreditAccount {
             account_id,

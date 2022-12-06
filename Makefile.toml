@@ -14,7 +14,7 @@ script = """
 if [[ $(arch) == "arm64" ]]; then
   image="cosmwasm/workspace-optimizer-arm64:0.12.8"
 else
-  image="cosmwasm/workspace-optimizer:0.12.9"
+  image="cosmwasm/workspace-optimizer:0.12.10"
 fi
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \

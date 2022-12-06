@@ -1,5 +1,5 @@
 use cosmwasm_std::Addr;
-use cw_controllers::AdminError::NotAdmin;
+use cw_controllers_admin_fork::AdminError::NotAdmin;
 use cw_multi_test::{App, Executor};
 
 use mars_oracle_adapter::error::ContractError::AdminError;
@@ -39,16 +39,14 @@ fn test_update_config_works_with_full_config() {
         .query_wasm_smart(contract_addr.to_string(), &QueryMsg::Config {})
         .unwrap();
 
-    let new_owner = Addr::unchecked("new_owner");
     let new_oracle = OracleUnchecked::new("new_oracle".to_string());
     let new_vault_pricing = vec![];
 
     app.execute_contract(
-        original_config.admin.clone().unwrap(),
+        Addr::unchecked(original_config.admin.clone().unwrap()),
         contract_addr.clone(),
         &ExecuteMsg::UpdateConfig {
             new_config: ConfigUpdates {
-                admin: Some(new_owner.to_string()),
                 oracle: Some(new_oracle),
                 vault_pricing: Some(new_vault_pricing),
             },
@@ -62,8 +60,11 @@ fn test_update_config_works_with_full_config() {
         .query_wasm_smart(contract_addr.to_string(), &QueryMsg::Config {})
         .unwrap();
 
-    assert_ne!(new_config.admin, original_config.admin);
-    assert_eq!(new_config.admin, Some(new_owner));
+    assert_eq!(new_config.admin, original_config.admin);
+    assert_eq!(
+        new_config.proposed_new_admin,
+        original_config.proposed_new_admin
+    );
 
     assert_ne!(new_config.oracle, original_config.oracle);
     assert_eq!(
@@ -106,11 +107,10 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
         .unwrap();
 
     app.execute_contract(
-        original_config.admin.clone().unwrap(),
+        Addr::unchecked(original_config.admin.clone().unwrap()),
         contract_addr.clone(),
         &ExecuteMsg::UpdateConfig {
             new_config: ConfigUpdates {
-                admin: None,
                 oracle: None,
                 vault_pricing: None,
             },
@@ -125,6 +125,10 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
         .unwrap();
 
     assert_eq!(new_config.admin, original_config.admin);
+    assert_eq!(
+        new_config.proposed_new_admin,
+        original_config.proposed_new_admin
+    );
     assert_eq!(new_config.oracle, original_config.oracle);
 
     let new_pricing_infos: Vec<VaultPricingInfo> = app

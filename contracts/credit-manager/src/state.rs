@@ -1,5 +1,5 @@
 use cosmwasm_std::{Addr, Decimal, Uint128};
-use cw_controllers::Admin;
+use cw_controllers_admin_fork::Admin;
 use cw_item_set::Set;
 use cw_storage_plus::{Item, Map};
 
