@@ -4,10 +4,10 @@ use cosmwasm_std::{
     to_binary, Addr, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
 };
 use cw2::set_contract_version;
+use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
 use cw_storage_plus::Bound;
 
-use cw_controllers_admin_fork::AdminExecuteUpdate;
-use cw_controllers_admin_fork::AdminUpdate::InitializeAdmin;
+use cw_controllers_admin_fork::AdminUpdate;
 use mars_outpost::oracle::PriceResponse;
 use mars_rover::adapters::vault::VaultBase;
 use mars_rover::adapters::Oracle;
@@ -39,8 +39,7 @@ pub fn instantiate(
         CONTRACT_VERSION,
     )?;
 
-    let admin = deps.api.addr_validate(&msg.admin)?;
-    ADMIN.update(deps.storage, InitializeAdmin { admin })?;
+    ADMIN.initialize(deps.storage, deps.api, SetInitialAdmin { admin: msg.admin })?;
 
     let oracle = msg.oracle.check(deps.api)?;
     ORACLE.save(deps.storage, &oracle)?;
@@ -192,7 +191,7 @@ pub fn update_config(
 pub fn update_admin(
     deps: DepsMut,
     info: MessageInfo,
-    update: AdminExecuteUpdate,
+    update: AdminUpdate,
 ) -> ContractResult<Response> {
-    Ok(ADMIN.execute_update(deps, info, update)?)
+    Ok(ADMIN.update(deps, info, update)?)
 }

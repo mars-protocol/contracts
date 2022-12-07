@@ -1,5 +1,5 @@
 use cosmwasm_std::Addr;
-use cw_controllers_admin_fork::AdminExecuteUpdate;
+use cw_controllers_admin_fork::AdminUpdate;
 use cw_multi_test::{App, Executor};
 
 use mars_oracle_adapter::msg::{ConfigResponse, ExecuteMsg, QueryMsg};
@@ -37,7 +37,7 @@ fn test_propose_new_admin() {
     app.execute_contract(
         bad_guy.clone(),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminExecuteUpdate::ProposeNewAdmin {
+        &ExecuteMsg::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
             proposed: bad_guy.to_string(),
         }),
         &[],
@@ -47,7 +47,7 @@ fn test_propose_new_admin() {
     app.execute_contract(
         Addr::unchecked(original_config.admin.clone().unwrap()),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminExecuteUpdate::ProposeNewAdmin {
+        &ExecuteMsg::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
             proposed: new_admin.clone(),
         }),
         &[],
@@ -81,7 +81,7 @@ fn test_clear_proposed() {
     app.execute_contract(
         Addr::unchecked(original_config.admin.clone().unwrap()),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminExecuteUpdate::ProposeNewAdmin {
+        &ExecuteMsg::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
             proposed: new_admin.clone(),
         }),
         &[],
@@ -100,7 +100,7 @@ fn test_clear_proposed() {
     app.execute_contract(
         bad_guy,
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminExecuteUpdate::ClearProposed),
+        &ExecuteMsg::UpdateAdmin(AdminUpdate::ClearProposed),
         &[],
     )
     .unwrap_err();
@@ -108,7 +108,7 @@ fn test_clear_proposed() {
     app.execute_contract(
         Addr::unchecked(original_config.admin.clone().unwrap()),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminExecuteUpdate::ClearProposed),
+        &ExecuteMsg::UpdateAdmin(AdminUpdate::ClearProposed),
         &[],
     )
     .unwrap();
@@ -140,7 +140,7 @@ fn test_accept_admin_role() {
     app.execute_contract(
         Addr::unchecked(original_config.admin.clone().unwrap()),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminExecuteUpdate::ProposeNewAdmin {
+        &ExecuteMsg::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
             proposed: new_admin.clone(),
         }),
         &[],
@@ -151,7 +151,7 @@ fn test_accept_admin_role() {
     app.execute_contract(
         Addr::unchecked(original_config.admin.unwrap()),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminExecuteUpdate::AcceptProposed),
+        &ExecuteMsg::UpdateAdmin(AdminUpdate::AcceptProposed),
         &[],
     )
     .unwrap_err();
@@ -159,7 +159,7 @@ fn test_accept_admin_role() {
     app.execute_contract(
         Addr::unchecked(new_admin.clone()),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminExecuteUpdate::AcceptProposed),
+        &ExecuteMsg::UpdateAdmin(AdminUpdate::AcceptProposed),
         &[],
     )
     .unwrap();

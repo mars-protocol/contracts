@@ -6,7 +6,7 @@ use cosmwasm_std::{coins, Addr, Coin, Decimal, Empty, Uint128};
 use cosmwasm_vault_standard::extensions::lockup::{LockupQueryMsg, UnlockingPosition};
 use cosmwasm_vault_standard::msg::VaultStandardQueryMsg::{Info as VaultInfoMsg, VaultExtension};
 use cosmwasm_vault_standard::msg::{ExtensionQueryMsg, VaultInfoResponse};
-use cw_controllers_admin_fork::AdminExecuteUpdate;
+use cw_controllers_admin_fork::AdminUpdate;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_account_nft::msg::InstantiateMsg as NftInstantiateMsg;
 
@@ -192,11 +192,7 @@ impl MockEnv {
         )
     }
 
-    pub fn update_admin(
-        &mut self,
-        sender: &Addr,
-        update: AdminExecuteUpdate,
-    ) -> AnyResult<AppResponse> {
+    pub fn update_admin(&mut self, sender: &Addr, update: AdminUpdate) -> AnyResult<AppResponse> {
         self.app.execute_contract(
             sender.clone(),
             self.rover.clone(),

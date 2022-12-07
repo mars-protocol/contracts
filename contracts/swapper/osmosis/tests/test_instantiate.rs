@@ -1,5 +1,5 @@
 use cosmwasm_std::coin;
-use cw_controllers::AdminResponse;
+use cw_controllers_admin_fork::AdminResponse;
 use osmosis_testing::{Account, Module, OsmosisTestApp, Wasm};
 
 use mars_rover::adapters::swap::{InstantiateMsg, QueryMsg};

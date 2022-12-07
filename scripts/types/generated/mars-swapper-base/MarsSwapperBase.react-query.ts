@@ -11,6 +11,7 @@ import { StdFee } from '@cosmjs/amino'
 import {
   InstantiateMsg,
   ExecuteMsg,
+  AdminUpdate,
   Uint128,
   Decimal,
   Addr,
@@ -214,9 +215,6 @@ export function useMarsSwapperBaseSetRouteMutation(
 }
 export interface MarsSwapperBaseUpdateAdminMutation {
   client: MarsSwapperBaseClient
-  msg: {
-    admin: string
-  }
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string

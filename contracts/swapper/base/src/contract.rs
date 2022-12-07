@@ -4,9 +4,10 @@ use cosmwasm_std::{
     to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Deps,
     DepsMut, Env, MessageInfo, Order, Response, WasmMsg,
 };
-use cw_controllers::{Admin, AdminResponse};
 use cw_storage_plus::{Bound, Map};
 
+use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
+use cw_controllers_admin_fork::{Admin, AdminUpdate};
 use mars_rover::adapters::swap::{
     EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
     RoutesResponse,
@@ -60,8 +61,8 @@ where
         deps: DepsMut<Q>,
         msg: InstantiateMsg,
     ) -> ContractResult<Response<M>> {
-        let validated = deps.api.addr_validate(&msg.admin)?;
-        self.admin.set(deps, Some(validated))?;
+        self.admin
+            .initialize(deps.storage, deps.api, SetInitialAdmin { admin: msg.admin })?;
         Ok(Response::default())
     }
 
@@ -73,7 +74,7 @@ where
         msg: ExecuteMsg<R>,
     ) -> ContractResult<Response<M>> {
         match msg {
-            ExecuteMsg::UpdateAdmin { admin } => self.update_admin(deps, info.sender, &admin),
+            ExecuteMsg::UpdateAdmin(update) => self.update_admin(deps, info, update),
             ExecuteMsg::SetRoute {
                 denom_in,
                 denom_out,
@@ -94,7 +95,7 @@ where
 
     pub fn query(&self, deps: Deps<Q>, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         let res = match msg {
-            QueryMsg::Admin {} => to_binary(&self.query_admin(deps)?),
+            QueryMsg::Admin {} => to_binary(&self.admin.query(deps.storage)?),
             QueryMsg::EstimateExactInSwap { coin_in, denom_out } => {
                 to_binary(&self.estimate_exact_in_swap(deps, env, coin_in, denom_out)?)
             }
@@ -107,10 +108,6 @@ where
             }
         };
         res.map_err(Into::into)
-    }
-
-    fn query_admin(&self, deps: Deps<Q>) -> ContractResult<AdminResponse> {
-        Ok(self.admin.query_admin(deps)?)
     }
 
     fn query_route(
@@ -244,7 +241,7 @@ where
         denom_out: String,
         route: R,
     ) -> ContractResult<Response<M>> {
-        self.admin.assert_admin(deps.as_ref(), &sender)?;
+        self.admin.assert_admin(deps.storage, &sender)?;
 
         route.validate(&deps.querier, &denom_in, &denom_out)?;
 
@@ -261,16 +258,9 @@ where
     fn update_admin(
         &self,
         deps: DepsMut<Q>,
-        sender: Addr,
-        admin: &str,
+        info: MessageInfo,
+        update: AdminUpdate,
     ) -> ContractResult<Response<M>> {
-        self.admin.assert_admin(deps.as_ref(), &sender)?;
-        let validated = deps.api.addr_validate(admin)?;
-        self.admin.set(deps, Some(validated))?;
-
-        Ok(Response::new()
-            .add_attribute("action", "rover/swapper-base/update_admin")
-            .add_attribute("key", "owner")
-            .add_attribute("value", admin))
+        Ok(self.admin.update(deps, info, update)?)
     }
 }

@@ -1,3 +1,3 @@
 mod admin;
 
-pub use admin::{Admin, AdminError, AdminExecuteUpdate, AdminResponse, AdminUpdate};
+pub use admin::{Admin, AdminError, AdminInit, AdminResponse, AdminUpdate};

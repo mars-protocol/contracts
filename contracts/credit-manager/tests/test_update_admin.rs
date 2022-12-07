@@ -1,6 +1,6 @@
 use cosmwasm_std::Addr;
 use cw_controllers_admin_fork::AdminError::{NotAdmin, NotProposedAdmin, StateTransitionError};
-use cw_controllers_admin_fork::AdminExecuteUpdate;
+use cw_controllers_admin_fork::AdminUpdate;
 use mars_rover::error::ContractError::AdminError;
 
 use crate::helpers::{assert_err, MockEnv};
@@ -27,7 +27,7 @@ fn test_propose_new_admin() {
     let bad_guy = Addr::unchecked("bad_guy");
     let res = mock.update_admin(
         &bad_guy,
-        AdminExecuteUpdate::ProposeNewAdmin {
+        AdminUpdate::ProposeNewAdmin {
             proposed: bad_guy.to_string(),
         },
     );
@@ -35,7 +35,7 @@ fn test_propose_new_admin() {
 
     mock.update_admin(
         &Addr::unchecked(original_config.admin.clone().unwrap()),
-        AdminExecuteUpdate::ProposeNewAdmin {
+        AdminUpdate::ProposeNewAdmin {
             proposed: new_admin.clone(),
         },
     )
@@ -60,7 +60,7 @@ fn test_clear_proposed() {
 
     mock.update_admin(
         &Addr::unchecked(original_config.admin.clone().unwrap()),
-        AdminExecuteUpdate::ProposeNewAdmin {
+        AdminUpdate::ProposeNewAdmin {
             proposed: new_admin.clone(),
         },
     )
@@ -72,12 +72,12 @@ fn test_clear_proposed() {
 
     // only admin can clear
     let bad_guy = Addr::unchecked("bad_guy");
-    let res = mock.update_admin(&bad_guy, AdminExecuteUpdate::ClearProposed);
+    let res = mock.update_admin(&bad_guy, AdminUpdate::ClearProposed);
     assert_err(res, AdminError(NotAdmin {}));
 
     mock.update_admin(
         &Addr::unchecked(original_config.admin.clone().unwrap()),
-        AdminExecuteUpdate::ClearProposed,
+        AdminUpdate::ClearProposed,
     )
     .unwrap();
 
@@ -100,7 +100,7 @@ fn test_accept_admin_role() {
 
     mock.update_admin(
         &Addr::unchecked(original_config.admin.clone().unwrap()),
-        AdminExecuteUpdate::ProposeNewAdmin {
+        AdminUpdate::ProposeNewAdmin {
             proposed: new_admin.clone(),
         },
     )
@@ -109,13 +109,13 @@ fn test_accept_admin_role() {
     // Only proposed admin can accept
     let res = mock.update_admin(
         &Addr::unchecked(original_config.admin.unwrap()),
-        AdminExecuteUpdate::AcceptProposed,
+        AdminUpdate::AcceptProposed,
     );
     assert_err(res, AdminError(NotProposedAdmin {}));
 
     mock.update_admin(
         &Addr::unchecked(new_admin.clone()),
-        AdminExecuteUpdate::AcceptProposed,
+        AdminUpdate::AcceptProposed,
     )
     .unwrap();
 
@@ -132,12 +132,12 @@ fn test_abolish_admin_role() {
 
     // Only admin can abolish role
     let bad_guy = Addr::unchecked("bad_guy");
-    let res = mock.update_admin(&bad_guy, AdminExecuteUpdate::AbolishAdminRole);
+    let res = mock.update_admin(&bad_guy, AdminUpdate::AbolishAdminRole);
     assert_err(res, AdminError(NotAdmin {}));
 
     mock.update_admin(
         &Addr::unchecked(original_config.admin.clone().unwrap()),
-        AdminExecuteUpdate::AbolishAdminRole,
+        AdminUpdate::AbolishAdminRole,
     )
     .unwrap();
 
@@ -149,8 +149,8 @@ fn test_abolish_admin_role() {
     // No new updates can occur
     let res = mock.update_admin(
         &Addr::unchecked(original_config.admin.clone().unwrap()),
-        AdminExecuteUpdate::InitializeAdmin {
-            admin: original_config.admin.unwrap(),
+        AdminUpdate::ProposeNewAdmin {
+            proposed: original_config.admin.unwrap(),
         },
     );
     assert_err(res, AdminError(StateTransitionError {}));

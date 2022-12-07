@@ -10,6 +10,7 @@ import { StdFee } from '@cosmjs/amino'
 import {
   InstantiateMsg,
   ExecuteMsg,
+  AdminUpdate,
   Uint128,
   Decimal,
   Addr,
@@ -111,11 +112,6 @@ export interface MarsSwapperBaseInterface extends MarsSwapperBaseReadOnlyInterfa
   contractAddress: string
   sender: string
   updateAdmin: (
-    {
-      admin,
-    }: {
-      admin: string
-    },
     fee?: number | StdFee | 'auto',
     memo?: string,
     funds?: Coin[],
@@ -183,11 +179,6 @@ export class MarsSwapperBaseClient
   }
 
   updateAdmin = async (
-    {
-      admin,
-    }: {
-      admin: string
-    },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     funds?: Coin[],
@@ -196,9 +187,7 @@ export class MarsSwapperBaseClient
       this.sender,
       this.contractAddress,
       {
-        update_admin: {
-          admin,
-        },
+        update_admin: {},
       },
       fee,
       memo,

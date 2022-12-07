@@ -56,7 +56,7 @@ export type ExecuteMsg =
       }
     }
   | {
-      update_admin: AdminExecuteUpdate
+      update_admin: AdminUpdate
     }
   | {
       callback: CallbackMsg
@@ -137,18 +137,15 @@ export type Action =
       refund_all_coin_balances: {}
     }
 export type VaultPositionType = 'u_n_l_o_c_k_e_d' | 'l_o_c_k_e_d' | 'u_n_l_o_c_k_i_n_g'
-export type AdminExecuteUpdate =
-  | ('clear_proposed' | 'accept_proposed' | 'abolish_admin_role')
-  | {
-      initialize_admin: {
-        admin: string
-      }
-    }
+export type AdminUpdate =
   | {
       propose_new_admin: {
         proposed: string
       }
     }
+  | 'clear_proposed'
+  | 'accept_proposed'
+  | 'abolish_admin_role'
 export type CallbackMsg =
   | {
       withdraw: {

@@ -27,7 +27,7 @@ pub fn execute(
     msg: ExecuteMsg<Empty>,
 ) -> StdResult<Response> {
     match msg {
-        ExecuteMsg::UpdateAdmin { .. } => unimplemented!("not implemented"),
+        ExecuteMsg::UpdateAdmin(_) => unimplemented!("not implemented"),
         ExecuteMsg::SetRoute { .. } => unimplemented!("not implemented"),
         ExecuteMsg::TransferResult { .. } => unimplemented!("not implemented"),
         ExecuteMsg::SwapExactIn {

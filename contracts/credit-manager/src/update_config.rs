@@ -1,6 +1,6 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, MessageInfo, Response, WasmMsg};
 
-use cw_controllers_admin_fork::AdminExecuteUpdate;
+use cw_controllers_admin_fork::AdminUpdate;
 use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use mars_rover::error::ContractResult;
 use mars_rover::msg::instantiate::ConfigUpdates;
@@ -109,7 +109,7 @@ pub fn update_config(
 pub fn update_admin(
     deps: DepsMut,
     info: MessageInfo,
-    update: AdminExecuteUpdate,
+    update: AdminUpdate,
 ) -> ContractResult<Response> {
-    Ok(ADMIN.execute_update(deps, info, update)?)
+    Ok(ADMIN.update(deps, info, update)?)
 }

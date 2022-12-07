@@ -1,6 +1,6 @@
 use cosmwasm_std::coin;
 use cosmwasm_std::StdError::GenericErr;
-use cw_controllers::AdminError;
+use cw_controllers_admin_fork::AdminError;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
 use osmosis_testing::{Gamm, Module, OsmosisTestApp, Wasm};
 

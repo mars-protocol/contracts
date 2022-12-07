@@ -14,7 +14,7 @@ import {
   InstantiateMsg,
   VaultPricingInfo,
   ExecuteMsg,
-  AdminExecuteUpdate,
+  AdminUpdate,
   ConfigUpdates,
   QueryMsg,
   ArrayOfVaultPricingInfo,

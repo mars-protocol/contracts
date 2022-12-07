@@ -20,7 +20,6 @@ backtraces = ["cosmwasm-std/backtraces"]
 cosmwasm-schema           = { workspace = true }
 cosmwasm-std              = { workspace = true }
 cosmwasm-vault-standard   = { workspace = true }
-cw-controllers            = { workspace = true }
 cw-controllers-admin-fork = { workspace = true }
 cw-storage-plus           = { workspace = true }
 cw-utils                  = { workspace = true }

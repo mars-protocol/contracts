@@ -26,20 +26,17 @@ export type ExecuteMsg =
       }
     }
   | {
-      update_admin: AdminExecuteUpdate
+      update_admin: AdminUpdate
     }
-export type AdminExecuteUpdate =
-  | ('clear_proposed' | 'accept_proposed' | 'abolish_admin_role')
-  | {
-      initialize_admin: {
-        admin: string
-      }
-    }
+export type AdminUpdate =
   | {
       propose_new_admin: {
         proposed: string
       }
     }
+  | 'clear_proposed'
+  | 'accept_proposed'
+  | 'abolish_admin_role'
 export interface ConfigUpdates {
   oracle?: OracleBaseForString | null
   vault_pricing?: VaultPricingInfo[] | null

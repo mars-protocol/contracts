@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Decimal};
-use cw_controllers_admin_fork::AdminExecuteUpdate;
+use cw_controllers_admin_fork::AdminUpdate;
 
 use mars_rover::adapters::{Oracle, OracleUnchecked};
 
@@ -20,7 +20,7 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub enum ExecuteMsg {
     UpdateConfig { new_config: ConfigUpdates },
-    UpdateAdmin(AdminExecuteUpdate),
+    UpdateAdmin(AdminUpdate),
 }
 
 #[cw_serde]

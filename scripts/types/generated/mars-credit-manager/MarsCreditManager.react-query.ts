@@ -23,7 +23,7 @@ import {
   ExecuteMsg,
   Action,
   VaultPositionType,
-  AdminExecuteUpdate,
+  AdminUpdate,
   CallbackMsg,
   Addr,
   ConfigUpdates,
