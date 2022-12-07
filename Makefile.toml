@@ -1,5 +1,6 @@
-extend= [
-    { path = "schema.Makefile.toml" }
+extend = [
+    { path = "schema.Makefile.toml" },
+    { path = "coverage_grcov.Makefile.toml" }
 ]
 
 [config]
@@ -34,12 +35,23 @@ args = ["fmt", "--all", "--check"]
 command = "cargo"
 args = ["clippy", "--tests", "--", "-D", "warnings"]
 
-[tasks.all-github-actions]
+[tasks.audit]
+command = "cargo"
+args = ["audit"]
+
+[tasks.coverage-html]
+alias = "coverage_grcov_html"
+
+[tasks.coverage-lcov]
+alias = "coverage_grcov_lcov"
+
+[tasks.all-actions]
 dependencies = [
-    "build",
-    "test",
     "fmt",
     "clippy",
+    "build",
+    "test",
     "generate-all-schemas",
+    "audit",
     "rust-optimizer",
 ]
