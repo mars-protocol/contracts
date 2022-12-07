@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env,
-    MessageInfo, Response, StdResult, Uint128,
+    MessageInfo, Response, StdResult, Timestamp, Uint128,
 };
 
 use mars_outpost::address_provider::MarsAddressType;
@@ -57,7 +57,17 @@ pub fn execute(
         ExecuteMsg::SetAssetIncentive {
             denom,
             emission_per_second,
-        } => execute_set_asset_incentive(deps, env, info, denom, emission_per_second),
+            start_time,
+            duration,
+        } => execute_set_asset_incentive(
+            deps,
+            env,
+            info,
+            denom,
+            emission_per_second,
+            start_time,
+            duration,
+        ),
         ExecuteMsg::BalanceChange {
             user_addr,
             denom,
@@ -86,23 +96,61 @@ pub fn execute_set_asset_incentive(
     env: Env,
     info: MessageInfo,
     denom: String,
-    emission_per_second: Uint128,
+    emission_per_second: Option<Uint128>,
+    start_time: Option<Timestamp>,
+    duration: Option<u64>,
 ) -> Result<Response, ContractError> {
     // only owner can call this
     let config = CONFIG.load(deps.storage)?;
-    let owner = config.owner;
-    if info.sender != owner {
+    if info.sender != config.owner {
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    let red_bank_addr = address_provider::helpers::query_address(
-        deps.as_ref(),
-        &config.address_provider,
-        MarsAddressType::RedBank,
-    )?;
-
     let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &denom)? {
         Some(mut asset_incentive) => {
+            let current_block_time = env.block.time;
+            let end_time = asset_incentive.start_time.plus_seconds(asset_incentive.duration);
+            let start_time = match start_time {
+                Some(_)
+                    if asset_incentive.start_time <= current_block_time
+                        && end_time >= current_block_time =>
+                {
+                    return Err(ContractError::InvalidIncentive {
+                        reason: "can't modify start_time if incentive in progress".to_string(),
+                    })
+                }
+                Some(st) => st,
+                None if end_time < current_block_time => {
+                    // previous incentive has finished
+                    current_block_time
+                }
+                None => asset_incentive.start_time,
+            };
+
+            let duration = match duration {
+                Some(dur) if dur == 0 => {
+                    return Err(ContractError::InvalidIncentive {
+                        reason: "duration can't be 0".to_string(),
+                    })
+                }
+                Some(dur) if start_time.plus_seconds(dur) < current_block_time => {
+                    return Err(ContractError::InvalidIncentive {
+                        reason: "end_time can't be less than current block time".to_string(),
+                    })
+                }
+                Some(dur) => dur,
+                None => asset_incentive.duration,
+            };
+
+            let emission_per_second =
+                emission_per_second.unwrap_or(asset_incentive.emission_per_second);
+
+            let red_bank_addr = address_provider::helpers::query_address(
+                deps.as_ref(),
+                &config.address_provider,
+                MarsAddressType::RedBank,
+            )?;
+
             let market: red_bank::Market = deps.querier.query_wasm_smart(
                 red_bank_addr,
                 &red_bank::QueryMsg::Market {
@@ -119,14 +167,47 @@ pub fn execute_set_asset_incentive(
 
             // Set new emission
             asset_incentive.emission_per_second = emission_per_second;
+            asset_incentive.start_time = start_time;
+            asset_incentive.duration = duration;
 
             asset_incentive
         }
-        None => AssetIncentive {
-            emission_per_second,
-            index: Decimal::zero(),
-            last_updated: env.block.time.seconds(),
-        },
+        None => {
+            // all params are required during incentive initialization (if start_time = None then set to current block time)
+            let (emission_per_second, duration) = match (emission_per_second, duration) {
+                (Some(eps), Some(dur)) => (eps, dur),
+                _ => {
+                    return Err(ContractError::InvalidIncentive {
+                        reason: "all params are required during incentive initialization"
+                            .to_string(),
+                    })
+                }
+            };
+
+            // duration should be greater than 0
+            if duration == 0 {
+                return Err(ContractError::InvalidIncentive {
+                    reason: "duration can't be 0".to_string(),
+                });
+            }
+
+            // start_time can't be less that current block time
+            let current_block_time = env.block.time;
+            let start_time = start_time.unwrap_or(current_block_time);
+            if start_time < current_block_time {
+                return Err(ContractError::InvalidIncentive {
+                    reason: "start_time can't be less than current block time".to_string(),
+                });
+            }
+
+            AssetIncentive {
+                emission_per_second,
+                start_time,
+                duration,
+                index: Decimal::zero(),
+                last_updated: env.block.time.seconds(),
+            }
+        }
     };
 
     ASSET_INCENTIVES.save(deps.storage, &denom, &new_asset_incentive)?;
@@ -134,7 +215,9 @@ pub fn execute_set_asset_incentive(
     let response = Response::new().add_attributes(vec![
         attr("action", "outposts/incentives/set_asset_incentive"),
         attr("denom", denom),
-        attr("emission_per_second", emission_per_second),
+        attr("emission_per_second", new_asset_incentive.emission_per_second),
+        attr("start_time", new_asset_incentive.start_time.to_string()),
+        attr("duration", new_asset_incentive.duration.to_string()),
     ]);
     Ok(response)
 }
