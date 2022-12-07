@@ -31,7 +31,11 @@ keywords      = ["mars", "cosmos", "cosmwasm"]
 cosmwasm-schema             = "1.1"
 cosmwasm-std                = "1.1"
 cw2                         = "1.0"
-cw-storage-plus             = "1.0"
+# cw-storage-plus v1.0.0 comes with a bug that leads to compilation error:
+# https://github.com/CosmWasm/cw-storage-plus/issues/19
+# This error is addressed in v1.0.1 release.
+# We need to enforce the latest version v1.0.1 in order to compile contracts.
+cw-storage-plus             = "=1.0.1"
 cw-utils                    = "1.0"
 mars-health                 = { version = "0.1.0", path = "./packages/health" }
 mars-oracle-base            = { version = "0.1.0", path = "./contracts/oracle/base" }
