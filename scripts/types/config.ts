@@ -44,4 +44,5 @@ export interface DeploymentConfig {
   zap: { amount: number; denom: string; price: number }[]
   unzapAmount: number
   maxValueForBurn: number
+  maxUnlockingPositions: number
 }

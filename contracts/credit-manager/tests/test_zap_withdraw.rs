@@ -105,7 +105,7 @@ fn test_coins_out_must_be_whitelisted() {
         &account_id,
         &user,
         vec![WithdrawLiquidity {
-            lp_token: lp_token.to_coin(10),
+            lp_token: lp_token.to_coin(100_000),
         }],
         &[],
     );

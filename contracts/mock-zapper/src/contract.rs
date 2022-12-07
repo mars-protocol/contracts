@@ -1,12 +1,13 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{coin, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, Uint128};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, Uint128};
+
+use mars_rover::msg::zapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::error::ContractResult;
 use crate::execute::{provide_liquidity, withdraw_liquidity};
 use crate::query::{estimate_provide_liquidity, estimate_withdraw_liquidity};
-use crate::state::{COIN_BALANCES, ORACLE};
-use mars_rover::msg::zapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::state::{COIN_BALANCES, COIN_CONFIG, ORACLE};
 
 pub const STARTING_LP_POOL_TOKENS: Uint128 = Uint128::new(1_000_000);
 
@@ -21,13 +22,26 @@ pub fn instantiate(
 ) -> ContractResult<Response> {
     ORACLE.save(deps.storage, &msg.oracle.check(deps.api)?)?;
     for config in msg.lp_configs {
-        COIN_BALANCES.save(
+        // Store map from lp token to the underlying tokens
+        COIN_CONFIG.save(
             deps.storage,
             &config.lp_token_denom,
-            &(
-                coin(0, config.lp_pair_denoms.0),
-                coin(0, config.lp_pair_denoms.1),
-            ),
+            &vec![
+                config.lp_pair_denoms.0.to_string(),
+                config.lp_pair_denoms.1.to_string(),
+            ],
+        )?;
+
+        // Store balances of each of the underlying
+        COIN_BALANCES.save(
+            deps.storage,
+            (&config.lp_token_denom, &config.lp_pair_denoms.0),
+            &Uint128::zero(),
+        )?;
+        COIN_BALANCES.save(
+            deps.storage,
+            (&config.lp_token_denom, &config.lp_pair_denoms.1),
+            &Uint128::zero(),
         )?;
     }
     Ok(Response::default())

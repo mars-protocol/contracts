@@ -51,4 +51,5 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   ],
   unzapAmount: 1000000,
   maxValueForBurn: 1000000,
+  maxUnlockingPositions: 10,
 }

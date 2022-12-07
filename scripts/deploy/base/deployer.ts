@@ -67,7 +67,6 @@ export class Deployer {
 
   async instantiateNftContract() {
     const msg: NftInstantiateMsg = {
-      credit_manager: this.storage.addresses.creditManager!,
       max_value_for_burn: this.config.maxValueForBurn.toString(),
       minter: this.deployerAddr,
       name: 'credit-manger-accounts',
@@ -101,7 +100,7 @@ export class Deployer {
   async instantiateMarsOracleAdapter() {
     const msg: OracleAdapterInstantiateMsg = {
       oracle: this.config.oracleAddr,
-      owner: this.deployerAddr,
+      admin: this.deployerAddr,
       vault_pricing: [
         {
           addr: this.storage.addresses.mockVault!,
@@ -116,7 +115,7 @@ export class Deployer {
 
   async instantiateSwapper() {
     const msg: SwapperInstantiateMsg = {
-      owner: this.deployerAddr,
+      admin: this.deployerAddr,
     }
     await this.instantiate('swapper', this.storage.codeIds.swapper!, msg)
 
@@ -175,6 +174,7 @@ export class Deployer {
 
   async instantiateCreditManager() {
     const msg: RoverInstantiateMsg = {
+      max_unlocking_positions: this.config.maxUnlockingPositions.toString(),
       allowed_coins: [this.config.baseDenom, this.config.secondaryDenom, this.config.lpToken.denom],
       allowed_vaults: [
         {
@@ -188,7 +188,7 @@ export class Deployer {
         },
       ],
       oracle: this.storage.addresses.marsOracleAdapter!,
-      owner: this.deployerAddr,
+      admin: this.deployerAddr,
       red_bank: this.config.redBankAddr,
       max_close_factor: this.config.maxCloseFactor.toString(),
       swapper: this.storage.addresses.swapper!,
@@ -204,7 +204,9 @@ export class Deployer {
         this.deployerAddr,
         this.storage.addresses.accountNft!,
       )
-      await nftClient.proposeNewOwner({ newOwner: this.storage.addresses.creditManager! })
+      await nftClient.updateConfig({
+        updates: { proposed_new_minter: this.storage.addresses.creditManager! },
+      })
       this.storage.actions.proposedNewOwner = true
       printBlue('Nft contract owner proposes Rover as new owner')
     } else {

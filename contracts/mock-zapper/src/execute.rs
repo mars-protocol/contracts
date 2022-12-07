@@ -1,28 +1,27 @@
-use crate::error::ContractError;
-use crate::query::{estimate_provide_liquidity, estimate_withdraw_liquidity};
-use crate::state::{COIN_BALANCES, LP_TOKEN_SUPPLY};
 use cosmwasm_std::{
     BankMsg, Coin, CosmosMsg, DepsMut, MessageInfo, Response, StdError, StdResult, Storage, Uint128,
 };
+use cw_utils::one_coin;
+
+use crate::error::{ContractError, ContractResult};
+use crate::query::{estimate_provide_liquidity, estimate_withdraw_liquidity};
+use crate::state::{COIN_BALANCES, COIN_CONFIG, LP_TOKEN_SUPPLY};
 
 pub fn provide_liquidity(
     deps: DepsMut,
     info: MessageInfo,
     lp_token_out_denom: String,
     minimum_receive: Uint128,
-) -> Result<Response, ContractError> {
-    let sent_coin_a = info.funds.get(0).ok_or(ContractError::CoinNotFound)?;
-    let sent_coin_b = info.funds.get(1).ok_or(ContractError::CoinNotFound)?;
-    let (mut coin0, mut coin1) = COIN_BALANCES.load(deps.storage, &lp_token_out_denom)?;
-
-    if (sent_coin_a.denom != coin0.denom && sent_coin_a.denom != coin1.denom)
-        || (sent_coin_b.denom != coin0.denom && sent_coin_b.denom != coin1.denom)
-    {
-        return Err(ContractError::RequirementsNotMet {
-            lp_token: lp_token_out_denom,
-            coin0: coin0.denom,
-            coin1: coin1.denom,
-        });
+) -> ContractResult<Response> {
+    let underlying = COIN_CONFIG.load(deps.storage, &lp_token_out_denom)?;
+    // Ensure no incorrect denoms sent for expected LP token underlying
+    for coin in &info.funds {
+        if !underlying.contains(&coin.denom) {
+            return Err(ContractError::RequirementsNotMet(format!(
+                "{} is unexpected for lp_token_out_denom",
+                coin.denom
+            )));
+        }
     }
 
     let lp_token_amount =
@@ -32,15 +31,17 @@ pub fn provide_liquidity(
         return Err(ContractError::ReceivedBelowMinimum);
     }
 
-    // Update internal balances
-    if coin0.denom == sent_coin_a.denom {
-        coin0.amount += sent_coin_a.amount;
-        coin1.amount += sent_coin_b.amount;
-    } else {
-        coin0.amount += sent_coin_b.amount;
-        coin1.amount += sent_coin_a.amount;
+    for coin in info.funds {
+        COIN_BALANCES.update(
+            deps.storage,
+            (&lp_token_out_denom, &coin.denom),
+            |amount_opt| -> StdResult<_> {
+                Ok(amount_opt
+                    .unwrap_or(Uint128::zero())
+                    .checked_add(coin.amount)?)
+            },
+        )?;
     }
-    COIN_BALANCES.save(deps.storage, &lp_token_out_denom, &(coin0, coin1))?;
 
     // Send LP tokens to user (assumes mock zapper has been pre-funded with this token)
     mock_lp_token_mint(deps.storage, lp_token_amount, &lp_token_out_denom)?;
@@ -55,29 +56,29 @@ pub fn provide_liquidity(
     Ok(Response::new().add_message(transfer_msg))
 }
 
-pub fn withdraw_liquidity(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
-    let lp_token_sent = info.funds.get(0).ok_or(ContractError::CoinNotFound)?;
-    mock_lp_token_burn(deps.storage, lp_token_sent)?;
+pub fn withdraw_liquidity(deps: DepsMut, info: MessageInfo) -> ContractResult<Response> {
+    let lp_token_sent = one_coin(&info)?;
+    let underlying_coins = estimate_withdraw_liquidity(deps.storage, &lp_token_sent)?;
 
-    let underlying_coins = estimate_withdraw_liquidity(deps.storage, lp_token_sent)?;
-
-    // Update internal balances
-    let (mut coin0, mut coin1) = COIN_BALANCES.load(deps.storage, &lp_token_sent.denom)?;
-    let coin_a = underlying_coins.get(0).ok_or(ContractError::CoinNotFound)?;
-    let coin_b = underlying_coins.get(1).ok_or(ContractError::CoinNotFound)?;
-    if coin0.denom == coin_a.denom {
-        coin0.amount -= coin_a.amount;
-        coin1.amount -= coin_b.amount;
-    } else {
-        coin0.amount -= coin_b.amount;
-        coin1.amount -= coin_a.amount;
-    };
-    COIN_BALANCES.save(deps.storage, &lp_token_sent.denom, &(coin0, coin1))?;
+    for coin in &underlying_coins {
+        COIN_BALANCES.update(
+            deps.storage,
+            (&lp_token_sent.denom, &coin.denom),
+            |amount_opt| -> StdResult<_> {
+                Ok(amount_opt
+                    .unwrap_or(Uint128::zero())
+                    .checked_sub(coin.amount)?)
+            },
+        )?;
+    }
 
     let transfer_msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: info.sender.to_string(),
         amount: underlying_coins,
     });
+
+    mock_lp_token_burn(deps.storage, &lp_token_sent)?;
+
     Ok(Response::new().add_message(transfer_msg))
 }
 

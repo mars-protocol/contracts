@@ -1,8 +1,8 @@
-use cosmwasm_std::{Coin, Deps, Storage, Uint128};
+use cosmwasm_std::{Coin, Deps, StdResult, Storage, Uint128};
 
 use crate::contract::STARTING_LP_POOL_TOKENS;
 use crate::error::ContractError;
-use crate::state::{COIN_BALANCES, LP_TOKEN_SUPPLY, ORACLE};
+use crate::state::{COIN_BALANCES, COIN_CONFIG, LP_TOKEN_SUPPLY, ORACLE};
 
 pub fn estimate_provide_liquidity(
     deps: &Deps,
@@ -16,9 +16,18 @@ pub fn estimate_provide_liquidity(
     let lp_tokens_estimate = if total_supply.is_zero() {
         STARTING_LP_POOL_TOKENS
     } else {
-        let (coin0, coin1) = COIN_BALANCES.load(deps.storage, lp_token_out)?;
+        let coins = coins_in
+            .iter()
+            .map(|c| {
+                let balance = COIN_BALANCES.load(deps.storage, (lp_token_out, &c.denom))?;
+                Ok(Coin {
+                    denom: c.denom.clone(),
+                    amount: balance,
+                })
+            })
+            .collect::<StdResult<Vec<_>>>()?;
         let oracle = ORACLE.load(deps.storage)?;
-        let total_underlying_value = oracle.query_total_value(&deps.querier, &[coin0, coin1])?;
+        let total_underlying_value = oracle.query_total_value(&deps.querier, &coins)?;
         let given_value = oracle.query_total_value(&deps.querier, &coins_in)?;
         total_supply
             .checked_multiply_ratio(given_value.atomics(), total_underlying_value.atomics())?
@@ -31,20 +40,24 @@ pub fn estimate_withdraw_liquidity(
     lp_token: &Coin,
 ) -> Result<Vec<Coin>, ContractError> {
     let total_supply = LP_TOKEN_SUPPLY.load(storage, &lp_token.denom)?;
-    let (coin0, coin1) = COIN_BALANCES.load(storage, &lp_token.denom)?;
-
     if total_supply.is_zero() {
-        Ok(vec![coin0, coin1])
-    } else {
-        Ok(vec![
-            Coin {
-                denom: coin0.denom,
-                amount: coin0.amount.multiply_ratio(lp_token.amount, total_supply),
-            },
-            Coin {
-                denom: coin1.denom,
-                amount: coin1.amount.multiply_ratio(lp_token.amount, total_supply),
-            },
-        ])
+        return Ok(vec![]);
     }
+
+    let underlying = COIN_CONFIG.load(storage, &lp_token.denom)?;
+    let estimate = underlying
+        .into_iter()
+        .map(|denom| {
+            let balance = COIN_BALANCES.load(storage, (&lp_token.denom, &denom))?;
+            Ok(Coin {
+                denom,
+                amount: balance.multiply_ratio(lp_token.amount, total_supply),
+            })
+        })
+        .collect::<StdResult<Vec<_>>>()?
+        .into_iter()
+        .filter(|c| !c.amount.is_zero())
+        .collect::<Vec<_>>();
+
+    Ok(estimate)
 }

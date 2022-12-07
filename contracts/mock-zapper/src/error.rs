@@ -1,6 +1,8 @@
 use cosmwasm_std::{CheckedMultiplyRatioError, StdError};
-use mars_rover::error::ContractError as RoverError;
+use cw_utils::PaymentError;
 use thiserror::Error;
+
+use mars_rover::error::ContractError as RoverError;
 
 pub type ContractResult<T> = Result<T, ContractError>;
 
@@ -21,10 +23,9 @@ pub enum ContractError {
     #[error("Could not find coin trying to access")]
     CoinNotFound,
 
-    #[error("{lp_token:?} requires {coin0:?} and {coin1:?}")]
-    RequirementsNotMet {
-        lp_token: String,
-        coin0: String,
-        coin1: String,
-    },
+    #[error("{0}")]
+    RequirementsNotMet(String),
+
+    #[error("{0}")]
+    PaymentError(#[from] PaymentError),
 }
