@@ -31,7 +31,10 @@ jobs:
       - name: Install cargo make
         uses: davidB/rust-cargo-make@v1
 
-      - name: Build for Wasm target
+      - name: Install build target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Build contracts
         run: cargo make build
 
   test:
