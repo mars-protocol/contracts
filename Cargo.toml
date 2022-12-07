@@ -28,17 +28,15 @@ documentation = "https://docs.marsprotocol.io/"
 keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
-cosmwasm-schema             = "1.1.9"
-cosmwasm-std                = "1.1.9"
-cw2                         = "1.0.0"
-cw-multi-test               = "0.16.1"
-# NOTE: cw-storage-plus v1.0.0 comes with a bug that leads to compilation error:
+cosmwasm-schema             = "1.1"
+cosmwasm-std                = "1.1"
+cw2                         = "1.0"
+cw-multi-test               = "0.16"
+# cw-storage-plus v1.0.0 contained a bug that prevents contract compilation into
+# the wasm32-unknown-unknown target.
 # https://github.com/CosmWasm/cw-storage-plus/issues/19
-# This error is addressed in v1.0.1 release.
-# We need to enforce the latest version v1.0.1 in order to compile contracts.
 cw-storage-plus             = "=1.0.1"
-# FIXME: cw-utils v1.0.0 has a similar error, but it hasn't been fixed yet.
-# Use my fork instead for now. I have create a PR to address this issue:
+# FIXME: update when this PR has been merged and published to crates.io:
 # https://github.com/CosmWasm/cw-utils/pull/4
 cw-utils                    = { git = "https://github.com/larry0x/cw-utils", rev = "68c01eb" }
 mars-health                 = { version = "0.1.0", path = "./packages/health" }
