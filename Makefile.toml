@@ -1,13 +1,9 @@
 extend= [
-  { path = "coverage_grcov.makefile.toml" }
+  { path = "coverage_grcov.Makefile.toml" }
 ]
 
 [config]
 default_to_workspace = false
-
-[tasks.check]
-command = "cargo"
-args = ["check"]
 
 [tasks.build]
 command = "cargo"
@@ -15,25 +11,20 @@ args = ["build", "--release", "--target", "wasm32-unknown-unknown", "--locked"]
 
 [tasks.rust-optimizer]
 script = """
-if [[ $(arch) == 'arm64' ]]; then
-  docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
-  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/workspace-optimizer-arm64:0.12.9
+if [[ $(arch) == "arm64" ]]; then
+  image="cosmwasm/workspace-optimizer-arm64:0.12.9"
 else
-  docker run --rm -v "$(pwd)":/code \
+  image="cosmwasm/workspace-optimizer:0.12.9"
+fi
+docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/workspace-optimizer:0.12.9
-fi
+  ${image}
 """
 
 [tasks.test]
 command = "cargo"
 args = ["test", "--locked"]
-
-[tasks.coverage]
-alias="coverage_grcov"
 
 [tasks.fmt]
 command = "cargo"
@@ -43,15 +34,15 @@ args = ["fmt", "--all", "--check"]
 command = "cargo"
 args = ["clippy", "--tests", "--", "-D", "warnings"]
 
-[tasks.all-github-actions]
-dependencies = [
-  "check",
-  "build",
-  "test",
-  "fmt",
-  "clippy",
-  "rust-optimizer",
-]
+[tasks.audit]
+command = "cargo"
+args = ["audit"]
+
+[tasks.coverage-html]
+alias = "coverage_grcov_html"
+
+[tasks.coverage-lcov]
+alias = "coverage_grcov_lcov"
 
 [tasks.generate-all-schemas]
 script = """
@@ -70,3 +61,14 @@ script = """
 
   rm -rf schema
 """
+
+[tasks.all-actions]
+dependencies = [
+  "fmt",
+  "clippy",
+  "build",
+  "test",
+  "generate-all-schemas",
+  "audit",
+  "rust-optimizer",
+]

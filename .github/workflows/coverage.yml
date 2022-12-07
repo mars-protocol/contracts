@@ -1,4 +1,4 @@
-name: Main
+name: Coverage
 
 on:
   push:
@@ -10,9 +10,11 @@ on:
 env:
   RUST_BACKTRACE: 1
   CARGO_TERM_COLOR: always
+  # Directory with wasm files used by `tests`
+  ARTIFACTS_DIR_PATH: 'target/wasm32-unknown-unknown/release'
 
 jobs:
-  check:
+  coverage:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -23,9 +25,9 @@ jobs:
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
-          components: rustfmt, clippy
           profile: minimal
           override: true
+          components: llvm-tools-preview
 
       # FIXME: use cache when osmosis-rust dependency available in crates.io
       # selecting a toolchain should happen before the plugin, as the cache uses the current rustc version as its cache key
@@ -35,19 +37,15 @@ jobs:
       - name: Install cargo make
         uses: davidB/rust-cargo-make@v1
 
-      - name: Format
-        run: cargo make fmt
+      # artifacts used by tests
+      - name: Compile workspace
+        run: cargo make build
 
-      - name: Clippy
-        run: cargo make clippy
+      - name: Run test coverage
+        run: cargo make coverage-lcov
 
-      # fails if schemas changes not committed
-      - name: Check schemas up-to-date
-        run: |
-          cargo make generate-all-schemas
-          git diff --exit-code schemas
-
-      - name: Audit dependencies
-        run: |
-          cargo install --locked cargo-audit
-          cargo make audit
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: target/coverage/lcov.info

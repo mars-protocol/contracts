@@ -1,4 +1,4 @@
-name: Main
+name: Artifacts
 
 on:
   push:
@@ -12,7 +12,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
+  artifacts:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -23,7 +23,6 @@ jobs:
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
-          components: rustfmt, clippy
           profile: minimal
           override: true
 
@@ -35,19 +34,5 @@ jobs:
       - name: Install cargo make
         uses: davidB/rust-cargo-make@v1
 
-      - name: Format
-        run: cargo make fmt
-
-      - name: Clippy
-        run: cargo make clippy
-
-      # fails if schemas changes not committed
-      - name: Check schemas up-to-date
-        run: |
-          cargo make generate-all-schemas
-          git diff --exit-code schemas
-
-      - name: Audit dependencies
-        run: |
-          cargo install --locked cargo-audit
-          cargo make audit
+      - name: Compile contracts to wasm
+        run: cargo make rust-optimizer
