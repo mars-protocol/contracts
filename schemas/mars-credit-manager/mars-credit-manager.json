@@ -316,14 +316,33 @@
             "additionalProperties": false
           },
           {
-            "description": "Repay coin of specified amount back to Red Bank",
+            "description": "Repay coin of specified amount back to Red Bank. If `amount: None` is passed, the repaid amount will be the minimum between account balance for denom and total owed.",
             "type": "object",
             "required": [
               "repay"
             ],
             "properties": {
               "repay": {
-                "$ref": "#/definitions/Coin"
+                "type": "object",
+                "required": [
+                  "denom"
+                ],
+                "properties": {
+                  "amount": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/Uint128"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "denom": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -727,7 +746,7 @@
             "additionalProperties": false
           },
           {
-            "description": "Repay coin of specified amount back to Red Bank; Decrement the token's coin amount and debt shares;",
+            "description": "Repay coin of specified amount back to Red Bank; Decrement the token's coin amount and debt shares; If `amount: None` is passed, the repaid amount will be the minimum between account balance for denom and total owed;",
             "type": "object",
             "required": [
               "repay"
@@ -737,14 +756,24 @@
                 "type": "object",
                 "required": [
                   "account_id",
-                  "coin"
+                  "denom"
                 ],
                 "properties": {
                   "account_id": {
                     "type": "string"
                   },
-                  "coin": {
-                    "$ref": "#/definitions/Coin"
+                  "amount": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/Uint128"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "denom": {
+                    "type": "string"
                   }
                 },
                 "additionalProperties": false

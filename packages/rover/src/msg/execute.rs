@@ -39,8 +39,12 @@ pub enum Action {
     Withdraw(Coin),
     /// Borrow coin of specified amount from Red Bank
     Borrow(Coin),
-    /// Repay coin of specified amount back to Red Bank
-    Repay(Coin),
+    /// Repay coin of specified amount back to Red Bank. If `amount: None` is passed,
+    /// the repaid amount will be the minimum between account balance for denom and total owed.
+    Repay {
+        denom: String,
+        amount: Option<Uint128>,
+    },
     /// Deposit coins into vault strategy
     /// If amount sent is None, Rover attempts to deposit the account's entire balance into the vault
     EnterVault {
@@ -121,7 +125,13 @@ pub enum CallbackMsg {
     Borrow { account_id: String, coin: Coin },
     /// Repay coin of specified amount back to Red Bank;
     /// Decrement the token's coin amount and debt shares;
-    Repay { account_id: String, coin: Coin },
+    /// If `amount: None` is passed, the repaid amount will be the minimum
+    /// between account balance for denom and total owed;
+    Repay {
+        account_id: String,
+        denom: String,
+        amount: Option<Uint128>,
+    },
     /// Calculate the account's max loan-to-value health factor. If above 1,
     /// emits a `position_changed` event. If 1 or below, raises an error.
     AssertBelowMaxLTV { account_id: String },

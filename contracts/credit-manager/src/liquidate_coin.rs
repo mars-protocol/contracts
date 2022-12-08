@@ -152,7 +152,8 @@ pub fn repay_debt(
     increment_coin_balance(storage, liquidatee_account_id, debt)?;
     let msg = (CallbackMsg::Repay {
         account_id: liquidatee_account_id.to_string(),
-        coin: debt.clone(),
+        denom: debt.denom.clone(),
+        amount: Some(debt.amount),
     })
     .into_cosmos_msg(&env.contract.address)?;
     Ok(msg)

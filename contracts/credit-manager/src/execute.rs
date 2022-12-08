@@ -74,9 +74,10 @@ pub fn dispatch_actions(
                 account_id: account_id.to_string(),
                 coin: coin.clone(),
             }),
-            Action::Repay(coin) => callbacks.push(CallbackMsg::Repay {
+            Action::Repay { denom, amount } => callbacks.push(CallbackMsg::Repay {
                 account_id: account_id.to_string(),
-                coin: coin.clone(),
+                denom: denom.clone(),
+                amount: *amount,
             }),
             Action::EnterVault {
                 vault,
@@ -206,7 +207,11 @@ pub fn execute_callback(
             recipient,
         } => withdraw(deps, &account_id, coin, recipient),
         CallbackMsg::Borrow { coin, account_id } => borrow(deps, env, &account_id, coin),
-        CallbackMsg::Repay { account_id, coin } => repay(deps, env, &account_id, coin),
+        CallbackMsg::Repay {
+            account_id,
+            denom,
+            amount,
+        } => repay(deps, env, &account_id, &denom, amount),
         CallbackMsg::AssertBelowMaxLTV { account_id } => {
             assert_below_max_ltv(deps.as_ref(), env, &account_id)
         }

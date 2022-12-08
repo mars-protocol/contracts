@@ -72,7 +72,10 @@ export type Action =
       borrow: Coin
     }
   | {
-      repay: Coin
+      repay: {
+        amount?: Uint128 | null
+        denom: string
+      }
     }
   | {
       enter_vault: {
@@ -163,7 +166,8 @@ export type CallbackMsg =
   | {
       repay: {
         account_id: string
-        coin: Coin
+        amount?: Uint128 | null
+        denom: string
       }
     }
   | {
