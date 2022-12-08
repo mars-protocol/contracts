@@ -25,6 +25,5 @@ mars-testing                    = { workspace = true }
 mars-rewards-collector-base     = { workspace = true }
 mars-osmosis                    = { workspace = true }
 osmosis-std                     = { workspace = true }
-# FIXME: update with new version when osmosis-v13 branch merged to main branch
-osmosis-testing                 = { rev = "660ba88d381dacb89fdcacdb44274566429ca56e", git = "https://github.com/osmosis-labs/osmosis-rust" }
+osmosis-testing                 = "0.13.1"
 serde                           = { workspace = true }
