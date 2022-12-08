@@ -482,9 +482,9 @@ dependencies = [
 
 [[package]]
 name = "der"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13dd2ae565c0a381dde7fade45fce95984c568bdcb4700a4fdbe3175e0380b2f"
+checksum = "f1a467a65c5e759bce6e65eaf91cc29f466cdc57cb65777bd646872a8a1fd4de"
 dependencies = [
  "const-oid",
  "zeroize",
@@ -866,9 +866,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.137"
+version = "0.2.138"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc7fcc620a3bff7cdd7a365be3376c97191aeaccc2a603e600951e452615bf89"
+checksum = "db6d7e329c562c5dfab7a46a2afabc8b987ab9a4834c9d1ca04dc54c1546cef8"
 
 [[package]]
 name = "libloading"
@@ -1138,9 +1138,8 @@ checksum = "9b7820b9daea5457c9f21c69448905d723fbd21136ccf521748f23fd49e723ee"
 
 [[package]]
 name = "osmosis-std"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ceccaee53c707428c2c632a14eed62b497c74728bf79062ca6f217d8d096ef0"
+version = "0.12.0"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=1917ebbd7e11507e24ea0527736f2f43a331ee19#1917ebbd7e11507e24ea0527736f2f43a331ee19"
 dependencies = [
  "chrono",
  "cosmwasm-std",
@@ -1154,9 +1153,8 @@ dependencies = [
 
 [[package]]
 name = "osmosis-std-derive"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3ae47095a1277a27cbfd4a8b16d27683ac23995b2eedf79e03a00a5001be041"
+version = "0.12.0"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=1917ebbd7e11507e24ea0527736f2f43a331ee19#1917ebbd7e11507e24ea0527736f2f43a331ee19"
 dependencies = [
  "itertools",
  "proc-macro2",
@@ -1167,8 +1165,7 @@ dependencies = [
 [[package]]
 name = "osmosis-testing"
 version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbf1364abc3b6d53e1d6b1c3fd74a21df8eb7fb91612660f0e5bff559d81a623"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=1917ebbd7e11507e24ea0527736f2f43a331ee19#1917ebbd7e11507e24ea0527736f2f43a331ee19"
 dependencies = [
  "base64",
  "bindgen",
@@ -1419,9 +1416,9 @@ checksum = "e25dfac463d778e353db5be2449d1cce89bd6fd23c9f1ea21310ce6e5a1b29c4"
 
 [[package]]
 name = "serde"
-version = "1.0.148"
+version = "1.0.149"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e53f64bb4ba0191d6d0676e1b141ca55047d83b74f5607e6d8eb88126c52c2dc"
+checksum = "256b9932320c590e707b94576e3cc1f7c9024d0ee6612dfbcf1cb106cbe8e055"
 dependencies = [
  "serde_derive",
 ]
@@ -1455,9 +1452,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.148"
+version = "1.0.149"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a55492425aa53521babf6137309e7d34c20bbfbbfcfe2c7f3a047fd1f6b92c0c"
+checksum = "b4eae9b04cbffdfd550eb462ed33bc6a1b68c935127d008b27444d08380f94e4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1710,9 +1707,9 @@ checksum = "42657b1a6f4d817cda8e7a0ace261fe0cc946cf3a80314390b22cc61ae080792"
 
 [[package]]
 name = "typenum"
-version = "1.15.0"
+version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
+checksum = "497961ef93d974e23eb6f433eb5fe1b7930b659f06d12dec6fc44a8f554c0bba"
 
 [[package]]
 name = "uint"
