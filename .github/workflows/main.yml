@@ -4,7 +4,7 @@ name: Main
 
 env:
   # Directory with wasm files used by `tests`
-  ARTIFACTS_DIR_PATH: 'target/wasm32-unknown-unknown/release'
+  #ARTIFACTS_DIR_PATH: 'target/wasm32-unknown-unknown/release'
 
 jobs:
 
@@ -62,7 +62,7 @@ jobs:
         uses: davidB/rust-cargo-make@v1
 
       - name: Compile workspace
-        run: cargo make build
+        run: cargo make rust-optimizer
 
       - name: Run tests
         run: cargo make test
