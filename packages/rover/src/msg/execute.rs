@@ -93,8 +93,10 @@ pub enum Action {
         position_type: VaultPositionType,
     },
     /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
+    /// If `coin_in_amount: None`, the accounts entire balance of `coin_in_denom` will be used.
     SwapExactIn {
-        coin_in: Coin,
+        coin_in_denom: String,
+        coin_in_amount: Option<Uint128>,
         denom_out: String,
         slippage: Decimal,
     },
@@ -183,9 +185,11 @@ pub enum CallbackMsg {
         position_type: VaultPositionType,
     },
     /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
+    /// If `coin_in_amount: None`, the accounts entire balance of `coin_in_denom` will be used.
     SwapExactIn {
         account_id: String,
-        coin_in: Coin,
+        coin_in_denom: String,
+        coin_in_amount: Option<Uint128>,
         denom_out: String,
         slippage: Decimal,
     },

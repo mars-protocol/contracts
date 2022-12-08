@@ -112,13 +112,15 @@ pub fn dispatch_actions(
                 position_type: position_type.clone(),
             }),
             Action::SwapExactIn {
-                coin_in,
+                coin_in_denom,
+                coin_in_amount,
                 denom_out,
                 slippage,
             } => callbacks.push(CallbackMsg::SwapExactIn {
                 account_id: account_id.to_string(),
-                coin_in: coin_in.clone(),
-                denom_out: denom_out.to_string(),
+                coin_in_denom: coin_in_denom.clone(),
+                coin_in_amount: *coin_in_amount,
+                denom_out: denom_out.clone(),
                 slippage: *slippage,
             }),
             Action::ExitVault { vault, amount } => callbacks.push(CallbackMsg::ExitVault {
@@ -269,10 +271,19 @@ pub fn execute_callback(
         ),
         CallbackMsg::SwapExactIn {
             account_id,
-            coin_in,
+            coin_in_denom,
+            coin_in_amount,
             denom_out,
             slippage,
-        } => swap_exact_in(deps, env, &account_id, coin_in, &denom_out, slippage),
+        } => swap_exact_in(
+            deps,
+            env,
+            &account_id,
+            &coin_in_denom,
+            coin_in_amount,
+            &denom_out,
+            slippage,
+        ),
         CallbackMsg::UpdateCoinBalance {
             account_id,
             previous_balance,

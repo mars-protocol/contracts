@@ -119,7 +119,8 @@ export type Action =
     }
   | {
       swap_exact_in: {
-        coin_in: Coin
+        coin_in_amount?: Uint128 | null
+        coin_in_denom: string
         denom_out: string
         slippage: Decimal
       }
@@ -231,7 +232,8 @@ export type CallbackMsg =
   | {
       swap_exact_in: {
         account_id: string
-        coin_in: Coin
+        coin_in_amount?: Uint128 | null
+        coin_in_denom: string
         denom_out: string
         slippage: Decimal
       }
