@@ -25,5 +25,5 @@ mars-testing                    = { workspace = true }
 mars-rewards-collector-base     = { workspace = true }
 mars-osmosis                    = { workspace = true }
 osmosis-std                     = { workspace = true }
-osmosis-testing                 = { rev = "1917ebbd7e11507e24ea0527736f2f43a331ee19", git = "https://github.com/osmosis-labs/osmosis-rust" }
+osmosis-testing                 = "0.13.1"
 serde                           = { workspace = true }
