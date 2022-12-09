@@ -4,10 +4,7 @@ coverage:
   status:
     project:
       default:
-        threshold: 0.06%
+        threshold: 0.05%
     patch:
       default:
-        threshold: 0.06%
-
-ignore:
-  - "**/mock-*"
+        threshold: 0.05%
