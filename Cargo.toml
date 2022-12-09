@@ -30,9 +30,9 @@ keywords      = ["mars", "cosmos", "cosmwasm"]
 [workspace.dependencies]
 cosmwasm-schema             = "1.1"
 cosmwasm-std                = "1.1"
-cw2                         = "1.0"
-cw-storage-plus             = "1.0"
-cw-utils                    = "1.0"
+cw2                         = "0.16"
+cw-storage-plus             = "0.16"
+cw-utils                    = "0.16"
 mars-health                 = { version = "0.1.0", path = "./packages/health" }
 mars-oracle-base            = { version = "0.1.0", path = "./contracts/oracle/base" }
 mars-oracle-osmosis         = { version = "0.1.0", path = "./contracts/oracle/osmosis" }
