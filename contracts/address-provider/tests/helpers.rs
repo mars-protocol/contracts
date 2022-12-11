@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use cosmwasm_std::testing::{
     mock_dependencies_with_balance, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
 };

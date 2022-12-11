@@ -1,0 +1,18 @@
+[package]
+name = "cw-controllers-admin-fork"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[dependencies]
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+cw-utils        = { workspace = true }
+cw-storage-plus = { workspace = true }
+schemars        = { workspace = true }
+serde           = { workspace = true }
+thiserror       = { workspace = true }
