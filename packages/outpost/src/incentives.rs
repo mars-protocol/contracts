@@ -1,11 +1,10 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Decimal, Uint128};
+use cw_controllers_admin_fork::AdminUpdate;
 
 /// Global configuration
 #[cw_serde]
 pub struct Config {
-    /// Contract owner
-    pub owner: Addr,
     /// Address provider
     pub address_provider: Addr,
     /// Mars Token Denom
@@ -72,17 +71,19 @@ pub enum ExecuteMsg {
 
     /// Update contract config (only callable by owner)
     UpdateConfig {
-        owner: Option<String>,
         address_provider: Option<String>,
         mars_denom: Option<String>,
     },
+
+    /// Manages admin role state
+    UpdateOwner(AdminUpdate),
 }
 
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Query contract config
-    #[returns(Config)]
+    #[returns(ConfigResponse)]
     Config {},
 
     /// Query info about asset incentive for a given denom
@@ -96,4 +97,16 @@ pub enum QueryMsg {
     UserUnclaimedRewards {
         user: String,
     },
+}
+
+#[cw_serde]
+pub struct ConfigResponse {
+    /// The contract's owner
+    pub owner: Option<String>,
+    /// The contract's proposed owner
+    pub proposed_new_owner: Option<String>,
+    /// Address provider
+    pub address_provider: Addr,
+    /// Mars Token Denom
+    pub mars_denom: String,
 }

@@ -6,15 +6,18 @@ use cosmwasm_std::{
     to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
 };
 
+use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
+use cw_controllers_admin_fork::AdminUpdate;
 use cw_storage_plus::Bound;
 use mars_outpost::address_provider::{
-    AddressResponseItem, Config, ExecuteMsg, InstantiateMsg, MarsAddressType, QueryMsg,
+    AddressResponseItem, Config, ConfigResponse, ExecuteMsg, InstantiateMsg, MarsAddressType,
+    QueryMsg,
 };
 
 use crate::error::ContractError;
-use crate::helpers::{assert_owner, assert_valid_addr};
+use crate::helpers::{assert_valid_addr, assert_valid_prefix};
 use crate::key::MarsAddressTypeKey;
-use crate::state::{ADDRESSES, CONFIG};
+use crate::state::{ADDRESSES, CONFIG, OWNER};
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-address-provider";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -33,9 +36,22 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    assert_valid_addr(deps.api, &msg.owner, &msg.prefix)?;
+    assert_valid_prefix(&msg.owner, &msg.prefix)?;
 
-    CONFIG.save(deps.storage, &msg)?;
+    OWNER.initialize(
+        deps.storage,
+        deps.api,
+        SetInitialAdmin {
+            admin: msg.owner,
+        },
+    )?;
+
+    CONFIG.save(
+        deps.storage,
+        &Config {
+            prefix: msg.prefix,
+        },
+    )?;
 
     Ok(Response::default())
 }
@@ -54,21 +70,19 @@ pub fn execute(
             address_type: contract,
             address,
         } => set_address(deps, info.sender, contract, address),
-        ExecuteMsg::TransferOwnership {
-            new_owner,
-        } => transfer_ownership(deps, info.sender, new_owner),
+        ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
     }
 }
 
-pub fn set_address(
+fn set_address(
     deps: DepsMut,
     sender: Addr,
     address_type: MarsAddressType,
     address: String,
 ) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
+    OWNER.assert_admin(deps.storage, &sender)?;
 
-    assert_owner(&sender, &config.owner)?;
+    let config = CONFIG.load(deps.storage)?;
     assert_valid_addr(deps.api, &address, &config.prefix)?;
 
     ADDRESSES.save(deps.storage, address_type.into(), &address)?;
@@ -79,23 +93,12 @@ pub fn set_address(
         .add_attribute("address", address))
 }
 
-pub fn transfer_ownership(
+fn update_owner(
     deps: DepsMut,
-    sender: Addr,
-    new_owner: String,
+    info: MessageInfo,
+    update: AdminUpdate,
 ) -> Result<Response, ContractError> {
-    let mut config = CONFIG.load(deps.storage)?;
-
-    assert_owner(&sender, &config.owner)?;
-    assert_valid_addr(deps.api, &new_owner, &config.prefix)?;
-
-    config.owner = new_owner.clone();
-    CONFIG.save(deps.storage, &config)?;
-
-    Ok(Response::new()
-        .add_attribute("action", "outposts/address-provider/transfer_ownership")
-        .add_attribute("previous_owner", sender)
-        .add_attribute("new_owner", new_owner))
+    Ok(OWNER.update(deps, info, update)?)
 }
 
 // QUERIES
@@ -113,8 +116,14 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-fn query_config(deps: Deps) -> StdResult<Config> {
-    CONFIG.load(deps.storage)
+fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
+    let owner_state = OWNER.query(deps.storage)?;
+    let config = CONFIG.load(deps.storage)?;
+    Ok(ConfigResponse {
+        owner: owner_state.admin,
+        proposed_new_owner: owner_state.proposed,
+        prefix: config.prefix,
+    })
 }
 
 fn query_address(deps: Deps, address_type: MarsAddressType) -> StdResult<AddressResponseItem> {

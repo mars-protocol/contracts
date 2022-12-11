@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::{attr, Decimal, Timestamp, Uint128};
+use cw_controllers_admin_fork::AdminError::NotAdmin;
 
-use mars_outpost::error::MarsError;
 use mars_outpost::incentives::AssetIncentive;
 use mars_outpost::incentives::ExecuteMsg;
 use mars_outpost::red_bank::Market;
@@ -10,7 +10,7 @@ use mars_testing::MockEnvParams;
 use mars_incentives::contract::execute;
 use mars_incentives::state::ASSET_INCENTIVES;
 
-use crate::helpers::setup_test;
+use crate::helpers::th_setup;
 use mars_incentives::helpers::asset_incentive_compute_index;
 use mars_incentives::ContractError;
 
@@ -18,7 +18,7 @@ mod helpers;
 
 #[test]
 fn test_only_owner_can_set_asset_incentive() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     let info = mock_info("sender", &[]);
     let msg = ExecuteMsg::SetAssetIncentive {
@@ -27,12 +27,12 @@ fn test_only_owner_can_set_asset_incentive() {
     };
 
     let res_error = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(res_error, ContractError::Mars(MarsError::Unauthorized {}));
+    assert_eq!(res_error, ContractError::AdminError(NotAdmin {}));
 }
 
 #[test]
 fn test_set_new_asset_incentive() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
     let denom = "uosmo";
 
     let info = mock_info("owner", &[]);
@@ -65,7 +65,7 @@ fn test_set_new_asset_incentive() {
 #[test]
 fn test_set_existing_asset_incentive() {
     // setup
-    let mut deps = setup_test();
+    let mut deps = th_setup();
     let denom = "uosmo";
     let total_collateral_scaled = Uint128::new(2_000_000);
 

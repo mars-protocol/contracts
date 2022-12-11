@@ -6,6 +6,7 @@ members = [
   "contracts/red-bank",
   "contracts/rewards-collector/*",
   "packages/chains/*",
+  "packages/controllers",
   "packages/health",
   "packages/outpost",
   "packages/testing",
@@ -31,6 +32,7 @@ keywords      = ["mars", "cosmos", "cosmwasm"]
 cosmwasm-schema             = "1.1"
 cosmwasm-std                = "1.1"
 cw2                         = "0.16"
+cw-controllers-admin-fork   = { version = "0.1.0", path = "./packages/controllers" }
 cw-storage-plus             = "0.16"
 cw-utils                    = "0.16"
 mars-health                 = { version = "0.1.0", path = "./packages/health" }

@@ -11,13 +11,13 @@ use mars_incentives::contract::{execute, execute_balance_change, query_user_uncl
 use mars_incentives::helpers::{asset_incentive_compute_index, user_compute_accrued_rewards};
 use mars_incentives::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
-use crate::helpers::setup_test;
+use crate::helpers::th_setup;
 
 mod helpers;
 
 #[test]
 fn test_balance_change_unauthorized() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     // the `balance_change` method can only be invoked by Red Bank contract
     let err = execute(
@@ -37,7 +37,7 @@ fn test_balance_change_unauthorized() {
 
 #[test]
 fn test_execute_balance_change_noops() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     // non existing incentive returns a no op
     let info = mock_info("red_bank", &[]);
@@ -54,7 +54,7 @@ fn test_execute_balance_change_noops() {
 
 #[test]
 fn test_balance_change_zero_emission() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
     let asset_incentive_index = Decimal::from_ratio(1_u128, 2_u128);
@@ -118,7 +118,7 @@ fn test_balance_change_zero_emission() {
 
 #[test]
 fn test_balance_change_user_with_zero_balance() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
 
@@ -192,7 +192,7 @@ fn test_balance_change_user_with_zero_balance() {
 
 #[test]
 fn test_with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
 
@@ -260,7 +260,7 @@ fn test_with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards
 
 #[test]
 fn test_set_new_asset_incentive_user_non_zero_balance() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
     let user_addr = Addr::unchecked("user");
 
     // set collateral shares for user
@@ -375,7 +375,7 @@ fn test_set_new_asset_incentive_user_non_zero_balance() {
 
 #[test]
 fn test_balance_change_user_non_zero_balance() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
 

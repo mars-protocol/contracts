@@ -1,11 +1,14 @@
-use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
-use cosmwasm_std::OwnedDeps;
-use mars_incentives::contract::instantiate;
+#![allow(dead_code)]
 
-use mars_outpost::incentives::InstantiateMsg;
+use cosmwasm_schema::serde;
+use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
+use cosmwasm_std::{from_binary, Deps, OwnedDeps};
+use mars_incentives::contract::{instantiate, query};
+
+use mars_outpost::incentives::{InstantiateMsg, QueryMsg};
 use mars_testing::{mock_dependencies, MarsMockQuerier};
 
-pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
+pub fn th_setup() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     let mut deps = mock_dependencies(&[]);
 
     let msg = InstantiateMsg {
@@ -17,4 +20,8 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
     deps
+}
+
+pub fn th_query<T: serde::de::DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
+    from_binary(&query(deps, mock_env(), msg).unwrap()).unwrap()
 }

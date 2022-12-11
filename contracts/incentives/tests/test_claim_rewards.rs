@@ -13,14 +13,14 @@ use mars_incentives::contract::{execute, query_user_unclaimed_rewards};
 use mars_incentives::helpers::{asset_incentive_compute_index, user_compute_accrued_rewards};
 use mars_incentives::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
-use crate::helpers::setup_test;
+use crate::helpers::th_setup;
 
 mod helpers;
 
 #[test]
 fn test_execute_claim_rewards() {
     // SETUP
-    let mut deps = setup_test();
+    let mut deps = th_setup();
     let user_addr = Addr::unchecked("user");
 
     let previous_unclaimed_rewards = Uint128::new(50_000);
@@ -245,7 +245,7 @@ fn test_execute_claim_rewards() {
 #[test]
 fn test_claim_zero_rewards() {
     // SETUP
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     let info = mock_info("user", &[]);
     let msg = ExecuteMsg::ClaimRewards {};

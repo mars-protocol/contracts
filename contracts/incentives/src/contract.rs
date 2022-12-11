@@ -4,12 +4,14 @@ use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env,
     MessageInfo, Response, StdResult, Uint128,
 };
+use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
+use cw_controllers_admin_fork::AdminUpdate;
 
 use mars_outpost::address_provider::MarsAddressType;
 use mars_outpost::error::MarsError;
 use mars_outpost::helpers::option_string_to_addr;
 
-use mars_outpost::incentives::{AssetIncentive, AssetIncentiveResponse, Config};
+use mars_outpost::incentives::{AssetIncentive, AssetIncentiveResponse, Config, ConfigResponse};
 use mars_outpost::incentives::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_outpost::{address_provider, red_bank};
 
@@ -17,7 +19,7 @@ use crate::error::ContractError;
 use crate::helpers::{
     asset_incentive_update_index, compute_user_unclaimed_rewards, user_compute_accrued_rewards,
 };
-use crate::state::{ASSET_INCENTIVES, CONFIG, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
+use crate::state::{ASSET_INCENTIVES, CONFIG, OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-incentives";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -30,11 +32,18 @@ pub fn instantiate(
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
-) -> StdResult<Response> {
+) -> Result<Response, ContractError> {
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    OWNER.initialize(
+        deps.storage,
+        deps.api,
+        SetInitialAdmin {
+            admin: msg.owner,
+        },
+    )?;
+
     let config = Config {
-        owner: deps.api.addr_validate(&msg.owner)?,
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
         mars_denom: msg.mars_denom,
     };
@@ -74,10 +83,10 @@ pub fn execute(
         ),
         ExecuteMsg::ClaimRewards {} => execute_claim_rewards(deps, env, info),
         ExecuteMsg::UpdateConfig {
-            owner,
             address_provider,
             mars_denom,
-        } => Ok(execute_update_config(deps, env, info, owner, address_provider, mars_denom)?),
+        } => Ok(execute_update_config(deps, env, info, address_provider, mars_denom)?),
+        ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
     }
 }
 
@@ -88,12 +97,9 @@ pub fn execute_set_asset_incentive(
     denom: String,
     emission_per_second: Uint128,
 ) -> Result<Response, ContractError> {
-    // only owner can call this
+    OWNER.assert_admin(deps.storage, &info.sender)?;
+
     let config = CONFIG.load(deps.storage)?;
-    let owner = config.owner;
-    if info.sender != owner {
-        return Err(MarsError::Unauthorized {}.into());
-    }
 
     let red_bank_addr = address_provider::helpers::query_address(
         deps.as_ref(),
@@ -270,17 +276,13 @@ pub fn execute_update_config(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    owner: Option<String>,
     address_provider: Option<String>,
     mars_denom: Option<String>,
-) -> Result<Response, MarsError> {
+) -> Result<Response, ContractError> {
+    OWNER.assert_admin(deps.storage, &info.sender)?;
+
     let mut config = CONFIG.load(deps.storage)?;
 
-    if info.sender != config.owner {
-        return Err(MarsError::Unauthorized {});
-    };
-
-    config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
     config.address_provider =
         option_string_to_addr(deps.api, address_provider, config.address_provider)?;
     config.mars_denom = mars_denom.unwrap_or(config.mars_denom);
@@ -290,6 +292,14 @@ pub fn execute_update_config(
     let response = Response::new().add_attribute("action", "outposts/incentives/update_config");
 
     Ok(response)
+}
+
+fn update_owner(
+    deps: DepsMut,
+    info: MessageInfo,
+    update: AdminUpdate,
+) -> Result<Response, ContractError> {
+    Ok(OWNER.update(deps, info, update)?)
 }
 
 // QUERIES
@@ -307,9 +317,15 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-pub fn query_config(deps: Deps) -> StdResult<Config> {
+pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
+    let owner_state = OWNER.query(deps.storage)?;
     let config = CONFIG.load(deps.storage)?;
-    Ok(config)
+    Ok(ConfigResponse {
+        owner: owner_state.admin,
+        proposed_new_owner: owner_state.proposed,
+        address_provider: config.address_provider,
+        mars_denom: config.mars_denom,
+    })
 }
 
 pub fn query_asset_incentive(deps: Deps, denom: String) -> StdResult<AssetIncentiveResponse> {
