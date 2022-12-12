@@ -38,7 +38,9 @@ export interface AssetConfig {
 
 export interface OracleConfig {
   denom: string
-  price: string
+  price?: string
+  pool_id?: number
+  window_size?: number
 }
 
 export interface MultisigConfig {

@@ -120,7 +120,8 @@ export const axlUSDCAsset: AssetConfig = {
 
 export const atomOracle: OracleConfig = {
   denom: 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2',
-  price: '1.5',
+  pool_id: 1,
+  window_size: 1800,
 }
 
 export const osmoOracle: OracleConfig = {
@@ -129,6 +130,7 @@ export const osmoOracle: OracleConfig = {
 }
 
 export const axlUSDCOracle: OracleConfig = {
-  denom: 'uosmo',
-  price: '1.0',
+  denom: 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
+  pool_id: 1,
+  window_size: 1800,
 }

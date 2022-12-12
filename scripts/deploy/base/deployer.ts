@@ -236,16 +236,30 @@ export class Deployer {
       return
     }
 
-    const msg = {
-      set_price_source: {
-        denom: oracleConfig.denom,
-        price_source: {
-          fixed: { price: oracleConfig.price },
+    if (oracleConfig.price) {
+      const msg = {
+        set_price_source: {
+          denom: oracleConfig.denom,
+          price_source: {
+            fixed: { price: oracleConfig.price },
+          },
         },
-      },
+      }
+      await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
+    } else {
+      const msg = {
+        set_price_source: {
+          denom: oracleConfig.denom,
+          price_source: {
+            Twap: {
+              pool_id: oracleConfig.pool_id,
+              window_size: oracleConfig.window_size,
+            },
+          },
+        },
+      }
+      await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
     }
-
-    await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
 
     printYellow('Oracle Price is set.')
 
