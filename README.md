@@ -1,6 +1,9 @@
 # Mars Protocol
 This repository contains the source code for the core smart contracts of Mars Protocol. Smart contracts are meant to be compiled to `.wasm` files and uploaded to the [Terra](https://www.terra.money/) blockchain.
 
+## Audits
+See reports [here](https://github.com/mars-protocol/mars-audits/tree/main/outposts)
+
 ## Bug bounty
 A bug bounty is currently open for these contracts. See details at: https://immunefi.com/bounty/marsprotocol/
 
@@ -10,22 +13,22 @@ A bug bounty is currently open for these contracts. See details at: https://immu
 2. Get the wasm binary executable on your local machine.
    ```shell
    git clone https://github.com/mars-protocol/outposts.git
-   
-   git checkout <commit-id> 
-   
-   cd scripts 
-   
+
+   git checkout <commit-id>
+
+   cd scripts
+
    yarn compile
    ```
    Note: Intel/Amd 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production and the wasm bytecode will not match up to an Intel compiled wasm file.
 3. Download the wasm from the chain.
-   ```shell  
+   ```shell
    osmosisd query wasm code $CODEID -- $NODE download.wasm
    ```
 
 4. Verify that the diff is empty between them. If any value is returned, then the wasm files differ.
    ```shell
-   diff artifacts/$CONTRACTNAME.wasm download.wasm 
+   diff artifacts/$CONTRACTNAME.wasm download.wasm
    ```
 
 ## Deploy scripts overview and set up
