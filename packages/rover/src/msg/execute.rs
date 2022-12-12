@@ -106,8 +106,12 @@ pub enum Action {
         lp_token_out: String,
         minimum_receive: Uint128,
     },
-    /// Send LP token and withdraw corresponding reserve assets from pool
-    WithdrawLiquidity { lp_token: Coin },
+    /// Send LP token and withdraw corresponding reserve assets from pool.
+    /// If `lp_token_amount: None`, the account balance of `lp_token_denom` will be used.
+    WithdrawLiquidity {
+        lp_token_denom: String,
+        lp_token_amount: Option<Uint128>,
+    },
     /// Refunds all coin balances back to user wallet
     RefundAllCoinBalances {},
 }
@@ -207,8 +211,13 @@ pub enum CallbackMsg {
         lp_token_out: String,
         minimum_receive: Uint128,
     },
-    /// Send LP token and withdraw corresponding reserve assets from pool
-    WithdrawLiquidity { account_id: String, lp_token: Coin },
+    /// Send LP token and withdraw corresponding reserve assets from pool.
+    /// If `lp_token_amount: None`, the account balance of `lp_token_denom` will be used.
+    WithdrawLiquidity {
+        account_id: String,
+        lp_token_denom: String,
+        lp_token_amount: Option<Uint128>,
+    },
     /// Checks to ensure only one vault position is taken per credit account
     AssertOneVaultPositionOnly { account_id: String },
     /// Refunds all coin balances back to user wallet

@@ -102,7 +102,8 @@ export class Rover {
     await this.updateCreditAccount([
       {
         swap_exact_in: {
-          coin_in: { amount, denom: this.config.baseDenom },
+          coin_in_amount: amount,
+          coin_in_denom: this.config.baseDenom,
           denom_out: this.config.secondaryDenom,
           slippage: this.config.slippage.toString(),
         },
@@ -139,7 +140,8 @@ export class Rover {
     await this.updateCreditAccount([
       {
         withdraw_liquidity: {
-          lp_token: lpToken,
+          lp_token_denom: lpToken.denom,
+          lp_token_amount: lpToken.amount,
         },
       },
     ])

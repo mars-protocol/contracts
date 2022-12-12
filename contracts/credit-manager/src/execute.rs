@@ -152,12 +152,14 @@ pub fn dispatch_actions(
                 coins_in: coins_in.clone(),
                 minimum_receive: *minimum_receive,
             }),
-            Action::WithdrawLiquidity { lp_token } => {
-                callbacks.push(CallbackMsg::WithdrawLiquidity {
-                    account_id: account_id.to_string(),
-                    lp_token: lp_token.clone(),
-                })
-            }
+            Action::WithdrawLiquidity {
+                lp_token_denom,
+                lp_token_amount,
+            } => callbacks.push(CallbackMsg::WithdrawLiquidity {
+                account_id: account_id.to_string(),
+                lp_token_denom: lp_token_denom.clone(),
+                lp_token_amount: *lp_token_amount,
+            }),
             Action::RefundAllCoinBalances {} => {
                 callbacks.push(CallbackMsg::RefundAllCoinBalances {
                     account_id: account_id.to_string(),
@@ -318,8 +320,9 @@ pub fn execute_callback(
         ),
         CallbackMsg::WithdrawLiquidity {
             account_id,
-            lp_token,
-        } => withdraw_liquidity(deps, env, &account_id, lp_token),
+            lp_token_denom,
+            lp_token_amount,
+        } => withdraw_liquidity(deps, env, &account_id, &lp_token_denom, lp_token_amount),
         CallbackMsg::AssertOneVaultPositionOnly { account_id } => {
             assert_only_one_vault_position(deps, &account_id)
         }

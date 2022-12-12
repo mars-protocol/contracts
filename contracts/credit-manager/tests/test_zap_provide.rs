@@ -348,7 +348,8 @@ fn test_can_provide_unbalanced() {
         &account_id,
         &user,
         vec![WithdrawLiquidity {
-            lp_token: lp_token.to_coin(STARTING_LP_POOL_TOKENS.multiply_ratio(1u128, 2u128).u128()),
+            lp_token_denom: lp_token.denom.clone(),
+            lp_token_amount: Some(STARTING_LP_POOL_TOKENS.multiply_ratio(1u128, 2u128)),
         }],
         &[],
     )

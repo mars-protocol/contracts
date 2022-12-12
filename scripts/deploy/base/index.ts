@@ -45,6 +45,7 @@ export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProp
     await rover.vaultDeposit()
     if (config.vaultType === VaultType.UNLOCKED) {
       await rover.vaultWithdraw()
+      await rover.unzap()
     } else {
       await rover.vaultRequestUnlock()
     }

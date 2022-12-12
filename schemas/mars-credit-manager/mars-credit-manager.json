@@ -608,7 +608,7 @@
             "additionalProperties": false
           },
           {
-            "description": "Send LP token and withdraw corresponding reserve assets from pool",
+            "description": "Send LP token and withdraw corresponding reserve assets from pool. If `lp_token_amount: None`, the account balance of `lp_token_denom` will be used.",
             "type": "object",
             "required": [
               "withdraw_liquidity"
@@ -617,11 +617,21 @@
               "withdraw_liquidity": {
                 "type": "object",
                 "required": [
-                  "lp_token"
+                  "lp_token_denom"
                 ],
                 "properties": {
-                  "lp_token": {
-                    "$ref": "#/definitions/Coin"
+                  "lp_token_amount": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/Uint128"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "lp_token_denom": {
+                    "type": "string"
                   }
                 },
                 "additionalProperties": false
@@ -1166,7 +1176,7 @@
             "additionalProperties": false
           },
           {
-            "description": "Send LP token and withdraw corresponding reserve assets from pool",
+            "description": "Send LP token and withdraw corresponding reserve assets from pool. If `lp_token_amount: None`, the account balance of `lp_token_denom` will be used.",
             "type": "object",
             "required": [
               "withdraw_liquidity"
@@ -1176,14 +1186,24 @@
                 "type": "object",
                 "required": [
                   "account_id",
-                  "lp_token"
+                  "lp_token_denom"
                 ],
                 "properties": {
                   "account_id": {
                     "type": "string"
                   },
-                  "lp_token": {
-                    "$ref": "#/definitions/Coin"
+                  "lp_token_amount": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/Uint128"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "lp_token_denom": {
+                    "type": "string"
                   }
                 },
                 "additionalProperties": false

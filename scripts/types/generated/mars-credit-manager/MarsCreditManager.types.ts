@@ -134,7 +134,8 @@ export type Action =
     }
   | {
       withdraw_liquidity: {
-        lp_token: Coin
+        lp_token_amount?: Uint128 | null
+        lp_token_denom: string
       }
     }
   | {
@@ -255,7 +256,8 @@ export type CallbackMsg =
   | {
       withdraw_liquidity: {
         account_id: string
-        lp_token: Coin
+        lp_token_amount?: Uint128 | null
+        lp_token_denom: string
       }
     }
   | {

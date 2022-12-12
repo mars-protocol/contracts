@@ -1,9 +1,9 @@
 use cosmwasm_std::{Coin, Deps, DepsMut, Env, Response, Uint128};
 
-use mars_rover::error::ContractResult;
+use mars_rover::error::{ContractError, ContractResult};
 use mars_rover::traits::Denoms;
 
-use crate::state::ZAPPER;
+use crate::state::{COIN_BALANCES, ZAPPER};
 use crate::utils::{
     assert_coin_is_whitelisted, assert_coins_are_whitelisted, decrement_coin_balance,
     update_balance_msg, update_balances_msgs,
@@ -45,9 +45,23 @@ pub fn withdraw_liquidity(
     deps: DepsMut,
     env: Env,
     account_id: &str,
-    lp_token: Coin,
+    lp_token_denom: &str,
+    lp_token_amount: Option<Uint128>,
 ) -> ContractResult<Response> {
-    assert_coin_is_whitelisted(deps.storage, &lp_token.denom)?;
+    assert_coin_is_whitelisted(deps.storage, lp_token_denom)?;
+
+    let lp_token = Coin {
+        denom: lp_token_denom.to_string(),
+        amount: lp_token_amount.unwrap_or(
+            COIN_BALANCES
+                .may_load(deps.storage, (account_id, lp_token_denom))?
+                .unwrap_or(Uint128::zero()),
+        ),
+    };
+
+    if lp_token.amount.is_zero() {
+        return Err(ContractError::NoAmount);
+    }
 
     let zapper = ZAPPER.load(deps.storage)?;
     let coins_out = zapper.estimate_withdraw_liquidity(&deps.querier, &lp_token)?;

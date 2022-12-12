@@ -1,4 +1,4 @@
-name: Main
+name: Scripts
 
 on:
   push:
@@ -12,8 +12,11 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
+  scripts:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./scripts
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -27,21 +30,24 @@ jobs:
           profile: minimal
           override: true
 
-      # FIXME: use cache when osmosis-rust dependency available in crates.io
-      # selecting a toolchain should happen before the plugin, as the cache uses the current rustc version as its cache key
-      #- name: Cache dependencies
-      #  uses: Swatinem/rust-cache@v2
-
       - name: Install cargo make
         uses: davidB/rust-cargo-make@v1
 
-      - name: Format
-        run: cargo make fmt
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-      - name: Clippy
-        run: cargo make clippy
+      - name: Install yarn
+        run: npm install --global yarn
 
-      - name: Audit dependencies
+      - name: Install dependencies
+        run: yarn install
+
+      # fails if schema changes not committed
+      - name: Generate latest schemas
         run: |
-          cargo install --locked cargo-audit
-          cargo make audit
+          yarn generate-types
+          git diff --exit-code
+
+      - name: Check build
+        run: yarn build
