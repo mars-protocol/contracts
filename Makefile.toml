@@ -1,13 +1,10 @@
-extend= [
-  { path = "coverage_grcov.makefile.toml" }
+extend = [
+  { path = "schema.Makefile.toml" },
+  { path = "coverage_grcov.Makefile.toml" }
 ]
 
 [config]
 default_to_workspace = false
-
-[tasks.check]
-command = "cargo"
-args = ["check"]
 
 [tasks.build]
 command = "cargo"
@@ -15,25 +12,20 @@ args = ["build", "--release", "--target", "wasm32-unknown-unknown", "--locked"]
 
 [tasks.rust-optimizer]
 script = """
-if [[ $(arch) == 'arm64' ]]; then
-  docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
-  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/workspace-optimizer-arm64:0.12.9
+if [[ $(arch) == "arm64" ]]; then
+  image="cosmwasm/workspace-optimizer-arm64:0.12.9"
 else
-  docker run --rm -v "$(pwd)":/code \
+  image="cosmwasm/workspace-optimizer:0.12.9"
+fi
+docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/workspace-optimizer:0.12.9
-fi
+  ${image}
 """
 
 [tasks.test]
 command = "cargo"
 args = ["test", "--locked"]
-
-[tasks.coverage]
-alias="coverage_grcov"
 
 [tasks.fmt]
 command = "cargo"
@@ -43,30 +35,23 @@ args = ["fmt", "--all", "--check"]
 command = "cargo"
 args = ["clippy", "--tests", "--", "-D", "warnings"]
 
-[tasks.all-github-actions]
+[tasks.audit]
+command = "cargo"
+args = ["audit"]
+
+[tasks.coverage-html]
+alias = "coverage-grcov-html"
+
+[tasks.coverage-lcov]
+alias = "coverage-grcov-lcov"
+
+[tasks.all-actions]
 dependencies = [
-  "check",
-  "build",
-  "test",
   "fmt",
   "clippy",
+  "build",
+  "test",
+  "audit",
+  "generate-all-schemas",
   "rust-optimizer",
 ]
-
-[tasks.generate-all-schemas]
-script = """
-  rm -rf schema
-  rm -rf schemas
-  mkdir schemas
-
-  array=( mars-address-provider mars-incentives mars-oracle-osmosis mars-red-bank mars-rewards-collector-osmosis )
-  for i in "${array[@]}"
-  do
-    echo "$i"
-    cargo run --package "$i" --example schema
-    mkdir schemas/"$i"
-    mv schema/"$i".json schemas/"$i"/"$i".json
-  done
-
-  rm -rf schema
-"""
