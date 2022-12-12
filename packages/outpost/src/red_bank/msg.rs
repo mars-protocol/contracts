@@ -1,9 +1,14 @@
 use crate::red_bank::InterestRateModel;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Decimal, Uint128};
+use cw_controllers_admin_fork::AdminUpdate;
 
 #[cw_serde]
 pub struct InstantiateMsg {
+    /// Contract's owner
+    pub owner: String,
+    /// Contract's emergency owner
+    pub emergency_owner: String,
     /// Market configuration
     pub config: CreateOrUpdateConfig,
 }
@@ -11,6 +16,12 @@ pub struct InstantiateMsg {
 #[cw_serde]
 #[allow(clippy::large_enum_variant)]
 pub enum ExecuteMsg {
+    /// Manages owner state
+    UpdateOwner(AdminUpdate),
+
+    /// Manages emergency owner state
+    UpdateEmergencyOwner(AdminUpdate),
+
     /// Update contract config (only owner can call)
     UpdateConfig {
         config: CreateOrUpdateConfig,
@@ -105,7 +116,6 @@ pub enum ExecuteMsg {
 
 #[cw_serde]
 pub struct CreateOrUpdateConfig {
-    pub owner: Option<String>,
     pub address_provider: Option<String>,
     pub close_factor: Option<Decimal>,
 }

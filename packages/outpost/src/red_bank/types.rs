@@ -7,8 +7,6 @@ use crate::helpers::decimal_param_le_one;
 /// Global configuration
 #[cw_serde]
 pub struct Config<T> {
-    /// Contract owner
-    pub owner: T,
     /// Address provider returns addresses for all protocol contracts
     pub address_provider: T,
     /// Maximum percentage of outstanding debt that can be covered by a liquidator
@@ -68,7 +66,21 @@ pub struct Position {
     pub asset_price: Decimal,
 }
 
-pub type ConfigResponse = Config<String>;
+#[cw_serde]
+pub struct ConfigResponse {
+    /// The contract's owner
+    pub owner: Option<String>,
+    /// The contract's proposed owner
+    pub proposed_new_owner: Option<String>,
+    /// The contract's emergency owner
+    pub emergency_owner: Option<String>,
+    /// The contract's proposed emergency owner
+    pub proposed_new_emergency_owner: Option<String>,
+    /// Address provider returns addresses for all protocol contracts
+    pub address_provider: String,
+    /// Maximum percentage of outstanding debt that can be covered by a liquidator
+    pub close_factor: Decimal,
+}
 
 #[cw_serde]
 pub struct UncollateralizedLoanLimitResponse {

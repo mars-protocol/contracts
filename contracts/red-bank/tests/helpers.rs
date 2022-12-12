@@ -69,11 +69,12 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
     let env = mock_env(MockEnvParams::default());
     let info = mock_info("owner");
     let config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     instantiate(deps.as_mut(), env, info, msg).unwrap();
