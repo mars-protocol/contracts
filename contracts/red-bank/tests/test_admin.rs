@@ -1,5 +1,6 @@
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{attr, coin, from_binary, Addr, Decimal, Event, Uint128};
+use cw_controllers_admin_fork::AdminError::NotAdmin;
 
 use mars_outpost::address_provider::MarsAddressType;
 use mars_outpost::error::MarsError;
@@ -14,7 +15,7 @@ use mars_red_bank::error::ContractError;
 use mars_red_bank::interest_rates::{
     compute_scaled_amount, compute_underlying_amount, ScalingOperation,
 };
-use mars_red_bank::state::{COLLATERALS, CONFIG, MARKETS};
+use mars_red_bank::state::{COLLATERALS, MARKETS};
 
 use crate::helpers::{th_get_expected_indices, th_init_market, th_setup};
 
@@ -27,7 +28,6 @@ fn test_proper_initialization() {
 
     // Config with base params valid (just update the rest)
     let base_config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
         close_factor: None,
     };
@@ -36,11 +36,11 @@ fn test_proper_initialization() {
     // init config with empty params
     // *
     let empty_config = CreateOrUpdateConfig {
-        owner: None,
         address_provider: None,
         close_factor: None,
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
         config: empty_config,
     };
     let info = mock_info("owner", &[]);
@@ -56,6 +56,7 @@ fn test_proper_initialization() {
         ..base_config.clone()
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -79,6 +80,7 @@ fn test_proper_initialization() {
         ..base_config
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
         config,
     };
 
@@ -90,7 +92,7 @@ fn test_proper_initialization() {
     // it worked, let's query the state
     let res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
     let value: ConfigResponse = from_binary(&res).unwrap();
-    assert_eq!(value.owner, "owner");
+    assert_eq!(value.owner.unwrap(), "owner");
     assert_eq!(value.address_provider, "address_provider");
 }
 
@@ -104,11 +106,11 @@ fn test_update_config() {
     // *
     let mut close_factor = Decimal::from_ratio(1u128, 4u128);
     let init_config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
         close_factor: Some(close_factor),
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
         config: init_config.clone(),
     };
     // we can just call .unwrap() to assert this was a success
@@ -123,14 +125,13 @@ fn test_update_config() {
     };
     let info = mock_info("somebody", &[]);
     let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-    assert_eq!(error_res, MarsError::Unauthorized {}.into());
+    assert_eq!(error_res, ContractError::AdminError(NotAdmin {}));
 
     // *
     // update config with close_factor
     // *
     close_factor = Decimal::from_ratio(13u128, 10u128);
     let config = CreateOrUpdateConfig {
-        owner: None,
         close_factor: Some(close_factor),
         ..init_config
     };
@@ -154,7 +155,6 @@ fn test_update_config() {
     // *
     close_factor = Decimal::from_ratio(1u128, 20u128);
     let config = CreateOrUpdateConfig {
-        owner: Some("new_owner".to_string()),
         address_provider: Some("new_address_provider".to_string()),
         close_factor: Some(close_factor),
     };
@@ -164,13 +164,14 @@ fn test_update_config() {
 
     // we can just call .unwrap() to assert this was a success
     let info = mock_info("owner", &[]);
-    let res = execute(deps.as_mut(), env, info, msg).unwrap();
+    let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // Read config from state
-    let new_config = CONFIG.load(&deps.storage).unwrap();
+    let res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
+    let new_config: ConfigResponse = from_binary(&res).unwrap();
 
-    assert_eq!(new_config.owner, Addr::unchecked("new_owner"));
+    assert_eq!(new_config.owner.unwrap(), "owner".to_string());
     assert_eq!(new_config.address_provider, Addr::unchecked(config.address_provider.unwrap()));
     assert_eq!(new_config.close_factor, config.close_factor.unwrap());
 }
@@ -181,11 +182,11 @@ fn test_init_asset() {
     let env = mock_env(MockEnvParams::default());
 
     let config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -217,7 +218,7 @@ fn test_init_asset() {
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-        assert_eq!(error_res, MarsError::Unauthorized {}.into());
+        assert_eq!(error_res, ContractError::AdminError(NotAdmin {}));
     }
 
     // init asset with empty params
@@ -420,11 +421,11 @@ fn test_update_asset() {
     let env = mock_env_at_block_time(start_time);
 
     let config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -456,7 +457,7 @@ fn test_update_asset() {
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-        assert_eq!(error_res, MarsError::Unauthorized {}.into());
+        assert_eq!(error_res, ContractError::AdminError(NotAdmin {}));
     }
 
     // owner is authorized but can't update asset if not initialized first
@@ -673,11 +674,11 @@ fn test_update_asset_with_new_interest_rate_model_params() {
     let mut deps = mock_dependencies(&[]);
 
     let config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);

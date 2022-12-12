@@ -1,4 +1,5 @@
 use cosmwasm_std::{OverflowError, StdError};
+use cw_controllers_admin_fork::AdminError;
 use cw_utils::PaymentError;
 use thiserror::Error;
 
@@ -11,6 +12,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Mars(#[from] MarsError),
+
+    #[error("{0}")]
+    AdminError(#[from] AdminError),
 
     #[error("{0}")]
     Payment(#[from] PaymentError),

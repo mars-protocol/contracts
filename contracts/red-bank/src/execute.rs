@@ -2,6 +2,8 @@ use std::cmp::min;
 use std::str;
 
 use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
+use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
+use cw_controllers_admin_fork::AdminUpdate;
 
 use mars_outpost::address_provider::{self, MarsAddressType};
 use mars_outpost::error::MarsError;
@@ -21,7 +23,7 @@ use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
     get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
 };
-use crate::state::{COLLATERALS, CONFIG, DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
+use crate::state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS};
 use crate::user::User;
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-red-bank";
@@ -33,20 +35,18 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
     // Destructuring a struct’s fields into separate variables in order to force
     // compile error if we add more params
     let CreateOrUpdateConfig {
-        owner,
         address_provider,
         close_factor,
     } = msg.config;
 
     // All fields should be available
-    let available = owner.is_some() && address_provider.is_some() && close_factor.is_some();
+    let available = address_provider.is_some() && close_factor.is_some();
 
     if !available {
         return Err(MarsError::InstantiateParamsUnavailable {}.into());
     };
 
     let config = Config {
-        owner: option_string_to_addr(deps.api, owner, zero_address())?,
         address_provider: option_string_to_addr(deps.api, address_provider, zero_address())?,
         close_factor: close_factor.unwrap(),
     };
@@ -55,7 +55,23 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
 
     CONFIG.save(deps.storage, &config)?;
 
+    OWNER.initialize(
+        deps.storage,
+        deps.api,
+        SetInitialAdmin {
+            admin: msg.owner,
+        },
+    )?;
+
     Ok(Response::default())
+}
+
+pub fn update_owner(
+    deps: DepsMut,
+    info: MessageInfo,
+    update: AdminUpdate,
+) -> Result<Response, ContractError> {
+    Ok(OWNER.update(deps, info, update)?)
 }
 
 /// Update config
@@ -64,22 +80,18 @@ pub fn update_config(
     info: MessageInfo,
     new_config: CreateOrUpdateConfig,
 ) -> Result<Response, ContractError> {
-    let mut config = CONFIG.load(deps.storage)?;
+    OWNER.assert_admin(deps.storage, &info.sender)?;
 
-    if info.sender != config.owner {
-        return Err(MarsError::Unauthorized {}.into());
-    }
+    let mut config = CONFIG.load(deps.storage)?;
 
     // Destructuring a struct’s fields into separate variables in order to force
     // compile error if we add more params
     let CreateOrUpdateConfig {
-        owner,
         address_provider,
         close_factor,
     } = new_config;
 
     // Update config
-    config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
     config.address_provider =
         option_string_to_addr(deps.api, address_provider, config.address_provider)?;
     config.close_factor = close_factor.unwrap_or(config.close_factor);
@@ -101,11 +113,7 @@ pub fn init_asset(
     denom: String,
     params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-
-    if info.sender != config.owner {
-        return Err(MarsError::Unauthorized {}.into());
-    }
+    OWNER.assert_admin(deps.storage, &info.sender)?;
 
     if MARKETS.may_load(deps.storage, &denom)?.is_some() {
         return Err(ContractError::AssetAlreadyInitialized {});
@@ -184,11 +192,9 @@ pub fn update_asset(
     denom: String,
     params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
+    OWNER.assert_admin(deps.storage, &info.sender)?;
 
-    if info.sender != config.owner {
-        return Err(MarsError::Unauthorized {}.into());
-    }
+    let config = CONFIG.load(deps.storage)?;
 
     let market_option = MARKETS.may_load(deps.storage, &denom)?;
     match market_option {
@@ -278,13 +284,7 @@ pub fn update_uncollateralized_loan_limit(
     denom: String,
     new_limit: Uint128,
 ) -> Result<Response, ContractError> {
-    // Get config
-    let config = CONFIG.load(deps.storage)?;
-
-    // Only owner can do this
-    if info.sender != config.owner {
-        return Err(MarsError::Unauthorized {}.into());
-    }
+    OWNER.assert_admin(deps.storage, &info.sender)?;
 
     // Check that the user has no collateralized debt
     let current_limit = UNCOLLATERALIZED_LOAN_LIMITS

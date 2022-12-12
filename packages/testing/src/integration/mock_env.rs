@@ -550,8 +550,8 @@ impl MockEnvBuilder {
                 code_id,
                 self.owner.clone(),
                 &red_bank::InstantiateMsg {
+                    owner: self.owner.to_string(),
                     config: CreateOrUpdateConfig {
-                        owner: Some(self.owner.to_string()),
                         address_provider: Some(address_provider_addr.to_string()),
                         close_factor: Some(self.close_factor),
                     },

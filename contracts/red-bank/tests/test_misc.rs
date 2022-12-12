@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128};
+use cw_controllers_admin_fork::AdminError::NotAdmin;
 
-use mars_outpost::error::MarsError;
 use mars_outpost::math;
 use mars_outpost::red_bank::{Debt, ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
@@ -73,7 +73,7 @@ fn test_uncollateralized_loan_limits() {
     let error_res =
         execute(deps.as_mut(), update_limit_env.clone(), info, update_limit_msg.clone())
             .unwrap_err();
-    assert_eq!(error_res, MarsError::Unauthorized {}.into());
+    assert_eq!(error_res, ContractError::AdminError(NotAdmin {}));
 
     // Update borrower limit as owner
     let info = mock_info("owner", &[]);
