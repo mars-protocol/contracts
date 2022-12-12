@@ -230,7 +230,7 @@ export class Deployer {
     this.storage.execute.assetsInitialized.push(assetConfig.denom)
   }
 
-  async setOraclePrice(oracleConfig: OracleConfig) {
+  async setOracle(oracleConfig: OracleConfig) {
     if (this.storage.execute.oraclePriceSet) {
       printBlue(`${this.config.second_asset_symbol} Oracle Price already set`)
       return

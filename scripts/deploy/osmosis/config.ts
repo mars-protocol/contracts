@@ -66,17 +66,17 @@ export const osmosisLocalConfig: DeploymentConfig = {
 
 export const osmoAsset: AssetConfig = {
   denom: 'uosmo',
-  max_loan_to_value: '0.55',
+  max_loan_to_value: '0.59',
   reserve_factor: '0.2',
-  liquidation_threshold: '0.65',
-  liquidation_bonus: '0.1',
+  liquidation_threshold: '0.61',
+  liquidation_bonus: '0.15',
   interest_rate_model: {
-    optimal_utilization_rate: '0.7',
-    base: '0.3',
+    optimal_utilization_rate: '0.5',
+    base: '0',
     slope_1: '0.25',
-    slope_2: '0.3',
+    slope_2: '3',
   },
-  deposit_cap: '1000000000',
+  deposit_cap: '2_000_000',
   deposit_enabled: true,
   borrow_enabled: true,
   symbol: 'OSMO',
@@ -84,20 +84,38 @@ export const osmoAsset: AssetConfig = {
 
 export const atomAsset: AssetConfig = {
   denom: 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2',
-  max_loan_to_value: '0.65',
+  max_loan_to_value: '0.68',
   reserve_factor: '0.2',
   liquidation_threshold: '0.7',
-  liquidation_bonus: '0.1',
+  liquidation_bonus: '0.15',
   interest_rate_model: {
-    optimal_utilization_rate: '0.1',
-    base: '0.3',
+    optimal_utilization_rate: '0.5',
+    base: '0',
     slope_1: '0.25',
-    slope_2: '0.3',
+    slope_2: '3',
   },
-  deposit_cap: '1000000000',
+  deposit_cap: '100_000',
   deposit_enabled: true,
   borrow_enabled: true,
   symbol: 'ATOM',
+}
+
+export const axlUSDCAsset: AssetConfig = {
+  denom: 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
+  max_loan_to_value: '0.795',
+  reserve_factor: '0.2',
+  liquidation_threshold: '0.8',
+  liquidation_bonus: '0.1',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.8',
+    base: '0',
+    slope_1: '0.25',
+    slope_2: '2',
+  },
+  deposit_cap: '500_000',
+  deposit_enabled: true,
+  borrow_enabled: true,
+  symbol: 'axlUSDC',
 }
 
 export const atomOracle: OracleConfig = {
@@ -106,6 +124,11 @@ export const atomOracle: OracleConfig = {
 }
 
 export const osmoOracle: OracleConfig = {
+  denom: 'uosmo',
+  price: '1.0',
+}
+
+export const axlUSDCOracle: OracleConfig = {
   denom: 'uosmo',
   price: '1.0',
 }

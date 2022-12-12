@@ -1,7 +1,7 @@
 import { setupDeployer } from './setupDeployer'
 import { DeploymentConfig } from '../../types/config'
-import { printGreen, printYellow, printRed } from '../../utils/chalk'
-import { atomAsset, osmoAsset, osmoOracle, atomOracle } from '../osmosis/config'
+import { printRed } from '../../utils/chalk'
+import {atomAsset, osmoAsset, osmoOracle, atomOracle, axlUSDCAsset, axlUSDCOracle} from '../osmosis/config'
 
 export const taskRunner = async (config: DeploymentConfig) => {
   const deployer = await setupDeployer(config)
@@ -30,17 +30,10 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.updateAddressProvider()
     await deployer.initializeAsset(osmoAsset)
     await deployer.initializeAsset(atomAsset)
-    await deployer.setOraclePrice(atomOracle)
-    await deployer.setOraclePrice(osmoOracle)
-
-    // execute actions
-    printYellow('Testing...')
-    await deployer.executeDeposit()
-    await deployer.executeBorrow()
-    await deployer.executeRepay()
-    await deployer.executeWithdraw()
-    await deployer.executeRewardsSwap()
-    printGreen('ALL TESTS HAVE BEEN SUCCESSFUL')
+    await deployer.initializeAsset(axlUSDCAsset)
+    await deployer.setOracle(atomOracle)
+    await deployer.setOracle(osmoOracle)
+    await deployer.setOracle(axlUSDCOracle)
 
     // update owner to multisig address
     await deployer.updateIncentivesContractOwner()
