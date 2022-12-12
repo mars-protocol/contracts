@@ -32,5 +32,4 @@ thiserror                 = { workspace = true }
 
 [dev-dependencies]
 anyhow          = { workspace = true }
-# FIXME: update with new version when osmosis-v13 branch merged to main branch
-osmosis-testing = { rev = "fb79d48810cfa80f1f74dffc1e04f0775fe1e152", git = "https://github.com/osmosis-labs/osmosis-rust" }
+osmosis-testing = "0.13.2"

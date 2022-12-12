@@ -40,10 +40,10 @@ command = "cargo"
 args = ["audit"]
 
 [tasks.coverage-html]
-alias = "coverage_grcov_html"
+alias = "coverage-grcov-html"
 
 [tasks.coverage-lcov]
-alias = "coverage_grcov_lcov"
+alias = "coverage-grcov-lcov"
 
 [tasks.all-actions]
 dependencies = [
