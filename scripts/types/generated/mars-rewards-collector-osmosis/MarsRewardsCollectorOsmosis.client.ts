@@ -6,28 +6,15 @@
  */
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from '@cosmjs/cosmwasm-stargate'
-import { StdFee } from '@cosmjs/amino'
+import { Coin, StdFee } from '@cosmjs/amino'
 import {
   Decimal,
   InstantiateMsg,
   ExecuteMsg,
   OsmosisRoute,
   Uint128,
-  CosmosMsgForEmpty,
-  BankMsg,
-  Binary,
-  IbcMsg,
-  Timestamp,
-  Uint64,
-  WasmMsg,
-  GovMsg,
-  VoteOption,
   CreateOrUpdateConfig,
   SwapAmountInRoute,
-  Coin,
-  Empty,
-  IbcTimeout,
-  IbcTimeoutBlock,
   QueryMsg,
   ConfigForString,
   RouteResponseForString,
@@ -163,16 +150,6 @@ export interface MarsRewardsCollectorOsmosisInterface
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
-  executeCosmosMsg: (
-    {
-      cosmosMsg,
-    }: {
-      cosmosMsg: CosmosMsgForEmpty
-    },
-    fee?: number | StdFee | 'auto',
-    memo?: string,
-    funds?: Coin[],
-  ) => Promise<ExecuteResult>
 }
 export class MarsRewardsCollectorOsmosisClient
   extends MarsRewardsCollectorOsmosisQueryClient
@@ -192,7 +169,6 @@ export class MarsRewardsCollectorOsmosisClient
     this.withdrawFromRedBank = this.withdrawFromRedBank.bind(this)
     this.distributeRewards = this.distributeRewards.bind(this)
     this.swapAsset = this.swapAsset.bind(this)
-    this.executeCosmosMsg = this.executeCosmosMsg.bind(this)
   }
 
   updateConfig = async (
@@ -318,29 +294,6 @@ export class MarsRewardsCollectorOsmosisClient
         swap_asset: {
           amount,
           denom,
-        },
-      },
-      fee,
-      memo,
-      funds,
-    )
-  }
-  executeCosmosMsg = async (
-    {
-      cosmosMsg,
-    }: {
-      cosmosMsg: CosmosMsgForEmpty
-    },
-    fee: number | StdFee | 'auto' = 'auto',
-    memo?: string,
-    funds?: Coin[],
-  ): Promise<ExecuteResult> => {
-    return await this.client.execute(
-      this.sender,
-      this.contractAddress,
-      {
-        execute_cosmos_msg: {
-          cosmos_msg: cosmosMsg,
         },
       },
       fee,

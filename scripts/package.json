@@ -5,7 +5,7 @@
     "deploy:osmosis-testnet": "yarn build && node build/deploy/osmosis/testIndex.js",
     "deploy:osmosis-mainnet": "yarn build && node build/deploy/osmosis/mainIndex.js",
     "deploy:osmosis-testnet-multisig": "yarn build && node build/deploy/osmosis/multisig.js",
-    "generate-types": "yarn rust-schema && tsc --project codegen-tsconfig.json && rm -rf types/generated && node build/codegen && node build/codegen/insertIgnores.js",
+    "generate-types": "yarn rust-schema && tsc --project codegen-tsconfig.json && rm -rf types/generated && node build/codegen && node build/codegen/insertIgnores.js && yarn format",
     "rust-schema": "cd ../ && cargo make generate-all-schemas && cd scripts",
     "build": "tsc",
     "lint": "yarn format-check && eslint . && yarn build",

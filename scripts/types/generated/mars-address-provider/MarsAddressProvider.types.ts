@@ -13,7 +13,7 @@ export type ExecuteMsg =
   | {
       set_address: {
         address: string
-        contract: MarsContract
+        address_type: MarsAddressType
       }
     }
   | {
@@ -21,11 +21,8 @@ export type ExecuteMsg =
         new_owner: string
       }
     }
-export type MarsContract =
-  | 'incentives'
-  | 'oracle'
-  | 'red_bank'
-  | 'rewards_collector'
+export type MarsAddressType =
+  | ('incentives' | 'oracle' | 'red_bank' | 'rewards_collector')
   | 'protocol_admin'
   | 'fee_collector'
   | 'safety_fund'
@@ -34,19 +31,19 @@ export type QueryMsg =
       config: {}
     }
   | {
-      address: MarsContract
+      address: MarsAddressType
     }
   | {
-      addresses: MarsContract[]
+      addresses: MarsAddressType[]
     }
   | {
       all_addresses: {
         limit?: number | null
-        start_after?: MarsContract | null
+        start_after?: MarsAddressType | null
       }
     }
 export interface AddressResponseItem {
   address: string
-  contract: MarsContract
+  address_type: MarsAddressType
 }
 export type ArrayOfAddressResponseItem = AddressResponseItem[]

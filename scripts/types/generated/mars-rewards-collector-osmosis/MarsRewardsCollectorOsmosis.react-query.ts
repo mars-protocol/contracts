@@ -7,28 +7,15 @@
 
 import { UseQueryOptions, useQuery, useMutation, UseMutationOptions } from '@tanstack/react-query'
 import { ExecuteResult } from '@cosmjs/cosmwasm-stargate'
-import { StdFee } from '@cosmjs/amino'
+import { StdFee, Coin } from '@cosmjs/amino'
 import {
   Decimal,
   InstantiateMsg,
   ExecuteMsg,
   OsmosisRoute,
   Uint128,
-  CosmosMsgForEmpty,
-  BankMsg,
-  Binary,
-  IbcMsg,
-  Timestamp,
-  Uint64,
-  WasmMsg,
-  GovMsg,
-  VoteOption,
   CreateOrUpdateConfig,
   SwapAmountInRoute,
-  Coin,
-  Empty,
-  IbcTimeout,
-  IbcTimeoutBlock,
   QueryMsg,
   ConfigForString,
   RouteResponseForString,
@@ -138,29 +125,6 @@ export function useMarsRewardsCollectorOsmosisConfigQuery<TData = ConfigForStrin
     marsRewardsCollectorOsmosisQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
-  )
-}
-export interface MarsRewardsCollectorOsmosisExecuteCosmosMsgMutation {
-  client: MarsRewardsCollectorOsmosisClient
-  msg: {
-    cosmosMsg: CosmosMsgForEmpty
-  }
-  args?: {
-    fee?: number | StdFee | 'auto'
-    memo?: string
-    funds?: Coin[]
-  }
-}
-export function useMarsRewardsCollectorOsmosisExecuteCosmosMsgMutation(
-  options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsRewardsCollectorOsmosisExecuteCosmosMsgMutation>,
-    'mutationFn'
-  >,
-) {
-  return useMutation<ExecuteResult, Error, MarsRewardsCollectorOsmosisExecuteCosmosMsgMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) =>
-      client.executeCosmosMsg(msg, fee, memo, funds),
-    options,
   )
 }
 export interface MarsRewardsCollectorOsmosisSwapAssetMutation {

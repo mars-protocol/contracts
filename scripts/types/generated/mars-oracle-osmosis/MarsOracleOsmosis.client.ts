@@ -108,7 +108,7 @@ export interface MarsOracleOsmosisInterface extends MarsOracleOsmosisReadOnlyInt
     {
       owner,
     }: {
-      owner?: string
+      owner: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -121,6 +121,16 @@ export interface MarsOracleOsmosisInterface extends MarsOracleOsmosisReadOnlyInt
     }: {
       denom: string
       priceSource: OsmosisPriceSource
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
+  removePriceSource: (
+    {
+      denom,
+    }: {
+      denom: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -142,13 +152,14 @@ export class MarsOracleOsmosisClient
     this.contractAddress = contractAddress
     this.updateConfig = this.updateConfig.bind(this)
     this.setPriceSource = this.setPriceSource.bind(this)
+    this.removePriceSource = this.removePriceSource.bind(this)
   }
 
   updateConfig = async (
     {
       owner,
     }: {
-      owner?: string
+      owner: string
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -186,6 +197,29 @@ export class MarsOracleOsmosisClient
         set_price_source: {
           denom,
           price_source: priceSource,
+        },
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  removePriceSource = async (
+    {
+      denom,
+    }: {
+      denom: string
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        remove_price_source: {
+          denom,
         },
       },
       fee,
