@@ -10,6 +10,7 @@ use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg;
 
 use mars_rover::error::{ContractError, ContractResult};
+use mars_rover::math::CeilRatio;
 use mars_rover::msg::execute::CallbackMsg;
 use mars_rover::msg::query::CoinValue;
 use mars_rover::msg::ExecuteMsg;
@@ -136,10 +137,8 @@ pub fn debt_shares_to_amount(
     let red_bank = RED_BANK.load(deps.storage)?;
     let total_debt_amount = red_bank.query_debt(&deps.querier, rover_addr, denom)?;
 
-    // amount of debt for token's position
-    // NOTE: Given the nature of integers, the debt is rounded down. This means that the
-    //       remaining share owners will take a small hit of the remainder.
-    let amount = total_debt_amount.checked_multiply_ratio(shares, total_debt_shares)?;
+    // Amount of debt for token's position. Rounded up to favor participants in the debt pool.
+    let amount = total_debt_amount.multiply_ratio_ceil(shares, total_debt_shares)?;
 
     Ok(Coin {
         denom: denom.to_string(),

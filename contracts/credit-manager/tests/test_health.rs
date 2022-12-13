@@ -5,6 +5,7 @@ use cosmwasm_std::{coins, Addr, Coin, Decimal, Uint128};
 use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use mars_mock_oracle::msg::CoinPrice;
 use mars_rover::error::ContractError;
+use mars_rover::math::CeilRatio;
 use mars_rover::msg::execute::Action::{Borrow, Deposit};
 use mars_rover::msg::instantiate::ConfigUpdates;
 use mars_rover::msg::query::DebtAmount;
@@ -575,7 +576,8 @@ fn test_debt_value() {
 
     let user_a_owed_atom = red_bank_atom_debt
         .amount
-        .multiply_ratio(user_a_debt_shares_atom, red_bank_atom_res.shares);
+        .multiply_ratio_ceil(user_a_debt_shares_atom, red_bank_atom_res.shares)
+        .unwrap();
     let user_a_owed_atom_value = uatom_info.price * user_a_owed_atom.to_dec().unwrap();
 
     let osmo_borrowed_amount_dec = (user_a_borrowed_amount_osmo + Uint128::one())
