@@ -37,7 +37,7 @@ mars-rover                = { workspace = true }
 anyhow             = { workspace = true }
 cw-multi-test      = { workspace = true }
 cw-utils           = { workspace = true }
-itertools          = "0.10"
+itertools          = { workspace = true }
 mars-mock-oracle   = { workspace = true }
 mars-mock-red-bank = { workspace = true }
 mars-mock-vault    = { workspace = true }

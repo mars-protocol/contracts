@@ -32,25 +32,28 @@ documentation = "https://docs.marsprotocol.io/"
 keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
-anyhow          = "1"
-cosmwasm-schema = "1.1"
-cosmwasm-std    = "1.1"
-cw2             = "0.16"
-cw721           = "0.16"
-cw721-base      = { version = "0.16", features = ["library"] }
-cw-item-set     = { version = "0.6", default-features = false, features = ["iterator"] }
-cw-multi-test   = "0.16"
-cw-utils        = "0.16"
-cw-storage-plus = "0.16"
+anyhow          = "1.0.66"
+cosmwasm-schema = "1.1.9"
+cosmwasm-std    = "1.1.9"
+cw2             = "1.0.0"
+cw721           = "0.16.0"
+cw721-base      = { version = "0.16.0", features = ["library"] }
+cw-item-set     = { version = "0.7.0", default-features = false, features = ["iterator"] }
+cw-multi-test   = "0.16.1"
+cw-utils        = "0.16.0"
+cw-storage-plus = "1.0.1"
+itertools       = "0.10.5"
 osmosis-std     = "0.13.2"
-schemars        = "0.8"
-serde           = { version = "1.0", default-features = false, features = ["derive"] }
-thiserror       = "1.0"
+osmosis-testing = "0.13.2"
+schemars        = "0.8.11"
+serde           = { version = "1.0.150", default-features = false, features = ["derive"] }
+thiserror       = "1.0.37"
 
 # packages
 cosmwasm-vault-standard   = { version = "0.1.0", features = ["lockup", "force-unlock"] }
 cw-controllers-admin-fork = { version = "1.0.0", path = "./packages/controllers" }
 mars-health               = { version = "1.0.0", path = "./packages/health" }
+mars-osmosis              = { version = "1.0.0", path = "./packages/chains/osmosis" }
 mars-outpost              = { version = "1.0.0", path = "./packages/outpost" }
 mars-rover                = { version = "1.0.0", path = "./packages/rover" }
 
