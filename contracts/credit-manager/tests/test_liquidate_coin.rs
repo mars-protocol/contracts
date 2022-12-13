@@ -78,7 +78,7 @@ fn test_vault_positions_contribute_to_health() {
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone(), atom_info.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: vec![lp_token.to_coin(500)],

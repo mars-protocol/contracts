@@ -56,7 +56,7 @@ pub struct MockEnv {
 pub struct MockEnvBuilder {
     pub app: BasicApp,
     pub admin: Option<Addr>,
-    pub allowed_vaults: Option<Vec<VaultTestInfo>>,
+    pub vault_configs: Option<Vec<VaultTestInfo>>,
     pub pre_deployed_vaults: Option<Vec<VaultInstantiateConfig>>,
     pub allowed_coins: Option<Vec<CoinInfo>>,
     pub oracle: Option<OracleBase<Addr>>,
@@ -75,7 +75,7 @@ impl MockEnv {
         MockEnvBuilder {
             app: App::default(),
             admin: None,
-            allowed_vaults: None,
+            vault_configs: None,
             pre_deployed_vaults: None,
             allowed_coins: None,
             oracle: None,
@@ -534,11 +534,11 @@ impl MockEnvBuilder {
         let max_close_factor = self.get_max_close_factor();
         let max_unlocking_positions = self.get_max_unlocking_positions();
 
-        let mut allowed_vaults = vec![];
-        allowed_vaults.extend(self.deploy_vaults());
-        allowed_vaults.extend(self.pre_deployed_vaults.clone().unwrap_or_default());
+        let mut vault_configs = vec![];
+        vault_configs.extend(self.deploy_vaults());
+        vault_configs.extend(self.pre_deployed_vaults.clone().unwrap_or_default());
 
-        let oracle = self.get_oracle_adapter(allowed_vaults.clone()).into();
+        let oracle = self.get_oracle_adapter(vault_configs.clone()).into();
         let zapper = self.deploy_zapper(&oracle)?.into();
 
         self.app.instantiate_contract(
@@ -547,7 +547,7 @@ impl MockEnvBuilder {
             &InstantiateMsg {
                 admin: self.get_admin().to_string(),
                 allowed_coins,
-                allowed_vaults,
+                vault_configs,
                 red_bank,
                 oracle,
                 max_close_factor,
@@ -801,7 +801,7 @@ impl MockEnvBuilder {
     }
 
     fn deploy_vaults(&mut self) -> Vec<VaultInstantiateConfig> {
-        self.allowed_vaults
+        self.vault_configs
             .clone()
             .unwrap_or_default()
             .iter()
@@ -837,8 +837,8 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn allowed_vaults(&mut self, allowed_vaults: &[VaultTestInfo]) -> &mut Self {
-        self.allowed_vaults = Some(allowed_vaults.to_vec());
+    pub fn vault_configs(&mut self, vault_configs: &[VaultTestInfo]) -> &mut Self {
+        self.vault_configs = Some(vault_configs.to_vec());
         self
     }
 

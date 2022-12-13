@@ -20,7 +20,7 @@ fn test_only_owner_can_request_unlocked() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .build()
         .unwrap();
 
@@ -74,7 +74,7 @@ fn test_request_when_unnecessary() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .build()
         .unwrap();
 
@@ -105,7 +105,7 @@ fn test_no_vault_tokens_for_request() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .build()
         .unwrap();
 
@@ -148,7 +148,7 @@ fn test_not_enough_vault_tokens_for_request() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -203,7 +203,7 @@ fn test_request_unlocked() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(200)],
@@ -278,7 +278,7 @@ fn test_cannot_request_more_than_max() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(200)],

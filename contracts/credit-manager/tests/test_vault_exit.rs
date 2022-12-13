@@ -71,7 +71,7 @@ fn test_no_unlocked_vault_coins_to_withdraw() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[uatom.clone(), uosmo.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![coin(300, "uatom"), coin(500, "uosmo")],
@@ -114,7 +114,7 @@ fn test_withdraw_with_unlocked_vault_coins() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(300)],

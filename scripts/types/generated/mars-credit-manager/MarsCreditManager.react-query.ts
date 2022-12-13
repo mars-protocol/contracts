@@ -9,8 +9,8 @@ import { UseQueryOptions, useQuery, useMutation, UseMutationOptions } from '@tan
 import { ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee } from '@cosmjs/amino'
 import {
-  Uint128,
   Decimal,
+  Uint128,
   OracleBaseForString,
   RedBankBaseForString,
   SwapperBaseForString,

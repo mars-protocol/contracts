@@ -32,8 +32,8 @@ fn test_nft_contract_addr_not_set_on_instantiate() {
 }
 
 #[test]
-fn test_allowed_vaults_set_on_instantiate() {
-    let allowed_vaults = vec![
+fn test_vault_configs_set_on_instantiate() {
+    let vault_configs = vec![
         VaultTestInfo {
             vault_token_denom: "vault_contract_1".to_string(),
             lockup: None,
@@ -61,13 +61,13 @@ fn test_allowed_vaults_set_on_instantiate() {
     ];
 
     let mock = MockEnv::new()
-        .allowed_vaults(&allowed_vaults)
+        .vault_configs(&vault_configs)
         .build()
         .unwrap();
     let res = mock.query_vault_configs(None, None);
     assert_contents_equal(
         &res.iter().map(|v| v.vault.clone()).collect::<Vec<_>>(),
-        &allowed_vaults
+        &vault_configs
             .iter()
             .map(|info| mock.get_vault(info))
             .collect::<Vec<_>>(),

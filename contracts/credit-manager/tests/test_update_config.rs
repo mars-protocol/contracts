@@ -229,7 +229,7 @@ fn test_update_config_removes_properly() {
 
     let mut mock = MockEnv::new()
         .allowed_coins(&[uatom, uosmo])
-        .allowed_vaults(&[leverage_vault])
+        .vault_configs(&[leverage_vault])
         .build()
         .unwrap();
 

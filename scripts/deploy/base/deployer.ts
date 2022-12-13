@@ -176,7 +176,7 @@ export class Deployer {
     const msg: RoverInstantiateMsg = {
       max_unlocking_positions: this.config.maxUnlockingPositions.toString(),
       allowed_coins: [this.config.baseDenom, this.config.secondaryDenom, this.config.lpToken.denom],
-      allowed_vaults: [
+      vault_configs: [
         {
           config: {
             deposit_cap: this.config.vaultDepositCap,

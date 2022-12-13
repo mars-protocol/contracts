@@ -5,8 +5,8 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
-export type Uint128 = string
 export type Decimal = string
+export type Uint128 = string
 export type OracleBaseForString = string
 export type RedBankBaseForString = string
 export type SwapperBaseForString = string
@@ -14,12 +14,12 @@ export type ZapperBaseForString = string
 export interface InstantiateMsg {
   admin: string
   allowed_coins: string[]
-  allowed_vaults: VaultInstantiateConfig[]
   max_close_factor: Decimal
   max_unlocking_positions: Uint128
   oracle: OracleBaseForString
   red_bank: RedBankBaseForString
   swapper: SwapperBaseForString
+  vault_configs: VaultInstantiateConfig[]
   zapper: ZapperBaseForString
 }
 export interface VaultInstantiateConfig {

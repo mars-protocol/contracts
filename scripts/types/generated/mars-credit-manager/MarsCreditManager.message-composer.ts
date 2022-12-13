@@ -9,8 +9,8 @@ import { MsgExecuteContractEncodeObject } from 'cosmwasm'
 import { MsgExecuteContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx'
 import { toUtf8 } from '@cosmjs/encoding'
 import {
-  Uint128,
   Decimal,
+  Uint128,
   OracleBaseForString,
   RedBankBaseForString,
   SwapperBaseForString,

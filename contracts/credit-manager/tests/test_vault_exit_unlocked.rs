@@ -22,7 +22,7 @@ fn test_only_owner_can_withdraw_unlocked_for_account() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .build()
         .unwrap();
 
@@ -73,7 +73,7 @@ fn test_not_owner_of_unlocking_position() {
     let user_b = Addr::unchecked("user_b");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user_a.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -146,7 +146,7 @@ fn test_unlocking_position_not_ready_time() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -200,7 +200,7 @@ fn test_unlocking_position_not_ready_blocks() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -254,7 +254,7 @@ fn test_withdraw_unlock_success_time_expiring() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -330,7 +330,7 @@ fn test_withdraw_unlock_success_block_expiring() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(300)],

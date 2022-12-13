@@ -9,12 +9,12 @@
     "required": [
       "admin",
       "allowed_coins",
-      "allowed_vaults",
       "max_close_factor",
       "max_unlocking_positions",
       "oracle",
       "red_bank",
       "swapper",
+      "vault_configs",
       "zapper"
     ],
     "properties": {
@@ -27,13 +27,6 @@
         "type": "array",
         "items": {
           "type": "string"
-        }
-      },
-      "allowed_vaults": {
-        "description": "Whitelisted vaults approved by governance that implement credit manager's vault interface Includes a deposit cap that enforces a TLV limit for risk mitigation",
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/VaultInstantiateConfig"
         }
       },
       "max_close_factor": {
@@ -75,6 +68,13 @@
             "$ref": "#/definitions/SwapperBase_for_String"
           }
         ]
+      },
+      "vault_configs": {
+        "description": "Vaults approved by governance that implement credit manager's vault interface Includes a deposit cap that enforces a TLV limit for risk mitigation",
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/VaultInstantiateConfig"
+        }
       },
       "zapper": {
         "description": "Helper contract for adding/removing liquidity",

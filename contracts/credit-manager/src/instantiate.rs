@@ -32,8 +32,8 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
     assert_lte_to_one(&msg.max_close_factor)?;
     MAX_CLOSE_FACTOR.save(deps.storage, &msg.max_close_factor)?;
 
-    assert_no_duplicate_vaults(&msg.allowed_vaults)?;
-    msg.allowed_vaults
+    assert_no_duplicate_vaults(&msg.vault_configs)?;
+    msg.vault_configs
         .iter()
         .try_for_each(|v| -> ContractResult<_> {
             v.config.check()?;

@@ -49,7 +49,7 @@ fn test_deposit_denom_is_whitelisted() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .build()
         .unwrap();
 
@@ -79,7 +79,7 @@ fn test_vault_is_whitelisted() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[uatom.clone(), uosmo])
-        .allowed_vaults(&[leverage_vault])
+        .vault_configs(&[leverage_vault])
         .build()
         .unwrap();
 
@@ -110,7 +110,7 @@ fn test_deposited_coin_matches_vault_requirements() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[uatom.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .build()
         .unwrap();
 
@@ -143,7 +143,7 @@ fn test_fails_if_not_enough_funds_for_implied_deposit() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -180,7 +180,7 @@ fn test_fails_if_not_enough_funds_for_enumerated_deposit() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -219,7 +219,7 @@ fn test_successful_deposit_into_locked_vault() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -279,7 +279,7 @@ fn test_successful_deposit_into_unlocked_vault() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -334,7 +334,7 @@ fn test_vault_deposit_must_be_under_cap() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(3_300_000)],
@@ -415,7 +415,7 @@ fn test_successful_deposit_with_implied_full_balance_amount() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(300)],

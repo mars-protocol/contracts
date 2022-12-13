@@ -13,9 +13,9 @@ pub struct InstantiateMsg {
     pub admin: String,
     /// Whitelisted coin denoms approved by governance
     pub allowed_coins: Vec<String>,
-    /// Whitelisted vaults approved by governance that implement credit manager's vault interface
+    /// Vaults approved by governance that implement credit manager's vault interface
     /// Includes a deposit cap that enforces a TLV limit for risk mitigation
-    pub allowed_vaults: Vec<VaultInstantiateConfig>,
+    pub vault_configs: Vec<VaultInstantiateConfig>,
     /// The Mars Protocol money market contract where we borrow assets from
     pub red_bank: RedBankUnchecked,
     /// The Mars Protocol oracle contract. We read prices of assets here.

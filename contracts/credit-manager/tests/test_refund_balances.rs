@@ -57,7 +57,7 @@ fn test_refund_coin_balances_when_no_balances() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(200)],

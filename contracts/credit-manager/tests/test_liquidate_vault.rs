@@ -29,7 +29,7 @@ fn test_liquidatee_must_have_the_request_vault_position() {
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
         .allowed_coins(&[uatom.clone(), uosmo.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: vec![uatom.to_coin(300), uosmo.to_coin(500)],
@@ -78,7 +78,7 @@ fn test_liquidatee_is_not_liquidatable() {
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -137,7 +137,7 @@ fn test_liquidator_does_not_have_debt_coin_in_credit_account() {
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone(), ujake.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -202,7 +202,7 @@ fn test_wrong_position_type_sent_for_unlocked_vault() {
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -268,7 +268,7 @@ fn test_wrong_position_type_sent_for_locked_vault() {
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -323,7 +323,7 @@ fn test_liquidate_unlocked_vault() {
 
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone(), ujake.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -410,7 +410,7 @@ fn test_liquidate_locked_vault() {
 
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone(), atom.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -500,7 +500,7 @@ fn test_liquidate_unlocking_liquidation_order() {
 
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone(), ujake.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: vec![lp_token.to_coin(300)],
@@ -632,7 +632,7 @@ fn test_liquidation_calculation_adjustment() {
 
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone(), ujake.clone()])
-        .allowed_vaults(&[leverage_vault.clone()])
+        .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: vec![lp_token.to_coin(300)],

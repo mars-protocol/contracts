@@ -5,10 +5,10 @@ use crate::helpers::{assert_contents_equal, build_mock_vaults, MockEnv};
 pub mod helpers;
 
 #[test]
-fn test_pagination_on_allowed_vaults_query_works() {
-    let allowed_vaults = build_mock_vaults(32);
+fn test_pagination_on_vault_configs_query_works() {
+    let vault_configs = build_mock_vaults(32);
     let mock = MockEnv::new()
-        .allowed_vaults(&allowed_vaults)
+        .vault_configs(&vault_configs)
         .build()
         .unwrap();
 
@@ -48,10 +48,10 @@ fn test_pagination_on_allowed_vaults_query_works() {
         .map(|info| info.vault_token)
         .collect::<Vec<_>>();
 
-    assert_eq!(combined.len(), allowed_vaults.len());
+    assert_eq!(combined.len(), vault_configs.len());
 
     assert_contents_equal(
-        &allowed_vaults
+        &vault_configs
             .iter()
             .map(|v| v.vault_token_denom.clone())
             .collect::<Vec<_>>(),

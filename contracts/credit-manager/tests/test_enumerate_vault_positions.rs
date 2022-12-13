@@ -33,7 +33,7 @@ fn test_pagination_on_all_vault_positions_query_works() {
             funds: vec![lp_token.to_coin(1000)],
         })
         .allowed_coins(&[lp_token.clone()])
-        .allowed_vaults(&all_vaults)
+        .vault_configs(&all_vaults)
         .build()
         .unwrap();
 

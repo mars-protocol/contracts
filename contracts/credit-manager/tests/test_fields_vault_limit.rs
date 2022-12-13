@@ -32,7 +32,7 @@ fn test_can_only_have_a_single_vault_position() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[lp_token.clone(), degen_vault_token.clone()])
-        .allowed_vaults(&[leverage_vault.clone(), degen_vault.clone()])
+        .vault_configs(&[leverage_vault.clone(), degen_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![lp_token.to_coin(300), degen_vault_token.to_coin(300)],
