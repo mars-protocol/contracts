@@ -32,6 +32,12 @@ A bug bounty is currently open for these contracts. See details at: https://immu
    ```
 
 ## Environment set up
+- [Install rustup](https://rustup.rs/). Once installed, make sure you have the wasm32 target:
+```shell
+rustup default stable
+rustup update stable
+rustup target add wasm32-unknown-unknown
+```
 - Install [cargo make](https://github.com/sagiegurari/cargo-make)
 
 ```shell
