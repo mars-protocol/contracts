@@ -2,7 +2,7 @@ use cosmwasm_std::{coins, Addr, Coin, Decimal, OverflowError, OverflowOperation,
 
 use mars_mock_oracle::msg::CoinPrice;
 use mars_rover::error::ContractError;
-use mars_rover::error::ContractError::{AboveMaxLTV, NotLiquidatable};
+use mars_rover::error::ContractError::{AboveMaxLTV, LiquidationNotProfitable, NotLiquidatable};
 use mars_rover::msg::execute::Action::{Borrow, Deposit, EnterVault, LiquidateCoin};
 use mars_rover::traits::IntoDecimal;
 
@@ -382,6 +382,74 @@ fn test_liquidator_left_in_unhealthy_state() {
 }
 
 #[test]
+fn test_liquidation_not_profitable_after_calculations() {
+    let uosmo_info = uosmo_info();
+    let uatom_info = uatom_info();
+    let ujake_info = ujake_info();
+    let liquidator = Addr::unchecked("liquidator");
+    let liquidatee = Addr::unchecked("liquidatee");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone(), ujake_info.clone()])
+        .fund_account(AccountToFund {
+            addr: liquidatee.clone(),
+            funds: coins(300, uosmo_info.denom.clone()),
+        })
+        .fund_account(AccountToFund {
+            addr: liquidator.clone(),
+            funds: coins(300, uatom_info.denom.clone()),
+        })
+        .build()
+        .unwrap();
+    let liquidatee_account_id = mock.create_credit_account(&liquidatee).unwrap();
+
+    mock.update_credit_account(
+        &liquidatee_account_id,
+        &liquidatee,
+        vec![
+            Deposit(uosmo_info.to_coin(300)),
+            Borrow(uatom_info.to_coin(100)),
+            Borrow(ujake_info.to_coin(25)),
+        ],
+        &[Coin::new(300, uosmo_info.denom.clone())],
+    )
+    .unwrap();
+
+    mock.price_change(CoinPrice {
+        denom: ujake_info.denom,
+        price: Decimal::from_atomics(100u128, 0).unwrap(),
+    });
+
+    mock.price_change(CoinPrice {
+        denom: uosmo_info.denom.clone(),
+        price: Decimal::from_atomics(2u128, 0).unwrap(),
+    });
+
+    let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
+
+    let res = mock.update_credit_account(
+        &liquidator_account_id,
+        &liquidator,
+        vec![
+            Deposit(uatom_info.to_coin(10)),
+            LiquidateCoin {
+                liquidatee_account_id: liquidatee_account_id.clone(),
+                debt_coin: uatom_info.to_coin(5),
+                request_coin_denom: uosmo_info.denom.clone(),
+            },
+        ],
+        &[uatom_info.to_coin(10)],
+    );
+
+    assert_err(
+        res,
+        LiquidationNotProfitable {
+            debt_coin: uatom_info.to_coin(5),
+            request_coin: uosmo_info.to_coin(2),
+        },
+    )
+}
+
+#[test]
 fn test_debt_amount_adjusted_to_close_factor_max() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
@@ -517,7 +585,7 @@ fn test_debt_amount_adjusted_to_total_debt_for_denom() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.coins.len(), 3);
     let osmo_balance = get_coin("uosmo", &position.coins);
-    assert_eq!(osmo_balance.amount, Uint128::new(180));
+    assert_eq!(osmo_balance.amount, Uint128::new(181));
     let atom_balance = get_coin("uatom", &position.coins);
     assert_eq!(atom_balance.amount, Uint128::new(100));
     let jake_balance = get_coin("ujake", &position.coins);
@@ -534,7 +602,7 @@ fn test_debt_amount_adjusted_to_total_debt_for_denom() {
     let jake_balance = get_coin("ujake", &position.coins);
     assert_eq!(jake_balance.amount, Uint128::new(39));
     let osmo_balance = get_coin("uosmo", &position.coins);
-    assert_eq!(osmo_balance.amount, Uint128::new(120));
+    assert_eq!(osmo_balance.amount, Uint128::new(119));
 }
 
 #[test]

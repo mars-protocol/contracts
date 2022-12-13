@@ -1,6 +1,9 @@
 use std::ops::{Add, Div};
 
-use cosmwasm_std::{Coin, CosmosMsg, Decimal, DepsMut, Env, Response, StdError, Storage, Uint128};
+use cosmwasm_std::{
+    Coin, CosmosMsg, Decimal, DepsMut, Env, QuerierWrapper, Response, StdError, Storage, Uint128,
+};
+use mars_rover::adapters::Oracle;
 
 use mars_rover::error::{ContractError, ContractResult};
 use mars_rover::msg::execute::CallbackMsg;
@@ -120,14 +123,10 @@ pub fn calculate_liquidation(
         .add(Decimal::one())
         .checked_mul(debt_res.price.checked_mul(final_debt_to_repay.to_dec()?)?)?
         .div(request_res.price)
-        // Given the nature of integers, these operations will round down. This means the liquidation balance will get
-        // closer and closer to 0, but never actually get there and stay as a single denom unit.
-        // The remediation for this is to round up at the very end of the calculation.
-        .ceil()
         .uint128();
 
     // (Debt Coin, Request Coin)
-    Ok((
+    let result = (
         Coin {
             denom: debt_coin.denom.clone(),
             amount: final_debt_to_repay,
@@ -136,7 +135,11 @@ pub fn calculate_liquidation(
             denom: request_coin.to_string(),
             amount: request_amount,
         },
-    ))
+    );
+
+    assert_liquidation_profitable(&deps.querier, &oracle, result.clone())?;
+
+    Ok(result)
 }
 
 pub fn repay_debt(
@@ -157,4 +160,24 @@ pub fn repay_debt(
     })
     .into_cosmos_msg(&env.contract.address)?;
     Ok(msg)
+}
+
+/// In scenarios with small amounts or large gap between coin prices, there is a possibility
+/// that the liquidation will result in loss for the liquidator. This assertion prevents this.
+fn assert_liquidation_profitable(
+    querier: &QuerierWrapper,
+    oracle: &Oracle,
+    (debt_coin, request_coin): (Coin, Coin),
+) -> ContractResult<()> {
+    let debt_value = oracle.query_total_value(querier, &[debt_coin.clone()])?;
+    let request_value = oracle.query_total_value(querier, &[request_coin.clone()])?;
+
+    if debt_value >= request_value {
+        return Err(ContractError::LiquidationNotProfitable {
+            debt_coin,
+            request_coin,
+        });
+    }
+
+    Ok(())
 }

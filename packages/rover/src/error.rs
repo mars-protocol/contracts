@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    CheckedFromRatioError, CheckedMultiplyRatioError, DecimalRangeExceeded, OverflowError,
+    CheckedFromRatioError, CheckedMultiplyRatioError, Coin, DecimalRangeExceeded, OverflowError,
     StdError, Uint128,
 };
 use cw_controllers_admin_fork::AdminError;
@@ -60,6 +60,9 @@ pub enum ContractError {
 
     #[error("{reason:?}")]
     InvalidConfig { reason: String },
+
+    #[error("Paying down {debt_coin:?} for {request_coin:?} does not result in a profit for the liquidator")]
+    LiquidationNotProfitable { debt_coin: Coin, request_coin: Coin },
 
     #[error("Issued incorrect action for vault type")]
     MismatchedVaultType,

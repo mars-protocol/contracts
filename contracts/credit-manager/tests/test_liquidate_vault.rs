@@ -381,7 +381,7 @@ fn test_liquidate_unlocked_vault() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.vaults.len(), 1);
     let vault_balance = position.vaults.first().unwrap().amount.unlocked();
-    assert_eq!(vault_balance, Uint128::new(883_532)); // 1M - 116_468
+    assert_eq!(vault_balance, Uint128::new(883_533)); // 1M - 116_467
 
     assert_eq!(position.coins.len(), 1);
     let jake_balance = get_coin("ujake", &position.coins);
@@ -468,8 +468,8 @@ fn test_liquidate_locked_vault() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.vaults.len(), 1);
     let vault_amount = position.vaults.first().unwrap().amount.clone();
-    // 1M - 835_528 vault tokens liquidated = 164,472
-    assert_eq!(vault_amount.locked(), Uint128::new(164_472));
+    // 1M - 835,527 vault tokens liquidated = 164,473
+    assert_eq!(vault_amount.locked(), Uint128::new(164_473));
     assert_eq!(vault_amount.unlocking().positions().len(), 0);
     assert_eq!(vault_amount.unlocked(), Uint128::zero());
 
@@ -580,7 +580,7 @@ fn test_liquidate_unlocking_liquidation_order() {
     // Total liquidated:                   24 LP tokens
     //   First bucket drained:                 2 of 2
     //   Second bucket drained:              10 of 10
-    //   Third bucket partially liquidated:  12 of 20
+    //   Third bucket partially liquidated:  11 of 20
     //   Fourth bucket retained:             0 of 168
     assert_eq!(vault_amount.unlocking().positions().len(), 2);
     assert_eq!(
@@ -591,7 +591,7 @@ fn test_liquidate_unlocking_liquidation_order() {
             .unwrap()
             .coin
             .amount,
-        Uint128::new(8)
+        Uint128::new(9)
     );
     assert_eq!(
         vault_amount
@@ -617,7 +617,7 @@ fn test_liquidate_unlocking_liquidation_order() {
     assert_eq!(position.coins.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let lp_balance = get_coin(&lp_token.denom, &position.coins);
-    assert_eq!(lp_balance.amount, Uint128::new(24));
+    assert_eq!(lp_balance.amount, Uint128::new(23));
 }
 
 // NOTE: liquidation calculation+adjustments are quite complex, full cases in test_liquidate_coin.rs
@@ -693,7 +693,7 @@ fn test_liquidation_calculation_adjustment() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.vaults.len(), 1);
     let vault_balance = position.vaults.first().unwrap().amount.unlocked();
-    assert_eq!(vault_balance, Uint128::new(10_026)); // Vault position liquidated by 99%
+    assert_eq!(vault_balance, Uint128::new(10_027)); // Vault position liquidated by 99%
 
     assert_eq!(position.coins.len(), 1);
     let jake_balance = get_coin("ujake", &position.coins);
