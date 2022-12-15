@@ -231,11 +231,6 @@ export class Deployer {
   }
 
   async setOracle(oracleConfig: OracleConfig) {
-    if (this.storage.execute.oraclePriceSet) {
-      printBlue(`${this.config.second_asset_symbol} Oracle Price already set`)
-      return
-    }
-
     if (oracleConfig.price) {
       const msg = {
         set_price_source: {
@@ -251,7 +246,7 @@ export class Deployer {
         set_price_source: {
           denom: oracleConfig.denom,
           price_source: {
-            Twap: {
+            twap: {
               pool_id: oracleConfig.pool_id,
               window_size: oracleConfig.window_size,
             },
@@ -269,7 +264,11 @@ export class Deployer {
       price: { denom: this.config.atomDenom },
     })) as { price: number; denom: string }
 
-    console.log(`${this.config.chainId} :: uosmo oracle price :  ${JSON.stringify(oracleResult)}`)
+    console.log(
+      `${this.config.chainId} :: ${oracleConfig.denom} oracle price :  ${JSON.stringify(
+        oracleResult,
+      )}`,
+    )
   }
 
   async executeDeposit() {

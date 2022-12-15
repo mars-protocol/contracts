@@ -77,9 +77,15 @@ For Osmosis:
 ```
 cd scripts 
 
-yarn deploy:osmosis
+# for testnet deployment with deployerAddr set as owner & admin: 
+yarn deploy:osmosis-testnet
+
+# for testnet deployment with multisigAddr set as owner & admin: 
+yarn deploy:osmosis-testnet-multisig 
+
+# for mainnet deployment: 
+yarn deploy:osmosis-mainnet
 ```
-Note: This deployment sets the 'owner' and 'admin' of each contract to the multisig wallet address. 
 
 ## Schemas
 ```

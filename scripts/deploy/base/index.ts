@@ -1,7 +1,14 @@
 import { setupDeployer } from './setupDeployer'
 import { DeploymentConfig } from '../../types/config'
 import { printRed } from '../../utils/chalk'
-import {atomAsset, osmoAsset, osmoOracle, atomOracle, axlUSDCAsset, axlUSDCOracle} from '../osmosis/config'
+import {
+  atomAsset,
+  osmoAsset,
+  osmoOracle,
+  atomOracle,
+  axlUSDCAsset,
+  axlUSDCOracle,
+} from '../osmosis/config'
 
 export const taskRunner = async (config: DeploymentConfig) => {
   const deployer = await setupDeployer(config)
@@ -34,6 +41,15 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.setOracle(atomOracle)
     await deployer.setOracle(osmoOracle)
     await deployer.setOracle(axlUSDCOracle)
+
+    //run tests
+    if (config.runTests) {
+      await deployer.executeDeposit()
+      await deployer.executeBorrow()
+      await deployer.executeRepay()
+      await deployer.executeWithdraw()
+      await deployer.executeRewardsSwap()
+    }
 
     // update owner to multisig address
     await deployer.updateIncentivesContractOwner()

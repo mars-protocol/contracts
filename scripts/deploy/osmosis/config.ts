@@ -6,7 +6,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   baseAssetDenom: 'uosmo',
   chainId: 'osmo-test-4',
   chainPrefix: 'osmo',
-  channelId: 'channel-1',
+  channelId: 'channel-1753',
   marsDenom: 'umars',
   rewardCollectorTimeoutBlocks: 10,
   rewardCollectorTimeoutSeconds: 60,
@@ -20,6 +20,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   slippage_tolerance: '0.05',
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
+  runTests: true,
 }
 export const osmosisTestMultisig: DeploymentConfig = {
   chainName: 'osmosis',
@@ -42,6 +43,7 @@ export const osmosisTestMultisig: DeploymentConfig = {
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
   multisigAddr: 'osmo1jklpvl3446z5qw58cvq8hqvthzjtsfvs9j65tq',
+  runTests: true,
 }
 
 export const osmosisMainnet: DeploymentConfig = {
@@ -62,6 +64,7 @@ export const osmosisMainnet: DeploymentConfig = {
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
   multisigAddr: 'osmo1jklpvl3446z5qw58cvq8hqvthzjtsfvs9j65tq',
+  runTests: false,
 }
 
 export const osmosisLocalConfig: DeploymentConfig = {
@@ -82,6 +85,7 @@ export const osmosisLocalConfig: DeploymentConfig = {
   slippage_tolerance: '0.05',
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
+  runTests: false,
 }
 
 export const osmoAsset: AssetConfig = {
@@ -96,7 +100,7 @@ export const osmoAsset: AssetConfig = {
     slope_1: '0.25',
     slope_2: '3',
   },
-  deposit_cap: '2_000_000_000_000',
+  deposit_cap: '2000000000000',
   deposit_enabled: true,
   borrow_enabled: true,
   symbol: 'OSMO',
@@ -114,7 +118,7 @@ export const atomAsset: AssetConfig = {
     slope_1: '0.25',
     slope_2: '3',
   },
-  deposit_cap: '100_000_000_000',
+  deposit_cap: '100000000000',
   deposit_enabled: true,
   borrow_enabled: true,
   symbol: 'ATOM',
@@ -132,7 +136,7 @@ export const axlUSDCAsset: AssetConfig = {
     slope_1: '0.25',
     slope_2: '2',
   },
-  deposit_cap: '500_000_000_000',
+  deposit_cap: '500000000000',
   deposit_enabled: true,
   borrow_enabled: true,
   symbol: 'axlUSDC',
@@ -151,6 +155,6 @@ export const osmoOracle: OracleConfig = {
 
 export const axlUSDCOracle: OracleConfig = {
   denom: 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
-  pool_id: 1,
+  pool_id: 678,
   window_size: 1800,
 }

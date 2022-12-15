@@ -16,6 +16,7 @@ export interface DeploymentConfig {
   base_asset_symbol: string
   second_asset_symbol: string
   multisigAddr?: string
+  runTests: boolean
 }
 
 export interface AssetConfig {

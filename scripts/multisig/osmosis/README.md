@@ -37,40 +37,42 @@ _Steps 2-4 must be completed by ALL multisig holders to properly set up their lo
 5. Update the config with the new mutlisig address in `outposts/scripts/deploy/osmosis/config`, which will set the owner and admin of the smart contracts to the multisig upon deployment.
 
 ## Set up environment variables
+
 These variables change based on the network, transaction, time, and user. Therefore, they should be provided to the multisig holders before each transaction and updated as needed on your machine.
 
 For `# bash`:
 
-   ```shell
-   # Osmosis Testnet variables
-   export OSMO_MULTI="osmo1nxs5fw53jwh7epqnj5ypyqkdhga4lnnmng6ln5"
-   export OSMO_TEST_CHAINID="osmo-test-4"
-   export OSMO_TEST_NODE="https://rpc-test.osmosis.zone:443"
-   export OSMO_ACCOUNT="278179"
-   export OSMO_TEST_ADDR_PROVIDER="osmo1h5ljap7yajt8d8kejx0xsq46evxmalwgy78xfc5arrk3g3gwgkes7l06p8"
-   export OSMO_TEST_REDBANK="osmo1gtkcx8634wufu4awt42ng7srk05hpqxkfpjpvuj03f9g69qvr3ksn27j54"
-   export OSMO_TEST_INCENTIVES="osmo12caxzc4699vde8lr3ut4tsdkvsvhzruvsxlrmd4v6tamyacdymdq7l8dsy"
-   export OSMO_TEST_ORACLE="osmo1eeg2uuuxk9agv8slskmhay3h5929vkfu9gfk0egwtfg9qs86w5dqty96cf"
-   export OSMO_TEST_REWARDS_COLLECTOR="osmo1xl7jguvkg807ya00s0l722nwcappfzyzrac3ug5tnjassnrmnfrs47wguz"
-   export OSMO_TEST_LIQUIDATION_FILTERER="osmo1djyfwh886gmwsdgr3w0jnzdgwudem9kqxte2f5mc20sxcmy029ss8r4ldq"
-   export OSMO_TEST_ADDR_PROVIDER_ID="3802"
-   export OSMO_TEST_REDBANK_ID="3801"
-   export OSMO_TEST_INCENTIVES_ID="3803"
-   export OSMO_TEST_ORACLE_ID="3804"
-   export OSMO_TEST_REWARDS_ID="3805"
-   export OSMO_TEST_LIQUIDATION_FILTERER_ID="4009"
+```shell
+# Osmosis Testnet variables
+export OSMO_MULTI="osmo1nxs5fw53jwh7epqnj5ypyqkdhga4lnnmng6ln5"
+export OSMO_TEST_CHAINID="osmo-test-4"
+export OSMO_TEST_NODE="https://rpc-test.osmosis.zone:443"
+export OSMO_ACCOUNT="278179"
+export OSMO_TEST_ADDR_PROVIDER="osmo1h5ljap7yajt8d8kejx0xsq46evxmalwgy78xfc5arrk3g3gwgkes7l06p8"
+export OSMO_TEST_REDBANK="osmo1gtkcx8634wufu4awt42ng7srk05hpqxkfpjpvuj03f9g69qvr3ksn27j54"
+export OSMO_TEST_INCENTIVES="osmo12caxzc4699vde8lr3ut4tsdkvsvhzruvsxlrmd4v6tamyacdymdq7l8dsy"
+export OSMO_TEST_ORACLE="osmo1eeg2uuuxk9agv8slskmhay3h5929vkfu9gfk0egwtfg9qs86w5dqty96cf"
+export OSMO_TEST_REWARDS_COLLECTOR="osmo1xl7jguvkg807ya00s0l722nwcappfzyzrac3ug5tnjassnrmnfrs47wguz"
+export OSMO_TEST_LIQUIDATION_FILTERER="osmo1djyfwh886gmwsdgr3w0jnzdgwudem9kqxte2f5mc20sxcmy029ss8r4ldq"
+export OSMO_TEST_ADDR_PROVIDER_ID="3802"
+export OSMO_TEST_REDBANK_ID="3801"
+export OSMO_TEST_INCENTIVES_ID="3803"
+export OSMO_TEST_ORACLE_ID="3804"
+export OSMO_TEST_REWARDS_ID="3805"
+export OSMO_TEST_LIQUIDATION_FILTERER_ID="4009"
 
-   # Transaction specific variables (must be created at time of transaction)
-   export CODEID="new_code_ID_to_migrate_to"
-   export SEQUENCE="current_account_sequence"
-   export UNSIGNED="unsignedTX_filename.JSON"
-   export SIGNEDTX="signedTX_filenme.JSON"
-   export EXECUTE="msg_to_execute"
+# Transaction specific variables (must be created at time of transaction)
+export CODEID="new_code_ID_to_migrate_to"
+export SEQUENCE="current_account_sequence"
+export UNSIGNED="unsignedTX_filename.JSON"
+export SIGNEDTX="signedTX_filenme.JSON"
+export EXECUTE="msg_to_execute"
 
-   # User specific variables
-   export SINGLE_SIGN="your_name.JSON"
-   export OSMO_ADDR="your_wallet_address"
-   ```
+# User specific variables
+export SINGLE_SIGN="your_name.JSON"
+export OSMO_ADDR="your_wallet_address"
+```
+
 **Note:**
 
 `OSMO_ACCOUNT` and `SEQUENCE` can be found by running:
@@ -83,15 +85,20 @@ $OSMO_MULTI
 ```
 
 ## Verifying Contracts
+
 1. Get the wasm binary executable on your local machine.
    For address-provider, incentives, oracle, red-bank, rewards-collector contracts:
+
    ```shell
    git clone https://github.com/mars-protocol/outposts.git
    ```
+
    For liquidation-filterer contract
+
    ```shell
    git clone https://github.com/mars-protocol/liquidation-helpers
    ```
+
    ```shell
    git checkout <commit-id>
 
@@ -99,8 +106,11 @@ $OSMO_MULTI
 
    yarn compile
    ```
+
    Note: Intel/Amd 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production and the wasm bytecode will not match up to an Intel compiled wasm file.
+
 2. Download the wasm from the chain.
+
    ```shell
    osmosisd query wasm code $CODEID -- $NODE download.wasm
    ```
@@ -112,49 +122,64 @@ $OSMO_MULTI
 
 ## Query contract configs
 
-   * Red Bank Contract Config:
-   ``` shell
-   QUERY='{"config": {}}'
-   osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
-   ```
-   * Oracle Config:
-   ``` shell
-   QUERY='{"config": {}}'
-   osmosisd query wasm contract-state smart $OSMO_TEST_ORACLE "$QUERY" --output json --node=$OSMO_TEST_NODE
-   ```
-   * Incentives Config:
-   ``` shell
-   QUERY='{"config": {}}'
-   osmosisd query wasm contract-state smart $OSMO_TEST_INCENTIVES "$QUERY" --output json --node=$OSMO_TEST_NODE
-   ```
-   * Address Provider Config:
-   ``` shell
-   QUERY='{"config": {}}'
-   osmosisd query wasm contract-state smart $OSMO_TEST_ADDR_PROVIDER "$QUERY" --output json --node=$OSMO_TEST_NODE
-  ```
-  * Rewards Collector Config:
-   ``` shell
-   QUERY='{"config": {}}'
-   osmosisd query wasm contract-state smart $OSMO_TEST_REWARDS_COLLECTOR "$QUERY" --output json --node=$OSMO_TEST_NODE
-   ```
-  * Liquidation Filterer Config:
-   ``` shell
-   QUERY='{"config": {}}'
-   osmosisd query wasm contract-state smart $OSMO_TEST_LIQUIDATION_FILTERER "$QUERY" --output json --node=$OSMO_TEST_NODE
-   ```
-   * Verify OSMO and ATOM are initialized in the red bank market and have the correct params:
-   ``` shell
-   QUERY='{"market":{"denom":"uosmo"}}'
-   osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
+- Red Bank Contract Config:
 
-   QUERY='{"market":{"denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}}'
-   osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
-   ```
-   * Verify Oracle Price Source is set correctly:
-   ``` shell
-   QUERY='{"price_sources":{}}'
-   osmosisd query wasm contract-state smart $OSMO_TEST_ORACLE "$QUERY" --output json --node=$OSMO_TEST_NODE
-   ```
+```shell
+QUERY='{"config": {}}'
+osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
+```
+
+- Oracle Config:
+
+```shell
+QUERY='{"config": {}}'
+osmosisd query wasm contract-state smart $OSMO_TEST_ORACLE "$QUERY" --output json --node=$OSMO_TEST_NODE
+```
+
+- Incentives Config:
+
+```shell
+QUERY='{"config": {}}'
+osmosisd query wasm contract-state smart $OSMO_TEST_INCENTIVES "$QUERY" --output json --node=$OSMO_TEST_NODE
+```
+
+- Address Provider Config:
+
+```shell
+QUERY='{"config": {}}'
+osmosisd query wasm contract-state smart $OSMO_TEST_ADDR_PROVIDER "$QUERY" --output json --node=$OSMO_TEST_NODE
+```
+
+- Rewards Collector Config:
+
+```shell
+QUERY='{"config": {}}'
+osmosisd query wasm contract-state smart $OSMO_TEST_REWARDS_COLLECTOR "$QUERY" --output json --node=$OSMO_TEST_NODE
+```
+
+- Liquidation Filterer Config:
+
+```shell
+QUERY='{"config": {}}'
+osmosisd query wasm contract-state smart $OSMO_TEST_LIQUIDATION_FILTERER "$QUERY" --output json --node=$OSMO_TEST_NODE
+```
+
+- Verify OSMO and ATOM are initialized in the red bank market and have the correct params:
+
+```shell
+QUERY='{"market":{"denom":"uosmo"}}'
+osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
+
+QUERY='{"market":{"denom":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}}'
+osmosisd query wasm contract-state smart $OSMO_TEST_REDBANK "$QUERY" --output json --node=$OSMO_TEST_NODE
+```
+
+- Verify Oracle Price Source is set correctly:
+
+```shell
+QUERY='{"price_sources":{}}'
+osmosisd query wasm contract-state smart $OSMO_TEST_ORACLE "$QUERY" --output json --node=$OSMO_TEST_NODE
+```
 
 ## Signing a TX with the multisig - Testnet Migrate Msg Example
 
@@ -173,6 +198,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
    If they're missing, follow steps 2-4 from the "Set up multisig on your local network" section.
 
 3. Ensure the newly uploaded code has a migration entry point.
+
    ```rust
    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
    pub struct MigrateMsg {}
@@ -182,6 +208,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
     Ok(Response::default())
    }
    ```
+
 4. Initiate the multisig migrate tx. This can be done by any one of the multisig holders.
 
    Signing over a node:
@@ -269,15 +296,18 @@ _Note: The multisig must have at least one tx against it for the address to exis
    ```
 
 8. Broadcast the transaction.
+
    ```shell
    osmosisd tx broadcast $SIGNED \
     --chain-id=$OSMO_TEST_CHAINID \
     --broadcast-mode=block
     --node=$OSMO_TEST_NODE
    ```
+
    Note: For the tx to be able to broadcast, the newly uploaded code needs to have a migration entry point, meaning you have to put an empty (returning Ok) migration method.
 
 9. Verify the new contract.
+
    ```
    git clone https://github.com/mars-protocol/outposts.git
 
@@ -297,6 +327,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
    ```
 
 ## Signing a TX with the multisig - Testnet Execute Msg Example
+
 Every multisig holder is responsible for verifying the execute msg inside the json file of their unsigned tx.
 
 1. Assert that you have both your own wallet and multisig wallet in your keyring.
@@ -306,6 +337,7 @@ Every multisig holder is responsible for verifying the execute msg inside the js
    ```
 
    If they're missing, follow steps 2-4 from the "Set up multisig on your local network" section.
+
 2. Initiate the multisig execute tx. This can be done by any one of the multisig holders.
 
    ```shell
@@ -351,7 +383,9 @@ Every multisig holder is responsible for verifying the execute msg inside the js
    ```
 
 ## Examples of Execute Args:
+
 For this to be completed as a multisig tx, the flags and steps from the previous section must be used.
+
 ```shell
 # Red Bank
 EXECUTE='{"deposit":{}}'

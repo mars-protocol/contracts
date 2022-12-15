@@ -54,26 +54,26 @@ These variables change based on the network, transaction, time, and user. Theref
 
 For `bash`:
 
-   ```bash
-   # Mars Testnet variables
-   export MARS_MULTI="mars15mwq8jc7sf0r8hu6phahfsmqg3fagt7ysyd3un"
-   export MARS_TEST_NODE="https://testnet-rpc.marsprotocol.io:443"
-   export MARS_TEST_VESTING="mars14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9smxjtde"
-   export MARS_TEST_AIRDROP="mars1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqhnhf0l"
-   export MARS_TEST_DELEGATOR="mars17p9rzwnnfxcjp32un9ug7yhhzgtkhvl9jfksztgw5uh69wac2pgs0gfvxm"
-   export MARS_TEST_CHAIN_ID="ares-1"
+```bash
+# Mars Testnet variables
+export MARS_MULTI="mars15mwq8jc7sf0r8hu6phahfsmqg3fagt7ysyd3un"
+export MARS_TEST_NODE="https://testnet-rpc.marsprotocol.io:443"
+export MARS_TEST_VESTING="mars14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9smxjtde"
+export MARS_TEST_AIRDROP="mars1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqhnhf0l"
+export MARS_TEST_DELEGATOR="mars17p9rzwnnfxcjp32un9ug7yhhzgtkhvl9jfksztgw5uh69wac2pgs0gfvxm"
+export MARS_TEST_CHAIN_ID="ares-1"
 
-   # Transaction specific variables (must be created at time of transaction)
-   export CODEID="new_code_ID_to_migrate_to"
-   export MARS_SEQUENCE="current_account_sequence"
-   export UNSIGNED="unsignedTX_filename.JSON"
-   export SIGNEDTX="signedTX_filenme.JSON"
-   export EXECUTE="msg_to_execute"
+# Transaction specific variables (must be created at time of transaction)
+export CODEID="new_code_ID_to_migrate_to"
+export MARS_SEQUENCE="current_account_sequence"
+export UNSIGNED="unsignedTX_filename.JSON"
+export SIGNEDTX="signedTX_filenme.JSON"
+export EXECUTE="msg_to_execute"
 
-   # User specific variables
-   export SINGLE_SIGN="your_name.JSON"
-   export OSMO_ADDR="your_wallet_address"
-   ```
+# User specific variables
+export SINGLE_SIGN="your_name.JSON"
+export OSMO_ADDR="your_wallet_address"
+```
 
 **Note:** `MARS_ACCOUNT` and `MARS_SEQUENCE` can be found by running:
 
@@ -115,26 +115,26 @@ marsd query account $MARS_MULTI \
 
 ## Query contract configs
 
-* Airdrop Contract Config:
+- Airdrop Contract Config:
 
-   ``` shell
-   QUERY='{"config":{}}'
-   marsd query wasm contract-state smart $MARS_TEST_AIRDROP "$QUERY" --output json --node=$MARS_TEST_NODE
-   ```
+  ```shell
+  QUERY='{"config":{}}'
+  marsd query wasm contract-state smart $MARS_TEST_AIRDROP "$QUERY" --output json --node=$MARS_TEST_NODE
+  ```
 
-* Vesting Config:
+- Vesting Config:
 
-   ``` shell
-   QUERY='{"config":{}}'
-   marsd query wasm contract-state smart $MARS_TEST_VESTING "$QUERY" --output json --node=$MARS_TEST_NODE
-   ```
+  ```shell
+  QUERY='{"config":{}}'
+  marsd query wasm contract-state smart $MARS_TEST_VESTING "$QUERY" --output json --node=$MARS_TEST_NODE
+  ```
 
-* Delegator Config:
+- Delegator Config:
 
-   ``` shell
-   QUERY='{"config":{}}'
-   marsd query wasm contract-state smart $MARS_TEST_DELEGATOR "$QUERY" --output json --node=$MARS_TEST_NODE
-   ```
+  ```shell
+  QUERY='{"config":{}}'
+  marsd query wasm contract-state smart $MARS_TEST_DELEGATOR "$QUERY" --output json --node=$MARS_TEST_NODE
+  ```
 
 ## Signing a tx with the multisig - testnet migrate msg example
 
@@ -267,6 +267,7 @@ Every multisig holder is responsible for verifying the execute msg inside the js
    ```
 
    If they're missing, follow steps 2-4 from the "Set up multisig on your local network" section.
+
 2. Initiate the multisig execute tx. This can be done by any one of the multisig holders.
 
    ```bash
