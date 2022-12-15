@@ -264,7 +264,7 @@ export class Deployer {
       price: { denom: oracleConfig.denom },
     })) as { price: number; denom: string }
 
-    console.log(
+    printGreen(
       `${this.config.chainId} :: ${oracleConfig.denom} oracle price :  ${JSON.stringify(
         oracleResult,
       )}`,
