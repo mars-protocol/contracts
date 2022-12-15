@@ -1053,6 +1053,7 @@ dependencies = [
  "anyhow",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cosmwasm-vault-standard",
  "cw-controllers-admin-fork",
  "cw-multi-test",
  "cw-storage-plus 1.0.1",

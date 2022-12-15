@@ -28,8 +28,9 @@ mars-rover                = { workspace = true }
 thiserror                 = { workspace = true }
 
 [dev-dependencies]
-anyhow           = { workspace = true }
-cw-multi-test    = { workspace = true }
-cw-utils         = { workspace = true }
-mars-mock-oracle = { workspace = true }
-mars-mock-vault  = { workspace = true }
+anyhow                    = { workspace = true }
+cw-multi-test             = { workspace = true }
+cw-utils                  = { workspace = true }
+mars-mock-oracle          = { workspace = true }
+mars-mock-vault           = { workspace = true }
+cosmwasm-vault-standard   = { workspace = true }
