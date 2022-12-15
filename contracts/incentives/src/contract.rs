@@ -104,7 +104,7 @@ pub fn execute_set_asset_incentive(
     let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &denom)? {
         Some(mut asset_incentive) => {
             let market: red_bank::Market = deps.querier.query_wasm_smart(
-                &red_bank_addr,
+                red_bank_addr,
                 &red_bank::QueryMsg::Market {
                     denom: denom.clone(),
                 },
