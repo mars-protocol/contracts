@@ -16,6 +16,7 @@ export interface DeploymentConfig {
   base_asset_symbol: string
   second_asset_symbol: string
   multisigAddr?: string
+  runTests: boolean
 }
 
 export interface AssetConfig {
@@ -38,7 +39,9 @@ export interface AssetConfig {
 
 export interface OracleConfig {
   denom: string
-  price: string
+  price?: string
+  pool_id?: number
+  window_size?: number
 }
 
 export interface MultisigConfig {

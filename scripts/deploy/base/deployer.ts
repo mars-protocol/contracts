@@ -230,32 +230,45 @@ export class Deployer {
     this.storage.execute.assetsInitialized.push(assetConfig.denom)
   }
 
-  async setOraclePrice(oracleConfig: OracleConfig) {
-    if (this.storage.execute.oraclePriceSet) {
-      printBlue(`${this.config.second_asset_symbol} Oracle Price already set`)
-      return
-    }
-
-    const msg = {
-      set_price_source: {
-        denom: oracleConfig.denom,
-        price_source: {
-          fixed: { price: oracleConfig.price },
+  async setOracle(oracleConfig: OracleConfig) {
+    if (oracleConfig.price) {
+      const msg = {
+        set_price_source: {
+          denom: oracleConfig.denom,
+          price_source: {
+            fixed: { price: oracleConfig.price },
+          },
         },
-      },
+      }
+      await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
+    } else {
+      const msg = {
+        set_price_source: {
+          denom: oracleConfig.denom,
+          price_source: {
+            twap: {
+              pool_id: oracleConfig.pool_id,
+              window_size: oracleConfig.window_size,
+            },
+          },
+        },
+      }
+      await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
     }
-
-    await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
 
     printYellow('Oracle Price is set.')
 
     this.storage.execute.oraclePriceSet = true
 
     const oracleResult = (await this.client.queryContractSmart(this.storage.addresses.oracle!, {
-      price: { denom: this.config.atomDenom },
+      price: { denom: oracleConfig.denom },
     })) as { price: number; denom: string }
 
-    console.log(`${this.config.chainId} :: uosmo oracle price :  ${JSON.stringify(oracleResult)}`)
+    printGreen(
+      `${this.config.chainId} :: ${oracleConfig.denom} oracle price :  ${JSON.stringify(
+        oracleResult,
+      )}`,
+    )
   }
 
   async executeDeposit() {

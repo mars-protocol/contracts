@@ -31,48 +31,60 @@ A bug bounty is currently open for these contracts. See details at: https://immu
    diff artifacts/$CONTRACTNAME.wasm download.wasm
    ```
 
-## Deploy scripts overview and set up
-When the scripts run for the first time, it will upload code IDs for each contract, instantiate each contract, initialize assets, and run 4 tests (deposit, borrow, repay, withdraw). After the first run, the code will only run deposit, borrow, repay, and withdraw tests. To rerun everything, delete the osmo-test-4.json file in the artifacts folder to clear the storage.
+## Environment set up
+- [Install rustup](https://rustup.rs/). Once installed, make sure you have the wasm32 target:
+```shell
+rustup default stable
+rustup update stable
+rustup target add wasm32-unknown-unknown
+```
+- Install [cargo make](https://github.com/sagiegurari/cargo-make)
 
-Everything related to deployment must be ran from the `scripts` directory:
+```shell
+cargo install --force cargo-make
 ```
-cd scripts
-```
-Set up yarn:
-```
-yarn install
-```
-Create the build folder:
-```
-yarn build
-```
-Compile all contracts:
-```
-yarn compile
-```
+
+- Install [Docker](https://docs.docker.com/get-docker/)
+
+- Install [Node.js v16](https://github.com/nvm-sh/nvm)
+
+- Install [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
+
+- Create the build folder:
+   ```
+   yarn build
+   ```
+- Compile all contracts:
+   ```
+   cargo make rust-optimizer 
+   ```
+- Formatting: 
+   ```
+   yarn format
+   
+   yarn lint 
+   ```
 This compiles and optimizes all contracts, storing them in `/artifacts` directory along with `checksum.txt` which contains sha256 hashes of each of the `.wasm` files (The script just uses CosmWasm's [rust-optimizer](https://github.com/CosmWasm/rust-optimizer)).
 Note: Intel/Amd 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production.
 
-Formatting must be done before running lint:
-```
-yarn format
-```
-Linting:
-```
-yarn lint
-```
-Now you're ready to deploy for an outpost.
-
 ## Deploying Outposts
-Each outpost has a config file for its respective deployment and assets
+When the deployment scripts run for the first time, it will upload code IDs for each contract, instantiate each contract, initialize assets, and set oracles. If you want to redeploy, you must locally delete the 'osmo-test-4.json' file in the artifacts directory. 
+Everything related to deployment must be ran from the `scripts` directory:
+
+Each outpost has a config file for its respective deployment and assets. 
 
 For Osmosis:
 ```
-yarn deploy:osmosis
-```
-For Osmosis multisig owned contracts:
-```
-yarn deploy:osmosis-multisig
+cd scripts 
+
+# for testnet deployment with deployerAddr set as owner & admin: 
+yarn deploy:osmosis-testnet
+
+# for testnet deployment with multisigAddr set as owner & admin: 
+yarn deploy:osmosis-testnet-multisig 
+
+# for mainnet deployment: 
+yarn deploy:osmosis-mainnet
 ```
 
 ## Schemas
