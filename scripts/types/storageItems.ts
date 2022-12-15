@@ -6,7 +6,6 @@ export interface StorageItems {
     mockOracle?: number
     marsOracleAdapter?: number
     swapper?: number
-    mockZapper?: number
     creditManager?: number
   }
   addresses: {
@@ -14,15 +13,13 @@ export interface StorageItems {
     mockVault?: string
     marsOracleAdapter?: string
     swapper?: string
-    mockZapper?: string
     creditManager?: string
   }
   actions: {
     proposedNewOwner?: boolean
     acceptedOwnership?: boolean
-    setRoute?: boolean
+    setRoutes?: boolean
     seedMockVault?: boolean
-    seedMockZapper?: boolean
     grantedCreditLines?: boolean
     oraclePricesSet?: boolean
     redBankMarketsSet?: boolean

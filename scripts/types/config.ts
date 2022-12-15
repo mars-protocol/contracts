@@ -1,48 +1,69 @@
-import { Duration } from './generated/mars-mock-vault/MarsMockVault.types'
+import { Duration, VaultInfoResponse } from './generated/mars-mock-vault/MarsMockVault.types'
+import {
+  VaultConfig,
+  VaultInstantiateConfig,
+} from './generated/mars-credit-manager/MarsCreditManager.types'
+import { VaultPricingInfo } from './generated/mars-oracle-adapter/MarsOracleAdapter.types'
 
 export enum VaultType {
   LOCKED,
   UNLOCKED,
 }
 
+export type VaultInfo = { lockup: { time: number } | undefined; tokens: VaultInfoResponse }
+
 export interface DeploymentConfig {
-  oracleAddr: string
-  redBankAddr: string
-  baseDenom: string
-  secondaryDenom: string
-  chainPrefix: string
-  rpcEndpoint: string
-  deployerMnemonic: string
-  redBankDeployerMnemonic: string
-  vaultTokenDenom: string
-  vaultLockup?: Duration
-  chainId: string
-  defaultGasPrice: number
-  startingAmountForTestUser: number
-  depositAmount: number
-  toGrantCreditLines: {
-    amount: string
-    denom: string
-  }[]
-  borrowAmount: number
-  repayAmount: number
-  swapAmount: number
-  slippage: number
-  swapRoute: { token_out_denom: string; pool_id: string }[]
-  withdrawAmount: number
-  maxCloseFactor: number
-  vaultType: VaultType
-  vaultDepositAmount: number
-  vaultDepositCap: {
-    amount: string
-    denom: string
+  chain: {
+    prefix: string
+    id: string
+    rpcEndpoint: string
+    defaultGasPrice: number
+    baseDenom: string
   }
-  vaultLiquidationThreshold: number
-  vaultMaxLTV: number
-  vaultWithdrawAmount: number
-  lpToken: { denom: string; price: number }
-  zap: { amount: number; denom: string; price: number }[]
-  unzapAmount: number
-  maxValueForBurn: number
-  maxUnlockingPositions: number
+  deployerMnemonic: string
+  oracle: { addr: string; vaultPricing: VaultPricingInfo[] }
+  redBank: { addr: string }
+  zapper: { addr: string }
+  vaults: VaultInstantiateConfig[]
+  allowedCoins: string[]
+  maxCloseFactor: string
+  maxValueForBurn: string
+  maxUnlockingPositions: string
+  swapRoutes: SwapRoute[]
+  testActions?: TestActions
+}
+
+export interface SwapRoute {
+  denomIn: string
+  denomOut: string
+  route: { token_out_denom: string; pool_id: string }[]
+}
+
+export interface TestActions {
+  vault: {
+    depositAmount: string
+    withdrawAmount: string
+    mock: {
+      type: VaultType
+      config: VaultConfig
+      vaultTokenDenom: string
+      lockup?: Duration
+      baseToken: { denom: string; price: string }
+    }
+  }
+  outpostsDeployerMnemonic: string
+  secondaryDenom: string
+  defaultCreditLine: string
+  startingAmountForTestUser: string
+  depositAmount: string
+  borrowAmount: string
+  repayAmount: string
+  swap: {
+    amount: string
+    slippage: string
+    route: { token_out_denom: string; pool_id: string }[]
+  }
+  withdrawAmount: string
+  zap: { amount: string; denom: string; price: string }[]
+  unzapAmount: string
 }

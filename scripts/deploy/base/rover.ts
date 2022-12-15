@@ -1,5 +1,5 @@
 import { Storage } from './storage'
-import { DeploymentConfig } from '../../types/config'
+import { DeploymentConfig, TestActions, VaultInfo } from '../../types/config'
 import { difference } from 'lodash'
 import assert from 'assert'
 import { printBlue, printGreen } from '../../utils/chalk'
@@ -13,7 +13,9 @@ import {
   Action,
   Coin,
   ConfigUpdates,
+  VaultInstantiateConfig,
 } from '../../types/generated/mars-credit-manager/MarsCreditManager.types'
+import { MarsMockVaultQueryClient } from '../../types/generated/mars-mock-vault/MarsMockVault.client'
 
 export class Rover {
   private exec: MarsCreditManagerClient
@@ -26,6 +28,7 @@ export class Rover {
     private storage: Storage,
     private config: DeploymentConfig,
     private cwClient: SigningCosmWasmClient,
+    private actions: TestActions,
   ) {
     this.exec = new MarsCreditManagerClient(cwClient, userAddr, storage.addresses.creditManager!)
     this.query = new MarsCreditManagerQueryClient(cwClient, storage.addresses.creditManager!)
@@ -47,96 +50,99 @@ export class Rover {
   }
 
   async deposit() {
-    const amount = this.config.depositAmount.toString()
+    const amount = this.actions.depositAmount
     await this.updateCreditAccount(
-      [{ deposit: { amount, denom: this.config.baseDenom } }],
-      [{ amount, denom: this.config.baseDenom }],
+      [{ deposit: { amount, denom: this.config.chain.baseDenom } }],
+      [{ amount, denom: this.config.chain.baseDenom }],
     )
     const positions = await this.query.positions({ accountId: this.accountId! })
     assert.equal(positions.coins.length, 1)
     assert.equal(positions.coins[0].amount, amount)
-    assert.equal(positions.coins[0].denom, this.config.baseDenom)
-    printGreen(`Deposited into credit account: ${amount} ${this.config.baseDenom}`)
+    assert.equal(positions.coins[0].denom, this.config.chain.baseDenom)
+    printGreen(`Deposited into credit account: ${amount} ${this.config.chain.baseDenom}`)
   }
 
   async withdraw() {
-    const amount = this.config.withdrawAmount.toString()
+    const amount = this.actions.withdrawAmount
     const positionsBefore = await this.query.positions({ accountId: this.accountId! })
     const beforeWithdraw = parseFloat(
-      positionsBefore.coins.find((c) => c.denom === this.config.baseDenom)!.amount,
+      positionsBefore.coins.find((c) => c.denom === this.config.chain.baseDenom)!.amount,
     )
-    await this.updateCreditAccount([{ withdraw: { amount, denom: this.config.baseDenom } }])
+    await this.updateCreditAccount([{ withdraw: { amount, denom: this.config.chain.baseDenom } }])
     const positionsAfter = await this.query.positions({ accountId: this.accountId! })
     const afterWithdraw = parseFloat(
-      positionsAfter.coins.find((c) => c.denom === this.config.baseDenom)!.amount,
+      positionsAfter.coins.find((c) => c.denom === this.config.chain.baseDenom)!.amount,
     )
     assert.equal(beforeWithdraw - afterWithdraw, amount)
-    printGreen(`Withdrew: ${amount} ${this.config.baseDenom}`)
+    printGreen(`Withdrew: ${amount} ${this.config.chain.baseDenom}`)
   }
 
   async borrow() {
-    const amount = this.config.borrowAmount.toString()
-    await this.updateCreditAccount([{ borrow: { amount, denom: this.config.secondaryDenom } }])
+    const amount = this.actions.borrowAmount
+    await this.updateCreditAccount([{ borrow: { amount, denom: this.actions.secondaryDenom } }])
     const positions = await this.query.positions({ accountId: this.accountId! })
     assert.equal(positions.debts.length, 1)
-    assert.equal(positions.debts[0].denom, this.config.secondaryDenom)
-    printGreen(`Borrowed from RedBank: ${amount} ${this.config.secondaryDenom}`)
+    assert.equal(positions.debts[0].denom, this.actions.secondaryDenom)
+    printGreen(`Borrowed from RedBank: ${amount} ${this.actions.secondaryDenom}`)
   }
 
   async repay() {
-    const amount = this.config.repayAmount.toString()
-    await this.updateCreditAccount([{ repay: { amount, denom: this.config.secondaryDenom } }])
+    const amount = this.actions.repayAmount
+    await this.updateCreditAccount([{ repay: { amount, denom: this.actions.secondaryDenom } }])
     const positions = await this.query.positions({ accountId: this.accountId! })
     printGreen(
-      `Repaid to RedBank: ${amount} ${this.config.secondaryDenom}. Debt remaining: ${positions.debts[0].amount} ${positions.debts[0].denom}`,
+      `Repaid to RedBank: ${amount} ${
+        this.actions.secondaryDenom
+      }. Debt remaining: ${JSON.stringify(positions.debts)}`,
     )
   }
 
   async swap() {
-    const amount = this.config.swapAmount.toString()
-    printBlue(`Swapping ${amount} ${this.config.baseDenom} for ${this.config.secondaryDenom}`)
-    const prevPositions = await this.query.positions({ accountId: this.accountId! })
+    const amount = this.actions.swap.amount
     printBlue(
-      `Previous account balance: ${prevPositions.coins[0].amount} ${prevPositions.coins[0].denom}`,
+      `Swapping ${amount} ${this.config.chain.baseDenom} for ${this.actions.secondaryDenom}`,
     )
+    const prevPositions = await this.query.positions({ accountId: this.accountId! })
+    printBlue(`Previous account balance: ${JSON.stringify(prevPositions.coins)}`)
     await this.updateCreditAccount([
       {
         swap_exact_in: {
           coin_in_amount: amount,
-          coin_in_denom: this.config.baseDenom,
-          denom_out: this.config.secondaryDenom,
-          slippage: this.config.slippage.toString(),
+          coin_in_denom: this.config.chain.baseDenom,
+          denom_out: this.actions.secondaryDenom,
+          slippage: this.actions.swap.slippage,
         },
       },
     ])
     printGreen(`Swap successful`)
     const newPositions = await this.query.positions({ accountId: this.accountId! })
-    printGreen(
-      `New account balance: ${newPositions.coins[0].amount} ${newPositions.coins[0].denom}, ${newPositions.coins[1].amount} ${newPositions.coins[1].denom}`,
-    )
+    printGreen(`New account balance: ${JSON.stringify(newPositions.coins)}`)
   }
 
-  async zap() {
+  async zap(lp_token_out: string) {
     await this.updateCreditAccount([
       {
         provide_liquidity: {
-          coins_in: this.config.zap.map((c) => ({ denom: c.denom, amount: c.amount.toString() })),
-          lp_token_out: this.config.lpToken.denom,
+          coins_in: this.actions.zap.map((c) => ({ denom: c.denom, amount: c.amount })),
+          lp_token_out,
           minimum_receive: '1',
         },
       },
     ])
     const positions = await this.query.positions({ accountId: this.accountId! })
-    const lp_balance = positions.coins.find((c) => c.denom === this.config.lpToken.denom)!.amount
+    const lp_balance = positions.coins.find((c) => c.denom === lp_token_out)!.amount
     printGreen(
-      `Zapped ${this.config.zap.map((c) => c.denom).join(', ')} for LP token: ${lp_balance} ${
-        this.config.lpToken.denom
-      }`,
+      `Zapped ${this.actions.zap
+        .map((c) => c.denom)
+        .join(', ')} for LP token: ${lp_balance} ${lp_token_out}`,
     )
   }
 
-  async unzap() {
-    const lpToken = { denom: this.config.lpToken.denom, amount: this.config.unzapAmount.toString() }
+  async unzap(lp_token_in: string) {
+    const lpToken = {
+      denom: lp_token_in,
+      amount: this.actions.unzapAmount,
+    }
     await this.updateCreditAccount([
       {
         withdraw_liquidity: {
@@ -147,74 +153,76 @@ export class Rover {
     ])
     const underlying = await this.query.estimateWithdrawLiquidity({ lpToken })
     printGreen(
-      `Unzapped ${this.config.lpToken.denom} ${this.config.unzapAmount} for underlying: ${underlying
+      `Unzapped ${lp_token_in} ${this.actions.unzapAmount} for underlying: ${underlying
         .map((c) => `${c.amount} ${c.denom}`)
         .join(', ')}`,
     )
   }
 
-  async vaultDeposit() {
+  async vaultDeposit(v: VaultInstantiateConfig, info: VaultInfo) {
     const oldRoverBalance = await this.cwClient.getBalance(
       this.storage.addresses.creditManager!,
-      this.config.vaultTokenDenom,
+      info.tokens.vault_token,
     )
     await this.updateCreditAccount([
       {
         enter_vault: {
-          amount: this.config.vaultDepositAmount.toString(),
-          denom: this.config.lpToken.denom,
-          vault: { address: this.storage.addresses.mockVault! },
+          amount: this.actions.vault.depositAmount,
+          denom: info.tokens.base_token,
+          vault: { address: v.vault.address },
         },
       },
     ])
     const positions = await this.query.positions({ accountId: this.accountId! })
     assert.equal(positions.vaults.length, 1)
-    const state = await this.getVaultBalance(this.storage.addresses.mockVault!)
+    const state = await this.getVaultBalance(v.vault.address)
     assert(state.locked > 0 || state.unlocked > 0)
     const newRoverBalance = await this.cwClient.getBalance(
       this.storage.addresses.creditManager!,
-      this.config.vaultTokenDenom,
+      info.tokens.vault_token,
     )
     const newAmount = parseInt(newRoverBalance.amount) - parseInt(oldRoverBalance.amount)
     assert(newAmount === state.locked || newAmount === state.unlocked)
 
     printGreen(
-      `Deposited ${this.config.vaultDepositAmount} ${
-        this.config.lpToken.denom
-      } in exchange for vault tokens: ${JSON.stringify(positions.vaults[0].amount)}`,
+      `Deposited ${this.actions.vault.depositAmount} ${
+        info.tokens.base_token
+      } in exchange for ${JSON.stringify(positions.vaults[0].amount)} vault tokens (${
+        info.tokens.vault_token
+      })`,
     )
   }
 
-  async vaultWithdraw() {
-    const oldBalance = await this.getAccountBalance(this.config.baseDenom)
+  async vaultWithdraw(v: VaultInstantiateConfig, info: VaultInfo) {
+    const oldBalance = await this.getAccountBalance(info.tokens.base_token)
     await this.updateCreditAccount([
       {
         exit_vault: {
-          amount: this.config.vaultWithdrawAmount.toString(),
-          vault: { address: this.storage.addresses.mockVault! },
+          amount: this.actions.vault.withdrawAmount,
+          vault: { address: v.vault.address },
         },
       },
     ])
-    const newBalance = await this.getAccountBalance(this.config.baseDenom)
+    const newBalance = await this.getAccountBalance(info.tokens.base_token)
     assert(newBalance > oldBalance)
     printGreen(
-      `Withdrew ${newBalance - oldBalance} ${this.config.baseDenom} in exchange for ${
-        this.config.vaultWithdrawAmount
-      } ${this.config.vaultTokenDenom}`,
+      `Withdrew ${newBalance - oldBalance} ${info.tokens.base_token} in exchange for ${
+        this.actions.vault.withdrawAmount
+      } ${info.tokens.vault_token} vault tokens`,
     )
   }
 
-  async vaultRequestUnlock() {
-    const oldBalance = await this.getVaultBalance(this.storage.addresses.mockVault!)
+  async vaultRequestUnlock(v: VaultInstantiateConfig, info: VaultInfo) {
+    const oldBalance = await this.getVaultBalance(v.vault.address)
     await this.updateCreditAccount([
       {
         request_vault_unlock: {
-          amount: this.config.vaultWithdrawAmount.toString(),
-          vault: { address: this.storage.addresses.mockVault! },
+          amount: this.actions.vault.withdrawAmount,
+          vault: { address: v.vault.address },
         },
       },
     ])
-    const newBalance = await this.getVaultBalance(this.storage.addresses.mockVault!)
+    const newBalance = await this.getVaultBalance(v.vault.address)
     assert(newBalance.locked < oldBalance.locked)
     assert.equal(newBalance.unlocking.length, 1)
 
@@ -223,7 +231,7 @@ export class Rover {
         newBalance.unlocking[0].coin.amount
       } ${newBalance.unlocking[0].coin.denom} in exchange for: ${
         oldBalance.locked - newBalance.locked
-      } ${this.config.vaultTokenDenom}`,
+      } ${info.tokens.vault_token}`,
     )
   }
 
@@ -232,6 +240,28 @@ export class Rover {
     const positions = await this.query.positions({ accountId: this.accountId! })
     assert.equal(positions.coins.length, 0)
     printGreen(`Withdrew all balances back to wallet`)
+  }
+
+  async getVaultInfo(v: VaultInstantiateConfig): Promise<VaultInfo> {
+    const client = new MarsMockVaultQueryClient(this.cwClient, v.vault.address)
+    return {
+      tokens: await client.info(),
+      lockup: await this.getLockup(v),
+    }
+  }
+
+  async getLockup(v: VaultInstantiateConfig): Promise<VaultInfo['lockup']> {
+    try {
+      return await this.cwClient.queryContractSmart(v.vault.address, {
+        vault_extension: {
+          lockup: {
+            lockup_duration: {},
+          },
+        },
+      })
+    } catch (e) {
+      return undefined
+    }
   }
 
   private async getAccountBalance(denom: string) {

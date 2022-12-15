@@ -19,18 +19,22 @@ export const getAddress = async (wallet: DirectSecp256k1HdWallet) => {
 
 export const setupClient = async (config: DeploymentConfig, wallet: DirectSecp256k1HdWallet) => {
   const clientOption: SigningCosmWasmClientOptions = {
-    gasPrice: GasPrice.fromString(`${config.defaultGasPrice}${config.baseDenom}`),
+    gasPrice: GasPrice.fromString(`${config.chain.defaultGasPrice}${config.chain.baseDenom}`),
   }
-  return await SigningCosmWasmClient.connectWithSigner(config.rpcEndpoint, wallet, clientOption)
+  return await SigningCosmWasmClient.connectWithSigner(
+    config.chain.rpcEndpoint,
+    wallet,
+    clientOption,
+  )
 }
 
 export const setupDeployer = async (config: DeploymentConfig) => {
-  const wallet = await getWallet(config.deployerMnemonic, config.chainPrefix)
+  const wallet = await getWallet(config.deployerMnemonic, config.chain.prefix)
   const client = await setupClient(config, wallet)
   const addr = await getAddress(wallet)
-  const balance = await client.getBalance(addr, config.baseDenom)
+  const balance = await client.getBalance(addr, config.chain.baseDenom)
   printGray(`Deployer addr: ${addr}, balance: ${parseInt(balance.amount) / 1e6} ${balance.denom}`)
 
-  const storage = await Storage.load(config.chainId)
+  const storage = await Storage.load(config.chain.id)
   return new Deployer(config, client, addr, storage)
 }
