@@ -65,7 +65,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
         },
         vaultTokenDenom: udig,
         type: VaultType.LOCKED,
-        lockup: { time: 3600 }, // 1 hour
+        lockup: { time: 900 }, // 15 mins
         baseToken: { denom: ucro, price: '3' },
       },
     },
