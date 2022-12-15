@@ -261,7 +261,7 @@ export class Deployer {
     this.storage.execute.oraclePriceSet = true
 
     const oracleResult = (await this.client.queryContractSmart(this.storage.addresses.oracle!, {
-      price: { denom: this.config.atomDenom },
+      price: { denom: oracleConfig.denom },
     })) as { price: number; denom: string }
 
     console.log(
