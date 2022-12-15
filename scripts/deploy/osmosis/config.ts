@@ -24,7 +24,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   maxValueForBurn: '1000000',
   // Get the latest addresses from: https://github.com/mars-protocol/outposts/blob/master/scripts/deploy/addresses/osmo-test-4.json
   oracle: {
-    addr: 'osmo1hkkx42777dyfz7wc8acjjhfdh9x2ugcjvdt7shtft6ha9cn420cquz3u3j',
+    addr: 'osmo1jnkun9gcajn96a4yh7atzkq98c9sm0xrsqk7xtes07ujyn7xh5rqjymxxv',
     vaultPricing: [
       {
         addr: autoCompoundingVault,
@@ -35,7 +35,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
       },
     ],
   },
-  redBank: { addr: 'osmo1g30recyv8pfy3qd4qn3dn7plc0rn5z68y5gn32j39e96tjhthzxsw3uvvu' },
+  redBank: { addr: 'osmo18w58j2dlpre6kslls9w88aur5ud8000wvg8pw4fp80p6q97g6qtqvhztpv' },
   swapRoutes: [
     { denomIn: uosmo, denomOut: uatom, route: [{ token_out_denom: uatom, pool_id: '1' }] },
   ],
@@ -89,9 +89,12 @@ export const osmosisTestnetConfig: DeploymentConfig = {
     },
     unzapAmount: '1000000',
     withdrawAmount: '12',
-    zap: [
-      { denom: uatom, amount: '1', price: '2.135' },
-      { denom: uosmo, amount: '3', price: '1' },
-    ],
+    zap: {
+      coinsIn: [
+        { denom: uatom, amount: '1', price: '2.135' },
+        { denom: uosmo, amount: '3', price: '1' },
+      ],
+      denomOut: { denom: gammPool1, price: '1.75' },
+    },
   },
 }

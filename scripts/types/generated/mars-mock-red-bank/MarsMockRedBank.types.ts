@@ -87,7 +87,6 @@ export interface InitOrUpdateAssetParams {
   borrow_enabled?: boolean | null
   deposit_cap?: Uint128 | null
   deposit_enabled?: boolean | null
-  initial_borrow_rate?: Decimal | null
   interest_rate_model?: InterestRateModel | null
   liquidation_bonus?: Decimal | null
   liquidation_threshold?: Decimal | null

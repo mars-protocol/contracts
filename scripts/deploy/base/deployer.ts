@@ -265,7 +265,8 @@ export class Deployer {
     const { client, addr } = await this.getOutpostsDeployer()
 
     for (const coin of this.config
-      .testActions!.zap.map((c) => ({ denom: c.denom, price: c.price }))
+      .testActions!.zap.coinsIn.map((c) => ({ denom: c.denom, price: c.price }))
+      .concat(this.config.testActions!.zap.denomOut)
       .concat(this.config.testActions!.vault.mock.baseToken)) {
       try {
         await client.queryContractSmart(this.config.oracle.addr, {
@@ -298,7 +299,8 @@ export class Deployer {
     const { client, addr } = await this.getOutpostsDeployer()
 
     for (const denom of this.config
-      .testActions!.zap.map((c) => c.denom)
+      .testActions!.zap.coinsIn.map((c) => c.denom)
+      .concat(this.config.testActions!.zap.denomOut.denom)
       .concat(this.config.testActions!.vault.mock.baseToken.denom)) {
       try {
         await client.queryContractSmart(this.config.redBank.addr, {
@@ -317,7 +319,6 @@ export class Deployer {
           init_asset: {
             denom,
             params: {
-              initial_borrow_rate: '0.1',
               max_loan_to_value: '0.65',
               reserve_factor: '0.2',
               liquidation_threshold: '0.7',

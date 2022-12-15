@@ -427,17 +427,6 @@
               "null"
             ]
           },
-          "initial_borrow_rate": {
-            "description": "Initial borrow rate",
-            "anyOf": [
-              {
-                "$ref": "#/definitions/Decimal"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "interest_rate_model": {
             "description": "Interest rate strategy to calculate borrow_rate and liquidity_rate",
             "anyOf": [

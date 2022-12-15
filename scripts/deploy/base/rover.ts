@@ -123,7 +123,7 @@ export class Rover {
     await this.updateCreditAccount([
       {
         provide_liquidity: {
-          coins_in: this.actions.zap.map((c) => ({ denom: c.denom, amount: c.amount })),
+          coins_in: this.actions.zap.coinsIn.map((c) => ({ denom: c.denom, amount: c.amount })),
           lp_token_out,
           minimum_receive: '1',
         },
@@ -132,7 +132,7 @@ export class Rover {
     const positions = await this.query.positions({ accountId: this.accountId! })
     const lp_balance = positions.coins.find((c) => c.denom === lp_token_out)!.amount
     printGreen(
-      `Zapped ${this.actions.zap
+      `Zapped ${this.actions.zap.coinsIn
         .map((c) => c.denom)
         .join(', ')} for LP token: ${lp_balance} ${lp_token_out}`,
     )

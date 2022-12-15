@@ -64,6 +64,9 @@ export interface TestActions {
     route: { token_out_denom: string; pool_id: string }[]
   }
   withdrawAmount: string
-  zap: { amount: string; denom: string; price: string }[]
+  zap: {
+    coinsIn: { amount: string; denom: string; price: string }[]
+    denomOut: { denom: string; price: string }
+  }
   unzapAmount: string
 }
