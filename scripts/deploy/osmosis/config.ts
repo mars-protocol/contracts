@@ -3,13 +3,12 @@ import { DeploymentConfig, VaultType } from '../../types/config'
 const uosmo = 'uosmo'
 const uatom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
 const udig = 'ibc/307E5C96C8F60D1CBEE269A9A86C0834E1DB06F2B3788AE4F716EDB97A48B97D'
-const ucro = 'ibc/E6931F78057F7CC5DA0FD6CEF82FF39373A6E0452BF1FD76910B93292CF356C1'
 const gammPool1 = 'gamm/pool/1'
 
 const autoCompoundingVault = 'osmo1lcnpd5000ru7qpd0tz8wnl00rlfvlxvqlw04md9cxsudapd0flvsqke5t5'
 
 export const osmosisTestnetConfig: DeploymentConfig = {
-  allowedCoins: [uosmo, uatom, ucro, gammPool1],
+  allowedCoins: [uosmo, uatom, gammPool1],
   chain: {
     baseDenom: uosmo,
     defaultGasPrice: 0.1,
@@ -66,7 +65,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
         vaultTokenDenom: udig,
         type: VaultType.LOCKED,
         lockup: { time: 900 }, // 15 mins
-        baseToken: { denom: ucro, price: '3' },
+        baseToken: { denom: gammPool1, price: '1.75' },
       },
     },
     outpostsDeployerMnemonic:
