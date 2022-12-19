@@ -20,6 +20,7 @@ export interface DeploymentConfig {
 }
 
 export interface AssetConfig {
+  emission: string
   denom: string
   max_loan_to_value: string
   reserve_factor: string

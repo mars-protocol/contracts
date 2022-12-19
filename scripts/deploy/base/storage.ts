@@ -25,7 +25,7 @@ export class Storage implements StorageItems {
       const items = JSON.parse(data) as StorageItems
       return new this(chainId, items)
     } catch (e) {
-      return new this(chainId, { addresses: {}, codeIds: {}, execute: { assetsInitialized: [] } })
+      return new this(chainId, { addresses: {}, codeIds: {}, execute: { assetsInitialized: [], assetIncentive: [] } })
     }
   }
 

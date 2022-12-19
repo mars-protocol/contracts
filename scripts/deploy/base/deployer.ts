@@ -7,6 +7,7 @@ import { InstantiateMsgs } from '../../types/msg'
 import { writeFile } from 'fs/promises'
 import { join, resolve } from 'path'
 import assert from 'assert'
+import {coin} from "@cosmjs/amino";
 
 export class Deployer {
   constructor(
@@ -57,7 +58,7 @@ export class Deployer {
     }
   }
 
-  async instantiate(name: keyof Storage['addresses'], codeId: number, msg: InstantiateMsgs) {
+  async instantiateFundedContract(name: keyof Storage['addresses'], codeId: number, msg: InstantiateMsgs) {
     if (this.storage.addresses[name]) {
       printBlue(`Contract already instantiated :: ${name} :: ${this.storage.addresses[name]}`)
       return
@@ -70,12 +71,34 @@ export class Deployer {
       msg,
       `mars-${name}`,
       'auto',
-      { admin: this.storage.owner },
+      { admin: this.storage.owner, funds: [coin(200, 'ibc/1BF910A3C8A30C8E3331764FA0113B920AE14B913F487DF7E1989FD75EFE61FD')] },
     )
 
     this.storage.addresses[name] = redBankContractAddress
     printGreen(
       `${this.config.chainId} :: ${name} Contract Address : ${this.storage.addresses[name]}`,
+    )
+  }
+
+  async instantiate(name: keyof Storage['addresses'], codeId: number, msg: InstantiateMsgs) {
+    if (this.storage.addresses[name]) {
+      printBlue(`Contract already instantiated :: ${name} :: ${this.storage.addresses[name]}`)
+      return
+    }
+
+    const { contractAddress: redBankContractAddress } = await this.client.instantiate(
+        this.deployerAddress,
+        codeId,
+        // @ts-expect-error msg expecting too general of a type
+        msg,
+        `mars-${name}`,
+        'auto',
+        { admin: this.storage.owner },
+    )
+
+    this.storage.addresses[name] = redBankContractAddress
+    printGreen(
+        `${this.config.chainId} :: ${name} Contract Address : ${this.storage.addresses[name]}`,
     )
   }
 
@@ -228,6 +251,26 @@ export class Deployer {
     printYellow(`${assetConfig.symbol} initialized`)
 
     this.storage.execute.assetsInitialized.push(assetConfig.denom)
+  }
+
+  async setAssetIncentive(assetConfig: AssetConfig) {
+    if (this.storage.execute.assetIncentive.includes(assetConfig.denom)) {
+      printBlue(`${assetConfig.symbol} already initialized.`)
+      return
+    }
+
+    const msg = {
+      set_asset_incentive:{
+        denom: assetConfig.denom,
+        emission_per_second: assetConfig.emission,
+      },
+    }
+
+    await this.client.execute(this.deployerAddress, this.storage.addresses.incentives!, msg, 'auto')
+
+    printYellow(`${assetConfig.symbol} emissions per second set`)
+
+    this.storage.execute.assetIncentive.push(assetConfig.denom)
   }
 
   async setOracle(oracleConfig: OracleConfig) {

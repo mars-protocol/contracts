@@ -15,6 +15,7 @@ export interface StorageItems {
   }
 
   execute: {
+    assetIncentive: string[];
     addressProviderUpdated?: boolean
     assetsInitialized: string[]
     secondAssetInitialized?: boolean
