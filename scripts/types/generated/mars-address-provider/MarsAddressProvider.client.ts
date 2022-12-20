@@ -10,7 +10,7 @@ import { Coin, StdFee } from '@cosmjs/amino'
 import {
   InstantiateMsg,
   ExecuteMsg,
-  MarsContract,
+  MarsAddressType,
   QueryMsg,
   AddressResponseItem,
   ArrayOfAddressResponseItem,
@@ -25,7 +25,7 @@ export interface MarsAddressProviderReadOnlyInterface {
     startAfter,
   }: {
     limit?: number
-    startAfter?: MarsContract
+    startAfter?: MarsAddressType
   }) => Promise<ArrayOfAddressResponseItem>
 }
 export class MarsAddressProviderQueryClient implements MarsAddressProviderReadOnlyInterface {
@@ -61,7 +61,7 @@ export class MarsAddressProviderQueryClient implements MarsAddressProviderReadOn
     startAfter,
   }: {
     limit?: number
-    startAfter?: MarsContract
+    startAfter?: MarsAddressType
   }): Promise<ArrayOfAddressResponseItem> => {
     return this.client.queryContractSmart(this.contractAddress, {
       all_addresses: {
@@ -77,10 +77,10 @@ export interface MarsAddressProviderInterface extends MarsAddressProviderReadOnl
   setAddress: (
     {
       address,
-      contract,
+      addressType,
     }: {
       address: string
-      contract: MarsContract
+      addressType: MarsAddressType
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -117,10 +117,10 @@ export class MarsAddressProviderClient
   setAddress = async (
     {
       address,
-      contract,
+      addressType,
     }: {
       address: string
-      contract: MarsContract
+      addressType: MarsAddressType
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -132,7 +132,7 @@ export class MarsAddressProviderClient
       {
         set_address: {
           address,
-          contract,
+          address_type: addressType,
         },
       },
       fee,

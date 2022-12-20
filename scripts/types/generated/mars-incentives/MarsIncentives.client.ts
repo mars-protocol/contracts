@@ -6,25 +6,12 @@
  */
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from '@cosmjs/cosmwasm-stargate'
-import { StdFee } from '@cosmjs/amino'
+import { Coin, StdFee } from '@cosmjs/amino'
 import {
   InstantiateMsg,
   ExecuteMsg,
   Uint128,
   Addr,
-  CosmosMsgForEmpty,
-  BankMsg,
-  Binary,
-  IbcMsg,
-  Timestamp,
-  Uint64,
-  WasmMsg,
-  GovMsg,
-  VoteOption,
-  Coin,
-  Empty,
-  IbcTimeout,
-  IbcTimeoutBlock,
   QueryMsg,
   Decimal,
   AssetIncentiveResponse,
@@ -119,11 +106,6 @@ export interface MarsIncentivesInterface extends MarsIncentivesReadOnlyInterface
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
-  executeCosmosMsg: (
-    fee?: number | StdFee | 'auto',
-    memo?: string,
-    funds?: Coin[],
-  ) => Promise<ExecuteResult>
 }
 export class MarsIncentivesClient
   extends MarsIncentivesQueryClient
@@ -142,7 +124,6 @@ export class MarsIncentivesClient
     this.balanceChange = this.balanceChange.bind(this)
     this.claimRewards = this.claimRewards.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
-    this.executeCosmosMsg = this.executeCosmosMsg.bind(this)
   }
 
   setAssetIncentive = async (
@@ -242,22 +223,6 @@ export class MarsIncentivesClient
           mars_denom: marsDenom,
           owner,
         },
-      },
-      fee,
-      memo,
-      funds,
-    )
-  }
-  executeCosmosMsg = async (
-    fee: number | StdFee | 'auto' = 'auto',
-    memo?: string,
-    funds?: Coin[],
-  ): Promise<ExecuteResult> => {
-    return await this.client.execute(
-      this.sender,
-      this.contractAddress,
-      {
-        execute_cosmos_msg: {},
       },
       fee,
       memo,

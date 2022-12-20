@@ -12,13 +12,18 @@ export interface InstantiateMsg {
 export type ExecuteMsg =
   | {
       update_config: {
-        owner?: string | null
+        owner: string
       }
     }
   | {
       set_price_source: {
         denom: string
         price_source: OsmosisPriceSource
+      }
+    }
+  | {
+      remove_price_source: {
+        denom: string
       }
     }
 export type OsmosisPriceSource =
@@ -42,7 +47,7 @@ export type OsmosisPriceSource =
       }
     }
   | {
-      liquidity_token: {
+      xyk_liquidity_token: {
         pool_id: number
         [k: string]: unknown
       }

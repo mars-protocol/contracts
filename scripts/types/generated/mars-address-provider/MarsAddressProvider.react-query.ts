@@ -11,7 +11,7 @@ import { StdFee, Coin } from '@cosmjs/amino'
 import {
   InstantiateMsg,
   ExecuteMsg,
-  MarsContract,
+  MarsAddressType,
   QueryMsg,
   AddressResponseItem,
   ArrayOfAddressResponseItem,
@@ -62,7 +62,7 @@ export interface MarsAddressProviderAllAddressesQuery<TData>
   extends MarsAddressProviderReactQuery<ArrayOfAddressResponseItem, TData> {
   args: {
     limit?: number
-    startAfter?: MarsContract
+    startAfter?: MarsAddressType
   }
 }
 export function useMarsAddressProviderAllAddressesQuery<TData = ArrayOfAddressResponseItem>({
@@ -145,7 +145,7 @@ export interface MarsAddressProviderSetAddressMutation {
   client: MarsAddressProviderClient
   msg: {
     address: string
-    contract: MarsContract
+    addressType: MarsAddressType
   }
   args?: {
     fee?: number | StdFee | 'auto'

@@ -161,6 +161,29 @@ export function useMarsOracleOsmosisConfigQuery<TData = ConfigForString>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
+export interface MarsOracleOsmosisRemovePriceSourceMutation {
+  client: MarsOracleOsmosisClient
+  msg: {
+    denom: string
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsOracleOsmosisRemovePriceSourceMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsOracleOsmosisRemovePriceSourceMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsOracleOsmosisRemovePriceSourceMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.removePriceSource(msg, fee, memo, funds),
+    options,
+  )
+}
 export interface MarsOracleOsmosisSetPriceSourceMutation {
   client: MarsOracleOsmosisClient
   msg: {
@@ -188,7 +211,7 @@ export function useMarsOracleOsmosisSetPriceSourceMutation(
 export interface MarsOracleOsmosisUpdateConfigMutation {
   client: MarsOracleOsmosisClient
   msg: {
-    owner?: string
+    owner: string
   }
   args?: {
     fee?: number | StdFee | 'auto'

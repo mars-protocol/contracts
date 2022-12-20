@@ -66,6 +66,7 @@ export type ExecuteMsg =
   | {
       liquidate: {
         collateral_denom: string
+        recipient?: string | null
         user: string
       }
     }

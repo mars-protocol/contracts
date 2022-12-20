@@ -407,9 +407,11 @@ export interface MarsRedBankInterface extends MarsRedBankReadOnlyInterface {
   liquidate: (
     {
       collateralDenom,
+      recipient,
       user,
     }: {
       collateralDenom: string
+      recipient?: string
       user: string
     },
     fee?: number | StdFee | 'auto',
@@ -662,9 +664,11 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
   liquidate = async (
     {
       collateralDenom,
+      recipient,
       user,
     }: {
       collateralDenom: string
+      recipient?: string
       user: string
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -677,6 +681,7 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
       {
         liquidate: {
           collateral_denom: collateralDenom,
+          recipient,
           user,
         },
       },

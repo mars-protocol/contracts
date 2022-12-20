@@ -472,6 +472,7 @@ export interface MarsRedBankLiquidateMutation {
   client: MarsRedBankClient
   msg: {
     collateralDenom: string
+    recipient?: string
     user: string
   }
   args?: {
