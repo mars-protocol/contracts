@@ -48,6 +48,10 @@ export class Deployer {
     printGreen(`${this.config.chain.id} :: ${name} : ${this.storage.codeIds[name]}`)
   }
 
+  setOwnerAddr() {
+    this.storage.owner = this.deployerAddr
+  }
+
   async instantiate(name: keyof Storage['addresses'], codeId: number, msg: InstantiateMsgs) {
     if (this.storage.addresses[name]) {
       printGray(`Contract already instantiated :: ${name} :: ${this.storage.addresses[name]}`)
@@ -59,6 +63,7 @@ export class Deployer {
       msg,
       `mars-${name}`,
       'auto',
+      { admin: this.storage.owner },
     )
     this.storage.addresses[name] = contractAddress
     printGreen(

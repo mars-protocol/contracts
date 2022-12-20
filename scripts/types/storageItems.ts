@@ -24,4 +24,5 @@ export interface StorageItems {
     oraclePricesSet?: boolean
     redBankMarketsSet?: boolean
   }
+  owner?: string
 }
