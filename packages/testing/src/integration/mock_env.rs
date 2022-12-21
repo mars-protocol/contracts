@@ -83,14 +83,43 @@ impl MockEnv {
 }
 
 impl Incentives {
-    pub fn set_asset_incentive(&self, env: &mut MockEnv, denom: &str, emission_per_second: u128) {
+    pub fn init_asset_incentive_from_current_block(
+        &self,
+        env: &mut MockEnv,
+        denom: &str,
+        emission_per_second: u128,
+        duration: u64,
+    ) {
         env.app
             .execute_contract(
                 env.owner.clone(),
                 self.contract_addr.clone(),
                 &incentives::ExecuteMsg::SetAssetIncentive {
                     denom: denom.to_string(),
-                    emission_per_second: emission_per_second.into(),
+                    emission_per_second: Some(emission_per_second.into()),
+                    start_time: None,
+                    duration: Some(duration),
+                },
+                &[],
+            )
+            .unwrap();
+    }
+
+    pub fn update_asset_incentive_emission(
+        &self,
+        env: &mut MockEnv,
+        denom: &str,
+        emission_per_second: u128,
+    ) {
+        env.app
+            .execute_contract(
+                env.owner.clone(),
+                self.contract_addr.clone(),
+                &incentives::ExecuteMsg::SetAssetIncentive {
+                    denom: denom.to_string(),
+                    emission_per_second: Some(emission_per_second.into()),
+                    start_time: None,
+                    duration: None,
                 },
                 &[],
             )

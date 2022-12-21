@@ -5,6 +5,8 @@ use mars_testing::integration::mock_env::MockEnvBuilder;
 
 mod helpers;
 
+const ONE_WEEK_IN_SEC: u64 = 604800;
+
 // Note: The incentives rewards for an individual is calculated as follows:
 // (emissions_per_second) * (amount of seconds that the asset has been deposited into the redbank) * (amount of asset user deposited / total amount of asset deposited)
 // this calculation is used to verify that the amount of rewards claimed is accurate in all the tests below
@@ -19,7 +21,7 @@ fn test_rewards_claim() {
     red_bank.init_asset(&mut mock_env, "uusdc", default_asset_params());
 
     let incentives = mock_env.incentives.clone();
-    incentives.set_asset_incentive(&mut mock_env, "uusdc", 10);
+    incentives.init_asset_incentive_from_current_block(&mut mock_env, "uusdc", 10, ONE_WEEK_IN_SEC);
 
     let user = Addr::unchecked("user_a");
     let funded_amt = 10_000_000_000u128;
@@ -69,7 +71,7 @@ fn test_emissions_rates() {
     red_bank.init_asset(&mut mock_env, "umars", default_asset_params());
 
     let incentives = mock_env.incentives.clone();
-    incentives.set_asset_incentive(&mut mock_env, "uusdc", 5);
+    incentives.init_asset_incentive_from_current_block(&mut mock_env, "uusdc", 5, ONE_WEEK_IN_SEC);
 
     let user = Addr::unchecked("user_a");
     let funded_amt = 10_000_000_000u128;
@@ -102,7 +104,7 @@ fn test_emissions_rates() {
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
     assert_eq!(rewards_balance, Uint128::zero());
 
-    incentives.set_asset_incentive(&mut mock_env, "uosmo", 10);
+    incentives.init_asset_incentive_from_current_block(&mut mock_env, "uosmo", 10, ONE_WEEK_IN_SEC);
 
     red_bank.deposit(&mut mock_env, &user, coin(funded_amt, "uosmo")).unwrap();
     let balance = mock_env.query_balance(&user, "uosmo").unwrap();
@@ -142,7 +144,7 @@ fn test_no_incentives_accrued_after_withdraw() {
     red_bank.init_asset(&mut mock_env, "umars", default_asset_params());
 
     let incentives = mock_env.incentives.clone();
-    incentives.set_asset_incentive(&mut mock_env, "uusdc", 5);
+    incentives.init_asset_incentive_from_current_block(&mut mock_env, "uusdc", 5, ONE_WEEK_IN_SEC);
 
     let user = Addr::unchecked("user_a");
     let funded_amt = 10_000_000_000u128;
@@ -206,9 +208,9 @@ fn test_multiple_assets() {
 
     // set incentives
     let incentives = mock_env.incentives.clone();
-    incentives.set_asset_incentive(&mut mock_env, "uusdc", 5);
-    incentives.set_asset_incentive(&mut mock_env, "uatom", 10);
-    incentives.set_asset_incentive(&mut mock_env, "uosmo", 3);
+    incentives.init_asset_incentive_from_current_block(&mut mock_env, "uusdc", 5, ONE_WEEK_IN_SEC);
+    incentives.init_asset_incentive_from_current_block(&mut mock_env, "uatom", 10, ONE_WEEK_IN_SEC);
+    incentives.init_asset_incentive_from_current_block(&mut mock_env, "uosmo", 3, ONE_WEEK_IN_SEC);
 
     // fund user wallet account
     let user = Addr::unchecked("user_a");
@@ -259,7 +261,7 @@ fn test_stopping_incentives() {
 
     // set incentives
     let incentives = mock_env.incentives.clone();
-    incentives.set_asset_incentive(&mut mock_env, "uusdc", 5);
+    incentives.init_asset_incentive_from_current_block(&mut mock_env, "uusdc", 5, ONE_WEEK_IN_SEC);
 
     // fund user wallet account
     let user = Addr::unchecked("user_a");
@@ -287,7 +289,7 @@ fn test_stopping_incentives() {
     assert_eq!(rewards_balance, Uint128::new(432000));
 
     // stop incentives
-    incentives.set_asset_incentive(&mut mock_env, "uusdc", 0);
+    incentives.update_asset_incentive_emission(&mut mock_env, "uusdc", 0);
 
     mock_env.increment_by_time(86400); // 24 hours
 
@@ -295,7 +297,7 @@ fn test_stopping_incentives() {
     assert_eq!(rewards_balance, Uint128::new(432000));
 
     // restart incentives
-    incentives.set_asset_incentive(&mut mock_env, "uusdc", 5);
+    incentives.update_asset_incentive_emission(&mut mock_env, "uusdc", 5);
 
     mock_env.increment_by_time(43200); // 12 hours
 
@@ -315,7 +317,7 @@ fn test_multiple_users() {
 
     // set incentives
     let incentives = mock_env.incentives.clone();
-    incentives.set_asset_incentive(&mut mock_env, "uusdc", 5);
+    incentives.init_asset_incentive_from_current_block(&mut mock_env, "uusdc", 5, ONE_WEEK_IN_SEC);
 
     // fund user wallet account
     let user_a = Addr::unchecked("user_a");
@@ -383,7 +385,7 @@ fn test_insufficient_mars() {
 
     // set incentives
     let incentives = mock_env.incentives.clone();
-    incentives.set_asset_incentive(&mut mock_env, "uusdc", 5);
+    incentives.init_asset_incentive_from_current_block(&mut mock_env, "uusdc", 5, ONE_WEEK_IN_SEC);
 
     // fund user wallet account
     let user_a = Addr::unchecked("user_a");

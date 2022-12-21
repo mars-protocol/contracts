@@ -13,14 +13,15 @@ use mars_incentives::contract::{execute, query_user_unclaimed_rewards};
 use mars_incentives::helpers::{asset_incentive_compute_index, user_compute_accrued_rewards};
 use mars_incentives::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
-use crate::helpers::setup_test;
+use crate::helpers::{setup_test, setup_test_with_env};
 
 mod helpers;
 
 #[test]
 fn test_execute_claim_rewards() {
     // SETUP
-    let mut deps = setup_test();
+    let env = mock_env();
+    let mut deps = setup_test_with_env(env.clone());
     let user_addr = Addr::unchecked("user");
 
     let previous_unclaimed_rewards = Uint128::new(50_000);
@@ -93,6 +94,8 @@ fn test_execute_claim_rewards() {
             asset_denom,
             &AssetIncentive {
                 emission_per_second: Uint128::new(100),
+                start_time: Timestamp::from_seconds(time_start),
+                duration: 8640000,
                 index: Decimal::one(),
                 last_updated: time_start,
             },
@@ -104,6 +107,8 @@ fn test_execute_claim_rewards() {
             zero_denom,
             &AssetIncentive {
                 emission_per_second: Uint128::zero(),
+                start_time: env.block.time,
+                duration: 86400,
                 index: Decimal::one(),
                 last_updated: time_start,
             },
@@ -115,6 +120,8 @@ fn test_execute_claim_rewards() {
             no_user_denom,
             &AssetIncentive {
                 emission_per_second: Uint128::new(200),
+                start_time: env.block.time,
+                duration: 86400,
                 index: Decimal::one(),
                 last_updated: time_start,
             },
