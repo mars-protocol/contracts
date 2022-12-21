@@ -11,6 +11,8 @@ import {
   InstantiateMsg,
   ExecuteMsg,
   Uint128,
+  Timestamp,
+  Uint64,
   Addr,
   QueryMsg,
   Decimal,
@@ -62,10 +64,14 @@ export interface MarsIncentivesInterface extends MarsIncentivesReadOnlyInterface
   setAssetIncentive: (
     {
       denom,
+      duration,
       emissionPerSecond,
+      startTime,
     }: {
       denom: string
-      emissionPerSecond: Uint128
+      duration?: number
+      emissionPerSecond?: Uint128
+      startTime?: Timestamp
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -129,10 +135,14 @@ export class MarsIncentivesClient
   setAssetIncentive = async (
     {
       denom,
+      duration,
       emissionPerSecond,
+      startTime,
     }: {
       denom: string
-      emissionPerSecond: Uint128
+      duration?: number
+      emissionPerSecond?: Uint128
+      startTime?: Timestamp
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -144,7 +154,9 @@ export class MarsIncentivesClient
       {
         set_asset_incentive: {
           denom,
+          duration,
           emission_per_second: emissionPerSecond,
+          start_time: startTime,
         },
       },
       fee,
