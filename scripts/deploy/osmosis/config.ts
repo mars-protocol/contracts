@@ -104,7 +104,7 @@ export const osmoAsset: AssetConfig = {
   deposit_enabled: true,
   borrow_enabled: true,
   symbol: 'OSMO',
-  emission: '100',
+  emission: '560000',
 }
 
 export const atomAsset: AssetConfig = {
@@ -123,7 +123,7 @@ export const atomAsset: AssetConfig = {
   deposit_enabled: true,
   borrow_enabled: true,
   symbol: 'ATOM',
-  emission: '100',
+  emission: '220000',
 }
 
 export const axlUSDCAsset: AssetConfig = {
@@ -142,7 +142,7 @@ export const axlUSDCAsset: AssetConfig = {
   deposit_enabled: true,
   borrow_enabled: true,
   symbol: 'axlUSDC',
-  emission: '100',
+  emission: '110000',
 }
 
 export const atomOracle: OracleConfig = {
