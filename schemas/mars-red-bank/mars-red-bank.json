@@ -7,7 +7,8 @@
     "title": "InstantiateMsg",
     "type": "object",
     "required": [
-      "config"
+      "config",
+      "owner"
     ],
     "properties": {
       "config": {
@@ -17,6 +18,10 @@
             "$ref": "#/definitions/CreateOrUpdateConfig"
           }
         ]
+      },
+      "owner": {
+        "description": "Contract's owner",
+        "type": "string"
       }
     },
     "additionalProperties": false,
@@ -39,12 +44,6 @@
                 "type": "null"
               }
             ]
-          },
-          "owner": {
-            "type": [
-              "string",
-              "null"
-            ]
           }
         },
         "additionalProperties": false
@@ -59,6 +58,19 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "ExecuteMsg",
     "oneOf": [
+      {
+        "description": "Manages owner state",
+        "type": "object",
+        "required": [
+          "update_owner"
+        ],
+        "properties": {
+          "update_owner": {
+            "$ref": "#/definitions/AdminUpdate"
+          }
+        },
+        "additionalProperties": false
+      },
       {
         "description": "Update contract config (only owner can call)",
         "type": "object",
@@ -373,6 +385,53 @@
       }
     ],
     "definitions": {
+      "AdminUpdate": {
+        "oneOf": [
+          {
+            "description": "Proposes a new admin to take role. Only current admin can execute.",
+            "type": "object",
+            "required": [
+              "propose_new_admin"
+            ],
+            "properties": {
+              "propose_new_admin": {
+                "type": "object",
+                "required": [
+                  "proposed"
+                ],
+                "properties": {
+                  "proposed": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Clears the currently proposed admin. Only current admin can execute.",
+            "type": "string",
+            "enum": [
+              "clear_proposed"
+            ]
+          },
+          {
+            "description": "Promotes the proposed admin to be the current one. Only the proposed admin can execute.",
+            "type": "string",
+            "enum": [
+              "accept_proposed"
+            ]
+          },
+          {
+            "description": "Throws away the keys to the Admin role forever. Once done, no admin can ever be set later.",
+            "type": "string",
+            "enum": [
+              "abolish_admin_role"
+            ]
+          }
+        ]
+      },
       "CreateOrUpdateConfig": {
         "type": "object",
         "properties": {
@@ -390,12 +449,6 @@
               {
                 "type": "null"
               }
-            ]
-          },
-          "owner": {
-            "type": [
-              "string",
-              "null"
             ]
           }
         },
@@ -936,13 +989,11 @@
   "responses": {
     "config": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Config_for_String",
-      "description": "Global configuration",
+      "title": "ConfigResponse",
       "type": "object",
       "required": [
         "address_provider",
-        "close_factor",
-        "owner"
+        "close_factor"
       ],
       "properties": {
         "address_provider": {
@@ -958,8 +1009,18 @@
           ]
         },
         "owner": {
-          "description": "Contract owner",
-          "type": "string"
+          "description": "The contract's owner",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "proposed_new_owner": {
+          "description": "The contract's proposed owner",
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "additionalProperties": false,

@@ -12,12 +12,13 @@ import {
   Decimal,
   InstantiateMsg,
   ExecuteMsg,
+  AdminUpdate,
   OsmosisRoute,
   Uint128,
-  CreateOrUpdateConfig,
+  UpdateConfig,
   SwapAmountInRoute,
   QueryMsg,
-  ConfigForString,
+  ConfigResponse,
   RouteResponseForString,
   ArrayOfRouteResponseForString,
 } from './MarsRewardsCollectorOsmosis.types'
@@ -116,12 +117,12 @@ export function useMarsRewardsCollectorOsmosisRouteQuery<TData = RouteResponseFo
   )
 }
 export interface MarsRewardsCollectorOsmosisConfigQuery<TData>
-  extends MarsRewardsCollectorOsmosisReactQuery<ConfigForString, TData> {}
-export function useMarsRewardsCollectorOsmosisConfigQuery<TData = ConfigForString>({
+  extends MarsRewardsCollectorOsmosisReactQuery<ConfigResponse, TData> {}
+export function useMarsRewardsCollectorOsmosisConfigQuery<TData = ConfigResponse>({
   client,
   options,
 }: MarsRewardsCollectorOsmosisConfigQuery<TData>) {
-  return useQuery<ConfigForString, Error, TData>(
+  return useQuery<ConfigResponse, Error, TData>(
     marsRewardsCollectorOsmosisQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -229,7 +230,7 @@ export function useMarsRewardsCollectorOsmosisSetRouteMutation(
 export interface MarsRewardsCollectorOsmosisUpdateConfigMutation {
   client: MarsRewardsCollectorOsmosisClient
   msg: {
-    newCfg: CreateOrUpdateConfig
+    newCfg: UpdateConfig
   }
   args?: {
     fee?: number | StdFee | 'auto'
@@ -246,6 +247,26 @@ export function useMarsRewardsCollectorOsmosisUpdateConfigMutation(
   return useMutation<ExecuteResult, Error, MarsRewardsCollectorOsmosisUpdateConfigMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) =>
       client.updateConfig(msg, fee, memo, funds),
+    options,
+  )
+}
+export interface MarsRewardsCollectorOsmosisUpdateOwnerMutation {
+  client: MarsRewardsCollectorOsmosisClient
+  msg: AdminUpdate
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsRewardsCollectorOsmosisUpdateOwnerMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsRewardsCollectorOsmosisUpdateOwnerMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsRewardsCollectorOsmosisUpdateOwnerMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.updateOwner(msg, fee, memo, funds),
     options,
   )
 }

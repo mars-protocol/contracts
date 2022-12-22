@@ -8,13 +8,16 @@
 export type Decimal = string
 export interface InstantiateMsg {
   config: CreateOrUpdateConfig
+  owner: string
 }
 export interface CreateOrUpdateConfig {
   address_provider?: string | null
   close_factor?: Decimal | null
-  owner?: string | null
 }
 export type ExecuteMsg =
+  | {
+      update_owner: AdminUpdate
+    }
   | {
       update_config: {
         config: CreateOrUpdateConfig
@@ -76,6 +79,15 @@ export type ExecuteMsg =
         enable: boolean
       }
     }
+export type AdminUpdate =
+  | {
+      propose_new_admin: {
+        proposed: string
+      }
+    }
+  | 'clear_proposed'
+  | 'accept_proposed'
+  | 'abolish_admin_role'
 export type Uint128 = string
 export interface InitOrUpdateAssetParams {
   borrow_enabled?: boolean | null
@@ -176,10 +188,11 @@ export type QueryMsg =
         denom: string
       }
     }
-export interface ConfigForString {
+export interface ConfigResponse {
   address_provider: string
   close_factor: Decimal
-  owner: string
+  owner?: string | null
+  proposed_new_owner?: string | null
 }
 export interface Market {
   borrow_enabled: boolean

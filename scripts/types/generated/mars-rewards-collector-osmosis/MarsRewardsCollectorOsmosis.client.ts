@@ -11,18 +11,19 @@ import {
   Decimal,
   InstantiateMsg,
   ExecuteMsg,
+  AdminUpdate,
   OsmosisRoute,
   Uint128,
-  CreateOrUpdateConfig,
+  UpdateConfig,
   SwapAmountInRoute,
   QueryMsg,
-  ConfigForString,
+  ConfigResponse,
   RouteResponseForString,
   ArrayOfRouteResponseForString,
 } from './MarsRewardsCollectorOsmosis.types'
 export interface MarsRewardsCollectorOsmosisReadOnlyInterface {
   contractAddress: string
-  config: () => Promise<ConfigForString>
+  config: () => Promise<ConfigResponse>
   route: ({
     denomIn,
     denomOut,
@@ -52,7 +53,7 @@ export class MarsRewardsCollectorOsmosisQueryClient
     this.routes = this.routes.bind(this)
   }
 
-  config = async (): Promise<ConfigForString> => {
+  config = async (): Promise<ConfigResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {},
     })
@@ -90,11 +91,16 @@ export interface MarsRewardsCollectorOsmosisInterface
   extends MarsRewardsCollectorOsmosisReadOnlyInterface {
   contractAddress: string
   sender: string
+  updateOwner: (
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
   updateConfig: (
     {
       newCfg,
     }: {
-      newCfg: CreateOrUpdateConfig
+      newCfg: UpdateConfig
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -164,6 +170,7 @@ export class MarsRewardsCollectorOsmosisClient
     this.client = client
     this.sender = sender
     this.contractAddress = contractAddress
+    this.updateOwner = this.updateOwner.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
     this.setRoute = this.setRoute.bind(this)
     this.withdrawFromRedBank = this.withdrawFromRedBank.bind(this)
@@ -171,11 +178,27 @@ export class MarsRewardsCollectorOsmosisClient
     this.swapAsset = this.swapAsset.bind(this)
   }
 
+  updateOwner = async (
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        update_owner: {},
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
   updateConfig = async (
     {
       newCfg,
     }: {
-      newCfg: CreateOrUpdateConfig
+      newCfg: UpdateConfig
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,

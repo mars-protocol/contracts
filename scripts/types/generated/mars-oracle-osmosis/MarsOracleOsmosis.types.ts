@@ -11,11 +11,6 @@ export interface InstantiateMsg {
 }
 export type ExecuteMsg =
   | {
-      update_config: {
-        owner: string
-      }
-    }
-  | {
       set_price_source: {
         denom: string
         price_source: OsmosisPriceSource
@@ -25,6 +20,9 @@ export type ExecuteMsg =
       remove_price_source: {
         denom: string
       }
+    }
+  | {
+      update_owner: AdminUpdate
     }
 export type OsmosisPriceSource =
   | {
@@ -53,6 +51,15 @@ export type OsmosisPriceSource =
       }
     }
 export type Decimal = string
+export type AdminUpdate =
+  | {
+      propose_new_admin: {
+        proposed: string
+      }
+    }
+  | 'clear_proposed'
+  | 'accept_proposed'
+  | 'abolish_admin_role'
 export type QueryMsg =
   | {
       config: {}
@@ -79,9 +86,10 @@ export type QueryMsg =
         start_after?: string | null
       }
     }
-export interface ConfigForString {
+export interface ConfigResponse {
   base_denom: string
-  owner: string
+  owner?: string | null
+  proposed_new_owner?: string | null
 }
 export interface PriceResponse {
   denom: string

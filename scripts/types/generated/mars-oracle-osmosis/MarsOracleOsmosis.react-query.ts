@@ -13,8 +13,9 @@ import {
   ExecuteMsg,
   OsmosisPriceSource,
   Decimal,
+  AdminUpdate,
   QueryMsg,
-  ConfigForString,
+  ConfigResponse,
   PriceResponse,
   PriceSourceResponseForString,
   ArrayOfPriceSourceResponseForString,
@@ -150,15 +151,35 @@ export function useMarsOracleOsmosisPriceSourceQuery<TData = PriceSourceResponse
   )
 }
 export interface MarsOracleOsmosisConfigQuery<TData>
-  extends MarsOracleOsmosisReactQuery<ConfigForString, TData> {}
-export function useMarsOracleOsmosisConfigQuery<TData = ConfigForString>({
+  extends MarsOracleOsmosisReactQuery<ConfigResponse, TData> {}
+export function useMarsOracleOsmosisConfigQuery<TData = ConfigResponse>({
   client,
   options,
 }: MarsOracleOsmosisConfigQuery<TData>) {
-  return useQuery<ConfigForString, Error, TData>(
+  return useQuery<ConfigResponse, Error, TData>(
     marsOracleOsmosisQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsOracleOsmosisUpdateOwnerMutation {
+  client: MarsOracleOsmosisClient
+  msg: AdminUpdate
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsOracleOsmosisUpdateOwnerMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsOracleOsmosisUpdateOwnerMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsOracleOsmosisUpdateOwnerMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.updateOwner(msg, fee, memo, funds),
+    options,
   )
 }
 export interface MarsOracleOsmosisRemovePriceSourceMutation {
@@ -205,29 +226,6 @@ export function useMarsOracleOsmosisSetPriceSourceMutation(
   return useMutation<ExecuteResult, Error, MarsOracleOsmosisSetPriceSourceMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) =>
       client.setPriceSource(msg, fee, memo, funds),
-    options,
-  )
-}
-export interface MarsOracleOsmosisUpdateConfigMutation {
-  client: MarsOracleOsmosisClient
-  msg: {
-    owner: string
-  }
-  args?: {
-    fee?: number | StdFee | 'auto'
-    memo?: string
-    funds?: Coin[]
-  }
-}
-export function useMarsOracleOsmosisUpdateConfigMutation(
-  options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsOracleOsmosisUpdateConfigMutation>,
-    'mutationFn'
-  >,
-) {
-  return useMutation<ExecuteResult, Error, MarsOracleOsmosisUpdateConfigMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) =>
-      client.updateConfig(msg, fee, memo, funds),
     options,
   )
 }

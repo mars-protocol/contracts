@@ -32,11 +32,22 @@ export type ExecuteMsg =
       update_config: {
         address_provider?: string | null
         mars_denom?: string | null
-        owner?: string | null
       }
+    }
+  | {
+      update_owner: AdminUpdate
     }
 export type Uint128 = string
 export type Addr = string
+export type AdminUpdate =
+  | {
+      propose_new_admin: {
+        proposed: string
+      }
+    }
+  | 'clear_proposed'
+  | 'accept_proposed'
+  | 'abolish_admin_role'
 export type QueryMsg =
   | {
       config: {}
@@ -60,8 +71,9 @@ export interface AssetIncentive {
   index: Decimal
   last_updated: number
 }
-export interface Config {
+export interface ConfigResponse {
   address_provider: Addr
   mars_denom: string
-  owner: Addr
+  owner?: string | null
+  proposed_new_owner?: string | null
 }

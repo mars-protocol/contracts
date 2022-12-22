@@ -12,15 +12,16 @@ import {
   ExecuteMsg,
   Uint128,
   Addr,
+  AdminUpdate,
   QueryMsg,
   Decimal,
   AssetIncentiveResponse,
   AssetIncentive,
-  Config,
+  ConfigResponse,
 } from './MarsIncentives.types'
 export interface MarsIncentivesReadOnlyInterface {
   contractAddress: string
-  config: () => Promise<Config>
+  config: () => Promise<ConfigResponse>
   assetIncentive: ({ denom }: { denom: string }) => Promise<AssetIncentiveResponse>
   userUnclaimedRewards: ({ user }: { user: string }) => Promise<Uint128>
 }
@@ -36,7 +37,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     this.userUnclaimedRewards = this.userUnclaimedRewards.bind(this)
   }
 
-  config = async (): Promise<Config> => {
+  config = async (): Promise<ConfigResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {},
     })
@@ -96,12 +97,15 @@ export interface MarsIncentivesInterface extends MarsIncentivesReadOnlyInterface
     {
       addressProvider,
       marsDenom,
-      owner,
     }: {
       addressProvider?: string
       marsDenom?: string
-      owner?: string
     },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
+  updateOwner: (
     fee?: number | StdFee | 'auto',
     memo?: string,
     funds?: Coin[],
@@ -124,6 +128,7 @@ export class MarsIncentivesClient
     this.balanceChange = this.balanceChange.bind(this)
     this.claimRewards = this.claimRewards.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
+    this.updateOwner = this.updateOwner.bind(this)
   }
 
   setAssetIncentive = async (
@@ -204,11 +209,9 @@ export class MarsIncentivesClient
     {
       addressProvider,
       marsDenom,
-      owner,
     }: {
       addressProvider?: string
       marsDenom?: string
-      owner?: string
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -221,8 +224,23 @@ export class MarsIncentivesClient
         update_config: {
           address_provider: addressProvider,
           mars_denom: marsDenom,
-          owner,
         },
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  updateOwner = async (
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        update_owner: {},
       },
       fee,
       memo,

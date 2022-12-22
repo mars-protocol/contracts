@@ -12,8 +12,9 @@ import {
   ExecuteMsg,
   OsmosisPriceSource,
   Decimal,
+  AdminUpdate,
   QueryMsg,
-  ConfigForString,
+  ConfigResponse,
   PriceResponse,
   PriceSourceResponseForString,
   ArrayOfPriceSourceResponseForString,
@@ -21,7 +22,7 @@ import {
 } from './MarsOracleOsmosis.types'
 export interface MarsOracleOsmosisReadOnlyInterface {
   contractAddress: string
-  config: () => Promise<ConfigForString>
+  config: () => Promise<ConfigResponse>
   priceSource: ({ denom }: { denom: string }) => Promise<PriceSourceResponseForString>
   priceSources: ({
     limit,
@@ -53,7 +54,7 @@ export class MarsOracleOsmosisQueryClient implements MarsOracleOsmosisReadOnlyIn
     this.prices = this.prices.bind(this)
   }
 
-  config = async (): Promise<ConfigForString> => {
+  config = async (): Promise<ConfigResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {},
     })
@@ -104,16 +105,6 @@ export class MarsOracleOsmosisQueryClient implements MarsOracleOsmosisReadOnlyIn
 export interface MarsOracleOsmosisInterface extends MarsOracleOsmosisReadOnlyInterface {
   contractAddress: string
   sender: string
-  updateConfig: (
-    {
-      owner,
-    }: {
-      owner: string
-    },
-    fee?: number | StdFee | 'auto',
-    memo?: string,
-    funds?: Coin[],
-  ) => Promise<ExecuteResult>
   setPriceSource: (
     {
       denom,
@@ -136,6 +127,11 @@ export interface MarsOracleOsmosisInterface extends MarsOracleOsmosisReadOnlyInt
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
+  updateOwner: (
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
 }
 export class MarsOracleOsmosisClient
   extends MarsOracleOsmosisQueryClient
@@ -150,34 +146,11 @@ export class MarsOracleOsmosisClient
     this.client = client
     this.sender = sender
     this.contractAddress = contractAddress
-    this.updateConfig = this.updateConfig.bind(this)
     this.setPriceSource = this.setPriceSource.bind(this)
     this.removePriceSource = this.removePriceSource.bind(this)
+    this.updateOwner = this.updateOwner.bind(this)
   }
 
-  updateConfig = async (
-    {
-      owner,
-    }: {
-      owner: string
-    },
-    fee: number | StdFee | 'auto' = 'auto',
-    memo?: string,
-    funds?: Coin[],
-  ): Promise<ExecuteResult> => {
-    return await this.client.execute(
-      this.sender,
-      this.contractAddress,
-      {
-        update_config: {
-          owner,
-        },
-      },
-      fee,
-      memo,
-      funds,
-    )
-  }
   setPriceSource = async (
     {
       denom,
@@ -221,6 +194,22 @@ export class MarsOracleOsmosisClient
         remove_price_source: {
           denom,
         },
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  updateOwner = async (
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        update_owner: {},
       },
       fee,
       memo,

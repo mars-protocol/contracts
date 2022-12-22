@@ -17,15 +17,22 @@ export type ExecuteMsg =
       }
     }
   | {
-      transfer_ownership: {
-        new_owner: string
-      }
+      update_owner: AdminUpdate
     }
 export type MarsAddressType =
   | ('incentives' | 'oracle' | 'red_bank' | 'rewards_collector')
   | 'protocol_admin'
   | 'fee_collector'
   | 'safety_fund'
+export type AdminUpdate =
+  | {
+      propose_new_admin: {
+        proposed: string
+      }
+    }
+  | 'clear_proposed'
+  | 'accept_proposed'
+  | 'abolish_admin_role'
 export type QueryMsg =
   | {
       config: {}
@@ -47,3 +54,8 @@ export interface AddressResponseItem {
   address_type: MarsAddressType
 }
 export type ArrayOfAddressResponseItem = AddressResponseItem[]
+export interface ConfigResponse {
+  owner?: string | null
+  prefix: string
+  proposed_new_owner?: string | null
+}

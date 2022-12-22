@@ -12,9 +12,11 @@ import {
   InstantiateMsg,
   ExecuteMsg,
   MarsAddressType,
+  AdminUpdate,
   QueryMsg,
   AddressResponseItem,
   ArrayOfAddressResponseItem,
+  ConfigResponse,
 } from './MarsAddressProvider.types'
 import {
   MarsAddressProviderQueryClient,
@@ -107,37 +109,34 @@ export function useMarsAddressProviderAddressQuery<TData = AddressResponseItem>(
   )
 }
 export interface MarsAddressProviderConfigQuery<TData>
-  extends MarsAddressProviderReactQuery<InstantiateMsg, TData> {}
-export function useMarsAddressProviderConfigQuery<TData = InstantiateMsg>({
+  extends MarsAddressProviderReactQuery<ConfigResponse, TData> {}
+export function useMarsAddressProviderConfigQuery<TData = ConfigResponse>({
   client,
   options,
 }: MarsAddressProviderConfigQuery<TData>) {
-  return useQuery<InstantiateMsg, Error, TData>(
+  return useQuery<ConfigResponse, Error, TData>(
     marsAddressProviderQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsAddressProviderTransferOwnershipMutation {
+export interface MarsAddressProviderUpdateOwnerMutation {
   client: MarsAddressProviderClient
-  msg: {
-    newOwner: string
-  }
+  msg: AdminUpdate
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string
     funds?: Coin[]
   }
 }
-export function useMarsAddressProviderTransferOwnershipMutation(
+export function useMarsAddressProviderUpdateOwnerMutation(
   options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsAddressProviderTransferOwnershipMutation>,
+    UseMutationOptions<ExecuteResult, Error, MarsAddressProviderUpdateOwnerMutation>,
     'mutationFn'
   >,
 ) {
-  return useMutation<ExecuteResult, Error, MarsAddressProviderTransferOwnershipMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) =>
-      client.transferOwnership(msg, fee, memo, funds),
+  return useMutation<ExecuteResult, Error, MarsAddressProviderUpdateOwnerMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.updateOwner(msg, fee, memo, funds),
     options,
   )
 }

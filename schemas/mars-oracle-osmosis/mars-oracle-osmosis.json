@@ -27,28 +27,6 @@
     "title": "ExecuteMsg",
     "oneOf": [
       {
-        "description": "Update contract config",
-        "type": "object",
-        "required": [
-          "update_config"
-        ],
-        "properties": {
-          "update_config": {
-            "type": "object",
-            "required": [
-              "owner"
-            ],
-            "properties": {
-              "owner": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      {
         "description": "Specify the price source to be used for a coin\n\nNOTE: The input parameters for method are chain-specific.",
         "type": "object",
         "required": [
@@ -95,9 +73,69 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "description": "Manages admin role state",
+        "type": "object",
+        "required": [
+          "update_owner"
+        ],
+        "properties": {
+          "update_owner": {
+            "$ref": "#/definitions/AdminUpdate"
+          }
+        },
+        "additionalProperties": false
       }
     ],
     "definitions": {
+      "AdminUpdate": {
+        "oneOf": [
+          {
+            "description": "Proposes a new admin to take role. Only current admin can execute.",
+            "type": "object",
+            "required": [
+              "propose_new_admin"
+            ],
+            "properties": {
+              "propose_new_admin": {
+                "type": "object",
+                "required": [
+                  "proposed"
+                ],
+                "properties": {
+                  "proposed": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Clears the currently proposed admin. Only current admin can execute.",
+            "type": "string",
+            "enum": [
+              "clear_proposed"
+            ]
+          },
+          {
+            "description": "Promotes the proposed admin to be the current one. Only the proposed admin can execute.",
+            "type": "string",
+            "enum": [
+              "accept_proposed"
+            ]
+          },
+          {
+            "description": "Throws away the keys to the Admin role forever. Once done, no admin can ever be set later.",
+            "type": "string",
+            "enum": [
+              "abolish_admin_role"
+            ]
+          }
+        ]
+      },
       "Decimal": {
         "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
         "type": "string"
@@ -334,11 +372,10 @@
   "responses": {
     "config": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Config_for_String",
+      "title": "ConfigResponse",
       "type": "object",
       "required": [
-        "base_denom",
-        "owner"
+        "base_denom"
       ],
       "properties": {
         "base_denom": {
@@ -346,8 +383,18 @@
           "type": "string"
         },
         "owner": {
-          "description": "The contract's owner, who can update config and price sources",
-          "type": "string"
+          "description": "The contract's owner",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "proposed_new_owner": {
+          "description": "The contract's proposed owner",
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "additionalProperties": false
