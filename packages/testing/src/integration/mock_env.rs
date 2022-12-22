@@ -372,6 +372,7 @@ pub struct MockEnvBuilder {
     app: BasicApp,
     admin: Option<String>,
     owner: Addr,
+    emergency_owner: Addr,
 
     chain_prefix: String,
     mars_denom: String,
@@ -390,7 +391,8 @@ impl MockEnvBuilder {
         Self {
             app: App::default(),
             admin,
-            owner,
+            owner: owner.clone(),
+            emergency_owner: owner,
             chain_prefix: "".to_string(), // empty prefix for multitest because deployed contracts have addresses such as contract1, contract2 etc which are invalid in address-provider
             mars_denom: "umars".to_string(),
             base_denom: "uosmo".to_string(),
@@ -551,6 +553,7 @@ impl MockEnvBuilder {
                 self.owner.clone(),
                 &red_bank::InstantiateMsg {
                     owner: self.owner.to_string(),
+                    emergency_owner: self.emergency_owner.to_string(),
                     config: CreateOrUpdateConfig {
                         address_provider: Some(address_provider_addr.to_string()),
                         close_factor: Some(self.close_factor),

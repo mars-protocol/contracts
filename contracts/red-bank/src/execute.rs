@@ -23,7 +23,9 @@ use crate::interest_rates::{
     apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
     get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
 };
-use crate::state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS};
+use crate::state::{
+    COLLATERALS, CONFIG, DEBTS, EMERGENCY_OWNER, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS,
+};
 use crate::user::User;
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-red-bank";
@@ -63,6 +65,14 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
         },
     )?;
 
+    EMERGENCY_OWNER.initialize(
+        deps.storage,
+        deps.api,
+        SetInitialAdmin {
+            admin: msg.emergency_owner,
+        },
+    )?;
+
     Ok(Response::default())
 }
 
@@ -72,6 +82,14 @@ pub fn update_owner(
     update: AdminUpdate,
 ) -> Result<Response, ContractError> {
     Ok(OWNER.update(deps, info, update)?)
+}
+
+pub fn update_emergency_owner(
+    deps: DepsMut,
+    info: MessageInfo,
+    update: AdminUpdate,
+) -> Result<Response, ContractError> {
+    Ok(EMERGENCY_OWNER.update(deps, info, update)?)
 }
 
 /// Update config

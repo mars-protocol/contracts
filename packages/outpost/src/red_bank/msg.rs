@@ -7,6 +7,8 @@ use cw_controllers_admin_fork::AdminUpdate;
 pub struct InstantiateMsg {
     /// Contract's owner
     pub owner: String,
+    /// Contract's emergency owner
+    pub emergency_owner: String,
     /// Market configuration
     pub config: CreateOrUpdateConfig,
 }
@@ -16,6 +18,9 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     /// Manages owner state
     UpdateOwner(AdminUpdate),
+
+    /// Manages emergency owner state
+    UpdateEmergencyOwner(AdminUpdate),
 
     /// Update contract config (only owner can call)
     UpdateConfig {

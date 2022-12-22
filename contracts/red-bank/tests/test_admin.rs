@@ -41,6 +41,7 @@ fn test_proper_initialization() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config: empty_config,
     };
     let info = mock_info("owner", &[]);
@@ -57,6 +58,7 @@ fn test_proper_initialization() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -81,6 +83,7 @@ fn test_proper_initialization() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config,
     };
 
@@ -111,6 +114,7 @@ fn test_update_config() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config: init_config.clone(),
     };
     // we can just call .unwrap() to assert this was a success
@@ -187,6 +191,7 @@ fn test_init_asset() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -426,6 +431,7 @@ fn test_update_asset() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -679,6 +685,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);

@@ -72,6 +72,10 @@ pub struct ConfigResponse {
     pub owner: Option<String>,
     /// The contract's proposed owner
     pub proposed_new_owner: Option<String>,
+    /// The contract's emergency owner
+    pub emergency_owner: Option<String>,
+    /// The contract's proposed emergency owner
+    pub proposed_new_emergency_owner: Option<String>,
     /// Address provider returns addresses for all protocol contracts
     pub address_provider: String,
     /// Maximum percentage of outstanding debt that can be covered by a liquidator
