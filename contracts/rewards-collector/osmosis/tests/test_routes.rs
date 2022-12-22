@@ -1,8 +1,8 @@
 use cosmwasm_std::testing::mock_env;
 
+use cw_controllers_admin_fork::AdminError::NotAdmin;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
 
-use mars_outpost::error::MarsError;
 use mars_outpost::rewards_collector::{QueryMsg, RouteResponse};
 use mars_rewards_collector_base::{ContractError, Route};
 use mars_rewards_collector_osmosis::contract::entry::execute;
@@ -42,7 +42,7 @@ fn test_setting_route() {
 
     // non-owner is not authorized
     let err = execute(deps.as_mut(), mock_env(), mock_info("jake"), msg.clone()).unwrap_err();
-    assert_eq!(err, MarsError::Unauthorized {}.into());
+    assert_eq!(err, ContractError::AdminError(NotAdmin {}));
 
     // attempting to set an invalid swap route; should fail
     let err = execute(deps.as_mut(), mock_env(), mock_info("owner"), invalid_msg).unwrap_err();

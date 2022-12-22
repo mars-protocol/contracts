@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{CosmosMsg, Decimal, Fraction, SubMsg, Uint128};
 
-use mars_outpost::rewards_collector::{Config, QueryMsg};
+use mars_outpost::rewards_collector::{ConfigResponse, QueryMsg};
 use osmosis_std::types::cosmos::base::v1beta1::Coin;
 use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
 use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
@@ -71,7 +71,7 @@ fn test_swapping_asset() {
         },
     );
 
-    let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
+    let cfg: ConfigResponse = helpers::query(deps.as_ref(), QueryMsg::Config {});
 
     // amount for safety fund:   42069 * 0.25 = 10517
     // amount for fee collector: 42069 - 10517 = 31552

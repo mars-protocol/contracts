@@ -29,5 +29,6 @@ thiserror                   = { workspace = true }
 osmosis-std                 = { workspace = true }
 
 [dev-dependencies]
-cosmwasm-schema = { workspace = true }
-mars-testing    = { workspace = true }
+cosmwasm-schema           = { workspace = true }
+cw-controllers-admin-fork = { workspace = true }
+mars-testing              = { workspace = true }

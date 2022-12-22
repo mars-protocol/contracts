@@ -1,14 +1,15 @@
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::Decimal;
 
+use cw_controllers_admin_fork::AdminError::NotAdmin;
 use mars_outpost::error::MarsError;
-use mars_outpost::rewards_collector::{Config, CreateOrUpdateConfig, QueryMsg};
+use mars_outpost::rewards_collector::{ConfigResponse, QueryMsg, UpdateConfig};
 use mars_rewards_collector_base::ContractError;
 use mars_rewards_collector_osmosis::contract::entry::{execute, instantiate};
 use mars_rewards_collector_osmosis::msg::ExecuteMsg;
 use mars_testing::mock_info;
 
-use crate::helpers::mock_config;
+use crate::helpers::{mock_config, mock_instantiate_msg};
 
 mod helpers;
 
@@ -16,16 +17,33 @@ mod helpers;
 fn test_instantiating() {
     let mut deps = helpers::setup_test();
 
+    let mut init_msg = mock_instantiate_msg();
+    let config = mock_config(deps.api, init_msg.clone());
+
     // config should have been correctly stored
-    let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
-    assert_eq!(cfg, mock_config().into());
+    let cfg: ConfigResponse = helpers::query(deps.as_ref(), QueryMsg::Config {});
+    assert_eq!(
+        cfg,
+        ConfigResponse {
+            owner: Some("owner".to_string()),
+            proposed_new_owner: None,
+            address_provider: config.address_provider.to_string(),
+            safety_tax_rate: config.safety_tax_rate,
+            safety_fund_denom: config.safety_fund_denom,
+            fee_collector_denom: config.fee_collector_denom,
+            channel_id: config.channel_id,
+            timeout_revision: config.timeout_revision,
+            timeout_blocks: config.timeout_blocks,
+            timeout_seconds: config.timeout_seconds,
+            slippage_tolerance: config.slippage_tolerance,
+        }
+    );
 
     // init config with safety_tax_rate greater than 1; should fail
-    let mut cfg = mock_config();
-    cfg.safety_tax_rate = Decimal::percent(150);
+    init_msg.safety_tax_rate = Decimal::percent(150);
 
     let info = mock_info("deployer");
-    let err = instantiate(deps.as_mut(), mock_env(), info, cfg.into()).unwrap_err();
+    let err = instantiate(deps.as_mut(), mock_env(), info, init_msg).unwrap_err();
     assert_eq!(
         err,
         ContractError::Mars(MarsError::InvalidParam {
@@ -40,7 +58,7 @@ fn test_instantiating() {
 fn test_updating_config_if_invalid_slippage() {
     let mut deps = helpers::setup_test();
 
-    let invalid_cfg = CreateOrUpdateConfig {
+    let invalid_cfg = UpdateConfig {
         slippage_tolerance: Some(Decimal::percent(51u64)),
         ..Default::default()
     };
@@ -64,7 +82,7 @@ fn test_updating_config_if_invalid_slippage() {
 fn test_updating_config() {
     let mut deps = helpers::setup_test();
 
-    let new_cfg = CreateOrUpdateConfig {
+    let new_cfg = UpdateConfig {
         safety_tax_rate: Some(Decimal::percent(69)),
         ..Default::default()
     };
@@ -75,7 +93,7 @@ fn test_updating_config() {
         new_cfg: new_cfg.clone(),
     };
     let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(err, MarsError::Unauthorized {}.into());
+    assert_eq!(err, ContractError::AdminError(NotAdmin {}));
 
     // update config with safety_tax_rate greater than 1
     let mut invalid_cfg = new_cfg.clone();
@@ -101,7 +119,7 @@ fn test_updating_config() {
     };
     execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-    let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
+    let cfg: ConfigResponse = helpers::query(deps.as_ref(), QueryMsg::Config {});
     assert_eq!(cfg.safety_tax_rate, Decimal::percent(69));
 }
 
@@ -109,7 +127,7 @@ fn test_updating_config() {
 fn test_updating_config_if_invalid_timeout_revision() {
     let mut deps = helpers::setup_test();
 
-    let invalid_cfg = CreateOrUpdateConfig {
+    let invalid_cfg = UpdateConfig {
         timeout_revision: Some(0),
         ..Default::default()
     };
@@ -133,7 +151,7 @@ fn test_updating_config_if_invalid_timeout_revision() {
 fn test_updating_config_if_invalid_timeout_blocks() {
     let mut deps = helpers::setup_test();
 
-    let invalid_cfg = CreateOrUpdateConfig {
+    let invalid_cfg = UpdateConfig {
         timeout_blocks: Some(0),
         ..Default::default()
     };
@@ -157,7 +175,7 @@ fn test_updating_config_if_invalid_timeout_blocks() {
 fn test_updating_config_if_invalid_timeout_seconds() {
     let mut deps = helpers::setup_test();
 
-    let invalid_cfg = CreateOrUpdateConfig {
+    let invalid_cfg = UpdateConfig {
         timeout_seconds: Some(0),
         ..Default::default()
     };

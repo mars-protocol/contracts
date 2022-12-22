@@ -3,20 +3,20 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::testing::{mock_env, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{coin, from_binary, Addr, Coin, Decimal, Deps, OwnedDeps};
+use cosmwasm_std::{coin, from_binary, Coin, Decimal, Deps, OwnedDeps};
 
 use mars_osmosis::helpers::{Pool, QueryPoolResponse};
 use osmosis_std::types::osmosis::gamm::v1beta1::{PoolAsset, SwapAmountInRoute};
 
-use mars_outpost::rewards_collector::{Config, ExecuteMsg, QueryMsg};
+use mars_outpost::rewards_collector::{Config, ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_rewards_collector_osmosis::contract::entry;
 use mars_rewards_collector_osmosis::OsmosisRoute;
 use mars_testing::{mock_info, MarsMockQuerier};
 
-pub fn mock_config() -> Config<Addr> {
-    Config {
-        owner: Addr::unchecked("owner"),
-        address_provider: Addr::unchecked("address_provider"),
+pub fn mock_instantiate_msg() -> InstantiateMsg {
+    InstantiateMsg {
+        owner: "owner".to_string(),
+        address_provider: "address_provider".to_string(),
         safety_tax_rate: Decimal::percent(25),
         safety_fund_denom: "uusdc".to_string(),
         fee_collector_denom: "umars".to_string(),
@@ -26,6 +26,10 @@ pub fn mock_config() -> Config<Addr> {
         timeout_seconds: 300,
         slippage_tolerance: Decimal::percent(3),
     }
+}
+
+pub fn mock_config(api: MockApi, msg: InstantiateMsg) -> Config {
+    Config::checked(&api, msg).unwrap()
 }
 
 pub fn mock_routes() -> HashMap<(&'static str, &'static str), OsmosisRoute> {
@@ -124,7 +128,7 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
 
     // instantiate the contract
     let info = mock_info("deployer");
-    let msg = mock_config().into();
+    let msg = mock_instantiate_msg();
     entry::instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
     // set a few swap routes

@@ -1,4 +1,5 @@
 use cosmwasm_std::{CheckedMultiplyRatioError, OverflowError, StdError, Uint128};
+use cw_controllers_admin_fork::AdminError;
 use thiserror::Error;
 
 use mars_outpost::error::MarsError;
@@ -10,6 +11,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Mars(#[from] MarsError),
+
+    #[error("{0}")]
+    AdminError(#[from] AdminError),
 
     #[error("{0}")]
     Overflow(#[from] OverflowError),
