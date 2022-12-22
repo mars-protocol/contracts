@@ -119,6 +119,11 @@ pub fn execute_set_asset_incentive(
                         reason: "can't modify start_time if incentive in progress".to_string(),
                     })
                 }
+                Some(st) if st < current_block_time => {
+                    return Err(ContractError::InvalidIncentive {
+                        reason: "start_time can't be less than current block time".to_string(),
+                    });
+                }
                 Some(st) => st,
                 None if end_time < current_block_time => {
                     // previous incentive has finished
