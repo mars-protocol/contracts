@@ -1,8 +1,8 @@
 use std::fmt;
 
 use cosmwasm_std::{
-    Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, StdError, StdResult, Uint128,
-    Uint256,
+    BlockInfo, Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, StdError, StdResult,
+    Uint128, Uint256,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -188,38 +188,51 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 pool_id,
                 window_size,
                 downtime_detector,
-            } => {
-                if let Some(dd) = downtime_detector {
-                    let recovered = recovered_since_downtime_of_length(
-                        &deps.querier,
-                        dd.downtime.clone() as i32,
-                        dd.recovery,
-                    )?;
-                    if !recovered {
-                        return Err(StdError::generic_err("chain is recovering from downtime"));
-                    }
-                }
-                let start_time = env.block.time.seconds() - window_size;
-                query_twap_price(&deps.querier, *pool_id, denom, base_denom, start_time)
-            }
+            } => Self::query_twap_price(
+                deps,
+                &env.block,
+                denom,
+                base_denom,
+                *pool_id,
+                *window_size,
+                downtime_detector,
+            ),
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
-            } => self.query_xyk_liquidity_token_price(deps, env, *pool_id),
+            } => Self::query_xyk_liquidity_token_price(deps, env, *pool_id),
         }
     }
 }
 
 impl OsmosisPriceSource {
+    fn query_twap_price(
+        deps: &Deps,
+        block: &BlockInfo,
+        denom: &str,
+        base_denom: &str,
+        pool_id: u64,
+        window_size: u64,
+        downtime_detector: &Option<DowntimeDetector>,
+    ) -> StdResult<Decimal> {
+        if let Some(dd) = downtime_detector {
+            let recovered = recovered_since_downtime_of_length(
+                &deps.querier,
+                dd.downtime.clone() as i32,
+                dd.recovery,
+            )?;
+            if !recovered {
+                return Err(StdError::generic_err("chain is recovering from downtime"));
+            }
+        }
+        let start_time = block.time.seconds() - window_size;
+        query_twap_price(&deps.querier, pool_id, denom, base_denom, start_time)
+    }
+
     /// The calculation of the value of liquidity token, see: https://blog.alphafinance.io/fair-lp-token-pricing/.
     /// This formulation avoids a potential sandwich attack that distorts asset prices by a flashloan.
     ///
     /// NOTE: Price sources must exist for both assets in the pool.
-    fn query_xyk_liquidity_token_price(
-        &self,
-        deps: &Deps,
-        env: &Env,
-        pool_id: u64,
-    ) -> StdResult<Decimal> {
+    fn query_xyk_liquidity_token_price(deps: &Deps, env: &Env, pool_id: u64) -> StdResult<Decimal> {
         // XYK pool asserted during price source creation
         let pool = query_pool(&deps.querier, pool_id)?;
 

@@ -2,6 +2,9 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
 use mars_osmosis::helpers::QueryPoolResponse;
+use osmosis_std::types::osmosis::downtimedetector::v1beta1::{
+    RecoveredSinceDowntimeOfLengthRequest, RecoveredSinceDowntimeOfLengthResponse,
+};
 use osmosis_std::types::osmosis::gamm::v1beta1::QueryPoolRequest;
 use osmosis_std::types::osmosis::gamm::v2::{QuerySpotPriceRequest, QuerySpotPriceResponse};
 use osmosis_std::types::osmosis::twap::v1beta1::{
@@ -22,6 +25,8 @@ pub struct OsmosisQuerier {
 
     pub spot_prices: HashMap<PriceKey, QuerySpotPriceResponse>,
     pub twap_prices: HashMap<PriceKey, ArithmeticTwapToNowResponse>,
+
+    pub downtime_detector: HashMap<(i32, u64), RecoveredSinceDowntimeOfLengthResponse>,
 }
 
 impl OsmosisQuerier {
@@ -47,6 +52,14 @@ impl OsmosisQuerier {
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
                 return Ok(self.handle_query_twap_request(osmosis_query));
+            }
+        }
+
+        if path == "/osmosis.downtimedetector.v1beta1.Query/RecoveredSinceDowntimeOfLength" {
+            let parse_osmosis_query: Result<RecoveredSinceDowntimeOfLengthRequest, DecodeError> =
+                Message::decode(data.as_slice());
+            if let Ok(osmosis_query) = parse_osmosis_query {
+                return Ok(self.handle_recovered_since_downtime_of_length(osmosis_query));
             }
         }
 
@@ -98,6 +111,27 @@ impl OsmosisQuerier {
                 error: format!(
                     "ArithmeticTwapToNowResponse is not found for price key: {:?}",
                     price_key
+                ),
+                request: Default::default(),
+            })
+            .into(),
+        };
+        Ok(res).into()
+    }
+
+    fn handle_recovered_since_downtime_of_length(
+        &self,
+        request: RecoveredSinceDowntimeOfLengthRequest,
+    ) -> QuerierResult {
+        let res: ContractResult<Binary> = match self
+            .downtime_detector
+            .get(&(request.downtime, request.recovery.unwrap().seconds as u64))
+        {
+            Some(query_response) => to_binary(&query_response).into(),
+            None => Err(SystemError::InvalidRequest {
+                error: format!(
+                    "RecoveredSinceDowntimeOfLengthResponse is not found for downtime: {:?}",
+                    request.downtime
                 ),
                 request: Default::default(),
             })
