@@ -209,6 +209,7 @@ fn test_setting_price_source_twap() {
                 price_source: OsmosisPriceSource::Twap {
                     pool_id,
                     window_size,
+                    downtime_detector: None,
                 },
             },
         )
@@ -273,7 +274,8 @@ fn test_setting_price_source_twap() {
         res.price_source,
         OsmosisPriceSource::Twap {
             pool_id: 89,
-            window_size: 86400
+            window_size: 86400,
+            downtime_detector: None
         }
     );
 }

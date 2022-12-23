@@ -1,13 +1,16 @@
 use std::fmt;
 
 use cosmwasm_std::{
-    Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, StdResult, Uint128, Uint256,
+    Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, StdError, StdResult, Uint128,
+    Uint256,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use mars_oracle_base::{ContractError, ContractResult, PriceSource};
-use mars_osmosis::helpers::{query_pool, query_spot_price, query_twap_price, Pool};
+use mars_osmosis::helpers::{
+    query_pool, query_spot_price, query_twap_price, recovered_since_downtime_of_length, Pool,
+};
 use mars_outpost::oracle;
 use mars_outpost::oracle::PriceResponse;
 
@@ -15,6 +18,50 @@ use crate::helpers;
 
 /// 48 hours in seconds
 const TWO_DAYS_IN_SECONDS: u64 = 172800u64;
+
+/// Copy from https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std/src/types/osmosis/downtimedetector/v1beta1.rs#L4
+/// It doesn't impl JsonSchema.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum Downtime {
+    Duration30s = 0,
+    Duration1m = 1,
+    Duration2m = 2,
+    Duration3m = 3,
+    Duration4m = 4,
+    Duration5m = 5,
+    Duration10m = 6,
+    Duration20m = 7,
+    Duration30m = 8,
+    Duration40m = 9,
+    Duration50m = 10,
+    Duration1h = 11,
+    Duration15h = 12,
+    Duration2h = 13,
+    Duration25h = 14,
+    Duration3h = 15,
+    Duration4h = 16,
+    Duration5h = 17,
+    Duration6h = 18,
+    Duration9h = 19,
+    Duration12h = 20,
+    Duration18h = 21,
+    Duration24h = 22,
+    Duration36h = 23,
+    Duration48h = 24,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct DowntimeDetector {
+    /// Downtime period options that you can query, to be: 30seconds, 1 min, 2 min, 3 min, 4 min,
+    /// 5 min, 10 min, 20 min, 30 min, 40 min, 50 min, 1 hr, 1.5hr, 2 hr, 2.5 hr, 3 hr, 4 hr, 5 hr,
+    /// 6 hr, 9hr, 12hr, 18hr, 24hr, 36hr, 48hr.
+    downtime: Downtime,
+
+    /// Recovery seconds since the chain has been down for downtime period.
+    recovery: u64,
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -38,6 +85,9 @@ pub enum OsmosisPriceSource {
         /// Window size in seconds representing the entire window for which 'average' price is calculated.
         /// Value should be <= 172800 sec (48 hours).
         window_size: u64,
+
+        /// Detect when the chain is recovering from downtime
+        downtime_detector: Option<DowntimeDetector>,
     },
     /// Osmosis LP token (of an XYK pool) price quoted in OSMO
     XykLiquidityToken {
@@ -57,7 +107,8 @@ impl fmt::Display for OsmosisPriceSource {
             OsmosisPriceSource::Twap {
                 pool_id,
                 window_size,
-            } => format!("twap:{}:{}", pool_id, window_size),
+                downtime_detector,
+            } => format!("twap:{}:{}:{:?}", pool_id, window_size, downtime_detector),
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
             } => format!("xyk_liquidity_token:{}", pool_id),
@@ -86,20 +137,29 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             OsmosisPriceSource::Twap {
                 pool_id,
                 window_size,
+                downtime_detector,
             } => {
                 let pool = query_pool(querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
 
                 if *window_size > TWO_DAYS_IN_SECONDS {
-                    Err(ContractError::InvalidPriceSource {
+                    return Err(ContractError::InvalidPriceSource {
                         reason: format!(
                             "expecting window size to be within {} sec",
                             TWO_DAYS_IN_SECONDS
                         ),
-                    })
-                } else {
-                    Ok(())
+                    });
                 }
+
+                if let Some(dd) = downtime_detector {
+                    if dd.recovery == 0 {
+                        return Err(ContractError::InvalidPriceSource {
+                            reason: "downtime recovery can't be 0".to_string(),
+                        });
+                    }
+                }
+
+                Ok(())
             }
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
@@ -127,7 +187,18 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             OsmosisPriceSource::Twap {
                 pool_id,
                 window_size,
+                downtime_detector,
             } => {
+                if let Some(dd) = downtime_detector {
+                    let recovered = recovered_since_downtime_of_length(
+                        &deps.querier,
+                        dd.downtime.clone() as i32,
+                        dd.recovery,
+                    )?;
+                    if !recovered {
+                        return Err(StdError::generic_err("chain is recovering from downtime"));
+                    }
+                }
                 let start_time = env.block.time.seconds() - window_size;
                 query_twap_price(&deps.querier, *pool_id, denom, base_denom, start_time)
             }

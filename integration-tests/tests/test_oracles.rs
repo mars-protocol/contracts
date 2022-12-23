@@ -499,6 +499,7 @@ fn query_twap_price() {
             price_source: OsmosisPriceSource::Twap {
                 pool_id,
                 window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
+                downtime_detector: None,
             },
         },
         &[],
@@ -521,6 +522,7 @@ fn query_twap_price() {
         (OsmosisPriceSource::Twap {
             pool_id,
             window_size: 10,
+            downtime_detector: None
         })
     );
 
@@ -596,6 +598,7 @@ fn compare_spot_and_twap_price() {
             price_source: OsmosisPriceSource::Twap {
                 pool_id,
                 window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
+                downtime_detector: None,
             },
         },
         &[],

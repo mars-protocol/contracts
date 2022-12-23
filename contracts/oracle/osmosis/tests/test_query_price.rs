@@ -70,6 +70,7 @@ fn test_querying_price_twap() {
         OsmosisPriceSource::Twap {
             pool_id: 89,
             window_size: 86400,
+            downtime_detector: None,
         },
     );
 
