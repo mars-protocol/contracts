@@ -15,7 +15,7 @@ use mars_outpost::{address_provider, red_bank};
 
 use crate::error::ContractError;
 use crate::helpers::{
-    asset_incentive_update_index, compute_user_unclaimed_rewards, user_compute_accrued_rewards,
+    compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_asset_incentive_index,
 };
 use crate::state::{ASSET_INCENTIVES, CONFIG, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
@@ -164,7 +164,7 @@ pub fn execute_set_asset_incentive(
             )?;
 
             // Update index up to now
-            asset_incentive_update_index(
+            update_asset_incentive_index(
                 &mut asset_incentive,
                 market.collateral_total_scaled,
                 env.block.time.seconds(),
@@ -252,7 +252,7 @@ pub fn execute_balance_change(
         Some(ai) => ai,
     };
 
-    asset_incentive_update_index(
+    update_asset_incentive_index(
         &mut asset_incentive,
         total_amount_scaled_before,
         env.block.time.seconds(),
@@ -269,7 +269,7 @@ pub fn execute_balance_change(
 
     if user_asset_index != asset_incentive.index {
         // Compute user accrued rewards and update state
-        accrued_rewards = user_compute_accrued_rewards(
+        accrued_rewards = compute_user_accrued_rewards(
             user_amount_scaled_before,
             user_asset_index,
             asset_incentive.index,

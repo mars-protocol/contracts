@@ -11,7 +11,7 @@ use mars_incentives::contract::execute;
 use mars_incentives::state::ASSET_INCENTIVES;
 
 use crate::helpers::{setup_test, setup_test_with_env};
-use mars_incentives::helpers::asset_incentive_compute_index;
+use mars_incentives::helpers::compute_asset_incentive_index;
 use mars_incentives::ContractError;
 
 mod helpers;
@@ -448,7 +448,7 @@ fn test_set_existing_asset_incentive_with_index_updated_during_incentive() {
 
     let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, denom).unwrap();
 
-    let expected_index = asset_incentive_compute_index(
+    let expected_index = compute_asset_incentive_index(
         Decimal::from_ratio(1_u128, 2_u128),
         Uint128::new(100),
         total_collateral_scaled,
@@ -524,7 +524,7 @@ fn test_set_existing_asset_incentive_with_index_updated_after_incentive() {
 
     let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, denom).unwrap();
 
-    let expected_index = asset_incentive_compute_index(
+    let expected_index = compute_asset_incentive_index(
         Decimal::from_ratio(1_u128, 4_u128),
         Uint128::new(120),
         total_collateral_scaled,

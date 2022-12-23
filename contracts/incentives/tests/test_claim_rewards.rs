@@ -10,7 +10,7 @@ use mars_outpost::red_bank::{Market, UserCollateralResponse};
 use mars_testing::MockEnvParams;
 
 use mars_incentives::contract::{execute, query_user_unclaimed_rewards};
-use mars_incentives::helpers::{asset_incentive_compute_index, user_compute_accrued_rewards};
+use mars_incentives::helpers::{compute_asset_incentive_index, compute_user_accrued_rewards};
 use mars_incentives::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
 use crate::helpers::{setup_test, setup_test_with_env};
@@ -142,7 +142,7 @@ fn test_execute_claim_rewards() {
         .save(deps.as_mut().storage, &user_addr, &previous_unclaimed_rewards)
         .unwrap();
 
-    let expected_asset_incentive_index = asset_incentive_compute_index(
+    let expected_asset_incentive_index = compute_asset_incentive_index(
         Decimal::one(),
         Uint128::new(100),
         asset_total_supply,
@@ -151,14 +151,14 @@ fn test_execute_claim_rewards() {
     )
     .unwrap();
 
-    let expected_asset_accrued_rewards = user_compute_accrued_rewards(
+    let expected_asset_accrued_rewards = compute_user_accrued_rewards(
         asset_user_balance,
         Decimal::one(),
         expected_asset_incentive_index,
     )
     .unwrap();
 
-    let expected_zero_accrued_rewards = user_compute_accrued_rewards(
+    let expected_zero_accrued_rewards = compute_user_accrued_rewards(
         zero_user_balance,
         Decimal::from_ratio(1_u128, 2_u128),
         Decimal::one(),
@@ -272,7 +272,7 @@ fn test_claim_zero_rewards() {
 #[test]
 fn test_asset_incentive_compute_index() {
     assert_eq!(
-        asset_incentive_compute_index(
+        compute_asset_incentive_index(
             Decimal::zero(),
             Uint128::new(100),
             Uint128::new(200_000),
@@ -283,7 +283,7 @@ fn test_asset_incentive_compute_index() {
     );
 
     assert_eq!(
-        asset_incentive_compute_index(
+        compute_asset_incentive_index(
             Decimal::zero(),
             Uint128::new(100),
             Uint128::new(200_000),
@@ -294,7 +294,7 @@ fn test_asset_incentive_compute_index() {
         Decimal::from_ratio(1_u128, 2_u128)
     );
     assert_eq!(
-        asset_incentive_compute_index(
+        compute_asset_incentive_index(
             Decimal::from_ratio(1_u128, 2_u128),
             Uint128::new(2000),
             Uint128::new(5_000_000),
@@ -309,7 +309,7 @@ fn test_asset_incentive_compute_index() {
 #[test]
 fn test_user_compute_accrued_rewards() {
     assert_eq!(
-        user_compute_accrued_rewards(
+        compute_user_accrued_rewards(
             Uint128::zero(),
             Decimal::one(),
             Decimal::from_ratio(2_u128, 1_u128)
@@ -319,7 +319,7 @@ fn test_user_compute_accrued_rewards() {
     );
 
     assert_eq!(
-        user_compute_accrued_rewards(
+        compute_user_accrued_rewards(
             Uint128::new(100),
             Decimal::zero(),
             Decimal::from_ratio(2_u128, 1_u128)
@@ -328,7 +328,7 @@ fn test_user_compute_accrued_rewards() {
         Uint128::new(200)
     );
     assert_eq!(
-        user_compute_accrued_rewards(
+        compute_user_accrued_rewards(
             Uint128::new(100),
             Decimal::one(),
             Decimal::from_ratio(2_u128, 1_u128)

@@ -8,7 +8,7 @@ use mars_outpost::red_bank::{Market, UserCollateralResponse};
 use mars_testing::MockEnvParams;
 
 use mars_incentives::contract::{execute, execute_balance_change, query_user_unclaimed_rewards};
-use mars_incentives::helpers::{asset_incentive_compute_index, user_compute_accrued_rewards};
+use mars_incentives::helpers::{compute_asset_incentive_index, compute_user_accrued_rewards};
 use mars_incentives::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
 use crate::helpers::{setup_test, setup_test_with_env};
@@ -89,7 +89,7 @@ fn test_balance_change_zero_emission() {
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
     let expected_accrued_rewards =
-        user_compute_accrued_rewards(Uint128::new(100_000), Decimal::zero(), asset_incentive_index)
+        compute_user_accrued_rewards(Uint128::new(100_000), Decimal::zero(), asset_incentive_index)
             .unwrap();
 
     assert_eq!(
@@ -161,7 +161,7 @@ fn test_balance_change_user_with_zero_balance() {
 
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
-    let expected_index = asset_incentive_compute_index(
+    let expected_index = compute_asset_incentive_index(
         start_index,
         emission_per_second,
         total_supply,
@@ -433,7 +433,7 @@ fn test_balance_change_user_non_zero_balance() {
         };
         let res = execute(deps.as_mut(), env, info.clone(), msg).unwrap();
 
-        expected_asset_incentive_index = asset_incentive_compute_index(
+        expected_asset_incentive_index = compute_asset_incentive_index(
             expected_asset_incentive_index,
             emission_per_second,
             total_supply,
@@ -442,7 +442,7 @@ fn test_balance_change_user_non_zero_balance() {
         )
         .unwrap();
 
-        let expected_accrued_rewards = user_compute_accrued_rewards(
+        let expected_accrued_rewards = compute_user_accrued_rewards(
             user_balance,
             Decimal::zero(),
             expected_asset_incentive_index,
@@ -496,7 +496,7 @@ fn test_balance_change_user_non_zero_balance() {
         let res = execute(deps.as_mut(), env, info.clone(), msg).unwrap();
 
         let previous_user_index = expected_asset_incentive_index;
-        expected_asset_incentive_index = asset_incentive_compute_index(
+        expected_asset_incentive_index = compute_asset_incentive_index(
             expected_asset_incentive_index,
             emission_per_second,
             total_supply,
@@ -505,7 +505,7 @@ fn test_balance_change_user_non_zero_balance() {
         )
         .unwrap();
 
-        let expected_accrued_rewards = user_compute_accrued_rewards(
+        let expected_accrued_rewards = compute_user_accrued_rewards(
             user_balance,
             previous_user_index,
             expected_asset_incentive_index,
