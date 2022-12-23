@@ -57,10 +57,10 @@ pub struct DowntimeDetector {
     /// Downtime period options that you can query, to be: 30seconds, 1 min, 2 min, 3 min, 4 min,
     /// 5 min, 10 min, 20 min, 30 min, 40 min, 50 min, 1 hr, 1.5hr, 2 hr, 2.5 hr, 3 hr, 4 hr, 5 hr,
     /// 6 hr, 9hr, 12hr, 18hr, 24hr, 36hr, 48hr.
-    downtime: Downtime,
+    pub downtime: Downtime,
 
     /// Recovery seconds since the chain has been down for downtime period.
-    recovery: u64,
+    pub recovery: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

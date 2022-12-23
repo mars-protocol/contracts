@@ -468,6 +468,98 @@ fn query_spot_price_after_lp_change() {
     assert!(price.price < price2.price);
 }
 
+// FIXME: Unsupported query type: '/osmosis.downtimedetector.v1beta1.Query/RecoveredSinceDowntimeOfLength' path is not allowed from the contract: query wasm contract failed
+/*#[test]
+fn query_twap_price_with_downtime_detector() {
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
+
+    let signer = app
+        .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "uatom")])
+        .unwrap();
+
+    let oracle_addr = instantiate_contract(
+        &wasm,
+        &signer,
+        OSMOSIS_ORACLE_CONTRACT_NAME,
+        &InstantiateMsg {
+            owner: signer.address(),
+            base_denom: "uosmo".to_string(),
+        },
+    );
+
+    let gamm = Gamm::new(&app);
+    let pool_liquidity = vec![Coin::new(2_000_000_000, "uatom"), Coin::new(1_000_000_000, "uosmo")];
+    let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
+
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSource::Twap {
+                pool_id,
+                window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
+                downtime_detector: Some(DowntimeDetector {
+                    downtime: Downtime::Duration30s,
+                    recovery: 60u64,
+                }),
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+
+    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 10);
+
+    let price_source: PriceSourceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::PriceSource {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(
+        price_source.price_source,
+        (OsmosisPriceSource::Twap {
+            pool_id,
+            window_size: 10,
+            downtime_detector: Some(DowntimeDetector {
+                downtime: Downtime::Duration30s,
+                recovery: 60u64
+            }),
+        })
+    );
+
+    // since swaps were small, the prices should be the same within a 1% tolerance
+    let tolerance = Decimal::percent(1);
+
+    let price: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+    // calculate spot price
+    let spot_price = Decimal::from_ratio(1u128, 2u128);
+    assert!((price.price - spot_price) < tolerance);
+
+    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 10);
+
+    let price2: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+    assert!(price2.price - price.price < tolerance);
+}*/
+
 // assert oracle was correctly set to TWAP and assert prices are queried correctly
 #[test]
 fn query_twap_price() {
