@@ -673,6 +673,27 @@ export function useMarsRedBankUpdateConfigMutation(
     options,
   )
 }
+export interface MarsRedBankUpdateEmergencyOwnerMutation {
+  client: MarsRedBankClient
+  msg: AdminUpdate
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsRedBankUpdateEmergencyOwnerMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsRedBankUpdateEmergencyOwnerMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsRedBankUpdateEmergencyOwnerMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateEmergencyOwner(msg, fee, memo, funds),
+    options,
+  )
+}
 export interface MarsRedBankUpdateOwnerMutation {
   client: MarsRedBankClient
   msg: AdminUpdate
