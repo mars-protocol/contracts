@@ -3,6 +3,7 @@ use std::collections::{BTreeMap, HashSet};
 use std::fmt;
 use std::str::FromStr;
 
+use crate::msg::execute::ActionCoin;
 use crate::traits::{Denoms, Stringify};
 use cosmwasm_std::{Coin, StdError, StdResult, Uint128};
 use schemars::JsonSchema;
@@ -293,6 +294,12 @@ impl Stringify for &[Coin] {
 }
 
 impl Denoms for Vec<Coin> {
+    fn to_denoms(&self) -> Vec<&str> {
+        self.iter().map(|c| c.denom.as_str()).collect()
+    }
+}
+
+impl Denoms for Vec<ActionCoin> {
     fn to_denoms(&self) -> Vec<&str> {
         self.iter().map(|c| c.denom.as_str()).collect()
     }

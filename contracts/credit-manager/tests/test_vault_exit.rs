@@ -132,8 +132,7 @@ fn test_withdraw_with_unlocked_vault_coins() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(100)),
+                coin: lp_token.to_action_coin(100),
             },
         ],
         &[lp_token.to_coin(200)],

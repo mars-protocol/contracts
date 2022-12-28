@@ -31,6 +31,7 @@ condition = { env_not_set = ["SKIP_INSTALL_GRCOV"] }
 private = true
 install_crate = { crate_name = "grcov" }
 
+# NOTE: ignore coverage for swapper and zapper contracts because their tests are based on `osmosis-testing` which don't work for grcov
 [tasks.coverage-grcov]
 condition = { rust_version = { min = "1.60.0" } }
 private = true
@@ -40,7 +41,7 @@ set -eux
 
 grcov ${COVERAGE_PROF_OUTPUT} \
   -b ${COVERAGE_BINARIES} -s ${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY} \
-  -t ${GRCOV_OUTPUT_TYPE} --llvm --branch --ignore-not-existing --ignore "/*" --ignore "*/tests/*" --ignore "*/mock*" --ignore "target/*" -o ${GRCOV_OUTPUT_PATH}
+  -t ${GRCOV_OUTPUT_TYPE} --llvm --branch --ignore-not-existing --ignore "/*" --ignore "*/tests/*" --ignore "*/mock*" --ignore "target/*" --ignore "*/swapper/*" --ignore "*/zapper/*" -o ${GRCOV_OUTPUT_PATH}
 '''
 dependencies = ["install-grcov", "coverage-grcov-prepare-outdir", "coverage-grcov-run-test"]
 

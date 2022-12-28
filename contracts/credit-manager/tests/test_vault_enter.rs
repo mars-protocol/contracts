@@ -6,6 +6,7 @@ use mars_mock_vault::contract::STARTING_VAULT_SHARES;
 use mars_rover::adapters::vault::VaultBase;
 use mars_rover::error::ContractError;
 use mars_rover::msg::execute::Action::{Deposit, EnterVault};
+use mars_rover::msg::execute::{ActionAmount, ActionCoin};
 
 use crate::helpers::{
     assert_err, locked_vault_info, lp_token_info, uatom_info, unlocked_vault_info, uosmo_info,
@@ -27,8 +28,10 @@ fn test_only_account_owner_can_take_action() {
         &bad_guy,
         vec![EnterVault {
             vault: VaultBase::new("xyz".to_string()),
-            denom: "uosmo".to_string(),
-            amount: Some(Uint128::new(1)),
+            coin: ActionCoin {
+                denom: "uosmo".to_string(),
+                amount: ActionAmount::Exact(Uint128::new(1)),
+            },
         }],
         &[],
     );
@@ -61,8 +64,7 @@ fn test_deposit_denom_is_whitelisted() {
         &user,
         vec![EnterVault {
             vault,
-            denom: lp_token.denom.clone(),
-            amount: Some(Uint128::new(200)),
+            coin: lp_token.to_action_coin(200),
         }],
         &[],
     );
@@ -90,8 +92,7 @@ fn test_vault_is_whitelisted() {
         &user,
         vec![EnterVault {
             vault: VaultBase::new("unknown_vault".to_string()),
-            denom: uatom.denom,
-            amount: Some(Uint128::new(200)),
+            coin: uatom.to_action_coin(200),
         }],
         &[],
     );
@@ -121,8 +122,7 @@ fn test_deposited_coin_matches_vault_requirements() {
         &user,
         vec![EnterVault {
             vault: mock.get_vault(&leverage_vault),
-            denom: uatom.denom,
-            amount: Some(Uint128::new(200)),
+            coin: uatom.to_action_coin(200),
         }],
         &[],
     );
@@ -158,8 +158,7 @@ fn test_fails_if_not_enough_funds_for_implied_deposit() {
         &user,
         vec![EnterVault {
             vault: mock.get_vault(&leverage_vault),
-            denom: lp_token.denom,
-            amount: None,
+            coin: lp_token.to_action_coin_full_balance(),
         }],
         &[],
     );
@@ -195,8 +194,7 @@ fn test_fails_if_not_enough_funds_for_enumerated_deposit() {
         &user,
         vec![EnterVault {
             vault: mock.get_vault(&leverage_vault),
-            denom: lp_token.denom,
-            amount: Some(Uint128::new(200)),
+            coin: lp_token.to_action_coin(200),
         }],
         &[],
     );
@@ -239,8 +237,7 @@ fn test_successful_deposit_into_locked_vault() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(23)),
+                coin: lp_token.to_action_coin(23),
             },
         ],
         &[lp_token.to_coin(200)],
@@ -297,8 +294,7 @@ fn test_successful_deposit_into_unlocked_vault() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(23)),
+                coin: lp_token.to_action_coin(23),
             },
         ],
         &[lp_token.to_coin(200)],
@@ -355,8 +351,7 @@ fn test_vault_deposit_must_be_under_cap() {
             Deposit(lp_token.to_coin(700_000)),
             EnterVault {
                 vault: vault.clone(),
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(700_000)),
+                coin: lp_token.to_action_coin(700_000),
             },
         ],
         &[lp_token.to_coin(700_000)],
@@ -373,8 +368,7 @@ fn test_vault_deposit_must_be_under_cap() {
             Deposit(lp_token.to_coin(100_000)),
             EnterVault {
                 vault: vault.clone(),
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(100_000)),
+                coin: lp_token.to_action_coin(100_000),
             },
         ],
         &[lp_token.to_coin(100_000)],
@@ -391,8 +385,7 @@ fn test_vault_deposit_must_be_under_cap() {
             Deposit(lp_token.to_coin(2_500_000)),
             EnterVault {
                 vault,
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(2_500_000)),
+                coin: lp_token.to_action_coin(2_500_000),
             },
         ],
         &[lp_token.to_coin(2_500_000)],
@@ -433,8 +426,7 @@ fn test_successful_deposit_with_implied_full_balance_amount() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                denom: lp_token.denom.clone(),
-                amount: None,
+                coin: lp_token.to_action_coin_full_balance(),
             },
         ],
         &[lp_token.to_coin(200)],

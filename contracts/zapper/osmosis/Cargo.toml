@@ -1,0 +1,30 @@
+[package]
+name          = "mars-zapper-osmosis"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+library    = []
+
+[dependencies]
+cosmwasm-std     = { workspace = true }
+cw2              = { workspace = true }
+mars-zapper-base = { workspace = true }
+
+# FIXME: develop branch dependency till Apollo finish audit
+cw-dex   = { git = "https://github.com/apollodao/cw-dex", rev = "b9d18cfbba8aa09ae4ee9459d308cda87ae5ffb3", features = ["osmosis"] }
+
+[dev-dependencies]
+cw-utils        = { workspace = true }
+osmosis-testing = { workspace = true }

@@ -72,15 +72,11 @@ export type Action =
       borrow: Coin
     }
   | {
-      repay: {
-        amount?: Uint128 | null
-        denom: string
-      }
+      repay: ActionCoin
     }
   | {
       enter_vault: {
-        amount?: Uint128 | null
-        denom: string
+        coin: ActionCoin
         vault: VaultBaseForString
       }
     }
@@ -119,27 +115,30 @@ export type Action =
     }
   | {
       swap_exact_in: {
-        coin_in_amount?: Uint128 | null
-        coin_in_denom: string
+        coin_in: ActionCoin
         denom_out: string
         slippage: Decimal
       }
     }
   | {
       provide_liquidity: {
-        coins_in: Coin[]
+        coins_in: ActionCoin[]
         lp_token_out: string
         minimum_receive: Uint128
       }
     }
   | {
       withdraw_liquidity: {
-        lp_token_amount?: Uint128 | null
-        lp_token_denom: string
+        lp_token: ActionCoin
       }
     }
   | {
       refund_all_coin_balances: {}
+    }
+export type ActionAmount =
+  | 'account_balance'
+  | {
+      exact: Uint128
     }
 export type VaultPositionType = 'u_n_l_o_c_k_e_d' | 'l_o_c_k_e_d' | 'u_n_l_o_c_k_i_n_g'
 export type AdminUpdate =
@@ -168,8 +167,7 @@ export type CallbackMsg =
   | {
       repay: {
         account_id: string
-        amount?: Uint128 | null
-        denom: string
+        coin: ActionCoin
       }
     }
   | {
@@ -180,8 +178,7 @@ export type CallbackMsg =
   | {
       enter_vault: {
         account_id: string
-        amount?: Uint128 | null
-        denom: string
+        coin: ActionCoin
         vault: VaultBaseForAddr
       }
     }
@@ -233,8 +230,7 @@ export type CallbackMsg =
   | {
       swap_exact_in: {
         account_id: string
-        coin_in_amount?: Uint128 | null
-        coin_in_denom: string
+        coin_in: ActionCoin
         denom_out: string
         slippage: Decimal
       }
@@ -248,7 +244,7 @@ export type CallbackMsg =
   | {
       provide_liquidity: {
         account_id: string
-        coins_in: Coin[]
+        coins_in: ActionCoin[]
         lp_token_out: string
         minimum_receive: Uint128
       }
@@ -256,8 +252,7 @@ export type CallbackMsg =
   | {
       withdraw_liquidity: {
         account_id: string
-        lp_token_amount?: Uint128 | null
-        lp_token_denom: string
+        lp_token: ActionCoin
       }
     }
   | {
@@ -271,6 +266,10 @@ export type CallbackMsg =
       }
     }
 export type Addr = string
+export interface ActionCoin {
+  amount: ActionAmount
+  denom: string
+}
 export interface ConfigUpdates {
   account_nft?: string | null
   allowed_coins?: string[] | null

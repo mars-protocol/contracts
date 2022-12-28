@@ -9,16 +9,16 @@ import { MsgExecuteContractEncodeObject } from 'cosmwasm'
 import { MsgExecuteContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx'
 import { toUtf8 } from '@cosmjs/encoding'
 import {
-  OracleBaseForString,
   InstantiateMsg,
-  LpConfig,
   ExecuteMsg,
   Uint128,
-  QueryMsg,
+  CallbackMsg,
+  Addr,
   Coin,
+  QueryMsg,
   ArrayOfCoin,
-} from './MarsMockZapper.types'
-export interface MarsMockZapperMessage {
+} from './MarsZapperBase.types'
+export interface MarsZapperBaseMessage {
   contractAddress: string
   sender: string
   provideLiquidity: (
@@ -41,8 +41,9 @@ export interface MarsMockZapperMessage {
     },
     funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
+  callback: (funds?: Coin[]) => MsgExecuteContractEncodeObject
 }
-export class MarsMockZapperMessageComposer implements MarsMockZapperMessage {
+export class MarsZapperBaseMessageComposer implements MarsZapperBaseMessage {
   sender: string
   contractAddress: string
 
@@ -51,6 +52,7 @@ export class MarsMockZapperMessageComposer implements MarsMockZapperMessage {
     this.contractAddress = contractAddress
     this.provideLiquidity = this.provideLiquidity.bind(this)
     this.withdrawLiquidity = this.withdrawLiquidity.bind(this)
+    this.callback = this.callback.bind(this)
   }
 
   provideLiquidity = (
@@ -101,6 +103,21 @@ export class MarsMockZapperMessageComposer implements MarsMockZapperMessage {
             withdraw_liquidity: {
               recipient,
             },
+          }),
+        ),
+        funds,
+      }),
+    }
+  }
+  callback = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(
+          JSON.stringify({
+            callback: {},
           }),
         ),
         funds,

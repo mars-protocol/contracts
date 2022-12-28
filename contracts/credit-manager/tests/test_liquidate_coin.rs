@@ -96,8 +96,7 @@ fn test_vault_positions_contribute_to_health() {
             Deposit(lp_token.to_coin(220)),
             EnterVault {
                 vault,
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(200)),
+                coin: lp_token.to_action_coin(200),
             },
             Borrow(atom_info.to_coin(14)),
         ],

@@ -41,5 +41,5 @@ itertools          = { workspace = true }
 mars-mock-oracle   = { workspace = true }
 mars-mock-red-bank = { workspace = true }
 mars-mock-vault    = { workspace = true }
-mars-mock-zapper   = { workspace = true }
 mars-swapper-mock  = { workspace = true }
+mars-zapper-mock   = { workspace = true }

@@ -88,7 +88,9 @@ export class Rover {
 
   async repay() {
     const amount = this.actions.repayAmount
-    await this.updateCreditAccount([{ repay: { amount, denom: this.actions.secondaryDenom } }])
+    await this.updateCreditAccount([
+      { repay: { amount: { exact: amount }, denom: this.actions.secondaryDenom } },
+    ])
     const positions = await this.query.positions({ accountId: this.accountId! })
     printGreen(
       `Repaid to RedBank: ${amount} ${
@@ -107,8 +109,7 @@ export class Rover {
     await this.updateCreditAccount([
       {
         swap_exact_in: {
-          coin_in_amount: amount,
-          coin_in_denom: this.config.chain.baseDenom,
+          coin_in: { amount: { exact: amount }, denom: this.config.chain.baseDenom },
           denom_out: this.actions.secondaryDenom,
           slippage: this.actions.swap.slippage,
         },
@@ -123,7 +124,10 @@ export class Rover {
     await this.updateCreditAccount([
       {
         provide_liquidity: {
-          coins_in: this.actions.zap.coinsIn.map((c) => ({ denom: c.denom, amount: c.amount })),
+          coins_in: this.actions.zap.coinsIn.map((c) => ({
+            denom: c.denom,
+            amount: { exact: c.amount },
+          })),
           lp_token_out,
           minimum_receive: '1',
         },
@@ -146,8 +150,7 @@ export class Rover {
     await this.updateCreditAccount([
       {
         withdraw_liquidity: {
-          lp_token_denom: lpToken.denom,
-          lp_token_amount: lpToken.amount,
+          lp_token: { amount: { exact: lpToken.amount }, denom: lpToken.denom },
         },
       },
     ])
@@ -167,8 +170,10 @@ export class Rover {
     await this.updateCreditAccount([
       {
         enter_vault: {
-          amount: this.actions.vault.depositAmount,
-          denom: info.tokens.base_token,
+          coin: {
+            amount: { exact: this.actions.vault.depositAmount },
+            denom: info.tokens.base_token,
+          },
           vault: { address: v.vault.address },
         },
       },

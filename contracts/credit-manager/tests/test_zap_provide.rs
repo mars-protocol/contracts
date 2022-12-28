@@ -1,11 +1,12 @@
 use cosmwasm_std::OverflowOperation::Sub;
 use cosmwasm_std::{Addr, OverflowError, Uint128};
-use mars_mock_zapper::contract::STARTING_LP_POOL_TOKENS;
+use mars_zapper_mock::contract::STARTING_LP_POOL_TOKENS;
 use std::ops::Mul;
 
-use mars_mock_zapper::error::ContractError;
 use mars_rover::error::ContractError as RoverError;
 use mars_rover::msg::execute::Action::{Deposit, ProvideLiquidity, WithdrawLiquidity};
+use mars_rover::msg::execute::{ActionAmount, ActionCoin};
+use mars_zapper_mock::error::ContractError;
 
 use crate::helpers::{
     assert_err, get_coin, lp_token_info, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv,
@@ -64,7 +65,7 @@ fn test_does_not_have_enough_tokens_to_provide_liq() {
             Deposit(atom.to_coin(100)),
             Deposit(osmo.to_coin(50)),
             ProvideLiquidity {
-                coins_in: vec![atom.to_coin(100), osmo.to_coin(200)],
+                coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(200)],
                 lp_token_out: lp_token.denom,
                 minimum_receive: Uint128::zero(),
             },
@@ -106,7 +107,7 @@ fn test_lp_token_out_must_be_whitelisted() {
             Deposit(atom.to_coin(100)),
             Deposit(osmo.to_coin(50)),
             ProvideLiquidity {
-                coins_in: vec![atom.to_coin(100), osmo.to_coin(200)],
+                coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(200)],
                 lp_token_out: lp_token.denom.clone(),
                 minimum_receive: Uint128::zero(),
             },
@@ -138,7 +139,7 @@ fn test_coins_in_must_be_whitelisted() {
         &account_id,
         &user,
         vec![ProvideLiquidity {
-            coins_in: vec![atom.to_coin(100), osmo.to_coin(200)],
+            coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(200)],
             lp_token_out: lp_token.denom,
             minimum_receive: Uint128::zero(),
         }],
@@ -173,7 +174,7 @@ fn test_min_received_too_high() {
                 Deposit(atom.to_coin(100)),
                 Deposit(osmo.to_coin(50)),
                 ProvideLiquidity {
-                    coins_in: vec![atom.to_coin(100), osmo.to_coin(50)],
+                    coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(50)],
                     lp_token_out: lp_token.denom,
                     minimum_receive: Uint128::new(100_000_000_000),
                 },
@@ -211,7 +212,7 @@ fn test_wrong_denom_provided() {
                 Deposit(atom.to_coin(100)),
                 Deposit(jake.to_coin(50)),
                 ProvideLiquidity {
-                    coins_in: vec![atom.to_coin(100), jake.to_coin(50)],
+                    coins_in: vec![atom.to_action_coin(100), jake.to_action_coin(50)],
                     lp_token_out: lp_token.denom,
                     minimum_receive: Uint128::zero(),
                 },
@@ -256,7 +257,7 @@ fn test_successful_zap() {
             Deposit(atom.to_coin(100)),
             Deposit(osmo.to_coin(50)),
             ProvideLiquidity {
-                coins_in: vec![atom.to_coin(100), osmo.to_coin(50)],
+                coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(50)],
                 lp_token_out: lp_token.denom.clone(),
                 minimum_receive: slippage_adjusted,
             },
@@ -323,7 +324,7 @@ fn test_can_provide_unbalanced() {
         vec![
             Deposit(atom.to_coin(100)),
             ProvideLiquidity {
-                coins_in: vec![atom.to_coin(100)],
+                coins_in: vec![atom.to_action_coin(100)],
                 lp_token_out: lp_token.denom.clone(),
                 minimum_receive: slippage_adjusted,
             },
@@ -348,8 +349,10 @@ fn test_can_provide_unbalanced() {
         &account_id,
         &user,
         vec![WithdrawLiquidity {
-            lp_token_denom: lp_token.denom.clone(),
-            lp_token_amount: Some(STARTING_LP_POOL_TOKENS.multiply_ratio(1u128, 2u128)),
+            lp_token: ActionCoin {
+                denom: lp_token.denom.clone(),
+                amount: ActionAmount::Exact(STARTING_LP_POOL_TOKENS.multiply_ratio(1u128, 2u128)),
+            },
         }],
         &[],
     )
@@ -401,7 +404,7 @@ fn test_order_does_not_matter() {
             Deposit(atom.to_coin(100)),
             Deposit(osmo.to_coin(50)),
             ProvideLiquidity {
-                coins_in: vec![atom.to_coin(100), osmo.to_coin(50)],
+                coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(50)],
                 lp_token_out: lp_token.denom.clone(),
                 minimum_receive: slippage_adjusted,
             },
@@ -418,7 +421,7 @@ fn test_order_does_not_matter() {
             Deposit(atom.to_coin(100)),
             Deposit(osmo.to_coin(50)),
             ProvideLiquidity {
-                coins_in: vec![osmo.to_coin(50), atom.to_coin(100)],
+                coins_in: vec![osmo.to_action_coin(50), atom.to_action_coin(100)],
                 lp_token_out: lp_token.denom.clone(),
                 minimum_receive: slippage_adjusted,
             },

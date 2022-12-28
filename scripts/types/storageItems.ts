@@ -6,6 +6,7 @@ export interface StorageItems {
     mockOracle?: number
     marsOracleAdapter?: number
     swapper?: number
+    zapper?: number
     creditManager?: number
   }
   addresses: {
@@ -13,6 +14,7 @@ export interface StorageItems {
     mockVault?: string
     marsOracleAdapter?: string
     swapper?: string
+    zapper?: string
     creditManager?: string
   }
   actions: {

@@ -1,10 +1,11 @@
 use cosmwasm_std::OverflowOperation::Sub;
 use cosmwasm_std::{Addr, OverflowError, Uint128};
 
-use mars_mock_zapper::contract::STARTING_LP_POOL_TOKENS;
 use mars_rover::error::ContractError as RoverError;
 use mars_rover::msg::execute::Action::{Deposit, ProvideLiquidity, WithdrawLiquidity};
+use mars_rover::msg::execute::{ActionAmount, ActionCoin};
 use mars_rover::msg::instantiate::ConfigUpdates;
+use mars_zapper_mock::contract::STARTING_LP_POOL_TOKENS;
 
 use crate::helpers::{
     assert_err, get_coin, lp_token_info, uatom_info, uosmo_info, AccountToFund, MockEnv,
@@ -23,8 +24,10 @@ fn test_only_token_owner_can_unzap_for_account() {
         &account_id,
         &another_user,
         vec![WithdrawLiquidity {
-            lp_token_denom: "xyz".to_string(),
-            lp_token_amount: None,
+            lp_token: ActionCoin {
+                denom: "xyz".to_string(),
+                amount: ActionAmount::AccountBalance,
+            },
         }],
         &[],
     );
@@ -49,8 +52,7 @@ fn test_lp_token_in_must_be_whitelisted() {
         &account_id,
         &user,
         vec![WithdrawLiquidity {
-            lp_token_denom: lp_token.denom.clone(),
-            lp_token_amount: Some(Uint128::new(100)),
+            lp_token: lp_token.to_action_coin(100),
         }],
         &[],
     );
@@ -83,7 +85,7 @@ fn test_coins_out_must_be_whitelisted() {
             Deposit(atom.to_coin(100)),
             Deposit(osmo.to_coin(50)),
             ProvideLiquidity {
-                coins_in: vec![atom.to_coin(100), osmo.to_coin(50)],
+                coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(50)],
                 lp_token_out: lp_token.denom.clone(),
                 minimum_receive: Uint128::zero(),
             },
@@ -107,8 +109,7 @@ fn test_coins_out_must_be_whitelisted() {
         &account_id,
         &user,
         vec![WithdrawLiquidity {
-            lp_token_denom: lp_token.denom,
-            lp_token_amount: Some(Uint128::new(100_000)),
+            lp_token: lp_token.to_action_coin(100_000),
         }],
         &[],
     );
@@ -134,7 +135,7 @@ fn test_does_not_have_the_tokens_to_withdraw_liq() {
 
     // Seed zapper with denoms so test can estimate withdraws
     let account_id = mock.create_credit_account(&user).unwrap();
-    let attempted_unzap_amount = 100_000_000_000;
+    let attempted_unzap_amount = 100_000_000_000u128;
     let res = mock.update_credit_account(
         &account_id,
         &user,
@@ -142,13 +143,12 @@ fn test_does_not_have_the_tokens_to_withdraw_liq() {
             Deposit(atom.to_coin(100)),
             Deposit(osmo.to_coin(50)),
             ProvideLiquidity {
-                coins_in: vec![atom.to_coin(100), osmo.to_coin(50)],
+                coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(50)],
                 lp_token_out: lp_token.denom.clone(),
                 minimum_receive: Uint128::zero(),
             },
             WithdrawLiquidity {
-                lp_token_denom: lp_token.denom,
-                lp_token_amount: Some(Uint128::new(attempted_unzap_amount)),
+                lp_token: lp_token.to_action_coin(attempted_unzap_amount),
             },
         ],
         &[atom.to_coin(100), osmo.to_coin(50)],
@@ -188,7 +188,7 @@ fn test_amount_zero_passed() {
             Deposit(atom.to_coin(100)),
             Deposit(osmo.to_coin(50)),
             ProvideLiquidity {
-                coins_in: vec![atom.to_coin(100), osmo.to_coin(50)],
+                coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(50)],
                 lp_token_out: lp_token.denom.clone(),
                 minimum_receive: Uint128::zero(),
             },
@@ -201,8 +201,7 @@ fn test_amount_zero_passed() {
         &account_id,
         &user,
         vec![WithdrawLiquidity {
-            lp_token_denom: lp_token.denom,
-            lp_token_amount: Some(Uint128::zero()),
+            lp_token: lp_token.to_action_coin(0),
         }],
         &[],
     );
@@ -232,8 +231,7 @@ fn test_amount_none_passed_with_no_balance() {
         &account_id,
         &user,
         vec![WithdrawLiquidity {
-            lp_token_denom: lp_token.denom,
-            lp_token_amount: None,
+            lp_token: lp_token.to_action_coin_full_balance(),
         }],
         &[],
     );
@@ -266,13 +264,12 @@ fn test_successful_unzap_specified_amount() {
             Deposit(atom.to_coin(100)),
             Deposit(osmo.to_coin(50)),
             ProvideLiquidity {
-                coins_in: vec![atom.to_coin(100), osmo.to_coin(50)],
+                coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(50)],
                 lp_token_out: lp_token.denom.clone(),
                 minimum_receive: Uint128::zero(),
             },
             WithdrawLiquidity {
-                lp_token_denom: lp_token.denom.clone(),
-                lp_token_amount: Some(STARTING_LP_POOL_TOKENS),
+                lp_token: lp_token.to_action_coin(STARTING_LP_POOL_TOKENS.u128()),
             },
         ],
         &[atom.to_coin(100), osmo.to_coin(50)],
@@ -330,13 +327,12 @@ fn test_successful_unzap_unspecified_amount() {
             Deposit(atom.to_coin(100)),
             Deposit(osmo.to_coin(50)),
             ProvideLiquidity {
-                coins_in: vec![atom.to_coin(100), osmo.to_coin(50)],
+                coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(50)],
                 lp_token_out: lp_token.denom.clone(),
                 minimum_receive: Uint128::zero(),
             },
             WithdrawLiquidity {
-                lp_token_denom: lp_token.denom.clone(),
-                lp_token_amount: None,
+                lp_token: lp_token.to_action_coin_full_balance(),
             },
         ],
         &[atom.to_coin(100), osmo.to_coin(50)],

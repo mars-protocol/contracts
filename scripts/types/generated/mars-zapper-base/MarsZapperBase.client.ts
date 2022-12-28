@@ -8,16 +8,16 @@
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee } from '@cosmjs/amino'
 import {
-  OracleBaseForString,
   InstantiateMsg,
-  LpConfig,
   ExecuteMsg,
   Uint128,
-  QueryMsg,
+  CallbackMsg,
+  Addr,
   Coin,
+  QueryMsg,
   ArrayOfCoin,
-} from './MarsMockZapper.types'
-export interface MarsMockZapperReadOnlyInterface {
+} from './MarsZapperBase.types'
+export interface MarsZapperBaseReadOnlyInterface {
   contractAddress: string
   estimateProvideLiquidity: ({
     coinsIn,
@@ -28,7 +28,7 @@ export interface MarsMockZapperReadOnlyInterface {
   }) => Promise<Uint128>
   estimateWithdrawLiquidity: ({ coinIn }: { coinIn: Coin }) => Promise<ArrayOfCoin>
 }
-export class MarsMockZapperQueryClient implements MarsMockZapperReadOnlyInterface {
+export class MarsZapperBaseQueryClient implements MarsZapperBaseReadOnlyInterface {
   client: CosmWasmClient
   contractAddress: string
 
@@ -61,7 +61,7 @@ export class MarsMockZapperQueryClient implements MarsMockZapperReadOnlyInterfac
     })
   }
 }
-export interface MarsMockZapperInterface extends MarsMockZapperReadOnlyInterface {
+export interface MarsZapperBaseInterface extends MarsZapperBaseReadOnlyInterface {
   contractAddress: string
   sender: string
   provideLiquidity: (
@@ -88,10 +88,15 @@ export interface MarsMockZapperInterface extends MarsMockZapperReadOnlyInterface
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
+  callback: (
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
 }
-export class MarsMockZapperClient
-  extends MarsMockZapperQueryClient
-  implements MarsMockZapperInterface
+export class MarsZapperBaseClient
+  extends MarsZapperBaseQueryClient
+  implements MarsZapperBaseInterface
 {
   client: SigningCosmWasmClient
   sender: string
@@ -104,6 +109,7 @@ export class MarsMockZapperClient
     this.contractAddress = contractAddress
     this.provideLiquidity = this.provideLiquidity.bind(this)
     this.withdrawLiquidity = this.withdrawLiquidity.bind(this)
+    this.callback = this.callback.bind(this)
   }
 
   provideLiquidity = async (
@@ -152,6 +158,22 @@ export class MarsMockZapperClient
         withdraw_liquidity: {
           recipient,
         },
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  callback = async (
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        callback: {},
       },
       fee,
       memo,

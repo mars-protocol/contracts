@@ -1,5 +1,5 @@
 [package]
-name          = "mars-mock-zapper"
+name          = "mars-zapper-base"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
@@ -18,9 +18,13 @@ backtraces = ["cosmwasm-std/backtraces"]
 library    = []
 
 [dependencies]
-cosmwasm-schema       = { workspace = true }
-cosmwasm-std          = { workspace = true }
-cw-storage-plus       = { workspace = true }
-cw-utils              = { workspace = true }
-mars-rover            = { workspace = true }
-thiserror             = { workspace = true }
+cosmwasm-schema  = { workspace = true }
+cosmwasm-std     = { workspace = true }
+cw-utils         = { workspace = true }
+cw-storage-plus  = { workspace = true }
+schemars         = { workspace = true }
+serde            = { workspace = true }
+thiserror        = { workspace = true }
+
+# FIXME: develop branch dependency till Apollo finish audit
+cw-dex   = { git = "https://github.com/apollodao/cw-dex", rev = "b9d18cfbba8aa09ae4ee9459d308cda87ae5ffb3" }

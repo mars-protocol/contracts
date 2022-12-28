@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Addr, Decimal, Uint128};
+use cosmwasm_std::{coin, Addr, Decimal};
 use mars_rover::error::ContractError;
 use mars_rover::msg::execute::Action::{Deposit, EnterVault};
 
@@ -51,14 +51,12 @@ fn test_can_only_have_a_single_vault_position() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: lev_vault,
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(200)),
+                coin: lp_token.to_action_coin(200),
             },
             Deposit(degen_vault_token.to_coin(200)),
             EnterVault {
                 vault: degen_vault,
-                denom: degen_vault_token.denom.clone(),
-                amount: Some(Uint128::new(200)),
+                coin: degen_vault_token.to_action_coin(200),
             },
         ],
         &[lp_token.to_coin(200), degen_vault_token.to_coin(200)],

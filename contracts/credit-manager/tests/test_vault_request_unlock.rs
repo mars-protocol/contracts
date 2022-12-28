@@ -174,8 +174,7 @@ fn test_not_enough_vault_tokens_for_request() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(23)),
+                coin: lp_token.to_action_coin(23),
             },
             RequestVaultUnlock {
                 vault,
@@ -221,8 +220,7 @@ fn test_request_unlocked() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(23)),
+                coin: lp_token.to_action_coin(23),
             },
             RequestVaultUnlock {
                 vault: vault.clone(),
@@ -297,8 +295,7 @@ fn test_cannot_request_more_than_max() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault: vault.clone(),
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(23)),
+                coin: lp_token.to_action_coin(23),
             },
         ],
         &[lp_token.to_coin(200)],

@@ -30,6 +30,36 @@ pub enum ExecuteMsg {
     Callback(CallbackMsg),
 }
 
+#[cw_serde]
+pub enum ActionAmount {
+    Exact(Uint128),
+    AccountBalance,
+}
+
+impl ActionAmount {
+    pub fn value(&self) -> Option<Uint128> {
+        match self {
+            ActionAmount::Exact(amt) => Some(*amt),
+            ActionAmount::AccountBalance => None,
+        }
+    }
+}
+
+#[cw_serde]
+pub struct ActionCoin {
+    pub denom: String,
+    pub amount: ActionAmount,
+}
+
+impl From<&Coin> for ActionCoin {
+    fn from(value: &Coin) -> Self {
+        Self {
+            denom: value.denom.to_string(),
+            amount: ActionAmount::Exact(value.amount),
+        }
+    }
+}
+
 /// The list of actions that users can perform on their positions
 #[cw_serde]
 pub enum Action {
@@ -39,18 +69,14 @@ pub enum Action {
     Withdraw(Coin),
     /// Borrow coin of specified amount from Red Bank
     Borrow(Coin),
-    /// Repay coin of specified amount back to Red Bank. If `amount: None` is passed,
+    /// Repay coin of specified amount back to Red Bank. If `amount: AccountBalance` is passed,
     /// the repaid amount will be the minimum between account balance for denom and total owed.
-    Repay {
-        denom: String,
-        amount: Option<Uint128>,
-    },
+    Repay(ActionCoin),
     /// Deposit coins into vault strategy
-    /// If amount sent is None, Rover attempts to deposit the account's entire balance into the vault
+    /// If `coin.amount: AccountBalance`, Rover attempts to deposit the account's entire balance into the vault
     EnterVault {
         vault: VaultUnchecked,
-        denom: String,
-        amount: Option<Uint128>,
+        coin: ActionCoin,
     },
     /// Withdraw underlying coins from vault
     ExitVault {
@@ -93,25 +119,21 @@ pub enum Action {
         position_type: VaultPositionType,
     },
     /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
-    /// If `coin_in_amount: None`, the accounts entire balance of `coin_in_denom` will be used.
+    /// If `coin_in.amount: AccountBalance`, the accounts entire balance of `coin_in.denom` will be used.
     SwapExactIn {
-        coin_in_denom: String,
-        coin_in_amount: Option<Uint128>,
+        coin_in: ActionCoin,
         denom_out: String,
         slippage: Decimal,
     },
     /// Add Vec<Coin> to liquidity pool in exchange for LP tokens
     ProvideLiquidity {
-        coins_in: Vec<Coin>,
+        coins_in: Vec<ActionCoin>,
         lp_token_out: String,
         minimum_receive: Uint128,
     },
     /// Send LP token and withdraw corresponding reserve assets from pool.
-    /// If `lp_token_amount: None`, the account balance of `lp_token_denom` will be used.
-    WithdrawLiquidity {
-        lp_token_denom: String,
-        lp_token_amount: Option<Uint128>,
-    },
+    /// If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used.
+    WithdrawLiquidity { lp_token: ActionCoin },
     /// Refunds all coin balances back to user wallet
     RefundAllCoinBalances {},
 }
@@ -131,12 +153,11 @@ pub enum CallbackMsg {
     Borrow { account_id: String, coin: Coin },
     /// Repay coin of specified amount back to Red Bank;
     /// Decrement the token's coin amount and debt shares;
-    /// If `amount: None` is passed, the repaid amount will be the minimum
+    /// If `coin.amount: AccountBalance` is passed, the repaid amount will be the minimum
     /// between account balance for denom and total owed;
     Repay {
         account_id: String,
-        denom: String,
-        amount: Option<Uint128>,
+        coin: ActionCoin,
     },
     /// Calculate the account's max loan-to-value health factor. If above 1,
     /// emits a `position_changed` event. If 1 or below, raises an error.
@@ -145,8 +166,7 @@ pub enum CallbackMsg {
     EnterVault {
         account_id: String,
         vault: Vault,
-        denom: String,
-        amount: Option<Uint128>,
+        coin: ActionCoin,
     },
     /// Exchanges vault LP shares for assets
     ExitVault {
@@ -189,11 +209,10 @@ pub enum CallbackMsg {
         position_type: VaultPositionType,
     },
     /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
-    /// If `coin_in_amount: None`, the accounts entire balance of `coin_in_denom` will be used.
+    /// If `coin_in.amount: AccountBalance`, the accounts entire balance of `coin_in.denom` will be used.
     SwapExactIn {
         account_id: String,
-        coin_in_denom: String,
-        coin_in_amount: Option<Uint128>,
+        coin_in: ActionCoin,
         denom_out: String,
         slippage: Decimal,
     },
@@ -207,16 +226,15 @@ pub enum CallbackMsg {
     /// Add Vec<Coin> to liquidity pool in exchange for LP tokens
     ProvideLiquidity {
         account_id: String,
-        coins_in: Vec<Coin>,
+        coins_in: Vec<ActionCoin>,
         lp_token_out: String,
         minimum_receive: Uint128,
     },
     /// Send LP token and withdraw corresponding reserve assets from pool.
-    /// If `lp_token_amount: None`, the account balance of `lp_token_denom` will be used.
+    /// If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used.
     WithdrawLiquidity {
         account_id: String,
-        lp_token_denom: String,
-        lp_token_amount: Option<Uint128>,
+        lp_token: ActionCoin,
     },
     /// Checks to ensure only one vault position is taken per credit account
     AssertOneVaultPositionOnly { account_id: String },

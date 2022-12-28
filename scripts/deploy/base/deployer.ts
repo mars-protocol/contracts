@@ -7,6 +7,7 @@ import { InstantiateMsgs } from '../../types/instantiateMsgs'
 import { InstantiateMsg as NftInstantiateMsg } from '../../types/generated/mars-account-nft/MarsAccountNft.types'
 import { InstantiateMsg as VaultInstantiateMsg } from '../../types/generated/mars-mock-vault/MarsMockVault.types'
 import { InstantiateMsg as SwapperInstantiateMsg } from '../../types/generated/mars-swapper-base/MarsSwapperBase.types'
+import { InstantiateMsg as ZapperInstantiateMsg } from '../../types/generated/mars-zapper-base/MarsZapperBase.types'
 import { InstantiateMsg as RoverInstantiateMsg } from '../../types/generated/mars-credit-manager/MarsCreditManager.types'
 import { InstantiateMsg as OracleAdapterInstantiateMsg } from '../../types/generated/mars-oracle-adapter/MarsOracleAdapter.types'
 import { Rover } from './rover'
@@ -156,6 +157,11 @@ export class Deployer {
     } else {
       printGray("Swap contract's routes already set")
     }
+  }
+
+  async instantiateZapper() {
+    const msg: ZapperInstantiateMsg = {}
+    await this.instantiate('zapper', this.storage.codeIds.zapper!, msg)
   }
 
   async instantiateCreditManager() {

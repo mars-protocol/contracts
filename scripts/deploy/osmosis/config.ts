@@ -5,7 +5,7 @@ const uatom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5
 const udig = 'ibc/307E5C96C8F60D1CBEE269A9A86C0834E1DB06F2B3788AE4F716EDB97A48B97D'
 const gammPool1 = 'gamm/pool/1'
 
-const autoCompoundingVault = 'osmo1lcnpd5000ru7qpd0tz8wnl00rlfvlxvqlw04md9cxsudapd0flvsqke5t5'
+const autoCompoundingVault = 'osmo1v40lnedgvake8p7f49gvqu0q3vc9sx3qpc0jqtyfdyw25d4vg8us38an37'
 
 export const osmosisTestnetConfig: DeploymentConfig = {
   allowedCoins: [uosmo, uatom, gammPool1],
@@ -30,7 +30,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
         base_denom: gammPool1,
         method: 'preview_redeem',
         vault_coin_denom:
-          'factory/osmo1lcnpd5000ru7qpd0tz8wnl00rlfvlxvqlw04md9cxsudapd0flvsqke5t5/cwVTT',
+          'factory/osmo1v40lnedgvake8p7f49gvqu0q3vc9sx3qpc0jqtyfdyw25d4vg8us38an37/cwVTT',
       },
     ],
   },
@@ -44,7 +44,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
       // https://github.com/apollodao/apollo-config/blob/master/config.json#L114
       vault: { address: autoCompoundingVault },
       config: {
-        deposit_cap: { denom: uosmo, amount: '1000000000' },
+        deposit_cap: { denom: uosmo, amount: '100000000000000000000000000' }, // 100 osmo
         liquidation_threshold: '0.75',
         max_ltv: '0.65',
         whitelisted: true,
@@ -57,7 +57,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
       withdrawAmount: '1',
       mock: {
         config: {
-          deposit_cap: { denom: uosmo, amount: '100000000000' },
+          deposit_cap: { denom: uosmo, amount: '100000000000000000000000000' }, // 100 osmo
           liquidation_threshold: '0.75',
           max_ltv: '0.65',
           whitelisted: true,

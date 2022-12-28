@@ -15,10 +15,10 @@ fn main() -> std::io::Result<()> {
         "mars-account-nft",
         "mars-swapper-base",
         "mars-oracle-adapter",
+        "mars-zapper-base",
         "mars-mock-red-bank",
         "mars-mock-vault",
         "mars-mock-oracle",
-        "mars-mock-zapper",
         "mars-mock-credit-manager",
     ];
 

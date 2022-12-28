@@ -4,6 +4,7 @@ members = [
     "contracts/credit-manager",
     "contracts/swapper/*",
     "contracts/oracle-adapter",
+    "contracts/zapper/*",
     "packages/chains/*",
     "packages/health",
     "packages/outpost",
@@ -14,7 +15,6 @@ members = [
     "contracts/mock-oracle",
     "contracts/mock-red-bank",
     "contracts/mock-vault",
-    "contracts/mock-zapper",
     "contracts/mock-credit-manager",
 ]
 
@@ -61,14 +61,15 @@ mars-rover                = { version = "1.0.0", path = "./packages/rover" }
 mars-account-nft    = { version = "1.0.0", path = "./contracts/account-nft", features = ["library"] }
 mars-oracle-adapter = { version = "1.0.0", path = "contracts/oracle-adapter", features = ["library"] }
 mars-swapper-base   = { version = "1.0.0", path = "./contracts/swapper/base" }
+mars-zapper-base    = { version = "1.0.0", path = "./contracts/zapper/base" }
 
 # mocks
 mars-mock-credit-manager  = { version = "1.0.0", path = "./contracts/mock-credit-manager", features = ["library"] }
 mars-mock-oracle          = { version = "1.0.0", path = "./contracts/mock-oracle", features = ["library"] }
 mars-mock-red-bank        = { version = "1.0.0", path = "./contracts/mock-red-bank", features = ["library"] }
 mars-mock-vault           = { version = "1.0.0", path = "./contracts/mock-vault", features = ["library"] }
-mars-mock-zapper          = { version = "1.0.0", path = "./contracts/mock-zapper", features = ["library"] }
 mars-swapper-mock         = { version = "1.0.0", path = "./contracts/swapper/mock", features = ["library"] }
+mars-zapper-mock          = { version = "1.0.0", path = "./contracts/zapper/mock", features = ["library"] }
 
 [profile.release]
 opt-level = 3

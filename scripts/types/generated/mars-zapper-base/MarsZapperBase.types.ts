@@ -5,15 +5,7 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
-export type OracleBaseForString = string
-export interface InstantiateMsg {
-  lp_configs: LpConfig[]
-  oracle: OracleBaseForString
-}
-export interface LpConfig {
-  lp_pair_denoms: [string, string]
-  lp_token_denom: string
-}
+export interface InstantiateMsg {}
 export type ExecuteMsg =
   | {
       provide_liquidity: {
@@ -27,7 +19,22 @@ export type ExecuteMsg =
         recipient?: string | null
       }
     }
+  | {
+      callback: CallbackMsg
+    }
 export type Uint128 = string
+export type CallbackMsg = {
+  return_coin: {
+    balance_before: Coin
+    recipient: Addr
+  }
+}
+export type Addr = string
+export interface Coin {
+  amount: Uint128
+  denom: string
+  [k: string]: unknown
+}
 export type QueryMsg =
   | {
       estimate_provide_liquidity: {
@@ -40,9 +47,4 @@ export type QueryMsg =
         coin_in: Coin
       }
     }
-export interface Coin {
-  amount: Uint128
-  denom: string
-  [k: string]: unknown
-}
 export type ArrayOfCoin = Coin[]

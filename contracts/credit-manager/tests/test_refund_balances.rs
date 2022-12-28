@@ -77,8 +77,7 @@ fn test_refund_coin_balances_when_no_balances() {
             Deposit(lp_token.to_coin(200)),
             EnterVault {
                 vault,
-                denom: lp_token.denom.clone(),
-                amount: Some(Uint128::new(200)),
+                coin: lp_token.to_action_coin(200),
             },
             RefundAllCoinBalances {},
         ],

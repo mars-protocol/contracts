@@ -74,20 +74,14 @@ pub fn dispatch_actions(
                 account_id: account_id.to_string(),
                 coin: coin.clone(),
             }),
-            Action::Repay { denom, amount } => callbacks.push(CallbackMsg::Repay {
+            Action::Repay(coin) => callbacks.push(CallbackMsg::Repay {
                 account_id: account_id.to_string(),
-                denom: denom.clone(),
-                amount: *amount,
+                coin: coin.clone(),
             }),
-            Action::EnterVault {
-                vault,
-                denom,
-                amount,
-            } => callbacks.push(CallbackMsg::EnterVault {
+            Action::EnterVault { vault, coin } => callbacks.push(CallbackMsg::EnterVault {
                 account_id: account_id.to_string(),
                 vault: vault.check(deps.api)?,
-                denom: denom.to_string(),
-                amount: *amount,
+                coin: coin.clone(),
             }),
             Action::LiquidateCoin {
                 liquidatee_account_id,
@@ -112,14 +106,12 @@ pub fn dispatch_actions(
                 position_type: position_type.clone(),
             }),
             Action::SwapExactIn {
-                coin_in_denom,
-                coin_in_amount,
+                coin_in,
                 denom_out,
                 slippage,
             } => callbacks.push(CallbackMsg::SwapExactIn {
                 account_id: account_id.to_string(),
-                coin_in_denom: coin_in_denom.clone(),
-                coin_in_amount: *coin_in_amount,
+                coin_in: coin_in.clone(),
                 denom_out: denom_out.clone(),
                 slippage: *slippage,
             }),
@@ -152,14 +144,12 @@ pub fn dispatch_actions(
                 coins_in: coins_in.clone(),
                 minimum_receive: *minimum_receive,
             }),
-            Action::WithdrawLiquidity {
-                lp_token_denom,
-                lp_token_amount,
-            } => callbacks.push(CallbackMsg::WithdrawLiquidity {
-                account_id: account_id.to_string(),
-                lp_token_denom: lp_token_denom.clone(),
-                lp_token_amount: *lp_token_amount,
-            }),
+            Action::WithdrawLiquidity { lp_token } => {
+                callbacks.push(CallbackMsg::WithdrawLiquidity {
+                    account_id: account_id.to_string(),
+                    lp_token: lp_token.clone(),
+                })
+            }
             Action::RefundAllCoinBalances {} => {
                 callbacks.push(CallbackMsg::RefundAllCoinBalances {
                     account_id: account_id.to_string(),
@@ -211,27 +201,15 @@ pub fn execute_callback(
             recipient,
         } => withdraw(deps, &account_id, coin, recipient),
         CallbackMsg::Borrow { coin, account_id } => borrow(deps, env, &account_id, coin),
-        CallbackMsg::Repay {
-            account_id,
-            denom,
-            amount,
-        } => repay(deps, env, &account_id, &denom, amount),
+        CallbackMsg::Repay { account_id, coin } => repay(deps, env, &account_id, &coin),
         CallbackMsg::AssertBelowMaxLTV { account_id } => {
             assert_below_max_ltv(deps.as_ref(), env, &account_id)
         }
         CallbackMsg::EnterVault {
             account_id,
             vault,
-            denom,
-            amount,
-        } => enter_vault(
-            deps,
-            &env.contract.address,
-            &account_id,
-            vault,
-            &denom,
-            amount,
-        ),
+            coin,
+        } => enter_vault(deps, &env.contract.address, &account_id, vault, &coin),
         CallbackMsg::UpdateVaultCoinBalance {
             vault,
             account_id,
@@ -273,19 +251,10 @@ pub fn execute_callback(
         ),
         CallbackMsg::SwapExactIn {
             account_id,
-            coin_in_denom,
-            coin_in_amount,
+            coin_in,
             denom_out,
             slippage,
-        } => swap_exact_in(
-            deps,
-            env,
-            &account_id,
-            &coin_in_denom,
-            coin_in_amount,
-            &denom_out,
-            slippage,
-        ),
+        } => swap_exact_in(deps, env, &account_id, &coin_in, &denom_out, slippage),
         CallbackMsg::UpdateCoinBalance {
             account_id,
             previous_balance,
@@ -320,9 +289,8 @@ pub fn execute_callback(
         ),
         CallbackMsg::WithdrawLiquidity {
             account_id,
-            lp_token_denom,
-            lp_token_amount,
-        } => withdraw_liquidity(deps, env, &account_id, &lp_token_denom, lp_token_amount),
+            lp_token,
+        } => withdraw_liquidity(deps, env, &account_id, &lp_token),
         CallbackMsg::AssertOneVaultPositionOnly { account_id } => {
             assert_only_one_vault_position(deps, &account_id)
         }

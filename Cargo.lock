@@ -29,6 +29,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "216261ddc8289130e551ddcd5ce8a064710c0d064a4d2895c67151c92b5443f6"
 
 [[package]]
+name = "apollo-utils"
+version = "0.1.0"
+source = "git+https://github.com/apollodao/apollo-utils.git?rev=bfd1abd8cd9716dccad3e74aeb3704cad9f1f41a#bfd1abd8cd9716dccad3e74aeb3704cad9f1f41a"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-asset",
+ "cw20",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.59"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -336,7 +347,7 @@ checksum = "d48847f2c22b96d9659ff9d0b67403ed1d5cbe5470e65d293c4c455de05b237b"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-utils",
+ "cw-utils 0.16.0",
  "schemars",
  "serde",
 ]
@@ -392,15 +403,45 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-asset"
+version = "0.3.0"
+source = "git+https://github.com/apollodao/cw-asset.git?rev=057fb193013ad4adfc25063b99960972d1d208bc#057fb193013ad4adfc25063b99960972d1d208bc"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.16.0",
+ "cw20",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "cw-controllers-admin-fork"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
- "cw-utils",
+ "cw-utils 0.16.0",
  "schemars",
  "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-dex"
+version = "0.0.1"
+source = "git+https://github.com/apollodao/cw-dex?rev=b9d18cfbba8aa09ae4ee9459d308cda87ae5ffb3#b9d18cfbba8aa09ae4ee9459d308cda87ae5ffb3"
+dependencies = [
+ "apollo-utils",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-asset",
+ "cw-storage-plus 0.16.0",
+ "cw-utils 0.11.1",
+ "cw-utils 0.16.0",
+ "cw20",
+ "osmosis-std 0.12.0",
  "thiserror",
 ]
 
@@ -416,14 +457,14 @@ dependencies = [
 
 [[package]]
 name = "cw-multi-test"
-version = "0.16.1"
+version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2dc50fde3ad87ef4e3a3e57c73d11326333318761c7655cc8cae67c40382ac91"
+checksum = "c2eb84554bbfa6b66736abcd6a9bfdf237ee0ecb83910f746dff7f799093c80a"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
- "cw-storage-plus 0.16.0",
- "cw-utils",
+ "cw-storage-plus 1.0.1",
+ "cw-utils 1.0.1",
  "derivative",
  "itertools",
  "k256",
@@ -457,6 +498,18 @@ dependencies = [
 
 [[package]]
 name = "cw-utils"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef842a1792e4285beff7b3b518705f760fa4111dc1e296e53f3e92d1ef7f6220"
+dependencies = [
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-utils"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6a84c6c1c0acc3616398eba50783934bd6c964bad6974241eaee3460c8f5b26"
@@ -464,6 +517,21 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw2 0.16.0",
+ "schemars",
+ "semver",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-utils"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c80e93d1deccb8588db03945016a292c3c631e6325d349ebb35d2db6f4f946f7"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw2 1.0.0",
  "schemars",
  "semver",
  "serde",
@@ -497,6 +565,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw20"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a45a8794a5dd33b66af34caee52a7beceb690856adcc1682b6e3db88b2cdee62"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils 0.16.0",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "cw721"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -504,7 +585,7 @@ checksum = "94a1ea6e6277bdd6dfc043a9b1380697fe29d6e24b072597439523658d21d791"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-utils",
+ "cw-utils 0.16.0",
  "schemars",
  "serde",
 ]
@@ -518,7 +599,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 0.16.0",
- "cw-utils",
+ "cw-utils 0.16.0",
  "cw2 0.16.0",
  "cw721",
  "schemars",
@@ -964,7 +1045,7 @@ dependencies = [
  "cw-item-set",
  "cw-multi-test",
  "cw-storage-plus 1.0.1",
- "cw-utils",
+ "cw-utils 0.16.0",
  "cw2 1.0.0",
  "cw721",
  "cw721-base",
@@ -974,11 +1055,11 @@ dependencies = [
  "mars-mock-oracle",
  "mars-mock-red-bank",
  "mars-mock-vault",
- "mars-mock-zapper",
  "mars-oracle-adapter",
  "mars-outpost",
  "mars-rover",
  "mars-swapper-mock",
+ "mars-zapper-mock",
 ]
 
 [[package]]
@@ -996,7 +1077,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
- "cw-utils",
+ "cw-utils 0.16.0",
  "mars-rover",
  "thiserror",
 ]
@@ -1029,19 +1110,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-vault-standard",
  "cw-storage-plus 1.0.1",
- "cw-utils",
- "mars-rover",
- "thiserror",
-]
-
-[[package]]
-name = "mars-mock-zapper"
-version = "1.0.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus 1.0.1",
- "cw-utils",
+ "cw-utils 0.16.0",
  "mars-rover",
  "thiserror",
 ]
@@ -1057,7 +1126,7 @@ dependencies = [
  "cw-controllers-admin-fork",
  "cw-multi-test",
  "cw-storage-plus 1.0.1",
- "cw-utils",
+ "cw-utils 0.16.0",
  "cw2 1.0.0",
  "mars-mock-oracle",
  "mars-mock-vault",
@@ -1071,7 +1140,7 @@ name = "mars-osmosis"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
- "osmosis-std",
+ "osmosis-std 0.13.2",
  "serde",
 ]
 
@@ -1093,7 +1162,7 @@ dependencies = [
  "cosmwasm-vault-standard",
  "cw-controllers-admin-fork",
  "cw-storage-plus 1.0.1",
- "cw-utils",
+ "cw-utils 0.16.0",
  "mars-health",
  "mars-mock-oracle",
  "mars-mock-red-bank",
@@ -1143,10 +1212,48 @@ dependencies = [
  "mars-osmosis",
  "mars-rover",
  "mars-swapper-base",
- "osmosis-std",
+ "osmosis-std 0.13.2",
  "osmosis-testing",
  "schemars",
  "thiserror",
+]
+
+[[package]]
+name = "mars-zapper-base"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-dex",
+ "cw-storage-plus 1.0.1",
+ "cw-utils 0.16.0",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-zapper-mock"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.0.1",
+ "cw-utils 0.16.0",
+ "mars-rover",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-zapper-osmosis"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-dex",
+ "cw-utils 0.16.0",
+ "cw2 1.0.0",
+ "mars-zapper-base",
+ "osmosis-testing",
 ]
 
 [[package]]
@@ -1230,18 +1337,44 @@ checksum = "9b7820b9daea5457c9f21c69448905d723fbd21136ccf521748f23fd49e723ee"
 
 [[package]]
 name = "osmosis-std"
+version = "0.12.0"
+source = "git+https://github.com/apollodao/osmosis-rust?rev=52ca8eaa4b2926fea01a68f4d7e7253ad29d88b3#52ca8eaa4b2926fea01a68f4d7e7253ad29d88b3"
+dependencies = [
+ "chrono",
+ "cosmwasm-std",
+ "osmosis-std-derive 0.12.0",
+ "prost 0.11.3",
+ "prost-types",
+ "schemars",
+ "serde",
+ "serde-cw-value",
+]
+
+[[package]]
+name = "osmosis-std"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10d6fe6ac7fcba45ed61d738091d33c838c4cabbcf4892dc7aa56d19d39cc976"
 dependencies = [
  "chrono",
  "cosmwasm-std",
- "osmosis-std-derive",
+ "osmosis-std-derive 0.13.2",
  "prost 0.11.3",
  "prost-types",
  "schemars",
  "serde",
  "serde-cw-value",
+]
+
+[[package]]
+name = "osmosis-std-derive"
+version = "0.12.0"
+source = "git+https://github.com/apollodao/osmosis-rust?rev=52ca8eaa4b2926fea01a68f4d7e7253ad29d88b3#52ca8eaa4b2926fea01a68f4d7e7253ad29d88b3"
+dependencies = [
+ "itertools",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1266,7 +1399,7 @@ dependencies = [
  "bindgen",
  "cosmrs",
  "cosmwasm-std",
- "osmosis-std",
+ "osmosis-std 0.13.2",
  "prost 0.11.3",
  "serde",
  "serde_json",

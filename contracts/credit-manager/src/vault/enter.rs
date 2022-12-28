@@ -1,11 +1,11 @@
 use cosmwasm_std::{
-    coin as c, to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Storage,
-    Uint128, WasmMsg,
+    coin as c, to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Uint128,
+    WasmMsg,
 };
 
 use mars_rover::adapters::vault::{UpdateType, Vault, VaultPositionUpdate};
 use mars_rover::error::{ContractError, ContractResult};
-use mars_rover::msg::execute::CallbackMsg;
+use mars_rover::msg::execute::{ActionAmount, ActionCoin, CallbackMsg};
 use mars_rover::msg::ExecuteMsg;
 
 use crate::query::query_vault_positions;
@@ -18,16 +18,20 @@ pub fn enter_vault(
     rover_addr: &Addr,
     account_id: &str,
     vault: Vault,
-    denom: &str,
-    amount_opt: Option<Uint128>,
+    coin: &ActionCoin,
 ) -> ContractResult<Response> {
-    let amount = or_full_balance_default(deps.storage, amount_opt, account_id, denom)?;
+    let amount = match coin.amount {
+        ActionAmount::Exact(a) => a,
+        ActionAmount::AccountBalance => {
+            COIN_BALANCES.load(deps.storage, (account_id, &coin.denom))?
+        }
+    };
     let coin_to_enter = Coin {
-        denom: denom.to_string(),
+        denom: coin.denom.clone(),
         amount,
     };
 
-    assert_coin_is_whitelisted(deps.storage, denom)?;
+    assert_coin_is_whitelisted(deps.storage, &coin.denom)?;
     assert_vault_is_whitelisted(deps.storage, &vault)?;
     assert_denom_matches_vault_reqs(deps.querier, &vault, &coin_to_enter)?;
     assert_deposit_is_under_cap(deps.as_ref(), &vault, &coin_to_enter, rover_addr)?;
@@ -49,19 +53,6 @@ pub fn enter_vault(
         .add_message(vault.deposit_msg(&coin_to_enter)?)
         .add_message(update_vault_balance_msg)
         .add_attribute("action", "rover/credit-manager/vault/deposit"))
-}
-
-fn or_full_balance_default(
-    storage: &dyn Storage,
-    amount_opt: Option<Uint128>,
-    account_id: &str,
-    denom: &str,
-) -> ContractResult<Uint128> {
-    if let Some(a) = amount_opt {
-        Ok(a)
-    } else {
-        Ok(COIN_BALANCES.load(storage, (account_id, denom))?)
-    }
 }
 
 pub fn update_vault_coin_balance(

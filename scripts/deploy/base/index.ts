@@ -6,9 +6,14 @@ import { wasmFile } from '../../utils/environment'
 export interface TaskRunnerProps {
   config: DeploymentConfig
   swapperContractName: string
+  zapperContractName: string
 }
 
-export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProps) => {
+export const taskRunner = async ({
+  config,
+  swapperContractName,
+  zapperContractName,
+}: TaskRunnerProps) => {
   const deployer = await setupDeployer(config)
   try {
     // Upload contracts
@@ -16,6 +21,7 @@ export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProp
     await deployer.upload('mockVault', wasmFile('mars_mock_vault'))
     await deployer.upload('marsOracleAdapter', wasmFile('mars_oracle_adapter'))
     await deployer.upload('swapper', wasmFile(swapperContractName))
+    await deployer.upload('zapper', wasmFile(zapperContractName))
     await deployer.upload('creditManager', wasmFile('mars_credit_manager'))
 
     // Set contracts owner
@@ -25,6 +31,7 @@ export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProp
     await deployer.instantiateMockVault()
     await deployer.instantiateMarsOracleAdapter()
     await deployer.instantiateSwapper()
+    await deployer.instantiateZapper()
     await deployer.instantiateCreditManager()
     await deployer.instantiateNftContract()
     await deployer.transferNftContractOwnership()
@@ -35,6 +42,7 @@ export const taskRunner = async ({ config, swapperContractName }: TaskRunnerProp
       await deployer.grantCreditLines()
       await deployer.setupOraclePrices()
       await deployer.setupRedBankMarketsForZapDenoms()
+
       const rover = await deployer.newUserRoverClient(config.testActions)
       await rover.createCreditAccount()
       await rover.deposit()

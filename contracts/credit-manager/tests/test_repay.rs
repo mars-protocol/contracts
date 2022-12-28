@@ -24,10 +24,7 @@ fn test_only_token_owner_can_repay() {
     let res = mock.update_credit_account(
         &account_id,
         &another_user,
-        vec![Repay {
-            denom: coin_info.denom,
-            amount: Some(Uint128::new(12312)),
-        }],
+        vec![Repay(coin_info.to_action_coin(12312))],
         &[],
     );
 
@@ -54,10 +51,7 @@ fn test_repaying_with_zero_debt_raises() {
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![Repay {
-            denom: coin_info.denom.clone(),
-            amount: Some(Uint128::new(0)),
-        }],
+        vec![Repay(coin_info.to_action_coin(0))],
         &[],
     );
 
@@ -67,10 +61,7 @@ fn test_repaying_with_zero_debt_raises() {
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![Repay {
-            denom: coin_info.denom,
-            amount: None,
-        }],
+        vec![Repay(coin_info.to_action_coin_full_balance())],
         &[],
     );
 
@@ -126,10 +117,7 @@ fn test_raises_when_repaying_what_is_not_owed() {
         vec![
             Deposit(uatom_info.to_coin(300)),
             Borrow(uosmo_info.to_coin(42)),
-            Repay {
-                denom: uatom_info.denom.clone(),
-                amount: Some(Uint128::new(42)),
-            },
+            Repay(uatom_info.to_action_coin(42)),
         ],
         &[uatom_info.to_coin(300)],
     );
@@ -169,10 +157,7 @@ fn test_raises_when_not_enough_assets_to_repay() {
             Deposit(uatom_info.to_coin(300)),
             Borrow(uosmo_info.to_coin(50)),
             Withdraw(uosmo_info.to_coin(10)),
-            Repay {
-                denom: uosmo_info.denom,
-                amount: Some(Uint128::new(50)),
-            },
+            Repay(uosmo_info.to_action_coin(50)),
         ],
         &[uatom_info.to_coin(300)],
     );
@@ -224,10 +209,7 @@ fn test_repay_less_than_total_debt() {
     mock.update_credit_account(
         &account_id,
         &user,
-        vec![Repay {
-            denom: coin_info.denom.clone(),
-            amount: Some(Uint128::new(20)),
-        }],
+        vec![Repay(coin_info.to_action_coin(20))],
         &[],
     )
     .unwrap();
@@ -265,10 +247,7 @@ fn test_repay_less_than_total_debt() {
     mock.update_credit_account(
         &account_id,
         &user,
-        vec![Repay {
-            denom: coin_info.denom.clone(),
-            amount: Some(Uint128::new(31)),
-        }], // Interest accrued paid back as well
+        vec![Repay(coin_info.to_action_coin(31))], // Interest accrued paid back as well
         &[],
     )
     .unwrap();
@@ -317,10 +296,7 @@ fn test_pays_max_debt_when_attempting_to_repay_more_than_owed() {
         vec![
             Deposit(coin_info.to_coin(300)),
             Borrow(coin_info.to_coin(50)),
-            Repay {
-                denom: coin_info.denom.clone(),
-                amount: Some(Uint128::new(75)),
-            },
+            Repay(coin_info.to_action_coin(75)),
         ],
         &[coin(300, coin_info.denom.clone())],
     )
@@ -371,10 +347,7 @@ fn test_amount_none_repays_total_debt() {
         vec![
             Deposit(coin_info.to_coin(300)),
             Borrow(coin_info.to_coin(50)),
-            Repay {
-                denom: coin_info.denom.clone(),
-                amount: None,
-            },
+            Repay(coin_info.to_action_coin_full_balance()),
         ],
         &[coin(300, coin_info.denom.clone())],
     )
