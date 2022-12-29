@@ -53,18 +53,19 @@ import {
   HealthResponse,
   Positions,
   DebtAmount,
-  ArrayOfVaultInstantiateConfig,
+  ArrayOfVaultInfoResponse,
+  VaultInfoResponse,
 } from './MarsCreditManager.types'
 export interface MarsCreditManagerReadOnlyInterface {
   contractAddress: string
   config: () => Promise<ConfigResponse>
-  vaultConfigs: ({
+  vaultsInfo: ({
     limit,
     startAfter,
   }: {
     limit?: number
     startAfter?: VaultBaseForString
-  }) => Promise<ArrayOfVaultInstantiateConfig>
+  }) => Promise<ArrayOfVaultInfoResponse>
   allowedCoins: ({
     limit,
     startAfter,
@@ -128,7 +129,7 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
     this.client = client
     this.contractAddress = contractAddress
     this.config = this.config.bind(this)
-    this.vaultConfigs = this.vaultConfigs.bind(this)
+    this.vaultsInfo = this.vaultsInfo.bind(this)
     this.allowedCoins = this.allowedCoins.bind(this)
     this.positions = this.positions.bind(this)
     this.health = this.health.bind(this)
@@ -148,15 +149,15 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
       config: {},
     })
   }
-  vaultConfigs = async ({
+  vaultsInfo = async ({
     limit,
     startAfter,
   }: {
     limit?: number
     startAfter?: VaultBaseForString
-  }): Promise<ArrayOfVaultInstantiateConfig> => {
+  }): Promise<ArrayOfVaultInfoResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      vault_configs: {
+      vaults_info: {
         limit,
         start_after: startAfter,
       },

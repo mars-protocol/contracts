@@ -3,7 +3,7 @@ use cosmwasm_std::{Coin, Decimal, Uint128};
 
 use mars_health::health::Health;
 
-use crate::adapters::vault::{Vault, VaultPosition, VaultUnchecked};
+use crate::adapters::vault::{Vault, VaultConfig, VaultPosition, VaultUnchecked};
 use crate::traits::Coins;
 
 #[cw_serde]
@@ -12,9 +12,9 @@ pub enum QueryMsg {
     /// Rover contract-level config
     #[returns(ConfigResponse)]
     Config {},
-    /// Configs on vaults
-    #[returns(Vec<crate::msg::instantiate::VaultInstantiateConfig>)]
-    VaultConfigs {
+    /// Configs & deposit caps on vaults
+    #[returns(Vec<VaultInfoResponse>)]
+    VaultsInfo {
         start_after: Option<VaultUnchecked>,
         limit: Option<u32>,
     },
@@ -75,6 +75,15 @@ pub enum QueryMsg {
     /// Estimate coins withdrawn if exchanged for LP tokens
     #[returns(Vec<Coin>)]
     EstimateWithdrawLiquidity { lp_token: Coin },
+}
+
+#[cw_serde]
+pub struct VaultInfoResponse {
+    pub vault: VaultUnchecked,
+    pub config: VaultConfig,
+    /// The amount the vault has been utilized,
+    /// denominated in the same denom set in the vault config's deposit cap
+    pub utilization: Coin,
 }
 
 #[cw_serde]

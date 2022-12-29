@@ -1,9 +1,10 @@
-use cosmwasm_std::{Addr, Coin, Deps, StdResult, Storage, Uint128};
+use cosmwasm_std::{coin, Addr, Coin, Decimal, Deps, StdResult, Storage, Uint128};
 
 use mars_rover::adapters::vault::{Vault, VaultPositionAmount, VaultPositionUpdate};
 use mars_rover::error::{ContractError, ContractResult};
+use mars_rover::traits::IntoUint128;
 
-use crate::state::{MAX_UNLOCKING_POSITIONS, VAULT_CONFIGS, VAULT_POSITIONS};
+use crate::state::{MAX_UNLOCKING_POSITIONS, ORACLE, VAULT_CONFIGS, VAULT_POSITIONS};
 use crate::update_coin_balances::query_balance;
 
 pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> ContractResult<()> {
@@ -67,4 +68,43 @@ pub fn query_withdraw_denom_balance(
 ) -> StdResult<Coin> {
     let vault_info = vault.query_info(&deps.querier)?;
     query_balance(&deps.querier, rover_addr, vault_info.base_token.as_str())
+}
+
+pub fn vault_utilization_in_deposit_cap_denom(
+    deps: &Deps,
+    vault: &Vault,
+    rover_addr: &Addr,
+) -> ContractResult<Coin> {
+    let rover_vault_balance_value = rover_vault_balance_value(deps, vault, rover_addr)?;
+    let config = VAULT_CONFIGS.load(deps.storage, &vault.address)?;
+    let oracle = ORACLE.load(deps.storage)?;
+    let deposit_cap_denom_price = oracle
+        .query_price(&deps.querier, &config.deposit_cap.denom)?
+        .price;
+
+    Ok(Coin {
+        denom: config.deposit_cap.denom,
+        amount: rover_vault_balance_value
+            .checked_div(deposit_cap_denom_price)?
+            .uint128(),
+    })
+}
+
+/// Total value of vault coins under Rover's management for vault
+pub fn rover_vault_balance_value(
+    deps: &Deps,
+    vault: &Vault,
+    rover_addr: &Addr,
+) -> ContractResult<Decimal> {
+    let oracle = ORACLE.load(deps.storage)?;
+    let vault_info = vault.query_info(&deps.querier)?;
+    let rover_vault_coin_balance = vault.query_balance(&deps.querier, rover_addr)?;
+    let balance_value = oracle.query_total_value(
+        &deps.querier,
+        &[coin(
+            rover_vault_coin_balance.u128(),
+            vault_info.vault_token,
+        )],
+    )?;
+    Ok(balance_value)
 }

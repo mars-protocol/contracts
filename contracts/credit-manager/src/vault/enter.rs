@@ -1,6 +1,5 @@
 use cosmwasm_std::{
-    coin as c, to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Uint128,
-    WasmMsg,
+    to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Uint128, WasmMsg,
 };
 
 use mars_rover::adapters::vault::{UpdateType, Vault, VaultPositionUpdate};
@@ -11,6 +10,7 @@ use mars_rover::msg::ExecuteMsg;
 use crate::query::query_vault_positions;
 use crate::state::{COIN_BALANCES, ORACLE, VAULT_CONFIGS};
 use crate::utils::{assert_coin_is_whitelisted, decrement_coin_balance};
+use crate::vault::rover_vault_balance_value;
 use crate::vault::utils::{assert_vault_is_whitelisted, update_vault_position};
 
 pub fn enter_vault(
@@ -107,23 +107,17 @@ pub fn assert_denom_matches_vault_reqs(
 pub fn assert_deposit_is_under_cap(
     deps: Deps,
     vault: &Vault,
-    coin: &Coin,
+    coin_to_add: &Coin,
     rover_addr: &Addr,
 ) -> ContractResult<()> {
     let oracle = ORACLE.load(deps.storage)?;
-    let deposit_request_value = oracle.query_total_value(&deps.querier, &[coin.clone()])?;
+    let deposit_request_value = oracle.query_total_value(&deps.querier, &[coin_to_add.clone()])?;
+    let rover_vault_balance_value = rover_vault_balance_value(&deps, vault, rover_addr)?;
+
+    let new_total_vault_value = rover_vault_balance_value.checked_add(deposit_request_value)?;
 
     let config = VAULT_CONFIGS.load(deps.storage, &vault.address)?;
     let deposit_cap_value = oracle.query_total_value(&deps.querier, &[config.deposit_cap])?;
-
-    let vault_info = vault.query_info(&deps.querier)?;
-    let rover_vault_coin_balance = vault.query_balance(&deps.querier, rover_addr)?;
-    let rover_vault_coins_value = oracle.query_total_value(
-        &deps.querier,
-        &[c(rover_vault_coin_balance.u128(), vault_info.vault_token)],
-    )?;
-
-    let new_total_vault_value = rover_vault_coins_value.checked_add(deposit_request_value)?;
 
     if new_total_vault_value > deposit_cap_value {
         return Err(ContractError::AboveVaultDepositCap {

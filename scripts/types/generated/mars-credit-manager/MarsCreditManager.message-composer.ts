@@ -54,7 +54,8 @@ import {
   HealthResponse,
   Positions,
   DebtAmount,
-  ArrayOfVaultInstantiateConfig,
+  ArrayOfVaultInfoResponse,
+  VaultInfoResponse,
 } from './MarsCreditManager.types'
 export interface MarsCreditManagerMessage {
   contractAddress: string

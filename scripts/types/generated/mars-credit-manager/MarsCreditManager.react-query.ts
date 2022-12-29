@@ -54,7 +54,8 @@ import {
   HealthResponse,
   Positions,
   DebtAmount,
-  ArrayOfVaultInstantiateConfig,
+  ArrayOfVaultInfoResponse,
+  VaultInfoResponse,
 } from './MarsCreditManager.types'
 import { MarsCreditManagerQueryClient, MarsCreditManagerClient } from './MarsCreditManager.client'
 export const marsCreditManagerQueryKeys = {
@@ -69,9 +70,9 @@ export const marsCreditManagerQueryKeys = {
     [
       { ...marsCreditManagerQueryKeys.address(contractAddress)[0], method: 'config', args },
     ] as const,
-  vaultConfigs: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+  vaultsInfo: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
-      { ...marsCreditManagerQueryKeys.address(contractAddress)[0], method: 'vault_configs', args },
+      { ...marsCreditManagerQueryKeys.address(contractAddress)[0], method: 'vaults_info', args },
     ] as const,
   allowedCoins: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -437,23 +438,23 @@ export function useMarsCreditManagerAllowedCoinsQuery<TData = ArrayOfString>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsCreditManagerVaultConfigsQuery<TData>
-  extends MarsCreditManagerReactQuery<ArrayOfVaultInstantiateConfig, TData> {
+export interface MarsCreditManagerVaultsInfoQuery<TData>
+  extends MarsCreditManagerReactQuery<ArrayOfVaultInfoResponse, TData> {
   args: {
     limit?: number
     startAfter?: VaultBaseForString
   }
 }
-export function useMarsCreditManagerVaultConfigsQuery<TData = ArrayOfVaultInstantiateConfig>({
+export function useMarsCreditManagerVaultsInfoQuery<TData = ArrayOfVaultInfoResponse>({
   client,
   args,
   options,
-}: MarsCreditManagerVaultConfigsQuery<TData>) {
-  return useQuery<ArrayOfVaultInstantiateConfig, Error, TData>(
-    marsCreditManagerQueryKeys.vaultConfigs(client?.contractAddress, args),
+}: MarsCreditManagerVaultsInfoQuery<TData>) {
+  return useQuery<ArrayOfVaultInfoResponse, Error, TData>(
+    marsCreditManagerQueryKeys.vaultsInfo(client?.contractAddress, args),
     () =>
       client
-        ? client.vaultConfigs({
+        ? client.vaultsInfo({
             limit: args.limit,
             startAfter: args.startAfter,
           })

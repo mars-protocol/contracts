@@ -33,7 +33,8 @@ use mars_rover::msg::execute::{Action, CallbackMsg};
 use mars_rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
 use mars_rover::msg::query::{
     CoinBalanceResponseItem, ConfigResponse, DebtShares, HealthResponse, Positions,
-    SharesResponseItem, VaultPositionResponseItem, VaultWithBalance,
+    SharesResponseItem, VaultInfoResponse as RoverVaultInfoResponse, VaultPositionResponseItem,
+    VaultWithBalance,
 };
 use mars_rover::msg::zapper::QueryMsg::EstimateProvideLiquidity;
 use mars_rover::msg::zapper::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
@@ -244,12 +245,12 @@ impl MockEnv {
         &self,
         start_after: Option<VaultUnchecked>,
         limit: Option<u32>,
-    ) -> Vec<VaultInstantiateConfig> {
+    ) -> Vec<RoverVaultInfoResponse> {
         self.app
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
-                &QueryMsg::VaultConfigs { start_after, limit },
+                &QueryMsg::VaultsInfo { start_after, limit },
             )
             .unwrap()
     }

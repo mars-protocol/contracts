@@ -41,8 +41,8 @@ import {
   ArrayOfCoin,
   Positions,
   DebtAmount,
-  ArrayOfVaultInstantiateConfig,
-  VaultInstantiateConfig,
+  ArrayOfVaultInfoResponse,
+  VaultInfoResponse,
   VaultConfig,
 } from './MarsMockCreditManager.types'
 import {
@@ -61,11 +61,11 @@ export const marsMockCreditManagerQueryKeys = {
     [
       { ...marsMockCreditManagerQueryKeys.address(contractAddress)[0], method: 'config', args },
     ] as const,
-  vaultConfigs: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+  vaultsInfo: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       {
         ...marsMockCreditManagerQueryKeys.address(contractAddress)[0],
-        method: 'vault_configs',
+        method: 'vaults_info',
         args,
       },
     ] as const,
@@ -435,23 +435,23 @@ export function useMarsMockCreditManagerAllowedCoinsQuery<TData = ArrayOfString>
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsMockCreditManagerVaultConfigsQuery<TData>
-  extends MarsMockCreditManagerReactQuery<ArrayOfVaultInstantiateConfig, TData> {
+export interface MarsMockCreditManagerVaultsInfoQuery<TData>
+  extends MarsMockCreditManagerReactQuery<ArrayOfVaultInfoResponse, TData> {
   args: {
     limit?: number
     startAfter?: VaultBaseForString
   }
 }
-export function useMarsMockCreditManagerVaultConfigsQuery<TData = ArrayOfVaultInstantiateConfig>({
+export function useMarsMockCreditManagerVaultsInfoQuery<TData = ArrayOfVaultInfoResponse>({
   client,
   args,
   options,
-}: MarsMockCreditManagerVaultConfigsQuery<TData>) {
-  return useQuery<ArrayOfVaultInstantiateConfig, Error, TData>(
-    marsMockCreditManagerQueryKeys.vaultConfigs(client?.contractAddress, args),
+}: MarsMockCreditManagerVaultsInfoQuery<TData>) {
+  return useQuery<ArrayOfVaultInfoResponse, Error, TData>(
+    marsMockCreditManagerQueryKeys.vaultsInfo(client?.contractAddress, args),
     () =>
       client
-        ? client.vaultConfigs({
+        ? client.vaultsInfo({
             limit: args.limit,
             startAfter: args.startAfter,
           })

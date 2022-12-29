@@ -41,8 +41,8 @@ import {
   ArrayOfCoin,
   Positions,
   DebtAmount,
-  ArrayOfVaultInstantiateConfig,
-  VaultInstantiateConfig,
+  ArrayOfVaultInfoResponse,
+  VaultInfoResponse,
   VaultConfig,
 } from './MarsMockCreditManager.types'
 export interface MarsMockCreditManagerMessage {

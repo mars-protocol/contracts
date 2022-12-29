@@ -37,6 +37,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   redBank: { addr: 'osmo18w58j2dlpre6kslls9w88aur5ud8000wvg8pw4fp80p6q97g6qtqvhztpv' },
   swapRoutes: [
     { denomIn: uosmo, denomOut: uatom, route: [{ token_out_denom: uatom, pool_id: '1' }] },
+    { denomIn: uatom, denomOut: uosmo, route: [{ token_out_denom: uosmo, pool_id: '1' }] },
   ],
   zapper: { addr: 'osmo150dpk65f6deunksn94xtvu249hnr2hwqe335ukucltlwh3uz87hq898s7q' },
   vaults: [

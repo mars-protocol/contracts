@@ -3,10 +3,9 @@ use cw_storage_plus::Bound;
 
 use mars_rover::adapters::vault::{Vault, VaultBase, VaultPosition, VaultUnchecked};
 use mars_rover::error::ContractResult;
-use mars_rover::msg::instantiate::VaultInstantiateConfig;
 use mars_rover::msg::query::{
     CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, Positions, SharesResponseItem,
-    VaultPositionResponseItem, VaultWithBalance,
+    VaultInfoResponse, VaultPositionResponseItem, VaultWithBalance,
 };
 
 use crate::state::ADMIN;
@@ -16,6 +15,7 @@ use crate::state::{
     VAULT_POSITIONS, ZAPPER,
 };
 use crate::utils::debt_shares_to_amount;
+use crate::vault::vault_utilization_in_deposit_cap_denom;
 
 const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
@@ -119,11 +119,12 @@ pub fn query_all_debt_shares(
         .collect())
 }
 
-pub fn query_vault_configs(
+pub fn query_vaults_info(
     deps: Deps,
+    env: Env,
     start_after: Option<VaultUnchecked>,
     limit: Option<u32>,
-) -> StdResult<Vec<VaultInstantiateConfig>> {
+) -> ContractResult<Vec<VaultInfoResponse>> {
     let vault: Vault;
     let start = match &start_after {
         Some(unchecked) => {
@@ -140,9 +141,15 @@ pub fn query_vault_configs(
         .take(limit)
         .map(|res| {
             let (addr, config) = res?;
-            Ok(VaultInstantiateConfig {
-                vault: VaultBase::new(addr.to_string()),
+            let vault = VaultBase::new(addr);
+            Ok(VaultInfoResponse {
+                vault: vault.clone().into(),
                 config,
+                utilization: vault_utilization_in_deposit_cap_denom(
+                    &deps,
+                    &vault,
+                    &env.contract.address,
+                )?,
             })
         })
         .collect()

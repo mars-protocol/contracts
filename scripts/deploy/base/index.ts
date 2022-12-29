@@ -24,9 +24,6 @@ export const taskRunner = async ({
     await deployer.upload('zapper', wasmFile(zapperContractName))
     await deployer.upload('creditManager', wasmFile('mars_credit_manager'))
 
-    // Set contracts owner
-    deployer.setOwnerAddr()
-
     // Instantiate contracts
     await deployer.instantiateMockVault()
     await deployer.instantiateMarsOracleAdapter()

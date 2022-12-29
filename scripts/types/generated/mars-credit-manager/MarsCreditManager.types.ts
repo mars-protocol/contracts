@@ -288,7 +288,7 @@ export type QueryMsg =
       config: {}
     }
   | {
-      vault_configs: {
+      vaults_info: {
         limit?: number | null
         start_after?: VaultBaseForString | null
       }
@@ -441,4 +441,9 @@ export interface DebtAmount {
   denom: string
   shares: Uint128
 }
-export type ArrayOfVaultInstantiateConfig = VaultInstantiateConfig[]
+export type ArrayOfVaultInfoResponse = VaultInfoResponse[]
+export interface VaultInfoResponse {
+  config: VaultConfig
+  utilization: Coin
+  vault: VaultBaseForString
+}

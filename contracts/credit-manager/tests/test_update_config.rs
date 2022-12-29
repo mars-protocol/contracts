@@ -1,12 +1,19 @@
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
+use cw_multi_test::{BasicApp, Executor};
 
+use mars_mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
+use mars_mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
 use mars_rover::adapters::swap::SwapperBase;
 use mars_rover::adapters::vault::{VaultBase, VaultConfig};
 use mars_rover::adapters::{OracleBase, ZapperBase};
 use mars_rover::error::ContractError::InvalidConfig;
 use mars_rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
+use mars_rover::msg::query::VaultInfoResponse;
 
-use crate::helpers::{assert_err, locked_vault_info, uatom_info, uosmo_info, MockEnv};
+use crate::helpers::{
+    assert_err, locked_vault_info, mock_oracle_contract, mock_vault_contract, uatom_info,
+    uosmo_info, MockEnv,
+};
 
 pub mod helpers;
 
@@ -105,17 +112,9 @@ fn test_update_config_works_with_full_config() {
     let original_vault_configs = mock.query_vault_configs(None, None);
 
     let new_nft_contract = mock.deploy_new_nft_contract().unwrap();
-    let new_vault_configs = vec![VaultInstantiateConfig {
-        vault: VaultBase::new("vault_contract_3000".to_string()),
-        config: VaultConfig {
-            deposit_cap: coin(123, "usomething"),
-            max_ltv: Decimal::from_atomics(3u128, 1).unwrap(),
-            liquidation_threshold: Decimal::from_atomics(5u128, 1).unwrap(),
-            whitelisted: false,
-        },
-    }];
+    let new_vault_configs = vec![deploy_vault(&mut mock.app)];
     let new_allowed_coins = vec!["uosmo".to_string()];
-    let new_oracle = OracleBase::new("new_oracle".to_string());
+    let new_oracle = deploy_new_oracle(&mut mock.app);
     let new_zapper = ZapperBase::new("new_zapper".to_string());
     let new_close_factor = Decimal::from_atomics(32u128, 2).unwrap();
     let new_unlocking_max = Uint128::new(321);
@@ -148,7 +147,17 @@ fn test_update_config_works_with_full_config() {
         original_config.admin.clone().unwrap()
     );
 
-    assert_eq!(new_queried_vault_configs, new_vault_configs);
+    assert_eq!(
+        new_queried_vault_configs,
+        new_vault_configs
+            .iter()
+            .map(|v| VaultInfoResponse {
+                vault: v.vault.clone(),
+                config: v.config.clone(),
+                utilization: coin(0, "uusdc"),
+            })
+            .collect::<Vec<_>>()
+    );
     assert_ne!(new_queried_vault_configs, original_vault_configs);
 
     assert_eq!(new_queried_allowed_coins, new_allowed_coins);
@@ -184,21 +193,13 @@ fn test_update_config_works_with_some_config() {
     let original_vault_configs = mock.query_vault_configs(None, None);
 
     let new_nft_contract = mock.deploy_new_nft_contract().unwrap();
-    let new_vault_configs = vec![VaultInstantiateConfig {
-        vault: VaultBase::new("vault_contract_1".to_string()),
-        config: VaultConfig {
-            deposit_cap: coin(1211, "uxyz"),
-            max_ltv: Default::default(),
-            liquidation_threshold: Default::default(),
-            whitelisted: false,
-        },
-    }];
+    let new_max_unlocking = Uint128::new(42);
 
     mock.update_config(
         &Addr::unchecked(original_config.admin.clone().unwrap()),
         ConfigUpdates {
             account_nft: Some(new_nft_contract.to_string()),
-            vault_configs: Some(new_vault_configs.clone()),
+            max_unlocking_positions: Some(new_max_unlocking),
             ..Default::default()
         },
     )
@@ -212,13 +213,28 @@ fn test_update_config_works_with_some_config() {
     assert_eq!(new_config.account_nft, Some(new_nft_contract.to_string()));
     assert_ne!(new_config.account_nft, original_config.account_nft);
 
-    assert_eq!(new_queried_vault_configs, new_vault_configs);
-    assert_ne!(new_queried_vault_configs, original_vault_configs);
+    assert_eq!(new_config.max_unlocking_positions, new_max_unlocking);
+    assert_ne!(
+        new_config.max_unlocking_positions,
+        original_config.max_unlocking_positions
+    );
 
     // Unchanged configs
     assert_eq!(new_config.admin, original_config.admin);
-    assert_eq!(original_allowed_coins, new_queried_allowed_coins);
+    assert_eq!(
+        new_config.proposed_new_admin,
+        original_config.proposed_new_admin
+    );
     assert_eq!(new_config.red_bank, original_config.red_bank);
+    assert_eq!(new_config.oracle, original_config.oracle);
+    assert_eq!(
+        new_config.max_close_factor,
+        original_config.max_close_factor
+    );
+    assert_eq!(new_config.swapper, original_config.swapper);
+    assert_eq!(new_config.zapper, original_config.zapper);
+    assert_eq!(original_allowed_coins, new_queried_allowed_coins);
+    assert_eq!(new_queried_vault_configs, original_vault_configs);
 }
 
 #[test]
@@ -381,4 +397,58 @@ fn test_raises_on_duplicate_coin_configs() {
             reason: "Duplicate coin configs present".to_string(),
         },
     );
+}
+
+fn deploy_new_oracle(app: &mut BasicApp) -> OracleBase<String> {
+    let contract_code_id = app.store_code(mock_oracle_contract());
+    let addr = app
+        .instantiate_contract(
+            contract_code_id,
+            Addr::unchecked("oracle_contract_admin"),
+            &OracleInstantiateMsg {
+                prices: vec![
+                    CoinPrice {
+                        denom: "uusdc".to_string(),
+                        price: Decimal::from_atomics(12345u128, 4).unwrap(),
+                    },
+                    CoinPrice {
+                        denom: "vault_xyz".to_string(),
+                        price: Decimal::from_atomics(989685877u128, 8).unwrap(),
+                    },
+                ],
+            },
+            &[],
+            "mock-oracle",
+            None,
+        )
+        .unwrap();
+    OracleBase::new(addr.to_string())
+}
+
+fn deploy_vault(app: &mut BasicApp) -> VaultInstantiateConfig {
+    let code_id = app.store_code(mock_vault_contract());
+    let addr = app
+        .instantiate_contract(
+            code_id,
+            Addr::unchecked("vault-instantiator"),
+            &VaultInstantiateMsg {
+                vault_token_denom: "vault_xyz".to_string(),
+                lockup: None,
+                base_token_denom: "base_token".to_string(),
+                oracle: OracleBase::new("oracle".to_string()),
+            },
+            &[],
+            "mock-vault",
+            None,
+        )
+        .unwrap();
+    VaultInstantiateConfig {
+        vault: VaultBase::new(addr.to_string()),
+        config: VaultConfig {
+            deposit_cap: coin(123, "uusdc"),
+            max_ltv: Decimal::from_atomics(3u128, 1).unwrap(),
+            liquidation_threshold: Decimal::from_atomics(5u128, 1).unwrap(),
+            whitelisted: false,
+        },
+    }
 }

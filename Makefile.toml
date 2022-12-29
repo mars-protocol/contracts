@@ -13,9 +13,9 @@ args = ["build", "--release", "--target", "wasm32-unknown-unknown", "--locked"]
 [tasks.rust-optimizer]
 script = """
 if [[ $(arch) == "arm64" ]]; then
-  image="cosmwasm/workspace-optimizer-arm64:0.12.8"
+  image="cosmwasm/workspace-optimizer-arm64:0.12.11"
 else
-  image="cosmwasm/workspace-optimizer:0.12.10"
+  image="cosmwasm/workspace-optimizer:0.12.11"
 fi
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
