@@ -273,8 +273,8 @@ fn test_successful_zap() {
 
     // assert user's new position
     let positions = mock.query_positions(&account_id);
-    assert_eq!(positions.coins.len(), 1);
-    let lp_balance = get_coin(&lp_token.denom, &positions.coins);
+    assert_eq!(positions.deposits.len(), 1);
+    let lp_balance = get_coin(&lp_token.denom, &positions.deposits);
     assert_eq!(lp_balance.amount, STARTING_LP_POOL_TOKENS);
 
     // assert rover actually has the tokens
@@ -337,8 +337,8 @@ fn test_can_provide_unbalanced() {
 
     // assert user's new position
     let positions = mock.query_positions(&account_id);
-    assert_eq!(positions.coins.len(), 1);
-    let lp_balance = get_coin(&lp_token.denom, &positions.coins);
+    assert_eq!(positions.deposits.len(), 1);
+    let lp_balance = get_coin(&lp_token.denom, &positions.deposits);
     assert_eq!(lp_balance.amount, STARTING_LP_POOL_TOKENS);
 
     // assert coin balance of zapper contract
@@ -360,13 +360,13 @@ fn test_can_provide_unbalanced() {
 
     // assert user's new position (withdrew half)
     let positions = mock.query_positions(&account_id);
-    assert_eq!(positions.coins.len(), 2);
-    let lp_balance = get_coin(&lp_token.denom, &positions.coins);
+    assert_eq!(positions.deposits.len(), 2);
+    let lp_balance = get_coin(&lp_token.denom, &positions.deposits);
     assert_eq!(
         lp_balance.amount,
         STARTING_LP_POOL_TOKENS.multiply_ratio(1u128, 2u128)
     );
-    let atom_balance = get_coin(&atom.denom, &positions.coins);
+    let atom_balance = get_coin(&atom.denom, &positions.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(50));
 
     // assert coin balance of zapper contract
@@ -432,8 +432,8 @@ fn test_order_does_not_matter() {
 
     // assert user's new position
     let positions = mock.query_positions(&account_id);
-    assert_eq!(positions.coins.len(), 1);
-    let lp_balance = get_coin(&lp_token.denom, &positions.coins);
+    assert_eq!(positions.deposits.len(), 1);
+    let lp_balance = get_coin(&lp_token.denom, &positions.deposits);
     assert_eq!(
         lp_balance.amount,
         STARTING_LP_POOL_TOKENS.mul(Uint128::new(2))

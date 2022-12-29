@@ -78,7 +78,7 @@ fn test_borrowing_zero_does_nothing() {
     assert_err(res, ContractError::NoAmount);
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 0);
+    assert_eq!(position.deposits.len(), 0);
     assert_eq!(position.debts.len(), 0);
 }
 
@@ -97,7 +97,7 @@ fn test_cannot_borrow_above_max_ltv() {
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 0);
+    assert_eq!(position.deposits.len(), 0);
     assert_eq!(position.debts.len(), 0);
 
     let res = mock.update_credit_account(
@@ -134,7 +134,7 @@ fn test_success_when_new_debt_asset() {
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 0);
+    assert_eq!(position.deposits.len(), 0);
     assert_eq!(position.debts.len(), 0);
     mock.update_credit_account(
         &account_id,
@@ -148,8 +148,8 @@ fn test_success_when_new_debt_asset() {
     .unwrap();
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 1);
-    let asset_res = position.coins.first().unwrap();
+    assert_eq!(position.deposits.len(), 1);
+    let asset_res = position.deposits.first().unwrap();
     assert_eq!(
         asset_res.amount,
         Uint128::new(342) // Deposit + Borrow

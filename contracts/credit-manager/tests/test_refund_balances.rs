@@ -41,7 +41,7 @@ fn test_refund_coin_balances_when_balances() {
 
     // Assert refunds have been issued
     let res = mock.query_positions(&account_id);
-    assert_eq!(res.coins.len(), 0);
+    assert_eq!(res.deposits.len(), 0);
 
     let osmo_balance = mock.query_balance(&user, &uosmo_info.denom);
     assert_eq!(osmo_balance.amount, Uint128::new(234));
@@ -87,7 +87,7 @@ fn test_refund_coin_balances_when_no_balances() {
 
     // Assert no error is thrown and nothing happens to coin balances
     let res = mock.query_positions(&account_id);
-    assert_eq!(res.coins.len(), 0);
+    assert_eq!(res.deposits.len(), 0);
     // Assert vault positions have not been effected
     assert_eq!(res.vaults.len(), 1);
 

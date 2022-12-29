@@ -378,8 +378,8 @@ fn test_liquidate_unlocked_vault() {
     let vault_balance = position.vaults.first().unwrap().amount.unlocked();
     assert_eq!(vault_balance, Uint128::new(883_533)); // 1M - 116_467
 
-    assert_eq!(position.coins.len(), 1);
-    let jake_balance = get_coin("ujake", &position.coins);
+    assert_eq!(position.deposits.len(), 1);
+    let jake_balance = get_coin("ujake", &position.deposits);
     assert_eq!(jake_balance.amount, Uint128::new(175));
 
     assert_eq!(position.debts.len(), 1);
@@ -388,9 +388,9 @@ fn test_liquidate_unlocked_vault() {
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
-    assert_eq!(position.coins.len(), 1);
+    assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
-    let lp = get_coin(&lp_token.denom, &position.coins);
+    let lp = get_coin(&lp_token.denom, &position.deposits);
     assert_eq!(lp.amount, Uint128::new(23));
 }
 
@@ -467,8 +467,8 @@ fn test_liquidate_locked_vault() {
     assert_eq!(vault_amount.unlocking().positions().len(), 0);
     assert_eq!(vault_amount.unlocked(), Uint128::zero());
 
-    assert_eq!(position.coins.len(), 1);
-    let atom_balance = get_coin("uatom", &position.coins);
+    assert_eq!(position.deposits.len(), 1);
+    let atom_balance = get_coin("uatom", &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(700));
 
     assert_eq!(position.debts.len(), 1);
@@ -477,9 +477,9 @@ fn test_liquidate_locked_vault() {
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
-    assert_eq!(position.coins.len(), 1);
+    assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
-    let lp_balance = get_coin(&lp_token.denom, &position.coins);
+    let lp_balance = get_coin(&lp_token.denom, &position.deposits);
     assert_eq!(lp_balance.amount, Uint128::new(66));
 }
 
@@ -597,8 +597,8 @@ fn test_liquidate_unlocking_liquidation_order() {
         Uint128::new(168)
     );
 
-    assert_eq!(position.coins.len(), 1);
-    let jake_balance = get_coin("ujake", &position.coins);
+    assert_eq!(position.deposits.len(), 1);
+    let jake_balance = get_coin("ujake", &position.deposits);
     assert_eq!(jake_balance.amount, Uint128::new(175));
 
     assert_eq!(position.debts.len(), 1);
@@ -607,9 +607,9 @@ fn test_liquidate_unlocking_liquidation_order() {
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
-    assert_eq!(position.coins.len(), 1);
+    assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
-    let lp_balance = get_coin(&lp_token.denom, &position.coins);
+    let lp_balance = get_coin(&lp_token.denom, &position.deposits);
     assert_eq!(lp_balance.amount, Uint128::new(23));
 }
 
@@ -687,8 +687,8 @@ fn test_liquidation_calculation_adjustment() {
     let vault_balance = position.vaults.first().unwrap().amount.unlocked();
     assert_eq!(vault_balance, Uint128::new(10_027)); // Vault position liquidated by 99%
 
-    assert_eq!(position.coins.len(), 1);
-    let jake_balance = get_coin("ujake", &position.coins);
+    assert_eq!(position.deposits.len(), 1);
+    let jake_balance = get_coin("ujake", &position.deposits);
     assert_eq!(jake_balance.amount, Uint128::new(175));
 
     assert_eq!(position.debts.len(), 1);
@@ -697,10 +697,10 @@ fn test_liquidation_calculation_adjustment() {
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
-    assert_eq!(position.coins.len(), 2);
-    let jake_balance = get_coin("ujake", &position.coins);
+    assert_eq!(position.deposits.len(), 2);
+    let jake_balance = get_coin("ujake", &position.deposits);
     assert_eq!(jake_balance.amount, Uint128::new(415));
-    let atom_balance = get_coin(&lp_token.denom, &position.coins);
+    let atom_balance = get_coin(&lp_token.denom, &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(197));
     assert_eq!(position.debts.len(), 0);
 }

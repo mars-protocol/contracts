@@ -144,7 +144,7 @@ fn test_withdraw_with_unlocked_vault_coins() {
     assert_eq!(res.vaults.len(), 1);
     let v = res.vaults.first().unwrap();
     assert_eq!(v.amount.unlocked(), STARTING_VAULT_SHARES);
-    let lp = get_coin(&lp_token.denom, &res.coins);
+    let lp = get_coin(&lp_token.denom, &res.deposits);
     assert_eq!(lp.amount, Uint128::from(100u128));
 
     // Assert Rover's totals
@@ -169,7 +169,7 @@ fn test_withdraw_with_unlocked_vault_coins() {
     // Assert token's updated position
     let res = mock.query_positions(&account_id);
     assert_eq!(res.vaults.len(), 0);
-    let lp = get_coin(&lp_token.denom, &res.coins);
+    let lp = get_coin(&lp_token.denom, &res.deposits);
     assert_eq!(lp.amount, Uint128::from(200u128));
 
     // Assert Rover indeed has those on hand in the bank

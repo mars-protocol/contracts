@@ -100,9 +100,9 @@ fn test_user_gets_rebalanced_down() {
     .unwrap();
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 1);
-    assert_eq!(position.coins.first().unwrap().denom, osmo_info.denom);
-    assert_eq!(position.coins.first().unwrap().amount.u128(), 100);
+    assert_eq!(position.deposits.len(), 1);
+    assert_eq!(position.deposits.first().unwrap().denom, osmo_info.denom);
+    assert_eq!(position.deposits.first().unwrap().amount.u128(), 100);
 }
 
 #[test]
@@ -145,7 +145,7 @@ fn test_user_gets_rebalanced_up() {
     .unwrap();
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 1);
-    assert_eq!(position.coins.first().unwrap().denom, osmo_info.denom);
-    assert_eq!(position.coins.first().unwrap().amount.u128(), 500);
+    assert_eq!(position.deposits.len(), 1);
+    assert_eq!(position.deposits.first().unwrap().denom, osmo_info.denom);
+    assert_eq!(position.deposits.first().unwrap().amount.u128(), 500);
 }

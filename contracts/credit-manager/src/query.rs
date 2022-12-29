@@ -40,7 +40,7 @@ pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
 pub fn query_positions(deps: Deps, env: &Env, account_id: &str) -> ContractResult<Positions> {
     Ok(Positions {
         account_id: account_id.to_string(),
-        coins: query_coin_balances(deps, account_id)?,
+        deposits: query_coin_balances(deps, account_id)?,
         debts: query_debt_amounts(deps, env, account_id)?,
         vaults: query_vault_positions(deps, account_id)?,
     })

@@ -279,8 +279,8 @@ fn test_withdraw_unlock_success_time_expiring() {
     )
     .unwrap();
 
-    let Positions { coins, .. } = mock.query_positions(&account_id);
-    assert_eq!(coins.len(), 0);
+    let Positions { deposits, .. } = mock.query_positions(&account_id);
+    assert_eq!(deposits.len(), 0);
 
     mock.app.update_block(|block| {
         if let Duration::Time(s) = leverage_vault.lockup.unwrap() {
@@ -303,13 +303,15 @@ fn test_withdraw_unlock_success_time_expiring() {
     )
     .unwrap();
 
-    let Positions { vaults, coins, .. } = mock.query_positions(&account_id);
+    let Positions {
+        vaults, deposits, ..
+    } = mock.query_positions(&account_id);
 
     // Users vault position decrements
     assert_eq!(vaults.len(), 0);
 
     // Users asset position increments
-    let lp = get_coin(&lp_token.denom, &coins);
+    let lp = get_coin(&lp_token.denom, &deposits);
     assert_eq!(lp.amount, Uint128::from(200u128));
 
     // Assert Rover indeed has those on hand in the bank
@@ -354,8 +356,8 @@ fn test_withdraw_unlock_success_block_expiring() {
     )
     .unwrap();
 
-    let Positions { coins, .. } = mock.query_positions(&account_id);
-    assert_eq!(coins.len(), 0);
+    let Positions { deposits, .. } = mock.query_positions(&account_id);
+    assert_eq!(deposits.len(), 0);
 
     mock.app.update_block(|block| {
         if let Duration::Height(h) = leverage_vault.lockup.unwrap() {
@@ -378,13 +380,15 @@ fn test_withdraw_unlock_success_block_expiring() {
     )
     .unwrap();
 
-    let Positions { vaults, coins, .. } = mock.query_positions(&account_id);
+    let Positions {
+        vaults, deposits, ..
+    } = mock.query_positions(&account_id);
 
     // Users vault position decrements
     assert_eq!(vaults.len(), 0);
 
     // Users asset position increments
-    let lp = get_coin(&lp_token.denom, &coins);
+    let lp = get_coin(&lp_token.denom, &deposits);
     assert_eq!(lp.amount, Uint128::from(200u128));
 
     // Assert Rover indeed has those on hand in the bank

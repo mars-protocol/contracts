@@ -177,8 +177,8 @@ export interface ConfigResponse {
 export type ArrayOfCoin = Coin[]
 export interface Positions {
   account_id: string
-  coins: Coin[]
   debts: DebtAmount[]
+  deposits: Coin[]
   vaults: VaultPosition[]
 }
 export interface DebtAmount {

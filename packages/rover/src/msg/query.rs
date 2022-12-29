@@ -128,7 +128,7 @@ pub struct CoinValue {
 #[cw_serde]
 pub struct Positions {
     pub account_id: String,
-    pub coins: Vec<Coin>,
+    pub deposits: Vec<Coin>,
     pub debts: Vec<DebtAmount>,
     pub vaults: Vec<VaultPosition>,
 }

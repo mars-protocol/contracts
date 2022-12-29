@@ -56,9 +56,9 @@ export class Rover {
       [{ amount, denom: this.config.chain.baseDenom }],
     )
     const positions = await this.query.positions({ accountId: this.accountId! })
-    assert.equal(positions.coins.length, 1)
-    assert.equal(positions.coins[0].amount, amount)
-    assert.equal(positions.coins[0].denom, this.config.chain.baseDenom)
+    assert.equal(positions.deposits.length, 1)
+    assert.equal(positions.deposits[0].amount, amount)
+    assert.equal(positions.deposits[0].denom, this.config.chain.baseDenom)
     printGreen(`Deposited into credit account: ${amount} ${this.config.chain.baseDenom}`)
   }
 
@@ -66,12 +66,12 @@ export class Rover {
     const amount = this.actions.withdrawAmount
     const positionsBefore = await this.query.positions({ accountId: this.accountId! })
     const beforeWithdraw = parseFloat(
-      positionsBefore.coins.find((c) => c.denom === this.config.chain.baseDenom)!.amount,
+      positionsBefore.deposits.find((c) => c.denom === this.config.chain.baseDenom)!.amount,
     )
     await this.updateCreditAccount([{ withdraw: { amount, denom: this.config.chain.baseDenom } }])
     const positionsAfter = await this.query.positions({ accountId: this.accountId! })
     const afterWithdraw = parseFloat(
-      positionsAfter.coins.find((c) => c.denom === this.config.chain.baseDenom)!.amount,
+      positionsAfter.deposits.find((c) => c.denom === this.config.chain.baseDenom)!.amount,
     )
     assert.equal(beforeWithdraw - afterWithdraw, amount)
     printGreen(`Withdrew: ${amount} ${this.config.chain.baseDenom}`)
@@ -105,7 +105,7 @@ export class Rover {
       `Swapping ${amount} ${this.config.chain.baseDenom} for ${this.actions.secondaryDenom}`,
     )
     const prevPositions = await this.query.positions({ accountId: this.accountId! })
-    printBlue(`Previous account balance: ${JSON.stringify(prevPositions.coins)}`)
+    printBlue(`Previous account balance: ${JSON.stringify(prevPositions.deposits)}`)
     await this.updateCreditAccount([
       {
         swap_exact_in: {
@@ -117,7 +117,7 @@ export class Rover {
     ])
     printGreen(`Swap successful`)
     const newPositions = await this.query.positions({ accountId: this.accountId! })
-    printGreen(`New account balance: ${JSON.stringify(newPositions.coins)}`)
+    printGreen(`New account balance: ${JSON.stringify(newPositions.deposits)}`)
   }
 
   async zap(lp_token_out: string) {
@@ -134,7 +134,7 @@ export class Rover {
       },
     ])
     const positions = await this.query.positions({ accountId: this.accountId! })
-    const lp_balance = positions.coins.find((c) => c.denom === lp_token_out)!.amount
+    const lp_balance = positions.deposits.find((c) => c.denom === lp_token_out)!.amount
     printGreen(
       `Zapped ${this.actions.zap.coinsIn
         .map((c) => c.denom)
@@ -243,7 +243,7 @@ export class Rover {
   async refundAllBalances() {
     await this.updateCreditAccount([{ refund_all_coin_balances: {} }])
     const positions = await this.query.positions({ accountId: this.accountId! })
-    assert.equal(positions.coins.length, 0)
+    assert.equal(positions.deposits.length, 0)
     printGreen(`Withdrew all balances back to wallet`)
   }
 
@@ -271,7 +271,7 @@ export class Rover {
 
   private async getAccountBalance(denom: string) {
     const positions = await this.query.positions({ accountId: this.accountId! })
-    const coin = positions.coins.find((c) => c.denom === denom)
+    const coin = positions.deposits.find((c) => c.denom === denom)
     if (!coin) throw new Error(`No balance of ${denom}`)
     return parseInt(coin.amount)
   }

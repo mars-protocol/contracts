@@ -34,13 +34,13 @@ fn test_nothing_happens_if_no_actions_are_passed() {
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.query_positions(&account_id);
-    assert_eq!(res.coins.len(), 0);
+    assert_eq!(res.deposits.len(), 0);
 
     mock.update_credit_account(&account_id, &user, vec![], &[])
         .unwrap();
 
     let res = mock.query_positions(&account_id);
-    assert_eq!(res.coins.len(), 0);
+    assert_eq!(res.deposits.len(), 0);
 }
 
 #[test]

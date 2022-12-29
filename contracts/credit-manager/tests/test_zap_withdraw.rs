@@ -278,10 +278,10 @@ fn test_successful_unzap_specified_amount() {
 
     // Assert user's new position
     let positions = mock.query_positions(&account_id);
-    assert_eq!(positions.coins.len(), 2);
-    let atom_balance = get_coin(&atom.denom, &positions.coins);
+    assert_eq!(positions.deposits.len(), 2);
+    let atom_balance = get_coin(&atom.denom, &positions.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(100));
-    let osmo_balance = get_coin(&osmo.denom, &positions.coins);
+    let osmo_balance = get_coin(&osmo.denom, &positions.deposits);
     assert_eq!(osmo_balance.amount, Uint128::new(50));
 
     // assert rover actually has the tokens
@@ -341,10 +341,10 @@ fn test_successful_unzap_unspecified_amount() {
 
     // Assert user's new position
     let positions = mock.query_positions(&account_id);
-    assert_eq!(positions.coins.len(), 2);
-    let atom_balance = get_coin(&atom.denom, &positions.coins);
+    assert_eq!(positions.deposits.len(), 2);
+    let atom_balance = get_coin(&atom.denom, &positions.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(100));
-    let osmo_balance = get_coin(&osmo.denom, &positions.coins);
+    let osmo_balance = get_coin(&osmo.denom, &positions.deposits);
     assert_eq!(osmo_balance.amount, Uint128::new(50));
 
     // assert rover actually has the tokens

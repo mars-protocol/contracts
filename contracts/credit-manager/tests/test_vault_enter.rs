@@ -437,7 +437,7 @@ fn test_successful_deposit_with_implied_full_balance_amount() {
     let res = mock.query_positions(&account_id);
     let amount = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().amount.unlocked());
     assert_eq!(amount, Uint128::new(200));
-    assert_eq!(res.coins.len(), 0);
+    assert_eq!(res.deposits.len(), 0);
 
     // Assert vault indeed has those tokens
     let base_denom = mock.query_balance(

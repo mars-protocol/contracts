@@ -2296,24 +2296,24 @@
       "type": "object",
       "required": [
         "account_id",
-        "coins",
         "debts",
+        "deposits",
         "vaults"
       ],
       "properties": {
         "account_id": {
           "type": "string"
         },
-        "coins": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Coin"
-          }
-        },
         "debts": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/DebtAmount"
+          }
+        },
+        "deposits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Coin"
           }
         },
         "vaults": {

@@ -190,7 +190,7 @@ fn test_repay_less_than_total_debt() {
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 0);
+    assert_eq!(position.deposits.len(), 0);
     assert_eq!(position.debts.len(), 0);
 
     mock.update_credit_account(
@@ -215,8 +215,8 @@ fn test_repay_less_than_total_debt() {
     .unwrap();
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 1);
-    let asset_res = position.coins.first().unwrap();
+    assert_eq!(position.deposits.len(), 1);
+    let asset_res = position.deposits.first().unwrap();
     let expected_net_asset_amount = Uint128::new(330); // Deposit + Borrow - Repay
     assert_eq!(asset_res.amount, expected_net_asset_amount);
 
@@ -253,8 +253,8 @@ fn test_repay_less_than_total_debt() {
     .unwrap();
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 1);
-    let asset_res = position.coins.first().unwrap();
+    assert_eq!(position.deposits.len(), 1);
+    let asset_res = position.deposits.first().unwrap();
     let expected_net_asset_amount = Uint128::new(299); // Deposit + Borrow - full repay - interest
     assert_eq!(asset_res.amount, expected_net_asset_amount);
 
@@ -303,8 +303,8 @@ fn test_pays_max_debt_when_attempting_to_repay_more_than_owed() {
     .unwrap();
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 1);
-    let asset_res = position.coins.first().unwrap();
+    assert_eq!(position.deposits.len(), 1);
+    let asset_res = position.deposits.first().unwrap();
     let expected_net_asset_amount = Uint128::new(299); // Deposit + Borrow - Repay - interest
     assert_eq!(asset_res.amount, expected_net_asset_amount);
 

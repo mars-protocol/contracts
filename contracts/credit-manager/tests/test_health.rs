@@ -47,7 +47,7 @@ fn test_only_assets_with_no_debts() {
     .unwrap();
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 1);
+    assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
 
     let health = mock.query_health(&account_id);
@@ -106,7 +106,7 @@ fn test_terra_ragnarok() {
     .unwrap();
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 1);
+    assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 1);
 
     let health = mock.query_health(&account_id);
@@ -132,7 +132,7 @@ fn test_terra_ragnarok() {
     });
 
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 1);
+    assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 1);
 
     let health = mock.query_health(&account_id);
@@ -180,7 +180,7 @@ fn test_debts_no_assets() {
 
     let position = mock.query_positions(&account_id);
     assert_eq!(position.account_id, account_id);
-    assert_eq!(position.coins.len(), 0);
+    assert_eq!(position.deposits.len(), 0);
     assert_eq!(position.debts.len(), 0);
 
     let health = mock.query_health(&account_id);
@@ -232,7 +232,7 @@ fn test_cannot_borrow_more_than_healthy() {
 
     let position = mock.query_positions(&account_id);
     assert_eq!(position.account_id, account_id);
-    assert_eq!(position.coins.len(), 1);
+    assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 1);
 
     let health = mock.query_health(&account_id);
@@ -425,7 +425,7 @@ fn test_assets_and_ltv_lqdt_adjusted_value() {
 
     let position = mock.query_positions(&account_id);
     assert_eq!(position.account_id, account_id);
-    assert_eq!(position.coins.len(), 2);
+    assert_eq!(position.deposits.len(), 2);
     assert_eq!(position.debts.len(), 1);
 
     let health = mock.query_health(&account_id);
@@ -543,7 +543,7 @@ fn test_debt_value() {
 
     let position_a = mock.query_positions(&account_id_a);
     assert_eq!(position_a.account_id, account_id_a);
-    assert_eq!(position_a.coins.len(), 2);
+    assert_eq!(position_a.deposits.len(), 2);
     assert_eq!(position_a.debts.len(), 2);
 
     let health = mock.query_health(&account_id_a);

@@ -48,7 +48,7 @@ fn test_deposit_nothing() {
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.query_positions(&account_id);
-    assert_eq!(res.coins.len(), 0);
+    assert_eq!(res.deposits.len(), 0);
 
     mock.update_credit_account(
         &account_id,
@@ -59,7 +59,7 @@ fn test_deposit_nothing() {
     .unwrap();
 
     let res = mock.query_positions(&account_id);
-    assert_eq!(res.coins.len(), 0);
+    assert_eq!(res.deposits.len(), 0);
 }
 
 #[test]
@@ -90,7 +90,7 @@ fn test_deposit_but_no_funds() {
     );
 
     let res = mock.query_positions(&account_id);
-    assert_eq!(res.coins.len(), 0);
+    assert_eq!(res.deposits.len(), 0);
 }
 
 #[test]
@@ -150,7 +150,7 @@ fn test_can_only_deposit_allowed_assets() {
     assert_err(res, NotWhitelisted(not_allowed_coin.denom));
 
     let res = mock.query_positions(&account_id);
-    assert_eq!(res.coins.len(), 0);
+    assert_eq!(res.deposits.len(), 0);
 }
 
 #[test]
@@ -186,7 +186,7 @@ fn test_extra_funds_received() {
     );
 
     let res = mock.query_positions(&account_id);
-    assert_eq!(res.coins.len(), 0);
+    assert_eq!(res.deposits.len(), 0);
 }
 
 #[test]
@@ -214,8 +214,8 @@ fn test_deposit_success() {
     .unwrap();
 
     let res = mock.query_positions(&account_id);
-    let assets_res = res.coins.first().unwrap();
-    assert_eq!(res.coins.len(), 1);
+    let assets_res = res.deposits.first().unwrap();
+    assert_eq!(res.deposits.len(), 1);
     assert_eq!(assets_res.amount, deposit_amount);
     assert_eq!(assets_res.denom, coin_info.denom);
 
@@ -260,7 +260,7 @@ fn test_multiple_deposit_actions() {
     .unwrap();
 
     let res = mock.query_positions(&account_id);
-    assert_eq!(res.coins.len(), 2);
+    assert_eq!(res.deposits.len(), 2);
     assert_present(&res, &uosmo_info, uosmo_amount);
     assert_present(&res, &uatom_info, uatom_amount);
 
@@ -272,7 +272,7 @@ fn test_multiple_deposit_actions() {
 }
 
 fn assert_present(res: &Positions, coin: &CoinInfo, amount: Uint128) {
-    res.coins
+    res.deposits
         .iter()
         .find(|item| item.denom == coin.denom && item.amount == amount)
         .unwrap();

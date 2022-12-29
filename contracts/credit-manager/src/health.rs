@@ -20,8 +20,13 @@ pub fn compute_health(deps: Deps, env: &Env, account_id: &str) -> ContractResult
     let res = query_positions(deps, env, account_id)?;
 
     let mut positions: Vec<Position> = vec![];
-    let coin_positions =
-        get_positions_for_coins(&deps, &res.coins, &res.debts.to_coins(), &oracle, &red_bank)?;
+    let coin_positions = get_positions_for_coins(
+        &deps,
+        &res.deposits,
+        &res.debts.to_coins(),
+        &oracle,
+        &red_bank,
+    )?;
     positions.extend(coin_positions);
     let vault_positions = get_positions_for_vaults(&deps, &res.vaults, &oracle)?;
     positions.extend(vault_positions);

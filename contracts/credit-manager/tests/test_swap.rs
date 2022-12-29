@@ -206,9 +206,9 @@ fn test_swap_success_with_specified_amount() {
 
     // assert account position
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 1);
-    assert_eq!(position.coins.first().unwrap().denom, osmo_info.denom);
-    assert_eq!(position.coins.first().unwrap().amount, MOCK_SWAP_RESULT);
+    assert_eq!(position.deposits.len(), 1);
+    assert_eq!(position.deposits.first().unwrap().denom, osmo_info.denom);
+    assert_eq!(position.deposits.first().unwrap().amount, MOCK_SWAP_RESULT);
 }
 
 #[test]
@@ -253,7 +253,7 @@ fn test_swap_success_with_amount_none() {
 
     // assert account position
     let position = mock.query_positions(&account_id);
-    assert_eq!(position.coins.len(), 1);
-    assert_eq!(position.coins.first().unwrap().denom, osmo_info.denom);
-    assert_eq!(position.coins.first().unwrap().amount, MOCK_SWAP_RESULT);
+    assert_eq!(position.deposits.len(), 1);
+    assert_eq!(position.deposits.first().unwrap().denom, osmo_info.denom);
+    assert_eq!(position.deposits.first().unwrap().amount, MOCK_SWAP_RESULT);
 }

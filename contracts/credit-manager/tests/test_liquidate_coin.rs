@@ -504,10 +504,10 @@ fn test_debt_amount_adjusted_to_close_factor_max() {
 
     // Assert liquidatee's new position
     let position = mock.query_positions(&liquidatee_account_id);
-    assert_eq!(position.coins.len(), 2);
-    let osmo_balance = get_coin("uosmo", &position.coins);
+    assert_eq!(position.deposits.len(), 2);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
     assert_eq!(osmo_balance.amount, Uint128::new(36));
-    let atom_balance = get_coin("uatom", &position.coins);
+    let atom_balance = get_coin("uatom", &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(100));
 
     assert_eq!(position.debts.len(), 1);
@@ -516,11 +516,11 @@ fn test_debt_amount_adjusted_to_close_factor_max() {
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
-    assert_eq!(position.coins.len(), 2);
+    assert_eq!(position.deposits.len(), 2);
     assert_eq!(position.debts.len(), 0);
-    let atom_balance = get_coin("uatom", &position.coins);
+    let atom_balance = get_coin("uatom", &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(40));
-    let osmo_balance = get_coin("uosmo", &position.coins);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
     assert_eq!(osmo_balance.amount, Uint128::new(264));
 }
 
@@ -582,12 +582,12 @@ fn test_debt_amount_adjusted_to_total_debt_for_denom() {
 
     // Assert liquidatee's new position
     let position = mock.query_positions(&liquidatee_account_id);
-    assert_eq!(position.coins.len(), 3);
-    let osmo_balance = get_coin("uosmo", &position.coins);
+    assert_eq!(position.deposits.len(), 3);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
     assert_eq!(osmo_balance.amount, Uint128::new(181));
-    let atom_balance = get_coin("uatom", &position.coins);
+    let atom_balance = get_coin("uatom", &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(100));
-    let jake_balance = get_coin("ujake", &position.coins);
+    let jake_balance = get_coin("ujake", &position.deposits);
     assert_eq!(jake_balance.amount, Uint128::new(10));
 
     assert_eq!(position.debts.len(), 1);
@@ -596,11 +596,11 @@ fn test_debt_amount_adjusted_to_total_debt_for_denom() {
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
-    assert_eq!(position.coins.len(), 2);
+    assert_eq!(position.deposits.len(), 2);
     assert_eq!(position.debts.len(), 0);
-    let jake_balance = get_coin("ujake", &position.coins);
+    let jake_balance = get_coin("ujake", &position.deposits);
     assert_eq!(jake_balance.amount, Uint128::new(39));
-    let osmo_balance = get_coin("uosmo", &position.coins);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
     assert_eq!(osmo_balance.amount, Uint128::new(119));
 }
 
@@ -659,10 +659,10 @@ fn test_debt_amount_adjusted_to_max_allowed_by_request_coin() {
 
     // Assert liquidatee's new position
     let position = mock.query_positions(&liquidatee_account_id);
-    assert_eq!(position.coins.len(), 2);
-    let osmo_balance = get_coin("uosmo", &position.coins);
+    assert_eq!(position.deposits.len(), 2);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
     assert_eq!(osmo_balance.amount, Uint128::new(36));
-    let atom_balance = get_coin("uatom", &position.coins);
+    let atom_balance = get_coin("uatom", &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(100));
 
     assert_eq!(position.debts.len(), 1);
@@ -671,11 +671,11 @@ fn test_debt_amount_adjusted_to_max_allowed_by_request_coin() {
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
-    assert_eq!(position.coins.len(), 2);
+    assert_eq!(position.deposits.len(), 2);
     assert_eq!(position.debts.len(), 0);
-    let atom_balance = get_coin("uatom", &position.coins);
+    let atom_balance = get_coin("uatom", &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(47));
-    let osmo_balance = get_coin("uosmo", &position.coins);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
     assert_eq!(osmo_balance.amount, Uint128::new(264));
 }
 
@@ -735,10 +735,10 @@ fn test_debt_amount_no_adjustment() {
 
     // Assert liquidatee's new position
     let position = mock.query_positions(&liquidatee_account_id);
-    assert_eq!(position.coins.len(), 2);
-    let osmo_balance = get_coin("uosmo", &position.coins);
+    assert_eq!(position.deposits.len(), 2);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
     assert_eq!(osmo_balance.amount, Uint128::new(58));
-    let atom_balance = get_coin("uatom", &position.coins);
+    let atom_balance = get_coin("uatom", &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(100));
 
     assert_eq!(position.debts.len(), 1);
@@ -747,9 +747,9 @@ fn test_debt_amount_no_adjustment() {
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
-    assert_eq!(position.coins.len(), 1);
+    assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
-    let osmo_balance = get_coin("uosmo", &position.coins);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
     assert_eq!(osmo_balance.amount, Uint128::new(242));
 }
 
