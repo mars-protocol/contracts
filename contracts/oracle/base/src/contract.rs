@@ -7,6 +7,7 @@ use cosmwasm_std::{
 use cw_storage_plus::{Bound, Item, Map};
 
 use mars_outpost::error::MarsError;
+use mars_outpost::helpers::validate_native_denom;
 use mars_outpost::oracle::{
     Config, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse, QueryMsg,
 };
@@ -131,6 +132,8 @@ where
             return Err(MarsError::Unauthorized {}.into());
         }
 
+        validate_native_denom(&denom)?;
+
         price_source.validate(&deps.querier, &denom, &cfg.base_denom)?;
 
         self.price_sources.save(deps.storage, denom.clone(), &price_source)?;
@@ -151,6 +154,8 @@ where
         if sender_addr != cfg.owner {
             return Err(MarsError::Unauthorized {}.into());
         }
+
+        validate_native_denom(&denom)?;
 
         self.price_sources.remove(deps.storage, denom.clone());
 
