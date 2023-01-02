@@ -1,6 +1,8 @@
 use cosmwasm_std::{coin, Decimal};
 use osmosis_std::types::osmosis::gamm::v2::QuerySpotPriceResponse;
-use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
+use osmosis_std::types::osmosis::twap::v1beta1::{
+    ArithmeticTwapToNowResponse, GeometricTwapToNowResponse,
+};
 
 use mars_outpost::oracle::{PriceResponse, QueryMsg};
 
@@ -89,6 +91,37 @@ fn test_querying_price_twap() {
         },
     );
     assert_eq!(res.price, Decimal::from_ratio(77777u128, 12345u128));
+}
+
+#[test]
+fn test_querying_price_geometric_twap() {
+    let mut deps = helpers::setup_test();
+
+    helpers::set_price_source(
+        deps.as_mut(),
+        "umars",
+        OsmosisPriceSource::GeometricTwap {
+            pool_id: 89,
+            window_size: 86400,
+        },
+    );
+
+    deps.querier.set_geometric_twap_price(
+        89,
+        "umars",
+        "uosmo",
+        GeometricTwapToNowResponse {
+            geometric_twap: Decimal::from_ratio(66666u128, 12345u128).to_string(),
+        },
+    );
+
+    let res: PriceResponse = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Price {
+            denom: "umars".to_string(),
+        },
+    );
+    assert_eq!(res.price, Decimal::from_ratio(66666u128, 12345u128));
 }
 
 #[test]
