@@ -47,6 +47,13 @@ export type OsmosisPriceSource =
       }
     }
   | {
+      geometric_twap: {
+        pool_id: number
+        window_size: number
+        [k: string]: unknown
+      }
+    }
+  | {
       xyk_liquidity_token: {
         pool_id: number
         [k: string]: unknown

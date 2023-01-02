@@ -179,6 +179,36 @@
             "additionalProperties": false
           },
           {
+            "description": "Osmosis geometric twap price quoted in OSMO\n\nNOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO",
+            "type": "object",
+            "required": [
+              "geometric_twap"
+            ],
+            "properties": {
+              "geometric_twap": {
+                "type": "object",
+                "required": [
+                  "pool_id",
+                  "window_size"
+                ],
+                "properties": {
+                  "pool_id": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  },
+                  "window_size": {
+                    "description": "Window size in seconds representing the entire window for which 'average' price is calculated. Value should be <= 172800 sec (48 hours).",
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Osmosis LP token (of an XYK pool) price quoted in OSMO",
             "type": "object",
             "required": [
