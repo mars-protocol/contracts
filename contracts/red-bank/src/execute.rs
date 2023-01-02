@@ -155,7 +155,7 @@ pub fn create_market(
         return Err(MarsError::InstantiateParamsUnavailable {}.into());
     }
 
-    validate_native_denom(&denom)?;
+    validate_native_denom(denom)?;
 
     let new_market = Market {
         denom: denom.to_string(),
