@@ -66,7 +66,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
         vaultTokenDenom: udig,
         type: VaultType.LOCKED,
         lockup: { time: 900 }, // 15 mins
-        baseToken: { denom: gammPool1, price: '1.75' },
+        baseToken: { denom: gammPool1, priceSource: { xyk_liquidity_token: { pool_id: 1 } } },
       },
     },
     outpostsDeployerMnemonic:
@@ -91,10 +91,10 @@ export const osmosisTestnetConfig: DeploymentConfig = {
     withdrawAmount: '12',
     zap: {
       coinsIn: [
-        { denom: uatom, amount: '1', price: '2.135' },
-        { denom: uosmo, amount: '3', price: '1' },
+        { denom: uatom, amount: '1', priceSource: { twap: { pool_id: 1, window_size: 1800 } } },
+        { denom: uosmo, amount: '3', priceSource: { fixed: { price: '1' } } },
       ],
-      denomOut: { denom: gammPool1, price: '1.75' },
+      denomOut: { denom: gammPool1, priceSource: { xyk_liquidity_token: { pool_id: 1 } } },
     },
   },
 }

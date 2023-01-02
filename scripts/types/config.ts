@@ -4,6 +4,7 @@ import {
   VaultInstantiateConfig,
 } from './generated/mars-credit-manager/MarsCreditManager.types'
 import { VaultPricingInfo } from './generated/mars-oracle-adapter/MarsOracleAdapter.types'
+import { PriceSource } from './priceSource'
 
 export enum VaultType {
   LOCKED,
@@ -48,7 +49,7 @@ export interface TestActions {
       config: VaultConfig
       vaultTokenDenom: string
       lockup?: Duration
-      baseToken: { denom: string; price: string }
+      baseToken: { denom: string; priceSource: PriceSource }
     }
   }
   outpostsDeployerMnemonic: string
@@ -65,8 +66,8 @@ export interface TestActions {
   }
   withdrawAmount: string
   zap: {
-    coinsIn: { amount: string; denom: string; price: string }[]
-    denomOut: { denom: string; price: string }
+    coinsIn: { amount: string; denom: string; priceSource: PriceSource }[]
+    denomOut: { denom: string; priceSource: PriceSource }
   }
   unzapAmount: string
 }

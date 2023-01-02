@@ -25,6 +25,7 @@ import {
 import { MarsAccountNftClient } from '../../types/generated/mars-account-nft/MarsAccountNft.client'
 import { MarsCreditManagerClient } from '../../types/generated/mars-credit-manager/MarsCreditManager.client'
 import { InitOrUpdateAssetParams } from '../../types/generated/mars-mock-red-bank/MarsMockRedBank.types'
+import { PriceSource } from '../../types/priceSource'
 
 export class Deployer {
   constructor(
@@ -116,7 +117,7 @@ export class Deployer {
       msg.vault_pricing.push({
         addr: this.storage.addresses.mockVault!,
         method: 'preview_redeem',
-        base_denom: this.config.chain.baseDenom,
+        base_denom: this.config.testActions.vault.mock.baseToken.denom,
         vault_coin_denom: this.config.testActions.vault.mock.vaultTokenDenom,
       })
     }
@@ -272,28 +273,17 @@ export class Deployer {
     const { client, addr } = await this.getOutpostsDeployer()
 
     for (const coin of this.config
-      .testActions!.zap.coinsIn.map((c) => ({ denom: c.denom, price: c.price }))
+      .testActions!.zap.coinsIn.map((c) => ({ denom: c.denom, priceSource: c.priceSource }))
       .concat(this.config.testActions!.zap.denomOut)
       .concat(this.config.testActions!.vault.mock.baseToken)) {
-      try {
-        await client.queryContractSmart(this.config.oracle.addr, {
-          price: {
-            denom: coin.denom,
-          },
-        })
-        printGray(`Price for ${coin.denom} already set`)
-      } catch {
-        const msg = {
-          set_price_source: {
-            denom: coin.denom,
-            price_source: {
-              fixed: { price: coin.price },
-            },
-          },
-        }
-        printBlue(`Setting price for ${coin.denom}: ${coin.price}`)
-        await client.execute(addr, this.config.oracle.addr, msg, 'auto')
+      const msg = {
+        set_price_source: {
+          denom: coin.denom,
+          price_source: coin.priceSource as PriceSource,
+        },
       }
+      printBlue(`Setting price source for ${coin.denom}: ${JSON.stringify(coin.priceSource)}`)
+      await client.execute(addr, this.config.oracle.addr, msg, 'auto')
     }
     this.storage.actions.oraclePricesSet = true
   }
