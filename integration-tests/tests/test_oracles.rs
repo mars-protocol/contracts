@@ -553,7 +553,7 @@ fn query_twap_price() {
 }
 
 // assert oracle was correctly set to Geometric TWAP and assert prices are queried correctly
-/*#[test]
+#[test]
 fn query_geometric_twap_price() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
@@ -573,7 +573,7 @@ fn query_geometric_twap_price() {
     );
 
     let gamm = Gamm::new(&app);
-    let pool_liquidity = vec![Coin::new(2_000_000_000, "uatom"), Coin::new(1_000_000_000, "uosmo")];
+    let pool_liquidity = vec![Coin::new(4_000_000_000, "uatom"), Coin::new(1_000_000_000, "uosmo")];
     let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
 
     wasm.execute(
@@ -588,7 +588,7 @@ fn query_geometric_twap_price() {
         &[],
         &signer,
     )
-        .unwrap();
+    .unwrap();
 
     swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 10);
 
@@ -620,8 +620,8 @@ fn query_geometric_twap_price() {
         )
         .unwrap();
     // calculate spot price
-    let spot_price = Decimal::from_ratio(1u128, 2u128);
-    assert!((price.price - spot_price) < tolerance);
+    let spot_price = Decimal::from_ratio(1u128, 4u128);
+    assert!((spot_price - price.price) < tolerance);
 
     swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 10);
 
@@ -634,7 +634,7 @@ fn query_geometric_twap_price() {
         )
         .unwrap();
     assert!(price2.price - price.price < tolerance);
-}*/
+}
 
 // compare SPOT and TWAP prices
 #[test]

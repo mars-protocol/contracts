@@ -40,7 +40,7 @@ mars-osmosis                = { version = "0.1.0", path = "./packages/chains/osm
 mars-outpost                = { version = "0.1.0", path = "./packages/outpost" }
 mars-rewards-collector-base = { version = "0.1.0", path = "./contracts/rewards-collector/base" }
 mars-testing                = { version = "0.1.0", path = "./packages/testing" }
-osmosis-std                 = { git = "https://github.com/osmosis-labs/osmosis-rust", rev = "e3c9ad161c0490117a6d01c4f2b3e73e8f20c51f" }
+osmosis-std                 = { git = "https://github.com/osmosis-labs/osmosis-rust", rev = "5f2493aa13569167431add6282916683b4aaf3c8" }
 schemars                    = "0.8"
 serde                       = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror                   = "1.0"

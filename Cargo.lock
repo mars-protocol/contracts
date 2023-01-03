@@ -1101,7 +1101,7 @@ checksum = "9b7820b9daea5457c9f21c69448905d723fbd21136ccf521748f23fd49e723ee"
 [[package]]
 name = "osmosis-std"
 version = "0.13.2"
-source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=e3c9ad161c0490117a6d01c4f2b3e73e8f20c51f#e3c9ad161c0490117a6d01c4f2b3e73e8f20c51f"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=5f2493aa13569167431add6282916683b4aaf3c8#5f2493aa13569167431add6282916683b4aaf3c8"
 dependencies = [
  "chrono",
  "cosmwasm-std",
@@ -1116,7 +1116,7 @@ dependencies = [
 [[package]]
 name = "osmosis-std-derive"
 version = "0.13.2"
-source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=e3c9ad161c0490117a6d01c4f2b3e73e8f20c51f#e3c9ad161c0490117a6d01c4f2b3e73e8f20c51f"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=5f2493aa13569167431add6282916683b4aaf3c8#5f2493aa13569167431add6282916683b4aaf3c8"
 dependencies = [
  "itertools",
  "proc-macro2",
@@ -1127,7 +1127,7 @@ dependencies = [
 [[package]]
 name = "osmosis-testing"
 version = "0.13.2"
-source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=e3c9ad161c0490117a6d01c4f2b3e73e8f20c51f#e3c9ad161c0490117a6d01c4f2b3e73e8f20c51f"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=5f2493aa13569167431add6282916683b4aaf3c8#5f2493aa13569167431add6282916683b4aaf3c8"
 dependencies = [
  "base64",
  "bindgen",
