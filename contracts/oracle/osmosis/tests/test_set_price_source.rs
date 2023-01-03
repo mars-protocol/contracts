@@ -136,7 +136,7 @@ fn test_setting_price_source_spot() {
 }
 
 #[test]
-fn test_setting_price_source_twap() {
+fn test_setting_price_source_arithmetic_twap() {
     let mut deps = helpers::setup_test();
 
     let mut set_price_source_twap = |denom: &str, pool_id: u64, window_size| {
@@ -146,7 +146,7 @@ fn test_setting_price_source_twap() {
             mock_info("owner"),
             ExecuteMsg::SetPriceSource {
                 denom: denom.to_string(),
-                price_source: OsmosisPriceSource::Twap {
+                price_source: OsmosisPriceSource::ArithmeticTwap {
                     pool_id,
                     window_size,
                 },
@@ -211,7 +211,7 @@ fn test_setting_price_source_twap() {
     );
     assert_eq!(
         res.price_source,
-        OsmosisPriceSource::Twap {
+        OsmosisPriceSource::ArithmeticTwap {
             pool_id: 89,
             window_size: 86400
         }

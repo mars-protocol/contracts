@@ -468,9 +468,9 @@ fn query_spot_price_after_lp_change() {
     assert!(price.price < price2.price);
 }
 
-// assert oracle was correctly set to TWAP and assert prices are queried correctly
+// assert oracle was correctly set to Arithmetic TWAP and assert prices are queried correctly
 #[test]
-fn query_twap_price() {
+fn query_arithmetic_twap_price() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -496,7 +496,7 @@ fn query_twap_price() {
         &oracle_addr,
         &ExecuteMsg::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Twap {
+            price_source: OsmosisPriceSource::ArithmeticTwap {
                 pool_id,
                 window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
             },
@@ -518,7 +518,7 @@ fn query_twap_price() {
         .unwrap();
     assert_eq!(
         price_source.price_source,
-        (OsmosisPriceSource::Twap {
+        (OsmosisPriceSource::ArithmeticTwap {
             pool_id,
             window_size: 10,
         })
@@ -704,7 +704,7 @@ fn compare_spot_and_twap_price() {
         &oracle_addr,
         &ExecuteMsg::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Twap {
+            price_source: OsmosisPriceSource::ArithmeticTwap {
                 pool_id,
                 window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
             },
@@ -723,7 +723,7 @@ fn compare_spot_and_twap_price() {
         .unwrap();
     assert_eq!(
         price_source.price_source,
-        OsmosisPriceSource::Twap {
+        OsmosisPriceSource::ArithmeticTwap {
             pool_id,
             window_size: 10,
         }

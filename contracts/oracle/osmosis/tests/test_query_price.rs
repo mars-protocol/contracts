@@ -12,7 +12,7 @@ use mars_oracle_osmosis::OsmosisPriceSource;
 mod helpers;
 
 #[test]
-fn test_querying_price_fixed() {
+fn test_querying_fixed_price() {
     let mut deps = helpers::setup_test();
 
     helpers::set_price_source(
@@ -33,7 +33,7 @@ fn test_querying_price_fixed() {
 }
 
 #[test]
-fn test_querying_price_spot() {
+fn test_querying_spot_price() {
     let mut deps = helpers::setup_test();
 
     helpers::set_price_source(
@@ -63,13 +63,13 @@ fn test_querying_price_spot() {
 }
 
 #[test]
-fn test_querying_price_twap() {
+fn test_querying_arithmetic_twap_price() {
     let mut deps = helpers::setup_test();
 
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::Twap {
+        OsmosisPriceSource::ArithmeticTwap {
             pool_id: 89,
             window_size: 86400,
         },
@@ -94,7 +94,7 @@ fn test_querying_price_twap() {
 }
 
 #[test]
-fn test_querying_price_geometric_twap() {
+fn test_querying_geometric_twap_price() {
     let mut deps = helpers::setup_test();
 
     helpers::set_price_source(
@@ -125,7 +125,7 @@ fn test_querying_price_geometric_twap() {
 }
 
 #[test]
-fn test_querying_price_xyk_lp() {
+fn test_querying_xyk_lp_price() {
     let mut deps = helpers::setup_test();
 
     let assets = vec![coin(1, "uatom"), coin(1, "uosmo")];
