@@ -3,7 +3,7 @@ use crate::helpers::{default_asset_params, swap, swap_to_create_twap_records};
 use cosmwasm_std::{coin, Coin, Decimal, Isqrt, Uint128};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::msg::PriceSourceResponse;
-use mars_oracle_osmosis::OsmosisPriceSource;
+use mars_oracle_osmosis::{Downtime, DowntimeDetector, OsmosisPriceSource};
 use mars_outpost::address_provider::ExecuteMsg::SetAddress;
 use mars_outpost::address_provider::{InstantiateMsg as InstantiateAddr, MarsAddressType};
 use mars_outpost::incentives::InstantiateMsg as InstantiateIncentives;
@@ -12,7 +12,7 @@ use mars_outpost::red_bank::ExecuteMsg as ExecuteRedBank;
 use mars_outpost::red_bank::ExecuteMsg::{Borrow, Deposit};
 use mars_outpost::red_bank::{CreateOrUpdateConfig, InstantiateMsg as InstantiateRedBank};
 use mars_outpost::rewards_collector::InstantiateMsg as InstantiateRewards;
-use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, SigningAccount, Wasm};
+use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, RunnerResult, SigningAccount, Wasm};
 use std::str::FromStr;
 
 mod helpers;
@@ -468,8 +468,7 @@ fn query_spot_price_after_lp_change() {
     assert!(price.price < price2.price);
 }
 
-// FIXME: Unsupported query type: '/osmosis.downtimedetector.v1beta1.Query/RecoveredSinceDowntimeOfLength' path is not allowed from the contract: query wasm contract failed
-/*#[test]
+#[test]
 fn query_twap_price_with_downtime_detector() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
@@ -500,7 +499,7 @@ fn query_twap_price_with_downtime_detector() {
                 pool_id,
                 window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
                 downtime_detector: Some(DowntimeDetector {
-                    downtime: Downtime::Duration30s,
+                    downtime: Downtime::Duration2m,
                     recovery: 60u64,
                 }),
             },
@@ -509,9 +508,6 @@ fn query_twap_price_with_downtime_detector() {
         &signer,
     )
     .unwrap();
-
-    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 10);
-
     let price_source: PriceSourceResponse = wasm
         .query(
             &oracle_addr,
@@ -526,16 +522,26 @@ fn query_twap_price_with_downtime_detector() {
             pool_id,
             window_size: 10,
             downtime_detector: Some(DowntimeDetector {
-                downtime: Downtime::Duration30s,
+                downtime: Downtime::Duration2m,
                 recovery: 60u64
             }),
         })
     );
 
-    // since swaps were small, the prices should be the same within a 1% tolerance
-    let tolerance = Decimal::percent(1);
+    // chain has just started
+    let res: RunnerResult<PriceResponse> = wasm.query(
+        &oracle_addr,
+        &QueryMsg::Price {
+            denom: "uatom".to_string(),
+        },
+    );
+    assert_err(res.unwrap_err(), "Generic error: chain is recovering from downtime");
 
-    let price: PriceResponse = wasm
+    // window_size > recovery (60 sec)
+    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 100);
+
+    // chain recovered
+    let _res: PriceResponse = wasm
         .query(
             &oracle_addr,
             &QueryMsg::Price {
@@ -543,22 +549,7 @@ fn query_twap_price_with_downtime_detector() {
             },
         )
         .unwrap();
-    // calculate spot price
-    let spot_price = Decimal::from_ratio(1u128, 2u128);
-    assert!((price.price - spot_price) < tolerance);
-
-    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 10);
-
-    let price2: PriceResponse = wasm
-        .query(
-            &oracle_addr,
-            &QueryMsg::Price {
-                denom: "uatom".to_string(),
-            },
-        )
-        .unwrap();
-    assert!(price2.price - price.price < tolerance);
-}*/
+}
 
 // assert oracle was correctly set to TWAP and assert prices are queried correctly
 #[test]

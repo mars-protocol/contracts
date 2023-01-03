@@ -10,7 +10,9 @@ use mars_red_bank::error::ContractError;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
     MsgSwapExactAmountIn, MsgSwapExactAmountInResponse, SwapAmountInRoute,
 };
-use osmosis_testing::{Account, ExecuteResponse, OsmosisTestApp, Runner, SigningAccount};
+use osmosis_testing::{
+    Account, ExecuteResponse, OsmosisTestApp, Runner, SigningAccount,
+};
 
 pub fn default_asset_params() -> InitOrUpdateAssetParams {
     InitOrUpdateAssetParams {
