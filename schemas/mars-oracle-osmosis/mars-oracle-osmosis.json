@@ -149,13 +149,13 @@
             "additionalProperties": false
           },
           {
-            "description": "Osmosis twap price quoted in OSMO\n\nNOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO",
+            "description": "Osmosis arithmetic twap price quoted in OSMO\n\nNOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO",
             "type": "object",
             "required": [
-              "twap"
+              "arithmetic_twap"
             ],
             "properties": {
-              "twap": {
+              "arithmetic_twap": {
                 "type": "object",
                 "required": [
                   "pool_id",
@@ -198,7 +198,7 @@
                     "minimum": 0.0
                   },
                   "window_size": {
-                    "description": "Window size in seconds representing the entire window for which 'average' price is calculated. Value should be <= 172800 sec (48 hours).",
+                    "description": "Window size in seconds representing the entire window for which 'geometric' price is calculated. Value should be <= 172800 sec (48 hours).",
                     "type": "integer",
                     "format": "uint64",
                     "minimum": 0.0
