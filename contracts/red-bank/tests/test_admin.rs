@@ -892,3 +892,117 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
         .unwrap();
     assert_eq!(collateral.amount_scaled, expected_rewards_scaled);
 }
+
+#[test]
+fn test_update_asset_by_emergency_owner() {
+    let mut deps = mock_dependencies(&[]);
+    let start_time = 100000000;
+    let env = mock_env_at_block_time(start_time);
+
+    let config = CreateOrUpdateConfig {
+        address_provider: Some("address_provider".to_string()),
+        close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
+    };
+    let msg = InstantiateMsg {
+        owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
+        config,
+    };
+    let info = mock_info("owner", &[]);
+    instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+    let ir_model = InterestRateModel {
+        optimal_utilization_rate: Decimal::one(),
+        base: Decimal::percent(5),
+        slope_1: Decimal::zero(),
+        slope_2: Decimal::zero(),
+    };
+
+    let params = InitOrUpdateAssetParams {
+        max_loan_to_value: Some(Decimal::from_ratio(50u128, 100u128)),
+        reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
+        liquidation_threshold: Some(Decimal::from_ratio(80u128, 100u128)),
+        liquidation_bonus: Some(Decimal::from_ratio(10u128, 100u128)),
+        interest_rate_model: Some(ir_model.clone()),
+        deposit_enabled: Some(true),
+        borrow_enabled: Some(true),
+        deposit_cap: None,
+    };
+
+    // emergency owner is authorized but can't update asset if not initialized first
+    {
+        let msg = ExecuteMsg::UpdateAsset {
+            denom: "someasset".to_string(),
+            params: params.clone(),
+        };
+        let info = mock_info("emergency_owner", &[]);
+        let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+        assert_eq!(error_res, ContractError::AssetNotInitialized {});
+    }
+
+    // initialize asset
+    {
+        let msg = ExecuteMsg::InitAsset {
+            denom: "someasset".to_string(),
+            params: params.clone(),
+        };
+        let info = mock_info("owner", &[]);
+        let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+    }
+
+    // update asset with borrow_enabled = true, should have not effect on the saved market
+    {
+        let old_market = MARKETS.load(&deps.storage, "someasset").unwrap();
+
+        let new_asset_params = InitOrUpdateAssetParams {
+            borrow_enabled: Some(true),
+            ..params
+        };
+        let msg = ExecuteMsg::UpdateAsset {
+            denom: "someasset".to_string(),
+            params: new_asset_params,
+        };
+        let info = mock_info("emergency_owner", &[]);
+        let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+        assert!(res.messages.is_empty());
+        assert!(res.attributes.is_empty());
+
+        let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();
+        assert_eq!(old_market, new_market)
+    }
+
+    // update asset with new params, only borrow_enabled = false should have effect on the saved market
+    {
+        let mut old_market = MARKETS.load(&deps.storage, "someasset").unwrap();
+
+        let params = InitOrUpdateAssetParams {
+            max_loan_to_value: Some(Decimal::from_ratio(60u128, 100u128)),
+            reserve_factor: Some(Decimal::from_ratio(10u128, 100u128)),
+            liquidation_threshold: Some(Decimal::from_ratio(90u128, 100u128)),
+            liquidation_bonus: Some(Decimal::from_ratio(12u128, 100u128)),
+            interest_rate_model: Some(ir_model),
+            deposit_enabled: Some(false),
+            borrow_enabled: Some(false),
+            deposit_cap: Some(Uint128::new(10_000_000)),
+        };
+        let msg = ExecuteMsg::UpdateAsset {
+            denom: "someasset".to_string(),
+            params,
+        };
+        let info = mock_info("emergency_owner", &[]);
+        let res = execute(deps.as_mut(), env, info, msg).unwrap();
+        assert!(res.messages.is_empty());
+        assert_eq!(
+            res.attributes,
+            vec![
+                attr("action", "outposts/red-bank/emergency_update_asset"),
+                attr("denom", "someasset")
+            ],
+        );
+
+        let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();
+        // old market should have only borrow_enabled updated
+        old_market.borrow_enabled = false;
+        assert_eq!(old_market, new_market);
+    }
+}

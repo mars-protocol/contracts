@@ -3,7 +3,7 @@ use std::str;
 
 use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
-use cw_controllers_admin_fork::AdminUpdate;
+use cw_controllers_admin_fork::{AdminError, AdminUpdate};
 
 use mars_outpost::address_provider::{self, MarsAddressType};
 use mars_outpost::error::MarsError;
@@ -210,11 +210,22 @@ pub fn update_asset(
     denom: String,
     params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
-    OWNER.assert_admin(deps.storage, &info.sender)?;
+    if OWNER.is_admin(deps.storage, &info.sender)? {
+        update_asset_by_owner(deps, &env, &denom, params)
+    } else if EMERGENCY_OWNER.is_admin(deps.storage, &info.sender)? {
+        update_asset_by_emergency_owner(deps, &denom, params)
+    } else {
+        Err(AdminError::NotAdmin {}.into())
+    }
+}
 
-    let config = CONFIG.load(deps.storage)?;
-
-    let market_option = MARKETS.may_load(deps.storage, &denom)?;
+fn update_asset_by_owner(
+    deps: DepsMut,
+    env: &Env,
+    denom: &str,
+    params: InitOrUpdateAssetParams,
+) -> Result<Response, ContractError> {
+    let market_option = MARKETS.may_load(deps.storage, denom)?;
     match market_option {
         None => Err(ContractError::AssetNotInitialized {}),
         Some(mut market) => {
@@ -242,6 +253,7 @@ pub fn update_asset(
             let mut response = Response::new();
 
             if should_update_interest_rates {
+                let config = CONFIG.load(deps.storage)?;
                 let addresses = address_provider::helpers::query_addresses(
                     deps.as_ref(),
                     &config.address_provider,
@@ -252,7 +264,7 @@ pub fn update_asset(
 
                 response = apply_accumulated_interests(
                     deps.storage,
-                    &env,
+                    env,
                     &mut market,
                     rewards_collector_addr,
                     incentives_addr,
@@ -278,19 +290,42 @@ pub fn update_asset(
             if should_update_interest_rates {
                 response = update_interest_rates(
                     &deps,
-                    &env,
+                    env,
                     &mut updated_market,
                     Uint128::zero(),
-                    &denom,
+                    denom,
                     response,
                 )?;
             }
-            MARKETS.save(deps.storage, &denom, &updated_market)?;
+            MARKETS.save(deps.storage, denom, &updated_market)?;
 
             Ok(response
                 .add_attribute("action", "outposts/red-bank/update_asset")
-                .add_attribute("denom", &denom))
+                .add_attribute("denom", denom))
         }
+    }
+}
+
+/// Emergency owner can only DISABLE BORROWING.
+fn update_asset_by_emergency_owner(
+    deps: DepsMut,
+    denom: &str,
+    params: InitOrUpdateAssetParams,
+) -> Result<Response, ContractError> {
+    if let Some(mut market) = MARKETS.may_load(deps.storage, denom)? {
+        match params.borrow_enabled {
+            Some(borrow_enabled) if !borrow_enabled => {
+                market.borrow_enabled = borrow_enabled;
+                MARKETS.save(deps.storage, denom, &market)?;
+
+                Ok(Response::new()
+                    .add_attribute("action", "outposts/red-bank/emergency_update_asset")
+                    .add_attribute("denom", denom))
+            }
+            _ => Ok(Response::new()),
+        }
+    } else {
+        Err(ContractError::AssetNotInitialized {})
     }
 }
 
