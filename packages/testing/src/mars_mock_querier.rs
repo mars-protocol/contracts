@@ -92,7 +92,7 @@ impl MarsMockQuerier {
         self.osmosis_querier.spot_prices.insert(price_key, spot_price);
     }
 
-    pub fn set_twap_price(
+    pub fn set_arithmetic_twap_price(
         &mut self,
         id: u64,
         base_asset_denom: &str,

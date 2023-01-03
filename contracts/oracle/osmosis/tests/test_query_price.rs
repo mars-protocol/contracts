@@ -75,7 +75,7 @@ fn test_querying_arithmetic_twap_price() {
         },
     );
 
-    deps.querier.set_twap_price(
+    deps.querier.set_arithmetic_twap_price(
         89,
         "umars",
         "uosmo",

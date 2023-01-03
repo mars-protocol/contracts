@@ -48,7 +48,7 @@ impl OsmosisQuerier {
             let parse_osmosis_query: Result<ArithmeticTwapToNowRequest, DecodeError> =
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
-                return Ok(self.handle_query_twap_request(osmosis_query));
+                return Ok(self.handle_query_arithmetic_twap_request(osmosis_query));
             }
         }
 
@@ -96,7 +96,10 @@ impl OsmosisQuerier {
         Ok(res).into()
     }
 
-    fn handle_query_twap_request(&self, request: ArithmeticTwapToNowRequest) -> QuerierResult {
+    fn handle_query_arithmetic_twap_request(
+        &self,
+        request: ArithmeticTwapToNowRequest,
+    ) -> QuerierResult {
         let price_key = PriceKey {
             pool_id: request.pool_id,
             denom_in: request.base_asset,
