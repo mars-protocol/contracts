@@ -6,7 +6,7 @@ use crate::helpers::decimal_param_le_one;
 use crate::math;
 
 #[cw_serde]
-#[derive(Eq, Default)]
+#[derive(Eq, Default, Copy)]
 pub struct InterestRateModel {
     /// Optimal utilization rate
     pub optimal_utilization_rate: Decimal,
