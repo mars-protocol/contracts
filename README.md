@@ -1,5 +1,5 @@
 # Mars Protocol
-This repository contains the source code for the core smart contracts of Mars Protocol. Smart contracts are meant to be compiled to `.wasm` files and uploaded to the [Terra](https://www.terra.money/) blockchain.
+This repository contains the source code for the core smart contracts of Mars Protocol. Smart contracts are meant to be compiled to `.wasm` files and uploaded to the Cosmos chains.
 
 ## Audits
 See reports [here](https://github.com/mars-protocol/mars-audits/tree/main/outposts)
@@ -56,34 +56,34 @@ cargo install --force cargo-make
    ```
 - Compile all contracts:
    ```
-   cargo make rust-optimizer 
+   cargo make rust-optimizer
    ```
-- Formatting: 
+- Formatting:
    ```
    yarn format
-   
-   yarn lint 
+
+   yarn lint
    ```
 This compiles and optimizes all contracts, storing them in `/artifacts` directory along with `checksum.txt` which contains sha256 hashes of each of the `.wasm` files (The script just uses CosmWasm's [rust-optimizer](https://github.com/CosmWasm/rust-optimizer)).
 Note: Intel/Amd 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production.
 
 ## Deploying Outposts
-When the deployment scripts run for the first time, it will upload code IDs for each contract, instantiate each contract, initialize assets, and set oracles. If you want to redeploy, you must locally delete the 'osmo-test-4.json' file in the artifacts directory. 
+When the deployment scripts run for the first time, it will upload code IDs for each contract, instantiate each contract, initialize assets, and set oracles. If you want to redeploy, you must locally delete the 'osmo-test-4.json' file in the artifacts directory.
 Everything related to deployment must be ran from the `scripts` directory:
 
-Each outpost has a config file for its respective deployment and assets. 
+Each outpost has a config file for its respective deployment and assets.
 
 For Osmosis:
 ```
-cd scripts 
+cd scripts
 
-# for testnet deployment with deployerAddr set as owner & admin: 
+# for testnet deployment with deployerAddr set as owner & admin:
 yarn deploy:osmosis-testnet
 
-# for testnet deployment with multisigAddr set as owner & admin: 
-yarn deploy:osmosis-testnet-multisig 
+# for testnet deployment with multisigAddr set as owner & admin:
+yarn deploy:osmosis-testnet-multisig
 
-# for mainnet deployment: 
+# for mainnet deployment:
 yarn deploy:osmosis-mainnet
 ```
 
@@ -104,41 +104,26 @@ cargo fmt
 `clippy` is used as a linting tool:
 
 ```
-cargo +nightly clippy --tests --all-features -- -D warnings
+cargo make clippy
 ```
 
 ## Testing
-### Unit tests
 
+Integration tests (task `integration-test` or `test`) use `.wasm` files. They have to be generated with `cargo make build`.
+
+running unit tests:
 ```
-# inside a package to run specific package tests
-cargo unit-test
-
-# in the root directory to run all tests
-cargo test
+cargo make unit-test
 ```
 
-### Integration tests
+running integration tests:
 
-#### Running a single integration test
 ```
-cd scripts
-node --loader ts-node/esm tests/<test>.ts
+cargo make integration-test
 ```
 
-#### Running the main integration test suite
+running all tests:
 
-1. Get LocalTerra repo and set `LOCAL_TERRA_REPO_PATH` env variable to its path.
-2. Run `run_tests.sh` from the scripts directory:
 ```
-cd scripts
-./run_tests.sh
+cargo make test
 ```
-
-## Generating a whitelist.json
-
-1. Create a .env file in the top level of the scripts directory if doesn't already exist
-2. Add the env variable NETWORK=[network_to_generate_from_e.g._NETWORK=testnet]
-3. Add the env variable REDBANK_ADDRESS=[your_deployed_red_bank_contract_address]
-4. Run `node --loader ts-node/esm whitelist.ts`
-5. Check the whitelists folder for [NETWORK].json output
