@@ -8,17 +8,17 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_admin_set_on_instantiate() {
-    let admin = "admin_addr";
-    let mock = MockEnv::new().admin(admin).build().unwrap();
+fn test_owner_set_on_instantiate() {
+    let owner = "owner_addr";
+    let mock = MockEnv::new().owner(owner).build().unwrap();
     let res = mock.query_config();
-    assert_eq!(admin, res.admin.unwrap());
+    assert_eq!(owner, res.owner.unwrap());
 }
 
 #[test]
-fn test_raises_on_invalid_admin_addr() {
-    let admin = "%%%INVALID%%%";
-    let res = MockEnv::new().admin(admin).build();
+fn test_raises_on_invalid_owner_addr() {
+    let owner = "%%%INVALID%%%";
+    let res = MockEnv::new().owner(owner).build();
     if res.is_ok() {
         panic!("Should have thrown an error");
     }

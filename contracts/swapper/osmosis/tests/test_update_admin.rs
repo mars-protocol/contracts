@@ -1,7 +1,7 @@
 use cosmwasm_std::coin;
 use osmosis_testing::{Account, Module, OsmosisTestApp, Wasm};
 
-use cw_controllers_admin_fork::{AdminResponse, AdminUpdate};
+use mars_owner::{OwnerResponse, OwnerUpdate};
 use mars_rover::adapters::swap::{ExecuteMsg, QueryMsg};
 use mars_swapper_osmosis::route::OsmosisRoute;
 
@@ -17,31 +17,31 @@ fn test_initial_state() {
     let accs = app
         .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
         .unwrap();
-    let admin = &accs[0];
+    let owner = &accs[0];
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
-    let res: AdminResponse = wasm.query(&contract_addr, &QueryMsg::Admin {}).unwrap();
-    assert_eq!(res.admin.unwrap(), admin.address());
+    let res: OwnerResponse = wasm.query(&contract_addr, &QueryMsg::Owner {}).unwrap();
+    assert_eq!(res.owner.unwrap(), owner.address());
     assert_eq!(res.proposed, None);
 }
 
 #[test]
-fn test_only_admin_can_propose() {
+fn test_only_owner_can_propose() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
     let accs = app
         .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 3)
         .unwrap();
-    let admin = &accs[0];
+    let owner = &accs[0];
     let bad_guy = &accs[1];
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
+        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
             proposed: bad_guy.address(),
         }),
         &[],
@@ -51,60 +51,60 @@ fn test_only_admin_can_propose() {
 }
 
 #[test]
-fn test_propose_new_admin() {
+fn test_propose_new_owner() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
     let accs = app
         .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
         .unwrap();
-    let admin = &accs[0];
-    let new_admin = &accs[1];
+    let owner = &accs[0];
+    let new_owner = &accs[1];
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
-            proposed: new_admin.address(),
+        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+            proposed: new_owner.address(),
         }),
         &[],
-        admin,
+        owner,
     )
     .unwrap();
 
-    let res: AdminResponse = wasm.query(&contract_addr, &QueryMsg::Admin {}).unwrap();
-    assert_eq!(res.admin.unwrap(), admin.address());
-    assert_eq!(res.proposed.unwrap(), new_admin.address());
+    let res: OwnerResponse = wasm.query(&contract_addr, &QueryMsg::Owner {}).unwrap();
+    assert_eq!(res.owner.unwrap(), owner.address());
+    assert_eq!(res.proposed.unwrap(), new_owner.address());
 }
 
 #[test]
-fn test_only_admin_can_clear_proposed() {
+fn test_only_owner_can_clear_proposed() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
     let accs = app
         .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 3)
         .unwrap();
-    let admin = &accs[0];
+    let owner = &accs[0];
     let bad_guy = &accs[1];
-    let new_admin = &accs[2];
+    let new_owner = &accs[2];
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
-            proposed: new_admin.address(),
+        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+            proposed: new_owner.address(),
         }),
         &[],
-        admin,
+        owner,
     )
     .unwrap();
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateAdmin(AdminUpdate::ClearProposed),
+        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ClearProposed),
         &[],
         bad_guy,
     )
@@ -119,98 +119,98 @@ fn test_clear_proposed() {
     let accs = app
         .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
         .unwrap();
-    let admin = &accs[0];
-    let new_admin = &accs[1];
+    let owner = &accs[0];
+    let new_owner = &accs[1];
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
-            proposed: new_admin.address(),
+        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+            proposed: new_owner.address(),
         }),
         &[],
-        admin,
+        owner,
     )
     .unwrap();
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateAdmin(AdminUpdate::ClearProposed),
+        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ClearProposed),
         &[],
-        admin,
+        owner,
     )
     .unwrap();
 
-    let res: AdminResponse = wasm.query(&contract_addr, &QueryMsg::Admin {}).unwrap();
-    assert_eq!(res.admin.unwrap(), admin.address());
+    let res: OwnerResponse = wasm.query(&contract_addr, &QueryMsg::Owner {}).unwrap();
+    assert_eq!(res.owner.unwrap(), owner.address());
     assert_eq!(res.proposed, None);
 }
 
 #[test]
-fn test_only_proposed_admin_can_accept_role() {
+fn test_only_proposed_owner_can_accept_role() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
     let accs = app
         .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
         .unwrap();
-    let admin = &accs[0];
-    let new_admin = &accs[1];
+    let owner = &accs[0];
+    let new_owner = &accs[1];
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
-            proposed: new_admin.address(),
+        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+            proposed: new_owner.address(),
         }),
         &[],
-        admin,
+        owner,
     )
     .unwrap();
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateAdmin(AdminUpdate::AcceptProposed),
+        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::AcceptProposed),
         &[],
-        admin,
+        owner,
     )
     .unwrap_err();
 }
 
 #[test]
-fn test_accept_admin_role() {
+fn test_accept_owner_role() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
     let accs = app
         .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
         .unwrap();
-    let admin = &accs[0];
-    let new_admin = &accs[1];
+    let owner = &accs[0];
+    let new_owner = &accs[1];
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
-            proposed: new_admin.address(),
+        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+            proposed: new_owner.address(),
         }),
         &[],
-        admin,
+        owner,
     )
     .unwrap();
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateAdmin(AdminUpdate::AcceptProposed),
+        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::AcceptProposed),
         &[],
-        new_admin,
+        new_owner,
     )
     .unwrap();
 
-    let res: AdminResponse = wasm.query(&contract_addr, &QueryMsg::Admin {}).unwrap();
-    assert_eq!(res.admin.unwrap(), new_admin.address());
+    let res: OwnerResponse = wasm.query(&contract_addr, &QueryMsg::Owner {}).unwrap();
+    assert_eq!(res.owner.unwrap(), new_owner.address());
     assert_eq!(res.proposed, None);
 }

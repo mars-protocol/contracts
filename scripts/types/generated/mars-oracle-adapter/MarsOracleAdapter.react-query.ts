@@ -15,7 +15,7 @@ import {
   InstantiateMsg,
   VaultPricingInfo,
   ExecuteMsg,
-  AdminUpdate,
+  OwnerUpdate,
   ConfigUpdates,
   QueryMsg,
   ArrayOfVaultPricingInfo,
@@ -141,7 +141,7 @@ export function useMarsOracleAdapterPriceQuery<TData = PriceResponse>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsOracleAdapterUpdateAdminMutation {
+export interface MarsOracleAdapterUpdateOwnerMutation {
   client: MarsOracleAdapterClient
   args?: {
     fee?: number | StdFee | 'auto'
@@ -149,14 +149,14 @@ export interface MarsOracleAdapterUpdateAdminMutation {
     funds?: Coin[]
   }
 }
-export function useMarsOracleAdapterUpdateAdminMutation(
+export function useMarsOracleAdapterUpdateOwnerMutation(
   options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsOracleAdapterUpdateAdminMutation>,
+    UseMutationOptions<ExecuteResult, Error, MarsOracleAdapterUpdateOwnerMutation>,
     'mutationFn'
   >,
 ) {
-  return useMutation<ExecuteResult, Error, MarsOracleAdapterUpdateAdminMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) => client.updateAdmin(msg, fee, memo, funds),
+  return useMutation<ExecuteResult, Error, MarsOracleAdapterUpdateOwnerMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.updateOwner(msg, fee, memo, funds),
     options,
   )
 }

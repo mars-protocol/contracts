@@ -24,7 +24,7 @@ import {
   Action,
   ActionAmount,
   VaultPositionType,
-  AdminUpdate,
+  OwnerUpdate,
   CallbackMsg,
   Addr,
   ActionCoin,
@@ -493,7 +493,7 @@ export function useMarsCreditManagerCallbackMutation(
     options,
   )
 }
-export interface MarsCreditManagerUpdateAdminMutation {
+export interface MarsCreditManagerUpdateOwnerMutation {
   client: MarsCreditManagerClient
   args?: {
     fee?: number | StdFee | 'auto'
@@ -501,14 +501,14 @@ export interface MarsCreditManagerUpdateAdminMutation {
     funds?: Coin[]
   }
 }
-export function useMarsCreditManagerUpdateAdminMutation(
+export function useMarsCreditManagerUpdateOwnerMutation(
   options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsCreditManagerUpdateAdminMutation>,
+    UseMutationOptions<ExecuteResult, Error, MarsCreditManagerUpdateOwnerMutation>,
     'mutationFn'
   >,
 ) {
-  return useMutation<ExecuteResult, Error, MarsCreditManagerUpdateAdminMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) => client.updateAdmin(msg, fee, memo, funds),
+  return useMutation<ExecuteResult, Error, MarsCreditManagerUpdateOwnerMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.updateOwner(msg, fee, memo, funds),
     options,
   )
 }

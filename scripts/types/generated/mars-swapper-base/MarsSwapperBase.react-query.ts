@@ -11,15 +11,15 @@ import { StdFee } from '@cosmjs/amino'
 import {
   InstantiateMsg,
   ExecuteMsg,
-  AdminUpdate,
+  OwnerUpdate,
   Uint128,
   Decimal,
   Addr,
   Empty,
   Coin,
   QueryMsg,
-  AdminResponse,
   EstimateExactInSwapResponse,
+  OwnerResponse,
   RouteResponseForEmpty,
   ArrayOfRouteResponseForEmpty,
 } from './MarsSwapperBase.types'
@@ -32,8 +32,8 @@ export const marsSwapperBaseQueryKeys = {
   ] as const,
   address: (contractAddress: string | undefined) =>
     [{ ...marsSwapperBaseQueryKeys.contract[0], address: contractAddress }] as const,
-  admin: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
-    [{ ...marsSwapperBaseQueryKeys.address(contractAddress)[0], method: 'admin', args }] as const,
+  owner: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [{ ...marsSwapperBaseQueryKeys.address(contractAddress)[0], method: 'owner', args }] as const,
   route: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsSwapperBaseQueryKeys.address(contractAddress)[0], method: 'route', args }] as const,
   routes: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
@@ -128,15 +128,15 @@ export function useMarsSwapperBaseRouteQuery<TData = RouteResponseForEmpty>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsSwapperBaseAdminQuery<TData>
-  extends MarsSwapperBaseReactQuery<AdminResponse, TData> {}
-export function useMarsSwapperBaseAdminQuery<TData = AdminResponse>({
+export interface MarsSwapperBaseOwnerQuery<TData>
+  extends MarsSwapperBaseReactQuery<OwnerResponse, TData> {}
+export function useMarsSwapperBaseOwnerQuery<TData = OwnerResponse>({
   client,
   options,
-}: MarsSwapperBaseAdminQuery<TData>) {
-  return useQuery<AdminResponse, Error, TData>(
-    marsSwapperBaseQueryKeys.admin(client?.contractAddress),
-    () => (client ? client.admin() : Promise.reject(new Error('Invalid client'))),
+}: MarsSwapperBaseOwnerQuery<TData>) {
+  return useQuery<OwnerResponse, Error, TData>(
+    marsSwapperBaseQueryKeys.owner(client?.contractAddress),
+    () => (client ? client.owner() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
@@ -213,7 +213,7 @@ export function useMarsSwapperBaseSetRouteMutation(
     options,
   )
 }
-export interface MarsSwapperBaseUpdateAdminMutation {
+export interface MarsSwapperBaseUpdateOwnerMutation {
   client: MarsSwapperBaseClient
   args?: {
     fee?: number | StdFee | 'auto'
@@ -221,14 +221,14 @@ export interface MarsSwapperBaseUpdateAdminMutation {
     funds?: Coin[]
   }
 }
-export function useMarsSwapperBaseUpdateAdminMutation(
+export function useMarsSwapperBaseUpdateOwnerMutation(
   options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsSwapperBaseUpdateAdminMutation>,
+    UseMutationOptions<ExecuteResult, Error, MarsSwapperBaseUpdateOwnerMutation>,
     'mutationFn'
   >,
 ) {
-  return useMutation<ExecuteResult, Error, MarsSwapperBaseUpdateAdminMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) => client.updateAdmin(msg, fee, memo, funds),
+  return useMutation<ExecuteResult, Error, MarsSwapperBaseUpdateOwnerMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.updateOwner(msg, fee, memo, funds),
     options,
   )
 }

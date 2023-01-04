@@ -35,14 +35,14 @@ pub fn instantiate_oracle_adapter(app: &mut BasicApp) -> Addr {
     let vault_pricing_info = deploy_vault(app, oracle.clone().into(), mock_vault_info());
     starting_vault_deposit(app, &vault_pricing_info);
 
-    let admin = Addr::unchecked("admin");
+    let owner = Addr::unchecked("owner");
     app.instantiate_contract(
         code_id,
-        admin.clone(),
+        owner.clone(),
         &InstantiateMsg {
             oracle: oracle.into(),
             vault_pricing: vec![vault_pricing_info],
-            admin: admin.to_string(),
+            owner: owner.to_string(),
         },
         &[],
         "mars-oracle-adapter",
@@ -127,7 +127,7 @@ fn deploy_oracle(app: &mut BasicApp) -> OracleBase<Addr> {
     let addr = app
         .instantiate_contract(
             code_id,
-            Addr::unchecked("oracle_contract_admin"),
+            Addr::unchecked("oracle_contract_owner"),
             &OracleInstantiateMsg {
                 prices: vec![
                     CoinPrice {

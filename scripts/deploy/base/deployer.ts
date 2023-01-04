@@ -109,7 +109,7 @@ export class Deployer {
   async instantiateMarsOracleAdapter() {
     const msg: OracleAdapterInstantiateMsg = {
       oracle: this.config.oracle.addr,
-      admin: this.deployerAddr,
+      owner: this.deployerAddr,
       vault_pricing: this.config.oracle.vaultPricing,
     }
 
@@ -127,7 +127,7 @@ export class Deployer {
 
   async instantiateSwapper() {
     const msg: SwapperInstantiateMsg = {
-      admin: this.deployerAddr,
+      owner: this.deployerAddr,
     }
     await this.instantiate('swapper', this.storage.codeIds.swapper!, msg)
 
@@ -167,7 +167,7 @@ export class Deployer {
       allowed_coins: this.config.allowedCoins,
       vault_configs: this.config.vaults,
       oracle: this.storage.addresses.marsOracleAdapter!,
-      admin: this.deployerAddr,
+      owner: this.deployerAddr,
       red_bank: this.config.redBank.addr,
       max_close_factor: this.config.maxCloseFactor,
       swapper: this.storage.addresses.swapper!,

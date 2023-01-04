@@ -103,21 +103,21 @@ fn test_withdraw_liquidity_successfully() {
             2,
         )
         .unwrap();
-    let admin = &accs[0];
+    let owner = &accs[0];
     let user = &accs[1];
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
         .create_basic_pool(
             &[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")],
-            admin,
+            owner,
         )
         .unwrap()
         .data
         .pool_id;
     let pool_denom = format!("gamm/pool/{}", pool_id);
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     let bank = Bank::new(&app);
 
@@ -214,7 +214,7 @@ fn test_withdraw_liquidity_with_different_recipient_successfully() {
             3,
         )
         .unwrap();
-    let admin = &accs[0];
+    let owner = &accs[0];
     let user = &accs[1];
     let recipient = &accs[2];
 
@@ -222,14 +222,14 @@ fn test_withdraw_liquidity_with_different_recipient_successfully() {
     let pool_id = gamm
         .create_basic_pool(
             &[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")],
-            admin,
+            owner,
         )
         .unwrap()
         .data
         .pool_id;
     let pool_denom = format!("gamm/pool/{}", pool_id);
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     let bank = Bank::new(&app);
 

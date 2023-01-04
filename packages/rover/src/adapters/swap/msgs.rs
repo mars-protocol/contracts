@@ -1,17 +1,17 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
-use cw_controllers_admin_fork::AdminUpdate;
+use mars_owner::OwnerUpdate;
 
 #[cw_serde]
 pub struct InstantiateMsg {
-    /// The contract's admin, who can update config
-    pub admin: String,
+    /// The contract's owner, who can update config
+    pub owner: String,
 }
 
 #[cw_serde]
 pub enum ExecuteMsg<Route> {
-    /// Manges admin role state
-    UpdateAdmin(AdminUpdate),
+    /// Manges owner role state
+    UpdateOwner(OwnerUpdate),
     /// Configure the route for swapping an asset
     ///
     /// This is chain-specific, and can include parameters such as slippage tolerance and the routes
@@ -38,9 +38,9 @@ pub enum ExecuteMsg<Route> {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    /// Query contract admin config
-    #[returns(cw_controllers_admin_fork::AdminResponse)]
-    Admin {},
+    /// Query contract owner config
+    #[returns(mars_owner::OwnerResponse)]
+    Owner {},
     /// Get route for swapping an input denom into an output denom
     #[returns(RouteResponse<cosmwasm_std::Empty>)]
     Route { denom_in: String, denom_out: String },

@@ -23,7 +23,7 @@ import {
   Action,
   ActionAmount,
   VaultPositionType,
-  AdminUpdate,
+  OwnerUpdate,
   CallbackMsg,
   Addr,
   ActionCoin,
@@ -325,7 +325,7 @@ export interface MarsCreditManagerInterface extends MarsCreditManagerReadOnlyInt
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
-  updateAdmin: (
+  updateOwner: (
     fee?: number | StdFee | 'auto',
     memo?: string,
     funds?: Coin[],
@@ -352,7 +352,7 @@ export class MarsCreditManagerClient
     this.createCreditAccount = this.createCreditAccount.bind(this)
     this.updateCreditAccount = this.updateCreditAccount.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
-    this.updateAdmin = this.updateAdmin.bind(this)
+    this.updateOwner = this.updateOwner.bind(this)
     this.callback = this.callback.bind(this)
   }
 
@@ -421,7 +421,7 @@ export class MarsCreditManagerClient
       funds,
     )
   }
-  updateAdmin = async (
+  updateOwner = async (
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     funds?: Coin[],
@@ -430,7 +430,7 @@ export class MarsCreditManagerClient
       this.sender,
       this.contractAddress,
       {
-        update_admin: {},
+        update_owner: {},
       },
       fee,
       memo,

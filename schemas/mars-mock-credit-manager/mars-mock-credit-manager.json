@@ -856,12 +856,6 @@
             "null"
           ]
         },
-        "admin": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "max_close_factor": {
           "$ref": "#/definitions/Decimal"
         },
@@ -871,7 +865,13 @@
         "oracle": {
           "type": "string"
         },
-        "proposed_new_admin": {
+        "owner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "proposed_new_owner": {
           "type": [
             "string",
             "null"

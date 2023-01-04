@@ -6,11 +6,11 @@
  */
 
 export interface InstantiateMsg {
-  admin: string
+  owner: string
 }
 export type ExecuteMsg =
   | {
-      update_admin: AdminUpdate
+      update_owner: OwnerUpdate
     }
   | {
       set_route: {
@@ -33,15 +33,15 @@ export type ExecuteMsg =
         recipient: Addr
       }
     }
-export type AdminUpdate =
+export type OwnerUpdate =
   | {
-      propose_new_admin: {
+      propose_new_owner: {
         proposed: string
       }
     }
   | 'clear_proposed'
   | 'accept_proposed'
-  | 'abolish_admin_role'
+  | 'abolish_owner_role'
 export type Uint128 = string
 export type Decimal = string
 export type Addr = string
@@ -55,7 +55,7 @@ export interface Coin {
 }
 export type QueryMsg =
   | {
-      admin: {}
+      owner: {}
     }
   | {
       route: {
@@ -75,12 +75,14 @@ export type QueryMsg =
         denom_out: string
       }
     }
-export interface AdminResponse {
-  admin?: string | null
-  proposed?: string | null
-}
 export interface EstimateExactInSwapResponse {
   amount: Uint128
+}
+export interface OwnerResponse {
+  abolished: boolean
+  initialized: boolean
+  owner?: string | null
+  proposed?: string | null
 }
 export interface RouteResponseForEmpty {
   denom_in: string

@@ -7,21 +7,17 @@
     "title": "InstantiateMsg",
     "type": "object",
     "required": [
-      "admin",
       "allowed_coins",
       "max_close_factor",
       "max_unlocking_positions",
       "oracle",
+      "owner",
       "red_bank",
       "swapper",
       "vault_configs",
       "zapper"
     ],
     "properties": {
-      "admin": {
-        "description": "The address with privileged access to update config",
-        "type": "string"
-      },
       "allowed_coins": {
         "description": "Whitelisted coin denoms approved by governance",
         "type": "array",
@@ -52,6 +48,10 @@
             "$ref": "#/definitions/OracleBase_for_String"
           }
         ]
+      },
+      "owner": {
+        "description": "The address with privileged access to update config",
+        "type": "string"
       },
       "red_bank": {
         "description": "The Mars Protocol money market contract where we borrow assets from",
@@ -246,14 +246,14 @@
         "additionalProperties": false
       },
       {
-        "description": "Manages admin role state",
+        "description": "Manages owner role state",
         "type": "object",
         "required": [
-          "update_admin"
+          "update_owner"
         ],
         "properties": {
-          "update_admin": {
-            "$ref": "#/definitions/AdminUpdate"
+          "update_owner": {
+            "$ref": "#/definitions/OwnerUpdate"
           }
         },
         "additionalProperties": false
@@ -647,53 +647,6 @@
       "Addr": {
         "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
         "type": "string"
-      },
-      "AdminUpdate": {
-        "oneOf": [
-          {
-            "description": "Proposes a new admin to take role. Only current admin can execute.",
-            "type": "object",
-            "required": [
-              "propose_new_admin"
-            ],
-            "properties": {
-              "propose_new_admin": {
-                "type": "object",
-                "required": [
-                  "proposed"
-                ],
-                "properties": {
-                  "proposed": {
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "description": "Clears the currently proposed admin. Only current admin can execute.",
-            "type": "string",
-            "enum": [
-              "clear_proposed"
-            ]
-          },
-          {
-            "description": "Promotes the proposed admin to be the current one. Only the proposed admin can execute.",
-            "type": "string",
-            "enum": [
-              "accept_proposed"
-            ]
-          },
-          {
-            "description": "Throws away the keys to the Admin role forever. Once done, no admin can ever be set later.",
-            "type": "string",
-            "enum": [
-              "abolish_admin_role"
-            ]
-          }
-        ]
       },
       "CallbackMsg": {
         "description": "Internal actions made by the contract with pre-validated inputs",
@@ -1308,6 +1261,53 @@
       },
       "OracleBase_for_String": {
         "type": "string"
+      },
+      "OwnerUpdate": {
+        "oneOf": [
+          {
+            "description": "Proposes a new owner to take role. Only current owner can execute.",
+            "type": "object",
+            "required": [
+              "propose_new_owner"
+            ],
+            "properties": {
+              "propose_new_owner": {
+                "type": "object",
+                "required": [
+                  "proposed"
+                ],
+                "properties": {
+                  "proposed": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Clears the currently proposed owner. Only current owner can execute.",
+            "type": "string",
+            "enum": [
+              "clear_proposed"
+            ]
+          },
+          {
+            "description": "Promotes the proposed owner to be the current one. Only the proposed owner can execute.",
+            "type": "string",
+            "enum": [
+              "accept_proposed"
+            ]
+          },
+          {
+            "description": "Throws away the keys to the Owner role forever. Once done, no owner can ever be set later.",
+            "type": "string",
+            "enum": [
+              "abolish_owner_role"
+            ]
+          }
+        ]
       },
       "SwapperBase_for_String": {
         "type": "string"
@@ -2152,12 +2152,6 @@
             "null"
           ]
         },
-        "admin": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "max_close_factor": {
           "$ref": "#/definitions/Decimal"
         },
@@ -2167,7 +2161,13 @@
         "oracle": {
           "type": "string"
         },
-        "proposed_new_admin": {
+        "owner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "proposed_new_owner": {
           "type": [
             "string",
             "null"

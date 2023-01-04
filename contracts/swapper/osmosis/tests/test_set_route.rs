@@ -1,6 +1,6 @@
 use cosmwasm_std::coin;
 use cosmwasm_std::StdError::GenericErr;
-use cw_controllers_admin_fork::AdminError;
+use mars_owner::OwnerError;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
 use osmosis_testing::{Gamm, Module, OsmosisTestApp, Wasm};
 
@@ -13,17 +13,17 @@ use crate::helpers::{assert_err, instantiate_contract};
 pub mod helpers;
 
 #[test]
-fn test_only_admin_can_set_routes() {
+fn test_only_owner_can_set_routes() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
     let accs = app
         .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
         .unwrap();
-    let admin = &accs[0];
+    let owner = &accs[0];
     let bad_guy = &accs[1];
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     let res_err = wasm
         .execute(
@@ -47,7 +47,7 @@ fn test_only_admin_can_set_routes() {
         )
         .unwrap_err();
 
-    assert_err(res_err, AdminError::NotAdmin {});
+    assert_err(res_err, OwnerError::NotOwner {});
 }
 
 #[test]

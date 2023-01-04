@@ -5,9 +5,9 @@ use cosmwasm_std::{
     DepsMut, Env, MessageInfo, Order, Response, WasmMsg,
 };
 use cw_storage_plus::{Bound, Map};
+use mars_owner::OwnerInit::SetInitialOwner;
+use mars_owner::{Owner, OwnerUpdate};
 
-use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
-use cw_controllers_admin_fork::{Admin, AdminUpdate};
 use mars_rover::adapters::swap::{
     EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
     RoutesResponse,
@@ -25,8 +25,8 @@ where
     M: CustomMsg,
     R: Route<M, Q>,
 {
-    /// The contract's admin who has special rights to update contract
-    pub admin: Admin<'a>,
+    /// The contract's owner who has special rights to update contract
+    pub owner: Owner<'a>,
     /// The trade route for each pair of input/output assets
     pub routes: Map<'a, (String, String), R>,
     /// Phantom data holds generics
@@ -42,7 +42,7 @@ where
 {
     fn default() -> Self {
         Self {
-            admin: Admin::new("admin"),
+            owner: Owner::new("owner"),
             routes: Map::new("routes"),
             custom_query: PhantomData,
             custom_message: PhantomData,
@@ -61,8 +61,8 @@ where
         deps: DepsMut<Q>,
         msg: InstantiateMsg,
     ) -> ContractResult<Response<M>> {
-        self.admin
-            .initialize(deps.storage, deps.api, SetInitialAdmin { admin: msg.admin })?;
+        self.owner
+            .initialize(deps.storage, deps.api, SetInitialOwner { owner: msg.owner })?;
         Ok(Response::default())
     }
 
@@ -74,7 +74,7 @@ where
         msg: ExecuteMsg<R>,
     ) -> ContractResult<Response<M>> {
         match msg {
-            ExecuteMsg::UpdateAdmin(update) => self.update_admin(deps, info, update),
+            ExecuteMsg::UpdateOwner(update) => self.update_owner(deps, info, update),
             ExecuteMsg::SetRoute {
                 denom_in,
                 denom_out,
@@ -95,7 +95,7 @@ where
 
     pub fn query(&self, deps: Deps<Q>, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         let res = match msg {
-            QueryMsg::Admin {} => to_binary(&self.admin.query(deps.storage)?),
+            QueryMsg::Owner {} => to_binary(&self.owner.query(deps.storage)?),
             QueryMsg::EstimateExactInSwap { coin_in, denom_out } => {
                 to_binary(&self.estimate_exact_in_swap(deps, env, coin_in, denom_out)?)
             }
@@ -241,7 +241,7 @@ where
         denom_out: String,
         route: R,
     ) -> ContractResult<Response<M>> {
-        self.admin.assert_admin(deps.storage, &sender)?;
+        self.owner.assert_owner(deps.storage, &sender)?;
 
         route.validate(&deps.querier, &denom_in, &denom_out)?;
 
@@ -255,12 +255,12 @@ where
             .add_attribute("route", route.to_string()))
     }
 
-    fn update_admin(
+    fn update_owner(
         &self,
         deps: DepsMut<Q>,
         info: MessageInfo,
-        update: AdminUpdate,
+        update: OwnerUpdate,
     ) -> ContractResult<Response<M>> {
-        Ok(self.admin.update(deps, info, update)?)
+        Ok(self.owner.update(deps, info, update)?)
     }
 }

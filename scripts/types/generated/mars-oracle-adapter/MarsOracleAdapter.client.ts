@@ -14,7 +14,7 @@ import {
   InstantiateMsg,
   VaultPricingInfo,
   ExecuteMsg,
-  AdminUpdate,
+  OwnerUpdate,
   ConfigUpdates,
   QueryMsg,
   ArrayOfVaultPricingInfo,
@@ -96,7 +96,7 @@ export interface MarsOracleAdapterInterface extends MarsOracleAdapterReadOnlyInt
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
-  updateAdmin: (
+  updateOwner: (
     fee?: number | StdFee | 'auto',
     memo?: string,
     funds?: Coin[],
@@ -116,7 +116,7 @@ export class MarsOracleAdapterClient
     this.sender = sender
     this.contractAddress = contractAddress
     this.updateConfig = this.updateConfig.bind(this)
-    this.updateAdmin = this.updateAdmin.bind(this)
+    this.updateOwner = this.updateOwner.bind(this)
   }
 
   updateConfig = async (
@@ -142,7 +142,7 @@ export class MarsOracleAdapterClient
       funds,
     )
   }
-  updateAdmin = async (
+  updateOwner = async (
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     funds?: Coin[],
@@ -151,7 +151,7 @@ export class MarsOracleAdapterClient
       this.sender,
       this.contractAddress,
       {
-        update_admin: {},
+        update_owner: {},
       },
       fee,
       memo,

@@ -1,7 +1,7 @@
 use cosmwasm_std::Addr;
-use cw_controllers_admin_fork::AdminError::{NotAdmin, NotProposedAdmin, StateTransitionError};
-use cw_controllers_admin_fork::AdminUpdate;
-use mars_rover::error::ContractError::AdminError;
+use mars_owner::OwnerError::{NotOwner, NotProposedOwner, StateTransitionError};
+use mars_owner::OwnerUpdate;
+use mars_rover::error::ContractError::OwnerError;
 
 use crate::helpers::{assert_err, MockEnv};
 
@@ -12,43 +12,43 @@ fn test_initialized_state() {
     let mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
 
-    assert!(original_config.admin.is_some());
-    assert!(original_config.proposed_new_admin.is_none());
+    assert!(original_config.owner.is_some());
+    assert!(original_config.proposed_new_owner.is_none());
 }
 
 #[test]
-fn test_propose_new_admin() {
+fn test_propose_new_owner() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
 
-    let new_admin = "new_admin".to_string();
+    let new_owner = "new_owner".to_string();
 
-    // only admin can propose new admins
+    // only owner can propose new owners
     let bad_guy = Addr::unchecked("bad_guy");
-    let res = mock.update_admin(
+    let res = mock.update_owner(
         &bad_guy,
-        AdminUpdate::ProposeNewAdmin {
+        OwnerUpdate::ProposeNewOwner {
             proposed: bad_guy.to_string(),
         },
     );
-    assert_err(res, AdminError(NotAdmin {}));
+    assert_err(res, OwnerError(NotOwner {}));
 
-    mock.update_admin(
-        &Addr::unchecked(original_config.admin.clone().unwrap()),
-        AdminUpdate::ProposeNewAdmin {
-            proposed: new_admin.clone(),
+    mock.update_owner(
+        &Addr::unchecked(original_config.owner.clone().unwrap()),
+        OwnerUpdate::ProposeNewOwner {
+            proposed: new_owner.clone(),
         },
     )
     .unwrap();
 
     let new_config = mock.query_config();
 
-    assert_eq!(new_config.admin, original_config.admin);
+    assert_eq!(new_config.owner, original_config.owner);
     assert_ne!(
-        new_config.proposed_new_admin,
-        original_config.proposed_new_admin
+        new_config.proposed_new_owner,
+        original_config.proposed_new_owner
     );
-    assert_eq!(new_config.proposed_new_admin, Some(new_admin));
+    assert_eq!(new_config.proposed_new_owner, Some(new_owner));
 }
 
 #[test]
@@ -56,102 +56,102 @@ fn test_clear_proposed() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
 
-    let new_admin = "new_admin".to_string();
+    let new_owner = "new_owner".to_string();
 
-    mock.update_admin(
-        &Addr::unchecked(original_config.admin.clone().unwrap()),
-        AdminUpdate::ProposeNewAdmin {
-            proposed: new_admin.clone(),
+    mock.update_owner(
+        &Addr::unchecked(original_config.owner.clone().unwrap()),
+        OwnerUpdate::ProposeNewOwner {
+            proposed: new_owner.clone(),
         },
     )
     .unwrap();
 
     let interim_config = mock.query_config();
 
-    assert_eq!(interim_config.proposed_new_admin, Some(new_admin));
+    assert_eq!(interim_config.proposed_new_owner, Some(new_owner));
 
-    // only admin can clear
+    // only owner can clear
     let bad_guy = Addr::unchecked("bad_guy");
-    let res = mock.update_admin(&bad_guy, AdminUpdate::ClearProposed);
-    assert_err(res, AdminError(NotAdmin {}));
+    let res = mock.update_owner(&bad_guy, OwnerUpdate::ClearProposed);
+    assert_err(res, OwnerError(NotOwner {}));
 
-    mock.update_admin(
-        &Addr::unchecked(original_config.admin.clone().unwrap()),
-        AdminUpdate::ClearProposed,
+    mock.update_owner(
+        &Addr::unchecked(original_config.owner.clone().unwrap()),
+        OwnerUpdate::ClearProposed,
     )
     .unwrap();
 
     let latest_config = mock.query_config();
 
-    assert_eq!(latest_config.admin, original_config.admin);
+    assert_eq!(latest_config.owner, original_config.owner);
     assert_ne!(
-        latest_config.proposed_new_admin,
-        interim_config.proposed_new_admin
+        latest_config.proposed_new_owner,
+        interim_config.proposed_new_owner
     );
-    assert_eq!(latest_config.proposed_new_admin, None);
+    assert_eq!(latest_config.proposed_new_owner, None);
 }
 
 #[test]
-fn test_accept_admin_role() {
+fn test_accept_owner_role() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
 
-    let new_admin = "new_admin".to_string();
+    let new_owner = "new_owner".to_string();
 
-    mock.update_admin(
-        &Addr::unchecked(original_config.admin.clone().unwrap()),
-        AdminUpdate::ProposeNewAdmin {
-            proposed: new_admin.clone(),
+    mock.update_owner(
+        &Addr::unchecked(original_config.owner.clone().unwrap()),
+        OwnerUpdate::ProposeNewOwner {
+            proposed: new_owner.clone(),
         },
     )
     .unwrap();
 
-    // Only proposed admin can accept
-    let res = mock.update_admin(
-        &Addr::unchecked(original_config.admin.unwrap()),
-        AdminUpdate::AcceptProposed,
+    // Only proposed owner can accept
+    let res = mock.update_owner(
+        &Addr::unchecked(original_config.owner.unwrap()),
+        OwnerUpdate::AcceptProposed,
     );
-    assert_err(res, AdminError(NotProposedAdmin {}));
+    assert_err(res, OwnerError(NotProposedOwner {}));
 
-    mock.update_admin(
-        &Addr::unchecked(new_admin.clone()),
-        AdminUpdate::AcceptProposed,
+    mock.update_owner(
+        &Addr::unchecked(new_owner.clone()),
+        OwnerUpdate::AcceptProposed,
     )
     .unwrap();
 
     let new_config = mock.query_config();
 
-    assert_eq!(new_config.admin.unwrap(), new_admin);
-    assert_eq!(new_config.proposed_new_admin, None);
+    assert_eq!(new_config.owner.unwrap(), new_owner);
+    assert_eq!(new_config.proposed_new_owner, None);
 }
 
 #[test]
-fn test_abolish_admin_role() {
+fn test_abolish_owner_role() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
 
-    // Only admin can abolish role
+    // Only owner can abolish role
     let bad_guy = Addr::unchecked("bad_guy");
-    let res = mock.update_admin(&bad_guy, AdminUpdate::AbolishAdminRole);
-    assert_err(res, AdminError(NotAdmin {}));
+    let res = mock.update_owner(&bad_guy, OwnerUpdate::AbolishOwnerRole);
+    assert_err(res, OwnerError(NotOwner {}));
 
-    mock.update_admin(
-        &Addr::unchecked(original_config.admin.clone().unwrap()),
-        AdminUpdate::AbolishAdminRole,
+    mock.update_owner(
+        &Addr::unchecked(original_config.owner.clone().unwrap()),
+        OwnerUpdate::AbolishOwnerRole,
     )
     .unwrap();
 
     let new_config = mock.query_config();
 
-    assert_eq!(new_config.admin, None);
-    assert_eq!(new_config.proposed_new_admin, None);
+    assert_eq!(new_config.owner, None);
+    assert_eq!(new_config.proposed_new_owner, None);
 
     // No new updates can occur
-    let res = mock.update_admin(
-        &Addr::unchecked(original_config.admin.clone().unwrap()),
-        AdminUpdate::ProposeNewAdmin {
-            proposed: original_config.admin.unwrap(),
+    let res = mock.update_owner(
+        &Addr::unchecked(original_config.owner.clone().unwrap()),
+        OwnerUpdate::ProposeNewOwner {
+            proposed: original_config.owner.unwrap(),
         },
     );
-    assert_err(res, AdminError(StateTransitionError {}));
+    assert_err(res, OwnerError(StateTransitionError {}));
 }

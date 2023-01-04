@@ -21,10 +21,10 @@ fn test_only_contract_itself_can_callback() {
             2,
         )
         .unwrap();
-    let admin = &accs[0];
+    let owner = &accs[0];
     let user = &accs[1];
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     let res_err = wasm
         .execute(

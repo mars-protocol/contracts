@@ -1,10 +1,10 @@
-use cw_controllers_admin_fork::Admin;
 use cw_storage_plus::{Item, Map};
+use mars_owner::Owner;
 use mars_rover::adapters::Oracle;
 
 use crate::msg::VaultPricingInfo;
 
-pub const ADMIN: Admin = Admin::new("admin");
+pub const OWNER: Owner = Owner::new("owner");
 pub const ORACLE: Item<Oracle> = Item::new("oracle");
 
 /// Map<(Vault Token Denom, Pricing Method)>

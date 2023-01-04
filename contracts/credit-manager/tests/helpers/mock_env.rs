@@ -6,9 +6,9 @@ use cosmwasm_std::{coins, Addr, Coin, Decimal, Empty, Uint128};
 use cosmwasm_vault_standard::extensions::lockup::{LockupQueryMsg, UnlockingPosition};
 use cosmwasm_vault_standard::msg::VaultStandardQueryMsg::{Info as VaultInfoMsg, VaultExtension};
 use cosmwasm_vault_standard::msg::{ExtensionQueryMsg, VaultInfoResponse};
-use cw_controllers_admin_fork::AdminUpdate;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_account_nft::msg::InstantiateMsg as NftInstantiateMsg;
+use mars_owner::OwnerUpdate;
 
 use mars_account_nft::config::ConfigUpdates as NftConfigUpdates;
 use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
@@ -56,7 +56,7 @@ pub struct MockEnv {
 
 pub struct MockEnvBuilder {
     pub app: BasicApp,
-    pub admin: Option<Addr>,
+    pub owner: Option<Addr>,
     pub vault_configs: Option<Vec<VaultTestInfo>>,
     pub pre_deployed_vaults: Option<Vec<VaultInstantiateConfig>>,
     pub allowed_coins: Option<Vec<CoinInfo>>,
@@ -75,7 +75,7 @@ impl MockEnv {
     pub fn new() -> MockEnvBuilder {
         MockEnvBuilder {
             app: App::default(),
-            admin: None,
+            owner: None,
             vault_configs: None,
             pre_deployed_vaults: None,
             allowed_coins: None,
@@ -193,11 +193,11 @@ impl MockEnv {
         )
     }
 
-    pub fn update_admin(&mut self, sender: &Addr, update: AdminUpdate) -> AnyResult<AppResponse> {
+    pub fn update_owner(&mut self, sender: &Addr, update: OwnerUpdate) -> AnyResult<AppResponse> {
         self.app.execute_contract(
             sender.clone(),
             self.rover.clone(),
-            &ExecuteMsg::UpdateAdmin(update),
+            &ExecuteMsg::UpdateOwner(update),
             &[],
         )
     }
@@ -511,7 +511,7 @@ impl MockEnvBuilder {
     pub fn update_config(&mut self, rover: &Addr, new_config: ConfigUpdates) {
         self.app
             .execute_contract(
-                self.get_admin(),
+                self.get_owner(),
                 rover.clone(),
                 &ExecuteMsg::UpdateConfig { new_config },
                 &[],
@@ -544,9 +544,9 @@ impl MockEnvBuilder {
 
         self.app.instantiate_contract(
             code_id,
-            self.get_admin(),
+            self.get_owner(),
             &InstantiateMsg {
-                admin: self.get_admin().to_string(),
+                owner: self.get_owner().to_string(),
                 allowed_coins,
                 vault_configs,
                 red_bank,
@@ -562,10 +562,10 @@ impl MockEnvBuilder {
         )
     }
 
-    fn get_admin(&self) -> Addr {
-        self.admin
+    fn get_owner(&self) -> Addr {
+        self.owner
             .clone()
-            .unwrap_or_else(|| Addr::unchecked("admin"))
+            .unwrap_or_else(|| Addr::unchecked("owner"))
     }
 
     fn get_oracle(&mut self) -> OracleBase<Addr> {
@@ -594,7 +594,7 @@ impl MockEnvBuilder {
             .app
             .instantiate_contract(
                 contract_code_id,
-                Addr::unchecked("oracle_contract_admin"),
+                Addr::unchecked("oracle_contract_owner"),
                 &OracleInstantiateMsg { prices },
                 &[],
                 "mock-oracle",
@@ -613,7 +613,7 @@ impl MockEnvBuilder {
     }
 
     fn deploy_oracle_adapter(&mut self, vaults: Vec<VaultInstantiateConfig>) -> OracleBase<Addr> {
-        let admin = Addr::unchecked("oracle_adapter_contract_admin");
+        let owner = Addr::unchecked("oracle_adapter_contract_owner");
         let contract_code_id = self.app.store_code(mock_oracle_adapter_contract());
         let oracle = self.get_oracle().into();
         let vault_pricing = if self.pre_deployed_vaults.is_some() {
@@ -640,11 +640,11 @@ impl MockEnvBuilder {
             .app
             .instantiate_contract(
                 contract_code_id,
-                admin.clone(),
+                owner.clone(),
                 &OracleAdapterInstantiateMsg {
                     oracle,
                     vault_pricing,
-                    admin: admin.to_string(),
+                    owner: owner.to_string(),
                 },
                 &[],
                 "mars-oracle-adapter",
@@ -668,7 +668,7 @@ impl MockEnvBuilder {
             .app
             .instantiate_contract(
                 contract_code_id,
-                Addr::unchecked("red_bank_contract_admin"),
+                Addr::unchecked("red_bank_contract_owner"),
                 &RedBankInstantiateMsg {
                     coins: self
                         .get_allowed_coins()
@@ -743,7 +743,7 @@ impl MockEnvBuilder {
                 code_id,
                 Addr::unchecked("swapper-instantiator"),
                 &SwapperInstantiateMsg {
-                    admin: self.get_admin().to_string(),
+                    owner: self.get_owner().to_string(),
                 },
                 &[],
                 "mock-vault",
@@ -833,8 +833,8 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn admin(&mut self, admin: &str) -> &mut Self {
-        self.admin = Some(Addr::unchecked(admin));
+    pub fn owner(&mut self, owner: &str) -> &mut Self {
+        self.owner = Some(Addr::unchecked(owner));
         self
     }
 

@@ -11,22 +11,22 @@ import { toUtf8 } from '@cosmjs/encoding'
 import {
   InstantiateMsg,
   ExecuteMsg,
-  AdminUpdate,
+  OwnerUpdate,
   Uint128,
   Decimal,
   Addr,
   Empty,
   Coin,
   QueryMsg,
-  AdminResponse,
   EstimateExactInSwapResponse,
+  OwnerResponse,
   RouteResponseForEmpty,
   ArrayOfRouteResponseForEmpty,
 } from './MarsSwapperBase.types'
 export interface MarsSwapperBaseMessage {
   contractAddress: string
   sender: string
-  updateAdmin: (funds?: Coin[]) => MsgExecuteContractEncodeObject
+  updateOwner: (funds?: Coin[]) => MsgExecuteContractEncodeObject
   setRoute: (
     {
       denomIn,
@@ -71,13 +71,13 @@ export class MarsSwapperBaseMessageComposer implements MarsSwapperBaseMessage {
   constructor(sender: string, contractAddress: string) {
     this.sender = sender
     this.contractAddress = contractAddress
-    this.updateAdmin = this.updateAdmin.bind(this)
+    this.updateOwner = this.updateOwner.bind(this)
     this.setRoute = this.setRoute.bind(this)
     this.swapExactIn = this.swapExactIn.bind(this)
     this.transferResult = this.transferResult.bind(this)
   }
 
-  updateAdmin = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
+  updateOwner = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
       value: MsgExecuteContract.fromPartial({
@@ -85,7 +85,7 @@ export class MarsSwapperBaseMessageComposer implements MarsSwapperBaseMessage {
         contract: this.contractAddress,
         msg: toUtf8(
           JSON.stringify({
-            update_admin: {},
+            update_owner: {},
           }),
         ),
         funds,

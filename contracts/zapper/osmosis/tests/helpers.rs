@@ -15,11 +15,11 @@ pub fn wasm_file() -> String {
     format!("../../../{}/{}.wasm", artifacts_dir, snaked_name)
 }
 
-pub fn instantiate_contract(wasm: &Wasm<OsmosisTestApp>, admin: &SigningAccount) -> String {
+pub fn instantiate_contract(wasm: &Wasm<OsmosisTestApp>, owner: &SigningAccount) -> String {
     println!("WASM name: {}", wasm_file());
     let wasm_byte_code = std::fs::read(wasm_file()).unwrap();
     let code_id = wasm
-        .store_code(&wasm_byte_code, None, admin)
+        .store_code(&wasm_byte_code, None, owner)
         .unwrap()
         .data
         .code_id;
@@ -30,7 +30,7 @@ pub fn instantiate_contract(wasm: &Wasm<OsmosisTestApp>, admin: &SigningAccount)
         None,
         Some("zapper-osmosis-contract"),
         &[],
-        admin,
+        owner,
     )
     .unwrap()
     .data

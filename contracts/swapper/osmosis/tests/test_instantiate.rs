@@ -1,5 +1,5 @@
 use cosmwasm_std::coin;
-use cw_controllers_admin_fork::AdminResponse;
+use mars_owner::OwnerResponse;
 use osmosis_testing::{Account, Module, OsmosisTestApp, Wasm};
 
 use mars_rover::adapters::swap::{InstantiateMsg, QueryMsg};
@@ -9,7 +9,7 @@ use crate::helpers::{instantiate_contract, wasm_file};
 pub mod helpers;
 
 #[test]
-fn test_admin_set_on_instantiate() {
+fn test_owner_set_on_instantiate() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
     let signer = app
@@ -18,12 +18,12 @@ fn test_admin_set_on_instantiate() {
 
     let contract_addr = instantiate_contract(&wasm, &signer);
 
-    let res: AdminResponse = wasm.query(&contract_addr, &QueryMsg::Admin {}).unwrap();
-    assert_eq!(res.admin, Some(signer.address()));
+    let res: OwnerResponse = wasm.query(&contract_addr, &QueryMsg::Owner {}).unwrap();
+    assert_eq!(res.owner, Some(signer.address()));
 }
 
 #[test]
-fn test_raises_on_invalid_admin_addr() {
+fn test_raises_on_invalid_owner_addr() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
     let signer = app
@@ -37,11 +37,11 @@ fn test_raises_on_invalid_admin_addr() {
         .data
         .code_id;
 
-    let admin = "%%%INVALID%%%";
+    let owner = "%%%INVALID%%%";
     let res = wasm.instantiate(
         code_id,
         &InstantiateMsg {
-            admin: admin.to_string(),
+            owner: owner.to_string(),
         },
         None,
         Some("swapper-osmosis-contract"),

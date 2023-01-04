@@ -8,7 +8,7 @@ use mars_rover::msg::query::{
     VaultInfoResponse, VaultPositionResponseItem, VaultWithBalance,
 };
 
-use crate::state::ADMIN;
+use crate::state::OWNER;
 use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, DEBT_SHARES, MAX_CLOSE_FACTOR,
     MAX_UNLOCKING_POSITIONS, ORACLE, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES, VAULT_CONFIGS,
@@ -21,10 +21,10 @@ const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
 
 pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
-    let admin_state = ADMIN.query(deps.storage)?;
+    let owner_res = OWNER.query(deps.storage)?;
     Ok(ConfigResponse {
-        admin: admin_state.admin,
-        proposed_new_admin: admin_state.proposed,
+        owner: owner_res.owner,
+        proposed_new_owner: owner_res.proposed,
         account_nft: ACCOUNT_NFT
             .may_load(deps.storage)?
             .map(|addr| addr.to_string()),

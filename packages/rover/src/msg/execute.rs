@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
 
-use cw_controllers_admin_fork::AdminUpdate;
+use mars_owner::OwnerUpdate;
 
 use crate::adapters::vault::{Vault, VaultPositionType, VaultUnchecked};
 use crate::msg::instantiate::ConfigUpdates;
@@ -24,8 +24,8 @@ pub enum ExecuteMsg {
     //--------------------------------------------------------------------------------------------------
     /// Update contract config constants
     UpdateConfig { new_config: ConfigUpdates },
-    /// Manages admin role state
-    UpdateAdmin(AdminUpdate),
+    /// Manages owner role state
+    UpdateOwner(OwnerUpdate),
     /// Internal actions only callable by the contract itself
     Callback(CallbackMsg),
 }

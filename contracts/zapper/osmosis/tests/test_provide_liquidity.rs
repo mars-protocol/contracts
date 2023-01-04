@@ -89,21 +89,21 @@ fn test_provide_liquidity_with_min_not_received() {
             2,
         )
         .unwrap();
-    let admin = &accs[0];
+    let owner = &accs[0];
     let user = &accs[1];
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
         .create_basic_pool(
             &[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")],
-            admin,
+            owner,
         )
         .unwrap()
         .data
         .pool_id;
     let pool_denom = format!("gamm/pool/{}", pool_id);
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     let bank = Bank::new(&app);
 
@@ -162,21 +162,21 @@ fn test_provide_liquidity_with_one_coin() {
             2,
         )
         .unwrap();
-    let admin = &accs[0];
+    let owner = &accs[0];
     let user = &accs[1];
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
         .create_basic_pool(
             &[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")],
-            admin,
+            owner,
         )
         .unwrap()
         .data
         .pool_id;
     let pool_denom = format!("gamm/pool/{}", pool_id);
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     let bank = Bank::new(&app);
 
@@ -245,21 +245,21 @@ fn test_provide_liquidity_with_two_balanced_coins() {
             2,
         )
         .unwrap();
-    let admin = &accs[0];
+    let owner = &accs[0];
     let user = &accs[1];
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
         .create_basic_pool(
             &[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")],
-            admin,
+            owner,
         )
         .unwrap()
         .data
         .pool_id;
     let pool_denom = format!("gamm/pool/{}", pool_id);
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     let bank = Bank::new(&app);
 
@@ -335,21 +335,21 @@ fn test_provide_liquidity_with_two_unbalanced_coins() {
             2,
         )
         .unwrap();
-    let admin = &accs[0];
+    let owner = &accs[0];
     let user = &accs[1];
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
         .create_basic_pool(
             &[coin(20_000_000_000, "uatom"), coin(40_000_000_000, "uosmo")],
-            admin,
+            owner,
         )
         .unwrap()
         .data
         .pool_id;
     let pool_denom = format!("gamm/pool/{}", pool_id);
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     let bank = Bank::new(&app);
 
@@ -443,7 +443,7 @@ fn test_provide_liquidity_with_different_recipient() {
             3,
         )
         .unwrap();
-    let admin = &accs[0];
+    let owner = &accs[0];
     let user = &accs[1];
     let recipient = &accs[2];
 
@@ -451,14 +451,14 @@ fn test_provide_liquidity_with_different_recipient() {
     let pool_id = gamm
         .create_basic_pool(
             &[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")],
-            admin,
+            owner,
         )
         .unwrap()
         .data
         .pool_id;
     let pool_denom = format!("gamm/pool/{}", pool_id);
 
-    let contract_addr = instantiate_contract(&wasm, admin);
+    let contract_addr = instantiate_contract(&wasm, owner);
 
     let bank = Bank::new(&app);
 

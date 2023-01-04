@@ -17,7 +17,7 @@ use crate::query::{
     query_config, query_positions, query_total_debt_shares, query_total_vault_coin_balance,
     query_vaults_info,
 };
-use crate::update_config::{update_admin, update_config};
+use crate::update_config::{update_config, update_owner};
 use crate::vault::handle_unlock_request_reply;
 use crate::zap::{estimate_provide_liquidity, estimate_withdraw_liquidity};
 
@@ -50,7 +50,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::CreateCreditAccount {} => create_credit_account(deps, info.sender),
         ExecuteMsg::UpdateConfig { new_config } => update_config(deps, info, new_config),
-        ExecuteMsg::UpdateAdmin(update) => update_admin(deps, info, update),
+        ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
         ExecuteMsg::Callback(callback) => execute_callback(deps, info, env, callback),
         ExecuteMsg::UpdateCreditAccount {
             account_id,

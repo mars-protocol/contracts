@@ -1,7 +1,7 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, MessageInfo, Response, WasmMsg};
 
-use cw_controllers_admin_fork::AdminUpdate;
 use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
+use mars_owner::OwnerUpdate;
 use mars_rover::error::ContractResult;
 use mars_rover::msg::instantiate::ConfigUpdates;
 use mars_rover::traits::{FallbackStr, Stringify};
@@ -9,7 +9,7 @@ use mars_rover::traits::{FallbackStr, Stringify};
 use crate::instantiate::{
     assert_lte_to_one, assert_no_duplicate_coins, assert_no_duplicate_vaults,
 };
-use crate::state::ADMIN;
+use crate::state::OWNER;
 use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, SWAPPER,
     VAULT_CONFIGS, ZAPPER,
@@ -20,7 +20,7 @@ pub fn update_config(
     info: MessageInfo,
     new_config: ConfigUpdates,
 ) -> ContractResult<Response> {
-    ADMIN.assert_admin(deps.storage, &info.sender)?;
+    OWNER.assert_owner(deps.storage, &info.sender)?;
 
     let mut response =
         Response::new().add_attribute("action", "rover/credit-manager/update_config");
@@ -106,10 +106,10 @@ pub fn update_config(
     Ok(response)
 }
 
-pub fn update_admin(
+pub fn update_owner(
     deps: DepsMut,
     info: MessageInfo,
-    update: AdminUpdate,
+    update: OwnerUpdate,
 ) -> ContractResult<Response> {
-    Ok(ADMIN.update(deps, info, update)?)
+    Ok(OWNER.update(deps, info, update)?)
 }

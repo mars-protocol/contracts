@@ -6,9 +6,9 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
 
-use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
-use cw_controllers_admin_fork::AdminUpdate;
 use mars_outpost::oracle::PriceResponse;
+use mars_owner::OwnerInit::SetInitialOwner;
+use mars_owner::OwnerUpdate;
 use mars_rover::adapters::vault::VaultBase;
 use mars_rover::adapters::Oracle;
 
@@ -17,7 +17,7 @@ use crate::msg::{
     ConfigResponse, ConfigUpdates, ExecuteMsg, InstantiateMsg, PricingMethod, QueryMsg,
     VaultPricingInfo,
 };
-use crate::state::{ADMIN, ORACLE, VAULT_PRICING_INFO};
+use crate::state::{ORACLE, OWNER, VAULT_PRICING_INFO};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -38,7 +38,7 @@ pub fn instantiate(
         CONTRACT_VERSION,
     )?;
 
-    ADMIN.initialize(deps.storage, deps.api, SetInitialAdmin { admin: msg.admin })?;
+    OWNER.initialize(deps.storage, deps.api, SetInitialOwner { owner: msg.owner })?;
 
     let oracle = msg.oracle.check(deps.api)?;
     ORACLE.save(deps.storage, &oracle)?;
@@ -59,7 +59,7 @@ pub fn execute(
 ) -> ContractResult<Response> {
     match msg {
         ExecuteMsg::UpdateConfig { new_config } => update_config(deps, info, new_config),
-        ExecuteMsg::UpdateAdmin(update) => update_admin(deps, info, update),
+        ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
     }
 }
 
@@ -139,10 +139,10 @@ fn calculate_preview_redeem(
 }
 
 fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
-    let res = ADMIN.query(deps.storage)?;
+    let res = OWNER.query(deps.storage)?;
     Ok(ConfigResponse {
-        admin: res.admin,
-        proposed_new_admin: res.proposed,
+        owner: res.owner,
+        proposed_new_owner: res.proposed,
         oracle: ORACLE.load(deps.storage)?,
     })
 }
@@ -152,7 +152,7 @@ pub fn update_config(
     info: MessageInfo,
     new_config: ConfigUpdates,
 ) -> ContractResult<Response> {
-    ADMIN.assert_admin(deps.storage, &info.sender)?;
+    OWNER.assert_owner(deps.storage, &info.sender)?;
 
     let mut response =
         Response::new().add_attribute("action", "rover/oracle-adapter/update_config");
@@ -186,10 +186,10 @@ pub fn update_config(
     Ok(response)
 }
 
-pub fn update_admin(
+pub fn update_owner(
     deps: DepsMut,
     info: MessageInfo,
-    update: AdminUpdate,
+    update: OwnerUpdate,
 ) -> ContractResult<Response> {
-    Ok(ADMIN.update(deps, info, update)?)
+    Ok(OWNER.update(deps, info, update)?)
 }

@@ -1,7 +1,7 @@
 use cosmwasm_std::{Addr, Decimal, Uint128};
-use cw_controllers_admin_fork::Admin;
 use cw_item_set::Set;
 use cw_storage_plus::{Item, Map};
+use mars_owner::Owner;
 
 use mars_rover::adapters::swap::Swapper;
 use mars_rover::adapters::vault::{VaultConfig, VaultPositionAmount};
@@ -19,7 +19,7 @@ pub const VAULT_CONFIGS: Map<&Addr, VaultConfig> = Map::new("vault_configs");
 pub const ZAPPER: Item<Zapper> = Item::new("zapper");
 
 // Config
-pub const ADMIN: Admin = Admin::new("admin");
+pub const OWNER: Owner = Owner::new("owner");
 pub const ALLOWED_COINS: Set<&str> = Set::new("allowed_coins");
 pub const MAX_CLOSE_FACTOR: Item<Decimal> = Item::new("max_close_factor");
 pub const MAX_UNLOCKING_POSITIONS: Item<Uint128> = Item::new("max_unlocking_positions");

@@ -10,21 +10,21 @@ import { StdFee } from '@cosmjs/amino'
 import {
   InstantiateMsg,
   ExecuteMsg,
-  AdminUpdate,
+  OwnerUpdate,
   Uint128,
   Decimal,
   Addr,
   Empty,
   Coin,
   QueryMsg,
-  AdminResponse,
   EstimateExactInSwapResponse,
+  OwnerResponse,
   RouteResponseForEmpty,
   ArrayOfRouteResponseForEmpty,
 } from './MarsSwapperBase.types'
 export interface MarsSwapperBaseReadOnlyInterface {
   contractAddress: string
-  admin: () => Promise<AdminResponse>
+  owner: () => Promise<OwnerResponse>
   route: ({
     denomIn,
     denomOut,
@@ -54,15 +54,15 @@ export class MarsSwapperBaseQueryClient implements MarsSwapperBaseReadOnlyInterf
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client
     this.contractAddress = contractAddress
-    this.admin = this.admin.bind(this)
+    this.owner = this.owner.bind(this)
     this.route = this.route.bind(this)
     this.routes = this.routes.bind(this)
     this.estimateExactInSwap = this.estimateExactInSwap.bind(this)
   }
 
-  admin = async (): Promise<AdminResponse> => {
+  owner = async (): Promise<OwnerResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      admin: {},
+      owner: {},
     })
   }
   route = async ({
@@ -111,7 +111,7 @@ export class MarsSwapperBaseQueryClient implements MarsSwapperBaseReadOnlyInterf
 export interface MarsSwapperBaseInterface extends MarsSwapperBaseReadOnlyInterface {
   contractAddress: string
   sender: string
-  updateAdmin: (
+  updateOwner: (
     fee?: number | StdFee | 'auto',
     memo?: string,
     funds?: Coin[],
@@ -172,13 +172,13 @@ export class MarsSwapperBaseClient
     this.client = client
     this.sender = sender
     this.contractAddress = contractAddress
-    this.updateAdmin = this.updateAdmin.bind(this)
+    this.updateOwner = this.updateOwner.bind(this)
     this.setRoute = this.setRoute.bind(this)
     this.swapExactIn = this.swapExactIn.bind(this)
     this.transferResult = this.transferResult.bind(this)
   }
 
-  updateAdmin = async (
+  updateOwner = async (
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     funds?: Coin[],
@@ -187,7 +187,7 @@ export class MarsSwapperBaseClient
       this.sender,
       this.contractAddress,
       {
-        update_admin: {},
+        update_owner: {},
       },
       fee,
       memo,

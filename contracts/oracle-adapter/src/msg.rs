@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Decimal};
-use cw_controllers_admin_fork::AdminUpdate;
+use mars_owner::OwnerUpdate;
 
 use mars_rover::adapters::{Oracle, OracleUnchecked};
 
@@ -14,13 +14,13 @@ pub struct CoinPrice {
 pub struct InstantiateMsg {
     pub oracle: OracleUnchecked,
     pub vault_pricing: Vec<VaultPricingInfo>,
-    pub admin: String,
+    pub owner: String,
 }
 
 #[cw_serde]
 pub enum ExecuteMsg {
     UpdateConfig { new_config: ConfigUpdates },
-    UpdateAdmin(AdminUpdate),
+    UpdateOwner(OwnerUpdate),
 }
 
 #[cw_serde]
@@ -45,8 +45,8 @@ pub enum QueryMsg {
 
 #[cw_serde]
 pub struct ConfigResponse {
-    pub admin: Option<String>,
-    pub proposed_new_admin: Option<String>,
+    pub owner: Option<String>,
+    pub proposed_new_owner: Option<String>,
     pub oracle: Oracle,
 }
 

@@ -1,25 +1,25 @@
 use std::collections::HashSet;
 
 use cosmwasm_std::{Decimal, DepsMut};
-use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
+use mars_owner::OwnerInit::SetInitialOwner;
 
 use mars_rover::error::ContractError::InvalidConfig;
 use mars_rover::error::ContractResult;
 use mars_rover::msg::instantiate::VaultInstantiateConfig;
 use mars_rover::msg::InstantiateMsg;
 
-use crate::state::ADMIN;
+use crate::state::OWNER;
 use crate::state::{
     ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, RED_BANK, SWAPPER,
     VAULT_CONFIGS, ZAPPER,
 };
 
 pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
-    ADMIN.initialize(
+    OWNER.initialize(
         deps.storage,
         deps.api,
-        SetInitialAdmin {
-            admin: msg.admin.clone(),
+        SetInitialOwner {
+            owner: msg.owner.clone(),
         },
     )?;
 

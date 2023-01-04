@@ -16,7 +16,7 @@ import {
   InstantiateMsg,
   VaultPricingInfo,
   ExecuteMsg,
-  AdminUpdate,
+  OwnerUpdate,
   ConfigUpdates,
   QueryMsg,
   ArrayOfVaultPricingInfo,
@@ -36,7 +36,7 @@ export interface MarsOracleAdapterMessage {
     },
     funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
-  updateAdmin: (funds?: Coin[]) => MsgExecuteContractEncodeObject
+  updateOwner: (funds?: Coin[]) => MsgExecuteContractEncodeObject
 }
 export class MarsOracleAdapterMessageComposer implements MarsOracleAdapterMessage {
   sender: string
@@ -46,7 +46,7 @@ export class MarsOracleAdapterMessageComposer implements MarsOracleAdapterMessag
     this.sender = sender
     this.contractAddress = contractAddress
     this.updateConfig = this.updateConfig.bind(this)
-    this.updateAdmin = this.updateAdmin.bind(this)
+    this.updateOwner = this.updateOwner.bind(this)
   }
 
   updateConfig = (
@@ -73,7 +73,7 @@ export class MarsOracleAdapterMessageComposer implements MarsOracleAdapterMessag
       }),
     }
   }
-  updateAdmin = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
+  updateOwner = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
       value: MsgExecuteContract.fromPartial({
@@ -81,7 +81,7 @@ export class MarsOracleAdapterMessageComposer implements MarsOracleAdapterMessag
         contract: this.contractAddress,
         msg: toUtf8(
           JSON.stringify({
-            update_admin: {},
+            update_owner: {},
           }),
         ),
         funds,

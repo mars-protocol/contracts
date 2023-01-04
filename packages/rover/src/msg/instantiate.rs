@@ -10,7 +10,7 @@ use cosmwasm_std::{Decimal, Uint128};
 #[cw_serde]
 pub struct InstantiateMsg {
     /// The address with privileged access to update config
-    pub admin: String,
+    pub owner: String,
     /// Whitelisted coin denoms approved by governance
     pub allowed_coins: Vec<String>,
     /// Vaults approved by governance that implement credit manager's vault interface

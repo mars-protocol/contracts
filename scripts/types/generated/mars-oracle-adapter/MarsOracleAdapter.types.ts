@@ -9,8 +9,8 @@ export type OracleBaseForString = string
 export type Addr = string
 export type PricingMethod = 'preview_redeem'
 export interface InstantiateMsg {
-  admin: string
   oracle: OracleBaseForString
+  owner: string
   vault_pricing: VaultPricingInfo[]
 }
 export interface VaultPricingInfo {
@@ -26,17 +26,17 @@ export type ExecuteMsg =
       }
     }
   | {
-      update_admin: AdminUpdate
+      update_owner: OwnerUpdate
     }
-export type AdminUpdate =
+export type OwnerUpdate =
   | {
-      propose_new_admin: {
+      propose_new_owner: {
         proposed: string
       }
     }
   | 'clear_proposed'
   | 'accept_proposed'
-  | 'abolish_admin_role'
+  | 'abolish_owner_role'
 export interface ConfigUpdates {
   oracle?: OracleBaseForString | null
   vault_pricing?: VaultPricingInfo[] | null
@@ -64,9 +64,9 @@ export type QueryMsg =
 export type ArrayOfVaultPricingInfo = VaultPricingInfo[]
 export type OracleBaseForAddr = string
 export interface ConfigResponse {
-  admin?: string | null
   oracle: OracleBaseForAddr
-  proposed_new_admin?: string | null
+  owner?: string | null
+  proposed_new_owner?: string | null
 }
 export type Decimal = string
 export interface PriceResponse {

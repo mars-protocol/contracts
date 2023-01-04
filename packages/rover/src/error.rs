@@ -2,7 +2,7 @@ use cosmwasm_std::{
     CheckedFromRatioError, CheckedMultiplyRatioError, Coin, DecimalRangeExceeded, OverflowError,
     StdError, Uint128,
 };
-use cw_controllers_admin_fork::AdminError;
+use mars_owner::OwnerError;
 use thiserror::Error;
 
 use crate::coins::Coins;
@@ -21,7 +21,7 @@ pub enum ContractError {
     AboveVaultDepositCap { new_value: String, maximum: String },
 
     #[error("{0}")]
-    AdminError(#[from] AdminError),
+    OwnerError(#[from] OwnerError),
 
     #[error("{0} is not an available coin to request")]
     CoinNotAvailable(String),

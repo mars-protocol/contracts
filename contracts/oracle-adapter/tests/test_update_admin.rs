@@ -1,6 +1,6 @@
 use cosmwasm_std::Addr;
-use cw_controllers_admin_fork::AdminUpdate;
 use cw_multi_test::{App, Executor};
+use mars_owner::OwnerUpdate;
 
 use mars_oracle_adapter::msg::{ConfigResponse, ExecuteMsg, QueryMsg};
 
@@ -17,12 +17,12 @@ fn test_initialized_state() {
         .query_wasm_smart(contract_addr.to_string(), &QueryMsg::Config {})
         .unwrap();
 
-    assert!(original_config.admin.is_some());
-    assert!(original_config.proposed_new_admin.is_none());
+    assert!(original_config.owner.is_some());
+    assert!(original_config.proposed_new_owner.is_none());
 }
 
 #[test]
-fn test_propose_new_admin() {
+fn test_propose_new_owner() {
     let mut app = App::default();
     let contract_addr = instantiate_oracle_adapter(&mut app);
     let original_config: ConfigResponse = app
@@ -30,14 +30,14 @@ fn test_propose_new_admin() {
         .query_wasm_smart(contract_addr.to_string(), &QueryMsg::Config {})
         .unwrap();
 
-    let new_admin = "new_admin".to_string();
+    let new_owner = "new_owner".to_string();
 
-    // only admin can propose new admins
+    // only owner can propose new owners
     let bad_guy = Addr::unchecked("bad_guy");
     app.execute_contract(
         bad_guy.clone(),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
+        &ExecuteMsg::UpdateOwner(OwnerUpdate::ProposeNewOwner {
             proposed: bad_guy.to_string(),
         }),
         &[],
@@ -45,10 +45,10 @@ fn test_propose_new_admin() {
     .unwrap_err();
 
     app.execute_contract(
-        Addr::unchecked(original_config.admin.clone().unwrap()),
+        Addr::unchecked(original_config.owner.clone().unwrap()),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
-            proposed: new_admin.clone(),
+        &ExecuteMsg::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+            proposed: new_owner.clone(),
         }),
         &[],
     )
@@ -59,12 +59,12 @@ fn test_propose_new_admin() {
         .query_wasm_smart(contract_addr.to_string(), &QueryMsg::Config {})
         .unwrap();
 
-    assert_eq!(new_config.admin, original_config.admin);
+    assert_eq!(new_config.owner, original_config.owner);
     assert_ne!(
-        new_config.proposed_new_admin,
-        original_config.proposed_new_admin
+        new_config.proposed_new_owner,
+        original_config.proposed_new_owner
     );
-    assert_eq!(new_config.proposed_new_admin, Some(new_admin));
+    assert_eq!(new_config.proposed_new_owner, Some(new_owner));
 }
 
 #[test]
@@ -76,13 +76,13 @@ fn test_clear_proposed() {
         .query_wasm_smart(contract_addr.to_string(), &QueryMsg::Config {})
         .unwrap();
 
-    let new_admin = "new_admin".to_string();
+    let new_owner = "new_owner".to_string();
 
     app.execute_contract(
-        Addr::unchecked(original_config.admin.clone().unwrap()),
+        Addr::unchecked(original_config.owner.clone().unwrap()),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
-            proposed: new_admin.clone(),
+        &ExecuteMsg::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+            proposed: new_owner.clone(),
         }),
         &[],
     )
@@ -93,22 +93,22 @@ fn test_clear_proposed() {
         .query_wasm_smart(contract_addr.to_string(), &QueryMsg::Config {})
         .unwrap();
 
-    assert_eq!(interim_config.proposed_new_admin, Some(new_admin));
+    assert_eq!(interim_config.proposed_new_owner, Some(new_owner));
 
-    // only admin can clear
+    // only owner can clear
     let bad_guy = Addr::unchecked("bad_guy");
     app.execute_contract(
         bad_guy,
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminUpdate::ClearProposed),
+        &ExecuteMsg::UpdateOwner(OwnerUpdate::ClearProposed),
         &[],
     )
     .unwrap_err();
 
     app.execute_contract(
-        Addr::unchecked(original_config.admin.clone().unwrap()),
+        Addr::unchecked(original_config.owner.clone().unwrap()),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminUpdate::ClearProposed),
+        &ExecuteMsg::UpdateOwner(OwnerUpdate::ClearProposed),
         &[],
     )
     .unwrap();
@@ -118,16 +118,16 @@ fn test_clear_proposed() {
         .query_wasm_smart(contract_addr.to_string(), &QueryMsg::Config {})
         .unwrap();
 
-    assert_eq!(latest_config.admin, original_config.admin);
+    assert_eq!(latest_config.owner, original_config.owner);
     assert_ne!(
-        latest_config.proposed_new_admin,
-        interim_config.proposed_new_admin
+        latest_config.proposed_new_owner,
+        interim_config.proposed_new_owner
     );
-    assert_eq!(latest_config.proposed_new_admin, None);
+    assert_eq!(latest_config.proposed_new_owner, None);
 }
 
 #[test]
-fn test_accept_admin_role() {
+fn test_accept_owner_role() {
     let mut app = App::default();
     let contract_addr = instantiate_oracle_adapter(&mut app);
     let original_config: ConfigResponse = app
@@ -135,31 +135,31 @@ fn test_accept_admin_role() {
         .query_wasm_smart(contract_addr.to_string(), &QueryMsg::Config {})
         .unwrap();
 
-    let new_admin = "new_admin".to_string();
+    let new_owner = "new_owner".to_string();
 
     app.execute_contract(
-        Addr::unchecked(original_config.admin.clone().unwrap()),
+        Addr::unchecked(original_config.owner.clone().unwrap()),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminUpdate::ProposeNewAdmin {
-            proposed: new_admin.clone(),
+        &ExecuteMsg::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+            proposed: new_owner.clone(),
         }),
         &[],
     )
     .unwrap();
 
-    // Only proposed admin can accept
+    // Only proposed owner can accept
     app.execute_contract(
-        Addr::unchecked(original_config.admin.unwrap()),
+        Addr::unchecked(original_config.owner.unwrap()),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminUpdate::AcceptProposed),
+        &ExecuteMsg::UpdateOwner(OwnerUpdate::AcceptProposed),
         &[],
     )
     .unwrap_err();
 
     app.execute_contract(
-        Addr::unchecked(new_admin.clone()),
+        Addr::unchecked(new_owner.clone()),
         contract_addr.clone(),
-        &ExecuteMsg::UpdateAdmin(AdminUpdate::AcceptProposed),
+        &ExecuteMsg::UpdateOwner(OwnerUpdate::AcceptProposed),
         &[],
     )
     .unwrap();
@@ -169,6 +169,6 @@ fn test_accept_admin_role() {
         .query_wasm_smart(contract_addr.to_string(), &QueryMsg::Config {})
         .unwrap();
 
-    assert_eq!(new_config.admin.unwrap(), new_admin);
-    assert_eq!(new_config.proposed_new_admin, None);
+    assert_eq!(new_config.owner.unwrap(), new_owner);
+    assert_eq!(new_config.proposed_new_owner, None);
 }

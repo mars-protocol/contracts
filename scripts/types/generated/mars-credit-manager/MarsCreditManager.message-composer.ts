@@ -24,7 +24,7 @@ import {
   Action,
   ActionAmount,
   VaultPositionType,
-  AdminUpdate,
+  OwnerUpdate,
   CallbackMsg,
   Addr,
   ActionCoin,
@@ -79,7 +79,7 @@ export interface MarsCreditManagerMessage {
     },
     funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
-  updateAdmin: (funds?: Coin[]) => MsgExecuteContractEncodeObject
+  updateOwner: (funds?: Coin[]) => MsgExecuteContractEncodeObject
   callback: (funds?: Coin[]) => MsgExecuteContractEncodeObject
 }
 export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessage {
@@ -92,7 +92,7 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
     this.createCreditAccount = this.createCreditAccount.bind(this)
     this.updateCreditAccount = this.updateCreditAccount.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
-    this.updateAdmin = this.updateAdmin.bind(this)
+    this.updateOwner = this.updateOwner.bind(this)
     this.callback = this.callback.bind(this)
   }
 
@@ -162,7 +162,7 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
       }),
     }
   }
-  updateAdmin = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
+  updateOwner = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
       value: MsgExecuteContract.fromPartial({
@@ -170,7 +170,7 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
         contract: this.contractAddress,
         msg: toUtf8(
           JSON.stringify({
-            update_admin: {},
+            update_owner: {},
           }),
         ),
         funds,

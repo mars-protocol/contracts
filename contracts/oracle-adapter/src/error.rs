@@ -1,5 +1,5 @@
 use cosmwasm_std::{CheckedFromRatioError, DecimalRangeExceeded, OverflowError, StdError};
-use cw_controllers_admin_fork::AdminError;
+use mars_owner::OwnerError;
 use thiserror::Error;
 
 use mars_rover::error::ContractError as RoverError;
@@ -9,7 +9,7 @@ pub type ContractResult<T> = Result<T, ContractError>;
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
-    AdminError(#[from] AdminError),
+    OwnerError(#[from] OwnerError),
 
     #[error("{0}")]
     CheckedFromRatioError(#[from] CheckedFromRatioError),
