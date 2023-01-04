@@ -10,8 +10,8 @@ use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSource;
 use mars_outpost::address_provider::MarsAddressType;
 use mars_outpost::red_bank::{
-    CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, UserCollateralResponse,
-    UserDebtResponse, UserPositionResponse,
+    CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, UncollateralizedLoanLimitResponse,
+    UserCollateralResponse, UserDebtResponse, UserPositionResponse,
 };
 use mars_outpost::{address_provider, incentives, oracle, red_bank, rewards_collector};
 use std::mem::take;
@@ -328,6 +328,24 @@ impl RedBank {
                 &red_bank::QueryMsg::ScaledDebtAmount {
                     denom: coin.denom,
                     amount: coin.amount,
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_uncollateralized_loan_limit(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+        denom: &str,
+    ) -> UncollateralizedLoanLimitResponse {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::UncollateralizedLoanLimit {
+                    user: user.to_string(),
+                    denom: denom.to_string(),
                 },
             )
             .unwrap()
