@@ -26,5 +26,5 @@ mars-outpost    = { workspace = true }
 thiserror       = { workspace = true }
 
 [dev-dependencies]
-cosmwasm-schema = "1.1"
+cosmwasm-schema = { workspace = true }
 mars-testing    = { workspace = true }
