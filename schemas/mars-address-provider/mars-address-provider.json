@@ -61,60 +61,13 @@
         ],
         "properties": {
           "update_owner": {
-            "$ref": "#/definitions/AdminUpdate"
+            "$ref": "#/definitions/OwnerUpdate"
           }
         },
         "additionalProperties": false
       }
     ],
     "definitions": {
-      "AdminUpdate": {
-        "oneOf": [
-          {
-            "description": "Proposes a new admin to take role. Only current admin can execute.",
-            "type": "object",
-            "required": [
-              "propose_new_admin"
-            ],
-            "properties": {
-              "propose_new_admin": {
-                "type": "object",
-                "required": [
-                  "proposed"
-                ],
-                "properties": {
-                  "proposed": {
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "description": "Clears the currently proposed admin. Only current admin can execute.",
-            "type": "string",
-            "enum": [
-              "clear_proposed"
-            ]
-          },
-          {
-            "description": "Promotes the proposed admin to be the current one. Only the proposed admin can execute.",
-            "type": "string",
-            "enum": [
-              "accept_proposed"
-            ]
-          },
-          {
-            "description": "Throws away the keys to the Admin role forever. Once done, no admin can ever be set later.",
-            "type": "string",
-            "enum": [
-              "abolish_admin_role"
-            ]
-          }
-        ]
-      },
       "MarsAddressType": {
         "oneOf": [
           {
@@ -145,6 +98,53 @@
             "type": "string",
             "enum": [
               "safety_fund"
+            ]
+          }
+        ]
+      },
+      "OwnerUpdate": {
+        "oneOf": [
+          {
+            "description": "Proposes a new owner to take role. Only current owner can execute.",
+            "type": "object",
+            "required": [
+              "propose_new_owner"
+            ],
+            "properties": {
+              "propose_new_owner": {
+                "type": "object",
+                "required": [
+                  "proposed"
+                ],
+                "properties": {
+                  "proposed": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Clears the currently proposed owner. Only current owner can execute.",
+            "type": "string",
+            "enum": [
+              "clear_proposed"
+            ]
+          },
+          {
+            "description": "Promotes the proposed owner to be the current one. Only the proposed owner can execute.",
+            "type": "string",
+            "enum": [
+              "accept_proposed"
+            ]
+          },
+          {
+            "description": "Throws away the keys to the Owner role forever. Once done, no owner can ever be set later.",
+            "type": "string",
+            "enum": [
+              "abolish_owner_role"
             ]
           }
         ]

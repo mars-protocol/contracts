@@ -13,7 +13,7 @@ import {
   InstantiateMsg,
   CreateOrUpdateConfig,
   ExecuteMsg,
-  AdminUpdate,
+  OwnerUpdate,
   Uint128,
   InitOrUpdateAssetParams,
   InterestRateModel,
@@ -675,7 +675,7 @@ export function useMarsRedBankUpdateConfigMutation(
 }
 export interface MarsRedBankUpdateEmergencyOwnerMutation {
   client: MarsRedBankClient
-  msg: AdminUpdate
+  msg: OwnerUpdate
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string
@@ -696,7 +696,7 @@ export function useMarsRedBankUpdateEmergencyOwnerMutation(
 }
 export interface MarsRedBankUpdateOwnerMutation {
   client: MarsRedBankClient
-  msg: AdminUpdate
+  msg: OwnerUpdate
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string

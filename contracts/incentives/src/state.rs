@@ -1,11 +1,11 @@
 use cosmwasm_std::{Addr, Decimal, Uint128};
-use cw_controllers_admin_fork::Admin;
 use cw_storage_plus::{Item, Map};
+use mars_owner::Owner;
 
 use mars_outpost::incentives::{AssetIncentive, Config};
 
 // keys (for singleton)
-pub const OWNER: Admin = Admin::new("owner");
+pub const OWNER: Owner = Owner::new("owner");
 pub const CONFIG: Item<Config> = Item::new("config");
 
 // namespaces (for buckets)

@@ -1,8 +1,8 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
-use cw_controllers_admin_fork::AdminError;
 use mars_address_provider::contract::execute;
 use mars_address_provider::error::ContractError;
 use mars_address_provider::state::ADDRESSES;
+use mars_owner::OwnerError;
 
 use mars_outpost::address_provider::{AddressResponseItem, ExecuteMsg, MarsAddressType, QueryMsg};
 
@@ -21,7 +21,7 @@ fn test_setting_address_if_unauthorized() {
 
     let err =
         execute(deps.as_mut(), mock_env(), mock_info("osmo_jake", &[]), msg.clone()).unwrap_err();
-    assert_eq!(err, ContractError::AdminError(AdminError::NotAdmin {}));
+    assert_eq!(err, ContractError::OwnerError(OwnerError::NotOwner {}));
 
     // owner can set address
     execute(deps.as_mut(), mock_env(), mock_info("osmo_owner", &[]), msg).unwrap();

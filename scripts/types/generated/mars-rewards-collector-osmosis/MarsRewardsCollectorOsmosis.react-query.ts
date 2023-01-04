@@ -12,7 +12,7 @@ import {
   Decimal,
   InstantiateMsg,
   ExecuteMsg,
-  AdminUpdate,
+  OwnerUpdate,
   OsmosisRoute,
   Uint128,
   UpdateConfig,
@@ -252,7 +252,7 @@ export function useMarsRewardsCollectorOsmosisUpdateConfigMutation(
 }
 export interface MarsRewardsCollectorOsmosisUpdateOwnerMutation {
   client: MarsRewardsCollectorOsmosisClient
-  msg: AdminUpdate
+  msg: OwnerUpdate
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string

@@ -13,7 +13,7 @@ import {
   ExecuteMsg,
   Uint128,
   Addr,
-  AdminUpdate,
+  OwnerUpdate,
   QueryMsg,
   Decimal,
   AssetIncentiveResponse,
@@ -111,7 +111,7 @@ export function useMarsIncentivesConfigQuery<TData = ConfigResponse>({
 }
 export interface MarsIncentivesUpdateOwnerMutation {
   client: MarsIncentivesClient
-  msg: AdminUpdate
+  msg: OwnerUpdate
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string

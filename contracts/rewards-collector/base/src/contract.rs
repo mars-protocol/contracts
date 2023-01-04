@@ -4,9 +4,9 @@ use cosmwasm_std::{
     to_binary, Addr, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Deps, DepsMut, Env, IbcMsg,
     IbcTimeout, IbcTimeoutBlock, MessageInfo, Order, Response, StdResult, Uint128, WasmMsg,
 };
-use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
-use cw_controllers_admin_fork::{Admin, AdminUpdate};
 use cw_storage_plus::{Bound, Item, Map};
+use mars_owner::OwnerInit::SetInitialOwner;
+use mars_owner::{Owner, OwnerUpdate};
 
 use mars_outpost::address_provider::{self, MarsAddressType};
 use mars_outpost::helpers::option_string_to_addr;
@@ -29,7 +29,7 @@ where
     Q: CustomQuery,
 {
     /// Contract's owner
-    pub owner: Admin<'a>,
+    pub owner: Owner<'a>,
     /// The contract's configurations
     pub config: Item<'a, Config>,
     /// The trade route for each pair of input/output assets
@@ -48,7 +48,7 @@ where
 {
     fn default() -> Self {
         Self {
-            owner: Admin::new("owner"),
+            owner: Owner::new("owner"),
             config: Item::new("config"),
             routes: Map::new("routes"),
             custom_msg: PhantomData,
@@ -72,8 +72,8 @@ where
         self.owner.initialize(
             deps.storage,
             deps.api,
-            SetInitialAdmin {
-                admin: owner,
+            SetInitialOwner {
+                owner,
             },
         )?;
 
@@ -132,7 +132,7 @@ where
         &self,
         deps: DepsMut<Q>,
         info: MessageInfo,
-        update: AdminUpdate,
+        update: OwnerUpdate,
     ) -> ContractResult<Response<M>> {
         Ok(self.owner.update(deps, info, update)?)
     }
@@ -143,7 +143,7 @@ where
         sender: Addr,
         new_cfg: UpdateConfig,
     ) -> ContractResult<Response<M>> {
-        self.owner.assert_admin(deps.storage, &sender)?;
+        self.owner.assert_owner(deps.storage, &sender)?;
 
         let mut cfg = self.config.load(deps.storage)?;
 
@@ -185,7 +185,7 @@ where
         denom_out: String,
         route: R,
     ) -> ContractResult<Response<M>> {
-        self.owner.assert_admin(deps.storage, &sender)?;
+        self.owner.assert_owner(deps.storage, &sender)?;
 
         route.validate(&deps.querier, &denom_in, &denom_out)?;
 
@@ -342,7 +342,7 @@ where
         let owner_state = self.owner.query(deps.storage)?;
         let cfg = self.config.load(deps.storage)?;
         Ok(ConfigResponse {
-            owner: owner_state.admin,
+            owner: owner_state.owner,
             proposed_new_owner: owner_state.proposed,
             address_provider: cfg.address_provider.into(),
             safety_tax_rate: cfg.safety_tax_rate,

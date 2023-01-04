@@ -11,7 +11,7 @@ import {
   Decimal,
   InstantiateMsg,
   ExecuteMsg,
-  AdminUpdate,
+  OwnerUpdate,
   OsmosisRoute,
   Uint128,
   UpdateConfig,

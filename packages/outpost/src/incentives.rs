@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Decimal, Uint128};
-use cw_controllers_admin_fork::AdminUpdate;
+use mars_owner::OwnerUpdate;
 
 /// Global configuration
 #[cw_serde]
@@ -76,7 +76,7 @@ pub enum ExecuteMsg {
     },
 
     /// Manages admin role state
-    UpdateOwner(AdminUpdate),
+    UpdateOwner(OwnerUpdate),
 }
 
 #[cw_serde]

@@ -17,10 +17,10 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cosmwasm-schema           = { workspace = true }
-cosmwasm-std              = { workspace = true }
-cw-controllers-admin-fork = { workspace = true }
-thiserror                 = { workspace = true }
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+mars-owner      = { workspace = true }
+thiserror       = { workspace = true }
 
 [dev-dependencies]
 mars-testing = { workspace = true }

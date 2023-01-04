@@ -6,13 +6,13 @@ use cosmwasm_std::{
     to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
 };
 
-use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
-use cw_controllers_admin_fork::AdminUpdate;
 use cw_storage_plus::Bound;
 use mars_outpost::address_provider::{
     AddressResponseItem, Config, ConfigResponse, ExecuteMsg, InstantiateMsg, MarsAddressType,
     QueryMsg,
 };
+use mars_owner::OwnerInit::SetInitialOwner;
+use mars_owner::OwnerUpdate;
 
 use crate::error::ContractError;
 use crate::helpers::{assert_valid_addr, assert_valid_prefix};
@@ -41,8 +41,8 @@ pub fn instantiate(
     OWNER.initialize(
         deps.storage,
         deps.api,
-        SetInitialAdmin {
-            admin: msg.owner,
+        SetInitialOwner {
+            owner: msg.owner,
         },
     )?;
 
@@ -80,7 +80,7 @@ fn set_address(
     address_type: MarsAddressType,
     address: String,
 ) -> Result<Response, ContractError> {
-    OWNER.assert_admin(deps.storage, &sender)?;
+    OWNER.assert_owner(deps.storage, &sender)?;
 
     let config = CONFIG.load(deps.storage)?;
     assert_valid_addr(deps.api, &address, &config.prefix)?;
@@ -96,7 +96,7 @@ fn set_address(
 fn update_owner(
     deps: DepsMut,
     info: MessageInfo,
-    update: AdminUpdate,
+    update: OwnerUpdate,
 ) -> Result<Response, ContractError> {
     Ok(OWNER.update(deps, info, update)?)
 }
@@ -120,7 +120,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let owner_state = OWNER.query(deps.storage)?;
     let config = CONFIG.load(deps.storage)?;
     Ok(ConfigResponse {
-        owner: owner_state.admin,
+        owner: owner_state.owner,
         proposed_new_owner: owner_state.proposed,
         prefix: config.prefix,
     })

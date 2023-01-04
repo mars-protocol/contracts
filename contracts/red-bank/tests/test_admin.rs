@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{attr, coin, from_binary, Addr, Decimal, Event, Uint128};
-use cw_controllers_admin_fork::AdminError::NotAdmin;
+use mars_owner::OwnerError::NotOwner;
 
 use mars_outpost::address_provider::MarsAddressType;
 use mars_outpost::error::MarsError;
@@ -129,7 +129,7 @@ fn test_update_config() {
     };
     let info = mock_info("somebody", &[]);
     let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-    assert_eq!(error_res, ContractError::AdminError(NotAdmin {}));
+    assert_eq!(error_res, ContractError::OwnerError(NotOwner {}));
 
     // *
     // update config with close_factor
@@ -223,7 +223,7 @@ fn test_init_asset() {
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-        assert_eq!(error_res, ContractError::AdminError(NotAdmin {}));
+        assert_eq!(error_res, ContractError::OwnerError(NotOwner {}));
     }
 
     // init asset with empty params
@@ -463,7 +463,7 @@ fn test_update_asset() {
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-        assert_eq!(error_res, ContractError::AdminError(NotAdmin {}));
+        assert_eq!(error_res, ContractError::OwnerError(NotOwner {}));
     }
 
     // owner is authorized but can't update asset if not initialized first

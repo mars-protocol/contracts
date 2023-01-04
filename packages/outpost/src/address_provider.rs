@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::StdError;
-use cw_controllers_admin_fork::AdminUpdate;
+use mars_owner::OwnerUpdate;
 
 #[cw_serde]
 #[derive(Copy, Eq, Hash)]
@@ -100,7 +100,7 @@ pub enum ExecuteMsg {
         address: String,
     },
     /// Manages admin role state
-    UpdateOwner(AdminUpdate),
+    UpdateOwner(OwnerUpdate),
 }
 
 #[cw_serde]

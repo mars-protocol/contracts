@@ -11,7 +11,7 @@ import {
   InstantiateMsg,
   ExecuteMsg,
   MarsAddressType,
-  AdminUpdate,
+  OwnerUpdate,
   QueryMsg,
   AddressResponseItem,
   ArrayOfAddressResponseItem,

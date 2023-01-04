@@ -1,8 +1,8 @@
 use crate::helpers::{th_query, th_setup};
 use cosmwasm_std::testing::{mock_env, mock_info};
-use cw_controllers_admin_fork::AdminError::{NotAdmin, NotProposedAdmin};
-use cw_controllers_admin_fork::AdminUpdate;
 use mars_outpost::red_bank::{ConfigResponse, ExecuteMsg, QueryMsg};
+use mars_owner::OwnerError::{NotOwner, NotProposedOwner};
+use mars_owner::OwnerUpdate;
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
 
@@ -31,18 +31,18 @@ fn test_propose_new_emergency_owner() {
         deps.as_mut(),
         mock_env(),
         mock_info(bad_guy, &[]),
-        ExecuteMsg::UpdateEmergencyOwner(AdminUpdate::ProposeNewAdmin {
+        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ProposeNewOwner {
             proposed: bad_guy.to_string(),
         }),
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::AdminError(NotAdmin {}));
+    assert_eq!(err, ContractError::OwnerError(NotOwner {}));
 
     execute(
         deps.as_mut(),
         mock_env(),
         mock_info(&original_config.emergency_owner.clone().unwrap(), &[]),
-        ExecuteMsg::UpdateEmergencyOwner(AdminUpdate::ProposeNewAdmin {
+        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ProposeNewOwner {
             proposed: new_admin.to_string(),
         }),
     )
@@ -72,7 +72,7 @@ fn test_clear_proposed_emergency_owner() {
         deps.as_mut(),
         mock_env(),
         mock_info(&original_config.emergency_owner.clone().unwrap(), &[]),
-        ExecuteMsg::UpdateEmergencyOwner(AdminUpdate::ProposeNewAdmin {
+        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ProposeNewOwner {
             proposed: new_admin.to_string(),
         }),
     )
@@ -87,16 +87,16 @@ fn test_clear_proposed_emergency_owner() {
         deps.as_mut(),
         mock_env(),
         mock_info(bad_guy, &[]),
-        ExecuteMsg::UpdateEmergencyOwner(AdminUpdate::ClearProposed),
+        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ClearProposed),
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::AdminError(NotAdmin {}));
+    assert_eq!(err, ContractError::OwnerError(NotOwner {}));
 
     execute(
         deps.as_mut(),
         mock_env(),
         mock_info(&original_config.emergency_owner.clone().unwrap(), &[]),
-        ExecuteMsg::UpdateEmergencyOwner(AdminUpdate::ClearProposed),
+        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ClearProposed),
     )
     .unwrap();
 
@@ -124,7 +124,7 @@ fn test_accept_emergency_owner_role() {
         deps.as_mut(),
         mock_env(),
         mock_info(&original_config.emergency_owner.clone().unwrap(), &[]),
-        ExecuteMsg::UpdateEmergencyOwner(AdminUpdate::ProposeNewAdmin {
+        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ProposeNewOwner {
             proposed: new_admin.to_string(),
         }),
     )
@@ -135,16 +135,16 @@ fn test_accept_emergency_owner_role() {
         deps.as_mut(),
         mock_env(),
         mock_info(&original_config.emergency_owner.unwrap(), &[]),
-        ExecuteMsg::UpdateEmergencyOwner(AdminUpdate::AcceptProposed),
+        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::AcceptProposed),
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::AdminError(NotProposedAdmin {}));
+    assert_eq!(err, ContractError::OwnerError(NotProposedOwner {}));
 
     execute(
         deps.as_mut(),
         mock_env(),
         mock_info(new_admin, &[]),
-        ExecuteMsg::UpdateEmergencyOwner(AdminUpdate::AcceptProposed),
+        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::AcceptProposed),
     )
     .unwrap();
 

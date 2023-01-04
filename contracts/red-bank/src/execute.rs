@@ -2,8 +2,8 @@ use std::cmp::min;
 use std::str;
 
 use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
-use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
-use cw_controllers_admin_fork::{AdminError, AdminUpdate};
+use mars_owner::OwnerInit::SetInitialOwner;
+use mars_owner::{OwnerError, OwnerUpdate};
 
 use mars_outpost::address_provider::{self, MarsAddressType};
 use mars_outpost::error::MarsError;
@@ -60,16 +60,16 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
     OWNER.initialize(
         deps.storage,
         deps.api,
-        SetInitialAdmin {
-            admin: msg.owner,
+        SetInitialOwner {
+            owner: msg.owner,
         },
     )?;
 
     EMERGENCY_OWNER.initialize(
         deps.storage,
         deps.api,
-        SetInitialAdmin {
-            admin: msg.emergency_owner,
+        SetInitialOwner {
+            owner: msg.emergency_owner,
         },
     )?;
 
@@ -79,7 +79,7 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
 pub fn update_owner(
     deps: DepsMut,
     info: MessageInfo,
-    update: AdminUpdate,
+    update: OwnerUpdate,
 ) -> Result<Response, ContractError> {
     Ok(OWNER.update(deps, info, update)?)
 }
@@ -87,7 +87,7 @@ pub fn update_owner(
 pub fn update_emergency_owner(
     deps: DepsMut,
     info: MessageInfo,
-    update: AdminUpdate,
+    update: OwnerUpdate,
 ) -> Result<Response, ContractError> {
     Ok(EMERGENCY_OWNER.update(deps, info, update)?)
 }
@@ -98,7 +98,7 @@ pub fn update_config(
     info: MessageInfo,
     new_config: CreateOrUpdateConfig,
 ) -> Result<Response, ContractError> {
-    OWNER.assert_admin(deps.storage, &info.sender)?;
+    OWNER.assert_owner(deps.storage, &info.sender)?;
 
     let mut config = CONFIG.load(deps.storage)?;
 
@@ -131,7 +131,7 @@ pub fn init_asset(
     denom: String,
     params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
-    OWNER.assert_admin(deps.storage, &info.sender)?;
+    OWNER.assert_owner(deps.storage, &info.sender)?;
 
     if MARKETS.may_load(deps.storage, &denom)?.is_some() {
         return Err(ContractError::AssetAlreadyInitialized {});
@@ -210,12 +210,12 @@ pub fn update_asset(
     denom: String,
     params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
-    if OWNER.is_admin(deps.storage, &info.sender)? {
+    if OWNER.is_owner(deps.storage, &info.sender)? {
         update_asset_by_owner(deps, &env, &denom, params)
-    } else if EMERGENCY_OWNER.is_admin(deps.storage, &info.sender)? {
+    } else if EMERGENCY_OWNER.is_owner(deps.storage, &info.sender)? {
         update_asset_by_emergency_owner(deps, &denom, params)
     } else {
-        Err(AdminError::NotAdmin {}.into())
+        Err(OwnerError::NotOwner {}.into())
     }
 }
 
@@ -337,7 +337,7 @@ pub fn update_uncollateralized_loan_limit(
     denom: String,
     new_limit: Uint128,
 ) -> Result<Response, ContractError> {
-    OWNER.assert_admin(deps.storage, &info.sender)?;
+    OWNER.assert_owner(deps.storage, &info.sender)?;
 
     // Check that the user has no collateralized debt
     let current_limit = UNCOLLATERALIZED_LOAN_LIMITS

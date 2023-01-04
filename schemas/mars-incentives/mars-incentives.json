@@ -163,7 +163,7 @@
         ],
         "properties": {
           "update_owner": {
-            "$ref": "#/definitions/AdminUpdate"
+            "$ref": "#/definitions/OwnerUpdate"
           }
         },
         "additionalProperties": false
@@ -174,16 +174,16 @@
         "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
         "type": "string"
       },
-      "AdminUpdate": {
+      "OwnerUpdate": {
         "oneOf": [
           {
-            "description": "Proposes a new admin to take role. Only current admin can execute.",
+            "description": "Proposes a new owner to take role. Only current owner can execute.",
             "type": "object",
             "required": [
-              "propose_new_admin"
+              "propose_new_owner"
             ],
             "properties": {
-              "propose_new_admin": {
+              "propose_new_owner": {
                 "type": "object",
                 "required": [
                   "proposed"
@@ -199,24 +199,24 @@
             "additionalProperties": false
           },
           {
-            "description": "Clears the currently proposed admin. Only current admin can execute.",
+            "description": "Clears the currently proposed owner. Only current owner can execute.",
             "type": "string",
             "enum": [
               "clear_proposed"
             ]
           },
           {
-            "description": "Promotes the proposed admin to be the current one. Only the proposed admin can execute.",
+            "description": "Promotes the proposed owner to be the current one. Only the proposed owner can execute.",
             "type": "string",
             "enum": [
               "accept_proposed"
             ]
           },
           {
-            "description": "Throws away the keys to the Admin role forever. Once done, no admin can ever be set later.",
+            "description": "Throws away the keys to the Owner role forever. Once done, no owner can ever be set later.",
             "type": "string",
             "enum": [
-              "abolish_admin_role"
+              "abolish_owner_role"
             ]
           }
         ]

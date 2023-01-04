@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::Decimal;
-use cw_controllers_admin_fork::AdminError::NotAdmin;
+use mars_owner::OwnerError::NotOwner;
 
 use mars_oracle_base::ContractError;
 use mars_outpost::oracle::QueryMsg;
@@ -28,7 +28,7 @@ fn test_setting_price_source_by_non_owner() {
         },
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::AdminError(NotAdmin {}))
+    assert_eq!(err, ContractError::OwnerError(NotOwner {}))
 }
 
 #[test]

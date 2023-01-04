@@ -4,9 +4,9 @@ use cosmwasm_std::{
     to_binary, Addr, Binary, CustomQuery, Deps, DepsMut, Env, MessageInfo, Order, Response,
     StdResult,
 };
-use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
-use cw_controllers_admin_fork::{Admin, AdminUpdate};
 use cw_storage_plus::{Bound, Item, Map};
+use mars_owner::OwnerInit::SetInitialOwner;
+use mars_owner::{Owner, OwnerUpdate};
 
 use mars_outpost::oracle::{
     Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
@@ -25,7 +25,7 @@ where
     C: CustomQuery,
 {
     /// Contract's owner
-    pub owner: Admin<'a>,
+    pub owner: Owner<'a>,
     /// The contract's config
     pub config: Item<'a, Config>,
     /// The price source of each coin denom
@@ -41,7 +41,7 @@ where
 {
     fn default() -> Self {
         Self {
-            owner: Admin::new("owner"),
+            owner: Owner::new("owner"),
             config: Item::new("config"),
             price_sources: Map::new("price_sources"),
             custom_query: PhantomData,
@@ -58,8 +58,8 @@ where
         self.owner.initialize(
             deps.storage,
             deps.api,
-            SetInitialAdmin {
-                admin: msg.owner,
+            SetInitialOwner {
+                owner: msg.owner,
             },
         )?;
 
@@ -115,7 +115,7 @@ where
         &self,
         deps: DepsMut<C>,
         info: MessageInfo,
-        update: AdminUpdate,
+        update: OwnerUpdate,
     ) -> ContractResult<Response> {
         Ok(self.owner.update(deps, info, update)?)
     }
@@ -127,7 +127,7 @@ where
         denom: String,
         price_source: P,
     ) -> ContractResult<Response> {
-        self.owner.assert_admin(deps.storage, &sender_addr)?;
+        self.owner.assert_owner(deps.storage, &sender_addr)?;
 
         let cfg = self.config.load(deps.storage)?;
         price_source.validate(&deps.querier, &denom, &cfg.base_denom)?;
@@ -145,7 +145,7 @@ where
         sender_addr: Addr,
         denom: String,
     ) -> ContractResult<Response> {
-        self.owner.assert_admin(deps.storage, &sender_addr)?;
+        self.owner.assert_owner(deps.storage, &sender_addr)?;
 
         self.price_sources.remove(deps.storage, denom.clone());
 
@@ -158,7 +158,7 @@ where
         let owner_state = self.owner.query(deps.storage)?;
         let cfg = self.config.load(deps.storage)?;
         Ok(ConfigResponse {
-            owner: owner_state.admin,
+            owner: owner_state.owner,
             proposed_new_owner: owner_state.proposed,
             base_denom: cfg.base_denom,
         })

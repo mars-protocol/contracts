@@ -22,7 +22,7 @@ export type ExecuteMsg =
       }
     }
   | {
-      update_owner: AdminUpdate
+      update_owner: OwnerUpdate
     }
 export type OsmosisPriceSource =
   | {
@@ -51,15 +51,15 @@ export type OsmosisPriceSource =
       }
     }
 export type Decimal = string
-export type AdminUpdate =
+export type OwnerUpdate =
   | {
-      propose_new_admin: {
+      propose_new_owner: {
         proposed: string
       }
     }
   | 'clear_proposed'
   | 'accept_proposed'
-  | 'abolish_admin_role'
+  | 'abolish_owner_role'
 export type QueryMsg =
   | {
       config: {}

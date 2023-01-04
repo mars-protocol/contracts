@@ -12,7 +12,7 @@ import {
   InstantiateMsg,
   CreateOrUpdateConfig,
   ExecuteMsg,
-  AdminUpdate,
+  OwnerUpdate,
   Uint128,
   InitOrUpdateAssetParams,
   InterestRateModel,

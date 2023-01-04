@@ -13,7 +13,7 @@ import {
   ExecuteMsg,
   OsmosisPriceSource,
   Decimal,
-  AdminUpdate,
+  OwnerUpdate,
   QueryMsg,
   ConfigResponse,
   PriceResponse,
@@ -164,7 +164,7 @@ export function useMarsOracleOsmosisConfigQuery<TData = ConfigResponse>({
 }
 export interface MarsOracleOsmosisUpdateOwnerMutation {
   client: MarsOracleOsmosisClient
-  msg: AdminUpdate
+  msg: OwnerUpdate
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string

@@ -1,7 +1,7 @@
 use crate::red_bank::InterestRateModel;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Decimal, Uint128};
-use cw_controllers_admin_fork::AdminUpdate;
+use mars_owner::OwnerUpdate;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -17,10 +17,10 @@ pub struct InstantiateMsg {
 #[allow(clippy::large_enum_variant)]
 pub enum ExecuteMsg {
     /// Manages owner state
-    UpdateOwner(AdminUpdate),
+    UpdateOwner(OwnerUpdate),
 
     /// Manages emergency owner state
-    UpdateEmergencyOwner(AdminUpdate),
+    UpdateEmergencyOwner(OwnerUpdate),
 
     /// Update contract config (only owner can call)
     UpdateConfig {

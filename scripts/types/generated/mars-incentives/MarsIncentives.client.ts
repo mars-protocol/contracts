@@ -12,7 +12,7 @@ import {
   ExecuteMsg,
   Uint128,
   Addr,
-  AdminUpdate,
+  OwnerUpdate,
   QueryMsg,
   Decimal,
   AssetIncentiveResponse,

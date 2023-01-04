@@ -1,9 +1,9 @@
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::Decimal;
 
-use cw_controllers_admin_fork::AdminError::NotAdmin;
 use mars_outpost::error::MarsError;
 use mars_outpost::rewards_collector::{ConfigResponse, QueryMsg, UpdateConfig};
+use mars_owner::OwnerError::NotOwner;
 use mars_rewards_collector_base::ContractError;
 use mars_rewards_collector_osmosis::contract::entry::{execute, instantiate};
 use mars_rewards_collector_osmosis::msg::ExecuteMsg;
@@ -93,7 +93,7 @@ fn test_updating_config() {
         new_cfg: new_cfg.clone(),
     };
     let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(err, ContractError::AdminError(NotAdmin {}));
+    assert_eq!(err, ContractError::OwnerError(NotOwner {}));
 
     // update config with safety_tax_rate greater than 1
     let mut invalid_cfg = new_cfg.clone();

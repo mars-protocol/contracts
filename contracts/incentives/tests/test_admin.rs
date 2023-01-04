@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::{Addr, SubMsg};
-use cw_controllers_admin_fork::AdminError::NotAdmin;
+use mars_owner::OwnerError::NotOwner;
 
 use mars_outpost::incentives::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_testing::mock_dependencies;
@@ -47,7 +47,7 @@ fn test_update_config() {
     };
     let info = mock_info("somebody", &[]);
     let error_res = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(error_res, ContractError::AdminError(NotAdmin {}));
+    assert_eq!(error_res, ContractError::OwnerError(NotOwner {}));
 
     // *
     // update config with new params

@@ -25,9 +25,9 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let emergency_owner_state = EMERGENCY_OWNER.query(deps.storage)?;
     let config = CONFIG.load(deps.storage)?;
     Ok(ConfigResponse {
-        owner: owner_state.admin,
+        owner: owner_state.owner,
         proposed_new_owner: owner_state.proposed,
-        emergency_owner: emergency_owner_state.admin,
+        emergency_owner: emergency_owner_state.owner,
         proposed_new_emergency_owner: emergency_owner_state.proposed,
         address_provider: config.address_provider.to_string(),
         close_factor: config.close_factor,

@@ -4,8 +4,8 @@ use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env,
     MessageInfo, Response, StdResult, Uint128,
 };
-use cw_controllers_admin_fork::AdminInit::SetInitialAdmin;
-use cw_controllers_admin_fork::AdminUpdate;
+use mars_owner::OwnerInit::SetInitialOwner;
+use mars_owner::OwnerUpdate;
 
 use mars_outpost::address_provider::MarsAddressType;
 use mars_outpost::error::MarsError;
@@ -38,8 +38,8 @@ pub fn instantiate(
     OWNER.initialize(
         deps.storage,
         deps.api,
-        SetInitialAdmin {
-            admin: msg.owner,
+        SetInitialOwner {
+            owner: msg.owner,
         },
     )?;
 
@@ -97,7 +97,7 @@ pub fn execute_set_asset_incentive(
     denom: String,
     emission_per_second: Uint128,
 ) -> Result<Response, ContractError> {
-    OWNER.assert_admin(deps.storage, &info.sender)?;
+    OWNER.assert_owner(deps.storage, &info.sender)?;
 
     let config = CONFIG.load(deps.storage)?;
 
@@ -279,7 +279,7 @@ pub fn execute_update_config(
     address_provider: Option<String>,
     mars_denom: Option<String>,
 ) -> Result<Response, ContractError> {
-    OWNER.assert_admin(deps.storage, &info.sender)?;
+    OWNER.assert_owner(deps.storage, &info.sender)?;
 
     let mut config = CONFIG.load(deps.storage)?;
 
@@ -297,7 +297,7 @@ pub fn execute_update_config(
 fn update_owner(
     deps: DepsMut,
     info: MessageInfo,
-    update: AdminUpdate,
+    update: OwnerUpdate,
 ) -> Result<Response, ContractError> {
     Ok(OWNER.update(deps, info, update)?)
 }
@@ -321,7 +321,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let owner_state = OWNER.query(deps.storage)?;
     let config = CONFIG.load(deps.storage)?;
     Ok(ConfigResponse {
-        owner: owner_state.admin,
+        owner: owner_state.owner,
         proposed_new_owner: owner_state.proposed,
         address_provider: config.address_provider,
         mars_denom: config.mars_denom,

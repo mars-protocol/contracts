@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Api, Decimal, StdResult, Uint128};
-use cw_controllers_admin_fork::AdminUpdate;
+use mars_owner::OwnerUpdate;
 
 use crate::error::MarsError;
 use crate::helpers::{decimal_param_le_one, integer_param_gt_zero};
@@ -115,7 +115,7 @@ pub struct UpdateConfig {
 #[cw_serde]
 pub enum ExecuteMsg<Route> {
     /// Manages admin role state
-    UpdateOwner(AdminUpdate),
+    UpdateOwner(OwnerUpdate),
 
     /// Update contract config
     UpdateConfig {

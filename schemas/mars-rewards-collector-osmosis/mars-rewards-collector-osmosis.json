@@ -94,7 +94,7 @@
         ],
         "properties": {
           "update_owner": {
-            "$ref": "#/definitions/AdminUpdate"
+            "$ref": "#/definitions/OwnerUpdate"
           }
         },
         "additionalProperties": false
@@ -249,16 +249,26 @@
       }
     ],
     "definitions": {
-      "AdminUpdate": {
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+        "type": "string"
+      },
+      "OsmosisRoute": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SwapAmountInRoute"
+        }
+      },
+      "OwnerUpdate": {
         "oneOf": [
           {
-            "description": "Proposes a new admin to take role. Only current admin can execute.",
+            "description": "Proposes a new owner to take role. Only current owner can execute.",
             "type": "object",
             "required": [
-              "propose_new_admin"
+              "propose_new_owner"
             ],
             "properties": {
-              "propose_new_admin": {
+              "propose_new_owner": {
                 "type": "object",
                 "required": [
                   "proposed"
@@ -274,37 +284,27 @@
             "additionalProperties": false
           },
           {
-            "description": "Clears the currently proposed admin. Only current admin can execute.",
+            "description": "Clears the currently proposed owner. Only current owner can execute.",
             "type": "string",
             "enum": [
               "clear_proposed"
             ]
           },
           {
-            "description": "Promotes the proposed admin to be the current one. Only the proposed admin can execute.",
+            "description": "Promotes the proposed owner to be the current one. Only the proposed owner can execute.",
             "type": "string",
             "enum": [
               "accept_proposed"
             ]
           },
           {
-            "description": "Throws away the keys to the Admin role forever. Once done, no admin can ever be set later.",
+            "description": "Throws away the keys to the Owner role forever. Once done, no owner can ever be set later.",
             "type": "string",
             "enum": [
-              "abolish_admin_role"
+              "abolish_owner_role"
             ]
           }
         ]
-      },
-      "Decimal": {
-        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
-        "type": "string"
-      },
-      "OsmosisRoute": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/SwapAmountInRoute"
-        }
       },
       "SwapAmountInRoute": {
         "description": "===================== MsgSwapExactAmountIn",

@@ -17,10 +17,10 @@ export interface CreateOrUpdateConfig {
 }
 export type ExecuteMsg =
   | {
-      update_owner: AdminUpdate
+      update_owner: OwnerUpdate
     }
   | {
-      update_emergency_owner: AdminUpdate
+      update_emergency_owner: OwnerUpdate
     }
   | {
       update_config: {
@@ -83,15 +83,15 @@ export type ExecuteMsg =
         enable: boolean
       }
     }
-export type AdminUpdate =
+export type OwnerUpdate =
   | {
-      propose_new_admin: {
+      propose_new_owner: {
         proposed: string
       }
     }
   | 'clear_proposed'
   | 'accept_proposed'
-  | 'abolish_admin_role'
+  | 'abolish_owner_role'
 export type Uint128 = string
 export interface InitOrUpdateAssetParams {
   borrow_enabled?: boolean | null

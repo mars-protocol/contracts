@@ -1,8 +1,8 @@
 use crate::helpers::{th_query, th_setup};
 use cosmwasm_std::testing::{mock_env, mock_info};
-use cw_controllers_admin_fork::AdminError::NotAdmin;
-use cw_controllers_admin_fork::AdminUpdate;
 use mars_outpost::red_bank::{ConfigResponse, ExecuteMsg, QueryMsg};
+use mars_owner::OwnerError::NotOwner;
+use mars_owner::OwnerUpdate;
 use mars_red_bank::contract::execute;
 use mars_red_bank::error::ContractError;
 
@@ -31,19 +31,19 @@ fn test_update_owner() {
         deps.as_mut(),
         mock_env(),
         mock_info(bad_guy, &[]),
-        ExecuteMsg::UpdateOwner(AdminUpdate::ProposeNewAdmin {
+        ExecuteMsg::UpdateOwner(OwnerUpdate::ProposeNewOwner {
             proposed: bad_guy.to_string(),
         }),
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::AdminError(NotAdmin {}));
+    assert_eq!(err, ContractError::OwnerError(NotOwner {}));
 
     // propose new owner
     execute(
         deps.as_mut(),
         mock_env(),
         mock_info(&original_config.owner.clone().unwrap(), &[]),
-        ExecuteMsg::UpdateOwner(AdminUpdate::ProposeNewAdmin {
+        ExecuteMsg::UpdateOwner(OwnerUpdate::ProposeNewOwner {
             proposed: new_owner.to_string(),
         }),
     )
@@ -58,7 +58,7 @@ fn test_update_owner() {
         deps.as_mut(),
         mock_env(),
         mock_info(new_owner, &[]),
-        ExecuteMsg::UpdateOwner(AdminUpdate::AcceptProposed),
+        ExecuteMsg::UpdateOwner(OwnerUpdate::AcceptProposed),
     )
     .unwrap();
     let new_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});

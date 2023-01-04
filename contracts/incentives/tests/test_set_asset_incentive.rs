@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::{attr, Decimal, Timestamp, Uint128};
-use cw_controllers_admin_fork::AdminError::NotAdmin;
+use mars_owner::OwnerError::NotOwner;
 
 use mars_outpost::incentives::AssetIncentive;
 use mars_outpost::incentives::ExecuteMsg;
@@ -27,7 +27,7 @@ fn test_only_owner_can_set_asset_incentive() {
     };
 
     let res_error = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(res_error, ContractError::AdminError(NotAdmin {}));
+    assert_eq!(res_error, ContractError::OwnerError(NotOwner {}));
 }
 
 #[test]

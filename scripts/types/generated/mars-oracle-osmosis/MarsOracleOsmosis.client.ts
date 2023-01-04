@@ -12,7 +12,7 @@ import {
   ExecuteMsg,
   OsmosisPriceSource,
   Decimal,
-  AdminUpdate,
+  OwnerUpdate,
   QueryMsg,
   ConfigResponse,
   PriceResponse,

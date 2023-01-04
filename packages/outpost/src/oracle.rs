@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Decimal;
-use cw_controllers_admin_fork::AdminUpdate;
+use mars_owner::OwnerUpdate;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -30,7 +30,7 @@ pub enum ExecuteMsg<T> {
         denom: String,
     },
     /// Manages admin role state
-    UpdateOwner(AdminUpdate),
+    UpdateOwner(OwnerUpdate),
 }
 
 #[cw_serde]

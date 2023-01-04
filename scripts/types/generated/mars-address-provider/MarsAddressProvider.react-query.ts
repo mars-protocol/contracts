@@ -12,7 +12,7 @@ import {
   InstantiateMsg,
   ExecuteMsg,
   MarsAddressType,
-  AdminUpdate,
+  OwnerUpdate,
   QueryMsg,
   AddressResponseItem,
   ArrayOfAddressResponseItem,
@@ -122,7 +122,7 @@ export function useMarsAddressProviderConfigQuery<TData = ConfigResponse>({
 }
 export interface MarsAddressProviderUpdateOwnerMutation {
   client: MarsAddressProviderClient
-  msg: AdminUpdate
+  msg: OwnerUpdate
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string

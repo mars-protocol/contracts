@@ -1,5 +1,5 @@
 use cosmwasm_std::StdError;
-use cw_controllers_admin_fork::AdminError;
+use mars_owner::OwnerError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -8,7 +8,7 @@ pub enum ContractError {
     Std(#[from] StdError),
 
     #[error("{0}")]
-    AdminError(#[from] AdminError),
+    OwnerError(#[from] OwnerError),
 
     #[error("Invalid address: {0}")]
     InvalidAddress(String),

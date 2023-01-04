@@ -17,22 +17,22 @@ export type ExecuteMsg =
       }
     }
   | {
-      update_owner: AdminUpdate
+      update_owner: OwnerUpdate
     }
 export type MarsAddressType =
   | ('incentives' | 'oracle' | 'red_bank' | 'rewards_collector')
   | 'protocol_admin'
   | 'fee_collector'
   | 'safety_fund'
-export type AdminUpdate =
+export type OwnerUpdate =
   | {
-      propose_new_admin: {
+      propose_new_owner: {
         proposed: string
       }
     }
   | 'clear_proposed'
   | 'accept_proposed'
-  | 'abolish_admin_role'
+  | 'abolish_owner_role'
 export type QueryMsg =
   | {
       config: {}
