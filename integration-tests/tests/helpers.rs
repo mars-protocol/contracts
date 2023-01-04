@@ -1,9 +1,12 @@
 #![allow(dead_code)]
 
+use anyhow::Result as AnyResult;
 use cosmwasm_std::{Coin, Decimal};
+use cw_multi_test::AppResponse;
 use mars_outpost::red_bank::{
     InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
 };
+use mars_red_bank::error::ContractError;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
     MsgSwapExactAmountIn, MsgSwapExactAmountInResponse, SwapAmountInRoute,
 };
@@ -167,4 +170,14 @@ pub fn swap(
         signer,
     )
     .unwrap()
+}
+
+pub fn assert_err(res: AnyResult<AppResponse>, err: ContractError) {
+    match res {
+        Ok(_) => panic!("Result was not an error"),
+        Err(generic_err) => {
+            let contract_err: ContractError = generic_err.downcast().unwrap();
+            assert_eq!(contract_err, err);
+        }
+    }
 }

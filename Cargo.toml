@@ -38,6 +38,7 @@ mars-oracle-base            = { version = "0.1.0", path = "./contracts/oracle/ba
 mars-oracle-osmosis         = { version = "0.1.0", path = "./contracts/oracle/osmosis" }
 mars-osmosis                = { version = "0.1.0", path = "./packages/chains/osmosis" }
 mars-outpost                = { version = "0.1.0", path = "./packages/outpost" }
+mars-red-bank               = { version = "0.1.0", path = "./contracts/red-bank" }
 mars-rewards-collector-base = { version = "0.1.0", path = "./contracts/rewards-collector/base" }
 mars-testing                = { version = "0.1.0", path = "./packages/testing" }
 osmosis-std                 = "0.13.2"

@@ -891,11 +891,14 @@ dependencies = [
 name = "mars-integration-tests"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "cosmwasm-std",
+ "cw-multi-test",
  "mars-oracle-base",
  "mars-oracle-osmosis",
  "mars-osmosis",
  "mars-outpost",
+ "mars-red-bank",
  "mars-rewards-collector-base",
  "mars-testing",
  "osmosis-std",
