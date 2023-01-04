@@ -135,7 +135,7 @@ export const axlUSDCAsset: AssetConfig = {
   interest_rate_model: {
     optimal_utilization_rate: '0.8',
     base: '0',
-    slope_1: '0.25',
+    slope_1: '0.2',
     slope_2: '2',
   },
   deposit_cap: '500000000000',
