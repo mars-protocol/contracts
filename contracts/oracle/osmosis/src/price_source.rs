@@ -48,19 +48,19 @@ impl fmt::Display for OsmosisPriceSource {
         let label = match self {
             OsmosisPriceSource::Fixed {
                 price,
-            } => format!("fixed:{}", price),
+            } => format!("fixed:{price}"),
             OsmosisPriceSource::Spot {
                 pool_id,
-            } => format!("spot:{}", pool_id),
+            } => format!("spot:{pool_id}"),
             OsmosisPriceSource::Twap {
                 pool_id,
                 window_size,
-            } => format!("twap:{}:{}", pool_id, window_size),
+            } => format!("twap:{pool_id}:{window_size}"),
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
-            } => format!("xyk_liquidity_token:{}", pool_id),
+            } => format!("xyk_liquidity_token:{pool_id}"),
         };
-        write!(f, "{}", label)
+        write!(f, "{label}")
     }
 }
 
@@ -91,8 +91,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 if *window_size > TWO_DAYS_IN_SECONDS {
                     Err(ContractError::InvalidPriceSource {
                         reason: format!(
-                            "expecting window size to be within {} sec",
-                            TWO_DAYS_IN_SECONDS
+                            "expecting window size to be within {TWO_DAYS_IN_SECONDS} sec"
                         ),
                     })
                 } else {

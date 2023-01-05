@@ -26,7 +26,7 @@ impl fmt::Display for OsmosisRoute {
             .map(|step| format!("{}:{}", step.pool_id, step.token_out_denom))
             .collect::<Vec<_>>()
             .join("|");
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 
@@ -94,8 +94,7 @@ impl Route<Empty, Empty> for OsmosisRoute {
         if prev_denom_out != denom_out {
             return Err(ContractError::InvalidRoute {
                 reason: format!(
-                    "the route's output denom {} does not match the desired output {}",
-                    prev_denom_out, denom_out
+                    "the route's output denom {prev_denom_out} does not match the desired output {denom_out}"
                 ),
             });
         }
