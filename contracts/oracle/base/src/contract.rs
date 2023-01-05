@@ -204,7 +204,13 @@ where
         let cfg = self.config.load(deps.storage)?;
         let price_source = self.price_sources.load(deps.storage, &denom)?;
         Ok(PriceResponse {
-            price: price_source.query_price(&deps, &env, &denom, &cfg.base_denom, &self.price_sources)?,
+            price: price_source.query_price(
+                &deps,
+                &env,
+                &denom,
+                &cfg.base_denom,
+                &self.price_sources,
+            )?,
             denom,
         })
     }
