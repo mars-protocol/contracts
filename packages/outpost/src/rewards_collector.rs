@@ -1,8 +1,10 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Api, Decimal, StdResult, Uint128};
 
-use crate::error::MarsError;
-use crate::helpers::{decimal_param_le_one, integer_param_gt_zero, validate_native_denom};
+use crate::{
+    error::MarsError,
+    helpers::{decimal_param_le_one, integer_param_gt_zero, validate_native_denom},
+};
 
 const MAX_SLIPPAGE_TOLERANCE_PERCENTAGE: u64 = 50;
 

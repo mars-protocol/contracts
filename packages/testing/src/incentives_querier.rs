@@ -1,6 +1,6 @@
-use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, QuerierResult, Uint128};
 use std::collections::HashMap;
 
+use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, QuerierResult, Uint128};
 use mars_outpost::incentives::QueryMsg;
 
 pub struct IncentivesQuerier {

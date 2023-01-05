@@ -1,6 +1,6 @@
-use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, Decimal, QuerierResult};
 use std::collections::HashMap;
 
+use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, Decimal, QuerierResult};
 use mars_outpost::oracle::{PriceResponse, QueryMsg};
 
 #[derive(Default)]

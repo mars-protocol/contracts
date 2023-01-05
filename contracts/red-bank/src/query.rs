@@ -1,19 +1,22 @@
 use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdError, StdResult, Uint128};
 use cw_storage_plus::Bound;
-
-use mars_outpost::address_provider::{self, MarsAddressType};
-use mars_outpost::error::MarsError;
-use mars_outpost::red_bank::{
-    Collateral, ConfigResponse, Debt, Market, UncollateralizedLoanLimitResponse,
-    UserCollateralResponse, UserDebtResponse, UserHealthStatus, UserPositionResponse,
+use mars_outpost::{
+    address_provider::{self, MarsAddressType},
+    error::MarsError,
+    red_bank::{
+        Collateral, ConfigResponse, Debt, Market, UncollateralizedLoanLimitResponse,
+        UserCollateralResponse, UserDebtResponse, UserHealthStatus, UserPositionResponse,
+    },
 };
 
-use crate::health;
-use crate::interest_rates::{
-    get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
-    get_underlying_liquidity_amount,
+use crate::{
+    health,
+    interest_rates::{
+        get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
+        get_underlying_liquidity_amount,
+    },
+    state::{COLLATERALS, CONFIG, DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
 };
-use crate::state::{COLLATERALS, CONFIG, DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
 
 const DEFAULT_LIMIT: u32 = 5;
 const MAX_LIMIT: u32 = 10;

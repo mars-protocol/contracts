@@ -1,5 +1,4 @@
 use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, QuerierResult};
-
 use mars_outpost::address_provider::{AddressResponseItem, QueryMsg};
 
 // NOTE: Addresses here are all hardcoded as we always use those to target a specific contract

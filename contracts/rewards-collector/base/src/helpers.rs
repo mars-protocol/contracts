@@ -32,9 +32,12 @@ pub(crate) fn stringify_option_amount(amount: Option<Uint128>) -> String {
 
 #[cfg(test)]
 mod tests {
+    use cosmwasm_std::{
+        coin,
+        testing::{mock_dependencies_with_balance, MOCK_CONTRACT_ADDR},
+    };
+
     use super::*;
-    use cosmwasm_std::coin;
-    use cosmwasm_std::testing::{mock_dependencies_with_balance, MOCK_CONTRACT_ADDR};
 
     #[test]
     fn unwrapping_option_amount() {

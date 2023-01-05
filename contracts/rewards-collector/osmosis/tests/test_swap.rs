@@ -1,14 +1,17 @@
-use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{CosmosMsg, Decimal, Fraction, SubMsg, Uint128};
-
+use cosmwasm_std::{
+    testing::{mock_env, MOCK_CONTRACT_ADDR},
+    CosmosMsg, Decimal, Fraction, SubMsg, Uint128,
+};
 use mars_outpost::rewards_collector::{Config, QueryMsg};
-use osmosis_std::types::cosmos::base::v1beta1::Coin;
-use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
-use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
-
-use mars_rewards_collector_osmosis::contract::entry::execute;
-use mars_rewards_collector_osmosis::msg::ExecuteMsg;
+use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg};
 use mars_testing::mock_info;
+use osmosis_std::types::{
+    cosmos::base::v1beta1::Coin,
+    osmosis::{
+        gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute},
+        twap::v1beta1::ArithmeticTwapToNowResponse,
+    },
+};
 
 mod helpers;
 

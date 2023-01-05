@@ -1,8 +1,9 @@
-use crate::helpers::{assert_err, default_asset_params};
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use mars_outpost::red_bank::UserHealthStatus;
 use mars_red_bank::error::ContractError;
 use mars_testing::integration::mock_env::MockEnvBuilder;
+
+use crate::helpers::{assert_err, default_asset_params};
 
 mod helpers;
 
