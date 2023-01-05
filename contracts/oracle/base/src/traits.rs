@@ -28,7 +28,7 @@ where
     ///
     /// - `base_denom`: The coin in which the price is to be denominated in.
     ///   For example, if `denom` is uatom and `base_denom` is uosmo, the
-    ///   function should return the how many uosmo is per one uatom.
+    ///   function should return how many uosmo is per one uatom.
     ///
     /// - `price_sources`: A map that stores the price source for each coin.
     ///   This is necessary because for some coins, in order to calculate its
