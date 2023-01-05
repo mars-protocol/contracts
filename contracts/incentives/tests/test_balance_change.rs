@@ -10,7 +10,6 @@ use mars_testing::MockEnvParams;
 use mars_incentives::contract::{execute, execute_balance_change, query_user_unclaimed_rewards};
 use mars_incentives::helpers::{asset_incentive_compute_index, user_compute_accrued_rewards};
 use mars_incentives::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
-use mars_incentives::ContractError;
 
 use crate::helpers::setup_test;
 
