@@ -8,8 +8,7 @@ pub fn handle_query(contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
     let address_provider = Addr::unchecked("address_provider");
     if *contract_addr != address_provider {
         panic!(
-            "[mock]: Address provider request made to {} shoud be {}",
-            contract_addr, address_provider
+            "[mock]: Address provider request made to {contract_addr} shoud be {address_provider}"
         );
     }
 
