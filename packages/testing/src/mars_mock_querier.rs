@@ -32,7 +32,7 @@ impl Querier for MarsMockQuerier {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
-                    error: format!("Parsing query request: {}", e),
+                    error: format!("Parsing query request: {e}"),
                     request: bin_request.into(),
                 })
             }
@@ -164,7 +164,7 @@ impl MarsMockQuerier {
                     return self.redbank_querier.handle_query(redbank_query);
                 }
 
-                panic!("[mock]: Unsupported wasm query: {:?}", msg);
+                panic!("[mock]: Unsupported wasm query: {msg:?}");
             }
 
             QueryRequest::Stargate {
@@ -175,7 +175,7 @@ impl MarsMockQuerier {
                     return querier_res;
                 }
 
-                panic!("[mock]: Unsupported stargate query, path: {:?}", path);
+                panic!("[mock]: Unsupported stargate query, path: {path:?}");
             }
 
             _ => self.base.handle_query(request),

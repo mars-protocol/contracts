@@ -60,7 +60,7 @@ impl OsmosisQuerier {
         let res: ContractResult<Binary> = match self.pools.get(&pool_id) {
             Some(query_response) => to_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
-                error: format!("QueryPoolResponse is not found for pool id: {}", pool_id),
+                error: format!("QueryPoolResponse is not found for pool id: {pool_id}"),
                 request: Default::default(),
             })
             .into(),
@@ -77,10 +77,7 @@ impl OsmosisQuerier {
         let res: ContractResult<Binary> = match self.spot_prices.get(&price_key) {
             Some(query_response) => to_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
-                error: format!(
-                    "QuerySpotPriceResponse is not found for price key: {:?}",
-                    price_key
-                ),
+                error: format!("QuerySpotPriceResponse is not found for price key: {price_key:?}"),
                 request: Default::default(),
             })
             .into(),
@@ -98,8 +95,7 @@ impl OsmosisQuerier {
             Some(query_response) => to_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
                 error: format!(
-                    "ArithmeticTwapToNowResponse is not found for price key: {:?}",
-                    price_key
+                    "ArithmeticTwapToNowResponse is not found for price key: {price_key:?}"
                 ),
                 request: Default::default(),
             })
