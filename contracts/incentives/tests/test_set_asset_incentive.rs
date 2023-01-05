@@ -31,6 +31,26 @@ fn test_only_owner_can_set_asset_incentive() {
 }
 
 #[test]
+fn test_invalid_denom_for_incentives() {
+    let mut deps = setup_test();
+
+    let info = mock_info("owner", &[]);
+    let msg = ExecuteMsg::SetAssetIncentive {
+        denom: "adfnjg&akjsfn!".to_string(),
+        emission_per_second: Uint128::new(100),
+    };
+
+    let res = execute(deps.as_mut(), mock_env(), info, msg);
+    assert_eq!(
+        res,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
+                .to_string()
+        }))
+    );
+}
+
+#[test]
 fn test_set_new_asset_incentive() {
     let mut deps = setup_test();
     let denom = "uosmo";

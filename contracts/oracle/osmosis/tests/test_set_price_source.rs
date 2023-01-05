@@ -64,6 +64,66 @@ fn test_setting_price_source_fixed() {
 }
 
 #[test]
+fn test_setting_price_source_incorrect_denom() {
+    let mut deps = helpers::setup_test();
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("owner"),
+        ExecuteMsg::SetPriceSource {
+            denom: "!*jadfaefc".to_string(),
+            price_source: OsmosisPriceSource::Fixed {
+                price: Decimal::one(),
+            },
+        },
+    );
+    assert_eq!(
+        res,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "First character is not ASCII alphabetic".to_string()
+        }))
+    );
+
+    let res_two = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("owner"),
+        ExecuteMsg::SetPriceSource {
+            denom: "ahdbufenf&*!-".to_string(),
+            price_source: OsmosisPriceSource::Fixed {
+                price: Decimal::one(),
+            },
+        },
+    );
+    assert_eq!(
+        res_two,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
+                .to_string()
+        }))
+    );
+
+    let res_three = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("owner"),
+        ExecuteMsg::SetPriceSource {
+            denom: "ab".to_string(),
+            price_source: OsmosisPriceSource::Fixed {
+                price: Decimal::one(),
+            },
+        },
+    );
+    assert_eq!(
+        res_three,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "Invalid denom length".to_string()
+        }))
+    );
+}
+
+#[test]
 fn test_setting_price_source_spot() {
     let mut deps = helpers::setup_test();
 

@@ -50,6 +50,24 @@ fn test_update_config() {
     assert_eq!(error_res, ContractError::Mars(MarsError::Unauthorized {}));
 
     // *
+    // update config with invalid denom
+    // *
+    let msg = ExecuteMsg::UpdateConfig {
+        owner: Some(String::from("new_owner")),
+        address_provider: None,
+        mars_denom: Some("*!fdskfna".to_string()),
+    };
+    let info = mock_info("owner", &[]);
+
+    let err = execute(deps.as_mut(), mock_env(), info, msg);
+    assert_eq!(
+        err,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "First character is not ASCII alphabetic".to_string()
+        }))
+    );
+
+    // *
     // update config with new params
     // *
     let msg = ExecuteMsg::UpdateConfig {

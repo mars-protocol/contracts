@@ -29,6 +29,11 @@ pub enum MarsError {
     Deserialize {
         target_type: String,
     },
+
+    #[error("Invalid denom: {reason}")]
+    InvalidDenom {
+        reason: String,
+    },
 }
 
 impl From<MarsError> for StdError {

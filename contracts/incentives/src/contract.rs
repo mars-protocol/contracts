@@ -7,7 +7,7 @@ use cosmwasm_std::{
 
 use mars_outpost::address_provider::MarsAddressType;
 use mars_outpost::error::MarsError;
-use mars_outpost::helpers::option_string_to_addr;
+use mars_outpost::helpers::{option_string_to_addr, validate_native_denom};
 
 use mars_outpost::incentives::{AssetIncentive, AssetIncentiveResponse, Config};
 use mars_outpost::incentives::{ExecuteMsg, InstantiateMsg, QueryMsg};
@@ -94,6 +94,8 @@ pub fn execute_set_asset_incentive(
     if info.sender != owner {
         return Err(MarsError::Unauthorized {}.into());
     }
+
+    validate_native_denom(&denom)?;
 
     let red_bank_addr = address_provider::helpers::query_address(
         deps.as_ref(),
@@ -278,6 +280,10 @@ pub fn execute_update_config(
 
     if info.sender != config.owner {
         return Err(MarsError::Unauthorized {});
+    };
+
+    if let Some(md) = &mars_denom {
+        validate_native_denom(md)?;
     };
 
     config.owner = option_string_to_addr(deps.api, owner, config.owner)?;

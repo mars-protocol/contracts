@@ -220,6 +220,55 @@ fn test_init_asset() {
         assert_eq!(error_res, MarsError::Unauthorized {}.into());
     }
 
+    // init incorrect asset denom - error 1
+    {
+        let msg = ExecuteMsg::InitAsset {
+            denom: "!ksdfakefb*.s-".to_string(),
+            params: params.clone(),
+        };
+        let info = mock_info("owner", &[]);
+        let err = execute(deps.as_mut(), env.clone(), info, msg);
+        assert_eq!(
+            err,
+            Err(ContractError::Mars(MarsError::InvalidDenom {
+                reason: "First character is not ASCII alphabetic".to_string()
+            }))
+        );
+    }
+
+    // init incorrect asset denom - error 2
+    {
+        let msg = ExecuteMsg::InitAsset {
+            denom: "ahdbufenf&*!-".to_string(),
+            params: params.clone(),
+        };
+        let info = mock_info("owner", &[]);
+        let err = execute(deps.as_mut(), env.clone(), info, msg);
+        assert_eq!(
+            err,
+            Err(ContractError::Mars(MarsError::InvalidDenom {
+                reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
+                    .to_string()
+            }))
+        );
+    }
+
+    // init incorrect asset denom - error 3
+    {
+        let msg = ExecuteMsg::InitAsset {
+            denom: "ab".to_string(),
+            params: params.clone(),
+        };
+        let info = mock_info("owner", &[]);
+        let err = execute(deps.as_mut(), env.clone(), info, msg);
+        assert_eq!(
+            err,
+            Err(ContractError::Mars(MarsError::InvalidDenom {
+                reason: "Invalid denom length".to_string()
+            }))
+        );
+    }
+
     // init asset with empty params
     {
         let empty_asset_params = InitOrUpdateAssetParams {

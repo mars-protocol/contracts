@@ -5,7 +5,9 @@ use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdResult
 
 use mars_outpost::address_provider::{self, MarsAddressType};
 use mars_outpost::error::MarsError;
-use mars_outpost::helpers::{build_send_asset_msg, option_string_to_addr, zero_address};
+use mars_outpost::helpers::{
+    build_send_asset_msg, option_string_to_addr, validate_native_denom, zero_address,
+};
 use mars_outpost::math;
 use mars_outpost::red_bank::{
     Config, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg, Market,
@@ -106,6 +108,8 @@ pub fn init_asset(
     if info.sender != config.owner {
         return Err(MarsError::Unauthorized {}.into());
     }
+
+    validate_native_denom(&denom)?;
 
     if MARKETS.may_load(deps.storage, &denom)?.is_some() {
         return Err(ContractError::AssetAlreadyInitialized {});
