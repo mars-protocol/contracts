@@ -25,7 +25,7 @@ pub mod entry {
         _env: Env,
         _info: MessageInfo,
         msg: InstantiateMsg,
-    ) -> StdResult<Response> {
+    ) -> ContractResult<Response> {
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
         OsmosisOracle::default().instantiate(deps, msg)
     }

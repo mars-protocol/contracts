@@ -2,7 +2,7 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Api, Decimal, StdResult, Uint128};
 
 use crate::error::MarsError;
-use crate::helpers::{decimal_param_le_one, integer_param_gt_zero};
+use crate::helpers::{decimal_param_le_one, integer_param_gt_zero, validate_native_denom};
 
 const MAX_SLIPPAGE_TOLERANCE_PERCENTAGE: u64 = 50;
 
@@ -46,6 +46,9 @@ impl<T> Config<T> {
                 predicate: format!("<= {}", Decimal::percent(MAX_SLIPPAGE_TOLERANCE_PERCENTAGE)),
             });
         }
+
+        validate_native_denom(&self.safety_fund_denom)?;
+        validate_native_denom(&self.fee_collector_denom)?;
 
         Ok(())
     }
