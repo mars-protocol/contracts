@@ -80,8 +80,8 @@ pub fn validate_native_denom(denom: &str) -> Result<(), MarsError> {
         });
     }
 
+    let set = ['/', ':', '.', '_', '-'];
     for c in chars {
-        let set = ['/', ':', '.', '_', '-'];
         if !(c.is_ascii_alphanumeric() || set.contains(&c)) {
             return Err(MarsError::InvalidDenom {
                 reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"

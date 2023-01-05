@@ -156,8 +156,6 @@ pub fn execute_balance_change(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    validate_native_denom(&denom)?;
-
     let mut asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &denom)? {
         // If there are no incentives,
         // an empty successful response is returned as the
@@ -282,6 +280,10 @@ pub fn execute_update_config(
 
     if info.sender != config.owner {
         return Err(MarsError::Unauthorized {});
+    };
+
+    if let Some(ref md) = mars_denom {
+        validate_native_denom(md)?;
     };
 
     config.owner = option_string_to_addr(deps.api, owner, config.owner)?;

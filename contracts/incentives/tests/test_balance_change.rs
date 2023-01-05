@@ -37,30 +37,6 @@ fn test_balance_change_unauthorized() {
 }
 
 #[test]
-fn test_balance_change_incorrect_denom() {
-    let mut deps = setup_test();
-
-    let err = execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info("red_bank", &[]),
-        ExecuteMsg::BalanceChange {
-            user_addr: Addr::unchecked("user"),
-            denom: "asfkfsk!sfn&%".to_string(),
-            user_amount_scaled_before: Uint128::new(100000),
-            total_amount_scaled_before: Uint128::new(100000),
-        },
-    );
-    assert_eq!(
-        err,
-        Err(ContractError::Mars(MarsError::InvalidDenom {
-            reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
-                .to_string()
-        }))
-    );
-}
-
-#[test]
 fn test_execute_balance_change_noops() {
     let mut deps = setup_test();
 

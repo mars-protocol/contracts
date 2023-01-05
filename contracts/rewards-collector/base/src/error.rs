@@ -32,11 +32,6 @@ pub enum ContractError {
     InvalidRoute {
         reason: String,
     },
-
-    #[error("Invalid denom: {reason}")]
-    InvalidDenom {
-        reason: String,
-    },
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;
