@@ -50,7 +50,9 @@ where
     P: PriceSource<C>,
     C: CustomQuery,
 {
-    pub fn instantiate(&self, deps: DepsMut<C>, msg: InstantiateMsg) -> StdResult<Response> {
+    pub fn instantiate(&self, deps: DepsMut<C>, msg: InstantiateMsg) -> ContractResult<Response> {
+        validate_native_denom(&msg.base_denom)?;
+
         self.config.save(
             deps.storage,
             &Config {
@@ -154,8 +156,6 @@ where
         if sender_addr != cfg.owner {
             return Err(MarsError::Unauthorized {}.into());
         }
-
-        validate_native_denom(&denom)?;
 
         self.price_sources.remove(deps.storage, denom.clone());
 

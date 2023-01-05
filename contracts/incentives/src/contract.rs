@@ -282,7 +282,7 @@ pub fn execute_update_config(
         return Err(MarsError::Unauthorized {});
     };
 
-    if let Some(ref md) = mars_denom {
+    if let Some(md) = &mars_denom {
         validate_native_denom(md)?;
     };
 
