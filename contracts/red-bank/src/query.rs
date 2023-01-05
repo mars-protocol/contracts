@@ -33,7 +33,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
     MARKETS
         .load(deps.storage, &denom)
-        .map_err(|_| StdError::generic_err(format!("failed to load market for: {}", denom)))
+        .map_err(|_| StdError::generic_err(format!("failed to load market for: {denom}")))
 }
 
 pub fn query_markets(
