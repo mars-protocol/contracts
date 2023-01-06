@@ -63,6 +63,12 @@ pub struct DowntimeDetector {
     pub recovery: u64,
 }
 
+impl fmt::Display for DowntimeDetector {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}:{}", self.downtime, self.recovery)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum OsmosisPriceSource {
@@ -108,7 +114,13 @@ impl fmt::Display for OsmosisPriceSource {
                 pool_id,
                 window_size,
                 downtime_detector,
-            } => format!("twap:{}:{}:{:?}", pool_id, window_size, downtime_detector),
+            } => {
+                let dd_fmt = match downtime_detector {
+                    None => "None".to_string(),
+                    Some(dd) => format!("Some({})", dd),
+                };
+                format!("twap:{}:{}:{}", pool_id, window_size, dd_fmt)
+            }
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
             } => format!("xyk_liquidity_token:{}", pool_id),
@@ -270,5 +282,63 @@ impl OsmosisPriceSource {
         let total_shares = Pool::unwrap_coin(&pool.total_shares)?.amount;
 
         Ok(Decimal::from_ratio(pool_value_u128, total_shares))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn display_downtime_detector() {
+        let dd = DowntimeDetector {
+            downtime: Downtime::Duration10m,
+            recovery: 550,
+        };
+        assert_eq!(dd.to_string(), "Duration10m:550")
+    }
+
+    #[test]
+    fn display_fixed_price_source() {
+        let ps = OsmosisPriceSource::Fixed {
+            price: Decimal::from_ratio(1u128, 2u128),
+        };
+        assert_eq!(ps.to_string(), "fixed:0.5")
+    }
+
+    #[test]
+    fn display_spot_price_source() {
+        let ps = OsmosisPriceSource::Spot {
+            pool_id: 123,
+        };
+        assert_eq!(ps.to_string(), "spot:123")
+    }
+
+    #[test]
+    fn display_twap_price_source() {
+        let ps = OsmosisPriceSource::Twap {
+            pool_id: 123,
+            window_size: 300,
+            downtime_detector: None,
+        };
+        assert_eq!(ps.to_string(), "twap:123:300:None");
+
+        let ps = OsmosisPriceSource::Twap {
+            pool_id: 123,
+            window_size: 300,
+            downtime_detector: Some(DowntimeDetector {
+                downtime: Downtime::Duration30m,
+                recovery: 568,
+            }),
+        };
+        assert_eq!(ps.to_string(), "twap:123:300:Some(Duration30m:568)");
+    }
+
+    #[test]
+    fn display_xyk_lp_price_source() {
+        let ps = OsmosisPriceSource::XykLiquidityToken {
+            pool_id: 224,
+        };
+        assert_eq!(ps.to_string(), "xyk_liquidity_token:224")
     }
 }

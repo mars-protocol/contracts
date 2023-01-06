@@ -10,9 +10,7 @@ use mars_red_bank::error::ContractError;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
     MsgSwapExactAmountIn, MsgSwapExactAmountInResponse, SwapAmountInRoute,
 };
-use osmosis_testing::{
-    Account, ExecuteResponse, OsmosisTestApp, Runner, SigningAccount,
-};
+use osmosis_testing::{Account, ExecuteResponse, OsmosisTestApp, Runner, SigningAccount};
 
 pub fn default_asset_params() -> InitOrUpdateAssetParams {
     InitOrUpdateAssetParams {
@@ -109,12 +107,12 @@ pub mod osmosis {
             RunnerError::ExecuteError {
                 msg,
             } => {
-                assert!(msg.contains(&format!("{}", expected)))
+                assert!(msg.contains(&expected.to_string()))
             }
             RunnerError::QueryError {
                 msg,
             } => {
-                assert!(msg.contains(&format!("{}", expected)))
+                assert!(msg.contains(&expected.to_string()))
             }
             _ => panic!("Unhandled error"),
         }

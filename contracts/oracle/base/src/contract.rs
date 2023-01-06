@@ -2,7 +2,6 @@ use std::marker::PhantomData;
 
 use cosmwasm_std::{
     to_binary, Addr, Binary, CustomQuery, Deps, DepsMut, Env, MessageInfo, Order, Response,
-    StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
 
