@@ -10,8 +10,8 @@ fn test_health_position() {
     let positions = HashMap::new();
     let health = compute_position_health(&positions).unwrap();
 
-    assert_eq!(health.total_collateral_value, Decimal::zero());
-    assert_eq!(health.total_debt_value, Decimal::zero());
+    assert_eq!(health.total_collateral_value, Uint128::zero());
+    assert_eq!(health.total_debt_value, Uint128::zero());
     assert_eq!(health.max_ltv_health_factor, None);
     assert_eq!(health.liquidation_health_factor, None);
     assert!(!health.is_liquidatable());
@@ -26,8 +26,8 @@ fn test_health_position() {
 
     let health = compute_position_health(&positions).unwrap();
 
-    assert_eq!(health.total_collateral_value, Decimal::from_atomics(11827u128, 1).unwrap());
-    assert_eq!(health.total_debt_value, Decimal::zero());
+    assert_eq!(health.total_collateral_value, Uint128::from(1182u128));
+    assert_eq!(health.total_debt_value, Uint128::zero());
     assert_eq!(health.max_ltv_health_factor, None);
     assert_eq!(health.liquidation_health_factor, None);
     assert!(!health.is_liquidatable());
@@ -46,8 +46,8 @@ fn test_health_position() {
         HashMap::from([("osmo".to_string(), osmo_position), ("atom".to_string(), atom_position)]);
     let health = compute_position_health(&positions).unwrap();
 
-    assert_eq!(health.total_collateral_value, Decimal::from_atomics(59135u128, 1).unwrap());
-    assert_eq!(health.total_debt_value, Decimal::from_ratio(2040u128, 1u128));
+    assert_eq!(health.total_collateral_value, Uint128::from(5913u128));
+    assert_eq!(health.total_debt_value, Uint128::from(2040u128));
     assert!(!health.is_liquidatable());
     assert!(!health.is_above_max_ltv());
 
@@ -63,8 +63,8 @@ fn test_health_position() {
         HashMap::from([("osmo".to_string(), osmo_position), ("atom".to_string(), atom_position)]);
     let health = compute_position_health(&positions).unwrap();
 
-    assert_eq!(health.total_collateral_value, Decimal::from_atomics(59135u128, 1).unwrap());
-    assert_eq!(health.total_debt_value, Decimal::from_atomics(32227u128, 1).unwrap());
+    assert_eq!(health.total_collateral_value, Uint128::from(5913u128));
+    assert_eq!(health.total_debt_value, Uint128::from(3222u128));
     assert!(!health.is_liquidatable());
     assert!(health.is_above_max_ltv());
 }

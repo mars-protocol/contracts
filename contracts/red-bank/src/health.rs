@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, Deps, Env, Order, StdError, StdResult, Uint128};
 use mars_health::health::{Health, Position as HealthPosition};
 use mars_outpost::{oracle, red_bank::Position};
 
@@ -82,14 +82,14 @@ pub fn compute_position_health(positions: &HashMap<String, Position>) -> StdResu
         .map(|p| {
             // if it is an "uncollateralized" debt, then it won't count towards their health factor
             let debt_amount = if p.uncollateralized_debt {
-                Decimal::zero()
+                Uint128::zero()
             } else {
-                Decimal::from_ratio(p.debt_amount, 1u128)
+                p.debt_amount
             };
 
             HealthPosition {
                 denom: p.denom.clone(),
-                collateral_amount: Decimal::from_ratio(p.collateral_amount, 1u128),
+                collateral_amount: p.collateral_amount,
                 debt_amount,
                 price: p.asset_price,
                 max_ltv: p.max_ltv,
