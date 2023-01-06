@@ -40,6 +40,7 @@ command = "cargo"
 args = ["test", "--locked", "--package", "mars-integration-tests"]
 
 [tasks.fmt]
+toolchain = "nightly"
 command = "cargo"
 args = ["fmt", "--all", "--check"]
 

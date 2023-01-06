@@ -1,6 +1,7 @@
-use crate::OsmosisPriceSource;
 use cosmwasm_std::Empty;
 use mars_oracle_base::OracleBase;
+
+use crate::OsmosisPriceSource;
 
 /// The Osmosis oracle contract inherits logics from the base oracle contract, with the Osmosis query
 /// and price source plugins
@@ -12,7 +13,6 @@ pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg(not(feature = "library"))]
 pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response};
-
     use mars_oracle_base::ContractResult;
     use mars_outpost::oracle::{ExecuteMsg, InstantiateMsg, QueryMsg};
 

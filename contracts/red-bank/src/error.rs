@@ -1,8 +1,7 @@
 use cosmwasm_std::{OverflowError, StdError};
 use cw_utils::PaymentError;
-use thiserror::Error;
-
 use mars_outpost::error::MarsError;
+use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {

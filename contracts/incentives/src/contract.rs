@@ -4,20 +4,24 @@ use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env,
     MessageInfo, Response, StdResult, Uint128,
 };
-
-use mars_outpost::address_provider::MarsAddressType;
-use mars_outpost::error::MarsError;
-use mars_outpost::helpers::{option_string_to_addr, validate_native_denom};
-
-use mars_outpost::incentives::{AssetIncentive, AssetIncentiveResponse, Config};
-use mars_outpost::incentives::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use mars_outpost::{address_provider, red_bank};
-
-use crate::error::ContractError;
-use crate::helpers::{
-    asset_incentive_update_index, compute_user_unclaimed_rewards, user_compute_accrued_rewards,
+use mars_outpost::{
+    address_provider,
+    address_provider::MarsAddressType,
+    error::MarsError,
+    helpers::{option_string_to_addr, validate_native_denom},
+    incentives::{
+        AssetIncentive, AssetIncentiveResponse, Config, ExecuteMsg, InstantiateMsg, QueryMsg,
+    },
+    red_bank,
 };
-use crate::state::{ASSET_INCENTIVES, CONFIG, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
+
+use crate::{
+    error::ContractError,
+    helpers::{
+        asset_incentive_update_index, compute_user_unclaimed_rewards, user_compute_accrued_rewards,
+    },
+    state::{ASSET_INCENTIVES, CONFIG, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
+};
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-incentives";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");

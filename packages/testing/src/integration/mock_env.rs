@@ -1,20 +1,26 @@
 #![allow(dead_code)]
 
-use crate::integration::mock_contracts::{
-    mock_address_provider_contract, mock_incentives_contract, mock_oracle_osmosis_contract,
-    mock_red_bank_contract, mock_rewards_collector_osmosis_contract,
-};
+use std::mem::take;
+
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSource;
-use mars_outpost::address_provider::MarsAddressType;
-use mars_outpost::red_bank::{
-    CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, UncollateralizedLoanLimitResponse,
-    UserCollateralResponse, UserDebtResponse, UserPositionResponse,
+use mars_outpost::{
+    address_provider,
+    address_provider::MarsAddressType,
+    incentives, oracle, red_bank,
+    red_bank::{
+        CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, UncollateralizedLoanLimitResponse,
+        UserCollateralResponse, UserDebtResponse, UserPositionResponse,
+    },
+    rewards_collector,
 };
-use mars_outpost::{address_provider, incentives, oracle, red_bank, rewards_collector};
-use std::mem::take;
+
+use crate::integration::mock_contracts::{
+    mock_address_provider_contract, mock_incentives_contract, mock_oracle_osmosis_contract,
+    mock_red_bank_contract, mock_rewards_collector_osmosis_contract,
+};
 
 pub struct MockEnv {
     pub app: App,

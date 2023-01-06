@@ -2,17 +2,16 @@ use std::marker::PhantomData;
 
 use cosmwasm_std::{
     to_binary, Addr, Binary, CustomQuery, Deps, DepsMut, Env, MessageInfo, Order, Response,
+    StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
-
-use mars_outpost::error::MarsError;
-use mars_outpost::helpers::validate_native_denom;
-use mars_outpost::oracle::{
-    Config, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse, QueryMsg,
+use mars_outpost::{
+    error::MarsError,
+    helpers::validate_native_denom,
+    oracle::{Config, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse, QueryMsg},
 };
 
-use crate::error::ContractResult;
-use crate::PriceSource;
+use crate::{error::ContractResult, PriceSource};
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
@@ -84,25 +83,24 @@ where
     }
 
     pub fn query(&self, deps: Deps<C>, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
-        match msg {
-            QueryMsg::Config {} => to_binary(&self.query_config(deps)?).map_err(Into::into),
+        let res = match msg {
+            QueryMsg::Config {} => to_binary(&self.query_config(deps)?),
             QueryMsg::PriceSource {
                 denom,
-            } => to_binary(&self.query_price_source(deps, denom)?).map_err(Into::into),
+            } => to_binary(&self.query_price_source(deps, denom)?),
             QueryMsg::PriceSources {
                 start_after,
                 limit,
-            } => {
-                to_binary(&self.query_price_sources(deps, start_after, limit)?).map_err(Into::into)
-            }
+            } => to_binary(&self.query_price_sources(deps, start_after, limit)?),
             QueryMsg::Price {
                 denom,
-            } => to_binary(&self.query_price(deps, env, denom)?).map_err(Into::into),
+            } => to_binary(&self.query_price(deps, env, denom)?),
             QueryMsg::Prices {
                 start_after,
                 limit,
-            } => to_binary(&self.query_prices(deps, env, start_after, limit)?).map_err(Into::into),
-        }
+            } => to_binary(&self.query_prices(deps, env, start_after, limit)?),
+        };
+        res.map_err(Into::into)
     }
 
     fn update_config(
@@ -165,7 +163,7 @@ where
             .add_attribute("denom", denom))
     }
 
-    fn query_config(&self, deps: Deps<C>) -> ContractResult<Config<String>> {
+    fn query_config(&self, deps: Deps<C>) -> StdResult<Config<String>> {
         let cfg = self.config.load(deps.storage)?;
         Ok(Config {
             owner: cfg.owner.to_string(),
@@ -177,7 +175,7 @@ where
         &self,
         deps: Deps<C>,
         denom: String,
-    ) -> ContractResult<PriceSourceResponse<P>> {
+    ) -> StdResult<PriceSourceResponse<P>> {
         Ok(PriceSourceResponse {
             denom: denom.clone(),
             price_source: self.price_sources.load(deps.storage, denom)?,
@@ -189,7 +187,7 @@ where
         deps: Deps<C>,
         start_after: Option<String>,
         limit: Option<u32>,
-    ) -> ContractResult<Vec<PriceSourceResponse<P>>> {
+    ) -> StdResult<Vec<PriceSourceResponse<P>>> {
         let start = start_after.map(Bound::exclusive);
         let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 

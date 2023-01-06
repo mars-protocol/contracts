@@ -3,16 +3,13 @@ use std::fmt;
 use cosmwasm_std::{
     BlockInfo, Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, Uint128, Uint256,
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
-use mars_oracle_base::ContractError::InvalidPrice;
-use mars_oracle_base::{ContractError, ContractResult, PriceSource};
+use mars_oracle_base::{ContractError, ContractError::InvalidPrice, ContractResult, PriceSource};
 use mars_osmosis::helpers::{
     query_pool, query_spot_price, query_twap_price, recovered_since_downtime_of_length, Pool,
 };
-use mars_outpost::oracle;
-use mars_outpost::oracle::PriceResponse;
+use mars_outpost::{oracle, oracle::PriceResponse};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::helpers;
 

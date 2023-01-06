@@ -2,13 +2,15 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
 use mars_osmosis::helpers::QueryPoolResponse;
-use osmosis_std::types::osmosis::downtimedetector::v1beta1::{
-    RecoveredSinceDowntimeOfLengthRequest, RecoveredSinceDowntimeOfLengthResponse,
-};
-use osmosis_std::types::osmosis::gamm::v1beta1::QueryPoolRequest;
-use osmosis_std::types::osmosis::gamm::v2::{QuerySpotPriceRequest, QuerySpotPriceResponse};
-use osmosis_std::types::osmosis::twap::v1beta1::{
-    ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse,
+use osmosis_std::types::osmosis::{
+    downtimedetector::v1beta1::{
+        RecoveredSinceDowntimeOfLengthRequest, RecoveredSinceDowntimeOfLengthResponse,
+    },
+    gamm::{
+        v1beta1::QueryPoolRequest,
+        v2::{QuerySpotPriceRequest, QuerySpotPriceResponse},
+    },
+    twap::v1beta1::{ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse},
 };
 use prost::{DecodeError, Message};
 

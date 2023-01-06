@@ -1,20 +1,19 @@
-use cosmwasm_std::testing::mock_info;
-use cosmwasm_std::{attr, coin, from_binary, Addr, Decimal, Event, Uint128};
-
-use mars_outpost::address_provider::MarsAddressType;
-use mars_outpost::error::MarsError;
-use mars_outpost::red_bank::{
-    ConfigResponse, CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
-    InterestRateModel, Market, QueryMsg,
+use cosmwasm_std::{attr, coin, from_binary, testing::mock_info, Addr, Decimal, Event, Uint128};
+use mars_outpost::{
+    address_provider::MarsAddressType,
+    error::MarsError,
+    red_bank::{
+        ConfigResponse, CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
+        InterestRateModel, Market, QueryMsg,
+    },
+};
+use mars_red_bank::{
+    contract::{execute, instantiate, query},
+    error::ContractError,
+    interest_rates::{compute_scaled_amount, compute_underlying_amount, ScalingOperation},
+    state::{COLLATERALS, CONFIG, MARKETS},
 };
 use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, MockEnvParams};
-
-use mars_red_bank::contract::{execute, instantiate, query};
-use mars_red_bank::error::ContractError;
-use mars_red_bank::interest_rates::{
-    compute_scaled_amount, compute_underlying_amount, ScalingOperation,
-};
-use mars_red_bank::state::{COLLATERALS, CONFIG, MARKETS};
 
 use crate::helpers::{th_get_expected_indices, th_init_market, th_setup};
 

@@ -63,11 +63,13 @@ pub fn is_user_liquidatable(position: &UserPositionResponse) -> bool {
 }
 
 pub mod osmosis {
-    use osmosis_testing::cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest;
-    use osmosis_testing::{Bank, OsmosisTestApp, RunnerError, SigningAccount, Wasm};
+    use std::{fmt::Display, str::FromStr};
+
+    use osmosis_testing::{
+        cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest, Bank, OsmosisTestApp,
+        RunnerError, SigningAccount, Wasm,
+    };
     use serde::Serialize;
-    use std::fmt::Display;
-    use std::str::FromStr;
 
     pub fn wasm_file(contract_name: &str) -> String {
         let artifacts_dir =

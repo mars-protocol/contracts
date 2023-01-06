@@ -1,12 +1,12 @@
 use cosmwasm_std::{coin, Decimal};
 use mars_oracle_base::ContractError;
-use osmosis_std::types::osmosis::gamm::v2::QuerySpotPriceResponse;
-use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
-
+use mars_oracle_osmosis::{Downtime, DowntimeDetector, OsmosisPriceSource};
 use mars_outpost::oracle::{PriceResponse, QueryMsg};
+use osmosis_std::types::osmosis::{
+    gamm::v2::QuerySpotPriceResponse, twap::v1beta1::ArithmeticTwapToNowResponse,
+};
 
 use crate::helpers::prepare_query_pool_response;
-use mars_oracle_osmosis::{Downtime, DowntimeDetector, OsmosisPriceSource};
 
 mod helpers;
 

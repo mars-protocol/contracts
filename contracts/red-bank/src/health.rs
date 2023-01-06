@@ -2,11 +2,12 @@ use std::collections::{HashMap, HashSet};
 
 use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdError, StdResult, Uint128};
 use mars_health::health::{Health, Position as HealthPosition};
-use mars_outpost::oracle;
-use mars_outpost::red_bank::Position;
+use mars_outpost::{oracle, red_bank::Position};
 
-use crate::interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount};
-use crate::state::{COLLATERALS, DEBTS, MARKETS};
+use crate::{
+    interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount},
+    state::{COLLATERALS, DEBTS, MARKETS},
+};
 
 /// Check the Health Factor for a given user
 pub fn assert_liquidatable(
