@@ -3,7 +3,7 @@ use std::{collections::HashMap, fmt};
 use cosmwasm_std::{Addr, Coin, Decimal, Fraction, QuerierWrapper, StdResult, Uint128};
 use mars_outpost::red_bank::Market;
 
-use crate::query::MarsQuerier;
+use crate::{error::HealthError, query::MarsQuerier};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Position {
@@ -54,7 +54,7 @@ impl Health {
         red_bank_addr: &Addr,
         collateral: &[Coin],
         debt: &[Coin],
-    ) -> StdResult<Health> {
+    ) -> Result<Health, HealthError> {
         let querier = MarsQuerier::new(querier, oracle_addr, red_bank_addr);
         let positions = Self::positions_from_coins(&querier, collateral, debt)?;
 
@@ -62,48 +62,38 @@ impl Health {
     }
 
     /// Compute the health for a Position
-    pub fn compute_health(positions: &[Position]) -> StdResult<Health> {
-        let mut health = positions.iter().try_fold::<_, _, StdResult<Health>>(
+    pub fn compute_health(positions: &[Position]) -> Result<Health, HealthError> {
+        let mut health = positions.iter().try_fold::<_, _, Result<Health, HealthError>>(
             Health::default(),
             |mut h, p| {
                 let collateral_value = p
                     .collateral_amount
-                    .checked_multiply_ratio(p.price.numerator(), p.price.denominator())
-                    .unwrap();
+                    .checked_multiply_ratio(p.price.numerator(), p.price.denominator())?;
                 h.total_debt_value += p
                     .debt_amount
-                    .checked_multiply_ratio(p.price.numerator(), p.price.denominator())
-                    .unwrap();
+                    .checked_multiply_ratio(p.price.numerator(), p.price.denominator())?;
                 h.total_collateral_value += collateral_value;
                 h.max_ltv_adjusted_collateral += collateral_value
-                    .checked_multiply_ratio(p.max_ltv.numerator(), p.max_ltv.denominator())
-                    .unwrap();
+                    .checked_multiply_ratio(p.max_ltv.numerator(), p.max_ltv.denominator())?;
                 h.liquidation_threshold_adjusted_collateral += collateral_value
                     .checked_multiply_ratio(
                         p.liquidation_threshold.numerator(),
                         p.liquidation_threshold.denominator(),
-                    )
-                    .unwrap();
+                    )?;
                 Ok(h)
             },
         )?;
 
         // If there aren't any debts a health factor can't be computed (divide by zero)
         if !health.total_debt_value.is_zero() {
-            health.max_ltv_health_factor = Some(
-                Decimal::checked_from_ratio(
-                    health.max_ltv_adjusted_collateral,
-                    health.total_debt_value,
-                )
-                .unwrap(),
-            );
-            health.liquidation_health_factor = Some(
-                Decimal::checked_from_ratio(
-                    health.liquidation_threshold_adjusted_collateral,
-                    health.total_debt_value,
-                )
-                .unwrap(),
-            );
+            health.max_ltv_health_factor = Some(Decimal::checked_from_ratio(
+                health.max_ltv_adjusted_collateral,
+                health.total_debt_value,
+            )?);
+            health.liquidation_health_factor = Some(Decimal::checked_from_ratio(
+                health.liquidation_threshold_adjusted_collateral,
+                health.total_debt_value,
+            )?);
         }
 
         Ok(health)

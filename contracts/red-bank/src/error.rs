@@ -1,5 +1,6 @@
 use cosmwasm_std::{OverflowError, StdError};
 use cw_utils::PaymentError;
+use mars_health::error::HealthError;
 use mars_outpost::error::MarsError;
 use thiserror::Error;
 
@@ -16,6 +17,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Overflow(#[from] OverflowError),
+
+    #[error("{0}")]
+    HealthError(#[from] HealthError),
 
     #[error("Price not found for asset: {denom:?}")]
     PriceNotFound {

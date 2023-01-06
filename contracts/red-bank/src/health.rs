@@ -5,6 +5,7 @@ use mars_health::health::{Health, Position as HealthPosition};
 use mars_outpost::{oracle, red_bank::Position};
 
 use crate::{
+    error::ContractError,
     interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount},
     state::{COLLATERALS, DEBTS, MARKETS},
 };
@@ -15,7 +16,7 @@ pub fn assert_liquidatable(
     env: &Env,
     user_addr: &Addr,
     oracle_addr: &Addr,
-) -> StdResult<(bool, HashMap<String, Position>)> {
+) -> Result<(bool, HashMap<String, Position>), ContractError> {
     let positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
     let health = compute_position_health(&positions)?;
 
@@ -30,7 +31,7 @@ pub fn assert_below_liq_threshold_after_withdraw(
     oracle_addr: &Addr,
     denom: &str,
     withdraw_amount: Uint128,
-) -> StdResult<bool> {
+) -> Result<bool, ContractError> {
     let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
 
     // Update position to compute health factor after withdraw
@@ -41,7 +42,8 @@ pub fn assert_below_liq_threshold_after_withdraw(
         None => {
             return Err(StdError::GenericErr {
                 msg: "No User Balance".to_string(),
-            })
+            }
+            .into())
         }
     }
 
@@ -57,7 +59,7 @@ pub fn assert_below_max_ltv_after_borrow(
     oracle_addr: &Addr,
     denom: &str,
     borrow_amount: Uint128,
-) -> StdResult<bool> {
+) -> Result<bool, ContractError> {
     let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
 
     // Update position to compute health factor after borrow
@@ -76,7 +78,9 @@ pub fn assert_below_max_ltv_after_borrow(
 }
 
 /// Compute Health of a given User Position
-pub fn compute_position_health(positions: &HashMap<String, Position>) -> StdResult<Health> {
+pub fn compute_position_health(
+    positions: &HashMap<String, Position>,
+) -> Result<Health, ContractError> {
     let positions = positions
         .values()
         .map(|p| {
@@ -98,7 +102,7 @@ pub fn compute_position_health(positions: &HashMap<String, Position>) -> StdResu
         })
         .collect::<Vec<_>>();
 
-    Health::compute_health(&positions)
+    Health::compute_health(&positions).map_err(Into::into)
 }
 
 /// Goes through assets user has a position in and returns a HashMap mapping the asset denoms to the
