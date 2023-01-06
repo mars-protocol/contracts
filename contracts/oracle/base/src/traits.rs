@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use cosmwasm_std::{CustomQuery, Decimal, Deps, Env, QuerierWrapper, StdResult};
+use cosmwasm_std::{CustomQuery, Decimal, Deps, Env, QuerierWrapper};
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -26,5 +26,5 @@ where
         env: &Env,
         denom: &str,
         base_denom: &str,
-    ) -> StdResult<Decimal>;
+    ) -> ContractResult<Decimal>;
 }

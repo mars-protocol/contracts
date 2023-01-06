@@ -40,7 +40,7 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         OsmosisOracle::default().query(deps, env, msg)
     }
 }

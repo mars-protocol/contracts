@@ -84,23 +84,25 @@ where
         }
     }
 
-    pub fn query(&self, deps: Deps<C>, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    pub fn query(&self, deps: Deps<C>, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         match msg {
-            QueryMsg::Config {} => to_binary(&self.query_config(deps)?),
+            QueryMsg::Config {} => to_binary(&self.query_config(deps)?).map_err(Into::into),
             QueryMsg::PriceSource {
                 denom,
-            } => to_binary(&self.query_price_source(deps, denom)?),
+            } => to_binary(&self.query_price_source(deps, denom)?).map_err(Into::into),
             QueryMsg::PriceSources {
                 start_after,
                 limit,
-            } => to_binary(&self.query_price_sources(deps, start_after, limit)?),
+            } => {
+                to_binary(&self.query_price_sources(deps, start_after, limit)?).map_err(Into::into)
+            }
             QueryMsg::Price {
                 denom,
-            } => to_binary(&self.query_price(deps, env, denom)?),
+            } => to_binary(&self.query_price(deps, env, denom)?).map_err(Into::into),
             QueryMsg::Prices {
                 start_after,
                 limit,
-            } => to_binary(&self.query_prices(deps, env, start_after, limit)?),
+            } => to_binary(&self.query_prices(deps, env, start_after, limit)?).map_err(Into::into),
         }
     }
 
@@ -164,7 +166,7 @@ where
             .add_attribute("denom", denom))
     }
 
-    fn query_config(&self, deps: Deps<C>) -> StdResult<Config<String>> {
+    fn query_config(&self, deps: Deps<C>) -> ContractResult<Config<String>> {
         let cfg = self.config.load(deps.storage)?;
         Ok(Config {
             owner: cfg.owner.to_string(),
@@ -176,7 +178,7 @@ where
         &self,
         deps: Deps<C>,
         denom: String,
-    ) -> StdResult<PriceSourceResponse<P>> {
+    ) -> ContractResult<PriceSourceResponse<P>> {
         Ok(PriceSourceResponse {
             denom: denom.clone(),
             price_source: self.price_sources.load(deps.storage, denom)?,
@@ -188,7 +190,7 @@ where
         deps: Deps<C>,
         start_after: Option<String>,
         limit: Option<u32>,
-    ) -> StdResult<Vec<PriceSourceResponse<P>>> {
+    ) -> ContractResult<Vec<PriceSourceResponse<P>>> {
         let start = start_after.map(Bound::exclusive);
         let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
@@ -205,7 +207,7 @@ where
             .collect()
     }
 
-    fn query_price(&self, deps: Deps<C>, env: Env, denom: String) -> StdResult<PriceResponse> {
+    fn query_price(&self, deps: Deps<C>, env: Env, denom: String) -> ContractResult<PriceResponse> {
         let cfg = self.config.load(deps.storage)?;
         let price_source = self.price_sources.load(deps.storage, denom.clone())?;
         Ok(PriceResponse {
@@ -220,7 +222,7 @@ where
         env: Env,
         start_after: Option<String>,
         limit: Option<u32>,
-    ) -> StdResult<Vec<PriceResponse>> {
+    ) -> ContractResult<Vec<PriceResponse>> {
         let cfg = self.config.load(deps.storage)?;
 
         let start = start_after.map(Bound::exclusive);

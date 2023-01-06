@@ -1,4 +1,5 @@
-use cosmwasm_std::{coin, Decimal, StdError};
+use cosmwasm_std::{coin, Decimal};
+use mars_oracle_base::ContractError;
 use osmosis_std::types::osmosis::gamm::v2::QuerySpotPriceResponse;
 use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
@@ -117,7 +118,12 @@ fn test_querying_price_twap_with_downtime_detector() {
             denom: "umars".to_string(),
         },
     );
-    assert_eq!(res_err, StdError::generic_err("chain is recovering from downtime"));
+    assert_eq!(
+        res_err,
+        ContractError::InvalidPrice {
+            reason: "chain is recovering from downtime".to_string()
+        }
+    );
 
     deps.querier.set_downtime_detector(dd, true);
     deps.querier.set_twap_price(

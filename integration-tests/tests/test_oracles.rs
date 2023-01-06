@@ -535,7 +535,7 @@ fn query_twap_price_with_downtime_detector() {
             denom: "uatom".to_string(),
         },
     );
-    assert_err(res.unwrap_err(), "Generic error: chain is recovering from downtime");
+    assert_err(res.unwrap_err(), "chain is recovering from downtime");
 
     // window_size > recovery (60 sec)
     swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 100);
