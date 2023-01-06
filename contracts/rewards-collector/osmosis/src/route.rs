@@ -1,14 +1,14 @@
 use std::fmt;
 
 use cosmwasm_std::{BlockInfo, CosmosMsg, Decimal, Empty, Env, Fraction, QuerierWrapper, Uint128};
+use mars_osmosis::helpers::{has_denom, query_pool, query_twap_price};
+use mars_rewards_collector_base::{ContractError, ContractResult, Route};
+use osmosis_std::types::{
+    cosmos::base::v1beta1::Coin,
+    osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute},
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-use mars_rewards_collector_base::{ContractError, ContractResult, Route};
-
-use mars_osmosis::helpers::{has_denom, query_pool, query_twap_price};
-use osmosis_std::types::cosmos::base::v1beta1::Coin;
-use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
 
 use crate::helpers::hashset;
 
@@ -26,7 +26,7 @@ impl fmt::Display for OsmosisRoute {
             .map(|step| format!("{}:{}", step.pool_id, step.token_out_denom))
             .collect::<Vec<_>>()
             .join("|");
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 
@@ -94,8 +94,7 @@ impl Route<Empty, Empty> for OsmosisRoute {
         if prev_denom_out != denom_out {
             return Err(ContractError::InvalidRoute {
                 reason: format!(
-                    "the route's output denom {} does not match the desired output {}",
-                    prev_denom_out, denom_out
+                    "the route's output denom {prev_denom_out} does not match the desired output {denom_out}"
                 ),
             });
         }

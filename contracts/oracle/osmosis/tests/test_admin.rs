@@ -1,12 +1,14 @@
 use cosmwasm_std::testing::mock_env;
 use mars_oracle_base::ContractError;
-use mars_oracle_osmosis::contract::entry;
-use mars_outpost::error::MarsError;
-use mars_outpost::oracle::{Config, InstantiateMsg, QueryMsg};
+use mars_oracle_osmosis::{
+    contract::{entry, entry::execute},
+    msg::ExecuteMsg,
+};
+use mars_outpost::{
+    error::MarsError,
+    oracle::{Config, InstantiateMsg, QueryMsg},
+};
 use mars_testing::{mock_dependencies, mock_info};
-
-use mars_oracle_osmosis::contract::entry::execute;
-use mars_oracle_osmosis::msg::ExecuteMsg;
 
 mod helpers;
 

@@ -1,6 +1,5 @@
 use cosmwasm_std::{Addr, Decimal, Uint128};
 use cw_storage_plus::{Item, Map};
-
 use mars_outpost::incentives::{AssetIncentive, Config};
 
 // keys (for singleton)

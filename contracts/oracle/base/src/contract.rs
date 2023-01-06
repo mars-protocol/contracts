@@ -5,15 +5,13 @@ use cosmwasm_std::{
     StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
-
-use mars_outpost::error::MarsError;
-use mars_outpost::helpers::validate_native_denom;
-use mars_outpost::oracle::{
-    Config, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse, QueryMsg,
+use mars_outpost::{
+    error::MarsError,
+    helpers::validate_native_denom,
+    oracle::{Config, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse, QueryMsg},
 };
 
-use crate::error::ContractResult;
-use crate::PriceSource;
+use crate::{error::ContractResult, PriceSource};
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
