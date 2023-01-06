@@ -4,11 +4,10 @@ use cosmwasm_std::{
     Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, StdResult, Uint128, Uint256,
 };
 use cw_storage_plus::Map;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
 use mars_oracle_base::{ContractError, ContractResult, PriceSource};
 use mars_osmosis::helpers::{query_pool, query_spot_price, query_twap_price, Pool};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::helpers;
 
@@ -49,19 +48,19 @@ impl fmt::Display for OsmosisPriceSource {
         let label = match self {
             OsmosisPriceSource::Fixed {
                 price,
-            } => format!("fixed:{}", price),
+            } => format!("fixed:{price}"),
             OsmosisPriceSource::Spot {
                 pool_id,
-            } => format!("spot:{}", pool_id),
+            } => format!("spot:{pool_id}"),
             OsmosisPriceSource::Twap {
                 pool_id,
                 window_size,
-            } => format!("twap:{}:{}", pool_id, window_size),
+            } => format!("twap:{pool_id}:{window_size}"),
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
-            } => format!("xyk_liquidity_token:{}", pool_id),
+            } => format!("xyk_liquidity_token:{pool_id}"),
         };
-        write!(f, "{}", label)
+        write!(f, "{label}")
     }
 }
 
@@ -92,8 +91,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 if *window_size > TWO_DAYS_IN_SECONDS {
                     Err(ContractError::InvalidPriceSource {
                         reason: format!(
-                            "expecting window size to be within {} sec",
-                            TWO_DAYS_IN_SECONDS
+                            "expecting window size to be within {TWO_DAYS_IN_SECONDS} sec"
                         ),
                     })
                 } else {

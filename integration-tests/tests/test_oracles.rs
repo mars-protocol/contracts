@@ -1,19 +1,28 @@
-use crate::helpers::osmosis::{assert_err, instantiate_contract};
-use crate::helpers::{default_asset_params, swap, swap_to_create_twap_records};
+use std::str::FromStr;
+
 use cosmwasm_std::{coin, Coin, Decimal, Isqrt, Uint128};
 use mars_oracle_base::ContractError;
-use mars_oracle_osmosis::msg::PriceSourceResponse;
-use mars_oracle_osmosis::OsmosisPriceSource;
-use mars_outpost::address_provider::ExecuteMsg::SetAddress;
-use mars_outpost::address_provider::{InstantiateMsg as InstantiateAddr, MarsAddressType};
-use mars_outpost::incentives::InstantiateMsg as InstantiateIncentives;
-use mars_outpost::oracle::{ExecuteMsg, InstantiateMsg, PriceResponse, QueryMsg};
-use mars_outpost::red_bank::ExecuteMsg as ExecuteRedBank;
-use mars_outpost::red_bank::ExecuteMsg::{Borrow, Deposit};
-use mars_outpost::red_bank::{CreateOrUpdateConfig, InstantiateMsg as InstantiateRedBank};
-use mars_outpost::rewards_collector::InstantiateMsg as InstantiateRewards;
+use mars_oracle_osmosis::{msg::PriceSourceResponse, OsmosisPriceSource};
+use mars_outpost::{
+    address_provider::{
+        ExecuteMsg::SetAddress, InstantiateMsg as InstantiateAddr, MarsAddressType,
+    },
+    incentives::InstantiateMsg as InstantiateIncentives,
+    oracle::{ExecuteMsg, InstantiateMsg, PriceResponse, QueryMsg},
+    red_bank::{
+        CreateOrUpdateConfig, ExecuteMsg as ExecuteRedBank,
+        ExecuteMsg::{Borrow, Deposit},
+        InstantiateMsg as InstantiateRedBank,
+    },
+    rewards_collector::InstantiateMsg as InstantiateRewards,
+};
 use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, SigningAccount, Wasm};
-use std::str::FromStr;
+
+use crate::helpers::{
+    default_asset_params,
+    osmosis::{assert_err, instantiate_contract},
+    swap, swap_to_create_twap_records,
+};
 
 mod helpers;
 

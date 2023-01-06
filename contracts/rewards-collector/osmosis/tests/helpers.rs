@@ -2,16 +2,16 @@
 
 use std::collections::HashMap;
 
-use cosmwasm_std::testing::{mock_env, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{coin, from_binary, Addr, Coin, Decimal, Deps, OwnedDeps};
-
+use cosmwasm_std::{
+    coin, from_binary,
+    testing::{mock_env, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR},
+    Addr, Coin, Decimal, Deps, OwnedDeps,
+};
 use mars_osmosis::helpers::{Pool, QueryPoolResponse};
-use osmosis_std::types::osmosis::gamm::v1beta1::{PoolAsset, SwapAmountInRoute};
-
 use mars_outpost::rewards_collector::{Config, ExecuteMsg, QueryMsg};
-use mars_rewards_collector_osmosis::contract::entry;
-use mars_rewards_collector_osmosis::OsmosisRoute;
+use mars_rewards_collector_osmosis::{contract::entry, OsmosisRoute};
 use mars_testing::{mock_info, MarsMockQuerier};
+use osmosis_std::types::osmosis::gamm::v1beta1::{PoolAsset, SwapAmountInRoute};
 
 pub fn mock_config() -> Config<Addr> {
     Config {

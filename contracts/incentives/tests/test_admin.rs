@@ -1,15 +1,19 @@
-use cosmwasm_std::testing::{mock_env, mock_info};
-use cosmwasm_std::{Addr, SubMsg};
-
-use mars_outpost::error::MarsError;
-use mars_outpost::incentives::{ExecuteMsg, InstantiateMsg};
+use cosmwasm_std::{
+    testing::{mock_env, mock_info},
+    Addr, SubMsg,
+};
+use mars_incentives::{
+    contract::{execute, instantiate},
+    state::CONFIG,
+    ContractError,
+};
+use mars_outpost::{
+    error::MarsError,
+    incentives::{ExecuteMsg, InstantiateMsg},
+};
 use mars_testing::mock_dependencies;
 
-use mars_incentives::contract::{execute, instantiate};
-use mars_incentives::state::CONFIG;
-
 use crate::helpers::setup_test;
-use mars_incentives::ContractError;
 
 mod helpers;
 
@@ -48,6 +52,24 @@ fn test_update_config() {
     let info = mock_info("somebody", &[]);
     let error_res = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(error_res, ContractError::Mars(MarsError::Unauthorized {}));
+
+    // *
+    // update config with invalid denom
+    // *
+    let msg = ExecuteMsg::UpdateConfig {
+        owner: Some(String::from("new_owner")),
+        address_provider: None,
+        mars_denom: Some("*!fdskfna".to_string()),
+    };
+    let info = mock_info("owner", &[]);
+
+    let err = execute(deps.as_mut(), mock_env(), info, msg);
+    assert_eq!(
+        err,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "First character is not ASCII alphabetic".to_string()
+        }))
+    );
 
     // *
     // update config with new params

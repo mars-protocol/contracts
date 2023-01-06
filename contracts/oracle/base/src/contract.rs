@@ -5,14 +5,13 @@ use cosmwasm_std::{
     StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
-
-use mars_outpost::error::MarsError;
-use mars_outpost::oracle::{
-    Config, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse, QueryMsg,
+use mars_outpost::{
+    error::MarsError,
+    helpers::validate_native_denom,
+    oracle::{Config, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse, QueryMsg},
 };
 
-use crate::error::ContractResult;
-use crate::PriceSource;
+use crate::{error::ContractResult, PriceSource};
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
@@ -49,7 +48,9 @@ where
     P: PriceSource<C>,
     C: CustomQuery,
 {
-    pub fn instantiate(&self, deps: DepsMut<C>, msg: InstantiateMsg) -> StdResult<Response> {
+    pub fn instantiate(&self, deps: DepsMut<C>, msg: InstantiateMsg) -> ContractResult<Response> {
+        validate_native_denom(&msg.base_denom)?;
+
         self.config.save(
             deps.storage,
             &Config {
@@ -130,6 +131,8 @@ where
         if sender_addr != cfg.owner {
             return Err(MarsError::Unauthorized {}.into());
         }
+
+        validate_native_denom(&denom)?;
 
         price_source.validate(&deps.querier, &denom, &cfg.base_denom)?;
 

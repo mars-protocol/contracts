@@ -2,10 +2,12 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
 use mars_osmosis::helpers::QueryPoolResponse;
-use osmosis_std::types::osmosis::gamm::v1beta1::QueryPoolRequest;
-use osmosis_std::types::osmosis::gamm::v2::{QuerySpotPriceRequest, QuerySpotPriceResponse};
-use osmosis_std::types::osmosis::twap::v1beta1::{
-    ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse,
+use osmosis_std::types::osmosis::{
+    gamm::{
+        v1beta1::QueryPoolRequest,
+        v2::{QuerySpotPriceRequest, QuerySpotPriceResponse},
+    },
+    twap::v1beta1::{ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse},
 };
 use prost::{DecodeError, Message};
 
@@ -58,7 +60,7 @@ impl OsmosisQuerier {
         let res: ContractResult<Binary> = match self.pools.get(&pool_id) {
             Some(query_response) => to_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
-                error: format!("QueryPoolResponse is not found for pool id: {}", pool_id),
+                error: format!("QueryPoolResponse is not found for pool id: {pool_id}"),
                 request: Default::default(),
             })
             .into(),
@@ -75,10 +77,7 @@ impl OsmosisQuerier {
         let res: ContractResult<Binary> = match self.spot_prices.get(&price_key) {
             Some(query_response) => to_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
-                error: format!(
-                    "QuerySpotPriceResponse is not found for price key: {:?}",
-                    price_key
-                ),
+                error: format!("QuerySpotPriceResponse is not found for price key: {price_key:?}"),
                 request: Default::default(),
             })
             .into(),
@@ -96,8 +95,7 @@ impl OsmosisQuerier {
             Some(query_response) => to_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
                 error: format!(
-                    "ArithmeticTwapToNowResponse is not found for price key: {:?}",
-                    price_key
+                    "ArithmeticTwapToNowResponse is not found for price key: {price_key:?}"
                 ),
                 request: Default::default(),
             })

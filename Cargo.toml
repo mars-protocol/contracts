@@ -13,7 +13,7 @@ members = [
 ]
 
 [workspace.package]
-version       = "0.1.0"
+version       = "1.0.0"
 authors       = [
   "Larry Engineer <larry@delphidigital.io>",
   "Piotr Babel <piotr@delphilabs.io>",
@@ -28,22 +28,35 @@ documentation = "https://docs.marsprotocol.io/"
 keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
-cosmwasm-schema             = "1.1"
-cosmwasm-std                = "1.1"
-cw2                         = "0.16"
-cw-storage-plus             = "0.16"
-cw-utils                    = "0.16"
-mars-health                 = { version = "0.1.0", path = "./packages/health" }
-mars-oracle-base            = { version = "0.1.0", path = "./contracts/oracle/base" }
-mars-oracle-osmosis         = { version = "0.1.0", path = "./contracts/oracle/osmosis" }
-mars-osmosis                = { version = "0.1.0", path = "./packages/chains/osmosis" }
-mars-outpost                = { version = "0.1.0", path = "./packages/outpost" }
-mars-rewards-collector-base = { version = "0.1.0", path = "./contracts/rewards-collector/base" }
-mars-testing                = { version = "0.1.0", path = "./packages/testing" }
-osmosis-std                 = "0.13.2"
-schemars                    = "0.8"
-serde                       = { version = "1.0", default-features = false, features = ["derive"] }
-thiserror                   = "1.0"
+anyhow          = "1.0.68"
+bech32          = "0.9.1"
+cosmwasm-schema = "1.1.9"
+cosmwasm-std    = "1.1.9"
+cw2             = "1.0.1"
+cw-multi-test   = "0.16.1"
+cw-storage-plus = "1.0.1"
+cw-utils        = "1.0.1"
+osmosis-std     = "0.13.2"
+osmosis-testing = "0.13.2"
+prost           = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
+schemars        = "0.8.11"
+serde           = { version = "1.0.152", default-features = false, features = ["derive"] }
+thiserror       = "1.0.38"
+
+# packages
+mars-health  = { version = "1.0.0", path = "./packages/health" }
+mars-osmosis = { version = "1.0.0", path = "./packages/chains/osmosis" }
+mars-outpost = { version = "1.0.0", path = "./packages/outpost" }
+mars-testing = { version = "1.0.0", path = "./packages/testing" }
+
+# contracts
+mars-address-provider          = { version = "1.0.0", path = "./contracts/address-provider" }
+mars-incentives                = { version = "1.0.0", path = "./contracts/incentives" }
+mars-oracle-base               = { version = "1.0.0", path = "./contracts/oracle/base" }
+mars-oracle-osmosis            = { version = "1.0.0", path = "./contracts/oracle/osmosis" }
+mars-red-bank                  = { version = "1.0.0", path = "./contracts/red-bank" }
+mars-rewards-collector-base    = { version = "1.0.0", path = "./contracts/rewards-collector/base" }
+mars-rewards-collector-osmosis = { version = "1.0.0", path = "./contracts/rewards-collector/osmosis" }
 
 [profile.release]
 opt-level = 3

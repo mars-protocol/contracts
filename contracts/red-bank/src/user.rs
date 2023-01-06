@@ -1,9 +1,10 @@
 use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, Order, Response, StdResult, Storage, Uint128, WasmMsg,
 };
-
-use mars_outpost::incentives;
-use mars_outpost::red_bank::{Collateral, Debt, Market};
+use mars_outpost::{
+    incentives,
+    red_bank::{Collateral, Debt, Market},
+};
 
 use crate::state::{COLLATERALS, DEBTS, UNCOLLATERALIZED_LOAN_LIMITS};
 

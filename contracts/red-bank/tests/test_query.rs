@@ -1,15 +1,11 @@
-use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::{Addr, Decimal, Uint128};
-
-use mars_outpost::red_bank::{Debt, Market, UserCollateralResponse, UserDebtResponse};
-
-use mars_red_bank::interest_rates::{
-    get_scaled_debt_amount, get_underlying_debt_amount, SCALING_FACTOR,
-};
-use mars_red_bank::query::{query_user_collaterals, query_user_debt, query_user_debts};
-use mars_red_bank::state::DEBTS;
-
+use cosmwasm_std::{testing::mock_env, Addr, Decimal, Uint128};
 use helpers::{set_collateral, th_init_market, th_setup};
+use mars_outpost::red_bank::{Debt, Market, UserCollateralResponse, UserDebtResponse};
+use mars_red_bank::{
+    interest_rates::{get_scaled_debt_amount, get_underlying_debt_amount, SCALING_FACTOR},
+    query::{query_user_collaterals, query_user_debt, query_user_debts},
+    state::DEBTS,
+};
 
 mod helpers;
 

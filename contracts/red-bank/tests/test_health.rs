@@ -1,7 +1,7 @@
-use cosmwasm_std::{Decimal, Uint128};
-use mars_outpost::red_bank::Position;
 use std::collections::HashMap;
 
+use cosmwasm_std::{Decimal, Uint128};
+use mars_outpost::red_bank::Position;
 use mars_red_bank::health::compute_position_health;
 
 #[test]

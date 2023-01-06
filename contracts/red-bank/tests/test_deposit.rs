@@ -1,24 +1,26 @@
 use std::any::type_name;
 
-use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
 use cosmwasm_std::{
-    attr, coin, coins, to_binary, Addr, Decimal, OwnedDeps, StdError, StdResult, SubMsg, Uint128,
-    WasmMsg,
+    attr, coin, coins,
+    testing::{mock_env, mock_info, MockApi, MockStorage},
+    to_binary, Addr, Decimal, OwnedDeps, StdError, StdResult, SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::PaymentError;
-
-use mars_outpost::address_provider::MarsAddressType;
-use mars_outpost::incentives;
-use mars_outpost::red_bank::{Collateral, ExecuteMsg, Market};
-use mars_red_bank::contract::execute;
-use mars_red_bank::error::ContractError;
-use mars_red_bank::interest_rates::{compute_scaled_amount, ScalingOperation, SCALING_FACTOR};
-use mars_red_bank::state::{COLLATERALS, MARKETS};
-use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
-
 use helpers::{
     set_collateral, th_build_interests_updated_event, th_get_expected_indices_and_rates, th_setup,
 };
+use mars_outpost::{
+    address_provider::MarsAddressType,
+    incentives,
+    red_bank::{Collateral, ExecuteMsg, Market},
+};
+use mars_red_bank::{
+    contract::execute,
+    error::ContractError,
+    interest_rates::{compute_scaled_amount, ScalingOperation, SCALING_FACTOR},
+    state::{COLLATERALS, MARKETS},
+};
+use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 
 mod helpers;
 

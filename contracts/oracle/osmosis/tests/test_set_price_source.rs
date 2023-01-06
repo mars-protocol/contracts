@@ -1,14 +1,12 @@
-use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::Decimal;
-
+use cosmwasm_std::{testing::mock_env, Decimal};
 use mars_oracle_base::ContractError;
-use mars_outpost::error::MarsError;
-use mars_outpost::oracle::QueryMsg;
+use mars_oracle_osmosis::{
+    contract::entry::execute,
+    msg::{ExecuteMsg, PriceSourceResponse},
+    OsmosisPriceSource,
+};
+use mars_outpost::{error::MarsError, oracle::QueryMsg};
 use mars_testing::mock_info;
-
-use mars_oracle_osmosis::contract::entry::execute;
-use mars_oracle_osmosis::msg::{ExecuteMsg, PriceSourceResponse};
-use mars_oracle_osmosis::OsmosisPriceSource;
 
 mod helpers;
 
@@ -60,6 +58,66 @@ fn test_setting_price_source_fixed() {
         OsmosisPriceSource::Fixed {
             price: Decimal::one()
         }
+    );
+}
+
+#[test]
+fn test_setting_price_source_incorrect_denom() {
+    let mut deps = helpers::setup_test();
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("owner"),
+        ExecuteMsg::SetPriceSource {
+            denom: "!*jadfaefc".to_string(),
+            price_source: OsmosisPriceSource::Fixed {
+                price: Decimal::one(),
+            },
+        },
+    );
+    assert_eq!(
+        res,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "First character is not ASCII alphabetic".to_string()
+        }))
+    );
+
+    let res_two = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("owner"),
+        ExecuteMsg::SetPriceSource {
+            denom: "ahdbufenf&*!-".to_string(),
+            price_source: OsmosisPriceSource::Fixed {
+                price: Decimal::one(),
+            },
+        },
+    );
+    assert_eq!(
+        res_two,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
+                .to_string()
+        }))
+    );
+
+    let res_three = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("owner"),
+        ExecuteMsg::SetPriceSource {
+            denom: "ab".to_string(),
+            price_source: OsmosisPriceSource::Fixed {
+                price: Decimal::one(),
+            },
+        },
+    );
+    assert_eq!(
+        res_three,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "Invalid denom length".to_string()
+        }))
     );
 }
 
