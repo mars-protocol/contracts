@@ -63,12 +63,9 @@ pub fn is_user_liquidatable(position: &UserPositionResponse) -> bool {
 }
 
 pub mod osmosis {
-    use std::{fmt::Display, str::FromStr};
+    use std::fmt::Display;
 
-    use osmosis_testing::{
-        cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest, Bank, OsmosisTestApp,
-        RunnerError, SigningAccount, Wasm,
-    };
+    use osmosis_testing::{OsmosisTestApp, RunnerError, SigningAccount, Wasm};
     use serde::Serialize;
 
     pub fn wasm_file(contract_name: &str) -> String {
@@ -91,17 +88,6 @@ pub mod osmosis {
         let code_id = wasm.store_code(&wasm_byte_code, None, owner).unwrap().data.code_id;
 
         wasm.instantiate(code_id, msg, None, Some(contract_name), &[], owner).unwrap().data.address
-    }
-
-    pub fn query_balance(bank: &Bank<OsmosisTestApp>, addr: &str, denom: &str) -> u128 {
-        bank.query_balance(&QueryBalanceRequest {
-            address: addr.to_string(),
-            denom: denom.to_string(),
-        })
-        .unwrap()
-        .balance
-        .map(|c| u128::from_str(&c.amount).unwrap())
-        .unwrap_or(0)
     }
 
     pub fn assert_err(actual: RunnerError, expected: impl Display) {
