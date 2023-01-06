@@ -1,7 +1,9 @@
-use crate::query::MarsQuerier;
+use std::{collections::HashMap, fmt};
+
 use cosmwasm_std::{Addr, Coin, Decimal, QuerierWrapper, StdError, StdResult, Uint128};
 use mars_outpost::{math::divide_decimal_by_decimal, red_bank::Market};
-use std::{collections::HashMap, fmt};
+
+use crate::query::MarsQuerier;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Position {

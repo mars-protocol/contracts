@@ -63,17 +63,19 @@ pub fn is_user_liquidatable(position: &UserPositionResponse) -> bool {
 }
 
 pub mod osmosis {
-    use osmosis_testing::cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest;
-    use osmosis_testing::{Bank, OsmosisTestApp, RunnerError, SigningAccount, Wasm};
+    use std::{fmt::Display, str::FromStr};
+
+    use osmosis_testing::{
+        cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest, Bank, OsmosisTestApp,
+        RunnerError, SigningAccount, Wasm,
+    };
     use serde::Serialize;
-    use std::fmt::Display;
-    use std::str::FromStr;
 
     pub fn wasm_file(contract_name: &str) -> String {
         let artifacts_dir =
             std::env::var("ARTIFACTS_DIR_PATH").unwrap_or_else(|_| "artifacts".to_string());
         let snaked_name = contract_name.replace('-', "_");
-        format!("../{}/{}.wasm", artifacts_dir, snaked_name)
+        format!("../{artifacts_dir}/{snaked_name}.wasm")
     }
 
     pub fn instantiate_contract<M>(
@@ -106,14 +108,10 @@ pub mod osmosis {
         match actual {
             RunnerError::ExecuteError {
                 msg,
-            } => {
-                assert!(msg.contains(&format!("{}", expected)))
-            }
+            } => assert!(msg.contains(&expected.to_string())),
             RunnerError::QueryError {
                 msg,
-            } => {
-                assert!(msg.contains(&format!("{}", expected)))
-            }
+            } => assert!(msg.contains(&expected.to_string())),
             _ => panic!("Unhandled error"),
         }
     }

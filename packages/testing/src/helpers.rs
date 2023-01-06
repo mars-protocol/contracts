@@ -17,7 +17,7 @@ pub fn assert_generic_error_message<T>(response: StdResult<T>, expected_msg: &st
             msg,
             ..
         }) => assert_eq!(msg, expected_msg),
-        Err(other_err) => panic!("Unexpected error: {:?}", other_err),
+        Err(other_err) => panic!("Unexpected error: {other_err:?}"),
         Ok(_) => panic!("SHOULD NOT ENTER HERE!"),
     }
 }

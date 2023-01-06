@@ -3,12 +3,9 @@ use std::str;
 use cosmwasm_std::{
     Addr, Decimal, DepsMut, Env, Event, Response, StdError, StdResult, Storage, Uint128,
 };
+use mars_outpost::{math, red_bank::Market};
 
-use mars_outpost::math;
-use mars_outpost::red_bank::Market;
-
-use crate::error::ContractError;
-use crate::user::User;
+use crate::{error::ContractError, user::User};
 
 /// Scaling factor used to keep more precision during division / multiplication by index.
 pub const SCALING_FACTOR: Uint128 = Uint128::new(1_000_000);

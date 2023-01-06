@@ -1,8 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
 
-use crate::error::MarsError;
-use crate::helpers::decimal_param_le_one;
+use crate::{error::MarsError, helpers::decimal_param_le_one};
 
 /// Global configuration
 #[cw_serde]

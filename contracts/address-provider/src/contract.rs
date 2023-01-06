@@ -5,16 +5,17 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
 };
-
 use cw_storage_plus::Bound;
 use mars_outpost::address_provider::{
     AddressResponseItem, Config, ExecuteMsg, InstantiateMsg, MarsAddressType, QueryMsg,
 };
 
-use crate::error::ContractError;
-use crate::helpers::{assert_owner, assert_valid_addr};
-use crate::key::MarsAddressTypeKey;
-use crate::state::{ADDRESSES, CONFIG};
+use crate::{
+    error::ContractError,
+    helpers::{assert_owner, assert_valid_addr},
+    key::MarsAddressTypeKey,
+    state::{ADDRESSES, CONFIG},
+};
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-address-provider";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");

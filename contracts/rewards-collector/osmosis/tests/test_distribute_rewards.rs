@@ -1,11 +1,9 @@
-use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coin, CosmosMsg, IbcMsg, IbcTimeout, IbcTimeoutBlock, SubMsg, Timestamp, Uint128,
+    coin, testing::mock_env, CosmosMsg, IbcMsg, IbcTimeout, IbcTimeoutBlock, SubMsg, Timestamp,
+    Uint128,
 };
-
 use mars_rewards_collector_base::ContractError;
-use mars_rewards_collector_osmosis::contract::entry::execute;
-use mars_rewards_collector_osmosis::msg::ExecuteMsg;
+use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg};
 use mars_testing::{mock_env as mock_env_at_height_and_time, mock_info, MockEnvParams};
 
 mod helpers;

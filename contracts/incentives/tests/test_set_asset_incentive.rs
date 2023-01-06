@@ -1,18 +1,20 @@
-use cosmwasm_std::testing::{mock_env, mock_info};
-use cosmwasm_std::{attr, Decimal, Timestamp, Uint128};
-
-use mars_outpost::error::MarsError;
-use mars_outpost::incentives::AssetIncentive;
-use mars_outpost::incentives::ExecuteMsg;
-use mars_outpost::red_bank::Market;
+use cosmwasm_std::{
+    attr,
+    testing::{mock_env, mock_info},
+    Decimal, Timestamp, Uint128,
+};
+use mars_incentives::{
+    contract::execute, helpers::asset_incentive_compute_index, state::ASSET_INCENTIVES,
+    ContractError,
+};
+use mars_outpost::{
+    error::MarsError,
+    incentives::{AssetIncentive, ExecuteMsg},
+    red_bank::Market,
+};
 use mars_testing::MockEnvParams;
 
-use mars_incentives::contract::execute;
-use mars_incentives::state::ASSET_INCENTIVES;
-
 use crate::helpers::setup_test;
-use mars_incentives::helpers::asset_incentive_compute_index;
-use mars_incentives::ContractError;
 
 mod helpers;
 
