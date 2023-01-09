@@ -5,8 +5,7 @@ use cosmwasm_std::{
     MessageInfo, Response, StdResult, Uint128,
 };
 use mars_outpost::{
-    address_provider,
-    address_provider::MarsAddressType,
+    address_provider::{self, MarsAddressType},
     error::MarsError,
     helpers::{option_string_to_addr, validate_native_denom},
     incentives::{

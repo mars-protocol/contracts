@@ -23,7 +23,7 @@ impl OracleQuerier {
                     })
                     .into()
                 } else {
-                    Err(format!("[mock]: could not find oracle price for {}", denom)).into()
+                    Err(format!("[mock]: could not find oracle price for {denom}")).into()
                 }
             }
 

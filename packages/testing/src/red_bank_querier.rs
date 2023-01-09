@@ -17,20 +17,20 @@ impl RedBankQuerier {
                 denom,
             } => match self.markets.get(&denom) {
                 Some(market) => to_binary(&market).into(),
-                None => Err(format!("[mock]: could not find the market for {}", denom)).into(),
+                None => Err(format!("[mock]: could not find the market for {denom}")).into(),
             },
             QueryMsg::UserCollateral {
                 user,
                 denom,
             } => match self.users_denoms_collaterals.get(&(user.clone(), denom)) {
                 Some(collateral) => to_binary(&collateral).into(),
-                None => Err(format!("[mock]: could not find the collateral for {}", user)).into(),
+                None => Err(format!("[mock]: could not find the collateral for {user}")).into(),
             },
             QueryMsg::UserPosition {
                 user,
             } => match self.users_positions.get(&user) {
                 Some(market) => to_binary(&market).into(),
-                None => Err(format!("[mock]: could not find the position for {}", user)).into(),
+                None => Err(format!("[mock]: could not find the position for {user}")).into(),
             },
             _ => Err("[mock]: Unsupported red_bank query".to_string()).into(),
         };

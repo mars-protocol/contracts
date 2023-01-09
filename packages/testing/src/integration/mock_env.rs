@@ -7,12 +7,12 @@ use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSource;
 use mars_outpost::{
-    address_provider,
-    address_provider::MarsAddressType,
-    incentives, oracle, red_bank,
+    address_provider::{self, MarsAddressType},
+    incentives, oracle,
     red_bank::{
-        CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, UncollateralizedLoanLimitResponse,
-        UserCollateralResponse, UserDebtResponse, UserPositionResponse,
+        self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market,
+        UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
+        UserPositionResponse,
     },
     rewards_collector,
 };

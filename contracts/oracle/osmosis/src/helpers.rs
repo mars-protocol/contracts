@@ -1,6 +1,11 @@
 use mars_oracle_base::{ContractError, ContractResult};
 use mars_osmosis::helpers::{has_denom, Pool};
 
+use crate::DowntimeDetector;
+
+/// 48 hours in seconds
+const TWO_DAYS_IN_SECONDS: u64 = 172800u64;
+
 /// Assert the Osmosis pool indicated by `pool_id` is of XYK type and assets are OSMO and `denom`
 pub fn assert_osmosis_pool_assets(
     pool: &Pool,
@@ -40,6 +45,28 @@ pub fn assert_osmosis_xyk_pool(pool: &Pool) -> ContractResult<()> {
         return Err(ContractError::InvalidPriceSource {
             reason: format!("assets in pool {} do not have equal weights", pool.id),
         });
+    }
+
+    Ok(())
+}
+
+/// Assert Osmosis twap configuration
+pub fn assert_osmosis_twap(
+    window_size: u64,
+    downtime_detector: &Option<DowntimeDetector>,
+) -> ContractResult<()> {
+    if window_size > TWO_DAYS_IN_SECONDS {
+        return Err(ContractError::InvalidPriceSource {
+            reason: format!("expecting window size to be within {TWO_DAYS_IN_SECONDS} sec"),
+        });
+    }
+
+    if let Some(dd) = downtime_detector {
+        if dd.recovery == 0 {
+            return Err(ContractError::InvalidPriceSource {
+                reason: "downtime recovery can't be 0".to_string(),
+            });
+        }
     }
 
     Ok(())

@@ -900,6 +900,7 @@ dependencies = [
  "mars-outpost",
  "mars-red-bank",
  "mars-rewards-collector-base",
+ "mars-rewards-collector-osmosis",
  "mars-testing",
  "osmosis-std",
  "osmosis-testing",

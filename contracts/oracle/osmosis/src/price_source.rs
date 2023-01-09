@@ -1,20 +1,18 @@
 use std::fmt;
 
 use cosmwasm_std::{
-    BlockInfo, Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, Uint128, Uint256,
+    Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, Uint128, Uint256,
 };
-use mars_oracle_base::{ContractError, ContractError::InvalidPrice, ContractResult, PriceSource};
+use cw_storage_plus::Map;
+use mars_oracle_base::{ContractError::InvalidPrice, ContractResult, PriceSource};
 use mars_osmosis::helpers::{
-    query_pool, query_spot_price, query_twap_price, recovered_since_downtime_of_length, Pool,
+    query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price,
+    recovered_since_downtime_of_length, Pool,
 };
-use mars_outpost::{oracle, oracle::PriceResponse};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::helpers;
-
-/// 48 hours in seconds
-const TWO_DAYS_IN_SECONDS: u64 = 172800u64;
 
 /// Copy from https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std/src/types/osmosis/downtimedetector/v1beta1.rs#L4
 /// It doesn't impl JsonSchema.
@@ -79,13 +77,26 @@ pub enum OsmosisPriceSource {
     Spot {
         pool_id: u64,
     },
-    /// Osmosis twap price quoted in OSMO
+    /// Osmosis arithmetic twap price quoted in OSMO
     ///
     /// NOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO
-    Twap {
+    ArithmeticTwap {
         pool_id: u64,
 
         /// Window size in seconds representing the entire window for which 'average' price is calculated.
+        /// Value should be <= 172800 sec (48 hours).
+        window_size: u64,
+
+        /// Detect when the chain is recovering from downtime
+        downtime_detector: Option<DowntimeDetector>,
+    },
+    /// Osmosis geometric twap price quoted in OSMO
+    ///
+    /// NOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO
+    GeometricTwap {
+        pool_id: u64,
+
+        /// Window size in seconds representing the entire window for which 'geometric' price is calculated.
         /// Value should be <= 172800 sec (48 hours).
         window_size: u64,
 
@@ -103,26 +114,37 @@ impl fmt::Display for OsmosisPriceSource {
         let label = match self {
             OsmosisPriceSource::Fixed {
                 price,
-            } => format!("fixed:{}", price),
+            } => format!("fixed:{price}"),
             OsmosisPriceSource::Spot {
                 pool_id,
-            } => format!("spot:{}", pool_id),
-            OsmosisPriceSource::Twap {
+            } => format!("spot:{pool_id}"),
+            OsmosisPriceSource::ArithmeticTwap {
                 pool_id,
                 window_size,
                 downtime_detector,
             } => {
                 let dd_fmt = match downtime_detector {
                     None => "None".to_string(),
-                    Some(dd) => format!("Some({})", dd),
+                    Some(dd) => format!("Some({dd})"),
                 };
-                format!("twap:{}:{}:{}", pool_id, window_size, dd_fmt)
+                format!("arithmetic_twap:{pool_id}:{window_size}:{dd_fmt}")
+            }
+            OsmosisPriceSource::GeometricTwap {
+                pool_id,
+                window_size,
+                downtime_detector,
+            } => {
+                let dd_fmt = match downtime_detector {
+                    None => "None".to_string(),
+                    Some(dd) => format!("Some({dd})"),
+                };
+                format!("geometric_twap:{pool_id}:{window_size}:{dd_fmt}")
             }
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
-            } => format!("xyk_liquidity_token:{}", pool_id),
+            } => format!("xyk_liquidity_token:{pool_id}"),
         };
-        write!(f, "{}", label)
+        write!(f, "{label}")
     }
 }
 
@@ -143,32 +165,23 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 let pool = query_pool(querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)
             }
-            OsmosisPriceSource::Twap {
+            OsmosisPriceSource::ArithmeticTwap {
                 pool_id,
                 window_size,
                 downtime_detector,
             } => {
                 let pool = query_pool(querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
-
-                if *window_size > TWO_DAYS_IN_SECONDS {
-                    return Err(ContractError::InvalidPriceSource {
-                        reason: format!(
-                            "expecting window size to be within {} sec",
-                            TWO_DAYS_IN_SECONDS
-                        ),
-                    });
-                }
-
-                if let Some(dd) = downtime_detector {
-                    if dd.recovery == 0 {
-                        return Err(ContractError::InvalidPriceSource {
-                            reason: "downtime recovery can't be 0".to_string(),
-                        });
-                    }
-                }
-
-                Ok(())
+                helpers::assert_osmosis_twap(*window_size, downtime_detector)
+            }
+            OsmosisPriceSource::GeometricTwap {
+                pool_id,
+                window_size,
+                downtime_detector,
+            } => {
+                let pool = query_pool(querier, *pool_id)?;
+                helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
+                helpers::assert_osmosis_twap(*window_size, downtime_detector)
             }
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
@@ -185,6 +198,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
         env: &Env,
         denom: &str,
         base_denom: &str,
+        price_sources: &Map<&str, Self>,
     ) -> ContractResult<Decimal> {
         match self {
             OsmosisPriceSource::Fixed {
@@ -193,36 +207,46 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             OsmosisPriceSource::Spot {
                 pool_id,
             } => query_spot_price(&deps.querier, *pool_id, denom, base_denom).map_err(Into::into),
-            OsmosisPriceSource::Twap {
+            OsmosisPriceSource::ArithmeticTwap {
                 pool_id,
                 window_size,
                 downtime_detector,
-            } => Self::query_twap_price(
-                deps,
-                &env.block,
-                denom,
-                base_denom,
-                *pool_id,
-                *window_size,
+            } => {
+                Self::chain_recovered(deps, downtime_detector)?;
+
+                let start_time = env.block.time.seconds() - window_size;
+                query_arithmetic_twap_price(&deps.querier, *pool_id, denom, base_denom, start_time)
+                    .map_err(Into::into)
+            }
+            OsmosisPriceSource::GeometricTwap {
+                pool_id,
+                window_size,
                 downtime_detector,
-            ),
+            } => {
+                Self::chain_recovered(deps, downtime_detector)?;
+
+                let start_time = env.block.time.seconds() - window_size;
+                query_geometric_twap_price(&deps.querier, *pool_id, denom, base_denom, start_time)
+                    .map_err(Into::into)
+            }
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
-            } => Self::query_xyk_liquidity_token_price(deps, env, *pool_id),
+            } => Self::query_xyk_liquidity_token_price(
+                deps,
+                env,
+                *pool_id,
+                base_denom,
+                price_sources,
+            ),
         }
     }
 }
 
 impl OsmosisPriceSource {
-    fn query_twap_price(
+    fn chain_recovered(
         deps: &Deps,
-        block: &BlockInfo,
-        denom: &str,
-        base_denom: &str,
-        pool_id: u64,
-        window_size: u64,
         downtime_detector: &Option<DowntimeDetector>,
-    ) -> ContractResult<Decimal> {
+    ) -> ContractResult<()> {
         if let Some(dd) = downtime_detector {
             let recovered = recovered_since_downtime_of_length(
                 &deps.querier,
@@ -235,8 +259,8 @@ impl OsmosisPriceSource {
                 });
             }
         }
-        let start_time = block.time.seconds() - window_size;
-        query_twap_price(&deps.querier, pool_id, denom, base_denom, start_time).map_err(Into::into)
+
+        Ok(())
     }
 
     /// The calculation of the value of liquidity token, see: https://blog.alphafinance.io/fair-lp-token-pricing/.
@@ -247,6 +271,8 @@ impl OsmosisPriceSource {
         deps: &Deps,
         env: &Env,
         pool_id: u64,
+        base_denom: &str,
+        price_sources: &Map<&str, Self>,
     ) -> ContractResult<Decimal> {
         // XYK pool asserted during price source creation
         let pool = query_pool(&deps.querier, pool_id)?;
@@ -254,23 +280,23 @@ impl OsmosisPriceSource {
         let coin0 = Pool::unwrap_coin(&pool.pool_assets[0].token)?;
         let coin1 = Pool::unwrap_coin(&pool.pool_assets[1].token)?;
 
-        let coin0_price_res: PriceResponse = deps.querier.query_wasm_smart(
-            env.contract.address.to_string(),
-            &oracle::QueryMsg::Price {
-                denom: coin0.denom,
-            },
+        let coin0_price = price_sources.load(deps.storage, &coin0.denom)?.query_price(
+            deps,
+            env,
+            &coin0.denom,
+            base_denom,
+            price_sources,
         )?;
-        let coin1_price_res: PriceResponse = deps.querier.query_wasm_smart(
-            env.contract.address.to_string(),
-            &oracle::QueryMsg::Price {
-                denom: coin1.denom,
-            },
+        let coin1_price = price_sources.load(deps.storage, &coin1.denom)?.query_price(
+            deps,
+            env,
+            &coin1.denom,
+            base_denom,
+            price_sources,
         )?;
 
-        let coin0_value =
-            Uint256::from_uint128(coin0.amount) * Decimal256::from(coin0_price_res.price);
-        let coin1_value =
-            Uint256::from_uint128(coin1.amount) * Decimal256::from(coin1_price_res.price);
+        let coin0_value = Uint256::from_uint128(coin0.amount) * Decimal256::from(coin0_price);
+        let coin1_value = Uint256::from_uint128(coin1.amount) * Decimal256::from(coin1_price);
 
         // We need to use Uint256, because Uint128 * Uint128 may overflow the 128-bit limit
         let pool_value_u256 = Uint256::from(2u8) * (coin0_value * coin1_value).isqrt();
@@ -312,15 +338,15 @@ mod tests {
     }
 
     #[test]
-    fn display_twap_price_source() {
-        let ps = OsmosisPriceSource::Twap {
+    fn display_arithmetic_twap_price_source() {
+        let ps = OsmosisPriceSource::ArithmeticTwap {
             pool_id: 123,
             window_size: 300,
             downtime_detector: None,
         };
-        assert_eq!(ps.to_string(), "twap:123:300:None");
+        assert_eq!(ps.to_string(), "arithmetic_twap:123:300:None");
 
-        let ps = OsmosisPriceSource::Twap {
+        let ps = OsmosisPriceSource::ArithmeticTwap {
             pool_id: 123,
             window_size: 300,
             downtime_detector: Some(DowntimeDetector {
@@ -328,7 +354,27 @@ mod tests {
                 recovery: 568,
             }),
         };
-        assert_eq!(ps.to_string(), "twap:123:300:Some(Duration30m:568)");
+        assert_eq!(ps.to_string(), "arithmetic_twap:123:300:Some(Duration30m:568)");
+    }
+
+    #[test]
+    fn display_geometric_twap_price_source() {
+        let ps = OsmosisPriceSource::GeometricTwap {
+            pool_id: 123,
+            window_size: 300,
+            downtime_detector: None,
+        };
+        assert_eq!(ps.to_string(), "geometric_twap:123:300:None");
+
+        let ps = OsmosisPriceSource::GeometricTwap {
+            pool_id: 123,
+            window_size: 300,
+            downtime_detector: Some(DowntimeDetector {
+                downtime: Downtime::Duration30m,
+                recovery: 568,
+            }),
+        };
+        assert_eq!(ps.to_string(), "geometric_twap:123:300:Some(Duration30m:568)");
     }
 
     #[test]

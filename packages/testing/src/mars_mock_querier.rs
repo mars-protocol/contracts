@@ -9,7 +9,8 @@ use mars_osmosis::helpers::QueryPoolResponse;
 use mars_outpost::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
-    gamm::v2::QuerySpotPriceResponse, twap::v1beta1::ArithmeticTwapToNowResponse,
+    gamm::v2::QuerySpotPriceResponse,
+    twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
 
 use crate::{
@@ -34,7 +35,7 @@ impl Querier for MarsMockQuerier {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
-                    error: format!("Parsing query request: {}", e),
+                    error: format!("Parsing query request: {e}"),
                     request: bin_request.into(),
                 })
             }
@@ -94,7 +95,7 @@ impl MarsMockQuerier {
         self.osmosis_querier.spot_prices.insert(price_key, spot_price);
     }
 
-    pub fn set_twap_price(
+    pub fn set_arithmetic_twap_price(
         &mut self,
         id: u64,
         base_asset_denom: &str,
@@ -106,7 +107,22 @@ impl MarsMockQuerier {
             denom_in: base_asset_denom.to_string(),
             denom_out: quote_asset_denom.to_string(),
         };
-        self.osmosis_querier.twap_prices.insert(price_key, twap_price);
+        self.osmosis_querier.arithmetic_twap_prices.insert(price_key, twap_price);
+    }
+
+    pub fn set_geometric_twap_price(
+        &mut self,
+        id: u64,
+        base_asset_denom: &str,
+        quote_asset_denom: &str,
+        twap_price: GeometricTwapToNowResponse,
+    ) {
+        let price_key = PriceKey {
+            pool_id: id,
+            denom_in: base_asset_denom.to_string(),
+            denom_out: quote_asset_denom.to_string(),
+        };
+        self.osmosis_querier.geometric_twap_prices.insert(price_key, twap_price);
     }
 
     pub fn set_downtime_detector(&mut self, downtime_detector: DowntimeDetector, recovered: bool) {
@@ -175,7 +191,7 @@ impl MarsMockQuerier {
                     return self.redbank_querier.handle_query(redbank_query);
                 }
 
-                panic!("[mock]: Unsupported wasm query: {:?}", msg);
+                panic!("[mock]: Unsupported wasm query: {msg:?}");
             }
 
             QueryRequest::Stargate {
@@ -186,7 +202,7 @@ impl MarsMockQuerier {
                     return querier_res;
                 }
 
-                panic!("[mock]: Unsupported stargate query, path: {:?}", path);
+                panic!("[mock]: Unsupported stargate query, path: {path:?}");
             }
 
             _ => self.base.handle_query(request),
