@@ -1,7 +1,7 @@
 use std::fmt;
 
 use cosmwasm_std::{BlockInfo, CosmosMsg, Decimal, Empty, Env, Fraction, QuerierWrapper, Uint128};
-use mars_osmosis::helpers::{has_denom, query_pool, query_twap_price};
+use mars_osmosis::helpers::{has_denom, query_arithmetic_twap_price, query_pool};
 use mars_rewards_collector_base::{ContractError, ContractResult, Route};
 use osmosis_std::types::{
     cosmos::base::v1beta1::Coin,
@@ -154,8 +154,13 @@ fn query_out_amount(
     let mut price = Decimal::one();
     let mut denom_in = denom_in.to_string();
     for step in steps {
-        let step_price =
-            query_twap_price(querier, step.pool_id, &denom_in, &step.token_out_denom, start_time)?;
+        let step_price = query_arithmetic_twap_price(
+            querier,
+            step.pool_id,
+            &denom_in,
+            &step.token_out_denom,
+            start_time,
+        )?;
         price = price.checked_mul(step_price)?;
         denom_in = step.token_out_denom.clone();
     }

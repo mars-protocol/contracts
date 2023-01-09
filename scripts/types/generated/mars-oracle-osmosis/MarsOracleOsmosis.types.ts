@@ -40,7 +40,14 @@ export type OsmosisPriceSource =
       }
     }
   | {
-      twap: {
+      arithmetic_twap: {
+        pool_id: number
+        window_size: number
+        [k: string]: unknown
+      }
+    }
+  | {
+      geometric_twap: {
         pool_id: number
         window_size: number
         [k: string]: unknown

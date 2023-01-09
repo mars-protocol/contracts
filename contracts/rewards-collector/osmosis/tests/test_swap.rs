@@ -20,7 +20,7 @@ fn test_swapping_asset_if_quering_price_fails() {
     let mut deps = helpers::setup_test();
 
     // Only pool_1 set, missing pool_69 and pool_420
-    deps.querier.set_twap_price(
+    deps.querier.set_arithmetic_twap_price(
         1,
         "uatom",
         "uosmo",
@@ -47,7 +47,7 @@ fn test_swapping_asset() {
     let mut deps = helpers::setup_test();
 
     let uatom_uosmo_price = Decimal::from_ratio(125u128, 10u128);
-    deps.querier.set_twap_price(
+    deps.querier.set_arithmetic_twap_price(
         1,
         "uatom",
         "uosmo",
@@ -56,7 +56,7 @@ fn test_swapping_asset() {
         },
     );
     let uosmo_uusdc_price = Decimal::from_ratio(10u128, 1u128);
-    deps.querier.set_twap_price(
+    deps.querier.set_arithmetic_twap_price(
         69,
         "uosmo",
         "uusdc",
@@ -65,7 +65,7 @@ fn test_swapping_asset() {
         },
     );
     let uosmo_umars_price = Decimal::from_ratio(5u128, 10u128);
-    deps.querier.set_twap_price(
+    deps.querier.set_arithmetic_twap_price(
         420,
         "uosmo",
         "umars",
