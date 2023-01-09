@@ -296,7 +296,7 @@ export class Deployer {
         set_price_source: {
           denom: oracleConfig.denom,
           price_source: {
-            twap: {
+            arithmetic_twap: {
               pool_id: oracleConfig.pool_id,
               window_size: oracleConfig.window_size,
             },

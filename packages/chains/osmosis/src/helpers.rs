@@ -79,17 +79,17 @@ pub fn query_spot_price(
     Ok(price)
 }
 
-/// Query the twap price of a coin, denominated in OSMO.
+/// Query arithmetic twap price of a coin, denominated in OSMO.
 /// `start_time` must be within 48 hours of current block time.
 #[allow(deprecated)] // FIXME: arithmetic_twap_to_now shouldn't be deprecated, make clippy happy for now
-pub fn query_twap_price(
+pub fn query_arithmetic_twap_price(
     querier: &QuerierWrapper,
     pool_id: u64,
     base_denom: &str,
     quote_denom: &str,
     start_time: u64,
 ) -> StdResult<Decimal> {
-    let arithmetic_twap_res = TwapQuerier::new(querier).arithmetic_twap_to_now(
+    let twap_res = TwapQuerier::new(querier).arithmetic_twap_to_now(
         pool_id,
         base_denom.to_string(),
         quote_denom.to_string(),
@@ -98,7 +98,30 @@ pub fn query_twap_price(
             nanos: 0,
         }),
     )?;
-    let price = Decimal::from_str(&arithmetic_twap_res.arithmetic_twap)?;
+    let price = Decimal::from_str(&twap_res.arithmetic_twap)?;
+    Ok(price)
+}
+
+/// Query geometric twap price of a coin, denominated in OSMO.
+/// `start_time` must be within 48 hours of current block time.
+#[allow(deprecated)] // FIXME: geometric_twap_to_now shouldn't be deprecated, make clippy happy for now
+pub fn query_geometric_twap_price(
+    querier: &QuerierWrapper,
+    pool_id: u64,
+    base_denom: &str,
+    quote_denom: &str,
+    start_time: u64,
+) -> StdResult<Decimal> {
+    let twap_res = TwapQuerier::new(querier).geometric_twap_to_now(
+        pool_id,
+        base_denom.to_string(),
+        quote_denom.to_string(),
+        Some(Timestamp {
+            seconds: start_time as i64,
+            nanos: 0,
+        }),
+    )?;
+    let price = Decimal::from_str(&twap_res.geometric_twap)?;
     Ok(price)
 }
 

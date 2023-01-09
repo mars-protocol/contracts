@@ -7,7 +7,8 @@ use cosmwasm_std::{
 use mars_osmosis::helpers::QueryPoolResponse;
 use mars_outpost::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
-    gamm::v2::QuerySpotPriceResponse, twap::v1beta1::ArithmeticTwapToNowResponse,
+    gamm::v2::QuerySpotPriceResponse,
+    twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
 
 use crate::{
@@ -92,7 +93,7 @@ impl MarsMockQuerier {
         self.osmosis_querier.spot_prices.insert(price_key, spot_price);
     }
 
-    pub fn set_twap_price(
+    pub fn set_arithmetic_twap_price(
         &mut self,
         id: u64,
         base_asset_denom: &str,
@@ -104,7 +105,22 @@ impl MarsMockQuerier {
             denom_in: base_asset_denom.to_string(),
             denom_out: quote_asset_denom.to_string(),
         };
-        self.osmosis_querier.twap_prices.insert(price_key, twap_price);
+        self.osmosis_querier.arithmetic_twap_prices.insert(price_key, twap_price);
+    }
+
+    pub fn set_geometric_twap_price(
+        &mut self,
+        id: u64,
+        base_asset_denom: &str,
+        quote_asset_denom: &str,
+        twap_price: GeometricTwapToNowResponse,
+    ) {
+        let price_key = PriceKey {
+            pool_id: id,
+            denom_in: base_asset_denom.to_string(),
+            denom_out: quote_asset_denom.to_string(),
+        };
+        self.osmosis_querier.geometric_twap_prices.insert(price_key, twap_price);
     }
 
     pub fn set_redbank_market(&mut self, market: red_bank::Market) {

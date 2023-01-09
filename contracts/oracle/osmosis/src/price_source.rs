@@ -5,7 +5,9 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError, ContractResult, PriceSource};
-use mars_osmosis::helpers::{query_pool, query_spot_price, query_twap_price, Pool};
+use mars_osmosis::helpers::{
+    query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price, Pool,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -27,13 +29,23 @@ pub enum OsmosisPriceSource {
     Spot {
         pool_id: u64,
     },
-    /// Osmosis twap price quoted in OSMO
+    /// Osmosis arithmetic twap price quoted in OSMO
     ///
     /// NOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO
-    Twap {
+    ArithmeticTwap {
         pool_id: u64,
 
         /// Window size in seconds representing the entire window for which 'average' price is calculated.
+        /// Value should be <= 172800 sec (48 hours).
+        window_size: u64,
+    },
+    /// Osmosis geometric twap price quoted in OSMO
+    ///
+    /// NOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO
+    GeometricTwap {
+        pool_id: u64,
+
+        /// Window size in seconds representing the entire window for which 'geometric' price is calculated.
         /// Value should be <= 172800 sec (48 hours).
         window_size: u64,
     },
@@ -52,10 +64,14 @@ impl fmt::Display for OsmosisPriceSource {
             OsmosisPriceSource::Spot {
                 pool_id,
             } => format!("spot:{pool_id}"),
-            OsmosisPriceSource::Twap {
+            OsmosisPriceSource::ArithmeticTwap {
                 pool_id,
                 window_size,
-            } => format!("twap:{pool_id}:{window_size}"),
+            } => format!("arithmetic_twap:{pool_id}:{window_size}"),
+            OsmosisPriceSource::GeometricTwap {
+                pool_id,
+                window_size,
+            } => format!("geometric_twap:{pool_id}:{window_size}"),
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
             } => format!("xyk_liquidity_token:{pool_id}"),
@@ -81,7 +97,24 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 let pool = query_pool(querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)
             }
-            OsmosisPriceSource::Twap {
+            OsmosisPriceSource::ArithmeticTwap {
+                pool_id,
+                window_size,
+            } => {
+                let pool = query_pool(querier, *pool_id)?;
+                helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
+
+                if *window_size > TWO_DAYS_IN_SECONDS {
+                    Err(ContractError::InvalidPriceSource {
+                        reason: format!(
+                            "expecting window size to be within {TWO_DAYS_IN_SECONDS} sec"
+                        ),
+                    })
+                } else {
+                    Ok(())
+                }
+            }
+            OsmosisPriceSource::GeometricTwap {
                 pool_id,
                 window_size,
             } => {
@@ -122,12 +155,19 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             OsmosisPriceSource::Spot {
                 pool_id,
             } => query_spot_price(&deps.querier, *pool_id, denom, base_denom),
-            OsmosisPriceSource::Twap {
+            OsmosisPriceSource::ArithmeticTwap {
                 pool_id,
                 window_size,
             } => {
                 let start_time = env.block.time.seconds() - window_size;
-                query_twap_price(&deps.querier, *pool_id, denom, base_denom, start_time)
+                query_arithmetic_twap_price(&deps.querier, *pool_id, denom, base_denom, start_time)
+            }
+            OsmosisPriceSource::GeometricTwap {
+                pool_id,
+                window_size,
+            } => {
+                let start_time = env.block.time.seconds() - window_size;
+                query_geometric_twap_price(&deps.querier, *pool_id, denom, base_denom, start_time)
             }
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
