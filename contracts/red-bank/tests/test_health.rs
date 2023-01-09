@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use cosmwasm_std::{Decimal, Uint128};
+use cosmwasm_std::{CheckedMultiplyRatioError, Decimal, Uint128};
+use mars_health::error::HealthError;
 use mars_outpost::red_bank::Position;
-use mars_red_bank::health::compute_position_health;
+use mars_red_bank::{error::ContractError, health::compute_position_health};
 
 #[test]
 fn test_health_position() {
@@ -67,6 +68,21 @@ fn test_health_position() {
     assert_eq!(health.total_debt_value, Uint128::from(3222u128));
     assert!(!health.is_liquidatable());
     assert!(health.is_above_max_ltv());
+}
+
+#[test]
+fn test_health_error_if_overflow() {
+    let mut osmo_position = default_osmo_position();
+    osmo_position.collateral_amount = Uint128::MAX;
+    osmo_position.asset_price = Decimal::MAX;
+    let positions = HashMap::from([("osmo".to_string(), osmo_position)]);
+    let res_err = compute_position_health(&positions).unwrap_err();
+    assert_eq!(
+        res_err,
+        ContractError::Health(HealthError::CheckedMultiplyRatio(
+            CheckedMultiplyRatioError::Overflow
+        ))
+    );
 }
 
 fn default_osmo_position() -> Position {

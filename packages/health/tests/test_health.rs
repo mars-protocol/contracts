@@ -1,7 +1,10 @@
 use std::vec;
 
-use cosmwasm_std::{Decimal, Uint128};
-use mars_health::health::{Health, Position};
+use cosmwasm_std::{CheckedFromRatioError, CheckedMultiplyRatioError, Decimal, Uint128};
+use mars_health::{
+    error::HealthError,
+    health::{Health, Position},
+};
 
 // Test to compute the health of a position where collateral is greater
 // than zero, and debt is zero
@@ -225,4 +228,31 @@ fn test_liquidatable() {
     );
     assert!(health.is_liquidatable());
     assert!(health.is_above_max_ltv());
+}
+
+#[test]
+fn test_health_errors() {
+    let positions = vec![Position {
+        denom: "osmo".to_string(),
+        debt_amount: Uint128::zero(),
+        collateral_amount: Uint128::MAX,
+        price: Decimal::MAX,
+        max_ltv: Decimal::from_atomics(50u128, 2).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
+    }];
+
+    let res_err = Health::compute_health(&positions).unwrap_err();
+    assert_eq!(res_err, HealthError::CheckedMultiplyRatio(CheckedMultiplyRatioError::Overflow));
+
+    let positions = vec![Position {
+        denom: "osmo".to_string(),
+        debt_amount: Uint128::one(),
+        collateral_amount: Uint128::MAX,
+        price: Decimal::one(),
+        max_ltv: Decimal::percent(100),
+        liquidation_threshold: Decimal::percent(100),
+    }];
+
+    let res_err = Health::compute_health(&positions).unwrap_err();
+    assert_eq!(res_err, HealthError::CheckedFromRatio(CheckedFromRatioError::Overflow));
 }
