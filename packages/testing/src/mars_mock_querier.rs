@@ -1,22 +1,23 @@
-use cosmwasm_std::testing::{MockQuerier, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, from_slice, Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest,
-    StdResult, SystemError, SystemResult, Uint128, WasmQuery,
+    from_binary, from_slice,
+    testing::{MockQuerier, MOCK_CONTRACT_ADDR},
+    Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
+    SystemResult, Uint128, WasmQuery,
 };
-
 use mars_osmosis::helpers::QueryPoolResponse;
-use osmosis_std::types::osmosis::gamm::v2::QuerySpotPriceResponse;
-use osmosis_std::types::osmosis::twap::v1beta1::{
-    ArithmeticTwapToNowResponse, GeometricTwapToNowResponse,
+use mars_outpost::{address_provider, incentives, oracle, red_bank};
+use osmosis_std::types::osmosis::{
+    gamm::v2::QuerySpotPriceResponse,
+    twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
 
-use mars_outpost::{address_provider, incentives, oracle, red_bank};
-
-use crate::incentives_querier::IncentivesQuerier;
-use crate::mock_address_provider;
-use crate::oracle_querier::OracleQuerier;
-use crate::osmosis_querier::{OsmosisQuerier, PriceKey};
-use crate::red_bank_querier::RedBankQuerier;
+use crate::{
+    incentives_querier::IncentivesQuerier,
+    mock_address_provider,
+    oracle_querier::OracleQuerier,
+    osmosis_querier::{OsmosisQuerier, PriceKey},
+    red_bank_querier::RedBankQuerier,
+};
 
 pub struct MarsMockQuerier {
     base: MockQuerier<Empty>,
@@ -32,7 +33,7 @@ impl Querier for MarsMockQuerier {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
-                    error: format!("Parsing query request: {}", e),
+                    error: format!("Parsing query request: {e}"),
                     request: bin_request.into(),
                 })
             }
@@ -179,7 +180,7 @@ impl MarsMockQuerier {
                     return self.redbank_querier.handle_query(redbank_query);
                 }
 
-                panic!("[mock]: Unsupported wasm query: {:?}", msg);
+                panic!("[mock]: Unsupported wasm query: {msg:?}");
             }
 
             QueryRequest::Stargate {
@@ -190,7 +191,7 @@ impl MarsMockQuerier {
                     return querier_res;
                 }
 
-                panic!("[mock]: Unsupported stargate query, path: {:?}", path);
+                panic!("[mock]: Unsupported stargate query, path: {path:?}");
             }
 
             _ => self.base.handle_query(request),

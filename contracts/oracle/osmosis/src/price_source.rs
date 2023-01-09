@@ -3,15 +3,13 @@ use std::fmt;
 use cosmwasm_std::{
     Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, StdResult, Uint128, Uint256,
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
+use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError, ContractResult, PriceSource};
 use mars_osmosis::helpers::{
     query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price, Pool,
 };
-use mars_outpost::oracle;
-use mars_outpost::oracle::PriceResponse;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::helpers;
 
@@ -62,23 +60,23 @@ impl fmt::Display for OsmosisPriceSource {
         let label = match self {
             OsmosisPriceSource::Fixed {
                 price,
-            } => format!("fixed:{}", price),
+            } => format!("fixed:{price}"),
             OsmosisPriceSource::Spot {
                 pool_id,
-            } => format!("spot:{}", pool_id),
+            } => format!("spot:{pool_id}"),
             OsmosisPriceSource::ArithmeticTwap {
                 pool_id,
                 window_size,
-            } => format!("arithmetic_twap:{}:{}", pool_id, window_size),
+            } => format!("arithmetic_twap:{pool_id}:{window_size}"),
             OsmosisPriceSource::GeometricTwap {
                 pool_id,
                 window_size,
-            } => format!("geometric_twap:{}:{}", pool_id, window_size),
+            } => format!("geometric_twap:{pool_id}:{window_size}"),
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
-            } => format!("xyk_liquidity_token:{}", pool_id),
+            } => format!("xyk_liquidity_token:{pool_id}"),
         };
-        write!(f, "{}", label)
+        write!(f, "{label}")
     }
 }
 
@@ -109,8 +107,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 if *window_size > TWO_DAYS_IN_SECONDS {
                     Err(ContractError::InvalidPriceSource {
                         reason: format!(
-                            "expecting window size to be within {} sec",
-                            TWO_DAYS_IN_SECONDS
+                            "expecting window size to be within {TWO_DAYS_IN_SECONDS} sec"
                         ),
                     })
                 } else {
@@ -127,8 +124,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 if *window_size > TWO_DAYS_IN_SECONDS {
                     Err(ContractError::InvalidPriceSource {
                         reason: format!(
-                            "expecting window size to be within {} sec",
-                            TWO_DAYS_IN_SECONDS
+                            "expecting window size to be within {TWO_DAYS_IN_SECONDS} sec"
                         ),
                     })
                 } else {
@@ -150,6 +146,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
         env: &Env,
         denom: &str,
         base_denom: &str,
+        price_sources: &Map<&str, Self>,
     ) -> StdResult<Decimal> {
         match self {
             OsmosisPriceSource::Fixed {
@@ -174,7 +171,9 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             }
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
-            } => self.query_xyk_liquidity_token_price(deps, env, *pool_id),
+            } => {
+                self.query_xyk_liquidity_token_price(deps, env, *pool_id, base_denom, price_sources)
+            }
         }
     }
 }
@@ -189,6 +188,8 @@ impl OsmosisPriceSource {
         deps: &Deps,
         env: &Env,
         pool_id: u64,
+        base_denom: &str,
+        price_sources: &Map<&str, Self>,
     ) -> StdResult<Decimal> {
         // XYK pool asserted during price source creation
         let pool = query_pool(&deps.querier, pool_id)?;
@@ -196,23 +197,23 @@ impl OsmosisPriceSource {
         let coin0 = Pool::unwrap_coin(&pool.pool_assets[0].token)?;
         let coin1 = Pool::unwrap_coin(&pool.pool_assets[1].token)?;
 
-        let coin0_price_res: PriceResponse = deps.querier.query_wasm_smart(
-            env.contract.address.to_string(),
-            &oracle::QueryMsg::Price {
-                denom: coin0.denom,
-            },
+        let coin0_price = price_sources.load(deps.storage, &coin0.denom)?.query_price(
+            deps,
+            env,
+            &coin0.denom,
+            base_denom,
+            price_sources,
         )?;
-        let coin1_price_res: PriceResponse = deps.querier.query_wasm_smart(
-            env.contract.address.to_string(),
-            &oracle::QueryMsg::Price {
-                denom: coin1.denom,
-            },
+        let coin1_price = price_sources.load(deps.storage, &coin1.denom)?.query_price(
+            deps,
+            env,
+            &coin1.denom,
+            base_denom,
+            price_sources,
         )?;
 
-        let coin0_value =
-            Uint256::from_uint128(coin0.amount) * Decimal256::from(coin0_price_res.price);
-        let coin1_value =
-            Uint256::from_uint128(coin1.amount) * Decimal256::from(coin1_price_res.price);
+        let coin0_value = Uint256::from_uint128(coin0.amount) * Decimal256::from(coin0_price);
+        let coin1_value = Uint256::from_uint128(coin1.amount) * Decimal256::from(coin1_price);
 
         // We need to use Uint256, because Uint128 * Uint128 may overflow the 128-bit limit
         let pool_value_u256 = Uint256::from(2u8) * (coin0_value * coin1_value).isqrt();

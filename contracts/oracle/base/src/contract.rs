@@ -5,14 +5,13 @@ use cosmwasm_std::{
     StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
-
-use mars_outpost::error::MarsError;
-use mars_outpost::oracle::{
-    Config, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse, QueryMsg,
+use mars_outpost::{
+    error::MarsError,
+    helpers::validate_native_denom,
+    oracle::{Config, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse, QueryMsg},
 };
 
-use crate::error::ContractResult;
-use crate::PriceSource;
+use crate::{error::ContractResult, PriceSource};
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
@@ -25,7 +24,7 @@ where
     /// The contract's config
     pub config: Item<'a, Config<Addr>>,
     /// The price source of each coin denom
-    pub price_sources: Map<'a, String, P>,
+    pub price_sources: Map<'a, &'a str, P>,
     /// Phantom data holds the custom query type
     pub custom_query: PhantomData<C>,
 }
@@ -49,7 +48,9 @@ where
     P: PriceSource<C>,
     C: CustomQuery,
 {
-    pub fn instantiate(&self, deps: DepsMut<C>, msg: InstantiateMsg) -> StdResult<Response> {
+    pub fn instantiate(&self, deps: DepsMut<C>, msg: InstantiateMsg) -> ContractResult<Response> {
+        validate_native_denom(&msg.base_denom)?;
+
         self.config.save(
             deps.storage,
             &Config {
@@ -131,9 +132,11 @@ where
             return Err(MarsError::Unauthorized {}.into());
         }
 
+        validate_native_denom(&denom)?;
+
         price_source.validate(&deps.querier, &denom, &cfg.base_denom)?;
 
-        self.price_sources.save(deps.storage, denom.clone(), &price_source)?;
+        self.price_sources.save(deps.storage, &denom, &price_source)?;
 
         Ok(Response::new()
             .add_attribute("action", "outposts/oracle/set_price_source")
@@ -152,7 +155,7 @@ where
             return Err(MarsError::Unauthorized {}.into());
         }
 
-        self.price_sources.remove(deps.storage, denom.clone());
+        self.price_sources.remove(deps.storage, &denom);
 
         Ok(Response::new()
             .add_attribute("action", "outposts/oracle/remove_price_source")
@@ -173,8 +176,8 @@ where
         denom: String,
     ) -> StdResult<PriceSourceResponse<P>> {
         Ok(PriceSourceResponse {
-            denom: denom.clone(),
-            price_source: self.price_sources.load(deps.storage, denom)?,
+            price_source: self.price_sources.load(deps.storage, &denom)?,
+            denom,
         })
     }
 
@@ -184,7 +187,7 @@ where
         start_after: Option<String>,
         limit: Option<u32>,
     ) -> StdResult<Vec<PriceSourceResponse<P>>> {
-        let start = start_after.map(Bound::exclusive);
+        let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
         let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
         self.price_sources
@@ -202,10 +205,16 @@ where
 
     fn query_price(&self, deps: Deps<C>, env: Env, denom: String) -> StdResult<PriceResponse> {
         let cfg = self.config.load(deps.storage)?;
-        let price_source = self.price_sources.load(deps.storage, denom.clone())?;
+        let price_source = self.price_sources.load(deps.storage, &denom)?;
         Ok(PriceResponse {
-            denom: denom.clone(),
-            price: price_source.query_price(&deps, &env, &denom, &cfg.base_denom)?,
+            price: price_source.query_price(
+                &deps,
+                &env,
+                &denom,
+                &cfg.base_denom,
+                &self.price_sources,
+            )?,
+            denom,
         })
     }
 
@@ -218,7 +227,7 @@ where
     ) -> StdResult<Vec<PriceResponse>> {
         let cfg = self.config.load(deps.storage)?;
 
-        let start = start_after.map(Bound::exclusive);
+        let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
         let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
         self.price_sources
@@ -227,8 +236,8 @@ where
             .map(|item| {
                 let (k, v) = item?;
                 Ok(PriceResponse {
-                    denom: k.clone(),
-                    price: v.query_price(&deps, &env, &k, &cfg.base_denom)?,
+                    price: v.query_price(&deps, &env, &k, &cfg.base_denom, &self.price_sources)?,
+                    denom: k,
                 })
             })
             .collect()

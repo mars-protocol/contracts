@@ -1,10 +1,9 @@
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
-
+use cosmwasm_std::{
+    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+};
 use mars_outpost::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::error::ContractError;
-use crate::{execute, query};
+use crate::{error::ContractError, execute, query};
 
 #[entry_point]
 pub fn instantiate(

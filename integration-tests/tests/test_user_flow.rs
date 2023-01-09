@@ -1,6 +1,7 @@
-use crate::helpers::default_asset_params;
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use mars_testing::integration::mock_env::MockEnvBuilder;
+
+use crate::helpers::default_asset_params;
 
 mod helpers;
 

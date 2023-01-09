@@ -1,6 +1,7 @@
+use std::collections::HashMap;
+
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult};
 use mars_outpost::red_bank::{Market, QueryMsg, UserCollateralResponse, UserPositionResponse};
-use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct RedBankQuerier {
@@ -16,20 +17,20 @@ impl RedBankQuerier {
                 denom,
             } => match self.markets.get(&denom) {
                 Some(market) => to_binary(&market).into(),
-                None => Err(format!("[mock]: could not find the market for {}", denom)).into(),
+                None => Err(format!("[mock]: could not find the market for {denom}")).into(),
             },
             QueryMsg::UserCollateral {
                 user,
                 denom,
             } => match self.users_denoms_collaterals.get(&(user.clone(), denom)) {
                 Some(collateral) => to_binary(&collateral).into(),
-                None => Err(format!("[mock]: could not find the collateral for {}", user)).into(),
+                None => Err(format!("[mock]: could not find the collateral for {user}")).into(),
             },
             QueryMsg::UserPosition {
                 user,
             } => match self.users_positions.get(&user) {
                 Some(market) => to_binary(&market).into(),
-                None => Err(format!("[mock]: could not find the position for {}", user)).into(),
+                None => Err(format!("[mock]: could not find the position for {user}")).into(),
             },
             _ => Err("[mock]: Unsupported red_bank query".to_string()).into(),
         };

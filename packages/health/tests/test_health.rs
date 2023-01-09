@@ -1,6 +1,7 @@
+use std::vec;
+
 use cosmwasm_std::Decimal;
 use mars_health::health::{Health, Position};
-use std::vec;
 
 // Test to compute the health of a position where collateral is greater
 // than zero, and debt is zero

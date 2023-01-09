@@ -1,13 +1,12 @@
 use cosmwasm_std::{coin, Decimal};
-use osmosis_std::types::osmosis::gamm::v2::QuerySpotPriceResponse;
-use osmosis_std::types::osmosis::twap::v1beta1::{
-    ArithmeticTwapToNowResponse, GeometricTwapToNowResponse,
+use mars_oracle_osmosis::OsmosisPriceSource;
+use mars_outpost::oracle::{PriceResponse, QueryMsg};
+use osmosis_std::types::osmosis::{
+    gamm::v2::QuerySpotPriceResponse,
+    twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
 
-use mars_outpost::oracle::{PriceResponse, QueryMsg};
-
 use crate::helpers::prepare_query_pool_response;
-use mars_oracle_osmosis::OsmosisPriceSource;
 
 mod helpers;
 

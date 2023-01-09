@@ -1,8 +1,8 @@
-use crate::helpers::{default_asset_params, default_asset_params_with, is_user_liquidatable};
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
-use mars_outpost::math;
-use mars_outpost::red_bank::UserHealthStatus;
+use mars_outpost::{math, red_bank::UserHealthStatus};
 use mars_testing::integration::mock_env::MockEnvBuilder;
+
+use crate::helpers::{default_asset_params, default_asset_params_with, is_user_liquidatable};
 
 mod helpers;
 

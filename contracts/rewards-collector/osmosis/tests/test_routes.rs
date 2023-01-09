@@ -1,14 +1,12 @@
 use cosmwasm_std::testing::mock_env;
-
-use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
-
-use mars_outpost::error::MarsError;
-use mars_outpost::rewards_collector::{QueryMsg, RouteResponse};
+use mars_outpost::{
+    error::MarsError,
+    rewards_collector::{QueryMsg, RouteResponse},
+};
 use mars_rewards_collector_base::{ContractError, Route};
-use mars_rewards_collector_osmosis::contract::entry::execute;
-use mars_rewards_collector_osmosis::msg::ExecuteMsg;
-use mars_rewards_collector_osmosis::OsmosisRoute;
+use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg, OsmosisRoute};
 use mars_testing::mock_info;
+use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
 
 use crate::helpers::mock_routes;
 
@@ -64,6 +62,67 @@ fn test_setting_route() {
         },
     );
     assert_eq!(res.route, OsmosisRoute(steps));
+}
+
+#[test]
+fn test_denom_with_invalid_char() {
+    let mut deps = helpers::setup_test();
+
+    let steps = vec![
+        SwapAmountInRoute {
+            pool_id: 1,
+            token_out_denom: "uosmo".to_string(),
+        },
+        SwapAmountInRoute {
+            pool_id: 420,
+            token_out_denom: "umars".to_string(),
+        },
+    ];
+
+    let msg = ExecuteMsg::SetRoute {
+        denom_in: "hadb%akdjb!".to_string(),
+        denom_out: "askd&7ab12d&".to_string(),
+        route: OsmosisRoute(steps),
+    };
+
+    let res = execute(deps.as_mut(), mock_env(), mock_info("owner"), msg);
+    assert_eq!(
+        res,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
+                .to_string()
+        }))
+    );
+}
+
+#[test]
+fn test_invalid_denom_length() {
+    let mut deps = helpers::setup_test();
+
+    let steps = vec![
+        SwapAmountInRoute {
+            pool_id: 1,
+            token_out_denom: "uosmo".to_string(),
+        },
+        SwapAmountInRoute {
+            pool_id: 420,
+            token_out_denom: "umars".to_string(),
+        },
+    ];
+
+    let msg = ExecuteMsg::SetRoute {
+        denom_in: "qw".to_string(),
+        denom_out: "qwrouwetsdknfsljvnsdkjfhw".to_string(),
+        route: OsmosisRoute(steps),
+    };
+
+    let res = execute(deps.as_mut(), mock_env(), mock_info("owner"), msg);
+    assert_eq!(
+        res,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "Invalid denom length".to_string(),
+        }))
+    );
 }
 
 #[test]

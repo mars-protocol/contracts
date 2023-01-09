@@ -3,13 +3,19 @@ use std::str::FromStr;
 use cosmwasm_std::{
     coin, Decimal, Empty, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
 };
-
-use osmosis_std::shim::Timestamp;
-use osmosis_std::types::cosmos::base::v1beta1::Coin;
-use osmosis_std::types::osmosis::gamm::v1beta1::{PoolAsset, PoolParams, QueryPoolRequest};
-use osmosis_std::types::osmosis::gamm::v2::GammQuerier;
-use osmosis_std::types::osmosis::twap::v1beta1::TwapQuerier;
-
+use osmosis_std::{
+    shim::Timestamp,
+    types::{
+        cosmos::base::v1beta1::Coin,
+        osmosis::{
+            gamm::{
+                v1beta1::{PoolAsset, PoolParams, QueryPoolRequest},
+                v2::GammQuerier,
+            },
+            twap::v1beta1::TwapQuerier,
+        },
+    },
+};
 use serde::{Deserialize, Serialize};
 
 // NOTE: Use custom Pool (`id` type as String) due to problem with json (de)serialization discrepancy between go and rust side.
