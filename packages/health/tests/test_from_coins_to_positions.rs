@@ -50,7 +50,7 @@ fn test_from_coins_to_positions() {
                 denom: "osmo".to_string(),
                 price: Decimal::from_atomics(23654u128, 4).unwrap(),
                 collateral_amount: Uint128::zero(),
-                debt_amount: Uint128::from(300u128),
+                debt_amount: Uint128::new(300),
                 max_ltv: Decimal::from_atomics(50u128, 2).unwrap(),
                 liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap()
             }
@@ -75,8 +75,8 @@ fn test_from_coins_to_positions() {
                 Position {
                     denom: "osmo".to_string(),
                     price: Decimal::from_atomics(23654u128, 4).unwrap(),
-                    collateral_amount: Uint128::from(500u128),
-                    debt_amount: Uint128::from(115u128),
+                    collateral_amount: Uint128::new(500),
+                    debt_amount: Uint128::new(115),
                     max_ltv: Decimal::from_atomics(50u128, 2).unwrap(),
                     liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap()
                 }
@@ -86,8 +86,8 @@ fn test_from_coins_to_positions() {
                 Position {
                     denom: "atom".to_string(),
                     price: Decimal::from_atomics(102u128, 1).unwrap(),
-                    collateral_amount: Uint128::from(200u128),
-                    debt_amount: Uint128::from(350u128),
+                    collateral_amount: Uint128::new(200),
+                    debt_amount: Uint128::new(350),
                     max_ltv: Decimal::from_atomics(70u128, 2).unwrap(),
                     liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap()
                 }

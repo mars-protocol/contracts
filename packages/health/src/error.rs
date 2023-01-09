@@ -7,8 +7,8 @@ pub enum HealthError {
     Std(#[from] StdError),
 
     #[error("{0}")]
-    CheckedMultiplyRatioError(#[from] CheckedMultiplyRatioError),
+    CheckedMultiplyRatio(#[from] CheckedMultiplyRatioError),
 
     #[error("{0}")]
-    CheckedFromRatioError(#[from] CheckedFromRatioError),
+    CheckedFromRatio(#[from] CheckedFromRatioError),
 }

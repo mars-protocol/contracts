@@ -19,7 +19,7 @@ pub enum ContractError {
     Overflow(#[from] OverflowError),
 
     #[error("{0}")]
-    HealthError(#[from] HealthError),
+    Health(#[from] HealthError),
 
     #[error("Price not found for asset: {denom:?}")]
     PriceNotFound {
