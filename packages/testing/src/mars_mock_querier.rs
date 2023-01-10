@@ -4,9 +4,11 @@ use cosmwasm_std::{
     Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
     SystemResult, Uint128, WasmQuery,
 };
+use mars_oracle_osmosis::DowntimeDetector;
 use mars_osmosis::helpers::QueryPoolResponse;
 use mars_outpost::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
+    downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
     gamm::v2::QuerySpotPriceResponse,
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
@@ -121,6 +123,15 @@ impl MarsMockQuerier {
             denom_out: quote_asset_denom.to_string(),
         };
         self.osmosis_querier.geometric_twap_prices.insert(price_key, twap_price);
+    }
+
+    pub fn set_downtime_detector(&mut self, downtime_detector: DowntimeDetector, recovered: bool) {
+        self.osmosis_querier.downtime_detector.insert(
+            (downtime_detector.downtime as i32, downtime_detector.recovery),
+            RecoveredSinceDowntimeOfLengthResponse {
+                succesfully_recovered: recovered,
+            },
+        );
     }
 
     pub fn set_redbank_market(&mut self, market: red_bank::Market) {
