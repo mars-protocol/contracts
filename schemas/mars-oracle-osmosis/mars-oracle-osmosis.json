@@ -103,7 +103,7 @@
         "type": "string"
       },
       "Downtime": {
-        "description": "Copy from https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std/src/types/osmosis/downtimedetector/v1beta1.rs#L4 It doesn't impl JsonSchema.",
+        "description": "Copied from https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std/src/types/osmosis/downtimedetector/v1beta1.rs#L4\n\nIt doesn't impl Serialize, Deserialize, and JsonSchema traits, and therefore cannot be used in contract APIs (messages and query responses).\n\nTODO: Make a PR to osmosis-rust that implements these traits for enum types. Once merged, remove this one here.",
         "type": "string",
         "enum": [
           "duration30s",
