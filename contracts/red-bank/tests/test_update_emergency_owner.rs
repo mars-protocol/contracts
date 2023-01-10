@@ -1,10 +1,12 @@
-use crate::helpers::{th_query, th_setup};
 use cosmwasm_std::testing::{mock_env, mock_info};
 use mars_outpost::red_bank::{ConfigResponse, ExecuteMsg, QueryMsg};
-use mars_owner::OwnerError::{NotOwner, NotProposedOwner};
-use mars_owner::OwnerUpdate;
-use mars_red_bank::contract::execute;
-use mars_red_bank::error::ContractError;
+use mars_owner::{
+    OwnerError::{NotOwner, NotProposedOwner},
+    OwnerUpdate,
+};
+use mars_red_bank::{contract::execute, error::ContractError};
+
+use crate::helpers::{th_query, th_setup};
 
 mod helpers;
 

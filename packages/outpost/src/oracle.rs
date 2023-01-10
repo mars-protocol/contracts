@@ -96,8 +96,9 @@ pub struct PriceResponse {
 }
 
 pub mod helpers {
-    use super::{PriceResponse, QueryMsg};
     use cosmwasm_std::{Decimal, QuerierWrapper, StdResult};
+
+    use super::{PriceResponse, QueryMsg};
 
     pub fn query_price(
         querier: &QuerierWrapper,

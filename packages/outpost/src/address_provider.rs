@@ -1,6 +1,4 @@
-use std::any::type_name;
-use std::fmt;
-use std::str::FromStr;
+use std::{any::type_name, fmt, str::FromStr};
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::StdError;
@@ -45,7 +43,7 @@ impl fmt::Display for MarsAddressType {
             MarsAddressType::RewardsCollector => "rewards_collector",
             MarsAddressType::SafetyFund => "safety_fund",
         };
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 
@@ -144,8 +142,9 @@ pub struct AddressResponseItem {
 pub mod helpers {
     use std::collections::HashMap;
 
-    use super::{AddressResponseItem, MarsAddressType, QueryMsg};
     use cosmwasm_std::{Addr, Deps, StdResult};
+
+    use super::{AddressResponseItem, MarsAddressType, QueryMsg};
 
     pub fn query_address(
         deps: Deps<impl cosmwasm_std::CustomQuery>,

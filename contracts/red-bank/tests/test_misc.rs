@@ -1,25 +1,27 @@
-use cosmwasm_std::testing::mock_info;
-use cosmwasm_std::{attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128};
-use mars_owner::OwnerError::NotOwner;
-
-use mars_outpost::math;
-use mars_outpost::red_bank::{Debt, ExecuteMsg, Market};
-use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
-
-use mars_red_bank::contract::execute;
-use mars_red_bank::error::ContractError;
-use mars_red_bank::health;
-use mars_red_bank::interest_rates::{
-    compute_scaled_amount, compute_underlying_amount, get_scaled_debt_amount,
-    get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
+use cosmwasm_std::{
+    attr, coin, coins, testing::mock_info, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128,
 };
-use mars_red_bank::state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
-
 use helpers::{
     has_collateral_enabled, has_collateral_position, has_debt_position, set_collateral, set_debt,
     th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
     TestUtilizationDeltaInfo,
 };
+use mars_outpost::{
+    math,
+    red_bank::{Debt, ExecuteMsg, Market},
+};
+use mars_owner::OwnerError::NotOwner;
+use mars_red_bank::{
+    contract::execute,
+    error::ContractError,
+    health,
+    interest_rates::{
+        compute_scaled_amount, compute_underlying_amount, get_scaled_debt_amount,
+        get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
+    },
+    state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
+};
+use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 mod helpers;
 

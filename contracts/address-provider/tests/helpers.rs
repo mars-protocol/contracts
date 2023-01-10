@@ -1,11 +1,13 @@
 #![allow(dead_code)]
 
-use cosmwasm_std::testing::{
-    mock_dependencies_with_balance, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
+use cosmwasm_std::{
+    from_binary,
+    testing::{
+        mock_dependencies_with_balance, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
+    },
+    Deps, OwnedDeps,
 };
-use cosmwasm_std::{from_binary, Deps, OwnedDeps};
 use mars_address_provider::contract::{instantiate, query};
-
 use mars_outpost::address_provider::{InstantiateMsg, QueryMsg};
 
 pub fn th_setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {

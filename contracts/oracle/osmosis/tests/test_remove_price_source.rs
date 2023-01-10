@@ -1,14 +1,13 @@
-use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::Decimal;
+use cosmwasm_std::{testing::mock_env, Decimal};
 use mars_oracle_base::ContractError;
-use mars_owner::OwnerError::NotOwner;
-
+use mars_oracle_osmosis::{
+    contract::entry::execute,
+    msg::{ExecuteMsg, PriceSourceResponse},
+    OsmosisPriceSource,
+};
 use mars_outpost::oracle::QueryMsg;
+use mars_owner::OwnerError::NotOwner;
 use mars_testing::mock_info;
-
-use mars_oracle_osmosis::contract::entry::execute;
-use mars_oracle_osmosis::msg::{ExecuteMsg, PriceSourceResponse};
-use mars_oracle_osmosis::OsmosisPriceSource;
 
 mod helpers;
 

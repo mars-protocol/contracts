@@ -1,7 +1,8 @@
-use crate::red_bank::InterestRateModel;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Decimal, Uint128};
 use mars_owner::OwnerUpdate;
+
+use crate::red_bank::InterestRateModel;
 
 #[cw_serde]
 pub struct InstantiateMsg {

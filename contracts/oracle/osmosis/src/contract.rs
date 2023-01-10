@@ -12,8 +12,7 @@ pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
-    use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
-
+    use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response};
     use mars_oracle_base::ContractResult;
     use mars_outpost::oracle::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
@@ -41,7 +40,7 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         OsmosisOracle::default().query(deps, env, msg)
     }
 }

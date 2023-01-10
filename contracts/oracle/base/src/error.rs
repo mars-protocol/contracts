@@ -1,8 +1,7 @@
-use cosmwasm_std::StdError;
+use cosmwasm_std::{ConversionOverflowError, StdError};
+use mars_outpost::error::MarsError;
 use mars_owner::OwnerError;
 use thiserror::Error;
-
-use mars_outpost::error::MarsError;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
@@ -15,8 +14,16 @@ pub enum ContractError {
     #[error("{0}")]
     OwnerError(#[from] OwnerError),
 
+    #[error("{0}")]
+    ConversionOverflow(#[from] ConversionOverflowError),
+
     #[error("Invalid price source: {reason}")]
     InvalidPriceSource {
+        reason: String,
+    },
+
+    #[error("Invalid price: {reason}")]
+    InvalidPrice {
         reason: String,
     },
 }

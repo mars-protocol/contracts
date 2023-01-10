@@ -1,10 +1,9 @@
-use crate::helpers::{th_query, th_setup};
 use cosmwasm_std::testing::{mock_env, mock_info};
-use mars_address_provider::contract::execute;
-use mars_address_provider::error::ContractError;
+use mars_address_provider::{contract::execute, error::ContractError};
 use mars_outpost::address_provider::{ConfigResponse, ExecuteMsg, QueryMsg};
-use mars_owner::OwnerError::NotOwner;
-use mars_owner::OwnerUpdate;
+use mars_owner::{OwnerError::NotOwner, OwnerUpdate};
+
+use crate::helpers::{th_query, th_setup};
 
 mod helpers;
 

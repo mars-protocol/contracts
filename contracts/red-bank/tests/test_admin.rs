@@ -1,21 +1,20 @@
-use cosmwasm_std::testing::mock_info;
-use cosmwasm_std::{attr, coin, from_binary, Addr, Decimal, Event, Uint128};
+use cosmwasm_std::{attr, coin, from_binary, testing::mock_info, Addr, Decimal, Event, Uint128};
+use mars_outpost::{
+    address_provider::MarsAddressType,
+    error::MarsError,
+    red_bank::{
+        ConfigResponse, CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
+        InterestRateModel, Market, QueryMsg,
+    },
+};
 use mars_owner::OwnerError::NotOwner;
-
-use mars_outpost::address_provider::MarsAddressType;
-use mars_outpost::error::MarsError;
-use mars_outpost::red_bank::{
-    ConfigResponse, CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
-    InterestRateModel, Market, QueryMsg,
+use mars_red_bank::{
+    contract::{execute, instantiate, query},
+    error::ContractError,
+    interest_rates::{compute_scaled_amount, compute_underlying_amount, ScalingOperation},
+    state::{COLLATERALS, MARKETS},
 };
 use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, MockEnvParams};
-
-use mars_red_bank::contract::{execute, instantiate, query};
-use mars_red_bank::error::ContractError;
-use mars_red_bank::interest_rates::{
-    compute_scaled_amount, compute_underlying_amount, ScalingOperation,
-};
-use mars_red_bank::state::{COLLATERALS, MARKETS};
 
 use crate::helpers::{th_get_expected_indices, th_init_market, th_setup};
 
@@ -224,6 +223,55 @@ fn test_init_asset() {
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(error_res, ContractError::OwnerError(NotOwner {}));
+    }
+
+    // init incorrect asset denom - error 1
+    {
+        let msg = ExecuteMsg::InitAsset {
+            denom: "!ksdfakefb*.s-".to_string(),
+            params: params.clone(),
+        };
+        let info = mock_info("owner", &[]);
+        let err = execute(deps.as_mut(), env.clone(), info, msg);
+        assert_eq!(
+            err,
+            Err(ContractError::Mars(MarsError::InvalidDenom {
+                reason: "First character is not ASCII alphabetic".to_string()
+            }))
+        );
+    }
+
+    // init incorrect asset denom - error 2
+    {
+        let msg = ExecuteMsg::InitAsset {
+            denom: "ahdbufenf&*!-".to_string(),
+            params: params.clone(),
+        };
+        let info = mock_info("owner", &[]);
+        let err = execute(deps.as_mut(), env.clone(), info, msg);
+        assert_eq!(
+            err,
+            Err(ContractError::Mars(MarsError::InvalidDenom {
+                reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
+                    .to_string()
+            }))
+        );
+    }
+
+    // init incorrect asset denom - error 3
+    {
+        let msg = ExecuteMsg::InitAsset {
+            denom: "ab".to_string(),
+            params: params.clone(),
+        };
+        let info = mock_info("owner", &[]);
+        let err = execute(deps.as_mut(), env.clone(), info, msg);
+        assert_eq!(
+            err,
+            Err(ContractError::Mars(MarsError::InvalidDenom {
+                reason: "Invalid denom length".to_string()
+            }))
+        );
     }
 
     // init asset with empty params

@@ -1,9 +1,7 @@
-use std::convert::TryFrom;
-use std::str::FromStr;
+use std::{convert::TryFrom, str::FromStr};
 
 use cosmwasm_std::{StdError, StdResult};
 use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
-
 use mars_outpost::address_provider::MarsAddressType;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

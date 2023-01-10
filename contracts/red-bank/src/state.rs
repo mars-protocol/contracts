@@ -1,8 +1,7 @@
 use cosmwasm_std::{Addr, Uint128};
 use cw_storage_plus::{Item, Map};
-use mars_owner::Owner;
-
 use mars_outpost::red_bank::{Collateral, Config, Debt, Market};
+use mars_owner::Owner;
 
 pub const OWNER: Owner = Owner::new("owner");
 pub const EMERGENCY_OWNER: Owner = Owner::new("emergency_owner");

@@ -1,10 +1,12 @@
 #![allow(dead_code)]
 
 use cosmwasm_schema::serde;
-use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
-use cosmwasm_std::{from_binary, Deps, OwnedDeps};
+use cosmwasm_std::{
+    from_binary,
+    testing::{mock_env, mock_info, MockApi, MockStorage},
+    Deps, OwnedDeps,
+};
 use mars_incentives::contract::{instantiate, query};
-
 use mars_outpost::incentives::{InstantiateMsg, QueryMsg};
 use mars_testing::{mock_dependencies, MarsMockQuerier};
 

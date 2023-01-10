@@ -1,7 +1,5 @@
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-use mars_address_provider::contract::instantiate;
-use mars_address_provider::error::ContractError;
-
+use mars_address_provider::{contract::instantiate, error::ContractError};
 use mars_outpost::address_provider::{ConfigResponse, InstantiateMsg, QueryMsg};
 
 use crate::helpers::th_query;

@@ -1,19 +1,30 @@
-use crate::helpers::osmosis::{assert_err, instantiate_contract};
-use crate::helpers::{default_asset_params, swap, swap_to_create_twap_records};
+use std::str::FromStr;
+
 use cosmwasm_std::{coin, Coin, Decimal, Isqrt, Uint128};
 use mars_oracle_base::ContractError;
-use mars_oracle_osmosis::msg::PriceSourceResponse;
-use mars_oracle_osmosis::OsmosisPriceSource;
-use mars_outpost::address_provider::ExecuteMsg::SetAddress;
-use mars_outpost::address_provider::{InstantiateMsg as InstantiateAddr, MarsAddressType};
-use mars_outpost::incentives::InstantiateMsg as InstantiateIncentives;
-use mars_outpost::oracle::{ExecuteMsg, InstantiateMsg, PriceResponse, QueryMsg};
-use mars_outpost::red_bank::ExecuteMsg as ExecuteRedBank;
-use mars_outpost::red_bank::ExecuteMsg::{Borrow, Deposit};
-use mars_outpost::red_bank::{CreateOrUpdateConfig, InstantiateMsg as InstantiateRedBank};
-use mars_outpost::rewards_collector::InstantiateMsg as InstantiateRewards;
-use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, SigningAccount, Wasm};
-use std::str::FromStr;
+use mars_oracle_osmosis::{
+    msg::PriceSourceResponse, Downtime, DowntimeDetector, OsmosisPriceSource,
+};
+use mars_outpost::{
+    address_provider::{
+        ExecuteMsg::SetAddress, InstantiateMsg as InstantiateAddr, MarsAddressType,
+    },
+    incentives::InstantiateMsg as InstantiateIncentives,
+    oracle::{ExecuteMsg, InstantiateMsg, PriceResponse, QueryMsg},
+    red_bank::{
+        CreateOrUpdateConfig, ExecuteMsg as ExecuteRedBank,
+        ExecuteMsg::{Borrow, Deposit},
+        InstantiateMsg as InstantiateRedBank,
+    },
+    rewards_collector::InstantiateMsg as InstantiateRewards,
+};
+use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, RunnerResult, SigningAccount, Wasm};
+
+use crate::helpers::{
+    default_asset_params,
+    osmosis::{assert_err, instantiate_contract},
+    swap, swap_to_create_twap_records,
+};
 
 mod helpers;
 
@@ -468,9 +479,8 @@ fn query_spot_price_after_lp_change() {
     assert!(price.price < price2.price);
 }
 
-// assert oracle was correctly set to TWAP and assert prices are queried correctly
 #[test]
-fn query_twap_price() {
+fn query_geometric_twap_price_with_downtime_detector() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -496,9 +506,94 @@ fn query_twap_price() {
         &oracle_addr,
         &ExecuteMsg::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Twap {
+            price_source: OsmosisPriceSource::GeometricTwap {
                 pool_id,
                 window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
+                downtime_detector: Some(DowntimeDetector {
+                    downtime: Downtime::Duration2m,
+                    recovery: 60u64,
+                }),
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+    let price_source: PriceSourceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::PriceSource {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(
+        price_source.price_source,
+        (OsmosisPriceSource::GeometricTwap {
+            pool_id,
+            window_size: 10,
+            downtime_detector: Some(DowntimeDetector {
+                downtime: Downtime::Duration2m,
+                recovery: 60u64
+            }),
+        })
+    );
+
+    // chain has just started
+    let res: RunnerResult<PriceResponse> = wasm.query(
+        &oracle_addr,
+        &QueryMsg::Price {
+            denom: "uatom".to_string(),
+        },
+    );
+    assert_err(res.unwrap_err(), "chain is recovering from downtime");
+
+    // window_size > recovery (60 sec)
+    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 100);
+
+    // chain recovered
+    let _res: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+}
+
+// assert oracle was correctly set to Arithmetic TWAP and assert prices are queried correctly
+#[test]
+fn query_arithmetic_twap_price() {
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
+
+    let signer = app
+        .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "uatom")])
+        .unwrap();
+
+    let oracle_addr = instantiate_contract(
+        &wasm,
+        &signer,
+        OSMOSIS_ORACLE_CONTRACT_NAME,
+        &InstantiateMsg {
+            owner: signer.address(),
+            base_denom: "uosmo".to_string(),
+        },
+    );
+
+    let gamm = Gamm::new(&app);
+    let pool_liquidity = vec![Coin::new(2_000_000_000, "uatom"), Coin::new(1_000_000_000, "uosmo")];
+    let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
+
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSource::ArithmeticTwap {
+                pool_id,
+                window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
+                downtime_detector: None,
             },
         },
         &[],
@@ -518,9 +613,10 @@ fn query_twap_price() {
         .unwrap();
     assert_eq!(
         price_source.price_source,
-        (OsmosisPriceSource::Twap {
+        (OsmosisPriceSource::ArithmeticTwap {
             pool_id,
             window_size: 10,
+            downtime_detector: None
         })
     );
 
@@ -538,6 +634,92 @@ fn query_twap_price() {
     // calculate spot price
     let spot_price = Decimal::from_ratio(1u128, 2u128);
     assert!((price.price - spot_price) < tolerance);
+
+    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 10);
+
+    let price2: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+    assert!(price2.price - price.price < tolerance);
+}
+
+// assert oracle was correctly set to Geometric TWAP and assert prices are queried correctly
+#[test]
+fn query_geometric_twap_price() {
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
+
+    let signer = app
+        .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "uatom")])
+        .unwrap();
+
+    let oracle_addr = instantiate_contract(
+        &wasm,
+        &signer,
+        OSMOSIS_ORACLE_CONTRACT_NAME,
+        &InstantiateMsg {
+            owner: signer.address(),
+            base_denom: "uosmo".to_string(),
+        },
+    );
+
+    let gamm = Gamm::new(&app);
+    let pool_liquidity = vec![Coin::new(4_000_000_000, "uatom"), Coin::new(1_000_000_000, "uosmo")];
+    let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
+
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSource::GeometricTwap {
+                pool_id,
+                window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
+                downtime_detector: None,
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+
+    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 10);
+
+    let price_source: PriceSourceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::PriceSource {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(
+        price_source.price_source,
+        (OsmosisPriceSource::GeometricTwap {
+            pool_id,
+            window_size: 10,
+            downtime_detector: None
+        })
+    );
+
+    // since swaps were small, the prices should be the same within a 1% tolerance
+    let tolerance = Decimal::percent(1);
+
+    let price: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+    // calculate spot price
+    let spot_price = Decimal::from_ratio(1u128, 4u128);
+    assert!((spot_price - price.price) < tolerance);
 
     swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 10);
 
@@ -576,6 +758,10 @@ fn compare_spot_and_twap_price() {
     let pool_liquidity = vec![Coin::new(2_000_000_000, "uatom"), Coin::new(1_000_000_000, "uosmo")];
     let pool_id = gamm.create_basic_pool(&pool_liquidity, &signer).unwrap().data.pool_id;
 
+    // do more swaps than window_size
+    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 300);
+
+    // set spot price source
     wasm.execute(
         &oracle_addr,
         &ExecuteMsg::SetPriceSource {
@@ -588,23 +774,20 @@ fn compare_spot_and_twap_price() {
         &signer,
     )
     .unwrap();
-
-    wasm.execute(
-        &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
-            denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Twap {
-                pool_id,
-                window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
+    let price_source: PriceSourceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::PriceSource {
+                denom: "uatom".to_string(),
             },
-        },
-        &[],
-        &signer,
-    )
-    .unwrap();
-
-    swap_to_create_twap_records(&app, &signer, pool_id, coin(1u128, "uosmo"), "uatom", 10);
-
+        )
+        .unwrap();
+    assert_eq!(
+        price_source.price_source,
+        OsmosisPriceSource::Spot {
+            pool_id,
+        }
+    );
     let spot_price: PriceResponse = wasm
         .query(
             &oracle_addr,
@@ -614,7 +797,78 @@ fn compare_spot_and_twap_price() {
         )
         .unwrap();
 
-    let twap_price: PriceResponse = wasm
+    // override price source to arithmetic TWAP
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSource::ArithmeticTwap {
+                pool_id,
+                window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
+                downtime_detector: None,
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+    let price_source: PriceSourceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::PriceSource {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(
+        price_source.price_source,
+        OsmosisPriceSource::ArithmeticTwap {
+            pool_id,
+            window_size: 10,
+            downtime_detector: None
+        }
+    );
+    let arithmetic_twap_price: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+
+    // override price source to geometric TWAP
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSource::GeometricTwap {
+                pool_id,
+                window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
+                downtime_detector: None,
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+    let price_source: PriceSourceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::PriceSource {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(
+        price_source.price_source,
+        OsmosisPriceSource::GeometricTwap {
+            pool_id,
+            window_size: 10,
+            downtime_detector: None
+        }
+    );
+    let geometric_twap_price: PriceResponse = wasm
         .query(
             &oracle_addr,
             &QueryMsg::Price {
@@ -624,8 +878,8 @@ fn compare_spot_and_twap_price() {
         .unwrap();
 
     let tolerance = Decimal::percent(1);
-
-    assert!(twap_price.price - spot_price.price < tolerance)
+    assert!(arithmetic_twap_price.price - spot_price.price < tolerance);
+    assert!(spot_price.price - geometric_twap_price.price < tolerance);
 }
 
 // execute borrow action in red bank with an asset not in the oracle - should fail when attempting to query oracle

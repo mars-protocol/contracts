@@ -5,19 +5,21 @@ use cosmwasm_std::{
     IbcTimeout, IbcTimeoutBlock, MessageInfo, Order, Response, StdResult, Uint128, WasmMsg,
 };
 use cw_storage_plus::{Bound, Item, Map};
-use mars_owner::OwnerInit::SetInitialOwner;
-use mars_owner::{Owner, OwnerUpdate};
-
-use mars_outpost::address_provider::{self, MarsAddressType};
-use mars_outpost::helpers::option_string_to_addr;
-use mars_outpost::red_bank;
-use mars_outpost::rewards_collector::{
-    Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse, RoutesResponse,
-    UpdateConfig,
+use mars_outpost::{
+    address_provider::{self, MarsAddressType},
+    helpers::{option_string_to_addr, validate_native_denom},
+    red_bank,
+    rewards_collector::{
+        Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
+        RoutesResponse, UpdateConfig,
+    },
 };
+use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 
-use crate::helpers::{stringify_option_amount, unwrap_option_amount};
-use crate::{ContractError, ContractResult, Route};
+use crate::{
+    helpers::{stringify_option_amount, unwrap_option_amount},
+    ContractError, ContractResult, Route,
+};
 
 const DEFAULT_LIMIT: u32 = 5;
 const MAX_LIMIT: u32 = 10;
@@ -186,6 +188,9 @@ where
         route: R,
     ) -> ContractResult<Response<M>> {
         self.owner.assert_owner(deps.storage, &sender)?;
+
+        validate_native_denom(&denom_in)?;
+        validate_native_denom(&denom_out)?;
 
         route.validate(&deps.querier, &denom_in, &denom_out)?;
 

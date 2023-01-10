@@ -1,10 +1,10 @@
-use crate::helpers::{query, setup_test};
 use cosmwasm_std::testing::{mock_env, mock_info};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::contract::entry::execute;
 use mars_outpost::oracle::{ConfigResponse, ExecuteMsg, QueryMsg};
-use mars_owner::OwnerError::NotOwner;
-use mars_owner::OwnerUpdate;
+use mars_owner::{OwnerError::NotOwner, OwnerUpdate};
+
+use crate::helpers::{query, setup_test};
 
 mod helpers;
 

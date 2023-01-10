@@ -1,8 +1,7 @@
 use cosmwasm_std::{CheckedMultiplyRatioError, OverflowError, StdError, Uint128};
+use mars_outpost::error::MarsError;
 use mars_owner::OwnerError;
 use thiserror::Error;
-
-use mars_outpost::error::MarsError;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {

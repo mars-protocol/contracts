@@ -17,7 +17,7 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-bech32          = "0.9"
+bech32          = { workspace = true }
 cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
 cw-storage-plus = { workspace = true }
