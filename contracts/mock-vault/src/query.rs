@@ -1,12 +1,12 @@
 use cosmwasm_std::{Deps, Order, StdError, StdResult, Storage, Uint128};
-use cosmwasm_vault_standard::extensions::lockup::UnlockingPosition;
-use cosmwasm_vault_standard::msg::VaultInfoResponse;
+use cosmwasm_vault_standard::{extensions::lockup::UnlockingPosition, msg::VaultInfoResponse};
 use cw_utils::Duration;
 
-use crate::error::ContractError::NotLockingVault;
-use crate::error::ContractResult;
-use crate::state::{
-    COIN_BALANCE, LOCKUP_TIME, TOTAL_VAULT_SHARES, UNLOCKING_POSITIONS, VAULT_TOKEN_DENOM,
+use crate::{
+    error::{ContractError::NotLockingVault, ContractResult},
+    state::{
+        COIN_BALANCE, LOCKUP_TIME, TOTAL_VAULT_SHARES, UNLOCKING_POSITIONS, VAULT_TOKEN_DENOM,
+    },
 };
 
 pub fn shares_to_base_denom_amount(

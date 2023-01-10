@@ -1,28 +1,31 @@
 use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
-
 use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
-use mars_rover::coins::Coins;
-use mars_rover::error::{ContractError, ContractResult};
-use mars_rover::msg::execute::{Action, CallbackMsg};
-
-use crate::borrow::borrow;
-use crate::deposit::deposit;
-use crate::health::assert_below_max_ltv;
-use crate::liquidate_coin::liquidate_coin;
-use crate::refund::refund_coin_balances;
-use crate::repay::repay;
-use crate::state::ACCOUNT_NFT;
-use crate::swap::swap_exact_in;
-use crate::update_coin_balances::update_coin_balance;
-use crate::utils::{assert_is_token_owner, assert_not_contract_in_config};
-use crate::vault::{
-    assert_only_one_vault_position, enter_vault, exit_vault, exit_vault_unlocked, liquidate_vault,
-    request_vault_unlock, update_vault_coin_balance,
+use mars_rover::{
+    coins::Coins,
+    error::{ContractError, ContractResult},
+    msg::execute::{Action, CallbackMsg},
 };
-use crate::withdraw::withdraw;
-use crate::zap::{provide_liquidity, withdraw_liquidity};
+
+use crate::{
+    borrow::borrow,
+    deposit::deposit,
+    health::assert_below_max_ltv,
+    liquidate_coin::liquidate_coin,
+    refund::refund_coin_balances,
+    repay::repay,
+    state::ACCOUNT_NFT,
+    swap::swap_exact_in,
+    update_coin_balances::update_coin_balance,
+    utils::{assert_is_token_owner, assert_not_contract_in_config},
+    vault::{
+        assert_only_one_vault_position, enter_vault, exit_vault, exit_vault_unlocked,
+        liquidate_vault, request_vault_unlock, update_vault_coin_balance,
+    },
+    withdraw::withdraw,
+    zap::{provide_liquidity, withdraw_liquidity},
+};
 
 pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Response> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
@@ -57,13 +60,7 @@ pub fn dispatch_actions(
     for action in actions {
         match action {
             Action::Deposit(coin) => {
-                response = deposit(
-                    deps.storage,
-                    response,
-                    account_id,
-                    coin,
-                    &mut received_coins,
-                )?;
+                response = deposit(deps.storage, response, account_id, coin, &mut received_coins)?;
             }
             Action::Withdraw(coin) => callbacks.push(CallbackMsg::Withdraw {
                 account_id: account_id.to_string(),
@@ -78,7 +75,10 @@ pub fn dispatch_actions(
                 account_id: account_id.to_string(),
                 coin: coin.clone(),
             }),
-            Action::EnterVault { vault, coin } => callbacks.push(CallbackMsg::EnterVault {
+            Action::EnterVault {
+                vault,
+                coin,
+            } => callbacks.push(CallbackMsg::EnterVault {
                 account_id: account_id.to_string(),
                 vault: vault.check(deps.api)?,
                 coin: coin.clone(),
@@ -115,25 +115,30 @@ pub fn dispatch_actions(
                 denom_out: denom_out.clone(),
                 slippage: *slippage,
             }),
-            Action::ExitVault { vault, amount } => callbacks.push(CallbackMsg::ExitVault {
+            Action::ExitVault {
+                vault,
+                amount,
+            } => callbacks.push(CallbackMsg::ExitVault {
                 account_id: account_id.to_string(),
                 vault: vault.check(deps.api)?,
                 amount: *amount,
             }),
-            Action::RequestVaultUnlock { vault, amount } => {
-                callbacks.push(CallbackMsg::RequestVaultUnlock {
-                    account_id: account_id.to_string(),
-                    vault: vault.check(deps.api)?,
-                    amount: *amount,
-                })
-            }
-            Action::ExitVaultUnlocked { id, vault } => {
-                callbacks.push(CallbackMsg::ExitVaultUnlocked {
-                    account_id: account_id.to_string(),
-                    vault: vault.check(deps.api)?,
-                    position_id: *id,
-                })
-            }
+            Action::RequestVaultUnlock {
+                vault,
+                amount,
+            } => callbacks.push(CallbackMsg::RequestVaultUnlock {
+                account_id: account_id.to_string(),
+                vault: vault.check(deps.api)?,
+                amount: *amount,
+            }),
+            Action::ExitVaultUnlocked {
+                id,
+                vault,
+            } => callbacks.push(CallbackMsg::ExitVaultUnlocked {
+                account_id: account_id.to_string(),
+                vault: vault.check(deps.api)?,
+                position_id: *id,
+            }),
             Action::ProvideLiquidity {
                 coins_in,
                 lp_token_out,
@@ -144,12 +149,12 @@ pub fn dispatch_actions(
                 coins_in: coins_in.clone(),
                 minimum_receive: *minimum_receive,
             }),
-            Action::WithdrawLiquidity { lp_token } => {
-                callbacks.push(CallbackMsg::WithdrawLiquidity {
-                    account_id: account_id.to_string(),
-                    lp_token: lp_token.clone(),
-                })
-            }
+            Action::WithdrawLiquidity {
+                lp_token,
+            } => callbacks.push(CallbackMsg::WithdrawLiquidity {
+                account_id: account_id.to_string(),
+                lp_token: lp_token.clone(),
+            }),
             Action::RefundAllCoinBalances {} => {
                 callbacks.push(CallbackMsg::RefundAllCoinBalances {
                     account_id: account_id.to_string(),
@@ -200,11 +205,17 @@ pub fn execute_callback(
             coin,
             recipient,
         } => withdraw(deps, &account_id, coin, recipient),
-        CallbackMsg::Borrow { coin, account_id } => borrow(deps, env, &account_id, coin),
-        CallbackMsg::Repay { account_id, coin } => repay(deps, env, &account_id, &coin),
-        CallbackMsg::AssertBelowMaxLTV { account_id } => {
-            assert_below_max_ltv(deps.as_ref(), env, &account_id)
-        }
+        CallbackMsg::Borrow {
+            coin,
+            account_id,
+        } => borrow(deps, env, &account_id, coin),
+        CallbackMsg::Repay {
+            account_id,
+            coin,
+        } => repay(deps, env, &account_id, &coin),
+        CallbackMsg::AssertBelowMaxLTV {
+            account_id,
+        } => assert_below_max_ltv(deps.as_ref(), env, &account_id),
         CallbackMsg::EnterVault {
             account_id,
             vault,
@@ -279,23 +290,16 @@ pub fn execute_callback(
             coins_in,
             lp_token_out,
             minimum_receive,
-        } => provide_liquidity(
-            deps,
-            env,
-            &account_id,
-            coins_in,
-            &lp_token_out,
-            minimum_receive,
-        ),
+        } => provide_liquidity(deps, env, &account_id, coins_in, &lp_token_out, minimum_receive),
         CallbackMsg::WithdrawLiquidity {
             account_id,
             lp_token,
         } => withdraw_liquidity(deps, env, &account_id, &lp_token),
-        CallbackMsg::AssertOneVaultPositionOnly { account_id } => {
-            assert_only_one_vault_position(deps, &account_id)
-        }
-        CallbackMsg::RefundAllCoinBalances { account_id } => {
-            refund_coin_balances(deps, env, &account_id)
-        }
+        CallbackMsg::AssertOneVaultPositionOnly {
+            account_id,
+        } => assert_only_one_vault_position(deps, &account_id),
+        CallbackMsg::RefundAllCoinBalances {
+            account_id,
+        } => refund_coin_balances(deps, env, &account_id),
     }
 }

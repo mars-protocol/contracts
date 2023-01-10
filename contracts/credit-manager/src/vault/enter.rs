@@ -1,17 +1,24 @@
 use cosmwasm_std::{
     to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Uint128, WasmMsg,
 };
+use mars_rover::{
+    adapters::vault::{UpdateType, Vault, VaultPositionUpdate},
+    error::{ContractError, ContractResult},
+    msg::{
+        execute::{ActionAmount, ActionCoin, CallbackMsg},
+        ExecuteMsg,
+    },
+};
 
-use mars_rover::adapters::vault::{UpdateType, Vault, VaultPositionUpdate};
-use mars_rover::error::{ContractError, ContractResult};
-use mars_rover::msg::execute::{ActionAmount, ActionCoin, CallbackMsg};
-use mars_rover::msg::ExecuteMsg;
-
-use crate::query::query_vault_positions;
-use crate::state::{COIN_BALANCES, ORACLE, VAULT_CONFIGS};
-use crate::utils::{assert_coin_is_whitelisted, decrement_coin_balance};
-use crate::vault::rover_vault_balance_value;
-use crate::vault::utils::{assert_vault_is_whitelisted, update_vault_position};
+use crate::{
+    query::query_vault_positions,
+    state::{COIN_BALANCES, ORACLE, VAULT_CONFIGS},
+    utils::{assert_coin_is_whitelisted, decrement_coin_balance},
+    vault::{
+        rover_vault_balance_value,
+        utils::{assert_vault_is_whitelisted, update_vault_position},
+    },
+};
 
 pub fn enter_vault(
     deps: DepsMut,
@@ -83,10 +90,7 @@ pub fn update_vault_coin_balance(
 
     Ok(Response::new()
         .add_attribute("action", "rover/credit-manager/vault/update_balance")
-        .add_attribute(
-            "amount_incremented",
-            current_balance.checked_sub(previous_total_balance)?,
-        ))
+        .add_attribute("amount_incremented", current_balance.checked_sub(previous_total_balance)?))
 }
 
 pub fn assert_denom_matches_vault_reqs(
@@ -135,8 +139,6 @@ pub fn assert_only_one_vault_position(deps: DepsMut, account_id: &str) -> Contra
         return Err(ContractError::OnlyOneVaultPositionAllowed);
     }
 
-    Ok(Response::new().add_attribute(
-        "action",
-        "rover/credit-manager/callback/assert_only_one_vault_position",
-    ))
+    Ok(Response::new()
+        .add_attribute("action", "rover/credit-manager/callback/assert_only_one_vault_position"))
 }

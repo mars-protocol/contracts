@@ -1,10 +1,13 @@
 use cosmwasm_std::{Coin, Decimal, DepsMut, Env, Response, Uint128};
+use mars_rover::{
+    error::{ContractError, ContractResult},
+    msg::execute::{ActionAmount, ActionCoin},
+};
 
-use mars_rover::error::{ContractError, ContractResult};
-use mars_rover::msg::execute::{ActionAmount, ActionCoin};
-
-use crate::state::{COIN_BALANCES, SWAPPER};
-use crate::utils::{assert_coin_is_whitelisted, decrement_coin_balance, update_balance_msg};
+use crate::{
+    state::{COIN_BALANCES, SWAPPER},
+    utils::{assert_coin_is_whitelisted, decrement_coin_balance, update_balance_msg},
+};
 
 pub fn swap_exact_in(
     deps: DepsMut,

@@ -3,15 +3,18 @@ use cosmwasm_std::{
 };
 use cw721::Cw721Execute;
 use cw721_base::MintMsg;
-
 use mars_health::HealthResponse;
 use mars_rover::msg::QueryMsg::Health;
 
-use crate::config::ConfigUpdates;
-use crate::contract::Parent;
-use crate::error::ContractError;
-use crate::error::ContractError::{BaseError, BurnNotAllowed};
-use crate::state::{CONFIG, NEXT_ID};
+use crate::{
+    config::ConfigUpdates,
+    contract::Parent,
+    error::{
+        ContractError,
+        ContractError::{BaseError, BurnNotAllowed},
+    },
+    state::{CONFIG, NEXT_ID},
+};
 
 pub fn mint(
     deps: DepsMut,
@@ -28,9 +31,7 @@ pub fn mint(
     };
     NEXT_ID.save(deps.storage, &(next_id + 1))?;
 
-    Parent::default()
-        .mint(deps, env, info, mint_msg_override)
-        .map_err(Into::into)
+    Parent::default().mint(deps, env, info, mint_msg_override).map_err(Into::into)
 }
 
 /// Checks first to ensure the balance of debts and collateral does not exceed the config
@@ -50,9 +51,8 @@ pub fn burn(
     }))?;
 
     let max_value_allowed = CONFIG.load(deps.storage)?.max_value_for_burn;
-    let current_balances = response
-        .total_debt_value
-        .checked_add(response.total_collateral_value)?;
+    let current_balances =
+        response.total_debt_value.checked_add(response.total_collateral_value)?;
     if current_balances > max_value_allowed {
         return Err(BurnNotAllowed {
             current_balances,
@@ -60,9 +60,7 @@ pub fn burn(
         });
     }
 
-    Parent::default()
-        .burn(deps, env, info, token_id)
-        .map_err(Into::into)
+    Parent::default().burn(deps, env, info, token_id).map_err(Into::into)
 }
 
 pub fn update_config(
@@ -88,9 +86,7 @@ pub fn update_config(
     if let Some(addr) = updates.proposed_new_minter {
         let validated = deps.api.addr_validate(&addr)?;
         config.proposed_new_minter = Some(validated);
-        response = response
-            .add_attribute("key", "pending_minter")
-            .add_attribute("value", addr);
+        response = response.add_attribute("key", "pending_minter").add_attribute("value", addr);
     }
 
     CONFIG.save(deps.storage, &config)?;

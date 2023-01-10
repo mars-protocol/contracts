@@ -7,10 +7,7 @@ pub mod helpers;
 #[test]
 fn test_pagination_on_vault_configs_query_works() {
     let vault_configs = build_mock_vaults(32);
-    let mock = MockEnv::new()
-        .vault_configs(&vault_configs)
-        .build()
-        .unwrap();
+    let mock = MockEnv::new().vault_configs(&vault_configs).build().unwrap();
 
     let vaults_res = mock.query_vault_configs(None, Some(58_u32));
 
@@ -51,10 +48,7 @@ fn test_pagination_on_vault_configs_query_works() {
     assert_eq!(combined.len(), vault_configs.len());
 
     assert_contents_equal(
-        &vault_configs
-            .iter()
-            .map(|v| v.vault_token_denom.clone())
-            .collect::<Vec<_>>(),
+        &vault_configs.iter().map(|v| v.vault_token_denom.clone()).collect::<Vec<_>>(),
         &combined,
     )
 }

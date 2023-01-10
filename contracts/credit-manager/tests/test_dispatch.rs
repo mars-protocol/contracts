@@ -1,9 +1,9 @@
 use cosmwasm_std::{coin, Addr};
-
 use helpers::assert_err;
-use mars_rover::error::ContractError;
-use mars_rover::error::ContractError::NotTokenOwner;
-use mars_rover::msg::execute::CallbackMsg;
+use mars_rover::{
+    error::{ContractError, ContractError::NotTokenOwner},
+    msg::execute::CallbackMsg,
+};
 
 use crate::helpers::MockEnv;
 
@@ -36,8 +36,7 @@ fn test_nothing_happens_if_no_actions_are_passed() {
     let res = mock.query_positions(&account_id);
     assert_eq!(res.deposits.len(), 0);
 
-    mock.update_credit_account(&account_id, &user, vec![], &[])
-        .unwrap();
+    mock.update_credit_account(&account_id, &user, vec![], &[]).unwrap();
 
     let res = mock.query_positions(&account_id);
     assert_eq!(res.deposits.len(), 0);

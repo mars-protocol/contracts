@@ -1,11 +1,9 @@
 use cosmwasm_std::{coin, coins, Addr, Coin, Uint128};
-
-use mars_rover::coins::Coins;
-use mars_rover::error::ContractError::{
-    ExtraFundsReceived, FundsMismatch, NotTokenOwner, NotWhitelisted,
+use mars_rover::{
+    coins::Coins,
+    error::ContractError::{ExtraFundsReceived, FundsMismatch, NotTokenOwner, NotWhitelisted},
+    msg::{execute::Action, query::Positions},
 };
-use mars_rover::msg::execute::Action;
-use mars_rover::msg::query::Positions;
 
 use crate::helpers::{
     assert_err, uatom_info, ujake_info, uosmo_info, AccountToFund, CoinInfo, MockEnv,
@@ -40,10 +38,7 @@ fn test_only_owner_of_token_can_deposit() {
 fn test_deposit_nothing() {
     let coin_info = uosmo_info();
 
-    let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
-        .build()
-        .unwrap();
+    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
     let user = Addr::unchecked("user");
     let account_id = mock.create_credit_account(&user).unwrap();
 
@@ -66,10 +61,7 @@ fn test_deposit_nothing() {
 fn test_deposit_but_no_funds() {
     let coin_info = uosmo_info();
 
-    let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
-        .build()
-        .unwrap();
+    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
     let user = Addr::unchecked("user");
     let account_id = mock.create_credit_account(&user).unwrap();
 
@@ -163,10 +155,7 @@ fn test_extra_funds_received() {
         .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![
-                coin(300, uosmo_info.denom.clone()),
-                coin(250, uatom_info.denom.clone()),
-            ],
+            funds: vec![coin(300, uosmo_info.denom.clone()), coin(250, uatom_info.denom.clone())],
         })
         .build()
         .unwrap();
@@ -180,10 +169,7 @@ fn test_extra_funds_received() {
         &[coin(234, uosmo_info.denom), extra_funds.clone()],
     );
 
-    assert_err(
-        res,
-        ExtraFundsReceived(Coins::try_from(vec![extra_funds]).unwrap()),
-    );
+    assert_err(res, ExtraFundsReceived(Coins::try_from(vec![extra_funds]).unwrap()));
 
     let res = mock.query_positions(&account_id);
     assert_eq!(res.deposits.len(), 0);
@@ -233,10 +219,7 @@ fn test_multiple_deposit_actions() {
         .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![
-                coin(300, uosmo_info.denom.clone()),
-                coin(50, uatom_info.denom.clone()),
-            ],
+            funds: vec![coin(300, uosmo_info.denom.clone()), coin(50, uatom_info.denom.clone())],
         })
         .build()
         .unwrap();
@@ -252,10 +235,7 @@ fn test_multiple_deposit_actions() {
             Action::Deposit(uosmo_info.to_coin(uosmo_amount.u128())),
             Action::Deposit(uatom_info.to_coin(uatom_amount.u128())),
         ],
-        &[
-            coin(234, uosmo_info.denom.clone()),
-            coin(25, uatom_info.denom.clone()),
-        ],
+        &[coin(234, uosmo_info.denom.clone()), coin(25, uatom_info.denom.clone())],
     )
     .unwrap();
 
@@ -272,8 +252,5 @@ fn test_multiple_deposit_actions() {
 }
 
 fn assert_present(res: &Positions, coin: &CoinInfo, amount: Uint128) {
-    res.deposits
-        .iter()
-        .find(|item| item.denom == coin.denom && item.amount == amount)
-        .unwrap();
+    res.deposits.iter().find(|item| item.denom == coin.denom && item.amount == amount).unwrap();
 }

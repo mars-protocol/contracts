@@ -1,10 +1,11 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
-
 use mars_owner::OwnerUpdate;
 
-use crate::adapters::vault::{Vault, VaultPositionType, VaultUnchecked};
-use crate::msg::instantiate::ConfigUpdates;
+use crate::{
+    adapters::vault::{Vault, VaultPositionType, VaultUnchecked},
+    msg::instantiate::ConfigUpdates,
+};
 
 #[cw_serde]
 pub enum ExecuteMsg {
@@ -23,7 +24,9 @@ pub enum ExecuteMsg {
     // Privileged messages
     //--------------------------------------------------------------------------------------------------
     /// Update contract config constants
-    UpdateConfig { new_config: ConfigUpdates },
+    UpdateConfig {
+        new_config: ConfigUpdates,
+    },
     /// Manages owner role state
     UpdateOwner(OwnerUpdate),
     /// Internal actions only callable by the contract itself
@@ -89,7 +92,10 @@ pub enum Action {
         amount: Uint128,
     },
     /// Withdraws the assets for unlocking position id from vault. Required time must have elapsed.
-    ExitVaultUnlocked { id: u64, vault: VaultUnchecked },
+    ExitVaultUnlocked {
+        id: u64,
+        vault: VaultUnchecked,
+    },
     /// Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt
     /// denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the
     /// liquidatee should have a balance of. The amount returned to liquidator will be the request coin
@@ -133,7 +139,9 @@ pub enum Action {
     },
     /// Send LP token and withdraw corresponding reserve assets from pool.
     /// If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used.
-    WithdrawLiquidity { lp_token: ActionCoin },
+    WithdrawLiquidity {
+        lp_token: ActionCoin,
+    },
     /// Refunds all coin balances back to user wallet
     RefundAllCoinBalances {},
 }
@@ -150,7 +158,10 @@ pub enum CallbackMsg {
     },
     /// Borrow specified amount of coin from Red Bank;
     /// Increase the token's coin amount and debt shares;
-    Borrow { account_id: String, coin: Coin },
+    Borrow {
+        account_id: String,
+        coin: Coin,
+    },
     /// Repay coin of specified amount back to Red Bank;
     /// Decrement the token's coin amount and debt shares;
     /// If `coin.amount: AccountBalance` is passed, the repaid amount will be the minimum
@@ -161,7 +172,9 @@ pub enum CallbackMsg {
     },
     /// Calculate the account's max loan-to-value health factor. If above 1,
     /// emits a `position_changed` event. If 1 or below, raises an error.
-    AssertBelowMaxLTV { account_id: String },
+    AssertBelowMaxLTV {
+        account_id: String,
+    },
     /// Adds coin to a vault strategy
     EnterVault {
         account_id: String,
@@ -237,9 +250,13 @@ pub enum CallbackMsg {
         lp_token: ActionCoin,
     },
     /// Checks to ensure only one vault position is taken per credit account
-    AssertOneVaultPositionOnly { account_id: String },
+    AssertOneVaultPositionOnly {
+        account_id: String,
+    },
     /// Refunds all coin balances back to user wallet
-    RefundAllCoinBalances { account_id: String },
+    RefundAllCoinBalances {
+        account_id: String,
+    },
 }
 
 impl CallbackMsg {

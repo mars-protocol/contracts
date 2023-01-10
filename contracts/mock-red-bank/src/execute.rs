@@ -1,7 +1,6 @@
 use cosmwasm_std::{coin, BankMsg, CosmosMsg, DepsMut, MessageInfo, Response, StdResult, Uint128};
 
-use crate::helpers::load_debt_amount;
-use crate::state::DEBT_AMOUNT;
+use crate::{helpers::load_debt_amount, state::DEBT_AMOUNT};
 
 pub fn borrow(
     deps: DepsMut,
@@ -14,9 +13,7 @@ pub fn borrow(
     DEBT_AMOUNT.save(
         deps.storage,
         (info.sender.clone(), denom.clone()),
-        &debt_amount
-            .checked_add(amount)?
-            .checked_add(Uint128::new(1))?, // The extra unit is simulated accrued interest
+        &debt_amount.checked_add(amount)?.checked_add(Uint128::new(1))?, // The extra unit is simulated accrued interest
     )?;
 
     let transfer_msg = CosmosMsg::Bank(BankMsg::Send {

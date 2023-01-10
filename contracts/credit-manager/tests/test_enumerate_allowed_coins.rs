@@ -5,10 +5,7 @@ pub mod helpers;
 #[test]
 fn test_pagination_on_allowed_coins_query_works() {
     let allowed_coins = build_mock_coin_infos(32);
-    let mock = MockEnv::new()
-        .allowed_coins(&build_mock_coin_infos(32))
-        .build()
-        .unwrap();
+    let mock = MockEnv::new().allowed_coins(&build_mock_coin_infos(32)).build().unwrap();
 
     let coins_res = mock.query_allowed_coins(None, Some(58_u32));
 
@@ -41,7 +38,5 @@ fn test_pagination_on_allowed_coins_query_works() {
         .collect();
 
     assert_eq!(combined.len(), allowed_coins.len());
-    assert!(allowed_coins
-        .iter()
-        .all(|item| combined.contains(&item.denom)));
+    assert!(allowed_coins.iter().all(|item| combined.contains(&item.denom)));
 }

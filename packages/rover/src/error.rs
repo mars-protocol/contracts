@@ -19,7 +19,10 @@ pub enum ContractError {
     },
 
     #[error("Vault deposit would result in exceeding limit. With deposit: {new_value:?}, Maximum: {maximum:?}")]
-    AboveVaultDepositCap { new_value: String, maximum: String },
+    AboveVaultDepositCap {
+        new_value: String,
+        maximum: String,
+    },
 
     #[error("{0}")]
     OwnerError(#[from] OwnerError),
@@ -60,13 +63,21 @@ pub enum ContractError {
     #[error(
         "Actions did not result in improved health factor: before: {prev_hf:?}, after: {new_hf:?}"
     )]
-    HealthNotImproved { prev_hf: String, new_hf: String },
+    HealthNotImproved {
+        prev_hf: String,
+        new_hf: String,
+    },
 
     #[error("{reason:?}")]
-    InvalidConfig { reason: String },
+    InvalidConfig {
+        reason: String,
+    },
 
     #[error("Paying down {debt_coin:?} for {request_coin:?} does not result in a profit for the liquidator")]
-    LiquidationNotProfitable { debt_coin: Coin, request_coin: Coin },
+    LiquidationNotProfitable {
+        debt_coin: Coin,
+        request_coin: Coin,
+    },
 
     #[error("Issued incorrect action for vault type")]
     MismatchedVaultType,
@@ -89,7 +100,10 @@ pub enum ContractError {
     },
 
     #[error("{user:?} is not the owner of {account_id:?}")]
-    NotTokenOwner { user: String, account_id: String },
+    NotTokenOwner {
+        user: String,
+        account_id: String,
+    },
 
     #[error("{0} is not whitelisted")]
     NotWhitelisted(String),
@@ -113,7 +127,10 @@ pub enum ContractError {
     Std(#[from] StdError),
 
     #[error("{user:?} is not authorized to {action:?}")]
-    Unauthorized { user: String, action: String },
+    Unauthorized {
+        user: String,
+        action: String,
+    },
 
     #[error("There is more time left on the lock period")]
     UnlockNotReady,

@@ -2,15 +2,13 @@ use std::collections::HashSet;
 
 use cosmwasm_std::{Decimal, DepsMut};
 use mars_owner::OwnerInit::SetInitialOwner;
+use mars_rover::{
+    error::{ContractError::InvalidConfig, ContractResult},
+    msg::{instantiate::VaultInstantiateConfig, InstantiateMsg},
+};
 
-use mars_rover::error::ContractError::InvalidConfig;
-use mars_rover::error::ContractResult;
-use mars_rover::msg::instantiate::VaultInstantiateConfig;
-use mars_rover::msg::InstantiateMsg;
-
-use crate::state::OWNER;
 use crate::state::{
-    ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, RED_BANK, SWAPPER,
+    ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, RED_BANK, SWAPPER,
     VAULT_CONFIGS, ZAPPER,
 };
 
@@ -33,13 +31,11 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
     MAX_CLOSE_FACTOR.save(deps.storage, &msg.max_close_factor)?;
 
     assert_no_duplicate_vaults(&msg.vault_configs)?;
-    msg.vault_configs
-        .iter()
-        .try_for_each(|v| -> ContractResult<_> {
-            v.config.check()?;
-            let vault = v.vault.check(deps.api)?;
-            Ok(VAULT_CONFIGS.save(deps.storage, &vault.address, &v.config)?)
-        })?;
+    msg.vault_configs.iter().try_for_each(|v| -> ContractResult<_> {
+        v.config.check()?;
+        let vault = v.vault.check(deps.api)?;
+        Ok(VAULT_CONFIGS.save(deps.storage, &vault.address, &v.config)?)
+    })?;
 
     assert_no_duplicate_coins(&msg.allowed_coins)?;
     msg.allowed_coins

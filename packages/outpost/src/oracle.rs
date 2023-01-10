@@ -14,13 +14,20 @@ pub type InstantiateMsg = Config<String>;
 #[cw_serde]
 pub enum ExecuteMsg<T> {
     /// Update contract config
-    UpdateConfig { owner: String },
+    UpdateConfig {
+        owner: String,
+    },
     /// Specify the price source to be used for a coin
     ///
     /// NOTE: The input parameters for method are chain-specific.
-    SetPriceSource { denom: String, price_source: T },
+    SetPriceSource {
+        denom: String,
+        price_source: T,
+    },
     /// Remove price source for a coin
-    RemovePriceSource { denom: String },
+    RemovePriceSource {
+        denom: String,
+    },
 }
 
 #[cw_serde]
@@ -33,7 +40,9 @@ pub enum QueryMsg {
     ///
     /// NOTE: The response type of this query is chain-specific.
     #[returns(PriceSourceResponse<String>)]
-    PriceSource { denom: String },
+    PriceSource {
+        denom: String,
+    },
     /// Enumerate all coins' price sources.
     ///
     /// NOTE: The response type of this query is chain-specific.
@@ -47,7 +56,9 @@ pub enum QueryMsg {
     /// NOTE: This query may be dependent on block time (e.g. if the price source is TWAP), so may not
     /// work properly with time travel queries on archive nodes.
     #[returns(PriceResponse)]
-    Price { denom: String },
+    Price {
+        denom: String,
+    },
     /// Enumerate all coins' prices.
     ///
     /// NOTE: This query may be dependent on block time (e.g. if the price source is TWAP), so may not
@@ -72,8 +83,9 @@ pub struct PriceResponse {
 }
 
 pub mod helpers {
-    use super::{PriceResponse, QueryMsg};
     use cosmwasm_std::{Decimal, QuerierWrapper, StdResult};
+
+    use super::{PriceResponse, QueryMsg};
 
     pub fn query_price(
         querier: &QuerierWrapper,

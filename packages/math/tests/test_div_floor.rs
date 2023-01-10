@@ -1,7 +1,8 @@
 use cosmwasm_std::{ConversionOverflowError, Decimal, DivideByZeroError, Uint128};
-
-use mars_math::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
-use mars_math::{FractionMath, Fractional};
+use mars_math::{
+    CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero},
+    FractionMath, Fractional,
+};
 
 #[test]
 fn div_floor_raises_with_zero() {
@@ -40,10 +41,7 @@ fn div_floor_does_not_round_on_even_divide() {
 fn div_floor_works_when_operation_temporarily_takes_above_max() {
     let fraction = Fractional(21u128, 8u128);
     let res = Uint128::MAX.checked_div_floor(fraction).unwrap(); // 129_631_377_874_643_224_176_523_659_974_006_937_697.1428
-    assert_eq!(
-        Uint128::new(129_631_377_874_643_224_176_523_659_974_006_937_697),
-        res
-    )
+    assert_eq!(Uint128::new(129_631_377_874_643_224_176_523_659_974_006_937_697), res)
 }
 
 #[test]
@@ -55,9 +53,7 @@ fn div_floor_works_with_decimal() {
 
 #[test]
 fn div_floor_works_with_decimal_evenly() {
-    let res = Uint128::new(60)
-        .checked_div_floor(Decimal::from_atomics(6u128, 0).unwrap())
-        .unwrap();
+    let res = Uint128::new(60).checked_div_floor(Decimal::from_atomics(6u128, 0).unwrap()).unwrap();
     assert_eq!(res, Uint128::new(10));
 }
 

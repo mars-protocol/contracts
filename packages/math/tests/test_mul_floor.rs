@@ -1,7 +1,8 @@
 use cosmwasm_std::{ConversionOverflowError, Decimal, DivideByZeroError, Uint128};
-
-use mars_math::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
-use mars_math::{FractionMath, Fractional};
+use mars_math::{
+    CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero},
+    FractionMath, Fractional,
+};
 
 #[test]
 fn mul_floor_works_with_zero() {
@@ -36,10 +37,7 @@ fn mul_floor_does_not_round_on_even_divide() {
 fn mul_floor_works_when_operation_temporarily_takes_above_max() {
     let fraction = Fractional(8u128, 21u128);
     let res = Uint128::MAX.checked_mul_floor(fraction).unwrap(); // 129_631_377_874_643_224_176_523_659_974_006_937_697.1428
-    assert_eq!(
-        Uint128::new(129_631_377_874_643_224_176_523_659_974_006_937_697),
-        res
-    )
+    assert_eq!(Uint128::new(129_631_377_874_643_224_176_523_659_974_006_937_697), res)
 }
 
 #[test]

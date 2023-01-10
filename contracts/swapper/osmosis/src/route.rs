@@ -25,7 +25,7 @@ impl fmt::Display for OsmosisRoute {
             .map(|step| format!("{}:{}", step.pool_id, step.token_out_denom))
             .collect::<Vec<_>>()
             .join("|");
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 
@@ -93,8 +93,7 @@ impl Route<Empty, Empty> for OsmosisRoute {
         if prev_denom_out != denom_out {
             return Err(ContractError::InvalidRoute {
                 reason: format!(
-                    "the route's output denom {} does not match the desired output {}",
-                    prev_denom_out, denom_out
+                    "the route's output denom {prev_denom_out} does not match the desired output {denom_out}",
                 ),
             });
         }
@@ -139,7 +138,9 @@ impl Route<Empty, Empty> for OsmosisRoute {
         coin_in: &Coin,
     ) -> ContractResult<EstimateExactInSwapResponse> {
         let out_amount = query_out_amount(querier, &env.block, coin_in, &self.0)?;
-        Ok(EstimateExactInSwapResponse { amount: out_amount })
+        Ok(EstimateExactInSwapResponse {
+            amount: out_amount,
+        })
     }
 }
 
@@ -162,19 +163,13 @@ fn query_out_amount(
     let mut price = Decimal::one();
     let mut denom_in = coin_in.denom.clone();
     for step in steps {
-        let step_price = query_twap_price(
-            querier,
-            step.pool_id,
-            &denom_in,
-            &step.token_out_denom,
-            start_time,
-        )?;
+        let step_price =
+            query_twap_price(querier, step.pool_id, &denom_in, &step.token_out_denom, start_time)?;
         price = price.checked_mul(step_price)?;
         denom_in = step.token_out_denom.clone();
     }
 
-    let out_amount = coin_in
-        .amount
-        .checked_multiply_ratio(price.numerator(), price.denominator())?;
+    let out_amount =
+        coin_in.amount.checked_multiply_ratio(price.numerator(), price.denominator())?;
     Ok(out_amount)
 }

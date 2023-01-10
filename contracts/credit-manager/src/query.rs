@@ -1,21 +1,23 @@
 use cosmwasm_std::{Addr, Coin, Deps, Env, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
-
-use mars_rover::adapters::vault::{Vault, VaultBase, VaultPosition, VaultUnchecked};
-use mars_rover::error::ContractResult;
-use mars_rover::msg::query::{
-    CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, Positions, SharesResponseItem,
-    VaultInfoResponse, VaultPositionResponseItem, VaultWithBalance,
+use mars_rover::{
+    adapters::vault::{Vault, VaultBase, VaultPosition, VaultUnchecked},
+    error::ContractResult,
+    msg::query::{
+        CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, Positions,
+        SharesResponseItem, VaultInfoResponse, VaultPositionResponseItem, VaultWithBalance,
+    },
 };
 
-use crate::state::OWNER;
-use crate::state::{
-    ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, DEBT_SHARES, MAX_CLOSE_FACTOR,
-    MAX_UNLOCKING_POSITIONS, ORACLE, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES, VAULT_CONFIGS,
-    VAULT_POSITIONS, ZAPPER,
+use crate::{
+    state::{
+        ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, DEBT_SHARES, MAX_CLOSE_FACTOR,
+        MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES,
+        VAULT_CONFIGS, VAULT_POSITIONS, ZAPPER,
+    },
+    utils::debt_shares_to_amount,
+    vault::vault_utilization_in_deposit_cap_denom,
 };
-use crate::utils::debt_shares_to_amount;
-use crate::vault::vault_utilization_in_deposit_cap_denom;
 
 const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
@@ -25,9 +27,7 @@ pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
     Ok(ConfigResponse {
         owner: owner_res.owner,
         proposed_new_owner: owner_res.proposed,
-        account_nft: ACCOUNT_NFT
-            .may_load(deps.storage)?
-            .map(|addr| addr.to_string()),
+        account_nft: ACCOUNT_NFT.may_load(deps.storage)?.map(|addr| addr.to_string()),
         red_bank: RED_BANK.load(deps.storage)?.address().into(),
         oracle: ORACLE.load(deps.storage)?.address().into(),
         max_close_factor: MAX_CLOSE_FACTOR.load(deps.storage)?,
@@ -91,7 +91,10 @@ pub fn query_coin_balances(deps: Deps, account_id: &str) -> ContractResult<Vec<C
         .range(deps.storage, None, None, Order::Ascending)
         .map(|item| {
             let (denom, amount) = item?;
-            Ok(Coin { denom, amount })
+            Ok(Coin {
+                denom,
+                amount,
+            })
         })
         .collect()
 }
@@ -206,9 +209,7 @@ pub fn query_allowed_coins(
     start_after: Option<String>,
     limit: Option<u32>,
 ) -> StdResult<Vec<String>> {
-    let start = start_after
-        .as_ref()
-        .map(|denom| Bound::exclusive(denom.as_str()));
+    let start = start_after.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
 
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
@@ -231,9 +232,7 @@ pub fn query_all_total_debt_shares(
     start_after: Option<String>,
     limit: Option<u32>,
 ) -> StdResult<Vec<DebtShares>> {
-    let start = start_after
-        .as_ref()
-        .map(|denom| Bound::exclusive(denom.as_str()));
+    let start = start_after.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
 
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
@@ -282,7 +281,10 @@ pub fn query_all_total_vault_coin_balances(
             let addr = res?;
             let vault = VaultBase::new(addr);
             let balance = vault.query_balance(&deps.querier, rover_addr)?;
-            Ok(VaultWithBalance { vault, balance })
+            Ok(VaultWithBalance {
+                vault,
+                balance,
+            })
         })
         .collect()
 }

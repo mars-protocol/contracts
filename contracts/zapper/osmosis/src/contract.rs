@@ -1,7 +1,8 @@
-use crate::lp_pool::OsmosisLpPool;
 use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw2::set_contract_version;
 use mars_zapper_base::{ContractError, ExecuteMsg, InstantiateMsg, QueryMsg, ZapperBase};
+
+use crate::lp_pool::OsmosisLpPool;
 
 /// The Osmosis zapper contract inherits logic from the base zapper contract
 pub type OsmosisZapper = ZapperBase<OsmosisLpPool>;
@@ -16,11 +17,7 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    set_contract_version(
-        deps.storage,
-        &format!("crates.io:{}", CONTRACT_NAME),
-        CONTRACT_VERSION,
-    )?;
+    set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
     OsmosisZapper::default().instantiate(deps, msg)
 }
 

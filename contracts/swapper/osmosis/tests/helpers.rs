@@ -1,16 +1,14 @@
+use std::{fmt::Display, str::FromStr};
+
 use cosmwasm_std::{Coin, Decimal, Uint128};
+use mars_rover::adapters::swap::InstantiateMsg;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
     MsgSwapExactAmountIn, MsgSwapExactAmountInResponse, SwapAmountInRoute,
 };
-use std::fmt::Display;
-use std::str::FromStr;
-
-use osmosis_testing::cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest;
 use osmosis_testing::{
-    Account, Bank, ExecuteResponse, Gamm, OsmosisTestApp, Runner, RunnerError, SigningAccount, Wasm,
+    cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest, Account, Bank, ExecuteResponse,
+    Gamm, OsmosisTestApp, Runner, RunnerError, SigningAccount, Wasm,
 };
-
-use mars_rover::adapters::swap::InstantiateMsg;
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 
@@ -18,16 +16,12 @@ pub fn wasm_file() -> String {
     let artifacts_dir =
         std::env::var("ARTIFACTS_DIR_PATH").unwrap_or_else(|_| "artifacts".to_string());
     let snaked_name = CONTRACT_NAME.replace('-', "_");
-    format!("../../../{}/{}.wasm", artifacts_dir, snaked_name)
+    format!("../../../{artifacts_dir}/{snaked_name}.wasm")
 }
 
 pub fn instantiate_contract(wasm: &Wasm<OsmosisTestApp>, owner: &SigningAccount) -> String {
     let wasm_byte_code = std::fs::read(wasm_file()).unwrap();
-    let code_id = wasm
-        .store_code(&wasm_byte_code, None, owner)
-        .unwrap()
-        .data
-        .code_id;
+    let code_id = wasm.store_code(&wasm_byte_code, None, owner).unwrap().data.code_id;
 
     wasm.instantiate(
         code_id,
@@ -113,7 +107,7 @@ pub fn query_price_from_pool(gamm: &Gamm<OsmosisTestApp>, pool_id: u64, denom: &
     } else if coin_2.denom == denom {
         Decimal::from_ratio(coin_1_amt, coin_2_amt)
     } else {
-        panic!("{} not found in the pool {}", denom, pool_id)
+        panic!("{denom} not found in the pool {pool_id}")
     }
 }
 
@@ -130,11 +124,15 @@ pub fn query_balance(bank: &Bank<OsmosisTestApp>, addr: &str, denom: &str) -> u1
 
 pub fn assert_err(actual: RunnerError, expected: impl Display) {
     match actual {
-        RunnerError::ExecuteError { msg } => {
-            assert!(msg.contains(&format!("{}", expected)))
+        RunnerError::ExecuteError {
+            msg,
+        } => {
+            assert!(msg.contains(&format!("{expected}")))
         }
-        RunnerError::QueryError { msg } => {
-            assert!(msg.contains(&format!("{}", expected)))
+        RunnerError::QueryError {
+            msg,
+        } => {
+            assert!(msg.contains(&format!("{expected}")))
         }
         _ => panic!("Unhandled error"),
     }

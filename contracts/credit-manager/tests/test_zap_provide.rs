@@ -1,12 +1,14 @@
-use cosmwasm_std::OverflowOperation::Sub;
-use cosmwasm_std::{Addr, OverflowError, Uint128};
-use mars_zapper_mock::contract::STARTING_LP_POOL_TOKENS;
 use std::ops::Mul;
 
-use mars_rover::error::ContractError as RoverError;
-use mars_rover::msg::execute::Action::{Deposit, ProvideLiquidity, WithdrawLiquidity};
-use mars_rover::msg::execute::{ActionAmount, ActionCoin};
-use mars_zapper_mock::error::ContractError;
+use cosmwasm_std::{Addr, OverflowError, OverflowOperation::Sub, Uint128};
+use mars_rover::{
+    error::ContractError as RoverError,
+    msg::execute::{
+        Action::{Deposit, ProvideLiquidity, WithdrawLiquidity},
+        ActionAmount, ActionCoin,
+    },
+};
+use mars_zapper_mock::{contract::STARTING_LP_POOL_TOKENS, error::ContractError};
 
 use crate::helpers::{
     assert_err, get_coin, lp_token_info, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv,
@@ -289,10 +291,7 @@ fn test_successful_zap() {
     let config = mock.query_config();
     let lp_balance = mock.query_balance(&Addr::unchecked(config.zapper.clone()), &lp_token.denom);
     // prefunded minus minted
-    assert_eq!(
-        lp_balance.amount,
-        Uint128::new(10_000_000) - STARTING_LP_POOL_TOKENS
-    );
+    assert_eq!(lp_balance.amount, Uint128::new(10_000_000) - STARTING_LP_POOL_TOKENS);
     let atom_balance = mock.query_balance(&Addr::unchecked(config.zapper.clone()), &atom.denom);
     assert_eq!(atom_balance.amount, Uint128::new(100));
     let osmo_balance = mock.query_balance(&Addr::unchecked(config.zapper), &osmo.denom);
@@ -362,10 +361,7 @@ fn test_can_provide_unbalanced() {
     let positions = mock.query_positions(&account_id);
     assert_eq!(positions.deposits.len(), 2);
     let lp_balance = get_coin(&lp_token.denom, &positions.deposits);
-    assert_eq!(
-        lp_balance.amount,
-        STARTING_LP_POOL_TOKENS.multiply_ratio(1u128, 2u128)
-    );
+    assert_eq!(lp_balance.amount, STARTING_LP_POOL_TOKENS.multiply_ratio(1u128, 2u128));
     let atom_balance = get_coin(&atom.denom, &positions.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(50));
 
@@ -434,8 +430,5 @@ fn test_order_does_not_matter() {
     let positions = mock.query_positions(&account_id);
     assert_eq!(positions.deposits.len(), 1);
     let lp_balance = get_coin(&lp_token.denom, &positions.deposits);
-    assert_eq!(
-        lp_balance.amount,
-        STARTING_LP_POOL_TOKENS.mul(Uint128::new(2))
-    );
+    assert_eq!(lp_balance.amount, STARTING_LP_POOL_TOKENS.mul(Uint128::new(2)));
 }

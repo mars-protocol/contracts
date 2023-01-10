@@ -1,12 +1,12 @@
-use cosmwasm_std::OverflowOperation::Sub;
-use cosmwasm_std::{coins, Addr, OverflowError, Uint128};
+use cosmwasm_std::{coins, Addr, OverflowError, OverflowOperation::Sub, Uint128};
 use cw_multi_test::{BankSudo, SudoMsg};
 use cw_utils::{Duration, Expiration};
-
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
-use mars_rover::adapters::vault::VaultUnchecked;
-use mars_rover::error::ContractError;
-use mars_rover::msg::execute::Action::{Deposit, EnterVault, RequestVaultUnlock};
+use mars_rover::{
+    adapters::vault::VaultUnchecked,
+    error::ContractError,
+    msg::execute::Action::{Deposit, EnterVault, RequestVaultUnlock},
+};
 
 use crate::helpers::{
     assert_err, locked_vault_info, lp_token_info, unlocked_vault_info, AccountToFund, MockEnv,
@@ -19,10 +19,7 @@ fn test_only_owner_can_request_unlocked() {
     let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .vault_configs(&[leverage_vault.clone()])
-        .build()
-        .unwrap();
+    let mut mock = MockEnv::new().vault_configs(&[leverage_vault.clone()]).build().unwrap();
 
     let vault = mock.get_vault(&leverage_vault);
     let account_id = mock.create_credit_account(&user).unwrap();
@@ -73,10 +70,7 @@ fn test_request_when_unnecessary() {
     let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .vault_configs(&[leverage_vault.clone()])
-        .build()
-        .unwrap();
+    let mut mock = MockEnv::new().vault_configs(&[leverage_vault.clone()]).build().unwrap();
 
     let vault = mock.get_vault(&leverage_vault);
     let account_id = mock.create_credit_account(&user).unwrap();
@@ -104,10 +98,7 @@ fn test_no_vault_tokens_for_request() {
     let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .vault_configs(&[leverage_vault.clone()])
-        .build()
-        .unwrap();
+    let mut mock = MockEnv::new().vault_configs(&[leverage_vault.clone()]).build().unwrap();
 
     let vault = mock.get_vault(&leverage_vault);
     let account_id = mock.create_credit_account(&user).unwrap();

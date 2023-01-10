@@ -15,7 +15,10 @@ pub enum UpdateType {
 #[cw_serde]
 pub enum UnlockingChange {
     Add(VaultUnlockingPosition),
-    Decrement { id: u64, amount: Uint128 },
+    Decrement {
+        id: u64,
+        amount: Uint128,
+    },
 }
 
 #[cw_serde]
@@ -28,9 +31,9 @@ pub enum VaultPositionUpdate {
 impl VaultPositionUpdate {
     pub fn default_amount(&self) -> VaultPositionAmount {
         match self {
-            VaultPositionUpdate::Unlocked { .. } => {
-                VaultPositionAmount::Unlocked(VaultAmount::new(Uint128::zero()))
-            }
+            VaultPositionUpdate::Unlocked {
+                ..
+            } => VaultPositionAmount::Unlocked(VaultAmount::new(Uint128::zero())),
             _ => VaultPositionAmount::Locking(LockingVaultAmount {
                 locked: VaultAmount::new(Uint128::zero()),
                 unlocking: UnlockingPositions::new(vec![]),

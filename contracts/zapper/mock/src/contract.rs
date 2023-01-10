@@ -1,13 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, Uint128};
-
 use mars_rover::msg::zapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::error::ContractResult;
-use crate::execute::{provide_liquidity, withdraw_liquidity};
-use crate::query::{estimate_provide_liquidity, estimate_withdraw_liquidity};
-use crate::state::{COIN_BALANCES, COIN_CONFIG, ORACLE};
+use crate::{
+    error::ContractResult,
+    execute::{provide_liquidity, withdraw_liquidity},
+    query::{estimate_provide_liquidity, estimate_withdraw_liquidity},
+    state::{COIN_BALANCES, COIN_CONFIG, ORACLE},
+};
 
 pub const STARTING_LP_POOL_TOKENS: Uint128 = Uint128::new(1_000_000);
 
@@ -26,10 +27,7 @@ pub fn instantiate(
         COIN_CONFIG.save(
             deps.storage,
             &config.lp_token_denom,
-            &vec![
-                config.lp_pair_denoms.0.to_string(),
-                config.lp_pair_denoms.1.to_string(),
-            ],
+            &vec![config.lp_pair_denoms.0.to_string(), config.lp_pair_denoms.1.to_string()],
         )?;
 
         // Store balances of each of the underlying
@@ -60,7 +58,9 @@ pub fn execute(
             minimum_receive,
             ..
         } => provide_liquidity(deps, info, lp_token_out, minimum_receive),
-        ExecuteMsg::WithdrawLiquidity { .. } => withdraw_liquidity(deps, info),
+        ExecuteMsg::WithdrawLiquidity {
+            ..
+        } => withdraw_liquidity(deps, info),
     }
 }
 
@@ -71,9 +71,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             lp_token_out,
             coins_in,
         } => to_binary(&estimate_provide_liquidity(&deps, &lp_token_out, coins_in)?),
-        QueryMsg::EstimateWithdrawLiquidity { coin_in } => {
-            to_binary(&estimate_withdraw_liquidity(deps.storage, &coin_in)?)
-        }
+        QueryMsg::EstimateWithdrawLiquidity {
+            coin_in,
+        } => to_binary(&estimate_withdraw_liquidity(deps.storage, &coin_in)?),
     };
     res.map_err(Into::into)
 }

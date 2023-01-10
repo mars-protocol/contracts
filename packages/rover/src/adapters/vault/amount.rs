@@ -1,10 +1,10 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Uint128;
 
-use crate::adapters::vault::{
-    UnlockingChange, UpdateType, VaultPositionUpdate, VaultUnlockingPosition,
+use crate::{
+    adapters::vault::{UnlockingChange, UpdateType, VaultPositionUpdate, VaultUnlockingPosition},
+    error::{ContractError, ContractResult},
 };
-use crate::error::{ContractError, ContractResult};
 
 #[cw_serde]
 pub enum VaultPositionAmount {
@@ -40,12 +40,9 @@ impl VaultPositionAmount {
 
     pub fn get_unlocking_position(&self, id: u64) -> Option<VaultUnlockingPosition> {
         match self {
-            VaultPositionAmount::Locking(amount) => amount
-                .unlocking
-                .positions()
-                .iter()
-                .find(|p| p.id == id)
-                .cloned(),
+            VaultPositionAmount::Locking(amount) => {
+                amount.unlocking.positions().iter().find(|p| p.id == id).cloned()
+            }
             _ => None,
         }
     }
@@ -66,9 +63,10 @@ impl VaultPositionAmount {
                 },
                 VaultPositionUpdate::Unlocking(u) => match u {
                     UnlockingChange::Add(p) => amount.unlocking.add(p),
-                    UnlockingChange::Decrement { id, amount: a } => {
-                        amount.unlocking.decrement(id, a)
-                    }
+                    UnlockingChange::Decrement {
+                        id,
+                        amount: a,
+                    } => amount.unlocking.decrement(id, a),
                 },
                 _ => Err(ContractError::MismatchedVaultType {}),
             },

@@ -1,9 +1,9 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, Uint128, WasmMsg};
-
-use mars_rover::adapters::vault::{UpdateType, Vault, VaultPositionUpdate};
-use mars_rover::error::ContractResult;
-use mars_rover::msg::execute::CallbackMsg;
-use mars_rover::msg::ExecuteMsg as RoverExecuteMsg;
+use mars_rover::{
+    adapters::vault::{UpdateType, Vault, VaultPositionUpdate},
+    error::ContractResult,
+    msg::{execute::CallbackMsg, ExecuteMsg as RoverExecuteMsg},
+};
 
 use crate::vault::utils::{
     assert_vault_is_whitelisted, query_withdraw_denom_balance, update_vault_position,

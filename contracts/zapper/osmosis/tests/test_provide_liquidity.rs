@@ -1,8 +1,7 @@
 use cosmwasm_std::{coin, Coin, Uint128};
 use cw_dex::CwDexError;
-use osmosis_testing::{Account, Bank, Gamm, Module, OsmosisTestApp, Wasm};
-
 use mars_zapper_base::{ExecuteMsg, QueryMsg};
+use osmosis_testing::{Account, Bank, Gamm, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::{assert_err, instantiate_contract, query_balance};
 
@@ -14,10 +13,7 @@ fn test_provide_liquidity_with_invalid_lp_token() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[
-            coin(1_000_000_000_000, "uatom"),
-            coin(1_000_000_000_000, "uosmo"),
-        ])
+        .init_account(&[coin(1_000_000_000_000, "uatom"), coin(1_000_000_000_000, "uosmo")])
         .unwrap();
 
     let contract_addr = instantiate_contract(&wasm, &signer);
@@ -43,18 +39,12 @@ fn test_provide_liquidity_with_invalid_coins() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[
-            coin(1_000_000_000_000, "uatom"),
-            coin(1_000_000_000_000, "uosmo"),
-        ])
+        .init_account(&[coin(1_000_000_000_000, "uatom"), coin(1_000_000_000_000, "uosmo")])
         .unwrap();
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
-        .create_basic_pool(
-            &[coin(2_000_000, "uatom"), coin(4_000_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(2_000_000, "uatom"), coin(4_000_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;
@@ -65,7 +55,7 @@ fn test_provide_liquidity_with_invalid_coins() {
     wasm.execute(
         &contract_addr,
         &ExecuteMsg::ProvideLiquidity {
-            lp_token_out: format!("gamm/pool/{}", pool_id),
+            lp_token_out: format!("gamm/pool/{pool_id}"),
             recipient: None,
             minimum_receive: Uint128::one(),
         },
@@ -81,27 +71,18 @@ fn test_provide_liquidity_with_min_not_received() {
     let wasm = Wasm::new(&app);
 
     let accs = app
-        .init_accounts(
-            &[
-                coin(1_000_000_000_000, "uatom"),
-                coin(1_000_000_000_000, "uosmo"),
-            ],
-            2,
-        )
+        .init_accounts(&[coin(1_000_000_000_000, "uatom"), coin(1_000_000_000_000, "uosmo")], 2)
         .unwrap();
     let owner = &accs[0];
     let user = &accs[1];
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
-        .create_basic_pool(
-            &[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")],
-            owner,
-        )
+        .create_basic_pool(&[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")], owner)
         .unwrap()
         .data
         .pool_id;
-    let pool_denom = format!("gamm/pool/{}", pool_id);
+    let pool_denom = format!("gamm/pool/{pool_id}");
 
     let contract_addr = instantiate_contract(&wasm, owner);
 
@@ -154,27 +135,18 @@ fn test_provide_liquidity_with_one_coin() {
     let uatom_acc_balance = 1_000_000_000_000u128;
     let uosmo_acc_balance = 1_000_000_000_000u128;
     let accs = app
-        .init_accounts(
-            &[
-                coin(uatom_acc_balance, "uatom"),
-                coin(uosmo_acc_balance, "uosmo"),
-            ],
-            2,
-        )
+        .init_accounts(&[coin(uatom_acc_balance, "uatom"), coin(uosmo_acc_balance, "uosmo")], 2)
         .unwrap();
     let owner = &accs[0];
     let user = &accs[1];
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
-        .create_basic_pool(
-            &[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")],
-            owner,
-        )
+        .create_basic_pool(&[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")], owner)
         .unwrap()
         .data
         .pool_id;
-    let pool_denom = format!("gamm/pool/{}", pool_id);
+    let pool_denom = format!("gamm/pool/{pool_id}");
 
     let contract_addr = instantiate_contract(&wasm, owner);
 
@@ -221,10 +193,7 @@ fn test_provide_liquidity_with_one_coin() {
     let user_pool_balance = query_balance(&bank, &user.address(), &pool_denom);
     assert_eq!(user_pool_balance, estimate_amount.u128());
     let user_uatom_balance = query_balance(&bank, &user.address(), "uatom");
-    assert_eq!(
-        user_uatom_balance,
-        uatom_acc_balance - uatom_liquidity_amount
-    );
+    assert_eq!(user_uatom_balance, uatom_acc_balance - uatom_liquidity_amount);
     let user_uosmo_balance = query_balance(&bank, &user.address(), "uosmo");
     assert_eq!(user_uosmo_balance, uosmo_acc_balance);
 }
@@ -237,27 +206,18 @@ fn test_provide_liquidity_with_two_balanced_coins() {
     let uatom_acc_balance = 1_000_000_000_000u128;
     let uosmo_acc_balance = 1_000_000_000_000u128;
     let accs = app
-        .init_accounts(
-            &[
-                coin(uatom_acc_balance, "uatom"),
-                coin(uosmo_acc_balance, "uosmo"),
-            ],
-            2,
-        )
+        .init_accounts(&[coin(uatom_acc_balance, "uatom"), coin(uosmo_acc_balance, "uosmo")], 2)
         .unwrap();
     let owner = &accs[0];
     let user = &accs[1];
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
-        .create_basic_pool(
-            &[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")],
-            owner,
-        )
+        .create_basic_pool(&[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")], owner)
         .unwrap()
         .data
         .pool_id;
-    let pool_denom = format!("gamm/pool/{}", pool_id);
+    let pool_denom = format!("gamm/pool/{pool_id}");
 
     let contract_addr = instantiate_contract(&wasm, owner);
 
@@ -270,10 +230,8 @@ fn test_provide_liquidity_with_two_balanced_coins() {
 
     let uatom_liquidity_amount = 5_000_000u128;
     let uosmo_liquidity_amount = 10_000_000u128;
-    let coins_in = vec![
-        coin(uatom_liquidity_amount, "uatom"),
-        coin(uosmo_liquidity_amount, "uosmo"),
-    ];
+    let coins_in =
+        vec![coin(uatom_liquidity_amount, "uatom"), coin(uosmo_liquidity_amount, "uosmo")];
 
     let estimate_amount: Uint128 = wasm
         .query(
@@ -308,15 +266,9 @@ fn test_provide_liquidity_with_two_balanced_coins() {
     let user_pool_balance = query_balance(&bank, &user.address(), &pool_denom);
     assert_eq!(user_pool_balance, estimate_amount.u128());
     let user_uatom_balance = query_balance(&bank, &user.address(), "uatom");
-    assert_eq!(
-        user_uatom_balance,
-        uatom_acc_balance - uatom_liquidity_amount
-    );
+    assert_eq!(user_uatom_balance, uatom_acc_balance - uatom_liquidity_amount);
     let user_uosmo_balance = query_balance(&bank, &user.address(), "uosmo");
-    assert_eq!(
-        user_uosmo_balance,
-        uosmo_acc_balance - uosmo_liquidity_amount
-    );
+    assert_eq!(user_uosmo_balance, uosmo_acc_balance - uosmo_liquidity_amount);
 }
 
 #[test]
@@ -327,27 +279,18 @@ fn test_provide_liquidity_with_two_unbalanced_coins() {
     let uatom_acc_balance = 1_000_000_000_000u128;
     let uosmo_acc_balance = 1_000_000_000_000u128;
     let accs = app
-        .init_accounts(
-            &[
-                coin(uatom_acc_balance, "uatom"),
-                coin(uosmo_acc_balance, "uosmo"),
-            ],
-            2,
-        )
+        .init_accounts(&[coin(uatom_acc_balance, "uatom"), coin(uosmo_acc_balance, "uosmo")], 2)
         .unwrap();
     let owner = &accs[0];
     let user = &accs[1];
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
-        .create_basic_pool(
-            &[coin(20_000_000_000, "uatom"), coin(40_000_000_000, "uosmo")],
-            owner,
-        )
+        .create_basic_pool(&[coin(20_000_000_000, "uatom"), coin(40_000_000_000, "uosmo")], owner)
         .unwrap()
         .data
         .pool_id;
-    let pool_denom = format!("gamm/pool/{}", pool_id);
+    let pool_denom = format!("gamm/pool/{pool_id}");
 
     let contract_addr = instantiate_contract(&wasm, owner);
 
@@ -360,10 +303,8 @@ fn test_provide_liquidity_with_two_unbalanced_coins() {
 
     let uatom_liquidity_amount = 5_000_000u128;
     let uosmo_liquidity_amount = 22_000_000u128;
-    let coins_in = vec![
-        coin(uatom_liquidity_amount, "uatom"),
-        coin(uosmo_liquidity_amount, "uosmo"),
-    ];
+    let coins_in =
+        vec![coin(uatom_liquidity_amount, "uatom"), coin(uosmo_liquidity_amount, "uosmo")];
 
     let estimate_amount: Uint128 = wasm
         .query(
@@ -385,18 +326,10 @@ fn test_provide_liquidity_with_two_unbalanced_coins() {
             },
         )
         .unwrap();
-    let uatom_estimate_amount = estimate_coins
-        .iter()
-        .find(|c| c.denom == "uatom")
-        .unwrap()
-        .amount
-        .u128();
-    let uosmo_estimate_amount = estimate_coins
-        .iter()
-        .find(|c| c.denom == "uosmo")
-        .unwrap()
-        .amount
-        .u128();
+    let uatom_estimate_amount =
+        estimate_coins.iter().find(|c| c.denom == "uatom").unwrap().amount.u128();
+    let uosmo_estimate_amount =
+        estimate_coins.iter().find(|c| c.denom == "uosmo").unwrap().amount.u128();
     assert_eq!(uatom_estimate_amount, 4950000u128);
     assert_eq!(uosmo_estimate_amount, 9900000u128);
 
@@ -435,13 +368,7 @@ fn test_provide_liquidity_with_different_recipient() {
     let uatom_acc_balance = 1_000_000_000_000u128;
     let uosmo_acc_balance = 1_000_000_000_000u128;
     let accs = app
-        .init_accounts(
-            &[
-                coin(uatom_acc_balance, "uatom"),
-                coin(uosmo_acc_balance, "uosmo"),
-            ],
-            3,
-        )
+        .init_accounts(&[coin(uatom_acc_balance, "uatom"), coin(uosmo_acc_balance, "uosmo")], 3)
         .unwrap();
     let owner = &accs[0];
     let user = &accs[1];
@@ -449,14 +376,11 @@ fn test_provide_liquidity_with_different_recipient() {
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
-        .create_basic_pool(
-            &[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")],
-            owner,
-        )
+        .create_basic_pool(&[coin(20_000_000, "uatom"), coin(40_000_000, "uosmo")], owner)
         .unwrap()
         .data
         .pool_id;
-    let pool_denom = format!("gamm/pool/{}", pool_id);
+    let pool_denom = format!("gamm/pool/{pool_id}");
 
     let contract_addr = instantiate_contract(&wasm, owner);
 
@@ -471,10 +395,8 @@ fn test_provide_liquidity_with_different_recipient() {
 
     let uatom_liquidity_amount = 5_000_000u128;
     let uosmo_liquidity_amount = 10_000_000u128;
-    let coins_in = vec![
-        coin(uatom_liquidity_amount, "uatom"),
-        coin(uosmo_liquidity_amount, "uosmo"),
-    ];
+    let coins_in =
+        vec![coin(uatom_liquidity_amount, "uatom"), coin(uosmo_liquidity_amount, "uosmo")];
 
     let estimate_amount: Uint128 = wasm
         .query(
@@ -509,15 +431,9 @@ fn test_provide_liquidity_with_different_recipient() {
     let user_pool_balance = query_balance(&bank, &user.address(), &pool_denom);
     assert_eq!(user_pool_balance, 0u128);
     let user_uatom_balance = query_balance(&bank, &user.address(), "uatom");
-    assert_eq!(
-        user_uatom_balance,
-        uatom_acc_balance - uatom_liquidity_amount
-    );
+    assert_eq!(user_uatom_balance, uatom_acc_balance - uatom_liquidity_amount);
     let user_uosmo_balance = query_balance(&bank, &user.address(), "uosmo");
-    assert_eq!(
-        user_uosmo_balance,
-        uosmo_acc_balance - uosmo_liquidity_amount
-    );
+    assert_eq!(user_uosmo_balance, uosmo_acc_balance - uosmo_liquidity_amount);
 
     let recipient_pool_balance = query_balance(&bank, &recipient.address(), &pool_denom);
     assert_eq!(recipient_pool_balance, estimate_amount.u128());

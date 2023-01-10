@@ -1,9 +1,10 @@
 use cosmwasm_std::{Coin, DepsMut, Env, Response, Uint128};
-
 use mars_rover::error::{ContractError, ContractResult};
 
-use crate::state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES};
-use crate::utils::{assert_coin_is_whitelisted, increment_coin_balance};
+use crate::{
+    state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES},
+    utils::{assert_coin_is_whitelisted, increment_coin_balance},
+};
 
 pub static DEFAULT_DEBT_SHARES_PER_COIN_BORROWED: Uint128 = Uint128::new(1_000_000);
 
@@ -24,8 +25,7 @@ pub fn borrow(deps: DepsMut, env: Env, account_id: &str, coin: Coin) -> Contract
         red_bank.query_debt(&deps.querier, &env.contract.address, &coin.denom)?;
 
     let debt_shares_to_add = if total_debt_amount.is_zero() {
-        coin.amount
-            .checked_mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)?
+        coin.amount.checked_mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)?
     } else {
         TOTAL_DEBT_SHARES
             .load(deps.storage, &coin.denom)?

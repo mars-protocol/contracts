@@ -1,6 +1,8 @@
 use cosmwasm_std::Addr;
-use mars_owner::OwnerError::{NotOwner, NotProposedOwner, StateTransitionError};
-use mars_owner::OwnerUpdate;
+use mars_owner::{
+    OwnerError::{NotOwner, NotProposedOwner, StateTransitionError},
+    OwnerUpdate,
+};
 use mars_rover::error::ContractError::OwnerError;
 
 use crate::helpers::{assert_err, MockEnv};
@@ -44,10 +46,7 @@ fn test_propose_new_owner() {
     let new_config = mock.query_config();
 
     assert_eq!(new_config.owner, original_config.owner);
-    assert_ne!(
-        new_config.proposed_new_owner,
-        original_config.proposed_new_owner
-    );
+    assert_ne!(new_config.proposed_new_owner, original_config.proposed_new_owner);
     assert_eq!(new_config.proposed_new_owner, Some(new_owner));
 }
 
@@ -84,10 +83,7 @@ fn test_clear_proposed() {
     let latest_config = mock.query_config();
 
     assert_eq!(latest_config.owner, original_config.owner);
-    assert_ne!(
-        latest_config.proposed_new_owner,
-        interim_config.proposed_new_owner
-    );
+    assert_ne!(latest_config.proposed_new_owner, interim_config.proposed_new_owner);
     assert_eq!(latest_config.proposed_new_owner, None);
 }
 
@@ -113,11 +109,7 @@ fn test_accept_owner_role() {
     );
     assert_err(res, OwnerError(NotProposedOwner {}));
 
-    mock.update_owner(
-        &Addr::unchecked(new_owner.clone()),
-        OwnerUpdate::AcceptProposed,
-    )
-    .unwrap();
+    mock.update_owner(&Addr::unchecked(new_owner.clone()), OwnerUpdate::AcceptProposed).unwrap();
 
     let new_config = mock.query_config();
 

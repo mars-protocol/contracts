@@ -44,5 +44,7 @@ pub enum QueryMsg {
         coins_in: Vec<Coin>,
     },
     #[returns(Vec<Coin>)]
-    EstimateWithdrawLiquidity { coin_in: Coin },
+    EstimateWithdrawLiquidity {
+        coin_in: Coin,
+    },
 }

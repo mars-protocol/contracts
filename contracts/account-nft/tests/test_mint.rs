@@ -4,11 +4,10 @@ use cosmwasm_std::Addr;
 use cw721::OwnerOfResponse;
 use cw721_base::ContractError::Unauthorized;
 use cw_multi_test::Executor;
-
-use mars_account_nft::error::ContractError;
-use mars_account_nft::error::ContractError::BaseError;
-use mars_account_nft::msg::ExecuteMsg as ExtendedExecuteMsg;
-use mars_account_nft::msg::QueryMsg::OwnerOf;
+use mars_account_nft::{
+    error::{ContractError, ContractError::BaseError},
+    msg::{ExecuteMsg as ExtendedExecuteMsg, QueryMsg::OwnerOf},
+};
 
 use crate::helpers::{below_max_for_burn, MockEnv};
 

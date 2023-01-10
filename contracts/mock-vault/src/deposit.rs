@@ -1,9 +1,10 @@
 use cosmwasm_std::{BankMsg, Coin, CosmosMsg, DepsMut, MessageInfo, Response, StdResult, Uint128};
 
-use crate::contract::STARTING_VAULT_SHARES;
-use crate::error::ContractError;
-use crate::error::ContractError::WrongDenomSent;
-use crate::state::{CHAIN_BANK, COIN_BALANCE, ORACLE, TOTAL_VAULT_SHARES, VAULT_TOKEN_DENOM};
+use crate::{
+    contract::STARTING_VAULT_SHARES,
+    error::{ContractError, ContractError::WrongDenomSent},
+    state::{CHAIN_BANK, COIN_BALANCE, ORACLE, TOTAL_VAULT_SHARES, VAULT_TOKEN_DENOM},
+};
 
 pub fn deposit(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
     let total_shares = TOTAL_VAULT_SHARES.load(deps.storage)?;
@@ -47,9 +48,10 @@ pub fn deposit(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractErr
 fn mock_lp_token_mint(deps: DepsMut, amount: Uint128) -> StdResult<Coin> {
     let denom = VAULT_TOKEN_DENOM.load(deps.storage)?;
 
-    CHAIN_BANK.update(deps.storage, |bank_amount| -> StdResult<_> {
-        Ok(bank_amount - amount)
-    })?;
+    CHAIN_BANK.update(deps.storage, |bank_amount| -> StdResult<_> { Ok(bank_amount - amount) })?;
 
-    Ok(Coin { denom, amount })
+    Ok(Coin {
+        denom,
+        amount,
+    })
 }

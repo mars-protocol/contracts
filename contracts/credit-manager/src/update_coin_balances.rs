@@ -2,7 +2,6 @@ use cosmwasm_std::{
     Addr, BalanceResponse, BankQuery, Coin, DepsMut, Env, QuerierWrapper, QueryRequest, Response,
     StdResult,
 };
-
 use mars_rover::error::ContractResult;
 
 use crate::utils::{decrement_coin_balance, increment_coin_balance};

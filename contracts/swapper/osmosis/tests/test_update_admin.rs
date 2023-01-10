@@ -1,9 +1,8 @@
 use cosmwasm_std::coin;
-use osmosis_testing::{Account, Module, OsmosisTestApp, Wasm};
-
 use mars_owner::{OwnerResponse, OwnerUpdate};
 use mars_rover::adapters::swap::{ExecuteMsg, QueryMsg};
 use mars_swapper_osmosis::route::OsmosisRoute;
+use osmosis_testing::{Account, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::instantiate_contract;
 
@@ -14,9 +13,7 @@ fn test_initial_state() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let accs = app
-        .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
-        .unwrap();
+    let accs = app.init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2).unwrap();
     let owner = &accs[0];
 
     let contract_addr = instantiate_contract(&wasm, owner);
@@ -31,9 +28,7 @@ fn test_only_owner_can_propose() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let accs = app
-        .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 3)
-        .unwrap();
+    let accs = app.init_accounts(&[coin(1_000_000_000_000, "uosmo")], 3).unwrap();
     let owner = &accs[0];
     let bad_guy = &accs[1];
 
@@ -55,9 +50,7 @@ fn test_propose_new_owner() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let accs = app
-        .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
-        .unwrap();
+    let accs = app.init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2).unwrap();
     let owner = &accs[0];
     let new_owner = &accs[1];
 
@@ -83,9 +76,7 @@ fn test_only_owner_can_clear_proposed() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let accs = app
-        .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 3)
-        .unwrap();
+    let accs = app.init_accounts(&[coin(1_000_000_000_000, "uosmo")], 3).unwrap();
     let owner = &accs[0];
     let bad_guy = &accs[1];
     let new_owner = &accs[2];
@@ -116,9 +107,7 @@ fn test_clear_proposed() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let accs = app
-        .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
-        .unwrap();
+    let accs = app.init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2).unwrap();
     let owner = &accs[0];
     let new_owner = &accs[1];
 
@@ -152,9 +141,7 @@ fn test_only_proposed_owner_can_accept_role() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let accs = app
-        .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
-        .unwrap();
+    let accs = app.init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2).unwrap();
     let owner = &accs[0];
     let new_owner = &accs[1];
 
@@ -184,9 +171,7 @@ fn test_accept_owner_role() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let accs = app
-        .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
-        .unwrap();
+    let accs = app.init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2).unwrap();
     let owner = &accs[0];
     let new_owner = &accs[1];
 

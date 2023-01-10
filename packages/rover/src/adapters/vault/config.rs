@@ -1,8 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Decimal};
 
-use crate::error::ContractError;
-use crate::error::ContractError::InvalidConfig;
+use crate::error::{ContractError, ContractError::InvalidConfig};
 
 #[cw_serde]
 pub struct VaultConfig {

@@ -1,12 +1,16 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
 
-use crate::adapters::oracle::OracleUnchecked;
-use crate::adapters::red_bank::RedBankUnchecked;
-use crate::adapters::swap::SwapperUnchecked;
-use crate::adapters::vault::{VaultConfig, VaultUnchecked};
-use crate::adapters::zapper::ZapperUnchecked;
-use crate::traits::Stringify;
+use crate::{
+    adapters::{
+        oracle::OracleUnchecked,
+        red_bank::RedBankUnchecked,
+        swap::SwapperUnchecked,
+        vault::{VaultConfig, VaultUnchecked},
+        zapper::ZapperUnchecked,
+    },
+    traits::Stringify,
+};
 
 #[cw_serde]
 pub struct InstantiateMsg {

@@ -1,10 +1,9 @@
-use cosmwasm_std::OverflowOperation::Sub;
-use cosmwasm_std::{coin, coins, Addr, OverflowError};
+use cosmwasm_std::{coin, coins, Addr, OverflowError, OverflowOperation::Sub};
 use cw_multi_test::{BankSudo, SudoMsg};
-
-use mars_rover::error::ContractError;
-use mars_rover::msg::execute::Action::Deposit;
-use mars_rover::msg::execute::CallbackMsg;
+use mars_rover::{
+    error::ContractError,
+    msg::execute::{Action::Deposit, CallbackMsg},
+};
 
 use crate::helpers::{assert_err, uosmo_info, AccountToFund, MockEnv};
 

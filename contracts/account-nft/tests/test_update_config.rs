@@ -1,5 +1,4 @@
 use cosmwasm_std::{Addr, Uint128};
-
 use mars_account_nft::config::ConfigUpdates;
 
 use crate::helpers::MockEnv;

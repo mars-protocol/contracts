@@ -5,14 +5,14 @@ use cosmwasm_std::{
     DepsMut, Env, MessageInfo, Order, Response, WasmMsg,
 };
 use cw_storage_plus::{Bound, Map};
-use mars_owner::OwnerInit::SetInitialOwner;
-use mars_owner::{Owner, OwnerUpdate};
-
-use mars_rover::adapters::swap::{
-    EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
-    RoutesResponse,
+use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_rover::{
+    adapters::swap::{
+        EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
+        RoutesResponse,
+    },
+    error::ContractError as RoverError,
 };
-use mars_rover::error::ContractError as RoverError;
 
 use crate::{ContractResult, Route};
 
@@ -61,8 +61,13 @@ where
         deps: DepsMut<Q>,
         msg: InstantiateMsg,
     ) -> ContractResult<Response<M>> {
-        self.owner
-            .initialize(deps.storage, deps.api, SetInitialOwner { owner: msg.owner })?;
+        self.owner.initialize(
+            deps.storage,
+            deps.api,
+            SetInitialOwner {
+                owner: msg.owner,
+            },
+        )?;
         Ok(Response::default())
     }
 
@@ -96,16 +101,18 @@ where
     pub fn query(&self, deps: Deps<Q>, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         let res = match msg {
             QueryMsg::Owner {} => to_binary(&self.owner.query(deps.storage)?),
-            QueryMsg::EstimateExactInSwap { coin_in, denom_out } => {
-                to_binary(&self.estimate_exact_in_swap(deps, env, coin_in, denom_out)?)
-            }
+            QueryMsg::EstimateExactInSwap {
+                coin_in,
+                denom_out,
+            } => to_binary(&self.estimate_exact_in_swap(deps, env, coin_in, denom_out)?),
             QueryMsg::Route {
                 denom_in,
                 denom_out,
             } => to_binary(&self.query_route(deps, denom_in, denom_out)?),
-            QueryMsg::Routes { start_after, limit } => {
-                to_binary(&self.query_routes(deps, start_after, limit)?)
-            }
+            QueryMsg::Routes {
+                start_after,
+                limit,
+            } => to_binary(&self.query_routes(deps, start_after, limit)?),
         };
         res.map_err(Into::into)
     }
@@ -153,9 +160,7 @@ where
         coin_in: Coin,
         denom_out: String,
     ) -> ContractResult<EstimateExactInSwapResponse> {
-        let route = self
-            .routes
-            .load(deps.storage, (coin_in.denom.clone(), denom_out))?;
+        let route = self.routes.load(deps.storage, (coin_in.denom.clone(), denom_out))?;
         route.estimate_exact_in_swap(&deps.querier, &env, &coin_in)
     }
 
@@ -212,12 +217,9 @@ where
             .into());
         };
 
-        let denom_in_balance = deps
-            .querier
-            .query_balance(env.contract.address.clone(), denom_in)?;
-        let denom_out_balance = deps
-            .querier
-            .query_balance(env.contract.address, denom_out)?;
+        let denom_in_balance =
+            deps.querier.query_balance(env.contract.address.clone(), denom_in)?;
+        let denom_out_balance = deps.querier.query_balance(env.contract.address, denom_out)?;
 
         let transfer_msg = CosmosMsg::Bank(BankMsg::Send {
             to_address: recipient.to_string(),
@@ -245,8 +247,7 @@ where
 
         route.validate(&deps.querier, &denom_in, &denom_out)?;
 
-        self.routes
-            .save(deps.storage, (denom_in.clone(), denom_out.clone()), &route)?;
+        self.routes.save(deps.storage, (denom_in.clone(), denom_out.clone()), &route)?;
 
         Ok(Response::new()
             .add_attribute("action", "rover/base/set_route")

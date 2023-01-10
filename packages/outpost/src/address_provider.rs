@@ -1,6 +1,4 @@
-use std::any::type_name;
-use std::fmt;
-use std::str::FromStr;
+use std::{any::type_name, fmt, str::FromStr};
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::StdError;
@@ -44,7 +42,7 @@ impl fmt::Display for MarsAddressType {
             MarsAddressType::RewardsCollector => "rewards_collector",
             MarsAddressType::SafetyFund => "safety_fund",
         };
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 
@@ -93,7 +91,9 @@ pub enum ExecuteMsg {
         address: String,
     },
     /// Propose to transfer the contract's ownership to another account
-    TransferOwnership { new_owner: String },
+    TransferOwnership {
+        new_owner: String,
+    },
 }
 
 #[cw_serde]
@@ -129,17 +129,17 @@ pub struct AddressResponseItem {
 pub mod helpers {
     use std::collections::HashMap;
 
-    use super::{AddressResponseItem, MarsAddressType, QueryMsg};
     use cosmwasm_std::{Addr, Deps, StdResult};
+
+    use super::{AddressResponseItem, MarsAddressType, QueryMsg};
 
     pub fn query_address(
         deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
         contract: MarsAddressType,
     ) -> StdResult<Addr> {
-        let res: AddressResponseItem = deps
-            .querier
-            .query_wasm_smart(address_provider_addr, &QueryMsg::Address(contract))?;
+        let res: AddressResponseItem =
+            deps.querier.query_wasm_smart(address_provider_addr, &QueryMsg::Address(contract))?;
 
         deps.api.addr_validate(&res.address)
     }

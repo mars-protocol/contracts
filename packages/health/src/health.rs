@@ -1,6 +1,6 @@
-use cosmwasm_schema::cw_serde;
 use std::fmt;
 
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
 
 #[cw_serde]
@@ -37,14 +37,12 @@ impl fmt::Display for Health {
 impl Health {
     #[inline]
     pub fn is_liquidatable(&self) -> bool {
-        self.liquidation_health_factor
-            .map_or(false, |hf| hf < Decimal::one())
+        self.liquidation_health_factor.map_or(false, |hf| hf < Decimal::one())
     }
 
     #[inline]
     pub fn is_above_max_ltv(&self) -> bool {
-        self.max_ltv_health_factor
-            .map_or(false, |hf| hf < Decimal::one())
+        self.max_ltv_health_factor.map_or(false, |hf| hf < Decimal::one())
     }
 }
 

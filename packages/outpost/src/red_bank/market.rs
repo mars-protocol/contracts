@@ -1,9 +1,11 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, StdResult, Uint128};
 
-use crate::error::MarsError;
-use crate::helpers::{decimal_param_le_one, decimal_param_lt_one};
-use crate::red_bank::InterestRateModel;
+use crate::{
+    error::MarsError,
+    helpers::{decimal_param_le_one, decimal_param_lt_one},
+    red_bank::InterestRateModel,
+};
 
 #[cw_serde]
 pub struct Market {
@@ -93,9 +95,7 @@ impl Market {
     }
 
     pub fn update_interest_rates(&mut self, current_utilization_rate: Decimal) -> StdResult<()> {
-        self.borrow_rate = self
-            .interest_rate_model
-            .get_borrow_rate(current_utilization_rate)?;
+        self.borrow_rate = self.interest_rate_model.get_borrow_rate(current_utilization_rate)?;
 
         self.liquidity_rate = self.interest_rate_model.get_liquidity_rate(
             self.borrow_rate,

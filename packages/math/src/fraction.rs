@@ -63,9 +63,7 @@ impl FractionMath for Uint128 {
         rhs: F,
     ) -> Result<Self, CheckedMultiplyFractionError> {
         let divisor = rhs.denominator().into();
-        let res = self
-            .full_mul(rhs.numerator().into())
-            .checked_div(divisor.into())?;
+        let res = self.full_mul(rhs.numerator().into()).checked_div(divisor.into())?;
         Ok(res.try_into()?)
     }
 
@@ -75,9 +73,7 @@ impl FractionMath for Uint128 {
     ) -> Result<Self, CheckedMultiplyFractionError> {
         let floor_result = self.checked_mul_floor(rhs.clone())?;
         let divisor = rhs.denominator().into();
-        let remainder = self
-            .full_mul(rhs.numerator().into())
-            .checked_rem(divisor.into())?;
+        let remainder = self.full_mul(rhs.numerator().into()).checked_rem(divisor.into())?;
         if !remainder.is_zero() {
             Ok(Uint128::one().checked_add(floor_result)?)
         } else {
@@ -92,9 +88,7 @@ impl FractionMath for Uint128 {
         rhs: F,
     ) -> Result<Self, CheckedMultiplyFractionError> {
         let divisor = rhs.numerator().into();
-        let res = self
-            .full_mul(rhs.denominator().into())
-            .checked_div(divisor.into())?;
+        let res = self.full_mul(rhs.denominator().into()).checked_div(divisor.into())?;
         Ok(res.try_into()?)
     }
 }

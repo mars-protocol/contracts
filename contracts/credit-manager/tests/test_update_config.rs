@@ -1,15 +1,20 @@
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use cw_multi_test::{BasicApp, Executor};
-
 use mars_mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
 use mars_mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
-use mars_rover::adapters::oracle::{OracleBase, OracleUnchecked};
-use mars_rover::adapters::swap::SwapperBase;
-use mars_rover::adapters::vault::{VaultBase, VaultConfig};
-use mars_rover::adapters::zapper::ZapperBase;
-use mars_rover::error::ContractError::InvalidConfig;
-use mars_rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
-use mars_rover::msg::query::VaultInfoResponse;
+use mars_rover::{
+    adapters::{
+        oracle::{OracleBase, OracleUnchecked},
+        swap::SwapperBase,
+        vault::{VaultBase, VaultConfig},
+        zapper::ZapperBase,
+    },
+    error::ContractError::InvalidConfig,
+    msg::{
+        instantiate::{ConfigUpdates, VaultInstantiateConfig},
+        query::VaultInfoResponse,
+    },
+};
 
 use crate::helpers::{
     assert_err, locked_vault_info, mock_oracle_contract, mock_vault_contract, uatom_info,
@@ -143,10 +148,7 @@ fn test_update_config_works_with_full_config() {
     assert_eq!(new_config.account_nft, Some(new_nft_contract.to_string()));
     assert_ne!(new_config.account_nft, original_config.account_nft);
 
-    assert_eq!(
-        new_config.owner.unwrap(),
-        original_config.owner.clone().unwrap()
-    );
+    assert_eq!(new_config.owner.unwrap(), original_config.owner.clone().unwrap());
 
     assert_eq!(
         new_queried_vault_configs,
@@ -171,16 +173,10 @@ fn test_update_config_works_with_full_config() {
     assert_ne!(new_config.zapper, original_config.zapper);
 
     assert_eq!(new_config.max_close_factor, new_close_factor);
-    assert_ne!(
-        new_config.max_close_factor,
-        original_config.max_close_factor
-    );
+    assert_ne!(new_config.max_close_factor, original_config.max_close_factor);
 
     assert_eq!(new_config.max_unlocking_positions, new_unlocking_max);
-    assert_ne!(
-        new_config.max_unlocking_positions,
-        original_config.max_unlocking_positions
-    );
+    assert_ne!(new_config.max_unlocking_positions, original_config.max_unlocking_positions);
 
     assert_eq!(&new_config.swapper, new_swapper.address());
     assert_ne!(new_config.swapper, original_config.swapper);
@@ -215,23 +211,14 @@ fn test_update_config_works_with_some_config() {
     assert_ne!(new_config.account_nft, original_config.account_nft);
 
     assert_eq!(new_config.max_unlocking_positions, new_max_unlocking);
-    assert_ne!(
-        new_config.max_unlocking_positions,
-        original_config.max_unlocking_positions
-    );
+    assert_ne!(new_config.max_unlocking_positions, original_config.max_unlocking_positions);
 
     // Unchanged configs
     assert_eq!(new_config.owner, original_config.owner);
-    assert_eq!(
-        new_config.proposed_new_owner,
-        original_config.proposed_new_owner
-    );
+    assert_eq!(new_config.proposed_new_owner, original_config.proposed_new_owner);
     assert_eq!(new_config.red_bank, original_config.red_bank);
     assert_eq!(new_config.oracle, original_config.oracle);
-    assert_eq!(
-        new_config.max_close_factor,
-        original_config.max_close_factor
-    );
+    assert_eq!(new_config.max_close_factor, original_config.max_close_factor);
     assert_eq!(new_config.swapper, original_config.swapper);
     assert_eq!(new_config.zapper, original_config.zapper);
     assert_eq!(original_allowed_coins, new_queried_allowed_coins);
@@ -298,10 +285,7 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
     assert_eq!(new_config.red_bank, original_config.red_bank);
     assert_eq!(new_config.oracle, original_config.oracle);
     assert_eq!(new_config.zapper, original_config.zapper);
-    assert_eq!(
-        new_config.max_close_factor,
-        original_config.max_close_factor
-    );
+    assert_eq!(new_config.max_close_factor, original_config.max_close_factor);
     assert_eq!(new_config.swapper, original_config.swapper);
 }
 

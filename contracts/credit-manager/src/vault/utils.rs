@@ -1,11 +1,14 @@
 use cosmwasm_std::{Addr, Coin, Deps, StdResult, Storage, Uint128};
-
 use mars_math::FractionMath;
-use mars_rover::adapters::vault::{Vault, VaultPositionAmount, VaultPositionUpdate};
-use mars_rover::error::{ContractError, ContractResult};
+use mars_rover::{
+    adapters::vault::{Vault, VaultPositionAmount, VaultPositionUpdate},
+    error::{ContractError, ContractResult},
+};
 
-use crate::state::{MAX_UNLOCKING_POSITIONS, ORACLE, VAULT_CONFIGS, VAULT_POSITIONS};
-use crate::update_coin_balances::query_balance;
+use crate::{
+    state::{MAX_UNLOCKING_POSITIONS, ORACLE, VAULT_CONFIGS, VAULT_POSITIONS},
+    update_coin_balances::query_balance,
+};
 
 pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> ContractResult<()> {
     let config = VAULT_CONFIGS
@@ -46,9 +49,7 @@ pub fn update_vault_position(
     update: VaultPositionUpdate,
 ) -> ContractResult<VaultPositionAmount> {
     let path = VAULT_POSITIONS.key((account_id, vault_addr.clone()));
-    let mut amount = path
-        .may_load(storage)?
-        .unwrap_or_else(|| update.default_amount());
+    let mut amount = path.may_load(storage)?.unwrap_or_else(|| update.default_amount());
 
     amount.update(update)?;
 
@@ -78,9 +79,8 @@ pub fn vault_utilization_in_deposit_cap_denom(
     let rover_vault_balance_value = rover_vault_balance_value(deps, vault, rover_addr)?;
     let config = VAULT_CONFIGS.load(deps.storage, &vault.address)?;
     let oracle = ORACLE.load(deps.storage)?;
-    let deposit_cap_denom_price = oracle
-        .query_price(&deps.querier, &config.deposit_cap.denom)?
-        .price;
+    let deposit_cap_denom_price =
+        oracle.query_price(&deps.querier, &config.deposit_cap.denom)?.price;
 
     Ok(Coin {
         denom: config.deposit_cap.denom,

@@ -1,8 +1,8 @@
+use std::hash::Hash;
+
 use anyhow::Result as AnyResult;
 use cw_multi_test::AppResponse;
 use mars_credit_manager::utils::contents_equal;
-use std::hash::Hash;
-
 use mars_rover::error::ContractError;
 
 pub fn assert_err(res: AnyResult<AppResponse>, err: ContractError) {

@@ -1,8 +1,10 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Api, Decimal, StdResult, Uint128};
 
-use crate::error::MarsError;
-use crate::helpers::{decimal_param_le_one, integer_param_gt_zero};
+use crate::{
+    error::MarsError,
+    helpers::{decimal_param_le_one, integer_param_gt_zero},
+};
 
 const MAX_SLIPPAGE_TOLERANCE_PERCENTAGE: u64 = 50;
 
@@ -115,7 +117,9 @@ pub type InstantiateMsg = Config<String>;
 #[cw_serde]
 pub enum ExecuteMsg<Route> {
     /// Update contract config
-    UpdateConfig { new_cfg: CreateOrUpdateConfig },
+    UpdateConfig {
+        new_cfg: CreateOrUpdateConfig,
+    },
 
     /// Configure the route for swapping an asset
     ///
@@ -158,7 +162,10 @@ pub enum QueryMsg {
     ///
     /// NOTE: The response type of this query is chain-specific.
     #[returns(RouteResponse<String>)]
-    Route { denom_in: String, denom_out: String },
+    Route {
+        denom_in: String,
+        denom_out: String,
+    },
     /// Enumerate all swap routes.
     ///
     /// NOTE: The response type of this query is chain-specific.

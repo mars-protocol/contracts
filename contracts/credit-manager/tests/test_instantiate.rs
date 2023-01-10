@@ -60,25 +60,17 @@ fn test_vault_configs_set_on_instantiate() {
         },
     ];
 
-    let mock = MockEnv::new()
-        .vault_configs(&vault_configs)
-        .build()
-        .unwrap();
+    let mock = MockEnv::new().vault_configs(&vault_configs).build().unwrap();
     let res = mock.query_vault_configs(None, None);
     assert_contents_equal(
         &res.iter().map(|v| v.vault.clone()).collect::<Vec<_>>(),
-        &vault_configs
-            .iter()
-            .map(|info| mock.get_vault(info))
-            .collect::<Vec<_>>(),
+        &vault_configs.iter().map(|info| mock.get_vault(info)).collect::<Vec<_>>(),
     );
 }
 
 #[test]
 fn test_raises_on_invalid_vaults_addr() {
-    let mock = MockEnv::new()
-        .pre_deployed_vault("%%%INVALID%%%", &unlocked_vault_info())
-        .build();
+    let mock = MockEnv::new().pre_deployed_vault("%%%INVALID%%%", &unlocked_vault_info()).build();
 
     if mock.is_ok() {
         panic!("Should have thrown an error");
@@ -149,18 +141,12 @@ fn test_allowed_coins_set_on_instantiate() {
             liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
         },
     ];
-    let mock = MockEnv::new()
-        .allowed_coins(&allowed_coins)
-        .build()
-        .unwrap();
+    let mock = MockEnv::new().allowed_coins(&allowed_coins).build().unwrap();
 
     let res = mock.query_allowed_coins(None, None);
     assert_contents_equal(
         &res,
-        &allowed_coins
-            .iter()
-            .map(|info| info.denom.clone())
-            .collect::<Vec<_>>(),
+        &allowed_coins.iter().map(|info| info.denom.clone()).collect::<Vec<_>>(),
     )
 }
 
@@ -215,9 +201,7 @@ fn test_max_close_factor_set_on_instantiate() {
 
 #[test]
 fn test_max_close_factor_validated() {
-    let mock = MockEnv::new()
-        .max_close_factor(Decimal::from_atomics(1244u128, 3).unwrap())
-        .build();
+    let mock = MockEnv::new().max_close_factor(Decimal::from_atomics(1244u128, 3).unwrap()).build();
 
     if mock.is_ok() {
         panic!("Should have thrown an error: Max close factor should be below 1");

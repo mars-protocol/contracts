@@ -3,9 +3,7 @@ use cosmwasm_std::{
     to_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, QueryRequest, StdResult, Uint128,
     WasmMsg, WasmQuery,
 };
-
-use mars_outpost::red_bank;
-use mars_outpost::red_bank::Market;
+use mars_outpost::{red_bank, red_bank::Market};
 
 #[cw_serde]
 pub struct RedBankBase<T>(T);
@@ -53,7 +51,9 @@ impl RedBank {
     pub fn repay_msg(&self, coin: &Coin) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
-            msg: to_binary(&red_bank::ExecuteMsg::Repay { on_behalf_of: None })?,
+            msg: to_binary(&red_bank::ExecuteMsg::Repay {
+                on_behalf_of: None,
+            })?,
             funds: vec![coin.clone()],
         }))
     }

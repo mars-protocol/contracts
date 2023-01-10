@@ -1,17 +1,17 @@
 use cosmwasm_std::{Coin, Deps, StdResult, Storage, Uint128};
 
-use crate::contract::STARTING_LP_POOL_TOKENS;
-use crate::error::ContractError;
-use crate::state::{COIN_BALANCES, COIN_CONFIG, LP_TOKEN_SUPPLY, ORACLE};
+use crate::{
+    contract::STARTING_LP_POOL_TOKENS,
+    error::ContractError,
+    state::{COIN_BALANCES, COIN_CONFIG, LP_TOKEN_SUPPLY, ORACLE},
+};
 
 pub fn estimate_provide_liquidity(
     deps: &Deps,
     lp_token_out: &str,
     coins_in: Vec<Coin>,
 ) -> Result<Uint128, ContractError> {
-    let total_supply = LP_TOKEN_SUPPLY
-        .load(deps.storage, lp_token_out)
-        .unwrap_or(Uint128::zero());
+    let total_supply = LP_TOKEN_SUPPLY.load(deps.storage, lp_token_out).unwrap_or(Uint128::zero());
 
     let lp_tokens_estimate = if total_supply.is_zero() {
         STARTING_LP_POOL_TOKENS

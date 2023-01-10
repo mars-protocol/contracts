@@ -1,11 +1,13 @@
-use cosmwasm_std::OverflowOperation::Sub;
-use cosmwasm_std::{coin, Addr, Coin, OverflowError, Uint128};
-
+use cosmwasm_std::{coin, Addr, Coin, OverflowError, OverflowOperation::Sub, Uint128};
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
-use mars_rover::adapters::vault::VaultBase;
-use mars_rover::error::ContractError;
-use mars_rover::error::ContractError::{NotTokenOwner, NotWhitelisted};
-use mars_rover::msg::execute::Action::{Deposit, EnterVault, ExitVault};
+use mars_rover::{
+    adapters::vault::VaultBase,
+    error::{
+        ContractError,
+        ContractError::{NotTokenOwner, NotWhitelisted},
+    },
+    msg::execute::Action::{Deposit, EnterVault, ExitVault},
+};
 
 use crate::helpers::{
     assert_err, locked_vault_info, lp_token_info, uatom_info, unlocked_vault_info, uosmo_info,

@@ -1,9 +1,11 @@
-use cosmwasm_std::OverflowOperation::Sub;
-use cosmwasm_std::{coins, Addr, Coin, Decimal, OverflowError, Uint128};
-
-use mars_rover::error::ContractError;
-use mars_rover::msg::execute::Action::{Deposit, SwapExactIn};
-use mars_rover::msg::execute::{ActionAmount, ActionCoin};
+use cosmwasm_std::{coins, Addr, Coin, Decimal, OverflowError, OverflowOperation::Sub, Uint128};
+use mars_rover::{
+    error::ContractError,
+    msg::execute::{
+        Action::{Deposit, SwapExactIn},
+        ActionAmount, ActionCoin,
+    },
+};
 use mars_swapper_mock::contract::MOCK_SWAP_RESULT;
 
 use crate::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv};
@@ -45,10 +47,7 @@ fn test_denom_out_must_be_whitelisted() {
     let osmo_info = uosmo_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .allowed_coins(&[osmo_info.clone()])
-        .build()
-        .unwrap();
+    let mut mock = MockEnv::new().allowed_coins(&[osmo_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(
@@ -71,10 +70,8 @@ fn test_no_amount_sent() {
     let atom_info = uatom_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .allowed_coins(&[osmo_info.clone(), atom_info.clone()])
-        .build()
-        .unwrap();
+    let mut mock =
+        MockEnv::new().allowed_coins(&[osmo_info.clone(), atom_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(
@@ -97,10 +94,8 @@ fn test_user_has_zero_balance_for_swap_req() {
     let atom_info = uatom_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .allowed_coins(&[osmo_info.clone(), atom_info.clone()])
-        .build()
-        .unwrap();
+    let mut mock =
+        MockEnv::new().allowed_coins(&[osmo_info.clone(), atom_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(

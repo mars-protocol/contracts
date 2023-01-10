@@ -2,17 +2,20 @@ use std::cmp::min;
 
 use cosmwasm_std::{Coin, DepsMut, Env, Response, Uint128};
 use cosmwasm_vault_standard::VaultInfoResponse;
-
-use mars_rover::adapters::vault::{
-    UnlockingChange, UnlockingPositions, UpdateType, Vault, VaultPositionAmount, VaultPositionType,
-    VaultPositionUpdate,
+use mars_rover::{
+    adapters::vault::{
+        UnlockingChange, UnlockingPositions, UpdateType, Vault, VaultPositionAmount,
+        VaultPositionType, VaultPositionUpdate,
+    },
+    error::{ContractError, ContractResult},
 };
-use mars_rover::error::{ContractError, ContractResult};
 
-use crate::liquidate_coin::{calculate_liquidation, repay_debt};
-use crate::state::VAULT_POSITIONS;
-use crate::utils::update_balance_msg;
-use crate::vault::update_vault_position;
+use crate::{
+    liquidate_coin::{calculate_liquidation, repay_debt},
+    state::VAULT_POSITIONS,
+    utils::update_balance_msg,
+    vault::update_vault_position,
+};
 
 pub fn liquidate_vault(
     deps: DepsMut,
@@ -23,10 +26,8 @@ pub fn liquidate_vault(
     request_vault: Vault,
     position_type: VaultPositionType,
 ) -> ContractResult<Response> {
-    let liquidatee_position = VAULT_POSITIONS.load(
-        deps.storage,
-        (liquidatee_account_id, request_vault.address.clone()),
-    )?;
+    let liquidatee_position = VAULT_POSITIONS
+        .load(deps.storage, (liquidatee_account_id, request_vault.address.clone()))?;
 
     match liquidatee_position {
         VaultPositionAmount::Unlocked(a) => match position_type {
@@ -86,13 +87,8 @@ fn liquidate_unlocked(
         &vault_info,
     )?;
 
-    let repay_msg = repay_debt(
-        deps.storage,
-        &env,
-        liquidator_account_id,
-        liquidatee_account_id,
-        &debt,
-    )?;
+    let repay_msg =
+        repay_debt(deps.storage, &env, liquidator_account_id, liquidatee_account_id, &debt)?;
 
     update_vault_position(
         deps.storage,
@@ -167,13 +163,8 @@ fn liquidate_unlocking(
         unlocking_positions.total(),
     )?;
 
-    let repay_msg = repay_debt(
-        deps.storage,
-        &env,
-        liquidator_account_id,
-        liquidatee_account_id,
-        &debt,
-    )?;
+    let repay_msg =
+        repay_debt(deps.storage, &env, liquidator_account_id, liquidatee_account_id, &debt)?;
 
     let mut total_to_liquidate = request.amount;
     let mut vault_withdraw_msgs = vec![];
@@ -189,7 +180,10 @@ fn liquidate_unlocking(
             deps.storage,
             liquidatee_account_id,
             &request_vault.address,
-            VaultPositionUpdate::Unlocking(UnlockingChange::Decrement { id: u.id, amount }),
+            VaultPositionUpdate::Unlocking(UnlockingChange::Decrement {
+                id: u.id,
+                amount,
+            }),
         )?;
 
         let msg = request_vault.force_withdraw_unlocking_msg(u.id, Some(amount))?;
@@ -238,13 +232,8 @@ fn liquidate_locked(
         &vault_info,
     )?;
 
-    let repay_msg = repay_debt(
-        deps.storage,
-        &env,
-        liquidator_account_id,
-        liquidatee_account_id,
-        &debt,
-    )?;
+    let repay_msg =
+        repay_debt(deps.storage, &env, liquidator_account_id, liquidatee_account_id, &debt)?;
 
     update_vault_position(
         deps.storage,

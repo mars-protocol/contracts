@@ -1,9 +1,9 @@
 use cosmwasm_std::{Addr, Empty, StdResult, Uint128};
 use cw721::NftInfoResponse;
-
-use mars_account_nft::error::ContractError;
-use mars_account_nft::error::ContractError::BurnNotAllowed;
-use mars_account_nft::msg::QueryMsg::NftInfo;
+use mars_account_nft::{
+    error::{ContractError, ContractError::BurnNotAllowed},
+    msg::QueryMsg::NftInfo,
+};
 
 use crate::helpers::{below_max_for_burn, generate_health_response, MockEnv, MAX_VALUE_FOR_BURN};
 
@@ -100,9 +100,11 @@ fn test_burn_allowance_when_under_max() {
     mock.set_health_response(&user, &token_id, &below_max_for_burn());
     mock.burn(&user, &token_id).unwrap();
 
-    let res: StdResult<NftInfoResponse<Empty>> = mock
-        .app
-        .wrap()
-        .query_wasm_smart(mock.nft_contract, &NftInfo { token_id });
+    let res: StdResult<NftInfoResponse<Empty>> = mock.app.wrap().query_wasm_smart(
+        mock.nft_contract,
+        &NftInfo {
+            token_id,
+        },
+    );
     res.unwrap_err();
 }

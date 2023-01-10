@@ -1,5 +1,4 @@
 use cosmwasm_std::{Addr, BankMsg, Coin, CosmosMsg, DepsMut, Response};
-
 use mars_rover::error::{ContractError, ContractResult};
 
 use crate::utils::decrement_coin_balance;

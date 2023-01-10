@@ -1,9 +1,12 @@
 use cosmwasm_std::{coins, Addr, Coin, Decimal, OverflowError, OverflowOperation, Uint128};
-
 use mars_mock_oracle::msg::CoinPrice;
-use mars_rover::error::ContractError;
-use mars_rover::error::ContractError::{AboveMaxLTV, LiquidationNotProfitable, NotLiquidatable};
-use mars_rover::msg::execute::Action::{Borrow, Deposit, EnterVault, LiquidateCoin};
+use mars_rover::{
+    error::{
+        ContractError,
+        ContractError::{AboveMaxLTV, LiquidationNotProfitable, NotLiquidatable},
+    },
+    msg::execute::Action::{Borrow, Deposit, EnterVault, LiquidateCoin},
+};
 
 use crate::helpers::{
     assert_err, get_coin, get_debt, lp_token_info, uatom_info, ujake_info, unlocked_vault_info,
@@ -34,10 +37,7 @@ fn test_can_only_liquidate_unhealthy_accounts() {
     mock.update_credit_account(
         &liquidatee_account_id,
         &liquidatee,
-        vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(uatom_info.to_coin(50)),
-        ],
+        vec![Deposit(uosmo_info.to_coin(300)), Borrow(uatom_info.to_coin(50))],
         &[Coin::new(300, uosmo_info.clone().denom)],
     )
     .unwrap();
@@ -149,10 +149,7 @@ fn test_liquidatee_does_not_have_requested_asset() {
     mock.update_credit_account(
         &liquidatee_account_id,
         &liquidatee,
-        vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(uatom_info.to_coin(105)),
-        ],
+        vec![Deposit(uosmo_info.to_coin(300)), Borrow(uatom_info.to_coin(105))],
         &[Coin::new(300, uosmo_info.denom)],
     )
     .unwrap();
@@ -210,10 +207,7 @@ fn test_liquidatee_does_not_have_debt_coin() {
     mock.update_credit_account(
         &liquidatee_account_id,
         &liquidatee,
-        vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(uatom_info.to_coin(105)),
-        ],
+        vec![Deposit(uosmo_info.to_coin(300)), Borrow(uatom_info.to_coin(105))],
         &[Coin::new(300, uosmo_info.denom.clone())],
     )
     .unwrap();
@@ -226,10 +220,7 @@ fn test_liquidatee_does_not_have_debt_coin() {
     mock.update_credit_account(
         &random_user_token,
         &random_user,
-        vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(ujake_info.to_coin(10)),
-        ],
+        vec![Deposit(uosmo_info.to_coin(300)), Borrow(ujake_info.to_coin(10))],
         &[Coin::new(300, uosmo_info.denom)],
     )
     .unwrap();
@@ -278,10 +269,7 @@ fn test_liquidator_does_not_have_enough_to_pay_debt() {
     mock.update_credit_account(
         &liquidatee_account_id,
         &liquidatee,
-        vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(uatom_info.to_coin(100)),
-        ],
+        vec![Deposit(uosmo_info.to_coin(300)), Borrow(uatom_info.to_coin(100))],
         &[Coin::new(300, uosmo_info.clone().denom)],
     )
     .unwrap();
@@ -337,10 +325,7 @@ fn test_liquidator_left_in_unhealthy_state() {
     mock.update_credit_account(
         &liquidatee_account_id,
         &liquidatee,
-        vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(uatom_info.to_coin(100)),
-        ],
+        vec![Deposit(uosmo_info.to_coin(300)), Borrow(uatom_info.to_coin(100))],
         &[Coin::new(300, uosmo_info.clone().denom)],
     )
     .unwrap();
@@ -471,10 +456,7 @@ fn test_debt_amount_adjusted_to_close_factor_max() {
     mock.update_credit_account(
         &liquidatee_account_id,
         &liquidatee,
-        vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(uatom_info.to_coin(100)),
-        ],
+        vec![Deposit(uosmo_info.to_coin(300)), Borrow(uatom_info.to_coin(100))],
         &[Coin::new(300, uosmo_info.denom.clone())],
     )
     .unwrap();
@@ -626,10 +608,7 @@ fn test_debt_amount_adjusted_to_max_allowed_by_request_coin() {
     mock.update_credit_account(
         &liquidatee_account_id,
         &liquidatee,
-        vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(uatom_info.to_coin(100)),
-        ],
+        vec![Deposit(uosmo_info.to_coin(300)), Borrow(uatom_info.to_coin(100))],
         &[Coin::new(300, uosmo_info.denom.clone())],
     )
     .unwrap();
@@ -702,10 +681,7 @@ fn test_debt_amount_no_adjustment() {
     mock.update_credit_account(
         &liquidatee_account_id,
         &liquidatee,
-        vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(uatom_info.to_coin(100)),
-        ],
+        vec![Deposit(uosmo_info.to_coin(300)), Borrow(uatom_info.to_coin(100))],
         &[Coin::new(300, uosmo_info.denom.clone())],
     )
     .unwrap();

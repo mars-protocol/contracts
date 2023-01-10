@@ -18,11 +18,7 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> ContractResult<Response> {
-    set_contract_version(
-        deps.storage,
-        &format!("crates.io:{}", CONTRACT_NAME),
-        CONTRACT_VERSION,
-    )?;
+    set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
     OsmosisSwap::default().instantiate(deps, msg)
 }
 

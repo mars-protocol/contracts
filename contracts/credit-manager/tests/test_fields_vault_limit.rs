@@ -1,6 +1,8 @@
 use cosmwasm_std::{coin, Addr, Decimal};
-use mars_rover::error::ContractError;
-use mars_rover::msg::execute::Action::{Deposit, EnterVault};
+use mars_rover::{
+    error::ContractError,
+    msg::execute::Action::{Deposit, EnterVault},
+};
 
 use crate::helpers::{
     assert_err, lp_token_info, unlocked_vault_info, AccountToFund, CoinInfo, MockEnv, VaultTestInfo,

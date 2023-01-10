@@ -13,7 +13,10 @@ pub enum MarsError {
     InstantiateParamsUnavailable {},
 
     #[error("Incorrect number of addresses, expected {expected:?}, got {actual:?}")]
-    AddressesQueryWrongNumber { expected: u32, actual: u32 },
+    AddressesQueryWrongNumber {
+        expected: u32,
+        actual: u32,
+    },
 
     #[error("Invalid param: {param_name} is {invalid_value}, but it should be {predicate}")]
     InvalidParam {
@@ -23,14 +26,16 @@ pub enum MarsError {
     },
 
     #[error("Failed to deserialize RPC query response for: {target_type}")]
-    Deserialize { target_type: String },
+    Deserialize {
+        target_type: String,
+    },
 }
 
 impl From<MarsError> for StdError {
     fn from(source: MarsError) -> Self {
         match source {
             MarsError::Std(e) => e,
-            e => StdError::generic_err(format!("{}", e)),
+            e => StdError::generic_err(format!("{e}")),
         }
     }
 }

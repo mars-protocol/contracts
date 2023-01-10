@@ -1,6 +1,7 @@
-use crate::red_bank::InterestRateModel;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Decimal, Uint128};
+
+use crate::red_bank::InterestRateModel;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -12,7 +13,9 @@ pub struct InstantiateMsg {
 #[allow(clippy::large_enum_variant)]
 pub enum ExecuteMsg {
     /// Update contract config (only owner can call)
-    UpdateConfig { config: CreateOrUpdateConfig },
+    UpdateConfig {
+        config: CreateOrUpdateConfig,
+    },
 
     /// Initialize an asset on the money market (only owner can call)
     InitAsset {
@@ -140,7 +143,9 @@ pub enum QueryMsg {
 
     /// Get asset market
     #[returns(crate::red_bank::Market)]
-    Market { denom: String },
+    Market {
+        denom: String,
+    },
 
     /// Enumerate markets with pagination
     #[returns(Vec<crate::red_bank::Market>)]
@@ -151,7 +156,10 @@ pub enum QueryMsg {
 
     /// Get uncollateralized limit for given user and asset
     #[returns(crate::red_bank::UncollateralizedLoanLimitResponse)]
-    UncollateralizedLoanLimit { user: String, denom: String },
+    UncollateralizedLoanLimit {
+        user: String,
+        denom: String,
+    },
 
     /// Get all uncollateralized limits for a given user
     #[returns(Vec<crate::red_bank::UncollateralizedLoanLimitResponse>)]
@@ -163,7 +171,10 @@ pub enum QueryMsg {
 
     /// Get user debt position for a specific asset
     #[returns(crate::red_bank::UserDebtResponse)]
-    UserDebt { user: String, denom: String },
+    UserDebt {
+        user: String,
+        denom: String,
+    },
 
     /// Get all debt positions for a user
     #[returns(Vec<crate::red_bank::UserDebtResponse>)]
@@ -175,7 +186,10 @@ pub enum QueryMsg {
 
     /// Get user collateral position for a specific asset
     #[returns(crate::red_bank::UserCollateralResponse)]
-    UserCollateral { user: String, denom: String },
+    UserCollateral {
+        user: String,
+        denom: String,
+    },
 
     /// Get all collateral positions for a user
     #[returns(Vec<crate::red_bank::UserCollateralResponse>)]
@@ -187,17 +201,25 @@ pub enum QueryMsg {
 
     /// Get user position
     #[returns(crate::red_bank::UserPositionResponse)]
-    UserPosition { user: String },
+    UserPosition {
+        user: String,
+    },
 
     /// Get liquidity scaled amount for a given underlying asset amount.
     /// (i.e: how much scaled collateral is added if the given amount is deposited)
     #[returns(Uint128)]
-    ScaledLiquidityAmount { denom: String, amount: Uint128 },
+    ScaledLiquidityAmount {
+        denom: String,
+        amount: Uint128,
+    },
 
     /// Get equivalent scaled debt for a given underlying asset amount.
     /// (i.e: how much scaled debt is added if the given amount is borrowed)
     #[returns(Uint128)]
-    ScaledDebtAmount { denom: String, amount: Uint128 },
+    ScaledDebtAmount {
+        denom: String,
+        amount: Uint128,
+    },
 
     /// Get underlying asset amount for a given asset and scaled amount.
     /// (i.e. How much underlying asset will be released if withdrawing by burning a given scaled

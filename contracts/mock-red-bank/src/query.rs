@@ -1,10 +1,7 @@
 use cosmwasm_std::{Deps, StdResult, Uint128};
-use mars_outpost::red_bank::Market;
+use mars_outpost::red_bank::{Market, UserDebtResponse};
 
-use crate::helpers::load_debt_amount;
-use crate::state::COIN_MARKET_INFO;
-
-use mars_outpost::red_bank::UserDebtResponse;
+use crate::{helpers::load_debt_amount, state::COIN_MARKET_INFO};
 
 pub fn query_debt(deps: Deps, user: String, denom: String) -> StdResult<UserDebtResponse> {
     let user_addr = deps.api.addr_validate(&user)?;

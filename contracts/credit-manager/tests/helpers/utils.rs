@@ -6,9 +6,5 @@ pub fn get_coin(denom: &str, coins: &[Coin]) -> Coin {
 }
 
 pub fn get_debt(denom: &str, coins: &[DebtAmount]) -> DebtAmount {
-    coins
-        .iter()
-        .find(|coin| coin.denom.as_str() == denom)
-        .unwrap()
-        .clone()
+    coins.iter().find(|coin| coin.denom.as_str() == denom).unwrap().clone()
 }

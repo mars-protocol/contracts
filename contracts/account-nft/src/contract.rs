@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -6,14 +8,15 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
 use cw721_base::Cw721Contract;
-use std::convert::TryInto;
 
-use crate::config::Config;
-use crate::error::ContractError;
-use crate::execute::{accept_minter_role, burn, mint, update_config};
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::query::{query_config, query_next_id};
-use crate::state::{CONFIG, NEXT_ID};
+use crate::{
+    config::Config,
+    error::ContractError,
+    execute::{accept_minter_role, burn, mint, update_config},
+    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+    query::{query_config, query_next_id},
+    state::{CONFIG, NEXT_ID},
+};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -28,11 +31,7 @@ pub fn instantiate(
     _: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    set_contract_version(
-        deps.storage,
-        &format!("crates.io:{}", CONTRACT_NAME),
-        CONTRACT_VERSION,
-    )?;
+    set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
 
     NEXT_ID.save(deps.storage, &1)?;
 
@@ -65,13 +64,17 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint { user } => mint(deps, env, info, &user),
-        ExecuteMsg::UpdateConfig { updates } => update_config(deps, info, updates),
+        ExecuteMsg::Mint {
+            user,
+        } => mint(deps, env, info, &user),
+        ExecuteMsg::UpdateConfig {
+            updates,
+        } => update_config(deps, info, updates),
         ExecuteMsg::AcceptMinterRole {} => accept_minter_role(deps, info),
-        ExecuteMsg::Burn { token_id } => burn(deps, env, info, token_id),
-        _ => Parent::default()
-            .execute(deps, env, info, msg.try_into()?)
-            .map_err(Into::into),
+        ExecuteMsg::Burn {
+            token_id,
+        } => burn(deps, env, info, token_id),
+        _ => Parent::default().execute(deps, env, info, msg.try_into()?).map_err(Into::into),
     }
 }
 

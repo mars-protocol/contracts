@@ -3,9 +3,11 @@ use cosmwasm_std::{
 };
 use cw_utils::one_coin;
 
-use crate::error::{ContractError, ContractResult};
-use crate::query::{estimate_provide_liquidity, estimate_withdraw_liquidity};
-use crate::state::{COIN_BALANCES, COIN_CONFIG, LP_TOKEN_SUPPLY};
+use crate::{
+    error::{ContractError, ContractResult},
+    query::{estimate_provide_liquidity, estimate_withdraw_liquidity},
+    state::{COIN_BALANCES, COIN_CONFIG, LP_TOKEN_SUPPLY},
+};
 
 pub fn provide_liquidity(
     deps: DepsMut,
@@ -36,9 +38,7 @@ pub fn provide_liquidity(
             deps.storage,
             (&lp_token_out_denom, &coin.denom),
             |amount_opt| -> StdResult<_> {
-                Ok(amount_opt
-                    .unwrap_or(Uint128::zero())
-                    .checked_add(coin.amount)?)
+                Ok(amount_opt.unwrap_or(Uint128::zero()).checked_add(coin.amount)?)
             },
         )?;
     }
@@ -65,9 +65,7 @@ pub fn withdraw_liquidity(deps: DepsMut, info: MessageInfo) -> ContractResult<Re
             deps.storage,
             (&lp_token_sent.denom, &coin.denom),
             |amount_opt| -> StdResult<_> {
-                Ok(amount_opt
-                    .unwrap_or(Uint128::zero())
-                    .checked_sub(coin.amount)?)
+                Ok(amount_opt.unwrap_or(Uint128::zero()).checked_sub(coin.amount)?)
             },
         )?;
     }
@@ -87,9 +85,7 @@ fn mock_lp_token_mint(
     amount: Uint128,
     lp_token_out_denom: &str,
 ) -> Result<(), StdError> {
-    let total_supply = LP_TOKEN_SUPPLY
-        .load(storage, lp_token_out_denom)
-        .unwrap_or(Uint128::zero());
+    let total_supply = LP_TOKEN_SUPPLY.load(storage, lp_token_out_denom).unwrap_or(Uint128::zero());
     LP_TOKEN_SUPPLY.save(storage, lp_token_out_denom, &(total_supply + amount))?;
     Ok(())
 }

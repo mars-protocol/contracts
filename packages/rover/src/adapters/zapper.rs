@@ -82,7 +82,9 @@ impl Zapper {
     pub fn withdraw_liquidity_msg(&self, lp_token: &Coin) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
-            msg: to_binary(&ExecuteMsg::WithdrawLiquidity { recipient: None })?,
+            msg: to_binary(&ExecuteMsg::WithdrawLiquidity {
+                recipient: None,
+            })?,
             funds: vec![lp_token.clone()],
         }))
     }

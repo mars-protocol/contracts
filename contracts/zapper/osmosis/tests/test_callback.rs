@@ -1,7 +1,6 @@
 use cosmwasm_std::{coin, Addr, Coin};
-use osmosis_testing::{Account, Module, OsmosisTestApp, Wasm};
-
 use mars_zapper_base::{CallbackMsg, ContractError, ExecuteMsg};
+use osmosis_testing::{Account, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::{assert_err, instantiate_contract};
 
@@ -13,13 +12,7 @@ fn test_only_contract_itself_can_callback() {
     let wasm = Wasm::new(&app);
 
     let accs = app
-        .init_accounts(
-            &[
-                coin(1_000_000_000_000, "uatom"),
-                coin(1_000_000_000_000, "uosmo"),
-            ],
-            2,
-        )
+        .init_accounts(&[coin(1_000_000_000_000, "uatom"), coin(1_000_000_000_000, "uosmo")], 2)
         .unwrap();
     let owner = &accs[0];
     let user = &accs[1];

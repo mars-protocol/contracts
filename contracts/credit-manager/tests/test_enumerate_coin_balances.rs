@@ -1,7 +1,5 @@
 use cosmwasm_std::{coin, Addr, Uint128};
-
-use mars_rover::msg::execute::Action;
-use mars_rover::msg::query::CoinBalanceResponseItem;
+use mars_rover::msg::{execute::Action, query::CoinBalanceResponseItem};
 
 use crate::helpers::{build_mock_coin_infos, AccountToFund, MockEnv};
 
@@ -75,10 +73,7 @@ fn test_pagination_on_all_coin_balances_query_works() {
     mock.update_credit_account(
         &account_id_a,
         &user_a,
-        user_a_coins
-            .iter()
-            .map(|coin| Action::Deposit(coin.clone()))
-            .collect(),
+        user_a_coins.iter().map(|coin| Action::Deposit(coin.clone())).collect(),
         &user_a_coins,
     )
     .unwrap();
@@ -87,10 +82,7 @@ fn test_pagination_on_all_coin_balances_query_works() {
     mock.update_credit_account(
         &account_id_b,
         &user_b,
-        user_b_coins
-            .iter()
-            .map(|coin| Action::Deposit(coin.clone()))
-            .collect(),
+        user_b_coins.iter().map(|coin| Action::Deposit(coin.clone())).collect(),
         &user_b_coins,
     )
     .unwrap();
@@ -99,10 +91,7 @@ fn test_pagination_on_all_coin_balances_query_works() {
     mock.update_credit_account(
         &account_id_c,
         &user_c,
-        user_c_coins
-            .iter()
-            .map(|coin| Action::Deposit(coin.clone()))
-            .collect(),
+        user_c_coins.iter().map(|coin| Action::Deposit(coin.clone())).collect(),
         &user_c_coins,
     )
     .unwrap();
@@ -120,17 +109,23 @@ fn test_pagination_on_all_coin_balances_query_works() {
     let all_assets_res_a = mock.query_all_coin_balances(None, None);
 
     let CoinBalanceResponseItem {
-        account_id, denom, ..
+        account_id,
+        denom,
+        ..
     } = all_assets_res_a.last().unwrap().clone();
     let all_assets_res_b = mock.query_all_coin_balances(Some((account_id, denom)), None);
 
     let CoinBalanceResponseItem {
-        account_id, denom, ..
+        account_id,
+        denom,
+        ..
     } = all_assets_res_b.last().unwrap().clone();
     let all_assets_res_c = mock.query_all_coin_balances(Some((account_id, denom)), None);
 
     let CoinBalanceResponseItem {
-        account_id, denom, ..
+        account_id,
+        denom,
+        ..
     } = all_assets_res_c.last().unwrap().clone();
     let all_assets_res_d = mock.query_all_coin_balances(Some((account_id, denom)), None);
 
@@ -184,7 +179,5 @@ fn test_pagination_on_all_coin_balances_query_works() {
         .collect();
 
     assert_eq!(combined_res.len(), combined_starting_vals.len());
-    assert!(combined_starting_vals
-        .iter()
-        .all(|item| combined_res.contains(item)));
+    assert!(combined_starting_vals.iter().all(|item| combined_res.contains(item)));
 }

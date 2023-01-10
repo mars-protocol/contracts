@@ -82,9 +82,11 @@ pub fn multiply_uint128_by_decimal_and_ceil(a: Uint128, b: Decimal) -> StdResult
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use cosmwasm_std::{ConversionOverflowError, OverflowOperation};
     use std::str::FromStr;
+
+    use cosmwasm_std::{ConversionOverflowError, OverflowOperation};
+
+    use super::*;
 
     const DECIMAL_FRACTIONAL: Uint128 = Uint128::new(1_000_000_000_000_000_000u128); // 1*10**18
     const DECIMAL_FRACTIONAL_SQUARED: Uint128 =
@@ -178,10 +180,7 @@ mod tests {
         let a = Uint128::new(1_000_000_000_000_000_000);
         let b = Decimal::from_ratio(1u128, DECIMAL_FRACTIONAL);
         let c = divide_uint128_by_decimal(a, b).unwrap();
-        assert_eq!(
-            c,
-            Uint128::new(1_000_000_000_000_000_000_000_000_000_000_000_000)
-        );
+        assert_eq!(c, Uint128::new(1_000_000_000_000_000_000_000_000_000_000_000_000));
 
         // Division is truncated
         let a = Uint128::new(100);
@@ -234,10 +233,7 @@ mod tests {
         let a = Uint128::new(1_000_000_000_000_000_000);
         let b = Decimal::from_ratio(1u128, DECIMAL_FRACTIONAL);
         let c = divide_uint128_by_decimal_and_ceil(a, b).unwrap();
-        assert_eq!(
-            c,
-            Uint128::new(1_000_000_000_000_000_000_000_000_000_000_000_000)
-        );
+        assert_eq!(c, Uint128::new(1_000_000_000_000_000_000_000_000_000_000_000_000));
 
         // Division is rounded up
         let a = Uint128::new(100);

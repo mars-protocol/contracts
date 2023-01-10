@@ -1,10 +1,11 @@
 use std::ops::{Add, Mul, Sub};
 
 use cosmwasm_std::{coin, coins, Addr, Decimal, OverflowError, OverflowOperation, Uint128};
-
 use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
-use mars_rover::error::ContractError;
-use mars_rover::msg::execute::Action::{Borrow, Deposit, Repay, Withdraw};
+use mars_rover::{
+    error::ContractError,
+    msg::execute::Action::{Borrow, Deposit, Repay, Withdraw},
+};
 
 use crate::helpers::{
     assert_err, uosmo_info, AccountToFund, CoinInfo, MockEnv, DEFAULT_RED_BANK_COIN_BALANCE,
@@ -40,10 +41,7 @@ fn test_only_token_owner_can_repay() {
 fn test_repaying_with_zero_debt_raises() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
-        .build()
-        .unwrap();
+    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     // When passing some amount
@@ -102,10 +100,7 @@ fn test_raises_when_repaying_what_is_not_owed() {
     mock.update_credit_account(
         &account_id_b,
         &user_b,
-        vec![
-            Deposit(uatom_info.to_coin(100)),
-            Borrow(uatom_info.to_coin(12)),
-        ],
+        vec![Deposit(uatom_info.to_coin(100)), Borrow(uatom_info.to_coin(12))],
         &[uatom_info.to_coin(100)],
     )
     .unwrap();
@@ -195,23 +190,15 @@ fn test_repay_less_than_total_debt() {
     mock.update_credit_account(
         &account_id,
         &user,
-        vec![
-            Deposit(coin_info.to_coin(300)),
-            Borrow(coin_info.to_coin(50)),
-        ],
+        vec![Deposit(coin_info.to_coin(300)), Borrow(coin_info.to_coin(50))],
         &[coin(300, coin_info.denom.clone())],
     )
     .unwrap();
 
     let interim_red_bank_debt = mock.query_red_bank_debt(&coin_info.denom);
 
-    mock.update_credit_account(
-        &account_id,
-        &user,
-        vec![Repay(coin_info.to_action_coin(20))],
-        &[],
-    )
-    .unwrap();
+    mock.update_credit_account(&account_id, &user, vec![Repay(coin_info.to_action_coin(20))], &[])
+        .unwrap();
 
     let position = mock.query_positions(&account_id);
     assert_eq!(position.deposits.len(), 1);
@@ -238,10 +225,7 @@ fn test_repay_less_than_total_debt() {
     let config = mock.query_config();
     let red_bank_addr = Addr::unchecked(config.red_bank);
     let coin = mock.query_balance(&red_bank_addr, &coin_info.denom);
-    assert_eq!(
-        coin.amount,
-        DEFAULT_RED_BANK_COIN_BALANCE.sub(Uint128::new(30))
-    );
+    assert_eq!(coin.amount, DEFAULT_RED_BANK_COIN_BALANCE.sub(Uint128::new(30)));
 
     mock.update_credit_account(
         &account_id,
@@ -266,10 +250,7 @@ fn test_repay_less_than_total_debt() {
     let coin = mock.query_balance(&mock.rover, &coin_info.denom);
     assert_eq!(coin.amount, Uint128::new(299));
     let coin = mock.query_balance(&red_bank_addr, &coin_info.denom);
-    assert_eq!(
-        coin.amount,
-        DEFAULT_RED_BANK_COIN_BALANCE.add(Uint128::new(1))
-    );
+    assert_eq!(coin.amount, DEFAULT_RED_BANK_COIN_BALANCE.add(Uint128::new(1)));
 }
 
 #[test]
@@ -317,10 +298,7 @@ fn test_pays_max_debt_when_attempting_to_repay_more_than_owed() {
 
     let config = mock.query_config();
     let coin = mock.query_balance(&Addr::unchecked(config.red_bank), &coin_info.denom);
-    assert_eq!(
-        coin.amount,
-        DEFAULT_RED_BANK_COIN_BALANCE.add(Uint128::new(1))
-    );
+    assert_eq!(coin.amount, DEFAULT_RED_BANK_COIN_BALANCE.add(Uint128::new(1)));
 }
 
 #[test]
@@ -363,8 +341,5 @@ fn test_amount_none_repays_total_debt() {
 
     let config = mock.query_config();
     let coin = mock.query_balance(&Addr::unchecked(config.red_bank), &coin_info.denom);
-    assert_eq!(
-        coin.amount,
-        DEFAULT_RED_BANK_COIN_BALANCE.add(Uint128::new(1))
-    );
+    assert_eq!(coin.amount, DEFAULT_RED_BANK_COIN_BALANCE.add(Uint128::new(1)));
 }

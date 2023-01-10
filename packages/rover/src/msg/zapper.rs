@@ -1,8 +1,9 @@
 // TODO: should be removed when liquidity-helper is finalized and published to crates.io
 
-use crate::adapters::oracle::OracleUnchecked;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Uint128};
+
+use crate::adapters::oracle::OracleUnchecked;
 
 #[cw_serde]
 pub struct LpConfig {
@@ -37,5 +38,7 @@ pub enum QueryMsg {
         coins_in: Vec<Coin>,
     },
     #[returns(Vec<Coin>)]
-    EstimateWithdrawLiquidity { coin_in: Coin },
+    EstimateWithdrawLiquidity {
+        coin_in: Coin,
+    },
 }

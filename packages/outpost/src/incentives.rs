@@ -87,9 +87,13 @@ pub enum QueryMsg {
 
     /// Query info about asset incentive for a given denom
     #[returns(AssetIncentiveResponse)]
-    AssetIncentive { denom: String },
+    AssetIncentive {
+        denom: String,
+    },
 
     /// Query user current unclaimed rewards
     #[returns(Uint128)]
-    UserUnclaimedRewards { user: String },
+    UserUnclaimedRewards {
+        user: String,
+    },
 }

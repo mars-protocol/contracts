@@ -3,10 +3,13 @@ use std::mem::take;
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Empty};
 use cw_multi_test::{BasicApp, Executor};
-
-use mars_account_nft::config::ConfigUpdates;
-use mars_account_nft::msg::ExecuteMsg::{AcceptMinterRole, UpdateConfig};
-use mars_account_nft::msg::InstantiateMsg;
+use mars_account_nft::{
+    config::ConfigUpdates,
+    msg::{
+        ExecuteMsg::{AcceptMinterRole, UpdateConfig},
+        InstantiateMsg,
+    },
+};
 
 use crate::helpers::{
     mock_credit_manager_contract, mock_nft_contract, MockEnv, MAX_VALUE_FOR_BURN,

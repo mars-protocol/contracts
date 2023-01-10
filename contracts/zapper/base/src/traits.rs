@@ -1,6 +1,5 @@
 use cosmwasm_std::Deps;
-use cw_dex::traits::Pool;
-use cw_dex::CwDexError;
+use cw_dex::{traits::Pool, CwDexError};
 
 pub trait LpPool {
     /// Returns the matching pool given a LP token.

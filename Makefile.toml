@@ -28,6 +28,7 @@ command = "cargo"
 args = ["test", "--locked"]
 
 [tasks.fmt]
+toolchain = "nightly"
 command = "cargo"
 args = ["fmt", "--all", "--check"]
 

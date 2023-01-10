@@ -3,16 +3,19 @@ use std::ops::Add;
 use cosmwasm_std::{
     Coin, CosmosMsg, Decimal, DepsMut, Env, QuerierWrapper, Response, StdError, Storage, Uint128,
 };
-
 use mars_math::FractionMath;
-use mars_rover::adapters::oracle::Oracle;
-use mars_rover::error::{ContractError, ContractResult};
-use mars_rover::msg::execute::CallbackMsg;
+use mars_rover::{
+    adapters::oracle::Oracle,
+    error::{ContractError, ContractResult},
+    msg::execute::CallbackMsg,
+};
 
-use crate::health::{compute_health, val_or_na};
-use crate::repay::current_debt_for_denom;
-use crate::state::{COIN_BALANCES, MAX_CLOSE_FACTOR, ORACLE, RED_BANK};
-use crate::utils::{decrement_coin_balance, increment_coin_balance};
+use crate::{
+    health::{compute_health, val_or_na},
+    repay::current_debt_for_denom,
+    state::{COIN_BALANCES, MAX_CLOSE_FACTOR, ORACLE, RED_BANK},
+    utils::{decrement_coin_balance, increment_coin_balance},
+};
 
 pub fn liquidate_coin(
     deps: DepsMut,
@@ -35,13 +38,8 @@ pub fn liquidate_coin(
         request_coin_balance,
     )?;
 
-    let repay_msg = repay_debt(
-        deps.storage,
-        &env,
-        liquidator_account_id,
-        liquidatee_account_id,
-        &debt,
-    )?;
+    let repay_msg =
+        repay_debt(deps.storage, &env, liquidator_account_id, liquidatee_account_id, &debt)?;
 
     // Transfer requested coin from liquidatee to liquidator
     decrement_coin_balance(deps.storage, liquidatee_account_id, &request)?;

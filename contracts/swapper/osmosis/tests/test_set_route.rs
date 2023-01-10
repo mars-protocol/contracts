@@ -1,12 +1,10 @@
-use cosmwasm_std::coin;
-use cosmwasm_std::StdError::GenericErr;
+use cosmwasm_std::{coin, StdError::GenericErr};
 use mars_owner::OwnerError;
-use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
-use osmosis_testing::{Gamm, Module, OsmosisTestApp, Wasm};
-
 use mars_rover::adapters::swap::{ExecuteMsg, QueryMsg, RouteResponse};
 use mars_swapper_base::ContractError;
 use mars_swapper_osmosis::route::OsmosisRoute;
+use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
+use osmosis_testing::{Gamm, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::{assert_err, instantiate_contract};
 
@@ -17,9 +15,7 @@ fn test_only_owner_can_set_routes() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let accs = app
-        .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
-        .unwrap();
+    let accs = app.init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2).unwrap();
     let owner = &accs[0];
     let bad_guy = &accs[1];
 
@@ -55,9 +51,7 @@ fn test_must_pass_at_least_one_step() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let signer = app
-        .init_account(&[coin(1_000_000_000_000, "uosmo")])
-        .unwrap();
+    let signer = app.init_account(&[coin(1_000_000_000_000, "uosmo")]).unwrap();
 
     let contract_addr = instantiate_contract(&wasm, &signer);
 
@@ -87,9 +81,7 @@ fn test_must_be_available_in_osmosis() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let signer = app
-        .init_account(&[coin(1_000_000_000_000, "uosmo")])
-        .unwrap();
+    let signer = app.init_account(&[coin(1_000_000_000_000, "uosmo")]).unwrap();
 
     let contract_addr = instantiate_contract(&wasm, &signer);
 
@@ -123,20 +115,14 @@ fn test_step_does_not_contain_input_denom() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[
-            coin(1_000_000_000_000, "uatom"),
-            coin(1_000_000_000_000, "uosmo"),
-        ])
+        .init_account(&[coin(1_000_000_000_000, "uatom"), coin(1_000_000_000_000, "uosmo")])
         .unwrap();
 
     let contract_addr = instantiate_contract(&wasm, &signer);
 
     let gamm = Gamm::new(&app);
     let pool_atom_osmo = gamm
-        .create_basic_pool(
-            &[coin(6_000_000, "uatom"), coin(1_500_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(6_000_000, "uatom"), coin(1_500_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;
@@ -160,10 +146,7 @@ fn test_step_does_not_contain_input_denom() {
     assert_err(
         res_err,
         ContractError::InvalidRoute {
-            reason: format!(
-                "step 1: pool {} does not contain input denom umars",
-                pool_atom_osmo
-            ),
+            reason: format!("step 1: pool {pool_atom_osmo} does not contain input denom umars",),
         },
     );
 }
@@ -174,20 +157,14 @@ fn test_step_does_not_contain_output_denom() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[
-            coin(1_000_000_000_000, "umars"),
-            coin(1_000_000_000_000, "uosmo"),
-        ])
+        .init_account(&[coin(1_000_000_000_000, "umars"), coin(1_000_000_000_000, "uosmo")])
         .unwrap();
 
     let contract_addr = instantiate_contract(&wasm, &signer);
 
     let gamm = Gamm::new(&app);
     let pool_mars_osmo = gamm
-        .create_basic_pool(
-            &[coin(6_000_000, "umars"), coin(1_500_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(6_000_000, "umars"), coin(1_500_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;
@@ -211,10 +188,7 @@ fn test_step_does_not_contain_output_denom() {
     assert_err(
         res_err,
         ContractError::InvalidRoute {
-            reason: format!(
-                "step 1: pool {} does not contain output denom uweth",
-                pool_mars_osmo
-            ),
+            reason: format!("step 1: pool {pool_mars_osmo} does not contain output denom uweth"),
         },
     );
 }
@@ -237,26 +211,17 @@ fn test_steps_do_not_loop() {
 
     let gamm = Gamm::new(&app);
     let pool_atom_osmo = gamm
-        .create_basic_pool(
-            &[coin(6_000_000, "uatom"), coin(1_500_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(6_000_000, "uatom"), coin(1_500_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;
     let pool_osmo_usdc = gamm
-        .create_basic_pool(
-            &[coin(6_000_000, "uosmo"), coin(1_500_000, "uusdc")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(6_000_000, "uosmo"), coin(1_500_000, "uusdc")], &signer)
         .unwrap()
         .data
         .pool_id;
     let pool_osmo_mars = gamm
-        .create_basic_pool(
-            &[coin(6_000_000, "uosmo"), coin(1_500_000, "umars")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(6_000_000, "uosmo"), coin(1_500_000, "umars")], &signer)
         .unwrap()
         .data
         .pool_id;
@@ -307,20 +272,14 @@ fn test_step_output_does_not_match() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[
-            coin(1_000_000_000_000, "uatom"),
-            coin(1_000_000_000_000, "uosmo"),
-        ])
+        .init_account(&[coin(1_000_000_000_000, "uatom"), coin(1_000_000_000_000, "uosmo")])
         .unwrap();
 
     let contract_addr = instantiate_contract(&wasm, &signer);
 
     let gamm = Gamm::new(&app);
     let pool_atom_osmo = gamm
-        .create_basic_pool(
-            &[coin(6_000_000, "uatom"), coin(1_500_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(6_000_000, "uatom"), coin(1_500_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;
@@ -367,10 +326,7 @@ fn test_set_route_success() {
 
     let gamm = Gamm::new(&app);
     let pool_mars_osmo = gamm
-        .create_basic_pool(
-            &[coin(6_000_000, "umars"), coin(1_500_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(6_000_000, "umars"), coin(1_500_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;
@@ -413,8 +369,5 @@ fn test_set_route_success() {
 
     assert_eq!(res.denom_in, "umars".to_string());
     assert_eq!(res.denom_out, "uweth".to_string());
-    assert_eq!(
-        res.route.to_string(),
-        format!("{}:uosmo|{}:uweth", pool_mars_osmo, pool_weth_osmo)
-    );
+    assert_eq!(res.route.to_string(), format!("{pool_mars_osmo}:uosmo|{pool_weth_osmo}:uweth"));
 }

@@ -1,8 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Coin;
 
-use crate::adapters::vault::Vault;
-use crate::adapters::vault::VaultPositionAmount;
+use crate::adapters::vault::{Vault, VaultPositionAmount};
 
 #[cw_serde]
 pub struct VaultUnlockingPosition {

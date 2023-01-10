@@ -1,12 +1,13 @@
-use cosmwasm_std::OverflowOperation::Sub;
-use cosmwasm_std::StdError::NotFound;
-use cosmwasm_std::{Addr, OverflowError, Uint128};
-
+use cosmwasm_std::{Addr, OverflowError, OverflowOperation::Sub, StdError::NotFound, Uint128};
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
-use mars_rover::adapters::vault::VaultBase;
-use mars_rover::error::ContractError;
-use mars_rover::msg::execute::Action::{Deposit, EnterVault};
-use mars_rover::msg::execute::{ActionAmount, ActionCoin};
+use mars_rover::{
+    adapters::vault::VaultBase,
+    error::ContractError,
+    msg::execute::{
+        Action::{Deposit, EnterVault},
+        ActionAmount, ActionCoin,
+    },
+};
 
 use crate::helpers::{
     assert_err, locked_vault_info, lp_token_info, uatom_info, unlocked_vault_info, uosmo_info,
@@ -51,10 +52,7 @@ fn test_deposit_denom_is_whitelisted() {
     let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .vault_configs(&[leverage_vault.clone()])
-        .build()
-        .unwrap();
+    let mut mock = MockEnv::new().vault_configs(&[leverage_vault.clone()]).build().unwrap();
 
     let vault = mock.get_vault(&leverage_vault);
     let account_id = mock.create_credit_account(&user).unwrap();
@@ -97,10 +95,7 @@ fn test_vault_is_whitelisted() {
         &[],
     );
 
-    assert_err(
-        res,
-        ContractError::NotWhitelisted("unknown_vault".to_string()),
-    );
+    assert_err(res, ContractError::NotWhitelisted("unknown_vault".to_string()));
 }
 
 #[test]
@@ -249,14 +244,8 @@ fn test_successful_deposit_into_locked_vault() {
 
     let res = mock.query_positions(&account_id);
     assert_eq!(res.vaults.len(), 1);
-    assert_eq!(
-        STARTING_VAULT_SHARES,
-        res.vaults.first().unwrap().amount.locked()
-    );
-    assert_eq!(
-        Uint128::zero(),
-        res.vaults.first().unwrap().amount.unlocked()
-    );
+    assert_eq!(STARTING_VAULT_SHARES, res.vaults.first().unwrap().amount.locked());
+    assert_eq!(Uint128::zero(), res.vaults.first().unwrap().amount.unlocked());
 
     let amount = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().amount.locked());
     assert_eq!(amount, Uint128::new(23));
@@ -306,10 +295,7 @@ fn test_successful_deposit_into_unlocked_vault() {
 
     let res = mock.query_positions(&account_id);
     assert_eq!(res.vaults.len(), 1);
-    assert_eq!(
-        STARTING_VAULT_SHARES,
-        res.vaults.first().unwrap().amount.unlocked()
-    );
+    assert_eq!(STARTING_VAULT_SHARES, res.vaults.first().unwrap().amount.unlocked());
     assert_eq!(Uint128::zero(), res.vaults.first().unwrap().amount.locked());
 
     let amount = mock.query_preview_redeem(&vault, res.vaults.first().unwrap().amount.unlocked());
@@ -440,9 +426,7 @@ fn test_successful_deposit_with_implied_full_balance_amount() {
     assert_eq!(res.deposits.len(), 0);
 
     // Assert vault indeed has those tokens
-    let base_denom = mock.query_balance(
-        &Addr::unchecked(vault.address),
-        &leverage_vault.base_token_denom,
-    );
+    let base_denom =
+        mock.query_balance(&Addr::unchecked(vault.address), &leverage_vault.base_token_denom);
     assert_eq!(base_denom.amount, Uint128::new(200))
 }

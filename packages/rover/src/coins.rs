@@ -1,13 +1,18 @@
-use std::any::type_name;
-use std::collections::{BTreeMap, HashSet};
-use std::fmt;
-use std::str::FromStr;
+use std::{
+    any::type_name,
+    collections::{BTreeMap, HashSet},
+    fmt,
+    str::FromStr,
+};
 
-use crate::msg::execute::ActionCoin;
-use crate::traits::{Denoms, Stringify};
 use cosmwasm_std::{Coin, StdError, StdResult, Uint128};
 use schemars::JsonSchema;
 use serde::{de, Serialize};
+
+use crate::{
+    msg::execute::ActionCoin,
+    traits::{Denoms, Stringify},
+};
 
 /// A collection of coins, similar to Cosmos SDK's `sdk.Coins` struct.
 ///
@@ -103,23 +108,18 @@ impl<'de> de::Deserialize<'de> for Coins {
                 while let Some((denom, amount_str)) = access.next_entry::<String, String>()? {
                     if seen_denoms.contains(&denom) {
                         return Err(de::Error::custom(format!(
-                            "failed to parse into Coins! duplicate denom: {}",
-                            denom
+                            "failed to parse into Coins! duplicate denom: {denom}"
                         )));
                     }
 
                     let amount = Uint128::from_str(&amount_str).map_err(|_| {
                         de::Error::custom(format!(
-                            "failed to parse into Coins! invalid amount: {}",
-                            amount_str
+                            "failed to parse into Coins! invalid amount: {amount_str}"
                         ))
                     })?;
 
                     if amount.is_zero() {
-                        return Err(de::Error::custom(format!(
-                            "amount for denom {} is zero",
-                            denom
-                        )));
+                        return Err(de::Error::custom(format!("amount for denom {denom} is zero")));
                     }
 
                     seen_denoms.insert(denom.clone());
@@ -188,21 +188,17 @@ impl FromStr for Coins {
                 if c.is_alphabetic() {
                     let amount = Uint128::from_str(&s[..i])?;
                     let denom = String::from(&s[i..]);
-                    return Ok(Coin { amount, denom });
+                    return Ok(Coin {
+                        amount,
+                        denom,
+                    });
                 }
             }
 
-            Err(StdError::parse_err(
-                type_name::<Coin>(),
-                format!("invalid coin string: {s}"),
-            ))
+            Err(StdError::parse_err(type_name::<Coin>(), format!("invalid coin string: {s}")))
         };
 
-        s.split(',')
-            .into_iter()
-            .map(parse_coin_str)
-            .collect::<StdResult<Vec<_>>>()?
-            .try_into()
+        s.split(',').map(parse_coin_str).collect::<StdResult<Vec<_>>>()?.try_into()
     }
 }
 
@@ -236,7 +232,10 @@ impl Coins {
     pub fn into_vec(self) -> Vec<Coin> {
         self.0
             .into_iter()
-            .map(|(denom, amount)| Coin { denom, amount })
+            .map(|(denom, amount)| Coin {
+                denom,
+                amount,
+            })
             .collect()
     }
 
@@ -258,10 +257,7 @@ impl Coins {
 
     /// NOTE: the syntax can be simpler if Uint128 has an inplace add method...
     pub fn add(&mut self, coin: &Coin) -> StdResult<()> {
-        let amount = self
-            .0
-            .entry(coin.denom.clone())
-            .or_insert_with(Uint128::zero);
+        let amount = self.0.entry(coin.denom.clone()).or_insert_with(Uint128::zero);
         *amount = amount.checked_add(coin.amount)?;
         Ok(())
     }
@@ -276,20 +272,14 @@ impl Coins {
             }
             Ok(())
         } else {
-            Err(StdError::generic_err(format!(
-                "not found in coin list: {}",
-                to_deduct.denom
-            )))
+            Err(StdError::generic_err(format!("not found in coin list: {}", to_deduct.denom)))
         }
     }
 }
 
 impl Stringify for &[Coin] {
     fn to_string(&self) -> String {
-        self.iter()
-            .map(|coin| coin.clone().denom)
-            .collect::<Vec<String>>()
-            .join(", ")
+        self.iter().map(|coin| coin.clone().denom).collect::<Vec<String>>().join(", ")
     }
 }
 

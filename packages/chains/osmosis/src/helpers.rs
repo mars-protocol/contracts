@@ -3,13 +3,19 @@ use std::str::FromStr;
 use cosmwasm_std::{
     coin, Decimal, Empty, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
 };
-
-use osmosis_std::shim::Timestamp;
-use osmosis_std::types::cosmos::base::v1beta1::Coin;
-use osmosis_std::types::osmosis::gamm::v1beta1::{PoolAsset, PoolParams, QueryPoolRequest};
-use osmosis_std::types::osmosis::gamm::v2::GammQuerier;
-use osmosis_std::types::osmosis::twap::v1beta1::TwapQuerier;
-
+use osmosis_std::{
+    shim::Timestamp,
+    types::{
+        cosmos::base::v1beta1::Coin,
+        osmosis::{
+            gamm::{
+                v1beta1::{PoolAsset, PoolParams, QueryPoolRequest},
+                v2::GammQuerier,
+            },
+            twap::v1beta1::TwapQuerier,
+        },
+    },
+};
 use serde::{Deserialize, Serialize};
 
 // NOTE: Use custom Pool (`id` type as String) due to problem with json (de)serialization discrepancy between go and rust side.
@@ -32,10 +38,8 @@ impl Pool {
             None => return Err(StdError::generic_err("missing coin")), // just in case, it shouldn't happen
             Some(osmosis_coin) => osmosis_coin,
         };
-        let cosmwasm_coin = coin(
-            Uint128::from_str(&osmosis_coin.amount)?.u128(),
-            &osmosis_coin.denom,
-        );
+        let cosmwasm_coin =
+            coin(Uint128::from_str(&osmosis_coin.amount)?.u128(), &osmosis_coin.denom);
         Ok(cosmwasm_coin)
     }
 }
@@ -47,16 +51,16 @@ pub struct QueryPoolResponse {
 
 /// Query an Osmosis pool's coin depths and the supply of of liquidity token
 pub fn query_pool(querier: &QuerierWrapper, pool_id: u64) -> StdResult<Pool> {
-    let req: QueryRequest<Empty> = QueryPoolRequest { pool_id }.into();
+    let req: QueryRequest<Empty> = QueryPoolRequest {
+        pool_id,
+    }
+    .into();
     let res: QueryPoolResponse = querier.query(&req)?;
     Ok(res.pool)
 }
 
 pub fn has_denom(denom: &str, pool_assets: &[PoolAsset]) -> bool {
-    pool_assets
-        .iter()
-        .flat_map(|asset| &asset.token)
-        .any(|coin| coin.denom == denom)
+    pool_assets.iter().flat_map(|asset| &asset.token).any(|coin| coin.denom == denom)
 }
 
 /// Query the spot price of a coin, denominated in OSMO

@@ -1,12 +1,15 @@
 use std::cmp::min;
 
 use cosmwasm_std::{Coin, Deps, DepsMut, Env, Response, Uint128};
+use mars_rover::{
+    error::{ContractError, ContractResult},
+    msg::execute::ActionCoin,
+};
 
-use mars_rover::error::{ContractError, ContractResult};
-use mars_rover::msg::execute::ActionCoin;
-
-use crate::state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES};
-use crate::utils::{debt_shares_to_amount, decrement_coin_balance};
+use crate::{
+    state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES},
+    utils::{debt_shares_to_amount, decrement_coin_balance},
+};
 
 pub fn repay(
     deps: DepsMut,
@@ -85,9 +88,8 @@ pub fn current_debt_for_denom(
     account_id: &str,
     denom: &str,
 ) -> ContractResult<(Uint128, Uint128)> {
-    let debt_shares = DEBT_SHARES
-        .load(deps.storage, (account_id, denom))
-        .map_err(|_| ContractError::NoDebt)?;
+    let debt_shares =
+        DEBT_SHARES.load(deps.storage, (account_id, denom)).map_err(|_| ContractError::NoDebt)?;
     let coin = debt_shares_to_amount(deps, &env.contract.address, denom, debt_shares)?;
     Ok((coin.amount, debt_shares))
 }

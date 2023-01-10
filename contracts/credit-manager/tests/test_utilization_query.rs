@@ -1,8 +1,9 @@
 use cosmwasm_std::{Addr, Decimal, Uint128};
-
-use mars_rover::msg::execute::Action::{Deposit, EnterVault};
-use mars_rover::msg::execute::ActionAmount::Exact;
-use mars_rover::msg::execute::ActionCoin;
+use mars_rover::msg::execute::{
+    Action::{Deposit, EnterVault},
+    ActionAmount::Exact,
+    ActionCoin,
+};
 
 use crate::helpers::{
     ujake_info, unlocked_vault_info, uosmo_info, AccountToFund, CoinInfo, MockEnv, VaultTestInfo,
@@ -12,10 +13,7 @@ pub mod helpers;
 
 #[test]
 fn test_utilization_is_zero() {
-    let mock = MockEnv::new()
-        .vault_configs(&[unlocked_vault_info()])
-        .build()
-        .unwrap();
+    let mock = MockEnv::new().vault_configs(&[unlocked_vault_info()]).build().unwrap();
     let vault_infos = mock.query_vault_configs(None, None);
     assert_eq!(1, vault_infos.len());
     let vault = vault_infos.first().unwrap();

@@ -1,7 +1,7 @@
-use crate::helpers::CoinInfo;
-use crate::helpers::VaultTestInfo;
 use cosmwasm_std::{coin, Decimal};
 use cw_utils::Duration;
+
+use crate::helpers::{CoinInfo, VaultTestInfo};
 
 pub fn uosmo_info() -> CoinInfo {
     CoinInfo {

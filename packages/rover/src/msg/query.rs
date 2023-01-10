@@ -1,8 +1,10 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Decimal, Uint128};
 
-use crate::adapters::vault::{Vault, VaultConfig, VaultPosition, VaultUnchecked};
-use crate::traits::Coins;
+use crate::{
+    adapters::vault::{Vault, VaultConfig, VaultPosition, VaultUnchecked},
+    traits::Coins,
+};
 
 #[cw_serde]
 #[derive(QueryResponses)]
@@ -24,10 +26,14 @@ pub enum QueryMsg {
     },
     /// All positions represented by token with value
     #[returns(Positions)]
-    Positions { account_id: String },
+    Positions {
+        account_id: String,
+    },
     /// The health of the account represented by token
     #[returns(mars_health::HealthResponse)]
-    Health { account_id: String },
+    Health {
+        account_id: String,
+    },
     /// Enumerate coin balances for all token positions; start_after accepts (account_id, denom)
     #[returns(Vec<CoinBalanceResponseItem>)]
     AllCoinBalances {
@@ -57,7 +63,9 @@ pub enum QueryMsg {
     },
     /// Get total vault coin balance in Rover for vault
     #[returns(Uint128)]
-    TotalVaultCoinBalance { vault: VaultUnchecked },
+    TotalVaultCoinBalance {
+        vault: VaultUnchecked,
+    },
     /// Enumerate all total vault coin balances; start_after accepts vault addr
     #[returns(Vec<VaultWithBalance>)]
     AllTotalVaultCoinBalances {
@@ -72,7 +80,9 @@ pub enum QueryMsg {
     },
     /// Estimate coins withdrawn if exchanged for LP tokens
     #[returns(Vec<Coin>)]
-    EstimateWithdrawLiquidity { lp_token: Coin },
+    EstimateWithdrawLiquidity {
+        lp_token: Coin,
+    },
 }
 
 #[cw_serde]

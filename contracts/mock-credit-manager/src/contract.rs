@@ -5,9 +5,7 @@ use cosmwasm_std::{
 };
 use mars_rover::msg::QueryMsg;
 
-use crate::execute::set_health_response;
-use crate::msg::ExecuteMsg;
-use crate::query::query_health;
+use crate::{execute::set_health_response, msg::ExecuteMsg, query::query_health};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -37,7 +35,9 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Health { account_id } => to_binary(&query_health(deps, account_id)?),
+        QueryMsg::Health {
+            account_id,
+        } => to_binary(&query_health(deps, account_id)?),
         _ => unimplemented!("query msg not supported"),
     }
 }

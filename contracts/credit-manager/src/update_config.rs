@@ -1,18 +1,18 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, MessageInfo, Response, WasmMsg};
-
 use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use mars_owner::OwnerUpdate;
-use mars_rover::error::ContractResult;
-use mars_rover::msg::instantiate::ConfigUpdates;
-use mars_rover::traits::{FallbackStr, Stringify};
-
-use crate::instantiate::{
-    assert_lte_to_one, assert_no_duplicate_coins, assert_no_duplicate_vaults,
+use mars_rover::{
+    error::ContractResult,
+    msg::instantiate::ConfigUpdates,
+    traits::{FallbackStr, Stringify},
 };
-use crate::state::OWNER;
-use crate::state::{
-    ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, SWAPPER,
-    VAULT_CONFIGS, ZAPPER,
+
+use crate::{
+    instantiate::{assert_lte_to_one, assert_no_duplicate_coins, assert_no_duplicate_vaults},
+    state::{
+        ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER,
+        SWAPPER, VAULT_CONFIGS, ZAPPER,
+    },
 };
 
 pub fn update_config(
@@ -45,9 +45,7 @@ pub fn update_config(
     if let Some(coins) = new_config.allowed_coins {
         assert_no_duplicate_coins(&coins)?;
         ALLOWED_COINS.clear(deps.storage);
-        coins
-            .iter()
-            .try_for_each(|denom| ALLOWED_COINS.insert(deps.storage, denom).map(|_| ()))?;
+        coins.iter().try_for_each(|denom| ALLOWED_COINS.insert(deps.storage, denom).map(|_| ()))?;
 
         response = response
             .add_attribute("key", "allowed_coins")
@@ -69,23 +67,20 @@ pub fn update_config(
 
     if let Some(unchecked) = new_config.oracle {
         ORACLE.save(deps.storage, &unchecked.check(deps.api)?)?;
-        response = response
-            .add_attribute("key", "oracle")
-            .add_attribute("value", unchecked.address());
+        response =
+            response.add_attribute("key", "oracle").add_attribute("value", unchecked.address());
     }
 
     if let Some(unchecked) = new_config.swapper {
         SWAPPER.save(deps.storage, &unchecked.check(deps.api)?)?;
-        response = response
-            .add_attribute("key", "swapper")
-            .add_attribute("value", unchecked.address());
+        response =
+            response.add_attribute("key", "swapper").add_attribute("value", unchecked.address());
     }
 
     if let Some(unchecked) = new_config.zapper {
         ZAPPER.save(deps.storage, &unchecked.check(deps.api)?)?;
-        response = response
-            .add_attribute("key", "zapper")
-            .add_attribute("value", unchecked.address());
+        response =
+            response.add_attribute("key", "zapper").add_attribute("value", unchecked.address());
     }
 
     if let Some(cf) = new_config.max_close_factor {

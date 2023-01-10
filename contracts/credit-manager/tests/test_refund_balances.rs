@@ -1,5 +1,4 @@
 use cosmwasm_std::{coin, Addr, Uint128};
-
 use mars_rover::msg::execute::Action::{Deposit, EnterVault, RefundAllCoinBalances};
 
 use crate::helpers::{
@@ -18,10 +17,7 @@ fn test_refund_coin_balances_when_balances() {
         .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![
-                coin(234, uosmo_info.denom.clone()),
-                coin(25, uatom_info.denom.clone()),
-            ],
+            funds: vec![coin(234, uosmo_info.denom.clone()), coin(25, uatom_info.denom.clone())],
         })
         .build()
         .unwrap();

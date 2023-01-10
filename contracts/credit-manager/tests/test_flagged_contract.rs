@@ -1,8 +1,6 @@
 use cosmwasm_std::{coin, Addr};
-
 use helpers::assert_err;
-use mars_rover::error::ContractError::Unauthorized;
-use mars_rover::msg::execute::Action;
+use mars_rover::{error::ContractError::Unauthorized, msg::execute::Action};
 
 use crate::helpers::MockEnv;
 

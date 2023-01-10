@@ -1,16 +1,18 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Decimal, Deps, Env, Event, Response, Uint128};
 use mars_health::Health;
-
 use mars_math::FractionMath;
-use mars_outpost::oracle::PriceResponse;
-use mars_outpost::red_bank::Market;
-use mars_rover::adapters::vault::VaultPosition;
-use mars_rover::error::{ContractError, ContractResult};
-use mars_rover::msg::query::{DebtAmount, Positions};
+use mars_outpost::{oracle::PriceResponse, red_bank::Market};
+use mars_rover::{
+    adapters::vault::VaultPosition,
+    error::{ContractError, ContractResult},
+    msg::query::{DebtAmount, Positions},
+};
 
-use crate::query::query_positions;
-use crate::state::{ALLOWED_COINS, ORACLE, RED_BANK, VAULT_CONFIGS};
+use crate::{
+    query::query_positions,
+    state::{ALLOWED_COINS, ORACLE, RED_BANK, VAULT_CONFIGS},
+};
 
 /// Used as storage when trying to compute Health
 #[cw_serde]
@@ -36,10 +38,7 @@ pub fn compute_health(deps: Deps, env: &Env, account_id: &str) -> ContractResult
     let max_ltv_health_factor = if total_debt_value.is_zero() {
         None
     } else {
-        Some(Decimal::checked_from_ratio(
-            max_ltv_adjusted_collateral,
-            total_debt_value,
-        )?)
+        Some(Decimal::checked_from_ratio(max_ltv_adjusted_collateral, total_debt_value)?)
     };
 
     let liquidation_health_factor = if total_debt_value.is_zero() {
@@ -95,9 +94,7 @@ fn calculate_vaults_value(
     for v in vaults {
         // Unlocked & locked denominated in vault coins
         let vault_coin_amount = v.amount.unlocked().checked_add(v.amount.locked())?;
-        let vault_coin_value = v
-            .vault
-            .query_value(&deps.querier, &oracle, vault_coin_amount)?;
+        let vault_coin_value = v.vault.query_value(&deps.querier, &oracle, vault_coin_amount)?;
         total_collateral_value = total_collateral_value.checked_add(vault_coin_value)?;
 
         let config = VAULT_CONFIGS.load(deps.storage, &v.vault.address)?;
@@ -110,7 +107,10 @@ fn calculate_vaults_value(
 
         // Unlocking positions denominated in underlying token
         let info = v.vault.query_info(&deps.querier)?;
-        let PriceResponse { price, .. } = oracle.query_price(&deps.querier, &info.base_token)?;
+        let PriceResponse {
+            price,
+            ..
+        } = oracle.query_price(&deps.querier, &info.base_token)?;
         let Market {
             max_loan_to_value,
             liquidation_threshold,
@@ -205,15 +205,9 @@ pub fn assert_below_max_ltv(deps: Deps, env: Env, account_id: &str) -> ContractR
         .add_attribute("account_id", account_id)
         .add_attribute("assets_value", health.total_collateral_value.to_string())
         .add_attribute("debts_value", health.total_debt_value.to_string())
-        .add_attribute(
-            "lqdt_health_factor",
-            val_or_na(health.liquidation_health_factor),
-        )
+        .add_attribute("lqdt_health_factor", val_or_na(health.liquidation_health_factor))
         .add_attribute("liquidatable", health.is_liquidatable().to_string())
-        .add_attribute(
-            "max_ltv_health_factor",
-            val_or_na(health.max_ltv_health_factor),
-        )
+        .add_attribute("max_ltv_health_factor", val_or_na(health.max_ltv_health_factor))
         .add_attribute("above_max_ltv", health.is_above_max_ltv().to_string());
 
     Ok(Response::new()

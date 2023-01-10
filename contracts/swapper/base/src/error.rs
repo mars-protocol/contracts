@@ -12,7 +12,9 @@ pub enum ContractError {
     DecimalRangeExceeded(#[from] DecimalRangeExceeded),
 
     #[error("Invalid route: {reason}")]
-    InvalidRoute { reason: String },
+    InvalidRoute {
+        reason: String,
+    },
 
     #[error("{0}")]
     Overflow(#[from] OverflowError),
@@ -21,7 +23,10 @@ pub enum ContractError {
     CheckedMultiplyRatio(#[from] CheckedMultiplyRatioError),
 
     #[error("{denom_a:?}-{denom_b:?} is not an available pool")]
-    PoolNotFound { denom_a: String, denom_b: String },
+    PoolNotFound {
+        denom_a: String,
+        denom_b: String,
+    },
 
     #[error("{0}")]
     Rover(#[from] RoverError),

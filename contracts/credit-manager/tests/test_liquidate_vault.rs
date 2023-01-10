@@ -1,12 +1,11 @@
-use cosmwasm_std::OverflowOperation::Sub;
-use cosmwasm_std::StdError::NotFound;
-use cosmwasm_std::{Addr, Decimal, OverflowError, Uint128};
-
+use cosmwasm_std::{
+    Addr, Decimal, OverflowError, OverflowOperation::Sub, StdError::NotFound, Uint128,
+};
 use mars_mock_oracle::msg::CoinPrice;
-use mars_rover::adapters::vault::{VaultBase, VaultPositionType};
-use mars_rover::error::ContractError;
-use mars_rover::msg::execute::Action::{
-    Borrow, Deposit, EnterVault, LiquidateVault, RequestVaultUnlock,
+use mars_rover::{
+    adapters::vault::{VaultBase, VaultPositionType},
+    error::ContractError,
+    msg::execute::Action::{Borrow, Deposit, EnterVault, LiquidateVault, RequestVaultUnlock},
 };
 
 use crate::helpers::{
@@ -575,26 +574,8 @@ fn test_liquidate_unlocking_liquidation_order() {
     //   Third bucket partially liquidated:  11 of 20
     //   Fourth bucket retained:             0 of 168
     assert_eq!(vault_amount.unlocking().positions().len(), 2);
-    assert_eq!(
-        vault_amount
-            .unlocking()
-            .positions()
-            .first()
-            .unwrap()
-            .coin
-            .amount,
-        Uint128::new(9)
-    );
-    assert_eq!(
-        vault_amount
-            .unlocking()
-            .positions()
-            .get(1)
-            .unwrap()
-            .coin
-            .amount,
-        Uint128::new(168)
-    );
+    assert_eq!(vault_amount.unlocking().positions().first().unwrap().coin.amount, Uint128::new(9));
+    assert_eq!(vault_amount.unlocking().positions().get(1).unwrap().coin.amount, Uint128::new(168));
 
     assert_eq!(position.deposits.len(), 1);
     let jake_balance = get_coin("ujake", &position.deposits);

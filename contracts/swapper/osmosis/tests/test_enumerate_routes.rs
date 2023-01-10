@@ -1,12 +1,14 @@
 extern crate core;
 
-use crate::helpers::instantiate_contract;
+use std::collections::HashMap;
+
 use cosmwasm_std::coin;
 use mars_rover::adapters::swap::{ExecuteMsg, QueryMsg, RouteResponse};
 use mars_swapper_osmosis::route::OsmosisRoute;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
 use osmosis_testing::{Gamm, Module, OsmosisTestApp, SigningAccount, Wasm};
-use std::collections::HashMap;
+
+use crate::helpers::instantiate_contract;
 
 pub mod helpers;
 
@@ -123,10 +125,7 @@ fn create_pools_and_routes(
     let gamm = Gamm::new(app);
 
     let pool_atom_osmo = gamm
-        .create_basic_pool(
-            &[coin(6_000_000, "uatom"), coin(1_500_000, "uosmo")],
-            signer,
-        )
+        .create_basic_pool(&[coin(6_000_000, "uatom"), coin(1_500_000, "uosmo")], signer)
         .unwrap()
         .data
         .pool_id;

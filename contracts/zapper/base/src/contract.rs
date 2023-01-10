@@ -59,9 +59,9 @@ where
                 recipient,
                 minimum_receive,
             ),
-            ExecuteMsg::WithdrawLiquidity { recipient } => {
-                Self::execute_withdraw_liquidity(deps, env, info, recipient)
-            }
+            ExecuteMsg::WithdrawLiquidity {
+                recipient,
+            } => Self::execute_withdraw_liquidity(deps, env, info, recipient),
             ExecuteMsg::Callback(msg) => {
                 // Can only be called by the contract itself
                 if info.sender != env.contract.address {
@@ -83,9 +83,9 @@ where
                 lp_token_out,
                 coins_in,
             } => Self::query_estimate_provide_liquidity(deps, env, lp_token_out, coins_in),
-            QueryMsg::EstimateWithdrawLiquidity { coin_in } => {
-                Self::query_estimate_withdraw_liquidity(deps, env, coin_in)
-            }
+            QueryMsg::EstimateWithdrawLiquidity {
+                coin_in,
+            } => Self::query_estimate_withdraw_liquidity(deps, env, coin_in),
         }
     }
 
@@ -112,17 +112,14 @@ where
         // Query current contract coin balances
         let mut coin_balances: Vec<Coin> = Vec::with_capacity(info.funds.len() + 1); // funds + lp token
         for funded_coin in info.funds {
-            let mut coin_balance = deps
-                .querier
-                .query_balance(&env.contract.address, &funded_coin.denom)?;
+            let mut coin_balance =
+                deps.querier.query_balance(&env.contract.address, &funded_coin.denom)?;
             coin_balance.amount = coin_balance.amount.checked_sub(funded_coin.amount)?;
             coin_balances.push(coin_balance);
         }
 
         // Query current contract LP token balance
-        let lp_token_balance = deps
-            .querier
-            .query_balance(&env.contract.address, &lp_token_out)?;
+        let lp_token_balance = deps.querier.query_balance(&env.contract.address, &lp_token_out)?;
         coin_balances.push(lp_token_balance);
 
         // Callbacks to return remaining coins and LP tokens
@@ -162,16 +159,14 @@ where
         let mut coin_balances: Vec<Coin> = Vec::with_capacity(coins_returned.len() + 1); // coins returned + lp token
         for coin_returned in coins_returned.to_vec() {
             let coin_returned: Coin = coin_returned.try_into()?;
-            let coin_balance = deps
-                .querier
-                .query_balance(&env.contract.address, coin_returned.denom)?;
+            let coin_balance =
+                deps.querier.query_balance(&env.contract.address, coin_returned.denom)?;
             coin_balances.push(coin_balance);
         }
 
         // Query current contract LP token balance
-        let mut lp_token_balance = deps
-            .querier
-            .query_balance(&env.contract.address, &lp_token.denom)?;
+        let mut lp_token_balance =
+            deps.querier.query_balance(&env.contract.address, &lp_token.denom)?;
         lp_token_balance.amount = lp_token_balance.amount.checked_sub(lp_token.amount)?;
         coin_balances.push(lp_token_balance);
 
@@ -193,9 +188,8 @@ where
         balance_before: Coin,
         recipient: Addr,
     ) -> Result<Response, ContractError> {
-        let balance_after = deps
-            .querier
-            .query_balance(env.contract.address, &balance_before.denom)?;
+        let balance_after =
+            deps.querier.query_balance(env.contract.address, &balance_before.denom)?;
         let return_amount = balance_after.amount.checked_sub(balance_before.amount)?;
 
         if return_amount.is_zero() {

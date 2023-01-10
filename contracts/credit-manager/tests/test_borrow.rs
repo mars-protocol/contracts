@@ -1,10 +1,11 @@
 use std::ops::{Mul, Sub};
 
 use cosmwasm_std::{coin, coins, Addr, Uint128};
-
 use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
-use mars_rover::error::ContractError;
-use mars_rover::msg::execute::Action::{Borrow, Deposit};
+use mars_rover::{
+    error::ContractError,
+    msg::execute::Action::{Borrow, Deposit},
+};
 
 use crate::helpers::{
     assert_err, uosmo_info, AccountToFund, MockEnv, DEFAULT_RED_BANK_COIN_BALANCE,
@@ -17,10 +18,7 @@ fn test_only_token_owner_can_borrow() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
-        .build()
-        .unwrap();
+    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let another_user = Addr::unchecked("another_user");
@@ -48,17 +46,10 @@ fn test_can_only_borrow_what_is_whitelisted() {
     let mut mock = MockEnv::new().allowed_coins(&[coin_info]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
-    let res = mock.update_credit_account(
-        &account_id,
-        &user,
-        vec![Borrow(coin(234, "usomething"))],
-        &[],
-    );
+    let res =
+        mock.update_credit_account(&account_id, &user, vec![Borrow(coin(234, "usomething"))], &[]);
 
-    assert_err(
-        res,
-        ContractError::NotWhitelisted(String::from("usomething")),
-    )
+    assert_err(res, ContractError::NotWhitelisted(String::from("usomething")))
 }
 
 #[test]
@@ -66,10 +57,7 @@ fn test_borrowing_zero_does_nothing() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
-        .build()
-        .unwrap();
+    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res =
@@ -103,10 +91,7 @@ fn test_cannot_borrow_above_max_ltv() {
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![
-            Deposit(coin_info.to_coin(300)),
-            Borrow(coin_info.to_coin(800)),
-        ],
+        vec![Deposit(coin_info.to_coin(300)), Borrow(coin_info.to_coin(800))],
         &[coin(300, coin_info.denom)],
     );
 
@@ -158,10 +143,7 @@ fn test_success_when_new_debt_asset() {
 
     let debt_shares_res = position.debts.first().unwrap();
     assert_eq!(position.debts.len(), 1);
-    assert_eq!(
-        debt_shares_res.shares,
-        Uint128::new(42).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)
-    );
+    assert_eq!(debt_shares_res.shares, Uint128::new(42).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED));
     assert_eq!(debt_shares_res.denom, coin_info.denom);
     let debt_amount = Uint128::new(42) + Uint128::new(1); // simulated yield
     assert_eq!(debt_shares_res.amount, debt_amount);
@@ -171,16 +153,10 @@ fn test_success_when_new_debt_asset() {
 
     let config = mock.query_config();
     let coin = mock.query_balance(&Addr::unchecked(config.red_bank), &coin_info.denom);
-    assert_eq!(
-        coin.amount,
-        DEFAULT_RED_BANK_COIN_BALANCE.sub(Uint128::new(42))
-    );
+    assert_eq!(coin.amount, DEFAULT_RED_BANK_COIN_BALANCE.sub(Uint128::new(42)));
 
     let res = mock.query_total_debt_shares(&coin_info.denom);
-    assert_eq!(
-        res.shares,
-        Uint128::new(42).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)
-    );
+    assert_eq!(res.shares, Uint128::new(42).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED));
 }
 
 #[test]
@@ -206,10 +182,7 @@ fn test_debt_shares_with_debt_amount() {
     mock.update_credit_account(
         &account_id_a,
         &user_a,
-        vec![
-            Deposit(coin_info.to_coin(300)),
-            Borrow(coin_info.to_coin(50)),
-        ],
+        vec![Deposit(coin_info.to_coin(300)), Borrow(coin_info.to_coin(50))],
         &[coin(300, coin_info.denom.clone())],
     )
     .unwrap();
@@ -219,10 +192,7 @@ fn test_debt_shares_with_debt_amount() {
     mock.update_credit_account(
         &account_id_b,
         &user_b,
-        vec![
-            Deposit(coin_info.to_coin(450)),
-            Borrow(coin_info.to_coin(50)),
-        ],
+        vec![Deposit(coin_info.to_coin(450)), Borrow(coin_info.to_coin(50))],
         &[coin(450, coin_info.denom.clone())],
     )
     .unwrap();
@@ -243,8 +213,5 @@ fn test_debt_shares_with_debt_amount() {
 
     let total = mock.query_total_debt_shares(&coin_info.denom);
 
-    assert_eq!(
-        total.shares,
-        debt_position_a.shares + debt_position_b.shares
-    );
+    assert_eq!(total.shares, debt_position_a.shares + debt_position_b.shares);
 }

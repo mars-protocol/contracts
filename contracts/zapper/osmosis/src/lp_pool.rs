@@ -1,9 +1,8 @@
-use cosmwasm_std::Deps;
-use cw_dex::osmosis::OsmosisPool;
-use cw_dex::traits::Pool;
-use cw_dex::CwDexError;
-use mars_zapper_base::LpPool;
 use std::str::FromStr;
+
+use cosmwasm_std::Deps;
+use cw_dex::{osmosis::OsmosisPool, traits::Pool, CwDexError};
+use mars_zapper_base::LpPool;
 
 pub struct OsmosisLpPool {}
 
@@ -20,9 +19,8 @@ impl OsmosisLpPool {
             return Err(CwDexError::NotLpToken {});
         }
 
-        let pool_id_str = lp_token_denom
-            .strip_prefix("gamm/pool/")
-            .ok_or(CwDexError::NotLpToken {})?;
+        let pool_id_str =
+            lp_token_denom.strip_prefix("gamm/pool/").ok_or(CwDexError::NotLpToken {})?;
 
         let pool_id = u64::from_str(pool_id_str).map_err(|_| CwDexError::NotLpToken {})?;
 

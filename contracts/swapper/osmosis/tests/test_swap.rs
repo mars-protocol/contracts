@@ -1,11 +1,9 @@
 use cosmwasm_std::{coin, Addr, Decimal};
-use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
-use osmosis_testing::{Account, Bank, Gamm, Module, OsmosisTestApp, Wasm};
-
-use mars_rover::adapters::swap::ExecuteMsg;
-use mars_rover::error::ContractError as RoverError;
+use mars_rover::{adapters::swap::ExecuteMsg, error::ContractError as RoverError};
 use mars_swapper_base::ContractError;
 use mars_swapper_osmosis::route::OsmosisRoute;
+use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
+use osmosis_testing::{Account, Bank, Gamm, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::{
     assert_err, instantiate_contract, query_balance, swap_to_create_twap_records,
@@ -18,9 +16,7 @@ fn test_transfer_callback_only_internal() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let accs = app
-        .init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2)
-        .unwrap();
+    let accs = app.init_accounts(&[coin(1_000_000_000_000, "uosmo")], 2).unwrap();
     let owner = &accs[0];
     let bad_guy = &accs[1];
 
@@ -54,10 +50,7 @@ fn test_swap_exact_in_slippage_too_high() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[
-            coin(1_000_000_000_000, "uosmo"),
-            coin(1_000_000_000_000, "umars"),
-        ])
+        .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "umars")])
         .unwrap();
     let whale = app.init_account(&[coin(1_000_000, "umars")]).unwrap();
 
@@ -65,21 +58,12 @@ fn test_swap_exact_in_slippage_too_high() {
 
     let gamm = Gamm::new(&app);
     let pool_mars_osmo = gamm
-        .create_basic_pool(
-            &[coin(6_000_000, "umars"), coin(1_500_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(6_000_000, "umars"), coin(1_500_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;
 
-    swap_to_create_twap_records(
-        &app,
-        &signer,
-        pool_mars_osmo,
-        coin(10u128, "umars"),
-        "uosmo",
-    );
+    swap_to_create_twap_records(&app, &signer, pool_mars_osmo, coin(10u128, "umars"), "uosmo");
 
     let route = OsmosisRoute(vec![SwapAmountInRoute {
         pool_id: pool_mars_osmo,
@@ -124,10 +108,7 @@ fn test_swap_exact_in_success() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[
-            coin(1_000_000_000_000, "uosmo"),
-            coin(1_000_000_000_000, "umars"),
-        ])
+        .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "umars")])
         .unwrap();
     let user = app.init_account(&[coin(10_000, "umars")]).unwrap();
 
@@ -135,21 +116,12 @@ fn test_swap_exact_in_success() {
 
     let gamm = Gamm::new(&app);
     let pool_mars_osmo = gamm
-        .create_basic_pool(
-            &[coin(6_000_000, "umars"), coin(1_500_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(6_000_000, "umars"), coin(1_500_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;
 
-    swap_to_create_twap_records(
-        &app,
-        &signer,
-        pool_mars_osmo,
-        coin(10u128, "umars"),
-        "uosmo",
-    );
+    swap_to_create_twap_records(&app, &signer, pool_mars_osmo, coin(10u128, "umars"), "uosmo");
 
     wasm.execute(
         &contract_addr,

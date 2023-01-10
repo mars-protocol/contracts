@@ -1,13 +1,16 @@
 use cosmwasm_std::{Coin, Deps, DepsMut, Env, Response, Uint128};
+use mars_rover::{
+    error::{ContractError, ContractResult},
+    msg::execute::{ActionAmount, ActionCoin},
+    traits::Denoms,
+};
 
-use mars_rover::error::{ContractError, ContractResult};
-use mars_rover::msg::execute::{ActionAmount, ActionCoin};
-use mars_rover::traits::Denoms;
-
-use crate::state::{COIN_BALANCES, ZAPPER};
-use crate::utils::{
-    assert_coin_is_whitelisted, assert_coins_are_whitelisted, decrement_coin_balance,
-    update_balance_msg, update_balances_msgs,
+use crate::{
+    state::{COIN_BALANCES, ZAPPER},
+    utils::{
+        assert_coin_is_whitelisted, assert_coins_are_whitelisted, decrement_coin_balance,
+        update_balance_msg, update_balances_msgs,
+    },
 };
 
 pub fn provide_liquidity(
@@ -40,12 +43,8 @@ pub fn provide_liquidity(
     // After zap is complete, update account's LP token balance
     let zapper = ZAPPER.load(deps.storage)?;
     let zap_msg = zapper.provide_liquidity_msg(&updated_coins_in, lp_token_out, minimum_receive)?;
-    let update_balance_msg = update_balance_msg(
-        &deps.querier,
-        &env.contract.address,
-        account_id,
-        lp_token_out,
-    )?;
+    let update_balance_msg =
+        update_balance_msg(&deps.querier, &env.contract.address, account_id, lp_token_out)?;
 
     Ok(Response::new()
         .add_message(zap_msg)

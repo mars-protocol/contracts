@@ -1,10 +1,10 @@
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, DepsMut, Env, Response, WasmMsg};
-use mars_rover::error::ContractResult;
-use mars_rover::msg::execute::CallbackMsg;
-use mars_rover::msg::ExecuteMsg;
+use mars_rover::{
+    error::ContractResult,
+    msg::{execute::CallbackMsg, ExecuteMsg},
+};
 
-use crate::query::query_coin_balances;
-use crate::utils::query_nft_token_owner;
+use crate::{query::query_coin_balances, utils::query_nft_token_owner};
 
 pub fn refund_coin_balances(deps: DepsMut, env: Env, account_id: &str) -> ContractResult<Response> {
     let coins = query_coin_balances(deps.as_ref(), account_id)?;
@@ -23,8 +23,7 @@ pub fn refund_coin_balances(deps: DepsMut, env: Env, account_id: &str) -> Contra
             }))
         })
         .collect::<ContractResult<Vec<_>>>()?;
-    Ok(Response::new().add_messages(withdraw_msgs).add_attribute(
-        "action",
-        "rover/credit-manager/callback/refund_coin_balances",
-    ))
+    Ok(Response::new()
+        .add_messages(withdraw_msgs)
+        .add_attribute("action", "rover/credit-manager/callback/refund_coin_balances"))
 }

@@ -29,7 +29,7 @@ impl AttrParse for Reply {
                     .events
                     .iter()
                     .find(|event| {
-                        event.ty == format!("wasm-{}", UNLOCKING_POSITION_CREATED_EVENT_TYPE)
+                        event.ty == format!("wasm-{UNLOCKING_POSITION_CREATED_EVENT_TYPE}")
                     })
                     .ok_or_else(|| StdError::generic_err("No unlock event"))?;
 

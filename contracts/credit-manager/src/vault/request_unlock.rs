@@ -1,15 +1,20 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Coin, DepsMut, Reply, Response, Uint128};
-
-use crate::state::VAULT_REQUEST_TEMP_STORAGE;
-use crate::vault::assert_under_max_unlocking_limit;
-use mars_rover::adapters::vault::{
-    UnlockingChange, UpdateType, Vault, VaultBase, VaultPositionUpdate, VaultUnlockingPosition,
+use mars_rover::{
+    adapters::vault::{
+        UnlockingChange, UpdateType, Vault, VaultBase, VaultPositionUpdate, VaultUnlockingPosition,
+    },
+    error::{ContractError, ContractResult},
+    extensions::AttrParse,
 };
-use mars_rover::error::{ContractError, ContractResult};
-use mars_rover::extensions::AttrParse;
 
-use crate::vault::utils::{assert_vault_is_whitelisted, update_vault_position};
+use crate::{
+    state::VAULT_REQUEST_TEMP_STORAGE,
+    vault::{
+        assert_under_max_unlocking_limit,
+        utils::{assert_vault_is_whitelisted, update_vault_position},
+    },
+};
 
 #[cw_serde]
 pub struct RequestTempStorage {
@@ -81,8 +86,6 @@ pub fn handle_unlock_request_reply(deps: DepsMut, reply: Reply) -> ContractResul
 
     VAULT_REQUEST_TEMP_STORAGE.remove(deps.storage);
 
-    Ok(Response::new().add_attribute(
-        "action",
-        "rover/credit-manager/vault/unlock_request/handle_reply",
-    ))
+    Ok(Response::new()
+        .add_attribute("action", "rover/credit-manager/vault/unlock_request/handle_reply"))
 }

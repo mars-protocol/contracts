@@ -2,10 +2,14 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::Addr;
 use cw721::OwnerOfResponse;
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
-
-use mars_account_nft::config::{ConfigUpdates, UncheckedConfig};
-use mars_account_nft::msg::ExecuteMsg::{AcceptMinterRole, UpdateConfig};
-use mars_account_nft::msg::{ExecuteMsg as ExtendedExecuteMsg, QueryMsg};
+use mars_account_nft::{
+    config::{ConfigUpdates, UncheckedConfig},
+    msg::{
+        ExecuteMsg as ExtendedExecuteMsg,
+        ExecuteMsg::{AcceptMinterRole, UpdateConfig},
+        QueryMsg,
+    },
+};
 use mars_health::HealthResponse;
 use mars_mock_credit_manager::msg::ExecuteMsg::SetHealthResponse;
 
@@ -30,17 +34,11 @@ impl MockEnv {
     }
 
     pub fn query_config(&mut self) -> UncheckedConfig {
-        self.app
-            .wrap()
-            .query_wasm_smart(self.nft_contract.clone(), &QueryMsg::Config {})
-            .unwrap()
+        self.app.wrap().query_wasm_smart(self.nft_contract.clone(), &QueryMsg::Config {}).unwrap()
     }
 
     pub fn query_next_id(&mut self) -> u64 {
-        self.app
-            .wrap()
-            .query_wasm_smart(self.nft_contract.clone(), &QueryMsg::NextId {})
-            .unwrap()
+        self.app.wrap().query_wasm_smart(self.nft_contract.clone(), &QueryMsg::NextId {}).unwrap()
     }
 
     // Double checking ownership by querying NFT account-nft for correct owner

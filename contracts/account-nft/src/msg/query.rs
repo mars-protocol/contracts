@@ -63,7 +63,9 @@ pub enum QueryMsg {
     /// Returns metadata about one particular token, based on *ERC721 Metadata JSON Schema*
     /// but directly from the contract
     #[returns(cw721::NftInfoResponse<cosmwasm_std::Empty>)]
-    NftInfo { token_id: String },
+    NftInfo {
+        token_id: String,
+    },
     /// With MetaData Extension.
     /// Returns the result of both `NftInfo` and `OwnerOf` as one query as an optimization for clients
     #[returns(cw721::AllNftInfoResponse<cosmwasm_std::Empty>)]
@@ -136,7 +138,11 @@ impl TryInto<ParentQueryMsg<Empty>> for QueryMsg {
             }),
             QueryMsg::NumTokens {} => Ok(ParentQueryMsg::NumTokens {}),
             QueryMsg::ContractInfo {} => Ok(ParentQueryMsg::ContractInfo {}),
-            QueryMsg::NftInfo { token_id } => Ok(ParentQueryMsg::NftInfo { token_id }),
+            QueryMsg::NftInfo {
+                token_id,
+            } => Ok(ParentQueryMsg::NftInfo {
+                token_id,
+            }),
             QueryMsg::AllNftInfo {
                 token_id,
                 include_expired,
@@ -153,9 +159,13 @@ impl TryInto<ParentQueryMsg<Empty>> for QueryMsg {
                 start_after,
                 limit,
             }),
-            QueryMsg::AllTokens { start_after, limit } => {
-                Ok(ParentQueryMsg::AllTokens { start_after, limit })
-            }
+            QueryMsg::AllTokens {
+                start_after,
+                limit,
+            } => Ok(ParentQueryMsg::AllTokens {
+                start_after,
+                limit,
+            }),
             QueryMsg::Minter {} => Ok(ParentQueryMsg::Minter {}),
             _ => Err(StdError::generic_err(
                 "Attempting to convert to a non-cw721 compatible message",

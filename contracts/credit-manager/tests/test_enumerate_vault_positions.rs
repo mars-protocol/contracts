@@ -1,6 +1,5 @@
 use cosmwasm_std::Addr;
 use itertools::Itertools;
-
 use mars_rover::msg::execute::Action;
 
 use crate::helpers::{
@@ -47,26 +46,15 @@ fn test_pagination_on_all_vault_positions_query_works() {
     });
 
     let account_id_a = mock.create_credit_account(&user_a).unwrap();
-    mock.update_credit_account(
-        &account_id_a,
-        &user_a,
-        actions.clone(),
-        &[lp_token.to_coin(220)],
-    )
-    .unwrap();
+    mock.update_credit_account(&account_id_a, &user_a, actions.clone(), &[lp_token.to_coin(220)])
+        .unwrap();
 
     let account_id_b = mock.create_credit_account(&user_b).unwrap();
-    mock.update_credit_account(
-        &account_id_b,
-        &user_b,
-        actions.clone(),
-        &[lp_token.to_coin(220)],
-    )
-    .unwrap();
+    mock.update_credit_account(&account_id_b, &user_b, actions.clone(), &[lp_token.to_coin(220)])
+        .unwrap();
 
     let account_id_c = mock.create_credit_account(&user_c).unwrap();
-    mock.update_credit_account(&account_id_c, &user_c, actions, &[lp_token.to_coin(220)])
-        .unwrap();
+    mock.update_credit_account(&account_id_c, &user_c, actions, &[lp_token.to_coin(220)]).unwrap();
 
     let vaults_res = mock.query_all_vault_positions(None, Some(58_u32));
     // Assert maximum is observed
@@ -79,26 +67,17 @@ fn test_pagination_on_all_vault_positions_query_works() {
     let vaults_res_a = mock.query_all_vault_positions(None, None);
     let item = vaults_res_a.last().unwrap();
     let vaults_res_b = mock.query_all_vault_positions(
-        Some((
-            item.account_id.clone(),
-            item.position.vault.address.to_string(),
-        )),
+        Some((item.account_id.clone(), item.position.vault.address.to_string())),
         Some(30),
     );
     let item = vaults_res_b.last().unwrap();
     let vaults_res_c = mock.query_all_vault_positions(
-        Some((
-            item.account_id.clone(),
-            item.position.vault.address.to_string(),
-        )),
+        Some((item.account_id.clone(), item.position.vault.address.to_string())),
         Some(30),
     );
     let item = vaults_res_c.last().unwrap();
     let vaults_res_d = mock.query_all_vault_positions(
-        Some((
-            item.account_id.clone(),
-            item.position.vault.address.to_string(),
-        )),
+        Some((item.account_id.clone(), item.position.vault.address.to_string())),
         None,
     );
 
@@ -123,10 +102,7 @@ fn test_pagination_on_all_vault_positions_query_works() {
     assert_eq!(deduped.len(), all_vaults.len());
 
     assert_contents_equal(
-        &all_vaults
-            .iter()
-            .map(|v| v.vault_token_denom.clone())
-            .collect::<Vec<_>>(),
+        &all_vaults.iter().map(|v| v.vault_token_denom.clone()).collect::<Vec<_>>(),
         &deduped,
     )
 }

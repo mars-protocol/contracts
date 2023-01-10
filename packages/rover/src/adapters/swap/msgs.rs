@@ -43,7 +43,10 @@ pub enum QueryMsg {
     Owner {},
     /// Get route for swapping an input denom into an output denom
     #[returns(RouteResponse<cosmwasm_std::Empty>)]
-    Route { denom_in: String, denom_out: String },
+    Route {
+        denom_in: String,
+        denom_out: String,
+    },
     /// Enumerate all swapper routes
     #[returns(RoutesResponse<cosmwasm_std::Empty>)]
     Routes {
@@ -53,7 +56,10 @@ pub enum QueryMsg {
     /// Return current spot price swapping In for Out
     /// Warning: Do not use this as an oracle price feed. Use Mars-Oracle for pricing.
     #[returns(EstimateExactInSwapResponse)]
-    EstimateExactInSwap { coin_in: Coin, denom_out: String },
+    EstimateExactInSwap {
+        coin_in: Coin,
+        denom_out: String,
+    },
 }
 
 #[cw_serde]

@@ -1,43 +1,51 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::testing::MockApi;
-use cosmwasm_std::{coins, Addr, Coin, Decimal, Uint128};
-use cosmwasm_vault_standard::extensions::lockup::{LockupQueryMsg, UnlockingPosition};
-use cosmwasm_vault_standard::msg::ExtensionQueryMsg;
-use cosmwasm_vault_standard::msg::VaultStandardQueryMsg::VaultExtension;
+use cosmwasm_std::{coins, testing::MockApi, Addr, Coin, Decimal, Uint128};
+use cosmwasm_vault_standard::{
+    extensions::lockup::{LockupQueryMsg, UnlockingPosition},
+    msg::{ExtensionQueryMsg, VaultStandardQueryMsg::VaultExtension},
+};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
-use mars_owner::OwnerUpdate;
-
-use mars_account_nft::config::ConfigUpdates as NftConfigUpdates;
-use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
-use mars_account_nft::msg::InstantiateMsg as NftInstantiateMsg;
+use mars_account_nft::{
+    config::ConfigUpdates as NftConfigUpdates,
+    msg::{ExecuteMsg as NftExecuteMsg, InstantiateMsg as NftInstantiateMsg},
+};
 use mars_health::HealthResponse;
 use mars_mock_oracle::msg::{
     CoinPrice, ExecuteMsg as OracleExecuteMsg, InstantiateMsg as OracleInstantiateMsg,
 };
 use mars_mock_red_bank::msg::{CoinMarketInfo, InstantiateMsg as RedBankInstantiateMsg};
-use mars_mock_vault::contract::DEFAULT_VAULT_TOKEN_PREFUND;
-use mars_mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
-use mars_outpost::red_bank::QueryMsg::UserDebt;
-use mars_outpost::red_bank::UserDebtResponse;
-use mars_rover::adapters::oracle::{Oracle, OracleBase, OracleUnchecked};
-use mars_rover::adapters::red_bank::RedBankBase;
-use mars_rover::adapters::swap::QueryMsg::EstimateExactInSwap;
-use mars_rover::adapters::swap::{
-    EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg, Swapper, SwapperBase,
+use mars_mock_vault::{
+    contract::DEFAULT_VAULT_TOKEN_PREFUND, msg::InstantiateMsg as VaultInstantiateMsg,
 };
-use mars_rover::adapters::vault::{VaultBase, VaultConfig, VaultUnchecked};
-use mars_rover::adapters::zapper::{Zapper, ZapperBase};
-use mars_rover::msg::execute::{Action, CallbackMsg};
-use mars_rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
-use mars_rover::msg::query::{
-    CoinBalanceResponseItem, ConfigResponse, DebtShares, Positions, SharesResponseItem,
-    VaultInfoResponse as RoverVaultInfoResponse, VaultPositionResponseItem, VaultWithBalance,
+use mars_outpost::red_bank::{QueryMsg::UserDebt, UserDebtResponse};
+use mars_owner::OwnerUpdate;
+use mars_rover::{
+    adapters::{
+        oracle::{Oracle, OracleBase, OracleUnchecked},
+        red_bank::RedBankBase,
+        swap::{
+            EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg,
+            QueryMsg::EstimateExactInSwap, Swapper, SwapperBase,
+        },
+        vault::{VaultBase, VaultConfig, VaultUnchecked},
+        zapper::{Zapper, ZapperBase},
+    },
+    msg::{
+        execute::{Action, CallbackMsg},
+        instantiate::{ConfigUpdates, VaultInstantiateConfig},
+        query::{
+            CoinBalanceResponseItem, ConfigResponse, DebtShares, Positions, SharesResponseItem,
+            VaultInfoResponse as RoverVaultInfoResponse, VaultPositionResponseItem,
+            VaultWithBalance,
+        },
+        zapper::{
+            InstantiateMsg as ZapperInstantiateMsg, LpConfig, QueryMsg::EstimateProvideLiquidity,
+        },
+        ExecuteMsg, InstantiateMsg, QueryMsg,
+    },
 };
-use mars_rover::msg::zapper::QueryMsg::EstimateProvideLiquidity;
-use mars_rover::msg::zapper::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
-use mars_rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::helpers::{
     lp_token_info, mock_account_nft_contract, mock_oracle_contract, mock_red_bank_contract,
@@ -130,7 +138,9 @@ impl MockEnv {
         self.app.execute_contract(
             sender.clone(),
             self.rover.clone(),
-            &ExecuteMsg::UpdateConfig { new_config },
+            &ExecuteMsg::UpdateConfig {
+                new_config,
+            },
             &[],
         )
     }
@@ -232,10 +242,7 @@ impl MockEnv {
     }
 
     pub fn query_config(&self) -> ConfigResponse {
-        self.app
-            .wrap()
-            .query_wasm_smart(self.rover.clone(), &QueryMsg::Config {})
-            .unwrap()
+        self.app.wrap().query_wasm_smart(self.rover.clone(), &QueryMsg::Config {}).unwrap()
     }
 
     pub fn query_vault_configs(
@@ -247,7 +254,10 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
-                &QueryMsg::VaultsInfo { start_after, limit },
+                &QueryMsg::VaultsInfo {
+                    start_after,
+                    limit,
+                },
             )
             .unwrap()
     }
@@ -278,7 +288,10 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
-                &QueryMsg::AllowedCoins { start_after, limit },
+                &QueryMsg::AllowedCoins {
+                    start_after,
+                    limit,
+                },
             )
             .unwrap()
     }
@@ -292,7 +305,10 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
-                &QueryMsg::AllCoinBalances { start_after, limit },
+                &QueryMsg::AllCoinBalances {
+                    start_after,
+                    limit,
+                },
             )
             .unwrap()
     }
@@ -306,7 +322,10 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
-                &QueryMsg::AllDebtShares { start_after, limit },
+                &QueryMsg::AllDebtShares {
+                    start_after,
+                    limit,
+                },
             )
             .unwrap()
     }
@@ -320,7 +339,10 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
-                &QueryMsg::AllTotalDebtShares { start_after, limit },
+                &QueryMsg::AllTotalDebtShares {
+                    start_after,
+                    limit,
+                },
             )
             .unwrap()
     }
@@ -328,10 +350,7 @@ impl MockEnv {
     pub fn query_total_debt_shares(&self, denom: &str) -> DebtShares {
         self.app
             .wrap()
-            .query_wasm_smart(
-                self.rover.clone(),
-                &QueryMsg::TotalDebtShares(denom.to_string()),
-            )
+            .query_wasm_smart(self.rover.clone(), &QueryMsg::TotalDebtShares(denom.to_string()))
             .unwrap()
     }
 
@@ -374,13 +393,11 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 vault.address.to_string(),
-                &VaultExtension(ExtensionQueryMsg::Lockup(
-                    LockupQueryMsg::UnlockingPositions {
-                        owner: addr.to_string(),
-                        start_after: None,
-                        limit: None,
-                    },
-                )),
+                &VaultExtension(ExtensionQueryMsg::Lockup(LockupQueryMsg::UnlockingPositions {
+                    owner: addr.to_string(),
+                    start_after: None,
+                    limit: None,
+                })),
             )
             .unwrap()
     }
@@ -406,7 +423,10 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
-                &QueryMsg::AllVaultPositions { start_after, limit },
+                &QueryMsg::AllVaultPositions {
+                    start_after,
+                    limit,
+                },
             )
             .unwrap()
     }
@@ -420,7 +440,10 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
-                &QueryMsg::AllTotalVaultCoinBalances { start_after, limit },
+                &QueryMsg::AllTotalVaultCoinBalances {
+                    start_after,
+                    limit,
+                },
             )
             .unwrap()
     }
@@ -510,7 +533,9 @@ impl MockEnvBuilder {
             .execute_contract(
                 self.get_owner(),
                 rover.clone(),
-                &ExecuteMsg::UpdateConfig { new_config },
+                &ExecuteMsg::UpdateConfig {
+                    new_config,
+                },
                 &[],
             )
             .unwrap();
@@ -524,11 +549,8 @@ impl MockEnvBuilder {
         let code_id = self.app.store_code(mock_rover_contract());
         let red_bank = self.get_red_bank().into();
         let swapper = self.deploy_swapper().into();
-        let allowed_coins = self
-            .get_allowed_coins()
-            .iter()
-            .map(|info| info.denom.clone())
-            .collect();
+        let allowed_coins =
+            self.get_allowed_coins().iter().map(|info| info.denom.clone()).collect();
         let max_close_factor = self.get_max_close_factor();
         let max_unlocking_positions = self.get_max_unlocking_positions();
 
@@ -560,9 +582,7 @@ impl MockEnvBuilder {
     }
 
     fn get_owner(&self) -> Addr {
-        self.owner
-            .clone()
-            .unwrap_or_else(|| Addr::unchecked("owner"))
+        self.owner.clone().unwrap_or_else(|| Addr::unchecked("owner"))
     }
 
     fn get_oracle(&mut self) -> Oracle {
@@ -592,7 +612,9 @@ impl MockEnvBuilder {
             .instantiate_contract(
                 contract_code_id,
                 Addr::unchecked("oracle_contract_owner"),
-                &OracleInstantiateMsg { prices },
+                &OracleInstantiateMsg {
+                    prices,
+                },
                 &[],
                 "mock-oracle",
                 None,
@@ -762,13 +784,12 @@ impl MockEnvBuilder {
     }
 
     fn get_max_close_factor(&self) -> Decimal {
-        self.max_close_factor
-            .unwrap_or_else(|| Decimal::from_atomics(5u128, 1).unwrap()) // 50%
+        self.max_close_factor.unwrap_or_else(|| Decimal::from_atomics(5u128, 1).unwrap())
+        // 50%
     }
 
     fn get_max_unlocking_positions(&self) -> Uint128 {
-        self.max_unlocking_positions
-            .unwrap_or_else(|| Uint128::new(100))
+        self.max_unlocking_positions.unwrap_or_else(|| Uint128::new(100))
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -876,6 +897,5 @@ fn propose_new_nft_minter(app: &mut App, nft_contract: Addr, old_minter: &Addr, 
             proposed_new_minter: Some(new_minter.into()),
         },
     };
-    app.execute_contract(old_minter.clone(), nft_contract, &proposal_msg, &[])
-        .unwrap();
+    app.execute_contract(old_minter.clone(), nft_contract, &proposal_msg, &[]).unwrap();
 }

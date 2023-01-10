@@ -1,10 +1,9 @@
+use std::{ops::Div, str::FromStr};
+
 use cosmwasm_std::{coin, Coin, Uint128};
 use cw_dex::CwDexError;
-use osmosis_testing::{Gamm, Module, OsmosisTestApp, Wasm};
-use std::ops::Div;
-use std::str::FromStr;
-
 use mars_zapper_base::QueryMsg;
+use osmosis_testing::{Gamm, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::{assert_err, instantiate_contract};
 
@@ -15,9 +14,7 @@ fn test_estimate_provide_liquidity_with_invalid_lp_token() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let signer = app
-        .init_account(&[coin(1_000_000_000_000, "uosmo")])
-        .unwrap();
+    let signer = app.init_account(&[coin(1_000_000_000_000, "uosmo")]).unwrap();
 
     let contract_addr = instantiate_contract(&wasm, &signer);
 
@@ -39,18 +36,12 @@ fn test_estimate_provide_liquidity_with_invalid_coins() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[
-            coin(1_000_000_000_000, "uatom"),
-            coin(1_000_000_000_000, "uosmo"),
-        ])
+        .init_account(&[coin(1_000_000_000_000, "uatom"), coin(1_000_000_000_000, "uosmo")])
         .unwrap();
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
-        .create_basic_pool(
-            &[coin(2_000_000, "uatom"), coin(4_000_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(2_000_000, "uatom"), coin(4_000_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;
@@ -78,18 +69,12 @@ fn test_estimate_provide_liquidity_successfully() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[
-            coin(1_000_000_000_000, "uatom"),
-            coin(1_000_000_000_000, "uosmo"),
-        ])
+        .init_account(&[coin(1_000_000_000_000, "uatom"), coin(1_000_000_000_000, "uosmo")])
         .unwrap();
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
-        .create_basic_pool(
-            &[coin(2_000_000, "uatom"), coin(4_000_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(2_000_000, "uatom"), coin(4_000_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;
@@ -119,9 +104,7 @@ fn test_estimate_withdraw_liquidity_with_invalid_lp_token() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
-    let signer = app
-        .init_account(&[coin(1_000_000_000_000, "uosmo")])
-        .unwrap();
+    let signer = app.init_account(&[coin(1_000_000_000_000, "uosmo")]).unwrap();
 
     let contract_addr = instantiate_contract(&wasm, &signer);
 
@@ -142,18 +125,12 @@ fn test_estimate_withdraw_liquidity_successfully() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[
-            coin(1_000_000_000_000, "uatom"),
-            coin(1_000_000_000_000, "uosmo"),
-        ])
+        .init_account(&[coin(1_000_000_000_000, "uatom"), coin(1_000_000_000_000, "uosmo")])
         .unwrap();
 
     let gamm = Gamm::new(&app);
     let pool_id = gamm
-        .create_basic_pool(
-            &[coin(2_000_000, "uatom"), coin(4_000_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(2_000_000, "uatom"), coin(4_000_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;

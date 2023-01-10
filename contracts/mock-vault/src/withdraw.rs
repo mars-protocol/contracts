@@ -3,9 +3,11 @@ use cosmwasm_std::{
     Uint128,
 };
 
-use crate::error::{ContractError, ContractResult};
-use crate::query::shares_to_base_denom_amount;
-use crate::state::{CHAIN_BANK, COIN_BALANCE, LOCKUP_TIME, TOTAL_VAULT_SHARES, VAULT_TOKEN_DENOM};
+use crate::{
+    error::{ContractError, ContractResult},
+    query::shares_to_base_denom_amount,
+    state::{CHAIN_BANK, COIN_BALANCE, LOCKUP_TIME, TOTAL_VAULT_SHARES, VAULT_TOKEN_DENOM},
+};
 
 pub fn withdraw(deps: DepsMut, info: MessageInfo) -> ContractResult<Response> {
     let lockup_time = LOCKUP_TIME.load(deps.storage)?;
@@ -71,7 +73,5 @@ pub fn get_vault_token(storage: &mut dyn Storage, funds: Vec<Coin>) -> ContractR
 }
 
 fn mock_lp_token_burn(storage: &mut dyn Storage, amount: Uint128) -> Result<Uint128, StdError> {
-    CHAIN_BANK.update(storage, |bank_amount| -> StdResult<_> {
-        Ok(bank_amount + amount)
-    })
+    CHAIN_BANK.update(storage, |bank_amount| -> StdResult<_> { Ok(bank_amount + amount) })
 }

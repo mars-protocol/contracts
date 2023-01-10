@@ -1,9 +1,8 @@
 use cosmwasm_std::{coin, Uint128};
-use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
-use osmosis_testing::{Gamm, Module, OsmosisTestApp, RunnerResult, Wasm};
-
 use mars_rover::adapters::swap::{EstimateExactInSwapResponse, ExecuteMsg, QueryMsg};
 use mars_swapper_osmosis::route::OsmosisRoute;
+use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
+use osmosis_testing::{Gamm, Module, OsmosisTestApp, RunnerResult, Wasm};
 
 use crate::helpers::{
     assert_err, instantiate_contract, query_price_from_pool, swap_to_create_twap_records,
@@ -15,9 +14,7 @@ pub mod helpers;
 fn test_error_on_route_not_found() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
-    let owner = app
-        .init_account(&[coin(1_000_000_000_000, "uosmo")])
-        .unwrap();
+    let owner = app.init_account(&[coin(1_000_000_000_000, "uosmo")]).unwrap();
 
     let contract_addr = instantiate_contract(&wasm, &owner);
 
@@ -29,10 +26,7 @@ fn test_error_on_route_not_found() {
         },
     );
 
-    assert_err(
-        res.unwrap_err(),
-        "swapper_osmosis::route::OsmosisRoute not found",
-    );
+    assert_err(res.unwrap_err(), "swapper_osmosis::route::OsmosisRoute not found");
 }
 
 #[test]
@@ -41,31 +35,19 @@ fn test_estimate_swap_one_step() {
     let wasm = Wasm::new(&app);
 
     let signer = app
-        .init_account(&[
-            coin(1_000_000_000_000, "uatom"),
-            coin(1_000_000_000_000, "uosmo"),
-        ])
+        .init_account(&[coin(1_000_000_000_000, "uatom"), coin(1_000_000_000_000, "uosmo")])
         .unwrap();
 
     let contract_addr = instantiate_contract(&wasm, &signer);
 
     let gamm = Gamm::new(&app);
     let pool_atom_osmo = gamm
-        .create_basic_pool(
-            &[coin(1_500_000, "uatom"), coin(6_000_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(1_500_000, "uatom"), coin(6_000_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;
 
-    swap_to_create_twap_records(
-        &app,
-        &signer,
-        pool_atom_osmo,
-        coin(10u128, "uatom"),
-        "uosmo",
-    );
+    swap_to_create_twap_records(&app, &signer, pool_atom_osmo, coin(10u128, "uatom"), "uosmo");
 
     wasm.execute(
         &contract_addr,
@@ -116,10 +98,7 @@ fn test_estimate_swap_multi_step() {
 
     let gamm = Gamm::new(&app);
     let pool_atom_osmo = gamm
-        .create_basic_pool(
-            &[coin(6_000_000, "uatom"), coin(1_500_000, "uosmo")],
-            &signer,
-        )
+        .create_basic_pool(&[coin(6_000_000, "uatom"), coin(1_500_000, "uosmo")], &signer)
         .unwrap()
         .data
         .pool_id;

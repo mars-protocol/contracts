@@ -1,8 +1,6 @@
 use cosmwasm_std::{coin, Addr};
-
 use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
-use mars_rover::msg::execute::Action;
-use mars_rover::msg::query::SharesResponseItem;
+use mars_rover::msg::{execute::Action, query::SharesResponseItem};
 
 use crate::helpers::{build_mock_coin_infos, AccountToFund, MockEnv};
 
@@ -79,10 +77,7 @@ fn test_pagination_on_all_debt_shares_query_works() {
         user_a_coins
             .iter()
             .flat_map(|c| {
-                vec![
-                    Action::Deposit(c.clone()),
-                    Action::Borrow(coin(1, c.denom.clone())),
-                ]
+                vec![Action::Deposit(c.clone()), Action::Borrow(coin(1, c.denom.clone()))]
             })
             .collect::<Vec<Action>>(),
         &user_a_coins,
@@ -96,10 +91,7 @@ fn test_pagination_on_all_debt_shares_query_works() {
         user_b_coins
             .iter()
             .flat_map(|c| {
-                vec![
-                    Action::Deposit(c.clone()),
-                    Action::Borrow(coin(1, c.denom.clone())),
-                ]
+                vec![Action::Deposit(c.clone()), Action::Borrow(coin(1, c.denom.clone()))]
             })
             .collect::<Vec<Action>>(),
         &user_b_coins,
@@ -113,10 +105,7 @@ fn test_pagination_on_all_debt_shares_query_works() {
         user_c_coins
             .iter()
             .flat_map(|c| {
-                vec![
-                    Action::Deposit(c.clone()),
-                    Action::Borrow(coin(1, c.denom.clone())),
-                ]
+                vec![Action::Deposit(c.clone()), Action::Borrow(coin(1, c.denom.clone()))]
             })
             .collect::<Vec<Action>>(),
         &user_c_coins,
@@ -136,17 +125,23 @@ fn test_pagination_on_all_debt_shares_query_works() {
     let all_debt_shares_res_a = mock.query_all_debt_shares(None, None);
 
     let SharesResponseItem {
-        account_id, denom, ..
+        account_id,
+        denom,
+        ..
     } = all_debt_shares_res_a.last().unwrap().clone();
     let all_debt_shares_res_b = mock.query_all_debt_shares(Some((account_id, denom)), None);
 
     let SharesResponseItem {
-        account_id, denom, ..
+        account_id,
+        denom,
+        ..
     } = all_debt_shares_res_b.last().unwrap().clone();
     let all_debt_shares_res_c = mock.query_all_debt_shares(Some((account_id, denom)), None);
 
     let SharesResponseItem {
-        account_id, denom, ..
+        account_id,
+        denom,
+        ..
     } = all_debt_shares_res_c.last().unwrap().clone();
     let all_debt_shares_res_d = mock.query_all_debt_shares(Some((account_id, denom)), None);
 
@@ -200,7 +195,5 @@ fn test_pagination_on_all_debt_shares_query_works() {
         .collect();
 
     assert_eq!(combined_res.len(), combined_starting_vals.len());
-    assert!(combined_starting_vals
-        .iter()
-        .all(|item| combined_res.contains(item)));
+    assert!(combined_starting_vals.iter().all(|item| combined_res.contains(item)));
 }

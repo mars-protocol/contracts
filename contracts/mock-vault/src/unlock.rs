@@ -6,9 +6,11 @@ use cosmwasm_vault_standard::extensions::lockup::{
 };
 use cw_utils::{Duration, Expiration};
 
-use crate::error::ContractError;
-use crate::state::{COIN_BALANCE, LOCKUP_TIME, NEXT_LOCKUP_ID, UNLOCKING_POSITIONS};
-use crate::withdraw::{get_vault_token, withdraw_state_update};
+use crate::{
+    error::ContractError,
+    state::{COIN_BALANCE, LOCKUP_TIME, NEXT_LOCKUP_ID, UNLOCKING_POSITIONS},
+    withdraw::{get_vault_token, withdraw_state_update},
+};
 
 pub fn request_unlock(
     deps: DepsMut,
@@ -56,11 +58,8 @@ pub fn withdraw_unlocked(
         .may_load(deps.storage, sender.clone())?
         .ok_or(ContractError::UnlockRequired {})?;
 
-    let matching_position = lockups
-        .iter()
-        .find(|p| p.id == id)
-        .ok_or(ContractError::UnlockRequired {})?
-        .clone();
+    let matching_position =
+        lockups.iter().find(|p| p.id == id).ok_or(ContractError::UnlockRequired {})?.clone();
 
     if &matching_position.owner != sender {
         return Err(ContractError::Unauthorized {});

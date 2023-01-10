@@ -1,13 +1,14 @@
 use cosmwasm_std::{Addr, Uint128};
 use cw_utils::Duration;
-
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
-use mars_rover::adapters::vault::VaultUnchecked;
-use mars_rover::error::ContractError;
-use mars_rover::msg::execute::Action::{
-    Deposit, EnterVault, ExitVaultUnlocked, RequestVaultUnlock,
+use mars_rover::{
+    adapters::vault::VaultUnchecked,
+    error::ContractError,
+    msg::{
+        execute::Action::{Deposit, EnterVault, ExitVaultUnlocked, RequestVaultUnlock},
+        query::Positions,
+    },
 };
-use mars_rover::msg::query::Positions;
 
 use crate::helpers::{
     assert_err, generate_mock_vault, get_coin, locked_vault_info, lp_token_info, AccountToFund,
@@ -21,10 +22,7 @@ fn test_only_owner_can_withdraw_unlocked_for_account() {
     let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .vault_configs(&[leverage_vault.clone()])
-        .build()
-        .unwrap();
+    let mut mock = MockEnv::new().vault_configs(&[leverage_vault.clone()]).build().unwrap();
 
     let vault = mock.get_vault(&leverage_vault);
     let account_id = mock.create_credit_account(&user).unwrap();
@@ -33,7 +31,10 @@ fn test_only_owner_can_withdraw_unlocked_for_account() {
     let res = mock.update_credit_account(
         &account_id,
         &bad_guy,
-        vec![ExitVaultUnlocked { id: 423, vault }],
+        vec![ExitVaultUnlocked {
+            id: 423,
+            vault,
+        }],
         &[],
     );
 
@@ -57,7 +58,10 @@ fn test_can_only_take_action_on_whitelisted_vaults() {
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![ExitVaultUnlocked { id: 234, vault }],
+        vec![ExitVaultUnlocked {
+            id: 234,
+            vault,
+        }],
         &[],
     );
 
@@ -279,7 +283,10 @@ fn test_withdraw_unlock_success_time_expiring() {
     )
     .unwrap();
 
-    let Positions { deposits, .. } = mock.query_positions(&account_id);
+    let Positions {
+        deposits,
+        ..
+    } = mock.query_positions(&account_id);
     assert_eq!(deposits.len(), 0);
 
     mock.app.update_block(|block| {
@@ -304,7 +311,9 @@ fn test_withdraw_unlock_success_time_expiring() {
     .unwrap();
 
     let Positions {
-        vaults, deposits, ..
+        vaults,
+        deposits,
+        ..
     } = mock.query_positions(&account_id);
 
     // Users vault position decrements
@@ -356,7 +365,10 @@ fn test_withdraw_unlock_success_block_expiring() {
     )
     .unwrap();
 
-    let Positions { deposits, .. } = mock.query_positions(&account_id);
+    let Positions {
+        deposits,
+        ..
+    } = mock.query_positions(&account_id);
     assert_eq!(deposits.len(), 0);
 
     mock.app.update_block(|block| {
@@ -381,7 +393,9 @@ fn test_withdraw_unlock_success_block_expiring() {
     .unwrap();
 
     let Positions {
-        vaults, deposits, ..
+        vaults,
+        deposits,
+        ..
     } = mock.query_positions(&account_id);
 
     // Users vault position decrements
@@ -397,14 +411,5 @@ fn test_withdraw_unlock_success_block_expiring() {
 }
 
 fn get_lockup_id(positions: &Positions) -> u64 {
-    positions
-        .vaults
-        .first()
-        .unwrap()
-        .amount
-        .unlocking()
-        .positions()
-        .first()
-        .unwrap()
-        .id
+    positions.vaults.first().unwrap().amount.unlocking().positions().first().unwrap().id
 }
