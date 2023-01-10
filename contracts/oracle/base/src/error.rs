@@ -11,7 +11,7 @@ pub enum ContractError {
     Mars(#[from] MarsError),
 
     #[error("{0}")]
-    ConversionOverflowError(#[from] ConversionOverflowError),
+    ConversionOverflow(#[from] ConversionOverflowError),
 
     #[error("Invalid price source: {reason}")]
     InvalidPriceSource {
