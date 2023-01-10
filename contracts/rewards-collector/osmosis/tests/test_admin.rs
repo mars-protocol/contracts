@@ -95,7 +95,7 @@ fn test_updating_config() {
         new_cfg: new_cfg.clone(),
     };
     let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(err, ContractError::OwnerError(NotOwner {}));
+    assert_eq!(err, ContractError::Owner(NotOwner {}));
 
     // update config with safety_tax_rate greater than 1
     let mut invalid_cfg = new_cfg.clone();

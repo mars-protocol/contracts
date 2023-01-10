@@ -8,7 +8,7 @@ pub enum ContractError {
     Std(#[from] StdError),
 
     #[error("{0}")]
-    OwnerError(#[from] OwnerError),
+    Owner(#[from] OwnerError),
 
     #[error("Invalid address: {0}")]
     InvalidAddress(String),

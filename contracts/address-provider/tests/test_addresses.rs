@@ -18,7 +18,7 @@ fn test_setting_address_if_unauthorized() {
 
     let err =
         execute(deps.as_mut(), mock_env(), mock_info("osmo_jake", &[]), msg.clone()).unwrap_err();
-    assert_eq!(err, ContractError::OwnerError(OwnerError::NotOwner {}));
+    assert_eq!(err, ContractError::Owner(OwnerError::NotOwner {}));
 
     // owner can set address
     execute(deps.as_mut(), mock_env(), mock_info("osmo_owner", &[]), msg).unwrap();

@@ -24,7 +24,7 @@ fn test_remove_price_source_by_non_owner() {
         },
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::OwnerError(NotOwner {}))
+    assert_eq!(err, ContractError::Owner(NotOwner {}))
 }
 
 #[test]

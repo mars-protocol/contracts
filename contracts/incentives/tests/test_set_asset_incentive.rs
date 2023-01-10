@@ -30,7 +30,7 @@ fn test_only_owner_can_set_asset_incentive() {
     };
 
     let res_error = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(res_error, ContractError::OwnerError(NotOwner {}));
+    assert_eq!(res_error, ContractError::Owner(NotOwner {}));
 }
 
 #[test]

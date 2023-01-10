@@ -17,5 +17,5 @@ pub enum ContractError {
     FromUtf8(#[from] FromUtf8Error),
 
     #[error("{0}")]
-    OwnerError(#[from] OwnerError),
+    Owner(#[from] OwnerError),
 }

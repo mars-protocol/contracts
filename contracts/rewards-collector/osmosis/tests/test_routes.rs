@@ -41,7 +41,7 @@ fn test_setting_route() {
 
     // non-owner is not authorized
     let err = execute(deps.as_mut(), mock_env(), mock_info("jake"), msg.clone()).unwrap_err();
-    assert_eq!(err, ContractError::OwnerError(NotOwner {}));
+    assert_eq!(err, ContractError::Owner(NotOwner {}));
 
     // attempting to set an invalid swap route; should fail
     let err = execute(deps.as_mut(), mock_env(), mock_info("owner"), invalid_msg).unwrap_err();

@@ -75,7 +75,7 @@ fn test_uncollateralized_loan_limits() {
     let error_res =
         execute(deps.as_mut(), update_limit_env.clone(), info, update_limit_msg.clone())
             .unwrap_err();
-    assert_eq!(error_res, ContractError::OwnerError(NotOwner {}));
+    assert_eq!(error_res, ContractError::Owner(NotOwner {}));
 
     // Update borrower limit as owner
     let info = mock_info("owner", &[]);

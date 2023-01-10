@@ -52,7 +52,7 @@ fn test_update_config() {
     };
     let info = mock_info("somebody", &[]);
     let error_res = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(error_res, ContractError::OwnerError(NotOwner {}));
+    assert_eq!(error_res, ContractError::Owner(NotOwner {}));
 
     // *
     // update config with invalid denom

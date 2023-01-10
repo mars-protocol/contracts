@@ -35,7 +35,7 @@ fn test_update_owner() {
         }),
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::OwnerError(NotOwner {}));
+    assert_eq!(err, ContractError::Owner(NotOwner {}));
 
     // propose new owner
     execute(

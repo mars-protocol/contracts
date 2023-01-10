@@ -128,7 +128,7 @@ fn test_update_config() {
     };
     let info = mock_info("somebody", &[]);
     let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-    assert_eq!(error_res, ContractError::OwnerError(NotOwner {}));
+    assert_eq!(error_res, ContractError::Owner(NotOwner {}));
 
     // *
     // update config with close_factor
@@ -222,7 +222,7 @@ fn test_init_asset() {
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-        assert_eq!(error_res, ContractError::OwnerError(NotOwner {}));
+        assert_eq!(error_res, ContractError::Owner(NotOwner {}));
     }
 
     // init incorrect asset denom - error 1
@@ -511,7 +511,7 @@ fn test_update_asset() {
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-        assert_eq!(error_res, ContractError::OwnerError(NotOwner {}));
+        assert_eq!(error_res, ContractError::Owner(NotOwner {}));
     }
 
     // owner is authorized but can't update asset if not initialized first

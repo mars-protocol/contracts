@@ -38,7 +38,7 @@ fn test_propose_new_emergency_owner() {
         }),
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::OwnerError(NotOwner {}));
+    assert_eq!(err, ContractError::Owner(NotOwner {}));
 
     execute(
         deps.as_mut(),
@@ -92,7 +92,7 @@ fn test_clear_proposed_emergency_owner() {
         ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ClearProposed),
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::OwnerError(NotOwner {}));
+    assert_eq!(err, ContractError::Owner(NotOwner {}));
 
     execute(
         deps.as_mut(),
@@ -140,7 +140,7 @@ fn test_accept_emergency_owner_role() {
         ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::AcceptProposed),
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::OwnerError(NotProposedOwner {}));
+    assert_eq!(err, ContractError::Owner(NotProposedOwner {}));
 
     execute(
         deps.as_mut(),

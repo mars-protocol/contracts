@@ -12,7 +12,7 @@ pub enum ContractError {
     Mars(#[from] MarsError),
 
     #[error("{0}")]
-    OwnerError(#[from] OwnerError),
+    Owner(#[from] OwnerError),
 
     #[error("{0}")]
     ConversionOverflow(#[from] ConversionOverflowError),
