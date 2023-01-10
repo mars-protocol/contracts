@@ -192,7 +192,7 @@ fn test_above_max_ltv_not_liquidatable() {
 /// Position: User Collateral: [(atom:50), (osmo:300)]
 ///           User Debt: [(atom:50)]
 /// Health:   liquidatable: true
-///           above_max_ltv: trie
+///           above_max_ltv: true
 #[test]
 fn test_liquidatable() {
     let positions = vec![
