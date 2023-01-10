@@ -12,6 +12,8 @@ import {
   ExecuteMsg,
   OsmosisPriceSource,
   Decimal,
+  Downtime,
+  DowntimeDetector,
   QueryMsg,
   ConfigForString,
   PriceResponse,

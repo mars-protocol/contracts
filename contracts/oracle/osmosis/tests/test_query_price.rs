@@ -1,5 +1,6 @@
 use cosmwasm_std::{coin, Decimal};
-use mars_oracle_osmosis::OsmosisPriceSource;
+use mars_oracle_base::ContractError;
+use mars_oracle_osmosis::{Downtime, DowntimeDetector, OsmosisPriceSource};
 use mars_outpost::oracle::{PriceResponse, QueryMsg};
 use osmosis_std::types::osmosis::{
     gamm::v2::QuerySpotPriceResponse,
@@ -71,6 +72,7 @@ fn test_querying_arithmetic_twap_price() {
         OsmosisPriceSource::ArithmeticTwap {
             pool_id: 89,
             window_size: 86400,
+            downtime_detector: None,
         },
     );
 
@@ -93,6 +95,56 @@ fn test_querying_arithmetic_twap_price() {
 }
 
 #[test]
+fn test_querying_arithmetic_twap_price_with_downtime_detector() {
+    let mut deps = helpers::setup_test();
+
+    let dd = DowntimeDetector {
+        downtime: Downtime::Duration10m,
+        recovery: 360,
+    };
+    helpers::set_price_source(
+        deps.as_mut(),
+        "umars",
+        OsmosisPriceSource::ArithmeticTwap {
+            pool_id: 89,
+            window_size: 86400,
+            downtime_detector: Some(dd.clone()),
+        },
+    );
+
+    deps.querier.set_downtime_detector(dd.clone(), false);
+    let res_err = helpers::query_err(
+        deps.as_ref(),
+        QueryMsg::Price {
+            denom: "umars".to_string(),
+        },
+    );
+    assert_eq!(
+        res_err,
+        ContractError::InvalidPrice {
+            reason: "chain is recovering from downtime".to_string()
+        }
+    );
+
+    deps.querier.set_downtime_detector(dd, true);
+    deps.querier.set_arithmetic_twap_price(
+        89,
+        "umars",
+        "uosmo",
+        ArithmeticTwapToNowResponse {
+            arithmetic_twap: Decimal::from_ratio(77777u128, 12345u128).to_string(),
+        },
+    );
+    let res: PriceResponse = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Price {
+            denom: "umars".to_string(),
+        },
+    );
+    assert_eq!(res.price, Decimal::from_ratio(77777u128, 12345u128));
+}
+
+#[test]
 fn test_querying_geometric_twap_price() {
     let mut deps = helpers::setup_test();
 
@@ -102,6 +154,7 @@ fn test_querying_geometric_twap_price() {
         OsmosisPriceSource::GeometricTwap {
             pool_id: 89,
             window_size: 86400,
+            downtime_detector: None,
         },
     );
 
@@ -121,6 +174,56 @@ fn test_querying_geometric_twap_price() {
         },
     );
     assert_eq!(res.price, Decimal::from_ratio(66666u128, 12345u128));
+}
+
+#[test]
+fn test_querying_geometric_twap_price_with_downtime_detector() {
+    let mut deps = helpers::setup_test();
+
+    let dd = DowntimeDetector {
+        downtime: Downtime::Duration10m,
+        recovery: 360,
+    };
+    helpers::set_price_source(
+        deps.as_mut(),
+        "umars",
+        OsmosisPriceSource::GeometricTwap {
+            pool_id: 89,
+            window_size: 86400,
+            downtime_detector: Some(dd.clone()),
+        },
+    );
+
+    deps.querier.set_downtime_detector(dd.clone(), false);
+    let res_err = helpers::query_err(
+        deps.as_ref(),
+        QueryMsg::Price {
+            denom: "umars".to_string(),
+        },
+    );
+    assert_eq!(
+        res_err,
+        ContractError::InvalidPrice {
+            reason: "chain is recovering from downtime".to_string()
+        }
+    );
+
+    deps.querier.set_downtime_detector(dd, true);
+    deps.querier.set_geometric_twap_price(
+        89,
+        "umars",
+        "uosmo",
+        GeometricTwapToNowResponse {
+            geometric_twap: Decimal::from_ratio(77777u128, 12345u128).to_string(),
+        },
+    );
+    let res: PriceResponse = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Price {
+            denom: "umars".to_string(),
+        },
+    );
+    assert_eq!(res.price, Decimal::from_ratio(77777u128, 12345u128));
 }
 
 #[test]

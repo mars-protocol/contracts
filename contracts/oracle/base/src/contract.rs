@@ -82,8 +82,8 @@ where
         }
     }
 
-    pub fn query(&self, deps: Deps<C>, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-        match msg {
+    pub fn query(&self, deps: Deps<C>, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
+        let res = match msg {
             QueryMsg::Config {} => to_binary(&self.query_config(deps)?),
             QueryMsg::PriceSource {
                 denom,
@@ -99,7 +99,8 @@ where
                 start_after,
                 limit,
             } => to_binary(&self.query_prices(deps, env, start_after, limit)?),
-        }
+        };
+        res.map_err(Into::into)
     }
 
     fn update_config(
@@ -203,7 +204,7 @@ where
             .collect()
     }
 
-    fn query_price(&self, deps: Deps<C>, env: Env, denom: String) -> StdResult<PriceResponse> {
+    fn query_price(&self, deps: Deps<C>, env: Env, denom: String) -> ContractResult<PriceResponse> {
         let cfg = self.config.load(deps.storage)?;
         let price_source = self.price_sources.load(deps.storage, &denom)?;
         Ok(PriceResponse {
@@ -224,7 +225,7 @@ where
         env: Env,
         start_after: Option<String>,
         limit: Option<u32>,
-    ) -> StdResult<Vec<PriceResponse>> {
+    ) -> ContractResult<Vec<PriceResponse>> {
         let cfg = self.config.load(deps.storage)?;
 
         let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));

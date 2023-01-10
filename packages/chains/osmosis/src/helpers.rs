@@ -4,10 +4,11 @@ use cosmwasm_std::{
     coin, Decimal, Empty, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
 };
 use osmosis_std::{
-    shim::Timestamp,
+    shim::{Duration, Timestamp},
     types::{
         cosmos::base::v1beta1::Coin,
         osmosis::{
+            downtimedetector::v1beta1::DowntimedetectorQuerier,
             gamm::{
                 v1beta1::{PoolAsset, PoolParams, QueryPoolRequest},
                 v2::GammQuerier,
@@ -123,6 +124,25 @@ pub fn query_geometric_twap_price(
     )?;
     let price = Decimal::from_str(&twap_res.geometric_twap)?;
     Ok(price)
+}
+
+/// Has it been $RECOVERY_PERIOD since the chain has been down for $DOWNTIME_PERIOD.
+///
+/// https://github.com/osmosis-labs/osmosis/tree/main/x/downtime-detector
+pub fn recovered_since_downtime_of_length(
+    querier: &QuerierWrapper,
+    downtime: i32,
+    recovery: u64,
+) -> StdResult<bool> {
+    let downtime_detector_res = DowntimedetectorQuerier::new(querier)
+        .recovered_since_downtime_of_length(
+            downtime,
+            Some(Duration {
+                seconds: recovery as i64,
+                nanos: 0,
+            }),
+        )?;
+    Ok(downtime_detector_res.succesfully_recovered)
 }
 
 #[cfg(test)]
