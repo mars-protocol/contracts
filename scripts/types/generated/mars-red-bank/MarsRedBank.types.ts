@@ -229,8 +229,8 @@ export type UserHealthStatus =
     }
 export interface UserPositionResponse {
   health_status: UserHealthStatus
-  total_collateralized_debt: Decimal
-  total_enabled_collateral: Decimal
-  weighted_liquidation_threshold_collateral: Decimal
-  weighted_max_ltv_collateral: Decimal
+  total_collateralized_debt: Uint128
+  total_enabled_collateral: Uint128
+  weighted_liquidation_threshold_collateral: Uint128
+  weighted_max_ltv_collateral: Uint128
 }

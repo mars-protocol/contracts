@@ -872,6 +872,7 @@ dependencies = [
  "cosmwasm-std",
  "mars-outpost",
  "mars-testing",
+ "thiserror",
 ]
 
 [[package]]

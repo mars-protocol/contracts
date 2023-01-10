@@ -1,10 +1,11 @@
 use std::collections::{HashMap, HashSet};
 
-use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, Deps, Env, Order, StdError, StdResult, Uint128};
 use mars_health::health::{Health, Position as HealthPosition};
 use mars_outpost::{oracle, red_bank::Position};
 
 use crate::{
+    error::ContractError,
     interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount},
     state::{COLLATERALS, DEBTS, MARKETS},
 };
@@ -15,7 +16,7 @@ pub fn assert_liquidatable(
     env: &Env,
     user_addr: &Addr,
     oracle_addr: &Addr,
-) -> StdResult<(bool, HashMap<String, Position>)> {
+) -> Result<(bool, HashMap<String, Position>), ContractError> {
     let positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
     let health = compute_position_health(&positions)?;
 
@@ -30,7 +31,7 @@ pub fn assert_below_liq_threshold_after_withdraw(
     oracle_addr: &Addr,
     denom: &str,
     withdraw_amount: Uint128,
-) -> StdResult<bool> {
+) -> Result<bool, ContractError> {
     let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
 
     // Update position to compute health factor after withdraw
@@ -41,7 +42,8 @@ pub fn assert_below_liq_threshold_after_withdraw(
         None => {
             return Err(StdError::GenericErr {
                 msg: "No User Balance".to_string(),
-            })
+            }
+            .into())
         }
     }
 
@@ -57,7 +59,7 @@ pub fn assert_below_max_ltv_after_borrow(
     oracle_addr: &Addr,
     denom: &str,
     borrow_amount: Uint128,
-) -> StdResult<bool> {
+) -> Result<bool, ContractError> {
     let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
 
     // Update position to compute health factor after borrow
@@ -76,20 +78,22 @@ pub fn assert_below_max_ltv_after_borrow(
 }
 
 /// Compute Health of a given User Position
-pub fn compute_position_health(positions: &HashMap<String, Position>) -> StdResult<Health> {
+pub fn compute_position_health(
+    positions: &HashMap<String, Position>,
+) -> Result<Health, ContractError> {
     let positions = positions
         .values()
         .map(|p| {
             // if it is an "uncollateralized" debt, then it won't count towards their health factor
             let debt_amount = if p.uncollateralized_debt {
-                Decimal::zero()
+                Uint128::zero()
             } else {
-                Decimal::from_ratio(p.debt_amount, 1u128)
+                p.debt_amount
             };
 
             HealthPosition {
                 denom: p.denom.clone(),
-                collateral_amount: Decimal::from_ratio(p.collateral_amount, 1u128),
+                collateral_amount: p.collateral_amount,
                 debt_amount,
                 price: p.asset_price,
                 max_ltv: p.max_ltv,
@@ -98,7 +102,7 @@ pub fn compute_position_health(positions: &HashMap<String, Position>) -> StdResu
         })
         .collect::<Vec<_>>();
 
-    Health::compute_health(&positions)
+    Health::compute_health(&positions).map_err(Into::into)
 }
 
 /// Goes through assets user has a position in and returns a HashMap mapping the asset denoms to the

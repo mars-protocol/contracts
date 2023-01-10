@@ -2,7 +2,6 @@ use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdError, StdResult, Uint1
 use cw_storage_plus::Bound;
 use mars_outpost::{
     address_provider::{self, MarsAddressType},
-    error::MarsError,
     red_bank::{
         Collateral, ConfigResponse, Debt, Market, UncollateralizedLoanLimitResponse,
         UserCollateralResponse, UserDebtResponse, UserHealthStatus, UserPositionResponse,
@@ -10,6 +9,7 @@ use mars_outpost::{
 };
 
 use crate::{
+    error::ContractError,
     health,
     interest_rates::{
         get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
@@ -247,7 +247,7 @@ pub fn query_user_position(
     deps: Deps,
     env: Env,
     user_addr: Addr,
-) -> Result<UserPositionResponse, MarsError> {
+) -> Result<UserPositionResponse, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let oracle_addr = address_provider::helpers::query_address(
         deps,
