@@ -14,8 +14,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::helpers;
 
-/// Copy from https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std/src/types/osmosis/downtimedetector/v1beta1.rs#L4
-/// It doesn't impl JsonSchema.
+/// Copied from https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std/src/types/osmosis/downtimedetector/v1beta1.rs#L4
+///
+/// It doesn't impl Serialize, Deserialize, and JsonSchema traits, and therefore
+/// cannot be used in contract APIs (messages and query responses).
+///
+/// TODO: Make a PR to osmosis-rust that implements these traits for enum types.
+/// Once merged, remove this one here.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Downtime {
