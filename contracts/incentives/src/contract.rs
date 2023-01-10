@@ -108,47 +108,14 @@ pub fn execute_set_asset_incentive(
 
     let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &denom)? {
         Some(mut asset_incentive) => {
-            let current_block_time = env.block.time;
-            let end_time = asset_incentive.start_time.plus_seconds(asset_incentive.duration);
-            let start_time = match start_time {
-                Some(_)
-                    if asset_incentive.start_time <= current_block_time
-                        && end_time >= current_block_time =>
-                {
-                    return Err(ContractError::InvalidIncentive {
-                        reason: "can't modify start_time if incentive in progress".to_string(),
-                    })
-                }
-                Some(st) if st < current_block_time => {
-                    return Err(ContractError::InvalidIncentive {
-                        reason: "start_time can't be less than current block time".to_string(),
-                    });
-                }
-                Some(st) => st,
-                None if end_time < current_block_time => {
-                    // previous incentive has finished
-                    current_block_time
-                }
-                None => asset_incentive.start_time,
-            };
-
-            let duration = match duration {
-                Some(dur) if dur == 0 => {
-                    return Err(ContractError::InvalidIncentive {
-                        reason: "duration can't be 0".to_string(),
-                    })
-                }
-                Some(dur) if start_time.plus_seconds(dur) < current_block_time => {
-                    return Err(ContractError::InvalidIncentive {
-                        reason: "end_time can't be less than current block time".to_string(),
-                    })
-                }
-                Some(dur) => dur,
-                None => asset_incentive.duration,
-            };
-
-            let emission_per_second =
-                emission_per_second.unwrap_or(asset_incentive.emission_per_second);
+            let (start_time, duration, emission_per_second) =
+                validate_params_for_existing_incentive(
+                    &asset_incentive,
+                    emission_per_second,
+                    start_time,
+                    duration,
+                    env.block.time,
+                )?;
 
             let red_bank_addr = address_provider::helpers::query_address(
                 deps.as_ref(),
@@ -178,39 +145,21 @@ pub fn execute_set_asset_incentive(
             asset_incentive
         }
         None => {
-            // all params are required during incentive initialization (if start_time = None then set to current block time)
-            let (emission_per_second, duration) = match (emission_per_second, duration) {
-                (Some(eps), Some(dur)) => (eps, dur),
-                _ => {
-                    return Err(ContractError::InvalidIncentive {
-                        reason: "all params are required during incentive initialization"
-                            .to_string(),
-                    })
-                }
-            };
-
-            // duration should be greater than 0
-            if duration == 0 {
-                return Err(ContractError::InvalidIncentive {
-                    reason: "duration can't be 0".to_string(),
-                });
-            }
-
-            // start_time can't be less that current block time
             let current_block_time = env.block.time;
-            let start_time = start_time.unwrap_or(current_block_time);
-            if start_time < current_block_time {
-                return Err(ContractError::InvalidIncentive {
-                    reason: "start_time can't be less than current block time".to_string(),
-                });
-            }
+
+            let (start_time, duration, emission_per_second) = validate_params_for_new_incentive(
+                start_time,
+                duration,
+                emission_per_second,
+                current_block_time,
+            )?;
 
             AssetIncentive {
                 emission_per_second,
                 start_time,
                 duration,
                 index: Decimal::zero(),
-                last_updated: env.block.time.seconds(),
+                last_updated: current_block_time.seconds(),
             }
         }
     };
@@ -225,6 +174,96 @@ pub fn execute_set_asset_incentive(
         attr("duration", new_asset_incentive.duration.to_string()),
     ]);
     Ok(response)
+}
+
+fn validate_params_for_existing_incentive(
+    asset_incentive: &AssetIncentive,
+    emission_per_second: Option<Uint128>,
+    start_time: Option<Timestamp>,
+    duration: Option<u64>,
+    current_block_time: Timestamp,
+) -> Result<(Timestamp, u64, Uint128), ContractError> {
+    let end_time = asset_incentive.start_time.plus_seconds(asset_incentive.duration);
+    let start_time = match start_time {
+        // current asset incentive hasn't finished yet
+        Some(_)
+            if asset_incentive.start_time <= current_block_time
+                && end_time >= current_block_time =>
+        {
+            return Err(ContractError::InvalidIncentive {
+                reason: "can't modify start_time if incentive in progress".to_string(),
+            })
+        }
+        // start_time can't be from the past
+        Some(st) if st < current_block_time => {
+            return Err(ContractError::InvalidIncentive {
+                reason: "start_time can't be less than current block time".to_string(),
+            });
+        }
+        // correct start_time so it can be used
+        Some(st) => st,
+        // previous asset incentive finished so we can use current block time as start_time
+        None if end_time < current_block_time => current_block_time,
+        // use start_time from current asset incentive
+        None => asset_incentive.start_time,
+    };
+
+    let duration = match duration {
+        // can't be 0
+        Some(dur) if dur == 0 => {
+            return Err(ContractError::InvalidIncentive {
+                reason: "duration can't be 0".to_string(),
+            })
+        }
+        // end_time can't be decreased to the past
+        Some(dur) if start_time.plus_seconds(dur) < current_block_time => {
+            return Err(ContractError::InvalidIncentive {
+                reason: "end_time can't be less than current block time".to_string(),
+            })
+        }
+        // correct duration so it can be used
+        Some(dur) => dur,
+        // use duration from current asset incentive
+        None => asset_incentive.duration,
+    };
+
+    let emission_per_second = emission_per_second.unwrap_or(asset_incentive.emission_per_second);
+
+    Ok((start_time, duration, emission_per_second))
+}
+
+fn validate_params_for_new_incentive(
+    start_time: Option<Timestamp>,
+    duration: Option<u64>,
+    emission_per_second: Option<Uint128>,
+    current_block_time: Timestamp,
+) -> Result<(Timestamp, u64, Uint128), ContractError> {
+    // all params are required during incentive initialization (if start_time = None then set to current block time)
+    let (emission_per_second, duration) = match (emission_per_second, duration) {
+        (Some(eps), Some(dur)) => (eps, dur),
+        _ => {
+            return Err(ContractError::InvalidIncentive {
+                reason: "all params are required during incentive initialization".to_string(),
+            })
+        }
+    };
+
+    // duration should be greater than 0
+    if duration == 0 {
+        return Err(ContractError::InvalidIncentive {
+            reason: "duration can't be 0".to_string(),
+        });
+    }
+
+    // start_time can't be less that current block time
+    let start_time = start_time.unwrap_or(current_block_time);
+    if start_time < current_block_time {
+        return Err(ContractError::InvalidIncentive {
+            reason: "start_time can't be less than current block time".to_string(),
+        });
+    }
+
+    Ok((start_time, duration, emission_per_second))
 }
 
 pub fn execute_balance_change(
