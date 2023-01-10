@@ -1,5 +1,5 @@
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
-use mars_testing::integration::mock_env::MockEnvBuilder;
+use mars_testing::integration::mock_env::{MockEnv, MockEnvBuilder, RedBank};
 
 use crate::helpers::default_asset_params;
 
@@ -169,4 +169,99 @@ fn borrow_exact_liquidity() {
 
     // borrowing more should fail
     red_bank.borrow(&mut mock_env, &borrower, "uusdc", 1u128).unwrap_err();
+}
+
+#[test]
+fn interest_rates_after_repayment() {
+    // 1. Repay exact debt
+    let (mut mock_env, red_bank, user_1) = prepare_debt_for_repayment();
+
+    // few blocks passed, debt should increase for user_1
+    let debt = red_bank.query_user_debt(&mut mock_env, &user_1, "uusdc");
+
+    // repay full debt for user_1
+    let repayed = debt.amount; // it should be 5_000_069 uusdc
+    assert_eq!(repayed, Uint128::from(5_000_069u128));
+
+    red_bank.repay(&mut mock_env, &user_1, coin(repayed.u128(), "uusdc")).unwrap();
+
+    let debt = red_bank.query_user_debt(&mut mock_env, &user_1, "uusdc");
+    assert_eq!(debt.amount, Uint128::zero());
+    assert_eq!(debt.amount_scaled, Uint128::zero());
+
+    let exact_debt_repayment_result = red_bank.query_market(&mut mock_env, "uusdc");
+    assert_eq!(
+        exact_debt_repayment_result.borrow_rate,
+        Decimal::from_ratio(716667701657739867u128, 1000000000000000000u128)
+    );
+    assert_eq!(
+        exact_debt_repayment_result.liquidity_rate,
+        Decimal::from_ratio(344002276982931938u128, 1000000000000000000u128)
+    );
+
+    // 2. Repay full debt with refund
+    let (mut mock_env, red_bank, user_1) = prepare_debt_for_repayment();
+
+    // repay full debt for user_1 with a huge excess
+    let repayed = 1_000_000_000u128;
+
+    red_bank.repay(&mut mock_env, &user_1, coin(repayed, "uusdc")).unwrap();
+
+    let debt = red_bank.query_user_debt(&mut mock_env, &user_1, "uusdc");
+    assert_eq!(debt.amount, Uint128::zero());
+    assert_eq!(debt.amount_scaled, Uint128::zero());
+
+    // interest rates should be the same after repaying exact debt or with refund
+    let result = red_bank.query_market(&mut mock_env, "uusdc");
+    assert_eq!(result.borrow_rate, exact_debt_repayment_result.borrow_rate);
+    assert_eq!(result.liquidity_rate, exact_debt_repayment_result.liquidity_rate);
+}
+
+fn prepare_debt_for_repayment() -> (MockEnv, RedBank, Addr) {
+    let owner = Addr::unchecked("owner");
+    let mut mock_env = MockEnvBuilder::new(None, owner).build();
+
+    // setup oracle and red-bank
+    let oracle = mock_env.oracle.clone();
+    oracle.set_price_source_fixed(&mut mock_env, "uatom", Decimal::from_ratio(12u128, 1u128));
+    oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::one());
+    let red_bank = mock_env.red_bank.clone();
+    red_bank.init_asset(&mut mock_env, "uatom", default_asset_params());
+    red_bank.init_asset(&mut mock_env, "uusdc", default_asset_params());
+
+    // fund user_1 account with atom
+    let user_1 = Addr::unchecked("user_1");
+    let funded_atom = 100_000_000u128;
+    mock_env.fund_account(&user_1, &[coin(funded_atom, "uatom")]);
+
+    // fund user_2 account with usdc
+    let user_2 = Addr::unchecked("user_2");
+    let funded_usdc = 200_000_000u128;
+    mock_env.fund_account(&user_2, &[coin(funded_usdc, "uusdc")]);
+
+    // user_1 deposits some atom
+    let deposited_atom = 65_000_000u128;
+    red_bank.deposit(&mut mock_env, &user_1, coin(deposited_atom, "uatom")).unwrap();
+
+    // user_2 deposits all usdc balance
+    let deposited_usdc = funded_usdc;
+    red_bank.deposit(&mut mock_env, &user_2, coin(deposited_usdc, "uusdc")).unwrap();
+
+    // move few blocks
+    mock_env.increment_by_blocks(10);
+
+    // user_1 borrows some usdc (no usdc in the account before)
+    let borrowed_usdc = 5_000_000u128;
+    red_bank.borrow(&mut mock_env, &user_1, "uusdc", borrowed_usdc).unwrap();
+
+    // user_2 borrows some usdc
+    let borrowed_usdc = 120_000_000u128;
+    red_bank.borrow(&mut mock_env, &user_2, "uusdc", borrowed_usdc).unwrap();
+
+    // move few blocks
+    mock_env.increment_by_blocks(100);
+
+    // add more usdc to user_1 account to repay full debt
+    mock_env.fund_account(&user_1, &[coin(1_000_000_000u128, "uusdc")]);
+    (mock_env, red_bank, user_1)
 }
