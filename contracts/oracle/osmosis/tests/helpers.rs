@@ -2,18 +2,17 @@
 
 use std::marker::PhantomData;
 
-use cosmwasm_std::testing::{mock_env, MockApi, MockQuerier, MockStorage};
-use cosmwasm_std::{coin, from_binary, Coin, Deps, DepsMut, OwnedDeps, StdError};
-use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
-
+use cosmwasm_std::{
+    coin, from_binary,
+    testing::{mock_env, MockApi, MockQuerier, MockStorage},
+    Coin, Deps, DepsMut, OwnedDeps,
+};
+use mars_oracle_base::ContractError;
+use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSource};
+use mars_osmosis::helpers::{Pool, QueryPoolResponse};
 use mars_outpost::oracle::{InstantiateMsg, QueryMsg};
 use mars_testing::{mock_info, MarsMockQuerier};
-
-use mars_oracle_osmosis::contract::entry;
-use mars_oracle_osmosis::msg::ExecuteMsg;
-use mars_oracle_osmosis::OsmosisPriceSource;
-
-use mars_osmosis::helpers::{Pool, QueryPoolResponse};
+use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
 
 pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     let mut deps = OwnedDeps::<_, _, _> {
@@ -139,6 +138,6 @@ pub fn query<T: serde::de::DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
     from_binary(&entry::query(deps, mock_env(), msg).unwrap()).unwrap()
 }
 
-pub fn query_err(deps: Deps, msg: QueryMsg) -> StdError {
+pub fn query_err(deps: Deps, msg: QueryMsg) -> ContractError {
     entry::query(deps, mock_env(), msg).unwrap_err()
 }

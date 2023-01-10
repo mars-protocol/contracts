@@ -1,5 +1,4 @@
 use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, QuerierResult};
-
 use mars_outpost::address_provider::{AddressResponseItem, QueryMsg};
 
 // NOTE: Addresses here are all hardcoded as we always use those to target a specific contract
@@ -9,8 +8,7 @@ pub fn handle_query(contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
     let address_provider = Addr::unchecked("address_provider");
     if *contract_addr != address_provider {
         panic!(
-            "[mock]: Address provider request made to {} shoud be {}",
-            contract_addr, address_provider
+            "[mock]: Address provider request made to {contract_addr} shoud be {address_provider}"
         );
     }
 

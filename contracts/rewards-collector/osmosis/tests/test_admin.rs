@@ -1,11 +1,13 @@
-use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::Decimal;
-
-use mars_outpost::error::MarsError;
-use mars_outpost::rewards_collector::{Config, CreateOrUpdateConfig, QueryMsg};
+use cosmwasm_std::{testing::mock_env, Decimal};
+use mars_outpost::{
+    error::MarsError,
+    rewards_collector::{Config, CreateOrUpdateConfig, QueryMsg},
+};
 use mars_rewards_collector_base::ContractError;
-use mars_rewards_collector_osmosis::contract::entry::{execute, instantiate};
-use mars_rewards_collector_osmosis::msg::ExecuteMsg;
+use mars_rewards_collector_osmosis::{
+    contract::entry::{execute, instantiate},
+    msg::ExecuteMsg,
+};
 use mars_testing::mock_info;
 
 use crate::helpers::mock_config;

@@ -1,20 +1,25 @@
-use cosmwasm_std::testing::{MockQuerier, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, from_slice, Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest,
-    StdResult, SystemError, SystemResult, Uint128, WasmQuery,
+    from_binary, from_slice,
+    testing::{MockQuerier, MOCK_CONTRACT_ADDR},
+    Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
+    SystemResult, Uint128, WasmQuery,
+};
+use mars_oracle_osmosis::DowntimeDetector;
+use mars_osmosis::helpers::QueryPoolResponse;
+use mars_outpost::{address_provider, incentives, oracle, red_bank};
+use osmosis_std::types::osmosis::{
+    downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
+    gamm::v2::QuerySpotPriceResponse,
+    twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
 
-use mars_osmosis::helpers::QueryPoolResponse;
-use osmosis_std::types::osmosis::gamm::v2::QuerySpotPriceResponse;
-use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
-
-use mars_outpost::{address_provider, incentives, oracle, red_bank};
-
-use crate::incentives_querier::IncentivesQuerier;
-use crate::mock_address_provider;
-use crate::oracle_querier::OracleQuerier;
-use crate::osmosis_querier::{OsmosisQuerier, PriceKey};
-use crate::red_bank_querier::RedBankQuerier;
+use crate::{
+    incentives_querier::IncentivesQuerier,
+    mock_address_provider,
+    oracle_querier::OracleQuerier,
+    osmosis_querier::{OsmosisQuerier, PriceKey},
+    red_bank_querier::RedBankQuerier,
+};
 
 pub struct MarsMockQuerier {
     base: MockQuerier<Empty>,
@@ -30,7 +35,7 @@ impl Querier for MarsMockQuerier {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
-                    error: format!("Parsing query request: {}", e),
+                    error: format!("Parsing query request: {e}"),
                     request: bin_request.into(),
                 })
             }
@@ -90,7 +95,7 @@ impl MarsMockQuerier {
         self.osmosis_querier.spot_prices.insert(price_key, spot_price);
     }
 
-    pub fn set_twap_price(
+    pub fn set_arithmetic_twap_price(
         &mut self,
         id: u64,
         base_asset_denom: &str,
@@ -102,7 +107,31 @@ impl MarsMockQuerier {
             denom_in: base_asset_denom.to_string(),
             denom_out: quote_asset_denom.to_string(),
         };
-        self.osmosis_querier.twap_prices.insert(price_key, twap_price);
+        self.osmosis_querier.arithmetic_twap_prices.insert(price_key, twap_price);
+    }
+
+    pub fn set_geometric_twap_price(
+        &mut self,
+        id: u64,
+        base_asset_denom: &str,
+        quote_asset_denom: &str,
+        twap_price: GeometricTwapToNowResponse,
+    ) {
+        let price_key = PriceKey {
+            pool_id: id,
+            denom_in: base_asset_denom.to_string(),
+            denom_out: quote_asset_denom.to_string(),
+        };
+        self.osmosis_querier.geometric_twap_prices.insert(price_key, twap_price);
+    }
+
+    pub fn set_downtime_detector(&mut self, downtime_detector: DowntimeDetector, recovered: bool) {
+        self.osmosis_querier.downtime_detector.insert(
+            (downtime_detector.downtime as i32, downtime_detector.recovery),
+            RecoveredSinceDowntimeOfLengthResponse {
+                succesfully_recovered: recovered,
+            },
+        );
     }
 
     pub fn set_redbank_market(&mut self, market: red_bank::Market) {
@@ -162,7 +191,7 @@ impl MarsMockQuerier {
                     return self.redbank_querier.handle_query(redbank_query);
                 }
 
-                panic!("[mock]: Unsupported wasm query: {:?}", msg);
+                panic!("[mock]: Unsupported wasm query: {msg:?}");
             }
 
             QueryRequest::Stargate {
@@ -173,7 +202,7 @@ impl MarsMockQuerier {
                     return querier_res;
                 }
 
-                panic!("[mock]: Unsupported stargate query, path: {:?}", path);
+                panic!("[mock]: Unsupported stargate query, path: {path:?}");
             }
 
             _ => self.base.handle_query(request),

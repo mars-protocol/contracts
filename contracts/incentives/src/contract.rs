@@ -4,20 +4,23 @@ use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env,
     MessageInfo, Response, StdResult, Timestamp, Uint128,
 };
-
-use mars_outpost::address_provider::MarsAddressType;
-use mars_outpost::error::MarsError;
-use mars_outpost::helpers::option_string_to_addr;
-
-use mars_outpost::incentives::{AssetIncentive, AssetIncentiveResponse, Config};
-use mars_outpost::incentives::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use mars_outpost::{address_provider, red_bank};
-
-use crate::error::ContractError;
-use crate::helpers::{
-    compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_asset_incentive_index,
+use mars_outpost::{
+    address_provider::{self, MarsAddressType},
+    error::MarsError,
+    helpers::{option_string_to_addr, validate_native_denom},
+    incentives::{
+        AssetIncentive, AssetIncentiveResponse, Config, ExecuteMsg, InstantiateMsg, QueryMsg,
+    },
+    red_bank,
 };
-use crate::state::{ASSET_INCENTIVES, CONFIG, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
+
+use crate::{
+    error::ContractError,
+    helpers::{
+        compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_asset_incentive_index,
+    },
+    state::{ASSET_INCENTIVES, CONFIG, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
+};
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-incentives";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -105,6 +108,8 @@ pub fn execute_set_asset_incentive(
     if info.sender != config.owner {
         return Err(MarsError::Unauthorized {}.into());
     }
+
+    validate_native_denom(&denom)?;
 
     let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &denom)? {
         Some(mut asset_incentive) => {
@@ -405,6 +410,10 @@ pub fn execute_update_config(
 
     if info.sender != config.owner {
         return Err(MarsError::Unauthorized {});
+    };
+
+    if let Some(md) = &mars_denom {
+        validate_native_denom(md)?;
     };
 
     config.owner = option_string_to_addr(deps.api, owner, config.owner)?;

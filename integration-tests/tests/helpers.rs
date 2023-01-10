@@ -1,9 +1,12 @@
 #![allow(dead_code)]
 
+use anyhow::Result as AnyResult;
 use cosmwasm_std::{Coin, Decimal};
+use cw_multi_test::AppResponse;
 use mars_outpost::red_bank::{
     InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
 };
+use mars_red_bank::error::ContractError;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
     MsgSwapExactAmountIn, MsgSwapExactAmountInResponse, SwapAmountInRoute,
 };
@@ -60,17 +63,16 @@ pub fn is_user_liquidatable(position: &UserPositionResponse) -> bool {
 }
 
 pub mod osmosis {
-    use osmosis_testing::cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest;
-    use osmosis_testing::{Bank, OsmosisTestApp, RunnerError, SigningAccount, Wasm};
-    use serde::Serialize;
     use std::fmt::Display;
-    use std::str::FromStr;
+
+    use osmosis_testing::{OsmosisTestApp, RunnerError, SigningAccount, Wasm};
+    use serde::Serialize;
 
     pub fn wasm_file(contract_name: &str) -> String {
         let artifacts_dir =
             std::env::var("ARTIFACTS_DIR_PATH").unwrap_or_else(|_| "artifacts".to_string());
         let snaked_name = contract_name.replace('-', "_");
-        format!("../{}/{}.wasm", artifacts_dir, snaked_name)
+        format!("../{artifacts_dir}/{snaked_name}.wasm")
     }
 
     pub fn instantiate_contract<M>(
@@ -88,29 +90,14 @@ pub mod osmosis {
         wasm.instantiate(code_id, msg, None, Some(contract_name), &[], owner).unwrap().data.address
     }
 
-    pub fn query_balance(bank: &Bank<OsmosisTestApp>, addr: &str, denom: &str) -> u128 {
-        bank.query_balance(&QueryBalanceRequest {
-            address: addr.to_string(),
-            denom: denom.to_string(),
-        })
-        .unwrap()
-        .balance
-        .map(|c| u128::from_str(&c.amount).unwrap())
-        .unwrap_or(0)
-    }
-
     pub fn assert_err(actual: RunnerError, expected: impl Display) {
         match actual {
             RunnerError::ExecuteError {
                 msg,
-            } => {
-                assert!(msg.contains(&format!("{}", expected)))
-            }
+            } => assert!(msg.contains(&expected.to_string())),
             RunnerError::QueryError {
                 msg,
-            } => {
-                assert!(msg.contains(&format!("{}", expected)))
-            }
+            } => assert!(msg.contains(&expected.to_string())),
             _ => panic!("Unhandled error"),
         }
     }
@@ -167,4 +154,14 @@ pub fn swap(
         signer,
     )
     .unwrap()
+}
+
+pub fn assert_err(res: AnyResult<AppResponse>, err: ContractError) {
+    match res {
+        Ok(_) => panic!("Result was not an error"),
+        Err(generic_err) => {
+            let contract_err: ContractError = generic_err.downcast().unwrap();
+            assert_eq!(contract_err, err);
+        }
+    }
 }

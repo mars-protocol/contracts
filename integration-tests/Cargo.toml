@@ -17,13 +17,17 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dev-dependencies]
-cosmwasm-std                    = { workspace = true }
-mars-outpost                    = { workspace = true }
-mars-oracle-osmosis             = { workspace = true }
-mars-oracle-base                = { workspace = true }
-mars-testing                    = { workspace = true }
-mars-rewards-collector-base     = { workspace = true }
-mars-osmosis                    = { workspace = true }
-osmosis-std                     = { workspace = true }
-osmosis-testing                 = "0.13.2"
-serde                           = { workspace = true }
+anyhow                         = { workspace = true }
+cosmwasm-std                   = { workspace = true }
+cw-multi-test                  = { workspace = true }
+mars-outpost                   = { workspace = true }
+mars-oracle-osmosis            = { workspace = true }
+mars-oracle-base               = { workspace = true }
+mars-testing                   = { workspace = true }
+mars-red-bank                  = { workspace = true }
+mars-rewards-collector-base    = { workspace = true }
+mars-rewards-collector-osmosis = { workspace = true }
+mars-osmosis                   = { workspace = true }
+osmosis-std                    = { workspace = true }
+osmosis-testing                = { workspace = true }
+serde                          = { workspace = true }

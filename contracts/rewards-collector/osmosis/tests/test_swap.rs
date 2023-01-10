@@ -1,14 +1,17 @@
-use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{CosmosMsg, Decimal, Fraction, SubMsg, Uint128};
-
+use cosmwasm_std::{
+    testing::{mock_env, MOCK_CONTRACT_ADDR},
+    CosmosMsg, Decimal, Fraction, SubMsg, Uint128,
+};
 use mars_outpost::rewards_collector::{Config, QueryMsg};
-use osmosis_std::types::cosmos::base::v1beta1::Coin;
-use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
-use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
-
-use mars_rewards_collector_osmosis::contract::entry::execute;
-use mars_rewards_collector_osmosis::msg::ExecuteMsg;
+use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg};
 use mars_testing::mock_info;
+use osmosis_std::types::{
+    cosmos::base::v1beta1::Coin,
+    osmosis::{
+        gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute},
+        twap::v1beta1::ArithmeticTwapToNowResponse,
+    },
+};
 
 mod helpers;
 
@@ -17,7 +20,7 @@ fn test_swapping_asset_if_quering_price_fails() {
     let mut deps = helpers::setup_test();
 
     // Only pool_1 set, missing pool_69 and pool_420
-    deps.querier.set_twap_price(
+    deps.querier.set_arithmetic_twap_price(
         1,
         "uatom",
         "uosmo",
@@ -44,7 +47,7 @@ fn test_swapping_asset() {
     let mut deps = helpers::setup_test();
 
     let uatom_uosmo_price = Decimal::from_ratio(125u128, 10u128);
-    deps.querier.set_twap_price(
+    deps.querier.set_arithmetic_twap_price(
         1,
         "uatom",
         "uosmo",
@@ -53,7 +56,7 @@ fn test_swapping_asset() {
         },
     );
     let uosmo_uusdc_price = Decimal::from_ratio(10u128, 1u128);
-    deps.querier.set_twap_price(
+    deps.querier.set_arithmetic_twap_price(
         69,
         "uosmo",
         "uusdc",
@@ -62,7 +65,7 @@ fn test_swapping_asset() {
         },
     );
     let uosmo_umars_price = Decimal::from_ratio(5u128, 10u128);
-    deps.querier.set_twap_price(
+    deps.querier.set_arithmetic_twap_price(
         420,
         "uosmo",
         "umars",

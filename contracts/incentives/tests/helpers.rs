@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 
-use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
-use cosmwasm_std::{Env, OwnedDeps};
+use cosmwasm_std::{
+    testing::{mock_env, mock_info, MockApi, MockStorage},
+    Env, OwnedDeps,
+};
 use mars_incentives::contract::instantiate;
-
 use mars_outpost::incentives::InstantiateMsg;
 use mars_testing::{mock_dependencies, MarsMockQuerier};
 

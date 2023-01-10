@@ -1,11 +1,14 @@
 use cosmwasm_std::testing::mock_env;
-
-use mars_outpost::error::MarsError;
-use mars_outpost::oracle::{Config, QueryMsg};
-use mars_testing::mock_info;
-
-use mars_oracle_osmosis::contract::entry::execute;
-use mars_oracle_osmosis::msg::ExecuteMsg;
+use mars_oracle_base::ContractError;
+use mars_oracle_osmosis::{
+    contract::{entry, entry::execute},
+    msg::ExecuteMsg,
+};
+use mars_outpost::{
+    error::MarsError,
+    oracle::{Config, InstantiateMsg, QueryMsg},
+};
+use mars_testing::{mock_dependencies, mock_info};
 
 mod helpers;
 
@@ -16,6 +19,62 @@ fn test_instantiating() {
     let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
     assert_eq!(cfg.owner, "owner".to_string());
     assert_eq!(cfg.base_denom, "uosmo".to_string());
+}
+
+#[test]
+fn test_instantiating_incorrect_denom() {
+    let mut deps = mock_dependencies(&[]);
+    let env = mock_env();
+    let owner = mock_info("owner");
+
+    let res = entry::instantiate(
+        deps.as_mut(),
+        env.clone(),
+        owner.clone(),
+        InstantiateMsg {
+            owner: "owner".to_string(),
+            base_denom: "!*jadfaefc".to_string(),
+        },
+    );
+    assert_eq!(
+        res,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "First character is not ASCII alphabetic".to_string()
+        }))
+    );
+
+    let res = entry::instantiate(
+        deps.as_mut(),
+        env.clone(),
+        owner.clone(),
+        InstantiateMsg {
+            owner: "owner".to_string(),
+            base_denom: "ahdbufenf&*!-".to_string(),
+        },
+    );
+    assert_eq!(
+        res,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
+                .to_string()
+        }))
+    );
+
+    let res = entry::instantiate(
+        deps.as_mut(),
+        env,
+        owner,
+        InstantiateMsg {
+            owner: "owner".to_string(),
+            base_denom: "ab".to_string(),
+        },
+    );
+    assert_eq!(
+        res,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "Invalid denom length".to_string()
+        }))
+    );
 }
 
 #[test]

@@ -1,18 +1,20 @@
-use cosmwasm_std::testing::{mock_env, mock_info};
-use cosmwasm_std::{attr, Decimal, Timestamp, Uint128};
-
-use mars_outpost::error::MarsError;
-use mars_outpost::incentives::AssetIncentive;
-use mars_outpost::incentives::ExecuteMsg;
-use mars_outpost::red_bank::Market;
+use cosmwasm_std::{
+    attr,
+    testing::{mock_env, mock_info},
+    Decimal, Timestamp, Uint128,
+};
+use mars_incentives::{
+    contract::execute, helpers::compute_asset_incentive_index, state::ASSET_INCENTIVES,
+    ContractError,
+};
+use mars_outpost::{
+    error::MarsError,
+    incentives::{AssetIncentive, ExecuteMsg},
+    red_bank::Market,
+};
 use mars_testing::MockEnvParams;
 
-use mars_incentives::contract::execute;
-use mars_incentives::state::ASSET_INCENTIVES;
-
 use crate::helpers::{setup_test, setup_test_with_env};
-use mars_incentives::helpers::compute_asset_incentive_index;
-use mars_incentives::ContractError;
 
 mod helpers;
 
@@ -30,6 +32,28 @@ fn test_only_owner_can_set_asset_incentive() {
 
     let res_error = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(res_error, ContractError::Mars(MarsError::Unauthorized {}));
+}
+
+#[test]
+fn test_invalid_denom_for_incentives() {
+    let mut deps = setup_test();
+
+    let info = mock_info("owner", &[]);
+    let msg = ExecuteMsg::SetAssetIncentive {
+        denom: "adfnjg&akjsfn!".to_string(),
+        emission_per_second: Some(Uint128::new(100)),
+        start_time: None,
+        duration: Some(2400u64),
+    };
+
+    let res = execute(deps.as_mut(), mock_env(), info, msg);
+    assert_eq!(
+        res,
+        Err(ContractError::Mars(MarsError::InvalidDenom {
+            reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
+                .to_string()
+        }))
+    );
 }
 
 #[test]

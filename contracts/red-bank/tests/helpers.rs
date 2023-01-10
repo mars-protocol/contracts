@@ -1,17 +1,19 @@
 #![allow(dead_code)]
 
-use cosmwasm_std::testing::{MockApi, MockStorage};
-use cosmwasm_std::{Addr, Coin, Decimal, Deps, DepsMut, Event, OwnedDeps, Uint128};
-
-use mars_outpost::red_bank::{Collateral, CreateOrUpdateConfig, Debt, InstantiateMsg, Market};
-use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
-
-use mars_red_bank::contract::instantiate;
-use mars_red_bank::interest_rates::{
-    calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
-    ScalingOperation,
+use cosmwasm_std::{
+    testing::{MockApi, MockStorage},
+    Addr, Coin, Decimal, Deps, DepsMut, Event, OwnedDeps, Uint128,
 };
-use mars_red_bank::state::{COLLATERALS, DEBTS, MARKETS};
+use mars_outpost::red_bank::{Collateral, CreateOrUpdateConfig, Debt, InstantiateMsg, Market};
+use mars_red_bank::{
+    contract::instantiate,
+    interest_rates::{
+        calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
+        ScalingOperation,
+    },
+    state::{COLLATERALS, DEBTS, MARKETS},
+};
+use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
 
 pub fn set_collateral(
     deps: DepsMut,

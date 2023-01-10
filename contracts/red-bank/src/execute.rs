@@ -1,28 +1,29 @@
-use std::cmp::min;
-use std::str;
+use std::{cmp::min, str};
 
 use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
-
-use mars_outpost::address_provider::{self, MarsAddressType};
-use mars_outpost::error::MarsError;
-use mars_outpost::helpers::{build_send_asset_msg, option_string_to_addr, zero_address};
-use mars_outpost::math;
-use mars_outpost::red_bank::{
-    Config, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg, Market,
+use mars_outpost::{
+    address_provider::{self, MarsAddressType},
+    error::MarsError,
+    helpers::{build_send_asset_msg, option_string_to_addr, validate_native_denom, zero_address},
+    math,
+    red_bank::{
+        Config, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg, Market,
+    },
 };
 
-use crate::error::ContractError;
-use crate::health::{
-    assert_below_liq_threshold_after_withdraw, assert_below_max_ltv_after_borrow,
-    assert_liquidatable,
+use crate::{
+    error::ContractError,
+    health::{
+        assert_below_liq_threshold_after_withdraw, assert_below_max_ltv_after_borrow,
+        assert_liquidatable,
+    },
+    interest_rates::{
+        apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
+        get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
+    },
+    state::{COLLATERALS, CONFIG, DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
+    user::User,
 };
-
-use crate::interest_rates::{
-    apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
-    get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
-};
-use crate::state::{COLLATERALS, CONFIG, DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
-use crate::user::User;
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-red-bank";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -106,6 +107,8 @@ pub fn init_asset(
     if info.sender != config.owner {
         return Err(MarsError::Unauthorized {}.into());
     }
+
+    validate_native_denom(&denom)?;
 
     if MARKETS.may_load(deps.storage, &denom)?.is_some() {
         return Err(ContractError::AssetAlreadyInitialized {});

@@ -1,11 +1,10 @@
+use std::cmp::{max, min};
+
 use cosmwasm_std::{
     Addr, BlockInfo, Decimal, Deps, Order, OverflowError, OverflowOperation, StdError, StdResult,
     Uint128,
 };
-use std::cmp::{max, min};
-
-use mars_outpost::incentives::AssetIncentive;
-use mars_outpost::red_bank;
+use mars_outpost::{incentives::AssetIncentive, red_bank};
 
 use crate::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 

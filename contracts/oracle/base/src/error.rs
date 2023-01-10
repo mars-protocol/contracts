@@ -1,7 +1,6 @@
-use cosmwasm_std::StdError;
-use thiserror::Error;
-
+use cosmwasm_std::{ConversionOverflowError, StdError};
 use mars_outpost::error::MarsError;
+use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
@@ -11,8 +10,16 @@ pub enum ContractError {
     #[error("{0}")]
     Mars(#[from] MarsError),
 
+    #[error("{0}")]
+    ConversionOverflow(#[from] ConversionOverflowError),
+
     #[error("Invalid price source: {reason}")]
     InvalidPriceSource {
+        reason: String,
+    },
+
+    #[error("Invalid price: {reason}")]
+    InvalidPrice {
         reason: String,
     },
 }

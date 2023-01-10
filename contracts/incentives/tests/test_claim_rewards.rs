@@ -1,17 +1,19 @@
-use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::{
-    attr, coins, Addr, BankMsg, CosmosMsg, Decimal, OverflowError, OverflowOperation, StdError,
-    SubMsg, Timestamp, Uint128,
+    attr, coins,
+    testing::{mock_env, mock_info},
+    Addr, BankMsg, CosmosMsg, Decimal, OverflowError, OverflowOperation, StdError, SubMsg,
+    Timestamp, Uint128,
 };
-
-use mars_outpost::incentives::AssetIncentive;
-use mars_outpost::incentives::ExecuteMsg;
-use mars_outpost::red_bank::{Market, UserCollateralResponse};
+use mars_incentives::{
+    contract::{execute, query_user_unclaimed_rewards},
+    helpers::{compute_asset_incentive_index, compute_user_accrued_rewards},
+    state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
+};
+use mars_outpost::{
+    incentives::{AssetIncentive, ExecuteMsg},
+    red_bank::{Market, UserCollateralResponse},
+};
 use mars_testing::MockEnvParams;
-
-use mars_incentives::contract::{execute, query_user_unclaimed_rewards};
-use mars_incentives::helpers::{compute_asset_incentive_index, compute_user_accrued_rewards};
-use mars_incentives::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
 use crate::helpers::{setup_test, setup_test_with_env};
 

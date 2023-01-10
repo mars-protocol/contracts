@@ -1,22 +1,25 @@
-use cosmwasm_std::testing::mock_info;
-use cosmwasm_std::{attr, coin, coins, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128};
-use cw_utils::PaymentError;
-
-use mars_outpost::math;
-use mars_outpost::red_bank::{ExecuteMsg, Market};
-use mars_red_bank::contract::execute;
-use mars_red_bank::error::ContractError;
-use mars_red_bank::interest_rates::{
-    calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
-    ScalingOperation, SCALING_FACTOR,
+use cosmwasm_std::{
+    attr, coin, coins, testing::mock_info, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128,
 };
-use mars_red_bank::state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS};
-use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
-
+use cw_utils::PaymentError;
 use helpers::{
     has_collateral_position, has_debt_position, set_collateral, th_build_interests_updated_event,
     th_get_expected_indices_and_rates, th_init_market, th_setup, TestUtilizationDeltaInfo,
 };
+use mars_outpost::{
+    math,
+    red_bank::{ExecuteMsg, Market},
+};
+use mars_red_bank::{
+    contract::execute,
+    error::ContractError,
+    interest_rates::{
+        calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
+        ScalingOperation, SCALING_FACTOR,
+    },
+    state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
+};
+use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 mod helpers;
 

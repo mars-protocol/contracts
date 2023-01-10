@@ -1,6 +1,8 @@
 use cosmwasm_std::{Addr, Decimal, QuerierWrapper, StdResult};
-use mars_outpost::oracle::{self, PriceResponse};
-use mars_outpost::red_bank::{self, Market};
+use mars_outpost::{
+    oracle::{self, PriceResponse},
+    red_bank::{self, Market},
+};
 
 pub struct MarsQuerier<'a> {
     querier: &'a QuerierWrapper<'a>,
