@@ -3,7 +3,6 @@ import {
   VaultConfig,
   VaultInstantiateConfig,
 } from './generated/mars-credit-manager/MarsCreditManager.types'
-import { VaultPricingInfo } from './generated/mars-oracle-adapter/MarsOracleAdapter.types'
 import { PriceSource } from './priceSource'
 
 export enum VaultType {
@@ -22,7 +21,7 @@ export interface DeploymentConfig {
     baseDenom: string
   }
   deployerMnemonic: string
-  oracle: { addr: string; vaultPricing: VaultPricingInfo[] }
+  oracle: { addr: string }
   redBank: { addr: string }
   zapper: { addr: string }
   vaults: VaultInstantiateConfig[]

@@ -10,7 +10,7 @@ import { MsgExecuteContractEncodeObject } from 'cosmwasm'
 import { MsgExecuteContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx'
 import { toUtf8 } from '@cosmjs/encoding'
 import {
-  Decimal,
+  Uint128,
   InstantiateMsg,
   ExecuteMsg,
   Binary,

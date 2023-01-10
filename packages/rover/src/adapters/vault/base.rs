@@ -1,15 +1,13 @@
-use cosmwasm_vault_standard::extensions::force_unlock::ForceUnlockExecuteMsg::{
-    ForceRedeem, ForceWithdrawUnlocking,
-};
 use std::hash::Hash;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, QuerierWrapper,
-    QueryRequest, StdResult, SubMsg, Uint128, WasmMsg, WasmQuery,
+    QueryRequest, StdError, StdResult, SubMsg, Uint128, WasmMsg, WasmQuery,
 };
-use cw_utils::Duration;
-
+use cosmwasm_vault_standard::extensions::force_unlock::ForceUnlockExecuteMsg::{
+    ForceRedeem, ForceWithdrawUnlocking,
+};
 use cosmwasm_vault_standard::extensions::lockup::LockupExecuteMsg::{Unlock, WithdrawUnlocked};
 use cosmwasm_vault_standard::extensions::lockup::LockupQueryMsg::LockupDuration;
 use cosmwasm_vault_standard::extensions::lockup::{LockupQueryMsg, UnlockingPosition};
@@ -17,7 +15,11 @@ use cosmwasm_vault_standard::msg::{
     ExtensionExecuteMsg, ExtensionQueryMsg, VaultStandardExecuteMsg, VaultStandardQueryMsg,
 };
 use cosmwasm_vault_standard::VaultInfoResponse;
+use cw_utils::Duration;
 
+use mars_math::FractionMath;
+
+use crate::adapters::oracle::Oracle;
 use crate::traits::Stringify;
 
 pub const VAULT_REQUEST_REPLY_ID: u64 = 10_001;
@@ -225,5 +227,28 @@ impl Vault {
             contract_addr: self.address.to_string(),
             msg: to_binary(&QueryMsg::TotalVaultTokenSupply {})?,
         }))
+    }
+
+    pub fn query_value(
+        &self,
+        querier: &QuerierWrapper,
+        oracle: &Oracle,
+        amount: Uint128,
+    ) -> StdResult<Uint128> {
+        let total_supply = self.query_total_vault_coins_issued(querier)?;
+        if total_supply.is_zero() {
+            return Ok(Uint128::zero());
+        };
+
+        let total_underlying = self.query_preview_redeem(querier, total_supply)?;
+        let amount_in_underlying = amount
+            .checked_multiply_ratio(total_underlying, total_supply)
+            .map_err(|_| StdError::generic_err("CheckedMultiplyRatioError"))?;
+        let vault_info = self.query_info(querier)?;
+        let price_res = oracle.query_price(querier, &vault_info.base_token)?;
+        let amount_value = amount_in_underlying
+            .checked_mul_floor(price_res.price)
+            .map_err(|_| StdError::generic_err("CheckedMultiplyFractionError"))?;
+        Ok(amount_value)
     }
 }

@@ -3,9 +3,11 @@ use cw_item_set::Set;
 use cw_storage_plus::{Item, Map};
 use mars_owner::Owner;
 
+use mars_rover::adapters::oracle::Oracle;
+use mars_rover::adapters::red_bank::RedBank;
 use mars_rover::adapters::swap::Swapper;
 use mars_rover::adapters::vault::{VaultConfig, VaultPositionAmount};
-use mars_rover::adapters::{Oracle, RedBank, Zapper};
+use mars_rover::adapters::zapper::Zapper;
 
 use crate::vault::RequestTempStorage;
 

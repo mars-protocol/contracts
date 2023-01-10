@@ -24,15 +24,6 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   // Get the latest addresses from: https://github.com/mars-protocol/outposts/blob/master/scripts/deploy/addresses/osmo-test-4.json
   oracle: {
     addr: 'osmo1jnkun9gcajn96a4yh7atzkq98c9sm0xrsqk7xtes07ujyn7xh5rqjymxxv',
-    vaultPricing: [
-      {
-        addr: autoCompoundingVault,
-        base_denom: gammPool1,
-        method: 'preview_redeem',
-        vault_coin_denom:
-          'factory/osmo1v40lnedgvake8p7f49gvqu0q3vc9sx3qpc0jqtyfdyw25d4vg8us38an37/cwVTT',
-      },
-    ],
   },
   redBank: { addr: 'osmo18w58j2dlpre6kslls9w88aur5ud8000wvg8pw4fp80p6q97g6qtqvhztpv' },
   swapRoutes: [

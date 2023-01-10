@@ -1,6 +1,7 @@
 use std::cmp::min;
 
 use cosmwasm_std::{Coin, DepsMut, Env, Response, Uint128};
+use cosmwasm_vault_standard::VaultInfoResponse;
 
 use mars_rover::adapters::vault::{
     UnlockingChange, UnlockingPositions, UpdateType, Vault, VaultPositionAmount, VaultPositionType,
@@ -75,13 +76,14 @@ fn liquidate_unlocked(
 ) -> ContractResult<Response> {
     let vault_info = request_vault.query_info(&deps.querier)?;
 
-    let (debt, request) = calculate_liquidation(
+    let (debt, request) = calculate_vault_liquidation(
         &deps,
         &env,
         liquidatee_account_id,
         &debt_coin,
-        &vault_info.vault_token,
+        &request_vault,
         amount,
+        &vault_info,
     )?;
 
     let repay_msg = repay_debt(
@@ -118,6 +120,31 @@ fn liquidate_unlocked(
         .add_attribute("debt_repaid_amount", debt.amount)
         .add_attribute("vault_coin_denom", request.denom)
         .add_attribute("vault_coin_liquidated", request.amount))
+}
+
+/// Converts vault coins to their underlying value. This allows for pricing and liquidation
+/// values to be determined. Afterward, the final amount is converted back into vault coins.
+fn calculate_vault_liquidation(
+    deps: &DepsMut,
+    env: &Env,
+    liquidatee_account_id: &str,
+    debt_coin: &Coin,
+    request_vault: &Vault,
+    amount: Uint128,
+    vault_info: &VaultInfoResponse,
+) -> ContractResult<(Coin, Coin)> {
+    let total_underlying = request_vault.query_preview_redeem(&deps.querier, amount)?;
+    let (debt, mut request) = calculate_liquidation(
+        deps,
+        env,
+        liquidatee_account_id,
+        debt_coin,
+        &vault_info.base_token,
+        total_underlying,
+    )?;
+    request.denom = vault_info.vault_token.clone();
+    request.amount = amount.checked_multiply_ratio(request.amount, total_underlying)?;
+    Ok((debt, request))
 }
 
 fn liquidate_unlocking(
@@ -201,13 +228,14 @@ fn liquidate_locked(
 ) -> ContractResult<Response> {
     let vault_info = request_vault.query_info(&deps.querier)?;
 
-    let (debt, request) = calculate_liquidation(
+    let (debt, request) = calculate_vault_liquidation(
         &deps,
         &env,
         liquidatee_account_id,
         &debt_coin,
-        &vault_info.vault_token,
+        &request_vault,
         amount,
+        &vault_info,
     )?;
 
     let repay_msg = repay_debt(

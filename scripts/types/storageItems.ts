@@ -4,7 +4,6 @@ export interface StorageItems {
     mockRedBank?: number
     mockVault?: number
     mockOracle?: number
-    marsOracleAdapter?: number
     swapper?: number
     zapper?: number
     creditManager?: number
@@ -12,7 +11,6 @@ export interface StorageItems {
   addresses: {
     accountNft?: string
     mockVault?: string
-    marsOracleAdapter?: string
     swapper?: string
     zapper?: string
     creditManager?: string

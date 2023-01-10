@@ -1,11 +1,11 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Addr, Decimal, Empty};
+use cosmwasm_std::{Addr, Empty};
 use cw_multi_test::{BasicApp, Executor};
+
 use mars_account_nft::config::ConfigUpdates;
 use mars_account_nft::msg::ExecuteMsg::{AcceptMinterRole, UpdateConfig};
-
 use mars_account_nft::msg::InstantiateMsg;
 
 use crate::helpers::{
@@ -56,7 +56,7 @@ impl MockEnvBuilder {
                 code_id,
                 self.deployer.clone(),
                 &InstantiateMsg {
-                    max_value_for_burn: Decimal::from_atomics(MAX_VALUE_FOR_BURN, 0).unwrap(),
+                    max_value_for_burn: MAX_VALUE_FOR_BURN,
                     name: "mock_nft".to_string(),
                     symbol: "MOCK".to_string(),
                     minter,

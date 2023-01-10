@@ -1,9 +1,9 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Decimal};
+use cosmwasm_std::{Addr, Uint128};
 
 #[cw_serde]
 pub struct ConfigBase<T> {
-    pub max_value_for_burn: Decimal,
+    pub max_value_for_burn: Uint128,
     pub proposed_new_minter: Option<T>,
 }
 
@@ -21,6 +21,6 @@ impl From<Config> for UncheckedConfig {
 
 #[cw_serde]
 pub struct ConfigUpdates {
-    pub max_value_for_burn: Option<Decimal>,
+    pub max_value_for_burn: Option<Uint128>,
     pub proposed_new_minter: Option<String>,
 }

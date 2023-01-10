@@ -6,8 +6,8 @@ use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 use mars_account_nft::config::{ConfigUpdates, UncheckedConfig};
 use mars_account_nft::msg::ExecuteMsg::{AcceptMinterRole, UpdateConfig};
 use mars_account_nft::msg::{ExecuteMsg as ExtendedExecuteMsg, QueryMsg};
+use mars_health::HealthResponse;
 use mars_mock_credit_manager::msg::ExecuteMsg::SetHealthResponse;
-use mars_rover::msg::query::HealthResponse;
 
 use crate::helpers::MockEnvBuilder;
 

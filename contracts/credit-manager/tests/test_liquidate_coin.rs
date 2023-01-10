@@ -4,7 +4,6 @@ use mars_mock_oracle::msg::CoinPrice;
 use mars_rover::error::ContractError;
 use mars_rover::error::ContractError::{AboveMaxLTV, LiquidationNotProfitable, NotLiquidatable};
 use mars_rover::msg::execute::Action::{Borrow, Deposit, EnterVault, LiquidateCoin};
-use mars_rover::traits::IntoDecimal;
 
 use crate::helpers::{
     assert_err, get_coin, get_debt, lp_token_info, uatom_info, ujake_info, unlocked_vault_info,
@@ -64,7 +63,7 @@ fn test_can_only_liquidate_unhealthy_accounts() {
         res,
         NotLiquidatable {
             account_id: liquidatee_account_id,
-            lqdt_health_factor: "2.029411764705882352".to_string(),
+            lqdt_health_factor: "2.019607843137254901".to_string(),
         },
     )
 }
@@ -125,7 +124,7 @@ fn test_vault_positions_contribute_to_health() {
         res,
         NotLiquidatable {
             account_id: liquidatee_account_id,
-            lqdt_health_factor: "101.94976".to_string(),
+            lqdt_health_factor: "101.733333333333333333".to_string(),
         },
     )
 }
@@ -163,7 +162,7 @@ fn test_liquidatee_does_not_have_requested_asset() {
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom.clone(),
-        price: 20.to_dec().unwrap(),
+        price: Decimal::from_atomics(20u128, 0).unwrap(),
     });
 
     let liquidator = Addr::unchecked("liquidator");
@@ -237,7 +236,7 @@ fn test_liquidatee_does_not_have_debt_coin() {
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom.clone(),
-        price: 20.to_dec().unwrap(),
+        price: Decimal::from_atomics(20u128, 0).unwrap(),
     });
 
     let liquidator = Addr::unchecked("liquidator");
@@ -292,7 +291,7 @@ fn test_liquidator_does_not_have_enough_to_pay_debt() {
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom.clone(),
-        price: 20.to_dec().unwrap(),
+        price: Decimal::from_atomics(20u128, 0).unwrap(),
     });
 
     let liquidator = Addr::unchecked("liquidator");
@@ -351,7 +350,7 @@ fn test_liquidator_left_in_unhealthy_state() {
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom.clone(),
-        price: 20.to_dec().unwrap(),
+        price: Decimal::from_atomics(20u128, 0).unwrap(),
     });
 
     let liquidator = Addr::unchecked("liquidator");
@@ -375,7 +374,7 @@ fn test_liquidator_left_in_unhealthy_state() {
         res,
         AboveMaxLTV {
             account_id: liquidator_account_id,
-            max_ltv_health_factor: "0.731818181818181818".to_string(),
+            max_ltv_health_factor: "0.727272727272727272".to_string(),
         },
     )
 }
@@ -482,7 +481,7 @@ fn test_debt_amount_adjusted_to_close_factor_max() {
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom.clone(),
-        price: 6.to_dec().unwrap(),
+        price: Decimal::from_atomics(6u128, 0).unwrap(),
     });
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
@@ -560,7 +559,7 @@ fn test_debt_amount_adjusted_to_total_debt_for_denom() {
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom,
-        price: 20.to_dec().unwrap(),
+        price: Decimal::from_atomics(20u128, 0).unwrap(),
     });
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
@@ -584,7 +583,7 @@ fn test_debt_amount_adjusted_to_total_debt_for_denom() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.deposits.len(), 3);
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(181));
+    assert_eq!(osmo_balance.amount, Uint128::new(184));
     let atom_balance = get_coin("uatom", &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(100));
     let jake_balance = get_coin("ujake", &position.deposits);
@@ -601,7 +600,7 @@ fn test_debt_amount_adjusted_to_total_debt_for_denom() {
     let jake_balance = get_coin("ujake", &position.deposits);
     assert_eq!(jake_balance.amount, Uint128::new(39));
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(119));
+    assert_eq!(osmo_balance.amount, Uint128::new(116));
 }
 
 #[test]
@@ -637,7 +636,7 @@ fn test_debt_amount_adjusted_to_max_allowed_by_request_coin() {
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom.clone(),
-        price: 20.to_dec().unwrap(),
+        price: Decimal::from_atomics(20u128, 0).unwrap(),
     });
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
@@ -737,7 +736,7 @@ fn test_debt_amount_no_adjustment() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.deposits.len(), 2);
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(58));
+    assert_eq!(osmo_balance.amount, Uint128::new(60));
     let atom_balance = get_coin("uatom", &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(100));
 
@@ -750,7 +749,7 @@ fn test_debt_amount_no_adjustment() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(242));
+    assert_eq!(osmo_balance.amount, Uint128::new(240));
 }
 
 #[test]

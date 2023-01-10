@@ -16,8 +16,7 @@ pub fn deposit(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractErr
     } else {
         let total_vault_value = oracle.query_total_value(&deps.querier, &[balance])?;
         let assets_value = oracle.query_total_value(&deps.querier, &info.funds)?;
-        let shares_to_add = total_shares
-            .checked_multiply_ratio(assets_value.atomics(), total_vault_value.atomics())?;
+        let shares_to_add = total_shares.checked_multiply_ratio(assets_value, total_vault_value)?;
         TOTAL_VAULT_SHARES.save(deps.storage, &(total_shares + shares_to_add))?;
         shares_to_add
     };

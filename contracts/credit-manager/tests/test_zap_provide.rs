@@ -269,7 +269,7 @@ fn test_successful_zap() {
     // assert follow up estimate can be made (calculates ratio from first deposit)
     let estimate =
         mock.estimate_provide_liquidity(&lp_token.denom, &[atom.to_coin(300), osmo.to_coin(150)]);
-    assert_eq!(estimate, STARTING_LP_POOL_TOKENS * Uint128::new(3)); // 3x the size as first deposit
+    assert_eq!(estimate, Uint128::new(3008928)); // ~3x the size as first deposit
 
     // assert user's new position
     let positions = mock.query_positions(&account_id);

@@ -1,2 +1,3 @@
-pub mod health;
-pub mod query;
+mod health;
+
+pub use self::health::*;

@@ -394,7 +394,7 @@ fn test_vault_deposit_must_be_under_cap() {
     assert_err(
         res,
         ContractError::AboveVaultDepositCap {
-            new_value: "32584199.999999999993270287".to_string(),
+            new_value: "32584200".to_string(),
             maximum: "12345000".to_string(),
         },
     );

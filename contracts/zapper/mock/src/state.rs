@@ -1,7 +1,7 @@
 use cosmwasm_std::Uint128;
 use cw_storage_plus::{Item, Map};
 
-use mars_rover::adapters::Oracle;
+use mars_rover::adapters::oracle::Oracle;
 
 pub const ORACLE: Item<Oracle> = Item::new("oracle");
 

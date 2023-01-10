@@ -14,7 +14,6 @@ fn main() -> std::io::Result<()> {
         "mars-credit-manager",
         "mars-account-nft",
         "mars-swapper-base",
-        "mars-oracle-adapter",
         "mars-zapper-base",
         "mars-mock-red-bank",
         "mars-mock-vault",

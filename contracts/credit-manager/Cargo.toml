@@ -27,8 +27,8 @@ cw721-base              = { workspace = true }
 cw-item-set             = { workspace = true }
 cw-storage-plus         = { workspace = true }
 mars-account-nft        = { workspace = true }
+mars-math               = { workspace = true }
 mars-health             = { workspace = true }
-mars-oracle-adapter     = { workspace = true }
 mars-outpost            = { workspace = true }
 mars-owner              = { workspace = true }
 mars-rover              = { workspace = true }

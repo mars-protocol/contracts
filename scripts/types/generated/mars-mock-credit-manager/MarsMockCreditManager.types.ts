@@ -15,15 +15,16 @@ export type ExecuteMsg = {
   }
 }
 export type Decimal = string
+export type Uint128 = string
 export interface HealthResponse {
   above_max_ltv: boolean
   liquidatable: boolean
   liquidation_health_factor?: Decimal | null
-  liquidation_threshold_adjusted_collateral: Decimal
-  max_ltv_adjusted_collateral: Decimal
+  liquidation_threshold_adjusted_collateral: Uint128
+  max_ltv_adjusted_collateral: Uint128
   max_ltv_health_factor?: Decimal | null
-  total_collateral_value: Decimal
-  total_debt_value: Decimal
+  total_collateral_value: Uint128
+  total_debt_value: Uint128
 }
 export type QueryMsg =
   | {
@@ -100,7 +101,6 @@ export type QueryMsg =
         lp_token: Coin
       }
     }
-export type Uint128 = string
 export interface VaultBaseForString {
   address: string
 }

@@ -424,11 +424,11 @@ export interface HealthResponse {
   above_max_ltv: boolean
   liquidatable: boolean
   liquidation_health_factor?: Decimal | null
-  liquidation_threshold_adjusted_collateral: Decimal
-  max_ltv_adjusted_collateral: Decimal
+  liquidation_threshold_adjusted_collateral: Uint128
+  max_ltv_adjusted_collateral: Uint128
   max_ltv_health_factor?: Decimal | null
-  total_collateral_value: Decimal
-  total_debt_value: Decimal
+  total_collateral_value: Uint128
+  total_debt_value: Uint128
 }
 export interface Positions {
   account_id: string

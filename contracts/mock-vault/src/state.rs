@@ -3,7 +3,7 @@ use cosmwasm_vault_standard::extensions::lockup::UnlockingPosition;
 use cw_storage_plus::{Item, Map};
 use cw_utils::Duration;
 
-use mars_rover::adapters::Oracle;
+use mars_rover::adapters::oracle::Oracle;
 
 pub const VAULT_TOKEN_DENOM: Item<String> = Item::new("vault_token_denom");
 pub const TOTAL_VAULT_SHARES: Item<Uint128> = Item::new("total_vault_shares");

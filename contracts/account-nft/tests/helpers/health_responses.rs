@@ -1,15 +1,14 @@
 use std::ops::Sub;
 
-use cosmwasm_std::Decimal;
+use cosmwasm_std::Uint128;
+use mars_health::HealthResponse;
 
-use mars_rover::msg::query::HealthResponse;
-
-pub const MAX_VALUE_FOR_BURN: u128 = 1000u128;
+pub const MAX_VALUE_FOR_BURN: Uint128 = Uint128::new(1000);
 
 pub fn generate_health_response(debt_value: u128, collateral_value: u128) -> HealthResponse {
     HealthResponse {
-        total_debt_value: Decimal::from_atomics(debt_value, 0).unwrap(),
-        total_collateral_value: Decimal::from_atomics(collateral_value, 0).unwrap(),
+        total_debt_value: debt_value.into(),
+        total_collateral_value: collateral_value.into(),
         max_ltv_adjusted_collateral: Default::default(),
         liquidation_threshold_adjusted_collateral: Default::default(),
         max_ltv_health_factor: None,
@@ -21,7 +20,7 @@ pub fn generate_health_response(debt_value: u128, collateral_value: u128) -> Hea
 
 pub fn below_max_for_burn() -> HealthResponse {
     HealthResponse {
-        total_debt_value: Decimal::from_atomics(MAX_VALUE_FOR_BURN.sub(1), 0).unwrap(),
+        total_debt_value: MAX_VALUE_FOR_BURN.sub(Uint128::one()),
         total_collateral_value: Default::default(),
         max_ltv_adjusted_collateral: Default::default(),
         liquidation_threshold_adjusted_collateral: Default::default(),

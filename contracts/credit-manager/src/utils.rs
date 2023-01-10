@@ -9,12 +9,10 @@ use cosmwasm_std::{
 use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg;
 
+use mars_math::{FractionMath, Fractional};
 use mars_rover::error::{ContractError, ContractResult};
-use mars_rover::math::CeilRatio;
 use mars_rover::msg::execute::CallbackMsg;
-use mars_rover::msg::query::CoinValue;
 use mars_rover::msg::ExecuteMsg;
-use mars_rover::traits::IntoDecimal;
 
 use crate::state::{
     ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES,
@@ -138,23 +136,11 @@ pub fn debt_shares_to_amount(
     let total_debt_amount = red_bank.query_debt(&deps.querier, rover_addr, denom)?;
 
     // Amount of debt for token's position. Rounded up to favor participants in the debt pool.
-    let amount = total_debt_amount.multiply_ratio_ceil(shares, total_debt_shares)?;
+    let amount = total_debt_amount.checked_mul_ceil(Fractional(shares, total_debt_shares))?;
 
     Ok(Coin {
         denom: denom.to_string(),
         amount,
-    })
-}
-
-pub fn coin_value(deps: &Deps, coin: &Coin) -> ContractResult<CoinValue> {
-    let oracle = ORACLE.load(deps.storage)?;
-    let res = oracle.query_price(&deps.querier, &coin.denom)?;
-    let value = res.price.checked_mul(coin.amount.to_dec()?)?;
-    Ok(CoinValue {
-        denom: coin.denom.clone(),
-        amount: coin.amount,
-        price: res.price,
-        value,
     })
 }
 

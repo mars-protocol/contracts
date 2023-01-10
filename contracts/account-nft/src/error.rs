@@ -1,4 +1,4 @@
-use cosmwasm_std::{Decimal, OverflowError, StdError};
+use cosmwasm_std::{OverflowError, StdError, Uint128};
 use cw721_base::ContractError as Base721Error;
 use thiserror::Error;
 
@@ -17,7 +17,7 @@ pub enum ContractError {
         "Account balances too high. Collateral + Debts = {current_balances:?}. Max allowed is {max_value_allowed:?}"
     )]
     BurnNotAllowed {
-        current_balances: Decimal,
-        max_value_allowed: Decimal,
+        current_balances: Uint128,
+        max_value_allowed: Uint128,
     },
 }

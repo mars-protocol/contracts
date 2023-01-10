@@ -3,12 +3,12 @@ members = [
     "contracts/account-nft",
     "contracts/credit-manager",
     "contracts/swapper/*",
-    "contracts/oracle-adapter",
     "contracts/zapper/*",
     "packages/chains/*",
     "packages/health",
     "packages/outpost",
     "packages/rover",
+    "packages/math",
 
     # Mock contracts
     "contracts/mock-oracle",
@@ -51,6 +51,7 @@ thiserror       = "1.0.37"
 # packages
 cosmwasm-vault-standard = { version = "0.1.0", features = ["lockup", "force-unlock"] }
 mars-health             = { version = "1.0.0", path = "./packages/health" }
+mars-math               = { version = "1.0.0", path = "./packages/math" }
 mars-osmosis            = { version = "1.0.0", path = "./packages/chains/osmosis" }
 mars-outpost            = { version = "1.0.0", path = "./packages/outpost" }
 mars-owner              = "1.0.0"
@@ -58,7 +59,6 @@ mars-rover              = { version = "1.0.0", path = "./packages/rover" }
 
 # contracts
 mars-account-nft    = { version = "1.0.0", path = "./contracts/account-nft", features = ["library"] }
-mars-oracle-adapter = { version = "1.0.0", path = "contracts/oracle-adapter", features = ["library"] }
 mars-swapper-base   = { version = "1.0.0", path = "./contracts/swapper/base" }
 mars-zapper-base    = { version = "1.0.0", path = "./contracts/zapper/base" }
 

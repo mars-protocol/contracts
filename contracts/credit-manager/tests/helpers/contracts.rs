@@ -42,15 +42,6 @@ pub fn mock_oracle_contract() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-pub fn mock_oracle_adapter_contract() -> Box<dyn Contract<Empty>> {
-    let contract = ContractWrapper::new(
-        mars_oracle_adapter::contract::execute,
-        mars_oracle_adapter::contract::instantiate,
-        mars_oracle_adapter::contract::query,
-    );
-    Box::new(contract)
-}
-
 pub fn mock_vault_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
         mars_mock_vault::contract::execute,

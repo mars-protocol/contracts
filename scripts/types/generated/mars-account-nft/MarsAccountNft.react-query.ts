@@ -9,7 +9,7 @@ import { UseQueryOptions, useQuery, useMutation, UseMutationOptions } from '@tan
 import { ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee, Coin } from '@cosmjs/amino'
 import {
-  Decimal,
+  Uint128,
   InstantiateMsg,
   ExecuteMsg,
   Binary,

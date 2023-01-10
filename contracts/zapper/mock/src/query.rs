@@ -29,8 +29,7 @@ pub fn estimate_provide_liquidity(
         let oracle = ORACLE.load(deps.storage)?;
         let total_underlying_value = oracle.query_total_value(&deps.querier, &coins)?;
         let given_value = oracle.query_total_value(&deps.querier, &coins_in)?;
-        total_supply
-            .checked_multiply_ratio(given_value.atomics(), total_underlying_value.atomics())?
+        total_supply.checked_multiply_ratio(given_value, total_underlying_value)?
     };
     Ok(lp_tokens_estimate)
 }

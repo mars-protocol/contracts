@@ -4,7 +4,7 @@ use cosmwasm_std::{
 use cw721::Cw721Execute;
 use cw721_base::MintMsg;
 
-use mars_rover::msg::query::HealthResponse;
+use mars_health::HealthResponse;
 use mars_rover::msg::QueryMsg::Health;
 
 use crate::config::ConfigUpdates;

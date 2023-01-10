@@ -155,7 +155,7 @@ fn test_cannot_withdraw_more_than_healthy() {
         res,
         ContractError::AboveMaxLTV {
             account_id: account_id.clone(),
-            max_ltv_health_factor: "0.960099750623441396".to_string(),
+            max_ltv_health_factor: "0.95".to_string(),
         },
     );
 

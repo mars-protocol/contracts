@@ -1,7 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
-
 use mars_outpost::oracle::PriceResponse;
 
 use crate::msg::{CoinPrice, ExecuteMsg, InstantiateMsg, QueryMsg};

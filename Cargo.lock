@@ -1015,6 +1015,7 @@ dependencies = [
  "cw2 1.0.1",
  "cw721",
  "cw721-base",
+ "mars-health",
  "mars-mock-credit-manager",
  "mars-rover",
  "thiserror",
@@ -1038,10 +1039,10 @@ dependencies = [
  "itertools",
  "mars-account-nft",
  "mars-health",
+ "mars-math",
  "mars-mock-oracle",
  "mars-mock-red-bank",
  "mars-mock-vault",
- "mars-oracle-adapter",
  "mars-outpost",
  "mars-owner",
  "mars-rover",
@@ -1053,8 +1054,16 @@ dependencies = [
 name = "mars-health"
 version = "1.0.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
- "mars-outpost",
+]
+
+[[package]]
+name = "mars-math"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-std",
+ "thiserror",
 ]
 
 [[package]]
@@ -1065,6 +1074,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
  "cw-utils 0.16.0",
+ "mars-health",
  "mars-rover",
  "thiserror",
 ]
@@ -1098,26 +1108,6 @@ dependencies = [
  "cosmwasm-vault-standard",
  "cw-storage-plus 1.0.1",
  "cw-utils 0.16.0",
- "mars-rover",
- "thiserror",
-]
-
-[[package]]
-name = "mars-oracle-adapter"
-version = "1.0.0"
-dependencies = [
- "anyhow",
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-vault-standard",
- "cw-multi-test",
- "cw-storage-plus 1.0.1",
- "cw-utils 0.16.0",
- "cw2 1.0.1",
- "mars-mock-oracle",
- "mars-mock-vault",
- "mars-outpost",
- "mars-owner",
  "mars-rover",
  "thiserror",
 ]
@@ -1163,8 +1153,7 @@ dependencies = [
  "cw-storage-plus 1.0.1",
  "cw-utils 0.16.0",
  "mars-health",
- "mars-mock-oracle",
- "mars-mock-red-bank",
+ "mars-math",
  "mars-outpost",
  "mars-owner",
  "schemars",
@@ -1195,7 +1184,6 @@ dependencies = [
  "cw-multi-test",
  "cw-storage-plus 1.0.1",
  "mars-rover",
- "mars-swapper-base",
  "thiserror",
 ]
 
@@ -1225,7 +1213,6 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-dex",
- "cw-storage-plus 1.0.1",
  "cw-utils 0.16.0",
  "schemars",
  "serde",

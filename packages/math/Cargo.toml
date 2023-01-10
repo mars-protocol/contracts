@@ -1,5 +1,5 @@
 [package]
-name          = "mars-swapper-mock"
+name          = "mars-math"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
@@ -9,20 +9,13 @@ documentation = { workspace = true }
 keywords      = { workspace = true }
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+doctest = false
 
 [features]
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
-library    = []
 
 [dependencies]
-cosmwasm-std      = { workspace = true }
-cw-storage-plus   = { workspace = true }
-mars-rover        = { workspace = true }
-thiserror         = { workspace = true }
-
-[dev-dependencies]
-anyhow        = { workspace = true }
-cw-multi-test = { workspace = true }
+cosmwasm-std = { workspace = true }
+thiserror    = { workspace = true }

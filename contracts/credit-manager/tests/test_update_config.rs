@@ -3,9 +3,10 @@ use cw_multi_test::{BasicApp, Executor};
 
 use mars_mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
 use mars_mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
+use mars_rover::adapters::oracle::{OracleBase, OracleUnchecked};
 use mars_rover::adapters::swap::SwapperBase;
 use mars_rover::adapters::vault::{VaultBase, VaultConfig};
-use mars_rover::adapters::{OracleBase, ZapperBase};
+use mars_rover::adapters::zapper::ZapperBase;
 use mars_rover::error::ContractError::InvalidConfig;
 use mars_rover::msg::instantiate::{ConfigUpdates, VaultInstantiateConfig};
 use mars_rover::msg::query::VaultInfoResponse;
@@ -399,7 +400,7 @@ fn test_raises_on_duplicate_coin_configs() {
     );
 }
 
-fn deploy_new_oracle(app: &mut BasicApp) -> OracleBase<String> {
+fn deploy_new_oracle(app: &mut BasicApp) -> OracleUnchecked {
     let contract_code_id = app.store_code(mock_oracle_contract());
     let addr = app
         .instantiate_contract(
@@ -422,7 +423,7 @@ fn deploy_new_oracle(app: &mut BasicApp) -> OracleBase<String> {
             None,
         )
         .unwrap();
-    OracleBase::new(addr.to_string())
+    OracleUnchecked::new(addr.to_string())
 }
 
 fn deploy_vault(app: &mut BasicApp) -> VaultInstantiateConfig {

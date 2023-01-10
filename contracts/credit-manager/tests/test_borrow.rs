@@ -105,7 +105,7 @@ fn test_cannot_borrow_above_max_ltv() {
         &user,
         vec![
             Deposit(coin_info.to_coin(300)),
-            Borrow(coin_info.to_coin(700)),
+            Borrow(coin_info.to_coin(800)),
         ],
         &[coin(300, coin_info.denom)],
     );
@@ -114,7 +114,7 @@ fn test_cannot_borrow_above_max_ltv() {
         res,
         ContractError::AboveMaxLTV {
             account_id,
-            max_ltv_health_factor: "0.998573466476462196".to_string(),
+            max_ltv_health_factor: "0.96".to_string(),
         },
     );
 }

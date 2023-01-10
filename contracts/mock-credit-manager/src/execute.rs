@@ -1,6 +1,6 @@
 use crate::state::HEALTH_RESPONSES;
 use cosmwasm_std::{DepsMut, Response, StdResult};
-use mars_rover::msg::query::HealthResponse;
+use mars_health::HealthResponse;
 
 pub fn set_health_response(
     deps: DepsMut,

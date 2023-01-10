@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Decimal;
+use cosmwasm_std::Uint128;
 use cw721_base::InstantiateMsg as ParentInstantiateMsg;
 
 #[cw_serde]
@@ -7,9 +7,9 @@ pub struct InstantiateMsg {
     //--------------------------------------------------------------------------------------------------
     // Extended and overridden messages
     //--------------------------------------------------------------------------------------------------
-    /// The maximum amount of Debts + Collaterals for an account before burns are disallowed
-    /// for the NFT. Meant to prevent accidental account deletions.
-    pub max_value_for_burn: Decimal,
+    /// The maximum value of Debts + Collaterals (denominated in base token) for an account
+    /// before burns are disallowed for the NFT. Meant to prevent accidental account deletions
+    pub max_value_for_burn: Uint128,
 
     //--------------------------------------------------------------------------------------------------
     // Base cw721 messages

@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Decimal, Empty, StdResult};
+use cosmwasm_std::{Addr, Empty, StdResult, Uint128};
 use cw721::NftInfoResponse;
 
 use mars_account_nft::error::ContractError;
@@ -22,8 +22,8 @@ fn test_burn_not_allowed_if_too_many_debts() {
     assert_eq!(
         error,
         BurnNotAllowed {
-            current_balances: Decimal::from_atomics(10_000u128, 0).unwrap(),
-            max_value_allowed: Decimal::from_atomics(MAX_VALUE_FOR_BURN, 0).unwrap()
+            current_balances: Uint128::new(10_000),
+            max_value_allowed: MAX_VALUE_FOR_BURN
         }
     )
 }
@@ -41,8 +41,8 @@ fn test_burn_not_allowed_if_too_much_collateral() {
     assert_eq!(
         error,
         BurnNotAllowed {
-            current_balances: Decimal::from_atomics(10_000u128, 0).unwrap(),
-            max_value_allowed: Decimal::from_atomics(MAX_VALUE_FOR_BURN, 0).unwrap()
+            current_balances: Uint128::new(10_000),
+            max_value_allowed: MAX_VALUE_FOR_BURN
         }
     )
 }
@@ -60,8 +60,8 @@ fn test_burn_allowance_works_with_both_debt_and_collateral() {
     assert_eq!(
         error,
         BurnNotAllowed {
-            current_balances: Decimal::from_atomics(1_001u128, 0).unwrap(),
-            max_value_allowed: Decimal::from_atomics(MAX_VALUE_FOR_BURN, 0).unwrap()
+            current_balances: Uint128::new(1_001),
+            max_value_allowed: MAX_VALUE_FOR_BURN
         }
     )
 }

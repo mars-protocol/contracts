@@ -2,6 +2,7 @@ use cosmwasm_std::{
     CheckedFromRatioError, CheckedMultiplyRatioError, Coin, DecimalRangeExceeded, OverflowError,
     StdError, Uint128,
 };
+use mars_math::CheckedMultiplyFractionError;
 use mars_owner::OwnerError;
 use thiserror::Error;
 
@@ -31,6 +32,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     CheckedMultiply(#[from] CheckedMultiplyRatioError),
+
+    #[error("{0}")]
+    CheckedMultiplyFraction(#[from] CheckedMultiplyFractionError),
 
     #[error("{0}")]
     DecimalRangeExceeded(#[from] DecimalRangeExceeded),

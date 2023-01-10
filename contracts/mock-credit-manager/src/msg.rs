@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use mars_rover::msg::query::HealthResponse;
+use mars_health::HealthResponse;
 
 #[cw_serde]
 pub enum ExecuteMsg {

@@ -9,7 +9,6 @@ import { InstantiateMsg as VaultInstantiateMsg } from '../../types/generated/mar
 import { InstantiateMsg as SwapperInstantiateMsg } from '../../types/generated/mars-swapper-base/MarsSwapperBase.types'
 import { InstantiateMsg as ZapperInstantiateMsg } from '../../types/generated/mars-zapper-base/MarsZapperBase.types'
 import { InstantiateMsg as RoverInstantiateMsg } from '../../types/generated/mars-credit-manager/MarsCreditManager.types'
-import { InstantiateMsg as OracleAdapterInstantiateMsg } from '../../types/generated/mars-oracle-adapter/MarsOracleAdapter.types'
 import { Rover } from './rover'
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing'
 import { getAddress, getWallet, setupClient } from './setupDeployer'
@@ -106,25 +105,6 @@ export class Deployer {
     }
   }
 
-  async instantiateMarsOracleAdapter() {
-    const msg: OracleAdapterInstantiateMsg = {
-      oracle: this.config.oracle.addr,
-      owner: this.deployerAddr,
-      vault_pricing: this.config.oracle.vaultPricing,
-    }
-
-    if (this.config.testActions) {
-      msg.vault_pricing.push({
-        addr: this.storage.addresses.mockVault!,
-        method: 'preview_redeem',
-        base_denom: this.config.testActions.vault.mock.baseToken.denom,
-        vault_coin_denom: this.config.testActions.vault.mock.vaultTokenDenom,
-      })
-    }
-
-    await this.instantiate('marsOracleAdapter', this.storage.codeIds.marsOracleAdapter!, msg)
-  }
-
   async instantiateSwapper() {
     const msg: SwapperInstantiateMsg = {
       owner: this.deployerAddr,
@@ -166,7 +146,7 @@ export class Deployer {
       max_unlocking_positions: this.config.maxUnlockingPositions,
       allowed_coins: this.config.allowedCoins,
       vault_configs: this.config.vaults,
-      oracle: this.storage.addresses.marsOracleAdapter!,
+      oracle: this.config.oracle.addr,
       owner: this.deployerAddr,
       red_bank: this.config.redBank.addr,
       max_close_factor: this.config.maxCloseFactor,

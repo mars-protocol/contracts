@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Decimal};
+use cosmwasm_std::{Addr, Uint128};
 
 use mars_account_nft::config::ConfigUpdates;
 
@@ -28,7 +28,7 @@ fn test_only_minter_can_update_config() {
 fn test_minter_can_update_config() {
     let mut mock = MockEnv::new().build().unwrap();
 
-    let new_max_burn_val = Decimal::from_atomics(4918453u128, 2).unwrap();
+    let new_max_burn_val = Uint128::new(4918453);
     let new_proposed_minter = "new_proposed_minter".to_string();
 
     let updates = ConfigUpdates {

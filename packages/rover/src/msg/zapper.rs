@@ -1,6 +1,6 @@
 // TODO: should be removed when liquidity-helper is finalized and published to crates.io
 
-use crate::adapters::OracleUnchecked;
+use crate::adapters::oracle::OracleUnchecked;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Uint128};
 

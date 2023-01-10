@@ -1,8 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Decimal, Uint128};
 
-use mars_health::health::Health;
-
 use crate::adapters::vault::{Vault, VaultConfig, VaultPosition, VaultUnchecked};
 use crate::traits::Coins;
 
@@ -28,7 +26,7 @@ pub enum QueryMsg {
     #[returns(Positions)]
     Positions { account_id: String },
     /// The health of the account represented by token
-    #[returns(HealthResponse)]
+    #[returns(mars_health::HealthResponse)]
     Health { account_id: String },
     /// Enumerate coin balances for all token positions; start_after accepts (account_id, denom)
     #[returns(Vec<CoinBalanceResponseItem>)]
@@ -171,31 +169,4 @@ pub struct ConfigResponse {
     pub max_unlocking_positions: Uint128,
     pub swapper: String,
     pub zapper: String,
-}
-
-#[cw_serde]
-pub struct HealthResponse {
-    pub total_debt_value: Decimal,
-    pub total_collateral_value: Decimal,
-    pub max_ltv_adjusted_collateral: Decimal,
-    pub liquidation_threshold_adjusted_collateral: Decimal,
-    pub max_ltv_health_factor: Option<Decimal>,
-    pub liquidation_health_factor: Option<Decimal>,
-    pub liquidatable: bool,
-    pub above_max_ltv: bool,
-}
-
-impl From<Health> for HealthResponse {
-    fn from(h: Health) -> Self {
-        Self {
-            total_debt_value: h.total_debt_value,
-            total_collateral_value: h.total_collateral_value,
-            max_ltv_adjusted_collateral: h.max_ltv_adjusted_collateral,
-            liquidation_threshold_adjusted_collateral: h.liquidation_threshold_adjusted_collateral,
-            max_ltv_health_factor: h.max_ltv_health_factor,
-            liquidation_health_factor: h.liquidation_health_factor,
-            liquidatable: h.is_liquidatable(),
-            above_max_ltv: h.is_above_max_ltv(),
-        }
-    }
 }

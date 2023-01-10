@@ -1,11 +1,10 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Api, Coin, Decimal, QuerierWrapper, StdResult};
-use mars_outpost::oracle::PriceResponse;
+use cosmwasm_std::{Addr, Api, Coin, QuerierWrapper, StdResult, Uint128};
 
-use mars_mock_oracle::msg::QueryMsg;
+use mars_math::FractionMath;
+use mars_outpost::oracle::{PriceResponse, QueryMsg};
 
 use crate::error::ContractResult;
-use crate::traits::IntoDecimal;
 
 #[cw_serde]
 pub struct OracleBase<T>(T);
@@ -45,16 +44,20 @@ impl Oracle {
         )
     }
 
+    pub fn query_value(&self, querier: &QuerierWrapper, coin: &Coin) -> ContractResult<Uint128> {
+        self.query_total_value(querier, &[coin.clone()])
+    }
+
     pub fn query_total_value(
         &self,
         querier: &QuerierWrapper,
         coins: &[Coin],
-    ) -> ContractResult<Decimal> {
+    ) -> ContractResult<Uint128> {
         Ok(coins
             .iter()
             .map(|coin| {
                 let res = self.query_price(querier, &coin.denom)?;
-                Ok(res.price.checked_mul(coin.amount.to_dec()?)?)
+                Ok(coin.amount.checked_mul_floor(res.price)?)
             })
             .collect::<ContractResult<Vec<_>>>()?
             .iter()

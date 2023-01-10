@@ -5,7 +5,6 @@ use cosmwasm_std::{coin, coins, Addr, Decimal, OverflowError, OverflowOperation,
 use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use mars_rover::error::ContractError;
 use mars_rover::msg::execute::Action::{Borrow, Deposit, Repay, Withdraw};
-use mars_rover::traits::IntoDecimal;
 
 use crate::helpers::{
     assert_err, uosmo_info, AccountToFund, CoinInfo, MockEnv, DEFAULT_RED_BANK_COIN_BALANCE,
@@ -74,7 +73,7 @@ fn test_raises_when_repaying_what_is_not_owed() {
 
     let uatom_info = CoinInfo {
         denom: "atom".to_string(),
-        price: 9.to_dec().unwrap(),
+        price: Decimal::from_atomics(9u128, 0).unwrap(),
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(85u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(1u128, 1).unwrap(),
@@ -131,7 +130,7 @@ fn test_raises_when_not_enough_assets_to_repay() {
 
     let uatom_info = CoinInfo {
         denom: "atom".to_string(),
-        price: 9.to_dec().unwrap(),
+        price: Decimal::from_atomics(9u128, 0).unwrap(),
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(85u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(1u128, 1).unwrap(),

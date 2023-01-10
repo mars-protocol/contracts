@@ -19,14 +19,12 @@ export const taskRunner = async ({
     // Upload contracts
     await deployer.upload('accountNft', wasmFile('mars_account_nft'))
     await deployer.upload('mockVault', wasmFile('mars_mock_vault'))
-    await deployer.upload('marsOracleAdapter', wasmFile('mars_oracle_adapter'))
     await deployer.upload('swapper', wasmFile(swapperContractName))
     await deployer.upload('zapper', wasmFile(zapperContractName))
     await deployer.upload('creditManager', wasmFile('mars_credit_manager'))
 
     // Instantiate contracts
     await deployer.instantiateMockVault()
-    await deployer.instantiateMarsOracleAdapter()
     await deployer.instantiateSwapper()
     await deployer.instantiateZapper()
     await deployer.instantiateCreditManager()

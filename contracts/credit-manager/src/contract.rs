@@ -3,9 +3,9 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 
+use mars_health::HealthResponse;
 use mars_rover::adapters::vault::VAULT_REQUEST_REPLY_ID;
 use mars_rover::error::{ContractError, ContractResult};
-use mars_rover::msg::query::HealthResponse;
 use mars_rover::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::execute::{create_credit_account, dispatch_actions, execute_callback};

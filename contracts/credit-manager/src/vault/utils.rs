@@ -1,8 +1,8 @@
-use cosmwasm_std::{coin, Addr, Coin, Decimal, Deps, StdResult, Storage, Uint128};
+use cosmwasm_std::{Addr, Coin, Deps, StdResult, Storage, Uint128};
 
+use mars_math::FractionMath;
 use mars_rover::adapters::vault::{Vault, VaultPositionAmount, VaultPositionUpdate};
 use mars_rover::error::{ContractError, ContractResult};
-use mars_rover::traits::IntoUint128;
 
 use crate::state::{MAX_UNLOCKING_POSITIONS, ORACLE, VAULT_CONFIGS, VAULT_POSITIONS};
 use crate::update_coin_balances::query_balance;
@@ -84,9 +84,7 @@ pub fn vault_utilization_in_deposit_cap_denom(
 
     Ok(Coin {
         denom: config.deposit_cap.denom,
-        amount: rover_vault_balance_value
-            .checked_div(deposit_cap_denom_price)?
-            .uint128(),
+        amount: rover_vault_balance_value.checked_div_floor(deposit_cap_denom_price)?,
     })
 }
 
@@ -95,16 +93,9 @@ pub fn rover_vault_balance_value(
     deps: &Deps,
     vault: &Vault,
     rover_addr: &Addr,
-) -> ContractResult<Decimal> {
+) -> ContractResult<Uint128> {
     let oracle = ORACLE.load(deps.storage)?;
-    let vault_info = vault.query_info(&deps.querier)?;
     let rover_vault_coin_balance = vault.query_balance(&deps.querier, rover_addr)?;
-    let balance_value = oracle.query_total_value(
-        &deps.querier,
-        &[coin(
-            rover_vault_coin_balance.u128(),
-            vault_info.vault_token,
-        )],
-    )?;
+    let balance_value = vault.query_value(&deps.querier, &oracle, rover_vault_coin_balance)?;
     Ok(balance_value)
 }

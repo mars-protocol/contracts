@@ -5,9 +5,9 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
-export type Decimal = string
+export type Uint128 = string
 export interface InstantiateMsg {
-  max_value_for_burn: Decimal
+  max_value_for_burn: Uint128
   minter: string
   name: string
   symbol: string
@@ -82,7 +82,7 @@ export type Expiration =
 export type Timestamp = Uint64
 export type Uint64 = string
 export interface ConfigUpdates {
-  max_value_for_burn?: Decimal | null
+  max_value_for_burn?: Uint128 | null
   proposed_new_minter?: string | null
 }
 export type QueryMsg =
@@ -184,7 +184,7 @@ export interface ApprovalsResponse {
   approvals: Approval[]
 }
 export interface ConfigBaseForString {
-  max_value_for_burn: Decimal
+  max_value_for_burn: Uint128
   proposed_new_minter?: string | null
 }
 export interface ContractInfoResponse {

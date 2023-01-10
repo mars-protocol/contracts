@@ -1,8 +1,6 @@
 use cosmwasm_std::{coin, Decimal};
 use cw_utils::Duration;
 
-use mars_rover::traits::IntoDecimal;
-
 use crate::helpers::{lp_token_info, CoinInfo, VaultTestInfo};
 
 pub fn build_mock_coin_infos(count: usize) -> Vec<CoinInfo> {
@@ -12,7 +10,7 @@ pub fn build_mock_coin_infos(count: usize) -> Vec<CoinInfo> {
             denom: format!("coin_{}", i),
             max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-            price: 10.to_dec().unwrap(),
+            price: Decimal::from_atomics(10u128, 0).unwrap(),
             liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
         })
         .collect()
