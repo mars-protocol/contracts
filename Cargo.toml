@@ -36,8 +36,9 @@ cw2             = "1.0.1"
 cw-multi-test   = "0.16.1"
 cw-storage-plus = "1.0.1"
 cw-utils        = "1.0.1"
-osmosis-std     = { git = "https://github.com/osmosis-labs/osmosis-rust", rev = "5f2493aa13569167431add6282916683b4aaf3c8" }
-osmosis-testing = { git = "https://github.com/osmosis-labs/osmosis-rust", rev = "5f2493aa13569167431add6282916683b4aaf3c8" }
+# FIXME: use crates.io dependency when ready
+osmosis-std     = { git = "https://github.com/osmosis-labs/osmosis-rust", rev = "597795a759823a2686a8f708e74c5445ad9a0af7" }
+osmosis-testing = { git = "https://github.com/osmosis-labs/osmosis-rust", rev = "597795a759823a2686a8f708e74c5445ad9a0af7" }
 prost           = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
 schemars        = "0.8.11"
 serde           = { version = "1.0.152", default-features = false, features = ["derive"] }
