@@ -59,7 +59,10 @@ pub fn enter_vault(
     Ok(Response::new()
         .add_message(vault.deposit_msg(&coin_to_enter)?)
         .add_message(update_vault_balance_msg)
-        .add_attribute("action", "rover/credit-manager/vault/deposit"))
+        .add_attribute("action", "rover/credit-manager/vault/enter")
+        .add_attribute("account_id", account_id)
+        .add_attribute("vault_addr", vault.address.to_string())
+        .add_attribute("amount_deposited", amount.to_string()))
 }
 
 pub fn update_vault_coin_balance(
@@ -90,6 +93,8 @@ pub fn update_vault_coin_balance(
 
     Ok(Response::new()
         .add_attribute("action", "rover/credit-manager/vault/update_balance")
+        .add_attribute("account_id", account_id.to_string())
+        .add_attribute("vault_addr", vault.address.to_string())
         .add_attribute("amount_incremented", current_balance.checked_sub(previous_total_balance)?))
 }
 

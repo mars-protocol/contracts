@@ -26,31 +26,25 @@ pub fn update_coin_balance(
     let curr = query_balance(&deps.querier, &env.contract.address, &prev.denom)?;
     if prev.amount > curr.amount {
         let amount_to_reduce = prev.amount.checked_sub(curr.amount)?;
-        decrement_coin_balance(
-            deps.storage,
-            account_id,
-            &Coin {
-                denom: curr.denom.clone(),
-                amount: amount_to_reduce,
-            },
-        )?;
+        let coin_to_reduce = Coin {
+            denom: curr.denom,
+            amount: amount_to_reduce,
+        };
+        decrement_coin_balance(deps.storage, account_id, &coin_to_reduce)?;
         Ok(Response::new()
             .add_attribute("action", "rover/credit-manager/update_coin_balance")
-            .add_attribute("denom", curr.denom)
-            .add_attribute("decremented", amount_to_reduce))
+            .add_attribute("account_id", account_id)
+            .add_attribute("coin_decremented", coin_to_reduce.to_string()))
     } else {
         let amount_to_increment = curr.amount.checked_sub(prev.amount)?;
-        increment_coin_balance(
-            deps.storage,
-            account_id,
-            &Coin {
-                denom: curr.denom.clone(),
-                amount: amount_to_increment,
-            },
-        )?;
+        let coin_to_increment = Coin {
+            denom: curr.denom,
+            amount: amount_to_increment,
+        };
+        increment_coin_balance(deps.storage, account_id, &coin_to_increment)?;
         Ok(Response::new()
             .add_attribute("action", "rover/credit-manager/update_coin_balance")
-            .add_attribute("denom", curr.denom)
-            .add_attribute("incremented", amount_to_increment))
+            .add_attribute("account_id", account_id)
+            .add_attribute("coin_incremented", coin_to_increment.to_string()))
     }
 }

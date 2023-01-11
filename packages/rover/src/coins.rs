@@ -279,7 +279,7 @@ impl Coins {
 
 impl Stringify for &[Coin] {
     fn to_string(&self) -> String {
-        self.iter().map(|coin| coin.clone().denom).collect::<Vec<String>>().join(", ")
+        self.iter().map(|coin| coin.to_string()).collect::<Vec<String>>().join(",")
     }
 }
 

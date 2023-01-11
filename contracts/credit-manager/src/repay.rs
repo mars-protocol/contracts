@@ -21,14 +21,11 @@ pub fn repay(
     let (debt_amount, debt_shares) =
         current_debt_for_denom(deps.as_ref(), &env, account_id, &coin.denom)?;
     let amount_to_repay = min(debt_amount, coin.amount.value().unwrap_or(Uint128::MAX));
-    let shares_to_repay = debt_amount_to_shares(
-        deps.as_ref(),
-        &env,
-        &Coin {
-            denom: coin.denom.to_string(),
-            amount: amount_to_repay,
-        },
-    )?;
+    let coin_to_repay = Coin {
+        denom: coin.denom.to_string(),
+        amount: amount_to_repay,
+    };
+    let shares_to_repay = debt_amount_to_shares(deps.as_ref(), &env, &coin_to_repay)?;
 
     // Decrement token's debt position
     if amount_to_repay == debt_amount {
@@ -49,26 +46,17 @@ pub fn repay(
         &total_debt_shares.checked_sub(shares_to_repay)?,
     )?;
 
-    decrement_coin_balance(
-        deps.storage,
-        account_id,
-        &Coin {
-            denom: coin.denom.to_string(),
-            amount: amount_to_repay,
-        },
-    )?;
+    decrement_coin_balance(deps.storage, account_id, &coin_to_repay)?;
 
     let red_bank = RED_BANK.load(deps.storage)?;
-    let red_bank_repay_msg = red_bank.repay_msg(&Coin {
-        denom: coin.denom.to_string(),
-        amount: amount_to_repay,
-    })?;
+    let red_bank_repay_msg = red_bank.repay_msg(&coin_to_repay)?;
 
     Ok(Response::new()
         .add_message(red_bank_repay_msg)
         .add_attribute("action", "rover/credit-manager/repay")
+        .add_attribute("account_id", account_id)
         .add_attribute("debt_shares_repaid", shares_to_repay)
-        .add_attribute("coins_repaid", amount_to_repay))
+        .add_attribute("coin_repaid", coin_to_repay.to_string()))
 }
 
 fn debt_amount_to_shares(deps: Deps, env: &Env, coin: &Coin) -> ContractResult<Uint128> {

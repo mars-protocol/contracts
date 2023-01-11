@@ -48,11 +48,10 @@ pub fn liquidate_coin(
     Ok(Response::new()
         .add_message(repay_msg)
         .add_attribute("action", "rover/credit-manager/liquidate_coin")
+        .add_attribute("account_id", liquidator_account_id)
         .add_attribute("liquidatee_account_id", liquidatee_account_id)
-        .add_attribute("debt_repaid_denom", debt.denom)
-        .add_attribute("debt_repaid_amount", debt.amount)
-        .add_attribute("request_coin_denom", request.denom)
-        .add_attribute("request_coin_amount", request.amount))
+        .add_attribute("coin_debt_repaid", debt.to_string())
+        .add_attribute("coin_liquidated", request.to_string()))
 }
 
 /// Calculates precise debt & request coin amounts to liquidate

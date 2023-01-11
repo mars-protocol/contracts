@@ -25,5 +25,6 @@ pub fn refund_coin_balances(deps: DepsMut, env: Env, account_id: &str) -> Contra
         .collect::<ContractResult<Vec<_>>>()?;
     Ok(Response::new()
         .add_messages(withdraw_msgs)
-        .add_attribute("action", "rover/credit-manager/callback/refund_coin_balances"))
+        .add_attribute("action", "rover/credit-manager/callback/refund_coin_balances")
+        .add_attribute("account_id", account_id.to_string()))
 }

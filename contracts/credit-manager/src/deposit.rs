@@ -27,7 +27,7 @@ pub fn deposit(
 
     Ok(response
         .add_attribute("action", "rover/credit-manager/callback/deposit")
-        .add_attribute("deposit_received", coin.to_string()))
+        .add_attribute("coin_deposited", coin.to_string()))
 }
 
 /// Assert that fund of exactly the same type and amount was sent along with a message

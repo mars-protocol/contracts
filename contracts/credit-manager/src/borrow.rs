@@ -51,6 +51,7 @@ pub fn borrow(deps: DepsMut, env: Env, account_id: &str, coin: Coin) -> Contract
     Ok(Response::new()
         .add_message(red_bank.borrow_msg(&coin)?)
         .add_attribute("action", "rover/credit-manager/borrow")
+        .add_attribute("account_id", account_id)
         .add_attribute("debt_shares_added", debt_shares_to_add)
-        .add_attribute("coins_borrowed", coin.amount))
+        .add_attribute("coin_borrowed", coin.to_string()))
 }

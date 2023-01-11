@@ -2,7 +2,7 @@ use cosmwasm_std::{Coin, Deps, DepsMut, Env, Response, Uint128};
 use mars_rover::{
     error::{ContractError, ContractResult},
     msg::execute::{ActionAmount, ActionCoin},
-    traits::Denoms,
+    traits::{Denoms, Stringify},
 };
 
 use crate::{
@@ -49,7 +49,10 @@ pub fn provide_liquidity(
     Ok(Response::new()
         .add_message(zap_msg)
         .add_message(update_balance_msg)
-        .add_attribute("action", "rover/credit-manager/provide_liquidity"))
+        .add_attribute("action", "rover/credit-manager/provide_liquidity")
+        .add_attribute("account_id", account_id)
+        .add_attribute("coins_in", updated_coins_in.as_slice().to_string())
+        .add_attribute("lp_token_out", lp_token_out))
 }
 
 pub fn withdraw_liquidity(
@@ -92,7 +95,10 @@ pub fn withdraw_liquidity(
     Ok(Response::new()
         .add_message(zap_msg)
         .add_messages(update_balances_msgs)
-        .add_attribute("action", "rover/credit-manager/withdraw_liquidity"))
+        .add_attribute("action", "rover/credit-manager/withdraw_liquidity")
+        .add_attribute("account_id", account_id)
+        .add_attribute("coin_in", lp_token.to_string())
+        .add_attribute("coins_out", coins_out.as_slice().to_string()))
 }
 
 pub fn estimate_provide_liquidity(

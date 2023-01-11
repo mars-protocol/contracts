@@ -45,5 +45,8 @@ pub fn exit_vault(
     Ok(Response::new()
         .add_message(withdraw_msg)
         .add_message(update_coin_balance_msg)
-        .add_attribute("action", "rover/credit-manager/vault/withdraw"))
+        .add_attribute("action", "rover/credit-manager/vault/exit")
+        .add_attribute("account_id", account_id)
+        .add_attribute("vault_addr", vault.address.to_string())
+        .add_attribute("amount_withdrawn", amount.to_string()))
 }

@@ -187,7 +187,8 @@ pub fn dispatch_actions(
 
     Ok(response
         .add_messages(callback_msgs)
-        .add_attribute("action", "rover/execute/update_credit_account"))
+        .add_attribute("action", "rover/execute/update_credit_account")
+        .add_attribute("account_id", account_id.to_string()))
 }
 
 pub fn execute_callback(
