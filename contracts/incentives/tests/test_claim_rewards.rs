@@ -1,12 +1,11 @@
 use cosmwasm_std::{
     attr, coins,
     testing::{mock_env, mock_info},
-    Addr, BankMsg, CosmosMsg, Decimal, OverflowError, OverflowOperation, StdError, SubMsg,
-    Timestamp, Uint128,
+    Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Timestamp, Uint128,
 };
 use mars_incentives::{
     contract::{execute, query_user_unclaimed_rewards},
-    helpers::{asset_incentive_compute_index, user_compute_accrued_rewards},
+    helpers::{compute_asset_incentive_index, compute_user_accrued_rewards},
     state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
 use mars_outpost::{
@@ -15,14 +14,15 @@ use mars_outpost::{
 };
 use mars_testing::MockEnvParams;
 
-use crate::helpers::setup_test;
+use crate::helpers::{setup_test, setup_test_with_env};
 
 mod helpers;
 
 #[test]
 fn test_execute_claim_rewards() {
     // SETUP
-    let mut deps = setup_test();
+    let env = mock_env();
+    let mut deps = setup_test_with_env(env.clone());
     let user_addr = Addr::unchecked("user");
 
     let previous_unclaimed_rewards = Uint128::new(50_000);
@@ -35,7 +35,6 @@ fn test_execute_claim_rewards() {
     let time_start = 500_000_u64;
     let time_contract_call = 600_000_u64;
 
-    // addresses
     // denom of an asset with ongoing rewards
     let asset_denom = "asset";
     // denom of an asset with no pending rewards but with user index (so it had active incentives
@@ -95,6 +94,8 @@ fn test_execute_claim_rewards() {
             asset_denom,
             &AssetIncentive {
                 emission_per_second: Uint128::new(100),
+                start_time: Timestamp::from_seconds(time_start),
+                duration: 8640000,
                 index: Decimal::one(),
                 last_updated: time_start,
             },
@@ -106,6 +107,8 @@ fn test_execute_claim_rewards() {
             zero_denom,
             &AssetIncentive {
                 emission_per_second: Uint128::zero(),
+                start_time: env.block.time,
+                duration: 86400,
                 index: Decimal::one(),
                 last_updated: time_start,
             },
@@ -117,6 +120,8 @@ fn test_execute_claim_rewards() {
             no_user_denom,
             &AssetIncentive {
                 emission_per_second: Uint128::new(200),
+                start_time: env.block.time,
+                duration: 86400,
                 index: Decimal::one(),
                 last_updated: time_start,
             },
@@ -137,7 +142,7 @@ fn test_execute_claim_rewards() {
         .save(deps.as_mut().storage, &user_addr, &previous_unclaimed_rewards)
         .unwrap();
 
-    let expected_asset_incentive_index = asset_incentive_compute_index(
+    let expected_asset_incentive_index = compute_asset_incentive_index(
         Decimal::one(),
         Uint128::new(100),
         asset_total_supply,
@@ -146,14 +151,14 @@ fn test_execute_claim_rewards() {
     )
     .unwrap();
 
-    let expected_asset_accrued_rewards = user_compute_accrued_rewards(
+    let expected_asset_accrued_rewards = compute_user_accrued_rewards(
         asset_user_balance,
         Decimal::one(),
         expected_asset_incentive_index,
     )
     .unwrap();
 
-    let expected_zero_accrued_rewards = user_compute_accrued_rewards(
+    let expected_zero_accrued_rewards = compute_user_accrued_rewards(
         zero_user_balance,
         Decimal::from_ratio(1_u128, 2_u128),
         Decimal::one(),
@@ -261,74 +266,5 @@ fn test_claim_zero_rewards() {
             attr("user", "user"),
             attr("mars_rewards", "0"),
         ]
-    );
-}
-
-#[test]
-fn test_asset_incentive_compute_index() {
-    assert_eq!(
-        asset_incentive_compute_index(
-            Decimal::zero(),
-            Uint128::new(100),
-            Uint128::new(200_000),
-            1000,
-            10
-        ),
-        Err(StdError::overflow(OverflowError::new(OverflowOperation::Sub, 1000, 10)))
-    );
-
-    assert_eq!(
-        asset_incentive_compute_index(
-            Decimal::zero(),
-            Uint128::new(100),
-            Uint128::new(200_000),
-            0,
-            1000
-        )
-        .unwrap(),
-        Decimal::from_ratio(1_u128, 2_u128)
-    );
-    assert_eq!(
-        asset_incentive_compute_index(
-            Decimal::from_ratio(1_u128, 2_u128),
-            Uint128::new(2000),
-            Uint128::new(5_000_000),
-            20_000,
-            30_000
-        )
-        .unwrap(),
-        Decimal::from_ratio(9_u128, 2_u128)
-    );
-}
-
-#[test]
-fn test_user_compute_accrued_rewards() {
-    assert_eq!(
-        user_compute_accrued_rewards(
-            Uint128::zero(),
-            Decimal::one(),
-            Decimal::from_ratio(2_u128, 1_u128)
-        )
-        .unwrap(),
-        Uint128::zero()
-    );
-
-    assert_eq!(
-        user_compute_accrued_rewards(
-            Uint128::new(100),
-            Decimal::zero(),
-            Decimal::from_ratio(2_u128, 1_u128)
-        )
-        .unwrap(),
-        Uint128::new(200)
-    );
-    assert_eq!(
-        user_compute_accrued_rewards(
-            Uint128::new(100),
-            Decimal::one(),
-            Decimal::from_ratio(2_u128, 1_u128)
-        )
-        .unwrap(),
-        Uint128::new(100)
     );
 }

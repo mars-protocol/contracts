@@ -14,7 +14,9 @@ export type ExecuteMsg =
   | {
       set_asset_incentive: {
         denom: string
-        emission_per_second: Uint128
+        duration?: number | null
+        emission_per_second?: Uint128 | null
+        start_time?: Timestamp | null
       }
     }
   | {
@@ -36,6 +38,8 @@ export type ExecuteMsg =
       }
     }
 export type Uint128 = string
+export type Timestamp = Uint64
+export type Uint64 = string
 export type Addr = string
 export type QueryMsg =
   | {
@@ -56,9 +60,11 @@ export interface AssetIncentiveResponse {
   asset_incentive?: AssetIncentive | null
 }
 export interface AssetIncentive {
+  duration: number
   emission_per_second: Uint128
   index: Decimal
   last_updated: number
+  start_time: Timestamp
 }
 export interface Config {
   address_provider: Addr

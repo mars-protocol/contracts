@@ -1,3 +1,5 @@
+use std::cmp::{max, min};
+
 use cosmwasm_std::{
     Addr, BlockInfo, Decimal, Deps, Order, OverflowError, OverflowOperation, StdError, StdResult,
     Uint128,
@@ -12,28 +14,34 @@ use crate::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS}
 /// Total supply is the total (liquidity) token supply during the period being computed.
 /// Note that this method does not commit updates to state as that should be executed by the
 /// caller
-pub fn asset_incentive_update_index(
+pub fn update_asset_incentive_index(
     asset_incentive: &mut AssetIncentive,
     total_amount_scaled: Uint128,
     current_block_time: u64,
 ) -> StdResult<()> {
+    let end_time_sec = asset_incentive.start_time.plus_seconds(asset_incentive.duration).seconds();
     if (current_block_time != asset_incentive.last_updated)
+        && current_block_time > asset_incentive.start_time.seconds()
+        && asset_incentive.last_updated < end_time_sec
         && !total_amount_scaled.is_zero()
         && !asset_incentive.emission_per_second.is_zero()
     {
-        asset_incentive.index = asset_incentive_compute_index(
+        let start_time_sec = asset_incentive.start_time.seconds();
+        let time_start = max(start_time_sec, asset_incentive.last_updated);
+        let time_end = min(current_block_time, end_time_sec);
+        asset_incentive.index = compute_asset_incentive_index(
             asset_incentive.index,
             asset_incentive.emission_per_second,
             total_amount_scaled,
-            asset_incentive.last_updated,
-            current_block_time,
-        )?
+            time_start,
+            time_end,
+        )?;
     }
     asset_incentive.last_updated = current_block_time;
     Ok(())
 }
 
-pub fn asset_incentive_compute_index(
+pub fn compute_asset_incentive_index(
     previous_index: Decimal,
     emission_per_second: Uint128,
     total_amount_scaled: Uint128,
@@ -58,7 +66,7 @@ pub fn asset_incentive_compute_index(
 /// Computes user accrued rewards using the difference between asset_incentive index and
 /// user current index
 /// asset_incentives index should be up to date.
-pub fn user_compute_accrued_rewards(
+pub fn compute_user_accrued_rewards(
     user_amount_scaled: Uint128,
     user_asset_index: Decimal,
     asset_incentive_index: Decimal,
@@ -117,7 +125,7 @@ pub fn compute_user_unclaimed_rewards(
             continue;
         }
 
-        asset_incentive_update_index(
+        update_asset_incentive_index(
             &mut asset_incentive,
             market.collateral_total_scaled,
             block.time.seconds(),
@@ -129,7 +137,7 @@ pub fn compute_user_unclaimed_rewards(
 
         if user_asset_index != asset_incentive.index {
             // Compute user accrued rewards and update user index
-            let asset_accrued_rewards = user_compute_accrued_rewards(
+            let asset_accrued_rewards = compute_user_accrued_rewards(
                 collateral.amount_scaled,
                 user_asset_index,
                 asset_incentive.index,
