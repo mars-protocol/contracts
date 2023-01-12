@@ -148,3 +148,8 @@ yarn deploy:osmosis
 ### Deployment
 
 Addresses published in [/scripts/deploy/addresses](https://github.com/mars-protocol/rover/tree/master/scripts/deploy/addresses)
+
+
+## License
+
+Contents of this repository are open source under [GNU General Public License v3](./LICENSE) or later.
