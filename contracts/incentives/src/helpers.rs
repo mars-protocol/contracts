@@ -21,7 +21,7 @@ pub fn update_asset_incentive_index(
 ) -> StdResult<()> {
     let end_time_sec = asset_incentive.start_time.plus_seconds(asset_incentive.duration).seconds();
     if (current_block_time != asset_incentive.last_updated)
-        && current_block_time >= asset_incentive.start_time.seconds()
+        && current_block_time > asset_incentive.start_time.seconds()
         && asset_incentive.last_updated < end_time_sec
         && !total_amount_scaled.is_zero()
         && !asset_incentive.emission_per_second.is_zero()

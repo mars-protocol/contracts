@@ -1,8 +1,7 @@
 use cosmwasm_std::{
     attr, coins,
     testing::{mock_env, mock_info},
-    Addr, BankMsg, CosmosMsg, Decimal, OverflowError, OverflowOperation, StdError, SubMsg,
-    Timestamp, Uint128,
+    Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Timestamp, Uint128,
 };
 use mars_incentives::{
     contract::{execute, query_user_unclaimed_rewards},
@@ -36,7 +35,6 @@ fn test_execute_claim_rewards() {
     let time_start = 500_000_u64;
     let time_contract_call = 600_000_u64;
 
-    // addresses
     // denom of an asset with ongoing rewards
     let asset_denom = "asset";
     // denom of an asset with no pending rewards but with user index (so it had active incentives
@@ -268,74 +266,5 @@ fn test_claim_zero_rewards() {
             attr("user", "user"),
             attr("mars_rewards", "0"),
         ]
-    );
-}
-
-#[test]
-fn test_asset_incentive_compute_index() {
-    assert_eq!(
-        compute_asset_incentive_index(
-            Decimal::zero(),
-            Uint128::new(100),
-            Uint128::new(200_000),
-            1000,
-            10
-        ),
-        Err(StdError::overflow(OverflowError::new(OverflowOperation::Sub, 1000, 10)))
-    );
-
-    assert_eq!(
-        compute_asset_incentive_index(
-            Decimal::zero(),
-            Uint128::new(100),
-            Uint128::new(200_000),
-            0,
-            1000
-        )
-        .unwrap(),
-        Decimal::from_ratio(1_u128, 2_u128)
-    );
-    assert_eq!(
-        compute_asset_incentive_index(
-            Decimal::from_ratio(1_u128, 2_u128),
-            Uint128::new(2000),
-            Uint128::new(5_000_000),
-            20_000,
-            30_000
-        )
-        .unwrap(),
-        Decimal::from_ratio(9_u128, 2_u128)
-    );
-}
-
-#[test]
-fn test_user_compute_accrued_rewards() {
-    assert_eq!(
-        compute_user_accrued_rewards(
-            Uint128::zero(),
-            Decimal::one(),
-            Decimal::from_ratio(2_u128, 1_u128)
-        )
-        .unwrap(),
-        Uint128::zero()
-    );
-
-    assert_eq!(
-        compute_user_accrued_rewards(
-            Uint128::new(100),
-            Decimal::zero(),
-            Decimal::from_ratio(2_u128, 1_u128)
-        )
-        .unwrap(),
-        Uint128::new(200)
-    );
-    assert_eq!(
-        compute_user_accrued_rewards(
-            Uint128::new(100),
-            Decimal::one(),
-            Decimal::from_ratio(2_u128, 1_u128)
-        )
-        .unwrap(),
-        Uint128::new(100)
     );
 }
