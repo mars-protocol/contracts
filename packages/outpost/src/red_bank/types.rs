@@ -117,12 +117,12 @@ pub struct UserCollateralResponse {
 pub struct UserPositionResponse {
     /// Total value of all enabled collateral assets.
     /// If an asset is disabled as collateral, it will not be included in this value.
-    pub total_enabled_collateral: Decimal,
+    pub total_enabled_collateral: Uint128,
     /// Total value of all collateralized debts.
     /// If the user has an uncollateralized loan limit in an asset, the debt in this asset will not
     /// be included in this value.
-    pub total_collateralized_debt: Decimal,
-    pub weighted_max_ltv_collateral: Decimal,
-    pub weighted_liquidation_threshold_collateral: Decimal,
+    pub total_collateralized_debt: Uint128,
+    pub weighted_max_ltv_collateral: Uint128,
+    pub weighted_liquidation_threshold_collateral: Uint128,
     pub health_status: UserHealthStatus,
 }

@@ -18,4 +18,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Owner(#[from] OwnerError),
+
+    #[error("Invalid incentive: {reason}")]
+    InvalidIncentive {
+        reason: String,
+    },
 }

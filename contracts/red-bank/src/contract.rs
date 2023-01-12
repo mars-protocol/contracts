@@ -1,6 +1,4 @@
-use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
-};
+use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
 use mars_outpost::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::{error::ContractError, execute, query};
@@ -94,8 +92,8 @@ pub fn execute(
 }
 
 #[entry_point]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
+    let res = match msg {
         QueryMsg::Config {} => to_binary(&query::query_config(deps)?),
         QueryMsg::Market {
             denom,
@@ -182,5 +180,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             denom,
             amount_scaled,
         } => to_binary(&query::query_underlying_debt_amount(deps, env, denom, amount_scaled)?),
-    }
+    };
+    res.map_err(Into::into)
 }

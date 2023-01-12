@@ -770,7 +770,7 @@ pub fn repay(
     market.decrease_debt(debt_amount_scaled_delta)?;
     user.decrease_debt(deps.storage, &denom, debt_amount_scaled_delta)?;
 
-    response = update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, response)?;
+    response = update_interest_rates(&deps, &env, &mut market, refund_amount, &denom, response)?;
     MARKETS.save(deps.storage, &denom, &market)?;
 
     Ok(response
