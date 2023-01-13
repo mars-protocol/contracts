@@ -20,8 +20,11 @@ export interface InstantiateMsg {
 }
 export type ExecuteMsg =
   | {
+      update_owner: OwnerUpdate
+    }
+  | {
       update_config: {
-        new_cfg: CreateOrUpdateConfig
+        new_cfg: UpdateConfig
       }
     }
   | {
@@ -49,13 +52,21 @@ export type ExecuteMsg =
         denom: string
       }
     }
+export type OwnerUpdate =
+  | {
+      propose_new_owner: {
+        proposed: string
+      }
+    }
+  | 'clear_proposed'
+  | 'accept_proposed'
+  | 'abolish_owner_role'
 export type OsmosisRoute = SwapAmountInRoute[]
 export type Uint128 = string
-export interface CreateOrUpdateConfig {
+export interface UpdateConfig {
   address_provider?: string | null
   channel_id?: string | null
   fee_collector_denom?: string | null
-  owner?: string | null
   safety_fund_denom?: string | null
   safety_tax_rate?: Decimal | null
   slippage_tolerance?: Decimal | null
@@ -84,11 +95,12 @@ export type QueryMsg =
         start_after?: [string, string] | null
       }
     }
-export interface ConfigForString {
+export interface ConfigResponse {
   address_provider: string
   channel_id: string
   fee_collector_denom: string
-  owner: string
+  owner?: string | null
+  proposed_new_owner?: string | null
   safety_fund_denom: string
   safety_tax_rate: Decimal
   slippage_tolerance: Decimal

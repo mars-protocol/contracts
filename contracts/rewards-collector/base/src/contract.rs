@@ -7,14 +7,14 @@ use cosmwasm_std::{
 use cw_storage_plus::{Bound, Item, Map};
 use mars_outpost::{
     address_provider::{self, MarsAddressType},
-    error::MarsError,
     helpers::{option_string_to_addr, validate_native_denom},
     red_bank,
     rewards_collector::{
-        Config, CreateOrUpdateConfig, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
-        RoutesResponse,
+        Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
+        RoutesResponse, UpdateConfig,
     },
 };
+use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 
 use crate::{
     helpers::{stringify_option_amount, unwrap_option_amount},
@@ -30,8 +30,10 @@ where
     M: CustomMsg,
     Q: CustomQuery,
 {
+    /// Contract's owner
+    pub owner: Owner<'a>,
     /// The contract's configurations
-    pub config: Item<'a, Config<Addr>>,
+    pub config: Item<'a, Config>,
     /// The trade route for each pair of input/output assets
     pub routes: Map<'a, (String, String), R>,
     /// Phantom data that holds the custom message type
@@ -48,6 +50,7 @@ where
 {
     fn default() -> Self {
         Self {
+            owner: Owner::new("owner"),
             config: Item::new("config"),
             routes: Map::new("routes"),
             custom_msg: PhantomData,
@@ -63,8 +66,18 @@ where
     Q: CustomQuery,
 {
     pub fn instantiate(&self, deps: DepsMut<Q>, msg: InstantiateMsg) -> ContractResult<Response> {
-        let cfg = msg.check(deps.api)?;
+        let owner = msg.owner.clone();
+
+        let cfg = Config::checked(deps.api, msg)?;
         cfg.validate()?;
+
+        self.owner.initialize(
+            deps.storage,
+            deps.api,
+            SetInitialOwner {
+                owner,
+            },
+        )?;
 
         self.config.save(deps.storage, &cfg)?;
 
@@ -79,6 +92,7 @@ where
         msg: ExecuteMsg<R>,
     ) -> ContractResult<Response<M>> {
         match msg {
+            ExecuteMsg::UpdateOwner(update) => self.update_owner(deps, info, update),
             ExecuteMsg::UpdateConfig {
                 new_cfg,
             } => self.update_config(deps, info.sender, new_cfg),
@@ -116,20 +130,26 @@ where
         }
     }
 
+    fn update_owner(
+        &self,
+        deps: DepsMut<Q>,
+        info: MessageInfo,
+        update: OwnerUpdate,
+    ) -> ContractResult<Response<M>> {
+        Ok(self.owner.update(deps, info, update)?)
+    }
+
     fn update_config(
         &self,
         deps: DepsMut<Q>,
         sender: Addr,
-        new_cfg: CreateOrUpdateConfig,
+        new_cfg: UpdateConfig,
     ) -> ContractResult<Response<M>> {
+        self.owner.assert_owner(deps.storage, &sender)?;
+
         let mut cfg = self.config.load(deps.storage)?;
 
-        if sender != cfg.owner {
-            return Err(MarsError::Unauthorized {}.into());
-        }
-
-        let CreateOrUpdateConfig {
-            owner,
+        let UpdateConfig {
             address_provider,
             safety_tax_rate,
             safety_fund_denom,
@@ -141,7 +161,6 @@ where
             slippage_tolerance,
         } = new_cfg;
 
-        cfg.owner = option_string_to_addr(deps.api, owner, cfg.owner)?;
         cfg.address_provider =
             option_string_to_addr(deps.api, address_provider, cfg.address_provider)?;
         cfg.safety_tax_rate = safety_tax_rate.unwrap_or(cfg.safety_tax_rate);
@@ -168,11 +187,7 @@ where
         denom_out: String,
         route: R,
     ) -> ContractResult<Response<M>> {
-        let cfg = self.config.load(deps.storage)?;
-
-        if sender != cfg.owner {
-            return Err(MarsError::Unauthorized {}.into());
-        }
+        self.owner.assert_owner(deps.storage, &sender)?;
 
         validate_native_denom(&denom_in)?;
         validate_native_denom(&denom_out)?;
@@ -328,9 +343,22 @@ where
             .add_attribute("to", to_address))
     }
 
-    fn query_config(&self, deps: Deps<Q>) -> StdResult<Config<String>> {
+    fn query_config(&self, deps: Deps<Q>) -> StdResult<ConfigResponse> {
+        let owner_state = self.owner.query(deps.storage)?;
         let cfg = self.config.load(deps.storage)?;
-        Ok(cfg.into())
+        Ok(ConfigResponse {
+            owner: owner_state.owner,
+            proposed_new_owner: owner_state.proposed,
+            address_provider: cfg.address_provider.into(),
+            safety_tax_rate: cfg.safety_tax_rate,
+            safety_fund_denom: cfg.safety_fund_denom,
+            fee_collector_denom: cfg.fee_collector_denom,
+            channel_id: cfg.channel_id,
+            timeout_revision: cfg.timeout_revision,
+            timeout_blocks: cfg.timeout_blocks,
+            timeout_seconds: cfg.timeout_seconds,
+            slippage_tolerance: cfg.slippage_tolerance,
+        })
     }
 
     fn query_route(

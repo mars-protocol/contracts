@@ -34,13 +34,24 @@ export type ExecuteMsg =
       update_config: {
         address_provider?: string | null
         mars_denom?: string | null
-        owner?: string | null
       }
+    }
+  | {
+      update_owner: OwnerUpdate
     }
 export type Uint128 = string
 export type Timestamp = Uint64
 export type Uint64 = string
 export type Addr = string
+export type OwnerUpdate =
+  | {
+      propose_new_owner: {
+        proposed: string
+      }
+    }
+  | 'clear_proposed'
+  | 'accept_proposed'
+  | 'abolish_owner_role'
 export type QueryMsg =
   | {
       config: {}
@@ -66,8 +77,9 @@ export interface AssetIncentive {
   last_updated: number
   start_time: Timestamp
 }
-export interface Config {
+export interface ConfigResponse {
   address_provider: Addr
   mars_denom: string
-  owner: Addr
+  owner?: string | null
+  proposed_new_owner?: string | null
 }

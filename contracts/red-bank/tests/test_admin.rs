@@ -7,11 +7,12 @@ use mars_outpost::{
         InterestRateModel, Market, QueryMsg,
     },
 };
+use mars_owner::OwnerError::NotOwner;
 use mars_red_bank::{
     contract::{execute, instantiate, query},
     error::ContractError,
     interest_rates::{compute_scaled_amount, compute_underlying_amount, ScalingOperation},
-    state::{COLLATERALS, CONFIG, MARKETS},
+    state::{COLLATERALS, MARKETS},
 };
 use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, MockEnvParams};
 
@@ -26,7 +27,6 @@ fn test_proper_initialization() {
 
     // Config with base params valid (just update the rest)
     let base_config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
         close_factor: None,
     };
@@ -35,11 +35,12 @@ fn test_proper_initialization() {
     // init config with empty params
     // *
     let empty_config = CreateOrUpdateConfig {
-        owner: None,
         address_provider: None,
         close_factor: None,
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config: empty_config,
     };
     let info = mock_info("owner", &[]);
@@ -55,6 +56,8 @@ fn test_proper_initialization() {
         ..base_config.clone()
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -78,6 +81,8 @@ fn test_proper_initialization() {
         ..base_config
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config,
     };
 
@@ -89,7 +94,7 @@ fn test_proper_initialization() {
     // it worked, let's query the state
     let res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
     let value: ConfigResponse = from_binary(&res).unwrap();
-    assert_eq!(value.owner, "owner");
+    assert_eq!(value.owner.unwrap(), "owner");
     assert_eq!(value.address_provider, "address_provider");
 }
 
@@ -103,11 +108,12 @@ fn test_update_config() {
     // *
     let mut close_factor = Decimal::from_ratio(1u128, 4u128);
     let init_config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
         close_factor: Some(close_factor),
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config: init_config.clone(),
     };
     // we can just call .unwrap() to assert this was a success
@@ -122,14 +128,13 @@ fn test_update_config() {
     };
     let info = mock_info("somebody", &[]);
     let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-    assert_eq!(error_res, MarsError::Unauthorized {}.into());
+    assert_eq!(error_res, ContractError::Owner(NotOwner {}));
 
     // *
     // update config with close_factor
     // *
     close_factor = Decimal::from_ratio(13u128, 10u128);
     let config = CreateOrUpdateConfig {
-        owner: None,
         close_factor: Some(close_factor),
         ..init_config
     };
@@ -153,7 +158,6 @@ fn test_update_config() {
     // *
     close_factor = Decimal::from_ratio(1u128, 20u128);
     let config = CreateOrUpdateConfig {
-        owner: Some("new_owner".to_string()),
         address_provider: Some("new_address_provider".to_string()),
         close_factor: Some(close_factor),
     };
@@ -163,13 +167,14 @@ fn test_update_config() {
 
     // we can just call .unwrap() to assert this was a success
     let info = mock_info("owner", &[]);
-    let res = execute(deps.as_mut(), env, info, msg).unwrap();
+    let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // Read config from state
-    let new_config = CONFIG.load(&deps.storage).unwrap();
+    let res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
+    let new_config: ConfigResponse = from_binary(&res).unwrap();
 
-    assert_eq!(new_config.owner, Addr::unchecked("new_owner"));
+    assert_eq!(new_config.owner.unwrap(), "owner".to_string());
     assert_eq!(new_config.address_provider, Addr::unchecked(config.address_provider.unwrap()));
     assert_eq!(new_config.close_factor, config.close_factor.unwrap());
 }
@@ -180,11 +185,12 @@ fn test_init_asset() {
     let env = mock_env(MockEnvParams::default());
 
     let config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -216,7 +222,7 @@ fn test_init_asset() {
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-        assert_eq!(error_res, MarsError::Unauthorized {}.into());
+        assert_eq!(error_res, ContractError::Owner(NotOwner {}));
     }
 
     // init incorrect asset denom - error 1
@@ -468,11 +474,12 @@ fn test_update_asset() {
     let env = mock_env_at_block_time(start_time);
 
     let config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -504,7 +511,7 @@ fn test_update_asset() {
         };
         let info = mock_info("somebody", &[]);
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-        assert_eq!(error_res, MarsError::Unauthorized {}.into());
+        assert_eq!(error_res, ContractError::Owner(NotOwner {}));
     }
 
     // owner is authorized but can't update asset if not initialized first
@@ -721,11 +728,12 @@ fn test_update_asset_with_new_interest_rate_model_params() {
     let mut deps = mock_dependencies(&[]);
 
     let config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -931,4 +939,117 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
         )
         .unwrap();
     assert_eq!(collateral.amount_scaled, expected_rewards_scaled);
+}
+
+#[test]
+fn test_update_asset_by_emergency_owner() {
+    let mut deps = mock_dependencies(&[]);
+    let start_time = 100000000;
+    let env = mock_env_at_block_time(start_time);
+
+    let config = CreateOrUpdateConfig {
+        address_provider: Some("address_provider".to_string()),
+        close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
+    };
+    let msg = InstantiateMsg {
+        owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
+        config,
+    };
+    let info = mock_info("owner", &[]);
+    instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+    let ir_model = InterestRateModel {
+        optimal_utilization_rate: Decimal::one(),
+        base: Decimal::percent(5),
+        slope_1: Decimal::zero(),
+        slope_2: Decimal::zero(),
+    };
+
+    let params = InitOrUpdateAssetParams {
+        max_loan_to_value: Some(Decimal::from_ratio(50u128, 100u128)),
+        reserve_factor: Some(Decimal::from_ratio(1u128, 100u128)),
+        liquidation_threshold: Some(Decimal::from_ratio(80u128, 100u128)),
+        liquidation_bonus: Some(Decimal::from_ratio(10u128, 100u128)),
+        interest_rate_model: Some(ir_model.clone()),
+        deposit_enabled: Some(true),
+        borrow_enabled: Some(true),
+        deposit_cap: None,
+    };
+
+    // emergency owner is authorized but can't update asset if not initialized first
+    {
+        let msg = ExecuteMsg::UpdateAsset {
+            denom: "someasset".to_string(),
+            params: params.clone(),
+        };
+        let info = mock_info("emergency_owner", &[]);
+        let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+        assert_eq!(error_res, ContractError::AssetNotInitialized {});
+    }
+
+    // initialize asset
+    {
+        let msg = ExecuteMsg::InitAsset {
+            denom: "someasset".to_string(),
+            params: params.clone(),
+        };
+        let info = mock_info("owner", &[]);
+        let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+    }
+
+    // update asset with borrow_enabled = true, should have not effect on the saved market
+    {
+        let old_market = MARKETS.load(&deps.storage, "someasset").unwrap();
+
+        let new_asset_params = InitOrUpdateAssetParams {
+            borrow_enabled: Some(true),
+            ..params
+        };
+        let msg = ExecuteMsg::UpdateAsset {
+            denom: "someasset".to_string(),
+            params: new_asset_params,
+        };
+        let info = mock_info("emergency_owner", &[]);
+        let res_err = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+        assert_eq!(res_err, ContractError::Mars(MarsError::Unauthorized {}));
+
+        let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();
+        assert_eq!(old_market, new_market)
+    }
+
+    // update asset with new params, only borrow_enabled = false should have effect on the saved market
+    {
+        let mut old_market = MARKETS.load(&deps.storage, "someasset").unwrap();
+
+        let params = InitOrUpdateAssetParams {
+            max_loan_to_value: Some(Decimal::from_ratio(60u128, 100u128)),
+            reserve_factor: Some(Decimal::from_ratio(10u128, 100u128)),
+            liquidation_threshold: Some(Decimal::from_ratio(90u128, 100u128)),
+            liquidation_bonus: Some(Decimal::from_ratio(12u128, 100u128)),
+            interest_rate_model: Some(ir_model),
+            deposit_enabled: Some(false),
+            borrow_enabled: Some(false),
+            deposit_cap: Some(Uint128::new(10_000_000)),
+        };
+        let msg = ExecuteMsg::UpdateAsset {
+            denom: "someasset".to_string(),
+            params,
+        };
+        let info = mock_info("emergency_owner", &[]);
+        let res = execute(deps.as_mut(), env, info, msg).unwrap();
+        assert!(res.messages.is_empty());
+        assert_eq!(
+            res.attributes,
+            vec![
+                attr("action", "outposts/red-bank/emergency_update_asset"),
+                attr("denom", "someasset")
+            ],
+        );
+
+        let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();
+        // old market should have only borrow_enabled updated
+        old_market.borrow_enabled = false;
+        assert_eq!(old_market, new_market);
+    }
 }

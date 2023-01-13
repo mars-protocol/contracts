@@ -23,6 +23,7 @@ cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
 mars-health     = { workspace = true }
 mars-outpost    = { workspace = true }
+mars-owner      = { workspace = true }
 thiserror       = { workspace = true }
 
 [dev-dependencies]

@@ -6,10 +6,13 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::{Bound, Item, Map};
 use mars_outpost::{
-    error::MarsError,
     helpers::validate_native_denom,
-    oracle::{Config, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse, QueryMsg},
+    oracle::{
+        Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
+        QueryMsg,
+    },
 };
+use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 
 use crate::{error::ContractResult, PriceSource};
 
@@ -21,8 +24,10 @@ where
     P: PriceSource<C>,
     C: CustomQuery,
 {
+    /// Contract's owner
+    pub owner: Owner<'a>,
     /// The contract's config
-    pub config: Item<'a, Config<Addr>>,
+    pub config: Item<'a, Config>,
     /// The price source of each coin denom
     pub price_sources: Map<'a, &'a str, P>,
     /// Phantom data holds the custom query type
@@ -36,6 +41,7 @@ where
 {
     fn default() -> Self {
         Self {
+            owner: Owner::new("owner"),
             config: Item::new("config"),
             price_sources: Map::new("price_sources"),
             custom_query: PhantomData,
@@ -51,10 +57,17 @@ where
     pub fn instantiate(&self, deps: DepsMut<C>, msg: InstantiateMsg) -> ContractResult<Response> {
         validate_native_denom(&msg.base_denom)?;
 
+        self.owner.initialize(
+            deps.storage,
+            deps.api,
+            SetInitialOwner {
+                owner: msg.owner,
+            },
+        )?;
+
         self.config.save(
             deps.storage,
             &Config {
-                owner: deps.api.addr_validate(&msg.owner)?,
                 base_denom: msg.base_denom,
             },
         )?;
@@ -69,9 +82,7 @@ where
         msg: ExecuteMsg<P>,
     ) -> ContractResult<Response> {
         match msg {
-            ExecuteMsg::UpdateConfig {
-                owner,
-            } => self.update_config(deps, info.sender, owner),
+            ExecuteMsg::UpdateOwner(update) => self.update_owner(deps, info, update),
             ExecuteMsg::SetPriceSource {
                 denom,
                 price_source,
@@ -103,22 +114,13 @@ where
         res.map_err(Into::into)
     }
 
-    fn update_config(
+    fn update_owner(
         &self,
         deps: DepsMut<C>,
-        sender_addr: Addr,
-        owner: String,
+        info: MessageInfo,
+        update: OwnerUpdate,
     ) -> ContractResult<Response> {
-        let mut cfg = self.config.load(deps.storage)?;
-        if sender_addr != cfg.owner {
-            return Err(MarsError::Unauthorized {}.into());
-        };
-
-        cfg.owner = deps.api.addr_validate(&owner)?;
-
-        self.config.save(deps.storage, &cfg)?;
-
-        Ok(Response::new().add_attribute("action", "outposts/oracle/update_config"))
+        Ok(self.owner.update(deps, info, update)?)
     }
 
     fn set_price_source(
@@ -128,15 +130,12 @@ where
         denom: String,
         price_source: P,
     ) -> ContractResult<Response> {
-        let cfg = self.config.load(deps.storage)?;
-        if sender_addr != cfg.owner {
-            return Err(MarsError::Unauthorized {}.into());
-        }
+        self.owner.assert_owner(deps.storage, &sender_addr)?;
 
         validate_native_denom(&denom)?;
 
+        let cfg = self.config.load(deps.storage)?;
         price_source.validate(&deps.querier, &denom, &cfg.base_denom)?;
-
         self.price_sources.save(deps.storage, &denom, &price_source)?;
 
         Ok(Response::new()
@@ -151,10 +150,7 @@ where
         sender_addr: Addr,
         denom: String,
     ) -> ContractResult<Response> {
-        let cfg = self.config.load(deps.storage)?;
-        if sender_addr != cfg.owner {
-            return Err(MarsError::Unauthorized {}.into());
-        }
+        self.owner.assert_owner(deps.storage, &sender_addr)?;
 
         self.price_sources.remove(deps.storage, &denom);
 
@@ -163,10 +159,12 @@ where
             .add_attribute("denom", denom))
     }
 
-    fn query_config(&self, deps: Deps<C>) -> StdResult<Config<String>> {
+    fn query_config(&self, deps: Deps<C>) -> StdResult<ConfigResponse> {
+        let owner_state = self.owner.query(deps.storage)?;
         let cfg = self.config.load(deps.storage)?;
-        Ok(Config {
-            owner: cfg.owner.to_string(),
+        Ok(ConfigResponse {
+            owner: owner_state.owner,
+            proposed_new_owner: owner_state.proposed,
             base_denom: cfg.base_denom,
         })
     }

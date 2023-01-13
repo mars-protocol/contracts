@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Api};
+use cosmwasm_std::Api;
 
 use crate::error::ContractError;
 
@@ -20,10 +20,10 @@ pub(crate) fn assert_valid_addr(
     Ok(())
 }
 
-/// Assert a message's sender is the contract's owner
-pub(crate) fn assert_owner(sender: &Addr, owner: &str) -> Result<(), ContractError> {
-    if *sender != owner {
-        return Err(ContractError::Unauthorized);
+/// Prefix should be related to owner address prefix on a specific chain
+pub(crate) fn assert_valid_prefix(owner: &str, prefix: &str) -> Result<(), ContractError> {
+    if !owner.starts_with(prefix) {
+        return Err(ContractError::InvalidChainPrefix(prefix.to_string()));
     }
     Ok(())
 }

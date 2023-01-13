@@ -21,6 +21,10 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
+        ExecuteMsg::UpdateOwner(update) => execute::update_owner(deps, info, update),
+        ExecuteMsg::UpdateEmergencyOwner(update) => {
+            execute::update_emergency_owner(deps, info, update)
+        }
         ExecuteMsg::UpdateConfig {
             config,
         } => execute::update_config(deps, info, config),

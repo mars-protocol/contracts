@@ -54,23 +54,14 @@
         "additionalProperties": false
       },
       {
-        "description": "Propose to transfer the contract's ownership to another account",
+        "description": "Manages admin role state",
         "type": "object",
         "required": [
-          "transfer_ownership"
+          "update_owner"
         ],
         "properties": {
-          "transfer_ownership": {
-            "type": "object",
-            "required": [
-              "new_owner"
-            ],
-            "properties": {
-              "new_owner": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
+          "update_owner": {
+            "$ref": "#/definitions/OwnerUpdate"
           }
         },
         "additionalProperties": false
@@ -107,6 +98,53 @@
             "type": "string",
             "enum": [
               "safety_fund"
+            ]
+          }
+        ]
+      },
+      "OwnerUpdate": {
+        "oneOf": [
+          {
+            "description": "Proposes a new owner to take role. Only current owner can execute.",
+            "type": "object",
+            "required": [
+              "propose_new_owner"
+            ],
+            "properties": {
+              "propose_new_owner": {
+                "type": "object",
+                "required": [
+                  "proposed"
+                ],
+                "properties": {
+                  "proposed": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Clears the currently proposed owner. Only current owner can execute.",
+            "type": "string",
+            "enum": [
+              "clear_proposed"
+            ]
+          },
+          {
+            "description": "Promotes the proposed owner to be the current one. Only the proposed owner can execute.",
+            "type": "string",
+            "enum": [
+              "accept_proposed"
+            ]
+          },
+          {
+            "description": "Throws away the keys to the Owner role forever. Once done, no owner can ever be set later.",
+            "type": "string",
+            "enum": [
+              "abolish_owner_role"
             ]
           }
         ]
@@ -429,21 +467,29 @@
     },
     "config": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "InstantiateMsg",
-      "description": "Essentially, mars-address-provider is a required init param for all other contracts, so it needs to be initialised first (Only owner can be set on initialization). So the deployment looks like this:\n\n1. Init the address provider 2. Init all other contracts, passing in the address provider address (not ALL contracts need this but many do) 3. Update the address provider, with an update config call to contain all the other contract addresses from step 2, this is why we need it to be owned by an EOA (externally owned account) - so we can do this update as part of the deployment 4. Update the owner of the address provider contract at the end of deployment to be either a. the multisig or b. the gov/council contract",
+      "title": "ConfigResponse",
       "type": "object",
       "required": [
-        "owner",
         "prefix"
       ],
       "properties": {
         "owner": {
           "description": "The contract's owner",
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "prefix": {
           "description": "The address prefix of the chain this contract is deployed on",
           "type": "string"
+        },
+        "proposed_new_owner": {
+          "description": "The contract's proposed owner",
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "additionalProperties": false

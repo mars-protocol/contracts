@@ -15,11 +15,12 @@ import {
   Timestamp,
   Uint64,
   Addr,
+  OwnerUpdate,
   QueryMsg,
   Decimal,
   AssetIncentiveResponse,
   AssetIncentive,
-  Config,
+  ConfigResponse,
 } from './MarsIncentives.types'
 import { MarsIncentivesQueryClient, MarsIncentivesClient } from './MarsIncentives.client'
 export const marsIncentivesQueryKeys = {
@@ -98,15 +99,36 @@ export function useMarsIncentivesAssetIncentiveQuery<TData = AssetIncentiveRespo
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsIncentivesConfigQuery<TData> extends MarsIncentivesReactQuery<Config, TData> {}
-export function useMarsIncentivesConfigQuery<TData = Config>({
+export interface MarsIncentivesConfigQuery<TData>
+  extends MarsIncentivesReactQuery<ConfigResponse, TData> {}
+export function useMarsIncentivesConfigQuery<TData = ConfigResponse>({
   client,
   options,
 }: MarsIncentivesConfigQuery<TData>) {
-  return useQuery<Config, Error, TData>(
+  return useQuery<ConfigResponse, Error, TData>(
     marsIncentivesQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsIncentivesUpdateOwnerMutation {
+  client: MarsIncentivesClient
+  msg: OwnerUpdate
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsIncentivesUpdateOwnerMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsIncentivesUpdateOwnerMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsIncentivesUpdateOwnerMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.updateOwner(msg, fee, memo, funds),
+    options,
   )
 }
 export interface MarsIncentivesUpdateConfigMutation {
@@ -114,7 +136,6 @@ export interface MarsIncentivesUpdateConfigMutation {
   msg: {
     addressProvider?: string
     marsDenom?: string
-    owner?: string
   }
   args?: {
     fee?: number | StdFee | 'auto'

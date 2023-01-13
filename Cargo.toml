@@ -36,6 +36,7 @@ cw2             = "1.0.1"
 cw-multi-test   = "0.16.1"
 cw-storage-plus = "1.0.1"
 cw-utils        = "1.0.1"
+mars-owner      = "1.0.0"
 # FIXME: use crates.io deps when ready
 osmosis-std     = { git = "https://github.com/osmosis-labs/osmosis-rust", rev = "5f2493aa13569167431add6282916683b4aaf3c8" }
 osmosis-testing = { git = "https://github.com/osmosis-labs/osmosis-rust", rev = "5f2493aa13569167431add6282916683b4aaf3c8" }

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use cosmwasm_std::{
     from_binary,
     testing::{

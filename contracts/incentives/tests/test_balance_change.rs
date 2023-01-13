@@ -15,13 +15,13 @@ use mars_outpost::{
 };
 use mars_testing::MockEnvParams;
 
-use crate::helpers::{setup_test, setup_test_with_env};
+use crate::helpers::{th_setup, th_setup_with_env};
 
 mod helpers;
 
 #[test]
 fn test_balance_change_unauthorized() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     // the `balance_change` method can only be invoked by Red Bank contract
     let err = execute(
@@ -41,7 +41,7 @@ fn test_balance_change_unauthorized() {
 
 #[test]
 fn test_execute_balance_change_noops() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     // non existing incentive returns a no op
     let info = mock_info("red_bank", &[]);
@@ -59,7 +59,7 @@ fn test_execute_balance_change_noops() {
 #[test]
 fn test_balance_change_zero_emission() {
     let env = mock_env();
-    let mut deps = setup_test_with_env(env.clone());
+    let mut deps = th_setup_with_env(env.clone());
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
     let asset_incentive_index = Decimal::from_ratio(1_u128, 2_u128);
@@ -126,7 +126,7 @@ fn test_balance_change_zero_emission() {
 #[test]
 fn test_balance_change_user_with_zero_balance() {
     let env = mock_env();
-    let mut deps = setup_test_with_env(env);
+    let mut deps = th_setup_with_env(env);
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
 
@@ -204,7 +204,7 @@ fn test_balance_change_user_with_zero_balance() {
 #[test]
 fn test_with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
     let env = mock_env();
-    let mut deps = setup_test_with_env(env);
+    let mut deps = th_setup_with_env(env);
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
 
@@ -275,7 +275,7 @@ fn test_with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards
 #[test]
 fn test_set_new_asset_incentive_user_non_zero_balance() {
     let env = mock_env();
-    let mut deps = setup_test_with_env(env);
+    let mut deps = th_setup_with_env(env);
     let user_addr = Addr::unchecked("user");
 
     // set collateral shares for user
@@ -393,7 +393,7 @@ fn test_set_new_asset_incentive_user_non_zero_balance() {
 #[test]
 fn test_balance_change_user_non_zero_balance() {
     let env = mock_env();
-    let mut deps = setup_test_with_env(env);
+    let mut deps = th_setup_with_env(env);
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
 

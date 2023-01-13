@@ -6,6 +6,7 @@ use mars_oracle_osmosis::{
     Downtime, DowntimeDetector, OsmosisPriceSource,
 };
 use mars_outpost::{error::MarsError, oracle::QueryMsg};
+use mars_owner::OwnerError::NotOwner;
 use mars_testing::mock_info;
 
 mod helpers;
@@ -26,7 +27,7 @@ fn test_setting_price_source_by_non_owner() {
         },
     )
     .unwrap_err();
-    assert_eq!(err, MarsError::Unauthorized {}.into())
+    assert_eq!(err, ContractError::Owner(NotOwner {}))
 }
 
 #[test]

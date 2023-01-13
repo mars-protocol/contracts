@@ -1,12 +1,16 @@
 #![allow(dead_code)]
 
+use cosmwasm_schema::serde;
 use cosmwasm_std::{
+    from_binary,
     testing::{MockApi, MockStorage},
     Addr, Coin, Decimal, Deps, DepsMut, Event, OwnedDeps, Uint128,
 };
-use mars_outpost::red_bank::{Collateral, CreateOrUpdateConfig, Debt, InstantiateMsg, Market};
+use mars_outpost::red_bank::{
+    Collateral, CreateOrUpdateConfig, Debt, InstantiateMsg, Market, QueryMsg,
+};
 use mars_red_bank::{
-    contract::instantiate,
+    contract::{instantiate, query},
     interest_rates::{
         calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
         ScalingOperation,
@@ -71,11 +75,12 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
     let env = mock_env(MockEnvParams::default());
     let info = mock_info("owner");
     let config = CreateOrUpdateConfig {
-        owner: Some("owner".to_string()),
         address_provider: Some("address_provider".to_string()),
         close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
+        owner: "owner".to_string(),
+        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -83,6 +88,10 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
     deps.querier.set_oracle_price("uusd", Decimal::one());
 
     deps
+}
+
+pub fn th_query<T: serde::de::DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
+    from_binary(&query(deps, mock_env(MockEnvParams::default()), msg).unwrap()).unwrap()
 }
 
 pub fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {

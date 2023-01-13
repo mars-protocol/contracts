@@ -1,10 +1,12 @@
 use cosmwasm_std::{testing::mock_env, Decimal};
+use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
     contract::entry::execute,
     msg::{ExecuteMsg, PriceSourceResponse},
     OsmosisPriceSource,
 };
-use mars_outpost::{error::MarsError, oracle::QueryMsg};
+use mars_outpost::oracle::QueryMsg;
+use mars_owner::OwnerError::NotOwner;
 use mars_testing::mock_info;
 
 mod helpers;
@@ -22,7 +24,7 @@ fn test_remove_price_source_by_non_owner() {
         },
     )
     .unwrap_err();
-    assert_eq!(err, MarsError::Unauthorized {}.into())
+    assert_eq!(err, ContractError::Owner(NotOwner {}))
 }
 
 #[test]

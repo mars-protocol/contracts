@@ -2,6 +2,7 @@ use std::{any::type_name, fmt, str::FromStr};
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::StdError;
+use mars_owner::OwnerUpdate;
 
 #[cw_serde]
 #[derive(Copy, Eq, Hash)]
@@ -84,23 +85,27 @@ pub struct InstantiateMsg {
 }
 
 #[cw_serde]
+pub struct Config {
+    /// The address prefix of the chain this contract is deployed on
+    pub prefix: String,
+}
+
+#[cw_serde]
 pub enum ExecuteMsg {
     /// Set address
     SetAddress {
         address_type: MarsAddressType,
         address: String,
     },
-    /// Propose to transfer the contract's ownership to another account
-    TransferOwnership {
-        new_owner: String,
-    },
+    /// Manages admin role state
+    UpdateOwner(OwnerUpdate),
 }
 
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Get config
-    #[returns(Config)]
+    #[returns(ConfigResponse)]
     Config {},
     /// Get a single address
     #[returns(AddressResponseItem)]
@@ -116,7 +121,15 @@ pub enum QueryMsg {
     },
 }
 
-pub type Config = InstantiateMsg;
+#[cw_serde]
+pub struct ConfigResponse {
+    /// The contract's owner
+    pub owner: Option<String>,
+    /// The contract's proposed owner
+    pub proposed_new_owner: Option<String>,
+    /// The address prefix of the chain this contract is deployed on
+    pub prefix: String,
+}
 
 #[cw_serde]
 pub struct AddressResponseItem {

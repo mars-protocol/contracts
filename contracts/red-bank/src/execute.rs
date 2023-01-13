@@ -10,6 +10,7 @@ use mars_outpost::{
         Config, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg, Market,
     },
 };
+use mars_owner::{OwnerError, OwnerInit::SetInitialOwner, OwnerUpdate};
 
 use crate::{
     error::ContractError,
@@ -21,7 +22,9 @@ use crate::{
         apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
         get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
     },
-    state::{COLLATERALS, CONFIG, DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
+    state::{
+        COLLATERALS, CONFIG, DEBTS, EMERGENCY_OWNER, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS,
+    },
     user::User,
 };
 
@@ -34,20 +37,18 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
     // Destructuring a struct’s fields into separate variables in order to force
     // compile error if we add more params
     let CreateOrUpdateConfig {
-        owner,
         address_provider,
         close_factor,
     } = msg.config;
 
     // All fields should be available
-    let available = owner.is_some() && address_provider.is_some() && close_factor.is_some();
+    let available = address_provider.is_some() && close_factor.is_some();
 
     if !available {
         return Err(MarsError::InstantiateParamsUnavailable {}.into());
     };
 
     let config = Config {
-        owner: option_string_to_addr(deps.api, owner, zero_address())?,
         address_provider: option_string_to_addr(deps.api, address_provider, zero_address())?,
         close_factor: close_factor.unwrap(),
     };
@@ -56,7 +57,39 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
 
     CONFIG.save(deps.storage, &config)?;
 
+    OWNER.initialize(
+        deps.storage,
+        deps.api,
+        SetInitialOwner {
+            owner: msg.owner,
+        },
+    )?;
+
+    EMERGENCY_OWNER.initialize(
+        deps.storage,
+        deps.api,
+        SetInitialOwner {
+            owner: msg.emergency_owner,
+        },
+    )?;
+
     Ok(Response::default())
+}
+
+pub fn update_owner(
+    deps: DepsMut,
+    info: MessageInfo,
+    update: OwnerUpdate,
+) -> Result<Response, ContractError> {
+    Ok(OWNER.update(deps, info, update)?)
+}
+
+pub fn update_emergency_owner(
+    deps: DepsMut,
+    info: MessageInfo,
+    update: OwnerUpdate,
+) -> Result<Response, ContractError> {
+    Ok(EMERGENCY_OWNER.update(deps, info, update)?)
 }
 
 /// Update config
@@ -65,22 +98,18 @@ pub fn update_config(
     info: MessageInfo,
     new_config: CreateOrUpdateConfig,
 ) -> Result<Response, ContractError> {
-    let mut config = CONFIG.load(deps.storage)?;
+    OWNER.assert_owner(deps.storage, &info.sender)?;
 
-    if info.sender != config.owner {
-        return Err(MarsError::Unauthorized {}.into());
-    }
+    let mut config = CONFIG.load(deps.storage)?;
 
     // Destructuring a struct’s fields into separate variables in order to force
     // compile error if we add more params
     let CreateOrUpdateConfig {
-        owner,
         address_provider,
         close_factor,
     } = new_config;
 
     // Update config
-    config.owner = option_string_to_addr(deps.api, owner, config.owner)?;
     config.address_provider =
         option_string_to_addr(deps.api, address_provider, config.address_provider)?;
     config.close_factor = close_factor.unwrap_or(config.close_factor);
@@ -102,11 +131,7 @@ pub fn init_asset(
     denom: String,
     params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-
-    if info.sender != config.owner {
-        return Err(MarsError::Unauthorized {}.into());
-    }
+    OWNER.assert_owner(deps.storage, &info.sender)?;
 
     validate_native_denom(&denom)?;
 
@@ -187,13 +212,22 @@ pub fn update_asset(
     denom: String,
     params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-
-    if info.sender != config.owner {
-        return Err(MarsError::Unauthorized {}.into());
+    if OWNER.is_owner(deps.storage, &info.sender)? {
+        update_asset_by_owner(deps, &env, &denom, params)
+    } else if EMERGENCY_OWNER.is_owner(deps.storage, &info.sender)? {
+        update_asset_by_emergency_owner(deps, &denom, params)
+    } else {
+        Err(OwnerError::NotOwner {}.into())
     }
+}
 
-    let market_option = MARKETS.may_load(deps.storage, &denom)?;
+fn update_asset_by_owner(
+    deps: DepsMut,
+    env: &Env,
+    denom: &str,
+    params: InitOrUpdateAssetParams,
+) -> Result<Response, ContractError> {
+    let market_option = MARKETS.may_load(deps.storage, denom)?;
     match market_option {
         None => Err(ContractError::AssetNotInitialized {}),
         Some(mut market) => {
@@ -221,6 +255,7 @@ pub fn update_asset(
             let mut response = Response::new();
 
             if should_update_interest_rates {
+                let config = CONFIG.load(deps.storage)?;
                 let addresses = address_provider::helpers::query_addresses(
                     deps.as_ref(),
                     &config.address_provider,
@@ -231,7 +266,7 @@ pub fn update_asset(
 
                 response = apply_accumulated_interests(
                     deps.storage,
-                    &env,
+                    env,
                     &mut market,
                     rewards_collector_addr,
                     incentives_addr,
@@ -257,19 +292,42 @@ pub fn update_asset(
             if should_update_interest_rates {
                 response = update_interest_rates(
                     &deps,
-                    &env,
+                    env,
                     &mut updated_market,
                     Uint128::zero(),
-                    &denom,
+                    denom,
                     response,
                 )?;
             }
-            MARKETS.save(deps.storage, &denom, &updated_market)?;
+            MARKETS.save(deps.storage, denom, &updated_market)?;
 
             Ok(response
                 .add_attribute("action", "outposts/red-bank/update_asset")
-                .add_attribute("denom", &denom))
+                .add_attribute("denom", denom))
         }
+    }
+}
+
+/// Emergency owner can only DISABLE BORROWING.
+fn update_asset_by_emergency_owner(
+    deps: DepsMut,
+    denom: &str,
+    params: InitOrUpdateAssetParams,
+) -> Result<Response, ContractError> {
+    if let Some(mut market) = MARKETS.may_load(deps.storage, denom)? {
+        match params.borrow_enabled {
+            Some(borrow_enabled) if !borrow_enabled => {
+                market.borrow_enabled = borrow_enabled;
+                MARKETS.save(deps.storage, denom, &market)?;
+
+                Ok(Response::new()
+                    .add_attribute("action", "outposts/red-bank/emergency_update_asset")
+                    .add_attribute("denom", denom))
+            }
+            _ => Err(MarsError::Unauthorized {}.into()),
+        }
+    } else {
+        Err(ContractError::AssetNotInitialized {})
     }
 }
 
@@ -281,13 +339,7 @@ pub fn update_uncollateralized_loan_limit(
     denom: String,
     new_limit: Uint128,
 ) -> Result<Response, ContractError> {
-    // Get config
-    let config = CONFIG.load(deps.storage)?;
-
-    // Only owner can do this
-    if info.sender != config.owner {
-        return Err(MarsError::Unauthorized {}.into());
-    }
+    OWNER.assert_owner(deps.storage, &info.sender)?;
 
     // Check that the user has no collateralized debt
     let current_limit = UNCOLLATERALIZED_LOAN_LIMITS

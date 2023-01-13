@@ -31,3 +31,4 @@ osmosis-std                 = { workspace = true }
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }
 mars-testing    = { workspace = true }
+mars-owner      = { workspace = true }

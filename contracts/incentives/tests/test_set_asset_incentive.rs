@@ -12,15 +12,16 @@ use mars_outpost::{
     incentives::{AssetIncentive, ExecuteMsg},
     red_bank::Market,
 };
+use mars_owner::OwnerError::NotOwner;
 use mars_testing::MockEnvParams;
 
-use crate::helpers::{setup_test, setup_test_with_env};
+use crate::helpers::{th_setup, th_setup_with_env};
 
 mod helpers;
 
 #[test]
 fn test_only_owner_can_set_asset_incentive() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     let info = mock_info("sender", &[]);
     let msg = ExecuteMsg::SetAssetIncentive {
@@ -31,12 +32,12 @@ fn test_only_owner_can_set_asset_incentive() {
     };
 
     let res_error = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(res_error, ContractError::Mars(MarsError::Unauthorized {}));
+    assert_eq!(res_error, ContractError::Owner(NotOwner {}));
 }
 
 #[test]
 fn test_invalid_denom_for_incentives() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     let info = mock_info("owner", &[]);
     let msg = ExecuteMsg::SetAssetIncentive {
@@ -58,7 +59,7 @@ fn test_invalid_denom_for_incentives() {
 
 #[test]
 fn test_cannot_set_new_asset_incentive_with_empty_params() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
     let info = mock_info("owner", &[]);
     let env = mock_env();
 
@@ -107,7 +108,7 @@ fn test_cannot_set_new_asset_incentive_with_empty_params() {
 
 #[test]
 fn test_cannot_set_new_asset_incentive_with_invalid_params() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
     let info = mock_info("owner", &[]);
     let block_time = Timestamp::from_seconds(1_000_000);
     let env = mars_testing::mock_env(MockEnvParams {
@@ -146,7 +147,7 @@ fn test_cannot_set_new_asset_incentive_with_invalid_params() {
 
 #[test]
 fn test_set_new_asset_incentive() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     let info = mock_info("owner", &[]);
     let env = mars_testing::mock_env(MockEnvParams {
@@ -183,7 +184,7 @@ fn test_set_new_asset_incentive() {
 
 #[test]
 fn test_set_existing_asset_incentive_with_different_start_time() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     deps.querier.set_redbank_market(Market {
         denom: "uosmo".to_string(),
@@ -305,7 +306,7 @@ fn test_set_existing_asset_incentive_with_different_start_time() {
 
 #[test]
 fn test_set_existing_asset_incentive_with_different_duration() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     deps.querier.set_redbank_market(Market {
         denom: "uosmo".to_string(),
@@ -416,7 +417,7 @@ fn test_set_existing_asset_incentive_with_different_duration() {
 fn test_set_existing_asset_incentive_with_index_updated_during_incentive() {
     // setup
     let env = mock_env();
-    let mut deps = setup_test_with_env(env);
+    let mut deps = th_setup_with_env(env);
     let denom = "uosmo";
     let total_collateral_scaled = Uint128::new(2_000_000);
 
@@ -492,7 +493,7 @@ fn test_set_existing_asset_incentive_with_index_updated_during_incentive() {
 fn test_set_existing_asset_incentive_with_index_updated_after_incentive() {
     // setup
     let env = mock_env();
-    let mut deps = setup_test_with_env(env);
+    let mut deps = th_setup_with_env(env);
     let denom = "uosmo";
     let total_collateral_scaled = Uint128::new(2_000_000);
 

@@ -4,16 +4,16 @@ use cosmwasm_std::{
 };
 use mars_incentives::{
     contract::{execute, instantiate},
-    state::CONFIG,
     ContractError,
 };
 use mars_outpost::{
     error::MarsError,
-    incentives::{ExecuteMsg, InstantiateMsg},
+    incentives::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg},
 };
+use mars_owner::OwnerError::NotOwner;
 use mars_testing::mock_dependencies;
 
-use crate::helpers::setup_test;
+use crate::helpers::{th_query, th_setup};
 
 mod helpers;
 
@@ -32,32 +32,32 @@ fn test_proper_initialization() {
     let empty_vec: Vec<SubMsg> = vec![];
     assert_eq!(empty_vec, res.messages);
 
-    let config = CONFIG.load(deps.as_ref().storage).unwrap();
-    assert_eq!(config.owner, Addr::unchecked("owner"));
+    let config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
+    assert_eq!(config.owner, Some("owner".to_string()));
+    assert_eq!(config.proposed_new_owner, None);
+    assert_eq!(config.address_provider, "address_provider".to_string());
     assert_eq!(config.mars_denom, "umars".to_string());
 }
 
 #[test]
 fn test_update_config() {
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     // *
     // non owner is not authorized
     // *
     let msg = ExecuteMsg::UpdateConfig {
-        owner: None,
         address_provider: None,
         mars_denom: None,
     };
     let info = mock_info("somebody", &[]);
     let error_res = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(error_res, ContractError::Mars(MarsError::Unauthorized {}));
+    assert_eq!(error_res, ContractError::Owner(NotOwner {}));
 
     // *
     // update config with invalid denom
     // *
     let msg = ExecuteMsg::UpdateConfig {
-        owner: Some(String::from("new_owner")),
         address_provider: None,
         mars_denom: Some("*!fdskfna".to_string()),
     };
@@ -75,8 +75,7 @@ fn test_update_config() {
     // update config with new params
     // *
     let msg = ExecuteMsg::UpdateConfig {
-        owner: Some(String::from("new_owner")),
-        address_provider: None,
+        address_provider: Some("new_addr_provider".to_string()),
         mars_denom: None,
     };
     let info = mock_info("owner", &[]);
@@ -85,7 +84,9 @@ fn test_update_config() {
     assert_eq!(0, res.messages.len());
 
     // Read config from state
-    let new_config = CONFIG.load(deps.as_ref().storage).unwrap();
-    assert_eq!(new_config.owner, Addr::unchecked("new_owner"));
+    let new_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
+    assert_eq!(new_config.owner, Some("owner".to_string()));
+    assert_eq!(new_config.proposed_new_owner, None);
+    assert_eq!(new_config.address_provider, Addr::unchecked("new_addr_provider"));
     assert_eq!(new_config.mars_denom, "umars".to_string());
 }

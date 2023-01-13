@@ -1,5 +1,6 @@
 use cosmwasm_std::{ConversionOverflowError, StdError};
 use mars_outpost::error::MarsError;
+use mars_owner::OwnerError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -9,6 +10,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Mars(#[from] MarsError),
+
+    #[error("{0}")]
+    Owner(#[from] OwnerError),
 
     #[error("{0}")]
     ConversionOverflow(#[from] ConversionOverflowError),

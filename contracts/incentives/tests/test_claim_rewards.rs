@@ -14,7 +14,7 @@ use mars_outpost::{
 };
 use mars_testing::MockEnvParams;
 
-use crate::helpers::{setup_test, setup_test_with_env};
+use crate::helpers::{th_setup, th_setup_with_env};
 
 mod helpers;
 
@@ -22,7 +22,7 @@ mod helpers;
 fn test_execute_claim_rewards() {
     // SETUP
     let env = mock_env();
-    let mut deps = setup_test_with_env(env.clone());
+    let mut deps = th_setup_with_env(env.clone());
     let user_addr = Addr::unchecked("user");
 
     let previous_unclaimed_rewards = Uint128::new(50_000);
@@ -252,7 +252,7 @@ fn test_execute_claim_rewards() {
 #[test]
 fn test_claim_zero_rewards() {
     // SETUP
-    let mut deps = setup_test();
+    let mut deps = th_setup();
 
     let info = mock_info("user", &[]);
     let msg = ExecuteMsg::ClaimRewards {};

@@ -11,11 +11,6 @@ export interface InstantiateMsg {
 }
 export type ExecuteMsg =
   | {
-      update_config: {
-        owner: string
-      }
-    }
-  | {
       set_price_source: {
         denom: string
         price_source: OsmosisPriceSource
@@ -25,6 +20,9 @@ export type ExecuteMsg =
       remove_price_source: {
         denom: string
       }
+    }
+  | {
+      update_owner: OwnerUpdate
     }
 export type OsmosisPriceSource =
   | {
@@ -88,6 +86,15 @@ export type Downtime =
   | 'duration24h'
   | 'duration36h'
   | 'duration48h'
+export type OwnerUpdate =
+  | {
+      propose_new_owner: {
+        proposed: string
+      }
+    }
+  | 'clear_proposed'
+  | 'accept_proposed'
+  | 'abolish_owner_role'
 export interface DowntimeDetector {
   downtime: Downtime
   recovery: number
@@ -119,9 +126,10 @@ export type QueryMsg =
         start_after?: string | null
       }
     }
-export interface ConfigForString {
+export interface ConfigResponse {
   base_denom: string
-  owner: string
+  owner?: string | null
+  proposed_new_owner?: string | null
 }
 export interface PriceResponse {
   denom: string

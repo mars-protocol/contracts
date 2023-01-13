@@ -7,10 +7,10 @@ use helpers::{
     TestUtilizationDeltaInfo,
 };
 use mars_outpost::{
-    error::MarsError,
     math,
     red_bank::{Debt, ExecuteMsg, Market},
 };
+use mars_owner::OwnerError::NotOwner;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -75,7 +75,7 @@ fn test_uncollateralized_loan_limits() {
     let error_res =
         execute(deps.as_mut(), update_limit_env.clone(), info, update_limit_msg.clone())
             .unwrap_err();
-    assert_eq!(error_res, MarsError::Unauthorized {}.into());
+    assert_eq!(error_res, ContractError::Owner(NotOwner {}));
 
     // Update borrower limit as owner
     let info = mock_info("owner", &[]);

@@ -2,7 +2,7 @@ use cosmwasm_std::{
     testing::{mock_env, MOCK_CONTRACT_ADDR},
     CosmosMsg, Decimal, Fraction, SubMsg, Uint128,
 };
-use mars_outpost::rewards_collector::{Config, QueryMsg};
+use mars_outpost::rewards_collector::{ConfigResponse, QueryMsg};
 use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg};
 use mars_testing::mock_info;
 use osmosis_std::types::{
@@ -74,7 +74,7 @@ fn test_swapping_asset() {
         },
     );
 
-    let cfg: Config<String> = helpers::query(deps.as_ref(), QueryMsg::Config {});
+    let cfg: ConfigResponse = helpers::query(deps.as_ref(), QueryMsg::Config {});
 
     // amount for safety fund:   42069 * 0.25 = 10517
     // amount for fee collector: 42069 - 10517 = 31552

@@ -3,6 +3,7 @@ use mars_outpost::{
     error::MarsError,
     rewards_collector::{QueryMsg, RouteResponse},
 };
+use mars_owner::OwnerError::NotOwner;
 use mars_rewards_collector_base::{ContractError, Route};
 use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg, OsmosisRoute};
 use mars_testing::mock_info;
@@ -40,7 +41,7 @@ fn test_setting_route() {
 
     // non-owner is not authorized
     let err = execute(deps.as_mut(), mock_env(), mock_info("jake"), msg.clone()).unwrap_err();
-    assert_eq!(err, MarsError::Unauthorized {}.into());
+    assert_eq!(err, ContractError::Owner(NotOwner {}));
 
     // attempting to set an invalid swap route; should fail
     let err = execute(deps.as_mut(), mock_env(), mock_info("owner"), invalid_msg).unwrap_err();

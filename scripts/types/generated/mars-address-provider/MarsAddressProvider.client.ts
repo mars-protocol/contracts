@@ -11,13 +11,15 @@ import {
   InstantiateMsg,
   ExecuteMsg,
   MarsAddressType,
+  OwnerUpdate,
   QueryMsg,
   AddressResponseItem,
   ArrayOfAddressResponseItem,
+  ConfigResponse,
 } from './MarsAddressProvider.types'
 export interface MarsAddressProviderReadOnlyInterface {
   contractAddress: string
-  config: () => Promise<InstantiateMsg>
+  config: () => Promise<ConfigResponse>
   address: () => Promise<AddressResponseItem>
   addresses: () => Promise<ArrayOfAddressResponseItem>
   allAddresses: ({
@@ -41,7 +43,7 @@ export class MarsAddressProviderQueryClient implements MarsAddressProviderReadOn
     this.allAddresses = this.allAddresses.bind(this)
   }
 
-  config = async (): Promise<InstantiateMsg> => {
+  config = async (): Promise<ConfigResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {},
     })
@@ -86,12 +88,7 @@ export interface MarsAddressProviderInterface extends MarsAddressProviderReadOnl
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
-  transferOwnership: (
-    {
-      newOwner,
-    }: {
-      newOwner: string
-    },
+  updateOwner: (
     fee?: number | StdFee | 'auto',
     memo?: string,
     funds?: Coin[],
@@ -111,7 +108,7 @@ export class MarsAddressProviderClient
     this.sender = sender
     this.contractAddress = contractAddress
     this.setAddress = this.setAddress.bind(this)
-    this.transferOwnership = this.transferOwnership.bind(this)
+    this.updateOwner = this.updateOwner.bind(this)
   }
 
   setAddress = async (
@@ -140,12 +137,7 @@ export class MarsAddressProviderClient
       funds,
     )
   }
-  transferOwnership = async (
-    {
-      newOwner,
-    }: {
-      newOwner: string
-    },
+  updateOwner = async (
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     funds?: Coin[],
@@ -154,9 +146,7 @@ export class MarsAddressProviderClient
       this.sender,
       this.contractAddress,
       {
-        transfer_ownership: {
-          new_owner: newOwner,
-        },
+        update_owner: {},
       },
       fee,
       memo,

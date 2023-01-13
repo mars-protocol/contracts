@@ -30,9 +30,9 @@ checksum = "2cb2f989d18dd141ab8ae82f64d1a8cdd37e0840f73a406896cf5e99502fab61"
 
 [[package]]
 name = "async-trait"
-version = "0.1.60"
+version = "0.1.61"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "677d1d8ab452a3936018a687b20e6f7cf5363d713b732b8884001317b0e48aa3"
+checksum = "705339e0e4a9690e2908d2b3d049d85682cf19fbd5782494498fbf7003a6a282"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -698,9 +698,9 @@ dependencies = [
 
 [[package]]
 name = "glob"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
+checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "group"
@@ -861,6 +861,7 @@ dependencies = [
  "cw-storage-plus",
  "cw2",
  "mars-outpost",
+ "mars-owner",
  "serde",
  "thiserror",
 ]
@@ -884,6 +885,7 @@ dependencies = [
  "cw-storage-plus",
  "cw2",
  "mars-outpost",
+ "mars-owner",
  "mars-testing",
  "thiserror",
 ]
@@ -915,6 +917,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-outpost",
+ "mars-owner",
  "schemars",
  "serde",
  "thiserror",
@@ -931,6 +934,7 @@ dependencies = [
  "mars-oracle-base",
  "mars-osmosis",
  "mars-outpost",
+ "mars-owner",
  "mars-testing",
  "osmosis-std",
  "schemars",
@@ -953,7 +957,21 @@ version = "1.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
+ "mars-owner",
  "mars-testing",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-owner"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5644a8b047a0d64d04706414805872f35439755e057431152dd36e6f369be24"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "schemars",
  "thiserror",
 ]
 
@@ -968,6 +986,7 @@ dependencies = [
  "cw2",
  "mars-health",
  "mars-outpost",
+ "mars-owner",
  "mars-testing",
  "thiserror",
 ]
@@ -979,6 +998,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-outpost",
+ "mars-owner",
  "mars-testing",
  "schemars",
  "serde",
@@ -995,6 +1015,7 @@ dependencies = [
  "cw2",
  "mars-osmosis",
  "mars-outpost",
+ "mars-owner",
  "mars-rewards-collector-base",
  "mars-testing",
  "osmosis-std",
@@ -1279,9 +1300,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.7.0"
+version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e076559ef8e241f2ae3479e36f97bd5741c0330689e217ad51ce2c76808b868a"
+checksum = "48aaa5748ba571fb95cd2c85c09f629215d3a6ece942baa100950af03a34f733"
 dependencies = [
  "aho-corasick",
  "memchr",
