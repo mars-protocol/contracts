@@ -25,7 +25,7 @@ fn test_propose_new_emergency_owner() {
 
     let original_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
 
-    let new_admin = "new_admin";
+    let new_owner = "new_admin";
 
     // only admin can propose new admins
     let bad_guy = "bad_guy";
@@ -45,7 +45,7 @@ fn test_propose_new_emergency_owner() {
         mock_env(),
         mock_info(&original_config.emergency_owner.clone().unwrap(), &[]),
         ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ProposeNewOwner {
-            proposed: new_admin.to_string(),
+            proposed: new_owner.to_string(),
         }),
     )
     .unwrap();
@@ -59,7 +59,7 @@ fn test_propose_new_emergency_owner() {
         new_config.proposed_new_emergency_owner,
         original_config.proposed_new_emergency_owner
     );
-    assert_eq!(new_config.proposed_new_emergency_owner, Some(new_admin.to_string()));
+    assert_eq!(new_config.proposed_new_emergency_owner, Some(new_owner.to_string()));
 }
 
 #[test]
@@ -68,20 +68,20 @@ fn test_clear_proposed_emergency_owner() {
 
     let original_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
 
-    let new_admin = "new_admin";
+    let new_owner = "new_admin";
 
     execute(
         deps.as_mut(),
         mock_env(),
         mock_info(&original_config.emergency_owner.clone().unwrap(), &[]),
         ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ProposeNewOwner {
-            proposed: new_admin.to_string(),
+            proposed: new_owner.to_string(),
         }),
     )
     .unwrap();
 
     let interim_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
-    assert_eq!(interim_config.proposed_new_emergency_owner, Some(new_admin.to_string()));
+    assert_eq!(interim_config.proposed_new_emergency_owner, Some(new_owner.to_string()));
 
     // only admin can clear
     let bad_guy = "bad_guy";
@@ -120,14 +120,14 @@ fn test_accept_emergency_owner_role() {
 
     let original_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
 
-    let new_admin = "new_admin";
+    let new_owner = "new_admin";
 
     execute(
         deps.as_mut(),
         mock_env(),
         mock_info(&original_config.emergency_owner.clone().unwrap(), &[]),
         ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ProposeNewOwner {
-            proposed: new_admin.to_string(),
+            proposed: new_owner.to_string(),
         }),
     )
     .unwrap();
@@ -145,7 +145,7 @@ fn test_accept_emergency_owner_role() {
     execute(
         deps.as_mut(),
         mock_env(),
-        mock_info(new_admin, &[]),
+        mock_info(new_owner, &[]),
         ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::AcceptProposed),
     )
     .unwrap();
@@ -154,6 +154,6 @@ fn test_accept_emergency_owner_role() {
 
     assert_eq!(new_config.owner, original_config.owner);
     assert_eq!(new_config.proposed_new_owner, original_config.proposed_new_owner);
-    assert_eq!(new_config.emergency_owner.unwrap(), new_admin.to_string());
+    assert_eq!(new_config.emergency_owner.unwrap(), new_owner.to_string());
     assert_eq!(new_config.proposed_new_emergency_owner, None);
 }

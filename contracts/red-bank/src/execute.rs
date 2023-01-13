@@ -324,7 +324,7 @@ fn update_asset_by_emergency_owner(
                     .add_attribute("action", "outposts/red-bank/emergency_update_asset")
                     .add_attribute("denom", denom))
             }
-            _ => Ok(Response::new()),
+            _ => Err(MarsError::Unauthorized {}.into()),
         }
     } else {
         Err(ContractError::AssetNotInitialized {})

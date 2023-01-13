@@ -1011,9 +1011,8 @@ fn test_update_asset_by_emergency_owner() {
             params: new_asset_params,
         };
         let info = mock_info("emergency_owner", &[]);
-        let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
-        assert!(res.messages.is_empty());
-        assert!(res.attributes.is_empty());
+        let res_err = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+        assert_eq!(res_err, ContractError::Mars(MarsError::Unauthorized {}));
 
         let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();
         assert_eq!(old_market, new_market)
