@@ -22,6 +22,7 @@ authors       = [
   "Harry Scholes",
 ]
 edition       = "2021"
+license       = "GPL-v3-or-later"
 repository    = "https://github.com/mars-protocol/outposts"
 homepage      = "https://marsprotocol.io"
 documentation = "https://docs.marsprotocol.io/"

@@ -4,6 +4,7 @@ description   = "Helper functions to compute the health factor"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
+license       = { workspace = true }
 repository    = { workspace = true }
 homepage      = { workspace = true }
 documentation = { workspace = true }
