@@ -57,7 +57,7 @@ export const osmosisMainnet: DeploymentConfig = {
   rewardCollectorTimeoutBlocks: 10,
   rewardCollectorTimeoutSeconds: 60,
   rpcEndpoint: 'https://rpc.osmosis.zone',
-  safetyFundFeeShare: '0.2',
+  safetyFundFeeShare: '0.5',
   timeoutRevision: 1,
   deployerMnemonic: 'TO BE INSERTED AT TIME OF DEPLOYMENT',
   slippage_tolerance: '0.1',
