@@ -1,22 +1,23 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Decimal;
+use mars_owner::OwnerUpdate;
 
 #[cw_serde]
-pub struct Config<T> {
+pub struct InstantiateMsg {
     /// The contract's owner, who can update config and price sources
-    pub owner: T,
+    pub owner: String,
     /// The asset in which prices are denominated in
     pub base_denom: String,
 }
 
-pub type InstantiateMsg = Config<String>;
+#[cw_serde]
+pub struct Config {
+    /// The asset in which prices are denominated in
+    pub base_denom: String,
+}
 
 #[cw_serde]
 pub enum ExecuteMsg<T> {
-    /// Update contract config
-    UpdateConfig {
-        owner: String,
-    },
     /// Specify the price source to be used for a coin
     ///
     /// NOTE: The input parameters for method are chain-specific.
@@ -28,13 +29,15 @@ pub enum ExecuteMsg<T> {
     RemovePriceSource {
         denom: String,
     },
+    /// Manages admin role state
+    UpdateOwner(OwnerUpdate),
 }
 
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Query contract config.
-    #[returns(Config<String>)]
+    #[returns(ConfigResponse)]
     Config {},
     /// Query a coin's price source.
     ///
@@ -68,6 +71,16 @@ pub enum QueryMsg {
         start_after: Option<String>,
         limit: Option<u32>,
     },
+}
+
+#[cw_serde]
+pub struct ConfigResponse {
+    /// The contract's owner
+    pub owner: Option<String>,
+    /// The contract's proposed owner
+    pub proposed_new_owner: Option<String>,
+    /// The asset in which prices are denominated in
+    pub base_denom: String,
 }
 
 #[cw_serde]

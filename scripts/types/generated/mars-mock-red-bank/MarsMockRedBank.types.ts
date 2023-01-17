@@ -17,6 +17,12 @@ export interface CoinMarketInfo {
 }
 export type ExecuteMsg =
   | {
+      update_owner: OwnerUpdate
+    }
+  | {
+      update_emergency_owner: OwnerUpdate
+    }
+  | {
       update_config: {
         config: CreateOrUpdateConfig
       }
@@ -77,11 +83,19 @@ export type ExecuteMsg =
         enable: boolean
       }
     }
+export type OwnerUpdate =
+  | {
+      propose_new_owner: {
+        proposed: string
+      }
+    }
+  | 'clear_proposed'
+  | 'accept_proposed'
+  | 'abolish_owner_role'
 export type Uint128 = string
 export interface CreateOrUpdateConfig {
   address_provider?: string | null
   close_factor?: Decimal | null
-  owner?: string | null
 }
 export interface InitOrUpdateAssetParams {
   borrow_enabled?: boolean | null
@@ -182,10 +196,13 @@ export type QueryMsg =
         denom: string
       }
     }
-export interface ConfigForString {
+export interface ConfigResponse {
   address_provider: string
   close_factor: Decimal
-  owner: string
+  emergency_owner?: string | null
+  owner?: string | null
+  proposed_new_emergency_owner?: string | null
+  proposed_new_owner?: string | null
 }
 export interface Market {
   borrow_enabled: boolean
@@ -235,8 +252,8 @@ export type UserHealthStatus =
     }
 export interface UserPositionResponse {
   health_status: UserHealthStatus
-  total_collateralized_debt: Decimal
-  total_enabled_collateral: Decimal
-  weighted_liquidation_threshold_collateral: Decimal
-  weighted_max_ltv_collateral: Decimal
+  total_collateralized_debt: Uint128
+  total_enabled_collateral: Uint128
+  weighted_liquidation_threshold_collateral: Uint128
+  weighted_max_ltv_collateral: Uint128
 }

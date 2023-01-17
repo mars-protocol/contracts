@@ -4,7 +4,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     BlockInfo, Coin, CosmosMsg, Decimal, Empty, Env, Fraction, QuerierWrapper, Uint128,
 };
-use mars_osmosis::helpers::{has_denom, query_pool, query_twap_price};
+use mars_osmosis::helpers::{has_denom, query_arithmetic_twap_price, query_pool};
 use mars_rover::adapters::swap::EstimateExactInSwapResponse;
 use mars_swapper_base::{ContractError, ContractResult, Route};
 use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
@@ -163,8 +163,13 @@ fn query_out_amount(
     let mut price = Decimal::one();
     let mut denom_in = coin_in.denom.clone();
     for step in steps {
-        let step_price =
-            query_twap_price(querier, step.pool_id, &denom_in, &step.token_out_denom, start_time)?;
+        let step_price = query_arithmetic_twap_price(
+            querier,
+            step.pool_id,
+            &denom_in,
+            &step.token_out_denom,
+            start_time,
+        )?;
         price = price.checked_mul(step_price)?;
         denom_in = step.token_out_denom.clone();
     }

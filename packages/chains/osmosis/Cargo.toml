@@ -3,6 +3,7 @@ name          = "mars-osmosis"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
+license       = { workspace = true }
 repository    = { workspace = true }
 homepage      = { workspace = true }
 documentation = { workspace = true }
@@ -12,7 +13,6 @@ keywords      = { workspace = true }
 doctest = false
 
 [features]
-# for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
 

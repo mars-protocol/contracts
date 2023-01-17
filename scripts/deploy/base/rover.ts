@@ -255,7 +255,7 @@ export class Rover {
     }
   }
 
-  async getLockup(v: VaultInstantiateConfig): Promise<VaultInfo['lockup']> {
+  private async getLockup(v: VaultInstantiateConfig): Promise<VaultInfo['lockup']> {
     try {
       return await this.cwClient.queryContractSmart(v.vault.address, {
         vault_extension: {

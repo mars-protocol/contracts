@@ -2,6 +2,7 @@
 name          = "mars-outpost"
 version       = { workspace = true }
 authors       = { workspace = true }
+license       = { workspace = true }
 edition       = { workspace = true }
 repository    = { workspace = true }
 homepage      = { workspace = true }
@@ -19,4 +20,5 @@ backtraces = ["cosmwasm-std/backtraces"]
 [dependencies]
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
+mars-owner      = { workspace = true }
 thiserror       = { workspace = true }

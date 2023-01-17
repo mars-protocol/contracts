@@ -13,12 +13,13 @@ import {
   InstantiateMsg,
   CoinMarketInfo,
   ExecuteMsg,
+  OwnerUpdate,
   Uint128,
   CreateOrUpdateConfig,
   InitOrUpdateAssetParams,
   InterestRateModel,
   QueryMsg,
-  ConfigForString,
+  ConfigResponse,
   Market,
   ArrayOfMarket,
   UncollateralizedLoanLimitResponse,
@@ -443,12 +444,12 @@ export function useMarsMockRedBankMarketQuery<TData = Market>({
   )
 }
 export interface MarsMockRedBankConfigQuery<TData>
-  extends MarsMockRedBankReactQuery<ConfigForString, TData> {}
-export function useMarsMockRedBankConfigQuery<TData = ConfigForString>({
+  extends MarsMockRedBankReactQuery<ConfigResponse, TData> {}
+export function useMarsMockRedBankConfigQuery<TData = ConfigResponse>({
   client,
   options,
 }: MarsMockRedBankConfigQuery<TData>) {
-  return useQuery<ConfigForString, Error, TData>(
+  return useQuery<ConfigResponse, Error, TData>(
     marsMockRedBankQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -689,6 +690,45 @@ export function useMarsMockRedBankUpdateConfigMutation(
   return useMutation<ExecuteResult, Error, MarsMockRedBankUpdateConfigMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) =>
       client.updateConfig(msg, fee, memo, funds),
+    options,
+  )
+}
+export interface MarsMockRedBankUpdateEmergencyOwnerMutation {
+  client: MarsMockRedBankClient
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsMockRedBankUpdateEmergencyOwnerMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsMockRedBankUpdateEmergencyOwnerMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsMockRedBankUpdateEmergencyOwnerMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateEmergencyOwner(msg, fee, memo, funds),
+    options,
+  )
+}
+export interface MarsMockRedBankUpdateOwnerMutation {
+  client: MarsMockRedBankClient
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsMockRedBankUpdateOwnerMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsMockRedBankUpdateOwnerMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsMockRedBankUpdateOwnerMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.updateOwner(msg, fee, memo, funds),
     options,
   )
 }

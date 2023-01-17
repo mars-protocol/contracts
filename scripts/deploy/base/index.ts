@@ -36,7 +36,7 @@ export const taskRunner = async ({
     if (config.testActions) {
       await deployer.grantCreditLines()
       await deployer.setupOraclePrices()
-      await deployer.setupRedBankMarketsForZapDenoms()
+      await deployer.setupRedBankMarkets()
 
       const rover = await deployer.newUserRoverClient(config.testActions)
       await rover.createCreditAccount()

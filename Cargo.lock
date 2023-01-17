@@ -1127,6 +1127,7 @@ version = "1.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
+ "mars-owner",
  "thiserror",
 ]
 
@@ -1340,8 +1341,7 @@ dependencies = [
 [[package]]
 name = "osmosis-std"
 version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10d6fe6ac7fcba45ed61d738091d33c838c4cabbcf4892dc7aa56d19d39cc976"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=5f2493aa13569167431add6282916683b4aaf3c8#5f2493aa13569167431add6282916683b4aaf3c8"
 dependencies = [
  "chrono",
  "cosmwasm-std",
@@ -1367,8 +1367,7 @@ dependencies = [
 [[package]]
 name = "osmosis-std-derive"
 version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a455e262a6fdfd3914f3a4e11e6bc0ce491901cb9d507d7856d7ef6e129e90c6"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=5f2493aa13569167431add6282916683b4aaf3c8#5f2493aa13569167431add6282916683b4aaf3c8"
 dependencies = [
  "itertools",
  "proc-macro2",
@@ -1379,8 +1378,7 @@ dependencies = [
 [[package]]
 name = "osmosis-testing"
 version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42636a83a181b7c4f94658eb3bb219caa51ff55bcc69750cd7ae4bf50b12cb2f"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?rev=5f2493aa13569167431add6282916683b4aaf3c8#5f2493aa13569167431add6282916683b4aaf3c8"
 dependencies = [
  "base64",
  "bindgen",

@@ -1,20 +1,20 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Api, Decimal, StdResult, Uint128};
+use mars_owner::OwnerUpdate;
 
 use crate::{
     error::MarsError,
-    helpers::{decimal_param_le_one, integer_param_gt_zero},
+    helpers::{decimal_param_le_one, integer_param_gt_zero, validate_native_denom},
 };
 
 const MAX_SLIPPAGE_TOLERANCE_PERCENTAGE: u64 = 50;
 
-/// Global configuration
 #[cw_serde]
-pub struct Config<T> {
-    /// Contract owner
-    pub owner: T,
+pub struct InstantiateMsg {
+    /// The contract's owner
+    pub owner: String,
     /// Address provider returns addresses for all protocol contracts
-    pub address_provider: T,
+    pub address_provider: String,
     /// Percentage of fees that are sent to the safety fund
     pub safety_tax_rate: Decimal,
     /// The asset to which the safety fund share is converted
@@ -33,7 +33,29 @@ pub struct Config<T> {
     pub slippage_tolerance: Decimal,
 }
 
-impl<T> Config<T> {
+#[cw_serde]
+pub struct Config {
+    /// Address provider returns addresses for all protocol contracts
+    pub address_provider: Addr,
+    /// Percentage of fees that are sent to the safety fund
+    pub safety_tax_rate: Decimal,
+    /// The asset to which the safety fund share is converted
+    pub safety_fund_denom: String,
+    /// The asset to which the fee collector share is converted
+    pub fee_collector_denom: String,
+    /// The channel ID of the mars hub
+    pub channel_id: String,
+    /// Revision number of Mars Hub's IBC client
+    pub timeout_revision: u64,
+    /// Number of blocks after which an IBC transfer is to be considered failed, if no acknowledgement is received
+    pub timeout_blocks: u64,
+    /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
+    pub timeout_seconds: u64,
+    /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
+    pub slippage_tolerance: Decimal,
+}
+
+impl Config {
     pub fn validate(&self) -> Result<(), MarsError> {
         decimal_param_le_one(self.safety_tax_rate, "safety_tax_rate")?;
 
@@ -49,49 +71,32 @@ impl<T> Config<T> {
             });
         }
 
+        validate_native_denom(&self.safety_fund_denom)?;
+        validate_native_denom(&self.fee_collector_denom)?;
+
         Ok(())
     }
 }
 
-impl Config<String> {
-    pub fn check(&self, api: &dyn Api) -> StdResult<Config<Addr>> {
+impl Config {
+    pub fn checked(api: &dyn Api, msg: InstantiateMsg) -> StdResult<Config> {
         Ok(Config {
-            owner: api.addr_validate(&self.owner)?,
-            address_provider: api.addr_validate(&self.address_provider)?,
-            safety_tax_rate: self.safety_tax_rate,
-            safety_fund_denom: self.safety_fund_denom.clone(),
-            fee_collector_denom: self.fee_collector_denom.clone(),
-            channel_id: self.channel_id.clone(),
-            timeout_revision: self.timeout_revision,
-            timeout_blocks: self.timeout_blocks,
-            timeout_seconds: self.timeout_seconds,
-            slippage_tolerance: self.slippage_tolerance,
+            address_provider: api.addr_validate(&msg.address_provider)?,
+            safety_tax_rate: msg.safety_tax_rate,
+            safety_fund_denom: msg.safety_fund_denom,
+            fee_collector_denom: msg.fee_collector_denom,
+            channel_id: msg.channel_id,
+            timeout_revision: msg.timeout_revision,
+            timeout_blocks: msg.timeout_blocks,
+            timeout_seconds: msg.timeout_seconds,
+            slippage_tolerance: msg.slippage_tolerance,
         })
-    }
-}
-
-impl From<Config<Addr>> for Config<String> {
-    fn from(cfg: Config<Addr>) -> Self {
-        Self {
-            owner: cfg.owner.into(),
-            address_provider: cfg.address_provider.into(),
-            safety_tax_rate: cfg.safety_tax_rate,
-            safety_fund_denom: cfg.safety_fund_denom.clone(),
-            fee_collector_denom: cfg.fee_collector_denom.clone(),
-            channel_id: cfg.channel_id.clone(),
-            timeout_revision: cfg.timeout_revision,
-            timeout_blocks: cfg.timeout_blocks,
-            timeout_seconds: cfg.timeout_seconds,
-            slippage_tolerance: cfg.slippage_tolerance,
-        }
     }
 }
 
 #[cw_serde]
 #[derive(Default)]
-pub struct CreateOrUpdateConfig {
-    /// Contract owner
-    pub owner: Option<String>,
+pub struct UpdateConfig {
     /// Address provider returns addresses for all protocol contracts
     pub address_provider: Option<String>,
     /// Percentage of fees that are sent to the safety fund
@@ -112,13 +117,14 @@ pub struct CreateOrUpdateConfig {
     pub slippage_tolerance: Option<Decimal>,
 }
 
-pub type InstantiateMsg = Config<String>;
-
 #[cw_serde]
 pub enum ExecuteMsg<Route> {
+    /// Manages admin role state
+    UpdateOwner(OwnerUpdate),
+
     /// Update contract config
     UpdateConfig {
-        new_cfg: CreateOrUpdateConfig,
+        new_cfg: UpdateConfig,
     },
 
     /// Configure the route for swapping an asset
@@ -153,10 +159,36 @@ pub enum ExecuteMsg<Route> {
 }
 
 #[cw_serde]
+pub struct ConfigResponse {
+    /// The contract's owner
+    pub owner: Option<String>,
+    /// The contract's proposed owner
+    pub proposed_new_owner: Option<String>,
+    /// Address provider returns addresses for all protocol contracts
+    pub address_provider: String,
+    /// Percentage of fees that are sent to the safety fund
+    pub safety_tax_rate: Decimal,
+    /// The asset to which the safety fund share is converted
+    pub safety_fund_denom: String,
+    /// The asset to which the fee collector share is converted
+    pub fee_collector_denom: String,
+    /// The channel ID of the mars hub
+    pub channel_id: String,
+    /// Revision number of Mars Hub's IBC client
+    pub timeout_revision: u64,
+    /// Number of blocks after which an IBC transfer is to be considered failed, if no acknowledgement is received
+    pub timeout_blocks: u64,
+    /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
+    pub timeout_seconds: u64,
+    /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
+    pub slippage_tolerance: Decimal,
+}
+
+#[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Get config parameters
-    #[returns(Config<String>)]
+    #[returns(ConfigResponse)]
     Config {},
     /// Get routes for swapping an input denom into an output denom.
     ///

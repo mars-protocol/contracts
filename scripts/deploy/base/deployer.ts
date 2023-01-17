@@ -85,7 +85,7 @@ export class Deployer {
     }
 
     const msg: VaultInstantiateMsg = {
-      base_token_denom: this.config.testActions.vault.mock.baseToken.denom,
+      base_token_denom: this.config.testActions.vault.mock.baseToken,
       oracle: this.config.oracle.addr,
       vault_token_denom: this.config.testActions.vault.mock.vaultTokenDenom,
       lockup: this.config.testActions.vault.mock.lockup,
@@ -144,14 +144,14 @@ export class Deployer {
   async instantiateCreditManager() {
     const msg: RoverInstantiateMsg = {
       max_unlocking_positions: this.config.maxUnlockingPositions,
-      allowed_coins: this.config.allowedCoins,
-      vault_configs: this.config.vaults,
+      allowed_coins: this.config.allowedCoins.map((c) => c.denom),
+      vault_configs: this.config.vaults.map((v) => ({ config: v.config, vault: v.vault })),
       oracle: this.config.oracle.addr,
       owner: this.deployerAddr,
       red_bank: this.config.redBank.addr,
       max_close_factor: this.config.maxCloseFactor,
       swapper: this.storage.addresses.swapper!,
-      zapper: this.config.zapper.addr,
+      zapper: this.storage.addresses.zapper!,
     }
 
     if (this.config.testActions) {
@@ -250,35 +250,30 @@ export class Deployer {
       return
     }
 
-    const { client, addr } = await this.getOutpostsDeployer()
-
-    for (const coin of this.config
-      .testActions!.zap.coinsIn.map((c) => ({ denom: c.denom, priceSource: c.priceSource }))
-      .concat(this.config.testActions!.zap.denomOut)
-      .concat(this.config.testActions!.vault.mock.baseToken)) {
+    for (const coin of this.config.allowedCoins) {
       const msg = {
         set_price_source: {
           denom: coin.denom,
           price_source: coin.priceSource as PriceSource,
         },
       }
+
       printBlue(`Setting price source for ${coin.denom}: ${JSON.stringify(coin.priceSource)}`)
+      const { client, addr } = await this.getOutpostsDeployer()
       await client.execute(addr, this.config.oracle.addr, msg, 'auto')
     }
     this.storage.actions.oraclePricesSet = true
   }
 
-  async setupRedBankMarketsForZapDenoms() {
+  async setupRedBankMarkets() {
     if (this.storage.actions.redBankMarketsSet) {
       printGray('Red bank markets already set')
       return
     }
+
     const { client, addr } = await this.getOutpostsDeployer()
 
-    for (const denom of this.config
-      .testActions!.zap.coinsIn.map((c) => c.denom)
-      .concat(this.config.testActions!.zap.denomOut.denom)
-      .concat(this.config.testActions!.vault.mock.baseToken.denom)) {
+    for (const denom of this.config.allowedCoins.map((c) => c.denom)) {
       try {
         await client.queryContractSmart(this.config.redBank.addr, {
           market: {

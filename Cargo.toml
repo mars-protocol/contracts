@@ -24,6 +24,7 @@ authors       = [
     "larry_0x <larry@delphidigital.io>",
     "Piotr Babel <piotr@delphilabs.io>",
 ]
+license       = "GPL-v3-or-later"
 edition       = "2021"
 repository    = "https://github.com/mars-protocol/rover"
 homepage      = "https://marsprotocol.io"
@@ -42,8 +43,8 @@ cw-multi-test   = "0.16.1"
 cw-utils        = "0.16.0"
 cw-storage-plus = "1.0.1"
 itertools       = "0.10.5"
-osmosis-std     = "0.13.2"
-osmosis-testing = "0.13.2"
+osmosis-std     = { git = "https://github.com/osmosis-labs/osmosis-rust", rev = "5f2493aa13569167431add6282916683b4aaf3c8" }
+osmosis-testing = { git = "https://github.com/osmosis-labs/osmosis-rust", rev = "5f2493aa13569167431add6282916683b4aaf3c8" }
 schemars        = "0.8.11"
 serde           = { version = "1.0.150", default-features = false, features = ["derive"] }
 thiserror       = "1.0.37"

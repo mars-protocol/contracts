@@ -23,9 +23,8 @@ export interface DeploymentConfig {
   deployerMnemonic: string
   oracle: { addr: string }
   redBank: { addr: string }
-  zapper: { addr: string }
   vaults: VaultInstantiateConfig[]
-  allowedCoins: string[]
+  allowedCoins: { denom: string; priceSource: PriceSource }[]
   maxCloseFactor: string
   maxValueForBurn: string
   maxUnlockingPositions: string
@@ -48,7 +47,7 @@ export interface TestActions {
       config: VaultConfig
       vaultTokenDenom: string
       lockup?: Duration
-      baseToken: { denom: string; priceSource: PriceSource }
+      baseToken: string
     }
   }
   outpostsDeployerMnemonic: string
@@ -65,8 +64,8 @@ export interface TestActions {
   }
   withdrawAmount: string
   zap: {
-    coinsIn: { amount: string; denom: string; priceSource: PriceSource }[]
-    denomOut: { denom: string; priceSource: PriceSource }
+    coinsIn: { amount: string; denom: string }[]
+    denomOut: string
   }
   unzapAmount: string
 }
