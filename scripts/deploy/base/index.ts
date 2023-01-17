@@ -1,6 +1,6 @@
 import { setupDeployer } from './setupDeployer'
 import { DeploymentConfig } from '../../types/config'
-import { printRed } from '../../utils/chalk'
+import { printGreen, printRed } from '../../utils/chalk'
 import {
   atomAsset,
   osmoAsset,
@@ -40,7 +40,9 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.initializeAsset(axlUSDCAsset)
     await deployer.setOracle(atomOracle)
     await deployer.setOracle(osmoOracle)
-    await deployer.setOracle(axlUSDCOracle)
+    if (config.mainnet) {
+      await deployer.setOracle(axlUSDCOracle)
+    }
 
     //run tests
     if (config.runTests) {
@@ -51,12 +53,16 @@ export const taskRunner = async (config: DeploymentConfig) => {
       await deployer.executeRewardsSwap()
     }
 
-    // update owner to multisig address
-    await deployer.updateIncentivesContractOwner()
-    await deployer.updateRedBankContractOwner()
-    await deployer.updateOracleContractOwner()
-    await deployer.updateRewardsContractOwner()
-    await deployer.updateAddressProviderContractOwner()
+    if (config.multisigAddr) {
+      await deployer.updateIncentivesContractOwner()
+      await deployer.updateRedBankContractOwner()
+      await deployer.updateOracleContractOwner()
+      await deployer.updateRewardsContractOwner()
+      await deployer.updateAddressProviderContractOwner()
+      printGreen('It is confirmed that all contracts have transferred ownership to the Multisig')
+    } else {
+      printGreen('Owner remains the deployer address.')
+    }
   } catch (e) {
     printRed(e)
   } finally {

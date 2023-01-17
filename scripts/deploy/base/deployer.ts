@@ -89,8 +89,9 @@ export class Deployer {
 
   async instantiateRedBank() {
     const msg = {
+      owner: this.storage.owner!,
+      emergency_owner: this.storage.owner!,
       config: {
-        owner: this.storage.owner!,
         address_provider: this.storage.addresses.addressProvider!,
         close_factor: '0.5',
       },
@@ -143,9 +144,7 @@ export class Deployer {
       'auto',
     )
 
-    printGreen(
-      `${this.config.chainId} :: Rewards Collector Contract Address : ${this.storage.addresses.rewardsCollector}`,
-    )
+    printYellow(`${this.config.chainId} :: Rewards Collector Route has been set`)
   }
 
   async saveDeploymentAddrsToFile() {
@@ -183,7 +182,7 @@ export class Deployer {
         address: this.storage.addresses.redBank,
       },
     ]
-    // When executeMultiple is released to npm, switch to that
+
     for (const addrObj of addressesToSet) {
       await this.client.execute(
         this.deployerAddress,
@@ -246,9 +245,10 @@ export class Deployer {
         set_price_source: {
           denom: oracleConfig.denom,
           price_source: {
-            arithmetic_twap: {
+            geometric_twap: {
               pool_id: oracleConfig.pool_id,
               window_size: oracleConfig.window_size,
+              downtime_detector: oracleConfig.downtime_detector,
             },
           },
         },
@@ -413,7 +413,7 @@ export class Deployer {
   async updateIncentivesContractOwner() {
     const msg = {
       update_config: {
-        owner: this.storage.owner,
+        owner: this.config.multisigAddr,
       },
     }
     await this.client.execute(this.deployerAddress, this.storage.addresses.incentives!, msg, 'auto')
@@ -425,14 +425,14 @@ export class Deployer {
       },
     )) as { owner: string; prefix: string }
 
-    assert.equal(incentivesConfig.owner, this.storage.owner)
+    assert.equal(incentivesConfig.owner, this.config.multisigAddr)
   }
 
   async updateRedBankContractOwner() {
     const msg = {
       update_config: {
         config: {
-          owner: this.storage.owner,
+          owner: this.config.multisigAddr,
         },
       },
     }
@@ -442,13 +442,13 @@ export class Deployer {
       config: {},
     })) as { owner: string; prefix: string }
 
-    assert.equal(redbankConfig.owner, this.storage.owner)
+    assert.equal(redbankConfig.owner, this.config.multisigAddr)
   }
 
   async updateOracleContractOwner() {
     const msg = {
       update_config: {
-        owner: this.storage.owner,
+        owner: this.config.multisigAddr,
       },
     }
     await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
@@ -457,14 +457,14 @@ export class Deployer {
       config: {},
     })) as { owner: string; prefix: string }
 
-    assert.equal(oracleConfig.owner, this.storage.owner)
+    assert.equal(oracleConfig.owner, this.config.multisigAddr)
   }
 
   async updateRewardsContractOwner() {
     const msg = {
       update_config: {
         new_cfg: {
-          owner: this.storage.owner,
+          owner: this.config.multisigAddr,
         },
       },
     }
@@ -482,13 +482,13 @@ export class Deployer {
       },
     )) as { owner: string; prefix: string }
 
-    assert.equal(rewardsConfig.owner, this.storage.owner)
+    assert.equal(rewardsConfig.owner, this.config.multisigAddr)
   }
 
   async updateAddressProviderContractOwner() {
     const msg = {
       transfer_ownership: {
-        new_owner: this.storage.owner,
+        new_owner: this.config.multisigAddr,
       },
     }
     await this.client.execute(
@@ -505,7 +505,6 @@ export class Deployer {
       },
     )) as { owner: string; prefix: string }
 
-    assert.equal(addressProviderConfig.owner, this.storage.owner)
-    printGreen('It is confirmed that all contracts have transferred ownership to the Multisig')
+    assert.equal(addressProviderConfig.owner, this.config.multisigAddr)
   }
 }
