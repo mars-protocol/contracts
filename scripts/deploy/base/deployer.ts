@@ -413,7 +413,7 @@ export class Deployer {
   async updateIncentivesContractOwner() {
     const msg = {
       update_config: {
-        owner: this.config.multisigAddr,
+        owner: this.storage.owner,
       },
     }
     await this.client.execute(this.deployerAddress, this.storage.addresses.incentives!, msg, 'auto')
@@ -432,7 +432,7 @@ export class Deployer {
     const msg = {
       update_config: {
         config: {
-          owner: this.config.multisigAddr,
+          owner: this.storage.owner,
         },
       },
     }
@@ -448,7 +448,7 @@ export class Deployer {
   async updateOracleContractOwner() {
     const msg = {
       update_config: {
-        owner: this.config.multisigAddr,
+        owner: this.storage.owner,
       },
     }
     await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
@@ -464,7 +464,7 @@ export class Deployer {
     const msg = {
       update_config: {
         new_cfg: {
-          owner: this.config.multisigAddr,
+          owner: this.storage.owner,
         },
       },
     }
@@ -488,7 +488,7 @@ export class Deployer {
   async updateAddressProviderContractOwner() {
     const msg = {
       transfer_ownership: {
-        new_owner: this.config.multisigAddr,
+        new_owner: this.storage.owner,
       },
     }
     await this.client.execute(
