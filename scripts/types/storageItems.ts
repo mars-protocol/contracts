@@ -1,25 +1,25 @@
 export interface StorageItems {
   codeIds: {
-    redBank?: number
-    rewardsCollector?: number
-    addressProvider?: number
-    incentives?: number
-    oracle?: number
+    'red-bank'?: number
+    'rewards-collector'?: number
+    'address-provider'?: number
+    'incentives'?: number
+    'oracle'?: number
   }
   addresses: {
-    addressProvider?: string
-    rewardsCollector?: string
-    redBank?: string
-    incentives?: string
-    oracle?: string
+    'address-provider'?: string
+    'rewards-collector'?: string
+    'red-bank'?: string
+    'incentives'?: string
+    'oracle'?: string
   }
 
   execute: {
-    addressProviderUpdated?: boolean
-    assetsInitialized: string[]
-    secondAssetInitialized?: boolean
-    oraclePriceSet?: boolean
-    smokeTest?: boolean
+    'address-provider-updated'?: boolean
+    'assets-initialized': string[]
+    'second-asset-initialized'?: boolean
+    'oracle-price-set'?: boolean
+    'smoke-test'?: boolean
   }
 
   owner?: string
