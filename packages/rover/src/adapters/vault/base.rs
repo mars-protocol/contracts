@@ -241,11 +241,7 @@ impl Vault {
         if total_supply.is_zero() {
             return Ok(Uint128::zero());
         };
-
-        let total_underlying = self.query_preview_redeem(querier, total_supply)?;
-        let amount_in_underlying = amount
-            .checked_multiply_ratio(total_underlying, total_supply)
-            .map_err(|_| StdError::generic_err("CheckedMultiplyRatioError"))?;
+        let amount_in_underlying = self.query_preview_redeem(querier, amount)?;
         let vault_info = self.query_info(querier)?;
         let price_res = oracle.query_price(querier, &vault_info.base_token)?;
         let amount_value = amount_in_underlying
