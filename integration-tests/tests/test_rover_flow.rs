@@ -71,33 +71,18 @@ fn rover_flow() {
     let position = red_bank.query_user_position(&mut mock_env, &rover);
     assert_eq!(position.health_status, UserHealthStatus::NotBorrowing);
 
-    // remove credit line for rover
-    red_bank
-        .update_uncollateralized_loan_limit(&mut mock_env, &owner, &rover, "uusdc", Uint128::zero())
-        .unwrap();
-    let debt = red_bank.query_user_debt(&mut mock_env, &rover, "uusdc");
-    assert!(!debt.uncollateralized);
-    assert_eq!(debt.amount.u128(), rover_uusdc_limit);
-
-    // rover should be unhealthy (max_ltv_hf < 1, liq_threshold_hf < 1), suddenly have an "collateralized" debt (debt.uncollateralized = false)
-    let position = red_bank.query_user_position(&mut mock_env, &rover);
-    assert_eq!(
-        position.health_status,
-        UserHealthStatus::Borrowing {
-            max_ltv_hf: Decimal::zero(),
-            liq_threshold_hf: Decimal::zero()
-        }
-    );
-
-    // can't increase credit line for rover (rover has an outstanding debt)
+    // can't remove credit line for rover (rover has an outstanding debt)
     let res_err = red_bank.update_uncollateralized_loan_limit(
         &mut mock_env,
         &owner,
         &rover,
         "uusdc",
-        Uint128::from(10_000_000u128),
+        Uint128::zero(),
     );
-    assert_err(res_err, ContractError::UserHasCollateralizedDebt {});
+    assert_err(res_err, ContractError::UserHasUncollateralizedDebt {});
+    let debt = red_bank.query_user_debt(&mut mock_env, &rover, "uusdc");
+    assert!(debt.uncollateralized);
+    assert_eq!(debt.amount.u128(), rover_uusdc_limit);
 
     // rover deposits some atom
     let deposited_atom = 15_000_000_000u128;
@@ -108,28 +93,22 @@ fn rover_flow() {
     let collateral = red_bank.query_user_collateral(&mut mock_env, &rover, "uatom");
     assert_eq!(collateral.amount.u128(), deposited_atom);
 
-    // rover should be unhealthy (max_ltv_hf < 1, liq_threshold_hf < 1)
-    let position = red_bank.query_user_position(&mut mock_env, &rover);
-    assert_eq!(
-        position.health_status,
-        UserHealthStatus::Borrowing {
-            max_ltv_hf: Decimal::from_ratio(216u128, 1000u128),
-            liq_threshold_hf: Decimal::from_ratio(288u128, 1000u128)
-        }
-    );
-
-    // can't borrow because position is unhealthy
-    let res_err = red_bank.borrow(&mut mock_env, &rover, "uusdc", 1u128);
-    assert_err(res_err, ContractError::BorrowAmountExceedsGivenCollateral {});
-
     // rover repay full debt
     red_bank.repay(&mut mock_env, &rover, coin(rover_uusdc_limit, "uusdc")).unwrap();
     let debt = red_bank.query_user_debt(&mut mock_env, &rover, "uusdc");
     assert!(!debt.uncollateralized);
     assert_eq!(debt.amount.u128(), 0u128);
 
+    // remove credit line for rover
+    red_bank
+        .update_uncollateralized_loan_limit(&mut mock_env, &owner, &rover, "uusdc", Uint128::zero())
+        .unwrap();
+
     // after debt repayment rover is able to borrow (using deposited collateral)
     red_bank.borrow(&mut mock_env, &rover, "uusdc", 1u128).unwrap();
+    let debt = red_bank.query_user_debt(&mut mock_env, &rover, "uusdc");
+    assert!(!debt.uncollateralized);
+    assert_eq!(debt.amount.u128(), 1u128);
 
     // can't increase credit line for rover (rover has an outstanding debt - collateralized debt)
     let res_err = red_bank.update_uncollateralized_loan_limit(
@@ -137,7 +116,7 @@ fn rover_flow() {
         &owner,
         &rover,
         "uusdc",
-        Uint128::from(10_000_000u128),
+        Uint128::from(rover_uusdc_limit),
     );
     assert_err(res_err, ContractError::UserHasCollateralizedDebt {});
 }

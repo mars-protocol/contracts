@@ -352,6 +352,9 @@ pub fn update_uncollateralized_loan_limit(
     if current_limit.is_zero() && !current_debt.is_zero() {
         return Err(ContractError::UserHasCollateralizedDebt {});
     }
+    if !current_limit.is_zero() && new_limit.is_zero() && !current_debt.is_zero() {
+        return Err(ContractError::UserHasUncollateralizedDebt {});
+    }
 
     UNCOLLATERALIZED_LOAN_LIMITS.save(deps.storage, (&user_addr, &denom), &new_limit)?;
 
