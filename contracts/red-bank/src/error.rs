@@ -131,6 +131,9 @@ pub enum ContractError {
     #[error("Cannot update uncollateralized loan limit because user has collateralized debt")]
     UserHasCollateralizedDebt {},
 
+    #[error("Cannot update uncollateralized loan limit because user has uncollateralized debt")]
+    UserHasUncollateralizedDebt {},
+
     #[error("Cannot repay uncollateralized loan on behalf of another user")]
     CannotRepayUncollateralizedLoanOnBehalfOf {},
 }
