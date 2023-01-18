@@ -186,16 +186,17 @@ fn test_uncollateralized_loan_limits() {
     };
     let allowance_env = mock_env_at_block_time(block_time);
     let info = mock_info("owner", &[]);
-    execute(deps.as_mut(), allowance_env, info, update_allowance_msg).unwrap();
+    let res_err = execute(deps.as_mut(), allowance_env, info, update_allowance_msg).unwrap_err();
+    assert_eq!(res_err, ContractError::UserHasUncollateralizedDebt {});
 
-    // check user's allowance is zero
+    // check user's allowance is different than zero
     let allowance =
         UNCOLLATERALIZED_LOAN_LIMITS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
-    assert_eq!(allowance, Uint128::zero());
+    assert!(!allowance.is_zero());
 
-    // check user's uncollateralized debt flag is false (limit == 0)
+    // check user's uncollateralized debt flag is true (limit > 0)
     let debt = DEBTS.load(&deps.storage, (&borrower_addr, "somecoin")).unwrap();
-    assert!(!debt.uncollateralized);
+    assert!(debt.uncollateralized);
 }
 
 #[test]
