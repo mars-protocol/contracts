@@ -35,8 +35,8 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   maxUnlockingPositions: '10',
   maxValueForBurn: '1000000',
   // Latest from: https://github.com/mars-protocol/outposts/blob/master/scripts/deploy/addresses/osmo-test-4.json
-  oracle: { addr: 'osmo1z97d9lvgknwm9h9fmy08jx52yynwce28hd8weuq6t6550n3np2usqunz6a' },
-  redBank: { addr: 'osmo1tyg72uru87ws0rldfq723a0fr6qle33etww6uk2545xtf2te7d8s8fmud7' },
+  oracle: { addr: 'osmo1dqz2u3c8rs5e7w5fnchsr2mpzzsxew69wtdy0aq4jsd76w7upmsstqe0s8' },
+  redBank: { addr: 'osmo1t0dl6r27phqetfu0geaxrng0u9zn8qgrdwztapt5xr32adtwptaq6vwg36' },
   swapRoutes: [
     { denomIn: uosmo, denomOut: uatom, route: [{ token_out_denom: uatom, pool_id: '1' }] },
     { denomIn: uatom, denomOut: uosmo, route: [{ token_out_denom: uosmo, pool_id: '1' }] },
