@@ -4,15 +4,17 @@ use cosmwasm_std::{
 use cw721::Cw721Execute;
 use cw721_base::MintMsg;
 use mars_health::HealthResponse;
-use mars_rover::msg::QueryMsg::Health;
-
-use crate::{
-    config::ConfigUpdates,
-    contract::Parent,
-    error::{
+use mars_rover::{
+    adapters::account_nft::{
         ContractError,
         ContractError::{BaseError, BurnNotAllowed},
+        NftConfigUpdates,
     },
+    msg::QueryMsg::Health,
+};
+
+use crate::{
+    contract::Parent,
     state::{CONFIG, NEXT_ID},
 };
 
@@ -66,7 +68,7 @@ pub fn burn(
 pub fn update_config(
     deps: DepsMut,
     info: MessageInfo,
-    updates: ConfigUpdates,
+    updates: NftConfigUpdates,
 ) -> Result<Response, ContractError> {
     let current_minter = Parent::default().minter.load(deps.storage)?;
     if info.sender != current_minter {

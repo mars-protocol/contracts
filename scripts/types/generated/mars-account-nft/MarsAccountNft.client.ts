@@ -15,7 +15,7 @@ import {
   Expiration,
   Timestamp,
   Uint64,
-  ConfigUpdates,
+  NftConfigUpdates,
   QueryMsg,
   AllNftInfoResponseForEmpty,
   OwnerOfResponse,
@@ -26,14 +26,14 @@ import {
   TokensResponse,
   ApprovalResponse,
   ApprovalsResponse,
-  ConfigBaseForString,
+  NftConfigBaseForString,
   ContractInfoResponse,
   MinterResponse,
   NumTokensResponse,
 } from './MarsAccountNft.types'
 export interface MarsAccountNftReadOnlyInterface {
   contractAddress: string
-  config: () => Promise<ConfigBaseForString>
+  config: () => Promise<NftConfigBaseForString>
   nextId: () => Promise<Uint64>
   ownerOf: ({
     includeExpired,
@@ -119,7 +119,7 @@ export class MarsAccountNftQueryClient implements MarsAccountNftReadOnlyInterfac
     this.minter = this.minter.bind(this)
   }
 
-  config = async (): Promise<ConfigBaseForString> => {
+  config = async (): Promise<NftConfigBaseForString> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {},
     })
@@ -269,7 +269,7 @@ export interface MarsAccountNftInterface extends MarsAccountNftReadOnlyInterface
     {
       updates,
     }: {
-      updates: ConfigUpdates
+      updates: NftConfigUpdates
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -404,7 +404,7 @@ export class MarsAccountNftClient
     {
       updates,
     }: {
-      updates: ConfigUpdates
+      updates: NftConfigUpdates
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,

@@ -29,6 +29,7 @@ import {
   Addr,
   ActionCoin,
   ConfigUpdates,
+  NftConfigUpdates,
   VaultBaseForAddr,
   QueryMsg,
   ArrayOfCoinBalanceResponseItem,
@@ -73,13 +74,21 @@ export interface MarsCreditManagerMessage {
   ) => MsgExecuteContractEncodeObject
   updateConfig: (
     {
-      newConfig,
+      updates,
     }: {
-      newConfig: ConfigUpdates
+      updates: ConfigUpdates
     },
     funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
   updateOwner: (funds?: Coin[]) => MsgExecuteContractEncodeObject
+  updateNftConfig: (
+    {
+      updates,
+    }: {
+      updates: NftConfigUpdates
+    },
+    funds?: Coin[],
+  ) => MsgExecuteContractEncodeObject
   callback: (funds?: Coin[]) => MsgExecuteContractEncodeObject
 }
 export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessage {
@@ -93,6 +102,7 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
     this.updateCreditAccount = this.updateCreditAccount.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
     this.updateOwner = this.updateOwner.bind(this)
+    this.updateNftConfig = this.updateNftConfig.bind(this)
     this.callback = this.callback.bind(this)
   }
 
@@ -140,9 +150,9 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
   }
   updateConfig = (
     {
-      newConfig,
+      updates,
     }: {
-      newConfig: ConfigUpdates
+      updates: ConfigUpdates
     },
     funds?: Coin[],
   ): MsgExecuteContractEncodeObject => {
@@ -154,7 +164,7 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
         msg: toUtf8(
           JSON.stringify({
             update_config: {
-              new_config: newConfig,
+              updates,
             },
           }),
         ),
@@ -171,6 +181,30 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
         msg: toUtf8(
           JSON.stringify({
             update_owner: {},
+          }),
+        ),
+        funds,
+      }),
+    }
+  }
+  updateNftConfig = (
+    {
+      updates,
+    }: {
+      updates: NftConfigUpdates
+    },
+    funds?: Coin[],
+  ): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(
+          JSON.stringify({
+            update_nft_config: {
+              updates,
+            },
           }),
         ),
         funds,

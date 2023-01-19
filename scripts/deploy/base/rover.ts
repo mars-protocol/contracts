@@ -35,8 +35,8 @@ export class Rover {
     this.nft = new MarsAccountNftQueryClient(cwClient, storage.addresses.accountNft!)
   }
 
-  async updateConfig(newConfig: ConfigUpdates) {
-    await this.exec.updateConfig({ newConfig })
+  async updateConfig(updates: ConfigUpdates) {
+    await this.exec.updateConfig({ updates })
   }
 
   async createCreditAccount() {

@@ -3,7 +3,10 @@ use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128
 use mars_owner::OwnerUpdate;
 
 use crate::{
-    adapters::vault::{Vault, VaultPositionType, VaultUnchecked},
+    adapters::{
+        account_nft::NftConfigUpdates,
+        vault::{Vault, VaultPositionType, VaultUnchecked},
+    },
     msg::instantiate::ConfigUpdates,
 };
 
@@ -25,10 +28,14 @@ pub enum ExecuteMsg {
     //--------------------------------------------------------------------------------------------------
     /// Update contract config constants
     UpdateConfig {
-        new_config: ConfigUpdates,
+        updates: ConfigUpdates,
     },
     /// Manages owner role state
     UpdateOwner(OwnerUpdate),
+    /// Update nft contract config
+    UpdateNftConfig {
+        updates: NftConfigUpdates,
+    },
     /// Internal actions only callable by the contract itself
     Callback(CallbackMsg),
 }

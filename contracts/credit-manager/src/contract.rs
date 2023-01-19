@@ -19,7 +19,7 @@ use crate::{
         query_config, query_positions, query_total_debt_shares, query_total_vault_coin_balance,
         query_vaults_info,
     },
-    update_config::{update_config, update_owner},
+    update_config::{update_config, update_nft_config, update_owner},
     vault::handle_unlock_request_reply,
     zap::{estimate_provide_liquidity, estimate_withdraw_liquidity},
 };
@@ -49,8 +49,11 @@ pub fn execute(
     match msg {
         ExecuteMsg::CreateCreditAccount {} => create_credit_account(deps, info.sender),
         ExecuteMsg::UpdateConfig {
-            new_config,
-        } => update_config(deps, info, new_config),
+            updates,
+        } => update_config(deps, info, updates),
+        ExecuteMsg::UpdateNftConfig {
+            updates,
+        } => update_nft_config(deps, info, updates),
         ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
         ExecuteMsg::Callback(callback) => execute_callback(deps, info, env, callback),
         ExecuteMsg::UpdateCreditAccount {

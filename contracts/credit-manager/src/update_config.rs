@@ -1,7 +1,7 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, MessageInfo, Response, WasmMsg};
-use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use mars_owner::OwnerUpdate;
 use mars_rover::{
+    adapters::account_nft::{ExecuteMsg as NftExecuteMsg, NftConfigUpdates},
     error::ContractResult,
     msg::instantiate::ConfigUpdates,
     traits::{FallbackStr, Stringify},
@@ -18,14 +18,14 @@ use crate::{
 pub fn update_config(
     deps: DepsMut,
     info: MessageInfo,
-    new_config: ConfigUpdates,
+    updates: ConfigUpdates,
 ) -> ContractResult<Response> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
     let mut response =
         Response::new().add_attribute("action", "rover/credit-manager/update_config");
 
-    if let Some(addr_str) = new_config.account_nft {
+    if let Some(addr_str) = updates.account_nft {
         let validated = deps.api.addr_validate(&addr_str)?;
         ACCOUNT_NFT.save(deps.storage, &validated)?;
 
@@ -42,7 +42,7 @@ pub fn update_config(
             .add_attribute("value", addr_str);
     }
 
-    if let Some(coins) = new_config.allowed_coins {
+    if let Some(coins) = updates.allowed_coins {
         assert_no_duplicate_coins(&coins)?;
         ALLOWED_COINS.clear(deps.storage);
         coins.iter().try_for_each(|denom| ALLOWED_COINS.insert(deps.storage, denom).map(|_| ()))?;
@@ -52,7 +52,7 @@ pub fn update_config(
             .add_attribute("value", coins.join(", ").fallback("None"));
     }
 
-    if let Some(configs) = new_config.vault_configs {
+    if let Some(configs) = updates.vault_configs {
         assert_no_duplicate_vaults(deps.api, &deps.querier, &configs)?;
         VAULT_CONFIGS.clear(deps.storage);
         configs.iter().try_for_each(|v| -> ContractResult<_> {
@@ -65,25 +65,25 @@ pub fn update_config(
             .add_attribute("value", configs.to_string().fallback("None"))
     }
 
-    if let Some(unchecked) = new_config.oracle {
+    if let Some(unchecked) = updates.oracle {
         ORACLE.save(deps.storage, &unchecked.check(deps.api)?)?;
         response =
             response.add_attribute("key", "oracle").add_attribute("value", unchecked.address());
     }
 
-    if let Some(unchecked) = new_config.swapper {
+    if let Some(unchecked) = updates.swapper {
         SWAPPER.save(deps.storage, &unchecked.check(deps.api)?)?;
         response =
             response.add_attribute("key", "swapper").add_attribute("value", unchecked.address());
     }
 
-    if let Some(unchecked) = new_config.zapper {
+    if let Some(unchecked) = updates.zapper {
         ZAPPER.save(deps.storage, &unchecked.check(deps.api)?)?;
         response =
             response.add_attribute("key", "zapper").add_attribute("value", unchecked.address());
     }
 
-    if let Some(cf) = new_config.max_close_factor {
+    if let Some(cf) = updates.max_close_factor {
         assert_lte_to_one(&cf)?;
         MAX_CLOSE_FACTOR.save(deps.storage, &cf)?;
         response = response
@@ -91,7 +91,7 @@ pub fn update_config(
             .add_attribute("value", cf.to_string());
     }
 
-    if let Some(num) = new_config.max_unlocking_positions {
+    if let Some(num) = updates.max_unlocking_positions {
         MAX_UNLOCKING_POSITIONS.save(deps.storage, &num)?;
         response = response
             .add_attribute("key", "max_unlocking_positions")
@@ -107,4 +107,26 @@ pub fn update_owner(
     update: OwnerUpdate,
 ) -> ContractResult<Response> {
     Ok(OWNER.update(deps, info, update)?)
+}
+
+pub fn update_nft_config(
+    deps: DepsMut,
+    info: MessageInfo,
+    updates: NftConfigUpdates,
+) -> ContractResult<Response> {
+    OWNER.assert_owner(deps.storage, &info.sender)?;
+
+    let nft_contract = ACCOUNT_NFT.load(deps.storage)?;
+
+    let update_config_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: nft_contract.to_string(),
+        funds: vec![],
+        msg: to_binary(&NftExecuteMsg::UpdateConfig {
+            updates,
+        })?,
+    });
+
+    Ok(Response::new()
+        .add_attribute("action", "rover/credit-manager/update_nft_config")
+        .add_message(update_config_msg))
 }

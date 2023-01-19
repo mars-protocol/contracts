@@ -1,8 +1,8 @@
 use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
-use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use mars_rover::{
+    adapters::account_nft::ExecuteMsg as NftExecuteMsg,
     coins::Coins,
     error::{ContractError, ContractResult},
     msg::execute::{Action, CallbackMsg},

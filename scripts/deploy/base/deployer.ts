@@ -188,7 +188,7 @@ export class Deployer {
         this.deployerAddr,
         this.storage.addresses.creditManager!,
       )
-      await client.updateConfig({ newConfig: { account_nft: this.storage.addresses.accountNft } })
+      await client.updateConfig({ updates: { account_nft: this.storage.addresses.accountNft } })
       this.storage.actions.acceptedOwnership = true
       printGreen(`Rover accepts ownership of Nft contract`)
     } else {

@@ -8,12 +8,12 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
 use cw721_base::Cw721Contract;
+use mars_rover::adapters::account_nft::{
+    ContractError, ExecuteMsg, InstantiateMsg, NftConfig, QueryMsg,
+};
 
 use crate::{
-    config::Config,
-    error::ContractError,
     execute::{accept_minter_role, burn, mint, update_config},
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     query::{query_config, query_next_id},
     state::{CONFIG, NEXT_ID},
 };
@@ -37,7 +37,7 @@ pub fn instantiate(
 
     CONFIG.save(
         deps.storage,
-        &Config {
+        &NftConfig {
             max_value_for_burn: msg.max_value_for_burn,
             proposed_new_minter: None,
         },

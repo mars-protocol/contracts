@@ -52,11 +52,16 @@ export type ExecuteMsg =
     }
   | {
       update_config: {
-        new_config: ConfigUpdates
+        updates: ConfigUpdates
       }
     }
   | {
       update_owner: OwnerUpdate
+    }
+  | {
+      update_nft_config: {
+        updates: NftConfigUpdates
+      }
     }
   | {
       callback: CallbackMsg
@@ -279,6 +284,10 @@ export interface ConfigUpdates {
   swapper?: SwapperBaseForString | null
   vault_configs?: VaultInstantiateConfig[] | null
   zapper?: ZapperBaseForString | null
+}
+export interface NftConfigUpdates {
+  max_value_for_burn?: Uint128 | null
+  proposed_new_minter?: string | null
 }
 export interface VaultBaseForAddr {
   address: Addr

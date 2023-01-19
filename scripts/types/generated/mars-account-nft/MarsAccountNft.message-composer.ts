@@ -17,7 +17,7 @@ import {
   Expiration,
   Timestamp,
   Uint64,
-  ConfigUpdates,
+  NftConfigUpdates,
   QueryMsg,
   AllNftInfoResponseForEmpty,
   OwnerOfResponse,
@@ -28,7 +28,7 @@ import {
   TokensResponse,
   ApprovalResponse,
   ApprovalsResponse,
-  ConfigBaseForString,
+  NftConfigBaseForString,
   ContractInfoResponse,
   MinterResponse,
   NumTokensResponse,
@@ -40,7 +40,7 @@ export interface MarsAccountNftMessage {
     {
       updates,
     }: {
-      updates: ConfigUpdates
+      updates: NftConfigUpdates
     },
     funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
@@ -147,7 +147,7 @@ export class MarsAccountNftMessageComposer implements MarsAccountNftMessage {
     {
       updates,
     }: {
-      updates: ConfigUpdates
+      updates: NftConfigUpdates
     },
     funds?: Coin[],
   ): MsgExecuteContractEncodeObject => {

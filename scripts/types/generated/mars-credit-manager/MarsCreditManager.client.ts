@@ -28,6 +28,7 @@ import {
   Addr,
   ActionCoin,
   ConfigUpdates,
+  NftConfigUpdates,
   VaultBaseForAddr,
   QueryMsg,
   ArrayOfCoinBalanceResponseItem,
@@ -317,15 +318,25 @@ export interface MarsCreditManagerInterface extends MarsCreditManagerReadOnlyInt
   ) => Promise<ExecuteResult>
   updateConfig: (
     {
-      newConfig,
+      updates,
     }: {
-      newConfig: ConfigUpdates
+      updates: ConfigUpdates
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
   updateOwner: (
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
+  updateNftConfig: (
+    {
+      updates,
+    }: {
+      updates: NftConfigUpdates
+    },
     fee?: number | StdFee | 'auto',
     memo?: string,
     funds?: Coin[],
@@ -353,6 +364,7 @@ export class MarsCreditManagerClient
     this.updateCreditAccount = this.updateCreditAccount.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
     this.updateOwner = this.updateOwner.bind(this)
+    this.updateNftConfig = this.updateNftConfig.bind(this)
     this.callback = this.callback.bind(this)
   }
 
@@ -400,9 +412,9 @@ export class MarsCreditManagerClient
   }
   updateConfig = async (
     {
-      newConfig,
+      updates,
     }: {
-      newConfig: ConfigUpdates
+      updates: ConfigUpdates
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -413,7 +425,7 @@ export class MarsCreditManagerClient
       this.contractAddress,
       {
         update_config: {
-          new_config: newConfig,
+          updates,
         },
       },
       fee,
@@ -431,6 +443,29 @@ export class MarsCreditManagerClient
       this.contractAddress,
       {
         update_owner: {},
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  updateNftConfig = async (
+    {
+      updates,
+    }: {
+      updates: NftConfigUpdates
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        update_nft_config: {
+          updates,
+        },
       },
       fee,
       memo,

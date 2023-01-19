@@ -1,8 +1,7 @@
 use cosmwasm_std::{Addr, Empty, StdResult, Uint128};
 use cw721::NftInfoResponse;
-use mars_account_nft::{
-    error::{ContractError, ContractError::BurnNotAllowed},
-    msg::QueryMsg::NftInfo,
+use mars_rover::adapters::account_nft::{
+    ContractError, ContractError::BurnNotAllowed, QueryMsg::NftInfo,
 };
 
 use crate::helpers::{below_max_for_burn, generate_health_response, MockEnv, MAX_VALUE_FOR_BURN};

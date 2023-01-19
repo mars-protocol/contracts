@@ -29,6 +29,7 @@ import {
   Addr,
   ActionCoin,
   ConfigUpdates,
+  NftConfigUpdates,
   VaultBaseForAddr,
   QueryMsg,
   ArrayOfCoinBalanceResponseItem,
@@ -493,6 +494,29 @@ export function useMarsCreditManagerCallbackMutation(
     options,
   )
 }
+export interface MarsCreditManagerUpdateNftConfigMutation {
+  client: MarsCreditManagerClient
+  msg: {
+    updates: NftConfigUpdates
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsCreditManagerUpdateNftConfigMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsCreditManagerUpdateNftConfigMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsCreditManagerUpdateNftConfigMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateNftConfig(msg, fee, memo, funds),
+    options,
+  )
+}
 export interface MarsCreditManagerUpdateOwnerMutation {
   client: MarsCreditManagerClient
   args?: {
@@ -515,7 +539,7 @@ export function useMarsCreditManagerUpdateOwnerMutation(
 export interface MarsCreditManagerUpdateConfigMutation {
   client: MarsCreditManagerClient
   msg: {
-    newConfig: ConfigUpdates
+    updates: ConfigUpdates
   }
   args?: {
     fee?: number | StdFee | 'auto'

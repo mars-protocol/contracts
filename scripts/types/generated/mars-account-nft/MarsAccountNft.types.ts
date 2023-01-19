@@ -15,7 +15,7 @@ export interface InstantiateMsg {
 export type ExecuteMsg =
   | {
       update_config: {
-        updates: ConfigUpdates
+        updates: NftConfigUpdates
       }
     }
   | {
@@ -81,7 +81,7 @@ export type Expiration =
     }
 export type Timestamp = Uint64
 export type Uint64 = string
-export interface ConfigUpdates {
+export interface NftConfigUpdates {
   max_value_for_burn?: Uint128 | null
   proposed_new_minter?: string | null
 }
@@ -183,7 +183,7 @@ export interface ApprovalResponse {
 export interface ApprovalsResponse {
   approvals: Approval[]
 }
-export interface ConfigBaseForString {
+export interface NftConfigBaseForString {
   max_value_for_burn: Uint128
   proposed_new_minter?: string | null
 }

@@ -1,5 +1,5 @@
 use cosmwasm_std::{Addr, Uint128};
-use mars_account_nft::config::ConfigUpdates;
+use mars_rover::adapters::account_nft::NftConfigUpdates;
 
 use crate::helpers::MockEnv;
 
@@ -12,7 +12,7 @@ fn test_only_minter_can_update_config() {
     let bad_guy = Addr::unchecked("bad_guy");
     let res = mock.update_config(
         &bad_guy,
-        &ConfigUpdates {
+        &NftConfigUpdates {
             max_value_for_burn: None,
             proposed_new_minter: None,
         },
@@ -30,7 +30,7 @@ fn test_minter_can_update_config() {
     let new_max_burn_val = Uint128::new(4918453);
     let new_proposed_minter = "new_proposed_minter".to_string();
 
-    let updates = ConfigUpdates {
+    let updates = NftConfigUpdates {
         max_value_for_burn: Some(new_max_burn_val),
         proposed_new_minter: Some(new_proposed_minter.clone()),
     };

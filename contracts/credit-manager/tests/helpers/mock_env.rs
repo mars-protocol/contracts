@@ -7,10 +7,6 @@ use cosmwasm_vault_standard::{
     msg::{ExtensionQueryMsg, VaultStandardQueryMsg::VaultExtension},
 };
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
-use mars_account_nft::{
-    config::ConfigUpdates as NftConfigUpdates,
-    msg::{ExecuteMsg as NftExecuteMsg, InstantiateMsg as NftInstantiateMsg},
-};
 use mars_health::HealthResponse;
 use mars_mock_oracle::msg::{
     CoinPrice, ExecuteMsg as OracleExecuteMsg, InstantiateMsg as OracleInstantiateMsg,
@@ -23,6 +19,10 @@ use mars_outpost::red_bank::{QueryMsg::UserDebt, UserDebtResponse};
 use mars_owner::OwnerUpdate;
 use mars_rover::{
     adapters::{
+        account_nft::{
+            ExecuteMsg as NftExecuteMsg, InstantiateMsg as NftInstantiateMsg, NftConfigUpdates,
+            QueryMsg as NftQueryMsg, UncheckedNftConfig,
+        },
         oracle::{Oracle, OracleBase, OracleUnchecked},
         red_bank::RedBankBase,
         swap::{
@@ -133,13 +133,28 @@ impl MockEnv {
     pub fn update_config(
         &mut self,
         sender: &Addr,
-        new_config: ConfigUpdates,
+        updates: ConfigUpdates,
     ) -> AnyResult<AppResponse> {
         self.app.execute_contract(
             sender.clone(),
             self.rover.clone(),
             &ExecuteMsg::UpdateConfig {
-                new_config,
+                updates,
+            },
+            &[],
+        )
+    }
+
+    pub fn update_nft_config(
+        &mut self,
+        sender: &Addr,
+        updates: NftConfigUpdates,
+    ) -> AnyResult<AppResponse> {
+        self.app.execute_contract(
+            sender.clone(),
+            self.rover.clone(),
+            &ExecuteMsg::UpdateNftConfig {
+                updates,
             },
             &[],
         )
@@ -243,6 +258,14 @@ impl MockEnv {
 
     pub fn query_config(&self) -> ConfigResponse {
         self.app.wrap().query_wasm_smart(self.rover.clone(), &QueryMsg::Config {}).unwrap()
+    }
+
+    pub fn query_nft_config(&self) -> UncheckedNftConfig {
+        let config = self.query_config();
+        self.app
+            .wrap()
+            .query_wasm_smart(config.account_nft.unwrap(), &NftQueryMsg::Config {})
+            .unwrap()
     }
 
     pub fn query_vault_configs(
@@ -485,6 +508,7 @@ impl MockEnvBuilder {
     pub fn build(&mut self) -> AnyResult<MockEnv> {
         let rover = self.get_rover()?;
         let mars_oracle = self.get_oracle();
+
         self.deploy_nft_contract(&rover);
         self.fund_users();
 
@@ -528,13 +552,13 @@ impl MockEnvBuilder {
         }
     }
 
-    pub fn update_config(&mut self, rover: &Addr, new_config: ConfigUpdates) {
+    pub fn update_config(&mut self, rover: &Addr, updates: ConfigUpdates) {
         self.app
             .execute_contract(
                 self.get_owner(),
                 rover.clone(),
                 &ExecuteMsg::UpdateConfig {
-                    new_config,
+                    updates,
                 },
                 &[],
             )

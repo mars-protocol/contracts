@@ -4,9 +4,8 @@ use cosmwasm_std::Addr;
 use cw721::OwnerOfResponse;
 use cw721_base::ContractError::Unauthorized;
 use cw_multi_test::Executor;
-use mars_account_nft::{
-    error::{ContractError, ContractError::BaseError},
-    msg::{ExecuteMsg as ExtendedExecuteMsg, QueryMsg::OwnerOf},
+use mars_rover::adapters::account_nft::{
+    ContractError, ContractError::BaseError, ExecuteMsg, QueryMsg::OwnerOf,
 };
 
 use crate::helpers::{below_max_for_burn, MockEnv};
@@ -62,7 +61,7 @@ fn test_only_minter_can_mint() {
     let res = mock.app.execute_contract(
         bad_guy.clone(),
         mock.nft_contract.clone(),
-        &ExtendedExecuteMsg::Mint {
+        &ExecuteMsg::Mint {
             user: bad_guy.into(),
         },
         &[],
@@ -95,7 +94,7 @@ fn test_normal_base_cw721_actions_can_still_be_taken() {
     let token_id = mock.mint(&rover_user_a).unwrap();
 
     let rover_user_b = Addr::unchecked("rover_user_b");
-    let transfer_msg: ExtendedExecuteMsg = ExtendedExecuteMsg::TransferNft {
+    let transfer_msg: ExecuteMsg = ExecuteMsg::TransferNft {
         token_id: token_id.clone(),
         recipient: rover_user_b.clone().into(),
     };

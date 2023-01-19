@@ -2,16 +2,13 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::Addr;
 use cw721::OwnerOfResponse;
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
-use mars_account_nft::{
-    config::{ConfigUpdates, UncheckedConfig},
-    msg::{
-        ExecuteMsg as ExtendedExecuteMsg,
-        ExecuteMsg::{AcceptMinterRole, UpdateConfig},
-        QueryMsg,
-    },
-};
 use mars_health::HealthResponse;
 use mars_mock_credit_manager::msg::ExecuteMsg::SetHealthResponse;
+use mars_rover::adapters::account_nft::{
+    ExecuteMsg,
+    ExecuteMsg::{AcceptMinterRole, UpdateConfig},
+    NftConfigUpdates, QueryMsg, UncheckedNftConfig,
+};
 
 use crate::helpers::MockEnvBuilder;
 
@@ -33,7 +30,7 @@ impl MockEnv {
         }
     }
 
-    pub fn query_config(&mut self) -> UncheckedConfig {
+    pub fn query_config(&mut self) -> UncheckedNftConfig {
         self.app.wrap().query_wasm_smart(self.nft_contract.clone(), &QueryMsg::Config {}).unwrap()
     }
 
@@ -80,7 +77,7 @@ impl MockEnv {
         let res = self.app.execute_contract(
             self.minter.clone(),
             self.nft_contract.clone(),
-            &ExtendedExecuteMsg::Mint {
+            &ExecuteMsg::Mint {
                 user: token_owner.into(),
             },
             &[],
@@ -102,7 +99,7 @@ impl MockEnv {
         self.app.execute_contract(
             sender.clone(),
             self.nft_contract.clone(),
-            &ExtendedExecuteMsg::Burn {
+            &ExecuteMsg::Burn {
                 token_id: token_id.to_string(),
             },
             &[],
@@ -116,7 +113,7 @@ impl MockEnv {
     ) -> AnyResult<AppResponse> {
         self.update_config(
             sender,
-            &ConfigUpdates {
+            &NftConfigUpdates {
                 max_value_for_burn: None,
                 proposed_new_minter: Some(proposed_new_minter.to_string()),
             },
@@ -135,7 +132,7 @@ impl MockEnv {
     pub fn update_config(
         &mut self,
         sender: &Addr,
-        updates: &ConfigUpdates,
+        updates: &NftConfigUpdates,
     ) -> AnyResult<AppResponse> {
         self.app.execute_contract(
             sender.clone(),

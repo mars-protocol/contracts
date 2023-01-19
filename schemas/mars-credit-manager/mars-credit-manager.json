@@ -233,10 +233,10 @@
           "update_config": {
             "type": "object",
             "required": [
-              "new_config"
+              "updates"
             ],
             "properties": {
-              "new_config": {
+              "updates": {
                 "$ref": "#/definitions/ConfigUpdates"
               }
             },
@@ -254,6 +254,28 @@
         "properties": {
           "update_owner": {
             "$ref": "#/definitions/OwnerUpdate"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Update nft contract config",
+        "type": "object",
+        "required": [
+          "update_nft_config"
+        ],
+        "properties": {
+          "update_nft_config": {
+            "type": "object",
+            "required": [
+              "updates"
+            ],
+            "properties": {
+              "updates": {
+                "$ref": "#/definitions/NftConfigUpdates"
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -1258,6 +1280,28 @@
       "Decimal": {
         "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
         "type": "string"
+      },
+      "NftConfigUpdates": {
+        "type": "object",
+        "properties": {
+          "max_value_for_burn": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Uint128"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "proposed_new_minter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
       },
       "OracleBase_for_String": {
         "type": "string"

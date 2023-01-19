@@ -2,16 +2,16 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Uint128};
 
 #[cw_serde]
-pub struct ConfigBase<T> {
+pub struct NftConfigBase<T> {
     pub max_value_for_burn: Uint128,
     pub proposed_new_minter: Option<T>,
 }
 
-pub type Config = ConfigBase<Addr>;
-pub type UncheckedConfig = ConfigBase<String>;
+pub type NftConfig = NftConfigBase<Addr>;
+pub type UncheckedNftConfig = NftConfigBase<String>;
 
-impl From<Config> for UncheckedConfig {
-    fn from(config: Config) -> Self {
+impl From<NftConfig> for UncheckedNftConfig {
+    fn from(config: NftConfig) -> Self {
         Self {
             max_value_for_burn: config.max_value_for_burn,
             proposed_new_minter: config.proposed_new_minter.map(Into::into),
@@ -20,7 +20,7 @@ impl From<Config> for UncheckedConfig {
 }
 
 #[cw_serde]
-pub struct ConfigUpdates {
+pub struct NftConfigUpdates {
     pub max_value_for_burn: Option<Uint128>,
     pub proposed_new_minter: Option<String>,
 }

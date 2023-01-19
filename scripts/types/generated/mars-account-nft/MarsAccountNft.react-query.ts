@@ -16,7 +16,7 @@ import {
   Expiration,
   Timestamp,
   Uint64,
-  ConfigUpdates,
+  NftConfigUpdates,
   QueryMsg,
   AllNftInfoResponseForEmpty,
   OwnerOfResponse,
@@ -27,7 +27,7 @@ import {
   TokensResponse,
   ApprovalResponse,
   ApprovalsResponse,
-  ConfigBaseForString,
+  NftConfigBaseForString,
   ContractInfoResponse,
   MinterResponse,
   NumTokensResponse,
@@ -335,12 +335,12 @@ export function useMarsAccountNftNextIdQuery<TData = Uint64>({
   )
 }
 export interface MarsAccountNftConfigQuery<TData>
-  extends MarsAccountNftReactQuery<ConfigBaseForString, TData> {}
-export function useMarsAccountNftConfigQuery<TData = ConfigBaseForString>({
+  extends MarsAccountNftReactQuery<NftConfigBaseForString, TData> {}
+export function useMarsAccountNftConfigQuery<TData = NftConfigBaseForString>({
   client,
   options,
 }: MarsAccountNftConfigQuery<TData>) {
-  return useQuery<ConfigBaseForString, Error, TData>(
+  return useQuery<NftConfigBaseForString, Error, TData>(
     marsAccountNftQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -551,7 +551,7 @@ export function useMarsAccountNftAcceptMinterRoleMutation(
 export interface MarsAccountNftUpdateConfigMutation {
   client: MarsAccountNftClient
   msg: {
-    updates: ConfigUpdates
+    updates: NftConfigUpdates
   }
   args?: {
     fee?: number | StdFee | 'auto'

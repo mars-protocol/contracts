@@ -148,6 +148,7 @@ fn test_instantiate_raises_on_invalid_vaults_config() {
                 max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
                 liquidation_threshold: Decimal::from_atomics(9u128, 0).unwrap(),
                 base_token_denom: "lp_denom_123".to_string(),
+                whitelisted: true,
             },
             None,
         )
@@ -159,6 +160,7 @@ fn test_instantiate_raises_on_invalid_vaults_config() {
                 max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
                 liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
                 base_token_denom: "xyz".to_string(),
+                whitelisted: true,
             },
             None,
         )

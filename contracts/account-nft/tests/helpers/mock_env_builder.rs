@@ -3,12 +3,9 @@ use std::mem::take;
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Empty};
 use cw_multi_test::{BasicApp, Executor};
-use mars_account_nft::{
-    config::ConfigUpdates,
-    msg::{
-        ExecuteMsg::{AcceptMinterRole, UpdateConfig},
-        InstantiateMsg,
-    },
+use mars_rover::adapters::account_nft::{
+    ExecuteMsg::{AcceptMinterRole, UpdateConfig},
+    InstantiateMsg, NftConfigUpdates,
 };
 
 use crate::helpers::{
@@ -98,7 +95,7 @@ impl MockEnvBuilder {
                 minter,
                 nft_contract.clone(),
                 &UpdateConfig {
-                    updates: ConfigUpdates {
+                    updates: NftConfigUpdates {
                         max_value_for_burn: None,
                         proposed_new_minter: Some(cm_addr.clone().into()),
                     },
