@@ -1,6 +1,8 @@
 use std::{cmp::min, str};
 
-use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
+use cosmwasm_std::{
+    Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128,
+};
 use mars_outpost::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
@@ -998,7 +1000,7 @@ pub fn liquidate(
 /// Computes debt to repay (in debt asset),
 /// collateral to liquidate (in collateral asset) and
 /// amount to refund the liquidator (in debt asset)
-fn liquidation_compute_amounts(
+pub fn liquidation_compute_amounts(
     user_collateral_amount_scaled: Uint128,
     user_debt_amount: Uint128,
     sent_debt_amount: Uint128,
@@ -1036,6 +1038,19 @@ fn liquidation_compute_amounts(
             )?,
             Decimal::one() + collateral_market.liquidation_bonus,
         )?;
+    }
+
+    // In some edges scenarios:
+    // - if debt_amount_to_repay = 0, some liquidators could drain collaterals and all their coins
+    // would be refunded, i.e.: without spending coins.
+    // - if collateral_amount_to_liquidate is 0, some users could liquidate without receiving collaterals
+    // in return.
+    if (!collateral_amount_to_liquidate.is_zero() && debt_amount_to_repay.is_zero())
+        || (collateral_amount_to_liquidate.is_zero() && !debt_amount_to_repay.is_zero())
+    {
+        return Err(StdError::generic_err(
+            format!("Can't process liquidation. Invalid collateral_amount_to_liquidate ({collateral_amount_to_liquidate}) and debt_amount_to_repay ({debt_amount_to_repay})")
+        ));
     }
 
     let refund_amount = sent_debt_amount - debt_amount_to_repay;

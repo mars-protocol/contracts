@@ -3,8 +3,8 @@ use std::cmp::min;
 use cosmwasm_std::{
     attr, coin, coins,
     testing::{mock_info, MockApi, MockStorage},
-    to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps, OwnedDeps, StdResult, SubMsg,
-    Uint128, WasmMsg,
+    to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps, OwnedDeps, StdError, StdResult,
+    SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::PaymentError;
 use helpers::{
@@ -20,6 +20,7 @@ use mars_outpost::{
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
+    execute::liquidation_compute_amounts,
     interest_rates::{
         compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
         ScalingOperation, SCALING_FACTOR,
@@ -1336,4 +1337,46 @@ fn liquidate_if_collateral_disabled() {
             denom: "collateral2".to_string()
         }
     );
+}
+
+#[test]
+fn liquidator_cannot_receive_collaterals_without_spending_coins() {
+    let market = Market {
+        liquidity_index: Decimal::one(),
+        liquidation_bonus: Decimal::from_ratio(1u128, 10u128),
+        ..Default::default()
+    };
+    let res_err = liquidation_compute_amounts(
+        Uint128::new(320000000),
+        Uint128::new(800),
+        Uint128::new(2),
+        &market,
+        Decimal::one(),
+        Decimal::from_ratio(300u128, 1u128),
+        0,
+        Decimal::from_ratio(1u128, 2u128),
+    )
+    .unwrap_err();
+    assert_eq!(res_err, StdError::generic_err("Can't process liquidation. Invalid collateral_amount_to_liquidate (320) and debt_amount_to_repay (0)"))
+}
+
+#[test]
+fn cannot_liquidate_without_receiving_collaterals() {
+    let market = Market {
+        liquidity_index: Decimal::one(),
+        liquidation_bonus: Decimal::from_ratio(1u128, 10u128),
+        ..Default::default()
+    };
+    let res_err = liquidation_compute_amounts(
+        Uint128::new(320000000),
+        Uint128::new(20),
+        Uint128::new(30),
+        &market,
+        Decimal::from_ratio(12u128, 1u128),
+        Decimal::one(),
+        0,
+        Decimal::from_ratio(1u128, 2u128),
+    )
+    .unwrap_err();
+    assert_eq!(res_err, StdError::generic_err("Can't process liquidation. Invalid collateral_amount_to_liquidate (0) and debt_amount_to_repay (10)"))
 }
