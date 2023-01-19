@@ -836,16 +836,12 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn pre_deployed_vault(&mut self, address: &str, info: &VaultTestInfo) -> &mut Self {
-        let config = VaultInstantiateConfig {
-            vault: VaultBase::new(address.to_string()),
-            config: VaultConfig {
-                deposit_cap: info.deposit_cap.clone(),
-                max_ltv: info.max_ltv,
-                liquidation_threshold: info.liquidation_threshold,
-                whitelisted: true,
-            },
-        };
+    pub fn pre_deployed_vault(
+        &mut self,
+        info: &VaultTestInfo,
+        config: Option<VaultInstantiateConfig>,
+    ) -> &mut Self {
+        let config = config.unwrap_or(self.deploy_vault(info));
         let new_list = match self.pre_deployed_vaults.clone() {
             None => Some(vec![config]),
             Some(mut curr) => {

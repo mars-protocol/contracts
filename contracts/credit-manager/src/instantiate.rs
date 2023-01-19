@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use cosmwasm_std::{Decimal, DepsMut};
+use cosmwasm_std::{Api, Decimal, DepsMut, QuerierWrapper, StdResult};
 use mars_owner::OwnerInit::SetInitialOwner;
 use mars_rover::{
     error::{ContractError::InvalidConfig, ContractResult},
@@ -30,7 +30,7 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
     assert_lte_to_one(&msg.max_close_factor)?;
     MAX_CLOSE_FACTOR.save(deps.storage, &msg.max_close_factor)?;
 
-    assert_no_duplicate_vaults(&msg.vault_configs)?;
+    assert_no_duplicate_vaults(deps.api, &deps.querier, &msg.vault_configs)?;
     msg.vault_configs.iter().try_for_each(|v| -> ContractResult<_> {
         v.config.check()?;
         let vault = v.vault.check(deps.api)?;
@@ -45,13 +45,32 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
     Ok(())
 }
 
-pub fn assert_no_duplicate_vaults(vaults: &[VaultInstantiateConfig]) -> ContractResult<()> {
+pub fn assert_no_duplicate_vaults(
+    api: &dyn Api,
+    querier: &QuerierWrapper,
+    vaults: &[VaultInstantiateConfig],
+) -> ContractResult<()> {
     let set: HashSet<_> = vaults.iter().map(|v| v.vault.address.clone()).collect();
     if set.len() != vaults.len() {
         return Err(InvalidConfig {
             reason: "Duplicate vault configs present".to_string(),
         });
     }
+
+    let set: HashSet<_> = vaults
+        .iter()
+        .map(|v| {
+            let vault = v.vault.check(api)?;
+            let info = vault.query_info(querier)?;
+            Ok(info.vault_token)
+        })
+        .collect::<StdResult<_>>()?;
+    if set.len() != vaults.len() {
+        return Err(InvalidConfig {
+            reason: "Multiple vaults share the same vault token".to_string(),
+        });
+    }
+
     Ok(())
 }
 

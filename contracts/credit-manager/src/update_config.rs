@@ -53,7 +53,7 @@ pub fn update_config(
     }
 
     if let Some(configs) = new_config.vault_configs {
-        assert_no_duplicate_vaults(&configs)?;
+        assert_no_duplicate_vaults(deps.api, &deps.querier, &configs)?;
         VAULT_CONFIGS.clear(deps.storage);
         configs.iter().try_for_each(|v| -> ContractResult<_> {
             v.config.check()?;

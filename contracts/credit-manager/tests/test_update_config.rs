@@ -51,6 +51,13 @@ fn test_only_owner_can_update_config() {
 fn test_raises_on_invalid_vaults_config() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
+
+    let mut vault_config = deploy_vault(&mut mock.app);
+
+    // Invalid config. Max LTV should be lower than liquidation threshold.
+    vault_config.config.max_ltv = Decimal::from_atomics(8u128, 1).unwrap();
+    vault_config.config.liquidation_threshold = Decimal::from_atomics(7u128, 1).unwrap();
+
     let res = mock.update_config(
         &Addr::unchecked(original_config.owner.clone().unwrap()),
         ConfigUpdates {
@@ -60,15 +67,7 @@ fn test_raises_on_invalid_vaults_config() {
             max_close_factor: None,
             max_unlocking_positions: None,
             swapper: None,
-            vault_configs: Some(vec![VaultInstantiateConfig {
-                vault: VaultBase::new("vault_123".to_string()),
-                config: VaultConfig {
-                    deposit_cap: coin(10_000_000, "uusdc"),
-                    max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
-                    liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
-                    whitelisted: true,
-                },
-            }]),
+            vault_configs: Some(vec![vault_config]),
             zapper: None,
         },
     );
@@ -79,6 +78,36 @@ fn test_raises_on_invalid_vaults_config() {
             reason: "max ltv or liquidation threshold are invalid".to_string(),
         },
     );
+
+    let mut vault_config = deploy_vault(&mut mock.app);
+
+    // Invalid config. Liquidation threshold should be <= 1.
+    vault_config.config.liquidation_threshold = Decimal::from_atomics(9u128, 0).unwrap();
+
+    let res = mock.update_config(
+        &Addr::unchecked(original_config.owner.clone().unwrap()),
+        ConfigUpdates {
+            account_nft: None,
+            allowed_coins: None,
+            oracle: None,
+            max_close_factor: None,
+            max_unlocking_positions: None,
+            swapper: None,
+            vault_configs: Some(vec![vault_config]),
+            zapper: None,
+        },
+    );
+
+    assert_err(
+        res,
+        InvalidConfig {
+            reason: "max ltv or liquidation threshold are invalid".to_string(),
+        },
+    );
+
+    // Duplicate vault tokens
+    let vault_a = deploy_vault(&mut mock.app);
+    let vault_b = deploy_vault(&mut mock.app);
 
     let res = mock.update_config(
         &Addr::unchecked(original_config.owner.unwrap()),
@@ -89,15 +118,7 @@ fn test_raises_on_invalid_vaults_config() {
             max_close_factor: None,
             max_unlocking_positions: None,
             swapper: None,
-            vault_configs: Some(vec![VaultInstantiateConfig {
-                vault: VaultBase::new("vault_123".to_string()),
-                config: VaultConfig {
-                    deposit_cap: coin(10_000_000, "uusdc"),
-                    max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
-                    liquidation_threshold: Decimal::from_atomics(9u128, 0).unwrap(),
-                    whitelisted: true,
-                },
-            }]),
+            vault_configs: Some(vec![vault_a, vault_b]),
             zapper: None,
         },
     );
@@ -105,7 +126,7 @@ fn test_raises_on_invalid_vaults_config() {
     assert_err(
         res,
         InvalidConfig {
-            reason: "max ltv or liquidation threshold are invalid".to_string(),
+            reason: "Multiple vaults share the same vault token".to_string(),
         },
     );
 }

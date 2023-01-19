@@ -1,4 +1,8 @@
 use cosmwasm_std::{coin, Decimal};
+use mars_rover::{
+    adapters::vault::{VaultBase, VaultConfig},
+    msg::instantiate::VaultInstantiateConfig,
+};
 
 use crate::helpers::{
     assert_contents_equal, locked_vault_info, uatom_info, ujake_info, unlocked_vault_info,
@@ -70,7 +74,22 @@ fn test_vault_configs_set_on_instantiate() {
 
 #[test]
 fn test_raises_on_invalid_vaults_addr() {
-    let mock = MockEnv::new().pre_deployed_vault("%%%INVALID%%%", &unlocked_vault_info()).build();
+    let mock = MockEnv::new()
+        .pre_deployed_vault(
+            &unlocked_vault_info(),
+            Some(VaultInstantiateConfig {
+                vault: VaultBase {
+                    address: "%%%INVALID%%%".to_string(),
+                },
+                config: VaultConfig {
+                    deposit_cap: Default::default(),
+                    max_ltv: Default::default(),
+                    liquidation_threshold: Default::default(),
+                    whitelisted: false,
+                },
+            }),
+        )
+        .build();
 
     if mock.is_ok() {
         panic!("Should have thrown an error");
@@ -78,10 +97,9 @@ fn test_raises_on_invalid_vaults_addr() {
 }
 
 #[test]
-fn test_raises_on_invalid_vaults_config() {
+fn test_instantiate_raises_on_invalid_vaults_config() {
     let mock = MockEnv::new()
         .pre_deployed_vault(
-            "addr_123",
             &VaultTestInfo {
                 vault_token_denom: "uleverage".to_string(),
                 lockup: None,
@@ -90,6 +108,7 @@ fn test_raises_on_invalid_vaults_config() {
                 liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
                 base_token_denom: "lp_denom_123".to_string(),
             },
+            None,
         )
         .build();
 
@@ -99,7 +118,6 @@ fn test_raises_on_invalid_vaults_config() {
 
     let mock = MockEnv::new()
         .pre_deployed_vault(
-            "addr_123",
             &VaultTestInfo {
                 vault_token_denom: "uleverage".to_string(),
                 lockup: None,
@@ -108,19 +126,49 @@ fn test_raises_on_invalid_vaults_config() {
                 liquidation_threshold: Decimal::from_atomics(9u128, 0).unwrap(),
                 base_token_denom: "lp_denom_123".to_string(),
             },
+            None,
         )
         .build();
 
     if mock.is_ok() {
         panic!("Should have thrown an error: liquidation_threshold > 1");
     }
+
+    let mock = MockEnv::new()
+        .pre_deployed_vault(
+            &VaultTestInfo {
+                vault_token_denom: "uleverage".to_string(),
+                lockup: None,
+                deposit_cap: coin(10_000_000, "uusdc"),
+                max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(9u128, 0).unwrap(),
+                base_token_denom: "lp_denom_123".to_string(),
+            },
+            None,
+        )
+        .pre_deployed_vault(
+            &VaultTestInfo {
+                vault_token_denom: "uleverage".to_string(),
+                lockup: None,
+                deposit_cap: coin(10_000_000, "uusdc"),
+                max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
+                liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
+                base_token_denom: "xyz".to_string(),
+            },
+            None,
+        )
+        .build();
+
+    if mock.is_ok() {
+        panic!("Should have thrown an error: duplicate vault token denoms");
+    }
 }
 
 #[test]
 fn test_duplicate_vaults_raises() {
     let mock = MockEnv::new()
-        .pre_deployed_vault("addr_123", &locked_vault_info())
-        .pre_deployed_vault("addr_123", &unlocked_vault_info())
+        .pre_deployed_vault(&locked_vault_info(), None)
+        .pre_deployed_vault(&unlocked_vault_info(), None)
         .build();
     if mock.is_ok() {
         panic!("Should have thrown an error");
