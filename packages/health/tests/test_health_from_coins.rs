@@ -9,7 +9,7 @@ use mars_outpost::red_bank::Market;
 use mars_testing::MarsMockQuerier;
 
 #[test]
-fn test_health_success_from_coins() {
+fn health_success_from_coins() {
     let mut mock_querier = MarsMockQuerier::new(MockQuerier::new(&[]));
 
     // Set Markets
@@ -62,7 +62,7 @@ fn test_health_success_from_coins() {
 }
 
 #[test]
-fn test_health_error_from_coins() {
+fn health_error_from_coins() {
     let mut mock_querier = MarsMockQuerier::new(MockQuerier::new(&[]));
 
     // Set Markets

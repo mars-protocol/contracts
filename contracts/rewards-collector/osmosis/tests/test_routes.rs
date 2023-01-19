@@ -14,7 +14,7 @@ use crate::helpers::mock_routes;
 mod helpers;
 
 #[test]
-fn test_setting_route() {
+fn setting_route() {
     let mut deps = helpers::setup_test();
 
     let steps = vec![
@@ -66,7 +66,7 @@ fn test_setting_route() {
 }
 
 #[test]
-fn test_denom_with_invalid_char() {
+fn denom_with_invalid_char() {
     let mut deps = helpers::setup_test();
 
     let steps = vec![
@@ -97,7 +97,7 @@ fn test_denom_with_invalid_char() {
 }
 
 #[test]
-fn test_invalid_denom_length() {
+fn invalid_denom_length() {
     let mut deps = helpers::setup_test();
 
     let steps = vec![
@@ -127,7 +127,7 @@ fn test_invalid_denom_length() {
 }
 
 #[test]
-fn test_querying_routes() {
+fn querying_routes() {
     let deps = helpers::setup_test();
 
     // NOTE: the response is ordered alphabetically
@@ -179,7 +179,7 @@ fn test_querying_routes() {
 }
 
 #[test]
-fn test_validating_route() {
+fn validating_route() {
     let deps = helpers::setup_test();
     let q = &deps.as_ref().querier;
 
@@ -289,7 +289,7 @@ fn test_validating_route() {
 }
 
 #[test]
-fn test_stringifying_route() {
+fn stringifying_route() {
     let route = OsmosisRoute(vec![
         SwapAmountInRoute {
             pool_id: 1,

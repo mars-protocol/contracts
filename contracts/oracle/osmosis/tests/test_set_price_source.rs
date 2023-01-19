@@ -12,7 +12,7 @@ use mars_testing::mock_info;
 mod helpers;
 
 #[test]
-fn test_setting_price_source_by_non_owner() {
+fn setting_price_source_by_non_owner() {
     let mut deps = helpers::setup_test();
 
     let err = execute(
@@ -31,7 +31,7 @@ fn test_setting_price_source_by_non_owner() {
 }
 
 #[test]
-fn test_setting_price_source_fixed() {
+fn setting_price_source_fixed() {
     let mut deps = helpers::setup_test();
 
     let res = execute(
@@ -63,7 +63,7 @@ fn test_setting_price_source_fixed() {
 }
 
 #[test]
-fn test_setting_price_source_incorrect_denom() {
+fn setting_price_source_incorrect_denom() {
     let mut deps = helpers::setup_test();
 
     let res = execute(
@@ -123,7 +123,7 @@ fn test_setting_price_source_incorrect_denom() {
 }
 
 #[test]
-fn test_setting_price_source_spot() {
+fn setting_price_source_spot() {
     let mut deps = helpers::setup_test();
 
     let mut set_price_source_spot = |denom: &str, pool_id: u64| {
@@ -195,7 +195,7 @@ fn test_setting_price_source_spot() {
 }
 
 #[test]
-fn test_setting_price_source_arithmetic_twap_with_invalid_params() {
+fn setting_price_source_arithmetic_twap_with_invalid_params() {
     let mut deps = helpers::setup_test();
 
     let mut set_price_source_twap =
@@ -283,7 +283,7 @@ fn test_setting_price_source_arithmetic_twap_with_invalid_params() {
 }
 
 #[test]
-fn test_setting_price_source_arithmetic_twap_successfully() {
+fn setting_price_source_arithmetic_twap_successfully() {
     let mut deps = helpers::setup_test();
 
     // properly set twap price source
@@ -358,7 +358,7 @@ fn test_setting_price_source_arithmetic_twap_successfully() {
 }
 
 #[test]
-fn test_setting_price_source_geometric_twap_with_invalid_params() {
+fn setting_price_source_geometric_twap_with_invalid_params() {
     let mut deps = helpers::setup_test();
 
     let mut set_price_source_twap =
@@ -446,7 +446,7 @@ fn test_setting_price_source_geometric_twap_with_invalid_params() {
 }
 
 #[test]
-fn test_setting_price_source_geometric_twap_successfully() {
+fn setting_price_source_geometric_twap_successfully() {
     let mut deps = helpers::setup_test();
 
     // properly set twap price source
@@ -521,7 +521,7 @@ fn test_setting_price_source_geometric_twap_successfully() {
 }
 
 #[test]
-fn test_setting_price_source_xyk_lp() {
+fn setting_price_source_xyk_lp() {
     let mut deps = helpers::setup_test();
 
     let mut set_price_source_xyk_lp = |denom: &str, pool_id: u64| {
@@ -575,7 +575,7 @@ fn test_setting_price_source_xyk_lp() {
 }
 
 #[test]
-fn test_querying_price_source() {
+fn querying_price_source() {
     let mut deps = helpers::setup_test();
 
     helpers::set_price_source(

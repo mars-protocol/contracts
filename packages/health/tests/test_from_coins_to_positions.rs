@@ -12,7 +12,7 @@ use mars_testing::MarsMockQuerier;
 
 // Test converting a collection of coins (collateral and debts) to a map of `Position`
 #[test]
-fn test_from_coins_to_positions() {
+fn from_coins_to_positions() {
     let oracle_addr = Addr::unchecked("oracle");
     let red_bank_addr = Addr::unchecked("red_bank");
     let mock_querier = mock_setup();

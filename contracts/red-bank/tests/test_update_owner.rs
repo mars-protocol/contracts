@@ -8,7 +8,7 @@ use crate::helpers::{th_query, th_setup};
 mod helpers;
 
 #[test]
-fn test_initialized_state() {
+fn initialized_state() {
     let deps = th_setup(&[]);
 
     let config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
@@ -17,7 +17,7 @@ fn test_initialized_state() {
 }
 
 #[test]
-fn test_update_owner() {
+fn update_owner() {
     let mut deps = th_setup(&[]);
 
     let original_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});

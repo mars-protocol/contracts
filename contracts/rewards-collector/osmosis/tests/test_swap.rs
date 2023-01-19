@@ -16,7 +16,7 @@ use osmosis_std::types::{
 mod helpers;
 
 #[test]
-fn test_swapping_asset_if_quering_price_fails() {
+fn swapping_asset_if_quering_price_fails() {
     let mut deps = helpers::setup_test();
 
     // Only pool_1 set, missing pool_69 and pool_420
@@ -43,7 +43,7 @@ fn test_swapping_asset_if_quering_price_fails() {
 }
 
 #[test]
-fn test_swapping_asset() {
+fn swapping_asset() {
     let mut deps = helpers::setup_test();
 
     let uatom_uosmo_price = Decimal::from_ratio(125u128, 10u128);

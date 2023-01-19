@@ -68,7 +68,7 @@ mod tests {
     use crate::red_bank::Market;
 
     #[test]
-    fn test_model_lifecycle() {
+    fn model_lifecycle() {
         let optimal_utilization_rate = Decimal::percent(80);
         let reserve_factor = Decimal::percent(20);
 
@@ -111,7 +111,7 @@ mod tests {
     }
 
     #[test]
-    fn test_interest_rates_calculation() {
+    fn interest_rates_calculation() {
         let model = InterestRateModel {
             optimal_utilization_rate: Decimal::percent(80),
             base: Decimal::zero(),

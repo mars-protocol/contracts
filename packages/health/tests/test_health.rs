@@ -13,7 +13,7 @@ use mars_health::{
 /// Health: liquidatable: false
 ///         above_max_ltv: false
 #[test]
-fn test_collateral_no_debt() {
+fn collateral_no_debt() {
     let positions = vec![Position {
         denom: "osmo".to_string(),
         collateral_amount: Uint128::new(300),
@@ -38,7 +38,7 @@ fn test_collateral_no_debt() {
 // Health:  liquidatable: true
 ///         above_max_ltv: true
 #[test]
-fn test_debt_no_collateral() {
+fn debt_no_collateral() {
     let positions = vec![Position {
         denom: "osmo".to_string(),
         debt_amount: Uint128::new(100),
@@ -67,7 +67,7 @@ fn test_debt_no_collateral() {
 /// Health:    liquidatable: false
 ///            above_max_ltv: false
 #[test]
-fn test_no_collateral_no_debt() {
+fn no_collateral_no_debt() {
     let positions = vec![Position {
         denom: "atom".to_string(),
         collateral_amount: Uint128::new(10),
@@ -113,7 +113,7 @@ fn test_no_collateral_no_debt() {
 /// Health:   liquidatable: false
 ///           above_max_ltv: false
 #[test]
-fn test_healthy_health_factor() {
+fn healthy_health_factor() {
     let positions = vec![
         Position {
             denom: "osmo".to_string(),
@@ -155,7 +155,7 @@ fn test_healthy_health_factor() {
 /// Health:   liquidatable: false
 ///           above_max_ltv: true
 #[test]
-fn test_above_max_ltv_not_liquidatable() {
+fn above_max_ltv_not_liquidatable() {
     let positions = vec![
         Position {
             denom: "osmo".to_string(),
@@ -194,7 +194,7 @@ fn test_above_max_ltv_not_liquidatable() {
 /// Health:   liquidatable: true
 ///           above_max_ltv: true
 #[test]
-fn test_liquidatable() {
+fn liquidatable() {
     let positions = vec![
         Position {
             denom: "osmo".to_string(),
@@ -231,7 +231,7 @@ fn test_liquidatable() {
 }
 
 #[test]
-fn test_health_errors() {
+fn health_errors() {
     let positions = vec![Position {
         denom: "osmo".to_string(),
         debt_amount: Uint128::zero(),

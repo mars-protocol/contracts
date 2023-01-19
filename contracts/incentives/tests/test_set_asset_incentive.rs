@@ -20,7 +20,7 @@ use crate::helpers::{th_setup, th_setup_with_env};
 mod helpers;
 
 #[test]
-fn test_only_owner_can_set_asset_incentive() {
+fn only_owner_can_set_asset_incentive() {
     let mut deps = th_setup();
 
     let info = mock_info("sender", &[]);
@@ -36,7 +36,7 @@ fn test_only_owner_can_set_asset_incentive() {
 }
 
 #[test]
-fn test_invalid_denom_for_incentives() {
+fn invalid_denom_for_incentives() {
     let mut deps = th_setup();
 
     let info = mock_info("owner", &[]);
@@ -58,7 +58,7 @@ fn test_invalid_denom_for_incentives() {
 }
 
 #[test]
-fn test_cannot_set_new_asset_incentive_with_empty_params() {
+fn cannot_set_new_asset_incentive_with_empty_params() {
     let mut deps = th_setup();
     let info = mock_info("owner", &[]);
     let env = mock_env();
@@ -107,7 +107,7 @@ fn test_cannot_set_new_asset_incentive_with_empty_params() {
 }
 
 #[test]
-fn test_cannot_set_new_asset_incentive_with_invalid_params() {
+fn cannot_set_new_asset_incentive_with_invalid_params() {
     let mut deps = th_setup();
     let info = mock_info("owner", &[]);
     let block_time = Timestamp::from_seconds(1_000_000);
@@ -146,7 +146,7 @@ fn test_cannot_set_new_asset_incentive_with_invalid_params() {
 }
 
 #[test]
-fn test_set_new_asset_incentive() {
+fn set_new_asset_incentive() {
     let mut deps = th_setup();
 
     let info = mock_info("owner", &[]);
@@ -183,7 +183,7 @@ fn test_set_new_asset_incentive() {
 }
 
 #[test]
-fn test_set_existing_asset_incentive_with_different_start_time() {
+fn set_existing_asset_incentive_with_different_start_time() {
     let mut deps = th_setup();
 
     deps.querier.set_redbank_market(Market {
@@ -305,7 +305,7 @@ fn test_set_existing_asset_incentive_with_different_start_time() {
 }
 
 #[test]
-fn test_set_existing_asset_incentive_with_different_duration() {
+fn set_existing_asset_incentive_with_different_duration() {
     let mut deps = th_setup();
 
     deps.querier.set_redbank_market(Market {
@@ -414,7 +414,7 @@ fn test_set_existing_asset_incentive_with_different_duration() {
 }
 
 #[test]
-fn test_set_existing_asset_incentive_with_index_updated_during_incentive() {
+fn set_existing_asset_incentive_with_index_updated_during_incentive() {
     // setup
     let env = mock_env();
     let mut deps = th_setup_with_env(env);
@@ -490,7 +490,7 @@ fn test_set_existing_asset_incentive_with_index_updated_during_incentive() {
 }
 
 #[test]
-fn test_set_existing_asset_incentive_with_index_updated_after_incentive() {
+fn set_existing_asset_incentive_with_index_updated_after_incentive() {
     // setup
     let env = mock_env();
     let mut deps = th_setup_with_env(env);

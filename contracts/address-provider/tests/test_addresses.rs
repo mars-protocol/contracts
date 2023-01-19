@@ -8,7 +8,7 @@ use crate::helpers::{th_query, th_setup};
 mod helpers;
 
 #[test]
-fn test_setting_address_if_unauthorized() {
+fn setting_address_if_unauthorized() {
     let mut deps = th_setup();
 
     let msg = ExecuteMsg::SetAddress {
@@ -28,7 +28,7 @@ fn test_setting_address_if_unauthorized() {
 }
 
 #[test]
-fn test_setting_address_if_invalid_remote_address() {
+fn setting_address_if_invalid_remote_address() {
     let mut deps = th_setup();
 
     let invalid_address = "mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3ze575".to_string();
@@ -42,7 +42,7 @@ fn test_setting_address_if_invalid_remote_address() {
 }
 
 #[test]
-fn test_setting_address() {
+fn setting_address() {
     let mut deps = th_setup();
 
     let invalid_address = "mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575".to_string();
@@ -59,7 +59,7 @@ fn test_setting_address() {
 }
 
 #[test]
-fn test_querying_addresses() {
+fn querying_addresses() {
     let mut deps = th_setup();
 
     ADDRESSES

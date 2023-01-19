@@ -53,7 +53,7 @@ mod tests {
     use crate::error::MarsError;
 
     #[test]
-    fn test_mars_error_to_std_error() {
+    fn mars_error_to_std_error() {
         {
             let mars_error = MarsError::Unauthorized {};
 

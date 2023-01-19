@@ -9,7 +9,7 @@ use mars_testing::{mock_env as mock_env_at_height_and_time, mock_info, MockEnvPa
 mod helpers;
 
 #[test]
-fn test_distributing_rewards() {
+fn distributing_rewards() {
     let mut deps = helpers::setup_test();
 
     let env = mock_env_at_height_and_time(MockEnvParams {

@@ -11,7 +11,7 @@ use crate::helpers::{th_query, th_setup};
 mod helpers;
 
 #[test]
-fn test_initialized_state() {
+fn initialized_state() {
     let deps = th_setup(&[]);
 
     let config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
@@ -20,7 +20,7 @@ fn test_initialized_state() {
 }
 
 #[test]
-fn test_propose_new_emergency_owner() {
+fn propose_new_emergency_owner() {
     let mut deps = th_setup(&[]);
 
     let original_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
@@ -63,7 +63,7 @@ fn test_propose_new_emergency_owner() {
 }
 
 #[test]
-fn test_clear_proposed_emergency_owner() {
+fn clear_proposed_emergency_owner() {
     let mut deps = th_setup(&[]);
 
     let original_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
@@ -115,7 +115,7 @@ fn test_clear_proposed_emergency_owner() {
 }
 
 #[test]
-fn test_accept_emergency_owner_role() {
+fn accept_emergency_owner_role() {
     let mut deps = th_setup(&[]);
 
     let original_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});

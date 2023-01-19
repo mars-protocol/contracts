@@ -13,7 +13,7 @@ const ONE_WEEK_IN_SEC: u64 = 604800;
 
 // User A deposits usdc in the redbank and claims rewards after one day
 #[test]
-fn test_rewards_claim() {
+fn rewards_claim() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
 
@@ -61,7 +61,7 @@ fn test_rewards_claim() {
 // Then user A later deposits osmo in the red bank when incentives were 10 emissions per second without withdrawing usdc
 // Then claimed rewards after one day again
 #[test]
-fn test_emissions_rates() {
+fn emissions_rates() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
 
@@ -134,7 +134,7 @@ fn test_emissions_rates() {
 // User A deposits usdc in the redbank and claimed rewards after one day
 // Then withdraws usdc and checks rewards balance after one day
 #[test]
-fn test_no_incentives_accrued_after_withdraw() {
+fn no_incentives_accrued_after_withdraw() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
 
@@ -196,7 +196,7 @@ fn test_no_incentives_accrued_after_withdraw() {
 
 // User A deposits usdc, osmo, and atom all with different emissions per second & claims rewards after one day
 #[test]
-fn test_multiple_assets() {
+fn multiple_assets() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
 
@@ -252,7 +252,7 @@ fn test_multiple_assets() {
 
 // User A holds usdc in the red bank while there are incentives then incentives are stopped and then incentives are restarted
 #[test]
-fn test_stopping_incentives() {
+fn stopping_incentives() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
 
@@ -308,7 +308,7 @@ fn test_stopping_incentives() {
 // User A deposits half the amount user B deposits in the red bank
 // User A withdraws usdc after one day while user B holds usdc in the red bank
 #[test]
-fn test_multiple_users() {
+fn multiple_users() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
 
@@ -376,7 +376,7 @@ fn test_multiple_users() {
 
 // User A attempts to claim rewards but there is not enough mars in the incentives contract
 #[test]
-fn test_insufficient_mars() {
+fn insufficient_mars() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
 

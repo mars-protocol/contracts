@@ -7,7 +7,7 @@ use crate::helpers::th_query;
 mod helpers;
 
 #[test]
-fn test_invalid_chain_prefix() {
+fn invalid_chain_prefix() {
     let mut deps = mock_dependencies();
 
     let err = instantiate(
@@ -24,7 +24,7 @@ fn test_invalid_chain_prefix() {
 }
 
 #[test]
-fn test_proper_initialization() {
+fn proper_initialization() {
     let mut deps = mock_dependencies();
 
     instantiate(

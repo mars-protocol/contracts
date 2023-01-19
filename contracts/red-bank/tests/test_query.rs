@@ -10,7 +10,7 @@ use mars_red_bank::{
 mod helpers;
 
 #[test]
-fn test_query_collateral() {
+fn query_collateral() {
     let mut deps = th_setup(&[]);
 
     let user_addr = Addr::unchecked("user");
@@ -171,7 +171,7 @@ fn test_query_user_debt() {
 }
 
 #[test]
-fn test_query_user_asset_debt() {
+fn query_user_asset_debt() {
     let mut deps = th_setup(&[]);
 
     let user_addr = Addr::unchecked("user");

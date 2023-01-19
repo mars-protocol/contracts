@@ -12,7 +12,7 @@ use crate::helpers::prepare_query_pool_response;
 mod helpers;
 
 #[test]
-fn test_querying_fixed_price() {
+fn querying_fixed_price() {
     let mut deps = helpers::setup_test();
 
     helpers::set_price_source(
@@ -33,7 +33,7 @@ fn test_querying_fixed_price() {
 }
 
 #[test]
-fn test_querying_spot_price() {
+fn querying_spot_price() {
     let mut deps = helpers::setup_test();
 
     helpers::set_price_source(
@@ -63,7 +63,7 @@ fn test_querying_spot_price() {
 }
 
 #[test]
-fn test_querying_arithmetic_twap_price() {
+fn querying_arithmetic_twap_price() {
     let mut deps = helpers::setup_test();
 
     helpers::set_price_source(
@@ -95,7 +95,7 @@ fn test_querying_arithmetic_twap_price() {
 }
 
 #[test]
-fn test_querying_arithmetic_twap_price_with_downtime_detector() {
+fn querying_arithmetic_twap_price_with_downtime_detector() {
     let mut deps = helpers::setup_test();
 
     let dd = DowntimeDetector {
@@ -145,7 +145,7 @@ fn test_querying_arithmetic_twap_price_with_downtime_detector() {
 }
 
 #[test]
-fn test_querying_geometric_twap_price() {
+fn querying_geometric_twap_price() {
     let mut deps = helpers::setup_test();
 
     helpers::set_price_source(
@@ -177,7 +177,7 @@ fn test_querying_geometric_twap_price() {
 }
 
 #[test]
-fn test_querying_geometric_twap_price_with_downtime_detector() {
+fn querying_geometric_twap_price_with_downtime_detector() {
     let mut deps = helpers::setup_test();
 
     let dd = DowntimeDetector {
@@ -227,7 +227,7 @@ fn test_querying_geometric_twap_price_with_downtime_detector() {
 }
 
 #[test]
-fn test_querying_xyk_lp_price() {
+fn querying_xyk_lp_price() {
     let mut deps = helpers::setup_test();
 
     let assets = vec![coin(1, "uatom"), coin(1, "uosmo")];
@@ -340,7 +340,7 @@ fn test_querying_xyk_lp_price() {
 }
 
 #[test]
-fn test_querying_all_prices() {
+fn querying_all_prices() {
     let mut deps = helpers::setup_test();
 
     helpers::set_price_source(

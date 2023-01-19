@@ -19,7 +19,7 @@ use crate::helpers::{th_setup, th_setup_with_env};
 mod helpers;
 
 #[test]
-fn test_execute_claim_rewards() {
+fn execute_claim_rewards() {
     // SETUP
     let env = mock_env();
     let mut deps = th_setup_with_env(env.clone());
@@ -250,7 +250,7 @@ fn test_execute_claim_rewards() {
 }
 
 #[test]
-fn test_claim_zero_rewards() {
+fn claim_zero_rewards() {
     // SETUP
     let mut deps = th_setup();
 

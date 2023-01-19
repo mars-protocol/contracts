@@ -7,7 +7,7 @@ use mars_outpost::incentives::AssetIncentive;
 mod helpers;
 
 #[test]
-fn test_update_asset_incentive_index_if_zero_emission() {
+fn update_asset_incentive_index_if_zero_emission() {
     let start_time = Timestamp::from_seconds(0);
     let mut ai = AssetIncentive {
         emission_per_second: Uint128::zero(),
@@ -27,7 +27,7 @@ fn test_update_asset_incentive_index_if_zero_emission() {
 }
 
 #[test]
-fn test_update_asset_incentive_index_if_zero_amount() {
+fn update_asset_incentive_index_if_zero_amount() {
     let start_time = Timestamp::from_seconds(0);
     let mut ai = AssetIncentive {
         emission_per_second: Uint128::new(50),
@@ -47,7 +47,7 @@ fn test_update_asset_incentive_index_if_zero_amount() {
 }
 
 #[test]
-fn test_update_asset_incentive_index_if_current_block_lt_start_time() {
+fn update_asset_incentive_index_if_current_block_lt_start_time() {
     let start_time = Timestamp::from_seconds(10);
     let mut ai = AssetIncentive {
         emission_per_second: Uint128::new(50),
@@ -67,7 +67,7 @@ fn test_update_asset_incentive_index_if_current_block_lt_start_time() {
 }
 
 #[test]
-fn test_update_asset_incentive_index_if_current_block_eq_start_time() {
+fn update_asset_incentive_index_if_current_block_eq_start_time() {
     let start_time = Timestamp::from_seconds(10);
     let mut ai = AssetIncentive {
         emission_per_second: Uint128::new(50),
@@ -87,7 +87,7 @@ fn test_update_asset_incentive_index_if_current_block_eq_start_time() {
 }
 
 #[test]
-fn test_update_asset_incentive_index_if_current_block_gt_start_time() {
+fn update_asset_incentive_index_if_current_block_gt_start_time() {
     let total_amount = Uint128::new(100);
 
     let start_time = Timestamp::from_seconds(10);
@@ -117,7 +117,7 @@ fn test_update_asset_incentive_index_if_current_block_gt_start_time() {
 }
 
 #[test]
-fn test_update_asset_incentive_index_if_last_updated_eq_end_time() {
+fn update_asset_incentive_index_if_last_updated_eq_end_time() {
     let start_time = Timestamp::from_seconds(10);
     let duration = 300; // 5 min
     let end_time = start_time.plus_seconds(duration).seconds();
@@ -139,7 +139,7 @@ fn test_update_asset_incentive_index_if_last_updated_eq_end_time() {
 }
 
 #[test]
-fn test_update_asset_incentive_index_if_last_updated_gt_end_time() {
+fn update_asset_incentive_index_if_last_updated_gt_end_time() {
     let start_time = Timestamp::from_seconds(10);
     let duration = 300; // 5 min
     let end_time = start_time.plus_seconds(duration).seconds();
@@ -162,7 +162,7 @@ fn test_update_asset_incentive_index_if_last_updated_gt_end_time() {
 }
 
 #[test]
-fn test_update_asset_incentive_index_if_last_updated_lt_end_time() {
+fn update_asset_incentive_index_if_last_updated_lt_end_time() {
     let start_time = Timestamp::from_seconds(10);
     let duration = 300; // 5 min
     let end_time = start_time.plus_seconds(duration).seconds();
@@ -185,7 +185,7 @@ fn test_update_asset_incentive_index_if_last_updated_lt_end_time() {
 }
 
 #[test]
-fn test_update_asset_incentive_index_if_not_updated_till_finished() {
+fn update_asset_incentive_index_if_not_updated_till_finished() {
     let start_time = Timestamp::from_seconds(10);
     let duration = 300; // 5 min
     let end_time = start_time.plus_seconds(duration).seconds();

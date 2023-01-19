@@ -6,7 +6,7 @@ use mars_outpost::red_bank::Position;
 use mars_red_bank::{error::ContractError, health::compute_position_health};
 
 #[test]
-fn test_health_position() {
+fn health_position() {
     // No Debt No Collateral
     let positions = HashMap::new();
     let health = compute_position_health(&positions).unwrap();
@@ -71,7 +71,7 @@ fn test_health_position() {
 }
 
 #[test]
-fn test_health_error_if_overflow() {
+fn health_error_if_overflow() {
     let mut osmo_position = default_osmo_position();
     osmo_position.collateral_amount = Uint128::MAX;
     osmo_position.asset_price = Decimal::MAX;
