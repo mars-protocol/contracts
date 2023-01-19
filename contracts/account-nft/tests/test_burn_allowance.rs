@@ -9,7 +9,7 @@ use crate::helpers::{below_max_for_burn, generate_health_response, MockEnv, MAX_
 pub mod helpers;
 
 #[test]
-fn test_burn_not_allowed_if_too_many_debts() {
+fn burn_not_allowed_if_too_many_debts() {
     let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
 
     let user = Addr::unchecked("user");
@@ -28,7 +28,7 @@ fn test_burn_not_allowed_if_too_many_debts() {
 }
 
 #[test]
-fn test_burn_not_allowed_if_too_much_collateral() {
+fn burn_not_allowed_if_too_much_collateral() {
     let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
 
     let user = Addr::unchecked("user");
@@ -47,7 +47,7 @@ fn test_burn_not_allowed_if_too_much_collateral() {
 }
 
 #[test]
-fn test_burn_allowance_works_with_both_debt_and_collateral() {
+fn burn_allowance_works_with_both_debt_and_collateral() {
     let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
 
     let user = Addr::unchecked("user");
@@ -66,7 +66,7 @@ fn test_burn_allowance_works_with_both_debt_and_collateral() {
 }
 
 #[test]
-fn test_burn_allowance_at_exactly_max() {
+fn burn_allowance_at_exactly_max() {
     let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
 
     let user = Addr::unchecked("user");
@@ -77,7 +77,7 @@ fn test_burn_allowance_at_exactly_max() {
 }
 
 #[test]
-fn test_burn_allowance_when_under_max() {
+fn burn_allowance_when_under_max() {
     let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
 
     let user = Addr::unchecked("user");

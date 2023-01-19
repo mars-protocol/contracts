@@ -13,7 +13,7 @@ use crate::helpers::{assert_err, MockEnv};
 pub mod helpers;
 
 #[test]
-fn test_only_owner_can_update_config() {
+fn _only_owner_can_update_config() {
     let mut mock = MockEnv::new().build().unwrap();
     let bad_guy = Addr::unchecked("bad_guy");
 
@@ -44,7 +44,7 @@ fn test_only_owner_can_update_config() {
 }
 
 #[test]
-fn test_raises_on_invalid_config() {
+fn _raises_on_invalid_config() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let res = mock.update_nft_config(
@@ -61,7 +61,7 @@ fn test_raises_on_invalid_config() {
 }
 
 #[test]
-fn test_update_config_works_with_full_config() {
+fn _update_config_works_with_full_config() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_nft_config();
 
@@ -85,7 +85,7 @@ fn test_update_config_works_with_full_config() {
 }
 
 #[test]
-fn test_update_config_works_with_some_config() {
+fn _update_config_works_with_some_config() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_nft_config();
 

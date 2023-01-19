@@ -24,7 +24,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_only_owner_can_update_config() {
+fn only_owner_can_update_config() {
     let mut mock = MockEnv::new().build().unwrap();
     let new_owner = Addr::unchecked("bad_guy");
 
@@ -48,7 +48,7 @@ fn test_only_owner_can_update_config() {
 }
 
 #[test]
-fn test_raises_on_invalid_vaults_config() {
+fn raises_on_invalid_vaults_config() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
 
@@ -132,7 +132,7 @@ fn test_raises_on_invalid_vaults_config() {
 }
 
 #[test]
-fn test_update_config_works_with_full_config() {
+fn update_config_works_with_full_config() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
     let original_allowed_coins = mock.query_allowed_coins(None, None);
@@ -204,7 +204,7 @@ fn test_update_config_works_with_full_config() {
 }
 
 #[test]
-fn test_update_config_works_with_some_config() {
+fn update_config_works_with_some_config() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
     let original_allowed_coins = mock.query_allowed_coins(None, None);
@@ -247,7 +247,7 @@ fn test_update_config_works_with_some_config() {
 }
 
 #[test]
-fn test_update_config_removes_properly() {
+fn update_config_removes_properly() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
     let leverage_vault = locked_vault_info();
@@ -283,7 +283,7 @@ fn test_update_config_removes_properly() {
 }
 
 #[test]
-fn test_update_config_does_nothing_when_nothing_is_passed() {
+fn update_config_does_nothing_when_nothing_is_passed() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
     let original_vault_configs = mock.query_vault_configs(None, None);
@@ -311,7 +311,7 @@ fn test_update_config_does_nothing_when_nothing_is_passed() {
 }
 
 #[test]
-fn test_max_close_factor_validated_on_update() {
+fn max_close_factor_validated_on_update() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
     let res = mock.update_config(
@@ -331,7 +331,7 @@ fn test_max_close_factor_validated_on_update() {
 }
 
 #[test]
-fn test_raises_on_duplicate_vault_configs() {
+fn raises_on_duplicate_vault_configs() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
     let res = mock.update_config(
@@ -376,7 +376,7 @@ fn test_raises_on_duplicate_vault_configs() {
 }
 
 #[test]
-fn test_raises_on_duplicate_coin_configs() {
+fn raises_on_duplicate_coin_configs() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
     let res = mock.update_config(

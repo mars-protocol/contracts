@@ -30,7 +30,7 @@ pub mod helpers;
 ///         liquidatable: false
 ///         above_max_ltv: false
 #[test]
-fn test_only_assets_with_no_debts() {
+fn only_assets_with_no_debts() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
@@ -78,7 +78,7 @@ fn test_only_assets_with_no_debts() {
 ///         liquidatable: false
 ///         above_max_ltv: false
 #[test]
-fn test_terra_ragnarok() {
+fn terra_ragnarok() {
     let coin_info = CoinInfo {
         denom: "uluna".to_string(),
         price: Decimal::from_atomics(100u128, 1).unwrap(),
@@ -165,7 +165,7 @@ fn test_terra_ragnarok() {
 ///         liquidatable: true
 ///         above_max_ltv: true
 #[test]
-fn test_debts_no_assets() {
+fn debts_no_assets() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -216,7 +216,7 @@ fn test_debts_no_assets() {
 /// Step 3: User borrows 100
 ///         AboveMaxLtv error thrown
 #[test]
-fn test_cannot_borrow_more_than_healthy() {
+fn cannot_borrow_more_than_healthy() {
     let coin_info = ujake_info();
 
     let user = Addr::unchecked("user");
@@ -291,7 +291,7 @@ fn test_cannot_borrow_more_than_healthy() {
 /// Health: liquidatable: true
 ///         above_max_ltv: true
 #[test]
-fn test_cannot_borrow_more_but_not_liquidatable() {
+fn cannot_borrow_more_but_not_liquidatable() {
     let uosmo_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(23654u128, 4).unwrap(),
@@ -367,7 +367,7 @@ fn test_cannot_borrow_more_but_not_liquidatable() {
 ///         liquidatable: false
 ///         above_max_ltv: false
 #[test]
-fn test_assets_and_ltv_lqdt_adjusted_value() {
+fn assets_and_ltv_lqdt_adjusted_value() {
     let uosmo_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(5265478965412365487125u128, 12).unwrap(),
@@ -473,7 +473,7 @@ fn test_assets_and_ltv_lqdt_adjusted_value() {
 ///         Deposits 101 osmo
 /// Test validates User A's debt value & health factors
 #[test]
-fn test_debt_value() {
+fn debt_value() {
     let uosmo_info = CoinInfo {
         denom: "uosmo".to_string(),
         price: Decimal::from_atomics(5265478965412365487125u128, 12).unwrap(),
@@ -613,7 +613,7 @@ fn test_debt_value() {
 }
 
 #[test]
-fn test_delisted_deposits_drop_max_ltv() {
+fn delisted_deposits_drop_max_ltv() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
 
@@ -670,7 +670,7 @@ fn test_delisted_deposits_drop_max_ltv() {
 }
 
 #[test]
-fn test_delisted_vaults_drop_max_ltv() {
+fn delisted_vaults_drop_max_ltv() {
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
     let atom = uatom_info();

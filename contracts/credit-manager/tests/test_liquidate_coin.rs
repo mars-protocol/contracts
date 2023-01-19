@@ -19,7 +19,7 @@ pub mod helpers;
 // https://docs.google.com/spreadsheets/d/1_Bs1Fc1RLf5IARvaXZ0QjigoMWSJQhhrRUtQ8uyoLdI/edit?pli=1#gid=1857897311
 
 #[test]
-fn test_can_only_liquidate_unhealthy_accounts() {
+fn can_only_liquidate_unhealthy_accounts() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
 
@@ -69,7 +69,7 @@ fn test_can_only_liquidate_unhealthy_accounts() {
 }
 
 #[test]
-fn test_vault_positions_contribute_to_health() {
+fn vault_positions_contribute_to_health() {
     let atom_info = uatom_info();
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
@@ -130,7 +130,7 @@ fn test_vault_positions_contribute_to_health() {
 }
 
 #[test]
-fn test_liquidatee_does_not_have_requested_asset() {
+fn liquidatee_does_not_have_requested_asset() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
     let ujake_info = ujake_info();
@@ -183,7 +183,7 @@ fn test_liquidatee_does_not_have_requested_asset() {
 }
 
 #[test]
-fn test_liquidatee_does_not_have_debt_coin() {
+fn liquidatee_does_not_have_debt_coin() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
     let ujake_info = ujake_info();
@@ -251,7 +251,7 @@ fn test_liquidatee_does_not_have_debt_coin() {
 }
 
 #[test]
-fn test_liquidator_does_not_have_enough_to_pay_debt() {
+fn liquidator_does_not_have_enough_to_pay_debt() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
 
@@ -307,7 +307,7 @@ fn test_liquidator_does_not_have_enough_to_pay_debt() {
 }
 
 #[test]
-fn test_liquidator_left_in_unhealthy_state() {
+fn liquidator_left_in_unhealthy_state() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
 
@@ -365,7 +365,7 @@ fn test_liquidator_left_in_unhealthy_state() {
 }
 
 #[test]
-fn test_liquidation_not_profitable_after_calculations() {
+fn liquidation_not_profitable_after_calculations() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
     let ujake_info = ujake_info();
@@ -433,7 +433,7 @@ fn test_liquidation_not_profitable_after_calculations() {
 }
 
 #[test]
-fn test_debt_amount_adjusted_to_close_factor_max() {
+fn debt_amount_adjusted_to_close_factor_max() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
     let liquidator = Addr::unchecked("liquidator");
@@ -506,7 +506,7 @@ fn test_debt_amount_adjusted_to_close_factor_max() {
 }
 
 #[test]
-fn test_debt_amount_adjusted_to_total_debt_for_denom() {
+fn debt_amount_adjusted_to_total_debt_for_denom() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
     let ujake_info = ujake_info();
@@ -586,7 +586,7 @@ fn test_debt_amount_adjusted_to_total_debt_for_denom() {
 }
 
 #[test]
-fn test_debt_amount_adjusted_to_max_allowed_by_request_coin() {
+fn debt_amount_adjusted_to_max_allowed_by_request_coin() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
     let liquidator = Addr::unchecked("liquidator");
@@ -658,7 +658,7 @@ fn test_debt_amount_adjusted_to_max_allowed_by_request_coin() {
 }
 
 #[test]
-fn test_debt_amount_no_adjustment() {
+fn debt_amount_no_adjustment() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
     let liquidator = Addr::unchecked("liquidator");
@@ -729,4 +729,4 @@ fn test_debt_amount_no_adjustment() {
 }
 
 #[test]
-fn test_liquidate_with_no_deposited_funds() {}
+fn liquidate_with_no_deposited_funds() {}

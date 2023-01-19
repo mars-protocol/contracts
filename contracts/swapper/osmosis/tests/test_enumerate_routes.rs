@@ -13,7 +13,7 @@ use crate::helpers::instantiate_contract;
 pub mod helpers;
 
 #[test]
-fn test_enumerating_routes() {
+fn enumerating_routes() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
     let signer = app

@@ -12,7 +12,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_owner_set_on_instantiate() {
+fn owner_set_on_instantiate() {
     let owner = "owner_addr";
     let mock = MockEnv::new().owner(owner).build().unwrap();
     let res = mock.query_config();
@@ -20,7 +20,7 @@ fn test_owner_set_on_instantiate() {
 }
 
 #[test]
-fn test_raises_on_invalid_owner_addr() {
+fn raises_on_invalid_owner_addr() {
     let owner = "%%%INVALID%%%";
     let res = MockEnv::new().owner(owner).build();
     if res.is_ok() {
@@ -29,14 +29,14 @@ fn test_raises_on_invalid_owner_addr() {
 }
 
 #[test]
-fn test_nft_contract_addr_not_set_on_instantiate() {
+fn nft_contract_addr_not_set_on_instantiate() {
     let mock = MockEnv::new().no_nft_contract().build().unwrap();
     let res = mock.query_config();
     assert_eq!(res.account_nft, None);
 }
 
 #[test]
-fn test_vault_configs_set_on_instantiate() {
+fn vault_configs_set_on_instantiate() {
     let vault_configs = vec![
         VaultTestInfo {
             vault_token_denom: "vault_contract_1".to_string(),
@@ -76,7 +76,7 @@ fn test_vault_configs_set_on_instantiate() {
 }
 
 #[test]
-fn test_raises_on_invalid_vaults_addr() {
+fn raises_on_invalid_vaults_addr() {
     let mock = MockEnv::new()
         .pre_deployed_vault(
             &unlocked_vault_info(),
@@ -100,7 +100,7 @@ fn test_raises_on_invalid_vaults_addr() {
 }
 
 #[test]
-fn test_instantiate_raises_on_invalid_vaults_config() {
+fn instantiate_raises_on_invalid_vaults_config() {
     let mock = MockEnv::new()
         .pre_deployed_vault(
             &VaultTestInfo {
@@ -172,7 +172,7 @@ fn test_instantiate_raises_on_invalid_vaults_config() {
 }
 
 #[test]
-fn test_duplicate_vaults_raises() {
+fn duplicate_vaults_raises() {
     let mock = MockEnv::new()
         .pre_deployed_vault(&locked_vault_info(), None)
         .pre_deployed_vault(&unlocked_vault_info(), None)
@@ -183,7 +183,7 @@ fn test_duplicate_vaults_raises() {
 }
 
 #[test]
-fn test_allowed_coins_set_on_instantiate() {
+fn allowed_coins_set_on_instantiate() {
     let allowed_coins = vec![
         uosmo_info(),
         uatom_info(),
@@ -206,7 +206,7 @@ fn test_allowed_coins_set_on_instantiate() {
 }
 
 #[test]
-fn test_duplicate_coins_raises() {
+fn duplicate_coins_raises() {
     let allowed_coins = vec![uosmo_info(), uosmo_info(), uatom_info()];
     let mock = MockEnv::new().allowed_coins(&allowed_coins).build();
     if mock.is_ok() {
@@ -215,7 +215,7 @@ fn test_duplicate_coins_raises() {
 }
 
 #[test]
-fn test_red_bank_set_on_instantiate() {
+fn red_bank_set_on_instantiate() {
     let red_bank_addr = "mars_red_bank_contract_123".to_string();
     let mock = MockEnv::new().red_bank(&red_bank_addr).build().unwrap();
     let res = mock.query_config();
@@ -223,7 +223,7 @@ fn test_red_bank_set_on_instantiate() {
 }
 
 #[test]
-fn test_raises_on_invalid_red_bank_addr() {
+fn raises_on_invalid_red_bank_addr() {
     let mock = MockEnv::new().red_bank("%%%INVALID%%%").build();
     if mock.is_ok() {
         panic!("Should have thrown an error");
@@ -231,7 +231,7 @@ fn test_raises_on_invalid_red_bank_addr() {
 }
 
 #[test]
-fn test_oracle_set_on_instantiate() {
+fn oracle_set_on_instantiate() {
     let oracle_contract = "oracle_contract_456".to_string();
     let mock = MockEnv::new().oracle(&oracle_contract).build().unwrap();
     let res = mock.query_config();
@@ -239,7 +239,7 @@ fn test_oracle_set_on_instantiate() {
 }
 
 #[test]
-fn test_raises_on_invalid_oracle_addr() {
+fn raises_on_invalid_oracle_addr() {
     let mock = MockEnv::new().oracle("%%%INVALID%%%").build();
     if mock.is_ok() {
         panic!("Should have thrown an error");
@@ -247,7 +247,7 @@ fn test_raises_on_invalid_oracle_addr() {
 }
 
 #[test]
-fn test_max_close_factor_set_on_instantiate() {
+fn max_close_factor_set_on_instantiate() {
     let mock = MockEnv::new().build().unwrap();
     let res = mock.query_config();
     let mock_default = Decimal::from_atomics(5u128, 1).unwrap();
@@ -255,7 +255,7 @@ fn test_max_close_factor_set_on_instantiate() {
 }
 
 #[test]
-fn test_max_close_factor_validated() {
+fn max_close_factor_validated() {
     let mock = MockEnv::new().max_close_factor(Decimal::from_atomics(1244u128, 3).unwrap()).build();
 
     if mock.is_ok() {

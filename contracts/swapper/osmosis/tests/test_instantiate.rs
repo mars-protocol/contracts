@@ -8,7 +8,7 @@ use crate::helpers::{instantiate_contract, wasm_file};
 pub mod helpers;
 
 #[test]
-fn test_owner_set_on_instantiate() {
+fn owner_set_on_instantiate() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
     let signer = app.init_account(&[coin(1_000_000_000_000, "uosmo")]).unwrap();
@@ -20,7 +20,7 @@ fn test_owner_set_on_instantiate() {
 }
 
 #[test]
-fn test_raises_on_invalid_owner_addr() {
+fn raises_on_invalid_owner_addr() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
     let signer = app.init_account(&[coin(1_000_000_000_000, "uosmo")]).unwrap();

@@ -3,7 +3,7 @@ use crate::helpers::{MockEnv, MAX_VALUE_FOR_BURN};
 pub mod helpers;
 
 #[test]
-fn test_storage_vars_set_on_instantiate() {
+fn storage_vars_set_on_instantiate() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let config = mock.query_config();

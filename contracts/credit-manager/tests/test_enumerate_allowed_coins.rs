@@ -3,7 +3,7 @@ use crate::helpers::{build_mock_coin_infos, MockEnv};
 pub mod helpers;
 
 #[test]
-fn test_pagination_on_allowed_coins_query_works() {
+fn pagination_on_allowed_coins_query_works() {
     let allowed_coins = build_mock_coin_infos(32);
     let mock = MockEnv::new().allowed_coins(&build_mock_coin_infos(32)).build().unwrap();
 

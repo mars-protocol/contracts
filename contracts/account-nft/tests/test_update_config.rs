@@ -6,7 +6,7 @@ use crate::helpers::MockEnv;
 pub mod helpers;
 
 #[test]
-fn test_only_minter_can_update_config() {
+fn only_minter_can_update_config() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let bad_guy = Addr::unchecked("bad_guy");
@@ -24,7 +24,7 @@ fn test_only_minter_can_update_config() {
 }
 
 #[test]
-fn test_minter_can_update_config() {
+fn minter_can_update_config() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let new_max_burn_val = Uint128::new(4918453);

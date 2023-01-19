@@ -15,7 +15,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_only_owner_can_request_unlocked() {
+fn only_owner_can_request_unlocked() {
     let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
@@ -45,7 +45,7 @@ fn test_only_owner_can_request_unlocked() {
 }
 
 #[test]
-fn test_can_only_take_action_on_whitelisted_vaults() {
+fn can_only_take_action_on_whitelisted_vaults() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().build().unwrap();
 
@@ -66,7 +66,7 @@ fn test_can_only_take_action_on_whitelisted_vaults() {
 }
 
 #[test]
-fn test_request_when_unnecessary() {
+fn request_when_unnecessary() {
     let leverage_vault = unlocked_vault_info();
 
     let user = Addr::unchecked("user");
@@ -94,7 +94,7 @@ fn test_request_when_unnecessary() {
 }
 
 #[test]
-fn test_no_vault_tokens_for_request() {
+fn no_vault_tokens_for_request() {
     let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
@@ -132,7 +132,7 @@ fn test_no_vault_tokens_for_request() {
 }
 
 #[test]
-fn test_not_enough_vault_tokens_for_request() {
+fn not_enough_vault_tokens_for_request() {
     let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
@@ -186,7 +186,7 @@ fn test_not_enough_vault_tokens_for_request() {
 }
 
 #[test]
-fn test_request_unlocked() {
+fn request_unlocked() {
     let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
@@ -260,7 +260,7 @@ fn test_request_unlocked() {
 }
 
 #[test]
-fn test_cannot_request_more_than_max() {
+fn cannot_request_more_than_max() {
     let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 

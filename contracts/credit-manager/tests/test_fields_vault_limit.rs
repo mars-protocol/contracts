@@ -11,7 +11,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_can_only_have_a_single_vault_position() {
+fn can_only_have_a_single_vault_position() {
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 

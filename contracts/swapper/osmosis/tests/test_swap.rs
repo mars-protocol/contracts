@@ -12,7 +12,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_transfer_callback_only_internal() {
+fn transfer_callback_only_internal() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -45,7 +45,7 @@ fn test_transfer_callback_only_internal() {
 }
 
 #[test]
-fn test_swap_exact_in_slippage_too_high() {
+fn swap_exact_in_slippage_too_high() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -103,7 +103,7 @@ fn test_swap_exact_in_slippage_too_high() {
 }
 
 #[test]
-fn test_swap_exact_in_success() {
+fn swap_exact_in_success() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 

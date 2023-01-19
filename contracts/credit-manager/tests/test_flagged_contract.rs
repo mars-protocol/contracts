@@ -7,7 +7,7 @@ use crate::helpers::MockEnv;
 pub mod helpers;
 
 #[test]
-fn test_addresses_in_config_cannot_execute_msgs() {
+fn addresses_in_config_cannot_execute_msgs() {
     let mut mock = MockEnv::new().build().unwrap();
     let config = mock.query_config();
     let vault_addrs = mock

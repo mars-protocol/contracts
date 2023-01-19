@@ -14,7 +14,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_only_token_owner_can_borrow() {
+fn only_token_owner_can_borrow() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
@@ -39,7 +39,7 @@ fn test_only_token_owner_can_borrow() {
 }
 
 #[test]
-fn test_can_only_borrow_what_is_whitelisted() {
+fn can_only_borrow_what_is_whitelisted() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
@@ -53,7 +53,7 @@ fn test_can_only_borrow_what_is_whitelisted() {
 }
 
 #[test]
-fn test_borrowing_zero_does_nothing() {
+fn borrowing_zero_does_nothing() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
@@ -71,7 +71,7 @@ fn test_borrowing_zero_does_nothing() {
 }
 
 #[test]
-fn test_cannot_borrow_above_max_ltv() {
+fn cannot_borrow_above_max_ltv() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -105,7 +105,7 @@ fn test_cannot_borrow_above_max_ltv() {
 }
 
 #[test]
-fn test_success_when_new_debt_asset() {
+fn success_when_new_debt_asset() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -160,7 +160,7 @@ fn test_success_when_new_debt_asset() {
 }
 
 #[test]
-fn test_debt_shares_with_debt_amount() {
+fn debt_shares_with_debt_amount() {
     let coin_info = uosmo_info();
     let user_a = Addr::unchecked("user_a");
     let user_b = Addr::unchecked("user_b");

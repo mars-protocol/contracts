@@ -19,7 +19,7 @@ pub mod helpers;
 // https://docs.google.com/spreadsheets/d/1rXa_8eKbtp1wQ0Mm1Rny7QzSLsko9D7UQTtO7NrAssA/edit#gid=2127757089
 
 #[test]
-fn test_liquidatee_must_have_the_request_vault_position() {
+fn liquidatee_must_have_the_request_vault_position() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
     let leverage_vault = unlocked_vault_info();
@@ -69,7 +69,7 @@ fn test_liquidatee_must_have_the_request_vault_position() {
 }
 
 #[test]
-fn test_liquidatee_is_not_liquidatable() {
+fn liquidatee_is_not_liquidatable() {
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
@@ -126,7 +126,7 @@ fn test_liquidatee_is_not_liquidatable() {
 }
 
 #[test]
-fn test_liquidator_does_not_have_debt_coin_in_credit_account() {
+fn liquidator_does_not_have_debt_coin_in_credit_account() {
     let lp_token = lp_token_info();
     let ujake = ujake_info();
     let leverage_vault = unlocked_vault_info();
@@ -191,7 +191,7 @@ fn test_liquidator_does_not_have_debt_coin_in_credit_account() {
 }
 
 #[test]
-fn test_wrong_position_type_sent_for_unlocked_vault() {
+fn wrong_position_type_sent_for_unlocked_vault() {
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
@@ -256,7 +256,7 @@ fn test_wrong_position_type_sent_for_unlocked_vault() {
 }
 
 #[test]
-fn test_wrong_position_type_sent_for_locked_vault() {
+fn wrong_position_type_sent_for_locked_vault() {
     let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
@@ -307,7 +307,7 @@ fn test_wrong_position_type_sent_for_locked_vault() {
 }
 
 #[test]
-fn test_liquidate_unlocked_vault() {
+fn liquidate_unlocked_vault() {
     let lp_token = lp_token_info();
     let ujake = ujake_info();
     let leverage_vault = unlocked_vault_info();
@@ -393,7 +393,7 @@ fn test_liquidate_unlocked_vault() {
 }
 
 #[test]
-fn test_liquidate_locked_vault() {
+fn liquidate_locked_vault() {
     let lp_token = lp_token_info();
     let atom = uatom_info();
     let leverage_vault = locked_vault_info();
@@ -482,7 +482,7 @@ fn test_liquidate_locked_vault() {
 }
 
 #[test]
-fn test_liquidate_unlocking_liquidation_order() {
+fn liquidate_unlocking_liquidation_order() {
     let lp_token = lp_token_info();
     let ujake = ujake_info();
     let leverage_vault = locked_vault_info();
@@ -595,7 +595,7 @@ fn test_liquidate_unlocking_liquidation_order() {
 
 // NOTE: liquidation calculation+adjustments are quite complex, full cases in test_liquidate_coin.rs
 #[test]
-fn test_liquidation_calculation_adjustment() {
+fn liquidation_calculation_adjustment() {
     let lp_token = lp_token_info();
     let ujake = ujake_info();
     let leverage_vault = unlocked_vault_info();

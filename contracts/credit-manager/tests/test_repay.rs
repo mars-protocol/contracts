@@ -14,7 +14,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_only_token_owner_can_repay() {
+fn only_token_owner_can_repay() {
     let coin_info = uosmo_info();
     let owner = Addr::unchecked("owner");
     let mut mock = MockEnv::new().build().unwrap();
@@ -38,7 +38,7 @@ fn test_only_token_owner_can_repay() {
 }
 
 #[test]
-fn test_repaying_with_zero_debt_raises() {
+fn repaying_with_zero_debt_raises() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
@@ -66,7 +66,7 @@ fn test_repaying_with_zero_debt_raises() {
 }
 
 #[test]
-fn test_raises_when_repaying_what_is_not_owed() {
+fn raises_when_repaying_what_is_not_owed() {
     let uosmo_info = uosmo_info();
 
     let uatom_info = CoinInfo {
@@ -120,7 +120,7 @@ fn test_raises_when_repaying_what_is_not_owed() {
 }
 
 #[test]
-fn test_raises_when_not_enough_assets_to_repay() {
+fn raises_when_not_enough_assets_to_repay() {
     let uosmo_info = uosmo_info();
 
     let uatom_info = CoinInfo {
@@ -167,7 +167,7 @@ fn test_raises_when_not_enough_assets_to_repay() {
 }
 
 #[test]
-fn test_repay_less_than_total_debt() {
+fn repay_less_than_total_debt() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
@@ -254,7 +254,7 @@ fn test_repay_less_than_total_debt() {
 }
 
 #[test]
-fn test_pays_max_debt_when_attempting_to_repay_more_than_owed() {
+fn pays_max_debt_when_attempting_to_repay_more_than_owed() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
@@ -302,7 +302,7 @@ fn test_pays_max_debt_when_attempting_to_repay_more_than_owed() {
 }
 
 #[test]
-fn test_amount_none_repays_total_debt() {
+fn amount_none_repays_total_debt() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");

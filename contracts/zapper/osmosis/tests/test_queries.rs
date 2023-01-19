@@ -10,7 +10,7 @@ use crate::helpers::{assert_err, instantiate_contract};
 pub mod helpers;
 
 #[test]
-fn test_estimate_provide_liquidity_with_invalid_lp_token() {
+fn estimate_provide_liquidity_with_invalid_lp_token() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -31,7 +31,7 @@ fn test_estimate_provide_liquidity_with_invalid_lp_token() {
 }
 
 #[test]
-fn test_estimate_provide_liquidity_with_invalid_coins() {
+fn estimate_provide_liquidity_with_invalid_coins() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -64,7 +64,7 @@ fn test_estimate_provide_liquidity_with_invalid_coins() {
 }
 
 #[test]
-fn test_estimate_provide_liquidity_successfully() {
+fn estimate_provide_liquidity_successfully() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -100,7 +100,7 @@ fn test_estimate_provide_liquidity_successfully() {
 }
 
 #[test]
-fn test_estimate_withdraw_liquidity_with_invalid_lp_token() {
+fn estimate_withdraw_liquidity_with_invalid_lp_token() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -120,7 +120,7 @@ fn test_estimate_withdraw_liquidity_with_invalid_lp_token() {
 }
 
 #[test]
-fn test_estimate_withdraw_liquidity_successfully() {
+fn estimate_withdraw_liquidity_successfully() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 

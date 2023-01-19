@@ -7,7 +7,7 @@ use crate::helpers::MockEnv;
 pub mod helpers;
 
 #[test]
-fn test_create_credit_account_fails_without_nft_contract_set() {
+fn create_credit_account_fails_without_nft_contract_set() {
     let mut mock = MockEnv::new().no_nft_contract().build().unwrap();
     let user = Addr::unchecked("user");
     let res = mock.create_credit_account(&user);
@@ -18,7 +18,7 @@ fn test_create_credit_account_fails_without_nft_contract_set() {
 }
 
 #[test]
-fn test_create_credit_account_fails_without_nft_contract_owner() {
+fn create_credit_account_fails_without_nft_contract_owner() {
     let mut mock = MockEnv::new().no_nft_contract_minter().build().unwrap();
 
     let user = Addr::unchecked("user");
@@ -30,7 +30,7 @@ fn test_create_credit_account_fails_without_nft_contract_owner() {
 }
 
 #[test]
-fn test_create_credit_account_success() {
+fn create_credit_account_success() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let user = Addr::unchecked("user");

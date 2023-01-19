@@ -7,7 +7,7 @@ use crate::helpers::MockEnv;
 pub mod helpers;
 
 #[test]
-fn test_only_minter_can_propose_new_minter() {
+fn only_minter_can_propose_new_minter() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let bad_guy = Addr::unchecked("bad_guy");
@@ -19,7 +19,7 @@ fn test_only_minter_can_propose_new_minter() {
 }
 
 #[test]
-fn test_propose_minter_stores() {
+fn propose_minter_stores() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let new_minter = Addr::unchecked("new_minter");
@@ -30,7 +30,7 @@ fn test_propose_minter_stores() {
 }
 
 #[test]
-fn test_proposed_minter_can_accept_role() {
+fn proposed_minter_can_accept_role() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let new_minter = Addr::unchecked("new_minter");
@@ -50,7 +50,7 @@ fn test_proposed_minter_can_accept_role() {
 }
 
 #[test]
-fn test_only_proposed_minter_can_accept() {
+fn only_proposed_minter_can_accept() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let new_minter = Addr::unchecked("new_minter");

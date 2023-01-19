@@ -19,7 +19,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_only_account_owner_can_take_action() {
+fn only_account_owner_can_take_action() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().build().unwrap();
 
@@ -49,7 +49,7 @@ fn test_only_account_owner_can_take_action() {
 }
 
 #[test]
-fn test_deposit_denom_is_whitelisted() {
+fn deposit_denom_is_whitelisted() {
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
@@ -73,7 +73,7 @@ fn test_deposit_denom_is_whitelisted() {
 }
 
 #[test]
-fn test_vault_is_whitelisted() {
+fn vault_is_whitelisted() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
     let leverage_vault = VaultTestInfo {
@@ -111,7 +111,7 @@ fn test_vault_is_whitelisted() {
 }
 
 #[test]
-fn test_deposited_coin_matches_vault_requirements() {
+fn deposited_coin_matches_vault_requirements() {
     let uatom = uatom_info();
     let leverage_vault = unlocked_vault_info();
 
@@ -143,7 +143,7 @@ fn test_deposited_coin_matches_vault_requirements() {
 }
 
 #[test]
-fn test_fails_if_not_enough_funds_for_implied_deposit() {
+fn fails_if_not_enough_funds_for_implied_deposit() {
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
@@ -179,7 +179,7 @@ fn test_fails_if_not_enough_funds_for_implied_deposit() {
 }
 
 #[test]
-fn test_fails_if_not_enough_funds_for_enumerated_deposit() {
+fn fails_if_not_enough_funds_for_enumerated_deposit() {
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
@@ -217,7 +217,7 @@ fn test_fails_if_not_enough_funds_for_enumerated_deposit() {
 }
 
 #[test]
-fn test_successful_deposit_into_locked_vault() {
+fn successful_deposit_into_locked_vault() {
     let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
@@ -270,7 +270,7 @@ fn test_successful_deposit_into_locked_vault() {
 }
 
 #[test]
-fn test_successful_deposit_into_unlocked_vault() {
+fn successful_deposit_into_unlocked_vault() {
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
@@ -321,7 +321,7 @@ fn test_successful_deposit_into_unlocked_vault() {
 }
 
 #[test]
-fn test_vault_deposit_must_be_under_cap() {
+fn vault_deposit_must_be_under_cap() {
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 
@@ -399,7 +399,7 @@ fn test_vault_deposit_must_be_under_cap() {
 }
 
 #[test]
-fn test_successful_deposit_with_implied_full_balance_amount() {
+fn successful_deposit_with_implied_full_balance_amount() {
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 

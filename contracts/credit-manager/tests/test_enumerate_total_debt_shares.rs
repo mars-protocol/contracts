@@ -7,7 +7,7 @@ use crate::helpers::{build_mock_coin_infos, AccountToFund, MockEnv};
 pub mod helpers;
 
 #[test]
-fn test_pagination_on_all_total_debt_shares_query_works() {
+fn pagination_on_all_total_debt_shares_query_works() {
     let user_a = Addr::unchecked("user_a");
     let user_b = Addr::unchecked("user_b");
     let user_c = Addr::unchecked("user_c");

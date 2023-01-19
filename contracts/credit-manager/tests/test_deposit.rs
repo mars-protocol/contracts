@@ -12,7 +12,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_only_owner_of_token_can_deposit() {
+fn only_owner_of_token_can_deposit() {
     let mut mock = MockEnv::new().build().unwrap();
     let user = Addr::unchecked("user");
     let account_id = mock.create_credit_account(&user).unwrap();
@@ -35,7 +35,7 @@ fn test_only_owner_of_token_can_deposit() {
 }
 
 #[test]
-fn test_deposit_nothing() {
+fn deposit_nothing() {
     let coin_info = uosmo_info();
 
     let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
@@ -58,7 +58,7 @@ fn test_deposit_nothing() {
 }
 
 #[test]
-fn test_deposit_but_no_funds() {
+fn deposit_but_no_funds() {
     let coin_info = uosmo_info();
 
     let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
@@ -86,7 +86,7 @@ fn test_deposit_but_no_funds() {
 }
 
 #[test]
-fn test_deposit_but_not_enough_funds() {
+fn deposit_but_not_enough_funds() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
@@ -117,7 +117,7 @@ fn test_deposit_but_not_enough_funds() {
 }
 
 #[test]
-fn test_can_only_deposit_allowed_assets() {
+fn can_only_deposit_allowed_assets() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -146,7 +146,7 @@ fn test_can_only_deposit_allowed_assets() {
 }
 
 #[test]
-fn test_extra_funds_received() {
+fn extra_funds_received() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
 
@@ -176,7 +176,7 @@ fn test_extra_funds_received() {
 }
 
 #[test]
-fn test_deposit_success() {
+fn deposit_success() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
@@ -210,7 +210,7 @@ fn test_deposit_success() {
 }
 
 #[test]
-fn test_multiple_deposit_actions() {
+fn multiple_deposit_actions() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
 

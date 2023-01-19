@@ -13,7 +13,7 @@ use crate::helpers::{below_max_for_burn, MockEnv};
 pub mod helpers;
 
 #[test]
-fn test_id_incrementer() {
+fn id_incrementer() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let user_1 = Addr::unchecked("user_1");
@@ -33,7 +33,7 @@ fn test_id_incrementer() {
 }
 
 #[test]
-fn test_id_incrementer_works_despite_burns() {
+fn id_incrementer_works_despite_burns() {
     let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
 
     let user = Addr::unchecked("user");
@@ -54,7 +54,7 @@ fn test_id_incrementer_works_despite_burns() {
 }
 
 #[test]
-fn test_only_minter_can_mint() {
+fn only_minter_can_mint() {
     let mut mock = MockEnv::new().set_minter("mr_minter").build().unwrap();
 
     let bad_guy = Addr::unchecked("bad_guy");
@@ -71,7 +71,7 @@ fn test_only_minter_can_mint() {
 }
 
 #[test]
-fn test_only_token_owner_can_burn() {
+fn only_token_owner_can_burn() {
     let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
 
     let user = Addr::unchecked("user");
@@ -87,7 +87,7 @@ fn test_only_token_owner_can_burn() {
 }
 
 #[test]
-fn test_normal_base_cw721_actions_can_still_be_taken() {
+fn normal_base_cw721_actions_can_still_be_taken() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let rover_user_a = Addr::unchecked("rover_user_a");

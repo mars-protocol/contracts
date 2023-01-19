@@ -10,7 +10,7 @@ use crate::helpers::MockEnv;
 pub mod helpers;
 
 #[test]
-fn test_dispatch_only_allowed_for_token_owner() {
+fn dispatch_only_allowed_for_token_owner() {
     let mut mock = MockEnv::new().build().unwrap();
     let user = Addr::unchecked("user");
     let account_id = mock.create_credit_account(&user).unwrap();
@@ -28,7 +28,7 @@ fn test_dispatch_only_allowed_for_token_owner() {
 }
 
 #[test]
-fn test_nothing_happens_if_no_actions_are_passed() {
+fn nothing_happens_if_no_actions_are_passed() {
     let mut mock = MockEnv::new().build().unwrap();
     let user = Addr::unchecked("user");
     let account_id = mock.create_credit_account(&user).unwrap();
@@ -43,7 +43,7 @@ fn test_nothing_happens_if_no_actions_are_passed() {
 }
 
 #[test]
-fn test_only_rover_can_execute_callbacks() {
+fn only_rover_can_execute_callbacks() {
     let mut mock = MockEnv::new().build().unwrap();
     let external_user = Addr::unchecked("external_user");
 

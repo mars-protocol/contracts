@@ -11,7 +11,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_error_on_route_not_found() {
+fn error_on_route_not_found() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
     let owner = app.init_account(&[coin(1_000_000_000_000, "uosmo")]).unwrap();
@@ -30,7 +30,7 @@ fn test_error_on_route_not_found() {
 }
 
 #[test]
-fn test_estimate_swap_one_step() {
+fn estimate_swap_one_step() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -81,7 +81,7 @@ fn test_estimate_swap_one_step() {
 }
 
 #[test]
-fn test_estimate_swap_multi_step() {
+fn estimate_swap_multi_step() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 

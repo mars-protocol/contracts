@@ -12,7 +12,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_utilization_is_zero() {
+fn utilization_is_zero() {
     let mock = MockEnv::new().vault_configs(&[unlocked_vault_info()]).build().unwrap();
     let vault_infos = mock.query_vault_configs(None, None);
     assert_eq!(1, vault_infos.len());
@@ -22,7 +22,7 @@ fn test_utilization_is_zero() {
 }
 
 #[test]
-fn test_utilization_if_cap_is_base_denom() {
+fn utilization_if_cap_is_base_denom() {
     let user = Addr::unchecked("user");
     let base_info = CoinInfo {
         denom: "base_denom".to_string(),
@@ -86,7 +86,7 @@ fn test_utilization_if_cap_is_base_denom() {
     Utilization denominated in uosmo = 1_000_000 * 2.3654 / .25 ---> 9461600
 */
 #[test]
-fn test_utilization_in_other_denom() {
+fn utilization_in_other_denom() {
     let osmo_info = uosmo_info();
     let jake_info = ujake_info();
 

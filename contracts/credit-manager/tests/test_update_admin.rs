@@ -10,7 +10,7 @@ use crate::helpers::{assert_err, MockEnv};
 pub mod helpers;
 
 #[test]
-fn test_initialized_state() {
+fn initialized_state() {
     let mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
 
@@ -19,7 +19,7 @@ fn test_initialized_state() {
 }
 
 #[test]
-fn test_propose_new_owner() {
+fn propose_new_owner() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
 
@@ -51,7 +51,7 @@ fn test_propose_new_owner() {
 }
 
 #[test]
-fn test_clear_proposed() {
+fn clear_proposed() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
 
@@ -88,7 +88,7 @@ fn test_clear_proposed() {
 }
 
 #[test]
-fn test_accept_owner_role() {
+fn accept_owner_role() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
 
@@ -118,7 +118,7 @@ fn test_accept_owner_role() {
 }
 
 #[test]
-fn test_abolish_owner_role() {
+fn abolish_owner_role() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
 

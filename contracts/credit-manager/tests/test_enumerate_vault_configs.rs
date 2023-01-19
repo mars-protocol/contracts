@@ -5,7 +5,7 @@ use crate::helpers::{assert_contents_equal, build_mock_vaults, MockEnv};
 pub mod helpers;
 
 #[test]
-fn test_pagination_on_vault_configs_query_works() {
+fn pagination_on_vault_configs_query_works() {
     let vault_configs = build_mock_vaults(32);
     let mock = MockEnv::new().vault_configs(&vault_configs).build().unwrap();
 

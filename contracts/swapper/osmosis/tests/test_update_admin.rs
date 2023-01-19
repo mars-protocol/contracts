@@ -9,7 +9,7 @@ use crate::helpers::instantiate_contract;
 pub mod helpers;
 
 #[test]
-fn test_initial_state() {
+fn initial_state() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -24,7 +24,7 @@ fn test_initial_state() {
 }
 
 #[test]
-fn test_only_owner_can_propose() {
+fn only_owner_can_propose() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -46,7 +46,7 @@ fn test_only_owner_can_propose() {
 }
 
 #[test]
-fn test_propose_new_owner() {
+fn propose_new_owner() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -72,7 +72,7 @@ fn test_propose_new_owner() {
 }
 
 #[test]
-fn test_only_owner_can_clear_proposed() {
+fn only_owner_can_clear_proposed() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -103,7 +103,7 @@ fn test_only_owner_can_clear_proposed() {
 }
 
 #[test]
-fn test_clear_proposed() {
+fn clear_proposed() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -137,7 +137,7 @@ fn test_clear_proposed() {
 }
 
 #[test]
-fn test_only_proposed_owner_can_accept_role() {
+fn only_proposed_owner_can_accept_role() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -167,7 +167,7 @@ fn test_only_proposed_owner_can_accept_role() {
 }
 
 #[test]
-fn test_accept_owner_role() {
+fn accept_owner_role() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 

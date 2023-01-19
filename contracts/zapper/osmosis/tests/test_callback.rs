@@ -7,7 +7,7 @@ use crate::helpers::{assert_err, instantiate_contract};
 pub mod helpers;
 
 #[test]
-fn test_only_contract_itself_can_callback() {
+fn only_contract_itself_can_callback() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 

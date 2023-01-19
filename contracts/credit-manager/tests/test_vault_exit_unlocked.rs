@@ -18,7 +18,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_only_owner_can_withdraw_unlocked_for_account() {
+fn only_owner_can_withdraw_unlocked_for_account() {
     let leverage_vault = locked_vault_info();
 
     let user = Addr::unchecked("user");
@@ -48,7 +48,7 @@ fn test_only_owner_can_withdraw_unlocked_for_account() {
 }
 
 #[test]
-fn test_can_only_take_action_on_whitelisted_vaults() {
+fn can_only_take_action_on_whitelisted_vaults() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().build().unwrap();
 
@@ -69,7 +69,7 @@ fn test_can_only_take_action_on_whitelisted_vaults() {
 }
 
 #[test]
-fn test_not_owner_of_unlocking_position() {
+fn not_owner_of_unlocking_position() {
     let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
@@ -141,7 +141,7 @@ fn test_not_owner_of_unlocking_position() {
 }
 
 #[test]
-fn test_unlocking_position_not_ready_time() {
+fn unlocking_position_not_ready_time() {
     let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
@@ -194,7 +194,7 @@ fn test_unlocking_position_not_ready_time() {
 }
 
 #[test]
-fn test_unlocking_position_not_ready_blocks() {
+fn unlocking_position_not_ready_blocks() {
     let lp_token = lp_token_info();
     let leverage_vault = generate_mock_vault(Some(Duration::Height(100_000)));
 
@@ -247,7 +247,7 @@ fn test_unlocking_position_not_ready_blocks() {
 }
 
 #[test]
-fn test_withdraw_unlock_success_time_expiring() {
+fn withdraw_unlock_success_time_expiring() {
     let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 
@@ -329,7 +329,7 @@ fn test_withdraw_unlock_success_time_expiring() {
 }
 
 #[test]
-fn test_withdraw_unlock_success_block_expiring() {
+fn withdraw_unlock_success_block_expiring() {
     let lp_token = lp_token_info();
     let leverage_vault = generate_mock_vault(Some(Duration::Height(100_000)));
 

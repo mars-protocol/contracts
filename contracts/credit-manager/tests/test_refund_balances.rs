@@ -8,7 +8,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_refund_coin_balances_when_balances() {
+fn refund_coin_balances_when_balances() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
 
@@ -46,7 +46,7 @@ fn test_refund_coin_balances_when_balances() {
 }
 
 #[test]
-fn test_refund_coin_balances_when_no_balances() {
+fn refund_coin_balances_when_no_balances() {
     let lp_token = lp_token_info();
     let leverage_vault = locked_vault_info();
 

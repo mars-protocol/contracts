@@ -9,7 +9,7 @@ use crate::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv}
 pub mod helpers;
 
 #[test]
-fn test_only_owner_of_token_can_withdraw() {
+fn only_owner_of_token_can_withdraw() {
     let coin_info = uosmo_info();
     let owner = Addr::unchecked("owner");
     let mut mock = MockEnv::new().build().unwrap();
@@ -36,7 +36,7 @@ fn test_only_owner_of_token_can_withdraw() {
 }
 
 #[test]
-fn test_withdraw_nothing() {
+fn withdraw_nothing() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
@@ -56,7 +56,7 @@ fn test_withdraw_nothing() {
 }
 
 #[test]
-fn test_withdraw_but_no_funds() {
+fn withdraw_but_no_funds() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
@@ -83,7 +83,7 @@ fn test_withdraw_but_no_funds() {
 }
 
 #[test]
-fn test_withdraw_but_not_enough_funds() {
+fn withdraw_but_not_enough_funds() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -117,7 +117,7 @@ fn test_withdraw_but_not_enough_funds() {
 }
 
 #[test]
-fn test_cannot_withdraw_more_than_healthy() {
+fn cannot_withdraw_more_than_healthy() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -154,7 +154,7 @@ fn test_cannot_withdraw_more_than_healthy() {
 }
 
 #[test]
-fn test_withdraw_success() {
+fn withdraw_success() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -187,7 +187,7 @@ fn test_withdraw_success() {
 }
 
 #[test]
-fn test_multiple_withdraw_actions() {
+fn multiple_withdraw_actions() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
 

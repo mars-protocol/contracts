@@ -13,7 +13,7 @@ use crate::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv}
 pub mod helpers;
 
 #[test]
-fn test_only_token_owner_can_swap_for_account() {
+fn only_token_owner_can_swap_for_account() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
@@ -43,7 +43,7 @@ fn test_only_token_owner_can_swap_for_account() {
 }
 
 #[test]
-fn test_denom_out_must_be_whitelisted() {
+fn denom_out_must_be_whitelisted() {
     let osmo_info = uosmo_info();
 
     let user = Addr::unchecked("user");
@@ -65,7 +65,7 @@ fn test_denom_out_must_be_whitelisted() {
 }
 
 #[test]
-fn test_no_amount_sent() {
+fn no_amount_sent() {
     let osmo_info = uosmo_info();
     let atom_info = uatom_info();
 
@@ -89,7 +89,7 @@ fn test_no_amount_sent() {
 }
 
 #[test]
-fn test_user_has_zero_balance_for_swap_req() {
+fn user_has_zero_balance_for_swap_req() {
     let osmo_info = uosmo_info();
     let atom_info = uatom_info();
 
@@ -120,7 +120,7 @@ fn test_user_has_zero_balance_for_swap_req() {
 }
 
 #[test]
-fn test_user_does_not_have_enough_balance_for_swap_req() {
+fn user_does_not_have_enough_balance_for_swap_req() {
     let osmo_info = uosmo_info();
     let atom_info = uatom_info();
 
@@ -160,7 +160,7 @@ fn test_user_does_not_have_enough_balance_for_swap_req() {
 }
 
 #[test]
-fn test_swap_success_with_specified_amount() {
+fn swap_success_with_specified_amount() {
     let atom_info = uatom_info();
     let osmo_info = uosmo_info();
 
@@ -207,7 +207,7 @@ fn test_swap_success_with_specified_amount() {
 }
 
 #[test]
-fn test_swap_success_with_amount_none() {
+fn swap_success_with_amount_none() {
     let atom_info = uatom_info();
     let osmo_info = uosmo_info();
 

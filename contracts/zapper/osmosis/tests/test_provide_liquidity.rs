@@ -8,7 +8,7 @@ use crate::helpers::{assert_err, instantiate_contract, query_balance};
 pub mod helpers;
 
 #[test]
-fn test_provide_liquidity_with_invalid_lp_token() {
+fn provide_liquidity_with_invalid_lp_token() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -34,7 +34,7 @@ fn test_provide_liquidity_with_invalid_lp_token() {
 }
 
 #[test]
-fn test_provide_liquidity_with_invalid_coins() {
+fn provide_liquidity_with_invalid_coins() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -66,7 +66,7 @@ fn test_provide_liquidity_with_invalid_coins() {
 }
 
 #[test]
-fn test_provide_liquidity_with_min_not_received() {
+fn provide_liquidity_with_min_not_received() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -128,7 +128,7 @@ fn test_provide_liquidity_with_min_not_received() {
 }
 
 #[test]
-fn test_provide_liquidity_with_one_coin() {
+fn provide_liquidity_with_one_coin() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -199,7 +199,7 @@ fn test_provide_liquidity_with_one_coin() {
 }
 
 #[test]
-fn test_provide_liquidity_with_two_balanced_coins() {
+fn provide_liquidity_with_two_balanced_coins() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -272,7 +272,7 @@ fn test_provide_liquidity_with_two_balanced_coins() {
 }
 
 #[test]
-fn test_provide_liquidity_with_two_unbalanced_coins() {
+fn provide_liquidity_with_two_unbalanced_coins() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -361,7 +361,7 @@ fn test_provide_liquidity_with_two_unbalanced_coins() {
 }
 
 #[test]
-fn test_provide_liquidity_with_different_recipient() {
+fn provide_liquidity_with_different_recipient() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 

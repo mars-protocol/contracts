@@ -18,7 +18,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_only_token_owner_can_unzap_for_account() {
+fn only_token_owner_can_unzap_for_account() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
@@ -46,7 +46,7 @@ fn test_only_token_owner_can_unzap_for_account() {
 }
 
 #[test]
-fn test_lp_token_in_must_be_whitelisted() {
+fn lp_token_in_must_be_whitelisted() {
     let lp_token = lp_token_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().build().unwrap();
@@ -65,7 +65,7 @@ fn test_lp_token_in_must_be_whitelisted() {
 }
 
 #[test]
-fn test_coins_out_must_be_whitelisted() {
+fn coins_out_must_be_whitelisted() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();
@@ -122,7 +122,7 @@ fn test_coins_out_must_be_whitelisted() {
 }
 
 #[test]
-fn test_does_not_have_the_tokens_to_withdraw_liq() {
+fn does_not_have_the_tokens_to_withdraw_liq() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();
@@ -169,7 +169,7 @@ fn test_does_not_have_the_tokens_to_withdraw_liq() {
 }
 
 #[test]
-fn test_amount_zero_passed() {
+fn amount_zero_passed() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();
@@ -214,7 +214,7 @@ fn test_amount_zero_passed() {
 }
 
 #[test]
-fn test_amount_none_passed_with_no_balance() {
+fn amount_none_passed_with_no_balance() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();
@@ -244,7 +244,7 @@ fn test_amount_none_passed_with_no_balance() {
 }
 
 #[test]
-fn test_successful_unzap_specified_amount() {
+fn successful_unzap_specified_amount() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();
@@ -307,7 +307,7 @@ fn test_successful_unzap_specified_amount() {
 }
 
 #[test]
-fn test_successful_unzap_unspecified_amount() {
+fn successful_unzap_unspecified_amount() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();

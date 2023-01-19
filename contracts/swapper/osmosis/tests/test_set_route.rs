@@ -11,7 +11,7 @@ use crate::helpers::{assert_err, instantiate_contract};
 pub mod helpers;
 
 #[test]
-fn test_only_owner_can_set_routes() {
+fn only_owner_can_set_routes() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -47,7 +47,7 @@ fn test_only_owner_can_set_routes() {
 }
 
 #[test]
-fn test_must_pass_at_least_one_step() {
+fn must_pass_at_least_one_step() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -77,7 +77,7 @@ fn test_must_pass_at_least_one_step() {
 }
 
 #[test]
-fn test_must_be_available_in_osmosis() {
+fn must_be_available_in_osmosis() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -110,7 +110,7 @@ fn test_must_be_available_in_osmosis() {
 }
 
 #[test]
-fn test_step_does_not_contain_input_denom() {
+fn step_does_not_contain_input_denom() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -152,7 +152,7 @@ fn test_step_does_not_contain_input_denom() {
 }
 
 #[test]
-fn test_step_does_not_contain_output_denom() {
+fn step_does_not_contain_output_denom() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -194,7 +194,7 @@ fn test_step_does_not_contain_output_denom() {
 }
 
 #[test]
-fn test_steps_do_not_loop() {
+fn steps_do_not_loop() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -267,7 +267,7 @@ fn test_steps_do_not_loop() {
 }
 
 #[test]
-fn test_step_output_does_not_match() {
+fn step_output_does_not_match() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -310,7 +310,7 @@ fn test_step_output_does_not_match() {
 }
 
 #[test]
-fn test_set_route_success() {
+fn set_route_success() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 

@@ -17,7 +17,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_only_owner_of_token_can_withdraw_from_vault() {
+fn only_owner_of_token_can_withdraw_from_vault() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().build().unwrap();
 
@@ -44,7 +44,7 @@ fn test_only_owner_of_token_can_withdraw_from_vault() {
 }
 
 #[test]
-fn test_can_only_take_action_on_whitelisted_vaults() {
+fn can_only_take_action_on_whitelisted_vaults() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().build().unwrap();
 
@@ -64,7 +64,7 @@ fn test_can_only_take_action_on_whitelisted_vaults() {
 }
 
 #[test]
-fn test_no_unlocked_vault_coins_to_withdraw() {
+fn no_unlocked_vault_coins_to_withdraw() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
 
@@ -109,7 +109,7 @@ fn test_no_unlocked_vault_coins_to_withdraw() {
 }
 
 #[test]
-fn test_withdraw_with_unlocked_vault_coins() {
+fn withdraw_with_unlocked_vault_coins() {
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
 

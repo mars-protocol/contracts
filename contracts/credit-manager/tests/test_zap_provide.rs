@@ -17,7 +17,7 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-fn test_only_token_owner_can_zap_for_account() {
+fn only_token_owner_can_zap_for_account() {
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
@@ -44,7 +44,7 @@ fn test_only_token_owner_can_zap_for_account() {
 }
 
 #[test]
-fn test_does_not_have_enough_tokens_to_provide_liq() {
+fn does_not_have_enough_tokens_to_provide_liq() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();
@@ -86,7 +86,7 @@ fn test_does_not_have_enough_tokens_to_provide_liq() {
 }
 
 #[test]
-fn test_lp_token_out_must_be_whitelisted() {
+fn lp_token_out_must_be_whitelisted() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();
@@ -121,7 +121,7 @@ fn test_lp_token_out_must_be_whitelisted() {
 }
 
 #[test]
-fn test_coins_in_must_be_whitelisted() {
+fn coins_in_must_be_whitelisted() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();
@@ -152,7 +152,7 @@ fn test_coins_in_must_be_whitelisted() {
 }
 
 #[test]
-fn test_min_received_too_high() {
+fn min_received_too_high() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();
@@ -190,7 +190,7 @@ fn test_min_received_too_high() {
 }
 
 #[test]
-fn test_wrong_denom_provided() {
+fn wrong_denom_provided() {
     let atom = uatom_info();
     let jake = ujake_info();
     let lp_token = lp_token_info();
@@ -231,7 +231,7 @@ fn test_wrong_denom_provided() {
 }
 
 #[test]
-fn test_successful_zap() {
+fn successful_zap() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();
@@ -299,7 +299,7 @@ fn test_successful_zap() {
 }
 
 #[test]
-fn test_can_provide_unbalanced() {
+fn can_provide_unbalanced() {
     let atom = uatom_info();
     let lp_token = lp_token_info();
 
@@ -371,7 +371,7 @@ fn test_can_provide_unbalanced() {
 }
 
 #[test]
-fn test_order_does_not_matter() {
+fn order_does_not_matter() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();

@@ -9,7 +9,7 @@ use crate::helpers::{assert_err, instantiate_contract, query_balance};
 pub mod helpers;
 
 #[test]
-fn test_withdraw_liquidity_without_funds() {
+fn withdraw_liquidity_without_funds() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -33,7 +33,7 @@ fn test_withdraw_liquidity_without_funds() {
 }
 
 #[test]
-fn test_withdraw_liquidity_with_more_than_one_coin_sent() {
+fn withdraw_liquidity_with_more_than_one_coin_sent() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -57,7 +57,7 @@ fn test_withdraw_liquidity_with_more_than_one_coin_sent() {
 }
 
 #[test]
-fn test_withdraw_liquidity_with_invalid_lp_token() {
+fn withdraw_liquidity_with_invalid_lp_token() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -79,7 +79,7 @@ fn test_withdraw_liquidity_with_invalid_lp_token() {
 }
 
 #[test]
-fn test_withdraw_liquidity_successfully() {
+fn withdraw_liquidity_successfully() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
@@ -166,7 +166,7 @@ fn test_withdraw_liquidity_successfully() {
 }
 
 #[test]
-fn test_withdraw_liquidity_with_different_recipient_successfully() {
+fn withdraw_liquidity_with_different_recipient_successfully() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
 
