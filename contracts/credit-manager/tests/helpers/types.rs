@@ -35,6 +35,7 @@ pub struct VaultTestInfo {
     pub deposit_cap: Coin,
     pub max_ltv: Decimal,
     pub liquidation_threshold: Decimal,
+    pub whitelisted: bool,
 }
 
 impl CoinInfo {

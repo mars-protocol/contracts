@@ -45,6 +45,7 @@ fn test_vault_configs_set_on_instantiate() {
             deposit_cap: coin(1_000_000, "uusdc"),
             max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
+            whitelisted: true,
         },
         VaultTestInfo {
             vault_token_denom: "vault_contract_2".to_string(),
@@ -53,6 +54,7 @@ fn test_vault_configs_set_on_instantiate() {
             deposit_cap: coin(1_000_000, "uusdc"),
             max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
+            whitelisted: true,
         },
         VaultTestInfo {
             vault_token_denom: "vault_contract_3".to_string(),
@@ -61,6 +63,7 @@ fn test_vault_configs_set_on_instantiate() {
             deposit_cap: coin(1_000_000, "uusdc"),
             max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
+            whitelisted: true,
         },
     ];
 
@@ -107,6 +110,7 @@ fn test_instantiate_raises_on_invalid_vaults_config() {
                 max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
                 liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
                 base_token_denom: "lp_denom_123".to_string(),
+                whitelisted: true,
             },
             None,
         )
@@ -125,6 +129,7 @@ fn test_instantiate_raises_on_invalid_vaults_config() {
                 max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
                 liquidation_threshold: Decimal::from_atomics(9u128, 0).unwrap(),
                 base_token_denom: "lp_denom_123".to_string(),
+                whitelisted: true,
             },
             None,
         )

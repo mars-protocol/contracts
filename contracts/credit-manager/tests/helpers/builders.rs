@@ -26,6 +26,7 @@ pub fn build_mock_vaults(count: usize) -> Vec<VaultTestInfo> {
                 deposit_cap: coin(10000000, "uusdc"),
                 max_ltv: lp_token.max_ltv,
                 liquidation_threshold: lp_token.liquidation_threshold,
+                whitelisted: true,
             }
         })
         .collect()

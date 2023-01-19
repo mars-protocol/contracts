@@ -10,14 +10,19 @@ use crate::{
     update_coin_balances::query_balance,
 };
 
-pub fn assert_vault_is_whitelisted(storage: &mut dyn Storage, vault: &Vault) -> ContractResult<()> {
-    let config = VAULT_CONFIGS
-        .may_load(storage, &vault.address)?
-        .and_then(|config| config.whitelisted.then_some(true));
-    if config.is_none() {
+pub fn assert_vault_is_whitelisted(storage: &dyn Storage, vault: &Vault) -> ContractResult<()> {
+    let is_whitelisted = vault_is_whitelisted(storage, vault)?;
+    if !is_whitelisted {
         return Err(ContractError::NotWhitelisted(vault.address.to_string()));
     }
     Ok(())
+}
+
+pub fn vault_is_whitelisted(storage: &dyn Storage, vault: &Vault) -> ContractResult<bool> {
+    let config = VAULT_CONFIGS
+        .may_load(storage, &vault.address)?
+        .and_then(|config| config.whitelisted.then_some(true));
+    Ok(config.is_some())
 }
 
 pub fn assert_under_max_unlocking_limit(

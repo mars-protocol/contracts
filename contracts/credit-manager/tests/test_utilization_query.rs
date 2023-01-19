@@ -39,6 +39,7 @@ fn test_utilization_if_cap_is_base_denom() {
         deposit_cap: base_info.to_coin(100),
         max_ltv: Default::default(),
         liquidation_threshold: Default::default(),
+        whitelisted: true,
     };
 
     let mut mock = MockEnv::new()
@@ -96,6 +97,7 @@ fn test_utilization_in_other_denom() {
         deposit_cap: osmo_info.to_coin(50_000_000),
         max_ltv: Default::default(),
         liquidation_threshold: Default::default(),
+        whitelisted: true,
     };
 
     let user = Addr::unchecked("user");

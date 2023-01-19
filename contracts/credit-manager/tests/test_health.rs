@@ -5,16 +5,18 @@ use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use mars_math::{FractionMath, Fractional};
 use mars_mock_oracle::msg::CoinPrice;
 use mars_rover::{
+    adapters::vault::VaultConfig,
     error::ContractError,
     msg::{
-        execute::Action::{Borrow, Deposit},
-        instantiate::ConfigUpdates,
+        execute::Action::{Borrow, Deposit, EnterVault},
+        instantiate::{ConfigUpdates, VaultInstantiateConfig},
         query::DebtAmount,
     },
 };
 
 use crate::helpers::{
-    assert_err, uatom_info, ujake_info, uosmo_info, AccountToFund, CoinInfo, MockEnv,
+    assert_err, lp_token_info, uatom_info, ujake_info, unlocked_vault_info, uosmo_info,
+    AccountToFund, CoinInfo, MockEnv,
 };
 
 pub mod helpers;
@@ -611,7 +613,7 @@ fn test_debt_value() {
 }
 
 #[test]
-fn test_delisted_assets_drop_max_ltv() {
+fn test_delisted_deposits_drop_max_ltv() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
 
@@ -650,6 +652,86 @@ fn test_delisted_assets_drop_max_ltv() {
     let curr_health = mock.query_health(&account_id);
 
     // Values should be the same
+    assert_eq!(prev_health.total_debt_value, curr_health.total_debt_value);
+    assert_eq!(prev_health.total_collateral_value, curr_health.total_collateral_value);
+
+    assert_eq!(prev_health.liquidation_health_factor, curr_health.liquidation_health_factor);
+    assert_eq!(
+        prev_health.liquidation_threshold_adjusted_collateral,
+        curr_health.liquidation_threshold_adjusted_collateral
+    );
+    assert_eq!(prev_health.liquidatable, curr_health.liquidatable);
+
+    // Should have been changed due to de-listing
+    assert_ne!(prev_health.above_max_ltv, curr_health.above_max_ltv);
+    assert_ne!(prev_health.max_ltv_adjusted_collateral, curr_health.max_ltv_adjusted_collateral);
+    assert_ne!(prev_health.max_ltv_health_factor, curr_health.max_ltv_health_factor);
+    assert_eq!(curr_health.max_ltv_health_factor, Some(Decimal::raw(811881188118811881u128)));
+}
+
+#[test]
+fn test_delisted_vaults_drop_max_ltv() {
+    let lp_token = lp_token_info();
+    let leverage_vault = unlocked_vault_info();
+    let atom = uatom_info();
+
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[lp_token.clone(), atom.clone()])
+        .vault_configs(&[leverage_vault.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![lp_token.to_coin(300)],
+        })
+        .build()
+        .unwrap();
+
+    let vault = mock.get_vault(&leverage_vault);
+    let account_id = mock.create_credit_account(&user).unwrap();
+
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![
+            Deposit(lp_token.to_coin(200)),
+            Borrow(atom.to_coin(100)),
+            EnterVault {
+                vault,
+                coin: lp_token.to_action_coin(200),
+            },
+        ],
+        &[lp_token.to_coin(200)],
+    )
+    .unwrap();
+
+    let prev_health = mock.query_health(&account_id);
+
+    let vault_configs = mock.query_vault_configs(None, None);
+    let v = vault_configs.first().unwrap();
+    let new_vault_config = VaultInstantiateConfig {
+        vault: v.vault.clone(),
+        config: VaultConfig {
+            deposit_cap: v.config.deposit_cap.clone(),
+            max_ltv: v.config.max_ltv,
+            liquidation_threshold: v.config.liquidation_threshold,
+            whitelisted: false,
+        },
+    };
+
+    // Remove uosmo from the coin whitelist
+    let res = mock.query_config();
+    mock.update_config(
+        &Addr::unchecked(res.owner.unwrap()),
+        ConfigUpdates {
+            vault_configs: Some(vec![new_vault_config]),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    let curr_health = mock.query_health(&account_id);
+
+    // // Values should be the same
     assert_eq!(prev_health.total_debt_value, curr_health.total_debt_value);
     assert_eq!(prev_health.total_collateral_value, curr_health.total_collateral_value);
 

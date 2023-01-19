@@ -1,4 +1,6 @@
-use cosmwasm_std::{Addr, OverflowError, OverflowOperation::Sub, StdError::NotFound, Uint128};
+use cosmwasm_std::{
+    coin, Addr, Decimal, OverflowError, OverflowOperation::Sub, StdError::NotFound, Uint128,
+};
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
 use mars_rover::{
     adapters::vault::VaultBase,
@@ -11,7 +13,7 @@ use mars_rover::{
 
 use crate::helpers::{
     assert_err, locked_vault_info, lp_token_info, uatom_info, unlocked_vault_info, uosmo_info,
-    AccountToFund, MockEnv,
+    AccountToFund, MockEnv, VaultTestInfo,
 };
 
 pub mod helpers;
@@ -74,28 +76,38 @@ fn test_deposit_denom_is_whitelisted() {
 fn test_vault_is_whitelisted() {
     let uatom = uatom_info();
     let uosmo = uosmo_info();
-    let leverage_vault = unlocked_vault_info();
+    let leverage_vault = VaultTestInfo {
+        vault_token_denom: "uleverage".to_string(),
+        lockup: None,
+        base_token_denom: uatom.denom.clone(),
+        deposit_cap: coin(10_000_000, "uusdc"),
+        max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
+        liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
+        whitelisted: false,
+    };
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
         .allowed_coins(&[uatom.clone(), uosmo])
-        .vault_configs(&[leverage_vault])
+        .vault_configs(&[leverage_vault.clone()])
         .build()
         .unwrap();
 
     let account_id = mock.create_credit_account(&user).unwrap();
 
+    let vault = mock.get_vault(&leverage_vault);
+
     let res = mock.update_credit_account(
         &account_id,
         &user,
         vec![EnterVault {
-            vault: VaultBase::new("unknown_vault".to_string()),
+            vault: vault.clone(),
             coin: uatom.to_action_coin(200),
         }],
         &[],
     );
 
-    assert_err(res, ContractError::NotWhitelisted("unknown_vault".to_string()));
+    assert_err(res, ContractError::NotWhitelisted(vault.address));
 }
 
 #[test]

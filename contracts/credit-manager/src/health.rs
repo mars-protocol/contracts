@@ -12,6 +12,7 @@ use mars_rover::{
 use crate::{
     query::query_positions,
     state::{ALLOWED_COINS, ORACLE, RED_BANK, VAULT_CONFIGS},
+    vault::vault_is_whitelisted,
 };
 
 /// Used as storage when trying to compute Health
@@ -98,15 +99,23 @@ fn calculate_vaults_value(
         total_collateral_value = total_collateral_value.checked_add(vault_coin_value)?;
 
         let config = VAULT_CONFIGS.load(deps.storage, &v.vault.address)?;
+        let info = v.vault.query_info(&deps.querier)?;
+
+        // If vault has been de-listed, drop MaxLTV to zero
+        let checked_vault_max_ltv = if vault_is_whitelisted(deps.storage, &v.vault)? {
+            config.max_ltv
+        } else {
+            Decimal::zero()
+        };
+
         max_ltv_adjusted_collateral = vault_coin_value
-            .checked_mul_floor(config.max_ltv)?
+            .checked_mul_floor(checked_vault_max_ltv)?
             .checked_add(max_ltv_adjusted_collateral)?;
         liquidation_threshold_adjusted_collateral = vault_coin_value
             .checked_mul_floor(config.liquidation_threshold)?
             .checked_add(liquidation_threshold_adjusted_collateral)?;
 
         // Unlocking positions denominated in underlying token
-        let info = v.vault.query_info(&deps.querier)?;
         let PriceResponse {
             price,
             ..
@@ -116,11 +125,19 @@ fn calculate_vaults_value(
             liquidation_threshold,
             ..
         } = red_bank.query_market(&deps.querier, &info.base_token)?;
+
+        // If base token has been de-listed, drop MaxLTV to zero
+        let checked_base_max_ltv = if ALLOWED_COINS.contains(deps.storage, &info.base_token) {
+            max_loan_to_value
+        } else {
+            Decimal::zero()
+        };
+
         for u in v.amount.unlocking().positions() {
             let underlying_value = u.coin.amount.checked_mul_floor(price)?;
             total_collateral_value = total_collateral_value.checked_add(underlying_value)?;
             max_ltv_adjusted_collateral = underlying_value
-                .checked_mul_floor(max_loan_to_value)?
+                .checked_mul_floor(checked_base_max_ltv)?
                 .checked_add(max_ltv_adjusted_collateral)?;
             liquidation_threshold_adjusted_collateral = underlying_value
                 .checked_mul_floor(liquidation_threshold)?
@@ -154,12 +171,12 @@ fn calculate_deposits_value(deps: &Deps, deposits: &[Coin]) -> ContractResult<Co
         } = red_bank.query_market(&deps.querier, &c.denom)?;
 
         // If coin has been de-listed, drop MaxLTV to zero
-        let max_ltv = if ALLOWED_COINS.contains(deps.storage, &c.denom) {
+        let checked_max_ltv = if ALLOWED_COINS.contains(deps.storage, &c.denom) {
             max_loan_to_value
         } else {
             Decimal::zero()
         };
-        let max_ltv_adjusted = value.checked_mul_floor(max_ltv)?;
+        let max_ltv_adjusted = value.checked_mul_floor(checked_max_ltv)?;
         max_ltv_adjusted_collateral = max_ltv_adjusted_collateral.checked_add(max_ltv_adjusted)?;
 
         let liq_adjusted = value.checked_mul_floor(liquidation_threshold)?;

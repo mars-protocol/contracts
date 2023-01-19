@@ -699,7 +699,7 @@ impl MockEnvBuilder {
                 deposit_cap: vault.deposit_cap.clone(),
                 max_ltv: vault.max_ltv,
                 liquidation_threshold: vault.liquidation_threshold,
-                whitelisted: true,
+                whitelisted: vault.whitelisted,
             },
         }
     }
