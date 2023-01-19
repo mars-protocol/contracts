@@ -1341,9 +1341,11 @@ fn liquidate_if_collateral_disabled() {
 
 #[test]
 fn liquidator_cannot_receive_collaterals_without_spending_coins() {
-    let mut market = Market::default();
-    market.liquidity_index = Decimal::one();
-    market.liquidation_bonus = Decimal::from_ratio(1u128, 10u128);
+    let market = Market {
+        liquidity_index: Decimal::one(),
+        liquidation_bonus: Decimal::from_ratio(1u128, 10u128),
+        ..Default::default()
+    };
     let res_err = liquidation_compute_amounts(
         Uint128::new(320000000),
         Uint128::new(800),
@@ -1360,9 +1362,11 @@ fn liquidator_cannot_receive_collaterals_without_spending_coins() {
 
 #[test]
 fn cannot_liquidate_without_receiving_collaterals() {
-    let mut market = Market::default();
-    market.liquidity_index = Decimal::one();
-    market.liquidation_bonus = Decimal::from_ratio(1u128, 10u128);
+    let market = Market {
+        liquidity_index: Decimal::one(),
+        liquidation_bonus: Decimal::from_ratio(1u128, 10u128),
+        ..Default::default()
+    };
     let res_err = liquidation_compute_amounts(
         Uint128::new(320000000),
         Uint128::new(20),
