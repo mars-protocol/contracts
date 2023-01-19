@@ -5,7 +5,7 @@ This repository contains the source code for the core smart contracts of Mars Pr
 See reports [here](https://github.com/mars-protocol/mars-audits/tree/main/outposts)
 
 ## Bug bounty
-A bug bounty is currently open for these contracts. See details at: https://immunefi.com/bounty/marsprotocol/
+A bug bounty is currently open for these contracts. See details [here](https://immunefi.com/bounty/mars/).
 
 ## Verify contracts
 ### For contracts deployed on the Osmosis chain:
