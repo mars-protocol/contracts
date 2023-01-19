@@ -18,11 +18,11 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.assertDeployerBalance()
 
     // Upload contracts
-    await deployer.upload('redBank', 'mars_red_bank.wasm')
-    await deployer.upload('addressProvider', 'mars_address_provider.wasm')
+    await deployer.upload('red-bank', 'mars_red_bank.wasm')
+    await deployer.upload('address-provider', 'mars_address_provider.wasm')
     await deployer.upload('incentives', 'mars_incentives.wasm')
     await deployer.upload('oracle', `mars_oracle_${config.chainName}.wasm`)
-    await deployer.upload('rewardsCollector', `mars_rewards_collector_${config.chainName}.wasm`)
+    await deployer.upload('rewards-collector', `mars_rewards_collector_${config.chainName}.wasm`)
 
     // Instantiate contracts
     await deployer.setOwnerAddr()
