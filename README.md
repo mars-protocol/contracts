@@ -132,11 +132,11 @@ cargo make test
 
 For `osmo-test-4` release `v1.0.0`: 
 
-* address-provider contract address: `osmo10maqpv35q4cfuxuwvh3mtlyg8au89uep7jrez8m5f8cqs8g4744sx92cp5`
-* red-bank contract address: `osmo1tyg72uru87ws0rldfq723a0fr6qle33etww6uk2545xtf2te7d8s8fmud7`
-* incentives contract address: `osmo1p58fvkca004rjua0rzdxw3ld3k6pv082rqqesnsswnshqkacmz2qmx93u9`
-* oracle contract address: `osmo1z97d9lvgknwm9h9fmy08jx52yynwce28hd8weuq6t6550n3np2usqunz6a`
-* rewards-collector contract address: `osmo15hzedvcac8pf4c3kqxeqskq9fgk48t04gyh4j9mv8mvadcjse27sxtkrcr`
+* address-provider contract address: `osmo17dyy6hyzzy6u5khy5lau7afa2y9kwknu0aprwqn8twndw2qhv8ls6msnjr`
+* red-bank contract address: `osmo1t0dl6r27phqetfu0geaxrng0u9zn8qgrdwztapt5xr32adtwptaq6vwg36`
+* incentives contract address: `osmo1zxs8fry3m8j94pqg7h4muunyx86en27cl0xgk76fc839xg2qnn6qtpjs48`
+* oracle contract address: `osmo1dqz2u3c8rs5e7w5fnchsr2mpzzsxew69wtdy0aq4jsd76w7upmsstqe0s8`
+* rewards-collector contract address: `osmo14kzsqw5tatdvwlkj383lgkh6gcdetwn7kfqm7488uargyy2lpucqsyv53j`
 
 ## License
 
