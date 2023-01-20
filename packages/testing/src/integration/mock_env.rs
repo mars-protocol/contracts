@@ -3,7 +3,7 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Uint128};
+use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Timestamp, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSource;
 use mars_outpost::{
@@ -104,6 +104,29 @@ impl Incentives {
                     denom: denom.to_string(),
                     emission_per_second: Some(emission_per_second.into()),
                     start_time: None,
+                    duration: Some(duration),
+                },
+                &[],
+            )
+            .unwrap();
+    }
+
+    pub fn init_asset_incentive(
+        &self,
+        env: &mut MockEnv,
+        denom: &str,
+        emission_per_second: u128,
+        start_time: Timestamp,
+        duration: u64,
+    ) {
+        env.app
+            .execute_contract(
+                env.owner.clone(),
+                self.contract_addr.clone(),
+                &incentives::ExecuteMsg::SetAssetIncentive {
+                    denom: denom.to_string(),
+                    emission_per_second: Some(emission_per_second.into()),
+                    start_time: Some(start_time),
                     duration: Some(duration),
                 },
                 &[],
