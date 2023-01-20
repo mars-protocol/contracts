@@ -20,7 +20,7 @@ use crate::helpers::{th_setup, th_setup_with_env};
 mod helpers;
 
 #[test]
-fn test_balance_change_unauthorized() {
+fn balance_change_unauthorized() {
     let mut deps = th_setup();
 
     // the `balance_change` method can only be invoked by Red Bank contract
@@ -40,7 +40,7 @@ fn test_balance_change_unauthorized() {
 }
 
 #[test]
-fn test_execute_balance_change_noops() {
+fn execute_balance_change_noops() {
     let mut deps = th_setup();
 
     // non existing incentive returns a no op
@@ -57,7 +57,7 @@ fn test_execute_balance_change_noops() {
 }
 
 #[test]
-fn test_balance_change_zero_emission() {
+fn balance_change_zero_emission() {
     let env = mock_env();
     let mut deps = th_setup_with_env(env.clone());
     let denom = "uosmo";
@@ -124,7 +124,7 @@ fn test_balance_change_zero_emission() {
 }
 
 #[test]
-fn test_balance_change_user_with_zero_balance() {
+fn balance_change_user_with_zero_balance() {
     let env = mock_env();
     let mut deps = th_setup_with_env(env);
     let denom = "uosmo";
@@ -202,7 +202,7 @@ fn test_balance_change_user_with_zero_balance() {
 }
 
 #[test]
-fn test_with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
+fn with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
     let env = mock_env();
     let mut deps = th_setup_with_env(env);
     let denom = "uosmo";
@@ -273,7 +273,7 @@ fn test_with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards
 }
 
 #[test]
-fn test_set_new_asset_incentive_user_non_zero_balance() {
+fn set_new_asset_incentive_user_non_zero_balance() {
     let env = mock_env();
     let mut deps = th_setup_with_env(env);
     let user_addr = Addr::unchecked("user");
@@ -391,7 +391,7 @@ fn test_set_new_asset_incentive_user_non_zero_balance() {
 }
 
 #[test]
-fn test_balance_change_user_non_zero_balance() {
+fn balance_change_user_non_zero_balance() {
     let env = mock_env();
     let mut deps = th_setup_with_env(env);
     let denom = "uosmo";

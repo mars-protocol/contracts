@@ -150,7 +150,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_unwrapping_coin() {
+    fn unwrapping_coin() {
         let pool = Pool {
             id: "1111".to_string(),
             address: "".to_string(),

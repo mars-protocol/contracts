@@ -16,7 +16,7 @@ use crate::helpers::{mock_config, mock_instantiate_msg};
 mod helpers;
 
 #[test]
-fn test_instantiating() {
+fn instantiating() {
     let mut deps = helpers::setup_test();
 
     let mut init_msg = mock_instantiate_msg();
@@ -57,7 +57,7 @@ fn test_instantiating() {
 }
 
 #[test]
-fn test_updating_config_if_invalid_slippage() {
+fn updating_config_if_invalid_slippage() {
     let mut deps = helpers::setup_test();
 
     let invalid_cfg = UpdateConfig {
@@ -81,7 +81,7 @@ fn test_updating_config_if_invalid_slippage() {
 }
 
 #[test]
-fn test_updating_config() {
+fn updating_config() {
     let mut deps = helpers::setup_test();
 
     let new_cfg = UpdateConfig {
@@ -126,7 +126,7 @@ fn test_updating_config() {
 }
 
 #[test]
-fn test_updating_config_if_invalid_timeout_revision() {
+fn updating_config_if_invalid_timeout_revision() {
     let mut deps = helpers::setup_test();
 
     let invalid_cfg = UpdateConfig {
@@ -150,7 +150,7 @@ fn test_updating_config_if_invalid_timeout_revision() {
 }
 
 #[test]
-fn test_updating_config_if_invalid_timeout_blocks() {
+fn updating_config_if_invalid_timeout_blocks() {
     let mut deps = helpers::setup_test();
 
     let invalid_cfg = UpdateConfig {
@@ -174,7 +174,7 @@ fn test_updating_config_if_invalid_timeout_blocks() {
 }
 
 #[test]
-fn test_updating_config_if_invalid_timeout_seconds() {
+fn updating_config_if_invalid_timeout_seconds() {
     let mut deps = helpers::setup_test();
 
     let invalid_cfg = UpdateConfig {

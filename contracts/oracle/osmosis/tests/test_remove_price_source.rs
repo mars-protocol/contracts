@@ -12,7 +12,7 @@ use mars_testing::mock_info;
 mod helpers;
 
 #[test]
-fn test_remove_price_source_by_non_owner() {
+fn remove_price_source_by_non_owner() {
     let mut deps = helpers::setup_test();
 
     let err = execute(
@@ -28,7 +28,7 @@ fn test_remove_price_source_by_non_owner() {
 }
 
 #[test]
-fn test_removing_price_source() {
+fn removing_price_source() {
     let mut deps = helpers::setup_test();
 
     helpers::set_price_source(

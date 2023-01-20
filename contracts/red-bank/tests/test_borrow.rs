@@ -24,7 +24,7 @@ use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 mod helpers;
 
 #[test]
-fn test_borrow_and_repay() {
+fn borrow_and_repay() {
     // consider three assets: uatom, uosmo, uusd
     // the user deposits uatom collateral, and borrow uosmo, uusd loans
     //
@@ -479,7 +479,7 @@ fn test_borrow_and_repay() {
 }
 
 #[test]
-fn test_repay_without_refund_on_behalf_of() {
+fn repay_without_refund_on_behalf_of() {
     let mut deps = th_setup(&[coin(1000000000u128, "borrowedcoinnative")]);
 
     deps.querier.set_oracle_price("depositedcoinnative", Decimal::one());
@@ -559,7 +559,7 @@ fn test_repay_without_refund_on_behalf_of() {
 }
 
 #[test]
-fn test_repay_with_refund_on_behalf_of() {
+fn repay_with_refund_on_behalf_of() {
     let mut deps = th_setup(&[coin(1000000000u128, "borrowedcoinnative")]);
 
     deps.querier.set_oracle_price("depositedcoinnative", Decimal::one());
@@ -646,7 +646,7 @@ fn test_repay_with_refund_on_behalf_of() {
 }
 
 #[test]
-fn test_repay_uncollateralized_loan_on_behalf_of() {
+fn repay_uncollateralized_loan_on_behalf_of() {
     let mut deps = th_setup(&[]);
 
     let repayer_addr = Addr::unchecked("repayer");
@@ -666,7 +666,7 @@ fn test_repay_uncollateralized_loan_on_behalf_of() {
 }
 
 #[test]
-fn test_borrow_uusd() {
+fn borrow_uusd() {
     let initial_liquidity = 10000000;
     let mut deps = th_setup(&[coin(initial_liquidity, "uusd")]);
     let block_time = 1;
@@ -744,7 +744,7 @@ fn test_borrow_uusd() {
 }
 
 #[test]
-fn test_borrow_full_liquidity_and_then_repay() {
+fn borrow_full_liquidity_and_then_repay() {
     let initial_liquidity = 50000;
     let mut deps = th_setup(&[coin(initial_liquidity, "uusd")]);
     let info = mock_info("borrower", &[]);
@@ -824,7 +824,7 @@ fn test_borrow_full_liquidity_and_then_repay() {
 }
 
 #[test]
-fn test_borrow_collateral_check() {
+fn borrow_collateral_check() {
     // NOTE: available liquidity stays fixed as the test environment does not get changes in
     // contract balances on subsequent calls. They would change from call to call in practice
     let available_liquidity_1 = Uint128::from(1000000000u128);
@@ -936,7 +936,7 @@ fn test_borrow_collateral_check() {
 }
 
 #[test]
-fn test_cannot_borrow_if_market_not_enabled() {
+fn cannot_borrow_if_market_not_enabled() {
     let mut deps = th_setup(&[]);
 
     let mock_market = Market {
@@ -963,7 +963,7 @@ fn test_cannot_borrow_if_market_not_enabled() {
 }
 
 #[test]
-fn test_borrow_and_send_funds_to_another_user() {
+fn borrow_and_send_funds_to_another_user() {
     let initial_liquidity = 10000000;
     let mut deps = th_setup(&[coin(initial_liquidity, "uusd")]);
 

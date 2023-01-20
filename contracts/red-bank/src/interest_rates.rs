@@ -324,7 +324,7 @@ mod tests {
     };
 
     #[test]
-    fn test_accumulated_index_calculation() {
+    fn accumulated_index_calculation() {
         let index = Decimal::from_ratio(1u128, 10u128);
         let rate = Decimal::from_ratio(2u128, 10u128);
         let time_elapsed = 15768000; // half a year
@@ -335,7 +335,7 @@ mod tests {
     }
 
     #[test]
-    fn test_liquidity_and_debt_rounding() {
+    fn liquidity_and_debt_rounding() {
         let start = Uint128::from(100_000_000_000_u128);
         let market = Market {
             liquidity_index: Decimal::from_ratio(3_u128, 1_u128),

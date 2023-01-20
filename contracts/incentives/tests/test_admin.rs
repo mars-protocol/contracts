@@ -18,7 +18,7 @@ use crate::helpers::{th_query, th_setup};
 mod helpers;
 
 #[test]
-fn test_proper_initialization() {
+fn proper_initialization() {
     let mut deps = mock_dependencies(&[]);
 
     let info = mock_info("sender", &[]);
@@ -40,7 +40,7 @@ fn test_proper_initialization() {
 }
 
 #[test]
-fn test_update_config() {
+fn update_config() {
     let mut deps = th_setup();
 
     // *

@@ -9,7 +9,7 @@ use crate::helpers::{query, setup_test};
 mod helpers;
 
 #[test]
-fn test_initialized_state() {
+fn initialized_state() {
     let deps = setup_test();
 
     let config: ConfigResponse = query(deps.as_ref(), QueryMsg::Config {});
@@ -18,7 +18,7 @@ fn test_initialized_state() {
 }
 
 #[test]
-fn test_update_owner() {
+fn update_owner() {
     let mut deps = setup_test();
 
     let original_config: ConfigResponse = query(deps.as_ref(), QueryMsg::Config {});

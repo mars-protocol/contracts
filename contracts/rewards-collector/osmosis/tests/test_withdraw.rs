@@ -5,7 +5,7 @@ use mars_testing::mock_info;
 mod helpers;
 
 #[test]
-fn test_withdrawing_from_red_bank() {
+fn withdrawing_from_red_bank() {
     let mut deps = helpers::setup_test();
 
     // anyone can execute a withdrawal

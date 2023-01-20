@@ -26,7 +26,7 @@ use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 mod helpers;
 
 #[test]
-fn test_uncollateralized_loan_limits() {
+fn uncollateralized_loan_limits() {
     let available_liquidity = Uint128::from(2000000000u128);
     let mut deps = th_setup(&[coin(available_liquidity.into(), "somecoin")]);
 
@@ -200,7 +200,7 @@ fn test_uncollateralized_loan_limits() {
 }
 
 #[test]
-fn test_update_asset_collateral() {
+fn update_asset_collateral() {
     let mut deps = th_setup(&[]);
 
     let user_addr = Addr::unchecked(String::from("user"));

@@ -21,7 +21,7 @@ use crate::helpers::{th_get_expected_indices, th_init_market, th_setup};
 mod helpers;
 
 #[test]
-fn test_proper_initialization() {
+fn proper_initialization() {
     let mut deps = mock_dependencies(&[]);
     let env = mock_env(MockEnvParams::default());
 
@@ -99,7 +99,7 @@ fn test_proper_initialization() {
 }
 
 #[test]
-fn test_update_config() {
+fn update_config() {
     let mut deps = mock_dependencies(&[]);
     let env = mock_env(MockEnvParams::default());
 
@@ -180,7 +180,7 @@ fn test_update_config() {
 }
 
 #[test]
-fn test_init_asset() {
+fn init_asset() {
     let mut deps = mock_dependencies(&[]);
     let env = mock_env(MockEnvParams::default());
 
@@ -468,7 +468,7 @@ fn test_init_asset() {
 }
 
 #[test]
-fn test_update_asset() {
+fn update_asset() {
     let mut deps = mock_dependencies(&[]);
     let start_time = 100000000;
     let env = mock_env_at_block_time(start_time);
@@ -724,7 +724,7 @@ fn test_update_asset() {
 }
 
 #[test]
-fn test_update_asset_with_new_interest_rate_model_params() {
+fn update_asset_with_new_interest_rate_model_params() {
     let mut deps = mock_dependencies(&[]);
 
     let config = CreateOrUpdateConfig {
@@ -821,7 +821,7 @@ fn test_update_asset_with_new_interest_rate_model_params() {
 }
 
 #[test]
-fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
+fn update_asset_new_reserve_factor_accrues_interest_rate() {
     let asset_liquidity = Uint128::from(10_000_000_000_000_u128);
     let mut deps = th_setup(&[coin(asset_liquidity.into(), "somecoin")]);
 
@@ -942,7 +942,7 @@ fn test_update_asset_new_reserve_factor_accrues_interest_rate() {
 }
 
 #[test]
-fn test_update_asset_by_emergency_owner() {
+fn update_asset_by_emergency_owner() {
     let mut deps = mock_dependencies(&[]);
     let start_time = 100000000;
     let env = mock_env_at_block_time(start_time);

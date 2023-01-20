@@ -10,7 +10,7 @@ use mars_testing::{mock_dependencies, mock_info};
 mod helpers;
 
 #[test]
-fn test_instantiating() {
+fn instantiating() {
     let deps = helpers::setup_test();
 
     let cfg: ConfigResponse = helpers::query(deps.as_ref(), QueryMsg::Config {});
@@ -20,7 +20,7 @@ fn test_instantiating() {
 }
 
 #[test]
-fn test_instantiating_incorrect_denom() {
+fn instantiating_incorrect_denom() {
     let mut deps = mock_dependencies(&[]);
     let env = mock_env();
     let owner = mock_info("owner");
