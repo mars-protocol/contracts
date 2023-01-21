@@ -541,17 +541,18 @@ fn rewards_distributed_among_users_and_not_for_rewards_collector() {
         red_bank.query_user_collateral(&mut mock_env, &rewards_collector.contract_addr, "uosmo");
     assert_eq!(uosmo_collateral_rc.amount, Uint128::zero());
 
-    // rewards-collector shouldn't accrue rewards
+    // rewards-collector accrue rewards
     let rewards_balance_rc =
         incentives.query_unclaimed_rewards(&mut mock_env, &rewards_collector.contract_addr);
-    // assert!(rewards_balance_rc.is_zero())
+    assert!(!rewards_balance_rc.is_zero());
 
     // sum of unclaimed rewards should be equal to total umars available for finished incentive
     let rewards_balance_user_a = incentives.query_unclaimed_rewards(&mut mock_env, &user_a);
     let rewards_balance_user_b = incentives.query_unclaimed_rewards(&mut mock_env, &user_b);
     let total_claimed_rewards =
         rewards_balance_rc + rewards_balance_user_a + rewards_balance_user_b;
-    assert_eq!(total_claimed_rewards.u128(), umars_incentives_amt - 1); // ~ values very close
+    // ~ values very close (small difference due to rounding errors for index calculation)
+    assert_eq!(total_claimed_rewards.u128(), umars_incentives_amt - 1);
 
     // users claim rewards
     incentives.claim_rewards(&mut mock_env, &user_a).unwrap();
@@ -561,7 +562,9 @@ fn rewards_distributed_among_users_and_not_for_rewards_collector() {
     let umars_balance_user_b = mock_env.query_balance(&user_b, "umars").unwrap();
     assert_eq!(umars_balance_user_b.amount, rewards_balance_user_b);
 
-    // uusdc incentives rewards are shared among user_a and user_b (both users deposit uusdc)
-
-    // uatom incentives rewards are taken by user_b (he deposits uatom)
+    // rewards-collector claims rewards
+    rewards_collector.claim_incentive_rewards(&mut mock_env).unwrap();
+    let umars_balance_rc =
+        mock_env.query_balance(&rewards_collector.contract_addr, "umars").unwrap();
+    assert_eq!(umars_balance_rc.amount, rewards_balance_rc);
 }

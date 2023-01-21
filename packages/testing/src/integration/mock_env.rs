@@ -424,6 +424,15 @@ impl RewardsCollector {
             )
             .unwrap();
     }
+
+    pub fn claim_incentive_rewards(&self, env: &mut MockEnv) -> AnyResult<AppResponse> {
+        env.app.execute_contract(
+            Addr::unchecked("anyone"),
+            self.contract_addr.clone(),
+            &mars_rewards_collector_osmosis::msg::ExecuteMsg::ClaimIncentiveRewards {},
+            &[],
+        )
+    }
 }
 
 pub struct MockEnvBuilder {
