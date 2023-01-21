@@ -128,6 +128,22 @@ running all tests:
 cargo make test
 ```
 
+## Deployments
+
+### osmosis-1
+
+TBD
+
+### osmo-test-4
+
+| Contract               | Address                                                           |
+| ---------------------- | ----------------------------------------------------------------- |
+| mars-address-provider  | `osmo17dyy6hyzzy6u5khy5lau7afa2y9kwknu0aprwqn8twndw2qhv8ls6msnjr` |
+| mars-incentives        | `osmo1zxs8fry3m8j94pqg7h4muunyx86en27cl0xgk76fc839xg2qnn6qtpjs48` |
+| mars-oracle            | `osmo1dqz2u3c8rs5e7w5fnchsr2mpzzsxew69wtdy0aq4jsd76w7upmsstqe0s8` |
+| mars-red-bank          | `osmo1t0dl6r27phqetfu0geaxrng0u9zn8qgrdwztapt5xr32adtwptaq6vwg36` |
+| mars-rewards-collector | `osmo14kzsqw5tatdvwlkj383lgkh6gcdetwn7kfqm7488uargyy2lpucqsyv53j` |
+
 ## License
 
 Contents of this repository are open source under [GNU General Public License v3](./LICENSE) or later.

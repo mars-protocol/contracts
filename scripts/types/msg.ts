@@ -6,8 +6,9 @@ export type InstantiateMsgs =
   | RewardsInstantiateMsg
 
 export interface RedBankInstantiateMsg {
+  owner: string
+  emergency_owner: string
   config: {
-    owner: string
     address_provider: string
     close_factor: string
   }

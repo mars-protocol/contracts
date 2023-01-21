@@ -1,15 +1,15 @@
 export interface StorageItems {
   codeIds: {
-    redBank?: number
-    rewardsCollector?: number
-    addressProvider?: number
+    'red-bank'?: number
+    'rewards-collector'?: number
+    'address-provider'?: number
     incentives?: number
     oracle?: number
   }
   addresses: {
-    addressProvider?: string
-    rewardsCollector?: string
-    redBank?: string
+    'address-provider'?: string
+    'rewards-collector'?: string
+    'red-bank'?: string
     incentives?: string
     oracle?: string
   }

@@ -55,6 +55,7 @@ export class Deployer {
     } else {
       this.storage.owner = this.deployerAddress
     }
+    printGreen(`Owner is set to: ${this.storage.owner}`)
   }
 
   async instantiate(name: keyof Storage['addresses'], codeId: number, msg: InstantiateMsgs) {
@@ -81,27 +82,28 @@ export class Deployer {
 
   async instantiateAddressProvider() {
     const msg = {
-      owner: this.storage.owner!,
+      owner: this.deployerAddress,
       prefix: this.config.chainPrefix,
     }
-    await this.instantiate('addressProvider', this.storage.codeIds.addressProvider!, msg)
+    await this.instantiate('address-provider', this.storage.codeIds['address-provider']!, msg)
   }
 
   async instantiateRedBank() {
     const msg = {
+      owner: this.deployerAddress,
+      emergency_owner: this.storage.owner!,
       config: {
-        owner: this.storage.owner!,
-        address_provider: this.storage.addresses.addressProvider!,
+        address_provider: this.storage.addresses['address-provider']!,
         close_factor: '0.5',
       },
     }
-    await this.instantiate('redBank', this.storage.codeIds.redBank!, msg)
+    await this.instantiate('red-bank', this.storage.codeIds['red-bank']!, msg)
   }
 
   async instantiateIncentives() {
     const msg = {
-      owner: this.storage.owner!,
-      address_provider: this.storage.addresses.addressProvider!,
+      owner: this.deployerAddress,
+      address_provider: this.storage.addresses['address-provider']!,
       mars_denom: this.config.marsDenom,
     }
     await this.instantiate('incentives', this.storage.codeIds.incentives!, msg)
@@ -109,7 +111,7 @@ export class Deployer {
 
   async instantiateOracle() {
     const msg = {
-      owner: this.storage.owner!,
+      owner: this.deployerAddress,
       base_denom: this.config.baseAssetDenom,
     }
     await this.instantiate('oracle', this.storage.codeIds.oracle!, msg)
@@ -117,8 +119,8 @@ export class Deployer {
 
   async instantiateRewards() {
     const msg = {
-      owner: this.storage.owner!,
-      address_provider: this.storage.addresses.addressProvider!,
+      owner: this.deployerAddress,
+      address_provider: this.storage.addresses['address-provider']!,
       safety_tax_rate: this.config.safetyFundFeeShare,
       safety_fund_denom: this.config.baseAssetDenom,
       fee_collector_denom: this.config.baseAssetDenom,
@@ -128,11 +130,11 @@ export class Deployer {
       timeout_seconds: this.config.rewardCollectorTimeoutSeconds,
       slippage_tolerance: this.config.slippage_tolerance,
     }
-    await this.instantiate('rewardsCollector', this.storage.codeIds.rewardsCollector!, msg)
+    await this.instantiate('rewards-collector', this.storage.codeIds['rewards-collector']!, msg)
 
     await this.client.execute(
       this.deployerAddress,
-      this.storage.addresses.rewardsCollector!,
+      this.storage.addresses['rewards-collector']!,
       {
         set_route: {
           denom_in: this.config.atomDenom,
@@ -143,9 +145,7 @@ export class Deployer {
       'auto',
     )
 
-    printGreen(
-      `${this.config.chainId} :: Rewards Collector Contract Address : ${this.storage.addresses.rewardsCollector}`,
-    )
+    printYellow(`${this.config.chainId} :: Rewards Collector Route has been set`)
   }
 
   async saveDeploymentAddrsToFile() {
@@ -157,14 +157,14 @@ export class Deployer {
   }
 
   async updateAddressProvider() {
-    if (this.storage.execute.addressProviderUpdated) {
+    if (this.storage.execute['address-provider-updated']) {
       printBlue('Addresses already updated.')
       return
     }
     const addressesToSet = [
       {
         address_type: 'rewards_collector',
-        address: this.storage.addresses.rewardsCollector,
+        address: this.storage.addresses['rewards-collector'],
       },
       {
         address_type: 'incentives',
@@ -180,20 +180,20 @@ export class Deployer {
       },
       {
         address_type: 'red_bank',
-        address: this.storage.addresses.redBank,
+        address: this.storage.addresses['red-bank'],
       },
     ]
-    // When executeMultiple is released to npm, switch to that
+
     for (const addrObj of addressesToSet) {
       await this.client.execute(
         this.deployerAddress,
-        this.storage.addresses.addressProvider!,
+        this.storage.addresses['address-provider']!,
         { set_address: addrObj },
         'auto',
       )
     }
     printYellow('Address Provider update completed')
-    this.storage.execute.addressProviderUpdated = true
+    this.storage.execute['address-provider-updated'] = true
   }
 
   async initializeAsset(assetConfig: AssetConfig) {
@@ -223,7 +223,12 @@ export class Deployer {
       },
     }
 
-    await this.client.execute(this.deployerAddress, this.storage.addresses.redBank!, msg, 'auto')
+    await this.client.execute(
+      this.deployerAddress,
+      this.storage.addresses['red-bank']!,
+      msg,
+      'auto',
+    )
 
     printYellow(`${assetConfig.symbol} initialized`)
 
@@ -246,13 +251,15 @@ export class Deployer {
         set_price_source: {
           denom: oracleConfig.denom,
           price_source: {
-            arithmetic_twap: {
+            geometric_twap: {
               pool_id: oracleConfig.pool_id,
               window_size: oracleConfig.window_size,
+              downtime_detector: oracleConfig.downtime_detector,
             },
           },
         },
       }
+      // see if we need fixed price for osmo - remove fixed price
       await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
     }
 
@@ -282,7 +289,7 @@ export class Deployer {
 
     await this.client.execute(
       this.deployerAddress,
-      this.storage.addresses.redBank!,
+      this.storage.addresses['red-bank']!,
       msg,
       'auto',
       undefined,
@@ -291,7 +298,7 @@ export class Deployer {
     printYellow('Deposit Executed:')
 
     const msgTwo = { user_position: { user: this.deployerAddress } }
-    console.log(await this.client.queryContractSmart(this.storage.addresses.redBank!, msgTwo))
+    console.log(await this.client.queryContractSmart(this.storage.addresses['red-bank']!, msgTwo))
   }
 
   async executeBorrow() {
@@ -302,11 +309,16 @@ export class Deployer {
       },
     }
 
-    await this.client.execute(this.deployerAddress, this.storage.addresses.redBank!, msg, 'auto')
+    await this.client.execute(
+      this.deployerAddress,
+      this.storage.addresses['red-bank']!,
+      msg,
+      'auto',
+    )
     printYellow('Borrow executed:')
 
     const msgTwo = { user_position: { user: this.deployerAddress } }
-    console.log(await this.client.queryContractSmart(this.storage.addresses.redBank!, msgTwo))
+    console.log(await this.client.queryContractSmart(this.storage.addresses['red-bank']!, msgTwo))
   }
 
   async executeRepay() {
@@ -320,7 +332,7 @@ export class Deployer {
 
     await this.client.execute(
       this.deployerAddress,
-      this.storage.addresses.redBank!,
+      this.storage.addresses['red-bank']!,
       msg,
       'auto',
       undefined,
@@ -329,7 +341,7 @@ export class Deployer {
     printYellow('Repay executed:')
 
     const msgTwo = { user_position: { user: this.deployerAddress } }
-    console.log(await this.client.queryContractSmart(this.storage.addresses.redBank!, msgTwo))
+    console.log(await this.client.queryContractSmart(this.storage.addresses['red-bank']!, msgTwo))
   }
 
   async executeWithdraw() {
@@ -340,11 +352,16 @@ export class Deployer {
       },
     }
 
-    await this.client.execute(this.deployerAddress, this.storage.addresses.redBank!, msg, 'auto')
+    await this.client.execute(
+      this.deployerAddress,
+      this.storage.addresses['red-bank']!,
+      msg,
+      'auto',
+    )
     printYellow('Withdraw executed:')
 
     const msgTwo = { user_position: { user: this.deployerAddress } }
-    console.log(await this.client.queryContractSmart(this.storage.addresses.redBank!, msgTwo))
+    console.log(await this.client.queryContractSmart(this.storage.addresses['red-bank']!, msgTwo))
   }
 
   async executeRewardsSwap() {
@@ -357,18 +374,18 @@ export class Deployer {
     ]
     await this.client.sendTokens(
       this.deployerAddress,
-      this.storage.addresses.rewardsCollector!,
+      this.storage.addresses['rewards-collector']!,
       coins,
       'auto',
     )
 
     // Check contract balance before swap
     const atomBalanceBefore = await this.client.getBalance(
-      this.storage.addresses.rewardsCollector!,
+      this.storage.addresses['rewards-collector']!,
       this.config.atomDenom,
     )
     const baseAssetBalanceBefore = await this.client.getBalance(
-      this.storage.addresses.rewardsCollector!,
+      this.storage.addresses['rewards-collector']!,
       this.config.baseAssetDenom,
     )
     printYellow(
@@ -385,17 +402,17 @@ export class Deployer {
     }
     await this.client.execute(
       this.deployerAddress,
-      this.storage.addresses.rewardsCollector!,
+      this.storage.addresses['rewards-collector']!,
       msg,
       'auto',
     )
     // Check contract balance after swap
     const atomBalanceAfter = await this.client.getBalance(
-      this.storage.addresses.rewardsCollector!,
+      this.storage.addresses['rewards-collector']!,
       this.config.atomDenom,
     )
     const baseAssetBalanceAfter = await this.client.getBalance(
-      this.storage.addresses.rewardsCollector!,
+      this.storage.addresses['rewards-collector']!,
       this.config.baseAssetDenom,
     )
     printYellow(
@@ -412,8 +429,10 @@ export class Deployer {
 
   async updateIncentivesContractOwner() {
     const msg = {
-      update_config: {
-        owner: this.storage.owner,
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner,
+        },
       },
     }
     await this.client.execute(this.deployerAddress, this.storage.addresses.incentives!, msg, 'auto')
@@ -423,89 +442,101 @@ export class Deployer {
       {
         config: {},
       },
-    )) as { owner: string; prefix: string }
+    )) as { proposed_new_owner: string; prefix: string }
 
-    assert.equal(incentivesConfig.owner, this.storage.owner)
+    printRed(`${incentivesConfig.proposed_new_owner}`)
+    assert.equal(incentivesConfig.proposed_new_owner, this.config.multisigAddr)
   }
 
   async updateRedBankContractOwner() {
     const msg = {
-      update_config: {
-        config: {
-          owner: this.storage.owner,
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner,
         },
       },
     }
-    await this.client.execute(this.deployerAddress, this.storage.addresses.redBank!, msg, 'auto')
+    await this.client.execute(
+      this.deployerAddress,
+      this.storage.addresses['red-bank']!,
+      msg,
+      'auto',
+    )
     printYellow('Owner updated to Mutlisig for Red Bank')
-    const redbankConfig = (await this.client.queryContractSmart(this.storage.addresses.redBank!, {
-      config: {},
-    })) as { owner: string; prefix: string }
+    const redbankConfig = (await this.client.queryContractSmart(
+      this.storage.addresses['red-bank']!,
+      {
+        config: {},
+      },
+    )) as { proposed_new_owner: string; prefix: string }
 
-    assert.equal(redbankConfig.owner, this.storage.owner)
+    assert.equal(redbankConfig.proposed_new_owner, this.config.multisigAddr)
   }
 
   async updateOracleContractOwner() {
     const msg = {
-      update_config: {
-        owner: this.storage.owner,
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner,
+        },
       },
     }
     await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
     printYellow('Owner updated to Mutlisig for Oracle')
     const oracleConfig = (await this.client.queryContractSmart(this.storage.addresses.oracle!, {
       config: {},
-    })) as { owner: string; prefix: string }
+    })) as { proposed_new_owner: string; prefix: string }
 
-    assert.equal(oracleConfig.owner, this.storage.owner)
+    assert.equal(oracleConfig.proposed_new_owner, this.config.multisigAddr)
   }
 
   async updateRewardsContractOwner() {
     const msg = {
-      update_config: {
-        new_cfg: {
-          owner: this.storage.owner,
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner,
         },
       },
     }
     await this.client.execute(
       this.deployerAddress,
-      this.storage.addresses.rewardsCollector!,
+      this.storage.addresses['rewards-collector']!,
       msg,
       'auto',
     )
     printYellow('Owner updated to Mutlisig for Rewards Collector')
     const rewardsConfig = (await this.client.queryContractSmart(
-      this.storage.addresses.rewardsCollector!,
+      this.storage.addresses['rewards-collector']!,
       {
         config: {},
       },
-    )) as { owner: string; prefix: string }
+    )) as { proposed_new_owner: string; prefix: string }
 
-    assert.equal(rewardsConfig.owner, this.storage.owner)
+    assert.equal(rewardsConfig.proposed_new_owner, this.config.multisigAddr)
   }
 
   async updateAddressProviderContractOwner() {
     const msg = {
-      transfer_ownership: {
-        new_owner: this.storage.owner,
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner,
+        },
       },
     }
     await this.client.execute(
       this.deployerAddress,
-      this.storage.addresses.addressProvider!,
+      this.storage.addresses['address-provider']!,
       msg,
       'auto',
     )
     printYellow('Owner updated to Mutlisig for Rewards Collector')
     const addressProviderConfig = (await this.client.queryContractSmart(
-      this.storage.addresses.addressProvider!,
+      this.storage.addresses['address-provider']!,
       {
         config: {},
       },
-    )) as { owner: string; prefix: string }
+    )) as { proposed_new_owner: string; prefix: string }
 
-    assert.equal(addressProviderConfig.owner, this.storage.owner)
-    printGreen('It is confirmed that all contracts have transferred ownership to the Multisig')
+    assert.equal(addressProviderConfig.proposed_new_owner, this.config.multisigAddr)
   }
 }
