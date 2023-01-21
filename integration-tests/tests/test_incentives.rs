@@ -445,10 +445,10 @@ fn insufficient_mars() {
 }
 
 // Rewards are proportionally distributed among users.
-// rewards-collector contract doesn't accrue rewards (can't claim its rewards).
+// rewards-collector contract accrues rewards.
 // All mars is used from incentives contract.
 #[test]
-fn rewards_distributed_among_users_and_not_for_rewards_collector() {
+fn rewards_distributed_among_users_and_rewards_collector() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner).build();
 
