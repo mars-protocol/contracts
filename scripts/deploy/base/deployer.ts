@@ -431,7 +431,7 @@ export class Deployer {
     const msg = {
       update_owner: {
         propose_new_owner: {
-          proposed: this.storage.owner
+          proposed: this.storage.owner,
         },
       },
     }
@@ -452,7 +452,7 @@ export class Deployer {
     const msg = {
       update_owner: {
         propose_new_owner: {
-          proposed: this.storage.owner
+          proposed: this.storage.owner,
         },
       },
     }
@@ -477,7 +477,7 @@ export class Deployer {
     const msg = {
       update_owner: {
         propose_new_owner: {
-          proposed: this.storage.owner
+          proposed: this.storage.owner,
         },
       },
     }
@@ -494,7 +494,7 @@ export class Deployer {
     const msg = {
       update_owner: {
         propose_new_owner: {
-          proposed: this.storage.owner
+          proposed: this.storage.owner,
         },
       },
     }
@@ -519,7 +519,7 @@ export class Deployer {
     const msg = {
       update_owner: {
         propose_new_owner: {
-          proposed: this.storage.owner
+          proposed: this.storage.owner,
         },
       },
     }
