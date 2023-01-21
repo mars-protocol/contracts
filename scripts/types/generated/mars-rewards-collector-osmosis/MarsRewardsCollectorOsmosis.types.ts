@@ -52,6 +52,9 @@ export type ExecuteMsg =
         denom: string
       }
     }
+  | {
+      claim_incentive_rewards: {}
+    }
 export type OwnerUpdate =
   | {
       propose_new_owner: {

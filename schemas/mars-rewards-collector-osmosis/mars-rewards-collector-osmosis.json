@@ -246,6 +246,20 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "description": "Claim rewards in incentives contract.\n\nWe wanted to leave protocol rewards in the red-bank so they continue to work as liquidity (until the bot invokes WithdrawFromRedBank). As an side effect to this, if the market is incentivised with MARS tokens, the contract will also accrue MARS token incentives.",
+        "type": "object",
+        "required": [
+          "claim_incentive_rewards"
+        ],
+        "properties": {
+          "claim_incentive_rewards": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       }
     ],
     "definitions": {
