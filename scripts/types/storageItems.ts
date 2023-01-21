@@ -15,11 +15,11 @@ export interface StorageItems {
   }
 
   execute: {
-    'address-provider-updated'?: boolean
-    'assets-initialized': string[]
-    'second-asset-initialized'?: boolean
-    'oracle-price-set'?: boolean
-    'smoke-test'?: boolean
+    addressProviderUpdated?: boolean
+    assetsInitialized: string[]
+    secondAssetInitialized?: boolean
+    oraclePriceSet?: boolean
+    smokeTest?: boolean
   }
 
   owner?: string

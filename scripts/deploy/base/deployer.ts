@@ -55,6 +55,7 @@ export class Deployer {
     } else {
       this.storage.owner = this.deployerAddress
     }
+    printGreen(`Owner is set to: ${this.storage.owner}`)
   }
 
   async instantiate(name: keyof Storage['addresses'], codeId: number, msg: InstantiateMsgs) {
@@ -81,7 +82,7 @@ export class Deployer {
 
   async instantiateAddressProvider() {
     const msg = {
-      owner: this.storage.owner!,
+      owner: this.deployerAddress,
       prefix: this.config.chainPrefix,
     }
     await this.instantiate('address-provider', this.storage.codeIds['address-provider']!, msg)
@@ -89,7 +90,7 @@ export class Deployer {
 
   async instantiateRedBank() {
     const msg = {
-      owner: this.storage.owner!,
+      owner: this.deployerAddress,
       emergency_owner: this.storage.owner!,
       config: {
         address_provider: this.storage.addresses['address-provider']!,
@@ -101,7 +102,7 @@ export class Deployer {
 
   async instantiateIncentives() {
     const msg = {
-      owner: this.storage.owner!,
+      owner: this.deployerAddress,
       address_provider: this.storage.addresses['address-provider']!,
       mars_denom: this.config.marsDenom,
     }
@@ -110,7 +111,7 @@ export class Deployer {
 
   async instantiateOracle() {
     const msg = {
-      owner: this.storage.owner!,
+      owner: this.deployerAddress,
       base_denom: this.config.baseAssetDenom,
     }
     await this.instantiate('oracle', this.storage.codeIds.oracle!, msg)
@@ -118,7 +119,7 @@ export class Deployer {
 
   async instantiateRewards() {
     const msg = {
-      owner: this.storage.owner!,
+      owner: this.deployerAddress,
       address_provider: this.storage.addresses['address-provider']!,
       safety_tax_rate: this.config.safetyFundFeeShare,
       safety_fund_denom: this.config.baseAssetDenom,
@@ -196,7 +197,7 @@ export class Deployer {
   }
 
   async initializeAsset(assetConfig: AssetConfig) {
-    if (this.storage.execute['assets-initialized'].includes(assetConfig.denom)) {
+    if (this.storage.execute.assetsInitialized.includes(assetConfig.denom)) {
       printBlue(`${assetConfig.symbol} already initialized.`)
       return
     }
@@ -231,7 +232,7 @@ export class Deployer {
 
     printYellow(`${assetConfig.symbol} initialized`)
 
-    this.storage.execute['assets-initialized'].push(assetConfig.denom)
+    this.storage.execute.assetsInitialized.push(assetConfig.denom)
   }
 
   async setOracle(oracleConfig: OracleConfig) {
@@ -264,7 +265,7 @@ export class Deployer {
 
     printYellow('Oracle Price is set.')
 
-    this.storage.execute['oracle-price-set'] = true
+    this.storage.execute.oraclePriceSet = true
 
     const oracleResult = (await this.client.queryContractSmart(this.storage.addresses.oracle!, {
       price: { denom: oracleConfig.denom },
@@ -428,8 +429,10 @@ export class Deployer {
 
   async updateIncentivesContractOwner() {
     const msg = {
-      update_config: {
-        owner: this.storage.owner,
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner
+        },
       },
     }
     await this.client.execute(this.deployerAddress, this.storage.addresses.incentives!, msg, 'auto')
@@ -439,16 +442,17 @@ export class Deployer {
       {
         config: {},
       },
-    )) as { owner: string; prefix: string }
+    )) as { proposed_new_owner: string; prefix: string }
 
-    assert.equal(incentivesConfig.owner, this.config.multisigAddr)
+    printRed(`${incentivesConfig.proposed_new_owner}`)
+    assert.equal(incentivesConfig.proposed_new_owner, this.config.multisigAddr)
   }
 
   async updateRedBankContractOwner() {
     const msg = {
-      update_config: {
-        config: {
-          owner: this.storage.owner,
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner
         },
       },
     }
@@ -464,31 +468,33 @@ export class Deployer {
       {
         config: {},
       },
-    )) as { owner: string; prefix: string }
+    )) as { proposed_new_owner: string; prefix: string }
 
-    assert.equal(redbankConfig.owner, this.config.multisigAddr)
+    assert.equal(redbankConfig.proposed_new_owner, this.config.multisigAddr)
   }
 
   async updateOracleContractOwner() {
     const msg = {
-      update_config: {
-        owner: this.storage.owner,
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner
+        },
       },
     }
     await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
     printYellow('Owner updated to Mutlisig for Oracle')
     const oracleConfig = (await this.client.queryContractSmart(this.storage.addresses.oracle!, {
       config: {},
-    })) as { owner: string; prefix: string }
+    })) as { proposed_new_owner: string; prefix: string }
 
-    assert.equal(oracleConfig.owner, this.config.multisigAddr)
+    assert.equal(oracleConfig.proposed_new_owner, this.config.multisigAddr)
   }
 
   async updateRewardsContractOwner() {
     const msg = {
-      update_config: {
-        new_cfg: {
-          owner: this.storage.owner,
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner
         },
       },
     }
@@ -504,15 +510,17 @@ export class Deployer {
       {
         config: {},
       },
-    )) as { owner: string; prefix: string }
+    )) as { proposed_new_owner: string; prefix: string }
 
-    assert.equal(rewardsConfig.owner, this.config.multisigAddr)
+    assert.equal(rewardsConfig.proposed_new_owner, this.config.multisigAddr)
   }
 
   async updateAddressProviderContractOwner() {
     const msg = {
-      transfer_ownership: {
-        new_owner: this.storage.owner,
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner
+        },
       },
     }
     await this.client.execute(
@@ -527,8 +535,8 @@ export class Deployer {
       {
         config: {},
       },
-    )) as { owner: string; prefix: string }
+    )) as { proposed_new_owner: string; prefix: string }
 
-    assert.equal(addressProviderConfig.owner, this.config.multisigAddr)
+    assert.equal(addressProviderConfig.proposed_new_owner, this.config.multisigAddr)
   }
 }
