@@ -22,7 +22,7 @@ authors       = [
   "Harry Scholes",
 ]
 edition       = "2021"
-license       = "GPL-v3-or-later"
+license       = "GPL-3.0-or-later"
 repository    = "https://github.com/mars-protocol/outposts"
 homepage      = "https://marsprotocol.io"
 documentation = "https://docs.marsprotocol.io/"
@@ -62,12 +62,12 @@ mars-rewards-collector-base    = { version = "1.0.0", path = "./contracts/reward
 mars-rewards-collector-osmosis = { version = "1.0.0", path = "./contracts/rewards-collector/osmosis" }
 
 [profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
+codegen-units    = 1
+debug            = false
 debug-assertions = false
-codegen-units = 1
-panic = 'abort'
-incremental = false
-overflow-checks = true
+incremental      = false
+lto              = true
+overflow-checks  = true
+opt-level        = 3
+panic            = "abort"
+rpath            = false
