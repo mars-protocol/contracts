@@ -68,7 +68,6 @@ export class Deployer {
     const { contractAddress: redBankContractAddress } = await this.client.instantiate(
       this.deployerAddress,
       codeId,
-      // @ts-expect-error msg expecting too general of a type
       msg,
       `mars-${name}`,
       'auto',
@@ -149,15 +148,9 @@ export class Deployer {
     printYellow(`${this.config.chainId} :: Rewards Collector Route has been set`)
   }
 
-  // routes for rewards collector need to be set here but it will involve hoping from atom-osmo pool to usdc-osmo pool to get from atom to usdc
-  // FYI this will only work for mainnet. Testnet doesnt have an axlUSDC pool
-
-  async setRoutes(assetConfig: AssetConfig) {
-    if (this.storage.execute.routeSet.includes(assetConfig.denom)) {
-      printBlue(`${assetConfig.symbol} route already set.`)
-      return
-    }
-    for (const route of this.config.swapRoutes) {
+  // This will only work for mainnet because testnet doesn't have an axlUSDC pool
+  async setRoutes() {
+    for (const route of this.config.swapRoutes!) {
       await this.client.execute(
         this.deployerAddress,
         this.storage.addresses['rewards-collector']!,

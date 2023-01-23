@@ -20,7 +20,6 @@ export interface StorageItems {
     secondAssetInitialized?: boolean
     oraclePriceSet?: boolean
     smokeTest?: boolean
-    routeSet: string[]
   }
 
   owner?: string

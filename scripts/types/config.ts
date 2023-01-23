@@ -10,6 +10,8 @@ type SwapRoute = {
 export interface DeploymentConfig {
   chainName: string
   rewardCollectorTimeoutSeconds: number
+  feeCollectorDenom: string
+  safetyFundDenom: string
   marsDenom: string
   baseAssetDenom: string
   atomDenom: string
@@ -27,7 +29,7 @@ export interface DeploymentConfig {
   multisigAddr?: string
   runTests: boolean
   mainnet: boolean
-  swapRoutes: SwapRoute[]
+  swapRoutes?: SwapRoute[]
 }
 
 export interface AssetConfig {

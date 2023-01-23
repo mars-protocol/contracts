@@ -42,9 +42,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.setOracle(osmoOracle)
     if (config.mainnet) {
       await deployer.setOracle(axlUSDCOracle)
-      await deployer.setRoutes(osmoAsset)
-      await deployer.setRoutes(atomAsset)
-      await deployer.setRoutes(axlUSDCAsset)
+      await deployer.setRoutes()
     }
 
     //run tests
