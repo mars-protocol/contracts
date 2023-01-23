@@ -156,6 +156,11 @@ export interface MarsRewardsCollectorOsmosisInterface
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
+  claimIncentiveRewards: (
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
 }
 export class MarsRewardsCollectorOsmosisClient
   extends MarsRewardsCollectorOsmosisQueryClient
@@ -176,6 +181,7 @@ export class MarsRewardsCollectorOsmosisClient
     this.withdrawFromRedBank = this.withdrawFromRedBank.bind(this)
     this.distributeRewards = this.distributeRewards.bind(this)
     this.swapAsset = this.swapAsset.bind(this)
+    this.claimIncentiveRewards = this.claimIncentiveRewards.bind(this)
   }
 
   updateOwner = async (
@@ -318,6 +324,22 @@ export class MarsRewardsCollectorOsmosisClient
           amount,
           denom,
         },
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  claimIncentiveRewards = async (
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        claim_incentive_rewards: {},
       },
       fee,
       memo,

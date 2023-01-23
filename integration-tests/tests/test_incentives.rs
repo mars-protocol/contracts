@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Addr, Uint128};
+use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use mars_testing::integration::mock_env::MockEnvBuilder;
 
 use crate::helpers::default_asset_params;
@@ -442,4 +442,129 @@ fn insufficient_mars() {
 
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user_a);
     assert_eq!(rewards_balance, Uint128::new(432000)); // newly accrued rewards unable to claim
+}
+
+// Rewards are proportionally distributed among users.
+// rewards-collector contract accrues rewards.
+// All mars is used from incentives contract.
+#[test]
+fn rewards_distributed_among_users_and_rewards_collector() {
+    let owner = Addr::unchecked("owner");
+    let mut mock_env = MockEnvBuilder::new(None, owner).build();
+
+    // setup oracle prices
+    let oracle = mock_env.oracle.clone();
+    oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::from_ratio(15u128, 10u128));
+    oracle.set_price_source_fixed(&mut mock_env, "uatom", Decimal::from_ratio(10u128, 1u128));
+
+    // setup red-bank assets
+    let red_bank = mock_env.red_bank.clone();
+    red_bank.init_asset(&mut mock_env, "uusdc", default_asset_params());
+    red_bank.init_asset(&mut mock_env, "uosmo", default_asset_params());
+    red_bank.init_asset(&mut mock_env, "uatom", default_asset_params());
+
+    // fund user accounts
+    let user_a = Addr::unchecked("user_a");
+    mock_env.fund_account(&user_a, &[coin(1_000_000_000_000u128, "uusdc")]);
+    let user_b = Addr::unchecked("user_b");
+    mock_env.fund_account(&user_b, &[coin(1_000_000_000_000u128, "uusdc")]);
+    mock_env.fund_account(&user_b, &[coin(1_000_000_000_000u128, "uatom")]);
+
+    // users deposit assets
+    let user_a_uusdc_deposited_amt = 150_000_000_000u128;
+    red_bank.deposit(&mut mock_env, &user_a, coin(user_a_uusdc_deposited_amt, "uusdc")).unwrap();
+    let user_b_uusdc_deposited_amt = 300_000_000_000u128;
+    red_bank.deposit(&mut mock_env, &user_b, coin(user_b_uusdc_deposited_amt, "uusdc")).unwrap();
+    let user_b_uatom_deposited_amt = 6_000_000_000u128;
+    red_bank.deposit(&mut mock_env, &user_b, coin(user_b_uatom_deposited_amt, "uatom")).unwrap();
+
+    // set incentives
+    let umars_eps_for_uusdc = 150000;
+    let umars_eps_for_uosmo = 730000;
+    let umars_eps_for_uatom = 310000;
+    let incentive_duration_sec = 2592000u64;
+    let incentives = mock_env.incentives.clone();
+    incentives.init_asset_incentive_from_current_block(
+        &mut mock_env,
+        "uusdc",
+        umars_eps_for_uusdc,
+        incentive_duration_sec,
+    );
+    incentives.init_asset_incentive_from_current_block(
+        &mut mock_env,
+        "uosmo",
+        umars_eps_for_uosmo,
+        incentive_duration_sec,
+    );
+    incentives.init_asset_incentive_from_current_block(
+        &mut mock_env,
+        "uatom",
+        umars_eps_for_uatom,
+        incentive_duration_sec,
+    );
+
+    // calculate how much umars is need for incentives for uusdc and uatom (only these assets are deposited in red-bank)
+    let umars_incentives_amt = umars_eps_for_uusdc * (incentive_duration_sec as u128)
+        + umars_eps_for_uatom * (incentive_duration_sec as u128);
+
+    // fund incentives contract
+    mock_env.fund_account(&incentives.contract_addr, &[coin(umars_incentives_amt, "umars")]);
+    let balance = mock_env.query_balance(&incentives.contract_addr, "umars").unwrap();
+    assert_eq!(balance.amount, Uint128::new(umars_incentives_amt));
+
+    // move few blocks
+    mock_env.increment_by_time(60);
+
+    // user_a borrows uusdc and uatom
+    red_bank.borrow(&mut mock_env, &user_a, "uusdc", 10_000_000_000u128).unwrap();
+    red_bank.borrow(&mut mock_env, &user_a, "uatom", 1_000_000_000u128).unwrap();
+
+    // move few blocks
+    mock_env.increment_by_time(400000);
+
+    // user_a borrows more uusdc and uatom
+    red_bank.borrow(&mut mock_env, &user_a, "uusdc", 100_000_000u128).unwrap();
+    red_bank.borrow(&mut mock_env, &user_a, "uatom", 100_000_000u128).unwrap();
+
+    // let's finish current incentives
+    mock_env.increment_by_time(incentive_duration_sec);
+
+    // uusdc and uatom rewards should be accrued for rewards-collector
+    let rewards_collector = mock_env.rewards_collector.clone();
+    let uusdc_collateral_rc =
+        red_bank.query_user_collateral(&mut mock_env, &rewards_collector.contract_addr, "uusdc");
+    assert_eq!(uusdc_collateral_rc.amount, Uint128::new(9_024_438u128));
+    let uatom_collateral_rc =
+        red_bank.query_user_collateral(&mut mock_env, &rewards_collector.contract_addr, "uatom");
+    assert_eq!(uatom_collateral_rc.amount, Uint128::new(1_461_774u128));
+    let uosmo_collateral_rc =
+        red_bank.query_user_collateral(&mut mock_env, &rewards_collector.contract_addr, "uosmo");
+    assert_eq!(uosmo_collateral_rc.amount, Uint128::zero());
+
+    // rewards-collector accrue rewards
+    let rewards_balance_rc =
+        incentives.query_unclaimed_rewards(&mut mock_env, &rewards_collector.contract_addr);
+    assert!(!rewards_balance_rc.is_zero());
+
+    // sum of unclaimed rewards should be equal to total umars available for finished incentive
+    let rewards_balance_user_a = incentives.query_unclaimed_rewards(&mut mock_env, &user_a);
+    let rewards_balance_user_b = incentives.query_unclaimed_rewards(&mut mock_env, &user_b);
+    let total_claimed_rewards =
+        rewards_balance_rc + rewards_balance_user_a + rewards_balance_user_b;
+    // ~ values very close (small difference due to rounding errors for index calculation)
+    assert_eq!(total_claimed_rewards.u128(), umars_incentives_amt - 1);
+
+    // users claim rewards
+    incentives.claim_rewards(&mut mock_env, &user_a).unwrap();
+    let umars_balance_user_a = mock_env.query_balance(&user_a, "umars").unwrap();
+    assert_eq!(umars_balance_user_a.amount, rewards_balance_user_a);
+    incentives.claim_rewards(&mut mock_env, &user_b).unwrap();
+    let umars_balance_user_b = mock_env.query_balance(&user_b, "umars").unwrap();
+    assert_eq!(umars_balance_user_b.amount, rewards_balance_user_b);
+
+    // rewards-collector claims rewards
+    rewards_collector.claim_incentive_rewards(&mut mock_env).unwrap();
+    let umars_balance_rc =
+        mock_env.query_balance(&rewards_collector.contract_addr, "umars").unwrap();
+    assert_eq!(umars_balance_rc.amount, rewards_balance_rc);
 }

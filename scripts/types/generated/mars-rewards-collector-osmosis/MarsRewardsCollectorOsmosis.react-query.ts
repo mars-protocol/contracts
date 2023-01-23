@@ -128,6 +128,33 @@ export function useMarsRewardsCollectorOsmosisConfigQuery<TData = ConfigResponse
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
+export interface MarsRewardsCollectorOsmosisClaimIncentiveRewardsMutation {
+  client: MarsRewardsCollectorOsmosisClient
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsRewardsCollectorOsmosisClaimIncentiveRewardsMutation(
+  options?: Omit<
+    UseMutationOptions<
+      ExecuteResult,
+      Error,
+      MarsRewardsCollectorOsmosisClaimIncentiveRewardsMutation
+    >,
+    'mutationFn'
+  >,
+) {
+  return useMutation<
+    ExecuteResult,
+    Error,
+    MarsRewardsCollectorOsmosisClaimIncentiveRewardsMutation
+  >(
+    ({ client, args: { fee, memo, funds } = {} }) => client.claimIncentiveRewards(fee, memo, funds),
+    options,
+  )
+}
 export interface MarsRewardsCollectorOsmosisSwapAssetMutation {
   client: MarsRewardsCollectorOsmosisClient
   msg: {

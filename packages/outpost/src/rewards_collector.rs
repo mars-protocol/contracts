@@ -156,6 +156,12 @@ pub enum ExecuteMsg<Route> {
         denom: String,
         amount: Option<Uint128>,
     },
+
+    /// Claim rewards in incentives contract.
+    ///
+    /// We wanted to leave protocol rewards in the red-bank so they continue to work as liquidity (until the bot invokes WithdrawFromRedBank).
+    /// As an side effect to this, if the market is incentivised with MARS tokens, the contract will also accrue MARS token incentives.
+    ClaimIncentiveRewards {},
 }
 
 #[cw_serde]
