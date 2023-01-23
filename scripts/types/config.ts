@@ -1,3 +1,5 @@
+import { DowntimeDetector } from './generated/mars-oracle-osmosis/MarsOracleOsmosis.types'
+
 export interface DeploymentConfig {
   chainName: string
   rewardCollectorTimeoutSeconds: number
@@ -17,6 +19,7 @@ export interface DeploymentConfig {
   second_asset_symbol: string
   multisigAddr?: string
   runTests: boolean
+  mainnet: boolean
 }
 
 export interface AssetConfig {
@@ -42,9 +45,5 @@ export interface OracleConfig {
   price?: string
   pool_id?: number
   window_size?: number
-}
-
-export interface MultisigConfig {
-  address: string
-  useMultisig: boolean
+  downtime_detector?: DowntimeDetector | null
 }
