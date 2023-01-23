@@ -8,7 +8,7 @@ use cw_storage_plus::{Bound, Item, Map};
 use mars_outpost::{
     address_provider::{self, MarsAddressType},
     helpers::{option_string_to_addr, validate_native_denom},
-    red_bank,
+    incentives, red_bank,
     rewards_collector::{
         Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
         RoutesResponse, UpdateConfig,
@@ -113,6 +113,7 @@ where
                 denom,
                 amount,
             } => self.swap_asset(deps, env, denom, amount),
+            ExecuteMsg::ClaimIncentiveRewards {} => self.claim_incentive_rewards(deps),
         }
     }
 
@@ -232,6 +233,26 @@ where
             .add_attribute("action", "outposts/rewards-collector/withdraw_from_red_bank")
             .add_attribute("denom", denom)
             .add_attribute("amount", stringify_option_amount(amount)))
+    }
+
+    fn claim_incentive_rewards(&self, deps: DepsMut<Q>) -> ContractResult<Response<M>> {
+        let cfg = self.config.load(deps.storage)?;
+
+        let incentives_addr = address_provider::helpers::query_address(
+            deps.as_ref(),
+            &cfg.address_provider,
+            MarsAddressType::Incentives,
+        )?;
+
+        let claim_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: incentives_addr.to_string(),
+            msg: to_binary(&incentives::ExecuteMsg::ClaimRewards {})?,
+            funds: vec![],
+        });
+
+        Ok(Response::new()
+            .add_message(claim_msg)
+            .add_attribute("action", "outposts/rewards-collector/claim_incentive_rewards"))
     }
 
     fn swap_asset(
