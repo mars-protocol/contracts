@@ -718,7 +718,7 @@ fn delisted_vaults_drop_max_ltv() {
         },
     };
 
-    // Remove uosmo from the coin whitelist
+    // Blacklist vault
     let res = mock.query_config();
     mock.update_config(
         &Addr::unchecked(res.owner.unwrap()),
@@ -731,7 +731,75 @@ fn delisted_vaults_drop_max_ltv() {
 
     let curr_health = mock.query_health(&account_id);
 
-    // // Values should be the same
+    // Values should be the same
+    assert_eq!(prev_health.total_debt_value, curr_health.total_debt_value);
+    assert_eq!(prev_health.total_collateral_value, curr_health.total_collateral_value);
+
+    assert_eq!(prev_health.liquidation_health_factor, curr_health.liquidation_health_factor);
+    assert_eq!(
+        prev_health.liquidation_threshold_adjusted_collateral,
+        curr_health.liquidation_threshold_adjusted_collateral
+    );
+    assert_eq!(prev_health.liquidatable, curr_health.liquidatable);
+
+    // Should have been changed due to de-listing
+    assert_ne!(prev_health.above_max_ltv, curr_health.above_max_ltv);
+    assert_ne!(prev_health.max_ltv_adjusted_collateral, curr_health.max_ltv_adjusted_collateral);
+    assert_ne!(prev_health.max_ltv_health_factor, curr_health.max_ltv_health_factor);
+    assert_eq!(curr_health.max_ltv_health_factor, Some(Decimal::raw(811881188118811881u128)));
+}
+
+#[test]
+fn vault_base_token_delisting_drops_max_ltv() {
+    let lp_token = lp_token_info();
+    let leverage_vault = unlocked_vault_info();
+    let atom = uatom_info();
+
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[lp_token.clone(), atom.clone()])
+        .vault_configs(&[leverage_vault.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![lp_token.to_coin(300)],
+        })
+        .build()
+        .unwrap();
+
+    let vault = mock.get_vault(&leverage_vault);
+    let account_id = mock.create_credit_account(&user).unwrap();
+
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![
+            Deposit(lp_token.to_coin(200)),
+            Borrow(atom.to_coin(100)),
+            EnterVault {
+                vault,
+                coin: lp_token.to_action_coin(200),
+            },
+        ],
+        &[lp_token.to_coin(200)],
+    )
+    .unwrap();
+
+    let prev_health = mock.query_health(&account_id);
+
+    // Remove LP token from the coin whitelist
+    let res = mock.query_config();
+    mock.update_config(
+        &Addr::unchecked(res.owner.unwrap()),
+        ConfigUpdates {
+            allowed_coins: Some(vec![atom.denom]),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    let curr_health = mock.query_health(&account_id);
+
+    // Values should be the same
     assert_eq!(prev_health.total_debt_value, curr_health.total_debt_value);
     assert_eq!(prev_health.total_collateral_value, curr_health.total_collateral_value);
 

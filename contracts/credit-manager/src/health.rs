@@ -101,8 +101,10 @@ fn calculate_vaults_value(
         let config = VAULT_CONFIGS.load(deps.storage, &v.vault.address)?;
         let info = v.vault.query_info(&deps.querier)?;
 
-        // If vault has been de-listed, drop MaxLTV to zero
-        let checked_vault_max_ltv = if vault_is_whitelisted(deps.storage, &v.vault)? {
+        // If vault or base token has been de-listed, drop MaxLTV to zero
+        let checked_vault_max_ltv = if vault_is_whitelisted(deps.storage, &v.vault)?
+            && ALLOWED_COINS.contains(deps.storage, &info.base_token)
+        {
             config.max_ltv
         } else {
             Decimal::zero()
