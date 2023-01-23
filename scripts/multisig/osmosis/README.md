@@ -90,7 +90,7 @@ $OSMO_MULTI
    For address-provider, incentives, oracle, red-bank, rewards-collector contracts:
 
    ```shell
-   git clone https://github.com/mars-protocol/outposts.git
+   git clone https://github.com/mars-protocol/red-bank.git
    ```
 
    For liquidation-filterer contract
@@ -309,7 +309,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
 9. Verify the new contract.
 
    ```
-   git clone https://github.com/mars-protocol/outposts.git
+   git clone https://github.com/mars-protocol/red-bank.git
 
    git checkout <commit-id>
 

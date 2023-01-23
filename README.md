@@ -12,7 +12,7 @@ A bug bounty is currently open for these contracts. See details [here](https://i
 1. Install Osmosisd: https://docs.osmosis.zone/osmosis-core/osmosisd/
 2. Get the wasm binary executable on your local machine.
    ```shell
-   git clone https://github.com/mars-protocol/outposts.git
+   git clone https://github.com/mars-protocol/red-bank.git
 
    git checkout <commit-id>
 
