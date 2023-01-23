@@ -756,20 +756,24 @@
             "additionalProperties": false
           },
           {
-            "description": "Calculate the account's max loan-to-value health factor. If above 1, emits a `position_changed` event. If 1 or below, raises an error.",
+            "description": "Assert MaxLTV is either: - Healthy, if prior to actions MaxLTV health factor >= 1 or None - Not further weakened, if prior to actions MaxLTV health factor < 1 Emits a `position_changed` event.",
             "type": "object",
             "required": [
-              "assert_below_max_l_t_v"
+              "assert_max_ltv"
             ],
             "properties": {
-              "assert_below_max_l_t_v": {
+              "assert_max_ltv": {
                 "type": "object",
                 "required": [
-                  "account_id"
+                  "account_id",
+                  "prev_health"
                 ],
                 "properties": {
                   "account_id": {
                     "type": "string"
+                  },
+                  "prev_health": {
+                    "$ref": "#/definitions/Health"
                   }
                 },
                 "additionalProperties": false
@@ -1280,6 +1284,72 @@
       "Decimal": {
         "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
         "type": "string"
+      },
+      "Health": {
+        "type": "object",
+        "required": [
+          "liquidation_threshold_adjusted_collateral",
+          "max_ltv_adjusted_collateral",
+          "total_collateral_value",
+          "total_debt_value"
+        ],
+        "properties": {
+          "liquidation_health_factor": {
+            "description": "The sum of the value of all collaterals multiplied by their liquidation threshold over the total value of debt",
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "liquidation_threshold_adjusted_collateral": {
+            "description": "The sum of the value of all colletarals adjusted by their Liquidation Threshold",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Uint128"
+              }
+            ]
+          },
+          "max_ltv_adjusted_collateral": {
+            "description": "The sum of the value of all colletarals adjusted by their Max LTV",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Uint128"
+              }
+            ]
+          },
+          "max_ltv_health_factor": {
+            "description": "The sum of the value of all collaterals multiplied by their max LTV, over the total value of debt",
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "total_collateral_value": {
+            "description": "The sum of the value of all collaterals",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Uint128"
+              }
+            ]
+          },
+          "total_debt_value": {
+            "description": "The sum of the value of all debts",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Uint128"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
       },
       "NftConfigUpdates": {
         "type": "object",

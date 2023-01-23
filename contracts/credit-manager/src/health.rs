@@ -7,6 +7,7 @@ use mars_rover::{
     adapters::vault::VaultPosition,
     error::{ContractError, ContractResult},
     msg::query::{DebtAmount, Positions},
+    traits::Stringify,
 };
 
 use crate::{
@@ -208,13 +209,31 @@ fn calculate_total_debt_value(deps: &Deps, debts: &[DebtAmount]) -> ContractResu
     Ok(total)
 }
 
-pub fn assert_below_max_ltv(deps: Deps, env: Env, account_id: &str) -> ContractResult<Response> {
-    let health = compute_health(deps, &env, account_id)?;
+pub fn assert_max_ltv(
+    deps: Deps,
+    env: Env,
+    account_id: &str,
+    prev_health: Health,
+) -> ContractResult<Response> {
+    let new_health = compute_health(deps, &env, account_id)?;
 
-    if health.is_above_max_ltv() {
+    // If previous health was in a bad state, assert it did not further weaken
+    if prev_health.is_above_max_ltv() {
+        if let (Some(prev_hf), Some(new_hf)) =
+            (prev_health.max_ltv_health_factor, new_health.max_ltv_health_factor)
+        {
+            if prev_hf > new_hf {
+                return Err(ContractError::HealthNotImproved {
+                    prev_hf: prev_hf.to_string(),
+                    new_hf: new_hf.to_string(),
+                });
+            }
+        }
+    // if previous health was in a good state, assert it's still healthy
+    } else if new_health.is_above_max_ltv() {
         return Err(ContractError::AboveMaxLTV {
             account_id: account_id.to_string(),
-            max_ltv_health_factor: val_or_na(health.max_ltv_health_factor),
+            max_ltv_health_factor: new_health.max_ltv_health_factor.to_string(),
         });
     }
 
@@ -222,18 +241,14 @@ pub fn assert_below_max_ltv(deps: Deps, env: Env, account_id: &str) -> ContractR
         .add_attribute("timestamp", env.block.time.seconds().to_string())
         .add_attribute("height", env.block.height.to_string())
         .add_attribute("account_id", account_id)
-        .add_attribute("assets_value", health.total_collateral_value.to_string())
-        .add_attribute("debts_value", health.total_debt_value.to_string())
-        .add_attribute("lqdt_health_factor", val_or_na(health.liquidation_health_factor))
-        .add_attribute("liquidatable", health.is_liquidatable().to_string())
-        .add_attribute("max_ltv_health_factor", val_or_na(health.max_ltv_health_factor))
-        .add_attribute("above_max_ltv", health.is_above_max_ltv().to_string());
+        .add_attribute("collateral_value", new_health.total_collateral_value.to_string())
+        .add_attribute("debts_value", new_health.total_debt_value.to_string())
+        .add_attribute("lqdt_health_factor", new_health.liquidation_health_factor.to_string())
+        .add_attribute("liquidatable", new_health.is_liquidatable().to_string())
+        .add_attribute("max_ltv_health_factor", new_health.max_ltv_health_factor.to_string())
+        .add_attribute("above_max_ltv", new_health.is_above_max_ltv().to_string());
 
     Ok(Response::new()
         .add_attribute("action", "rover/credit-manager/callback/assert_health")
         .add_event(event))
-}
-
-pub fn val_or_na(opt: Option<Decimal>) -> String {
-    opt.map_or_else(|| "n/a".to_string(), |dec| dec.to_string())
 }

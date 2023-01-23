@@ -176,8 +176,9 @@ export type CallbackMsg =
       }
     }
   | {
-      assert_below_max_l_t_v: {
+      assert_max_ltv: {
         account_id: string
+        prev_health: Health
       }
     }
   | {
@@ -288,6 +289,14 @@ export interface ConfigUpdates {
 export interface NftConfigUpdates {
   max_value_for_burn?: Uint128 | null
   proposed_new_minter?: string | null
+}
+export interface Health {
+  liquidation_health_factor?: Decimal | null
+  liquidation_threshold_adjusted_collateral: Uint128
+  max_ltv_adjusted_collateral: Uint128
+  max_ltv_health_factor?: Decimal | null
+  total_collateral_value: Uint128
+  total_debt_value: Uint128
 }
 export interface VaultBaseForAddr {
   address: Addr

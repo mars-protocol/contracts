@@ -8,10 +8,11 @@ use mars_rover::{
     adapters::oracle::Oracle,
     error::{ContractError, ContractResult},
     msg::execute::CallbackMsg,
+    traits::Stringify,
 };
 
 use crate::{
-    health::{compute_health, val_or_na},
+    health::compute_health,
     repay::current_debt_for_denom,
     state::{COIN_BALANCES, MAX_CLOSE_FACTOR, ORACLE, RED_BANK},
     utils::{decrement_coin_balance, increment_coin_balance},
@@ -73,7 +74,7 @@ pub fn calculate_liquidation(
     if !health.is_liquidatable() {
         return Err(ContractError::NotLiquidatable {
             account_id: liquidatee_account_id.to_string(),
-            lqdt_health_factor: val_or_na(health.liquidation_health_factor),
+            lqdt_health_factor: health.liquidation_health_factor.to_string(),
         });
     }
 

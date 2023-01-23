@@ -20,7 +20,7 @@ members = [
 [workspace.package]
 version       = "1.0.0"
 authors       = [
-  "grod220 <gabe.r@delphilabs.io>",
+  "Gabe R. <gabe.r@delphilabs.io>",
   "Larry Engineer <larry@delphidigital.io>",
   "Piotr Babel <piotr@delphilabs.io>",
 ]

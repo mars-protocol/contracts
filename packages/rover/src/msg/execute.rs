@@ -1,5 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
+use mars_health::Health;
 use mars_owner::OwnerUpdate;
 
 use crate::{
@@ -177,9 +178,13 @@ pub enum CallbackMsg {
         account_id: String,
         coin: ActionCoin,
     },
-    /// Calculate the account's max loan-to-value health factor. If above 1,
-    /// emits a `position_changed` event. If 1 or below, raises an error.
-    AssertBelowMaxLTV {
+    /// Assert MaxLTV is either:
+    /// - Healthy, if prior to actions MaxLTV health factor >= 1 or None
+    /// - Not further weakened, if prior to actions MaxLTV health factor < 1
+    /// Emits a `position_changed` event.
+    #[serde(rename = "assert_max_ltv")]
+    AssertMaxLTV {
+        prev_health: Health,
         account_id: String,
     },
     /// Adds coin to a vault strategy

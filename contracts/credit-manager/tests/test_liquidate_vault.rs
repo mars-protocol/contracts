@@ -120,7 +120,7 @@ fn liquidatee_is_not_liquidatable() {
         res,
         ContractError::NotLiquidatable {
             account_id: liquidatee_account_id,
-            lqdt_health_factor: "n/a".to_string(),
+            lqdt_health_factor: "None".to_string(),
         },
     )
 }

@@ -25,6 +25,7 @@ import { MarsAccountNftClient } from '../../types/generated/mars-account-nft/Mar
 import { MarsCreditManagerClient } from '../../types/generated/mars-credit-manager/MarsCreditManager.client'
 import { InitOrUpdateAssetParams } from '../../types/generated/mars-mock-red-bank/MarsMockRedBank.types'
 import { PriceSource } from '../../types/priceSource'
+import { kebabCase } from 'lodash'
 
 export class Deployer {
   constructor(
@@ -58,7 +59,7 @@ export class Deployer {
       this.deployerAddr,
       codeId,
       msg,
-      `mars-${name}`,
+      `mars-${kebabCase(name)}`,
       'auto',
       { admin: this.deployerAddr },
     )

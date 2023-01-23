@@ -1,7 +1,13 @@
-use cosmwasm_std::Coin;
+use cosmwasm_std::{Coin, Decimal};
 
 pub trait Stringify {
     fn to_string(&self) -> String;
+}
+
+impl Stringify for Option<Decimal> {
+    fn to_string(&self) -> String {
+        self.map_or_else(|| "None".to_string(), |dec| dec.to_string())
+    }
 }
 
 pub trait Denoms {

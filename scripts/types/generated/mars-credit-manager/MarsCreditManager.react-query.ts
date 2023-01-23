@@ -30,6 +30,7 @@ import {
   ActionCoin,
   ConfigUpdates,
   NftConfigUpdates,
+  Health,
   VaultBaseForAddr,
   QueryMsg,
   ArrayOfCoinBalanceResponseItem,

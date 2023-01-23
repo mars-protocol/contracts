@@ -49,8 +49,8 @@ export const osmosisTestnetConfig: DeploymentConfig = {
       vault: { address: vaultOsmoAtom1 },
       config: {
         deposit_cap: { denom: 'uosmo', amount: '1000000000' }, // 1000 osmo
-        liquidation_threshold: '0.75',
-        max_ltv: '0.65',
+        liquidation_threshold: '0.535',
+        max_ltv: '0.506',
         whitelisted: true,
       },
     },
@@ -58,8 +58,8 @@ export const osmosisTestnetConfig: DeploymentConfig = {
       vault: { address: vaultOsmoAtom7 },
       config: {
         deposit_cap: { denom: 'uosmo', amount: '1000000000' }, // 1000 osmo
-        liquidation_threshold: '0.75',
-        max_ltv: '0.65',
+        liquidation_threshold: '0.535',
+        max_ltv: '0.506',
         whitelisted: true,
       },
     },
@@ -67,8 +67,8 @@ export const osmosisTestnetConfig: DeploymentConfig = {
       vault: { address: vaultOsmoAtom14 },
       config: {
         deposit_cap: { denom: 'uosmo', amount: '1000000000' }, // 1000 osmo
-        liquidation_threshold: '0.75',
-        max_ltv: '0.65',
+        liquidation_threshold: '0.535',
+        max_ltv: '0.506',
         whitelisted: true,
       },
     },
@@ -76,8 +76,8 @@ export const osmosisTestnetConfig: DeploymentConfig = {
       vault: { address: vaultJunoOsmo1 },
       config: {
         deposit_cap: { denom: 'uosmo', amount: '500000000' }, // 500 osmo
-        liquidation_threshold: '0.55',
-        max_ltv: '0.5',
+        liquidation_threshold: '0.441',
+        max_ltv: '0.4115',
         whitelisted: true,
       },
     },
@@ -85,8 +85,8 @@ export const osmosisTestnetConfig: DeploymentConfig = {
       vault: { address: vaultJunoOsmo7 },
       config: {
         deposit_cap: { denom: 'uosmo', amount: '500000000' }, // 500 osmo
-        liquidation_threshold: '0.55',
-        max_ltv: '0.5',
+        liquidation_threshold: '0.441',
+        max_ltv: '0.4115',
         whitelisted: true,
       },
     },
@@ -94,8 +94,8 @@ export const osmosisTestnetConfig: DeploymentConfig = {
       vault: { address: vaultJunoOsmo14 },
       config: {
         deposit_cap: { denom: 'uosmo', amount: '500000000' }, // 500 osmo
-        liquidation_threshold: '0.55',
-        max_ltv: '0.5',
+        liquidation_threshold: '0.441',
+        max_ltv: '0.4115',
         whitelisted: true,
       },
     },
@@ -107,8 +107,8 @@ export const osmosisTestnetConfig: DeploymentConfig = {
       mock: {
         config: {
           deposit_cap: { denom: uosmo, amount: '100000000' }, // 100 osmo
-          liquidation_threshold: '0.75',
-          max_ltv: '0.65',
+          liquidation_threshold: '0.585',
+          max_ltv: '0.569',
           whitelisted: true,
         },
         vaultTokenDenom: udig,
@@ -124,7 +124,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
     defaultCreditLine: '100000000000',
     depositAmount: '100',
     secondaryDenom: uatom,
-    startingAmountForTestUser: '2000000',
+    startingAmountForTestUser: '2500000',
     swap: {
       slippage: '0.4',
       amount: '40',

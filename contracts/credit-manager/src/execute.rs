@@ -11,7 +11,7 @@ use mars_rover::{
 use crate::{
     borrow::borrow,
     deposit::deposit,
-    health::assert_below_max_ltv,
+    health::{assert_max_ltv, compute_health},
     liquidate_coin::liquidate_coin,
     refund::refund_coin_balances,
     repay::repay,
@@ -56,6 +56,7 @@ pub fn dispatch_actions(
     let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];
     let mut received_coins = Coins::try_from(info.funds)?;
+    let prev_health = compute_health(deps.as_ref(), &env, account_id)?;
 
     for action in actions {
         match action {
@@ -174,9 +175,13 @@ pub fn dispatch_actions(
         CallbackMsg::AssertOneVaultPositionOnly {
             account_id: account_id.to_string(),
         },
-        // after user selected actions, we assert LTV is healthy; if not, throw error and revert all actions
-        CallbackMsg::AssertBelowMaxLTV {
+        // after user selected actions, we assert LTV is either:
+        // - Healthy, if prior to actions MaxLTV health factor >= 1 or None
+        // - Not further weakened, if prior to actions MaxLTV health factor < 1
+        // Else, throw error and revert all actions
+        CallbackMsg::AssertMaxLTV {
             account_id: account_id.to_string(),
+            prev_health,
         },
     ]);
 
@@ -214,9 +219,10 @@ pub fn execute_callback(
             account_id,
             coin,
         } => repay(deps, env, &account_id, &coin),
-        CallbackMsg::AssertBelowMaxLTV {
+        CallbackMsg::AssertMaxLTV {
             account_id,
-        } => assert_below_max_ltv(deps.as_ref(), env, &account_id),
+            prev_health,
+        } => assert_max_ltv(deps.as_ref(), env, &account_id, prev_health),
         CallbackMsg::EnterVault {
             account_id,
             vault,
