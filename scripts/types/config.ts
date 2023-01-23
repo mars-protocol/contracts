@@ -1,4 +1,11 @@
 import { DowntimeDetector } from './generated/mars-oracle-osmosis/MarsOracleOsmosis.types'
+import { OsmosisRoute } from './generated/mars-rewards-collector-osmosis/MarsRewardsCollectorOsmosis.types'
+
+type SwapRoute = {
+  denom_in: string
+  denom_out: string
+  route: OsmosisRoute
+}
 
 export interface DeploymentConfig {
   chainName: string
@@ -20,6 +27,7 @@ export interface DeploymentConfig {
   multisigAddr?: string
   runTests: boolean
   mainnet: boolean
+  swapRoutes: SwapRoute[]
 }
 
 export interface AssetConfig {
@@ -38,6 +46,7 @@ export interface AssetConfig {
   deposit_enabled: boolean
   borrow_enabled: boolean
   symbol: string
+  pool_id: string
 }
 
 export interface OracleConfig {

@@ -13,22 +13,22 @@
     "format-check": "prettier --ignore-path .gitignore --check ."
   },
   "dependencies": {
-    "@cosmjs/cosmwasm-stargate": "^0.28.4",
-    "@cosmjs/proto-signing": "^0.28.13",
-    "@cosmjs/stargate": "^0.28.13",
-    "@cosmwasm/ts-codegen": "^0.16.4",
+    "@cosmjs/cosmwasm-stargate": "^0.29.5",
+    "@cosmjs/proto-signing": "^0.29.5",
+    "@cosmjs/stargate": "^0.29.5",
+    "@cosmwasm/ts-codegen": "^0.24.0",
     "chalk": "4.1.2",
-    "cosmjs-types": "^0.5.1",
+    "cosmjs-types": "^0.6.1",
     "prepend-file": "^2.0.1"
   },
   "devDependencies": {
-    "@types/node": "^18.7.14",
-    "@typescript-eslint/eslint-plugin": "^5.36.1",
-    "@typescript-eslint/parser": "^5.36.1",
+    "@types/node": "^18.11.18",
+    "@typescript-eslint/eslint-plugin": "^5.48.2",
+    "@typescript-eslint/parser": "^5.48.2",
     "cosmjs-types": "^0.5.1",
-    "eslint": "^8.23.0",
-    "eslint-config-prettier": "^8.5.0",
-    "prettier": "^2.7.1",
-    "typescript": "^4.8.2"
+    "eslint": "^8.32.0",
+    "eslint-config-prettier": "^8.6.0",
+    "prettier": "^2.8.3",
+    "typescript": "^4.9.4"
   }
 }
