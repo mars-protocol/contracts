@@ -131,21 +131,6 @@ export class Deployer {
       slippage_tolerance: this.config.slippage_tolerance,
     }
     await this.instantiate('rewards-collector', this.storage.codeIds['rewards-collector']!, msg)
-
-    await this.client.execute(
-      this.deployerAddress,
-      this.storage.addresses['rewards-collector']!,
-      {
-        set_route: {
-          denom_in: this.config.atomDenom,
-          denom_out: this.config.baseAssetDenom,
-          route: [{ token_out_denom: this.config.baseAssetDenom, pool_id: '1' }],
-        },
-      },
-      'auto',
-    )
-
-    printYellow(`${this.config.chainId} :: Rewards Collector Route has been set`)
   }
 
   // This will only work for mainnet because testnet doesn't have an axlUSDC pool
@@ -160,6 +145,8 @@ export class Deployer {
         'auto',
       )
     }
+
+    printYellow(`${this.config.chainId} :: Rewards Collector Routes have been set`)
   }
 
   async saveDeploymentAddrsToFile() {
