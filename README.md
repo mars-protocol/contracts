@@ -39,6 +39,12 @@ A bug bounty is currently open for these contracts. See details [here][2].
    diff artifacts/$CONTRACTNAME.wasm download.wasm
    ```
 
+5. Alternatively, compare the wasm files' checksums:
+
+   ```bash
+   sha256sum artifacts/$CONTRACTNAME.wasm download.wasm
+   ```
+
 ## Environment set up
 
 - Install [rustup][4]. Once installed, make sure you have the wasm32 target:
