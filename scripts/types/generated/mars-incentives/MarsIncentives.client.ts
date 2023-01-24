@@ -11,8 +11,6 @@ import {
   InstantiateMsg,
   ExecuteMsg,
   Uint128,
-  Timestamp,
-  Uint64,
   Addr,
   OwnerUpdate,
   QueryMsg,
@@ -72,7 +70,7 @@ export interface MarsIncentivesInterface extends MarsIncentivesReadOnlyInterface
       denom: string
       duration?: number
       emissionPerSecond?: Uint128
-      startTime?: Timestamp
+      startTime?: number
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -147,7 +145,7 @@ export class MarsIncentivesClient
       denom: string
       duration?: number
       emissionPerSecond?: Uint128
-      startTime?: Timestamp
+      startTime?: number
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,

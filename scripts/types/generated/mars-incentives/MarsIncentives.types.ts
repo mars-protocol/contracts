@@ -16,7 +16,7 @@ export type ExecuteMsg =
         denom: string
         duration?: number | null
         emission_per_second?: Uint128 | null
-        start_time?: Timestamp | null
+        start_time?: number | null
       }
     }
   | {
@@ -40,8 +40,6 @@ export type ExecuteMsg =
       update_owner: OwnerUpdate
     }
 export type Uint128 = string
-export type Timestamp = Uint64
-export type Uint64 = string
 export type Addr = string
 export type OwnerUpdate =
   | {
@@ -75,7 +73,7 @@ export interface AssetIncentive {
   emission_per_second: Uint128
   index: Decimal
   last_updated: number
-  start_time: Timestamp
+  start_time: number
 }
 export interface ConfigResponse {
   address_provider: Addr
