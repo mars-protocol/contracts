@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Decimal, Timestamp, Uint128};
+use cosmwasm_std::{Addr, Decimal, Uint128};
 use mars_owner::OwnerUpdate;
 
 /// Global configuration
@@ -16,8 +16,8 @@ pub struct Config {
 pub struct AssetIncentive {
     /// How much MARS per second is emitted to be then distributed to all Red Bank depositors
     pub emission_per_second: Uint128,
-    /// Start time for the incentive. Uses current block time if start_time not provided
-    pub start_time: Timestamp,
+    /// Start time for the incentive
+    pub start_time: u64,
     /// How many seconds the incentives last
     pub duration: u64,
     /// Total MARS assigned for distribution since the start of the incentive
@@ -56,7 +56,7 @@ pub enum ExecuteMsg {
         /// depositors
         emission_per_second: Option<Uint128>,
         /// Start time for the incentive
-        start_time: Option<Timestamp>,
+        start_time: Option<u64>,
         /// How many seconds the incentives last
         duration: Option<u64>,
     },

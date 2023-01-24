@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env,
-    MessageInfo, Response, StdResult, Timestamp, Uint128,
+    MessageInfo, Response, StdResult, Uint128,
 };
 use mars_outpost::{
     address_provider::{self, MarsAddressType},
@@ -109,7 +109,7 @@ pub fn execute_set_asset_incentive(
     info: MessageInfo,
     denom: String,
     emission_per_second: Option<Uint128>,
-    start_time: Option<Timestamp>,
+    start_time: Option<u64>,
     duration: Option<u64>,
 ) -> Result<Response, ContractError> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
@@ -118,13 +118,15 @@ pub fn execute_set_asset_incentive(
 
     let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &denom)? {
         Some(mut asset_incentive) => {
+            let current_block_time = env.block.time.seconds();
+
             let (start_time, duration, emission_per_second) =
                 validate_params_for_existing_incentive(
                     &asset_incentive,
                     emission_per_second,
                     start_time,
                     duration,
-                    env.block.time,
+                    current_block_time,
                 )?;
 
             let config = CONFIG.load(deps.storage)?;
@@ -146,7 +148,7 @@ pub fn execute_set_asset_incentive(
             update_asset_incentive_index(
                 &mut asset_incentive,
                 market.collateral_total_scaled,
-                env.block.time.seconds(),
+                current_block_time,
             )?;
 
             // Set new emission
@@ -157,7 +159,7 @@ pub fn execute_set_asset_incentive(
             asset_incentive
         }
         None => {
-            let current_block_time = env.block.time;
+            let current_block_time = env.block.time.seconds();
 
             let (start_time, duration, emission_per_second) = validate_params_for_new_incentive(
                 start_time,
@@ -171,7 +173,7 @@ pub fn execute_set_asset_incentive(
                 start_time,
                 duration,
                 index: Decimal::zero(),
-                last_updated: current_block_time.seconds(),
+                last_updated: current_block_time,
             }
         }
     };
@@ -191,11 +193,11 @@ pub fn execute_set_asset_incentive(
 fn validate_params_for_existing_incentive(
     asset_incentive: &AssetIncentive,
     emission_per_second: Option<Uint128>,
-    start_time: Option<Timestamp>,
+    start_time: Option<u64>,
     duration: Option<u64>,
-    current_block_time: Timestamp,
-) -> Result<(Timestamp, u64, Uint128), ContractError> {
-    let end_time = asset_incentive.start_time.plus_seconds(asset_incentive.duration);
+    current_block_time: u64,
+) -> Result<(u64, u64, Uint128), ContractError> {
+    let end_time = asset_incentive.start_time + asset_incentive.duration;
     let start_time = match start_time {
         // current asset incentive hasn't finished yet
         Some(_)
@@ -232,7 +234,7 @@ fn validate_params_for_existing_incentive(
             })
         }
         // end_time can't be decreased to the past
-        Some(dur) if start_time.plus_seconds(dur) < current_block_time => {
+        Some(dur) if start_time + dur < current_block_time => {
             return Err(ContractError::InvalidIncentive {
                 reason: "end_time can't be less than current block time".to_string(),
             })
@@ -249,11 +251,11 @@ fn validate_params_for_existing_incentive(
 }
 
 fn validate_params_for_new_incentive(
-    start_time: Option<Timestamp>,
+    start_time: Option<u64>,
     duration: Option<u64>,
     emission_per_second: Option<Uint128>,
-    current_block_time: Timestamp,
-) -> Result<(Timestamp, u64, Uint128), ContractError> {
+    current_block_time: u64,
+) -> Result<(u64, u64, Uint128), ContractError> {
     // all params are required during incentive initialization (if start_time = None then set to current block time)
     let (start_time, duration, emission_per_second) =
         match (start_time, duration, emission_per_second) {
