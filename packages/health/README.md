@@ -1,6 +1,6 @@
-# Mars Outpost
+# Mars Health
 
-Contains Msgs, types and helpers for all mars core smart contract.
+Functions used for evaluating the health of user positions at Mars Protocol.
 
 ## License
 
