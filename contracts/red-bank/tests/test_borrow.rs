@@ -128,7 +128,7 @@ fn borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/borrow"),
+            attr("action", "borrow"),
             attr("sender", "borrower"),
             attr("recipient", "borrower"),
             attr("denom", "uosmo"),
@@ -247,7 +247,7 @@ fn borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/borrow"),
+            attr("action", "borrow"),
             attr("sender", "borrower"),
             attr("recipient", "borrower"),
             attr("denom", "uusd"),
@@ -323,7 +323,7 @@ fn borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/repay"),
+            attr("action", "repay"),
             attr("sender", "borrower"),
             attr("on_behalf_of", "borrower"),
             attr("denom", "uusd"),
@@ -385,7 +385,7 @@ fn borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/repay"),
+            attr("action", "repay"),
             attr("sender", "borrower"),
             attr("on_behalf_of", "borrower"),
             attr("denom", "uusd"),
@@ -455,7 +455,7 @@ fn borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/repay"),
+            attr("action", "repay"),
             attr("sender", "borrower"),
             attr("on_behalf_of", "borrower"),
             attr("denom", "uosmo"),
@@ -546,7 +546,7 @@ fn repay_without_refund_on_behalf_of() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/repay"),
+            attr("action", "repay"),
             attr("sender", "user"),
             attr("on_behalf_of", "borrower"),
             attr("denom", "borrowedcoinnative"),
@@ -633,7 +633,7 @@ fn repay_with_refund_on_behalf_of() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/repay"),
+            attr("action", "repay"),
             attr("sender", "user"),
             attr("on_behalf_of", "borrower"),
             attr("denom", "borrowedcoinnative"),
@@ -1023,7 +1023,7 @@ fn borrow_and_send_funds_to_another_user() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/borrow"),
+            attr("action", "borrow"),
             attr("sender", borrower_addr),
             attr("recipient", another_user_addr),
             attr("denom", "uusd"),

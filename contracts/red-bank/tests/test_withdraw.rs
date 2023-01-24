@@ -210,7 +210,7 @@ fn withdrawing_partially() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/withdraw"),
+            attr("action", "withdraw"),
             attr("sender", &withdrawer_addr),
             attr("recipient", &withdrawer_addr),
             attr("denom", denom),
@@ -328,7 +328,7 @@ fn withdrawing_completely() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/withdraw"),
+            attr("action", "withdraw"),
             attr("sender", &withdrawer_addr),
             attr("recipient", &withdrawer_addr),
             attr("denom", denom),
@@ -438,7 +438,7 @@ fn withdrawing_to_another_user() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/withdraw"),
+            attr("action", "withdraw"),
             attr("sender", &withdrawer_addr),
             attr("recipient", &recipient_addr),
             attr("denom", denom.to_string()),

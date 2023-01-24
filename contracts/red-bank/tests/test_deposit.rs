@@ -270,7 +270,7 @@ fn depositing_without_existing_position() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/deposit"),
+            attr("action", "deposit"),
             attr("sender", &depositor_addr),
             attr("on_behalf_of", &depositor_addr),
             attr("denom", denom),

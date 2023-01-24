@@ -210,7 +210,7 @@ fn execute_claim_rewards() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/claim_rewards"),
+            attr("action", "claim_rewards"),
             attr("user", "user"),
             attr("mars_rewards", expected_accrued_rewards),
         ]
@@ -261,10 +261,6 @@ fn claim_zero_rewards() {
     assert_eq!(res.messages.len(), 0);
     assert_eq!(
         res.attributes,
-        vec![
-            attr("action", "outposts/incentives/claim_rewards"),
-            attr("user", "user"),
-            attr("mars_rewards", "0"),
-        ]
+        vec![attr("action", "claim_rewards"), attr("user", "user"), attr("mars_rewards", "0"),]
     );
 }

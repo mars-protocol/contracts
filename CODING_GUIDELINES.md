@@ -83,15 +83,14 @@ use mars_types::red_bank::*;
 ### Attributes for indexing
 
 ```
-key: "action", value: PROJECT_NAME/CONTRACT-NAME/EXECUTE_MSG
+key: "action", value: EXECUTE_MSG
 ```
 
-- Contract name should use hyphens (e.g. rewards-collector).
-- Everything else should be snake case (e.g. user_address).
+- Everything should be snake case (e.g. user_address).
 
 ```rust
 Response::new()
-    .add_attribute("action", "outposts/rewards-collector/balance_change")
+    .add_attribute("action", "balance_change")
     .add_attribute("ma_asset", "ma_token_address")
     .add_attribute("user", "user_address")
 ```

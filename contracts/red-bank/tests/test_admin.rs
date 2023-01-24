@@ -450,10 +450,7 @@ fn init_asset() {
         // should have unlimited deposit cap
         assert_eq!(market.deposit_cap, Uint128::MAX);
 
-        assert_eq!(
-            res.attributes,
-            vec![attr("action", "outposts/red-bank/init_asset"), attr("denom", "someasset")]
-        );
+        assert_eq!(res.attributes, vec![attr("action", "init_asset"), attr("denom", "someasset")]);
     }
 
     // can't init more than once
@@ -677,7 +674,7 @@ fn update_asset() {
         assert_eq!(res.messages, vec![],);
         assert_eq!(
             res.attributes,
-            vec![attr("action", "outposts/red-bank/update_asset"), attr("denom", "someasset")],
+            vec![attr("action", "update_asset"), attr("denom", "someasset")],
         );
 
         let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();
@@ -1042,10 +1039,7 @@ fn update_asset_by_emergency_owner() {
         assert!(res.messages.is_empty());
         assert_eq!(
             res.attributes,
-            vec![
-                attr("action", "outposts/red-bank/emergency_update_asset"),
-                attr("denom", "someasset")
-            ],
+            vec![attr("action", "emergency_update_asset"), attr("denom", "someasset")],
         );
 
         let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();

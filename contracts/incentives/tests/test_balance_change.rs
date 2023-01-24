@@ -99,7 +99,7 @@ fn balance_change_zero_emission() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/balance_change"),
+            attr("action", "balance_change"),
             attr("denom", denom),
             attr("user", "user"),
             attr("rewards_accrued", expected_accrued_rewards),
@@ -177,7 +177,7 @@ fn balance_change_user_with_zero_balance() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/balance_change"),
+            attr("action", "balance_change"),
             attr("denom", denom),
             attr("user", "user"),
             attr("rewards_accrued", "0"),
@@ -455,7 +455,7 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(
             res.attributes,
             vec![
-                attr("action", "outposts/incentives/balance_change"),
+                attr("action", "balance_change"),
                 attr("denom", denom),
                 attr("user", "user"),
                 attr("rewards_accrued", expected_accrued_rewards),
@@ -518,7 +518,7 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(
             res.attributes,
             vec![
-                attr("action", "outposts/incentives/balance_change"),
+                attr("action", "balance_change"),
                 attr("denom", denom),
                 attr("user", "user"),
                 attr("rewards_accrued", expected_accrued_rewards),
@@ -565,7 +565,7 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(
             res.attributes,
             vec![
-                attr("action", "outposts/incentives/balance_change"),
+                attr("action", "balance_change"),
                 attr("denom", denom),
                 attr("user", "user"),
                 attr("rewards_accrued", "0"),

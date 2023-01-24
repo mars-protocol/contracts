@@ -123,7 +123,7 @@ pub fn update_config(
 
     CONFIG.save(deps.storage, &config)?;
 
-    Ok(Response::new().add_attribute("action", "outposts/red-bank/update_config"))
+    Ok(Response::new().add_attribute("action", "update_config"))
 }
 
 /// Initialize asset if not exist.
@@ -146,9 +146,7 @@ pub fn init_asset(
     let new_market = create_market(env.block.time.seconds(), &denom, params)?;
     MARKETS.save(deps.storage, &denom, &new_market)?;
 
-    Ok(Response::new()
-        .add_attribute("action", "outposts/red-bank/init_asset")
-        .add_attribute("denom", denom))
+    Ok(Response::new().add_attribute("action", "init_asset").add_attribute("denom", denom))
 }
 
 /// Initialize new market
@@ -305,9 +303,7 @@ fn update_asset_by_owner(
             }
             MARKETS.save(deps.storage, denom, &updated_market)?;
 
-            Ok(response
-                .add_attribute("action", "outposts/red-bank/update_asset")
-                .add_attribute("denom", denom))
+            Ok(response.add_attribute("action", "update_asset").add_attribute("denom", denom))
         }
     }
 }
@@ -325,7 +321,7 @@ fn update_asset_by_emergency_owner(
                 MARKETS.save(deps.storage, denom, &market)?;
 
                 Ok(Response::new()
-                    .add_attribute("action", "outposts/red-bank/emergency_update_asset")
+                    .add_attribute("action", "emergency_update_asset")
                     .add_attribute("denom", denom))
             }
             _ => Err(MarsError::Unauthorized {}.into()),
@@ -373,7 +369,7 @@ pub fn update_uncollateralized_loan_limit(
     })?;
 
     Ok(Response::new()
-        .add_attribute("action", "outposts/red-bank/update_uncollateralized_loan_limit")
+        .add_attribute("action", "update_uncollateralized_loan_limit")
         .add_attribute("user", user_addr)
         .add_attribute("denom", denom)
         .add_attribute("new_allowance", new_limit))
@@ -454,7 +450,7 @@ pub fn deposit(
     MARKETS.save(deps.storage, &denom, &market)?;
 
     Ok(response
-        .add_attribute("action", "outposts/red-bank/deposit")
+        .add_attribute("action", "deposit")
         .add_attribute("sender", &info.sender)
         .add_attribute("on_behalf_of", user)
         .add_attribute("denom", denom)
@@ -580,7 +576,7 @@ pub fn withdraw(
 
     Ok(response
         .add_message(build_send_asset_msg(&recipient_addr, &denom, withdraw_amount))
-        .add_attribute("action", "outposts/red-bank/withdraw")
+        .add_attribute("action", "withdraw")
         .add_attribute("sender", withdrawer)
         .add_attribute("recipient", recipient_addr)
         .add_attribute("denom", denom)
@@ -695,7 +691,7 @@ pub fn borrow(
 
     Ok(response
         .add_message(build_send_asset_msg(&recipient_addr, &denom, borrow_amount))
-        .add_attribute("action", "outposts/red-bank/borrow")
+        .add_attribute("action", "borrow")
         .add_attribute("sender", borrower)
         .add_attribute("recipient", recipient_addr)
         .add_attribute("denom", denom)
@@ -781,7 +777,7 @@ pub fn repay(
     MARKETS.save(deps.storage, &denom, &market)?;
 
     Ok(response
-        .add_attribute("action", "outposts/red-bank/repay")
+        .add_attribute("action", "repay")
         .add_attribute("sender", &info.sender)
         .add_attribute("on_behalf_of", user)
         .add_attribute("denom", denom)
@@ -987,7 +983,7 @@ pub fn liquidate(
     }
 
     Ok(response
-        .add_attribute("action", "outposts/red-bank/liquidate")
+        .add_attribute("action", "liquidate")
         .add_attribute("user", user)
         .add_attribute("liquidator", info.sender.to_string())
         .add_attribute("recipient", recipient)
@@ -1107,7 +1103,7 @@ pub fn update_asset_collateral_status(
     }
 
     Ok(Response::new()
-        .add_attribute("action", "outposts/red-bank/update_asset_collateral_status")
+        .add_attribute("action", "update_asset_collateral_status")
         .add_attribute("user", user)
         .add_attribute("denom", denom)
         .add_attribute("enable", enable.to_string()))

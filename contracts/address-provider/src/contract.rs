@@ -88,7 +88,7 @@ fn set_address(
     ADDRESSES.save(deps.storage, address_type.into(), &address)?;
 
     Ok(Response::new()
-        .add_attribute("action", "outposts/address-provider/set_address")
+        .add_attribute("action", "set_address")
         .add_attribute("address_type", address_type.to_string())
         .add_attribute("address", address))
 }

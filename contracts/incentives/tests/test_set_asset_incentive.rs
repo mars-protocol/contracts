@@ -165,7 +165,7 @@ fn set_new_asset_incentive() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/set_asset_incentive"),
+            attr("action", "set_asset_incentive"),
             attr("denom", "uosmo"),
             attr("emission_per_second", "100"),
             attr("start_time", env.block.time.clone().to_string()),
@@ -463,7 +463,7 @@ fn set_existing_asset_incentive_with_index_updated_during_incentive() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/set_asset_incentive"),
+            attr("action", "set_asset_incentive"),
             attr("denom", denom),
             attr("emission_per_second", "200"),
             attr("start_time", start_time.to_string()),
@@ -539,7 +539,7 @@ fn set_existing_asset_incentive_with_index_updated_after_incentive() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/set_asset_incentive"),
+            attr("action", "set_asset_incentive"),
             attr("denom", denom),
             attr("emission_per_second", "215"),
             attr("start_time", block_time.to_string()),

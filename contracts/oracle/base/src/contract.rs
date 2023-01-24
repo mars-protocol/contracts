@@ -137,7 +137,7 @@ where
         self.price_sources.save(deps.storage, &denom, &price_source)?;
 
         Ok(Response::new()
-            .add_attribute("action", "outposts/oracle/set_price_source")
+            .add_attribute("action", "set_price_source")
             .add_attribute("denom", denom)
             .add_attribute("price_source", price_source.to_string()))
     }
@@ -153,7 +153,7 @@ where
         self.price_sources.remove(deps.storage, &denom);
 
         Ok(Response::new()
-            .add_attribute("action", "outposts/oracle/remove_price_source")
+            .add_attribute("action", "remove_price_source")
             .add_attribute("denom", denom))
     }
 

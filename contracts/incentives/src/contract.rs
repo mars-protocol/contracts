@@ -179,7 +179,7 @@ pub fn execute_set_asset_incentive(
     ASSET_INCENTIVES.save(deps.storage, &denom, &new_asset_incentive)?;
 
     let response = Response::new().add_attributes(vec![
-        attr("action", "outposts/incentives/set_asset_incentive"),
+        attr("action", "set_asset_incentive"),
         attr("denom", denom),
         attr("emission_per_second", new_asset_incentive.emission_per_second),
         attr("start_time", new_asset_incentive.start_time.to_string()),
@@ -344,7 +344,7 @@ pub fn execute_balance_change(
     }
 
     let response = Response::new().add_attributes(vec![
-        attr("action", "outposts/incentives/balance_change"),
+        attr("action", "balance_change"),
         attr("denom", denom),
         attr("user", user_addr),
         attr("rewards_accrued", accrued_rewards),
@@ -397,7 +397,7 @@ pub fn execute_claim_rewards(
     };
 
     response = response.add_attributes(vec![
-        attr("action", "outposts/incentives/claim_rewards"),
+        attr("action", "claim_rewards"),
         attr("user", user_addr),
         attr("mars_rewards", total_unclaimed_rewards),
     ]);
@@ -426,7 +426,7 @@ pub fn execute_update_config(
 
     CONFIG.save(deps.storage, &config)?;
 
-    let response = Response::new().add_attribute("action", "outposts/incentives/update_config");
+    let response = Response::new().add_attribute("action", "update_config");
 
     Ok(response)
 }
