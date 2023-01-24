@@ -74,6 +74,21 @@ pub fn mock_routes() -> HashMap<(&'static str, &'static str), OsmosisRoute> {
         ]),
     );
 
+    // uusdc -> uosmo -> umars
+    map.insert(
+        ("uusdc", "umars"),
+        OsmosisRoute(vec![
+            SwapAmountInRoute {
+                pool_id: 69,
+                token_out_denom: "uosmo".to_string(),
+            },
+            SwapAmountInRoute {
+                pool_id: 420,
+                token_out_denom: "umars".to_string(),
+            },
+        ]),
+    );
+
     map
 }
 

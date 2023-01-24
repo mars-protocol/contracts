@@ -273,7 +273,9 @@ where
         let amount_fee_collector = amount_to_swap.checked_sub(amount_safety_fund)?;
         let mut messages = vec![];
 
-        if !amount_safety_fund.is_zero() {
+        // execute the swap to safety fund denom, if the amount to swap is non-zero,
+        // and if the denom is not already the safety fund denom
+        if !amount_safety_fund.is_zero() && denom != cfg.safety_fund_denom {
             messages.push(
                 self.routes
                     .load(deps.storage, (denom.clone(), cfg.safety_fund_denom))?
@@ -287,7 +289,9 @@ where
             );
         }
 
-        if !amount_fee_collector.is_zero() {
+        // execute the swap to fee collector denom, if the amount to swap is non-zero,
+        // and if the denom is not already the fee collector denom
+        if !amount_fee_collector.is_zero() && denom != cfg.fee_collector_denom {
             messages.push(
                 self.routes
                     .load(deps.storage, (denom.clone(), cfg.fee_collector_denom))?
