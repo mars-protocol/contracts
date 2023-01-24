@@ -21,7 +21,7 @@ contracts
 │   └── osmosis
 └── red-bank
 packages
-├── outpost
+├── types
 └── testing
 ..
 ```

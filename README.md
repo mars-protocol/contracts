@@ -2,7 +2,7 @@
 This repository contains the source code for the core smart contracts of Mars Protocol. Smart contracts are meant to be compiled to `.wasm` files and uploaded to the Cosmos chains.
 
 ## Audits
-See reports [here](https://github.com/mars-protocol/mars-audits/tree/main/outposts)
+See reports [here](https://github.com/mars-protocol/mars-audits/tree/main/red-bank)
 
 ## Bug bounty
 A bug bounty is currently open for these contracts. See details [here](https://immunefi.com/bounty/mars/).

@@ -1,3 +1,3 @@
 # Mars Testing
 
-Utilities for testing Mars outpost contracts
+Utilities for testing Mars red-bank contracts

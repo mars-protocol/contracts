@@ -1,6 +1,6 @@
 [package]
 name          = "mars-testing"
-description   = "Utilities for testing Mars outpost contracts"
+description   = "Utilities for testing Mars red-bank contracts"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
