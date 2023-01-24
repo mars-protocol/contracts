@@ -1,4 +1,4 @@
-# Mars Red Bank
+# Mars Protocol: Red Bank
 
 This repository contains the source code for the core smart contracts of Mars Red Bank. Smart contracts are meant to be compiled to `.wasm` files and uploaded to the Cosmos chains.
 
