@@ -148,6 +148,11 @@ fn querying_routes() {
             denom_out: "umars".to_string(),
             route: routes.get(&("uosmo", "umars")).unwrap().clone(),
         },
+        RouteResponse {
+            denom_in: "uusdc".to_string(),
+            denom_out: "umars".to_string(),
+            route: routes.get(&("uusdc", "umars")).unwrap().clone(),
+        },
     ];
 
     let res: Vec<RouteResponse<OsmosisRoute>> = helpers::query(
