@@ -55,7 +55,7 @@ pub enum ExecuteMsg {
         /// How many MARS will be assigned per second to be distributed among all Red Bank
         /// depositors
         emission_per_second: Option<Uint128>,
-        /// Start time for the incentive
+        /// Start time of the incentive in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
         start_time: Option<u64>,
         /// How many seconds the incentives last
         duration: Option<u64>,
