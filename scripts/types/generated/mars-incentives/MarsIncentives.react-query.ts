@@ -12,8 +12,6 @@ import {
   InstantiateMsg,
   ExecuteMsg,
   Uint128,
-  Timestamp,
-  Uint64,
   Addr,
   OwnerUpdate,
   QueryMsg,
@@ -206,7 +204,7 @@ export interface MarsIncentivesSetAssetIncentiveMutation {
     denom: string
     duration?: number
     emissionPerSecond?: Uint128
-    startTime?: Timestamp
+    startTime?: number
   }
   args?: {
     fee?: number | StdFee | 'auto'
