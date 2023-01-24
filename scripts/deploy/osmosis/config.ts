@@ -126,9 +126,9 @@ export const atomAsset: AssetConfig = {
 
 export const axlUSDCAsset: AssetConfig = {
   denom: 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
-  max_loan_to_value: '0.79',
+  max_loan_to_value: '0.74',
   reserve_factor: '0.2',
-  liquidation_threshold: '0.8',
+  liquidation_threshold: '0.75',
   liquidation_bonus: '0.1',
   interest_rate_model: {
     optimal_utilization_rate: '0.8',
