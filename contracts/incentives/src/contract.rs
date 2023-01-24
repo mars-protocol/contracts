@@ -116,10 +116,9 @@ pub fn execute_set_asset_incentive(
 
     validate_native_denom(&denom)?;
 
+    let current_block_time = env.block.time.seconds();
     let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &denom)? {
         Some(mut asset_incentive) => {
-            let current_block_time = env.block.time.seconds();
-
             let (start_time, duration, emission_per_second) =
                 validate_params_for_existing_incentive(
                     &asset_incentive,
@@ -159,8 +158,6 @@ pub fn execute_set_asset_incentive(
             asset_incentive
         }
         None => {
-            let current_block_time = env.block.time.seconds();
-
             let (start_time, duration, emission_per_second) = validate_params_for_new_incentive(
                 start_time,
                 duration,
@@ -257,15 +254,11 @@ fn validate_params_for_new_incentive(
     current_block_time: u64,
 ) -> Result<(u64, u64, Uint128), ContractError> {
     // all params are required during incentive initialization (if start_time = None then set to current block time)
-    let (start_time, duration, emission_per_second) =
-        match (start_time, duration, emission_per_second) {
-            (Some(st), Some(dur), Some(eps)) => (st, dur, eps),
-            _ => {
-                return Err(ContractError::InvalidIncentive {
-                    reason: "all params are required during incentive initialization".to_string(),
-                })
-            }
-        };
+    let (Some(start_time), Some(duration), Some(emission_per_second)) = (start_time, duration, emission_per_second) else {
+        return Err(ContractError::InvalidIncentive {
+            reason: "all params are required during incentive initialization".to_string(),
+        });
+    };
 
     // duration should be greater than 0
     if duration == 0 {
