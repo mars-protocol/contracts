@@ -96,6 +96,7 @@ impl Incentives {
         emission_per_second: u128,
         duration: u64,
     ) {
+        let current_block_time = env.app.block_info().time;
         env.app
             .execute_contract(
                 env.owner.clone(),
@@ -103,7 +104,7 @@ impl Incentives {
                 &incentives::ExecuteMsg::SetAssetIncentive {
                     denom: denom.to_string(),
                     emission_per_second: Some(emission_per_second.into()),
-                    start_time: None,
+                    start_time: Some(current_block_time),
                     duration: Some(duration),
                 },
                 &[],

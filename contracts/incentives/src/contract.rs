@@ -214,8 +214,12 @@ fn validate_params_for_existing_incentive(
         }
         // correct start_time so it can be used
         Some(st) => st,
-        // previous asset incentive finished so we can use current block time as start_time
-        None if end_time < current_block_time => current_block_time,
+        // previous asset incentive finished so new start_time is required
+        None if end_time < current_block_time => {
+            return Err(ContractError::InvalidIncentive {
+                reason: "start_time is required for new incentive".to_string(),
+            })
+        }
         // use start_time from current asset incentive
         None => asset_incentive.start_time,
     };
@@ -251,14 +255,15 @@ fn validate_params_for_new_incentive(
     current_block_time: Timestamp,
 ) -> Result<(Timestamp, u64, Uint128), ContractError> {
     // all params are required during incentive initialization (if start_time = None then set to current block time)
-    let (emission_per_second, duration) = match (emission_per_second, duration) {
-        (Some(eps), Some(dur)) => (eps, dur),
-        _ => {
-            return Err(ContractError::InvalidIncentive {
-                reason: "all params are required during incentive initialization".to_string(),
-            })
-        }
-    };
+    let (start_time, duration, emission_per_second) =
+        match (start_time, duration, emission_per_second) {
+            (Some(st), Some(dur), Some(eps)) => (st, dur, eps),
+            _ => {
+                return Err(ContractError::InvalidIncentive {
+                    reason: "all params are required during incentive initialization".to_string(),
+                })
+            }
+        };
 
     // duration should be greater than 0
     if duration == 0 {
@@ -268,7 +273,6 @@ fn validate_params_for_new_incentive(
     }
 
     // start_time can't be less that current block time
-    let start_time = start_time.unwrap_or(current_block_time);
     if start_time < current_block_time {
         return Err(ContractError::InvalidIncentive {
             reason: "start_time can't be less than current block time".to_string(),

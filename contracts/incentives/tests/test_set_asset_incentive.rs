@@ -80,7 +80,7 @@ fn cannot_set_new_asset_incentive_with_empty_params() {
     let msg = ExecuteMsg::SetAssetIncentive {
         denom: "uosmo".to_string(),
         emission_per_second: Some(Uint128::from(100u32)),
-        start_time: None,
+        start_time: Some(Timestamp::from_seconds(100)),
         duration: None,
     };
     let res_error = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
@@ -94,6 +94,20 @@ fn cannot_set_new_asset_incentive_with_empty_params() {
     let msg = ExecuteMsg::SetAssetIncentive {
         denom: "uosmo".to_string(),
         emission_per_second: None,
+        start_time: Some(Timestamp::from_seconds(100)),
+        duration: Some(2400u64),
+    };
+    let res_error = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
+    assert_eq!(
+        res_error,
+        ContractError::InvalidIncentive {
+            reason: "all params are required during incentive initialization".to_string()
+        }
+    );
+
+    let msg = ExecuteMsg::SetAssetIncentive {
+        denom: "uosmo".to_string(),
+        emission_per_second: Some(Uint128::from(100u32)),
         start_time: None,
         duration: Some(2400u64),
     };
@@ -119,7 +133,7 @@ fn cannot_set_new_asset_incentive_with_invalid_params() {
     let msg = ExecuteMsg::SetAssetIncentive {
         denom: "uosmo".to_string(),
         emission_per_second: Some(Uint128::from(100u32)),
-        start_time: None,
+        start_time: Some(block_time),
         duration: Some(0u64),
     };
     let res_error = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
@@ -150,14 +164,15 @@ fn set_new_asset_incentive() {
     let mut deps = th_setup();
 
     let info = mock_info("owner", &[]);
+    let block_time = Timestamp::from_seconds(1_000_000);
     let env = mars_testing::mock_env(MockEnvParams {
-        block_time: Timestamp::from_seconds(1_000_000),
+        block_time,
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
         denom: "uosmo".to_string(),
         emission_per_second: Some(Uint128::new(100)),
-        start_time: None,
+        start_time: Some(block_time),
         duration: Some(86400),
     };
 
@@ -268,7 +283,7 @@ fn set_existing_asset_incentive_with_different_start_time() {
     assert_eq!(asset_incentive.start_time, start_time);
     assert_eq!(asset_incentive.last_updated, block_time.seconds());
 
-    // start time can be set to current block time only if previous incentive has finished
+    // start time is required if previous incentive has finished
     let block_time = start_time.plus_seconds(duration).plus_seconds(1);
     let env = mars_testing::mock_env(MockEnvParams {
         block_time,
@@ -280,10 +295,13 @@ fn set_existing_asset_incentive_with_different_start_time() {
         start_time: None,
         duration: None,
     };
-    execute(deps.as_mut(), env, info.clone(), msg).unwrap();
-    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, "uosmo").unwrap();
-    assert_eq!(asset_incentive.start_time, block_time);
-    assert_eq!(asset_incentive.last_updated, block_time.seconds());
+    let res_error = execute(deps.as_mut(), env, info.clone(), msg).unwrap_err();
+    assert_eq!(
+        res_error,
+        ContractError::InvalidIncentive {
+            reason: "start_time is required for new incentive".to_string()
+        }
+    );
 
     // incentive in progress, leave previous start_time
     let block_time = start_time.plus_seconds(duration);
@@ -530,7 +548,7 @@ fn set_existing_asset_incentive_with_index_updated_after_incentive() {
     let msg = ExecuteMsg::SetAssetIncentive {
         denom: denom.to_string(),
         emission_per_second: Some(Uint128::new(215)),
-        start_time: None,
+        start_time: Some(block_time),
         duration: None,
     };
 
