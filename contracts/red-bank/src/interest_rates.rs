@@ -3,7 +3,8 @@ use std::str;
 use cosmwasm_std::{
     Addr, Decimal, DepsMut, Env, Event, Response, StdError, StdResult, Storage, Uint128,
 };
-use mars_outpost::{math, red_bank::Market};
+use mars_types::red_bank::Market;
+use mars_utils::math;
 
 use crate::{error::ContractError, user::User};
 
@@ -316,7 +317,7 @@ pub fn build_interests_updated_event(denom: &str, market: &Market) -> Event {
 #[cfg(test)]
 mod tests {
     use cosmwasm_std::{Decimal, Uint128};
-    use mars_outpost::red_bank::Market;
+    use mars_types::red_bank::Market;
 
     use crate::interest_rates::{
         calculate_applied_linear_interest_rate, get_scaled_debt_amount,

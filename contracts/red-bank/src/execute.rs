@@ -3,16 +3,18 @@ use std::{cmp::min, str};
 use cosmwasm_std::{
     Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128,
 };
-use mars_outpost::{
+use mars_owner::{OwnerError, OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
-    helpers::{build_send_asset_msg, option_string_to_addr, validate_native_denom, zero_address},
-    math,
     red_bank::{
         Config, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg, Market,
     },
 };
-use mars_owner::{OwnerError, OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_utils::{
+    helpers::{build_send_asset_msg, option_string_to_addr, validate_native_denom, zero_address},
+    math,
+};
 
 use crate::{
     error::ContractError,

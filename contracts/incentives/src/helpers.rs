@@ -4,7 +4,7 @@ use cosmwasm_std::{
     Addr, BlockInfo, Decimal, Deps, Order, OverflowError, OverflowOperation, StdError, StdResult,
     Uint128,
 };
-use mars_outpost::{incentives::AssetIncentive, red_bank};
+use mars_types::{incentives::AssetIncentive, red_bank};
 
 use crate::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 

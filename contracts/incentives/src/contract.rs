@@ -4,17 +4,17 @@ use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env,
     MessageInfo, Response, StdResult, Timestamp, Uint128,
 };
-use mars_outpost::{
+use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
-    helpers::{option_string_to_addr, validate_native_denom},
     incentives::{
         AssetIncentive, AssetIncentiveResponse, Config, ConfigResponse, ExecuteMsg, InstantiateMsg,
         QueryMsg,
     },
     red_bank,
 };
-use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
 
 use crate::{
     error::ContractError,

@@ -5,9 +5,10 @@ use mars_oracle_osmosis::{
     msg::{ExecuteMsg, PriceSourceResponse},
     Downtime, DowntimeDetector, OsmosisPriceSource,
 };
-use mars_outpost::{error::MarsError, oracle::QueryMsg};
 use mars_owner::OwnerError::NotOwner;
 use mars_testing::mock_info;
+use mars_types::oracle::QueryMsg;
+use mars_utils::error::ValidationError;
 
 mod helpers;
 
@@ -79,7 +80,7 @@ fn setting_price_source_incorrect_denom() {
     );
     assert_eq!(
         res,
-        Err(ContractError::Mars(MarsError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "First character is not ASCII alphabetic".to_string()
         }))
     );
@@ -97,7 +98,7 @@ fn setting_price_source_incorrect_denom() {
     );
     assert_eq!(
         res_two,
-        Err(ContractError::Mars(MarsError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
                 .to_string()
         }))
@@ -116,7 +117,7 @@ fn setting_price_source_incorrect_denom() {
     );
     assert_eq!(
         res_three,
-        Err(ContractError::Mars(MarsError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "Invalid denom length".to_string()
         }))
     );

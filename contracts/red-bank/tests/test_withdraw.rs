@@ -7,11 +7,6 @@ use helpers::{
     has_collateral_position, set_collateral, th_build_interests_updated_event,
     th_get_expected_indices_and_rates, th_setup, TestUtilizationDeltaInfo,
 };
-use mars_outpost::{
-    address_provider::MarsAddressType,
-    incentives, math,
-    red_bank::{Collateral, Debt, ExecuteMsg, Market},
-};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -22,6 +17,12 @@ use mars_red_bank::{
     state::{COLLATERALS, DEBTS, MARKETS},
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
+use mars_types::{
+    address_provider::MarsAddressType,
+    incentives,
+    red_bank::{Collateral, Debt, ExecuteMsg, Market},
+};
+use mars_utils::math;
 
 mod helpers;
 

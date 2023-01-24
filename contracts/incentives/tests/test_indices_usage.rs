@@ -2,7 +2,7 @@ use cosmwasm_std::{Decimal, OverflowError, OverflowOperation, StdError, Timestam
 use mars_incentives::helpers::{
     compute_asset_incentive_index, compute_user_accrued_rewards, update_asset_incentive_index,
 };
-use mars_outpost::incentives::AssetIncentive;
+use mars_types::incentives::AssetIncentive;
 
 mod helpers;
 

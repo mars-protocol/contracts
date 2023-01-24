@@ -5,14 +5,12 @@ use cosmwasm_std::{
     StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
-use mars_outpost::{
-    helpers::validate_native_denom,
-    oracle::{
-        Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
-        QueryMsg,
-    },
-};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_types::oracle::{
+    Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
+    QueryMsg,
+};
+use mars_utils::helpers::validate_native_denom;
 
 use crate::{error::ContractResult, PriceSource};
 

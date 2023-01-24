@@ -1,12 +1,10 @@
 use cosmwasm_std::testing::mock_env;
-use mars_outpost::{
-    error::MarsError,
-    rewards_collector::{QueryMsg, RouteResponse},
-};
 use mars_owner::OwnerError::NotOwner;
 use mars_rewards_collector_base::{ContractError, Route};
 use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg, OsmosisRoute};
 use mars_testing::mock_info;
+use mars_types::rewards_collector::{QueryMsg, RouteResponse};
+use mars_utils::error::ValidationError;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
 
 use crate::helpers::mock_routes;
@@ -89,7 +87,7 @@ fn denom_with_invalid_char() {
     let res = execute(deps.as_mut(), mock_env(), mock_info("owner"), msg);
     assert_eq!(
         res,
-        Err(ContractError::Mars(MarsError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
                 .to_string()
         }))
@@ -120,7 +118,7 @@ fn invalid_denom_length() {
     let res = execute(deps.as_mut(), mock_env(), mock_info("owner"), msg);
     assert_eq!(
         res,
-        Err(ContractError::Mars(MarsError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "Invalid denom length".to_string(),
         }))
     );

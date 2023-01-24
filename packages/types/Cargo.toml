@@ -1,5 +1,5 @@
 [package]
-name          = "mars-outpost"
+name          = "mars-types"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
@@ -21,6 +21,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 mars-owner      = { workspace = true }
+mars-utils      = { workspace = true }
 thiserror       = { workspace = true }
 
 [dev-dependencies]

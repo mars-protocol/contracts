@@ -21,8 +21,9 @@ backtraces = ["cosmwasm-std/backtraces"]
 cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
 cw-storage-plus = { workspace = true }
-mars-outpost    = { workspace = true }
 mars-owner      = { workspace = true }
+mars-types      = { workspace = true }
+mars-utils      = { workspace = true }
 thiserror       = { workspace = true }
 
 [dev-dependencies]

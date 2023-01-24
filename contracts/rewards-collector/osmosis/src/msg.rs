@@ -1,4 +1,4 @@
-use mars_outpost::rewards_collector;
+use mars_types::rewards_collector;
 
 use crate::OsmosisRoute;
 

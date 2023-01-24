@@ -8,11 +8,11 @@ use mars_incentives::{
     helpers::{compute_asset_incentive_index, compute_user_accrued_rewards},
     state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
-use mars_outpost::{
+use mars_testing::MockEnvParams;
+use mars_types::{
     incentives::{AssetIncentive, ExecuteMsg},
     red_bank::{Market, UserCollateralResponse},
 };
-use mars_testing::MockEnvParams;
 
 use crate::helpers::{th_setup, th_setup_with_env};
 

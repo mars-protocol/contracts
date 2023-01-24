@@ -6,10 +6,6 @@ use helpers::{
     th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
     TestUtilizationDeltaInfo,
 };
-use mars_outpost::{
-    math,
-    red_bank::{Debt, ExecuteMsg, Market},
-};
 use mars_owner::OwnerError::NotOwner;
 use mars_red_bank::{
     contract::execute,
@@ -22,6 +18,8 @@ use mars_red_bank::{
     state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
 };
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
+use mars_types::red_bank::{Debt, ExecuteMsg, Market};
+use mars_utils::math;
 
 mod helpers;
 

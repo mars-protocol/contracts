@@ -6,10 +6,6 @@ use helpers::{
     has_collateral_position, has_debt_position, set_collateral, th_build_interests_updated_event,
     th_get_expected_indices_and_rates, th_init_market, th_setup, TestUtilizationDeltaInfo,
 };
-use mars_outpost::{
-    math,
-    red_bank::{ExecuteMsg, Market},
-};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -20,6 +16,8 @@ use mars_red_bank::{
     state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
 };
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
+use mars_types::red_bank::{ExecuteMsg, Market};
+use mars_utils::math;
 
 mod helpers;
 

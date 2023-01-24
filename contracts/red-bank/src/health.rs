@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use cosmwasm_std::{Addr, Deps, Env, Order, StdError, StdResult, Uint128};
 use mars_health::health::{Health, Position as HealthPosition};
-use mars_outpost::{oracle, red_bank::Position};
+use mars_types::{oracle, red_bank::Position};
 
 use crate::{
     error::ContractError,

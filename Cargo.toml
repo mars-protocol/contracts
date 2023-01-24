@@ -7,8 +7,9 @@ members = [
   "contracts/rewards-collector/*",
   "packages/chains/*",
   "packages/health",
-  "packages/outpost",
+  "packages/types",
   "packages/testing",
+  "packages/utils",
   "integration-tests",
 ]
 
@@ -49,8 +50,9 @@ thiserror       = "1.0.38"
 # packages
 mars-health  = { version = "1.0.0", path = "./packages/health" }
 mars-osmosis = { version = "1.0.0", path = "./packages/chains/osmosis" }
-mars-outpost = { version = "1.0.0", path = "./packages/outpost" }
 mars-testing = { version = "1.0.0", path = "./packages/testing" }
+mars-types   = { version = "1.0.0", path = "packages/types" }
+mars-utils   = { version = "1.0.0", path = "packages/utils" }
 
 # contracts
 mars-address-provider          = { version = "1.0.0", path = "./contracts/address-provider" }

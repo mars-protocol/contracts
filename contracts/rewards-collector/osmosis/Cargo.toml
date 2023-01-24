@@ -22,8 +22,8 @@ cosmwasm-std                = { workspace = true }
 cw2                         = { workspace = true }
 cw-storage-plus             = { workspace = true }
 mars-osmosis                = { workspace = true }
-mars-outpost                = { workspace = true }
 mars-rewards-collector-base = { workspace = true }
+mars-types                  = { workspace = true }
 schemars                    = { workspace = true }
 serde                       = { workspace = true }
 thiserror                   = { workspace = true }
@@ -33,3 +33,4 @@ osmosis-std                 = { workspace = true }
 cosmwasm-schema = { workspace = true }
 mars-testing    = { workspace = true }
 mars-owner      = { workspace = true }
+mars-utils      = { workspace = true }

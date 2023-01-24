@@ -1,6 +1,6 @@
 use cw_storage_plus::{Item, Map};
-use mars_outpost::address_provider::Config;
 use mars_owner::Owner;
+use mars_types::address_provider::Config;
 
 use crate::key::MarsAddressTypeKey;
 

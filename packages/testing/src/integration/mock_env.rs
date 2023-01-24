@@ -6,7 +6,7 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Timestamp, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSource;
-use mars_outpost::{
+use mars_types::{
     address_provider::{self, MarsAddressType},
     incentives, oracle,
     red_bank::{

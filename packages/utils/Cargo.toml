@@ -1,5 +1,5 @@
 [package]
-name          = "mars-address-provider"
+name          = "mars-utils"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
@@ -10,22 +10,16 @@ documentation = { workspace = true }
 keywords      = { workspace = true }
 
 [lib]
-crate-type = ["cdylib", "rlib"]
 doctest = false
 
 [features]
+# for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-bech32          = { workspace = true }
-cosmwasm-std    = { workspace = true }
-cw2             = { workspace = true }
-cw-storage-plus = { workspace = true }
-mars-owner      = { workspace = true }
-mars-types      = { workspace = true }
-thiserror       = { workspace = true }
+cosmwasm-std = { workspace = true }
+thiserror    = { workspace = true }
 
 [dev-dependencies]
-cosmwasm-schema = { workspace = true }
-serde           = { workspace = true }
+mars-testing = { workspace = true }

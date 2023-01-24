@@ -1,5 +1,5 @@
 use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
-use mars_outpost::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_types::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::{error::ContractError, execute, query};
 

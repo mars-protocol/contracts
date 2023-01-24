@@ -6,11 +6,11 @@ use cosmwasm_std::{
     to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
 };
 use cw_storage_plus::Bound;
-use mars_outpost::address_provider::{
+use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_types::address_provider::{
     AddressResponseItem, Config, ConfigResponse, ExecuteMsg, InstantiateMsg, MarsAddressType,
     QueryMsg,
 };
-use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
 
 use crate::{
     error::ContractError,

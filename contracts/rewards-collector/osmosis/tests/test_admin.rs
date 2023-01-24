@@ -1,8 +1,4 @@
 use cosmwasm_std::{testing::mock_env, Decimal};
-use mars_outpost::{
-    error::MarsError,
-    rewards_collector::{ConfigResponse, QueryMsg, UpdateConfig},
-};
 use mars_owner::OwnerError::NotOwner;
 use mars_rewards_collector_base::ContractError;
 use mars_rewards_collector_osmosis::{
@@ -10,6 +6,8 @@ use mars_rewards_collector_osmosis::{
     msg::ExecuteMsg,
 };
 use mars_testing::mock_info;
+use mars_types::rewards_collector::{ConfigResponse, QueryMsg, UpdateConfig};
+use mars_utils::error::ValidationError;
 
 use crate::helpers::{mock_config, mock_instantiate_msg};
 
@@ -48,7 +46,7 @@ fn instantiating() {
     let err = instantiate(deps.as_mut(), mock_env(), info, init_msg).unwrap_err();
     assert_eq!(
         err,
-        ContractError::Mars(MarsError::InvalidParam {
+        ContractError::Validation(ValidationError::InvalidParam {
             param_name: "safety_tax_rate".to_string(),
             invalid_value: "1.5".to_string(),
             predicate: "<= 1".to_string(),
@@ -72,7 +70,7 @@ fn updating_config_if_invalid_slippage() {
     let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(
         err,
-        ContractError::Mars(MarsError::InvalidParam {
+        ContractError::Validation(ValidationError::InvalidParam {
             param_name: "slippage_tolerance".to_string(),
             invalid_value: "0.51".to_string(),
             predicate: "<= 0.5".to_string(),
@@ -108,7 +106,7 @@ fn updating_config() {
     let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
     assert_eq!(
         err,
-        ContractError::Mars(MarsError::InvalidParam {
+        ContractError::Validation(ValidationError::InvalidParam {
             param_name: "safety_tax_rate".to_string(),
             invalid_value: "1.25".to_string(),
             predicate: "<= 1".to_string(),
@@ -141,7 +139,7 @@ fn updating_config_if_invalid_timeout_revision() {
     let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(
         err,
-        ContractError::Mars(MarsError::InvalidParam {
+        ContractError::Validation(ValidationError::InvalidParam {
             param_name: "timeout_revision".to_string(),
             invalid_value: "0".to_string(),
             predicate: "> 0".to_string(),
@@ -165,7 +163,7 @@ fn updating_config_if_invalid_timeout_blocks() {
     let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(
         err,
-        ContractError::Mars(MarsError::InvalidParam {
+        ContractError::Validation(ValidationError::InvalidParam {
             param_name: "timeout_blocks".to_string(),
             invalid_value: "0".to_string(),
             predicate: "> 0".to_string(),
@@ -189,7 +187,7 @@ fn updating_config_if_invalid_timeout_seconds() {
     let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(
         err,
-        ContractError::Mars(MarsError::InvalidParam {
+        ContractError::Validation(ValidationError::InvalidParam {
             param_name: "timeout_seconds".to_string(),
             invalid_value: "0".to_string(),
             predicate: "> 0".to_string(),

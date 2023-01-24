@@ -5,8 +5,8 @@ use cosmwasm_std::{
     Uint128,
 };
 use mars_health::{error::HealthError, health::Health};
-use mars_outpost::red_bank::Market;
 use mars_testing::MarsMockQuerier;
+use mars_types::red_bank::Market;
 
 #[test]
 fn health_success_from_coins() {

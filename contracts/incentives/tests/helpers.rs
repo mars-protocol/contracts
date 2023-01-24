@@ -7,8 +7,8 @@ use cosmwasm_std::{
     Deps, Env, OwnedDeps,
 };
 use mars_incentives::contract::{instantiate, query};
-use mars_outpost::incentives::{InstantiateMsg, QueryMsg};
 use mars_testing::{mock_dependencies, MarsMockQuerier};
+use mars_types::incentives::{InstantiateMsg, QueryMsg};
 
 pub fn th_setup() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     th_setup_with_env(mock_env())

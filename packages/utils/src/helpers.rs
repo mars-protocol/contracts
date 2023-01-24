@@ -1,6 +1,6 @@
 use cosmwasm_std::{coins, Addr, Api, BankMsg, CosmosMsg, Decimal, StdResult, Uint128};
 
-use crate::error::MarsError;
+use crate::error::ValidationError;
 
 pub fn build_send_asset_msg(recipient_addr: &Addr, denom: &str, amount: Uint128) -> CosmosMsg {
     CosmosMsg::Bank(BankMsg::Send {
@@ -22,9 +22,9 @@ pub fn option_string_to_addr(
     }
 }
 
-pub fn decimal_param_lt_one(param_value: Decimal, param_name: &str) -> Result<(), MarsError> {
+pub fn decimal_param_lt_one(param_value: Decimal, param_name: &str) -> Result<(), ValidationError> {
     if !param_value.lt(&Decimal::one()) {
-        Err(MarsError::InvalidParam {
+        Err(ValidationError::InvalidParam {
             param_name: param_name.to_string(),
             invalid_value: param_value.to_string(),
             predicate: "< 1".to_string(),
@@ -34,9 +34,9 @@ pub fn decimal_param_lt_one(param_value: Decimal, param_name: &str) -> Result<()
     }
 }
 
-pub fn decimal_param_le_one(param_value: Decimal, param_name: &str) -> Result<(), MarsError> {
+pub fn decimal_param_le_one(param_value: Decimal, param_name: &str) -> Result<(), ValidationError> {
     if !param_value.le(&Decimal::one()) {
-        Err(MarsError::InvalidParam {
+        Err(ValidationError::InvalidParam {
             param_name: param_name.to_string(),
             invalid_value: param_value.to_string(),
             predicate: "<= 1".to_string(),
@@ -46,9 +46,9 @@ pub fn decimal_param_le_one(param_value: Decimal, param_name: &str) -> Result<()
     }
 }
 
-pub fn integer_param_gt_zero(param_value: u64, param_name: &str) -> Result<(), MarsError> {
+pub fn integer_param_gt_zero(param_value: u64, param_name: &str) -> Result<(), ValidationError> {
     if !param_value.gt(&0) {
-        Err(MarsError::InvalidParam {
+        Err(ValidationError::InvalidParam {
             param_name: param_name.to_string(),
             invalid_value: param_value.to_string(),
             predicate: "> 0".to_string(),
@@ -65,9 +65,9 @@ pub fn zero_address() -> Addr {
 /// follows cosmos SDK validation logic where denoms can be 3 - 128 characters long
 /// and starts with a letter, followed but either a letter, number, or separator ( ‘/' , ‘:' , ‘.’ , ‘_’ , or '-')
 /// reference: https://github.com/cosmos/cosmos-sdk/blob/7728516abfab950dc7a9120caad4870f1f962df5/types/coin.go#L865-L867
-pub fn validate_native_denom(denom: &str) -> Result<(), MarsError> {
+pub fn validate_native_denom(denom: &str) -> Result<(), ValidationError> {
     if denom.len() < 3 || denom.len() > 128 {
-        return Err(MarsError::InvalidDenom {
+        return Err(ValidationError::InvalidDenom {
             reason: "Invalid denom length".to_string(),
         });
     }
@@ -75,7 +75,7 @@ pub fn validate_native_denom(denom: &str) -> Result<(), MarsError> {
     let mut chars = denom.chars();
     let first = chars.next().unwrap();
     if !first.is_ascii_alphabetic() {
-        return Err(MarsError::InvalidDenom {
+        return Err(ValidationError::InvalidDenom {
             reason: "First character is not ASCII alphabetic".to_string(),
         });
     }
@@ -83,7 +83,7 @@ pub fn validate_native_denom(denom: &str) -> Result<(), MarsError> {
     let set = ['/', ':', '.', '_', '-'];
     for c in chars {
         if !(c.is_ascii_alphanumeric() || set.contains(&c)) {
-            return Err(MarsError::InvalidDenom {
+            return Err(ValidationError::InvalidDenom {
                 reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
                     .to_string(),
             });

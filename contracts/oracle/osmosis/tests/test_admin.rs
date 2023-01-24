@@ -1,11 +1,9 @@
 use cosmwasm_std::testing::mock_env;
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::contract::entry;
-use mars_outpost::{
-    error::MarsError,
-    oracle::{ConfigResponse, InstantiateMsg, QueryMsg},
-};
 use mars_testing::{mock_dependencies, mock_info};
+use mars_types::oracle::{ConfigResponse, InstantiateMsg, QueryMsg};
+use mars_utils::error::ValidationError;
 
 mod helpers;
 
@@ -36,7 +34,7 @@ fn instantiating_incorrect_denom() {
     );
     assert_eq!(
         res,
-        Err(ContractError::Mars(MarsError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "First character is not ASCII alphabetic".to_string()
         }))
     );
@@ -52,7 +50,7 @@ fn instantiating_incorrect_denom() {
     );
     assert_eq!(
         res,
-        Err(ContractError::Mars(MarsError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
                 .to_string()
         }))
@@ -69,7 +67,7 @@ fn instantiating_incorrect_denom() {
     );
     assert_eq!(
         res,
-        Err(ContractError::Mars(MarsError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "Invalid denom length".to_string()
         }))
     );

@@ -7,13 +7,13 @@ use mars_incentives::{
     contract::execute, helpers::compute_asset_incentive_index, state::ASSET_INCENTIVES,
     ContractError,
 };
-use mars_outpost::{
-    error::MarsError,
+use mars_owner::OwnerError::NotOwner;
+use mars_testing::MockEnvParams;
+use mars_types::{
     incentives::{AssetIncentive, ExecuteMsg},
     red_bank::Market,
 };
-use mars_owner::OwnerError::NotOwner;
-use mars_testing::MockEnvParams;
+use mars_utils::error::ValidationError;
 
 use crate::helpers::{th_setup, th_setup_with_env};
 
@@ -50,7 +50,7 @@ fn invalid_denom_for_incentives() {
     let res = execute(deps.as_mut(), mock_env(), info, msg);
     assert_eq!(
         res,
-        Err(ContractError::Mars(MarsError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
                 .to_string()
         }))

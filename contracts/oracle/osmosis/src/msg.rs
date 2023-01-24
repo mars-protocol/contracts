@@ -1,4 +1,4 @@
-use mars_outpost::oracle;
+use mars_types::oracle;
 
 use crate::OsmosisPriceSource;
 
