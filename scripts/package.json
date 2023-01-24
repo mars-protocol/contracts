@@ -25,7 +25,7 @@
     "@types/node": "^18.11.18",
     "@typescript-eslint/eslint-plugin": "^5.49.0",
     "@typescript-eslint/parser": "^5.49.0",
-    "cosmjs-types": "^0.5.1",
+    "cosmjs-types": "^0.6.1",
     "eslint": "^8.32.0",
     "eslint-config-prettier": "^8.6.0",
     "prettier": "^2.8.3",
