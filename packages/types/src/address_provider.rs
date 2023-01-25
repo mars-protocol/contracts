@@ -12,7 +12,7 @@ pub enum MarsAddressType {
     RedBank,
     RewardsCollector,
     /// Protocol admin is an ICS-27 interchain account controlled by Mars Hub's x/gov module.
-    /// This account will take the owner and admin roles of outpost contracts.
+    /// This account will take the owner and admin roles of red-bank contracts.
     ///
     /// Owner means the account who can invoke certain priviliged execute methods on a contract,
     /// such as updating the config.

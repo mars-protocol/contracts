@@ -12,11 +12,6 @@ use helpers::{
     th_get_expected_indices, th_get_expected_indices_and_rates, th_init_market, th_setup,
     TestUtilizationDeltaInfo,
 };
-use mars_outpost::{
-    address_provider::MarsAddressType,
-    incentives, math,
-    red_bank::{Collateral, Debt, ExecuteMsg, InterestRateModel, Market},
-};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -27,7 +22,13 @@ use mars_red_bank::{
     },
     state::{COLLATERALS, CONFIG, DEBTS, MARKETS},
 };
+use mars_red_bank_types::{
+    address_provider::MarsAddressType,
+    incentives,
+    red_bank::{Collateral, Debt, ExecuteMsg, InterestRateModel, Market},
+};
 use mars_testing::{mock_env, mock_env_at_block_time, MarsMockQuerier, MockEnvParams};
+use mars_utils::math;
 
 use crate::helpers::{set_debt, TestInterestResults};
 
@@ -439,7 +440,7 @@ fn liquidate_partially() {
     mars_testing::assert_eq_vec(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/liquidate"),
+            attr("action", "liquidate"),
             attr("user", user_addr.as_str()),
             attr("liquidator", liquidator_addr.as_str()),
             attr("recipient", liquidator_addr.as_str()),
@@ -560,7 +561,7 @@ fn liquidate_up_to_close_factor_with_refund() {
 
     mars_testing::assert_eq_vec(
         vec![
-            attr("action", "outposts/red-bank/liquidate"),
+            attr("action", "liquidate"),
             attr("user", user_addr.as_str()),
             attr("liquidator", liquidator_addr.as_str()),
             attr("recipient", liquidator_addr.as_str()),
@@ -711,7 +712,7 @@ fn liquidate_fully() {
 
     mars_testing::assert_eq_vec(
         vec![
-            attr("action", "outposts/red-bank/liquidate"),
+            attr("action", "liquidate"),
             attr("user", user_addr.as_str()),
             attr("liquidator", liquidator_addr.as_str()),
             attr("recipient", liquidator_addr.as_str()),
@@ -845,7 +846,7 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
     mars_testing::assert_eq_vec(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/liquidate"),
+            attr("action", "liquidate"),
             attr("user", user_addr.as_str()),
             attr("liquidator", liquidator_addr.as_str()),
             attr("recipient", liquidator_addr.as_str()),
@@ -1019,7 +1020,7 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
 
     mars_testing::assert_eq_vec(
         vec![
-            attr("action", "outposts/red-bank/liquidate"),
+            attr("action", "liquidate"),
             attr("user", user_addr.as_str()),
             attr("liquidator", liquidator_addr.as_str()),
             attr("recipient", liquidator_addr.as_str()),
@@ -1139,7 +1140,7 @@ fn liquidate_with_recipient_for_underlying_collateral() {
 
     mars_testing::assert_eq_vec(
         vec![
-            attr("action", "outposts/red-bank/liquidate"),
+            attr("action", "liquidate"),
             attr("user", user_addr.as_str()),
             attr("liquidator", liquidator_addr.as_str()),
             attr("recipient", recipient_addr.as_str()),

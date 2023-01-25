@@ -6,10 +6,6 @@ use helpers::{
     has_collateral_position, has_debt_position, set_collateral, th_build_interests_updated_event,
     th_get_expected_indices_and_rates, th_init_market, th_setup, TestUtilizationDeltaInfo,
 };
-use mars_outpost::{
-    math,
-    red_bank::{ExecuteMsg, Market},
-};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -19,7 +15,9 @@ use mars_red_bank::{
     },
     state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
 };
+use mars_red_bank_types::red_bank::{ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
+use mars_utils::math;
 
 mod helpers;
 
@@ -130,7 +128,7 @@ fn borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/borrow"),
+            attr("action", "borrow"),
             attr("sender", "borrower"),
             attr("recipient", "borrower"),
             attr("denom", "uosmo"),
@@ -249,7 +247,7 @@ fn borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/borrow"),
+            attr("action", "borrow"),
             attr("sender", "borrower"),
             attr("recipient", "borrower"),
             attr("denom", "uusd"),
@@ -325,7 +323,7 @@ fn borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/repay"),
+            attr("action", "repay"),
             attr("sender", "borrower"),
             attr("on_behalf_of", "borrower"),
             attr("denom", "uusd"),
@@ -387,7 +385,7 @@ fn borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/repay"),
+            attr("action", "repay"),
             attr("sender", "borrower"),
             attr("on_behalf_of", "borrower"),
             attr("denom", "uusd"),
@@ -457,7 +455,7 @@ fn borrow_and_repay() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/repay"),
+            attr("action", "repay"),
             attr("sender", "borrower"),
             attr("on_behalf_of", "borrower"),
             attr("denom", "uosmo"),
@@ -548,7 +546,7 @@ fn repay_without_refund_on_behalf_of() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/repay"),
+            attr("action", "repay"),
             attr("sender", "user"),
             attr("on_behalf_of", "borrower"),
             attr("denom", "borrowedcoinnative"),
@@ -635,7 +633,7 @@ fn repay_with_refund_on_behalf_of() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/repay"),
+            attr("action", "repay"),
             attr("sender", "user"),
             attr("on_behalf_of", "borrower"),
             attr("denom", "borrowedcoinnative"),
@@ -1025,7 +1023,7 @@ fn borrow_and_send_funds_to_another_user() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/borrow"),
+            attr("action", "borrow"),
             attr("sender", borrower_addr),
             attr("recipient", another_user_addr),
             attr("denom", "uusd"),

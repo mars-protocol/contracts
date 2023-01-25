@@ -2,7 +2,7 @@ use cosmwasm_std::{
     testing::{mock_env, MOCK_CONTRACT_ADDR},
     CosmosMsg, Decimal, Fraction, SubMsg, Uint128,
 };
-use mars_outpost::rewards_collector::{ConfigResponse, QueryMsg};
+use mars_red_bank_types::rewards_collector::{ConfigResponse, QueryMsg};
 use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg};
 use mars_testing::mock_info;
 use osmosis_std::types::{

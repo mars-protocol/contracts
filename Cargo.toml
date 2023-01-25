@@ -7,8 +7,9 @@ members = [
   "contracts/rewards-collector/*",
   "packages/chains/*",
   "packages/health",
-  "packages/outpost",
   "packages/testing",
+  "packages/types",
+  "packages/utils",
   "integration-tests",
 ]
 
@@ -23,7 +24,7 @@ authors       = [
 ]
 edition       = "2021"
 license       = "GPL-3.0-or-later"
-repository    = "https://github.com/mars-protocol/outposts"
+repository    = "https://github.com/mars-protocol/red-bank"
 homepage      = "https://marsprotocol.io"
 documentation = "https://docs.marsprotocol.io/"
 keywords      = ["mars", "cosmos", "cosmwasm"]
@@ -47,10 +48,11 @@ serde           = { version = "1.0.152", default-features = false, features = ["
 thiserror       = "1.0.38"
 
 # packages
-mars-health  = { version = "1.0.0", path = "./packages/health" }
-mars-osmosis = { version = "1.0.0", path = "./packages/chains/osmosis" }
-mars-outpost = { version = "1.0.0", path = "./packages/outpost" }
-mars-testing = { version = "1.0.0", path = "./packages/testing" }
+mars-health         = { version = "1.0.0", path = "./packages/health" }
+mars-osmosis        = { version = "1.0.0", path = "./packages/chains/osmosis" }
+mars-red-bank-types = { version = "1.0.0", path = "./packages/types" }
+mars-testing        = { version = "1.0.0", path = "./packages/testing" }
+mars-utils          = { version = "1.0.0", path = "./packages/utils" }
 
 # contracts
 mars-address-provider          = { version = "1.0.0", path = "./contracts/address-provider" }

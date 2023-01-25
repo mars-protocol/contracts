@@ -1,4 +1,4 @@
-use mars_outpost::{error::MarsError::InvalidDenom, helpers::validate_native_denom};
+use mars_utils::{error::ValidationError::InvalidDenom, helpers::validate_native_denom};
 
 #[test]
 fn length_below_three() {

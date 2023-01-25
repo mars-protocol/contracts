@@ -5,16 +5,16 @@ use cosmwasm_std::{
     IbcTimeout, IbcTimeoutBlock, MessageInfo, Order, Response, StdResult, Uint128, WasmMsg,
 };
 use cw_storage_plus::{Bound, Item, Map};
-use mars_outpost::{
+use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
-    helpers::{option_string_to_addr, validate_native_denom},
     incentives, red_bank,
     rewards_collector::{
         Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
         RoutesResponse, UpdateConfig,
     },
 };
-use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
 
 use crate::{
     helpers::{stringify_option_amount, unwrap_option_amount},
@@ -230,7 +230,7 @@ where
 
         Ok(Response::new()
             .add_message(withdraw_msg)
-            .add_attribute("action", "outposts/rewards-collector/withdraw_from_red_bank")
+            .add_attribute("action", "withdraw_from_red_bank")
             .add_attribute("denom", denom)
             .add_attribute("amount", stringify_option_amount(amount)))
     }
@@ -252,7 +252,7 @@ where
 
         Ok(Response::new()
             .add_message(claim_msg)
-            .add_attribute("action", "outposts/rewards-collector/claim_incentive_rewards"))
+            .add_attribute("action", "claim_incentive_rewards"))
     }
 
     fn swap_asset(
@@ -307,7 +307,7 @@ where
 
         Ok(Response::new()
             .add_messages(messages)
-            .add_attribute("action", "outposts/rewards-collector/swap_asset")
+            .add_attribute("action", "swap_asset")
             .add_attribute("denom", denom)
             .add_attribute("amount_safety_fund", amount_safety_fund)
             .add_attribute("amount_fee_collector", amount_fee_collector)
@@ -362,7 +362,7 @@ where
 
         Ok(Response::new()
             .add_message(transfer_msg)
-            .add_attribute("action", "outposts/rewards-collector/distribute_rewards")
+            .add_attribute("action", "distribute_rewards")
             .add_attribute("denom", denom)
             .add_attribute("amount", amount_to_distribute)
             .add_attribute("to", to_address))

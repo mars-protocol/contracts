@@ -1,12 +1,4 @@
 use cosmwasm_std::{attr, coin, from_binary, testing::mock_info, Addr, Decimal, Event, Uint128};
-use mars_outpost::{
-    address_provider::MarsAddressType,
-    error::MarsError,
-    red_bank::{
-        ConfigResponse, CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
-        InterestRateModel, Market, QueryMsg,
-    },
-};
 use mars_owner::OwnerError::NotOwner;
 use mars_red_bank::{
     contract::{execute, instantiate, query},
@@ -14,7 +6,16 @@ use mars_red_bank::{
     interest_rates::{compute_scaled_amount, compute_underlying_amount, ScalingOperation},
     state::{COLLATERALS, MARKETS},
 };
+use mars_red_bank_types::{
+    address_provider::MarsAddressType,
+    error::MarsError,
+    red_bank::{
+        ConfigResponse, CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
+        InterestRateModel, Market, QueryMsg,
+    },
+};
 use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, MockEnvParams};
+use mars_utils::error::ValidationError;
 
 use crate::helpers::{th_get_expected_indices, th_init_market, th_setup};
 
@@ -64,7 +65,7 @@ fn proper_initialization() {
     let error_res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap_err();
     assert_eq!(
         error_res,
-        MarsError::InvalidParam {
+        ValidationError::InvalidParam {
             param_name: "close_factor".to_string(),
             invalid_value: "1.3".to_string(),
             predicate: "<= 1".to_string(),
@@ -145,7 +146,7 @@ fn update_config() {
     let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
     assert_eq!(
         error_res,
-        MarsError::InvalidParam {
+        ValidationError::InvalidParam {
             param_name: "close_factor".to_string(),
             invalid_value: "1.3".to_string(),
             predicate: "<= 1".to_string(),
@@ -235,7 +236,7 @@ fn init_asset() {
         let err = execute(deps.as_mut(), env.clone(), info, msg);
         assert_eq!(
             err,
-            Err(ContractError::Mars(MarsError::InvalidDenom {
+            Err(ContractError::Validation(ValidationError::InvalidDenom {
                 reason: "First character is not ASCII alphabetic".to_string()
             }))
         );
@@ -251,7 +252,7 @@ fn init_asset() {
         let err = execute(deps.as_mut(), env.clone(), info, msg);
         assert_eq!(
             err,
-            Err(ContractError::Mars(MarsError::InvalidDenom {
+            Err(ContractError::Validation(ValidationError::InvalidDenom {
                 reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
                     .to_string()
             }))
@@ -268,7 +269,7 @@ fn init_asset() {
         let err = execute(deps.as_mut(), env.clone(), info, msg);
         assert_eq!(
             err,
-            Err(ContractError::Mars(MarsError::InvalidDenom {
+            Err(ContractError::Validation(ValidationError::InvalidDenom {
                 reason: "Invalid denom length".to_string()
             }))
         );
@@ -305,7 +306,7 @@ fn init_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::InvalidParam {
+            ValidationError::InvalidParam {
                 param_name: "reserve_factor".to_string(),
                 invalid_value: "1".to_string(),
                 predicate: "< 1".to_string(),
@@ -328,7 +329,7 @@ fn init_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::InvalidParam {
+            ValidationError::InvalidParam {
                 param_name: "max_loan_to_value".to_string(),
                 invalid_value: "1.1".to_string(),
                 predicate: "<= 1".to_string(),
@@ -351,7 +352,7 @@ fn init_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::InvalidParam {
+            ValidationError::InvalidParam {
                 param_name: "liquidation_threshold".to_string(),
                 invalid_value: "1.1".to_string(),
                 predicate: "<= 1".to_string(),
@@ -374,7 +375,7 @@ fn init_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::InvalidParam {
+            ValidationError::InvalidParam {
                 param_name: "liquidation_bonus".to_string(),
                 invalid_value: "1.1".to_string(),
                 predicate: "<= 1".to_string(),
@@ -398,7 +399,7 @@ fn init_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::InvalidParam {
+            ValidationError::InvalidParam {
                 param_name: "liquidation_threshold".to_string(),
                 invalid_value: "0.5".to_string(),
                 predicate: "> 0.5 (max LTV)".to_string()
@@ -424,7 +425,7 @@ fn init_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::InvalidParam {
+            ValidationError::InvalidParam {
                 param_name: "optimal_utilization_rate".to_string(),
                 invalid_value: "1.1".to_string(),
                 predicate: "<= 1".to_string()
@@ -449,10 +450,7 @@ fn init_asset() {
         // should have unlimited deposit cap
         assert_eq!(market.deposit_cap, Uint128::MAX);
 
-        assert_eq!(
-            res.attributes,
-            vec![attr("action", "outposts/red-bank/init_asset"), attr("denom", "someasset")]
-        );
+        assert_eq!(res.attributes, vec![attr("action", "init_asset"), attr("denom", "someasset")]);
     }
 
     // can't init more than once
@@ -549,7 +547,7 @@ fn update_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::InvalidParam {
+            ValidationError::InvalidParam {
                 param_name: "max_loan_to_value".to_string(),
                 invalid_value: "1.1".to_string(),
                 predicate: "<= 1".to_string(),
@@ -572,7 +570,7 @@ fn update_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::InvalidParam {
+            ValidationError::InvalidParam {
                 param_name: "liquidation_threshold".to_string(),
                 invalid_value: "1.1".to_string(),
                 predicate: "<= 1".to_string(),
@@ -595,7 +593,7 @@ fn update_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::InvalidParam {
+            ValidationError::InvalidParam {
                 param_name: "liquidation_bonus".to_string(),
                 invalid_value: "1.1".to_string(),
                 predicate: "<= 1".to_string(),
@@ -619,7 +617,7 @@ fn update_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::InvalidParam {
+            ValidationError::InvalidParam {
                 param_name: "liquidation_threshold".to_string(),
                 invalid_value: "0.5".to_string(),
                 predicate: "> 0.6 (max LTV)".to_string()
@@ -645,7 +643,7 @@ fn update_asset() {
         let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             error_res,
-            MarsError::InvalidParam {
+            ValidationError::InvalidParam {
                 param_name: "optimal_utilization_rate".to_string(),
                 invalid_value: "1.1".to_string(),
                 predicate: "<= 1".to_string()
@@ -676,7 +674,7 @@ fn update_asset() {
         assert_eq!(res.messages, vec![],);
         assert_eq!(
             res.attributes,
-            vec![attr("action", "outposts/red-bank/update_asset"), attr("denom", "someasset")],
+            vec![attr("action", "update_asset"), attr("denom", "someasset")],
         );
 
         let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();
@@ -1041,10 +1039,7 @@ fn update_asset_by_emergency_owner() {
         assert!(res.messages.is_empty());
         assert_eq!(
             res.attributes,
-            vec![
-                attr("action", "outposts/red-bank/emergency_update_asset"),
-                attr("denom", "someasset")
-            ],
+            vec![attr("action", "emergency_update_asset"), attr("denom", "someasset")],
         );
 
         let new_market = MARKETS.load(&deps.storage, "someasset").unwrap();

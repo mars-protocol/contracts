@@ -1,5 +1,5 @@
 use cosmwasm_std::{coin, Decimal};
-use mars_outpost::{
+use mars_red_bank_types::{
     address_provider::InstantiateMsg as InstantiateAddr,
     rewards_collector::{ExecuteMsg, InstantiateMsg as InstantiateRewards},
 };

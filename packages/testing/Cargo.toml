@@ -1,6 +1,6 @@
 [package]
 name          = "mars-testing"
-description   = "Utilities for testing Mars outpost contracts"
+description   = "Utilities for testing Mars red-bank contracts"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
@@ -24,10 +24,10 @@ cosmwasm-std                   = { workspace = true }
 osmosis-std                    = { workspace = true }
 mars-address-provider          = { workspace = true }
 mars-incentives                = { workspace = true }
-mars-outpost                   = { workspace = true }
 mars-oracle-osmosis            = { workspace = true }
 mars-osmosis                   = { workspace = true }
 mars-red-bank                  = { workspace = true }
+mars-red-bank-types            = { workspace = true }
 mars-rewards-collector-osmosis = { workspace = true }
 prost                          = { workspace = true }
 schemars                       = { workspace = true }

@@ -5,7 +5,7 @@ use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
     msg::PriceSourceResponse, Downtime, DowntimeDetector, OsmosisPriceSource,
 };
-use mars_outpost::{
+use mars_red_bank_types::{
     address_provider::{
         ExecuteMsg::SetAddress, InstantiateMsg as InstantiateAddr, MarsAddressType,
     },

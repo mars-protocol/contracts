@@ -9,16 +9,16 @@ use cw_utils::PaymentError;
 use helpers::{
     set_collateral, th_build_interests_updated_event, th_get_expected_indices_and_rates, th_setup,
 };
-use mars_outpost::{
-    address_provider::MarsAddressType,
-    incentives,
-    red_bank::{Collateral, ExecuteMsg, Market},
-};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
     interest_rates::{compute_scaled_amount, ScalingOperation, SCALING_FACTOR},
     state::{COLLATERALS, MARKETS},
+};
+use mars_red_bank_types::{
+    address_provider::MarsAddressType,
+    incentives,
+    red_bank::{Collateral, ExecuteMsg, Market},
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 
@@ -270,7 +270,7 @@ fn depositing_without_existing_position() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/red-bank/deposit"),
+            attr("action", "deposit"),
             attr("sender", &depositor_addr),
             attr("on_behalf_of", &depositor_addr),
             attr("denom", denom),
