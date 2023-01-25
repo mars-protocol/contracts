@@ -7,8 +7,8 @@ members = [
   "contracts/rewards-collector/*",
   "packages/chains/*",
   "packages/health",
-  "packages/types",
   "packages/testing",
+  "packages/types",
   "packages/utils",
   "integration-tests",
 ]
