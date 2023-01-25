@@ -21,8 +21,7 @@ A bug bounty is currently open for these contracts. See details [here][2].
    ```bash
    git clone https://github.com/mars-protocol/outposts.git
    git checkout <commit-id>
-   cd scripts
-   yarn compile
+   cargo make rust-optimizer
    ```
 
    Note: Intel/Amd 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production and the wasm bytecode will not match up to an Intel compiled wasm file.
