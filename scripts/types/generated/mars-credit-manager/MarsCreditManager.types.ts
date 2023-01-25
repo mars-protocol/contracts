@@ -77,6 +77,9 @@ export type Action =
       borrow: Coin
     }
   | {
+      lend: Coin
+    }
+  | {
       repay: ActionCoin
     }
   | {
@@ -176,6 +179,12 @@ export type CallbackMsg =
       }
     }
   | {
+      lend: {
+        account_id: string
+        coin: Coin
+      }
+    }
+  | {
       assert_max_ltv: {
         account_id: string
         prev_health: Health
@@ -262,11 +271,6 @@ export type CallbackMsg =
       }
     }
   | {
-      assert_one_vault_position_only: {
-        account_id: string
-      }
-    }
-  | {
       refund_all_coin_balances: {
         account_id: string
       }
@@ -349,6 +353,21 @@ export type QueryMsg =
       }
     }
   | {
+      all_lent_shares: {
+        limit?: number | null
+        start_after?: [string, string] | null
+      }
+    }
+  | {
+      total_lent_shares: string
+    }
+  | {
+      all_total_lent_shares: {
+        limit?: number | null
+        start_after?: string | null
+      }
+    }
+  | {
       all_vault_positions: {
         limit?: number | null
         start_after?: [string, string] | null
@@ -390,6 +409,11 @@ export interface SharesResponseItem {
 }
 export type ArrayOfDebtShares = DebtShares[]
 export interface DebtShares {
+  denom: string
+  shares: Uint128
+}
+export type ArrayOfLentShares = LentShares[]
+export interface LentShares {
   denom: string
   shares: Uint128
 }
@@ -452,9 +476,15 @@ export interface Positions {
   account_id: string
   debts: DebtAmount[]
   deposits: Coin[]
+  lends: LentAmount[]
   vaults: VaultPosition[]
 }
 export interface DebtAmount {
+  amount: Uint128
+  denom: string
+  shares: Uint128
+}
+export interface LentAmount {
   amount: Uint128
   denom: string
   shares: Uint128

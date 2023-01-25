@@ -38,6 +38,8 @@ import {
   SharesResponseItem,
   ArrayOfDebtShares,
   DebtShares,
+  ArrayOfLentShares,
+  LentShares,
   ArrayOfVaultWithBalance,
   VaultWithBalance,
   VaultPositionAmount,
@@ -55,6 +57,7 @@ import {
   HealthResponse,
   Positions,
   DebtAmount,
+  LentAmount,
   ArrayOfVaultInfoResponse,
   VaultInfoResponse,
 } from './MarsCreditManager.types'
@@ -99,6 +102,21 @@ export interface MarsCreditManagerReadOnlyInterface {
     limit?: number
     startAfter?: string
   }) => Promise<ArrayOfDebtShares>
+  allLentShares: ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string[][]
+  }) => Promise<ArrayOfSharesResponseItem>
+  totalLentShares: () => Promise<LentShares>
+  allTotalLentShares: ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }) => Promise<ArrayOfLentShares>
   allVaultPositions: ({
     limit,
     startAfter,
@@ -139,6 +157,9 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
     this.allDebtShares = this.allDebtShares.bind(this)
     this.totalDebtShares = this.totalDebtShares.bind(this)
     this.allTotalDebtShares = this.allTotalDebtShares.bind(this)
+    this.allLentShares = this.allLentShares.bind(this)
+    this.totalLentShares = this.totalLentShares.bind(this)
+    this.allTotalLentShares = this.allTotalLentShares.bind(this)
     this.allVaultPositions = this.allVaultPositions.bind(this)
     this.totalVaultCoinBalance = this.totalVaultCoinBalance.bind(this)
     this.allTotalVaultCoinBalances = this.allTotalVaultCoinBalances.bind(this)
@@ -235,6 +256,39 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
   }): Promise<ArrayOfDebtShares> => {
     return this.client.queryContractSmart(this.contractAddress, {
       all_total_debt_shares: {
+        limit,
+        start_after: startAfter,
+      },
+    })
+  }
+  allLentShares = async ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string[][]
+  }): Promise<ArrayOfSharesResponseItem> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      all_lent_shares: {
+        limit,
+        start_after: startAfter,
+      },
+    })
+  }
+  totalLentShares = async (): Promise<LentShares> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      total_lent_shares: {},
+    })
+  }
+  allTotalLentShares = async ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }): Promise<ArrayOfLentShares> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      all_total_lent_shares: {
         limit,
         start_after: startAfter,
       },

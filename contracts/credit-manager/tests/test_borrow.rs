@@ -145,7 +145,7 @@ fn success_when_new_debt_asset() {
     assert_eq!(position.debts.len(), 1);
     assert_eq!(debt_shares_res.shares, Uint128::new(42).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED));
     assert_eq!(debt_shares_res.denom, coin_info.denom);
-    let debt_amount = Uint128::new(42) + Uint128::new(1); // simulated yield
+    let debt_amount = Uint128::new(42) + Uint128::new(1); // simulated interest
     assert_eq!(debt_shares_res.amount, debt_amount);
 
     let coin = mock.query_balance(&mock.rover, &coin_info.denom);

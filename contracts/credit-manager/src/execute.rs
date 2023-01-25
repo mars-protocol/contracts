@@ -12,6 +12,7 @@ use crate::{
     borrow::borrow,
     deposit::deposit,
     health::{assert_max_ltv, compute_health},
+    lend::lend,
     liquidate_coin::liquidate_coin,
     refund::refund_coin_balances,
     repay::repay,
@@ -20,8 +21,8 @@ use crate::{
     update_coin_balances::update_coin_balance,
     utils::{assert_is_token_owner, assert_not_contract_in_config},
     vault::{
-        assert_only_one_vault_position, enter_vault, exit_vault, exit_vault_unlocked,
-        liquidate_vault, request_vault_unlock, update_vault_coin_balance,
+        enter_vault, exit_vault, exit_vault_unlocked, liquidate_vault, request_vault_unlock,
+        update_vault_coin_balance,
     },
     withdraw::withdraw,
     zap::{provide_liquidity, withdraw_liquidity},
@@ -73,6 +74,10 @@ pub fn dispatch_actions(
                 coin: coin.clone(),
             }),
             Action::Repay(coin) => callbacks.push(CallbackMsg::Repay {
+                account_id: account_id.to_string(),
+                coin: coin.clone(),
+            }),
+            Action::Lend(coin) => callbacks.push(CallbackMsg::Lend {
                 account_id: account_id.to_string(),
                 coin: coin.clone(),
             }),
@@ -171,10 +176,6 @@ pub fn dispatch_actions(
     }
 
     callbacks.extend([
-        // Fields of Mars ONLY assertion. Only one vault position per credit account
-        CallbackMsg::AssertOneVaultPositionOnly {
-            account_id: account_id.to_string(),
-        },
         // after user selected actions, we assert LTV is either:
         // - Healthy, if prior to actions MaxLTV health factor >= 1 or None
         // - Not further weakened, if prior to actions MaxLTV health factor < 1
@@ -219,6 +220,10 @@ pub fn execute_callback(
             account_id,
             coin,
         } => repay(deps, env, &account_id, &coin),
+        CallbackMsg::Lend {
+            account_id,
+            coin,
+        } => lend(deps, env, &account_id, coin),
         CallbackMsg::AssertMaxLTV {
             account_id,
             prev_health,
@@ -302,9 +307,6 @@ pub fn execute_callback(
             account_id,
             lp_token,
         } => withdraw_liquidity(deps, env, &account_id, &lp_token),
-        CallbackMsg::AssertOneVaultPositionOnly {
-            account_id,
-        } => assert_only_one_vault_position(deps, &account_id),
         CallbackMsg::RefundAllCoinBalances {
             account_id,
         } => refund_coin_balances(deps, env, &account_id),

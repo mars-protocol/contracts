@@ -62,6 +62,15 @@ export class Rover {
     printGreen(`Deposited into credit account: ${amount} ${this.config.chain.baseDenom}`)
   }
 
+  async lend() {
+    const amount = this.actions.lendAmount
+    await this.updateCreditAccount([{ lend: { amount, denom: this.config.chain.baseDenom } }], [])
+    const positions = await this.query.positions({ accountId: this.accountId! })
+    assert.equal(positions.lends.length, 1)
+    assert.equal(positions.lends[0].denom, this.config.chain.baseDenom)
+    printGreen(`Lent to Red Bank: ${amount} ${this.config.chain.baseDenom}`)
+  }
+
   async withdraw() {
     const amount = this.actions.withdrawAmount
     const positionsBefore = await this.query.positions({ accountId: this.accountId! })

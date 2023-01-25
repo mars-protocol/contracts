@@ -16,11 +16,27 @@ const vaultJunoOsmo14 = 'osmo1rclt7lsfp0c89ydf9umuhwlg28maw6z87jak3ly7u2lefnyzdz
 
 export const osmosisTestnetConfig: DeploymentConfig = {
   allowedCoins: [
-    { denom: uosmo, priceSource: { fixed: { price: '1' } } },
-    { denom: uatom, priceSource: { arithmetic_twap: { pool_id: 1, window_size: 1800 } } },
-    { denom: ujuno, priceSource: { arithmetic_twap: { pool_id: 497, window_size: 1800 } } },
-    { denom: gammPool1, priceSource: { xyk_liquidity_token: { pool_id: 1 } } },
-    { denom: gammPool497, priceSource: { xyk_liquidity_token: { pool_id: 497 } } },
+    { denom: uosmo, priceSource: { fixed: { price: '1' } }, grantCreditLine: true },
+    {
+      denom: uatom,
+      priceSource: { arithmetic_twap: { pool_id: 1, window_size: 1800 } },
+      grantCreditLine: true,
+    },
+    {
+      denom: ujuno,
+      priceSource: { arithmetic_twap: { pool_id: 497, window_size: 1800 } },
+      grantCreditLine: true,
+    },
+    {
+      denom: gammPool1,
+      priceSource: { xyk_liquidity_token: { pool_id: 1 } },
+      grantCreditLine: false,
+    },
+    {
+      denom: gammPool497,
+      priceSource: { xyk_liquidity_token: { pool_id: 497 } },
+      grantCreditLine: false,
+    },
   ],
   chain: {
     baseDenom: uosmo,
@@ -123,6 +139,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
     repayAmount: '11',
     defaultCreditLine: '100000000000',
     depositAmount: '100',
+    lendAmount: '10',
     secondaryDenom: uatom,
     startingAmountForTestUser: '2500000',
     swap: {

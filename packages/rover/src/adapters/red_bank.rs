@@ -58,6 +58,34 @@ impl RedBank {
         }))
     }
 
+    /// Generate message for lending a specified amount of coin
+    pub fn lend_msg(&self, coin: &Coin) -> StdResult<CosmosMsg> {
+        Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: self.address().to_string(),
+            msg: to_binary(&red_bank::ExecuteMsg::Deposit {
+                on_behalf_of: None,
+            })?,
+            funds: vec![coin.clone()],
+        }))
+    }
+
+    pub fn query_lent(
+        &self,
+        querier: &QuerierWrapper,
+        user_address: &Addr,
+        denom: &str,
+    ) -> StdResult<Uint128> {
+        let response: red_bank::UserCollateralResponse =
+            querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+                contract_addr: self.address().to_string(),
+                msg: to_binary(&red_bank::QueryMsg::UserCollateral {
+                    user: user_address.to_string(),
+                    denom: denom.to_string(),
+                })?,
+            }))?;
+        Ok(response.amount)
+    }
+
     pub fn query_debt(
         &self,
         querier: &QuerierWrapper,

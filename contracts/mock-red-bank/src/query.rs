@@ -1,7 +1,10 @@
 use cosmwasm_std::{Deps, StdResult, Uint128};
-use mars_outpost::red_bank::{Market, UserDebtResponse};
+use mars_outpost::red_bank::{Market, UserCollateralResponse, UserDebtResponse};
 
-use crate::{helpers::load_debt_amount, state::COIN_MARKET_INFO};
+use crate::{
+    helpers::{load_collateral_amount, load_debt_amount},
+    state::COIN_MARKET_INFO,
+};
 
 pub fn query_debt(deps: Deps, user: String, denom: String) -> StdResult<UserDebtResponse> {
     let user_addr = deps.api.addr_validate(&user)?;
@@ -21,5 +24,20 @@ pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
         liquidation_threshold: market_info.liquidation_threshold,
         liquidation_bonus: market_info.liquidation_bonus,
         ..Default::default()
+    })
+}
+
+pub fn query_collateral(
+    deps: Deps,
+    user: String,
+    denom: String,
+) -> StdResult<UserCollateralResponse> {
+    let user_addr = deps.api.addr_validate(&user)?;
+    let amount = load_collateral_amount(deps.storage, &user_addr, &denom)?;
+    Ok(UserCollateralResponse {
+        denom,
+        amount,
+        amount_scaled: Default::default(),
+        enabled: true,
     })
 }

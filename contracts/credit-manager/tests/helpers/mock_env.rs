@@ -15,7 +15,10 @@ use mars_mock_red_bank::msg::{CoinMarketInfo, InstantiateMsg as RedBankInstantia
 use mars_mock_vault::{
     contract::DEFAULT_VAULT_TOKEN_PREFUND, msg::InstantiateMsg as VaultInstantiateMsg,
 };
-use mars_outpost::red_bank::{QueryMsg::UserDebt, UserDebtResponse};
+use mars_outpost::red_bank::{
+    QueryMsg::{UserCollateral, UserDebt},
+    UserCollateralResponse, UserDebtResponse,
+};
 use mars_owner::OwnerUpdate;
 use mars_rover::{
     adapters::{
@@ -36,9 +39,9 @@ use mars_rover::{
         execute::{Action, CallbackMsg},
         instantiate::{ConfigUpdates, VaultInstantiateConfig},
         query::{
-            CoinBalanceResponseItem, ConfigResponse, DebtShares, Positions, SharesResponseItem,
-            VaultInfoResponse as RoverVaultInfoResponse, VaultPositionResponseItem,
-            VaultWithBalance,
+            CoinBalanceResponseItem, ConfigResponse, DebtShares, LentShares, Positions,
+            SharesResponseItem, VaultInfoResponse as RoverVaultInfoResponse,
+            VaultPositionResponseItem, VaultWithBalance,
         },
         zapper::{
             InstantiateMsg as ZapperInstantiateMsg, LpConfig, QueryMsg::EstimateProvideLiquidity,
@@ -370,10 +373,51 @@ impl MockEnv {
             .unwrap()
     }
 
+    pub fn query_all_lent_shares(
+        &self,
+        start_after: Option<(String, String)>,
+        limit: Option<u32>,
+    ) -> Vec<SharesResponseItem> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.rover.clone(),
+                &QueryMsg::AllLentShares {
+                    start_after,
+                    limit,
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_all_total_lent_shares(
+        &self,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> Vec<LentShares> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.rover.clone(),
+                &QueryMsg::AllTotalLentShares {
+                    start_after,
+                    limit,
+                },
+            )
+            .unwrap()
+    }
+
     pub fn query_total_debt_shares(&self, denom: &str) -> DebtShares {
         self.app
             .wrap()
             .query_wasm_smart(self.rover.clone(), &QueryMsg::TotalDebtShares(denom.to_string()))
+            .unwrap()
+    }
+
+    pub fn query_total_lent_shares(&self, denom: &str) -> LentShares {
+        self.app
+            .wrap()
+            .query_wasm_smart(self.rover.clone(), &QueryMsg::TotalLentShares(denom.to_string()))
             .unwrap()
     }
 
@@ -384,6 +428,20 @@ impl MockEnv {
             .query_wasm_smart(
                 config.red_bank,
                 &UserDebt {
+                    user: self.rover.to_string(),
+                    denom: denom.into(),
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_red_bank_collateral(&self, denom: &str) -> UserCollateralResponse {
+        let config = self.query_config();
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                config.red_bank,
+                &UserCollateral {
                     user: self.rover.to_string(),
                     denom: denom.into(),
                 },

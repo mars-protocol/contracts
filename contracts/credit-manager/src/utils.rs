@@ -15,7 +15,7 @@ use mars_rover::{
 use crate::{
     state::{
         ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES,
-        VAULT_CONFIGS, ZAPPER,
+        TOTAL_LENT_SHARES, VAULT_CONFIGS, ZAPPER,
     },
     update_coin_balances::query_balance,
 };
@@ -128,6 +128,30 @@ pub fn debt_shares_to_amount(
 
     // Amount of debt for token's position. Rounded up to favor participants in the debt pool.
     let amount = total_debt_amount.checked_mul_ceil(Fractional(shares, total_debt_shares))?;
+
+    Ok(Coin {
+        denom: denom.to_string(),
+        amount,
+    })
+}
+
+pub fn lent_shares_to_amount(
+    deps: Deps,
+    rover_addr: &Addr,
+    denom: &str,
+    shares: Uint128,
+) -> ContractResult<Coin> {
+    // total shares of lent issued for denom
+    let total_lent_shares = TOTAL_LENT_SHARES.load(deps.storage, denom).unwrap_or(Uint128::zero());
+
+    // total rover lent amount in Redbank for asset
+    let red_bank = RED_BANK.load(deps.storage)?;
+    let total_lent_amount = red_bank.query_lent(&deps.querier, rover_addr, denom)?;
+
+    // amount of lent for account's position
+    // NOTE: Given the nature of integers, the lent amount is rounded down.
+    //       This means the account donates the fractional unit to the lending pool.
+    let amount = total_lent_amount.checked_multiply_ratio(shares, total_lent_shares)?;
 
     Ok(Coin {
         denom: denom.to_string(),

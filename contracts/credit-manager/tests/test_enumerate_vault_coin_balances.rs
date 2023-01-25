@@ -8,7 +8,6 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
-#[ignore] // Test ignored due to Fields limitation on vault position amounts
 fn pagination_on_all_vault_coin_balances_query_works() {
     let lp_token = lp_token_info();
 

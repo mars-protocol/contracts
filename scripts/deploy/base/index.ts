@@ -41,6 +41,7 @@ export const taskRunner = async ({
       const rover = await deployer.newUserRoverClient(config.testActions)
       await rover.createCreditAccount()
       await rover.deposit()
+      await rover.lend()
       await rover.borrow()
       await rover.swap()
       await rover.repay()

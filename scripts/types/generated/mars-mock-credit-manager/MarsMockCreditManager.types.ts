@@ -74,6 +74,21 @@ export type QueryMsg =
       }
     }
   | {
+      all_lent_shares: {
+        limit?: number | null
+        start_after?: [string, string] | null
+      }
+    }
+  | {
+      total_lent_shares: string
+    }
+  | {
+      all_total_lent_shares: {
+        limit?: number | null
+        start_after?: string | null
+      }
+    }
+  | {
       all_vault_positions: {
         limit?: number | null
         start_after?: [string, string] | null
@@ -123,6 +138,11 @@ export interface SharesResponseItem {
 }
 export type ArrayOfDebtShares = DebtShares[]
 export interface DebtShares {
+  denom: string
+  shares: Uint128
+}
+export type ArrayOfLentShares = LentShares[]
+export interface LentShares {
   denom: string
   shares: Uint128
 }
@@ -179,9 +199,15 @@ export interface Positions {
   account_id: string
   debts: DebtAmount[]
   deposits: Coin[]
+  lends: LentAmount[]
   vaults: VaultPosition[]
 }
 export interface DebtAmount {
+  amount: Uint128
+  denom: string
+  shares: Uint128
+}
+export interface LentAmount {
   amount: Uint128
   denom: string
   shares: Uint128

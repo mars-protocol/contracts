@@ -39,6 +39,8 @@ import {
   SharesResponseItem,
   ArrayOfDebtShares,
   DebtShares,
+  ArrayOfLentShares,
+  LentShares,
   ArrayOfVaultWithBalance,
   VaultWithBalance,
   VaultPositionAmount,
@@ -56,6 +58,7 @@ import {
   HealthResponse,
   Positions,
   DebtAmount,
+  LentAmount,
   ArrayOfVaultInfoResponse,
   VaultInfoResponse,
 } from './MarsCreditManager.types'

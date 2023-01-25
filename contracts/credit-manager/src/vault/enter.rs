@@ -11,7 +11,6 @@ use mars_rover::{
 };
 
 use crate::{
-    query::query_vault_positions,
     state::{COIN_BALANCES, ORACLE, VAULT_CONFIGS},
     utils::{assert_coin_is_whitelisted, decrement_coin_balance},
     vault::{
@@ -136,14 +135,4 @@ pub fn assert_deposit_is_under_cap(
     }
 
     Ok(())
-}
-
-pub fn assert_only_one_vault_position(deps: DepsMut, account_id: &str) -> ContractResult<Response> {
-    let vaults = query_vault_positions(deps.as_ref(), account_id)?;
-    if vaults.len() > 1 {
-        return Err(ContractError::OnlyOneVaultPositionAllowed);
-    }
-
-    Ok(Response::new()
-        .add_attribute("action", "rover/credit-manager/callback/assert_only_one_vault_position"))
 }

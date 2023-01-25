@@ -4,9 +4,9 @@ use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
 use mars_outpost::red_bank;
 
 use crate::{
-    execute::{borrow, repay},
+    execute::{borrow, deposit, repay},
     msg::InstantiateMsg,
-    query::{query_debt, query_market},
+    query::{query_collateral, query_debt, query_market},
     state::COIN_MARKET_INFO,
 };
 
@@ -39,6 +39,9 @@ pub fn execute(
         red_bank::ExecuteMsg::Repay {
             ..
         } => repay(deps, info),
+        red_bank::ExecuteMsg::Deposit {
+            ..
+        } => deposit(deps, info),
         _ => unimplemented!("Msg not supported!"),
     }
 }
@@ -53,6 +56,10 @@ pub fn query(deps: Deps, _env: Env, msg: red_bank::QueryMsg) -> StdResult<Binary
         red_bank::QueryMsg::Market {
             denom,
         } => to_binary(&query_market(deps, denom)?),
+        red_bank::QueryMsg::UserCollateral {
+            user,
+            denom,
+        } => to_binary(&query_collateral(deps, user, denom)?),
         _ => unimplemented!("Query not supported!"),
     }
 }

@@ -228,7 +228,9 @@ export class Deployer {
     const client = await setupClient(this.config, wallet)
     const addr = await getAddress(wallet)
 
-    for (const denom of [this.config.chain.baseDenom, this.config.testActions!.secondaryDenom]) {
+    for (const denom of this.config.allowedCoins
+      .filter((c) => c.grantCreditLine)
+      .map((c) => c.denom)) {
       const msg = {
         update_uncollateralized_loan_limit: {
           user: this.storage.addresses.creditManager,

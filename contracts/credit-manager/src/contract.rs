@@ -14,10 +14,11 @@ use crate::{
     health::compute_health,
     instantiate::store_config,
     query::{
-        query_all_coin_balances, query_all_debt_shares, query_all_total_debt_shares,
+        query_all_coin_balances, query_all_debt_shares, query_all_lent_shares,
+        query_all_total_debt_shares, query_all_total_lent_shares,
         query_all_total_vault_coin_balances, query_all_vault_positions, query_allowed_coins,
-        query_config, query_positions, query_total_debt_shares, query_total_vault_coin_balance,
-        query_vaults_info,
+        query_config, query_positions, query_total_debt_shares, query_total_lent_shares,
+        query_total_vault_coin_balance, query_vaults_info,
     },
     update_config::{update_config, update_nft_config, update_owner},
     vault::handle_unlock_request_reply,
@@ -102,6 +103,15 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             start_after,
             limit,
         } => to_binary(&query_all_total_debt_shares(deps, start_after, limit)?),
+        QueryMsg::AllLentShares {
+            start_after,
+            limit,
+        } => to_binary(&query_all_lent_shares(deps, start_after, limit)?),
+        QueryMsg::TotalLentShares(denom) => to_binary(&query_total_lent_shares(deps, &denom)?),
+        QueryMsg::AllTotalLentShares {
+            start_after,
+            limit,
+        } => to_binary(&query_all_total_lent_shares(deps, start_after, limit)?),
         QueryMsg::TotalVaultCoinBalance {
             vault,
         } => to_binary(&query_total_vault_coin_balance(deps, &vault, &env.contract.address)?),

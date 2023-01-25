@@ -80,6 +80,8 @@ pub enum Action {
     Withdraw(Coin),
     /// Borrow coin of specified amount from Red Bank
     Borrow(Coin),
+    /// Lend coin to the Red Bank
+    Lend(Coin),
     /// Repay coin of specified amount back to Red Bank. If `amount: AccountBalance` is passed,
     /// the repaid amount will be the minimum between account balance for denom and total owed.
     Repay(ActionCoin),
@@ -178,6 +180,11 @@ pub enum CallbackMsg {
         account_id: String,
         coin: ActionCoin,
     },
+    /// Lend coin to the Red Bank
+    Lend {
+        account_id: String,
+        coin: Coin,
+    },
     /// Assert MaxLTV is either:
     /// - Healthy, if prior to actions MaxLTV health factor >= 1 or None
     /// - Not further weakened, if prior to actions MaxLTV health factor < 1
@@ -260,10 +267,6 @@ pub enum CallbackMsg {
     WithdrawLiquidity {
         account_id: String,
         lp_token: ActionCoin,
-    },
-    /// Checks to ensure only one vault position is taken per credit account
-    AssertOneVaultPositionOnly {
-        account_id: String,
     },
     /// Refunds all coin balances back to user wallet
     RefundAllCoinBalances {

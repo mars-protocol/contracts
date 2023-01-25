@@ -24,7 +24,7 @@ export interface DeploymentConfig {
   oracle: { addr: string }
   redBank: { addr: string }
   vaults: VaultInstantiateConfig[]
-  allowedCoins: { denom: string; priceSource: PriceSource }[]
+  allowedCoins: { denom: string; priceSource: PriceSource; grantCreditLine: boolean }[]
   maxCloseFactor: string
   maxValueForBurn: string
   maxUnlockingPositions: string
@@ -55,6 +55,7 @@ export interface TestActions {
   defaultCreditLine: string
   startingAmountForTestUser: string
   depositAmount: string
+  lendAmount: string
   borrowAmount: string
   repayAmount: string
   swap: {

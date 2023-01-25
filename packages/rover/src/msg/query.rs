@@ -55,6 +55,21 @@ pub enum QueryMsg {
         start_after: Option<String>,
         limit: Option<u32>,
     },
+    /// Enumerate debt shares for all token positions; start_after accepts (account_id, denom)
+    #[returns(Vec<SharesResponseItem>)]
+    AllLentShares {
+        start_after: Option<(String, String)>,
+        limit: Option<u32>,
+    },
+    /// Total debt shares issued for Coin
+    #[returns(LentShares)]
+    TotalLentShares(String),
+    /// Enumerate total lent shares for all supported coins; start_after accepts denom string
+    #[returns(Vec<LentShares>)]
+    AllTotalLentShares {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
     /// Enumerate all vault positions; start_after accepts (account_id, addr)
     #[returns(Vec<VaultPositionResponseItem>)]
     AllVaultPositions {
@@ -115,9 +130,24 @@ pub struct DebtShares {
 }
 
 #[cw_serde]
+pub struct LentShares {
+    pub denom: String,
+    pub shares: Uint128,
+}
+
+#[cw_serde]
 pub struct DebtAmount {
     pub denom: String,
     /// number of shares in debt pool
+    pub shares: Uint128,
+    /// amount of coins
+    pub amount: Uint128,
+}
+
+#[cw_serde]
+pub struct LentAmount {
+    pub denom: String,
+    /// number of shares in lent pool
     pub shares: Uint128,
     /// amount of coins
     pub amount: Uint128,
@@ -147,6 +177,7 @@ pub struct Positions {
     pub account_id: String,
     pub deposits: Vec<Coin>,
     pub debts: Vec<DebtAmount>,
+    pub lends: Vec<LentAmount>,
     pub vaults: Vec<VaultPosition>,
 }
 
