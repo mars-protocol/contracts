@@ -7,13 +7,13 @@ use mars_incentives::{
     contract::execute, helpers::compute_asset_incentive_index, state::ASSET_INCENTIVES,
     ContractError,
 };
-use mars_outpost::{
-    error::MarsError,
+use mars_owner::OwnerError::NotOwner;
+use mars_red_bank_types::{
     incentives::{AssetIncentive, ExecuteMsg},
     red_bank::Market,
 };
-use mars_owner::OwnerError::NotOwner;
 use mars_testing::MockEnvParams;
+use mars_utils::error::ValidationError;
 
 use crate::helpers::{th_setup, th_setup_with_env};
 
@@ -50,7 +50,7 @@ fn invalid_denom_for_incentives() {
     let res = execute(deps.as_mut(), mock_env(), info, msg);
     assert_eq!(
         res,
-        Err(ContractError::Mars(MarsError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
                 .to_string()
         }))
@@ -180,7 +180,7 @@ fn set_new_asset_incentive() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/set_asset_incentive"),
+            attr("action", "set_asset_incentive"),
             attr("denom", "uosmo"),
             attr("emission_per_second", "100"),
             attr("start_time", block_time.seconds().to_string()),
@@ -481,7 +481,7 @@ fn set_existing_asset_incentive_with_index_updated_during_incentive() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/set_asset_incentive"),
+            attr("action", "set_asset_incentive"),
             attr("denom", denom),
             attr("emission_per_second", "200"),
             attr("start_time", start_time.to_string()),
@@ -557,7 +557,7 @@ fn set_existing_asset_incentive_with_index_updated_after_incentive() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/set_asset_incentive"),
+            attr("action", "set_asset_incentive"),
             attr("denom", denom),
             attr("emission_per_second", "215"),
             attr("start_time", block_time.seconds().to_string()),

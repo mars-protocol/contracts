@@ -6,11 +6,11 @@ use cosmwasm_std::{
     to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
 };
 use cw_storage_plus::Bound;
-use mars_outpost::address_provider::{
+use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_red_bank_types::address_provider::{
     AddressResponseItem, Config, ConfigResponse, ExecuteMsg, InstantiateMsg, MarsAddressType,
     QueryMsg,
 };
-use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
 
 use crate::{
     error::ContractError,
@@ -88,7 +88,7 @@ fn set_address(
     ADDRESSES.save(deps.storage, address_type.into(), &address)?;
 
     Ok(Response::new()
-        .add_attribute("action", "outposts/address-provider/set_address")
+        .add_attribute("action", "set_address")
         .add_attribute("address_type", address_type.to_string())
         .add_attribute("address", address))
 }

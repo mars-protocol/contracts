@@ -30,9 +30,9 @@ checksum = "2cb2f989d18dd141ab8ae82f64d1a8cdd37e0840f73a406896cf5e99502fab61"
 
 [[package]]
 name = "async-trait"
-version = "0.1.61"
+version = "0.1.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "705339e0e4a9690e2908d2b3d049d85682cf19fbd5782494498fbf7003a6a282"
+checksum = "eff18d764974428cf3a9328e23fc5c986f5fbed46e6cd4cdf42544df5d297ec1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -156,9 +156,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.11.1"
+version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "572f695136211188308f16ad2ca5c851a712c464060ae6974944458eb83880ba"
+checksum = "0d261e256854913907f67ed06efbc3338dfe6179796deefc1ff763fc1aee5535"
 
 [[package]]
 name = "byteorder"
@@ -244,7 +244,7 @@ version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20b42021d8488665b1a0d9748f1f81df7235362d194f44481e2e61bf376b77b4"
 dependencies = [
- "prost 0.11.5",
+ "prost 0.11.6",
  "prost-types",
  "tendermint-proto",
 ]
@@ -271,9 +271,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "1.1.9"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "227315dc11f0bb22a273d0c43d3ba8ef52041c42cf959f09045388a89c57e661"
+checksum = "cb56fffc2233212e9546df66e01267277173d55f6237ab939690ef2c5cfd50c2"
 dependencies = [
  "digest 0.10.6",
  "ed25519-zebra",
@@ -284,18 +284,18 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "1.1.9"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fca30d51f7e5fbfa6440d8b10d7df0231bdf77e97fd3fe5d0cb79cc4822e50c"
+checksum = "e26a78e202d602a23fd5d13dff898732814ebe7a8bde20f1bf71eb0209d56d56"
 dependencies = [
  "syn",
 ]
 
 [[package]]
 name = "cosmwasm-schema"
-version = "1.1.9"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04135971e2c3b867eb793ca4e832543c077dbf72edaef7672699190f8fcdb619"
+checksum = "1a3dfcfa0c6f4b9aef8820c0a999410f239828a4503a388ce8e55f59fe3ac863"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -306,9 +306,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "1.1.9"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a06c8f516a13ae481016aa35f0b5c4652459e8aee65b15b6fb51547a07cea5a0"
+checksum = "e19cd48063eef5b92a0aabcf0687705802178ae175571dfdc5f3b925d0741d39"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -317,9 +317,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.1.9"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b13d5a84d15cf7be17dc249a21588cdb0f7ef308907c50ce2723316a7d79c3dc"
+checksum = "7b50f4deaed6196047a3ceec9bc23e85d4292b73442d77af63723842d8b6049d"
 dependencies = [
  "base64",
  "cosmwasm-crypto",
@@ -330,6 +330,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde-json-wasm",
+ "sha2 0.10.6",
  "thiserror",
  "uint",
 ]
@@ -503,9 +504,9 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "1.5.2"
+version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e9c280362032ea4203659fc489832d0204ef09f247a0506f170dafcac08c369"
+checksum = "91cff35c70bba8a626e3185d8cd48cc11b5437e1a5bcd15b9b5fa3c64b6dfee7"
 dependencies = [
  "signature",
 ]
@@ -860,8 +861,8 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw2",
- "mars-outpost",
  "mars-owner",
+ "mars-red-bank-types",
  "serde",
  "thiserror",
 ]
@@ -871,7 +872,7 @@ name = "mars-health"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
- "mars-outpost",
+ "mars-red-bank-types",
  "mars-testing",
  "thiserror",
 ]
@@ -884,9 +885,10 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw2",
- "mars-outpost",
  "mars-owner",
+ "mars-red-bank-types",
  "mars-testing",
+ "mars-utils",
  "thiserror",
 ]
 
@@ -900,11 +902,12 @@ dependencies = [
  "mars-oracle-base",
  "mars-oracle-osmosis",
  "mars-osmosis",
- "mars-outpost",
  "mars-red-bank",
+ "mars-red-bank-types",
  "mars-rewards-collector-base",
  "mars-rewards-collector-osmosis",
  "mars-testing",
+ "mars-utils",
  "osmosis-std",
  "osmosis-testing",
  "serde",
@@ -916,8 +919,9 @@ version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
- "mars-outpost",
  "mars-owner",
+ "mars-red-bank-types",
+ "mars-utils",
  "schemars",
  "serde",
  "thiserror",
@@ -933,9 +937,10 @@ dependencies = [
  "cw2",
  "mars-oracle-base",
  "mars-osmosis",
- "mars-outpost",
  "mars-owner",
+ "mars-red-bank-types",
  "mars-testing",
+ "mars-utils",
  "osmosis-std",
  "schemars",
  "serde",
@@ -949,17 +954,6 @@ dependencies = [
  "cosmwasm-std",
  "osmosis-std",
  "serde",
-]
-
-[[package]]
-name = "mars-outpost"
-version = "1.0.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "mars-owner",
- "mars-testing",
- "thiserror",
 ]
 
 [[package]]
@@ -985,9 +979,22 @@ dependencies = [
  "cw-utils",
  "cw2",
  "mars-health",
- "mars-outpost",
+ "mars-owner",
+ "mars-red-bank-types",
+ "mars-testing",
+ "mars-utils",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-red-bank-types"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
  "mars-owner",
  "mars-testing",
+ "mars-utils",
  "thiserror",
 ]
 
@@ -997,9 +1004,10 @@ version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
- "mars-outpost",
  "mars-owner",
+ "mars-red-bank-types",
  "mars-testing",
+ "mars-utils",
  "schemars",
  "serde",
  "thiserror",
@@ -1014,10 +1022,11 @@ dependencies = [
  "cw-storage-plus",
  "cw2",
  "mars-osmosis",
- "mars-outpost",
  "mars-owner",
+ "mars-red-bank-types",
  "mars-rewards-collector-base",
  "mars-testing",
+ "mars-utils",
  "osmosis-std",
  "schemars",
  "serde",
@@ -1035,13 +1044,22 @@ dependencies = [
  "mars-incentives",
  "mars-oracle-osmosis",
  "mars-osmosis",
- "mars-outpost",
  "mars-red-bank",
+ "mars-red-bank-types",
  "mars-rewards-collector-osmosis",
  "osmosis-std",
- "prost 0.11.5",
+ "prost 0.11.6",
  "schemars",
  "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-utils"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-std",
+ "mars-testing",
  "thiserror",
 ]
 
@@ -1059,9 +1077,9 @@ checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 
 [[package]]
 name = "nom"
-version = "7.1.2"
+version = "7.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5507769c4919c998e69e49c839d9dc6e693ede4cc4290d6ad8b41d4f09c548c"
+checksum = "d273983c5a657a70a3e8f2a01329822f3b8c8172b73826411a55751e404a0a4a"
 dependencies = [
  "memchr",
  "minimal-lexical",
@@ -1132,7 +1150,7 @@ dependencies = [
  "chrono",
  "cosmwasm-std",
  "osmosis-std-derive",
- "prost 0.11.5",
+ "prost 0.11.6",
  "prost-types",
  "schemars",
  "serde",
@@ -1160,7 +1178,7 @@ dependencies = [
  "cosmrs",
  "cosmwasm-std",
  "osmosis-std",
- "prost 0.11.5",
+ "prost 0.11.6",
  "serde",
  "serde_json",
  "thiserror",
@@ -1211,9 +1229,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.49"
+version = "1.0.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57a8eca9f9c4ffde41714334dee777596264c7825420f521abc92b5b5deb63a5"
+checksum = "6ef7d57beacfaf2d8aee5937dab7b7f28de3cb8b1828479bb5de2a7106f2bae2"
 dependencies = [
  "unicode-ident",
 ]
@@ -1230,12 +1248,12 @@ dependencies = [
 
 [[package]]
 name = "prost"
-version = "0.11.5"
+version = "0.11.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c01db6702aa05baa3f57dec92b8eeeeb4cb19e894e73996b32a4093289e54592"
+checksum = "21dc42e00223fc37204bd4aa177e69420c604ca4a183209a8f9de30c6d934698"
 dependencies = [
  "bytes",
- "prost-derive 0.11.5",
+ "prost-derive 0.11.6",
 ]
 
 [[package]]
@@ -1253,9 +1271,9 @@ dependencies = [
 
 [[package]]
 name = "prost-derive"
-version = "0.11.5"
+version = "0.11.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8842bad1a5419bca14eac663ba798f6bc19c413c2fdceb5f3ba3b0932d96720"
+checksum = "8bda8c0881ea9f722eb9629376db3d0b903b462477c1aafcb0566610ac28ac5d"
 dependencies = [
  "anyhow",
  "itertools",
@@ -1266,12 +1284,12 @@ dependencies = [
 
 [[package]]
 name = "prost-types"
-version = "0.11.5"
+version = "0.11.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "017f79637768cde62820bc2d4fe0e45daaa027755c323ad077767c6c5f173091"
+checksum = "a5e0526209433e96d83d750dd81a99118edbc55739e7e61a46764fd2ad537788"
 dependencies = [
  "bytes",
- "prost 0.11.5",
+ "prost 0.11.6",
 ]
 
 [[package]]
@@ -1422,9 +1440,9 @@ dependencies = [
 
 [[package]]
 name = "serde-json-wasm"
-version = "0.4.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "479b4dbc401ca13ee8ce902851b834893251404c4f3c65370a49e047a6be09a5"
+checksum = "a15bee9b04dd165c3f4e142628982ddde884c2022a89e8ddf99c4829bf2c3a58"
 dependencies = [
  "serde",
 ]
@@ -1607,7 +1625,7 @@ dependencies = [
  "k256",
  "num-traits",
  "once_cell",
- "prost 0.11.5",
+ "prost 0.11.6",
  "prost-types",
  "ripemd160",
  "serde",
@@ -1633,7 +1651,7 @@ dependencies = [
  "flex-error",
  "num-derive",
  "num-traits",
- "prost 0.11.5",
+ "prost 0.11.6",
  "prost-types",
  "serde",
  "serde_bytes",
@@ -1643,9 +1661,9 @@ dependencies = [
 
 [[package]]
 name = "termcolor"
-version = "1.1.3"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bab24d30b911b2376f3a13cc2cd443142f0c81dda04c118693e35b3835757755"
+checksum = "be55cf8942feac5c765c2c993422806843c9a9a45d4d5c407ad6dd2ea95eb9b6"
 dependencies = [
  "winapi-util",
 ]
@@ -1791,9 +1809,9 @@ checksum = "1c38c045535d93ec4f0b4defec448e4291638ee608530863b1e2ba115d4fff7f"
 
 [[package]]
 name = "which"
-version = "4.3.0"
+version = "4.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c831fbbee9e129a8cf93e7747a82da9d95ba8e16621cae60ec2cdc849bacb7b"
+checksum = "2441c784c52b289a054b7201fc93253e288f094e2f4be9058343127c4226a269"
 dependencies = [
  "either",
  "libc",

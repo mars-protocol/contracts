@@ -6,12 +6,10 @@ use mars_incentives::{
     contract::{execute, instantiate},
     ContractError,
 };
-use mars_outpost::{
-    error::MarsError,
-    incentives::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg},
-};
 use mars_owner::OwnerError::NotOwner;
+use mars_red_bank_types::incentives::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_testing::mock_dependencies;
+use mars_utils::error::ValidationError;
 
 use crate::helpers::{th_query, th_setup};
 
@@ -66,7 +64,7 @@ fn update_config() {
     let err = execute(deps.as_mut(), mock_env(), info, msg);
     assert_eq!(
         err,
-        Err(ContractError::Mars(MarsError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "First character is not ASCII alphabetic".to_string()
         }))
     );

@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult};
-use mars_outpost::red_bank::{Market, QueryMsg, UserCollateralResponse, UserPositionResponse};
+use mars_red_bank_types::red_bank::{
+    Market, QueryMsg, UserCollateralResponse, UserPositionResponse,
+};
 
 #[derive(Default)]
 pub struct RedBankQuerier {

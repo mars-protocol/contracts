@@ -1,2 +1,3 @@
 # Mars integration tests
-Contains integration tests for outposts contracts
+
+Contains integration tests for red-bank contracts

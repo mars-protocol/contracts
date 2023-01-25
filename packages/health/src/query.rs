@@ -1,5 +1,5 @@
 use cosmwasm_std::{Addr, Decimal, QuerierWrapper, StdResult};
-use mars_outpost::{
+use mars_red_bank_types::{
     oracle::{self, PriceResponse},
     red_bank::{self, Market},
 };

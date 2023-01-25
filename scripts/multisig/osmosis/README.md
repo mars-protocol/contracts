@@ -34,7 +34,7 @@ _Steps 2-4 must be completed by ALL multisig holders to properly set up their lo
    ```shell
    osmosisd keys show osmosis_multisig
    ```
-5. Update the config with the new mutlisig address in `outposts/scripts/deploy/osmosis/config`, which will set the owner and admin of the smart contracts to the multisig upon deployment.
+5. Update the config with the new mutlisig address in `red-bank/scripts/deploy/osmosis/config`, which will set the owner and admin of the smart contracts to the multisig upon deployment.
 
 ## Set up environment variables
 
@@ -90,7 +90,7 @@ $OSMO_MULTI
    For address-provider, incentives, oracle, red-bank, rewards-collector contracts:
 
    ```shell
-   git clone https://github.com/mars-protocol/outposts.git
+   git clone https://github.com/mars-protocol/red-bank.git
    ```
 
    For liquidation-filterer contract
@@ -309,7 +309,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
 9. Verify the new contract.
 
    ```
-   git clone https://github.com/mars-protocol/outposts.git
+   git clone https://github.com/mars-protocol/red-bank.git
 
    git checkout <commit-id>
 

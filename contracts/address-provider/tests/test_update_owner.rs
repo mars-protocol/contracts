@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
 use mars_address_provider::{contract::execute, error::ContractError};
-use mars_outpost::address_provider::{ConfigResponse, ExecuteMsg, QueryMsg};
 use mars_owner::{OwnerError::NotOwner, OwnerUpdate};
+use mars_red_bank_types::address_provider::{ConfigResponse, ExecuteMsg, QueryMsg};
 
 use crate::helpers::{th_query, th_setup};
 

@@ -14,7 +14,7 @@ pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response};
     use mars_oracle_base::ContractResult;
-    use mars_outpost::oracle::{ExecuteMsg, InstantiateMsg, QueryMsg};
+    use mars_red_bank_types::oracle::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
     use super::*;
 

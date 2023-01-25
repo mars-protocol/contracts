@@ -1,9 +1,8 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Api, Decimal, StdResult, Uint128};
 use mars_owner::OwnerUpdate;
-
-use crate::{
-    error::MarsError,
+use mars_utils::{
+    error::ValidationError,
     helpers::{decimal_param_le_one, integer_param_gt_zero, validate_native_denom},
 };
 
@@ -56,7 +55,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn validate(&self) -> Result<(), MarsError> {
+    pub fn validate(&self) -> Result<(), ValidationError> {
         decimal_param_le_one(self.safety_tax_rate, "safety_tax_rate")?;
 
         integer_param_gt_zero(self.timeout_revision, "timeout_revision")?;
@@ -64,7 +63,7 @@ impl Config {
         integer_param_gt_zero(self.timeout_seconds, "timeout_seconds")?;
 
         if self.slippage_tolerance > Decimal::percent(MAX_SLIPPAGE_TOLERANCE_PERCENTAGE) {
-            return Err(MarsError::InvalidParam {
+            return Err(ValidationError::InvalidParam {
                 param_name: "slippage_tolerance".to_string(),
                 invalid_value: self.slippage_tolerance.to_string(),
                 predicate: format!("<= {}", Decimal::percent(MAX_SLIPPAGE_TOLERANCE_PERCENTAGE)),

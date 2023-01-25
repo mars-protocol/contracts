@@ -8,7 +8,7 @@ use mars_incentives::{
     helpers::{compute_asset_incentive_index, compute_user_accrued_rewards},
     state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
-use mars_outpost::{
+use mars_red_bank_types::{
     error::MarsError,
     incentives::{AssetIncentive, ExecuteMsg},
     red_bank::{Market, UserCollateralResponse},
@@ -99,7 +99,7 @@ fn balance_change_zero_emission() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/balance_change"),
+            attr("action", "balance_change"),
             attr("denom", denom),
             attr("user", "user"),
             attr("rewards_accrued", expected_accrued_rewards),
@@ -177,7 +177,7 @@ fn balance_change_user_with_zero_balance() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/balance_change"),
+            attr("action", "balance_change"),
             attr("denom", denom),
             attr("user", "user"),
             attr("rewards_accrued", "0"),
@@ -455,7 +455,7 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(
             res.attributes,
             vec![
-                attr("action", "outposts/incentives/balance_change"),
+                attr("action", "balance_change"),
                 attr("denom", denom),
                 attr("user", "user"),
                 attr("rewards_accrued", expected_accrued_rewards),
@@ -518,7 +518,7 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(
             res.attributes,
             vec![
-                attr("action", "outposts/incentives/balance_change"),
+                attr("action", "balance_change"),
                 attr("denom", denom),
                 attr("user", "user"),
                 attr("rewards_accrued", expected_accrued_rewards),
@@ -565,7 +565,7 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(
             res.attributes,
             vec![
-                attr("action", "outposts/incentives/balance_change"),
+                attr("action", "balance_change"),
                 attr("denom", denom),
                 attr("user", "user"),
                 attr("rewards_accrued", "0"),
