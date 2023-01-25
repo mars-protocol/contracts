@@ -31,5 +31,5 @@ mars-rewards-collector-osmosis = { workspace = true }
 mars-testing                   = { workspace = true }
 mars-utils                     = { workspace = true }
 osmosis-std                    = { workspace = true }
-osmosis-testing                = { workspace = true }
+osmosis-test-tube              = { workspace = true }
 serde                          = { workspace = true }
