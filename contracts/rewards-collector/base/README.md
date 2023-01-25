@@ -1,4 +1,4 @@
-# Base Rewards Collector
+# Mars Rewards Collector - Base
 
 Chain-agnostic logics for the rewards collector contract. To create an oracle contract specific to a chain, create a `{chain-name}Route` object that implements and `Route` trait, which defines methods relevant for swapping assets on that chain; then plugin it into the `CollectorBase` type.
 
@@ -17,3 +17,7 @@ impl Route<OsmosisMsg, OsmosisQuery> for OsmosisRoute {
 
 pub type OsmosisCollector<'a> = CollectorBase<'a, OsmosisRoute, OsmosisMsg, OsmosisQuery>;
 ```
+
+## License
+
+Contents of this crate are open source under [GNU General Public License v3](../../../LICENSE) or later.
