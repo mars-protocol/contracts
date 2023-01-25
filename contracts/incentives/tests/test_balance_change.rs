@@ -70,7 +70,7 @@ fn balance_change_zero_emission() {
             denom,
             &AssetIncentive {
                 emission_per_second: Uint128::zero(),
-                start_time: env.block.time,
+                start_time: env.block.time.seconds(),
                 duration: 86400,
                 index: asset_incentive_index,
                 last_updated: 500_000,
@@ -143,7 +143,7 @@ fn balance_change_user_with_zero_balance() {
             denom,
             &AssetIncentive {
                 emission_per_second,
-                start_time: Timestamp::from_seconds(time_last_updated),
+                start_time: time_last_updated,
                 duration,
                 index: start_index,
                 last_updated: time_last_updated,
@@ -219,7 +219,7 @@ fn with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
             denom,
             &AssetIncentive {
                 emission_per_second,
-                start_time: Timestamp::from_seconds(time_last_updated),
+                start_time: time_last_updated,
                 duration: 8640000,
                 index: start_index,
                 last_updated: time_last_updated,
@@ -310,7 +310,7 @@ fn set_new_asset_incentive_user_non_zero_balance() {
                 denom,
                 &AssetIncentive {
                     emission_per_second,
-                    start_time: Timestamp::from_seconds(time_last_updated),
+                    start_time: time_last_updated,
                     duration: 8640000,
                     index: asset_incentive_index,
                     last_updated: time_last_updated,
@@ -410,7 +410,7 @@ fn balance_change_user_non_zero_balance() {
             denom,
             &AssetIncentive {
                 emission_per_second,
-                start_time: Timestamp::from_seconds(expected_time_last_updated),
+                start_time: expected_time_last_updated,
                 duration: 8640000,
                 index: expected_asset_incentive_index,
                 last_updated: expected_time_last_updated,
