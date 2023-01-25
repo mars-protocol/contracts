@@ -8,7 +8,7 @@ use cosmwasm_std::{
     Deps, OwnedDeps,
 };
 use mars_address_provider::contract::{instantiate, query};
-use mars_types::address_provider::{InstantiateMsg, QueryMsg};
+use mars_red_bank_types::address_provider::{InstantiateMsg, QueryMsg};
 
 pub fn th_setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
     let mut deps = mock_dependencies_with_balance(&[]);

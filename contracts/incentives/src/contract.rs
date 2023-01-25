@@ -5,7 +5,7 @@ use cosmwasm_std::{
     MessageInfo, Response, StdResult, Uint128,
 };
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
-use mars_types::{
+use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
     incentives::{

@@ -14,10 +14,10 @@ use mars_red_bank::{
     },
     state::{COLLATERALS, DEBTS, MARKETS},
 };
-use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
-use mars_types::red_bank::{
+use mars_red_bank_types::red_bank::{
     Collateral, CreateOrUpdateConfig, Debt, InstantiateMsg, Market, QueryMsg,
 };
+use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
 
 pub fn set_collateral(
     deps: DepsMut,

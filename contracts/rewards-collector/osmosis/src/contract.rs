@@ -13,8 +13,8 @@ pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg(not(feature = "library"))]
 pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+    use mars_red_bank_types::rewards_collector::{InstantiateMsg, QueryMsg};
     use mars_rewards_collector_base::ContractResult;
-    use mars_types::rewards_collector::{InstantiateMsg, QueryMsg};
 
     use super::*;
     use crate::msg::ExecuteMsg;

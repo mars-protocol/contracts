@@ -4,7 +4,7 @@ use mars_owner::{
     OwnerUpdate,
 };
 use mars_red_bank::{contract::execute, error::ContractError};
-use mars_types::red_bank::{ConfigResponse, ExecuteMsg, QueryMsg};
+use mars_red_bank_types::red_bank::{ConfigResponse, ExecuteMsg, QueryMsg};
 
 use crate::helpers::{th_query, th_setup};
 

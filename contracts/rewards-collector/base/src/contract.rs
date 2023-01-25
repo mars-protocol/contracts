@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::{Bound, Item, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
-use mars_types::{
+use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     incentives, red_bank,
     rewards_collector::{

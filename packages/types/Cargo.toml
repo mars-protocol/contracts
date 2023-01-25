@@ -1,5 +1,5 @@
 [package]
-name          = "mars-types"
+name          = "mars-red-bank-types"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }

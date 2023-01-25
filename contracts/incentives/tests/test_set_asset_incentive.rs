@@ -8,11 +8,11 @@ use mars_incentives::{
     ContractError,
 };
 use mars_owner::OwnerError::NotOwner;
-use mars_testing::MockEnvParams;
-use mars_types::{
+use mars_red_bank_types::{
     incentives::{AssetIncentive, ExecuteMsg},
     red_bank::Market,
 };
+use mars_testing::MockEnvParams;
 use mars_utils::error::ValidationError;
 
 use crate::helpers::{th_setup, th_setup_with_env};

@@ -1,4 +1,4 @@
-use mars_types::rewards_collector;
+use mars_red_bank_types::rewards_collector;
 
 use crate::OsmosisRoute;
 

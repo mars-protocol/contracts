@@ -5,7 +5,7 @@ use mars_red_bank::{
     query::{query_user_collaterals, query_user_debt, query_user_debts},
     state::DEBTS,
 };
-use mars_types::red_bank::{Debt, Market, UserCollateralResponse, UserDebtResponse};
+use mars_red_bank_types::red_bank::{Debt, Market, UserCollateralResponse, UserDebtResponse};
 
 mod helpers;
 

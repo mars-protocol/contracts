@@ -7,7 +7,7 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::Bound;
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
-use mars_types::address_provider::{
+use mars_red_bank_types::address_provider::{
     AddressResponseItem, Config, ConfigResponse, ExecuteMsg, InstantiateMsg, MarsAddressType,
     QueryMsg,
 };

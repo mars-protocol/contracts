@@ -16,12 +16,12 @@ use mars_red_bank::{
     },
     state::{COLLATERALS, DEBTS, MARKETS},
 };
-use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
-use mars_types::{
+use mars_red_bank_types::{
     address_provider::MarsAddressType,
     incentives,
     red_bank::{Collateral, Debt, ExecuteMsg, Market},
 };
+use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 use mars_utils::math;
 
 mod helpers;

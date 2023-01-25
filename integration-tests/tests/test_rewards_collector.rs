@@ -1,9 +1,9 @@
 use cosmwasm_std::{coin, Decimal};
-use mars_rewards_collector_osmosis::OsmosisRoute;
-use mars_types::{
+use mars_red_bank_types::{
     address_provider::InstantiateMsg as InstantiateAddr,
     rewards_collector::{ExecuteMsg, InstantiateMsg as InstantiateRewards},
 };
+use mars_rewards_collector_osmosis::OsmosisRoute;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
 use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, Wasm};
 

@@ -4,7 +4,7 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::{Coin, Decimal};
 use cw_multi_test::AppResponse;
 use mars_red_bank::error::ContractError;
-use mars_types::red_bank::{
+use mars_red_bank_types::red_bank::{
     InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
 };
 use osmosis_std::types::osmosis::gamm::v1beta1::{

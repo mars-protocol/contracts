@@ -1,9 +1,9 @@
 use cosmwasm_std::testing::mock_env;
 use mars_owner::OwnerError::NotOwner;
+use mars_red_bank_types::rewards_collector::{QueryMsg, RouteResponse};
 use mars_rewards_collector_base::{ContractError, Route};
 use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg, OsmosisRoute};
 use mars_testing::mock_info;
-use mars_types::rewards_collector::{QueryMsg, RouteResponse};
 use mars_utils::error::ValidationError;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
 

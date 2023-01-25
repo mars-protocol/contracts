@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdError, StdResult, Uint128};
 use cw_storage_plus::Bound;
-use mars_types::{
+use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     red_bank::{
         Collateral, ConfigResponse, Debt, Market, UncollateralizedLoanLimitResponse,

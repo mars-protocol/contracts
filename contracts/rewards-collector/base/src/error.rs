@@ -1,6 +1,6 @@
 use cosmwasm_std::{CheckedMultiplyRatioError, OverflowError, StdError, Uint128};
 use mars_owner::OwnerError;
-use mars_types::error::MarsError;
+use mars_red_bank_types::error::MarsError;
 use mars_utils::error::ValidationError;
 use thiserror::Error;
 

@@ -8,9 +8,9 @@ use cosmwasm_std::{
     Coin, Decimal, Deps, OwnedDeps,
 };
 use mars_osmosis::helpers::{Pool, QueryPoolResponse};
+use mars_red_bank_types::rewards_collector::{Config, ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_rewards_collector_osmosis::{contract::entry, OsmosisRoute};
 use mars_testing::{mock_info, MarsMockQuerier};
-use mars_types::rewards_collector::{Config, ExecuteMsg, InstantiateMsg, QueryMsg};
 use osmosis_std::types::osmosis::gamm::v1beta1::{PoolAsset, SwapAmountInRoute};
 
 pub fn mock_instantiate_msg() -> InstantiateMsg {

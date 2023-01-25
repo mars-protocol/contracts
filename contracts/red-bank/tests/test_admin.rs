@@ -6,8 +6,7 @@ use mars_red_bank::{
     interest_rates::{compute_scaled_amount, compute_underlying_amount, ScalingOperation},
     state::{COLLATERALS, MARKETS},
 };
-use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, MockEnvParams};
-use mars_types::{
+use mars_red_bank_types::{
     address_provider::MarsAddressType,
     error::MarsError,
     red_bank::{
@@ -15,6 +14,7 @@ use mars_types::{
         InterestRateModel, Market, QueryMsg,
     },
 };
+use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, MockEnvParams};
 use mars_utils::error::ValidationError;
 
 use crate::helpers::{th_get_expected_indices, th_init_market, th_setup};

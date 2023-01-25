@@ -862,7 +862,7 @@ dependencies = [
  "cw-storage-plus",
  "cw2",
  "mars-owner",
- "mars-types",
+ "mars-red-bank-types",
  "serde",
  "thiserror",
 ]
@@ -872,8 +872,8 @@ name = "mars-health"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
+ "mars-red-bank-types",
  "mars-testing",
- "mars-types",
  "thiserror",
 ]
 
@@ -886,8 +886,8 @@ dependencies = [
  "cw-storage-plus",
  "cw2",
  "mars-owner",
+ "mars-red-bank-types",
  "mars-testing",
- "mars-types",
  "mars-utils",
  "thiserror",
 ]
@@ -903,10 +903,10 @@ dependencies = [
  "mars-oracle-osmosis",
  "mars-osmosis",
  "mars-red-bank",
+ "mars-red-bank-types",
  "mars-rewards-collector-base",
  "mars-rewards-collector-osmosis",
  "mars-testing",
- "mars-types",
  "mars-utils",
  "osmosis-std",
  "osmosis-testing",
@@ -920,7 +920,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-owner",
- "mars-types",
+ "mars-red-bank-types",
  "mars-utils",
  "schemars",
  "serde",
@@ -938,8 +938,8 @@ dependencies = [
  "mars-oracle-base",
  "mars-osmosis",
  "mars-owner",
+ "mars-red-bank-types",
  "mars-testing",
- "mars-types",
  "mars-utils",
  "osmosis-std",
  "schemars",
@@ -980,8 +980,20 @@ dependencies = [
  "cw2",
  "mars-health",
  "mars-owner",
+ "mars-red-bank-types",
  "mars-testing",
- "mars-types",
+ "mars-utils",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-red-bank-types"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "mars-owner",
+ "mars-testing",
  "mars-utils",
  "thiserror",
 ]
@@ -993,8 +1005,8 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "mars-owner",
+ "mars-red-bank-types",
  "mars-testing",
- "mars-types",
  "mars-utils",
  "schemars",
  "serde",
@@ -1011,9 +1023,9 @@ dependencies = [
  "cw2",
  "mars-osmosis",
  "mars-owner",
+ "mars-red-bank-types",
  "mars-rewards-collector-base",
  "mars-testing",
- "mars-types",
  "mars-utils",
  "osmosis-std",
  "schemars",
@@ -1033,24 +1045,12 @@ dependencies = [
  "mars-oracle-osmosis",
  "mars-osmosis",
  "mars-red-bank",
+ "mars-red-bank-types",
  "mars-rewards-collector-osmosis",
- "mars-types",
  "osmosis-std",
  "prost 0.11.6",
  "schemars",
  "serde",
- "thiserror",
-]
-
-[[package]]
-name = "mars-types"
-version = "1.0.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "mars-owner",
- "mars-testing",
- "mars-utils",
  "thiserror",
 ]
 

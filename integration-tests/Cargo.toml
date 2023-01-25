@@ -25,10 +25,10 @@ mars-oracle-osmosis            = { workspace = true }
 mars-oracle-base               = { workspace = true }
 mars-osmosis                   = { workspace = true }
 mars-red-bank                  = { workspace = true }
+mars-red-bank-types            = { workspace = true }
 mars-rewards-collector-base    = { workspace = true }
 mars-rewards-collector-osmosis = { workspace = true }
 mars-testing                   = { workspace = true }
-mars-types                     = { workspace = true }
 mars-utils                     = { workspace = true }
 osmosis-std                    = { workspace = true }
 osmosis-testing                = { workspace = true }

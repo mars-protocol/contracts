@@ -22,12 +22,12 @@ use mars_red_bank::{
     },
     state::{COLLATERALS, CONFIG, DEBTS, MARKETS},
 };
-use mars_testing::{mock_env, mock_env_at_block_time, MarsMockQuerier, MockEnvParams};
-use mars_types::{
+use mars_red_bank_types::{
     address_provider::MarsAddressType,
     incentives,
     red_bank::{Collateral, Debt, ExecuteMsg, InterestRateModel, Market},
 };
+use mars_testing::{mock_env, mock_env_at_block_time, MarsMockQuerier, MockEnvParams};
 use mars_utils::math;
 
 use crate::helpers::{set_debt, TestInterestResults};

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use cosmwasm_std::{CheckedMultiplyRatioError, Decimal, Uint128};
 use mars_health::error::HealthError;
 use mars_red_bank::{error::ContractError, health::compute_position_health};
-use mars_types::red_bank::Position;
+use mars_red_bank_types::red_bank::Position;
 
 #[test]
 fn health_position() {

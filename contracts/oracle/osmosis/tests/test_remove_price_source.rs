@@ -6,8 +6,8 @@ use mars_oracle_osmosis::{
     OsmosisPriceSource,
 };
 use mars_owner::OwnerError::NotOwner;
+use mars_red_bank_types::oracle::QueryMsg;
 use mars_testing::mock_info;
-use mars_types::oracle::QueryMsg;
 
 mod helpers;
 
