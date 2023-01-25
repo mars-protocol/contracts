@@ -1,7 +1,7 @@
 use cosmwasm_std::{Addr, Decimal, Uint128};
 use cw_storage_plus::{Item, Map};
-use mars_outpost::incentives::{AssetIncentive, Config};
 use mars_owner::Owner;
+use mars_red_bank_types::incentives::{AssetIncentive, Config};
 
 // keys (for singleton)
 pub const OWNER: Owner = Owner::new("owner");

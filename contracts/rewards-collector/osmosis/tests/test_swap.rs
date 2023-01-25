@@ -2,7 +2,7 @@ use cosmwasm_std::{
     testing::{mock_env, MOCK_CONTRACT_ADDR},
     CosmosMsg, Decimal, Fraction, SubMsg, Uint128,
 };
-use mars_outpost::rewards_collector::{ConfigResponse, QueryMsg};
+use mars_red_bank_types::rewards_collector::{ConfigResponse, QueryMsg};
 use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg};
 use mars_testing::mock_info;
 use osmosis_std::types::{
@@ -147,4 +147,91 @@ fn swapping_asset() {
     }
     .into();
     assert_eq!(res.messages[1], SubMsg::new(swap_msg));
+}
+
+/// Here we test the case where the denom is already the target denom.
+///
+/// For example, for the Osmosis outpost, we plan to set
+///
+/// - fee_collector_denom = MARS
+/// - safety_fund_denom = axlUSDC
+///
+/// For protocol revenue collected in axlUSDC, we want half to be swapped to
+/// MARS and sent to the fee collector, and the other half _not swapped_ and
+/// sent to safety fund.
+///
+/// In this test, we make sure the safety fund part of the swap is properly
+/// skipped.
+///
+/// See this issue for more explanation:
+/// https://github.com/mars-protocol/red-bank/issues/166
+#[test]
+fn skipping_swap_if_denom_matches() {
+    let mut deps = helpers::setup_test();
+
+    let uusdc_uosmo_price = Decimal::from_ratio(1u128, 10u128);
+    deps.querier.set_arithmetic_twap_price(
+        69,
+        "uusdc",
+        "uosmo",
+        ArithmeticTwapToNowResponse {
+            arithmetic_twap: uusdc_uosmo_price.to_string(),
+        },
+    );
+    let uosmo_umars_price = Decimal::from_ratio(5u128, 10u128);
+    deps.querier.set_arithmetic_twap_price(
+        420,
+        "uosmo",
+        "umars",
+        ArithmeticTwapToNowResponse {
+            arithmetic_twap: uosmo_umars_price.to_string(),
+        },
+    );
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("jake"),
+        ExecuteMsg::SwapAsset {
+            denom: "uusdc".to_string(),
+            amount: None,
+        },
+    )
+    .unwrap();
+
+    // the response should only contain one swap message, from USDC to MARS, for
+    // the fee collector.
+    //
+    // the USDC --> USDC swap for safety fund should be skipped.
+    assert_eq!(res.messages.len(), 1);
+
+    // amount of USDC the contract held prior to swap: 1234
+    //
+    // amount for safety fund:   1234 * 0.25 = 308
+    // amount for fee collector: 1234 - 308 = 926
+    //
+    // 1 uusdc = 0.1 uosmo
+    // 1 uosmo = 0.5 umars
+    // slippage tolerance: 3%
+    // min out amount: 926 * 0.1 * 0.5 * (1 - 0.03) = 44
+    let swap_msg: CosmosMsg = MsgSwapExactAmountIn {
+        sender: MOCK_CONTRACT_ADDR.to_string(),
+        routes: vec![
+            SwapAmountInRoute {
+                pool_id: 69,
+                token_out_denom: "uosmo".to_string(),
+            },
+            SwapAmountInRoute {
+                pool_id: 420,
+                token_out_denom: "umars".to_string(),
+            },
+        ],
+        token_in: Some(Coin {
+            denom: "uusdc".to_string(),
+            amount: "926".to_string(),
+        }),
+        token_out_min_amount: "44".to_string(),
+    }
+    .into();
+    assert_eq!(res.messages[0], SubMsg::new(swap_msg));
 }

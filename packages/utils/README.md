@@ -1,6 +1,6 @@
-# Mars Outpost
+# Mars Utils
 
-Contains Msgs, types and helpers for all mars core smart contract.
+Contains helpers for all Mars smart contracts.
 
 ## License
 

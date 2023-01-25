@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use mars_oracle_osmosis::DowntimeDetector;
 use mars_osmosis::helpers::QueryPoolResponse;
-use mars_outpost::{address_provider, incentives, oracle, red_bank};
+use mars_red_bank_types::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
     gamm::v2::QuerySpotPriceResponse,

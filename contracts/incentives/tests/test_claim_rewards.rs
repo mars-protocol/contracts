@@ -8,7 +8,7 @@ use mars_incentives::{
     helpers::{compute_asset_incentive_index, compute_user_accrued_rewards},
     state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
-use mars_outpost::{
+use mars_red_bank_types::{
     incentives::{AssetIncentive, ExecuteMsg},
     red_bank::{Market, UserCollateralResponse},
 };
@@ -94,7 +94,7 @@ fn execute_claim_rewards() {
             asset_denom,
             &AssetIncentive {
                 emission_per_second: Uint128::new(100),
-                start_time: Timestamp::from_seconds(time_start),
+                start_time: time_start,
                 duration: 8640000,
                 index: Decimal::one(),
                 last_updated: time_start,
@@ -107,7 +107,7 @@ fn execute_claim_rewards() {
             zero_denom,
             &AssetIncentive {
                 emission_per_second: Uint128::zero(),
-                start_time: env.block.time,
+                start_time: env.block.time.seconds(),
                 duration: 86400,
                 index: Decimal::one(),
                 last_updated: time_start,
@@ -120,7 +120,7 @@ fn execute_claim_rewards() {
             no_user_denom,
             &AssetIncentive {
                 emission_per_second: Uint128::new(200),
-                start_time: env.block.time,
+                start_time: env.block.time.seconds(),
                 duration: 86400,
                 index: Decimal::one(),
                 last_updated: time_start,
@@ -210,7 +210,7 @@ fn execute_claim_rewards() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/claim_rewards"),
+            attr("action", "claim_rewards"),
             attr("user", "user"),
             attr("mars_rewards", expected_accrued_rewards),
         ]
@@ -261,10 +261,6 @@ fn claim_zero_rewards() {
     assert_eq!(res.messages.len(), 0);
     assert_eq!(
         res.attributes,
-        vec![
-            attr("action", "outposts/incentives/claim_rewards"),
-            attr("user", "user"),
-            attr("mars_rewards", "0"),
-        ]
+        vec![attr("action", "claim_rewards"), attr("user", "user"), attr("mars_rewards", "0"),]
     );
 }

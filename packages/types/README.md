@@ -1,6 +1,6 @@
-# Mars Testing
+# Mars Red Bank
 
-Utilities for testing Red Bank smart contracts.
+Contains messages and types for Red Bank smart contracts.
 
 ## License
 

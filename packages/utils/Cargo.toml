@@ -1,5 +1,5 @@
 [package]
-name          = "mars-rewards-collector-base"
+name          = "mars-utils"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
@@ -13,18 +13,13 @@ keywords      = { workspace = true }
 doctest = false
 
 [features]
+# for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cosmwasm-std        = { workspace = true }
-cw-storage-plus     = { workspace = true }
-mars-owner          = { workspace = true }
-mars-red-bank-types = { workspace = true }
-mars-utils          = { workspace = true }
-schemars            = { workspace = true }
-serde               = { workspace = true }
-thiserror           = { workspace = true }
+cosmwasm-std = { workspace = true }
+thiserror    = { workspace = true }
 
 [dev-dependencies]
 mars-testing = { workspace = true }

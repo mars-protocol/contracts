@@ -1,11 +1,11 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, StdResult, Uint128};
-
-use crate::{
-    error::MarsError,
+use mars_utils::{
+    error::ValidationError,
     helpers::{decimal_param_le_one, decimal_param_lt_one},
-    red_bank::InterestRateModel,
 };
+
+use crate::red_bank::InterestRateModel;
 
 #[cw_serde]
 pub struct Market {
@@ -74,7 +74,7 @@ impl Default for Market {
 }
 
 impl Market {
-    pub fn validate(&self) -> Result<(), MarsError> {
+    pub fn validate(&self) -> Result<(), ValidationError> {
         decimal_param_lt_one(self.reserve_factor, "reserve_factor")?;
         decimal_param_le_one(self.max_loan_to_value, "max_loan_to_value")?;
         decimal_param_le_one(self.liquidation_threshold, "liquidation_threshold")?;
@@ -82,7 +82,7 @@ impl Market {
 
         // liquidation_threshold should be greater than max_loan_to_value
         if self.liquidation_threshold <= self.max_loan_to_value {
-            return Err(MarsError::InvalidParam {
+            return Err(ValidationError::InvalidParam {
                 param_name: "liquidation_threshold".to_string(),
                 invalid_value: self.liquidation_threshold.to_string(),
                 predicate: format!("> {} (max LTV)", self.max_loan_to_value),

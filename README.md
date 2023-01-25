@@ -19,7 +19,7 @@ A bug bounty is currently open for these contracts. See details [here][2].
 2. Get the wasm binary executable on your local machine.
 
    ```bash
-   git clone https://github.com/mars-protocol/outposts.git
+   git clone https://github.com/mars-protocol/red-bank.git
    git checkout <commit-id>
    cargo make rust-optimizer
    ```
@@ -176,7 +176,7 @@ TBD
 
 Contents of this repository are open source under [GNU General Public License v3](./LICENSE) or later.
 
-[1]: https://github.com/mars-protocol/mars-audits/tree/main/outposts
+[1]: https://github.com/mars-protocol/mars-audits/tree/main/red-bank
 [2]: https://immunefi.com/bounty/mars/
 [3]: https://docs.osmosis.zone/osmosis-core/osmosisd/
 [4]: https://rustup.rs/

@@ -8,7 +8,7 @@ use mars_incentives::{
     helpers::{compute_asset_incentive_index, compute_user_accrued_rewards},
     state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
-use mars_outpost::{
+use mars_red_bank_types::{
     error::MarsError,
     incentives::{AssetIncentive, ExecuteMsg},
     red_bank::{Market, UserCollateralResponse},
@@ -70,7 +70,7 @@ fn balance_change_zero_emission() {
             denom,
             &AssetIncentive {
                 emission_per_second: Uint128::zero(),
-                start_time: env.block.time,
+                start_time: env.block.time.seconds(),
                 duration: 86400,
                 index: asset_incentive_index,
                 last_updated: 500_000,
@@ -99,7 +99,7 @@ fn balance_change_zero_emission() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/balance_change"),
+            attr("action", "balance_change"),
             attr("denom", denom),
             attr("user", "user"),
             attr("rewards_accrued", expected_accrued_rewards),
@@ -143,7 +143,7 @@ fn balance_change_user_with_zero_balance() {
             denom,
             &AssetIncentive {
                 emission_per_second,
-                start_time: Timestamp::from_seconds(time_last_updated),
+                start_time: time_last_updated,
                 duration,
                 index: start_index,
                 last_updated: time_last_updated,
@@ -177,7 +177,7 @@ fn balance_change_user_with_zero_balance() {
     assert_eq!(
         res.attributes,
         vec![
-            attr("action", "outposts/incentives/balance_change"),
+            attr("action", "balance_change"),
             attr("denom", denom),
             attr("user", "user"),
             attr("rewards_accrued", "0"),
@@ -219,7 +219,7 @@ fn with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
             denom,
             &AssetIncentive {
                 emission_per_second,
-                start_time: Timestamp::from_seconds(time_last_updated),
+                start_time: time_last_updated,
                 duration: 8640000,
                 index: start_index,
                 last_updated: time_last_updated,
@@ -310,7 +310,7 @@ fn set_new_asset_incentive_user_non_zero_balance() {
                 denom,
                 &AssetIncentive {
                     emission_per_second,
-                    start_time: Timestamp::from_seconds(time_last_updated),
+                    start_time: time_last_updated,
                     duration: 8640000,
                     index: asset_incentive_index,
                     last_updated: time_last_updated,
@@ -410,7 +410,7 @@ fn balance_change_user_non_zero_balance() {
             denom,
             &AssetIncentive {
                 emission_per_second,
-                start_time: Timestamp::from_seconds(expected_time_last_updated),
+                start_time: expected_time_last_updated,
                 duration: 8640000,
                 index: expected_asset_incentive_index,
                 last_updated: expected_time_last_updated,
@@ -455,7 +455,7 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(
             res.attributes,
             vec![
-                attr("action", "outposts/incentives/balance_change"),
+                attr("action", "balance_change"),
                 attr("denom", denom),
                 attr("user", "user"),
                 attr("rewards_accrued", expected_accrued_rewards),
@@ -518,7 +518,7 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(
             res.attributes,
             vec![
-                attr("action", "outposts/incentives/balance_change"),
+                attr("action", "balance_change"),
                 attr("denom", denom),
                 attr("user", "user"),
                 attr("rewards_accrued", expected_accrued_rewards),
@@ -565,7 +565,7 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(
             res.attributes,
             vec![
-                attr("action", "outposts/incentives/balance_change"),
+                attr("action", "balance_change"),
                 attr("denom", denom),
                 attr("user", "user"),
                 attr("rewards_accrued", "0"),

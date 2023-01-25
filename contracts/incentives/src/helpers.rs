@@ -4,7 +4,7 @@ use cosmwasm_std::{
     Addr, BlockInfo, Decimal, Deps, Order, OverflowError, OverflowOperation, StdError, StdResult,
     Uint128,
 };
-use mars_outpost::{incentives::AssetIncentive, red_bank};
+use mars_red_bank_types::{incentives::AssetIncentive, red_bank};
 
 use crate::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
 
@@ -19,15 +19,14 @@ pub fn update_asset_incentive_index(
     total_amount_scaled: Uint128,
     current_block_time: u64,
 ) -> StdResult<()> {
-    let end_time_sec = asset_incentive.start_time.plus_seconds(asset_incentive.duration).seconds();
+    let end_time_sec = asset_incentive.start_time + asset_incentive.duration;
     if (current_block_time != asset_incentive.last_updated)
-        && current_block_time > asset_incentive.start_time.seconds()
+        && current_block_time > asset_incentive.start_time
         && asset_incentive.last_updated < end_time_sec
         && !total_amount_scaled.is_zero()
         && !asset_incentive.emission_per_second.is_zero()
     {
-        let start_time_sec = asset_incentive.start_time.seconds();
-        let time_start = max(start_time_sec, asset_incentive.last_updated);
+        let time_start = max(asset_incentive.start_time, asset_incentive.last_updated);
         let time_end = min(current_block_time, end_time_sec);
         asset_incentive.index = compute_asset_incentive_index(
             asset_incentive.index,

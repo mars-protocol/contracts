@@ -1,14 +1,14 @@
-use cosmwasm_std::{Decimal, OverflowError, OverflowOperation, StdError, Timestamp, Uint128};
+use cosmwasm_std::{Decimal, OverflowError, OverflowOperation, StdError, Uint128};
 use mars_incentives::helpers::{
     compute_asset_incentive_index, compute_user_accrued_rewards, update_asset_incentive_index,
 };
-use mars_outpost::incentives::AssetIncentive;
+use mars_red_bank_types::incentives::AssetIncentive;
 
 mod helpers;
 
 #[test]
 fn update_asset_incentive_index_if_zero_emission() {
-    let start_time = Timestamp::from_seconds(0);
+    let start_time = 0;
     let mut ai = AssetIncentive {
         emission_per_second: Uint128::zero(),
         start_time,
@@ -17,7 +17,7 @@ fn update_asset_incentive_index_if_zero_emission() {
         last_updated: 0,
     };
 
-    let current_block_time = start_time.plus_seconds(1).seconds();
+    let current_block_time = start_time + 1;
     let mut expected_ai = ai.clone();
     expected_ai.last_updated = current_block_time;
 
@@ -28,7 +28,7 @@ fn update_asset_incentive_index_if_zero_emission() {
 
 #[test]
 fn update_asset_incentive_index_if_zero_amount() {
-    let start_time = Timestamp::from_seconds(0);
+    let start_time = 0;
     let mut ai = AssetIncentive {
         emission_per_second: Uint128::new(50),
         start_time,
@@ -37,7 +37,7 @@ fn update_asset_incentive_index_if_zero_amount() {
         last_updated: 0,
     };
 
-    let current_block_time = start_time.plus_seconds(1).seconds();
+    let current_block_time = start_time + 1;
     let mut expected_ai = ai.clone();
     expected_ai.last_updated = current_block_time;
 
@@ -48,7 +48,7 @@ fn update_asset_incentive_index_if_zero_amount() {
 
 #[test]
 fn update_asset_incentive_index_if_current_block_lt_start_time() {
-    let start_time = Timestamp::from_seconds(10);
+    let start_time = 10;
     let mut ai = AssetIncentive {
         emission_per_second: Uint128::new(50),
         start_time,
@@ -57,7 +57,7 @@ fn update_asset_incentive_index_if_current_block_lt_start_time() {
         last_updated: 0,
     };
 
-    let current_block_time = start_time.minus_seconds(1).seconds();
+    let current_block_time = start_time - 1;
     let mut expected_ai = ai.clone();
     expected_ai.last_updated = current_block_time;
 
@@ -68,7 +68,7 @@ fn update_asset_incentive_index_if_current_block_lt_start_time() {
 
 #[test]
 fn update_asset_incentive_index_if_current_block_eq_start_time() {
-    let start_time = Timestamp::from_seconds(10);
+    let start_time = 10;
     let mut ai = AssetIncentive {
         emission_per_second: Uint128::new(50),
         start_time,
@@ -77,7 +77,7 @@ fn update_asset_incentive_index_if_current_block_eq_start_time() {
         last_updated: 0,
     };
 
-    let current_block_time = start_time.seconds();
+    let current_block_time = start_time;
     let mut expected_ai = ai.clone();
     expected_ai.last_updated = current_block_time;
 
@@ -90,7 +90,7 @@ fn update_asset_incentive_index_if_current_block_eq_start_time() {
 fn update_asset_incentive_index_if_current_block_gt_start_time() {
     let total_amount = Uint128::new(100);
 
-    let start_time = Timestamp::from_seconds(10);
+    let start_time = 10;
     let eps = Uint128::new(20);
     let mut ai = AssetIncentive {
         emission_per_second: eps,
@@ -100,7 +100,7 @@ fn update_asset_incentive_index_if_current_block_gt_start_time() {
         last_updated: 0,
     };
 
-    let current_block_time = start_time.seconds() + 1;
+    let current_block_time = start_time + 1;
     let mut expected_ai = ai.clone();
     expected_ai.index = Decimal::from_ratio(12u128, 10u128);
     expected_ai.last_updated = current_block_time;
@@ -118,9 +118,9 @@ fn update_asset_incentive_index_if_current_block_gt_start_time() {
 
 #[test]
 fn update_asset_incentive_index_if_last_updated_eq_end_time() {
-    let start_time = Timestamp::from_seconds(10);
+    let start_time = 10;
     let duration = 300; // 5 min
-    let end_time = start_time.plus_seconds(duration).seconds();
+    let end_time = start_time + duration;
     let mut ai = AssetIncentive {
         emission_per_second: Uint128::new(50),
         start_time,
@@ -140,9 +140,9 @@ fn update_asset_incentive_index_if_last_updated_eq_end_time() {
 
 #[test]
 fn update_asset_incentive_index_if_last_updated_gt_end_time() {
-    let start_time = Timestamp::from_seconds(10);
+    let start_time = 10;
     let duration = 300; // 5 min
-    let end_time = start_time.plus_seconds(duration).seconds();
+    let end_time = start_time + duration;
     let last_updated = end_time + 1;
     let mut ai = AssetIncentive {
         emission_per_second: Uint128::new(50),
@@ -163,9 +163,9 @@ fn update_asset_incentive_index_if_last_updated_gt_end_time() {
 
 #[test]
 fn update_asset_incentive_index_if_last_updated_lt_end_time() {
-    let start_time = Timestamp::from_seconds(10);
+    let start_time = 10;
     let duration = 300; // 5 min
-    let end_time = start_time.plus_seconds(duration).seconds();
+    let end_time = start_time + duration;
     let last_updated = end_time - 1;
     let mut ai = AssetIncentive {
         emission_per_second: Uint128::new(20),
@@ -186,9 +186,9 @@ fn update_asset_incentive_index_if_last_updated_lt_end_time() {
 
 #[test]
 fn update_asset_incentive_index_if_not_updated_till_finished() {
-    let start_time = Timestamp::from_seconds(10);
+    let start_time = 10;
     let duration = 300; // 5 min
-    let end_time = start_time.plus_seconds(duration).seconds();
+    let end_time = start_time + duration;
     let mut ai = AssetIncentive {
         emission_per_second: Uint128::new(20),
         start_time,

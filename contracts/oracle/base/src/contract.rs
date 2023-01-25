@@ -5,14 +5,12 @@ use cosmwasm_std::{
     StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
-use mars_outpost::{
-    helpers::validate_native_denom,
-    oracle::{
-        Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
-        QueryMsg,
-    },
-};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_red_bank_types::oracle::{
+    Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
+    QueryMsg,
+};
+use mars_utils::helpers::validate_native_denom;
 
 use crate::{error::ContractResult, PriceSource};
 
@@ -139,7 +137,7 @@ where
         self.price_sources.save(deps.storage, &denom, &price_source)?;
 
         Ok(Response::new()
-            .add_attribute("action", "outposts/oracle/set_price_source")
+            .add_attribute("action", "set_price_source")
             .add_attribute("denom", denom)
             .add_attribute("price_source", price_source.to_string()))
     }
@@ -155,7 +153,7 @@ where
         self.price_sources.remove(deps.storage, &denom);
 
         Ok(Response::new()
-            .add_attribute("action", "outposts/oracle/remove_price_source")
+            .add_attribute("action", "remove_price_source")
             .add_attribute("denom", denom))
     }
 

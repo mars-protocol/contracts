@@ -2,19 +2,19 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env,
-    MessageInfo, Response, StdResult, Timestamp, Uint128,
+    MessageInfo, Response, StdResult, Uint128,
 };
-use mars_outpost::{
+use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
-    helpers::{option_string_to_addr, validate_native_denom},
     incentives::{
         AssetIncentive, AssetIncentiveResponse, Config, ConfigResponse, ExecuteMsg, InstantiateMsg,
         QueryMsg,
     },
     red_bank,
 };
-use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
 
 use crate::{
     error::ContractError,
@@ -109,13 +109,14 @@ pub fn execute_set_asset_incentive(
     info: MessageInfo,
     denom: String,
     emission_per_second: Option<Uint128>,
-    start_time: Option<Timestamp>,
+    start_time: Option<u64>,
     duration: Option<u64>,
 ) -> Result<Response, ContractError> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
     validate_native_denom(&denom)?;
 
+    let current_block_time = env.block.time.seconds();
     let new_asset_incentive = match ASSET_INCENTIVES.may_load(deps.storage, &denom)? {
         Some(mut asset_incentive) => {
             let (start_time, duration, emission_per_second) =
@@ -124,7 +125,7 @@ pub fn execute_set_asset_incentive(
                     emission_per_second,
                     start_time,
                     duration,
-                    env.block.time,
+                    current_block_time,
                 )?;
 
             let config = CONFIG.load(deps.storage)?;
@@ -146,7 +147,7 @@ pub fn execute_set_asset_incentive(
             update_asset_incentive_index(
                 &mut asset_incentive,
                 market.collateral_total_scaled,
-                env.block.time.seconds(),
+                current_block_time,
             )?;
 
             // Set new emission
@@ -157,8 +158,6 @@ pub fn execute_set_asset_incentive(
             asset_incentive
         }
         None => {
-            let current_block_time = env.block.time;
-
             let (start_time, duration, emission_per_second) = validate_params_for_new_incentive(
                 start_time,
                 duration,
@@ -171,7 +170,7 @@ pub fn execute_set_asset_incentive(
                 start_time,
                 duration,
                 index: Decimal::zero(),
-                last_updated: current_block_time.seconds(),
+                last_updated: current_block_time,
             }
         }
     };
@@ -179,7 +178,7 @@ pub fn execute_set_asset_incentive(
     ASSET_INCENTIVES.save(deps.storage, &denom, &new_asset_incentive)?;
 
     let response = Response::new().add_attributes(vec![
-        attr("action", "outposts/incentives/set_asset_incentive"),
+        attr("action", "set_asset_incentive"),
         attr("denom", denom),
         attr("emission_per_second", new_asset_incentive.emission_per_second),
         attr("start_time", new_asset_incentive.start_time.to_string()),
@@ -191,11 +190,11 @@ pub fn execute_set_asset_incentive(
 fn validate_params_for_existing_incentive(
     asset_incentive: &AssetIncentive,
     emission_per_second: Option<Uint128>,
-    start_time: Option<Timestamp>,
+    start_time: Option<u64>,
     duration: Option<u64>,
-    current_block_time: Timestamp,
-) -> Result<(Timestamp, u64, Uint128), ContractError> {
-    let end_time = asset_incentive.start_time.plus_seconds(asset_incentive.duration);
+    current_block_time: u64,
+) -> Result<(u64, u64, Uint128), ContractError> {
+    let end_time = asset_incentive.start_time + asset_incentive.duration;
     let start_time = match start_time {
         // current asset incentive hasn't finished yet
         Some(_)
@@ -214,8 +213,12 @@ fn validate_params_for_existing_incentive(
         }
         // correct start_time so it can be used
         Some(st) => st,
-        // previous asset incentive finished so we can use current block time as start_time
-        None if end_time < current_block_time => current_block_time,
+        // previous asset incentive finished so new start_time is required
+        None if end_time < current_block_time => {
+            return Err(ContractError::InvalidIncentive {
+                reason: "start_time is required for new incentive".to_string(),
+            })
+        }
         // use start_time from current asset incentive
         None => asset_incentive.start_time,
     };
@@ -228,7 +231,7 @@ fn validate_params_for_existing_incentive(
             })
         }
         // end_time can't be decreased to the past
-        Some(dur) if start_time.plus_seconds(dur) < current_block_time => {
+        Some(dur) if start_time + dur < current_block_time => {
             return Err(ContractError::InvalidIncentive {
                 reason: "end_time can't be less than current block time".to_string(),
             })
@@ -245,19 +248,16 @@ fn validate_params_for_existing_incentive(
 }
 
 fn validate_params_for_new_incentive(
-    start_time: Option<Timestamp>,
+    start_time: Option<u64>,
     duration: Option<u64>,
     emission_per_second: Option<Uint128>,
-    current_block_time: Timestamp,
-) -> Result<(Timestamp, u64, Uint128), ContractError> {
+    current_block_time: u64,
+) -> Result<(u64, u64, Uint128), ContractError> {
     // all params are required during incentive initialization (if start_time = None then set to current block time)
-    let (emission_per_second, duration) = match (emission_per_second, duration) {
-        (Some(eps), Some(dur)) => (eps, dur),
-        _ => {
-            return Err(ContractError::InvalidIncentive {
-                reason: "all params are required during incentive initialization".to_string(),
-            })
-        }
+    let (Some(start_time), Some(duration), Some(emission_per_second)) = (start_time, duration, emission_per_second) else {
+        return Err(ContractError::InvalidIncentive {
+            reason: "all params are required during incentive initialization".to_string(),
+        });
     };
 
     // duration should be greater than 0
@@ -268,7 +268,6 @@ fn validate_params_for_new_incentive(
     }
 
     // start_time can't be less that current block time
-    let start_time = start_time.unwrap_or(current_block_time);
     if start_time < current_block_time {
         return Err(ContractError::InvalidIncentive {
             reason: "start_time can't be less than current block time".to_string(),
@@ -344,7 +343,7 @@ pub fn execute_balance_change(
     }
 
     let response = Response::new().add_attributes(vec![
-        attr("action", "outposts/incentives/balance_change"),
+        attr("action", "balance_change"),
         attr("denom", denom),
         attr("user", user_addr),
         attr("rewards_accrued", accrued_rewards),
@@ -397,7 +396,7 @@ pub fn execute_claim_rewards(
     };
 
     response = response.add_attributes(vec![
-        attr("action", "outposts/incentives/claim_rewards"),
+        attr("action", "claim_rewards"),
         attr("user", user_addr),
         attr("mars_rewards", total_unclaimed_rewards),
     ]);
@@ -426,7 +425,7 @@ pub fn execute_update_config(
 
     CONFIG.save(deps.storage, &config)?;
 
-    let response = Response::new().add_attribute("action", "outposts/incentives/update_config");
+    let response = Response::new().add_attribute("action", "update_config");
 
     Ok(response)
 }

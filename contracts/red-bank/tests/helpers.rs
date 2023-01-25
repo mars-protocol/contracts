@@ -6,9 +6,6 @@ use cosmwasm_std::{
     testing::{MockApi, MockStorage},
     Addr, Coin, Decimal, Deps, DepsMut, Event, OwnedDeps, Uint128,
 };
-use mars_outpost::red_bank::{
-    Collateral, CreateOrUpdateConfig, Debt, InstantiateMsg, Market, QueryMsg,
-};
 use mars_red_bank::{
     contract::{instantiate, query},
     interest_rates::{
@@ -16,6 +13,9 @@ use mars_red_bank::{
         ScalingOperation,
     },
     state::{COLLATERALS, DEBTS, MARKETS},
+};
+use mars_red_bank_types::red_bank::{
+    Collateral, CreateOrUpdateConfig, Debt, InstantiateMsg, Market, QueryMsg,
 };
 use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
 

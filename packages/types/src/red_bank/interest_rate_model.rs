@@ -1,7 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, StdError, StdResult};
-
-use crate::{error::MarsError, helpers::decimal_param_le_one, math};
+use mars_utils::{error::ValidationError, helpers::decimal_param_le_one, math};
 
 #[cw_serde]
 #[derive(Eq, Default)]
@@ -17,7 +16,7 @@ pub struct InterestRateModel {
 }
 
 impl InterestRateModel {
-    pub fn validate(&self) -> Result<(), MarsError> {
+    pub fn validate(&self) -> Result<(), ValidationError> {
         decimal_param_le_one(self.optimal_utilization_rate, "optimal_utilization_rate")?;
         Ok(())
     }

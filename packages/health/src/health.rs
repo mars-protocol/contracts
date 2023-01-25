@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt};
 
 use cosmwasm_std::{Addr, Coin, Decimal, Fraction, QuerierWrapper, StdResult, Uint128};
-use mars_outpost::red_bank::Market;
+use mars_red_bank_types::red_bank::Market;
 
 use crate::{error::HealthError, query::MarsQuerier};
 

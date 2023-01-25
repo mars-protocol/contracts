@@ -1,7 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
-
-use crate::{error::MarsError, helpers::decimal_param_le_one};
+use mars_utils::{error::ValidationError, helpers::decimal_param_le_one};
 
 /// Global configuration
 #[cw_serde]
@@ -13,7 +12,7 @@ pub struct Config<T> {
 }
 
 impl<T> Config<T> {
-    pub fn validate(&self) -> Result<(), MarsError> {
+    pub fn validate(&self) -> Result<(), ValidationError> {
         decimal_param_le_one(self.close_factor, "close_factor")?;
         Ok(())
     }

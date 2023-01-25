@@ -18,21 +18,9 @@ pub enum MarsError {
         actual: u32,
     },
 
-    #[error("Invalid param: {param_name} is {invalid_value}, but it should be {predicate}")]
-    InvalidParam {
-        param_name: String,
-        invalid_value: String,
-        predicate: String,
-    },
-
     #[error("Failed to deserialize RPC query response for: {target_type}")]
     Deserialize {
         target_type: String,
-    },
-
-    #[error("Invalid denom: {reason}")]
-    InvalidDenom {
-        reason: String,
     },
 }
 

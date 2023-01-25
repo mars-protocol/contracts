@@ -1,8 +1,9 @@
 use cosmwasm_std::{OverflowError, StdError};
 use cw_utils::PaymentError;
 use mars_health::error::HealthError;
-use mars_outpost::error::MarsError;
 use mars_owner::OwnerError;
+use mars_red_bank_types::error::MarsError;
+use mars_utils::error::ValidationError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -12,6 +13,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Mars(#[from] MarsError),
+
+    #[error("{0}")]
+    Validation(#[from] ValidationError),
 
     #[error("{0}")]
     Owner(#[from] OwnerError),
