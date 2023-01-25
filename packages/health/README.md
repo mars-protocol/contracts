@@ -1,6 +1,6 @@
-# Mars Testing
+# Mars Health
 
-Utilities for testing Red Bank smart contracts.
+Functions used for evaluating the health of user positions at Mars Protocol.
 
 ## License
 
