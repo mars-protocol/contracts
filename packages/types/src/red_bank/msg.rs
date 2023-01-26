@@ -15,7 +15,6 @@ pub struct InstantiateMsg {
 }
 
 #[cw_serde]
-#[allow(clippy::large_enum_variant)]
 pub enum ExecuteMsg {
     /// Manages owner state
     UpdateOwner(OwnerUpdate),
@@ -60,11 +59,11 @@ pub enum ExecuteMsg {
     /// Deposit native coins. Deposited coins must be sent in the transaction
     /// this call is made
     Deposit {
-        /// Address that will receive the maTokens
+        /// Address that will receive the coins
         on_behalf_of: Option<String>,
     },
 
-    /// Withdraw an amount of the asset burning an equivalent amount of maTokens.
+    /// Withdraw native coins
     Withdraw {
         /// Asset to withdraw
         denom: String,

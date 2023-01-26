@@ -152,7 +152,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Withdraw maTokens from the red bank",
+        "description": "Withdraw coins from the red bank",
         "type": "object",
         "required": [
           "withdraw_from_red_bank"

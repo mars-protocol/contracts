@@ -91,7 +91,7 @@ key: "action", value: EXECUTE_MSG
 ```rust
 Response::new()
     .add_attribute("action", "balance_change")
-    .add_attribute("ma_asset", "ma_token_address")
+    .add_attribute("balance_scaled", "100")
     .add_attribute("user", "user_address")
 ```
 
