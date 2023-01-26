@@ -10,7 +10,7 @@ use mars_red_bank_types::red_bank::{
 use osmosis_std::types::osmosis::gamm::v1beta1::{
     MsgSwapExactAmountIn, MsgSwapExactAmountInResponse, SwapAmountInRoute,
 };
-use osmosis_testing::{Account, ExecuteResponse, OsmosisTestApp, Runner, SigningAccount};
+use osmosis_test_tube::{Account, ExecuteResponse, OsmosisTestApp, Runner, SigningAccount};
 
 pub fn default_asset_params() -> InitOrUpdateAssetParams {
     InitOrUpdateAssetParams {
@@ -65,7 +65,7 @@ pub fn is_user_liquidatable(position: &UserPositionResponse) -> bool {
 pub mod osmosis {
     use std::fmt::Display;
 
-    use osmosis_testing::{OsmosisTestApp, RunnerError, SigningAccount, Wasm};
+    use osmosis_test_tube::{OsmosisTestApp, RunnerError, SigningAccount, Wasm};
     use serde::Serialize;
 
     pub fn wasm_file(contract_name: &str) -> String {

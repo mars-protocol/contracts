@@ -18,7 +18,9 @@ use mars_red_bank_types::{
     },
     rewards_collector::InstantiateMsg as InstantiateRewards,
 };
-use osmosis_testing::{Account, Gamm, Module, OsmosisTestApp, RunnerResult, SigningAccount, Wasm};
+use osmosis_test_tube::{
+    Account, Gamm, Module, OsmosisTestApp, RunnerResult, SigningAccount, Wasm,
+};
 
 use crate::helpers::{
     default_asset_params,

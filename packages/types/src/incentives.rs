@@ -16,7 +16,7 @@ pub struct Config {
 pub struct AssetIncentive {
     /// How much MARS per second is emitted to be then distributed to all Red Bank depositors
     pub emission_per_second: Uint128,
-    /// Start time for the incentive
+    /// Start time of the incentive (in seconds) since the UNIX epoch (00:00:00 on 1970-01-01 UTC)
     pub start_time: u64,
     /// How many seconds the incentives last
     pub duration: u64,
@@ -26,11 +26,34 @@ pub struct AssetIncentive {
     pub last_updated: u64,
 }
 
-/// Response to AssetIncentive query
+/// Incentive Metadata for a given incentive denom
 #[cw_serde]
 pub struct AssetIncentiveResponse {
-    /// Existing asset incentive for a given address. Will return None if it doesn't exist
-    pub asset_incentive: Option<AssetIncentive>,
+    /// Asset denom
+    pub denom: String,
+    /// How much MARS per second is emitted to be then distributed to all Red Bank depositors
+    pub emission_per_second: Uint128,
+    /// Start time of the incentive (in seconds) since the UNIX epoch (00:00:00 on 1970-01-01 UTC)
+    pub start_time: u64,
+    /// How many seconds the incentives last
+    pub duration: u64,
+    /// Total MARS assigned for distribution since the start of the incentive
+    pub index: Decimal,
+    /// Last time (in seconds) index was updated
+    pub last_updated: u64,
+}
+
+impl AssetIncentiveResponse {
+    pub fn from(denom: String, ai: AssetIncentive) -> Self {
+        Self {
+            denom,
+            emission_per_second: ai.emission_per_second,
+            start_time: ai.start_time,
+            duration: ai.duration,
+            index: ai.index,
+            last_updated: ai.last_updated,
+        }
+    }
 }
 
 #[cw_serde]
@@ -55,7 +78,7 @@ pub enum ExecuteMsg {
         /// How many MARS will be assigned per second to be distributed among all Red Bank
         /// depositors
         emission_per_second: Option<Uint128>,
-        /// Start time of the incentive in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
+        /// Start time of the incentive (in seconds) since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
         start_time: Option<u64>,
         /// How many seconds the incentives last
         duration: Option<u64>,
@@ -101,6 +124,13 @@ pub enum QueryMsg {
     #[returns(AssetIncentiveResponse)]
     AssetIncentive {
         denom: String,
+    },
+
+    /// Enumerate asset incentives with pagination
+    #[returns(Vec<AssetIncentiveResponse>)]
+    AssetIncentives {
+        start_after: Option<String>,
+        limit: Option<u32>,
     },
 
     /// Query user current unclaimed rewards

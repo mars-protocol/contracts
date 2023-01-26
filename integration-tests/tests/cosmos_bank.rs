@@ -9,7 +9,7 @@ use osmosis_std::types::cosmos::{
     },
     base::v1beta1::Coin as CosmosCoin,
 };
-use osmosis_testing::{
+use osmosis_test_tube::{
     fn_execute, fn_query, Account, Module, Runner, RunnerExecuteResult, SigningAccount,
 };
 

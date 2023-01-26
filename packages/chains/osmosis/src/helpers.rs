@@ -82,7 +82,6 @@ pub fn query_spot_price(
 
 /// Query arithmetic twap price of a coin, denominated in OSMO.
 /// `start_time` must be within 48 hours of current block time.
-#[allow(deprecated)] // FIXME: arithmetic_twap_to_now shouldn't be deprecated, make clippy happy for now
 pub fn query_arithmetic_twap_price(
     querier: &QuerierWrapper,
     pool_id: u64,
@@ -105,7 +104,6 @@ pub fn query_arithmetic_twap_price(
 
 /// Query geometric twap price of a coin, denominated in OSMO.
 /// `start_time` must be within 48 hours of current block time.
-#[allow(deprecated)] // FIXME: geometric_twap_to_now shouldn't be deprecated, make clippy happy for now
 pub fn query_geometric_twap_price(
     querier: &QuerierWrapper,
     pool_id: u64,

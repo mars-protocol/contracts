@@ -16,13 +16,20 @@ import {
   QueryMsg,
   Decimal,
   AssetIncentiveResponse,
-  AssetIncentive,
+  ArrayOfAssetIncentiveResponse,
   ConfigResponse,
 } from './MarsIncentives.types'
 export interface MarsIncentivesReadOnlyInterface {
   contractAddress: string
   config: () => Promise<ConfigResponse>
   assetIncentive: ({ denom }: { denom: string }) => Promise<AssetIncentiveResponse>
+  assetIncentives: ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }) => Promise<ArrayOfAssetIncentiveResponse>
   userUnclaimedRewards: ({ user }: { user: string }) => Promise<Uint128>
 }
 export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterface {
@@ -34,6 +41,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     this.contractAddress = contractAddress
     this.config = this.config.bind(this)
     this.assetIncentive = this.assetIncentive.bind(this)
+    this.assetIncentives = this.assetIncentives.bind(this)
     this.userUnclaimedRewards = this.userUnclaimedRewards.bind(this)
   }
 
@@ -46,6 +54,20 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     return this.client.queryContractSmart(this.contractAddress, {
       asset_incentive: {
         denom,
+      },
+    })
+  }
+  assetIncentives = async ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }): Promise<ArrayOfAssetIncentiveResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      asset_incentives: {
+        limit,
+        start_after: startAfter,
       },
     })
   }

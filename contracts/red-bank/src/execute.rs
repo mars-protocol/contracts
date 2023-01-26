@@ -375,7 +375,7 @@ pub fn update_uncollateralized_loan_limit(
         .add_attribute("new_allowance", new_limit))
 }
 
-/// Execute deposits and mint corresponding ma_tokens
+/// Execute deposits
 pub fn deposit(
     deps: DepsMut,
     env: Env,
@@ -488,19 +488,15 @@ pub fn withdraw(
     )?;
 
     let withdraw_amount = match amount {
-        Some(amount) => {
-            // Check user has sufficient balance to send back
-            if amount.is_zero() || amount > withdrawer_balance_before {
-                return Err(ContractError::InvalidWithdrawAmount {
-                    denom,
-                });
-            };
-            amount
+        // Check user has sufficient balance to send back
+        Some(amount) if amount.is_zero() || amount > withdrawer_balance_before => {
+            return Err(ContractError::InvalidWithdrawAmount {
+                denom,
+            });
         }
-        None => {
-            // If no amount is specified, the full balance is withdrawn
-            withdrawer_balance_before
-        }
+        Some(amount) => amount,
+        // If no amount is specified, the full balance is withdrawn
+        None => withdrawer_balance_before,
     };
 
     let config = CONFIG.load(deps.storage)?;
@@ -920,7 +916,7 @@ pub fn liquidate(
         debt_market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
 
     // 6. Update markets depending on whether the collateral and debt markets are the same
-    // and whether the liquidator receives ma_tokens (no change in liquidity) or underlying asset
+    // and whether the liquidator receives coins (no change in liquidity) or underlying asset
     // (changes liquidity)
     if collateral_and_debt_are_the_same_asset {
         // NOTE: for the sake of clarity copy attributes from collateral market and

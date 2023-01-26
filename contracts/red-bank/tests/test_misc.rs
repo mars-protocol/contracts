@@ -285,26 +285,26 @@ fn update_asset_collateral() {
     {
         // Initialize user with market_1 and market_2 as collaterals
         // User borrows market_3, which will be set up later in the test
-        let ma_token_1_balance_scaled = Uint128::new(150_000) * SCALING_FACTOR;
+        let token_1_balance_scaled = Uint128::new(150_000) * SCALING_FACTOR;
         set_collateral(
             deps.as_mut(),
             &user_addr,
             &market_1_initial.denom,
-            ma_token_1_balance_scaled,
+            token_1_balance_scaled,
             true,
         );
-        let ma_token_2_balance_scaled = Uint128::new(220_000) * SCALING_FACTOR;
+        let token_2_balance_scaled = Uint128::new(220_000) * SCALING_FACTOR;
         set_collateral(
             deps.as_mut(),
             &user_addr,
             &market_2_initial.denom,
-            ma_token_2_balance_scaled,
+            token_2_balance_scaled,
             true,
         );
 
         // Calculate maximum debt for the user to have valid health factor
         let token_1_weighted_lt_in_base_asset = compute_underlying_amount(
-            ma_token_1_balance_scaled,
+            token_1_balance_scaled,
             get_updated_liquidity_index(&market_1_initial, env.block.time.seconds()).unwrap(),
             ScalingOperation::Truncate,
         )
@@ -312,7 +312,7 @@ fn update_asset_collateral() {
             * market_1_initial.liquidation_threshold
             * token_1_exchange_rate;
         let token_2_weighted_lt_in_base_asset = compute_underlying_amount(
-            ma_token_2_balance_scaled,
+            token_2_balance_scaled,
             get_updated_liquidity_index(&market_2_initial, env.block.time.seconds()).unwrap(),
             ScalingOperation::Truncate,
         )

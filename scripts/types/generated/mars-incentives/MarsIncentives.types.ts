@@ -60,21 +60,26 @@ export type QueryMsg =
       }
     }
   | {
+      asset_incentives: {
+        limit?: number | null
+        start_after?: string | null
+      }
+    }
+  | {
       user_unclaimed_rewards: {
         user: string
       }
     }
 export type Decimal = string
 export interface AssetIncentiveResponse {
-  asset_incentive?: AssetIncentive | null
-}
-export interface AssetIncentive {
+  denom: string
   duration: number
   emission_per_second: Uint128
   index: Decimal
   last_updated: number
   start_time: number
 }
+export type ArrayOfAssetIncentiveResponse = AssetIncentiveResponse[]
 export interface ConfigResponse {
   address_provider: Addr
   mars_denom: string

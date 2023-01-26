@@ -136,7 +136,7 @@ pub enum ExecuteMsg<Route> {
         route: Route,
     },
 
-    /// Withdraw maTokens from the red bank
+    /// Withdraw coins from the red bank
     WithdrawFromRedBank {
         denom: String,
         amount: Option<Uint128>,
