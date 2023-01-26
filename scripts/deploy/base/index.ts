@@ -35,6 +35,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
 
     // setup
     await deployer.updateAddressProvider()
+    await deployer.setRoutes()
     await deployer.initializeAsset(osmoAsset)
     await deployer.initializeAsset(atomAsset)
     await deployer.initializeAsset(axlUSDCAsset)
