@@ -17,7 +17,7 @@ import {
   QueryMsg,
   Decimal,
   AssetIncentiveResponse,
-  AssetIncentive,
+  ArrayOfAssetIncentiveResponse,
   ConfigResponse,
 } from './MarsIncentives.types'
 import { MarsIncentivesQueryClient, MarsIncentivesClient } from './MarsIncentives.client'
@@ -34,6 +34,10 @@ export const marsIncentivesQueryKeys = {
   assetIncentive: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'asset_incentive', args },
+    ] as const,
+  assetIncentives: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'asset_incentives', args },
     ] as const,
   userUnclaimedRewards: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -70,6 +74,30 @@ export function useMarsIncentivesUserUnclaimedRewardsQuery<TData = Uint128>({
       client
         ? client.userUnclaimedRewards({
             user: args.user,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsIncentivesAssetIncentivesQuery<TData>
+  extends MarsIncentivesReactQuery<ArrayOfAssetIncentiveResponse, TData> {
+  args: {
+    limit?: number
+    startAfter?: string
+  }
+}
+export function useMarsIncentivesAssetIncentivesQuery<TData = ArrayOfAssetIncentiveResponse>({
+  client,
+  args,
+  options,
+}: MarsIncentivesAssetIncentivesQuery<TData>) {
+  return useQuery<ArrayOfAssetIncentiveResponse, Error, TData>(
+    marsIncentivesQueryKeys.assetIncentives(client?.contractAddress, args),
+    () =>
+      client
+        ? client.assetIncentives({
+            limit: args.limit,
+            startAfter: args.startAfter,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },

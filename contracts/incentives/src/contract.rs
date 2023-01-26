@@ -2,8 +2,9 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env,
-    MessageInfo, Response, StdResult, Uint128,
+    MessageInfo, Order, Response, StdResult, Uint128,
 };
+use cw_storage_plus::Bound;
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
@@ -26,6 +27,9 @@ use crate::{
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-incentives";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+const DEFAULT_LIMIT: u32 = 5;
+const MAX_LIMIT: u32 = 10;
 
 // INIT
 
@@ -447,6 +451,10 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::AssetIncentive {
             denom,
         } => to_binary(&query_asset_incentive(deps, denom)?),
+        QueryMsg::AssetIncentives {
+            start_after,
+            limit,
+        } => to_binary(&query_asset_incentives(deps, start_after, limit)?),
         QueryMsg::UserUnclaimedRewards {
             user,
         } => to_binary(&query_user_unclaimed_rewards(deps, env, user)?),
@@ -465,10 +473,26 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 }
 
 pub fn query_asset_incentive(deps: Deps, denom: String) -> StdResult<AssetIncentiveResponse> {
-    let option_asset_incentive = ASSET_INCENTIVES.may_load(deps.storage, &denom)?;
-    Ok(AssetIncentiveResponse {
-        asset_incentive: option_asset_incentive,
-    })
+    let asset_incentive = ASSET_INCENTIVES.load(deps.storage, &denom)?;
+    Ok(AssetIncentiveResponse::from(denom, asset_incentive))
+}
+
+pub fn query_asset_incentives(
+    deps: Deps,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> StdResult<Vec<AssetIncentiveResponse>> {
+    let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+
+    ASSET_INCENTIVES
+        .range(deps.storage, start, None, Order::Ascending)
+        .take(limit)
+        .map(|item| {
+            let (denom, ai) = item?;
+            Ok(AssetIncentiveResponse::from(denom, ai))
+        })
+        .collect()
 }
 
 pub fn query_user_unclaimed_rewards(deps: Deps, env: Env, user: String) -> StdResult<Uint128> {
