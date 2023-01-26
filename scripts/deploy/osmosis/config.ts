@@ -203,7 +203,7 @@ export const atomOracle: OracleConfig = {
   denom: 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2',
   pool_id: 1,
   window_size: 1800,
-  downtime_detector: { downtime: 'duration10m', recovery: 120 },
+  downtime_detector: { downtime: 'duration10m', recovery: 7200 },
 }
 
 export const osmoOracle: OracleConfig = {
