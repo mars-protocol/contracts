@@ -5,7 +5,9 @@ const atom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5E
 const marsTestnet = 'ibc/ACA4C8A815A053CC027DB90D15915ADA31939FA331CE745862CDD00A2904FA17'
 /// FIXME: Add in denom after marshub launch
 const marsMainnet = 'TBD'
+const marsOsmoPool = 1 // arbitrary number til pool is created
 
+// axlUSDC does not have a pool on testnet so it is only in the mainnet config
 export const osmosisTestnetConfig: DeploymentConfig = {
   chainName: 'osmosis',
   atomDenom: atom,
@@ -80,7 +82,7 @@ export const osmosisMainnet: DeploymentConfig = {
   multisigAddr: 'osmo1jklpvl3446z5qw58cvq8hqvthzjtsfvs9j65tq',
   runTests: false,
   mainnet: true,
-  feeCollectorDenom: axlUSDC,
+  feeCollectorDenom: marsMainnet,
   safetyFundDenom: axlUSDC,
   swapRoutes: [
     { denom_in: 'uosmo', denom_out: axlUSDC, route: [{ pool_id: 678, token_out_denom: axlUSDC }] },
@@ -90,6 +92,27 @@ export const osmosisMainnet: DeploymentConfig = {
       route: [
         { pool_id: 1, token_out_denom: 'uosmo' },
         { pool_id: 678, token_out_denom: axlUSDC },
+      ],
+    },
+    {
+      denom_in: 'uosmo',
+      denom_out: marsMainnet,
+      route: [{ pool_id: marsOsmoPool, token_out_denom: marsMainnet }],
+    },
+    {
+      denom_in: atom,
+      denom_out: marsMainnet,
+      route: [
+        { pool_id: 1, token_out_denom: 'uosmo' },
+        { pool_id: marsOsmoPool, token_out_denom: marsMainnet },
+      ],
+    },
+    {
+      denom_in: axlUSDC,
+      denom_out: marsMainnet,
+      route: [
+        { pool_id: 678, token_out_denom: 'uosmo' },
+        { pool_id: marsOsmoPool, token_out_denom: marsMainnet },
       ],
     },
   ],
@@ -117,6 +140,9 @@ export const osmosisLocalConfig: DeploymentConfig = {
   mainnet: false,
   feeCollectorDenom: axlUSDC,
   safetyFundDenom: axlUSDC,
+  swapRoutes: [
+    { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
+  ],
 }
 
 export const osmoAsset: AssetConfig = {

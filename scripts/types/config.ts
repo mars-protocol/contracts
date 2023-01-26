@@ -29,7 +29,7 @@ export interface DeploymentConfig {
   multisigAddr?: string
   runTests: boolean
   mainnet: boolean
-  swapRoutes?: SwapRoute[]
+  swapRoutes: SwapRoute[]
 }
 
 export interface AssetConfig {

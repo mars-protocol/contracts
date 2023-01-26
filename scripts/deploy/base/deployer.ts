@@ -133,7 +133,6 @@ export class Deployer {
     await this.instantiate('rewards-collector', this.storage.codeIds['rewards-collector']!, msg)
   }
 
-  // This will only work for mainnet because testnet doesn't have an axlUSDC pool
   async setRoutes() {
     for (const route of this.config.swapRoutes!) {
       await this.client.execute(
