@@ -7,6 +7,7 @@ import { InstantiateMsgs } from '../../types/msg'
 import { writeFile } from 'fs/promises'
 import { join, resolve } from 'path'
 import assert from 'assert'
+import { ExecuteMsg } from '../../types/generated/mars-rewards-collector-osmosis/MarsRewardsCollectorOsmosis.types'
 
 export class Deployer {
   constructor(
@@ -67,7 +68,6 @@ export class Deployer {
     const { contractAddress: redBankContractAddress } = await this.client.instantiate(
       this.deployerAddress,
       codeId,
-      // @ts-expect-error msg expecting too general of a type
       msg,
       `mars-${name}`,
       'auto',
@@ -131,21 +131,21 @@ export class Deployer {
       slippage_tolerance: this.config.slippage_tolerance,
     }
     await this.instantiate('rewards-collector', this.storage.codeIds['rewards-collector']!, msg)
+  }
 
-    await this.client.execute(
-      this.deployerAddress,
-      this.storage.addresses['rewards-collector']!,
-      {
-        set_route: {
-          denom_in: this.config.atomDenom,
-          denom_out: this.config.baseAssetDenom,
-          route: [{ token_out_denom: this.config.baseAssetDenom, pool_id: '1' }],
-        },
-      },
-      'auto',
-    )
+  async setRoutes() {
+    for (const route of this.config.swapRoutes!) {
+      await this.client.execute(
+        this.deployerAddress,
+        this.storage.addresses['rewards-collector']!,
+        {
+          set_route: route,
+        } satisfies ExecuteMsg,
+        'auto',
+      )
+    }
 
-    printYellow(`${this.config.chainId} :: Rewards Collector Route has been set`)
+    printYellow(`${this.config.chainId} :: Rewards Collector Routes have been set`)
   }
 
   async saveDeploymentAddrsToFile() {
