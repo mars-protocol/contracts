@@ -5,7 +5,7 @@ use mars_osmosis::helpers::{has_denom, query_arithmetic_twap_price, query_pool};
 use mars_rewards_collector_base::{ContractError, ContractResult, Route};
 use osmosis_std::types::{
     cosmos::base::v1beta1::Coin,
-    osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute},
+    osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute as OsmosisSwapAmountInRoute},
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -17,6 +17,27 @@ const TWAP_WINDOW_SIZE_SECONDS: u64 = 600u64;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct OsmosisRoute(pub Vec<SwapAmountInRoute>);
+
+/// SwapAmountInRoute instead of using `osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute`
+/// to keep consistency for pool_id representation as u64.
+///
+/// SwapAmountInRoute from osmosis package uses as_str serializer/deserializer, so it expects pool_id
+/// as a String, but JSON schema doesn't correctly represent it.
+///
+/// See schemas/mars-rewards-collector-osmosis/mars-rewards-collector-osmosis.json:
+///
+/// ```json
+/// "pool_id": {
+///   "type": "integer",
+///   "format": "uint64",
+///   "minimum": 0.0
+/// }
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct SwapAmountInRoute {
+    pub pool_id: u64,
+    pub token_out_denom: String,
+}
 
 impl fmt::Display for OsmosisRoute {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -120,9 +141,16 @@ impl Route<Empty, Empty> for OsmosisRoute {
         let out_amount = query_out_amount(querier, &env.block, denom_in, amount, steps)?;
         let min_out_amount = (Decimal::one() - slippage_tolerance) * out_amount;
 
+        let routes: Vec<_> = steps
+            .iter()
+            .map(|step| OsmosisSwapAmountInRoute {
+                pool_id: step.pool_id,
+                token_out_denom: step.token_out_denom.clone(),
+            })
+            .collect();
         let swap_msg: CosmosMsg = MsgSwapExactAmountIn {
             sender: env.contract.address.to_string(),
-            routes: steps.to_vec(),
+            routes,
             token_in: Some(Coin {
                 denom: denom_in.to_string(),
                 amount: amount.to_string(),

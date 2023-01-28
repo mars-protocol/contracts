@@ -3,8 +3,7 @@ use mars_red_bank_types::{
     address_provider::InstantiateMsg as InstantiateAddr,
     rewards_collector::{ExecuteMsg, InstantiateMsg as InstantiateRewards},
 };
-use mars_rewards_collector_osmosis::OsmosisRoute;
-use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
+use mars_rewards_collector_osmosis::{route::SwapAmountInRoute, OsmosisRoute};
 use osmosis_test_tube::{Account, Gamm, Module, OsmosisTestApp, Wasm};
 
 use crate::{

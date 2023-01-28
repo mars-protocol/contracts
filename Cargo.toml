@@ -39,7 +39,7 @@ cw-multi-test     = "0.16.1"
 cw-storage-plus   = "1.0.1"
 cw-utils          = "1.0.1"
 mars-owner        = "1.0.0"
-osmosis-std       = { git = "https://github.com/osmosis-labs/osmosis-rust", rev = "3aae799830d48a94f4c48bccd0381f69e87a901e" }
+osmosis-std       = "0.14.0"
 osmosis-test-tube = "14.1.1"
 prost             = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
 schemars          = "0.8.11"
