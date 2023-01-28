@@ -321,7 +321,7 @@
         ]
       },
       "SwapAmountInRoute": {
-        "description": "===================== MsgSwapExactAmountIn",
+        "description": "SwapAmountInRoute instead of using `osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute` to keep consistency in pool_id representation as u64. SwapAmountInRoute from osmosis package uses as_str serializer/deserializer so it expects pool_id as String but JSON schema doesn't correctly represent it (see schemas/mars-rewards-collector-osmosis/mars-rewards-collector-osmosis.json): \"pool_id\": { \"type\": \"integer\", \"format\": \"uint64\", \"minimum\": 0.0 }",
         "type": "object",
         "required": [
           "pool_id",
