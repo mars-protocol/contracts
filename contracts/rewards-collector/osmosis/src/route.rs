@@ -19,7 +19,7 @@ const TWAP_WINDOW_SIZE_SECONDS: u64 = 600u64;
 pub struct OsmosisRoute(pub Vec<SwapAmountInRoute>);
 
 /// SwapAmountInRoute instead of using `osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute`
-/// to keep consistency in pool_id representation as u64.
+/// to keep consistency for pool_id representation as u64.
 ///
 /// SwapAmountInRoute from osmosis package uses as_str serializer/deserializer, so it expects pool_id
 /// as a String, but JSON schema doesn't correctly represent it.
