@@ -185,8 +185,9 @@ osmosisd query wasm contract-state smart $OSMO_TEST_ORACLE "$QUERY" --output jso
 QUERY='{"routes":{}}'
 osmosisd query wasm contract-state smart $OSMO_TEST_REWARDS_COLLECTOR "$QUERY" --output json --node=$OSMO_TEST_NODE
 ```
+
 - Verify Admin is set correctly:
-   _Note: If admin is not set, contracts are immutable_
+  _Note: If admin is not set, contracts are immutable_
 
 ```shell
 QUERY='{"routes":{}}'
