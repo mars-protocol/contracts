@@ -185,6 +185,17 @@ osmosisd query wasm contract-state smart $OSMO_TEST_ORACLE "$QUERY" --output jso
 QUERY='{"routes":{}}'
 osmosisd query wasm contract-state smart $OSMO_TEST_REWARDS_COLLECTOR "$QUERY" --output json --node=$OSMO_TEST_NODE
 ```
+- Verify Admin is set correctly:
+   _Note: If admin is not set, contracts are immutable_
+
+```shell
+QUERY='{"routes":{}}'
+osmosisd query wasm contract $OSMO_TEST_REWARDS_COLLECTOR
+osmosisd query wasm contract $OSMO_TEST_RED_BANK
+osmosisd query wasm contract $OSMO_TEST_ADDR_PROVIDER
+osmosisd query wasm contract $OSMO_TEST_ORACLE
+osmosisd query wasm contract $OSMO_TEST_INCENTIVES
+```
 
 ## Signing a TX with the multisig - Testnet Migrate Msg Example
 
