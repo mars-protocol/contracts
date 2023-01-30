@@ -56,7 +56,7 @@ For `bash`:
 
 ```bash
 # Mars Testnet variables
-export MARS_MULTI="mars15mwq8jc7sf0r8hu6phahfsmqg3fagt7ysyd3un"
+export MARS_MULTISIG="mars1skwmcsesjj99hye93smjz88rh0qndhvahewr60"
 export MARS_TEST_NODE="https://testnet-rpc.marsprotocol.io:443"
 export MARS_TEST_VESTING="mars14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9smxjtde"
 export MARS_TEST_AIRDROP="mars1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqhnhf0l"
@@ -72,7 +72,7 @@ export EXECUTE="msg_to_execute"
 
 # User specific variables
 export SINGLE_SIGN="your_name.JSON"
-export OSMO_ADDR="your_wallet_address"
+export MARS_ADDR="your_wallet_address"
 ```
 
 **Note:** `MARS_ACCOUNT` and `MARS_SEQUENCE` can be found by running:
@@ -96,7 +96,7 @@ marsd query account $MARS_MULTI \
    docker run --rm -v "$(pwd)":/code \
     --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
     --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-    cosmwasm/workspace-optimizer:0.12.10
+    cosmwasm/workspace-optimizer:0.12.11
    ```
 
    Note: Intel/Amd 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production and the wasm bytecode will not match up to an Intel compiled wasm file.
@@ -176,7 +176,7 @@ _Note: The multisig must have at least one tx against it for the address to exis
      --from=$MARS_MULTI \
      --chain-id=$MARS_TEST_CHAINID \
      --generate-only > $UNSIGNED \
-     --node=$OSMO_TEST_NODE
+     --node=$MARS_TEST_NODE
    ```
 
    Or do an offline sign mode:
@@ -205,6 +205,9 @@ _Note: The multisig must have at least one tx against it for the address to exis
      --output-document=$SINGLE_SIGN \
      --chain-id=$MARS_TEST_CHAINID \
      --node=$MARS_TEST_NODE
+   
+   ## When using a ledger: 
+     --sign-mode=amino-json
    ```
 
 7. Complete the multisign. There must be a total of 3 signers for the transaction to be successful.
@@ -221,9 +224,9 @@ _Note: The multisig must have at least one tx against it for the address to exis
 
    ```bash
    marsd tx broadcast $SIGNED \
-     --chain-id=$OSMO_TEST_CHAINID \
+     --chain-id=$MARS_TEST_CHAINID \
      --broadcast-mode=block
-     --node=$OSMO_TEST_NODE
+     --node=$MARS_TEST_NODE
    ```
 
    Note: For the tx to be able to broadcast, the newly uploaded code needs to have a migration entry point, meaning you have to put an empty (returning Ok) migration method.
@@ -258,9 +261,13 @@ _Note: The multisig must have at least one tx against it for the address to exis
 
 ## Signing a tx with the multisig - testnet execute msg example
 
-Every multisig holder is responsible for verifying the execute msg inside the json file of their unsigned tx.
+**Every multisig holder is responsible for verifying the contract's newly uploaded code for every migrate msg.**
 
-1. Assert that you have both your own wallet and multisig wallet in your keyring.
+_Note: The multisig must have at least one tx against it or be registered in the auth module for the address to exist in Mars' state._
+
+1. If the multisig does not exist in Mars' state, send some tokens to the account. Otherwise, the account cannot run the following commands.
+
+2. Assert that you have both your own wallet and multisig wallet in your keyring.
 
    ```bash
    marsd keys list
@@ -268,7 +275,7 @@ Every multisig holder is responsible for verifying the execute msg inside the js
 
    If they're missing, follow steps 2-4 from the "Set up multisig on your local network" section.
 
-2. Initiate the multisig execute tx. This can be done by any one of the multisig holders.
+3. Initiate the multisig execute tx. This can be done by any one of the multisig holders.
 
    ```bash
    marsd tx wasm execute $CONTRACTADDR $EXECUTE \
@@ -278,9 +285,9 @@ Every multisig holder is responsible for verifying the execute msg inside the js
      --node=$MARS_TEST_NODE
    ```
 
-3. Distribute the generated file to all signers.
+4. Distribute the generated file to all signers.
 
-4. Individually sign the transaction.
+5. Individually sign the transaction.
 
    ```bash
    marsd tx sign $UNSIGNED \
@@ -291,7 +298,7 @@ Every multisig holder is responsible for verifying the execute msg inside the js
      --node=$MARS_TEST_NODE
    ```
 
-5. Complete the multisign. There must be a total of 3 signers for the transaction to be successful.
+6. Complete the multisign. There must be a total of 3 signers for the transaction to be successful.
 
    ```bash
    marsd tx multisign $UNSIGNED $MARS_MULTI `$SINGER1`.json `$SIGNER2`.json `$SIGNER3`.json \
@@ -300,7 +307,7 @@ Every multisig holder is responsible for verifying the execute msg inside the js
      --node=$MARS_TEST_NODE
    ```
 
-6. Broadcast the transaction.
+7. Broadcast the transaction.
 
    ```bash
    marsd tx broadcast $SIGNED \
