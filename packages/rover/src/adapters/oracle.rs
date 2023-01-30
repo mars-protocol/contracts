@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Coin, QuerierWrapper, StdResult, Uint128};
 use mars_math::FractionMath;
-use mars_outpost::oracle::{PriceResponse, QueryMsg};
+use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
 
 use crate::error::ContractResult;
 

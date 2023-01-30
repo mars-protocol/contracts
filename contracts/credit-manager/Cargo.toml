@@ -29,7 +29,7 @@ cw-item-set             = { workspace = true }
 cw-storage-plus         = { workspace = true }
 mars-math               = { workspace = true }
 mars-health             = { workspace = true }
-mars-outpost            = { workspace = true }
+mars-red-bank-types     = { workspace = true }
 mars-owner              = { workspace = true }
 mars-rover              = { workspace = true }
 

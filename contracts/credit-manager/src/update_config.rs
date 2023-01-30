@@ -22,8 +22,7 @@ pub fn update_config(
 ) -> ContractResult<Response> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
-    let mut response =
-        Response::new().add_attribute("action", "rover/credit-manager/update_config");
+    let mut response = Response::new().add_attribute("action", "update_config");
 
     if let Some(addr_str) = updates.account_nft {
         let validated = deps.api.addr_validate(&addr_str)?;
@@ -126,7 +125,5 @@ pub fn update_nft_config(
         })?,
     });
 
-    Ok(Response::new()
-        .add_attribute("action", "rover/credit-manager/update_nft_config")
-        .add_message(update_config_msg))
+    Ok(Response::new().add_attribute("action", "update_nft_config").add_message(update_config_msg))
 }

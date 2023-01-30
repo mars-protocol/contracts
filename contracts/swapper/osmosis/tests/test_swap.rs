@@ -3,7 +3,7 @@ use mars_rover::{adapters::swap::ExecuteMsg, error::ContractError as RoverError}
 use mars_swapper_base::ContractError;
 use mars_swapper_osmosis::route::OsmosisRoute;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
-use osmosis_testing::{Account, Bank, Gamm, Module, OsmosisTestApp, Wasm};
+use osmosis_test_tube::{Account, Bank, Gamm, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::{
     assert_err, instantiate_contract, query_balance, swap_to_create_twap_records,

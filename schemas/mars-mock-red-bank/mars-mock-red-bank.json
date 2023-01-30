@@ -213,7 +213,7 @@
             "type": "object",
             "properties": {
               "on_behalf_of": {
-                "description": "Address that will receive the maTokens",
+                "description": "Address that will receive the coins",
                 "type": [
                   "string",
                   "null"
@@ -226,7 +226,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Withdraw an amount of the asset burning an equivalent amount of maTokens.",
+        "description": "Withdraw native coins",
         "type": "object",
         "required": [
           "withdraw"

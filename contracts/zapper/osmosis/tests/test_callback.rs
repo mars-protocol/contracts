@@ -1,6 +1,6 @@
 use cosmwasm_std::{coin, Addr, Coin};
 use mars_zapper_base::{CallbackMsg, ContractError, ExecuteMsg};
-use osmosis_testing::{Account, Module, OsmosisTestApp, Wasm};
+use osmosis_test_tube::{Account, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::{assert_err, instantiate_contract};
 

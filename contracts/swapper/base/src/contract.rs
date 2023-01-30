@@ -192,7 +192,7 @@ where
         Ok(Response::new()
             .add_message(swap_msg)
             .add_message(transfer_msg)
-            .add_attribute("action", "rover/swapper/swap_fn")
+            .add_attribute("action", "swap_fn")
             .add_attribute("denom_in", coin_in.denom)
             .add_attribute("amount_in", coin_in.amount)
             .add_attribute("denom_out", denom_out)
@@ -230,9 +230,7 @@ where
                 .collect(),
         });
 
-        Ok(Response::new()
-            .add_attribute("action", "rover/swapper/transfer_result")
-            .add_message(transfer_msg))
+        Ok(Response::new().add_attribute("action", "transfer_result").add_message(transfer_msg))
     }
 
     fn set_route(

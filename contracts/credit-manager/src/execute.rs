@@ -39,9 +39,7 @@ pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Respon
         })?,
     });
 
-    Ok(Response::new()
-        .add_message(nft_mint_msg)
-        .add_attribute("action", "rover/credit-manager/create_credit_account"))
+    Ok(Response::new().add_message(nft_mint_msg).add_attribute("action", "create_credit_account"))
 }
 
 pub fn dispatch_actions(

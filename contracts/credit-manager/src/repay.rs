@@ -53,7 +53,7 @@ pub fn repay(
 
     Ok(Response::new()
         .add_message(red_bank_repay_msg)
-        .add_attribute("action", "rover/credit-manager/repay")
+        .add_attribute("action", "repay")
         .add_attribute("account_id", account_id)
         .add_attribute("debt_shares_repaid", shares_to_repay)
         .add_attribute("coin_repaid", coin_to_repay.to_string()))

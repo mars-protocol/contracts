@@ -2,7 +2,7 @@ use cosmwasm_std::coin;
 use mars_owner::{OwnerResponse, OwnerUpdate};
 use mars_rover::adapters::swap::{ExecuteMsg, QueryMsg};
 use mars_swapper_osmosis::route::OsmosisRoute;
-use osmosis_testing::{Account, Module, OsmosisTestApp, Wasm};
+use osmosis_test_tube::{Account, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::instantiate_contract;
 

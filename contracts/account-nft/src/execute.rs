@@ -75,7 +75,7 @@ pub fn update_config(
         return Err(BaseError(cw721_base::ContractError::Unauthorized {}));
     }
 
-    let mut response = Response::new().add_attribute("action", "rover/account_nft/update_config");
+    let mut response = Response::new().add_attribute("action", "update_config");
     let mut config = CONFIG.load(deps.storage)?;
 
     if let Some(max) = updates.max_value_for_burn {

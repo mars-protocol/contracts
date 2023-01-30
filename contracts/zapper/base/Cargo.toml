@@ -21,10 +21,8 @@ library    = []
 [dependencies]
 cosmwasm-schema  = { workspace = true }
 cosmwasm-std     = { workspace = true }
+cw-dex           = { workspace = true }
 cw-utils         = { workspace = true }
 schemars         = { workspace = true }
 serde            = { workspace = true }
 thiserror        = { workspace = true }
-
-# FIXME: develop branch dependency till Apollo finish audit
-cw-dex   = { git = "https://github.com/apollodao/cw-dex", rev = "b9d18cfbba8aa09ae4ee9459d308cda87ae5ffb3" }

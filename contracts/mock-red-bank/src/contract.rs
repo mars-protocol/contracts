@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
-use mars_outpost::red_bank;
+use mars_red_bank_types::red_bank;
 
 use crate::{
     execute::{borrow, deposit, repay},

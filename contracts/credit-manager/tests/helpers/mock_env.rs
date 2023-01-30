@@ -15,11 +15,11 @@ use mars_mock_red_bank::msg::{CoinMarketInfo, InstantiateMsg as RedBankInstantia
 use mars_mock_vault::{
     contract::DEFAULT_VAULT_TOKEN_PREFUND, msg::InstantiateMsg as VaultInstantiateMsg,
 };
-use mars_outpost::red_bank::{
+use mars_owner::OwnerUpdate;
+use mars_red_bank_types::red_bank::{
     QueryMsg::{UserCollateral, UserDebt},
     UserCollateralResponse, UserDebtResponse,
 };
-use mars_owner::OwnerUpdate;
 use mars_rover::{
     adapters::{
         account_nft::{
@@ -923,7 +923,7 @@ impl MockEnvBuilder {
         info: &VaultTestInfo,
         config: Option<VaultInstantiateConfig>,
     ) -> &mut Self {
-        let config = config.unwrap_or(self.deploy_vault(info));
+        let config = config.unwrap_or_else(|| self.deploy_vault(info));
         let new_list = match self.pre_deployed_vaults.clone() {
             None => Some(vec![config]),
             Some(mut curr) => {

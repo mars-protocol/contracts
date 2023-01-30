@@ -32,7 +32,7 @@ pub fn update_coin_balance(
         };
         decrement_coin_balance(deps.storage, account_id, &coin_to_reduce)?;
         Ok(Response::new()
-            .add_attribute("action", "rover/credit-manager/update_coin_balance")
+            .add_attribute("action", "update_coin_balance")
             .add_attribute("account_id", account_id)
             .add_attribute("coin_decremented", coin_to_reduce.to_string()))
     } else {
@@ -43,7 +43,7 @@ pub fn update_coin_balance(
         };
         increment_coin_balance(deps.storage, account_id, &coin_to_increment)?;
         Ok(Response::new()
-            .add_attribute("action", "rover/credit-manager/update_coin_balance")
+            .add_attribute("action", "update_coin_balance")
             .add_attribute("account_id", account_id)
             .add_attribute("coin_incremented", coin_to_increment.to_string()))
     }

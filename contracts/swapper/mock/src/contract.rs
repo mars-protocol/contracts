@@ -89,7 +89,5 @@ pub fn swap_exact_in(
         amount: coins(MOCK_SWAP_RESULT.u128(), denom_out),
     });
 
-    Ok(Response::new()
-        .add_attribute("action", "rover/swapper/transfer_result")
-        .add_message(transfer_msg))
+    Ok(Response::new().add_attribute("action", "transfer_result").add_message(transfer_msg))
 }

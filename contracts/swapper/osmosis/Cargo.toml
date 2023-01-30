@@ -32,5 +32,5 @@ schemars          = { workspace = true }
 thiserror         = { workspace = true }
 
 [dev-dependencies]
-anyhow          = { workspace = true }
-osmosis-testing = { workspace = true }
+anyhow            = { workspace = true }
+osmosis-test-tube = { workspace = true }

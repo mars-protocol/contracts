@@ -3,7 +3,7 @@ use cosmwasm_std::{
     to_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, QueryRequest, StdResult, Uint128,
     WasmMsg, WasmQuery,
 };
-use mars_outpost::{red_bank, red_bank::Market};
+use mars_red_bank_types::{red_bank, red_bank::Market};
 
 #[cw_serde]
 pub struct RedBankBase<T>(T);

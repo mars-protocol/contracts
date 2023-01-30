@@ -1,7 +1,7 @@
 use std::{fmt::Display, str::FromStr};
 
 use mars_zapper_base::InstantiateMsg;
-use osmosis_testing::{
+use osmosis_test_tube::{
     cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest, Bank, OsmosisTestApp, RunnerError,
     SigningAccount, Wasm,
 };

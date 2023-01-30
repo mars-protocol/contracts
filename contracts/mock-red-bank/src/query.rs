@@ -1,5 +1,5 @@
 use cosmwasm_std::{Deps, StdResult, Uint128};
-use mars_outpost::red_bank::{Market, UserCollateralResponse, UserDebtResponse};
+use mars_red_bank_types::red_bank::{Market, UserCollateralResponse, UserDebtResponse};
 
 use crate::{
     helpers::{load_collateral_amount, load_debt_amount},

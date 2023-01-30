@@ -2,7 +2,7 @@ use cosmwasm_std::{coin, Uint128};
 use mars_rover::adapters::swap::{EstimateExactInSwapResponse, ExecuteMsg, QueryMsg};
 use mars_swapper_osmosis::route::OsmosisRoute;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
-use osmosis_testing::{Gamm, Module, OsmosisTestApp, RunnerResult, Wasm};
+use osmosis_test_tube::{Gamm, Module, OsmosisTestApp, RunnerResult, Wasm};
 
 use crate::helpers::{
     assert_err, instantiate_contract, query_price_from_pool, swap_to_create_twap_records,

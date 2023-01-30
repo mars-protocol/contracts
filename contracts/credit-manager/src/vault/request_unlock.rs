@@ -61,7 +61,7 @@ pub fn request_vault_unlock(
 
     Ok(Response::new()
         .add_submessage(request_unlock_msg)
-        .add_attribute("action", "rover/credit-manager/vault/request_unlock")
+        .add_attribute("action", "vault/request_unlock")
         .add_attribute("account_id", account_id)
         .add_attribute("vault_addr", vault.address)
         .add_attribute("unlock_amount", amount))
@@ -90,7 +90,7 @@ pub fn handle_unlock_request_reply(deps: DepsMut, reply: Reply) -> ContractResul
     VAULT_REQUEST_TEMP_STORAGE.remove(deps.storage);
 
     Ok(Response::new()
-        .add_attribute("action", "rover/credit-manager/vault/unlock_request/handle_reply")
+        .add_attribute("action", "vault/unlock_request/handle_reply")
         .add_attribute("account_id", &storage.account_id)
         .add_attribute("vault_addr", storage.vault_addr.to_string())
         .add_attribute("position_id", unlocking_position.id.to_string()))

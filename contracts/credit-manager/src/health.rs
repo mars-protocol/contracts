@@ -2,7 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Decimal, Deps, Env, Event, Response, Uint128};
 use mars_health::Health;
 use mars_math::FractionMath;
-use mars_outpost::{oracle::PriceResponse, red_bank::Market};
+use mars_red_bank_types::{oracle::PriceResponse, red_bank::Market};
 use mars_rover::{
     adapters::vault::VaultPosition,
     error::{ContractError, ContractResult},
@@ -248,7 +248,5 @@ pub fn assert_max_ltv(
         .add_attribute("max_ltv_health_factor", new_health.max_ltv_health_factor.to_string())
         .add_attribute("above_max_ltv", new_health.is_above_max_ltv().to_string());
 
-    Ok(Response::new()
-        .add_attribute("action", "rover/credit-manager/callback/assert_health")
-        .add_event(event))
+    Ok(Response::new().add_attribute("action", "callback/assert_health").add_event(event))
 }

@@ -125,7 +125,7 @@ where
         // Callbacks to return remaining coins and LP tokens
         let callback_msgs = prepare_return_coin_callbacks(&env, recipient.clone(), coin_balances)?;
 
-        let event = Event::new("rover/zapper/execute_provide_liquidity")
+        let event = Event::new("execute_provide_liquidity")
             .add_attribute("lp_token_out", lp_token_out)
             .add_attribute("minimum_receive", minimum_receive)
             .add_attribute("recipient", recipient);
@@ -173,7 +173,7 @@ where
         // Callbacks to return remaining coins and LP tokens
         let callback_msgs = prepare_return_coin_callbacks(&env, recipient.clone(), coin_balances)?;
 
-        let event = Event::new("rover/zapper/execute_withdraw_liquidity")
+        let event = Event::new("execute_withdraw_liquidity")
             .add_attribute("lp_token", lp_token.denom)
             .add_attribute("coins_returned", coins_returned_str)
             .add_attribute("recipient", recipient);
@@ -205,7 +205,7 @@ where
             amount: vec![return_coin.clone()],
         });
 
-        let event = Event::new("rover/zapper/execute_callback_return_lp_tokens")
+        let event = Event::new("execute_callback_return_lp_tokens")
             .add_attribute("coin_returned", return_coin.to_string())
             .add_attribute("recipient", recipient);
 

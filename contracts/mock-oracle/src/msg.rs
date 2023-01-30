@@ -21,7 +21,7 @@ pub enum ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    #[returns(mars_outpost::oracle::PriceResponse)]
+    #[returns(mars_red_bank_types::oracle::PriceResponse)]
     Price {
         denom: String,
     },

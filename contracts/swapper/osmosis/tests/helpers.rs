@@ -5,7 +5,7 @@ use mars_rover::adapters::swap::InstantiateMsg;
 use osmosis_std::types::osmosis::gamm::v1beta1::{
     MsgSwapExactAmountIn, MsgSwapExactAmountInResponse, SwapAmountInRoute,
 };
-use osmosis_testing::{
+use osmosis_test_tube::{
     cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest, Account, Bank, ExecuteResponse,
     Gamm, OsmosisTestApp, Runner, RunnerError, SigningAccount, Wasm,
 };

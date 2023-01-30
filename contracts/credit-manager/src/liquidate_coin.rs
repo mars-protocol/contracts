@@ -48,7 +48,7 @@ pub fn liquidate_coin(
 
     Ok(Response::new()
         .add_message(repay_msg)
-        .add_attribute("action", "rover/credit-manager/liquidate_coin")
+        .add_attribute("action", "liquidate_coin")
         .add_attribute("account_id", liquidator_account_id)
         .add_attribute("liquidatee_account_id", liquidatee_account_id)
         .add_attribute("coin_debt_repaid", debt.to_string())
