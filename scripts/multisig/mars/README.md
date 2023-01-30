@@ -205,8 +205,8 @@ _Note: The multisig must have at least one tx against it for the address to exis
      --output-document=$SINGLE_SIGN \
      --chain-id=$MARS_TEST_CHAINID \
      --node=$MARS_TEST_NODE
-   
-   ## When using a ledger: 
+
+   ## When using a ledger:
      --sign-mode=amino-json
    ```
 

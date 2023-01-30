@@ -253,8 +253,8 @@ _Note: The multisig must have at least one tx against it for the address to exis
    --output-document=$SINGLE_SIGN \
    --chain-id=$OSMO_TEST_CHAINID \
    --node=$OSMO_TEST_NODE
-      
-   ## When using a ledger: 
+
+   ## When using a ledger:
    --sign-mode=amino-json
    ```
 
@@ -272,8 +272,8 @@ _Note: The multisig must have at least one tx against it for the address to exis
    --offline \
    --sequence=$SEQUENCE \
    --account=$OSMO_ACCOUNT
-         
-   ## When using a ledger: 
+
+   ## When using a ledger:
    --sign-mode=amino-json
    ```
 
@@ -372,8 +372,8 @@ Every multisig holder is responsible for verifying the execute msg inside the js
    --output-document=$SINGLE_SIGN \
    --chain-id=$OSMO_TEST_CHAINID \
    --node=$OSMO_TEST_NODE
-            
-   ## When using a ledger: 
+
+   ## When using a ledger:
    --sign-mode=amino-json
    ```
 
