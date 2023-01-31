@@ -134,7 +134,7 @@ export class Deployer {
   }
 
   async setRoutes() {
-    for (const route of this.config.swapRoutes!) {
+    for (const route of this.config.swapRoutes) {
       await this.client.execute(
         this.deployerAddress,
         this.storage.addresses['rewards-collector']!,
@@ -175,12 +175,20 @@ export class Deployer {
         address: this.storage.addresses.oracle,
       },
       {
-        address_type: 'protocol_admin',
-        address: this.storage.owner!,
-      },
-      {
         address_type: 'red_bank',
         address: this.storage.addresses['red-bank'],
+      },
+      {
+        address_type: 'fee_collector',
+        address: this.config.feeCollectorAddr,
+      },
+      {
+        address_type: 'safety_fund',
+        address: this.config.safetyFundAddr,
+      },
+      {
+        address_type: 'protocol_admin',
+        address: this.config.protocolAdminAddr,
       },
     ]
 

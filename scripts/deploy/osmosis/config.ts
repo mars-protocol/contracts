@@ -3,6 +3,10 @@ import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/config'
 const axlUSDC = 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858'
 const atom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
 const marsTestnet = 'ibc/ACA4C8A815A053CC027DB90D15915ADA31939FA331CE745862CDD00A2904FA17'
+// note the following three addresses are all 'mars' bech32 prefix
+const safetyFundAddr = 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575'
+const protocolAdminAddr = 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n'
+const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
 /// FIXME: Add in denom after marshub launch
 const marsMainnet = 'TBD'
 const marsOsmoPool = 1 // arbitrary number til pool is created
@@ -33,6 +37,9 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   swapRoutes: [
     { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
   ],
+  safetyFundAddr: safetyFundAddr,
+  protocolAdminAddr: protocolAdminAddr,
+  feeCollectorAddr: feeCollectorAddr,
 }
 export const osmosisTestMultisig: DeploymentConfig = {
   chainName: 'osmosis',
@@ -52,7 +59,7 @@ export const osmosisTestMultisig: DeploymentConfig = {
   slippage_tolerance: '0.01',
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
-  multisigAddr: 'osmo1jklpvl3446z5qw58cvq8hqvthzjtsfvs9j65tq',
+  multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
   runTests: false,
   mainnet: false,
   feeCollectorDenom: 'uosmo',
@@ -60,6 +67,9 @@ export const osmosisTestMultisig: DeploymentConfig = {
   swapRoutes: [
     { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
   ],
+  safetyFundAddr: safetyFundAddr,
+  protocolAdminAddr: protocolAdminAddr,
+  feeCollectorAddr: feeCollectorAddr,
 }
 /// FIXME:: TBD fields must be updated after mars hub launch
 export const osmosisMainnet: DeploymentConfig = {
@@ -116,6 +126,9 @@ export const osmosisMainnet: DeploymentConfig = {
       ],
     },
   ],
+  safetyFundAddr: safetyFundAddr,
+  protocolAdminAddr: protocolAdminAddr,
+  feeCollectorAddr: feeCollectorAddr,
 }
 
 export const osmosisLocalConfig: DeploymentConfig = {
@@ -143,6 +156,9 @@ export const osmosisLocalConfig: DeploymentConfig = {
   swapRoutes: [
     { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
   ],
+  safetyFundAddr: safetyFundAddr,
+  protocolAdminAddr: protocolAdminAddr,
+  feeCollectorAddr: feeCollectorAddr,
 }
 
 export const osmoAsset: AssetConfig = {

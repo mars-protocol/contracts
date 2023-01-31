@@ -30,6 +30,9 @@ export interface DeploymentConfig {
   runTests: boolean
   mainnet: boolean
   swapRoutes: SwapRoute[]
+  safetyFundAddr: string
+  protocolAdminAddr: string
+  feeCollectorAddr: string
 }
 
 export interface AssetConfig {
