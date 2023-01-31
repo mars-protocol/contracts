@@ -146,7 +146,7 @@ pub mod helpers {
 
     use super::{AddressResponseItem, MarsAddressType, QueryMsg};
 
-    /// Query contract address.
+        /// Query contract address.
     ///
     /// It fails if the provided address does not start with current chain prefix.
     pub fn query_contract_addr(
@@ -154,26 +154,28 @@ pub mod helpers {
         address_provider_addr: &Addr,
         contract: MarsAddressType,
     ) -> StdResult<Addr> {
-        let res = deps.querier.query_wasm_smart::<AddressResponseItem>(
-            address_provider_addr,
-            &QueryMsg::Address(contract),
-        )?;
-        deps.api.addr_validate(&res.address)
+        deps.querier
+            .query_wasm_smart::<AddressResponseItem>(
+                address_provider_addr,
+                &QueryMsg::Address(contract),
+            )
+            .map(|res| deps.api.addr_validate(&res.address))?
     }
 
     /// Query contract addresses.
     ///
     /// It fails if the provided address does not start with current chain prefix.
-    pub fn query_contract_addrs(
+    pub fn query_contracts_addr(
         deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
         contracts: Vec<MarsAddressType>,
     ) -> StdResult<HashMap<MarsAddressType, Addr>> {
-        let res = deps.querier.query_wasm_smart::<Vec<AddressResponseItem>>(
-            address_provider_addr,
-            &QueryMsg::Addresses(contracts),
-        )?;
-        res.iter()
+        deps.querier
+            .query_wasm_smart::<Vec<AddressResponseItem>>(
+                address_provider_addr,
+                &QueryMsg::Addresses(contracts),
+            )?
+            .into_iter()
             .map(|item| Ok((item.address_type, deps.api.addr_validate(&item.address)?)))
             .collect()
     }
@@ -184,10 +186,11 @@ pub mod helpers {
         address_provider_addr: &Addr,
         module: MarsAddressType,
     ) -> StdResult<String> {
-        let res = deps.querier.query_wasm_smart::<AddressResponseItem>(
-            address_provider_addr,
-            &QueryMsg::Address(module),
-        )?;
-        Ok(res.address)
+        deps.querier
+            .query_wasm_smart::<AddressResponseItem>(
+                address_provider_addr,
+                &QueryMsg::Address(module),
+            )
+            .map(|res| res.address)
     }
 }
