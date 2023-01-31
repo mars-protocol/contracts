@@ -258,7 +258,7 @@ fn update_asset_by_owner(
 
             if should_update_interest_rates {
                 let config = CONFIG.load(deps.storage)?;
-                let addresses = address_provider::helpers::query_addresses(
+                let addresses = address_provider::helpers::query_contracts_addr(
                     deps.as_ref(),
                     &config.address_provider,
                     vec![MarsAddressType::Incentives, MarsAddressType::RewardsCollector],
@@ -413,7 +413,7 @@ pub fn deposit(
     let config = CONFIG.load(deps.storage)?;
 
     // update indexes and interest rates
-    let addresses = address_provider::helpers::query_addresses(
+    let addresses = address_provider::helpers::query_contracts_addr(
         deps.as_ref(),
         &config.address_provider,
         vec![MarsAddressType::Incentives, MarsAddressType::RewardsCollector],
@@ -501,7 +501,7 @@ pub fn withdraw(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let addresses = address_provider::helpers::query_addresses(
+    let addresses = address_provider::helpers::query_contracts_addr(
         deps.as_ref(),
         &config.address_provider,
         vec![
@@ -611,7 +611,7 @@ pub fn borrow(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let addresses = address_provider::helpers::query_addresses(
+    let addresses = address_provider::helpers::query_contracts_addr(
         deps.as_ref(),
         &config.address_provider,
         vec![
@@ -724,7 +724,7 @@ pub fn repay(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let addresses = address_provider::helpers::query_addresses(
+    let addresses = address_provider::helpers::query_contracts_addr(
         deps.as_ref(),
         &config.address_provider,
         vec![MarsAddressType::Incentives, MarsAddressType::RewardsCollector],
@@ -826,7 +826,7 @@ pub fn liquidate(
     // 2. Compute health factor
     let config = CONFIG.load(deps.storage)?;
 
-    let addresses = address_provider::helpers::query_addresses(
+    let addresses = address_provider::helpers::query_contracts_addr(
         deps.as_ref(),
         &config.address_provider,
         vec![
@@ -1084,7 +1084,7 @@ pub fn update_asset_collateral_status(
     // user is not liquidatable after disabling
     if previously_enabled && !enable {
         let config = CONFIG.load(deps.storage)?;
-        let oracle_addr = address_provider::helpers::query_address(
+        let oracle_addr = address_provider::helpers::query_contract_addr(
             deps.as_ref(),
             &config.address_provider,
             MarsAddressType::Oracle,
