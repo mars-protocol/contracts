@@ -142,32 +142,55 @@ pub struct AddressResponseItem {
 pub mod helpers {
     use std::collections::HashMap;
 
-    use cosmwasm_std::{Addr, Deps, StdResult};
+    use cosmwasm_std::{Addr, CustomQuery, Deps, StdResult};
 
     use super::{AddressResponseItem, MarsAddressType, QueryMsg};
 
-    pub fn query_address(
-        deps: Deps<impl cosmwasm_std::CustomQuery>,
+    /// Query contract address.
+    ///
+    /// It fails if the provided address does not start with current chain prefix.
+    pub fn query_contract_addr(
+        deps: Deps<impl CustomQuery>,
         address_provider_addr: &Addr,
         contract: MarsAddressType,
     ) -> StdResult<Addr> {
-        let res: AddressResponseItem =
-            deps.querier.query_wasm_smart(address_provider_addr, &QueryMsg::Address(contract))?;
-
-        deps.api.addr_validate(&res.address)
+        deps.querier
+            .query_wasm_smart::<AddressResponseItem>(
+                address_provider_addr,
+                &QueryMsg::Address(contract),
+            )
+            .map(|res| deps.api.addr_validate(&res.address))?
     }
 
-    pub fn query_addresses(
-        deps: Deps<impl cosmwasm_std::CustomQuery>,
+    /// Query contract addresses.
+    ///
+    /// It fails if the provided address does not start with current chain prefix.
+    pub fn query_contract_addrs(
+        deps: Deps<impl CustomQuery>,
         address_provider_addr: &Addr,
         contracts: Vec<MarsAddressType>,
     ) -> StdResult<HashMap<MarsAddressType, Addr>> {
-        let res: Vec<AddressResponseItem> = deps
-            .querier
-            .query_wasm_smart(address_provider_addr, &QueryMsg::Addresses(contracts))?;
-
-        res.iter()
+        deps.querier
+            .query_wasm_smart::<Vec<AddressResponseItem>>(
+                address_provider_addr,
+                &QueryMsg::Addresses(contracts),
+            )?
+            .into_iter()
             .map(|item| Ok((item.address_type, deps.api.addr_validate(&item.address)?)))
             .collect()
+    }
+
+    /// Query Mars Hub module address
+    pub fn query_module_addr(
+        deps: Deps<impl CustomQuery>,
+        address_provider_addr: &Addr,
+        module: MarsAddressType,
+    ) -> StdResult<String> {
+        deps.querier
+            .query_wasm_smart::<AddressResponseItem>(
+                address_provider_addr,
+                &QueryMsg::Address(module),
+            )
+            .map(|res| res.address)
     }
 }

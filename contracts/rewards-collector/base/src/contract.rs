@@ -212,7 +212,7 @@ where
     ) -> ContractResult<Response<M>> {
         let cfg = self.config.load(deps.storage)?;
 
-        let red_bank_addr = address_provider::helpers::query_address(
+        let red_bank_addr = address_provider::helpers::query_contract_addr(
             deps.as_ref(),
             &cfg.address_provider,
             MarsAddressType::RedBank,
@@ -238,7 +238,7 @@ where
     fn claim_incentive_rewards(&self, deps: DepsMut<Q>) -> ContractResult<Response<M>> {
         let cfg = self.config.load(deps.storage)?;
 
-        let incentives_addr = address_provider::helpers::query_address(
+        let incentives_addr = address_provider::helpers::query_contract_addr(
             deps.as_ref(),
             &cfg.address_provider,
             MarsAddressType::Incentives,
@@ -324,13 +324,13 @@ where
         let cfg = self.config.load(deps.storage)?;
 
         let to_address = if denom == cfg.safety_fund_denom {
-            address_provider::helpers::query_address(
+            address_provider::helpers::query_module_addr(
                 deps.as_ref(),
                 &cfg.address_provider,
                 MarsAddressType::SafetyFund,
             )?
         } else if denom == cfg.fee_collector_denom {
-            address_provider::helpers::query_address(
+            address_provider::helpers::query_module_addr(
                 deps.as_ref(),
                 &cfg.address_provider,
                 MarsAddressType::FeeCollector,
