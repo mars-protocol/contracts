@@ -175,10 +175,6 @@ export class Deployer {
         address: this.storage.addresses.oracle,
       },
       {
-        address_type: 'protocol_admin',
-        address: this.storage.owner!,
-      },
-      {
         address_type: 'red_bank',
         address: this.storage.addresses['red-bank'],
       },

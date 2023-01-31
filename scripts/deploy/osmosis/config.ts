@@ -33,6 +33,10 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   swapRoutes: [
     { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
   ],
+  // note the following addresses are all 'mars' bech32 prefix
+  safetyFundAddr: 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575',
+  protocolAdminAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
+  feeCollectorAddr: 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x',
 }
 export const osmosisTestMultisig: DeploymentConfig = {
   chainName: 'osmosis',
@@ -60,6 +64,10 @@ export const osmosisTestMultisig: DeploymentConfig = {
   swapRoutes: [
     { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
   ],
+  // note the following addresses are all 'mars' bech32 prefix
+  safetyFundAddr: 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575',
+  protocolAdminAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
+  feeCollectorAddr: 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x',
 }
 /// FIXME:: TBD fields must be updated after mars hub launch
 export const osmosisMainnet: DeploymentConfig = {
@@ -117,9 +125,9 @@ export const osmosisMainnet: DeploymentConfig = {
     },
   ],
   // note the following addresses are all 'mars' bech32 prefix
-  safetyFundAddr: 'TBD',
-  protocolAdminAddr: 'TBD',
-  feeCollectorAddr: 'TBD',
+  safetyFundAddr: 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575',
+  protocolAdminAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
+  feeCollectorAddr: 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x',
 }
 
 export const osmosisLocalConfig: DeploymentConfig = {
@@ -147,6 +155,9 @@ export const osmosisLocalConfig: DeploymentConfig = {
   swapRoutes: [
     { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
   ],
+  safetyFundAddr: 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575',
+  protocolAdminAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
+  feeCollectorAddr: 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x',
 }
 
 export const osmoAsset: AssetConfig = {
