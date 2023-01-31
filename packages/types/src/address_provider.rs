@@ -142,7 +142,7 @@ pub struct AddressResponseItem {
 pub mod helpers {
     use std::collections::HashMap;
 
-    use cosmwasm_std::{Addr, Deps, StdResult};
+    use cosmwasm_std::{Addr, CustomQuery, Deps, StdResult};
 
     use super::{AddressResponseItem, MarsAddressType, QueryMsg};
 
@@ -150,7 +150,7 @@ pub mod helpers {
     ///
     /// It fails if the provided address does not start with current chain prefix.
     pub fn query_contract_addr(
-        deps: Deps<impl cosmwasm_std::CustomQuery>,
+        deps: Deps<impl CustomQuery>,
         address_provider_addr: &Addr,
         contract: MarsAddressType,
     ) -> StdResult<Addr> {
@@ -166,7 +166,7 @@ pub mod helpers {
     ///
     /// It fails if the provided address does not start with current chain prefix.
     pub fn query_contract_addrs(
-        deps: Deps<impl cosmwasm_std::CustomQuery>,
+        deps: Deps<impl CustomQuery>,
         address_provider_addr: &Addr,
         contracts: Vec<MarsAddressType>,
     ) -> StdResult<HashMap<MarsAddressType, Addr>> {
@@ -182,7 +182,7 @@ pub mod helpers {
 
     /// Query Mars Hub module address
     pub fn query_module_addr(
-        deps: Deps<impl cosmwasm_std::CustomQuery>,
+        deps: Deps<impl CustomQuery>,
         address_provider_addr: &Addr,
         module: MarsAddressType,
     ) -> StdResult<String> {
