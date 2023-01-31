@@ -154,22 +154,25 @@ pub mod helpers {
         address_provider_addr: &Addr,
         contract: MarsAddressType,
     ) -> StdResult<Addr> {
-        let res: AddressResponseItem =
-            deps.querier.query_wasm_smart(address_provider_addr, &QueryMsg::Address(contract))?;
+        let res = deps.querier.query_wasm_smart::<AddressResponseItem>(
+            address_provider_addr,
+            &QueryMsg::Address(contract),
+        )?;
         deps.api.addr_validate(&res.address)
     }
 
     /// Query contract addresses.
     ///
     /// It fails if the provided address does not start with current chain prefix.
-    pub fn query_contracts_addr(
+    pub fn query_contract_addrs(
         deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
         contracts: Vec<MarsAddressType>,
     ) -> StdResult<HashMap<MarsAddressType, Addr>> {
-        let res: Vec<AddressResponseItem> = deps
-            .querier
-            .query_wasm_smart(address_provider_addr, &QueryMsg::Addresses(contracts))?;
+        let res = deps.querier.query_wasm_smart::<Vec<AddressResponseItem>>(
+            address_provider_addr,
+            &QueryMsg::Addresses(contracts),
+        )?;
         res.iter()
             .map(|item| Ok((item.address_type, deps.api.addr_validate(&item.address)?)))
             .collect()
@@ -181,8 +184,10 @@ pub mod helpers {
         address_provider_addr: &Addr,
         module: MarsAddressType,
     ) -> StdResult<String> {
-        let res: AddressResponseItem =
-            deps.querier.query_wasm_smart(address_provider_addr, &QueryMsg::Address(module))?;
+        let res = deps.querier.query_wasm_smart::<AddressResponseItem>(
+            address_provider_addr,
+            &QueryMsg::Address(module),
+        )?;
         Ok(res.address)
     }
 }
