@@ -90,16 +90,10 @@ marsd query account $MARS_MULTI \
    ```bash
    git clone https://github.com/mars-protocol/periphery
    git checkout <commit-id>
+   cargo make rust-optimizer
    ```
 
-   ```bash
-   docker run --rm -v "$(pwd)":/code \
-    --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
-    --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-    cosmwasm/workspace-optimizer:0.12.11
-   ```
-
-   Note: Intel/Amd 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production and the wasm bytecode will not match up to an Intel compiled wasm file.
+   Note: Intel/AMD 64-bit processor is required. While there is experimental ARM support for CosmWasm/rust-optimizer, it's discouraged to use in production and the wasm bytecode will not match up to an Intel compiled wasm file.
 
 2. Download the wasm from the chain.
 
