@@ -146,7 +146,7 @@ pub mod helpers {
 
     use super::{AddressResponseItem, MarsAddressType, QueryMsg};
 
-        /// Query contract address.
+    /// Query contract address.
     ///
     /// It fails if the provided address does not start with current chain prefix.
     pub fn query_contract_addr(
@@ -166,7 +166,7 @@ pub mod helpers {
     ///
     /// It fails if the provided address does not start with current chain prefix.
     pub fn query_contract_addrs(
-    deps: Deps<impl cosmwasm_std::CustomQuery>,
+        deps: Deps<impl cosmwasm_std::CustomQuery>,
         address_provider_addr: &Addr,
         contracts: Vec<MarsAddressType>,
     ) -> StdResult<HashMap<MarsAddressType, Addr>> {
