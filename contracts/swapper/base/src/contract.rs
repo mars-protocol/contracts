@@ -2,8 +2,9 @@ use std::marker::PhantomData;
 
 use cosmwasm_std::{
     to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Deps,
-    DepsMut, Env, MessageInfo, Order, Response, WasmMsg,
+    DepsMut, Env, MessageInfo, Response, WasmMsg,
 };
+use cw_paginate::paginate_map;
 use cw_storage_plus::{Bound, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_rover::{
@@ -15,9 +16,6 @@ use mars_rover::{
 };
 
 use crate::{ContractResult, Route};
-
-const DEFAULT_LIMIT: u32 = 5;
-const MAX_LIMIT: u32 = 10;
 
 pub struct SwapBase<'a, Q, M, R>
 where
@@ -136,21 +134,14 @@ where
         start_after: Option<(String, String)>,
         limit: Option<u32>,
     ) -> ContractResult<RoutesResponse<R>> {
-        let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
         let start = start_after.map(Bound::exclusive);
-
-        self.routes
-            .range(deps.storage, start, None, Order::Ascending)
-            .take(limit)
-            .map(|item| {
-                let ((denom_in, denom_out), route) = item?;
-                Ok(RouteResponse {
-                    denom_in,
-                    denom_out,
-                    route,
-                })
+        paginate_map(&self.routes, deps.storage, start, limit, |(denom_in, denom_out), route| {
+            Ok(RouteResponse {
+                denom_in,
+                denom_out,
+                route,
             })
-            .collect()
+        })
     }
 
     fn estimate_exact_in_swap(

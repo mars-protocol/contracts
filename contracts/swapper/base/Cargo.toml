@@ -21,6 +21,7 @@ library    = []
 [dependencies]
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
+cw-paginate     = { workspace = true }
 cw-storage-plus = { workspace = true }
 mars-rover      = { workspace = true }
 mars-owner      = { workspace = true }

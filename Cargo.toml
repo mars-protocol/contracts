@@ -38,6 +38,7 @@ cw721             = "0.16.0"
 cw721-base        = { version = "0.16.0", features = ["library"] }
 cw-item-set       = { version = "0.7.0", default-features = false, features = ["iterator"] }
 cw-multi-test     = "0.16.1"
+cw-paginate       = "0.2.0"
 cw-utils          = "0.16.0"
 cw-storage-plus   = "1.0.1"
 itertools         = "0.10.5"

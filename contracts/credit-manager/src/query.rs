@@ -1,4 +1,5 @@
 use cosmwasm_std::{Addr, Coin, Deps, Env, Order, StdResult, Uint128};
+use cw_paginate::paginate_map;
 use cw_storage_plus::Bound;
 use mars_rover::{
     adapters::vault::{Vault, VaultBase, VaultPosition, VaultUnchecked},
@@ -56,19 +57,13 @@ pub fn query_all_coin_balances(
     let start = start_after
         .as_ref()
         .map(|(account_id, denom)| Bound::exclusive((account_id.as_str(), denom.as_str())));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-
-    Ok(COIN_BALANCES
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .collect::<StdResult<Vec<_>>>()?
-        .iter()
-        .map(|((account_id, denom), amount)| CoinBalanceResponseItem {
-            account_id: account_id.to_string(),
-            denom: denom.to_string(),
-            amount: *amount,
+    paginate_map(&COIN_BALANCES, deps.storage, start, limit, |(account_id, denom), amount| {
+        Ok(CoinBalanceResponseItem {
+            account_id,
+            denom,
+            amount,
         })
-        .collect())
+    })
 }
 
 fn query_lent_amounts(deps: Deps, env: &Env, account_id: &str) -> ContractResult<Vec<LentAmount>> {
@@ -125,19 +120,13 @@ pub fn query_all_debt_shares(
     let start = start_after
         .as_ref()
         .map(|(account_id, denom)| Bound::exclusive((account_id.as_str(), denom.as_str())));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-
-    Ok(DEBT_SHARES
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .collect::<StdResult<Vec<_>>>()?
-        .iter()
-        .map(|((account_id, denom), shares)| SharesResponseItem {
-            account_id: account_id.to_string(),
-            denom: denom.to_string(),
-            shares: *shares,
+    paginate_map(&DEBT_SHARES, deps.storage, start, limit, |(account_id, denom), shares| {
+        Ok(SharesResponseItem {
+            account_id,
+            denom,
+            shares,
         })
-        .collect())
+    })
 }
 
 pub fn query_all_lent_shares(
@@ -148,20 +137,13 @@ pub fn query_all_lent_shares(
     let start = start_after
         .as_ref()
         .map(|(account_id, denom)| Bound::exclusive((account_id.as_str(), denom.as_str())));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-
-    LENT_SHARES
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .map(|item| {
-            let ((account_id, denom), shares) = item?;
-            Ok(SharesResponseItem {
-                account_id,
-                denom,
-                shares,
-            })
+    paginate_map(&LENT_SHARES, deps.storage, start, limit, |(account_id, denom), shares| {
+        Ok(SharesResponseItem {
+            account_id,
+            denom,
+            shares,
         })
-        .collect()
+    })
 }
 
 pub fn query_vaults_info(
@@ -178,26 +160,18 @@ pub fn query_vaults_info(
         }
         None => None,
     };
-
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-
-    VAULT_CONFIGS
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .map(|res| {
-            let (addr, config) = res?;
-            let vault = VaultBase::new(addr);
-            Ok(VaultInfoResponse {
-                vault: vault.clone().into(),
-                config,
-                utilization: vault_utilization_in_deposit_cap_denom(
-                    &deps,
-                    &vault,
-                    &env.contract.address,
-                )?,
-            })
+    paginate_map(&VAULT_CONFIGS, deps.storage, start, limit, |addr, config| {
+        let vault = VaultBase::new(addr);
+        Ok(VaultInfoResponse {
+            config,
+            utilization: vault_utilization_in_deposit_cap_denom(
+                &deps,
+                &vault,
+                &env.contract.address,
+            )?,
+            vault: vault.into(),
         })
-        .collect()
+    })
 }
 
 pub fn query_vault_positions(deps: Deps, account_id: &str) -> ContractResult<Vec<VaultPosition>> {
@@ -226,22 +200,15 @@ pub fn query_all_vault_positions(
         }
         None => None,
     };
-
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-
-    Ok(VAULT_POSITIONS
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .collect::<StdResult<Vec<_>>>()?
-        .iter()
-        .map(|((account_id, addr), amount)| VaultPositionResponseItem {
-            account_id: account_id.clone(),
+    paginate_map(&VAULT_POSITIONS, deps.storage, start, limit, |(account_id, addr), amount| {
+        Ok(VaultPositionResponseItem {
+            account_id,
             position: VaultPosition {
-                vault: VaultBase::new(addr.clone()),
-                amount: amount.clone(),
+                vault: VaultBase::new(addr),
+                amount,
             },
         })
-        .collect())
+    })
 }
 
 /// NOTE: This implementation of the query function assumes the map `ALLOWED_COINS` only saves `Empty`.
@@ -283,19 +250,12 @@ pub fn query_all_total_debt_shares(
     limit: Option<u32>,
 ) -> StdResult<Vec<DebtShares>> {
     let start = start_after.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
-
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-
-    Ok(TOTAL_DEBT_SHARES
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .collect::<StdResult<Vec<_>>>()?
-        .iter()
-        .map(|(denom, shares)| DebtShares {
-            denom: denom.to_string(),
-            shares: *shares,
+    paginate_map(&TOTAL_DEBT_SHARES, deps.storage, start, limit, |denom, shares| {
+        Ok(DebtShares {
+            denom,
+            shares,
         })
-        .collect())
+    })
 }
 
 pub fn query_all_total_lent_shares(
@@ -304,18 +264,12 @@ pub fn query_all_total_lent_shares(
     limit: Option<u32>,
 ) -> StdResult<Vec<LentShares>> {
     let start = start_after.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-    TOTAL_LENT_SHARES
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .map(|item| {
-            let (denom, shares) = item?;
-            Ok(LentShares {
-                denom,
-                shares,
-            })
+    paginate_map(&TOTAL_LENT_SHARES, deps.storage, start, limit, |denom, shares| {
+        Ok(LentShares {
+            denom,
+            shares,
         })
-        .collect()
+    })
 }
 
 pub fn query_total_vault_coin_balance(
@@ -341,20 +295,12 @@ pub fn query_all_total_vault_coin_balances(
         }
         None => None,
     };
-
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-
-    VAULT_CONFIGS
-        .keys(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .map(|res| {
-            let addr = res?;
-            let vault = VaultBase::new(addr);
-            let balance = vault.query_balance(&deps.querier, rover_addr)?;
-            Ok(VaultWithBalance {
-                vault,
-                balance,
-            })
+    paginate_map(&VAULT_CONFIGS, deps.storage, start, limit, |addr, _| {
+        let vault = VaultBase::new(addr);
+        let balance = vault.query_balance(&deps.querier, rover_addr)?;
+        Ok(VaultWithBalance {
+            vault,
+            balance,
         })
-        .collect()
+    })
 }
