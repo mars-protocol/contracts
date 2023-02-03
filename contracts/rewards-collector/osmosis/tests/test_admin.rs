@@ -32,8 +32,6 @@ fn instantiating() {
             safety_fund_denom: config.safety_fund_denom,
             fee_collector_denom: config.fee_collector_denom,
             channel_id: config.channel_id,
-            timeout_revision: config.timeout_revision,
-            timeout_blocks: config.timeout_blocks,
             timeout_seconds: config.timeout_seconds,
             slippage_tolerance: config.slippage_tolerance,
         }
@@ -121,54 +119,6 @@ fn updating_config() {
 
     let cfg: ConfigResponse = helpers::query(deps.as_ref(), QueryMsg::Config {});
     assert_eq!(cfg.safety_tax_rate, Decimal::percent(69));
-}
-
-#[test]
-fn updating_config_if_invalid_timeout_revision() {
-    let mut deps = helpers::setup_test();
-
-    let invalid_cfg = UpdateConfig {
-        timeout_revision: Some(0),
-        ..Default::default()
-    };
-
-    let info = mock_info("owner");
-    let msg = ExecuteMsg::UpdateConfig {
-        new_cfg: invalid_cfg,
-    };
-    let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(
-        err,
-        ContractError::Validation(ValidationError::InvalidParam {
-            param_name: "timeout_revision".to_string(),
-            invalid_value: "0".to_string(),
-            predicate: "> 0".to_string(),
-        })
-    );
-}
-
-#[test]
-fn updating_config_if_invalid_timeout_blocks() {
-    let mut deps = helpers::setup_test();
-
-    let invalid_cfg = UpdateConfig {
-        timeout_blocks: Some(0),
-        ..Default::default()
-    };
-
-    let info = mock_info("owner");
-    let msg = ExecuteMsg::UpdateConfig {
-        new_cfg: invalid_cfg,
-    };
-    let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(
-        err,
-        ContractError::Validation(ValidationError::InvalidParam {
-            param_name: "timeout_blocks".to_string(),
-            invalid_value: "0".to_string(),
-            predicate: "> 0".to_string(),
-        })
-    );
 }
 
 #[test]

@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use cosmwasm_std::{
     to_binary, Addr, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Deps, DepsMut, Env, IbcMsg,
-    IbcTimeout, IbcTimeoutBlock, MessageInfo, Order, Response, StdResult, Uint128, WasmMsg,
+    IbcTimeout, MessageInfo, Order, Response, StdResult, Uint128, WasmMsg,
 };
 use cw_storage_plus::{Bound, Item, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
@@ -156,8 +156,6 @@ where
             safety_fund_denom,
             fee_collector_denom,
             channel_id,
-            timeout_revision,
-            timeout_blocks,
             timeout_seconds,
             slippage_tolerance,
         } = new_cfg;
@@ -168,8 +166,6 @@ where
         cfg.safety_fund_denom = safety_fund_denom.unwrap_or(cfg.safety_fund_denom);
         cfg.fee_collector_denom = fee_collector_denom.unwrap_or(cfg.fee_collector_denom);
         cfg.channel_id = channel_id.unwrap_or(cfg.channel_id);
-        cfg.timeout_revision = timeout_revision.unwrap_or(cfg.timeout_revision);
-        cfg.timeout_blocks = timeout_blocks.unwrap_or(cfg.timeout_blocks);
         cfg.timeout_seconds = timeout_seconds.unwrap_or(cfg.timeout_seconds);
         cfg.slippage_tolerance = slippage_tolerance.unwrap_or(cfg.slippage_tolerance);
 
@@ -351,13 +347,7 @@ where
                 denom: denom.clone(),
                 amount: amount_to_distribute,
             },
-            timeout: IbcTimeout::with_both(
-                IbcTimeoutBlock {
-                    revision: cfg.timeout_revision,
-                    height: env.block.height + cfg.timeout_blocks,
-                },
-                env.block.time.plus_seconds(cfg.timeout_seconds),
-            ),
+            timeout: IbcTimeout::with_timestamp(env.block.time.plus_seconds(cfg.timeout_seconds)),
         });
 
         Ok(Response::new()
@@ -379,8 +369,6 @@ where
             safety_fund_denom: cfg.safety_fund_denom,
             fee_collector_denom: cfg.fee_collector_denom,
             channel_id: cfg.channel_id,
-            timeout_revision: cfg.timeout_revision,
-            timeout_blocks: cfg.timeout_blocks,
             timeout_seconds: cfg.timeout_seconds,
             slippage_tolerance: cfg.slippage_tolerance,
         })
