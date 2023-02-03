@@ -14,8 +14,6 @@
       "safety_fund_denom",
       "safety_tax_rate",
       "slippage_tolerance",
-      "timeout_blocks",
-      "timeout_revision",
       "timeout_seconds"
     ],
     "properties": {
@@ -54,18 +52,6 @@
             "$ref": "#/definitions/Decimal"
           }
         ]
-      },
-      "timeout_blocks": {
-        "description": "Number of blocks after which an IBC transfer is to be considered failed, if no acknowledgement is received",
-        "type": "integer",
-        "format": "uint64",
-        "minimum": 0.0
-      },
-      "timeout_revision": {
-        "description": "Revision number of Mars Hub's IBC client",
-        "type": "integer",
-        "format": "uint64",
-        "minimum": 0.0
       },
       "timeout_seconds": {
         "description": "Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received",
@@ -395,24 +381,6 @@
               }
             ]
           },
-          "timeout_blocks": {
-            "description": "Number of blocks after which an IBC transfer is to be considered failed, if no acknowledgement is received",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "timeout_revision": {
-            "description": "Revision number of Mars Hub's IBC light client",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "uint64",
-            "minimum": 0.0
-          },
           "timeout_seconds": {
             "description": "Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received",
             "type": [
@@ -527,8 +495,6 @@
         "safety_fund_denom",
         "safety_tax_rate",
         "slippage_tolerance",
-        "timeout_blocks",
-        "timeout_revision",
         "timeout_seconds"
       ],
       "properties": {
@@ -577,18 +543,6 @@
               "$ref": "#/definitions/Decimal"
             }
           ]
-        },
-        "timeout_blocks": {
-          "description": "Number of blocks after which an IBC transfer is to be considered failed, if no acknowledgement is received",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "timeout_revision": {
-          "description": "Revision number of Mars Hub's IBC client",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
         },
         "timeout_seconds": {
           "description": "Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received",

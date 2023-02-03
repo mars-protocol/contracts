@@ -14,8 +14,6 @@ export interface InstantiateMsg {
   safety_fund_denom: string
   safety_tax_rate: Decimal
   slippage_tolerance: Decimal
-  timeout_blocks: number
-  timeout_revision: number
   timeout_seconds: number
 }
 export type ExecuteMsg =
@@ -73,8 +71,6 @@ export interface UpdateConfig {
   safety_fund_denom?: string | null
   safety_tax_rate?: Decimal | null
   slippage_tolerance?: Decimal | null
-  timeout_blocks?: number | null
-  timeout_revision?: number | null
   timeout_seconds?: number | null
 }
 export interface SwapAmountInRoute {
@@ -107,8 +103,6 @@ export interface ConfigResponse {
   safety_fund_denom: string
   safety_tax_rate: Decimal
   slippage_tolerance: Decimal
-  timeout_blocks: number
-  timeout_revision: number
   timeout_seconds: number
 }
 export interface RouteResponseForString {

@@ -122,11 +122,9 @@ export class Deployer {
       owner: this.deployerAddress,
       address_provider: this.storage.addresses['address-provider']!,
       safety_tax_rate: this.config.safetyFundFeeShare,
-      safety_fund_denom: this.config.baseAssetDenom,
-      fee_collector_denom: this.config.baseAssetDenom,
+      safety_fund_denom: this.config.safetyFundDenom,
+      fee_collector_denom: this.config.feeCollectorDenom,
       channel_id: this.config.channelId,
-      timeout_revision: this.config.timeoutRevision,
-      timeout_blocks: this.config.rewardCollectorTimeoutBlocks,
       timeout_seconds: this.config.rewardCollectorTimeoutSeconds,
       slippage_tolerance: this.config.slippage_tolerance,
     }
