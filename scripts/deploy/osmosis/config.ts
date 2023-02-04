@@ -2,13 +2,13 @@ import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/config'
 
 const axlUSDC = 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858'
 const atom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
-const mars = 'ibc/ACA4C8A815A053CC027DB90D15915ADA31939FA331CE745862CDD00A2904FA17'
+const marsTestnet = 'ibc/ACA4C8A815A053CC027DB90D15915ADA31939FA331CE745862CDD00A2904FA17'
+const marsMainnet = 'ibc/573FCD90FACEE750F55A8864EF7D38265F07E5A9273FA0E8DAFD39951332B580'
 // note the following three addresses are all 'mars' bech32 prefix
 const safetyFundAddr = 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575'
 const protocolAdminAddr = 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n'
 const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
-/// FIXME: arbitrary number til pool is created
-const marsOsmoPool = 1
+const marsOsmoPool = 907
 
 // axlUSDC does not have a pool on testnet so config can't have swapRoutes configured correctly
 export const osmosisTestnetConfig: DeploymentConfig = {
@@ -18,7 +18,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   chainId: 'osmo-test-4',
   chainPrefix: 'osmo',
   channelId: 'channel-2083',
-  marsDenom: mars,
+  marsDenom: marsTestnet,
   rewardCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc-test.osmosis.zone',
   safetyFundFeeShare: '0.5',
@@ -29,7 +29,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   second_asset_symbol: 'ATOM',
   runTests: false,
   mainnet: false,
-  feeCollectorDenom: mars,
+  feeCollectorDenom: marsTestnet,
   safetyFundDenom: axlUSDC,
   swapRoutes: [
     { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
@@ -47,7 +47,7 @@ export const osmosisTestMultisig: DeploymentConfig = {
   chainId: 'osmo-test-4',
   chainPrefix: 'osmo',
   channelId: 'channel-2083',
-  marsDenom: mars,
+  marsDenom: marsTestnet,
   rewardCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc-test.osmosis.zone',
   safetyFundFeeShare: '0.5',
@@ -59,7 +59,7 @@ export const osmosisTestMultisig: DeploymentConfig = {
   multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
   runTests: false,
   mainnet: false,
-  feeCollectorDenom: mars,
+  feeCollectorDenom: marsTestnet,
   safetyFundDenom: axlUSDC,
   swapRoutes: [
     { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
@@ -75,8 +75,8 @@ export const osmosisMainnet: DeploymentConfig = {
   baseAssetDenom: 'uosmo',
   chainId: 'osmosis-1',
   chainPrefix: 'osmo',
-  channelId: 'channel-2083',
-  marsDenom: mars,
+  channelId: 'channel-557',
+  marsDenom: marsMainnet,
   rewardCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc.osmosis.zone',
   safetyFundFeeShare: '0.5',
@@ -87,7 +87,7 @@ export const osmosisMainnet: DeploymentConfig = {
   multisigAddr: 'osmo1jklpvl3446z5qw58cvq8hqvthzjtsfvs9j65tq',
   runTests: false,
   mainnet: true,
-  feeCollectorDenom: mars,
+  feeCollectorDenom: marsMainnet,
   safetyFundDenom: axlUSDC,
   swapRoutes: [
     { denom_in: 'uosmo', denom_out: axlUSDC, route: [{ pool_id: 678, token_out_denom: axlUSDC }] },
@@ -101,23 +101,23 @@ export const osmosisMainnet: DeploymentConfig = {
     },
     {
       denom_in: 'uosmo',
-      denom_out: mars,
-      route: [{ pool_id: marsOsmoPool, token_out_denom: mars }],
+      denom_out: marsMainnet,
+      route: [{ pool_id: marsOsmoPool, token_out_denom: marsMainnet }],
     },
     {
       denom_in: atom,
-      denom_out: mars,
+      denom_out: marsMainnet,
       route: [
         { pool_id: 1, token_out_denom: 'uosmo' },
-        { pool_id: marsOsmoPool, token_out_denom: mars },
+        { pool_id: marsOsmoPool, token_out_denom: marsMainnet },
       ],
     },
     {
       denom_in: axlUSDC,
-      denom_out: mars,
+      denom_out: marsMainnet,
       route: [
         { pool_id: 678, token_out_denom: 'uosmo' },
-        { pool_id: marsOsmoPool, token_out_denom: mars },
+        { pool_id: marsOsmoPool, token_out_denom: marsMainnet },
       ],
     },
   ],
