@@ -84,7 +84,7 @@ export const osmosisMainnet: DeploymentConfig = {
   slippage_tolerance: '0.01',
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
-  multisigAddr: 'osmo1jklpvl3446z5qw58cvq8hqvthzjtsfvs9j65tq',
+  multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
   runTests: false,
   mainnet: true,
   feeCollectorDenom: marsMainnet,
