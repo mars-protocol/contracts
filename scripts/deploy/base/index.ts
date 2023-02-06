@@ -1,14 +1,7 @@
 import { setupDeployer } from './setupDeployer'
 import { DeploymentConfig } from '../../types/config'
 import { printGreen, printRed } from '../../utils/chalk'
-import {
-  atomAsset,
-  osmoAsset,
-  osmoOracle,
-  atomOracle,
-  axlUSDCAsset,
-  axlUSDCOracle,
-} from '../osmosis/config'
+import { atomAsset, osmoAsset, atomOracle, axlUSDCAsset, axlUSDCOracle } from '../osmosis/config'
 
 export const taskRunner = async (config: DeploymentConfig) => {
   const deployer = await setupDeployer(config)
@@ -40,7 +33,6 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.initializeAsset(atomAsset)
     await deployer.initializeAsset(axlUSDCAsset)
     await deployer.setOracle(atomOracle)
-    await deployer.setOracle(osmoOracle)
     if (config.mainnet) {
       await deployer.setOracle(axlUSDCOracle)
     }

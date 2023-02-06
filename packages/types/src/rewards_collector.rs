@@ -22,10 +22,6 @@ pub struct InstantiateMsg {
     pub fee_collector_denom: String,
     /// The channel ID of the mars hub
     pub channel_id: String,
-    /// Revision number of Mars Hub's IBC client
-    pub timeout_revision: u64,
-    /// Number of blocks after which an IBC transfer is to be considered failed, if no acknowledgement is received
-    pub timeout_blocks: u64,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: u64,
     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
@@ -44,10 +40,6 @@ pub struct Config {
     pub fee_collector_denom: String,
     /// The channel ID of the mars hub
     pub channel_id: String,
-    /// Revision number of Mars Hub's IBC client
-    pub timeout_revision: u64,
-    /// Number of blocks after which an IBC transfer is to be considered failed, if no acknowledgement is received
-    pub timeout_blocks: u64,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: u64,
     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
@@ -58,8 +50,6 @@ impl Config {
     pub fn validate(&self) -> Result<(), ValidationError> {
         decimal_param_le_one(self.safety_tax_rate, "safety_tax_rate")?;
 
-        integer_param_gt_zero(self.timeout_revision, "timeout_revision")?;
-        integer_param_gt_zero(self.timeout_blocks, "timeout_blocks")?;
         integer_param_gt_zero(self.timeout_seconds, "timeout_seconds")?;
 
         if self.slippage_tolerance > Decimal::percent(MAX_SLIPPAGE_TOLERANCE_PERCENTAGE) {
@@ -85,8 +75,6 @@ impl Config {
             safety_fund_denom: msg.safety_fund_denom,
             fee_collector_denom: msg.fee_collector_denom,
             channel_id: msg.channel_id,
-            timeout_revision: msg.timeout_revision,
-            timeout_blocks: msg.timeout_blocks,
             timeout_seconds: msg.timeout_seconds,
             slippage_tolerance: msg.slippage_tolerance,
         })
@@ -106,10 +94,6 @@ pub struct UpdateConfig {
     pub fee_collector_denom: Option<String>,
     /// The channel id of the mars hub
     pub channel_id: Option<String>,
-    /// Revision number of Mars Hub's IBC light client
-    pub timeout_revision: Option<u64>,
-    /// Number of blocks after which an IBC transfer is to be considered failed, if no acknowledgement is received
-    pub timeout_blocks: Option<u64>,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: Option<u64>,
     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
@@ -179,10 +163,6 @@ pub struct ConfigResponse {
     pub fee_collector_denom: String,
     /// The channel ID of the mars hub
     pub channel_id: String,
-    /// Revision number of Mars Hub's IBC client
-    pub timeout_revision: u64,
-    /// Number of blocks after which an IBC transfer is to be considered failed, if no acknowledgement is received
-    pub timeout_blocks: u64,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: u64,
     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)

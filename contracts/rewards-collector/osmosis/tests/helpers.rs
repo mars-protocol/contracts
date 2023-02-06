@@ -21,8 +21,6 @@ pub fn mock_instantiate_msg() -> InstantiateMsg {
         safety_fund_denom: "uusdc".to_string(),
         fee_collector_denom: "umars".to_string(),
         channel_id: "channel-69".to_string(),
-        timeout_revision: 1,
-        timeout_blocks: 50,
         timeout_seconds: 300,
         slippage_tolerance: Decimal::percent(3),
     }

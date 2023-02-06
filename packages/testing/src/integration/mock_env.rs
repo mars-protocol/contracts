@@ -648,8 +648,6 @@ impl MockEnvBuilder {
                     safety_fund_denom: self.safety_fund_denom.clone(),
                     fee_collector_denom: self.fee_collector_denom.clone(),
                     channel_id: "0".to_string(),
-                    timeout_revision: 1,
-                    timeout_blocks: 150,
                     timeout_seconds: 900,
                     slippage_tolerance: self.slippage_tolerance,
                 },

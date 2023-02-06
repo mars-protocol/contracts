@@ -34,10 +34,8 @@ export interface RewardsInstantiateMsg {
   owner: string
   safety_fund_denom: string
   address_provider: string
-  timeout_blocks: number
   slippage_tolerance: string
   safety_tax_rate: string
-  timeout_revision: number
   timeout_seconds: number
   fee_collector_denom: string
   channel_id: string

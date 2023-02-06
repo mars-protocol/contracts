@@ -16,8 +16,6 @@ export interface DeploymentConfig {
   chainPrefix: string
   safetyFundFeeShare: string
   channelId: string
-  timeoutRevision: number
-  rewardCollectorTimeoutBlocks: number
   feeCollectorDenom: string
   safetyFundDenom: string
   chainId: string

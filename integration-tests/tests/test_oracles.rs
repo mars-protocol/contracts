@@ -1062,8 +1062,6 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
             safety_fund_denom: "uosmo".to_string(),
             fee_collector_denom: "uosmo".to_string(),
             channel_id: "channel-1".to_string(),
-            timeout_revision: 2,
-            timeout_blocks: 10,
             timeout_seconds: 60,
             slippage_tolerance: Decimal::new(Uint128::from(1u128)),
         },

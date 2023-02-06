@@ -1,6 +1,5 @@
 use cosmwasm_std::{
-    coin, testing::mock_env, CosmosMsg, IbcMsg, IbcTimeout, IbcTimeoutBlock, SubMsg, Timestamp,
-    Uint128,
+    coin, testing::mock_env, CosmosMsg, IbcMsg, IbcTimeout, SubMsg, Timestamp, Uint128,
 };
 use mars_rewards_collector_base::ContractError;
 use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg};
@@ -35,13 +34,7 @@ fn distributing_rewards() {
             channel_id: "channel-69".to_string(),
             to_address: "safety_fund".to_string(),
             amount: coin(123, "uusdc"),
-            timeout: IbcTimeout::with_both(
-                IbcTimeoutBlock {
-                    revision: 1,
-                    height: 10050,
-                },
-                Timestamp::from_seconds(17000300)
-            )
+            timeout: IbcTimeout::with_timestamp(Timestamp::from_seconds(17000300))
         }))
     );
 
@@ -63,13 +56,7 @@ fn distributing_rewards() {
             channel_id: "channel-69".to_string(),
             to_address: "fee_collector".to_string(),
             amount: coin(8964, "umars"),
-            timeout: IbcTimeout::with_both(
-                IbcTimeoutBlock {
-                    revision: 1,
-                    height: 10050,
-                },
-                Timestamp::from_seconds(17000300)
-            )
+            timeout: IbcTimeout::with_timestamp(Timestamp::from_seconds(17000300))
         }))
     );
 
