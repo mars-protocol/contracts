@@ -160,7 +160,13 @@ cargo make test
 
 ### osmosis-1
 
-TBD
+| Contract               | Address                                                                 |
+| ---------------------- | ----------------------------------------------------------------------- |
+| mars-address-provider  | [`osmo1g677w7mfvn78eeudzwylxzlyz69fsgumqrscj6tekhdvs8fye3asufmvxr`][11] |
+| mars-incentives        | [`osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm`][12] |
+| mars-oracle            | [`osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g`][13] |
+| mars-red-bank          | [`osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg`][14] |
+| mars-rewards-collector | [`osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy`][15] |
 
 ### osmo-test-4
 
@@ -186,3 +192,8 @@ Contents of this repository are open source under [GNU General Public License v3
 [8]: https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable
 [9]: https://github.com/CosmWasm/rust-optimizer
 [10]: https://github.com/CosmWasm/cosmwasm/tree/main/packages/schema
+[11]: https://www.mintscan.io/osmosis/wasm/contract/osmo1g677w7mfvn78eeudzwylxzlyz69fsgumqrscj6tekhdvs8fye3asufmvxr
+[12]: https://www.mintscan.io/osmosis/wasm/contract/osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm
+[13]: https://www.mintscan.io/osmosis/wasm/contract/osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g
+[14]: https://www.mintscan.io/osmosis/wasm/contract/osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg
+[15]: https://www.mintscan.io/osmosis/wasm/contract/osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy
