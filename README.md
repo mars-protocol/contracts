@@ -160,7 +160,13 @@ cargo make test
 
 ### osmosis-1
 
-TBD
+| Contract               | Address                                                           |
+| ---------------------- | ----------------------------------------------------------------- |
+| mars-address-provider  | `osmo1g677w7mfvn78eeudzwylxzlyz69fsgumqrscj6tekhdvs8fye3asufmvxr` |
+| mars-incentives        | `osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm` |
+| mars-oracle            | `osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g` |
+| mars-red-bank          | `osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg` |
+| mars-rewards-collector | `osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy` |
 
 ### osmo-test-4
 
