@@ -1,6 +1,6 @@
 # Mars Incentives
 
-Manage MARS incentives for depositors.
+A smart contract that manages MARS incentives for depositors.
 
 ## License
 
