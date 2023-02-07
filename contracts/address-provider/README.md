@@ -1,6 +1,6 @@
 # Mars Address Provider
 
-Holds addresses of the main contracts of the core protocol.
+A smart contract that holds addresses of Mars Red Bank contracts.
 
 ## License
 

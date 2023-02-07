@@ -1,5 +1,6 @@
 [package]
 name          = "mars-rewards-collector-osmosis"
+description   = "A smart contract that manages protocol revenue in various coins from the Red Bank"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }

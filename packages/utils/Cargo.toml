@@ -1,5 +1,6 @@
 [package]
 name          = "mars-utils"
+description   = "Helpers for Mars smart contracts"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
@@ -20,6 +21,3 @@ backtraces = ["cosmwasm-std/backtraces"]
 [dependencies]
 cosmwasm-std = { workspace = true }
 thiserror    = { workspace = true }
-
-[dev-dependencies]
-mars-testing = { workspace = true }

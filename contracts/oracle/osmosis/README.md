@@ -1,6 +1,6 @@
 # Mars Oracle - Osmosis
 
-Provides prices denominated in `uosmo` for assets used in the protocol.
+A smart contract that provides prices denominated in `uosmo` for assets used in the protocol.
 
 ## License
 
