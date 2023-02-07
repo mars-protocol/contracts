@@ -993,7 +993,6 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "mars-owner",
- "mars-testing",
  "mars-utils",
  "thiserror",
 ]
@@ -1059,7 +1058,6 @@ name = "mars-utils"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
- "mars-testing",
  "thiserror",
 ]
 

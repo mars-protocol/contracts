@@ -23,6 +23,3 @@ cosmwasm-std    = { workspace = true }
 mars-owner      = { workspace = true }
 mars-utils      = { workspace = true }
 thiserror       = { workspace = true }
-
-[dev-dependencies]
-mars-testing = { workspace = true }

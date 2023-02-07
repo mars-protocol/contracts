@@ -20,6 +20,3 @@ backtraces = ["cosmwasm-std/backtraces"]
 [dependencies]
 cosmwasm-std = { workspace = true }
 thiserror    = { workspace = true }
-
-[dev-dependencies]
-mars-testing = { workspace = true }
