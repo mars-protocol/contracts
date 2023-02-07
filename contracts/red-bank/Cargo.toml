@@ -1,6 +1,6 @@
 [package]
 name          = "mars-red-bank"
-description   = "The Red Bank exposes all interactions that are done between the user and the money market"
+description   = "A smart contract that manages asset deposit, borrowing, and liquidations"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }

@@ -1,6 +1,6 @@
 [package]
 name          = "mars-incentives"
-description   = "Manage MARS incentives for depositors"
+description   = "A smart contract that manages MARS incentives for depositors"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }

@@ -1,6 +1,6 @@
 [package]
 name          = "mars-oracle-osmosis"
-description   = "Provides prices denominated in `uosmo` for assets used in the protocol"
+description   = "A smart contract that provides prices denominated in `uosmo` for assets used in the protocol"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
