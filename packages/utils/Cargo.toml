@@ -1,5 +1,6 @@
 [package]
 name          = "mars-utils"
+description   = "Helpers for Mars smart contracts"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }

@@ -1,5 +1,6 @@
 [package]
 name          = "mars-address-provider"
+description   = "Holds addresses of the contracts"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }

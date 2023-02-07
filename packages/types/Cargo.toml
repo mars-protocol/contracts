@@ -1,5 +1,6 @@
 [package]
 name          = "mars-red-bank-types"
+description   = "Messages and types for Red Bank smart contracts"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
