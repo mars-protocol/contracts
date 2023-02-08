@@ -34,7 +34,7 @@ anyhow            = "1.0.68"
 bech32            = "0.9.1"
 cosmwasm-schema   = "1.1.9"
 cosmwasm-std      = "1.1.9"
-cw2               = "1.0.1"
+cw2               = { git = "https://github.com/mars-protocol/cw-plus", rev = "4014255" }
 cw-multi-test     = "0.16.1"
 cw-storage-plus   = "1.0.1"
 cw-utils          = "1.0.1"

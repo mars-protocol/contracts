@@ -30,7 +30,7 @@ pub enum ContractError {
     Health(#[from] HealthError),
 
     #[error("{0}")]
-    Version(#[from] crate::migrations::VersionError),
+    Version(#[from] cw2::VersionError),
 
     #[error("Price not found for asset: {denom:?}")]
     PriceNotFound {

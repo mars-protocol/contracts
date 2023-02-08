@@ -1,6 +1,5 @@
 use cosmwasm_std::{coins, BankMsg, DepsMut, Response};
 
-use super::assert_version;
 use crate::{
     error::ContractError,
     execute::{CONTRACT_NAME, CONTRACT_VERSION},
@@ -19,7 +18,7 @@ const AMOUNT: u128 = 10_001_000_000;
 
 pub fn migrate(deps: DepsMut) -> Result<Response, ContractError> {
     // make sure we're migrating the correct contract and from the correct version
-    assert_version(deps.as_ref().storage, CONTRACT_NAME, FROM_VERSION)?;
+    cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, FROM_VERSION)?;
 
     // update contract version
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
