@@ -1,7 +1,9 @@
-use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{
+    entry_point, to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response,
+};
 use mars_red_bank_types::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::{error::ContractError, execute, query};
+use crate::{error::ContractError, execute, migrations, query};
 
 #[entry_point]
 pub fn instantiate(
@@ -57,7 +59,7 @@ pub fn execute(
         } => {
             cw_utils::nonpayable(&info)?;
             execute::withdraw(deps, env, info, denom, amount, recipient)
-        },
+        }
         ExecuteMsg::Borrow {
             denom,
             amount,
@@ -65,7 +67,7 @@ pub fn execute(
         } => {
             cw_utils::nonpayable(&info)?;
             execute::borrow(deps, env, info, denom, amount, recipient)
-        },
+        }
         ExecuteMsg::Repay {
             on_behalf_of,
         } => {
@@ -96,7 +98,7 @@ pub fn execute(
         } => {
             cw_utils::nonpayable(&info)?;
             execute::update_asset_collateral_status(deps, env, info, denom, enable)
-        },
+        }
     }
 }
 
@@ -191,4 +193,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
         } => to_binary(&query::query_underlying_debt_amount(deps, env, denom, amount_scaled)?),
     };
     res.map_err(Into::into)
+}
+
+#[entry_point]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    migrations::v1_1::migrate(deps)
 }
