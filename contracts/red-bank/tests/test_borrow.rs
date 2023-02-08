@@ -945,7 +945,7 @@ fn cannot_borrow_if_market_not_enabled() {
 
     // Check error when borrowing not allowed on market
     let env = mock_env(MockEnvParams::default());
-    let info = cosmwasm_std::testing::mock_info("borrower", &[coin(110000, "somecoin")]);
+    let info = cosmwasm_std::testing::mock_info("borrower", &[]);
     let msg = ExecuteMsg::Borrow {
         denom: "somecoin".to_string(),
         amount: Uint128::new(1000),
