@@ -192,6 +192,9 @@ export type QueryMsg =
         denom: string
       }
     }
+export interface MigrateMsg {
+  [k: string]: unknown
+}
 export interface ConfigResponse {
   address_provider: string
   close_factor: Decimal

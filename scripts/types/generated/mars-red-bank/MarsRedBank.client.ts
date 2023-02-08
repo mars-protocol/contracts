@@ -17,6 +17,7 @@ import {
   InitOrUpdateAssetParams,
   InterestRateModel,
   QueryMsg,
+  MigrateMsg,
   ConfigResponse,
   Market,
   ArrayOfMarket,
