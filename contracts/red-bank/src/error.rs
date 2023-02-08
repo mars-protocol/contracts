@@ -29,6 +29,9 @@ pub enum ContractError {
     #[error("{0}")]
     Health(#[from] HealthError),
 
+    #[error("{0}")]
+    Version(#[from] crate::migrations::VersionError),
+
     #[error("Price not found for asset: {denom:?}")]
     PriceNotFound {
         denom: String,

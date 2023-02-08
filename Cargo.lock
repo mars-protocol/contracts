@@ -854,7 +854,7 @@ dependencies = [
 
 [[package]]
 name = "mars-address-provider"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "bech32",
  "cosmwasm-schema",
@@ -869,7 +869,7 @@ dependencies = [
 
 [[package]]
 name = "mars-health"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-std",
  "mars-red-bank-types",
@@ -879,7 +879,7 @@ dependencies = [
 
 [[package]]
 name = "mars-incentives"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -894,7 +894,7 @@ dependencies = [
 
 [[package]]
 name = "mars-integration-tests"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
@@ -915,7 +915,7 @@ dependencies = [
 
 [[package]]
 name = "mars-oracle-base"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
@@ -929,7 +929,7 @@ dependencies = [
 
 [[package]]
 name = "mars-oracle-osmosis"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -949,7 +949,7 @@ dependencies = [
 
 [[package]]
 name = "mars-osmosis"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-std",
  "osmosis-std 0.14.0",
@@ -971,7 +971,7 @@ dependencies = [
 
 [[package]]
 name = "mars-red-bank"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -988,7 +988,7 @@ dependencies = [
 
 [[package]]
 name = "mars-red-bank-types"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -999,7 +999,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector-base"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
@@ -1014,7 +1014,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector-osmosis"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1034,7 +1034,7 @@ dependencies = [
 
 [[package]]
 name = "mars-testing"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
@@ -1055,7 +1055,7 @@ dependencies = [
 
 [[package]]
 name = "mars-utils"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-std",
  "thiserror",
