@@ -51,12 +51,18 @@ pub fn execute(
             denom,
             amount,
             recipient,
-        } => execute::withdraw(deps, env, info, denom, amount, recipient),
+        } => {
+            cw_utils::nonpayable(&info)?;
+            execute::withdraw(deps, env, info, denom, amount, recipient)
+        },
         ExecuteMsg::Borrow {
             denom,
             amount,
             recipient,
-        } => execute::borrow(deps, env, info, denom, amount, recipient),
+        } => {
+            cw_utils::nonpayable(&info)?;
+            execute::borrow(deps, env, info, denom, amount, recipient)
+        },
         ExecuteMsg::Repay {
             on_behalf_of,
         } => {
@@ -84,7 +90,10 @@ pub fn execute(
         ExecuteMsg::UpdateAssetCollateralStatus {
             denom,
             enable,
-        } => execute::update_asset_collateral_status(deps, env, info, denom, enable),
+        } => {
+            cw_utils::nonpayable(&info)?;
+            execute::update_asset_collateral_status(deps, env, info, denom, enable)
+        },
     }
 }
 
