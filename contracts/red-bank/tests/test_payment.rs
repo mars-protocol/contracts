@@ -11,7 +11,7 @@ use mars_red_bank::contract;
 use mars_red_bank_types::red_bank::ExecuteMsg;
 
 /// The Red Bank contract has 6 user-facing functions: deposit, withdraw, borrow,
-/// repay, liquidate, and update_asset_collateral_status; amont these, 3 do not
+/// repay, liquidate, and update_asset_collateral_status; among these, 3 do not
 /// expect the user to send any payment. This test verifies that they properly
 /// reject if a user sends an expected payment.
 ///
