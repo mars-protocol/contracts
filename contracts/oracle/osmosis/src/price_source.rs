@@ -63,6 +63,15 @@ pub struct DowntimeDetector {
     pub recovery: u64,
 }
 
+impl DowntimeDetector {
+    fn fmt(opt_dd: &Option<Self>) -> String {
+        match opt_dd {
+            None => "None".to_string(),
+            Some(dd) => format!("Some({dd})"),
+        }
+    }
+}
+
 impl fmt::Display for DowntimeDetector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}:{}", self.downtime, self.recovery)
@@ -152,10 +161,7 @@ impl fmt::Display for OsmosisPriceSource {
                 window_size,
                 downtime_detector,
             } => {
-                let dd_fmt = match downtime_detector {
-                    None => "None".to_string(),
-                    Some(dd) => format!("Some({dd})"),
-                };
+                let dd_fmt = DowntimeDetector::fmt(downtime_detector);
                 format!("arithmetic_twap:{pool_id}:{window_size}:{dd_fmt}")
             }
             OsmosisPriceSource::GeometricTwap {
@@ -163,10 +169,7 @@ impl fmt::Display for OsmosisPriceSource {
                 window_size,
                 downtime_detector,
             } => {
-                let dd_fmt = match downtime_detector {
-                    None => "None".to_string(),
-                    Some(dd) => format!("Some({dd})"),
-                };
+                let dd_fmt = DowntimeDetector::fmt(downtime_detector);
                 format!("geometric_twap:{pool_id}:{window_size}:{dd_fmt}")
             }
             OsmosisPriceSource::XykLiquidityToken {
@@ -178,10 +181,7 @@ impl fmt::Display for OsmosisPriceSource {
                 window_size,
                 downtime_detector,
             } => {
-                let dd_fmt = match downtime_detector {
-                    None => "None".to_string(),
-                    Some(dd) => format!("Some({dd})"),
-                };
+                let dd_fmt = DowntimeDetector::fmt(downtime_detector);
                 format!("staked_geometric_twap:{transitive_denom}:{pool_id}:{window_size}:{dd_fmt}")
             }
         };
