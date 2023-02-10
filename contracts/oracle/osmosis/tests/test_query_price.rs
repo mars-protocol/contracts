@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Decimal};
+use cosmwasm_std::{coin, Decimal, StdError};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{Downtime, DowntimeDetector, OsmosisPriceSource};
 use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
@@ -224,6 +224,171 @@ fn querying_geometric_twap_price_with_downtime_detector() {
         },
     );
     assert_eq!(res.price, Decimal::from_ratio(77777u128, 12345u128));
+}
+
+#[test]
+fn querying_staked_geometric_twap_price() {
+    let mut deps = helpers::setup_test();
+
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uatom",
+        OsmosisPriceSource::GeometricTwap {
+            pool_id: 1,
+            window_size: 86400,
+            downtime_detector: None,
+        },
+    );
+    helpers::set_price_source(
+        deps.as_mut(),
+        "ustatom",
+        OsmosisPriceSource::StakedGeometricTwap {
+            transitive_denom: "uatom".to_string(),
+            pool_id: 803,
+            window_size: 86400,
+            downtime_detector: None,
+        },
+    );
+
+    let uatom_uosmo_price = Decimal::from_ratio(135u128, 10u128);
+    deps.querier.set_geometric_twap_price(
+        1,
+        "uatom",
+        "uosmo",
+        GeometricTwapToNowResponse {
+            geometric_twap: uatom_uosmo_price.to_string(),
+        },
+    );
+    let ustatom_uatom_price = Decimal::from_ratio(105u128, 100u128);
+    deps.querier.set_geometric_twap_price(
+        803,
+        "ustatom",
+        "uatom",
+        GeometricTwapToNowResponse {
+            geometric_twap: ustatom_uatom_price.to_string(),
+        },
+    );
+
+    let res: PriceResponse = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Price {
+            denom: "ustatom".to_string(),
+        },
+    );
+    let expected_price = ustatom_uatom_price * uatom_uosmo_price;
+    assert_eq!(res.price, expected_price);
+}
+
+#[test]
+fn querying_staked_geometric_twap_price_if_no_transitive_denom_price_source() {
+    let mut deps = helpers::setup_test();
+
+    helpers::set_price_source(
+        deps.as_mut(),
+        "ustatom",
+        OsmosisPriceSource::StakedGeometricTwap {
+            transitive_denom: "uatom".to_string(),
+            pool_id: 803,
+            window_size: 86400,
+            downtime_detector: None,
+        },
+    );
+
+    let ustatom_uatom_price = Decimal::from_ratio(105u128, 100u128);
+    deps.querier.set_geometric_twap_price(
+        803,
+        "ustatom",
+        "uatom",
+        GeometricTwapToNowResponse {
+            geometric_twap: ustatom_uatom_price.to_string(),
+        },
+    );
+
+    let res_err = helpers::query_err(
+        deps.as_ref(),
+        QueryMsg::Price {
+            denom: "ustatom".to_string(),
+        },
+    );
+    assert_eq!(
+        res_err,
+        ContractError::Std(StdError::not_found(
+            "mars_oracle_osmosis::price_source::OsmosisPriceSource"
+        ))
+    );
+}
+
+#[test]
+fn querying_staked_geometric_twap_price_with_downtime_detector() {
+    let mut deps = helpers::setup_test();
+
+    let dd = DowntimeDetector {
+        downtime: Downtime::Duration10m,
+        recovery: 360,
+    };
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uatom",
+        OsmosisPriceSource::GeometricTwap {
+            pool_id: 1,
+            window_size: 86400,
+            downtime_detector: Some(dd.clone()),
+        },
+    );
+    helpers::set_price_source(
+        deps.as_mut(),
+        "ustatom",
+        OsmosisPriceSource::StakedGeometricTwap {
+            transitive_denom: "uatom".to_string(),
+            pool_id: 803,
+            window_size: 86400,
+            downtime_detector: Some(dd.clone()),
+        },
+    );
+
+    deps.querier.set_downtime_detector(dd.clone(), false);
+    let res_err = helpers::query_err(
+        deps.as_ref(),
+        QueryMsg::Price {
+            denom: "ustatom".to_string(),
+        },
+    );
+    assert_eq!(
+        res_err,
+        ContractError::InvalidPrice {
+            reason: "chain is recovering from downtime".to_string()
+        }
+    );
+
+    deps.querier.set_downtime_detector(dd, true);
+
+    let uatom_uosmo_price = Decimal::from_ratio(135u128, 10u128);
+    deps.querier.set_geometric_twap_price(
+        1,
+        "uatom",
+        "uosmo",
+        GeometricTwapToNowResponse {
+            geometric_twap: uatom_uosmo_price.to_string(),
+        },
+    );
+    let ustatom_uatom_price = Decimal::from_ratio(105u128, 100u128);
+    deps.querier.set_geometric_twap_price(
+        803,
+        "ustatom",
+        "uatom",
+        GeometricTwapToNowResponse {
+            geometric_twap: ustatom_uatom_price.to_string(),
+        },
+    );
+
+    let res: PriceResponse = helpers::query(
+        deps.as_ref(),
+        QueryMsg::Price {
+            denom: "ustatom".to_string(),
+        },
+    );
+    let expected_price = ustatom_uatom_price * uatom_uosmo_price;
+    assert_eq!(res.price, expected_price);
 }
 
 #[test]
