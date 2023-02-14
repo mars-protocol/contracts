@@ -39,5 +39,5 @@ pub fn lend(deps: DepsMut, env: Env, account_id: &str, coin: Coin) -> ContractRe
         .add_attribute("action", "lend")
         .add_attribute("account_id", account_id)
         .add_attribute("lent_shares_added", lent_shares_to_add)
-        .add_attribute("coins_lent", coin.amount))
+        .add_attribute("coin_lent", coin.to_string()))
 }
