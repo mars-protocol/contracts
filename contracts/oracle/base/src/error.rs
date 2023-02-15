@@ -16,6 +16,9 @@ pub enum ContractError {
     Validation(#[from] ValidationError),
 
     #[error("{0}")]
+    Version(#[from] cw2::VersionError),
+
+    #[error("{0}")]
     Owner(#[from] OwnerError),
 
     #[error("{0}")]
