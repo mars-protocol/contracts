@@ -123,6 +123,9 @@ pub enum OsmosisPriceSource {
     },
     /// Osmosis geometric twap price quoted in OSMO for staked asset.
     ///
+    /// Equation to calculate the price:
+    /// stAsset/OSMO = stAsset/Asset * Asset/OSMO
+    ///
     /// Example:
     /// stATOM/OSMO = stATOM/ATOM * ATOM/OSMO
     /// where:
@@ -132,7 +135,8 @@ pub enum OsmosisPriceSource {
     /// NOTE: `pool_id` must point to stAsset/Asset Osmosis pool.
     /// Asset/OSMO price source should be available in the Mars Oracle contract.
     StakedGeometricTwap {
-        /// Transitive denom for which we query price in OSMO
+        /// Transitive denom for which we query price in OSMO. It refers to 'Asset' in the equation:
+        /// stAsset/OSMO = stAsset/Asset * Asset/OSMO
         transitive_denom: String,
 
         /// Pool id for stAsset/Asset pool

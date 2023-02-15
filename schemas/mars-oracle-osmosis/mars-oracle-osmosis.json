@@ -299,7 +299,7 @@
             "additionalProperties": false
           },
           {
-            "description": "Osmosis geometric twap price quoted in OSMO for staked asset.\n\nExample: stATOM/OSMO = stATOM/ATOM * ATOM/OSMO where: - stATOM/ATOM price calculated using the geometric TWAP from the stATOM/ATOM pool. - ATOM/OSMO price comes from the Mars Oracle contract.\n\nNOTE: `pool_id` must point to stAsset/Asset Osmosis pool. Asset/OSMO price source should be available in the Mars Oracle contract.",
+            "description": "Osmosis geometric twap price quoted in OSMO for staked asset.\n\nEquation to calculate the price: stAsset/OSMO = stAsset/Asset * Asset/OSMO\n\nExample: stATOM/OSMO = stATOM/ATOM * ATOM/OSMO where: - stATOM/ATOM price calculated using the geometric TWAP from the stATOM/ATOM pool. - ATOM/OSMO price comes from the Mars Oracle contract.\n\nNOTE: `pool_id` must point to stAsset/Asset Osmosis pool. Asset/OSMO price source should be available in the Mars Oracle contract.",
             "type": "object",
             "required": [
               "staked_geometric_twap"
@@ -331,7 +331,7 @@
                     "minimum": 0.0
                   },
                   "transitive_denom": {
-                    "description": "Transitive denom for which we query price in OSMO",
+                    "description": "Transitive denom for which we query price in OSMO. It refers to 'Asset' in the equation: stAsset/OSMO = stAsset/Asset * Asset/OSMO",
                     "type": "string"
                   },
                   "window_size": {
