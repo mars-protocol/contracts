@@ -1,18 +1,24 @@
 [workspace]
 members = [
-  "contracts/account-nft",
-  "contracts/credit-manager",
-  "contracts/swapper/*",
-  "contracts/zapper/*",
-  "packages/health",
-  "packages/rover",
-  "packages/math",
+    # prod contracts
+    "contracts/account-nft",
+    "contracts/credit-manager",
+    "contracts/swapper/*",
+    "contracts/zapper/*",
+    "contracts/health",
 
-  # Mock contracts
-  "contracts/mock-oracle",
-  "contracts/mock-red-bank",
-  "contracts/mock-vault",
-  "contracts/mock-credit-manager",
+    # mock contracts
+    "contracts/mock-oracle",
+    "contracts/mock-red-bank",
+    "contracts/mock-vault",
+    "contracts/mock-credit-manager",
+
+    # packages
+    "packages/health", # TODO: to delete
+    "packages/health-computer",
+    "packages/health-types",
+    "packages/rover",
+    "packages/math",
 ]
 
 [workspace.package]
@@ -30,34 +36,39 @@ documentation = "https://docs.marsprotocol.io/"
 keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
-anyhow            = "1.0.66"
-cosmwasm-schema   = "1.1.9"
-cosmwasm-std      = "1.1.9"
-cw2               = "1.0.0"
-cw721             = "0.16.0"
-cw721-base        = { version = "0.16.0", features = ["library"] }
-cw-item-set       = { version = "0.7.0", default-features = false, features = ["iterator"] }
-cw-multi-test     = "0.16.1"
-cw-paginate       = "0.2.0"
-cw-utils          = "0.16.0"
-cw-storage-plus   = "1.0.1"
-itertools         = "0.10.5"
-osmosis-std       = "0.14.0"
-osmosis-test-tube = "14.1.1"
-schemars          = "0.8.11"
-serde             = { version = "1.0.150", default-features = false, features = ["derive"] }
-thiserror         = "1.0.37"
+anyhow             = "1.0.66"
+cosmwasm-schema    = "1.1.9"
+cosmwasm-std       = "1.1.9"
+cw2                = "1.0.0"
+cw721              = "0.16.0"
+cw721-base         = { version = "0.16.0", features = ["library"] }
+cw-item-set        = { version = "0.7.0", default-features = false, features = ["iterator"] }
+cw-multi-test      = "0.16.1"
+cw-paginate        = "0.2.0"
+cw-utils           = "0.16.0"
+cw-storage-plus    = "1.0.1"
+itertools          = "0.10.5"
+osmosis-std        = "0.14.0"
+osmosis-test-tube  = "14.1.1"
+schemars           = "0.8.11"
+serde              = { version = "1.0.150", default-features = false, features = ["derive"] }
+serde_json         = "1.0.91"
+serde-wasm-bindgen = "0.4.5"
+thiserror          = "1.0.37"
+wasm-bindgen       = "0.2.83"
 
 # packages
-cosmwasm-vault-standard = { version = "0.1.0", features = ["lockup", "force-unlock"] }
+cosmwasm-vault-standard    = { version = "0.1.0", features = ["lockup", "force-unlock"] }
 # FIXME: develop branch dependency till Apollo finish audit
-cw-dex                  = { git = "https://github.com/apollodao/cw-dex", rev = "1ce5566963851f7cab0eed117240654f3cb2d78d", features = ["osmosis"] }
-mars-health             = { version = "1.0.0", path = "./packages/health" }
-mars-math               = { version = "1.0.0", path = "./packages/math" }
-mars-osmosis            = { git = "https://github.com/mars-protocol/red-bank", rev = "3e57365d82b96967ef1bc7ec183c4a86bc88d5e7" }
-mars-red-bank-types     = { git = "https://github.com/mars-protocol/red-bank", rev = "3e57365d82b96967ef1bc7ec183c4a86bc88d5e7" }
-mars-owner              = "1.0.0"
-mars-rover              = { version = "1.0.0", path = "./packages/rover" }
+cw-dex                     = { git = "https://github.com/apollodao/cw-dex", rev = "1ce5566963851f7cab0eed117240654f3cb2d78d", features = ["osmosis"] }
+mars-health                = { version = "1.0.0", path = "./packages/health" } # TODO to delete
+mars-rover-health-computer = { version = "1.0.0", path = "./packages/health-computer" }
+mars-rover-health-types    = { version = "1.0.0", path = "./packages/health-types" }
+mars-math                  = { version = "1.0.0", path = "./packages/math" }
+mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "3e57365d82b96967ef1bc7ec183c4a86bc88d5e7" }
+mars-red-bank-types        = { git = "https://github.com/mars-protocol/red-bank", rev = "3e57365d82b96967ef1bc7ec183c4a86bc88d5e7" }
+mars-owner                 = "1.0.0"
+mars-rover                 = { version = "1.0.0", path = "./packages/rover" }
 
 # contracts
 mars-account-nft  = { version = "1.0.0", path = "./contracts/account-nft", features = ["library"] }

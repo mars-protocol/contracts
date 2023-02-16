@@ -1,11 +1,13 @@
 use cosmwasm_std::{
-    coin, BankMsg, CosmosMsg, DepsMut, MessageInfo, Response, StdError, StdResult, Uint128,
+    coin, BankMsg, CosmosMsg, Decimal, DepsMut, MessageInfo, Response, StdError, StdResult, Uint128,
 };
 use cw_utils::one_coin;
+use mars_red_bank_types::red_bank::InitOrUpdateAssetParams;
 
 use crate::{
     helpers::{load_collateral_amount, load_debt_amount},
-    state::{COLLATERAL_AMOUNT, DEBT_AMOUNT},
+    msg::CoinMarketInfo,
+    state::{COIN_MARKET_INFO, COLLATERAL_AMOUNT, DEBT_AMOUNT},
 };
 
 pub fn borrow(
@@ -53,6 +55,25 @@ pub fn deposit(deps: DepsMut, info: MessageInfo) -> StdResult<Response> {
         deps.storage,
         (info.sender, to_deposit.denom.clone()),
         &collateral_amount.checked_add(to_deposit.amount)?.checked_add(Uint128::new(1))?, // The extra unit is simulated accrued yield
+    )?;
+
+    Ok(Response::new())
+}
+
+pub fn update_asset(
+    deps: DepsMut,
+    denom: &str,
+    params: InitOrUpdateAssetParams,
+) -> StdResult<Response> {
+    COIN_MARKET_INFO.save(
+        deps.storage,
+        denom.to_string(),
+        &CoinMarketInfo {
+            denom: denom.to_string(),
+            max_ltv: params.max_loan_to_value.unwrap_or(Decimal::zero()),
+            liquidation_threshold: params.liquidation_threshold.unwrap_or(Decimal::zero()),
+            liquidation_bonus: params.liquidation_bonus.unwrap_or(Decimal::zero()),
+        },
     )?;
 
     Ok(Response::new())

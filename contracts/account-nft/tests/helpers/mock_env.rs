@@ -2,13 +2,13 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::Addr;
 use cw721::OwnerOfResponse;
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
-use mars_health::HealthResponse;
 use mars_mock_credit_manager::msg::ExecuteMsg::SetHealthResponse;
 use mars_rover::adapters::account_nft::{
     ExecuteMsg,
     ExecuteMsg::{AcceptMinterRole, UpdateConfig},
     NftConfigUpdates, QueryMsg, UncheckedNftConfig,
 };
+use mars_rover_health_types::HealthResponse;
 
 use crate::helpers::MockEnvBuilder;
 

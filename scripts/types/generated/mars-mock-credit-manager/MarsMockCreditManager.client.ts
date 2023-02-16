@@ -12,10 +12,23 @@ import {
   ExecuteMsg,
   Decimal,
   Uint128,
+  VaultPositionAmount,
+  VaultAmount,
+  VaultAmount1,
+  UnlockingPositions,
+  Addr,
   HealthResponse,
+  Positions,
+  DebtAmount,
+  Coin,
+  LentAmount,
+  VaultPosition,
+  LockingVaultAmount,
+  VaultUnlockingPosition,
+  VaultBaseForAddr,
+  VaultConfig,
   QueryMsg,
   VaultBaseForString,
-  Coin,
   ArrayOfCoinBalanceResponseItem,
   CoinBalanceResponseItem,
   ArrayOfSharesResponseItem,
@@ -24,28 +37,15 @@ import {
   DebtShares,
   ArrayOfLentShares,
   LentShares,
-  Addr,
   ArrayOfVaultWithBalance,
   VaultWithBalance,
-  VaultBaseForAddr,
-  VaultPositionAmount,
-  VaultAmount,
-  VaultAmount1,
-  UnlockingPositions,
   ArrayOfVaultPositionResponseItem,
   VaultPositionResponseItem,
-  VaultPosition,
-  LockingVaultAmount,
-  VaultUnlockingPosition,
   ArrayOfString,
   ConfigResponse,
   ArrayOfCoin,
-  Positions,
-  DebtAmount,
-  LentAmount,
   ArrayOfVaultInfoResponse,
   VaultInfoResponse,
-  VaultConfig,
 } from './MarsMockCreditManager.types'
 export interface MarsMockCreditManagerReadOnlyInterface {
   contractAddress: string
@@ -352,6 +352,35 @@ export interface MarsMockCreditManagerInterface extends MarsMockCreditManagerRea
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
+  setPositionsResponse: (
+    {
+      accountId,
+      positions,
+    }: {
+      accountId: string
+      positions: Positions
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
+  setAllowedCoins: (
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
+  setVaultConfig: (
+    {
+      address,
+      config,
+    }: {
+      address: string
+      config: VaultConfig
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
 }
 export class MarsMockCreditManagerClient
   extends MarsMockCreditManagerQueryClient
@@ -367,6 +396,9 @@ export class MarsMockCreditManagerClient
     this.sender = sender
     this.contractAddress = contractAddress
     this.setHealthResponse = this.setHealthResponse.bind(this)
+    this.setPositionsResponse = this.setPositionsResponse.bind(this)
+    this.setAllowedCoins = this.setAllowedCoins.bind(this)
+    this.setVaultConfig = this.setVaultConfig.bind(this)
   }
 
   setHealthResponse = async (
@@ -388,6 +420,74 @@ export class MarsMockCreditManagerClient
         set_health_response: {
           account_id: accountId,
           response,
+        },
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  setPositionsResponse = async (
+    {
+      accountId,
+      positions,
+    }: {
+      accountId: string
+      positions: Positions
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        set_positions_response: {
+          account_id: accountId,
+          positions,
+        },
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  setAllowedCoins = async (
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        set_allowed_coins: {},
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  setVaultConfig = async (
+    {
+      address,
+      config,
+    }: {
+      address: string
+      config: VaultConfig
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        set_vault_config: {
+          address,
+          config,
         },
       },
       fee,

@@ -57,5 +57,5 @@ pub fn query_unlocking_positions(
 }
 
 pub fn query_vault_token_supply(storage: &dyn Storage) -> ContractResult<Uint128> {
-    Ok(TOTAL_VAULT_SHARES.load(storage)?)
+    Ok(TOTAL_VAULT_SHARES.may_load(storage)?.unwrap_or(Uint128::zero()))
 }

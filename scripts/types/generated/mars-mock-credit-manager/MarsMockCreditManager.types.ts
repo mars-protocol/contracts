@@ -8,14 +8,41 @@
 export interface InstantiateMsg {
   [k: string]: unknown
 }
-export type ExecuteMsg = {
-  set_health_response: {
-    account_id: string
-    response: HealthResponse
-  }
-}
+export type ExecuteMsg =
+  | {
+      set_health_response: {
+        account_id: string
+        response: HealthResponse
+      }
+    }
+  | {
+      set_positions_response: {
+        account_id: string
+        positions: Positions
+      }
+    }
+  | {
+      set_allowed_coins: string[]
+    }
+  | {
+      set_vault_config: {
+        address: string
+        config: VaultConfig
+      }
+    }
 export type Decimal = string
 export type Uint128 = string
+export type VaultPositionAmount =
+  | {
+      unlocked: VaultAmount
+    }
+  | {
+      locking: LockingVaultAmount
+    }
+export type VaultAmount = string
+export type VaultAmount1 = string
+export type UnlockingPositions = VaultUnlockingPosition[]
+export type Addr = string
 export interface HealthResponse {
   above_max_ltv: boolean
   liquidatable: boolean
@@ -25,6 +52,49 @@ export interface HealthResponse {
   max_ltv_health_factor?: Decimal | null
   total_collateral_value: Uint128
   total_debt_value: Uint128
+}
+export interface Positions {
+  account_id: string
+  debts: DebtAmount[]
+  deposits: Coin[]
+  lends: LentAmount[]
+  vaults: VaultPosition[]
+}
+export interface DebtAmount {
+  amount: Uint128
+  denom: string
+  shares: Uint128
+}
+export interface Coin {
+  amount: Uint128
+  denom: string
+  [k: string]: unknown
+}
+export interface LentAmount {
+  amount: Uint128
+  denom: string
+  shares: Uint128
+}
+export interface VaultPosition {
+  amount: VaultPositionAmount
+  vault: VaultBaseForAddr
+}
+export interface LockingVaultAmount {
+  locked: VaultAmount1
+  unlocking: UnlockingPositions
+}
+export interface VaultUnlockingPosition {
+  coin: Coin
+  id: number
+}
+export interface VaultBaseForAddr {
+  address: Addr
+}
+export interface VaultConfig {
+  deposit_cap: Coin
+  liquidation_threshold: Decimal
+  max_ltv: Decimal
+  whitelisted: boolean
 }
 export type QueryMsg =
   | {
@@ -119,11 +189,6 @@ export type QueryMsg =
 export interface VaultBaseForString {
   address: string
 }
-export interface Coin {
-  amount: Uint128
-  denom: string
-  [k: string]: unknown
-}
 export type ArrayOfCoinBalanceResponseItem = CoinBalanceResponseItem[]
 export interface CoinBalanceResponseItem {
   account_id: string
@@ -146,41 +211,15 @@ export interface LentShares {
   denom: string
   shares: Uint128
 }
-export type Addr = string
 export type ArrayOfVaultWithBalance = VaultWithBalance[]
 export interface VaultWithBalance {
   balance: Uint128
   vault: VaultBaseForAddr
 }
-export interface VaultBaseForAddr {
-  address: Addr
-}
-export type VaultPositionAmount =
-  | {
-      unlocked: VaultAmount
-    }
-  | {
-      locking: LockingVaultAmount
-    }
-export type VaultAmount = string
-export type VaultAmount1 = string
-export type UnlockingPositions = VaultUnlockingPosition[]
 export type ArrayOfVaultPositionResponseItem = VaultPositionResponseItem[]
 export interface VaultPositionResponseItem {
   account_id: string
   position: VaultPosition
-}
-export interface VaultPosition {
-  amount: VaultPositionAmount
-  vault: VaultBaseForAddr
-}
-export interface LockingVaultAmount {
-  locked: VaultAmount1
-  unlocking: UnlockingPositions
-}
-export interface VaultUnlockingPosition {
-  coin: Coin
-  id: number
 }
 export type ArrayOfString = string[]
 export interface ConfigResponse {
@@ -195,32 +234,9 @@ export interface ConfigResponse {
   zapper: string
 }
 export type ArrayOfCoin = Coin[]
-export interface Positions {
-  account_id: string
-  debts: DebtAmount[]
-  deposits: Coin[]
-  lends: LentAmount[]
-  vaults: VaultPosition[]
-}
-export interface DebtAmount {
-  amount: Uint128
-  denom: string
-  shares: Uint128
-}
-export interface LentAmount {
-  amount: Uint128
-  denom: string
-  shares: Uint128
-}
 export type ArrayOfVaultInfoResponse = VaultInfoResponse[]
 export interface VaultInfoResponse {
   config: VaultConfig
   utilization: Coin
   vault: VaultBaseForString
-}
-export interface VaultConfig {
-  deposit_cap: Coin
-  liquidation_threshold: Decimal
-  max_ltv: Decimal
-  whitelisted: boolean
 }

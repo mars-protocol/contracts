@@ -1,11 +1,15 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Addr, Empty};
+use cosmwasm_std::Addr;
 use cw_multi_test::{BasicApp, Executor};
-use mars_rover::adapters::account_nft::{
-    ExecuteMsg::{AcceptMinterRole, UpdateConfig},
-    InstantiateMsg, NftConfigUpdates,
+use mars_mock_credit_manager::msg::InstantiateMsg as MockCmInstantiateMsg;
+use mars_rover::{
+    adapters::account_nft::{
+        ExecuteMsg::{AcceptMinterRole, UpdateConfig},
+        InstantiateMsg, NftConfigUpdates,
+    },
+    msg::query::ConfigResponse,
 };
 
 use crate::helpers::{
@@ -78,7 +82,20 @@ impl MockEnvBuilder {
             .instantiate_contract(
                 code_id,
                 self.deployer.clone(),
-                &Empty {},
+                // Will be removed on upcoming PR
+                &MockCmInstantiateMsg {
+                    config: ConfigResponse {
+                        owner: None,
+                        proposed_new_owner: None,
+                        account_nft: None,
+                        red_bank: "".to_string(),
+                        oracle: "".to_string(),
+                        max_close_factor: Default::default(),
+                        max_unlocking_positions: Default::default(),
+                        swapper: "".to_string(),
+                        zapper: "".to_string(),
+                    },
+                },
                 &[],
                 "mock-credit-manager",
                 None,

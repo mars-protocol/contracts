@@ -1029,6 +1029,7 @@ dependencies = [
  "mars-health",
  "mars-mock-credit-manager",
  "mars-rover",
+ "mars-rover-health-types",
  "thiserror",
 ]
 
@@ -1086,8 +1087,8 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
  "cw-utils 0.16.0",
- "mars-health",
  "mars-rover",
+ "mars-rover-health-types",
  "thiserror",
 ]
 
@@ -1177,6 +1178,61 @@ dependencies = [
  "mars-red-bank-types",
  "schemars",
  "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-rover-health"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-vault-standard",
+ "cw-multi-test",
+ "cw-storage-plus 1.0.1",
+ "cw-utils 0.16.0",
+ "cw2 1.0.1",
+ "mars-math",
+ "mars-mock-credit-manager",
+ "mars-mock-oracle",
+ "mars-mock-red-bank",
+ "mars-mock-vault",
+ "mars-owner",
+ "mars-red-bank-types",
+ "mars-rover",
+ "mars-rover-health-computer",
+ "mars-rover-health-types",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-rover-health-computer"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-vault-standard",
+ "mars-math",
+ "mars-red-bank-types",
+ "mars-rover",
+ "mars-rover-health-types",
+ "schemars",
+ "serde",
+ "serde-wasm-bindgen",
+ "serde_json",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "mars-rover-health-types"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "mars-math",
+ "mars-owner",
+ "mars-red-bank-types",
  "thiserror",
 ]
 
@@ -1700,6 +1756,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "479b4dbc401ca13ee8ce902851b834893251404c4f3c65370a49e047a6be09a5"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "serde-wasm-bindgen"
+version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3b4c031cd0d9014307d82b8abf653c0290fbdaeb4c02d00c63cf52f728628bf"
+dependencies = [
+ "js-sys",
+ "serde",
+ "wasm-bindgen",
 ]
 
 [[package]]

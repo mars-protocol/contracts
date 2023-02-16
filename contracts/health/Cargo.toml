@@ -1,0 +1,42 @@
+[package]
+name          = "mars-rover-health"
+version       = { workspace = true }
+authors       = { workspace = true }
+license       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+library    = []
+
+[dependencies]
+cosmwasm-schema            = { workspace = true }
+cosmwasm-std               = { workspace = true }
+cw2                        = { workspace = true }
+cw-storage-plus            = { workspace = true }
+mars-owner                 = { workspace = true }
+mars-rover-health-computer = { workspace = true }
+mars-rover-health-types    = { workspace = true }
+mars-rover                 = { workspace = true }
+thiserror                  = { workspace = true }
+
+[dev-dependencies]
+anyhow                   = { workspace = true }
+cosmwasm-vault-standard  = { workspace = true }
+cw-multi-test            = { workspace = true }
+cw-utils                 = { workspace = true }
+mars-math                = { workspace = true }
+mars-mock-credit-manager = { workspace = true }
+mars-mock-oracle         = { workspace = true }
+mars-mock-red-bank       = { workspace = true }
+mars-mock-vault          = { workspace = true }
+mars-red-bank-types      = { workspace = true }

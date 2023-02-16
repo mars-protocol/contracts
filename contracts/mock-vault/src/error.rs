@@ -18,6 +18,9 @@ pub enum ContractError {
     #[error("Lockup position {0} not found")]
     LockupPositionNotFound(u64),
 
+    #[error("Attempting to deposit, but did not sent any tokens")]
+    NoCoinsSent,
+
     #[error("This vault is not a locking vault, action not allowed")]
     NotLockingVault,
 

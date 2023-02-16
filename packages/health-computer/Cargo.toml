@@ -1,5 +1,5 @@
 [package]
-name          = "mars-mock-credit-manager"
+name          = "mars-rover-health-computer"
 version       = { workspace = true }
 authors       = { workspace = true }
 license       = { workspace = true }
@@ -11,18 +11,22 @@ keywords      = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+doctest    = false
 
 [features]
-# for quicker tests, cargo test --lib
-# for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
-library    = []
+default    = []
 
 [dependencies]
 cosmwasm-schema         = { workspace = true }
 cosmwasm-std            = { workspace = true }
-cw-storage-plus         = { workspace = true }
-cw-utils                = { workspace = true }
+cosmwasm-vault-standard = { workspace = true }
+mars-math               = { workspace = true }
 mars-rover-health-types = { workspace = true }
+mars-red-bank-types     = { workspace = true }
 mars-rover              = { workspace = true }
-thiserror               = { workspace = true }
+schemars                = { workspace = true }
+serde                   = { workspace = true }
+serde_json              = { workspace = true }
+serde-wasm-bindgen      = { workspace = true }
+wasm-bindgen            = { workspace = true }

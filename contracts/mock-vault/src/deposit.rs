@@ -2,7 +2,10 @@ use cosmwasm_std::{BankMsg, Coin, CosmosMsg, DepsMut, MessageInfo, Response, Std
 
 use crate::{
     contract::STARTING_VAULT_SHARES,
-    error::{ContractError, ContractError::WrongDenomSent},
+    error::{
+        ContractError,
+        ContractError::{NoCoinsSent, WrongDenomSent},
+    },
     state::{CHAIN_BANK, COIN_BALANCE, ORACLE, TOTAL_VAULT_SHARES, VAULT_TOKEN_DENOM},
 };
 
@@ -25,7 +28,8 @@ pub fn deposit(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractErr
     let balance = COIN_BALANCE.load(deps.storage)?;
     let amount_deposited = match info.funds.first() {
         Some(c) if c.denom == balance.denom => c.amount,
-        _ => return Err(WrongDenomSent),
+        Some(c) if c.denom != balance.denom => return Err(WrongDenomSent),
+        _ => return Err(NoCoinsSent),
     };
     COIN_BALANCE.save(
         deps.storage,

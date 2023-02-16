@@ -4,7 +4,7 @@ use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
 use mars_red_bank_types::red_bank;
 
 use crate::{
-    execute::{borrow, deposit, repay},
+    execute::{borrow, deposit, repay, update_asset},
     msg::InstantiateMsg,
     query::{query_collateral, query_debt, query_market},
     state::COIN_MARKET_INFO,
@@ -42,6 +42,10 @@ pub fn execute(
         red_bank::ExecuteMsg::Deposit {
             ..
         } => deposit(deps, info),
+        red_bank::ExecuteMsg::UpdateAsset {
+            denom,
+            params,
+        } => update_asset(deps, &denom, params),
         _ => unimplemented!("Msg not supported!"),
     }
 }
