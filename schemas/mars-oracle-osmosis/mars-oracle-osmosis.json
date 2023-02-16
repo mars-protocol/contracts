@@ -8,7 +8,8 @@
     "type": "object",
     "required": [
       "base_denom",
-      "owner"
+      "owner",
+      "pyth_contract_addr"
     ],
     "properties": {
       "base_denom": {
@@ -17,6 +18,10 @@
       },
       "owner": {
         "description": "The contract's owner, who can update config and price sources",
+        "type": "string"
+      },
+      "pyth_contract_addr": {
+        "description": "Contract address of Pyth",
         "type": "string"
       }
     },
@@ -146,6 +151,9 @@
             "minimum": 0.0
           }
         }
+      },
+      "Identifier": {
+        "type": "string"
       },
       "OsmosisPriceSource": {
         "oneOf": [
@@ -339,6 +347,26 @@
                     "type": "integer",
                     "format": "uint64",
                     "minimum": 0.0
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "pyth"
+            ],
+            "properties": {
+              "pyth": {
+                "type": "object",
+                "required": [
+                  "price_feed_id"
+                ],
+                "properties": {
+                  "price_feed_id": {
+                    "$ref": "#/definitions/Identifier"
                   }
                 }
               }

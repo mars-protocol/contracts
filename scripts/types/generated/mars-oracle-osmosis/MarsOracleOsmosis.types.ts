@@ -8,6 +8,7 @@
 export interface InstantiateMsg {
   base_denom: string
   owner: string
+  pyth_contract_addr: string
 }
 export type ExecuteMsg =
   | {
@@ -68,6 +69,12 @@ export type OsmosisPriceSource =
         [k: string]: unknown
       }
     }
+  | {
+      pyth: {
+        price_feed_id: Identifier
+        [k: string]: unknown
+      }
+    }
 export type Decimal = string
 export type Downtime =
   | 'duration30s'
@@ -95,6 +102,7 @@ export type Downtime =
   | 'duration24h'
   | 'duration36h'
   | 'duration48h'
+export type Identifier = string
 export type OwnerUpdate =
   | {
       propose_new_owner: {

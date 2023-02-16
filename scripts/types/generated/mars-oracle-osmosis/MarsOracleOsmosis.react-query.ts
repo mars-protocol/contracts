@@ -14,6 +14,7 @@ import {
   OsmosisPriceSource,
   Decimal,
   Downtime,
+  Identifier,
   OwnerUpdate,
   DowntimeDetector,
   QueryMsg,

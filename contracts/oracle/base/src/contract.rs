@@ -8,7 +8,7 @@ use cw_storage_plus::{Bound, Item, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_red_bank_types::oracle::{
     Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
-    QueryMsg,
+    PythConfig, QueryMsg,
 };
 use mars_utils::helpers::validate_native_denom;
 
@@ -26,6 +26,8 @@ where
     pub owner: Owner<'a>,
     /// The contract's config
     pub config: Item<'a, Config>,
+    /// Pyth config
+    pub pyth_config: Item<'a, PythConfig>,
     /// The price source of each coin denom
     pub price_sources: Map<'a, &'a str, P>,
     /// Phantom data holds the custom query type
@@ -41,6 +43,7 @@ where
         Self {
             owner: Owner::new("owner"),
             config: Item::new("config"),
+            pyth_config: Item::new("pyth_config"),
             price_sources: Map::new("price_sources"),
             custom_query: PhantomData,
         }
@@ -67,6 +70,13 @@ where
             deps.storage,
             &Config {
                 base_denom: msg.base_denom,
+            },
+        )?;
+
+        self.pyth_config.save(
+            deps.storage,
+            &PythConfig {
+                pyth_contract_addr: deps.api.addr_validate(&msg.pyth_contract_addr)?,
             },
         )?;
 
@@ -202,6 +212,7 @@ where
 
     fn query_price(&self, deps: Deps<C>, env: Env, denom: String) -> ContractResult<PriceResponse> {
         let cfg = self.config.load(deps.storage)?;
+        let pyth_cfg = self.pyth_config.load(deps.storage)?;
         let price_source = self.price_sources.load(deps.storage, &denom)?;
         Ok(PriceResponse {
             price: price_source.query_price(
@@ -210,6 +221,7 @@ where
                 &denom,
                 &cfg.base_denom,
                 &self.price_sources,
+                &pyth_cfg,
             )?,
             denom,
         })
@@ -223,6 +235,7 @@ where
         limit: Option<u32>,
     ) -> ContractResult<Vec<PriceResponse>> {
         let cfg = self.config.load(deps.storage)?;
+        let pyth_cfg = self.pyth_config.load(deps.storage)?;
 
         let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
         let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
@@ -233,7 +246,14 @@ where
             .map(|item| {
                 let (k, v) = item?;
                 Ok(PriceResponse {
-                    price: v.query_price(&deps, &env, &k, &cfg.base_denom, &self.price_sources)?,
+                    price: v.query_price(
+                        &deps,
+                        &env,
+                        &k,
+                        &cfg.base_denom,
+                        &self.price_sources,
+                        &pyth_cfg,
+                    )?,
                     denom: k,
                 })
             })

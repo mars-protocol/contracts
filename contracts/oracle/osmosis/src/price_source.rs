@@ -1,7 +1,8 @@
 use std::fmt;
 
 use cosmwasm_std::{
-    Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, Uint128, Uint256,
+    Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, StdError, StdResult, Uint128,
+    Uint256,
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError::InvalidPrice, ContractResult, PriceSource};
@@ -9,6 +10,8 @@ use mars_osmosis::helpers::{
     query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price,
     recovered_since_downtime_of_length, Pool,
 };
+use mars_red_bank_types::oracle::PythConfig;
+use pyth_sdk_cw::{query_price_feed, PriceFeedResponse, PriceIdentifier};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -149,6 +152,9 @@ pub enum OsmosisPriceSource {
         /// Detect when the chain is recovering from downtime
         downtime_detector: Option<DowntimeDetector>,
     },
+    Pyth {
+        price_feed_id: PriceIdentifier,
+    },
 }
 
 impl fmt::Display for OsmosisPriceSource {
@@ -187,6 +193,11 @@ impl fmt::Display for OsmosisPriceSource {
             } => {
                 let dd_fmt = DowntimeDetector::fmt(downtime_detector);
                 format!("staked_geometric_twap:{transitive_denom}:{pool_id}:{window_size}:{dd_fmt}")
+            }
+            OsmosisPriceSource::Pyth {
+                price_feed_id,
+            } => {
+                format!("pyth:{price_feed_id}")
             }
         };
         write!(f, "{label}")
@@ -244,6 +255,12 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 helpers::assert_osmosis_pool_assets(&pool, denom, transitive_denom)?;
                 helpers::assert_osmosis_twap(*window_size, downtime_detector)
             }
+            OsmosisPriceSource::Pyth {
+                ..
+            } => {
+                // TODO validate pyth, maybe use 'query_feed'
+                Ok(())
+            }
         }
     }
 
@@ -254,6 +271,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
         denom: &str,
         base_denom: &str,
         price_sources: &Map<&str, Self>,
+        pyth_config: &PythConfig,
     ) -> ContractResult<Decimal> {
         match self {
             OsmosisPriceSource::Fixed {
@@ -292,6 +310,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 *pool_id,
                 base_denom,
                 price_sources,
+                pyth_config,
             ),
             OsmosisPriceSource::StakedGeometricTwap {
                 transitive_denom,
@@ -304,14 +323,16 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 Self::query_staked_asset_price(
                     deps,
                     env,
-                    denom,
-                    transitive_denom,
-                    base_denom,
+                    (denom, transitive_denom, base_denom),
                     *pool_id,
                     *window_size,
                     price_sources,
+                    pyth_config,
                 )
             }
+            OsmosisPriceSource::Pyth {
+                price_feed_id,
+            } => Ok(Self::query_pyth_price(deps, env, *price_feed_id, pyth_config)?),
         }
     }
 }
@@ -347,6 +368,7 @@ impl OsmosisPriceSource {
         pool_id: u64,
         base_denom: &str,
         price_sources: &Map<&str, Self>,
+        pyth_config: &PythConfig,
     ) -> ContractResult<Decimal> {
         // XYK pool asserted during price source creation
         let pool = query_pool(&deps.querier, pool_id)?;
@@ -360,6 +382,7 @@ impl OsmosisPriceSource {
             &coin0.denom,
             base_denom,
             price_sources,
+            pyth_config,
         )?;
         let coin1_price = price_sources.load(deps.storage, &coin1.denom)?.query_price(
             deps,
@@ -367,6 +390,7 @@ impl OsmosisPriceSource {
             &coin1.denom,
             base_denom,
             price_sources,
+            pyth_config,
         )?;
 
         let coin0_value = Uint256::from_uint128(coin0.amount) * Decimal256::from(coin0_price);
@@ -390,13 +414,13 @@ impl OsmosisPriceSource {
     fn query_staked_asset_price(
         deps: &Deps,
         env: &Env,
-        denom: &str,
-        transitive_denom: &str,
-        base_denom: &str,
+        denoms: (&str, &str, &str),
         pool_id: u64,
         window_size: u64,
         price_sources: &Map<&str, OsmosisPriceSource>,
+        pyth_config: &PythConfig,
     ) -> ContractResult<Decimal> {
+        let (denom, transitive_denom, base_denom) = denoms;
         let start_time = env.block.time.seconds() - window_size;
         let staked_price = query_geometric_twap_price(
             &deps.querier,
@@ -413,9 +437,46 @@ impl OsmosisPriceSource {
             transitive_denom,
             base_denom,
             price_sources,
+            pyth_config,
         )?;
 
         staked_price.checked_mul(transitive_price).map_err(Into::into)
+    }
+
+    fn query_pyth_price(
+        deps: &Deps,
+        env: &Env,
+        price_feed_id: PriceIdentifier,
+        pyth_config: &PythConfig,
+    ) -> StdResult<Decimal> {
+        // query_price_feed is the standard way to read the current price from a Pyth price feed.
+        // It takes the address of the Pyth contract (which is fixed for each network) and the id of the
+        // price feed. The result is a PriceFeed object with fields for the current price and other
+        // useful information. The function will fail if the contract address or price feed id are
+        // invalid.
+        let price_feed_response: PriceFeedResponse =
+            query_price_feed(&deps.querier, pyth_config.pyth_contract_addr.clone(), price_feed_id)?;
+        let price_feed = price_feed_response.price_feed;
+
+        // Get the current price and confidence interval from the price feed.
+        // This function returns None if the price is not currently available.
+        // This condition can happen for various reasons. For example, some products only trade at
+        // specific times, or network outages may prevent the price feed from updating.
+        //
+        // The example code below throws an error if the price is not available. It is recommended that
+        // you handle this scenario more carefully. Consult the [consumer best practices](https://docs.pyth.network/consumers/best-practices)
+        // for recommendations.
+        let current_price = price_feed
+            .get_price_no_older_than(env.block.time.seconds() as i64, 60)
+            .ok_or_else(|| StdError::not_found("Current price is not available"))?;
+
+        // Get an exponentially-weighted moving average price and confidence interval.
+        // The same notes about availability apply to this price.
+        let _ema_price = price_feed
+            .get_ema_price_no_older_than(env.block.time.seconds() as i64, 60)
+            .ok_or_else(|| StdError::not_found("EMA price is not available"))?;
+
+        Ok(Decimal::from_ratio(current_price.price as u128, 1u128))
     }
 }
 

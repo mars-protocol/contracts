@@ -83,6 +83,7 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "uosmo".to_string(),
+            pyth_contract_addr: "pyth_contract".to_string(),
         },
     )
     .unwrap();

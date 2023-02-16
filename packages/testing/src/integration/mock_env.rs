@@ -452,6 +452,8 @@ pub struct MockEnvBuilder {
     safety_fund_denom: String,
     fee_collector_denom: String,
     slippage_tolerance: Decimal,
+
+    pyth_contract_addr: String,
 }
 
 impl MockEnvBuilder {
@@ -469,6 +471,7 @@ impl MockEnvBuilder {
             safety_fund_denom: "uusdc".to_string(),
             fee_collector_denom: "uusdc".to_string(),
             slippage_tolerance: Decimal::percent(5),
+            pyth_contract_addr: "".to_string(),
         }
     }
 
@@ -604,6 +607,7 @@ impl MockEnvBuilder {
                 &oracle::InstantiateMsg {
                     owner: self.owner.to_string(),
                     base_denom: self.base_denom.clone(),
+                    pyth_contract_addr: self.pyth_contract_addr.clone(),
                 },
                 &[],
                 "oracle",
