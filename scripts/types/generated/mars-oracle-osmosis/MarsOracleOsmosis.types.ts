@@ -59,6 +59,15 @@ export type OsmosisPriceSource =
         [k: string]: unknown
       }
     }
+  | {
+      staked_geometric_twap: {
+        downtime_detector?: DowntimeDetector | null
+        pool_id: number
+        transitive_denom: string
+        window_size: number
+        [k: string]: unknown
+      }
+    }
 export type Decimal = string
 export type Downtime =
   | 'duration30s'

@@ -63,6 +63,15 @@ pub struct DowntimeDetector {
     pub recovery: u64,
 }
 
+impl DowntimeDetector {
+    fn fmt(opt_dd: &Option<Self>) -> String {
+        match opt_dd {
+            None => "None".to_string(),
+            Some(dd) => format!("Some({dd})"),
+        }
+    }
+}
+
 impl fmt::Display for DowntimeDetector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}:{}", self.downtime, self.recovery)
@@ -112,6 +121,34 @@ pub enum OsmosisPriceSource {
     XykLiquidityToken {
         pool_id: u64,
     },
+    /// Osmosis geometric twap price quoted in OSMO for staked asset.
+    ///
+    /// Equation to calculate the price:
+    /// stAsset/OSMO = stAsset/Asset * Asset/OSMO
+    ///
+    /// Example:
+    /// stATOM/OSMO = stATOM/ATOM * ATOM/OSMO
+    /// where:
+    /// - stATOM/ATOM price calculated using the geometric TWAP from the stATOM/ATOM pool.
+    /// - ATOM/OSMO price comes from the Mars Oracle contract.
+    ///
+    /// NOTE: `pool_id` must point to stAsset/Asset Osmosis pool.
+    /// Asset/OSMO price source should be available in the Mars Oracle contract.
+    StakedGeometricTwap {
+        /// Transitive denom for which we query price in OSMO. It refers to 'Asset' in the equation:
+        /// stAsset/OSMO = stAsset/Asset * Asset/OSMO
+        transitive_denom: String,
+
+        /// Pool id for stAsset/Asset pool
+        pool_id: u64,
+
+        /// Window size in seconds representing the entire window for which 'geometric' price is calculated.
+        /// Value should be <= 172800 sec (48 hours).
+        window_size: u64,
+
+        /// Detect when the chain is recovering from downtime
+        downtime_detector: Option<DowntimeDetector>,
+    },
 }
 
 impl fmt::Display for OsmosisPriceSource {
@@ -128,10 +165,7 @@ impl fmt::Display for OsmosisPriceSource {
                 window_size,
                 downtime_detector,
             } => {
-                let dd_fmt = match downtime_detector {
-                    None => "None".to_string(),
-                    Some(dd) => format!("Some({dd})"),
-                };
+                let dd_fmt = DowntimeDetector::fmt(downtime_detector);
                 format!("arithmetic_twap:{pool_id}:{window_size}:{dd_fmt}")
             }
             OsmosisPriceSource::GeometricTwap {
@@ -139,15 +173,21 @@ impl fmt::Display for OsmosisPriceSource {
                 window_size,
                 downtime_detector,
             } => {
-                let dd_fmt = match downtime_detector {
-                    None => "None".to_string(),
-                    Some(dd) => format!("Some({dd})"),
-                };
+                let dd_fmt = DowntimeDetector::fmt(downtime_detector);
                 format!("geometric_twap:{pool_id}:{window_size}:{dd_fmt}")
             }
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
             } => format!("xyk_liquidity_token:{pool_id}"),
+            OsmosisPriceSource::StakedGeometricTwap {
+                transitive_denom,
+                pool_id,
+                window_size,
+                downtime_detector,
+            } => {
+                let dd_fmt = DowntimeDetector::fmt(downtime_detector);
+                format!("staked_geometric_twap:{transitive_denom}:{pool_id}:{window_size}:{dd_fmt}")
+            }
         };
         write!(f, "{label}")
     }
@@ -193,6 +233,16 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             } => {
                 let pool = query_pool(querier, *pool_id)?;
                 helpers::assert_osmosis_xyk_pool(&pool)
+            }
+            OsmosisPriceSource::StakedGeometricTwap {
+                transitive_denom,
+                pool_id,
+                window_size,
+                downtime_detector,
+            } => {
+                let pool = query_pool(querier, *pool_id)?;
+                helpers::assert_osmosis_pool_assets(&pool, denom, transitive_denom)?;
+                helpers::assert_osmosis_twap(*window_size, downtime_detector)
             }
         }
     }
@@ -243,6 +293,25 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 base_denom,
                 price_sources,
             ),
+            OsmosisPriceSource::StakedGeometricTwap {
+                transitive_denom,
+                pool_id,
+                window_size,
+                downtime_detector,
+            } => {
+                Self::chain_recovered(deps, downtime_detector)?;
+
+                Self::query_staked_asset_price(
+                    deps,
+                    env,
+                    denom,
+                    transitive_denom,
+                    base_denom,
+                    *pool_id,
+                    *window_size,
+                    price_sources,
+                )
+            }
         }
     }
 }
@@ -310,6 +379,43 @@ impl OsmosisPriceSource {
         let total_shares = Pool::unwrap_coin(&pool.total_shares)?.amount;
 
         Ok(Decimal::from_ratio(pool_value_u128, total_shares))
+    }
+
+    /// Staked asset price quoted in OSMO.
+    ///
+    /// stAsset/OSMO = stAsset/Asset * Asset/OSMO
+    /// where:
+    /// - stAsset/Asset price calculated using the geometric TWAP from the stAsset/Asset pool.
+    /// - Asset/OSMO price comes from the Mars Oracle contract.
+    fn query_staked_asset_price(
+        deps: &Deps,
+        env: &Env,
+        denom: &str,
+        transitive_denom: &str,
+        base_denom: &str,
+        pool_id: u64,
+        window_size: u64,
+        price_sources: &Map<&str, OsmosisPriceSource>,
+    ) -> ContractResult<Decimal> {
+        let start_time = env.block.time.seconds() - window_size;
+        let staked_price = query_geometric_twap_price(
+            &deps.querier,
+            pool_id,
+            denom,
+            transitive_denom,
+            start_time,
+        )?;
+
+        // use current price source
+        let transitive_price = price_sources.load(deps.storage, transitive_denom)?.query_price(
+            deps,
+            env,
+            transitive_denom,
+            base_denom,
+            price_sources,
+        )?;
+
+        staked_price.checked_mul(transitive_price).map_err(Into::into)
     }
 }
 
@@ -380,6 +486,31 @@ mod tests {
             }),
         };
         assert_eq!(ps.to_string(), "geometric_twap:123:300:Some(Duration30m:568)");
+    }
+
+    #[test]
+    fn display_staked_geometric_twap_price_source() {
+        let ps = OsmosisPriceSource::StakedGeometricTwap {
+            transitive_denom: "transitive".to_string(),
+            pool_id: 123,
+            window_size: 300,
+            downtime_detector: None,
+        };
+        assert_eq!(ps.to_string(), "staked_geometric_twap:transitive:123:300:None");
+
+        let ps = OsmosisPriceSource::StakedGeometricTwap {
+            transitive_denom: "transitive".to_string(),
+            pool_id: 123,
+            window_size: 300,
+            downtime_detector: Some(DowntimeDetector {
+                downtime: Downtime::Duration30m,
+                recovery: 568,
+            }),
+        };
+        assert_eq!(
+            ps.to_string(),
+            "staked_geometric_twap:transitive:123:300:Some(Duration30m:568)"
+        );
     }
 
     #[test]

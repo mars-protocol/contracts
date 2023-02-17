@@ -41,6 +41,17 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
         prepare_query_pool_response(89, &assets, &[5000u64, 5000u64], &coin(10000, "gamm/pool/89")),
     );
 
+    let assets = vec![coin(12345, "ustatom"), coin(88888, "uatom")];
+    deps.querier.set_query_pool_response(
+        803,
+        prepare_query_pool_response(
+            803,
+            &assets,
+            &[5000u64, 5000u64],
+            &coin(10000, "gamm/pool/803"),
+        ),
+    );
+
     let assets = vec![coin(100000, "uusdc"), coin(100000, "uusdt"), coin(100000, "udai")];
     deps.querier.set_query_pool_response(
         3333,
