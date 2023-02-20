@@ -471,7 +471,8 @@ impl MockEnvBuilder {
             safety_fund_denom: "uusdc".to_string(),
             fee_collector_denom: "uusdc".to_string(),
             slippage_tolerance: Decimal::percent(5),
-            pyth_contract_addr: "".to_string(),
+            pyth_contract_addr: "osmo1svg55quy7jjee6dn0qx85qxxvx5cafkkw4tmqpcjr9dx99l0zrhs4usft5"
+                .to_string(), // correct bech32 addr to pass validation
         }
     }
 
@@ -512,6 +513,11 @@ impl MockEnvBuilder {
 
     pub fn slippage_tolerance(&mut self, percentage: Decimal) -> &mut Self {
         self.slippage_tolerance = percentage;
+        self
+    }
+
+    pub fn pyth_contract_addr(&mut self, pyth_contract_addr: Addr) -> &mut Self {
+        self.pyth_contract_addr = pyth_contract_addr.to_string();
         self
     }
 

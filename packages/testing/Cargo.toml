@@ -30,6 +30,7 @@ mars-red-bank                  = { workspace = true }
 mars-red-bank-types            = { workspace = true }
 mars-rewards-collector-osmosis = { workspace = true }
 prost                          = { workspace = true }
+pyth-sdk-cw                    = { workspace = true }
 schemars                       = { workspace = true }
 serde                          = { workspace = true }
 thiserror                      = { workspace = true }
