@@ -12,7 +12,7 @@ Rover takes a different approach for Mars protocol, which utilizes a generalized
 
 The target audience of the credit manager is risk-seeking investors who wish to undertake leveraged trading or yield farming activities.
 
-To start, a user first needs to access the Mars credit manager contract and request the opening of a credit account. The credit account is analogous to a "sub-account" on centralized trading platforms such as FTX, and is represented by a non-fungible token (NFT).
+To start, a user first needs to access the Mars credit manager contract and request the opening of a credit account. The credit account is analogous to a "sub-account" on centralized trading platforms and is represented by a non-fungible token (NFT).
 
 ```rust
 pub enum ExecuteMsg {
