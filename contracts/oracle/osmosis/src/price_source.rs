@@ -1,8 +1,7 @@
 use std::fmt;
 
 use cosmwasm_std::{
-    Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, StdError, StdResult, Uint128,
-    Uint256,
+    Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, Uint128, Uint256,
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError::InvalidPrice, ContractResult, PriceSource};
@@ -153,7 +152,22 @@ pub enum OsmosisPriceSource {
         downtime_detector: Option<DowntimeDetector>,
     },
     Pyth {
+        /// Price feed id of an asset from the list: https://pyth.network/developers/price-feed-ids
         price_feed_id: PriceIdentifier,
+
+        /// The maximum number of seconds since the last price was by an oracle, before
+        /// rejecting the price as too stale
+        max_staleness: u64,
+
+        /// The maximum confidence deviation allowed for an oracle price.
+        ///
+        /// The confidence is measured as the percent of the confidence interval
+        /// value provided by the oracle as compared to the weighted average value
+        /// of the price.
+        max_confidence: Decimal,
+
+        /// The maximum deviation (percentage) between current and EMA price
+        max_deviation: Decimal,
     },
 }
 
@@ -196,8 +210,11 @@ impl fmt::Display for OsmosisPriceSource {
             }
             OsmosisPriceSource::Pyth {
                 price_feed_id,
+                max_staleness,
+                max_confidence,
+                max_deviation,
             } => {
-                format!("pyth:{price_feed_id}")
+                format!("pyth:{price_feed_id}:{max_staleness}:{max_confidence}:{max_deviation}")
             }
         };
         write!(f, "{label}")
@@ -256,11 +273,10 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 helpers::assert_osmosis_twap(*window_size, downtime_detector)
             }
             OsmosisPriceSource::Pyth {
+                max_confidence,
+                max_deviation,
                 ..
-            } => {
-                // TODO validate pyth, maybe use 'query_feed'
-                Ok(())
-            }
+            } => helpers::assert_pyth(*max_confidence, *max_deviation),
         }
     }
 
@@ -332,7 +348,18 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             }
             OsmosisPriceSource::Pyth {
                 price_feed_id,
-            } => Ok(Self::query_pyth_price(deps, env, *price_feed_id, pyth_config)?),
+                max_staleness,
+                max_confidence,
+                max_deviation,
+            } => Ok(Self::query_pyth_price(
+                deps,
+                env,
+                *price_feed_id,
+                *max_staleness,
+                *max_confidence,
+                *max_deviation,
+                pyth_config,
+            )?),
         }
     }
 }
@@ -447,36 +474,90 @@ impl OsmosisPriceSource {
         deps: &Deps,
         env: &Env,
         price_feed_id: PriceIdentifier,
+        max_staleness: u64,
+        max_confidence: Decimal,
+        max_deviation: Decimal,
         pyth_config: &PythConfig,
-    ) -> StdResult<Decimal> {
-        // query_price_feed is the standard way to read the current price from a Pyth price feed.
-        // It takes the address of the Pyth contract (which is fixed for each network) and the id of the
-        // price feed. The result is a PriceFeed object with fields for the current price and other
-        // useful information. The function will fail if the contract address or price feed id are
-        // invalid.
+    ) -> ContractResult<Decimal> {
+        let current_time = env.block.time.seconds();
+
         let price_feed_response: PriceFeedResponse =
             query_price_feed(&deps.querier, pyth_config.pyth_contract_addr.clone(), price_feed_id)?;
         let price_feed = price_feed_response.price_feed;
 
-        // Get the current price and confidence interval from the price feed.
-        // This function returns None if the price is not currently available.
-        // This condition can happen for various reasons. For example, some products only trade at
-        // specific times, or network outages may prevent the price feed from updating.
-        //
-        // The example code below throws an error if the price is not available. It is recommended that
-        // you handle this scenario more carefully. Consult the [consumer best practices](https://docs.pyth.network/consumers/best-practices)
-        // for recommendations.
-        let current_price = price_feed
-            .get_price_no_older_than(env.block.time.seconds() as i64, 60)
-            .ok_or_else(|| StdError::not_found("Current price is not available"))?;
+        // Get the current price and confidence interval from the price feed
+        let current_price = price_feed.get_price_unchecked();
 
-        // Get an exponentially-weighted moving average price and confidence interval.
-        // The same notes about availability apply to this price.
-        let _ema_price = price_feed
-            .get_ema_price_no_older_than(env.block.time.seconds() as i64, 60)
-            .ok_or_else(|| StdError::not_found("EMA price is not available"))?;
+        // Check if the current price is not too old
+        if (current_time - current_price.publish_time as u64) > max_staleness {
+            return Err(InvalidPrice {
+                reason: format!(
+                    "current price timestamp is too old/stale. published: {}, now: {}",
+                    current_price.publish_time, current_time
+                ),
+            });
+        }
 
-        Ok(Decimal::from_ratio(current_price.price as u128, 1u128))
+        // Get an exponentially-weighted moving average price and confidence interval
+        let ema_price = price_feed.get_ema_price_unchecked();
+
+        // Check if the EMA price is not too old
+        if (current_time - ema_price.publish_time as u64) > max_staleness {
+            return Err(InvalidPrice {
+                reason: format!(
+                    "EMA price timestamp is too old/stale. published: {}, now: {}",
+                    ema_price.publish_time, current_time
+                ),
+            });
+        }
+
+        // Check if the current price is > 0
+        if current_price.price <= 0 {
+            return Err(InvalidPrice {
+                reason: "current price can't be <= 0".to_string(),
+            });
+        }
+        let current_price_dec = scale_to_exponent(current_price.price as u128, current_price.expo)?;
+
+        // Check if the EMA price is > 0
+        if ema_price.price <= 0 {
+            return Err(InvalidPrice {
+                reason: "EMA price can't be <= 0".to_string(),
+            });
+        }
+        let ema_price_dec = scale_to_exponent(ema_price.price as u128, ema_price.expo)?;
+
+        // Check confidence deviation
+        let confidence = scale_to_exponent(current_price.conf as u128, current_price.expo)?;
+        if confidence.checked_div(ema_price_dec)? > max_confidence {
+            return Err(InvalidPrice {
+                reason: "price confidence exceeding max".to_string(),
+            });
+        }
+
+        // Check price deviation
+        let delta = if current_price_dec > ema_price_dec {
+            current_price_dec - ema_price_dec
+        } else {
+            ema_price_dec - current_price_dec
+        };
+        if delta.checked_div(ema_price_dec)? > max_deviation {
+            return Err(InvalidPrice {
+                reason: "price deviation exceeding max".to_string(),
+            });
+        }
+
+        Ok(current_price_dec)
+    }
+}
+
+fn scale_to_exponent(value: u128, expo: i32) -> ContractResult<Decimal> {
+    let target_expo = Uint128::from(10u8).checked_pow(expo.unsigned_abs())?;
+    if expo < 0 {
+        Ok(Decimal::checked_from_ratio(value, target_expo)?)
+    } else {
+        let res = Uint128::from(value).checked_mul(target_expo)?;
+        Ok(Decimal::new(res))
     }
 }
 
