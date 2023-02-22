@@ -8,13 +8,13 @@ members = [
     "contracts/health",
 
     # mock contracts
+    "contracts/mock-credit-manager",
+    "contracts/mock-health",
     "contracts/mock-oracle",
     "contracts/mock-red-bank",
     "contracts/mock-vault",
-    "contracts/mock-credit-manager",
 
     # packages
-    "packages/health", # TODO: to delete
     "packages/health-computer",
     "packages/health-types",
     "packages/rover",
@@ -38,7 +38,7 @@ keywords      = ["mars", "cosmos", "cosmwasm"]
 [workspace.dependencies]
 anyhow             = "1.0.66"
 cosmwasm-schema    = "1.1.9"
-cosmwasm-std       = "1.1.9"
+cosmwasm-std       = "=1.1.9" # TODO: 1.2.1 requires CheckedMultiplyFractionError exposure: https://github.com/CosmWasm/cosmwasm/pull/1608
 cw2                = "1.0.0"
 cw721              = "0.16.0"
 cw721-base         = { version = "0.16.0", features = ["library"] }
@@ -71,15 +71,17 @@ mars-owner                 = "1.0.0"
 mars-rover                 = { version = "1.0.0", path = "./packages/rover" }
 
 # contracts
-mars-account-nft  = { version = "1.0.0", path = "./contracts/account-nft", features = ["library"] }
-mars-swapper-base = { version = "1.0.0", path = "./contracts/swapper/base" }
-mars-zapper-base  = { version = "1.0.0", path = "./contracts/zapper/base" }
+mars-account-nft   = { version = "1.0.0", path = "./contracts/account-nft", features = ["library"] }
+mars-rover-health  = { version = "1.0.0", path = "./contracts/health" }
+mars-swapper-base  = { version = "1.0.0", path = "./contracts/swapper/base" }
+mars-zapper-base   = { version = "1.0.0", path = "./contracts/zapper/base" }
 
 # mocks
 mars-mock-credit-manager = { version = "1.0.0", path = "./contracts/mock-credit-manager", features = ["library"] }
 mars-mock-oracle         = { version = "1.0.0", path = "./contracts/mock-oracle", features = ["library"] }
 mars-mock-red-bank       = { version = "1.0.0", path = "./contracts/mock-red-bank", features = ["library"] }
 mars-mock-vault          = { version = "1.0.0", path = "./contracts/mock-vault", features = ["library"] }
+mars-mock-rover-health   = { version = "1.0.0", path = "./contracts/mock-health", features = ["library"] }
 mars-swapper-mock        = { version = "1.0.0", path = "./contracts/swapper/mock", features = ["library"] }
 mars-zapper-mock         = { version = "1.0.0", path = "./contracts/zapper/mock", features = ["library"] }
 

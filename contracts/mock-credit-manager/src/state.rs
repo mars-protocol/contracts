@@ -4,11 +4,9 @@ use mars_rover::{
     adapters::vault::VaultConfig,
     msg::query::{ConfigResponse, Positions},
 };
-use mars_rover_health_types::HealthResponse;
 
 pub const CONFIG: Item<ConfigResponse> = Item::new("config");
 pub const ALLOWED_COINS: Item<Vec<String>> = Item::new("allowed_coins"); // Vec<Coin Denom>
 pub const VAULT_CONFIGS: Map<&Addr, VaultConfig> = Map::new("vault_configs");
 
-pub const HEALTH_RESPONSES: Map<&str, HealthResponse> = Map::new("health_responses"); // Map<account_id, HealthResponse>
 pub const POSITION_RESPONSES: Map<&str, Positions> = Map::new("position_responses"); // Map<account_id, Positions>

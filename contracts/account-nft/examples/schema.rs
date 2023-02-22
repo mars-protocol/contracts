@@ -1,5 +1,5 @@
 use cosmwasm_schema::write_api;
-use mars_rover::adapters::account_nft::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_account_nft::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {

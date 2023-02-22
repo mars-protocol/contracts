@@ -1,7 +1,9 @@
 use cosmwasm_std::{Deps, StdResult};
-use mars_rover::adapters::account_nft::UncheckedNftConfig;
 
-use crate::state::{CONFIG, NEXT_ID};
+use crate::{
+    nft_config::UncheckedNftConfig,
+    state::{CONFIG, NEXT_ID},
+};
 
 pub fn query_config(deps: Deps) -> StdResult<UncheckedNftConfig> {
     Ok(CONFIG.load(deps.storage)?.into())

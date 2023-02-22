@@ -4,6 +4,7 @@ use mars_mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
 use mars_mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
 use mars_rover::{
     adapters::{
+        health::HealthContractUnchecked,
         oracle::{OracleBase, OracleUnchecked},
         swap::SwapperBase,
         vault::{VaultBase, VaultConfig},
@@ -39,6 +40,7 @@ fn only_owner_can_update_config() {
             swapper: None,
             vault_configs: None,
             zapper: None,
+            health_contract: None,
         },
     );
 
@@ -69,6 +71,7 @@ fn raises_on_invalid_vaults_config() {
             swapper: None,
             vault_configs: Some(vec![vault_config]),
             zapper: None,
+            health_contract: None,
         },
     );
 
@@ -95,6 +98,7 @@ fn raises_on_invalid_vaults_config() {
             swapper: None,
             vault_configs: Some(vec![vault_config]),
             zapper: None,
+            health_contract: None,
         },
     );
 
@@ -120,6 +124,7 @@ fn raises_on_invalid_vaults_config() {
             swapper: None,
             vault_configs: Some(vec![vault_a, vault_b]),
             zapper: None,
+            health_contract: None,
         },
     );
 
@@ -146,6 +151,7 @@ fn update_config_works_with_full_config() {
     let new_close_factor = Decimal::from_atomics(32u128, 2).unwrap();
     let new_unlocking_max = Uint128::new(321);
     let new_swapper = SwapperBase::new("new_swapper".to_string());
+    let new_health_contract = HealthContractUnchecked::new("new_health_contract".to_string());
 
     mock.update_config(
         &Addr::unchecked(original_config.owner.clone().unwrap()),
@@ -158,6 +164,7 @@ fn update_config_works_with_full_config() {
             swapper: Some(new_swapper.clone()),
             vault_configs: Some(new_vault_configs.clone()),
             zapper: Some(new_zapper.clone()),
+            health_contract: Some(new_health_contract.clone()),
         },
     )
     .unwrap();
@@ -201,6 +208,9 @@ fn update_config_works_with_full_config() {
 
     assert_eq!(&new_config.swapper, new_swapper.address());
     assert_ne!(new_config.swapper, original_config.swapper);
+
+    assert_eq!(&new_config.health_contract, new_health_contract.address());
+    assert_ne!(new_config.health_contract, original_config.health_contract);
 }
 
 #[test]
@@ -242,6 +252,7 @@ fn update_config_works_with_some_config() {
     assert_eq!(new_config.max_close_factor, original_config.max_close_factor);
     assert_eq!(new_config.swapper, original_config.swapper);
     assert_eq!(new_config.zapper, original_config.zapper);
+    assert_eq!(new_config.health_contract, original_config.health_contract);
     assert_eq!(original_allowed_coins, new_queried_allowed_coins);
     assert_eq!(new_queried_vault_configs, original_vault_configs);
 }
@@ -308,6 +319,7 @@ fn update_config_does_nothing_when_nothing_is_passed() {
     assert_eq!(new_config.zapper, original_config.zapper);
     assert_eq!(new_config.max_close_factor, original_config.max_close_factor);
     assert_eq!(new_config.swapper, original_config.swapper);
+    assert_eq!(new_config.health_contract, original_config.health_contract);
 }
 
 #[test]
@@ -364,6 +376,7 @@ fn raises_on_duplicate_vault_configs() {
                 },
             ]),
             zapper: None,
+            health_contract: None,
         },
     );
 
@@ -394,6 +407,7 @@ fn raises_on_duplicate_coin_configs() {
             swapper: None,
             vault_configs: None,
             zapper: None,
+            health_contract: None,
         },
     );
 
@@ -440,7 +454,7 @@ fn deploy_vault(app: &mut BasicApp) -> VaultInstantiateConfig {
             &VaultInstantiateMsg {
                 vault_token_denom: "vault_xyz".to_string(),
                 lockup: None,
-                base_token_denom: "base_token".to_string(),
+                base_token_denom: "uusdc".to_string(),
                 oracle: OracleBase::new("oracle".to_string()),
             },
             &[],

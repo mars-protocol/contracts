@@ -7,6 +7,7 @@
 
 export type Uint128 = string
 export interface InstantiateMsg {
+  health_contract?: string | null
   max_value_for_burn: Uint128
   minter: string
   name: string
@@ -82,6 +83,7 @@ export type Expiration =
 export type Timestamp = Uint64
 export type Uint64 = string
 export interface NftConfigUpdates {
+  health_contract_addr?: string | null
   max_value_for_burn?: Uint128 | null
   proposed_new_minter?: string | null
 }
@@ -184,6 +186,7 @@ export interface ApprovalsResponse {
   approvals: Approval[]
 }
 export interface NftConfigBaseForString {
+  health_contract_addr?: string | null
   max_value_for_burn: Uint128
   proposed_new_minter?: string | null
 }

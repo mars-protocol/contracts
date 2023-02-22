@@ -1,17 +1,7 @@
 use cosmwasm_std::{Addr, DepsMut, Response, StdResult};
 use mars_rover::{adapters::vault::VaultConfig, msg::query::Positions};
-use mars_rover_health_types::HealthResponse;
 
-use crate::state::{ALLOWED_COINS, HEALTH_RESPONSES, POSITION_RESPONSES, VAULT_CONFIGS};
-
-pub fn set_health_response(
-    deps: DepsMut,
-    account_id: String,
-    response: HealthResponse,
-) -> StdResult<Response> {
-    HEALTH_RESPONSES.save(deps.storage, &account_id, &response)?;
-    Ok(Response::new())
-}
+use crate::state::{ALLOWED_COINS, POSITION_RESPONSES, VAULT_CONFIGS};
 
 pub fn set_position_response(
     deps: DepsMut,

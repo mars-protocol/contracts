@@ -1,13 +1,18 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{coins, testing::MockApi, Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{coins, testing::MockApi, Addr, Coin, Decimal, StdResult, Uint128};
 use cosmwasm_vault_standard::{
     extensions::lockup::{LockupQueryMsg, UnlockingPosition},
     msg::{ExtensionQueryMsg, VaultStandardQueryMsg::VaultExtension},
 };
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
-use mars_health::HealthResponse;
+use mars_account_nft::{
+    msg::{
+        ExecuteMsg as NftExecuteMsg, InstantiateMsg as NftInstantiateMsg, QueryMsg as NftQueryMsg,
+    },
+    nft_config::{NftConfigUpdates, UncheckedNftConfig},
+};
 use mars_mock_oracle::msg::{
     CoinPrice, ExecuteMsg as OracleExecuteMsg, InstantiateMsg as OracleInstantiateMsg,
 };
@@ -22,17 +27,17 @@ use mars_red_bank_types::red_bank::{
 };
 use mars_rover::{
     adapters::{
-        account_nft::{
-            ExecuteMsg as NftExecuteMsg, InstantiateMsg as NftInstantiateMsg, NftConfigUpdates,
-            QueryMsg as NftQueryMsg, UncheckedNftConfig,
-        },
+        health::HealthContract,
         oracle::{Oracle, OracleBase, OracleUnchecked},
         red_bank::RedBankBase,
         swap::{
             EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg,
             QueryMsg::EstimateExactInSwap, Swapper, SwapperBase,
         },
-        vault::{VaultBase, VaultConfig, VaultUnchecked},
+        vault::{
+            VaultBase, VaultConfig, VaultPosition, VaultPositionValue as VPositionValue,
+            VaultUnchecked,
+        },
         zapper::{Zapper, ZapperBase},
     },
     msg::{
@@ -47,13 +52,18 @@ use mars_rover::{
             InstantiateMsg as ZapperInstantiateMsg, LpConfig, QueryMsg::EstimateProvideLiquidity,
         },
         ExecuteMsg, InstantiateMsg, QueryMsg,
+        QueryMsg::VaultPositionValue,
     },
+};
+use mars_rover_health_types::{
+    ExecuteMsg::UpdateConfig, HealthResponse, InstantiateMsg as HealthInstantiateMsg,
+    QueryMsg::Health,
 };
 
 use crate::helpers::{
-    lp_token_info, mock_account_nft_contract, mock_oracle_contract, mock_red_bank_contract,
-    mock_rover_contract, mock_swapper_contract, mock_vault_contract, mock_zapper_contract,
-    AccountToFund, CoinInfo, VaultTestInfo,
+    lp_token_info, mock_account_nft_contract, mock_health_contract, mock_oracle_contract,
+    mock_red_bank_contract, mock_rover_contract, mock_swapper_contract, mock_vault_contract,
+    mock_zapper_contract, AccountToFund, CoinInfo, VaultTestInfo,
 };
 
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000);
@@ -62,6 +72,7 @@ pub struct MockEnv {
     pub app: BasicApp,
     pub rover: Addr,
     pub mars_oracle: Addr,
+    pub health_contract: HealthContract,
 }
 
 pub struct MockEnvBuilder {
@@ -77,6 +88,7 @@ pub struct MockEnvBuilder {
     pub accounts_to_fund: Vec<AccountToFund>,
     pub max_close_factor: Option<Decimal>,
     pub max_unlocking_positions: Option<Uint128>,
+    pub health_contract: Option<HealthContract>,
 }
 
 #[allow(clippy::new_ret_no_self)]
@@ -95,6 +107,7 @@ impl MockEnv {
             accounts_to_fund: vec![],
             max_close_factor: None,
             max_unlocking_positions: None,
+            health_contract: None,
         }
     }
 
@@ -247,8 +260,8 @@ impl MockEnv {
         self.app
             .wrap()
             .query_wasm_smart(
-                self.rover.clone(),
-                &QueryMsg::Health {
+                self.health_contract.clone().address(),
+                &Health {
                     account_id: account_id.to_string(),
                 },
             )
@@ -269,6 +282,15 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(config.account_nft.unwrap(), &NftQueryMsg::Config {})
             .unwrap()
+    }
+
+    pub fn query_vault_config(&self, vault: &VaultUnchecked) -> StdResult<RoverVaultInfoResponse> {
+        self.app.wrap().query_wasm_smart(
+            self.rover.clone(),
+            &QueryMsg::VaultInfo {
+                vault: vault.clone(),
+            },
+        )
     }
 
     pub fn query_vault_configs(
@@ -560,12 +582,27 @@ impl MockEnv {
             )
             .unwrap()
     }
+
+    pub fn query_vault_position_value(
+        &self,
+        position: &VaultPosition,
+    ) -> StdResult<VPositionValue> {
+        self.app.wrap().query_wasm_smart(
+            self.rover.clone(),
+            &VaultPositionValue {
+                vault_position: position.clone(),
+            },
+        )
+    }
 }
 
 impl MockEnvBuilder {
     pub fn build(&mut self) -> AnyResult<MockEnv> {
         let rover = self.get_rover()?;
         let mars_oracle = self.get_oracle();
+
+        let health_contract = self.get_health_contract();
+        self.update_health_contract_config(rover.clone());
 
         self.deploy_nft_contract(&rover);
         self.fund_users();
@@ -574,6 +611,7 @@ impl MockEnvBuilder {
             app: take(&mut self.app),
             rover,
             mars_oracle: mars_oracle.address().clone(),
+            health_contract,
         })
     }
 
@@ -642,6 +680,7 @@ impl MockEnvBuilder {
 
         let oracle = self.get_oracle().into();
         let zapper = self.deploy_zapper(&oracle)?.into();
+        let health_contract = self.get_health_contract().into();
 
         self.app.instantiate_contract(
             code_id,
@@ -656,6 +695,7 @@ impl MockEnvBuilder {
                 max_unlocking_positions,
                 swapper,
                 zapper,
+                health_contract,
             },
             &[],
             "mock-rover-contract",
@@ -689,6 +729,19 @@ impl MockEnvBuilder {
             denom: "uusdc".to_string(),
             price: Decimal::from_atomics(12345u128, 4).unwrap(),
         });
+
+        // Ensures vault base token denoms are pricable in the oracle
+        // even if they are not whitelisted in Rover
+        let price_denoms = prices.iter().map(|c| c.denom.clone()).collect::<Vec<_>>();
+        self.vault_configs.clone().unwrap_or_default().iter().for_each(|v| {
+            if !price_denoms.contains(&v.base_token_denom) {
+                prices.push(CoinPrice {
+                    denom: v.base_token_denom.clone(),
+                    price: Decimal::from_atomics(456u128, 5).unwrap(),
+                });
+            }
+        });
+
         let addr = self
             .app
             .instantiate_contract(
@@ -703,6 +756,51 @@ impl MockEnvBuilder {
             )
             .unwrap();
         OracleBase::new(addr)
+    }
+
+    fn get_health_contract(&mut self) -> HealthContract {
+        if self.health_contract.is_none() {
+            let hc = self.deploy_health_contract();
+            self.health_contract = Some(hc);
+        }
+        self.health_contract.clone().unwrap()
+    }
+
+    pub fn deploy_health_contract(&mut self) -> HealthContract {
+        let contract_code_id = self.app.store_code(mock_health_contract());
+        let owner = Addr::unchecked("health_contract_owner");
+
+        let addr = self
+            .app
+            .instantiate_contract(
+                contract_code_id,
+                owner.clone(),
+                &HealthInstantiateMsg {
+                    owner: owner.to_string(),
+                },
+                &[],
+                "mock-health-contract",
+                Some(owner.to_string()),
+            )
+            .unwrap();
+
+        HealthContract::new(addr)
+    }
+
+    fn update_health_contract_config(&mut self, cm_addr: Addr) {
+        let owner = Addr::unchecked("health_contract_owner");
+        let health_contract = self.get_health_contract();
+
+        self.app
+            .execute_contract(
+                owner,
+                health_contract.address().clone(),
+                &UpdateConfig {
+                    credit_manager: cm_addr.to_string(),
+                },
+                &[],
+            )
+            .unwrap();
     }
 
     fn get_red_bank(&mut self) -> RedBankBase<Addr> {
@@ -957,6 +1055,7 @@ fn deploy_nft_contract(app: &mut App, minter: &Addr) -> Addr {
         minter.clone(),
         &NftInstantiateMsg {
             max_value_for_burn: Default::default(),
+            health_contract: None,
             name: "Rover Credit Account".to_string(),
             symbol: "RCA".to_string(),
             minter: minter.to_string(),
@@ -973,6 +1072,7 @@ fn propose_new_nft_minter(app: &mut App, nft_contract: Addr, old_minter: &Addr, 
         updates: NftConfigUpdates {
             max_value_for_burn: None,
             proposed_new_minter: Some(new_minter.into()),
+            health_contract_addr: None,
         },
     };
     app.execute_contract(old_minter.clone(), nft_contract, &proposal_msg, &[]).unwrap();

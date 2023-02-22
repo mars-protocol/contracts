@@ -1,26 +1,19 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Empty};
 use cw_multi_test::{BasicApp, Executor};
-use mars_mock_credit_manager::msg::InstantiateMsg as MockCmInstantiateMsg;
-use mars_rover::{
-    adapters::account_nft::{
-        ExecuteMsg::{AcceptMinterRole, UpdateConfig},
-        InstantiateMsg, NftConfigUpdates,
-    },
-    msg::query::ConfigResponse,
-};
+use mars_account_nft::msg::InstantiateMsg;
 
-use crate::helpers::{
-    mock_credit_manager_contract, mock_nft_contract, MockEnv, MAX_VALUE_FOR_BURN,
-};
+use crate::helpers::{mock_health_contract, mock_nft_contract, MockEnv, MAX_VALUE_FOR_BURN};
 
 pub struct MockEnvBuilder {
     pub app: BasicApp,
-    pub minter: Option<Addr>,
     pub deployer: Addr,
+    pub minter: Option<Addr>,
+    pub health_contract: Option<Addr>,
     pub nft_contract: Option<Addr>,
+    pub set_health_contract: bool,
 }
 
 impl MockEnvBuilder {
@@ -33,9 +26,45 @@ impl MockEnvBuilder {
         })
     }
 
+    pub fn instantiate_with_health_contract(&mut self, bool: bool) -> &mut Self {
+        self.set_health_contract = bool;
+        self
+    }
+
     pub fn set_minter(&mut self, minter: &str) -> &mut Self {
         self.minter = Some(Addr::unchecked(minter.to_string()));
         self
+    }
+
+    pub fn set_health_contract(&mut self, contract_addr: &str) -> &mut Self {
+        self.health_contract = Some(Addr::unchecked(contract_addr.to_string()));
+        self
+    }
+
+    fn get_health_contract(&mut self) -> Addr {
+        if self.health_contract.is_none() {
+            return self.deploy_health_contract();
+        }
+        self.health_contract.clone().unwrap()
+    }
+
+    fn deploy_health_contract(&mut self) -> Addr {
+        let contract = mock_health_contract();
+        let code_id = self.app.store_code(contract);
+
+        let health_contract = self
+            .app
+            .instantiate_contract(
+                code_id,
+                self.deployer.clone(),
+                &Empty {},
+                &[],
+                "mock-health-contract",
+                None,
+            )
+            .unwrap();
+        self.health_contract = Some(health_contract.clone());
+        health_contract
     }
 
     fn get_minter(&mut self) -> Addr {
@@ -53,6 +82,11 @@ impl MockEnvBuilder {
         let contract = mock_nft_contract();
         let code_id = self.app.store_code(contract);
         let minter = self.get_minter().into();
+        let health_contract = if self.set_health_contract {
+            Some(self.get_health_contract().into())
+        } else {
+            None
+        };
 
         let addr = self
             .app
@@ -64,6 +98,7 @@ impl MockEnvBuilder {
                     name: "mock_nft".to_string(),
                     symbol: "MOCK".to_string(),
                     minter,
+                    health_contract,
                 },
                 &[],
                 "mock-account-nft",
@@ -71,62 +106,5 @@ impl MockEnvBuilder {
             )
             .unwrap();
         self.nft_contract = Some(addr);
-    }
-
-    pub fn assign_minter_to_cm(&mut self) -> &mut Self {
-        let contract = mock_credit_manager_contract();
-        let code_id = self.app.store_code(contract);
-
-        let cm_addr = self
-            .app
-            .instantiate_contract(
-                code_id,
-                self.deployer.clone(),
-                // Will be removed on upcoming PR
-                &MockCmInstantiateMsg {
-                    config: ConfigResponse {
-                        owner: None,
-                        proposed_new_owner: None,
-                        account_nft: None,
-                        red_bank: "".to_string(),
-                        oracle: "".to_string(),
-                        max_close_factor: Default::default(),
-                        max_unlocking_positions: Default::default(),
-                        swapper: "".to_string(),
-                        zapper: "".to_string(),
-                    },
-                },
-                &[],
-                "mock-credit-manager",
-                None,
-            )
-            .unwrap();
-
-        let nft_contract = self.get_nft_contract();
-
-        let minter = self.get_minter();
-
-        // Propose new minter
-        self.app
-            .execute_contract(
-                minter,
-                nft_contract.clone(),
-                &UpdateConfig {
-                    updates: NftConfigUpdates {
-                        max_value_for_burn: None,
-                        proposed_new_minter: Some(cm_addr.clone().into()),
-                    },
-                },
-                &[],
-            )
-            .unwrap();
-
-        // Accept new role
-        self.app
-            .execute_contract(cm_addr.clone(), nft_contract, &AcceptMinterRole {}, &[])
-            .unwrap();
-
-        self.minter = Some(cm_addr);
-        self
     }
 }

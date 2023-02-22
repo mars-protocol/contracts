@@ -6,6 +6,7 @@ export interface StorageItems {
     mockOracle?: number
     swapper?: number
     zapper?: number
+    healthContract?: number
     creditManager?: number
   }
   addresses: {
@@ -13,6 +14,7 @@ export interface StorageItems {
     mockVault?: string
     swapper?: string
     zapper?: string
+    healthContract?: string
     creditManager?: string
   }
   actions: {
@@ -23,6 +25,7 @@ export interface StorageItems {
     grantedCreditLines?: boolean
     oraclePricesSet?: boolean
     redBankMarketsSet?: boolean
+    healthContractConfigUpdate?: boolean
   }
   owner?: string
 }

@@ -8,8 +8,8 @@ use mars_rover::{
 };
 
 use crate::state::{
-    ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, RED_BANK, SWAPPER,
-    VAULT_CONFIGS, ZAPPER,
+    ALLOWED_COINS, HEALTH_CONTRACT, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER,
+    RED_BANK, SWAPPER, VAULT_CONFIGS, ZAPPER,
 };
 
 pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
@@ -26,6 +26,7 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
     SWAPPER.save(deps.storage, &msg.swapper.check(deps.api)?)?;
     ZAPPER.save(deps.storage, &msg.zapper.check(deps.api)?)?;
     MAX_UNLOCKING_POSITIONS.save(deps.storage, &msg.max_unlocking_positions)?;
+    HEALTH_CONTRACT.save(deps.storage, &msg.health_contract.check(deps.api)?)?;
 
     assert_lte_to_one(&msg.max_close_factor)?;
     MAX_CLOSE_FACTOR.save(deps.storage, &msg.max_close_factor)?;

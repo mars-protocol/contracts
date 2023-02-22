@@ -21,14 +21,17 @@ export const taskRunner = async ({
     await deployer.upload('mockVault', wasmFile('mars_mock_vault'))
     await deployer.upload('swapper', wasmFile(swapperContractName))
     await deployer.upload('zapper', wasmFile(zapperContractName))
+    await deployer.upload('healthContract', wasmFile('mars_rover_health'))
     await deployer.upload('creditManager', wasmFile('mars_credit_manager'))
 
     // Instantiate contracts
     await deployer.instantiateMockVault()
     await deployer.instantiateSwapper()
     await deployer.instantiateZapper()
+    await deployer.instantiateHealthContract()
     await deployer.instantiateCreditManager()
     await deployer.instantiateNftContract()
+    await deployer.setCmOnHealthContract()
     await deployer.transferNftContractOwnership()
     await deployer.saveDeploymentAddrsToFile()
 

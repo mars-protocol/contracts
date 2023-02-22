@@ -5,7 +5,7 @@ use cosmwasm_std::{Binary, Empty, StdError};
 use cw721::Expiration;
 use cw721_base::ExecuteMsg as ParentExecuteMsg;
 
-use crate::adapters::account_nft::{ContractError, NftConfigUpdates};
+use crate::{error::ContractError, nft_config::NftConfigUpdates};
 
 #[cw_serde]
 pub enum ExecuteMsg {

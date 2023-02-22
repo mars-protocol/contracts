@@ -20,4 +20,7 @@ pub enum ContractError {
         current_balances: Uint128,
         max_value_allowed: Uint128,
     },
+
+    #[error("Health contract should be added to config before burns are allowed")]
+    HealthContractNotSet,
 }

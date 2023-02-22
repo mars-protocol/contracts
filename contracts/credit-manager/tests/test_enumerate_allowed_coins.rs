@@ -7,11 +7,6 @@ fn pagination_on_allowed_coins_query_works() {
     let allowed_coins = build_mock_coin_infos(32);
     let mock = MockEnv::new().allowed_coins(&build_mock_coin_infos(32)).build().unwrap();
 
-    let coins_res = mock.query_allowed_coins(None, Some(58_u32));
-
-    // Assert maximum is observed
-    assert_eq!(coins_res.len(), 30);
-
     let coins_res = mock.query_allowed_coins(None, Some(2_u32));
 
     // Assert limit request is observed

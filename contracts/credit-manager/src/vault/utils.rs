@@ -1,7 +1,10 @@
 use cosmwasm_std::{Addr, Coin, Deps, StdResult, Storage, Uint128};
 use mars_math::FractionMath;
 use mars_rover::{
-    adapters::vault::{Vault, VaultPositionAmount, VaultPositionUpdate},
+    adapters::vault::{
+        LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
+        VaultPositionAmount, VaultPositionUpdate,
+    },
     error::{ContractError, ContractResult},
 };
 
@@ -81,7 +84,7 @@ pub fn vault_utilization_in_deposit_cap_denom(
     vault: &Vault,
     rover_addr: &Addr,
 ) -> ContractResult<Coin> {
-    let rover_vault_balance_value = rover_vault_balance_value(deps, vault, rover_addr)?;
+    let rover_vault_balance_value = rover_vault_coin_balance_value(deps, vault, rover_addr)?;
     let config = VAULT_CONFIGS.load(deps.storage, &vault.address)?;
     let oracle = ORACLE.load(deps.storage)?;
     let deposit_cap_denom_price =
@@ -94,13 +97,25 @@ pub fn vault_utilization_in_deposit_cap_denom(
 }
 
 /// Total value of vault coins under Rover's management for vault
-pub fn rover_vault_balance_value(
+pub fn rover_vault_coin_balance_value(
     deps: &Deps,
     vault: &Vault,
     rover_addr: &Addr,
 ) -> ContractResult<Uint128> {
     let oracle = ORACLE.load(deps.storage)?;
     let rover_vault_coin_balance = vault.query_balance(&deps.querier, rover_addr)?;
-    let balance_value = vault.query_value(&deps.querier, &oracle, rover_vault_coin_balance)?;
-    Ok(balance_value)
+    let lockup = vault.query_lockup_duration(&deps.querier).ok();
+
+    let position = VaultPosition {
+        vault: vault.clone(),
+        amount: match lockup {
+            None => VaultPositionAmount::Unlocked(VaultAmount::new(rover_vault_coin_balance)),
+            Some(_) => VaultPositionAmount::Locking(LockingVaultAmount {
+                locked: VaultAmount::new(rover_vault_coin_balance),
+                unlocking: UnlockingPositions::new(vec![]),
+            }),
+        },
+    };
+    let vault_coin_balance_val = position.query_values(&deps.querier, &oracle)?.vault_coin.value;
+    Ok(vault_coin_balance_val)
 }

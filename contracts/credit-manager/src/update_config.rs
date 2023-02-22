@@ -1,7 +1,7 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, MessageInfo, Response, WasmMsg};
+use mars_account_nft::{msg::ExecuteMsg as NftExecuteMsg, nft_config::NftConfigUpdates};
 use mars_owner::OwnerUpdate;
 use mars_rover::{
-    adapters::account_nft::{ExecuteMsg as NftExecuteMsg, NftConfigUpdates},
     error::ContractResult,
     msg::instantiate::ConfigUpdates,
     traits::{FallbackStr, Stringify},
@@ -10,8 +10,8 @@ use mars_rover::{
 use crate::{
     instantiate::{assert_lte_to_one, assert_no_duplicate_coins, assert_no_duplicate_vaults},
     state::{
-        ACCOUNT_NFT, ALLOWED_COINS, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER,
-        SWAPPER, VAULT_CONFIGS, ZAPPER,
+        ACCOUNT_NFT, ALLOWED_COINS, HEALTH_CONTRACT, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS,
+        ORACLE, OWNER, SWAPPER, VAULT_CONFIGS, ZAPPER,
     },
 };
 
@@ -95,6 +95,13 @@ pub fn update_config(
         response = response
             .add_attribute("key", "max_unlocking_positions")
             .add_attribute("value", num.to_string());
+    }
+
+    if let Some(unchecked) = updates.health_contract {
+        HEALTH_CONTRACT.save(deps.storage, &unchecked.check(deps.api)?)?;
+        response = response
+            .add_attribute("key", "health_contract")
+            .add_attribute("value", unchecked.address());
     }
 
     Ok(response)

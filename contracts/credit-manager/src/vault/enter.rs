@@ -14,7 +14,7 @@ use crate::{
     state::{COIN_BALANCES, ORACLE, VAULT_CONFIGS},
     utils::{assert_coin_is_whitelisted, decrement_coin_balance},
     vault::{
-        rover_vault_balance_value,
+        rover_vault_coin_balance_value,
         utils::{assert_vault_is_whitelisted, update_vault_position},
     },
 };
@@ -120,7 +120,7 @@ pub fn assert_deposit_is_under_cap(
 ) -> ContractResult<()> {
     let oracle = ORACLE.load(deps.storage)?;
     let deposit_request_value = oracle.query_total_value(&deps.querier, &[coin_to_add.clone()])?;
-    let rover_vault_balance_value = rover_vault_balance_value(&deps, vault, rover_addr)?;
+    let rover_vault_balance_value = rover_vault_coin_balance_value(&deps, vault, rover_addr)?;
 
     let new_total_vault_value = rover_vault_balance_value.checked_add(deposit_request_value)?;
 

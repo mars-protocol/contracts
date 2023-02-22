@@ -5,6 +5,7 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
+export type HealthContractBaseForString = string
 export type Decimal = string
 export type Uint128 = string
 export type OracleBaseForString = string
@@ -13,6 +14,7 @@ export type SwapperBaseForString = string
 export type ZapperBaseForString = string
 export interface InstantiateMsg {
   allowed_coins: string[]
+  health_contract: HealthContractBaseForString
   max_close_factor: Decimal
   max_unlocking_positions: Uint128
   oracle: OracleBaseForString
@@ -187,7 +189,7 @@ export type CallbackMsg =
   | {
       assert_max_ltv: {
         account_id: string
-        prev_health: Health
+        prev_max_ltv_health_factor?: Decimal | null
       }
     }
   | {
@@ -283,6 +285,7 @@ export interface ActionCoin {
 export interface ConfigUpdates {
   account_nft?: string | null
   allowed_coins?: string[] | null
+  health_contract?: HealthContractBaseForString | null
   max_close_factor?: Decimal | null
   max_unlocking_positions?: Uint128 | null
   oracle?: OracleBaseForString | null
@@ -291,16 +294,9 @@ export interface ConfigUpdates {
   zapper?: ZapperBaseForString | null
 }
 export interface NftConfigUpdates {
+  health_contract_addr?: string | null
   max_value_for_burn?: Uint128 | null
   proposed_new_minter?: string | null
-}
-export interface Health {
-  liquidation_health_factor?: Decimal | null
-  liquidation_threshold_adjusted_collateral: Uint128
-  max_ltv_adjusted_collateral: Uint128
-  max_ltv_health_factor?: Decimal | null
-  total_collateral_value: Uint128
-  total_debt_value: Uint128
 }
 export interface VaultBaseForAddr {
   address: Addr
@@ -308,6 +304,11 @@ export interface VaultBaseForAddr {
 export type QueryMsg =
   | {
       config: {}
+    }
+  | {
+      vault_info: {
+        vault: VaultBaseForString
+      }
     }
   | {
       vaults_info: {
@@ -323,11 +324,6 @@ export type QueryMsg =
     }
   | {
       positions: {
-        account_id: string
-      }
-    }
-  | {
-      health: {
         account_id: string
       }
     }
@@ -395,6 +391,33 @@ export type QueryMsg =
         lp_token: Coin
       }
     }
+  | {
+      vault_position_value: {
+        vault_position: VaultPosition
+      }
+    }
+export type VaultPositionAmount =
+  | {
+      unlocked: VaultAmount
+    }
+  | {
+      locking: LockingVaultAmount
+    }
+export type VaultAmount = string
+export type VaultAmount1 = string
+export type UnlockingPositions = VaultUnlockingPosition[]
+export interface VaultPosition {
+  amount: VaultPositionAmount
+  vault: VaultBaseForAddr
+}
+export interface LockingVaultAmount {
+  locked: VaultAmount1
+  unlocking: UnlockingPositions
+}
+export interface VaultUnlockingPosition {
+  coin: Coin
+  id: number
+}
 export type ArrayOfCoinBalanceResponseItem = CoinBalanceResponseItem[]
 export interface CoinBalanceResponseItem {
   account_id: string
@@ -422,36 +445,15 @@ export interface VaultWithBalance {
   balance: Uint128
   vault: VaultBaseForAddr
 }
-export type VaultPositionAmount =
-  | {
-      unlocked: VaultAmount
-    }
-  | {
-      locking: LockingVaultAmount
-    }
-export type VaultAmount = string
-export type VaultAmount1 = string
-export type UnlockingPositions = VaultUnlockingPosition[]
 export type ArrayOfVaultPositionResponseItem = VaultPositionResponseItem[]
 export interface VaultPositionResponseItem {
   account_id: string
   position: VaultPosition
 }
-export interface VaultPosition {
-  amount: VaultPositionAmount
-  vault: VaultBaseForAddr
-}
-export interface LockingVaultAmount {
-  locked: VaultAmount1
-  unlocking: UnlockingPositions
-}
-export interface VaultUnlockingPosition {
-  coin: Coin
-  id: number
-}
 export type ArrayOfString = string[]
 export interface ConfigResponse {
   account_nft?: string | null
+  health_contract: string
   max_close_factor: Decimal
   max_unlocking_positions: Uint128
   oracle: string
@@ -462,16 +464,6 @@ export interface ConfigResponse {
   zapper: string
 }
 export type ArrayOfCoin = Coin[]
-export interface HealthResponse {
-  above_max_ltv: boolean
-  liquidatable: boolean
-  liquidation_health_factor?: Decimal | null
-  liquidation_threshold_adjusted_collateral: Uint128
-  max_ltv_adjusted_collateral: Uint128
-  max_ltv_health_factor?: Decimal | null
-  total_collateral_value: Uint128
-  total_debt_value: Uint128
-}
 export interface Positions {
   account_id: string
   debts: DebtAmount[]
@@ -489,9 +481,18 @@ export interface LentAmount {
   denom: string
   shares: Uint128
 }
-export type ArrayOfVaultInfoResponse = VaultInfoResponse[]
 export interface VaultInfoResponse {
   config: VaultConfig
   utilization: Coin
   vault: VaultBaseForString
 }
+export interface VaultPositionValue {
+  base_coin: CoinValue
+  vault_coin: CoinValue
+}
+export interface CoinValue {
+  amount: Uint128
+  denom: string
+  value: Uint128
+}
+export type ArrayOfVaultInfoResponse = VaultInfoResponse[]

@@ -12,7 +12,12 @@ pub enum QueryMsg {
     /// Rover contract-level config
     #[returns(ConfigResponse)]
     Config {},
-    /// Configs & deposit caps on vaults
+    /// Config & deposit caps on vault
+    #[returns(VaultInfoResponse)]
+    VaultInfo {
+        vault: VaultUnchecked,
+    },
+    /// Configs & deposit caps on all vaults
     #[returns(Vec<VaultInfoResponse>)]
     VaultsInfo {
         start_after: Option<VaultUnchecked>,
@@ -27,11 +32,6 @@ pub enum QueryMsg {
     /// All positions represented by token with value
     #[returns(Positions)]
     Positions {
-        account_id: String,
-    },
-    /// The health of the account represented by token
-    #[returns(mars_health::HealthResponse)]
-    Health {
         account_id: String,
     },
     /// Enumerate coin balances for all token positions; start_after accepts (account_id, denom)
@@ -97,6 +97,13 @@ pub enum QueryMsg {
     #[returns(Vec<Coin>)]
     EstimateWithdrawLiquidity {
         lp_token: Coin,
+    },
+    /// Returns the value of the a vault coin position.
+    /// Given the extremely low price-per-coin and lack of precision, individual vault
+    /// coins cannot be priced, hence you must send the whole amount you want priced.
+    #[returns(crate::adapters::vault::VaultPositionValue)]
+    VaultPositionValue {
+        vault_position: VaultPosition,
     },
 }
 
@@ -165,14 +172,6 @@ impl Coins for Vec<DebtAmount> {
 }
 
 #[cw_serde]
-pub struct CoinValue {
-    pub denom: String,
-    pub amount: Uint128,
-    pub price: Decimal,
-    pub value: Decimal,
-}
-
-#[cw_serde]
 pub struct Positions {
     pub account_id: String,
     pub deposits: Vec<Coin>,
@@ -194,12 +193,6 @@ pub struct VaultWithBalance {
 }
 
 #[cw_serde]
-pub struct VaultPositionValue {
-    pub position: VaultPosition,
-    pub value: Decimal,
-}
-
-#[cw_serde]
 pub struct ConfigResponse {
     pub owner: Option<String>,
     pub proposed_new_owner: Option<String>,
@@ -210,4 +203,5 @@ pub struct ConfigResponse {
     pub max_unlocking_positions: Uint128,
     pub swapper: String,
     pub zapper: String,
+    pub health_contract: String,
 }

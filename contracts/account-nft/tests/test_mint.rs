@@ -4,8 +4,9 @@ use cosmwasm_std::Addr;
 use cw721::OwnerOfResponse;
 use cw721_base::ContractError::Unauthorized;
 use cw_multi_test::Executor;
-use mars_rover::adapters::account_nft::{
-    ContractError, ContractError::BaseError, ExecuteMsg, QueryMsg::OwnerOf,
+use mars_account_nft::{
+    error::{ContractError, ContractError::BaseError},
+    msg::{ExecuteMsg, QueryMsg::OwnerOf},
 };
 
 use crate::helpers::{below_max_for_burn, MockEnv};
@@ -34,7 +35,7 @@ fn id_incrementer() {
 
 #[test]
 fn id_incrementer_works_despite_burns() {
-    let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
+    let mut mock = MockEnv::new().build().unwrap();
 
     let user = Addr::unchecked("user");
     let token_id_1 = mock.mint(&user).unwrap();
@@ -72,7 +73,7 @@ fn only_minter_can_mint() {
 
 #[test]
 fn only_token_owner_can_burn() {
-    let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
+    let mut mock = MockEnv::new().build().unwrap();
 
     let user = Addr::unchecked("user");
     let token_id = mock.mint(&user).unwrap();

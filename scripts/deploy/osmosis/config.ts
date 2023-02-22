@@ -141,7 +141,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
     depositAmount: '100',
     lendAmount: '10',
     secondaryDenom: uatom,
-    startingAmountForTestUser: '2500000',
+    startingAmountForTestUser: '4000000', // If test actions run out of gas, increment this
     swap: {
       slippage: '0.4',
       amount: '40',

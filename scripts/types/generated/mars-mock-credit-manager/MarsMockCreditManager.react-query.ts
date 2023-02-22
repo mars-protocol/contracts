@@ -11,14 +11,13 @@ import { StdFee } from '@cosmjs/amino'
 import {
   InstantiateMsg,
   ExecuteMsg,
-  Decimal,
   Uint128,
   VaultPositionAmount,
   VaultAmount,
   VaultAmount1,
   UnlockingPositions,
   Addr,
-  HealthResponse,
+  Decimal,
   Positions,
   DebtAmount,
   Coin,
@@ -45,8 +44,10 @@ import {
   ArrayOfString,
   ConfigResponse,
   ArrayOfCoin,
-  ArrayOfVaultInfoResponse,
   VaultInfoResponse,
+  VaultPositionValue,
+  CoinValue,
+  ArrayOfVaultInfoResponse,
 } from './MarsMockCreditManager.types'
 import {
   MarsMockCreditManagerQueryClient,
@@ -63,6 +64,10 @@ export const marsMockCreditManagerQueryKeys = {
   config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       { ...marsMockCreditManagerQueryKeys.address(contractAddress)[0], method: 'config', args },
+    ] as const,
+  vaultInfo: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsMockCreditManagerQueryKeys.address(contractAddress)[0], method: 'vault_info', args },
     ] as const,
   vaultsInfo: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -83,10 +88,6 @@ export const marsMockCreditManagerQueryKeys = {
   positions: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       { ...marsMockCreditManagerQueryKeys.address(contractAddress)[0], method: 'positions', args },
-    ] as const,
-  health: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
-    [
-      { ...marsMockCreditManagerQueryKeys.address(contractAddress)[0], method: 'health', args },
     ] as const,
   allCoinBalances: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -190,6 +191,14 @@ export const marsMockCreditManagerQueryKeys = {
         args,
       },
     ] as const,
+  vaultPositionValue: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      {
+        ...marsMockCreditManagerQueryKeys.address(contractAddress)[0],
+        method: 'vault_position_value',
+        args,
+      },
+    ] as const,
 }
 export interface MarsMockCreditManagerReactQuery<TResponse, TData = TResponse> {
   client: MarsMockCreditManagerQueryClient | undefined
@@ -199,6 +208,28 @@ export interface MarsMockCreditManagerReactQuery<TResponse, TData = TResponse> {
   > & {
     initialData?: undefined
   }
+}
+export interface MarsMockCreditManagerVaultPositionValueQuery<TData>
+  extends MarsMockCreditManagerReactQuery<VaultPositionValue, TData> {
+  args: {
+    vaultPosition: VaultPosition
+  }
+}
+export function useMarsMockCreditManagerVaultPositionValueQuery<TData = VaultPositionValue>({
+  client,
+  args,
+  options,
+}: MarsMockCreditManagerVaultPositionValueQuery<TData>) {
+  return useQuery<VaultPositionValue, Error, TData>(
+    marsMockCreditManagerQueryKeys.vaultPositionValue(client?.contractAddress, args),
+    () =>
+      client
+        ? client.vaultPositionValue({
+            vaultPosition: args.vaultPosition,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
 }
 export interface MarsMockCreditManagerEstimateWithdrawLiquidityQuery<TData>
   extends MarsMockCreditManagerReactQuery<ArrayOfCoin, TData> {
@@ -454,28 +485,6 @@ export function useMarsMockCreditManagerAllCoinBalancesQuery<
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsMockCreditManagerHealthQuery<TData>
-  extends MarsMockCreditManagerReactQuery<HealthResponse, TData> {
-  args: {
-    accountId: string
-  }
-}
-export function useMarsMockCreditManagerHealthQuery<TData = HealthResponse>({
-  client,
-  args,
-  options,
-}: MarsMockCreditManagerHealthQuery<TData>) {
-  return useQuery<HealthResponse, Error, TData>(
-    marsMockCreditManagerQueryKeys.health(client?.contractAddress, args),
-    () =>
-      client
-        ? client.health({
-            accountId: args.accountId,
-          })
-        : Promise.reject(new Error('Invalid client')),
-    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
-  )
-}
 export interface MarsMockCreditManagerPositionsQuery<TData>
   extends MarsMockCreditManagerReactQuery<Positions, TData> {
   args: {
@@ -541,6 +550,28 @@ export function useMarsMockCreditManagerVaultsInfoQuery<TData = ArrayOfVaultInfo
         ? client.vaultsInfo({
             limit: args.limit,
             startAfter: args.startAfter,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsMockCreditManagerVaultInfoQuery<TData>
+  extends MarsMockCreditManagerReactQuery<VaultInfoResponse, TData> {
+  args: {
+    vault: VaultBaseForString
+  }
+}
+export function useMarsMockCreditManagerVaultInfoQuery<TData = VaultInfoResponse>({
+  client,
+  args,
+  options,
+}: MarsMockCreditManagerVaultInfoQuery<TData>) {
+  return useQuery<VaultInfoResponse, Error, TData>(
+    marsMockCreditManagerQueryKeys.vaultInfo(client?.contractAddress, args),
+    () =>
+      client
+        ? client.vaultInfo({
+            vault: args.vault,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -622,30 +653,6 @@ export function useMarsMockCreditManagerSetPositionsResponseMutation(
   return useMutation<ExecuteResult, Error, MarsMockCreditManagerSetPositionsResponseMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) =>
       client.setPositionsResponse(msg, fee, memo, funds),
-    options,
-  )
-}
-export interface MarsMockCreditManagerSetHealthResponseMutation {
-  client: MarsMockCreditManagerClient
-  msg: {
-    accountId: string
-    response: HealthResponse
-  }
-  args?: {
-    fee?: number | StdFee | 'auto'
-    memo?: string
-    funds?: Coin[]
-  }
-}
-export function useMarsMockCreditManagerSetHealthResponseMutation(
-  options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsMockCreditManagerSetHealthResponseMutation>,
-    'mutationFn'
-  >,
-) {
-  return useMutation<ExecuteResult, Error, MarsMockCreditManagerSetHealthResponseMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) =>
-      client.setHealthResponse(msg, fee, memo, funds),
     options,
   )
 }

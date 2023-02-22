@@ -1,7 +1,11 @@
 use cosmwasm_std::{Addr, Empty, StdResult, Uint128};
 use cw721::NftInfoResponse;
-use mars_rover::adapters::account_nft::{
-    ContractError, ContractError::BurnNotAllowed, QueryMsg::NftInfo,
+use mars_account_nft::{
+    error::{
+        ContractError,
+        ContractError::{BurnNotAllowed, HealthContractNotSet},
+    },
+    msg::QueryMsg::NftInfo,
 };
 
 use crate::helpers::{below_max_for_burn, generate_health_response, MockEnv, MAX_VALUE_FOR_BURN};
@@ -9,8 +13,18 @@ use crate::helpers::{below_max_for_burn, generate_health_response, MockEnv, MAX_
 pub mod helpers;
 
 #[test]
+fn burn_not_allowed_if_no_cm_set() {
+    let mut mock = MockEnv::new().instantiate_with_health_contract(false).build().unwrap();
+    let user = Addr::unchecked("user");
+    let token_id = mock.mint(&user).unwrap();
+    let res = mock.burn(&user, &token_id);
+    let error: ContractError = res.unwrap_err().downcast().unwrap();
+    assert_eq!(error, HealthContractNotSet)
+}
+
+#[test]
 fn burn_not_allowed_if_too_many_debts() {
-    let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
+    let mut mock = MockEnv::new().build().unwrap();
 
     let user = Addr::unchecked("user");
     let token_id = mock.mint(&user).unwrap();
@@ -29,7 +43,7 @@ fn burn_not_allowed_if_too_many_debts() {
 
 #[test]
 fn burn_not_allowed_if_too_much_collateral() {
-    let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
+    let mut mock = MockEnv::new().build().unwrap();
 
     let user = Addr::unchecked("user");
     let token_id = mock.mint(&user).unwrap();
@@ -48,7 +62,7 @@ fn burn_not_allowed_if_too_much_collateral() {
 
 #[test]
 fn burn_allowance_works_with_both_debt_and_collateral() {
-    let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
+    let mut mock = MockEnv::new().build().unwrap();
 
     let user = Addr::unchecked("user");
     let token_id = mock.mint(&user).unwrap();
@@ -67,7 +81,7 @@ fn burn_allowance_works_with_both_debt_and_collateral() {
 
 #[test]
 fn burn_allowance_at_exactly_max() {
-    let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
+    let mut mock = MockEnv::new().build().unwrap();
 
     let user = Addr::unchecked("user");
     let token_id = mock.mint(&user).unwrap();
@@ -78,7 +92,7 @@ fn burn_allowance_at_exactly_max() {
 
 #[test]
 fn burn_allowance_when_under_max() {
-    let mut mock = MockEnv::new().assign_minter_to_cm().build().unwrap();
+    let mut mock = MockEnv::new().build().unwrap();
 
     let user = Addr::unchecked("user");
     let token_id = mock.mint(&user).unwrap();

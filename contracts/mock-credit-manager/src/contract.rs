@@ -4,9 +4,9 @@ use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
 use mars_rover::msg::QueryMsg;
 
 use crate::{
-    execute::{set_allowed_coins, set_health_response, set_position_response, set_vault_config},
+    execute::{set_allowed_coins, set_position_response, set_vault_config},
     msg::{ExecuteMsg, InstantiateMsg},
-    query::{query_allowed_coins, query_config, query_health, query_positions, query_vaults_info},
+    query::{query_allowed_coins, query_config, query_positions, query_vault_info},
     state::{ALLOWED_COINS, CONFIG},
 };
 
@@ -30,10 +30,6 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> StdResult<Response> {
     match msg {
-        ExecuteMsg::SetHealthResponse {
-            account_id,
-            response,
-        } => set_health_response(deps, account_id, response),
         ExecuteMsg::SetPositionsResponse {
             account_id,
             positions,
@@ -49,9 +45,6 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Health {
-            account_id,
-        } => to_binary(&query_health(deps, account_id)?),
         QueryMsg::Positions {
             account_id,
         } => to_binary(&query_positions(deps, account_id)?),
@@ -59,9 +52,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::AllowedCoins {
             ..
         } => to_binary(&query_allowed_coins(deps)?),
-        QueryMsg::VaultsInfo {
-            ..
-        } => to_binary(&query_vaults_info(deps)?),
+        QueryMsg::VaultInfo {
+            vault,
+        } => to_binary(&query_vault_info(deps, vault)?),
         _ => unimplemented!("query msg not supported"),
     }
 }

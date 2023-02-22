@@ -206,6 +206,8 @@ fn vault_whitelist_affects_max_ltv() {
 
     mock.deposit_into_vault(base_token_amount);
 
+    let vault = Vault::new(mock.vault_contract.clone());
+
     mock.set_positions_response(
         account_id,
         &Positions {
@@ -214,7 +216,7 @@ fn vault_whitelist_affects_max_ltv() {
             debts: vec![],
             lends: vec![],
             vaults: vec![VaultPosition {
-                vault: Vault::new(mock.vault_contract.clone()),
+                vault: vault.clone(),
                 amount: VaultPositionAmount::Unlocked(VaultAmount::new(vault_token_amount)),
             }],
         },
@@ -235,9 +237,9 @@ fn vault_whitelist_affects_max_ltv() {
         },
     );
 
-    let vault_configs = mock.query_vault_configs();
-    let vault_max_ltv = vault_configs.first().unwrap().config.max_ltv;
-    let vault_liq_threshold = vault_configs.first().unwrap().config.liquidation_threshold;
+    let vault_config = mock.query_vault_config(&vault.clone().into());
+    let vault_max_ltv = vault_config.config.max_ltv;
+    let vault_liq_threshold = vault_config.config.liquidation_threshold;
 
     let health = mock.query_health(account_id).unwrap();
     assert_eq!(health.total_debt_value, Uint128::zero());
@@ -256,7 +258,7 @@ fn vault_whitelist_affects_max_ltv() {
     assert!(!health.above_max_ltv);
 
     // After de-listing, maxLTV drops to zero
-    mock.vault_allowed(false);
+    mock.vault_allowed(&vault.into(), false);
     let health = mock.query_health(account_id).unwrap();
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::zero());
 }

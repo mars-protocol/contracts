@@ -1,8 +1,8 @@
 use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
+use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use mars_rover::{
-    adapters::account_nft::ExecuteMsg as NftExecuteMsg,
     coins::Coins,
     error::{ContractError, ContractResult},
     msg::execute::{Action, CallbackMsg},
@@ -11,7 +11,7 @@ use mars_rover::{
 use crate::{
     borrow::borrow,
     deposit::deposit,
-    health::{assert_max_ltv, compute_health},
+    health::{assert_max_ltv, query_health},
     lend::lend,
     liquidate_coin::liquidate_coin,
     refund::refund_coin_balances,
@@ -55,7 +55,7 @@ pub fn dispatch_actions(
     let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];
     let mut received_coins = Coins::try_from(info.funds)?;
-    let prev_health = compute_health(deps.as_ref(), &env, account_id)?;
+    let prev_health = query_health(deps.as_ref(), account_id)?;
 
     for action in actions {
         match action {
@@ -180,7 +180,7 @@ pub fn dispatch_actions(
         // Else, throw error and revert all actions
         CallbackMsg::AssertMaxLTV {
             account_id: account_id.to_string(),
-            prev_health,
+            prev_max_ltv_health_factor: prev_health.max_ltv_health_factor,
         },
     ]);
 
@@ -224,8 +224,8 @@ pub fn execute_callback(
         } => lend(deps, env, &account_id, coin),
         CallbackMsg::AssertMaxLTV {
             account_id,
-            prev_health,
-        } => assert_max_ltv(deps.as_ref(), env, &account_id, prev_health),
+            prev_max_ltv_health_factor,
+        } => assert_max_ltv(deps.as_ref(), env, &account_id, &prev_max_ltv_health_factor),
         CallbackMsg::EnterVault {
             account_id,
             vault,

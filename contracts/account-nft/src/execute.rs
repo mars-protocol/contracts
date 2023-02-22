@@ -3,18 +3,15 @@ use cosmwasm_std::{
 };
 use cw721::Cw721Execute;
 use cw721_base::MintMsg;
-use mars_health::HealthResponse;
-use mars_rover::{
-    adapters::account_nft::{
-        ContractError,
-        ContractError::{BaseError, BurnNotAllowed},
-        NftConfigUpdates,
-    },
-    msg::QueryMsg::Health,
-};
+use mars_rover_health_types::{HealthResponse, QueryMsg::Health};
 
 use crate::{
     contract::Parent,
+    error::{
+        ContractError,
+        ContractError::{BaseError, BurnNotAllowed, HealthContractNotSet},
+    },
+    nft_config::NftConfigUpdates,
     state::{CONFIG, NEXT_ID},
 };
 
@@ -44,21 +41,24 @@ pub fn burn(
     info: MessageInfo,
     token_id: String,
 ) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    if config.health_contract_addr.is_none() {
+        return Err(HealthContractNotSet);
+    }
+
     let response: HealthResponse = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-        // Expects the minter to be the credit manager
-        contract_addr: Parent::default().minter.load(deps.storage)?.into(),
+        contract_addr: config.health_contract_addr.unwrap().into(),
         msg: to_binary(&Health {
             account_id: token_id.clone(),
         })?,
     }))?;
 
-    let max_value_allowed = CONFIG.load(deps.storage)?.max_value_for_burn;
     let current_balances =
         response.total_debt_value.checked_add(response.total_collateral_value)?;
-    if current_balances > max_value_allowed {
+    if current_balances > config.max_value_for_burn {
         return Err(BurnNotAllowed {
             current_balances,
-            max_value_allowed,
+            max_value_allowed: config.max_value_for_burn,
         });
     }
 
@@ -77,6 +77,14 @@ pub fn update_config(
 
     let mut response = Response::new().add_attribute("action", "update_config");
     let mut config = CONFIG.load(deps.storage)?;
+
+    if let Some(unchecked) = updates.health_contract_addr {
+        let addr = deps.api.addr_validate(&unchecked)?;
+        config.health_contract_addr = Some(addr.clone());
+        response = response
+            .add_attribute("key", "health_contract_addr")
+            .add_attribute("value", addr.to_string());
+    }
 
     if let Some(max) = updates.max_value_for_burn {
         config.max_value_for_burn = max;

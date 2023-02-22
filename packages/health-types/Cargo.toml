@@ -21,5 +21,4 @@ cosmwasm-schema     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 mars-math           = { workspace = true }
 mars-owner          = { workspace = true }
-mars-red-bank-types = { workspace = true }
 thiserror           = { workspace = true }

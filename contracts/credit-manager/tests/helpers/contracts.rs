@@ -68,3 +68,12 @@ pub fn mock_zapper_contract() -> Box<dyn Contract<Empty>> {
     );
     Box::new(contract)
 }
+
+pub fn mock_health_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        mars_rover_health::contract::execute,
+        mars_rover_health::contract::instantiate,
+        mars_rover_health::contract::query,
+    );
+    Box::new(contract)
+}

@@ -2,12 +2,15 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::Addr;
 use cw721::OwnerOfResponse;
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
-use mars_mock_credit_manager::msg::ExecuteMsg::SetHealthResponse;
-use mars_rover::adapters::account_nft::{
-    ExecuteMsg,
-    ExecuteMsg::{AcceptMinterRole, UpdateConfig},
-    NftConfigUpdates, QueryMsg, UncheckedNftConfig,
+use mars_account_nft::{
+    msg::{
+        ExecuteMsg,
+        ExecuteMsg::{AcceptMinterRole, UpdateConfig},
+        QueryMsg,
+    },
+    nft_config::{NftConfigUpdates, UncheckedNftConfig},
 };
+use mars_mock_rover_health::msg::ExecuteMsg::SetHealthResponse;
 use mars_rover_health_types::HealthResponse;
 
 use crate::helpers::MockEnvBuilder;
@@ -27,6 +30,8 @@ impl MockEnv {
             minter: None,
             deployer: Addr::unchecked("deployer"),
             nft_contract: None,
+            health_contract: None,
+            set_health_contract: true,
         }
     }
 
@@ -60,10 +65,12 @@ impl MockEnv {
         account_id: &str,
         response: &HealthResponse,
     ) -> AppResponse {
+        let config = self.query_config();
+
         self.app
             .execute_contract(
                 sender.clone(),
-                self.minter.clone(),
+                Addr::unchecked(config.health_contract_addr.unwrap()),
                 &SetHealthResponse {
                     account_id: account_id.to_string(),
                     response: response.clone(),
@@ -116,6 +123,7 @@ impl MockEnv {
             &NftConfigUpdates {
                 max_value_for_burn: None,
                 proposed_new_minter: Some(proposed_new_minter.to_string()),
+                health_contract_addr: None,
             },
         )
     }

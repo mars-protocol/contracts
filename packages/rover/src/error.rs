@@ -25,7 +25,7 @@ pub enum ContractError {
     },
 
     #[error("{0}")]
-    OwnerError(#[from] OwnerError),
+    Owner(#[from] OwnerError),
 
     #[error("{0} is not an available coin to request")]
     CoinNotAvailable(String),

@@ -9,6 +9,7 @@ import { UseQueryOptions, useQuery, useMutation, UseMutationOptions } from '@tan
 import { ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee } from '@cosmjs/amino'
 import {
+  HealthContractBaseForString,
   Decimal,
   Uint128,
   OracleBaseForString,
@@ -30,9 +31,15 @@ import {
   ActionCoin,
   ConfigUpdates,
   NftConfigUpdates,
-  Health,
   VaultBaseForAddr,
   QueryMsg,
+  VaultPositionAmount,
+  VaultAmount,
+  VaultAmount1,
+  UnlockingPositions,
+  VaultPosition,
+  LockingVaultAmount,
+  VaultUnlockingPosition,
   ArrayOfCoinBalanceResponseItem,
   CoinBalanceResponseItem,
   ArrayOfSharesResponseItem,
@@ -43,24 +50,18 @@ import {
   LentShares,
   ArrayOfVaultWithBalance,
   VaultWithBalance,
-  VaultPositionAmount,
-  VaultAmount,
-  VaultAmount1,
-  UnlockingPositions,
   ArrayOfVaultPositionResponseItem,
   VaultPositionResponseItem,
-  VaultPosition,
-  LockingVaultAmount,
-  VaultUnlockingPosition,
   ArrayOfString,
   ConfigResponse,
   ArrayOfCoin,
-  HealthResponse,
   Positions,
   DebtAmount,
   LentAmount,
-  ArrayOfVaultInfoResponse,
   VaultInfoResponse,
+  VaultPositionValue,
+  CoinValue,
+  ArrayOfVaultInfoResponse,
 } from './MarsCreditManager.types'
 import { MarsCreditManagerQueryClient, MarsCreditManagerClient } from './MarsCreditManager.client'
 export const marsCreditManagerQueryKeys = {
@@ -75,6 +76,10 @@ export const marsCreditManagerQueryKeys = {
     [
       { ...marsCreditManagerQueryKeys.address(contractAddress)[0], method: 'config', args },
     ] as const,
+  vaultInfo: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsCreditManagerQueryKeys.address(contractAddress)[0], method: 'vault_info', args },
+    ] as const,
   vaultsInfo: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       { ...marsCreditManagerQueryKeys.address(contractAddress)[0], method: 'vaults_info', args },
@@ -86,10 +91,6 @@ export const marsCreditManagerQueryKeys = {
   positions: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       { ...marsCreditManagerQueryKeys.address(contractAddress)[0], method: 'positions', args },
-    ] as const,
-  health: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
-    [
-      { ...marsCreditManagerQueryKeys.address(contractAddress)[0], method: 'health', args },
     ] as const,
   allCoinBalances: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -193,6 +194,14 @@ export const marsCreditManagerQueryKeys = {
         args,
       },
     ] as const,
+  vaultPositionValue: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      {
+        ...marsCreditManagerQueryKeys.address(contractAddress)[0],
+        method: 'vault_position_value',
+        args,
+      },
+    ] as const,
 }
 export interface MarsCreditManagerReactQuery<TResponse, TData = TResponse> {
   client: MarsCreditManagerQueryClient | undefined
@@ -202,6 +211,28 @@ export interface MarsCreditManagerReactQuery<TResponse, TData = TResponse> {
   > & {
     initialData?: undefined
   }
+}
+export interface MarsCreditManagerVaultPositionValueQuery<TData>
+  extends MarsCreditManagerReactQuery<VaultPositionValue, TData> {
+  args: {
+    vaultPosition: VaultPosition
+  }
+}
+export function useMarsCreditManagerVaultPositionValueQuery<TData = VaultPositionValue>({
+  client,
+  args,
+  options,
+}: MarsCreditManagerVaultPositionValueQuery<TData>) {
+  return useQuery<VaultPositionValue, Error, TData>(
+    marsCreditManagerQueryKeys.vaultPositionValue(client?.contractAddress, args),
+    () =>
+      client
+        ? client.vaultPositionValue({
+            vaultPosition: args.vaultPosition,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
 }
 export interface MarsCreditManagerEstimateWithdrawLiquidityQuery<TData>
   extends MarsCreditManagerReactQuery<ArrayOfCoin, TData> {
@@ -459,28 +490,6 @@ export function useMarsCreditManagerAllCoinBalancesQuery<TData = ArrayOfCoinBala
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsCreditManagerHealthQuery<TData>
-  extends MarsCreditManagerReactQuery<HealthResponse, TData> {
-  args: {
-    accountId: string
-  }
-}
-export function useMarsCreditManagerHealthQuery<TData = HealthResponse>({
-  client,
-  args,
-  options,
-}: MarsCreditManagerHealthQuery<TData>) {
-  return useQuery<HealthResponse, Error, TData>(
-    marsCreditManagerQueryKeys.health(client?.contractAddress, args),
-    () =>
-      client
-        ? client.health({
-            accountId: args.accountId,
-          })
-        : Promise.reject(new Error('Invalid client')),
-    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
-  )
-}
 export interface MarsCreditManagerPositionsQuery<TData>
   extends MarsCreditManagerReactQuery<Positions, TData> {
   args: {
@@ -546,6 +555,28 @@ export function useMarsCreditManagerVaultsInfoQuery<TData = ArrayOfVaultInfoResp
         ? client.vaultsInfo({
             limit: args.limit,
             startAfter: args.startAfter,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsCreditManagerVaultInfoQuery<TData>
+  extends MarsCreditManagerReactQuery<VaultInfoResponse, TData> {
+  args: {
+    vault: VaultBaseForString
+  }
+}
+export function useMarsCreditManagerVaultInfoQuery<TData = VaultInfoResponse>({
+  client,
+  args,
+  options,
+}: MarsCreditManagerVaultInfoQuery<TData>) {
+  return useQuery<VaultInfoResponse, Error, TData>(
+    marsCreditManagerQueryKeys.vaultInfo(client?.contractAddress, args),
+    () =>
+      client
+        ? client.vaultInfo({
+            vault: args.vault,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },

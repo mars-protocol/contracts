@@ -12,7 +12,7 @@ use mars_rover::{
 };
 
 use crate::{
-    health::compute_health,
+    health::query_health,
     repay::current_debt_for_denom,
     state::{COIN_BALANCES, MAX_CLOSE_FACTOR, ORACLE, RED_BANK},
     utils::{decrement_coin_balance, increment_coin_balance},
@@ -70,8 +70,8 @@ pub fn calculate_liquidation(
     request_coin_balance: Uint128,
 ) -> ContractResult<(Coin, Coin)> {
     // Assert the liquidatee's credit account is liquidatable
-    let health = compute_health(deps.as_ref(), env, liquidatee_account_id)?;
-    if !health.is_liquidatable() {
+    let health = query_health(deps.as_ref(), liquidatee_account_id)?;
+    if !health.liquidatable {
         return Err(ContractError::NotLiquidatable {
             account_id: liquidatee_account_id.to_string(),
             lqdt_health_factor: health.liquidation_health_factor.to_string(),

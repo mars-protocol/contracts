@@ -11,9 +11,12 @@ use mars_mock_oracle::msg::{CoinPrice, ExecuteMsg::ChangePrice};
 use mars_mock_red_bank::msg::CoinMarketInfo;
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
 use mars_red_bank_types::red_bank::{ExecuteMsg::UpdateAsset, InitOrUpdateAssetParams};
-use mars_rover::msg::{
-    query::{Positions, VaultInfoResponse as CmVaultConfig},
-    QueryMsg::VaultsInfo,
+use mars_rover::{
+    adapters::vault::VaultUnchecked,
+    msg::{
+        query::{Positions, VaultInfoResponse as CmVaultConfig},
+        QueryMsg::VaultInfo,
+    },
 };
 use mars_rover_health_types::{ConfigResponse, ExecuteMsg::UpdateConfig, HealthResponse, QueryMsg};
 
@@ -60,14 +63,13 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_vault_configs(&self) -> Vec<CmVaultConfig> {
+    pub fn query_vault_config(&self, vault: &VaultUnchecked) -> CmVaultConfig {
         self.app
             .wrap()
             .query_wasm_smart(
                 self.cm_contract.clone(),
-                &VaultsInfo {
-                    start_after: None,
-                    limit: None,
+                &VaultInfo {
+                    vault: vault.clone(),
                 },
             )
             .unwrap()
@@ -195,8 +197,8 @@ impl MockEnv {
             .unwrap();
     }
 
-    pub fn vault_allowed(&mut self, allowed: bool) {
-        let mut config = self.query_vault_configs().first().unwrap().clone().config;
+    pub fn vault_allowed(&mut self, vault: &VaultUnchecked, allowed: bool) {
+        let mut config = self.query_vault_config(vault).config;
         config.whitelisted = allowed;
 
         self.app

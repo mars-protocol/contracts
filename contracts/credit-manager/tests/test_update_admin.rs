@@ -3,7 +3,7 @@ use mars_owner::{
     OwnerError::{NotOwner, NotProposedOwner, StateTransitionError},
     OwnerUpdate,
 };
-use mars_rover::error::ContractError::OwnerError;
+use mars_rover::error::ContractError::Owner;
 
 use crate::helpers::{assert_err, MockEnv};
 
@@ -33,7 +33,7 @@ fn propose_new_owner() {
             proposed: bad_guy.to_string(),
         },
     );
-    assert_err(res, OwnerError(NotOwner {}));
+    assert_err(res, Owner(NotOwner {}));
 
     mock.update_owner(
         &Addr::unchecked(original_config.owner.clone().unwrap()),
@@ -72,7 +72,7 @@ fn clear_proposed() {
     // only owner can clear
     let bad_guy = Addr::unchecked("bad_guy");
     let res = mock.update_owner(&bad_guy, OwnerUpdate::ClearProposed);
-    assert_err(res, OwnerError(NotOwner {}));
+    assert_err(res, Owner(NotOwner {}));
 
     mock.update_owner(
         &Addr::unchecked(original_config.owner.clone().unwrap()),
@@ -107,7 +107,7 @@ fn accept_owner_role() {
         &Addr::unchecked(original_config.owner.unwrap()),
         OwnerUpdate::AcceptProposed,
     );
-    assert_err(res, OwnerError(NotProposedOwner {}));
+    assert_err(res, Owner(NotProposedOwner {}));
 
     mock.update_owner(&Addr::unchecked(new_owner.clone()), OwnerUpdate::AcceptProposed).unwrap();
 
@@ -125,7 +125,7 @@ fn abolish_owner_role() {
     // Only owner can abolish role
     let bad_guy = Addr::unchecked("bad_guy");
     let res = mock.update_owner(&bad_guy, OwnerUpdate::AbolishOwnerRole);
-    assert_err(res, OwnerError(NotOwner {}));
+    assert_err(res, Owner(NotOwner {}));
 
     mock.update_owner(
         &Addr::unchecked(original_config.owner.clone().unwrap()),
@@ -145,5 +145,5 @@ fn abolish_owner_role() {
             proposed: original_config.owner.unwrap(),
         },
     );
-    assert_err(res, OwnerError(StateTransitionError {}));
+    assert_err(res, Owner(StateTransitionError {}));
 }

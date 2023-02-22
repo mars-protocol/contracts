@@ -8,6 +8,7 @@
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee } from '@cosmjs/amino'
 import {
+  HealthContractBaseForString,
   Decimal,
   Uint128,
   OracleBaseForString,
@@ -29,9 +30,15 @@ import {
   ActionCoin,
   ConfigUpdates,
   NftConfigUpdates,
-  Health,
   VaultBaseForAddr,
   QueryMsg,
+  VaultPositionAmount,
+  VaultAmount,
+  VaultAmount1,
+  UnlockingPositions,
+  VaultPosition,
+  LockingVaultAmount,
+  VaultUnlockingPosition,
   ArrayOfCoinBalanceResponseItem,
   CoinBalanceResponseItem,
   ArrayOfSharesResponseItem,
@@ -42,28 +49,23 @@ import {
   LentShares,
   ArrayOfVaultWithBalance,
   VaultWithBalance,
-  VaultPositionAmount,
-  VaultAmount,
-  VaultAmount1,
-  UnlockingPositions,
   ArrayOfVaultPositionResponseItem,
   VaultPositionResponseItem,
-  VaultPosition,
-  LockingVaultAmount,
-  VaultUnlockingPosition,
   ArrayOfString,
   ConfigResponse,
   ArrayOfCoin,
-  HealthResponse,
   Positions,
   DebtAmount,
   LentAmount,
-  ArrayOfVaultInfoResponse,
   VaultInfoResponse,
+  VaultPositionValue,
+  CoinValue,
+  ArrayOfVaultInfoResponse,
 } from './MarsCreditManager.types'
 export interface MarsCreditManagerReadOnlyInterface {
   contractAddress: string
   config: () => Promise<ConfigResponse>
+  vaultInfo: ({ vault }: { vault: VaultBaseForString }) => Promise<VaultInfoResponse>
   vaultsInfo: ({
     limit,
     startAfter,
@@ -79,7 +81,6 @@ export interface MarsCreditManagerReadOnlyInterface {
     startAfter?: string
   }) => Promise<ArrayOfString>
   positions: ({ accountId }: { accountId: string }) => Promise<Positions>
-  health: ({ accountId }: { accountId: string }) => Promise<HealthResponse>
   allCoinBalances: ({
     limit,
     startAfter,
@@ -140,6 +141,11 @@ export interface MarsCreditManagerReadOnlyInterface {
     lpTokenOut: string
   }) => Promise<Uint128>
   estimateWithdrawLiquidity: ({ lpToken }: { lpToken: Coin }) => Promise<ArrayOfCoin>
+  vaultPositionValue: ({
+    vaultPosition,
+  }: {
+    vaultPosition: VaultPosition
+  }) => Promise<VaultPositionValue>
 }
 export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyInterface {
   client: CosmWasmClient
@@ -149,10 +155,10 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
     this.client = client
     this.contractAddress = contractAddress
     this.config = this.config.bind(this)
+    this.vaultInfo = this.vaultInfo.bind(this)
     this.vaultsInfo = this.vaultsInfo.bind(this)
     this.allowedCoins = this.allowedCoins.bind(this)
     this.positions = this.positions.bind(this)
-    this.health = this.health.bind(this)
     this.allCoinBalances = this.allCoinBalances.bind(this)
     this.allDebtShares = this.allDebtShares.bind(this)
     this.totalDebtShares = this.totalDebtShares.bind(this)
@@ -165,11 +171,19 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
     this.allTotalVaultCoinBalances = this.allTotalVaultCoinBalances.bind(this)
     this.estimateProvideLiquidity = this.estimateProvideLiquidity.bind(this)
     this.estimateWithdrawLiquidity = this.estimateWithdrawLiquidity.bind(this)
+    this.vaultPositionValue = this.vaultPositionValue.bind(this)
   }
 
   config = async (): Promise<ConfigResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {},
+    })
+  }
+  vaultInfo = async ({ vault }: { vault: VaultBaseForString }): Promise<VaultInfoResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      vault_info: {
+        vault,
+      },
     })
   }
   vaultsInfo = async ({
@@ -203,13 +217,6 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
   positions = async ({ accountId }: { accountId: string }): Promise<Positions> => {
     return this.client.queryContractSmart(this.contractAddress, {
       positions: {
-        account_id: accountId,
-      },
-    })
-  }
-  health = async ({ accountId }: { accountId: string }): Promise<HealthResponse> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      health: {
         account_id: accountId,
       },
     })
@@ -347,6 +354,17 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
     return this.client.queryContractSmart(this.contractAddress, {
       estimate_withdraw_liquidity: {
         lp_token: lpToken,
+      },
+    })
+  }
+  vaultPositionValue = async ({
+    vaultPosition,
+  }: {
+    vaultPosition: VaultPosition
+  }): Promise<VaultPositionValue> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      vault_position_value: {
+        vault_position: vaultPosition,
       },
     })
   }

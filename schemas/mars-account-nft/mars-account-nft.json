@@ -13,6 +13,13 @@
       "symbol"
     ],
     "properties": {
+      "health_contract": {
+        "description": "Used to validate the account id's health status allows for burning. Can be set later, but no burning allowed until set.",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
       "max_value_for_burn": {
         "description": "The maximum value of Debts + Collaterals (denominated in base token) for an account before burns are disallowed for the NFT. Meant to prevent accidental account deletions",
         "allOf": [
@@ -354,6 +361,12 @@
       "NftConfigUpdates": {
         "type": "object",
         "properties": {
+          "health_contract_addr": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "max_value_for_burn": {
             "anyOf": [
               {
@@ -1200,6 +1213,12 @@
         "max_value_for_burn"
       ],
       "properties": {
+        "health_contract_addr": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "max_value_for_burn": {
           "$ref": "#/definitions/Uint128"
         },

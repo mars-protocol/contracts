@@ -5,6 +5,7 @@ import { InstantiateMsg as OracleInstantiateMsg } from './generated/mars-mock-or
 import { InstantiateMsg as RoverInstantiateMsg } from './generated/mars-credit-manager/MarsCreditManager.types'
 import { InstantiateMsg as SwapperInstantiateMsg } from './generated/mars-swapper-base/MarsSwapperBase.types'
 import { InstantiateMsg as ZapperInstantiateMsg } from './generated/mars-zapper-base/MarsZapperBase.types'
+import { InstantiateMsg as HealthInstantiateMsg } from './generated/mars-rover-health-types/MarsRoverHealthTypes.types'
 
 export type InstantiateMsgs =
   | NftInstantiateMsg
@@ -14,3 +15,4 @@ export type InstantiateMsgs =
   | RoverInstantiateMsg
   | SwapperInstantiateMsg
   | ZapperInstantiateMsg
+  | HealthInstantiateMsg

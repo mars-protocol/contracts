@@ -5,6 +5,7 @@ import { ARTIFACTS_PATH, Storage } from './storage'
 import fs from 'fs'
 import { InstantiateMsgs } from '../../types/instantiateMsgs'
 import { InstantiateMsg as NftInstantiateMsg } from '../../types/generated/mars-account-nft/MarsAccountNft.types'
+import { InstantiateMsg as HealthInstantiateMsg } from '../../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'
 import { InstantiateMsg as VaultInstantiateMsg } from '../../types/generated/mars-mock-vault/MarsMockVault.types'
 import { InstantiateMsg as SwapperInstantiateMsg } from '../../types/generated/mars-swapper-base/MarsSwapperBase.types'
 import { InstantiateMsg as ZapperInstantiateMsg } from '../../types/generated/mars-zapper-base/MarsZapperBase.types'
@@ -26,6 +27,7 @@ import { MarsCreditManagerClient } from '../../types/generated/mars-credit-manag
 import { InitOrUpdateAssetParams } from '../../types/generated/mars-mock-red-bank/MarsMockRedBank.types'
 import { PriceSource } from '../../types/priceSource'
 import { kebabCase } from 'lodash'
+import { MarsRoverHealthTypesClient } from '../../types/generated/mars-rover-health-types/MarsRoverHealthTypes.client'
 
 export class Deployer {
   constructor(
@@ -67,6 +69,29 @@ export class Deployer {
     printGreen(
       `${this.config.chain.id} :: ${name} Contract Address : ${this.storage.addresses[name]}`,
     )
+  }
+
+  async instantiateHealthContract() {
+    const msg: HealthInstantiateMsg = {
+      owner: this.deployerAddr,
+    }
+    await this.instantiate('healthContract', this.storage.codeIds.healthContract!, msg)
+  }
+
+  async setCmOnHealthContract() {
+    if (this.storage.actions.healthContractConfigUpdate) {
+      printGray('Credit manager address')
+    } else {
+      let hExec = new MarsRoverHealthTypesClient(
+        this.cwClient,
+        this.deployerAddr,
+        this.storage.addresses.healthContract!,
+      )
+
+      printBlue('Setting credit manager address on health contract config')
+      await hExec.updateConfig({ creditManager: this.storage.addresses.creditManager! })
+    }
+    this.storage.actions.healthContractConfigUpdate = true
   }
 
   async instantiateNftContract() {
@@ -153,6 +178,7 @@ export class Deployer {
       max_close_factor: this.config.maxCloseFactor,
       swapper: this.storage.addresses.swapper!,
       zapper: this.storage.addresses.zapper!,
+      health_contract: this.storage.addresses.healthContract!,
     }
 
     if (this.config.testActions) {

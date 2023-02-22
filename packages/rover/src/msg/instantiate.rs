@@ -3,6 +3,7 @@ use cosmwasm_std::{Decimal, Uint128};
 
 use crate::{
     adapters::{
+        health::HealthContractUnchecked,
         oracle::OracleUnchecked,
         red_bank::RedBankUnchecked,
         swap::SwapperUnchecked,
@@ -35,6 +36,8 @@ pub struct InstantiateMsg {
     pub swapper: SwapperUnchecked,
     /// Helper contract for adding/removing liquidity
     pub zapper: ZapperUnchecked,
+    /// Helper contract for calculating health factor
+    pub health_contract: HealthContractUnchecked,
 }
 
 #[cw_serde]
@@ -73,4 +76,5 @@ pub struct ConfigUpdates {
     pub max_unlocking_positions: Option<Uint128>,
     pub swapper: Option<SwapperUnchecked>,
     pub zapper: Option<ZapperUnchecked>,
+    pub health_contract: Option<HealthContractUnchecked>,
 }

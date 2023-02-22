@@ -3,7 +3,7 @@ use std::hash::Hash;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, QuerierWrapper,
-    QueryRequest, StdError, StdResult, SubMsg, Uint128, WasmMsg, WasmQuery,
+    QueryRequest, StdResult, SubMsg, Uint128, WasmMsg, WasmQuery,
 };
 use cosmwasm_vault_standard::{
     extensions::{
@@ -19,9 +19,8 @@ use cosmwasm_vault_standard::{
     VaultInfoResponse,
 };
 use cw_utils::Duration;
-use mars_math::FractionMath;
 
-use crate::{adapters::oracle::Oracle, traits::Stringify};
+use crate::traits::Stringify;
 
 pub const VAULT_REQUEST_REPLY_ID: u64 = 10_001;
 
@@ -229,24 +228,5 @@ impl Vault {
             contract_addr: self.address.to_string(),
             msg: to_binary(&QueryMsg::TotalVaultTokenSupply {})?,
         }))
-    }
-
-    pub fn query_value(
-        &self,
-        querier: &QuerierWrapper,
-        oracle: &Oracle,
-        amount: Uint128,
-    ) -> StdResult<Uint128> {
-        let total_supply = self.query_total_vault_coins_issued(querier)?;
-        if total_supply.is_zero() {
-            return Ok(Uint128::zero());
-        };
-        let amount_in_underlying = self.query_preview_redeem(querier, amount)?;
-        let vault_info = self.query_info(querier)?;
-        let price_res = oracle.query_price(querier, &vault_info.base_token)?;
-        let amount_value = amount_in_underlying
-            .checked_mul_floor(price_res.price)
-            .map_err(|_| StdError::generic_err("CheckedMultiplyFractionError"))?;
-        Ok(amount_value)
     }
 }

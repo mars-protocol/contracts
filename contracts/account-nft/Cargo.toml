@@ -19,18 +19,16 @@ backtraces = ["cosmwasm-std/backtraces"]
 library    = []
 
 [dependencies]
-cosmwasm-schema = { workspace = true }
-cosmwasm-std    = { workspace = true }
-cw2             = { workspace = true }
-cw721           = { workspace = true }
-cw721-base      = { workspace = true }
-cw-storage-plus = { workspace = true }
-mars-health     = { workspace = true }
-mars-rover      = { workspace = true }
-thiserror       = { workspace = true }
+cosmwasm-schema         = { workspace = true }
+cosmwasm-std            = { workspace = true }
+cw2                     = { workspace = true }
+cw721                   = { workspace = true }
+cw721-base              = { workspace = true }
+cw-storage-plus         = { workspace = true }
+mars-rover-health-types = { workspace = true }
+thiserror               = { workspace = true }
 
 [dev-dependencies]
-anyhow                   = { workspace = true }
-cw-multi-test            = { workspace = true }
-mars-rover-health-types  = { workspace = true }
-mars-mock-credit-manager = { workspace = true }
+anyhow                 = { workspace = true }
+cw-multi-test          = { workspace = true }
+mars-mock-rover-health = { workspace = true }

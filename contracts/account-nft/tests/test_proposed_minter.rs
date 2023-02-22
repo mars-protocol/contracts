@@ -1,6 +1,6 @@
 use cosmwasm_std::Addr;
 use cw721_base::MinterResponse;
-use mars_rover::adapters::account_nft::QueryMsg;
+use mars_account_nft::msg::QueryMsg;
 
 use crate::helpers::MockEnv;
 

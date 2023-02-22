@@ -153,6 +153,7 @@ impl MockEnvBuilder {
                         max_unlocking_positions: Default::default(),
                         swapper: "n/a".to_string(),
                         zapper: "n/a".to_string(),
+                        health_contract: "n/a".to_string(),
                     },
                 },
                 &[],

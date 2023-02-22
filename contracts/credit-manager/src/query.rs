@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, Coin, Deps, Env, Order, StdResult, Uint128};
 use cw_paginate::paginate_map;
 use cw_storage_plus::Bound;
 use mars_rover::{
-    adapters::vault::{Vault, VaultBase, VaultPosition, VaultUnchecked},
+    adapters::vault::{Vault, VaultBase, VaultPosition, VaultPositionValue, VaultUnchecked},
     error::ContractResult,
     msg::query::{
         CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, LentAmount, LentShares,
@@ -13,15 +13,14 @@ use mars_rover::{
 
 use crate::{
     state::{
-        ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, DEBT_SHARES, LENT_SHARES, MAX_CLOSE_FACTOR,
-        MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES,
-        TOTAL_LENT_SHARES, VAULT_CONFIGS, VAULT_POSITIONS, ZAPPER,
+        ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, DEBT_SHARES, HEALTH_CONTRACT, LENT_SHARES,
+        MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, RED_BANK, SWAPPER,
+        TOTAL_DEBT_SHARES, TOTAL_LENT_SHARES, VAULT_CONFIGS, VAULT_POSITIONS, ZAPPER,
     },
     utils::{debt_shares_to_amount, lent_shares_to_amount},
     vault::vault_utilization_in_deposit_cap_denom,
 };
 
-const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
 
 pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
@@ -36,6 +35,7 @@ pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
         max_unlocking_positions: MAX_UNLOCKING_POSITIONS.load(deps.storage)?,
         swapper: SWAPPER.load(deps.storage)?.address().into(),
         zapper: ZAPPER.load(deps.storage)?.address().into(),
+        health_contract: HEALTH_CONTRACT.load(deps.storage)?.address().into(),
     })
 }
 
@@ -146,6 +146,20 @@ pub fn query_all_lent_shares(
     })
 }
 
+pub fn query_vault_info(
+    deps: Deps,
+    env: Env,
+    unchecked: VaultUnchecked,
+) -> ContractResult<VaultInfoResponse> {
+    let vault = unchecked.check(deps.api)?;
+    let config = VAULT_CONFIGS.load(deps.storage, &vault.address)?;
+    Ok(VaultInfoResponse {
+        config,
+        utilization: vault_utilization_in_deposit_cap_denom(&deps, &vault, &env.contract.address)?,
+        vault: vault.into(),
+    })
+}
+
 pub fn query_vaults_info(
     deps: Deps,
     env: Env,
@@ -220,7 +234,7 @@ pub fn query_allowed_coins(
 ) -> StdResult<Vec<String>> {
     let start = start_after.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
 
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+    let limit = limit.unwrap_or(DEFAULT_LIMIT) as usize;
 
     ALLOWED_COINS
         .items(deps.storage, start, None, Order::Ascending)
@@ -303,4 +317,12 @@ pub fn query_all_total_vault_coin_balances(
             balance,
         })
     })
+}
+
+pub fn query_vault_position_value(
+    deps: Deps,
+    vault_position: VaultPosition,
+) -> StdResult<VaultPositionValue> {
+    let oracle = ORACLE.load(deps.storage)?;
+    vault_position.query_values(&deps.querier, &oracle)
 }
