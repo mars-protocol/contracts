@@ -10,7 +10,7 @@ use mars_red_bank_types::oracle::{
     Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
     PythConfig, QueryMsg,
 };
-use mars_utils::helpers::validate_native_denom;
+use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
 
 use crate::{error::ContractResult, PriceSource};
 
@@ -98,6 +98,10 @@ where
             ExecuteMsg::RemovePriceSource {
                 denom,
             } => self.remove_price_source(deps, info.sender, denom),
+            ExecuteMsg::UpdateConfig {
+                base_denom,
+                pyth_contract_addr,
+            } => self.update_config(deps, info.sender, base_denom, pyth_contract_addr),
         }
     }
 
@@ -165,6 +169,33 @@ where
         Ok(Response::new()
             .add_attribute("action", "remove_price_source")
             .add_attribute("denom", denom))
+    }
+
+    fn update_config(
+        &self,
+        deps: DepsMut<C>,
+        sender_addr: Addr,
+        base_denom: Option<String>,
+        pyth_contract_addr: Option<String>,
+    ) -> ContractResult<Response> {
+        self.owner.assert_owner(deps.storage, &sender_addr)?;
+
+        if let Some(bd) = &base_denom {
+            validate_native_denom(bd)?;
+        };
+
+        let mut config = self.config.load(deps.storage)?;
+        config.base_denom = base_denom.unwrap_or(config.base_denom);
+        self.config.save(deps.storage, &config)?;
+
+        let mut pyth_cfg = self.pyth_config.load(deps.storage)?;
+        pyth_cfg.pyth_contract_addr =
+            option_string_to_addr(deps.api, pyth_contract_addr, pyth_cfg.pyth_contract_addr)?;
+        self.pyth_config.save(deps.storage, &pyth_cfg)?;
+
+        let response = Response::new().add_attribute("action", "update_config");
+
+        Ok(response)
     }
 
     fn query_config(&self, deps: Deps<C>) -> StdResult<ConfigResponse> {
