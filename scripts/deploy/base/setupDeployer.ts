@@ -28,13 +28,13 @@ export const setupClient = async (config: DeploymentConfig, wallet: DirectSecp25
   )
 }
 
-export const setupDeployer = async (config: DeploymentConfig) => {
+export const setupDeployer = async (config: DeploymentConfig, label: string) => {
   const wallet = await getWallet(config.deployerMnemonic, config.chain.prefix)
   const client = await setupClient(config, wallet)
   const addr = await getAddress(wallet)
   const balance = await client.getBalance(addr, config.chain.baseDenom)
   printGray(`Deployer addr: ${addr}, balance: ${parseInt(balance.amount) / 1e6} ${balance.denom}`)
 
-  const storage = await Storage.load(config.chain.id)
+  const storage = await Storage.load(config.chain.id, label)
   return new Deployer(config, client, addr, storage)
 }

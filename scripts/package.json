@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "license": "GPL-3.0-or-later",
   "scripts": {
-    "deploy:osmosis": "yarn build && node build/deploy/osmosis",
+    "deploy:osmosis-testnet": "yarn build && node build/deploy/osmosis/testnet-deployer.js",
+    "deploy:osmosis-testnet-multisig": "yarn build && node build/deploy/osmosis/testnet-multisig.js",
+    "deploy:osmosis-mainnet": "yarn build && node build/deploy/osmosis/mainnet.js",
     "generate-types": "yarn rust-schema && tsc --project codegen-tsconfig.json && rm -rf types/generated && node build/codegen && node build/codegen/insertIgnores.js && yarn format",
     "rust-schema": "cd ../ && cargo make generate-all-schemas && cd scripts",
     "compile-wasm": "cd ../ && cargo make rust-optimizer && cd scripts",

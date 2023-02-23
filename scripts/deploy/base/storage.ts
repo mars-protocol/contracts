@@ -9,25 +9,25 @@ export class Storage implements StorageItems {
   public codeIds: StorageItems['codeIds']
   public actions: StorageItems['actions']
 
-  constructor(private chainId: string, items: StorageItems) {
+  constructor(private chainId: string, private label: string, items: StorageItems) {
     this.addresses = items.addresses
     this.codeIds = items.codeIds
     this.actions = items.actions
   }
 
-  static async load(chainId: string): Promise<Storage> {
+  static async load(chainId: string, label: string): Promise<Storage> {
     try {
-      const data = await readFile(path.join(ARTIFACTS_PATH, `${chainId}.json`), 'utf8')
+      const data = await readFile(path.join(ARTIFACTS_PATH, `${chainId}-${label}.json`), 'utf8')
       const items = JSON.parse(data) as StorageItems
-      return new this(chainId, items)
+      return new this(chainId, label, items)
     } catch (e) {
-      return new this(chainId, { addresses: {}, codeIds: {}, actions: {} })
+      return new this(chainId, label, { addresses: {}, codeIds: {}, actions: {} })
     }
   }
 
   async save() {
     await writeFile(
-      path.join(ARTIFACTS_PATH, `${this.chainId}.json`),
+      path.join(ARTIFACTS_PATH, `${this.chainId}-${this.label}.json`),
       JSON.stringify(this, null, 2),
     )
   }

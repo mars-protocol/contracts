@@ -10,7 +10,10 @@ export enum VaultType {
   UNLOCKED,
 }
 
-export type VaultInfo = { lockup: { time: number } | undefined; tokens: VaultInfoResponse }
+export interface VaultInfo {
+  lockup: { time: number } | undefined
+  tokens: VaultInfoResponse
+}
 
 export interface DeploymentConfig {
   chain: {
@@ -24,12 +27,15 @@ export interface DeploymentConfig {
   oracle: { addr: string }
   redBank: { addr: string }
   vaults: VaultInstantiateConfig[]
-  allowedCoins: { denom: string; priceSource: PriceSource; grantCreditLine: boolean }[]
+  allowedCoins: string[]
   maxCloseFactor: string
   maxValueForBurn: string
   maxUnlockingPositions: string
   swapRoutes: SwapRoute[]
   testActions?: TestActions
+  swapperContractName: string
+  zapperContractName: string
+  multisigAddr?: string
 }
 
 export interface SwapRoute {
@@ -39,6 +45,7 @@ export interface SwapRoute {
 }
 
 export interface TestActions {
+  allowedCoinsConfig: { denom: string; priceSource: PriceSource; grantCreditLine: boolean }[]
   vault: {
     depositAmount: string
     withdrawAmount: string

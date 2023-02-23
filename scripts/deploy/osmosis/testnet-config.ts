@@ -7,37 +7,32 @@ const ujuno = 'ibc/46B44899322F3CD854D2D46DEEF881958467CDD4B3B10086DA49296BBED94
 const gammPool1 = 'gamm/pool/1'
 const gammPool497 = 'gamm/pool/497'
 
-const vaultOsmoAtom1 = 'osmo1v40lnedgvake8p7f49gvqu0q3vc9sx3qpc0jqtyfdyw25d4vg8us38an37'
-const vaultOsmoAtom7 = 'osmo108q2krqr0y9g0rtesenvsw68sap2xefelwwjs0wedyvdl0cmrntqvllfjk'
-const vaultOsmoAtom14 = 'osmo1eht92w5dr0vx8dzl6dn9770yq0ycln50zfhzvz8uc6928mp8vvgqwcram9'
-const vaultJunoOsmo1 = 'osmo1g5hryv0gp9dzlchkp3yxk8fmcf5asjun6cxkvyffetqzkwmvy75qfmeq3f'
-const vaultJunoOsmo7 = 'osmo1jtuvr47taunfdhwrkns0cufwa3qlsz66qwwa9vvn4cc5eltzrtxs4zkaus'
-const vaultJunoOsmo14 = 'osmo1rclt7lsfp0c89ydf9umuhwlg28maw6z87jak3ly7u2lefnyzdz2s8gsepe'
+const vaultOsmoAtom1 = 'osmo1zktjv92f76epswjvyxzzt3yyskpw7k6jsyu0kmq4zzc5fphrjumqlahctp'
+const vaultOsmoAtom7 = 'osmo167j3yttwzcm3785tzk4jse2qdkppcy2xxrn5u6srqv7s93wnq6yqw8zhg5'
+const vaultOsmoAtom14 = 'osmo1tp2m6g39h8mvhnu3plqjyen5s63023gj8w873l8wvly0cd77l6hsaa73wt'
+const atomOsmoConfig = {
+  config: {
+    deposit_cap: { denom: uatom, amount: '1000000000' }, // 1000 atom
+    max_ltv: '0.63',
+    liquidation_threshold: '0.65',
+    whitelisted: true,
+  },
+}
+
+const vaultJunoOsmo1 = 'osmo1r6h0pafu3wq0kf6yv09qhc8qvuku2d6fua0rpwwv46h7hd8u586scxspjf'
+const vaultJunoOsmo7 = 'osmo1gr5epxn67q6202l3hy0mcnu7qc039v22pa6x2tsk23zwg235n9jsq6pmes'
+const vaultJunoOsmo14 = 'osmo1d6knwkelyr9eklewnn9htkess4ttpxpf2cze9ec0xfw7e3fj0ggssqzfpp'
+const junoOsmoConfig = {
+  config: {
+    deposit_cap: { denom: uatom, amount: '500000000' }, // 500 atom
+    max_ltv: '0.65',
+    liquidation_threshold: '0.66',
+    whitelisted: true,
+  },
+}
 
 export const osmosisTestnetConfig: DeploymentConfig = {
-  allowedCoins: [
-    { denom: uosmo, priceSource: { fixed: { price: '1' } }, grantCreditLine: true },
-    {
-      denom: uatom,
-      priceSource: { arithmetic_twap: { pool_id: 1, window_size: 1800 } },
-      grantCreditLine: true,
-    },
-    {
-      denom: ujuno,
-      priceSource: { arithmetic_twap: { pool_id: 497, window_size: 1800 } },
-      grantCreditLine: true,
-    },
-    {
-      denom: gammPool1,
-      priceSource: { xyk_liquidity_token: { pool_id: 1 } },
-      grantCreditLine: false,
-    },
-    {
-      denom: gammPool497,
-      priceSource: { xyk_liquidity_token: { pool_id: 497 } },
-      grantCreditLine: false,
-    },
-  ],
+  allowedCoins: [uosmo, uatom, ujuno, gammPool1, gammPool497],
   chain: {
     baseDenom: uosmo,
     defaultGasPrice: 0.1,
@@ -63,60 +58,55 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   vaults: [
     {
       vault: { address: vaultOsmoAtom1 },
-      config: {
-        deposit_cap: { denom: 'uosmo', amount: '1000000000' }, // 1000 osmo
-        liquidation_threshold: '0.65',
-        max_ltv: '0.63',
-        whitelisted: true,
-      },
+      ...atomOsmoConfig,
     },
     {
       vault: { address: vaultOsmoAtom7 },
-      config: {
-        deposit_cap: { denom: 'uosmo', amount: '1000000000' }, // 1000 osmo
-        liquidation_threshold: '0.65',
-        max_ltv: '0.63',
-        whitelisted: true,
-      },
+      ...atomOsmoConfig,
     },
     {
       vault: { address: vaultOsmoAtom14 },
-      config: {
-        deposit_cap: { denom: 'uosmo', amount: '1000000000' }, // 1000 osmo
-        liquidation_threshold: '0.65',
-        max_ltv: '0.63',
-        whitelisted: true,
-      },
+      ...atomOsmoConfig,
     },
     {
       vault: { address: vaultJunoOsmo1 },
-      config: {
-        deposit_cap: { denom: 'uosmo', amount: '500000000' }, // 500 osmo
-        liquidation_threshold: '0.441',
-        max_ltv: '0.4115',
-        whitelisted: true,
-      },
+      ...junoOsmoConfig,
     },
     {
       vault: { address: vaultJunoOsmo7 },
-      config: {
-        deposit_cap: { denom: 'uosmo', amount: '500000000' }, // 500 osmo
-        liquidation_threshold: '0.441',
-        max_ltv: '0.4115',
-        whitelisted: true,
-      },
+      ...junoOsmoConfig,
     },
     {
       vault: { address: vaultJunoOsmo14 },
-      config: {
-        deposit_cap: { denom: 'uosmo', amount: '500000000' }, // 500 osmo
-        liquidation_threshold: '0.441',
-        max_ltv: '0.4115',
-        whitelisted: true,
-      },
+      ...junoOsmoConfig,
     },
   ],
+  swapperContractName: 'mars_swapper_osmosis',
+  zapperContractName: 'mars_zapper_osmosis',
   testActions: {
+    allowedCoinsConfig: [
+      { denom: uosmo, priceSource: { fixed: { price: '1' } }, grantCreditLine: true },
+      {
+        denom: uatom,
+        priceSource: { geometric_twap: { pool_id: 1, window_size: 1800 } },
+        grantCreditLine: true,
+      },
+      {
+        denom: ujuno,
+        priceSource: { geometric_twap: { pool_id: 497, window_size: 1800 } },
+        grantCreditLine: true,
+      },
+      {
+        denom: gammPool1,
+        priceSource: { xyk_liquidity_token: { pool_id: 1 } },
+        grantCreditLine: false,
+      },
+      {
+        denom: gammPool497,
+        priceSource: { xyk_liquidity_token: { pool_id: 497 } },
+        grantCreditLine: false,
+      },
+    ],
     vault: {
       depositAmount: '1000000',
       withdrawAmount: '1000000',
@@ -141,7 +131,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
     depositAmount: '100',
     lendAmount: '10',
     secondaryDenom: uatom,
-    startingAmountForTestUser: '4000000', // If test actions run out of gas, increment this
+    startingAmountForTestUser: '2500000',
     swap: {
       slippage: '0.4',
       amount: '40',

@@ -138,17 +138,31 @@ For Rust cw-multi tests + osmosis-testing suite (requires mars_swapper_osmosis.w
 cargo test
 ```
 
-For Typescript end-to-end testnet deployment & tests against that deployment:
+For Typescript testnet deployment with the deployer address being the owner and admin of the contracts & end-to-end tests:
 ```shell
 cd scripts
 yarn install
-yarn deploy:osmosis
+yarn deploy:osmosis:testnet-deployer
+```
+
+For Typescript testnet deployment with the multisig address being the owner and admin of the contracts & end-to-end tests:
+```shell
+cd scripts
+yarn install
+yarn deploy:osmosis:testnet-multisig
+```
+
+For mainnet:
+```shell
+cd scripts
+yarn install
+yarn deploy:osmosis:mainnet
 ```
 
 ### Deployment
 
-Addresses published in [/scripts/deploy/addresses](https://github.com/mars-protocol/rover/tree/master/scripts/deploy/addresses)
-
+- osmosis-1 (TBD)
+- [osmo-test-4 with deployer owner](./scripts/deploy/addresses/osmo-test-4-testnet-deployer-owner.json)
 
 ## License
 
