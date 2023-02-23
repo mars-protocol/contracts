@@ -511,20 +511,14 @@ impl OsmosisPriceSource {
             });
         }
 
-        // Check if the current price is > 0
-        if current_price.price <= 0 {
+        // Check if the current and EMA price is > 0
+        if current_price.price <= 0 || ema_price.price <= 0 {
             return Err(InvalidPrice {
-                reason: "current price can't be <= 0".to_string(),
+                reason: "price can't be <= 0".to_string(),
             });
         }
-        let current_price_dec = scale_to_exponent(current_price.price as u128, current_price.expo)?;
 
-        // Check if the EMA price is > 0
-        if ema_price.price <= 0 {
-            return Err(InvalidPrice {
-                reason: "EMA price can't be <= 0".to_string(),
-            });
-        }
+        let current_price_dec = scale_to_exponent(current_price.price as u128, current_price.expo)?;
         let ema_price_dec = scale_to_exponent(ema_price.price as u128, ema_price.expo)?;
 
         // Check confidence deviation
@@ -557,7 +551,7 @@ fn scale_to_exponent(value: u128, expo: i32) -> ContractResult<Decimal> {
         Ok(Decimal::checked_from_ratio(value, target_expo)?)
     } else {
         let res = Uint128::from(value).checked_mul(target_expo)?;
-        Ok(Decimal::new(res))
+        Ok(Decimal::from_ratio(res, 1u128))
     }
 }
 
@@ -661,5 +655,22 @@ mod tests {
             pool_id: 224,
         };
         assert_eq!(ps.to_string(), "xyk_liquidity_token:224")
+    }
+
+    #[test]
+    fn display_pyth_price_source() {
+        let ps = OsmosisPriceSource::Pyth {
+            price_feed_id: PriceIdentifier::from_hex(
+                "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+            )
+            .unwrap(),
+            max_staleness: 60,
+            max_confidence: Decimal::from_ratio(5u128, 100u128),
+            max_deviation: Decimal::from_ratio(6u128, 100u128),
+        };
+        assert_eq!(
+            ps.to_string(),
+            "pyth:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60:0.05:0.06"
+        )
     }
 }

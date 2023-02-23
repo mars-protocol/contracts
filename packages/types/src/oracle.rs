@@ -89,6 +89,8 @@ pub struct ConfigResponse {
     pub proposed_new_owner: Option<String>,
     /// The asset in which prices are denominated in
     pub base_denom: String,
+    /// Contract address of Pyth
+    pub pyth_contract_addr: String,
 }
 
 #[cw_serde]

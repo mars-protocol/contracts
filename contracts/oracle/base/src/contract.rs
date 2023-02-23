@@ -170,10 +170,12 @@ where
     fn query_config(&self, deps: Deps<C>) -> StdResult<ConfigResponse> {
         let owner_state = self.owner.query(deps.storage)?;
         let cfg = self.config.load(deps.storage)?;
+        let pyth_cfg = self.pyth_config.load(deps.storage)?;
         Ok(ConfigResponse {
             owner: owner_state.owner,
             proposed_new_owner: owner_state.proposed,
             base_denom: cfg.base_denom,
+            pyth_contract_addr: pyth_cfg.pyth_contract_addr.to_string(),
         })
     }
 

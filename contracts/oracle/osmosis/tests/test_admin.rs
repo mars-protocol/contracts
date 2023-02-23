@@ -9,12 +9,13 @@ mod helpers;
 
 #[test]
 fn instantiating() {
-    let deps = helpers::setup_test();
+    let deps = helpers::setup_test_with_pools();
 
     let cfg: ConfigResponse = helpers::query(deps.as_ref(), QueryMsg::Config {});
     assert_eq!(cfg.owner.unwrap(), "owner".to_string());
     assert_eq!(cfg.proposed_new_owner, None);
     assert_eq!(cfg.base_denom, "uosmo".to_string());
+    assert_eq!(cfg.pyth_contract_addr, "pyth_contract".to_string());
 }
 
 #[test]

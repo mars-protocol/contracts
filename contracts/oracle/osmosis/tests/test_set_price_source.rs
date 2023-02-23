@@ -9,12 +9,13 @@ use mars_owner::OwnerError::NotOwner;
 use mars_red_bank_types::oracle::QueryMsg;
 use mars_testing::mock_info;
 use mars_utils::error::ValidationError;
+use pyth_sdk_cw::PriceIdentifier;
 
 mod helpers;
 
 #[test]
 fn setting_price_source_by_non_owner() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let err = execute(
         deps.as_mut(),
@@ -33,7 +34,7 @@ fn setting_price_source_by_non_owner() {
 
 #[test]
 fn setting_price_source_fixed() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let res = execute(
         deps.as_mut(),
@@ -65,7 +66,7 @@ fn setting_price_source_fixed() {
 
 #[test]
 fn setting_price_source_incorrect_denom() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let res = execute(
         deps.as_mut(),
@@ -125,7 +126,7 @@ fn setting_price_source_incorrect_denom() {
 
 #[test]
 fn setting_price_source_spot() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let mut set_price_source_spot = |denom: &str, pool_id: u64| {
         execute(
@@ -197,7 +198,7 @@ fn setting_price_source_spot() {
 
 #[test]
 fn setting_price_source_arithmetic_twap_with_invalid_params() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let mut set_price_source_twap =
         |denom: &str,
@@ -285,7 +286,7 @@ fn setting_price_source_arithmetic_twap_with_invalid_params() {
 
 #[test]
 fn setting_price_source_arithmetic_twap_successfully() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     // properly set twap price source
     let res = execute(
@@ -360,7 +361,7 @@ fn setting_price_source_arithmetic_twap_successfully() {
 
 #[test]
 fn setting_price_source_geometric_twap_with_invalid_params() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let mut set_price_source_twap =
         |denom: &str,
@@ -448,7 +449,7 @@ fn setting_price_source_geometric_twap_with_invalid_params() {
 
 #[test]
 fn setting_price_source_geometric_twap_successfully() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     // properly set twap price source
     let res = execute(
@@ -523,7 +524,7 @@ fn setting_price_source_geometric_twap_successfully() {
 
 #[test]
 fn setting_price_source_staked_geometric_twap_with_invalid_params() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let mut set_price_source_twap =
         |denom: &str,
@@ -612,7 +613,7 @@ fn setting_price_source_staked_geometric_twap_with_invalid_params() {
 
 #[test]
 fn setting_price_source_staked_geometric_twap_successfully() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     // properly set twap price source
     let res = execute(
@@ -691,7 +692,7 @@ fn setting_price_source_staked_geometric_twap_successfully() {
 
 #[test]
 fn setting_price_source_xyk_lp() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let mut set_price_source_xyk_lp = |denom: &str, pool_id: u64| {
         execute(
@@ -744,8 +745,95 @@ fn setting_price_source_xyk_lp() {
 }
 
 #[test]
-fn querying_price_source() {
+fn setting_price_source_pyth_with_invalid_params() {
     let mut deps = helpers::setup_test();
+
+    let mut set_price_source_pyth = |max_confidence: Decimal, max_deviation: Decimal| {
+        execute(
+            deps.as_mut(),
+            mock_env(),
+            mock_info("owner"),
+            ExecuteMsg::SetPriceSource {
+                denom: "uatom".to_string(),
+                price_source: OsmosisPriceSource::Pyth {
+                    price_feed_id: PriceIdentifier::from_hex(
+                        "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+                    )
+                    .unwrap(),
+                    max_staleness: 30,
+                    max_confidence,
+                    max_deviation,
+                },
+            },
+        )
+    };
+
+    // attempting to set max_confidence > 100%; should fail
+    let err = set_price_source_pyth(Decimal::percent(101), Decimal::percent(5)).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "max_confidence must be in the range of <0;1>".to_string()
+        }
+    );
+
+    // attempting to set max_deviation > 100%; should fail
+    let err = set_price_source_pyth(Decimal::percent(5), Decimal::percent(101)).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "max_deviation must be in the range of <0;1>".to_string()
+        }
+    );
+}
+
+#[test]
+fn setting_price_source_pyth_successfully() {
+    let mut deps = helpers::setup_test();
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("owner"),
+        ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSource::Pyth {
+                price_feed_id: PriceIdentifier::from_hex(
+                    "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+                )
+                .unwrap(),
+                max_staleness: 30,
+                max_confidence: Decimal::percent(5),
+                max_deviation: Decimal::percent(6),
+            },
+        },
+    )
+    .unwrap();
+    assert_eq!(res.messages.len(), 0);
+
+    let res: PriceSourceResponse = helpers::query(
+        deps.as_ref(),
+        QueryMsg::PriceSource {
+            denom: "uatom".to_string(),
+        },
+    );
+    assert_eq!(
+        res.price_source,
+        OsmosisPriceSource::Pyth {
+            price_feed_id: PriceIdentifier::from_hex(
+                "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3"
+            )
+            .unwrap(),
+            max_staleness: 30,
+            max_confidence: Decimal::percent(5),
+            max_deviation: Decimal::percent(6),
+        },
+    );
+}
+
+#[test]
+fn querying_price_source() {
+    let mut deps = helpers::setup_test_with_pools();
 
     helpers::set_price_source(
         deps.as_mut(),
