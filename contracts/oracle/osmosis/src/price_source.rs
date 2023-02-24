@@ -10,7 +10,7 @@ use mars_osmosis::helpers::{
     recovered_since_downtime_of_length, Pool,
 };
 use mars_red_bank_types::oracle::PythConfig;
-use pyth_sdk_cw::{query_price_feed, PriceFeedResponse, PriceIdentifier};
+use pyth_sdk_cw::{query_price_feed, PriceIdentifier};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -481,7 +481,7 @@ impl OsmosisPriceSource {
     ) -> ContractResult<Decimal> {
         let current_time = env.block.time.seconds();
 
-        let price_feed_response: PriceFeedResponse =
+        let price_feed_response =
             query_price_feed(&deps.querier, pyth_config.pyth_contract_addr.clone(), price_feed_id)?;
         let price_feed = price_feed_response.price_feed;
 
@@ -492,7 +492,7 @@ impl OsmosisPriceSource {
         if (current_time - current_price.publish_time as u64) > max_staleness {
             return Err(InvalidPrice {
                 reason: format!(
-                    "current price timestamp is too old/stale. published: {}, now: {}",
+                    "current price publish time is too old/stale. published: {}, now: {}",
                     current_price.publish_time, current_time
                 ),
             });
@@ -505,7 +505,7 @@ impl OsmosisPriceSource {
         if (current_time - ema_price.publish_time as u64) > max_staleness {
             return Err(InvalidPrice {
                 reason: format!(
-                    "EMA price timestamp is too old/stale. published: {}, now: {}",
+                    "EMA price publish time is too old/stale. published: {}, now: {}",
                     ema_price.publish_time, current_time
                 ),
             });
@@ -523,21 +523,21 @@ impl OsmosisPriceSource {
 
         // Check confidence deviation
         let confidence = scale_to_exponent(current_price.conf as u128, current_price.expo)?;
-        if confidence.checked_div(ema_price_dec)? > max_confidence {
+        let price_confidence = confidence.checked_div(ema_price_dec)?;
+        if price_confidence > max_confidence {
             return Err(InvalidPrice {
-                reason: "price confidence exceeding max".to_string(),
+                reason: format!("price confidence deviation {price_confidence} exceeds max allowed {max_confidence}")
             });
         }
 
         // Check price deviation
-        let delta = if current_price_dec > ema_price_dec {
-            current_price_dec - ema_price_dec
-        } else {
-            ema_price_dec - current_price_dec
-        };
-        if delta.checked_div(ema_price_dec)? > max_deviation {
+        let delta = current_price_dec.abs_diff(ema_price_dec);
+        let price_deviation = delta.checked_div(ema_price_dec)?;
+        if price_deviation > max_deviation {
             return Err(InvalidPrice {
-                reason: "price deviation exceeding max".to_string(),
+                reason: format!(
+                    "price deviation {price_deviation} exceeds max allowed {max_deviation}"
+                ),
             });
         }
 
@@ -545,6 +545,15 @@ impl OsmosisPriceSource {
     }
 }
 
+/// Price feeds represent numbers in a fixed-point format.
+/// The same exponent is used for both the price and confidence interval.
+/// The integer representation of these values can be computed by multiplying by 10^exponent.
+///
+/// As an example, imagine Pyth reported the following values for ATOM/USD:
+/// expo:  -8
+/// conf:  574566
+/// price: 1365133270
+/// The confidence interval is 574566 * 10^(-8) = $0.00574566, and the price is 1365133270 * 10^(-8) = $13.6513327.
 fn scale_to_exponent(value: u128, expo: i32) -> ContractResult<Decimal> {
     let target_expo = Uint128::from(10u8).checked_pow(expo.unsigned_abs())?;
     if expo < 0 {

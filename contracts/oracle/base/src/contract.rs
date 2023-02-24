@@ -185,15 +185,22 @@ where
         };
 
         let mut config = self.config.load(deps.storage)?;
+        let prev_base_denom = config.base_denom.clone();
         config.base_denom = base_denom.unwrap_or(config.base_denom);
         self.config.save(deps.storage, &config)?;
 
         let mut pyth_cfg = self.pyth_config.load(deps.storage)?;
+        let prev_pyth_contract_addr = pyth_cfg.pyth_contract_addr.clone();
         pyth_cfg.pyth_contract_addr =
             option_string_to_addr(deps.api, pyth_contract_addr, pyth_cfg.pyth_contract_addr)?;
         self.pyth_config.save(deps.storage, &pyth_cfg)?;
 
-        let response = Response::new().add_attribute("action", "update_config");
+        let response = Response::new()
+            .add_attribute("action", "update_config")
+            .add_attribute("prev_base_denom", prev_base_denom)
+            .add_attribute("base_denom", config.base_denom)
+            .add_attribute("prev_pyth_contract_addr", prev_pyth_contract_addr)
+            .add_attribute("pyth_contract_addr", pyth_cfg.pyth_contract_addr);
 
         Ok(response)
     }

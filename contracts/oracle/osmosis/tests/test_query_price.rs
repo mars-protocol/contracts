@@ -562,7 +562,7 @@ fn querying_pyth_price_if_publish_price_too_old() {
         res_err,
         ContractError::InvalidPrice {
             reason:
-                "current price timestamp is too old/stale. published: 1677157333, now: 1677157364"
+                "current price publish time is too old/stale. published: 1677157333, now: 1677157364"
                     .to_string()
         }
     );
@@ -601,8 +601,9 @@ fn querying_pyth_price_if_publish_price_too_old() {
     assert_eq!(
         res_err,
         ContractError::InvalidPrice {
-            reason: "EMA price timestamp is too old/stale. published: 1677157333, now: 1677157364"
-                .to_string()
+            reason:
+                "EMA price publish time is too old/stale. published: 1677157333, now: 1677157364"
+                    .to_string()
         }
     );
 }
@@ -694,13 +695,13 @@ fn querying_pyth_price_if_confidence_exceeded() {
             price_feed: PriceFeed::new(
                 price_id,
                 Price {
-                    price: 1000000,
+                    price: 1010000,
                     conf: 51000,
                     expo: -4,
                     publish_time: publish_time as i64,
                 },
                 Price {
-                    price: 1200000,
+                    price: 1000000,
                     conf: 40000,
                     expo: -4,
                     publish_time: publish_time as i64,
@@ -720,7 +721,7 @@ fn querying_pyth_price_if_confidence_exceeded() {
     assert_eq!(
         res_err,
         ContractError::InvalidPrice {
-            reason: "price deviation exceeding max".to_string()
+            reason: "price confidence deviation 0.051 exceeds max allowed 0.05".to_string()
         }
     );
 }
@@ -781,7 +782,7 @@ fn querying_pyth_price_if_deviation_exceeded() {
     assert_eq!(
         res_err,
         ContractError::InvalidPrice {
-            reason: "price deviation exceeding max".to_string()
+            reason: "price deviation 0.061 exceeds max allowed 0.06".to_string()
         }
     );
 
@@ -818,7 +819,7 @@ fn querying_pyth_price_if_deviation_exceeded() {
     assert_eq!(
         res_err,
         ContractError::InvalidPrice {
-            reason: "price deviation exceeding max".to_string()
+            reason: "price deviation 0.060001 exceeds max allowed 0.06".to_string()
         }
     );
 }

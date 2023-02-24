@@ -1,4 +1,4 @@
-use cosmwasm_std::testing::mock_env;
+use cosmwasm_std::{attr, testing::mock_env};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg};
 use mars_owner::OwnerError::NotOwner;
@@ -119,7 +119,17 @@ fn update_config_with_new_params() {
     };
     let info = mock_info("owner");
     let res = entry::execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-    assert_eq!(0, res.messages.len());
+    assert_eq!(res.messages.len(), 0);
+    assert_eq!(
+        res.attributes,
+        vec![
+            attr("action", "update_config"),
+            attr("prev_base_denom", "uosmo"),
+            attr("base_denom", "uusdc"),
+            attr("prev_pyth_contract_addr", "pyth_contract"),
+            attr("pyth_contract_addr", "new_pyth_contract_addr")
+        ]
+    );
 
     let cfg: ConfigResponse = helpers::query(deps.as_ref(), QueryMsg::Config {});
     assert_eq!(cfg.owner.unwrap(), "owner".to_string());
