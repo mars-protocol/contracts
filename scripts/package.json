@@ -9,7 +9,12 @@
     "generate-types": "yarn rust-schema && tsc --project codegen-tsconfig.json && rm -rf types/generated && node build/codegen && node build/codegen/insertIgnores.js && yarn format",
     "rust-schema": "cd ../ && cargo make generate-all-schemas && cd scripts",
     "compile-wasm": "cd ../ && cargo make rust-optimizer && cd scripts",
-    "build": "tsc",
+    "compile-health-base": "wasm-pack build ../packages/health-computer --out-name index --release",
+    "compile-health-web": "yarn run compile-health-base --target web --out-dir ../../scripts/health/pkg-web && rm health/pkg-web/.gitignore",
+    "compile-health-node": "yarn run compile-health-base --target nodejs --out-dir ../../scripts/health/pkg-node && rm health/pkg-node/.gitignore",
+    "compile-health-all": "yarn compile-health-node && yarn compile-health-web && yarn format",
+    "copy-wasm": "copyfiles health/**/*.wasm ./build",
+    "build": "tsc && yarn copy-wasm",
     "lint": "eslint . && yarn build && yarn format-check",
     "format": "prettier --write .",
     "format-check": "prettier --check ."
@@ -19,10 +24,12 @@
     "@cosmjs/stargate": "^0.29.5",
     "@cosmwasm/ts-codegen": "^0.24.0",
     "chalk": "4.1.2",
+    "copyfiles": "^2.4.1",
     "cosmjs-types": "^0.6.1",
     "lodash": "^4.17.21",
     "long": "^5.2.1",
-    "prepend-file": "^2.0.1"
+    "prepend-file": "^2.0.1",
+    "wasm-pack": "^0.10.3"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.20.2",

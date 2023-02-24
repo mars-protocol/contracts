@@ -2,12 +2,16 @@
 name          = "mars-rover-health-computer"
 version       = { workspace = true }
 authors       = { workspace = true }
-license       = { workspace = true }
 edition       = { workspace = true }
-repository    = { workspace = true }
-homepage      = { workspace = true }
 documentation = { workspace = true }
 keywords      = { workspace = true }
+
+# Current bug in wasm-pack does not allow workspace inheritance for these properties.
+# Revert to workspace inheritance when https://github.com/rustwasm/wasm-pack/pull/1185
+# has been included in the next wasm-pack version.
+license       = "GPL-3.0-or-later"
+repository    = "https://github.com/mars-protocol/rover"
+homepage      = "https://marsprotocol.io"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -15,18 +19,24 @@ doctest    = false
 
 [features]
 backtraces = ["cosmwasm-std/backtraces"]
-default    = []
+default    = ["console_error_panic_hook"]
 
 [dependencies]
 cosmwasm-schema         = { workspace = true }
 cosmwasm-std            = { workspace = true }
 cosmwasm-vault-standard = { workspace = true }
 mars-math               = { workspace = true }
-mars-rover-health-types = { workspace = true }
 mars-red-bank-types     = { workspace = true }
 mars-rover              = { workspace = true }
+mars-rover-health-types = { workspace = true }
 schemars                = { workspace = true }
 serde                   = { workspace = true }
 serde_json              = { workspace = true }
 serde-wasm-bindgen      = { workspace = true }
 wasm-bindgen            = { workspace = true }
+
+# The `console_error_panic_hook` crate provides better debugging of panics by
+# logging them with `console.error`. This is great for development, but requires
+# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
+# code size when deploying.
+console_error_panic_hook = { version = "0.1.7", optional = true }

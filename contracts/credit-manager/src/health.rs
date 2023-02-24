@@ -8,8 +8,8 @@ use mars_rover_health_types::{is_below_one, HealthResponse};
 use crate::state::HEALTH_CONTRACT;
 
 pub fn query_health(deps: Deps, account_id: &str) -> ContractResult<HealthResponse> {
-    let hm = HEALTH_CONTRACT.load(deps.storage)?;
-    Ok(hm.query_health(&deps.querier, account_id)?)
+    let hc = HEALTH_CONTRACT.load(deps.storage)?;
+    Ok(hc.query_health(&deps.querier, account_id)?)
 }
 
 pub fn assert_max_ltv(

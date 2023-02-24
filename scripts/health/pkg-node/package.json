@@ -1,0 +1,27 @@
+{
+  "name": "mars-rover-health-computer",
+  "collaborators": [
+    "Gabe R. <gabe.r@delphilabs.io>",
+    "Larry Engineer <larry@delphidigital.io>",
+    "Piotr Babel <piotr@delphilabs.io>"
+  ],
+  "version": "1.0.0",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mars-protocol/rover"
+  },
+  "files": [
+    "index_bg.wasm",
+    "index.js",
+    "index.d.ts"
+  ],
+  "main": "index.js",
+  "homepage": "https://marsprotocol.io",
+  "types": "index.d.ts",
+  "keywords": [
+    "mars",
+    "cosmos",
+    "cosmwasm"
+  ]
+}

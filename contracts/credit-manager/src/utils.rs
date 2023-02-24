@@ -14,8 +14,8 @@ use mars_rover::{
 
 use crate::{
     state::{
-        ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, ORACLE, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES,
-        TOTAL_LENT_SHARES, VAULT_CONFIGS, ZAPPER,
+        ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, HEALTH_CONTRACT, ORACLE, RED_BANK, SWAPPER,
+        TOTAL_DEBT_SHARES, TOTAL_LENT_SHARES, VAULT_CONFIGS, ZAPPER,
     },
     update_coin_balances::query_balance,
 };
@@ -173,6 +173,7 @@ pub fn assert_not_contract_in_config(deps: &Deps, addr_to_flag: &Addr) -> Contra
         ORACLE.load(deps.storage)?.address().clone(),
         SWAPPER.load(deps.storage)?.address().clone(),
         ZAPPER.load(deps.storage)?.address().clone(),
+        HEALTH_CONTRACT.load(deps.storage)?.address().clone(),
     ];
 
     let flagged_addr_in_config =

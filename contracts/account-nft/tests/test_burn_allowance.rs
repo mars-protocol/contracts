@@ -13,7 +13,7 @@ use crate::helpers::{below_max_for_burn, generate_health_response, MockEnv, MAX_
 pub mod helpers;
 
 #[test]
-fn burn_not_allowed_if_no_cm_set() {
+fn burn_not_allowed_if_no_health_contract_set() {
     let mut mock = MockEnv::new().instantiate_with_health_contract(false).build().unwrap();
     let user = Addr::unchecked("user");
     let token_id = mock.mint(&user).unwrap();

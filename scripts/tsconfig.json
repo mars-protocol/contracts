@@ -25,8 +25,8 @@
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowJs": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "types.d.ts"],
-  "exclude": ["node_modules", "./build/**/*", "types/generated/**/*"]
+  "exclude": ["node_modules", "./build/**/*", "types/generated/**/*", "health/example-react"]
 }

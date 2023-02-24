@@ -42,12 +42,12 @@ pub fn burn(
     token_id: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    if config.health_contract_addr.is_none() {
-        return Err(HealthContractNotSet);
-    }
+    let Some(health_contract_addr) = config.health_contract_addr else {
+        return Err(HealthContractNotSet)
+    };
 
     let response: HealthResponse = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-        contract_addr: config.health_contract_addr.unwrap().into(),
+        contract_addr: health_contract_addr.into(),
         msg: to_binary(&Health {
             account_id: token_id.clone(),
         })?,

@@ -30,10 +30,10 @@ cw-paginate             = { workspace = true }
 cw-storage-plus         = { workspace = true }
 mars-account-nft        = { workspace = true }
 mars-math               = { workspace = true }
-mars-rover-health-types = { workspace = true }
-mars-red-bank-types     = { workspace = true }
 mars-owner              = { workspace = true }
+mars-red-bank-types     = { workspace = true }
 mars-rover              = { workspace = true }
+mars-rover-health-types = { workspace = true }
 
 [dev-dependencies]
 anyhow             = { workspace = true }

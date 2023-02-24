@@ -53,5 +53,12 @@ jobs:
           yarn generate-types
           git diff --exit-code
 
+      - name: Compile latest health computer helpers
+        run: yarn compile-health-all
+
       - name: Check build
         run: yarn build
+
+      - name: Check react health example builds
+        working-directory: ./scripts/health/example-react
+        run: yarn install && yarn build

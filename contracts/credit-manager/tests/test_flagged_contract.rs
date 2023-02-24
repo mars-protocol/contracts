@@ -22,6 +22,7 @@ fn addresses_in_config_cannot_execute_msgs() {
         config.oracle,
         config.swapper,
         config.zapper,
+        config.health_contract,
     ]
     .into_iter()
     .chain(vault_addrs)
