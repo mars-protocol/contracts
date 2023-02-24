@@ -25,6 +25,12 @@ export type ExecuteMsg =
   | {
       update_owner: OwnerUpdate
     }
+  | {
+      update_config: {
+        base_denom?: string | null
+        pyth_contract_addr?: string | null
+      }
+    }
 export type OsmosisPriceSource =
   | {
       fixed: {
@@ -71,6 +77,9 @@ export type OsmosisPriceSource =
     }
   | {
       pyth: {
+        max_confidence: Decimal
+        max_deviation: Decimal
+        max_staleness: number
         price_feed_id: Identifier
         [k: string]: unknown
       }
@@ -147,6 +156,7 @@ export interface ConfigResponse {
   base_denom: string
   owner?: string | null
   proposed_new_owner?: string | null
+  pyth_contract_addr: string
 }
 export interface PriceResponse {
   denom: string
