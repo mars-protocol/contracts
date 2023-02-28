@@ -339,7 +339,9 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 Self::query_staked_asset_price(
                     deps,
                     env,
-                    (denom, transitive_denom, base_denom),
+                    denom,
+                    transitive_denom,
+                    base_denom,
                     *pool_id,
                     *window_size,
                     price_sources,
@@ -438,16 +440,18 @@ impl OsmosisPriceSource {
     /// where:
     /// - stAsset/Asset price calculated using the geometric TWAP from the stAsset/Asset pool.
     /// - Asset/OSMO price comes from the Mars Oracle contract.
+    #[allow(clippy::too_many_arguments)]
     fn query_staked_asset_price(
         deps: &Deps,
         env: &Env,
-        denoms: (&str, &str, &str),
+        denom: &str,
+        transitive_denom: &str,
+        base_denom: &str,
         pool_id: u64,
         window_size: u64,
         price_sources: &Map<&str, OsmosisPriceSource>,
         pyth_config: &PythConfig,
     ) -> ContractResult<Decimal> {
-        let (denom, transitive_denom, base_denom) = denoms;
         let start_time = env.block.time.seconds() - window_size;
         let staked_price = query_geometric_twap_price(
             &deps.querier,
