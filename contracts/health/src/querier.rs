@@ -5,7 +5,7 @@ use mars_rover::{
         red_bank::RedBank,
         vault::{Vault, VaultConfig},
     },
-    msg::query::{ConfigResponse, Positions, QueryMsg, VaultInfoResponse},
+    msg::query::{ConfigResponse, Positions, QueryMsg, VaultConfigResponse},
 };
 use mars_rover_health_types::HealthResult;
 
@@ -53,9 +53,9 @@ impl<'a> HealthQuerier<'a> {
     }
 
     pub fn query_vault_config(&self, vault: &Vault) -> HealthResult<VaultConfig> {
-        let vault_info: VaultInfoResponse = self.querier.query_wasm_smart(
+        let vault_info: VaultConfigResponse = self.querier.query_wasm_smart(
             self.credit_manager_addr.to_string(),
-            &QueryMsg::VaultInfo {
+            &QueryMsg::VaultConfig {
                 vault: vault.into(),
             },
         )?;

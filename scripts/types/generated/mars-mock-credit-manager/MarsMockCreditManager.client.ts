@@ -43,22 +43,24 @@ import {
   ArrayOfString,
   ConfigResponse,
   ArrayOfCoin,
-  VaultInfoResponse,
+  VaultConfigResponse,
   VaultPositionValue,
   CoinValue,
-  ArrayOfVaultInfoResponse,
+  VaultUtilizationResponse,
+  ArrayOfVaultConfigResponse,
 } from './MarsMockCreditManager.types'
 export interface MarsMockCreditManagerReadOnlyInterface {
   contractAddress: string
   config: () => Promise<ConfigResponse>
-  vaultInfo: ({ vault }: { vault: VaultBaseForString }) => Promise<VaultInfoResponse>
-  vaultsInfo: ({
+  vaultConfig: ({ vault }: { vault: VaultBaseForString }) => Promise<VaultConfigResponse>
+  vaultsConfig: ({
     limit,
     startAfter,
   }: {
     limit?: number
     startAfter?: VaultBaseForString
-  }) => Promise<ArrayOfVaultInfoResponse>
+  }) => Promise<ArrayOfVaultConfigResponse>
+  vaultUtilization: ({ vault }: { vault: VaultBaseForString }) => Promise<VaultUtilizationResponse>
   allowedCoins: ({
     limit,
     startAfter,
@@ -141,8 +143,9 @@ export class MarsMockCreditManagerQueryClient implements MarsMockCreditManagerRe
     this.client = client
     this.contractAddress = contractAddress
     this.config = this.config.bind(this)
-    this.vaultInfo = this.vaultInfo.bind(this)
-    this.vaultsInfo = this.vaultsInfo.bind(this)
+    this.vaultConfig = this.vaultConfig.bind(this)
+    this.vaultsConfig = this.vaultsConfig.bind(this)
+    this.vaultUtilization = this.vaultUtilization.bind(this)
     this.allowedCoins = this.allowedCoins.bind(this)
     this.positions = this.positions.bind(this)
     this.allCoinBalances = this.allCoinBalances.bind(this)
@@ -165,24 +168,35 @@ export class MarsMockCreditManagerQueryClient implements MarsMockCreditManagerRe
       config: {},
     })
   }
-  vaultInfo = async ({ vault }: { vault: VaultBaseForString }): Promise<VaultInfoResponse> => {
+  vaultConfig = async ({ vault }: { vault: VaultBaseForString }): Promise<VaultConfigResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      vault_info: {
+      vault_config: {
         vault,
       },
     })
   }
-  vaultsInfo = async ({
+  vaultsConfig = async ({
     limit,
     startAfter,
   }: {
     limit?: number
     startAfter?: VaultBaseForString
-  }): Promise<ArrayOfVaultInfoResponse> => {
+  }): Promise<ArrayOfVaultConfigResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      vaults_info: {
+      vaults_config: {
         limit,
         start_after: startAfter,
+      },
+    })
+  }
+  vaultUtilization = async ({
+    vault,
+  }: {
+    vault: VaultBaseForString
+  }): Promise<VaultUtilizationResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      vault_utilization: {
+        vault,
       },
     })
   }

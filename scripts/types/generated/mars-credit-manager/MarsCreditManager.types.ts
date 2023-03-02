@@ -306,14 +306,19 @@ export type QueryMsg =
       config: {}
     }
   | {
-      vault_info: {
+      vault_config: {
         vault: VaultBaseForString
       }
     }
   | {
-      vaults_info: {
+      vaults_config: {
         limit?: number | null
         start_after?: VaultBaseForString | null
+      }
+    }
+  | {
+      vault_utilization: {
+        vault: VaultBaseForString
       }
     }
   | {
@@ -481,9 +486,8 @@ export interface LentAmount {
   denom: string
   shares: Uint128
 }
-export interface VaultInfoResponse {
+export interface VaultConfigResponse {
   config: VaultConfig
-  utilization: Coin
   vault: VaultBaseForString
 }
 export interface VaultPositionValue {
@@ -495,4 +499,8 @@ export interface CoinValue {
   denom: string
   value: Uint128
 }
-export type ArrayOfVaultInfoResponse = VaultInfoResponse[]
+export interface VaultUtilizationResponse {
+  utilization: Coin
+  vault: VaultBaseForString
+}
+export type ArrayOfVaultConfigResponse = VaultConfigResponse[]

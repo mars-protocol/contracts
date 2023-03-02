@@ -45,8 +45,8 @@ use mars_rover::{
         instantiate::{ConfigUpdates, VaultInstantiateConfig},
         query::{
             CoinBalanceResponseItem, ConfigResponse, DebtShares, LentShares, Positions,
-            SharesResponseItem, VaultInfoResponse as RoverVaultInfoResponse,
-            VaultPositionResponseItem, VaultWithBalance,
+            SharesResponseItem, VaultConfigResponse, VaultPositionResponseItem,
+            VaultUtilizationResponse, VaultWithBalance,
         },
         zapper::{
             InstantiateMsg as ZapperInstantiateMsg, LpConfig, QueryMsg::EstimateProvideLiquidity,
@@ -284,10 +284,10 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_vault_config(&self, vault: &VaultUnchecked) -> StdResult<RoverVaultInfoResponse> {
+    pub fn query_vault_config(&self, vault: &VaultUnchecked) -> StdResult<VaultConfigResponse> {
         self.app.wrap().query_wasm_smart(
             self.rover.clone(),
-            &QueryMsg::VaultInfo {
+            &QueryMsg::VaultConfig {
                 vault: vault.clone(),
             },
         )
@@ -297,17 +297,29 @@ impl MockEnv {
         &self,
         start_after: Option<VaultUnchecked>,
         limit: Option<u32>,
-    ) -> Vec<RoverVaultInfoResponse> {
+    ) -> Vec<VaultConfigResponse> {
         self.app
             .wrap()
             .query_wasm_smart(
                 self.rover.clone(),
-                &QueryMsg::VaultsInfo {
+                &QueryMsg::VaultsConfig {
                     start_after,
                     limit,
                 },
             )
             .unwrap()
+    }
+
+    pub fn query_vault_utilization(
+        &self,
+        vault: &VaultUnchecked,
+    ) -> StdResult<VaultUtilizationResponse> {
+        self.app.wrap().query_wasm_smart(
+            self.rover.clone(),
+            &QueryMsg::VaultUtilization {
+                vault: vault.clone(),
+            },
+        )
     }
 
     pub fn get_vault(&self, vault: &VaultTestInfo) -> VaultUnchecked {

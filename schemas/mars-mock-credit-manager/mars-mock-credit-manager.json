@@ -359,10 +359,10 @@
         "description": "Config & deposit caps on vault",
         "type": "object",
         "required": [
-          "vault_info"
+          "vault_config"
         ],
         "properties": {
-          "vault_info": {
+          "vault_config": {
             "type": "object",
             "required": [
               "vault"
@@ -381,10 +381,10 @@
         "description": "Configs & deposit caps on all vaults",
         "type": "object",
         "required": [
-          "vaults_info"
+          "vaults_config"
         ],
         "properties": {
-          "vaults_info": {
+          "vaults_config": {
             "type": "object",
             "properties": {
               "limit": {
@@ -404,6 +404,28 @@
                     "type": "null"
                   }
                 ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "The amount the vault has been utilized, denominated in the same denom set in the vault config's deposit cap",
+        "type": "object",
+        "required": [
+          "vault_utilization"
+        ],
+        "properties": {
+          "vault_utilization": {
+            "type": "object",
+            "required": [
+              "vault"
+            ],
+            "properties": {
+              "vault": {
+                "$ref": "#/definitions/VaultBase_for_String"
               }
             },
             "additionalProperties": false
@@ -1742,26 +1764,17 @@
       "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
       "type": "string"
     },
-    "vault_info": {
+    "vault_config": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "VaultInfoResponse",
+      "title": "VaultConfigResponse",
       "type": "object",
       "required": [
         "config",
-        "utilization",
         "vault"
       ],
       "properties": {
         "config": {
           "$ref": "#/definitions/VaultConfig"
-        },
-        "utilization": {
-          "description": "The amount the vault has been utilized, denominated in the same denom set in the vault config's deposit cap",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Coin"
-            }
-          ]
         },
         "vault": {
           "$ref": "#/definitions/VaultBase_for_String"
@@ -1884,12 +1897,63 @@
         }
       }
     },
-    "vaults_info": {
+    "vault_utilization": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Array_of_VaultInfoResponse",
+      "title": "VaultUtilizationResponse",
+      "type": "object",
+      "required": [
+        "utilization",
+        "vault"
+      ],
+      "properties": {
+        "utilization": {
+          "$ref": "#/definitions/Coin"
+        },
+        "vault": {
+          "$ref": "#/definitions/VaultBase_for_String"
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Coin": {
+          "type": "object",
+          "required": [
+            "amount",
+            "denom"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "denom": {
+              "type": "string"
+            }
+          }
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        },
+        "VaultBase_for_String": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "vaults_config": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_VaultConfigResponse",
       "type": "array",
       "items": {
-        "$ref": "#/definitions/VaultInfoResponse"
+        "$ref": "#/definitions/VaultConfigResponse"
       },
       "definitions": {
         "Coin": {
@@ -1951,24 +2015,15 @@
           },
           "additionalProperties": false
         },
-        "VaultInfoResponse": {
+        "VaultConfigResponse": {
           "type": "object",
           "required": [
             "config",
-            "utilization",
             "vault"
           ],
           "properties": {
             "config": {
               "$ref": "#/definitions/VaultConfig"
-            },
-            "utilization": {
-              "description": "The amount the vault has been utilized, denominated in the same denom set in the vault config's deposit cap",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Coin"
-                }
-              ]
             },
             "vault": {
               "$ref": "#/definitions/VaultBase_for_String"

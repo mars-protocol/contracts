@@ -13,7 +13,7 @@ use mars_rover::{
     error::ContractError::InvalidConfig,
     msg::{
         instantiate::{ConfigUpdates, VaultInstantiateConfig},
-        query::VaultInfoResponse,
+        query::VaultConfigResponse,
     },
 };
 
@@ -182,10 +182,9 @@ fn update_config_works_with_full_config() {
         new_queried_vault_configs,
         new_vault_configs
             .iter()
-            .map(|v| VaultInfoResponse {
+            .map(|v| VaultConfigResponse {
                 vault: v.vault.clone(),
                 config: v.config.clone(),
-                utilization: coin(0, "uusdc"),
             })
             .collect::<Vec<_>>()
     );

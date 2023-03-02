@@ -44,10 +44,11 @@ import {
   ArrayOfString,
   ConfigResponse,
   ArrayOfCoin,
-  VaultInfoResponse,
+  VaultConfigResponse,
   VaultPositionValue,
   CoinValue,
-  ArrayOfVaultInfoResponse,
+  VaultUtilizationResponse,
+  ArrayOfVaultConfigResponse,
 } from './MarsMockCreditManager.types'
 export interface MarsMockCreditManagerMessage {
   contractAddress: string

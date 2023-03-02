@@ -58,10 +58,11 @@ import {
   Positions,
   DebtAmount,
   LentAmount,
-  VaultInfoResponse,
+  VaultConfigResponse,
   VaultPositionValue,
   CoinValue,
-  ArrayOfVaultInfoResponse,
+  VaultUtilizationResponse,
+  ArrayOfVaultConfigResponse,
 } from './MarsCreditManager.types'
 export interface MarsCreditManagerMessage {
   contractAddress: string

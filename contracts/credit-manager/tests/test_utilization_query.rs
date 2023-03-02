@@ -1,8 +1,11 @@
 use cosmwasm_std::{Addr, Decimal, Uint128};
-use mars_rover::msg::execute::{
-    Action::{Deposit, EnterVault},
-    ActionAmount::Exact,
-    ActionCoin,
+use mars_rover::{
+    adapters::vault::VaultUnchecked,
+    msg::execute::{
+        Action::{Deposit, EnterVault},
+        ActionAmount::Exact,
+        ActionCoin,
+    },
 };
 
 use crate::helpers::{
@@ -12,13 +15,21 @@ use crate::helpers::{
 pub mod helpers;
 
 #[test]
+fn raises_if_vault_not_found() {
+    let mock = MockEnv::new().build().unwrap();
+    mock.query_vault_utilization(&VaultUnchecked::new("some_vault".to_string())).unwrap_err();
+}
+
+#[test]
 fn utilization_is_zero() {
-    let mock = MockEnv::new().vault_configs(&[unlocked_vault_info()]).build().unwrap();
-    let vault_infos = mock.query_vault_configs(None, None);
-    assert_eq!(1, vault_infos.len());
-    let vault = vault_infos.first().unwrap();
-    assert_eq!(Uint128::zero(), vault.utilization.amount);
-    assert_eq!(vault.config.deposit_cap.denom, vault.utilization.denom);
+    let leverage_vault = unlocked_vault_info();
+    let mock = MockEnv::new().vault_configs(&[leverage_vault.clone()]).build().unwrap();
+
+    let vault = mock.get_vault(&leverage_vault);
+    let res = mock.query_vault_utilization(&vault).unwrap();
+
+    assert_eq!(Uint128::zero(), res.utilization.amount);
+    assert_eq!(leverage_vault.deposit_cap.denom, res.utilization.denom);
 }
 
 #[test]
@@ -61,7 +72,7 @@ fn utilization_if_cap_is_base_denom() {
         vec![
             Deposit(base_info.to_coin(50)),
             EnterVault {
-                vault,
+                vault: vault.clone(),
                 coin: ActionCoin {
                     denom: base_info.denom.clone(),
                     amount: Exact(Uint128::new(50)),
@@ -72,10 +83,9 @@ fn utilization_if_cap_is_base_denom() {
     )
     .unwrap();
 
-    let vault_infos = mock.query_vault_configs(None, None);
-    let vault = vault_infos.first().unwrap();
-    assert_eq!(vault.config.deposit_cap.denom, vault.utilization.denom);
-    assert_eq!(Uint128::new(50), vault.utilization.amount);
+    let res = mock.query_vault_utilization(&vault).unwrap();
+    assert_eq!(leverage_vault.deposit_cap.denom, res.utilization.denom);
+    assert_eq!(Uint128::new(50), res.utilization.amount);
 }
 
 /*
@@ -120,7 +130,7 @@ fn utilization_in_other_denom() {
         vec![
             Deposit(jake_info.to_coin(1_000_000)),
             EnterVault {
-                vault,
+                vault: vault.clone(),
                 coin: ActionCoin {
                     denom: jake_info.denom.clone(),
                     amount: Exact(Uint128::new(1_000_000)),
@@ -131,8 +141,7 @@ fn utilization_in_other_denom() {
     )
     .unwrap();
 
-    let vault_infos = mock.query_vault_configs(None, None);
-    let vault = vault_infos.first().unwrap();
-    assert_eq!(vault.config.deposit_cap.denom, vault.utilization.denom);
-    assert_eq!(Uint128::new(9461600), vault.utilization.amount);
+    let res = mock.query_vault_utilization(&vault).unwrap();
+    assert_eq!(leverage_vault.deposit_cap.denom, res.utilization.denom);
+    assert_eq!(Uint128::new(9461600), res.utilization.amount);
 }

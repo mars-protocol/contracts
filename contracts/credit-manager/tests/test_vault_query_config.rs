@@ -56,7 +56,6 @@ fn successfully_queries_with_utilization() {
 
     let res = mock.query_vault_config(&vault).unwrap();
     assert_eq!(res.vault, vault);
-    assert!(!res.utilization.amount.is_zero());
     assert_eq!(res.config.deposit_cap, leverage_vault.deposit_cap);
     assert_eq!(res.config.max_ltv, leverage_vault.max_ltv);
     assert_eq!(res.config.liquidation_threshold, leverage_vault.liquidation_threshold);

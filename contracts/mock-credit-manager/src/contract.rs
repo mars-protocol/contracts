@@ -6,7 +6,7 @@ use mars_rover::msg::QueryMsg;
 use crate::{
     execute::{set_allowed_coins, set_position_response, set_vault_config},
     msg::{ExecuteMsg, InstantiateMsg},
-    query::{query_allowed_coins, query_config, query_positions, query_vault_info},
+    query::{query_allowed_coins, query_config, query_positions, query_vault_config},
     state::{ALLOWED_COINS, CONFIG},
 };
 
@@ -52,9 +52,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::AllowedCoins {
             ..
         } => to_binary(&query_allowed_coins(deps)?),
-        QueryMsg::VaultInfo {
+        QueryMsg::VaultConfig {
             vault,
-        } => to_binary(&query_vault_info(deps, vault)?),
+        } => to_binary(&query_vault_config(deps, vault)?),
         _ => unimplemented!("query msg not supported"),
     }
 }

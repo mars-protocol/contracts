@@ -14,8 +14,8 @@ use mars_red_bank_types::red_bank::{ExecuteMsg::UpdateAsset, InitOrUpdateAssetPa
 use mars_rover::{
     adapters::vault::VaultUnchecked,
     msg::{
-        query::{Positions, VaultInfoResponse as CmVaultConfig},
-        QueryMsg::VaultInfo,
+        query::{Positions, VaultConfigResponse as CmVaultConfig},
+        QueryMsg::VaultConfig,
     },
 };
 use mars_rover_health_types::{ConfigResponse, ExecuteMsg::UpdateConfig, HealthResponse, QueryMsg};
@@ -68,7 +68,7 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 self.cm_contract.clone(),
-                &VaultInfo {
+                &VaultConfig {
                     vault: vault.clone(),
                 },
             )

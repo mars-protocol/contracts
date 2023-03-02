@@ -13,15 +13,21 @@ pub enum QueryMsg {
     #[returns(ConfigResponse)]
     Config {},
     /// Config & deposit caps on vault
-    #[returns(VaultInfoResponse)]
-    VaultInfo {
+    #[returns(VaultConfigResponse)]
+    VaultConfig {
         vault: VaultUnchecked,
     },
     /// Configs & deposit caps on all vaults
-    #[returns(Vec<VaultInfoResponse>)]
-    VaultsInfo {
+    #[returns(Vec<VaultConfigResponse>)]
+    VaultsConfig {
         start_after: Option<VaultUnchecked>,
         limit: Option<u32>,
+    },
+    /// The amount the vault has been utilized,
+    /// denominated in the same denom set in the vault config's deposit cap
+    #[returns(VaultUtilizationResponse)]
+    VaultUtilization {
+        vault: VaultUnchecked,
     },
     /// Whitelisted coins
     #[returns(Vec<String>)]
@@ -108,11 +114,14 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
-pub struct VaultInfoResponse {
+pub struct VaultConfigResponse {
     pub vault: VaultUnchecked,
     pub config: VaultConfig,
-    /// The amount the vault has been utilized,
-    /// denominated in the same denom set in the vault config's deposit cap
+}
+
+#[cw_serde]
+pub struct VaultUtilizationResponse {
+    pub vault: VaultUnchecked,
     pub utilization: Coin,
 }
 

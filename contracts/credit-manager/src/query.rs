@@ -6,8 +6,8 @@ use mars_rover::{
     error::ContractResult,
     msg::query::{
         CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, LentAmount, LentShares,
-        Positions, SharesResponseItem, VaultInfoResponse, VaultPositionResponseItem,
-        VaultWithBalance,
+        Positions, SharesResponseItem, VaultConfigResponse, VaultPositionResponseItem,
+        VaultUtilizationResponse, VaultWithBalance,
     },
 };
 
@@ -146,26 +146,23 @@ pub fn query_all_lent_shares(
     })
 }
 
-pub fn query_vault_info(
+pub fn query_vault_config(
     deps: Deps,
-    env: Env,
     unchecked: VaultUnchecked,
-) -> ContractResult<VaultInfoResponse> {
+) -> ContractResult<VaultConfigResponse> {
     let vault = unchecked.check(deps.api)?;
     let config = VAULT_CONFIGS.load(deps.storage, &vault.address)?;
-    Ok(VaultInfoResponse {
+    Ok(VaultConfigResponse {
         config,
-        utilization: vault_utilization_in_deposit_cap_denom(&deps, &vault, &env.contract.address)?,
         vault: vault.into(),
     })
 }
 
-pub fn query_vaults_info(
+pub fn query_vaults_config(
     deps: Deps,
-    env: Env,
     start_after: Option<VaultUnchecked>,
     limit: Option<u32>,
-) -> ContractResult<Vec<VaultInfoResponse>> {
+) -> ContractResult<Vec<VaultConfigResponse>> {
     let vault: Vault;
     let start = match &start_after {
         Some(unchecked) => {
@@ -176,15 +173,22 @@ pub fn query_vaults_info(
     };
     paginate_map(&VAULT_CONFIGS, deps.storage, start, limit, |addr, config| {
         let vault = VaultBase::new(addr);
-        Ok(VaultInfoResponse {
+        Ok(VaultConfigResponse {
             config,
-            utilization: vault_utilization_in_deposit_cap_denom(
-                &deps,
-                &vault,
-                &env.contract.address,
-            )?,
             vault: vault.into(),
         })
+    })
+}
+
+pub fn query_vault_utilization(
+    deps: Deps,
+    env: Env,
+    unchecked: VaultUnchecked,
+) -> ContractResult<VaultUtilizationResponse> {
+    let vault = unchecked.check(deps.api)?;
+    Ok(VaultUtilizationResponse {
+        vault: vault.clone().into(),
+        utilization: vault_utilization_in_deposit_cap_denom(&deps, &vault, &env.contract.address)?,
     })
 }
 

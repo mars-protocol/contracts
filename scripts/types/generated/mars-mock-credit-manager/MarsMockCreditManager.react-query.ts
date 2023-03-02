@@ -44,10 +44,11 @@ import {
   ArrayOfString,
   ConfigResponse,
   ArrayOfCoin,
-  VaultInfoResponse,
+  VaultConfigResponse,
   VaultPositionValue,
   CoinValue,
-  ArrayOfVaultInfoResponse,
+  VaultUtilizationResponse,
+  ArrayOfVaultConfigResponse,
 } from './MarsMockCreditManager.types'
 import {
   MarsMockCreditManagerQueryClient,
@@ -65,15 +66,27 @@ export const marsMockCreditManagerQueryKeys = {
     [
       { ...marsMockCreditManagerQueryKeys.address(contractAddress)[0], method: 'config', args },
     ] as const,
-  vaultInfo: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
-    [
-      { ...marsMockCreditManagerQueryKeys.address(contractAddress)[0], method: 'vault_info', args },
-    ] as const,
-  vaultsInfo: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+  vaultConfig: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       {
         ...marsMockCreditManagerQueryKeys.address(contractAddress)[0],
-        method: 'vaults_info',
+        method: 'vault_config',
+        args,
+      },
+    ] as const,
+  vaultsConfig: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      {
+        ...marsMockCreditManagerQueryKeys.address(contractAddress)[0],
+        method: 'vaults_config',
+        args,
+      },
+    ] as const,
+  vaultUtilization: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      {
+        ...marsMockCreditManagerQueryKeys.address(contractAddress)[0],
+        method: 'vault_utilization',
         args,
       },
     ] as const,
@@ -531,23 +544,45 @@ export function useMarsMockCreditManagerAllowedCoinsQuery<TData = ArrayOfString>
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsMockCreditManagerVaultsInfoQuery<TData>
-  extends MarsMockCreditManagerReactQuery<ArrayOfVaultInfoResponse, TData> {
+export interface MarsMockCreditManagerVaultUtilizationQuery<TData>
+  extends MarsMockCreditManagerReactQuery<VaultUtilizationResponse, TData> {
+  args: {
+    vault: VaultBaseForString
+  }
+}
+export function useMarsMockCreditManagerVaultUtilizationQuery<TData = VaultUtilizationResponse>({
+  client,
+  args,
+  options,
+}: MarsMockCreditManagerVaultUtilizationQuery<TData>) {
+  return useQuery<VaultUtilizationResponse, Error, TData>(
+    marsMockCreditManagerQueryKeys.vaultUtilization(client?.contractAddress, args),
+    () =>
+      client
+        ? client.vaultUtilization({
+            vault: args.vault,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsMockCreditManagerVaultsConfigQuery<TData>
+  extends MarsMockCreditManagerReactQuery<ArrayOfVaultConfigResponse, TData> {
   args: {
     limit?: number
     startAfter?: VaultBaseForString
   }
 }
-export function useMarsMockCreditManagerVaultsInfoQuery<TData = ArrayOfVaultInfoResponse>({
+export function useMarsMockCreditManagerVaultsConfigQuery<TData = ArrayOfVaultConfigResponse>({
   client,
   args,
   options,
-}: MarsMockCreditManagerVaultsInfoQuery<TData>) {
-  return useQuery<ArrayOfVaultInfoResponse, Error, TData>(
-    marsMockCreditManagerQueryKeys.vaultsInfo(client?.contractAddress, args),
+}: MarsMockCreditManagerVaultsConfigQuery<TData>) {
+  return useQuery<ArrayOfVaultConfigResponse, Error, TData>(
+    marsMockCreditManagerQueryKeys.vaultsConfig(client?.contractAddress, args),
     () =>
       client
-        ? client.vaultsInfo({
+        ? client.vaultsConfig({
             limit: args.limit,
             startAfter: args.startAfter,
           })
@@ -555,22 +590,22 @@ export function useMarsMockCreditManagerVaultsInfoQuery<TData = ArrayOfVaultInfo
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsMockCreditManagerVaultInfoQuery<TData>
-  extends MarsMockCreditManagerReactQuery<VaultInfoResponse, TData> {
+export interface MarsMockCreditManagerVaultConfigQuery<TData>
+  extends MarsMockCreditManagerReactQuery<VaultConfigResponse, TData> {
   args: {
     vault: VaultBaseForString
   }
 }
-export function useMarsMockCreditManagerVaultInfoQuery<TData = VaultInfoResponse>({
+export function useMarsMockCreditManagerVaultConfigQuery<TData = VaultConfigResponse>({
   client,
   args,
   options,
-}: MarsMockCreditManagerVaultInfoQuery<TData>) {
-  return useQuery<VaultInfoResponse, Error, TData>(
-    marsMockCreditManagerQueryKeys.vaultInfo(client?.contractAddress, args),
+}: MarsMockCreditManagerVaultConfigQuery<TData>) {
+  return useQuery<VaultConfigResponse, Error, TData>(
+    marsMockCreditManagerQueryKeys.vaultConfig(client?.contractAddress, args),
     () =>
       client
-        ? client.vaultInfo({
+        ? client.vaultConfig({
             vault: args.vault,
           })
         : Promise.reject(new Error('Invalid client')),

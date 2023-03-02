@@ -81,8 +81,8 @@ export class DataFetcher {
         const values = await cmQuery.vaultPositionValue({ vaultPosition: v })
         vaultsData.vault_values[v.vault.address] = values
 
-        const info = await cmQuery.vaultInfo({ vault: v.vault })
-        vaultsData.vault_configs[v.vault.address] = info.config
+        const res = await cmQuery.vaultConfig({ vault: v.vault })
+        vaultsData.vault_configs[v.vault.address] = res.config
       }),
     )
     return vaultsData

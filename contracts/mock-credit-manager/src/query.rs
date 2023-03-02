@@ -1,7 +1,7 @@
-use cosmwasm_std::{coin, Deps, StdResult};
+use cosmwasm_std::{Deps, StdResult};
 use mars_rover::{
     adapters::vault::VaultUnchecked,
-    msg::query::{ConfigResponse, Positions, VaultInfoResponse},
+    msg::query::{ConfigResponse, Positions, VaultConfigResponse},
 };
 
 use crate::state::{ALLOWED_COINS, CONFIG, POSITION_RESPONSES, VAULT_CONFIGS};
@@ -18,12 +18,11 @@ pub fn query_allowed_coins(deps: Deps) -> StdResult<Vec<String>> {
     ALLOWED_COINS.load(deps.storage)
 }
 
-pub fn query_vault_info(deps: Deps, vault: VaultUnchecked) -> StdResult<VaultInfoResponse> {
+pub fn query_vault_config(deps: Deps, vault: VaultUnchecked) -> StdResult<VaultConfigResponse> {
     let validated = deps.api.addr_validate(&vault.address)?;
     let config = VAULT_CONFIGS.load(deps.storage, &validated)?;
-    Ok(VaultInfoResponse {
+    Ok(VaultConfigResponse {
         config,
-        utilization: coin(1000000, "uusdc"),
         vault: VaultUnchecked::new(validated.to_string()),
     })
 }
