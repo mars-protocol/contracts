@@ -12,12 +12,14 @@ use osmosis_std::types::osmosis::{
     gamm::v2::QuerySpotPriceResponse,
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
+use pyth_sdk_cw::{PriceFeedResponse, PriceIdentifier};
 
 use crate::{
     incentives_querier::IncentivesQuerier,
     mock_address_provider,
     oracle_querier::OracleQuerier,
     osmosis_querier::{OsmosisQuerier, PriceKey},
+    pyth_querier::PythQuerier,
     red_bank_querier::RedBankQuerier,
 };
 
@@ -26,6 +28,7 @@ pub struct MarsMockQuerier {
     oracle_querier: OracleQuerier,
     incentives_querier: IncentivesQuerier,
     osmosis_querier: OsmosisQuerier,
+    pyth_querier: PythQuerier,
     redbank_querier: RedBankQuerier,
 }
 
@@ -52,6 +55,7 @@ impl MarsMockQuerier {
             oracle_querier: OracleQuerier::default(),
             incentives_querier: IncentivesQuerier::default(),
             osmosis_querier: OsmosisQuerier::default(),
+            pyth_querier: PythQuerier::default(),
             redbank_querier: RedBankQuerier::default(),
         }
     }
@@ -134,6 +138,10 @@ impl MarsMockQuerier {
         );
     }
 
+    pub fn set_pyth_price(&mut self, id: PriceIdentifier, price: PriceFeedResponse) {
+        self.pyth_querier.prices.insert(id, price);
+    }
+
     pub fn set_redbank_market(&mut self, market: red_bank::Market) {
         self.redbank_querier.markets.insert(market.denom.clone(), market);
     }
@@ -184,6 +192,11 @@ impl MarsMockQuerier {
                 let parse_incentives_query: StdResult<incentives::QueryMsg> = from_binary(msg);
                 if let Ok(incentives_query) = parse_incentives_query {
                     return self.incentives_querier.handle_query(&contract_addr, incentives_query);
+                }
+
+                // Pyth Queries
+                if let Ok(pyth_query) = from_binary::<pyth_sdk_cw::QueryMsg>(msg) {
+                    return self.pyth_querier.handle_query(&contract_addr, pyth_query);
                 }
 
                 // RedBank Queries

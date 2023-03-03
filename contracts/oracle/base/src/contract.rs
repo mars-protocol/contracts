@@ -8,9 +8,9 @@ use cw_storage_plus::{Bound, Item, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_red_bank_types::oracle::{
     Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
-    QueryMsg,
+    PythConfig, QueryMsg,
 };
-use mars_utils::helpers::validate_native_denom;
+use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
 
 use crate::{error::ContractResult, PriceSource};
 
@@ -26,6 +26,8 @@ where
     pub owner: Owner<'a>,
     /// The contract's config
     pub config: Item<'a, Config>,
+    /// Pyth config
+    pub pyth_config: Item<'a, PythConfig>,
     /// The price source of each coin denom
     pub price_sources: Map<'a, &'a str, P>,
     /// Phantom data holds the custom query type
@@ -41,6 +43,7 @@ where
         Self {
             owner: Owner::new("owner"),
             config: Item::new("config"),
+            pyth_config: Item::new("pyth_config"),
             price_sources: Map::new("price_sources"),
             custom_query: PhantomData,
         }
@@ -70,6 +73,13 @@ where
             },
         )?;
 
+        self.pyth_config.save(
+            deps.storage,
+            &PythConfig {
+                pyth_contract_addr: deps.api.addr_validate(&msg.pyth_contract_addr)?,
+            },
+        )?;
+
         Ok(Response::default())
     }
 
@@ -88,6 +98,10 @@ where
             ExecuteMsg::RemovePriceSource {
                 denom,
             } => self.remove_price_source(deps, info.sender, denom),
+            ExecuteMsg::UpdateConfig {
+                base_denom,
+                pyth_contract_addr,
+            } => self.update_config(deps, info.sender, base_denom, pyth_contract_addr),
         }
     }
 
@@ -157,13 +171,49 @@ where
             .add_attribute("denom", denom))
     }
 
+    fn update_config(
+        &self,
+        deps: DepsMut<C>,
+        sender_addr: Addr,
+        base_denom: Option<String>,
+        pyth_contract_addr: Option<String>,
+    ) -> ContractResult<Response> {
+        self.owner.assert_owner(deps.storage, &sender_addr)?;
+
+        if let Some(bd) = &base_denom {
+            validate_native_denom(bd)?;
+        };
+
+        let mut config = self.config.load(deps.storage)?;
+        let prev_base_denom = config.base_denom.clone();
+        config.base_denom = base_denom.unwrap_or(config.base_denom);
+        self.config.save(deps.storage, &config)?;
+
+        let mut pyth_cfg = self.pyth_config.load(deps.storage)?;
+        let prev_pyth_contract_addr = pyth_cfg.pyth_contract_addr.clone();
+        pyth_cfg.pyth_contract_addr =
+            option_string_to_addr(deps.api, pyth_contract_addr, pyth_cfg.pyth_contract_addr)?;
+        self.pyth_config.save(deps.storage, &pyth_cfg)?;
+
+        let response = Response::new()
+            .add_attribute("action", "update_config")
+            .add_attribute("prev_base_denom", prev_base_denom)
+            .add_attribute("base_denom", config.base_denom)
+            .add_attribute("prev_pyth_contract_addr", prev_pyth_contract_addr)
+            .add_attribute("pyth_contract_addr", pyth_cfg.pyth_contract_addr);
+
+        Ok(response)
+    }
+
     fn query_config(&self, deps: Deps<C>) -> StdResult<ConfigResponse> {
         let owner_state = self.owner.query(deps.storage)?;
         let cfg = self.config.load(deps.storage)?;
+        let pyth_cfg = self.pyth_config.load(deps.storage)?;
         Ok(ConfigResponse {
             owner: owner_state.owner,
             proposed_new_owner: owner_state.proposed,
             base_denom: cfg.base_denom,
+            pyth_contract_addr: pyth_cfg.pyth_contract_addr.to_string(),
         })
     }
 
@@ -202,6 +252,7 @@ where
 
     fn query_price(&self, deps: Deps<C>, env: Env, denom: String) -> ContractResult<PriceResponse> {
         let cfg = self.config.load(deps.storage)?;
+        let pyth_cfg = self.pyth_config.load(deps.storage)?;
         let price_source = self.price_sources.load(deps.storage, &denom)?;
         Ok(PriceResponse {
             price: price_source.query_price(
@@ -210,6 +261,7 @@ where
                 &denom,
                 &cfg.base_denom,
                 &self.price_sources,
+                &pyth_cfg,
             )?,
             denom,
         })
@@ -223,6 +275,7 @@ where
         limit: Option<u32>,
     ) -> ContractResult<Vec<PriceResponse>> {
         let cfg = self.config.load(deps.storage)?;
+        let pyth_cfg = self.pyth_config.load(deps.storage)?;
 
         let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
         let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
@@ -233,7 +286,14 @@ where
             .map(|item| {
                 let (k, v) = item?;
                 Ok(PriceResponse {
-                    price: v.query_price(&deps, &env, &k, &cfg.base_denom, &self.price_sources)?,
+                    price: v.query_price(
+                        &deps,
+                        &env,
+                        &k,
+                        &cfg.base_denom,
+                        &self.price_sources,
+                        &pyth_cfg,
+                    )?,
                     denom: k,
                 })
             })

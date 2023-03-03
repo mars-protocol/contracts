@@ -8,6 +8,7 @@
 export interface InstantiateMsg {
   base_denom: string
   owner: string
+  pyth_contract_addr: string
 }
 export type ExecuteMsg =
   | {
@@ -23,6 +24,12 @@ export type ExecuteMsg =
     }
   | {
       update_owner: OwnerUpdate
+    }
+  | {
+      update_config: {
+        base_denom?: string | null
+        pyth_contract_addr?: string | null
+      }
     }
 export type OsmosisPriceSource =
   | {
@@ -68,6 +75,15 @@ export type OsmosisPriceSource =
         [k: string]: unknown
       }
     }
+  | {
+      pyth: {
+        max_confidence: Decimal
+        max_deviation: Decimal
+        max_staleness: number
+        price_feed_id: Identifier
+        [k: string]: unknown
+      }
+    }
 export type Decimal = string
 export type Downtime =
   | 'duration30s'
@@ -95,6 +111,7 @@ export type Downtime =
   | 'duration24h'
   | 'duration36h'
   | 'duration48h'
+export type Identifier = string
 export type OwnerUpdate =
   | {
       propose_new_owner: {
@@ -139,6 +156,7 @@ export interface ConfigResponse {
   base_denom: string
   owner?: string | null
   proposed_new_owner?: string | null
+  pyth_contract_addr: string
 }
 export interface PriceResponse {
   denom: string

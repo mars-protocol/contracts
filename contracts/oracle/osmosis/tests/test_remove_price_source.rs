@@ -13,7 +13,7 @@ mod helpers;
 
 #[test]
 fn remove_price_source_by_non_owner() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let err = execute(
         deps.as_mut(),
@@ -29,7 +29,7 @@ fn remove_price_source_by_non_owner() {
 
 #[test]
 fn removing_price_source() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     helpers::set_price_source(
         deps.as_mut(),

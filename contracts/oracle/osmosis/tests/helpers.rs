@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use cosmwasm_std::{
     coin, from_binary,
     testing::{mock_env, MockApi, MockQuerier, MockStorage},
-    Coin, Deps, DepsMut, OwnedDeps,
+    Coin, Decimal, Deps, DepsMut, OwnedDeps,
 };
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSource};
@@ -13,14 +13,10 @@ use mars_osmosis::helpers::{Pool, QueryPoolResponse};
 use mars_red_bank_types::oracle::{InstantiateMsg, QueryMsg};
 use mars_testing::{mock_info, MarsMockQuerier};
 use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
+use pyth_sdk_cw::PriceIdentifier;
 
-pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
-    let mut deps = OwnedDeps::<_, _, _> {
-        storage: MockStorage::default(),
-        api: MockApi::default(),
-        querier: MarsMockQuerier::new(MockQuerier::new(&[])),
-        custom_query_type: PhantomData,
-    };
+pub fn setup_test_with_pools() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
+    let mut deps = setup_test();
 
     // set a few osmosis pools
     let assets = vec![coin(42069, "uatom"), coin(69420, "uosmo")];
@@ -75,6 +71,17 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
         ),
     );
 
+    deps
+}
+
+pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
+    let mut deps = OwnedDeps::<_, _, _> {
+        storage: MockStorage::default(),
+        api: MockApi::default(),
+        querier: MarsMockQuerier::new(MockQuerier::new(&[])),
+        custom_query_type: PhantomData,
+    };
+
     // instantiate the oracle contract
     entry::instantiate(
         deps.as_mut(),
@@ -83,6 +90,7 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "uosmo".to_string(),
+            pyth_contract_addr: "pyth_contract".to_string(),
         },
     )
     .unwrap();
@@ -130,6 +138,19 @@ fn prepare_pool_assets(coins: &[Coin], weights: &[u64]) -> Vec<PoolAsset> {
             }
         })
         .collect()
+}
+
+pub fn set_pyth_price_source(deps: DepsMut, denom: &str, price_id: PriceIdentifier) {
+    set_price_source(
+        deps,
+        denom,
+        OsmosisPriceSource::Pyth {
+            price_feed_id: price_id,
+            max_staleness: 30,
+            max_confidence: Decimal::from_ratio(5u128, 100u128),
+            max_deviation: Decimal::from_ratio(6u128, 100u128),
+        },
+    )
 }
 
 pub fn set_price_source(deps: DepsMut, denom: &str, price_source: OsmosisPriceSource) {
