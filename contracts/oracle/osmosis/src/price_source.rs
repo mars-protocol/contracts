@@ -9,6 +9,8 @@ use mars_osmosis::helpers::{
     query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price,
     recovered_since_downtime_of_length, Pool,
 };
+use mars_red_bank_types::oracle::PythConfig;
+use pyth_sdk_cw::{query_price_feed, PriceIdentifier};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -149,6 +151,24 @@ pub enum OsmosisPriceSource {
         /// Detect when the chain is recovering from downtime
         downtime_detector: Option<DowntimeDetector>,
     },
+    Pyth {
+        /// Price feed id of an asset from the list: https://pyth.network/developers/price-feed-ids
+        price_feed_id: PriceIdentifier,
+
+        /// The maximum number of seconds since the last price was by an oracle, before
+        /// rejecting the price as too stale
+        max_staleness: u64,
+
+        /// The maximum confidence deviation allowed for an oracle price.
+        ///
+        /// The confidence is measured as the percent of the confidence interval
+        /// value provided by the oracle as compared to the weighted average value
+        /// of the price.
+        max_confidence: Decimal,
+
+        /// The maximum deviation (percentage) between current and EMA price
+        max_deviation: Decimal,
+    },
 }
 
 impl fmt::Display for OsmosisPriceSource {
@@ -187,6 +207,14 @@ impl fmt::Display for OsmosisPriceSource {
             } => {
                 let dd_fmt = DowntimeDetector::fmt(downtime_detector);
                 format!("staked_geometric_twap:{transitive_denom}:{pool_id}:{window_size}:{dd_fmt}")
+            }
+            OsmosisPriceSource::Pyth {
+                price_feed_id,
+                max_staleness,
+                max_confidence,
+                max_deviation,
+            } => {
+                format!("pyth:{price_feed_id}:{max_staleness}:{max_confidence}:{max_deviation}")
             }
         };
         write!(f, "{label}")
@@ -244,6 +272,11 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 helpers::assert_osmosis_pool_assets(&pool, denom, transitive_denom)?;
                 helpers::assert_osmosis_twap(*window_size, downtime_detector)
             }
+            OsmosisPriceSource::Pyth {
+                max_confidence,
+                max_deviation,
+                ..
+            } => helpers::assert_pyth(*max_confidence, *max_deviation),
         }
     }
 
@@ -254,6 +287,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
         denom: &str,
         base_denom: &str,
         price_sources: &Map<&str, Self>,
+        pyth_config: &PythConfig,
     ) -> ContractResult<Decimal> {
         match self {
             OsmosisPriceSource::Fixed {
@@ -292,6 +326,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 *pool_id,
                 base_denom,
                 price_sources,
+                pyth_config,
             ),
             OsmosisPriceSource::StakedGeometricTwap {
                 transitive_denom,
@@ -310,8 +345,23 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                     *pool_id,
                     *window_size,
                     price_sources,
+                    pyth_config,
                 )
             }
+            OsmosisPriceSource::Pyth {
+                price_feed_id,
+                max_staleness,
+                max_confidence,
+                max_deviation,
+            } => Ok(Self::query_pyth_price(
+                deps,
+                env,
+                *price_feed_id,
+                *max_staleness,
+                *max_confidence,
+                *max_deviation,
+                pyth_config,
+            )?),
         }
     }
 }
@@ -347,6 +397,7 @@ impl OsmosisPriceSource {
         pool_id: u64,
         base_denom: &str,
         price_sources: &Map<&str, Self>,
+        pyth_config: &PythConfig,
     ) -> ContractResult<Decimal> {
         // XYK pool asserted during price source creation
         let pool = query_pool(&deps.querier, pool_id)?;
@@ -360,6 +411,7 @@ impl OsmosisPriceSource {
             &coin0.denom,
             base_denom,
             price_sources,
+            pyth_config,
         )?;
         let coin1_price = price_sources.load(deps.storage, &coin1.denom)?.query_price(
             deps,
@@ -367,6 +419,7 @@ impl OsmosisPriceSource {
             &coin1.denom,
             base_denom,
             price_sources,
+            pyth_config,
         )?;
 
         let coin0_value = Uint256::from_uint128(coin0.amount) * Decimal256::from(coin0_price);
@@ -387,6 +440,7 @@ impl OsmosisPriceSource {
     /// where:
     /// - stAsset/Asset price calculated using the geometric TWAP from the stAsset/Asset pool.
     /// - Asset/OSMO price comes from the Mars Oracle contract.
+    #[allow(clippy::too_many_arguments)]
     fn query_staked_asset_price(
         deps: &Deps,
         env: &Env,
@@ -396,6 +450,7 @@ impl OsmosisPriceSource {
         pool_id: u64,
         window_size: u64,
         price_sources: &Map<&str, OsmosisPriceSource>,
+        pyth_config: &PythConfig,
     ) -> ContractResult<Decimal> {
         let start_time = env.block.time.seconds() - window_size;
         let staked_price = query_geometric_twap_price(
@@ -413,9 +468,103 @@ impl OsmosisPriceSource {
             transitive_denom,
             base_denom,
             price_sources,
+            pyth_config,
         )?;
 
         staked_price.checked_mul(transitive_price).map_err(Into::into)
+    }
+
+    fn query_pyth_price(
+        deps: &Deps,
+        env: &Env,
+        price_feed_id: PriceIdentifier,
+        max_staleness: u64,
+        max_confidence: Decimal,
+        max_deviation: Decimal,
+        pyth_config: &PythConfig,
+    ) -> ContractResult<Decimal> {
+        let current_time = env.block.time.seconds();
+
+        let price_feed_response =
+            query_price_feed(&deps.querier, pyth_config.pyth_contract_addr.clone(), price_feed_id)?;
+        let price_feed = price_feed_response.price_feed;
+
+        // Get the current price and confidence interval from the price feed
+        let current_price = price_feed.get_price_unchecked();
+
+        // Check if the current price is not too old
+        if (current_time - current_price.publish_time as u64) > max_staleness {
+            return Err(InvalidPrice {
+                reason: format!(
+                    "current price publish time is too old/stale. published: {}, now: {}",
+                    current_price.publish_time, current_time
+                ),
+            });
+        }
+
+        // Get an exponentially-weighted moving average price and confidence interval
+        let ema_price = price_feed.get_ema_price_unchecked();
+
+        // Check if the EMA price is not too old
+        if (current_time - ema_price.publish_time as u64) > max_staleness {
+            return Err(InvalidPrice {
+                reason: format!(
+                    "EMA price publish time is too old/stale. published: {}, now: {}",
+                    ema_price.publish_time, current_time
+                ),
+            });
+        }
+
+        // Check if the current and EMA price is > 0
+        if current_price.price <= 0 || ema_price.price <= 0 {
+            return Err(InvalidPrice {
+                reason: "price can't be <= 0".to_string(),
+            });
+        }
+
+        let current_price_dec = scale_to_exponent(current_price.price as u128, current_price.expo)?;
+        let ema_price_dec = scale_to_exponent(ema_price.price as u128, ema_price.expo)?;
+
+        // Check confidence deviation
+        let confidence = scale_to_exponent(current_price.conf as u128, current_price.expo)?;
+        let price_confidence = confidence.checked_div(ema_price_dec)?;
+        if price_confidence > max_confidence {
+            return Err(InvalidPrice {
+                reason: format!("price confidence deviation {price_confidence} exceeds max allowed {max_confidence}")
+            });
+        }
+
+        // Check price deviation
+        let delta = current_price_dec.abs_diff(ema_price_dec);
+        let price_deviation = delta.checked_div(ema_price_dec)?;
+        if price_deviation > max_deviation {
+            return Err(InvalidPrice {
+                reason: format!(
+                    "price deviation {price_deviation} exceeds max allowed {max_deviation}"
+                ),
+            });
+        }
+
+        Ok(current_price_dec)
+    }
+}
+
+/// Price feeds represent numbers in a fixed-point format.
+/// The same exponent is used for both the price and confidence interval.
+/// The integer representation of these values can be computed by multiplying by 10^exponent.
+///
+/// As an example, imagine Pyth reported the following values for ATOM/USD:
+/// expo:  -8
+/// conf:  574566
+/// price: 1365133270
+/// The confidence interval is 574566 * 10^(-8) = $0.00574566, and the price is 1365133270 * 10^(-8) = $13.6513327.
+fn scale_to_exponent(value: u128, expo: i32) -> ContractResult<Decimal> {
+    let target_expo = Uint128::from(10u8).checked_pow(expo.unsigned_abs())?;
+    if expo < 0 {
+        Ok(Decimal::checked_from_ratio(value, target_expo)?)
+    } else {
+        let res = Uint128::from(value).checked_mul(target_expo)?;
+        Ok(Decimal::from_ratio(res, 1u128))
     }
 }
 
@@ -519,5 +668,22 @@ mod tests {
             pool_id: 224,
         };
         assert_eq!(ps.to_string(), "xyk_liquidity_token:224")
+    }
+
+    #[test]
+    fn display_pyth_price_source() {
+        let ps = OsmosisPriceSource::Pyth {
+            price_feed_id: PriceIdentifier::from_hex(
+                "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+            )
+            .unwrap(),
+            max_staleness: 60,
+            max_confidence: Decimal::from_ratio(5u128, 100u128),
+            max_deviation: Decimal::from_ratio(6u128, 100u128),
+        };
+        assert_eq!(
+            ps.to_string(),
+            "pyth:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60:0.05:0.06"
+        )
     }
 }

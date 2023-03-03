@@ -14,6 +14,7 @@ import {
   OsmosisPriceSource,
   Decimal,
   Downtime,
+  Identifier,
   OwnerUpdate,
   DowntimeDetector,
   QueryMsg,
@@ -162,6 +163,30 @@ export function useMarsOracleOsmosisConfigQuery<TData = ConfigResponse>({
     marsOracleOsmosisQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsOracleOsmosisUpdateConfigMutation {
+  client: MarsOracleOsmosisClient
+  msg: {
+    baseDenom?: string
+    pythContractAddr?: string
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsOracleOsmosisUpdateConfigMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsOracleOsmosisUpdateConfigMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsOracleOsmosisUpdateConfigMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateConfig(msg, fee, memo, funds),
+    options,
   )
 }
 export interface MarsOracleOsmosisUpdateOwnerMutation {
