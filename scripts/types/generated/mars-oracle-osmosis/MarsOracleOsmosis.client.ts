@@ -13,6 +13,7 @@ import {
   OsmosisPriceSource,
   Decimal,
   Downtime,
+  Identifier,
   OwnerUpdate,
   DowntimeDetector,
   QueryMsg,
@@ -134,6 +135,18 @@ export interface MarsOracleOsmosisInterface extends MarsOracleOsmosisReadOnlyInt
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
+  updateConfig: (
+    {
+      baseDenom,
+      pythContractAddr,
+    }: {
+      baseDenom?: string
+      pythContractAddr?: string
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
 }
 export class MarsOracleOsmosisClient
   extends MarsOracleOsmosisQueryClient
@@ -151,6 +164,7 @@ export class MarsOracleOsmosisClient
     this.setPriceSource = this.setPriceSource.bind(this)
     this.removePriceSource = this.removePriceSource.bind(this)
     this.updateOwner = this.updateOwner.bind(this)
+    this.updateConfig = this.updateConfig.bind(this)
   }
 
   setPriceSource = async (
@@ -212,6 +226,32 @@ export class MarsOracleOsmosisClient
       this.contractAddress,
       {
         update_owner: {},
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  updateConfig = async (
+    {
+      baseDenom,
+      pythContractAddr,
+    }: {
+      baseDenom?: string
+      pythContractAddr?: string
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        update_config: {
+          base_denom: baseDenom,
+          pyth_contract_addr: pythContractAddr,
+        },
       },
       fee,
       memo,
