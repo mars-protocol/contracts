@@ -33,8 +33,9 @@ pub fn mint(
     Parent::default().mint(deps, env, info, mint_msg_override).map_err(Into::into)
 }
 
-/// Checks first to ensure the balance of debts and collateral does not exceed the config
-/// set amount. This is to ensure accounts are not accidentally deleted.
+/// A few checks to ensure accounts are not accidentally deleted:
+/// - Cannot burn if debt balance
+/// - Cannot burn if collateral exceeding config set amount
 pub fn burn(
     deps: DepsMut,
     env: Env,
@@ -53,12 +54,18 @@ pub fn burn(
         })?,
     }))?;
 
-    let current_balances =
-        response.total_debt_value.checked_add(response.total_collateral_value)?;
-    if current_balances > config.max_value_for_burn {
+    if !response.total_debt_value.is_zero() {
         return Err(BurnNotAllowed {
-            current_balances,
-            max_value_allowed: config.max_value_for_burn,
+            reason: format!("Account has a debt balance. Value: {}.", response.total_debt_value),
+        });
+    }
+
+    if response.total_collateral_value > config.max_value_for_burn {
+        return Err(BurnNotAllowed {
+            reason: format!(
+                "Account collateral value exceeds config set max ({}). Total collateral value: {}.",
+                config.max_value_for_burn, response.total_collateral_value
+            ),
         });
     }
 

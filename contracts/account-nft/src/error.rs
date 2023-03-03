@@ -1,4 +1,4 @@
-use cosmwasm_std::{OverflowError, StdError, Uint128};
+use cosmwasm_std::{OverflowError, StdError};
 use cw721_base::ContractError as Base721Error;
 use thiserror::Error;
 
@@ -13,12 +13,9 @@ pub enum ContractError {
     #[error("{0}")]
     Overflow(#[from] OverflowError),
 
-    #[error(
-        "Account balances too high. Collateral + Debts = {current_balances:?}. Max allowed is {max_value_allowed:?}"
-    )]
+    #[error("{reason:?}")]
     BurnNotAllowed {
-        current_balances: Uint128,
-        max_value_allowed: Uint128,
+        reason: String,
     },
 
     #[error("Health contract should be added to config before burns are allowed")]

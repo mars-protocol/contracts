@@ -20,8 +20,8 @@ pub fn generate_health_response(debt_value: u128, collateral_value: u128) -> Hea
 
 pub fn below_max_for_burn() -> HealthResponse {
     HealthResponse {
-        total_debt_value: MAX_VALUE_FOR_BURN.sub(Uint128::one()),
-        total_collateral_value: Default::default(),
+        total_debt_value: Default::default(),
+        total_collateral_value: MAX_VALUE_FOR_BURN.sub(Uint128::one()),
         max_ltv_adjusted_collateral: Default::default(),
         liquidation_threshold_adjusted_collateral: Default::default(),
         max_ltv_health_factor: None,

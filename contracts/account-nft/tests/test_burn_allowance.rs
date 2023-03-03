@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use cosmwasm_std::{Addr, Empty, StdResult, Uint128};
 use cw721::NftInfoResponse;
 use mars_account_nft::{
@@ -23,7 +25,7 @@ fn burn_not_allowed_if_no_health_contract_set() {
 }
 
 #[test]
-fn burn_not_allowed_if_too_many_debts() {
+fn burn_not_allowed_if_debt_balance() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let user = Addr::unchecked("user");
@@ -35,8 +37,7 @@ fn burn_not_allowed_if_too_many_debts() {
     assert_eq!(
         error,
         BurnNotAllowed {
-            current_balances: Uint128::new(10_000),
-            max_value_allowed: MAX_VALUE_FOR_BURN
+            reason: "Account has a debt balance. Value: 10000.".to_string(),
         }
     )
 }
@@ -47,34 +48,18 @@ fn burn_not_allowed_if_too_much_collateral() {
 
     let user = Addr::unchecked("user");
     let token_id = mock.mint(&user).unwrap();
-    mock.set_health_response(&user, &token_id, &generate_health_response(0, 10_000));
+    mock.set_health_response(
+        &user,
+        &token_id,
+        &generate_health_response(0, MAX_VALUE_FOR_BURN.add(Uint128::one()).into()),
+    );
 
     let res = mock.burn(&user, &token_id);
     let error: ContractError = res.unwrap_err().downcast().unwrap();
     assert_eq!(
         error,
         BurnNotAllowed {
-            current_balances: Uint128::new(10_000),
-            max_value_allowed: MAX_VALUE_FOR_BURN
-        }
-    )
-}
-
-#[test]
-fn burn_allowance_works_with_both_debt_and_collateral() {
-    let mut mock = MockEnv::new().build().unwrap();
-
-    let user = Addr::unchecked("user");
-    let token_id = mock.mint(&user).unwrap();
-    mock.set_health_response(&user, &token_id, &generate_health_response(501, 500));
-
-    let res = mock.burn(&user, &token_id);
-    let error: ContractError = res.unwrap_err().downcast().unwrap();
-    assert_eq!(
-        error,
-        BurnNotAllowed {
-            current_balances: Uint128::new(1_001),
-            max_value_allowed: MAX_VALUE_FOR_BURN
+            reason: "Account collateral value exceeds config set max (1000). Total collateral value: 1001.".to_string()
         }
     )
 }
@@ -85,7 +70,11 @@ fn burn_allowance_at_exactly_max() {
 
     let user = Addr::unchecked("user");
     let token_id = mock.mint(&user).unwrap();
-    mock.set_health_response(&user, &token_id, &generate_health_response(500, 500));
+    mock.set_health_response(
+        &user,
+        &token_id,
+        &generate_health_response(0, MAX_VALUE_FOR_BURN.into()),
+    );
 
     mock.burn(&user, &token_id).unwrap();
 }
@@ -96,7 +85,7 @@ fn burn_allowance_when_under_max() {
 
     let user = Addr::unchecked("user");
     let token_id = mock.mint(&user).unwrap();
-    mock.set_health_response(&user, &token_id, &generate_health_response(500, 500));
+    mock.set_health_response(&user, &token_id, &generate_health_response(0, 500));
 
     // Assert no errors on calling for NftInfo
     let _: NftInfoResponse<Empty> = mock
