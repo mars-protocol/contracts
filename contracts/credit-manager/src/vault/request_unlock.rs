@@ -93,5 +93,6 @@ pub fn handle_unlock_request_reply(deps: DepsMut, reply: Reply) -> ContractResul
         .add_attribute("action", "vault/unlock_request/handle_reply")
         .add_attribute("account_id", &storage.account_id)
         .add_attribute("vault_addr", storage.vault_addr.to_string())
-        .add_attribute("position_id", unlocking_position.id.to_string()))
+        .add_attribute("position_id", unlocking_position.id.to_string())
+        .add_attribute("position_amount", unlocking_position.base_token_amount))
 }
