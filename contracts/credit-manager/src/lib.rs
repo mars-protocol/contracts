@@ -8,6 +8,7 @@ pub mod instantiate;
 pub mod lend;
 pub mod liquidate_coin;
 pub mod query;
+pub mod reclaim;
 pub mod refund;
 pub mod repay;
 pub mod state;

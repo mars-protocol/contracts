@@ -88,6 +88,9 @@ pub enum ContractError {
     #[error("No debt to repay")]
     NoDebt,
 
+    #[error("Nothing lent to reclaim")]
+    NoneLent,
+
     #[error("Position {0} was not a valid position for this account id in this vault")]
     NoPositionMatch(String),
 

@@ -69,6 +69,19 @@ impl RedBank {
         }))
     }
 
+    /// Generate message for reclaiming a specified amount of lent coin
+    pub fn reclaim_msg(&self, coin: &Coin) -> StdResult<CosmosMsg> {
+        Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: self.address().to_string(),
+            msg: to_binary(&red_bank::ExecuteMsg::Withdraw {
+                denom: coin.denom.clone(),
+                amount: Some(coin.amount),
+                recipient: None,
+            })?,
+            funds: vec![],
+        }))
+    }
+
     pub fn query_lent(
         &self,
         querier: &QuerierWrapper,

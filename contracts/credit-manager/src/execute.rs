@@ -14,6 +14,7 @@ use crate::{
     health::{assert_max_ltv, query_health},
     lend::lend,
     liquidate_coin::liquidate_coin,
+    reclaim::reclaim,
     refund::refund_coin_balances,
     repay::repay,
     state::ACCOUNT_NFT,
@@ -76,6 +77,10 @@ pub fn dispatch_actions(
                 coin: coin.clone(),
             }),
             Action::Lend(coin) => callbacks.push(CallbackMsg::Lend {
+                account_id: account_id.to_string(),
+                coin: coin.clone(),
+            }),
+            Action::Reclaim(coin) => callbacks.push(CallbackMsg::Reclaim {
                 account_id: account_id.to_string(),
                 coin: coin.clone(),
             }),
@@ -222,6 +227,10 @@ pub fn execute_callback(
             account_id,
             coin,
         } => lend(deps, env, &account_id, coin),
+        CallbackMsg::Reclaim {
+            account_id,
+            coin,
+        } => reclaim(deps, env, &account_id, &coin),
         CallbackMsg::AssertMaxLTV {
             account_id,
             prev_max_ltv_health_factor,

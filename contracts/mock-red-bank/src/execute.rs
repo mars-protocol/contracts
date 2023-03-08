@@ -5,7 +5,7 @@ use cw_utils::one_coin;
 use mars_red_bank_types::red_bank::InitOrUpdateAssetParams;
 
 use crate::{
-    helpers::{load_collateral_amount, load_debt_amount},
+    helpers::{load_collateral_amount, load_debt_amount, load_lent_amount},
     msg::CoinMarketInfo,
     state::{COIN_MARKET_INFO, COLLATERAL_AMOUNT, DEBT_AMOUNT},
 };
@@ -58,6 +58,29 @@ pub fn deposit(deps: DepsMut, info: MessageInfo) -> StdResult<Response> {
     )?;
 
     Ok(Response::new())
+}
+
+pub fn withdraw(
+    deps: DepsMut,
+    info: MessageInfo,
+    denom: &str,
+    amount: &Option<Uint128>,
+) -> StdResult<Response> {
+    let total_lent = load_lent_amount(deps.storage, &info.sender, denom)?;
+    let amount_to_reclaim = amount.unwrap_or(total_lent);
+
+    COLLATERAL_AMOUNT.save(
+        deps.storage,
+        (info.sender.clone(), denom.to_string()),
+        &total_lent.checked_sub(amount_to_reclaim)?,
+    )?;
+
+    let transfer_msg = CosmosMsg::Bank(BankMsg::Send {
+        to_address: info.sender.to_string(),
+        amount: vec![coin(amount_to_reclaim.u128(), denom)],
+    });
+
+    Ok(Response::new().add_message(transfer_msg))
 }
 
 pub fn update_asset(

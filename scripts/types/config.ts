@@ -65,6 +65,7 @@ export interface TestActions {
   lendAmount: string
   borrowAmount: string
   repayAmount: string
+  reclaimAmount: string
   swap: {
     amount: string
     slippage: string

@@ -363,6 +363,19 @@
             "additionalProperties": false
           },
           {
+            "description": "Reclaim the coins that were lent to the Red Bank.",
+            "type": "object",
+            "required": [
+              "reclaim"
+            ],
+            "properties": {
+              "reclaim": {
+                "$ref": "#/definitions/ActionCoin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Repay coin of specified amount back to Red Bank. If `amount: AccountBalance` is passed, the repaid amount will be the minimum between account balance for denom and total owed.",
             "type": "object",
             "required": [
@@ -799,6 +812,32 @@
                   },
                   "coin": {
                     "$ref": "#/definitions/Coin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Reclaim lent coin from the Red Bank; Decrement the token's lent shares and increment the coin amount;",
+            "type": "object",
+            "required": [
+              "reclaim"
+            ],
+            "properties": {
+              "reclaim": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "coin"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
                   }
                 },
                 "additionalProperties": false

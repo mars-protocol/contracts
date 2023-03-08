@@ -79,6 +79,8 @@ pub enum Action {
     Borrow(Coin),
     /// Lend coin to the Red Bank
     Lend(Coin),
+    /// Reclaim the coins that were lent to the Red Bank.
+    Reclaim(ActionCoin),
     /// Repay coin of specified amount back to Red Bank. If `amount: AccountBalance` is passed,
     /// the repaid amount will be the minimum between account balance for denom and total owed.
     Repay(ActionCoin),
@@ -181,6 +183,12 @@ pub enum CallbackMsg {
     Lend {
         account_id: String,
         coin: Coin,
+    },
+    /// Reclaim lent coin from the Red Bank;
+    /// Decrement the token's lent shares and increment the coin amount;
+    Reclaim {
+        account_id: String,
+        coin: ActionCoin,
     },
     /// Assert MaxLTV is either:
     /// - Healthy, if prior to actions MaxLTV health factor >= 1 or None

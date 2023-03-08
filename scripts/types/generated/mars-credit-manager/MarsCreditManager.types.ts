@@ -82,6 +82,9 @@ export type Action =
       lend: Coin
     }
   | {
+      reclaim: ActionCoin
+    }
+  | {
       repay: ActionCoin
     }
   | {
@@ -184,6 +187,12 @@ export type CallbackMsg =
       lend: {
         account_id: string
         coin: Coin
+      }
+    }
+  | {
+      reclaim: {
+        account_id: string
+        coin: ActionCoin
       }
     }
   | {

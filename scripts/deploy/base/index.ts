@@ -42,6 +42,7 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
       await rover.borrow()
       await rover.swap()
       await rover.repay()
+      await rover.reclaim()
       await rover.withdraw()
 
       const vaultConfig = config.vaults[0]
