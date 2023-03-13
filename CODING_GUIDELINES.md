@@ -137,7 +137,11 @@ pub enum ContractError {
 
 ### Schema
 
-Don’t generate schema files - if there is a request from frontend team we can generate schema.
+Generate schema files (CI/CD fails on outdated schema):
+
+```
+cargo make generate-all-schemas
+```
 
 ### Zero comparisons
 
@@ -221,6 +225,25 @@ If a crate does not contain documentations to be tested, considering adding the 
 doctest = false
 ```
 
+### Code coverage
+
+One of the basic metrics over code quality is how much is covered by unit tests.
+CI/CD fails on decrease of the code coverage.
+
+To check code coverage locally:
+
+```
+cargo make coverage-grcov-html
+```
+
+or:
+
+```
+cargo make coverage-grcov-lcov
+```
+
+The report can be found in `target/coverage` directory (for example: `target/coverage/html/index.html`).
+
 ## CI/CD
 
 Setting up a pipeline with strict checks helps ensure only linted+tested code merged.
@@ -230,6 +253,7 @@ Setting up a pipeline with strict checks helps ensure only linted+tested code me
   - Linting
   - Formatting
   - Testing
+  - Generate latest schemas
   - Contract compilation
-- Setup Github workflow that runs all checks when pull requests are open: [https://github.com/mars-protocol/rover/blob/master/.github/workflows/main.yml](https://github.com/mars-protocol/rover/blob/master/.github/workflows/main.yml).
+- Setup Github workflow that runs all checks when pull requests are open: [https://github.com/mars-protocol/rover/blob/master/.github/workflows](https://github.com/mars-protocol/rover/blob/master/.github/workflows).
 - Ensure the master branch has protections to not allow merges without passing checks.
