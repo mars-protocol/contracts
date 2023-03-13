@@ -4,12 +4,12 @@ use mars_rover::{
     msg::execute::Action::{Deposit, Lend, Reclaim},
 };
 
-use crate::helpers::{assert_err, get_coin, uosmo_info, AccountToFund, MockEnv};
+use crate::helpers::{assert_err, get_coin, uatom_info, uosmo_info, AccountToFund, MockEnv};
 
 pub mod helpers;
 
 #[test]
-fn test_only_token_owner_can_reclaim() {
+fn only_token_owner_can_reclaim() {
     let coin_info = uosmo_info();
     let owner = Addr::unchecked("owner");
     let mut mock = MockEnv::new().build().unwrap();
@@ -33,7 +33,7 @@ fn test_only_token_owner_can_reclaim() {
 }
 
 #[test]
-fn test_reclaiming_with_zero_lent() {
+fn reclaiming_with_zero_lent() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
@@ -61,7 +61,7 @@ fn test_reclaiming_with_zero_lent() {
 }
 
 #[test]
-fn test_when_trying_to_reclaim_more_than_lent() {
+fn when_trying_to_reclaim_more_than_lent() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
@@ -107,7 +107,7 @@ fn test_when_trying_to_reclaim_more_than_lent() {
     let positions = mock.query_positions(&account_id);
     assert_eq!(positions.deposits.len(), 1);
     assert_eq!(positions.lends.len(), 0);
-    assert_eq!(get_coin(&coin_info.denom, &positions.deposits), coin_info.to_coin(301));
+    assert_eq!(get_coin(&coin_info.denom, &positions.deposits), coin_info.to_coin(301)); // +1 for interest from red bank
 
     // Assert Rover's balances
     let coin = mock.query_balance(&mock.rover, &coin_info.denom);
@@ -222,5 +222,89 @@ fn reclaiming_the_entire_lent_share() {
 
     // Assert Rover's balances
     let coin = mock.query_balance(&mock.rover, &coin_info.denom);
+    assert_eq!(coin.amount, Uint128::new(301));
+}
+#[test]
+fn reclaiming_multiple_assets() {
+    let uosmo_info = uosmo_info();
+    let uatom_info = uatom_info();
+    let user = Addr::unchecked("user");
+
+    let mut mock = MockEnv::new()
+        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: coins(300, uosmo_info.denom.clone()),
+        })
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: coins(300, uatom_info.denom.clone()),
+        })
+        .build()
+        .unwrap();
+
+    let account_id = mock.create_credit_account(&user).unwrap();
+
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![Deposit(uatom_info.to_coin(300)), Lend(uatom_info.to_coin(100))],
+        &[coin(300, uatom_info.denom.clone())],
+    )
+    .unwrap();
+
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![Deposit(uosmo_info.to_coin(200)), Lend(uosmo_info.to_coin(100))],
+        &[coin(200, uosmo_info.denom.clone())],
+    )
+    .unwrap();
+    // Assert account id's position
+    let position = mock.query_positions(&account_id);
+    assert_eq!(position.deposits.len(), 2);
+    assert_eq!(position.lends.len(), 2);
+    assert_eq!(get_coin(&uatom_info.denom, &position.deposits), uatom_info.to_coin(200));
+    assert_eq!(get_coin(&uosmo_info.denom, &position.deposits), uosmo_info.to_coin(100));
+    assert_eq!(position.lends.first().unwrap().amount, Uint128::new(101)); // +1 for interest from red bank
+
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![Reclaim(uosmo_info.to_action_coin(101))],
+        &[],
+    )
+    .unwrap();
+
+    // 1 lent share should be removed and 1 should stay
+
+    // Assert account id's position
+    let position = mock.query_positions(&account_id);
+    assert_eq!(position.deposits.len(), 2);
+    assert_eq!(position.lends.len(), 1);
+    assert_eq!(get_coin(&uosmo_info.denom, &position.deposits), uosmo_info.to_coin(201));
+
+    // Assert Rover's balances
+    let coin = mock.query_balance(&mock.rover, &uosmo_info.denom);
+    assert_eq!(coin.amount, Uint128::new(201));
+
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![Reclaim(uatom_info.to_action_coin(101))],
+        &[],
+    )
+    .unwrap();
+
+    // last lent share should be removed
+
+    // Assert account id's position
+    let position = mock.query_positions(&account_id);
+    assert_eq!(position.deposits.len(), 2);
+    assert_eq!(position.lends.len(), 0);
+    assert_eq!(get_coin(&uatom_info.denom, &position.deposits), uatom_info.to_coin(301));
+
+    // Assert Rover's balances
+    let coin = mock.query_balance(&mock.rover, &uatom_info.denom);
     assert_eq!(coin.amount, Uint128::new(301));
 }
