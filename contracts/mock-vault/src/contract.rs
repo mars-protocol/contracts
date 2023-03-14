@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{coin, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, Uint128};
-use cosmwasm_vault_standard::{
+use cw_vault_standard::{
     extensions::{
         force_unlock::ForceUnlockExecuteMsg,
         lockup::{LockupExecuteMsg, LockupQueryMsg},

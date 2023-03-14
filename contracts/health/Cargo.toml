@@ -31,10 +31,9 @@ thiserror                  = { workspace = true }
 
 [dev-dependencies]
 anyhow                   = { workspace = true }
-cosmwasm-vault-standard  = { workspace = true }
 cw-multi-test            = { workspace = true }
 cw-utils                 = { workspace = true }
-mars-math                = { workspace = true }
+cw-vault-standard        = { workspace = true }
 mars-mock-credit-manager = { workspace = true }
 mars-mock-oracle         = { workspace = true }
 mars-mock-red-bank       = { workspace = true }

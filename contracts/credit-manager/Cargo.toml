@@ -21,15 +21,14 @@ library    = []
 [dependencies]
 cosmwasm-schema         = { workspace = true }
 cosmwasm-std            = { workspace = true }
-cosmwasm-vault-standard = { workspace = true }
 cw2                     = { workspace = true }
 cw721                   = { workspace = true }
 cw721-base              = { workspace = true }
 cw-item-set             = { workspace = true }
 cw-paginate             = { workspace = true }
 cw-storage-plus         = { workspace = true }
+cw-vault-standard       = { workspace = true }
 mars-account-nft        = { workspace = true }
-mars-math               = { workspace = true }
 mars-owner              = { workspace = true }
 mars-red-bank-types     = { workspace = true }
 mars-rover              = { workspace = true }

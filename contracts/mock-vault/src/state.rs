@@ -1,7 +1,7 @@
 use cosmwasm_std::{Addr, Coin, Uint128};
-use cosmwasm_vault_standard::extensions::lockup::UnlockingPosition;
 use cw_storage_plus::{Item, Map};
 use cw_utils::Duration;
+use cw_vault_standard::extensions::lockup::UnlockingPosition;
 use mars_rover::adapters::oracle::Oracle;
 
 pub const VAULT_TOKEN_DENOM: Item<String> = Item::new("vault_token_denom");

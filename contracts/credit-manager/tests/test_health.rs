@@ -2,7 +2,6 @@ use std::ops::{Add, Mul};
 
 use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Uint128};
 use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
-use mars_math::{FractionMath, Fractional};
 use mars_mock_oracle::msg::CoinPrice;
 use mars_rover::{
     adapters::vault::VaultConfig,
@@ -567,7 +566,7 @@ fn debt_value() {
 
     let user_a_owed_atom = red_bank_atom_debt
         .amount
-        .checked_mul_ceil(Fractional(user_a_debt_shares_atom, red_bank_atom_res.shares))
+        .checked_mul_ceil((user_a_debt_shares_atom, red_bank_atom_res.shares))
         .unwrap();
     let user_a_owed_atom_value = user_a_owed_atom.checked_mul_floor(uatom_info.price).unwrap();
 

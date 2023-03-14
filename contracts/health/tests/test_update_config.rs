@@ -29,7 +29,12 @@ fn raises_on_invalid_config() {
     let err: HealthError =
         mock.update_config(&mock.deployer.clone(), &new_cm_addr).unwrap_err().downcast().unwrap();
 
-    assert_eq!(err, Std(StdError::generic_err("Invalid input: human address too short")));
+    assert_eq!(
+        err,
+        Std(StdError::generic_err(
+            "Invalid input: human address too short for this mock implementation (must be >= 3)."
+        ))
+    );
 }
 
 #[test]

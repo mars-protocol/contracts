@@ -1,8 +1,7 @@
 use cosmwasm_std::{
-    CheckedFromRatioError, CheckedMultiplyRatioError, Coin, DecimalRangeExceeded, OverflowError,
-    StdError, Uint128,
+    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError, Coin,
+    DecimalRangeExceeded, OverflowError, StdError, Uint128,
 };
-use mars_math::CheckedMultiplyFractionError;
 use mars_owner::OwnerError;
 use thiserror::Error;
 

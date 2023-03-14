@@ -1,6 +1,5 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, QuerierWrapper, StdError, StdResult, Uint128};
-use mars_math::FractionMath;
 
 use crate::adapters::{
     oracle::Oracle,

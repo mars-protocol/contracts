@@ -1,10 +1,10 @@
 use cosmwasm_std::{
     Addr, BankMsg, Coin, CosmosMsg, DepsMut, Env, Event, MessageInfo, Response, StdResult, Uint128,
 };
-use cosmwasm_vault_standard::extensions::lockup::{
+use cw_utils::{Duration, Expiration};
+use cw_vault_standard::extensions::lockup::{
     UnlockingPosition, UNLOCKING_POSITION_ATTR_KEY, UNLOCKING_POSITION_CREATED_EVENT_TYPE,
 };
-use cw_utils::{Duration, Expiration};
 
 use crate::{
     error::ContractError,

@@ -1,6 +1,5 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
-use mars_math::FractionMath;
 use mars_red_bank_types::red_bank::Market;
 use mars_rover::msg::query::Positions;
 use mars_rover_health_types::{

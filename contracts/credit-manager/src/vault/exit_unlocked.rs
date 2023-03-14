@@ -1,5 +1,5 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, WasmMsg};
-use cosmwasm_vault_standard::extensions::lockup::UnlockingPosition;
+use cw_vault_standard::extensions::lockup::UnlockingPosition;
 use mars_rover::{
     adapters::vault::{UnlockingChange, Vault, VaultPositionUpdate},
     error::{ContractError, ContractResult},

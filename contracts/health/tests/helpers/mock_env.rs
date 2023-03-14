@@ -1,9 +1,9 @@
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Coin, Decimal, Empty, StdResult, Uint128};
-use cosmwasm_vault_standard::{
+use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
+use cw_vault_standard::{
     VaultInfoResponse, VaultStandardExecuteMsg::Deposit, VaultStandardQueryMsg::Info,
 };
-use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_mock_credit_manager::msg::ExecuteMsg::{
     SetAllowedCoins, SetPositionsResponse, SetVaultConfig,
 };

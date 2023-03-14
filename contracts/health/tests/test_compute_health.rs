@@ -1,5 +1,4 @@
 use cosmwasm_std::{Coin, Decimal, StdError, Uint128};
-use mars_math::FractionMath;
 use mars_mock_red_bank::msg::CoinMarketInfo;
 use mars_rover::{
     adapters::vault::{

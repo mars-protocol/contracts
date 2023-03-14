@@ -1,5 +1,4 @@
-use cosmwasm_std::{CheckedFromRatioError, OverflowError, StdError};
-use mars_math::CheckedMultiplyFractionError;
+use cosmwasm_std::{CheckedFromRatioError, CheckedMultiplyFractionError, OverflowError, StdError};
 use mars_owner::OwnerError;
 use thiserror::Error;
 

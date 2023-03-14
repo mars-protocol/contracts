@@ -1,6 +1,6 @@
 use cosmwasm_std::{Deps, Order, StdError, StdResult, Storage, Uint128};
-use cosmwasm_vault_standard::{extensions::lockup::UnlockingPosition, msg::VaultInfoResponse};
 use cw_utils::Duration;
+use cw_vault_standard::{extensions::lockup::UnlockingPosition, msg::VaultInfoResponse};
 
 use crate::{
     error::{ContractError::NotLockingVault, ContractResult},

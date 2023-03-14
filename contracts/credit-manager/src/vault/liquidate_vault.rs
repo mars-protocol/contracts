@@ -1,7 +1,7 @@
 use std::cmp::min;
 
 use cosmwasm_std::{Coin, DepsMut, Env, Response, Uint128};
-use cosmwasm_vault_standard::VaultInfoResponse;
+use cw_vault_standard::VaultInfoResponse;
 use mars_rover::{
     adapters::vault::{
         UnlockingChange, UnlockingPositions, UpdateType, Vault, VaultPositionAmount,

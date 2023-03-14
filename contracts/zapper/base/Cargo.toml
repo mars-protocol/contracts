@@ -19,10 +19,10 @@ backtraces = ["cosmwasm-std/backtraces"]
 library    = []
 
 [dependencies]
-cosmwasm-schema  = { workspace = true }
-cosmwasm-std     = { workspace = true }
-cw-dex           = { workspace = true }
-cw-utils         = { workspace = true }
-schemars         = { workspace = true }
-serde            = { workspace = true }
-thiserror        = { workspace = true }
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+cw-dex          = { workspace = true }
+cw-utils        = { workspace = true }
+schemars        = { workspace = true }
+serde           = { workspace = true }
+thiserror       = { workspace = true }

@@ -325,12 +325,12 @@ module.exports.__wbindgen_string_new = function (arg0, arg1) {
   return addHeapObject(ret)
 }
 
-module.exports.__wbg_getwithrefkey_15c62c2b8546208d = function (arg0, arg1) {
+module.exports.__wbg_getwithrefkey_5e6d9547403deab8 = function (arg0, arg1) {
   const ret = getObject(arg0)[getObject(arg1)]
   return addHeapObject(ret)
 }
 
-module.exports.__wbg_set_20cbc34131e76824 = function (arg0, arg1, arg2) {
+module.exports.__wbg_set_841ac57cff3d672b = function (arg0, arg1, arg2) {
   getObject(arg0)[takeObject(arg1)] = takeObject(arg2)
 }
 

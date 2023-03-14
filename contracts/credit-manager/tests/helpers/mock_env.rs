@@ -2,11 +2,11 @@ use std::mem::take;
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coins, testing::MockApi, Addr, Coin, Decimal, StdResult, Uint128};
-use cosmwasm_vault_standard::{
+use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
+use cw_vault_standard::{
     extensions::lockup::{LockupQueryMsg, UnlockingPosition},
     msg::{ExtensionQueryMsg, VaultStandardQueryMsg::VaultExtension},
 };
-use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_account_nft::{
     msg::{
         ExecuteMsg as NftExecuteMsg, InstantiateMsg as NftInstantiateMsg, QueryMsg as NftQueryMsg,

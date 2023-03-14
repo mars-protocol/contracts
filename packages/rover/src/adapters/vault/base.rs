@@ -5,7 +5,8 @@ use cosmwasm_std::{
     to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, QuerierWrapper,
     QueryRequest, StdResult, SubMsg, Uint128, WasmMsg, WasmQuery,
 };
-use cosmwasm_vault_standard::{
+use cw_utils::Duration;
+use cw_vault_standard::{
     extensions::{
         force_unlock::ForceUnlockExecuteMsg::{ForceRedeem, ForceWithdrawUnlocking},
         lockup::{
@@ -18,7 +19,6 @@ use cosmwasm_vault_standard::{
     msg::{ExtensionExecuteMsg, ExtensionQueryMsg, VaultStandardExecuteMsg, VaultStandardQueryMsg},
     VaultInfoResponse,
 };
-use cw_utils::Duration;
 
 use crate::traits::Stringify;
 

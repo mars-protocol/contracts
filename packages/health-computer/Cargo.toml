@@ -6,13 +6,6 @@ edition       = { workspace = true }
 documentation = { workspace = true }
 keywords      = { workspace = true }
 
-# Current bug in wasm-pack does not allow workspace inheritance for these properties.
-# Revert to workspace inheritance when https://github.com/rustwasm/wasm-pack/pull/1185
-# has been included in the next wasm-pack version.
-license       = "GPL-3.0-or-later"
-repository    = "https://github.com/mars-protocol/rover"
-homepage      = "https://marsprotocol.io"
-
 [lib]
 crate-type = ["cdylib", "rlib"]
 doctest    = false
@@ -24,8 +17,7 @@ default    = ["console_error_panic_hook"]
 [dependencies]
 cosmwasm-schema         = { workspace = true }
 cosmwasm-std            = { workspace = true }
-cosmwasm-vault-standard = { workspace = true }
-mars-math               = { workspace = true }
+cw-vault-standard       = { workspace = true }
 mars-red-bank-types     = { workspace = true }
 mars-rover              = { workspace = true }
 mars-rover-health-types = { workspace = true }

@@ -1,12 +1,11 @@
 import { DataFetcher } from './DataFetcher'
-import { Storage } from '../deploy/base/storage'
 import { compute_health_js } from './pkg-node'
 import { osmosisTestnetConfig } from '../deploy/osmosis/testnet-config'
+import OsmosisAddresses from '../deploy/addresses/osmo-test-4.json'
 ;(async () => {
-  const storage = await Storage.load(osmosisTestnetConfig.chain.id, 'testnet-deployer-owner')
   const dataFetcher = new DataFetcher(
     compute_health_js,
-    storage.addresses.creditManager!,
+    OsmosisAddresses.creditManager,
     osmosisTestnetConfig.oracle.addr,
     osmosisTestnetConfig.redBank.addr,
     osmosisTestnetConfig.chain.rpcEndpoint,

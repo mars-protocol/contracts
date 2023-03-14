@@ -1,5 +1,4 @@
 use cosmwasm_std::{Addr, Coin, Deps, StdResult, Storage, Uint128};
-use mars_math::FractionMath;
 use mars_rover::{
     adapters::vault::{
         LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,

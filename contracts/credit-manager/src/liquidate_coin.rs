@@ -3,7 +3,6 @@ use std::ops::Add;
 use cosmwasm_std::{
     Coin, CosmosMsg, Decimal, DepsMut, Env, QuerierWrapper, Response, StdError, Storage, Uint128,
 };
-use mars_math::FractionMath;
 use mars_rover::{
     adapters::oracle::Oracle,
     error::{ContractError, ContractResult},

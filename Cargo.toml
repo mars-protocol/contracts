@@ -18,7 +18,6 @@ members = [
     "packages/health-computer",
     "packages/health-types",
     "packages/rover",
-    "packages/math",
 ]
 
 [workspace.package]
@@ -36,37 +35,34 @@ documentation = "https://docs.marsprotocol.io/"
 keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
-anyhow             = "1.0.66"
-cosmwasm-schema    = "1.1.9"
-cosmwasm-std       = "=1.1.9" # TODO: 1.2.1 requires CheckedMultiplyFractionError exposure: https://github.com/CosmWasm/cosmwasm/pull/1608
-cw2                = "1.0.0"
+anyhow             = "1.0.69"
+cosmwasm-schema    = "1.2.2"
+cosmwasm-std       = "1.2.2"
+cw2                = "1.0.1"
 cw721              = "0.16.0"
 cw721-base         = { version = "0.16.0", features = ["library"] }
-cw-item-set        = { version = "0.7.0", default-features = false, features = ["iterator"] }
-cw-multi-test      = "0.16.1"
-cw-paginate        = "0.2.0"
-cw-utils           = "0.16.0"
+cw-item-set        = { version = "0.7.1", default-features = false, features = ["iterator"] }
+cw-multi-test      = "0.16.2"
+cw-paginate        = "0.2.1"
+cw-utils           = "1.0.1"
 cw-storage-plus    = "1.0.1"
 itertools          = "0.10.5"
 osmosis-std        = "0.14.0"
 osmosis-test-tube  = "14.1.1"
-schemars           = "0.8.11"
-serde              = { version = "1.0.150", default-features = false, features = ["derive"] }
-serde_json         = "1.0.91"
-serde-wasm-bindgen = "0.4.5"
-thiserror          = "1.0.37"
-wasm-bindgen       = "0.2.83"
+schemars           = "0.8.12"
+serde              = { version = "1.0.155", default-features = false, features = ["derive"] }
+serde_json         = "1.0.94"
+serde-wasm-bindgen = "0.5.0"
+thiserror          = "1.0.39"
+wasm-bindgen       = "0.2.84"
 
 # packages
-cosmwasm-vault-standard    = { version = "0.1.0", features = ["lockup", "force-unlock"] }
-# FIXME: develop branch dependency till Apollo finish audit
-cw-dex                     = { git = "https://github.com/apollodao/cw-dex", rev = "1ce5566963851f7cab0eed117240654f3cb2d78d", features = ["osmosis"] }
-mars-health                = { version = "1.0.0", path = "./packages/health" } # TODO to delete
+cw-dex                     = { version = "0.1.3", features = ["osmosis"] }
+cw-vault-standard          = { version = "0.2.0", features = ["lockup", "force-unlock"] }
 mars-rover-health-computer = { version = "1.0.0", path = "./packages/health-computer" }
 mars-rover-health-types    = { version = "1.0.0", path = "./packages/health-types" }
-mars-math                  = { version = "1.0.0", path = "./packages/math" }
-mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "3e57365d82b96967ef1bc7ec183c4a86bc88d5e7" }
-mars-red-bank-types        = { git = "https://github.com/mars-protocol/red-bank", rev = "3e57365d82b96967ef1bc7ec183c4a86bc88d5e7" }
+mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
+mars-red-bank-types        = "1.0.0"
 mars-owner                 = "1.0.0"
 mars-rover                 = { version = "1.0.0", path = "./packages/rover" }
 

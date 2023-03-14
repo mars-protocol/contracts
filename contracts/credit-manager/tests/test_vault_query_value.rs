@@ -1,7 +1,6 @@
 use std::ops::Div;
 
 use cosmwasm_std::{Addr, Uint128};
-use mars_math::FractionMath;
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
 use mars_rover::{
     adapters::vault::{Vault, VaultAmount, VaultPosition, VaultPositionAmount},

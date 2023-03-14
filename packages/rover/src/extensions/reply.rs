@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Reply, StdError, StdResult, SubMsgResult};
-use cosmwasm_vault_standard::extensions::lockup::{
+use cw_vault_standard::extensions::lockup::{
     UNLOCKING_POSITION_ATTR_KEY, UNLOCKING_POSITION_CREATED_EVENT_TYPE,
 };
 

@@ -1,7 +1,6 @@
 use std::{collections::HashMap, ops::Add, str::FromStr};
 
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
-use mars_math::FractionMath;
 use mars_rover::{
     adapters::vault::{
         CoinValue, LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultConfig,
