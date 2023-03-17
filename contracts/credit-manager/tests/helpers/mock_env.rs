@@ -41,7 +41,7 @@ use mars_rover::{
         zapper::{Zapper, ZapperBase},
     },
     msg::{
-        execute::{Action, CallbackMsg},
+        execute::{Action, CallbackMsg, EmergencyUpdate},
         instantiate::{ConfigUpdates, VaultInstantiateConfig},
         query::{
             CoinBalanceResponseItem, ConfigResponse, DebtShares, LentShares, Positions,
@@ -78,6 +78,7 @@ pub struct MockEnv {
 pub struct MockEnvBuilder {
     pub app: BasicApp,
     pub owner: Option<Addr>,
+    pub emergency_owner: Option<Addr>,
     pub vault_configs: Option<Vec<VaultTestInfo>>,
     pub pre_deployed_vaults: Option<Vec<VaultInstantiateConfig>>,
     pub allowed_coins: Option<Vec<CoinInfo>>,
@@ -97,6 +98,7 @@ impl MockEnv {
         MockEnvBuilder {
             app: App::default(),
             owner: None,
+            emergency_owner: None,
             vault_configs: None,
             pre_deployed_vaults: None,
             allowed_coins: None,
@@ -157,6 +159,19 @@ impl MockEnv {
             &ExecuteMsg::UpdateConfig {
                 updates,
             },
+            &[],
+        )
+    }
+
+    pub fn emergency_update(
+        &mut self,
+        sender: &Addr,
+        update: EmergencyUpdate,
+    ) -> AnyResult<AppResponse> {
+        self.app.execute_contract(
+            sender.clone(),
+            self.rover.clone(),
+            &ExecuteMsg::EmergencyConfigUpdate(update),
             &[],
         )
     }
@@ -611,6 +626,8 @@ impl MockEnv {
 impl MockEnvBuilder {
     pub fn build(&mut self) -> AnyResult<MockEnv> {
         let rover = self.get_rover()?;
+        self.set_emergency_owner(&rover);
+
         let mars_oracle = self.get_oracle();
 
         let health_contract = self.get_health_contract();
@@ -657,6 +674,21 @@ impl MockEnvBuilder {
                     },
                 )
             }
+        }
+    }
+
+    pub fn set_emergency_owner(&mut self, rover: &Addr) {
+        if let Some(eo) = self.emergency_owner.clone() {
+            self.app
+                .execute_contract(
+                    self.get_owner(),
+                    rover.clone(),
+                    &ExecuteMsg::UpdateOwner(OwnerUpdate::SetEmergencyOwner {
+                        emergency_owner: eo.to_string(),
+                    }),
+                    &[],
+                )
+                .unwrap();
         }
     }
 
@@ -995,6 +1027,11 @@ impl MockEnvBuilder {
 
     pub fn owner(&mut self, owner: &str) -> &mut Self {
         self.owner = Some(Addr::unchecked(owner));
+        self
+    }
+
+    pub fn emergency_owner(&mut self, eo: &Addr) -> &mut Self {
+        self.emergency_owner = Some(eo.clone());
         self
     }
 

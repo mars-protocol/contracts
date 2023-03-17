@@ -25,6 +25,7 @@ import {
   Action,
   ActionAmount,
   VaultPositionType,
+  EmergencyUpdate,
   OwnerUpdate,
   CallbackMsg,
   Addr,
@@ -86,6 +87,7 @@ export interface MarsCreditManagerMessage {
     },
     funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
+  emergencyConfigUpdate: (funds?: Coin[]) => MsgExecuteContractEncodeObject
   updateOwner: (funds?: Coin[]) => MsgExecuteContractEncodeObject
   updateNftConfig: (
     {
@@ -107,6 +109,7 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
     this.createCreditAccount = this.createCreditAccount.bind(this)
     this.updateCreditAccount = this.updateCreditAccount.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
+    this.emergencyConfigUpdate = this.emergencyConfigUpdate.bind(this)
     this.updateOwner = this.updateOwner.bind(this)
     this.updateNftConfig = this.updateNftConfig.bind(this)
     this.callback = this.callback.bind(this)
@@ -172,6 +175,21 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
             update_config: {
               updates,
             },
+          }),
+        ),
+        funds,
+      }),
+    }
+  }
+  emergencyConfigUpdate = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(
+          JSON.stringify({
+            emergency_config_update: {},
           }),
         ),
         funds,

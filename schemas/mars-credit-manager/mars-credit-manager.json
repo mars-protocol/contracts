@@ -258,6 +258,19 @@
         "additionalProperties": false
       },
       {
+        "description": "Emergency owner has a narrow amount of config changes it is allowed to do: - Lower maxLTV of vault to zero - Lower deposit cap of vault to zero - Remove asset from ALLOWED_COINS list. This has a second order consequence disallowing of that coin: - Borrow - Deposit - Swap into - Zap with/into - Unzap into Coin would still be allowed to: - Withdraw - Swap out of - Repay loan of",
+        "type": "object",
+        "required": [
+          "emergency_config_update"
+        ],
+        "properties": {
+          "emergency_config_update": {
+            "$ref": "#/definitions/EmergencyUpdate"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Manages owner role state",
         "type": "object",
         "required": [
@@ -1369,6 +1382,46 @@
         "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
         "type": "string"
       },
+      "EmergencyUpdate": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "set_zero_max_ltv"
+            ],
+            "properties": {
+              "set_zero_max_ltv": {
+                "$ref": "#/definitions/VaultBase_for_String"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "set_zero_deposit_cap"
+            ],
+            "properties": {
+              "set_zero_deposit_cap": {
+                "$ref": "#/definitions/VaultBase_for_String"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "disallow_coin"
+            ],
+            "properties": {
+              "disallow_coin": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
       "HealthContractBase_for_String": {
         "type": "string"
       },
@@ -1446,6 +1499,35 @@
             "type": "string",
             "enum": [
               "abolish_owner_role"
+            ]
+          },
+          {
+            "description": "A separate entity managed by Owner that can be used for granting specific emergency powers.",
+            "type": "object",
+            "required": [
+              "set_emergency_owner"
+            ],
+            "properties": {
+              "set_emergency_owner": {
+                "type": "object",
+                "required": [
+                  "emergency_owner"
+                ],
+                "properties": {
+                  "emergency_owner": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Remove the entity in the Emergency Owner role",
+            "type": "string",
+            "enum": [
+              "clear_emergency_owner"
             ]
           }
         ]

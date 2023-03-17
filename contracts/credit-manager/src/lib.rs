@@ -2,6 +2,7 @@ pub mod contract;
 
 pub mod borrow;
 pub mod deposit;
+pub mod emergency_update;
 pub mod execute;
 pub mod health;
 pub mod instantiate;

@@ -9,6 +9,7 @@ use mars_rover::{
 };
 
 use crate::{
+    emergency_update::emergency_config_update,
     execute::{create_credit_account, dispatch_actions, execute_callback},
     instantiate::store_config,
     query::{
@@ -60,6 +61,7 @@ pub fn execute(
             account_id,
             actions,
         } => dispatch_actions(deps, env, info, &account_id, &actions),
+        ExecuteMsg::EmergencyConfigUpdate(update) => emergency_config_update(deps, info, update),
     }
 }
 

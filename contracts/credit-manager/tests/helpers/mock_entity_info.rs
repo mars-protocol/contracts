@@ -51,9 +51,15 @@ pub fn unlocked_vault_info() -> VaultTestInfo {
 }
 
 pub fn generate_mock_vault(lockup: Option<Duration>) -> VaultTestInfo {
+    let vault_token_denom = if lockup.is_some() {
+        "uleverage-locked".to_string()
+    } else {
+        "uleverage-unlocked".to_string()
+    };
+
     let lp_token = lp_token_info();
     VaultTestInfo {
-        vault_token_denom: "uleverage".to_string(),
+        vault_token_denom,
         lockup,
         base_token_denom: lp_token.denom,
         deposit_cap: coin(10_000_000, "uusdc"),

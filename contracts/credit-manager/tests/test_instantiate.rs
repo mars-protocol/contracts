@@ -175,7 +175,7 @@ fn instantiate_raises_on_invalid_vaults_config() {
 fn duplicate_vaults_raises() {
     let mock = MockEnv::new()
         .pre_deployed_vault(&locked_vault_info(), None)
-        .pre_deployed_vault(&unlocked_vault_info(), None)
+        .pre_deployed_vault(&locked_vault_info(), None)
         .build();
     if mock.is_ok() {
         panic!("Should have thrown an error");

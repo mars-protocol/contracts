@@ -28,6 +28,20 @@ pub enum ExecuteMsg {
     UpdateConfig {
         updates: ConfigUpdates,
     },
+    /// Emergency owner has a narrow amount of config changes it is allowed to do:
+    /// - Lower maxLTV of vault to zero
+    /// - Lower deposit cap of vault to zero
+    /// - Remove asset from ALLOWED_COINS list. This has a second order consequence disallowing of that coin:
+    ///     - Borrow
+    ///     - Deposit
+    ///     - Swap into
+    ///     - Zap with/into
+    ///     - Unzap into
+    ///   Coin would still be allowed to:
+    ///     - Withdraw
+    ///     - Swap out of
+    ///     - Repay loan of
+    EmergencyConfigUpdate(EmergencyUpdate),
     /// Manages owner role state
     UpdateOwner(OwnerUpdate),
     /// Update nft contract config
@@ -66,6 +80,13 @@ impl From<&Coin> for ActionCoin {
             amount: ActionAmount::Exact(value.amount),
         }
     }
+}
+
+#[cw_serde]
+pub enum EmergencyUpdate {
+    SetZeroMaxLtv(VaultUnchecked),
+    SetZeroDepositCap(VaultUnchecked),
+    DisallowCoin(String),
 }
 
 /// The list of actions that users can perform on their positions

@@ -58,6 +58,9 @@ export type ExecuteMsg =
       }
     }
   | {
+      emergency_config_update: EmergencyUpdate
+    }
+  | {
       update_owner: OwnerUpdate
     }
   | {
@@ -154,6 +157,16 @@ export type ActionAmount =
       exact: Uint128
     }
 export type VaultPositionType = 'u_n_l_o_c_k_e_d' | 'l_o_c_k_e_d' | 'u_n_l_o_c_k_i_n_g'
+export type EmergencyUpdate =
+  | {
+      set_zero_max_ltv: VaultBaseForString
+    }
+  | {
+      set_zero_deposit_cap: VaultBaseForString
+    }
+  | {
+      disallow_coin: string
+    }
 export type OwnerUpdate =
   | {
       propose_new_owner: {
@@ -163,6 +176,12 @@ export type OwnerUpdate =
   | 'clear_proposed'
   | 'accept_proposed'
   | 'abolish_owner_role'
+  | {
+      set_emergency_owner: {
+        emergency_owner: string
+      }
+    }
+  | 'clear_emergency_owner'
 export type CallbackMsg =
   | {
       withdraw: {

@@ -42,6 +42,12 @@ export type OwnerUpdate =
   | 'clear_proposed'
   | 'accept_proposed'
   | 'abolish_owner_role'
+  | {
+      set_emergency_owner: {
+        emergency_owner: string
+      }
+    }
+  | 'clear_emergency_owner'
 export type Uint128 = string
 export type Decimal = string
 export type Addr = string
@@ -80,6 +86,7 @@ export interface EstimateExactInSwapResponse {
 }
 export interface OwnerResponse {
   abolished: boolean
+  emergency_owner?: string | null
   initialized: boolean
   owner?: string | null
   proposed?: string | null
