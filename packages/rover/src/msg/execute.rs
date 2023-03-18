@@ -89,6 +89,34 @@ pub enum EmergencyUpdate {
     DisallowCoin(String),
 }
 
+#[cw_serde]
+pub enum LiquidateRequest<T> {
+    /// Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt
+    /// denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the
+    /// liquidatee should have a balance of. The amount returned to liquidator will be the request coin
+    /// of the amount that precisely matches the value of the debt + a liquidation bonus.
+    /// The debt amount will be adjusted down if:
+    /// - Exceeds liquidatee's total debt for denom
+    /// - Not enough liquidatee request coin balance to match
+    /// - The value of the debt repaid exceeds the maximum close factor %
+    ///
+    /// Liquidation should prioritize first the not lent coin and if more needs to be serviced to the liquidator
+    /// it should reclaim (withdrawn from Red Bank).
+    Deposit(String),
+    /// Pay back debt of a liquidatable rover account for a via liquidating a Lent position.
+    /// Lent shares are transfered from the liquidatable to the liquidator.
+    Lend(String),
+    /// Pay back debt of a liquidatable rover account for a via liquidating a vault position.
+    /// Similar to `Deposit` msg and will make similar adjustments to the request.
+    /// The vault position will be withdrawn (and force withdrawn if a locked vault position) and
+    /// the underlying assets will transferred to the liquidator.
+    /// The `VaultPositionType` will determine which bucket to liquidate from.
+    Vault {
+        request_vault: T,
+        position_type: VaultPositionType,
+    },
+}
+
 /// The list of actions that users can perform on their positions
 #[cw_serde]
 pub enum Action {
@@ -126,33 +154,14 @@ pub enum Action {
         id: u64,
         vault: VaultUnchecked,
     },
-    /// Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt
-    /// denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the
-    /// liquidatee should have a balance of. The amount returned to liquidator will be the request coin
-    /// of the amount that precisely matches the value of the debt + a liquidation bonus.
-    /// The debt amount will be adjusted down if:
-    /// - Exceeds liquidatee's total debt for denom
-    /// - Not enough liquidatee request coin balance to match
-    /// - The value of the debt repaid exceeds the maximum close factor %
-    LiquidateCoin {
+    /// Pay back debt of a liquidatable rover account for a via liquidating a specific type of the position.
+    Liquidate {
         /// The credit account id of the one with a liquidation threshold health factor 1 or below
         liquidatee_account_id: String,
-        /// The coin debt that the liquidator wishes to pay back on behalf of the liquidatee.
-        /// The liquidator must already have these assets in their credit account.
-        debt_coin: Coin,
         /// The coin they wish to acquire from the liquidatee (amount returned will include the bonus)
-        request_coin_denom: String,
-    },
-    /// Pay back debt of a liquidatable rover account for a via liquidating a vault position.
-    /// Similar to LiquidateCoin {} msg and will make similar adjustments to the request.
-    /// The vault position will be withdrawn (and force withdrawn if a locked vault position) and
-    /// the underlying assets will transferred to the liquidator.
-    /// The `VaultPositionType` will determine which bucket to liquidate from.
-    LiquidateVault {
-        liquidatee_account_id: String,
         debt_coin: Coin,
-        request_vault: VaultUnchecked,
-        position_type: VaultPositionType,
+        /// Position details to be liquidated
+        request: LiquidateRequest<VaultUnchecked>,
     },
     /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
     /// If `coin_in.amount: AccountBalance`, the accounts entire balance of `coin_in.denom` will be used.
@@ -253,18 +262,11 @@ pub enum CallbackMsg {
         position_id: u64,
     },
     /// Pay back debts of a liquidatable rover account for a bonus
-    LiquidateCoin {
+    Liquidate {
         liquidator_account_id: String,
         liquidatee_account_id: String,
         debt_coin: Coin,
-        request_coin_denom: String,
-    },
-    LiquidateVault {
-        liquidator_account_id: String,
-        liquidatee_account_id: String,
-        debt_coin: Coin,
-        request_vault: Vault,
-        position_type: VaultPositionType,
+        request: LiquidateRequest<Vault>,
     },
     /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
     /// If `coin_in.amount: AccountBalance`, the accounts entire balance of `coin_in.denom` will be used.

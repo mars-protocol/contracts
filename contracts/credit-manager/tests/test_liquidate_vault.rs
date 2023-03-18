@@ -5,7 +5,10 @@ use mars_mock_oracle::msg::CoinPrice;
 use mars_rover::{
     adapters::vault::{VaultBase, VaultPositionType},
     error::ContractError,
-    msg::execute::Action::{Borrow, Deposit, EnterVault, LiquidateVault, RequestVaultUnlock},
+    msg::execute::{
+        Action::{Borrow, Deposit, EnterVault, Liquidate, RequestVaultUnlock},
+        LiquidateRequest,
+    },
 };
 
 use crate::helpers::{
@@ -51,11 +54,13 @@ fn liquidatee_must_have_the_request_vault_position() {
     let res = mock.update_credit_account(
         &liquidator_account_id,
         &liquidator,
-        vec![LiquidateVault {
+        vec![Liquidate {
             liquidatee_account_id: liquidatee_account_id.clone(),
             debt_coin: uatom.to_coin(10),
-            request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
-            position_type: VaultPositionType::UNLOCKED,
+            request: LiquidateRequest::Vault {
+                request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
+                position_type: VaultPositionType::UNLOCKED,
+            },
         }],
         &[],
     );
@@ -107,11 +112,13 @@ fn liquidatee_is_not_liquidatable() {
     let res = mock.update_credit_account(
         &liquidator_account_id,
         &liquidator,
-        vec![LiquidateVault {
+        vec![Liquidate {
             liquidatee_account_id: liquidatee_account_id.clone(),
             debt_coin: lp_token.to_coin(10),
-            request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
-            position_type: VaultPositionType::UNLOCKED,
+            request: LiquidateRequest::Vault {
+                request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
+                position_type: VaultPositionType::UNLOCKED,
+            },
         }],
         &[],
     );
@@ -171,11 +178,13 @@ fn liquidator_does_not_have_debt_coin_in_credit_account() {
     let res = mock.update_credit_account(
         &liquidator_account_id,
         &liquidator,
-        vec![LiquidateVault {
+        vec![Liquidate {
             liquidatee_account_id: liquidatee_account_id.clone(),
             debt_coin: ujake.to_coin(10),
-            request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
-            position_type: VaultPositionType::UNLOCKED,
+            request: LiquidateRequest::Vault {
+                request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
+                position_type: VaultPositionType::UNLOCKED,
+            },
         }],
         &[],
     );
@@ -229,11 +238,13 @@ fn wrong_position_type_sent_for_unlocked_vault() {
     let res = mock.update_credit_account(
         &liquidator_account_id,
         &liquidator,
-        vec![LiquidateVault {
+        vec![Liquidate {
             liquidatee_account_id: liquidatee_account_id.clone(),
             debt_coin: lp_token.to_coin(10),
-            request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
-            position_type: VaultPositionType::LOCKED,
+            request: LiquidateRequest::Vault {
+                request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
+                position_type: VaultPositionType::LOCKED,
+            },
         }],
         &[],
     );
@@ -243,11 +254,13 @@ fn wrong_position_type_sent_for_unlocked_vault() {
     let res = mock.update_credit_account(
         &liquidator_account_id,
         &liquidator,
-        vec![LiquidateVault {
+        vec![Liquidate {
             liquidatee_account_id: liquidatee_account_id.clone(),
             debt_coin: lp_token.to_coin(10),
-            request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
-            position_type: VaultPositionType::UNLOCKING,
+            request: LiquidateRequest::Vault {
+                request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
+                position_type: VaultPositionType::UNLOCKING,
+            },
         }],
         &[],
     );
@@ -294,11 +307,13 @@ fn wrong_position_type_sent_for_locked_vault() {
     let res = mock.update_credit_account(
         &liquidator_account_id,
         &liquidator,
-        vec![LiquidateVault {
+        vec![Liquidate {
             liquidatee_account_id: liquidatee_account_id.clone(),
             debt_coin: lp_token.to_coin(10),
-            request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
-            position_type: VaultPositionType::UNLOCKED,
+            request: LiquidateRequest::Vault {
+                request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
+                position_type: VaultPositionType::UNLOCKED,
+            },
         }],
         &[],
     );
@@ -359,11 +374,13 @@ fn liquidate_unlocked_vault() {
         &liquidator,
         vec![
             Deposit(ujake.to_coin(10)),
-            LiquidateVault {
+            Liquidate {
                 liquidatee_account_id: liquidatee_account_id.clone(),
                 debt_coin: ujake.to_coin(10),
-                request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
-                position_type: VaultPositionType::UNLOCKED,
+                request: LiquidateRequest::Vault {
+                    request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
+                    position_type: VaultPositionType::UNLOCKED,
+                },
             },
         ],
         &[ujake.to_coin(10)],
@@ -445,11 +462,13 @@ fn liquidate_locked_vault() {
         &liquidator,
         vec![
             Deposit(atom.to_coin(30)),
-            LiquidateVault {
+            Liquidate {
                 liquidatee_account_id: liquidatee_account_id.clone(),
                 debt_coin: atom.to_coin(30),
-                request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
-                position_type: VaultPositionType::LOCKED,
+                request: LiquidateRequest::Vault {
+                    request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
+                    position_type: VaultPositionType::LOCKED,
+                },
             },
         ],
         &[atom.to_coin(30)],
@@ -550,11 +569,13 @@ fn liquidate_unlocking_liquidation_order() {
         &liquidator,
         vec![
             Deposit(ujake.to_coin(10)),
-            LiquidateVault {
+            Liquidate {
                 liquidatee_account_id: liquidatee_account_id.clone(),
                 debt_coin: ujake.to_coin(10),
-                request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
-                position_type: VaultPositionType::UNLOCKING,
+                request: LiquidateRequest::Vault {
+                    request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
+                    position_type: VaultPositionType::UNLOCKING,
+                },
             },
         ],
         &[ujake.to_coin(10)],
@@ -648,13 +669,15 @@ fn liquidation_calculation_adjustment() {
         &liquidator,
         vec![
             Deposit(ujake.to_coin(500)),
-            LiquidateVault {
+            Liquidate {
                 liquidatee_account_id: liquidatee_account_id.clone(),
                 // Given the request vault balance, this debt payment is too high.
                 // It will be adjusted to 85, the max given the request vault value
                 debt_coin: ujake.to_coin(500),
-                request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
-                position_type: VaultPositionType::UNLOCKED,
+                request: LiquidateRequest::Vault {
+                    request_vault: VaultBase::new(mock.get_vault(&leverage_vault).address),
+                    position_type: VaultPositionType::UNLOCKED,
+                },
             },
         ],
         &[ujake.to_coin(500)],

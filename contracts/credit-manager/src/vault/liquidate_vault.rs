@@ -11,7 +11,7 @@ use mars_rover::{
 };
 
 use crate::{
-    liquidate_coin::{calculate_liquidation, repay_debt},
+    liquidate_deposit::{calculate_liquidation, repay_debt},
     state::VAULT_POSITIONS,
     utils::update_balance_msg,
     vault::update_vault_position,

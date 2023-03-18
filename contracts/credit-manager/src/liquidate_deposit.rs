@@ -17,7 +17,7 @@ use crate::{
     utils::{decrement_coin_balance, increment_coin_balance},
 };
 
-pub fn liquidate_coin(
+pub fn liquidate_deposit(
     deps: DepsMut,
     env: Env,
     liquidator_account_id: &str,
@@ -47,7 +47,7 @@ pub fn liquidate_coin(
 
     Ok(Response::new()
         .add_message(repay_msg)
-        .add_attribute("action", "liquidate_coin")
+        .add_attribute("action", "liquidate_deposit")
         .add_attribute("account_id", liquidator_account_id)
         .add_attribute("liquidatee_account_id", liquidatee_account_id)
         .add_attribute("coin_debt_repaid", debt.to_string())

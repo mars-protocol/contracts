@@ -180,6 +180,17 @@ impl Coins for Vec<DebtAmount> {
     }
 }
 
+impl Coins for Vec<LentAmount> {
+    fn to_coins(&self) -> Vec<Coin> {
+        self.iter()
+            .map(|l| Coin {
+                denom: l.denom.to_string(),
+                amount: l.amount,
+            })
+            .collect()
+    }
+}
+
 #[cw_serde]
 pub struct Positions {
     pub account_id: String,

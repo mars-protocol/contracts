@@ -115,18 +115,10 @@ export type Action =
       }
     }
   | {
-      liquidate_coin: {
+      liquidate: {
         debt_coin: Coin
         liquidatee_account_id: string
-        request_coin_denom: string
-      }
-    }
-  | {
-      liquidate_vault: {
-        debt_coin: Coin
-        liquidatee_account_id: string
-        position_type: VaultPositionType
-        request_vault: VaultBaseForString
+        request: LiquidateRequestForVaultBaseForString
       }
     }
   | {
@@ -155,6 +147,19 @@ export type ActionAmount =
   | 'account_balance'
   | {
       exact: Uint128
+    }
+export type LiquidateRequestForVaultBaseForString =
+  | {
+      deposit: string
+    }
+  | {
+      lend: string
+    }
+  | {
+      vault: {
+        position_type: VaultPositionType
+        request_vault: VaultBaseForString
+      }
     }
 export type VaultPositionType = 'u_n_l_o_c_k_e_d' | 'l_o_c_k_e_d' | 'u_n_l_o_c_k_i_n_g'
 export type EmergencyUpdate =
@@ -256,20 +261,11 @@ export type CallbackMsg =
       }
     }
   | {
-      liquidate_coin: {
+      liquidate: {
         debt_coin: Coin
         liquidatee_account_id: string
         liquidator_account_id: string
-        request_coin_denom: string
-      }
-    }
-  | {
-      liquidate_vault: {
-        debt_coin: Coin
-        liquidatee_account_id: string
-        liquidator_account_id: string
-        position_type: VaultPositionType
-        request_vault: VaultBaseForAddr
+        request: LiquidateRequestForVaultBaseForAddr
       }
     }
   | {
@@ -306,6 +302,19 @@ export type CallbackMsg =
       }
     }
 export type Addr = string
+export type LiquidateRequestForVaultBaseForAddr =
+  | {
+      deposit: string
+    }
+  | {
+      lend: string
+    }
+  | {
+      vault: {
+        position_type: VaultPositionType
+        request_vault: VaultBaseForAddr
+      }
+    }
 export interface ActionCoin {
   amount: ActionAmount
   denom: string

@@ -19,6 +19,7 @@ pub fn compute_health(deps: Deps, account_id: &str) -> HealthResult<HealthRespon
     // Get the denoms that need prices + markets
     let deposit_denoms = positions.deposits.iter().map(|d| &d.denom).collect::<Vec<_>>();
     let debt_denoms = positions.debts.iter().map(|d| &d.denom).collect::<Vec<_>>();
+    let lend_denoms = positions.lends.iter().map(|d| &d.denom).collect::<Vec<_>>();
     let vault_infos = positions
         .vaults
         .iter()
@@ -32,15 +33,18 @@ pub fn compute_health(deps: Deps, account_id: &str) -> HealthResult<HealthRespon
     // Collect prices + markets
     let (oracle, red_bank) = querier.query_deps()?;
     let mut denoms_data: DenomsData = Default::default();
-    deposit_denoms.into_iter().chain(debt_denoms).chain(vault_base_token_denoms).try_for_each(
-        |denom| -> StdResult<()> {
+    deposit_denoms
+        .into_iter()
+        .chain(debt_denoms)
+        .chain(lend_denoms)
+        .chain(vault_base_token_denoms)
+        .try_for_each(|denom| -> StdResult<()> {
             let price = oracle.query_price(&deps.querier, denom)?.price;
             denoms_data.prices.insert(denom.clone(), price);
             let market = red_bank.query_market(&deps.querier, denom)?;
             denoms_data.markets.insert(denom.clone(), market);
             Ok(())
-        },
-    )?;
+        })?;
 
     // Collect all vault data
     let mut vaults_data: VaultsData = Default::default();

@@ -508,22 +508,22 @@
             "additionalProperties": false
           },
           {
-            "description": "Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the liquidatee should have a balance of. The amount returned to liquidator will be the request coin of the amount that precisely matches the value of the debt + a liquidation bonus. The debt amount will be adjusted down if: - Exceeds liquidatee's total debt for denom - Not enough liquidatee request coin balance to match - The value of the debt repaid exceeds the maximum close factor %",
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a specific type of the position.",
             "type": "object",
             "required": [
-              "liquidate_coin"
+              "liquidate"
             ],
             "properties": {
-              "liquidate_coin": {
+              "liquidate": {
                 "type": "object",
                 "required": [
                   "debt_coin",
                   "liquidatee_account_id",
-                  "request_coin_denom"
+                  "request"
                 ],
                 "properties": {
                   "debt_coin": {
-                    "description": "The coin debt that the liquidator wishes to pay back on behalf of the liquidatee. The liquidator must already have these assets in their credit account.",
+                    "description": "The coin they wish to acquire from the liquidatee (amount returned will include the bonus)",
                     "allOf": [
                       {
                         "$ref": "#/definitions/Coin"
@@ -534,43 +534,13 @@
                     "description": "The credit account id of the one with a liquidation threshold health factor 1 or below",
                     "type": "string"
                   },
-                  "request_coin_denom": {
-                    "description": "The coin they wish to acquire from the liquidatee (amount returned will include the bonus)",
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "description": "Pay back debt of a liquidatable rover account for a via liquidating a vault position. Similar to LiquidateCoin {} msg and will make similar adjustments to the request. The vault position will be withdrawn (and force withdrawn if a locked vault position) and the underlying assets will transferred to the liquidator. The `VaultPositionType` will determine which bucket to liquidate from.",
-            "type": "object",
-            "required": [
-              "liquidate_vault"
-            ],
-            "properties": {
-              "liquidate_vault": {
-                "type": "object",
-                "required": [
-                  "debt_coin",
-                  "liquidatee_account_id",
-                  "position_type",
-                  "request_vault"
-                ],
-                "properties": {
-                  "debt_coin": {
-                    "$ref": "#/definitions/Coin"
-                  },
-                  "liquidatee_account_id": {
-                    "type": "string"
-                  },
-                  "position_type": {
-                    "$ref": "#/definitions/VaultPositionType"
-                  },
-                  "request_vault": {
-                    "$ref": "#/definitions/VaultBase_for_String"
+                  "request": {
+                    "description": "Position details to be liquidated",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/LiquidateRequest_for_VaultBase_for_String"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -1052,16 +1022,16 @@
             "description": "Pay back debts of a liquidatable rover account for a bonus",
             "type": "object",
             "required": [
-              "liquidate_coin"
+              "liquidate"
             ],
             "properties": {
-              "liquidate_coin": {
+              "liquidate": {
                 "type": "object",
                 "required": [
                   "debt_coin",
                   "liquidatee_account_id",
                   "liquidator_account_id",
-                  "request_coin_denom"
+                  "request"
                 ],
                 "properties": {
                   "debt_coin": {
@@ -1073,45 +1043,8 @@
                   "liquidator_account_id": {
                     "type": "string"
                   },
-                  "request_coin_denom": {
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "required": [
-              "liquidate_vault"
-            ],
-            "properties": {
-              "liquidate_vault": {
-                "type": "object",
-                "required": [
-                  "debt_coin",
-                  "liquidatee_account_id",
-                  "liquidator_account_id",
-                  "position_type",
-                  "request_vault"
-                ],
-                "properties": {
-                  "debt_coin": {
-                    "$ref": "#/definitions/Coin"
-                  },
-                  "liquidatee_account_id": {
-                    "type": "string"
-                  },
-                  "liquidator_account_id": {
-                    "type": "string"
-                  },
-                  "position_type": {
-                    "$ref": "#/definitions/VaultPositionType"
-                  },
-                  "request_vault": {
-                    "$ref": "#/definitions/VaultBase_for_Addr"
+                  "request": {
+                    "$ref": "#/definitions/LiquidateRequest_for_VaultBase_for_Addr"
                   }
                 },
                 "additionalProperties": false
@@ -1424,6 +1357,118 @@
       },
       "HealthContractBase_for_String": {
         "type": "string"
+      },
+      "LiquidateRequest_for_VaultBase_for_Addr": {
+        "oneOf": [
+          {
+            "description": "Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the liquidatee should have a balance of. The amount returned to liquidator will be the request coin of the amount that precisely matches the value of the debt + a liquidation bonus. The debt amount will be adjusted down if: - Exceeds liquidatee's total debt for denom - Not enough liquidatee request coin balance to match - The value of the debt repaid exceeds the maximum close factor %\n\nLiquidation should prioritize first the not lent coin and if more needs to be serviced to the liquidator it should reclaim (withdrawn from Red Bank).",
+            "type": "object",
+            "required": [
+              "deposit"
+            ],
+            "properties": {
+              "deposit": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a Lent position. Lent shares are transfered from the liquidatable to the liquidator.",
+            "type": "object",
+            "required": [
+              "lend"
+            ],
+            "properties": {
+              "lend": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a vault position. Similar to `Deposit` msg and will make similar adjustments to the request. The vault position will be withdrawn (and force withdrawn if a locked vault position) and the underlying assets will transferred to the liquidator. The `VaultPositionType` will determine which bucket to liquidate from.",
+            "type": "object",
+            "required": [
+              "vault"
+            ],
+            "properties": {
+              "vault": {
+                "type": "object",
+                "required": [
+                  "position_type",
+                  "request_vault"
+                ],
+                "properties": {
+                  "position_type": {
+                    "$ref": "#/definitions/VaultPositionType"
+                  },
+                  "request_vault": {
+                    "$ref": "#/definitions/VaultBase_for_Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "LiquidateRequest_for_VaultBase_for_String": {
+        "oneOf": [
+          {
+            "description": "Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the liquidatee should have a balance of. The amount returned to liquidator will be the request coin of the amount that precisely matches the value of the debt + a liquidation bonus. The debt amount will be adjusted down if: - Exceeds liquidatee's total debt for denom - Not enough liquidatee request coin balance to match - The value of the debt repaid exceeds the maximum close factor %\n\nLiquidation should prioritize first the not lent coin and if more needs to be serviced to the liquidator it should reclaim (withdrawn from Red Bank).",
+            "type": "object",
+            "required": [
+              "deposit"
+            ],
+            "properties": {
+              "deposit": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a Lent position. Lent shares are transfered from the liquidatable to the liquidator.",
+            "type": "object",
+            "required": [
+              "lend"
+            ],
+            "properties": {
+              "lend": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a vault position. Similar to `Deposit` msg and will make similar adjustments to the request. The vault position will be withdrawn (and force withdrawn if a locked vault position) and the underlying assets will transferred to the liquidator. The `VaultPositionType` will determine which bucket to liquidate from.",
+            "type": "object",
+            "required": [
+              "vault"
+            ],
+            "properties": {
+              "vault": {
+                "type": "object",
+                "required": [
+                  "position_type",
+                  "request_vault"
+                ],
+                "properties": {
+                  "position_type": {
+                    "$ref": "#/definitions/VaultPositionType"
+                  },
+                  "request_vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
       },
       "NftConfigUpdates": {
         "type": "object",

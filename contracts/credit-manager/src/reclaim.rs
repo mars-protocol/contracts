@@ -70,7 +70,7 @@ pub fn reclaim(
         .add_attribute("coin_reclaimed", format!("{}{}", amount_to_reclaim, &coin.denom)))
 }
 
-fn lent_amount_to_shares(deps: Deps, env: &Env, coin: &Coin) -> ContractResult<Uint128> {
+pub fn lent_amount_to_shares(deps: Deps, env: &Env, coin: &Coin) -> ContractResult<Uint128> {
     let red_bank = RED_BANK.load(deps.storage)?;
     let total_lent_shares = TOTAL_LENT_SHARES.load(deps.storage, &coin.denom)?;
     let total_lent = red_bank.query_lent(&deps.querier, &env.contract.address, &coin.denom)?;

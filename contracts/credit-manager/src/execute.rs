@@ -5,7 +5,7 @@ use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
 use mars_rover::{
     coins::Coins,
     error::{ContractError, ContractResult},
-    msg::execute::{Action, CallbackMsg},
+    msg::execute::{Action, CallbackMsg, LiquidateRequest},
 };
 
 use crate::{
@@ -13,7 +13,8 @@ use crate::{
     deposit::deposit,
     health::{assert_max_ltv, query_health},
     lend::lend,
-    liquidate_coin::liquidate_coin,
+    liquidate_deposit::liquidate_deposit,
+    liquidate_lend::liquidate_lend,
     reclaim::reclaim,
     refund::refund_coin_balances,
     repay::repay,
@@ -92,28 +93,36 @@ pub fn dispatch_actions(
                 vault: vault.check(deps.api)?,
                 coin: coin.clone(),
             }),
-            Action::LiquidateCoin {
+            Action::Liquidate {
                 liquidatee_account_id,
                 debt_coin,
-                request_coin_denom,
-            } => callbacks.push(CallbackMsg::LiquidateCoin {
-                liquidator_account_id: account_id.to_string(),
-                liquidatee_account_id: liquidatee_account_id.to_string(),
-                debt_coin: debt_coin.clone(),
-                request_coin_denom: request_coin_denom.clone(),
-            }),
-            Action::LiquidateVault {
-                liquidatee_account_id,
-                debt_coin,
-                request_vault,
-                position_type,
-            } => callbacks.push(CallbackMsg::LiquidateVault {
-                liquidator_account_id: account_id.to_string(),
-                liquidatee_account_id: liquidatee_account_id.to_string(),
-                debt_coin: debt_coin.clone(),
-                request_vault: request_vault.check(deps.api)?,
-                position_type: position_type.clone(),
-            }),
+                request,
+            } => match request {
+                LiquidateRequest::Deposit(denom) => callbacks.push(CallbackMsg::Liquidate {
+                    liquidator_account_id: account_id.to_string(),
+                    liquidatee_account_id: liquidatee_account_id.to_string(),
+                    debt_coin: debt_coin.clone(),
+                    request: LiquidateRequest::Deposit(denom.clone()),
+                }),
+                LiquidateRequest::Lend(denom) => callbacks.push(CallbackMsg::Liquidate {
+                    liquidator_account_id: account_id.to_string(),
+                    liquidatee_account_id: liquidatee_account_id.to_string(),
+                    debt_coin: debt_coin.clone(),
+                    request: LiquidateRequest::Lend(denom.clone()),
+                }),
+                LiquidateRequest::Vault {
+                    request_vault,
+                    position_type,
+                } => callbacks.push(CallbackMsg::Liquidate {
+                    liquidator_account_id: account_id.to_string(),
+                    liquidatee_account_id: liquidatee_account_id.to_string(),
+                    debt_coin: debt_coin.clone(),
+                    request: LiquidateRequest::Vault {
+                        request_vault: request_vault.check(deps.api)?,
+                        position_type: position_type.clone(),
+                    },
+                }),
+            },
             Action::SwapExactIn {
                 coin_in,
                 denom_out,
@@ -251,34 +260,41 @@ pub fn execute_callback(
             previous_total_balance,
             &env.contract.address,
         ),
-        CallbackMsg::LiquidateCoin {
+        CallbackMsg::Liquidate {
             liquidator_account_id,
             liquidatee_account_id,
             debt_coin,
-            request_coin_denom,
-        } => liquidate_coin(
-            deps,
-            env,
-            &liquidator_account_id,
-            &liquidatee_account_id,
-            debt_coin,
-            &request_coin_denom,
-        ),
-        CallbackMsg::LiquidateVault {
-            liquidator_account_id,
-            liquidatee_account_id,
-            debt_coin,
-            request_vault,
-            position_type,
-        } => liquidate_vault(
-            deps,
-            env,
-            &liquidator_account_id,
-            &liquidatee_account_id,
-            debt_coin,
-            request_vault,
-            position_type,
-        ),
+            request,
+        } => match request {
+            LiquidateRequest::Deposit(request_coin_denom) => liquidate_deposit(
+                deps,
+                env,
+                &liquidator_account_id,
+                &liquidatee_account_id,
+                debt_coin,
+                &request_coin_denom,
+            ),
+            LiquidateRequest::Lend(request_coin_denom) => liquidate_lend(
+                deps,
+                env,
+                &liquidator_account_id,
+                &liquidatee_account_id,
+                debt_coin,
+                &request_coin_denom,
+            ),
+            LiquidateRequest::Vault {
+                request_vault,
+                position_type,
+            } => liquidate_vault(
+                deps,
+                env,
+                &liquidator_account_id,
+                &liquidatee_account_id,
+                debt_coin,
+                request_vault,
+                position_type,
+            ),
+        },
         CallbackMsg::SwapExactIn {
             account_id,
             coin_in,

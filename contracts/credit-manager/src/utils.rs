@@ -13,8 +13,8 @@ use mars_rover::{
 
 use crate::{
     state::{
-        ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, HEALTH_CONTRACT, ORACLE, RED_BANK, SWAPPER,
-        TOTAL_DEBT_SHARES, TOTAL_LENT_SHARES, VAULT_CONFIGS, ZAPPER,
+        ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, HEALTH_CONTRACT, LENT_SHARES, ORACLE, RED_BANK,
+        SWAPPER, TOTAL_DEBT_SHARES, TOTAL_LENT_SHARES, VAULT_CONFIGS, ZAPPER,
     },
     update_coin_balances::query_balance,
 };
@@ -78,6 +78,34 @@ pub fn decrement_coin_balance(
     let path = COIN_BALANCES.key((account_id, &coin.denom));
     let value_opt = path.may_load(storage)?;
     let new_value = value_opt.unwrap_or_else(Uint128::zero).checked_sub(coin.amount)?;
+    if new_value.is_zero() {
+        path.remove(storage);
+    } else {
+        path.save(storage, &new_value)?;
+    }
+    Ok(new_value)
+}
+
+pub fn increment_lent_shares(
+    storage: &mut dyn Storage,
+    account_id: &str,
+    denom: &str,
+    shares: Uint128,
+) -> ContractResult<Uint128> {
+    LENT_SHARES.update(storage, (account_id, denom), |value_opt| {
+        value_opt.unwrap_or_else(Uint128::zero).checked_add(shares).map_err(ContractError::Overflow)
+    })
+}
+
+pub fn decrement_lent_shares(
+    storage: &mut dyn Storage,
+    account_id: &str,
+    denom: &str,
+    shares: Uint128,
+) -> ContractResult<Uint128> {
+    let path = LENT_SHARES.key((account_id, denom));
+    let value_opt = path.may_load(storage)?;
+    let new_value = value_opt.unwrap_or_else(Uint128::zero).checked_sub(shares)?;
     if new_value.is_zero() {
         path.remove(storage);
     } else {
