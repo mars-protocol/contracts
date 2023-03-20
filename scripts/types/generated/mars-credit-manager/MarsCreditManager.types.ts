@@ -88,7 +88,10 @@ export type Action =
       reclaim: ActionCoin
     }
   | {
-      repay: ActionCoin
+      repay: {
+        coin: ActionCoin
+        recipient_account_id?: string | null
+      }
     }
   | {
       enter_vault: {
@@ -205,6 +208,13 @@ export type CallbackMsg =
       repay: {
         account_id: string
         coin: ActionCoin
+      }
+    }
+  | {
+      repay_for_recipient: {
+        benefactor_account_id: string
+        coin: ActionCoin
+        recipient_account_id: string
       }
     }
   | {

@@ -1,14 +1,17 @@
 use std::cmp::min;
 
-use cosmwasm_std::{Coin, Deps, DepsMut, Env, Response, Uint128};
+use cosmwasm_std::{to_binary, Coin, CosmosMsg, Deps, DepsMut, Env, Response, Uint128, WasmMsg};
 use mars_rover::{
     error::{ContractError, ContractResult},
-    msg::execute::ActionCoin,
+    msg::{
+        execute::{ActionCoin, CallbackMsg::Repay},
+        ExecuteMsg,
+    },
 };
 
 use crate::{
     state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES},
-    utils::{debt_shares_to_amount, decrement_coin_balance},
+    utils::{debt_shares_to_amount, decrement_coin_balance, increment_coin_balance},
 };
 
 pub fn repay(
@@ -80,4 +83,39 @@ pub fn current_debt_for_denom(
         DEBT_SHARES.load(deps.storage, (account_id, denom)).map_err(|_| ContractError::NoDebt)?;
     let coin = debt_shares_to_amount(deps, &env.contract.address, denom, debt_shares)?;
     Ok((coin.amount, debt_shares))
+}
+
+pub fn repay_for_recipient(
+    deps: DepsMut,
+    env: Env,
+    benefactor_account_id: &str,
+    recipient_account_id: &str,
+    coin: ActionCoin,
+) -> ContractResult<Response> {
+    let (debt_amount, _) =
+        current_debt_for_denom(deps.as_ref(), &env, recipient_account_id, &coin.denom)?;
+    let amount_to_repay = min(debt_amount, coin.amount.value().unwrap_or(Uint128::MAX));
+    let coin_to_repay = &Coin {
+        denom: coin.denom,
+        amount: amount_to_repay,
+    };
+
+    decrement_coin_balance(deps.storage, benefactor_account_id, coin_to_repay)?;
+    increment_coin_balance(deps.storage, recipient_account_id, coin_to_repay)?;
+
+    let repay_callback_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: env.contract.address.to_string(),
+        funds: vec![],
+        msg: to_binary(&ExecuteMsg::Callback(Repay {
+            account_id: recipient_account_id.to_string(),
+            coin: ActionCoin::from(coin_to_repay),
+        }))?,
+    });
+
+    Ok(Response::new()
+        .add_message(repay_callback_msg)
+        .add_attribute("action", "repay_for_recipient")
+        .add_attribute("benefactor_account_id", benefactor_account_id)
+        .add_attribute("recipient_account_id", recipient_account_id)
+        .add_attribute("coin_repaid", coin_to_repay.to_string()))
 }

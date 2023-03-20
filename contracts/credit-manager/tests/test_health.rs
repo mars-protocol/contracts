@@ -889,10 +889,13 @@ fn can_take_actions_if_ltv_does_not_weaken() {
         &user,
         vec![
             Deposit(uatom_info.to_coin(50)),
-            Repay(ActionCoin {
-                denom: uatom_info.denom.clone(),
-                amount: ActionAmount::AccountBalance,
-            }),
+            Repay {
+                recipient_account_id: None,
+                coin: ActionCoin {
+                    denom: uatom_info.denom.clone(),
+                    amount: ActionAmount::AccountBalance,
+                },
+            },
         ],
         &[uatom_info.to_coin(50)],
     )

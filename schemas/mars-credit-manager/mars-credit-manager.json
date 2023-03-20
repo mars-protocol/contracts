@@ -389,14 +389,29 @@
             "additionalProperties": false
           },
           {
-            "description": "Repay coin of specified amount back to Red Bank. If `amount: AccountBalance` is passed, the repaid amount will be the minimum between account balance for denom and total owed.",
+            "description": "Repay coin of specified amount back to Red Bank. If `amount: AccountBalance` is passed, the repaid amount will be the minimum between account balance for denom and total owed. The sender will repay on behalf of the recipient account. If 'recipient_account_id: None', the sender repays to its own account.",
             "type": "object",
             "required": [
               "repay"
             ],
             "properties": {
               "repay": {
-                "$ref": "#/definitions/ActionCoin"
+                "type": "object",
+                "required": [
+                  "coin"
+                ],
+                "properties": {
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "recipient_account_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -769,6 +784,36 @@
                   },
                   "coin": {
                     "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Benefactor account repays debt on behalf of recipient",
+            "type": "object",
+            "required": [
+              "repay_for_recipient"
+            ],
+            "properties": {
+              "repay_for_recipient": {
+                "type": "object",
+                "required": [
+                  "benefactor_account_id",
+                  "coin",
+                  "recipient_account_id"
+                ],
+                "properties": {
+                  "benefactor_account_id": {
+                    "type": "string"
+                  },
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "recipient_account_id": {
+                    "type": "string"
                   }
                 },
                 "additionalProperties": false

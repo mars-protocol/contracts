@@ -132,7 +132,12 @@ pub enum Action {
     Reclaim(ActionCoin),
     /// Repay coin of specified amount back to Red Bank. If `amount: AccountBalance` is passed,
     /// the repaid amount will be the minimum between account balance for denom and total owed.
-    Repay(ActionCoin),
+    /// The sender will repay on behalf of the recipient account. If 'recipient_account_id: None',
+    /// the sender repays to its own account.
+    Repay {
+        recipient_account_id: Option<String>,
+        coin: ActionCoin,
+    },
     /// Deposit coins into vault strategy
     /// If `coin.amount: AccountBalance`, Rover attempts to deposit the account's entire balance into the vault
     EnterVault {
@@ -207,6 +212,12 @@ pub enum CallbackMsg {
     /// between account balance for denom and total owed;
     Repay {
         account_id: String,
+        coin: ActionCoin,
+    },
+    /// Benefactor account repays debt on behalf of recipient
+    RepayForRecipient {
+        benefactor_account_id: String,
+        recipient_account_id: String,
         coin: ActionCoin,
     },
     /// Lend coin to the Red Bank
