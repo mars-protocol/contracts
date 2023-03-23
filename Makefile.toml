@@ -1,0 +1,70 @@
+extend = [
+  { path = "schema.Makefile.toml" },
+  { path = "coverage_grcov.Makefile.toml" }
+]
+
+[config]
+default_to_workspace = false
+
+[env]
+# Directory with wasm files used by integration tests (another directory can be used instead, for example 'artifacts' from rust-optimizer)
+ARTIFACTS_DIR_PATH = "target/wasm32-unknown-unknown/release"
+
+[tasks.build]
+command = "cargo"
+args = ["build", "--release", "--target", "wasm32-unknown-unknown", "--locked"]
+
+[tasks.rust-optimizer]
+script = """
+if [[ $(arch) == "arm64" ]]; then
+  image="cosmwasm/workspace-optimizer-arm64:0.12.11"
+else
+  image="cosmwasm/workspace-optimizer:0.12.11"
+fi
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  ${image}
+"""
+
+[tasks.test]
+command = "cargo"
+args = ["test", "--locked"]
+
+[tasks.unit-test]
+command = "cargo"
+args = ["test", "--locked", "--workspace", "--exclude", "mars-integration-tests"]
+
+[tasks.integration-test]
+command = "cargo"
+args = ["test", "--locked", "--package", "mars-integration-tests"]
+
+[tasks.fmt]
+toolchain = "nightly"
+command = "cargo"
+args = ["fmt", "--all", "--check"]
+
+[tasks.clippy]
+command = "cargo"
+args = ["clippy", "--tests", "--", "-D", "warnings"]
+
+[tasks.audit]
+command = "cargo"
+args = ["audit"]
+
+[tasks.coverage-html]
+alias = "coverage-grcov-html"
+
+[tasks.coverage-lcov]
+alias = "coverage-grcov-lcov"
+
+[tasks.all-actions]
+dependencies = [
+  "fmt",
+  "clippy",
+  "build",
+  "test",
+  "audit",
+  "generate-all-schemas",
+  "rust-optimizer",
+]

@@ -1,0 +1,53 @@
+# https://crates.io/crates/grcov
+
+[env]
+COVERAGE_TARGET_DIRECTORY = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/coverage"
+COVERAGE_BINARIES = "${COVERAGE_TARGET_DIRECTORY}/debug/deps"
+COVERAGE_PROF_OUTPUT = "${COVERAGE_TARGET_DIRECTORY}/profraw"
+
+[tasks.coverage-grcov-prepare-outdir]
+private = true
+script='''
+#!/usr/bin/env bash
+set -eux
+
+rm -rf ${COVERAGE_PROF_OUTPUT}
+mkdir -p ${COVERAGE_PROF_OUTPUT}
+'''
+
+[tasks.coverage-grcov-run-test]
+condition = { rust_version = { min = "1.60.0" } }
+private = true
+run_task = "test"
+
+[tasks.coverage-grcov-run-test.env]
+CARGO_BUILD_TARGET_DIR = "${COVERAGE_TARGET_DIRECTORY}"
+CARGO_INCREMENTAL = "0"
+RUSTFLAGS = "-Cinstrument-coverage"
+LLVM_PROFILE_FILE = "${COVERAGE_PROF_OUTPUT}/coverage-%p-%m.profraw"
+
+[tasks.install-grcov]
+condition = { env_not_set = ["SKIP_INSTALL_GRCOV"] }
+private = true
+install_crate = { crate_name = "grcov" }
+
+[tasks.coverage-grcov]
+condition = { rust_version = { min = "1.60.0" } }
+private = true
+script = '''
+#!/usr/bin/env bash
+set -eux
+
+grcov ${COVERAGE_PROF_OUTPUT} \
+  -b ${COVERAGE_BINARIES} -s ${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY} \
+  -t ${GRCOV_OUTPUT_TYPE} --llvm --branch --ignore-not-existing --ignore "/*" --ignore "*/tests/*" --ignore "*/testing/*" --ignore "target/*" -o ${GRCOV_OUTPUT_PATH}
+'''
+dependencies = ["install-grcov", "coverage-grcov-prepare-outdir", "coverage-grcov-run-test"]
+
+[tasks.coverage-grcov-html]
+env = { GRCOV_OUTPUT_TYPE = "html", GRCOV_OUTPUT_PATH = "${COVERAGE_TARGET_DIRECTORY}/html" }
+run_task = "coverage-grcov"
+
+[tasks.coverage-grcov-lcov]
+env = { GRCOV_OUTPUT_TYPE = "lcov", GRCOV_OUTPUT_PATH = "${COVERAGE_TARGET_DIRECTORY}/lcov.info" }
+run_task = "coverage-grcov"
