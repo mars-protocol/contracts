@@ -25,6 +25,5 @@ whitelists/
 
 # Artifacts
 artifacts/
-schemas/
 
 yarn-error.log
