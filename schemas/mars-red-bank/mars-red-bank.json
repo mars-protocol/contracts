@@ -8,7 +8,6 @@
     "type": "object",
     "required": [
       "config",
-      "emergency_owner",
       "owner"
     ],
     "properties": {
@@ -19,10 +18,6 @@
             "$ref": "#/definitions/CreateOrUpdateConfig"
           }
         ]
-      },
-      "emergency_owner": {
-        "description": "Contract's emergency owner",
-        "type": "string"
       },
       "owner": {
         "description": "Contract's owner",
@@ -71,19 +66,6 @@
         ],
         "properties": {
           "update_owner": {
-            "$ref": "#/definitions/OwnerUpdate"
-          }
-        },
-        "additionalProperties": false
-      },
-      {
-        "description": "Manages emergency owner state",
-        "type": "object",
-        "required": [
-          "update_emergency_owner"
-        ],
-        "properties": {
-          "update_emergency_owner": {
             "$ref": "#/definitions/OwnerUpdate"
           }
         },
@@ -603,6 +585,35 @@
             "enum": [
               "abolish_owner_role"
             ]
+          },
+          {
+            "description": "A separate entity managed by Owner that can be used for granting specific emergency powers.",
+            "type": "object",
+            "required": [
+              "set_emergency_owner"
+            ],
+            "properties": {
+              "set_emergency_owner": {
+                "type": "object",
+                "required": [
+                  "emergency_owner"
+                ],
+                "properties": {
+                  "emergency_owner": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Remove the entity in the Emergency Owner role",
+            "type": "string",
+            "enum": [
+              "clear_emergency_owner"
+            ]
           }
         ]
       },
@@ -1035,13 +1046,6 @@
         },
         "owner": {
           "description": "The contract's owner",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "proposed_new_emergency_owner": {
-          "description": "The contract's proposed emergency owner",
           "type": [
             "string",
             "null"

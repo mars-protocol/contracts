@@ -104,6 +104,12 @@ export type OwnerUpdate =
   | 'clear_proposed'
   | 'accept_proposed'
   | 'abolish_owner_role'
+  | {
+      set_emergency_owner: {
+        emergency_owner: string
+      }
+    }
+  | 'clear_emergency_owner'
 export interface DowntimeDetector {
   downtime: Downtime
   recovery: number

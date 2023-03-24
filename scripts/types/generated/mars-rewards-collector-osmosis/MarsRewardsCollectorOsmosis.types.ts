@@ -62,6 +62,12 @@ export type OwnerUpdate =
   | 'clear_proposed'
   | 'accept_proposed'
   | 'abolish_owner_role'
+  | {
+      set_emergency_owner: {
+        emergency_owner: string
+      }
+    }
+  | 'clear_emergency_owner'
 export type OsmosisRoute = SwapAmountInRoute[]
 export type Uint128 = string
 export interface UpdateConfig {
