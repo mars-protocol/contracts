@@ -26,9 +26,7 @@ use crate::{
         apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
         get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
     },
-    state::{
-        COLLATERALS, CONFIG, DEBTS, EMERGENCY_OWNER, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS,
-    },
+    state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS},
     user::User,
 };
 
@@ -69,14 +67,6 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
         },
     )?;
 
-    EMERGENCY_OWNER.initialize(
-        deps.storage,
-        deps.api,
-        SetInitialOwner {
-            owner: msg.emergency_owner,
-        },
-    )?;
-
     Ok(Response::default())
 }
 
@@ -86,14 +76,6 @@ pub fn update_owner(
     update: OwnerUpdate,
 ) -> Result<Response, ContractError> {
     Ok(OWNER.update(deps, info, update)?)
-}
-
-pub fn update_emergency_owner(
-    deps: DepsMut,
-    info: MessageInfo,
-    update: OwnerUpdate,
-) -> Result<Response, ContractError> {
-    Ok(EMERGENCY_OWNER.update(deps, info, update)?)
 }
 
 /// Update config
@@ -216,7 +198,7 @@ pub fn update_asset(
 ) -> Result<Response, ContractError> {
     if OWNER.is_owner(deps.storage, &info.sender)? {
         update_asset_by_owner(deps, &env, &denom, params)
-    } else if EMERGENCY_OWNER.is_owner(deps.storage, &info.sender)? {
+    } else if OWNER.is_emergency_owner(deps.storage, &info.sender)? {
         update_asset_by_emergency_owner(deps, &denom, params)
     } else {
         Err(OwnerError::NotOwner {}.into())

@@ -1,5 +1,5 @@
 use cosmwasm_std::{attr, coin, from_binary, testing::mock_info, Addr, Decimal, Event, Uint128};
-use mars_owner::OwnerError::NotOwner;
+use mars_owner::{OwnerError::NotOwner, OwnerUpdate};
 use mars_red_bank::{
     contract::{execute, instantiate, query},
     error::ContractError,
@@ -41,7 +41,6 @@ fn proper_initialization() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config: empty_config,
     };
     let info = mock_info("owner", &[]);
@@ -58,7 +57,6 @@ fn proper_initialization() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -83,7 +81,6 @@ fn proper_initialization() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
 
@@ -114,7 +111,6 @@ fn update_config() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config: init_config.clone(),
     };
     // we can just call .unwrap() to assert this was a success
@@ -191,7 +187,6 @@ fn init_asset() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -477,7 +472,6 @@ fn update_asset() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -731,7 +725,6 @@ fn update_asset_with_new_interest_rate_model_params() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -951,7 +944,6 @@ fn update_asset_by_emergency_owner() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -974,6 +966,16 @@ fn update_asset_by_emergency_owner() {
         borrow_enabled: Some(true),
         deposit_cap: None,
     };
+
+    execute(
+        deps.as_mut(),
+        env.clone(),
+        mock_info("owner", &[]),
+        ExecuteMsg::UpdateOwner(OwnerUpdate::SetEmergencyOwner {
+            emergency_owner: "emergency_owner".to_string(),
+        }),
+    )
+    .unwrap();
 
     // emergency owner is authorized but can't update asset if not initialized first
     {
