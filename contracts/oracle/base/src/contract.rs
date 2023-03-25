@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 
-use crate::utils::validate_native_denom;
 use cosmwasm_std::{
     to_binary, Addr, Binary, CustomQuery, Deps, DepsMut, Env, MessageInfo, Order, Response,
     StdResult,
@@ -12,7 +11,7 @@ use mars_oracle::msg::{
 };
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 
-use crate::{error::ContractResult, PriceSource};
+use crate::{error::ContractResult, utils::validate_native_denom, PriceSource};
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
