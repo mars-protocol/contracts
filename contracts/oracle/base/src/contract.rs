@@ -6,11 +6,11 @@ use cosmwasm_std::{
     StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
-use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
-use mars_red_bank_types::oracle::{
+use mars_oracle::msg::{
     Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
     QueryMsg,
 };
+use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 
 use crate::{error::ContractResult, PriceSource};
 

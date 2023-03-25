@@ -7,10 +7,10 @@ use cosmwasm_std::{
     testing::{mock_env, MockApi, MockQuerier, MockStorage},
     Coin, Deps, DepsMut, OwnedDeps,
 };
+use mars_oracle::msg::{InstantiateMsg, QueryMsg};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSource};
 use mars_osmosis::helpers::{Pool, QueryPoolResponse};
-use mars_red_bank_types::oracle::{InstantiateMsg, QueryMsg};
 use mars_testing::{mock_info, MarsMockQuerier};
 use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
 

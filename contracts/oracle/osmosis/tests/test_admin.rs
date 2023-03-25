@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::mock_env;
+use mars_oracle::msg::{ConfigResponse, InstantiateMsg, QueryMsg};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::contract::entry;
-use mars_red_bank_types::oracle::{ConfigResponse, InstantiateMsg, QueryMsg};
 use mars_testing::{mock_dependencies, mock_info};
 
 mod helpers;

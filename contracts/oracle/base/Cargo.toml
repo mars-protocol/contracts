@@ -21,7 +21,7 @@ cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
 cw-storage-plus     = { workspace = true }
 mars-owner          = { workspace = true }
-mars-red-bank-types = { workspace = true }
+mars-oracle         = { workspace = true }
 schemars            = { workspace = true }
 serde               = { workspace = true }
 thiserror           = { workspace = true }

@@ -23,8 +23,8 @@ cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
 cw-storage-plus     = { workspace = true }
 mars-oracle-base    = { workspace = true }
+mars-oracle         = { workspace = true }
 mars-osmosis        = { workspace = true }
-mars-red-bank-types = { workspace = true }
 osmosis-std         = { workspace = true }
 schemars            = { workspace = true }
 serde               = { workspace = true }

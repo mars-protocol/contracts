@@ -1,4 +1,4 @@
-use mars_red_bank_types::oracle;
+use mars_oracle as oracle;
 
 use crate::OsmosisPriceSource;
 

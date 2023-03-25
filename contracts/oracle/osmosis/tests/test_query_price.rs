@@ -1,7 +1,7 @@
 use cosmwasm_std::{coin, Decimal, StdError};
+use mars_oracle::msg::{PriceResponse, QueryMsg};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{Downtime, DowntimeDetector, OsmosisPriceSource};
-use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
 use osmosis_std::types::osmosis::{
     gamm::v2::QuerySpotPriceResponse,
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},

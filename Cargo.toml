@@ -44,7 +44,6 @@ prost              = { version = "0.11.5", default-features = false, features = 
 
 # packages
 mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
-mars-red-bank-types        = "1.0.0"
 mars-owner                 = "1.0.0"
 mars-swapper               = { path = "packages/mars-swapper" }
 mars-testing               = { path = "packages/testing" }

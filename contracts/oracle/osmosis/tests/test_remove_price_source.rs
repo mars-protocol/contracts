@@ -1,4 +1,5 @@
 use cosmwasm_std::{testing::mock_env, Decimal};
+use mars_oracle::msg::QueryMsg;
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
     contract::entry::execute,
@@ -6,7 +7,6 @@ use mars_oracle_osmosis::{
     OsmosisPriceSource,
 };
 use mars_owner::OwnerError::NotOwner;
-use mars_red_bank_types::oracle::QueryMsg;
 use mars_testing::mock_info;
 
 mod helpers;

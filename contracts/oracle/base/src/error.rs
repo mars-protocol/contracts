@@ -1,6 +1,6 @@
 use cosmwasm_std::{ConversionOverflowError, OverflowError, StdError};
+// use mars_oracle::error::MarsError;
 use mars_owner::OwnerError;
-use mars_red_bank_types::error::MarsError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -8,9 +8,8 @@ pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
 
-    #[error("{0}")]
-    Mars(#[from] MarsError),
-
+    // #[error("{0}")]
+    // Mars(#[from] MarsError),
     #[error("Invalid denom: {reason}")]
     InvalidDenom {
         reason: String,
