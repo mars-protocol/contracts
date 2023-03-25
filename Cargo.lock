@@ -30,13 +30,13 @@ checksum = "7de8ce5e0f9f8d88245311066a578d72b7af3e7088f32783804676302df237e4"
 
 [[package]]
 name = "async-trait"
-version = "0.1.67"
+version = "0.1.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86ea188f25f0255d8f92797797c97ebf5631fa88178beb1a46fdf5622c9a00e4"
+checksum = "b9ccdd8f2a161be9bd5c023df56f1b2a0bd1d83872ae53b71a84a12c9bf6e842"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.5",
+ "syn 2.0.10",
 ]
 
 [[package]]
@@ -331,9 +331,9 @@ dependencies = [
 
 [[package]]
 name = "cpufeatures"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28d997bd5e24a5928dd43e46dc529867e207907fe0b239c3477d924f7f2ca320"
+checksum = "280a9f2d8b3a38871a3c8a46fb80db65e5e5ed97da80c4d08bf27fb63e35e181"
 dependencies = [
  "libc",
 ]
@@ -428,7 +428,7 @@ checksum = "c80e93d1deccb8588db03945016a292c3c631e6325d349ebb35d2db6f4f946f7"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw2",
+ "cw2 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "schemars",
  "semver",
  "serde",
@@ -446,6 +446,19 @@ dependencies = [
  "cw-storage-plus",
  "schemars",
  "serde",
+]
+
+[[package]]
+name = "cw2"
+version = "1.0.1"
+source = "git+https://github.com/mars-protocol/cw-plus?rev=4014255#4014255fc2d79486e332e02d1ab1421db86f4f0b"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "schemars",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -766,9 +779,9 @@ checksum = "ce23b50ad8242c51a442f3ff322d56b02f08852c77e4c0b4d3fd684abc89c683"
 
 [[package]]
 name = "indexmap"
-version = "1.9.2"
+version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1885e79c1fc4b10f0e172c475f458b7f7b93061064d98c3293e98c5ba0c8b399"
+checksum = "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
 dependencies = [
  "autocfg",
  "hashbrown",
@@ -858,6 +871,53 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-oracle"
+version = "1.0.1"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "mars-owner",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-oracle-base"
+version = "1.0.1"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "mars-owner",
+ "mars-red-bank-types",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-oracle-osmosis"
+version = "1.0.1"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "mars-oracle-base",
+ "mars-osmosis",
+ "mars-owner",
+ "mars-red-bank-types",
+ "mars-testing",
+ "osmosis-std 0.14.0",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-osmosis"
 version = "1.0.1"
 source = "git+https://github.com/mars-protocol/red-bank?rev=00301d60c38af09d8eb7980355009e2f00c6f41f#00301d60c38af09d8eb7980355009e2f00c6f41f"
@@ -881,8 +941,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-swapper"
+name = "mars-red-bank-types"
 version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cca59bb17daa753c30d3c934e0779736200708cb89a34020fa805b1cb05e7278"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "mars-owner",
+ "mars-utils",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-swapper"
+version = "1.0.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -896,7 +969,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-base"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -911,7 +984,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-mock"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
@@ -923,13 +996,13 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-osmosis"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
- "cw2",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
  "mars-osmosis",
  "mars-owner",
  "mars-swapper",
@@ -937,6 +1010,33 @@ dependencies = [
  "osmosis-std 0.14.0",
  "osmosis-test-tube",
  "schemars",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-testing"
+version = "1.0.1"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "mars-oracle",
+ "mars-oracle-osmosis",
+ "mars-osmosis",
+ "osmosis-std 0.14.0",
+ "prost 0.11.8",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-utils"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12bae572eda20842ade4bf8ab09ce0856cae5cff89dbeb7c51e9123489e48256"
+dependencies = [
+ "cosmwasm-std",
  "thiserror",
 ]
 
@@ -1214,9 +1314,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.7.2"
+version = "1.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cce168fea28d3e05f158bda4576cf0c844d5045bc2cc3620fa0292ed5bb5814c"
+checksum = "8b1f693b24f6ac912f4893ef08244d70b6067480d2f1a46e950c9691e6749d1d"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -1360,7 +1460,7 @@ checksum = "e801c1712f48475582b7696ac71e0ca34ebb30e09338425384269d9717c62cad"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.5",
+ "syn 2.0.10",
 ]
 
 [[package]]
@@ -1393,7 +1493,7 @@ checksum = "bcec881020c684085e55a25f7fd888954d56609ef363479dc5a1305eb0d40cab"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.5",
+ "syn 2.0.10",
 ]
 
 [[package]]
@@ -1496,9 +1596,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.5"
+version = "2.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89c2d1c76a26822187a1fbb5964e3fff108bc208f02e820ab9dac1234f6b388a"
+checksum = "5aad1363ed6d37b84299588d62d3a7d95b5a5c2d9aad5c85609fda12afaa1f40"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1614,7 +1714,7 @@ checksum = "f9456a42c5b0d803c8cd86e73dd7cc9edd429499f37a3550d286d5e86720569f"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.5",
+ "syn 2.0.10",
 ]
 
 [[package]]

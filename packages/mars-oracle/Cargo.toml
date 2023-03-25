@@ -1,0 +1,28 @@
+[package]
+name          = "mars-oracle"
+version       = { workspace = true }
+authors       = { workspace = true }
+license       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+doctest = false
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+cosmwasm-schema         = { workspace = true }
+cosmwasm-std            = { workspace = true }
+cw-storage-plus         = { workspace = true }
+cw-utils                = { workspace = true }
+mars-owner              = { workspace = true }
+schemars                = { workspace = true }
+serde                   = { workspace = true }
+thiserror               = { workspace = true }

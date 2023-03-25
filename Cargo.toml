@@ -1,11 +1,12 @@
 [workspace]
 members = [
   "contracts/swapper/*",
+  "contracts/oracle/*",
   "packages/*"
 ]
 
 [workspace.package]
-version       = "1.0.0"
+version       = "1.0.1"
 authors       = [
   "Gabe R. <gabe.r@delphilabs.io>",
   "Larry Engineer <larry@delphidigital.io>",
@@ -22,7 +23,7 @@ keywords      = ["mars", "cosmos", "cosmwasm"]
 anyhow             = "1.0.69"
 cosmwasm-schema    = "1.2.2"
 cosmwasm-std       = "1.2.2"
-cw2                = "1.0.1"
+cw2                = { git = "https://github.com/mars-protocol/cw-plus", rev = "4014255" }
 cw721              = "0.16.0"
 cw721-base         = { version = "0.16.0", features = ["library"] }
 cw-item-set        = { version = "0.7.1", default-features = false, features = ["iterator"] }
@@ -39,15 +40,20 @@ serde_json         = "1.0.94"
 serde-wasm-bindgen = "0.5.0"
 thiserror          = "1.0.39"
 wasm-bindgen       = "0.2.84"
+prost              = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
 
 # packages
 mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
 mars-red-bank-types        = "1.0.0"
 mars-owner                 = "1.0.0"
 mars-swapper               = { path = "packages/mars-swapper" }
+mars-testing               = { path = "packages/testing" }
+mars-oracle                = { path = "packages/mars-oracle" }
 
 # contracts
-mars-swapper-base  = { version = "1.0.0", path = "contracts/swapper/base" }
+mars-swapper-base   = { version = "1.0.0", path = "contracts/swapper/base" }
+mars-oracle-base    = { version = "1.0.0", path = "contracts/oracle/base" }
+mars-oracle-osmosis = { version = "1.0.0", path = "contracts/oracle/osmosis" }
 
 [profile.release]
 codegen-units    = 1

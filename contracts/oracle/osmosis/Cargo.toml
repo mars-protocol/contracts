@@ -1,0 +1,36 @@
+[package]
+name          = "mars-oracle-osmosis"
+description   = "A smart contract that provides prices denominated in `uosmo` for assets used in the protocol"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+license       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest = false
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+cosmwasm-std        = { workspace = true }
+cw2                 = { workspace = true }
+cw-storage-plus     = { workspace = true }
+mars-oracle-base    = { workspace = true }
+mars-osmosis        = { workspace = true }
+mars-red-bank-types = { workspace = true }
+osmosis-std         = { workspace = true }
+schemars            = { workspace = true }
+serde               = { workspace = true }
+thiserror           = { workspace = true }
+
+[dev-dependencies]
+cosmwasm-schema = { workspace = true }
+mars-testing    = { workspace = true }
+mars-owner      = { workspace = true }

@@ -1,0 +1,35 @@
+[package]
+name          = "mars-testing"
+description   = "Utilities for testing Mars red-bank contracts"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+license       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+doctest = false
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+anyhow                         = { workspace = true }
+cosmwasm-std                   = { workspace = true }
+osmosis-std                    = { workspace = true }
+mars-oracle                    = { workspace = true }
+mars-oracle-osmosis            = { workspace = true }
+mars-osmosis                   = { workspace = true }
+# mars-rewards-collector-osmosis = { workspace = true }
+prost                          = { workspace = true }
+schemars                       = { workspace = true }
+serde                          = { workspace = true }
+thiserror                      = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+cw-multi-test = { workspace = true }
