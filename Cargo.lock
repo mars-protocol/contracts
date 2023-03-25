@@ -876,12 +876,7 @@ version = "1.0.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
  "mars-owner",
- "schemars",
- "serde",
- "thiserror",
 ]
 
 [[package]]
@@ -914,25 +909,6 @@ dependencies = [
  "osmosis-std 0.14.0",
  "schemars",
  "serde",
- "thiserror",
-]
-
-[[package]]
-name = "mars-oracle-wasm"
-version = "1.0.1"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
- "mars-oracle-base",
- "mars-osmosis",
- "mars-owner",
- "mars-testing",
- "osmosis-std 0.14.0",
- "schemars",
- "serde",
- "thiserror",
 ]
 
 [[package]]
@@ -964,12 +940,7 @@ version = "1.0.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
  "mars-owner",
- "schemars",
- "serde",
- "thiserror",
 ]
 
 [[package]]
@@ -994,9 +965,7 @@ dependencies = [
  "anyhow",
  "cosmwasm-std",
  "cw-multi-test",
- "cw-storage-plus",
  "mars-swapper",
- "thiserror",
 ]
 
 [[package]]
@@ -1006,7 +975,6 @@ dependencies = [
  "anyhow",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus",
  "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
  "mars-osmosis",
  "mars-owner",
@@ -1014,15 +982,12 @@ dependencies = [
  "mars-swapper-base",
  "osmosis-std 0.14.0",
  "osmosis-test-tube",
- "schemars",
- "thiserror",
 ]
 
 [[package]]
 name = "mars-testing"
 version = "1.0.1"
 dependencies = [
- "anyhow",
  "cosmwasm-std",
  "cw-multi-test",
  "mars-oracle",
@@ -1030,9 +995,6 @@ dependencies = [
  "mars-osmosis",
  "osmosis-std 0.14.0",
  "prost 0.11.8",
- "schemars",
- "serde",
- "thiserror",
 ]
 
 [[package]]

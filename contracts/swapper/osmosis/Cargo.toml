@@ -22,13 +22,10 @@ library    = []
 cosmwasm-schema   = { workspace = true }
 cosmwasm-std      = { workspace = true }
 cw2               = { workspace = true }
-cw-storage-plus   = { workspace = true }
 mars-osmosis      = { workspace = true }
 mars-owner        = { workspace = true }
 mars-swapper-base = { workspace = true }
 osmosis-std       = { workspace = true }
-schemars          = { workspace = true }
-thiserror         = { workspace = true }
 mars-swapper      = { workspace = true }
 
 [dev-dependencies]

@@ -28,7 +28,6 @@ mars-osmosis        = { workspace = true }
 osmosis-std         = { workspace = true }
 schemars            = { workspace = true }
 serde               = { workspace = true }
-thiserror           = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }
