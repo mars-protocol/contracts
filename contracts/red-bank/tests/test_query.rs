@@ -16,22 +16,10 @@ fn query_collateral() {
     let user_addr = Addr::unchecked("user");
 
     // Setup first market
-    let market_1 = th_init_market(
-        deps.as_mut(),
-        "uosmo",
-        &Market {
-            ..Default::default()
-        },
-    );
+    let market_1 = th_init_market(deps.as_mut(), "uosmo", &Default::default());
 
     // Setup second market
-    let market_2 = th_init_market(
-        deps.as_mut(),
-        "uusd",
-        &Market {
-            ..Default::default()
-        },
-    );
+    let market_2 = th_init_market(deps.as_mut(), "uusd", &Default::default());
 
     let amount_1 = Uint128::new(12345);
     let amount_2 = Uint128::new(54321);
