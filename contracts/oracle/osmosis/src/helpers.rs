@@ -1,4 +1,3 @@
-use cosmwasm_std::Decimal;
 use mars_oracle_base::{ContractError, ContractResult};
 use mars_osmosis::helpers::{has_denom, Pool};
 
@@ -68,25 +67,6 @@ pub fn assert_osmosis_twap(
                 reason: "downtime recovery can't be 0".to_string(),
             });
         }
-    }
-
-    Ok(())
-}
-
-/// Assert Pyth configuration
-pub fn assert_pyth(max_confidence: Decimal, max_deviation: Decimal) -> ContractResult<()> {
-    // TODO: update validation once confirmed with Risk team
-    if !max_confidence.le(&Decimal::one()) {
-        return Err(ContractError::InvalidPriceSource {
-            reason: "max_confidence must be in the range of <0;1>".to_string(),
-        });
-    }
-
-    // TODO: update validation once confirmed with Risk team
-    if !max_deviation.le(&Decimal::one()) {
-        return Err(ContractError::InvalidPriceSource {
-            reason: "max_deviation must be in the range of <0;1>".to_string(),
-        });
     }
 
     Ok(())
