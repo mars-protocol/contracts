@@ -522,8 +522,6 @@ fn querying_pyth_price_if_publish_price_too_old() {
         OsmosisPriceSource::Pyth {
             price_feed_id: price_id,
             max_staleness,
-            max_confidence: Decimal::from_ratio(5u128, 100u128),
-            max_deviation: Decimal::from_ratio(6u128, 100u128),
         },
     );
 
@@ -566,46 +564,6 @@ fn querying_pyth_price_if_publish_price_too_old() {
                     .to_string()
         }
     );
-
-    let ema_price_publish_time = 1677157333u64;
-    let price_publish_time = ema_price_publish_time + max_staleness;
-    deps.querier.set_pyth_price(
-        price_id,
-        PriceFeedResponse {
-            price_feed: PriceFeed::new(
-                price_id,
-                Price {
-                    price: 1371155677,
-                    conf: 646723,
-                    expo: -8,
-                    publish_time: price_publish_time as i64,
-                },
-                Price {
-                    price: 1365133270,
-                    conf: 574566,
-                    expo: -8,
-                    publish_time: ema_price_publish_time as i64,
-                },
-            ),
-        },
-    );
-
-    let res_err = entry::query(
-        deps.as_ref(),
-        mock_env_at_block_time(ema_price_publish_time + max_staleness + 1u64),
-        QueryMsg::Price {
-            denom: "uatom".to_string(),
-        },
-    )
-    .unwrap_err();
-    assert_eq!(
-        res_err,
-        ContractError::InvalidPrice {
-            reason:
-                "EMA price publish time is too old/stale. published: 1677157333, now: 1677157364"
-                    .to_string()
-        }
-    );
 }
 
 #[test]
@@ -624,8 +582,6 @@ fn querying_pyth_price_if_signed() {
         OsmosisPriceSource::Pyth {
             price_feed_id: price_id,
             max_staleness,
-            max_confidence: Decimal::from_ratio(5u128, 100u128),
-            max_deviation: Decimal::from_ratio(6u128, 100u128),
         },
     );
 
@@ -668,163 +624,6 @@ fn querying_pyth_price_if_signed() {
 }
 
 #[test]
-fn querying_pyth_price_if_confidence_exceeded() {
-    let mut deps = helpers::setup_test();
-
-    let price_id = PriceIdentifier::from_hex(
-        "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
-    )
-    .unwrap();
-
-    let max_staleness = 30u64;
-    helpers::set_price_source(
-        deps.as_mut(),
-        "uatom",
-        OsmosisPriceSource::Pyth {
-            price_feed_id: price_id,
-            max_staleness,
-            max_confidence: Decimal::from_ratio(5u128, 100u128),
-            max_deviation: Decimal::from_ratio(6u128, 100u128),
-        },
-    );
-
-    let publish_time = 1677157333u64;
-    deps.querier.set_pyth_price(
-        price_id,
-        PriceFeedResponse {
-            price_feed: PriceFeed::new(
-                price_id,
-                Price {
-                    price: 1010000,
-                    conf: 51000,
-                    expo: -4,
-                    publish_time: publish_time as i64,
-                },
-                Price {
-                    price: 1000000,
-                    conf: 40000,
-                    expo: -4,
-                    publish_time: publish_time as i64,
-                },
-            ),
-        },
-    );
-
-    let res_err = entry::query(
-        deps.as_ref(),
-        mock_env_at_block_time(publish_time),
-        QueryMsg::Price {
-            denom: "uatom".to_string(),
-        },
-    )
-    .unwrap_err();
-    assert_eq!(
-        res_err,
-        ContractError::InvalidPrice {
-            reason: "price confidence deviation 0.051 exceeds max allowed 0.05".to_string()
-        }
-    );
-}
-
-#[test]
-fn querying_pyth_price_if_deviation_exceeded() {
-    let mut deps = helpers::setup_test();
-
-    let price_id = PriceIdentifier::from_hex(
-        "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
-    )
-    .unwrap();
-
-    let max_staleness = 30u64;
-    helpers::set_price_source(
-        deps.as_mut(),
-        "uatom",
-        OsmosisPriceSource::Pyth {
-            price_feed_id: price_id,
-            max_staleness,
-            max_confidence: Decimal::from_ratio(5u128, 100u128),
-            max_deviation: Decimal::from_ratio(6u128, 100u128),
-        },
-    );
-
-    let publish_time = 1677157333u64;
-
-    // price > ema_price
-    deps.querier.set_pyth_price(
-        price_id,
-        PriceFeedResponse {
-            price_feed: PriceFeed::new(
-                price_id,
-                Price {
-                    price: 1061000,
-                    conf: 50000,
-                    expo: -4,
-                    publish_time: publish_time as i64,
-                },
-                Price {
-                    price: 1000000,
-                    conf: 40000,
-                    expo: -4,
-                    publish_time: publish_time as i64,
-                },
-            ),
-        },
-    );
-
-    let res_err = entry::query(
-        deps.as_ref(),
-        mock_env_at_block_time(publish_time),
-        QueryMsg::Price {
-            denom: "uatom".to_string(),
-        },
-    )
-    .unwrap_err();
-    assert_eq!(
-        res_err,
-        ContractError::InvalidPrice {
-            reason: "price deviation 0.061 exceeds max allowed 0.06".to_string()
-        }
-    );
-
-    // ema_price > price
-    deps.querier.set_pyth_price(
-        price_id,
-        PriceFeedResponse {
-            price_feed: PriceFeed::new(
-                price_id,
-                Price {
-                    price: 939999,
-                    conf: 50000,
-                    expo: -4,
-                    publish_time: publish_time as i64,
-                },
-                Price {
-                    price: 1000000,
-                    conf: 40000,
-                    expo: -4,
-                    publish_time: publish_time as i64,
-                },
-            ),
-        },
-    );
-
-    let res_err = entry::query(
-        deps.as_ref(),
-        mock_env_at_block_time(publish_time),
-        QueryMsg::Price {
-            denom: "uatom".to_string(),
-        },
-    )
-    .unwrap_err();
-    assert_eq!(
-        res_err,
-        ContractError::InvalidPrice {
-            reason: "price deviation 0.060001 exceeds max allowed 0.06".to_string()
-        }
-    );
-}
-
-#[test]
 fn querying_pyth_price_successfully() {
     let mut deps = helpers::setup_test();
 
@@ -840,8 +639,6 @@ fn querying_pyth_price_successfully() {
         OsmosisPriceSource::Pyth {
             price_feed_id: price_id,
             max_staleness,
-            max_confidence: Decimal::from_ratio(5u128, 100u128),
-            max_deviation: Decimal::from_ratio(6u128, 100u128),
         },
     );
 
