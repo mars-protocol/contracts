@@ -77,8 +77,6 @@ export type OsmosisPriceSource =
     }
   | {
       pyth: {
-        max_confidence: Decimal
-        max_deviation: Decimal
         max_staleness: number
         price_feed_id: Identifier
         [k: string]: unknown

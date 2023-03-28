@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use cosmwasm_std::{
     coin, from_binary,
     testing::{mock_env, MockApi, MockQuerier, MockStorage},
-    Coin, Decimal, Deps, DepsMut, OwnedDeps,
+    Coin, Deps, DepsMut, OwnedDeps,
 };
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSource};
@@ -147,8 +147,6 @@ pub fn set_pyth_price_source(deps: DepsMut, denom: &str, price_id: PriceIdentifi
         OsmosisPriceSource::Pyth {
             price_feed_id: price_id,
             max_staleness: 30,
-            max_confidence: Decimal::from_ratio(5u128, 100u128),
-            max_deviation: Decimal::from_ratio(6u128, 100u128),
         },
     )
 }
