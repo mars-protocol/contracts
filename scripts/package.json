@@ -1,6 +1,7 @@
 {
   "name": "scripts",
   "version": "1.0.0",
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "deploy:osmosis-testnet": "yarn build && node build/deploy/osmosis/testIndex.js",
     "deploy:osmosis-mainnet": "yarn build && node build/deploy/osmosis/mainIndex.js",
