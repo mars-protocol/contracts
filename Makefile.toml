@@ -11,6 +11,7 @@ default_to_workspace = false
 ARTIFACTS_DIR_PATH = "target/wasm32-unknown-unknown/release"
 
 [tasks.build]
+toolchain = "stable"
 command = "cargo"
 args = ["build", "--release", "--target", "wasm32-unknown-unknown", "--locked"]
 
@@ -28,14 +29,17 @@ docker run --rm -v "$(pwd)":/code \
 """
 
 [tasks.test]
+toolchain = "stable"
 command = "cargo"
 args = ["test", "--locked"]
 
 [tasks.unit-test]
+toolchain = "stable"
 command = "cargo"
 args = ["test", "--locked", "--workspace", "--exclude", "mars-integration-tests"]
 
 [tasks.integration-test]
+toolchain = "stable"
 command = "cargo"
 args = ["test", "--locked", "--package", "mars-integration-tests"]
 
@@ -45,10 +49,12 @@ command = "cargo"
 args = ["fmt", "--all", "--check"]
 
 [tasks.clippy]
+toolchain = "stable"
 command = "cargo"
 args = ["clippy", "--tests", "--", "-D", "warnings"]
 
 [tasks.audit]
+toolchain = "stable"
 command = "cargo"
 args = ["audit"]
 
