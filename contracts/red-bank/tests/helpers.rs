@@ -80,7 +80,6 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     instantiate(deps.as_mut(), env, info, msg).unwrap();

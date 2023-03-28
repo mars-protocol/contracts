@@ -1,8 +1,5 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
-use mars_owner::{
-    OwnerError::{NotOwner, NotProposedOwner},
-    OwnerUpdate,
-};
+use mars_owner::{OwnerError::NotOwner, OwnerUpdate};
 use mars_red_bank::{contract::execute, error::ContractError};
 use mars_red_bank_types::red_bank::{ConfigResponse, ExecuteMsg, QueryMsg};
 
@@ -15,17 +12,12 @@ fn initialized_state() {
     let deps = th_setup(&[]);
 
     let config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
-    assert!(config.emergency_owner.is_some());
-    assert!(config.proposed_new_emergency_owner.is_none());
+    assert!(config.emergency_owner.is_none());
 }
 
 #[test]
-fn propose_new_emergency_owner() {
+fn only_owner_can_set_emergency_owner() {
     let mut deps = th_setup(&[]);
-
-    let original_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
-
-    let new_owner = "new_admin";
 
     // only admin can propose new admins
     let bad_guy = "bad_guy";
@@ -33,19 +25,28 @@ fn propose_new_emergency_owner() {
         deps.as_mut(),
         mock_env(),
         mock_info(bad_guy, &[]),
-        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ProposeNewOwner {
-            proposed: bad_guy.to_string(),
+        ExecuteMsg::UpdateOwner(OwnerUpdate::SetEmergencyOwner {
+            emergency_owner: "new_emergency_owner".to_string(),
         }),
     )
     .unwrap_err();
     assert_eq!(err, ContractError::Owner(NotOwner {}));
+}
+
+#[test]
+fn set_and_clear_emergency_owner() {
+    let mut deps = th_setup(&[]);
+
+    let original_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
+
+    let emergency_owner = "new_emergency_owner";
 
     execute(
         deps.as_mut(),
         mock_env(),
-        mock_info(&original_config.emergency_owner.clone().unwrap(), &[]),
-        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ProposeNewOwner {
-            proposed: new_owner.to_string(),
+        mock_info(&original_config.owner.clone().unwrap(), &[]),
+        ExecuteMsg::UpdateOwner(OwnerUpdate::SetEmergencyOwner {
+            emergency_owner: emergency_owner.to_string(),
         }),
     )
     .unwrap();
@@ -54,99 +55,15 @@ fn propose_new_emergency_owner() {
 
     assert_eq!(new_config.owner, original_config.owner);
     assert_eq!(new_config.proposed_new_owner, original_config.proposed_new_owner);
-    assert_eq!(new_config.emergency_owner, original_config.emergency_owner);
-    assert_ne!(
-        new_config.proposed_new_emergency_owner,
-        original_config.proposed_new_emergency_owner
-    );
-    assert_eq!(new_config.proposed_new_emergency_owner, Some(new_owner.to_string()));
-}
+    assert_eq!(new_config.emergency_owner, Some(emergency_owner.to_string()));
 
-#[test]
-fn clear_proposed_emergency_owner() {
-    let mut deps = th_setup(&[]);
-
-    let original_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
-
-    let new_owner = "new_admin";
+    // clear emergency owner
 
     execute(
         deps.as_mut(),
         mock_env(),
-        mock_info(&original_config.emergency_owner.clone().unwrap(), &[]),
-        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ProposeNewOwner {
-            proposed: new_owner.to_string(),
-        }),
-    )
-    .unwrap();
-
-    let interim_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
-    assert_eq!(interim_config.proposed_new_emergency_owner, Some(new_owner.to_string()));
-
-    // only admin can clear
-    let bad_guy = "bad_guy";
-    let err = execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info(bad_guy, &[]),
-        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ClearProposed),
-    )
-    .unwrap_err();
-    assert_eq!(err, ContractError::Owner(NotOwner {}));
-
-    execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info(&original_config.emergency_owner.clone().unwrap(), &[]),
-        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ClearProposed),
-    )
-    .unwrap();
-
-    let latest_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
-
-    assert_eq!(latest_config.owner, original_config.owner);
-    assert_eq!(latest_config.proposed_new_owner, original_config.proposed_new_owner);
-    assert_eq!(latest_config.emergency_owner, original_config.emergency_owner);
-    assert_ne!(
-        latest_config.proposed_new_emergency_owner,
-        interim_config.proposed_new_emergency_owner
-    );
-    assert_eq!(latest_config.proposed_new_emergency_owner, None);
-}
-
-#[test]
-fn accept_emergency_owner_role() {
-    let mut deps = th_setup(&[]);
-
-    let original_config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
-
-    let new_owner = "new_admin";
-
-    execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info(&original_config.emergency_owner.clone().unwrap(), &[]),
-        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::ProposeNewOwner {
-            proposed: new_owner.to_string(),
-        }),
-    )
-    .unwrap();
-
-    // Only proposed admin can accept
-    let err = execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info(&original_config.emergency_owner.unwrap(), &[]),
-        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::AcceptProposed),
-    )
-    .unwrap_err();
-    assert_eq!(err, ContractError::Owner(NotProposedOwner {}));
-
-    execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info(new_owner, &[]),
-        ExecuteMsg::UpdateEmergencyOwner(OwnerUpdate::AcceptProposed),
+        mock_info(&original_config.owner.clone().unwrap(), &[]),
+        ExecuteMsg::UpdateOwner(OwnerUpdate::ClearEmergencyOwner {}),
     )
     .unwrap();
 
@@ -154,6 +71,5 @@ fn accept_emergency_owner_role() {
 
     assert_eq!(new_config.owner, original_config.owner);
     assert_eq!(new_config.proposed_new_owner, original_config.proposed_new_owner);
-    assert_eq!(new_config.emergency_owner.unwrap(), new_owner.to_string());
-    assert_eq!(new_config.proposed_new_emergency_owner, None);
+    assert_eq!(new_config.emergency_owner, None);
 }

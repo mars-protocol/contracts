@@ -314,11 +314,6 @@ export interface MarsRedBankInterface extends MarsRedBankReadOnlyInterface {
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
-  updateEmergencyOwner: (
-    fee?: number | StdFee | 'auto',
-    memo?: string,
-    funds?: Coin[],
-  ) => Promise<ExecuteResult>
   updateConfig: (
     {
       config,
@@ -453,7 +448,6 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
     this.sender = sender
     this.contractAddress = contractAddress
     this.updateOwner = this.updateOwner.bind(this)
-    this.updateEmergencyOwner = this.updateEmergencyOwner.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
     this.initAsset = this.initAsset.bind(this)
     this.updateAsset = this.updateAsset.bind(this)
@@ -476,22 +470,6 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
       this.contractAddress,
       {
         update_owner: {},
-      },
-      fee,
-      memo,
-      funds,
-    )
-  }
-  updateEmergencyOwner = async (
-    fee: number | StdFee | 'auto' = 'auto',
-    memo?: string,
-    funds?: Coin[],
-  ): Promise<ExecuteResult> => {
-    return await this.client.execute(
-      this.sender,
-      this.contractAddress,
-      {
-        update_emergency_owner: {},
       },
       fee,
       memo,

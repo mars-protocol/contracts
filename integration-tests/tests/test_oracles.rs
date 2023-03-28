@@ -1032,7 +1032,6 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
         OSMOSIS_RED_BANK_CONTRACT_NAME,
         &InstantiateRedBank {
             owner: signer.address(),
-            emergency_owner: signer.address(),
             config: CreateOrUpdateConfig {
                 address_provider: Some(addr_provider_addr.clone()),
                 close_factor: Some(Decimal::percent(10)),
