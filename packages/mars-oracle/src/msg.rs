@@ -1,13 +1,21 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Decimal;
+use cosmwasm_std::{Decimal, Empty};
 use mars_owner::OwnerUpdate;
 
 #[cw_serde]
-pub struct InstantiateMsg {
+pub struct WasmOracleCustomInitParams {
+    /// The Astroport factory contract address
+    pub astroport_factory: String,
+}
+
+#[cw_serde]
+pub struct InstantiateMsg<C = Empty> {
     /// The contract's owner, who can update config and price sources
     pub owner: String,
     /// The asset in which prices are denominated in
     pub base_denom: String,
+    /// Custom init params
+    pub custom_init: Option<C>,
 }
 
 #[cw_serde]

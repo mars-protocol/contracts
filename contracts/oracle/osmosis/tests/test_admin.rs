@@ -29,6 +29,7 @@ fn instantiating_incorrect_denom() {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "!*jadfaefc".to_string(),
+            custom_init: None,
         },
     );
     assert_eq!(
@@ -45,6 +46,7 @@ fn instantiating_incorrect_denom() {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "ahdbufenf&*!-".to_string(),
+            custom_init: None,
         },
     );
     assert_eq!(
@@ -62,6 +64,7 @@ fn instantiating_incorrect_denom() {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "ab".to_string(),
+            custom_init: None,
         },
     );
     assert_eq!(

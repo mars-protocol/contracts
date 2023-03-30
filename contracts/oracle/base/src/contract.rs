@@ -11,14 +11,17 @@ use mars_oracle::msg::{
 };
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 
-use crate::{error::ContractResult, utils::validate_native_denom, PriceSource};
+use crate::{
+    error::ContractResult, utils::validate_native_denom, PriceSourceChecked, PriceSourceUnchecked,
+};
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
 
-pub struct OracleBase<'a, P, C>
+pub struct OracleBase<'a, P, PU, C, I>
 where
-    P: PriceSource<C>,
+    P: PriceSourceChecked<C>,
+    PU: PriceSourceUnchecked<P, C>,
     C: CustomQuery,
 {
     /// Contract's owner
@@ -29,11 +32,16 @@ where
     pub price_sources: Map<'a, &'a str, P>,
     /// Phantom data holds the custom query type
     pub custom_query: PhantomData<C>,
+    /// Phantom data holds the unchecked price source type
+    pub unchecked_price_source: PhantomData<PU>,
+    /// Phantom data holds the instantiate msg custom type
+    pub instantiate_msg: PhantomData<I>,
 }
 
-impl<'a, P, C> Default for OracleBase<'a, P, C>
+impl<'a, P, PU, C, I> Default for OracleBase<'a, P, PU, C, I>
 where
-    P: PriceSource<C>,
+    P: PriceSourceChecked<C>,
+    PU: PriceSourceUnchecked<P, C>,
     C: CustomQuery,
 {
     fn default() -> Self {
@@ -42,16 +50,23 @@ where
             config: Item::new("config"),
             price_sources: Map::new("price_sources"),
             custom_query: PhantomData,
+            unchecked_price_source: PhantomData,
+            instantiate_msg: PhantomData,
         }
     }
 }
 
-impl<'a, P, C> OracleBase<'a, P, C>
+impl<'a, P, PU, C, I> OracleBase<'a, P, PU, C, I>
 where
-    P: PriceSource<C>,
+    P: PriceSourceChecked<C>,
+    PU: PriceSourceUnchecked<P, C>,
     C: CustomQuery,
 {
-    pub fn instantiate(&self, deps: DepsMut<C>, msg: InstantiateMsg) -> ContractResult<Response> {
+    pub fn instantiate(
+        &self,
+        deps: DepsMut<C>,
+        msg: InstantiateMsg<I>,
+    ) -> ContractResult<Response> {
         validate_native_denom(&msg.base_denom)?;
 
         self.owner.initialize(
@@ -76,7 +91,7 @@ where
         &self,
         deps: DepsMut<C>,
         info: MessageInfo,
-        msg: ExecuteMsg<P>,
+        msg: ExecuteMsg<PU>,
     ) -> ContractResult<Response> {
         match msg {
             ExecuteMsg::UpdateOwner(update) => self.update_owner(deps, info, update),
@@ -125,14 +140,14 @@ where
         deps: DepsMut<C>,
         sender_addr: Addr,
         denom: String,
-        price_source: P,
+        price_source: PU,
     ) -> ContractResult<Response> {
         self.owner.assert_owner(deps.storage, &sender_addr)?;
 
         validate_native_denom(&denom)?;
 
         let cfg = self.config.load(deps.storage)?;
-        price_source.validate(&deps.querier, &denom, &cfg.base_denom)?;
+        let price_source = price_source.validate(&deps.querier, &denom, &cfg.base_denom)?;
         self.price_sources.save(deps.storage, &denom, &price_source)?;
 
         Ok(Response::new()
