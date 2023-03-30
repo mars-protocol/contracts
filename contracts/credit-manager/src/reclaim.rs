@@ -66,6 +66,7 @@ pub fn reclaim(
     Ok(Response::new()
         .add_message(red_bank_reclaim_msg)
         .add_attribute("action", "reclaim")
+        .add_attribute("account_id", account_id)
         .add_attribute("lent_shares_reclaimed", shares_to_reclaim)
         .add_attribute("coin_reclaimed", format!("{}{}", amount_to_reclaim, &coin.denom)))
 }
