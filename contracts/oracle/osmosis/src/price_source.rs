@@ -159,6 +159,57 @@ pub enum OsmosisPriceSource {
         /// rejecting the price as too stale
         max_staleness: u64,
     },
+    /// Liquid Staking Derivatives (LSD) price quoted in USD based on data from Pyth, Osmosis and Stride.
+    ///
+    /// Equation to calculate the price:
+    /// stAsset/USD = stAsset/Asset * Asset/USD
+    /// where:
+    /// stAsset/Asset = min(stAsset/Asset Geometric TWAP, stAsset/Asset Redemption Rate)
+    ///
+    /// Example:
+    /// stATOM/USD = stATOM/ATOM * ATOM/USD
+    /// where:
+    /// - stATOM/ATOM = min(stAtom/Atom Geometric TWAP from Osmosis, stAtom/Atom Redemption Rate from Stride)
+    /// - ATOM/USD price comes from the Mars Oracle contract (should point to Pyth).
+    ///
+    /// NOTE: `pool_id` must point to stAsset/Asset Osmosis pool.
+    /// Asset/USD price source should be available in the Mars Oracle contract.
+    Lsd {
+        /// Transitive denom for which we query price in USD. It refers to 'Asset' in the equation:
+        /// stAsset/USD = stAsset/Asset * Asset/USD
+        transitive_denom: String,
+
+        /// Params to query geometric TWAP price
+        geometric_twap: GeometricTwap,
+
+        /// Params to query redemption rate
+        redemption_rate: RedemptionRate,
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct GeometricTwap {
+    /// Pool id for stAsset/Asset pool
+    pub pool_id: u64,
+
+    /// Window size in seconds representing the entire window for which 'geometric' price is calculated.
+    /// Value should be <= 172800 sec (48 hours).
+    pub window_size: u64,
+
+    /// Detect when the chain is recovering from downtime
+    pub downtime_detector: Option<DowntimeDetector>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct RedemptionRate {
+    /// Stride contract addr
+    pub stride_contract_addr: String,
+
+    /// The maximum number of seconds since the last price was by an oracle, before
+    /// rejecting the price as too stale
+    max_staleness: u64,
 }
 
 impl fmt::Display for OsmosisPriceSource {
@@ -203,6 +254,12 @@ impl fmt::Display for OsmosisPriceSource {
                 max_staleness,
             } => {
                 format!("pyth:{price_feed_id}:{max_staleness}")
+            }
+            OsmosisPriceSource::Lsd {
+                ..
+            } => {
+                // TODO
+                unimplemented!()
             }
         };
         write!(f, "{label}")
@@ -263,6 +320,12 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             OsmosisPriceSource::Pyth {
                 ..
             } => Ok(()),
+            OsmosisPriceSource::Lsd {
+                ..
+            } => {
+                // TODO
+                unimplemented!()
+            }
         }
     }
 
@@ -339,6 +402,12 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 max_staleness,
             } => {
                 Ok(Self::query_pyth_price(deps, env, *price_feed_id, *max_staleness, pyth_config)?)
+            }
+            OsmosisPriceSource::Lsd {
+                ..
+            } => {
+                // TODO
+                unimplemented!()
             }
         }
     }

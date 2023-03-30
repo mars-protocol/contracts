@@ -1,0 +1,40 @@
+use cosmwasm_std::{to_binary, Addr, Decimal, QuerierWrapper, QueryRequest, StdResult, WasmQuery};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+// TODO: should be updated once Stride open source their contract
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, JsonSchema)]
+pub struct Price {
+    denom: String,
+    base_denom: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, JsonSchema)]
+pub struct RedemptionRateRequest {
+    price: Price,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, JsonSchema)]
+pub struct RedemptionRateResponse {
+    pub exchange_rate: Decimal,
+    pub last_updated: u64,
+}
+
+pub fn query_redemption_rate(
+    querier: &QuerierWrapper,
+    contract_addr: Addr,
+    denom: String,
+    base_denom: String,
+) -> StdResult<RedemptionRateResponse> {
+    let redemption_rate_response = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: contract_addr.into_string(),
+        msg: to_binary(&RedemptionRateRequest {
+            price: Price {
+                denom,
+                base_denom,
+            },
+        })?,
+    }))?;
+    Ok(redemption_rate_response)
+}
