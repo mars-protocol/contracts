@@ -1,10 +1,10 @@
 use std::fmt;
 
-use cosmwasm_std::{
-    Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, Uint128, Uint256,
-};
+use cosmwasm_std::{Addr, Decimal, Decimal256, Deps, Empty, Env, Isqrt, Uint128, Uint256};
 use cw_storage_plus::Map;
-use mars_oracle_base::{ContractError::InvalidPrice, ContractResult, PriceSource};
+use mars_oracle_base::{
+    ContractError::InvalidPrice, ContractResult, PriceSourceChecked, PriceSourceUnchecked,
+};
 use mars_osmosis::helpers::{
     query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price,
     recovered_since_downtime_of_length, Pool,
@@ -82,7 +82,7 @@ impl fmt::Display for DowntimeDetector {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum OsmosisPriceSource {
+pub enum OsmosisPriceSource<T> {
     /// Returns a fixed value;
     Fixed {
         price: Decimal,
@@ -183,7 +183,7 @@ pub enum OsmosisPriceSource {
         geometric_twap: GeometricTwap,
 
         /// Params to query redemption rate
-        redemption_rate: RedemptionRate,
+        redemption_rate: RedemptionRate<T>,
     },
 }
 
@@ -201,18 +201,31 @@ pub struct GeometricTwap {
     pub downtime_detector: Option<DowntimeDetector>,
 }
 
+impl From<&GeometricTwap> for GeometricTwap {
+    fn from(value: &GeometricTwap) -> Self {
+        Self {
+            pool_id: value.pool_id,
+            window_size: value.window_size,
+            downtime_detector: value.downtime_detector.clone(),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct RedemptionRate {
+pub struct RedemptionRate<T> {
     /// Stride contract addr
-    pub stride_contract_addr: String,
+    pub stride_contract_addr: T,
 
     /// The maximum number of seconds since the last price was by an oracle, before
     /// rejecting the price as too stale
-    max_staleness: u64,
+    pub max_staleness: u64,
 }
 
-impl fmt::Display for OsmosisPriceSource {
+pub type OsmosisPriceSourceUnchecked = OsmosisPriceSource<String>;
+pub type OsmosisPriceSourceChecked = OsmosisPriceSource<Addr>;
+
+impl fmt::Display for OsmosisPriceSourceChecked {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let label = match self {
             OsmosisPriceSource::Fixed {
@@ -266,69 +279,107 @@ impl fmt::Display for OsmosisPriceSource {
     }
 }
 
-impl PriceSource<Empty> for OsmosisPriceSource {
+impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSourceUnchecked {
     fn validate(
-        &self,
-        querier: &QuerierWrapper,
+        self,
+        deps: Deps,
         denom: &str,
         base_denom: &str,
-    ) -> ContractResult<()> {
-        match self {
-            OsmosisPriceSource::Fixed {
-                ..
-            } => Ok(()),
-            OsmosisPriceSource::Spot {
+    ) -> ContractResult<OsmosisPriceSourceChecked> {
+        match &self {
+            OsmosisPriceSourceUnchecked::Fixed {
+                price,
+            } => Ok(OsmosisPriceSourceChecked::Fixed {
+                price: *price,
+            }),
+            OsmosisPriceSourceUnchecked::Spot {
                 pool_id,
             } => {
-                let pool = query_pool(querier, *pool_id)?;
-                helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)
+                let pool = query_pool(&deps.querier, *pool_id)?;
+                helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
+                Ok(OsmosisPriceSourceChecked::Spot {
+                    pool_id: *pool_id,
+                })
             }
-            OsmosisPriceSource::ArithmeticTwap {
+            OsmosisPriceSourceUnchecked::ArithmeticTwap {
                 pool_id,
                 window_size,
                 downtime_detector,
             } => {
-                let pool = query_pool(querier, *pool_id)?;
+                let pool = query_pool(&deps.querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
-                helpers::assert_osmosis_twap(*window_size, downtime_detector)
+                helpers::assert_osmosis_twap(*window_size, downtime_detector)?;
+                Ok(OsmosisPriceSourceChecked::ArithmeticTwap {
+                    pool_id: *pool_id,
+                    window_size: *window_size,
+                    downtime_detector: downtime_detector.clone(),
+                })
             }
-            OsmosisPriceSource::GeometricTwap {
+            OsmosisPriceSourceUnchecked::GeometricTwap {
                 pool_id,
                 window_size,
                 downtime_detector,
             } => {
-                let pool = query_pool(querier, *pool_id)?;
+                let pool = query_pool(&deps.querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
-                helpers::assert_osmosis_twap(*window_size, downtime_detector)
+                helpers::assert_osmosis_twap(*window_size, downtime_detector)?;
+                Ok(OsmosisPriceSourceChecked::GeometricTwap {
+                    pool_id: *pool_id,
+                    window_size: *window_size,
+                    downtime_detector: downtime_detector.clone(),
+                })
             }
-            OsmosisPriceSource::XykLiquidityToken {
+            OsmosisPriceSourceUnchecked::XykLiquidityToken {
                 pool_id,
             } => {
-                let pool = query_pool(querier, *pool_id)?;
-                helpers::assert_osmosis_xyk_pool(&pool)
+                let pool = query_pool(&deps.querier, *pool_id)?;
+                helpers::assert_osmosis_xyk_pool(&pool)?;
+                Ok(OsmosisPriceSourceChecked::XykLiquidityToken {
+                    pool_id: *pool_id,
+                })
             }
-            OsmosisPriceSource::StakedGeometricTwap {
+            OsmosisPriceSourceUnchecked::StakedGeometricTwap {
                 transitive_denom,
                 pool_id,
                 window_size,
                 downtime_detector,
             } => {
-                let pool = query_pool(querier, *pool_id)?;
+                let pool = query_pool(&deps.querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, transitive_denom)?;
-                helpers::assert_osmosis_twap(*window_size, downtime_detector)
+                helpers::assert_osmosis_twap(*window_size, downtime_detector)?;
+                Ok(OsmosisPriceSourceChecked::StakedGeometricTwap {
+                    transitive_denom: transitive_denom.to_string(),
+                    pool_id: *pool_id,
+                    window_size: *window_size,
+                    downtime_detector: downtime_detector.clone(),
+                })
             }
-            OsmosisPriceSource::Pyth {
-                ..
-            } => Ok(()),
-            OsmosisPriceSource::Lsd {
-                ..
-            } => {
-                // TODO
-                unimplemented!()
-            }
+            OsmosisPriceSourceUnchecked::Pyth {
+                price_feed_id,
+                max_staleness,
+            } => Ok(OsmosisPriceSourceChecked::Pyth {
+                price_feed_id: *price_feed_id,
+                max_staleness: *max_staleness,
+            }),
+            OsmosisPriceSourceUnchecked::Lsd {
+                transitive_denom,
+                geometric_twap,
+                redemption_rate,
+            } => Ok(OsmosisPriceSourceChecked::Lsd {
+                transitive_denom: transitive_denom.to_string(),
+                geometric_twap: geometric_twap.into(),
+                redemption_rate: RedemptionRate {
+                    stride_contract_addr: deps
+                        .api
+                        .addr_validate(&redemption_rate.stride_contract_addr)?,
+                    max_staleness: redemption_rate.max_staleness,
+                },
+            }),
         }
     }
+}
 
+impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
     fn query_price(
         &self,
         deps: &Deps,
@@ -339,13 +390,13 @@ impl PriceSource<Empty> for OsmosisPriceSource {
         pyth_config: &PythConfig,
     ) -> ContractResult<Decimal> {
         match self {
-            OsmosisPriceSource::Fixed {
+            OsmosisPriceSourceChecked::Fixed {
                 price,
             } => Ok(*price),
-            OsmosisPriceSource::Spot {
+            OsmosisPriceSourceChecked::Spot {
                 pool_id,
             } => query_spot_price(&deps.querier, *pool_id, denom, base_denom).map_err(Into::into),
-            OsmosisPriceSource::ArithmeticTwap {
+            OsmosisPriceSourceChecked::ArithmeticTwap {
                 pool_id,
                 window_size,
                 downtime_detector,
@@ -356,7 +407,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 query_arithmetic_twap_price(&deps.querier, *pool_id, denom, base_denom, start_time)
                     .map_err(Into::into)
             }
-            OsmosisPriceSource::GeometricTwap {
+            OsmosisPriceSourceChecked::GeometricTwap {
                 pool_id,
                 window_size,
                 downtime_detector,
@@ -367,7 +418,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 query_geometric_twap_price(&deps.querier, *pool_id, denom, base_denom, start_time)
                     .map_err(Into::into)
             }
-            OsmosisPriceSource::XykLiquidityToken {
+            OsmosisPriceSourceChecked::XykLiquidityToken {
                 pool_id,
             } => Self::query_xyk_liquidity_token_price(
                 deps,
@@ -377,7 +428,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                 price_sources,
                 pyth_config,
             ),
-            OsmosisPriceSource::StakedGeometricTwap {
+            OsmosisPriceSourceChecked::StakedGeometricTwap {
                 transitive_denom,
                 pool_id,
                 window_size,
@@ -397,13 +448,13 @@ impl PriceSource<Empty> for OsmosisPriceSource {
                     pyth_config,
                 )
             }
-            OsmosisPriceSource::Pyth {
+            OsmosisPriceSourceChecked::Pyth {
                 price_feed_id,
                 max_staleness,
             } => {
                 Ok(Self::query_pyth_price(deps, env, *price_feed_id, *max_staleness, pyth_config)?)
             }
-            OsmosisPriceSource::Lsd {
+            OsmosisPriceSourceChecked::Lsd {
                 ..
             } => {
                 // TODO
@@ -413,7 +464,7 @@ impl PriceSource<Empty> for OsmosisPriceSource {
     }
 }
 
-impl OsmosisPriceSource {
+impl OsmosisPriceSourceChecked {
     fn chain_recovered(
         deps: &Deps,
         downtime_detector: &Option<DowntimeDetector>,
@@ -496,7 +547,7 @@ impl OsmosisPriceSource {
         base_denom: &str,
         pool_id: u64,
         window_size: u64,
-        price_sources: &Map<&str, OsmosisPriceSource>,
+        price_sources: &Map<&str, OsmosisPriceSourceChecked>,
         pyth_config: &PythConfig,
     ) -> ContractResult<Decimal> {
         let start_time = env.block.time.seconds() - window_size;
