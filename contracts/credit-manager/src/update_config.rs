@@ -11,7 +11,7 @@ use crate::{
     instantiate::{assert_lte_to_one, assert_no_duplicate_coins, assert_no_duplicate_vaults},
     state::{
         ACCOUNT_NFT, ALLOWED_COINS, HEALTH_CONTRACT, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS,
-        ORACLE, OWNER, SWAPPER, VAULT_CONFIGS, ZAPPER,
+        ORACLE, OWNER, RED_BANK, SWAPPER, VAULT_CONFIGS, ZAPPER,
     },
 };
 
@@ -68,6 +68,12 @@ pub fn update_config(
         ORACLE.save(deps.storage, &unchecked.check(deps.api)?)?;
         response =
             response.add_attribute("key", "oracle").add_attribute("value", unchecked.address());
+    }
+
+    if let Some(unchecked) = updates.red_bank {
+        RED_BANK.save(deps.storage, &unchecked.check(deps.api)?)?;
+        response =
+            response.add_attribute("key", "red_bank").add_attribute("value", unchecked.address());
     }
 
     if let Some(unchecked) = updates.swapper {

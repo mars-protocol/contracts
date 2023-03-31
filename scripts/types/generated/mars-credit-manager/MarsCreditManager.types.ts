@@ -336,6 +336,7 @@ export interface ConfigUpdates {
   max_close_factor?: Decimal | null
   max_unlocking_positions?: Uint128 | null
   oracle?: OracleBaseForString | null
+  red_bank?: RedBankBaseForString | null
   swapper?: SwapperBaseForString | null
   vault_configs?: VaultInstantiateConfig[] | null
   zapper?: ZapperBaseForString | null

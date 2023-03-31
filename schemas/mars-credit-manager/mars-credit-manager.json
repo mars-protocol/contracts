@@ -1324,6 +1324,16 @@
               }
             ]
           },
+          "red_bank": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/RedBankBase_for_String"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "swapper": {
             "anyOf": [
               {
@@ -1621,6 +1631,9 @@
             ]
           }
         ]
+      },
+      "RedBankBase_for_String": {
+        "type": "string"
       },
       "SwapperBase_for_String": {
         "type": "string"
