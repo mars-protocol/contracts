@@ -214,8 +214,8 @@ impl From<&GeometricTwap> for GeometricTwap {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct RedemptionRate<T> {
-    /// Stride contract addr
-    pub stride_contract_addr: T,
+    /// Contract addr
+    pub contract_addr: T,
 
     /// The maximum number of seconds since the last price was by an oracle, before
     /// rejecting the price as too stale
@@ -269,10 +269,21 @@ impl fmt::Display for OsmosisPriceSourceChecked {
                 format!("pyth:{price_feed_id}:{max_staleness}")
             }
             OsmosisPriceSource::Lsd {
-                ..
+                transitive_denom,
+                geometric_twap,
+                redemption_rate,
             } => {
-                // TODO
-                unimplemented!()
+                let GeometricTwap {
+                    pool_id,
+                    window_size,
+                    downtime_detector,
+                } = geometric_twap;
+                let dd_fmt = DowntimeDetector::fmt(downtime_detector);
+                let RedemptionRate {
+                    contract_addr,
+                    max_staleness,
+                } = redemption_rate;
+                format!("lsd:{transitive_denom}:{pool_id}:{window_size}:{dd_fmt}:{contract_addr}:{max_staleness}")
             }
         };
         write!(f, "{label}")
@@ -369,9 +380,7 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
                 transitive_denom: transitive_denom.to_string(),
                 geometric_twap: geometric_twap.into(),
                 redemption_rate: RedemptionRate {
-                    stride_contract_addr: deps
-                        .api
-                        .addr_validate(&redemption_rate.stride_contract_addr)?,
+                    contract_addr: deps.api.addr_validate(&redemption_rate.contract_addr)?,
                     max_staleness: redemption_rate.max_staleness,
                 },
             }),
@@ -745,5 +754,41 @@ mod tests {
             ps.to_string(),
             "pyth:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60"
         )
+    }
+
+    #[test]
+    fn display_lsd_price_source() {
+        let ps = OsmosisPriceSource::Lsd {
+            transitive_denom: "transitive".to_string(),
+            geometric_twap: GeometricTwap {
+                pool_id: 456,
+                window_size: 380,
+                downtime_detector: None,
+            },
+            redemption_rate: RedemptionRate {
+                contract_addr: "osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc"
+                    .to_string(),
+                max_staleness: 1234,
+            },
+        };
+        assert_eq!(ps.to_string(), "lsd:transitive:456:380:None:osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc:1234");
+
+        let ps = OsmosisPriceSource::Lsd {
+            transitive_denom: "transitive".to_string(),
+            geometric_twap: GeometricTwap {
+                pool_id: 456,
+                window_size: 380,
+                downtime_detector: Some(DowntimeDetector {
+                    downtime: Downtime::Duration30m,
+                    recovery: 552,
+                }),
+            },
+            redemption_rate: RedemptionRate {
+                contract_addr: "osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc"
+                    .to_string(),
+                max_staleness: 1234,
+            },
+        };
+        assert_eq!(ps.to_string(), "lsd:transitive:456:380:Some(Duration30m:552):osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc:1234");
     }
 }
