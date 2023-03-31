@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{cmp::min, fmt};
 
 use cosmwasm_std::{Addr, Decimal, Decimal256, Deps, Empty, Env, Isqrt, Uint128, Uint256};
 use cw_storage_plus::Map;
@@ -14,7 +14,7 @@ use pyth_sdk_cw::{query_price_feed, PriceIdentifier};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::helpers;
+use crate::{helpers, stride::query_redemption_rate};
 
 /// Copied from https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std/src/types/osmosis/downtimedetector/v1beta1.rs#L4
 ///
@@ -464,10 +464,23 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                 Ok(Self::query_pyth_price(deps, env, *price_feed_id, *max_staleness, pyth_config)?)
             }
             OsmosisPriceSourceChecked::Lsd {
-                ..
+                transitive_denom,
+                geometric_twap,
+                redemption_rate,
             } => {
-                // TODO
-                unimplemented!()
+                Self::chain_recovered(deps, &geometric_twap.downtime_detector)?;
+
+                Self::query_lsd_price(
+                    deps,
+                    env,
+                    denom,
+                    transitive_denom,
+                    base_denom,
+                    geometric_twap.clone(),
+                    redemption_rate.clone(),
+                    price_sources,
+                    pyth_config,
+                )
             }
         }
     }
@@ -579,6 +592,65 @@ impl OsmosisPriceSourceChecked {
         )?;
 
         staked_price.checked_mul(transitive_price).map_err(Into::into)
+    }
+
+    /// Staked asset price quoted in USD.
+    ///
+    /// stAsset/USD = stAsset/Asset * Asset/USD
+    /// where:
+    /// stAsset/Asset = min(stAsset/Asset Geometric TWAP, stAsset/Asset Redemption Rate)
+    fn query_lsd_price(
+        deps: &Deps,
+        env: &Env,
+        denom: &str,
+        transitive_denom: &str,
+        base_denom: &str,
+        geometric_twap: GeometricTwap,
+        redemption_rate: RedemptionRate<Addr>,
+        price_sources: &Map<&str, OsmosisPriceSourceChecked>,
+        pyth_config: &PythConfig,
+    ) -> ContractResult<Decimal> {
+        let current_time = env.block.time.seconds();
+        let start_time = current_time - geometric_twap.window_size;
+        let staked_price = query_geometric_twap_price(
+            &deps.querier,
+            geometric_twap.pool_id,
+            denom,
+            transitive_denom,
+            start_time,
+        )?;
+
+        // query redemption rate
+        let rr = query_redemption_rate(
+            &deps.querier,
+            redemption_rate.contract_addr.clone(),
+            denom.to_string(),
+            transitive_denom.to_string(),
+        )?;
+        // Check if the redemption rate is not too old
+        if (current_time - rr.last_updated) > redemption_rate.max_staleness {
+            return Err(InvalidPrice {
+                reason: format!(
+                    "redemption rate update time is too old/stale. last updated: {}, now: {}",
+                    rr.last_updated, current_time
+                ),
+            });
+        }
+
+        // min from geometric TWAP and exchange rate
+        let min_price = min(staked_price, rr.exchange_rate);
+
+        // use current price source
+        let transitive_price = price_sources.load(deps.storage, transitive_denom)?.query_price(
+            deps,
+            env,
+            transitive_denom,
+            base_denom,
+            price_sources,
+            pyth_config,
+        )?;
+
+        min_price.checked_mul(transitive_price).map_err(Into::into)
     }
 
     fn query_pyth_price(

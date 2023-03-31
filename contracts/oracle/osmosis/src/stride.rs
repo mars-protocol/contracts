@@ -21,6 +21,12 @@ pub struct RedemptionRateResponse {
     pub last_updated: u64,
 }
 
+/// How much base_denom we get for 1 denom
+///
+/// Example:
+/// denom: stAtom, base_denom: Atom
+/// exchange_rate: 1.0211
+/// 1 stAtom = 1.0211 Atom
 pub fn query_redemption_rate(
     querier: &QuerierWrapper,
     contract_addr: Addr,
