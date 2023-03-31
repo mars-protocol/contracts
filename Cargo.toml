@@ -47,8 +47,8 @@ cw-paginate        = "0.2.1"
 cw-utils           = "1.0.1"
 cw-storage-plus    = "1.0.1"
 itertools          = "0.10.5"
-osmosis-std        = "0.14.0"
-osmosis-test-tube  = "14.1.1"
+osmosis-std        = { git = "https://github.com/osmosis-labs/osmosis-rust", branch = "main" }
+osmosis-test-tube  = { git = "https://github.com/osmosis-labs/test-tube", branch = "main" }
 schemars           = "0.8.12"
 serde              = { version = "1.0.155", default-features = false, features = ["derive"] }
 serde_json         = "1.0.94"

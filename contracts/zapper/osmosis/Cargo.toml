@@ -26,4 +26,5 @@ mars-zapper-base = { workspace = true }
 
 [dev-dependencies]
 cw-utils          = { workspace = true }
+osmosis-std       = { workspace = true }
 osmosis-test-tube = { workspace = true }

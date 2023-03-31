@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use cosmwasm_std::coin;
 use mars_rover::adapters::swap::{ExecuteMsg, QueryMsg, RouteResponse};
 use mars_swapper_osmosis::route::OsmosisRoute;
-use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
+use osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute;
 use osmosis_test_tube::{Gamm, Module, OsmosisTestApp, SigningAccount, Wasm};
 
 use crate::helpers::instantiate_contract;

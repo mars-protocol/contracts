@@ -7,7 +7,9 @@ use cosmwasm_std::{
 use mars_osmosis::helpers::{has_denom, query_arithmetic_twap_price, query_pool};
 use mars_rover::adapters::swap::EstimateExactInSwapResponse;
 use mars_swapper_base::{ContractError, ContractResult, Route};
-use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
+use osmosis_std::types::osmosis::{
+    gamm::v1beta1::MsgSwapExactAmountIn, poolmanager::v1beta1::SwapAmountInRoute,
+};
 
 use crate::helpers::hashset;
 
