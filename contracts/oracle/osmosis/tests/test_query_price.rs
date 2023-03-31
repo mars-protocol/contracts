@@ -1,6 +1,8 @@
 use cosmwasm_std::{coin, from_binary, Decimal, StdError};
 use mars_oracle_base::ContractError;
-use mars_oracle_osmosis::{contract::entry, Downtime, DowntimeDetector, OsmosisPriceSource};
+use mars_oracle_osmosis::{
+    contract::entry, Downtime, DowntimeDetector, OsmosisPriceSourceUnchecked,
+};
 use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
 use mars_testing::mock_env_at_block_time;
 use osmosis_std::types::osmosis::{
@@ -20,7 +22,7 @@ fn querying_fixed_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "uosmo",
-        OsmosisPriceSource::Fixed {
+        OsmosisPriceSourceUnchecked::Fixed {
             price: Decimal::one(),
         },
     );
@@ -41,7 +43,7 @@ fn querying_spot_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceUnchecked::Spot {
             pool_id: 89,
         },
     );
@@ -71,7 +73,7 @@ fn querying_arithmetic_twap_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::ArithmeticTwap {
+        OsmosisPriceSourceUnchecked::ArithmeticTwap {
             pool_id: 89,
             window_size: 86400,
             downtime_detector: None,
@@ -107,7 +109,7 @@ fn querying_arithmetic_twap_price_with_downtime_detector() {
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::ArithmeticTwap {
+        OsmosisPriceSourceUnchecked::ArithmeticTwap {
             pool_id: 89,
             window_size: 86400,
             downtime_detector: Some(dd.clone()),
@@ -153,7 +155,7 @@ fn querying_geometric_twap_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::GeometricTwap {
+        OsmosisPriceSourceUnchecked::GeometricTwap {
             pool_id: 89,
             window_size: 86400,
             downtime_detector: None,
@@ -189,7 +191,7 @@ fn querying_geometric_twap_price_with_downtime_detector() {
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::GeometricTwap {
+        OsmosisPriceSourceUnchecked::GeometricTwap {
             pool_id: 89,
             window_size: 86400,
             downtime_detector: Some(dd.clone()),
@@ -235,7 +237,7 @@ fn querying_staked_geometric_twap_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::GeometricTwap {
+        OsmosisPriceSourceUnchecked::GeometricTwap {
             pool_id: 1,
             window_size: 86400,
             downtime_detector: None,
@@ -244,7 +246,7 @@ fn querying_staked_geometric_twap_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "ustatom",
-        OsmosisPriceSource::StakedGeometricTwap {
+        OsmosisPriceSourceUnchecked::StakedGeometricTwap {
             transitive_denom: "uatom".to_string(),
             pool_id: 803,
             window_size: 86400,
@@ -288,7 +290,7 @@ fn querying_staked_geometric_twap_price_if_no_transitive_denom_price_source() {
     helpers::set_price_source(
         deps.as_mut(),
         "ustatom",
-        OsmosisPriceSource::StakedGeometricTwap {
+        OsmosisPriceSourceUnchecked::StakedGeometricTwap {
             transitive_denom: "uatom".to_string(),
             pool_id: 803,
             window_size: 86400,
@@ -315,7 +317,7 @@ fn querying_staked_geometric_twap_price_if_no_transitive_denom_price_source() {
     assert_eq!(
         res_err,
         ContractError::Std(StdError::not_found(
-            "mars_oracle_osmosis::price_source::OsmosisPriceSource"
+            "mars_oracle_osmosis::price_source::OsmosisPriceSource<cosmwasm_std::addresses::Addr>"
         ))
     );
 }
@@ -331,7 +333,7 @@ fn querying_staked_geometric_twap_price_with_downtime_detector() {
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::GeometricTwap {
+        OsmosisPriceSourceUnchecked::GeometricTwap {
             pool_id: 1,
             window_size: 86400,
             downtime_detector: Some(dd.clone()),
@@ -340,7 +342,7 @@ fn querying_staked_geometric_twap_price_with_downtime_detector() {
     helpers::set_price_source(
         deps.as_mut(),
         "ustatom",
-        OsmosisPriceSource::StakedGeometricTwap {
+        OsmosisPriceSourceUnchecked::StakedGeometricTwap {
             transitive_denom: "uatom".to_string(),
             pool_id: 803,
             window_size: 86400,
@@ -435,7 +437,7 @@ fn querying_xyk_lp_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::Fixed {
+        OsmosisPriceSourceUnchecked::Fixed {
             price: uatom_price,
         },
     );
@@ -446,7 +448,7 @@ fn querying_xyk_lp_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::Fixed {
+        OsmosisPriceSourceUnchecked::Fixed {
             price: umars_price,
         },
     );
@@ -456,7 +458,7 @@ fn querying_xyk_lp_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "uatom_umars_lp",
-        OsmosisPriceSource::XykLiquidityToken {
+        OsmosisPriceSourceUnchecked::XykLiquidityToken {
             pool_id: 10003,
         },
     );
@@ -519,7 +521,7 @@ fn querying_pyth_price_if_publish_price_too_old() {
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::Pyth {
+        OsmosisPriceSourceUnchecked::Pyth {
             price_feed_id: price_id,
             max_staleness,
         },
@@ -579,7 +581,7 @@ fn querying_pyth_price_if_signed() {
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::Pyth {
+        OsmosisPriceSourceUnchecked::Pyth {
             price_feed_id: price_id,
             max_staleness,
         },
@@ -636,7 +638,7 @@ fn querying_pyth_price_successfully() {
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::Pyth {
+        OsmosisPriceSourceUnchecked::Pyth {
             price_feed_id: price_id,
             max_staleness,
         },
@@ -718,21 +720,21 @@ fn querying_all_prices() {
     helpers::set_price_source(
         deps.as_mut(),
         "uosmo",
-        OsmosisPriceSource::Fixed {
+        OsmosisPriceSourceUnchecked::Fixed {
             price: Decimal::one(),
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceUnchecked::Spot {
             pool_id: 1,
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceUnchecked::Spot {
             pool_id: 89,
         },
     );

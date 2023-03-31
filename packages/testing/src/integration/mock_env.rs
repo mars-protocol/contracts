@@ -5,7 +5,7 @@ use std::mem::take;
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
-use mars_oracle_osmosis::OsmosisPriceSource;
+use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     incentives, oracle,
@@ -186,7 +186,7 @@ impl Oracle {
                 self.contract_addr.clone(),
                 &oracle::ExecuteMsg::SetPriceSource {
                     denom: denom.to_string(),
-                    price_source: OsmosisPriceSource::Fixed {
+                    price_source: OsmosisPriceSourceUnchecked::Fixed {
                         price,
                     },
                 },

@@ -8,7 +8,7 @@ use cosmwasm_std::{
     Coin, Deps, DepsMut, OwnedDeps,
 };
 use mars_oracle_base::ContractError;
-use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSource};
+use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSourceUnchecked};
 use mars_osmosis::helpers::{Pool, QueryPoolResponse};
 use mars_red_bank_types::oracle::{InstantiateMsg, QueryMsg};
 use mars_testing::{mock_info, MarsMockQuerier};
@@ -144,14 +144,14 @@ pub fn set_pyth_price_source(deps: DepsMut, denom: &str, price_id: PriceIdentifi
     set_price_source(
         deps,
         denom,
-        OsmosisPriceSource::Pyth {
+        OsmosisPriceSourceUnchecked::Pyth {
             price_feed_id: price_id,
             max_staleness: 30,
         },
     )
 }
 
-pub fn set_price_source(deps: DepsMut, denom: &str, price_source: OsmosisPriceSource) {
+pub fn set_price_source(deps: DepsMut, denom: &str, price_source: OsmosisPriceSourceUnchecked) {
     entry::execute(
         deps,
         mock_env(),

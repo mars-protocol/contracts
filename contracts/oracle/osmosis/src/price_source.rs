@@ -599,6 +599,7 @@ impl OsmosisPriceSourceChecked {
     /// stAsset/USD = stAsset/Asset * Asset/USD
     /// where:
     /// stAsset/Asset = min(stAsset/Asset Geometric TWAP, stAsset/Asset Redemption Rate)
+    #[allow(clippy::too_many_arguments)]
     fn query_lsd_price(
         deps: &Deps,
         env: &Env,
@@ -726,7 +727,7 @@ mod tests {
 
     #[test]
     fn display_fixed_price_source() {
-        let ps = OsmosisPriceSource::Fixed {
+        let ps = OsmosisPriceSourceChecked::Fixed {
             price: Decimal::from_ratio(1u128, 2u128),
         };
         assert_eq!(ps.to_string(), "fixed:0.5")
@@ -734,7 +735,7 @@ mod tests {
 
     #[test]
     fn display_spot_price_source() {
-        let ps = OsmosisPriceSource::Spot {
+        let ps = OsmosisPriceSourceChecked::Spot {
             pool_id: 123,
         };
         assert_eq!(ps.to_string(), "spot:123")
@@ -742,14 +743,14 @@ mod tests {
 
     #[test]
     fn display_arithmetic_twap_price_source() {
-        let ps = OsmosisPriceSource::ArithmeticTwap {
+        let ps = OsmosisPriceSourceChecked::ArithmeticTwap {
             pool_id: 123,
             window_size: 300,
             downtime_detector: None,
         };
         assert_eq!(ps.to_string(), "arithmetic_twap:123:300:None");
 
-        let ps = OsmosisPriceSource::ArithmeticTwap {
+        let ps = OsmosisPriceSourceChecked::ArithmeticTwap {
             pool_id: 123,
             window_size: 300,
             downtime_detector: Some(DowntimeDetector {
@@ -762,14 +763,14 @@ mod tests {
 
     #[test]
     fn display_geometric_twap_price_source() {
-        let ps = OsmosisPriceSource::GeometricTwap {
+        let ps = OsmosisPriceSourceChecked::GeometricTwap {
             pool_id: 123,
             window_size: 300,
             downtime_detector: None,
         };
         assert_eq!(ps.to_string(), "geometric_twap:123:300:None");
 
-        let ps = OsmosisPriceSource::GeometricTwap {
+        let ps = OsmosisPriceSourceChecked::GeometricTwap {
             pool_id: 123,
             window_size: 300,
             downtime_detector: Some(DowntimeDetector {
@@ -782,7 +783,7 @@ mod tests {
 
     #[test]
     fn display_staked_geometric_twap_price_source() {
-        let ps = OsmosisPriceSource::StakedGeometricTwap {
+        let ps = OsmosisPriceSourceChecked::StakedGeometricTwap {
             transitive_denom: "transitive".to_string(),
             pool_id: 123,
             window_size: 300,
@@ -790,7 +791,7 @@ mod tests {
         };
         assert_eq!(ps.to_string(), "staked_geometric_twap:transitive:123:300:None");
 
-        let ps = OsmosisPriceSource::StakedGeometricTwap {
+        let ps = OsmosisPriceSourceChecked::StakedGeometricTwap {
             transitive_denom: "transitive".to_string(),
             pool_id: 123,
             window_size: 300,
@@ -807,7 +808,7 @@ mod tests {
 
     #[test]
     fn display_xyk_lp_price_source() {
-        let ps = OsmosisPriceSource::XykLiquidityToken {
+        let ps = OsmosisPriceSourceChecked::XykLiquidityToken {
             pool_id: 224,
         };
         assert_eq!(ps.to_string(), "xyk_liquidity_token:224")
@@ -815,7 +816,7 @@ mod tests {
 
     #[test]
     fn display_pyth_price_source() {
-        let ps = OsmosisPriceSource::Pyth {
+        let ps = OsmosisPriceSourceChecked::Pyth {
             price_feed_id: PriceIdentifier::from_hex(
                 "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
             )
@@ -830,7 +831,7 @@ mod tests {
 
     #[test]
     fn display_lsd_price_source() {
-        let ps = OsmosisPriceSource::Lsd {
+        let ps = OsmosisPriceSourceChecked::Lsd {
             transitive_denom: "transitive".to_string(),
             geometric_twap: GeometricTwap {
                 pool_id: 456,
@@ -838,14 +839,15 @@ mod tests {
                 downtime_detector: None,
             },
             redemption_rate: RedemptionRate {
-                contract_addr: "osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc"
-                    .to_string(),
+                contract_addr: Addr::unchecked(
+                    "osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc",
+                ),
                 max_staleness: 1234,
             },
         };
         assert_eq!(ps.to_string(), "lsd:transitive:456:380:None:osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc:1234");
 
-        let ps = OsmosisPriceSource::Lsd {
+        let ps = OsmosisPriceSourceChecked::Lsd {
             transitive_denom: "transitive".to_string(),
             geometric_twap: GeometricTwap {
                 pool_id: 456,
@@ -856,8 +858,9 @@ mod tests {
                 }),
             },
             redemption_rate: RedemptionRate {
-                contract_addr: "osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc"
-                    .to_string(),
+                contract_addr: Addr::unchecked(
+                    "osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc",
+                ),
                 max_staleness: 1234,
             },
         };
