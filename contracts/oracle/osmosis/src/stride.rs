@@ -4,15 +4,15 @@ use serde::{Deserialize, Serialize};
 
 // TODO: should be updated once Stride open source their contract
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct Price {
-    denom: String,
-    base_denom: String,
+    pub denom: String,
+    pub base_denom: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, JsonSchema)]
 pub struct RedemptionRateRequest {
-    price: Price,
+    pub price: Price,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, JsonSchema)]

@@ -6,5 +6,6 @@ mod price_source;
 pub mod stride;
 
 pub use price_source::{
-    Downtime, DowntimeDetector, OsmosisPriceSourceChecked, OsmosisPriceSourceUnchecked,
+    scale_to_exponent, Downtime, DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked,
+    OsmosisPriceSourceUnchecked, RedemptionRate,
 };

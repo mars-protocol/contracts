@@ -376,14 +376,22 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
                 transitive_denom,
                 geometric_twap,
                 redemption_rate,
-            } => Ok(OsmosisPriceSourceChecked::Lsd {
-                transitive_denom: transitive_denom.to_string(),
-                geometric_twap: geometric_twap.into(),
-                redemption_rate: RedemptionRate {
-                    contract_addr: deps.api.addr_validate(&redemption_rate.contract_addr)?,
-                    max_staleness: redemption_rate.max_staleness,
-                },
-            }),
+            } => {
+                let pool = query_pool(&deps.querier, geometric_twap.pool_id)?;
+                helpers::assert_osmosis_pool_assets(&pool, denom, transitive_denom)?;
+                helpers::assert_osmosis_twap(
+                    geometric_twap.window_size,
+                    &geometric_twap.downtime_detector,
+                )?;
+                Ok(OsmosisPriceSourceChecked::Lsd {
+                    transitive_denom: transitive_denom.to_string(),
+                    geometric_twap: geometric_twap.into(),
+                    redemption_rate: RedemptionRate {
+                        contract_addr: deps.api.addr_validate(&redemption_rate.contract_addr)?,
+                        max_staleness: redemption_rate.max_staleness,
+                    },
+                })
+            }
         }
     }
 }
@@ -702,7 +710,7 @@ impl OsmosisPriceSourceChecked {
 /// conf:  574566
 /// price: 1365133270
 /// The confidence interval is 574566 * 10^(-8) = $0.00574566, and the price is 1365133270 * 10^(-8) = $13.6513327.
-fn scale_to_exponent(value: u128, expo: i32) -> ContractResult<Decimal> {
+pub fn scale_to_exponent(value: u128, expo: i32) -> ContractResult<Decimal> {
     let target_expo = Uint128::from(10u8).checked_pow(expo.unsigned_abs())?;
     if expo < 0 {
         Ok(Decimal::checked_from_ratio(value, target_expo)?)
