@@ -1,7 +1,7 @@
 [workspace]
 members = [
   "contracts/swapper/*",
-  "contracts/asset-params",
+  "contracts/params",
   "packages/*"
 ]
 

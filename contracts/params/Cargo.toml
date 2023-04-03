@@ -22,7 +22,6 @@ library    = []
 cosmwasm-schema     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
-cw-item-set         = { workspace = true }
 cw-paginate         = { workspace = true }
 cw-storage-plus     = { workspace = true }
 mars-red-bank-types = { workspace = true }

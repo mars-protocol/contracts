@@ -1,0 +1,103 @@
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+use mars_red_bank_types::red_bank::InterestRateModel;
+use mars_utils::{
+    error::ValidationError,
+    helpers::{decimal_param_le_one, decimal_param_lt_one},
+};
+
+use crate::execute::assert_lqt_gte_max_ltv;
+
+#[cw_serde]
+pub struct RoverPermissions {
+    pub whitelisted: bool,
+}
+
+#[cw_serde]
+pub struct RedBankPermissions {
+    pub deposit_enabled: bool,
+    pub borrow_enabled: bool,
+}
+
+#[cw_serde]
+pub struct AssetPermissions {
+    pub rover: RoverPermissions,
+    pub red_bank: RedBankPermissions,
+}
+
+#[cw_serde]
+pub struct AssetParams {
+    pub permissions: AssetPermissions,
+    pub max_loan_to_value: Decimal,
+    pub liquidation_threshold: Decimal,
+    pub liquidation_bonus: Decimal,
+    pub red_bank_deposit_cap: Uint128,
+    pub interest_rate_model: InterestRateModel,
+    pub reserve_factor: Decimal,
+}
+
+impl AssetParams {
+    pub fn validate(&self) -> Result<(), ValidationError> {
+        decimal_param_lt_one(self.reserve_factor, "reserve_factor")?;
+        decimal_param_le_one(self.max_loan_to_value, "max_loan_to_value")?;
+        decimal_param_le_one(self.liquidation_threshold, "liquidation_threshold")?;
+        decimal_param_le_one(self.liquidation_bonus, "liquidation_bonus")?;
+
+        assert_lqt_gte_max_ltv(self.max_loan_to_value, self.liquidation_threshold)?;
+
+        self.interest_rate_model.validate()?;
+
+        Ok(())
+    }
+}
+
+#[cw_serde]
+pub struct AssetParamsResponse {
+    pub denom: String,
+    pub params: AssetParams,
+}
+
+#[cw_serde]
+pub struct VaultConfigResponse {
+    pub addr: Addr,
+    pub config: VaultConfig,
+}
+
+#[cw_serde]
+pub struct VaultConfig {
+    pub deposit_cap: Coin,
+    pub max_loan_to_value: Decimal,
+    pub liquidation_threshold: Decimal,
+    pub whitelisted: bool,
+}
+
+impl VaultConfig {
+    pub fn validate(&self) -> Result<(), ValidationError> {
+        decimal_param_le_one(self.max_loan_to_value, "max_loan_to_value")?;
+        decimal_param_le_one(self.liquidation_threshold, "liquidation_threshold")?;
+        assert_lqt_gte_max_ltv(self.max_loan_to_value, self.liquidation_threshold)?;
+        Ok(())
+    }
+}
+
+#[cw_serde]
+pub enum AssetParamsUpdate {
+    AddOrUpdate {
+        denom: String,
+        params: AssetParams,
+    },
+    Remove {
+        denom: String,
+    },
+}
+
+#[cw_serde]
+pub enum VaultConfigUpdate {
+    AddOrUpdate {
+        addr: String,
+        config: VaultConfig,
+    },
+    Remove {
+        addr: String,
+    },
+}

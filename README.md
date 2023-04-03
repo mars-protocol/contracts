@@ -1,6 +1,6 @@
 # Mars Protocol: Common Contracts
 
-## Asset-Params Contract 
+## Params Contract 
 This contract holds the following values for all the assets in Mars Protocol.
 - **Reserve Factor:** Percentage of borrowed interest that stays in the protocol as fees
 - **Max Loan To Value:** Max percentage of collateral that can be borrowed
