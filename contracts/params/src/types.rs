@@ -101,3 +101,21 @@ pub enum VaultConfigUpdate {
         addr: String,
     },
 }
+
+#[cw_serde]
+pub enum RoverEmergencyUpdate {
+    SetZeroMaxLtvOnVault(String),
+    SetZeroDepositCapOnVault(String),
+    DisallowCoin(String),
+}
+
+#[cw_serde]
+pub enum RedBankEmergencyUpdate {
+    DisableBorrowing(String),
+}
+
+#[cw_serde]
+pub enum EmergencyUpdate {
+    Rover(RoverEmergencyUpdate),
+    RedBank(RedBankEmergencyUpdate),
+}

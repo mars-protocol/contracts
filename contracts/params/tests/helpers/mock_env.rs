@@ -7,8 +7,8 @@ use mars_owner::{OwnerResponse, OwnerUpdate};
 use mars_params::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     types::{
-        AssetParams, AssetParamsResponse, AssetParamsUpdate, VaultConfig, VaultConfigResponse,
-        VaultConfigUpdate,
+        AssetParams, AssetParamsResponse, AssetParamsUpdate, EmergencyUpdate, VaultConfig,
+        VaultConfigResponse, VaultConfigUpdate,
     },
 };
 
@@ -22,6 +22,7 @@ pub struct MockEnv {
 pub struct MockEnvBuilder {
     pub app: BasicApp,
     pub max_close_factor: Option<Decimal>,
+    pub emergency_owner: Option<String>,
 }
 
 #[allow(clippy::new_ret_no_self)]
@@ -30,6 +31,7 @@ impl MockEnv {
         MockEnvBuilder {
             app: App::default(),
             max_close_factor: None,
+            emergency_owner: None,
         }
     }
 
@@ -81,6 +83,19 @@ impl MockEnv {
             sender.clone(),
             self.params_contract.clone(),
             &ExecuteMsg::UpdateMaxCloseFactor(mcf),
+            &[],
+        )
+    }
+
+    pub fn emergency_update(
+        &mut self,
+        sender: &Addr,
+        update: EmergencyUpdate,
+    ) -> AnyResult<AppResponse> {
+        self.app.execute_contract(
+            sender.clone(),
+            self.params_contract.clone(),
+            &ExecuteMsg::EmergencyUpdate(update),
             &[],
         )
     }
@@ -180,10 +195,27 @@ impl MockEnvBuilder {
             None,
         )?;
 
+        if self.emergency_owner.is_some() {
+            self.set_emergency_owner(&params_contract, &self.emergency_owner.clone().unwrap());
+        }
+
         Ok(MockEnv {
             app: take(&mut self.app),
             params_contract,
         })
+    }
+
+    fn set_emergency_owner(&mut self, params_contract: &Addr, eo: &str) {
+        self.app
+            .execute_contract(
+                Addr::unchecked("owner"),
+                params_contract.clone(),
+                &ExecuteMsg::UpdateOwner(OwnerUpdate::SetEmergencyOwner {
+                    emergency_owner: eo.to_string(),
+                }),
+                &[],
+            )
+            .unwrap();
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -199,6 +231,11 @@ impl MockEnvBuilder {
     //--------------------------------------------------------------------------------------------------
     pub fn max_close_factor(&mut self, mcf: Decimal) -> &mut Self {
         self.max_close_factor = Some(mcf);
+        self
+    }
+
+    pub fn emergency_owner(&mut self, eo: &str) -> &mut Self {
+        self.emergency_owner = Some(eo.to_string());
         self
     }
 }

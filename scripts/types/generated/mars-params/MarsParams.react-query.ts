@@ -16,6 +16,9 @@ import {
   AssetParamsUpdate,
   Uint128,
   VaultConfigUpdate,
+  EmergencyUpdate,
+  RoverEmergencyUpdate,
+  RedBankEmergencyUpdate,
   AssetParams,
   InterestRateModel,
   AssetPermissions,
@@ -179,6 +182,26 @@ export function useMarsParamsOwnerQuery<TData = OwnerResponse>({
     marsParamsQueryKeys.owner(client?.contractAddress),
     () => (client ? client.owner() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsParamsEmergencyUpdateMutation {
+  client: MarsParamsClient
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsParamsEmergencyUpdateMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsParamsEmergencyUpdateMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsParamsEmergencyUpdateMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.emergencyUpdate(msg, fee, memo, funds),
+    options,
   )
 }
 export interface MarsParamsUpdateVaultConfigMutation {

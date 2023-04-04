@@ -48,7 +48,6 @@ mars-red-bank-types        = "1.0.0"
 mars-owner                 = { version = "1.0.0", features = ["emergency-owner"] }
 mars-swapper               = { path = "packages/mars-swapper" }
 mars-utils                 = "1.0.0"
-mars-testing               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
 
 # contracts
 mars-swapper-base  = { version = "1.0.0", path = "contracts/swapper/base" }

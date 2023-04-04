@@ -2,7 +2,9 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Decimal;
 use mars_owner::OwnerUpdate;
 
-use crate::types::{AssetParams, AssetParamsUpdate, VaultConfig, VaultConfigUpdate};
+use crate::types::{
+    AssetParams, AssetParamsUpdate, EmergencyUpdate, VaultConfig, VaultConfigUpdate,
+};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -18,6 +20,7 @@ pub enum ExecuteMsg {
     UpdateMaxCloseFactor(Decimal),
     UpdateAssetParams(AssetParamsUpdate),
     UpdateVaultConfig(VaultConfigUpdate),
+    EmergencyUpdate(EmergencyUpdate),
 }
 
 #[cw_serde]
@@ -49,7 +52,6 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
 
-    // query all configs
     #[returns(Decimal)]
     MaxCloseFactor {},
 }

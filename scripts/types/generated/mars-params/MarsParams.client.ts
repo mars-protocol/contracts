@@ -15,6 +15,9 @@ import {
   AssetParamsUpdate,
   Uint128,
   VaultConfigUpdate,
+  EmergencyUpdate,
+  RoverEmergencyUpdate,
+  RedBankEmergencyUpdate,
   AssetParams,
   InterestRateModel,
   AssetPermissions,
@@ -140,6 +143,11 @@ export interface MarsParamsInterface extends MarsParamsReadOnlyInterface {
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
+  emergencyUpdate: (
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
 }
 export class MarsParamsClient extends MarsParamsQueryClient implements MarsParamsInterface {
   client: SigningCosmWasmClient
@@ -155,6 +163,7 @@ export class MarsParamsClient extends MarsParamsQueryClient implements MarsParam
     this.updateMaxCloseFactor = this.updateMaxCloseFactor.bind(this)
     this.updateAssetParams = this.updateAssetParams.bind(this)
     this.updateVaultConfig = this.updateVaultConfig.bind(this)
+    this.emergencyUpdate = this.emergencyUpdate.bind(this)
   }
 
   updateOwner = async (
@@ -215,6 +224,22 @@ export class MarsParamsClient extends MarsParamsQueryClient implements MarsParam
       this.contractAddress,
       {
         update_vault_config: {},
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  emergencyUpdate = async (
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        emergency_update: {},
       },
       fee,
       memo,

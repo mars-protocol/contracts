@@ -83,6 +83,18 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "emergency_update"
+        ],
+        "properties": {
+          "emergency_update": {
+            "$ref": "#/definitions/EmergencyUpdate"
+          }
+        },
+        "additionalProperties": false
       }
     ],
     "definitions": {
@@ -207,6 +219,34 @@
         "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
         "type": "string"
       },
+      "EmergencyUpdate": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "rover"
+            ],
+            "properties": {
+              "rover": {
+                "$ref": "#/definitions/RoverEmergencyUpdate"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "red_bank"
+            ],
+            "properties": {
+              "red_bank": {
+                "$ref": "#/definitions/RedBankEmergencyUpdate"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
       "InterestRateModel": {
         "type": "object",
         "required": [
@@ -327,6 +367,22 @@
           }
         ]
       },
+      "RedBankEmergencyUpdate": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "disable_borrowing"
+            ],
+            "properties": {
+              "disable_borrowing": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
       "RedBankPermissions": {
         "type": "object",
         "required": [
@@ -342,6 +398,46 @@
           }
         },
         "additionalProperties": false
+      },
+      "RoverEmergencyUpdate": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "set_zero_max_ltv_on_vault"
+            ],
+            "properties": {
+              "set_zero_max_ltv_on_vault": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "set_zero_deposit_cap_on_vault"
+            ],
+            "properties": {
+              "set_zero_deposit_cap_on_vault": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "disallow_coin"
+            ],
+            "properties": {
+              "disallow_coin": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
       },
       "RoverPermissions": {
         "type": "object",

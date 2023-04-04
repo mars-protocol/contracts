@@ -23,6 +23,9 @@ export type ExecuteMsg =
   | {
       update_vault_config: VaultConfigUpdate
     }
+  | {
+      emergency_update: EmergencyUpdate
+    }
 export type OwnerUpdate =
   | {
       propose_new_owner: {
@@ -63,6 +66,26 @@ export type VaultConfigUpdate =
         addr: string
       }
     }
+export type EmergencyUpdate =
+  | {
+      rover: RoverEmergencyUpdate
+    }
+  | {
+      red_bank: RedBankEmergencyUpdate
+    }
+export type RoverEmergencyUpdate =
+  | {
+      set_zero_max_ltv_on_vault: string
+    }
+  | {
+      set_zero_deposit_cap_on_vault: string
+    }
+  | {
+      disallow_coin: string
+    }
+export type RedBankEmergencyUpdate = {
+  disable_borrowing: string
+}
 export interface AssetParams {
   interest_rate_model: InterestRateModel
   liquidation_bonus: Decimal

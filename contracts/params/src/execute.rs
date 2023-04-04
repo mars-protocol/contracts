@@ -61,29 +61,6 @@ pub fn update_asset_params(
     Ok(response)
 }
 
-// /// Emergency owner can only DISABLE BORROWING.
-// fn update_asset_by_emergency_owner(
-//     deps: DepsMut,
-//     denom: &str,
-//     params: AssetParams,
-// ) -> Result<Response, ContractError> {
-//     if let Some(mut asset) = ASSET_PARAMS.may_load(deps.storage, denom)? {
-//         match params.red_bank_borrow_enabled {
-//             Some(borrow_enabled) if !borrow_enabled => {
-//                 asset.red_bank_borrow_enabled = borrow_enabled;
-//                 ASSET_PARAMS.save(deps.storage, denom, &asset)?;
-//
-//                 Ok(Response::new()
-//                     .add_attribute("action", "emergency_update_asset")
-//                     .add_attribute("denom", denom))
-//             }
-//             _ => ContractError::Unauthorized {}.into(),
-//         }
-//     } else {
-//         ContractError::AssetNotInitialized {}
-//     }
-// }
-
 pub fn update_vault_config(
     deps: DepsMut,
     info: MessageInfo,

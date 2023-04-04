@@ -1,11 +1,12 @@
 use cosmwasm_std::{Addr, Deps, Order, StdResult};
-use cw_paginate::DEFAULT_LIMIT;
 use cw_storage_plus::Bound;
 
 use crate::{
     state::{ASSET_PARAMS, VAULT_CONFIGS},
     types::{AssetParamsResponse, VaultConfig, VaultConfigResponse},
 };
+
+pub const DEFAULT_LIMIT: u32 = 10;
 
 pub fn query_all_asset_params(
     deps: Deps,
