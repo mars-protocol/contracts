@@ -201,16 +201,6 @@ pub struct GeometricTwap {
     pub downtime_detector: Option<DowntimeDetector>,
 }
 
-impl From<&GeometricTwap> for GeometricTwap {
-    fn from(value: &GeometricTwap) -> Self {
-        Self {
-            pool_id: value.pool_id,
-            window_size: value.window_size,
-            downtime_detector: value.downtime_detector.clone(),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct RedemptionRate<T> {
@@ -385,7 +375,7 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
                 )?;
                 Ok(OsmosisPriceSourceChecked::Lsd {
                     transitive_denom: transitive_denom.to_string(),
-                    geometric_twap: geometric_twap.into(),
+                    geometric_twap: geometric_twap.clone(),
                     redemption_rate: RedemptionRate {
                         contract_addr: deps.api.addr_validate(&redemption_rate.contract_addr)?,
                         max_staleness: redemption_rate.max_staleness,
