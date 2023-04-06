@@ -3,7 +3,7 @@ use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
     contract::entry::execute,
     msg::{ExecuteMsg, PriceSourceResponse},
-    OsmosisPriceSource,
+    OsmosisPriceSourceUnchecked,
 };
 use mars_owner::OwnerError::NotOwner;
 use mars_red_bank_types::oracle::QueryMsg;
@@ -34,21 +34,21 @@ fn removing_price_source() {
     helpers::set_price_source(
         deps.as_mut(),
         "uosmo",
-        OsmosisPriceSource::Fixed {
+        OsmosisPriceSourceUnchecked::Fixed {
             price: Decimal::one(),
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceUnchecked::Spot {
             pool_id: 1,
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceUnchecked::Spot {
             pool_id: 89,
         },
     );
