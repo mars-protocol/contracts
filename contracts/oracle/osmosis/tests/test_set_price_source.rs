@@ -1,9 +1,10 @@
-use cosmwasm_std::{testing::mock_env, Decimal};
+use cosmwasm_std::{testing::mock_env, Addr, Decimal};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
     contract::entry::execute,
     msg::{ExecuteMsg, PriceSourceResponse},
-    Downtime, DowntimeDetector, OsmosisPriceSource,
+    Downtime, DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked,
+    OsmosisPriceSourceUnchecked, RedemptionRate,
 };
 use mars_owner::OwnerError::NotOwner;
 use mars_red_bank_types::oracle::QueryMsg;
@@ -23,7 +24,7 @@ fn setting_price_source_by_non_owner() {
         mock_info("jake"),
         ExecuteMsg::SetPriceSource {
             denom: "uosmo".to_string(),
-            price_source: OsmosisPriceSource::Fixed {
+            price_source: OsmosisPriceSourceUnchecked::Fixed {
                 price: Decimal::one(),
             },
         },
@@ -42,7 +43,7 @@ fn setting_price_source_fixed() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "uosmo".to_string(),
-            price_source: OsmosisPriceSource::Fixed {
+            price_source: OsmosisPriceSourceUnchecked::Fixed {
                 price: Decimal::one(),
             },
         },
@@ -58,7 +59,7 @@ fn setting_price_source_fixed() {
     );
     assert_eq!(
         res.price_source,
-        OsmosisPriceSource::Fixed {
+        OsmosisPriceSourceChecked::Fixed {
             price: Decimal::one()
         }
     );
@@ -74,7 +75,7 @@ fn setting_price_source_incorrect_denom() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "!*jadfaefc".to_string(),
-            price_source: OsmosisPriceSource::Fixed {
+            price_source: OsmosisPriceSourceUnchecked::Fixed {
                 price: Decimal::one(),
             },
         },
@@ -92,7 +93,7 @@ fn setting_price_source_incorrect_denom() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "ahdbufenf&*!-".to_string(),
-            price_source: OsmosisPriceSource::Fixed {
+            price_source: OsmosisPriceSourceUnchecked::Fixed {
                 price: Decimal::one(),
             },
         },
@@ -111,7 +112,7 @@ fn setting_price_source_incorrect_denom() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "ab".to_string(),
-            price_source: OsmosisPriceSource::Fixed {
+            price_source: OsmosisPriceSourceUnchecked::Fixed {
                 price: Decimal::one(),
             },
         },
@@ -135,7 +136,7 @@ fn setting_price_source_spot() {
             mock_info("owner"),
             ExecuteMsg::SetPriceSource {
                 denom: denom.to_string(),
-                price_source: OsmosisPriceSource::Spot {
+                price_source: OsmosisPriceSourceUnchecked::Spot {
                     pool_id,
                 },
             },
@@ -190,7 +191,7 @@ fn setting_price_source_spot() {
     );
     assert_eq!(
         res.price_source,
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceChecked::Spot {
             pool_id: 89,
         }
     );
@@ -211,7 +212,7 @@ fn setting_price_source_arithmetic_twap_with_invalid_params() {
                 mock_info("owner"),
                 ExecuteMsg::SetPriceSource {
                     denom: denom.to_string(),
-                    price_source: OsmosisPriceSource::ArithmeticTwap {
+                    price_source: OsmosisPriceSourceUnchecked::ArithmeticTwap {
                         pool_id,
                         window_size,
                         downtime_detector,
@@ -295,7 +296,7 @@ fn setting_price_source_arithmetic_twap_successfully() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "umars".to_string(),
-            price_source: OsmosisPriceSource::ArithmeticTwap {
+            price_source: OsmosisPriceSourceUnchecked::ArithmeticTwap {
                 pool_id: 89,
                 window_size: 86400,
                 downtime_detector: None,
@@ -313,7 +314,7 @@ fn setting_price_source_arithmetic_twap_successfully() {
     );
     assert_eq!(
         res.price_source,
-        OsmosisPriceSource::ArithmeticTwap {
+        OsmosisPriceSourceChecked::ArithmeticTwap {
             pool_id: 89,
             window_size: 86400,
             downtime_detector: None
@@ -327,7 +328,7 @@ fn setting_price_source_arithmetic_twap_successfully() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "umars".to_string(),
-            price_source: OsmosisPriceSource::ArithmeticTwap {
+            price_source: OsmosisPriceSourceUnchecked::ArithmeticTwap {
                 pool_id: 89,
                 window_size: 86400,
                 downtime_detector: Some(DowntimeDetector {
@@ -348,7 +349,7 @@ fn setting_price_source_arithmetic_twap_successfully() {
     );
     assert_eq!(
         res.price_source,
-        OsmosisPriceSource::ArithmeticTwap {
+        OsmosisPriceSourceChecked::ArithmeticTwap {
             pool_id: 89,
             window_size: 86400,
             downtime_detector: Some(DowntimeDetector {
@@ -374,7 +375,7 @@ fn setting_price_source_geometric_twap_with_invalid_params() {
                 mock_info("owner"),
                 ExecuteMsg::SetPriceSource {
                     denom: denom.to_string(),
-                    price_source: OsmosisPriceSource::GeometricTwap {
+                    price_source: OsmosisPriceSourceUnchecked::GeometricTwap {
                         pool_id,
                         window_size,
                         downtime_detector,
@@ -458,7 +459,7 @@ fn setting_price_source_geometric_twap_successfully() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "umars".to_string(),
-            price_source: OsmosisPriceSource::GeometricTwap {
+            price_source: OsmosisPriceSourceUnchecked::GeometricTwap {
                 pool_id: 89,
                 window_size: 86400,
                 downtime_detector: None,
@@ -476,7 +477,7 @@ fn setting_price_source_geometric_twap_successfully() {
     );
     assert_eq!(
         res.price_source,
-        OsmosisPriceSource::GeometricTwap {
+        OsmosisPriceSourceChecked::GeometricTwap {
             pool_id: 89,
             window_size: 86400,
             downtime_detector: None
@@ -490,7 +491,7 @@ fn setting_price_source_geometric_twap_successfully() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "umars".to_string(),
-            price_source: OsmosisPriceSource::GeometricTwap {
+            price_source: OsmosisPriceSourceUnchecked::GeometricTwap {
                 pool_id: 89,
                 window_size: 86400,
                 downtime_detector: Some(DowntimeDetector {
@@ -511,7 +512,7 @@ fn setting_price_source_geometric_twap_successfully() {
     );
     assert_eq!(
         res.price_source,
-        OsmosisPriceSource::GeometricTwap {
+        OsmosisPriceSourceChecked::GeometricTwap {
             pool_id: 89,
             window_size: 86400,
             downtime_detector: Some(DowntimeDetector {
@@ -538,7 +539,7 @@ fn setting_price_source_staked_geometric_twap_with_invalid_params() {
                 mock_info("owner"),
                 ExecuteMsg::SetPriceSource {
                     denom: denom.to_string(),
-                    price_source: OsmosisPriceSource::StakedGeometricTwap {
+                    price_source: OsmosisPriceSourceUnchecked::StakedGeometricTwap {
                         transitive_denom: transitive_denom.to_string(),
                         pool_id,
                         window_size,
@@ -622,7 +623,7 @@ fn setting_price_source_staked_geometric_twap_successfully() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "ustatom".to_string(),
-            price_source: OsmosisPriceSource::StakedGeometricTwap {
+            price_source: OsmosisPriceSourceUnchecked::StakedGeometricTwap {
                 transitive_denom: "uatom".to_string(),
                 pool_id: 803,
                 window_size: 86400,
@@ -641,7 +642,7 @@ fn setting_price_source_staked_geometric_twap_successfully() {
     );
     assert_eq!(
         res.price_source,
-        OsmosisPriceSource::StakedGeometricTwap {
+        OsmosisPriceSourceChecked::StakedGeometricTwap {
             transitive_denom: "uatom".to_string(),
             pool_id: 803,
             window_size: 86400,
@@ -656,7 +657,7 @@ fn setting_price_source_staked_geometric_twap_successfully() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "ustatom".to_string(),
-            price_source: OsmosisPriceSource::StakedGeometricTwap {
+            price_source: OsmosisPriceSourceUnchecked::StakedGeometricTwap {
                 transitive_denom: "uatom".to_string(),
                 pool_id: 803,
                 window_size: 86400,
@@ -678,7 +679,7 @@ fn setting_price_source_staked_geometric_twap_successfully() {
     );
     assert_eq!(
         res.price_source,
-        OsmosisPriceSource::StakedGeometricTwap {
+        OsmosisPriceSourceChecked::StakedGeometricTwap {
             transitive_denom: "uatom".to_string(),
             pool_id: 803,
             window_size: 86400,
@@ -686,6 +687,204 @@ fn setting_price_source_staked_geometric_twap_successfully() {
                 downtime: Downtime::Duration30m,
                 recovery: 360u64
             })
+        }
+    );
+}
+
+#[test]
+fn setting_price_source_lsd_with_invalid_params() {
+    let mut deps = helpers::setup_test_with_pools();
+
+    let mut set_price_source_twap =
+        |denom: &str,
+         transitive_denom: &str,
+         pool_id: u64,
+         window_size: u64,
+         downtime_detector: Option<DowntimeDetector>| {
+            execute(
+                deps.as_mut(),
+                mock_env(),
+                mock_info("owner"),
+                ExecuteMsg::SetPriceSource {
+                    denom: denom.to_string(),
+                    price_source: OsmosisPriceSourceUnchecked::Lsd {
+                        transitive_denom: transitive_denom.to_string(),
+                        geometric_twap: GeometricTwap {
+                            pool_id,
+                            window_size,
+                            downtime_detector,
+                        },
+                        redemption_rate: RedemptionRate {
+                            contract_addr: "dummy_addr".to_string(),
+                            max_staleness: 100,
+                        },
+                    },
+                },
+            )
+        };
+
+    // attempting to use a pool that does not contain the denom of interest; should fail
+    let err = set_price_source_twap("ustatom", "umars", 803, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "pool 803 does not contain the base denom umars".to_string()
+        }
+    );
+    let err = set_price_source_twap("umars", "uatom", 803, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "pool 803 does not contain umars".to_string()
+        }
+    );
+
+    // attempting to use a pool that contains more than two assets; should fail
+    let err = set_price_source_twap("ustatom", "uatom", 3333, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "expecting pool 3333 to contain exactly two coins; found 3".to_string()
+        }
+    );
+
+    // attempting to use not XYK pool
+    let err = set_price_source_twap("ustatom", "uatom", 4444, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "assets in pool 4444 do not have equal weights".to_string()
+        }
+    );
+
+    // attempting to set window_size bigger than 172800 sec (48h)
+    let err = set_price_source_twap("ustatom", "uatom", 803, 172801, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "expecting window size to be within 172800 sec".to_string()
+        }
+    );
+
+    // attempting to set downtime recovery to 0
+    let err = set_price_source_twap(
+        "ustatom",
+        "uatom",
+        803,
+        86400,
+        Some(DowntimeDetector {
+            downtime: Downtime::Duration30s,
+            recovery: 0,
+        }),
+    )
+    .unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "downtime recovery can't be 0".to_string()
+        }
+    );
+}
+
+#[test]
+fn setting_price_source_lsd_successfully() {
+    let mut deps = helpers::setup_test_with_pools();
+
+    // properly set twap price source
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("owner"),
+        ExecuteMsg::SetPriceSource {
+            denom: "ustatom".to_string(),
+            price_source: OsmosisPriceSourceUnchecked::Lsd {
+                transitive_denom: "uatom".to_string(),
+                geometric_twap: GeometricTwap {
+                    pool_id: 803,
+                    window_size: 86400,
+                    downtime_detector: None,
+                },
+                redemption_rate: RedemptionRate {
+                    contract_addr: "dummy_addr".to_string(),
+                    max_staleness: 100,
+                },
+            },
+        },
+    )
+    .unwrap();
+    assert_eq!(res.messages.len(), 0);
+
+    let res: PriceSourceResponse = helpers::query(
+        deps.as_ref(),
+        QueryMsg::PriceSource {
+            denom: "ustatom".to_string(),
+        },
+    );
+    assert_eq!(
+        res.price_source,
+        OsmosisPriceSourceChecked::Lsd {
+            transitive_denom: "uatom".to_string(),
+            geometric_twap: GeometricTwap {
+                pool_id: 803,
+                window_size: 86400,
+                downtime_detector: None,
+            },
+            redemption_rate: RedemptionRate {
+                contract_addr: Addr::unchecked("dummy_addr"),
+                max_staleness: 100
+            }
+        }
+    );
+
+    // properly set twap price source with downtime detector
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("owner"),
+        ExecuteMsg::SetPriceSource {
+            denom: "ustatom".to_string(),
+            price_source: OsmosisPriceSourceUnchecked::Lsd {
+                transitive_denom: "uatom".to_string(),
+                geometric_twap: GeometricTwap {
+                    pool_id: 803,
+                    window_size: 86400,
+                    downtime_detector: Some(DowntimeDetector {
+                        downtime: Downtime::Duration30m,
+                        recovery: 360u64,
+                    }),
+                },
+                redemption_rate: RedemptionRate {
+                    contract_addr: "dummy_addr".to_string(),
+                    max_staleness: 100,
+                },
+            },
+        },
+    )
+    .unwrap();
+    assert_eq!(res.messages.len(), 0);
+
+    let res: PriceSourceResponse = helpers::query(
+        deps.as_ref(),
+        QueryMsg::PriceSource {
+            denom: "ustatom".to_string(),
+        },
+    );
+    assert_eq!(
+        res.price_source,
+        OsmosisPriceSourceChecked::Lsd {
+            transitive_denom: "uatom".to_string(),
+            geometric_twap: GeometricTwap {
+                pool_id: 803,
+                window_size: 86400,
+                downtime_detector: Some(DowntimeDetector {
+                    downtime: Downtime::Duration30m,
+                    recovery: 360u64,
+                })
+            },
+            redemption_rate: RedemptionRate {
+                contract_addr: Addr::unchecked("dummy_addr"),
+                max_staleness: 100
+            }
         }
     );
 }
@@ -701,7 +900,7 @@ fn setting_price_source_xyk_lp() {
             mock_info("owner"),
             ExecuteMsg::SetPriceSource {
                 denom: denom.to_string(),
-                price_source: OsmosisPriceSource::XykLiquidityToken {
+                price_source: OsmosisPriceSourceUnchecked::XykLiquidityToken {
                     pool_id,
                 },
             },
@@ -738,7 +937,7 @@ fn setting_price_source_xyk_lp() {
     );
     assert_eq!(
         res.price_source,
-        OsmosisPriceSource::XykLiquidityToken {
+        OsmosisPriceSourceChecked::XykLiquidityToken {
             pool_id: 89,
         }
     );
@@ -754,7 +953,7 @@ fn setting_price_source_pyth_successfully() {
         mock_info("owner"),
         ExecuteMsg::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Pyth {
+            price_source: OsmosisPriceSourceUnchecked::Pyth {
                 price_feed_id: PriceIdentifier::from_hex(
                     "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
                 )
@@ -774,7 +973,7 @@ fn setting_price_source_pyth_successfully() {
     );
     assert_eq!(
         res.price_source,
-        OsmosisPriceSource::Pyth {
+        OsmosisPriceSourceChecked::Pyth {
             price_feed_id: PriceIdentifier::from_hex(
                 "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3"
             )
@@ -791,21 +990,21 @@ fn querying_price_source() {
     helpers::set_price_source(
         deps.as_mut(),
         "uosmo",
-        OsmosisPriceSource::Fixed {
+        OsmosisPriceSourceUnchecked::Fixed {
             price: Decimal::one(),
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceUnchecked::Spot {
             pool_id: 1,
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceUnchecked::Spot {
             pool_id: 89,
         },
     );
@@ -819,7 +1018,7 @@ fn querying_price_source() {
     );
     assert_eq!(
         res.price_source,
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceChecked::Spot {
             pool_id: 89,
         }
     );
@@ -839,13 +1038,13 @@ fn querying_price_source() {
         vec![
             PriceSourceResponse {
                 denom: "uatom".to_string(),
-                price_source: OsmosisPriceSource::Spot {
+                price_source: OsmosisPriceSourceChecked::Spot {
                     pool_id: 1
                 }
             },
             PriceSourceResponse {
                 denom: "umars".to_string(),
-                price_source: OsmosisPriceSource::Spot {
+                price_source: OsmosisPriceSourceChecked::Spot {
                     pool_id: 89
                 }
             }
@@ -864,13 +1063,13 @@ fn querying_price_source() {
         vec![
             PriceSourceResponse {
                 denom: "umars".to_string(),
-                price_source: OsmosisPriceSource::Spot {
+                price_source: OsmosisPriceSourceChecked::Spot {
                     pool_id: 89
                 }
             },
             PriceSourceResponse {
                 denom: "uosmo".to_string(),
-                price_source: OsmosisPriceSource::Fixed {
+                price_source: OsmosisPriceSourceChecked::Fixed {
                     price: Decimal::one()
                 }
             }
