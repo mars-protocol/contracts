@@ -4,7 +4,11 @@ use cosmwasm_std::{
     Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
     SystemResult, Uint128, WasmQuery,
 };
-use mars_oracle_osmosis::DowntimeDetector;
+use mars_oracle_osmosis::{
+    stride,
+    stride::{Price, RedemptionRateResponse},
+    DowntimeDetector,
+};
 use mars_osmosis::helpers::QueryPoolResponse;
 use mars_red_bank_types::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
@@ -21,6 +25,7 @@ use crate::{
     osmosis_querier::{OsmosisQuerier, PriceKey},
     pyth_querier::PythQuerier,
     red_bank_querier::RedBankQuerier,
+    redemption_rate_querier::RedemptionRateQuerier,
 };
 
 pub struct MarsMockQuerier {
@@ -30,6 +35,7 @@ pub struct MarsMockQuerier {
     osmosis_querier: OsmosisQuerier,
     pyth_querier: PythQuerier,
     redbank_querier: RedBankQuerier,
+    redemption_rate_querier: RedemptionRateQuerier,
 }
 
 impl Querier for MarsMockQuerier {
@@ -57,6 +63,7 @@ impl MarsMockQuerier {
             osmosis_querier: OsmosisQuerier::default(),
             pyth_querier: PythQuerier::default(),
             redbank_querier: RedBankQuerier::default(),
+            redemption_rate_querier: Default::default(),
         }
     }
 
@@ -164,6 +171,19 @@ impl MarsMockQuerier {
         self.redbank_querier.users_positions.insert(user_address, position);
     }
 
+    pub fn set_redemption_rate(
+        &mut self,
+        denom: &str,
+        base_denom: &str,
+        redemption_rate: RedemptionRateResponse,
+    ) {
+        let price_key = Price {
+            denom: denom.to_string(),
+            base_denom: base_denom.to_string(),
+        };
+        self.redemption_rate_querier.redemption_rates.insert(price_key, redemption_rate);
+    }
+
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
         match &request {
             QueryRequest::Wasm(WasmQuery::Smart {
@@ -202,6 +222,11 @@ impl MarsMockQuerier {
                 // RedBank Queries
                 if let Ok(redbank_query) = from_binary::<red_bank::QueryMsg>(msg) {
                     return self.redbank_querier.handle_query(redbank_query);
+                }
+
+                // Redemption Rate Queries
+                if let Ok(redemption_rate_req) = from_binary::<stride::RedemptionRateRequest>(msg) {
+                    return self.redemption_rate_querier.handle_query(redemption_rate_req);
                 }
 
                 panic!("[mock]: Unsupported wasm query: {msg:?}");

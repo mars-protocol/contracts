@@ -49,7 +49,7 @@
                 "type": "string"
               },
               "price_source": {
-                "$ref": "#/definitions/OsmosisPriceSource"
+                "$ref": "#/definitions/OsmosisPriceSource_for_String"
               }
             },
             "additionalProperties": false
@@ -180,10 +180,42 @@
           }
         }
       },
+      "GeometricTwap": {
+        "type": "object",
+        "required": [
+          "pool_id",
+          "window_size"
+        ],
+        "properties": {
+          "downtime_detector": {
+            "description": "Detect when the chain is recovering from downtime",
+            "anyOf": [
+              {
+                "$ref": "#/definitions/DowntimeDetector"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pool_id": {
+            "description": "Pool id for stAsset/Asset pool",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "window_size": {
+            "description": "Window size in seconds representing the entire window for which 'geometric' price is calculated. Value should be <= 172800 sec (48 hours).",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        }
+      },
       "Identifier": {
         "type": "string"
       },
-      "OsmosisPriceSource": {
+      "OsmosisPriceSource_for_String": {
         "oneOf": [
           {
             "description": "Returns a fixed value;",
@@ -412,6 +444,46 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "description": "Liquid Staking Derivatives (LSD) price quoted in USD based on data from Pyth, Osmosis and Stride.\n\nEquation to calculate the price: stAsset/USD = stAsset/Asset * Asset/USD where: stAsset/Asset = min(stAsset/Asset Geometric TWAP, stAsset/Asset Redemption Rate)\n\nExample: stATOM/USD = stATOM/ATOM * ATOM/USD where: - stATOM/ATOM = min(stAtom/Atom Geometric TWAP from Osmosis, stAtom/Atom Redemption Rate from Stride) - ATOM/USD price comes from the Mars Oracle contract (should point to Pyth).\n\nNOTE: `pool_id` must point to stAsset/Asset Osmosis pool. Asset/USD price source should be available in the Mars Oracle contract.",
+            "type": "object",
+            "required": [
+              "lsd"
+            ],
+            "properties": {
+              "lsd": {
+                "type": "object",
+                "required": [
+                  "geometric_twap",
+                  "redemption_rate",
+                  "transitive_denom"
+                ],
+                "properties": {
+                  "geometric_twap": {
+                    "description": "Params to query geometric TWAP price",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/GeometricTwap"
+                      }
+                    ]
+                  },
+                  "redemption_rate": {
+                    "description": "Params to query redemption rate",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/RedemptionRate_for_String"
+                      }
+                    ]
+                  },
+                  "transitive_denom": {
+                    "description": "Transitive denom for which we query price in USD. It refers to 'Asset' in the equation: stAsset/USD = stAsset/Asset * Asset/USD",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },
@@ -461,6 +533,25 @@
             ]
           }
         ]
+      },
+      "RedemptionRate_for_String": {
+        "type": "object",
+        "required": [
+          "contract_addr",
+          "max_staleness"
+        ],
+        "properties": {
+          "contract_addr": {
+            "description": "Contract addr",
+            "type": "string"
+          },
+          "max_staleness": {
+            "description": "The maximum number of seconds since the last price was by an oracle, before rejecting the price as too stale",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        }
       }
     }
   },

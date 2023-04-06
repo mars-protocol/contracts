@@ -11,12 +11,14 @@ import { StdFee, Coin } from '@cosmjs/amino'
 import {
   InstantiateMsg,
   ExecuteMsg,
-  OsmosisPriceSource,
+  OsmosisPriceSourceForString,
   Decimal,
   Downtime,
   Identifier,
   OwnerUpdate,
   DowntimeDetector,
+  GeometricTwap,
+  RedemptionRateForString,
   QueryMsg,
   ConfigResponse,
   PriceResponse,
@@ -235,7 +237,7 @@ export interface MarsOracleOsmosisSetPriceSourceMutation {
   client: MarsOracleOsmosisClient
   msg: {
     denom: string
-    priceSource: OsmosisPriceSource
+    priceSource: OsmosisPriceSourceForString
   }
   args?: {
     fee?: number | StdFee | 'auto'

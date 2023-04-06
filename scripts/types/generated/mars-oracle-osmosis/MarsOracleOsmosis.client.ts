@@ -10,12 +10,14 @@ import { Coin, StdFee } from '@cosmjs/amino'
 import {
   InstantiateMsg,
   ExecuteMsg,
-  OsmosisPriceSource,
+  OsmosisPriceSourceForString,
   Decimal,
   Downtime,
   Identifier,
   OwnerUpdate,
   DowntimeDetector,
+  GeometricTwap,
+  RedemptionRateForString,
   QueryMsg,
   ConfigResponse,
   PriceResponse,
@@ -114,7 +116,7 @@ export interface MarsOracleOsmosisInterface extends MarsOracleOsmosisReadOnlyInt
       priceSource,
     }: {
       denom: string
-      priceSource: OsmosisPriceSource
+      priceSource: OsmosisPriceSourceForString
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -173,7 +175,7 @@ export class MarsOracleOsmosisClient
       priceSource,
     }: {
       denom: string
-      priceSource: OsmosisPriceSource
+      priceSource: OsmosisPriceSourceForString
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,

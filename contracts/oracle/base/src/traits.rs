@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use cosmwasm_std::{CustomQuery, Decimal, Deps, Env, QuerierWrapper};
+use cosmwasm_std::{CustomQuery, Decimal, Deps, Env};
 use cw_storage_plus::Map;
 use mars_red_bank_types::oracle::PythConfig;
 use schemars::JsonSchema;
@@ -8,19 +8,21 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::ContractResult;
 
-pub trait PriceSource<C>:
+pub trait PriceSourceUnchecked<P, C>:
+    Serialize + DeserializeOwned + Clone + Debug + PartialEq + JsonSchema
+where
+    P: PriceSourceChecked<C>,
+    C: CustomQuery,
+{
+    /// Validate whether the price source is valid for a given denom
+    fn validate(self, deps: Deps<C>, denom: &str, base_denom: &str) -> ContractResult<P>;
+}
+
+pub trait PriceSourceChecked<C>:
     Serialize + DeserializeOwned + Clone + Debug + Display + PartialEq + JsonSchema
 where
     C: CustomQuery,
 {
-    /// Validate whether the price source is valid for a given denom
-    fn validate(
-        &self,
-        querier: &QuerierWrapper<C>,
-        denom: &str,
-        base_denom: &str,
-    ) -> ContractResult<()>;
-
     /// Query the price of an asset based on the given price source
     ///
     /// Notable arguments:
