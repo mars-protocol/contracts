@@ -147,7 +147,8 @@ where
         validate_native_denom(&denom)?;
 
         let cfg = self.config.load(deps.storage)?;
-        let price_source = price_source.validate(&deps.querier, &denom, &cfg.base_denom)?;
+        let price_source =
+            price_source.validate(deps.as_ref(), &denom, &cfg.base_denom, &self.price_sources)?;
         self.price_sources.save(deps.storage, &denom, &price_source)?;
 
         Ok(Response::new()
