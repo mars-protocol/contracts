@@ -1,3 +1,4 @@
+use cosmwasm_std::{to_binary, Empty, WasmMsg};
 use cw_it::{
     astroport::{robot::AstroportTestRobot, utils::AstroportContracts},
     multi_test::MultiTestRunner,
@@ -7,6 +8,8 @@ use cw_it::{
 };
 use mars_oracle::{InstantiateMsg, WasmOracleCustomInitParams};
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
+use mars_owner::OwnerUpdate;
+use serde::Serialize;
 
 // Base denom to use in tests
 pub const BASE_DENOM: &str = "USD";
@@ -23,7 +26,7 @@ const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const TEST_RUNNER: Option<&str> = option_env!("TEST_RUNNER");
 
 /// Default test runner to use if TEST_RUNNER env var is not set
-const DEFAULT_TEST_RUNNER: &str = "osmosis-test-tube";
+const DEFAULT_TEST_RUNNER: &str = "multi-test";
 
 pub struct WasmOracleTestRobot<'a> {
     runner: &'a TestRunner<'a>,
@@ -33,10 +36,13 @@ pub struct WasmOracleTestRobot<'a> {
 }
 
 impl<'a> WasmOracleTestRobot<'a> {
-    pub fn new(runner: &'a TestRunner<'a>, contract_map: ContractMap) -> Self {
+    pub fn new(
+        runner: &'a TestRunner<'a>,
+        contract_map: ContractMap,
+        admin: &SigningAccount,
+    ) -> Self {
         // Initialize accounts
         let accs = runner.init_accounts();
-        let admin = &accs[0];
 
         // Upload and instantiate contracts
         let (astroport_contracts, contract_addr) =
@@ -97,6 +103,29 @@ impl<'a> WasmOracleTestRobot<'a> {
         };
         self.wasm().execute(contract_addr, &msg, &[], admin).unwrap();
     }
+
+    pub fn owner_update(&self, update_msg: OwnerUpdate, signer: &SigningAccount) -> &Self {
+        let msg = &mars_oracle::msg::ExecuteMsg::<Empty>::UpdateOwner(update_msg);
+        self.wasm().execute(&self.mars_oracle_contract_addr, &msg, &[], signer).unwrap();
+        self
+    }
+
+    pub fn query_config(&self) -> mars_oracle::ConfigResponse {
+        let msg = &mars_oracle::msg::QueryMsg::Config {};
+        self.wasm().query(&self.mars_oracle_contract_addr, &msg).unwrap()
+    }
+
+    pub fn assert_owner(&self, expected_owner: impl Into<String>) -> &Self {
+        let config = self.query_config();
+        assert_eq!(config.owner, Some(expected_owner.into()));
+        self
+    }
+
+    pub fn assert_proposed_new_owner(&self, expected_proposed_owner: impl Into<String>) -> &Self {
+        let config = self.query_config();
+        assert_eq!(config.proposed_new_owner, Some(expected_proposed_owner.into()));
+        self
+    }
 }
 
 impl<'a> TestRobot<'a, TestRunner<'a>> for WasmOracleTestRobot<'a> {
@@ -122,8 +151,9 @@ pub fn get_test_runner<'a>() -> TestRunner<'a> {
 pub fn setup_test<'a>(
     runner: &'a TestRunner<'a>,
     contract_map: ContractMap,
+    admin: &SigningAccount,
 ) -> WasmOracleTestRobot<'a> {
-    let robot = WasmOracleTestRobot::new(runner, contract_map);
+    let robot = WasmOracleTestRobot::new(runner, contract_map, admin);
     robot
 }
 
