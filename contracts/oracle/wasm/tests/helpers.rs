@@ -32,7 +32,6 @@ pub struct WasmOracleTestRobot<'a> {
     runner: &'a TestRunner<'a>,
     pub astroport_contracts: AstroportContracts,
     pub mars_oracle_contract_addr: String,
-    pub accs: Vec<SigningAccount>,
 }
 
 impl<'a> WasmOracleTestRobot<'a> {
@@ -41,9 +40,6 @@ impl<'a> WasmOracleTestRobot<'a> {
         contract_map: ContractMap,
         admin: &SigningAccount,
     ) -> Self {
-        // Initialize accounts
-        let accs = runner.init_accounts();
-
         // Upload and instantiate contracts
         let (astroport_contracts, contract_addr) =
             Self::upload_and_init_contracts(runner, contract_map, admin);
@@ -52,7 +48,6 @@ impl<'a> WasmOracleTestRobot<'a> {
             runner,
             astroport_contracts,
             mars_oracle_contract_addr: contract_addr,
-            accs,
         }
     }
 
@@ -90,19 +85,63 @@ impl<'a> WasmOracleTestRobot<'a> {
         (astroport_contracts, contract_addr)
     }
 
+    // ====== Price source methods ======
+
     pub fn set_price_source(
         &self,
         contract_addr: &str,
         admin: &SigningAccount,
         denom: &str,
         price_source: WasmPriceSourceUnchecked,
-    ) {
+    ) -> &Self {
         let msg = mars_oracle::msg::ExecuteMsg::SetPriceSource {
             denom: denom.to_string(),
             price_source,
         };
         self.wasm().execute(contract_addr, &msg, &[], admin).unwrap();
+        self
     }
+
+    pub fn remove_price_source(&self, signer: &SigningAccount, denom: &str) -> &Self {
+        let msg = mars_oracle::msg::ExecuteMsg::<Empty>::RemovePriceSource {
+            denom: denom.to_string(),
+        };
+        self.wasm().execute(&self.mars_oracle_contract_addr, &msg, &[], signer).unwrap();
+        self
+    }
+
+    pub fn query_price_sources(
+        &self,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> Vec<mars_oracle::PriceSourceResponse<WasmPriceSourceUnchecked>> {
+        let msg = &mars_oracle::msg::QueryMsg::PriceSources {
+            start_after,
+            limit,
+        };
+        self.wasm().query(&self.mars_oracle_contract_addr, &msg).unwrap()
+    }
+
+    pub fn assert_price_source(
+        &self,
+        denom: &str,
+        expected_price_source: WasmPriceSourceUnchecked,
+    ) -> &Self {
+        let price_sources = self.query_price_sources(None, None);
+        let price_source =
+            price_sources.iter().find(|ps| ps.denom == denom).expect("Price source not found");
+        assert_eq!(price_source.price_source, expected_price_source);
+        self
+    }
+
+    pub fn assert_price_source_not_exists(&self, denom: &str) -> &Self {
+        let price_sources = self.query_price_sources(None, None);
+        let price_source = price_sources.iter().find(|ps| ps.denom == denom);
+        assert!(price_source.is_none());
+        self
+    }
+
+    // =====  Owner update methods ======
 
     pub fn owner_update(&self, update_msg: OwnerUpdate, signer: &SigningAccount) -> &Self {
         let msg = &mars_oracle::msg::ExecuteMsg::<Empty>::UpdateOwner(update_msg);
