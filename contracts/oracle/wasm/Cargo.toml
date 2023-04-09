@@ -34,7 +34,7 @@ astroport        = "2.3.1"
 cosmwasm-schema = { workspace = true }
 mars-testing = { workspace = true }
 mars-owner = { workspace = true }
-cw-it = { path = "../../../../../apollo/cw-it", features = [
+cw-it = { git = "https://github.com/apollodao/cw-it.git", rev = "2ac8498fc5987a6fc6e9ab8cf32d3e0b85603ede", features = [
     "astroport",
     "astroport-multi-test",
     "osmosis-test-tube",
