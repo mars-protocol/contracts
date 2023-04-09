@@ -1,3 +1,4 @@
+use cosmwasm_std::Decimal;
 use cw_it::TestRunner;
 
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
@@ -41,4 +42,20 @@ fn remove_price_source() {
         .set_price_source(&robot.mars_oracle_contract_addr, admin, denom, price_source.clone())
         .remove_price_source(admin, denom)
         .assert_price_source_not_exists(denom);
+}
+
+#[test]
+fn test_query_price() {
+    let runner = get_test_runner();
+    let admin = &runner.init_accounts()[0];
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin);
+    let denom = "uusd";
+    let price_source = WasmPriceSourceUnchecked::Fixed {
+        price: Decimal::one(),
+    };
+
+    // Execute SetPriceSource
+    robot
+        .set_price_source(&robot.mars_oracle_contract_addr, admin, denom, price_source.clone())
+        .assert_price(denom, Decimal::one());
 }

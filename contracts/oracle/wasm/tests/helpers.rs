@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, Empty, WasmMsg};
+use cosmwasm_std::{to_binary, Decimal, Empty, WasmMsg};
 use cw_it::{
     astroport::{robot::AstroportTestRobot, utils::AstroportContracts},
     multi_test::MultiTestRunner,
@@ -120,6 +120,42 @@ impl<'a> WasmOracleTestRobot<'a> {
             limit,
         };
         self.wasm().query(&self.mars_oracle_contract_addr, &msg).unwrap()
+    }
+
+    pub fn query_price_source(
+        &self,
+        denom: &str,
+    ) -> mars_oracle::PriceSourceResponse<WasmPriceSourceUnchecked> {
+        let msg = &mars_oracle::msg::QueryMsg::PriceSource {
+            denom: denom.to_string(),
+        };
+        self.wasm().query(&self.mars_oracle_contract_addr, &msg).unwrap()
+    }
+
+    pub fn query_price(&self, denom: &str) -> mars_oracle::PriceResponse {
+        let msg = &mars_oracle::msg::QueryMsg::Price {
+            denom: denom.to_string(),
+        };
+        self.wasm().query(&self.mars_oracle_contract_addr, &msg).unwrap()
+    }
+
+    pub fn query_prices(
+        &self,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> Vec<mars_oracle::PriceResponse> {
+        let msg = &mars_oracle::msg::QueryMsg::Prices {
+            start_after,
+            limit,
+        };
+        self.wasm().query(&self.mars_oracle_contract_addr, &msg).unwrap()
+    }
+
+    pub fn assert_price(&self, denom: &str, expected_price: Decimal) -> &Self {
+        let price = self.query_price(denom);
+        assert_eq!(price.price, expected_price);
+        assert_eq!(price.denom, denom);
+        self
     }
 
     pub fn assert_price_source(
