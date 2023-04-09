@@ -39,10 +39,11 @@ impl<'a> WasmOracleTestRobot<'a> {
         runner: &'a TestRunner<'a>,
         contract_map: ContractMap,
         admin: &SigningAccount,
+        base_denom: Option<&str>,
     ) -> Self {
         // Upload and instantiate contracts
         let (astroport_contracts, contract_addr) =
-            Self::upload_and_init_contracts(runner, contract_map, admin);
+            Self::upload_and_init_contracts(runner, contract_map, admin, base_denom);
 
         Self {
             runner,
@@ -56,6 +57,7 @@ impl<'a> WasmOracleTestRobot<'a> {
         runner: &'a TestRunner<'a>,
         contracts: ContractMap,
         admin: &SigningAccount,
+        base_denom: Option<&str>,
     ) -> (AstroportContracts, String) {
         let admin_addr = admin.address();
         // Upload contracts
@@ -71,7 +73,7 @@ impl<'a> WasmOracleTestRobot<'a> {
         let code_id = code_ids[CONTRACT_NAME];
         let init_msg = InstantiateMsg::<WasmOracleCustomInitParams> {
             owner: admin_addr.clone(),
-            base_denom: BASE_DENOM.to_string(),
+            base_denom: base_denom.unwrap_or(BASE_DENOM).to_string(),
             custom_init: Some(WasmOracleCustomInitParams {
                 astroport_factory: astroport_contracts.factory.address.clone(),
             }),
@@ -89,16 +91,15 @@ impl<'a> WasmOracleTestRobot<'a> {
 
     pub fn set_price_source(
         &self,
-        contract_addr: &str,
-        admin: &SigningAccount,
         denom: &str,
         price_source: WasmPriceSourceUnchecked,
+        signer: &SigningAccount,
     ) -> &Self {
         let msg = mars_oracle::msg::ExecuteMsg::SetPriceSource {
             denom: denom.to_string(),
             price_source,
         };
-        self.wasm().execute(contract_addr, &msg, &[], admin).unwrap();
+        self.wasm().execute(&self.mars_oracle_contract_addr, &msg, &[], signer).unwrap();
         self
     }
 
@@ -208,7 +209,11 @@ impl<'a> TestRobot<'a, TestRunner<'a>> for WasmOracleTestRobot<'a> {
         self.runner
     }
 }
-impl<'a> AstroportTestRobot<'a, TestRunner<'a>> for WasmOracleTestRobot<'a> {}
+impl<'a> AstroportTestRobot<'a, TestRunner<'a>> for WasmOracleTestRobot<'a> {
+    fn astroport_contracts(&self) -> &AstroportContracts {
+        &self.astroport_contracts
+    }
+}
 
 /// Creates an OsmosisTestApp TestRunner
 pub fn get_test_runner<'a>() -> TestRunner<'a> {
@@ -227,8 +232,9 @@ pub fn setup_test<'a>(
     runner: &'a TestRunner<'a>,
     contract_map: ContractMap,
     admin: &SigningAccount,
+    base_denom: Option<&str>,
 ) -> WasmOracleTestRobot<'a> {
-    let robot = WasmOracleTestRobot::new(runner, contract_map, admin);
+    let robot = WasmOracleTestRobot::new(runner, contract_map, admin, base_denom);
     robot
 }
 

@@ -20,7 +20,7 @@ fn test_update_admin(caller_is_owner: bool) {
     };
 
     let contract_map = get_contracts(&runner);
-    let robot = WasmOracleTestRobot::new(&runner, contract_map, alice);
+    let robot = WasmOracleTestRobot::new(&runner, contract_map, alice, None);
 
     robot
         .owner_update(
@@ -47,7 +47,7 @@ fn test_accept_proposed(caller_is_new_owner: bool) {
     };
 
     let contract_map = get_contracts(&runner);
-    let robot = WasmOracleTestRobot::new(&runner, contract_map, alice);
+    let robot = WasmOracleTestRobot::new(&runner, contract_map, alice, None);
 
     robot
         .owner_update(
@@ -75,7 +75,7 @@ fn test_clear_proposed(caller_is_owner: bool) {
     };
 
     let contract_map = get_contracts(&runner);
-    let robot = WasmOracleTestRobot::new(&runner, contract_map, alice);
+    let robot = WasmOracleTestRobot::new(&runner, contract_map, alice, None);
 
     robot
         .owner_update(

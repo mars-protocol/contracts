@@ -60,21 +60,6 @@ dependencies = [
 
 [[package]]
 name = "astroport"
-version = "2.3.0"
-source = "git+https://github.com/astroport-fi/astroport-core.git?tag=v2.0.0#042b0768951422099f5d77224c320978cbfa92cc"
-dependencies = [
- "ap-native-coin-registry 1.0.0 (git+https://github.com/astroport-fi/astroport-core.git?tag=v2.0.0)",
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus 0.15.1",
- "cw-utils 0.15.1",
- "cw20",
- "itertools",
- "uint",
-]
-
-[[package]]
-name = "astroport"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fab6a411b28b51a715092aae978dc2ef10b0ba818e9412c0da22d5fcb5e216c3"
@@ -721,11 +706,11 @@ dependencies = [
 [[package]]
 name = "cw-it"
 version = "0.1.0"
-source = "git+https://github.com/apollodao/cw-it.git?rev=2ac8498fc5987a6fc6e9ab8cf32d3e0b85603ede#2ac8498fc5987a6fc6e9ab8cf32d3e0b85603ede"
+source = "git+https://github.com/apollodao/cw-it.git?rev=4e8a2e24c820464c1a36ac426067dab828910268#4e8a2e24c820464c1a36ac426067dab828910268"
 dependencies = [
  "anyhow",
  "ap-native-coin-registry 1.0.0 (git+https://github.com/astroport-fi/astroport-core.git?tag=v2.0.0)",
- "astroport 2.3.0",
+ "astroport 2.3.1",
  "astroport-factory",
  "astroport-generator",
  "astroport-maker",
