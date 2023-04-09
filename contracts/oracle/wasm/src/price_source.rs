@@ -1,15 +1,15 @@
 use std::fmt;
 
 use astroport::{
-    asset::{Asset, AssetInfo},
+    asset::{AssetInfo},
     querier::{query_token_precision, simulate},
 };
 use cosmwasm_std::{
-    Addr, Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, Uint128, Uint256,
+    Addr, Decimal, Deps, Empty, Env, Uint128,
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{
-    ContractError::{self, InvalidPrice},
+    ContractError::{self},
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
 
@@ -18,7 +18,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::helpers::{
     assert_astroport_pair_contains_denoms, astro_native_asset, query_astroport_pair_info,
-    query_astroport_pool,
 };
 use crate::state::ASTROPORT_FACTORY;
 
@@ -209,23 +208,21 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 // If there are route assets, we need to multiply the price by the price of the
                 // route assets in the base denom
                 for denom in route_assets {
-                    let price_source = price_sources.load(deps.storage, denom).or_else(|_| {
-                        Err(ContractError::InvalidPrice {
+                    let price_source = price_sources.load(deps.storage, denom).map_err(|_| ContractError::InvalidPrice {
                             reason: format!("No price source for route asset {}", denom),
-                        })
-                    })?;
+                        })?;
                     let route_price =
                         price_source.query_price(deps, env, denom, base_denom, price_sources)?;
-                    price = price * route_price;
+                    price *= route_price;
                 }
 
                 Ok(price)
             }
             WasmPriceSource::AstroportTwap {
-                pair_address,
-                window_size,
-                tolerance,
-                route_assets,
+                pair_address: _,
+                window_size: _,
+                tolerance: _,
+                route_assets: _,
             } => todo!(),
         }
     }
@@ -233,7 +230,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
 
 #[cfg(test)]
 mod tests {
-    use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_height};
+    use mars_testing::{mock_dependencies};
 
     use super::*;
 
