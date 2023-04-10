@@ -49,13 +49,6 @@ pub fn update_asset_params(
                 .add_attribute("action_type", "add_or_update")
                 .add_attribute("denom", denom);
         }
-        AssetParamsUpdate::Remove {
-            denom,
-        } => {
-            ASSET_PARAMS.remove(deps.storage, &denom);
-            response =
-                response.add_attribute("action_type", "remove").add_attribute("denom", denom);
-        }
     }
 
     Ok(response)

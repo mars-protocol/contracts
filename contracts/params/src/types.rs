@@ -86,9 +86,6 @@ pub enum AssetParamsUpdate {
         denom: String,
         params: AssetParams,
     },
-    Remove {
-        denom: String,
-    },
 }
 
 #[cw_serde]

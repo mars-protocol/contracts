@@ -16,11 +16,13 @@ fn initial_state_of_params() {
 #[test]
 fn only_owner_can_update_asset_params() {
     let mut mock = MockEnv::new().build().unwrap();
+    let params = default_asset_params();
     let bad_guy = Addr::unchecked("doctor_otto_983");
     let res = mock.update_asset_params(
         &bad_guy,
-        AssetParamsUpdate::Remove {
+        AssetParamsUpdate::AddOrUpdate {
             denom: "xyz".to_string(),
+            params: params.clone(),
         },
     );
     assert_err(res, Owner(OwnerError::NotOwner {}));
@@ -200,35 +202,6 @@ fn removing_from_asset_params() {
 
     let asset_params = mock.query_all_asset_params(None, None);
     assert_eq!(3, asset_params.len());
-
-    mock.update_asset_params(
-        &owner,
-        AssetParamsUpdate::Remove {
-            denom: denom1,
-        },
-    )
-    .unwrap();
-    let asset_params = mock.query_all_asset_params(None, None);
-    assert_eq!(2, asset_params.len());
-    assert_eq!(&denom0, &asset_params.first().unwrap().denom);
-    assert_eq!(&denom2, &asset_params.get(1).unwrap().denom);
-
-    mock.update_asset_params(
-        &owner,
-        AssetParamsUpdate::Remove {
-            denom: denom0,
-        },
-    )
-    .unwrap();
-    mock.update_asset_params(
-        &owner,
-        AssetParamsUpdate::Remove {
-            denom: denom2,
-        },
-    )
-    .unwrap();
-    let asset_params = mock.query_all_asset_params(None, None);
-    assert!(asset_params.is_empty());
 }
 
 #[test]
