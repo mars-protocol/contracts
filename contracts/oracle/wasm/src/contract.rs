@@ -19,17 +19,16 @@ pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
-    use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response};
+    use cosmwasm_std::{entry_point, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response};
     use mars_oracle::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
     use mars_oracle_base::{ContractError, ContractResult};
 
-    use crate::{state::ASTROPORT_FACTORY, WasmPriceSourceUnchecked};
-
     use super::*;
+    use crate::{state::ASTROPORT_FACTORY, WasmPriceSourceUnchecked};
 
     #[entry_point]
     pub fn instantiate(
-        deps: DepsMut,
+        mut deps: DepsMut,
         _env: Env,
         _info: MessageInfo,
         msg: InstantiateMsg<WasmOracleCustomInitParams>,
@@ -42,7 +41,16 @@ pub mod entry {
         let astroport_factory = deps.api.addr_validate(&custom_init.astroport_factory)?;
         ASTROPORT_FACTORY.save(deps.storage, &astroport_factory)?;
 
-        WasmOracle::default().instantiate(deps, msg)
+        let contract = WasmOracle::default();
+
+        // Set base denom price source as fixed = 1
+        let price_source = WasmPriceSourceChecked::Fixed {
+            price: Decimal::one(),
+        };
+        contract.price_sources.save(deps.storage, &msg.base_denom, &price_source)?;
+
+        // Instantiate base oracle contract
+        contract.instantiate(deps.branch(), msg.clone())
     }
 
     #[entry_point]
