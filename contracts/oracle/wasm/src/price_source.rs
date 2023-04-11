@@ -4,14 +4,13 @@ use astroport::{
     asset::AssetInfo,
     querier::{query_token_precision, simulate},
 };
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
     ContractError::{self},
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     helpers::{
@@ -20,8 +19,7 @@ use crate::{
     state::ASTROPORT_FACTORY,
 };
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum WasmPriceSource<A> {
     /// Returns a fixed value;
     Fixed {

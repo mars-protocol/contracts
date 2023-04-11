@@ -1,4 +1,7 @@
-use cosmwasm_std::{Decimal, Empty};
+use std::{error::Error, str::FromStr};
+
+use astroport::{factory::PairType, pair::StablePoolParams};
+use cosmwasm_std::{to_binary, Binary, Decimal, Empty};
 use cw_it::{
     astroport::{robot::AstroportTestRobot, utils::AstroportContracts},
     multi_test::MultiTestRunner,
@@ -270,4 +273,18 @@ pub fn get_contracts(runner: &TestRunner) -> ContractMap {
     contracts.insert(CONTRACT_NAME.to_string(), contract);
 
     contracts
+}
+
+/// Returns some default pair initialization params for the given pair type
+pub fn astro_init_params(pair_type: &PairType) -> Option<Binary> {
+    match pair_type {
+        PairType::Xyk {} => None,
+        PairType::Stable {} => Some(
+            to_binary(&StablePoolParams {
+                amp: 10,
+            })
+            .unwrap(),
+        ),
+        _ => panic!("Unsupported pair type"),
+    }
 }

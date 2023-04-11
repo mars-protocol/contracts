@@ -706,7 +706,7 @@ dependencies = [
 [[package]]
 name = "cw-it"
 version = "0.1.0"
-source = "git+https://github.com/apollodao/cw-it.git?rev=4e8a2e24c820464c1a36ac426067dab828910268#4e8a2e24c820464c1a36ac426067dab828910268"
+source = "git+https://github.com/apollodao/cw-it.git?rev=9086a08a45dd82e89029323d5d108595c8408060#9086a08a45dd82e89029323d5d108595c8408060"
 dependencies = [
  "anyhow",
  "ap-native-coin-registry 1.0.0 (git+https://github.com/astroport-fi/astroport-core.git?tag=v2.0.0)",

@@ -29,13 +29,14 @@ osmosis-std      = { workspace = true }
 schemars         = { workspace = true }
 serde            = { workspace = true }
 thiserror        = { workspace = true }
+cosmwasm-schema  = { workspace = true }
 astroport        = "2.3.1"
 
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }
 mars-testing = { workspace = true }
 mars-owner = { workspace = true }
-cw-it = { git = "https://github.com/apollodao/cw-it.git", rev = "4e8a2e24c820464c1a36ac426067dab828910268", features = [
+cw-it = { git = "https://github.com/apollodao/cw-it.git", rev = "9086a08a45dd82e89029323d5d108595c8408060", features = [
     "astroport",
     "astroport-multi-test",
     "osmosis-test-tube",
