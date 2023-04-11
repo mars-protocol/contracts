@@ -4,7 +4,9 @@ use cosmwasm_std::{
     Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, Uint128, Uint256,
 };
 use cw_storage_plus::Map;
-use mars_oracle_base::{ContractError::InvalidPrice, ContractResult, PriceSource};
+use mars_oracle_base::{
+    ContractError::InvalidPrice, ContractResult, PriceSourceChecked, PriceSourceUnchecked,
+};
 use mars_osmosis::helpers::{
     query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price,
     recovered_since_downtime_of_length, Pool,
@@ -193,22 +195,23 @@ impl fmt::Display for OsmosisPriceSource {
     }
 }
 
-impl PriceSource<Empty> for OsmosisPriceSource {
+impl PriceSourceUnchecked<OsmosisPriceSource, Empty> for OsmosisPriceSource {
     fn validate(
-        &self,
+        self,
         querier: &QuerierWrapper,
         denom: &str,
         base_denom: &str,
-    ) -> ContractResult<()> {
-        match self {
+    ) -> ContractResult<OsmosisPriceSource> {
+        match &self {
             OsmosisPriceSource::Fixed {
                 ..
-            } => Ok(()),
+            } => Ok(self),
             OsmosisPriceSource::Spot {
                 pool_id,
             } => {
                 let pool = query_pool(querier, *pool_id)?;
-                helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)
+                helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
+                Ok(self)
             }
             OsmosisPriceSource::ArithmeticTwap {
                 pool_id,
@@ -217,7 +220,8 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             } => {
                 let pool = query_pool(querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
-                helpers::assert_osmosis_twap(*window_size, downtime_detector)
+                helpers::assert_osmosis_twap(*window_size, downtime_detector)?;
+                Ok(self)
             }
             OsmosisPriceSource::GeometricTwap {
                 pool_id,
@@ -226,13 +230,15 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             } => {
                 let pool = query_pool(querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
-                helpers::assert_osmosis_twap(*window_size, downtime_detector)
+                helpers::assert_osmosis_twap(*window_size, downtime_detector)?;
+                Ok(self)
             }
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
             } => {
                 let pool = query_pool(querier, *pool_id)?;
-                helpers::assert_osmosis_xyk_pool(&pool)
+                helpers::assert_osmosis_xyk_pool(&pool)?;
+                Ok(self)
             }
             OsmosisPriceSource::StakedGeometricTwap {
                 transitive_denom,
@@ -242,14 +248,17 @@ impl PriceSource<Empty> for OsmosisPriceSource {
             } => {
                 let pool = query_pool(querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, transitive_denom)?;
-                helpers::assert_osmosis_twap(*window_size, downtime_detector)
+                helpers::assert_osmosis_twap(*window_size, downtime_detector)?;
+                Ok(self)
             }
         }
     }
+}
 
+impl PriceSourceChecked<Empty> for OsmosisPriceSource {
     fn query_price(
         &self,
-        deps: &Deps,
+        deps: &Deps<'_, Empty>,
         env: &Env,
         denom: &str,
         base_denom: &str,

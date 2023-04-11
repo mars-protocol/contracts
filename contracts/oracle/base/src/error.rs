@@ -36,6 +36,9 @@ pub enum ContractError {
     InvalidPrice {
         reason: String,
     },
+
+    #[error("Missing custom init params")]
+    MissingCustomInitParams {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

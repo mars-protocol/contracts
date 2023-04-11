@@ -7,19 +7,25 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::ContractResult;
 
-pub trait PriceSource<C>:
-    Serialize + DeserializeOwned + Clone + Debug + Display + PartialEq + JsonSchema
+pub trait PriceSourceUnchecked<P, C>:
+    Serialize + DeserializeOwned + Clone + Debug + PartialEq + JsonSchema
 where
+    P: PriceSourceChecked<C>,
     C: CustomQuery,
 {
     /// Validate whether the price source is valid for a given denom
     fn validate(
-        &self,
+        self,
         querier: &QuerierWrapper<C>,
         denom: &str,
         base_denom: &str,
-    ) -> ContractResult<()>;
-
+    ) -> ContractResult<P>;
+}
+pub trait PriceSourceChecked<C>:
+    Serialize + DeserializeOwned + Clone + Debug + Display + PartialEq + JsonSchema
+where
+    C: CustomQuery,
+{
     /// Query the price of an asset based on the given price source
     ///
     /// Notable arguments:
