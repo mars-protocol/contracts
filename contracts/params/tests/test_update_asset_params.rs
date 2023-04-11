@@ -16,13 +16,12 @@ fn initial_state_of_params() {
 #[test]
 fn only_owner_can_update_asset_params() {
     let mut mock = MockEnv::new().build().unwrap();
-    let params = default_asset_params();
     let bad_guy = Addr::unchecked("doctor_otto_983");
     let res = mock.update_asset_params(
         &bad_guy,
         AssetParamsUpdate::AddOrUpdate {
             denom: "xyz".to_string(),
-            params: params.clone(),
+            params: default_asset_params(),
         },
     );
     assert_err(res, Owner(OwnerError::NotOwner {}));
