@@ -292,3 +292,9 @@ pub fn astro_init_params(pair_type: &PairType) -> Option<Binary> {
         _ => panic!("Unsupported pair type"),
     }
 }
+
+pub const fn fixed_source() -> WasmPriceSourceUnchecked {
+    WasmPriceSourceUnchecked::Fixed {
+        price: Decimal::one(),
+    }
+}
