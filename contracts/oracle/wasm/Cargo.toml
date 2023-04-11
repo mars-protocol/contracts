@@ -18,6 +18,7 @@ doctest    = false
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
 library = []
+osmosis-test-app = ["cw-it/osmosis-test-tube"]
 
 [dependencies]
 cosmwasm-std     = { workspace = true }
@@ -39,11 +40,5 @@ mars-owner = { workspace = true }
 cw-it = { git = "https://github.com/apollodao/cw-it.git", rev = "9086a08a45dd82e89029323d5d108595c8408060", features = [
     "astroport",
     "astroport-multi-test",
-    "osmosis-test-tube",
 ] }
-# cw-it = { path = "../../../../cw-it", features = [
-#     "astroport",
-#     "astroport-multi-test",
-#     "osmosis-test-tube",
-# ] }
 test-case = "3.0.0"
