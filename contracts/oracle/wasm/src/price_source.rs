@@ -124,20 +124,9 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                     assert_astroport_pair_contains_denoms(&pair_info, &[denom, base_denom])?;
                 } else {
                     // If there are route assets, the pair must contain the denom and the first
-                    // route asset, and the last route asset must be the base denom.
+                    // route asset
                     let pair_info = query_astroport_pair_info(&deps.querier, &pair_address)?;
                     assert_astroport_pair_contains_denoms(&pair_info, &[denom, &route_assets[0]])?;
-
-                    // TODO: Is this necessary? As 1 base_denom = 1 base_denom
-                    if route_assets.last().unwrap() != base_denom {
-                        return Err(ContractError::InvalidPriceSource {
-                            reason: format!(
-                                "Last route asset {} must be the base denom {}",
-                                route_assets.last().unwrap(),
-                                base_denom
-                            ),
-                        });
-                    }
                 }
 
                 Ok(WasmPriceSourceChecked::AstroportSpot {
