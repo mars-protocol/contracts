@@ -1,25 +1,24 @@
 use std::fmt;
 
 use astroport::{
-    asset::{AssetInfo},
+    asset::AssetInfo,
     querier::{query_token_precision, simulate},
 };
-use cosmwasm_std::{
-    Addr, Decimal, Deps, Empty, Env, Uint128,
-};
+use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
     ContractError::{self},
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
-
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::helpers::{
-    assert_astroport_pair_contains_denoms, astro_native_asset, query_astroport_pair_info,
+use crate::{
+    helpers::{
+        assert_astroport_pair_contains_denoms, astro_native_asset, query_astroport_pair_info,
+    },
+    state::ASTROPORT_FACTORY,
 };
-use crate::state::ASTROPORT_FACTORY;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -198,7 +197,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 )?;
                 let one = Uint128::new(10_u128.pow(p.into()));
 
-                // Simulate a swap with one unit to get the price. We can't just divide the pools reserve,
+                // Simulate a swap with one unit to get the price. We can't just divide the pools reserves,
                 // because that only works for XYK pairs.
                 let sim_res =
                     simulate(&deps.querier, pair_address, &astro_native_asset(denom, one))?;
@@ -208,9 +207,11 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 // If there are route assets, we need to multiply the price by the price of the
                 // route assets in the base denom
                 for denom in route_assets {
-                    let price_source = price_sources.load(deps.storage, denom).map_err(|_| ContractError::InvalidPrice {
+                    let price_source = price_sources.load(deps.storage, denom).map_err(|_| {
+                        ContractError::InvalidPrice {
                             reason: format!("No price source for route asset {}", denom),
-                        })?;
+                        }
+                    })?;
                     let route_price =
                         price_source.query_price(deps, env, denom, base_denom, price_sources)?;
                     price *= route_price;
@@ -230,7 +231,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
 
 #[cfg(test)]
 mod tests {
-    use mars_testing::{mock_dependencies};
+    use mars_testing::mock_dependencies;
 
     use super::*;
 

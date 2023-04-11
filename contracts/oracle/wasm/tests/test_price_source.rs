@@ -1,12 +1,10 @@
 use astroport::{asset::AssetInfo, factory::PairType};
 use cosmwasm_std::{Decimal, Uint128};
-use cw_it::{astroport::robot::AstroportTestRobot, TestRunner};
-
+use cw_it::astroport::robot::AstroportTestRobot;
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
-use test_case::test_case;
 
 mod helpers;
-use helpers::*;
+pub use helpers::*;
 
 #[test]
 fn test_contract_initialization() {
@@ -16,11 +14,17 @@ fn test_contract_initialization() {
     setup_test(&runner, contract_map, admin, None);
 }
 
-#[test_case(get_test_runner(), "uusd", WasmPriceSourceUnchecked::Fixed { price: cosmwasm_std::Decimal::one()})]
-fn test_set_price_source(runner: TestRunner, denom: &str, price_source: WasmPriceSourceUnchecked) {
+#[test]
+fn test_set_price_source_fixed() {
+    let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
     let contract_map = get_contracts(&runner);
     let robot = setup_test(&runner, contract_map, admin, None);
+
+    let price_source = WasmPriceSourceUnchecked::Fixed {
+        price: cosmwasm_std::Decimal::one(),
+    };
+    let denom = "uatom";
 
     // Execute SetPriceSource
     robot
@@ -55,7 +59,7 @@ fn test_query_fixed_price() {
         price: Decimal::one(),
     };
 
-    // Execute SetPriceSource
+    // Set price and then query it
     robot.set_price_source(denom, price_source.clone(), admin).assert_price(denom, Decimal::one());
 }
 
@@ -85,12 +89,17 @@ fn test_query_astroport_xyk_spot_price_without_route_asset() {
         route_assets: vec![],
     };
 
+    // Oracle uses a swap simulation rather than just dividing the reserves, because we need to support non XYK pools
+    let fee = Decimal::permille(3);
+    let expected_price =
+        Decimal::from_ratio(initial_liq[1], initial_liq[0]) * (Decimal::one() - fee);
+
     // Execute SetPriceSource
     robot
         .add_denom_precision_to_coin_registry("uatom", 6, admin)
         .add_denom_precision_to_coin_registry("uosmo", 6, admin)
-        .set_price_source("uatom", price_source.clone(), admin);
-    // .assert_price("uatom", Decimal::from_ratio(initial_liq[1], initial_liq[0]));
+        .set_price_source("uatom", price_source.clone(), admin)
+        .assert_price("uatom", expected_price);
 }
 
 #[test]
@@ -126,12 +135,17 @@ fn test_query_astroport_xyk_spot_price_with_route_asset() {
         price: Decimal::one(),
     };
 
+    // Oracle uses a swap simulation rather than just dividing the reserves, because we need to support non XYK pools
+    let fee = Decimal::permille(3);
+    let expected_price =
+        Decimal::from_ratio(initial_liq[1] * osmo_price, initial_liq[0]) * (Decimal::one() - fee);
+
     // Execute SetPriceSource
     robot
         .add_denom_precision_to_coin_registry("uatom", 6, admin)
         .add_denom_precision_to_coin_registry("uosmo", 6, admin)
         .set_price_source("usd", usd_price_source, admin)
         .set_price_source("uosmo", osmo_price_source, admin)
-        .set_price_source("uatom", price_source.clone(), admin);
-    // .assert_price("uatom", Decimal::from_ratio(initial_liq[1] * osmo_price, initial_liq[0]));
+        .set_price_source("uatom", price_source.clone(), admin)
+        .assert_price("uatom", expected_price);
 }

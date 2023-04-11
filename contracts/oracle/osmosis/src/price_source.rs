@@ -1,8 +1,6 @@
 use std::fmt;
 
-use cosmwasm_std::{
-    Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, Uint128, Uint256,
-};
+use cosmwasm_std::{Decimal, Decimal256, Deps, Empty, Env, Isqrt, Uint128, Uint256};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
     ContractError::InvalidPrice, ContractResult, PriceSourceChecked, PriceSourceUnchecked,

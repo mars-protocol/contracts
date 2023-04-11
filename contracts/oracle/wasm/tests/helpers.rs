@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, Decimal, Empty, WasmMsg};
+use cosmwasm_std::{Decimal, Empty};
 use cw_it::{
     astroport::{robot::AstroportTestRobot, utils::AstroportContracts},
     multi_test::MultiTestRunner,
@@ -9,7 +9,6 @@ use cw_it::{
 use mars_oracle::{InstantiateMsg, WasmOracleCustomInitParams};
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
 use mars_owner::OwnerUpdate;
-use serde::Serialize;
 
 // Base denom to use in tests
 pub const BASE_DENOM: &str = "USD";
@@ -215,7 +214,7 @@ impl<'a> AstroportTestRobot<'a, TestRunner<'a>> for WasmOracleTestRobot<'a> {
     }
 }
 
-/// Creates an OsmosisTestApp TestRunner
+/// Creates a test runner with the type defined by the TEST_RUNNER environment variable
 pub fn get_test_runner<'a>() -> TestRunner<'a> {
     match TEST_RUNNER.unwrap_or(DEFAULT_TEST_RUNNER) {
         "osmosis-test-tube" => {
@@ -238,10 +237,13 @@ pub fn setup_test<'a>(
     robot
 }
 
+/// Returns a HashMap of contracts to be used in the tests
 pub fn get_contracts(runner: &TestRunner) -> ContractMap {
+    // Get Astroport contracts
     let mut contracts =
         cw_it::astroport::utils::get_local_contracts(runner, &ASTRO_ARTIFACTS_PATH, false, &None);
 
+    // Get Oracle contract
     let contract = match runner {
         TestRunner::OsmosisTestApp(_) => {
             let oracle_wasm_path = if APPEND_ARCH {
@@ -265,7 +267,6 @@ pub fn get_contracts(runner: &TestRunner) -> ContractMap {
         }
         _ => panic!("Unsupported test runner type"),
     };
-
     contracts.insert(CONTRACT_NAME.to_string(), contract);
 
     contracts
