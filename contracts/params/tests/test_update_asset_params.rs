@@ -63,7 +63,10 @@ fn initializing_asset_param() {
     assert_eq!(params.max_loan_to_value, res.params.max_loan_to_value);
     assert_eq!(params.liquidation_threshold, res.params.liquidation_threshold);
     assert_eq!(params.liquidation_bonus, res.params.liquidation_bonus);
-    assert_eq!(params.red_bank_deposit_cap, res.params.red_bank_deposit_cap);
+    assert_eq!(
+        params.permissions.red_bank.deposit_cap,
+        res.params.permissions.red_bank.deposit_cap
+    );
     assert_eq!(params.interest_rate_model, res.params.interest_rate_model);
     assert_eq!(params.reserve_factor, res.params.reserve_factor);
 
