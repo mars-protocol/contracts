@@ -5,7 +5,7 @@ use mars_owner::OwnerInit::SetInitialOwner;
 use crate::{
     emergency_powers::{disable_borrowing, disallow_coin, set_zero_deposit_cap, set_zero_max_ltv},
     error::ContractResult,
-    execute::{update_asset_params, update_max_close_factor, update_vault_config, validate_mcf},
+    execute::{update_asset_params, update_max_close_factor, update_vault_config, assert_mcf},
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     query::{query_all_asset_params, query_all_vault_configs, query_vault_config},
     state::{ASSET_PARAMS, MAX_CLOSE_FACTOR, OWNER},
@@ -32,7 +32,7 @@ pub fn instantiate(
         },
     )?;
 
-    validate_mcf(msg.max_close_factor)?;
+    assert_mcf(msg.max_close_factor)?;
     MAX_CLOSE_FACTOR.save(deps.storage, &msg.max_close_factor)?;
 
     Ok(Response::default())

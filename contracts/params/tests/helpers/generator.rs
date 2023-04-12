@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_std::{coin, Decimal, Uint128};
 use mars_params::types::{
-    AssetParams, AssetPermissions, RedBankPermissions, RoverPermissions, VaultConfig,
+    AssetParams, AssetPermissions, RedBankSettings, RoverPermissions, VaultConfig,
 };
 use mars_red_bank_types::red_bank::InterestRateModel;
 
@@ -12,15 +12,15 @@ pub fn default_asset_params() -> AssetParams {
             rover: RoverPermissions {
                 whitelisted: false,
             },
-            red_bank: RedBankPermissions {
+            red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: false,
+                deposit_cap: Uint128::new(1_000_000_000),
             },
         },
         max_loan_to_value: Decimal::from_str("0.6").unwrap(),
         liquidation_threshold: Decimal::from_str("0.7").unwrap(),
         liquidation_bonus: Decimal::from_str("0.15").unwrap(),
-        red_bank_deposit_cap: Uint128::new(1_000_000_000),
         interest_rate_model: InterestRateModel {
             optimal_utilization_rate: Decimal::from_str("0.6").unwrap(),
             base: Decimal::zero(),

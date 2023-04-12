@@ -14,15 +14,16 @@ pub struct RoverPermissions {
 }
 
 #[cw_serde]
-pub struct RedBankPermissions {
+pub struct RedBankSettings {
     pub deposit_enabled: bool,
     pub borrow_enabled: bool,
+    pub deposit_cap: Uint128,
 }
 
 #[cw_serde]
 pub struct AssetPermissions {
     pub rover: RoverPermissions,
-    pub red_bank: RedBankPermissions,
+    pub red_bank: RedBankSettings,
 }
 
 #[cw_serde]
@@ -31,7 +32,6 @@ pub struct AssetParams {
     pub max_loan_to_value: Decimal,
     pub liquidation_threshold: Decimal,
     pub liquidation_bonus: Decimal,
-    pub red_bank_deposit_cap: Uint128,
     pub interest_rate_model: InterestRateModel,
     pub reserve_factor: Decimal,
 }

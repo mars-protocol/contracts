@@ -41,18 +41,12 @@ export type OwnerUpdate =
       }
     }
   | 'clear_emergency_owner'
-export type AssetParamsUpdate =
-  | {
-      add_or_update: {
-        denom: string
-        params: AssetParams
-      }
-    }
-  | {
-      remove: {
-        denom: string
-      }
-    }
+export type AssetParamsUpdate = {
+  add_or_update: {
+    denom: string
+    params: AssetParams
+  }
+}
 export type Uint128 = string
 export type VaultConfigUpdate =
   | {
@@ -92,7 +86,6 @@ export interface AssetParams {
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
   permissions: AssetPermissions
-  red_bank_deposit_cap: Uint128
   reserve_factor: Decimal
 }
 export interface InterestRateModel {
@@ -102,11 +95,12 @@ export interface InterestRateModel {
   slope_2: Decimal
 }
 export interface AssetPermissions {
-  red_bank: RedBankPermissions
+  red_bank: RedBankSettings
   rover: RoverPermissions
 }
-export interface RedBankPermissions {
+export interface RedBankSettings {
   borrow_enabled: boolean
+  deposit_cap: Uint128
   deposit_enabled: boolean
 }
 export interface RoverPermissions {

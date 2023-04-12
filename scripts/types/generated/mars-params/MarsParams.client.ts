@@ -21,7 +21,7 @@ import {
   AssetParams,
   InterestRateModel,
   AssetPermissions,
-  RedBankPermissions,
+  RedBankSettings,
   RoverPermissions,
   VaultConfig,
   Coin,

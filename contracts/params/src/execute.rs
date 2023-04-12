@@ -17,7 +17,7 @@ pub fn update_max_close_factor(
 ) -> Result<Response, ContractError> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
-    validate_mcf(max_close_factor)?;
+    assert_mcf(max_close_factor)?;
     MAX_CLOSE_FACTOR.save(deps.storage, &max_close_factor)?;
 
     let response = Response::new()
@@ -86,7 +86,7 @@ pub fn update_vault_config(
     Ok(response)
 }
 
-pub fn validate_mcf(param_value: Decimal) -> Result<(), ValidationError> {
+pub fn assert_mcf(param_value: Decimal) -> Result<(), ValidationError> {
     if !param_value.le(&Decimal::one()) {
         Err(ValidationError::InvalidParam {
             param_name: "max-close-factor".to_string(),
