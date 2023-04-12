@@ -48,7 +48,7 @@ fn remove_price_source() {
 
     // Execute SetPriceSource
     robot
-        .set_price_source(denom, price_source.clone(), admin)
+        .set_price_source(denom, price_source, admin)
         .remove_price_source(admin, denom)
         .assert_price_source_not_exists(denom);
 }
@@ -64,7 +64,7 @@ fn test_query_fixed_price() {
     };
 
     // Set price and then query it
-    robot.set_price_source(denom, price_source.clone(), admin).assert_price(denom, Decimal::one());
+    robot.set_price_source(denom, price_source, admin).assert_price(denom, Decimal::one());
 }
 
 #[test_case(&["uatom","uosmo"], "uosmo", &[] ; "no route, base_denom in pair")]
@@ -93,7 +93,7 @@ fn test_validate_astroport_spot_price_source(
     );
 
     let price_source = WasmPriceSourceUnchecked::AstroportSpot {
-        pair_address: pair_address.clone(),
+        pair_address,
         route_assets: route_assets.iter().map(|&s| s.to_string()).collect(),
     };
 
@@ -132,7 +132,7 @@ fn test_validate_astroport_twap_price_source(
     );
 
     let price_source = WasmPriceSourceUnchecked::AstroportTwap {
-        pair_address: pair_address.clone(),
+        pair_address,
         route_assets: route_assets.iter().map(|&s| s.to_string()).collect(),
         tolerance: 5,
         window_size: 100,
@@ -181,7 +181,7 @@ fn test_query_astroport_spot_price_without_route_asset(pair_type: PairType) {
     robot
         .add_denom_precision_to_coin_registry("uatom", 6, admin)
         .add_denom_precision_to_coin_registry("uosmo", 6, admin)
-        .set_price_source("uatom", price_source.clone(), admin)
+        .set_price_source("uatom", price_source, admin)
         .assert_price("uatom", expected_price);
 }
 
@@ -227,6 +227,6 @@ fn test_query_astroport_xyk_spot_price_with_route_asset(pair_type: PairType) {
         .add_denom_precision_to_coin_registry("uosmo", 6, admin)
         .set_price_source("usd", usd_price_source, admin)
         .set_price_source("uosmo", osmo_price_source, admin)
-        .set_price_source("uatom", price_source.clone(), admin)
+        .set_price_source("uatom", price_source, admin)
         .assert_price("uatom", expected_price);
 }

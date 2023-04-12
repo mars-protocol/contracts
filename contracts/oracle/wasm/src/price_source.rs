@@ -153,9 +153,9 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
     fn query_price(
         &self,
         deps: &Deps,
-        env: &Env,
+        _env: &Env,
         denom: &str,
-        base_denom: &str,
+        _base_denom: &str,
         price_sources: &Map<&str, Self>,
     ) -> ContractResult<Decimal> {
         match self {
@@ -194,7 +194,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                         }
                     })?;
                     let route_price =
-                        price_source.query_price(deps, env, denom, base_denom, price_sources)?;
+                        price_source.query_price(deps, _env, denom, _base_denom, price_sources)?;
                     price *= route_price;
                 }
 

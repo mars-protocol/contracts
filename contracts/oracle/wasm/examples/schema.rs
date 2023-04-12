@@ -1,5 +1,4 @@
 use cosmwasm_schema::write_api;
-
 use mars_oracle::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     WasmOracleCustomInitParams,

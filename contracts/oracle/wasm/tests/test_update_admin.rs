@@ -53,7 +53,7 @@ fn test_accept_proposed(caller_is_new_owner: bool) {
             OwnerUpdate::ProposeNewOwner {
                 proposed: bob.address(),
             },
-            &alice,
+            alice,
         )
         .owner_update(OwnerUpdate::AcceptProposed, caller)
         .assert_owner(bob.address());
@@ -81,7 +81,7 @@ fn test_clear_proposed(caller_is_owner: bool) {
             OwnerUpdate::ProposeNewOwner {
                 proposed: bob.address(),
             },
-            &alice,
+            alice,
         )
         .owner_update(OwnerUpdate::ClearProposed, caller);
 }

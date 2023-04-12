@@ -1,6 +1,6 @@
 use astroport::{
     asset::{Asset, AssetInfo, PairInfo},
-    pair::{PoolResponse, QueryMsg as PairQueryMsg},
+    pair::QueryMsg as PairQueryMsg,
 };
 use cosmwasm_std::{Deps, QuerierWrapper, StdResult, Uint128};
 use cw_storage_plus::Map;
@@ -14,13 +14,6 @@ pub fn query_astroport_pair_info(
     pair_contract: impl Into<String>,
 ) -> StdResult<PairInfo> {
     querier.query_wasm_smart(pair_contract, &PairQueryMsg::Pair {})
-}
-
-pub fn query_astroport_pool(
-    querier: &QuerierWrapper,
-    pair_contract: impl Into<String>,
-) -> StdResult<PoolResponse> {
-    querier.query_wasm_smart(pair_contract, &PairQueryMsg::Pool {})
 }
 
 /// Helper function to create an Astroport native token AssetInfo.
