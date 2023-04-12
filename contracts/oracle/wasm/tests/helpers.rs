@@ -7,7 +7,7 @@ use cw_it::{
     test_tube::{Account, Module, SigningAccount, Wasm},
     ContractMap, ContractType, TestRunner,
 };
-use mars_oracle::{InstantiateMsg, WasmOracleCustomInitParams};
+use mars_oracle::{InstantiateMsg, WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams};
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
 use mars_owner::OwnerUpdate;
 #[cfg(feature = "osmosis-test-app")]
@@ -97,7 +97,7 @@ impl<'a> WasmOracleTestRobot<'a> {
         price_source: WasmPriceSourceUnchecked,
         signer: &SigningAccount,
     ) -> &Self {
-        let msg = mars_oracle::msg::ExecuteMsg::SetPriceSource {
+        let msg = mars_oracle::msg::ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: denom.to_string(),
             price_source,
         };
@@ -177,6 +177,16 @@ impl<'a> WasmOracleTestRobot<'a> {
         let price_sources = self.query_price_sources(None, None);
         let price_source = price_sources.iter().find(|ps| ps.denom == denom);
         assert!(price_source.is_none());
+        self
+    }
+
+    pub fn record_twap_snapshots(&self, denoms: &[&str], signer: &SigningAccount) -> &Self {
+        let msg = &mars_oracle::msg::ExecuteMsg::<Empty, WasmOracleCustomExecuteMsg>::Custom(
+            WasmOracleCustomExecuteMsg::RecordTwapSnapshots {
+                denoms: denoms.iter().map(|d| d.to_string()).collect(),
+            },
+        );
+        self.wasm().execute(&self.mars_oracle_contract_addr, &msg, &[], signer).unwrap();
         self
     }
 

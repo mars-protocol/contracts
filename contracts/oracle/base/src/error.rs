@@ -39,6 +39,15 @@ pub enum ContractError {
 
     #[error("Missing custom init params")]
     MissingCustomInitParams {},
+
+    #[error("Missing custom execute params")]
+    MissingCustomExecuteParams {},
+
+    #[error("Price source is not TWAP")]
+    PriceSourceNotTwap {},
+
+    #[error("No TWAP snapshot within tolerance")]
+    NoSnapshotWithinTolerance {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

@@ -5,7 +5,8 @@ use crate::OsmosisPriceSource;
 
 /// The Osmosis oracle contract inherits logics from the base oracle contract, with the Osmosis query
 /// and price source plugins
-pub type OsmosisOracle<'a> = OracleBase<'a, OsmosisPriceSource, OsmosisPriceSource, Empty, Empty>;
+pub type OsmosisOracle<'a> =
+    OracleBase<'a, OsmosisPriceSource, OsmosisPriceSource, Empty, Empty, Empty>;
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-oracle-osmosis";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");

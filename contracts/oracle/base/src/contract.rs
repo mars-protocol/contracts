@@ -12,13 +12,14 @@ use mars_oracle::msg::{
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 
 use crate::{
-    error::ContractResult, utils::validate_native_denom, PriceSourceChecked, PriceSourceUnchecked,
+    error::ContractResult, utils::validate_native_denom, ContractError, PriceSourceChecked,
+    PriceSourceUnchecked,
 };
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
 
-pub struct OracleBase<'a, P, PU, C, I>
+pub struct OracleBase<'a, P, PU, C, I, E>
 where
     P: PriceSourceChecked<C>,
     PU: PriceSourceUnchecked<P, C>,
@@ -36,9 +37,11 @@ where
     pub unchecked_price_source: PhantomData<PU>,
     /// Phantom data holds the instantiate msg custom type
     pub instantiate_msg: PhantomData<I>,
+    /// Phantom data holds the execute msg custom type
+    pub execute_msg: PhantomData<E>,
 }
 
-impl<'a, P, PU, C, I> Default for OracleBase<'a, P, PU, C, I>
+impl<'a, P, PU, C, I, E> Default for OracleBase<'a, P, PU, C, I, E>
 where
     P: PriceSourceChecked<C>,
     PU: PriceSourceUnchecked<P, C>,
@@ -52,11 +55,12 @@ where
             custom_query: PhantomData,
             unchecked_price_source: PhantomData,
             instantiate_msg: PhantomData,
+            execute_msg: PhantomData,
         }
     }
 }
 
-impl<'a, P, PU, C, I> OracleBase<'a, P, PU, C, I>
+impl<'a, P, PU, C, I, E> OracleBase<'a, P, PU, C, I, E>
 where
     P: PriceSourceChecked<C>,
     PU: PriceSourceUnchecked<P, C>,
@@ -91,7 +95,7 @@ where
         &self,
         deps: DepsMut<C>,
         info: MessageInfo,
-        msg: ExecuteMsg<PU>,
+        msg: ExecuteMsg<PU, E>,
     ) -> ContractResult<Response> {
         match msg {
             ExecuteMsg::UpdateOwner(update) => self.update_owner(deps, info, update),
@@ -102,6 +106,8 @@ where
             ExecuteMsg::RemovePriceSource {
                 denom,
             } => self.remove_price_source(deps, info.sender, denom),
+            // Custom messages should be handled by the implementing contract
+            ExecuteMsg::Custom(_) => Err(ContractError::MissingCustomExecuteParams {}),
         }
     }
 

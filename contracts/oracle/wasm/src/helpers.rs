@@ -2,11 +2,15 @@ use std::collections::HashSet;
 
 use astroport::{
     asset::{Asset, AssetInfo, PairInfo},
-    pair::QueryMsg as PairQueryMsg,
+    pair::{CumulativePricesResponse, QueryMsg as PairQueryMsg},
 };
-use cosmwasm_std::{Deps, QuerierWrapper, StdResult, Uint128};
+use cosmwasm_std::{
+    to_binary, Addr, Decimal, Deps, Env, QuerierWrapper, QueryRequest, StdResult, Uint128,
+    WasmQuery,
+};
 use cw_storage_plus::Map;
-use mars_oracle_base::{ContractError, ContractResult};
+use mars_oracle::AstroportTwapSnapshot;
+use mars_oracle_base::{ContractError, ContractResult, PriceSourceChecked};
 
 use crate::WasmPriceSourceChecked;
 
@@ -84,6 +88,58 @@ pub fn assert_astroport_pair_contains_denoms(
         });
     }
     Ok(())
+}
+
+/// Queries the pair contract for the cumulate price of the specified denom denominated in the other
+/// asset of the pair.
+pub fn query_astroport_cumulative_price(
+    querier: &QuerierWrapper,
+    pair_address: &Addr,
+    denom: &str,
+) -> StdResult<Uint128> {
+    let response: CumulativePricesResponse =
+        querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: pair_address.to_string(),
+            msg: to_binary(&PairQueryMsg::CumulativePrices {})?,
+        }))?;
+
+    let price_cumulative = if response.assets[0].info.to_string() == denom {
+        response.price1_cumulative_last
+    } else {
+        response.price0_cumulative_last
+    };
+    Ok(price_cumulative)
+}
+
+/// Calculate how much the period between two TWAP snapshots deviates from the desired window size
+pub fn period_diff(
+    snapshot1: &AstroportTwapSnapshot,
+    snapshot2: &AstroportTwapSnapshot,
+    window_size: u64,
+) -> u64 {
+    snapshot1.timestamp.abs_diff(snapshot2.timestamp).abs_diff(window_size)
+}
+
+/// Add the prices of the route assets to the supplied price to get a price denominated in the base
+/// asset.
+pub fn add_route_prices(
+    deps: &Deps,
+    env: &Env,
+    base_denom: &str,
+    price_sources: &Map<&str, WasmPriceSourceChecked>,
+    route_assets: &[String],
+    price: &Decimal,
+) -> ContractResult<Decimal> {
+    let mut price = *price;
+    for denom in route_assets {
+        let price_source =
+            price_sources.load(deps.storage, denom).map_err(|_| ContractError::InvalidPrice {
+                reason: format!("No price source for route asset {}", denom),
+            })?;
+        let route_price = price_source.query_price(deps, env, denom, base_denom, price_sources)?;
+        price *= route_price;
+    }
+    Ok(price)
 }
 
 #[cfg(test)]
