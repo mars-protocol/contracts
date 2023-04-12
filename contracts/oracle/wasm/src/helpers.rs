@@ -2,9 +2,13 @@ use astroport::{
     asset::{Asset, AssetInfo, PairInfo},
     pair::{PoolResponse, QueryMsg as PairQueryMsg},
 };
-use cosmwasm_std::{QuerierWrapper, StdResult, Uint128};
+use cosmwasm_std::{Deps, QuerierWrapper, StdResult, Uint128};
+use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError, ContractResult};
 
+use crate::WasmPriceSourceChecked;
+
+/// Queries the pair contract for the pair info.
 pub fn query_astroport_pair_info(
     querier: &QuerierWrapper,
     pair_contract: impl Into<String>,
@@ -19,17 +23,49 @@ pub fn query_astroport_pool(
     querier.query_wasm_smart(pair_contract, &PairQueryMsg::Pool {})
 }
 
+/// Helper function to create an Astroport native token AssetInfo.
 pub fn astro_native_info(denom: &str) -> AssetInfo {
     AssetInfo::NativeToken {
         denom: denom.to_string(),
     }
 }
 
+/// Helper function to create an Astroport native Asset.
 pub fn astro_native_asset(denom: impl Into<String>, amount: impl Into<Uint128>) -> Asset {
     Asset {
         info: astro_native_info(&denom.into()),
         amount: amount.into(),
     }
+}
+
+/// Validates the route assets of an Astroport price source. Used for both TWAP and spot price sources.
+pub fn validate_route_assets(
+    deps: &Deps,
+    denom: &str,
+    base_denom: &str,
+    price_sources: &Map<&str, WasmPriceSourceChecked>,
+    pair_address: &str,
+    route_assets: &[String],
+) -> ContractResult<()> {
+    // For all route assets, there must be a price source available
+    for asset in route_assets {
+        price_sources.load(deps.storage, asset).map_err(|_| ContractError::InvalidPriceSource {
+            reason: format!("No price source found for asset {}", asset),
+        })?;
+    }
+
+    // If there are no route assets, then the pair must contain the denom and base denom.
+    if route_assets.is_empty() {
+        let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
+        assert_astroport_pair_contains_denoms(&pair_info, &[denom, base_denom])?;
+    } else {
+        // If there are route assets, the pair must contain the denom and the first
+        // route asset
+        let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
+        assert_astroport_pair_contains_denoms(&pair_info, &[denom, &route_assets[0]])?;
+    }
+
+    Ok(())
 }
 
 /// Asserts that the pair contains exactly the specified denoms.

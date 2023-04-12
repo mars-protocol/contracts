@@ -106,6 +106,47 @@ fn test_validate_astroport_spot_price_source(
         .assert_price_source("uatom", price_source);
 }
 
+#[test_case(&["uatom","uosmo"], "uosmo", &[] ; "no route, base_denom in pair")]
+#[test_case(&["uatom","uosmo"], "USD", &[] => panics; "no route, base_denom not in pair")]
+#[test_case(&["uatom","uosmo"], "uosmo", &["uusd"] => panics; "route asset does not exist")]
+#[test_case(&["uatom","uosmo"], "uosmo", &["uosmo"]; "route equal to base_denom")]
+#[test_case(&["uatom","uosmo"], "uosmo", &["uion"] => panics; "route with non-base existing asset, not in pair")]
+#[test_case(&["uatom","uion"], "uosmo", &["uion"]; "route with non-base existing asset, in pair")]
+fn test_validate_astroport_twap_price_source(
+    pair_denoms: &[&str; 2],
+    base_denom: &str,
+    route_assets: &[&str],
+) {
+    let runner = get_test_runner();
+    let admin = &runner.init_accounts()[0];
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
+
+    let initial_liq: [Uint128; 2] =
+        [10000000000000000000000u128.into(), 1000000000000000000000u128.into()];
+    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
+        PairType::Xyk {},
+        [native_info(pair_denoms[0]), native_info(pair_denoms[1])],
+        None,
+        admin,
+        Some(initial_liq),
+    );
+
+    let price_source = WasmPriceSourceUnchecked::AstroportTwap {
+        pair_address: pair_address.clone(),
+        route_assets: route_assets.iter().map(|&s| s.to_string()).collect(),
+        tolerance: 5,
+        window_size: 100,
+    };
+
+    // Execute SetPriceSource
+    robot
+        .add_denom_precision_to_coin_registry("uatom", 6, admin)
+        .add_denom_precision_to_coin_registry("uosmo", 6, admin)
+        .set_price_source("uion", fixed_source(), admin)
+        .set_price_source("uatom", price_source.clone(), admin)
+        .assert_price_source("uatom", price_source);
+}
+
 #[test_case(PairType::Xyk {}; "xyk")]
 #[test_case(PairType::Stable {}; "stable")]
 

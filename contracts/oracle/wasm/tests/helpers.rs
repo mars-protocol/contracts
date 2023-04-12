@@ -1,5 +1,3 @@
-use std::{error::Error, str::FromStr};
-
 use astroport::{factory::PairType, pair::StablePoolParams};
 use cosmwasm_std::{to_binary, Binary, Decimal, Empty};
 use cw_it::{

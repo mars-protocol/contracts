@@ -13,9 +13,7 @@ use mars_oracle_base::{
 };
 
 use crate::{
-    helpers::{
-        assert_astroport_pair_contains_denoms, astro_native_asset, query_astroport_pair_info,
-    },
+    helpers::{astro_native_asset, validate_route_assets},
     state::ASTROPORT_FACTORY,
 };
 
@@ -109,25 +107,14 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 pair_address,
                 route_assets,
             } => {
-                // For all route assets, there must be a price source available
-                for asset in &route_assets {
-                    price_sources.load(deps.storage, asset).map_err(|_| {
-                        ContractError::InvalidPriceSource {
-                            reason: format!("No price source found for asset {}", asset),
-                        }
-                    })?;
-                }
-
-                // If there are no route assets, then the pair must contain the denom and base denom.
-                if route_assets.is_empty() {
-                    let pair_info = query_astroport_pair_info(&deps.querier, &pair_address)?;
-                    assert_astroport_pair_contains_denoms(&pair_info, &[denom, base_denom])?;
-                } else {
-                    // If there are route assets, the pair must contain the denom and the first
-                    // route asset
-                    let pair_info = query_astroport_pair_info(&deps.querier, &pair_address)?;
-                    assert_astroport_pair_contains_denoms(&pair_info, &[denom, &route_assets[0]])?;
-                }
+                validate_route_assets(
+                    &deps,
+                    denom,
+                    base_denom,
+                    price_sources,
+                    &pair_address,
+                    &route_assets,
+                )?;
 
                 Ok(WasmPriceSourceChecked::AstroportSpot {
                     pair_address: deps.api.addr_validate(&pair_address)?,
@@ -140,16 +127,23 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 tolerance,
                 route_assets,
             } => {
-                let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
-                assert_astroport_pair_contains_denoms(&pair_info, &[denom, base_denom])?;
+                validate_route_assets(
+                    &deps,
+                    denom,
+                    base_denom,
+                    price_sources,
+                    &pair_address,
+                    &route_assets,
+                )?;
+
+                //TODO: Validate window_size and tolerance?
+
                 Ok(WasmPriceSourceChecked::AstroportTwap {
-                    pair_address: pair_info.contract_addr,
+                    pair_address: deps.api.addr_validate(&pair_address)?,
                     window_size,
                     tolerance,
                     route_assets,
                 })
-
-                //TODO: Validate window_size and tolerance?
             }
         }
     }
