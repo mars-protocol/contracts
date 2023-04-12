@@ -3,7 +3,8 @@ use std::{cmp::min, str};
 use cosmwasm_std::{
     Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128,
 };
-use mars_owner::{OwnerError, OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_params::types::AssetParams;
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
@@ -22,6 +23,7 @@ use crate::{
         assert_below_liq_threshold_after_withdraw, assert_below_max_ltv_after_borrow,
         assert_liquidatable,
     },
+    helpers::query_asset_params,
     interest_rates::{
         apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
         get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
@@ -140,24 +142,12 @@ pub fn create_market(
     // Destructuring a struct’s fields into separate variables in order to force
     // compile error if we add more params
     let InitOrUpdateAssetParams {
-        max_loan_to_value,
         reserve_factor,
-        liquidation_threshold,
-        liquidation_bonus,
         interest_rate_model,
-        deposit_enabled,
-        borrow_enabled,
-        deposit_cap,
     } = params;
 
     // All fields should be available
-    let available = max_loan_to_value.is_some()
-        && reserve_factor.is_some()
-        && liquidation_threshold.is_some()
-        && liquidation_bonus.is_some()
-        && interest_rate_model.is_some()
-        && deposit_enabled.is_some()
-        && borrow_enabled.is_some();
+    let available = reserve_factor.is_some() && interest_rate_model.is_some();
 
     if !available {
         return Err(MarsError::InstantiateParamsUnavailable {}.into());
@@ -169,18 +159,11 @@ pub fn create_market(
         liquidity_index: Decimal::one(),
         borrow_rate: Decimal::zero(),
         liquidity_rate: Decimal::zero(),
-        max_loan_to_value: max_loan_to_value.unwrap(),
         reserve_factor: reserve_factor.unwrap(),
         indexes_last_updated: block_time,
         collateral_total_scaled: Uint128::zero(),
         debt_total_scaled: Uint128::zero(),
-        liquidation_threshold: liquidation_threshold.unwrap(),
-        liquidation_bonus: liquidation_bonus.unwrap(),
         interest_rate_model: interest_rate_model.unwrap(),
-        deposit_enabled: deposit_enabled.unwrap(),
-        borrow_enabled: borrow_enabled.unwrap(),
-        // if not specified, deposit cap is set to unlimited
-        deposit_cap: deposit_cap.unwrap_or(Uint128::MAX),
     };
 
     new_market.validate()?;
@@ -196,36 +179,17 @@ pub fn update_asset(
     denom: String,
     params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
-    if OWNER.is_owner(deps.storage, &info.sender)? {
-        update_asset_by_owner(deps, &env, &denom, params)
-    } else if OWNER.is_emergency_owner(deps.storage, &info.sender)? {
-        update_asset_by_emergency_owner(deps, &denom, params)
-    } else {
-        Err(OwnerError::NotOwner {}.into())
-    }
-}
+    OWNER.is_owner(deps.storage, &info.sender)?;
 
-fn update_asset_by_owner(
-    deps: DepsMut,
-    env: &Env,
-    denom: &str,
-    params: InitOrUpdateAssetParams,
-) -> Result<Response, ContractError> {
-    let market_option = MARKETS.may_load(deps.storage, denom)?;
+    let market_option = MARKETS.may_load(deps.storage, &denom)?;
     match market_option {
         None => Err(ContractError::AssetNotInitialized {}),
         Some(mut market) => {
             // Destructuring a struct’s fields into separate variables in order to force
             // compile error if we add more params
             let InitOrUpdateAssetParams {
-                max_loan_to_value,
                 reserve_factor,
-                liquidation_threshold,
-                liquidation_bonus,
                 interest_rate_model,
-                deposit_enabled,
-                borrow_enabled,
-                deposit_cap,
             } = params;
 
             // If reserve factor or interest rates are updated we update indexes with
@@ -250,7 +214,7 @@ fn update_asset_by_owner(
 
                 response = apply_accumulated_interests(
                     deps.storage,
-                    env,
+                    &env,
                     &mut market,
                     rewards_collector_addr,
                     incentives_addr,
@@ -259,50 +223,20 @@ fn update_asset_by_owner(
             }
 
             let mut updated_market = Market {
-                max_loan_to_value: max_loan_to_value.unwrap_or(market.max_loan_to_value),
                 reserve_factor: reserve_factor.unwrap_or(market.reserve_factor),
-                liquidation_threshold: liquidation_threshold
-                    .unwrap_or(market.liquidation_threshold),
-                liquidation_bonus: liquidation_bonus.unwrap_or(market.liquidation_bonus),
                 interest_rate_model: interest_rate_model.unwrap_or(market.interest_rate_model),
-                deposit_enabled: deposit_enabled.unwrap_or(market.deposit_enabled),
-                borrow_enabled: borrow_enabled.unwrap_or(market.borrow_enabled),
-                deposit_cap: deposit_cap.unwrap_or(market.deposit_cap),
                 ..market
             };
 
             updated_market.validate()?;
 
             if should_update_interest_rates {
-                response = update_interest_rates(env, &mut updated_market, response)?;
+                response = update_interest_rates(&env, &mut updated_market, response)?;
             }
-            MARKETS.save(deps.storage, denom, &updated_market)?;
+            MARKETS.save(deps.storage, &denom, &updated_market)?;
 
             Ok(response.add_attribute("action", "update_asset").add_attribute("denom", denom))
         }
-    }
-}
-
-/// Emergency owner can only DISABLE BORROWING.
-fn update_asset_by_emergency_owner(
-    deps: DepsMut,
-    denom: &str,
-    params: InitOrUpdateAssetParams,
-) -> Result<Response, ContractError> {
-    if let Some(mut market) = MARKETS.may_load(deps.storage, denom)? {
-        match params.borrow_enabled {
-            Some(borrow_enabled) if !borrow_enabled => {
-                market.borrow_enabled = borrow_enabled;
-                MARKETS.save(deps.storage, denom, &market)?;
-
-                Ok(Response::new()
-                    .add_attribute("action", "emergency_update_asset")
-                    .add_attribute("denom", denom))
-            }
-            _ => Err(MarsError::Unauthorized {}.into()),
-        }
-    } else {
-        Err(ContractError::AssetNotInitialized {})
     }
 }
 
@@ -367,17 +301,35 @@ pub fn deposit(
         User(&info.sender)
     };
 
-    let mut market = MARKETS.load(deps.storage, &denom)?;
-    if !market.deposit_enabled {
+    let config = CONFIG.load(deps.storage)?;
+
+    let addresses = address_provider::helpers::query_contract_addrs(
+        deps.as_ref(),
+        &config.address_provider,
+        vec![
+            MarsAddressType::Incentives,
+            MarsAddressType::RewardsCollector,
+            MarsAddressType::Params,
+        ],
+    )?;
+    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
+    let incentives_addr = &addresses[&MarsAddressType::Incentives];
+    let params_addr = &addresses[&MarsAddressType::Params];
+
+    let asset_params = query_asset_params(&deps.querier, params_addr, &denom)?;
+
+    if !asset_params.permissions.red_bank.deposit_enabled {
         return Err(ContractError::DepositNotEnabled {
             denom,
         });
     }
 
+    let mut market = MARKETS.load(deps.storage, &denom)?;
+
     let total_scaled_deposits = market.collateral_total_scaled;
     let total_deposits =
         get_underlying_liquidity_amount(total_scaled_deposits, &market, env.block.time.seconds())?;
-    if total_deposits.checked_add(deposit_amount)? > market.deposit_cap {
+    if total_deposits.checked_add(deposit_amount)? > asset_params.permissions.red_bank.deposit_cap {
         return Err(ContractError::DepositCapExceeded {
             denom,
         });
@@ -385,17 +337,7 @@ pub fn deposit(
 
     let mut response = Response::new();
 
-    let config = CONFIG.load(deps.storage)?;
-
     // update indexes and interest rates
-    let addresses = address_provider::helpers::query_contract_addrs(
-        deps.as_ref(),
-        &config.address_provider,
-        vec![MarsAddressType::Incentives, MarsAddressType::RewardsCollector],
-    )?;
-    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
-    let incentives_addr = &addresses[&MarsAddressType::Incentives];
-
     response = apply_accumulated_interests(
         deps.storage,
         &env,
@@ -483,11 +425,13 @@ pub fn withdraw(
             MarsAddressType::Oracle,
             MarsAddressType::Incentives,
             MarsAddressType::RewardsCollector,
+            MarsAddressType::Params,
         ],
     )?;
     let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
     let incentives_addr = &addresses[&MarsAddressType::Incentives];
     let oracle_addr = &addresses[&MarsAddressType::Oracle];
+    let params_addr = &addresses[&MarsAddressType::Params];
 
     // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
     // otherwise no reasons to block the withdraw
@@ -498,6 +442,7 @@ pub fn withdraw(
             &env,
             withdrawer.address(),
             oracle_addr,
+            params_addr,
             &denom,
             withdraw_amount,
         )?
@@ -573,17 +518,6 @@ pub fn borrow(
         });
     }
 
-    // Load market and user state
-    let mut borrow_market = MARKETS.load(deps.storage, &denom)?;
-
-    if !borrow_market.borrow_enabled {
-        return Err(ContractError::BorrowNotEnabled {
-            denom,
-        });
-    }
-
-    let uncollateralized_loan_limit = borrower.uncollateralized_loan_limit(deps.storage, &denom)?;
-
     let config = CONFIG.load(deps.storage)?;
 
     let addresses = address_provider::helpers::query_contract_addrs(
@@ -593,11 +527,26 @@ pub fn borrow(
             MarsAddressType::Oracle,
             MarsAddressType::Incentives,
             MarsAddressType::RewardsCollector,
+            MarsAddressType::Params,
         ],
     )?;
     let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
     let incentives_addr = &addresses[&MarsAddressType::Incentives];
     let oracle_addr = &addresses[&MarsAddressType::Oracle];
+    let params_addr = &addresses[&MarsAddressType::Params];
+
+    let asset_params = query_asset_params(&deps.querier, params_addr, &denom)?;
+
+    if !asset_params.permissions.red_bank.borrow_enabled {
+        return Err(ContractError::BorrowNotEnabled {
+            denom,
+        });
+    }
+
+    // Load market and user state
+    let mut borrow_market = MARKETS.load(deps.storage, &denom)?;
+
+    let uncollateralized_loan_limit = borrower.uncollateralized_loan_limit(deps.storage, &denom)?;
 
     // Check if user can borrow specified amount
     let mut uncollateralized_debt = false;
@@ -607,6 +556,7 @@ pub fn borrow(
             &env,
             borrower.address(),
             oracle_addr,
+            params_addr,
             &denom,
             borrow_amount,
         )? {
@@ -618,7 +568,7 @@ pub fn borrow(
 
         let debt_amount_scaled = borrower.debt_amount_scaled(deps.storage, &denom)?;
 
-        let asset_market = MARKETS.load(deps.storage, &denom)?;
+        let asset_market = MARKETS.load(deps.storage, &denom)?; // TODO do we need this one?
         let debt_amount = get_underlying_debt_amount(
             debt_amount_scaled,
             &asset_market,
@@ -807,14 +757,16 @@ pub fn liquidate(
             MarsAddressType::Oracle,
             MarsAddressType::Incentives,
             MarsAddressType::RewardsCollector,
+            MarsAddressType::Params,
         ],
     )?;
     let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
     let incentives_addr = &addresses[&MarsAddressType::Incentives];
     let oracle_addr = &addresses[&MarsAddressType::Oracle];
+    let params_addr = &addresses[&MarsAddressType::Params];
 
     let (liquidatable, assets_positions) =
-        assert_liquidatable(&deps.as_ref(), &env, &user_addr, oracle_addr)?;
+        assert_liquidatable(&deps.as_ref(), &env, &user_addr, oracle_addr, params_addr)?;
 
     if !liquidatable {
         return Err(ContractError::CannotLiquidateHealthyPosition {});
@@ -843,6 +795,8 @@ pub fn liquidate(
     let user_debt_amount =
         get_underlying_debt_amount(user_debt.amount_scaled, &debt_market, block_time)?;
 
+    let collateral_params = query_asset_params(&deps.querier, params_addr, &collateral_denom)?;
+
     let (
         debt_amount_to_repay,
         collateral_amount_to_liquidate,
@@ -853,6 +807,7 @@ pub fn liquidate(
         user_debt_amount,
         sent_debt_amount,
         &collateral_market,
+        &collateral_params,
         collateral_price,
         debt_price,
         block_time,
@@ -959,6 +914,7 @@ pub fn liquidation_compute_amounts(
     user_debt_amount: Uint128,
     sent_debt_amount: Uint128,
     collateral_market: &Market,
+    collateral_params: &AssetParams,
     collateral_price: Decimal,
     debt_price: Decimal,
     block_time: u64,
@@ -970,7 +926,7 @@ pub fn liquidation_compute_amounts(
 
     // Collateral: debt to repay in base asset times the liquidation bonus
     let mut collateral_amount_to_liquidate = math::divide_uint128_by_decimal(
-        debt_amount_to_repay * debt_price * (Decimal::one() + collateral_market.liquidation_bonus),
+        debt_amount_to_repay * debt_price * (Decimal::one() + collateral_params.liquidation_bonus),
         collateral_price,
     )?;
     let mut collateral_amount_to_liquidate_scaled =
@@ -990,7 +946,7 @@ pub fn liquidation_compute_amounts(
                 collateral_amount_to_liquidate * collateral_price,
                 debt_price,
             )?,
-            Decimal::one() + collateral_market.liquidation_bonus,
+            Decimal::one() + collateral_params.liquidation_bonus,
         )?;
     }
 
@@ -1044,14 +1000,17 @@ pub fn update_asset_collateral_status(
     // user is not liquidatable after disabling
     if previously_enabled && !enable {
         let config = CONFIG.load(deps.storage)?;
-        let oracle_addr = address_provider::helpers::query_contract_addr(
+
+        let addresses = address_provider::helpers::query_contract_addrs(
             deps.as_ref(),
             &config.address_provider,
-            MarsAddressType::Oracle,
+            vec![MarsAddressType::Oracle, MarsAddressType::Params],
         )?;
+        let oracle_addr = &addresses[&MarsAddressType::Oracle];
+        let params_addr = &addresses[&MarsAddressType::Params];
 
         let (liquidatable, _) =
-            assert_liquidatable(&deps.as_ref(), &env, user.address(), &oracle_addr)?;
+            assert_liquidatable(&deps.as_ref(), &env, user.address(), &oracle_addr, params_addr)?;
 
         if liquidatable {
             return Err(ContractError::InvalidHealthFactorAfterDisablingCollateral {});

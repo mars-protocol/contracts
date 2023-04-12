@@ -119,23 +119,9 @@ pub struct CreateOrUpdateConfig {
 pub struct InitOrUpdateAssetParams {
     /// Portion of the borrow rate that is kept as protocol rewards
     pub reserve_factor: Option<Decimal>,
-    /// Max uusd that can be borrowed per uusd of collateral when using the asset as collateral
-    pub max_loan_to_value: Option<Decimal>,
-    /// uusd amount in debt position per uusd of asset collateral that if surpassed makes the user's position liquidatable.
-    pub liquidation_threshold: Option<Decimal>,
-    /// Bonus amount of collateral liquidator get when repaying user's debt (Will get collateral
-    /// from user in an amount equal to debt repayed + bonus)
-    pub liquidation_bonus: Option<Decimal>,
 
     /// Interest rate strategy to calculate borrow_rate and liquidity_rate
     pub interest_rate_model: Option<InterestRateModel>,
-
-    /// If false cannot deposit
-    pub deposit_enabled: Option<bool>,
-    /// If false cannot borrow
-    pub borrow_enabled: Option<bool>,
-    /// Deposit Cap defined in terms of the asset (Unlimited by default)
-    pub deposit_cap: Option<Uint128>,
 }
 
 #[cw_serde]
