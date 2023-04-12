@@ -180,7 +180,7 @@ fn removing_from_asset_params() {
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom0.to_string(),
+            denom: denom0,
             params: default_asset_params(),
         },
     )
@@ -188,7 +188,7 @@ fn removing_from_asset_params() {
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom1.to_string(),
+            denom: denom1,
             params: default_asset_params(),
         },
     )
@@ -196,7 +196,7 @@ fn removing_from_asset_params() {
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom2.to_string(),
+            denom: denom2,
             params: default_asset_params(),
         },
     )
