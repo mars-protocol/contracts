@@ -8,48 +8,51 @@
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee } from '@cosmjs/amino'
 import {
+  Decimal,
   InstantiateMsg,
   ExecuteMsg,
   OwnerUpdate,
-  OsmosisRoute,
+  AssetParamsUpdate,
   Uint128,
-  Decimal,
-  Addr,
-  SwapAmountInRoute,
+  VaultConfigUpdate,
+  EmergencyUpdate,
+  RoverEmergencyUpdate,
+  RedBankEmergencyUpdate,
+  AssetParams,
+  InterestRateModel,
+  AssetPermissions,
+  RedBankSettings,
+  RoverPermissions,
+  VaultConfig,
   Coin,
   QueryMsg,
-  EstimateExactInSwapResponse,
+  ArrayOfAssetParamsResponse,
+  AssetParamsResponse,
+  ArrayOfVaultConfig,
   OwnerResponse,
-  RouteResponseForEmpty,
-  Empty,
-  ArrayOfRouteResponseForEmpty,
-} from './MarsSwapperOsmosis.types'
-export interface MarsSwapperOsmosisReadOnlyInterface {
+} from './MarsParams.types'
+export interface MarsParamsReadOnlyInterface {
   contractAddress: string
   owner: () => Promise<OwnerResponse>
-  route: ({
-    denomIn,
-    denomOut,
-  }: {
-    denomIn: string
-    denomOut: string
-  }) => Promise<RouteResponseForEmpty>
-  routes: ({
+  assetParams: ({ denom }: { denom: string }) => Promise<AssetParams>
+  allAssetParams: ({
     limit,
     startAfter,
   }: {
     limit?: number
-    startAfter?: string[][]
-  }) => Promise<ArrayOfRouteResponseForEmpty>
-  estimateExactInSwap: ({
-    coinIn,
-    denomOut,
+    startAfter?: string
+  }) => Promise<ArrayOfAssetParamsResponse>
+  vaultConfig: ({ address }: { address: string }) => Promise<VaultConfig>
+  allVaultConfigs: ({
+    limit,
+    startAfter,
   }: {
-    coinIn: Coin
-    denomOut: string
-  }) => Promise<EstimateExactInSwapResponse>
+    limit?: number
+    startAfter?: string
+  }) => Promise<ArrayOfVaultConfig>
+  maxCloseFactor: () => Promise<Decimal>
 }
-export class MarsSwapperOsmosisQueryClient implements MarsSwapperOsmosisReadOnlyInterface {
+export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
   client: CosmWasmClient
   contractAddress: string
 
@@ -57,9 +60,11 @@ export class MarsSwapperOsmosisQueryClient implements MarsSwapperOsmosisReadOnly
     this.client = client
     this.contractAddress = contractAddress
     this.owner = this.owner.bind(this)
-    this.route = this.route.bind(this)
-    this.routes = this.routes.bind(this)
-    this.estimateExactInSwap = this.estimateExactInSwap.bind(this)
+    this.assetParams = this.assetParams.bind(this)
+    this.allAssetParams = this.allAssetParams.bind(this)
+    this.vaultConfig = this.vaultConfig.bind(this)
+    this.allVaultConfigs = this.allVaultConfigs.bind(this)
+    this.maxCloseFactor = this.maxCloseFactor.bind(this)
   }
 
   owner = async (): Promise<OwnerResponse> => {
@@ -67,50 +72,55 @@ export class MarsSwapperOsmosisQueryClient implements MarsSwapperOsmosisReadOnly
       owner: {},
     })
   }
-  route = async ({
-    denomIn,
-    denomOut,
-  }: {
-    denomIn: string
-    denomOut: string
-  }): Promise<RouteResponseForEmpty> => {
+  assetParams = async ({ denom }: { denom: string }): Promise<AssetParams> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      route: {
-        denom_in: denomIn,
-        denom_out: denomOut,
+      asset_params: {
+        denom,
       },
     })
   }
-  routes = async ({
+  allAssetParams = async ({
     limit,
     startAfter,
   }: {
     limit?: number
-    startAfter?: string[][]
-  }): Promise<ArrayOfRouteResponseForEmpty> => {
+    startAfter?: string
+  }): Promise<ArrayOfAssetParamsResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      routes: {
+      all_asset_params: {
         limit,
         start_after: startAfter,
       },
     })
   }
-  estimateExactInSwap = async ({
-    coinIn,
-    denomOut,
-  }: {
-    coinIn: Coin
-    denomOut: string
-  }): Promise<EstimateExactInSwapResponse> => {
+  vaultConfig = async ({ address }: { address: string }): Promise<VaultConfig> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      estimate_exact_in_swap: {
-        coin_in: coinIn,
-        denom_out: denomOut,
+      vault_config: {
+        address,
       },
     })
   }
+  allVaultConfigs = async ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }): Promise<ArrayOfVaultConfig> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      all_vault_configs: {
+        limit,
+        start_after: startAfter,
+      },
+    })
+  }
+  maxCloseFactor = async (): Promise<Decimal> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      max_close_factor: {},
+    })
+  }
 }
-export interface MarsSwapperOsmosisInterface extends MarsSwapperOsmosisReadOnlyInterface {
+export interface MarsParamsInterface extends MarsParamsReadOnlyInterface {
   contractAddress: string
   sender: string
   updateOwner: (
@@ -118,53 +128,28 @@ export interface MarsSwapperOsmosisInterface extends MarsSwapperOsmosisReadOnlyI
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
-  setRoute: (
-    {
-      denomIn,
-      denomOut,
-      route,
-    }: {
-      denomIn: string
-      denomOut: string
-      route: OsmosisRoute
-    },
+  updateMaxCloseFactor: (
     fee?: number | StdFee | 'auto',
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
-  swapExactIn: (
-    {
-      coinIn,
-      denomOut,
-      slippage,
-    }: {
-      coinIn: Coin
-      denomOut: string
-      slippage: Decimal
-    },
+  updateAssetParams: (
     fee?: number | StdFee | 'auto',
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
-  transferResult: (
-    {
-      denomIn,
-      denomOut,
-      recipient,
-    }: {
-      denomIn: string
-      denomOut: string
-      recipient: Addr
-    },
+  updateVaultConfig: (
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
+  emergencyUpdate: (
     fee?: number | StdFee | 'auto',
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
 }
-export class MarsSwapperOsmosisClient
-  extends MarsSwapperOsmosisQueryClient
-  implements MarsSwapperOsmosisInterface
-{
+export class MarsParamsClient extends MarsParamsQueryClient implements MarsParamsInterface {
   client: SigningCosmWasmClient
   sender: string
   contractAddress: string
@@ -175,9 +160,10 @@ export class MarsSwapperOsmosisClient
     this.sender = sender
     this.contractAddress = contractAddress
     this.updateOwner = this.updateOwner.bind(this)
-    this.setRoute = this.setRoute.bind(this)
-    this.swapExactIn = this.swapExactIn.bind(this)
-    this.transferResult = this.transferResult.bind(this)
+    this.updateMaxCloseFactor = this.updateMaxCloseFactor.bind(this)
+    this.updateAssetParams = this.updateAssetParams.bind(this)
+    this.updateVaultConfig = this.updateVaultConfig.bind(this)
+    this.emergencyUpdate = this.emergencyUpdate.bind(this)
   }
 
   updateOwner = async (
@@ -196,16 +182,7 @@ export class MarsSwapperOsmosisClient
       funds,
     )
   }
-  setRoute = async (
-    {
-      denomIn,
-      denomOut,
-      route,
-    }: {
-      denomIn: string
-      denomOut: string
-      route: OsmosisRoute
-    },
+  updateMaxCloseFactor = async (
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     funds?: Coin[],
@@ -214,27 +191,14 @@ export class MarsSwapperOsmosisClient
       this.sender,
       this.contractAddress,
       {
-        set_route: {
-          denom_in: denomIn,
-          denom_out: denomOut,
-          route,
-        },
+        update_max_close_factor: {},
       },
       fee,
       memo,
       funds,
     )
   }
-  swapExactIn = async (
-    {
-      coinIn,
-      denomOut,
-      slippage,
-    }: {
-      coinIn: Coin
-      denomOut: string
-      slippage: Decimal
-    },
+  updateAssetParams = async (
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     funds?: Coin[],
@@ -243,27 +207,14 @@ export class MarsSwapperOsmosisClient
       this.sender,
       this.contractAddress,
       {
-        swap_exact_in: {
-          coin_in: coinIn,
-          denom_out: denomOut,
-          slippage,
-        },
+        update_asset_params: {},
       },
       fee,
       memo,
       funds,
     )
   }
-  transferResult = async (
-    {
-      denomIn,
-      denomOut,
-      recipient,
-    }: {
-      denomIn: string
-      denomOut: string
-      recipient: Addr
-    },
+  updateVaultConfig = async (
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     funds?: Coin[],
@@ -272,11 +223,23 @@ export class MarsSwapperOsmosisClient
       this.sender,
       this.contractAddress,
       {
-        transfer_result: {
-          denom_in: denomIn,
-          denom_out: denomOut,
-          recipient,
-        },
+        update_vault_config: {},
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  emergencyUpdate = async (
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        emergency_update: {},
       },
       fee,
       memo,

@@ -881,6 +881,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-params"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw2",
+ "mars-owner",
+ "mars-red-bank-types",
+ "mars-utils",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-red-bank-types"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cca59bb17daa753c30d3c934e0779736200708cb89a34020fa805b1cb05e7278"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "mars-owner",
+ "mars-utils",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-swapper"
 version = "1.0.0"
 dependencies = [
@@ -937,6 +968,16 @@ dependencies = [
  "osmosis-std 0.14.0",
  "osmosis-test-tube",
  "schemars",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-utils"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12bae572eda20842ade4bf8ab09ce0856cae5cff89dbeb7c51e9123489e48256"
+dependencies = [
+ "cosmwasm-std",
  "thiserror",
 ]
 

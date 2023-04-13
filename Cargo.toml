@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "contracts/swapper/*",
+  "contracts/params",
   "packages/*"
 ]
 
@@ -10,6 +11,7 @@ authors       = [
   "Gabe R. <gabe.r@delphilabs.io>",
   "Larry Engineer <larry@delphidigital.io>",
   "Piotr Babel <piotr@delphilabs.io>",
+  "Brianna M. <brianna@delphilabs.io>"
 ]
 license       = "GPL-3.0-or-later"
 edition       = "2021"
@@ -43,8 +45,9 @@ wasm-bindgen       = "0.2.84"
 # packages
 mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
 mars-red-bank-types        = "1.0.0"
-mars-owner                 = "1.0.0"
+mars-owner                 = { version = "1.0.0", features = ["emergency-owner"] }
 mars-swapper               = { path = "packages/mars-swapper" }
+mars-utils                 = "1.0.0"
 
 # contracts
 mars-swapper-base  = { version = "1.0.0", path = "contracts/swapper/base" }
