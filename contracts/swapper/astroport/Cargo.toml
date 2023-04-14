@@ -1,0 +1,46 @@
+[package]
+name          = "mars-swapper-astroport"
+version       = { workspace = true }
+authors       = { workspace = true }
+license       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+library    = []
+
+[dependencies]
+cosmwasm-schema   = { workspace = true }
+cosmwasm-std      = { workspace = true }
+cw2               = { workspace = true }
+mars-owner        = { workspace = true }
+mars-swapper-base = { workspace = true }
+mars-swapper      = { workspace = true }
+mars-oracle       = { workspace = true }
+mars-oracle-wasm  = { workspace = true }
+astroport         = "2.3.1"
+
+[dev-dependencies]
+anyhow            = { workspace = true }
+osmosis-test-tube = { workspace = true }
+# cw-it = { git = "https://github.com/apollodao/cw-it.git", rev = "4e8a2e24c820464c1a36ac426067dab828910268", features = [
+#     "astroport",
+#     "astroport-multi-test",
+#     "osmosis-test-tube",
+# ] }
+mars-testing = { workspace = true }
+cw-it = { path = "../../../../cw-it", features = [
+    "astroport",
+    "astroport-multi-test",
+    "osmosis-test-tube",
+] }
+test-case = "3.0.0"
