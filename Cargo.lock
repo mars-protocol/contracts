@@ -50,6 +50,21 @@ dependencies = [
 
 [[package]]
 name = "astroport"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fab6a411b28b51a715092aae978dc2ef10b0ba818e9412c0da22d5fcb5e216c3"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.15.1",
+ "cw-utils 0.15.1",
+ "cw20",
+ "itertools",
+ "uint",
+]
+
+[[package]]
+name = "astroport"
 version = "2.4.0"
 source = "git+https://github.com/astroport-fi/astroport-core?branch=merge/release#ff923ddac6b99c10bed53c7af6c8c4a5d2f5995e"
 dependencies = [
@@ -545,9 +560,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b76d2207945b8aa3ce0735da53ab9a74f75fe3e7794754c216a9edfa04e1e627"
+checksum = "75836a10cb9654c54e77ee56da94d592923092a10b369cdb0dbd56acefc16340"
 dependencies = [
  "digest 0.10.6",
  "ed25519-zebra",
@@ -558,18 +573,18 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1dd07af7736164d2d8126dc67fdb33b1b5c54fb5a3190395c47f46d24fc6d592"
+checksum = "1c9f7f0e51bfc7295f7b2664fe8513c966428642aa765dad8a74acdab5e0c773"
 dependencies = [
  "syn 1.0.109",
 ]
 
 [[package]]
 name = "cosmwasm-schema"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e9e92cdce475a91659d0dc4d17836a484fc534e80e787281aa4adde4cb1798b"
+checksum = "0f00b363610218eea83f24bbab09e1a7c3920b79f068334fdfcc62f6129ef9fc"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -580,9 +595,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69681bac3dbeb0b00990279e3ed39e3d4406b29f538b16b712f6771322a45048"
+checksum = "ae38f909b2822d32b275c9e2db9728497aa33ffe67dd463bc67c6a3b7092785c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -591,9 +606,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d39f20967baeb94709123f7bba13a25ae2fa166bc5e7813f734914df3f8f6a1"
+checksum = "a49b85345e811c8e80ec55d0d091e4fcb4f00f97ab058f9be5f614c444a730cb"
 dependencies = [
  "base64",
  "cosmwasm-crypto",
@@ -611,9 +626,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-storage"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88f7944b5204c3a998f73248925a097ace887bdf01c2f70de00d8b92cd69e807"
+checksum = "a3737a3aac48f5ed883b5b73bfb731e77feebd8fc6b43419844ec2971072164d"
 dependencies = [
  "cosmwasm-std",
  "serde",
@@ -707,7 +722,41 @@ dependencies = [
  "prost 0.11.9",
  "serde",
  "serde_json",
- "test-tube 0.1.1 (git+https://github.com/apollodao/test-tube.git?rev=93c472a58645c83e514152f34efd4cc4c16fe189)",
+ "test-tube 0.1.1",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-it"
+version = "0.1.0"
+source = "git+https://github.com/apollodao/cw-it.git?rev=798f1ef6276957cc4dc1960d20ad364b84a42666#798f1ef6276957cc4dc1960d20ad364b84a42666"
+dependencies = [
+ "anyhow",
+ "astroport 2.7.1",
+ "astroport-factory",
+ "astroport-generator",
+ "astroport-maker",
+ "astroport-native-coin-registry",
+ "astroport-pair",
+ "astroport-pair-stable",
+ "astroport-router",
+ "astroport-staking",
+ "astroport-token",
+ "astroport-vesting",
+ "astroport-whitelist",
+ "config",
+ "cosmrs",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test 0.16.2",
+ "cw20",
+ "osmosis-std 0.13.2 (git+https://github.com/apollodao/osmosis-rust.git?rev=a438e6b477ae75de538af3926847a689477d29f1)",
+ "osmosis-test-tube 14.1.1 (git+https://github.com/apollodao/test-tube.git?rev=93c472a58645c83e514152f34efd4cc4c16fe189)",
+ "paste",
+ "prost 0.11.9",
+ "serde",
+ "serde_json",
+ "test-tube 0.1.1",
  "thiserror",
 ]
 
@@ -1608,7 +1657,7 @@ dependencies = [
  "astroport 2.7.1",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-it",
+ "cw-it 0.1.0 (git+https://github.com/apollodao/cw-it.git?rev=798f1ef6276957cc4dc1960d20ad364b84a42666)",
  "cw-storage-plus 1.0.1",
  "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
  "mars-oracle",
@@ -1648,6 +1697,26 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "mars-owner",
+]
+
+[[package]]
+name = "mars-swapper-astroport"
+version = "1.0.1"
+dependencies = [
+ "anyhow",
+ "astroport 2.3.1",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-it 0.1.0",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "mars-oracle",
+ "mars-oracle-wasm",
+ "mars-owner",
+ "mars-swapper",
+ "mars-swapper-base",
+ "mars-testing",
+ "osmosis-test-tube 14.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "test-case",
 ]
 
 [[package]]
@@ -1697,7 +1766,7 @@ version = "1.0.1"
 dependencies = [
  "astroport 2.7.1",
  "cosmwasm-std",
- "cw-it",
+ "cw-it 0.1.0 (git+https://github.com/apollodao/cw-it.git?rev=798f1ef6276957cc4dc1960d20ad364b84a42666)",
  "cw-multi-test 0.16.4",
  "mars-oracle",
  "mars-oracle-osmosis",
@@ -1941,7 +2010,7 @@ dependencies = [
  "prost 0.11.9",
  "serde",
  "serde_json",
- "test-tube 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "test-tube 0.1.2",
  "thiserror",
 ]
 
@@ -1958,7 +2027,7 @@ dependencies = [
  "prost 0.11.9",
  "serde",
  "serde_json",
- "test-tube 0.1.1 (git+https://github.com/apollodao/test-tube.git?rev=93c472a58645c83e514152f34efd4cc4c16fe189)",
+ "test-tube 0.1.1",
  "thiserror",
 ]
 
@@ -2834,13 +2903,12 @@ dependencies = [
 [[package]]
 name = "test-tube"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2791215b77f72c219df4d3e95d78539ee66950a0449961ba6d0ab1c7b538673f"
+source = "git+https://github.com/apollodao/test-tube.git?rev=93c472a58645c83e514152f34efd4cc4c16fe189#93c472a58645c83e514152f34efd4cc4c16fe189"
 dependencies = [
  "base64",
  "cosmrs",
  "cosmwasm-std",
- "osmosis-std 0.13.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "osmosis-std 0.13.2 (git+https://github.com/apollodao/osmosis-rust.git?rev=a438e6b477ae75de538af3926847a689477d29f1)",
  "prost 0.11.9",
  "serde",
  "serde_json",
@@ -2849,13 +2917,13 @@ dependencies = [
 
 [[package]]
 name = "test-tube"
-version = "0.1.1"
-source = "git+https://github.com/apollodao/test-tube.git?rev=93c472a58645c83e514152f34efd4cc4c16fe189#93c472a58645c83e514152f34efd4cc4c16fe189"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4807f0de0b84340e20a6ef1353a5c9db4543e1c74cd507aedd8b52e35d80020"
 dependencies = [
  "base64",
  "cosmrs",
  "cosmwasm-std",
- "osmosis-std 0.13.2 (git+https://github.com/apollodao/osmosis-rust.git?rev=a438e6b477ae75de538af3926847a689477d29f1)",
  "prost 0.11.9",
  "serde",
  "serde_json",
