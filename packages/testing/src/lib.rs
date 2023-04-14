@@ -8,6 +8,7 @@ mod mars_mock_querier;
 mod mocks;
 mod oracle_querier;
 mod osmosis_querier;
+pub mod wasm_oracle;
 
 pub use helpers::*;
 pub use mars_mock_querier::MarsMockQuerier;

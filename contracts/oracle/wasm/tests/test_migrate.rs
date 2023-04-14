@@ -1,12 +1,13 @@
-mod helpers;
 use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, CosmosMsg, Empty, WasmMsg};
 use cw_it::test_tube::{
     osmosis_std::types::cosmwasm::wasm::v1::MsgMigrateContractResponse, Runner,
 };
-pub use helpers::*;
 use mars_oracle_wasm::contract::CONTRACT_NAME;
+use mars_testing::wasm_oracle::{
+    get_contracts, get_test_runner, get_wasm_oracle_contract, WasmOracleTestRobot,
+};
 
 #[test]
 fn test_migrate_wasm_oracle() {

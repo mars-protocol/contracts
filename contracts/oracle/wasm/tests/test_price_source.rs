@@ -12,13 +12,16 @@ use cw_it::{
 use cw_storage_plus::Map;
 use mars_oracle_base::PriceSourceUnchecked;
 use mars_oracle_wasm::{WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked};
-use test_case::test_case;
-
-mod helpers;
-pub use helpers::*;
 
 const ONE: Decimal = Decimal::one();
 const TWO: Decimal = Decimal::new(Uint128::new(2_000_000_000_000_000_000u128));
+
+use mars_testing::wasm_oracle::{
+    astro_init_params, fixed_source, get_contracts, get_test_runner, setup_test,
+    WasmOracleTestRobot,
+};
+
+use test_case::test_case;
 
 #[test]
 fn test_contract_initialization() {
