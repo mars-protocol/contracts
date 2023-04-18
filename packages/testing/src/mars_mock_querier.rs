@@ -10,6 +10,7 @@ use mars_oracle_osmosis::{
     DowntimeDetector,
 };
 use mars_osmosis::helpers::QueryPoolResponse;
+use mars_params::types::AssetParams;
 use mars_red_bank_types::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
@@ -23,6 +24,7 @@ use crate::{
     mock_address_provider,
     oracle_querier::OracleQuerier,
     osmosis_querier::{OsmosisQuerier, PriceKey},
+    params_querier::ParamsQuerier,
     pyth_querier::PythQuerier,
     red_bank_querier::RedBankQuerier,
     redemption_rate_querier::RedemptionRateQuerier,
@@ -36,6 +38,7 @@ pub struct MarsMockQuerier {
     pyth_querier: PythQuerier,
     redbank_querier: RedBankQuerier,
     redemption_rate_querier: RedemptionRateQuerier,
+    params_querier: ParamsQuerier,
 }
 
 impl Querier for MarsMockQuerier {
@@ -64,6 +67,7 @@ impl MarsMockQuerier {
             pyth_querier: PythQuerier::default(),
             redbank_querier: RedBankQuerier::default(),
             redemption_rate_querier: Default::default(),
+            params_querier: ParamsQuerier::default(),
         }
     }
 
@@ -190,6 +194,10 @@ impl MarsMockQuerier {
         self.redbank_querier.users_positions.insert(user_address, position);
     }
 
+    pub fn set_redbank_params(&mut self, denom: &str, params: AssetParams) {
+        self.params_querier.params.insert(denom.to_string(), params);
+    }
+
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
         match &request {
             QueryRequest::Wasm(WasmQuery::Smart {
@@ -238,6 +246,11 @@ impl MarsMockQuerier {
                 // Redemption Rate Queries
                 if let Ok(redemption_rate_req) = from_binary::<stride::RedemptionRateRequest>(msg) {
                     return self.redemption_rate_querier.handle_query(redemption_rate_req);
+                }
+
+                // Params Queries
+                if let Ok(params_query) = from_binary::<mars_params::msg::QueryMsg>(msg) {
+                    return self.params_querier.handle_query(params_query);
                 }
 
                 panic!("[mock]: Unsupported wasm query: {msg:?}");

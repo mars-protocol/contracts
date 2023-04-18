@@ -2035,6 +2035,7 @@ dependencies = [
  "mars-oracle-wasm",
  "mars-osmosis",
  "mars-owner",
+ "mars-params 1.0.0",
  "mars-red-bank",
  "mars-red-bank-types 1.1.0",
  "mars-rewards-collector",

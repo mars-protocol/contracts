@@ -6,6 +6,7 @@ use helpers::{
     has_collateral_position, has_debt_position, set_collateral, th_build_interests_updated_event,
     th_get_expected_indices_and_rates, th_init_market, th_setup, TestUtilizationDeltaInfo,
 };
+use mars_params::types::AssetParams;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -58,7 +59,6 @@ fn borrow_and_repay() {
     let mock_market_3 = Market {
         borrow_index: Decimal::one(),
         liquidity_index: Decimal::from_ratio(11u128, 10u128),
-        max_loan_to_value: Decimal::from_ratio(7u128, 10u128),
         borrow_rate: Decimal::from_ratio(30u128, 100u128),
         reserve_factor: Decimal::from_ratio(3u128, 100u128),
         liquidity_rate: Decimal::from_ratio(20u128, 100u128),
@@ -70,6 +70,16 @@ fn borrow_and_repay() {
     let market_1_initial = th_init_market(deps.as_mut(), "uosmo", &mock_market_1);
     let market_2_initial = th_init_market(deps.as_mut(), "uusd", &mock_market_2);
     th_init_market(deps.as_mut(), "uatom", &mock_market_3);
+
+    deps.querier.set_redbank_params("uosmo", Default::default());
+    deps.querier.set_redbank_params("uusd", Default::default());
+    deps.querier.set_redbank_params(
+        "uatom",
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(7u128, 10u128),
+            ..Default::default()
+        },
+    );
 
     let borrower_addr = Addr::unchecked("borrower");
 
