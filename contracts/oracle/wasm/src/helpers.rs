@@ -96,19 +96,22 @@ pub fn query_astroport_cumulative_price(
     querier: &QuerierWrapper,
     pair_address: &Addr,
     denom: &str,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     let response: CumulativePricesResponse =
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: pair_address.to_string(),
             msg: to_binary(&PairQueryMsg::CumulativePrices {})?,
         }))?;
 
-    let price_cumulative = if response.assets[0].info.to_string() == denom {
-        response.price1_cumulative_last
-    } else {
-        response.price0_cumulative_last
-    };
-    Ok(price_cumulative)
+    let (_, _, price) =
+        response.cumulative_prices.iter().find(|(d, _, _)| d.to_string() == denom).ok_or(
+            // This error should not happen, but lets return it instead of unwrapping anyway
+            ContractError::InvalidPriceSource {
+                reason: format!("Cumulative price not found for asset {}", denom),
+            },
+        )?;
+
+    Ok(*price)
 }
 
 /// Calculate how much the period between two TWAP snapshots deviates from the desired window size

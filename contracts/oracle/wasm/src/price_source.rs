@@ -245,12 +245,14 @@ fn query_astroport_twap_price(
     window_size: &u64,
     tolerance: &u64,
 ) -> ContractResult<Decimal> {
-    let snapshots = ASTROPORT_TWAP_SNAPSHOTS.load(deps.storage, &denom)?;
+    let snapshots = ASTROPORT_TWAP_SNAPSHOTS
+        .may_load(deps.storage, denom)?
+        .ok_or_else(|| ContractError::NoSnapshots {})?;
 
     // First, query the current TWAP snapshot
     let current_snapshot = AstroportTwapSnapshot {
         timestamp: env.block.time.seconds(),
-        price_cumulative: query_astroport_cumulative_price(&deps.querier, &pair_address, &denom)?,
+        price_cumulative: query_astroport_cumulative_price(&deps.querier, pair_address, denom)?,
     };
 
     // Find the oldest snapshot whose period from current snapshot is within the tolerable window
@@ -281,5 +283,5 @@ fn query_astroport_twap_price(
 
     // If there are route assets, we need to multiply the price by the price of the
     // route assets in the base denom
-    add_route_prices(&deps, &env, base_denom, price_sources, route_assets, &price)
+    add_route_prices(deps, env, base_denom, price_sources, route_assets, &price)
 }

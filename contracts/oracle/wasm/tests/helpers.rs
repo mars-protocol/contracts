@@ -1,10 +1,14 @@
 use astroport::{factory::PairType, pair::StablePoolParams};
-use cosmwasm_std::{to_binary, Binary, Decimal, Empty};
+use cosmwasm_std::{to_binary, Binary, Decimal, Empty, Uint128};
 use cw_it::{
-    astroport::{robot::AstroportTestRobot, utils::AstroportContracts},
+    astroport::{
+        robot::AstroportTestRobot,
+        utils::{native_asset, AstroportContracts},
+    },
     multi_test::MultiTestRunner,
     robot::TestRobot,
     test_tube::{Account, Module, SigningAccount, Wasm},
+    traits::CwItRunner,
     ContractMap, ContractType, TestRunner,
 };
 use mars_oracle::{InstantiateMsg, WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams};
@@ -89,6 +93,11 @@ impl<'a> WasmOracleTestRobot<'a> {
         (astroport_contracts, contract_addr)
     }
 
+    pub fn increase_time(&self, seconds: u64) -> &Self {
+        self.runner.increase_time(seconds).unwrap();
+        self
+    }
+
     // ====== Price source methods ======
 
     pub fn set_price_source(
@@ -154,9 +163,24 @@ impl<'a> WasmOracleTestRobot<'a> {
         self.wasm().query(&self.mars_oracle_contract_addr, &msg).unwrap()
     }
 
+    /// Queries the oracle price and asserts that it is equal to the expected price
     pub fn assert_price(&self, denom: &str, expected_price: Decimal) -> &Self {
         let price = self.query_price(denom);
         assert_eq!(price.price, expected_price);
+        assert_eq!(price.denom, denom);
+        self
+    }
+
+    /// Queries the oracle price and asserts that it is almost equal to the expected price, within
+    /// the given tolerance in percent.
+    pub fn assert_price_almost_equal(
+        &self,
+        denom: &str,
+        expected_price: Decimal,
+        tolerance: Decimal,
+    ) -> &Self {
+        let price = self.query_price(denom);
+        assert_almost_equal(price.price, expected_price, tolerance);
         assert_eq!(price.denom, denom);
         self
     }
@@ -188,6 +212,16 @@ impl<'a> WasmOracleTestRobot<'a> {
         );
         self.wasm().execute(&self.mars_oracle_contract_addr, &msg, &[], signer).unwrap();
         self
+    }
+    pub fn query_price_via_simulation(&self, pair_addr: &str, denom: &str) -> Decimal {
+        let decimals = self.query_native_coin_registry(denom).unwrap();
+        let one = Uint128::from(10u128.pow(decimals as u32));
+
+        let return_amount =
+            self.query_simulate_swap(pair_addr, native_asset(denom, one), None).return_amount;
+
+        let price = Decimal::from_ratio(return_amount, one);
+        price
     }
 
     // =====  Owner update methods ======
@@ -294,6 +328,7 @@ pub fn astro_init_params(pair_type: &PairType) -> Option<Binary> {
         PairType::Stable {} => Some(
             to_binary(&StablePoolParams {
                 amp: 10,
+                owner: None,
             })
             .unwrap(),
         ),
@@ -305,4 +340,10 @@ pub const fn fixed_source() -> WasmPriceSourceUnchecked {
     WasmPriceSourceUnchecked::Fixed {
         price: Decimal::one(),
     }
+}
+
+/// Asserts that the difference between two Decimal values is less than `tolerance` percent
+fn assert_almost_equal(a: Decimal, b: Decimal, tolerance: Decimal) {
+    let diff = a.abs_diff(b);
+    assert!((diff / a) < tolerance);
 }

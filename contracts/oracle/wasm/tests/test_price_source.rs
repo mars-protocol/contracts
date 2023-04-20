@@ -280,3 +280,118 @@ fn test_query_astroport_xyk_spot_price_with_route_asset(pair_type: PairType) {
         .set_price_source("uatom", price_source, admin)
         .assert_price("uatom", expected_price);
 }
+
+#[test_case(5, 100; "Query TWAP price without route asset, XYK")]
+fn test_query_astroport_twap_price_without_route_asset_xyk(tolerance: u64, window_size: u64) {
+    let runner = get_test_runner();
+    let admin = &runner.init_accounts()[0];
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uosmo"));
+
+    let initial_liq: [Uint128; 2] =
+        [10000000000000000000000u128.into(), 1000000000000000000000u128.into()]; // price 0.1 or 10
+    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
+        PairType::Xyk {},
+        [native_info("uatom"), native_info("uosmo")],
+        None,
+        admin,
+        Some(initial_liq),
+    );
+    let reserves = robot
+        .add_denom_precision_to_coin_registry("uatom", 6, admin)
+        .add_denom_precision_to_coin_registry("uosmo", 6, admin)
+        .query_pool(&pair_address)
+        .assets;
+    let initial_price = Decimal::from_ratio(reserves[1].amount, reserves[0].amount);
+
+    let price_source = WasmPriceSourceUnchecked::AstroportTwap {
+        pair_address: pair_address.clone(),
+        route_assets: vec![],
+        tolerance,
+        window_size,
+    };
+
+    let reserves = robot
+        .set_price_source("uatom", price_source, admin)
+        .record_twap_snapshots(&["uatom"], admin)
+        .increase_time(window_size / 2)
+        .swap_on_astroport_pair(
+            &pair_address,
+            native_asset("uosmo", 10000000000000000000u128),
+            None,
+            None,
+            Some(Decimal::from_ratio(1u128, 2u128)),
+            admin,
+        )
+        .query_pool(&pair_address)
+        .assets;
+    let price_after_swap = Decimal::from_ratio(reserves[1].amount, reserves[0].amount);
+
+    let price_precision: Uint128 = Uint128::from(10_u128.pow(8));
+    let expected_price = Decimal::from_ratio(
+        (initial_price + price_after_swap) * Decimal::from_ratio(1u128, 2u128) * price_precision,
+        price_precision,
+    );
+
+    robot
+        .record_twap_snapshots(&["uatom"], admin)
+        .increase_time(window_size / 2)
+        .assert_price("uatom", expected_price);
+}
+
+#[test_case(5, 100; "Query TWAP price without route asset, StableSwap")]
+fn test_query_astroport_twap_price_without_route_asset_stableswap(
+    tolerance: u64,
+    window_size: u64,
+) {
+    let runner = get_test_runner();
+    let admin = &runner.init_accounts()[0];
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uosmo"));
+
+    let pair_type = PairType::Stable {};
+    let initial_liq: [Uint128; 2] =
+        [10000000000000000000000u128.into(), 1000000000000000000000u128.into()]; // price 0.1 or 10
+    let init_params = astro_init_params(&pair_type);
+    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
+        pair_type,
+        [native_info("uatom"), native_info("uosmo")],
+        init_params,
+        admin,
+        Some(initial_liq),
+    );
+    let initial_price = robot
+        .add_denom_precision_to_coin_registry("uatom", 6, admin)
+        .add_denom_precision_to_coin_registry("uosmo", 6, admin)
+        .query_price_via_simulation(&pair_address, "uatom");
+
+    let price_source = WasmPriceSourceUnchecked::AstroportTwap {
+        pair_address: pair_address.clone(),
+        route_assets: vec![],
+        tolerance,
+        window_size,
+    };
+
+    let price_after_swap = robot
+        .set_price_source("uatom", price_source, admin)
+        .record_twap_snapshots(&["uatom"], admin)
+        .increase_time(window_size / 2)
+        .swap_on_astroport_pair(
+            &pair_address,
+            native_asset("uosmo", 10000000000000000000u128),
+            None,
+            None,
+            Some(Decimal::from_ratio(1u128, 2u128)),
+            admin,
+        )
+        .query_price_via_simulation(&pair_address, "uatom");
+
+    let price_precision: Uint128 = Uint128::from(10_u128.pow(8));
+    let expected_price = Decimal::from_ratio(
+        (initial_price + price_after_swap) * Decimal::from_ratio(1u128, 2u128) * price_precision,
+        price_precision,
+    );
+
+    robot
+        .record_twap_snapshots(&["uatom"], admin)
+        .increase_time(window_size / 2)
+        .assert_price_almost_equal("uatom", expected_price, Decimal::percent(1));
+}

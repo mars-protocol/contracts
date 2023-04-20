@@ -48,6 +48,9 @@ pub enum ContractError {
 
     #[error("No TWAP snapshot within tolerance")]
     NoSnapshotWithinTolerance {},
+
+    #[error("No TWAP snapshots found")]
+    NoSnapshots {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;
