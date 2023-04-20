@@ -6,6 +6,7 @@ use cosmwasm_std::{
     testing::{MockApi, MockStorage},
     Addr, Coin, Decimal, Deps, DepsMut, Event, OwnedDeps, Uint128,
 };
+use mars_params::types::{AssetParams, AssetPermissions, RedBankSettings, RoverPermissions};
 use mars_red_bank::{
     contract::{instantiate, query},
     interest_rates::{
@@ -102,6 +103,26 @@ pub fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {
     MARKETS.save(deps.storage, denom, &new_market).unwrap();
 
     new_market
+}
+
+pub fn th_default_asset_params() -> AssetParams {
+    AssetParams {
+        permissions: AssetPermissions {
+            rover: RoverPermissions {
+                whitelisted: false,
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: false,
+                borrow_enabled: false,
+                deposit_cap: Default::default(),
+            },
+        },
+        max_loan_to_value: Default::default(),
+        liquidation_threshold: Default::default(),
+        liquidation_bonus: Default::default(),
+        interest_rate_model: Default::default(),
+        reserve_factor: Default::default(),
+    }
 }
 
 #[derive(Default, Debug)]

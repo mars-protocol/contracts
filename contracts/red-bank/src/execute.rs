@@ -1010,7 +1010,7 @@ pub fn update_asset_collateral_status(
         let params_addr = &addresses[&MarsAddressType::Params];
 
         let (liquidatable, _) =
-            assert_liquidatable(&deps.as_ref(), &env, user.address(), &oracle_addr, params_addr)?;
+            assert_liquidatable(&deps.as_ref(), &env, user.address(), oracle_addr, params_addr)?;
 
         if liquidatable {
             return Err(ContractError::InvalidHealthFactorAfterDisablingCollateral {});

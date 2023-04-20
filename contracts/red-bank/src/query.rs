@@ -261,7 +261,7 @@ pub fn query_user_position(
     let params_addr = &addresses[&MarsAddressType::Params];
 
     let positions =
-        health::get_user_positions_map(&deps, &env, &user_addr, &oracle_addr, params_addr)?;
+        health::get_user_positions_map(&deps, &env, &user_addr, oracle_addr, params_addr)?;
     let health = health::compute_position_health(&positions)?;
 
     let health_status = if let (Some(max_ltv_hf), Some(liq_threshold_hf)) =

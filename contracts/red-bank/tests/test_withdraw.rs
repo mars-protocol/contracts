@@ -7,6 +7,7 @@ use helpers::{
     has_collateral_position, set_collateral, th_build_interests_updated_event,
     th_get_expected_indices_and_rates, th_setup, TestUtilizationDeltaInfo,
 };
+use mars_params::types::AssetParams;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -23,6 +24,8 @@ use mars_red_bank_types::{
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 use mars_utils::math;
+
+use crate::helpers::th_default_asset_params;
 
 mod helpers;
 
@@ -447,6 +450,7 @@ struct HealthCheckTestSuite {
     deps: OwnedDeps<MockStorage, MockApi, MarsMockQuerier>,
     denoms: [&'static str; 3],
     markets: [Market; 3],
+    asset_params: [AssetParams; 3],
     prices: [Decimal; 3],
     collaterals: [Collateral; 3],
     debts: [Debt; 3],
@@ -466,8 +470,6 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
             denom: denoms[0].to_string(),
             liquidity_index: Decimal::one(),
             borrow_index: Decimal::one(),
-            max_loan_to_value: Decimal::from_ratio(40u128, 100u128),
-            liquidation_threshold: Decimal::from_ratio(60u128, 100u128),
             collateral_total_scaled: Uint128::new(100_000) * SCALING_FACTOR,
             ..Default::default()
         },
@@ -475,8 +477,6 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
             denom: denoms[1].to_string(),
             liquidity_index: Decimal::one(),
             borrow_index: Decimal::one(),
-            max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
-            liquidation_threshold: Decimal::from_ratio(80u128, 100u128),
             collateral_total_scaled: Uint128::new(100_000) * SCALING_FACTOR,
             ..Default::default()
         },
@@ -484,10 +484,26 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
             denom: denoms[2].to_string(),
             liquidity_index: Decimal::one(),
             borrow_index: Decimal::one(),
-            max_loan_to_value: Decimal::from_ratio(20u128, 100u128),
-            liquidation_threshold: Decimal::from_ratio(40u128, 100u128),
             collateral_total_scaled: Uint128::new(100_000) * SCALING_FACTOR,
             ..Default::default()
+        },
+    ];
+
+    let asset_params = [
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(40u128, 100u128),
+            liquidation_threshold: Decimal::from_ratio(60u128, 100u128),
+            ..th_default_asset_params()
+        },
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
+            liquidation_threshold: Decimal::from_ratio(80u128, 100u128),
+            ..th_default_asset_params()
+        },
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(20u128, 100u128),
+            liquidation_threshold: Decimal::from_ratio(40u128, 100u128),
+            ..th_default_asset_params()
         },
     ];
 
@@ -533,6 +549,24 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
         .try_for_each(|(denom, market)| MARKETS.save(deps.as_mut().storage, denom, market))
         .unwrap();
 
+    /*deps.querier.set_redbank_params(
+        &denoms[0],
+        asset_params[0].clone()
+    );
+    deps.querier.set_redbank_params(
+        &denoms[1],
+        asset_params[1].clone()
+    );
+    deps.querier.set_redbank_params(
+        &denoms[2],
+        asset_params[2].clone()
+    );*/
+
+    denoms
+        .iter()
+        .zip(asset_params.iter())
+        .for_each(|(denom, ap)| deps.querier.set_redbank_params(denom, ap.clone()));
+
     denoms
         .iter()
         .zip(prices.iter())
@@ -554,6 +588,7 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
         deps,
         denoms,
         markets,
+        asset_params,
         prices,
         collaterals,
         debts,
@@ -565,6 +600,7 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
 fn how_much_to_withdraw(suite: &HealthCheckTestSuite, block_time: u64) -> Uint128 {
     let HealthCheckTestSuite {
         markets,
+        asset_params,
         prices,
         collaterals,
         debts,
@@ -577,7 +613,7 @@ fn how_much_to_withdraw(suite: &HealthCheckTestSuite, block_time: u64) -> Uint12
         ScalingOperation::Truncate,
     )
     .unwrap()
-        * markets[0].liquidation_threshold
+        * asset_params[0].liquidation_threshold
         * prices[0];
 
     let token_3_weighted_lt_in_base_asset = compute_underlying_amount(
@@ -586,7 +622,7 @@ fn how_much_to_withdraw(suite: &HealthCheckTestSuite, block_time: u64) -> Uint12
         ScalingOperation::Truncate,
     )
     .unwrap()
-        * markets[2].liquidation_threshold
+        * asset_params[2].liquidation_threshold
         * prices[2];
 
     let weighted_liquidation_threshold_in_base_asset =
@@ -603,7 +639,7 @@ fn how_much_to_withdraw(suite: &HealthCheckTestSuite, block_time: u64) -> Uint12
     // How much to withdraw in base asset to have health factor equal to one
     let how_much_to_withdraw_in_base_asset = math::divide_uint128_by_decimal(
         weighted_liquidation_threshold_in_base_asset - total_collateralized_debt_in_base_asset,
-        markets[2].liquidation_threshold,
+        asset_params[2].liquidation_threshold,
     )
     .unwrap();
 

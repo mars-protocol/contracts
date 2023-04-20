@@ -9,6 +9,7 @@ use cw_utils::PaymentError;
 use helpers::{
     set_collateral, th_build_interests_updated_event, th_get_expected_indices_and_rates, th_setup,
 };
+use mars_params::types::{AssetParams, AssetPermissions, RedBankSettings, RoverPermissions};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -21,6 +22,8 @@ use mars_red_bank_types::{
     red_bank::{Collateral, ExecuteMsg, Market},
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
+
+use crate::helpers::th_default_asset_params;
 
 mod helpers;
 
@@ -40,7 +43,6 @@ fn setup_test() -> TestSuite {
     let market = Market {
         denom: denom.to_string(),
         liquidity_index: Decimal::from_ratio(11u128, 10u128),
-        max_loan_to_value: Decimal::one(),
         borrow_index: Decimal::from_ratio(1u128, 1u128),
         borrow_rate: Decimal::from_ratio(10u128, 100u128),
         liquidity_rate: Decimal::from_ratio(10u128, 100u128),
@@ -48,11 +50,31 @@ fn setup_test() -> TestSuite {
         collateral_total_scaled: Uint128::new(10_000_000) * SCALING_FACTOR,
         debt_total_scaled: Uint128::new(10_000_000) * SCALING_FACTOR,
         indexes_last_updated: 10000000,
-        deposit_cap: Uint128::new(12_000_000),
         ..Default::default()
     };
 
     MARKETS.save(deps.as_mut().storage, denom, &market).unwrap();
+
+    deps.querier.set_redbank_params(
+        denom,
+        AssetParams {
+            reserve_factor: Default::default(),
+            max_loan_to_value: Decimal::one(),
+            liquidation_threshold: Default::default(),
+            liquidation_bonus: Default::default(),
+            interest_rate_model: Default::default(),
+            permissions: AssetPermissions {
+                rover: RoverPermissions {
+                    whitelisted: false,
+                },
+                red_bank: RedBankSettings {
+                    deposit_enabled: false,
+                    borrow_enabled: false,
+                    deposit_cap: Uint128::new(12_000_000),
+                },
+            },
+        },
+    );
 
     TestSuite {
         deps,
@@ -137,13 +159,22 @@ fn depositing_to_disabled_market() {
     } = setup_test();
 
     // disable the market
-    MARKETS
-        .update(deps.as_mut().storage, denom, |opt| -> StdResult<_> {
-            let mut market = opt.unwrap();
-            market.deposit_enabled = false;
-            Ok(market)
-        })
-        .unwrap();
+    deps.querier.set_redbank_params(
+        denom,
+        AssetParams {
+            permissions: AssetPermissions {
+                rover: RoverPermissions {
+                    whitelisted: false,
+                },
+                red_bank: RedBankSettings {
+                    deposit_enabled: false,
+                    borrow_enabled: true,
+                    deposit_cap: Default::default(),
+                },
+            },
+            ..th_default_asset_params()
+        },
+    );
 
     let err = execute(
         deps.as_mut(),
@@ -176,10 +207,25 @@ fn depositing_above_cap() {
         .update(deps.as_mut().storage, denom, |opt| -> StdResult<_> {
             let mut market = opt.unwrap();
             market.collateral_total_scaled = Uint128::new(9_000_000) * SCALING_FACTOR;
-            market.deposit_cap = Uint128::new(10_000_000);
             Ok(market)
         })
         .unwrap();
+    deps.querier.set_redbank_params(
+        denom,
+        AssetParams {
+            permissions: AssetPermissions {
+                rover: RoverPermissions {
+                    whitelisted: false,
+                },
+                red_bank: RedBankSettings {
+                    deposit_enabled: false,
+                    borrow_enabled: true,
+                    deposit_cap: Uint128::new(10_000_000),
+                },
+            },
+            ..th_default_asset_params()
+        },
+    );
 
     // try deposit with a big amount, should fail
     let err = execute(
