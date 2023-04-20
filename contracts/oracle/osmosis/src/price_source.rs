@@ -196,7 +196,7 @@ impl fmt::Display for OsmosisPriceSource {
 impl PriceSourceUnchecked<OsmosisPriceSource, Empty> for OsmosisPriceSource {
     fn validate(
         self,
-        deps: Deps,
+        deps: &Deps,
         denom: &str,
         base_denom: &str,
         _price_sources: &Map<&str, OsmosisPriceSource>,

@@ -16,7 +16,7 @@ where
     /// Validate whether the price source is valid for a given denom
     fn validate(
         self,
-        deps: Deps<C>,
+        deps: &Deps<C>,
         denom: &str,
         base_denom: &str,
         price_sources: &Map<&str, P>,

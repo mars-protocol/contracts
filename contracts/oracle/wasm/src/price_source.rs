@@ -92,7 +92,7 @@ impl fmt::Display for WasmPriceSourceChecked {
 impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnchecked {
     fn validate(
         self,
-        deps: Deps,
+        deps: &Deps,
         denom: &str,
         base_denom: &str,
         price_sources: &Map<&str, WasmPriceSourceChecked>,
@@ -253,7 +253,7 @@ mod tests {
         let price_sources = Map::new("price_sources");
         let denom = "uusd";
         let base_denom = "uusd";
-        let res = ps.validate(deps.as_ref(), denom, base_denom, &price_sources);
+        let res = ps.validate(&deps.as_ref(), denom, base_denom, &price_sources);
         assert!(res.is_ok());
     }
 }
