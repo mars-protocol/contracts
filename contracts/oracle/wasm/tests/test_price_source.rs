@@ -1,8 +1,11 @@
 use astroport::factory::PairType;
 use cosmwasm_std::{Decimal, Uint128};
-use cw_it::astroport::{
-    robot::AstroportTestRobot,
-    utils::{native_asset, native_info},
+use cw_it::{
+    astroport::{
+        robot::AstroportTestRobot,
+        utils::{native_asset, native_info},
+    },
+    test_tube::Account,
 };
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
 use test_case::test_case;
@@ -15,7 +18,12 @@ fn test_contract_initialization() {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
     let contract_map = get_contracts(&runner);
-    setup_test(&runner, contract_map, admin, None);
+    let robot = setup_test(&runner, contract_map, admin, Some("USD"));
+
+    let config = robot.query_config();
+    assert_eq!(config.base_denom, "USD");
+    assert_eq!(config.owner, Some(admin.address()));
+    assert_eq!(config.proposed_new_owner, None);
 }
 
 #[test]
@@ -149,7 +157,6 @@ fn test_validate_astroport_twap_price_source(
 
 #[test_case(PairType::Xyk {}; "xyk")]
 #[test_case(PairType::Stable {}; "stable")]
-
 fn test_query_astroport_spot_price_without_route_asset(pair_type: PairType) {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];

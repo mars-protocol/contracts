@@ -1642,11 +1642,7 @@ dependencies = [
  "mars-oracle-base",
  "mars-owner",
  "mars-testing",
- "osmosis-std 0.14.0",
- "schemars",
- "serde",
  "test-case",
- "thiserror",
 ]
 
 [[package]]

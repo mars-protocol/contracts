@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use astroport::{
     asset::{Asset, AssetInfo, PairInfo},
     pair::QueryMsg as PairQueryMsg,
@@ -42,19 +44,23 @@ pub fn validate_route_assets(
 ) -> ContractResult<()> {
     // For all route assets, there must be a price source available
     for asset in route_assets {
-        price_sources.load(deps.storage, asset).map_err(|_| ContractError::InvalidPriceSource {
-            reason: format!("No price source found for asset {}", asset),
-        })?;
+        if !price_sources.has(deps.storage, asset) {
+            Err(ContractError::InvalidPriceSource {
+                reason: format!("No price source found for asset {}", asset),
+            })?;
+        }
     }
 
-    // If there are no route assets, then the pair must contain the denom and base denom.
+    let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
+
     if route_assets.is_empty() {
-        let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
+        // If there are no route assets, then the pair must contain the denom and base denom.
         assert_astroport_pair_contains_denoms(&pair_info, &[denom, base_denom])?;
     } else {
-        // If there are route assets, the pair must contain the denom and the first
-        // route asset
-        let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
+        // If there are route assets, the pair must contain the denom and the first route asset.
+        // The rest should already be validated in the same way because we checked above that a
+        // price source exists for each of them, and the corresponding validation would have been
+        // done when they were added.
         assert_astroport_pair_contains_denoms(&pair_info, &[denom, &route_assets[0]])?;
     }
 
@@ -66,14 +72,10 @@ pub fn assert_astroport_pair_contains_denoms(
     pair_info: &PairInfo,
     denoms: &[&str],
 ) -> ContractResult<()> {
-    // sort denoms to compare them
-    let mut pair_denoms: Vec<String> =
-        pair_info.asset_infos.iter().map(|a| a.to_string()).collect();
-    let mut denoms = denoms.to_vec();
-    denoms.sort();
-    pair_denoms.sort();
+    let pair_denoms: HashSet<_> = pair_info.asset_infos.iter().map(|a| a.to_string()).collect();
+    let denoms: HashSet<_> = denoms.iter().map(|s| s.to_string()).collect();
 
-    if denoms != pair_denoms {
+    if pair_denoms == denoms {
         return Err(ContractError::InvalidPriceSource {
             reason: format!(
                 "pair {} does not contain the denoms {:?}",

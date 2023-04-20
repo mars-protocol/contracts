@@ -14,7 +14,7 @@ pub type WasmOracle<'a> = OracleBase<
     WasmOracleCustomInitParams,
 >;
 
-pub const CONTRACT_NAME: &str = "crates.io:mars-oracle-wasm";
+const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(not(feature = "library"))]
@@ -28,7 +28,7 @@ pub mod entry {
 
     #[entry_point]
     pub fn instantiate(
-        mut deps: DepsMut,
+        deps: DepsMut,
         _env: Env,
         _info: MessageInfo,
         msg: InstantiateMsg<WasmOracleCustomInitParams>,
@@ -50,7 +50,7 @@ pub mod entry {
         contract.price_sources.save(deps.storage, &msg.base_denom, &price_source)?;
 
         // Instantiate base oracle contract
-        contract.instantiate(deps.branch(), msg.clone())
+        contract.instantiate(deps, msg)
     }
 
     #[entry_point]

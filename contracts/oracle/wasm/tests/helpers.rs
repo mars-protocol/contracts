@@ -18,7 +18,7 @@ pub const BASE_DENOM: &str = "USD";
 
 /// The path to the artifacts folder
 pub const ARTIFACTS_PATH: &str = "artifacts/";
-pub const APPEND_ARCH: bool = true;
+pub const APPEND_ARCH: bool = false;
 
 /// The path to the artifacts folder
 pub const ASTRO_ARTIFACTS_PATH: Option<&str> = Some("tests/astroport-artifacts");
