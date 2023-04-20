@@ -204,16 +204,7 @@ fn test_query_astroport_spot_price_without_route_asset(pair_type: PairType) {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uosmo"));
-    let initial_liq: [Uint128; 2] =
-        [10000000000000000000000u128.into(), 1000000000000000000000u128.into()];
-    let init_params = astro_init_params(&pair_type);
-    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
-        pair_type,
-        [native_info("uatom"), native_info("uosmo")],
-        init_params,
-        admin,
-        Some(initial_liq),
-    );
+    let (pair_address, _lp_token_addr) = robot.create_default_astro_pair(pair_type, admin);
     let price_source = WasmPriceSourceUnchecked::AstroportSpot {
         pair_address: pair_address.clone(),
         route_assets: vec![],
@@ -241,17 +232,10 @@ fn test_query_astroport_xyk_spot_price_with_route_asset(pair_type: PairType) {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("usd"));
-    let initial_liq: [Uint128; 2] =
-        [10000000000000000000000u128.into(), 1000000000000000000000u128.into()];
+
+    let (pair_address, _lp_token_addr) = robot.create_default_astro_pair(pair_type, admin);
     let osmo_price = Decimal::from_ratio(2u128, 1u128);
-    let init_params = astro_init_params(&pair_type);
-    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
-        pair_type,
-        [native_info("uatom"), native_info("uosmo")],
-        init_params,
-        admin,
-        Some(initial_liq),
-    );
+
     let price_source = WasmPriceSourceUnchecked::AstroportSpot {
         pair_address: pair_address.clone(),
         route_assets: vec!["uosmo".to_string(), "usd".to_string()],
@@ -287,15 +271,8 @@ fn test_query_astroport_twap_price_without_route_asset_xyk(tolerance: u64, windo
     let admin = &runner.init_accounts()[0];
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uosmo"));
 
-    let initial_liq: [Uint128; 2] =
-        [10000000000000000000000u128.into(), 1000000000000000000000u128.into()]; // price 0.1 or 10
-    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
-        PairType::Xyk {},
-        [native_info("uatom"), native_info("uosmo")],
-        None,
-        admin,
-        Some(initial_liq),
-    );
+    let (pair_address, _lp_token_addr) = robot.create_default_astro_pair(PairType::Xyk {}, admin);
+
     let reserves = robot
         .add_denom_precision_to_coin_registry("uatom", 6, admin)
         .add_denom_precision_to_coin_registry("uosmo", 6, admin)
@@ -347,17 +324,8 @@ fn test_query_astroport_twap_price_without_route_asset_stableswap(
     let admin = &runner.init_accounts()[0];
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uosmo"));
 
-    let pair_type = PairType::Stable {};
-    let initial_liq: [Uint128; 2] =
-        [10000000000000000000000u128.into(), 1000000000000000000000u128.into()]; // price 0.1 or 10
-    let init_params = astro_init_params(&pair_type);
-    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
-        pair_type,
-        [native_info("uatom"), native_info("uosmo")],
-        init_params,
-        admin,
-        Some(initial_liq),
-    );
+    let (pair_address, _lp_token_addr) =
+        robot.create_default_astro_pair(PairType::Stable {}, admin);
     let initial_price = robot
         .add_denom_precision_to_coin_registry("uatom", 6, admin)
         .add_denom_precision_to_coin_registry("uosmo", 6, admin)

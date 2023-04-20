@@ -3,7 +3,7 @@ use cosmwasm_std::{to_binary, Binary, Decimal, Empty, Uint128};
 use cw_it::{
     astroport::{
         robot::AstroportTestRobot,
-        utils::{native_asset, AstroportContracts},
+        utils::{native_asset, native_info, AstroportContracts},
     },
     multi_test::MultiTestRunner,
     robot::TestRobot,
@@ -96,6 +96,23 @@ impl<'a> WasmOracleTestRobot<'a> {
     pub fn increase_time(&self, seconds: u64) -> &Self {
         self.runner.increase_time(seconds).unwrap();
         self
+    }
+
+    pub fn create_default_astro_pair(
+        &self,
+        pair_type: PairType,
+        signer: &SigningAccount,
+    ) -> (String, String) {
+        let initial_liq: [Uint128; 2] =
+            [10000000000000000000000u128.into(), 1000000000000000000000u128.into()];
+        let init_params = astro_init_params(&pair_type);
+        self.create_astroport_pair(
+            pair_type,
+            [native_info("uatom"), native_info("uosmo")],
+            init_params,
+            signer,
+            Some(initial_liq),
+        )
     }
 
     // ====== Price source methods ======
