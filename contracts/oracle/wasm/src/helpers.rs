@@ -75,7 +75,7 @@ pub fn assert_astroport_pair_contains_denoms(
     let pair_denoms: HashSet<_> = pair_info.asset_infos.iter().map(|a| a.to_string()).collect();
     let denoms: HashSet<_> = denoms.iter().map(|s| s.to_string()).collect();
 
-    if pair_denoms == denoms {
+    if pair_denoms != denoms {
         return Err(ContractError::InvalidPriceSource {
             reason: format!(
                 "pair {} does not contain the denoms {:?}",
