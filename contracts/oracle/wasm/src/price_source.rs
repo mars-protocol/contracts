@@ -86,7 +86,7 @@ impl fmt::Display for WasmPriceSourceChecked {
             } => {
                 let route_str = route_assets.join(",");
                 format!(
-                    "astroport_twap:{pair_address}:{window_size}:{tolerance}. Route: {route_str}"
+                    "astroport_twap:{pair_address}. Window Size: {window_size}. Tolerance: {tolerance}. Route: {route_str}"
                 )
             }
         };

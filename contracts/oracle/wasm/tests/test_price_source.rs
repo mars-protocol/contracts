@@ -57,7 +57,30 @@ fn display_spot_price_source_with_route() {
     assert_eq!(ps.to_string(), "astroport_spot:fake_addr. Route: fake_asset1,fake_asset2")
 }
 
-// TODO: Display test for twap
+#[test]
+fn display_twap_price_source() {
+    let ps = WasmPriceSourceChecked::AstroportTwap {
+        pair_address: Addr::unchecked("fake_addr"),
+        window_size: 100,
+        tolerance: 10,
+        route_assets: vec![],
+    };
+    assert_eq!(ps.to_string(), "astroport_twap:fake_addr. Window Size: 100. Tolerance: 10. Route: ")
+}
+
+#[test]
+fn display_twap_price_source_with_route() {
+    let ps = WasmPriceSourceChecked::AstroportTwap {
+        pair_address: Addr::unchecked("fake_addr"),
+        window_size: 100,
+        tolerance: 10,
+        route_assets: vec!["fake_asset1".to_string(), "fake_asset2".to_string()],
+    };
+    assert_eq!(
+        ps.to_string(),
+        "astroport_twap:fake_addr. Window Size: 100. Tolerance: 10. Route: fake_asset1,fake_asset2"
+    )
+}
 
 #[test]
 fn validate_fixed_price_source() {
