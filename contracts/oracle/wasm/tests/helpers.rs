@@ -131,6 +131,17 @@ impl<'a> WasmOracleTestRobot<'a> {
         self
     }
 
+    pub fn set_price_sources(
+        &self,
+        price_sources: Vec<(&str, WasmPriceSourceUnchecked)>,
+        signer: &SigningAccount,
+    ) -> &Self {
+        for (denom, price_source) in price_sources {
+            self.set_price_source(denom, price_source, signer);
+        }
+        self
+    }
+
     pub fn remove_price_source(&self, signer: &SigningAccount, denom: &str) -> &Self {
         let msg = mars_oracle::msg::ExecuteMsg::<Empty>::RemovePriceSource {
             denom: denom.to_string(),
@@ -353,9 +364,9 @@ pub fn astro_init_params(pair_type: &PairType) -> Option<Binary> {
     }
 }
 
-pub const fn fixed_source() -> WasmPriceSourceUnchecked {
+pub const fn fixed_source(price: Decimal) -> WasmPriceSourceUnchecked {
     WasmPriceSourceUnchecked::Fixed {
-        price: Decimal::one(),
+        price,
     }
 }
 
