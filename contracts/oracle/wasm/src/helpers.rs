@@ -135,10 +135,7 @@ pub fn add_route_prices(
 ) -> ContractResult<Decimal> {
     let mut price = *price;
     for denom in route_assets {
-        let price_source =
-            price_sources.load(deps.storage, denom).map_err(|_| ContractError::InvalidPrice {
-                reason: format!("No price source for route asset {}", denom),
-            })?;
+        let price_source = price_sources.load(deps.storage, denom)?;
         let route_price = price_source.query_price(deps, env, denom, base_denom, price_sources)?;
         price *= route_price;
     }
