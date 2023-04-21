@@ -27,9 +27,9 @@ fn health_success_from_coins() {
                     whitelisted: false,
                 },
                 red_bank: RedBankSettings {
-                    deposit_enabled: false,
-                    borrow_enabled: false,
-                    deposit_cap: Default::default(),
+                    deposit_enabled: true,
+                    borrow_enabled: true,
+                    deposit_cap: Uint128::MAX,
                 },
             },
             max_loan_to_value: Decimal::from_atomics(50u128, 2).unwrap(),
@@ -45,16 +45,16 @@ fn health_success_from_coins() {
     };
     mock_querier.set_redbank_market(atom_market);
     mock_querier.set_redbank_params(
-        "osmo",
+        "atom",
         AssetParams {
             permissions: AssetPermissions {
                 rover: RoverPermissions {
                     whitelisted: false,
                 },
                 red_bank: RedBankSettings {
-                    deposit_enabled: false,
-                    borrow_enabled: false,
-                    deposit_cap: Default::default(),
+                    deposit_enabled: true,
+                    borrow_enabled: true,
+                    deposit_cap: Uint128::MAX,
                 },
             },
             max_loan_to_value: Decimal::from_atomics(70u128, 2).unwrap(),

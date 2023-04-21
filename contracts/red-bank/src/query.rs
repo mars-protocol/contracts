@@ -253,7 +253,7 @@ pub fn query_user_position(
     let config = CONFIG.load(deps.storage)?;
 
     let addresses = address_provider::helpers::query_contract_addrs(
-        deps.clone(), // TODO can we avoid this?
+        deps,
         &config.address_provider,
         vec![MarsAddressType::Oracle, MarsAddressType::Params],
     )?;

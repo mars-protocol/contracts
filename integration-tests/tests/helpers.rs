@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Coin, Decimal};
+use cosmwasm_std::{Coin, Decimal, Uint128};
 use cw_multi_test::AppResponse;
+use mars_params::types::{AssetParams, AssetPermissions, RedBankSettings, RoverPermissions};
 use mars_red_bank::error::ContractError;
 use mars_red_bank_types::red_bank::{
     InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
@@ -13,44 +14,68 @@ use osmosis_std::types::osmosis::{
 };
 use osmosis_test_tube::{Account, ExecuteResponse, OsmosisTestApp, Runner, SigningAccount};
 
-pub fn default_asset_params() -> InitOrUpdateAssetParams {
-    InitOrUpdateAssetParams {
+pub fn default_asset_params() -> (InitOrUpdateAssetParams, AssetParams) {
+    let market_params = InitOrUpdateAssetParams {
         reserve_factor: Some(Decimal::percent(20)),
-        max_loan_to_value: Some(Decimal::percent(60)),
-        liquidation_threshold: Some(Decimal::percent(80)),
-        liquidation_bonus: Some(Decimal::percent(10)),
         interest_rate_model: Some(InterestRateModel {
             optimal_utilization_rate: Decimal::percent(10),
             base: Decimal::percent(30),
             slope_1: Decimal::percent(25),
             slope_2: Decimal::percent(30),
         }),
-        deposit_enabled: Some(true),
-        borrow_enabled: Some(true),
-        deposit_cap: None,
-    }
+    };
+    let asset_params = AssetParams {
+        permissions: AssetPermissions {
+            rover: RoverPermissions {
+                whitelisted: false,
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: true,
+                borrow_enabled: true,
+                deposit_cap: Uint128::MAX,
+            },
+        },
+        max_loan_to_value: Decimal::percent(60),
+        liquidation_threshold: Decimal::percent(80),
+        liquidation_bonus: Decimal::percent(10),
+        interest_rate_model: Default::default(),
+        reserve_factor: Default::default(),
+    };
+    (market_params, asset_params)
 }
 
 pub fn default_asset_params_with(
     max_loan_to_value: Decimal,
     liquidation_threshold: Decimal,
     liquidation_bonus: Decimal,
-) -> InitOrUpdateAssetParams {
-    InitOrUpdateAssetParams {
+) -> (InitOrUpdateAssetParams, AssetParams) {
+    let market_params = InitOrUpdateAssetParams {
         reserve_factor: Some(Decimal::percent(20)),
-        max_loan_to_value: Some(max_loan_to_value),
-        liquidation_threshold: Some(liquidation_threshold),
-        liquidation_bonus: Some(liquidation_bonus),
         interest_rate_model: Some(InterestRateModel {
             optimal_utilization_rate: Decimal::percent(10),
             base: Decimal::percent(30),
             slope_1: Decimal::percent(25),
             slope_2: Decimal::percent(30),
         }),
-        deposit_enabled: Some(true),
-        borrow_enabled: Some(true),
-        deposit_cap: None,
-    }
+    };
+    let asset_params = AssetParams {
+        permissions: AssetPermissions {
+            rover: RoverPermissions {
+                whitelisted: false,
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: true,
+                borrow_enabled: true,
+                deposit_cap: Uint128::MAX,
+            },
+        },
+        max_loan_to_value,
+        liquidation_threshold,
+        liquidation_bonus,
+        interest_rate_model: Default::default(),
+        reserve_factor: Default::default(),
+    };
+    (market_params, asset_params)
 }
 
 pub fn is_user_liquidatable(position: &UserPositionResponse) -> bool {
