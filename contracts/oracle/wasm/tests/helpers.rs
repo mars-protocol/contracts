@@ -313,14 +313,8 @@ pub fn setup_test<'a>(
     robot
 }
 
-/// Returns a HashMap of contracts to be used in the tests
-pub fn get_contracts(runner: &TestRunner) -> ContractMap {
-    // Get Astroport contracts
-    let mut contracts =
-        cw_it::astroport::utils::get_local_contracts(runner, &ASTRO_ARTIFACTS_PATH, false, &None);
-
-    // Get Oracle contract
-    let contract = match runner {
+pub fn get_wasm_oracle_contract(runner: &TestRunner) -> ContractType {
+    match runner {
         #[cfg(feature = "osmosis-test-app")]
         TestRunner::OsmosisTestApp(_) => {
             let oracle_wasm_path = if APPEND_ARCH {
@@ -335,15 +329,26 @@ pub fn get_contracts(runner: &TestRunner) -> ContractMap {
             };
             ContractType::Artifact(Artifact::Local(oracle_wasm_path))
         }
-        TestRunner::MultiTest(_) => {
-            ContractType::MultiTestContract(Box::new(cw_it::cw_multi_test::ContractWrapper::new(
+        TestRunner::MultiTest(_) => ContractType::MultiTestContract(Box::new(
+            cw_it::cw_multi_test::ContractWrapper::new(
                 mars_oracle_wasm::contract::entry::execute,
                 mars_oracle_wasm::contract::entry::instantiate,
                 mars_oracle_wasm::contract::entry::query,
-            )))
-        }
+            )
+            .with_migrate(mars_oracle_wasm::contract::entry::migrate),
+        )),
         _ => panic!("Unsupported test runner type"),
-    };
+    }
+}
+
+/// Returns a HashMap of contracts to be used in the tests
+pub fn get_contracts(runner: &TestRunner) -> ContractMap {
+    // Get Astroport contracts
+    let mut contracts =
+        cw_it::astroport::utils::get_local_contracts(runner, &ASTRO_ARTIFACTS_PATH, false, &None);
+
+    // Get Oracle contract
+    let contract = get_wasm_oracle_contract(runner);
     contracts.insert(CONTRACT_NAME.to_string(), contract);
 
     contracts
