@@ -1,9 +1,12 @@
+use std::vec;
+
 use cosmwasm_std::{
+    coin,
     testing::{mock_env, MOCK_CONTRACT_ADDR},
-    CosmosMsg, Decimal, Fraction, SubMsg, Uint128,
+    to_binary, CosmosMsg, Decimal, Empty, Fraction, SubMsg, Uint128, WasmMsg,
 };
-use mars_red_bank_types::rewards_collector::{ConfigResponse, QueryMsg};
-use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg};
+use mars_red_bank_types::rewards_collector::{ConfigResponse, ExecuteMsg, QueryMsg};
+use mars_rewards_collector_osmosis::contract::entry::execute;
 use mars_testing::mock_info;
 use osmosis_std::types::{
     cosmos::base::v1beta1::Coin,
@@ -14,33 +17,6 @@ use osmosis_std::types::{
 };
 
 mod helpers;
-
-#[test]
-fn swapping_asset_if_quering_price_fails() {
-    let mut deps = helpers::setup_test();
-
-    // Only pool_1 set, missing pool_69 and pool_420
-    deps.querier.set_arithmetic_twap_price(
-        1,
-        "uatom",
-        "uosmo",
-        ArithmeticTwapToNowResponse {
-            arithmetic_twap: Decimal::from_ratio(125u128, 10u128).to_string(),
-        },
-    );
-
-    // Should fail because can't query price (missing price for pools) for calculating min out amount
-    execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info("jake"),
-        ExecuteMsg::SwapAsset {
-            denom: "uatom".to_string(),
-            amount: Some(Uint128::new(42069)),
-        },
-    )
-    .unwrap_err();
-}
 
 #[test]
 fn swapping_asset() {
@@ -125,25 +101,34 @@ fn swapping_asset() {
     .unwrap();
 
     assert_eq!(res.messages.len(), 2);
-    let swap_msg: CosmosMsg = MsgSwapExactAmountIn {
-        sender: MOCK_CONTRACT_ADDR.to_string(),
-        routes: safety_fund_route.to_vec(),
-        token_in: Some(Coin {
-            denom: "uatom".to_string(),
-            amount: safety_fund_input.to_string(),
-        }),
-        token_out_min_amount: safety_fund_min_output.to_string(),
+    let swap_msg: CosmosMsg = WasmMsg::Execute {
+        contract_addr: "swapper".to_string(),
+        msg: to_binary(&mars_swapper::ExecuteMsg::<Empty>::SwapExactIn {
+            coin_in: cosmwasm_std::Coin {
+                denom: "uatom".to_string(),
+                amount: safety_fund_input,
+            },
+            denom_out: "uusdc".to_string(),
+            slippage: Decimal::percent(3),
+        })
+        .unwrap(),
+        funds: vec![coin(safety_fund_input.u128(), "uatom")],
     }
     .into();
     assert_eq!(res.messages[0], SubMsg::new(swap_msg));
-    let swap_msg: CosmosMsg = MsgSwapExactAmountIn {
-        sender: MOCK_CONTRACT_ADDR.to_string(),
-        routes: fee_collector_route.to_vec(),
-        token_in: Some(Coin {
-            denom: "uatom".to_string(),
-            amount: fee_collector_input.to_string(),
-        }),
-        token_out_min_amount: fee_collector_min_output.to_string(),
+
+    let swap_msg: CosmosMsg = WasmMsg::Execute {
+        contract_addr: "swapper".to_string(),
+        msg: to_binary(&mars_swapper::ExecuteMsg::<Empty>::SwapExactIn {
+            coin_in: cosmwasm_std::Coin {
+                denom: "uatom".to_string(),
+                amount: fee_collector_input,
+            },
+            denom_out: "umars".to_string(),
+            slippage: Decimal::percent(3),
+        })
+        .unwrap(),
+        funds: vec![coin(fee_collector_input.u128(), "uatom")],
     }
     .into();
     assert_eq!(res.messages[1], SubMsg::new(swap_msg));
@@ -200,7 +185,7 @@ fn skipping_swap_if_denom_matches() {
     .unwrap();
 
     // the response should only contain one swap message, from USDC to MARS, for
-    // the fee collector.
+    // the fee collector
     //
     // the USDC --> USDC swap for safety fund should be skipped.
     assert_eq!(res.messages.len(), 1);
@@ -214,24 +199,20 @@ fn skipping_swap_if_denom_matches() {
     // 1 uosmo = 0.5 umars
     // slippage tolerance: 3%
     // min out amount: 926 * 0.1 * 0.5 * (1 - 0.03) = 44
-    let swap_msg: CosmosMsg = MsgSwapExactAmountIn {
-        sender: MOCK_CONTRACT_ADDR.to_string(),
-        routes: vec![
-            SwapAmountInRoute {
-                pool_id: 69,
-                token_out_denom: "uosmo".to_string(),
+    let swap_msg: CosmosMsg = WasmMsg::Execute {
+        contract_addr: "swapper".to_string(),
+        msg: to_binary(&mars_swapper::ExecuteMsg::<Empty>::SwapExactIn {
+            coin_in: cosmwasm_std::Coin {
+                denom: "uusdc".to_string(),
+                amount: Uint128::new(926),
             },
-            SwapAmountInRoute {
-                pool_id: 420,
-                token_out_denom: "umars".to_string(),
-            },
-        ],
-        token_in: Some(Coin {
-            denom: "uusdc".to_string(),
-            amount: "926".to_string(),
-        }),
-        token_out_min_amount: "44".to_string(),
+            denom_out: "umars".to_string(),
+            slippage: Decimal::percent(3),
+        })
+        .unwrap(),
+        funds: vec![coin(926, "uusdc")],
     }
     .into();
+
     assert_eq!(res.messages[0], SubMsg::new(swap_msg));
 }

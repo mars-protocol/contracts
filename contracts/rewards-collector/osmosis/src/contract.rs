@@ -1,11 +1,9 @@
 use cosmwasm_std::Empty;
 use mars_rewards_collector_base::CollectorBase;
 
-use crate::OsmosisRoute;
-
 /// The Osmosis rewards collector contract inherits logics from the base oracle contract, with the
 /// Osmosis custom msg, query, and swap route plugins
-pub type OsmosisCollector<'a> = CollectorBase<'a, OsmosisRoute, Empty, Empty>;
+pub type OsmosisCollector<'a> = CollectorBase<'a, Empty, Empty>;
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-rewards-collector-osmosis";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -17,7 +15,7 @@ pub mod entry {
     use mars_rewards_collector_base::ContractResult;
 
     use super::*;
-    use crate::msg::ExecuteMsg;
+    use mars_red_bank_types::rewards_collector::ExecuteMsg;
 
     #[entry_point]
     pub fn instantiate(

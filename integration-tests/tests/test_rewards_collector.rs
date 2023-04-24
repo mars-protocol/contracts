@@ -5,7 +5,7 @@ use mars_red_bank_types::{
     },
     rewards_collector::{ExecuteMsg, InstantiateMsg as InstantiateRewards, UpdateConfig},
 };
-use mars_rewards_collector_osmosis::{route::SwapAmountInRoute, OsmosisRoute};
+use mars_swapper_osmosis::route::{OsmosisRoute, SwapAmountInRoute};
 use osmosis_test_tube::{Account, Gamm, Module, OsmosisTestApp, Wasm};
 
 use crate::{
@@ -21,6 +21,7 @@ mod helpers;
 
 const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
 const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
+const OSMOSIS_SWAPPER_CONTRACT_NAME: &str = "mars-swapper-osmosis";
 
 #[test]
 fn swapping_rewards() {
@@ -59,7 +60,7 @@ fn swapping_rewards() {
         OSMOSIS_REWARDS_CONTRACT_NAME,
         &InstantiateRewards {
             owner: signer.address(),
-            address_provider: addr_provider_addr,
+            address_provider: addr_provider_addr.clone(),
             safety_tax_rate: Decimal::percent(25),
             safety_fund_denom: safety_fund_denom.to_string(),
             fee_collector_denom: fee_collector_denom.to_string(),
@@ -68,6 +69,28 @@ fn swapping_rewards() {
             slippage_tolerance: Decimal::percent(1),
         },
     );
+
+    // Instantiate swapper addr
+    let swapper_addr = instantiate_contract(
+        &wasm,
+        signer,
+        OSMOSIS_SWAPPER_CONTRACT_NAME,
+        &mars_swapper::InstantiateMsg {
+            owner: signer.address(),
+        },
+    );
+
+    // Set swapper addr in address provider
+    wasm.execute(
+        &addr_provider_addr,
+        &mars_red_bank_types::address_provider::ExecuteMsg::SetAddress {
+            address_type: MarsAddressType::Swapper,
+            address: swapper_addr.clone(),
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
 
     let gamm = Gamm::new(&app);
     let pool_mars_osmo = gamm
@@ -114,8 +137,8 @@ fn swapping_rewards() {
 
     // set routes
     wasm.execute(
-        &rewards_addr,
-        &ExecuteMsg::SetRoute {
+        &swapper_addr,
+        &mars_swapper::ExecuteMsg::SetRoute {
             denom_in: "uosmo".to_string(),
             denom_out: safety_fund_denom.to_string(),
             route: OsmosisRoute(vec![SwapAmountInRoute {
@@ -128,8 +151,8 @@ fn swapping_rewards() {
     )
     .unwrap();
     wasm.execute(
-        &rewards_addr,
-        &ExecuteMsg::SetRoute {
+        &swapper_addr,
+        &mars_swapper::ExecuteMsg::SetRoute {
             denom_in: "uosmo".to_string(),
             denom_out: fee_collector_denom.to_string(),
             route: OsmosisRoute(vec![SwapAmountInRoute {
@@ -142,8 +165,8 @@ fn swapping_rewards() {
     )
     .unwrap();
     wasm.execute(
-        &rewards_addr,
-        &ExecuteMsg::SetRoute {
+        &swapper_addr,
+        &mars_swapper::ExecuteMsg::SetRoute {
             denom_in: "uatom".to_string(),
             denom_out: safety_fund_denom.to_string(),
             route: OsmosisRoute(vec![
@@ -162,8 +185,8 @@ fn swapping_rewards() {
     )
     .unwrap();
     wasm.execute(
-        &rewards_addr,
-        &ExecuteMsg::SetRoute {
+        &swapper_addr,
+        &mars_swapper::ExecuteMsg::SetRoute {
             denom_in: "uatom".to_string(),
             denom_out: fee_collector_denom.to_string(),
             route: OsmosisRoute(vec![
@@ -196,9 +219,10 @@ fn swapping_rewards() {
     assert_eq!(fee_collector_denom_balance, 0u128);
 
     // swap osmo
+    println!("swap osmo");
     wasm.execute(
         &rewards_addr,
-        &ExecuteMsg::<OsmosisRoute>::SwapAsset {
+        &ExecuteMsg::SwapAsset {
             denom: "uosmo".to_string(),
             amount: None,
         },
@@ -208,9 +232,10 @@ fn swapping_rewards() {
     .unwrap();
 
     // swap atom
+    println!("second swap");
     wasm.execute(
         &rewards_addr,
-        &ExecuteMsg::<OsmosisRoute>::SwapAsset {
+        &ExecuteMsg::SwapAsset {
             denom: "uatom".to_string(),
             amount: None,
         },
@@ -306,7 +331,7 @@ fn distribute_rewards_if_ibc_channel_invalid() {
     let res = wasm
         .execute(
             &rewards_addr,
-            &ExecuteMsg::<OsmosisRoute>::DistributeRewards {
+            &ExecuteMsg::DistributeRewards {
                 denom: "uusdc".to_string(),
                 amount: None,
             },
@@ -319,7 +344,7 @@ fn distribute_rewards_if_ibc_channel_invalid() {
     // update ibc channel
     wasm.execute(
         &rewards_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateConfig {
+        &ExecuteMsg::UpdateConfig {
             new_cfg: UpdateConfig {
                 address_provider: None,
                 safety_tax_rate: None,
@@ -339,7 +364,7 @@ fn distribute_rewards_if_ibc_channel_invalid() {
     let res = wasm
         .execute(
             &rewards_addr,
-            &ExecuteMsg::<OsmosisRoute>::DistributeRewards {
+            &ExecuteMsg::DistributeRewards {
                 denom: "umars".to_string(),
                 amount: None,
             },

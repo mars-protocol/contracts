@@ -30,6 +30,8 @@ pub enum MarsAddressType {
     /// NOTE: This is a Mars Hub address with the `mars` bech32 prefix, which may not be recognized
     /// by the `api.addr_validate` method.
     SafetyFund,
+    /// The swapper contract on the chain
+    Swapper,
 }
 
 impl fmt::Display for MarsAddressType {
@@ -42,6 +44,7 @@ impl fmt::Display for MarsAddressType {
             MarsAddressType::RedBank => "red_bank",
             MarsAddressType::RewardsCollector => "rewards_collector",
             MarsAddressType::SafetyFund => "safety_fund",
+            MarsAddressType::Swapper => "swapper",
         };
         write!(f, "{s}")
     }

@@ -8,8 +8,9 @@ use cosmwasm_std::{
     Coin, Decimal, Deps, OwnedDeps,
 };
 use mars_osmosis::helpers::{Pool, QueryPoolResponse};
-use mars_red_bank_types::rewards_collector::{Config, ExecuteMsg, InstantiateMsg, QueryMsg};
-use mars_rewards_collector_osmosis::{contract::entry, route::SwapAmountInRoute, OsmosisRoute};
+use mars_red_bank_types::rewards_collector::{Config, InstantiateMsg, QueryMsg};
+use mars_rewards_collector_osmosis::contract::entry;
+use mars_swapper_osmosis::route::{OsmosisRoute, SwapAmountInRoute};
 use mars_testing::{mock_info, MarsMockQuerier};
 use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
 
@@ -143,21 +144,6 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     let info = mock_info("deployer");
     let msg = mock_instantiate_msg();
     entry::instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-    // set a few swap routes
-    mock_routes().into_iter().for_each(|((denom_in, denom_out), route)| {
-        entry::execute(
-            deps.as_mut(),
-            mock_env(),
-            mock_info("owner"),
-            ExecuteMsg::SetRoute {
-                denom_in: denom_in.to_string(),
-                denom_out: denom_out.to_string(),
-                route,
-            },
-        )
-        .unwrap();
-    });
 
     deps
 }

@@ -11,12 +11,17 @@ documentation = { workspace = true }
 keywords      = { workspace = true }
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = [
+    "cdylib",
+    "rlib",
+]
 doctest = false
 
 [features]
 # for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
+backtraces = [
+    "cosmwasm-std/backtraces",
+]
 
 [dependencies]
 cosmwasm-std                = { workspace = true }
@@ -31,7 +36,10 @@ thiserror                   = { workspace = true }
 osmosis-std                 = { workspace = true }
 
 [dev-dependencies]
-cosmwasm-schema = { workspace = true }
-mars-testing    = { workspace = true }
-mars-owner      = { workspace = true }
-mars-utils      = { workspace = true }
+cosmwasm-schema      = { workspace = true }
+mars-testing         = { workspace = true }
+mars-owner           = { workspace = true }
+mars-utils           = { workspace = true }
+mars-swapper         = { workspace = true }
+mars-swapper-osmosis = { workspace = true }
+mars-swapper-base    = { workspace = true }

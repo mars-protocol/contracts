@@ -1,11 +1,8 @@
 use cosmwasm_std::{testing::mock_env, Decimal};
 use mars_owner::OwnerError::NotOwner;
-use mars_red_bank_types::rewards_collector::{ConfigResponse, QueryMsg, UpdateConfig};
+use mars_red_bank_types::rewards_collector::{ConfigResponse, ExecuteMsg, QueryMsg, UpdateConfig};
 use mars_rewards_collector_base::ContractError;
-use mars_rewards_collector_osmosis::{
-    contract::entry::{execute, instantiate},
-    msg::ExecuteMsg,
-};
+use mars_rewards_collector_osmosis::contract::entry::{execute, instantiate};
 use mars_testing::mock_info;
 use mars_utils::error::ValidationError;
 

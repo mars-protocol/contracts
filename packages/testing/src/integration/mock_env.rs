@@ -417,7 +417,7 @@ impl RewardsCollector {
             .execute_contract(
                 Addr::unchecked("anyone"),
                 self.contract_addr.clone(),
-                &mars_rewards_collector_osmosis::msg::ExecuteMsg::WithdrawFromRedBank {
+                &mars_red_bank_types::rewards_collector::ExecuteMsg::WithdrawFromRedBank {
                     denom: denom.to_string(),
                     amount,
                 },
@@ -430,7 +430,7 @@ impl RewardsCollector {
         env.app.execute_contract(
             Addr::unchecked("anyone"),
             self.contract_addr.clone(),
-            &mars_rewards_collector_osmosis::msg::ExecuteMsg::ClaimIncentiveRewards {},
+            &mars_red_bank_types::rewards_collector::ExecuteMsg::ClaimIncentiveRewards {},
             &[],
         )
     }

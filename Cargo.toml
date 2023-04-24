@@ -15,8 +15,8 @@ members = [
 ]
 
 [workspace.package]
-version       = "1.0.1"
-authors       = [
+version = "1.0.1"
+authors = [
   "Larry Engineer <larry@delphidigital.io>",
   "Piotr Babel <piotr@delphilabs.io>",
   "Spike Spiegel <spikeonmars@protonmail.com>",
@@ -24,12 +24,16 @@ authors       = [
   "Ahmad Kaouk",
   "Harry Scholes",
 ]
-edition       = "2021"
-license       = "GPL-3.0-or-later"
-repository    = "https://github.com/mars-protocol/red-bank"
-homepage      = "https://marsprotocol.io"
+edition = "2021"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/mars-protocol/red-bank"
+homepage = "https://marsprotocol.io"
 documentation = "https://docs.marsprotocol.io/"
-keywords      = ["mars", "cosmos", "cosmwasm"]
+keywords = [
+  "mars",
+  "cosmos",
+  "cosmwasm",
+]
 
 [workspace.dependencies]
 anyhow            = "1.0.68"
@@ -65,7 +69,8 @@ mars-oracle-osmosis            = { version = "1.0.0", path = "./contracts/oracle
 mars-red-bank                  = { version = "1.0.0", path = "./contracts/red-bank" }
 mars-rewards-collector-base    = { version = "1.0.0", path = "./contracts/rewards-collector/base" }
 mars-rewards-collector-osmosis = { version = "1.0.0", path = "./contracts/rewards-collector/osmosis" }
-mars-swapper-base  = { version = "1.0.0", path = "contracts/swapper/base" }
+mars-swapper-base              = { version = "1.0.0", path = "./contracts/swapper/base" }
+mars-swapper-osmosis           = { version = "1.0.0", path = "./contracts/swapper/osmosis" }
 
 [profile.release]
 codegen-units    = 1

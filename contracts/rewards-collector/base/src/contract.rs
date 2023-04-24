@@ -1,32 +1,26 @@
 use std::marker::PhantomData;
 
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Deps, DepsMut, Env, IbcMsg,
-    IbcTimeout, MessageInfo, Order, Response, StdResult, Uint128, WasmMsg,
+    coin, to_binary, Addr, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Deps, DepsMut, Empty,
+    Env, IbcMsg, IbcTimeout, MessageInfo, Response, StdResult, Uint128, WasmMsg,
 };
-use cw_storage_plus::{Bound, Item, Map};
+use cw_storage_plus::Item;
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_red_bank_types::{
-    address_provider::{self, MarsAddressType},
+    address_provider::{self, AddressResponseItem, MarsAddressType},
     incentives, red_bank,
     rewards_collector::{
-        Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
-        RoutesResponse, UpdateConfig,
+        Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, UpdateConfig,
     },
 };
-use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
+use mars_utils::helpers::option_string_to_addr;
 
 use crate::{
     helpers::{stringify_option_amount, unwrap_option_amount},
-    ContractError, ContractResult, Route,
+    ContractError, ContractResult,
 };
-
-const DEFAULT_LIMIT: u32 = 5;
-const MAX_LIMIT: u32 = 10;
-
-pub struct CollectorBase<'a, R, M, Q>
+pub struct CollectorBase<'a, M, Q>
 where
-    R: Route<M, Q>,
     M: CustomMsg,
     Q: CustomQuery,
 {
@@ -34,17 +28,14 @@ where
     pub owner: Owner<'a>,
     /// The contract's configurations
     pub config: Item<'a, Config>,
-    /// The trade route for each pair of input/output assets
-    pub routes: Map<'a, (String, String), R>,
     /// Phantom data that holds the custom message type
     pub custom_msg: PhantomData<M>,
     /// Phantom data that holds the custom query type
     pub custom_query: PhantomData<Q>,
 }
 
-impl<'a, R, M, Q> Default for CollectorBase<'a, R, M, Q>
+impl<'a, M, Q> Default for CollectorBase<'a, M, Q>
 where
-    R: Route<M, Q>,
     M: CustomMsg,
     Q: CustomQuery,
 {
@@ -52,16 +43,14 @@ where
         Self {
             owner: Owner::new("owner"),
             config: Item::new("config"),
-            routes: Map::new("routes"),
             custom_msg: PhantomData,
             custom_query: PhantomData,
         }
     }
 }
 
-impl<'a, R, M, Q> CollectorBase<'a, R, M, Q>
+impl<'a, M, Q> CollectorBase<'a, M, Q>
 where
-    R: Route<M, Q>,
     M: CustomMsg,
     Q: CustomQuery,
 {
@@ -89,18 +78,13 @@ where
         deps: DepsMut<Q>,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<R>,
+        msg: ExecuteMsg,
     ) -> ContractResult<Response<M>> {
         match msg {
             ExecuteMsg::UpdateOwner(update) => self.update_owner(deps, info, update),
             ExecuteMsg::UpdateConfig {
                 new_cfg,
             } => self.update_config(deps, info.sender, new_cfg),
-            ExecuteMsg::SetRoute {
-                denom_in,
-                denom_out,
-                route,
-            } => self.set_route(deps, info.sender, denom_in, denom_out, route),
             ExecuteMsg::WithdrawFromRedBank {
                 denom,
                 amount,
@@ -120,14 +104,6 @@ where
     pub fn query(&self, deps: Deps<Q>, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
             QueryMsg::Config {} => to_binary(&self.query_config(deps)?),
-            QueryMsg::Route {
-                denom_in,
-                denom_out,
-            } => to_binary(&self.query_route(deps, denom_in, denom_out)?),
-            QueryMsg::Routes {
-                start_after,
-                limit,
-            } => to_binary(&self.query_routes(deps, start_after, limit)?),
         }
     }
 
@@ -174,30 +150,6 @@ where
         self.config.save(deps.storage, &cfg)?;
 
         Ok(Response::new().add_attribute("action", "mars/rewards-collector/update_config"))
-    }
-
-    fn set_route(
-        &self,
-        deps: DepsMut<Q>,
-        sender: Addr,
-        denom_in: String,
-        denom_out: String,
-        route: R,
-    ) -> ContractResult<Response<M>> {
-        self.owner.assert_owner(deps.storage, &sender)?;
-
-        validate_native_denom(&denom_in)?;
-        validate_native_denom(&denom_out)?;
-
-        route.validate(&deps.querier, &denom_in, &denom_out)?;
-
-        self.routes.save(deps.storage, (denom_in.clone(), denom_out.clone()), &route)?;
-
-        Ok(Response::new()
-            .add_attribute("action", "mars/rewards-collector/set_instructions")
-            .add_attribute("denom_in", denom_in)
-            .add_attribute("denom_out", denom_out)
-            .add_attribute("route", route.to_string()))
     }
 
     fn withdraw_from_red_bank(
@@ -260,6 +212,14 @@ where
     ) -> ContractResult<Response<M>> {
         let cfg = self.config.load(deps.storage)?;
 
+        let swapper_addr = deps
+            .querier
+            .query_wasm_smart::<AddressResponseItem>(
+                cfg.address_provider,
+                &mars_red_bank_types::address_provider::QueryMsg::Address(MarsAddressType::Swapper),
+            )?
+            .address;
+
         // if amount is None, swap the total balance
         let amount_to_swap =
             unwrap_option_amount(&deps.querier, &env.contract.address, &denom, amount)?;
@@ -272,33 +232,31 @@ where
         // execute the swap to safety fund denom, if the amount to swap is non-zero,
         // and if the denom is not already the safety fund denom
         if !amount_safety_fund.is_zero() && denom != cfg.safety_fund_denom {
-            messages.push(
-                self.routes
-                    .load(deps.storage, (denom.clone(), cfg.safety_fund_denom))?
-                    .build_swap_msg(
-                        &env,
-                        &deps.querier,
-                        &denom,
-                        amount_safety_fund,
-                        cfg.slippage_tolerance,
-                    )?,
-            );
+            let coin_in_safety_fund = coin(amount_safety_fund.u128(), denom.clone());
+            messages.push(WasmMsg::Execute {
+                contract_addr: swapper_addr.clone(),
+                msg: to_binary(&mars_swapper::ExecuteMsg::<Empty>::SwapExactIn {
+                    coin_in: coin_in_safety_fund.clone(),
+                    denom_out: cfg.safety_fund_denom,
+                    slippage: cfg.slippage_tolerance,
+                })?,
+                funds: vec![coin_in_safety_fund],
+            });
         }
 
         // execute the swap to fee collector denom, if the amount to swap is non-zero,
         // and if the denom is not already the fee collector denom
         if !amount_fee_collector.is_zero() && denom != cfg.fee_collector_denom {
-            messages.push(
-                self.routes
-                    .load(deps.storage, (denom.clone(), cfg.fee_collector_denom))?
-                    .build_swap_msg(
-                        &env,
-                        &deps.querier,
-                        &denom,
-                        amount_fee_collector,
-                        cfg.slippage_tolerance,
-                    )?,
-            );
+            let coin_in_fee_collector = coin(amount_fee_collector.u128(), denom.clone());
+            messages.push(WasmMsg::Execute {
+                contract_addr: swapper_addr,
+                msg: to_binary(&mars_swapper::ExecuteMsg::<Empty>::SwapExactIn {
+                    coin_in: coin_in_fee_collector.clone(),
+                    denom_out: cfg.fee_collector_denom,
+                    slippage: cfg.slippage_tolerance,
+                })?,
+                funds: vec![coin_in_fee_collector],
+            });
         }
 
         Ok(Response::new()
@@ -372,41 +330,5 @@ where
             timeout_seconds: cfg.timeout_seconds,
             slippage_tolerance: cfg.slippage_tolerance,
         })
-    }
-
-    fn query_route(
-        &self,
-        deps: Deps<Q>,
-        denom_in: String,
-        denom_out: String,
-    ) -> StdResult<RouteResponse<R>> {
-        Ok(RouteResponse {
-            denom_in: denom_in.clone(),
-            denom_out: denom_out.clone(),
-            route: self.routes.load(deps.storage, (denom_in, denom_out))?,
-        })
-    }
-
-    fn query_routes(
-        &self,
-        deps: Deps<Q>,
-        start_after: Option<(String, String)>,
-        limit: Option<u32>,
-    ) -> StdResult<RoutesResponse<R>> {
-        let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-        let start = start_after.map(Bound::exclusive);
-
-        self.routes
-            .range(deps.storage, start, None, Order::Ascending)
-            .take(limit)
-            .map(|item| {
-                let (k, v) = item?;
-                Ok(RouteResponse {
-                    denom_in: k.0,
-                    denom_out: k.1,
-                    route: v,
-                })
-            })
-            .collect()
     }
 }

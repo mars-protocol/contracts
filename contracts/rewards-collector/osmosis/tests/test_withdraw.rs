@@ -1,5 +1,6 @@
 use cosmwasm_std::{testing::mock_env, to_binary, CosmosMsg, SubMsg, Uint128, WasmMsg};
-use mars_rewards_collector_osmosis::{contract::entry::execute, msg::ExecuteMsg};
+use mars_red_bank_types::rewards_collector::ExecuteMsg;
+use mars_rewards_collector_osmosis::contract::entry::execute;
 use mars_testing::mock_info;
 
 mod helpers;

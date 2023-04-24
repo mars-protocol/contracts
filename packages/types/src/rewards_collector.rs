@@ -101,23 +101,13 @@ pub struct UpdateConfig {
 }
 
 #[cw_serde]
-pub enum ExecuteMsg<Route> {
+pub enum ExecuteMsg {
     /// Manages admin role state
     UpdateOwner(OwnerUpdate),
 
     /// Update contract config
     UpdateConfig {
         new_cfg: UpdateConfig,
-    },
-
-    /// Configure the route for swapping an asset
-    ///
-    /// This is chain-specific, and can include parameters such as slippage tolerance and the routes
-    /// for multi-step swaps
-    SetRoute {
-        denom_in: String,
-        denom_out: String,
-        route: Route,
     },
 
     /// Withdraw coins from the red bank
@@ -175,22 +165,6 @@ pub enum QueryMsg {
     /// Get config parameters
     #[returns(ConfigResponse)]
     Config {},
-    /// Get routes for swapping an input denom into an output denom.
-    ///
-    /// NOTE: The response type of this query is chain-specific.
-    #[returns(RouteResponse<String>)]
-    Route {
-        denom_in: String,
-        denom_out: String,
-    },
-    /// Enumerate all swap routes.
-    ///
-    /// NOTE: The response type of this query is chain-specific.
-    #[returns(Vec<RouteResponse<String>>)]
-    Routes {
-        start_after: Option<(String, String)>,
-        limit: Option<u32>,
-    },
 }
 
 #[cw_serde]
