@@ -130,6 +130,8 @@ fn setup_test() -> TestSuite {
     };
     deps.querier.set_redbank_params(&initial_debt_coin.denom, asset_params_2_debt.clone());
 
+    deps.querier.set_redbank_params(uncollateralized_denom, th_default_asset_params());
+
     TestSuite {
         deps,
         collateral_coin: initial_collateral_coin,
@@ -1270,6 +1272,7 @@ fn liquidation_health_factor_check() {
             ..th_default_asset_params()
         },
     );
+    deps.querier.set_redbank_params("uncollateralized_debt", th_default_asset_params());
 
     // test health factor check
     let healthy_user_addr = Addr::unchecked("healthy_user");

@@ -44,6 +44,7 @@ fn uncollateralized_loan_limits() {
 
     // should get index 0
     let market_initial = th_init_market(deps.as_mut(), "somecoin", &mock_market);
+    deps.querier.set_redbank_params("somecoin", th_default_asset_params());
 
     let mut block_time = mock_market.indexes_last_updated + 10000u64;
     let initial_uncollateralized_loan_limit = Uint128::from(2400_u128);

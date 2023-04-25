@@ -1156,7 +1156,7 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
         &addr_provider_addr,
         &SetAddress {
             address_type: MarsAddressType::Params,
-            address: params_addr,
+            address: params_addr.clone(),
         },
         &[],
         signer,
@@ -1188,7 +1188,7 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
     .unwrap();
 
     wasm.execute(
-        &red_bank_addr,
+        &params_addr,
         &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
             denom: "uosmo".to_string(),
             params: asset_params.clone(),
@@ -1199,7 +1199,7 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
     .unwrap();
 
     wasm.execute(
-        &red_bank_addr,
+        &params_addr,
         &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
             denom: "uatom".to_string(),
             params: asset_params,

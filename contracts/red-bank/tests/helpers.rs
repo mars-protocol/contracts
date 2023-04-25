@@ -112,16 +112,16 @@ pub fn th_default_asset_params() -> AssetParams {
                 whitelisted: false,
             },
             red_bank: RedBankSettings {
-                deposit_enabled: false,
-                borrow_enabled: false,
-                deposit_cap: Default::default(),
+                deposit_enabled: true,
+                borrow_enabled: true,
+                deposit_cap: Uint128::MAX,
             },
         },
-        max_loan_to_value: Default::default(),
-        liquidation_threshold: Default::default(),
-        liquidation_bonus: Default::default(),
+        max_loan_to_value: Decimal::zero(),
+        liquidation_threshold: Decimal::one(),
+        liquidation_bonus: Decimal::zero(),
         interest_rate_model: Default::default(),
-        reserve_factor: Default::default(),
+        reserve_factor: Decimal::zero(),
     }
 }
 

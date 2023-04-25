@@ -267,7 +267,8 @@ fn init_asset() {
     // init asset with empty params
     {
         let empty_asset_params = InitOrUpdateAssetParams {
-            ..params.clone()
+            reserve_factor: None,
+            interest_rate_model: None,
         };
         let msg = ExecuteMsg::InitAsset {
             denom: "someasset".to_string(),

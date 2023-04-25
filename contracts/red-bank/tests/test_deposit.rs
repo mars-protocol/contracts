@@ -68,8 +68,8 @@ fn setup_test() -> TestSuite {
                     whitelisted: false,
                 },
                 red_bank: RedBankSettings {
-                    deposit_enabled: false,
-                    borrow_enabled: false,
+                    deposit_enabled: true,
+                    borrow_enabled: true,
                     deposit_cap: Uint128::new(12_000_000),
                 },
             },
@@ -218,7 +218,7 @@ fn depositing_above_cap() {
                     whitelisted: false,
                 },
                 red_bank: RedBankSettings {
-                    deposit_enabled: false,
+                    deposit_enabled: true,
                     borrow_enabled: true,
                     deposit_cap: Uint128::new(10_000_000),
                 },

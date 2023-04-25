@@ -179,7 +179,7 @@ pub fn update_asset(
     denom: String,
     params: InitOrUpdateAssetParams,
 ) -> Result<Response, ContractError> {
-    OWNER.is_owner(deps.storage, &info.sender)?;
+    OWNER.assert_owner(deps.storage, &info.sender)?;
 
     let market_option = MARKETS.may_load(deps.storage, &denom)?;
     match market_option {
@@ -301,6 +301,8 @@ pub fn deposit(
         User(&info.sender)
     };
 
+    let mut market = MARKETS.load(deps.storage, &denom)?;
+
     let config = CONFIG.load(deps.storage)?;
 
     let addresses = address_provider::helpers::query_contract_addrs(
@@ -323,8 +325,6 @@ pub fn deposit(
             denom,
         });
     }
-
-    let mut market = MARKETS.load(deps.storage, &denom)?;
 
     let total_scaled_deposits = market.collateral_total_scaled;
     let total_deposits =
