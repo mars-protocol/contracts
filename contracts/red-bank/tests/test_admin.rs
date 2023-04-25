@@ -1,5 +1,5 @@
 use cosmwasm_std::{attr, coin, from_binary, testing::mock_info, Addr, Decimal, Event, Uint128};
-use mars_owner::{OwnerError::NotOwner, OwnerUpdate};
+use mars_owner::{OwnerError::NotOwner};
 use mars_red_bank::{
     contract::{execute, instantiate, query},
     error::ContractError,

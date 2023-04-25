@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::cmp::min;
 
 use cosmwasm_std::{

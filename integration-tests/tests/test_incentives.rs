@@ -314,7 +314,7 @@ fn multiple_assets() {
     mock_env.increment_by_time(86400); // 24 hours
 
     let rewards_balance = incentives.query_unclaimed_rewards(&mut mock_env, &user);
-    assert_eq!(rewards_balance, Uint128::new(1555200));
+    assert_eq!(rewards_balance[0].amount, Uint128::new(1555200));
 }
 
 // User A deposits half the amount user B deposits in the red bank

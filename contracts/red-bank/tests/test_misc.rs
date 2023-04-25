@@ -245,7 +245,7 @@ fn update_asset_collateral() {
         liquidation_threshold: Decimal::from_ratio(40u128, 100u128),
         ..th_default_asset_params()
     };
-    deps.querier.set_redbank_params(denom_3, asset_params_3.clone());
+    deps.querier.set_redbank_params(denom_3, asset_params_3);
 
     // Set the querier to return exchange rates
     let token_1_exchange_rate = Decimal::from_ratio(2u128, 1u128);

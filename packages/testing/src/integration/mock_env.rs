@@ -497,7 +497,7 @@ impl MockEnvBuilder {
         Self {
             app: App::default(),
             admin,
-            owner: owner.clone(),
+            owner,
             chain_prefix: "".to_string(), // empty prefix for multitest because deployed contracts have addresses such as contract1, contract2 etc which are invalid in address-provider
             mars_denom: "umars".to_string(),
             base_denom: "uosmo".to_string(),
