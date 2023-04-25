@@ -112,7 +112,6 @@ pub enum ExecuteMsg {
 #[cw_serde]
 pub struct CreateOrUpdateConfig {
     pub address_provider: Option<String>,
-    pub close_factor: Option<Decimal>,
 }
 
 #[cw_serde]

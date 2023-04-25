@@ -198,6 +198,10 @@ impl MarsMockQuerier {
         self.params_querier.params.insert(denom.to_string(), params);
     }
 
+    pub fn set_close_factor(&mut self, close_factor: Decimal) {
+        self.params_querier.close_factor = close_factor;
+    }
+
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
         match &request {
             QueryRequest::Wasm(WasmQuery::Smart {

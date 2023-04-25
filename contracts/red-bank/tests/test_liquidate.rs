@@ -5,8 +5,8 @@ use std::cmp::min;
 use cosmwasm_std::{
     attr, coin, coins,
     testing::{mock_info, MockApi, MockStorage},
-    to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps, OwnedDeps, StdError, StdResult,
-    SubMsg, Uint128, WasmMsg,
+    to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps, OwnedDeps, StdError, SubMsg, Uint128,
+    WasmMsg,
 };
 use cw_utils::PaymentError;
 use helpers::{
@@ -23,7 +23,7 @@ use mars_red_bank::{
         compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
         ScalingOperation, SCALING_FACTOR,
     },
-    state::{COLLATERALS, CONFIG, DEBTS, MARKETS},
+    state::{COLLATERALS, DEBTS, MARKETS},
 };
 use mars_red_bank_types::{
     address_provider::MarsAddressType,
@@ -57,12 +57,7 @@ fn setup_test() -> TestSuite {
     let mut deps = th_setup(&[initial_collateral_coin.clone(), initial_debt_coin.clone()]);
 
     let close_factor = Decimal::from_ratio(1u128, 2u128);
-    CONFIG
-        .update(deps.as_mut().storage, |mut config| -> StdResult<_> {
-            config.close_factor = close_factor;
-            Ok(config)
-        })
-        .unwrap();
+    deps.querier.set_close_factor(close_factor);
 
     let collateral_price = Decimal::from_ratio(2_u128, 1_u128);
     let debt_price = Decimal::from_ratio(11_u128, 10_u128);

@@ -77,7 +77,6 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
     let info = mock_info("owner");
     let config = CreateOrUpdateConfig {
         address_provider: Some("address_provider".to_string()),
-        close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
@@ -86,6 +85,8 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
     instantiate(deps.as_mut(), env, info, msg).unwrap();
 
     deps.querier.set_oracle_price("uusd", Decimal::one());
+
+    deps.querier.set_close_factor(Decimal::from_ratio(1u128, 2u128));
 
     deps
 }

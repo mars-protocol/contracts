@@ -23,7 +23,7 @@ use crate::{
         assert_below_liq_threshold_after_withdraw, assert_below_max_ltv_after_borrow,
         assert_liquidatable,
     },
-    helpers::query_asset_params,
+    helpers::{query_asset_params, query_close_factor},
     interest_rates::{
         apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
         get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
@@ -42,22 +42,15 @@ pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, Contr
     // compile error if we add more params
     let CreateOrUpdateConfig {
         address_provider,
-        close_factor,
     } = msg.config;
 
-    // All fields should be available
-    let available = address_provider.is_some() && close_factor.is_some();
-
-    if !available {
+    if address_provider.is_none() {
         return Err(MarsError::InstantiateParamsUnavailable {}.into());
     };
 
     let config = Config {
         address_provider: option_string_to_addr(deps.api, address_provider, zero_address())?,
-        close_factor: close_factor.unwrap(),
     };
-
-    config.validate()?;
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -94,16 +87,11 @@ pub fn update_config(
     // compile error if we add more params
     let CreateOrUpdateConfig {
         address_provider,
-        close_factor,
     } = new_config;
 
     // Update config
     config.address_provider =
         option_string_to_addr(deps.api, address_provider, config.address_provider)?;
-    config.close_factor = close_factor.unwrap_or(config.close_factor);
-
-    // Validate config
-    config.validate()?;
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -796,6 +784,7 @@ pub fn liquidate(
         get_underlying_debt_amount(user_debt.amount_scaled, &debt_market, block_time)?;
 
     let collateral_params = query_asset_params(&deps.querier, params_addr, &collateral_denom)?;
+    let close_factor = query_close_factor(&deps.querier, params_addr)?;
 
     let (
         debt_amount_to_repay,
@@ -811,7 +800,7 @@ pub fn liquidate(
         collateral_price,
         debt_price,
         block_time,
-        config.close_factor,
+        close_factor,
     )?;
 
     // 4. Transfer collateral shares from the user to the liquidator

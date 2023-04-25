@@ -29,7 +29,6 @@ fn proper_initialization() {
     // Config with base params valid (just update the rest)
     let base_config = CreateOrUpdateConfig {
         address_provider: Some("address_provider".to_string()),
-        close_factor: None,
     };
 
     // *
@@ -37,7 +36,6 @@ fn proper_initialization() {
     // *
     let empty_config = CreateOrUpdateConfig {
         address_provider: None,
-        close_factor: None,
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
@@ -48,35 +46,9 @@ fn proper_initialization() {
     assert_eq!(error_res, MarsError::InstantiateParamsUnavailable {}.into());
 
     // *
-    // init config with close_factor greater than 1
-    // *
-    let mut close_factor = Decimal::from_ratio(13u128, 10u128);
-    let config = CreateOrUpdateConfig {
-        close_factor: Some(close_factor),
-        ..base_config.clone()
-    };
-    let msg = InstantiateMsg {
-        owner: "owner".to_string(),
-        config,
-    };
-    let info = mock_info("owner", &[]);
-    let error_res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ValidationError::InvalidParam {
-            param_name: "close_factor".to_string(),
-            invalid_value: "1.3".to_string(),
-            predicate: "<= 1".to_string(),
-        }
-        .into()
-    );
-
-    // *
     // init config with valid params
     // *
-    close_factor = Decimal::from_ratio(1u128, 2u128);
     let config = CreateOrUpdateConfig {
-        close_factor: Some(close_factor),
         ..base_config
     };
     let msg = InstantiateMsg {
@@ -104,10 +76,8 @@ fn update_config() {
     // *
     // init config with valid params
     // *
-    let mut close_factor = Decimal::from_ratio(1u128, 4u128);
     let init_config = CreateOrUpdateConfig {
         address_provider: Some("address_provider".to_string()),
-        close_factor: Some(close_factor),
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
@@ -121,42 +91,17 @@ fn update_config() {
     // non owner is not authorized
     // *
     let msg = ExecuteMsg::UpdateConfig {
-        config: init_config.clone(),
+        config: init_config,
     };
     let info = mock_info("somebody", &[]);
     let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
     assert_eq!(error_res, ContractError::Owner(NotOwner {}));
 
     // *
-    // update config with close_factor
-    // *
-    close_factor = Decimal::from_ratio(13u128, 10u128);
-    let config = CreateOrUpdateConfig {
-        close_factor: Some(close_factor),
-        ..init_config
-    };
-    let msg = ExecuteMsg::UpdateConfig {
-        config,
-    };
-    let info = mock_info("owner", &[]);
-    let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
-    assert_eq!(
-        error_res,
-        ValidationError::InvalidParam {
-            param_name: "close_factor".to_string(),
-            invalid_value: "1.3".to_string(),
-            predicate: "<= 1".to_string(),
-        }
-        .into()
-    );
-
-    // *
     // update config with all new params
     // *
-    close_factor = Decimal::from_ratio(1u128, 20u128);
     let config = CreateOrUpdateConfig {
         address_provider: Some("new_address_provider".to_string()),
-        close_factor: Some(close_factor),
     };
     let msg = ExecuteMsg::UpdateConfig {
         config: config.clone(),
@@ -173,7 +118,6 @@ fn update_config() {
 
     assert_eq!(new_config.owner.unwrap(), "owner".to_string());
     assert_eq!(new_config.address_provider, Addr::unchecked(config.address_provider.unwrap()));
-    assert_eq!(new_config.close_factor, config.close_factor.unwrap());
 }
 
 #[test]
@@ -183,7 +127,6 @@ fn init_asset() {
 
     let config = CreateOrUpdateConfig {
         address_provider: Some("address_provider".to_string()),
-        close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
@@ -367,7 +310,6 @@ fn update_asset() {
 
     let config = CreateOrUpdateConfig {
         address_provider: Some("address_provider".to_string()),
-        close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
@@ -375,6 +317,8 @@ fn update_asset() {
     };
     let info = mock_info("owner", &[]);
     instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+    deps.querier.set_close_factor(Decimal::from_ratio(1u128, 2u128));
 
     let ir_model = InterestRateModel {
         optimal_utilization_rate: Decimal::one(),
@@ -502,7 +446,6 @@ fn update_asset_with_new_interest_rate_model_params() {
 
     let config = CreateOrUpdateConfig {
         address_provider: Some("address_provider".to_string()),
-        close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
@@ -511,6 +454,8 @@ fn update_asset_with_new_interest_rate_model_params() {
     let info = mock_info("owner", &[]);
     let env = mock_env(MockEnvParams::default());
     instantiate(deps.as_mut(), env, info, msg).unwrap();
+
+    deps.querier.set_close_factor(Decimal::from_ratio(1u128, 2u128));
 
     let ir_model = InterestRateModel {
         optimal_utilization_rate: Decimal::one(),

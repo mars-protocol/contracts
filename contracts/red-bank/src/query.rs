@@ -28,7 +28,6 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         owner: owner_state.owner,
         proposed_new_owner: owner_state.proposed,
         address_provider: config.address_provider.to_string(),
-        close_factor: config.close_factor,
     })
 }
 

@@ -675,7 +675,6 @@ impl MockEnvBuilder {
                     owner: self.owner.to_string(),
                     config: CreateOrUpdateConfig {
                         address_provider: Some(address_provider_addr.to_string()),
-                        close_factor: Some(self.close_factor),
                     },
                 },
                 &[],
