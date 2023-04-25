@@ -263,8 +263,8 @@ fn query_astroport_twap_price(
         .ok_or(ContractError::NoSnapshotWithinTolerance {})?;
 
     // Handle the case if Astroport's cumulative price overflows. In this case, cumulative
-    // price warps back to zero, resulting in more recent cum. prices being smaller than
-    // earlier ones. (same behavior as in Solidity)
+    // price wraps back to zero, resulting in more recent cum. prices being smaller than
+    // earlier ones.
     //
     // Calculations below assumes the cumulative price doesn't overflows more than once during
     // the period, which should always be the case in practice

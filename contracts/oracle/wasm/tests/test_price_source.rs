@@ -144,19 +144,20 @@ fn test_query_fixed_price() {
     robot.set_price_source(denom, price_source, admin).assert_price(denom, ONE);
 }
 
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[]; "XYK, no route, base_denom in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "USD", &[] => panics; "XYK, no route, base_denom not in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[("uusd", TWO)] => panics; "XYK, route asset does not exist")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[("uosmo", TWO)]; "XYK, route equal to base_denom")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[("uion",TWO)] => panics; "XYK, route with non-base existing asset, not in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", &[("uion",TWO)]; "XYK, route with non-base existing asset, in pair")]
-#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", &[]; "Stable, no route, base_denom in pair")]
-#[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", &[("uion",TWO)]; "Stable, route with non-base existing asset, in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[], true; "XYK, no route, base_denom in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "USD", &[], true => panics; "XYK, no route, base_denom not in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[("uusd", TWO)], false => panics; "XYK, route asset does not exist")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[("uosmo", TWO)], true; "XYK, route equal to base_denom")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[("uion",TWO)], true => panics; "XYK, route with non-base existing asset, not in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], true; "XYK, route with non-base existing asset, in pair")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", &[], true; "Stable, no route, base_denom in pair")]
+#[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], true; "Stable, route with non-base existing asset, in pair")]
 fn test_validate_and_query_astroport_spot_price_source(
     pair_type: PairType,
     pair_denoms: &[&str; 2],
     base_denom: &str,
     route_prices: &[(&str, Decimal)],
+    register_routes: bool,
 ) {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
@@ -176,8 +177,11 @@ fn test_validate_and_query_astroport_spot_price_source(
         pair_address: pair_address.clone(),
         route_assets: route_prices.iter().map(|&(s, _)| s.to_string()).collect(),
     };
-    let route_price_sources: Vec<_> =
-        route_prices.iter().map(|&(s, p)| (s, fixed_source(p))).collect();
+    let route_price_sources: Vec<_> = if register_routes {
+        route_prices.iter().map(|&(s, p)| (s, fixed_source(p))).collect()
+    } else {
+        vec![]
+    };
 
     // Oracle uses a swap simulation rather than just dividing the reserves, because we need to support non-XYK pools
     let sim_res =
@@ -269,3 +273,51 @@ fn test_validate_and_query_astroport_twap_price(
         .increase_time(window_size / 2)
         .assert_price_almost_equal(pair_denoms[0], expected_price, Decimal::percent(1));
 }
+
+#[test]
+#[should_panic]
+fn record_twap_snapshots_errors_on_non_twap_price_source() {
+    let runner = get_test_runner();
+    let admin = &runner.init_accounts()[0];
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, None);
+
+    robot
+        .set_price_source("uosmo", fixed_source(ONE), admin)
+        .record_twap_snapshots(&["uosmo"], admin);
+}
+
+#[test]
+fn record_twap_snapshot_does_not_save_when_less_than_tolerance_ago() {
+    let runner = get_test_runner();
+    let admin = &runner.init_accounts()[0];
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uosmo"));
+
+    let (pair_address, _) = robot.create_default_astro_pair(PairType::Xyk {}, admin);
+
+    let price_source = WasmPriceSourceUnchecked::AstroportTwap {
+        pair_address: pair_address.clone(),
+        route_assets: vec![],
+        tolerance: 20,
+        window_size: 100,
+    };
+
+    robot
+        .set_price_source("uatom", price_source.clone(), admin)
+        .record_twap_snapshots(&["uatom"], admin)
+        .increase_time(100)
+        .record_twap_snapshots(&["uatom"], admin)
+        .assert_price("uatom", Decimal::from_ratio(1u128, 10u128))
+        .swap_on_astroport_pair(
+            &pair_address,
+            native_asset("uosmo", 1000000000000u128),
+            None,
+            None,
+            Some(Decimal::percent(50)),
+            admin,
+        )
+        .increase_time(10)
+        .record_twap_snapshots(&["uatom"], admin)
+        // Price should be the same as before
+        .assert_price("uatom", Decimal::from_ratio(1u128, 10u128));
+}
+

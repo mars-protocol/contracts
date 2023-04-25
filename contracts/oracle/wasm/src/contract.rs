@@ -17,7 +17,7 @@ pub type WasmOracle<'a> = OracleBase<
     WasmOracleCustomExecuteMsg,
 >;
 
-const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(not(feature = "library"))]
