@@ -549,19 +549,6 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
         .try_for_each(|(denom, market)| MARKETS.save(deps.as_mut().storage, denom, market))
         .unwrap();
 
-    /*deps.querier.set_redbank_params(
-        &denoms[0],
-        asset_params[0].clone()
-    );
-    deps.querier.set_redbank_params(
-        &denoms[1],
-        asset_params[1].clone()
-    );
-    deps.querier.set_redbank_params(
-        &denoms[2],
-        asset_params[2].clone()
-    );*/
-
     denoms
         .iter()
         .zip(asset_params.iter())
