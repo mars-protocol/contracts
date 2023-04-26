@@ -1,5 +1,6 @@
 [package]
 name          = "mars-params"
+description   = "Contract storing the asset params for Rover and Red Bank."
 version       = { workspace = true }
 authors       = { workspace = true }
 license       = { workspace = true }
