@@ -1,3 +1,5 @@
+#![allow(clippy::items_after_test_module)]
+
 use astroport::factory::PairType;
 use cosmwasm_std::{testing::mock_dependencies, Addr, Decimal, Uint128};
 use cw_it::{
