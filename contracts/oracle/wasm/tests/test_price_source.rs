@@ -1,5 +1,5 @@
 use astroport::factory::PairType;
-use cosmwasm_std::{Decimal, Uint128};
+use cosmwasm_std::{testing::mock_dependencies, Addr, Decimal, Uint128};
 use cw_it::{
     astroport::{
         robot::AstroportTestRobot,
@@ -7,7 +7,9 @@ use cw_it::{
     },
     test_tube::Account,
 };
-use mars_oracle_wasm::WasmPriceSourceUnchecked;
+use cw_storage_plus::Map;
+use mars_oracle_base::PriceSourceUnchecked;
+use mars_oracle_wasm::{WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked};
 use test_case::test_case;
 
 mod helpers;
@@ -24,6 +26,47 @@ fn test_contract_initialization() {
     assert_eq!(config.base_denom, "USD");
     assert_eq!(config.owner, Some(admin.address()));
     assert_eq!(config.proposed_new_owner, None);
+}
+
+#[test]
+fn display_fixed_price_source() {
+    let ps = WasmPriceSource::Fixed {
+        price: Decimal::from_ratio(1u128, 2u128),
+    };
+    assert_eq!(ps.to_string(), "fixed:0.5")
+}
+
+#[test]
+fn display_spot_price_source() {
+    let ps = WasmPriceSourceChecked::AstroportSpot {
+        pair_address: Addr::unchecked("fake_addr"),
+        route_assets: vec![],
+    };
+    assert_eq!(ps.to_string(), "astroport_spot:fake_addr. Route: ")
+}
+
+#[test]
+fn display_spot_price_source_with_route() {
+    let ps = WasmPriceSourceChecked::AstroportSpot {
+        pair_address: Addr::unchecked("fake_addr"),
+        route_assets: vec!["fake_asset1".to_string(), "fake_asset2".to_string()],
+    };
+    assert_eq!(ps.to_string(), "astroport_spot:fake_addr. Route: fake_asset1,fake_asset2")
+}
+
+// TODO: Display test for twap
+
+#[test]
+fn validate_fixed_price_source() {
+    let ps = WasmPriceSource::Fixed {
+        price: Decimal::from_ratio(1u128, 2u128),
+    };
+    let deps = mock_dependencies();
+    let price_sources = Map::new("price_sources");
+    let denom = "uusd";
+    let base_denom = "uusd";
+    let res = ps.validate(&deps.as_ref(), denom, base_denom, &price_sources);
+    assert!(res.is_ok());
 }
 
 #[test]
