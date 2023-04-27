@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use cosmwasm_std::{CustomQuery, Decimal, Deps, Env, QuerierWrapper};
+use cosmwasm_std::{CustomQuery, Decimal, Deps, Env};
 use cw_storage_plus::Map;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
@@ -16,9 +16,10 @@ where
     /// Validate whether the price source is valid for a given denom
     fn validate(
         self,
-        querier: &QuerierWrapper<C>,
+        deps: &Deps<C>,
         denom: &str,
         base_denom: &str,
+        price_sources: &Map<&str, P>,
     ) -> ContractResult<P>;
 }
 pub trait PriceSourceChecked<C>:

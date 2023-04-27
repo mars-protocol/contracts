@@ -45,9 +45,9 @@ grcov ${COVERAGE_PROF_OUTPUT} \
 dependencies = ["install-grcov", "coverage-grcov-prepare-outdir", "coverage-grcov-run-test"]
 
 [tasks.coverage-grcov-html]
-env = { GRCOV_OUTPUT_TYPE = "html", GRCOV_OUTPUT_PATH = "${COVERAGE_TARGET_DIRECTORY}/html" }
+env = { GRCOV_OUTPUT_TYPE = "html", GRCOV_OUTPUT_PATH = "${COVERAGE_TARGET_DIRECTORY}/html", TEST_RUNNER = "multi-test" }
 run_task = "coverage-grcov"
 
 [tasks.coverage-grcov-lcov]
-env = { GRCOV_OUTPUT_TYPE = "lcov", GRCOV_OUTPUT_PATH = "${COVERAGE_TARGET_DIRECTORY}/lcov.info" }
+env = { GRCOV_OUTPUT_TYPE = "lcov", GRCOV_OUTPUT_PATH = "${COVERAGE_TARGET_DIRECTORY}/lcov.info", TEST_RUNNER = "multi-test" }
 run_task = "coverage-grcov"

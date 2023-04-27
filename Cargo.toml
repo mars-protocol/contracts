@@ -41,6 +41,11 @@ serde-wasm-bindgen = "0.5.0"
 thiserror          = "1.0.39"
 wasm-bindgen       = "0.2.84"
 prost              = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
+astroport          = "2.3.1"
+
+# dev-dependencies
+cw-it              = { git = "https://github.com/apollodao/cw-it.git", rev = "9086a08a45dd82e89029323d5d108595c8408060" }
+test-case          = "3.0.0"
 
 # packages
 mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }

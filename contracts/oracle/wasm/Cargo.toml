@@ -1,0 +1,37 @@
+[package]
+name          = "mars-oracle-wasm"
+description   = "A smart contract that provides prices for generic CosmWasm chains"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+license       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest    = false
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+library = []
+osmosis-test-app = ["cw-it/osmosis-test-tube"]
+
+[dependencies]
+cosmwasm-std     = { workspace = true }
+cw2              = { workspace = true }
+cw-storage-plus  = { workspace = true }
+mars-oracle-base = { workspace = true }
+mars-oracle      = { workspace = true }
+cosmwasm-schema  = { workspace = true }
+astroport        = { workspace = true }
+
+[dev-dependencies]
+cosmwasm-schema  = { workspace = true }
+mars-testing     = { workspace = true }
+mars-owner       = { workspace = true }
+cw-it            = { workspace = true, features = ["astroport", "astroport-multi-test"] }
+test-case        = { workspace = true }

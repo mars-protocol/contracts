@@ -1,8 +1,6 @@
 use std::fmt;
 
-use cosmwasm_std::{
-    Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, Uint128, Uint256,
-};
+use cosmwasm_std::{Decimal, Decimal256, Deps, Empty, Env, Isqrt, Uint128, Uint256};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
     ContractError::InvalidPrice, ContractResult, PriceSourceChecked, PriceSourceUnchecked,
@@ -198,9 +196,10 @@ impl fmt::Display for OsmosisPriceSource {
 impl PriceSourceUnchecked<OsmosisPriceSource, Empty> for OsmosisPriceSource {
     fn validate(
         self,
-        querier: &QuerierWrapper,
+        deps: &Deps,
         denom: &str,
         base_denom: &str,
+        _price_sources: &Map<&str, OsmosisPriceSource>,
     ) -> ContractResult<OsmosisPriceSource> {
         match &self {
             OsmosisPriceSource::Fixed {
@@ -209,7 +208,7 @@ impl PriceSourceUnchecked<OsmosisPriceSource, Empty> for OsmosisPriceSource {
             OsmosisPriceSource::Spot {
                 pool_id,
             } => {
-                let pool = query_pool(querier, *pool_id)?;
+                let pool = query_pool(&deps.querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
                 Ok(self)
             }
@@ -218,7 +217,7 @@ impl PriceSourceUnchecked<OsmosisPriceSource, Empty> for OsmosisPriceSource {
                 window_size,
                 downtime_detector,
             } => {
-                let pool = query_pool(querier, *pool_id)?;
+                let pool = query_pool(&deps.querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
                 helpers::assert_osmosis_twap(*window_size, downtime_detector)?;
                 Ok(self)
@@ -228,7 +227,7 @@ impl PriceSourceUnchecked<OsmosisPriceSource, Empty> for OsmosisPriceSource {
                 window_size,
                 downtime_detector,
             } => {
-                let pool = query_pool(querier, *pool_id)?;
+                let pool = query_pool(&deps.querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, base_denom)?;
                 helpers::assert_osmosis_twap(*window_size, downtime_detector)?;
                 Ok(self)
@@ -236,7 +235,7 @@ impl PriceSourceUnchecked<OsmosisPriceSource, Empty> for OsmosisPriceSource {
             OsmosisPriceSource::XykLiquidityToken {
                 pool_id,
             } => {
-                let pool = query_pool(querier, *pool_id)?;
+                let pool = query_pool(&deps.querier, *pool_id)?;
                 helpers::assert_osmosis_xyk_pool(&pool)?;
                 Ok(self)
             }
@@ -246,7 +245,7 @@ impl PriceSourceUnchecked<OsmosisPriceSource, Empty> for OsmosisPriceSource {
                 window_size,
                 downtime_detector,
             } => {
-                let pool = query_pool(querier, *pool_id)?;
+                let pool = query_pool(&deps.querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, transitive_denom)?;
                 helpers::assert_osmosis_twap(*window_size, downtime_detector)?;
                 Ok(self)
