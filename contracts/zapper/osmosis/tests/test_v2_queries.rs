@@ -151,5 +151,5 @@ fn estimate_withdraw_liquidity_successfully() {
             },
         )
         .unwrap();
-    assert_eq!(coins, vec![coin(990000, "uatom"), coin(1980000, "uosmo")])
+    assert_eq!(coins, vec![coin(1000000, "uatom"), coin(2000000, "uosmo")])
 }

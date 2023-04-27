@@ -74,7 +74,7 @@ fn add_position() {
                 denom0,
                 denom1,
                 tick_spacing: 1,
-                precision_factor_at_price_one: "-4".to_string(),
+                exponent_at_price_one: "-4".to_string(),
                 swap_fee: "0".to_string(),
             },
             signer,

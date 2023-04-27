@@ -23,7 +23,6 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "strictNullChecks": true,
-    "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "allowJs": true

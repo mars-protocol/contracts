@@ -36,9 +36,9 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   chain: {
     baseDenom: uosmo,
     defaultGasPrice: 0.1,
-    id: 'osmo-test-4',
+    id: 'osmo-test-5',
     prefix: 'osmo',
-    rpcEndpoint: 'https://rpc-test.osmosis.zone',
+    rpcEndpoint: 'https://rpc.osmotest5.osmosis.zone',
   },
   deployerMnemonic:
     'rely wonder join knock during sudden slow plate segment state agree also arrest mandate grief ordinary lonely lawsuit hurt super banana rule velvet cart',

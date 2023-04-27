@@ -336,8 +336,8 @@ fn provide_liquidity_with_two_unbalanced_coins() {
         estimate_coins.iter().find(|c| c.denom == "uatom").unwrap().amount.u128();
     let uosmo_estimate_amount =
         estimate_coins.iter().find(|c| c.denom == "uosmo").unwrap().amount.u128();
-    assert_eq!(uatom_estimate_amount, 4950000u128);
-    assert_eq!(uosmo_estimate_amount, 9900000u128);
+    assert_eq!(uatom_estimate_amount, 5_000_000u128);
+    assert_eq!(uosmo_estimate_amount, 10_000_000u128);
 
     wasm.execute(
         &contract_addr,

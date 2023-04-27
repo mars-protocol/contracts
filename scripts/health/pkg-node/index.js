@@ -1,7 +1,7 @@
 let imports = {}
 imports['__wbindgen_placeholder__'] = module.exports
 let wasm
-const { TextEncoder, TextDecoder } = require(`util`)
+const { TextDecoder, TextEncoder } = require(`util`)
 
 const heap = new Array(128).fill(undefined)
 
@@ -25,7 +25,18 @@ function takeObject(idx) {
   return ret
 }
 
-let WASM_VECTOR_LEN = 0
+function addHeapObject(obj) {
+  if (heap_next === heap.length) heap.push(heap.length + 1)
+  const idx = heap_next
+  heap_next = heap[idx]
+
+  heap[idx] = obj
+  return idx
+}
+
+let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true })
+
+cachedTextDecoder.decode()
 
 let cachedUint8Memory0 = null
 
@@ -35,6 +46,12 @@ function getUint8Memory0() {
   }
   return cachedUint8Memory0
 }
+
+function getStringFromWasm0(ptr, len) {
+  return cachedTextDecoder.decode(getUint8Memory0().subarray(ptr, ptr + len))
+}
+
+let WASM_VECTOR_LEN = 0
 
 let cachedTextEncoder = new TextEncoder('utf-8')
 
@@ -102,23 +119,6 @@ function getInt32Memory0() {
     cachedInt32Memory0 = new Int32Array(wasm.memory.buffer)
   }
   return cachedInt32Memory0
-}
-
-function addHeapObject(obj) {
-  if (heap_next === heap.length) heap.push(heap.length + 1)
-  const idx = heap_next
-  heap_next = heap[idx]
-
-  heap[idx] = obj
-  return idx
-}
-
-let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true })
-
-cachedTextDecoder.decode()
-
-function getStringFromWasm0(ptr, len) {
-  return cachedTextDecoder.decode(getUint8Memory0().subarray(ptr, ptr + len))
 }
 
 let cachedFloat64Memory0 = null
@@ -224,6 +224,26 @@ module.exports.__wbindgen_object_drop_ref = function (arg0) {
   takeObject(arg0)
 }
 
+module.exports.__wbindgen_is_bigint = function (arg0) {
+  const ret = typeof getObject(arg0) === 'bigint'
+  return ret
+}
+
+module.exports.__wbindgen_bigint_from_u64 = function (arg0) {
+  const ret = BigInt.asUintN(64, arg0)
+  return addHeapObject(ret)
+}
+
+module.exports.__wbindgen_jsval_eq = function (arg0, arg1) {
+  const ret = getObject(arg0) === getObject(arg1)
+  return ret
+}
+
+module.exports.__wbindgen_error_new = function (arg0, arg1) {
+  const ret = new Error(getStringFromWasm0(arg0, arg1))
+  return addHeapObject(ret)
+}
+
 module.exports.__wbindgen_is_object = function (arg0) {
   const val = getObject(arg0)
   const ret = typeof val === 'object' && val !== null
@@ -251,34 +271,14 @@ module.exports.__wbindgen_string_get = function (arg0, arg1) {
   getInt32Memory0()[arg0 / 4 + 0] = ptr0
 }
 
-module.exports.__wbindgen_is_bigint = function (arg0) {
-  const ret = typeof getObject(arg0) === 'bigint'
+module.exports.__wbindgen_is_string = function (arg0) {
+  const ret = typeof getObject(arg0) === 'string'
   return ret
-}
-
-module.exports.__wbindgen_bigint_from_u64 = function (arg0) {
-  const ret = BigInt.asUintN(64, arg0)
-  return addHeapObject(ret)
-}
-
-module.exports.__wbindgen_jsval_eq = function (arg0, arg1) {
-  const ret = getObject(arg0) === getObject(arg1)
-  return ret
-}
-
-module.exports.__wbindgen_error_new = function (arg0, arg1) {
-  const ret = new Error(getStringFromWasm0(arg0, arg1))
-  return addHeapObject(ret)
 }
 
 module.exports.__wbindgen_boolean_get = function (arg0) {
   const v = getObject(arg0)
   const ret = typeof v === 'boolean' ? (v ? 1 : 0) : 2
-  return ret
-}
-
-module.exports.__wbindgen_is_string = function (arg0) {
-  const ret = typeof getObject(arg0) === 'string'
   return ret
 }
 

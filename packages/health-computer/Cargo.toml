@@ -13,6 +13,7 @@ doctest    = false
 [features]
 backtraces = ["cosmwasm-std/backtraces"]
 default    = ["console_error_panic_hook"]
+javascript = []
 
 [dependencies]
 cosmwasm-schema         = { workspace = true }

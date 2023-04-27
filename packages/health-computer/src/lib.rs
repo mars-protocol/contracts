@@ -1,5 +1,8 @@
 mod data_types;
 mod health_computer;
-mod javascript;
+pub use self::{data_types::*, health_computer::*};
 
-pub use self::{data_types::*, health_computer::*, javascript::*};
+#[cfg(feature = "javascript")]
+mod javascript;
+#[cfg(feature = "javascript")]
+pub use self::javascript::*;

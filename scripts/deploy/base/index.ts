@@ -17,6 +17,7 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
     await deployer.upload('swapper', wasmFile(config.swapperContractName))
     await deployer.upload('zapper', wasmFile(config.zapperContractName))
     await deployer.upload('creditManager', wasmFile('mars_credit_manager'))
+    await deployer.upload('healthContract', wasmFile('mars_rover_health'))
 
     // Instantiate contracts
     await deployer.instantiateMockVault()
