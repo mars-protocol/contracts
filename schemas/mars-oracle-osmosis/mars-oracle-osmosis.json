@@ -103,6 +103,19 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "description": "Custom messages defined by the contract",
+        "type": "object",
+        "required": [
+          "custom"
+        ],
+        "properties": {
+          "custom": {
+            "$ref": "#/definitions/Empty"
+          }
+        },
+        "additionalProperties": false
       }
     ],
     "definitions": {
@@ -163,6 +176,10 @@
             "minimum": 0.0
           }
         }
+      },
+      "Empty": {
+        "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+        "type": "object"
       },
       "OsmosisPriceSource": {
         "oneOf": [
