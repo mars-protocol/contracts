@@ -165,6 +165,25 @@ export function useMarsOracleOsmosisConfigQuery<TData = ConfigResponse>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
+export interface MarsOracleOsmosisCustomMutation {
+  client: MarsOracleOsmosisClient
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsOracleOsmosisCustomMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsOracleOsmosisCustomMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsOracleOsmosisCustomMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.custom(msg, fee, memo, funds),
+    options,
+  )
+}
 export interface MarsOracleOsmosisUpdateOwnerMutation {
   client: MarsOracleOsmosisClient
   args?: {

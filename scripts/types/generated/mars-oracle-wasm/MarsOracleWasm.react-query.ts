@@ -15,6 +15,7 @@ import {
   WasmPriceSourceForString,
   Decimal,
   OwnerUpdate,
+  Empty,
   QueryMsg,
   ConfigResponse,
   PriceResponse,
@@ -157,6 +158,25 @@ export function useMarsOracleWasmConfigQuery<TData = ConfigResponse>({
     marsOracleWasmQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsOracleWasmCustomMutation {
+  client: MarsOracleWasmClient
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsOracleWasmCustomMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsOracleWasmCustomMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsOracleWasmCustomMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.custom(msg, fee, memo, funds),
+    options,
   )
 }
 export interface MarsOracleWasmUpdateOwnerMutation {

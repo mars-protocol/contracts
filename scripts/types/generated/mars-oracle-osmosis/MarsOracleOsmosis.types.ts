@@ -28,6 +28,9 @@ export type ExecuteMsg =
   | {
       update_owner: OwnerUpdate
     }
+  | {
+      custom: Empty
+    }
 export type OsmosisPriceSource =
   | {
       fixed: {
