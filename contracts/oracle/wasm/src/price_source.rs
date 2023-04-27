@@ -166,41 +166,15 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
             WasmPriceSource::AstroportSpot {
                 pair_address,
                 route_assets,
-            } => {
-                let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
-
-                // Get the token's precision
-                let p = query_token_precision(
-                    &deps.querier,
-                    &AssetInfo::NativeToken {
-                        denom: denom.to_string(),
-                    },
-                    &astroport_factory,
-                )?;
-                let one = Uint128::new(10_u128.pow(p.into()));
-
-                // Simulate a swap with one unit to get the price. We can't just divide the pools reserves,
-                // because that only works for XYK pairs.
-                let sim_res =
-                    simulate(&deps.querier, pair_address, &astro_native_asset(denom, one))?;
-
-                let mut price = Decimal::from_ratio(sim_res.return_amount, one);
-
-                // If there are route assets, we need to multiply the price by the price of the
-                // route assets in the base denom
-                for denom in route_assets {
-                    let price_source = price_sources.load(deps.storage, denom).map_err(|_| {
-                        ContractError::InvalidPrice {
-                            reason: format!("No price source for route asset {}", denom),
-                        }
-                    })?;
-                    let route_price =
-                        price_source.query_price(deps, env, denom, base_denom, price_sources)?;
-                    price *= route_price;
-                }
-
-                Ok(price)
-            }
+            } => query_astroport_spot_price(
+                deps,
+                env,
+                denom,
+                base_denom,
+                price_sources,
+                pair_address,
+                route_assets,
+            ),
             WasmPriceSource::AstroportTwap {
                 pair_address: _,
                 window_size: _,
@@ -209,4 +183,46 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
             } => todo!(),
         }
     }
+}
+
+/// Queries the spot price of `denom` denominated in `base_denom` from the Astroport pair at `pair_address`.
+fn query_astroport_spot_price(
+    deps: &Deps,
+    env: &Env,
+    denom: &str,
+    base_denom: &str,
+    price_sources: &Map<&str, WasmPriceSourceChecked>,
+    pair_address: &Addr,
+    route_assets: &Vec<String>,
+) -> ContractResult<Decimal> {
+    let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
+
+    // Get the token's precision
+    let p = query_token_precision(
+        &deps.querier,
+        &AssetInfo::NativeToken {
+            denom: denom.to_string(),
+        },
+        &astroport_factory,
+    )?;
+    let one = Uint128::new(10_u128.pow(p.into()));
+
+    // Simulate a swap with one unit to get the price. We can't just divide the pools reserves,
+    // because that only works for XYK pairs.
+    let sim_res = simulate(&deps.querier, pair_address, &astro_native_asset(denom, one))?;
+
+    let mut price = Decimal::from_ratio(sim_res.return_amount, one);
+
+    // If there are route assets, we need to multiply the price by the price of the
+    // route assets in the base denom
+    for denom in route_assets {
+        let price_source =
+            price_sources.load(deps.storage, denom).map_err(|_| ContractError::InvalidPrice {
+                reason: format!("No price source for route asset {}", denom),
+            })?;
+        let route_price = price_source.query_price(deps, env, denom, base_denom, price_sources)?;
+        price *= route_price;
+    }
+
+    Ok(price)
 }
