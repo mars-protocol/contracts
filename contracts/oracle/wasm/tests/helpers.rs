@@ -248,8 +248,7 @@ impl<'a> WasmOracleTestRobot<'a> {
         let return_amount =
             self.query_simulate_swap(pair_addr, native_asset(denom, one), None).return_amount;
 
-        let price = Decimal::from_ratio(return_amount, one);
-        price
+        Decimal::from_ratio(return_amount, one)
     }
 
     // =====  Owner update methods ======

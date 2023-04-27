@@ -23,7 +23,7 @@ fn test_migrate_wasm_oracle() {
         .execute_cosmos_msgs::<MsgMigrateContractResponse>(
             &[CosmosMsg::Wasm(WasmMsg::Migrate {
                 contract_addr: robot.mars_oracle_contract_addr,
-                new_code_id: new_code_id,
+                new_code_id,
                 msg: to_binary(&Empty {}).unwrap(),
             })],
             admin,

@@ -302,7 +302,7 @@ fn record_twap_snapshot_does_not_save_when_less_than_tolerance_ago() {
     };
 
     robot
-        .set_price_source("uatom", price_source.clone(), admin)
+        .set_price_source("uatom", price_source, admin)
         .record_twap_snapshots(&["uatom"], admin)
         .increase_time(100)
         .record_twap_snapshots(&["uatom"], admin)
@@ -320,4 +320,3 @@ fn record_twap_snapshot_does_not_save_when_less_than_tolerance_ago() {
         // Price should be the same as before
         .assert_price("uatom", Decimal::from_ratio(1u128, 10u128));
 }
-

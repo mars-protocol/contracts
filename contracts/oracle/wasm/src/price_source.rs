@@ -208,7 +208,7 @@ fn query_astroport_spot_price(
     base_denom: &str,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     pair_address: &Addr,
-    route_assets: &Vec<String>,
+    route_assets: &[String],
 ) -> ContractResult<Decimal> {
     let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
 
@@ -230,10 +230,11 @@ fn query_astroport_spot_price(
 
     // If there are route assets, we need to multiply the price by the price of the
     // route assets in the base denom
-    add_route_prices(&deps, &env, base_denom, price_sources, route_assets, &price)
+    add_route_prices(deps, env, base_denom, price_sources, route_assets, &price)
 }
 
 /// Queries the TWAP price of `denom` denominated in `base_denom` from the Astroport pair at `pair_address`.
+#[allow(clippy::too_many_arguments)]
 fn query_astroport_twap_price(
     deps: &Deps,
     env: &Env,
@@ -241,13 +242,13 @@ fn query_astroport_twap_price(
     base_denom: &str,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     pair_address: &Addr,
-    route_assets: &Vec<String>,
+    route_assets: &[String],
     window_size: &u64,
     tolerance: &u64,
 ) -> ContractResult<Decimal> {
     let snapshots = ASTROPORT_TWAP_SNAPSHOTS
         .may_load(deps.storage, denom)?
-        .ok_or_else(|| ContractError::NoSnapshots {})?;
+        .ok_or(ContractError::NoSnapshots {})?;
 
     // First, query the current TWAP snapshot
     let current_snapshot = AstroportTwapSnapshot {
