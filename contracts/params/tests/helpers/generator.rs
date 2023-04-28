@@ -4,7 +4,6 @@ use cosmwasm_std::{coin, Decimal, Uint128};
 use mars_params::types::{
     AssetParams, AssetPermissions, RedBankSettings, RoverPermissions, VaultConfig,
 };
-use mars_red_bank_types::red_bank::InterestRateModel;
 
 pub fn default_asset_params() -> AssetParams {
     AssetParams {
@@ -21,13 +20,6 @@ pub fn default_asset_params() -> AssetParams {
         max_loan_to_value: Decimal::from_str("0.6").unwrap(),
         liquidation_threshold: Decimal::from_str("0.7").unwrap(),
         liquidation_bonus: Decimal::from_str("0.15").unwrap(),
-        interest_rate_model: InterestRateModel {
-            optimal_utilization_rate: Decimal::from_str("0.6").unwrap(),
-            base: Decimal::zero(),
-            slope_1: Decimal::from_str("0.15").unwrap(),
-            slope_2: Decimal::from_str("3").unwrap(),
-        },
-        reserve_factor: Decimal::from_str("0.2").unwrap(),
     }
 }
 

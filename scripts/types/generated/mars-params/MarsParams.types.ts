@@ -81,18 +81,10 @@ export type RedBankEmergencyUpdate = {
   disable_borrowing: string
 }
 export interface AssetParams {
-  interest_rate_model: InterestRateModel
   liquidation_bonus: Decimal
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
   permissions: AssetPermissions
-  reserve_factor: Decimal
-}
-export interface InterestRateModel {
-  base: Decimal
-  optimal_utilization_rate: Decimal
-  slope_1: Decimal
-  slope_2: Decimal
 }
 export interface AssetPermissions {
   red_bank: RedBankSettings

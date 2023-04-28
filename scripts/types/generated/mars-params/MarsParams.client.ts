@@ -19,7 +19,6 @@ import {
   RoverEmergencyUpdate,
   RedBankEmergencyUpdate,
   AssetParams,
-  InterestRateModel,
   AssetPermissions,
   RedBankSettings,
   RoverPermissions,

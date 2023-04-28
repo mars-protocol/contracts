@@ -67,8 +67,6 @@ fn initializing_asset_param() {
         params.permissions.red_bank.deposit_cap,
         res.params.permissions.red_bank.deposit_cap
     );
-    assert_eq!(params.interest_rate_model, res.params.interest_rate_model);
-    assert_eq!(params.reserve_factor, res.params.reserve_factor);
 
     mock.update_asset_params(
         &owner,

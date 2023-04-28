@@ -29,29 +29,6 @@ fn denom_must_be_native() {
 }
 
 #[test]
-fn reserve_factor_less_than_one() {
-    let mut mock = MockEnv::new().build().unwrap();
-    let mut params = default_asset_params();
-    params.reserve_factor = Decimal::from_str("1.1235").unwrap();
-
-    let res = mock.update_asset_params(
-        &mock.query_owner(),
-        AssetParamsUpdate::AddOrUpdate {
-            denom: "denom_xyz".to_string(),
-            params,
-        },
-    );
-    assert_err(
-        res,
-        Validation(InvalidParam {
-            param_name: "reserve_factor".to_string(),
-            invalid_value: "1.1235".to_string(),
-            predicate: "< 1".to_string(),
-        }),
-    );
-}
-
-#[test]
 fn max_ltv_less_than_or_equal_to_one() {
     let mut mock = MockEnv::new().build().unwrap();
     let mut params = default_asset_params();
@@ -140,29 +117,6 @@ fn liq_threshold_gte_max_ltv() {
             param_name: "liquidation_threshold".to_string(),
             invalid_value: "0.5".to_string(),
             predicate: "> 0.6 (max LTV)".to_string(),
-        }),
-    );
-}
-
-#[test]
-fn interest_rate_model_validated() {
-    let mut mock = MockEnv::new().build().unwrap();
-    let mut params = default_asset_params();
-    params.interest_rate_model.optimal_utilization_rate = Decimal::from_str("1.5").unwrap();
-
-    let res = mock.update_asset_params(
-        &mock.query_owner(),
-        AssetParamsUpdate::AddOrUpdate {
-            denom: "denom_xyz".to_string(),
-            params,
-        },
-    );
-    assert_err(
-        res,
-        Validation(InvalidParam {
-            param_name: "optimal_utilization_rate".to_string(),
-            invalid_value: "1.5".to_string(),
-            predicate: "<= 1".to_string(),
         }),
     );
 }

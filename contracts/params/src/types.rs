@@ -1,10 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
-use mars_red_bank_types::red_bank::InterestRateModel;
-use mars_utils::{
-    error::ValidationError,
-    helpers::{decimal_param_le_one, decimal_param_lt_one},
-};
+use mars_utils::{error::ValidationError, helpers::decimal_param_le_one};
 
 use crate::execute::assert_lqt_gte_max_ltv;
 
@@ -32,20 +28,15 @@ pub struct AssetParams {
     pub max_loan_to_value: Decimal,
     pub liquidation_threshold: Decimal,
     pub liquidation_bonus: Decimal,
-    pub interest_rate_model: InterestRateModel,
-    pub reserve_factor: Decimal,
 }
 
 impl AssetParams {
     pub fn validate(&self) -> Result<(), ValidationError> {
-        decimal_param_lt_one(self.reserve_factor, "reserve_factor")?;
         decimal_param_le_one(self.max_loan_to_value, "max_loan_to_value")?;
         decimal_param_le_one(self.liquidation_threshold, "liquidation_threshold")?;
         decimal_param_le_one(self.liquidation_bonus, "liquidation_bonus")?;
 
         assert_lqt_gte_max_ltv(self.max_loan_to_value, self.liquidation_threshold)?;
-
-        self.interest_rate_model.validate()?;
 
         Ok(())
     }
