@@ -154,6 +154,7 @@ fn test_query_fixed_price() {
 #[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], true; "XYK, route with non-base existing asset, in pair")]
 #[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", &[], true; "Stable, no route, base_denom in pair")]
 #[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], true; "Stable, route with non-base existing asset, in pair")]
+#[test_case(PairType::Xyk {}, &["uosmo","stake"], "stake", &[("stake", TWO),("stake", TWO)], true => panics; "Duplicate asset in route")]
 pub fn test_validate_and_query_astroport_spot_price_source(
     pair_type: PairType,
     pair_denoms: &[&str; 2],

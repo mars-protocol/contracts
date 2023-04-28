@@ -55,6 +55,15 @@ pub fn validate_route_assets(
         }
     }
 
+    // Route assets should be unique
+    let mut route_assets_set = HashSet::new();
+    for asset in route_assets {
+        if !route_assets_set.insert(asset) {
+            Err(ContractError::InvalidPriceSource {
+                reason: format!("Duplicate route asset {}", asset),
+            })?;
+        }
+    }
     let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
 
     if route_assets.is_empty() {
