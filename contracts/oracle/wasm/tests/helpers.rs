@@ -21,7 +21,7 @@ use {cw_it::osmosis_test_tube::OsmosisTestApp, cw_it::Artifact};
 pub const BASE_DENOM: &str = "USD";
 
 /// The path to the artifacts folder
-pub const ARTIFACTS_PATH: &str = "artifacts/";
+pub const ARTIFACTS_PATH: &str = "../../../artifacts";
 pub const APPEND_ARCH: bool = false;
 
 /// The path to the artifacts folder
@@ -316,15 +316,11 @@ pub fn get_wasm_oracle_contract(runner: &TestRunner) -> ContractType {
     match runner {
         #[cfg(feature = "osmosis-test-app")]
         TestRunner::OsmosisTestApp(_) => {
+            let contract_name = CONTRACT_NAME.replace("-", "_");
             let oracle_wasm_path = if APPEND_ARCH {
-                format!(
-                    "{}/{}-{}.wasm",
-                    ARTIFACTS_PATH,
-                    CONTRACT_NAME.replace('-', "_"),
-                    std::env::consts::ARCH
-                )
+                format!("{}/{}-{}.wasm", ARTIFACTS_PATH, contract_name, std::env::consts::ARCH)
             } else {
-                format!("{}/{}.wasm", ARTIFACTS_PATH, CONTRACT_NAME)
+                format!("{}/{}.wasm", ARTIFACTS_PATH, contract_name)
             };
             ContractType::Artifact(Artifact::Local(oracle_wasm_path))
         }
