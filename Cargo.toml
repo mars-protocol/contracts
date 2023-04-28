@@ -46,6 +46,7 @@ astroport          = { git = "https://github.com/astroport-fi/astroport-core", t
 # dev-dependencies
 cw-it              = { git = "https://github.com/apollodao/cw-it.git", rev = "df43d81fc941c0023c06e3ccffa1e627db5fa5ad" }
 test-case          = "3.0.0"
+proptest           = "1.1.0"
 
 # packages
 mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }

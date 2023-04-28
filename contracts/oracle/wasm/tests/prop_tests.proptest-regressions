@@ -1,0 +1,9 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc dfaa3bc082c4bd0e6e6785f7cc41bccf5ff8454817e3541e03f9610b16fd891c # shrinks to pair_type = Xyk, pair_denoms = ["uatom", "uatom"], base_denom_index = 0, route_prices = [("uatom", Decimal(0))], register_routes = false
+cc ff448d0e7a8b4e91c6c668325d60ed494de44be55fda33ecc379cba616e20f85 # shrinks to pair_type = Xyk, (pair_denoms, route_prices) = (["uosmo", "stake"], [("stake", Decimal(0)), ("stake", Decimal(0.000000004585472013))])
+cc 5ca64eeb9f8cb0df4166ea7782ec07d91492eee50da8160b1342f6e8f4f33cfe # shrinks to pair_type = Xyk, (pair_denoms, route_prices) = (["stake", "uatom"], [("uatom", Decimal(0.637403151169969837)), ("stake", Decimal(0.495188105830810358))])

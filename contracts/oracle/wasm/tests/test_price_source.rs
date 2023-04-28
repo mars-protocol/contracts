@@ -154,53 +154,20 @@ fn test_query_fixed_price() {
 #[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], true; "XYK, route with non-base existing asset, in pair")]
 #[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", &[], true; "Stable, no route, base_denom in pair")]
 #[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], true; "Stable, route with non-base existing asset, in pair")]
-fn test_validate_and_query_astroport_spot_price_source(
+pub fn test_validate_and_query_astroport_spot_price_source(
     pair_type: PairType,
     pair_denoms: &[&str; 2],
     base_denom: &str,
     route_prices: &[(&str, Decimal)],
     register_routes: bool,
 ) {
-    let runner = get_test_runner();
-    let admin = &runner.init_accounts()[0];
-    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
-
-    let initial_liq: [Uint128; 2] =
-        [10000000000000000000000u128.into(), 1000000000000000000000u128.into()];
-    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
-        pair_type.clone(),
-        [native_info(pair_denoms[0]), native_info(pair_denoms[1])],
-        astro_init_params(&pair_type),
-        admin,
-        Some(initial_liq),
-    );
-
-    let price_source = WasmPriceSourceUnchecked::AstroportSpot {
-        pair_address: pair_address.clone(),
-        route_assets: route_prices.iter().map(|&(s, _)| s.to_string()).collect(),
-    };
-    let route_price_sources: Vec<_> = if register_routes {
-        route_prices.iter().map(|&(s, p)| (s, fixed_source(p))).collect()
-    } else {
-        vec![]
-    };
-
-    // Oracle uses a swap simulation rather than just dividing the reserves, because we need to support non-XYK pools
-    let sim_res =
-        robot.query_simulate_swap(&pair_address, native_asset(pair_denoms[0], 1000000u128), None);
-    let expected_price = route_prices
-        .iter()
-        .fold(Decimal::from_ratio(sim_res.return_amount, 1000000u128), |acc, &(_, p)| acc * p);
-
-    // Execute SetPriceSource
-    robot
-        .add_denom_precision_to_coin_registry(pair_denoms[0], 6, admin)
-        .add_denom_precision_to_coin_registry(pair_denoms[1], 6, admin)
-        .add_denom_precision_to_coin_registry(base_denom, 6, admin)
-        .set_price_sources(route_price_sources, admin)
-        .set_price_source(pair_denoms[0], price_source.clone(), admin)
-        .assert_price_source(pair_denoms[0], price_source)
-        .assert_price(pair_denoms[0], expected_price);
+    validate_and_query_astroport_spot_price_source(
+        pair_type,
+        pair_denoms,
+        base_denom,
+        route_prices,
+        register_routes,
+    )
 }
 
 #[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[], 5, 100; "XYK, no route, base_denom in pair")]
