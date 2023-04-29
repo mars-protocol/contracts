@@ -193,8 +193,8 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 price_sources,
                 pair_address,
                 route_assets,
-                window_size,
-                tolerance,
+                *window_size,
+                *tolerance,
             ),
         }
     }
@@ -243,8 +243,8 @@ fn query_astroport_twap_price(
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     pair_address: &Addr,
     route_assets: &[String],
-    window_size: &u64,
-    tolerance: &u64,
+    window_size: u64,
+    tolerance: u64,
 ) -> ContractResult<Decimal> {
     let snapshots = ASTROPORT_TWAP_SNAPSHOTS
         .may_load(deps.storage, denom)?
@@ -260,7 +260,7 @@ fn query_astroport_twap_price(
     // We do this using a linear search, and quit as soon as we find one; otherwise throw error
     let previous_snapshot = snapshots
         .iter()
-        .find(|snapshot| &period_diff(&current_snapshot, snapshot, *window_size) <= tolerance)
+        .find(|snapshot| &period_diff(&current_snapshot, snapshot, window_size) <= &tolerance)
         .ok_or(ContractError::NoSnapshotWithinTolerance {})?;
 
     // Handle the case if Astroport's cumulative price overflows. In this case, cumulative
