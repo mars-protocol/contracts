@@ -260,7 +260,7 @@ fn query_astroport_twap_price(
     // We do this using a linear search, and quit as soon as we find one; otherwise throw error
     let previous_snapshot = snapshots
         .iter()
-        .find(|snapshot| &period_diff(&current_snapshot, snapshot, window_size) <= &tolerance)
+        .find(|snapshot| period_diff(&current_snapshot, snapshot, window_size) <= tolerance)
         .ok_or(ContractError::NoSnapshotWithinTolerance {})?;
 
     // Handle the case if Astroport's cumulative price overflows. In this case, cumulative
