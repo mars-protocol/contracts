@@ -23,7 +23,11 @@ pub fn pair_denoms() -> impl Strategy<Value = [&'static str; 2]> {
 }
 
 pub fn decimal() -> impl Strategy<Value = Decimal> {
-    (1000000..1000000000000000000u128).prop_map(|x| Decimal::new(x.into()))
+    (0..1000000000000000000000000u128).prop_map(|x| Decimal::new(x.into()))
+}
+
+pub fn liquidity() -> impl Strategy<Value = [u128; 2]> {
+    vec(1..1000000000000000000000000u128, 2).prop_map(|v| [v[0], v[1]])
 }
 
 pub fn route_prices<'a>(
@@ -56,12 +60,18 @@ proptest! {
   })]
 
   #[test]
-  fn proptest_validate_and_query_astroport_spot_price_source(pair_type in astro_pair_type(), (pair_denoms,route_prices) in pair_denoms().prop_flat_map(|pair_denoms| (Just(pair_denoms.clone()),route_prices(pair_denoms.clone())))) {
+  fn proptest_validate_and_query_astroport_spot_price_source(
+    pair_type in astro_pair_type(),
+    (pair_denoms,route_prices) in pair_denoms().prop_flat_map(|pair_denoms|
+      (Just(pair_denoms.clone()),route_prices(pair_denoms.clone()))
+    ),
+    initial_liq in liquidity(),
+  ){
     let base_denom = if route_prices.len() > 0 {
       route_prices[route_prices.len() -1].0
     } else {
       pair_denoms[1]
     };
-    validate_and_query_astroport_spot_price_source(pair_type, &pair_denoms, base_denom, &route_prices, true);
+    validate_and_query_astroport_spot_price_source(pair_type, &pair_denoms, base_denom, &route_prices, &initial_liq, true);
   }
 }

@@ -19,6 +19,7 @@ pub use helpers::*;
 
 const ONE: Decimal = Decimal::one();
 const TWO: Decimal = Decimal::new(Uint128::new(2_000_000_000_000_000_000u128));
+const DEFAULT_LIQ: [u128; 2] = [10000000000000000000000u128, 1000000000000000000000u128];
 
 #[test]
 fn test_contract_initialization() {
@@ -168,6 +169,7 @@ pub fn test_validate_and_query_astroport_spot_price_source(
         pair_denoms,
         base_denom,
         route_prices,
+        &DEFAULT_LIQ,
         register_routes,
     )
 }

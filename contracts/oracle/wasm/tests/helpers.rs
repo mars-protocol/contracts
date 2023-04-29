@@ -386,6 +386,7 @@ pub fn validate_and_query_astroport_spot_price_source(
     pair_denoms: &[&str; 2],
     base_denom: &str,
     route_prices: &[(&str, Decimal)],
+    initial_liq: &[u128; 2],
     register_routes: bool,
 ) {
     let runner = get_test_runner();
@@ -393,7 +394,7 @@ pub fn validate_and_query_astroport_spot_price_source(
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
 
     let initial_liq: [Uint128; 2] =
-        [10000000000000000000000u128.into(), 1000000000000000000000u128.into()];
+        initial_liq.into_iter().map(|x| Uint128::from(*x)).collect::<Vec<_>>().try_into().unwrap();
     let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
         pair_type.clone(),
         [native_info(pair_denoms[0]), native_info(pair_denoms[1])],
