@@ -1,8 +1,10 @@
 use cosmwasm_std::Empty;
-use mars_oracle::WasmOracleCustomInitParams;
+use mars_oracle::{WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams};
 use mars_oracle_base::OracleBase;
 
-use crate::{WasmPriceSourceChecked, WasmPriceSourceUnchecked};
+use crate::{
+    astroport_twap::ExecuteTwapSnapshots, WasmPriceSourceChecked, WasmPriceSourceUnchecked,
+};
 
 /// The Wasm oracle contract inherits logics from the base oracle contract, with the Wasm query
 /// and price source plugins
@@ -12,9 +14,10 @@ pub type WasmOracle<'a> = OracleBase<
     WasmPriceSourceUnchecked,
     Empty,
     WasmOracleCustomInitParams,
+    WasmOracleCustomExecuteMsg,
 >;
 
-const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(not(feature = "library"))]
@@ -56,11 +59,19 @@ pub mod entry {
     #[entry_point]
     pub fn execute(
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<WasmPriceSourceUnchecked>,
+        msg: ExecuteMsg<WasmPriceSourceUnchecked, WasmOracleCustomExecuteMsg>,
     ) -> ContractResult<Response> {
-        WasmOracle::default().execute(deps, info, msg)
+        let contract = WasmOracle::default();
+        match msg {
+            ExecuteMsg::Custom(custom_msg) => match custom_msg {
+                WasmOracleCustomExecuteMsg::RecordTwapSnapshots {
+                    denoms,
+                } => contract.execute_record_astroport_twap_snapshots(deps, env, denoms),
+            },
+            _ => contract.execute(deps, info, msg),
+        }
     }
 
     #[entry_point]

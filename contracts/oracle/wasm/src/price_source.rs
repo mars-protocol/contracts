@@ -2,19 +2,24 @@ use std::fmt;
 
 use astroport::{
     asset::AssetInfo,
+    pair::TWAP_PRECISION,
     querier::{query_token_precision, simulate},
 };
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
+use mars_oracle::AstroportTwapSnapshot;
 use mars_oracle_base::{
     ContractError::{self},
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
 
 use crate::{
-    helpers::{astro_native_asset, validate_route_assets},
-    state::ASTROPORT_FACTORY,
+    helpers::{
+        add_route_prices, astro_native_asset, period_diff, query_astroport_cumulative_price,
+        validate_route_assets,
+    },
+    state::{ASTROPORT_FACTORY, ASTROPORT_TWAP_SNAPSHOTS},
 };
 
 #[cw_serde]
@@ -81,7 +86,7 @@ impl fmt::Display for WasmPriceSourceChecked {
             } => {
                 let route_str = route_assets.join(",");
                 format!(
-                    "astroport_twap:{pair_address}:{window_size}:{tolerance}. Route: {route_str}"
+                    "astroport_twap:{pair_address}. Window Size: {window_size}. Tolerance: {tolerance}. Route: {route_str}"
                 )
             }
         };
@@ -176,11 +181,21 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 route_assets,
             ),
             WasmPriceSource::AstroportTwap {
-                pair_address: _,
-                window_size: _,
-                tolerance: _,
-                route_assets: _,
-            } => todo!(),
+                pair_address,
+                window_size,
+                tolerance,
+                route_assets,
+            } => query_astroport_twap_price(
+                deps,
+                env,
+                denom,
+                base_denom,
+                price_sources,
+                pair_address,
+                route_assets,
+                *window_size,
+                *tolerance,
+            ),
         }
     }
 }
@@ -193,7 +208,7 @@ fn query_astroport_spot_price(
     base_denom: &str,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     pair_address: &Addr,
-    route_assets: &Vec<String>,
+    route_assets: &[String],
 ) -> ContractResult<Decimal> {
     let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
 
@@ -211,18 +226,63 @@ fn query_astroport_spot_price(
     // because that only works for XYK pairs.
     let sim_res = simulate(&deps.querier, pair_address, &astro_native_asset(denom, one))?;
 
-    let mut price = Decimal::from_ratio(sim_res.return_amount, one);
+    let price = Decimal::from_ratio(sim_res.return_amount, one);
 
     // If there are route assets, we need to multiply the price by the price of the
     // route assets in the base denom
-    for denom in route_assets {
-        let price_source =
-            price_sources.load(deps.storage, denom).map_err(|_| ContractError::InvalidPrice {
-                reason: format!("No price source for route asset {}", denom),
-            })?;
-        let route_price = price_source.query_price(deps, env, denom, base_denom, price_sources)?;
-        price *= route_price;
-    }
+    add_route_prices(deps, env, base_denom, price_sources, route_assets, &price)
+}
 
-    Ok(price)
+/// Queries the TWAP price of `denom` denominated in `base_denom` from the Astroport pair at `pair_address`.
+#[allow(clippy::too_many_arguments)]
+fn query_astroport_twap_price(
+    deps: &Deps,
+    env: &Env,
+    denom: &str,
+    base_denom: &str,
+    price_sources: &Map<&str, WasmPriceSourceChecked>,
+    pair_address: &Addr,
+    route_assets: &[String],
+    window_size: u64,
+    tolerance: u64,
+) -> ContractResult<Decimal> {
+    let snapshots = ASTROPORT_TWAP_SNAPSHOTS
+        .may_load(deps.storage, denom)?
+        .ok_or(ContractError::NoSnapshots {})?;
+
+    // First, query the current TWAP snapshot
+    let current_snapshot = AstroportTwapSnapshot {
+        timestamp: env.block.time.seconds(),
+        price_cumulative: query_astroport_cumulative_price(&deps.querier, pair_address, denom)?,
+    };
+
+    // Find the oldest snapshot whose period from current snapshot is within the tolerable window
+    // We do this using a linear search, and quit as soon as we find one; otherwise throw error
+    let previous_snapshot = snapshots
+        .iter()
+        .find(|snapshot| period_diff(&current_snapshot, snapshot, window_size) <= tolerance)
+        .ok_or(ContractError::NoSnapshotWithinTolerance {})?;
+
+    // Handle the case if Astroport's cumulative price overflows. In this case, cumulative
+    // price wraps back to zero, resulting in more recent cum. prices being smaller than
+    // earlier ones.
+    //
+    // Calculations below assumes the cumulative price doesn't overflows more than once during
+    // the period, which should always be the case in practice
+    let price_delta = if current_snapshot.price_cumulative >= previous_snapshot.price_cumulative {
+        current_snapshot.price_cumulative - previous_snapshot.price_cumulative
+    } else {
+        current_snapshot
+            .price_cumulative
+            .checked_add(Uint128::MAX - previous_snapshot.price_cumulative)?
+    };
+    let period = current_snapshot.timestamp - previous_snapshot.timestamp;
+    // NOTE: Astroport introduces TWAP precision (https://github.com/astroport-fi/astroport/pull/143).
+    // We need to divide the result by price_precision: (price_delta / (time * price_precision)).
+    let price_precision = Uint128::from(10_u128.pow(TWAP_PRECISION.into()));
+    let price = Decimal::from_ratio(price_delta, price_precision.checked_mul(period.into())?);
+
+    // If there are route assets, we need to multiply the price by the price of the
+    // route assets in the base denom
+    add_route_prices(deps, env, base_denom, price_sources, route_assets, &price)
 }

@@ -14,6 +14,7 @@ import {
   WasmPriceSourceForString,
   Decimal,
   OwnerUpdate,
+  Empty,
   QueryMsg,
   ConfigResponse,
   PriceResponse,
@@ -133,6 +134,7 @@ export interface MarsOracleWasmInterface extends MarsOracleWasmReadOnlyInterface
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
+  custom: (fee?: number | StdFee | 'auto', memo?: string, funds?: Coin[]) => Promise<ExecuteResult>
 }
 export class MarsOracleWasmClient
   extends MarsOracleWasmQueryClient
@@ -150,6 +152,7 @@ export class MarsOracleWasmClient
     this.setPriceSource = this.setPriceSource.bind(this)
     this.removePriceSource = this.removePriceSource.bind(this)
     this.updateOwner = this.updateOwner.bind(this)
+    this.custom = this.custom.bind(this)
   }
 
   setPriceSource = async (
@@ -211,6 +214,22 @@ export class MarsOracleWasmClient
       this.contractAddress,
       {
         update_owner: {},
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  custom = async (
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        custom: {},
       },
       fee,
       memo,

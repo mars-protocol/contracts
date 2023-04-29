@@ -1,3 +1,4 @@
+mod astroport_twap;
 pub mod contract;
 mod helpers;
 mod price_source;

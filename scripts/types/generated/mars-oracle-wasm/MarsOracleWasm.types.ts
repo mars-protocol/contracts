@@ -28,6 +28,9 @@ export type ExecuteMsg =
   | {
       update_owner: OwnerUpdate
     }
+  | {
+      custom: Empty
+    }
 export type WasmPriceSourceForString =
   | {
       fixed: {
@@ -58,6 +61,9 @@ export type OwnerUpdate =
   | 'clear_proposed'
   | 'accept_proposed'
   | 'abolish_owner_role'
+export interface Empty {
+  [k: string]: unknown
+}
 export type QueryMsg =
   | {
       config: {}
