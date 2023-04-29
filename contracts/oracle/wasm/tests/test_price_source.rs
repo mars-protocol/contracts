@@ -190,61 +190,15 @@ fn test_validate_and_query_astroport_twap_price(
     tolerance: u64,
     window_size: u64,
 ) {
-    let runner = get_test_runner();
-    let admin = &runner.init_accounts()[0];
-    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
-
-    let initial_liq: [Uint128; 2] =
-        [10000000000000000000000u128.into(), 1000000000000000000000u128.into()];
-    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
-        pair_type.clone(),
-        [native_info(pair_denoms[0]), native_info(pair_denoms[1])],
-        astro_init_params(&pair_type),
-        admin,
-        Some(initial_liq),
-    );
-    let initial_price = robot
-        .add_denom_precision_to_coin_registry(pair_denoms[0], 6, admin)
-        .add_denom_precision_to_coin_registry(pair_denoms[1], 6, admin)
-        .add_denom_precision_to_coin_registry(base_denom, 6, admin)
-        .query_price_via_simulation(&pair_address, pair_denoms[0]);
-
-    let price_source = WasmPriceSourceUnchecked::AstroportTwap {
-        pair_address: pair_address.clone(),
-        route_assets: route_prices.iter().map(|&(s, _)| s.to_string()).collect(),
+    validate_and_query_astroport_twap_price_source(
+        pair_type,
+        pair_denoms,
+        base_denom,
+        route_prices,
         tolerance,
         window_size,
-    };
-    let route_price_sources: Vec<_> =
-        route_prices.iter().map(|&(s, p)| (s, fixed_source(p))).collect();
-
-    let price_after_swap = robot
-        .set_price_sources(route_price_sources, admin)
-        .set_price_source(pair_denoms[0], price_source.clone(), admin)
-        .assert_price_source(pair_denoms[0], price_source)
-        .record_twap_snapshots(&[pair_denoms[0]], admin)
-        .increase_time(window_size / 2)
-        .swap_on_astroport_pair(
-            &pair_address,
-            native_asset(pair_denoms[1], 10000000000000000000u128),
-            None,
-            None,
-            Some(Decimal::from_ratio(1u128, 2u128)),
-            admin,
-        )
-        .query_price_via_simulation(&pair_address, pair_denoms[0]);
-
-    let price_precision: Uint128 = Uint128::from(10_u128.pow(8));
-    let expected_price = Decimal::from_ratio(
-        (initial_price + price_after_swap) * Decimal::from_ratio(1u128, 2u128) * price_precision,
-        price_precision,
-    );
-    let expected_price = route_prices.iter().fold(expected_price, |acc, &(_, p)| acc * p);
-
-    robot
-        .record_twap_snapshots(&[pair_denoms[0]], admin)
-        .increase_time(window_size / 2)
-        .assert_price_almost_equal(pair_denoms[0], expected_price, Decimal::percent(1));
+        &DEFAULT_LIQ,
+    )
 }
 
 #[test]
