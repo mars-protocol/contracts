@@ -394,7 +394,7 @@ pub fn validate_and_query_astroport_spot_price_source(
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
 
     let initial_liq: [Uint128; 2] =
-        initial_liq.into_iter().map(|x| Uint128::from(*x)).collect::<Vec<_>>().try_into().unwrap();
+        initial_liq.iter().map(|x| Uint128::from(*x)).collect::<Vec<_>>().try_into().unwrap();
     let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
         pair_type.clone(),
         [native_info(pair_denoms[0]), native_info(pair_denoms[1])],
@@ -446,7 +446,7 @@ pub fn validate_and_query_astroport_twap_price_source(
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
 
     let initial_liq: [Uint128; 2] =
-        initial_liq.into_iter().map(|x| Uint128::from(*x)).collect::<Vec<_>>().try_into().unwrap();
+        initial_liq.iter().map(|x| Uint128::from(*x)).collect::<Vec<_>>().try_into().unwrap();
     let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
         pair_type.clone(),
         [native_info(pair_denoms[0]), native_info(pair_denoms[1])],

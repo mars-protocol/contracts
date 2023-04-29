@@ -38,23 +38,23 @@ pub fn liquidity() -> impl Strategy<Value = [u128; 2]> {
 }
 
 /// Generates a vector of (denom, price) tuples that can be used as route assets for the price source.
-pub fn route_prices<'a>(
-    pair_denoms: [&'a str; 2],
-) -> impl Strategy<Value = Vec<(&'a str, Decimal)>> + 'a {
+pub fn route_prices(
+    pair_denoms: [&str; 2],
+) -> impl Strategy<Value = Vec<(&'_ str, Decimal)>> {
     vec((denom(), decimal()), 0..4)
         .prop_flat_map(move |x| {
             let mut v = x;
-            if v.len() > 0 {
+            if !v.is_empty() {
                 v[0].0 = pair_denoms[1];
             }
             Just(v)
         })
         .prop_filter("route assets must be unique", |v| {
             let mut set = HashSet::new();
-            v.into_iter().all(|x| set.insert(x.0))
+            v.iter().all(|x| set.insert(x.0))
         })
         .prop_filter("route assets cannot contain the price source denom", move |v| {
-            v.into_iter().all(|x| x.0 != pair_denoms[0])
+            v.iter().all(|x| x.0 != pair_denoms[0])
         })
 }
 
@@ -71,11 +71,11 @@ proptest! {
   fn proptest_validate_and_query_astroport_spot_price_source(
     pair_type in astro_pair_type(),
     (pair_denoms,route_prices) in pair_denoms().prop_flat_map(|pair_denoms|
-      (Just(pair_denoms.clone()),route_prices(pair_denoms.clone()))
+      (Just(pair_denoms),route_prices(pair_denoms))
     ),
     initial_liq in liquidity(),
   ){
-    let base_denom = if route_prices.len() > 0 {
+    let base_denom = if !route_prices.is_empty() {
       route_prices[route_prices.len() -1].0
     } else {
       pair_denoms[1]
@@ -87,12 +87,12 @@ proptest! {
   fn proptest_validate_and_query_astroport_twap_price_source(
     pair_type in astro_pair_type(),
     (pair_denoms,route_prices) in pair_denoms().prop_flat_map(|pair_denoms|
-      (Just(pair_denoms.clone()),route_prices(pair_denoms.clone()))
+      (Just(pair_denoms),route_prices(pair_denoms))
     ),
     initial_liq in liquidity(),
     (window_size,tolerance) in (2..1000000u64).prop_flat_map(|x| (Just(x), 0..x))
   ) {
-    let base_denom = if route_prices.len() > 0 {
+    let base_denom = if !route_prices.is_empty() {
       route_prices[route_prices.len() -1].0
     } else {
       pair_denoms[1]

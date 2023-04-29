@@ -3,10 +3,7 @@
 use astroport::factory::PairType;
 use cosmwasm_std::{testing::mock_dependencies, Addr, Decimal, Uint128};
 use cw_it::{
-    astroport::{
-        robot::AstroportTestRobot,
-        utils::{native_asset, native_info},
-    },
+    astroport::{robot::AstroportTestRobot, utils::native_asset},
     test_tube::Account,
 };
 use cw_storage_plus::Map;
