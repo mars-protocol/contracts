@@ -20,6 +20,7 @@ use crate::{
         query_total_vault_coin_balance, query_vault_config, query_vault_position_value,
         query_vault_utilization, query_vaults_config,
     },
+    repay::repay_from_wallet,
     update_config::{update_config, update_nft_config, update_owner},
     vault::handle_unlock_request_reply,
     zap::{estimate_provide_liquidity, estimate_withdraw_liquidity},
@@ -62,6 +63,9 @@ pub fn execute(
             actions,
         } => dispatch_actions(deps, env, info, &account_id, &actions),
         ExecuteMsg::EmergencyConfigUpdate(update) => emergency_config_update(deps, info, update),
+        ExecuteMsg::RepayFromWallet {
+            account_id,
+        } => repay_from_wallet(deps, env, info, account_id),
     }
 }
 

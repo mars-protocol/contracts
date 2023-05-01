@@ -53,6 +53,11 @@ export type ExecuteMsg =
       }
     }
   | {
+      repay_from_wallet: {
+        account_id: string
+      }
+    }
+  | {
       update_config: {
         updates: ConfigUpdates
       }

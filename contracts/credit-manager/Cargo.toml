@@ -27,6 +27,7 @@ cw721-base              = { workspace = true }
 cw-item-set             = { workspace = true }
 cw-paginate             = { workspace = true }
 cw-storage-plus         = { workspace = true }
+cw-utils                = { workspace = true }
 cw-vault-standard       = { workspace = true }
 mars-account-nft        = { workspace = true }
 mars-owner              = { workspace = true }
@@ -37,7 +38,6 @@ mars-rover-health-types = { workspace = true }
 [dev-dependencies]
 anyhow             = { workspace = true }
 cw-multi-test      = { workspace = true }
-cw-utils           = { workspace = true }
 itertools          = { workspace = true }
 mars-mock-oracle   = { workspace = true }
 mars-mock-red-bank = { workspace = true }

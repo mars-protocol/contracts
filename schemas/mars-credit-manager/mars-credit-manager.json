@@ -236,6 +236,28 @@
         "additionalProperties": false
       },
       {
+        "description": "Repay debt on behalf of an account, funded from wallet. Must send exactly one coin in message funds. Allows repaying debts of assets that have been de-listed from credit manager.",
+        "type": "object",
+        "required": [
+          "repay_from_wallet"
+        ],
+        "properties": {
+          "repay_from_wallet": {
+            "type": "object",
+            "required": [
+              "account_id"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Update contract config constants",
         "type": "object",
         "required": [

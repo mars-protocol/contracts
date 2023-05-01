@@ -1,6 +1,10 @@
 use std::cmp::min;
 
-use cosmwasm_std::{to_binary, Coin, CosmosMsg, Deps, DepsMut, Env, Response, Uint128, WasmMsg};
+use cosmwasm_std::{
+    to_binary, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, Uint128,
+    WasmMsg,
+};
+use cw_utils::one_coin;
 use mars_rover::{
     error::{ContractError, ContractResult},
     msg::{
@@ -118,4 +122,60 @@ pub fn repay_for_recipient(
         .add_attribute("benefactor_account_id", benefactor_account_id)
         .add_attribute("recipient_account_id", recipient_account_id)
         .add_attribute("coin_repaid", coin_to_repay.to_string()))
+}
+
+pub fn repay_from_wallet(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    account_id: String,
+) -> ContractResult<Response> {
+    let coin_sent = one_coin(&info)?;
+
+    let (debt_amount, _) =
+        current_debt_for_denom(deps.as_ref(), &env, &account_id, &coin_sent.denom)?;
+    let amount_to_repay = min(debt_amount, coin_sent.amount);
+    let coin_to_repay = Coin {
+        denom: coin_sent.denom.clone(),
+        amount: amount_to_repay,
+    };
+
+    increment_coin_balance(deps.storage, &account_id, &coin_to_repay)?;
+
+    let repay_callback_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: env.contract.address.to_string(),
+        funds: vec![],
+        msg: to_binary(&ExecuteMsg::Callback(Repay {
+            account_id: account_id.to_string(),
+            coin: ActionCoin::from(&coin_to_repay),
+        }))?,
+    });
+
+    // if attempting to repay too much, refund back the extra
+    let refund_amount = if coin_sent.amount > coin_to_repay.amount {
+        coin_sent.amount.checked_sub(coin_to_repay.amount)?
+    } else {
+        Uint128::zero()
+    };
+
+    let mut response = Response::new()
+        .add_message(repay_callback_msg)
+        .add_attribute("action", "repay_from_wallet")
+        .add_attribute("from_address", info.sender.to_string())
+        .add_attribute("account_id", account_id)
+        .add_attribute("coin_repaid", coin_to_repay.to_string())
+        .add_attribute("refunded", refund_amount.to_string());
+
+    if !refund_amount.is_zero() {
+        let transfer_msg = CosmosMsg::Bank(BankMsg::Send {
+            to_address: info.sender.to_string(),
+            amount: vec![Coin {
+                denom: coin_sent.denom,
+                amount: refund_amount,
+            }],
+        });
+        response = response.add_message(transfer_msg);
+    }
+
+    Ok(response)
 }

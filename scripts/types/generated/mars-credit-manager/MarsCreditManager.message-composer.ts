@@ -81,6 +81,14 @@ export interface MarsCreditManagerMessage {
     },
     funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
+  repayFromWallet: (
+    {
+      accountId,
+    }: {
+      accountId: string
+    },
+    funds?: Coin[],
+  ) => MsgExecuteContractEncodeObject
   updateConfig: (
     {
       updates,
@@ -110,6 +118,7 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
     this.contractAddress = contractAddress
     this.createCreditAccount = this.createCreditAccount.bind(this)
     this.updateCreditAccount = this.updateCreditAccount.bind(this)
+    this.repayFromWallet = this.repayFromWallet.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
     this.emergencyConfigUpdate = this.emergencyConfigUpdate.bind(this)
     this.updateOwner = this.updateOwner.bind(this)
@@ -152,6 +161,30 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
             update_credit_account: {
               account_id: accountId,
               actions,
+            },
+          }),
+        ),
+        funds,
+      }),
+    }
+  }
+  repayFromWallet = (
+    {
+      accountId,
+    }: {
+      accountId: string
+    },
+    funds?: Coin[],
+  ): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(
+          JSON.stringify({
+            repay_from_wallet: {
+              account_id: accountId,
             },
           }),
         ),

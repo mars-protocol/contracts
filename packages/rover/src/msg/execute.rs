@@ -20,6 +20,11 @@ pub enum ExecuteMsg {
         account_id: String,
         actions: Vec<Action>,
     },
+    /// Repay debt on behalf of an account, funded from wallet. Must send exactly one coin in message funds.
+    /// Allows repaying debts of assets that have been de-listed from credit manager.
+    RepayFromWallet {
+        account_id: String,
+    },
 
     //--------------------------------------------------------------------------------------------------
     // Privileged messages

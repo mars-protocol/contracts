@@ -24,9 +24,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.70"
+version = "1.0.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7de8ce5e0f9f8d88245311066a578d72b7af3e7088f32783804676302df237e4"
+checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
 
 [[package]]
 name = "apollo-cw-asset"
@@ -235,9 +235,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.2.24"
+version = "3.2.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eef2b3ded6a26dfaec672a742c93c8cf6b689220324da509ec5caa20de55dc83"
+checksum = "4ea181bf566f71cb9a5d17a59e1871af638180a18fb0035c92ae62b705207123"
 dependencies = [
  "atty",
  "bitflags",
@@ -1685,7 +1685,7 @@ dependencies = [
 [[package]]
 name = "osmosis-std"
 version = "0.15.2"
-source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=main#f726d5f5820cd04fedf23ea336e7174acb5b44da"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=main#b0860d063c0b59cb5d5b3fb4233bb2784185bb4c"
 dependencies = [
  "chrono",
  "cosmwasm-std",
@@ -1712,7 +1712,7 @@ dependencies = [
 [[package]]
 name = "osmosis-std-derive"
 version = "0.15.2"
-source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=main#f726d5f5820cd04fedf23ea336e7174acb5b44da"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=main#b0860d063c0b59cb5d5b3fb4233bb2784185bb4c"
 dependencies = [
  "itertools",
  "proc-macro2",
@@ -1723,7 +1723,7 @@ dependencies = [
 [[package]]
 name = "osmosis-test-tube"
 version = "14.1.1"
-source = "git+https://github.com/osmosis-labs/test-tube?branch=main#1ba6e8021e441c7ffd1e17796ae64cb750ca57d0"
+source = "git+https://github.com/osmosis-labs/test-tube?branch=main#ae48e239edcf7d0bd7fddd789d2078bd15ef9b2a"
 dependencies = [
  "base64",
  "bindgen",
@@ -2460,7 +2460,7 @@ dependencies = [
 [[package]]
 name = "test-tube"
 version = "0.1.1"
-source = "git+https://github.com/osmosis-labs/test-tube?branch=main#1ba6e8021e441c7ffd1e17796ae64cb750ca57d0"
+source = "git+https://github.com/osmosis-labs/test-tube?branch=main#ae48e239edcf7d0bd7fddd789d2078bd15ef9b2a"
 dependencies = [
  "base64",
  "cosmrs",
@@ -2599,10 +2599,11 @@ checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 
 [[package]]
 name = "tracing"
-version = "0.1.38"
+version = "0.1.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf9cf6a813d3f40c88b0b6b6f29a5c95c6cdbf97c1f9cc53fb820200f5ad814d"
+checksum = "8ce8c33a8d48bd45d624a6e523445fd21ec13d3653cd51f681abf67418f54eb8"
 dependencies = [
+ "cfg-if",
  "pin-project-lite",
  "tracing-core",
 ]

@@ -406,6 +406,16 @@ export interface MarsCreditManagerInterface extends MarsCreditManagerReadOnlyInt
     memo?: string,
     funds?: Coin[],
   ) => Promise<ExecuteResult>
+  repayFromWallet: (
+    {
+      accountId,
+    }: {
+      accountId: string
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
   updateConfig: (
     {
       updates,
@@ -457,6 +467,7 @@ export class MarsCreditManagerClient
     this.contractAddress = contractAddress
     this.createCreditAccount = this.createCreditAccount.bind(this)
     this.updateCreditAccount = this.updateCreditAccount.bind(this)
+    this.repayFromWallet = this.repayFromWallet.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
     this.emergencyConfigUpdate = this.emergencyConfigUpdate.bind(this)
     this.updateOwner = this.updateOwner.bind(this)
@@ -499,6 +510,29 @@ export class MarsCreditManagerClient
         update_credit_account: {
           account_id: accountId,
           actions,
+        },
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  repayFromWallet = async (
+    {
+      accountId,
+    }: {
+      accountId: string
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        repay_from_wallet: {
+          account_id: accountId,
         },
       },
       fee,

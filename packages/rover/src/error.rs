@@ -2,6 +2,7 @@ use cosmwasm_std::{
     CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError, Coin,
     DecimalRangeExceeded, OverflowError, StdError, Uint128,
 };
+use cw_utils::PaymentError;
 use mars_owner::OwnerError;
 use thiserror::Error;
 
@@ -118,6 +119,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Overflow(#[from] OverflowError),
+
+    #[error("{0}")]
+    Payment(#[from] PaymentError),
 
     #[error("Reply id: {0} not valid")]
     ReplyIdError(u64),

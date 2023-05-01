@@ -148,6 +148,22 @@ impl MockEnv {
         )
     }
 
+    pub fn repay_from_wallet(
+        &mut self,
+        sender: &Addr,
+        account_id: &str,
+        funds: &[Coin],
+    ) -> AnyResult<AppResponse> {
+        self.app.execute_contract(
+            sender.clone(),
+            self.rover.clone(),
+            &ExecuteMsg::RepayFromWallet {
+                account_id: account_id.to_string(),
+            },
+            funds,
+        )
+    }
+
     pub fn update_config(
         &mut self,
         sender: &Addr,

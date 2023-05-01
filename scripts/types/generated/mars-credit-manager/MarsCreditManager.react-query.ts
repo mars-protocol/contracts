@@ -732,6 +732,29 @@ export function useMarsCreditManagerUpdateConfigMutation(
     options,
   )
 }
+export interface MarsCreditManagerRepayFromWalletMutation {
+  client: MarsCreditManagerClient
+  msg: {
+    accountId: string
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsCreditManagerRepayFromWalletMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsCreditManagerRepayFromWalletMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsCreditManagerRepayFromWalletMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.repayFromWallet(msg, fee, memo, funds),
+    options,
+  )
+}
 export interface MarsCreditManagerUpdateCreditAccountMutation {
   client: MarsCreditManagerClient
   msg: {
