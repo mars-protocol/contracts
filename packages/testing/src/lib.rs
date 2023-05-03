@@ -2,6 +2,7 @@
 
 extern crate core;
 
+pub mod astroport_swapper;
 /// cosmwasm_std::testing overrides and custom test helpers
 mod helpers;
 mod mars_mock_querier;

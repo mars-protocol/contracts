@@ -31,7 +31,6 @@ cw-utils = "1.0.1"
 cw-storage-plus = "1.0.1"
 itertools = "0.10.5"
 osmosis-std = "0.14.0"
-osmosis-test-tube = "14.1.1"
 schemars = "0.8.12"
 serde = { version = "1.0.155", default-features = false, features = ["derive"] }
 serde_json = "1.0.94"
@@ -42,11 +41,7 @@ prost              = { version = "0.11.5", default-features = false, features = 
 astroport          = { git = "https://github.com/astroport-fi/astroport-core", tag = "v2.7.1" }
 
 # dev-dependencies
-cw-it = { git = "https://github.com/apollodao/cw-it.git", rev = "798f1ef6276957cc4dc1960d20ad364b84a42666", features = [
-    "astroport",
-    "astroport-multi-test",
-    # "osmosis-test-tube",
-] }
+cw-it = { git = "https://github.com/apollodao/cw-it.git", rev = "86f9f9ca314faee3b7a8def1e2b006393f99f7f1" }
 
 test-case          = "3.0.0"
 
@@ -58,10 +53,11 @@ mars-testing = { path = "packages/testing" }
 mars-oracle  = { path = "packages/mars-oracle" }
 
 # contracts
-mars-swapper-base   = { version = "1.0.0", path = "contracts/swapper/base" }
-mars-oracle-base    = { version = "1.0.0", path = "contracts/oracle/base" }
-mars-oracle-osmosis = { version = "1.0.0", path = "contracts/oracle/osmosis" }
-mars-oracle-wasm    = { version = "1.0.0", path = "contracts/oracle/wasm" }
+mars-swapper-base      = { version = "1.0.0", path = "contracts/swapper/base" }
+mars-swapper-astroport = { version = "1.0.0", path = "contracts/swapper/astroport" }
+mars-oracle-base       = { version = "1.0.0", path = "contracts/oracle/base" }
+mars-oracle-osmosis    = { version = "1.0.0", path = "contracts/oracle/osmosis" }
+mars-oracle-wasm       = { version = "1.0.0", path = "contracts/oracle/wasm" }
 
 [profile.release]
 codegen-units    = 1

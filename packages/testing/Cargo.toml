@@ -20,13 +20,15 @@ osmosis-test-tube = ["cw-it/osmosis-test-tube"]
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cosmwasm-std        = { workspace = true }
-osmosis-std         = { workspace = true }
-mars-oracle         = { workspace = true }
-mars-oracle-osmosis = { workspace = true }
-mars-oracle-wasm    = { workspace = true }
-mars-osmosis        = { workspace = true }
-mars-owner          = { workspace = true }
+cosmwasm-std           = { workspace = true }
+osmosis-std            = { workspace = true }
+mars-oracle            = { workspace = true }
+mars-oracle-osmosis    = { workspace = true }
+mars-oracle-wasm       = { workspace = true }
+mars-osmosis           = { workspace = true }
+mars-owner             = { workspace = true }
+mars-swapper           = { workspace = true }
+mars-swapper-astroport = { workspace = true }
 # mars-rewards-collector-osmosis = { workspace = true }
 prost = { workspace = true }
 
