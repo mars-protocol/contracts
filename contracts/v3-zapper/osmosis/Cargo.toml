@@ -1,0 +1,30 @@
+[package]
+name          = "mars-v3-zapper-osmosis"
+version       = { workspace = true }
+authors       = { workspace = true }
+license       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+library    = []
+
+[dependencies]
+cosmwasm-std        = { workspace = true }
+mars-owner          = { workspace = true }
+mars-v3-zapper-base = { workspace = true }
+osmosis-std       = { workspace = true }
+
+[dev-dependencies]
+anyhow            = { workspace = true }
+cw-utils          = { workspace = true }
+osmosis-test-tube = { workspace = true }

@@ -11,7 +11,7 @@ import {
   ExecuteMsg as SwapperExecute,
   InstantiateMsg as SwapperInstantiateMsg,
 } from '../../types/generated/mars-swapper-base/MarsSwapperBase.types'
-import { InstantiateMsg as ZapperInstantiateMsg } from '../../types/generated/mars-zapper-base/MarsZapperBase.types'
+import { InstantiateMsg as ZapperInstantiateMsg } from '../../types/generated/mars-v2-zapper-base/MarsV2ZapperBase.types'
 import {
   ExecuteMsg as CreditManagerExecute,
   InstantiateMsg as RoverInstantiateMsg,

@@ -340,6 +340,33 @@
             "additionalProperties": false
           },
           {
+            "description": "EmergencyUnlock is called to initiate unlocking a locked position held by the vault. This call should simply unlock `amount` of vault tokens, without performing any other side effects that might cause the transaction to fail. Such as for example compoundning rewards for an LP position.",
+            "type": "object",
+            "required": [
+              "emergency_unlock"
+            ],
+            "properties": {
+              "emergency_unlock": {
+                "type": "object",
+                "required": [
+                  "amount"
+                ],
+                "properties": {
+                  "amount": {
+                    "description": "The amount of vault tokens to unlock.",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Uint128"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Withdraw an unlocking position that has finished unlocking.",
             "type": "object",
             "required": [

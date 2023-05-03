@@ -62,8 +62,8 @@ use mars_rover_health_types::{
 
 use crate::helpers::{
     lp_token_info, mock_account_nft_contract, mock_health_contract, mock_oracle_contract,
-    mock_red_bank_contract, mock_rover_contract, mock_swapper_contract, mock_vault_contract,
-    mock_zapper_contract, AccountToFund, CoinInfo, VaultTestInfo,
+    mock_red_bank_contract, mock_rover_contract, mock_swapper_contract, mock_v2_zapper_contract,
+    mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo,
 };
 
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000);
@@ -970,7 +970,7 @@ impl MockEnvBuilder {
     }
 
     fn deploy_zapper(&mut self, oracle: &OracleUnchecked) -> AnyResult<Zapper> {
-        let code_id = self.app.store_code(mock_zapper_contract());
+        let code_id = self.app.store_code(mock_v2_zapper_contract());
         let lp_token = lp_token_info();
         let addr = self.app.instantiate_contract(
             code_id,

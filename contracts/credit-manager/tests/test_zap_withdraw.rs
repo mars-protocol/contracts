@@ -9,7 +9,7 @@ use mars_rover::{
         instantiate::ConfigUpdates,
     },
 };
-use mars_zapper_mock::contract::STARTING_LP_POOL_TOKENS;
+use mars_v2_zapper_mock::contract::STARTING_LP_POOL_TOKENS;
 
 use crate::helpers::{
     assert_err, get_coin, lp_token_info, uatom_info, uosmo_info, AccountToFund, MockEnv,

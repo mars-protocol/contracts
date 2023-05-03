@@ -72,6 +72,9 @@ pub fn execute(
                 LockupExecuteMsg::Unlock {
                     ..
                 } => request_unlock(deps, env, info),
+                LockupExecuteMsg::EmergencyUnlock {
+                    ..
+                } => unimplemented!(),
             },
             ExtensionExecuteMsg::ForceUnlock(force_msg) => match force_msg {
                 ForceUnlockExecuteMsg::ForceRedeem {

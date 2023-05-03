@@ -61,7 +61,7 @@ pub fn withdraw_unlocked(
     let matching_position =
         lockups.iter().find(|p| p.id == id).ok_or(ContractError::UnlockRequired {})?.clone();
 
-    if &matching_position.owner != sender {
+    if matching_position.owner != sender {
         return Err(ContractError::Unauthorized {});
     }
 

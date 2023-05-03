@@ -323,9 +323,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b76d2207945b8aa3ce0735da53ab9a74f75fe3e7794754c216a9edfa04e1e627"
+checksum = "75836a10cb9654c54e77ee56da94d592923092a10b369cdb0dbd56acefc16340"
 dependencies = [
  "digest 0.10.6",
  "ed25519-zebra",
@@ -336,18 +336,18 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1dd07af7736164d2d8126dc67fdb33b1b5c54fb5a3190395c47f46d24fc6d592"
+checksum = "1c9f7f0e51bfc7295f7b2664fe8513c966428642aa765dad8a74acdab5e0c773"
 dependencies = [
  "syn 1.0.109",
 ]
 
 [[package]]
 name = "cosmwasm-schema"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e9e92cdce475a91659d0dc4d17836a484fc534e80e787281aa4adde4cb1798b"
+checksum = "0f00b363610218eea83f24bbab09e1a7c3920b79f068334fdfcc62f6129ef9fc"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -358,9 +358,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69681bac3dbeb0b00990279e3ed39e3d4406b29f538b16b712f6771322a45048"
+checksum = "ae38f909b2822d32b275c9e2db9728497aa33ffe67dd463bc67c6a3b7092785c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -369,9 +369,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d39f20967baeb94709123f7bba13a25ae2fa166bc5e7813f734914df3f8f6a1"
+checksum = "a49b85345e811c8e80ec55d0d091e4fcb4f00f97ab058f9be5f614c444a730cb"
 dependencies = [
  "base64",
  "cosmwasm-crypto",
@@ -557,9 +557,9 @@ dependencies = [
 
 [[package]]
 name = "cw-vault-standard"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "793cd7de3239b1bf187a2a61c8e37d80bb9bd6e354328bfb12070323a435eee1"
+checksum = "c2e72c053adf399c2dc95cf07ee0c8723dfceeb13ba127cc96ba31d96e454919"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1291,7 +1291,7 @@ dependencies = [
  "mars-rover-health",
  "mars-rover-health-types",
  "mars-swapper-mock",
- "mars-zapper-mock",
+ "mars-v2-zapper-mock",
 ]
 
 [[package]]
@@ -1516,7 +1516,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-zapper-base"
+name = "mars-v2-zapper-base"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-schema",
@@ -1529,7 +1529,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-zapper-mock"
+name = "mars-v2-zapper-mock"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-schema",
@@ -1541,14 +1541,40 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-zapper-osmosis"
+name = "mars-v2-zapper-osmosis"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
  "cw-dex",
  "cw-utils 1.0.1",
  "cw2 1.0.1",
- "mars-zapper-base",
+ "mars-v2-zapper-base",
+ "osmosis-std 0.15.2",
+ "osmosis-test-tube",
+]
+
+[[package]]
+name = "mars-v3-zapper-base"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw2 1.0.1",
+ "mars-owner",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-v3-zapper-osmosis"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std",
+ "cw-utils 1.0.1",
+ "mars-owner",
+ "mars-v3-zapper-base",
  "osmosis-std 0.15.2",
  "osmosis-test-tube",
 ]
@@ -1685,7 +1711,7 @@ dependencies = [
 [[package]]
 name = "osmosis-std"
 version = "0.15.2"
-source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=main#b0860d063c0b59cb5d5b3fb4233bb2784185bb4c"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=main#a139d47ba298c94ebff462572b53c43fae0483e2"
 dependencies = [
  "chrono",
  "cosmwasm-std",
@@ -1712,7 +1738,7 @@ dependencies = [
 [[package]]
 name = "osmosis-std-derive"
 version = "0.15.2"
-source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=main#b0860d063c0b59cb5d5b3fb4233bb2784185bb4c"
+source = "git+https://github.com/osmosis-labs/osmosis-rust?branch=main#a139d47ba298c94ebff462572b53c43fae0483e2"
 dependencies = [
  "itertools",
  "proc-macro2",
@@ -1722,8 +1748,8 @@ dependencies = [
 
 [[package]]
 name = "osmosis-test-tube"
-version = "14.1.1"
-source = "git+https://github.com/osmosis-labs/test-tube?branch=main#ae48e239edcf7d0bd7fddd789d2078bd15ef9b2a"
+version = "15.1.0"
+source = "git+https://github.com/osmosis-labs/test-tube?branch=main#360dd44310d0ea0a14e899c02ab3a4eb716d8404"
 dependencies = [
  "base64",
  "bindgen",
@@ -2459,8 +2485,8 @@ dependencies = [
 
 [[package]]
 name = "test-tube"
-version = "0.1.1"
-source = "git+https://github.com/osmosis-labs/test-tube?branch=main#ae48e239edcf7d0bd7fddd789d2078bd15ef9b2a"
+version = "0.1.2"
+source = "git+https://github.com/osmosis-labs/test-tube?branch=main#360dd44310d0ea0a14e899c02ab3a4eb716d8404"
 dependencies = [
  "base64",
  "cosmrs",

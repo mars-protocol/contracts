@@ -60,11 +60,11 @@ pub fn mock_swapper_contract() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-pub fn mock_zapper_contract() -> Box<dyn Contract<Empty>> {
+pub fn mock_v2_zapper_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
-        mars_zapper_mock::contract::execute,
-        mars_zapper_mock::contract::instantiate,
-        mars_zapper_mock::contract::query,
+        mars_v2_zapper_mock::contract::execute,
+        mars_v2_zapper_mock::contract::instantiate,
+        mars_v2_zapper_mock::contract::query,
     );
     Box::new(contract)
 }
