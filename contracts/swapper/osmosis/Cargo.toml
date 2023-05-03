@@ -30,4 +30,4 @@ mars-swapper      = { workspace = true }
 
 [dev-dependencies]
 anyhow            = { workspace = true }
-osmosis-test-tube = { workspace = true }
+cw-it             = { workspace = true, features = ["osmosis-test-tube"] }
