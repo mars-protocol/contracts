@@ -171,7 +171,6 @@ export interface MarsOracleOsmosisUpdateConfigMutation {
   client: MarsOracleOsmosisClient
   msg: {
     baseDenom?: string
-    pythContractAddr?: string
   }
   args?: {
     fee?: number | StdFee | 'auto'

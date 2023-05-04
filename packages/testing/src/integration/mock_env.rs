@@ -613,7 +613,6 @@ impl MockEnvBuilder {
                 &oracle::InstantiateMsg {
                     owner: self.owner.to_string(),
                     base_denom: self.base_denom.clone(),
-                    pyth_contract_addr: self.pyth_contract_addr.clone(),
                 },
                 &[],
                 "oracle",

@@ -37,8 +37,6 @@ const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
 const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
 const OSMOSIS_INCENTIVES_CONTRACT_NAME: &str = "mars-incentives";
 
-const OSMOSIS_PYTH_ADDR: &str = "osmo1svg55quy7jjee6dn0qx85qxxvx5cafkkw4tmqpcjr9dx99l0zrhs4usft5"; // correct bech32 addr to pass validation
-
 #[test]
 fn querying_xyk_lp_price_if_no_price_for_tokens() {
     let app = OsmosisTestApp::new();
@@ -59,7 +57,6 @@ fn querying_xyk_lp_price_if_no_price_for_tokens() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
-            pyth_contract_addr: OSMOSIS_PYTH_ADDR.to_string(),
         },
     );
 
@@ -113,7 +110,6 @@ fn querying_xyk_lp_price_success() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
-            pyth_contract_addr: OSMOSIS_PYTH_ADDR.to_string(),
         },
     );
 
@@ -222,7 +218,6 @@ fn query_spot_price() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
-            pyth_contract_addr: OSMOSIS_PYTH_ADDR.to_string(),
         },
     );
 
@@ -287,7 +282,6 @@ fn set_spot_without_pools() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
-            pyth_contract_addr: OSMOSIS_PYTH_ADDR.to_string(),
         },
     );
 
@@ -325,7 +319,6 @@ fn incorrect_pool_for_spot() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
-            pyth_contract_addr: OSMOSIS_PYTH_ADDR.to_string(),
         },
     );
 
@@ -372,7 +365,6 @@ fn update_spot_with_different_pool() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
-            pyth_contract_addr: OSMOSIS_PYTH_ADDR.to_string(),
         },
     );
 
@@ -447,7 +439,6 @@ fn query_spot_price_after_lp_change() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
-            pyth_contract_addr: OSMOSIS_PYTH_ADDR.to_string(),
         },
     );
 
@@ -507,7 +498,6 @@ fn query_geometric_twap_price_with_downtime_detector() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
-            pyth_contract_addr: OSMOSIS_PYTH_ADDR.to_string(),
         },
     );
 
@@ -592,7 +582,6 @@ fn query_arithmetic_twap_price() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
-            pyth_contract_addr: OSMOSIS_PYTH_ADDR.to_string(),
         },
     );
 
@@ -679,7 +668,6 @@ fn query_geometric_twap_price() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
-            pyth_contract_addr: OSMOSIS_PYTH_ADDR.to_string(),
         },
     );
 
@@ -766,7 +754,6 @@ fn compare_spot_and_twap_price() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
-            pyth_contract_addr: OSMOSIS_PYTH_ADDR.to_string(),
         },
     );
 
@@ -1027,7 +1014,6 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
-            pyth_contract_addr: OSMOSIS_PYTH_ADDR.to_string(),
         },
     );
 

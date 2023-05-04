@@ -16,7 +16,6 @@ fn instantiating() {
     assert_eq!(cfg.owner.unwrap(), "owner".to_string());
     assert_eq!(cfg.proposed_new_owner, None);
     assert_eq!(cfg.base_denom, "uosmo".to_string());
-    assert_eq!(cfg.pyth_contract_addr, "pyth_contract".to_string());
 }
 
 #[test]
@@ -32,7 +31,6 @@ fn instantiating_incorrect_denom() {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "!*jadfaefc".to_string(),
-            pyth_contract_addr: "pyth_contract_addr".to_string(),
         },
     );
     assert_eq!(
@@ -49,7 +47,6 @@ fn instantiating_incorrect_denom() {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "ahdbufenf&*!-".to_string(),
-            pyth_contract_addr: "pyth_contract_addr".to_string(),
         },
     );
     assert_eq!(
@@ -67,7 +64,6 @@ fn instantiating_incorrect_denom() {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "ab".to_string(),
-            pyth_contract_addr: "pyth_contract_addr".to_string(),
         },
     );
     assert_eq!(
@@ -84,7 +80,6 @@ fn update_config_if_unauthorized() {
 
     let msg = ExecuteMsg::UpdateConfig {
         base_denom: None,
-        pyth_contract_addr: None,
     };
     let info = mock_info("somebody");
     let res_err = entry::execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -97,7 +92,6 @@ fn update_config_with_invalid_base_denom() {
 
     let msg = ExecuteMsg::UpdateConfig {
         base_denom: Some("*!fdskfna".to_string()),
-        pyth_contract_addr: None,
     };
     let info = mock_info("owner");
     let res_err = entry::execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -115,7 +109,6 @@ fn update_config_with_new_params() {
 
     let msg = ExecuteMsg::UpdateConfig {
         base_denom: Some("uusdc".to_string()),
-        pyth_contract_addr: Some("new_pyth_contract_addr".to_string()),
     };
     let info = mock_info("owner");
     let res = entry::execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -126,8 +119,6 @@ fn update_config_with_new_params() {
             attr("action", "update_config"),
             attr("prev_base_denom", "uosmo"),
             attr("base_denom", "uusdc"),
-            attr("prev_pyth_contract_addr", "pyth_contract"),
-            attr("pyth_contract_addr", "new_pyth_contract_addr")
         ]
     );
 
@@ -135,5 +126,4 @@ fn update_config_with_new_params() {
     assert_eq!(cfg.owner.unwrap(), "owner".to_string());
     assert_eq!(cfg.proposed_new_owner, None);
     assert_eq!(cfg.base_denom, "uusdc".to_string());
-    assert_eq!(cfg.pyth_contract_addr, "new_pyth_contract_addr".to_string());
 }
