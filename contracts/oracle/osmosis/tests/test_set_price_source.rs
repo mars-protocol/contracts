@@ -954,6 +954,7 @@ fn setting_price_source_pyth_successfully() {
         ExecuteMsg::SetPriceSource {
             denom: "uatom".to_string(),
             price_source: OsmosisPriceSourceUnchecked::Pyth {
+                contract_addr: "new_pyth_contract_addr".to_string(),
                 price_feed_id: PriceIdentifier::from_hex(
                     "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
                 )
@@ -974,6 +975,7 @@ fn setting_price_source_pyth_successfully() {
     assert_eq!(
         res.price_source,
         OsmosisPriceSourceChecked::Pyth {
+            contract_addr: Addr::unchecked("new_pyth_contract_addr"),
             price_feed_id: PriceIdentifier::from_hex(
                 "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3"
             )

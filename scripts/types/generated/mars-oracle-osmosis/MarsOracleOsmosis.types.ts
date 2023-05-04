@@ -8,7 +8,6 @@
 export interface InstantiateMsg {
   base_denom: string
   owner: string
-  pyth_contract_addr: string
 }
 export type ExecuteMsg =
   | {
@@ -28,7 +27,6 @@ export type ExecuteMsg =
   | {
       update_config: {
         base_denom?: string | null
-        pyth_contract_addr?: string | null
       }
     }
 export type OsmosisPriceSourceForString =
@@ -77,6 +75,7 @@ export type OsmosisPriceSourceForString =
     }
   | {
       pyth: {
+        contract_addr: string
         max_staleness: number
         price_feed_id: Identifier
         [k: string]: unknown
@@ -179,7 +178,6 @@ export interface ConfigResponse {
   base_denom: string
   owner?: string | null
   proposed_new_owner?: string | null
-  pyth_contract_addr: string
 }
 export interface PriceResponse {
   denom: string

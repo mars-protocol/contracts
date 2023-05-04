@@ -502,6 +502,7 @@ fn setup_pyth_and_geometric_twap_for_lsd(
         deps.as_mut(),
         "uatom",
         OsmosisPriceSourceUnchecked::Pyth {
+            contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness: 1800u64,
         },
@@ -847,6 +848,7 @@ fn querying_pyth_price_if_publish_price_too_old() {
         deps.as_mut(),
         "uatom",
         OsmosisPriceSourceUnchecked::Pyth {
+            contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
         },
@@ -907,6 +909,7 @@ fn querying_pyth_price_if_signed() {
         deps.as_mut(),
         "uatom",
         OsmosisPriceSourceUnchecked::Pyth {
+            contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
         },
@@ -964,6 +967,7 @@ fn querying_pyth_price_successfully() {
         deps.as_mut(),
         "uatom",
         OsmosisPriceSourceUnchecked::Pyth {
+            contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
         },
