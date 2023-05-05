@@ -4,7 +4,7 @@ use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
     contract::entry::execute,
     msg::{ExecuteMsg, PriceSourceResponse},
-    OsmosisPriceSource,
+    OsmosisPriceSourceUnchecked,
 };
 use mars_owner::OwnerError::NotOwner;
 use mars_testing::mock_info;
@@ -13,7 +13,7 @@ mod helpers;
 
 #[test]
 fn remove_price_source_by_non_owner() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let err = execute(
         deps.as_mut(),
@@ -29,26 +29,26 @@ fn remove_price_source_by_non_owner() {
 
 #[test]
 fn removing_price_source() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     helpers::set_price_source(
         deps.as_mut(),
         "uosmo",
-        OsmosisPriceSource::Fixed {
+        OsmosisPriceSourceUnchecked::Fixed {
             price: Decimal::one(),
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceUnchecked::Spot {
             pool_id: 1,
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceUnchecked::Spot {
             pool_id: 89,
         },
     );

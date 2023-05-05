@@ -21,6 +21,7 @@ keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
 anyhow             = "1.0.69"
+bech32             = "0.9.1"
 cosmwasm-schema    = "1.2.2"
 cosmwasm-std       = "1.2.2"
 cw2                = { git = "https://github.com/mars-protocol/cw-plus", rev = "4014255" }
@@ -41,6 +42,7 @@ serde-wasm-bindgen = "0.5.0"
 thiserror          = "1.0.39"
 wasm-bindgen       = "0.2.84"
 prost              = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
+pyth-sdk-cw        = "1.0.0"
 astroport          = { git = "https://github.com/astroport-fi/astroport-core", tag = "v2.7.1" }
 
 # dev-dependencies
@@ -49,11 +51,12 @@ test-case          = "3.0.0"
 proptest           = "1.1.0"
 
 # packages
-mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
-mars-owner                 = "1.0.0"
-mars-swapper               = { path = "packages/mars-swapper" }
-mars-testing               = { path = "packages/testing" }
-mars-oracle                = { path = "packages/mars-oracle" }
+mars-osmosis  = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
+mars-owner    = "1.0.0"
+mars-swapper  = { path = "packages/mars-swapper" }
+mars-testing  = { path = "packages/testing" }
+mars-oracle   = { path = "packages/mars-oracle" }
+mars-utils    = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
 
 # contracts
 mars-swapper-base   = { version = "1.0.0", path = "contracts/swapper/base" }

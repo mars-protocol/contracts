@@ -12,11 +12,14 @@ import {
   InstantiateMsg,
   Empty,
   ExecuteMsg,
-  OsmosisPriceSource,
+  OsmosisPriceSourceForString,
   Decimal,
   Downtime,
+  Identifier,
   OwnerUpdate,
   DowntimeDetector,
+  GeometricTwap,
+  RedemptionRateForString,
   QueryMsg,
   ConfigResponse,
   PriceResponse,
@@ -184,6 +187,29 @@ export function useMarsOracleOsmosisCustomMutation(
     options,
   )
 }
+export interface MarsOracleOsmosisUpdateConfigMutation {
+  client: MarsOracleOsmosisClient
+  msg: {
+    baseDenom?: string
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsOracleOsmosisUpdateConfigMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsOracleOsmosisUpdateConfigMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsOracleOsmosisUpdateConfigMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateConfig(msg, fee, memo, funds),
+    options,
+  )
+}
 export interface MarsOracleOsmosisUpdateOwnerMutation {
   client: MarsOracleOsmosisClient
   args?: {
@@ -230,7 +256,7 @@ export interface MarsOracleOsmosisSetPriceSourceMutation {
   client: MarsOracleOsmosisClient
   msg: {
     denom: string
-    priceSource: OsmosisPriceSource
+    priceSource: OsmosisPriceSourceForString
   }
   args?: {
     fee?: number | StdFee | 'auto'

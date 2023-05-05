@@ -179,6 +179,29 @@ export function useMarsOracleWasmCustomMutation(
     options,
   )
 }
+export interface MarsOracleWasmUpdateConfigMutation {
+  client: MarsOracleWasmClient
+  msg: {
+    baseDenom?: string
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsOracleWasmUpdateConfigMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsOracleWasmUpdateConfigMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsOracleWasmUpdateConfigMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateConfig(msg, fee, memo, funds),
+    options,
+  )
+}
 export interface MarsOracleWasmUpdateOwnerMutation {
   client: MarsOracleWasmClient
   args?: {

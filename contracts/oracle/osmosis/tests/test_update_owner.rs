@@ -4,13 +4,13 @@ use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::contract::entry::execute;
 use mars_owner::{OwnerError::NotOwner, OwnerUpdate};
 
-use crate::helpers::{query, setup_test};
+use crate::helpers::{query, setup_test_with_pools};
 
 mod helpers;
 
 #[test]
 fn initialized_state() {
-    let deps = setup_test();
+    let deps = setup_test_with_pools();
 
     let config: ConfigResponse = query(deps.as_ref(), QueryMsg::Config {});
     assert!(config.owner.is_some());
@@ -19,7 +19,7 @@ fn initialized_state() {
 
 #[test]
 fn update_owner() {
-    let mut deps = setup_test();
+    let mut deps = setup_test_with_pools();
 
     let original_config: ConfigResponse = query(deps.as_ref(), QueryMsg::Config {});
 

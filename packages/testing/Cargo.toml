@@ -26,6 +26,7 @@ mars-oracle-osmosis            = { workspace = true }
 mars-osmosis                   = { workspace = true }
 # mars-rewards-collector-osmosis = { workspace = true }
 prost                          = { workspace = true }
+pyth-sdk-cw                    = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 cw-multi-test = { workspace = true }
