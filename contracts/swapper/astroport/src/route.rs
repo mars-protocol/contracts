@@ -34,33 +34,11 @@ impl fmt::Display for AstroportRoute {
 
 impl AstroportRoute {
     pub fn ask(&self) -> AssetInfo {
-        match self.operations.last().unwrap() {
-            SwapOperation::NativeSwap {
-                offer_denom: _,
-                ask_denom,
-            } => AssetInfo::NativeToken {
-                denom: ask_denom.to_string(),
-            },
-            SwapOperation::AstroSwap {
-                offer_asset_info: _,
-                ask_asset_info,
-            } => ask_asset_info.clone(),
-        }
+        self.operations.last().unwrap().ask()
     }
 
     pub fn offer(&self) -> AssetInfo {
-        match self.operations.first().unwrap() {
-            SwapOperation::NativeSwap {
-                offer_denom,
-                ask_denom: _,
-            } => AssetInfo::NativeToken {
-                denom: offer_denom.to_string(),
-            },
-            SwapOperation::AstroSwap {
-                offer_asset_info,
-                ask_asset_info: _,
-            } => offer_asset_info.clone(),
-        }
+        self.operations.first().unwrap().offer()
     }
 
     pub fn query_oracle_price(
@@ -112,22 +90,13 @@ impl Route<Empty, Empty> for AstroportRoute {
         // for each step:
         // - the pool must contain the input and output denoms
         // - the output denom must not be the same as the input denom of a previous step (i.e. the route must not contain a loop)
-        let mut prev_denom_out = &AssetInfo::NativeToken {
+        let mut prev_denom_out = AssetInfo::NativeToken {
             denom: denom_in.to_string(),
         };
         let mut seen_denoms = hashset(&[prev_denom_out.clone()]);
         for (_, step) in steps.iter().enumerate() {
-            let (offer, ask) = match step {
-                SwapOperation::NativeSwap {
-                    ..
-                } => Err(ContractError::InvalidRoute {
-                    reason: "native swap not supported".to_string(),
-                }),
-                SwapOperation::AstroSwap {
-                    offer_asset_info,
-                    ask_asset_info,
-                } => Ok((offer_asset_info, ask_asset_info)),
-            }?;
+            let offer = step.offer();
+            let ask = step.ask();
 
             if offer != prev_denom_out {
                 return Err(ContractError::InvalidRoute {
@@ -143,7 +112,7 @@ impl Route<Empty, Empty> for AstroportRoute {
                 });
             }
 
-            prev_denom_out = ask;
+            prev_denom_out = ask.clone();
             seen_denoms.insert(ask.clone());
         }
 
@@ -173,12 +142,8 @@ impl Route<Empty, Empty> for AstroportRoute {
             reason: "the route must contain at least one step".to_string(),
         })?;
 
-        // Query oracle for prices
-        let offer_price = self.query_oracle_price(querier, self.offer())?;
-        let ask_price = self.query_oracle_price(querier, self.ask())?;
-
         // Calculate the minimum amount of output tokens to receive
-        let out_amount = (ask_price / offer_price) * coin_in.amount;
+        let out_amount = self.estimate_out_amount(querier, coin_in)?;
         let minimum_receive = Some((Decimal::one() - slippage) * out_amount);
 
         let swap_msg: CosmosMsg = WasmMsg::Execute {
@@ -219,11 +184,8 @@ impl Offer for SwapOperation {
     fn offer(&self) -> AssetInfo {
         match self {
             SwapOperation::NativeSwap {
-                offer_denom,
-                ask_denom: _,
-            } => AssetInfo::NativeToken {
-                denom: offer_denom.to_string(),
-            },
+                ..
+            } => unimplemented!("NativeSwap not implemented"),
             SwapOperation::AstroSwap {
                 offer_asset_info,
                 ask_asset_info: _,
@@ -236,11 +198,8 @@ impl Ask for SwapOperation {
     fn ask(&self) -> AssetInfo {
         match self {
             SwapOperation::NativeSwap {
-                offer_denom: _,
-                ask_denom,
-            } => AssetInfo::NativeToken {
-                denom: ask_denom.to_string(),
-            },
+                ..
+            } => unimplemented!("NativeSwap not implemented"),
             SwapOperation::AstroSwap {
                 offer_asset_info: _,
                 ask_asset_info,
@@ -255,24 +214,6 @@ mod tests {
 
     #[test]
     fn test_swap_operation_ask_and_offer() {
-        let op = SwapOperation::NativeSwap {
-            offer_denom: "uosmo".to_string(),
-            ask_denom: "uusd".to_string(),
-        };
-
-        assert_eq!(
-            op.ask(),
-            AssetInfo::NativeToken {
-                denom: "uusd".to_string()
-            }
-        );
-        assert_eq!(
-            op.offer(),
-            AssetInfo::NativeToken {
-                denom: "uosmo".to_string()
-            }
-        );
-
         let op = SwapOperation::AstroSwap {
             offer_asset_info: AssetInfo::NativeToken {
                 denom: "uosmo".to_string(),
@@ -297,41 +238,38 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_swap_operation_ask_native_swap() {
+        let op = SwapOperation::NativeSwap {
+            offer_denom: "uosmo".to_string(),
+            ask_denom: "uusd".to_string(),
+        };
+
+        op.ask();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_swap_operation_offer_native_swap() {
+        let op = SwapOperation::NativeSwap {
+            offer_denom: "uosmo".to_string(),
+            ask_denom: "uusd".to_string(),
+        };
+
+        op.offer();
+    }
+
+    #[test]
     fn test_astroport_route_offer_and_ask() {
         let route = AstroportRoute {
             operations: vec![
-                SwapOperation::NativeSwap {
-                    offer_denom: "uosmo".to_string(),
-                    ask_denom: "uusd".to_string(),
-                },
-                SwapOperation::NativeSwap {
-                    offer_denom: "uusd".to_string(),
-                    ask_denom: "uatom".to_string(),
-                },
-            ],
-            router: "router".to_string(),
-            oracle: "oracle".to_string(),
-            factory: "factory".to_string(),
-        };
-
-        assert_eq!(
-            route.ask(),
-            AssetInfo::NativeToken {
-                denom: "uatom".to_string()
-            }
-        );
-        assert_eq!(
-            route.offer(),
-            AssetInfo::NativeToken {
-                denom: "uosmo".to_string()
-            }
-        );
-
-        let route = AstroportRoute {
-            operations: vec![
-                SwapOperation::NativeSwap {
-                    offer_denom: "uosmo".to_string(),
-                    ask_denom: "uusd".to_string(),
+                SwapOperation::AstroSwap {
+                    offer_asset_info: AssetInfo::NativeToken {
+                        denom: "uosmo".to_string(),
+                    },
+                    ask_asset_info: AssetInfo::NativeToken {
+                        denom: "uusd".to_string(),
+                    },
                 },
                 SwapOperation::AstroSwap {
                     offer_asset_info: AssetInfo::NativeToken {
@@ -359,5 +297,37 @@ mod tests {
                 denom: "uosmo".to_string()
             }
         );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_astroport_route_native_swap_offer() {
+        let route = AstroportRoute {
+            operations: vec![SwapOperation::NativeSwap {
+                offer_denom: "uosmo".to_string(),
+                ask_denom: "uusd".to_string(),
+            }],
+            router: "router".to_string(),
+            oracle: "oracle".to_string(),
+            factory: "factory".to_string(),
+        };
+
+        route.offer();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_astroport_route_native_swap_ask() {
+        let route = AstroportRoute {
+            operations: vec![SwapOperation::NativeSwap {
+                offer_denom: "uosmo".to_string(),
+                ask_denom: "uusd".to_string(),
+            }],
+            router: "router".to_string(),
+            oracle: "oracle".to_string(),
+            factory: "factory".to_string(),
+        };
+
+        route.ask();
     }
 }

@@ -1,39 +1,41 @@
 [workspace]
-members = ["contracts/swapper/*", "contracts/oracle/*", "packages/*"]
+members = [
+  "contracts/swapper/*",
+  "contracts/oracle/*",
+  "packages/*"
+]
 
 [workspace.package]
-version = "1.0.1"
-authors = [
+version       = "1.0.1"
+authors       = [
   "Gabe R. <gabe.r@delphilabs.io>",
   "Larry Engineer <larry@delphidigital.io>",
   "Piotr Babel <piotr@delphilabs.io>",
 ]
-license = "GPL-3.0-or-later"
-edition = "2021"
-repository = "https://github.com/mars-protocol/mars-common"
-homepage = "https://marsprotocol.io"
+license       = "GPL-3.0-or-later"
+edition       = "2021"
+repository    = "https://github.com/mars-protocol/mars-common"
+homepage      = "https://marsprotocol.io"
 documentation = "https://docs.marsprotocol.io/"
-keywords = ["mars", "cosmos", "cosmwasm"]
+keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
-anyhow = "1.0.69"
-cosmwasm-schema = "1.2.2"
-cosmwasm-std = "1.2.2"
-cw2 = { git = "https://github.com/mars-protocol/cw-plus", rev = "4014255" }
-cw721 = "0.16.0"
-cw721-base = { version = "0.16.0", features = ["library"] }
-cw-item-set = { version = "0.7.1", default-features = false, features = [
-  "iterator",
-] }
-cw-multi-test = "0.16.2"
-cw-paginate = "0.2.1"
-cw-utils = "1.0.1"
-cw-storage-plus = "1.0.1"
-itertools = "0.10.5"
-osmosis-std = "0.14.0"
-schemars = "0.8.12"
-serde = { version = "1.0.155", default-features = false, features = ["derive"] }
-serde_json = "1.0.94"
+anyhow             = "1.0.69"
+cosmwasm-schema    = "1.2.2"
+cosmwasm-std       = "1.2.2"
+cw2                = { git = "https://github.com/mars-protocol/cw-plus", rev = "4014255" }
+cw721              = "0.16.0"
+cw721-base         = { version = "0.16.0", features = ["library"] }
+cw-item-set        = { version = "0.7.1", default-features = false, features = ["iterator"] }
+cw-multi-test      = "0.16.2"
+cw-paginate        = "0.2.1"
+cw-utils           = "1.0.1"
+cw-storage-plus    = "1.0.1"
+itertools          = "0.10.5"
+osmosis-std        = "0.14.0"
+schemars           = "0.8.12"
+serde              = { version = "1.0.155", default-features = false, features = ["derive"] }
+serde_json         = "1.0.94"
 serde-wasm-bindgen = "0.5.0"
 thiserror          = "1.0.39"
 wasm-bindgen       = "0.2.84"
@@ -41,16 +43,16 @@ prost              = { version = "0.11.5", default-features = false, features = 
 astroport          = { git = "https://github.com/astroport-fi/astroport-core", tag = "v2.7.1" }
 
 # dev-dependencies
-cw-it = { git = "https://github.com/apollodao/cw-it.git", rev = "86f9f9ca314faee3b7a8def1e2b006393f99f7f1" }
-
+cw-it              = { git = "https://github.com/apollodao/cw-it.git", rev = "86f9f9ca314faee3b7a8def1e2b006393f99f7f1" }
 test-case          = "3.0.0"
 
 # packages
-mars-osmosis = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
-mars-owner   = "1.0.0"
-mars-swapper = { path = "packages/mars-swapper" }
-mars-testing = { path = "packages/testing" }
-mars-oracle  = { path = "packages/mars-oracle" }
+mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
+mars-red-bank-types        = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
+mars-owner                 = "1.0.0"
+mars-swapper               = { path = "packages/mars-swapper" }
+mars-testing               = { path = "packages/testing" }
+mars-oracle                = { path = "packages/mars-oracle" }
 
 # contracts
 mars-swapper-base      = { version = "1.0.0", path = "contracts/swapper/base" }

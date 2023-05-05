@@ -1643,6 +1643,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-red-bank-types"
+version = "1.0.1"
+source = "git+https://github.com/mars-protocol/red-bank?rev=00301d60c38af09d8eb7980355009e2f00c6f41f#00301d60c38af09d8eb7980355009e2f00c6f41f"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "mars-owner",
+ "mars-utils",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-swapper"
 version = "1.0.1"
 dependencies = [
@@ -1664,6 +1676,7 @@ dependencies = [
  "mars-oracle",
  "mars-oracle-wasm",
  "mars-owner",
+ "mars-red-bank-types",
  "mars-swapper",
  "mars-swapper-base",
  "mars-testing",
@@ -1728,6 +1741,15 @@ dependencies = [
  "mars-swapper-astroport",
  "osmosis-std 0.14.0",
  "prost 0.11.9",
+]
+
+[[package]]
+name = "mars-utils"
+version = "1.0.1"
+source = "git+https://github.com/mars-protocol/red-bank?rev=00301d60c38af09d8eb7980355009e2f00c6f41f#00301d60c38af09d8eb7980355009e2f00c6f41f"
+dependencies = [
+ "cosmwasm-std",
+ "thiserror",
 ]
 
 [[package]]

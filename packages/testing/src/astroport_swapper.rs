@@ -92,7 +92,7 @@ pub fn get_test_runner<'a>() -> TestRunner<'a> {
 
 pub struct AstroportSwapperRobot<'a> {
     pub runner: &'a TestRunner<'a>,
-    /// The astroport swapper contract address
+    /// The mars-swapper-astroport contract address
     pub swapper: String,
     /// The mars wasm oracle address
     pub oracle_robot: WasmOracleTestRobot<'a>,

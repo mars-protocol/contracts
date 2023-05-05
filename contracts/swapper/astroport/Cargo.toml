@@ -27,10 +27,11 @@ mars-swapper-base = { workspace = true }
 mars-swapper      = { workspace = true }
 mars-oracle       = { workspace = true }
 mars-oracle-wasm  = { workspace = true }
+mars-red-bank-types = { workspace = true }
 astroport         = { workspace = true }
 
 [dev-dependencies]
 anyhow            = { workspace = true }
 mars-testing      = { workspace = true }
 cw-it             = { workspace = true , features = ["astroport", "astroport-multi-test", "osmosis-test-tube"] }
-test-case = "3.0.0"
+test-case         = "3.0.0"

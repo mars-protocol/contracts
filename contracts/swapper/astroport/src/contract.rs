@@ -5,7 +5,7 @@ use mars_swapper_base::{ContractResult, SwapBase};
 
 use crate::route::AstroportRoute;
 
-/// The Osmosis swapper contract inherits logic from the base swapper contract
+/// The Astroport swapper contract inherits logic from the base swapper contract
 pub type AstroportSwap<'a> = SwapBase<'a, Empty, Empty, AstroportRoute>;
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");

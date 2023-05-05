@@ -31,6 +31,7 @@ const CONTRACT_NAME: &str = "mars-oracle-wasm";
 /// The path to the artifacts folder
 pub const ASTRO_ARTIFACTS_PATH: Option<&str> = Some("tests/astroport-artifacts");
 
+pub const ORACLE_CONTRACT_NAME: &str = "mars-oracle-wasm";
 const TEST_RUNNER: Option<&str> = option_env!("TEST_RUNNER");
 
 /// Default test runner to use if TEST_RUNNER env var is not set
@@ -78,7 +79,7 @@ impl<'a> WasmOracleTestRobot<'a> {
             );
 
         // Instantiate Mars Oracle Wasm contract
-        let code_id = code_ids["mars-oracle-wasm"];
+        let code_id = code_ids[ORACLE_CONTRACT_NAME];
         let init_msg = InstantiateMsg::<WasmOracleCustomInitParams> {
             owner: admin_addr.clone(),
             base_denom: base_denom.unwrap_or(BASE_DENOM).to_string(),
@@ -322,11 +323,11 @@ pub fn get_wasm_oracle_contract(runner: &TestRunner) -> ContractType {
                 format!(
                     "{}/{}-{}.wasm",
                     ARTIFACTS_PATH,
-                    CONTRACT_NAME.replace('-', "_"),
+                    ORACLE_CONTRACT_NAME.replace('-', "_"),
                     std::env::consts::ARCH
                 )
             } else {
-                format!("{}/{}.wasm", ARTIFACTS_PATH, CONTRACT_NAME.replace('-', "_"))
+                format!("{}/{}.wasm", ARTIFACTS_PATH, ORACLE_CONTRACT_NAME.replace('-', "_"))
             };
             ContractType::Artifact(Artifact::Local(oracle_wasm_path))
         }
@@ -350,7 +351,7 @@ pub fn get_contracts(runner: &TestRunner) -> ContractMap {
 
     // Get Oracle contract
     let contract = get_wasm_oracle_contract(runner);
-    contracts.insert("mars-oracle-wasm".to_string(), contract);
+    contracts.insert(ORACLE_CONTRACT_NAME.to_string(), contract);
 
     contracts
 }
