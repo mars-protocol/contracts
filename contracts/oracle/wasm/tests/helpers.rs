@@ -21,7 +21,7 @@ use {cw_it::osmosis_test_tube::OsmosisTestApp, cw_it::Artifact};
 pub const BASE_DENOM: &str = "USD";
 
 /// The path to the artifacts folder
-pub const ARTIFACTS_PATH: &str = "artifacts/";
+pub const ARTIFACTS_PATH: &str = "../../../artifacts";
 pub const APPEND_ARCH: bool = false;
 
 /// The path to the artifacts folder
@@ -316,15 +316,11 @@ pub fn get_wasm_oracle_contract(runner: &TestRunner) -> ContractType {
     match runner {
         #[cfg(feature = "osmosis-test-app")]
         TestRunner::OsmosisTestApp(_) => {
+            let contract_name = CONTRACT_NAME.replace("-", "_");
             let oracle_wasm_path = if APPEND_ARCH {
-                format!(
-                    "{}/{}-{}.wasm",
-                    ARTIFACTS_PATH,
-                    CONTRACT_NAME.replace('-', "_"),
-                    std::env::consts::ARCH
-                )
+                format!("{}/{}-{}.wasm", ARTIFACTS_PATH, contract_name, std::env::consts::ARCH)
             } else {
-                format!("{}/{}.wasm", ARTIFACTS_PATH, CONTRACT_NAME)
+                format!("{}/{}.wasm", ARTIFACTS_PATH, contract_name)
             };
             ContractType::Artifact(Artifact::Local(oracle_wasm_path))
         }
@@ -377,5 +373,129 @@ pub const fn fixed_source(price: Decimal) -> WasmPriceSourceUnchecked {
 /// Asserts that the difference between two Decimal values is less than `tolerance` percent
 fn assert_almost_equal(a: Decimal, b: Decimal, tolerance: Decimal) {
     let diff = a.abs_diff(b);
-    assert!((diff / a) < tolerance);
+    if a == Decimal::zero() {
+        assert!(diff < tolerance);
+    } else {
+        assert!((diff / a) < tolerance);
+    }
+}
+
+/// Tests that Astroport Spot Price Source validation and querying works as expected
+pub fn validate_and_query_astroport_spot_price_source(
+    pair_type: PairType,
+    pair_denoms: &[&str; 2],
+    base_denom: &str,
+    route_prices: &[(&str, Decimal)],
+    initial_liq: &[u128; 2],
+    register_routes: bool,
+) {
+    let runner = get_test_runner();
+    let admin = &runner.init_accounts()[0];
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
+
+    let initial_liq: [Uint128; 2] =
+        initial_liq.iter().map(|x| Uint128::from(*x)).collect::<Vec<_>>().try_into().unwrap();
+    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
+        pair_type.clone(),
+        [native_info(pair_denoms[0]), native_info(pair_denoms[1])],
+        astro_init_params(&pair_type),
+        admin,
+        Some(initial_liq),
+    );
+
+    let price_source = WasmPriceSourceUnchecked::AstroportSpot {
+        pair_address: pair_address.clone(),
+        route_assets: route_prices.iter().map(|&(s, _)| s.to_string()).collect(),
+    };
+    let route_price_sources: Vec<_> = if register_routes {
+        route_prices.iter().map(|&(s, p)| (s, fixed_source(p))).collect()
+    } else {
+        vec![]
+    };
+
+    // Oracle uses a swap simulation rather than just dividing the reserves, because we need to support non-XYK pools
+    let sim_res =
+        robot.query_simulate_swap(&pair_address, native_asset(pair_denoms[0], 1000000u128), None);
+    let expected_price = route_prices
+        .iter()
+        .fold(Decimal::from_ratio(sim_res.return_amount, 1000000u128), |acc, &(_, p)| acc * p);
+
+    // Execute SetPriceSource
+    robot
+        .add_denom_precision_to_coin_registry(pair_denoms[0], 6, admin)
+        .add_denom_precision_to_coin_registry(pair_denoms[1], 6, admin)
+        .add_denom_precision_to_coin_registry(base_denom, 6, admin)
+        .set_price_sources(route_price_sources, admin)
+        .set_price_source(pair_denoms[0], price_source.clone(), admin)
+        .assert_price_source(pair_denoms[0], price_source)
+        .assert_price_almost_equal(pair_denoms[0], expected_price, Decimal::permille(1));
+}
+
+/// Tests that Astroport TWAP Price Source validation and querying works as expected
+pub fn validate_and_query_astroport_twap_price_source(
+    pair_type: PairType,
+    pair_denoms: &[&str; 2],
+    base_denom: &str,
+    route_prices: &[(&str, Decimal)],
+    tolerance: u64,
+    window_size: u64,
+    initial_liq: &[u128; 2],
+) {
+    let runner = get_test_runner();
+    let admin = &runner.init_accounts()[0];
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
+
+    let initial_liq: [Uint128; 2] =
+        initial_liq.iter().map(|x| Uint128::from(*x)).collect::<Vec<_>>().try_into().unwrap();
+    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
+        pair_type.clone(),
+        [native_info(pair_denoms[0]), native_info(pair_denoms[1])],
+        astro_init_params(&pair_type),
+        admin,
+        Some(initial_liq),
+    );
+    let initial_price = robot
+        .add_denom_precision_to_coin_registry(pair_denoms[0], 6, admin)
+        .add_denom_precision_to_coin_registry(pair_denoms[1], 6, admin)
+        .add_denom_precision_to_coin_registry(base_denom, 6, admin)
+        .query_price_via_simulation(&pair_address, pair_denoms[0]);
+
+    let price_source = WasmPriceSourceUnchecked::AstroportTwap {
+        pair_address: pair_address.clone(),
+        route_assets: route_prices.iter().map(|&(s, _)| s.to_string()).collect(),
+        tolerance,
+        window_size,
+    };
+    let route_price_sources: Vec<_> =
+        route_prices.iter().map(|&(s, p)| (s, fixed_source(p))).collect();
+
+    println!("Swap amount: {}", initial_liq[1].u128() / 1000000);
+
+    let price_after_swap = robot
+        .set_price_sources(route_price_sources, admin)
+        .set_price_source(pair_denoms[0], price_source.clone(), admin)
+        .assert_price_source(pair_denoms[0], price_source)
+        .record_twap_snapshots(&[pair_denoms[0]], admin)
+        .increase_time(window_size / 2)
+        .swap_on_astroport_pair(
+            &pair_address,
+            native_asset(pair_denoms[1], initial_liq[1].u128() / 1000000),
+            None,
+            None,
+            Some(Decimal::from_ratio(1u128, 2u128)),
+            admin,
+        )
+        .query_price_via_simulation(&pair_address, pair_denoms[0]);
+
+    let price_precision: Uint128 = Uint128::from(10_u128.pow(8));
+    let expected_price = Decimal::from_ratio(
+        (initial_price + price_after_swap) * Decimal::from_ratio(1u128, 2u128) * price_precision,
+        price_precision,
+    );
+    let expected_price = route_prices.iter().fold(expected_price, |acc, &(_, p)| acc * p);
+
+    robot
+        .record_twap_snapshots(&[pair_denoms[0]], admin)
+        .increase_time(window_size / 2)
+        .assert_price_almost_equal(pair_denoms[0], expected_price, Decimal::percent(1));
 }
