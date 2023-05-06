@@ -11,7 +11,8 @@ import {
   axlUSDCAssetTest,
   axlUSDCOracleTest,
   osmoOracle,
-  marsAssetTest, marsOracleTest
+  marsAssetTest,
+  marsOracleTest,
 } from '../osmosis/config'
 
 export const taskRunner = async (config: DeploymentConfig) => {

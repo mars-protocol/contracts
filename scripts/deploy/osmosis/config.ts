@@ -216,7 +216,6 @@ export const atomAssetTest: AssetConfig = {
   symbol: 'ATOM',
 }
 
-
 export const axlUSDCAsset: AssetConfig = {
   denom: axlUSDC,
   max_loan_to_value: '0.74',
@@ -289,7 +288,6 @@ export const atomOracle: OracleConfig = {
 //   window_size: 1800,
 //   downtime_detector: { downtime: 'duration30m', recovery: 7200 },
 // }
-
 
 export const axlUSDCOracle: OracleConfig = {
   denom: 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
