@@ -1874,7 +1874,6 @@ dependencies = [
  "astroport 2.7.1",
  "cosmwasm-std",
  "cw-it",
- "cw-multi-test 0.16.4",
  "mars-oracle",
  "mars-oracle-osmosis",
  "mars-oracle-wasm",
