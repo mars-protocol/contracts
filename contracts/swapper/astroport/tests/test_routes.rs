@@ -1,3 +1,5 @@
+#![allow(clippy::items_after_test_module)]
+
 use astroport::{asset::AssetInfo, router::SwapOperation};
 use cosmwasm_std::coin;
 use cw_it::traits::CwItRunner;

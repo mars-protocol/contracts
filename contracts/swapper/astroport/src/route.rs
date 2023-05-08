@@ -108,7 +108,7 @@ impl Route<Empty, Empty> for AstroportRoute {
 
             if seen_denoms.contains(&ask) {
                 return Err(ContractError::InvalidRoute {
-                    reason: format!("route contains a loop: denom {} seen twice", ask.to_string()),
+                    reason: format!("route contains a loop: denom {} seen twice", ask),
                 });
             }
 

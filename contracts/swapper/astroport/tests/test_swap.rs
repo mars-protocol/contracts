@@ -1,3 +1,5 @@
+#![allow(clippy::items_after_test_module)]
+
 use astroport::{asset::AssetInfo, factory::PairType, router::SwapOperation};
 use cosmwasm_std::{coin, Decimal, Uint128};
 use cw_it::{
