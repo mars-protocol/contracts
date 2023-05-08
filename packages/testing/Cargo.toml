@@ -16,6 +16,7 @@ doctest = false
 [features]
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
+astroport = ["cw-it/astroport"]
 osmosis-test-tube = ["cw-it/osmosis-test-tube"]
 backtraces = ["cosmwasm-std/backtraces"]
 
@@ -33,7 +34,7 @@ mars-swapper-astroport = { workspace = true }
 prost                  = { workspace = true }
 
 astroport              = { workspace = true }
-cw-it                  = { workspace = true }
+cw-it                  = { workspace = true, features = ["multi-test"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 cw-multi-test = { workspace = true }
