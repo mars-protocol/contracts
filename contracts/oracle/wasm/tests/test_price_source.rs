@@ -20,7 +20,6 @@ use mars_testing::wasm_oracle::{
     astro_init_params, fixed_source, get_contracts, get_test_runner, setup_test,
     WasmOracleTestRobot,
 };
-
 use test_case::test_case;
 
 #[test]

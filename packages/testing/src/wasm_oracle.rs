@@ -14,7 +14,6 @@ use cw_it::{
 use mars_oracle::{InstantiateMsg, WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams};
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
 use mars_owner::OwnerUpdate;
-
 #[cfg(feature = "osmosis-test-tube")]
 use {cw_it::osmosis_test_tube::OsmosisTestApp, cw_it::Artifact};
 

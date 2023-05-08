@@ -4,7 +4,6 @@ use cw_it::{
     astroport::robot::AstroportTestRobot, robot::TestRobot, test_tube::Account, traits::CwItRunner,
 };
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
-
 use mars_testing::astroport_swapper::{get_test_runner, AstroportSwapperRobot};
 use test_case::test_case;
 

@@ -1,15 +1,18 @@
 use std::{fmt::Display, str::FromStr};
 
 use cosmwasm_std::{Coin, Decimal, Uint128};
-use cw_it::osmosis_std::types::{
-    cosmos::bank::v1beta1::QueryBalanceRequest,
-    osmosis::{
-        gamm::v1beta1::{MsgSwapExactAmountIn, MsgSwapExactAmountInResponse},
-        poolmanager::v1beta1::SwapAmountInRoute,
+use cw_it::{
+    osmosis_std::types::{
+        cosmos::bank::v1beta1::QueryBalanceRequest,
+        osmosis::{
+            gamm::v1beta1::{MsgSwapExactAmountIn, MsgSwapExactAmountInResponse},
+            poolmanager::v1beta1::SwapAmountInRoute,
+        },
     },
-};
-use cw_it::osmosis_test_tube::{
-    Account, Bank, ExecuteResponse, Gamm, OsmosisTestApp, Runner, RunnerError, SigningAccount, Wasm,
+    osmosis_test_tube::{
+        Account, Bank, ExecuteResponse, Gamm, OsmosisTestApp, Runner, RunnerError, SigningAccount,
+        Wasm,
+    },
 };
 use mars_swapper::msgs::InstantiateMsg;
 

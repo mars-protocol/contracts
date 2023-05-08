@@ -1,7 +1,6 @@
 use astroport::{asset::AssetInfo, router::SwapOperation};
 use cosmwasm_std::coin;
 use cw_it::traits::CwItRunner;
-
 use mars_testing::astroport_swapper::{get_test_runner, AstroportSwapperRobot};
 use test_case::test_case;
 

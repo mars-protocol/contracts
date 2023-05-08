@@ -1,4 +1,3 @@
-use crate::wasm_oracle::WasmOracleTestRobot;
 use astroport::router::SwapOperation;
 use cosmwasm_std::{Coin, Decimal, Uint128};
 use cw_it::{
@@ -12,11 +11,12 @@ use cw_it::{
     },
     ContractMap, ContractType, TestRunner,
 };
+#[cfg(feature = "osmosis-test-tube")]
+use cw_it::{osmosis_test_tube::OsmosisTestApp, Artifact};
 use mars_swapper::EstimateExactInSwapResponse;
 use mars_swapper_astroport::route::AstroportRoute;
 
-#[cfg(feature = "osmosis-test-tube")]
-use cw_it::{osmosis_test_tube::OsmosisTestApp, Artifact};
+use crate::wasm_oracle::WasmOracleTestRobot;
 
 #[cfg(feature = "osmosis-test-tube")]
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
