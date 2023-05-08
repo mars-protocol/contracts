@@ -114,6 +114,28 @@
         "additionalProperties": false
       },
       {
+        "description": "Update contract config (only callable by owner)",
+        "type": "object",
+        "required": [
+          "update_config"
+        ],
+        "properties": {
+          "update_config": {
+            "type": "object",
+            "properties": {
+              "base_denom": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Custom messages defined by the contract",
         "type": "object",
         "required": [

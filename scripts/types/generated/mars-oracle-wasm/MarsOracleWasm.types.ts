@@ -29,6 +29,11 @@ export type ExecuteMsg =
       update_owner: OwnerUpdate
     }
   | {
+      update_config: {
+        base_denom?: string | null
+      }
+    }
+  | {
       custom: Empty
     }
 export type WasmPriceSourceForString =

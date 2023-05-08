@@ -106,6 +106,9 @@ where
             ExecuteMsg::RemovePriceSource {
                 denom,
             } => self.remove_price_source(deps, info.sender, denom),
+            ExecuteMsg::UpdateConfig {
+                base_denom,
+            } => self.update_config(deps, info.sender, base_denom),
             // Custom messages should be handled by the implementing contract
             ExecuteMsg::Custom(_) => Err(ContractError::MissingCustomExecuteParams {}),
         }
@@ -176,6 +179,31 @@ where
         Ok(Response::new()
             .add_attribute("action", "remove_price_source")
             .add_attribute("denom", denom))
+    }
+
+    fn update_config(
+        &self,
+        deps: DepsMut<C>,
+        sender_addr: Addr,
+        base_denom: Option<String>,
+    ) -> ContractResult<Response> {
+        self.owner.assert_owner(deps.storage, &sender_addr)?;
+
+        if let Some(bd) = &base_denom {
+            validate_native_denom(bd)?;
+        };
+
+        let mut config = self.config.load(deps.storage)?;
+        let prev_base_denom = config.base_denom.clone();
+        config.base_denom = base_denom.unwrap_or(config.base_denom);
+        self.config.save(deps.storage, &config)?;
+
+        let response = Response::new()
+            .add_attribute("action", "update_config")
+            .add_attribute("prev_base_denom", prev_base_denom)
+            .add_attribute("base_denom", config.base_denom);
+
+        Ok(response)
     }
 
     fn query_config(&self, deps: Deps<C>) -> StdResult<ConfigResponse> {

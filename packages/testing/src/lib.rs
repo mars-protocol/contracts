@@ -10,6 +10,8 @@ mod mars_mock_querier;
 mod mocks;
 mod oracle_querier;
 mod osmosis_querier;
+mod pyth_querier;
+mod redemption_rate_querier;
 #[cfg(feature = "astroport")]
 pub mod wasm_oracle;
 

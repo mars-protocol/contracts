@@ -1,6 +1,6 @@
 use mars_oracle as oracle;
 
-use crate::OsmosisPriceSource;
+use crate::price_source::{OsmosisPriceSourceChecked, OsmosisPriceSourceUnchecked};
 
-pub type ExecuteMsg = oracle::ExecuteMsg<OsmosisPriceSource>;
-pub type PriceSourceResponse = oracle::PriceSourceResponse<OsmosisPriceSource>;
+pub type ExecuteMsg = oracle::ExecuteMsg<OsmosisPriceSourceUnchecked>;
+pub type PriceSourceResponse = oracle::PriceSourceResponse<OsmosisPriceSourceChecked>;

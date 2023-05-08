@@ -32,6 +32,7 @@ mars-swapper           = { workspace = true }
 mars-swapper-astroport = { workspace = true }
 # mars-rewards-collector-osmosis = { workspace = true }
 prost                  = { workspace = true }
+pyth-sdk-cw                    = { workspace = true }
 
 astroport              = { workspace = true }
 cw-it                  = { workspace = true, features = ["multi-test"] }

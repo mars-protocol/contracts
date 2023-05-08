@@ -8,12 +8,13 @@
 export interface InstantiateMsg {
   base_denom: string
   owner: string
+  pyth_contract_addr: string
 }
 export type ExecuteMsg =
   | {
       set_price_source: {
         denom: string
-        price_source: OsmosisPriceSource
+        price_source: OsmosisPriceSourceForString
       }
     }
   | {
@@ -24,7 +25,13 @@ export type ExecuteMsg =
   | {
       update_owner: OwnerUpdate
     }
-export type OsmosisPriceSource =
+  | {
+      update_config: {
+        base_denom?: string | null
+        pyth_contract_addr?: string | null
+      }
+    }
+export type OsmosisPriceSourceForString =
   | {
       fixed: {
         price: Decimal
@@ -68,6 +75,21 @@ export type OsmosisPriceSource =
         [k: string]: unknown
       }
     }
+  | {
+      pyth: {
+        max_staleness: number
+        price_feed_id: Identifier
+        [k: string]: unknown
+      }
+    }
+  | {
+      lsd: {
+        geometric_twap: GeometricTwap
+        redemption_rate: RedemptionRateForString
+        transitive_denom: string
+        [k: string]: unknown
+      }
+    }
 export type Decimal = string
 export type Downtime =
   | 'duration30s'
@@ -95,6 +117,7 @@ export type Downtime =
   | 'duration24h'
   | 'duration36h'
   | 'duration48h'
+export type Identifier = string
 export type OwnerUpdate =
   | {
       propose_new_owner: {
@@ -107,6 +130,17 @@ export type OwnerUpdate =
 export interface DowntimeDetector {
   downtime: Downtime
   recovery: number
+  [k: string]: unknown
+}
+export interface GeometricTwap {
+  downtime_detector?: DowntimeDetector | null
+  pool_id: number
+  window_size: number
+  [k: string]: unknown
+}
+export interface RedemptionRateForString {
+  contract_addr: string
+  max_staleness: number
   [k: string]: unknown
 }
 export type QueryMsg =
@@ -139,6 +173,7 @@ export interface ConfigResponse {
   base_denom: string
   owner?: string | null
   proposed_new_owner?: string | null
+  pyth_contract_addr: string
 }
 export interface PriceResponse {
   denom: string

@@ -32,6 +32,6 @@ astroport         = { workspace = true }
 
 [dev-dependencies]
 anyhow            = { workspace = true }
-mars-testing      = { workspace = true }
+mars-testing      = { workspace = true, features = ["astroport"] }
 cw-it             = { workspace = true , features = ["astroport", "astroport-multi-test", "osmosis-test-tube"] }
 test-case         = "3.0.0"

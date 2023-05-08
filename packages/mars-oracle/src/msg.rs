@@ -33,6 +33,10 @@ pub enum ExecuteMsg<T, C = Empty> {
     },
     /// Manages admin role state
     UpdateOwner(OwnerUpdate),
+    /// Update contract config (only callable by owner)
+    UpdateConfig {
+        base_denom: Option<String>,
+    },
     /// Custom messages defined by the contract
     Custom(C),
 }

@@ -31,7 +31,8 @@ astroport        = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema  = { workspace = true }
-mars-testing     = { workspace = true }
+mars-testing     = { workspace = true, features = ["astroport"] }
 mars-owner       = { workspace = true }
 cw-it            = { workspace = true, features = ["astroport", "astroport-multi-test"] }
 test-case        = { workspace = true }
+proptest         = { workspace = true }

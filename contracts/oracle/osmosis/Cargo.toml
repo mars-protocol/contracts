@@ -26,6 +26,7 @@ mars-oracle-base    = { workspace = true }
 mars-oracle         = { workspace = true }
 mars-osmosis        = { workspace = true }
 osmosis-std         = { workspace = true }
+pyth-sdk-cw         = { workspace = true }
 schemars            = { workspace = true }
 serde               = { workspace = true }
 
