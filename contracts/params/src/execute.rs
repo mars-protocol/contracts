@@ -112,3 +112,17 @@ pub fn assert_lqt_gte_max_ltv(
     }
     Ok(())
 }
+
+pub fn assert_hls_lqt_gte_max_ltv(
+    max_ltv: Decimal,
+    liq_threshold: Decimal,
+) -> Result<(), ValidationError> {
+    if liq_threshold <= max_ltv {
+        return Err(ValidationError::InvalidParam {
+            param_name: "hls_liquidation_threshold".to_string(),
+            invalid_value: liq_threshold.to_string(),
+            predicate: format!("> {} (hls max LTV)", max_ltv),
+        });
+    }
+    Ok(())
+}

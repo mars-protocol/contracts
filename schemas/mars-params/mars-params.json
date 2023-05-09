@@ -101,12 +101,16 @@
       "AssetParams": {
         "type": "object",
         "required": [
+          "hls",
           "liquidation_bonus",
           "liquidation_threshold",
           "max_loan_to_value",
           "permissions"
         ],
         "properties": {
+          "hls": {
+            "$ref": "#/definitions/HighLeverageStrategyParams"
+          },
           "liquidation_bonus": {
             "$ref": "#/definitions/Decimal"
           },
@@ -159,7 +163,7 @@
         ],
         "properties": {
           "red_bank": {
-            "$ref": "#/definitions/RedBankSettings"
+            "$ref": "#/definitions/RedBankPermissions"
           },
           "rover": {
             "$ref": "#/definitions/RoverPermissions"
@@ -213,6 +217,22 @@
             "additionalProperties": false
           }
         ]
+      },
+      "HighLeverageStrategyParams": {
+        "type": "object",
+        "required": [
+          "liquidation_threshold",
+          "max_loan_to_value"
+        ],
+        "properties": {
+          "liquidation_threshold": {
+            "$ref": "#/definitions/Decimal"
+          },
+          "max_loan_to_value": {
+            "$ref": "#/definitions/Decimal"
+          }
+        },
+        "additionalProperties": false
       },
       "OwnerUpdate": {
         "oneOf": [
@@ -306,7 +326,7 @@
           }
         ]
       },
-      "RedBankSettings": {
+      "RedBankPermissions": {
         "type": "object",
         "required": [
           "borrow_enabled",
@@ -605,12 +625,16 @@
         "AssetParams": {
           "type": "object",
           "required": [
+            "hls",
             "liquidation_bonus",
             "liquidation_threshold",
             "max_loan_to_value",
             "permissions"
           ],
           "properties": {
+            "hls": {
+              "$ref": "#/definitions/HighLeverageStrategyParams"
+            },
             "liquidation_bonus": {
               "$ref": "#/definitions/Decimal"
             },
@@ -650,7 +674,7 @@
           ],
           "properties": {
             "red_bank": {
-              "$ref": "#/definitions/RedBankSettings"
+              "$ref": "#/definitions/RedBankPermissions"
             },
             "rover": {
               "$ref": "#/definitions/RoverPermissions"
@@ -662,7 +686,23 @@
           "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
           "type": "string"
         },
-        "RedBankSettings": {
+        "HighLeverageStrategyParams": {
+          "type": "object",
+          "required": [
+            "liquidation_threshold",
+            "max_loan_to_value"
+          ],
+          "properties": {
+            "liquidation_threshold": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "max_loan_to_value": {
+              "$ref": "#/definitions/Decimal"
+            }
+          },
+          "additionalProperties": false
+        },
+        "RedBankPermissions": {
           "type": "object",
           "required": [
             "borrow_enabled",
@@ -762,12 +802,16 @@
       "title": "AssetParams",
       "type": "object",
       "required": [
+        "hls",
         "liquidation_bonus",
         "liquidation_threshold",
         "max_loan_to_value",
         "permissions"
       ],
       "properties": {
+        "hls": {
+          "$ref": "#/definitions/HighLeverageStrategyParams"
+        },
         "liquidation_bonus": {
           "$ref": "#/definitions/Decimal"
         },
@@ -791,7 +835,7 @@
           ],
           "properties": {
             "red_bank": {
-              "$ref": "#/definitions/RedBankSettings"
+              "$ref": "#/definitions/RedBankPermissions"
             },
             "rover": {
               "$ref": "#/definitions/RoverPermissions"
@@ -803,7 +847,23 @@
           "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
           "type": "string"
         },
-        "RedBankSettings": {
+        "HighLeverageStrategyParams": {
+          "type": "object",
+          "required": [
+            "liquidation_threshold",
+            "max_loan_to_value"
+          ],
+          "properties": {
+            "liquidation_threshold": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "max_loan_to_value": {
+              "$ref": "#/definitions/Decimal"
+            }
+          },
+          "additionalProperties": false
+        },
+        "RedBankPermissions": {
           "type": "object",
           "required": [
             "borrow_enabled",
