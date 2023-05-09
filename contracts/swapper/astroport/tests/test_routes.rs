@@ -60,7 +60,7 @@ fn test_to_native_swap_operation() {
 #[test_case("uosmo", "uusd", to_native_swap_operations(vec![("uosmo", "uatom"), ("uatom", "uusd"), ("uusd", "uosmo")]) => panics ; "route contains cycle")]
 #[test_case("uosmo", "uusd", to_native_swap_operations(vec![("uosmo", "uatom"), ("uusd", "ustrd")]) => panics ; "route is not connected")]
 #[test_case("uosmo", "uusd", vec![SwapOperation::NativeSwap { offer_denom: "uosmo".to_string(), ask_denom: "uusd".to_string() }] => panics ; "contains NativeSwap operation")]
-fn test_set_route(denom_in: &str, denom_out: &str, operations: Vec<SwapOperation>) {
+fn set_route(denom_in: &str, denom_out: &str, operations: Vec<SwapOperation>) {
     let runner = get_test_runner();
     let admin = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();
     let robot = AstroportSwapperRobot::new_with_local(&runner, &admin);
@@ -70,7 +70,7 @@ fn test_set_route(denom_in: &str, denom_out: &str, operations: Vec<SwapOperation
 
 #[test]
 #[should_panic]
-fn test_set_route_not_admin() {
+fn set_route_not_admin() {
     let runner = get_test_runner();
     let admin = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();
     let caller = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();

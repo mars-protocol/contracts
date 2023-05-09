@@ -50,13 +50,13 @@ test-case          = "3.0.0"
 proptest           = "1.1.0"
 
 # packages
-mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
-mars-red-bank-types        = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
-mars-owner                 = "1.0.0"
-mars-swapper               = { path = "packages/mars-swapper" }
-mars-testing               = { path = "packages/testing" }
-mars-oracle                = { path = "packages/mars-oracle" }
-mars-utils                 = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
+mars-osmosis        = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
+mars-red-bank-types = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
+mars-owner          = "1.0.0"
+mars-swapper        = { path = "packages/mars-swapper" }
+mars-testing        = { path = "packages/testing" }
+mars-oracle         = { path = "packages/mars-oracle" }
+mars-utils          = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
 
 # contracts
 mars-swapper-base      = { version = "1.0.0", path = "contracts/swapper/base" }

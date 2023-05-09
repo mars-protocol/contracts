@@ -53,7 +53,7 @@ impl PoolType {
 #[test_case(PoolType::Stable { amp: 10u64 }, "usd", Decimal::percent(5), false ; "stable swap 5% slippage tolerance")]
 #[test_case(PoolType::Stable { amp: 10u64 }, "usd", Decimal::percent(5), true => panics ; "stable swap no route")]
 #[test_case(PoolType::Stable { amp: 10u64 }, "usd", Decimal::percent(0), false => panics ; "stable swap 0% slippage tolerance")]
-fn test_swap(pool_type: PoolType, denom_out: &str, slippage: Decimal, no_route: bool) {
+fn swap(pool_type: PoolType, denom_out: &str, slippage: Decimal, no_route: bool) {
     let denom_in = "uosmo";
     let operations = vec![SwapOperation::AstroSwap {
         offer_asset_info: AssetInfo::NativeToken {

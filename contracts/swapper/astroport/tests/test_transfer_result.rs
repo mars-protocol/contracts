@@ -7,7 +7,7 @@ use mars_swapper_astroport::route::AstroportRoute;
 use mars_testing::{astroport_swapper::AstroportSwapperRobot, test_runner::get_test_runner};
 
 #[test]
-fn test_transfer_result_unauthorized() {
+fn transfer_result_unauthorized() {
     let runner = get_test_runner();
     let admin = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();
     let robot = AstroportSwapperRobot::new_with_local(&runner, &admin);

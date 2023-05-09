@@ -3,8 +3,8 @@ use std::fmt;
 use astroport::{asset::AssetInfo, router::SwapOperation};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_binary, Coin, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, QueryRequest, StdResult,
-    Uint128, WasmMsg, WasmQuery,
+    to_binary, Coin, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, QueryRequest, StdError,
+    StdResult, Uint128, WasmMsg, WasmQuery,
 };
 use mars_oracle::PriceResponse;
 use mars_swapper::msgs::EstimateExactInSwapResponse;
@@ -33,12 +33,18 @@ impl fmt::Display for AstroportRoute {
 }
 
 impl AstroportRoute {
-    pub fn ask(&self) -> AssetInfo {
-        self.operations.last().unwrap().ask()
+    pub fn ask(&self) -> StdResult<AssetInfo> {
+        match self.operations.last() {
+            Some(step) => Ok(step.ask()),
+            None => Err(StdError::generic_err("failed to get last step of AstroportRoute")),
+        }
     }
 
-    pub fn offer(&self) -> AssetInfo {
-        self.operations.first().unwrap().offer()
+    pub fn offer(&self) -> StdResult<AssetInfo> {
+        match self.operations.first() {
+            Some(step) => Ok(step.offer()),
+            None => Err(StdError::generic_err("failed to get first step of AstroportRoute")),
+        }
     }
 
     pub fn query_oracle_price(
@@ -61,12 +67,33 @@ impl AstroportRoute {
         querier: &QuerierWrapper,
         coin_in: &Coin,
     ) -> ContractResult<Uint128> {
+        // Validate the input coin
+        match self.offer()? {
+            AssetInfo::NativeToken {
+                denom,
+            } => {
+                if coin_in.denom != denom {
+                    Err(ContractError::InvalidRoute {
+                        reason: format!(
+                            "invalid offer denom: expected {}, got {}",
+                            denom, coin_in.denom
+                        ),
+                    })
+                } else {
+                    Ok(())
+                }
+            }
+            token => Err(ContractError::InvalidRoute {
+                reason: format!("invalid offer denom: expected {}, got {}", token, coin_in.denom),
+            }),
+        }?;
+
         // Query oracle for prices
-        let offer_price = self.query_oracle_price(querier, self.offer())?;
-        let ask_price = self.query_oracle_price(querier, self.ask())?;
+        let offer_price = self.query_oracle_price(querier, self.offer()?)?;
+        let ask_price = self.query_oracle_price(querier, self.ask()?)?;
 
         // Calculate the minimum amount of output tokens to receive
-        Ok((ask_price / offer_price) * coin_in.amount)
+        Ok(ask_price.checked_div(offer_price)? * coin_in.amount)
     }
 }
 
@@ -213,7 +240,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_swap_operation_ask_and_offer() {
+    fn swap_operation_ask_and_offer() {
         let op = SwapOperation::AstroSwap {
             offer_asset_info: AssetInfo::NativeToken {
                 denom: "uosmo".to_string(),
@@ -239,7 +266,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_swap_operation_ask_native_swap() {
+    fn swap_operation_ask_native_swap() {
         let op = SwapOperation::NativeSwap {
             offer_denom: "uosmo".to_string(),
             ask_denom: "uusd".to_string(),
@@ -250,7 +277,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_swap_operation_offer_native_swap() {
+    fn swap_operation_offer_native_swap() {
         let op = SwapOperation::NativeSwap {
             offer_denom: "uosmo".to_string(),
             ask_denom: "uusd".to_string(),
@@ -260,7 +287,7 @@ mod tests {
     }
 
     #[test]
-    fn test_astroport_route_offer_and_ask() {
+    fn astroport_route_offer_and_ask() {
         let route = AstroportRoute {
             operations: vec![
                 SwapOperation::AstroSwap {
@@ -286,13 +313,13 @@ mod tests {
         };
 
         assert_eq!(
-            route.ask(),
+            route.ask().unwrap(),
             AssetInfo::NativeToken {
                 denom: "uatom".to_string()
             }
         );
         assert_eq!(
-            route.offer(),
+            route.offer().unwrap(),
             AssetInfo::NativeToken {
                 denom: "uosmo".to_string()
             }
@@ -301,7 +328,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_astroport_route_native_swap_offer() {
+    fn astroport_route_native_swap_offer() {
         let route = AstroportRoute {
             operations: vec![SwapOperation::NativeSwap {
                 offer_denom: "uosmo".to_string(),
@@ -312,12 +339,12 @@ mod tests {
             factory: "factory".to_string(),
         };
 
-        route.offer();
+        route.offer().unwrap();
     }
 
     #[test]
     #[should_panic]
-    fn test_astroport_route_native_swap_ask() {
+    fn astroport_route_native_swap_ask() {
         let route = AstroportRoute {
             operations: vec![SwapOperation::NativeSwap {
                 offer_denom: "uosmo".to_string(),
@@ -328,6 +355,6 @@ mod tests {
             factory: "factory".to_string(),
         };
 
-        route.ask();
+        route.ask().unwrap();
     }
 }
