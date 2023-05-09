@@ -75,7 +75,7 @@ fn test_swap(pool_type: PoolType, denom_out: &str, slippage: Decimal, no_route: 
         .unwrap();
     let robot = AstroportSwapperRobot::new_with_local(&runner, &admin);
 
-    // Create astropor pair for uosmo/usd
+    // Create astroport pair for uosmo/usd
     let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
         pool_type.clone().into(),
         [
