@@ -13,10 +13,10 @@ use cw_it::{
 use mars_oracle::{InstantiateMsg, WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams};
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
 use mars_owner::OwnerUpdate;
-
-use crate::test_runner::get_test_runner;
 #[cfg(feature = "osmosis-test-tube")]
 use {cw_it::osmosis_test_tube::OsmosisTestApp, cw_it::Artifact};
+
+use crate::test_runner::get_test_runner;
 
 // Base denom to use in tests
 pub const BASE_DENOM: &str = "USD";

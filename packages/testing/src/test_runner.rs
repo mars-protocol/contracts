@@ -1,7 +1,6 @@
-use cw_it::{multi_test::MultiTestRunner, TestRunner};
-
 #[cfg(feature = "osmosis-test-tube")]
 use cw_it::osmosis_test_tube::OsmosisTestApp;
+use cw_it::{multi_test::MultiTestRunner, TestRunner};
 
 const DEFAULT_TEST_RUNNER: &str = "multi-test";
 
