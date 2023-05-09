@@ -14,10 +14,12 @@ const ONE: Decimal = Decimal::one();
 const TWO: Decimal = Decimal::new(Uint128::new(2_000_000_000_000_000_000u128));
 const DEFAULT_LIQ: [u128; 2] = [10000000000000000000000u128, 1000000000000000000000u128];
 
-use mars_testing::wasm_oracle::{
-    fixed_source, get_contracts, get_test_runner, setup_test,
-    validate_and_query_astroport_spot_price_source, validate_and_query_astroport_twap_price_source,
-    WasmOracleTestRobot,
+use mars_testing::{
+    test_runner::get_test_runner,
+    wasm_oracle::{
+        fixed_source, get_contracts, setup_test, validate_and_query_astroport_spot_price_source,
+        validate_and_query_astroport_twap_price_source, WasmOracleTestRobot,
+    },
 };
 use test_case::test_case;
 

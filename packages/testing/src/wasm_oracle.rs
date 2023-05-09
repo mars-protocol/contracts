@@ -5,7 +5,6 @@ use cw_it::{
         robot::AstroportTestRobot,
         utils::{native_asset, native_info, AstroportContracts},
     },
-    multi_test::MultiTestRunner,
     robot::TestRobot,
     test_tube::{Account, Module, SigningAccount, Wasm},
     traits::CwItRunner,
@@ -14,6 +13,8 @@ use cw_it::{
 use mars_oracle::{InstantiateMsg, WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams};
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
 use mars_owner::OwnerUpdate;
+
+use crate::test_runner::get_test_runner;
 #[cfg(feature = "osmosis-test-tube")]
 use {cw_it::osmosis_test_tube::OsmosisTestApp, cw_it::Artifact};
 
@@ -24,17 +25,10 @@ pub const BASE_DENOM: &str = "USD";
 pub const ARTIFACTS_PATH: &str = "../../../artifacts";
 pub const APPEND_ARCH: bool = true;
 
-#[cfg(feature = "osmosis-test-tube")]
-const CONTRACT_NAME: &str = "mars-oracle-wasm";
-
 /// The path to the artifacts folder
 pub const ASTRO_ARTIFACTS_PATH: Option<&str> = Some("tests/astroport-artifacts");
 
 pub const ORACLE_CONTRACT_NAME: &str = "mars-oracle-wasm";
-const TEST_RUNNER: Option<&str> = option_env!("TEST_RUNNER");
-
-/// Default test runner to use if TEST_RUNNER env var is not set
-const DEFAULT_TEST_RUNNER: &str = "multi-test";
 
 pub struct WasmOracleTestRobot<'a> {
     runner: &'a TestRunner<'a>,
@@ -290,19 +284,6 @@ impl<'a> AstroportTestRobot<'a, TestRunner<'a>> for WasmOracleTestRobot<'a> {
     }
 }
 
-/// Creates a test runner with the type defined by the TEST_RUNNER environment variable
-pub fn get_test_runner<'a>() -> TestRunner<'a> {
-    match TEST_RUNNER.unwrap_or(DEFAULT_TEST_RUNNER) {
-        #[cfg(feature = "osmosis-test-tube")]
-        "osmosis-test-tube" => {
-            let app = OsmosisTestApp::new();
-            TestRunner::OsmosisTestApp(app)
-        }
-        "multi-test" => TestRunner::MultiTest(MultiTestRunner::new("osmo")),
-        x => panic!("Unsupported test runner type {} specified", x),
-    }
-}
-
 /// Creates a test robot, initializes accounts, and uploads and instantiates contracts
 pub fn setup_test<'a>(
     runner: &'a TestRunner<'a>,
@@ -318,7 +299,7 @@ pub fn get_wasm_oracle_contract(runner: &TestRunner) -> ContractType {
     match runner {
         #[cfg(feature = "osmosis-test-tube")]
         TestRunner::OsmosisTestApp(_) => {
-            let contract_name = CONTRACT_NAME.replace("-", "_");
+            let contract_name = ORACLE_CONTRACT_NAME.replace("-", "_");
             let oracle_wasm_path = if APPEND_ARCH {
                 format!("{}/{}-{}.wasm", ARTIFACTS_PATH, contract_name, std::env::consts::ARCH)
             } else {

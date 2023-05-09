@@ -5,8 +5,9 @@ use cw_it::test_tube::{
     osmosis_std::types::cosmwasm::wasm::v1::MsgMigrateContractResponse, Runner,
 };
 use mars_oracle_wasm::contract::CONTRACT_NAME;
-use mars_testing::wasm_oracle::{
-    get_contracts, get_test_runner, get_wasm_oracle_contract, WasmOracleTestRobot,
+use mars_testing::{
+    test_runner::get_test_runner,
+    wasm_oracle::{get_contracts, get_wasm_oracle_contract, WasmOracleTestRobot},
 };
 
 #[test]

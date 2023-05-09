@@ -3,7 +3,6 @@ use cosmwasm_std::{Coin, Decimal, Uint128};
 use cw_it::{
     astroport::{robot::AstroportTestRobot, utils::AstroportContracts},
     cw_multi_test::ContractWrapper,
-    multi_test::MultiTestRunner,
     robot::TestRobot,
     test_tube::{
         osmosis_std::types::cosmwasm::wasm::v1::MsgExecuteContractResponse, Account, Module,
@@ -16,7 +15,7 @@ use cw_it::{osmosis_test_tube::OsmosisTestApp, Artifact};
 use mars_swapper::EstimateExactInSwapResponse;
 use mars_swapper_astroport::route::AstroportRoute;
 
-use crate::wasm_oracle::WasmOracleTestRobot;
+use crate::wasm_oracle::{get_wasm_oracle_contract, WasmOracleTestRobot};
 
 #[cfg(feature = "osmosis-test-tube")]
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -54,38 +53,6 @@ fn get_local_swapper_contract(runner: &TestRunner) -> ContractType {
                 mars_swapper_astroport::contract::query,
             )))
         }
-        _ => panic!("Unsupported test runner type"),
-    }
-}
-
-fn get_local_oracle_contract(runner: &TestRunner) -> ContractType {
-    match runner {
-        #[cfg(feature = "osmosis-test-tube")]
-        TestRunner::OsmosisTestApp(_) => ContractType::Artifact(Artifact::Local(wasm_path(
-            ARTIFACTS_PATH,
-            "mars-oracle-wasm",
-            APPEND_ARCH,
-        ))),
-        TestRunner::MultiTest(_) => {
-            ContractType::MultiTestContract(Box::new(ContractWrapper::new(
-                mars_oracle_wasm::contract::entry::execute,
-                mars_oracle_wasm::contract::entry::instantiate,
-                mars_oracle_wasm::contract::entry::query,
-            )))
-        }
-        _ => panic!("Unsupported test runner type"),
-    }
-}
-
-/// Creates an OsmosisTestApp TestRunner
-pub fn get_test_runner<'a>() -> TestRunner<'a> {
-    match option_env!("TEST_RUNNER").unwrap_or("multi-test") {
-        #[cfg(feature = "osmosis-test-tube")]
-        "osmosis-test-tube" => {
-            let app = OsmosisTestApp::new();
-            TestRunner::OsmosisTestApp(app)
-        }
-        "multi-test" => TestRunner::MultiTest(MultiTestRunner::new("osmo")),
         _ => panic!("Unsupported test runner type"),
     }
 }
@@ -168,7 +135,7 @@ impl<'a> AstroportSwapperRobot<'a> {
             &Some(std::env::consts::ARCH),
         );
         let swapper_contract = get_local_swapper_contract(runner);
-        let oracle_contract = get_local_oracle_contract(runner);
+        let oracle_contract = get_wasm_oracle_contract(runner);
         Self::new(runner, astroport_contracts, swapper_contract, oracle_contract, admin)
     }
 

@@ -4,7 +4,7 @@ use cw_it::{
     traits::CwItRunner,
 };
 use mars_swapper_astroport::route::AstroportRoute;
-use mars_testing::astroport_swapper::{get_test_runner, AstroportSwapperRobot};
+use mars_testing::{astroport_swapper::AstroportSwapperRobot, test_runner::get_test_runner};
 
 #[test]
 fn test_transfer_result_unauthorized() {

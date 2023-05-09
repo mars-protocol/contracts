@@ -12,6 +12,7 @@ mod oracle_querier;
 mod osmosis_querier;
 mod pyth_querier;
 mod redemption_rate_querier;
+pub mod test_runner;
 #[cfg(feature = "astroport")]
 pub mod wasm_oracle;
 

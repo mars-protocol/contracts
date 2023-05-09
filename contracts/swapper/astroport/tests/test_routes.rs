@@ -3,7 +3,7 @@
 use astroport::{asset::AssetInfo, router::SwapOperation};
 use cosmwasm_std::coin;
 use cw_it::traits::CwItRunner;
-use mars_testing::astroport_swapper::{get_test_runner, AstroportSwapperRobot};
+use mars_testing::{astroport_swapper::AstroportSwapperRobot, test_runner::get_test_runner};
 use test_case::test_case;
 
 fn to_native_swap_operation((denom_in, denom_out): (&str, &str)) -> SwapOperation {

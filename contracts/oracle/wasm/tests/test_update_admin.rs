@@ -1,6 +1,9 @@
 use cw_it::test_tube::Account;
 use mars_owner::OwnerUpdate;
-use mars_testing::wasm_oracle::{get_contracts, get_test_runner, WasmOracleTestRobot};
+use mars_testing::{
+    test_runner::get_test_runner,
+    wasm_oracle::{get_contracts, WasmOracleTestRobot},
+};
 use test_case::test_case;
 
 #[test_case(true ; "caller is owner")]
