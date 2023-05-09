@@ -104,9 +104,11 @@ export interface MarsCreditManagerMessage {
   updateOwner: (ownerUpdate: OwnerUpdate, funds?: Coin[]) => MsgExecuteContractEncodeObject
   updateNftConfig: (
     {
-      updates,
+      config,
+      ownership,
     }: {
-      updates: NftConfigUpdates
+      config?: NftConfigUpdates
+      ownership?: Action
     },
     funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
@@ -254,9 +256,11 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
   }
   updateNftConfig = (
     {
-      updates,
+      config,
+      ownership,
     }: {
-      updates: NftConfigUpdates
+      config?: NftConfigUpdates
+      ownership?: Action
     },
     funds?: Coin[],
   ): MsgExecuteContractEncodeObject => {
@@ -268,7 +272,8 @@ export class MarsCreditManagerMessageComposer implements MarsCreditManagerMessag
         msg: toUtf8(
           JSON.stringify({
             update_nft_config: {
-              updates,
+              config,
+              ownership,
             },
           }),
         ),

@@ -22,7 +22,7 @@ members = [
 ]
 
 [workspace.package]
-version       = "1.0.0"
+version       = "2.0.0"
 authors       = [
   "Gabe R. <gabe.r@delphilabs.io>",
   "Larry Engineer <larry@delphidigital.io>",
@@ -40,8 +40,8 @@ anyhow             = "1.0.71"
 cosmwasm-schema    = "1.2.5"
 cosmwasm-std       = "1.2.5"
 cw2                = "1.0.1"
-cw721              = "0.16.0"
-cw721-base         = { version = "0.16.0", features = ["library"] }
+cw721              = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main" }
+cw721-base         = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main", features = ["library"] }
 cw-item-set        = { version = "0.7.1", default-features = false, features = ["iterator"] }
 cw-multi-test      = "0.16.4"
 cw-paginate        = "0.2.1"
@@ -60,28 +60,28 @@ wasm-bindgen       = "0.2.84"
 # packages
 cw-dex                     = { version = "0.1.3", features = ["osmosis"] }
 cw-vault-standard          = { version = "0.3.0", features = ["lockup", "force-unlock"] }
-mars-rover-health-computer = { version = "1.0.0", path = "./packages/health-computer" }
-mars-rover-health-types    = { version = "1.0.0", path = "./packages/health-types" }
+mars-rover-health-computer = { version = "2.0.0", path = "./packages/health-computer" }
+mars-rover-health-types    = { version = "2.0.0", path = "./packages/health-types" }
 mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
 mars-red-bank-types        = "1.0.0"
 mars-owner                 = { version = "1.1.0", features = ["emergency-owner"] }
-mars-rover                 = { version = "1.0.0", path = "./packages/rover" }
+mars-rover                 = { version = "2.0.0", path = "./packages/rover" }
 
 # contracts
-mars-account-nft    = { version = "1.0.0", path = "./contracts/account-nft", features = ["library"] }
-mars-rover-health   = { version = "1.0.0", path = "./contracts/health" }
-mars-swapper-base   = { version = "1.0.0", path = "./contracts/swapper/base" }
-mars-v2-zapper-base = { version = "1.0.0", path = "./contracts/v2-zapper/base" }
-mars-v3-zapper-base = { version = "1.0.0", path = "./contracts/v3-zapper/base" }
+mars-account-nft    = { version = "2.0.0", path = "./contracts/account-nft", features = ["library"] }
+mars-rover-health   = { version = "2.0.0", path = "./contracts/health" }
+mars-swapper-base   = { version = "2.0.0", path = "./contracts/swapper/base" }
+mars-v2-zapper-base = { version = "2.0.0", path = "./contracts/v2-zapper/base" }
+mars-v3-zapper-base = { version = "2.0.0", path = "./contracts/v3-zapper/base" }
 
 # mocks
-mars-mock-credit-manager = { version = "1.0.0", path = "./contracts/mock-credit-manager", features = ["library"] }
-mars-mock-oracle         = { version = "1.0.0", path = "./contracts/mock-oracle", features = ["library"] }
-mars-mock-red-bank       = { version = "1.0.0", path = "./contracts/mock-red-bank", features = ["library"] }
-mars-mock-vault          = { version = "1.0.0", path = "./contracts/mock-vault", features = ["library"] }
-mars-mock-rover-health   = { version = "1.0.0", path = "./contracts/mock-health", features = ["library"] }
-mars-swapper-mock        = { version = "1.0.0", path = "./contracts/swapper/mock", features = ["library"] }
-mars-v2-zapper-mock      = { version = "1.0.0", path = "./contracts/v2-zapper/mock", features = ["library"] }
+mars-mock-credit-manager = { version = "2.0.0", path = "./contracts/mock-credit-manager", features = ["library"] }
+mars-mock-oracle         = { version = "2.0.0", path = "./contracts/mock-oracle", features = ["library"] }
+mars-mock-red-bank       = { version = "2.0.0", path = "./contracts/mock-red-bank", features = ["library"] }
+mars-mock-vault          = { version = "2.0.0", path = "./contracts/mock-vault", features = ["library"] }
+mars-mock-rover-health   = { version = "2.0.0", path = "./contracts/mock-health", features = ["library"] }
+mars-swapper-mock        = { version = "2.0.0", path = "./contracts/swapper/mock", features = ["library"] }
+mars-v2-zapper-mock      = { version = "2.0.0", path = "./contracts/v2-zapper/mock", features = ["library"] }
 
 [profile.release]
 codegen-units    = 1

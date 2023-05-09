@@ -440,9 +440,11 @@ export interface MarsCreditManagerInterface extends MarsCreditManagerReadOnlyInt
   ) => Promise<ExecuteResult>
   updateNftConfig: (
     {
-      updates,
+      config,
+      ownership,
     }: {
-      updates: NftConfigUpdates
+      config?: NftConfigUpdates
+      ownership?: Action
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -602,9 +604,11 @@ export class MarsCreditManagerClient
   }
   updateNftConfig = async (
     {
-      updates,
+      config,
+      ownership,
     }: {
-      updates: NftConfigUpdates
+      config?: NftConfigUpdates
+      ownership?: Action
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -615,7 +619,8 @@ export class MarsCreditManagerClient
       this.contractAddress,
       {
         update_nft_config: {
-          updates,
+          config,
+          ownership,
         },
       },
       fee,

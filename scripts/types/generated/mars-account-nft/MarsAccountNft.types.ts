@@ -20,9 +20,6 @@ export type ExecuteMsg =
       }
     }
   | {
-      accept_minter_role: {}
-    }
-  | {
       mint: {
         user: string
       }
@@ -69,6 +66,9 @@ export type ExecuteMsg =
         operator: string
       }
     }
+  | {
+      update_ownership: Action
+    }
 export type Binary = string
 export type Expiration =
   | {
@@ -82,10 +82,18 @@ export type Expiration =
     }
 export type Timestamp = Uint64
 export type Uint64 = string
+export type Action =
+  | {
+      transfer_ownership: {
+        expiry?: Expiration | null
+        new_owner: string
+      }
+    }
+  | 'accept_ownership'
+  | 'renounce_ownership'
 export interface NftConfigUpdates {
   health_contract_addr?: string | null
   max_value_for_burn?: Uint128 | null
-  proposed_new_minter?: string | null
 }
 export type QueryMsg =
   | {
@@ -154,6 +162,9 @@ export type QueryMsg =
   | {
       minter: {}
     }
+  | {
+      ownership: {}
+    }
 export interface AllNftInfoResponseForEmpty {
   access: OwnerOfResponse
   info: NftInfoResponseForEmpty
@@ -188,15 +199,20 @@ export interface ApprovalsResponse {
 export interface NftConfigBaseForString {
   health_contract_addr?: string | null
   max_value_for_burn: Uint128
-  proposed_new_minter?: string | null
 }
 export interface ContractInfoResponse {
   name: string
   symbol: string
 }
 export interface MinterResponse {
-  minter: string
+  minter?: string | null
 }
 export interface NumTokensResponse {
   count: number
+}
+export type Addr = string
+export interface OwnershipForAddr {
+  owner?: Addr | null
+  pending_expiry?: Expiration | null
+  pending_owner?: Addr | null
 }

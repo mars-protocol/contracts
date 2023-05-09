@@ -95,6 +95,10 @@ pub enum QueryMsg {
     /// Return the minter
     #[returns(cw721_base::MinterResponse)]
     Minter {},
+
+    /// Returns ownership state of nft contract
+    #[returns(cw721_base::Ownership<cosmwasm_std::Addr>)]
+    Ownership {},
 }
 
 impl TryInto<ParentQueryMsg<Empty>> for QueryMsg {
@@ -167,6 +171,7 @@ impl TryInto<ParentQueryMsg<Empty>> for QueryMsg {
                 limit,
             }),
             QueryMsg::Minter {} => Ok(ParentQueryMsg::Minter {}),
+            QueryMsg::Ownership {} => Ok(ParentQueryMsg::Ownership {}),
             _ => Err(StdError::generic_err(
                 "Attempting to convert to a non-cw721 compatible message",
             )),

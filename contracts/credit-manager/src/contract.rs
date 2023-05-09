@@ -54,8 +54,9 @@ pub fn execute(
             updates,
         } => update_config(deps, info, updates),
         ExecuteMsg::UpdateNftConfig {
-            updates,
-        } => update_nft_config(deps, info, updates),
+            config,
+            ownership,
+        } => update_nft_config(deps, info, config, ownership),
         ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
         ExecuteMsg::Callback(callback) => execute_callback(deps, info, env, callback),
         ExecuteMsg::UpdateCreditAccount {

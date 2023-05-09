@@ -16,6 +16,7 @@ import {
   Expiration,
   Timestamp,
   Uint64,
+  Action,
   NftConfigUpdates,
   QueryMsg,
   AllNftInfoResponseForEmpty,
@@ -31,6 +32,8 @@ import {
   ContractInfoResponse,
   MinterResponse,
   NumTokensResponse,
+  Addr,
+  OwnershipForAddr,
 } from './MarsAccountNft.types'
 import { MarsAccountNftQueryClient, MarsAccountNftClient } from './MarsAccountNft.client'
 export const marsAccountNftQueryKeys = {
@@ -79,6 +82,10 @@ export const marsAccountNftQueryKeys = {
     ] as const,
   minter: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsAccountNftQueryKeys.address(contractAddress)[0], method: 'minter', args }] as const,
+  ownership: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsAccountNftQueryKeys.address(contractAddress)[0], method: 'ownership', args },
+    ] as const,
 }
 export interface MarsAccountNftReactQuery<TResponse, TData = TResponse> {
   client: MarsAccountNftQueryClient | undefined
@@ -88,6 +95,18 @@ export interface MarsAccountNftReactQuery<TResponse, TData = TResponse> {
   > & {
     initialData?: undefined
   }
+}
+export interface MarsAccountNftOwnershipQuery<TData>
+  extends MarsAccountNftReactQuery<OwnershipForAddr, TData> {}
+export function useMarsAccountNftOwnershipQuery<TData = OwnershipForAddr>({
+  client,
+  options,
+}: MarsAccountNftOwnershipQuery<TData>) {
+  return useQuery<OwnershipForAddr, Error, TData>(
+    marsAccountNftQueryKeys.ownership(client?.contractAddress),
+    () => (client ? client.ownership() : Promise.reject(new Error('Invalid client'))),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
 }
 export interface MarsAccountNftMinterQuery<TData>
   extends MarsAccountNftReactQuery<MinterResponse, TData> {}
@@ -346,6 +365,27 @@ export function useMarsAccountNftConfigQuery<TData = NftConfigBaseForString>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
+export interface MarsAccountNftUpdateOwnershipMutation {
+  client: MarsAccountNftClient
+  msg: Action
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsAccountNftUpdateOwnershipMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsAccountNftUpdateOwnershipMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsAccountNftUpdateOwnershipMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateOwnership(msg, fee, memo, funds),
+    options,
+  )
+}
 export interface MarsAccountNftRevokeAllMutation {
   client: MarsAccountNftClient
   msg: {
@@ -526,25 +566,6 @@ export function useMarsAccountNftMintMutation(
 ) {
   return useMutation<ExecuteResult, Error, MarsAccountNftMintMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) => client.mint(msg, fee, memo, funds),
-    options,
-  )
-}
-export interface MarsAccountNftAcceptMinterRoleMutation {
-  client: MarsAccountNftClient
-  args?: {
-    fee?: number | StdFee | 'auto'
-    memo?: string
-    funds?: Coin[]
-  }
-}
-export function useMarsAccountNftAcceptMinterRoleMutation(
-  options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsAccountNftAcceptMinterRoleMutation>,
-    'mutationFn'
-  >,
-) {
-  return useMutation<ExecuteResult, Error, MarsAccountNftAcceptMinterRoleMutation>(
-    ({ client, args: { fee, memo, funds } = {} }) => client.acceptMinterRole(fee, memo, funds),
     options,
   )
 }

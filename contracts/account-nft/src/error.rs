@@ -20,4 +20,9 @@ pub enum ContractError {
 
     #[error("Health contract should be added to config before burns are allowed")]
     HealthContractNotSet,
+
+    #[error("{reason:?}")]
+    MigrationError {
+        reason: String,
+    },
 }

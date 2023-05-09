@@ -5,13 +5,12 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
-use cw2::set_contract_version;
-use cw721::ContractInfoResponse;
+use cw2::{get_contract_version, set_contract_version, ContractVersion};
 use cw721_base::Cw721Contract;
 
 use crate::{
-    error::ContractError,
-    execute::{accept_minter_role, burn, mint, update_config},
+    error::{ContractError, ContractError::MigrationError},
+    execute::{burn, mint, update_config},
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     nft_config::NftConfig,
     query::{query_config, query_next_id},
@@ -27,37 +26,29 @@ pub type Parent<'a> = Cw721Contract<'a, Empty, Empty, Empty, Empty>;
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    _: Env,
-    _: MessageInfo,
+    env: Env,
+    info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
     set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
 
     NEXT_ID.save(deps.storage, &1)?;
 
-    let health_contract_addr =
-        msg.health_contract.map(|unchecked| deps.api.addr_validate(&unchecked)).transpose()?;
+    let health_contract_addr = msg
+        .health_contract
+        .as_ref()
+        .map(|unchecked| deps.api.addr_validate(unchecked))
+        .transpose()?;
 
     CONFIG.save(
         deps.storage,
         &NftConfig {
             max_value_for_burn: msg.max_value_for_burn,
-            proposed_new_minter: None,
             health_contract_addr,
         },
     )?;
 
-    // Parent::default().instantiate() copied below
-    // Cannot use given it overrides contract version
-    let info = ContractInfoResponse {
-        name: msg.name,
-        symbol: msg.symbol,
-    };
-    Parent::default().contract_info.save(deps.storage, &info)?;
-    let minter = deps.api.addr_validate(&msg.minter)?;
-    Parent::default().minter.save(deps.storage, &minter)?;
-
-    Ok(Response::default())
+    Parent::default().instantiate(deps, env, info, msg.into())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -70,11 +61,10 @@ pub fn execute(
     match msg {
         ExecuteMsg::Mint {
             user,
-        } => mint(deps, env, info, &user),
+        } => mint(deps, info, &user),
         ExecuteMsg::UpdateConfig {
             updates,
         } => update_config(deps, info, updates),
-        ExecuteMsg::AcceptMinterRole {} => accept_minter_role(deps, info),
         ExecuteMsg::Burn {
             token_id,
         } => burn(deps, env, info, token_id),
@@ -89,4 +79,31 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::NextId {} => to_binary(&query_next_id(deps)?),
         _ => Parent::default().query(deps, env, msg.try_into()?),
     }
+}
+
+const FROM_VERSION: &str = "1.0.0";
+const TO_VERSION: &str = "2.0.0";
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    let ContractVersion {
+        contract,
+        version,
+    } = get_contract_version(deps.storage)?;
+
+    if CONTRACT_NAME != contract {
+        return Err(MigrationError {
+            reason: format!("Wrong contract. Expected: {CONTRACT_NAME}, Found: {contract}"),
+        });
+    }
+
+    if FROM_VERSION != version {
+        return Err(MigrationError {
+            reason: format!("Wrong version. Expected: {FROM_VERSION}, Found: {version}"),
+        });
+    }
+
+    set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
+
+    Ok(cw721_base::upgrades::v0_17::migrate::<Empty, Empty, Empty, Empty>(deps)?)
 }

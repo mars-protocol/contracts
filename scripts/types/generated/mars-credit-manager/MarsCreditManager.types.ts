@@ -70,7 +70,8 @@ export type ExecuteMsg =
     }
   | {
       update_nft_config: {
-        updates: NftConfigUpdates
+        config?: NftConfigUpdates | null
+        ownership?: Action | null
       }
     }
   | {
@@ -349,7 +350,6 @@ export interface ConfigUpdates {
 export interface NftConfigUpdates {
   health_contract_addr?: string | null
   max_value_for_burn?: Uint128 | null
-  proposed_new_minter?: string | null
 }
 export interface VaultBaseForAddr {
   address: Addr

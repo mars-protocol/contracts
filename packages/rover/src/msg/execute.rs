@@ -51,7 +51,8 @@ pub enum ExecuteMsg {
     UpdateOwner(OwnerUpdate),
     /// Update nft contract config
     UpdateNftConfig {
-        updates: NftConfigUpdates,
+        config: Option<NftConfigUpdates>,
+        ownership: Option<cw721_base::Action>,
     },
     /// Internal actions only callable by the contract itself
     Callback(CallbackMsg),

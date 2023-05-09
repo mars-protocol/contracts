@@ -651,7 +651,8 @@ export function useMarsCreditManagerCallbackMutation(
 export interface MarsCreditManagerUpdateNftConfigMutation {
   client: MarsCreditManagerClient
   msg: {
-    updates: NftConfigUpdates
+    config?: NftConfigUpdates
+    ownership?: Action
   }
   args?: {
     fee?: number | StdFee | 'auto'

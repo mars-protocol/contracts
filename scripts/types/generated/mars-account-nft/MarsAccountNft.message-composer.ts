@@ -17,6 +17,7 @@ import {
   Expiration,
   Timestamp,
   Uint64,
+  Action,
   NftConfigUpdates,
   QueryMsg,
   AllNftInfoResponseForEmpty,
@@ -32,6 +33,8 @@ import {
   ContractInfoResponse,
   MinterResponse,
   NumTokensResponse,
+  Addr,
+  OwnershipForAddr,
 } from './MarsAccountNft.types'
 export interface MarsAccountNftMessage {
   contractAddress: string
@@ -44,7 +47,6 @@ export interface MarsAccountNftMessage {
     },
     funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
-  acceptMinterRole: (funds?: Coin[]) => MsgExecuteContractEncodeObject
   mint: (
     {
       user,
@@ -123,6 +125,7 @@ export interface MarsAccountNftMessage {
     },
     funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
+  updateOwnership: (action: Action, funds?: Coin[]) => MsgExecuteContractEncodeObject
 }
 export class MarsAccountNftMessageComposer implements MarsAccountNftMessage {
   sender: string
@@ -132,7 +135,6 @@ export class MarsAccountNftMessageComposer implements MarsAccountNftMessage {
     this.sender = sender
     this.contractAddress = contractAddress
     this.updateConfig = this.updateConfig.bind(this)
-    this.acceptMinterRole = this.acceptMinterRole.bind(this)
     this.mint = this.mint.bind(this)
     this.burn = this.burn.bind(this)
     this.transferNft = this.transferNft.bind(this)
@@ -141,6 +143,7 @@ export class MarsAccountNftMessageComposer implements MarsAccountNftMessage {
     this.revoke = this.revoke.bind(this)
     this.approveAll = this.approveAll.bind(this)
     this.revokeAll = this.revokeAll.bind(this)
+    this.updateOwnership = this.updateOwnership.bind(this)
   }
 
   updateConfig = (
@@ -161,21 +164,6 @@ export class MarsAccountNftMessageComposer implements MarsAccountNftMessage {
             update_config: {
               updates,
             },
-          }),
-        ),
-        funds,
-      }),
-    }
-  }
-  acceptMinterRole = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
-    return {
-      typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
-      value: MsgExecuteContract.fromPartial({
-        sender: this.sender,
-        contract: this.contractAddress,
-        msg: toUtf8(
-          JSON.stringify({
-            accept_minter_role: {},
           }),
         ),
         funds,
@@ -389,6 +377,21 @@ export class MarsAccountNftMessageComposer implements MarsAccountNftMessage {
             revoke_all: {
               operator,
             },
+          }),
+        ),
+        funds,
+      }),
+    }
+  }
+  updateOwnership = (action: Action, funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(
+          JSON.stringify({
+            update_ownership: action,
           }),
         ),
         funds,

@@ -2,7 +2,10 @@ use cosmwasm_std::{
     to_binary, DepsMut, Empty, Env, MessageInfo, QueryRequest, Response, WasmQuery,
 };
 use cw721::Cw721Execute;
-use cw721_base::MintMsg;
+use cw721_base::{
+    ContractError::Ownership,
+    OwnershipError::{NoOwner, NotOwner},
+};
 use mars_rover_health_types::{HealthResponse, QueryMsg::Health};
 
 use crate::{
@@ -15,22 +18,12 @@ use crate::{
     state::{CONFIG, NEXT_ID},
 };
 
-pub fn mint(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    user: &str,
-) -> Result<Response, ContractError> {
+pub fn mint(deps: DepsMut, info: MessageInfo, user: &str) -> Result<Response, ContractError> {
     let next_id = NEXT_ID.load(deps.storage)?;
-    let mint_msg_override = MintMsg {
-        token_id: next_id.to_string(),
-        owner: user.to_string(),
-        token_uri: None,
-        extension: Empty {},
-    };
     NEXT_ID.save(deps.storage, &(next_id + 1))?;
-
-    Parent::default().mint(deps, env, info, mint_msg_override).map_err(Into::into)
+    Parent::default()
+        .mint(deps, info, next_id.to_string(), user.to_string(), None, Empty {})
+        .map_err(Into::into)
 }
 
 /// A few checks to ensure accounts are not accidentally deleted:
@@ -77,9 +70,11 @@ pub fn update_config(
     info: MessageInfo,
     updates: NftConfigUpdates,
 ) -> Result<Response, ContractError> {
-    let current_minter = Parent::default().minter.load(deps.storage)?;
+    let current_minter =
+        Parent::default().minter(deps.as_ref())?.minter.ok_or(BaseError(Ownership(NoOwner)))?;
+
     if info.sender != current_minter {
-        return Err(BaseError(cw721_base::ContractError::Unauthorized {}));
+        return Err(BaseError(Ownership(NotOwner)));
     }
 
     let mut response = Response::new().add_attribute("action", "update_config");
@@ -100,31 +95,7 @@ pub fn update_config(
             .add_attribute("value", max.to_string());
     }
 
-    if let Some(addr) = updates.proposed_new_minter {
-        let validated = deps.api.addr_validate(&addr)?;
-        config.proposed_new_minter = Some(validated);
-        response = response.add_attribute("key", "pending_minter").add_attribute("value", addr);
-    }
-
     CONFIG.save(deps.storage, &config)?;
 
     Ok(response)
-}
-
-pub fn accept_minter_role(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
-    let mut config = CONFIG.load(deps.storage)?;
-    let previous_minter = Parent::default().minter.load(deps.storage)?;
-
-    match config.proposed_new_minter {
-        Some(addr) if addr == info.sender => {
-            Parent::default().minter.save(deps.storage, &addr)?;
-            config.proposed_new_minter = None;
-            CONFIG.save(deps.storage, &config)?;
-
-            Ok(Response::new()
-                .add_attribute("previous_minter", previous_minter)
-                .add_attribute("new_minter", addr))
-        }
-        _ => Err(BaseError(cw721_base::ContractError::Unauthorized {})),
-    }
 }

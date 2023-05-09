@@ -1,4 +1,5 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, MessageInfo, Response, WasmMsg};
+use cw721_base::Action;
 use mars_account_nft::{msg::ExecuteMsg as NftExecuteMsg, nft_config::NftConfigUpdates};
 use mars_owner::OwnerUpdate;
 use mars_rover::{
@@ -32,7 +33,7 @@ pub fn update_config(
         let accept_minter_role_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: addr_str.clone(),
             funds: vec![],
-            msg: to_binary(&NftExecuteMsg::AcceptMinterRole {})?,
+            msg: to_binary(&NftExecuteMsg::UpdateOwnership(Action::AcceptOwnership))?,
         });
 
         response = response
@@ -124,19 +125,34 @@ pub fn update_owner(
 pub fn update_nft_config(
     deps: DepsMut,
     info: MessageInfo,
-    updates: NftConfigUpdates,
+    config: Option<NftConfigUpdates>,
+    ownership: Option<Action>,
 ) -> ContractResult<Response> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
     let nft_contract = ACCOUNT_NFT.load(deps.storage)?;
+    let mut response = Response::new();
 
-    let update_config_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: nft_contract.to_string(),
-        funds: vec![],
-        msg: to_binary(&NftExecuteMsg::UpdateConfig {
-            updates,
-        })?,
-    });
+    if let Some(updates) = config {
+        let update_config_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: nft_contract.to_string(),
+            funds: vec![],
+            msg: to_binary(&NftExecuteMsg::UpdateConfig {
+                updates,
+            })?,
+        });
+        response = response.add_message(update_config_msg).add_attribute("action", "update_config")
+    }
 
-    Ok(Response::new().add_attribute("action", "update_nft_config").add_message(update_config_msg))
+    if let Some(action) = ownership {
+        let update_ownership_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: nft_contract.to_string(),
+            funds: vec![],
+            msg: to_binary(&NftExecuteMsg::UpdateOwnership(action))?,
+        });
+        response =
+            response.add_message(update_ownership_msg).add_attribute("action", "update_ownership")
+    }
+
+    Ok(response)
 }

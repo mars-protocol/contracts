@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Binary, Empty, StdError};
 use cw721::Expiration;
-use cw721_base::ExecuteMsg as ParentExecuteMsg;
+use cw721_base::{Action, ExecuteMsg as ParentExecuteMsg};
 
 use crate::{error::ContractError, nft_config::NftConfigUpdates};
 
@@ -16,15 +16,10 @@ pub enum ExecuteMsg {
     UpdateConfig {
         updates: NftConfigUpdates,
     },
-
-    /// Accept the proposed minter role. Only the proposed new minter can execute.
-    AcceptMinterRole {},
-
     /// Mint a new NFT to the specified user; can only be called by the contract minter
     Mint {
         user: String,
     },
-
     /// Burn an NFT the sender has access to. Will attempt to query the Credit Manager first
     /// to ensure the balance is below the config set threshold.
     Burn {
@@ -68,6 +63,8 @@ pub enum ExecuteMsg {
     RevokeAll {
         operator: String,
     },
+    /// Propose new owner (minter) and accept new role
+    UpdateOwnership(Action),
 }
 
 impl TryInto<ParentExecuteMsg<Empty, Empty>> for ExecuteMsg {
@@ -119,6 +116,7 @@ impl TryInto<ParentExecuteMsg<Empty, Empty>> for ExecuteMsg {
             } => Ok(ParentExecuteMsg::RevokeAll {
                 operator,
             }),
+            ExecuteMsg::UpdateOwnership(action) => Ok(ParentExecuteMsg::UpdateOwnership(action)),
             _ => Err(StdError::generic_err(
                 "Attempting to convert to a non-cw721 compatible message",
             )

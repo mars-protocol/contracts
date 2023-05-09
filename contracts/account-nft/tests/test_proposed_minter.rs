@@ -25,8 +25,8 @@ fn propose_minter_stores() {
     let new_minter = Addr::unchecked("new_minter");
     mock.propose_new_minter(&mock.minter.clone(), &new_minter).unwrap();
 
-    let config = mock.query_config();
-    assert_eq!(config.proposed_new_minter.unwrap(), new_minter);
+    let ownership = mock.query_ownership();
+    assert_eq!(ownership.pending_owner.unwrap(), new_minter);
 }
 
 #[test]
@@ -38,15 +38,17 @@ fn proposed_minter_can_accept_role() {
 
     mock.accept_proposed_minter(&new_minter).unwrap();
 
-    let config = mock.query_config();
-    if config.proposed_new_minter.is_some() {
+    let ownership = mock.query_ownership();
+    if ownership.pending_owner.is_some() {
         panic!("Proposed minter should have been removed from storage");
     }
+
+    assert_eq!(ownership.owner.unwrap().to_string(), new_minter.to_string());
 
     let res: MinterResponse =
         mock.app.wrap().query_wasm_smart(mock.nft_contract, &QueryMsg::Minter {}).unwrap();
 
-    assert_eq!(res.minter, new_minter)
+    assert_eq!(res.minter.unwrap(), new_minter.to_string());
 }
 
 #[test]

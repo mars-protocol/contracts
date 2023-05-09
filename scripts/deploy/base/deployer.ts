@@ -207,8 +207,10 @@ export class Deployer {
         this.deployerAddr,
         this.storage.addresses.accountNft!,
       )
-      await nftClient.updateConfig({
-        updates: { proposed_new_minter: this.storage.addresses.creditManager! },
+      await nftClient.updateOwnership({
+        transfer_ownership: {
+          new_owner: this.storage.addresses.creditManager!,
+        },
       })
       this.storage.actions.proposedNewOwner = true
       printBlue('Nft contract owner proposes Rover as new owner')

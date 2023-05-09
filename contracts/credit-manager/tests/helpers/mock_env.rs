@@ -2,6 +2,7 @@ use std::mem::take;
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coins, testing::MockApi, Addr, Coin, Decimal, StdResult, Uint128};
+use cw721_base::{Action::TransferOwnership, Ownership};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use cw_vault_standard::{
     extensions::lockup::{LockupQueryMsg, UnlockingPosition},
@@ -195,13 +196,15 @@ impl MockEnv {
     pub fn update_nft_config(
         &mut self,
         sender: &Addr,
-        updates: NftConfigUpdates,
+        config: Option<NftConfigUpdates>,
+        ownership: Option<cw721_base::Action>,
     ) -> AnyResult<AppResponse> {
         self.app.execute_contract(
             sender.clone(),
             self.rover.clone(),
             &ExecuteMsg::UpdateNftConfig {
-                updates,
+                config,
+                ownership,
             },
             &[],
         )
@@ -312,6 +315,14 @@ impl MockEnv {
         self.app
             .wrap()
             .query_wasm_smart(config.account_nft.unwrap(), &NftQueryMsg::Config {})
+            .unwrap()
+    }
+
+    pub fn query_nft_ownership(&self) -> Ownership<Addr> {
+        let config = self.query_config();
+        self.app
+            .wrap()
+            .query_wasm_smart(config.account_nft.unwrap(), &NftQueryMsg::Ownership {})
             .unwrap()
     }
 
@@ -1133,12 +1144,9 @@ fn deploy_nft_contract(app: &mut App, minter: &Addr) -> Addr {
 }
 
 fn propose_new_nft_minter(app: &mut App, nft_contract: Addr, old_minter: &Addr, new_minter: &Addr) {
-    let proposal_msg: NftExecuteMsg = NftExecuteMsg::UpdateConfig {
-        updates: NftConfigUpdates {
-            max_value_for_burn: None,
-            proposed_new_minter: Some(new_minter.into()),
-            health_contract_addr: None,
-        },
-    };
+    let proposal_msg: NftExecuteMsg = NftExecuteMsg::UpdateOwnership(TransferOwnership {
+        new_owner: new_minter.into(),
+        expiry: None,
+    });
     app.execute_contract(old_minter.clone(), nft_contract, &proposal_msg, &[]).unwrap();
 }

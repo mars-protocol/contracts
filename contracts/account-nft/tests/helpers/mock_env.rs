@@ -1,13 +1,14 @@
 use anyhow::Result as AnyResult;
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Empty};
 use cw721::OwnerOfResponse;
+use cw721_base::{
+    Action::{AcceptOwnership, TransferOwnership},
+    ExecuteMsg::UpdateOwnership,
+    Ownership,
+};
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 use mars_account_nft::{
-    msg::{
-        ExecuteMsg,
-        ExecuteMsg::{AcceptMinterRole, UpdateConfig},
-        QueryMsg,
-    },
+    msg::{ExecuteMsg, ExecuteMsg::UpdateConfig, QueryMsg},
     nft_config::{NftConfigUpdates, UncheckedNftConfig},
 };
 use mars_mock_rover_health::msg::ExecuteMsg::SetHealthResponse;
@@ -37,6 +38,13 @@ impl MockEnv {
 
     pub fn query_config(&mut self) -> UncheckedNftConfig {
         self.app.wrap().query_wasm_smart(self.nft_contract.clone(), &QueryMsg::Config {}).unwrap()
+    }
+
+    pub fn query_ownership(&mut self) -> Ownership<Addr> {
+        self.app
+            .wrap()
+            .query_wasm_smart(self.nft_contract.clone(), &QueryMsg::Ownership {})
+            .unwrap()
     }
 
     pub fn query_next_id(&mut self) -> u64 {
@@ -118,13 +126,14 @@ impl MockEnv {
         sender: &Addr,
         proposed_new_minter: &Addr,
     ) -> AnyResult<AppResponse> {
-        self.update_config(
-            sender,
-            &NftConfigUpdates {
-                max_value_for_burn: None,
-                proposed_new_minter: Some(proposed_new_minter.to_string()),
-                health_contract_addr: None,
-            },
+        self.app.execute_contract(
+            sender.clone(),
+            self.nft_contract.clone(),
+            &UpdateOwnership::<Empty, Empty>(TransferOwnership {
+                new_owner: proposed_new_minter.to_string(),
+                expiry: None,
+            }),
+            &[],
         )
     }
 
@@ -132,7 +141,7 @@ impl MockEnv {
         self.app.execute_contract(
             sender.clone(),
             self.nft_contract.clone(),
-            &AcceptMinterRole {},
+            &UpdateOwnership::<Empty, Empty>(AcceptOwnership),
             &[],
         )
     }

@@ -1,6 +1,6 @@
 {
   "contract_name": "mars-credit-manager",
-  "contract_version": "1.0.0",
+  "contract_version": "2.0.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -314,12 +314,26 @@
         "properties": {
           "update_nft_config": {
             "type": "object",
-            "required": [
-              "updates"
-            ],
             "properties": {
-              "updates": {
-                "$ref": "#/definitions/NftConfigUpdates"
+              "config": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/NftConfigUpdates"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ownership": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/Action"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -1564,12 +1578,6 @@
               {
                 "type": "null"
               }
-            ]
-          },
-          "proposed_new_minter": {
-            "type": [
-              "string",
-              "null"
             ]
           }
         },
