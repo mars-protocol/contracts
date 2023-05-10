@@ -643,7 +643,7 @@ fn delisted_deposits_drop_max_ltv() {
     // Remove uosmo from the coin whitelist
     let res = mock.query_config();
     mock.update_config(
-        &Addr::unchecked(res.owner.unwrap()),
+        &Addr::unchecked(res.ownership.owner.unwrap()),
         ConfigUpdates {
             allowed_coins: Some(vec![uatom_info.denom]),
             ..Default::default()
@@ -723,7 +723,7 @@ fn delisted_vaults_drop_max_ltv() {
     // Blacklist vault
     let res = mock.query_config();
     mock.update_config(
-        &Addr::unchecked(res.owner.unwrap()),
+        &Addr::unchecked(res.ownership.owner.unwrap()),
         ConfigUpdates {
             vault_configs: Some(vec![new_vault_config]),
             ..Default::default()
@@ -791,7 +791,7 @@ fn vault_base_token_delisting_drops_max_ltv() {
     // Remove LP token from the coin whitelist
     let res = mock.query_config();
     mock.update_config(
-        &Addr::unchecked(res.owner.unwrap()),
+        &Addr::unchecked(res.ownership.owner.unwrap()),
         ConfigUpdates {
             allowed_coins: Some(vec![atom.denom]),
             ..Default::default()

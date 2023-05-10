@@ -182,7 +182,7 @@ fn delisted_assets_can_be_repaid() {
     // Delist the asset
     let config = mock.query_config();
     mock.update_config(
-        &Addr::unchecked(config.owner.unwrap()),
+        &Addr::unchecked(config.ownership.owner.unwrap()),
         ConfigUpdates {
             account_nft: None,
             allowed_coins: Some(vec![]),

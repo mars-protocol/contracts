@@ -64,7 +64,7 @@ fn raises_on_invalid_vaults_config() {
     vault_config.config.liquidation_threshold = Decimal::from_atomics(7u128, 1).unwrap();
 
     let res = mock.update_config(
-        &Addr::unchecked(original_config.owner.clone().unwrap()),
+        &Addr::unchecked(original_config.ownership.owner.clone().unwrap()),
         ConfigUpdates {
             account_nft: None,
             allowed_coins: None,
@@ -92,7 +92,7 @@ fn raises_on_invalid_vaults_config() {
     vault_config.config.liquidation_threshold = Decimal::from_atomics(9u128, 0).unwrap();
 
     let res = mock.update_config(
-        &Addr::unchecked(original_config.owner.clone().unwrap()),
+        &Addr::unchecked(original_config.ownership.owner.clone().unwrap()),
         ConfigUpdates {
             account_nft: None,
             allowed_coins: None,
@@ -119,7 +119,7 @@ fn raises_on_invalid_vaults_config() {
     let vault_b = deploy_vault(&mut mock.app);
 
     let res = mock.update_config(
-        &Addr::unchecked(original_config.owner.unwrap()),
+        &Addr::unchecked(original_config.ownership.owner.unwrap()),
         ConfigUpdates {
             account_nft: None,
             allowed_coins: None,
@@ -161,7 +161,7 @@ fn update_config_works_with_full_config() {
     let new_health_contract = HealthContractUnchecked::new("new_health_contract".to_string());
 
     mock.update_config(
-        &Addr::unchecked(original_config.owner.clone().unwrap()),
+        &Addr::unchecked(original_config.ownership.owner.clone().unwrap()),
         ConfigUpdates {
             account_nft: Some(new_nft_contract.to_string()),
             allowed_coins: Some(new_allowed_coins.clone()),
@@ -184,7 +184,10 @@ fn update_config_works_with_full_config() {
     assert_eq!(new_config.account_nft, Some(new_nft_contract.to_string()));
     assert_ne!(new_config.account_nft, original_config.account_nft);
 
-    assert_eq!(new_config.owner.unwrap(), original_config.owner.clone().unwrap());
+    assert_eq!(
+        new_config.ownership.owner.unwrap(),
+        original_config.ownership.owner.clone().unwrap()
+    );
 
     assert_eq!(
         new_queried_vault_configs,
@@ -234,7 +237,7 @@ fn update_config_works_with_some_config() {
     let new_max_unlocking = Uint128::new(42);
 
     mock.update_config(
-        &Addr::unchecked(original_config.owner.clone().unwrap()),
+        &Addr::unchecked(original_config.ownership.owner.clone().unwrap()),
         ConfigUpdates {
             account_nft: Some(new_nft_contract.to_string()),
             max_unlocking_positions: Some(new_max_unlocking),
@@ -255,8 +258,8 @@ fn update_config_works_with_some_config() {
     assert_ne!(new_config.max_unlocking_positions, original_config.max_unlocking_positions);
 
     // Unchanged configs
-    assert_eq!(new_config.owner, original_config.owner);
-    assert_eq!(new_config.proposed_new_owner, original_config.proposed_new_owner);
+    assert_eq!(new_config.ownership.owner, original_config.ownership.owner);
+    assert_eq!(new_config.ownership.proposed, original_config.ownership.proposed);
     assert_eq!(new_config.red_bank, original_config.red_bank);
     assert_eq!(new_config.oracle, original_config.oracle);
     assert_eq!(new_config.max_close_factor, original_config.max_close_factor);
@@ -286,7 +289,7 @@ fn update_config_removes_properly() {
     assert_eq!(vault_configs.len(), 1);
 
     mock.update_config(
-        &Addr::unchecked(mock.query_config().owner.unwrap()),
+        &Addr::unchecked(mock.query_config().ownership.owner.unwrap()),
         ConfigUpdates {
             allowed_coins: Some(vec![]),
             vault_configs: Some(vec![]),
@@ -311,7 +314,7 @@ fn update_config_does_nothing_when_nothing_is_passed() {
     let original_allowed_coins = mock.query_allowed_coins(None, None);
 
     mock.update_config(
-        &Addr::unchecked(original_config.owner.clone().unwrap()),
+        &Addr::unchecked(original_config.ownership.owner.clone().unwrap()),
         Default::default(),
     )
     .unwrap();
@@ -321,7 +324,7 @@ fn update_config_does_nothing_when_nothing_is_passed() {
     let new_queried_allowed_coins = mock.query_allowed_coins(None, None);
 
     assert_eq!(new_config.account_nft, original_config.account_nft);
-    assert_eq!(new_config.owner, original_config.owner);
+    assert_eq!(new_config.ownership, original_config.ownership);
     assert_eq!(new_queried_vault_configs, original_vault_configs);
     assert_eq!(new_queried_allowed_coins, original_allowed_coins);
     assert_eq!(new_config.red_bank, original_config.red_bank);
@@ -337,7 +340,7 @@ fn max_close_factor_validated_on_update() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
     let res = mock.update_config(
-        &Addr::unchecked(original_config.owner.unwrap()),
+        &Addr::unchecked(original_config.ownership.owner.unwrap()),
         ConfigUpdates {
             max_close_factor: Some(Decimal::from_atomics(42u128, 1).unwrap()),
             ..Default::default()
@@ -357,7 +360,7 @@ fn raises_on_duplicate_vault_configs() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
     let res = mock.update_config(
-        &Addr::unchecked(original_config.owner.unwrap()),
+        &Addr::unchecked(original_config.ownership.owner.unwrap()),
         ConfigUpdates {
             account_nft: None,
             allowed_coins: None,
@@ -404,7 +407,7 @@ fn raises_on_duplicate_coin_configs() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
     let res = mock.update_config(
-        &Addr::unchecked(original_config.owner.unwrap()),
+        &Addr::unchecked(original_config.ownership.owner.unwrap()),
         ConfigUpdates {
             account_nft: None,
             allowed_coins: Some(vec![

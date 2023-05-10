@@ -10,6 +10,7 @@ use mars_mock_credit_manager::msg::{
 use mars_mock_oracle::msg::InstantiateMsg as OracleInstantiateMsg;
 use mars_mock_red_bank::msg::InstantiateMsg as RedBankInstantiateMsg;
 use mars_mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
+use mars_owner::OwnerResponse;
 use mars_rover::{
     adapters::{oracle::OracleUnchecked, vault::VaultConfig},
     msg::query::ConfigResponse,
@@ -144,10 +145,15 @@ impl MockEnvBuilder {
                 self.deployer.clone(),
                 &CmMockInstantiateMsg {
                     config: ConfigResponse {
-                        owner: Some(self.deployer.to_string()),
+                        ownership: OwnerResponse {
+                            owner: Some(self.deployer.to_string()),
+                            proposed: None,
+                            emergency_owner: None,
+                            initialized: true,
+                            abolished: false,
+                        },
                         red_bank,
                         oracle,
-                        proposed_new_owner: None,
                         account_nft: None,
                         max_close_factor: Default::default(),
                         max_unlocking_positions: Default::default(),

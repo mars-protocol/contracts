@@ -222,11 +222,17 @@ export interface ConfigResponse {
   max_close_factor: Decimal
   max_unlocking_positions: Uint128
   oracle: string
-  owner?: string | null
-  proposed_new_owner?: string | null
+  ownership: OwnerResponse
   red_bank: string
   swapper: string
   zapper: string
+}
+export interface OwnerResponse {
+  abolished: boolean
+  emergency_owner?: string | null
+  initialized: boolean
+  owner?: string | null
+  proposed?: string | null
 }
 export type ArrayOfCoin = Coin[]
 export interface VaultConfigResponse {

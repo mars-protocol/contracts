@@ -60,7 +60,7 @@ fn raises_on_invalid_config() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let res = mock.update_nft_config(
-        &Addr::unchecked(mock.query_config().owner.unwrap()),
+        &Addr::unchecked(mock.query_config().ownership.owner.unwrap()),
         None,
         Some(cw721_base::Action::TransferOwnership {
             new_owner: "".to_string(),
@@ -84,7 +84,7 @@ fn update_config_works_with_full_config() {
     let new_health_contract = Some("new_health_contract_xyz".to_string());
 
     mock.update_nft_config(
-        &Addr::unchecked(mock.query_config().owner.unwrap()),
+        &Addr::unchecked(mock.query_config().ownership.owner.unwrap()),
         Some(NftConfigUpdates {
             max_value_for_burn: new_max_value,
             health_contract_addr: new_health_contract.clone(),
@@ -116,7 +116,7 @@ fn update_config_works_with_some_config() {
 
     let new_proposed = Some(Addr::unchecked("spiderman_12345"));
     mock.update_nft_config(
-        &Addr::unchecked(mock.query_config().owner.unwrap()),
+        &Addr::unchecked(mock.query_config().ownership.owner.unwrap()),
         None,
         Some(cw721_base::Action::TransferOwnership {
             new_owner: new_proposed.clone().unwrap().into(),

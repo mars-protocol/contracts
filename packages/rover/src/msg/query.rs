@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Decimal, Uint128};
+use mars_owner::OwnerResponse;
 
 use crate::{
     adapters::vault::{Vault, VaultConfig, VaultPosition, VaultUnchecked},
@@ -214,8 +215,7 @@ pub struct VaultWithBalance {
 
 #[cw_serde]
 pub struct ConfigResponse {
-    pub owner: Option<String>,
-    pub proposed_new_owner: Option<String>,
+    pub ownership: OwnerResponse,
     pub account_nft: Option<String>,
     pub red_bank: String,
     pub oracle: String,

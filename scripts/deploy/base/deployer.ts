@@ -380,7 +380,7 @@ export class Deployer {
       this.storage.addresses.creditManager!,
     )
     const creditManagerConfig = await cmQuery.config()
-    assert.equal(creditManagerConfig.proposed_new_owner, this.config.multisigAddr)
+    assert.equal(creditManagerConfig.ownership.proposed, this.config.multisigAddr)
   }
 
   async updateSwapperOwner() {

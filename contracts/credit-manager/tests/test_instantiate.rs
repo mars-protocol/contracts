@@ -16,7 +16,7 @@ fn owner_set_on_instantiate() {
     let owner = "owner_addr";
     let mock = MockEnv::new().owner(owner).build().unwrap();
     let res = mock.query_config();
-    assert_eq!(owner, res.owner.unwrap());
+    assert_eq!(owner, res.ownership.owner.unwrap());
 }
 
 #[test]

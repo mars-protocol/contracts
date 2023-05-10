@@ -42,6 +42,7 @@ import {
   VaultPositionResponseItem,
   ArrayOfString,
   ConfigResponse,
+  OwnerResponse,
   ArrayOfCoin,
   VaultConfigResponse,
   VaultPositionValue,
