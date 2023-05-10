@@ -37,6 +37,10 @@ jobs:
           cargo make rust-optimizer
           sudo chown -R $USER .
 
+      - name: download mars-common artifacts
+        run: |
+          wget https://github.com/mars-protocol/mars-common/releases/download/v1.0.0-alpha/mars_params.wasm -O target/wasm32-unknown-unknown/release/mars_params.wasm
+
       - name: Run test coverage
         run: cargo make coverage-lcov
 
