@@ -13,7 +13,7 @@ pub fn disable_borrowing(
     OWNER.assert_emergency_owner(deps.storage, &info.sender)?;
 
     let mut params = ASSET_PARAMS.load(deps.storage, denom)?;
-    params.permissions.red_bank.borrow_enabled = false;
+    params.red_bank.borrow_enabled = false;
     ASSET_PARAMS.save(deps.storage, denom, &params)?;
 
     let response = Response::new()
@@ -31,7 +31,7 @@ pub fn disallow_coin(
     OWNER.assert_emergency_owner(deps.storage, &info.sender)?;
 
     let mut params = ASSET_PARAMS.load(deps.storage, denom)?;
-    params.permissions.rover.whitelisted = false;
+    params.rover.whitelisted = false;
     ASSET_PARAMS.save(deps.storage, denom, &params)?;
 
     let response = Response::new()

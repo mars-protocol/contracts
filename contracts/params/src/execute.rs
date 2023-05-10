@@ -99,7 +99,7 @@ pub fn assert_mcf(param_value: Decimal) -> Result<(), ValidationError> {
 }
 
 /// liquidation_threshold should be greater than or equal to max_loan_to_value
-pub fn assert_lqt_gte_max_ltv(
+pub fn assert_lqt_gt_max_ltv(
     max_ltv: Decimal,
     liq_threshold: Decimal,
 ) -> Result<(), ValidationError> {
@@ -108,6 +108,20 @@ pub fn assert_lqt_gte_max_ltv(
             param_name: "liquidation_threshold".to_string(),
             invalid_value: liq_threshold.to_string(),
             predicate: format!("> {} (max LTV)", max_ltv),
+        });
+    }
+    Ok(())
+}
+
+pub fn assert_hls_lqt_gt_max_ltv(
+    max_ltv: Decimal,
+    liq_threshold: Decimal,
+) -> Result<(), ValidationError> {
+    if liq_threshold <= max_ltv {
+        return Err(ValidationError::InvalidParam {
+            param_name: "hls_liquidation_threshold".to_string(),
+            invalid_value: liq_threshold.to_string(),
+            predicate: format!("> {} (hls max LTV)", max_ltv),
         });
     }
     Ok(())

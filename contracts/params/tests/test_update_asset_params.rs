@@ -51,22 +51,13 @@ fn initializing_asset_param() {
     assert_eq!(&denom0, &res.denom);
 
     // Validate config set correctly
-    assert_eq!(params.permissions.rover.whitelisted, res.params.permissions.rover.whitelisted);
-    assert_eq!(
-        params.permissions.red_bank.deposit_enabled,
-        res.params.permissions.red_bank.deposit_enabled
-    );
-    assert_eq!(
-        params.permissions.red_bank.borrow_enabled,
-        res.params.permissions.red_bank.borrow_enabled
-    );
+    assert_eq!(params.rover.whitelisted, res.params.rover.whitelisted);
+    assert_eq!(params.red_bank.deposit_enabled, res.params.red_bank.deposit_enabled);
+    assert_eq!(params.red_bank.borrow_enabled, res.params.red_bank.borrow_enabled);
     assert_eq!(params.max_loan_to_value, res.params.max_loan_to_value);
     assert_eq!(params.liquidation_threshold, res.params.liquidation_threshold);
     assert_eq!(params.liquidation_bonus, res.params.liquidation_bonus);
-    assert_eq!(
-        params.permissions.red_bank.deposit_cap,
-        res.params.permissions.red_bank.deposit_cap
-    );
+    assert_eq!(params.red_bank.deposit_cap, res.params.red_bank.deposit_cap);
 
     mock.update_asset_params(
         &owner,
@@ -144,11 +135,11 @@ fn update_existing_asset_params() {
     .unwrap();
 
     let asset_params = mock.query_asset_params(&denom0);
-    assert!(!asset_params.permissions.rover.whitelisted);
-    assert!(asset_params.permissions.red_bank.deposit_enabled);
+    assert!(!asset_params.rover.whitelisted);
+    assert!(asset_params.red_bank.deposit_enabled);
 
-    params.permissions.rover.whitelisted = true;
-    params.permissions.red_bank.deposit_enabled = false;
+    params.rover.whitelisted = true;
+    params.red_bank.deposit_enabled = false;
 
     mock.update_asset_params(
         &owner,
@@ -163,8 +154,8 @@ fn update_existing_asset_params() {
     assert_eq!(1, all_asset_params.len());
 
     let asset_params = mock.query_asset_params(&denom0);
-    assert!(asset_params.permissions.rover.whitelisted);
-    assert!(!asset_params.permissions.red_bank.deposit_enabled);
+    assert!(asset_params.rover.whitelisted);
+    assert!(!asset_params.red_bank.deposit_enabled);
 }
 
 #[test]
