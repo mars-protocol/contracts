@@ -48,7 +48,7 @@ fn disabling_borrowing() {
     let denom = "atom".to_string();
 
     let mut params = default_asset_params();
-    params.permissions.red_bank.borrow_enabled = true;
+    params.red_bank.borrow_enabled = true;
 
     mock.update_asset_params(
         &mock.query_owner(),
@@ -60,7 +60,7 @@ fn disabling_borrowing() {
     .unwrap();
 
     let params = mock.query_asset_params(&denom);
-    assert!(params.permissions.red_bank.borrow_enabled);
+    assert!(params.red_bank.borrow_enabled);
 
     mock.emergency_update(
         &emergency_owner,
@@ -69,7 +69,7 @@ fn disabling_borrowing() {
     .unwrap();
 
     let params = mock.query_asset_params(&denom);
-    assert!(!params.permissions.red_bank.borrow_enabled);
+    assert!(!params.red_bank.borrow_enabled);
 }
 
 #[test]
@@ -79,7 +79,7 @@ fn disallow_coin() {
     let denom = "atom".to_string();
 
     let mut params = default_asset_params();
-    params.permissions.rover.whitelisted = true;
+    params.rover.whitelisted = true;
 
     mock.update_asset_params(
         &mock.query_owner(),
@@ -91,7 +91,7 @@ fn disallow_coin() {
     .unwrap();
 
     let params = mock.query_asset_params(&denom);
-    assert!(params.permissions.rover.whitelisted);
+    assert!(params.rover.whitelisted);
 
     mock.emergency_update(
         &emergency_owner,
@@ -100,7 +100,7 @@ fn disallow_coin() {
     .unwrap();
 
     let params = mock.query_asset_params(&denom);
-    assert!(!params.permissions.rover.whitelisted);
+    assert!(!params.rover.whitelisted);
 }
 
 #[test]

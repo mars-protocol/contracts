@@ -75,7 +75,7 @@ fn vault_liquidation_threshold_less_than_or_equal_to_one() {
 }
 
 #[test]
-fn vault_liq_threshold_gte_max_ltv() {
+fn vault_liq_threshold_gt_max_ltv() {
     let mut mock = MockEnv::new().build().unwrap();
     let mut config = default_vault_config();
     config.liquidation_threshold = Decimal::from_str("0.5").unwrap();

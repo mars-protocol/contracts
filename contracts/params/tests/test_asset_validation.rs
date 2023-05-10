@@ -98,7 +98,7 @@ fn liquidation_bonus_less_than_or_equal_to_one() {
 }
 
 #[test]
-fn liq_threshold_gte_max_ltv() {
+fn liq_threshold_gt_max_ltv() {
     let mut mock = MockEnv::new().build().unwrap();
     let mut params = default_asset_params();
     params.liquidation_threshold = Decimal::from_str("0.5").unwrap();
@@ -125,7 +125,7 @@ fn liq_threshold_gte_max_ltv() {
 fn hls_max_ltv_less_than_or_equal_to_one() {
     let mut mock = MockEnv::new().build().unwrap();
     let mut params = default_asset_params();
-    params.hls.max_loan_to_value = Decimal::from_str("1.1235").unwrap();
+    params.rover.hls.max_loan_to_value = Decimal::from_str("1.1235").unwrap();
 
     let res = mock.update_asset_params(
         &mock.query_owner(),
@@ -148,7 +148,7 @@ fn hls_max_ltv_less_than_or_equal_to_one() {
 fn hls_liquidation_threshold_less_than_or_equal_to_one() {
     let mut mock = MockEnv::new().build().unwrap();
     let mut params = default_asset_params();
-    params.hls.liquidation_threshold = Decimal::from_str("1.1235").unwrap();
+    params.rover.hls.liquidation_threshold = Decimal::from_str("1.1235").unwrap();
 
     let res = mock.update_asset_params(
         &mock.query_owner(),
@@ -168,11 +168,11 @@ fn hls_liquidation_threshold_less_than_or_equal_to_one() {
 }
 
 #[test]
-fn hls_liq_threshold_gte_hls_max_ltv() {
+fn hls_liq_threshold_gt_hls_max_ltv() {
     let mut mock = MockEnv::new().build().unwrap();
     let mut params = default_asset_params();
-    params.hls.liquidation_threshold = Decimal::from_str("0.5").unwrap();
-    params.hls.max_loan_to_value = Decimal::from_str("0.6").unwrap();
+    params.rover.hls.liquidation_threshold = Decimal::from_str("0.5").unwrap();
+    params.rover.hls.max_loan_to_value = Decimal::from_str("0.6").unwrap();
 
     let res = mock.update_asset_params(
         &mock.query_owner(),

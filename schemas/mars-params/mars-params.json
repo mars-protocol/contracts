@@ -101,16 +101,13 @@
       "AssetParams": {
         "type": "object",
         "required": [
-          "hls",
           "liquidation_bonus",
           "liquidation_threshold",
           "max_loan_to_value",
-          "permissions"
+          "red_bank",
+          "rover"
         ],
         "properties": {
-          "hls": {
-            "$ref": "#/definitions/HighLeverageStrategyParams"
-          },
           "liquidation_bonus": {
             "$ref": "#/definitions/Decimal"
           },
@@ -120,8 +117,11 @@
           "max_loan_to_value": {
             "$ref": "#/definitions/Decimal"
           },
-          "permissions": {
-            "$ref": "#/definitions/AssetPermissions"
+          "red_bank": {
+            "$ref": "#/definitions/RedBankSettings"
+          },
+          "rover": {
+            "$ref": "#/definitions/RoverSettings"
           }
         },
         "additionalProperties": false
@@ -154,22 +154,6 @@
             "additionalProperties": false
           }
         ]
-      },
-      "AssetPermissions": {
-        "type": "object",
-        "required": [
-          "red_bank",
-          "rover"
-        ],
-        "properties": {
-          "red_bank": {
-            "$ref": "#/definitions/RedBankPermissions"
-          },
-          "rover": {
-            "$ref": "#/definitions/RoverPermissions"
-          }
-        },
-        "additionalProperties": false
       },
       "Coin": {
         "type": "object",
@@ -326,7 +310,7 @@
           }
         ]
       },
-      "RedBankPermissions": {
+      "RedBankSettings": {
         "type": "object",
         "required": [
           "borrow_enabled",
@@ -386,12 +370,16 @@
           }
         ]
       },
-      "RoverPermissions": {
+      "RoverSettings": {
         "type": "object",
         "required": [
+          "hls",
           "whitelisted"
         ],
         "properties": {
+          "hls": {
+            "$ref": "#/definitions/HighLeverageStrategyParams"
+          },
           "whitelisted": {
             "type": "boolean"
           }
@@ -625,16 +613,13 @@
         "AssetParams": {
           "type": "object",
           "required": [
-            "hls",
             "liquidation_bonus",
             "liquidation_threshold",
             "max_loan_to_value",
-            "permissions"
+            "red_bank",
+            "rover"
           ],
           "properties": {
-            "hls": {
-              "$ref": "#/definitions/HighLeverageStrategyParams"
-            },
             "liquidation_bonus": {
               "$ref": "#/definitions/Decimal"
             },
@@ -644,8 +629,11 @@
             "max_loan_to_value": {
               "$ref": "#/definitions/Decimal"
             },
-            "permissions": {
-              "$ref": "#/definitions/AssetPermissions"
+            "red_bank": {
+              "$ref": "#/definitions/RedBankSettings"
+            },
+            "rover": {
+              "$ref": "#/definitions/RoverSettings"
             }
           },
           "additionalProperties": false
@@ -662,22 +650,6 @@
             },
             "params": {
               "$ref": "#/definitions/AssetParams"
-            }
-          },
-          "additionalProperties": false
-        },
-        "AssetPermissions": {
-          "type": "object",
-          "required": [
-            "red_bank",
-            "rover"
-          ],
-          "properties": {
-            "red_bank": {
-              "$ref": "#/definitions/RedBankPermissions"
-            },
-            "rover": {
-              "$ref": "#/definitions/RoverPermissions"
             }
           },
           "additionalProperties": false
@@ -702,7 +674,7 @@
           },
           "additionalProperties": false
         },
-        "RedBankPermissions": {
+        "RedBankSettings": {
           "type": "object",
           "required": [
             "borrow_enabled",
@@ -722,12 +694,16 @@
           },
           "additionalProperties": false
         },
-        "RoverPermissions": {
+        "RoverSettings": {
           "type": "object",
           "required": [
+            "hls",
             "whitelisted"
           ],
           "properties": {
+            "hls": {
+              "$ref": "#/definitions/HighLeverageStrategyParams"
+            },
             "whitelisted": {
               "type": "boolean"
             }
@@ -802,16 +778,13 @@
       "title": "AssetParams",
       "type": "object",
       "required": [
-        "hls",
         "liquidation_bonus",
         "liquidation_threshold",
         "max_loan_to_value",
-        "permissions"
+        "red_bank",
+        "rover"
       ],
       "properties": {
-        "hls": {
-          "$ref": "#/definitions/HighLeverageStrategyParams"
-        },
         "liquidation_bonus": {
           "$ref": "#/definitions/Decimal"
         },
@@ -821,28 +794,15 @@
         "max_loan_to_value": {
           "$ref": "#/definitions/Decimal"
         },
-        "permissions": {
-          "$ref": "#/definitions/AssetPermissions"
+        "red_bank": {
+          "$ref": "#/definitions/RedBankSettings"
+        },
+        "rover": {
+          "$ref": "#/definitions/RoverSettings"
         }
       },
       "additionalProperties": false,
       "definitions": {
-        "AssetPermissions": {
-          "type": "object",
-          "required": [
-            "red_bank",
-            "rover"
-          ],
-          "properties": {
-            "red_bank": {
-              "$ref": "#/definitions/RedBankPermissions"
-            },
-            "rover": {
-              "$ref": "#/definitions/RoverPermissions"
-            }
-          },
-          "additionalProperties": false
-        },
         "Decimal": {
           "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
           "type": "string"
@@ -863,7 +823,7 @@
           },
           "additionalProperties": false
         },
-        "RedBankPermissions": {
+        "RedBankSettings": {
           "type": "object",
           "required": [
             "borrow_enabled",
@@ -883,12 +843,16 @@
           },
           "additionalProperties": false
         },
-        "RoverPermissions": {
+        "RoverSettings": {
           "type": "object",
           "required": [
+            "hls",
             "whitelisted"
           ],
           "properties": {
+            "hls": {
+              "$ref": "#/definitions/HighLeverageStrategyParams"
+            },
             "whitelisted": {
               "type": "boolean"
             }

@@ -81,27 +81,24 @@ export type RedBankEmergencyUpdate = {
   disable_borrowing: string
 }
 export interface AssetParams {
-  hls: HighLeverageStrategyParams
   liquidation_bonus: Decimal
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
-  permissions: AssetPermissions
+  red_bank: RedBankSettings
+  rover: RoverSettings
 }
-export interface HighLeverageStrategyParams {
-  liquidation_threshold: Decimal
-  max_loan_to_value: Decimal
-}
-export interface AssetPermissions {
-  red_bank: RedBankPermissions
-  rover: RoverPermissions
-}
-export interface RedBankPermissions {
+export interface RedBankSettings {
   borrow_enabled: boolean
   deposit_cap: Uint128
   deposit_enabled: boolean
 }
-export interface RoverPermissions {
+export interface RoverSettings {
+  hls: HighLeverageStrategyParams
   whitelisted: boolean
+}
+export interface HighLeverageStrategyParams {
+  liquidation_threshold: Decimal
+  max_loan_to_value: Decimal
 }
 export interface VaultConfig {
   deposit_cap: Coin
