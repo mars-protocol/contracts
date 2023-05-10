@@ -93,7 +93,7 @@ impl AstroportRoute {
         let ask_price = self.query_oracle_price(querier, self.ask()?)?;
 
         // Calculate the minimum amount of output tokens to receive
-        Ok(ask_price.checked_div(offer_price)? * coin_in.amount)
+        Ok(coin_in.amount.checked_mul_floor(ask_price.checked_div(offer_price)?)?)
     }
 }
 
