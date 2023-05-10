@@ -308,7 +308,7 @@ pub fn deposit(
 
     let asset_params = query_asset_params(&deps.querier, params_addr, &denom)?;
 
-    if !asset_params.permissions.red_bank.deposit_enabled {
+    if !asset_params.red_bank.deposit_enabled {
         return Err(ContractError::DepositNotEnabled {
             denom,
         });
@@ -317,7 +317,7 @@ pub fn deposit(
     let total_scaled_deposits = market.collateral_total_scaled;
     let total_deposits =
         get_underlying_liquidity_amount(total_scaled_deposits, &market, env.block.time.seconds())?;
-    if total_deposits.checked_add(deposit_amount)? > asset_params.permissions.red_bank.deposit_cap {
+    if total_deposits.checked_add(deposit_amount)? > asset_params.red_bank.deposit_cap {
         return Err(ContractError::DepositCapExceeded {
             denom,
         });
@@ -525,7 +525,7 @@ pub fn borrow(
 
     let asset_params = query_asset_params(&deps.querier, params_addr, &denom)?;
 
-    if !asset_params.permissions.red_bank.borrow_enabled {
+    if !asset_params.red_bank.borrow_enabled {
         return Err(ContractError::BorrowNotEnabled {
             denom,
         });
@@ -556,7 +556,7 @@ pub fn borrow(
 
         let debt_amount_scaled = borrower.debt_amount_scaled(deps.storage, &denom)?;
 
-        let asset_market = MARKETS.load(deps.storage, &denom)?; // TODO do we need this one?
+        let asset_market = MARKETS.load(deps.storage, &denom)?;
         let debt_amount = get_underlying_debt_amount(
             debt_amount_scaled,
             &asset_market,

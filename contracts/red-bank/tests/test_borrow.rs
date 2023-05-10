@@ -6,7 +6,7 @@ use helpers::{
     has_collateral_position, has_debt_position, set_collateral, th_build_interests_updated_event,
     th_get_expected_indices_and_rates, th_init_market, th_setup, TestUtilizationDeltaInfo,
 };
-use mars_params::types::{AssetParams, AssetPermissions, RedBankSettings, RoverPermissions};
+use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -991,15 +991,18 @@ fn cannot_borrow_if_market_not_enabled() {
     deps.querier.set_redbank_params(
         "somecoin",
         AssetParams {
-            permissions: AssetPermissions {
-                rover: RoverPermissions {
-                    whitelisted: false,
+            rover: RoverSettings {
+                whitelisted: false,
+
+                hls: HighLeverageStrategyParams {
+                    max_loan_to_value: Decimal::percent(90),
+                    liquidation_threshold: Decimal::one(),
                 },
-                red_bank: RedBankSettings {
-                    deposit_enabled: false,
-                    borrow_enabled: false,
-                    deposit_cap: Default::default(),
-                },
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: false,
+                borrow_enabled: false,
+                deposit_cap: Default::default(),
             },
             ..th_default_asset_params()
         },

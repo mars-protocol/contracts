@@ -3,7 +3,7 @@
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Coin, Decimal, Uint128};
 use cw_multi_test::AppResponse;
-use mars_params::types::{AssetParams, AssetPermissions, RedBankSettings, RoverPermissions};
+use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
 use mars_red_bank::error::ContractError;
 use mars_red_bank_types::red_bank::{
     InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
@@ -25,21 +25,21 @@ pub fn default_asset_params() -> (InitOrUpdateAssetParams, AssetParams) {
         }),
     };
     let asset_params = AssetParams {
-        permissions: AssetPermissions {
-            rover: RoverPermissions {
-                whitelisted: false,
+        rover: RoverSettings {
+            whitelisted: false,
+            hls: HighLeverageStrategyParams {
+                max_loan_to_value: Decimal::percent(90),
+                liquidation_threshold: Decimal::one(),
             },
-            red_bank: RedBankSettings {
-                deposit_enabled: true,
-                borrow_enabled: true,
-                deposit_cap: Uint128::MAX,
-            },
+        },
+        red_bank: RedBankSettings {
+            deposit_enabled: true,
+            borrow_enabled: true,
+            deposit_cap: Uint128::MAX,
         },
         max_loan_to_value: Decimal::percent(60),
         liquidation_threshold: Decimal::percent(80),
         liquidation_bonus: Decimal::percent(10),
-        interest_rate_model: Default::default(),
-        reserve_factor: Default::default(),
     };
     (market_params, asset_params)
 }
@@ -59,21 +59,21 @@ pub fn default_asset_params_with(
         }),
     };
     let asset_params = AssetParams {
-        permissions: AssetPermissions {
-            rover: RoverPermissions {
-                whitelisted: false,
+        rover: RoverSettings {
+            whitelisted: false,
+            hls: HighLeverageStrategyParams {
+                max_loan_to_value: Decimal::percent(90),
+                liquidation_threshold: Decimal::one(),
             },
-            red_bank: RedBankSettings {
-                deposit_enabled: true,
-                borrow_enabled: true,
-                deposit_cap: Uint128::MAX,
-            },
+        },
+        red_bank: RedBankSettings {
+            deposit_enabled: true,
+            borrow_enabled: true,
+            deposit_cap: Uint128::MAX,
         },
         max_loan_to_value,
         liquidation_threshold,
         liquidation_bonus,
-        interest_rate_model: Default::default(),
-        reserve_factor: Default::default(),
     };
     (market_params, asset_params)
 }

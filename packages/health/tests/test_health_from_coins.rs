@@ -5,7 +5,7 @@ use cosmwasm_std::{
     Uint128,
 };
 use mars_health::{error::HealthError, health::Health};
-use mars_params::types::{AssetParams, AssetPermissions, RedBankSettings, RoverPermissions};
+use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
 use mars_red_bank_types::red_bank::Market;
 use mars_testing::MarsMockQuerier;
 
@@ -22,21 +22,21 @@ fn health_success_from_coins() {
     mock_querier.set_redbank_params(
         "osmo",
         AssetParams {
-            permissions: AssetPermissions {
-                rover: RoverPermissions {
-                    whitelisted: false,
+            rover: RoverSettings {
+                whitelisted: false,
+                hls: HighLeverageStrategyParams {
+                    max_loan_to_value: Decimal::percent(90),
+                    liquidation_threshold: Decimal::one(),
                 },
-                red_bank: RedBankSettings {
-                    deposit_enabled: true,
-                    borrow_enabled: true,
-                    deposit_cap: Uint128::MAX,
-                },
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: true,
+                borrow_enabled: true,
+                deposit_cap: Uint128::MAX,
             },
             max_loan_to_value: Decimal::from_atomics(50u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
             liquidation_bonus: Default::default(),
-            interest_rate_model: Default::default(),
-            reserve_factor: Default::default(),
         },
     );
     let atom_market = Market {
@@ -47,21 +47,21 @@ fn health_success_from_coins() {
     mock_querier.set_redbank_params(
         "atom",
         AssetParams {
-            permissions: AssetPermissions {
-                rover: RoverPermissions {
-                    whitelisted: false,
+            rover: RoverSettings {
+                whitelisted: false,
+                hls: HighLeverageStrategyParams {
+                    max_loan_to_value: Decimal::percent(90),
+                    liquidation_threshold: Decimal::one(),
                 },
-                red_bank: RedBankSettings {
-                    deposit_enabled: true,
-                    borrow_enabled: true,
-                    deposit_cap: Uint128::MAX,
-                },
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: true,
+                borrow_enabled: true,
+                deposit_cap: Uint128::MAX,
             },
             max_loan_to_value: Decimal::from_atomics(70u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
             liquidation_bonus: Default::default(),
-            interest_rate_model: Default::default(),
-            reserve_factor: Default::default(),
         },
     );
 
@@ -111,21 +111,21 @@ fn health_error_from_coins() {
     mock_querier.set_redbank_params(
         "osmo",
         AssetParams {
-            permissions: AssetPermissions {
-                rover: RoverPermissions {
-                    whitelisted: false,
+            rover: RoverSettings {
+                whitelisted: false,
+                hls: HighLeverageStrategyParams {
+                    max_loan_to_value: Decimal::percent(90),
+                    liquidation_threshold: Decimal::one(),
                 },
-                red_bank: RedBankSettings {
-                    deposit_enabled: false,
-                    borrow_enabled: false,
-                    deposit_cap: Default::default(),
-                },
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: false,
+                borrow_enabled: false,
+                deposit_cap: Default::default(),
             },
             max_loan_to_value: Decimal::from_atomics(50u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
             liquidation_bonus: Default::default(),
-            interest_rate_model: Default::default(),
-            reserve_factor: Default::default(),
         },
     );
 

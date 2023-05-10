@@ -1869,8 +1869,9 @@ dependencies = [
 
 [[package]]
 name = "mars-params"
-version = "1.0.0"
-source = "git+https://github.com/mars-protocol/mars-common?rev=8f94672#8f94672b950694f41bde9fa09445d27418b6b8f5"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e76688c883401778ab5f60c83e0e982f307438fbbcbfea10bbb97a950222636e"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",

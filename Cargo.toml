@@ -67,7 +67,7 @@ proptest          = "1.1.0"
 # packages
 mars-health         = { version = "1.0.0", path = "./packages/health" }
 mars-osmosis        = { version = "1.0.0", path = "./packages/chains/osmosis" }
-mars-params         = { git = "https://github.com/mars-protocol/mars-common", rev = "8f94672" }
+mars-params         = "1.0.2"
 mars-red-bank-types = { version = "1.0.0", path = "./packages/types" }
 mars-testing        = { version = "1.0.0", path = "./packages/testing" }
 mars-utils          = { version = "1.0.0", path = "./packages/utils" }

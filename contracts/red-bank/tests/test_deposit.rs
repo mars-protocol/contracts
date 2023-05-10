@@ -9,7 +9,7 @@ use cw_utils::PaymentError;
 use helpers::{
     set_collateral, th_build_interests_updated_event, th_get_expected_indices_and_rates, th_setup,
 };
-use mars_params::types::{AssetParams, AssetPermissions, RedBankSettings, RoverPermissions};
+use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -58,20 +58,20 @@ fn setup_test() -> TestSuite {
     deps.querier.set_redbank_params(
         denom,
         AssetParams {
-            reserve_factor: Default::default(),
             max_loan_to_value: Decimal::one(),
             liquidation_threshold: Default::default(),
             liquidation_bonus: Default::default(),
-            interest_rate_model: Default::default(),
-            permissions: AssetPermissions {
-                rover: RoverPermissions {
-                    whitelisted: false,
+            rover: RoverSettings {
+                whitelisted: false,
+                hls: HighLeverageStrategyParams {
+                    max_loan_to_value: Decimal::percent(90),
+                    liquidation_threshold: Decimal::one(),
                 },
-                red_bank: RedBankSettings {
-                    deposit_enabled: true,
-                    borrow_enabled: true,
-                    deposit_cap: Uint128::new(12_000_000),
-                },
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: true,
+                borrow_enabled: true,
+                deposit_cap: Uint128::new(12_000_000),
             },
         },
     );
@@ -162,15 +162,17 @@ fn depositing_to_disabled_market() {
     deps.querier.set_redbank_params(
         denom,
         AssetParams {
-            permissions: AssetPermissions {
-                rover: RoverPermissions {
-                    whitelisted: false,
+            rover: RoverSettings {
+                whitelisted: false,
+                hls: HighLeverageStrategyParams {
+                    max_loan_to_value: Decimal::percent(90),
+                    liquidation_threshold: Decimal::one(),
                 },
-                red_bank: RedBankSettings {
-                    deposit_enabled: false,
-                    borrow_enabled: true,
-                    deposit_cap: Default::default(),
-                },
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: false,
+                borrow_enabled: true,
+                deposit_cap: Default::default(),
             },
             ..th_default_asset_params()
         },
@@ -213,15 +215,17 @@ fn depositing_above_cap() {
     deps.querier.set_redbank_params(
         denom,
         AssetParams {
-            permissions: AssetPermissions {
-                rover: RoverPermissions {
-                    whitelisted: false,
+            rover: RoverSettings {
+                whitelisted: false,
+                hls: HighLeverageStrategyParams {
+                    max_loan_to_value: Decimal::percent(90),
+                    liquidation_threshold: Decimal::one(),
                 },
-                red_bank: RedBankSettings {
-                    deposit_enabled: true,
-                    borrow_enabled: true,
-                    deposit_cap: Uint128::new(10_000_000),
-                },
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: true,
+                borrow_enabled: true,
+                deposit_cap: Uint128::new(10_000_000),
             },
             ..th_default_asset_params()
         },
