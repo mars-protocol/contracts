@@ -18,7 +18,7 @@ doctest    = false
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
 library = []
-osmosis-test-app = ["cw-it/osmosis-test-tube"]
+osmosis-test-app = ["cw-it/osmosis-test-tube", "mars-testing/osmosis-test-tube"]
 
 [dependencies]
 cosmwasm-std     = { workspace = true }
@@ -31,7 +31,7 @@ astroport        = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema  = { workspace = true }
-mars-testing     = { workspace = true }
+mars-testing     = { workspace = true, features = ["astroport"] }
 mars-owner       = { workspace = true }
 cw-it            = { workspace = true, features = ["astroport", "astroport-multi-test"] }
 test-case        = { workspace = true }

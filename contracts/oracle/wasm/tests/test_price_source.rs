@@ -9,14 +9,19 @@ use cw_it::{
 use cw_storage_plus::Map;
 use mars_oracle_base::PriceSourceUnchecked;
 use mars_oracle_wasm::{WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked};
-use test_case::test_case;
-
-mod helpers;
-pub use helpers::*;
 
 const ONE: Decimal = Decimal::one();
 const TWO: Decimal = Decimal::new(Uint128::new(2_000_000_000_000_000_000u128));
 const DEFAULT_LIQ: [u128; 2] = [10000000000000000000000u128, 1000000000000000000000u128];
+
+use mars_testing::{
+    test_runner::get_test_runner,
+    wasm_oracle::{
+        fixed_source, get_contracts, setup_test, validate_and_query_astroport_spot_price_source,
+        validate_and_query_astroport_twap_price_source, WasmOracleTestRobot,
+    },
+};
+use test_case::test_case;
 
 #[test]
 fn test_contract_initialization() {

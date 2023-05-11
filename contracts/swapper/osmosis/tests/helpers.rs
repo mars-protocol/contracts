@@ -1,14 +1,20 @@
 use std::{fmt::Display, str::FromStr};
 
 use cosmwasm_std::{Coin, Decimal, Uint128};
+use cw_it::{
+    osmosis_std::types::{
+        cosmos::bank::v1beta1::QueryBalanceRequest,
+        osmosis::{
+            gamm::v1beta1::{MsgSwapExactAmountIn, MsgSwapExactAmountInResponse},
+            poolmanager::v1beta1::SwapAmountInRoute,
+        },
+    },
+    osmosis_test_tube::{
+        Account, Bank, ExecuteResponse, Gamm, OsmosisTestApp, Runner, RunnerError, SigningAccount,
+        Wasm,
+    },
+};
 use mars_swapper::msgs::InstantiateMsg;
-use osmosis_std::types::osmosis::gamm::v1beta1::{
-    MsgSwapExactAmountIn, MsgSwapExactAmountInResponse, SwapAmountInRoute,
-};
-use osmosis_test_tube::{
-    cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest, Account, Bank, ExecuteResponse,
-    Gamm, OsmosisTestApp, Runner, RunnerError, SigningAccount, Wasm,
-};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 

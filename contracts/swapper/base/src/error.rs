@@ -1,4 +1,7 @@
-use cosmwasm_std::{CheckedMultiplyRatioError, DecimalRangeExceeded, OverflowError, StdError};
+use cosmwasm_std::{
+    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
+    DecimalRangeExceeded, OverflowError, StdError,
+};
 use mars_owner::OwnerError;
 use thiserror::Error;
 
@@ -20,6 +23,12 @@ pub enum ContractError {
 
     #[error("{0}")]
     CheckedMultiplyRatio(#[from] CheckedMultiplyRatioError),
+
+    #[error("{0}")]
+    CheckedFromRatioError(#[from] CheckedFromRatioError),
+
+    #[error("{0}")]
+    CheckedMultiplyFractionError(#[from] CheckedMultiplyFractionError),
 
     #[error("{denom_a:?}-{denom_b:?} is not an available pool")]
     PoolNotFound {
