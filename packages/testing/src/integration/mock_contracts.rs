@@ -43,9 +43,9 @@ pub fn mock_red_bank_contract() -> Box<dyn Contract<Empty>> {
 
 pub fn mock_rewards_collector_osmosis_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
-        mars_rewards_collector_osmosis::contract::entry::execute,
-        mars_rewards_collector_osmosis::contract::entry::instantiate,
-        mars_rewards_collector_osmosis::contract::entry::query,
+        mars_rewards_collector::contract::entry::execute,
+        mars_rewards_collector::contract::entry::instantiate,
+        mars_rewards_collector::contract::entry::query,
     );
     Box::new(contract)
 }

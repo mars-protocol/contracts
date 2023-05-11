@@ -1,17 +1,13 @@
-use std::marker::PhantomData;
-
 use cosmwasm_std::{
-    coin, to_binary, Addr, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Deps, DepsMut, Empty,
-    Env, IbcMsg, IbcTimeout, MessageInfo, Response, StdResult, Uint128, WasmMsg,
+    coin, to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, Empty, Env, IbcMsg, IbcTimeout,
+    MessageInfo, Response, StdResult, Uint128, WasmMsg,
 };
 use cw_storage_plus::Item;
-use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
+use mars_owner::{Owner, OwnerUpdate};
 use mars_red_bank_types::{
     address_provider::{self, AddressResponseItem, MarsAddressType},
     incentives, red_bank,
-    rewards_collector::{
-        Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, UpdateConfig,
-    },
+    rewards_collector::{Config, ConfigResponse, UpdateConfig},
 };
 use mars_utils::helpers::option_string_to_addr;
 
@@ -19,109 +15,38 @@ use crate::{
     helpers::{stringify_option_amount, unwrap_option_amount},
     ContractError, ContractResult,
 };
-pub struct CollectorBase<'a, M, Q>
-where
-    M: CustomMsg,
-    Q: CustomQuery,
-{
+pub struct Collector<'a> {
     /// Contract's owner
     pub owner: Owner<'a>,
     /// The contract's configurations
     pub config: Item<'a, Config>,
-    /// Phantom data that holds the custom message type
-    pub custom_msg: PhantomData<M>,
-    /// Phantom data that holds the custom query type
-    pub custom_query: PhantomData<Q>,
 }
 
-impl<'a, M, Q> Default for CollectorBase<'a, M, Q>
-where
-    M: CustomMsg,
-    Q: CustomQuery,
-{
+impl<'a> Default for Collector<'a> {
     fn default() -> Self {
         Self {
             owner: Owner::new("owner"),
             config: Item::new("config"),
-            custom_msg: PhantomData,
-            custom_query: PhantomData,
         }
     }
 }
 
-impl<'a, M, Q> CollectorBase<'a, M, Q>
-where
-    M: CustomMsg,
-    Q: CustomQuery,
-{
-    pub fn instantiate(&self, deps: DepsMut<Q>, msg: InstantiateMsg) -> ContractResult<Response> {
-        let owner = msg.owner.clone();
-
-        let cfg = Config::checked(deps.api, msg)?;
-        cfg.validate()?;
-
-        self.owner.initialize(
-            deps.storage,
-            deps.api,
-            SetInitialOwner {
-                owner,
-            },
-        )?;
-
-        self.config.save(deps.storage, &cfg)?;
-
-        Ok(Response::default())
-    }
-
-    pub fn execute(
-        &self,
-        deps: DepsMut<Q>,
-        env: Env,
-        info: MessageInfo,
-        msg: ExecuteMsg,
-    ) -> ContractResult<Response<M>> {
-        match msg {
-            ExecuteMsg::UpdateOwner(update) => self.update_owner(deps, info, update),
-            ExecuteMsg::UpdateConfig {
-                new_cfg,
-            } => self.update_config(deps, info.sender, new_cfg),
-            ExecuteMsg::WithdrawFromRedBank {
-                denom,
-                amount,
-            } => self.withdraw_from_red_bank(deps, denom, amount),
-            ExecuteMsg::DistributeRewards {
-                denom,
-                amount,
-            } => self.distribute_rewards(deps, env, denom, amount),
-            ExecuteMsg::SwapAsset {
-                denom,
-                amount,
-            } => self.swap_asset(deps, env, denom, amount),
-            ExecuteMsg::ClaimIncentiveRewards {} => self.claim_incentive_rewards(deps),
-        }
-    }
-
-    pub fn query(&self, deps: Deps<Q>, msg: QueryMsg) -> StdResult<Binary> {
-        match msg {
-            QueryMsg::Config {} => to_binary(&self.query_config(deps)?),
-        }
-    }
-
+impl<'a> Collector<'a> {
     fn update_owner(
-        &self,
-        deps: DepsMut<Q>,
+        self,
+        deps: DepsMut,
         info: MessageInfo,
         update: OwnerUpdate,
-    ) -> ContractResult<Response<M>> {
+    ) -> ContractResult<Response> {
         Ok(self.owner.update(deps, info, update)?)
     }
 
     fn update_config(
         &self,
-        deps: DepsMut<Q>,
+        deps: DepsMut,
         sender: Addr,
         new_cfg: UpdateConfig,
-    ) -> ContractResult<Response<M>> {
+    ) -> ContractResult<Response> {
         self.owner.assert_owner(deps.storage, &sender)?;
 
         let mut cfg = self.config.load(deps.storage)?;
@@ -154,10 +79,10 @@ where
 
     fn withdraw_from_red_bank(
         &self,
-        deps: DepsMut<Q>,
+        deps: DepsMut,
         denom: String,
         amount: Option<Uint128>,
-    ) -> ContractResult<Response<M>> {
+    ) -> ContractResult<Response> {
         let cfg = self.config.load(deps.storage)?;
 
         let red_bank_addr = address_provider::helpers::query_contract_addr(
@@ -183,7 +108,7 @@ where
             .add_attribute("amount", stringify_option_amount(amount)))
     }
 
-    fn claim_incentive_rewards(&self, deps: DepsMut<Q>) -> ContractResult<Response<M>> {
+    fn claim_incentive_rewards(&self, deps: DepsMut) -> ContractResult<Response> {
         let cfg = self.config.load(deps.storage)?;
 
         let incentives_addr = address_provider::helpers::query_contract_addr(
@@ -205,11 +130,11 @@ where
 
     fn swap_asset(
         &self,
-        deps: DepsMut<Q>,
+        deps: DepsMut,
         env: Env,
         denom: String,
         amount: Option<Uint128>,
-    ) -> ContractResult<Response<M>> {
+    ) -> ContractResult<Response> {
         let cfg = self.config.load(deps.storage)?;
 
         let swapper_addr = deps
@@ -270,11 +195,11 @@ where
 
     fn distribute_rewards(
         &self,
-        deps: DepsMut<Q>,
+        deps: DepsMut,
         env: Env,
         denom: String,
         amount: Option<Uint128>,
-    ) -> ContractResult<Response<M>> {
+    ) -> ContractResult<Response> {
         let cfg = self.config.load(deps.storage)?;
 
         let to_address = if denom == cfg.safety_fund_denom {
@@ -316,7 +241,7 @@ where
             .add_attribute("to", to_address))
     }
 
-    fn query_config(&self, deps: Deps<Q>) -> StdResult<ConfigResponse> {
+    fn query_config(&self, deps: Deps) -> StdResult<ConfigResponse> {
         let owner_state = self.owner.query(deps.storage)?;
         let cfg = self.config.load(deps.storage)?;
         Ok(ConfigResponse {
@@ -330,5 +255,79 @@ where
             timeout_seconds: cfg.timeout_seconds,
             slippage_tolerance: cfg.slippage_tolerance,
         })
+    }
+}
+
+#[cfg(not(feature = "library"))]
+pub mod entry {
+    use cosmwasm_std::{
+        entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    };
+    use mars_red_bank_types::rewards_collector::{Config, ExecuteMsg, InstantiateMsg, QueryMsg};
+
+    use crate::ContractResult;
+    use mars_owner::OwnerInit::SetInitialOwner;
+
+    use super::Collector;
+
+    #[entry_point]
+    pub fn instantiate(
+        deps: DepsMut,
+        _env: Env,
+        _info: MessageInfo,
+        msg: InstantiateMsg,
+    ) -> ContractResult<Response> {
+        let collector = Collector::default();
+        let owner = msg.owner.clone();
+
+        let cfg = Config::checked(deps.api, msg)?;
+        cfg.validate()?;
+
+        collector.owner.initialize(
+            deps.storage,
+            deps.api,
+            SetInitialOwner {
+                owner,
+            },
+        )?;
+
+        collector.config.save(deps.storage, &cfg)?;
+
+        Ok(Response::default())
+    }
+
+    pub fn execute(
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        msg: ExecuteMsg,
+    ) -> ContractResult<Response> {
+        let collector = Collector::default();
+        match msg {
+            ExecuteMsg::UpdateOwner(update) => collector.update_owner(deps, info, update),
+            ExecuteMsg::UpdateConfig {
+                new_cfg,
+            } => collector.update_config(deps, info.sender, new_cfg),
+            ExecuteMsg::WithdrawFromRedBank {
+                denom,
+                amount,
+            } => collector.withdraw_from_red_bank(deps, denom, amount),
+            ExecuteMsg::DistributeRewards {
+                denom,
+                amount,
+            } => collector.distribute_rewards(deps, env, denom, amount),
+            ExecuteMsg::SwapAsset {
+                denom,
+                amount,
+            } => collector.swap_asset(deps, env, denom, amount),
+            ExecuteMsg::ClaimIncentiveRewards {} => collector.claim_incentive_rewards(deps),
+        }
+    }
+
+    pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+        let collector = Collector::default();
+        match msg {
+            QueryMsg::Config {} => to_binary(&collector.query_config(deps)?),
+        }
     }
 }

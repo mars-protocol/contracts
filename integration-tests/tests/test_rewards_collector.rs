@@ -261,7 +261,14 @@ fn distribute_rewards_if_ibc_channel_invalid() {
     let wasm = Wasm::new(&app);
 
     let accs = app
-        .init_accounts(&[coin(1_000_000_000_000, "uusdc"), coin(1_000_000_000_000, "umars")], 2)
+        .init_accounts(
+            &[
+                coin(1_000_000_000_000, "uusdc"),
+                coin(1_000_000_000_000, "umars"),
+                coin(1_000_000_000_000, "uosmo"), // For gas fees
+            ],
+            2,
+        )
         .unwrap();
     let signer = &accs[0];
     let user = &accs[1];

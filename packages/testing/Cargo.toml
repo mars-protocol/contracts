@@ -28,7 +28,7 @@ mars-oracle-osmosis            = { workspace = true }
 mars-osmosis                   = { workspace = true }
 mars-red-bank                  = { workspace = true }
 mars-red-bank-types            = { workspace = true }
-mars-rewards-collector-osmosis = { workspace = true }
+mars-rewards-collector         = { workspace = true }
 prost                          = { workspace = true }
 schemars                       = { workspace = true }
 serde                          = { workspace = true }

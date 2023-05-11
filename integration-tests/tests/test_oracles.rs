@@ -36,6 +36,12 @@ const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
 const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
 const OSMOSIS_INCENTIVES_CONTRACT_NAME: &str = "mars-incentives";
 
+const OSMOSIS_ORACLE_CONTRACT_NAME: &str = "mars-oracle-osmosis";
+const OSMOSIS_RED_BANK_CONTRACT_NAME: &str = "mars-red-bank";
+const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
+const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector";
+const OSMOSIS_INCENTIVES_CONTRACT_NAME: &str = "mars-incentives";
+
 #[test]
 fn querying_xyk_lp_price_if_no_price_for_tokens() {
     let app = OsmosisTestApp::new();

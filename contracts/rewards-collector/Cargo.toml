@@ -1,5 +1,5 @@
 [package]
-name          = "mars-rewards-collector-base"
+name          = "mars-rewards-collector"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
@@ -10,6 +10,10 @@ documentation = { workspace = true }
 keywords      = { workspace = true }
 
 [lib]
+crate-type = [
+    "cdylib",
+    "rlib",
+]
 doctest = false
 
 [features]
@@ -19,17 +23,15 @@ backtraces = [
 ]
 
 [dependencies]
-cosmwasm-std = { workspace = true, features = [
-    "stargate",
-] }
-cw-storage-plus = { workspace = true }
-mars-owner = { workspace = true }
+cosmwasm-std        = { workspace = true, features = ["stargate"] }
+cw-storage-plus     = { workspace = true }
+mars-owner          = { workspace = true }
 mars-red-bank-types = { workspace = true }
-mars-utils = { workspace = true }
-schemars = { workspace = true }
-serde = { workspace = true }
-thiserror = { workspace = true }
-mars-swapper = { workspace = true }
+mars-utils          = { workspace = true }
+schemars            = { workspace = true }
+serde               = { workspace = true }
+thiserror           = { workspace = true }
+mars-swapper        = { workspace = true }
 
 [dev-dependencies]
 mars-testing = { workspace = true }
