@@ -26,6 +26,7 @@ backtraces = [
 anyhow                         = { workspace = true }
 cosmwasm-std                   = { workspace = true }
 cw-multi-test                  = { workspace = true }
+cw-it                          = { workspace = true, features = ["osmosis-test-tube"] }
 mars-oracle-osmosis            = { workspace = true }
 mars-oracle-base               = { workspace = true }
 mars-osmosis                   = { workspace = true }
