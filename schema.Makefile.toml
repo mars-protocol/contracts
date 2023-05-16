@@ -12,6 +12,7 @@ fn main() -> std::io::Result<()> {
 
     let contracts = vec![
         "mars-swapper-osmosis",
+        "mars-swapper-astroport",
         "mars-oracle-osmosis",
         "mars-oracle-wasm",
     ];
