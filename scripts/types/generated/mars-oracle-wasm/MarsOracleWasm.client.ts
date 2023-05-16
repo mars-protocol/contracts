@@ -14,7 +14,7 @@ import {
   WasmPriceSourceForString,
   Decimal,
   OwnerUpdate,
-  Empty,
+  WasmOracleCustomExecuteMsg,
   QueryMsg,
   ConfigResponse,
   PriceResponse,

@@ -34,7 +34,7 @@ export type ExecuteMsg =
       }
     }
   | {
-      custom: Empty
+      custom: WasmOracleCustomExecuteMsg
     }
 export type WasmPriceSourceForString =
   | {
@@ -66,8 +66,10 @@ export type OwnerUpdate =
   | 'clear_proposed'
   | 'accept_proposed'
   | 'abolish_owner_role'
-export interface Empty {
-  [k: string]: unknown
+export type WasmOracleCustomExecuteMsg = {
+  record_twap_snapshots: {
+    denoms: string[]
+  }
 }
 export type QueryMsg =
   | {
