@@ -1,7 +1,6 @@
 import { setupDeployer } from './setupDeployer'
 import { DeploymentConfig } from '../../types/config'
 import { printGreen, printRed } from '../../utils/chalk'
-import { atomOracle, axlUSDCOracle } from '../osmosis/config'
 
 export const taskRunner = async (config: DeploymentConfig) => {
   const deployer = await setupDeployer(config)
@@ -11,29 +10,48 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.assertDeployerBalance()
 
     // Upload contracts
-    await deployer.upload('oracle', `mars_oracle_${config.chainName}.wasm`)
-    // TODO: upload swapper contract
+    await deployer.upload('red-bank', 'mars_red_bank.wasm')
+    await deployer.upload('address-provider', 'mars_address_provider.wasm')
+    await deployer.upload('incentives', 'mars_incentives.wasm')
+    await deployer.upload('rewards-collector', `mars_rewards_collector_osmosis.wasm`)
+    await deployer.upload('oracle', `mars_oracle_${config.oracleName}.wasm`)
+    await deployer.upload('swapper', `mars_swapper_${config.swapperDexName}.wasm`)
 
     // Instantiate contracts
     deployer.setOwnerAddr()
+    await deployer.instantiateAddressProvider()
+    await deployer.instantiateRedBank()
+    await deployer.instantiateIncentives()
     await deployer.instantiateOracle()
-    // TODO: instantiate swapper contract
+    await deployer.instantiateSwapper()
+    await deployer.instantiateRewards()
+    await deployer.saveDeploymentAddrsToFile()
 
     // setup
-    await deployer.setOracle(atomOracle)
-    if (config.mainnet) {
-      await deployer.setOracle(axlUSDCOracle)
+    await deployer.updateAddressProvider()
+    await deployer.setRoutes()
+    for (const asset of config.assets) {
+      await deployer.initializeAsset(asset)
     }
-    // TODO: setup contract
+    for (const oracleConfig of config.oracleConfigs) {
+      await deployer.setOracle(oracleConfig)
+    }
 
     //run tests
     if (config.runTests) {
-      // TODO: run tests
+      await deployer.executeDeposit()
+      await deployer.executeBorrow()
+      await deployer.executeRepay()
+      await deployer.executeWithdraw()
+      await deployer.executeRewardsSwap()
     }
 
     if (config.multisigAddr) {
+      await deployer.updateIncentivesContractOwner()
+      await deployer.updateRedBankContractOwner()
       await deployer.updateOracleContractOwner()
-      // TODO: transfer swapper contract ownership to multisig
+      await deployer.updateRewardsContractOwner()
+      await deployer.updateAddressProviderContractOwner()
       printGreen('It is confirmed that all contracts have transferred ownership to the Multisig')
     } else {
       printGreen('Owner remains the deployer address.')

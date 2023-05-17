@@ -10,150 +10,6 @@ const protocolAdminAddr = 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n'
 const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
 const marsOsmoPool = 907
 
-// axlUSDC does not have a pool on testnet so config can't have swapRoutes configured correctly
-export const osmosisTestnetConfig: DeploymentConfig = {
-  chainName: 'osmosis',
-  atomDenom: atom,
-  baseAssetDenom: 'uosmo',
-  chainId: 'osmo-test-4',
-  chainPrefix: 'osmo',
-  channelId: 'channel-2083',
-  marsDenom: marsTestnet,
-  rewardCollectorTimeoutSeconds: 600,
-  rpcEndpoint: 'https://rpc-test.osmosis.zone',
-  safetyFundFeeShare: '0.5',
-  deployerMnemonic:
-    'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
-  slippage_tolerance: '0.01',
-  base_asset_symbol: 'OSMO',
-  second_asset_symbol: 'ATOM',
-  runTests: false,
-  mainnet: false,
-  feeCollectorDenom: marsTestnet,
-  safetyFundDenom: axlUSDC,
-  swapRoutes: [
-    { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
-  ],
-  safetyFundAddr: safetyFundAddr,
-  protocolAdminAddr: protocolAdminAddr,
-  feeCollectorAddr: feeCollectorAddr,
-}
-
-// axlUSDC does not have a pool on testnet so config can't have swapRoutes configured correctly
-export const osmosisTestMultisig: DeploymentConfig = {
-  chainName: 'osmosis',
-  atomDenom: atom,
-  baseAssetDenom: 'uosmo',
-  chainId: 'osmo-test-4',
-  chainPrefix: 'osmo',
-  channelId: 'channel-2083',
-  marsDenom: marsTestnet,
-  rewardCollectorTimeoutSeconds: 600,
-  rpcEndpoint: 'https://rpc-test.osmosis.zone',
-  safetyFundFeeShare: '0.5',
-  deployerMnemonic:
-    'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
-  slippage_tolerance: '0.01',
-  base_asset_symbol: 'OSMO',
-  second_asset_symbol: 'ATOM',
-  multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
-  runTests: false,
-  mainnet: false,
-  feeCollectorDenom: marsTestnet,
-  safetyFundDenom: axlUSDC,
-  swapRoutes: [
-    { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
-  ],
-  safetyFundAddr: safetyFundAddr,
-  protocolAdminAddr: protocolAdminAddr,
-  feeCollectorAddr: feeCollectorAddr,
-}
-
-export const osmosisMainnet: DeploymentConfig = {
-  chainName: 'osmosis',
-  atomDenom: atom,
-  baseAssetDenom: 'uosmo',
-  chainId: 'osmosis-1',
-  chainPrefix: 'osmo',
-  channelId: 'channel-557',
-  marsDenom: marsMainnet,
-  rewardCollectorTimeoutSeconds: 600,
-  rpcEndpoint: 'https://rpc.osmosis.zone',
-  safetyFundFeeShare: '0.5',
-  deployerMnemonic: 'TO BE INSERTED AT TIME OF DEPLOYMENT',
-  slippage_tolerance: '0.01',
-  base_asset_symbol: 'OSMO',
-  second_asset_symbol: 'ATOM',
-  multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
-  runTests: false,
-  mainnet: true,
-  feeCollectorDenom: marsMainnet,
-  safetyFundDenom: axlUSDC,
-  swapRoutes: [
-    { denom_in: 'uosmo', denom_out: axlUSDC, route: [{ pool_id: 678, token_out_denom: axlUSDC }] },
-    {
-      denom_in: atom,
-      denom_out: axlUSDC,
-      route: [
-        { pool_id: 1, token_out_denom: 'uosmo' },
-        { pool_id: 678, token_out_denom: axlUSDC },
-      ],
-    },
-    {
-      denom_in: 'uosmo',
-      denom_out: marsMainnet,
-      route: [{ pool_id: marsOsmoPool, token_out_denom: marsMainnet }],
-    },
-    {
-      denom_in: atom,
-      denom_out: marsMainnet,
-      route: [
-        { pool_id: 1, token_out_denom: 'uosmo' },
-        { pool_id: marsOsmoPool, token_out_denom: marsMainnet },
-      ],
-    },
-    {
-      denom_in: axlUSDC,
-      denom_out: marsMainnet,
-      route: [
-        { pool_id: 678, token_out_denom: 'uosmo' },
-        { pool_id: marsOsmoPool, token_out_denom: marsMainnet },
-      ],
-    },
-  ],
-  safetyFundAddr: safetyFundAddr,
-  protocolAdminAddr: protocolAdminAddr,
-  feeCollectorAddr: feeCollectorAddr,
-}
-
-export const osmosisLocalConfig: DeploymentConfig = {
-  chainName: 'osmosis',
-  atomDenom: atom,
-  baseAssetDenom: 'uosmo',
-  chainId: 'localosmosis',
-  chainPrefix: 'osmo',
-  channelId: 'channel-1',
-  marsDenom: 'umars',
-  rewardCollectorTimeoutSeconds: 600,
-  rpcEndpoint: 'http://localhost:26657',
-  safetyFundFeeShare: '0.2',
-  deployerMnemonic:
-    'notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius',
-  slippage_tolerance: '0.05',
-  base_asset_symbol: 'OSMO',
-  second_asset_symbol: 'ATOM',
-  runTests: false,
-  mainnet: false,
-  feeCollectorDenom: axlUSDC,
-  safetyFundDenom: axlUSDC,
-  swapRoutes: [
-    { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
-  ],
-  safetyFundAddr: safetyFundAddr,
-  protocolAdminAddr: protocolAdminAddr,
-  feeCollectorAddr: feeCollectorAddr,
-}
-
 export const osmoAsset: AssetConfig = {
   denom: 'uosmo',
   max_loan_to_value: '0.59',
@@ -210,14 +66,182 @@ export const axlUSDCAsset: AssetConfig = {
 
 export const atomOracle: OracleConfig = {
   denom: 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2',
-  pool_id: 1,
-  window_size: 1800,
-  downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+  price_source: {
+    geometric_twap: {
+      pool_id: 1,
+      window_size: 1800,
+      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+    },
+  },
 }
 
 export const axlUSDCOracle: OracleConfig = {
   denom: 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
-  pool_id: 678,
-  window_size: 1800,
-  downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+  price_source: {
+    geometric_twap: {
+      pool_id: 678,
+      window_size: 1800,
+      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+    },
+  },
+}
+
+// axlUSDC does not have a pool on testnet so config can't have swapRoutes configured correctly
+export const osmosisTestnetConfig: DeploymentConfig = {
+  oracleName: 'osmosis',
+  atomDenom: atom,
+  baseAssetDenom: 'uosmo',
+  gasPrice: '0.1uosmo',
+  chainId: 'osmo-test-4',
+  chainPrefix: 'osmo',
+  channelId: 'channel-2083',
+  marsDenom: marsTestnet,
+  rewardCollectorTimeoutSeconds: 600,
+  rpcEndpoint: 'https://rpc-test.osmosis.zone',
+  safetyFundFeeShare: '0.5',
+  deployerMnemonic:
+    'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
+  slippage_tolerance: '0.01',
+  base_asset_symbol: 'OSMO',
+  second_asset_symbol: 'ATOM',
+  runTests: false,
+  mainnet: false,
+  feeCollectorDenom: marsTestnet,
+  safetyFundDenom: axlUSDC,
+  swapRoutes: [
+    { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
+  ],
+  safetyFundAddr: safetyFundAddr,
+  protocolAdminAddr: protocolAdminAddr,
+  feeCollectorAddr: feeCollectorAddr,
+  swapperDexName: 'osmosis',
+  assets: [osmoAsset, atomAsset, axlUSDCAsset],
+  oracleConfigs: [atomOracle, axlUSDCOracle],
+}
+
+// axlUSDC does not have a pool on testnet so config can't have swapRoutes configured correctly
+export const osmosisTestMultisig: DeploymentConfig = {
+  oracleName: 'osmosis',
+  atomDenom: atom,
+  baseAssetDenom: 'uosmo',
+  gasPrice: '0.1uosmo',
+  chainId: 'osmo-test-4',
+  chainPrefix: 'osmo',
+  channelId: 'channel-2083',
+  marsDenom: marsTestnet,
+  rewardCollectorTimeoutSeconds: 600,
+  rpcEndpoint: 'https://rpc-test.osmosis.zone',
+  safetyFundFeeShare: '0.5',
+  deployerMnemonic:
+    'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
+  slippage_tolerance: '0.01',
+  base_asset_symbol: 'OSMO',
+  second_asset_symbol: 'ATOM',
+  multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
+  runTests: false,
+  mainnet: false,
+  feeCollectorDenom: marsTestnet,
+  safetyFundDenom: axlUSDC,
+  swapRoutes: [
+    { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
+  ],
+  safetyFundAddr: safetyFundAddr,
+  protocolAdminAddr: protocolAdminAddr,
+  feeCollectorAddr: feeCollectorAddr,
+  swapperDexName: 'osmosis',
+  assets: [osmoAsset, atomAsset, axlUSDCAsset],
+  oracleConfigs: [atomOracle, axlUSDCOracle],
+}
+
+export const osmosisMainnet: DeploymentConfig = {
+  oracleName: 'osmosis',
+  atomDenom: atom,
+  baseAssetDenom: 'uosmo',
+  gasPrice: '0.1uosmo',
+  chainId: 'osmosis-1',
+  chainPrefix: 'osmo',
+  channelId: 'channel-557',
+  marsDenom: marsMainnet,
+  rewardCollectorTimeoutSeconds: 600,
+  rpcEndpoint: 'https://rpc.osmosis.zone',
+  safetyFundFeeShare: '0.5',
+  deployerMnemonic: 'TO BE INSERTED AT TIME OF DEPLOYMENT',
+  slippage_tolerance: '0.01',
+  base_asset_symbol: 'OSMO',
+  second_asset_symbol: 'ATOM',
+  multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
+  runTests: false,
+  mainnet: true,
+  feeCollectorDenom: marsMainnet,
+  safetyFundDenom: axlUSDC,
+  swapRoutes: [
+    { denom_in: 'uosmo', denom_out: axlUSDC, route: [{ pool_id: 678, token_out_denom: axlUSDC }] },
+    {
+      denom_in: atom,
+      denom_out: axlUSDC,
+      route: [
+        { pool_id: 1, token_out_denom: 'uosmo' },
+        { pool_id: 678, token_out_denom: axlUSDC },
+      ],
+    },
+    {
+      denom_in: 'uosmo',
+      denom_out: marsMainnet,
+      route: [{ pool_id: marsOsmoPool, token_out_denom: marsMainnet }],
+    },
+    {
+      denom_in: atom,
+      denom_out: marsMainnet,
+      route: [
+        { pool_id: 1, token_out_denom: 'uosmo' },
+        { pool_id: marsOsmoPool, token_out_denom: marsMainnet },
+      ],
+    },
+    {
+      denom_in: axlUSDC,
+      denom_out: marsMainnet,
+      route: [
+        { pool_id: 678, token_out_denom: 'uosmo' },
+        { pool_id: marsOsmoPool, token_out_denom: marsMainnet },
+      ],
+    },
+  ],
+  safetyFundAddr: safetyFundAddr,
+  protocolAdminAddr: protocolAdminAddr,
+  feeCollectorAddr: feeCollectorAddr,
+  swapperDexName: 'osmosis',
+  assets: [osmoAsset, atomAsset, axlUSDCAsset],
+  oracleConfigs: [atomOracle, axlUSDCOracle],
+}
+
+export const osmosisLocalConfig: DeploymentConfig = {
+  oracleName: 'osmosis',
+  atomDenom: atom,
+  baseAssetDenom: 'uosmo',
+  gasPrice: '0.1uosmo',
+  chainId: 'localosmosis',
+  chainPrefix: 'osmo',
+  channelId: 'channel-1',
+  marsDenom: 'umars',
+  rewardCollectorTimeoutSeconds: 600,
+  rpcEndpoint: 'http://localhost:26657',
+  safetyFundFeeShare: '0.2',
+  deployerMnemonic:
+    'notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius',
+  slippage_tolerance: '0.05',
+  base_asset_symbol: 'OSMO',
+  second_asset_symbol: 'ATOM',
+  runTests: false,
+  mainnet: false,
+  feeCollectorDenom: axlUSDC,
+  safetyFundDenom: axlUSDC,
+  swapRoutes: [
+    { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
+  ],
+  safetyFundAddr: safetyFundAddr,
+  protocolAdminAddr: protocolAdminAddr,
+  feeCollectorAddr: feeCollectorAddr,
+  swapperDexName: 'osmosis',
+  assets: [osmoAsset, atomAsset, axlUSDCAsset],
+  oracleConfigs: [atomOracle, axlUSDCOracle],
 }

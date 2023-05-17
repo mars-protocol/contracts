@@ -1,9 +1,12 @@
+import { InstantiateMsg as SwapperInstantiateMsg } from './generated/mars-swapper-astroport/MarsSwapperAstroport.types'
+
 export type InstantiateMsgs =
   | RedBankInstantiateMsg
   | AddressProviderInstantiateMsg
   | IncentivesInstantiateMsg
   | OracleInstantiateMsg
   | RewardsInstantiateMsg
+  | SwapperInstantiateMsg
 
 export interface RedBankInstantiateMsg {
   owner: string

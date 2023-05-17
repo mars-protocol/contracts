@@ -1,8 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2021",
-    "lib": ["ES2021"],
-    "types": ["node"],
+    "lib": [
+      "ES2021"
+    ],
+    "types": [
+      "node"
+    ],
     "module": "NodeNext",
     "declaration": true,
     "noImplicitAny": true,
@@ -23,10 +27,16 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "strictNullChecks": true,
-    "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "types.d.ts"],
-  "exclude": ["node_modules", "./build/**/*"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "types.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "./build/**/*"
+  ]
 }
