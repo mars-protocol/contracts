@@ -412,6 +412,7 @@
                 "type": "object",
                 "required": [
                   "contract_addr",
+                  "decimals",
                   "max_staleness",
                   "price_feed_id"
                 ],
@@ -419,6 +420,12 @@
                   "contract_addr": {
                     "description": "Contract address of Pyth",
                     "type": "string"
+                  },
+                  "decimals": {
+                    "description": "Assets are represented as utokens and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).\n\nPyth prices are denominated in USD so basically it means how much 1 USDC, 1 ATOM, 1 OSMO is worth in USD (NOT 1 uusdc, 1 uatom, 1 uosmo). We have to normalize it. We should get how much 1 utoken is worth in USD. For example: osmo_price_in_usd = 0.59958994 uosmo_price_in_usd = osmo_price_in_usd / 10^decimals = 0.59958994 / 10^6 = 0.00000059958994",
+                    "type": "integer",
+                    "format": "uint8",
+                    "minimum": 0.0
                   },
                   "max_staleness": {
                     "description": "The maximum number of seconds since the last price was by an oracle, before rejecting the price as too stale",
