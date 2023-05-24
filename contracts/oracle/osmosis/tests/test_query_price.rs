@@ -5,7 +5,7 @@ use cosmwasm_std::{
 };
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
-    contract::entry, scale_to_exponent, stride::RedemptionRateResponse, Downtime, DowntimeDetector,
+    contract::entry, scale_pyth_price, stride::RedemptionRateResponse, Downtime, DowntimeDetector,
     GeometricTwap, OsmosisPriceSourceUnchecked, RedemptionRate,
 };
 use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
@@ -505,6 +505,7 @@ fn setup_pyth_and_geometric_twap_for_lsd(
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness: 1800u64,
+            decimals: 6u8,
         },
     );
 
@@ -514,7 +515,7 @@ fn setup_pyth_and_geometric_twap_for_lsd(
         expo: -4,
         publish_time: publish_time as i64,
     };
-    let pyth_price = scale_to_exponent(price.price as u128, price.expo).unwrap();
+    let pyth_price = scale_pyth_price(price.price as u128, price.expo, 6u8).unwrap();
 
     deps.querier.set_pyth_price(
         price_id,
@@ -851,6 +852,7 @@ fn querying_pyth_price_if_publish_price_too_old() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
+            decimals: 6u8,
         },
     );
 
@@ -912,6 +914,7 @@ fn querying_pyth_price_if_signed() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
+            decimals: 6u8,
         },
     );
 
@@ -970,6 +973,7 @@ fn querying_pyth_price_successfully() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
+            decimals: 6u8,
         },
     );
 

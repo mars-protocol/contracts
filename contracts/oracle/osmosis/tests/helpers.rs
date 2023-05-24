@@ -147,6 +147,7 @@ pub fn set_pyth_price_source(deps: DepsMut, denom: &str, price_id: PriceIdentifi
             contract_addr: "pyth_contract".to_string(),
             price_feed_id: price_id,
             max_staleness: 30,
+            decimals: 6,
         },
     )
 }
