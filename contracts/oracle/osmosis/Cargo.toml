@@ -22,11 +22,10 @@ backtraces = ["cosmwasm-std/backtraces"]
 cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
 cw-storage-plus     = { workspace = true }
-mars-oracle-base    = { workspace = true }
+mars-oracle-base    = { workspace = true, features = ["pyth"] }
 mars-oracle         = { workspace = true }
 mars-osmosis        = { workspace = true }
 osmosis-std         = { workspace = true }
-pyth-sdk-cw         = { workspace = true }
 schemars            = { workspace = true }
 serde               = { workspace = true }
 
@@ -34,3 +33,4 @@ serde               = { workspace = true }
 cosmwasm-schema = { workspace = true }
 mars-testing    = { workspace = true }
 mars-owner      = { workspace = true }
+pyth-sdk-cw     = { workspace = true }

@@ -45,7 +45,7 @@ pyth-sdk-cw        = "1.0.0"
 astroport          = { git = "https://github.com/astroport-fi/astroport-core", tag = "v2.7.1" }
 
 # dev-dependencies
-cw-it              = { git = "https://github.com/apollodao/cw-it.git", rev = "86f9f9ca314faee3b7a8def1e2b006393f99f7f1" }
+cw-it              = { git = "https://github.com/apollodao/cw-it.git", rev = "3d38cf0f8e0a6040c9d8c0ccb28b27dc8ce60a09" }
 test-case          = "3.0.0"
 proptest           = "1.1.0"
 

@@ -24,7 +24,7 @@ osmosis-test-app = ["cw-it/osmosis-test-tube", "mars-testing/osmosis-test-tube"]
 cosmwasm-std     = { workspace = true }
 cw2              = { workspace = true }
 cw-storage-plus  = { workspace = true }
-mars-oracle-base = { workspace = true }
+mars-oracle-base = { workspace = true, features = ["pyth"] }
 mars-oracle      = { workspace = true }
 cosmwasm-schema  = { workspace = true }
 astroport        = { workspace = true }
