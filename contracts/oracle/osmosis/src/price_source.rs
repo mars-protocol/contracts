@@ -718,7 +718,7 @@ impl OsmosisPriceSourceChecked {
 /// Pyth price should be normalized with token decimals so:
 /// uAtom/USD = ATOM/USD / 10^atom_decimals * 10^usd_decimals
 /// uAtom/uusd = 1365133270 * 10^(-8) * 10^(-6) * 10^6 = 1365133270 * 10^(-8) = 13.6513327
-/// 
+///
 /// NOTE: if we don't introduce base_denom decimals we can overflow.
 pub fn scale_pyth_price(value: u128, expo: i32, decimals: u8) -> ContractResult<Decimal> {
     // FIXME: add base_denom decimals to config once design comfirmed
@@ -901,6 +901,5 @@ mod tests {
         // ETH
         let ueth_price_in_usd = scale_pyth_price(181598000001u128, -8, 18u8).unwrap();
         assert_eq!(ueth_price_in_usd, Decimal::from_str("0.00000000181598").unwrap());
-        // !!! we loose precision
     }
 }
