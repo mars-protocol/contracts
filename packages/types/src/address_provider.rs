@@ -62,6 +62,7 @@ impl FromStr for MarsAddressType {
             "red_bank" => Ok(MarsAddressType::RedBank),
             "rewards_collector" => Ok(MarsAddressType::RewardsCollector),
             "safety_fund" => Ok(MarsAddressType::SafetyFund),
+            "swapper" => Ok(MarsAddressType::Swapper),
             _ => Err(StdError::parse_err(type_name::<Self>(), s)),
         }
     }
