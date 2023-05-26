@@ -1,7 +1,19 @@
 import { setupDeployer } from './setupDeployer'
 import { DeploymentConfig } from '../../types/config'
 import { printGreen, printRed } from '../../utils/chalk'
-import { atomAsset, osmoAsset, atomOracle, axlUSDCAsset, axlUSDCOracle } from '../osmosis/config'
+import {
+  atomAsset,
+  osmoAsset,
+  atomOracle,
+  axlUSDCAsset,
+  axlUSDCOracle,
+  atomAssetTest,
+  axlUSDCAssetTest,
+  axlUSDCOracleTest,
+  osmoOracle,
+  marsAssetTest,
+  marsOracleTest,
+} from '../osmosis/config'
 
 export const taskRunner = async (config: DeploymentConfig) => {
   const deployer = await setupDeployer(config)
@@ -29,12 +41,22 @@ export const taskRunner = async (config: DeploymentConfig) => {
     // setup
     await deployer.updateAddressProvider()
     await deployer.setRoutes()
-    await deployer.initializeAsset(osmoAsset)
-    await deployer.initializeAsset(atomAsset)
-    await deployer.initializeAsset(axlUSDCAsset)
-    await deployer.setOracle(atomOracle)
     if (config.mainnet) {
+      await deployer.initializeAsset(osmoAsset)
+      await deployer.initializeAsset(atomAsset)
+      await deployer.initializeAsset(axlUSDCAsset)
+      await deployer.setOracle(osmoOracle)
+      await deployer.setOracle(atomOracle)
       await deployer.setOracle(axlUSDCOracle)
+    } else {
+      await deployer.initializeAsset(osmoAsset)
+      await deployer.initializeAsset(atomAssetTest)
+      await deployer.initializeAsset(axlUSDCAssetTest)
+      await deployer.initializeAsset(marsAssetTest)
+      // await deployer.setOracle(atomOracle) NEED POOL SET
+      await deployer.setOracle(osmoOracle)
+      await deployer.setOracle(axlUSDCOracleTest)
+      await deployer.setOracle(marsOracleTest)
     }
 
     //run tests
