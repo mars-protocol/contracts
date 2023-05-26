@@ -53,6 +53,7 @@ schemars          = "0.8.11"
 serde             = { version = "1.0.152", default-features = false, features = ["derive"] }
 thiserror         = "1.0.38"
 cw-paginate       = "0.2.1"
+strum             = "0.24.1"
 
 # packages
 mars-health         = { version = "1.0.0", path = "./packages/health" }
@@ -69,8 +70,8 @@ mars-oracle-base               = { version = "1.0.0", path = "./contracts/oracle
 mars-oracle-osmosis            = { version = "1.0.0", path = "./contracts/oracle/osmosis" }
 mars-red-bank                  = { version = "1.0.0", path = "./contracts/red-bank" }
 mars-rewards-collector         = { version = "1.0.0", path = "./contracts/rewards-collector" }
-mars-swapper-osmosis           = { version = "1.0.0", path = "../mars-common/contracts/swapper/osmosis" }
-mars-swapper-base              = { version = "1.0.0", path = "../mars-common/contracts/swapper/base" }
+mars-swapper-base              = { version = "1.0.0", path = "./contracts/swapper/base" }
+mars-swapper-osmosis           = { version = "1.0.0", path = "./contracts/swapper/osmosis" }
 
 [profile.release]
 codegen-units    = 1
