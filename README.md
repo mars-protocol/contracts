@@ -178,7 +178,6 @@ cargo make test
 | mars-red-bank          | `osmo1dl4rylasnd7mtfzlkdqn2gr0ss4gvyykpvr6d7t5ylzf6z535n9s5jjt8u` |
 | mars-rewards-collector | `osmo1u5pcjue4grmg8lh7xrz2nvpy79xlzknwqkczfkyeyx9zzzj76tpq4tgrcs` |
 
-
 ## License
 
 Contents of this repository are open source under [GNU General Public License v3](./LICENSE) or later.
