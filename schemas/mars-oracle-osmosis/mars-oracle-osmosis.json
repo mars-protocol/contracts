@@ -8,12 +8,19 @@
     "type": "object",
     "required": [
       "base_denom",
+      "base_denom_decimals",
       "owner"
     ],
     "properties": {
       "base_denom": {
         "description": "The asset in which prices are denominated in",
         "type": "string"
+      },
+      "base_denom_decimals": {
+        "description": "The asset decimals used for price normalization",
+        "type": "integer",
+        "format": "uint8",
+        "minimum": 0.0
       },
       "owner": {
         "description": "The contract's owner, who can update config and price sources",
@@ -102,6 +109,14 @@
                   "string",
                   "null"
                 ]
+              },
+              "base_denom_decimals": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint8",
+                "minimum": 0.0
               }
             },
             "additionalProperties": false
@@ -412,7 +427,7 @@
                 "type": "object",
                 "required": [
                   "contract_addr",
-                  "decimals",
+                  "denom_decimals",
                   "max_staleness",
                   "price_feed_id"
                 ],
@@ -421,7 +436,7 @@
                     "description": "Contract address of Pyth",
                     "type": "string"
                   },
-                  "decimals": {
+                  "denom_decimals": {
                     "description": "Assets are represented as utokens and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).\n\nPyth prices are denominated in USD so basically it means how much 1 USDC, 1 ATOM, 1 OSMO is worth in USD (NOT 1 uusdc, 1 uatom, 1 uosmo). We have to normalize it. We should get how much 1 utoken is worth in USD. For example: osmo_price_in_usd = 0.59958994 uosmo_price_in_usd = osmo_price_in_usd / 10^decimals = 0.59958994 / 10^6 = 0.00000059958994",
                     "type": "integer",
                     "format": "uint8",
@@ -688,12 +703,19 @@
       "title": "ConfigResponse",
       "type": "object",
       "required": [
-        "base_denom"
+        "base_denom",
+        "base_denom_decimals"
       ],
       "properties": {
         "base_denom": {
           "description": "The asset in which prices are denominated in",
           "type": "string"
+        },
+        "base_denom_decimals": {
+          "description": "The asset decimals used for price normalization",
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
         },
         "owner": {
           "description": "The contract's owner",

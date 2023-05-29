@@ -167,7 +167,7 @@ pub enum OsmosisPriceSource<T> {
         /// We have to normalize it. We should get how much 1 utoken is worth in USD. For example:
         /// osmo_price_in_usd = 0.59958994
         /// uosmo_price_in_usd = osmo_price_in_usd / 10^decimals = 0.59958994 / 10^6 = 0.00000059958994
-        decimals: u8,
+        denom_decimals: u8,
     },
     /// Liquid Staking Derivatives (LSD) price quoted in USD based on data from Pyth, Osmosis and Stride.
     ///
@@ -266,9 +266,9 @@ impl fmt::Display for OsmosisPriceSourceChecked {
                 contract_addr,
                 price_feed_id,
                 max_staleness,
-                decimals,
+                denom_decimals,
             } => {
-                format!("pyth:{contract_addr}:{price_feed_id}:{max_staleness}:{decimals}")
+                format!("pyth:{contract_addr}:{price_feed_id}:{max_staleness}:{denom_decimals}")
             }
             OsmosisPriceSource::Lsd {
                 transitive_denom,
@@ -371,12 +371,12 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
                 contract_addr,
                 price_feed_id,
                 max_staleness,
-                decimals,
+                denom_decimals,
             } => Ok(OsmosisPriceSourceChecked::Pyth {
                 contract_addr: deps.api.addr_validate(contract_addr)?,
                 price_feed_id: *price_feed_id,
                 max_staleness: *max_staleness,
-                decimals: *decimals,
+                denom_decimals: *denom_decimals,
             }),
             OsmosisPriceSourceUnchecked::Lsd {
                 transitive_denom,
@@ -472,14 +472,14 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                 contract_addr,
                 price_feed_id,
                 max_staleness,
-                decimals,
+                denom_decimals,
             } => Ok(Self::query_pyth_price(
                 deps,
                 env,
                 contract_addr.to_owned(),
                 *price_feed_id,
                 *max_staleness,
-                *decimals,
+                *denom_decimals,
             )?),
             OsmosisPriceSourceChecked::Lsd {
                 transitive_denom,
@@ -670,7 +670,7 @@ impl OsmosisPriceSourceChecked {
         contract_addr: Addr,
         price_feed_id: PriceIdentifier,
         max_staleness: u64,
-        decimals: u8,
+        denom_decimals: u8,
     ) -> ContractResult<Decimal> {
         let current_time = env.block.time.seconds();
 
@@ -698,7 +698,7 @@ impl OsmosisPriceSourceChecked {
         }
 
         let current_price_dec =
-            scale_pyth_price(current_price.price as u128, current_price.expo, decimals)?;
+            scale_pyth_price(current_price.price as u128, current_price.expo, denom_decimals)?;
 
         Ok(current_price_dec)
     }
@@ -720,10 +720,10 @@ impl OsmosisPriceSourceChecked {
 /// uAtom/uusd = 1365133270 * 10^(-8) * 10^(-6) * 10^6 = 1365133270 * 10^(-8) = 13.6513327
 ///
 /// NOTE: if we don't introduce base_denom decimals we can overflow.
-pub fn scale_pyth_price(value: u128, expo: i32, decimals: u8) -> ContractResult<Decimal> {
+pub fn scale_pyth_price(value: u128, expo: i32, denom_decimals: u8) -> ContractResult<Decimal> {
     // FIXME: add base_denom decimals to config once design comfirmed
     let base_denom_decimals = 6;
-    let expo = expo - decimals as i32 + base_denom_decimals;
+    let expo = expo - denom_decimals as i32 + base_denom_decimals;
     let target_expo = Uint128::from(10u8).checked_pow(expo.unsigned_abs())?;
     if expo < 0 {
         Ok(Decimal::checked_from_ratio(value, target_expo)?)
@@ -846,7 +846,7 @@ mod tests {
             )
             .unwrap(),
             max_staleness: 60,
-            decimals: 18,
+            denom_decimals: 18,
         };
         assert_eq!(
             ps.to_string(),

@@ -445,6 +445,7 @@ pub struct MockEnvBuilder {
     chain_prefix: String,
     mars_denom: String,
     base_denom: String,
+    base_denom_decimals: u8,
     close_factor: Decimal,
 
     // rewards-collector params
@@ -466,6 +467,7 @@ impl MockEnvBuilder {
             chain_prefix: "".to_string(), // empty prefix for multitest because deployed contracts have addresses such as contract1, contract2 etc which are invalid in address-provider
             mars_denom: "umars".to_string(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
             close_factor: Decimal::percent(80),
             safety_tax_rate: Decimal::percent(50),
             safety_fund_denom: "uusdc".to_string(),
@@ -613,6 +615,7 @@ impl MockEnvBuilder {
                 &oracle::InstantiateMsg {
                     owner: self.owner.to_string(),
                     base_denom: self.base_denom.clone(),
+                    base_denom_decimals: self.base_denom_decimals,
                 },
                 &[],
                 "oracle",

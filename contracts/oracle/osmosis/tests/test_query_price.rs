@@ -505,7 +505,7 @@ fn setup_pyth_and_geometric_twap_for_lsd(
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness: 1800u64,
-            decimals: 6u8,
+            denom_decimals: 6u8,
         },
     );
 
@@ -852,7 +852,7 @@ fn querying_pyth_price_if_publish_price_too_old() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
-            decimals: 6u8,
+            denom_decimals: 6u8,
         },
     );
 
@@ -914,7 +914,7 @@ fn querying_pyth_price_if_signed() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
-            decimals: 6u8,
+            denom_decimals: 6u8,
         },
     );
 
@@ -973,7 +973,7 @@ fn querying_pyth_price_successfully() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
-            decimals: 6u8,
+            denom_decimals: 6u8,
         },
     );
 

@@ -57,6 +57,7 @@ fn querying_xyk_lp_price_if_no_price_for_tokens() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     );
 
@@ -110,6 +111,7 @@ fn querying_xyk_lp_price_success() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     );
 
@@ -218,6 +220,7 @@ fn query_spot_price() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     );
 
@@ -282,6 +285,7 @@ fn set_spot_without_pools() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     );
 
@@ -319,6 +323,7 @@ fn incorrect_pool_for_spot() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     );
 
@@ -365,6 +370,7 @@ fn update_spot_with_different_pool() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     );
 
@@ -439,6 +445,7 @@ fn query_spot_price_after_lp_change() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     );
 
@@ -498,6 +505,7 @@ fn query_geometric_twap_price_with_downtime_detector() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     );
 
@@ -582,6 +590,7 @@ fn query_arithmetic_twap_price() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     );
 
@@ -668,6 +677,7 @@ fn query_geometric_twap_price() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     );
 
@@ -754,6 +764,7 @@ fn compare_spot_and_twap_price() {
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     );
 
@@ -1014,6 +1025,7 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
         &InstantiateMsg {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     );
 
