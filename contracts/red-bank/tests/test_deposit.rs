@@ -29,7 +29,6 @@ struct TestSuite {
     denom: &'static str,
     depositor_addr: Addr,
     initial_market: Market,
-    initial_liquidity: Uint128,
 }
 
 fn setup_test() -> TestSuite {
@@ -60,7 +59,6 @@ fn setup_test() -> TestSuite {
         denom,
         depositor_addr: Addr::unchecked("larry"),
         initial_market: market,
-        initial_liquidity,
     }
 }
 
@@ -219,19 +217,14 @@ fn depositing_without_existing_position() {
         denom,
         depositor_addr,
         initial_market,
-        initial_liquidity,
     } = setup_test();
 
     let block_time = 10000100;
     let deposit_amount = 110000;
 
     // compute expected market parameters
-    let expected_params = th_get_expected_indices_and_rates(
-        &initial_market,
-        block_time,
-        initial_liquidity,
-        Default::default(),
-    );
+    let expected_params =
+        th_get_expected_indices_and_rates(&initial_market, block_time, Default::default());
     let expected_mint_amount = compute_scaled_amount(
         Uint128::from(deposit_amount),
         expected_params.liquidity_index,
@@ -310,7 +303,6 @@ fn depositing_with_existing_position() {
         denom,
         depositor_addr,
         initial_market,
-        initial_liquidity,
     } = setup_test();
 
     // create a collateral position for the user, with the `enabled` parameter as false
@@ -321,12 +313,8 @@ fn depositing_with_existing_position() {
     let deposit_amount = 110000;
 
     // compute expected market parameters
-    let expected_params = th_get_expected_indices_and_rates(
-        &initial_market,
-        block_time,
-        initial_liquidity,
-        Default::default(),
-    );
+    let expected_params =
+        th_get_expected_indices_and_rates(&initial_market, block_time, Default::default());
     let expected_mint_amount = compute_scaled_amount(
         Uint128::from(deposit_amount),
         expected_params.liquidity_index,
@@ -383,7 +371,6 @@ fn depositing_on_behalf_of() {
         denom,
         depositor_addr,
         initial_market,
-        initial_liquidity,
     } = setup_test();
 
     let deposit_amount = 123456u128;
@@ -391,12 +378,8 @@ fn depositing_on_behalf_of() {
 
     // compute expected market parameters
     let block_time = 10000300;
-    let expected_params = th_get_expected_indices_and_rates(
-        &initial_market,
-        block_time,
-        initial_liquidity,
-        Default::default(),
-    );
+    let expected_params =
+        th_get_expected_indices_and_rates(&initial_market, block_time, Default::default());
     let expected_mint_amount = compute_scaled_amount(
         Uint128::from(deposit_amount),
         expected_params.liquidity_index,

@@ -287,7 +287,7 @@ pub fn update_interest_rates(
     let total_debt =
         get_underlying_debt_amount(market.debt_total_scaled, market, current_timestamp)?;
 
-    let current_utilization_rate = if !total_debt.is_zero() {
+    let current_utilization_rate = if !total_collateral.is_zero() {
         Decimal::from_ratio(total_debt, total_collateral)
     } else {
         Decimal::zero()

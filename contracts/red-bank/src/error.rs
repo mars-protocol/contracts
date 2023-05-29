@@ -111,9 +111,6 @@ pub enum ContractError {
     #[error("Failed to encode asset reference into string")]
     CannotEncodeAssetReferenceIntoString {},
 
-    #[error("Contract current asset balance cannot be less than liquidity taken")]
-    OperationExceedsAvailableLiquidity {},
-
     #[error("Deposit for {denom:?} is not enabled")]
     DepositNotEnabled {
         denom: String,

@@ -139,7 +139,6 @@ pub struct TestUtilizationDeltaInfo {
 pub fn th_get_expected_indices_and_rates(
     market: &Market,
     block_time: u64,
-    initial_liquidity: Uint128,
     delta_info: TestUtilizationDeltaInfo,
 ) -> TestInterestResults {
     if !delta_info.more_debt.is_zero() && !delta_info.less_debt.is_zero() {
@@ -195,17 +194,27 @@ pub fn th_get_expected_indices_and_rates(
     } else {
         Uint128::zero()
     };
-    let dec_debt_total = compute_underlying_amount(
+    let debt_total = compute_underlying_amount(
         new_debt_total_scaled,
         expected_indices.borrow,
         ScalingOperation::Ceil,
     )
     .unwrap();
-    let contract_current_balance = initial_liquidity;
-    let liquidity_taken = delta_info.less_liquidity;
-    let dec_liquidity_total = contract_current_balance - liquidity_taken;
-    let expected_utilization_rate =
-        Decimal::from_ratio(dec_debt_total, dec_liquidity_total + dec_debt_total);
+
+    let total_collateral = compute_underlying_amount(
+        market.collateral_total_scaled,
+        expected_indices.liquidity,
+        ScalingOperation::Truncate,
+    )
+    .unwrap();
+
+    // Total collateral increased by accured protocol rewards
+    let total_collateral = total_collateral + expected_protocol_rewards_to_distribute;
+    let expected_utilization_rate = if !total_collateral.is_zero() {
+        Decimal::from_ratio(debt_total, total_collateral)
+    } else {
+        Decimal::zero()
+    };
 
     // interest rates (make a copy and update those values to get the expeted irs)
     let mut market_copy = market.clone();
