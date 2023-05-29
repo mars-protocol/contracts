@@ -515,7 +515,7 @@ fn setup_pyth_and_geometric_twap_for_lsd(
         expo: -4,
         publish_time: publish_time as i64,
     };
-    let pyth_price = scale_pyth_price(price.price as u128, price.expo, 6u8).unwrap();
+    let pyth_price = scale_pyth_price(price.price as u128, price.expo, 6u8, 6u8).unwrap();
 
     deps.querier.set_pyth_price(
         price_id,

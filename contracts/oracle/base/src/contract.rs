@@ -246,13 +246,7 @@ where
         let cfg = self.config.load(deps.storage)?;
         let price_source = self.price_sources.load(deps.storage, &denom)?;
         Ok(PriceResponse {
-            price: price_source.query_price(
-                &deps,
-                &env,
-                &denom,
-                &cfg.base_denom,
-                &self.price_sources,
-            )?,
+            price: price_source.query_price(&deps, &env, &denom, &cfg, &self.price_sources)?,
             denom,
         })
     }
@@ -275,7 +269,7 @@ where
             .map(|item| {
                 let (k, v) = item?;
                 Ok(PriceResponse {
-                    price: v.query_price(&deps, &env, &k, &cfg.base_denom, &self.price_sources)?,
+                    price: v.query_price(&deps, &env, &k, &cfg, &self.price_sources)?,
                     denom: k,
                 })
             })
