@@ -36,3 +36,4 @@ mars-owner       = { workspace = true }
 cw-it            = { workspace = true, features = ["astroport", "astroport-multi-test"] }
 test-case        = { workspace = true }
 proptest         = { workspace = true }
+pyth-sdk-cw      = { workspace = true }

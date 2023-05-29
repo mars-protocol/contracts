@@ -1778,6 +1778,7 @@ dependencies = [
  "mars-owner",
  "mars-testing",
  "proptest",
+ "pyth-sdk-cw",
  "test-case",
 ]
 
