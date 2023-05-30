@@ -27,4 +27,13 @@ pub enum ContractError {
     InvalidIncentive {
         reason: String,
     },
+
+    #[error("Invalid Pagination Params. If start_after_incentive_denom is supplied, then start_after_collateral_denom must also be supplied")]
+    InvalidPaginationParams,
+}
+
+impl From<ContractError> for StdError {
+    fn from(err: ContractError) -> Self {
+        StdError::generic_err(err.to_string())
+    }
 }
