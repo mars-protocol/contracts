@@ -108,7 +108,13 @@ impl<'a> Collector<'a> {
             .add_attribute("amount", stringify_option_amount(amount)))
     }
 
-    fn claim_incentive_rewards(&self, deps: DepsMut) -> ContractResult<Response> {
+    fn claim_incentive_rewards(
+        &self,
+        deps: DepsMut,
+        start_after_collateral_denom: Option<String>,
+        start_after_incentive_denom: Option<String>,
+        limit: Option<u32>,
+    ) -> ContractResult<Response> {
         let cfg = self.config.load(deps.storage)?;
 
         let incentives_addr = address_provider::helpers::query_contract_addr(
@@ -119,7 +125,11 @@ impl<'a> Collector<'a> {
 
         let claim_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: incentives_addr.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::ClaimRewards {})?,
+            msg: to_binary(&incentives::ExecuteMsg::ClaimRewards {
+                start_after_collateral_denom,
+                start_after_incentive_denom,
+                limit,
+            })?,
             funds: vec![],
         });
 
@@ -320,7 +330,16 @@ pub mod entry {
                 denom,
                 amount,
             } => collector.swap_asset(deps, env, denom, amount),
-            ExecuteMsg::ClaimIncentiveRewards {} => collector.claim_incentive_rewards(deps),
+            ExecuteMsg::ClaimIncentiveRewards {
+                start_after_collateral_denom,
+                start_after_incentive_denom,
+                limit,
+            } => collector.claim_incentive_rewards(
+                deps,
+                start_after_collateral_denom,
+                start_after_incentive_denom,
+                limit,
+            ),
         }
     }
 

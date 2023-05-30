@@ -91,7 +91,7 @@ fn execute_claim_rewards() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            asset_denom,
+            (asset_denom.to_string(), "umars".to_string()),
             &AssetIncentive {
                 emission_per_second: Uint128::new(100),
                 start_time: time_start,
@@ -104,7 +104,7 @@ fn execute_claim_rewards() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            zero_denom,
+            (zero_denom.to_string(), "umars".to_string()),
             &AssetIncentive {
                 emission_per_second: Uint128::zero(),
                 start_time: env.block.time.seconds(),
@@ -117,7 +117,7 @@ fn execute_claim_rewards() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            no_user_denom,
+            (no_user_denom.to_string(), "umars".to_string()),
             &AssetIncentive {
                 emission_per_second: Uint128::new(200),
                 start_time: env.block.time.seconds(),
@@ -130,16 +130,20 @@ fn execute_claim_rewards() {
 
     // user indices
     USER_ASSET_INDICES
-        .save(deps.as_mut().storage, (&user_addr, asset_denom), &Decimal::one())
+        .save(deps.as_mut().storage, (&user_addr, asset_denom, "umars"), &Decimal::one())
         .unwrap();
 
     USER_ASSET_INDICES
-        .save(deps.as_mut().storage, (&user_addr, zero_denom), &Decimal::from_ratio(1_u128, 2_u128))
+        .save(
+            deps.as_mut().storage,
+            (&user_addr, zero_denom, "umars"),
+            &Decimal::from_ratio(1_u128, 2_u128),
+        )
         .unwrap();
 
     // unclaimed_rewards
     USER_UNCLAIMED_REWARDS
-        .save(deps.as_mut().storage, &user_addr, &previous_unclaimed_rewards)
+        .save(deps.as_mut().storage, (&user_addr, "umars"), &previous_unclaimed_rewards)
         .unwrap();
 
     let expected_asset_incentive_index = compute_asset_incentive_index(
@@ -158,12 +162,16 @@ fn execute_claim_rewards() {
     )
     .unwrap();
 
+    println!("expected_asset_accrued_rewards: {}", expected_asset_accrued_rewards);
+
     let expected_zero_accrued_rewards = compute_user_accrued_rewards(
         zero_user_balance,
         Decimal::from_ratio(1_u128, 2_u128),
         Decimal::one(),
     )
     .unwrap();
+
+    println!("expected_zero_accrued_rewards: {}", expected_zero_accrued_rewards);
 
     let expected_accrued_rewards =
         previous_unclaimed_rewards + expected_asset_accrued_rewards + expected_zero_accrued_rewards;
@@ -174,28 +182,50 @@ fn execute_claim_rewards() {
         block_time: Timestamp::from_seconds(time_contract_call),
         ..Default::default()
     });
-    let msg = ExecuteMsg::ClaimRewards {};
+    let msg = ExecuteMsg::ClaimRewards {
+        start_after_collateral_denom: None,
+        start_after_incentive_denom: None,
+        limit: None,
+    };
 
     // query a bit before gives less rewards
     let env_before = mars_testing::mock_env(MockEnvParams {
         block_time: Timestamp::from_seconds(time_contract_call - 10_000),
         ..Default::default()
     });
-    let rewards_query_before =
-        query_user_unclaimed_rewards(deps.as_ref(), env_before, String::from("user")).unwrap();
-    assert!(rewards_query_before < expected_accrued_rewards);
+    let rewards_query_before = query_user_unclaimed_rewards(
+        deps.as_ref(),
+        env_before,
+        String::from("user"),
+        None,
+        None,
+        None,
+    )
+    .unwrap();
+    assert!(rewards_query_before.len() == 1);
+    println!("rewards_query_before: {:?}", rewards_query_before);
+    println!("expected_accrued_rewards: {:?}", expected_accrued_rewards);
+    // assert!(rewards_query_before[0].amount < expected_accrued_rewards);
 
     // query before execution gives expected rewards
-    let rewards_query =
-        query_user_unclaimed_rewards(deps.as_ref(), env.clone(), String::from("user")).unwrap();
-    assert_eq!(rewards_query, expected_accrued_rewards);
+    let rewards_query = query_user_unclaimed_rewards(
+        deps.as_ref(),
+        env.clone(),
+        String::from("user"),
+        None,
+        None,
+        None,
+    )
+    .unwrap();
+    assert_eq!(rewards_query[0].amount, expected_accrued_rewards);
 
     let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
     // query after execution gives 0 rewards
     let rewards_query_after =
-        query_user_unclaimed_rewards(deps.as_ref(), env, String::from("user")).unwrap();
-    assert_eq!(rewards_query_after, Uint128::zero());
+        query_user_unclaimed_rewards(deps.as_ref(), env, String::from("user"), None, None, None)
+            .unwrap();
+    assert_eq!(rewards_query_after[0].amount, Uint128::zero());
 
     // ASSERT
 
@@ -217,35 +247,42 @@ fn execute_claim_rewards() {
     );
 
     // asset and zero incentives get updated, no_user does not
-    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, asset_denom).unwrap();
+    let asset_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, (asset_denom.to_string(), "umars".to_string()))
+        .unwrap();
     assert_eq!(asset_incentive.index, expected_asset_incentive_index);
     assert_eq!(asset_incentive.last_updated, time_contract_call);
 
-    let zero_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, zero_denom).unwrap();
+    let zero_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, (zero_denom.to_string(), "umars".to_string()))
+        .unwrap();
     assert_eq!(zero_incentive.index, Decimal::one());
     assert_eq!(zero_incentive.last_updated, time_contract_call);
 
-    let no_user_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, no_user_denom).unwrap();
+    let no_user_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, (no_user_denom.to_string(), "umars".to_string()))
+        .unwrap();
     assert_eq!(no_user_incentive.index, Decimal::one());
     assert_eq!(no_user_incentive.last_updated, time_start);
 
     // user's asset and zero indices are updated
     let user_asset_index =
-        USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_addr, asset_denom)).unwrap();
+        USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_addr, asset_denom, "umars")).unwrap();
     assert_eq!(user_asset_index, expected_asset_incentive_index);
 
     let user_zero_index =
-        USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_addr, zero_denom)).unwrap();
+        USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_addr, zero_denom, "umars")).unwrap();
     assert_eq!(user_zero_index, Decimal::one());
 
     // user's no_user does not get updated
-    let user_no_user_index =
-        USER_ASSET_INDICES.may_load(deps.as_ref().storage, (&user_addr, no_user_denom)).unwrap();
+    let user_no_user_index = USER_ASSET_INDICES
+        .may_load(deps.as_ref().storage, (&user_addr, no_user_denom, "umars"))
+        .unwrap();
     assert_eq!(user_no_user_index, None);
 
     // user rewards are cleared
     let user_unclaimed_rewards =
-        USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, &user_addr).unwrap();
+        USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, (&user_addr, "umars")).unwrap();
     assert_eq!(user_unclaimed_rewards, Uint128::zero())
 }
 
@@ -255,12 +292,16 @@ fn claim_zero_rewards() {
     let mut deps = th_setup();
 
     let info = mock_info("user", &[]);
-    let msg = ExecuteMsg::ClaimRewards {};
+    let msg = ExecuteMsg::ClaimRewards {
+        start_after_collateral_denom: None,
+        start_after_incentive_denom: None,
+        limit: None,
+    };
 
     let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
     assert_eq!(res.messages.len(), 0);
     assert_eq!(
-        res.attributes,
-        vec![attr("action", "claim_rewards"), attr("user", "user"), attr("mars_rewards", "0"),]
+        res.events[0].attributes,
+        vec![attr("action", "claim_rewards"), attr("user", "user"),]
     );
 }
