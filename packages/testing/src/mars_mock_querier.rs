@@ -70,10 +70,16 @@ impl MarsMockQuerier {
         self.incentives_querier.incentives_addr = address;
     }
 
-    pub fn set_unclaimed_rewards(&mut self, user_address: String, unclaimed_rewards: Uint128) {
-        self.incentives_querier
-            .unclaimed_rewards_at
-            .insert(Addr::unchecked(user_address), unclaimed_rewards);
+    pub fn set_unclaimed_rewards(
+        &mut self,
+        user_address: String,
+        incentive_denom: &str,
+        unclaimed_rewards: Uint128,
+    ) {
+        self.incentives_querier.unclaimed_rewards_at.insert(
+            (Addr::unchecked(user_address), incentive_denom.to_string()),
+            unclaimed_rewards,
+        );
     }
 
     pub fn set_query_pool_response(&mut self, pool_id: u64, pool_response: QueryPoolResponse) {

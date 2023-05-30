@@ -134,7 +134,16 @@ pub enum ExecuteMsg {
     ///
     /// We wanted to leave protocol rewards in the red-bank so they continue to work as liquidity (until the bot invokes WithdrawFromRedBank).
     /// As an side effect to this, if the market is incentivised with MARS tokens, the contract will also accrue MARS token incentives.
-    ClaimIncentiveRewards {},
+    ClaimIncentiveRewards {
+        /// Start pagination after this collateral denom
+        start_after_collateral_denom: Option<String>,
+        /// Start pagination after this incentive denom. If supplied you must also supply
+        /// start_after_collateral_denom.
+        start_after_incentive_denom: Option<String>,
+        /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
+        /// 10 is used.
+        limit: Option<u32>,
+    },
 }
 
 #[cw_serde]

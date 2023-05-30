@@ -25,7 +25,8 @@ fn only_owner_can_set_asset_incentive() {
 
     let info = mock_info("sender", &[]);
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: Some(Uint128::new(100)),
         start_time: None,
         duration: Some(86400),
@@ -41,7 +42,8 @@ fn invalid_denom_for_incentives() {
 
     let info = mock_info("owner", &[]);
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "adfnjg&akjsfn!".to_string(),
+        collateral_denom: "adfnjg&akjsfn!".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: Some(Uint128::new(100)),
         start_time: None,
         duration: Some(2400u64),
@@ -64,7 +66,8 @@ fn cannot_set_new_asset_incentive_with_empty_params() {
     let env = mock_env();
 
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: None,
         start_time: None,
         duration: None,
@@ -78,7 +81,8 @@ fn cannot_set_new_asset_incentive_with_empty_params() {
     );
 
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: Some(Uint128::from(100u32)),
         start_time: Some(100),
         duration: None,
@@ -92,7 +96,8 @@ fn cannot_set_new_asset_incentive_with_empty_params() {
     );
 
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: None,
         start_time: Some(100),
         duration: Some(2400u64),
@@ -106,7 +111,8 @@ fn cannot_set_new_asset_incentive_with_empty_params() {
     );
 
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: Some(Uint128::from(100u32)),
         start_time: None,
         duration: Some(2400u64),
@@ -131,7 +137,8 @@ fn cannot_set_new_asset_incentive_with_invalid_params() {
     });
 
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: Some(Uint128::from(100u32)),
         start_time: Some(block_time.seconds()),
         duration: Some(0u64),
@@ -145,7 +152,8 @@ fn cannot_set_new_asset_incentive_with_invalid_params() {
     );
 
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: Some(Uint128::from(100u32)),
         start_time: Some(block_time.minus_seconds(1u64).seconds()),
         duration: Some(100u64),
@@ -170,7 +178,8 @@ fn set_new_asset_incentive() {
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: Some(Uint128::new(100)),
         start_time: Some(block_time.seconds()),
         duration: Some(86400),
@@ -181,14 +190,17 @@ fn set_new_asset_incentive() {
         res.attributes,
         vec![
             attr("action", "set_asset_incentive"),
-            attr("denom", "uosmo"),
+            attr("collateral_denom", "uosmo"),
+            attr("incentive_denom", "umars"),
             attr("emission_per_second", "100"),
             attr("start_time", block_time.seconds().to_string()),
             attr("duration", "86400"),
         ]
     );
 
-    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, "uosmo").unwrap();
+    let asset_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
+        .unwrap();
 
     assert_eq!(asset_incentive.emission_per_second, Uint128::new(100));
     assert_eq!(asset_incentive.index, Decimal::zero());
@@ -214,7 +226,7 @@ fn set_existing_asset_incentive_with_different_start_time() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            "uosmo",
+            ("uosmo".to_string(), "umars".to_string()),
             &AssetIncentive {
                 emission_per_second: Uint128::new(124),
                 start_time,
@@ -232,7 +244,8 @@ fn set_existing_asset_incentive_with_different_start_time() {
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: None,
         start_time: Some(block_time.seconds() + 10),
         duration: None,
@@ -252,7 +265,8 @@ fn set_existing_asset_incentive_with_different_start_time() {
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: None,
         start_time: Some(block_time.seconds() - 1),
         duration: None,
@@ -273,13 +287,16 @@ fn set_existing_asset_incentive_with_different_start_time() {
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: None,
         start_time: Some(start_time),
         duration: None,
     };
     execute(deps.as_mut(), env, info.clone(), msg).unwrap();
-    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, "uosmo").unwrap();
+    let asset_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
+        .unwrap();
     assert_eq!(asset_incentive.start_time, start_time);
     assert_eq!(asset_incentive.last_updated, block_time.seconds());
 
@@ -290,7 +307,8 @@ fn set_existing_asset_incentive_with_different_start_time() {
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: None,
         start_time: None,
         duration: None,
@@ -310,14 +328,19 @@ fn set_existing_asset_incentive_with_different_start_time() {
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: None,
         start_time: None,
         duration: None,
     };
-    let prev_asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, "uosmo").unwrap();
+    let prev_asset_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
+        .unwrap();
     execute(deps.as_mut(), env, info, msg).unwrap();
-    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, "uosmo").unwrap();
+    let asset_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
+        .unwrap();
     assert_eq!(asset_incentive.start_time, prev_asset_incentive.start_time);
     assert_eq!(asset_incentive.last_updated, block_time.seconds());
 }
@@ -339,7 +362,7 @@ fn set_existing_asset_incentive_with_different_duration() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            "uosmo",
+            ("uosmo".to_string(), "umars".to_string()),
             &AssetIncentive {
                 emission_per_second: Uint128::new(124),
                 start_time,
@@ -357,7 +380,8 @@ fn set_existing_asset_incentive_with_different_duration() {
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: None,
         start_time: None,
         duration: Some(0),
@@ -377,7 +401,8 @@ fn set_existing_asset_incentive_with_different_duration() {
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: None,
         start_time: None,
         duration: Some(duration - 1),
@@ -398,14 +423,19 @@ fn set_existing_asset_incentive_with_different_duration() {
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: None,
         start_time: None,
         duration: Some(duration),
     };
-    let prev_asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, "uosmo").unwrap();
+    let prev_asset_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
+        .unwrap();
     execute(deps.as_mut(), env, info.clone(), msg).unwrap();
-    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, "uosmo").unwrap();
+    let asset_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
+        .unwrap();
     assert_eq!(asset_incentive.start_time, prev_asset_incentive.start_time);
     assert_eq!(asset_incentive.duration, duration);
     assert_eq!(asset_incentive.last_updated, block_time.seconds());
@@ -417,14 +447,19 @@ fn set_existing_asset_incentive_with_different_duration() {
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: "uosmo".to_string(),
+        collateral_denom: "uosmo".to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: Some(Uint128::new(300)),
         start_time: None,
         duration: None,
     };
-    let prev_asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, "uosmo").unwrap();
+    let prev_asset_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
+        .unwrap();
     execute(deps.as_mut(), env, info, msg).unwrap();
-    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, "uosmo").unwrap();
+    let asset_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
+        .unwrap();
     assert_eq!(asset_incentive.emission_per_second, Uint128::new(300));
     assert_eq!(asset_incentive.start_time, prev_asset_incentive.start_time);
     assert_eq!(asset_incentive.duration, prev_asset_incentive.duration);
@@ -451,7 +486,7 @@ fn set_existing_asset_incentive_with_index_updated_during_incentive() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            denom,
+            (denom.to_string(), "umars".to_string()),
             &AssetIncentive {
                 emission_per_second: Uint128::new(100),
                 start_time,
@@ -470,7 +505,8 @@ fn set_existing_asset_incentive_with_index_updated_during_incentive() {
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: denom.to_string(),
+        collateral_denom: denom.to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: Some(Uint128::new(200)),
         start_time: None,
         duration: None,
@@ -482,14 +518,17 @@ fn set_existing_asset_incentive_with_index_updated_during_incentive() {
         res.attributes,
         vec![
             attr("action", "set_asset_incentive"),
-            attr("denom", denom),
+            attr("collateral_denom", denom),
+            attr("incentive_denom", "umars"),
             attr("emission_per_second", "200"),
             attr("start_time", start_time.to_string()),
             attr("duration", duration.to_string()),
         ]
     );
 
-    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, denom).unwrap();
+    let asset_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, (denom.to_string(), "umars".to_string()))
+        .unwrap();
 
     let expected_index = compute_asset_incentive_index(
         Decimal::from_ratio(1_u128, 2_u128),
@@ -527,7 +566,7 @@ fn set_existing_asset_incentive_with_index_updated_after_incentive() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            denom,
+            (denom.to_string(), "umars".to_string()),
             &AssetIncentive {
                 emission_per_second: Uint128::new(120),
                 start_time,
@@ -546,7 +585,8 @@ fn set_existing_asset_incentive_with_index_updated_after_incentive() {
         ..Default::default()
     });
     let msg = ExecuteMsg::SetAssetIncentive {
-        denom: denom.to_string(),
+        collateral_denom: denom.to_string(),
+        incentive_denom: "umars".to_string(),
         emission_per_second: Some(Uint128::new(215)),
         start_time: Some(block_time.seconds()),
         duration: None,
@@ -558,14 +598,17 @@ fn set_existing_asset_incentive_with_index_updated_after_incentive() {
         res.attributes,
         vec![
             attr("action", "set_asset_incentive"),
-            attr("denom", denom),
+            attr("collateral_denom", denom),
+            attr("incentive_denom", "umars"),
             attr("emission_per_second", "215"),
             attr("start_time", block_time.seconds().to_string()),
             attr("duration", duration.to_string()),
         ]
     );
 
-    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, denom).unwrap();
+    let asset_incentive = ASSET_INCENTIVES
+        .load(deps.as_ref().storage, (denom.to_string(), "umars".to_string()))
+        .unwrap();
 
     let expected_index = compute_asset_incentive_index(
         Decimal::from_ratio(1_u128, 4_u128),
