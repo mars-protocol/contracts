@@ -1,8 +1,8 @@
 use cosmwasm_std::{Decimal, DepsMut, MessageInfo, Response};
-use mars_utils::{error::ValidationError, helpers::validate_native_denom};
+use mars_utils::error::ValidationError;
 
+use crate::error::ContractResult;
 use crate::{
-    error::ContractError,
     state::{ASSET_PARAMS, MAX_CLOSE_FACTOR, OWNER, VAULT_CONFIGS},
     types::{AssetParamsUpdate, VaultConfigUpdate},
 };
@@ -14,7 +14,7 @@ pub fn update_max_close_factor(
     deps: DepsMut,
     info: MessageInfo,
     max_close_factor: Decimal,
-) -> Result<Response, ContractError> {
+) -> ContractResult<Response> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
     assert_mcf(max_close_factor)?;
@@ -31,23 +31,21 @@ pub fn update_asset_params(
     deps: DepsMut,
     info: MessageInfo,
     update: AssetParamsUpdate,
-) -> Result<Response, ContractError> {
+) -> ContractResult<Response> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
     let mut response = Response::new().add_attribute("action", "update_asset_param");
 
     match update {
         AssetParamsUpdate::AddOrUpdate {
-            denom,
             params,
         } => {
-            validate_native_denom(&denom)?;
             params.validate()?;
 
-            ASSET_PARAMS.save(deps.storage, &denom, &params)?;
+            ASSET_PARAMS.save(deps.storage, &params.denom, &params)?;
             response = response
                 .add_attribute("action_type", "add_or_update")
-                .add_attribute("denom", denom);
+                .add_attribute("denom", params.denom);
         }
     }
 
@@ -58,21 +56,20 @@ pub fn update_vault_config(
     deps: DepsMut,
     info: MessageInfo,
     update: VaultConfigUpdate,
-) -> Result<Response, ContractError> {
+) -> ContractResult<Response> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
     let mut response = Response::new().add_attribute("action", "update_vault_config");
 
     match update {
         VaultConfigUpdate::AddOrUpdate {
-            addr,
             config,
         } => {
-            let checked = deps.api.addr_validate(&addr)?;
-            config.validate()?;
-            VAULT_CONFIGS.save(deps.storage, &checked, &config)?;
-            response =
-                response.add_attribute("action_type", "add_or_update").add_attribute("addr", addr);
+            let checked = config.check(deps.api)?;
+            VAULT_CONFIGS.save(deps.storage, &checked.addr, &checked)?;
+            response = response
+                .add_attribute("action_type", "add_or_update")
+                .add_attribute("addr", checked.addr);
         }
         VaultConfigUpdate::Remove {
             addr,

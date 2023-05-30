@@ -1,12 +1,14 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{coin, Decimal, Uint128};
+
 use mars_params::types::{
-    AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings, VaultConfig,
+    AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings, VaultConfigUnchecked,
 };
 
-pub fn default_asset_params() -> AssetParams {
+pub fn default_asset_params(denom: &str) -> AssetParams {
     AssetParams {
+        denom: denom.to_string(),
         rover: RoverSettings {
             whitelisted: false,
             hls: HighLeverageStrategyParams {
@@ -25,8 +27,9 @@ pub fn default_asset_params() -> AssetParams {
     }
 }
 
-pub fn default_vault_config() -> VaultConfig {
-    VaultConfig {
+pub fn default_vault_config(addr: &str) -> VaultConfigUnchecked {
+    VaultConfigUnchecked {
+        addr: addr.to_string(),
         deposit_cap: coin(100_000_000_000, "uusdc"),
         max_loan_to_value: Decimal::from_str("0.47").unwrap(),
         liquidation_threshold: Decimal::from_str("0.5").unwrap(),

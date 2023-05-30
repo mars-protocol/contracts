@@ -18,8 +18,7 @@ fn vault_addr_must_be_valid() {
     let res = mock.update_vault_config(
         &mock.query_owner(),
         VaultConfigUpdate::AddOrUpdate {
-            addr: "%".to_string(),
-            config: default_vault_config(),
+            config: default_vault_config("%"),
         },
     );
     assert_err(
@@ -31,13 +30,12 @@ fn vault_addr_must_be_valid() {
 #[test]
 fn vault_max_ltv_less_than_or_equal_to_one() {
     let mut mock = MockEnv::new().build().unwrap();
-    let mut config = default_vault_config();
+    let mut config = default_vault_config("vault_xyz");
     config.max_loan_to_value = Decimal::from_str("1.1235").unwrap();
 
     let res = mock.update_vault_config(
         &mock.query_owner(),
         VaultConfigUpdate::AddOrUpdate {
-            addr: "vault_xyz".to_string(),
             config,
         },
     );
@@ -54,13 +52,12 @@ fn vault_max_ltv_less_than_or_equal_to_one() {
 #[test]
 fn vault_liquidation_threshold_less_than_or_equal_to_one() {
     let mut mock = MockEnv::new().build().unwrap();
-    let mut config = default_vault_config();
+    let mut config = default_vault_config("vault_xyz");
     config.liquidation_threshold = Decimal::from_str("1.1235").unwrap();
 
     let res = mock.update_vault_config(
         &mock.query_owner(),
         VaultConfigUpdate::AddOrUpdate {
-            addr: "vault_xyz".to_string(),
             config,
         },
     );
@@ -77,14 +74,13 @@ fn vault_liquidation_threshold_less_than_or_equal_to_one() {
 #[test]
 fn vault_liq_threshold_gt_max_ltv() {
     let mut mock = MockEnv::new().build().unwrap();
-    let mut config = default_vault_config();
+    let mut config = default_vault_config("vault_xyz");
     config.liquidation_threshold = Decimal::from_str("0.5").unwrap();
     config.max_loan_to_value = Decimal::from_str("0.6").unwrap();
 
     let res = mock.update_vault_config(
         &mock.query_owner(),
         VaultConfigUpdate::AddOrUpdate {
-            addr: "vault_xyz".to_string(),
             config,
         },
     );

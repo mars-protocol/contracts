@@ -1,38 +1,25 @@
 use cosmwasm_std::{Addr, Deps, Order, StdResult};
 use cw_storage_plus::Bound;
 
+use crate::types::AssetParams;
 use crate::{
     state::{ASSET_PARAMS, VAULT_CONFIGS},
-    types::{AssetParamsResponse, VaultConfig, VaultConfigResponse},
+    types::VaultConfig,
 };
 
 pub const DEFAULT_LIMIT: u32 = 10;
-
-pub fn query_asset_params(deps: Deps, denom: String) -> StdResult<AssetParamsResponse> {
-    let params = ASSET_PARAMS.load(deps.storage, &denom)?;
-    Ok(AssetParamsResponse {
-        denom,
-        params,
-    })
-}
 
 pub fn query_all_asset_params(
     deps: Deps,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<AssetParamsResponse>> {
+) -> StdResult<Vec<AssetParams>> {
     let start = start_after.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT) as usize;
     ASSET_PARAMS
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
-        .map(|res| {
-            let (denom, params) = res?;
-            Ok(AssetParamsResponse {
-                denom,
-                params,
-            })
-        })
+        .map(|res| Ok(res?.1))
         .collect()
 }
 
@@ -45,7 +32,7 @@ pub fn query_all_vault_configs(
     deps: Deps,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<VaultConfigResponse>> {
+) -> StdResult<Vec<VaultConfig>> {
     let vault_addr: Addr;
     let start = match &start_after {
         Some(unchecked) => {
@@ -60,12 +47,6 @@ pub fn query_all_vault_configs(
     VAULT_CONFIGS
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
-        .map(|res| {
-            let (addr, config) = res?;
-            Ok(VaultConfigResponse {
-                addr,
-                config,
-            })
-        })
+        .map(|res| Ok(res?.1))
         .collect()
 }

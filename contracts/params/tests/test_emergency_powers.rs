@@ -47,13 +47,12 @@ fn disabling_borrowing() {
     let mut mock = MockEnv::new().emergency_owner(emergency_owner.as_str()).build().unwrap();
     let denom = "atom".to_string();
 
-    let mut params = default_asset_params();
+    let mut params = default_asset_params(&denom);
     params.red_bank.borrow_enabled = true;
 
     mock.update_asset_params(
         &mock.query_owner(),
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom.clone(),
             params,
         },
     )
@@ -78,13 +77,12 @@ fn disallow_coin() {
     let mut mock = MockEnv::new().emergency_owner(emergency_owner.as_str()).build().unwrap();
     let denom = "atom".to_string();
 
-    let mut params = default_asset_params();
+    let mut params = default_asset_params(&denom);
     params.rover.whitelisted = true;
 
     mock.update_asset_params(
         &mock.query_owner(),
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom.clone(),
             params,
         },
     )
@@ -112,8 +110,7 @@ fn set_zero_max_ltv() {
     mock.update_vault_config(
         &mock.query_owner(),
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault.clone(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault),
         },
     )
     .unwrap();
@@ -140,8 +137,7 @@ fn set_zero_deposit_cap() {
     mock.update_vault_config(
         &mock.query_owner(),
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault.clone(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault),
         },
     )
     .unwrap();

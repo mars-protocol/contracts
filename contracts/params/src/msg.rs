@@ -27,12 +27,12 @@ pub enum QueryMsg {
     #[returns(mars_owner::OwnerResponse)]
     Owner {},
 
-    #[returns(crate::types::AssetParamsResponse)]
+    #[returns(crate::types::AssetParams)]
     AssetParams {
         denom: String,
     },
 
-    #[returns(Vec<crate::types::AssetParamsResponse>)]
+    #[returns(Vec<crate::types::AssetParams>)]
     AllAssetParams {
         start_after: Option<String>,
         limit: Option<u32>,

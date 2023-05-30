@@ -8,10 +8,7 @@ use mars_owner::{OwnerResponse, OwnerUpdate};
 use mars_params::types::AssetParams;
 use mars_params::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    types::{
-        AssetParamsResponse, AssetParamsUpdate, EmergencyUpdate, VaultConfig, VaultConfigResponse,
-        VaultConfigUpdate,
-    },
+    types::{AssetParamsUpdate, EmergencyUpdate, VaultConfig, VaultConfigUpdate},
 };
 
 use crate::helpers::mock_params_contract;
@@ -116,8 +113,7 @@ impl MockEnv {
     }
 
     pub fn query_asset_params(&self, denom: &str) -> AssetParams {
-        let res: AssetParamsResponse = self
-            .app
+        self.app
             .wrap()
             .query_wasm_smart(
                 self.params_contract.clone(),
@@ -125,15 +121,14 @@ impl MockEnv {
                     denom: denom.to_string(),
                 },
             )
-            .unwrap();
-        res.params
+            .unwrap()
     }
 
     pub fn query_all_asset_params(
         &self,
         start_after: Option<String>,
         limit: Option<u32>,
-    ) -> Vec<AssetParamsResponse> {
+    ) -> Vec<AssetParams> {
         self.app
             .wrap()
             .query_wasm_smart(
@@ -162,7 +157,7 @@ impl MockEnv {
         &self,
         start_after: Option<String>,
         limit: Option<u32>,
-    ) -> Vec<VaultConfigResponse> {
+    ) -> Vec<VaultConfig> {
         self.app
             .wrap()
             .query_wasm_smart(

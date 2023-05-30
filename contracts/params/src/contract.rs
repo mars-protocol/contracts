@@ -4,7 +4,7 @@ use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response}
 use cw2::set_contract_version;
 use mars_owner::OwnerInit::SetInitialOwner;
 
-use crate::query::query_asset_params;
+use crate::state::ASSET_PARAMS;
 use crate::{
     emergency_powers::{disable_borrowing, disallow_coin, set_zero_deposit_cap, set_zero_max_ltv},
     error::ContractResult,
@@ -76,7 +76,7 @@ pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> ContractResult<Binary> {
         QueryMsg::Owner {} => to_binary(&OWNER.query(deps.storage)?),
         QueryMsg::AssetParams {
             denom,
-        } => to_binary(&query_asset_params(deps, denom)?),
+        } => to_binary(&ASSET_PARAMS.load(deps.storage, &denom)?),
         QueryMsg::AllAssetParams {
             start_after,
             limit,
