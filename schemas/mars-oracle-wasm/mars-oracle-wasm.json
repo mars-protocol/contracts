@@ -154,6 +154,9 @@
         "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
         "type": "string"
       },
+      "Identifier": {
+        "type": "string"
+      },
       "OwnerUpdate": {
         "oneOf": [
           {
@@ -322,6 +325,44 @@
                     "type": "integer",
                     "format": "uint64",
                     "minimum": 0.0
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "pyth"
+            ],
+            "properties": {
+              "pyth": {
+                "type": "object",
+                "required": [
+                  "contract_addr",
+                  "max_staleness",
+                  "price_feed_id"
+                ],
+                "properties": {
+                  "contract_addr": {
+                    "description": "Contract address of Pyth",
+                    "type": "string"
+                  },
+                  "max_staleness": {
+                    "description": "The maximum number of seconds since the last price was by an oracle, before rejecting the price as too stale",
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  },
+                  "price_feed_id": {
+                    "description": "Price feed id of an asset from the list: https://pyth.network/developers/price-feed-ids",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Identifier"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false

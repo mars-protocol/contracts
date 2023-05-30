@@ -56,7 +56,15 @@ export type WasmPriceSourceForString =
         window_size: number
       }
     }
+  | {
+      pyth: {
+        contract_addr: string
+        max_staleness: number
+        price_feed_id: Identifier
+      }
+    }
 export type Decimal = string
+export type Identifier = string
 export type OwnerUpdate =
   | {
       propose_new_owner: {
