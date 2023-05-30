@@ -27,7 +27,7 @@ pub enum QueryMsg {
     #[returns(mars_owner::OwnerResponse)]
     Owner {},
 
-    #[returns(crate::types::AssetParams)]
+    #[returns(crate::types::AssetParamsResponse)]
     AssetParams {
         denom: String,
     },

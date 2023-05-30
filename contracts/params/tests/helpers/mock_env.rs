@@ -4,11 +4,13 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Decimal};
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 use mars_owner::{OwnerResponse, OwnerUpdate};
+
+use mars_params::types::AssetParams;
 use mars_params::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     types::{
-        AssetParams, AssetParamsResponse, AssetParamsUpdate, EmergencyUpdate, VaultConfig,
-        VaultConfigResponse, VaultConfigUpdate,
+        AssetParamsResponse, AssetParamsUpdate, EmergencyUpdate, VaultConfig, VaultConfigResponse,
+        VaultConfigUpdate,
     },
 };
 
@@ -114,7 +116,8 @@ impl MockEnv {
     }
 
     pub fn query_asset_params(&self, denom: &str) -> AssetParams {
-        self.app
+        let res: AssetParamsResponse = self
+            .app
             .wrap()
             .query_wasm_smart(
                 self.params_contract.clone(),
@@ -122,7 +125,8 @@ impl MockEnv {
                     denom: denom.to_string(),
                 },
             )
-            .unwrap()
+            .unwrap();
+        res.params
     }
 
     pub fn query_all_asset_params(

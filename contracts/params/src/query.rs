@@ -8,6 +8,14 @@ use crate::{
 
 pub const DEFAULT_LIMIT: u32 = 10;
 
+pub fn query_asset_params(deps: Deps, denom: String) -> StdResult<AssetParamsResponse> {
+    let params = ASSET_PARAMS.load(deps.storage, &denom)?;
+    Ok(AssetParamsResponse {
+        denom,
+        params,
+    })
+}
+
 pub fn query_all_asset_params(
     deps: Deps,
     start_after: Option<String>,

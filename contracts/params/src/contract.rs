@@ -4,13 +4,14 @@ use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response}
 use cw2::set_contract_version;
 use mars_owner::OwnerInit::SetInitialOwner;
 
+use crate::query::query_asset_params;
 use crate::{
     emergency_powers::{disable_borrowing, disallow_coin, set_zero_deposit_cap, set_zero_max_ltv},
     error::ContractResult,
     execute::{assert_mcf, update_asset_params, update_max_close_factor, update_vault_config},
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     query::{query_all_asset_params, query_all_vault_configs, query_vault_config},
-    state::{ASSET_PARAMS, MAX_CLOSE_FACTOR, OWNER},
+    state::{MAX_CLOSE_FACTOR, OWNER},
     types::{EmergencyUpdate, RedBankEmergencyUpdate, RoverEmergencyUpdate},
 };
 
@@ -75,7 +76,7 @@ pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> ContractResult<Binary> {
         QueryMsg::Owner {} => to_binary(&OWNER.query(deps.storage)?),
         QueryMsg::AssetParams {
             denom,
-        } => to_binary(&ASSET_PARAMS.load(deps.storage, &denom)?),
+        } => to_binary(&query_asset_params(deps, denom)?),
         QueryMsg::AllAssetParams {
             start_after,
             limit,
