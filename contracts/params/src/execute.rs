@@ -1,8 +1,8 @@
 use cosmwasm_std::{Decimal, DepsMut, MessageInfo, Response};
 use mars_utils::error::ValidationError;
 
-use crate::error::ContractResult;
 use crate::{
+    error::ContractResult,
     state::{ASSET_PARAMS, MAX_CLOSE_FACTOR, OWNER, VAULT_CONFIGS},
     types::{AssetParamsUpdate, VaultConfigUpdate},
 };

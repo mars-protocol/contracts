@@ -1,10 +1,14 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Coin, Decimal, Uint128};
-use mars_utils::helpers::validate_native_denom;
-use mars_utils::{error::ValidationError, helpers::decimal_param_le_one};
+use mars_utils::{
+    error::ValidationError,
+    helpers::{decimal_param_le_one, validate_native_denom},
+};
 
-use crate::error::ContractResult;
-use crate::execute::{assert_hls_lqt_gt_max_ltv, assert_lqt_gt_max_ltv};
+use crate::{
+    error::ContractResult,
+    execute::{assert_hls_lqt_gt_max_ltv, assert_lqt_gt_max_ltv},
+};
 
 #[cw_serde]
 pub struct HighLeverageStrategyParams {

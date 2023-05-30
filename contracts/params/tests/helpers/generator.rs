@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{coin, Decimal, Uint128};
-
 use mars_params::types::{
     AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings, VaultConfigUnchecked,
 };

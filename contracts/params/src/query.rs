@@ -1,10 +1,9 @@
 use cosmwasm_std::{Addr, Deps, Order, StdResult};
 use cw_storage_plus::Bound;
 
-use crate::types::AssetParams;
 use crate::{
     state::{ASSET_PARAMS, VAULT_CONFIGS},
-    types::VaultConfig,
+    types::{AssetParams, VaultConfig},
 };
 
 pub const DEFAULT_LIMIT: u32 = 10;

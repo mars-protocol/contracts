@@ -4,11 +4,9 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Decimal};
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 use mars_owner::{OwnerResponse, OwnerUpdate};
-
-use mars_params::types::AssetParams;
 use mars_params::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    types::{AssetParamsUpdate, EmergencyUpdate, VaultConfig, VaultConfigUpdate},
+    types::{AssetParams, AssetParamsUpdate, EmergencyUpdate, VaultConfig, VaultConfigUpdate},
 };
 
 use crate::helpers::mock_params_contract;
