@@ -6,8 +6,8 @@ use cosmwasm_std::{
 use mars_oracle::msg::{PriceResponse, QueryMsg};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
-    contract::entry, scale_to_exponent, stride::RedemptionRateResponse, Downtime, DowntimeDetector,
-    GeometricTwap, OsmosisPriceSourceUnchecked, RedemptionRate,
+    contract::entry, stride::RedemptionRateResponse, Downtime, DowntimeDetector, GeometricTwap,
+    OsmosisPriceSourceUnchecked, RedemptionRate,
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 use osmosis_std::types::osmosis::{
@@ -514,7 +514,8 @@ fn setup_pyth_and_geometric_twap_for_lsd(
         expo: -4,
         publish_time: publish_time as i64,
     };
-    let pyth_price = scale_to_exponent(price.price as u128, price.expo).unwrap();
+    let pyth_price =
+        mars_oracle_base::pyth::scale_to_exponent(price.price as u128, price.expo).unwrap();
 
     deps.querier.set_pyth_price(
         price_id,

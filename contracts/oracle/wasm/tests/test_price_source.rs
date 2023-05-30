@@ -1,27 +1,34 @@
 #![allow(clippy::items_after_test_module)]
 
 use astroport::factory::PairType;
-use cosmwasm_std::{testing::mock_dependencies, Addr, Decimal, Uint128};
+use cosmwasm_std::{from_binary, testing::mock_dependencies, Addr, Decimal, Uint128};
 use cw_it::{
     astroport::{robot::AstroportTestRobot, utils::native_asset},
     test_tube::Account,
 };
 use cw_storage_plus::Map;
-use mars_oracle_base::PriceSourceUnchecked;
-use mars_oracle_wasm::{WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked};
+use mars_oracle::{PriceResponse, QueryMsg};
+use mars_oracle_base::{pyth::PriceIdentifier, ContractError, PriceSourceUnchecked};
+use mars_oracle_wasm::{
+    contract::entry, WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked,
+};
 
 const ONE: Decimal = Decimal::one();
 const TWO: Decimal = Decimal::new(Uint128::new(2_000_000_000_000_000_000u128));
 const DEFAULT_LIQ: [u128; 2] = [10000000000000000000000u128, 1000000000000000000000u128];
 
 use mars_testing::{
+    mock_env_at_block_time,
     test_runner::get_test_runner,
     wasm_oracle::{
         fixed_source, get_contracts, setup_test, validate_and_query_astroport_spot_price_source,
         validate_and_query_astroport_twap_price_source, WasmOracleTestRobot,
     },
 };
+use pyth_sdk_cw::{Price, PriceFeed, PriceFeedResponse};
 use test_case::test_case;
+
+mod helpers;
 
 #[test]
 fn test_contract_initialization() {
@@ -248,4 +255,236 @@ fn record_twap_snapshot_does_not_save_when_less_than_tolerance_ago() {
         .record_twap_snapshots(&["uatom"], admin)
         // Price should be the same as before
         .assert_price("uatom", Decimal::from_ratio(1u128, 10u128));
+}
+
+#[test]
+fn querying_pyth_price_if_publish_price_too_old() {
+    let runner = get_test_runner();
+    let robot = WasmOracleTestRobot::new(
+        &runner,
+        get_contracts(&get_test_runner()),
+        &get_test_runner().init_accounts()[0],
+        None,
+    );
+
+    let mut deps = helpers::setup_test(&robot.astroport_contracts.factory.address);
+
+    let price_id = PriceIdentifier::from_hex(
+        "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+    )
+    .unwrap();
+
+    let max_staleness = 30u64;
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uatom",
+        WasmPriceSourceUnchecked::Pyth {
+            contract_addr: "pyth_contract_addr".to_string(),
+            price_feed_id: price_id,
+            max_staleness,
+        },
+    );
+
+    let price_publish_time = 1677157333u64;
+    let ema_price_publish_time = price_publish_time + max_staleness;
+    deps.querier.set_pyth_price(
+        price_id,
+        PriceFeedResponse {
+            price_feed: PriceFeed::new(
+                price_id,
+                Price {
+                    price: 1371155677,
+                    conf: 646723,
+                    expo: -8,
+                    publish_time: price_publish_time as i64,
+                },
+                Price {
+                    price: 1365133270,
+                    conf: 574566,
+                    expo: -8,
+                    publish_time: ema_price_publish_time as i64,
+                },
+            ),
+        },
+    );
+
+    let res_err = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(price_publish_time + max_staleness + 1u64),
+        QueryMsg::Price {
+            denom: "uatom".to_string(),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        res_err,
+        ContractError::InvalidPrice {
+            reason:
+                "current price publish time is too old/stale. published: 1677157333, now: 1677157364"
+                    .to_string()
+        }
+    );
+}
+
+#[test]
+fn querying_pyth_price_if_signed() {
+    let runner = get_test_runner();
+    let robot = WasmOracleTestRobot::new(
+        &runner,
+        get_contracts(&get_test_runner()),
+        &get_test_runner().init_accounts()[0],
+        None,
+    );
+
+    let mut deps = helpers::setup_test(&robot.astroport_contracts.factory.address);
+
+    let price_id = PriceIdentifier::from_hex(
+        "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+    )
+    .unwrap();
+
+    let max_staleness = 30u64;
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uatom",
+        WasmPriceSourceUnchecked::Pyth {
+            contract_addr: "pyth_contract_addr".to_string(),
+            price_feed_id: price_id,
+            max_staleness,
+        },
+    );
+
+    let publish_time = 1677157333u64;
+    deps.querier.set_pyth_price(
+        price_id,
+        PriceFeedResponse {
+            price_feed: PriceFeed::new(
+                price_id,
+                Price {
+                    price: -1371155677,
+                    conf: 646723,
+                    expo: -8,
+                    publish_time: publish_time as i64,
+                },
+                Price {
+                    price: -1365133270,
+                    conf: 574566,
+                    expo: -8,
+                    publish_time: publish_time as i64,
+                },
+            ),
+        },
+    );
+
+    let res_err = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "uatom".to_string(),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        res_err,
+        ContractError::InvalidPrice {
+            reason: "price can't be <= 0".to_string()
+        }
+    );
+}
+
+#[test]
+fn querying_pyth_price_successfully() {
+    let runner = get_test_runner();
+    let robot = WasmOracleTestRobot::new(
+        &runner,
+        get_contracts(&get_test_runner()),
+        &get_test_runner().init_accounts()[0],
+        None,
+    );
+
+    let mut deps = helpers::setup_test(&robot.astroport_contracts.factory.address);
+
+    let price_id = PriceIdentifier::from_hex(
+        "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+    )
+    .unwrap();
+
+    let max_staleness = 30u64;
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uatom",
+        WasmPriceSourceUnchecked::Pyth {
+            contract_addr: "pyth_contract_addr".to_string(),
+            price_feed_id: price_id,
+            max_staleness,
+        },
+    );
+
+    let publish_time = 1677157333u64;
+
+    // exp < 0
+    deps.querier.set_pyth_price(
+        price_id,
+        PriceFeedResponse {
+            price_feed: PriceFeed::new(
+                price_id,
+                Price {
+                    price: 1021000,
+                    conf: 50000,
+                    expo: -4,
+                    publish_time: publish_time as i64,
+                },
+                Price {
+                    price: 1000000,
+                    conf: 40000,
+                    expo: -4,
+                    publish_time: publish_time as i64,
+                },
+            ),
+        },
+    );
+
+    let res = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "uatom".to_string(),
+        },
+    )
+    .unwrap();
+    let res: PriceResponse = from_binary(&res).unwrap();
+    assert_eq!(res.price, Decimal::from_ratio(1021000u128, 10000u128));
+
+    // exp > 0
+    deps.querier.set_pyth_price(
+        price_id,
+        PriceFeedResponse {
+            price_feed: PriceFeed::new(
+                price_id,
+                Price {
+                    price: 102,
+                    conf: 5,
+                    expo: 3,
+                    publish_time: publish_time as i64,
+                },
+                Price {
+                    price: 100,
+                    conf: 4,
+                    expo: 3,
+                    publish_time: publish_time as i64,
+                },
+            ),
+        },
+    );
+
+    let res = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "uatom".to_string(),
+        },
+    )
+    .unwrap();
+    let res: PriceResponse = from_binary(&res).unwrap();
+    assert_eq!(res.price, Decimal::from_ratio(102000u128, 1u128));
 }

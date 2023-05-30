@@ -10,6 +10,7 @@ use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
 use mars_oracle::AstroportTwapSnapshot;
 use mars_oracle_base::{
+    pyth::PriceIdentifier,
     ContractError::{self},
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
@@ -60,6 +61,17 @@ pub enum WasmPriceSource<A> {
         /// USDC, and then multiply by the price of USDC in USD.
         route_assets: Vec<String>,
     },
+    Pyth {
+        /// Contract address of Pyth
+        contract_addr: A,
+
+        /// Price feed id of an asset from the list: https://pyth.network/developers/price-feed-ids
+        price_feed_id: PriceIdentifier,
+
+        /// The maximum number of seconds since the last price was by an oracle, before
+        /// rejecting the price as too stale
+        max_staleness: u64,
+    },
 }
 
 pub type WasmPriceSourceUnchecked = WasmPriceSource<String>;
@@ -89,6 +101,11 @@ impl fmt::Display for WasmPriceSourceChecked {
                     "astroport_twap:{pair_address}. Window Size: {window_size}. Tolerance: {tolerance}. Route: {route_str}"
                 )
             }
+            WasmPriceSource::Pyth {
+                contract_addr,
+                price_feed_id,
+                max_staleness,
+            } => format!("pyth:{contract_addr}:{price_feed_id}:{max_staleness}"),
         };
         write!(f, "{label}")
     }
@@ -150,6 +167,15 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                     route_assets,
                 })
             }
+            WasmPriceSource::Pyth {
+                contract_addr,
+                price_feed_id,
+                max_staleness,
+            } => Ok(WasmPriceSourceChecked::Pyth {
+                contract_addr: deps.api.addr_validate(&contract_addr)?,
+                price_feed_id,
+                max_staleness,
+            }),
         }
     }
 }
@@ -195,6 +221,17 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 route_assets,
                 *window_size,
                 *tolerance,
+            ),
+            WasmPriceSource::Pyth {
+                contract_addr,
+                price_feed_id,
+                max_staleness,
+            } => mars_oracle_base::pyth::query_pyth_price(
+                deps,
+                env,
+                contract_addr.clone(),
+                *price_feed_id,
+                *max_staleness,
             ),
         }
     }
@@ -285,4 +322,25 @@ fn query_astroport_twap_price(
     // If there are route assets, we need to multiply the price by the price of the
     // route assets in the base denom
     add_route_prices(deps, env, base_denom, price_sources, route_assets, &price)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn display_pyth_price_source() {
+        let ps = WasmPriceSourceChecked::Pyth {
+            contract_addr: Addr::unchecked("osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08"),
+            price_feed_id: PriceIdentifier::from_hex(
+                "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+            )
+            .unwrap(),
+            max_staleness: 60,
+        };
+        assert_eq!(
+            ps.to_string(),
+            "pyth:osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60"
+        )
+    }
 }
