@@ -6,10 +6,7 @@ use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 use mars_owner::{OwnerResponse, OwnerUpdate};
 use mars_params::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    types::{
-        AssetParams, AssetParamsResponse, AssetParamsUpdate, EmergencyUpdate, VaultConfig,
-        VaultConfigResponse, VaultConfigUpdate,
-    },
+    types::{AssetParams, AssetParamsUpdate, EmergencyUpdate, VaultConfig, VaultConfigUpdate},
 };
 
 use crate::helpers::mock_params_contract;
@@ -129,7 +126,7 @@ impl MockEnv {
         &self,
         start_after: Option<String>,
         limit: Option<u32>,
-    ) -> Vec<AssetParamsResponse> {
+    ) -> Vec<AssetParams> {
         self.app
             .wrap()
             .query_wasm_smart(
@@ -158,7 +155,7 @@ impl MockEnv {
         &self,
         start_after: Option<String>,
         limit: Option<u32>,
-    ) -> Vec<VaultConfigResponse> {
+    ) -> Vec<VaultConfig> {
         self.app
             .wrap()
             .query_wasm_smart(

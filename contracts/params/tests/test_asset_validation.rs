@@ -16,8 +16,7 @@ fn denom_must_be_native() {
     let res = mock.update_asset_params(
         &mock.query_owner(),
         AssetParamsUpdate::AddOrUpdate {
-            denom,
-            params: default_asset_params(),
+            params: default_asset_params(&denom),
         },
     );
     assert_err(
@@ -31,13 +30,12 @@ fn denom_must_be_native() {
 #[test]
 fn max_ltv_less_than_or_equal_to_one() {
     let mut mock = MockEnv::new().build().unwrap();
-    let mut params = default_asset_params();
+    let mut params = default_asset_params("denom_xyz");
     params.max_loan_to_value = Decimal::from_str("1.1235").unwrap();
 
     let res = mock.update_asset_params(
         &mock.query_owner(),
         AssetParamsUpdate::AddOrUpdate {
-            denom: "denom_xyz".to_string(),
             params,
         },
     );
@@ -54,13 +52,12 @@ fn max_ltv_less_than_or_equal_to_one() {
 #[test]
 fn liquidation_threshold_less_than_or_equal_to_one() {
     let mut mock = MockEnv::new().build().unwrap();
-    let mut params = default_asset_params();
+    let mut params = default_asset_params("denom_xyz");
     params.liquidation_threshold = Decimal::from_str("1.1235").unwrap();
 
     let res = mock.update_asset_params(
         &mock.query_owner(),
         AssetParamsUpdate::AddOrUpdate {
-            denom: "denom_xyz".to_string(),
             params,
         },
     );
@@ -77,13 +74,12 @@ fn liquidation_threshold_less_than_or_equal_to_one() {
 #[test]
 fn liquidation_bonus_less_than_or_equal_to_one() {
     let mut mock = MockEnv::new().build().unwrap();
-    let mut params = default_asset_params();
+    let mut params = default_asset_params("denom_xyz");
     params.liquidation_bonus = Decimal::from_str("1.1235").unwrap();
 
     let res = mock.update_asset_params(
         &mock.query_owner(),
         AssetParamsUpdate::AddOrUpdate {
-            denom: "denom_xyz".to_string(),
             params,
         },
     );
@@ -100,14 +96,13 @@ fn liquidation_bonus_less_than_or_equal_to_one() {
 #[test]
 fn liq_threshold_gt_max_ltv() {
     let mut mock = MockEnv::new().build().unwrap();
-    let mut params = default_asset_params();
+    let mut params = default_asset_params("denom_xyz");
     params.liquidation_threshold = Decimal::from_str("0.5").unwrap();
     params.max_loan_to_value = Decimal::from_str("0.6").unwrap();
 
     let res = mock.update_asset_params(
         &mock.query_owner(),
         AssetParamsUpdate::AddOrUpdate {
-            denom: "denom_xyz".to_string(),
             params,
         },
     );
@@ -124,13 +119,12 @@ fn liq_threshold_gt_max_ltv() {
 #[test]
 fn hls_max_ltv_less_than_or_equal_to_one() {
     let mut mock = MockEnv::new().build().unwrap();
-    let mut params = default_asset_params();
+    let mut params = default_asset_params("denom_xyz");
     params.rover.hls.max_loan_to_value = Decimal::from_str("1.1235").unwrap();
 
     let res = mock.update_asset_params(
         &mock.query_owner(),
         AssetParamsUpdate::AddOrUpdate {
-            denom: "denom_xyz".to_string(),
             params,
         },
     );
@@ -147,13 +141,12 @@ fn hls_max_ltv_less_than_or_equal_to_one() {
 #[test]
 fn hls_liquidation_threshold_less_than_or_equal_to_one() {
     let mut mock = MockEnv::new().build().unwrap();
-    let mut params = default_asset_params();
+    let mut params = default_asset_params("denom_xyz");
     params.rover.hls.liquidation_threshold = Decimal::from_str("1.1235").unwrap();
 
     let res = mock.update_asset_params(
         &mock.query_owner(),
         AssetParamsUpdate::AddOrUpdate {
-            denom: "denom_xyz".to_string(),
             params,
         },
     );
@@ -170,14 +163,13 @@ fn hls_liquidation_threshold_less_than_or_equal_to_one() {
 #[test]
 fn hls_liq_threshold_gt_hls_max_ltv() {
     let mut mock = MockEnv::new().build().unwrap();
-    let mut params = default_asset_params();
+    let mut params = default_asset_params("denom_xyz");
     params.rover.hls.liquidation_threshold = Decimal::from_str("0.5").unwrap();
     params.rover.hls.max_loan_to_value = Decimal::from_str("0.6").unwrap();
 
     let res = mock.update_asset_params(
         &mock.query_owner(),
         AssetParamsUpdate::AddOrUpdate {
-            denom: "denom_xyz".to_string(),
             params,
         },
     );

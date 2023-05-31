@@ -32,7 +32,7 @@ pub enum QueryMsg {
         denom: String,
     },
 
-    #[returns(Vec<crate::types::AssetParamsResponse>)]
+    #[returns(Vec<crate::types::AssetParams>)]
     AllAssetParams {
         start_after: Option<String>,
         limit: Option<u32>,

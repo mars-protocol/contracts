@@ -35,34 +35,30 @@ fn initializing_asset_param() {
     let vault0 = "vault_addr_0".to_string();
     let vault1 = "vault_addr_1".to_string();
 
-    let config = default_vault_config();
-
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault0.clone(),
-            config: config.clone(),
+            config: default_vault_config(&vault0),
         },
     )
     .unwrap();
 
     let all_vault_configs = mock.query_all_vault_configs(None, None);
     assert_eq!(1, all_vault_configs.len());
-    let res = all_vault_configs.first().unwrap();
-    assert_eq!(&vault0, &res.addr);
+    let config = all_vault_configs.first().unwrap();
+    assert_eq!(&vault0, &config.addr);
 
     // Validate config set correctly
-    assert_eq!(config.max_loan_to_value, res.config.max_loan_to_value);
-    assert_eq!(config.liquidation_threshold, res.config.liquidation_threshold);
-    assert_eq!(config.deposit_cap.denom, res.config.deposit_cap.denom);
-    assert_eq!(config.deposit_cap.amount, res.config.deposit_cap.amount);
-    assert_eq!(config.whitelisted, res.config.whitelisted);
+    assert_eq!(config.max_loan_to_value, config.max_loan_to_value);
+    assert_eq!(config.liquidation_threshold, config.liquidation_threshold);
+    assert_eq!(config.deposit_cap.denom, config.deposit_cap.denom);
+    assert_eq!(config.deposit_cap.amount, config.deposit_cap.amount);
+    assert_eq!(config.whitelisted, config.whitelisted);
 
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault1.clone(),
-            config,
+            config: default_vault_config(&vault1),
         },
     )
     .unwrap();
@@ -81,32 +77,28 @@ fn add_same_vault_multiple_times() {
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault0.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault0),
         },
     )
     .unwrap();
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault0.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault0),
         },
     )
     .unwrap();
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault0.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault0),
         },
     )
     .unwrap();
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault0.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault0),
         },
     )
     .unwrap();
@@ -122,12 +114,11 @@ fn update_existing_vault_configs() {
     let owner = mock.query_owner();
     let vault0 = "vault_addr_0".to_string();
 
-    let mut config = default_vault_config();
+    let mut config = default_vault_config(&vault0);
 
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault0.to_string(),
             config: config.clone(),
         },
     )
@@ -144,7 +135,6 @@ fn update_existing_vault_configs() {
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault0.to_string(),
             config,
         },
     )
@@ -169,24 +159,21 @@ fn removing_from_vault_configs() {
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault0.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault0),
         },
     )
     .unwrap();
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault1.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault1),
         },
     )
     .unwrap();
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault2.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault2),
         },
     )
     .unwrap();
@@ -238,48 +225,42 @@ fn pagination_query() {
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault0.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault0),
         },
     )
     .unwrap();
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault1.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault1),
         },
     )
     .unwrap();
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault2.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault2),
         },
     )
     .unwrap();
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault3.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault3),
         },
     )
     .unwrap();
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault4.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault4),
         },
     )
     .unwrap();
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            addr: vault5.to_string(),
-            config: default_vault_config(),
+            config: default_vault_config(&vault5),
         },
     )
     .unwrap();

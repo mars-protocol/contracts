@@ -20,8 +20,7 @@ fn only_owner_can_update_asset_params() {
     let res = mock.update_asset_params(
         &bad_guy,
         AssetParamsUpdate::AddOrUpdate {
-            denom: "xyz".to_string(),
-            params: default_asset_params(),
+            params: default_asset_params("xyz"),
         },
     );
     assert_err(res, Owner(OwnerError::NotOwner {}));
@@ -34,12 +33,11 @@ fn initializing_asset_param() {
     let denom0 = "atom".to_string();
     let denom1 = "osmo".to_string();
 
-    let params = default_asset_params();
+    let params = default_asset_params(&denom0);
 
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom0.to_string(),
             params: params.clone(),
         },
     )
@@ -51,19 +49,18 @@ fn initializing_asset_param() {
     assert_eq!(&denom0, &res.denom);
 
     // Validate config set correctly
-    assert_eq!(params.rover.whitelisted, res.params.rover.whitelisted);
-    assert_eq!(params.red_bank.deposit_enabled, res.params.red_bank.deposit_enabled);
-    assert_eq!(params.red_bank.borrow_enabled, res.params.red_bank.borrow_enabled);
-    assert_eq!(params.max_loan_to_value, res.params.max_loan_to_value);
-    assert_eq!(params.liquidation_threshold, res.params.liquidation_threshold);
-    assert_eq!(params.liquidation_bonus, res.params.liquidation_bonus);
-    assert_eq!(params.red_bank.deposit_cap, res.params.red_bank.deposit_cap);
+    assert_eq!(params.rover.whitelisted, res.rover.whitelisted);
+    assert_eq!(params.red_bank.deposit_enabled, res.red_bank.deposit_enabled);
+    assert_eq!(params.red_bank.borrow_enabled, res.red_bank.borrow_enabled);
+    assert_eq!(params.max_loan_to_value, res.max_loan_to_value);
+    assert_eq!(params.liquidation_threshold, res.liquidation_threshold);
+    assert_eq!(params.liquidation_bonus, res.liquidation_bonus);
+    assert_eq!(params.red_bank.deposit_cap, res.red_bank.deposit_cap);
 
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom1.to_string(),
-            params: default_asset_params(),
+            params: default_asset_params(&denom1),
         },
     )
     .unwrap();
@@ -82,32 +79,28 @@ fn add_same_denom_multiple_times() {
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom0.to_string(),
-            params: default_asset_params(),
+            params: default_asset_params(&denom0),
         },
     )
     .unwrap();
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom0.to_string(),
-            params: default_asset_params(),
+            params: default_asset_params(&denom0),
         },
     )
     .unwrap();
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom0.to_string(),
-            params: default_asset_params(),
+            params: default_asset_params(&denom0),
         },
     )
     .unwrap();
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom0.to_string(),
-            params: default_asset_params(),
+            params: default_asset_params(&denom0),
         },
     )
     .unwrap();
@@ -123,12 +116,11 @@ fn update_existing_asset_params() {
     let owner = mock.query_owner();
     let denom0 = "atom".to_string();
 
-    let mut params = default_asset_params();
+    let mut params = default_asset_params(&denom0);
 
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom0.to_string(),
             params: params.clone(),
         },
     )
@@ -144,7 +136,6 @@ fn update_existing_asset_params() {
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom0.to_string(),
             params,
         },
     )
@@ -169,24 +160,21 @@ fn removing_from_asset_params() {
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom0,
-            params: default_asset_params(),
+            params: default_asset_params(&denom0),
         },
     )
     .unwrap();
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom1,
-            params: default_asset_params(),
+            params: default_asset_params(&denom1),
         },
     )
     .unwrap();
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom2,
-            params: default_asset_params(),
+            params: default_asset_params(&denom2),
         },
     )
     .unwrap();
@@ -209,48 +197,42 @@ fn pagination_query() {
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom0.to_string(),
-            params: default_asset_params(),
+            params: default_asset_params(&denom0),
         },
     )
     .unwrap();
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom1.to_string(),
-            params: default_asset_params(),
+            params: default_asset_params(&denom1),
         },
     )
     .unwrap();
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom2.to_string(),
-            params: default_asset_params(),
+            params: default_asset_params(&denom2),
         },
     )
     .unwrap();
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom3.to_string(),
-            params: default_asset_params(),
+            params: default_asset_params(&denom3),
         },
     )
     .unwrap();
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom4.to_string(),
-            params: default_asset_params(),
+            params: default_asset_params(&denom4),
         },
     )
     .unwrap();
     mock.update_asset_params(
         &owner,
         AssetParamsUpdate::AddOrUpdate {
-            denom: denom5.to_string(),
-            params: default_asset_params(),
+            params: default_asset_params(&denom5),
         },
     )
     .unwrap();
