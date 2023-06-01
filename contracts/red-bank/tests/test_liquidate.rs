@@ -69,7 +69,7 @@ fn setup_test() -> TestSuite {
 
     // for the test to pass, we need an interest rate model that gives non-zero rates
     let mock_ir_model = InterestRateModel {
-        optimal_utilization_rate: Decimal::one(),
+        optimal_utilization_rate: Decimal::percent(80),
         base: Decimal::percent(5),
         slope_1: Decimal::zero(),
         slope_2: Decimal::zero(),
@@ -93,7 +93,7 @@ fn setup_test() -> TestSuite {
 
     let debt_market = Market {
         max_loan_to_value: Decimal::from_ratio(6u128, 10u128),
-        collateral_total_scaled: Uint128::zero(), // can be any number, but just using zero for now for convenience
+        collateral_total_scaled: Uint128::new(3_500_000_000) * SCALING_FACTOR,
         debt_total_scaled: Uint128::new(1_800_000_000) * SCALING_FACTOR,
         liquidity_index: Decimal::from_ratio(12u128, 10u128),
         borrow_index: Decimal::from_ratio(14u128, 10u128),
@@ -172,7 +172,6 @@ fn expected_amounts(
     let expected_debt_rates = th_get_expected_indices_and_rates(
         &test_suite.debt_market,
         block_time,
-        test_suite.debt_coin.amount,
         TestUtilizationDeltaInfo {
             less_debt: amount_to_repay,
             user_current_debt_scaled: user_debt_scaled,
@@ -192,7 +191,6 @@ fn expected_amounts(
     let expected_collateral_rates = th_get_expected_indices_and_rates(
         &test_suite.collateral_market,
         block_time,
-        test_suite.collateral_coin.amount,
         TestUtilizationDeltaInfo {
             less_liquidity: expected_liquidated_collateral_amount,
             ..Default::default()
@@ -621,7 +619,6 @@ fn liquidate_up_to_close_factor_with_refund() {
 fn liquidate_fully() {
     let TestSuite {
         mut deps,
-        debt_coin,
         collateral_price,
         debt_price,
         collateral_market,
@@ -681,7 +678,6 @@ fn liquidate_fully() {
     let expected_debt_rates = th_get_expected_indices_and_rates(
         &debt_market,
         block_time,
-        debt_coin.amount,
         TestUtilizationDeltaInfo {
             less_debt: expected_less_debt,
             user_current_debt_scaled: user_debt_scaled_before,
@@ -754,12 +750,10 @@ fn liquidate_fully() {
 fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
     let TestSuite {
         mut deps,
-        collateral_coin,
         collateral_price,
         collateral_market,
         ..
     } = setup_test();
-    let debt_coin = collateral_coin;
     let debt_price = collateral_price;
     let debt_market = collateral_market.clone();
 
@@ -802,7 +796,6 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
     let expected_debt_rates = th_get_expected_indices_and_rates(
         &debt_market,
         block_time,
-        debt_coin.amount,
         TestUtilizationDeltaInfo {
             less_debt: debt_to_repay,
             user_current_debt_scaled: user_debt_scaled_before,
@@ -902,13 +895,11 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
 fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
     let TestSuite {
         mut deps,
-        collateral_coin,
         collateral_price,
         close_factor,
         collateral_market,
         ..
     } = setup_test();
-    let debt_coin = collateral_coin.clone();
     let debt_price = collateral_price;
     let debt_market = collateral_market.clone();
 
@@ -963,7 +954,6 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
     let expected_debt_rates = th_get_expected_indices_and_rates(
         &debt_market,
         block_time,
-        debt_coin.amount,
         TestUtilizationDeltaInfo {
             less_debt: expected_less_debt,
             user_current_debt_scaled: user_debt_scaled_before,
@@ -981,7 +971,6 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
     let expected_collateral_rates = th_get_expected_indices_and_rates(
         &collateral_market,
         block_time,
-        collateral_coin.amount,
         TestUtilizationDeltaInfo {
             less_liquidity: expected_liquidated_collateral_amount,
             ..Default::default()

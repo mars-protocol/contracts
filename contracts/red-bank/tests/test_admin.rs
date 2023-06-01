@@ -816,6 +816,8 @@ fn update_asset_new_reserve_factor_accrues_interest_rate() {
     let asset_liquidity = Uint128::from(10_000_000_000_000_u128);
     let mut deps = th_setup(&[coin(asset_liquidity.into(), "somecoin")]);
 
+    let reserve_factor = Decimal::from_ratio(1_u128, 10_u128);
+
     let ir_model = InterestRateModel {
         optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
         base: Decimal::zero(),
@@ -824,22 +826,31 @@ fn update_asset_new_reserve_factor_accrues_interest_rate() {
     };
 
     let asset_initial_debt = Uint128::new(2_000_000_000_000);
+    let debt_total_scaled =
+        compute_scaled_amount(asset_initial_debt, Decimal::one(), ScalingOperation::Ceil).unwrap();
+
+    let asset_initial_collateral = asset_liquidity + asset_initial_debt;
+    let collateral_total_scaled =
+        compute_scaled_amount(asset_initial_collateral, Decimal::one(), ScalingOperation::Ceil)
+            .unwrap();
+
+    let initial_utilization_rate = Decimal::from_ratio(debt_total_scaled, collateral_total_scaled);
+    let borrow_rate = ir_model.get_borrow_rate(initial_utilization_rate).unwrap();
+    let liquidity_rate =
+        ir_model.get_liquidity_rate(borrow_rate, initial_utilization_rate, reserve_factor).unwrap();
+
     let market_before = th_init_market(
         deps.as_mut(),
         "somecoin",
         &Market {
-            reserve_factor: Decimal::from_ratio(1_u128, 10_u128),
+            reserve_factor,
             borrow_index: Decimal::one(),
             liquidity_index: Decimal::one(),
             indexes_last_updated: 1_000_000,
-            borrow_rate: Decimal::from_ratio(12u128, 100u128),
-            liquidity_rate: Decimal::from_ratio(12u128, 100u128),
-            debt_total_scaled: compute_scaled_amount(
-                asset_initial_debt,
-                Decimal::one(),
-                ScalingOperation::Ceil,
-            )
-            .unwrap(),
+            borrow_rate,
+            liquidity_rate,
+            collateral_total_scaled,
+            debt_total_scaled,
             interest_rate_model: ir_model.clone(),
             ..Default::default()
         },
@@ -879,8 +890,10 @@ fn update_asset_new_reserve_factor_accrues_interest_rate() {
     )
     .unwrap();
     let expected_liquidity = asset_liquidity;
-    let expected_utilization_rate =
-        Decimal::from_ratio(expected_debt, expected_liquidity + expected_debt);
+    // in this particular example, we have to subtract 1 from the total underlying
+    // collateral amount here, because of rounding error.
+    let expected_collateral = expected_liquidity + expected_debt - Uint128::new(1);
+    let expected_utilization_rate = Decimal::from_ratio(expected_debt, expected_collateral);
 
     let expected_borrow_rate = ir_model.get_borrow_rate(expected_utilization_rate).unwrap();
 

@@ -274,14 +274,7 @@ fn update_asset_by_owner(
             updated_market.validate()?;
 
             if should_update_interest_rates {
-                response = update_interest_rates(
-                    &deps,
-                    env,
-                    &mut updated_market,
-                    Uint128::zero(),
-                    denom,
-                    response,
-                )?;
+                response = update_interest_rates(env, &mut updated_market, response)?;
             }
             MARKETS.save(deps.storage, denom, &updated_market)?;
 
@@ -412,7 +405,7 @@ pub fn deposit(
         response,
     )?;
 
-    response = update_interest_rates(&deps, &env, &mut market, Uint128::zero(), &denom, response)?;
+    response = update_interest_rates(&env, &mut market, response)?;
 
     if market.liquidity_index.is_zero() {
         return Err(ContractError::InvalidLiquidityIndex {});
@@ -524,7 +517,7 @@ pub fn withdraw(
         response,
     )?;
 
-    response = update_interest_rates(&deps, &env, &mut market, withdraw_amount, &denom, response)?;
+    response = update_interest_rates(&env, &mut market, response)?;
 
     // reduce the withdrawer's scaled collateral amount
     let withdrawer_balance_after = withdrawer_balance_before.checked_sub(withdraw_amount)?;
@@ -656,8 +649,7 @@ pub fn borrow(
     borrow_market.increase_debt(borrow_amount_scaled)?;
     borrower.increase_debt(deps.storage, &denom, borrow_amount_scaled, uncollateralized_debt)?;
 
-    response =
-        update_interest_rates(&deps, &env, &mut borrow_market, borrow_amount, &denom, response)?;
+    response = update_interest_rates(&env, &mut borrow_market, response)?;
     MARKETS.save(deps.storage, &denom, &borrow_market)?;
 
     // Send borrow amount to borrower or another recipient
@@ -751,7 +743,7 @@ pub fn repay(
     market.decrease_debt(debt_amount_scaled_delta)?;
     user.decrease_debt(deps.storage, &denom, debt_amount_scaled_delta)?;
 
-    response = update_interest_rates(&deps, &env, &mut market, refund_amount, &denom, response)?;
+    response = update_interest_rates(&env, &mut market, response)?;
     MARKETS.save(deps.storage, &denom, &market)?;
 
     Ok(response
@@ -917,14 +909,7 @@ pub fn liquidate(
 
         asset_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
 
-        response = update_interest_rates(
-            &deps,
-            &env,
-            &mut asset_market_after,
-            refund_amount,
-            denom,
-            response,
-        )?;
+        response = update_interest_rates(&env, &mut asset_market_after, response)?;
 
         MARKETS.save(deps.storage, denom, &asset_market_after)?;
     } else {
@@ -941,14 +926,7 @@ pub fn liquidate(
 
         debt_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
 
-        response = update_interest_rates(
-            &deps,
-            &env,
-            &mut debt_market_after,
-            refund_amount,
-            &debt_denom,
-            response,
-        )?;
+        response = update_interest_rates(&env, &mut debt_market_after, response)?;
 
         MARKETS.save(deps.storage, &debt_denom, &debt_market_after)?;
     }
