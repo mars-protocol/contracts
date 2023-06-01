@@ -1415,13 +1415,13 @@ checksum = "ceedf44fb00f2d1984b0bc98102627ce622e083e49a5bacdb3e514fa4238e267"
 
 [[package]]
 name = "osmosis-std"
-version = "0.13.2"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10d6fe6ac7fcba45ed61d738091d33c838c4cabbcf4892dc7aa56d19d39cc976"
+checksum = "2fc0a9075efd64ed5a8be3bf134cbf1080570d68384f2ad58ffaac6c00d063fd"
 dependencies = [
  "chrono",
  "cosmwasm-std",
- "osmosis-std-derive",
+ "osmosis-std-derive 0.13.2",
  "prost 0.11.9",
  "prost-types",
  "schemars",
@@ -1431,13 +1431,13 @@ dependencies = [
 
 [[package]]
 name = "osmosis-std"
-version = "0.14.0"
+version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fc0a9075efd64ed5a8be3bf134cbf1080570d68384f2ad58ffaac6c00d063fd"
+checksum = "87725a7480b98887167edf878daa52201a13322ad88e34355a7f2ddc663e047e"
 dependencies = [
  "chrono",
  "cosmwasm-std",
- "osmosis-std-derive",
+ "osmosis-std-derive 0.15.3",
  "prost 0.11.9",
  "prost-types",
  "schemars",
@@ -1458,16 +1458,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "osmosis-test-tube"
-version = "14.1.1"
+name = "osmosis-std-derive"
+version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37e7d470a607f4016906fee20ff51275b399ffad9903240dc462c0f5226650c7"
+checksum = "f4d482a16be198ee04e0f94e10dd9b8d02332dcf33bc5ea4b255e7e25eedc5df"
+dependencies = [
+ "itertools",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "osmosis-test-tube"
+version = "15.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6aba931600343de65be9cbf9ed5a98a611bbf1fc9c45994eb980cc5afb18404"
 dependencies = [
  "base64",
  "bindgen",
  "cosmrs",
  "cosmwasm-std",
- "osmosis-std 0.13.2",
+ "osmosis-std 0.15.3",
  "prost 0.11.9",
  "serde",
  "serde_json",

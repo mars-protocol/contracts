@@ -880,6 +880,9 @@ fn compare_spot_and_twap_price() {
         .unwrap();
 
     let tolerance = Decimal::percent(1);
+    // TODO: Fix error
+    // arithmetic_twap_price: 0.500000049700261907
+    // spot_price: 0.50000005
     assert!(arithmetic_twap_price.price - spot_price.price < tolerance);
     assert!(spot_price.price - geometric_twap_price.price < tolerance);
 }
