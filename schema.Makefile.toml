@@ -16,6 +16,8 @@ fn main() -> std::io::Result<()> {
         "mars-oracle-osmosis",
         "mars-red-bank",
         "mars-rewards-collector-osmosis",
+        "mars-params",
+        "mars-swapper-osmosis",
     ];
 
     for contract in contracts {

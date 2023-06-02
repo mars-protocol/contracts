@@ -1,0 +1,36 @@
+[package]
+name          = "mars-params"
+description   = "Contract storing the asset params for Rover and Red Bank."
+version       = { workspace = true }
+authors       = { workspace = true }
+license       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+library    = []
+
+[dependencies]
+cosmwasm-schema     = { workspace = true }
+cosmwasm-std        = { workspace = true }
+cw2                 = { workspace = true }
+cw-storage-plus     = { workspace = true }
+mars-red-bank-types = { workspace = true }
+mars-owner          = { workspace = true }
+mars-utils          = { workspace = true }
+schemars            = { workspace = true }
+serde               = { workspace = true }
+thiserror           = { workspace = true }
+
+[dev-dependencies]
+anyhow        = { workspace = true }
+cw-multi-test = { workspace = true }

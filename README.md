@@ -68,22 +68,22 @@ A bug bounty is currently open for these contracts. See details [here][2].
 
 - Create the build folder:
 
-   ```bash
-   yarn build
-   ```
+  ```bash
+  yarn build
+  ```
 
 - Compile all contracts:
 
-   ```bash
-   cargo make rust-optimizer
-   ```
+  ```bash
+  cargo make rust-optimizer
+  ```
 
 - Formatting:
 
-   ```bash
-   yarn format
-   yarn lint
-   ```
+  ```bash
+  yarn format
+  yarn lint
+  ```
 
 This compiles and optimizes all contracts, storing them in `/artifacts` directory along with `checksum.txt` which contains sha256 hashes of each of the `.wasm` files (The script just uses CosmWasm's [rust-optimizer][9]).
 

@@ -50,7 +50,7 @@ export class Deployer {
     printGreen(`${this.config.chainId} :: ${name} : ${this.storage.codeIds[name]}`)
   }
 
-  async setOwnerAddr() {
+  setOwnerAddr() {
     if (this.config.multisigAddr) {
       this.storage.owner = this.config.multisigAddr
     } else {
@@ -65,7 +65,7 @@ export class Deployer {
       return
     }
 
-    const { contractAddress: redBankContractAddress } = await this.client.instantiate(
+    const { contractAddress } = await this.client.instantiate(
       this.deployerAddress,
       codeId,
       msg,
@@ -74,7 +74,7 @@ export class Deployer {
       { admin: this.storage.owner },
     )
 
-    this.storage.addresses[name] = redBankContractAddress
+    this.storage.addresses[name] = contractAddress
     printGreen(
       `${this.config.chainId} :: ${name} Contract Address : ${this.storage.addresses[name]}`,
     )
