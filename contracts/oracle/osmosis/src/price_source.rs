@@ -730,7 +730,8 @@ impl OsmosisPriceSourceChecked {
 ///
 /// Moreover, we have to represent the price for utoken in uusd (instead of token/USD).
 /// Pyth price should be normalized with token decimals so:
-/// uAtom/USD = ATOM/USD / 10^atom_decimals * 10^usd_decimals
+/// ATOM/USD = price * 10^expo
+/// uAtom/uusd = ATOM/USD / 10^atom_decimals * 10^usd_decimals = price * 10^expo / 10^atom_decimals * 10^usd_decimals
 /// uAtom/uusd = 1365133270 * 10^(-8) * 10^(-6) * 10^6 = 1365133270 * 10^(-8) = 13.6513327
 ///
 /// NOTE: if we don't introduce base_denom decimals we can overflow.
