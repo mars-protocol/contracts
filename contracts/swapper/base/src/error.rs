@@ -35,6 +35,12 @@ pub enum ContractError {
         user: String,
         action: String,
     },
+
+    #[error("No route found from {from} to {to}")]
+    NoRoute {
+        from: String,
+        to: String,
+    },
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

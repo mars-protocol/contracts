@@ -25,8 +25,9 @@ fn error_on_route_not_found() {
             denom_out: "mars".to_string(),
         },
     );
+    let err = res.unwrap_err();
 
-    assert_err(res.unwrap_err(), "swapper_osmosis::route::OsmosisRoute not found");
+    assert_err(err, "No route found from jake to mars");
 }
 
 #[test]

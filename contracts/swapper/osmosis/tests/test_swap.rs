@@ -3,7 +3,7 @@ use mars_swapper::msgs::ExecuteMsg;
 use mars_swapper_base::ContractError;
 use mars_swapper_osmosis::route::OsmosisRoute;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
-use osmosis_test_tube::{Account, Bank, Gamm, Module, OsmosisTestApp, Wasm};
+use osmosis_test_tube::{Account, Bank, FeeSetting, Gamm, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::{
     assert_err, instantiate_contract, query_balance, swap_to_create_twap_records,
@@ -52,7 +52,7 @@ fn swap_exact_in_slippage_too_high() {
     let signer = app
         .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "umars")])
         .unwrap();
-    let whale = app.init_account(&[coin(1_000_000, "umars")]).unwrap();
+    let whale = app.init_account(&[coin(1_000_000, "umars"), coin(100_000, "uosmo")]).unwrap();
 
     let contract_addr = instantiate_contract(&wasm, &signer);
 
@@ -96,6 +96,8 @@ fn swap_exact_in_slippage_too_high() {
         )
         .unwrap_err();
 
+    println!("{:?}", res_err);
+
     assert_err(
         res_err,
         "uosmo token is lesser than min amount: calculated amount is lesser than min amount",
@@ -110,7 +112,18 @@ fn swap_exact_in_success() {
     let signer = app
         .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "umars")])
         .unwrap();
-    let user = app.init_account(&[coin(10_000, "umars")]).unwrap();
+    let initial_osmo_balance = 500_000u128;
+    let gas_amount = 2500u128;
+    let user = app
+        .init_account(&[coin(10_000, "umars"), coin(initial_osmo_balance, "uosmo")])
+        .unwrap()
+        .with_fee_setting(
+            // Use custom fee setting to be able to know how much osmo will be consumed for gas
+            FeeSetting::Custom {
+                amount: coin(gas_amount, "uosmo"),
+                gas_limit: initial_osmo_balance as u64,
+            },
+        );
 
     let contract_addr = instantiate_contract(&wasm, &signer);
 
@@ -141,7 +154,7 @@ fn swap_exact_in_success() {
     let bank = Bank::new(&app);
     let osmo_balance = query_balance(&bank, &user.address(), "uosmo");
     let mars_balance = query_balance(&bank, &user.address(), "umars");
-    assert_eq!(osmo_balance, 0);
+    assert_eq!(osmo_balance, initial_osmo_balance);
     assert_eq!(mars_balance, 10_000);
 
     wasm.execute(
@@ -159,7 +172,7 @@ fn swap_exact_in_success() {
     // Assert user receives their new tokens
     let osmo_balance = query_balance(&bank, &user.address(), "uosmo");
     let mars_balance = query_balance(&bank, &user.address(), "umars");
-    assert_eq!(osmo_balance, 2470);
+    assert_eq!(osmo_balance, initial_osmo_balance - gas_amount + 2470);
     assert_eq!(mars_balance, 0);
 
     // Assert no tokens in contract left over

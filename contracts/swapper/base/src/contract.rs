@@ -121,7 +121,7 @@ where
         Ok(RouteResponse {
             denom_in: denom_in.clone(),
             denom_out: denom_out.clone(),
-            route: self.routes.load(deps.storage, (denom_in, denom_out))?,
+            route: self.get_route(deps, &denom_in, &denom_out)?,
         })
     }
 
@@ -148,7 +148,7 @@ where
         coin_in: Coin,
         denom_out: String,
     ) -> ContractResult<EstimateExactInSwapResponse> {
-        let route = self.routes.load(deps.storage, (coin_in.denom.clone(), denom_out))?;
+        let route = self.get_route(deps, &coin_in.denom, &denom_out)?;
         route.estimate_exact_in_swap(&deps.querier, &env, &coin_in)
     }
 
@@ -163,7 +163,11 @@ where
     ) -> ContractResult<Response<M>> {
         let swap_msg = self
             .routes
-            .load(deps.storage, (coin_in.denom.clone(), denom_out.clone()))?
+            .load(deps.storage, (coin_in.denom.clone(), denom_out.clone()))
+            .map_err(|_| ContractError::NoRoute {
+                from: coin_in.denom.clone(),
+                to: denom_out.clone(),
+            })?
             .build_exact_in_swap_msg(&deps.querier, &env, &coin_in, slippage)?;
 
         // Check balance of result of swapper and send back result to sender
@@ -239,6 +243,15 @@ where
             .add_attribute("denom_in", denom_in)
             .add_attribute("denom_out", denom_out)
             .add_attribute("route", route.to_string()))
+    }
+
+    fn get_route(&self, deps: Deps<Q>, denom_in: &str, denom_out: &str) -> ContractResult<R> {
+        self.routes.load(deps.storage, (denom_in.to_string(), denom_out.to_string())).map_err(
+            |_| ContractError::NoRoute {
+                from: denom_in.to_string(),
+                to: denom_out.to_string(),
+            },
+        )
     }
 
     fn update_owner(

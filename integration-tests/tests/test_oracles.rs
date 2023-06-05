@@ -33,12 +33,6 @@ mod helpers;
 const OSMOSIS_ORACLE_CONTRACT_NAME: &str = "mars-oracle-osmosis";
 const OSMOSIS_RED_BANK_CONTRACT_NAME: &str = "mars-red-bank";
 const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
-const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
-const OSMOSIS_INCENTIVES_CONTRACT_NAME: &str = "mars-incentives";
-
-const OSMOSIS_ORACLE_CONTRACT_NAME: &str = "mars-oracle-osmosis";
-const OSMOSIS_RED_BANK_CONTRACT_NAME: &str = "mars-red-bank";
-const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
 const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector";
 const OSMOSIS_INCENTIVES_CONTRACT_NAME: &str = "mars-incentives";
 
@@ -886,8 +880,8 @@ fn compare_spot_and_twap_price() {
         .unwrap();
 
     let tolerance = Decimal::percent(1);
-    assert!(arithmetic_twap_price.price - spot_price.price < tolerance);
-    assert!(spot_price.price - geometric_twap_price.price < tolerance);
+    assert!(arithmetic_twap_price.price.abs_diff(spot_price.price) < tolerance);
+    assert!(spot_price.price.abs_diff(geometric_twap_price.price) < tolerance);
 }
 
 // execute borrow action in red bank with an asset not in the oracle - should fail when attempting to query oracle

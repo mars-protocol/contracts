@@ -20,7 +20,7 @@ mod cosmos_bank;
 mod helpers;
 
 const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
-const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
+const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector";
 const OSMOSIS_SWAPPER_CONTRACT_NAME: &str = "mars-swapper-osmosis";
 
 #[test]
@@ -109,6 +109,7 @@ fn swapping_rewards() {
         .data
         .pool_id;
 
+    println!("pre swap");
     // swap to create historic index for TWAP
     swap_to_create_twap_records(
         &app,
@@ -134,6 +135,8 @@ fn swapping_rewards() {
         "uosmo",
         600u64,
     );
+
+    println!("postSwap");
 
     // set routes
     wasm.execute(
@@ -204,6 +207,8 @@ fn swapping_rewards() {
         signer,
     )
     .unwrap();
+
+    println!("post setroute");
 
     // fund contract
     let bank = Bank::new(&app);
