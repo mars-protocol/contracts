@@ -39,7 +39,7 @@ fn only_owner_of_token_can_withdraw() {
 fn withdraw_nothing() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
+    let mut mock = MockEnv::new().set_params(&[coin_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(
@@ -59,7 +59,7 @@ fn withdraw_nothing() {
 fn withdraw_but_no_funds() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
+    let mut mock = MockEnv::new().set_params(&[coin_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(
@@ -87,7 +87,7 @@ fn withdraw_but_not_enough_funds() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -121,7 +121,7 @@ fn cannot_withdraw_more_than_healthy() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -158,7 +158,7 @@ fn withdraw_success() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -193,7 +193,7 @@ fn multiple_withdraw_actions() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![coin(234, uosmo_info.denom.clone()), coin(25, uatom_info.denom.clone())],

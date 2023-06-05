@@ -24,7 +24,6 @@ cosmwasm-std            = { workspace = true }
 cw2                     = { workspace = true }
 cw721                   = { workspace = true }
 cw721-base              = { workspace = true }
-cw-item-set             = { workspace = true }
 cw-paginate             = { workspace = true }
 cw-storage-plus         = { workspace = true }
 cw-utils                = { workspace = true }
@@ -42,6 +41,7 @@ itertools           = { workspace = true }
 mars-mock-oracle    = { workspace = true }
 mars-mock-red-bank  = { workspace = true }
 mars-mock-vault     = { workspace = true }
+mars-params         = { workspace = true }
 mars-rover-health   = { workspace = true }
 mars-swapper-mock   = { workspace = true }
 mars-v2-zapper-mock = { workspace = true }

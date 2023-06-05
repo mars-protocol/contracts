@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Coin, Deps, StdResult, Storage, Uint128};
+use cosmwasm_std::{Addr, Coin, Deps, DepsMut, StdResult, Storage, Uint128};
 use mars_rover::{
     adapters::vault::{
         LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
@@ -8,23 +8,24 @@ use mars_rover::{
 };
 
 use crate::{
-    state::{MAX_UNLOCKING_POSITIONS, ORACLE, VAULT_CONFIGS, VAULT_POSITIONS},
+    state::{MAX_UNLOCKING_POSITIONS, ORACLE, PARAMS, VAULT_POSITIONS},
     update_coin_balances::query_balance,
 };
 
-pub fn assert_vault_is_whitelisted(storage: &dyn Storage, vault: &Vault) -> ContractResult<()> {
-    let is_whitelisted = vault_is_whitelisted(storage, vault)?;
+pub fn assert_vault_is_whitelisted(deps: &mut DepsMut, vault: &Vault) -> ContractResult<()> {
+    let is_whitelisted = vault_is_whitelisted(deps, vault)?;
     if !is_whitelisted {
         return Err(ContractError::NotWhitelisted(vault.address.to_string()));
     }
     Ok(())
 }
 
-pub fn vault_is_whitelisted(storage: &dyn Storage, vault: &Vault) -> ContractResult<bool> {
-    let config = VAULT_CONFIGS
-        .may_load(storage, &vault.address)?
-        .and_then(|config| config.whitelisted.then_some(true));
-    Ok(config.is_some())
+pub fn vault_is_whitelisted(deps: &mut DepsMut, vault: &Vault) -> ContractResult<bool> {
+    Ok(PARAMS
+        .load(deps.storage)?
+        .query_vault_config(&deps.querier, &vault.address)
+        .map(|c| c.whitelisted)
+        .unwrap_or(false))
 }
 
 pub fn assert_under_max_unlocking_limit(
@@ -84,7 +85,8 @@ pub fn vault_utilization_in_deposit_cap_denom(
     rover_addr: &Addr,
 ) -> ContractResult<Coin> {
     let rover_vault_balance_value = rover_vault_coin_balance_value(deps, vault, rover_addr)?;
-    let config = VAULT_CONFIGS.load(deps.storage, &vault.address)?;
+    let params = PARAMS.load(deps.storage)?;
+    let config = params.query_vault_config(&deps.querier, &vault.address)?;
     let oracle = ORACLE.load(deps.storage)?;
     let deposit_cap_denom_price =
         oracle.query_price(&deps.querier, &config.deposit_cap.denom)?.price;

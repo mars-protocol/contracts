@@ -13,7 +13,8 @@ pub enum ExecuteMsg {
     UpdateOwner(OwnerUpdate),
     /// Update contract config constants
     UpdateConfig {
-        credit_manager: String,
+        credit_manager: Option<String>,
+        params: Option<String>,
     },
 }
 
@@ -30,6 +31,7 @@ pub enum QueryMsg {
 
 #[cw_serde]
 pub struct ConfigResponse {
-    pub credit_manager_addr: Option<String>,
+    pub credit_manager: Option<String>,
+    pub params: Option<String>,
     pub owner_response: OwnerResponse,
 }

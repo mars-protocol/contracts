@@ -8,12 +8,12 @@ use crate::{
 
 pub static DEFAULT_LENT_SHARES_PER_COIN: Uint128 = Uint128::new(1_000_000);
 
-pub fn lend(deps: DepsMut, env: Env, account_id: &str, coin: Coin) -> ContractResult<Response> {
+pub fn lend(mut deps: DepsMut, env: Env, account_id: &str, coin: Coin) -> ContractResult<Response> {
     if coin.amount.is_zero() {
         return Err(ContractError::NoAmount);
     }
 
-    assert_coin_is_whitelisted(deps.storage, &coin.denom)?;
+    assert_coin_is_whitelisted(&mut deps, &coin.denom)?;
 
     let red_bank = RED_BANK.load(deps.storage)?;
     let total_lent = red_bank.query_lent(&deps.querier, &env.contract.address, &coin.denom)?;

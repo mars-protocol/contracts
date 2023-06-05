@@ -43,12 +43,18 @@
         "properties": {
           "update_config": {
             "type": "object",
-            "required": [
-              "credit_manager"
-            ],
             "properties": {
               "credit_manager": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "params": {
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "additionalProperties": false
@@ -187,7 +193,7 @@
         "owner_response"
       ],
       "properties": {
-        "credit_manager_addr": {
+        "credit_manager": {
           "type": [
             "string",
             "null"
@@ -195,6 +201,12 @@
         },
         "owner_response": {
           "$ref": "#/definitions/OwnerResponse"
+        },
+        "params": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "additionalProperties": false,

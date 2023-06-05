@@ -1,10 +1,10 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Decimal, Uint128};
-use mars_red_bank_types::red_bank::Market;
+use mars_params::types::AssetParams;
 use mars_rover::{msg::query::Positions, traits::Coins};
 use mars_rover_health_types::{
     Health,
-    HealthError::{MissingMarket, MissingPrice, MissingVaultConfig, MissingVaultValues},
+    HealthError::{MissingParams, MissingPrice, MissingVaultConfig, MissingVaultValues},
     HealthResult,
 };
 
@@ -17,7 +17,6 @@ pub struct HealthComputer {
     pub positions: Positions,
     pub denoms_data: DenomsData,
     pub vaults_data: VaultsData,
-    pub allowed_coins: Vec<String>,
 }
 
 impl HealthComputer {
@@ -98,15 +97,16 @@ impl HealthComputer {
             let coin_value = c.amount.checked_mul_floor(*coin_price)?;
             total_collateral_value = total_collateral_value.checked_add(coin_value)?;
 
-            let &Market {
+            let AssetParams {
+                rover,
                 max_loan_to_value,
                 liquidation_threshold,
                 ..
-            } = self.denoms_data.markets.get(&c.denom).ok_or(MissingMarket(c.denom.clone()))?;
+            } = self.denoms_data.params.get(&c.denom).ok_or(MissingParams(c.denom.clone()))?;
 
             // If coin has been de-listed, drop MaxLTV to zero
-            let checked_max_ltv = if self.allowed_coins.contains(&c.denom) {
-                max_loan_to_value
+            let checked_max_ltv = if rover.whitelisted {
+                *max_loan_to_value
             } else {
                 Decimal::zero()
             };
@@ -114,7 +114,7 @@ impl HealthComputer {
             max_ltv_adjusted_collateral =
                 max_ltv_adjusted_collateral.checked_add(max_ltv_adjusted)?;
 
-            let liq_adjusted = coin_value.checked_mul_floor(liquidation_threshold)?;
+            let liq_adjusted = coin_value.checked_mul_floor(*liquidation_threshold)?;
             liquidation_threshold_adjusted_collateral =
                 liquidation_threshold_adjusted_collateral.checked_add(liq_adjusted)?;
         }
@@ -146,9 +146,19 @@ impl HealthComputer {
                 .ok_or(MissingVaultConfig(v.vault.address.to_string()))?;
 
             // If vault or base token has been de-listed, drop MaxLTV to zero
-            let base_token_whitelisted = self.allowed_coins.contains(&values.base_coin.denom);
+            let AssetParams {
+                rover,
+                max_loan_to_value,
+                liquidation_threshold,
+                ..
+            } = self
+                .denoms_data
+                .params
+                .get(&values.base_coin.denom)
+                .ok_or(MissingParams(values.base_coin.denom.clone()))?;
+            let base_token_whitelisted = rover.whitelisted;
             let checked_vault_max_ltv = if config.whitelisted && base_token_whitelisted {
-                config.max_ltv
+                config.max_loan_to_value
             } else {
                 Decimal::zero()
             };
@@ -165,19 +175,9 @@ impl HealthComputer {
                 .checked_mul_floor(config.liquidation_threshold)?
                 .checked_add(liquidation_threshold_adjusted_collateral)?;
 
-            let &Market {
-                max_loan_to_value,
-                liquidation_threshold,
-                ..
-            } = self
-                .denoms_data
-                .markets
-                .get(&values.base_coin.denom)
-                .ok_or(MissingMarket(values.base_coin.denom.clone()))?;
-
             // If base token has been de-listed, drop MaxLTV to zero
             let checked_base_max_ltv = if base_token_whitelisted {
-                max_loan_to_value
+                *max_loan_to_value
             } else {
                 Decimal::zero()
             };
@@ -191,7 +191,7 @@ impl HealthComputer {
             liquidation_threshold_adjusted_collateral = values
                 .base_coin
                 .value
-                .checked_mul_floor(liquidation_threshold)?
+                .checked_mul_floor(*liquidation_threshold)?
                 .checked_add(liquidation_threshold_adjusted_collateral)?;
         }
 

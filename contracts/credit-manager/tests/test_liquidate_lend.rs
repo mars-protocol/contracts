@@ -22,7 +22,7 @@ fn lent_positions_contribute_to_health() {
 
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom_info.clone(), uosmo_info.clone()])
+        .set_params(&[uatom_info.clone(), uosmo_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: vec![uatom_info.to_coin(500), uosmo_info.to_coin(500)],
@@ -95,7 +95,7 @@ fn liquidatee_does_not_have_requested_lent_coin() {
     let liquidator = Addr::unchecked("liquidator");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom_info.clone(), uosmo_info.clone(), ujake_info.clone()])
+        .set_params(&[uatom_info.clone(), uosmo_info.clone(), ujake_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: vec![uatom_info.to_coin(500)],
@@ -158,7 +158,7 @@ fn lent_position_partially_liquidated() {
 
     let mut mock = MockEnv::new()
         .max_close_factor(Decimal::from_atomics(6u128, 1).unwrap())
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -247,7 +247,7 @@ fn lent_position_fully_liquidated() {
 
     let mut mock = MockEnv::new()
         .max_close_factor(Decimal::from_atomics(6u128, 1).unwrap())
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -342,7 +342,7 @@ fn liquidate_with_reclaiming() {
 
     let mut mock = MockEnv::new()
         .max_close_factor(Decimal::from_atomics(6u128, 1).unwrap())
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),

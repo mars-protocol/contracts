@@ -1,25 +1,22 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+};
 use mars_red_bank_types::red_bank;
 
 use crate::{
-    execute::{borrow, deposit, repay, update_asset, withdraw},
-    msg::InstantiateMsg,
-    query::{query_collateral, query_debt, query_market},
-    state::COIN_MARKET_INFO,
+    execute::{borrow, deposit, repay, withdraw},
+    query::{query_collateral, query_debt},
 };
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    msg: InstantiateMsg,
+    _msg: Empty,
 ) -> StdResult<Response> {
-    for item in msg.coins {
-        COIN_MARKET_INFO.save(deps.storage, item.denom.clone(), &item)?;
-    }
     Ok(Response::default())
 }
 
@@ -47,10 +44,6 @@ pub fn execute(
             amount,
             ..
         } => withdraw(deps, info, &denom, &amount),
-        red_bank::ExecuteMsg::UpdateAsset {
-            denom,
-            params,
-        } => update_asset(deps, &denom, params),
         _ => unimplemented!("Msg not supported!"),
     }
 }
@@ -62,9 +55,6 @@ pub fn query(deps: Deps, _env: Env, msg: red_bank::QueryMsg) -> StdResult<Binary
             user,
             denom,
         } => to_binary(&query_debt(deps, user, denom)?),
-        red_bank::QueryMsg::Market {
-            denom,
-        } => to_binary(&query_market(deps, denom)?),
         red_bank::QueryMsg::UserCollateral {
             user,
             denom,

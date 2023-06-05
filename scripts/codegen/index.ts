@@ -1,9 +1,10 @@
 import codegen from '@cosmwasm/ts-codegen'
 import { join, resolve } from 'path'
 import { printGreen, printRed } from '../utils/chalk'
-import { readdir } from 'fs/promises'
+import { readdir, rm, rename } from 'fs/promises'
+import simpleGit from 'simple-git'
 
-void (async function () {
+const generateTypes = async () => {
   const schemasDir = resolve(join(__dirname, '../../../schemas'))
   const schemas = await readdir(schemasDir)
 
@@ -36,4 +37,26 @@ void (async function () {
       printRed(`Error with ${schema}: ${e}`)
     }
   }
+}
+
+const fetchSchemafromGithub = async ({
+  githubRepo,
+  pathToSchema,
+}: {
+  githubRepo: string
+  pathToSchema: string
+}) => {
+  await simpleGit().clone(githubRepo)
+  const schemaDirName = pathToSchema.split('/').pop()!
+  const repoDirName = githubRepo.split('/').pop()!
+  await rename(pathToSchema, `../schemas/${schemaDirName}`)
+  await rm(`./${repoDirName}`, { recursive: true, force: true })
+}
+
+void (async function () {
+  await fetchSchemafromGithub({
+    githubRepo: 'https://github.com/mars-protocol/mars-common',
+    pathToSchema: './mars-common/schemas/mars-params',
+  })
+  await generateTypes()
 })()

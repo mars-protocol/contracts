@@ -1,10 +1,11 @@
 use std::{collections::HashMap, ops::Add, str::FromStr};
 
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
+use mars_params::types::VaultConfig;
 use mars_rover::{
     adapters::vault::{
-        CoinValue, LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultConfig,
-        VaultPosition, VaultPositionAmount, VaultPositionValue, VaultUnlockingPosition,
+        CoinValue, LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
+        VaultPositionAmount, VaultPositionValue, VaultUnlockingPosition,
     },
     msg::query::{DebtAmount, LentAmount, Positions},
 };
@@ -24,8 +25,8 @@ fn only_assets_with_no_debts() {
     let umars = umars_info();
 
     let denoms_data = DenomsData {
-        prices: HashMap::from([(umars.market.denom.clone(), umars.price)]),
-        markets: HashMap::from([(umars.market.denom.clone(), umars.market.clone())]),
+        prices: HashMap::from([(umars.denom.clone(), umars.price)]),
+        params: HashMap::from([(umars.denom.clone(), umars.params.clone())]),
     };
 
     let vaults_data = VaultsData {
@@ -38,7 +39,7 @@ fn only_assets_with_no_debts() {
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![Coin {
-                denom: umars.market.denom.clone(),
+                denom: umars.denom.clone(),
                 amount: deposit_amount,
             }],
             debts: vec![],
@@ -47,7 +48,6 @@ fn only_assets_with_no_debts() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![umars.market.denom.clone()],
     };
 
     let health = h.compute_health().unwrap();
@@ -55,11 +55,11 @@ fn only_assets_with_no_debts() {
     assert_eq!(health.total_collateral_value, collateral_value);
     assert_eq!(
         health.max_ltv_adjusted_collateral,
-        collateral_value.checked_mul_floor(umars.market.max_loan_to_value).unwrap()
+        collateral_value.checked_mul_floor(umars.params.max_loan_to_value).unwrap()
     );
     assert_eq!(
         health.liquidation_threshold_adjusted_collateral,
-        collateral_value.checked_mul_floor(umars.market.liquidation_threshold).unwrap()
+        collateral_value.checked_mul_floor(umars.params.liquidation_threshold).unwrap()
     );
     assert_eq!(health.total_debt_value, Uint128::zero());
     assert_eq!(health.liquidation_health_factor, None);
@@ -83,8 +83,8 @@ fn terra_ragnarok() {
     let mut uluna = uluna_info();
 
     let denoms_data = DenomsData {
-        prices: HashMap::from([(uluna.market.denom.clone(), uluna.price)]),
-        markets: HashMap::from([(uluna.market.denom.clone(), uluna.market.clone())]),
+        prices: HashMap::from([(uluna.denom.clone(), uluna.price)]),
+        params: HashMap::from([(uluna.denom.clone(), uluna.params.clone())]),
     };
 
     let vaults_data = VaultsData {
@@ -99,11 +99,11 @@ fn terra_ragnarok() {
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![Coin {
-                denom: uluna.market.denom.clone(),
+                denom: uluna.denom.clone(),
                 amount: deposit_amount,
             }],
             debts: vec![DebtAmount {
-                denom: uluna.market.denom.clone(),
+                denom: uluna.denom.clone(),
                 amount: borrow_amount,
                 shares: Uint128::new(100),
             }],
@@ -112,7 +112,6 @@ fn terra_ragnarok() {
         },
         denoms_data,
         vaults_data: vaults_data.clone(),
-        allowed_coins: vec![uluna.market.denom.clone()],
     };
 
     let health = h.compute_health().unwrap();
@@ -122,24 +121,24 @@ fn terra_ragnarok() {
     assert_eq!(health.total_collateral_value, collateral_value);
     assert_eq!(
         health.max_ltv_adjusted_collateral,
-        collateral_value.checked_mul_floor(uluna.market.max_loan_to_value).unwrap()
+        collateral_value.checked_mul_floor(uluna.params.max_loan_to_value).unwrap()
     );
     assert_eq!(
         health.liquidation_threshold_adjusted_collateral,
-        collateral_value.checked_mul_floor(uluna.market.liquidation_threshold).unwrap()
+        collateral_value.checked_mul_floor(uluna.params.liquidation_threshold).unwrap()
     );
     assert_eq!(health.total_debt_value, borrow_amount.checked_mul_floor(uluna.price).unwrap());
     assert_eq!(
         health.liquidation_health_factor,
         Some(Decimal::from_ratio(
-            collateral_value.checked_mul_floor(uluna.market.liquidation_threshold).unwrap(),
+            collateral_value.checked_mul_floor(uluna.params.liquidation_threshold).unwrap(),
             debts_value
         ))
     );
     assert_eq!(
         health.max_ltv_health_factor,
         Some(Decimal::from_ratio(
-            collateral_value.checked_mul_floor(uluna.market.max_loan_to_value).unwrap(),
+            collateral_value.checked_mul_floor(uluna.params.max_loan_to_value).unwrap(),
             debts_value,
         ))
     );
@@ -150,19 +149,19 @@ fn terra_ragnarok() {
     uluna.price = Decimal::zero();
 
     let denoms_data = DenomsData {
-        prices: HashMap::from([(uluna.market.denom.clone(), uluna.price)]),
-        markets: HashMap::from([(uluna.market.denom.clone(), uluna.market.clone())]),
+        prices: HashMap::from([(uluna.denom.clone(), uluna.price)]),
+        params: HashMap::from([(uluna.denom.clone(), uluna.params.clone())]),
     };
 
     let h = HealthComputer {
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![Coin {
-                denom: uluna.market.denom.clone(),
+                denom: uluna.denom.clone(),
                 amount: deposit_amount,
             }],
             debts: vec![DebtAmount {
-                denom: uluna.market.denom.clone(),
+                denom: uluna.denom,
                 amount: borrow_amount,
                 shares: Uint128::new(100),
             }],
@@ -171,7 +170,6 @@ fn terra_ragnarok() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![uluna.market.denom],
     };
 
     let health = h.compute_health().unwrap();
@@ -198,12 +196,12 @@ fn ltv_and_lqdt_adjusted_values() {
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
-            (ustars.market.denom.clone(), ustars.price),
-            (ujuno.market.denom.clone(), ujuno.price),
+            (ustars.denom.clone(), ustars.price),
+            (ujuno.denom.clone(), ujuno.price),
         ]),
-        markets: HashMap::from([
-            (ustars.market.denom.clone(), ustars.market.clone()),
-            (ujuno.market.denom.clone(), ujuno.market.clone()),
+        params: HashMap::from([
+            (ustars.denom.clone(), ustars.params.clone()),
+            (ujuno.denom.clone(), ujuno.params.clone()),
         ]),
     };
 
@@ -220,16 +218,16 @@ fn ltv_and_lqdt_adjusted_values() {
             account_id: "123".to_string(),
             deposits: vec![
                 Coin {
-                    denom: ustars.market.denom.clone(),
+                    denom: ustars.denom.clone(),
                     amount: deposit_amount,
                 },
                 Coin {
-                    denom: ujuno.market.denom.clone(),
+                    denom: ujuno.denom.clone(),
                     amount: borrow_amount,
                 },
             ],
             debts: vec![DebtAmount {
-                denom: ujuno.market.denom.clone(),
+                denom: ujuno.denom.clone(),
                 shares: Uint128::new(12345),
                 amount: borrow_amount.add(Uint128::one()), // simulated interest
             }],
@@ -238,7 +236,6 @@ fn ltv_and_lqdt_adjusted_values() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![ustars.market.denom.clone(), ujuno.market.denom.clone()],
     };
 
     let health = h.compute_health().unwrap();
@@ -256,13 +253,13 @@ fn ltv_and_lqdt_adjusted_values() {
     let lqdt_adjusted_assets_value = deposit_amount
         .checked_mul_floor(ustars.price)
         .unwrap()
-        .checked_mul_floor(ustars.market.liquidation_threshold)
+        .checked_mul_floor(ustars.params.liquidation_threshold)
         .unwrap()
         .add(
             borrow_amount
                 .checked_mul_floor(ujuno.price)
                 .unwrap()
-                .checked_mul_floor(ujuno.market.liquidation_threshold)
+                .checked_mul_floor(ujuno.params.liquidation_threshold)
                 .unwrap(),
         );
     assert_eq!(
@@ -275,13 +272,13 @@ fn ltv_and_lqdt_adjusted_values() {
     let ltv_adjusted_assets_value = deposit_amount
         .checked_mul_floor(ustars.price)
         .unwrap()
-        .checked_mul_floor(ustars.market.max_loan_to_value)
+        .checked_mul_floor(ustars.params.max_loan_to_value)
         .unwrap()
         .add(
             borrow_amount
                 .checked_mul_floor(ujuno.price)
                 .unwrap()
-                .checked_mul_floor(ujuno.market.max_loan_to_value)
+                .checked_mul_floor(ujuno.params.max_loan_to_value)
                 .unwrap(),
         );
     assert_eq!(
@@ -306,12 +303,12 @@ fn debt_value() {
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
-            (ustars.market.denom.clone(), ustars.price),
-            (ujuno.market.denom.clone(), ujuno.price),
+            (ustars.denom.clone(), ustars.price),
+            (ujuno.denom.clone(), ujuno.price),
         ]),
-        markets: HashMap::from([
-            (ustars.market.denom.clone(), ustars.market.clone()),
-            (ujuno.market.denom.clone(), ujuno.market.clone()),
+        params: HashMap::from([
+            (ustars.denom.clone(), ustars.params.clone()),
+            (ujuno.denom.clone(), ujuno.params.clone()),
         ]),
     };
 
@@ -329,26 +326,26 @@ fn debt_value() {
             account_id: "123".to_string(),
             deposits: vec![
                 Coin {
-                    denom: ustars.market.denom.clone(),
+                    denom: ustars.denom.clone(),
                     amount: deposit_amount_stars,
                 },
                 Coin {
-                    denom: ujuno.market.denom.clone(),
+                    denom: ujuno.denom.clone(),
                     amount: borrowed_amount_juno,
                 },
                 Coin {
-                    denom: ustars.market.denom.clone(),
+                    denom: ustars.denom.clone(),
                     amount: borrowed_amount_stars,
                 },
             ],
             debts: vec![
                 DebtAmount {
-                    denom: ujuno.market.denom.clone(),
+                    denom: ujuno.denom.clone(),
                     shares: Uint128::new(12345),
                     amount: borrowed_amount_juno.add(Uint128::one()), // simulated interest
                 },
                 DebtAmount {
-                    denom: ustars.market.denom.clone(),
+                    denom: ustars.denom.clone(),
                     shares: Uint128::new(12345),
                     amount: borrowed_amount_stars.add(Uint128::one()), // simulated interest
                 },
@@ -358,7 +355,6 @@ fn debt_value() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![ustars.market.denom.clone(), ujuno.market.denom.clone()],
     };
 
     let health = h.compute_health().unwrap();
@@ -378,20 +374,20 @@ fn debt_value() {
     let lqdt_adjusted_assets_value = deposit_amount_stars
         .checked_mul_floor(ustars.price)
         .unwrap()
-        .checked_mul_floor(ustars.market.liquidation_threshold)
+        .checked_mul_floor(ustars.params.liquidation_threshold)
         .unwrap()
         .add(
             borrowed_amount_stars
                 .checked_mul_floor(ustars.price)
                 .unwrap()
-                .checked_mul_floor(ustars.market.liquidation_threshold)
+                .checked_mul_floor(ustars.params.liquidation_threshold)
                 .unwrap(),
         )
         .add(
             borrowed_amount_juno
                 .checked_mul_floor(ujuno.price)
                 .unwrap()
-                .checked_mul_floor(ujuno.market.liquidation_threshold)
+                .checked_mul_floor(ujuno.params.liquidation_threshold)
                 .unwrap(),
         );
 
@@ -403,20 +399,20 @@ fn debt_value() {
     let max_ltv_adjusted_assets_value = deposit_amount_stars
         .checked_mul_floor(ustars.price)
         .unwrap()
-        .checked_mul_floor(ustars.market.max_loan_to_value)
+        .checked_mul_floor(ustars.params.max_loan_to_value)
         .unwrap()
         .add(
             borrowed_amount_stars
                 .checked_mul_floor(ustars.price)
                 .unwrap()
-                .checked_mul_floor(ustars.market.max_loan_to_value)
+                .checked_mul_floor(ustars.params.max_loan_to_value)
                 .unwrap(),
         )
         .add(
             borrowed_amount_juno
                 .checked_mul_floor(ujuno.price)
                 .unwrap()
-                .checked_mul_floor(ujuno.market.max_loan_to_value)
+                .checked_mul_floor(ujuno.params.max_loan_to_value)
                 .unwrap(),
         );
     assert_eq!(
@@ -432,12 +428,12 @@ fn above_max_ltv_below_liq_threshold() {
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
-            (umars.market.denom.clone(), umars.price),
-            (udai.market.denom.clone(), udai.price),
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
         ]),
-        markets: HashMap::from([
-            (umars.market.denom.clone(), umars.market.clone()),
-            (udai.market.denom.clone(), udai.market.clone()),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
         ]),
     };
 
@@ -449,9 +445,9 @@ fn above_max_ltv_below_liq_threshold() {
     let h = HealthComputer {
         positions: Positions {
             account_id: "123".to_string(),
-            deposits: vec![coin(1200, &umars.market.denom), coin(33, &udai.market.denom)],
+            deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![DebtAmount {
-                denom: udai.market.denom.clone(),
+                denom: udai.denom,
                 shares: Default::default(),
                 amount: Uint128::new(3100),
             }],
@@ -460,7 +456,6 @@ fn above_max_ltv_below_liq_threshold() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![umars.market.denom, udai.market.denom],
     };
 
     let health = h.compute_health().unwrap();
@@ -487,12 +482,12 @@ fn liquidatable() {
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
-            (umars.market.denom.clone(), umars.price),
-            (udai.market.denom.clone(), udai.price),
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
         ]),
-        markets: HashMap::from([
-            (umars.market.denom.clone(), umars.market.clone()),
-            (udai.market.denom.clone(), udai.market.clone()),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
         ]),
     };
 
@@ -504,15 +499,15 @@ fn liquidatable() {
     let h = HealthComputer {
         positions: Positions {
             account_id: "123".to_string(),
-            deposits: vec![coin(1200, &umars.market.denom), coin(33, &udai.market.denom)],
+            deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
-                    denom: udai.market.denom.clone(),
+                    denom: udai.denom,
                     shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
                 DebtAmount {
-                    denom: umars.market.denom.clone(),
+                    denom: umars.denom,
                     shares: Default::default(),
                     amount: Uint128::new(200),
                 },
@@ -522,7 +517,6 @@ fn liquidatable() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![umars.market.denom, udai.market.denom],
     };
 
     let health = h.compute_health().unwrap();
@@ -543,18 +537,20 @@ fn liquidatable() {
 }
 
 #[test]
-fn allowed_coins_influence_max_ltv() {
+fn rover_whitelist_influences_max_ltv() {
     let umars = umars_info();
-    let udai = udai_info();
+    let mut udai = udai_info();
+
+    udai.params.rover.whitelisted = false;
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
-            (umars.market.denom.clone(), umars.price),
-            (udai.market.denom.clone(), udai.price),
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
         ]),
-        markets: HashMap::from([
-            (umars.market.denom.clone(), umars.market.clone()),
-            (udai.market.denom.clone(), udai.market.clone()),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
         ]),
     };
 
@@ -566,15 +562,15 @@ fn allowed_coins_influence_max_ltv() {
     let h = HealthComputer {
         positions: Positions {
             account_id: "123".to_string(),
-            deposits: vec![coin(1200, &umars.market.denom), coin(33, &udai.market.denom)],
+            deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
-                    denom: udai.market.denom,
+                    denom: udai.denom,
                     shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
                 DebtAmount {
-                    denom: umars.market.denom.clone(),
+                    denom: umars.denom,
                     shares: Default::default(),
                     amount: Uint128::new(200),
                 },
@@ -584,7 +580,6 @@ fn allowed_coins_influence_max_ltv() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![umars.market.denom],
     };
 
     let health = h.compute_health().unwrap();
@@ -611,12 +606,12 @@ fn unlocked_vault() {
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
-            (umars.market.denom.clone(), umars.price),
-            (udai.market.denom.clone(), udai.price),
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
         ]),
-        markets: HashMap::from([
-            (umars.market.denom.clone(), umars.market.clone()),
-            (udai.market.denom.clone(), udai.market.clone()),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
         ]),
     };
 
@@ -632,7 +627,7 @@ fn unlocked_vault() {
                     value: Uint128::new(5264),
                 },
                 base_coin: CoinValue {
-                    denom: udai.market.denom.clone(),
+                    denom: udai.denom.clone(),
                     amount: Default::default(),
                     value: Default::default(),
                 },
@@ -641,8 +636,9 @@ fn unlocked_vault() {
         vault_configs: HashMap::from([(
             vault.address.clone(),
             VaultConfig {
+                addr: vault.address.clone(),
                 deposit_cap: Default::default(),
-                max_ltv: Decimal::from_str("0.4").unwrap(),
+                max_loan_to_value: Decimal::from_str("0.4").unwrap(),
                 liquidation_threshold: Decimal::from_str("0.5").unwrap(),
                 whitelisted: true,
             },
@@ -652,15 +648,15 @@ fn unlocked_vault() {
     let h = HealthComputer {
         positions: Positions {
             account_id: "123".to_string(),
-            deposits: vec![coin(1200, &umars.market.denom), coin(33, &udai.market.denom)],
+            deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
-                    denom: udai.market.denom.clone(),
+                    denom: udai.denom,
                     shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
                 DebtAmount {
-                    denom: umars.market.denom.clone(),
+                    denom: umars.denom,
                     shares: Default::default(),
                     amount: Uint128::new(200),
                 },
@@ -673,7 +669,6 @@ fn unlocked_vault() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![umars.market.denom, udai.market.denom],
     };
 
     let health = h.compute_health().unwrap();
@@ -700,12 +695,12 @@ fn locked_vault() {
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
-            (umars.market.denom.clone(), umars.price),
-            (udai.market.denom.clone(), udai.price),
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
         ]),
-        markets: HashMap::from([
-            (umars.market.denom.clone(), umars.market.clone()),
-            (udai.market.denom.clone(), udai.market.clone()),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
         ]),
     };
 
@@ -721,7 +716,7 @@ fn locked_vault() {
                     value: Uint128::new(5264),
                 },
                 base_coin: CoinValue {
-                    denom: udai.market.denom.clone(),
+                    denom: udai.denom.clone(),
                     amount: Default::default(),
                     value: Default::default(),
                 },
@@ -730,8 +725,9 @@ fn locked_vault() {
         vault_configs: HashMap::from([(
             vault.address.clone(),
             VaultConfig {
+                addr: vault.address.clone(),
                 deposit_cap: Default::default(),
-                max_ltv: Decimal::from_str("0.4").unwrap(),
+                max_loan_to_value: Decimal::from_str("0.4").unwrap(),
                 liquidation_threshold: Decimal::from_str("0.5").unwrap(),
                 whitelisted: true,
             },
@@ -741,15 +737,15 @@ fn locked_vault() {
     let h = HealthComputer {
         positions: Positions {
             account_id: "123".to_string(),
-            deposits: vec![coin(1200, &umars.market.denom), coin(33, &udai.market.denom)],
+            deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
-                    denom: udai.market.denom.clone(),
+                    denom: udai.denom,
                     shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
                 DebtAmount {
-                    denom: umars.market.denom.clone(),
+                    denom: umars.denom,
                     shares: Default::default(),
                     amount: Uint128::new(200),
                 },
@@ -765,7 +761,6 @@ fn locked_vault() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![umars.market.denom, udai.market.denom],
     };
 
     let health = h.compute_health().unwrap();
@@ -792,12 +787,12 @@ fn locked_vault_with_unlocking_positions() {
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
-            (umars.market.denom.clone(), umars.price),
-            (udai.market.denom.clone(), udai.price),
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
         ]),
-        markets: HashMap::from([
-            (umars.market.denom.clone(), umars.market.clone()),
-            (udai.market.denom.clone(), udai.market.clone()),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
         ]),
     };
 
@@ -813,7 +808,7 @@ fn locked_vault_with_unlocking_positions() {
                     value: Uint128::new(5000),
                 },
                 base_coin: CoinValue {
-                    denom: udai.market.denom.clone(),
+                    denom: udai.denom.clone(),
                     amount: Default::default(),
                     value: Uint128::new(264),
                 },
@@ -822,8 +817,9 @@ fn locked_vault_with_unlocking_positions() {
         vault_configs: HashMap::from([(
             vault.address.clone(),
             VaultConfig {
+                addr: vault.address.clone(),
                 deposit_cap: Default::default(),
-                max_ltv: Decimal::from_str("0.4").unwrap(),
+                max_loan_to_value: Decimal::from_str("0.4").unwrap(),
                 liquidation_threshold: Decimal::from_str("0.5").unwrap(),
                 whitelisted: true,
             },
@@ -833,15 +829,15 @@ fn locked_vault_with_unlocking_positions() {
     let h = HealthComputer {
         positions: Positions {
             account_id: "123".to_string(),
-            deposits: vec![coin(1200, &umars.market.denom), coin(33, &udai.market.denom)],
+            deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
-                    denom: udai.market.denom.clone(),
+                    denom: udai.denom.clone(),
                     shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
                 DebtAmount {
-                    denom: umars.market.denom.clone(),
+                    denom: umars.denom,
                     shares: Default::default(),
                     amount: Uint128::new(200),
                 },
@@ -854,11 +850,11 @@ fn locked_vault_with_unlocking_positions() {
                     unlocking: UnlockingPositions::new(vec![
                         VaultUnlockingPosition {
                             id: 0,
-                            coin: coin(840, udai.market.denom.clone()),
+                            coin: coin(840, udai.denom.clone()),
                         },
                         VaultUnlockingPosition {
                             id: 1,
-                            coin: coin(3, udai.market.denom.clone()),
+                            coin: coin(3, udai.denom),
                         },
                     ]),
                 }),
@@ -866,7 +862,6 @@ fn locked_vault_with_unlocking_positions() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![umars.market.denom, udai.market.denom],
     };
 
     let health = h.compute_health().unwrap();
@@ -893,12 +888,12 @@ fn vault_is_not_whitelisted() {
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
-            (umars.market.denom.clone(), umars.price),
-            (udai.market.denom.clone(), udai.price),
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
         ]),
-        markets: HashMap::from([
-            (umars.market.denom.clone(), umars.market.clone()),
-            (udai.market.denom.clone(), udai.market.clone()),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
         ]),
     };
 
@@ -914,7 +909,7 @@ fn vault_is_not_whitelisted() {
                     value: Uint128::new(5264),
                 },
                 base_coin: CoinValue {
-                    denom: udai.market.denom.clone(),
+                    denom: udai.denom.clone(),
                     amount: Default::default(),
                     value: Default::default(),
                 },
@@ -923,8 +918,9 @@ fn vault_is_not_whitelisted() {
         vault_configs: HashMap::from([(
             vault.address.clone(),
             VaultConfig {
+                addr: vault.address.clone(),
                 deposit_cap: Default::default(),
-                max_ltv: Decimal::from_str("0.4").unwrap(),
+                max_loan_to_value: Decimal::from_str("0.4").unwrap(),
                 liquidation_threshold: Decimal::from_str("0.5").unwrap(),
                 whitelisted: false,
             },
@@ -934,15 +930,15 @@ fn vault_is_not_whitelisted() {
     let h = HealthComputer {
         positions: Positions {
             account_id: "123".to_string(),
-            deposits: vec![coin(1200, &umars.market.denom), coin(33, &udai.market.denom)],
+            deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
-                    denom: udai.market.denom.clone(),
+                    denom: udai.denom,
                     shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
                 DebtAmount {
-                    denom: umars.market.denom.clone(),
+                    denom: umars.denom,
                     shares: Default::default(),
                     amount: Uint128::new(200),
                 },
@@ -955,7 +951,6 @@ fn vault_is_not_whitelisted() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![umars.market.denom, udai.market.denom],
     };
 
     let health = h.compute_health().unwrap();
@@ -980,18 +975,20 @@ fn vault_is_not_whitelisted() {
 fn vault_base_token_is_not_whitelisted() {
     let umars = umars_info();
     let udai = udai_info();
-    let ujuno = ujuno_info();
+    let mut ujuno = ujuno_info();
+
+    ujuno.params.rover.whitelisted = false;
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
-            (umars.market.denom.clone(), umars.price),
-            (udai.market.denom.clone(), udai.price),
-            (ujuno.market.denom.clone(), ujuno.price),
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
+            (ujuno.denom.clone(), ujuno.price),
         ]),
-        markets: HashMap::from([
-            (umars.market.denom.clone(), umars.market.clone()),
-            (udai.market.denom.clone(), udai.market.clone()),
-            (ujuno.market.denom.clone(), ujuno.market.clone()),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
+            (ujuno.denom.clone(), ujuno.params.clone()),
         ]),
     };
 
@@ -1007,7 +1004,7 @@ fn vault_base_token_is_not_whitelisted() {
                     value: Uint128::new(5000),
                 },
                 base_coin: CoinValue {
-                    denom: ujuno.market.denom.clone(),
+                    denom: ujuno.denom.clone(),
                     amount: Default::default(),
                     value: Uint128::new(497873442),
                 },
@@ -1016,8 +1013,9 @@ fn vault_base_token_is_not_whitelisted() {
         vault_configs: HashMap::from([(
             vault.address.clone(),
             VaultConfig {
+                addr: vault.address.clone(),
                 deposit_cap: Default::default(),
-                max_ltv: Decimal::from_str("0.4").unwrap(),
+                max_loan_to_value: Decimal::from_str("0.4").unwrap(),
                 liquidation_threshold: Decimal::from_str("0.5").unwrap(),
                 whitelisted: true,
             },
@@ -1027,15 +1025,15 @@ fn vault_base_token_is_not_whitelisted() {
     let h = HealthComputer {
         positions: Positions {
             account_id: "123".to_string(),
-            deposits: vec![coin(1200, &umars.market.denom), coin(33, &udai.market.denom)],
+            deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
-                    denom: udai.market.denom.clone(),
+                    denom: udai.denom,
                     shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
                 DebtAmount {
-                    denom: umars.market.denom.clone(),
+                    denom: umars.denom,
                     shares: Default::default(),
                     amount: Uint128::new(200),
                 },
@@ -1048,11 +1046,11 @@ fn vault_base_token_is_not_whitelisted() {
                     unlocking: UnlockingPositions::new(vec![
                         VaultUnlockingPosition {
                             id: 0,
-                            coin: coin(60, ujuno.market.denom.clone()),
+                            coin: coin(60, ujuno.denom.clone()),
                         },
                         VaultUnlockingPosition {
                             id: 1,
-                            coin: coin(11, ujuno.market.denom),
+                            coin: coin(11, ujuno.denom),
                         },
                     ]),
                 }),
@@ -1060,7 +1058,6 @@ fn vault_base_token_is_not_whitelisted() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![umars.market.denom, udai.market.denom],
     };
 
     let health = h.compute_health().unwrap();
@@ -1088,14 +1085,14 @@ fn lent_coins_used_as_collateral() {
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
-            (umars.market.denom.clone(), umars.price),
-            (udai.market.denom.clone(), udai.price),
-            (uluna.market.denom.clone(), uluna.price),
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
+            (uluna.denom.clone(), uluna.price),
         ]),
-        markets: HashMap::from([
-            (umars.market.denom.clone(), umars.market.clone()),
-            (udai.market.denom.clone(), udai.market.clone()),
-            (uluna.market.denom.clone(), uluna.market.clone()),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
+            (uluna.denom.clone(), uluna.params.clone()),
         ]),
     };
 
@@ -1107,20 +1104,20 @@ fn lent_coins_used_as_collateral() {
     let h = HealthComputer {
         positions: Positions {
             account_id: "123".to_string(),
-            deposits: vec![coin(1200, &umars.market.denom), coin(23, &udai.market.denom)],
+            deposits: vec![coin(1200, &umars.denom), coin(23, &udai.denom)],
             debts: vec![DebtAmount {
-                denom: udai.market.denom.clone(),
+                denom: udai.denom.clone(),
                 shares: Default::default(),
                 amount: Uint128::new(3100),
             }],
             lends: vec![
                 LentAmount {
-                    denom: udai.market.denom.clone(),
+                    denom: udai.denom,
                     shares: Default::default(),
                     amount: Uint128::new(10),
                 },
                 LentAmount {
-                    denom: uluna.market.denom.clone(),
+                    denom: uluna.denom,
                     shares: Default::default(),
                     amount: Uint128::new(2),
                 },
@@ -1129,7 +1126,6 @@ fn lent_coins_used_as_collateral() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![umars.market.denom, udai.market.denom, uluna.market.denom],
     };
 
     let health = h.compute_health().unwrap();
@@ -1153,18 +1149,20 @@ fn lent_coins_used_as_collateral() {
 fn allowed_lent_coins_influence_max_ltv() {
     let umars = umars_info();
     let udai = udai_info();
-    let uluna = uluna_info();
+    let mut uluna = uluna_info();
+
+    uluna.params.rover.whitelisted = false;
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
-            (umars.market.denom.clone(), umars.price),
-            (udai.market.denom.clone(), udai.price),
-            (uluna.market.denom.clone(), uluna.price),
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
+            (uluna.denom.clone(), uluna.price),
         ]),
-        markets: HashMap::from([
-            (umars.market.denom.clone(), umars.market.clone()),
-            (udai.market.denom.clone(), udai.market.clone()),
-            (uluna.market.denom.clone(), uluna.market.clone()),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
+            (uluna.denom.clone(), uluna.params.clone()),
         ]),
     };
 
@@ -1176,20 +1174,20 @@ fn allowed_lent_coins_influence_max_ltv() {
     let h = HealthComputer {
         positions: Positions {
             account_id: "123".to_string(),
-            deposits: vec![coin(1200, &umars.market.denom), coin(23, &udai.market.denom)],
+            deposits: vec![coin(1200, &umars.denom), coin(23, &udai.denom)],
             debts: vec![DebtAmount {
-                denom: udai.market.denom.clone(),
+                denom: udai.denom.clone(),
                 shares: Default::default(),
                 amount: Uint128::new(3100),
             }],
             lends: vec![
                 LentAmount {
-                    denom: udai.market.denom.clone(),
+                    denom: udai.denom,
                     shares: Default::default(),
                     amount: Uint128::new(10),
                 },
                 LentAmount {
-                    denom: uluna.market.denom,
+                    denom: uluna.denom,
                     shares: Default::default(),
                     amount: Uint128::new(2),
                 },
@@ -1198,7 +1196,6 @@ fn allowed_lent_coins_influence_max_ltv() {
         },
         denoms_data,
         vaults_data,
-        allowed_coins: vec![umars.market.denom, udai.market.denom],
     };
 
     let health = h.compute_health().unwrap();

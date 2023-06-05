@@ -88,7 +88,7 @@ fn vault_is_whitelisted() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom.clone(), uosmo])
+        .set_params(&[uatom.clone(), uosmo])
         .vault_configs(&[leverage_vault.clone()])
         .build()
         .unwrap();
@@ -117,7 +117,7 @@ fn deposited_coin_matches_vault_requirements() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uatom.clone()])
+        .set_params(&[uatom.clone()])
         .vault_configs(&[leverage_vault.clone()])
         .build()
         .unwrap();
@@ -149,7 +149,7 @@ fn fails_if_not_enough_funds_for_implied_deposit() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone()])
+        .set_params(&[lp_token.clone()])
         .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
@@ -185,7 +185,7 @@ fn fails_if_not_enough_funds_for_enumerated_deposit() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone()])
+        .set_params(&[lp_token.clone()])
         .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
@@ -223,7 +223,7 @@ fn successful_deposit_into_locked_vault() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone()])
+        .set_params(&[lp_token.clone()])
         .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
@@ -276,7 +276,7 @@ fn successful_deposit_into_unlocked_vault() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone()])
+        .set_params(&[lp_token.clone()])
         .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
@@ -327,7 +327,7 @@ fn vault_deposit_must_be_under_cap() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone()])
+        .set_params(&[lp_token.clone()])
         .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
@@ -405,7 +405,7 @@ fn successful_deposit_with_implied_full_balance_amount() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone()])
+        .set_params(&[lp_token.clone()])
         .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),

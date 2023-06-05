@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use cosmwasm_std::{Addr, Decimal, Uint128};
 use mars_rover::{
     adapters::vault::VaultUnchecked,
@@ -37,10 +39,11 @@ fn utilization_if_cap_is_base_denom() {
     let user = Addr::unchecked("user");
     let base_info = CoinInfo {
         denom: "base_denom".to_string(),
-        price: Decimal::from_atomics(1u128, 0).unwrap(),
-        max_ltv: Default::default(),
-        liquidation_threshold: Default::default(),
-        liquidation_bonus: Default::default(),
+        price: Decimal::from_str("1").unwrap(),
+        max_ltv: Decimal::from_str("0.6").unwrap(),
+        liquidation_threshold: Decimal::from_str("0.7").unwrap(),
+        liquidation_bonus: Decimal::from_str("0.15").unwrap(),
+        whitelisted: true,
     };
 
     let leverage_vault = VaultTestInfo {
@@ -48,13 +51,13 @@ fn utilization_if_cap_is_base_denom() {
         base_token_denom: base_info.denom.clone(),
         lockup: None,
         deposit_cap: base_info.to_coin(100),
-        max_ltv: Default::default(),
-        liquidation_threshold: Default::default(),
+        max_ltv: Decimal::from_str("0.6").unwrap(),
+        liquidation_threshold: Decimal::from_str("0.7").unwrap(),
         whitelisted: true,
     };
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[base_info.clone()])
+        .set_params(&[base_info.clone()])
         .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
@@ -105,14 +108,14 @@ fn utilization_in_other_denom() {
         base_token_denom: jake_info.denom.clone(),
         lockup: None,
         deposit_cap: osmo_info.to_coin(50_000_000),
-        max_ltv: Default::default(),
-        liquidation_threshold: Default::default(),
+        max_ltv: Decimal::from_str("0.6").unwrap(),
+        liquidation_threshold: Decimal::from_str("0.7").unwrap(),
         whitelisted: true,
     };
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[jake_info.clone(), osmo_info])
+        .set_params(&[jake_info.clone(), osmo_info])
         .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),

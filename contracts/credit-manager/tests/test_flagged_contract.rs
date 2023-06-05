@@ -10,11 +10,6 @@ pub mod helpers;
 fn addresses_in_config_cannot_execute_msgs() {
     let mut mock = MockEnv::new().build().unwrap();
     let config = mock.query_config();
-    let vault_addrs = mock
-        .query_vault_configs(None, None)
-        .iter()
-        .map(|v| v.vault.address.clone())
-        .collect::<Vec<_>>();
 
     let banned = vec![
         config.account_nft.unwrap(),
@@ -25,7 +20,6 @@ fn addresses_in_config_cannot_execute_msgs() {
         config.health_contract,
     ]
     .into_iter()
-    .chain(vault_addrs)
     .collect::<Vec<String>>();
 
     for addr_str in banned {

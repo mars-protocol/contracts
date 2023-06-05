@@ -42,7 +42,7 @@ fn raises_when_benefactor_has_no_funds() {
     let benefactor = Addr::unchecked("benefactor");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: recipient.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -91,7 +91,7 @@ fn raises_when_non_owner_of_benefactor_account_repays() {
     let benefactor = Addr::unchecked("benefactor");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: benefactor.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -151,7 +151,7 @@ fn raises_when_benefactor_repays_account_with_no_debt() {
     let benefactor = Addr::unchecked("benefactor");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: benefactor.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -205,7 +205,7 @@ fn benefactor_successfully_repays_on_behalf_of_recipient() {
     let benefactor = Addr::unchecked("benefactor");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: benefactor.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -272,7 +272,7 @@ fn benefactor_pays_some_of_recipient_debt() {
     let benefactor = Addr::unchecked("benefactor");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: benefactor.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -338,7 +338,7 @@ fn benefactor_attempts_to_pay_more_than_max_debt() {
     let benefactor = Addr::unchecked("benefactor");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: benefactor.clone(),
             funds: coins(300, coin_info.denom.clone()),

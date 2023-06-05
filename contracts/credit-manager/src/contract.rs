@@ -9,16 +9,13 @@ use mars_rover::{
 };
 
 use crate::{
-    emergency_update::emergency_config_update,
     execute::{create_credit_account, dispatch_actions, execute_callback},
     instantiate::store_config,
     query::{
         query_all_coin_balances, query_all_debt_shares, query_all_lent_shares,
-        query_all_total_debt_shares, query_all_total_lent_shares,
-        query_all_total_vault_coin_balances, query_all_vault_positions, query_allowed_coins,
+        query_all_total_debt_shares, query_all_total_lent_shares, query_all_vault_positions,
         query_config, query_positions, query_total_debt_shares, query_total_lent_shares,
-        query_total_vault_coin_balance, query_vault_config, query_vault_position_value,
-        query_vault_utilization, query_vaults_config,
+        query_vault_position_value, query_vault_utilization,
     },
     repay::repay_from_wallet,
     update_config::{update_config, update_nft_config, update_owner},
@@ -63,7 +60,6 @@ pub fn execute(
             account_id,
             actions,
         } => dispatch_actions(deps, env, info, &account_id, &actions),
-        ExecuteMsg::EmergencyConfigUpdate(update) => emergency_config_update(deps, info, update),
         ExecuteMsg::RepayFromWallet {
             account_id,
         } => repay_from_wallet(deps, env, info, account_id),
@@ -82,20 +78,9 @@ pub fn reply(deps: DepsMut, _: Env, reply: Reply) -> ContractResult<Response> {
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
     let res = match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::VaultConfig {
-            vault,
-        } => to_binary(&query_vault_config(deps, vault)?),
-        QueryMsg::VaultsConfig {
-            start_after,
-            limit,
-        } => to_binary(&query_vaults_config(deps, start_after, limit)?),
         QueryMsg::VaultUtilization {
             vault,
         } => to_binary(&query_vault_utilization(deps, env, vault)?),
-        QueryMsg::AllowedCoins {
-            start_after,
-            limit,
-        } => to_binary(&query_allowed_coins(deps, start_after, limit)?),
         QueryMsg::Positions {
             account_id,
         } => to_binary(&query_positions(deps, &env, &account_id)?),
@@ -121,18 +106,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             start_after,
             limit,
         } => to_binary(&query_all_total_lent_shares(deps, start_after, limit)?),
-        QueryMsg::TotalVaultCoinBalance {
-            vault,
-        } => to_binary(&query_total_vault_coin_balance(deps, &vault, &env.contract.address)?),
-        QueryMsg::AllTotalVaultCoinBalances {
-            start_after,
-            limit,
-        } => to_binary(&query_all_total_vault_coin_balances(
-            deps,
-            &env.contract.address,
-            start_after,
-            limit,
-        )?),
         QueryMsg::AllVaultPositions {
             start_after,
             limit,

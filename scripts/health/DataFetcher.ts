@@ -8,15 +8,15 @@ import {
   VaultsData,
 } from '../types/generated/mars-rover-health-computer/MarsRoverHealthComputer.types'
 import { MarsMockOracleQueryClient } from '../types/generated/mars-mock-oracle/MarsMockOracle.client'
-import { MarsMockRedBankQueryClient } from '../types/generated/mars-mock-red-bank/MarsMockRedBank.client'
 import { MarsMockVaultQueryClient } from '../types/generated/mars-mock-vault/MarsMockVault.client'
+import { MarsParamsQueryClient } from '../types/generated/mars-params/MarsParams.client'
 
 export class DataFetcher {
   constructor(
     private healthComputer: (h: HealthComputer) => HealthResponse,
     private creditManagerAddr: string,
     private oracleAddr: string,
-    private redBankAddr: string,
+    private paramsAddr: string,
     private rpcEndpoint: string,
   ) {}
 
@@ -29,14 +29,17 @@ export class DataFetcher {
     return await cmQuery.positions({ accountId })
   }
 
-  fetchMarkets = async (denoms: string[]): Promise<DenomsData['markets']> => {
-    const rQuery = new MarsMockRedBankQueryClient(await this.getClient(), this.redBankAddr)
-    const promises = denoms.map(async (denom) => await rQuery.market({ denom }))
+  fetchParams = async (denoms: string[]): Promise<DenomsData['params']> => {
+    const pQuery = new MarsParamsQueryClient(await this.getClient(), this.paramsAddr)
+    const promises = denoms.map(async (denom) => ({
+      denom: denom,
+      params: await pQuery.assetParams({ denom }),
+    }))
     const responses = await Promise.all(promises)
     return responses.reduce((acc, curr) => {
-      acc[curr.denom] = curr
+      acc[curr.denom] = curr.params
       return acc
-    }, {} as DenomsData['markets'])
+    }, {} as DenomsData['params'])
   }
 
   fetchPrices = async (denoms: string[]): Promise<DenomsData['prices']> => {
@@ -63,26 +66,24 @@ export class DataFetcher {
     const allDenoms = depositDenoms.concat(debtDenoms).concat(vaultBaseTokenDenoms)
 
     return {
-      markets: await this.fetchMarkets(allDenoms),
+      params: await this.fetchParams(allDenoms),
       prices: await this.fetchPrices(allDenoms),
     }
-  }
-
-  fetchAllowedCoins = async (): Promise<string[]> => {
-    const cmQuery = new MarsCreditManagerQueryClient(await this.getClient(), this.creditManagerAddr)
-    return await cmQuery.allowedCoins({})
   }
 
   fetchVaultsData = async (positions: Positions): Promise<VaultsData> => {
     const vaultsData = { vault_values: {}, vault_configs: {} } as VaultsData
     const cmQuery = new MarsCreditManagerQueryClient(await this.getClient(), this.creditManagerAddr)
+    const pQuery = new MarsParamsQueryClient(await this.getClient(), this.paramsAddr)
     await Promise.all(
       positions.vaults.map(async (v) => {
-        const values = await cmQuery.vaultPositionValue({ vaultPosition: v })
-        vaultsData.vault_values[v.vault.address] = values
+        vaultsData.vault_values[v.vault.address] = await cmQuery.vaultPositionValue({
+          vaultPosition: v,
+        })
 
-        const res = await cmQuery.vaultConfig({ vault: v.vault })
-        vaultsData.vault_configs[v.vault.address] = res.config
+        vaultsData.vault_configs[v.vault.address] = await pQuery.vaultConfig({
+          address: v.vault.address,
+        })
       }),
     )
     return vaultsData
@@ -91,16 +92,14 @@ export class DataFetcher {
   fetchHealth = async (accountId: string): Promise<HealthResponse> => {
     const positions = await this.fetchPositions(accountId)
 
-    const [denoms_data, vaults_data, allowed_coins] = await Promise.all([
+    const [denoms_data, vaults_data] = await Promise.all([
       this.fetchDenomsData(positions),
       this.fetchVaultsData(positions),
-      this.fetchAllowedCoins(),
     ])
 
     let data = {
       positions,
       denoms_data,
-      allowed_coins,
       vaults_data,
     }
     return this.healthComputer(data)

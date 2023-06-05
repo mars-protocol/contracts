@@ -1,14 +1,9 @@
-use cosmwasm_std::{Addr, Decimal, Uint128};
-use cw_item_set::Set;
+use cosmwasm_std::{Addr, Uint128};
 use cw_storage_plus::{Item, Map};
 use mars_owner::Owner;
 use mars_rover::adapters::{
-    health::HealthContract,
-    oracle::Oracle,
-    red_bank::RedBank,
-    swap::Swapper,
-    vault::{VaultConfig, VaultPositionAmount},
-    zapper::Zapper,
+    health::HealthContract, oracle::Oracle, params::Params, red_bank::RedBank, swap::Swapper,
+    vault::VaultPositionAmount, zapper::Zapper,
 };
 
 use crate::vault::RequestTempStorage;
@@ -19,14 +14,12 @@ pub const ACCOUNT_NFT: Item<Addr> = Item::new("account_nft");
 pub const ORACLE: Item<Oracle> = Item::new("oracle");
 pub const RED_BANK: Item<RedBank> = Item::new("red_bank");
 pub const SWAPPER: Item<Swapper> = Item::new("swapper");
-pub const VAULT_CONFIGS: Map<&Addr, VaultConfig> = Map::new("vault_configs");
 pub const ZAPPER: Item<Zapper> = Item::new("zapper");
 pub const HEALTH_CONTRACT: Item<HealthContract> = Item::new("health_contract");
+pub const PARAMS: Item<Params> = Item::new("params");
 
 // Config
 pub const OWNER: Owner = Owner::new("owner");
-pub const ALLOWED_COINS: Set<&str> = Set::new("allowed_coins");
-pub const MAX_CLOSE_FACTOR: Item<Decimal> = Item::new("max_close_factor");
 pub const MAX_UNLOCKING_POSITIONS: Item<Uint128> = Item::new("max_unlocking_positions");
 
 // Positions

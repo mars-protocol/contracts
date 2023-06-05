@@ -24,6 +24,7 @@ export const osmosisMainnetConfig: DeploymentConfig = {
   // oracle and redbank contract addresses can be found:  https://github.com/mars-protocol/red-bank/blob/master/README.md#osmosis-1
   oracle: { addr: 'osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g' },
   redBank: { addr: 'osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg' },
+  params: { addr: 'TBD' },
   swapRoutes: [
     { denomIn: uosmo, denomOut: uatom, route: [{ token_out_denom: uatom, pool_id: '1' }] },
     { denomIn: uatom, denomOut: uosmo, route: [{ token_out_denom: uosmo, pool_id: '1' }] },
@@ -33,22 +34,18 @@ export const osmosisMainnetConfig: DeploymentConfig = {
   // Latest from: https://stats.apollo.farm/api/vaults/v1/all
   vaults: [
     {
-      vault: { address: 'osmo1g3kmqpp8608szfp0pdag3r6z85npph7wmccat8lgl3mp407kv73qlj7qwp' },
-      config: {
-        deposit_cap: { denom: axlUSDC, amount: '2000000000000' }, // $2M
-        max_ltv: '0.63',
-        liquidation_threshold: '0.65',
-        whitelisted: true,
-      },
+      addr: 'osmo1g3kmqpp8608szfp0pdag3r6z85npph7wmccat8lgl3mp407kv73qlj7qwp',
+      deposit_cap: { denom: axlUSDC, amount: '2000000000000' }, // $2M
+      max_loan_to_value: '0.63',
+      liquidation_threshold: '0.65',
+      whitelisted: true,
     },
     {
-      vault: { address: 'osmo1jfmwayj8jqp9tfy4v4eks5c2jpnqdumn8x8xvfllng0wfes770qqp7jl4j' },
-      config: {
-        deposit_cap: { denom: axlUSDC, amount: '750000000000' }, // $750k
-        max_ltv: '0.65',
-        liquidation_threshold: '0.66',
-        whitelisted: true,
-      },
+      addr: 'osmo1jfmwayj8jqp9tfy4v4eks5c2jpnqdumn8x8xvfllng0wfes770qqp7jl4j',
+      deposit_cap: { denom: axlUSDC, amount: '750000000000' }, // $750k
+      max_loan_to_value: '0.65',
+      liquidation_threshold: '0.66',
+      whitelisted: true,
     },
   ],
   swapperContractName: 'mars_swapper_osmosis',

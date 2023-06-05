@@ -13,7 +13,7 @@ use mars_rover::{
 use crate::{
     health::query_health,
     repay::current_debt_for_denom,
-    state::{COIN_BALANCES, MAX_CLOSE_FACTOR, ORACLE, RED_BANK},
+    state::{COIN_BALANCES, ORACLE, PARAMS},
     utils::{decrement_coin_balance, increment_coin_balance},
 };
 
@@ -82,7 +82,8 @@ pub fn calculate_liquidation(
         current_debt_for_denom(deps.as_ref(), env, liquidatee_account_id, &debt_coin.denom)?;
 
     // Ensure debt amount does not exceed close factor % of the liquidatee's total debt value
-    let close_factor = MAX_CLOSE_FACTOR.load(deps.storage)?;
+    let params = PARAMS.load(deps.storage)?;
+    let close_factor = params.query_max_close_factor(&deps.querier)?;
     let max_close_value = health.total_debt_value.checked_mul_floor(close_factor)?;
     let oracle = ORACLE.load(deps.storage)?;
     let debt_res = oracle.query_price(&deps.querier, &debt_coin.denom)?;
@@ -92,10 +93,9 @@ pub fn calculate_liquidation(
     // FORMULA: debt amount = request value / (1 + liquidation bonus %) / debt price
     let request_res = oracle.query_price(&deps.querier, request_coin)?;
     let max_request_value = request_coin_balance.checked_mul_floor(request_res.price)?;
-    let liq_bonus_rate = RED_BANK
-        .load(deps.storage)?
-        .query_market(&deps.querier, &debt_coin.denom)?
-        .liquidation_bonus;
+
+    let denom_params = params.query_asset_params(&deps.querier, &debt_coin.denom)?;
+    let liq_bonus_rate = denom_params.liquidation_bonus;
     let request_coin_adjusted_max_debt = max_request_value
         .checked_div_floor(Decimal::one().add(liq_bonus_rate))?
         .checked_div_floor(debt_res.price)?;

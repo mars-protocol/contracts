@@ -2,18 +2,10 @@ use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, MessageInfo, Response, WasmMsg
 use cw721_base::Action;
 use mars_account_nft::{msg::ExecuteMsg as NftExecuteMsg, nft_config::NftConfigUpdates};
 use mars_owner::OwnerUpdate;
-use mars_rover::{
-    error::ContractResult,
-    msg::instantiate::ConfigUpdates,
-    traits::{FallbackStr, Stringify},
-};
+use mars_rover::{error::ContractResult, msg::instantiate::ConfigUpdates};
 
-use crate::{
-    instantiate::{assert_lte_to_one, assert_no_duplicate_coins, assert_no_duplicate_vaults},
-    state::{
-        ACCOUNT_NFT, ALLOWED_COINS, HEALTH_CONTRACT, MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS,
-        ORACLE, OWNER, RED_BANK, SWAPPER, VAULT_CONFIGS, ZAPPER,
-    },
+use crate::state::{
+    ACCOUNT_NFT, HEALTH_CONTRACT, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, RED_BANK, SWAPPER, ZAPPER,
 };
 
 pub fn update_config(
@@ -42,29 +34,6 @@ pub fn update_config(
             .add_attribute("value", addr_str);
     }
 
-    if let Some(coins) = updates.allowed_coins {
-        assert_no_duplicate_coins(&coins)?;
-        ALLOWED_COINS.clear(deps.storage);
-        coins.iter().try_for_each(|denom| ALLOWED_COINS.insert(deps.storage, denom).map(|_| ()))?;
-
-        response = response
-            .add_attribute("key", "allowed_coins")
-            .add_attribute("value", coins.join(", ").fallback("None"));
-    }
-
-    if let Some(configs) = updates.vault_configs {
-        assert_no_duplicate_vaults(deps.api, &deps.querier, &configs)?;
-        VAULT_CONFIGS.clear(deps.storage);
-        configs.iter().try_for_each(|v| -> ContractResult<_> {
-            v.config.check()?;
-            let vault = v.vault.check(deps.api)?;
-            Ok(VAULT_CONFIGS.save(deps.storage, &vault.address, &v.config)?)
-        })?;
-        response = response
-            .add_attribute("key", "vault_configs")
-            .add_attribute("value", configs.to_string().fallback("None"))
-    }
-
     if let Some(unchecked) = updates.oracle {
         ORACLE.save(deps.storage, &unchecked.check(deps.api)?)?;
         response =
@@ -87,14 +56,6 @@ pub fn update_config(
         ZAPPER.save(deps.storage, &unchecked.check(deps.api)?)?;
         response =
             response.add_attribute("key", "zapper").add_attribute("value", unchecked.address());
-    }
-
-    if let Some(cf) = updates.max_close_factor {
-        assert_lte_to_one(&cf)?;
-        MAX_CLOSE_FACTOR.save(deps.storage, &cf)?;
-        response = response
-            .add_attribute("key", "max_close_factor")
-            .add_attribute("value", cf.to_string());
     }
 
     if let Some(num) = updates.max_unlocking_positions {

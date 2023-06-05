@@ -5,7 +5,7 @@
     "Larry Engineer <larry@delphidigital.io>",
     "Piotr Babel <piotr@delphilabs.io>"
   ],
-  "version": "1.0.0",
+  "version": "2.0.0",
   "files": [
     "index_bg.wasm",
     "index.js",

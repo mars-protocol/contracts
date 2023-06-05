@@ -28,7 +28,7 @@ fn can_only_liquidate_unhealthy_accounts() {
 
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -79,7 +79,7 @@ fn vault_positions_contribute_to_health() {
 
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom_info.clone()])
+        .set_params(&[lp_token.clone(), atom_info.clone()])
         .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
@@ -140,7 +140,7 @@ fn liquidatee_does_not_have_requested_asset() {
 
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone(), ujake_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone(), ujake_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -194,7 +194,7 @@ fn liquidatee_does_not_have_debt_coin() {
     let liquidatee = Addr::unchecked("liquidatee");
     let random_user = Addr::unchecked("random_user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone(), ujake_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone(), ujake_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -260,7 +260,7 @@ fn liquidator_does_not_have_enough_to_pay_debt() {
 
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -316,7 +316,7 @@ fn liquidator_left_in_unhealthy_state() {
 
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -375,7 +375,7 @@ fn liquidation_not_profitable_after_calculations() {
     let liquidator = Addr::unchecked("liquidator");
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone(), ujake_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone(), ujake_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -443,7 +443,7 @@ fn debt_amount_adjusted_to_close_factor_max() {
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
         .max_close_factor(Decimal::from_atomics(1u128, 1).unwrap())
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -517,7 +517,7 @@ fn debt_amount_adjusted_to_total_debt_for_denom() {
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
         .max_close_factor(Decimal::from_atomics(1u128, 1).unwrap())
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone(), ujake_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone(), ujake_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -595,7 +595,7 @@ fn debt_amount_adjusted_to_max_allowed_by_request_coin() {
     let liquidator = Addr::unchecked("liquidator");
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -668,7 +668,7 @@ fn debt_amount_no_adjustment() {
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
         .max_close_factor(Decimal::from_atomics(1u128, 1).unwrap())
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
             funds: coins(300, uosmo_info.denom.clone()),

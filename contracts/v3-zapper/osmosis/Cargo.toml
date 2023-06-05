@@ -26,5 +26,4 @@ osmosis-std       = { workspace = true }
 
 [dev-dependencies]
 anyhow            = { workspace = true }
-cw-utils          = { workspace = true }
 osmosis-test-tube = { workspace = true }

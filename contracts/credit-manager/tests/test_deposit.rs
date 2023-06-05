@@ -6,7 +6,8 @@ use mars_rover::{
 };
 
 use crate::helpers::{
-    assert_err, uatom_info, ujake_info, uosmo_info, AccountToFund, CoinInfo, MockEnv,
+    assert_err, blacklisted_coin, uatom_info, ujake_info, uosmo_info, AccountToFund, CoinInfo,
+    MockEnv,
 };
 
 pub mod helpers;
@@ -38,7 +39,7 @@ fn only_owner_of_token_can_deposit() {
 fn deposit_nothing() {
     let coin_info = uosmo_info();
 
-    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
+    let mut mock = MockEnv::new().set_params(&[coin_info.clone()]).build().unwrap();
     let user = Addr::unchecked("user");
     let account_id = mock.create_credit_account(&user).unwrap();
 
@@ -61,7 +62,7 @@ fn deposit_nothing() {
 fn deposit_but_no_funds() {
     let coin_info = uosmo_info();
 
-    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
+    let mut mock = MockEnv::new().set_params(&[coin_info.clone()]).build().unwrap();
     let user = Addr::unchecked("user");
     let account_id = mock.create_credit_account(&user).unwrap();
 
@@ -91,7 +92,7 @@ fn deposit_but_not_enough_funds() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -118,28 +119,38 @@ fn deposit_but_not_enough_funds() {
 
 #[test]
 fn can_only_deposit_allowed_assets() {
-    let coin_info = uosmo_info();
+    let blacklisted_coin = blacklisted_coin();
+    let not_listed_coin = ujake_info().to_coin(234);
+
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[blacklisted_coin.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: coins(300, coin_info.denom.clone()),
+            funds: vec![
+                coin(300, blacklisted_coin.denom.clone()),
+                coin(300, not_listed_coin.denom.clone()),
+            ],
         })
         .build()
         .unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
-    let not_allowed_coin = ujake_info().to_coin(234);
+    let res = mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![Action::Deposit(not_listed_coin.clone())],
+        &[coin(250, not_listed_coin.denom.clone())],
+    );
+    assert_err(res, NotWhitelisted(not_listed_coin.denom));
 
     let res = mock.update_credit_account(
         &account_id,
         &user,
-        vec![Action::Deposit(not_allowed_coin.clone())],
-        &[coin(250, coin_info.denom)],
+        vec![Action::Deposit(blacklisted_coin.to_coin(250))],
+        &[coin(250, blacklisted_coin.denom.clone())],
     );
-
-    assert_err(res, NotWhitelisted(not_allowed_coin.denom));
+    assert_err(res, NotWhitelisted(blacklisted_coin.denom));
 
     let res = mock.query_positions(&account_id);
     assert_eq!(res.deposits.len(), 0);
@@ -152,7 +163,7 @@ fn extra_funds_received() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![coin(300, uosmo_info.denom.clone()), coin(250, uatom_info.denom.clone())],
@@ -181,7 +192,7 @@ fn deposit_success() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -216,7 +227,7 @@ fn multiple_deposit_actions() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![coin(300, uosmo_info.denom.clone()), coin(50, uatom_info.denom.clone())],

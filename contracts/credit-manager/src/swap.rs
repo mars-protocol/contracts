@@ -10,14 +10,14 @@ use crate::{
 };
 
 pub fn swap_exact_in(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     account_id: &str,
     coin_in: &ActionCoin,
     denom_out: &str,
     slippage: Decimal,
 ) -> ContractResult<Response> {
-    assert_coin_is_whitelisted(deps.storage, denom_out)?;
+    assert_coin_is_whitelisted(&mut deps, denom_out)?;
 
     let coin_in_to_trade = Coin {
         denom: coin_in.denom.clone(),

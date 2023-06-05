@@ -1,6 +1,9 @@
+use std::str::FromStr;
+
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
 use cw_utils::Duration;
+use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
 use mars_rover::msg::execute::{ActionAmount, ActionCoin};
 
 #[cw_serde]
@@ -16,6 +19,7 @@ pub struct CoinInfo {
     pub max_ltv: Decimal,
     pub liquidation_threshold: Decimal,
     pub liquidation_bonus: Decimal,
+    pub whitelisted: bool,
 }
 
 #[cw_serde]
@@ -54,6 +58,29 @@ impl CoinInfo {
         ActionCoin {
             denom: self.denom.clone(),
             amount: ActionAmount::AccountBalance,
+        }
+    }
+}
+
+impl From<CoinInfo> for AssetParams {
+    fn from(c: CoinInfo) -> Self {
+        Self {
+            denom: c.denom,
+            rover: RoverSettings {
+                whitelisted: c.whitelisted,
+                hls: HighLeverageStrategyParams {
+                    max_loan_to_value: Decimal::from_str("0.86").unwrap(),
+                    liquidation_threshold: Decimal::from_str("0.89").unwrap(),
+                },
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: true,
+                borrow_enabled: true,
+                deposit_cap: Uint128::MAX,
+            },
+            max_loan_to_value: c.max_ltv,
+            liquidation_threshold: c.liquidation_threshold,
+            liquidation_bonus: c.liquidation_bonus,
         }
     }
 }

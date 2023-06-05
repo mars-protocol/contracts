@@ -10,26 +10,24 @@ const gammPool497 = 'gamm/pool/497'
 const vaultOsmoAtom1 = 'osmo1zktjv92f76epswjvyxzzt3yyskpw7k6jsyu0kmq4zzc5fphrjumqlahctp'
 const vaultOsmoAtom7 = 'osmo167j3yttwzcm3785tzk4jse2qdkppcy2xxrn5u6srqv7s93wnq6yqw8zhg5'
 const vaultOsmoAtom14 = 'osmo1tp2m6g39h8mvhnu3plqjyen5s63023gj8w873l8wvly0cd77l6hsaa73wt'
-const atomOsmoConfig = {
-  config: {
-    deposit_cap: { denom: uatom, amount: '1000000000' }, // 1000 atom
-    max_ltv: '0.63',
-    liquidation_threshold: '0.65',
-    whitelisted: true,
-  },
-}
+const atomOsmoConfig = (addr: string) => ({
+  addr,
+  deposit_cap: { denom: uatom, amount: '1000000000' }, // 1000 atom
+  max_loan_to_value: '0.63',
+  liquidation_threshold: '0.65',
+  whitelisted: true,
+})
 
 const vaultJunoOsmo1 = 'osmo1r6h0pafu3wq0kf6yv09qhc8qvuku2d6fua0rpwwv46h7hd8u586scxspjf'
 const vaultJunoOsmo7 = 'osmo1gr5epxn67q6202l3hy0mcnu7qc039v22pa6x2tsk23zwg235n9jsq6pmes'
 const vaultJunoOsmo14 = 'osmo1d6knwkelyr9eklewnn9htkess4ttpxpf2cze9ec0xfw7e3fj0ggssqzfpp'
-const junoOsmoConfig = {
-  config: {
-    deposit_cap: { denom: uatom, amount: '500000000' }, // 500 atom
-    max_ltv: '0.65',
-    liquidation_threshold: '0.66',
-    whitelisted: true,
-  },
-}
+const junoOsmoConfig = (addr: string) => ({
+  addr,
+  deposit_cap: { denom: uatom, amount: '500000000' }, // 500 atom
+  max_loan_to_value: '0.65',
+  liquidation_threshold: '0.66',
+  whitelisted: true,
+})
 
 export const osmosisTestnetConfig: DeploymentConfig = {
   allowedCoins: [uosmo, uatom, ujuno, gammPool1, gammPool497],
@@ -48,6 +46,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   // Latest from: https://github.com/mars-protocol/outposts/blob/master/scripts/deploy/addresses/osmo-test-4.json
   oracle: { addr: 'osmo1dqz2u3c8rs5e7w5fnchsr2mpzzsxew69wtdy0aq4jsd76w7upmsstqe0s8' },
   redBank: { addr: 'osmo1t0dl6r27phqetfu0geaxrng0u9zn8qgrdwztapt5xr32adtwptaq6vwg36' },
+  params: { addr: 'xyz' }, // TODO: add with build scripts update task
   swapRoutes: [
     { denomIn: uosmo, denomOut: uatom, route: [{ token_out_denom: uatom, pool_id: '1' }] },
     { denomIn: uatom, denomOut: uosmo, route: [{ token_out_denom: uosmo, pool_id: '1' }] },
@@ -56,30 +55,12 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   ],
   // Latest from: https://stats.apollo.farm/api/vaults/v1/all
   vaults: [
-    {
-      vault: { address: vaultOsmoAtom1 },
-      ...atomOsmoConfig,
-    },
-    {
-      vault: { address: vaultOsmoAtom7 },
-      ...atomOsmoConfig,
-    },
-    {
-      vault: { address: vaultOsmoAtom14 },
-      ...atomOsmoConfig,
-    },
-    {
-      vault: { address: vaultJunoOsmo1 },
-      ...junoOsmoConfig,
-    },
-    {
-      vault: { address: vaultJunoOsmo7 },
-      ...junoOsmoConfig,
-    },
-    {
-      vault: { address: vaultJunoOsmo14 },
-      ...junoOsmoConfig,
-    },
+    atomOsmoConfig(vaultOsmoAtom1),
+    atomOsmoConfig(vaultOsmoAtom7),
+    atomOsmoConfig(vaultOsmoAtom14),
+    junoOsmoConfig(vaultJunoOsmo1),
+    junoOsmoConfig(vaultJunoOsmo7),
+    junoOsmoConfig(vaultJunoOsmo14),
   ],
   swapperContractName: 'mars_swapper_osmosis',
   zapperContractName: 'mars_zapper_osmosis',
@@ -114,7 +95,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
         config: {
           deposit_cap: { denom: uosmo, amount: '100000000' }, // 100 osmo
           liquidation_threshold: '0.585',
-          max_ltv: '0.569',
+          max_loan_to_value: '0.569',
           whitelisted: true,
         },
         vaultTokenDenom: udig,

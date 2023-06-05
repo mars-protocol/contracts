@@ -8,7 +8,9 @@ use mars_rover::{
 };
 use mars_swapper_mock::contract::MOCK_SWAP_RESULT;
 
-use crate::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv};
+use crate::helpers::{
+    assert_err, blacklisted_coin, uatom_info, uosmo_info, AccountToFund, MockEnv,
+};
 
 pub mod helpers;
 
@@ -44,17 +46,17 @@ fn only_token_owner_can_swap_for_account() {
 
 #[test]
 fn denom_out_must_be_whitelisted() {
-    let osmo_info = uosmo_info();
+    let blacklisted_coin = blacklisted_coin();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().allowed_coins(&[osmo_info.clone()]).build().unwrap();
+    let mut mock = MockEnv::new().set_params(&[blacklisted_coin.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(
         &account_id,
         &user,
         vec![SwapExactIn {
-            coin_in: osmo_info.to_action_coin(10_000),
+            coin_in: blacklisted_coin.to_action_coin(10_000),
             denom_out: "ujake".to_string(),
             slippage: Decimal::from_atomics(6u128, 1).unwrap(),
         }],
@@ -71,7 +73,7 @@ fn no_amount_sent() {
 
     let user = Addr::unchecked("user");
     let mut mock =
-        MockEnv::new().allowed_coins(&[osmo_info.clone(), atom_info.clone()]).build().unwrap();
+        MockEnv::new().set_params(&[osmo_info.clone(), atom_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(
@@ -95,7 +97,7 @@ fn user_has_zero_balance_for_swap_req() {
 
     let user = Addr::unchecked("user");
     let mut mock =
-        MockEnv::new().allowed_coins(&[osmo_info.clone(), atom_info.clone()]).build().unwrap();
+        MockEnv::new().set_params(&[osmo_info.clone(), atom_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(
@@ -126,7 +128,7 @@ fn user_does_not_have_enough_balance_for_swap_req() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[osmo_info.clone(), atom_info.clone()])
+        .set_params(&[osmo_info.clone(), atom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, osmo_info.denom.clone()),
@@ -166,7 +168,7 @@ fn swap_success_with_specified_amount() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[osmo_info.clone(), atom_info.clone()])
+        .set_params(&[osmo_info.clone(), atom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![Coin::new(10_000u128, atom_info.denom.clone())],
@@ -213,7 +215,7 @@ fn swap_success_with_amount_none() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[osmo_info.clone(), atom_info.clone()])
+        .set_params(&[osmo_info.clone(), atom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![Coin::new(10_000u128, atom_info.denom.clone())],

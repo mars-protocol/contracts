@@ -1,9 +1,6 @@
 import { Duration, VaultInfoResponse } from './generated/mars-mock-vault/MarsMockVault.types'
-import {
-  VaultConfig,
-  VaultInstantiateConfig,
-} from './generated/mars-credit-manager/MarsCreditManager.types'
 import { PriceSource } from './priceSource'
+import { VaultConfigBaseForString } from './generated/mars-params/MarsParams.types'
 
 export enum VaultType {
   LOCKED,
@@ -26,7 +23,8 @@ export interface DeploymentConfig {
   deployerMnemonic: string
   oracle: { addr: string }
   redBank: { addr: string }
-  vaults: VaultInstantiateConfig[]
+  params: { addr: string }
+  vaults: VaultConfigBaseForString[]
   allowedCoins: string[]
   maxCloseFactor: string
   maxValueForBurn: string
@@ -51,7 +49,7 @@ export interface TestActions {
     withdrawAmount: string
     mock: {
       type: VaultType
-      config: VaultConfig
+      config: Omit<VaultConfigBaseForString, 'addr'>
       vaultTokenDenom: string
       lockup?: Duration
       baseToken: string

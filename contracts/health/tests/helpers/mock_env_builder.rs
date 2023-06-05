@@ -1,25 +1,23 @@
-use std::mem::take;
+use std::{mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Decimal};
 use cw_multi_test::{BasicApp, Executor};
 use cw_utils::Duration;
-use mars_mock_credit_manager::msg::{
-    ExecuteMsg::SetVaultConfig, InstantiateMsg as CmMockInstantiateMsg,
-};
+use mars_mock_credit_manager::msg::InstantiateMsg as CmMockInstantiateMsg;
 use mars_mock_oracle::msg::InstantiateMsg as OracleInstantiateMsg;
-use mars_mock_red_bank::msg::InstantiateMsg as RedBankInstantiateMsg;
 use mars_mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
 use mars_owner::OwnerResponse;
-use mars_rover::{
-    adapters::{oracle::OracleUnchecked, vault::VaultConfig},
-    msg::query::ConfigResponse,
+use mars_params::{
+    msg::{ExecuteMsg::UpdateVaultConfig, InstantiateMsg as ParamsInstantiateMsg},
+    types::{VaultConfigUnchecked, VaultConfigUpdate::AddOrUpdate},
 };
+use mars_rover::{adapters::oracle::OracleUnchecked, msg::query::ConfigResponse};
 use mars_rover_health_types::{ExecuteMsg::UpdateConfig, InstantiateMsg};
 
 use crate::helpers::{
-    mock_credit_manager_contract, mock_health_contract, mock_oracle_contract,
-    mock_red_bank_contract, mock_vault_contract, MockEnv,
+    mock_credit_manager_contract, mock_health_contract, mock_oracle_contract, mock_params_contract,
+    mock_vault_contract, MockEnv,
 };
 
 pub struct MockEnvBuilder {
@@ -29,8 +27,9 @@ pub struct MockEnvBuilder {
     pub cm_contract: Option<Addr>,
     pub vault_contract: Option<Addr>,
     pub oracle: Option<Addr>,
-    pub red_bank: Option<Addr>,
+    pub params: Option<Addr>,
     pub set_cm_config: bool,
+    pub set_params_config: bool,
 }
 
 impl MockEnvBuilder {
@@ -39,19 +38,28 @@ impl MockEnvBuilder {
             self.add_cm_to_config();
         }
 
+        if self.set_params_config {
+            self.add_params_to_config();
+        }
+
         Ok(MockEnv {
             deployer: self.deployer.clone(),
             health_contract: self.get_health_contract(),
             vault_contract: self.get_vault_contract(),
             oracle: self.get_oracle(),
-            red_bank: self.get_red_bank(),
             cm_contract: self.get_cm_contract(),
             app: take(&mut self.app),
+            params: self.get_params_contract(),
         })
     }
 
     pub fn skip_cm_config(&mut self) -> &mut Self {
         self.set_cm_config = false;
+        self
+    }
+
+    pub fn skip_params_config(&mut self) -> &mut Self {
+        self.set_params_config = false;
         self
     }
 
@@ -64,7 +72,25 @@ impl MockEnvBuilder {
                 self.deployer.clone(),
                 health_contract,
                 &UpdateConfig {
-                    credit_manager: cm_contract.to_string(),
+                    credit_manager: Some(cm_contract.to_string()),
+                    params: None,
+                },
+                &[],
+            )
+            .unwrap();
+    }
+
+    fn add_params_to_config(&mut self) {
+        let health_contract = self.get_health_contract();
+        let params_contract = self.get_params_contract();
+
+        self.app
+            .execute_contract(
+                self.deployer.clone(),
+                health_contract,
+                &UpdateConfig {
+                    credit_manager: None,
+                    params: Some(params_contract.to_string()),
                 },
                 &[],
             )
@@ -98,33 +124,6 @@ impl MockEnvBuilder {
         self.oracle = Some(addr);
     }
 
-    fn get_red_bank(&mut self) -> Addr {
-        if self.red_bank.is_none() {
-            self.deploy_red_bank()
-        }
-        self.red_bank.clone().unwrap()
-    }
-
-    fn deploy_red_bank(&mut self) {
-        let contract = mock_red_bank_contract();
-        let code_id = self.app.store_code(contract);
-
-        let addr = self
-            .app
-            .instantiate_contract(
-                code_id,
-                self.deployer.clone(),
-                &RedBankInstantiateMsg {
-                    coins: vec![],
-                },
-                &[],
-                "mock-red-bank",
-                None,
-            )
-            .unwrap();
-        self.red_bank = Some(addr);
-    }
-
     fn get_cm_contract(&mut self) -> Addr {
         if self.cm_contract.is_none() {
             self.deploy_cm_contract()
@@ -135,8 +134,8 @@ impl MockEnvBuilder {
     fn deploy_cm_contract(&mut self) {
         let contract = mock_credit_manager_contract();
         let code_id = self.app.store_code(contract);
-        let red_bank = self.get_red_bank().to_string();
         let oracle = self.get_oracle().to_string();
+        let params = self.get_params_contract().to_string();
 
         let cm_addr = self
             .app
@@ -152,10 +151,10 @@ impl MockEnvBuilder {
                             initialized: true,
                             abolished: false,
                         },
-                        red_bank,
+                        red_bank: "n/a".to_string(),
                         oracle,
+                        params,
                         account_nft: None,
-                        max_close_factor: Default::default(),
                         max_unlocking_positions: Default::default(),
                         swapper: "n/a".to_string(),
                         zapper: "n/a".to_string(),
@@ -167,26 +166,54 @@ impl MockEnvBuilder {
                 Some(self.deployer.clone().into()),
             )
             .unwrap();
-        self.cm_contract = Some(cm_addr.clone());
+        self.cm_contract = Some(cm_addr);
 
         // Set mock vault with a starting config
-        let vault = self.get_vault_contract().to_string();
+        let vault = self.get_vault_contract();
+        let params = self.get_params_contract();
         self.app
             .execute_contract(
                 self.deployer.clone(),
-                cm_addr,
-                &SetVaultConfig {
-                    address: vault,
-                    config: VaultConfig {
+                params,
+                &UpdateVaultConfig(AddOrUpdate {
+                    config: VaultConfigUnchecked {
+                        addr: vault.to_string(),
                         deposit_cap: coin(10000000u128, "uusdc"),
-                        max_ltv: Decimal::from_atomics(4u128, 1).unwrap(),
+                        max_loan_to_value: Decimal::from_atomics(4u128, 1).unwrap(),
                         liquidation_threshold: Decimal::from_atomics(44u128, 2).unwrap(),
                         whitelisted: true,
                     },
-                },
+                }),
                 &[],
             )
             .unwrap();
+    }
+
+    fn get_params_contract(&mut self) -> Addr {
+        if self.params.is_none() {
+            let hc = self.deploy_params_contract();
+            self.params = Some(hc);
+        }
+        self.params.clone().unwrap()
+    }
+
+    pub fn deploy_params_contract(&mut self) -> Addr {
+        let contract_code_id = self.app.store_code(mock_params_contract());
+        let owner = self.deployer.clone();
+
+        self.app
+            .instantiate_contract(
+                contract_code_id,
+                owner.clone(),
+                &ParamsInstantiateMsg {
+                    owner: owner.to_string(),
+                    max_close_factor: Decimal::from_str("0.5").unwrap(),
+                },
+                &[],
+                "mock-params-contract",
+                Some(owner.to_string()),
+            )
+            .unwrap()
     }
 
     fn get_vault_contract(&mut self) -> Addr {

@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use cosmwasm_std::{coin, Decimal};
 use cw_utils::Duration;
 
@@ -10,8 +12,10 @@ pub fn uosmo_info() -> CoinInfo {
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(12u128, 2).unwrap(),
+        whitelisted: true,
     }
 }
+
 pub fn uatom_info() -> CoinInfo {
     CoinInfo {
         denom: "uatom".to_string(),
@@ -19,6 +23,7 @@ pub fn uatom_info() -> CoinInfo {
         max_ltv: Decimal::from_atomics(82u128, 2).unwrap(),
         liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
         liquidation_bonus: Decimal::from_atomics(10u128, 2).unwrap(),
+        whitelisted: true,
     }
 }
 
@@ -29,6 +34,18 @@ pub fn ujake_info() -> CoinInfo {
         max_ltv: Decimal::from_atomics(5u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
+        whitelisted: true,
+    }
+}
+
+pub fn blacklisted_coin() -> CoinInfo {
+    CoinInfo {
+        denom: "uluna".to_string(),
+        price: Decimal::from_str("0.01").unwrap(),
+        max_ltv: Decimal::from_str("0.4").unwrap(),
+        liquidation_threshold: Decimal::from_str("0.5").unwrap(),
+        liquidation_bonus: Decimal::from_str("0.33").unwrap(),
+        whitelisted: false,
     }
 }
 
@@ -39,6 +56,7 @@ pub fn lp_token_info() -> CoinInfo {
         max_ltv: Decimal::from_atomics(63u128, 2).unwrap(),
         liquidation_threshold: Decimal::from_atomics(68u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(12u128, 2).unwrap(),
+        whitelisted: true,
     }
 }
 

@@ -24,6 +24,7 @@ cosmwasm-std               = { workspace = true }
 cw2                        = { workspace = true }
 cw-storage-plus            = { workspace = true }
 mars-owner                 = { workspace = true }
+mars-params                = { workspace = true }
 mars-rover-health-computer = { workspace = true }
 mars-rover-health-types    = { workspace = true }
 mars-rover                 = { workspace = true }
@@ -36,6 +37,4 @@ cw-utils                 = { workspace = true }
 cw-vault-standard        = { workspace = true }
 mars-mock-credit-manager = { workspace = true }
 mars-mock-oracle         = { workspace = true }
-mars-mock-red-bank       = { workspace = true }
 mars-mock-vault          = { workspace = true }
-mars-red-bank-types      = { workspace = true }

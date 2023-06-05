@@ -14,15 +14,15 @@ use crate::{
 };
 
 pub fn provide_liquidity(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     account_id: &str,
     coins_in: Vec<ActionCoin>,
     lp_token_out: &str,
     minimum_receive: Uint128,
 ) -> ContractResult<Response> {
-    assert_coin_is_whitelisted(deps.storage, lp_token_out)?;
-    assert_coins_are_whitelisted(deps.storage, coins_in.to_denoms())?;
+    assert_coin_is_whitelisted(&mut deps, lp_token_out)?;
+    assert_coins_are_whitelisted(&mut deps, coins_in.to_denoms())?;
 
     // Decrement coin amounts in account for those sent to pool
     let mut updated_coins_in: Vec<Coin> = Vec::with_capacity(coins_in.len());
@@ -56,12 +56,12 @@ pub fn provide_liquidity(
 }
 
 pub fn withdraw_liquidity(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     account_id: &str,
     lp_token_action: &ActionCoin,
 ) -> ContractResult<Response> {
-    assert_coin_is_whitelisted(deps.storage, &lp_token_action.denom)?;
+    assert_coin_is_whitelisted(&mut deps, &lp_token_action.denom)?;
 
     let lp_token = Coin {
         denom: lp_token_action.denom.clone(),
@@ -79,7 +79,7 @@ pub fn withdraw_liquidity(
 
     let zapper = ZAPPER.load(deps.storage)?;
     let coins_out = zapper.estimate_withdraw_liquidity(&deps.querier, &lp_token)?;
-    assert_coins_are_whitelisted(deps.storage, coins_out.to_denoms())?;
+    assert_coins_are_whitelisted(&mut deps, coins_out.to_denoms())?;
 
     decrement_coin_balance(deps.storage, account_id, &lp_token)?;
 

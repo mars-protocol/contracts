@@ -1,9 +1,9 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Coin, Decimal, Uint128};
+use cosmwasm_std::{Coin, Uint128};
 use mars_owner::OwnerResponse;
 
 use crate::{
-    adapters::vault::{Vault, VaultConfig, VaultPosition, VaultUnchecked},
+    adapters::vault::{Vault, VaultPosition, VaultUnchecked},
     traits::Coins,
 };
 
@@ -13,28 +13,11 @@ pub enum QueryMsg {
     /// Rover contract-level config
     #[returns(ConfigResponse)]
     Config {},
-    /// Config & deposit caps on vault
-    #[returns(VaultConfigResponse)]
-    VaultConfig {
-        vault: VaultUnchecked,
-    },
-    /// Configs & deposit caps on all vaults
-    #[returns(Vec<VaultConfigResponse>)]
-    VaultsConfig {
-        start_after: Option<VaultUnchecked>,
-        limit: Option<u32>,
-    },
     /// The amount the vault has been utilized,
     /// denominated in the same denom set in the vault config's deposit cap
     #[returns(VaultUtilizationResponse)]
     VaultUtilization {
         vault: VaultUnchecked,
-    },
-    /// Whitelisted coins
-    #[returns(Vec<String>)]
-    AllowedCoins {
-        start_after: Option<String>,
-        limit: Option<u32>,
     },
     /// All positions represented by token with value
     #[returns(Positions)]
@@ -83,17 +66,6 @@ pub enum QueryMsg {
         start_after: Option<(String, String)>,
         limit: Option<u32>,
     },
-    /// Get total vault coin balance in Rover for vault
-    #[returns(Uint128)]
-    TotalVaultCoinBalance {
-        vault: VaultUnchecked,
-    },
-    /// Enumerate all total vault coin balances; start_after accepts vault addr
-    #[returns(Vec<VaultWithBalance>)]
-    AllTotalVaultCoinBalances {
-        start_after: Option<VaultUnchecked>,
-        limit: Option<u32>,
-    },
     /// Estimate how many LP tokens received in exchange for coins provided for liquidity
     #[returns(Uint128)]
     EstimateProvideLiquidity {
@@ -112,12 +84,6 @@ pub enum QueryMsg {
     VaultPositionValue {
         vault_position: VaultPosition,
     },
-}
-
-#[cw_serde]
-pub struct VaultConfigResponse {
-    pub vault: VaultUnchecked,
-    pub config: VaultConfig,
 }
 
 #[cw_serde]
@@ -219,7 +185,7 @@ pub struct ConfigResponse {
     pub account_nft: Option<String>,
     pub red_bank: String,
     pub oracle: String,
-    pub max_close_factor: Decimal,
+    pub params: String,
     pub max_unlocking_positions: Uint128,
     pub swapper: String,
     pub zapper: String,

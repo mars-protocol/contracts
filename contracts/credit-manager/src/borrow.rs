@@ -13,12 +13,17 @@ pub static DEFAULT_DEBT_SHARES_PER_COIN_BORROWED: Uint128 = Uint128::new(1_000_0
 /// else, get debt ownership % and multiply by total existing shares
 ///
 /// increment total debt shares, token debt shares, and asset amount
-pub fn borrow(deps: DepsMut, env: Env, account_id: &str, coin: Coin) -> ContractResult<Response> {
+pub fn borrow(
+    mut deps: DepsMut,
+    env: Env,
+    account_id: &str,
+    coin: Coin,
+) -> ContractResult<Response> {
     if coin.amount.is_zero() {
         return Err(ContractError::NoAmount);
     }
 
-    assert_coin_is_whitelisted(deps.storage, &coin.denom)?;
+    assert_coin_is_whitelisted(&mut deps, &coin.denom)?;
 
     let red_bank = RED_BANK.load(deps.storage)?;
     let total_debt_amount =

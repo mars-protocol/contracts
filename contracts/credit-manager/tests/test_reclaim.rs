@@ -36,7 +36,7 @@ fn only_token_owner_can_reclaim() {
 fn reclaiming_with_zero_lent() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
+    let mut mock = MockEnv::new().set_params(&[coin_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     // When passing some amount
@@ -65,7 +65,7 @@ fn when_trying_to_reclaim_more_than_lent() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -120,7 +120,7 @@ fn reclaiming_less_than_entire_lent_share() {
     let user = Addr::unchecked("user");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -175,7 +175,7 @@ fn reclaiming_the_entire_lent_share() {
     let user = Addr::unchecked("user");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -231,7 +231,7 @@ fn reclaiming_multiple_assets() {
     let user = Addr::unchecked("user");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, uosmo_info.denom.clone()),

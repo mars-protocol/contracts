@@ -3,15 +3,14 @@ use std::ops::{Add, Mul};
 use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Uint128};
 use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use mars_mock_oracle::msg::CoinPrice;
+use mars_params::types::{AssetParamsUpdate::AddOrUpdate, VaultConfigUpdate};
 use mars_rover::{
-    adapters::vault::VaultConfig,
     error::ContractError,
     msg::{
         execute::{
             Action::{Borrow, Deposit, EnterVault, Repay, Withdraw},
             ActionAmount, ActionCoin,
         },
-        instantiate::{ConfigUpdates, VaultInstantiateConfig},
         query::DebtAmount,
     },
 };
@@ -37,7 +36,7 @@ fn only_assets_with_no_debts() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -87,11 +86,12 @@ fn terra_ragnarok() {
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
+        whitelisted: true,
     };
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -171,7 +171,7 @@ fn debts_no_assets() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -223,7 +223,7 @@ fn cannot_borrow_more_than_healthy() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -300,6 +300,7 @@ fn cannot_borrow_more_but_not_liquidatable() {
         max_ltv: Decimal::from_atomics(5u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
+        whitelisted: true,
     };
     let uatom_info = CoinInfo {
         denom: "uatom".to_string(),
@@ -307,11 +308,12 @@ fn cannot_borrow_more_but_not_liquidatable() {
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
+        whitelisted: true,
     };
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -376,6 +378,7 @@ fn assets_and_ltv_lqdt_adjusted_value() {
         max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
         liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
+        whitelisted: true,
     };
     let uatom_info = CoinInfo {
         denom: "uatom".to_string(),
@@ -383,11 +386,12 @@ fn assets_and_ltv_lqdt_adjusted_value() {
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
         liquidation_bonus: Decimal::from_atomics(12u128, 2).unwrap(),
+        whitelisted: true,
     };
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -482,6 +486,7 @@ fn debt_value() {
         max_ltv: Decimal::from_atomics(3u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(5u128, 1).unwrap(),
         liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
+        whitelisted: true,
     };
     let uatom_info = CoinInfo {
         denom: "uatom".to_string(),
@@ -489,12 +494,13 @@ fn debt_value() {
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
         liquidation_bonus: Decimal::from_atomics(1u128, 1).unwrap(),
+        whitelisted: true,
     };
 
     let user_a = Addr::unchecked("user_a");
     let user_b = Addr::unchecked("user_b");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user_a.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -616,12 +622,12 @@ fn debt_value() {
 
 #[test]
 fn delisted_deposits_drop_max_ltv() {
-    let uosmo_info = uosmo_info();
+    let mut uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, uosmo_info.denom.clone()),
@@ -640,16 +646,11 @@ fn delisted_deposits_drop_max_ltv() {
 
     let prev_health = mock.query_health(&account_id);
 
-    // Remove uosmo from the coin whitelist
-    let res = mock.query_config();
-    mock.update_config(
-        &Addr::unchecked(res.ownership.owner.unwrap()),
-        ConfigUpdates {
-            allowed_coins: Some(vec![uatom_info.denom]),
-            ..Default::default()
-        },
-    )
-    .unwrap();
+    // Blacklist osmo in params contract
+    uosmo_info.whitelisted = false;
+    mock.update_asset_params(AddOrUpdate {
+        params: uosmo_info.into(),
+    });
 
     let curr_health = mock.query_health(&account_id);
 
@@ -679,7 +680,7 @@ fn delisted_vaults_drop_max_ltv() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone()])
+        .set_params(&[lp_token.clone(), atom.clone()])
         .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
@@ -698,7 +699,7 @@ fn delisted_vaults_drop_max_ltv() {
             Deposit(lp_token.to_coin(200)),
             Borrow(atom.to_coin(100)),
             EnterVault {
-                vault,
+                vault: vault.clone(),
                 coin: lp_token.to_action_coin(200),
             },
         ],
@@ -708,28 +709,12 @@ fn delisted_vaults_drop_max_ltv() {
 
     let prev_health = mock.query_health(&account_id);
 
-    let vault_configs = mock.query_vault_configs(None, None);
-    let v = vault_configs.first().unwrap();
-    let new_vault_config = VaultInstantiateConfig {
-        vault: v.vault.clone(),
-        config: VaultConfig {
-            deposit_cap: v.config.deposit_cap.clone(),
-            max_ltv: v.config.max_ltv,
-            liquidation_threshold: v.config.liquidation_threshold,
-            whitelisted: false,
-        },
-    };
-
     // Blacklist vault
-    let res = mock.query_config();
-    mock.update_config(
-        &Addr::unchecked(res.ownership.owner.unwrap()),
-        ConfigUpdates {
-            vault_configs: Some(vec![new_vault_config]),
-            ..Default::default()
-        },
-    )
-    .unwrap();
+    let mut config = mock.query_vault_params(&vault.address);
+    config.whitelisted = false;
+    mock.update_vault_params(VaultConfigUpdate::AddOrUpdate {
+        config: config.into(),
+    });
 
     let curr_health = mock.query_health(&account_id);
 
@@ -753,13 +738,13 @@ fn delisted_vaults_drop_max_ltv() {
 
 #[test]
 fn vault_base_token_delisting_drops_max_ltv() {
-    let lp_token = lp_token_info();
+    let mut lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
     let atom = uatom_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone()])
+        .set_params(&[lp_token.clone(), atom.clone()])
         .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
@@ -788,16 +773,11 @@ fn vault_base_token_delisting_drops_max_ltv() {
 
     let prev_health = mock.query_health(&account_id);
 
-    // Remove LP token from the coin whitelist
-    let res = mock.query_config();
-    mock.update_config(
-        &Addr::unchecked(res.ownership.owner.unwrap()),
-        ConfigUpdates {
-            allowed_coins: Some(vec![atom.denom]),
-            ..Default::default()
-        },
-    )
-    .unwrap();
+    // Blacklist LP token in params contract
+    lp_token.whitelisted = false;
+    mock.update_asset_params(AddOrUpdate {
+        params: lp_token.into(),
+    });
 
     let curr_health = mock.query_health(&account_id);
 
@@ -827,6 +807,7 @@ fn can_take_actions_if_ltv_does_not_weaken() {
         max_ltv: Decimal::from_atomics(5u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
+        whitelisted: true,
     };
     let uatom_info = CoinInfo {
         denom: "uatom".to_string(),
@@ -834,11 +815,12 @@ fn can_take_actions_if_ltv_does_not_weaken() {
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
+        whitelisted: true,
     };
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![coin(400, uosmo_info.denom.clone()), coin(50, uatom_info.denom.clone())],

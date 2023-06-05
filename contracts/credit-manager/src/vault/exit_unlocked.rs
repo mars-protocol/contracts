@@ -14,13 +14,13 @@ use crate::{
 };
 
 pub fn exit_vault_unlocked(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     account_id: &str,
     vault: Vault,
     position_id: u64,
 ) -> ContractResult<Response> {
-    assert_vault_is_whitelisted(deps.storage, &vault)?;
+    assert_vault_is_whitelisted(&mut deps, &vault)?;
 
     let vault_position = VAULT_POSITIONS.load(deps.storage, (account_id, vault.address.clone()))?;
     let matching_unlock = vault_position

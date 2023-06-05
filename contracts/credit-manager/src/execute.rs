@@ -45,7 +45,7 @@ pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Respon
 }
 
 pub fn dispatch_actions(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     info: MessageInfo,
     account_id: &str,
@@ -62,7 +62,7 @@ pub fn dispatch_actions(
     for action in actions {
         match action {
             Action::Deposit(coin) => {
-                response = deposit(deps.storage, response, account_id, coin, &mut received_coins)?;
+                response = deposit(&mut deps, response, account_id, coin, &mut received_coins)?;
             }
             Action::Withdraw(coin) => callbacks.push(CallbackMsg::Withdraw {
                 account_id: account_id.to_string(),

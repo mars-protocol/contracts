@@ -51,7 +51,7 @@ fn does_not_have_enough_tokens_to_provide_liq() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone(), osmo.clone()])
+        .set_params(&[lp_token.clone(), atom.clone(), osmo.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],
@@ -93,7 +93,7 @@ fn lp_token_out_must_be_whitelisted() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[atom.clone(), osmo.clone()])
+        .set_params(&[atom.clone(), osmo.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],
@@ -128,7 +128,7 @@ fn coins_in_must_be_whitelisted() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), osmo.clone()])
+        .set_params(&[lp_token.clone(), osmo.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],
@@ -159,7 +159,7 @@ fn min_received_too_high() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone(), osmo.clone()])
+        .set_params(&[lp_token.clone(), atom.clone(), osmo.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],
@@ -197,7 +197,7 @@ fn wrong_denom_provided() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone(), jake.clone()])
+        .set_params(&[lp_token.clone(), atom.clone(), jake.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), jake.to_coin(300)],
@@ -238,7 +238,7 @@ fn successful_zap() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone(), osmo.clone()])
+        .set_params(&[lp_token.clone(), atom.clone(), osmo.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],
@@ -305,7 +305,7 @@ fn can_provide_unbalanced() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone()])
+        .set_params(&[lp_token.clone(), atom.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300)],
@@ -378,7 +378,7 @@ fn order_does_not_matter() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone(), osmo.clone()])
+        .set_params(&[lp_token.clone(), atom.clone(), osmo.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],

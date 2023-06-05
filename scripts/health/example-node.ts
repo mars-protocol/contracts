@@ -7,7 +7,7 @@ import OsmosisAddresses from '../deploy/addresses/osmo-test-4.json'
     compute_health_js,
     OsmosisAddresses.creditManager,
     osmosisTestnetConfig.oracle.addr,
-    osmosisTestnetConfig.redBank.addr,
+    osmosisTestnetConfig.params.addr,
     osmosisTestnetConfig.chain.rpcEndpoint,
   )
   const health = await dataFetcher.fetchHealth('9')

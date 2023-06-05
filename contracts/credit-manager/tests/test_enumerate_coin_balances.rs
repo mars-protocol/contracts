@@ -65,7 +65,7 @@ fn pagination_on_all_coin_balances_query_works() {
             addr: user_c.clone(),
             funds: user_c_coins.clone(),
         })
-        .allowed_coins(&build_mock_coin_infos(14))
+        .set_params(&build_mock_coin_infos(14))
         .build()
         .unwrap();
 

@@ -44,7 +44,7 @@ fn only_token_owner_can_repay() {
 fn repaying_with_zero_debt_raises() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
+    let mut mock = MockEnv::new().set_params(&[coin_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     // When passing some amount
@@ -84,13 +84,14 @@ fn raises_when_repaying_what_is_not_owed() {
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(85u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(1u128, 1).unwrap(),
+        whitelisted: true,
     };
 
     let user_a = Addr::unchecked("user_a");
     let user_b = Addr::unchecked("user_b");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user_a.clone(),
             funds: coins(300, uatom_info.denom.clone()),
@@ -141,12 +142,13 @@ fn raises_when_not_enough_assets_to_repay() {
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(85u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(1u128, 1).unwrap(),
+        whitelisted: true,
     };
 
     let user = Addr::unchecked("user");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[uosmo_info.clone(), uatom_info.clone()])
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, uatom_info.denom.clone()),
@@ -188,7 +190,7 @@ fn repay_less_than_total_debt() {
     let user = Addr::unchecked("user");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -286,7 +288,7 @@ fn pays_max_debt_when_attempting_to_repay_more_than_owed() {
     let user = Addr::unchecked("user");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -337,7 +339,7 @@ fn amount_none_repays_total_debt() {
     let user = Addr::unchecked("user");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),

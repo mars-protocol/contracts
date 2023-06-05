@@ -7,7 +7,7 @@ use mars_rover_health_types::{ConfigResponse, ExecuteMsg, HealthResult, Instanti
 
 use crate::{
     compute::compute_health,
-    state::{CREDIT_MANAGER, OWNER},
+    state::{CREDIT_MANAGER, OWNER, PARAMS},
     update_config::update_config,
 };
 
@@ -45,7 +45,8 @@ pub fn execute(
         ExecuteMsg::UpdateOwner(update) => Ok(OWNER.update(deps, info, update)?),
         ExecuteMsg::UpdateConfig {
             credit_manager,
-        } => update_config(deps, info, credit_manager),
+            params,
+        } => update_config(deps, info, credit_manager, params),
     }
 }
 
@@ -61,11 +62,13 @@ pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> HealthResult<Binary> {
 }
 
 pub fn query_config(deps: Deps) -> HealthResult<ConfigResponse> {
-    let credit_manager_addr = CREDIT_MANAGER.may_load(deps.storage)?.map(|a| a.into());
+    let credit_manager = CREDIT_MANAGER.may_load(deps.storage)?.map(Into::into);
+    let params = PARAMS.may_load(deps.storage)?.map(Into::into);
     let owner_response = OWNER.query(deps.storage)?;
 
     Ok(ConfigResponse {
-        credit_manager_addr,
+        credit_manager,
+        params,
         owner_response,
     })
 }

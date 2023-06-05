@@ -1,27 +1,24 @@
-use cosmwasm_std::{Addr, Coin, Deps, Env, Order, StdResult, Uint128};
+use cosmwasm_std::{Coin, Deps, Env, Order, StdResult};
 use cw_paginate::paginate_map;
 use cw_storage_plus::Bound;
 use mars_rover::{
-    adapters::vault::{Vault, VaultBase, VaultPosition, VaultPositionValue, VaultUnchecked},
+    adapters::vault::{VaultBase, VaultPosition, VaultPositionValue, VaultUnchecked},
     error::ContractResult,
     msg::query::{
         CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, LentAmount, LentShares,
-        Positions, SharesResponseItem, VaultConfigResponse, VaultPositionResponseItem,
-        VaultUtilizationResponse, VaultWithBalance,
+        Positions, SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
     },
 };
 
 use crate::{
     state::{
-        ACCOUNT_NFT, ALLOWED_COINS, COIN_BALANCES, DEBT_SHARES, HEALTH_CONTRACT, LENT_SHARES,
-        MAX_CLOSE_FACTOR, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, RED_BANK, SWAPPER,
-        TOTAL_DEBT_SHARES, TOTAL_LENT_SHARES, VAULT_CONFIGS, VAULT_POSITIONS, ZAPPER,
+        ACCOUNT_NFT, COIN_BALANCES, DEBT_SHARES, HEALTH_CONTRACT, LENT_SHARES,
+        MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, PARAMS, RED_BANK, SWAPPER, TOTAL_DEBT_SHARES,
+        TOTAL_LENT_SHARES, VAULT_POSITIONS, ZAPPER,
     },
     utils::{debt_shares_to_amount, lent_shares_to_amount},
     vault::vault_utilization_in_deposit_cap_denom,
 };
-
-const DEFAULT_LIMIT: u32 = 10;
 
 pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
     Ok(ConfigResponse {
@@ -29,7 +26,7 @@ pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
         account_nft: ACCOUNT_NFT.may_load(deps.storage)?.map(|addr| addr.to_string()),
         red_bank: RED_BANK.load(deps.storage)?.address().into(),
         oracle: ORACLE.load(deps.storage)?.address().into(),
-        max_close_factor: MAX_CLOSE_FACTOR.load(deps.storage)?,
+        params: PARAMS.load(deps.storage)?.address().into(),
         max_unlocking_positions: MAX_UNLOCKING_POSITIONS.load(deps.storage)?,
         swapper: SWAPPER.load(deps.storage)?.address().into(),
         zapper: ZAPPER.load(deps.storage)?.address().into(),
@@ -144,40 +141,6 @@ pub fn query_all_lent_shares(
     })
 }
 
-pub fn query_vault_config(
-    deps: Deps,
-    unchecked: VaultUnchecked,
-) -> ContractResult<VaultConfigResponse> {
-    let vault = unchecked.check(deps.api)?;
-    let config = VAULT_CONFIGS.load(deps.storage, &vault.address)?;
-    Ok(VaultConfigResponse {
-        config,
-        vault: vault.into(),
-    })
-}
-
-pub fn query_vaults_config(
-    deps: Deps,
-    start_after: Option<VaultUnchecked>,
-    limit: Option<u32>,
-) -> ContractResult<Vec<VaultConfigResponse>> {
-    let vault: Vault;
-    let start = match &start_after {
-        Some(unchecked) => {
-            vault = unchecked.check(deps.api)?;
-            Some(Bound::exclusive(&vault.address))
-        }
-        None => None,
-    };
-    paginate_map(&VAULT_CONFIGS, deps.storage, start, limit, |addr, config| {
-        let vault = VaultBase::new(addr);
-        Ok(VaultConfigResponse {
-            config,
-            vault: vault.into(),
-        })
-    })
-}
-
 pub fn query_vault_utilization(
     deps: Deps,
     env: Env,
@@ -227,23 +190,6 @@ pub fn query_all_vault_positions(
     })
 }
 
-/// NOTE: This implementation of the query function assumes the map `ALLOWED_COINS` only saves `Empty`.
-/// If a coin is to be removed from the whitelist, the map must remove the corresponding key.
-pub fn query_allowed_coins(
-    deps: Deps,
-    start_after: Option<String>,
-    limit: Option<u32>,
-) -> StdResult<Vec<String>> {
-    let start = start_after.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
-
-    let limit = limit.unwrap_or(DEFAULT_LIMIT) as usize;
-
-    ALLOWED_COINS
-        .items(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .collect::<StdResult<Vec<_>>>()
-}
-
 pub fn query_total_debt_shares(deps: Deps, denom: &str) -> StdResult<DebtShares> {
     let shares = TOTAL_DEBT_SHARES.load(deps.storage, denom)?;
     Ok(DebtShares {
@@ -284,39 +230,6 @@ pub fn query_all_total_lent_shares(
         Ok(LentShares {
             denom,
             shares,
-        })
-    })
-}
-
-pub fn query_total_vault_coin_balance(
-    deps: Deps,
-    unchecked: &VaultUnchecked,
-    rover_addr: &Addr,
-) -> StdResult<Uint128> {
-    let vault = unchecked.check(deps.api)?;
-    vault.query_balance(&deps.querier, rover_addr)
-}
-
-pub fn query_all_total_vault_coin_balances(
-    deps: Deps,
-    rover_addr: &Addr,
-    start_after: Option<VaultUnchecked>,
-    limit: Option<u32>,
-) -> StdResult<Vec<VaultWithBalance>> {
-    let vault: Vault;
-    let start = match &start_after {
-        Some(unchecked) => {
-            vault = unchecked.check(deps.api)?;
-            Some(Bound::exclusive(&vault.address))
-        }
-        None => None,
-    };
-    paginate_map(&VAULT_CONFIGS, deps.storage, start, limit, |addr, _| {
-        let vault = VaultBase::new(addr);
-        let balance = vault.query_balance(&deps.querier, rover_addr)?;
-        Ok(VaultWithBalance {
-            vault,
-            balance,
         })
     })
 }

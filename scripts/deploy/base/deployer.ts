@@ -176,25 +176,14 @@ export class Deployer {
 
   async instantiateCreditManager() {
     const msg: RoverInstantiateMsg = {
+      params: this.storage.addresses.params!,
       max_unlocking_positions: this.config.maxUnlockingPositions,
-      allowed_coins: this.config.allowedCoins,
-      vault_configs: this.config.vaults.map((v) => ({ config: v.config, vault: v.vault })),
       oracle: this.config.oracle.addr,
       owner: this.deployerAddr,
       red_bank: this.config.redBank.addr,
-      max_close_factor: this.config.maxCloseFactor,
       swapper: this.storage.addresses.swapper!,
       zapper: this.storage.addresses.zapper!,
       health_contract: this.storage.addresses.healthContract!,
-    }
-
-    if (this.config.testActions) {
-      msg.vault_configs.push({
-        vault: {
-          address: this.storage.addresses.mockVault!,
-        },
-        config: this.config.testActions.vault.mock.config,
-      })
     }
 
     await this.instantiate('creditManager', this.storage.codeIds.creditManager!, msg)

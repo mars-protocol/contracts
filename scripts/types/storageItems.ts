@@ -16,6 +16,7 @@ export interface StorageItems {
     zapper?: string
     healthContract?: string
     creditManager?: string
+    params?: string
   }
   actions: {
     proposedNewOwner?: boolean

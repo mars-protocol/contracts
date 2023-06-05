@@ -13,9 +13,9 @@ import {
   Action,
   Coin,
   ConfigUpdates,
-  VaultInstantiateConfig,
 } from '../../types/generated/mars-credit-manager/MarsCreditManager.types'
 import { MarsMockVaultQueryClient } from '../../types/generated/mars-mock-vault/MarsMockVault.client'
+import { VaultConfigBaseForString } from '../../types/generated/mars-params/MarsParams.types'
 
 export class Rover {
   private exec: MarsCreditManagerClient
@@ -184,7 +184,7 @@ export class Rover {
     )
   }
 
-  async vaultDeposit(v: VaultInstantiateConfig, info: VaultInfo) {
+  async vaultDeposit(v: VaultConfigBaseForString, info: VaultInfo) {
     const oldRoverBalance = await this.cwClient.getBalance(
       this.storage.addresses.creditManager!,
       info.tokens.vault_token,
@@ -196,13 +196,13 @@ export class Rover {
             amount: { exact: this.actions.vault.depositAmount },
             denom: info.tokens.base_token,
           },
-          vault: { address: v.vault.address },
+          vault: { address: v.addr },
         },
       },
     ])
     const positions = await this.query.positions({ accountId: this.accountId! })
     assert.equal(positions.vaults.length, 1)
-    const state = await this.getVaultBalance(v.vault.address)
+    const state = await this.getVaultBalance(v.addr)
     assert(state.locked > 0 || state.unlocked > 0)
     const newRoverBalance = await this.cwClient.getBalance(
       this.storage.addresses.creditManager!,
@@ -220,13 +220,13 @@ export class Rover {
     )
   }
 
-  async vaultWithdraw(v: VaultInstantiateConfig, info: VaultInfo) {
+  async vaultWithdraw(v: VaultConfigBaseForString, info: VaultInfo) {
     const oldBalance = await this.getAccountBalance(info.tokens.base_token)
     await this.updateCreditAccount([
       {
         exit_vault: {
           amount: this.actions.vault.withdrawAmount,
-          vault: { address: v.vault.address },
+          vault: { address: v.addr },
         },
       },
     ])
@@ -239,17 +239,17 @@ export class Rover {
     )
   }
 
-  async vaultRequestUnlock(v: VaultInstantiateConfig, info: VaultInfo) {
-    const oldBalance = await this.getVaultBalance(v.vault.address)
+  async vaultRequestUnlock(v: VaultConfigBaseForString, info: VaultInfo) {
+    const oldBalance = await this.getVaultBalance(v.addr)
     await this.updateCreditAccount([
       {
         request_vault_unlock: {
           amount: this.actions.vault.withdrawAmount,
-          vault: { address: v.vault.address },
+          vault: { address: v.addr },
         },
       },
     ])
-    const newBalance = await this.getVaultBalance(v.vault.address)
+    const newBalance = await this.getVaultBalance(v.addr)
     assert(newBalance.locked < oldBalance.locked)
     assert.equal(newBalance.unlocking.length, 1)
 
@@ -269,17 +269,17 @@ export class Rover {
     printGreen(`Withdrew all balances back to wallet`)
   }
 
-  async getVaultInfo(v: VaultInstantiateConfig): Promise<VaultInfo> {
-    const client = new MarsMockVaultQueryClient(this.cwClient, v.vault.address)
+  async getVaultInfo(v: VaultConfigBaseForString): Promise<VaultInfo> {
+    const client = new MarsMockVaultQueryClient(this.cwClient, v.addr)
     return {
       tokens: await client.info(),
       lockup: await this.getLockup(v),
     }
   }
 
-  private async getLockup(v: VaultInstantiateConfig): Promise<VaultInfo['lockup']> {
+  private async getLockup(v: VaultConfigBaseForString): Promise<VaultInfo['lockup']> {
     try {
-      return await this.cwClient.queryContractSmart(v.vault.address, {
+      return await this.cwClient.queryContractSmart(v.addr, {
         vault_extension: {
           lockup: {
             lockup_duration: {},

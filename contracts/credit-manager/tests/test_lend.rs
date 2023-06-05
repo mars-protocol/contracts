@@ -41,7 +41,7 @@ fn only_token_owner_can_lend() {
 fn can_only_lend_what_is_whitelisted() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().allowed_coins(&[coin_info]).build().unwrap();
+    let mut mock = MockEnv::new().set_params(&[coin_info]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res =
@@ -54,7 +54,7 @@ fn can_only_lend_what_is_whitelisted() {
 fn lending_zero_raises() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
+    let mut mock = MockEnv::new().set_params(&[coin_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res = mock.update_credit_account(&account_id, &user, vec![Lend(coin_info.to_coin(0))], &[]);
@@ -68,7 +68,7 @@ fn raises_when_not_enough_assets_to_lend() {
     let user = Addr::unchecked("user");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -103,7 +103,7 @@ fn successful_lend() {
     let user_b = Addr::unchecked("user_b");
 
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user_a.clone(),
             funds: coins(300, coin_info.denom.clone()),

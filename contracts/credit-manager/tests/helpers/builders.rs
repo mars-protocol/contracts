@@ -11,6 +11,7 @@ pub fn build_mock_coin_infos(count: usize) -> Vec<CoinInfo> {
             liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
             price: Decimal::from_atomics(10u128, 0).unwrap(),
             liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
+            whitelisted: true,
         })
         .collect()
 }

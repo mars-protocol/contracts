@@ -31,7 +31,7 @@ fn user_does_not_have_enough_to_pay_diff() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[osmo_info.clone()])
+        .set_params(&[osmo_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, osmo_info.denom.clone()),
@@ -72,7 +72,7 @@ fn user_gets_rebalanced_down() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[osmo_info.clone()])
+        .set_params(&[osmo_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, osmo_info.denom.clone()),
@@ -110,7 +110,7 @@ fn user_gets_rebalanced_up() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[osmo_info.clone()])
+        .set_params(&[osmo_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, osmo_info.denom.clone()),

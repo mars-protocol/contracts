@@ -12,11 +12,11 @@ pub enum HealthError {
     #[error("{0}")]
     CheckedMultiplyFraction(#[from] CheckedMultiplyFractionError),
 
-    #[error("The credit manager address has not been set in config")]
-    CreditManagerNotSet,
+    #[error("{0} address has not been set in config")]
+    ContractNotSet(String),
 
-    #[error("{0} was not provided a market to compute health with")]
-    MissingMarket(String),
+    #[error("{0} was not provided asset params to compute health with")]
+    MissingParams(String),
 
     #[error("{0} was not provided a price to compute health with")]
     MissingPrice(String),

@@ -8,7 +8,7 @@ use mars_rover::{
 };
 
 use crate::helpers::{
-    assert_err, uosmo_info, AccountToFund, MockEnv, DEFAULT_RED_BANK_COIN_BALANCE,
+    assert_err, blacklisted_coin, uosmo_info, AccountToFund, MockEnv, DEFAULT_RED_BANK_COIN_BALANCE,
 };
 
 pub mod helpers;
@@ -18,7 +18,7 @@ fn only_token_owner_can_borrow() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
+    let mut mock = MockEnv::new().set_params(&[coin_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let another_user = Addr::unchecked("another_user");
@@ -40,16 +40,20 @@ fn only_token_owner_can_borrow() {
 
 #[test]
 fn can_only_borrow_what_is_whitelisted() {
-    let coin_info = uosmo_info();
+    let blacklisted_coin = blacklisted_coin();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().allowed_coins(&[coin_info]).build().unwrap();
+    let mut mock = MockEnv::new().set_params(&[blacklisted_coin.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
-    let res =
-        mock.update_credit_account(&account_id, &user, vec![Borrow(coin(234, "usomething"))], &[]);
+    let res = mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![Borrow(coin(234, blacklisted_coin.denom.clone()))],
+        &[],
+    );
 
-    assert_err(res, ContractError::NotWhitelisted(String::from("usomething")))
+    assert_err(res, ContractError::NotWhitelisted(blacklisted_coin.denom))
 }
 
 #[test]
@@ -57,7 +61,7 @@ fn borrowing_zero_does_nothing() {
     let coin_info = uosmo_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().allowed_coins(&[coin_info.clone()]).build().unwrap();
+    let mut mock = MockEnv::new().set_params(&[coin_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
     let res =
@@ -75,7 +79,7 @@ fn cannot_borrow_above_max_ltv() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -109,7 +113,7 @@ fn success_when_new_debt_asset() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: coins(300, coin_info.denom.clone()),
@@ -165,7 +169,7 @@ fn debt_shares_with_debt_amount() {
     let user_a = Addr::unchecked("user_a");
     let user_b = Addr::unchecked("user_b");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[coin_info.clone()])
+        .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user_a.clone(),
             funds: coins(300, coin_info.denom.clone()),

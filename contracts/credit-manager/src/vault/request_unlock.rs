@@ -24,12 +24,12 @@ pub struct RequestTempStorage {
 }
 
 pub fn request_vault_unlock(
-    deps: DepsMut,
+    mut deps: DepsMut,
     account_id: &str,
     vault: Vault,
     amount: Uint128,
 ) -> ContractResult<Response> {
-    assert_vault_is_whitelisted(deps.storage, &vault)?;
+    assert_vault_is_whitelisted(&mut deps, &vault)?;
     vault.query_lockup_duration(&deps.querier).map_err(|_| {
         ContractError::RequirementsNotMet(
             "This vault does not require lockup. Call withdraw directly.".to_string(),

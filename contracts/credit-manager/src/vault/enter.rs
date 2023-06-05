@@ -11,7 +11,7 @@ use mars_rover::{
 };
 
 use crate::{
-    state::{COIN_BALANCES, ORACLE, VAULT_CONFIGS},
+    state::{COIN_BALANCES, ORACLE, PARAMS},
     utils::{assert_coin_is_whitelisted, decrement_coin_balance},
     vault::{
         rover_vault_coin_balance_value,
@@ -20,7 +20,7 @@ use crate::{
 };
 
 pub fn enter_vault(
-    deps: DepsMut,
+    mut deps: DepsMut,
     rover_addr: &Addr,
     account_id: &str,
     vault: Vault,
@@ -37,8 +37,8 @@ pub fn enter_vault(
         amount,
     };
 
-    assert_coin_is_whitelisted(deps.storage, &coin.denom)?;
-    assert_vault_is_whitelisted(deps.storage, &vault)?;
+    assert_coin_is_whitelisted(&mut deps, &coin.denom)?;
+    assert_vault_is_whitelisted(&mut deps, &vault)?;
     assert_denom_matches_vault_reqs(deps.querier, &vault, &coin_to_enter)?;
     assert_deposit_is_under_cap(deps.as_ref(), &vault, &coin_to_enter, rover_addr)?;
 
@@ -124,7 +124,8 @@ pub fn assert_deposit_is_under_cap(
 
     let new_total_vault_value = rover_vault_balance_value.checked_add(deposit_request_value)?;
 
-    let config = VAULT_CONFIGS.load(deps.storage, &vault.address)?;
+    let params = PARAMS.load(deps.storage)?;
+    let config = params.query_vault_config(&deps.querier, &vault.address)?;
     let deposit_cap_value = oracle.query_total_value(&deps.querier, &[config.deposit_cap])?;
 
     if new_total_vault_value > deposit_cap_value {

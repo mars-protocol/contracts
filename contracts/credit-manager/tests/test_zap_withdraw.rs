@@ -1,18 +1,17 @@
 use cosmwasm_std::{Addr, OverflowError, OverflowOperation::Sub, Uint128};
+use mars_params::types::AssetParamsUpdate::AddOrUpdate;
 use mars_rover::{
     error::ContractError as RoverError,
-    msg::{
-        execute::{
-            Action::{Deposit, ProvideLiquidity, WithdrawLiquidity},
-            ActionAmount, ActionCoin,
-        },
-        instantiate::ConfigUpdates,
+    msg::execute::{
+        Action::{Deposit, ProvideLiquidity, WithdrawLiquidity},
+        ActionAmount, ActionCoin,
     },
 };
 use mars_v2_zapper_mock::contract::STARTING_LP_POOL_TOKENS;
 
 use crate::helpers::{
-    assert_err, get_coin, lp_token_info, uatom_info, uosmo_info, AccountToFund, MockEnv,
+    assert_err, blacklisted_coin, get_coin, lp_token_info, uatom_info, uosmo_info, AccountToFund,
+    MockEnv,
 };
 
 pub mod helpers;
@@ -47,7 +46,7 @@ fn only_token_owner_can_unzap_for_account() {
 
 #[test]
 fn lp_token_in_must_be_whitelisted() {
-    let lp_token = lp_token_info();
+    let blacklisted = blacklisted_coin();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().build().unwrap();
 
@@ -56,23 +55,23 @@ fn lp_token_in_must_be_whitelisted() {
         &account_id,
         &user,
         vec![WithdrawLiquidity {
-            lp_token: lp_token.to_action_coin(100),
+            lp_token: blacklisted.to_action_coin(100),
         }],
         &[],
     );
 
-    assert_err(res, RoverError::NotWhitelisted(lp_token.denom))
+    assert_err(res, RoverError::NotWhitelisted(blacklisted.denom))
 }
 
 #[test]
 fn coins_out_must_be_whitelisted() {
     let atom = uatom_info();
-    let osmo = uosmo_info();
+    let mut osmo = uosmo_info();
     let lp_token = lp_token_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone(), osmo.clone()])
+        .set_params(&[lp_token.clone(), atom.clone(), osmo.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],
@@ -98,16 +97,11 @@ fn coins_out_must_be_whitelisted() {
     )
     .unwrap();
 
-    // update config to disallow denoms out
-    let config = mock.query_config();
-    mock.update_config(
-        &Addr::unchecked(config.ownership.owner.unwrap()),
-        ConfigUpdates {
-            allowed_coins: Some(vec![lp_token.denom.clone(), atom.denom]),
-            ..Default::default()
-        },
-    )
-    .unwrap();
+    // update params to disallow denoms out
+    osmo.whitelisted = false;
+    mock.update_asset_params(AddOrUpdate {
+        params: osmo.clone().into(),
+    });
 
     let res = mock.update_credit_account(
         &account_id,
@@ -129,7 +123,7 @@ fn does_not_have_the_tokens_to_withdraw_liq() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone(), osmo.clone()])
+        .set_params(&[lp_token.clone(), atom.clone(), osmo.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],
@@ -176,7 +170,7 @@ fn amount_zero_passed() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone(), osmo.clone()])
+        .set_params(&[lp_token.clone(), atom.clone(), osmo.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],
@@ -221,7 +215,7 @@ fn amount_none_passed_with_no_balance() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone(), osmo.clone()])
+        .set_params(&[lp_token.clone(), atom.clone(), osmo.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],
@@ -251,7 +245,7 @@ fn successful_unzap_specified_amount() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone(), osmo.clone()])
+        .set_params(&[lp_token.clone(), atom.clone(), osmo.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],
@@ -314,7 +308,7 @@ fn successful_unzap_unspecified_amount() {
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .allowed_coins(&[lp_token.clone(), atom.clone(), osmo.clone()])
+        .set_params(&[lp_token.clone(), atom.clone(), osmo.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],
