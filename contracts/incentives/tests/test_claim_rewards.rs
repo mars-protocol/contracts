@@ -143,7 +143,11 @@ fn execute_claim_rewards() {
 
     // unclaimed_rewards
     USER_UNCLAIMED_REWARDS
-        .save(deps.as_mut().storage, (&user_addr, "umars"), &previous_unclaimed_rewards)
+        .save(
+            deps.as_mut().storage,
+            (&user_addr, asset_denom, "umars"),
+            &previous_unclaimed_rewards,
+        )
         .unwrap();
 
     let expected_asset_incentive_index = compute_asset_incentive_index(
@@ -162,16 +166,12 @@ fn execute_claim_rewards() {
     )
     .unwrap();
 
-    println!("expected_asset_accrued_rewards: {}", expected_asset_accrued_rewards);
-
     let expected_zero_accrued_rewards = compute_user_accrued_rewards(
         zero_user_balance,
         Decimal::from_ratio(1_u128, 2_u128),
         Decimal::one(),
     )
     .unwrap();
-
-    println!("expected_zero_accrued_rewards: {}", expected_zero_accrued_rewards);
 
     let expected_accrued_rewards =
         previous_unclaimed_rewards + expected_asset_accrued_rewards + expected_zero_accrued_rewards;
@@ -203,9 +203,7 @@ fn execute_claim_rewards() {
     )
     .unwrap();
     assert!(rewards_query_before.len() == 1);
-    println!("rewards_query_before: {:?}", rewards_query_before);
-    println!("expected_accrued_rewards: {:?}", expected_accrued_rewards);
-    // assert!(rewards_query_before[0].amount < expected_accrued_rewards);
+    assert!(rewards_query_before[0].amount < expected_accrued_rewards);
 
     // query before execution gives expected rewards
     let rewards_query = query_user_unclaimed_rewards(
@@ -238,11 +236,11 @@ fn execute_claim_rewards() {
     );
 
     assert_eq!(
-        res.attributes,
+        res.events[0].attributes,
         vec![
             attr("action", "claim_rewards"),
             attr("user", "user"),
-            attr("mars_rewards", expected_accrued_rewards),
+            attr("umars_rewards", expected_accrued_rewards),
         ]
     );
 
@@ -281,8 +279,9 @@ fn execute_claim_rewards() {
     assert_eq!(user_no_user_index, None);
 
     // user rewards are cleared
-    let user_unclaimed_rewards =
-        USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, (&user_addr, "umars")).unwrap();
+    let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
+        .load(deps.as_ref().storage, (&user_addr, asset_denom, "umars"))
+        .unwrap();
     assert_eq!(user_unclaimed_rewards, Uint128::zero())
 }
 
