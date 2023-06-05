@@ -93,7 +93,7 @@ pub fn compute_user_unclaimed_rewards(
     incentive_denom: &str,
 ) -> StdResult<(Uint128, Option<UserAssetIncentiveStatus>)> {
     let mut unclaimed_rewards = USER_UNCLAIMED_REWARDS
-        .may_load(deps.storage, (user_addr, &incentive_denom))?
+        .may_load(deps.storage, (user_addr, &collateral_denom, &incentive_denom))?
         .unwrap_or_else(Uint128::zero);
 
     let mut asset_incentive = ASSET_INCENTIVES

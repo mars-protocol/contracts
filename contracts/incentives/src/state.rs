@@ -21,8 +21,8 @@ pub const ASSET_INCENTIVES: Map<(String, String), AssetIncentive> = Map::new("in
 pub const USER_ASSET_INDICES: Map<(&Addr, &str, &str), Decimal> = Map::new("indices");
 
 /// A map containing the amount of unclaimed incentives for a given user and incentive denom.
-/// The key is (user address, incentive denom).
-pub const USER_UNCLAIMED_REWARDS: Map<(&Addr, &str), Uint128> = Map::new("unclaimed_rewards");
+/// The key is (user address, collateral denom, incentive denom).
+pub const USER_UNCLAIMED_REWARDS: Map<(&Addr, &str, &str), Uint128> = Map::new("unclaimed_rewards");
 
 /// The default limit for pagination over asset incentives
 pub const DEFAULT_LIMIT: u32 = 5;
