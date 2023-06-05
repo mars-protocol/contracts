@@ -129,7 +129,7 @@ fn balance_change_zero_emission() {
 
     // rewards get updated
     let user_unclaimed_rewards =
-        USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, (&user_addr, "umars")).unwrap();
+        USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, (&user_addr, denom, "umars")).unwrap();
     assert_eq!(user_unclaimed_rewards, expected_accrued_rewards)
 }
 
@@ -208,8 +208,9 @@ fn balance_change_user_with_zero_balance() {
     assert_eq!(user_asset_index, expected_index);
 
     // no new rewards
-    let user_unclaimed_rewards =
-        USER_UNCLAIMED_REWARDS.may_load(deps.as_ref().storage, (&user_addr, "umars")).unwrap();
+    let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
+        .may_load(deps.as_ref().storage, (&user_addr, denom, "umars"))
+        .unwrap();
     assert_eq!(user_unclaimed_rewards, None)
 }
 
@@ -500,8 +501,9 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(user_asset_index, expected_asset_incentive_index);
 
         // user gets new rewards
-        let user_unclaimed_rewards =
-            USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, (&user_addr, "umars")).unwrap();
+        let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
+            .load(deps.as_ref().storage, (&user_addr, denom, "umars"))
+            .unwrap();
         expected_accumulated_rewards += expected_accrued_rewards;
         assert_eq!(user_unclaimed_rewards, expected_accumulated_rewards)
     }
@@ -565,8 +567,9 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(user_asset_index, expected_asset_incentive_index);
 
         // user gets new rewards
-        let user_unclaimed_rewards =
-            USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, (&user_addr, "umars")).unwrap();
+        let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
+            .load(deps.as_ref().storage, (&user_addr, denom, "umars"))
+            .unwrap();
         expected_accumulated_rewards += expected_accrued_rewards;
         assert_eq!(user_unclaimed_rewards, expected_accumulated_rewards)
     }
@@ -612,8 +615,9 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(user_asset_index, expected_asset_incentive_index);
 
         // user gets no new rewards
-        let user_unclaimed_rewards =
-            USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, (&user_addr, "umars")).unwrap();
+        let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
+            .load(deps.as_ref().storage, (&user_addr, denom, "umars"))
+            .unwrap();
         assert_eq!(user_unclaimed_rewards, expected_accumulated_rewards)
     }
 }
