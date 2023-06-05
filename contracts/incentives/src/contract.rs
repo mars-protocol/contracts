@@ -358,7 +358,7 @@ pub fn execute_balance_change(
             if !accrued_rewards.is_zero() {
                 USER_UNCLAIMED_REWARDS.update(
                     deps.storage,
-                    (&user_addr, &incentive_denom),
+                    (&user_addr, &collateral_denom, &incentive_denom),
                     |ur: Option<Uint128>| -> StdResult<Uint128> {
                         match ur {
                             Some(unclaimed_rewards) => Ok(unclaimed_rewards + accrued_rewards),
@@ -404,6 +404,9 @@ pub fn execute_claim_rewards(
         start_after_incentive_denom,
         limit,
     )?;
+
+    let mut total_unclaimed_rewards: HashMap<String, Uint128> = HashMap::new();
+
     for ((collateral_denom, incentive_denom), _) in asset_incentives {
         let (unclaimed_rewards, user_asset_incentive_statuses_to_update) =
             compute_user_unclaimed_rewards(
@@ -437,19 +440,25 @@ pub fn execute_claim_rewards(
         // clear unclaimed rewards
         USER_UNCLAIMED_REWARDS.save(
             deps.storage,
-            (&user_addr, &incentive_denom),
+            (&user_addr, &collateral_denom, &incentive_denom),
             &Uint128::zero(),
         )?;
 
         if !unclaimed_rewards.is_zero() {
-            // Build message to send the incentive to the user
-            // TODO: Group all sends of the same denom in a single message?
-            response = response.add_message(CosmosMsg::Bank(BankMsg::Send {
-                to_address: user_addr.to_string(),
-                amount: coins(unclaimed_rewards.u128(), &incentive_denom),
-            }));
-            event = event.add_attribute(format!("{}_rewards", incentive_denom), unclaimed_rewards);
+            if let Some(x) = total_unclaimed_rewards.get_mut(&incentive_denom) {
+                *x += unclaimed_rewards;
+            } else {
+                total_unclaimed_rewards.insert(incentive_denom, unclaimed_rewards);
+            }
         };
+    }
+
+    for (denom, amount) in total_unclaimed_rewards.iter() {
+        response = response.add_message(CosmosMsg::Bank(BankMsg::Send {
+            to_address: user_addr.to_string(),
+            amount: coins(amount.u128(), denom),
+        }));
+        event = event.add_attribute(format!("{}_rewards", denom), *amount);
     }
 
     Ok(response.add_event(event))
@@ -599,7 +608,7 @@ pub fn query_user_unclaimed_rewards(
         if let Some(x) = total_unclaimed_rewards.get_mut(&incentive_denom) {
             *x += unclaimed_rewards;
         } else {
-            total_unclaimed_rewards.insert(incentive_denom, unclaimed_rewards);
+            total_unclaimed_rewards.insert(incentive_denom.clone(), unclaimed_rewards);
         }
     }
 
