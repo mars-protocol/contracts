@@ -90,6 +90,7 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
         },
     )
     .unwrap();
@@ -147,6 +148,7 @@ pub fn set_pyth_price_source(deps: DepsMut, denom: &str, price_id: PriceIdentifi
             contract_addr: "pyth_contract".to_string(),
             price_feed_id: price_id,
             max_staleness: 30,
+            denom_decimals: 6,
         },
     )
 }
