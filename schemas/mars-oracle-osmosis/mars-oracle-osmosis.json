@@ -437,7 +437,7 @@
                     "type": "string"
                   },
                   "denom_decimals": {
-                    "description": "Assets are represented as utokens and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).\n\nPyth prices are denominated in USD so basically it means how much 1 USDC, 1 ATOM, 1 OSMO is worth in USD (NOT 1 uusdc, 1 uatom, 1 uosmo). We have to normalize it. We should get how much 1 utoken is worth in USD. For example: osmo_price_in_usd = 0.59958994 uosmo_price_in_usd = osmo_price_in_usd / 10^decimals = 0.59958994 / 10^6 = 0.00000059958994",
+                    "description": "Assets are represented in their smallest unit and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).\n\nPyth prices are denominated in USD so basically it means how much 1 USDC, 1 ATOM, 1 OSMO is worth in USD (NOT 1 uusdc, 1 uatom, 1 uosmo). We have to normalize it. We should get how much 1 utoken is worth in uusd. For example: denom_decimals (OSMO) = 6 base_denom_decimals (USD) = 6\n\n1 OSMO = 10^6 uosmo 1 USD = 10^6 uusd\n\nosmo_price_in_usd = 0.59958994 uosmo_price_in_uusd = osmo_price_in_usd / 10^denom_decimals * 10^base_denom_decimals = uosmo_price_in_uusd = 0.59958994 * 10^(-6) * 10^6 = 0.59958994",
                     "type": "integer",
                     "format": "uint8",
                     "minimum": 0.0

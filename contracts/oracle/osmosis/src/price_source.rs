@@ -162,12 +162,19 @@ pub enum OsmosisPriceSource<T> {
         /// rejecting the price as too stale
         max_staleness: u64,
 
-        /// Assets are represented as utokens and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).
+        /// Assets are represented in their smallest unit and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).
         ///
         /// Pyth prices are denominated in USD so basically it means how much 1 USDC, 1 ATOM, 1 OSMO is worth in USD (NOT 1 uusdc, 1 uatom, 1 uosmo).
-        /// We have to normalize it. We should get how much 1 utoken is worth in USD. For example:
+        /// We have to normalize it. We should get how much 1 utoken is worth in uusd. For example:
+        /// denom_decimals (OSMO) = 6
+        /// base_denom_decimals (USD) = 6
+        ///
+        /// 1 OSMO = 10^6 uosmo
+        /// 1 USD = 10^6 uusd
+        ///
         /// osmo_price_in_usd = 0.59958994
-        /// uosmo_price_in_usd = osmo_price_in_usd / 10^decimals = 0.59958994 / 10^6 = 0.00000059958994
+        /// uosmo_price_in_uusd = osmo_price_in_usd / 10^denom_decimals * 10^base_denom_decimals =
+        /// uosmo_price_in_uusd = 0.59958994 * 10^(-6) * 10^6 = 0.59958994
         denom_decimals: u8,
     },
     /// Liquid Staking Derivatives (LSD) price quoted in USD based on data from Pyth, Osmosis and Stride.
@@ -729,10 +736,24 @@ impl OsmosisPriceSourceChecked {
 /// The confidence interval is 574566 * 10^(-8) = $0.00574566, and the price is 1365133270 * 10^(-8) = $13.6513327.
 ///
 /// Moreover, we have to represent the price for utoken in uusd (instead of token/USD).
-/// Pyth price should be normalized with token decimals so:
-/// ATOM/USD = price * 10^expo
-/// uAtom/uusd = ATOM/USD / 10^atom_decimals * 10^usd_decimals = price * 10^expo / 10^atom_decimals * 10^usd_decimals
-/// uAtom/uusd = 1365133270 * 10^(-8) * 10^(-6) * 10^6 = 1365133270 * 10^(-8) = 13.6513327
+/// Pyth price should be normalized with token decimals.
+///
+/// Let's try to convert ATOM/USD reported by Pyth to uatom/uusd:
+/// denom_decimals (ATOM) = 6
+/// base_denom_decimals (USD) = 6
+///
+/// 1 ATOM = 10^6 uatom
+/// 1 USD = 10^6 uusd
+/// ///
+/// 1 ATOM = price * 10^expo USD
+/// 10^6 uatom = price * 10^expo * 10^6 uusd
+/// uatom = price * 10^expo * 10^6 / 10^6 uusd
+/// uatom = price * 10^expo * 10^6 * 10^(-6) uusd
+/// uatom/uusd = 1365133270 * 10^(-8) * 10^6 * 10^(-6)
+/// uatom/uusd = 1365133270 * 10^(-8) = 13.6513327
+///
+/// Generalized formula:
+/// utoken/uusd = price * 10^expo * 10^base_denom_decimals * 10^(-denom_decimals)
 ///
 /// NOTE: if we don't introduce base_denom decimals we can overflow.
 pub fn scale_pyth_price(
