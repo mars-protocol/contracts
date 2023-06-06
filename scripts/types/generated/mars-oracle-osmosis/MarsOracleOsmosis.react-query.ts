@@ -171,6 +171,7 @@ export interface MarsOracleOsmosisUpdateConfigMutation {
   client: MarsOracleOsmosisClient
   msg: {
     baseDenom?: string
+    baseDenomDecimals?: number
   }
   args?: {
     fee?: number | StdFee | 'auto'

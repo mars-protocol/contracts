@@ -960,6 +960,7 @@ fn setting_price_source_pyth_successfully() {
                 )
                 .unwrap(),
                 max_staleness: 30,
+                denom_decimals: 8,
             },
         },
     )
@@ -981,6 +982,7 @@ fn setting_price_source_pyth_successfully() {
             )
             .unwrap(),
             max_staleness: 30,
+            denom_decimals: 8
         },
     );
 }

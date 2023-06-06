@@ -529,7 +529,7 @@ dependencies = [
 [[package]]
 name = "cw2"
 version = "1.0.1"
-source = "git+https://github.com/mars-protocol/cw-plus?rev=4014255#4014255fc2d79486e332e02d1ab1421db86f4f0b"
+source = "git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b#de1fb0b9836e56e5640575d246274d882509d714"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1166,7 +1166,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-owner",
  "mars-red-bank-types",
  "serde",
@@ -1190,7 +1190,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-owner",
  "mars-red-bank-types",
  "mars-testing",
@@ -1225,7 +1225,7 @@ version = "1.0.1"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-owner",
  "mars-red-bank-types",
  "mars-utils",
@@ -1241,7 +1241,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-oracle-base",
  "mars-osmosis",
  "mars-owner",
@@ -1285,7 +1285,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-health",
  "mars-owner",
  "mars-red-bank-types",
@@ -1327,7 +1327,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-osmosis",
  "mars-owner",
  "mars-red-bank-types",
