@@ -32,7 +32,7 @@ jobs:
 
       # artifacts used by tests
       - name: Compile workspace
-        run: cargo make build
+        run: cargo make rust-optimizer
 
       - name: Run test coverage
         run: cargo make coverage-lcov
