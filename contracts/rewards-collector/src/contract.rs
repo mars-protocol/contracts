@@ -296,6 +296,7 @@ pub mod entry {
         Ok(Response::default())
     }
 
+    #[entry_point]
     pub fn execute(
         deps: DepsMut,
         env: Env,
@@ -324,6 +325,7 @@ pub mod entry {
         }
     }
 
+    #[entry_point]
     pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         let collector = Collector::default();
         match msg {
