@@ -2,9 +2,7 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Decimal;
 use mars_owner::OwnerUpdate;
 
-use crate::types::{
-    AssetParams, AssetParamsUpdate, EmergencyUpdate, VaultConfig, VaultConfigUpdate,
-};
+use crate::types::{AssetParamsUpdate, EmergencyUpdate, VaultConfigUpdate};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -29,24 +27,24 @@ pub enum QueryMsg {
     #[returns(mars_owner::OwnerResponse)]
     Owner {},
 
-    #[returns(AssetParams)]
+    #[returns(crate::types::AssetParams)]
     AssetParams {
         denom: String,
     },
 
-    #[returns(Vec<crate::types::AssetParamsResponse>)]
+    #[returns(Vec<crate::types::AssetParams>)]
     AllAssetParams {
         start_after: Option<String>,
         limit: Option<u32>,
     },
 
-    #[returns(VaultConfig)]
+    #[returns(crate::types::VaultConfig)]
     VaultConfig {
         /// Address of vault
         address: String,
     },
 
-    #[returns(Vec<VaultConfig>)]
+    #[returns(Vec<crate::types::VaultConfig>)]
     AllVaultConfigs {
         start_after: Option<String>,
         limit: Option<u32>,
