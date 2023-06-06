@@ -750,6 +750,8 @@ fn liquidate_fully() {
     );
 }
 
+/// FIXME: new clippy version warns to remove clone() from "collateral_market.clone()" but then it breaks compilation
+#[allow(clippy::redundant_clone)]
 #[test]
 fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
     let TestSuite {
@@ -898,6 +900,8 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
     );
 }
 
+/// FIXME: new clippy version warns to remove clone() from "collateral_market.clone()" but then it breaks compilation
+#[allow(clippy::redundant_clone)]
 #[test]
 fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
     let TestSuite {
