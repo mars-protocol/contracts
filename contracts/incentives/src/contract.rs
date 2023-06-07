@@ -356,15 +356,12 @@ pub fn execute_balance_change(
 
             // Store user accrued rewards as unclaimed
             if !accrued_rewards.is_zero() {
-                USER_UNCLAIMED_REWARDS.update(
+                state::increase_unclaimed_rewards(
                     deps.storage,
-                    (&user_addr, &collateral_denom, &incentive_denom),
-                    |ur: Option<Uint128>| -> StdResult<Uint128> {
-                        match ur {
-                            Some(unclaimed_rewards) => Ok(unclaimed_rewards + accrued_rewards),
-                            None => Ok(accrued_rewards),
-                        }
-                    },
+                    &user_addr,
+                    &collateral_denom,
+                    &incentive_denom,
+                    accrued_rewards,
                 )?;
             }
 
