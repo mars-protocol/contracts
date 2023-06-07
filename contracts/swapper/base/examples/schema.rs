@@ -1,6 +1,6 @@
 use cosmwasm_schema::write_api;
 use cosmwasm_std::Empty;
-use mars_swapper::msgs::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_red_bank_types::swapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {

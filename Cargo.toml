@@ -12,7 +12,6 @@ members = [
   "packages/testing",
   "packages/types",
   "packages/utils",
-  "packages/mars-swapper",
   "integration-tests",
 ]
 
@@ -70,7 +69,6 @@ mars-osmosis        = { version = "1.0.0", path = "./packages/chains/osmosis" }
 mars-red-bank-types = { version = "1.0.0", path = "./packages/types" }
 mars-testing        = { version = "1.0.0", path = "./packages/testing" }
 mars-utils          = { version = "1.0.0", path = "./packages/utils" }
-mars-swapper        = { version = "1.0.0", path = "./packages/mars-swapper" }
 
 # contracts
 mars-address-provider          = { version = "1.0.0", path = "./contracts/address-provider" }

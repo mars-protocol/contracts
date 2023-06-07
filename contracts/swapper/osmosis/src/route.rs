@@ -5,7 +5,7 @@ use cosmwasm_std::{
     BlockInfo, Coin, CosmosMsg, Decimal, Empty, Env, Fraction, QuerierWrapper, Uint128,
 };
 use mars_osmosis::helpers::{has_denom, query_arithmetic_twap_price, query_pool};
-use mars_swapper::msgs::EstimateExactInSwapResponse;
+use mars_red_bank_types::swapper::EstimateExactInSwapResponse;
 use mars_swapper_base::{ContractError, ContractResult, Route};
 use osmosis_std::types::osmosis::gamm::v1beta1::MsgSwapExactAmountIn;
 pub use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;

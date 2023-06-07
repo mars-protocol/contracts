@@ -19,12 +19,12 @@ backtraces = ["cosmwasm-std/backtraces"]
 library    = []
 
 [dependencies]
-cosmwasm-schema = { workspace = true }
-cosmwasm-std    = { workspace = true }
-cw-paginate     = { workspace = true }
-cw-storage-plus = { workspace = true }
-mars-owner      = { workspace = true }
-schemars        = { workspace = true }
-serde           = { workspace = true }
-thiserror       = { workspace = true }
-mars-swapper    = { workspace = true }
+cosmwasm-schema     = { workspace = true }
+cosmwasm-std        = { workspace = true }
+cw-paginate         = { workspace = true }
+cw-storage-plus     = { workspace = true }
+mars-owner          = { workspace = true }
+mars-red-bank-types = { workspace = true }
+schemars            = { workspace = true }
+serde               = { workspace = true }
+thiserror           = { workspace = true }

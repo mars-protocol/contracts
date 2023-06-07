@@ -1789,7 +1789,6 @@ dependencies = [
  "mars-red-bank",
  "mars-red-bank-types",
  "mars-rewards-collector",
- "mars-swapper",
  "mars-swapper-osmosis",
  "mars-testing",
  "mars-utils",
@@ -1932,21 +1931,11 @@ dependencies = [
  "cw-storage-plus 1.0.1",
  "mars-owner",
  "mars-red-bank-types",
- "mars-swapper",
  "mars-testing",
  "mars-utils",
  "schemars",
  "serde",
  "thiserror",
-]
-
-[[package]]
-name = "mars-swapper"
-version = "1.0.1"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "mars-owner",
 ]
 
 [[package]]
@@ -1962,7 +1951,6 @@ dependencies = [
  "mars-oracle-wasm",
  "mars-owner",
  "mars-red-bank-types",
- "mars-swapper",
  "mars-swapper-base",
  "mars-testing",
  "test-case",
@@ -1977,7 +1965,7 @@ dependencies = [
  "cw-paginate",
  "cw-storage-plus 1.0.1",
  "mars-owner",
- "mars-swapper",
+ "mars-red-bank-types",
  "schemars",
  "serde",
  "thiserror",
@@ -1990,7 +1978,7 @@ dependencies = [
  "anyhow",
  "cosmwasm-std",
  "cw-multi-test 0.16.4",
- "mars-swapper",
+ "mars-red-bank-types",
 ]
 
 [[package]]
@@ -2004,7 +1992,7 @@ dependencies = [
  "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
  "mars-osmosis",
  "mars-owner",
- "mars-swapper",
+ "mars-red-bank-types",
  "mars-swapper-base",
  "osmosis-std 0.14.0",
 ]
@@ -2027,7 +2015,6 @@ dependencies = [
  "mars-red-bank",
  "mars-red-bank-types",
  "mars-rewards-collector",
- "mars-swapper",
  "mars-swapper-astroport",
  "osmosis-std 0.14.0",
  "prost 0.11.9",

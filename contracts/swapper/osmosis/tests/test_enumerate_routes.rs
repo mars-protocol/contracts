@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use cosmwasm_std::coin;
 use cw_it::osmosis_test_tube::{Gamm, Module, OsmosisTestApp, SigningAccount, Wasm};
-use mars_swapper::msgs::{ExecuteMsg, QueryMsg, RouteResponse};
+use mars_red_bank_types::swapper::{ExecuteMsg, QueryMsg, RouteResponse};
 use mars_swapper_osmosis::route::OsmosisRoute;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;
 

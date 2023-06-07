@@ -32,7 +32,6 @@ mars-utils          = { workspace = true }
 schemars            = { workspace = true }
 serde               = { workspace = true }
 thiserror           = { workspace = true }
-mars-swapper        = { workspace = true }
 
 [dev-dependencies]
 mars-testing = { workspace = true }

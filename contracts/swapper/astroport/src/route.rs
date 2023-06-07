@@ -7,7 +7,7 @@ use cosmwasm_std::{
     StdResult, Uint128, WasmMsg, WasmQuery,
 };
 use mars_red_bank_types::oracle::PriceResponse;
-use mars_swapper::msgs::EstimateExactInSwapResponse;
+use mars_red_bank_types::swapper::EstimateExactInSwapResponse;
 use mars_swapper_base::{ContractError, ContractResult, Route};
 
 use crate::helpers::hashset;

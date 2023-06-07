@@ -24,7 +24,6 @@ cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
 mars-owner          = { workspace = true }
 mars-swapper-base   = { workspace = true }
-mars-swapper        = { workspace = true }
 mars-oracle-wasm    = { workspace = true }
 mars-red-bank-types = { workspace = true }
 astroport           = { workspace = true }

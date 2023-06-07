@@ -1,6 +1,6 @@
 use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response};
 use cw2::set_contract_version;
-use mars_swapper::msgs::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_red_bank_types::swapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_swapper_base::{ContractResult, SwapBase};
 
 use crate::route::OsmosisRoute;

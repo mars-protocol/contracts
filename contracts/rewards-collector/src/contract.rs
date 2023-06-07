@@ -160,7 +160,7 @@ impl<'a> Collector<'a> {
             let coin_in_safety_fund = coin(amount_safety_fund.u128(), denom.clone());
             messages.push(WasmMsg::Execute {
                 contract_addr: swapper_addr.clone(),
-                msg: to_binary(&mars_swapper::ExecuteMsg::<Empty>::SwapExactIn {
+                msg: to_binary(&mars_red_bank_types::swapper::ExecuteMsg::<Empty>::SwapExactIn {
                     coin_in: coin_in_safety_fund.clone(),
                     denom_out: cfg.safety_fund_denom,
                     slippage: cfg.slippage_tolerance,
@@ -175,7 +175,7 @@ impl<'a> Collector<'a> {
             let coin_in_fee_collector = coin(amount_fee_collector.u128(), denom.clone());
             messages.push(WasmMsg::Execute {
                 contract_addr: swapper_addr,
-                msg: to_binary(&mars_swapper::ExecuteMsg::<Empty>::SwapExactIn {
+                msg: to_binary(&mars_red_bank_types::swapper::ExecuteMsg::<Empty>::SwapExactIn {
                     coin_in: coin_in_fee_collector.clone(),
                     denom_out: cfg.fee_collector_denom,
                     slippage: cfg.slippage_tolerance,

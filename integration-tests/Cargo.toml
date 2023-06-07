@@ -38,5 +38,4 @@ mars-utils                     = { workspace = true }
 osmosis-std                    = { workspace = true }
 osmosis-test-tube              = { workspace = true }
 serde                          = { workspace = true }
-mars-swapper                   = { workspace = true }
 mars-swapper-osmosis           = { workspace = true }

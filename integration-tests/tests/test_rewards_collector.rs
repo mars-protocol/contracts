@@ -75,7 +75,7 @@ fn swapping_rewards() {
         &wasm,
         signer,
         OSMOSIS_SWAPPER_CONTRACT_NAME,
-        &mars_swapper::InstantiateMsg {
+        &mars_red_bank_types::swapper::InstantiateMsg {
             owner: signer.address(),
         },
     );
@@ -141,7 +141,7 @@ fn swapping_rewards() {
     // set routes
     wasm.execute(
         &swapper_addr,
-        &mars_swapper::ExecuteMsg::SetRoute {
+        &mars_red_bank_types::swapper::ExecuteMsg::SetRoute {
             denom_in: "uosmo".to_string(),
             denom_out: safety_fund_denom.to_string(),
             route: OsmosisRoute(vec![SwapAmountInRoute {
@@ -155,7 +155,7 @@ fn swapping_rewards() {
     .unwrap();
     wasm.execute(
         &swapper_addr,
-        &mars_swapper::ExecuteMsg::SetRoute {
+        &mars_red_bank_types::swapper::ExecuteMsg::SetRoute {
             denom_in: "uosmo".to_string(),
             denom_out: fee_collector_denom.to_string(),
             route: OsmosisRoute(vec![SwapAmountInRoute {
@@ -169,7 +169,7 @@ fn swapping_rewards() {
     .unwrap();
     wasm.execute(
         &swapper_addr,
-        &mars_swapper::ExecuteMsg::SetRoute {
+        &mars_red_bank_types::swapper::ExecuteMsg::SetRoute {
             denom_in: "uatom".to_string(),
             denom_out: safety_fund_denom.to_string(),
             route: OsmosisRoute(vec![
@@ -189,7 +189,7 @@ fn swapping_rewards() {
     .unwrap();
     wasm.execute(
         &swapper_addr,
-        &mars_swapper::ExecuteMsg::SetRoute {
+        &mars_red_bank_types::swapper::ExecuteMsg::SetRoute {
             denom_in: "uatom".to_string(),
             denom_out: fee_collector_denom.to_string(),
             route: OsmosisRoute(vec![

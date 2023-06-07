@@ -1,7 +1,7 @@
 use cosmwasm_std::{coin, StdError::GenericErr};
 use cw_it::osmosis_test_tube::{Gamm, Module, OsmosisTestApp, Wasm};
 use mars_owner::OwnerError;
-use mars_swapper::msgs::{ExecuteMsg, QueryMsg, RouteResponse};
+use mars_red_bank_types::swapper::{ExecuteMsg, QueryMsg, RouteResponse};
 use mars_swapper_base::ContractError;
 use mars_swapper_osmosis::route::OsmosisRoute;
 use osmosis_std::types::osmosis::gamm::v1beta1::SwapAmountInRoute;

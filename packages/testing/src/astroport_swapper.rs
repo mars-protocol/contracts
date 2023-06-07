@@ -10,7 +10,7 @@ use cw_it::{
 };
 #[cfg(feature = "osmosis-test-tube")]
 use cw_it::{osmosis_test_tube::OsmosisTestApp, Artifact};
-use mars_swapper::EstimateExactInSwapResponse;
+use mars_red_bank_types::swapper::EstimateExactInSwapResponse;
 use mars_swapper_astroport::route::AstroportRoute;
 
 use crate::wasm_oracle::{get_wasm_oracle_contract, WasmOracleTestRobot};
@@ -103,7 +103,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         let swapper = wasm
             .instantiate(
                 swapper_code_id,
-                &mars_swapper::InstantiateMsg {
+                &mars_red_bank_types::swapper::InstantiateMsg {
                     owner: admin.address(),
                 },
                 None,
@@ -147,7 +147,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         self.wasm()
             .execute(
                 &self.swapper,
-                &mars_swapper::ExecuteMsg::SetRoute {
+                &mars_red_bank_types::swapper::ExecuteMsg::SetRoute {
                     route: AstroportRoute {
                         operations,
                         router: self.astroport_contracts.router.address.clone(),
@@ -186,7 +186,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         println!("sending {} to swapper contract", coin_in);
         self.wasm().execute(
             &self.swapper,
-            &mars_swapper::ExecuteMsg::<AstroportRoute>::SwapExactIn {
+            &mars_red_bank_types::swapper::ExecuteMsg::<AstroportRoute>::SwapExactIn {
                 coin_in: coin_in.clone(),
                 denom_out: denom_out.into(),
                 slippage,
@@ -204,7 +204,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         self.wasm()
             .query::<_, EstimateExactInSwapResponse>(
                 &self.swapper,
-                &mars_swapper::QueryMsg::EstimateExactInSwap {
+                &mars_red_bank_types::swapper::QueryMsg::EstimateExactInSwap {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.into(),
                 },

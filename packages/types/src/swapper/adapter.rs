@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Api, Coin, CosmosMsg, Decimal, Empty, StdResult, WasmMsg};
 
-use crate::msgs::ExecuteMsg;
+use crate::swapper::ExecuteMsg;
 
 #[cw_serde]
 pub struct SwapperBase<T>(T);
