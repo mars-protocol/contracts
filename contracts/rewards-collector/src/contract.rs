@@ -263,12 +263,11 @@ pub mod entry {
     use cosmwasm_std::{
         entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
     };
+    use mars_owner::OwnerInit::SetInitialOwner;
     use mars_red_bank_types::rewards_collector::{Config, ExecuteMsg, InstantiateMsg, QueryMsg};
 
-    use crate::ContractResult;
-    use mars_owner::OwnerInit::SetInitialOwner;
-
     use super::Collector;
+    use crate::ContractResult;
 
     #[entry_point]
     pub fn instantiate(

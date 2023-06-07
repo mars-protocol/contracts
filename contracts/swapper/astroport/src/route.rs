@@ -6,8 +6,7 @@ use cosmwasm_std::{
     to_binary, Coin, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, QueryRequest, StdError,
     StdResult, Uint128, WasmMsg, WasmQuery,
 };
-use mars_red_bank_types::oracle::PriceResponse;
-use mars_red_bank_types::swapper::EstimateExactInSwapResponse;
+use mars_red_bank_types::{oracle::PriceResponse, swapper::EstimateExactInSwapResponse};
 use mars_swapper_base::{ContractError, ContractResult, Route};
 
 use crate::helpers::hashset;
