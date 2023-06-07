@@ -10,7 +10,7 @@ This contract holds the following values for all the assets in Mars Protocol:
 - **Deposit Enabled:** Is the asset able to be deposited into the Red Bank
 - **Borrow Enabled:** Is the asset able to be borrowed from the Red Bank
 - **Deposit Cap:** Max amount that can be deposited into the Red Bank
-- **Asset Permissions** Rover and Red Bank Permission Settings
+- **Asset Settings:** Credit Manager and Red Bank Permission Settings
 
-Note: Rover Vaults only utilize max loan to value, liquidation threshold, and deposit cap parameters, while Red Bank Markets utilize all of the above parameters.
+Note: Credit Manager Vaults only utilize max loan to value, liquidation threshold, and deposit cap parameters, while Red Bank Markets utilize all of the above parameters.
 

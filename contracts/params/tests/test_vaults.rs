@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_std::{Addr, Decimal};
 use mars_owner::OwnerError;
-use mars_params::{error::ContractError::Owner, types::VaultConfigUpdate};
+use mars_params::{error::ContractError::Owner, msg::VaultConfigUpdate};
 
 use crate::helpers::{assert_contents_equal, assert_err, default_vault_config, MockEnv};
 
@@ -35,25 +35,21 @@ fn initializing_asset_param() {
     let vault0 = "vault_addr_0".to_string();
     let vault1 = "vault_addr_1".to_string();
 
+    let starting_vault_config = default_vault_config(&vault0);
     mock.update_vault_config(
         &owner,
         VaultConfigUpdate::AddOrUpdate {
-            config: default_vault_config(&vault0),
+            config: starting_vault_config.clone(),
         },
     )
     .unwrap();
 
     let all_vault_configs = mock.query_all_vault_configs(None, None);
     assert_eq!(1, all_vault_configs.len());
-    let config = all_vault_configs.first().unwrap();
-    assert_eq!(&vault0, &config.addr);
 
     // Validate config set correctly
-    assert_eq!(config.max_loan_to_value, config.max_loan_to_value);
-    assert_eq!(config.liquidation_threshold, config.liquidation_threshold);
-    assert_eq!(config.deposit_cap.denom, config.deposit_cap.denom);
-    assert_eq!(config.deposit_cap.amount, config.deposit_cap.amount);
-    assert_eq!(config.whitelisted, config.whitelisted);
+    let config = all_vault_configs.first().unwrap();
+    assert_eq!(starting_vault_config, config.clone().into());
 
     mock.update_vault_config(
         &owner,

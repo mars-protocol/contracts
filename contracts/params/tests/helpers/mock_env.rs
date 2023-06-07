@@ -5,8 +5,10 @@ use cosmwasm_std::{Addr, Decimal};
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 use mars_owner::{OwnerResponse, OwnerUpdate};
 use mars_params::{
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    types::{AssetParams, AssetParamsUpdate, EmergencyUpdate, VaultConfig, VaultConfigUpdate},
+    msg::{
+        AssetParamsUpdate, EmergencyUpdate, ExecuteMsg, InstantiateMsg, QueryMsg, VaultConfigUpdate,
+    },
+    types::{asset::AssetParams, vault::VaultConfig},
 };
 
 use crate::helpers::mock_params_contract;

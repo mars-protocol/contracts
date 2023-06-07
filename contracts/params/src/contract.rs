@@ -8,10 +8,12 @@ use crate::{
     emergency_powers::{disable_borrowing, disallow_coin, set_zero_deposit_cap, set_zero_max_ltv},
     error::ContractResult,
     execute::{assert_mcf, update_asset_params, update_max_close_factor, update_vault_config},
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+    msg::{
+        CmEmergencyUpdate, EmergencyUpdate, ExecuteMsg, InstantiateMsg, QueryMsg,
+        RedBankEmergencyUpdate,
+    },
     query::{query_all_asset_params, query_all_vault_configs, query_vault_config},
     state::{ASSET_PARAMS, MAX_CLOSE_FACTOR, OWNER},
-    types::{EmergencyUpdate, RedBankEmergencyUpdate, RoverEmergencyUpdate},
 };
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -58,10 +60,10 @@ pub fn execute(
                     disable_borrowing(deps, info, &denom)
                 }
             },
-            EmergencyUpdate::Rover(rv_u) => match rv_u {
-                RoverEmergencyUpdate::DisallowCoin(denom) => disallow_coin(deps, info, &denom),
-                RoverEmergencyUpdate::SetZeroMaxLtvOnVault(v) => set_zero_max_ltv(deps, info, &v),
-                RoverEmergencyUpdate::SetZeroDepositCapOnVault(v) => {
+            EmergencyUpdate::CreditManager(rv_u) => match rv_u {
+                CmEmergencyUpdate::DisallowCoin(denom) => disallow_coin(deps, info, &denom),
+                CmEmergencyUpdate::SetZeroMaxLtvOnVault(v) => set_zero_max_ltv(deps, info, &v),
+                CmEmergencyUpdate::SetZeroDepositCapOnVault(v) => {
                     set_zero_deposit_cap(deps, info, &v)
                 }
             },

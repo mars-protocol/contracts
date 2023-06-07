@@ -14,4 +14,4 @@ This contract holds the following values for all the assets in Mars Protocol.
   - slope 2: Slope for when U > Uoptimal
 - **Deposit Cap:** Max amount that can be deposited into the Red Bank
 
-Note: Rover Vaults only utilize max loan to value, liquidation threshold, and deposit cap parameters, while Red Bank Markets utilize all of the above parameters. 
+Note: Credit Manager Vaults only utilize max loan to value, liquidation threshold, and deposit cap parameters, while Red Bank Markets utilize all of the above parameters. 

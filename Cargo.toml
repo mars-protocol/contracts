@@ -6,7 +6,7 @@ members = [
 ]
 
 [workspace.package]
-version       = "1.0.4"
+version       = "1.0.5"
 authors       = [
   "Gabe R. <gabe.r@delphilabs.io>",
   "Larry Engineer <larry@delphidigital.io>",
@@ -21,36 +21,27 @@ documentation = "https://docs.marsprotocol.io/"
 keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
-anyhow             = "1.0.69"
-cosmwasm-schema    = "1.2.2"
-cosmwasm-std       = "1.2.2"
+anyhow             = "1.0.71"
+cosmwasm-schema    = "1.2.6"
+cosmwasm-std       = "1.2.6"
 cw2                = "1.0.1"
-cw721              = "0.16.0"
-cw721-base         = { version = "0.16.0", features = ["library"] }
-cw-item-set        = { version = "0.7.1", default-features = false, features = ["iterator"] }
-cw-multi-test      = "0.16.2"
+cw-multi-test      = "0.16.5"
 cw-paginate        = "0.2.1"
-cw-utils           = "1.0.1"
 cw-storage-plus    = "1.0.1"
-itertools          = "0.10.5"
-osmosis-std        = "0.14.0"
-osmosis-test-tube  = "14.1.1"
+osmosis-std        = "0.15.3"
+osmosis-test-tube  = "15.1.0"
 schemars           = "0.8.12"
-serde              = { version = "1.0.155", default-features = false, features = ["derive"] }
-serde_json         = "1.0.94"
-serde-wasm-bindgen = "0.5.0"
-thiserror          = "1.0.39"
-wasm-bindgen       = "0.2.84"
+serde              = { version = "1.0.164", default-features = false, features = ["derive"] }
+thiserror          = "1.0.40"
 
 # packages
 mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
-mars-red-bank-types        = "1.0.0"
-mars-owner                 = { version = "1.0.0", features = ["emergency-owner"] }
+mars-owner                 = { version = "1.2.0", features = ["emergency-owner"] }
 mars-swapper               = { path = "packages/mars-swapper" }
 mars-utils                 = "1.0.0"
 
 # contracts
-mars-swapper-base  = { version = "1.0.0", path = "contracts/swapper/base" }
+mars-swapper-base = { version = "1.0.0", path = "contracts/swapper/base" }
 
 [profile.release]
 codegen-units    = 1
