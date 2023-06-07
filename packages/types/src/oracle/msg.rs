@@ -1,13 +1,15 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Decimal;
+use cosmwasm_std::{Decimal, Empty};
 use mars_owner::OwnerUpdate;
 
 #[cw_serde]
-pub struct InstantiateMsg {
+pub struct InstantiateMsg<C = Empty> {
     /// The contract's owner, who can update config and price sources
     pub owner: String,
     /// The asset in which prices are denominated in
     pub base_denom: String,
+    /// Custom init params
+    pub custom_init: Option<C>,
 }
 
 #[cw_serde]
@@ -17,7 +19,7 @@ pub struct Config {
 }
 
 #[cw_serde]
-pub enum ExecuteMsg<T> {
+pub enum ExecuteMsg<T, C = Empty> {
     /// Specify the price source to be used for a coin
     ///
     /// NOTE: The input parameters for method are chain-specific.
@@ -31,6 +33,12 @@ pub enum ExecuteMsg<T> {
     },
     /// Manages admin role state
     UpdateOwner(OwnerUpdate),
+    /// Update contract config (only callable by owner)
+    UpdateConfig {
+        base_denom: Option<String>,
+    },
+    /// Custom messages defined by the contract
+    Custom(C),
 }
 
 #[cw_serde]

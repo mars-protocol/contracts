@@ -6,20 +6,23 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::{Bound, Item, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
-use mars_red_bank_types::oracle::{
+use mars_red_bank_types::oracle::msg::{
     Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
     QueryMsg,
 };
-use mars_utils::helpers::validate_native_denom;
 
-use crate::{error::ContractResult, PriceSource};
+use crate::{
+    error::ContractResult, utils::validate_native_denom, ContractError, PriceSourceChecked,
+    PriceSourceUnchecked,
+};
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
 
-pub struct OracleBase<'a, P, C>
+pub struct OracleBase<'a, P, PU, C, I, E>
 where
-    P: PriceSource<C>,
+    P: PriceSourceChecked<C>,
+    PU: PriceSourceUnchecked<P, C>,
     C: CustomQuery,
 {
     /// Contract's owner
@@ -30,11 +33,18 @@ where
     pub price_sources: Map<'a, &'a str, P>,
     /// Phantom data holds the custom query type
     pub custom_query: PhantomData<C>,
+    /// Phantom data holds the unchecked price source type
+    pub unchecked_price_source: PhantomData<PU>,
+    /// Phantom data holds the instantiate msg custom type
+    pub instantiate_msg: PhantomData<I>,
+    /// Phantom data holds the execute msg custom type
+    pub execute_msg: PhantomData<E>,
 }
 
-impl<'a, P, C> Default for OracleBase<'a, P, C>
+impl<'a, P, PU, C, I, E> Default for OracleBase<'a, P, PU, C, I, E>
 where
-    P: PriceSource<C>,
+    P: PriceSourceChecked<C>,
+    PU: PriceSourceUnchecked<P, C>,
     C: CustomQuery,
 {
     fn default() -> Self {
@@ -43,16 +53,24 @@ where
             config: Item::new("config"),
             price_sources: Map::new("price_sources"),
             custom_query: PhantomData,
+            unchecked_price_source: PhantomData,
+            instantiate_msg: PhantomData,
+            execute_msg: PhantomData,
         }
     }
 }
 
-impl<'a, P, C> OracleBase<'a, P, C>
+impl<'a, P, PU, C, I, E> OracleBase<'a, P, PU, C, I, E>
 where
-    P: PriceSource<C>,
+    P: PriceSourceChecked<C>,
+    PU: PriceSourceUnchecked<P, C>,
     C: CustomQuery,
 {
-    pub fn instantiate(&self, deps: DepsMut<C>, msg: InstantiateMsg) -> ContractResult<Response> {
+    pub fn instantiate(
+        &self,
+        deps: DepsMut<C>,
+        msg: InstantiateMsg<I>,
+    ) -> ContractResult<Response> {
         validate_native_denom(&msg.base_denom)?;
 
         self.owner.initialize(
@@ -77,7 +95,7 @@ where
         &self,
         deps: DepsMut<C>,
         info: MessageInfo,
-        msg: ExecuteMsg<P>,
+        msg: ExecuteMsg<PU, E>,
     ) -> ContractResult<Response> {
         match msg {
             ExecuteMsg::UpdateOwner(update) => self.update_owner(deps, info, update),
@@ -88,6 +106,11 @@ where
             ExecuteMsg::RemovePriceSource {
                 denom,
             } => self.remove_price_source(deps, info.sender, denom),
+            ExecuteMsg::UpdateConfig {
+                base_denom,
+            } => self.update_config(deps, info.sender, base_denom),
+            // Custom messages should be handled by the implementing contract
+            ExecuteMsg::Custom(_) => Err(ContractError::MissingCustomExecuteParams {}),
         }
     }
 
@@ -126,14 +149,15 @@ where
         deps: DepsMut<C>,
         sender_addr: Addr,
         denom: String,
-        price_source: P,
+        price_source: PU,
     ) -> ContractResult<Response> {
         self.owner.assert_owner(deps.storage, &sender_addr)?;
 
         validate_native_denom(&denom)?;
 
         let cfg = self.config.load(deps.storage)?;
-        price_source.validate(&deps.querier, &denom, &cfg.base_denom)?;
+        let price_source =
+            price_source.validate(&deps.as_ref(), &denom, &cfg.base_denom, &self.price_sources)?;
         self.price_sources.save(deps.storage, &denom, &price_source)?;
 
         Ok(Response::new()
@@ -155,6 +179,31 @@ where
         Ok(Response::new()
             .add_attribute("action", "remove_price_source")
             .add_attribute("denom", denom))
+    }
+
+    fn update_config(
+        &self,
+        deps: DepsMut<C>,
+        sender_addr: Addr,
+        base_denom: Option<String>,
+    ) -> ContractResult<Response> {
+        self.owner.assert_owner(deps.storage, &sender_addr)?;
+
+        if let Some(bd) = &base_denom {
+            validate_native_denom(bd)?;
+        };
+
+        let mut config = self.config.load(deps.storage)?;
+        let prev_base_denom = config.base_denom.clone();
+        config.base_denom = base_denom.unwrap_or(config.base_denom);
+        self.config.save(deps.storage, &config)?;
+
+        let response = Response::new()
+            .add_attribute("action", "update_config")
+            .add_attribute("prev_base_denom", prev_base_denom)
+            .add_attribute("base_denom", config.base_denom);
+
+        Ok(response)
     }
 
     fn query_config(&self, deps: Deps<C>) -> StdResult<ConfigResponse> {

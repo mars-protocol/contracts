@@ -1,9 +1,10 @@
 use std::str::FromStr;
 
-use cosmwasm_std::{coin, Coin, Decimal, Isqrt, Uint128};
+use cosmwasm_std::{coin, Coin, Decimal, Empty, Isqrt, Uint128};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
-    msg::PriceSourceResponse, Downtime, DowntimeDetector, OsmosisPriceSource,
+    msg::PriceSourceResponse, Downtime, DowntimeDetector, OsmosisPriceSourceChecked,
+    OsmosisPriceSourceUnchecked,
 };
 use mars_red_bank_types::{
     address_provider::{
@@ -53,9 +54,10 @@ fn querying_xyk_lp_price_if_no_price_for_tokens() {
         &wasm,
         &signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
-        &InstantiateMsg {
+        &InstantiateMsg::<Empty> {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     );
 
@@ -68,9 +70,9 @@ fn querying_xyk_lp_price_if_no_price_for_tokens() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "umars_uatom_lp".to_string(),
-            price_source: OsmosisPriceSource::XykLiquidityToken {
+            price_source: OsmosisPriceSourceUnchecked::XykLiquidityToken {
                 pool_id: pool_mars_atom,
             },
         },
@@ -106,9 +108,10 @@ fn querying_xyk_lp_price_success() {
         &wasm,
         &signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
-        &InstantiateMsg {
+        &InstantiateMsg::<Empty> {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     );
 
@@ -140,9 +143,9 @@ fn querying_xyk_lp_price_success() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "umars_uatom_lp".to_string(),
-            price_source: OsmosisPriceSource::XykLiquidityToken {
+            price_source: OsmosisPriceSourceUnchecked::XykLiquidityToken {
                 pool_id: pool_mars_atom,
             },
         },
@@ -152,9 +155,9 @@ fn querying_xyk_lp_price_success() {
     .unwrap();
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "umars".to_string(),
-            price_source: OsmosisPriceSource::Spot {
+            price_source: OsmosisPriceSourceUnchecked::Spot {
                 pool_id: pool_mars_osmo,
             },
         },
@@ -164,9 +167,9 @@ fn querying_xyk_lp_price_success() {
     .unwrap();
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Spot {
+            price_source: OsmosisPriceSourceUnchecked::Spot {
                 pool_id: pool_atom_osmo,
             },
         },
@@ -214,9 +217,10 @@ fn query_spot_price() {
         &wasm,
         &signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
-        &InstantiateMsg {
+        &InstantiateMsg::<Empty> {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     );
 
@@ -226,9 +230,9 @@ fn query_spot_price() {
 
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Spot {
+            price_source: OsmosisPriceSourceUnchecked::Spot {
                 pool_id,
             },
         },
@@ -247,7 +251,7 @@ fn query_spot_price() {
         .unwrap();
     assert_eq!(
         price_source.price_source,
-        (OsmosisPriceSource::Spot {
+        (OsmosisPriceSourceChecked::Spot {
             pool_id
         })
     );
@@ -278,17 +282,18 @@ fn set_spot_without_pools() {
         &wasm,
         &signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
-        &InstantiateMsg {
+        &InstantiateMsg::<Empty> {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     );
 
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Spot {
+            price_source: OsmosisPriceSourceUnchecked::Spot {
                 pool_id: 1u64,
             },
         },
@@ -315,9 +320,10 @@ fn incorrect_pool_for_spot() {
         &wasm,
         &signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
-        &InstantiateMsg {
+        &InstantiateMsg::<Empty> {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     );
 
@@ -328,9 +334,9 @@ fn incorrect_pool_for_spot() {
     let res = wasm
         .execute(
             &oracle_addr,
-            &ExecuteMsg::SetPriceSource {
+            &ExecuteMsg::<_, Empty>::SetPriceSource {
                 denom: "umars".to_string(),
-                price_source: OsmosisPriceSource::Spot {
+                price_source: OsmosisPriceSourceUnchecked::Spot {
                     pool_id,
                 },
             },
@@ -361,9 +367,10 @@ fn update_spot_with_different_pool() {
         &wasm,
         &signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
-        &InstantiateMsg {
+        &InstantiateMsg::<Empty> {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     );
 
@@ -373,9 +380,9 @@ fn update_spot_with_different_pool() {
 
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Spot {
+            price_source: OsmosisPriceSourceUnchecked::Spot {
                 pool_id,
             },
         },
@@ -399,9 +406,9 @@ fn update_spot_with_different_pool() {
 
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Spot {
+            price_source: OsmosisPriceSourceUnchecked::Spot {
                 pool_id,
             },
         },
@@ -435,9 +442,10 @@ fn query_spot_price_after_lp_change() {
         &wasm,
         &signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
-        &InstantiateMsg {
+        &InstantiateMsg::<Empty> {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     );
 
@@ -447,9 +455,9 @@ fn query_spot_price_after_lp_change() {
 
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Spot {
+            price_source: OsmosisPriceSourceUnchecked::Spot {
                 pool_id,
             },
         },
@@ -494,9 +502,10 @@ fn query_geometric_twap_price_with_downtime_detector() {
         &wasm,
         &signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
-        &InstantiateMsg {
+        &InstantiateMsg::<Empty> {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     );
 
@@ -506,9 +515,9 @@ fn query_geometric_twap_price_with_downtime_detector() {
 
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::GeometricTwap {
+            price_source: OsmosisPriceSourceUnchecked::GeometricTwap {
                 pool_id,
                 window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
                 downtime_detector: Some(DowntimeDetector {
@@ -531,7 +540,7 @@ fn query_geometric_twap_price_with_downtime_detector() {
         .unwrap();
     assert_eq!(
         price_source.price_source,
-        (OsmosisPriceSource::GeometricTwap {
+        (OsmosisPriceSourceChecked::GeometricTwap {
             pool_id,
             window_size: 10,
             downtime_detector: Some(DowntimeDetector {
@@ -578,9 +587,10 @@ fn query_arithmetic_twap_price() {
         &wasm,
         &signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
-        &InstantiateMsg {
+        &InstantiateMsg::<Empty> {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     );
 
@@ -590,9 +600,9 @@ fn query_arithmetic_twap_price() {
 
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::ArithmeticTwap {
+            price_source: OsmosisPriceSourceUnchecked::ArithmeticTwap {
                 pool_id,
                 window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
                 downtime_detector: None,
@@ -615,7 +625,7 @@ fn query_arithmetic_twap_price() {
         .unwrap();
     assert_eq!(
         price_source.price_source,
-        (OsmosisPriceSource::ArithmeticTwap {
+        (OsmosisPriceSourceChecked::ArithmeticTwap {
             pool_id,
             window_size: 10,
             downtime_detector: None
@@ -664,9 +674,10 @@ fn query_geometric_twap_price() {
         &wasm,
         &signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
-        &InstantiateMsg {
+        &InstantiateMsg::<Empty> {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     );
 
@@ -676,9 +687,9 @@ fn query_geometric_twap_price() {
 
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::GeometricTwap {
+            price_source: OsmosisPriceSourceUnchecked::GeometricTwap {
                 pool_id,
                 window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
                 downtime_detector: None,
@@ -701,7 +712,7 @@ fn query_geometric_twap_price() {
         .unwrap();
     assert_eq!(
         price_source.price_source,
-        (OsmosisPriceSource::GeometricTwap {
+        (OsmosisPriceSourceChecked::GeometricTwap {
             pool_id,
             window_size: 10,
             downtime_detector: None
@@ -750,9 +761,10 @@ fn compare_spot_and_twap_price() {
         &wasm,
         &signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
-        &InstantiateMsg {
+        &InstantiateMsg::<Empty> {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     );
 
@@ -766,9 +778,9 @@ fn compare_spot_and_twap_price() {
     // set spot price source
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Spot {
+            price_source: OsmosisPriceSourceUnchecked::Spot {
                 pool_id,
             },
         },
@@ -786,7 +798,7 @@ fn compare_spot_and_twap_price() {
         .unwrap();
     assert_eq!(
         price_source.price_source,
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceChecked::Spot {
             pool_id,
         }
     );
@@ -802,9 +814,9 @@ fn compare_spot_and_twap_price() {
     // override price source to arithmetic TWAP
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::ArithmeticTwap {
+            price_source: OsmosisPriceSourceUnchecked::ArithmeticTwap {
                 pool_id,
                 window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
                 downtime_detector: None,
@@ -824,7 +836,7 @@ fn compare_spot_and_twap_price() {
         .unwrap();
     assert_eq!(
         price_source.price_source,
-        OsmosisPriceSource::ArithmeticTwap {
+        OsmosisPriceSourceChecked::ArithmeticTwap {
             pool_id,
             window_size: 10,
             downtime_detector: None
@@ -842,9 +854,9 @@ fn compare_spot_and_twap_price() {
     // override price source to geometric TWAP
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::GeometricTwap {
+            price_source: OsmosisPriceSourceUnchecked::GeometricTwap {
                 pool_id,
                 window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
                 downtime_detector: None,
@@ -864,7 +876,7 @@ fn compare_spot_and_twap_price() {
         .unwrap();
     assert_eq!(
         price_source.price_source,
-        OsmosisPriceSource::GeometricTwap {
+        OsmosisPriceSourceChecked::GeometricTwap {
             pool_id,
             window_size: 10,
             downtime_detector: None
@@ -908,9 +920,9 @@ fn redbank_should_fail_if_no_price() {
 
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Spot {
+            price_source: OsmosisPriceSourceUnchecked::Spot {
                 pool_id,
             },
         },
@@ -970,9 +982,9 @@ fn redbank_quering_oracle_successfully() {
 
     wasm.execute(
         &oracle_addr,
-        &ExecuteMsg::SetPriceSource {
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: "uatom".to_string(),
-            price_source: OsmosisPriceSource::Spot {
+            price_source: OsmosisPriceSourceUnchecked::Spot {
                 pool_id,
             },
         },
@@ -1010,9 +1022,10 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
         wasm,
         signer,
         OSMOSIS_ORACLE_CONTRACT_NAME,
-        &InstantiateMsg {
+        &InstantiateMsg::<Empty> {
             owner: signer.address(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     );
 

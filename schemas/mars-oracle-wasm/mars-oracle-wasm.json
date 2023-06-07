@@ -1,0 +1,661 @@
+{
+  "contract_name": "mars-oracle-wasm",
+  "contract_version": "1.0.1",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "type": "object",
+    "required": [
+      "base_denom",
+      "owner"
+    ],
+    "properties": {
+      "base_denom": {
+        "description": "The asset in which prices are denominated in",
+        "type": "string"
+      },
+      "custom_init": {
+        "description": "Custom init params",
+        "anyOf": [
+          {
+            "$ref": "#/definitions/WasmOracleCustomInitParams"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "owner": {
+        "description": "The contract's owner, who can update config and price sources",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "definitions": {
+      "WasmOracleCustomInitParams": {
+        "type": "object",
+        "required": [
+          "astroport_factory"
+        ],
+        "properties": {
+          "astroport_factory": {
+            "description": "The Astroport factory contract address",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "execute": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ExecuteMsg",
+    "oneOf": [
+      {
+        "description": "Specify the price source to be used for a coin\n\nNOTE: The input parameters for method are chain-specific.",
+        "type": "object",
+        "required": [
+          "set_price_source"
+        ],
+        "properties": {
+          "set_price_source": {
+            "type": "object",
+            "required": [
+              "denom",
+              "price_source"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "price_source": {
+                "$ref": "#/definitions/WasmPriceSource_for_String"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Remove price source for a coin",
+        "type": "object",
+        "required": [
+          "remove_price_source"
+        ],
+        "properties": {
+          "remove_price_source": {
+            "type": "object",
+            "required": [
+              "denom"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Manages admin role state",
+        "type": "object",
+        "required": [
+          "update_owner"
+        ],
+        "properties": {
+          "update_owner": {
+            "$ref": "#/definitions/OwnerUpdate"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Update contract config (only callable by owner)",
+        "type": "object",
+        "required": [
+          "update_config"
+        ],
+        "properties": {
+          "update_config": {
+            "type": "object",
+            "properties": {
+              "base_denom": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Custom messages defined by the contract",
+        "type": "object",
+        "required": [
+          "custom"
+        ],
+        "properties": {
+          "custom": {
+            "$ref": "#/definitions/WasmOracleCustomExecuteMsg"
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+        "type": "string"
+      },
+      "Identifier": {
+        "type": "string"
+      },
+      "OwnerUpdate": {
+        "oneOf": [
+          {
+            "description": "Proposes a new owner to take role. Only current owner can execute.",
+            "type": "object",
+            "required": [
+              "propose_new_owner"
+            ],
+            "properties": {
+              "propose_new_owner": {
+                "type": "object",
+                "required": [
+                  "proposed"
+                ],
+                "properties": {
+                  "proposed": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Clears the currently proposed owner. Only current owner can execute.",
+            "type": "string",
+            "enum": [
+              "clear_proposed"
+            ]
+          },
+          {
+            "description": "Promotes the proposed owner to be the current one. Only the proposed owner can execute.",
+            "type": "string",
+            "enum": [
+              "accept_proposed"
+            ]
+          },
+          {
+            "description": "Throws away the keys to the Owner role forever. Once done, no owner can ever be set later.",
+            "type": "string",
+            "enum": [
+              "abolish_owner_role"
+            ]
+          },
+          {
+            "description": "A separate entity managed by Owner that can be used for granting specific emergency powers.",
+            "type": "object",
+            "required": [
+              "set_emergency_owner"
+            ],
+            "properties": {
+              "set_emergency_owner": {
+                "type": "object",
+                "required": [
+                  "emergency_owner"
+                ],
+                "properties": {
+                  "emergency_owner": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Remove the entity in the Emergency Owner role",
+            "type": "string",
+            "enum": [
+              "clear_emergency_owner"
+            ]
+          }
+        ]
+      },
+      "WasmOracleCustomExecuteMsg": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "record_twap_snapshots"
+            ],
+            "properties": {
+              "record_twap_snapshots": {
+                "type": "object",
+                "required": [
+                  "denoms"
+                ],
+                "properties": {
+                  "denoms": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "WasmPriceSource_for_String": {
+        "oneOf": [
+          {
+            "description": "Returns a fixed value;",
+            "type": "object",
+            "required": [
+              "fixed"
+            ],
+            "properties": {
+              "fixed": {
+                "type": "object",
+                "required": [
+                  "price"
+                ],
+                "properties": {
+                  "price": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Astroport spot price",
+            "type": "object",
+            "required": [
+              "astroport_spot"
+            ],
+            "properties": {
+              "astroport_spot": {
+                "type": "object",
+                "required": [
+                  "pair_address",
+                  "route_assets"
+                ],
+                "properties": {
+                  "pair_address": {
+                    "description": "Address of the Astroport pair",
+                    "type": "string"
+                  },
+                  "route_assets": {
+                    "description": "Other assets to route through when calculating the price. E.g. if the pair is USDC/ETH and `config.base_denom` is USD, and we want to get the price of ETH in USD, then `route_assets` could be `[\"USDC\"]`, which would mean we would get the price of ETH in USDC, and then multiply by the price of USDC in USD.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Astroport TWAP price\n\nWhen calculating the  average price, we take the most recent TWAP snapshot and find a second snapshot in the range of window_size +/- tolerance. For example, if window_size is 5 minutes and tolerance is 1 minute, we look for snapshots that are 4 - 6 minutes back in time from the most recent snapshot.\n\nIf there are multiple snapshots within the range, we take the one that is closest to the desired window size.",
+            "type": "object",
+            "required": [
+              "astroport_twap"
+            ],
+            "properties": {
+              "astroport_twap": {
+                "type": "object",
+                "required": [
+                  "pair_address",
+                  "route_assets",
+                  "tolerance",
+                  "window_size"
+                ],
+                "properties": {
+                  "pair_address": {
+                    "description": "Address of the Astroport pair",
+                    "type": "string"
+                  },
+                  "route_assets": {
+                    "description": "Other assets to route through when calculating the price. E.g. if the pair is USDC/ETH and `config.base_denom` is USD, and we want to get the price of ETH in USD, then `route_assets` could be `[\"USDC\"]`, which would mean we would get the price of ETH in USDC, and then multiply by the price of USDC in USD.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "tolerance": {
+                    "description": "The tolerance in seconds for the sliding TWAP window.",
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  },
+                  "window_size": {
+                    "description": "The size of the sliding TWAP window in seconds.",
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "pyth"
+            ],
+            "properties": {
+              "pyth": {
+                "type": "object",
+                "required": [
+                  "contract_addr",
+                  "max_staleness",
+                  "price_feed_id"
+                ],
+                "properties": {
+                  "contract_addr": {
+                    "description": "Contract address of Pyth",
+                    "type": "string"
+                  },
+                  "max_staleness": {
+                    "description": "The maximum number of seconds since the last price was by an oracle, before rejecting the price as too stale",
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  },
+                  "price_feed_id": {
+                    "description": "Price feed id of an asset from the list: https://pyth.network/developers/price-feed-ids",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Identifier"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "query": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "QueryMsg",
+    "oneOf": [
+      {
+        "description": "Query contract config.",
+        "type": "object",
+        "required": [
+          "config"
+        ],
+        "properties": {
+          "config": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Query a coin's price source.\n\nNOTE: The response type of this query is chain-specific.",
+        "type": "object",
+        "required": [
+          "price_source"
+        ],
+        "properties": {
+          "price_source": {
+            "type": "object",
+            "required": [
+              "denom"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Enumerate all coins' price sources.\n\nNOTE: The response type of this query is chain-specific.",
+        "type": "object",
+        "required": [
+          "price_sources"
+        ],
+        "properties": {
+          "price_sources": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Query a coin's price.\n\nNOTE: This query may be dependent on block time (e.g. if the price source is TWAP), so may not work properly with time travel queries on archive nodes.",
+        "type": "object",
+        "required": [
+          "price"
+        ],
+        "properties": {
+          "price": {
+            "type": "object",
+            "required": [
+              "denom"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Enumerate all coins' prices.\n\nNOTE: This query may be dependent on block time (e.g. if the price source is TWAP), so may not work properly with time travel queries on archive nodes.",
+        "type": "object",
+        "required": [
+          "prices"
+        ],
+        "properties": {
+          "prices": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "migrate": null,
+  "sudo": null,
+  "responses": {
+    "config": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ConfigResponse",
+      "type": "object",
+      "required": [
+        "base_denom"
+      ],
+      "properties": {
+        "base_denom": {
+          "description": "The asset in which prices are denominated in",
+          "type": "string"
+        },
+        "owner": {
+          "description": "The contract's owner",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "proposed_new_owner": {
+          "description": "The contract's proposed owner",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "price": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PriceResponse",
+      "type": "object",
+      "required": [
+        "denom",
+        "price"
+      ],
+      "properties": {
+        "denom": {
+          "type": "string"
+        },
+        "price": {
+          "$ref": "#/definitions/Decimal"
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        }
+      }
+    },
+    "price_source": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PriceSourceResponse_for_String",
+      "type": "object",
+      "required": [
+        "denom",
+        "price_source"
+      ],
+      "properties": {
+        "denom": {
+          "type": "string"
+        },
+        "price_source": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "price_sources": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_PriceSourceResponse_for_String",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/PriceSourceResponse_for_String"
+      },
+      "definitions": {
+        "PriceSourceResponse_for_String": {
+          "type": "object",
+          "required": [
+            "denom",
+            "price_source"
+          ],
+          "properties": {
+            "denom": {
+              "type": "string"
+            },
+            "price_source": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "prices": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_PriceResponse",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/PriceResponse"
+      },
+      "definitions": {
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        },
+        "PriceResponse": {
+          "type": "object",
+          "required": [
+            "denom",
+            "price"
+          ],
+          "properties": {
+            "denom": {
+              "type": "string"
+            },
+            "price": {
+              "$ref": "#/definitions/Decimal"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

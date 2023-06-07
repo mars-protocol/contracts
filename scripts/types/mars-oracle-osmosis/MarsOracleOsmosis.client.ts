@@ -10,11 +10,14 @@ import { Coin, StdFee } from '@cosmjs/amino'
 import {
   InstantiateMsg,
   ExecuteMsg,
-  OsmosisPriceSource,
+  OsmosisPriceSourceForString,
   Decimal,
   Downtime,
+  Identifier,
   OwnerUpdate,
   DowntimeDetector,
+  GeometricTwap,
+  RedemptionRateForString,
   QueryMsg,
   ConfigResponse,
   PriceResponse,
@@ -113,7 +116,7 @@ export interface MarsOracleOsmosisInterface extends MarsOracleOsmosisReadOnlyInt
       priceSource,
     }: {
       denom: string
-      priceSource: OsmosisPriceSource
+      priceSource: OsmosisPriceSourceForString
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -130,6 +133,18 @@ export interface MarsOracleOsmosisInterface extends MarsOracleOsmosisReadOnlyInt
     funds?: Coin[],
   ) => Promise<ExecuteResult>
   updateOwner: (
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ) => Promise<ExecuteResult>
+  updateConfig: (
+    {
+      baseDenom,
+      pythContractAddr,
+    }: {
+      baseDenom?: string
+      pythContractAddr?: string
+    },
     fee?: number | StdFee | 'auto',
     memo?: string,
     funds?: Coin[],
@@ -151,6 +166,7 @@ export class MarsOracleOsmosisClient
     this.setPriceSource = this.setPriceSource.bind(this)
     this.removePriceSource = this.removePriceSource.bind(this)
     this.updateOwner = this.updateOwner.bind(this)
+    this.updateConfig = this.updateConfig.bind(this)
   }
 
   setPriceSource = async (
@@ -159,7 +175,7 @@ export class MarsOracleOsmosisClient
       priceSource,
     }: {
       denom: string
-      priceSource: OsmosisPriceSource
+      priceSource: OsmosisPriceSourceForString
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -212,6 +228,32 @@ export class MarsOracleOsmosisClient
       this.contractAddress,
       {
         update_owner: {},
+      },
+      fee,
+      memo,
+      funds,
+    )
+  }
+  updateConfig = async (
+    {
+      baseDenom,
+      pythContractAddr,
+    }: {
+      baseDenom?: string
+      pythContractAddr?: string
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        update_config: {
+          base_denom: baseDenom,
+          pyth_contract_addr: pythContractAddr,
+        },
       },
       fee,
       memo,

@@ -3,9 +3,9 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Uint128};
+use cosmwasm_std::{Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
-use mars_oracle_osmosis::OsmosisPriceSource;
+use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     incentives, oracle,
@@ -184,9 +184,9 @@ impl Oracle {
             .execute_contract(
                 env.owner.clone(),
                 self.contract_addr.clone(),
-                &oracle::ExecuteMsg::SetPriceSource {
+                &oracle::ExecuteMsg::<_, Empty>::SetPriceSource {
                     denom: denom.to_string(),
-                    price_source: OsmosisPriceSource::Fixed {
+                    price_source: OsmosisPriceSourceUnchecked::Fixed {
                         price,
                     },
                 },
@@ -601,9 +601,10 @@ impl MockEnvBuilder {
             .instantiate_contract(
                 code_id,
                 self.owner.clone(),
-                &oracle::InstantiateMsg {
+                &oracle::InstantiateMsg::<Empty> {
                     owner: self.owner.to_string(),
                     base_denom: self.base_denom.clone(),
+                    custom_init: None,
                 },
                 &[],
                 "oracle",

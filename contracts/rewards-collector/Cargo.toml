@@ -23,6 +23,7 @@ backtraces = [
 ]
 
 [dependencies]
+cosmwasm-schema     = { workspace = true }
 cosmwasm-std        = { workspace = true, features = ["stargate"] }
 cw-storage-plus     = { workspace = true }
 mars-owner          = { workspace = true }

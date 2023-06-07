@@ -3,6 +3,7 @@ members = [
   "contracts/address-provider",
   "contracts/incentives",
   "contracts/oracle/*",
+  "contracts/params",
   "contracts/swapper/*",
   "contracts/red-bank",
   "contracts/rewards-collector",
@@ -11,6 +12,7 @@ members = [
   "packages/testing",
   "packages/types",
   "packages/utils",
+  "packages/mars-swapper",
   "integration-tests",
 ]
 
@@ -42,7 +44,6 @@ bech32            = "0.9.1"
 cosmwasm-schema   = "1.1.9"
 cosmwasm-std      = "1.1.9"
 cw2               = { git = "https://github.com/mars-protocol/cw-plus", rev = "4014255" }
-cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "8bf265a43113ff1f8f3a514a1e14b3ed7bce5fb4" }
 cw-multi-test     = "0.16.1"
 cw-storage-plus   = "1.0.1"
 cw-utils          = "1.0.1"
@@ -53,8 +54,15 @@ prost             = { version = "0.11.5", default-features = false, features = [
 schemars          = "0.8.11"
 serde             = { version = "1.0.152", default-features = false, features = ["derive"] }
 thiserror         = "1.0.38"
+pyth-sdk-cw        = "1.0.0"
 cw-paginate       = "0.2.1"
+astroport         = { git = "https://github.com/astroport-fi/astroport-core", tag = "v2.7.1" }
 strum             = "0.24.1"
+
+# dev-dependencies
+cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "2d59e15703aaa377cfb09f0e021b3b63bc827a22" }
+test-case         = "3.0.0"
+proptest          = "1.1.0"
 
 # packages
 mars-health         = { version = "1.0.0", path = "./packages/health" }
@@ -69,9 +77,11 @@ mars-address-provider          = { version = "1.0.0", path = "./contracts/addres
 mars-incentives                = { version = "1.0.0", path = "./contracts/incentives" }
 mars-oracle-base               = { version = "1.0.0", path = "./contracts/oracle/base" }
 mars-oracle-osmosis            = { version = "1.0.0", path = "./contracts/oracle/osmosis" }
+mars-oracle-wasm               = { version = "1.0.0", path = "./contracts/oracle/wasm" }
 mars-red-bank                  = { version = "1.0.0", path = "./contracts/red-bank" }
 mars-rewards-collector         = { version = "1.0.0", path = "./contracts/rewards-collector" }
 mars-swapper-base              = { version = "1.0.0", path = "./contracts/swapper/base" }
+mars-swapper-astroport         = { version = "1.0.0", path = "./contracts/swapper/astroport" }
 mars-swapper-osmosis           = { version = "1.0.0", path = "./contracts/swapper/osmosis" }
 
 [profile.release]

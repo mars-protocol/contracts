@@ -15,12 +15,29 @@
         "description": "The asset in which prices are denominated in",
         "type": "string"
       },
+      "custom_init": {
+        "description": "Custom init params",
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Empty"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
       "owner": {
         "description": "The contract's owner, who can update config and price sources",
         "type": "string"
       }
     },
-    "additionalProperties": false
+    "additionalProperties": false,
+    "definitions": {
+      "Empty": {
+        "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+        "type": "object"
+      }
+    }
   },
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -44,7 +61,7 @@
                 "type": "string"
               },
               "price_source": {
-                "$ref": "#/definitions/OsmosisPriceSource"
+                "$ref": "#/definitions/OsmosisPriceSource_for_String"
               }
             },
             "additionalProperties": false
@@ -83,6 +100,41 @@
         "properties": {
           "update_owner": {
             "$ref": "#/definitions/OwnerUpdate"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Update contract config (only callable by owner)",
+        "type": "object",
+        "required": [
+          "update_config"
+        ],
+        "properties": {
+          "update_config": {
+            "type": "object",
+            "properties": {
+              "base_denom": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Custom messages defined by the contract",
+        "type": "object",
+        "required": [
+          "custom"
+        ],
+        "properties": {
+          "custom": {
+            "$ref": "#/definitions/Empty"
           }
         },
         "additionalProperties": false
@@ -147,7 +199,46 @@
           }
         }
       },
-      "OsmosisPriceSource": {
+      "Empty": {
+        "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+        "type": "object"
+      },
+      "GeometricTwap": {
+        "type": "object",
+        "required": [
+          "pool_id",
+          "window_size"
+        ],
+        "properties": {
+          "downtime_detector": {
+            "description": "Detect when the chain is recovering from downtime",
+            "anyOf": [
+              {
+                "$ref": "#/definitions/DowntimeDetector"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pool_id": {
+            "description": "Pool id for stAsset/Asset pool",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "window_size": {
+            "description": "Window size in seconds representing the entire window for which 'geometric' price is calculated. Value should be <= 172800 sec (48 hours).",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        }
+      },
+      "Identifier": {
+        "type": "string"
+      },
+      "OsmosisPriceSource_for_String": {
         "oneOf": [
           {
             "description": "Returns a fixed value;",
@@ -344,6 +435,83 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "pyth"
+            ],
+            "properties": {
+              "pyth": {
+                "type": "object",
+                "required": [
+                  "contract_addr",
+                  "max_staleness",
+                  "price_feed_id"
+                ],
+                "properties": {
+                  "contract_addr": {
+                    "description": "Contract address of Pyth",
+                    "type": "string"
+                  },
+                  "max_staleness": {
+                    "description": "The maximum number of seconds since the last price was by an oracle, before rejecting the price as too stale",
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  },
+                  "price_feed_id": {
+                    "description": "Price feed id of an asset from the list: https://pyth.network/developers/price-feed-ids",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Identifier"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Liquid Staking Derivatives (LSD) price quoted in USD based on data from Pyth, Osmosis and Stride.\n\nEquation to calculate the price: stAsset/USD = stAsset/Asset * Asset/USD where: stAsset/Asset = min(stAsset/Asset Geometric TWAP, stAsset/Asset Redemption Rate)\n\nExample: stATOM/USD = stATOM/ATOM * ATOM/USD where: - stATOM/ATOM = min(stAtom/Atom Geometric TWAP from Osmosis, stAtom/Atom Redemption Rate from Stride) - ATOM/USD price comes from the Mars Oracle contract (should point to Pyth).\n\nNOTE: `pool_id` must point to stAsset/Asset Osmosis pool. Asset/USD price source should be available in the Mars Oracle contract.",
+            "type": "object",
+            "required": [
+              "lsd"
+            ],
+            "properties": {
+              "lsd": {
+                "type": "object",
+                "required": [
+                  "geometric_twap",
+                  "redemption_rate",
+                  "transitive_denom"
+                ],
+                "properties": {
+                  "geometric_twap": {
+                    "description": "Params to query geometric TWAP price",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/GeometricTwap"
+                      }
+                    ]
+                  },
+                  "redemption_rate": {
+                    "description": "Params to query redemption rate",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/RedemptionRate_for_String"
+                      }
+                    ]
+                  },
+                  "transitive_denom": {
+                    "description": "Transitive denom for which we query price in USD. It refers to 'Asset' in the equation: stAsset/USD = stAsset/Asset * Asset/USD",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },
@@ -391,8 +559,56 @@
             "enum": [
               "abolish_owner_role"
             ]
+          },
+          {
+            "description": "A separate entity managed by Owner that can be used for granting specific emergency powers.",
+            "type": "object",
+            "required": [
+              "set_emergency_owner"
+            ],
+            "properties": {
+              "set_emergency_owner": {
+                "type": "object",
+                "required": [
+                  "emergency_owner"
+                ],
+                "properties": {
+                  "emergency_owner": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Remove the entity in the Emergency Owner role",
+            "type": "string",
+            "enum": [
+              "clear_emergency_owner"
+            ]
           }
         ]
+      },
+      "RedemptionRate_for_String": {
+        "type": "object",
+        "required": [
+          "contract_addr",
+          "max_staleness"
+        ],
+        "properties": {
+          "contract_addr": {
+            "description": "Contract addr",
+            "type": "string"
+          },
+          "max_staleness": {
+            "description": "The maximum number of seconds since the last price was by an oracle, before rejecting the price as too stale",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        }
       }
     }
   },

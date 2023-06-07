@@ -4,7 +4,11 @@ use cosmwasm_std::{
     Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
     SystemResult, Uint128, WasmQuery,
 };
-use mars_oracle_osmosis::DowntimeDetector;
+use mars_oracle_osmosis::{
+    stride,
+    stride::{Price, RedemptionRateResponse},
+    DowntimeDetector,
+};
 use mars_osmosis::helpers::QueryPoolResponse;
 use mars_red_bank_types::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
@@ -12,13 +16,16 @@ use osmosis_std::types::osmosis::{
     gamm::v2::QuerySpotPriceResponse,
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
+use pyth_sdk_cw::{PriceFeedResponse, PriceIdentifier};
 
 use crate::{
     incentives_querier::IncentivesQuerier,
     mock_address_provider,
     oracle_querier::OracleQuerier,
     osmosis_querier::{OsmosisQuerier, PriceKey},
+    pyth_querier::PythQuerier,
     red_bank_querier::RedBankQuerier,
+    redemption_rate_querier::RedemptionRateQuerier,
 };
 
 pub struct MarsMockQuerier {
@@ -27,6 +34,8 @@ pub struct MarsMockQuerier {
     incentives_querier: IncentivesQuerier,
     osmosis_querier: OsmosisQuerier,
     redbank_querier: RedBankQuerier,
+    pyth_querier: PythQuerier,
+    redemption_rate_querier: RedemptionRateQuerier,
 }
 
 impl Querier for MarsMockQuerier {
@@ -53,6 +62,8 @@ impl MarsMockQuerier {
             incentives_querier: IncentivesQuerier::default(),
             osmosis_querier: OsmosisQuerier::default(),
             redbank_querier: RedBankQuerier::default(),
+            pyth_querier: PythQuerier::default(),
+            redemption_rate_querier: Default::default(),
         }
     }
 
@@ -134,6 +145,23 @@ impl MarsMockQuerier {
         );
     }
 
+    pub fn set_pyth_price(&mut self, id: PriceIdentifier, price: PriceFeedResponse) {
+        self.pyth_querier.prices.insert(id, price);
+    }
+
+    pub fn set_redemption_rate(
+        &mut self,
+        denom: &str,
+        base_denom: &str,
+        redemption_rate: RedemptionRateResponse,
+    ) {
+        let price_key = Price {
+            denom: denom.to_string(),
+            base_denom: base_denom.to_string(),
+        };
+        self.redemption_rate_querier.redemption_rates.insert(price_key, redemption_rate);
+    }
+
     pub fn set_redbank_market(&mut self, market: red_bank::Market) {
         self.redbank_querier.markets.insert(market.denom.clone(), market);
     }
@@ -189,6 +217,16 @@ impl MarsMockQuerier {
                 // RedBank Queries
                 if let Ok(redbank_query) = from_binary::<red_bank::QueryMsg>(msg) {
                     return self.redbank_querier.handle_query(redbank_query);
+                }
+
+                // Pyth Queries
+                if let Ok(pyth_query) = from_binary::<pyth_sdk_cw::QueryMsg>(msg) {
+                    return self.pyth_querier.handle_query(&contract_addr, pyth_query);
+                }
+
+                // Redemption Rate Queries
+                if let Ok(redemption_rate_req) = from_binary::<stride::RedemptionRateRequest>(msg) {
+                    return self.redemption_rate_querier.handle_query(redemption_rate_req);
                 }
 
                 panic!("[mock]: Unsupported wasm query: {msg:?}");
