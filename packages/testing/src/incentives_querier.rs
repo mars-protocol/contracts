@@ -21,7 +21,7 @@ impl Default for IncentivesQuerier {
 
 impl IncentivesQuerier {
     pub fn handle_query(&self, contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
-        if contract_addr != &self.incentives_addr {
+        if contract_addr != self.incentives_addr {
             panic!(
                 "[mock]: made an incentives query but incentive contract address is incorrect, was: {}, should be {}",
                 contract_addr,
