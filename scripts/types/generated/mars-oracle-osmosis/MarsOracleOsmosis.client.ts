@@ -140,10 +140,8 @@ export interface MarsOracleOsmosisInterface extends MarsOracleOsmosisReadOnlyInt
   updateConfig: (
     {
       baseDenom,
-      baseDenomDecimals,
     }: {
       baseDenom?: string
-      baseDenomDecimals?: number
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -237,10 +235,8 @@ export class MarsOracleOsmosisClient
   updateConfig = async (
     {
       baseDenom,
-      baseDenomDecimals,
     }: {
       baseDenom?: string
-      baseDenomDecimals?: number
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -252,7 +248,6 @@ export class MarsOracleOsmosisClient
       {
         update_config: {
           base_denom: baseDenom,
-          base_denom_decimals: baseDenomDecimals,
         },
       },
       fee,

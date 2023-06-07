@@ -2,8 +2,6 @@ use cosmwasm_std::{to_binary, Addr, Decimal, QuerierWrapper, QueryRequest, StdRe
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-// TODO: should be updated once Stride open source their contract
-
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct Price {
     pub denom: String,

@@ -7,7 +7,6 @@
 
 export interface InstantiateMsg {
   base_denom: string
-  base_denom_decimals: number
   owner: string
 }
 export type ExecuteMsg =
@@ -28,7 +27,6 @@ export type ExecuteMsg =
   | {
       update_config: {
         base_denom?: string | null
-        base_denom_decimals?: number | null
       }
     }
 export type OsmosisPriceSourceForString =
@@ -173,7 +171,6 @@ export type QueryMsg =
     }
 export interface ConfigResponse {
   base_denom: string
-  base_denom_decimals: number
   owner?: string | null
   proposed_new_owner?: string | null
 }

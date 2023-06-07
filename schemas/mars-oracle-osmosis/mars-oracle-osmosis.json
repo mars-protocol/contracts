@@ -8,19 +8,12 @@
     "type": "object",
     "required": [
       "base_denom",
-      "base_denom_decimals",
       "owner"
     ],
     "properties": {
       "base_denom": {
         "description": "The asset in which prices are denominated in",
         "type": "string"
-      },
-      "base_denom_decimals": {
-        "description": "The asset decimals used for price normalization",
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
       },
       "owner": {
         "description": "The contract's owner, who can update config and price sources",
@@ -109,14 +102,6 @@
                   "string",
                   "null"
                 ]
-              },
-              "base_denom_decimals": {
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "format": "uint8",
-                "minimum": 0.0
               }
             },
             "additionalProperties": false
@@ -437,7 +422,7 @@
                     "type": "string"
                   },
                   "denom_decimals": {
-                    "description": "Assets are represented in their smallest unit and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).\n\nPyth prices are denominated in USD so basically it means how much 1 USDC, 1 ATOM, 1 OSMO is worth in USD (NOT 1 uusdc, 1 uatom, 1 uosmo). We have to normalize it. We should get how much 1 utoken is worth in uusd. For example: denom_decimals (OSMO) = 6 base_denom_decimals (USD) = 6\n\n1 OSMO = 10^6 uosmo 1 USD = 10^6 uusd\n\nosmo_price_in_usd = 0.59958994 uosmo_price_in_uusd = osmo_price_in_usd / 10^denom_decimals * 10^base_denom_decimals = uosmo_price_in_uusd = 0.59958994 * 10^(-6) * 10^6 = 0.59958994",
+                    "description": "Assets are represented in their smallest unit and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).\n\nPyth prices are denominated in USD so basically it means how much 1 USDC, 1 ATOM, 1 OSMO is worth in USD (NOT 1 uusdc, 1 uatom, 1 uosmo). We have to normalize it. We should get how much 1 utoken is worth in uusd. For example: - base_denom = uusd - price source set for usd (e.g. FIXED price source where 1 usd = 1000000 uusd) - denom_decimals (ATOM) = 6\n\n1 OSMO = 10^6 uosmo\n\nosmo_price_in_usd = 0.59958994 uosmo_price_in_uusd = osmo_price_in_usd * usd_price_in_base_denom / 10^denom_decimals = uosmo_price_in_uusd = 0.59958994 * 1000000 * 10^(-6) = 0.59958994",
                     "type": "integer",
                     "format": "uint8",
                     "minimum": 0.0
@@ -449,7 +434,7 @@
                     "minimum": 0.0
                   },
                   "price_feed_id": {
-                    "description": "Price feed id of an asset from the list: https://pyth.network/developers/price-feed-ids",
+                    "description": "Price feed id of an asset from the list: https://pyth.network/developers/price-feed-ids We can't verify what denoms consist of the price feed. Be very careful when adding it !!!",
                     "allOf": [
                       {
                         "$ref": "#/definitions/Identifier"
@@ -703,19 +688,12 @@
       "title": "ConfigResponse",
       "type": "object",
       "required": [
-        "base_denom",
-        "base_denom_decimals"
+        "base_denom"
       ],
       "properties": {
         "base_denom": {
           "description": "The asset in which prices are denominated in",
           "type": "string"
-        },
-        "base_denom_decimals": {
-          "description": "The asset decimals used for price normalization",
-          "type": "integer",
-          "format": "uint8",
-          "minimum": 0.0
         },
         "owner": {
           "description": "The contract's owner",
