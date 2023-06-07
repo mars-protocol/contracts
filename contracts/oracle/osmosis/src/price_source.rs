@@ -782,7 +782,7 @@ pub fn scale_pyth_price(
     };
 
     let denom_scaled = Decimal::from_atomics(1u128, denom_decimals as u32)?;
-    
+
     // Multiplication order matters !!! It can overflow doing different ways.
     // usd_price is represented in smallest unit so it can be quite big number and can be used to reduce number of decimals.
     //
