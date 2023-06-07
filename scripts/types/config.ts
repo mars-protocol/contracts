@@ -1,5 +1,5 @@
 import { DowntimeDetector } from './generated/mars-oracle-osmosis/MarsOracleOsmosis.types'
-import { OsmosisRoute } from './generated/mars-rewards-collector-osmosis/MarsRewardsCollectorOsmosis.types'
+import { OsmosisRoute } from './generated/mars-swapper-osmosis/MarsSwapperOsmosis.types'
 
 type SwapRoute = {
   denom_in: string

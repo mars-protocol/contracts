@@ -7,7 +7,7 @@ import { InstantiateMsgs } from '../../types/msg'
 import { writeFile } from 'fs/promises'
 import { join, resolve } from 'path'
 import assert from 'assert'
-import { ExecuteMsg } from '../../types/generated/mars-rewards-collector-osmosis/MarsRewardsCollectorOsmosis.types'
+import { ExecuteMsg } from '../../types/generated/mars-swapper-osmosis/MarsSwapperOsmosis.types'
 
 export class Deployer {
   constructor(
@@ -135,7 +135,7 @@ export class Deployer {
     for (const route of this.config.swapRoutes) {
       await this.client.execute(
         this.deployerAddress,
-        this.storage.addresses['rewards-collector']!,
+        this.storage.addresses.swapper!,
         {
           set_route: route,
         } satisfies ExecuteMsg,
@@ -155,7 +155,7 @@ export class Deployer {
   }
 
   async updateAddressProvider() {
-    if (this.storage.execute['address-provider-updated']) {
+    if (this.storage.execute.addressProviderUpdated) {
       printBlue('Addresses already updated.')
       return
     }
@@ -199,7 +199,7 @@ export class Deployer {
       )
     }
     printYellow('Address Provider update completed')
-    this.storage.execute['address-provider-updated'] = true
+    this.storage.execute.addressProviderUpdated = true
   }
 
   async initializeAsset(assetConfig: AssetConfig) {
