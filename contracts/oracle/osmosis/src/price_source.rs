@@ -491,11 +491,12 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
             } => Ok(Self::query_pyth_price(
                 deps,
                 env,
-                config,
                 contract_addr.to_owned(),
                 *price_feed_id,
                 *max_staleness,
                 *denom_decimals,
+                config,
+                price_sources,
             )?),
             OsmosisPriceSourceChecked::Lsd {
                 transitive_denom,
@@ -683,12 +684,22 @@ impl OsmosisPriceSourceChecked {
     fn query_pyth_price(
         deps: &Deps,
         env: &Env,
-        config: &Config,
         contract_addr: Addr,
         price_feed_id: PriceIdentifier,
         max_staleness: u64,
         denom_decimals: u8,
+        config: &Config,
+        price_sources: &Map<&str, OsmosisPriceSourceChecked>,
     ) -> ContractResult<Decimal> {
+        // use current price source for usd
+        let usd_price = price_sources.load(deps.storage, "usd")?.query_price(
+            deps,
+            env,
+            "usd",
+            config,
+            price_sources,
+        )?;
+
         let current_time = env.block.time.seconds();
 
         let price_feed_response = query_price_feed(&deps.querier, contract_addr, price_feed_id)?;
@@ -718,7 +729,7 @@ impl OsmosisPriceSourceChecked {
             current_price.price as u128,
             current_price.expo,
             denom_decimals,
-            config.base_denom_decimals,
+            usd_price,
         )?;
 
         Ok(current_price_dec)
@@ -760,15 +771,20 @@ pub fn scale_pyth_price(
     value: u128,
     expo: i32,
     denom_decimals: u8,
-    base_denom_decimals: u8,
+    usd_price: Decimal,
 ) -> ContractResult<Decimal> {
-    let expo = expo - denom_decimals as i32 + base_denom_decimals as i32;
+    let denom_scaled = Decimal::from_atomics(1u128, denom_decimals as u32)?;
+
     let target_expo = Uint128::from(10u8).checked_pow(expo.unsigned_abs())?;
     if expo < 0 {
-        Ok(Decimal::checked_from_ratio(value, target_expo)?)
+        let pyth_price = Decimal::checked_from_ratio(value, target_expo)?;
+        let price = pyth_price.checked_mul(usd_price)?.checked_mul(denom_scaled)?;
+        Ok(price)
     } else {
         let res = Uint128::from(value).checked_mul(target_expo)?;
-        Ok(Decimal::from_ratio(res, 1u128))
+        let pyth_price = Decimal::from_ratio(res, 1u128);
+        let price = pyth_price.checked_mul(denom_scaled)?.checked_mul(usd_price)?;
+        Ok(price)
     }
 }
 
@@ -781,11 +797,31 @@ mod tests {
     #[test]
     fn scale_real_pyth_price() {
         // ATOM
-        let uatom_price_in_usd = scale_pyth_price(1035200881u128, -8, 6u8, 6u8).unwrap();
-        assert_eq!(uatom_price_in_usd, Decimal::from_str("10.35200881").unwrap());
+        let uatom_price_in_uusd =
+            scale_pyth_price(1035200881u128, -8, 6u8, Decimal::from_str("1000000").unwrap())
+                .unwrap();
+        assert_eq!(uatom_price_in_uusd, Decimal::from_str("10.35200881").unwrap());
 
         // ETH
-        let ueth_price_in_usd = scale_pyth_price(181598000001u128, -8, 18u8, 6u8).unwrap();
-        assert_eq!(ueth_price_in_usd, Decimal::from_str("0.00000000181598").unwrap());
+        let ueth_price_in_uusd =
+            scale_pyth_price(181598000001u128, -8, 18u8, Decimal::from_str("1000000").unwrap())
+                .unwrap();
+        assert_eq!(ueth_price_in_uusd, Decimal::from_str("0.00000000181598").unwrap());
+    }
+
+    #[test]
+    fn scale_pyth_price_if_expo_above_zero() {
+        let ueth_price_in_uusd =
+            scale_pyth_price(181598000001u128, 8, 18u8, Decimal::from_str("1000000").unwrap())
+                .unwrap();
+        assert_eq!(ueth_price_in_uusd, Decimal::from_atomics(181598000001u128, 4u32).unwrap());
+    }
+
+    #[test]
+    fn scale_big_eth_pyth_price() {
+        let ueth_price_in_uusd =
+            scale_pyth_price(100000098000001u128, -8, 18u8, Decimal::from_str("1000000").unwrap())
+                .unwrap();
+        assert_eq!(ueth_price_in_uusd, Decimal::from_atomics(100000098000001u128, 20u32).unwrap());
     }
 }
