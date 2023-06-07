@@ -31,6 +31,28 @@ pub const DEFAULT_LIMIT: u32 = 5;
 /// TODO: Remove MAX_LIMIT? What is the purpose? Surely better to have the limit be whatever is the max gas limit?
 pub const MAX_LIMIT: u32 = 10;
 
+/// Helper function to update unclaimed rewards for a given user, collateral denom and incentive
+/// denom. Adds `accrued_rewards` to the existing amount.
+pub fn increase_unclaimed_rewards(
+    storage: &mut dyn Storage,
+    user_addr: &Addr,
+    collateral_denom: &str,
+    incentive_denom: &str,
+    accrued_rewards: Uint128,
+) -> StdResult<()> {
+    USER_UNCLAIMED_REWARDS.update(
+        storage,
+        (&user_addr, &collateral_denom, &incentive_denom),
+        |ur: Option<Uint128>| -> StdResult<Uint128> {
+            match ur {
+                Some(unclaimed_rewards) => Ok(unclaimed_rewards + accrued_rewards),
+                None => Ok(accrued_rewards),
+            }
+        },
+    )?;
+    Ok(())
+}
+
 /// Returns an iterator over all asset incentives, with optional pagination.
 /// Caller should make sure that if start_after_incentive_denom is supplied, then
 /// start_after_collateral_denom is also supplied.
