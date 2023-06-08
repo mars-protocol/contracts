@@ -11,7 +11,7 @@ use mars_oracle_osmosis::{
 use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 use osmosis_std::types::osmosis::{
-    gamm::v2::QuerySpotPriceResponse,
+    poolmanager::v1beta1::SpotPriceResponse,
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
 use pyth_sdk_cw::{Price, PriceFeed, PriceFeedResponse, PriceIdentifier};
@@ -57,7 +57,7 @@ fn querying_spot_price() {
         89,
         "umars",
         "uosmo",
-        QuerySpotPriceResponse {
+        SpotPriceResponse {
             spot_price: Decimal::from_ratio(88888u128, 12345u128).to_string(),
         },
     );
@@ -1076,7 +1076,7 @@ fn querying_all_prices() {
         1,
         "uatom",
         "uosmo",
-        QuerySpotPriceResponse {
+        SpotPriceResponse {
             spot_price: Decimal::from_ratio(77777u128, 12345u128).to_string(),
         },
     );
@@ -1084,7 +1084,7 @@ fn querying_all_prices() {
         89,
         "umars",
         "uosmo",
-        QuerySpotPriceResponse {
+        SpotPriceResponse {
             spot_price: Decimal::from_ratio(88888u128, 12345u128).to_string(),
         },
     );

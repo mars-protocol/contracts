@@ -6,10 +6,7 @@ use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::{
         RecoveredSinceDowntimeOfLengthRequest, RecoveredSinceDowntimeOfLengthResponse,
     },
-    gamm::{
-        v1beta1::QueryPoolRequest,
-        v2::{QuerySpotPriceRequest, QuerySpotPriceResponse},
-    },
+    poolmanager::v1beta1::{PoolRequest, SpotPriceRequest, SpotPriceResponse},
     twap::v1beta1::{
         ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse, GeometricTwapToNowRequest,
         GeometricTwapToNowResponse,
@@ -28,7 +25,7 @@ pub struct PriceKey {
 pub struct OsmosisQuerier {
     pub pools: HashMap<u64, QueryPoolResponse>,
 
-    pub spot_prices: HashMap<PriceKey, QuerySpotPriceResponse>,
+    pub spot_prices: HashMap<PriceKey, SpotPriceResponse>,
     pub arithmetic_twap_prices: HashMap<PriceKey, ArithmeticTwapToNowResponse>,
     pub geometric_twap_prices: HashMap<PriceKey, GeometricTwapToNowResponse>,
 
@@ -37,16 +34,16 @@ pub struct OsmosisQuerier {
 
 impl OsmosisQuerier {
     pub fn handle_stargate_query(&self, path: &str, data: &Binary) -> Result<QuerierResult, ()> {
-        if path == "/osmosis.gamm.v1beta1.Query/Pool" {
-            let parse_osmosis_query: Result<QueryPoolRequest, DecodeError> =
+        if path == "/osmosis.poolmanager.v1beta1.Query/Pool" {
+            let parse_osmosis_query: Result<PoolRequest, DecodeError> =
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
                 return Ok(self.handle_query_pool_request(osmosis_query));
             }
         }
 
-        if path == "/osmosis.gamm.v2.Query/SpotPrice" {
-            let parse_osmosis_query: Result<QuerySpotPriceRequest, DecodeError> =
+        if path == "/osmosis.poolmanager.v1beta1.Query/SpotPrice" {
+            let parse_osmosis_query: Result<SpotPriceRequest, DecodeError> =
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
                 return Ok(self.handle_query_spot_request(osmosis_query));
@@ -80,7 +77,7 @@ impl OsmosisQuerier {
         Err(())
     }
 
-    fn handle_query_pool_request(&self, request: QueryPoolRequest) -> QuerierResult {
+    fn handle_query_pool_request(&self, request: PoolRequest) -> QuerierResult {
         let pool_id = request.pool_id;
         let res: ContractResult<Binary> = match self.pools.get(&pool_id) {
             Some(query_response) => to_binary(&query_response).into(),
@@ -93,7 +90,7 @@ impl OsmosisQuerier {
         Ok(res).into()
     }
 
-    fn handle_query_spot_request(&self, request: QuerySpotPriceRequest) -> QuerierResult {
+    fn handle_query_spot_request(&self, request: SpotPriceRequest) -> QuerierResult {
         let price_key = PriceKey {
             pool_id: request.pool_id,
             denom_in: request.base_asset_denom,

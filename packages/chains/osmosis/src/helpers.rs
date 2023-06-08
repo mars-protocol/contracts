@@ -9,10 +9,8 @@ use osmosis_std::{
         cosmos::base::v1beta1::Coin,
         osmosis::{
             downtimedetector::v1beta1::DowntimedetectorQuerier,
-            gamm::{
-                v1beta1::{PoolAsset, PoolParams, QueryPoolRequest},
-                v2::GammQuerier,
-            },
+            gamm::v1beta1::{PoolAsset, PoolParams},
+            poolmanager::v1beta1::{PoolRequest, PoolmanagerQuerier},
             twap::v1beta1::TwapQuerier,
         },
     },
@@ -52,7 +50,7 @@ pub struct QueryPoolResponse {
 
 /// Query an Osmosis pool's coin depths and the supply of of liquidity token
 pub fn query_pool(querier: &QuerierWrapper, pool_id: u64) -> StdResult<Pool> {
-    let req: QueryRequest<Empty> = QueryPoolRequest {
+    let req: QueryRequest<Empty> = PoolRequest {
         pool_id,
     }
     .into();
@@ -71,7 +69,7 @@ pub fn query_spot_price(
     base_denom: &str,
     quote_denom: &str,
 ) -> StdResult<Decimal> {
-    let spot_price_res = GammQuerier::new(querier).spot_price(
+    let spot_price_res = PoolmanagerQuerier::new(querier).spot_price(
         pool_id,
         base_denom.to_string(),
         quote_denom.to_string(),
