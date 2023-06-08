@@ -106,12 +106,14 @@ fn balance_change_zero_emission() {
 
     assert_eq!(
         res.events[0].attributes,
+        vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user"),]
+    );
+    assert_eq!(
+        res.events[1].attributes,
         vec![
-            attr("action", "balance_change"),
-            attr("denom", denom),
-            attr("user", "user"),
-            attr("rewards_accrued_umars", expected_accrued_rewards),
-            attr("asset_index_umars", asset_incentive_index.to_string()),
+            attr("incentive_denom", "umars"),
+            attr("rewards_accrued", expected_accrued_rewards),
+            attr("asset_index", asset_incentive_index.to_string())
         ]
     );
 
@@ -184,12 +186,14 @@ fn balance_change_user_with_zero_balance() {
 
     assert_eq!(
         res.events[0].attributes,
+        vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user"),]
+    );
+    assert_eq!(
+        res.events[1].attributes,
         vec![
-            attr("action", "balance_change"),
-            attr("denom", denom),
-            attr("user", "user"),
-            attr("rewards_accrued_umars", "0"),
-            attr("asset_index_umars", expected_index.to_string()),
+            attr("incentive_denom", "umars"),
+            attr("rewards_accrued", "0"),
+            attr("asset_index", expected_index.to_string())
         ]
     );
 
@@ -473,12 +477,14 @@ fn balance_change_user_non_zero_balance() {
         .unwrap();
         assert_eq!(
             res.events[0].attributes,
+            vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user"),]
+        );
+        assert_eq!(
+            res.events[1].attributes,
             vec![
-                attr("action", "balance_change"),
-                attr("denom", denom),
-                attr("user", "user"),
-                attr("rewards_accrued_umars", expected_accrued_rewards),
-                attr("asset_index_umars", expected_asset_incentive_index.to_string()),
+                attr("incentive_denom", "umars"),
+                attr("rewards_accrued", expected_accrued_rewards),
+                attr("asset_index", expected_asset_incentive_index.to_string())
             ]
         );
 
@@ -538,12 +544,14 @@ fn balance_change_user_non_zero_balance() {
         .unwrap();
         assert_eq!(
             res.events[0].attributes,
+            vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user"),]
+        );
+        assert_eq!(
+            res.events[1].attributes,
             vec![
-                attr("action", "balance_change"),
-                attr("denom", denom),
-                attr("user", "user"),
-                attr("rewards_accrued_umars", expected_accrued_rewards),
-                attr("asset_index_umars", expected_asset_incentive_index.to_string()),
+                attr("incentive_denom", "umars"),
+                attr("rewards_accrued", expected_accrued_rewards),
+                attr("asset_index", expected_asset_incentive_index.to_string())
             ]
         );
 
@@ -587,12 +595,14 @@ fn balance_change_user_non_zero_balance() {
 
         assert_eq!(
             res.events[0].attributes,
+            vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user"),]
+        );
+        assert_eq!(
+            res.events[1].attributes,
             vec![
-                attr("action", "balance_change"),
-                attr("denom", denom),
-                attr("user", "user"),
-                attr("rewards_accrued_umars", "0"),
-                attr("asset_index_umars", expected_asset_incentive_index.to_string()),
+                attr("incentive_denom", "umars"),
+                attr("rewards_accrued", "0"),
+                attr("asset_index", expected_asset_incentive_index.to_string())
             ]
         );
 

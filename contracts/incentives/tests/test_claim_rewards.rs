@@ -237,13 +237,12 @@ fn execute_claim_rewards() {
 
     assert_eq!(
         res.events[0].attributes,
-        vec![
-            attr("action", "claim_rewards"),
-            attr("user", "user"),
-            attr("umars_rewards", expected_accrued_rewards),
-        ]
+        vec![attr("action", "claim_rewards"), attr("user", "user"),]
     );
-
+    assert_eq!(
+        res.events[1].attributes,
+        vec![attr("denom", "umars"), attr("amount", expected_accrued_rewards),]
+    );
     // asset and zero incentives get updated, no_user does not
     let asset_incentive =
         ASSET_INCENTIVES.load(deps.as_ref().storage, (asset_denom, "umars")).unwrap();
