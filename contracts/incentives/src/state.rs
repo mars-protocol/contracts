@@ -13,7 +13,6 @@ pub const CONFIG: Item<Config> = Item::new("config");
 
 /// A map containing a configuration of an incentive for a given collateral and incentive denom.
 /// The key is (collateral denom, incentive denom).
-/// We use String instead of &str for the key because Map::prefix_range gives borrow issues with &str.
 pub const ASSET_INCENTIVES: Map<(&str, &str), AssetIncentive> = Map::new("incentives");
 
 /// A map containing the incentive index for a given user, collateral denom and incentive denom.
@@ -98,13 +97,15 @@ mod tests {
             start_time: 0,
         };
         let incentives = vec![
-            (("collat1", "incen1"), asset_incentive.clone()),
-            (("collat1", "incen2"), asset_incentive.clone()),
-            (("collat2", "incen1"), asset_incentive.clone()),
-            (("collat2", "incen2"), asset_incentive.clone()),
+            (("collat1".to_string(), "incen1".to_string()), asset_incentive.clone()),
+            (("collat1".to_string(), "incen2".to_string()), asset_incentive.clone()),
+            (("collat2".to_string(), "incen1".to_string()), asset_incentive.clone()),
+            (("collat2".to_string(), "incen2".to_string()), asset_incentive.clone()),
         ];
-        for (key, incentive) in incentives.iter() {
-            ASSET_INCENTIVES.save(&mut storage, key, &incentive).unwrap();
+        for ((collat, incen), incentive) in incentives.iter() {
+            ASSET_INCENTIVES
+                .save(&mut storage, (collat.as_str(), incen.as_str()), &incentive)
+                .unwrap();
         }
 
         // No pagination
