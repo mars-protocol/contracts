@@ -1,4 +1,5 @@
 use cosmwasm_std::{Addr, Decimal, Order, StdResult, Storage, Uint128};
+use cw_item_set::Set;
 use cw_storage_plus::{Bound, Item, Map, PrefixBound};
 use mars_owner::Owner;
 use mars_red_bank_types::incentives::{AssetIncentive, Config};
@@ -10,6 +11,10 @@ pub const OWNER: Owner = Owner::new("owner");
 
 /// The configuration of the contract
 pub const CONFIG: Item<Config> = Item::new("config");
+
+/// A set containing all whitelisted incentive denoms. Incentives can only be added for denoms in
+/// this set.
+pub const WHITELIST: Set<&str> = Set::new("whitelist", "whitelist_counter");
 
 /// A map containing a configuration of an incentive for a given collateral and incentive denom.
 /// The key is (collateral denom, incentive denom).
