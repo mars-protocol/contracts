@@ -5,7 +5,10 @@ use mars_osmosis::helpers::{has_denom, query_arithmetic_twap_price, query_pool};
 use mars_rewards_collector_base::{ContractError, ContractResult, Route};
 use osmosis_std::types::{
     cosmos::base::v1beta1::Coin,
-    osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute as OsmosisSwapAmountInRoute},
+    osmosis::{
+        gamm::v1beta1::MsgSwapExactAmountIn,
+        poolmanager::v1beta1::SwapAmountInRoute as OsmosisSwapAmountInRoute,
+    },
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
