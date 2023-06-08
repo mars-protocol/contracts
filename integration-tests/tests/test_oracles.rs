@@ -880,8 +880,8 @@ fn compare_spot_and_twap_price() {
         .unwrap();
 
     let tolerance = Decimal::percent(1);
-    assert!(arithmetic_twap_price.price - spot_price.price < tolerance);
-    assert!(spot_price.price - geometric_twap_price.price < tolerance);
+    assert!(spot_price.price.abs_diff(arithmetic_twap_price.price) < tolerance);
+    assert!(spot_price.price.abs_diff(geometric_twap_price.price) < tolerance);
 }
 
 // execute borrow action in red bank with an asset not in the oracle - should fail when attempting to query oracle

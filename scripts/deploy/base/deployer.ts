@@ -155,7 +155,7 @@ export class Deployer {
   }
 
   async updateAddressProvider() {
-    if (this.storage.execute['address-provider-updated']) {
+    if (this.storage.execute.addressProviderUpdated) {
       printBlue('Addresses already updated.')
       return
     }
@@ -199,7 +199,7 @@ export class Deployer {
       )
     }
     printYellow('Address Provider update completed')
-    this.storage.execute['address-provider-updated'] = true
+    this.storage.execute.addressProviderUpdated = true
   }
 
   async initializeAsset(assetConfig: AssetConfig) {
