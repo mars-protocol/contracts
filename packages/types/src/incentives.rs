@@ -75,6 +75,13 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
+    /// Add or remove incentive denoms from the whitelist. Only admin can do this.
+    UpdateWhitelist {
+        /// The denoms to add to the whitelist
+        add_denoms: Vec<String>,
+        /// The denoms to remove from the whitelist
+        remove_denoms: Vec<String>,
+    },
     /// Set incentive params for an asset to its depositor at Red Bank.
     ///
     /// If there is no incentive for the asset, all params are required.
