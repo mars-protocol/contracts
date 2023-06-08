@@ -31,7 +31,6 @@ struct TestSuite {
     denom: &'static str,
     withdrawer_addr: Addr,
     initial_market: Market,
-    initial_liquidity: Uint128,
 }
 
 fn setup_test() -> TestSuite {
@@ -60,7 +59,6 @@ fn setup_test() -> TestSuite {
         denom,
         withdrawer_addr: Addr::unchecked("larry"),
         initial_market: market,
-        initial_liquidity,
     }
 }
 
@@ -102,7 +100,6 @@ fn withdrawing_partially() {
         denom,
         withdrawer_addr,
         initial_market,
-        initial_liquidity,
     } = setup_test();
 
     let block_time = initial_market.indexes_last_updated + 2000;
@@ -138,7 +135,6 @@ fn withdrawing_partially() {
     let expected_params = th_get_expected_indices_and_rates(
         &initial_market,
         block_time,
-        initial_liquidity,
         TestUtilizationDeltaInfo {
             less_liquidity: withdraw_amount,
             ..Default::default()
@@ -246,7 +242,6 @@ fn withdrawing_completely() {
         denom,
         withdrawer_addr,
         initial_market,
-        initial_liquidity,
     } = setup_test();
 
     let block_time = initial_market.indexes_last_updated + 2000;
@@ -279,7 +274,6 @@ fn withdrawing_completely() {
     let expected_params = th_get_expected_indices_and_rates(
         &initial_market,
         block_time,
-        initial_liquidity,
         TestUtilizationDeltaInfo {
             less_liquidity: withdrawer_balance,
             ..Default::default()
@@ -354,7 +348,6 @@ fn withdrawing_to_another_user() {
         denom,
         withdrawer_addr,
         initial_market,
-        initial_liquidity,
     } = setup_test();
 
     let block_time = initial_market.indexes_last_updated + 2000;
@@ -388,7 +381,6 @@ fn withdrawing_to_another_user() {
     let expected_params = th_get_expected_indices_and_rates(
         &initial_market,
         block_time,
-        initial_liquidity,
         TestUtilizationDeltaInfo {
             less_liquidity: withdraw_amount,
             ..Default::default()

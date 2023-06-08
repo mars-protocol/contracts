@@ -1,5 +1,5 @@
 use cosmwasm_std::{attr, coin, from_binary, testing::mock_info, Addr, Decimal, Event, Uint128};
-use mars_owner::OwnerError::NotOwner;
+use mars_owner::{OwnerError::NotOwner, OwnerUpdate};
 use mars_red_bank::{
     contract::{execute, instantiate, query},
     error::ContractError,
@@ -41,7 +41,6 @@ fn proper_initialization() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config: empty_config,
     };
     let info = mock_info("owner", &[]);
@@ -58,7 +57,6 @@ fn proper_initialization() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -83,7 +81,6 @@ fn proper_initialization() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
 
@@ -114,7 +111,6 @@ fn update_config() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config: init_config.clone(),
     };
     // we can just call .unwrap() to assert this was a success
@@ -191,7 +187,6 @@ fn init_asset() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -477,7 +472,6 @@ fn update_asset() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -731,7 +725,6 @@ fn update_asset_with_new_interest_rate_model_params() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -823,6 +816,8 @@ fn update_asset_new_reserve_factor_accrues_interest_rate() {
     let asset_liquidity = Uint128::from(10_000_000_000_000_u128);
     let mut deps = th_setup(&[coin(asset_liquidity.into(), "somecoin")]);
 
+    let reserve_factor = Decimal::from_ratio(1_u128, 10_u128);
+
     let ir_model = InterestRateModel {
         optimal_utilization_rate: Decimal::from_ratio(80u128, 100u128),
         base: Decimal::zero(),
@@ -831,22 +826,31 @@ fn update_asset_new_reserve_factor_accrues_interest_rate() {
     };
 
     let asset_initial_debt = Uint128::new(2_000_000_000_000);
+    let debt_total_scaled =
+        compute_scaled_amount(asset_initial_debt, Decimal::one(), ScalingOperation::Ceil).unwrap();
+
+    let asset_initial_collateral = asset_liquidity + asset_initial_debt;
+    let collateral_total_scaled =
+        compute_scaled_amount(asset_initial_collateral, Decimal::one(), ScalingOperation::Ceil)
+            .unwrap();
+
+    let initial_utilization_rate = Decimal::from_ratio(debt_total_scaled, collateral_total_scaled);
+    let borrow_rate = ir_model.get_borrow_rate(initial_utilization_rate).unwrap();
+    let liquidity_rate =
+        ir_model.get_liquidity_rate(borrow_rate, initial_utilization_rate, reserve_factor).unwrap();
+
     let market_before = th_init_market(
         deps.as_mut(),
         "somecoin",
         &Market {
-            reserve_factor: Decimal::from_ratio(1_u128, 10_u128),
+            reserve_factor,
             borrow_index: Decimal::one(),
             liquidity_index: Decimal::one(),
             indexes_last_updated: 1_000_000,
-            borrow_rate: Decimal::from_ratio(12u128, 100u128),
-            liquidity_rate: Decimal::from_ratio(12u128, 100u128),
-            debt_total_scaled: compute_scaled_amount(
-                asset_initial_debt,
-                Decimal::one(),
-                ScalingOperation::Ceil,
-            )
-            .unwrap(),
+            borrow_rate,
+            liquidity_rate,
+            collateral_total_scaled,
+            debt_total_scaled,
             interest_rate_model: ir_model.clone(),
             ..Default::default()
         },
@@ -886,8 +890,10 @@ fn update_asset_new_reserve_factor_accrues_interest_rate() {
     )
     .unwrap();
     let expected_liquidity = asset_liquidity;
-    let expected_utilization_rate =
-        Decimal::from_ratio(expected_debt, expected_liquidity + expected_debt);
+    // in this particular example, we have to subtract 1 from the total underlying
+    // collateral amount here, because of rounding error.
+    let expected_collateral = expected_liquidity + expected_debt - Uint128::new(1);
+    let expected_utilization_rate = Decimal::from_ratio(expected_debt, expected_collateral);
 
     let expected_borrow_rate = ir_model.get_borrow_rate(expected_utilization_rate).unwrap();
 
@@ -951,7 +957,6 @@ fn update_asset_by_emergency_owner() {
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
-        emergency_owner: "emergency_owner".to_string(),
         config,
     };
     let info = mock_info("owner", &[]);
@@ -974,6 +979,16 @@ fn update_asset_by_emergency_owner() {
         borrow_enabled: Some(true),
         deposit_cap: None,
     };
+
+    execute(
+        deps.as_mut(),
+        env.clone(),
+        mock_info("owner", &[]),
+        ExecuteMsg::UpdateOwner(OwnerUpdate::SetEmergencyOwner {
+            emergency_owner: "emergency_owner".to_string(),
+        }),
+    )
+    .unwrap();
 
     // emergency owner is authorized but can't update asset if not initialized first
     {

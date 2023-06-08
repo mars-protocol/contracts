@@ -192,11 +192,11 @@ fn interest_rates_after_repayment() {
     let exact_debt_repayment_result = red_bank.query_market(&mut mock_env, "uusdc");
     assert_eq!(
         exact_debt_repayment_result.borrow_rate,
-        Decimal::from_ratio(716667701657739867u128, 1000000000000000000u128)
+        Decimal::from_ratio(716667703657732987u128, 1000000000000000000u128)
     );
     assert_eq!(
         exact_debt_repayment_result.liquidity_rate,
-        Decimal::from_ratio(344002276982931938u128, 1000000000000000000u128)
+        Decimal::from_ratio(344002281382926748u128, 1000000000000000000u128)
     );
 
     // 2. Repay full debt with refund

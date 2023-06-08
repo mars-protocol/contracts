@@ -102,7 +102,6 @@ fn borrow_and_repay() {
     let expected_params_uosmo = th_get_expected_indices_and_rates(
         &market_1_initial,
         block_time,
-        available_liquidity_uosmo,
         TestUtilizationDeltaInfo {
             less_liquidity: borrow_amount,
             more_debt: borrow_amount,
@@ -174,7 +173,6 @@ fn borrow_and_repay() {
     let expected_params_uosmo = th_get_expected_indices_and_rates(
         &market_1_after_borrow,
         block_time,
-        available_liquidity_uosmo,
         TestUtilizationDeltaInfo {
             less_liquidity: borrow_amount,
             more_debt: borrow_amount,
@@ -221,7 +219,6 @@ fn borrow_and_repay() {
     let expected_params_uusd = th_get_expected_indices_and_rates(
         &market_2_initial,
         block_time,
-        available_liquidity_uusd,
         TestUtilizationDeltaInfo {
             less_liquidity: borrow_amount,
             more_debt: borrow_amount,
@@ -304,7 +301,6 @@ fn borrow_and_repay() {
     let expected_params_uusd = th_get_expected_indices_and_rates(
         &market_2_after_borrow_2,
         block_time,
-        available_liquidity_uusd,
         TestUtilizationDeltaInfo {
             less_debt: repay_amount,
             user_current_debt_scaled: expected_debt_scaled_2_after_borrow_2,
@@ -358,7 +354,6 @@ fn borrow_and_repay() {
     let expected_params_uusd = th_get_expected_indices_and_rates(
         &market_2_after_repay_some_2,
         block_time,
-        available_liquidity_uusd,
         TestUtilizationDeltaInfo {
             less_debt: Uint128::from(9999999999999_u128), // hack: Just do a big number to repay all debt,
             user_current_debt_scaled: expected_debt_scaled_2_after_repay_some_2,
@@ -422,7 +417,6 @@ fn borrow_and_repay() {
     let expected_params_uosmo = th_get_expected_indices_and_rates(
         &market_1_after_borrow_again,
         block_time,
-        available_liquidity_uosmo,
         TestUtilizationDeltaInfo {
             less_debt: repay_amount,
             user_current_debt_scaled: expected_debt_scaled_1_after_borrow_again,
@@ -781,7 +775,7 @@ fn borrow_full_liquidity_and_then_repay() {
             amount: initial_liquidity.into(),
             recipient: None,
         };
-        let _res = execute(deps.as_mut(), env, info.clone(), msg).unwrap();
+        let _res = execute(deps.as_mut(), env, info, msg).unwrap();
 
         let market_after_borrow = MARKETS.load(&deps.storage, "uusd").unwrap();
         let debt_total = compute_underlying_amount(
@@ -796,18 +790,6 @@ fn borrow_full_liquidity_and_then_repay() {
     let new_block_time = 12000u64;
     // We need to update balance after borrowing
     deps.querier.set_contract_balances(&[coin(0, "uusd")]);
-
-    // Try to borrow more than available liquidity
-    {
-        let env = mock_env_at_block_time(new_block_time);
-        let msg = ExecuteMsg::Borrow {
-            denom: "uusd".to_string(),
-            amount: 100u128.into(),
-            recipient: None,
-        };
-        let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-        assert_eq!(error_res, ContractError::OperationExceedsAvailableLiquidity {});
-    }
 
     // Repay part of the debt
     {
@@ -945,7 +927,7 @@ fn cannot_borrow_if_market_not_enabled() {
 
     // Check error when borrowing not allowed on market
     let env = mock_env(MockEnvParams::default());
-    let info = cosmwasm_std::testing::mock_info("borrower", &[coin(110000, "somecoin")]);
+    let info = cosmwasm_std::testing::mock_info("borrower", &[]);
     let msg = ExecuteMsg::Borrow {
         denom: "somecoin".to_string(),
         amount: Uint128::new(1000),

@@ -1,6 +1,7 @@
 {
   "name": "scripts",
   "version": "1.0.0",
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "deploy:osmosis-testnet": "yarn build && node build/deploy/osmosis/testIndex.js",
     "deploy:osmosis-mainnet": "yarn build && node build/deploy/osmosis/mainIndex.js",
@@ -13,22 +14,21 @@
     "format-check": "prettier --ignore-path .gitignore --check ."
   },
   "dependencies": {
-    "@cosmjs/cosmwasm-stargate": "^0.29.5",
-    "@cosmjs/proto-signing": "^0.29.5",
-    "@cosmjs/stargate": "^0.29.5",
-    "@cosmwasm/ts-codegen": "^0.24.0",
+    "@cosmjs/cosmwasm-stargate": "^0.30.1",
+    "@cosmjs/proto-signing": "^0.30.1",
+    "@cosmjs/stargate": "^0.30.1",
+    "@cosmwasm/ts-codegen": "^0.30.0",
     "chalk": "4.1.2",
-    "cosmjs-types": "^0.6.1",
     "prepend-file": "^2.0.1"
   },
   "devDependencies": {
-    "@types/node": "^18.11.18",
-    "@typescript-eslint/eslint-plugin": "^5.49.0",
-    "@typescript-eslint/parser": "^5.49.0",
-    "cosmjs-types": "^0.6.1",
-    "eslint": "^8.32.0",
-    "eslint-config-prettier": "^8.6.0",
-    "prettier": "^2.8.3",
-    "typescript": "^4.9.4"
+    "@types/node": "^20.2.5",
+    "@typescript-eslint/eslint-plugin": "^5.59.8",
+    "@typescript-eslint/parser": "^5.59.8",
+    "cosmjs-types": "^0.8.0",
+    "eslint": "^8.41.0",
+    "eslint-config-prettier": "^8.8.0",
+    "prettier": "^2.8.8",
+    "typescript": "^5.0.4"
   }
 }

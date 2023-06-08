@@ -103,7 +103,6 @@ fn uncollateralized_loan_limits() {
     let expected_params = th_get_expected_indices_and_rates(
         &market_initial,
         block_time,
-        available_liquidity,
         TestUtilizationDeltaInfo {
             less_liquidity: initial_borrow_amount,
             more_debt: initial_borrow_amount,
