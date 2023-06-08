@@ -134,7 +134,7 @@ pub fn execute_set_asset_incentive(
 
     let current_block_time = env.block.time.seconds();
     let new_asset_incentive = match ASSET_INCENTIVES
-        .may_load(deps.storage, (collateral_denom.clone(), incentive_denom.clone()))?
+        .may_load(deps.storage, (&collateral_denom, &incentive_denom))?
     {
         Some(mut asset_incentive) => {
             let (start_time, duration, emission_per_second) =
@@ -195,7 +195,7 @@ pub fn execute_set_asset_incentive(
 
     ASSET_INCENTIVES.save(
         deps.storage,
-        (collateral_denom.clone(), incentive_denom.clone()),
+        (&collateral_denom, &incentive_denom),
         &new_asset_incentive,
     )?;
 
@@ -322,7 +322,7 @@ pub fn execute_balance_change(
     let mut events = vec![base_event];
 
     let asset_incentives = ASSET_INCENTIVES
-        .prefix(collateral_denom.clone())
+        .prefix(&collateral_denom)
         .range(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?;
 
@@ -334,7 +334,7 @@ pub fn execute_balance_change(
         )?;
         ASSET_INCENTIVES.save(
             deps.storage,
-            (collateral_denom.clone(), incentive_denom.clone()),
+            (&collateral_denom, &incentive_denom.clone()),
             &asset_incentive,
         )?;
 
@@ -423,7 +423,7 @@ pub fn execute_claim_rewards(
 
             ASSET_INCENTIVES.save(
                 deps.storage,
-                (collateral_denom.clone(), incentive_denom.clone()),
+                (&collateral_denom.clone(), &incentive_denom),
                 &asset_incentive_updated,
             )?;
 
@@ -554,7 +554,7 @@ pub fn query_asset_incentive(
     incentive_denom: String,
 ) -> StdResult<AssetIncentiveResponse> {
     let asset_incentive =
-        ASSET_INCENTIVES.load(deps.storage, (collateral_denom.clone(), incentive_denom.clone()))?;
+        ASSET_INCENTIVES.load(deps.storage, (&collateral_denom, &incentive_denom))?;
     Ok(AssetIncentiveResponse::from(collateral_denom, incentive_denom, asset_incentive))
 }
 
@@ -619,7 +619,7 @@ pub fn query_user_unclaimed_rewards(
         .into_iter()
         .map(|(denom, amount)| Coin {
             denom,
-            amount: amount.into(),
+            amount,
         })
         .collect())
 }

@@ -18,9 +18,7 @@ fn query_asset_incentive() {
         index: Decimal::one(),
         last_updated: 150,
     };
-    ASSET_INCENTIVES
-        .save(deps.as_mut().storage, ("uosmo".to_string(), "umars".to_string()), &uosmo_incentive)
-        .unwrap();
+    ASSET_INCENTIVES.save(deps.as_mut().storage, ("uosmo", "umars"), &uosmo_incentive).unwrap();
     let uatom_incentive = AssetIncentive {
         emission_per_second: Uint128::zero(),
         start_time: 0,
@@ -28,9 +26,7 @@ fn query_asset_incentive() {
         index: Decimal::one(),
         last_updated: 1000,
     };
-    ASSET_INCENTIVES
-        .save(deps.as_mut().storage, ("uatom".to_string(), "umars".to_string()), &uatom_incentive)
-        .unwrap();
+    ASSET_INCENTIVES.save(deps.as_mut().storage, ("uatom", "umars"), &uatom_incentive).unwrap();
     let uusdc_incentive = AssetIncentive {
         emission_per_second: Uint128::new(200),
         start_time: 12000,
@@ -38,9 +34,7 @@ fn query_asset_incentive() {
         index: Decimal::from_ratio(120u128, 50u128),
         last_updated: 120000,
     };
-    ASSET_INCENTIVES
-        .save(deps.as_mut().storage, ("uusdc".to_string(), "umars".to_string()), &uusdc_incentive)
-        .unwrap();
+    ASSET_INCENTIVES.save(deps.as_mut().storage, ("uusdc", "umars"), &uusdc_incentive).unwrap();
 
     let res: AssetIncentiveResponse = helpers::th_query(
         deps.as_ref(),
@@ -67,9 +61,7 @@ fn query_asset_incentives() {
         index: Decimal::one(),
         last_updated: 150,
     };
-    ASSET_INCENTIVES
-        .save(deps.as_mut().storage, ("uosmo".to_string(), "umars".to_string()), &uosmo_incentive)
-        .unwrap();
+    ASSET_INCENTIVES.save(deps.as_mut().storage, ("uosmo", "umars"), &uosmo_incentive).unwrap();
     let uatom_incentive = AssetIncentive {
         emission_per_second: Uint128::zero(),
         start_time: 0,
@@ -77,9 +69,7 @@ fn query_asset_incentives() {
         index: Decimal::one(),
         last_updated: 1000,
     };
-    ASSET_INCENTIVES
-        .save(deps.as_mut().storage, ("uatom".to_string(), "umars".to_string()), &uatom_incentive)
-        .unwrap();
+    ASSET_INCENTIVES.save(deps.as_mut().storage, ("uatom", "umars"), &uatom_incentive).unwrap();
     let uusdc_incentive = AssetIncentive {
         emission_per_second: Uint128::new(200),
         start_time: 12000,
@@ -87,9 +77,7 @@ fn query_asset_incentives() {
         index: Decimal::from_ratio(120u128, 50u128),
         last_updated: 120000,
     };
-    ASSET_INCENTIVES
-        .save(deps.as_mut().storage, ("uusdc".to_string(), "umars".to_string()), &uusdc_incentive)
-        .unwrap();
+    ASSET_INCENTIVES.save(deps.as_mut().storage, ("uusdc", "umars"), &uusdc_incentive).unwrap();
 
     // NOTE: responses are ordered alphabetically by denom
     let res: Vec<AssetIncentiveResponse> = helpers::th_query(

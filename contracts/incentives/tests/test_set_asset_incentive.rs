@@ -198,9 +198,7 @@ fn set_new_asset_incentive() {
         ]
     );
 
-    let asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
-        .unwrap();
+    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, ("uosmo", "umars")).unwrap();
 
     assert_eq!(asset_incentive.emission_per_second, Uint128::new(100));
     assert_eq!(asset_incentive.index, Decimal::zero());
@@ -226,7 +224,7 @@ fn set_existing_asset_incentive_with_different_start_time() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            ("uosmo".to_string(), "umars".to_string()),
+            ("uosmo", "umars"),
             &AssetIncentive {
                 emission_per_second: Uint128::new(124),
                 start_time,
@@ -294,9 +292,7 @@ fn set_existing_asset_incentive_with_different_start_time() {
         duration: None,
     };
     execute(deps.as_mut(), env, info.clone(), msg).unwrap();
-    let asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
-        .unwrap();
+    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, ("uosmo", "umars")).unwrap();
     assert_eq!(asset_incentive.start_time, start_time);
     assert_eq!(asset_incentive.last_updated, block_time.seconds());
 
@@ -334,13 +330,10 @@ fn set_existing_asset_incentive_with_different_start_time() {
         start_time: None,
         duration: None,
     };
-    let prev_asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
-        .unwrap();
+    let prev_asset_incentive =
+        ASSET_INCENTIVES.load(deps.as_ref().storage, ("uosmo", "umars")).unwrap();
     execute(deps.as_mut(), env, info, msg).unwrap();
-    let asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
-        .unwrap();
+    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, ("uosmo", "umars")).unwrap();
     assert_eq!(asset_incentive.start_time, prev_asset_incentive.start_time);
     assert_eq!(asset_incentive.last_updated, block_time.seconds());
 }
@@ -362,7 +355,7 @@ fn set_existing_asset_incentive_with_different_duration() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            ("uosmo".to_string(), "umars".to_string()),
+            ("uosmo", "umars"),
             &AssetIncentive {
                 emission_per_second: Uint128::new(124),
                 start_time,
@@ -429,13 +422,10 @@ fn set_existing_asset_incentive_with_different_duration() {
         start_time: None,
         duration: Some(duration),
     };
-    let prev_asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
-        .unwrap();
+    let prev_asset_incentive =
+        ASSET_INCENTIVES.load(deps.as_ref().storage, ("uosmo", "umars")).unwrap();
     execute(deps.as_mut(), env, info.clone(), msg).unwrap();
-    let asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
-        .unwrap();
+    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, ("uosmo", "umars")).unwrap();
     assert_eq!(asset_incentive.start_time, prev_asset_incentive.start_time);
     assert_eq!(asset_incentive.duration, duration);
     assert_eq!(asset_incentive.last_updated, block_time.seconds());
@@ -453,13 +443,10 @@ fn set_existing_asset_incentive_with_different_duration() {
         start_time: None,
         duration: None,
     };
-    let prev_asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
-        .unwrap();
+    let prev_asset_incentive =
+        ASSET_INCENTIVES.load(deps.as_ref().storage, ("uosmo", "umars")).unwrap();
     execute(deps.as_mut(), env, info, msg).unwrap();
-    let asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, ("uosmo".to_string(), "umars".to_string()))
-        .unwrap();
+    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, ("uosmo", "umars")).unwrap();
     assert_eq!(asset_incentive.emission_per_second, Uint128::new(300));
     assert_eq!(asset_incentive.start_time, prev_asset_incentive.start_time);
     assert_eq!(asset_incentive.duration, prev_asset_incentive.duration);
@@ -486,7 +473,7 @@ fn set_existing_asset_incentive_with_index_updated_during_incentive() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            (denom.to_string(), "umars".to_string()),
+            (denom, "umars"),
             &AssetIncentive {
                 emission_per_second: Uint128::new(100),
                 start_time,
@@ -526,9 +513,7 @@ fn set_existing_asset_incentive_with_index_updated_during_incentive() {
         ]
     );
 
-    let asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, (denom.to_string(), "umars".to_string()))
-        .unwrap();
+    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
 
     let expected_index = compute_asset_incentive_index(
         Decimal::from_ratio(1_u128, 2_u128),
@@ -566,7 +551,7 @@ fn set_existing_asset_incentive_with_index_updated_after_incentive() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            (denom.to_string(), "umars".to_string()),
+            (denom, "umars"),
             &AssetIncentive {
                 emission_per_second: Uint128::new(120),
                 start_time,
@@ -606,9 +591,7 @@ fn set_existing_asset_incentive_with_index_updated_after_incentive() {
         ]
     );
 
-    let asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, (denom.to_string(), "umars".to_string()))
-        .unwrap();
+    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
 
     let expected_index = compute_asset_incentive_index(
         Decimal::from_ratio(1_u128, 4_u128),
