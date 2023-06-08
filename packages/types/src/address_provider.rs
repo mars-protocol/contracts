@@ -3,7 +3,6 @@ use std::{any::type_name, fmt, str::FromStr};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::StdError;
 use mars_owner::OwnerUpdate;
-
 use strum::EnumIter;
 
 #[cw_serde]
