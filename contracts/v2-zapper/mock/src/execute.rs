@@ -4,7 +4,7 @@ use cosmwasm_std::{
 use cw_utils::one_coin;
 
 use crate::{
-    error::{ContractError, ContractResult},
+    error::{ContractError, ContractError::RequirementsNotMet, ContractResult},
     query::{estimate_provide_liquidity, estimate_withdraw_liquidity},
     state::{COIN_BALANCES, COIN_CONFIG, LP_TOKEN_SUPPLY},
 };
@@ -56,9 +56,14 @@ pub fn provide_liquidity(
     Ok(Response::new().add_message(transfer_msg))
 }
 
-pub fn withdraw_liquidity(deps: DepsMut, info: MessageInfo) -> ContractResult<Response> {
+pub fn withdraw_liquidity(
+    deps: DepsMut,
+    info: MessageInfo,
+    minimum_receive: Vec<Coin>,
+) -> ContractResult<Response> {
     let lp_token_sent = one_coin(&info)?;
     let underlying_coins = estimate_withdraw_liquidity(deps.storage, &lp_token_sent)?;
+    assert_min_receive(minimum_receive, underlying_coins.clone())?;
 
     for coin in &underlying_coins {
         COIN_BALANCES.update(
@@ -78,6 +83,28 @@ pub fn withdraw_liquidity(deps: DepsMut, info: MessageInfo) -> ContractResult<Re
     mock_lp_token_burn(deps.storage, &lp_token_sent)?;
 
     Ok(Response::new().add_message(transfer_msg))
+}
+
+fn assert_min_receive(expected_mins: Vec<Coin>, actuals: Vec<Coin>) -> ContractResult<()> {
+    let mut errors: Vec<String> = vec![];
+
+    for expected_min in expected_mins {
+        match actuals.iter().find(|c| c.denom == expected_min.denom) {
+            Some(actual) if actual.amount < expected_min.amount => {
+                errors.push(format!("Expected min: {}. Actual: {}.", expected_min, actual));
+            }
+            None => {
+                errors.push(format!("Expected min denom {} not found", expected_min.denom));
+            }
+            _ => {}
+        }
+    }
+
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(RequirementsNotMet(errors.join("; ")))
+    }
 }
 
 fn mock_lp_token_mint(

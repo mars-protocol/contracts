@@ -51,7 +51,16 @@
         "properties": {
           "withdraw_liquidity": {
             "type": "object",
+            "required": [
+              "minimum_receive"
+            ],
             "properties": {
+              "minimum_receive": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/Coin"
+                }
+              },
               "recipient": {
                 "type": [
                   "string",

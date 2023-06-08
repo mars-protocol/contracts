@@ -32,9 +32,12 @@ jobs:
       - name: Install cargo make
         uses: davidB/rust-cargo-make@v1
 
-      # artifacts used by tests
+      # Artifacts used by tests.
+      # Change owner of the current directory (rust-optimizer set root for artifacts / target).
       - name: Compile workspace
-        run: cargo make build
+        run: |
+          cargo make rust-optimizer
+          sudo chown -R $USER .
 
       - name: Run test coverage
         run: cargo make coverage-lcov

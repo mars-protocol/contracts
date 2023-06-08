@@ -60,6 +60,7 @@ pub fn withdraw_liquidity(
     env: Env,
     account_id: &str,
     lp_token_action: &ActionCoin,
+    minimum_receive: Vec<Coin>,
 ) -> ContractResult<Response> {
     assert_coin_is_whitelisted(&mut deps, &lp_token_action.denom)?;
 
@@ -84,7 +85,7 @@ pub fn withdraw_liquidity(
     decrement_coin_balance(deps.storage, account_id, &lp_token)?;
 
     // After unzap is complete, update account's coin balances
-    let zap_msg = zapper.withdraw_liquidity_msg(&lp_token)?;
+    let zap_msg = zapper.withdraw_liquidity_msg(&lp_token, minimum_receive)?;
     let update_balances_msgs = update_balances_msgs(
         &deps.querier,
         &env.contract.address,

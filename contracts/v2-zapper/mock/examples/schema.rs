@@ -1,5 +1,5 @@
 use cosmwasm_schema::write_api;
-use mars_rover::msg::zapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_v2_zapper_base::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {

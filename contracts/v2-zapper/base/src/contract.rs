@@ -61,7 +61,8 @@ where
             ),
             ExecuteMsg::WithdrawLiquidity {
                 recipient,
-            } => Self::execute_withdraw_liquidity(deps, env, info, recipient),
+                minimum_receive,
+            } => Self::execute_withdraw_liquidity(deps, env, info, recipient, minimum_receive),
             ExecuteMsg::Callback(msg) => {
                 // Can only be called by the contract itself
                 if info.sender != env.contract.address {
@@ -138,6 +139,7 @@ where
         env: Env,
         info: MessageInfo,
         recipient: Option<String>,
+        minimum_receive: Vec<Coin>,
     ) -> Result<Response, ContractError> {
         // Make sure only one coin is sent
         one_coin(&info)?;
@@ -153,7 +155,12 @@ where
             pool.simulate_withdraw_liquidity(deps.as_ref(), &lp_token.clone().into())?;
         let coins_returned_str = coins_returned.to_string();
 
-        let response = pool.withdraw_liquidity(deps.as_ref(), &env, lp_token.clone().into())?;
+        let response = pool.withdraw_liquidity(
+            deps.as_ref(),
+            &env,
+            lp_token.clone().into(),
+            minimum_receive.into(),
+        )?;
 
         // Query current contract coin balances
         let mut coin_balances: Vec<Coin> = Vec::with_capacity(coins_returned.len() + 1); // coins returned + lp token

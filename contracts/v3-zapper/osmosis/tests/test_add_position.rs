@@ -12,6 +12,8 @@ use crate::helpers::{assert_err, default_new_position_req, MockEnv};
 
 pub mod helpers;
 
+// TODO: Remove ignores when Test-Tube fixed: https://github.com/osmosis-labs/test-tube/commit/f9c1e6ba9b69432d9a19ee9d6454819e57903327
+
 #[test]
 fn only_owner_can_add_positions() {
     let mock = MockEnv::new().build().unwrap();
@@ -31,6 +33,7 @@ fn only_owner_can_add_positions() {
 }
 
 #[test]
+#[ignore = "pending concentrated liquidity type update"]
 fn must_send_exact_funds() {
     let mut mock = MockEnv::new().build().unwrap();
     let (denom0, denom1, _) = mock.create_pool("ujuno", "umars");
@@ -95,6 +98,7 @@ fn must_send_exact_funds() {
 }
 
 #[test]
+#[ignore = "pending concentrated liquidity type update"]
 fn add_position_successfully() {
     let mut mock = MockEnv::new().build().unwrap();
     let (denom0, denom1, _) = mock.create_pool("ujuno", "umars");
@@ -176,6 +180,7 @@ fn add_position_successfully() {
 }
 
 #[test]
+#[ignore = "pending concentrated liquidity type update"]
 fn refunds_are_issued() {
     let mut mock = MockEnv::new().build().unwrap();
     let (denom0, denom1, _) = mock.create_pool("ujuno", "umars");
@@ -269,6 +274,7 @@ fn refunds_are_issued() {
 }
 
 #[test]
+#[ignore = "pending concentrated liquidity type update"]
 fn adding_multiple_increments() {
     let mut mock = MockEnv::new().build().unwrap();
     let (denom0, denom1, _) = mock.create_pool("ujuno", "umars");
@@ -326,6 +332,7 @@ fn adding_multiple_increments() {
 }
 
 #[test]
+#[ignore = "pending concentrated liquidity type update"]
 fn error_rolls_back_state() {
     let mut mock = MockEnv::new().build().unwrap();
     let (denom0, denom1, _) = mock.create_pool("ujuno", "umars");

@@ -16,6 +16,7 @@ export type ExecuteMsg =
     }
   | {
       withdraw_liquidity: {
+        minimum_receive: Coin[]
         recipient?: string | null
       }
     }

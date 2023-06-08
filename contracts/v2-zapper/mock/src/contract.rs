@@ -1,11 +1,12 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, Uint128};
-use mars_rover::msg::zapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_v2_zapper_base::{ExecuteMsg, QueryMsg};
 
 use crate::{
     error::ContractResult,
     execute::{provide_liquidity, withdraw_liquidity},
+    msg::InstantiateMsg,
     query::{estimate_provide_liquidity, estimate_withdraw_liquidity},
     state::{COIN_BALANCES, COIN_CONFIG, ORACLE},
 };
@@ -59,8 +60,10 @@ pub fn execute(
             ..
         } => provide_liquidity(deps, info, lp_token_out, minimum_receive),
         ExecuteMsg::WithdrawLiquidity {
+            minimum_receive,
             ..
-        } => withdraw_liquidity(deps, info),
+        } => withdraw_liquidity(deps, info, minimum_receive),
+        ExecuteMsg::Callback(_) => unimplemented!("msg not supported"),
     }
 }
 

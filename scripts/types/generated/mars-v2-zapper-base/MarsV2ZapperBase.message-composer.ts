@@ -35,8 +35,10 @@ export interface MarsV2ZapperBaseMessage {
   ) => MsgExecuteContractEncodeObject
   withdrawLiquidity: (
     {
+      minimumReceive,
       recipient,
     }: {
+      minimumReceive: Coin[]
       recipient?: string
     },
     _funds?: Coin[],
@@ -87,8 +89,10 @@ export class MarsV2ZapperBaseMessageComposer implements MarsV2ZapperBaseMessage 
   }
   withdrawLiquidity = (
     {
+      minimumReceive,
       recipient,
     }: {
+      minimumReceive: Coin[]
       recipient?: string
     },
     _funds?: Coin[],
@@ -101,6 +105,7 @@ export class MarsV2ZapperBaseMessageComposer implements MarsV2ZapperBaseMessage 
         msg: toUtf8(
           JSON.stringify({
             withdraw_liquidity: {
+              minimum_receive: minimumReceive,
               recipient,
             },
           }),

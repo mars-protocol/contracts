@@ -80,8 +80,10 @@ export interface MarsV2ZapperBaseInterface extends MarsV2ZapperBaseReadOnlyInter
   ) => Promise<ExecuteResult>
   withdrawLiquidity: (
     {
+      minimumReceive,
       recipient,
     }: {
+      minimumReceive: Coin[]
       recipient?: string
     },
     fee?: number | StdFee | 'auto',
@@ -144,8 +146,10 @@ export class MarsV2ZapperBaseClient
   }
   withdrawLiquidity = async (
     {
+      minimumReceive,
       recipient,
     }: {
+      minimumReceive: Coin[]
       recipient?: string
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -157,6 +161,7 @@ export class MarsV2ZapperBaseClient
       this.contractAddress,
       {
         withdraw_liquidity: {
+          minimum_receive: minimumReceive,
           recipient,
         },
       },

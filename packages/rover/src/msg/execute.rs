@@ -170,6 +170,7 @@ pub enum Action {
     /// If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used.
     WithdrawLiquidity {
         lp_token: ActionCoin,
+        minimum_receive: Vec<Coin>,
     },
     /// Refunds all coin balances back to user wallet
     RefundAllCoinBalances {},
@@ -291,6 +292,7 @@ pub enum CallbackMsg {
     WithdrawLiquidity {
         account_id: String,
         lp_token: ActionCoin,
+        minimum_receive: Vec<Coin>,
     },
     /// Refunds all coin balances back to user wallet
     RefundAllCoinBalances {

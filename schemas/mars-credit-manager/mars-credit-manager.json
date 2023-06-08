@@ -575,11 +575,18 @@
               "withdraw_liquidity": {
                 "type": "object",
                 "required": [
-                  "lp_token"
+                  "lp_token",
+                  "minimum_receive"
                 ],
                 "properties": {
                   "lp_token": {
                     "$ref": "#/definitions/ActionCoin"
+                  },
+                  "minimum_receive": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/Coin"
+                    }
                   }
                 },
                 "additionalProperties": false
@@ -1150,7 +1157,8 @@
                 "type": "object",
                 "required": [
                   "account_id",
-                  "lp_token"
+                  "lp_token",
+                  "minimum_receive"
                 ],
                 "properties": {
                   "account_id": {
@@ -1158,6 +1166,12 @@
                   },
                   "lp_token": {
                     "$ref": "#/definitions/ActionCoin"
+                  },
+                  "minimum_receive": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/Coin"
+                    }
                   }
                 },
                 "additionalProperties": false

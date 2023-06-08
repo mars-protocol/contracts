@@ -182,9 +182,11 @@ pub fn dispatch_actions(
             }),
             Action::WithdrawLiquidity {
                 lp_token,
+                minimum_receive,
             } => callbacks.push(CallbackMsg::WithdrawLiquidity {
                 account_id: account_id.to_string(),
                 lp_token: lp_token.clone(),
+                minimum_receive: minimum_receive.clone(),
             }),
             Action::RefundAllCoinBalances {} => {
                 callbacks.push(CallbackMsg::RefundAllCoinBalances {
@@ -347,7 +349,8 @@ pub fn execute_callback(
         CallbackMsg::WithdrawLiquidity {
             account_id,
             lp_token,
-        } => withdraw_liquidity(deps, env, &account_id, &lp_token),
+            minimum_receive,
+        } => withdraw_liquidity(deps, env, &account_id, &lp_token, minimum_receive),
         CallbackMsg::RefundAllCoinBalances {
             account_id,
         } => refund_coin_balances(deps, env, &account_id),

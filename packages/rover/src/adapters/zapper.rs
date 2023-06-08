@@ -2,8 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, StdResult, Uint128, WasmMsg,
 };
-
-use crate::msg::zapper::{ExecuteMsg, QueryMsg};
+use mars_v2_zapper_base::{ExecuteMsg, QueryMsg};
 
 #[cw_serde]
 pub struct ZapperBase<T>(T);
@@ -79,11 +78,16 @@ impl Zapper {
         }))
     }
 
-    pub fn withdraw_liquidity_msg(&self, lp_token: &Coin) -> StdResult<CosmosMsg> {
+    pub fn withdraw_liquidity_msg(
+        &self,
+        lp_token: &Coin,
+        minimum_receive: Vec<Coin>,
+    ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
             msg: to_binary(&ExecuteMsg::WithdrawLiquidity {
                 recipient: None,
+                minimum_receive,
             })?,
             funds: vec![lp_token.clone()],
         }))

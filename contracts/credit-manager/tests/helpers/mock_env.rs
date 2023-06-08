@@ -55,17 +55,15 @@ use mars_rover::{
             CoinBalanceResponseItem, ConfigResponse, DebtShares, LentShares, Positions,
             SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
         },
-        zapper::{
-            InstantiateMsg as ZapperInstantiateMsg, LpConfig, QueryMsg::EstimateProvideLiquidity,
-        },
         ExecuteMsg, InstantiateMsg, QueryMsg,
-        QueryMsg::VaultPositionValue,
+        QueryMsg::{EstimateProvideLiquidity, VaultPositionValue},
     },
 };
 use mars_rover_health_types::{
     ExecuteMsg::UpdateConfig, HealthResponse, InstantiateMsg as HealthInstantiateMsg,
     QueryMsg::Health,
 };
+use mars_v2_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 
 use crate::helpers::{
     lp_token_info, mock_account_nft_contract, mock_health_contract, mock_oracle_contract,

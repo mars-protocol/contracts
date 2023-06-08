@@ -124,6 +124,7 @@ export type Action =
   | {
       withdraw_liquidity: {
         lp_token: ActionCoin
+        minimum_receive: Coin[]
       }
     }
   | {
@@ -278,6 +279,7 @@ export type CallbackMsg =
       withdraw_liquidity: {
         account_id: string
         lp_token: ActionCoin
+        minimum_receive: Coin[]
       }
     }
   | {

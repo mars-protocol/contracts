@@ -8,7 +8,7 @@ default_to_workspace = false
 
 [env]
 # Directory with wasm files used by integration tests (another directory can be used instead, for example 'artifacts' from rust-optimizer)
-ARTIFACTS_DIR_PATH = "target/wasm32-unknown-unknown/release"
+ARTIFACTS_DIR_PATH = "artifacts"
 
 [tasks.build]
 command = "cargo"

@@ -13,6 +13,7 @@ pub enum ExecuteMsg {
     },
     WithdrawLiquidity {
         recipient: Option<String>,
+        minimum_receive: Vec<Coin>,
     },
     Callback(CallbackMsg),
 }

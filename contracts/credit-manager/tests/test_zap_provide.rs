@@ -352,6 +352,7 @@ fn can_provide_unbalanced() {
                 denom: lp_token.denom.clone(),
                 amount: ActionAmount::Exact(STARTING_LP_POOL_TOKENS.multiply_ratio(1u128, 2u128)),
             },
+            minimum_receive: vec![],
         }],
         &[],
     )

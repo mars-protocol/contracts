@@ -125,6 +125,7 @@ export function useMarsV2ZapperBaseCallbackMutation(
 export interface MarsV2ZapperBaseWithdrawLiquidityMutation {
   client: MarsV2ZapperBaseClient
   msg: {
+    minimumReceive: Coin[]
     recipient?: string
   }
   args?: {
