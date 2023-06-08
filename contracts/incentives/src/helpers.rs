@@ -93,11 +93,11 @@ pub fn compute_user_unclaimed_rewards(
     incentive_denom: &str,
 ) -> StdResult<(Uint128, Option<UserAssetIncentiveStatus>)> {
     let mut unclaimed_rewards = USER_UNCLAIMED_REWARDS
-        .may_load(deps.storage, (user_addr, &collateral_denom, &incentive_denom))?
+        .may_load(deps.storage, (user_addr, collateral_denom, incentive_denom))?
         .unwrap_or_else(Uint128::zero);
 
-    let mut asset_incentive = ASSET_INCENTIVES
-        .load(deps.storage, (collateral_denom.to_string(), incentive_denom.to_string()))?; //TODO: Use may_load or handle error
+    let mut asset_incentive =
+        ASSET_INCENTIVES.load(deps.storage, (collateral_denom, incentive_denom))?; //TODO: Use may_load or handle error
 
     // Get asset user balances and total supply
     let collateral: red_bank::UserCollateralResponse = deps.querier.query_wasm_smart(
@@ -128,7 +128,7 @@ pub fn compute_user_unclaimed_rewards(
     )?;
 
     let user_asset_index = USER_ASSET_INDICES
-        .may_load(deps.storage, (user_addr, &collateral_denom, &incentive_denom))?
+        .may_load(deps.storage, (user_addr, collateral_denom, incentive_denom))?
         .unwrap_or_else(Decimal::zero);
 
     if user_asset_index != asset_incentive.index {

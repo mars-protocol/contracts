@@ -75,7 +75,7 @@ fn balance_change_zero_emission() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            (denom.to_string(), "umars".to_string()),
+            (denom, "umars"),
             &AssetIncentive {
                 emission_per_second: Uint128::zero(),
                 start_time: env.block.time.seconds(),
@@ -116,9 +116,7 @@ fn balance_change_zero_emission() {
     );
 
     // asset incentive index stays the same
-    let asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, (denom.to_string(), "umars".to_string()))
-        .unwrap();
+    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
     assert_eq!(asset_incentive.index, asset_incentive_index);
     assert_eq!(asset_incentive.last_updated, 600_000);
 
@@ -150,7 +148,7 @@ fn balance_change_user_with_zero_balance() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            (denom.to_string(), "umars".to_string()),
+            (denom, "umars"),
             &AssetIncentive {
                 emission_per_second,
                 start_time: time_last_updated,
@@ -196,9 +194,7 @@ fn balance_change_user_with_zero_balance() {
     );
 
     // asset incentive gets updated
-    let asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, (denom.to_string(), "umars".to_string()))
-        .unwrap();
+    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
     assert_eq!(asset_incentive.index, expected_index);
     assert_eq!(asset_incentive.last_updated, time_contract_call);
 
@@ -229,7 +225,7 @@ fn with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            (denom.to_string(), "umars".to_string()),
+            (denom, "umars"),
             &AssetIncentive {
                 emission_per_second,
                 start_time: time_last_updated,
@@ -327,7 +323,7 @@ fn set_new_asset_incentive_user_non_zero_balance() {
         ASSET_INCENTIVES
             .save(
                 deps.as_mut().storage,
-                (denom.to_string(), "umars".to_string()),
+                (denom, "umars"),
                 &AssetIncentive {
                     emission_per_second,
                     start_time: time_last_updated,
@@ -430,7 +426,7 @@ fn balance_change_user_non_zero_balance() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            (denom.to_string(), "umars".to_string()),
+            (denom, "umars"),
             &AssetIncentive {
                 emission_per_second,
                 start_time: expected_time_last_updated,
@@ -489,9 +485,8 @@ fn balance_change_user_non_zero_balance() {
         // asset incentive gets updated
         expected_time_last_updated = time_contract_call;
 
-        let asset_incentive = ASSET_INCENTIVES
-            .load(deps.as_ref().storage, (denom.to_string(), "umars".to_string()))
-            .unwrap();
+        let asset_incentive =
+            ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
         assert_eq!(asset_incentive.index, expected_asset_incentive_index);
         assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
 
@@ -555,9 +550,8 @@ fn balance_change_user_non_zero_balance() {
         // asset incentive gets updated
         expected_time_last_updated = time_contract_call;
 
-        let asset_incentive = ASSET_INCENTIVES
-            .load(deps.as_ref().storage, (denom.to_string(), "umars".to_string()))
-            .unwrap();
+        let asset_incentive =
+            ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
         assert_eq!(asset_incentive.index, expected_asset_incentive_index);
         assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
 
@@ -603,9 +597,8 @@ fn balance_change_user_non_zero_balance() {
         );
 
         // asset incentive is still the same
-        let asset_incentive = ASSET_INCENTIVES
-            .load(deps.as_ref().storage, (denom.to_string(), "umars".to_string()))
-            .unwrap();
+        let asset_incentive =
+            ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
         assert_eq!(asset_incentive.index, expected_asset_incentive_index);
         assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
 
