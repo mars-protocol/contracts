@@ -57,6 +57,7 @@ pyth-sdk-cw        = "1.2.0"
 cw-paginate       = "0.2.1"
 astroport         = { git = "https://github.com/astroport-fi/astroport-core", tag = "v2.7.1" }
 strum             = "0.24.1"
+cw-item-set       = "0.7.1"
 
 # dev-dependencies
 cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "2d59e15703aaa377cfb09f0e021b3b63bc827a22" }

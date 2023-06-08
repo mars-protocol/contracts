@@ -24,7 +24,10 @@ use crate::{
         compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_asset_incentive_index,
         UserAssetIncentiveStatus,
     },
-    state::{self, ASSET_INCENTIVES, CONFIG, OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
+    state::{
+        self, ASSET_INCENTIVES, CONFIG, OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS,
+        WHITELIST,
+    },
 };
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-incentives";
@@ -69,6 +72,10 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
+        ExecuteMsg::UpdateWhitelist {
+            add_denoms,
+            remove_denoms,
+        } => execute_update_whitelist(deps, env, info, add_denoms, remove_denoms),
         ExecuteMsg::SetAssetIncentive {
             collateral_denom,
             incentive_denom,
@@ -117,6 +124,36 @@ pub fn execute(
         } => Ok(execute_update_config(deps, env, info, address_provider, mars_denom)?),
         ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
     }
+}
+
+pub fn execute_update_whitelist(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    add_denoms: Vec<String>,
+    remove_denoms: Vec<String>,
+) -> Result<Response, ContractError> {
+    OWNER.assert_owner(deps.storage, &info.sender)?;
+
+    for denom in add_denoms.iter() {
+        validate_native_denom(&denom)?;
+        WHITELIST.insert(deps.storage, &denom)?;
+    }
+
+    for denom in remove_denoms.iter() {
+        // TODO: Handle ongoing incentives
+        WHITELIST.remove(deps.storage, &denom)?;
+    }
+
+    let mut event = Event::new("mars/incentives/update_whitelist");
+    if !add_denoms.is_empty() {
+        event = event.add_attribute("add_denoms", add_denoms.join(",").to_string());
+    }
+    if !remove_denoms.is_empty() {
+        event = event.add_attribute("remove_denoms", remove_denoms.join(",").to_string());
+    }
+
+    Ok(Response::default().add_event(event))
 }
 
 pub fn execute_set_asset_incentive(
