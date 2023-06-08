@@ -315,10 +315,11 @@ pub fn execute_balance_change(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    let mut event = Event::new("mars/incentives/balance_change")
+    let base_event = Event::new("mars/incentives/balance_change")
         .add_attribute("action", "balance_change")
         .add_attribute("denom", collateral_denom.clone())
         .add_attribute("user", user_addr.to_string());
+    let mut events = vec![base_event];
 
     let asset_incentives = ASSET_INCENTIVES
         .prefix(collateral_denom.clone())
@@ -368,15 +369,15 @@ pub fn execute_balance_change(
             user_asset_index_key.save(deps.storage, &asset_incentive.index)?;
         }
 
-        event = event
-            .add_attribute(format!("rewards_accrued_{}", incentive_denom), accrued_rewards)
-            .add_attribute(
-                format!("asset_index_{}", incentive_denom),
-                asset_incentive.index.to_string(),
-            );
+        events.push(
+            Event::new("mars/incentives/balance_change/reward_accrued")
+                .add_attribute("incentive_denom", incentive_denom)
+                .add_attribute("rewards_accrued", accrued_rewards)
+                .add_attribute("asset_index", asset_incentive.index.to_string()),
+        );
     }
 
-    Ok(Response::new().add_event(event))
+    Ok(Response::new().add_events(events))
 }
 
 pub fn execute_claim_rewards(
@@ -391,9 +392,10 @@ pub fn execute_claim_rewards(
     let user_addr = info.sender;
 
     let mut response = Response::new();
-    let mut event = Event::new("mars/incentives/claim_rewards")
+    let base_event = Event::new("mars/incentives/claim_rewards")
         .add_attribute("action", "claim_rewards")
         .add_attribute("user", user_addr.to_string());
+    let mut events = vec![base_event];
 
     let asset_incentives = state::paginate_asset_incentives(
         deps.storage,
@@ -455,10 +457,14 @@ pub fn execute_claim_rewards(
             to_address: user_addr.to_string(),
             amount: coins(amount.u128(), denom),
         }));
-        event = event.add_attribute(format!("{}_rewards", denom), *amount);
+        events.push(
+            Event::new("mars/incentives/claim_rewards/claimed_reward")
+                .add_attribute("denom", denom)
+                .add_attribute("amount", *amount),
+        );
     }
 
-    Ok(response.add_event(event))
+    Ok(response.add_events(events))
 }
 
 pub fn execute_update_config(
