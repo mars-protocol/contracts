@@ -91,7 +91,7 @@ fn execute_claim_rewards() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            (asset_denom.to_string(), "umars".to_string()),
+            (asset_denom, "umars"),
             &AssetIncentive {
                 emission_per_second: Uint128::new(100),
                 start_time: time_start,
@@ -104,7 +104,7 @@ fn execute_claim_rewards() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            (zero_denom.to_string(), "umars".to_string()),
+            (zero_denom, "umars"),
             &AssetIncentive {
                 emission_per_second: Uint128::zero(),
                 start_time: env.block.time.seconds(),
@@ -117,7 +117,7 @@ fn execute_claim_rewards() {
     ASSET_INCENTIVES
         .save(
             deps.as_mut().storage,
-            (no_user_denom.to_string(), "umars".to_string()),
+            (no_user_denom, "umars"),
             &AssetIncentive {
                 emission_per_second: Uint128::new(200),
                 start_time: env.block.time.seconds(),
@@ -245,21 +245,18 @@ fn execute_claim_rewards() {
     );
 
     // asset and zero incentives get updated, no_user does not
-    let asset_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, (asset_denom.to_string(), "umars".to_string()))
-        .unwrap();
+    let asset_incentive =
+        ASSET_INCENTIVES.load(deps.as_ref().storage, (asset_denom, "umars")).unwrap();
     assert_eq!(asset_incentive.index, expected_asset_incentive_index);
     assert_eq!(asset_incentive.last_updated, time_contract_call);
 
-    let zero_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, (zero_denom.to_string(), "umars".to_string()))
-        .unwrap();
+    let zero_incentive =
+        ASSET_INCENTIVES.load(deps.as_ref().storage, (zero_denom, "umars")).unwrap();
     assert_eq!(zero_incentive.index, Decimal::one());
     assert_eq!(zero_incentive.last_updated, time_contract_call);
 
-    let no_user_incentive = ASSET_INCENTIVES
-        .load(deps.as_ref().storage, (no_user_denom.to_string(), "umars".to_string()))
-        .unwrap();
+    let no_user_incentive =
+        ASSET_INCENTIVES.load(deps.as_ref().storage, (no_user_denom, "umars")).unwrap();
     assert_eq!(no_user_incentive.index, Decimal::one());
     assert_eq!(no_user_incentive.last_updated, time_start);
 
