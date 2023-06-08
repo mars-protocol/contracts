@@ -14,7 +14,7 @@ pub const CONFIG: Item<Config> = Item::new("config");
 /// A map containing a configuration of an incentive for a given collateral and incentive denom.
 /// The key is (collateral denom, incentive denom).
 /// We use String instead of &str for the key because Map::prefix_range gives borrow issues with &str.
-pub const ASSET_INCENTIVES: Map<(String, String), AssetIncentive> = Map::new("incentives");
+pub const ASSET_INCENTIVES: Map<(&str, &str), AssetIncentive> = Map::new("incentives");
 
 /// A map containing the incentive index for a given user, collateral denom and incentive denom.
 /// The key is (user address, collateral denom, incentive denom).
@@ -42,7 +42,7 @@ pub fn increase_unclaimed_rewards(
 ) -> StdResult<()> {
     USER_UNCLAIMED_REWARDS.update(
         storage,
-        (&user_addr, &collateral_denom, &incentive_denom),
+        (user_addr, collateral_denom, incentive_denom),
         |ur: Option<Uint128>| -> StdResult<Uint128> {
             match ur {
                 Some(unclaimed_rewards) => Ok(unclaimed_rewards + accrued_rewards),
@@ -63,13 +63,13 @@ pub fn paginate_asset_incentives(
     limit: Option<u32>,
 ) -> Result<Vec<((String, String), AssetIncentive)>, ContractError> {
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-    Ok(match (start_after_collateral_denom, start_after_incentive_denom) {
+    Ok(match (start_after_collateral_denom.as_ref(), start_after_incentive_denom.as_ref()) {
         (Some(collat_denom), Some(incen_denom)) => {
-            let start = Bound::exclusive((collat_denom, incen_denom));
+            let start = Bound::exclusive((collat_denom.as_str(), incen_denom.as_str()));
             ASSET_INCENTIVES.range(storage, Some(start), None, Order::Ascending)
         }
         (Some(collat_denom), None) => {
-            let start = PrefixBound::exclusive(collat_denom);
+            let start = PrefixBound::exclusive(collat_denom.as_str());
             ASSET_INCENTIVES.prefix_range(storage, Some(start), None, Order::Ascending)
         }
         (None, Some(_)) => return Err(ContractError::InvalidPaginationParams),
@@ -98,13 +98,13 @@ mod tests {
             start_time: 0,
         };
         let incentives = vec![
-            (("collat1".to_string(), "incen1".to_string()), asset_incentive.clone()),
-            (("collat1".to_string(), "incen2".to_string()), asset_incentive.clone()),
-            (("collat2".to_string(), "incen1".to_string()), asset_incentive.clone()),
-            (("collat2".to_string(), "incen2".to_string()), asset_incentive.clone()),
+            (("collat1", "incen1"), asset_incentive.clone()),
+            (("collat1", "incen2"), asset_incentive.clone()),
+            (("collat2", "incen1"), asset_incentive.clone()),
+            (("collat2", "incen2"), asset_incentive.clone()),
         ];
         for (key, incentive) in incentives.iter() {
-            ASSET_INCENTIVES.save(&mut storage, key.clone(), &incentive).unwrap();
+            ASSET_INCENTIVES.save(&mut storage, key, &incentive).unwrap();
         }
 
         // No pagination
