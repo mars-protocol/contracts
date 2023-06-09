@@ -146,7 +146,7 @@ export interface MarsOracleOsmosisInterface extends MarsOracleOsmosisReadOnlyInt
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
-    funds?: Coin[],
+    _funds?: Coin[],
   ) => Promise<ExecuteResult>
 }
 export class MarsOracleOsmosisClient
@@ -242,7 +242,7 @@ export class MarsOracleOsmosisClient
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
-    funds?: Coin[],
+    _funds?: Coin[],
   ): Promise<ExecuteResult> => {
     return await this.client.execute(
       this.sender,
@@ -254,7 +254,7 @@ export class MarsOracleOsmosisClient
       },
       fee,
       memo,
-      funds,
+      _funds,
     )
   }
 }

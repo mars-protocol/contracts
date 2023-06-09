@@ -1214,7 +1214,7 @@ dependencies = [
  "mars-rewards-collector-osmosis",
  "mars-testing",
  "mars-utils",
- "osmosis-std 0.14.0",
+ "osmosis-std",
  "osmosis-test-tube",
  "serde",
 ]
@@ -1248,7 +1248,7 @@ dependencies = [
  "mars-red-bank-types",
  "mars-testing",
  "mars-utils",
- "osmosis-std 0.14.0",
+ "osmosis-std",
  "pyth-sdk-cw",
  "schemars",
  "serde",
@@ -1260,7 +1260,7 @@ name = "mars-osmosis"
 version = "1.0.1"
 dependencies = [
  "cosmwasm-std",
- "osmosis-std 0.14.0",
+ "osmosis-std",
  "serde",
 ]
 
@@ -1334,7 +1334,7 @@ dependencies = [
  "mars-rewards-collector-base",
  "mars-testing",
  "mars-utils",
- "osmosis-std 0.14.0",
+ "osmosis-std",
  "schemars",
  "serde",
  "thiserror",
@@ -1354,7 +1354,7 @@ dependencies = [
  "mars-red-bank",
  "mars-red-bank-types",
  "mars-rewards-collector-osmosis",
- "osmosis-std 0.14.0",
+ "osmosis-std",
  "prost 0.11.9",
  "pyth-sdk-cw",
  "schemars",
@@ -1474,46 +1474,18 @@ checksum = "ceedf44fb00f2d1984b0bc98102627ce622e083e49a5bacdb3e514fa4238e267"
 
 [[package]]
 name = "osmosis-std"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fc0a9075efd64ed5a8be3bf134cbf1080570d68384f2ad58ffaac6c00d063fd"
-dependencies = [
- "chrono",
- "cosmwasm-std",
- "osmosis-std-derive 0.13.2",
- "prost 0.11.9",
- "prost-types",
- "schemars",
- "serde",
- "serde-cw-value",
-]
-
-[[package]]
-name = "osmosis-std"
 version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87725a7480b98887167edf878daa52201a13322ad88e34355a7f2ddc663e047e"
 dependencies = [
  "chrono",
  "cosmwasm-std",
- "osmosis-std-derive 0.15.3",
+ "osmosis-std-derive",
  "prost 0.11.9",
  "prost-types",
  "schemars",
  "serde",
  "serde-cw-value",
-]
-
-[[package]]
-name = "osmosis-std-derive"
-version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a455e262a6fdfd3914f3a4e11e6bc0ce491901cb9d507d7856d7ef6e129e90c6"
-dependencies = [
- "itertools",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -1538,7 +1510,7 @@ dependencies = [
  "bindgen",
  "cosmrs",
  "cosmwasm-std",
- "osmosis-std 0.15.3",
+ "osmosis-std",
  "prost 0.11.9",
  "serde",
  "serde_json",

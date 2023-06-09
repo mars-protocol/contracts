@@ -13,7 +13,7 @@ use mars_osmosis::helpers::QueryPoolResponse;
 use mars_red_bank_types::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
-    gamm::v2::QuerySpotPriceResponse,
+    poolmanager::v1beta1::SpotPriceResponse,
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
 use pyth_sdk_cw::{PriceFeedResponse, PriceIdentifier};
@@ -96,7 +96,7 @@ impl MarsMockQuerier {
         id: u64,
         base_asset_denom: &str,
         quote_asset_denom: &str,
-        spot_price: QuerySpotPriceResponse,
+        spot_price: SpotPriceResponse,
     ) {
         let price_key = PriceKey {
             pool_id: id,
