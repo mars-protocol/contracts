@@ -5,7 +5,7 @@ pub mod v1_0_0 {
 
     use crate::contract::{CONTRACT_NAME, CONTRACT_VERSION};
 
-    const FROM_VERSION: &str = "1.0.0";
+    const FROM_VERSION: &str = "1.0.1";
 
     pub fn migrate(deps: DepsMut) -> ContractResult<Response> {
         // make sure we're migrating the correct contract and from the correct version
@@ -38,8 +38,8 @@ pub mod v1_0_0 {
                 res.attributes,
                 vec![
                     attr("action", "migrate"),
-                    attr("from_version", "1.0.0"),
-                    attr("to_version", "1.0.1")
+                    attr("from_version", "1.0.1"),
+                    attr("to_version", "1.0.2")
                 ]
             );
         }
