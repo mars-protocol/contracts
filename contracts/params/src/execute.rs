@@ -71,13 +71,6 @@ pub fn update_vault_config(
                 .add_attribute("action_type", "add_or_update")
                 .add_attribute("addr", checked.addr);
         }
-        VaultConfigUpdate::Remove {
-            addr,
-        } => {
-            let checked = deps.api.addr_validate(&addr)?;
-            VAULT_CONFIGS.remove(deps.storage, &checked);
-            response = response.add_attribute("action_type", "remove").add_attribute("addr", addr);
-        }
     }
 
     Ok(response)
