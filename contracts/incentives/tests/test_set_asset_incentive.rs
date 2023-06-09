@@ -4,8 +4,7 @@ use cosmwasm_std::{
     Decimal, Timestamp, Uint128,
 };
 use mars_incentives::{
-    contract::execute, helpers::compute_asset_incentive_index, state::ASSET_INCENTIVES,
-    ContractError,
+    contract::execute, helpers::compute_incentive_index, state::ASSET_INCENTIVES, ContractError,
 };
 use mars_owner::OwnerError::NotOwner;
 use mars_red_bank_types::{
@@ -515,7 +514,7 @@ fn set_existing_asset_incentive_with_index_updated_during_incentive() {
 
     let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
 
-    let expected_index = compute_asset_incentive_index(
+    let expected_index = compute_incentive_index(
         Decimal::from_ratio(1_u128, 2_u128),
         Uint128::new(100),
         total_collateral_scaled,
@@ -593,7 +592,7 @@ fn set_existing_asset_incentive_with_index_updated_after_incentive() {
 
     let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
 
-    let expected_index = compute_asset_incentive_index(
+    let expected_index = compute_incentive_index(
         Decimal::from_ratio(1_u128, 4_u128),
         Uint128::new(120),
         total_collateral_scaled,

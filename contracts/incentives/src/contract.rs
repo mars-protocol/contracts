@@ -6,13 +6,14 @@ use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env,
     Event, MessageInfo, Order, Response, StdResult, Uint128,
 };
+use cw_storage_plus::Bound;
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
     incentives::{
-        AssetIncentive, AssetIncentiveResponse, Config, ConfigResponse, ExecuteMsg, InstantiateMsg,
-        QueryMsg,
+        Config, ConfigResponse, ExecuteMsg, IncentiveSchedule, IncentiveStateResponse,
+        InstantiateMsg, QueryMsg,
     },
     red_bank,
 };
@@ -21,12 +22,11 @@ use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
 use crate::{
     error::ContractError,
     helpers::{
-        compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_asset_incentive_index,
-        UserAssetIncentiveStatus,
+        self, compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_incentive_index,
     },
     state::{
-        self, ASSET_INCENTIVES, CONFIG, OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS,
-        WHITELIST,
+        self, CONFIG, INCENTIVE_SCHEDULES, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES,
+        USER_UNCLAIMED_REWARDS, WHITELIST,
     },
 };
 
@@ -55,6 +55,7 @@ pub fn instantiate(
     let config = Config {
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
         mars_denom: msg.mars_denom,
+        epoch_duration: todo!(),
     };
 
     CONFIG.save(deps.storage, &config)?;
@@ -157,17 +158,15 @@ pub fn execute_update_whitelist(
 }
 
 pub fn execute_set_asset_incentive(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     info: MessageInfo,
     collateral_denom: String,
     incentive_denom: String,
-    emission_per_second: Option<Uint128>,
-    start_time: Option<u64>,
-    duration: Option<u64>,
+    emission_per_second: Uint128,
+    start_time: u64,
+    duration: u64,
 ) -> Result<Response, ContractError> {
-    OWNER.assert_owner(deps.storage, &info.sender)?;
-
     validate_native_denom(&collateral_denom)?;
     validate_native_denom(&incentive_denom)?;
 
@@ -190,161 +189,106 @@ pub fn execute_set_asset_incentive(
             reason: "Market does not exist on Red Bank".to_string(),
         })?;
 
-    let current_block_time = env.block.time.seconds();
-    let new_asset_incentive = match ASSET_INCENTIVES
-        .may_load(deps.storage, (&collateral_denom, &incentive_denom))?
-    {
-        Some(mut asset_incentive) => {
-            let (start_time, duration, emission_per_second) =
-                validate_params_for_existing_incentive(
-                    &asset_incentive,
-                    emission_per_second,
-                    start_time,
-                    duration,
-                    current_block_time,
-                )?;
+    let current_time = env.block.time.seconds();
 
-            // Update index up to now
-            update_asset_incentive_index(
-                &mut asset_incentive,
-                market.collateral_total_scaled,
-                current_block_time,
-            )?;
-
-            // Set new emission
-            asset_incentive.emission_per_second = emission_per_second;
-            asset_incentive.start_time = start_time;
-            asset_incentive.duration = duration;
-
-            asset_incentive
-        }
-        None => {
-            let (start_time, duration, emission_per_second) = validate_params_for_new_incentive(
-                start_time,
-                duration,
-                emission_per_second,
-                current_block_time,
-            )?;
-
-            AssetIncentive {
-                emission_per_second,
-                start_time,
-                duration,
-                index: Decimal::zero(),
-                last_updated: current_block_time,
-            }
-        }
+    // Validate incentive schedule
+    let mut new_schedule = IncentiveSchedule {
+        start_time,
+        duration,
+        emission_per_second,
     };
-
-    ASSET_INCENTIVES.save(
+    helpers::validate_incentive_schedule(
         deps.storage,
-        (&collateral_denom, &incentive_denom),
-        &new_asset_incentive,
+        &info,
+        &config,
+        current_time,
+        &new_schedule,
+        &collateral_denom,
+        &incentive_denom,
     )?;
+
+    // Update current incentive index
+    let total_collateral = helpers::query_red_bank_total_collateral(
+        deps.as_ref(),
+        &config.address_provider,
+        &collateral_denom,
+    )?;
+    update_incentive_index(
+        &mut deps.branch().storage.into(),
+        &collateral_denom,
+        &incentive_denom,
+        total_collateral,
+        current_time,
+    )?;
+
+    // If the new schedule overlaps any existing schedules, we merge them so that there is at most
+    // one schedule per epoch.
+    // First, find all existing schdules that overlap with the new schedule
+    let overlapping_schedules = INCENTIVE_SCHEDULES
+        .prefix((&collateral_denom, &incentive_denom))
+        .range(deps.storage, None, Some(Bound::exclusive(start_time + duration)), Order::Ascending)
+        .collect::<StdResult<Vec<_>>>()?;
+    // For each overlapping schedule, add the emission to the existing incentive and modify the new
+    // incentive, as well as creating new incentives for any gaps between the new incentive and the
+    // existing incentives.
+    for (_, mut old_schedule) in overlapping_schedules {
+        if old_schedule.start_time > new_schedule.start_time {
+            // The new schdule starts before the existing schedule, so we need to create a new
+            // schedule for the time before the existing schedule starts
+            INCENTIVE_SCHEDULES.save(
+                deps.storage,
+                (&collateral_denom, &incentive_denom, new_schedule.start_time),
+                &IncentiveSchedule {
+                    emission_per_second: new_schedule.emission_per_second,
+                    start_time: new_schedule.start_time,
+                    duration: old_schedule.start_time - new_schedule.start_time,
+                },
+            )?;
+            new_schedule.duration -= old_schedule.start_time - new_schedule.start_time;
+            new_schedule.start_time = old_schedule.start_time;
+        }
+
+        old_schedule.emission_per_second += new_schedule.emission_per_second;
+
+        INCENTIVE_SCHEDULES.save(
+            deps.storage,
+            (&collateral_denom, &incentive_denom, old_schedule.start_time),
+            &old_schedule,
+        )?;
+
+        let remaining_duration = new_schedule.duration.saturating_sub(old_schedule.duration);
+        new_schedule.duration = remaining_duration;
+        new_schedule.start_time = old_schedule.start_time + old_schedule.duration;
+
+        if remaining_duration == 0 {
+            // The new incentive is fully covered by the existing incentive, so we can stop
+            // processing
+            break;
+        }
+    }
+
+    // If there is any remaining duration on the new incentive, we save it
+    if new_schedule.duration > 0 {
+        INCENTIVE_SCHEDULES.save(
+            deps.storage,
+            (&collateral_denom, &incentive_denom, new_schedule.start_time),
+            &new_schedule,
+        )?;
+    }
 
     let response = Response::new().add_attributes(vec![
         attr("action", "set_asset_incentive"),
         attr("collateral_denom", collateral_denom),
         attr("incentive_denom", incentive_denom),
-        attr("emission_per_second", new_asset_incentive.emission_per_second),
-        attr("start_time", new_asset_incentive.start_time.to_string()),
-        attr("duration", new_asset_incentive.duration.to_string()),
+        attr("emission_per_second", emission_per_second),
+        attr("start_time", start_time.to_string()),
+        attr("duration", duration.to_string()),
     ]);
     Ok(response)
 }
 
-fn validate_params_for_existing_incentive(
-    asset_incentive: &AssetIncentive,
-    emission_per_second: Option<Uint128>,
-    start_time: Option<u64>,
-    duration: Option<u64>,
-    current_block_time: u64,
-) -> Result<(u64, u64, Uint128), ContractError> {
-    let end_time = asset_incentive.start_time + asset_incentive.duration;
-    let start_time = match start_time {
-        // current asset incentive hasn't finished yet
-        Some(_)
-            if asset_incentive.start_time <= current_block_time
-                && end_time >= current_block_time =>
-        {
-            return Err(ContractError::InvalidIncentive {
-                reason: "can't modify start_time if incentive in progress".to_string(),
-            })
-        }
-        // start_time can't be from the past
-        Some(st) if st < current_block_time => {
-            return Err(ContractError::InvalidIncentive {
-                reason: "start_time can't be less than current block time".to_string(),
-            });
-        }
-        // correct start_time so it can be used
-        Some(st) => st,
-        // previous asset incentive finished so new start_time is required
-        None if end_time < current_block_time => {
-            return Err(ContractError::InvalidIncentive {
-                reason: "start_time is required for new incentive".to_string(),
-            })
-        }
-        // use start_time from current asset incentive
-        None => asset_incentive.start_time,
-    };
-
-    let duration = match duration {
-        // can't be 0
-        Some(dur) if dur == 0 => {
-            return Err(ContractError::InvalidIncentive {
-                reason: "duration can't be 0".to_string(),
-            })
-        }
-        // end_time can't be decreased to the past
-        Some(dur) if start_time + dur < current_block_time => {
-            return Err(ContractError::InvalidIncentive {
-                reason: "end_time can't be less than current block time".to_string(),
-            })
-        }
-        // correct duration so it can be used
-        Some(dur) => dur,
-        // use duration from current asset incentive
-        None => asset_incentive.duration,
-    };
-
-    let emission_per_second = emission_per_second.unwrap_or(asset_incentive.emission_per_second);
-
-    Ok((start_time, duration, emission_per_second))
-}
-
-fn validate_params_for_new_incentive(
-    start_time: Option<u64>,
-    duration: Option<u64>,
-    emission_per_second: Option<Uint128>,
-    current_block_time: u64,
-) -> Result<(u64, u64, Uint128), ContractError> {
-    // all params are required during incentive initialization (if start_time = None then set to current block time)
-    let (Some(start_time), Some(duration), Some(emission_per_second)) = (start_time, duration, emission_per_second) else {
-        return Err(ContractError::InvalidIncentive {
-            reason: "all params are required during incentive initialization".to_string(),
-        });
-    };
-
-    // duration should be greater than 0
-    if duration == 0 {
-        return Err(ContractError::InvalidIncentive {
-            reason: "duration can't be 0".to_string(),
-        });
-    }
-
-    // start_time can't be less that current block time
-    if start_time < current_block_time {
-        return Err(ContractError::InvalidIncentive {
-            reason: "start_time can't be less than current block time".to_string(),
-        });
-    }
-
-    Ok((start_time, duration, emission_per_second))
-}
-
 pub fn execute_balance_change(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     info: MessageInfo,
     user_addr: Addr,
@@ -364,21 +308,18 @@ pub fn execute_balance_change(
         .add_attribute("user", user_addr.to_string());
     let mut events = vec![base_event];
 
-    let asset_incentives = ASSET_INCENTIVES
+    let incentive_states = INCENTIVE_STATES
         .prefix(&collateral_denom)
         .range(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?;
 
-    for (incentive_denom, mut asset_incentive) in asset_incentives {
-        update_asset_incentive_index(
-            &mut asset_incentive,
+    for (incentive_denom, _) in incentive_states {
+        let incentive_state = update_incentive_index(
+            &mut deps.branch().storage.into(),
+            &collateral_denom,
+            &incentive_denom,
             total_amount_scaled_before,
             env.block.time.seconds(),
-        )?;
-        ASSET_INCENTIVES.save(
-            deps.storage,
-            (&collateral_denom, &incentive_denom.clone()),
-            &asset_incentive,
         )?;
 
         // Check if user has accumulated uncomputed rewards (which means index is not up to date)
@@ -390,12 +331,12 @@ pub fn execute_balance_change(
 
         let mut accrued_rewards = Uint128::zero();
 
-        if user_asset_index != asset_incentive.index {
+        if user_asset_index != incentive_state.index {
             // Compute user accrued rewards and update state
             accrued_rewards = compute_user_accrued_rewards(
                 user_amount_scaled_before,
                 user_asset_index,
-                asset_incentive.index,
+                incentive_state.index,
             )?;
 
             // Store user accrued rewards as unclaimed
@@ -409,14 +350,14 @@ pub fn execute_balance_change(
                 )?;
             }
 
-            user_asset_index_key.save(deps.storage, &asset_incentive.index)?;
+            user_asset_index_key.save(deps.storage, &incentive_state.index)?;
         }
 
         events.push(
             Event::new("mars/incentives/balance_change/reward_accrued")
                 .add_attribute("incentive_denom", incentive_denom)
                 .add_attribute("rewards_accrued", accrued_rewards)
-                .add_attribute("asset_index", asset_incentive.index.to_string()),
+                .add_attribute("asset_index", incentive_state.index.to_string()),
         );
     }
 
@@ -424,7 +365,7 @@ pub fn execute_balance_change(
 }
 
 pub fn execute_claim_rewards(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     info: MessageInfo,
     start_after_collateral_denom: Option<String>,
@@ -440,7 +381,7 @@ pub fn execute_claim_rewards(
         .add_attribute("user", user_addr.to_string());
     let mut events = vec![base_event];
 
-    let asset_incentives = state::paginate_asset_incentives(
+    let asset_incentives = state::paginate_incentive_indices(
         deps.storage,
         start_after_collateral_denom,
         start_after_incentive_denom,
@@ -450,36 +391,16 @@ pub fn execute_claim_rewards(
     let mut total_unclaimed_rewards: HashMap<String, Uint128> = HashMap::new();
 
     for ((collateral_denom, incentive_denom), _) in asset_incentives {
-        let (unclaimed_rewards, user_asset_incentive_statuses_to_update) =
-            compute_user_unclaimed_rewards(
-                deps.as_ref(),
-                &env.block,
-                &red_bank_addr,
-                &user_addr,
-                &collateral_denom,
-                &incentive_denom,
-            )?;
-
-        // Commit updated asset_incentives and user indexes
-        if let Some(UserAssetIncentiveStatus {
-            user_index_current,
-            asset_incentive_updated,
-        }) = user_asset_incentive_statuses_to_update
-        {
-            ASSET_INCENTIVES.save(
-                deps.storage,
-                (&collateral_denom.clone(), &incentive_denom),
-                &asset_incentive_updated,
-            )?;
-
-            if asset_incentive_updated.index != user_index_current {
-                USER_ASSET_INDICES.save(
-                    deps.storage,
-                    (&user_addr, &collateral_denom, &incentive_denom),
-                    &asset_incentive_updated.index,
-                )?
-            }
-        }
+        let querier = deps.querier.clone();
+        let unclaimed_rewards = compute_user_unclaimed_rewards(
+            &mut deps.branch().storage.into(),
+            &querier,
+            &env.block,
+            &red_bank_addr,
+            &user_addr,
+            &collateral_denom,
+            &incentive_denom,
+        )?;
 
         // clear unclaimed rewards
         USER_UNCLAIMED_REWARDS.save(
@@ -594,10 +515,10 @@ pub fn query_asset_incentive(
     deps: Deps,
     collateral_denom: String,
     incentive_denom: String,
-) -> StdResult<AssetIncentiveResponse> {
+) -> StdResult<IncentiveStateResponse> {
     let asset_incentive =
-        ASSET_INCENTIVES.load(deps.storage, (&collateral_denom, &incentive_denom))?;
-    Ok(AssetIncentiveResponse::from(collateral_denom, incentive_denom, asset_incentive))
+        INCENTIVE_STATES.load(deps.storage, (&collateral_denom, &incentive_denom))?;
+    Ok(IncentiveStateResponse::from(collateral_denom, incentive_denom, asset_incentive))
 }
 
 pub fn query_asset_incentives(
@@ -605,8 +526,8 @@ pub fn query_asset_incentives(
     start_after_collateral_denom: Option<String>,
     start_after_incentive_denom: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<AssetIncentiveResponse>> {
-    let asset_incentives = state::paginate_asset_incentives(
+) -> StdResult<Vec<IncentiveStateResponse>> {
+    let asset_incentives = state::paginate_incentive_indices(
         deps.storage,
         start_after_collateral_denom,
         start_after_incentive_denom,
@@ -616,7 +537,7 @@ pub fn query_asset_incentives(
     asset_incentives
         .into_iter()
         .map(|((collateral_denom, incentive_denom), ai)| {
-            Ok(AssetIncentiveResponse::from(collateral_denom, incentive_denom, ai))
+            Ok(IncentiveStateResponse::from(collateral_denom, incentive_denom, ai))
         })
         .collect()
 }
@@ -632,7 +553,7 @@ pub fn query_user_unclaimed_rewards(
     let red_bank_addr = query_red_bank_address(deps)?;
     let user_addr = deps.api.addr_validate(&user)?;
 
-    let asset_incentives = state::paginate_asset_incentives(
+    let asset_incentives = state::paginate_incentive_indices(
         deps.storage,
         start_after_collateral_denom,
         start_after_incentive_denom,
@@ -642,8 +563,9 @@ pub fn query_user_unclaimed_rewards(
     let mut total_unclaimed_rewards: HashMap<String, Uint128> = HashMap::new();
 
     for ((collateral_denom, incentive_denom), _) in asset_incentives {
-        let (unclaimed_rewards, _) = compute_user_unclaimed_rewards(
-            deps,
+        let unclaimed_rewards = compute_user_unclaimed_rewards(
+            &mut deps.storage.into(),
+            &deps.querier,
             &env.block,
             &red_bank_addr,
             &user_addr,
