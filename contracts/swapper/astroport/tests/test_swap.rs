@@ -1,5 +1,3 @@
-#![allow(clippy::items_after_test_module)]
-
 use astroport::{
     asset::AssetInfo, factory::PairType, pair::StablePoolParams, router::SwapOperation,
 };
