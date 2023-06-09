@@ -34,7 +34,7 @@ pub struct OsmosisQuerier {
 
 impl OsmosisQuerier {
     pub fn handle_stargate_query(&self, path: &str, data: &Binary) -> Result<QuerierResult, ()> {
-        if path == "/osmosis.poolmanager.v1beta1.Query/Pool" {
+        if path == "/osmosis.gamm.v1beta1.Query/Pool" {
             let parse_osmosis_query: Result<PoolRequest, DecodeError> =
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
