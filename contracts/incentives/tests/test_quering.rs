@@ -1,6 +1,6 @@
 use cosmwasm_std::{Decimal, Uint128};
 use mars_incentives::state::ASSET_INCENTIVES;
-use mars_red_bank_types::incentives::{AssetIncentive, AssetIncentiveResponse, QueryMsg};
+use mars_red_bank_types::incentives::{AssetIncentive, IncentiveStateResponse, QueryMsg};
 
 use crate::helpers::th_setup;
 
@@ -36,7 +36,7 @@ fn query_asset_incentive() {
     };
     ASSET_INCENTIVES.save(deps.as_mut().storage, ("uusdc", "umars"), &uusdc_incentive).unwrap();
 
-    let res: AssetIncentiveResponse = helpers::th_query(
+    let res: IncentiveStateResponse = helpers::th_query(
         deps.as_ref(),
         QueryMsg::AssetIncentive {
             collateral_denom: "uatom".to_string(),
@@ -45,7 +45,7 @@ fn query_asset_incentive() {
     );
     assert_eq!(
         res,
-        AssetIncentiveResponse::from("uatom".to_string(), "umars".to_string(), uatom_incentive)
+        IncentiveStateResponse::from("uatom".to_string(), "umars".to_string(), uatom_incentive)
     );
 }
 
@@ -80,7 +80,7 @@ fn query_asset_incentives() {
     ASSET_INCENTIVES.save(deps.as_mut().storage, ("uusdc", "umars"), &uusdc_incentive).unwrap();
 
     // NOTE: responses are ordered alphabetically by denom
-    let res: Vec<AssetIncentiveResponse> = helpers::th_query(
+    let res: Vec<IncentiveStateResponse> = helpers::th_query(
         deps.as_ref(),
         QueryMsg::AssetIncentives {
             start_after_collateral_denom: None,
@@ -91,18 +91,18 @@ fn query_asset_incentives() {
     assert_eq!(
         res,
         vec![
-            AssetIncentiveResponse::from("uatom".to_string(), "umars".to_string(), uatom_incentive),
-            AssetIncentiveResponse::from(
+            IncentiveStateResponse::from("uatom".to_string(), "umars".to_string(), uatom_incentive),
+            IncentiveStateResponse::from(
                 "uosmo".to_string(),
                 "umars".to_string(),
                 uosmo_incentive.clone()
             ),
-            AssetIncentiveResponse::from("uusdc".to_string(), "umars".to_string(), uusdc_incentive),
+            IncentiveStateResponse::from("uusdc".to_string(), "umars".to_string(), uusdc_incentive),
         ]
     );
 
     // NOTE: responses are ordered alphabetically by denom
-    let res: Vec<AssetIncentiveResponse> = helpers::th_query(
+    let res: Vec<IncentiveStateResponse> = helpers::th_query(
         deps.as_ref(),
         QueryMsg::AssetIncentives {
             start_after_collateral_denom: Some("uatom".to_string()),
@@ -112,7 +112,7 @@ fn query_asset_incentives() {
     );
     assert_eq!(
         res,
-        vec![AssetIncentiveResponse::from(
+        vec![IncentiveStateResponse::from(
             "uosmo".to_string(),
             "umars".to_string(),
             uosmo_incentive
