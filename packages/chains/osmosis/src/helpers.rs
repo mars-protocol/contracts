@@ -9,8 +9,11 @@ use osmosis_std::{
         cosmos::base::v1beta1::Coin,
         osmosis::{
             downtimedetector::v1beta1::DowntimedetectorQuerier,
-            gamm::v1beta1::{PoolAsset, PoolParams},
-            poolmanager::v1beta1::{PoolRequest, PoolmanagerQuerier},
+            gamm::{
+                v1beta1::{PoolAsset, PoolParams},
+                v2::GammQuerier,
+            },
+            poolmanager::v1beta1::PoolRequest,
             twap::v1beta1::TwapQuerier,
         },
     },
@@ -63,13 +66,16 @@ pub fn has_denom(denom: &str, pool_assets: &[PoolAsset]) -> bool {
 }
 
 /// Query the spot price of a coin, denominated in OSMO
+///
+/// FIXME: migrate to Spot queries from PoolManager once whitelisted in https://github.com/osmosis-labs/osmosis/blob/main/wasmbinding/stargate_whitelist.go#L127
+#[allow(deprecated)]
 pub fn query_spot_price(
     querier: &QuerierWrapper,
     pool_id: u64,
     base_denom: &str,
     quote_denom: &str,
 ) -> StdResult<Decimal> {
-    let spot_price_res = PoolmanagerQuerier::new(querier).spot_price(
+    let spot_price_res = GammQuerier::new(querier).spot_price(
         pool_id,
         base_denom.to_string(),
         quote_denom.to_string(),

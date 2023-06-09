@@ -42,7 +42,7 @@ impl OsmosisQuerier {
             }
         }
 
-        if path == "/osmosis.poolmanager.v1beta1.Query/SpotPrice" {
+        if path == "/osmosis.gamm.v2.Query/SpotPrice" {
             let parse_osmosis_query: Result<SpotPriceRequest, DecodeError> =
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
