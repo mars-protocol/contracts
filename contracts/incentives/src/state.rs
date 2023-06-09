@@ -43,16 +43,13 @@ pub fn increase_unclaimed_rewards(
         storage,
         (user_addr, collateral_denom, incentive_denom),
         |ur: Option<Uint128>| -> StdResult<Uint128> {
-            match ur {
-                Some(unclaimed_rewards) => Ok(unclaimed_rewards + accrued_rewards),
-                None => Ok(accrued_rewards),
-            }
+            Ok(ur.map_or_else(|| accrued_rewards, |r| r + accrued_rewards))
         },
     )?;
     Ok(())
 }
 
-/// Returns an iterator over all asset incentives, with optional pagination.
+/// Returns asset incentives, with optional pagination.
 /// Caller should make sure that if start_after_incentive_denom is supplied, then
 /// start_after_collateral_denom is also supplied.
 pub fn paginate_asset_incentives(
