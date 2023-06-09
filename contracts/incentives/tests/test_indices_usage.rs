@@ -1,6 +1,6 @@
 use cosmwasm_std::{Decimal, OverflowError, OverflowOperation, StdError, Uint128};
 use mars_incentives::helpers::{
-    compute_asset_incentive_index, compute_user_accrued_rewards, update_asset_incentive_index,
+    compute_incentive_index, compute_user_accrued_rewards, update_asset_incentive_index,
 };
 use mars_red_bank_types::incentives::AssetIncentive;
 
@@ -209,7 +209,7 @@ fn update_asset_incentive_index_if_not_updated_till_finished() {
 #[test]
 fn test_compute_asset_incentive_index() {
     assert_eq!(
-        compute_asset_incentive_index(
+        compute_incentive_index(
             Decimal::zero(),
             Uint128::new(100),
             Uint128::new(200_000),
@@ -220,18 +220,12 @@ fn test_compute_asset_incentive_index() {
     );
 
     assert_eq!(
-        compute_asset_incentive_index(
-            Decimal::zero(),
-            Uint128::new(100),
-            Uint128::new(200_000),
-            0,
-            1000
-        )
-        .unwrap(),
+        compute_incentive_index(Decimal::zero(), Uint128::new(100), Uint128::new(200_000), 0, 1000)
+            .unwrap(),
         Decimal::from_ratio(1_u128, 2_u128)
     );
     assert_eq!(
-        compute_asset_incentive_index(
+        compute_incentive_index(
             Decimal::from_ratio(1_u128, 2_u128),
             Uint128::new(2000),
             Uint128::new(5_000_000),

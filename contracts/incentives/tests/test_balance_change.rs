@@ -5,7 +5,7 @@ use cosmwasm_std::{
 };
 use mars_incentives::{
     contract::{execute, execute_balance_change, query_user_unclaimed_rewards},
-    helpers::{compute_asset_incentive_index, compute_user_accrued_rewards},
+    helpers::{compute_incentive_index, compute_user_accrued_rewards},
     state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
 use mars_red_bank_types::{
@@ -175,7 +175,7 @@ fn balance_change_user_with_zero_balance() {
 
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
-    let expected_index = compute_asset_incentive_index(
+    let expected_index = compute_incentive_index(
         start_index,
         emission_per_second,
         total_supply,
@@ -460,7 +460,7 @@ fn balance_change_user_non_zero_balance() {
         };
         let res = execute(deps.as_mut(), env, info.clone(), msg).unwrap();
 
-        expected_asset_incentive_index = compute_asset_incentive_index(
+        expected_asset_incentive_index = compute_incentive_index(
             expected_asset_incentive_index,
             emission_per_second,
             total_supply,
@@ -527,7 +527,7 @@ fn balance_change_user_non_zero_balance() {
         let res = execute(deps.as_mut(), env, info.clone(), msg).unwrap();
 
         let previous_user_index = expected_asset_incentive_index;
-        expected_asset_incentive_index = compute_asset_incentive_index(
+        expected_asset_incentive_index = compute_incentive_index(
             expected_asset_incentive_index,
             emission_per_second,
             total_supply,

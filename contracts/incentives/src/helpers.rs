@@ -1,45 +1,191 @@
 use std::cmp::{max, min};
 
 use cosmwasm_std::{
-    Addr, BlockInfo, Decimal, Deps, OverflowError, OverflowOperation, StdError, StdResult, Uint128,
+    Addr, BlockInfo, Decimal, Deps, MessageInfo, Order, OverflowError, OverflowOperation,
+    QuerierWrapper, StdError, StdResult, Storage, Uint128,
 };
-use mars_red_bank_types::{incentives::AssetIncentive, red_bank};
+use cw_storage_plus::Bound;
+use mars_red_bank_types::{
+    address_provider::{self, MarsAddressType},
+    incentives::{Config, IncentiveSchedule, IncentiveState},
+    red_bank,
+};
 
-use crate::state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS};
+use crate::{
+    state::{INCENTIVE_SCHEDULES, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
+    ContractError,
+};
 
-/// Updates asset incentive index and last updated timestamp by computing
-/// how many rewards were accrued since last time updated given incentive's
-/// emission per second.
-/// Total supply is the total (liquidity) token supply during the period being computed.
-/// Note that this method does not commit updates to state as that should be executed by the
-/// caller
-pub fn update_asset_incentive_index(
-    asset_incentive: &mut AssetIncentive,
-    total_amount_scaled: Uint128,
-    current_block_time: u64,
-) -> StdResult<()> {
-    let end_time_sec = asset_incentive.start_time + asset_incentive.duration;
-    if (current_block_time != asset_incentive.last_updated)
-        && current_block_time > asset_incentive.start_time
-        && asset_incentive.last_updated < end_time_sec
-        && !total_amount_scaled.is_zero()
-        && !asset_incentive.emission_per_second.is_zero()
-    {
-        let time_start = max(asset_incentive.start_time, asset_incentive.last_updated);
-        let time_end = min(current_block_time, end_time_sec);
-        asset_incentive.index = compute_asset_incentive_index(
-            asset_incentive.index,
-            asset_incentive.emission_per_second,
-            total_amount_scaled,
-            time_start,
-            time_end,
-        )?;
+/// A helper enum to represent a storage that can either be immutable or mutable. This is useful
+/// to create functions that should mutate state on Execute but not on Query.
+pub enum MaybeMutStorage<'a> {
+    Immutable(&'a dyn Storage),
+    Mutable(&'a mut dyn Storage),
+}
+
+impl<'a> From<&'a dyn Storage> for MaybeMutStorage<'a> {
+    fn from(storage: &'a dyn Storage) -> Self {
+        MaybeMutStorage::Immutable(storage)
     }
-    asset_incentive.last_updated = current_block_time;
+}
+
+impl<'a> From<&'a mut dyn Storage> for MaybeMutStorage<'a> {
+    fn from(storage: &'a mut dyn Storage) -> Self {
+        MaybeMutStorage::Mutable(storage)
+    }
+}
+
+impl MaybeMutStorage<'_> {
+    pub fn as_ref(&self) -> &dyn Storage {
+        match self {
+            MaybeMutStorage::Immutable(storage) => *storage,
+            MaybeMutStorage::Mutable(storage) => *storage,
+        }
+    }
+}
+
+/// Validates that a incentive schedule to be added is valid. This checks that:
+/// - start_time is in the future
+/// - duration is a multiple of epoch duration
+/// - enough tokens are sent to cover the entire duration
+/// - start_time is a multiple of epoch duration away from any other existing incentive
+///  for the same collateral denom and incentive denom tuple
+pub fn validate_incentive_schedule(
+    storage: &dyn Storage,
+    info: &MessageInfo,
+    config: &Config,
+    current_time: u64,
+    schedule: &IncentiveSchedule,
+    collateral_denom: &str,
+    incentive_denom: &str,
+) -> Result<(), ContractError> {
+    // start_time can't be less that current block time
+    if schedule.start_time < current_time {
+        return Err(ContractError::InvalidIncentive {
+            reason: "start_time can't be less than current block time".to_string(),
+        });
+    }
+    // Duration must be a multiple of epoch duration
+    if schedule.duration % config.epoch_duration != 0 {
+        return Err(ContractError::InvalidDuration {
+            epoch_duration: config.epoch_duration,
+        });
+    }
+    // Enough tokens must be sent to cover the entire duration
+    let total_emission = schedule.emission_per_second * Uint128::from(schedule.duration);
+    if info.funds.len() != 1 || info.funds[0].amount != total_emission {
+        return Err(ContractError::InvalidFunds {
+            expected: total_emission,
+        });
+    }
+    // Start time must be a multiple of epoch duration away from any other existing incentive
+    // for the same collateral denom and incentive denom tuple. We do this so that we don't have
+    // so we have at most one incentive schedule per epoch, to limit gas usage.
+    let old_schedule = INCENTIVE_SCHEDULES
+        .prefix((&collateral_denom, &incentive_denom))
+        .range(storage, None, None, Order::Ascending)
+        .into_iter()
+        .next()
+        .transpose()?;
+    if let Some((existing_start_time, _)) = old_schedule {
+        if (schedule.start_time + existing_start_time) % config.epoch_duration != 0 {
+            return Err(ContractError::InvalidStartTime {
+                epoch_duration: config.epoch_duration,
+                existing_start_time,
+            });
+        }
+    }
+
     Ok(())
 }
 
-pub fn compute_asset_incentive_index(
+/// Queries the total scaled collateral for a given collateral denom from the red bank contract
+pub fn query_red_bank_total_collateral(
+    deps: Deps,
+    address_provider: &Addr,
+    collateral_denom: &str,
+) -> StdResult<Uint128> {
+    let red_bank_addr = address_provider::helpers::query_contract_addr(
+        deps,
+        address_provider,
+        MarsAddressType::RedBank,
+    )?;
+    let market: red_bank::Market = deps.querier.query_wasm_smart(
+        red_bank_addr,
+        &red_bank::QueryMsg::Market {
+            denom: collateral_denom.to_string(),
+        },
+    )?;
+    Ok(market.collateral_total_scaled)
+}
+
+/// Updates the incentive index for a collateral denom and incentive denom tuple. This function
+/// should be called every time a user's collateral balance changes, when a new incentive schedule
+/// is added, or when a user claims rewards.
+pub fn update_incentive_index(
+    storage: &mut MaybeMutStorage,
+    collateral_denom: &str,
+    incentive_denom: &str,
+    total_collateral: Uint128,
+    current_block_time: u64,
+) -> StdResult<IncentiveState> {
+    let mut incentive_state = INCENTIVE_STATES
+        .may_load(storage.as_ref(), (collateral_denom, incentive_denom))?
+        .unwrap_or_else(|| IncentiveState {
+            index: Decimal::zero(),
+            last_updated: current_block_time,
+        });
+
+    // If incentive state is already up to date or there is no collateral, no need to update
+    if incentive_state.last_updated == current_block_time || total_collateral.is_zero() {
+        return Ok(incentive_state);
+    }
+
+    // Range over all relevant asset incentive indexes (those which have a start time before the
+    // current block time)
+    let schedules = INCENTIVE_SCHEDULES
+        .prefix((collateral_denom, incentive_denom))
+        .range(
+            storage.as_ref(),
+            None,
+            Some(Bound::exclusive(current_block_time)),
+            cosmwasm_std::Order::Ascending,
+        )
+        .into_iter()
+        .collect::<StdResult<Vec<_>>>()?;
+
+    for (start_time, schedule) in schedules {
+        let end_time_sec = schedule.start_time + schedule.duration;
+        let time_start = max(schedule.start_time, incentive_state.last_updated);
+        let time_end = min(current_block_time, end_time_sec);
+        incentive_state.index = compute_incentive_index(
+            incentive_state.index,
+            schedule.emission_per_second,
+            total_collateral,
+            time_start,
+            time_end,
+        )?;
+
+        // If incentive schedule is over, remove it from storage
+        if let MaybeMutStorage::Mutable(storage) = storage {
+            if end_time_sec <= current_block_time {
+                INCENTIVE_SCHEDULES
+                    .remove(*storage, (collateral_denom, incentive_denom, start_time));
+            }
+        }
+    }
+
+    // Save update index if storage is mutable
+    if let MaybeMutStorage::Mutable(storage) = storage {
+        incentive_state.last_updated = current_block_time;
+        INCENTIVE_STATES.save(*storage, (collateral_denom, incentive_denom), &incentive_state)?;
+    }
+
+    Ok(incentive_state)
+}
+
+/// Computes the new incentive index for a given collateral denom and incentive denom tuple
+pub fn compute_incentive_index(
     previous_index: Decimal,
     emission_per_second: Uint128,
     total_amount_scaled: Uint128,
@@ -74,40 +220,31 @@ pub fn compute_user_accrued_rewards(
     Ok(result)
 }
 
-/// Result of querying and updating the status of the user and a give asset incentives in order to
-/// compute unclaimed rewards.
-pub struct UserAssetIncentiveStatus {
-    /// Current user index's value on the contract store (not updated by current asset index)
-    pub user_index_current: Decimal,
-    /// Asset incentive with values updated to the current block (not neccesarily commited
-    /// to storage)
-    pub asset_incentive_updated: AssetIncentive,
-}
-
+/// Computes unclaimed rewards for a given user. Also updates the user's index to the current
+/// incentive index if storage is mutable.
+/// NB: Does not store the updated unclaimed rewards in storage.
 pub fn compute_user_unclaimed_rewards(
-    deps: Deps,
+    storage: &mut MaybeMutStorage,
+    querier: &QuerierWrapper,
     block: &BlockInfo,
     red_bank_addr: &Addr,
     user_addr: &Addr,
     collateral_denom: &str,
     incentive_denom: &str,
-) -> StdResult<(Uint128, Option<UserAssetIncentiveStatus>)> {
+) -> StdResult<Uint128> {
     let mut unclaimed_rewards = USER_UNCLAIMED_REWARDS
-        .may_load(deps.storage, (user_addr, collateral_denom, incentive_denom))?
+        .may_load(storage.as_ref(), (user_addr, collateral_denom, incentive_denom))?
         .unwrap_or_else(Uint128::zero);
 
-    let mut asset_incentive =
-        ASSET_INCENTIVES.load(deps.storage, (collateral_denom, incentive_denom))?; //TODO: Use may_load or handle error
-
     // Get asset user balances and total supply
-    let collateral: red_bank::UserCollateralResponse = deps.querier.query_wasm_smart(
+    let collateral: red_bank::UserCollateralResponse = querier.query_wasm_smart(
         red_bank_addr,
         &red_bank::QueryMsg::UserCollateral {
             user: user_addr.to_string(),
             denom: collateral_denom.to_string(),
         },
     )?;
-    let market: red_bank::Market = deps.querier.query_wasm_smart(
+    let market: red_bank::Market = querier.query_wasm_smart(
         red_bank_addr,
         &red_bank::QueryMsg::Market {
             denom: collateral_denom.to_string(),
@@ -118,33 +255,41 @@ pub fn compute_user_unclaimed_rewards(
     // updating indexes. If the user's balance changes, the indexes will be updated correctly at
     // that point in time.
     if collateral.amount_scaled.is_zero() {
-        return Ok((unclaimed_rewards, None));
+        return Ok(unclaimed_rewards);
     }
 
-    update_asset_incentive_index(
-        &mut asset_incentive,
+    let incentive_state = update_incentive_index(
+        storage,
+        collateral_denom,
+        incentive_denom,
         market.collateral_total_scaled,
         block.time.seconds(),
     )?;
 
     let user_asset_index = USER_ASSET_INDICES
-        .may_load(deps.storage, (user_addr, collateral_denom, incentive_denom))?
+        .may_load(storage.as_ref(), (user_addr, collateral_denom, incentive_denom))?
         .unwrap_or_else(Decimal::zero);
 
-    if user_asset_index != asset_incentive.index {
+    if user_asset_index != incentive_state.index {
         // Compute user accrued rewards and update user index
         let asset_accrued_rewards = compute_user_accrued_rewards(
             collateral.amount_scaled,
             user_asset_index,
-            asset_incentive.index,
+            incentive_state.index,
         )?;
         unclaimed_rewards += asset_accrued_rewards;
     }
 
-    let user_asset_incentive_status_to_update = UserAssetIncentiveStatus {
-        user_index_current: user_asset_index,
-        asset_incentive_updated: asset_incentive,
-    };
+    // If state is mutable, commit updated user index
+    if let MaybeMutStorage::Mutable(storage) = storage {
+        if user_asset_index != incentive_state.index {
+            USER_ASSET_INDICES.save(
+                *storage,
+                (&user_addr, &collateral_denom, &incentive_denom),
+                &incentive_state.index,
+            )?
+        }
+    }
 
-    Ok((unclaimed_rewards, Some(user_asset_incentive_status_to_update)))
+    Ok(unclaimed_rewards)
 }
