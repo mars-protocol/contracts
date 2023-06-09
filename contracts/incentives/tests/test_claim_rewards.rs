@@ -5,7 +5,7 @@ use cosmwasm_std::{
 };
 use mars_incentives::{
     contract::{execute, query_user_unclaimed_rewards},
-    helpers::{compute_asset_incentive_index, compute_user_accrued_rewards},
+    helpers::{compute_incentive_index, compute_user_accrued_rewards},
     state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
 use mars_red_bank_types::{
@@ -150,7 +150,7 @@ fn execute_claim_rewards() {
         )
         .unwrap();
 
-    let expected_asset_incentive_index = compute_asset_incentive_index(
+    let expected_asset_incentive_index = compute_incentive_index(
         Decimal::one(),
         Uint128::new(100),
         asset_total_supply,

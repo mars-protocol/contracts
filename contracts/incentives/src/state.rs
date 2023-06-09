@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, Decimal, Order, StdResult, Storage, Uint128};
 use cw_item_set::Set;
 use cw_storage_plus::{Bound, Item, Map, PrefixBound};
 use mars_owner::Owner;
-use mars_red_bank_types::incentives::{AssetIncentive, Config};
+use mars_red_bank_types::incentives::{Config, IncentiveSchedule, IncentiveState};
 
 use crate::ContractError;
 
@@ -16,9 +16,14 @@ pub const CONFIG: Item<Config> = Item::new("config");
 /// this set.
 pub const WHITELIST: Set<&str> = Set::new("whitelist", "whitelist_counter");
 
-/// A map containing a configuration of an incentive for a given collateral and incentive denom.
-/// The key is (collateral denom, incentive denom).
-pub const ASSET_INCENTIVES: Map<(&str, &str), AssetIncentive> = Map::new("incentives");
+/// A map containing the incentive index and last updated time for a given collateral and incentive
+/// denom. The key is (collateral denom, incentive denom).
+pub const INCENTIVE_STATES: Map<(&str, &str), IncentiveState> = Map::new("incentive_states");
+
+/// A map containing incentive schedules for a given collateral and incentive denom. The key is
+/// (collateral denom, incentive denom, schedule start time).
+pub const INCENTIVE_SCHEDULES: Map<(&str, &str, u64), IncentiveSchedule> =
+    Map::new("incentive_schedules");
 
 /// A map containing the incentive index for a given user, collateral denom and incentive denom.
 /// The key is (user address, collateral denom, incentive denom).
@@ -57,24 +62,24 @@ pub fn increase_unclaimed_rewards(
 /// Returns asset incentives, with optional pagination.
 /// Caller should make sure that if start_after_incentive_denom is supplied, then
 /// start_after_collateral_denom is also supplied.
-pub fn paginate_asset_incentives(
+pub fn paginate_incentive_indices(
     storage: &dyn Storage,
     start_after_collateral_denom: Option<String>,
     start_after_incentive_denom: Option<String>,
     limit: Option<u32>,
-) -> Result<Vec<((String, String), AssetIncentive)>, ContractError> {
+) -> Result<Vec<((String, String), IncentiveState)>, ContractError> {
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
     Ok(match (start_after_collateral_denom.as_ref(), start_after_incentive_denom.as_ref()) {
         (Some(collat_denom), Some(incen_denom)) => {
             let start = Bound::exclusive((collat_denom.as_str(), incen_denom.as_str()));
-            ASSET_INCENTIVES.range(storage, Some(start), None, Order::Ascending)
+            INCENTIVE_STATES.range(storage, Some(start), None, Order::Ascending)
         }
         (Some(collat_denom), None) => {
             let start = PrefixBound::exclusive(collat_denom.as_str());
-            ASSET_INCENTIVES.prefix_range(storage, Some(start), None, Order::Ascending)
+            INCENTIVE_STATES.prefix_range(storage, Some(start), None, Order::Ascending)
         }
         (None, Some(_)) => return Err(ContractError::InvalidPaginationParams),
-        _ => ASSET_INCENTIVES.range(storage, None, None, Order::Ascending),
+        _ => INCENTIVE_STATES.range(storage, None, None, Order::Ascending),
     }
     .take(limit)
     .collect::<StdResult<Vec<_>>>()?)
@@ -111,18 +116,18 @@ mod tests {
         }
 
         // No pagination
-        let res = paginate_asset_incentives(&storage, None, None, None).unwrap();
+        let res = paginate_incentive_indices(&storage, None, None, None).unwrap();
         assert_eq!(res, incentives);
 
         // Start after collateral denom
         let res =
-            paginate_asset_incentives(&storage, Some("collat1".to_string()), None, None).unwrap();
+            paginate_incentive_indices(&storage, Some("collat1".to_string()), None, None).unwrap();
         println!("start after collat1: {:?}", res);
         println!("expected: {:?}", incentives[2..].to_vec());
         assert_eq!(res, incentives[2..]);
 
         // Start after collateral denom and incentive denom
-        let res = paginate_asset_incentives(
+        let res = paginate_incentive_indices(
             &storage,
             Some("collat1".to_string()),
             Some("incen1".to_string()),
@@ -130,7 +135,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(res, incentives[1..]);
-        let res = paginate_asset_incentives(
+        let res = paginate_incentive_indices(
             &storage,
             Some("collat1".to_string()),
             Some("incen2".to_string()),
@@ -140,7 +145,7 @@ mod tests {
         assert_eq!(res, incentives[2..]);
 
         // Limit
-        let res = paginate_asset_incentives(&storage, None, None, Some(2)).unwrap();
+        let res = paginate_incentive_indices(&storage, None, None, Some(2)).unwrap();
         assert_eq!(res, incentives[..2].to_vec());
     }
 }

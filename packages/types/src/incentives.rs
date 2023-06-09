@@ -9,18 +9,26 @@ pub struct Config {
     pub address_provider: Addr,
     /// Mars Token Denom
     pub mars_denom: String,
+    /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
+    /// that an incentive can last, and each incentive must be a multiple of this duration.
+    pub epoch_duration: u64,
 }
 
-/// Incentive Metadata for a given incentive
+/// A single incentive schedule for a given collateral and incentive denom
 #[cw_serde]
-pub struct AssetIncentive {
+pub struct IncentiveSchedule {
     /// How many incentive tokens per second is emitted to be then distributed to all Red Bank depositors
     pub emission_per_second: Uint128,
     /// Start time of the incentive (in seconds) since the UNIX epoch (00:00:00 on 1970-01-01 UTC)
     pub start_time: u64,
     /// How many seconds the incentives last
     pub duration: u64,
-    /// Total incentive tokens assigned for distribution since the start of the incentive
+}
+
+/// Incentive Metadata for a given incentive
+#[cw_serde]
+pub struct IncentiveState {
+    /// An index that represents how many incentive tokens have been distributed per unit of collateral
     pub index: Decimal,
     /// Last time (in seconds) index was updated
     pub last_updated: u64,
@@ -28,37 +36,28 @@ pub struct AssetIncentive {
 
 /// Incentive Metadata for a given incentive denom
 #[cw_serde]
-pub struct AssetIncentiveResponse {
+pub struct IncentiveStateResponse {
     /// The denom for which users get the incentive if they provide collateral in the Red Bank
     pub collateral_denom: String,
     /// The denom of the token these incentives are paid with
     pub incentive_denom: String,
-    /// How many incentive tokens per second is emitted to be then distributed to all Red Bank depositors
-    pub emission_per_second: Uint128,
-    /// Start time of the incentive (in seconds) since the UNIX epoch (00:00:00 on 1970-01-01 UTC)
-    pub start_time: u64,
-    /// How many seconds the incentives last
-    pub duration: u64,
-    /// Total incentive tokens assigned for distribution since the start of the incentive
+    /// An index that represents how many incentive tokens have been distributed per unit of collateral
     pub index: Decimal,
     /// Last time (in seconds) index was updated
     pub last_updated: u64,
 }
 
-impl AssetIncentiveResponse {
+impl IncentiveStateResponse {
     pub fn from(
         collateral_denom: impl Into<String>,
         incentive_denom: impl Into<String>,
-        ai: AssetIncentive,
+        ii: IncentiveState,
     ) -> Self {
         Self {
             collateral_denom: collateral_denom.into(),
             incentive_denom: incentive_denom.into(),
-            emission_per_second: ai.emission_per_second,
-            start_time: ai.start_time,
-            duration: ai.duration,
-            index: ai.index,
-            last_updated: ai.last_updated,
+            index: ii.index,
+            last_updated: ii.last_updated,
         }
     }
 }
@@ -71,6 +70,9 @@ pub struct InstantiateMsg {
     pub address_provider: String,
     /// Mars token denom
     pub mars_denom: String,
+    /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
+    /// that an incentive can last, and each incentive must be a multiple of this duration.
+    pub epoch_duration: u64,
 }
 
 #[cw_serde]
@@ -93,11 +95,11 @@ pub enum ExecuteMsg {
         incentive_denom: String,
         /// How many `incentive_denom` tokens will be assigned per second to be distributed among
         /// all Red Bank depositors
-        emission_per_second: Option<Uint128>,
+        emission_per_second: Uint128,
         /// Start time of the incentive (in seconds) since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
-        start_time: Option<u64>,
+        start_time: u64,
         /// How many seconds the incentives last
-        duration: Option<u64>,
+        duration: u64,
     },
 
     /// Handle balance change updating user and asset rewards.
@@ -146,7 +148,7 @@ pub enum QueryMsg {
     Config {},
 
     /// Query info about asset incentive for a given collateral and incentive denom pair
-    #[returns(AssetIncentiveResponse)]
+    #[returns(IncentiveStateResponse)]
     AssetIncentive {
         /// The denom of the token that users supply as collateral to receive incentives
         collateral_denom: String,
@@ -155,7 +157,7 @@ pub enum QueryMsg {
     },
 
     /// Enumerate asset incentives with pagination
-    #[returns(Vec<AssetIncentiveResponse>)]
+    #[returns(Vec<IncentiveStateResponse>)]
     AssetIncentives {
         /// Start pagination after this collateral denom
         start_after_collateral_denom: Option<String>,
