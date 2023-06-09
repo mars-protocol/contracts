@@ -73,7 +73,6 @@ where
             deps.storage,
             &Config {
                 base_denom: msg.base_denom,
-                base_denom_decimals: msg.base_denom_decimals,
             },
         )?;
 
@@ -97,8 +96,7 @@ where
             } => self.remove_price_source(deps, info.sender, denom),
             ExecuteMsg::UpdateConfig {
                 base_denom,
-                base_denom_decimals,
-            } => self.update_config(deps, info.sender, base_denom, base_denom_decimals),
+            } => self.update_config(deps, info.sender, base_denom),
         }
     }
 
@@ -173,7 +171,6 @@ where
         deps: DepsMut<C>,
         sender_addr: Addr,
         base_denom: Option<String>,
-        base_demom_decimals: Option<u8>,
     ) -> ContractResult<Response> {
         self.owner.assert_owner(deps.storage, &sender_addr)?;
 
@@ -183,17 +180,13 @@ where
 
         let mut config = self.config.load(deps.storage)?;
         let prev_base_denom = config.base_denom.clone();
-        let prev_base_denom_decimals = config.base_denom_decimals;
         config.base_denom = base_denom.unwrap_or(config.base_denom);
-        config.base_denom_decimals = base_demom_decimals.unwrap_or(config.base_denom_decimals);
         self.config.save(deps.storage, &config)?;
 
         let response = Response::new()
             .add_attribute("action", "update_config")
             .add_attribute("prev_base_denom", prev_base_denom)
-            .add_attribute("base_denom", config.base_denom)
-            .add_attribute("prev_base_denom_decimals", prev_base_denom_decimals.to_string())
-            .add_attribute("base_denom_decimals", config.base_denom_decimals.to_string());
+            .add_attribute("base_denom", config.base_denom);
 
         Ok(response)
     }
@@ -205,7 +198,6 @@ where
             owner: owner_state.owner,
             proposed_new_owner: owner_state.proposed,
             base_denom: cfg.base_denom,
-            base_denom_decimals: cfg.base_denom_decimals,
         })
     }
 

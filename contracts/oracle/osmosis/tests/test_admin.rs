@@ -31,7 +31,6 @@ fn instantiating_incorrect_denom() {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "!*jadfaefc".to_string(),
-            base_denom_decimals: 6u8,
         },
     );
     assert_eq!(
@@ -48,7 +47,6 @@ fn instantiating_incorrect_denom() {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "ahdbufenf&*!-".to_string(),
-            base_denom_decimals: 6u8,
         },
     );
     assert_eq!(
@@ -66,7 +64,6 @@ fn instantiating_incorrect_denom() {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "ab".to_string(),
-            base_denom_decimals: 6u8,
         },
     );
     assert_eq!(
@@ -83,7 +80,6 @@ fn update_config_if_unauthorized() {
 
     let msg = ExecuteMsg::UpdateConfig {
         base_denom: None,
-        base_denom_decimals: None,
     };
     let info = mock_info("somebody");
     let res_err = entry::execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -96,7 +92,6 @@ fn update_config_with_invalid_base_denom() {
 
     let msg = ExecuteMsg::UpdateConfig {
         base_denom: Some("*!fdskfna".to_string()),
-        base_denom_decimals: None,
     };
     let info = mock_info("owner");
     let res_err = entry::execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -114,7 +109,6 @@ fn update_config_with_new_params() {
 
     let msg = ExecuteMsg::UpdateConfig {
         base_denom: Some("uusdc".to_string()),
-        base_denom_decimals: Some(10u8),
     };
     let info = mock_info("owner");
     let res = entry::execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -124,9 +118,7 @@ fn update_config_with_new_params() {
         vec![
             attr("action", "update_config"),
             attr("prev_base_denom", "uosmo"),
-            attr("base_denom", "uusdc"),
-            attr("prev_base_denom_decimals", "6"),
-            attr("base_denom_decimals", "10"),
+            attr("base_denom", "uusdc")
         ]
     );
 
@@ -134,5 +126,4 @@ fn update_config_with_new_params() {
     assert_eq!(cfg.owner.unwrap(), "owner".to_string());
     assert_eq!(cfg.proposed_new_owner, None);
     assert_eq!(cfg.base_denom, "uusdc".to_string());
-    assert_eq!(cfg.base_denom_decimals, 10u8);
 }

@@ -615,7 +615,6 @@ impl MockEnvBuilder {
                 &oracle::InstantiateMsg {
                     owner: self.owner.to_string(),
                     base_denom: self.base_denom.clone(),
-                    base_denom_decimals: self.base_denom_decimals,
                 },
                 &[],
                 "oracle",

@@ -8,16 +8,12 @@ pub struct InstantiateMsg {
     pub owner: String,
     /// The asset in which prices are denominated in
     pub base_denom: String,
-    /// The asset decimals used for price normalization
-    pub base_denom_decimals: u8,
 }
 
 #[cw_serde]
 pub struct Config {
     /// The asset in which prices are denominated in
     pub base_denom: String,
-    /// The asset decimals used for price normalization
-    pub base_denom_decimals: u8,
 }
 
 #[cw_serde]
@@ -38,7 +34,6 @@ pub enum ExecuteMsg<T> {
     /// Update contract config (only callable by owner)
     UpdateConfig {
         base_denom: Option<String>,
-        base_denom_decimals: Option<u8>,
     },
 }
 
@@ -90,8 +85,6 @@ pub struct ConfigResponse {
     pub proposed_new_owner: Option<String>,
     /// The asset in which prices are denominated in
     pub base_denom: String,
-    /// The asset decimals used for price normalization
-    pub base_denom_decimals: u8,
 }
 
 #[cw_serde]
