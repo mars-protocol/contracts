@@ -22,6 +22,7 @@ use crate::{
     error::ContractError,
     helpers::{
         compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_asset_incentive_index,
+        UserAssetIncentiveStatus,
     },
     state::{self, ASSET_INCENTIVES, CONFIG, OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
@@ -131,6 +132,7 @@ pub fn execute_set_asset_incentive(
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
     validate_native_denom(&collateral_denom)?;
+    validate_native_denom(&incentive_denom)?;
 
     let current_block_time = env.block.time.seconds();
     let new_asset_incentive = match ASSET_INCENTIVES
@@ -418,16 +420,18 @@ pub fn execute_claim_rewards(
             )?;
 
         // Commit updated asset_incentives and user indexes
-        if let Some(user_asset_incentive_status) = user_asset_incentive_statuses_to_update {
-            let asset_incentive_updated = user_asset_incentive_status.asset_incentive_updated;
-
+        if let Some(UserAssetIncentiveStatus {
+            user_index_current,
+            asset_incentive_updated,
+        }) = user_asset_incentive_statuses_to_update
+        {
             ASSET_INCENTIVES.save(
                 deps.storage,
                 (&collateral_denom.clone(), &incentive_denom),
                 &asset_incentive_updated,
             )?;
 
-            if asset_incentive_updated.index != user_asset_incentive_status.user_index_current {
+            if asset_incentive_updated.index != user_index_current {
                 USER_ASSET_INDICES.save(
                     deps.storage,
                     (&user_addr, &collateral_denom, &incentive_denom),
@@ -443,13 +447,10 @@ pub fn execute_claim_rewards(
             &Uint128::zero(),
         )?;
 
-        if !unclaimed_rewards.is_zero() {
-            if let Some(x) = total_unclaimed_rewards.get_mut(&incentive_denom) {
-                *x += unclaimed_rewards;
-            } else {
-                total_unclaimed_rewards.insert(incentive_denom, unclaimed_rewards);
-            }
-        };
+        total_unclaimed_rewards
+            .entry(incentive_denom)
+            .and_modify(|amount| *amount += unclaimed_rewards)
+            .or_insert(unclaimed_rewards);
     }
 
     for (denom, amount) in total_unclaimed_rewards.iter() {
@@ -608,11 +609,10 @@ pub fn query_user_unclaimed_rewards(
             &collateral_denom,
             &incentive_denom,
         )?;
-        if let Some(x) = total_unclaimed_rewards.get_mut(&incentive_denom) {
-            *x += unclaimed_rewards;
-        } else {
-            total_unclaimed_rewards.insert(incentive_denom.clone(), unclaimed_rewards);
-        }
+        total_unclaimed_rewards
+            .entry(incentive_denom)
+            .and_modify(|amount| *amount += unclaimed_rewards)
+            .or_insert(unclaimed_rewards);
     }
 
     Ok(total_unclaimed_rewards
