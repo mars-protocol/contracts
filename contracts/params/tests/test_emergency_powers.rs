@@ -2,8 +2,8 @@ use cosmwasm_std::Addr;
 use mars_owner::OwnerError;
 use mars_params::{
     error::ContractError::Owner,
-    types::{
-        AssetParamsUpdate, EmergencyUpdate, RedBankEmergencyUpdate, RoverEmergencyUpdate,
+    msg::{
+        AssetParamsUpdate, CmEmergencyUpdate, EmergencyUpdate, RedBankEmergencyUpdate,
         VaultConfigUpdate,
     },
 };
@@ -24,19 +24,21 @@ fn only_owner_can_invoke_emergency_powers() {
 
     let res = mock.emergency_update(
         &bad_guy,
-        EmergencyUpdate::Rover(RoverEmergencyUpdate::DisallowCoin("xyz".to_string())),
+        EmergencyUpdate::CreditManager(CmEmergencyUpdate::DisallowCoin("xyz".to_string())),
     );
     assert_err(res, Owner(OwnerError::NotEmergencyOwner {}));
 
     let res = mock.emergency_update(
         &bad_guy,
-        EmergencyUpdate::Rover(RoverEmergencyUpdate::SetZeroDepositCapOnVault("xyz".to_string())),
+        EmergencyUpdate::CreditManager(CmEmergencyUpdate::SetZeroDepositCapOnVault(
+            "xyz".to_string(),
+        )),
     );
     assert_err(res, Owner(OwnerError::NotEmergencyOwner {}));
 
     let res = mock.emergency_update(
         &bad_guy,
-        EmergencyUpdate::Rover(RoverEmergencyUpdate::SetZeroMaxLtvOnVault("xyz".to_string())),
+        EmergencyUpdate::CreditManager(CmEmergencyUpdate::SetZeroMaxLtvOnVault("xyz".to_string())),
     );
     assert_err(res, Owner(OwnerError::NotEmergencyOwner {}));
 }
@@ -78,7 +80,7 @@ fn disallow_coin() {
     let denom = "atom".to_string();
 
     let mut params = default_asset_params(&denom);
-    params.rover.whitelisted = true;
+    params.credit_manager.whitelisted = true;
 
     mock.update_asset_params(
         &mock.query_owner(),
@@ -89,16 +91,16 @@ fn disallow_coin() {
     .unwrap();
 
     let params = mock.query_asset_params(&denom);
-    assert!(params.rover.whitelisted);
+    assert!(params.credit_manager.whitelisted);
 
     mock.emergency_update(
         &emergency_owner,
-        EmergencyUpdate::Rover(RoverEmergencyUpdate::DisallowCoin(denom.clone())),
+        EmergencyUpdate::CreditManager(CmEmergencyUpdate::DisallowCoin(denom.clone())),
     )
     .unwrap();
 
     let params = mock.query_asset_params(&denom);
-    assert!(!params.rover.whitelisted);
+    assert!(!params.credit_manager.whitelisted);
 }
 
 #[test]
@@ -120,7 +122,7 @@ fn set_zero_max_ltv() {
 
     mock.emergency_update(
         &emergency_owner,
-        EmergencyUpdate::Rover(RoverEmergencyUpdate::SetZeroMaxLtvOnVault(vault.clone())),
+        EmergencyUpdate::CreditManager(CmEmergencyUpdate::SetZeroMaxLtvOnVault(vault.clone())),
     )
     .unwrap();
 
@@ -147,7 +149,7 @@ fn set_zero_deposit_cap() {
 
     mock.emergency_update(
         &emergency_owner,
-        EmergencyUpdate::Rover(RoverEmergencyUpdate::SetZeroDepositCapOnVault(vault.clone())),
+        EmergencyUpdate::CreditManager(CmEmergencyUpdate::SetZeroDepositCapOnVault(vault.clone())),
     )
     .unwrap();
 
