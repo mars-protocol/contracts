@@ -797,9 +797,9 @@ dependencies = [
 
 [[package]]
 name = "cw-multi-test"
-version = "0.16.4"
+version = "0.16.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a18afd2e201221c6d72a57f0886ef2a22151bbc9e6db7af276fde8a91081042"
+checksum = "127c7bb95853b8e828bdab97065c81cb5ddc20f7339180b61b2300565aaa99d1"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
@@ -935,7 +935,7 @@ dependencies = [
 [[package]]
 name = "cw2"
 version = "1.0.1"
-source = "git+https://github.com/mars-protocol/cw-plus?rev=4014255#4014255fc2d79486e332e02d1ab1421db86f4f0b"
+source = "git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b#de1fb0b9836e56e5640575d246274d882509d714"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1332,9 +1332,9 @@ dependencies = [
 
 [[package]]
 name = "getrandom"
-version = "0.2.9"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c85e1d9ab2eadba7e5040d4e09cbd6d072b76a557ad64e797c2cb9d4da21d7e4"
+checksum = "be4136b2a15dd319360be1c07d9933517ccf0be8f16bf62a3bee4f0d618df427"
 dependencies = [
  "cfg-if",
  "js-sys",
@@ -1731,19 +1731,19 @@ checksum = "ef53942eb7bf7ff43a617b3e2c1c4a5ecf5944a7c1bc12d7ee39bbb15e5c1519"
 
 [[package]]
 name = "log"
-version = "0.4.18"
+version = "0.4.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "518ef76f2f87365916b142844c16d8fefd85039bc5699050210a7778ee1cd1de"
+checksum = "b06a4cde4c0f271a446782e3eff8de789548ce57dbc8eca9292c27f4a42004b4"
 
 [[package]]
 name = "mars-address-provider"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "bech32",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-owner",
  "mars-red-bank-types",
  "serde",
@@ -1752,7 +1752,7 @@ dependencies = [
 
 [[package]]
 name = "mars-health"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-std",
  "mars-red-bank-types",
@@ -1762,12 +1762,12 @@ dependencies = [
 
 [[package]]
 name = "mars-incentives"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-owner",
  "mars-red-bank-types",
  "mars-testing",
@@ -1777,12 +1777,12 @@ dependencies = [
 
 [[package]]
 name = "mars-integration-tests"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
  "cw-it",
- "cw-multi-test 0.16.4",
+ "cw-multi-test 0.16.5",
  "mars-oracle-base",
  "mars-oracle-osmosis",
  "mars-osmosis",
@@ -1792,18 +1792,18 @@ dependencies = [
  "mars-swapper-osmosis",
  "mars-testing",
  "mars-utils",
- "osmosis-std 0.14.0",
+ "osmosis-std 0.15.3",
  "osmosis-test-tube 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
 ]
 
 [[package]]
 name = "mars-oracle-base"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-owner",
  "mars-red-bank-types",
  "mars-utils",
@@ -1815,19 +1815,19 @@ dependencies = [
 
 [[package]]
 name = "mars-oracle-osmosis"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-oracle-base",
  "mars-osmosis",
  "mars-owner",
  "mars-red-bank-types",
  "mars-testing",
  "mars-utils",
- "osmosis-std 0.14.0",
+ "osmosis-std 0.15.3",
  "pyth-sdk-cw",
  "schemars",
  "serde",
@@ -1836,14 +1836,14 @@ dependencies = [
 
 [[package]]
 name = "mars-oracle-wasm"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "astroport 2.7.1",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
  "cw-storage-plus 1.0.1",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-oracle-base",
  "mars-owner",
  "mars-red-bank-types",
@@ -1855,10 +1855,10 @@ dependencies = [
 
 [[package]]
 name = "mars-osmosis"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-std",
- "osmosis-std 0.14.0",
+ "osmosis-std 0.15.3",
  "serde",
 ]
 
@@ -1877,14 +1877,14 @@ dependencies = [
 
 [[package]]
 name = "mars-params"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-multi-test 0.16.4",
+ "cw-multi-test 0.16.5",
  "cw-storage-plus 1.0.1",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-owner",
  "mars-red-bank-types",
  "mars-utils",
@@ -1895,13 +1895,13 @@ dependencies = [
 
 [[package]]
 name = "mars-red-bank"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-health",
  "mars-owner",
  "mars-red-bank-types",
@@ -1912,7 +1912,7 @@ dependencies = [
 
 [[package]]
 name = "mars-red-bank-types"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1924,7 +1924,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1940,14 +1940,14 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-astroport"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "astroport 2.7.1",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-oracle-wasm",
  "mars-owner",
  "mars-red-bank-types",
@@ -1958,7 +1958,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-base"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1973,39 +1973,39 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-mock"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
- "cw-multi-test 0.16.4",
+ "cw-multi-test 0.16.5",
  "mars-red-bank-types",
 ]
 
 [[package]]
 name = "mars-swapper-osmosis"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
- "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-osmosis",
  "mars-owner",
  "mars-red-bank-types",
  "mars-swapper-base",
- "osmosis-std 0.14.0",
+ "osmosis-std 0.15.3",
 ]
 
 [[package]]
 name = "mars-testing"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "astroport 2.7.1",
  "cosmwasm-std",
  "cw-it",
- "cw-multi-test 0.16.4",
+ "cw-multi-test 0.16.5",
  "mars-address-provider",
  "mars-incentives",
  "mars-oracle-osmosis",
@@ -2016,7 +2016,7 @@ dependencies = [
  "mars-red-bank-types",
  "mars-rewards-collector",
  "mars-swapper-astroport",
- "osmosis-std 0.14.0",
+ "osmosis-std 0.15.3",
  "prost 0.11.9",
  "pyth-sdk-cw",
  "schemars",
@@ -2026,7 +2026,7 @@ dependencies = [
 
 [[package]]
 name = "mars-utils"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-std",
  "thiserror",
@@ -2141,9 +2141,9 @@ dependencies = [
 
 [[package]]
 name = "os_str_bytes"
-version = "6.5.0"
+version = "6.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ceedf44fb00f2d1984b0bc98102627ce622e083e49a5bacdb3e514fa4238e267"
+checksum = "4d5d9eb14b174ee9aa2ef96dc2b94637a2d4b6e7cb873c7e171f0c20c6cf3eac"
 
 [[package]]
 name = "osmosis-std"
@@ -2152,23 +2152,7 @@ source = "git+https://github.com/apollodao/osmosis-rust.git?rev=a438e6b477ae75de
 dependencies = [
  "chrono",
  "cosmwasm-std",
- "osmosis-std-derive 0.13.2 (git+https://github.com/apollodao/osmosis-rust.git?rev=a438e6b477ae75de538af3926847a689477d29f1)",
- "prost 0.11.9",
- "prost-types",
- "schemars",
- "serde",
- "serde-cw-value",
-]
-
-[[package]]
-name = "osmosis-std"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fc0a9075efd64ed5a8be3bf134cbf1080570d68384f2ad58ffaac6c00d063fd"
-dependencies = [
- "chrono",
- "cosmwasm-std",
- "osmosis-std-derive 0.13.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "osmosis-std-derive 0.13.2",
  "prost 0.11.9",
  "prost-types",
  "schemars",
@@ -2205,18 +2189,6 @@ dependencies = [
  "schemars",
  "serde",
  "serde-cw-value",
-]
-
-[[package]]
-name = "osmosis-std-derive"
-version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a455e262a6fdfd3914f3a4e11e6bc0ce491901cb9d507d7856d7ef6e129e90c6"
-dependencies = [
- "itertools",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -2475,9 +2447,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.59"
+version = "1.0.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6aeca18b86b413c660b781aa319e4e2648a3e6f9eadc9b47e9038e6fe9f3451b"
+checksum = "dec2b086b7a862cf4de201096214fa870344cf922b2b30c167badb3af3195406"
 dependencies = [
  "unicode-ident",
 ]
@@ -2758,9 +2730,9 @@ checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rustix"
-version = "0.37.19"
+version = "0.37.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acf8729d8542766f1b2cf77eb034d52f40d375bb8b615d0b147089946e16613d"
+checksum = "b96e891d04aa506a6d1f318d2771bcb1c7dfda84e126660ace067c9b474bb2c0"
 dependencies = [
  "bitflags",
  "errno",
@@ -2916,9 +2888,9 @@ checksum = "bebd363326d05ec3e2f532ab7660680f3b02130d780c299bca73469d521bc0ed"
 
 [[package]]
 name = "serde"
-version = "1.0.163"
+version = "1.0.164"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2113ab51b87a539ae008b5c6c02dc020ffa39afd2d83cffcb3f4eb2722cebec2"
+checksum = "9e8c8cf938e98f769bc164923b06dce91cea1751522f46f8466461af04c9027d"
 dependencies = [
  "serde_derive",
 ]
@@ -2952,9 +2924,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.163"
+version = "1.0.164"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c805777e3930c8883389c602315a24224bcc738b63905ef87cd1420353ea93e"
+checksum = "d9735b638ccc51c28bf6914d90a2e9725b377144fc612c49a611fddd1b631d68"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3184,15 +3156,16 @@ dependencies = [
 
 [[package]]
 name = "tempfile"
-version = "3.5.0"
+version = "3.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9fbec84f381d5795b08656e4912bec604d162bff9291d6189a78f4c8ab87998"
+checksum = "31c0432476357e58790aaa47a8efb0c5138f137343f3b5f23bd36a27e3b0a6d6"
 dependencies = [
+ "autocfg",
  "cfg-if",
  "fastrand",
  "redox_syscall",
  "rustix",
- "windows-sys 0.45.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -3774,35 +3747,11 @@ dependencies = [
 
 [[package]]
 name = "windows-sys"
-version = "0.45.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75283be5efb2831d37ea142365f009c02ec203cd29a3ebecbc093d52315b66d0"
-dependencies = [
- "windows-targets 0.42.2",
-]
-
-[[package]]
-name = "windows-sys"
 version = "0.48.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "677d2418bec65e3338edb076e806bc1ec15693c5d0104683f2efe857f61056a9"
 dependencies = [
- "windows-targets 0.48.0",
-]
-
-[[package]]
-name = "windows-targets"
-version = "0.42.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e5180c00cd44c9b1c88adb3693291f1cd93605ded80c250a75d472756b4d071"
-dependencies = [
- "windows_aarch64_gnullvm 0.42.2",
- "windows_aarch64_msvc 0.42.2",
- "windows_i686_gnu 0.42.2",
- "windows_i686_msvc 0.42.2",
- "windows_x86_64_gnu 0.42.2",
- "windows_x86_64_gnullvm 0.42.2",
- "windows_x86_64_msvc 0.42.2",
+ "windows-targets",
 ]
 
 [[package]]

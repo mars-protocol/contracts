@@ -120,7 +120,7 @@ fn update_config_with_new_params() {
         vec![
             attr("action", "update_config"),
             attr("prev_base_denom", "uosmo"),
-            attr("base_denom", "uusdc"),
+            attr("base_denom", "uusdc")
         ]
     );
 

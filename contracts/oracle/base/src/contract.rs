@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use cosmwasm_std::{
     to_binary, Addr, Binary, CustomQuery, Deps, DepsMut, Env, MessageInfo, Order, Response,
-    StdResult,
+    StdError, StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
@@ -31,10 +31,10 @@ where
     pub config: Item<'a, Config>,
     /// The price source of each coin denom
     pub price_sources: Map<'a, &'a str, P>,
-    /// Phantom data holds the custom query type
-    pub custom_query: PhantomData<C>,
     /// Phantom data holds the unchecked price source type
     pub unchecked_price_source: PhantomData<PU>,
+    /// Phantom data holds the custom query type
+    pub custom_query: PhantomData<C>,
     /// Phantom data holds the instantiate msg custom type
     pub instantiate_msg: PhantomData<I>,
     /// Phantom data holds the execute msg custom type
@@ -52,8 +52,8 @@ where
             owner: Owner::new("owner"),
             config: Item::new("config"),
             price_sources: Map::new("price_sources"),
-            custom_query: PhantomData,
             unchecked_price_source: PhantomData,
+            custom_query: PhantomData,
             instantiate_msg: PhantomData,
             execute_msg: PhantomData,
         }
@@ -251,15 +251,11 @@ where
 
     fn query_price(&self, deps: Deps<C>, env: Env, denom: String) -> ContractResult<PriceResponse> {
         let cfg = self.config.load(deps.storage)?;
-        let price_source = self.price_sources.load(deps.storage, &denom)?;
+        let price_source = self.price_sources.load(deps.storage, &denom).map_err(|_| {
+            StdError::generic_err(format!("No price source found for denom: {}", denom))
+        })?;
         Ok(PriceResponse {
-            price: price_source.query_price(
-                &deps,
-                &env,
-                &denom,
-                &cfg.base_denom,
-                &self.price_sources,
-            )?,
+            price: price_source.query_price(&deps, &env, &denom, &cfg, &self.price_sources)?,
             denom,
         })
     }
@@ -282,7 +278,7 @@ where
             .map(|item| {
                 let (k, v) = item?;
                 Ok(PriceResponse {
-                    price: v.query_price(&deps, &env, &k, &cfg.base_denom, &self.price_sources)?,
+                    price: v.query_price(&deps, &env, &k, &cfg, &self.price_sources)?,
                     denom: k,
                 })
             })

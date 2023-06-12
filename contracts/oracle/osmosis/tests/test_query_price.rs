@@ -1,9 +1,11 @@
+use std::str::FromStr;
+
 use cosmwasm_std::{
     coin, from_binary,
     testing::{MockApi, MockStorage},
     Decimal, OwnedDeps, StdError,
 };
-use mars_oracle_base::ContractError;
+use mars_oracle_base::{pyth::scale_pyth_price, ContractError};
 use mars_oracle_osmosis::{
     contract::entry, stride::RedemptionRateResponse, Downtime, DowntimeDetector, GeometricTwap,
     OsmosisPriceSourceUnchecked, RedemptionRate,
@@ -11,7 +13,7 @@ use mars_oracle_osmosis::{
 use mars_red_bank_types::oracle::msg::{PriceResponse, QueryMsg};
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 use osmosis_std::types::osmosis::{
-    gamm::v2::QuerySpotPriceResponse,
+    poolmanager::v1beta1::SpotPriceResponse,
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
 use pyth_sdk_cw::{Price, PriceFeed, PriceFeedResponse, PriceIdentifier};
@@ -57,7 +59,7 @@ fn querying_spot_price() {
         89,
         "umars",
         "uosmo",
-        QuerySpotPriceResponse {
+        SpotPriceResponse {
             spot_price: Decimal::from_ratio(88888u128, 12345u128).to_string(),
         },
     );
@@ -404,6 +406,15 @@ fn querying_staked_geometric_twap_price_with_downtime_detector() {
 fn querying_lsd_price() {
     let mut deps = helpers::setup_test_with_pools();
 
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
     let publish_time = 1677157333u64;
     let (pyth_price, ustatom_uatom_price) =
         setup_pyth_and_geometric_twap_for_lsd(&mut deps, publish_time);
@@ -505,6 +516,7 @@ fn setup_pyth_and_geometric_twap_for_lsd(
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness: 1800u64,
+            denom_decimals: 6u8,
         },
     );
 
@@ -514,8 +526,13 @@ fn setup_pyth_and_geometric_twap_for_lsd(
         expo: -4,
         publish_time: publish_time as i64,
     };
-    let pyth_price =
-        mars_oracle_base::pyth::scale_to_exponent(price.price as u128, price.expo).unwrap();
+    let pyth_price = scale_pyth_price(
+        price.price as u128,
+        price.expo,
+        6u8,
+        Decimal::from_str("1000000").unwrap(),
+    )
+    .unwrap();
 
     deps.querier.set_pyth_price(
         price_id,
@@ -673,6 +690,15 @@ fn querying_lsd_price_with_downtime_detector() {
         downtime: Downtime::Duration10m,
         recovery: 360,
     };
+
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
 
     // query price if geometric TWAP < redemption rate
     helpers::set_price_source(
@@ -839,6 +865,15 @@ fn querying_xyk_lp_price() {
 fn querying_pyth_price_if_publish_price_too_old() {
     let mut deps = helpers::setup_test();
 
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
     let price_id = PriceIdentifier::from_hex(
         "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
     )
@@ -852,6 +887,7 @@ fn querying_pyth_price_if_publish_price_too_old() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
+            denom_decimals: 6u8,
         },
     );
 
@@ -900,6 +936,15 @@ fn querying_pyth_price_if_publish_price_too_old() {
 fn querying_pyth_price_if_signed() {
     let mut deps = helpers::setup_test();
 
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
     let price_id = PriceIdentifier::from_hex(
         "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
     )
@@ -913,6 +958,7 @@ fn querying_pyth_price_if_signed() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
+            denom_decimals: 6u8,
         },
     );
 
@@ -958,6 +1004,15 @@ fn querying_pyth_price_if_signed() {
 fn querying_pyth_price_successfully() {
     let mut deps = helpers::setup_test();
 
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
     let price_id = PriceIdentifier::from_hex(
         "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
     )
@@ -971,6 +1026,7 @@ fn querying_pyth_price_successfully() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
+            denom_decimals: 6u8,
         },
     );
 
@@ -1073,7 +1129,7 @@ fn querying_all_prices() {
         1,
         "uatom",
         "uosmo",
-        QuerySpotPriceResponse {
+        SpotPriceResponse {
             spot_price: Decimal::from_ratio(77777u128, 12345u128).to_string(),
         },
     );
@@ -1081,7 +1137,7 @@ fn querying_all_prices() {
         89,
         "umars",
         "uosmo",
-        QuerySpotPriceResponse {
+        SpotPriceResponse {
             spot_price: Decimal::from_ratio(88888u128, 12345u128).to_string(),
         },
     );

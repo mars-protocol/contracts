@@ -445,6 +445,7 @@ pub struct MockEnvBuilder {
     chain_prefix: String,
     mars_denom: String,
     base_denom: String,
+    base_denom_decimals: u8,
     close_factor: Decimal,
 
     // rewards-collector params
@@ -452,6 +453,8 @@ pub struct MockEnvBuilder {
     safety_fund_denom: String,
     fee_collector_denom: String,
     slippage_tolerance: Decimal,
+
+    pyth_contract_addr: String,
 }
 
 impl MockEnvBuilder {
@@ -464,11 +467,14 @@ impl MockEnvBuilder {
             chain_prefix: "".to_string(), // empty prefix for multitest because deployed contracts have addresses such as contract1, contract2 etc which are invalid in address-provider
             mars_denom: "umars".to_string(),
             base_denom: "uosmo".to_string(),
+            base_denom_decimals: 6u8,
             close_factor: Decimal::percent(80),
             safety_tax_rate: Decimal::percent(50),
             safety_fund_denom: "uusdc".to_string(),
             fee_collector_denom: "uusdc".to_string(),
             slippage_tolerance: Decimal::percent(5),
+            pyth_contract_addr: "osmo1svg55quy7jjee6dn0qx85qxxvx5cafkkw4tmqpcjr9dx99l0zrhs4usft5"
+                .to_string(), // correct bech32 addr to pass validation
         }
     }
 
@@ -509,6 +515,11 @@ impl MockEnvBuilder {
 
     pub fn slippage_tolerance(&mut self, percentage: Decimal) -> &mut Self {
         self.slippage_tolerance = percentage;
+        self
+    }
+
+    pub fn pyth_contract_addr(&mut self, pyth_contract_addr: Addr) -> &mut Self {
+        self.pyth_contract_addr = pyth_contract_addr.to_string();
         self
     }
 
@@ -622,7 +633,6 @@ impl MockEnvBuilder {
                 self.owner.clone(),
                 &red_bank::InstantiateMsg {
                     owner: self.owner.to_string(),
-                    emergency_owner: self.emergency_owner.to_string(),
                     config: CreateOrUpdateConfig {
                         address_provider: Some(address_provider_addr.to_string()),
                         close_factor: Some(self.close_factor),

@@ -16,7 +16,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.0.1"
+version       = "1.1.0"
 authors       = [
   "Gabe R. <gabe.r@delphilabs.io>",
   "Larry Engineer <larry@delphidigital.io>",
@@ -38,22 +38,22 @@ keywords = [
 ]
 
 [workspace.dependencies]
-anyhow            = "1.0.68"
+anyhow            = "1.0.71"
 bech32            = "0.9.1"
-cosmwasm-schema   = "1.1.9"
-cosmwasm-std      = "1.1.9"
-cw2               = { git = "https://github.com/mars-protocol/cw-plus", rev = "4014255" }
-cw-multi-test     = "0.16.1"
+cosmwasm-schema   = "1.2.6"
+cosmwasm-std      = "1.2.6"
+cw2               = { git = "https://github.com/CosmWasm/cw-plus", rev = "de1fb0b" }
+cw-multi-test     = "0.16.5"
 cw-storage-plus   = "1.0.1"
 cw-utils          = "1.0.1"
-mars-owner        = { version = "1.0.0", features = ["emergency-owner"] }
-osmosis-std       = "0.14.0"
+mars-owner        = { version = "1.2.0", features = ["emergency-owner"] }
+osmosis-std       = "0.15.3"
 osmosis-test-tube = "15.1.0"
 prost             = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
-schemars          = "0.8.11"
-serde             = { version = "1.0.152", default-features = false, features = ["derive"] }
-thiserror         = "1.0.38"
-pyth-sdk-cw        = "1.0.0"
+schemars          = "0.8.12"
+serde             = { version = "1.0.163", default-features = false, features = ["derive"] }
+thiserror         = "1.0.40"
+pyth-sdk-cw        = "1.2.0"
 cw-paginate       = "0.2.1"
 astroport         = { git = "https://github.com/astroport-fi/astroport-core", tag = "v2.7.1" }
 strum             = "0.24.1"

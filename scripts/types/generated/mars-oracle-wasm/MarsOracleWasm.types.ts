@@ -59,6 +59,7 @@ export type WasmPriceSourceForString =
   | {
       pyth: {
         contract_addr: string
+        denom_decimals: number
         max_staleness: number
         price_feed_id: Identifier
       }

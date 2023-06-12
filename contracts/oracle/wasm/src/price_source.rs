@@ -13,7 +13,7 @@ use mars_oracle_base::{
     ContractError::{self},
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
-use mars_red_bank_types::oracle::AstroportTwapSnapshot;
+use mars_red_bank_types::oracle::{AstroportTwapSnapshot, Config};
 
 use crate::{
     helpers::{
@@ -71,6 +71,21 @@ pub enum WasmPriceSource<A> {
         /// The maximum number of seconds since the last price was by an oracle, before
         /// rejecting the price as too stale
         max_staleness: u64,
+
+        /// Assets are represented in their smallest unit and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).
+        ///
+        /// Pyth prices are denominated in USD so basically it means how much 1 USDC, 1 ATOM, 1 OSMO is worth in USD (NOT 1 uusdc, 1 uatom, 1 uosmo).
+        /// We have to normalize it. We should get how much 1 utoken is worth in uusd. For example:
+        /// - base_denom = uusd
+        /// - price source set for usd (e.g. FIXED price source where 1 usd = 1000000 uusd)
+        /// - denom_decimals (ATOM) = 6
+        ///
+        /// 1 OSMO = 10^6 uosmo
+        ///
+        /// osmo_price_in_usd = 0.59958994
+        /// uosmo_price_in_uusd = osmo_price_in_usd * usd_price_in_base_denom / 10^denom_decimals =
+        /// uosmo_price_in_uusd = 0.59958994 * 1000000 * 10^(-6) = 0.59958994
+        denom_decimals: u8,
     },
 }
 
@@ -105,7 +120,8 @@ impl fmt::Display for WasmPriceSourceChecked {
                 contract_addr,
                 price_feed_id,
                 max_staleness,
-            } => format!("pyth:{contract_addr}:{price_feed_id}:{max_staleness}"),
+                denom_decimals,
+            } => format!("pyth:{contract_addr}:{price_feed_id}:{max_staleness}:{denom_decimals}"),
         };
         write!(f, "{label}")
     }
@@ -171,10 +187,12 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 contract_addr,
                 price_feed_id,
                 max_staleness,
+                denom_decimals,
             } => Ok(WasmPriceSourceChecked::Pyth {
                 contract_addr: deps.api.addr_validate(&contract_addr)?,
                 price_feed_id,
                 max_staleness,
+                denom_decimals,
             }),
         }
     }
@@ -187,7 +205,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
         deps: &Deps,
         env: &Env,
         denom: &str,
-        base_denom: &str,
+        config: &Config,
         price_sources: &Map<&str, Self>,
     ) -> ContractResult<Decimal> {
         match self {
@@ -201,7 +219,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 deps,
                 env,
                 denom,
-                base_denom,
+                config,
                 price_sources,
                 pair_address,
                 route_assets,
@@ -215,7 +233,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 deps,
                 env,
                 denom,
-                base_denom,
+                config,
                 price_sources,
                 pair_address,
                 route_assets,
@@ -226,12 +244,16 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 contract_addr,
                 price_feed_id,
                 max_staleness,
+                denom_decimals,
             } => mars_oracle_base::pyth::query_pyth_price(
                 deps,
                 env,
                 contract_addr.clone(),
                 *price_feed_id,
                 *max_staleness,
+                *denom_decimals,
+                config,
+                price_sources,
             ),
         }
     }
@@ -242,7 +264,7 @@ fn query_astroport_spot_price(
     deps: &Deps,
     env: &Env,
     denom: &str,
-    base_denom: &str,
+    config: &Config,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     pair_address: &Addr,
     route_assets: &[String],
@@ -267,7 +289,7 @@ fn query_astroport_spot_price(
 
     // If there are route assets, we need to multiply the price by the price of the
     // route assets in the base denom
-    add_route_prices(deps, env, base_denom, price_sources, route_assets, &price)
+    add_route_prices(deps, env, config, price_sources, route_assets, &price)
 }
 
 /// Queries the TWAP price of `denom` denominated in `base_denom` from the Astroport pair at `pair_address`.
@@ -276,7 +298,7 @@ fn query_astroport_twap_price(
     deps: &Deps,
     env: &Env,
     denom: &str,
-    base_denom: &str,
+    config: &Config,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     pair_address: &Addr,
     route_assets: &[String],
@@ -321,7 +343,7 @@ fn query_astroport_twap_price(
 
     // If there are route assets, we need to multiply the price by the price of the
     // route assets in the base denom
-    add_route_prices(deps, env, base_denom, price_sources, route_assets, &price)
+    add_route_prices(deps, env, config, price_sources, route_assets, &price)
 }
 
 #[cfg(test)]
@@ -337,10 +359,11 @@ mod tests {
             )
             .unwrap(),
             max_staleness: 60,
+            denom_decimals: 6,
         };
         assert_eq!(
             ps.to_string(),
-            "pyth:osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60"
+            "pyth:osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60:6"
         )
     }
 }

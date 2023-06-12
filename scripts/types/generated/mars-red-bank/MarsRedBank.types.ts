@@ -8,7 +8,6 @@
 export type Decimal = string
 export interface InstantiateMsg {
   config: CreateOrUpdateConfig
-  emergency_owner: string
   owner: string
 }
 export interface CreateOrUpdateConfig {
@@ -18,9 +17,6 @@ export interface CreateOrUpdateConfig {
 export type ExecuteMsg =
   | {
       update_owner: OwnerUpdate
-    }
-  | {
-      update_emergency_owner: OwnerUpdate
     }
   | {
       update_config: {
@@ -203,7 +199,6 @@ export interface ConfigResponse {
   close_factor: Decimal
   emergency_owner?: string | null
   owner?: string | null
-  proposed_new_emergency_owner?: string | null
   proposed_new_owner?: string | null
 }
 export interface Market {

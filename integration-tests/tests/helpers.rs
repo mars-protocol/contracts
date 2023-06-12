@@ -7,8 +7,9 @@ use mars_red_bank::error::ContractError;
 use mars_red_bank_types::red_bank::{
     InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
 };
-use osmosis_std::types::osmosis::gamm::v1beta1::{
-    MsgSwapExactAmountIn, MsgSwapExactAmountInResponse, SwapAmountInRoute,
+use osmosis_std::types::osmosis::{
+    gamm::v1beta1::{MsgSwapExactAmountIn, MsgSwapExactAmountInResponse},
+    poolmanager::v1beta1::SwapAmountInRoute,
 };
 use osmosis_test_tube::{Account, ExecuteResponse, OsmosisTestApp, Runner, SigningAccount};
 

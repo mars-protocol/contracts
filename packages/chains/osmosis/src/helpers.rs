@@ -3,6 +3,9 @@ use std::str::FromStr;
 use cosmwasm_std::{
     coin, Decimal, Empty, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
 };
+/// FIXME: migrate to Spot queries from PoolManager once whitelisted in https://github.com/osmosis-labs/osmosis/blob/main/wasmbinding/stargate_whitelist.go#L127
+#[allow(deprecated)]
+use osmosis_std::types::osmosis::gamm::v1beta1::QueryPoolRequest as PoolRequest;
 use osmosis_std::{
     shim::{Duration, Timestamp},
     types::{
@@ -10,7 +13,7 @@ use osmosis_std::{
         osmosis::{
             downtimedetector::v1beta1::DowntimedetectorQuerier,
             gamm::{
-                v1beta1::{PoolAsset, PoolParams, QueryPoolRequest},
+                v1beta1::{PoolAsset, PoolParams},
                 v2::GammQuerier,
             },
             twap::v1beta1::TwapQuerier,
@@ -51,8 +54,11 @@ pub struct QueryPoolResponse {
 }
 
 /// Query an Osmosis pool's coin depths and the supply of of liquidity token
+///
+/// FIXME: migrate to Spot queries from PoolManager once whitelisted in https://github.com/osmosis-labs/osmosis/blob/main/wasmbinding/stargate_whitelist.go#L127
+#[allow(deprecated)]
 pub fn query_pool(querier: &QuerierWrapper, pool_id: u64) -> StdResult<Pool> {
-    let req: QueryRequest<Empty> = QueryPoolRequest {
+    let req: QueryRequest<Empty> = PoolRequest {
         pool_id,
     }
     .into();
@@ -65,6 +71,9 @@ pub fn has_denom(denom: &str, pool_assets: &[PoolAsset]) -> bool {
 }
 
 /// Query the spot price of a coin, denominated in OSMO
+///
+/// FIXME: migrate to Spot queries from PoolManager once whitelisted in https://github.com/osmosis-labs/osmosis/blob/main/wasmbinding/stargate_whitelist.go#L127
+#[allow(deprecated)]
 pub fn query_spot_price(
     querier: &QuerierWrapper,
     pool_id: u64,

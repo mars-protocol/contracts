@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use astroport::factory::PairType;
 use cosmwasm_std::{from_binary, testing::mock_dependencies, Addr, Decimal, Uint128};
 use cw_it::{
@@ -267,6 +269,15 @@ fn querying_pyth_price_if_publish_price_too_old() {
 
     let mut deps = helpers::setup_test(&robot.astroport_contracts.factory.address);
 
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        WasmPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
     let price_id = PriceIdentifier::from_hex(
         "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
     )
@@ -280,6 +291,7 @@ fn querying_pyth_price_if_publish_price_too_old() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
+            denom_decimals: 6,
         },
     );
 
@@ -336,6 +348,15 @@ fn querying_pyth_price_if_signed() {
 
     let mut deps = helpers::setup_test(&robot.astroport_contracts.factory.address);
 
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        WasmPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
     let price_id = PriceIdentifier::from_hex(
         "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
     )
@@ -349,6 +370,7 @@ fn querying_pyth_price_if_signed() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
+            denom_decimals: 6,
         },
     );
 
@@ -402,6 +424,15 @@ fn querying_pyth_price_successfully() {
 
     let mut deps = helpers::setup_test(&robot.astroport_contracts.factory.address);
 
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        WasmPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
     let price_id = PriceIdentifier::from_hex(
         "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
     )
@@ -415,6 +446,7 @@ fn querying_pyth_price_successfully() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
+            denom_decimals: 6,
         },
     );
 

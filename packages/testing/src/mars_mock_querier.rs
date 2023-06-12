@@ -13,7 +13,7 @@ use mars_osmosis::helpers::QueryPoolResponse;
 use mars_red_bank_types::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
-    gamm::v2::QuerySpotPriceResponse,
+    poolmanager::v1beta1::SpotPriceResponse,
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
 use pyth_sdk_cw::{PriceFeedResponse, PriceIdentifier};
@@ -33,8 +33,8 @@ pub struct MarsMockQuerier {
     oracle_querier: OracleQuerier,
     incentives_querier: IncentivesQuerier,
     osmosis_querier: OsmosisQuerier,
-    redbank_querier: RedBankQuerier,
     pyth_querier: PythQuerier,
+    redbank_querier: RedBankQuerier,
     redemption_rate_querier: RedemptionRateQuerier,
 }
 
@@ -61,8 +61,8 @@ impl MarsMockQuerier {
             oracle_querier: OracleQuerier::default(),
             incentives_querier: IncentivesQuerier::default(),
             osmosis_querier: OsmosisQuerier::default(),
-            redbank_querier: RedBankQuerier::default(),
             pyth_querier: PythQuerier::default(),
+            redbank_querier: RedBankQuerier::default(),
             redemption_rate_querier: Default::default(),
         }
     }
@@ -96,7 +96,7 @@ impl MarsMockQuerier {
         id: u64,
         base_asset_denom: &str,
         quote_asset_denom: &str,
-        spot_price: QuerySpotPriceResponse,
+        spot_price: SpotPriceResponse,
     ) {
         let price_key = PriceKey {
             pool_id: id,
@@ -212,6 +212,11 @@ impl MarsMockQuerier {
                 let parse_incentives_query: StdResult<incentives::QueryMsg> = from_binary(msg);
                 if let Ok(incentives_query) = parse_incentives_query {
                     return self.incentives_querier.handle_query(&contract_addr, incentives_query);
+                }
+
+                // Pyth Queries
+                if let Ok(pyth_query) = from_binary::<pyth_sdk_cw::QueryMsg>(msg) {
+                    return self.pyth_querier.handle_query(&contract_addr, pyth_query);
                 }
 
                 // RedBank Queries

@@ -1,7 +1,6 @@
-// use mars_oracle::error::MarsError;
 use cosmwasm_std::{
-    CheckedFromRatioError, CheckedMultiplyRatioError, ConversionOverflowError, OverflowError,
-    StdError,
+    CheckedFromRatioError, CheckedMultiplyRatioError, ConversionOverflowError,
+    DecimalRangeExceeded, OverflowError, StdError,
 };
 use mars_owner::OwnerError;
 use thiserror::Error;
@@ -35,6 +34,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     CheckedFromRatio(#[from] CheckedFromRatioError),
+
+    #[error("{0}")]
+    DecimalRangeExceeded(#[from] DecimalRangeExceeded),
 
     #[error("Invalid price source: {reason}")]
     InvalidPriceSource {

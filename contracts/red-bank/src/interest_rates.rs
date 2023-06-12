@@ -1,8 +1,6 @@
 use std::str;
 
-use cosmwasm_std::{
-    Addr, Decimal, DepsMut, Env, Event, Response, StdError, StdResult, Storage, Uint128,
-};
+use cosmwasm_std::{Addr, Decimal, Env, Event, Response, StdError, StdResult, Storage, Uint128};
 use mars_red_bank_types::red_bank::Market;
 use mars_utils::math;
 
@@ -278,31 +276,26 @@ pub fn get_updated_liquidity_index(market: &Market, timestamp: u64) -> StdResult
 /// NOTE: For a given block, interest rates should not be updated before updating indexes first
 /// as it should result in wrong indexes
 pub fn update_interest_rates(
-    deps: &DepsMut,
     env: &Env,
     market: &mut Market,
-    liquidity_taken: Uint128,
-    denom: &str,
     response: Response,
 ) -> Result<Response, ContractError> {
-    // compute utilization rate
-    let contract_current_balance = deps.querier.query_balance(&env.contract.address, denom)?.amount;
-    if contract_current_balance < liquidity_taken {
-        return Err(ContractError::OperationExceedsAvailableLiquidity {});
-    }
-    let available_liquidity = contract_current_balance - liquidity_taken;
+    let current_timestamp = env.block.time.seconds();
+
+    let total_collateral =
+        get_underlying_liquidity_amount(market.collateral_total_scaled, market, current_timestamp)?;
     let total_debt =
-        get_underlying_debt_amount(market.debt_total_scaled, market, env.block.time.seconds())?;
-    let current_utilization_rate = if !total_debt.is_zero() {
-        let liquidity_and_debt = available_liquidity.checked_add(total_debt)?;
-        Decimal::from_ratio(total_debt, liquidity_and_debt)
+        get_underlying_debt_amount(market.debt_total_scaled, market, current_timestamp)?;
+
+    let current_utilization_rate = if !total_collateral.is_zero() {
+        Decimal::from_ratio(total_debt, total_collateral)
     } else {
         Decimal::zero()
     };
 
     market.update_interest_rates(current_utilization_rate)?;
 
-    Ok(response.add_event(build_interests_updated_event(denom, market)))
+    Ok(response.add_event(build_interests_updated_event(&market.denom, market)))
 }
 
 pub fn build_interests_updated_event(denom: &str, market: &Market) -> Event {

@@ -10,7 +10,7 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError, ContractResult, PriceSourceChecked};
-use mars_red_bank_types::oracle::AstroportTwapSnapshot;
+use mars_red_bank_types::oracle::{AstroportTwapSnapshot, Config};
 
 use crate::WasmPriceSourceChecked;
 
@@ -145,7 +145,7 @@ pub fn period_diff(
 pub fn add_route_prices(
     deps: &Deps,
     env: &Env,
-    base_denom: &str,
+    config: &Config,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     route_assets: &[String],
     price: &Decimal,
@@ -153,7 +153,7 @@ pub fn add_route_prices(
     let mut price = *price;
     for denom in route_assets {
         let price_source = price_sources.load(deps.storage, denom)?;
-        let route_price = price_source.query_price(deps, env, denom, base_denom, price_sources)?;
+        let route_price = price_source.query_price(deps, env, denom, config, price_sources)?;
         price *= route_price;
     }
     Ok(price)

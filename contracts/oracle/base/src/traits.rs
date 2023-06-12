@@ -2,6 +2,7 @@ use std::fmt::{Debug, Display};
 
 use cosmwasm_std::{CustomQuery, Decimal, Deps, Env};
 use cw_storage_plus::Map;
+use mars_red_bank_types::oracle::Config;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -33,7 +34,7 @@ where
     ///
     /// - `denom`: The coin whose price is to be queried.
     ///
-    /// - `base_denom`: The coin in which the price is to be denominated in.
+    /// - `config.base_denom`: The coin in which the price is to be denominated in.
     ///   For example, if `denom` is uatom and `base_denom` is uosmo, the
     ///   function should return how many uosmo is per one uatom.
     ///
@@ -46,7 +47,7 @@ where
         deps: &Deps<C>,
         env: &Env,
         denom: &str,
-        base_denom: &str,
+        config: &Config,
         price_sources: &Map<&str, Self>,
     ) -> ContractResult<Decimal>;
 }

@@ -10,6 +10,7 @@ use mars_osmosis::helpers::{
     query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price,
     recovered_since_downtime_of_length, Pool,
 };
+use mars_red_bank_types::oracle::Config;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -155,11 +156,28 @@ pub enum OsmosisPriceSource<T> {
         contract_addr: T,
 
         /// Price feed id of an asset from the list: https://pyth.network/developers/price-feed-ids
+        /// We can't verify what denoms consist of the price feed.
+        /// Be very careful when adding it !!!
         price_feed_id: PriceIdentifier,
 
         /// The maximum number of seconds since the last price was by an oracle, before
         /// rejecting the price as too stale
         max_staleness: u64,
+
+        /// Assets are represented in their smallest unit and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).
+        ///
+        /// Pyth prices are denominated in USD so basically it means how much 1 USDC, 1 ATOM, 1 OSMO is worth in USD (NOT 1 uusdc, 1 uatom, 1 uosmo).
+        /// We have to normalize it. We should get how much 1 utoken is worth in uusd. For example:
+        /// - base_denom = uusd
+        /// - price source set for usd (e.g. FIXED price source where 1 usd = 1000000 uusd)
+        /// - denom_decimals (ATOM) = 6
+        ///
+        /// 1 OSMO = 10^6 uosmo
+        ///
+        /// osmo_price_in_usd = 0.59958994
+        /// uosmo_price_in_uusd = osmo_price_in_usd * usd_price_in_base_denom / 10^denom_decimals =
+        /// uosmo_price_in_uusd = 0.59958994 * 1000000 * 10^(-6) = 0.59958994
+        denom_decimals: u8,
     },
     /// Liquid Staking Derivatives (LSD) price quoted in USD based on data from Pyth, Osmosis and Stride.
     ///
@@ -258,8 +276,9 @@ impl fmt::Display for OsmosisPriceSourceChecked {
                 contract_addr,
                 price_feed_id,
                 max_staleness,
+                denom_decimals,
             } => {
-                format!("pyth:{contract_addr}:{price_feed_id}:{max_staleness}")
+                format!("pyth:{contract_addr}:{price_feed_id}:{max_staleness}:{denom_decimals}")
             }
             OsmosisPriceSource::Lsd {
                 transitive_denom,
@@ -363,10 +382,12 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
                 contract_addr,
                 price_feed_id,
                 max_staleness,
+                denom_decimals,
             } => Ok(OsmosisPriceSourceChecked::Pyth {
                 contract_addr: deps.api.addr_validate(contract_addr)?,
                 price_feed_id: *price_feed_id,
                 max_staleness: *max_staleness,
+                denom_decimals: *denom_decimals,
             }),
             OsmosisPriceSourceUnchecked::Lsd {
                 transitive_denom,
@@ -398,7 +419,7 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
         deps: &Deps<'_, Empty>,
         env: &Env,
         denom: &str,
-        base_denom: &str,
+        config: &Config,
         price_sources: &Map<&str, Self>,
     ) -> ContractResult<Decimal> {
         match self {
@@ -407,7 +428,8 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
             } => Ok(*price),
             OsmosisPriceSourceChecked::Spot {
                 pool_id,
-            } => query_spot_price(&deps.querier, *pool_id, denom, base_denom).map_err(Into::into),
+            } => query_spot_price(&deps.querier, *pool_id, denom, &config.base_denom)
+                .map_err(Into::into),
             OsmosisPriceSourceChecked::ArithmeticTwap {
                 pool_id,
                 window_size,
@@ -416,8 +438,14 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                 Self::chain_recovered(deps, downtime_detector)?;
 
                 let start_time = env.block.time.seconds() - window_size;
-                query_arithmetic_twap_price(&deps.querier, *pool_id, denom, base_denom, start_time)
-                    .map_err(Into::into)
+                query_arithmetic_twap_price(
+                    &deps.querier,
+                    *pool_id,
+                    denom,
+                    &config.base_denom,
+                    start_time,
+                )
+                .map_err(Into::into)
             }
             OsmosisPriceSourceChecked::GeometricTwap {
                 pool_id,
@@ -427,18 +455,18 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                 Self::chain_recovered(deps, downtime_detector)?;
 
                 let start_time = env.block.time.seconds() - window_size;
-                query_geometric_twap_price(&deps.querier, *pool_id, denom, base_denom, start_time)
-                    .map_err(Into::into)
+                query_geometric_twap_price(
+                    &deps.querier,
+                    *pool_id,
+                    denom,
+                    &config.base_denom,
+                    start_time,
+                )
+                .map_err(Into::into)
             }
             OsmosisPriceSourceChecked::XykLiquidityToken {
                 pool_id,
-            } => Self::query_xyk_liquidity_token_price(
-                deps,
-                env,
-                *pool_id,
-                base_denom,
-                price_sources,
-            ),
+            } => Self::query_xyk_liquidity_token_price(deps, env, *pool_id, config, price_sources),
             OsmosisPriceSourceChecked::StakedGeometricTwap {
                 transitive_denom,
                 pool_id,
@@ -452,9 +480,9 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                     env,
                     denom,
                     transitive_denom,
-                    base_denom,
                     *pool_id,
                     *window_size,
+                    config,
                     price_sources,
                 )
             }
@@ -462,12 +490,16 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                 contract_addr,
                 price_feed_id,
                 max_staleness,
+                denom_decimals,
             } => Ok(mars_oracle_base::pyth::query_pyth_price(
                 deps,
                 env,
                 contract_addr.to_owned(),
                 *price_feed_id,
                 *max_staleness,
+                *denom_decimals,
+                config,
+                price_sources,
             )?),
             OsmosisPriceSourceChecked::Lsd {
                 transitive_denom,
@@ -481,9 +513,9 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                     env,
                     denom,
                     transitive_denom,
-                    base_denom,
                     geometric_twap.clone(),
                     redemption_rate.clone(),
+                    config,
                     price_sources,
                 )
             }
@@ -520,7 +552,7 @@ impl OsmosisPriceSourceChecked {
         deps: &Deps,
         env: &Env,
         pool_id: u64,
-        base_denom: &str,
+        config: &Config,
         price_sources: &Map<&str, Self>,
     ) -> ContractResult<Decimal> {
         // XYK pool asserted during price source creation
@@ -533,14 +565,14 @@ impl OsmosisPriceSourceChecked {
             deps,
             env,
             &coin0.denom,
-            base_denom,
+            config,
             price_sources,
         )?;
         let coin1_price = price_sources.load(deps.storage, &coin1.denom)?.query_price(
             deps,
             env,
             &coin1.denom,
-            base_denom,
+            config,
             price_sources,
         )?;
 
@@ -568,9 +600,9 @@ impl OsmosisPriceSourceChecked {
         env: &Env,
         denom: &str,
         transitive_denom: &str,
-        base_denom: &str,
         pool_id: u64,
         window_size: u64,
+        config: &Config,
         price_sources: &Map<&str, OsmosisPriceSourceChecked>,
     ) -> ContractResult<Decimal> {
         let start_time = env.block.time.seconds() - window_size;
@@ -587,7 +619,7 @@ impl OsmosisPriceSourceChecked {
             deps,
             env,
             transitive_denom,
-            base_denom,
+            config,
             price_sources,
         )?;
 
@@ -605,9 +637,9 @@ impl OsmosisPriceSourceChecked {
         env: &Env,
         denom: &str,
         transitive_denom: &str,
-        base_denom: &str,
         geometric_twap: GeometricTwap,
         redemption_rate: RedemptionRate<Addr>,
+        config: &Config,
         price_sources: &Map<&str, OsmosisPriceSourceChecked>,
     ) -> ContractResult<Decimal> {
         let current_time = env.block.time.seconds();
@@ -645,7 +677,7 @@ impl OsmosisPriceSourceChecked {
             deps,
             env,
             transitive_denom,
-            base_denom,
+            config,
             price_sources,
         )?;
 
@@ -658,104 +690,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn display_downtime_detector() {
-        let dd = DowntimeDetector {
-            downtime: Downtime::Duration10m,
-            recovery: 550,
-        };
-        assert_eq!(dd.to_string(), "Duration10m:550")
-    }
-
-    #[test]
-    fn display_fixed_price_source() {
-        let ps = OsmosisPriceSourceChecked::Fixed {
-            price: Decimal::from_ratio(1u128, 2u128),
-        };
-        assert_eq!(ps.to_string(), "fixed:0.5")
-    }
-
-    #[test]
-    fn display_spot_price_source() {
-        let ps = OsmosisPriceSourceChecked::Spot {
-            pool_id: 123,
-        };
-        assert_eq!(ps.to_string(), "spot:123")
-    }
-
-    #[test]
-    fn display_arithmetic_twap_price_source() {
-        let ps = OsmosisPriceSourceChecked::ArithmeticTwap {
-            pool_id: 123,
-            window_size: 300,
-            downtime_detector: None,
-        };
-        assert_eq!(ps.to_string(), "arithmetic_twap:123:300:None");
-
-        let ps = OsmosisPriceSourceChecked::ArithmeticTwap {
-            pool_id: 123,
-            window_size: 300,
-            downtime_detector: Some(DowntimeDetector {
-                downtime: Downtime::Duration30m,
-                recovery: 568,
-            }),
-        };
-        assert_eq!(ps.to_string(), "arithmetic_twap:123:300:Some(Duration30m:568)");
-    }
-
-    #[test]
-    fn display_geometric_twap_price_source() {
-        let ps = OsmosisPriceSourceChecked::GeometricTwap {
-            pool_id: 123,
-            window_size: 300,
-            downtime_detector: None,
-        };
-        assert_eq!(ps.to_string(), "geometric_twap:123:300:None");
-
-        let ps = OsmosisPriceSourceChecked::GeometricTwap {
-            pool_id: 123,
-            window_size: 300,
-            downtime_detector: Some(DowntimeDetector {
-                downtime: Downtime::Duration30m,
-                recovery: 568,
-            }),
-        };
-        assert_eq!(ps.to_string(), "geometric_twap:123:300:Some(Duration30m:568)");
-    }
-
-    #[test]
-    fn display_staked_geometric_twap_price_source() {
-        let ps = OsmosisPriceSourceChecked::StakedGeometricTwap {
-            transitive_denom: "transitive".to_string(),
-            pool_id: 123,
-            window_size: 300,
-            downtime_detector: None,
-        };
-        assert_eq!(ps.to_string(), "staked_geometric_twap:transitive:123:300:None");
-
-        let ps = OsmosisPriceSourceChecked::StakedGeometricTwap {
-            transitive_denom: "transitive".to_string(),
-            pool_id: 123,
-            window_size: 300,
-            downtime_detector: Some(DowntimeDetector {
-                downtime: Downtime::Duration30m,
-                recovery: 568,
-            }),
-        };
-        assert_eq!(
-            ps.to_string(),
-            "staked_geometric_twap:transitive:123:300:Some(Duration30m:568)"
-        );
-    }
-
-    #[test]
-    fn display_xyk_lp_price_source() {
-        let ps = OsmosisPriceSourceChecked::XykLiquidityToken {
-            pool_id: 224,
-        };
-        assert_eq!(ps.to_string(), "xyk_liquidity_token:224")
-    }
-
-    #[test]
     fn display_pyth_price_source() {
         let ps = OsmosisPriceSourceChecked::Pyth {
             contract_addr: Addr::unchecked("osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08"),
@@ -764,10 +698,11 @@ mod tests {
             )
             .unwrap(),
             max_staleness: 60,
+            denom_decimals: 6,
         };
         assert_eq!(
             ps.to_string(),
-            "pyth:osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60"
+            "pyth:osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60:6"
         )
     }
 

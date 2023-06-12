@@ -26,6 +26,7 @@ mars-oracle-base    = { workspace = true, features = ["pyth"] }
 mars-osmosis        = { workspace = true }
 mars-red-bank-types = { workspace = true }
 osmosis-std         = { workspace = true }
+pyth-sdk-cw         = { workspace = true }
 schemars            = { workspace = true }
 serde               = { workspace = true }
 thiserror           = { workspace = true }
