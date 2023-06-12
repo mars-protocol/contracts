@@ -3,7 +3,7 @@ use cw_storage_plus::Bound;
 
 use crate::{
     state::{ASSET_PARAMS, VAULT_CONFIGS},
-    types::{AssetParams, VaultConfig},
+    types::{asset::AssetParams, vault::VaultConfig},
 };
 
 pub const DEFAULT_LIMIT: u32 = 10;

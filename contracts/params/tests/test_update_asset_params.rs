@@ -1,6 +1,6 @@
 use cosmwasm_std::Addr;
 use mars_owner::OwnerError;
-use mars_params::{error::ContractError::Owner, types::AssetParamsUpdate};
+use mars_params::{error::ContractError::Owner, msg::AssetParamsUpdate};
 
 use crate::helpers::{assert_contents_equal, assert_err, default_asset_params, MockEnv};
 
@@ -49,13 +49,7 @@ fn initializing_asset_param() {
     assert_eq!(&denom0, &res.denom);
 
     // Validate config set correctly
-    assert_eq!(params.rover.whitelisted, res.rover.whitelisted);
-    assert_eq!(params.red_bank.deposit_enabled, res.red_bank.deposit_enabled);
-    assert_eq!(params.red_bank.borrow_enabled, res.red_bank.borrow_enabled);
-    assert_eq!(params.max_loan_to_value, res.max_loan_to_value);
-    assert_eq!(params.liquidation_threshold, res.liquidation_threshold);
-    assert_eq!(params.liquidation_bonus, res.liquidation_bonus);
-    assert_eq!(params.red_bank.deposit_cap, res.red_bank.deposit_cap);
+    assert_eq!(params, res.clone().into());
 
     mock.update_asset_params(
         &owner,
@@ -127,10 +121,10 @@ fn update_existing_asset_params() {
     .unwrap();
 
     let asset_params = mock.query_asset_params(&denom0);
-    assert!(!asset_params.rover.whitelisted);
+    assert!(!asset_params.credit_manager.whitelisted);
     assert!(asset_params.red_bank.deposit_enabled);
 
-    params.rover.whitelisted = true;
+    params.credit_manager.whitelisted = true;
     params.red_bank.deposit_enabled = false;
 
     mock.update_asset_params(
@@ -145,7 +139,7 @@ fn update_existing_asset_params() {
     assert_eq!(1, all_asset_params.len());
 
     let asset_params = mock.query_asset_params(&denom0);
-    assert!(asset_params.rover.whitelisted);
+    assert!(asset_params.credit_manager.whitelisted);
     assert!(!asset_params.red_bank.deposit_enabled);
 }
 

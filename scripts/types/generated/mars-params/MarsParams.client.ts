@@ -13,20 +13,25 @@ import {
   ExecuteMsg,
   OwnerUpdate,
   AssetParamsUpdate,
+  HlsAssetTypeForString,
   Uint128,
   VaultConfigUpdate,
   EmergencyUpdate,
-  RoverEmergencyUpdate,
+  CmEmergencyUpdate,
   RedBankEmergencyUpdate,
-  AssetParams,
+  AssetParamsBaseForString,
+  CmSettingsForString,
+  HlsParamsBaseForString,
   RedBankSettings,
-  RoverSettings,
-  HighLeverageStrategyParams,
   VaultConfigBaseForString,
   Coin,
   QueryMsg,
-  ArrayOfAssetParams,
+  HlsAssetTypeForAddr,
   Addr,
+  ArrayOfAssetParamsBaseForAddr,
+  AssetParamsBaseForAddr,
+  CmSettingsForAddr,
+  HlsParamsBaseForAddr,
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
   OwnerResponse,
@@ -34,14 +39,14 @@ import {
 export interface MarsParamsReadOnlyInterface {
   contractAddress: string
   owner: () => Promise<OwnerResponse>
-  assetParams: ({ denom }: { denom: string }) => Promise<AssetParams>
+  assetParams: ({ denom }: { denom: string }) => Promise<AssetParamsBaseForAddr>
   allAssetParams: ({
     limit,
     startAfter,
   }: {
     limit?: number
     startAfter?: string
-  }) => Promise<ArrayOfAssetParams>
+  }) => Promise<ArrayOfAssetParamsBaseForAddr>
   vaultConfig: ({ address }: { address: string }) => Promise<VaultConfigBaseForAddr>
   allVaultConfigs: ({
     limit,
@@ -72,7 +77,7 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
       owner: {},
     })
   }
-  assetParams = async ({ denom }: { denom: string }): Promise<AssetParams> => {
+  assetParams = async ({ denom }: { denom: string }): Promise<AssetParamsBaseForAddr> => {
     return this.client.queryContractSmart(this.contractAddress, {
       asset_params: {
         denom,
@@ -85,7 +90,7 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: string
-  }): Promise<ArrayOfAssetParams> => {
+  }): Promise<ArrayOfAssetParamsBaseForAddr> => {
     return this.client.queryContractSmart(this.contractAddress, {
       all_asset_params: {
         limit,

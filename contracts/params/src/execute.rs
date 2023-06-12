@@ -3,8 +3,8 @@ use mars_utils::error::ValidationError;
 
 use crate::{
     error::ContractResult,
+    msg::{AssetParamsUpdate, VaultConfigUpdate},
     state::{ASSET_PARAMS, MAX_CLOSE_FACTOR, OWNER, VAULT_CONFIGS},
-    types::{AssetParamsUpdate, VaultConfigUpdate},
 };
 
 pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -38,9 +38,9 @@ pub fn update_asset_params(
 
     match update {
         AssetParamsUpdate::AddOrUpdate {
-            params,
+            params: unchecked,
         } => {
-            params.validate()?;
+            let params = unchecked.check(deps.api)?;
 
             ASSET_PARAMS.save(deps.storage, &params.denom, &params)?;
             response = response
@@ -70,13 +70,6 @@ pub fn update_vault_config(
             response = response
                 .add_attribute("action_type", "add_or_update")
                 .add_attribute("addr", checked.addr);
-        }
-        VaultConfigUpdate::Remove {
-            addr,
-        } => {
-            let checked = deps.api.addr_validate(&addr)?;
-            VAULT_CONFIGS.remove(deps.storage, &checked);
-            response = response.add_attribute("action_type", "remove").add_attribute("addr", addr);
         }
     }
 

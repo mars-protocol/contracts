@@ -14,20 +14,25 @@ import {
   ExecuteMsg,
   OwnerUpdate,
   AssetParamsUpdate,
+  HlsAssetTypeForString,
   Uint128,
   VaultConfigUpdate,
   EmergencyUpdate,
-  RoverEmergencyUpdate,
+  CmEmergencyUpdate,
   RedBankEmergencyUpdate,
-  AssetParams,
+  AssetParamsBaseForString,
+  CmSettingsForString,
+  HlsParamsBaseForString,
   RedBankSettings,
-  RoverSettings,
-  HighLeverageStrategyParams,
   VaultConfigBaseForString,
   Coin,
   QueryMsg,
-  ArrayOfAssetParams,
+  HlsAssetTypeForAddr,
   Addr,
+  ArrayOfAssetParamsBaseForAddr,
+  AssetParamsBaseForAddr,
+  CmSettingsForAddr,
+  HlsParamsBaseForAddr,
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
   OwnerResponse,
@@ -128,18 +133,18 @@ export function useMarsParamsVaultConfigQuery<TData = VaultConfigBaseForAddr>({
   )
 }
 export interface MarsParamsAllAssetParamsQuery<TData>
-  extends MarsParamsReactQuery<ArrayOfAssetParams, TData> {
+  extends MarsParamsReactQuery<ArrayOfAssetParamsBaseForAddr, TData> {
   args: {
     limit?: number
     startAfter?: string
   }
 }
-export function useMarsParamsAllAssetParamsQuery<TData = ArrayOfAssetParams>({
+export function useMarsParamsAllAssetParamsQuery<TData = ArrayOfAssetParamsBaseForAddr>({
   client,
   args,
   options,
 }: MarsParamsAllAssetParamsQuery<TData>) {
-  return useQuery<ArrayOfAssetParams, Error, TData>(
+  return useQuery<ArrayOfAssetParamsBaseForAddr, Error, TData>(
     marsParamsQueryKeys.allAssetParams(client?.contractAddress, args),
     () =>
       client
@@ -152,17 +157,17 @@ export function useMarsParamsAllAssetParamsQuery<TData = ArrayOfAssetParams>({
   )
 }
 export interface MarsParamsAssetParamsQuery<TData>
-  extends MarsParamsReactQuery<AssetParams, TData> {
+  extends MarsParamsReactQuery<AssetParamsBaseForAddr, TData> {
   args: {
     denom: string
   }
 }
-export function useMarsParamsAssetParamsQuery<TData = AssetParams>({
+export function useMarsParamsAssetParamsQuery<TData = AssetParamsBaseForAddr>({
   client,
   args,
   options,
 }: MarsParamsAssetParamsQuery<TData>) {
-  return useQuery<AssetParams, Error, TData>(
+  return useQuery<AssetParamsBaseForAddr, Error, TData>(
     marsParamsQueryKeys.assetParams(client?.contractAddress, args),
     () =>
       client

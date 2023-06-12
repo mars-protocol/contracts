@@ -31,7 +31,7 @@ pub fn disallow_coin(
     OWNER.assert_emergency_owner(deps.storage, &info.sender)?;
 
     let mut params = ASSET_PARAMS.load(deps.storage, denom)?;
-    params.rover.whitelisted = false;
+    params.credit_manager.whitelisted = false;
     ASSET_PARAMS.save(deps.storage, denom, &params)?;
 
     let response = Response::new()

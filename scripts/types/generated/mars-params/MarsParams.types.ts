@@ -43,29 +43,34 @@ export type OwnerUpdate =
   | 'clear_emergency_owner'
 export type AssetParamsUpdate = {
   add_or_update: {
-    params: AssetParams
+    params: AssetParamsBaseForString
   }
 }
-export type Uint128 = string
-export type VaultConfigUpdate =
+export type HlsAssetTypeForString =
   | {
-      add_or_update: {
-        config: VaultConfigBaseForString
+      coin: {
+        denom: string
       }
     }
   | {
-      remove: {
+      vault: {
         addr: string
       }
     }
+export type Uint128 = string
+export type VaultConfigUpdate = {
+  add_or_update: {
+    config: VaultConfigBaseForString
+  }
+}
 export type EmergencyUpdate =
   | {
-      rover: RoverEmergencyUpdate
+      credit_manager: CmEmergencyUpdate
     }
   | {
       red_bank: RedBankEmergencyUpdate
     }
-export type RoverEmergencyUpdate =
+export type CmEmergencyUpdate =
   | {
       set_zero_max_ltv_on_vault: string
     }
@@ -78,30 +83,32 @@ export type RoverEmergencyUpdate =
 export type RedBankEmergencyUpdate = {
   disable_borrowing: string
 }
-export interface AssetParams {
+export interface AssetParamsBaseForString {
+  credit_manager: CmSettingsForString
   denom: string
   liquidation_bonus: Decimal
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
   red_bank: RedBankSettings
-  rover: RoverSettings
+}
+export interface CmSettingsForString {
+  hls?: HlsParamsBaseForString | null
+  whitelisted: boolean
+}
+export interface HlsParamsBaseForString {
+  correlations: HlsAssetTypeForString[]
+  liquidation_threshold: Decimal
+  max_loan_to_value: Decimal
 }
 export interface RedBankSettings {
   borrow_enabled: boolean
   deposit_cap: Uint128
   deposit_enabled: boolean
 }
-export interface RoverSettings {
-  hls: HighLeverageStrategyParams
-  whitelisted: boolean
-}
-export interface HighLeverageStrategyParams {
-  liquidation_threshold: Decimal
-  max_loan_to_value: Decimal
-}
 export interface VaultConfigBaseForString {
   addr: string
   deposit_cap: Coin
+  hls?: HlsParamsBaseForString | null
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
   whitelisted: boolean
@@ -140,12 +147,41 @@ export type QueryMsg =
   | {
       max_close_factor: {}
     }
-export type ArrayOfAssetParams = AssetParams[]
+export type HlsAssetTypeForAddr =
+  | {
+      coin: {
+        denom: string
+      }
+    }
+  | {
+      vault: {
+        addr: Addr
+      }
+    }
 export type Addr = string
+export type ArrayOfAssetParamsBaseForAddr = AssetParamsBaseForAddr[]
+export interface AssetParamsBaseForAddr {
+  credit_manager: CmSettingsForAddr
+  denom: string
+  liquidation_bonus: Decimal
+  liquidation_threshold: Decimal
+  max_loan_to_value: Decimal
+  red_bank: RedBankSettings
+}
+export interface CmSettingsForAddr {
+  hls?: HlsParamsBaseForAddr | null
+  whitelisted: boolean
+}
+export interface HlsParamsBaseForAddr {
+  correlations: HlsAssetTypeForAddr[]
+  liquidation_threshold: Decimal
+  max_loan_to_value: Decimal
+}
 export type ArrayOfVaultConfigBaseForAddr = VaultConfigBaseForAddr[]
 export interface VaultConfigBaseForAddr {
   addr: Addr
   deposit_cap: Coin
+  hls?: HlsParamsBaseForAddr | null
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
   whitelisted: boolean

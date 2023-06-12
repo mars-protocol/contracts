@@ -114,13 +114,15 @@ fn swap_exact_in_success() {
     let signer = app
         .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "umars")])
         .unwrap();
-    let tx_fee = 250000u128;
+
+    let tx_fee = 1_000_000u128;
+    let user_osmo_starting_amount = 10_000_000u128;
     let user = app
-        .init_account(&[coin(10_000, "umars"), coin(1_000_000, "uosmo")])
+        .init_account(&[coin(10_000, "umars"), coin(user_osmo_starting_amount, "uosmo")])
         .unwrap()
         .with_fee_setting(FeeSetting::Custom {
-            amount: coin(tx_fee, "uosmo"),
-            gas_limit: 10000000u64,
+            amount: Coin::new(tx_fee, "uosmo"),
+            gas_limit: tx_fee as u64,
         });
 
     let contract_addr = instantiate_contract(&wasm, &signer);
@@ -152,7 +154,7 @@ fn swap_exact_in_success() {
     let bank = Bank::new(&app);
     let osmo_balance = query_balance(&bank, &user.address(), "uosmo");
     let mars_balance = query_balance(&bank, &user.address(), "umars");
-    assert_eq!(osmo_balance, 1_000_000);
+    assert_eq!(osmo_balance, user_osmo_starting_amount);
     assert_eq!(mars_balance, 10_000);
 
     wasm.execute(
@@ -170,7 +172,7 @@ fn swap_exact_in_success() {
     // Assert user receives their new tokens
     let osmo_balance = query_balance(&bank, &user.address(), "uosmo");
     let mars_balance = query_balance(&bank, &user.address(), "umars");
-    assert_eq!(osmo_balance, 1_000_000 + 2470 - tx_fee);
+    assert_eq!(osmo_balance, 2470 + user_osmo_starting_amount - tx_fee);
     assert_eq!(mars_balance, 0);
 
     // Assert no tokens in contract left over

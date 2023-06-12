@@ -3,7 +3,8 @@ use std::str::FromStr;
 use cosmwasm_std::{Decimal, StdError::GenericErr};
 use mars_params::{
     error::ContractError::{Std, Validation},
-    types::VaultConfigUpdate,
+    msg::VaultConfigUpdate,
+    types::hls::HlsParamsUnchecked,
 };
 use mars_utils::error::ValidationError::InvalidParam;
 
@@ -90,6 +91,84 @@ fn vault_liq_threshold_gt_max_ltv() {
             param_name: "liquidation_threshold".to_string(),
             invalid_value: "0.5".to_string(),
             predicate: "> 0.6 (max LTV)".to_string(),
+        }),
+    );
+}
+
+#[test]
+fn vault_hls_max_ltv_less_than_or_equal_to_one() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let mut config = default_vault_config("vault_xyz");
+    config.hls = Some(HlsParamsUnchecked {
+        max_loan_to_value: Decimal::from_str("1.1235").unwrap(),
+        liquidation_threshold: Decimal::from_str("2.1235").unwrap(),
+        correlations: vec![],
+    });
+
+    let res = mock.update_vault_config(
+        &mock.query_owner(),
+        VaultConfigUpdate::AddOrUpdate {
+            config,
+        },
+    );
+    assert_err(
+        res,
+        Validation(InvalidParam {
+            param_name: "hls_max_loan_to_value".to_string(),
+            invalid_value: "1.1235".to_string(),
+            predicate: "<= 1".to_string(),
+        }),
+    );
+}
+
+#[test]
+fn vault_hls_liquidation_threshold_less_than_or_equal_to_one() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let mut config = default_vault_config("vault_xyz");
+    config.hls = Some(HlsParamsUnchecked {
+        max_loan_to_value: Decimal::from_str("0.8").unwrap(),
+        liquidation_threshold: Decimal::from_str("1.1235").unwrap(),
+        correlations: vec![],
+    });
+
+    let res = mock.update_vault_config(
+        &mock.query_owner(),
+        VaultConfigUpdate::AddOrUpdate {
+            config,
+        },
+    );
+    assert_err(
+        res,
+        Validation(InvalidParam {
+            param_name: "hls_liquidation_threshold".to_string(),
+            invalid_value: "1.1235".to_string(),
+            predicate: "<= 1".to_string(),
+        }),
+    );
+}
+
+#[test]
+fn vault_hls_liq_threshold_gt_max_ltv() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let mut config = default_vault_config("vault_xyz");
+    config.hls = Some(HlsParamsUnchecked {
+        max_loan_to_value: Decimal::from_str("0.6").unwrap(),
+        liquidation_threshold: Decimal::from_str("0.5").unwrap(),
+        correlations: vec![],
+    });
+
+    let res = mock.update_vault_config(
+        &mock.query_owner(),
+        VaultConfigUpdate::AddOrUpdate {
+            config,
+        },
+    );
+    assert_err(
+        res,
+        Validation(InvalidParam {
+            param_name: "hls_liquidation_threshold".to_string(),
+            invalid_value: "0.5".to_string(),
+            predicate: "> 0.6 (hls max LTV)".to_string(),
         }),
     );
 }
