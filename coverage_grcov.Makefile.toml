@@ -40,7 +40,7 @@ set -eux
 
 grcov ${COVERAGE_PROF_OUTPUT} \
   -b ${COVERAGE_BINARIES} -s ${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY} \
-  -t ${GRCOV_OUTPUT_TYPE} --llvm --branch --ignore-not-existing --ignore "/*" --ignore "*/tests/*" --ignore "*/testing/*" --ignore "target/*" -o ${GRCOV_OUTPUT_PATH}
+  -t ${GRCOV_OUTPUT_TYPE} --llvm --branch --ignore-not-existing --ignore "/*" --ignore "*/tests/*" --ignore "*/testing/*" --ignore "target/*" --ignore "contracts/swapper/mock/*" -o ${GRCOV_OUTPUT_PATH}
 '''
 dependencies = ["install-grcov", "coverage-grcov-prepare-outdir", "coverage-grcov-run-test"]
 

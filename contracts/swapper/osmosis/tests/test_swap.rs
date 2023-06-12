@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Addr, Decimal};
+use cosmwasm_std::{coin, Addr, Coin, Decimal};
 use cw_it::{
     osmosis_test_tube::{Account, Bank, Gamm, Module, OsmosisTestApp, Wasm},
     test_tube::FeeSetting,
