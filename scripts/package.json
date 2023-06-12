@@ -20,7 +20,8 @@
     "@cosmwasm/ts-codegen": "^0.30.0",
     "chalk": "4.1.2",
     "cosmjs-types": "^0.8.0",
-    "prepend-file": "^2.0.1"
+    "prepend-file": "^2.0.1",
+    "ts-codegen": "^0.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.2.5",
