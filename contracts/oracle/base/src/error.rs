@@ -1,4 +1,7 @@
-use cosmwasm_std::{ConversionOverflowError, OverflowError, StdError};
+use cosmwasm_std::{
+    CheckedFromRatioError, CheckedMultiplyRatioError, ConversionOverflowError,
+    DecimalRangeExceeded, OverflowError, StdError,
+};
 use mars_owner::OwnerError;
 use mars_red_bank_types::error::MarsError;
 use mars_utils::error::ValidationError;
@@ -26,6 +29,15 @@ pub enum ContractError {
 
     #[error("{0}")]
     Overflow(#[from] OverflowError),
+
+    #[error("{0}")]
+    CheckedMultiplyRatio(#[from] CheckedMultiplyRatioError),
+
+    #[error("{0}")]
+    CheckedFromRatio(#[from] CheckedFromRatioError),
+
+    #[error("{0}")]
+    DecimalRangeExceeded(#[from] DecimalRangeExceeded),
 
     #[error("Invalid price source: {reason}")]
     InvalidPriceSource {

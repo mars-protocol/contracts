@@ -1,11 +1,12 @@
 use cosmwasm_std::Empty;
 use mars_oracle_base::OracleBase;
 
-use crate::OsmosisPriceSource;
+use crate::price_source::{OsmosisPriceSourceChecked, OsmosisPriceSourceUnchecked};
 
 /// The Osmosis oracle contract inherits logics from the base oracle contract, with the Osmosis query
 /// and price source plugins
-pub type OsmosisOracle<'a> = OracleBase<'a, OsmosisPriceSource, Empty>;
+pub type OsmosisOracle<'a> =
+    OracleBase<'a, OsmosisPriceSourceChecked, OsmosisPriceSourceUnchecked, Empty>;
 
 pub const CONTRACT_NAME: &str = "crates.io:mars-oracle-osmosis";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -35,7 +36,7 @@ pub mod entry {
         deps: DepsMut,
         _env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<OsmosisPriceSource>,
+        msg: ExecuteMsg<OsmosisPriceSourceUnchecked>,
     ) -> ContractResult<Response> {
         OsmosisOracle::default().execute(deps, info, msg)
     }
@@ -47,6 +48,6 @@ pub mod entry {
 
     #[entry_point]
     pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> ContractResult<Response> {
-        migrations::v1_0_0::migrate(deps)
+        migrations::v1_0_1::migrate(deps)
     }
 }

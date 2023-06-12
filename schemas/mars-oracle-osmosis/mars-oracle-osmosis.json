@@ -1,6 +1,6 @@
 {
   "contract_name": "mars-oracle-osmosis",
-  "contract_version": "1.0.1",
+  "contract_version": "1.1.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -44,7 +44,7 @@
                 "type": "string"
               },
               "price_source": {
-                "$ref": "#/definitions/OsmosisPriceSource"
+                "$ref": "#/definitions/OsmosisPriceSource_for_String"
               }
             },
             "additionalProperties": false
@@ -83,6 +83,28 @@
         "properties": {
           "update_owner": {
             "$ref": "#/definitions/OwnerUpdate"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Update contract config (only callable by owner)",
+        "type": "object",
+        "required": [
+          "update_config"
+        ],
+        "properties": {
+          "update_config": {
+            "type": "object",
+            "properties": {
+              "base_denom": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -147,7 +169,42 @@
           }
         }
       },
-      "OsmosisPriceSource": {
+      "GeometricTwap": {
+        "type": "object",
+        "required": [
+          "pool_id",
+          "window_size"
+        ],
+        "properties": {
+          "downtime_detector": {
+            "description": "Detect when the chain is recovering from downtime",
+            "anyOf": [
+              {
+                "$ref": "#/definitions/DowntimeDetector"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pool_id": {
+            "description": "Pool id for stAsset/Asset pool",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "window_size": {
+            "description": "Window size in seconds representing the entire window for which 'geometric' price is calculated. Value should be <= 172800 sec (48 hours).",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        }
+      },
+      "Identifier": {
+        "type": "string"
+      },
+      "OsmosisPriceSource_for_String": {
         "oneOf": [
           {
             "description": "Returns a fixed value;",
@@ -344,6 +401,90 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "pyth"
+            ],
+            "properties": {
+              "pyth": {
+                "type": "object",
+                "required": [
+                  "contract_addr",
+                  "denom_decimals",
+                  "max_staleness",
+                  "price_feed_id"
+                ],
+                "properties": {
+                  "contract_addr": {
+                    "description": "Contract address of Pyth",
+                    "type": "string"
+                  },
+                  "denom_decimals": {
+                    "description": "Assets are represented in their smallest unit and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).\n\nPyth prices are denominated in USD so basically it means how much 1 USDC, 1 ATOM, 1 OSMO is worth in USD (NOT 1 uusdc, 1 uatom, 1 uosmo). We have to normalize it. We should get how much 1 utoken is worth in uusd. For example: - base_denom = uusd - price source set for usd (e.g. FIXED price source where 1 usd = 1000000 uusd) - denom_decimals (ATOM) = 6\n\n1 OSMO = 10^6 uosmo\n\nosmo_price_in_usd = 0.59958994 uosmo_price_in_uusd = osmo_price_in_usd * usd_price_in_base_denom / 10^denom_decimals = uosmo_price_in_uusd = 0.59958994 * 1000000 * 10^(-6) = 0.59958994",
+                    "type": "integer",
+                    "format": "uint8",
+                    "minimum": 0.0
+                  },
+                  "max_staleness": {
+                    "description": "The maximum number of seconds since the last price was by an oracle, before rejecting the price as too stale",
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  },
+                  "price_feed_id": {
+                    "description": "Price feed id of an asset from the list: https://pyth.network/developers/price-feed-ids We can't verify what denoms consist of the price feed. Be very careful when adding it !!!",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Identifier"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Liquid Staking Derivatives (LSD) price quoted in USD based on data from Pyth, Osmosis and Stride.\n\nEquation to calculate the price: stAsset/USD = stAsset/Asset * Asset/USD where: stAsset/Asset = min(stAsset/Asset Geometric TWAP, stAsset/Asset Redemption Rate)\n\nExample: stATOM/USD = stATOM/ATOM * ATOM/USD where: - stATOM/ATOM = min(stAtom/Atom Geometric TWAP from Osmosis, stAtom/Atom Redemption Rate from Stride) - ATOM/USD price comes from the Mars Oracle contract (should point to Pyth).\n\nNOTE: `pool_id` must point to stAsset/Asset Osmosis pool. Asset/USD price source should be available in the Mars Oracle contract.",
+            "type": "object",
+            "required": [
+              "lsd"
+            ],
+            "properties": {
+              "lsd": {
+                "type": "object",
+                "required": [
+                  "geometric_twap",
+                  "redemption_rate",
+                  "transitive_denom"
+                ],
+                "properties": {
+                  "geometric_twap": {
+                    "description": "Params to query geometric TWAP price",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/GeometricTwap"
+                      }
+                    ]
+                  },
+                  "redemption_rate": {
+                    "description": "Params to query redemption rate",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/RedemptionRate_for_String"
+                      }
+                    ]
+                  },
+                  "transitive_denom": {
+                    "description": "Transitive denom for which we query price in USD. It refers to 'Asset' in the equation: stAsset/USD = stAsset/Asset * Asset/USD",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },
@@ -422,6 +563,25 @@
             ]
           }
         ]
+      },
+      "RedemptionRate_for_String": {
+        "type": "object",
+        "required": [
+          "contract_addr",
+          "max_staleness"
+        ],
+        "properties": {
+          "contract_addr": {
+            "description": "Contract addr",
+            "type": "string"
+          },
+          "max_staleness": {
+            "description": "The maximum number of seconds since the last price was by an oracle, before rejecting the price as too stale",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        }
       }
     }
   },

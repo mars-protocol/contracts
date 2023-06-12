@@ -240,7 +240,7 @@ fn distribute_rewards_if_ibc_channel_invalid() {
             &[
                 coin(1_000_000_000_000, "uusdc"),
                 coin(1_000_000_000_000, "umars"),
-                coin(1_000_000_000_000, "uosmo"),
+                coin(1_000_000_000_000, "uosmo"), // for gas
             ],
             2,
         )

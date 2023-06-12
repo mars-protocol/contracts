@@ -10,7 +10,9 @@ mod mock_address_provider;
 mod mocks;
 mod oracle_querier;
 mod osmosis_querier;
+mod pyth_querier;
 mod red_bank_querier;
+mod redemption_rate_querier;
 
 pub use helpers::*;
 pub use mars_mock_querier::MarsMockQuerier;

@@ -1,11 +1,22 @@
-use cosmwasm_std::{coin, Decimal, StdError};
+use std::str::FromStr;
+
+use cosmwasm_std::{
+    coin, from_binary,
+    testing::{MockApi, MockStorage},
+    Decimal, OwnedDeps, StdError,
+};
 use mars_oracle_base::ContractError;
-use mars_oracle_osmosis::{Downtime, DowntimeDetector, OsmosisPriceSource};
+use mars_oracle_osmosis::{
+    contract::entry, scale_pyth_price, stride::RedemptionRateResponse, Downtime, DowntimeDetector,
+    GeometricTwap, OsmosisPriceSourceUnchecked, RedemptionRate,
+};
 use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
+use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 use osmosis_std::types::osmosis::{
-    gamm::v2::QuerySpotPriceResponse,
+    poolmanager::v1beta1::SpotPriceResponse,
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
+use pyth_sdk_cw::{Price, PriceFeed, PriceFeedResponse, PriceIdentifier};
 
 use crate::helpers::prepare_query_pool_response;
 
@@ -13,12 +24,12 @@ mod helpers;
 
 #[test]
 fn querying_fixed_price() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     helpers::set_price_source(
         deps.as_mut(),
         "uosmo",
-        OsmosisPriceSource::Fixed {
+        OsmosisPriceSourceUnchecked::Fixed {
             price: Decimal::one(),
         },
     );
@@ -34,12 +45,12 @@ fn querying_fixed_price() {
 
 #[test]
 fn querying_spot_price() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceUnchecked::Spot {
             pool_id: 89,
         },
     );
@@ -48,7 +59,7 @@ fn querying_spot_price() {
         89,
         "umars",
         "uosmo",
-        QuerySpotPriceResponse {
+        SpotPriceResponse {
             spot_price: Decimal::from_ratio(88888u128, 12345u128).to_string(),
         },
     );
@@ -64,12 +75,12 @@ fn querying_spot_price() {
 
 #[test]
 fn querying_arithmetic_twap_price() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::ArithmeticTwap {
+        OsmosisPriceSourceUnchecked::ArithmeticTwap {
             pool_id: 89,
             window_size: 86400,
             downtime_detector: None,
@@ -96,7 +107,7 @@ fn querying_arithmetic_twap_price() {
 
 #[test]
 fn querying_arithmetic_twap_price_with_downtime_detector() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let dd = DowntimeDetector {
         downtime: Downtime::Duration10m,
@@ -105,7 +116,7 @@ fn querying_arithmetic_twap_price_with_downtime_detector() {
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::ArithmeticTwap {
+        OsmosisPriceSourceUnchecked::ArithmeticTwap {
             pool_id: 89,
             window_size: 86400,
             downtime_detector: Some(dd.clone()),
@@ -146,12 +157,12 @@ fn querying_arithmetic_twap_price_with_downtime_detector() {
 
 #[test]
 fn querying_geometric_twap_price() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::GeometricTwap {
+        OsmosisPriceSourceUnchecked::GeometricTwap {
             pool_id: 89,
             window_size: 86400,
             downtime_detector: None,
@@ -178,7 +189,7 @@ fn querying_geometric_twap_price() {
 
 #[test]
 fn querying_geometric_twap_price_with_downtime_detector() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let dd = DowntimeDetector {
         downtime: Downtime::Duration10m,
@@ -187,7 +198,7 @@ fn querying_geometric_twap_price_with_downtime_detector() {
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::GeometricTwap {
+        OsmosisPriceSourceUnchecked::GeometricTwap {
             pool_id: 89,
             window_size: 86400,
             downtime_detector: Some(dd.clone()),
@@ -228,12 +239,12 @@ fn querying_geometric_twap_price_with_downtime_detector() {
 
 #[test]
 fn querying_staked_geometric_twap_price() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::GeometricTwap {
+        OsmosisPriceSourceUnchecked::GeometricTwap {
             pool_id: 1,
             window_size: 86400,
             downtime_detector: None,
@@ -242,7 +253,7 @@ fn querying_staked_geometric_twap_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "ustatom",
-        OsmosisPriceSource::StakedGeometricTwap {
+        OsmosisPriceSourceUnchecked::StakedGeometricTwap {
             transitive_denom: "uatom".to_string(),
             pool_id: 803,
             window_size: 86400,
@@ -281,12 +292,12 @@ fn querying_staked_geometric_twap_price() {
 
 #[test]
 fn querying_staked_geometric_twap_price_if_no_transitive_denom_price_source() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     helpers::set_price_source(
         deps.as_mut(),
         "ustatom",
-        OsmosisPriceSource::StakedGeometricTwap {
+        OsmosisPriceSourceUnchecked::StakedGeometricTwap {
             transitive_denom: "uatom".to_string(),
             pool_id: 803,
             window_size: 86400,
@@ -313,14 +324,14 @@ fn querying_staked_geometric_twap_price_if_no_transitive_denom_price_source() {
     assert_eq!(
         res_err,
         ContractError::Std(StdError::not_found(
-            "mars_oracle_osmosis::price_source::OsmosisPriceSource"
+            "mars_oracle_osmosis::price_source::OsmosisPriceSource<cosmwasm_std::addresses::Addr>"
         ))
     );
 }
 
 #[test]
 fn querying_staked_geometric_twap_price_with_downtime_detector() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let dd = DowntimeDetector {
         downtime: Downtime::Duration10m,
@@ -329,7 +340,7 @@ fn querying_staked_geometric_twap_price_with_downtime_detector() {
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::GeometricTwap {
+        OsmosisPriceSourceUnchecked::GeometricTwap {
             pool_id: 1,
             window_size: 86400,
             downtime_detector: Some(dd.clone()),
@@ -338,7 +349,7 @@ fn querying_staked_geometric_twap_price_with_downtime_detector() {
     helpers::set_price_source(
         deps.as_mut(),
         "ustatom",
-        OsmosisPriceSource::StakedGeometricTwap {
+        OsmosisPriceSourceUnchecked::StakedGeometricTwap {
             transitive_denom: "uatom".to_string(),
             pool_id: 803,
             window_size: 86400,
@@ -392,8 +403,354 @@ fn querying_staked_geometric_twap_price_with_downtime_detector() {
 }
 
 #[test]
+fn querying_lsd_price() {
+    let mut deps = helpers::setup_test_with_pools();
+
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
+    let publish_time = 1677157333u64;
+    let (pyth_price, ustatom_uatom_price) =
+        setup_pyth_and_geometric_twap_for_lsd(&mut deps, publish_time);
+
+    // setup redemption rate: stAtom/Atom
+    deps.querier.set_redemption_rate(
+        "ustatom",
+        "uatom",
+        RedemptionRateResponse {
+            exchange_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
+            last_updated: publish_time,
+        },
+    );
+
+    // query price if geometric TWAP < redemption rate
+    helpers::set_price_source(
+        deps.as_mut(),
+        "ustatom",
+        OsmosisPriceSourceUnchecked::Lsd {
+            transitive_denom: "uatom".to_string(),
+            geometric_twap: GeometricTwap {
+                pool_id: 803,
+                window_size: 86400,
+                downtime_detector: None,
+            },
+            redemption_rate: RedemptionRate {
+                contract_addr: "dummy_addr".to_string(),
+                max_staleness: 21600,
+            },
+        },
+    );
+    let res = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "ustatom".to_string(),
+        },
+    )
+    .unwrap();
+    let res: PriceResponse = from_binary(&res).unwrap();
+    let expected_price = ustatom_uatom_price * pyth_price;
+    assert_eq!(res.price, expected_price);
+
+    // setup redemption rate: stAtom/Atom
+    let ustatom_uatom_redemption_rate = ustatom_uatom_price - Decimal::one(); // geometric TWAP > redemption rate
+    deps.querier.set_redemption_rate(
+        "ustatom",
+        "uatom",
+        RedemptionRateResponse {
+            exchange_rate: ustatom_uatom_redemption_rate,
+            last_updated: publish_time,
+        },
+    );
+
+    // query price if geometric TWAP > redemption rate
+    helpers::set_price_source(
+        deps.as_mut(),
+        "ustatom",
+        OsmosisPriceSourceUnchecked::Lsd {
+            transitive_denom: "uatom".to_string(),
+            geometric_twap: GeometricTwap {
+                pool_id: 803,
+                window_size: 86400,
+                downtime_detector: None,
+            },
+            redemption_rate: RedemptionRate {
+                contract_addr: "dummy_addr".to_string(),
+                max_staleness: 21600,
+            },
+        },
+    );
+    let res = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "ustatom".to_string(),
+        },
+    )
+    .unwrap();
+    let res: PriceResponse = from_binary(&res).unwrap();
+    let expected_price = ustatom_uatom_redemption_rate * pyth_price;
+    assert_eq!(res.price, expected_price);
+}
+
+fn setup_pyth_and_geometric_twap_for_lsd(
+    deps: &mut OwnedDeps<MockStorage, MockApi, MarsMockQuerier>,
+    publish_time: u64,
+) -> (Decimal, Decimal) {
+    // setup pyth price: Atom/Usd
+    let price_id = PriceIdentifier::from_hex(
+        "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+    )
+    .unwrap();
+
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uatom",
+        OsmosisPriceSourceUnchecked::Pyth {
+            contract_addr: "pyth_contract_addr".to_string(),
+            price_feed_id: price_id,
+            max_staleness: 1800u64,
+            denom_decimals: 6u8,
+        },
+    );
+
+    let price = Price {
+        price: 1021000,
+        conf: 50000,
+        expo: -4,
+        publish_time: publish_time as i64,
+    };
+    let pyth_price = scale_pyth_price(
+        price.price as u128,
+        price.expo,
+        6u8,
+        Decimal::from_str("1000000").unwrap(),
+    )
+    .unwrap();
+
+    deps.querier.set_pyth_price(
+        price_id,
+        PriceFeedResponse {
+            price_feed: PriceFeed::new(price_id, price, price),
+        },
+    );
+
+    // setup geometric TWAP: stAtom/Atom
+    let ustatom_uatom_price = Decimal::from_ratio(1054u128, 1000u128);
+    deps.querier.set_geometric_twap_price(
+        803,
+        "ustatom",
+        "uatom",
+        GeometricTwapToNowResponse {
+            geometric_twap: ustatom_uatom_price.to_string(),
+        },
+    );
+    (pyth_price, ustatom_uatom_price)
+}
+
+#[test]
+fn querying_lsd_price_if_no_transitive_denom_price_source() {
+    let mut deps = helpers::setup_test_with_pools();
+
+    // setup geometric TWAP: stAtom/Atom
+    let ustatom_uatom_price = Decimal::from_ratio(1054u128, 1000u128);
+    deps.querier.set_geometric_twap_price(
+        803,
+        "ustatom",
+        "uatom",
+        GeometricTwapToNowResponse {
+            geometric_twap: ustatom_uatom_price.to_string(),
+        },
+    );
+
+    // setup redemption rate: stAtom/Atom
+    let publish_time = 1677157333u64;
+    deps.querier.set_redemption_rate(
+        "ustatom",
+        "uatom",
+        RedemptionRateResponse {
+            exchange_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
+            last_updated: publish_time,
+        },
+    );
+
+    // query price if geometric TWAP < redemption rate
+    helpers::set_price_source(
+        deps.as_mut(),
+        "ustatom",
+        OsmosisPriceSourceUnchecked::Lsd {
+            transitive_denom: "uatom".to_string(),
+            geometric_twap: GeometricTwap {
+                pool_id: 803,
+                window_size: 86400,
+                downtime_detector: None,
+            },
+            redemption_rate: RedemptionRate {
+                contract_addr: "dummy_addr".to_string(),
+                max_staleness: 21600,
+            },
+        },
+    );
+
+    let res_err = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "ustatom".to_string(),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        res_err,
+        ContractError::Std(StdError::not_found(
+            "mars_oracle_osmosis::price_source::OsmosisPriceSource<cosmwasm_std::addresses::Addr>"
+        ))
+    );
+}
+
+#[test]
+fn querying_lsd_price_if_redemption_rate_too_old() {
+    let mut deps = helpers::setup_test_with_pools();
+
+    let max_staleness = 21600u64;
+
+    let publish_time = 1677157333u64;
+    let (_pyth_price, ustatom_uatom_price) =
+        setup_pyth_and_geometric_twap_for_lsd(&mut deps, publish_time);
+
+    // setup redemption rate: stAtom/Atom
+    deps.querier.set_redemption_rate(
+        "ustatom",
+        "uatom",
+        RedemptionRateResponse {
+            exchange_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
+            last_updated: publish_time - max_staleness - 1,
+        },
+    );
+
+    // query price if geometric TWAP < redemption rate
+    helpers::set_price_source(
+        deps.as_mut(),
+        "ustatom",
+        OsmosisPriceSourceUnchecked::Lsd {
+            transitive_denom: "uatom".to_string(),
+            geometric_twap: GeometricTwap {
+                pool_id: 803,
+                window_size: 86400,
+                downtime_detector: None,
+            },
+            redemption_rate: RedemptionRate {
+                contract_addr: "dummy_addr".to_string(),
+                max_staleness,
+            },
+        },
+    );
+
+    let res_err = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "ustatom".to_string(),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        res_err,
+        ContractError::InvalidPrice {
+            reason: "redemption rate update time is too old/stale. last updated: 1677135732, now: 1677157333".to_string()
+        }
+    );
+}
+
+#[test]
+fn querying_lsd_price_with_downtime_detector() {
+    let mut deps = helpers::setup_test_with_pools();
+
+    let publish_time = 1677157333u64;
+    let (pyth_price, ustatom_uatom_price) =
+        setup_pyth_and_geometric_twap_for_lsd(&mut deps, publish_time);
+
+    // setup redemption rate: stAtom/Atom
+    deps.querier.set_redemption_rate(
+        "ustatom",
+        "uatom",
+        RedemptionRateResponse {
+            exchange_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
+            last_updated: publish_time,
+        },
+    );
+
+    let dd = DowntimeDetector {
+        downtime: Downtime::Duration10m,
+        recovery: 360,
+    };
+
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
+    // query price if geometric TWAP < redemption rate
+    helpers::set_price_source(
+        deps.as_mut(),
+        "ustatom",
+        OsmosisPriceSourceUnchecked::Lsd {
+            transitive_denom: "uatom".to_string(),
+            geometric_twap: GeometricTwap {
+                pool_id: 803,
+                window_size: 86400,
+                downtime_detector: Some(dd.clone()),
+            },
+            redemption_rate: RedemptionRate {
+                contract_addr: "dummy_addr".to_string(),
+                max_staleness: 21600,
+            },
+        },
+    );
+
+    deps.querier.set_downtime_detector(dd.clone(), false);
+    let res_err = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "ustatom".to_string(),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        res_err,
+        ContractError::InvalidPrice {
+            reason: "chain is recovering from downtime".to_string()
+        }
+    );
+
+    deps.querier.set_downtime_detector(dd, true);
+    let res = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "ustatom".to_string(),
+        },
+    )
+    .unwrap();
+    let res: PriceResponse = from_binary(&res).unwrap();
+    let expected_price = ustatom_uatom_price * pyth_price;
+    assert_eq!(res.price, expected_price);
+}
+
+#[test]
 fn querying_xyk_lp_price() {
-    let mut deps = helpers::setup_test();
+    let mut deps = helpers::setup_test_with_pools();
 
     let assets = vec![coin(1, "uatom"), coin(1, "uosmo")];
     deps.querier.set_query_pool_response(
@@ -433,7 +790,7 @@ fn querying_xyk_lp_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::Fixed {
+        OsmosisPriceSourceUnchecked::Fixed {
             price: uatom_price,
         },
     );
@@ -444,7 +801,7 @@ fn querying_xyk_lp_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::Fixed {
+        OsmosisPriceSourceUnchecked::Fixed {
             price: umars_price,
         },
     );
@@ -454,7 +811,7 @@ fn querying_xyk_lp_price() {
     helpers::set_price_source(
         deps.as_mut(),
         "uatom_umars_lp",
-        OsmosisPriceSource::XykLiquidityToken {
+        OsmosisPriceSourceUnchecked::XykLiquidityToken {
             pool_id: 10003,
         },
     );
@@ -505,27 +862,265 @@ fn querying_xyk_lp_price() {
 }
 
 #[test]
-fn querying_all_prices() {
+fn querying_pyth_price_if_publish_price_too_old() {
     let mut deps = helpers::setup_test();
+
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
+    let price_id = PriceIdentifier::from_hex(
+        "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+    )
+    .unwrap();
+
+    let max_staleness = 30u64;
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uatom",
+        OsmosisPriceSourceUnchecked::Pyth {
+            contract_addr: "pyth_contract_addr".to_string(),
+            price_feed_id: price_id,
+            max_staleness,
+            denom_decimals: 6u8,
+        },
+    );
+
+    let price_publish_time = 1677157333u64;
+    let ema_price_publish_time = price_publish_time + max_staleness;
+    deps.querier.set_pyth_price(
+        price_id,
+        PriceFeedResponse {
+            price_feed: PriceFeed::new(
+                price_id,
+                Price {
+                    price: 1371155677,
+                    conf: 646723,
+                    expo: -8,
+                    publish_time: price_publish_time as i64,
+                },
+                Price {
+                    price: 1365133270,
+                    conf: 574566,
+                    expo: -8,
+                    publish_time: ema_price_publish_time as i64,
+                },
+            ),
+        },
+    );
+
+    let res_err = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(price_publish_time + max_staleness + 1u64),
+        QueryMsg::Price {
+            denom: "uatom".to_string(),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        res_err,
+        ContractError::InvalidPrice {
+            reason:
+                "current price publish time is too old/stale. published: 1677157333, now: 1677157364"
+                    .to_string()
+        }
+    );
+}
+
+#[test]
+fn querying_pyth_price_if_signed() {
+    let mut deps = helpers::setup_test();
+
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
+    let price_id = PriceIdentifier::from_hex(
+        "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+    )
+    .unwrap();
+
+    let max_staleness = 30u64;
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uatom",
+        OsmosisPriceSourceUnchecked::Pyth {
+            contract_addr: "pyth_contract_addr".to_string(),
+            price_feed_id: price_id,
+            max_staleness,
+            denom_decimals: 6u8,
+        },
+    );
+
+    let publish_time = 1677157333u64;
+    deps.querier.set_pyth_price(
+        price_id,
+        PriceFeedResponse {
+            price_feed: PriceFeed::new(
+                price_id,
+                Price {
+                    price: -1371155677,
+                    conf: 646723,
+                    expo: -8,
+                    publish_time: publish_time as i64,
+                },
+                Price {
+                    price: -1365133270,
+                    conf: 574566,
+                    expo: -8,
+                    publish_time: publish_time as i64,
+                },
+            ),
+        },
+    );
+
+    let res_err = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "uatom".to_string(),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        res_err,
+        ContractError::InvalidPrice {
+            reason: "price can't be <= 0".to_string()
+        }
+    );
+}
+
+#[test]
+fn querying_pyth_price_successfully() {
+    let mut deps = helpers::setup_test();
+
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
+    let price_id = PriceIdentifier::from_hex(
+        "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+    )
+    .unwrap();
+
+    let max_staleness = 30u64;
+    helpers::set_price_source(
+        deps.as_mut(),
+        "uatom",
+        OsmosisPriceSourceUnchecked::Pyth {
+            contract_addr: "pyth_contract_addr".to_string(),
+            price_feed_id: price_id,
+            max_staleness,
+            denom_decimals: 6u8,
+        },
+    );
+
+    let publish_time = 1677157333u64;
+
+    // exp < 0
+    deps.querier.set_pyth_price(
+        price_id,
+        PriceFeedResponse {
+            price_feed: PriceFeed::new(
+                price_id,
+                Price {
+                    price: 1021000,
+                    conf: 50000,
+                    expo: -4,
+                    publish_time: publish_time as i64,
+                },
+                Price {
+                    price: 1000000,
+                    conf: 40000,
+                    expo: -4,
+                    publish_time: publish_time as i64,
+                },
+            ),
+        },
+    );
+
+    let res = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "uatom".to_string(),
+        },
+    )
+    .unwrap();
+    let res: PriceResponse = from_binary(&res).unwrap();
+    assert_eq!(res.price, Decimal::from_ratio(1021000u128, 10000u128));
+
+    // exp > 0
+    deps.querier.set_pyth_price(
+        price_id,
+        PriceFeedResponse {
+            price_feed: PriceFeed::new(
+                price_id,
+                Price {
+                    price: 102,
+                    conf: 5,
+                    expo: 3,
+                    publish_time: publish_time as i64,
+                },
+                Price {
+                    price: 100,
+                    conf: 4,
+                    expo: 3,
+                    publish_time: publish_time as i64,
+                },
+            ),
+        },
+    );
+
+    let res = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "uatom".to_string(),
+        },
+    )
+    .unwrap();
+    let res: PriceResponse = from_binary(&res).unwrap();
+    assert_eq!(res.price, Decimal::from_ratio(102000u128, 1u128));
+}
+
+#[test]
+fn querying_all_prices() {
+    let mut deps = helpers::setup_test_with_pools();
 
     helpers::set_price_source(
         deps.as_mut(),
         "uosmo",
-        OsmosisPriceSource::Fixed {
+        OsmosisPriceSourceUnchecked::Fixed {
             price: Decimal::one(),
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "uatom",
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceUnchecked::Spot {
             pool_id: 1,
         },
     );
     helpers::set_price_source(
         deps.as_mut(),
         "umars",
-        OsmosisPriceSource::Spot {
+        OsmosisPriceSourceUnchecked::Spot {
             pool_id: 89,
         },
     );
@@ -534,7 +1129,7 @@ fn querying_all_prices() {
         1,
         "uatom",
         "uosmo",
-        QuerySpotPriceResponse {
+        SpotPriceResponse {
             spot_price: Decimal::from_ratio(77777u128, 12345u128).to_string(),
         },
     );
@@ -542,7 +1137,7 @@ fn querying_all_prices() {
         89,
         "umars",
         "uosmo",
-        QuerySpotPriceResponse {
+        SpotPriceResponse {
             spot_price: Decimal::from_ratio(88888u128, 12345u128).to_string(),
         },
     );

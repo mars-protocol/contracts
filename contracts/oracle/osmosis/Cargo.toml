@@ -19,13 +19,16 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
+cosmwasm-schema     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
 cw-storage-plus     = { workspace = true }
+mars-owner          = { workspace = true }
 mars-oracle-base    = { workspace = true }
 mars-osmosis        = { workspace = true }
 mars-red-bank-types = { workspace = true }
 osmosis-std         = { workspace = true }
+pyth-sdk-cw         = { workspace = true }
 schemars            = { workspace = true }
 serde               = { workspace = true }
 thiserror           = { workspace = true }

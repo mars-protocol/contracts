@@ -12,14 +12,15 @@ use mars_red_bank_types::oracle::{
 };
 use mars_utils::helpers::validate_native_denom;
 
-use crate::{error::ContractResult, PriceSource};
+use crate::{error::ContractResult, PriceSourceChecked, PriceSourceUnchecked};
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
 
-pub struct OracleBase<'a, P, C>
+pub struct OracleBase<'a, P, PU, C>
 where
-    P: PriceSource<C>,
+    P: PriceSourceChecked<C>,
+    PU: PriceSourceUnchecked<P, C>,
     C: CustomQuery,
 {
     /// Contract's owner
@@ -28,13 +29,16 @@ where
     pub config: Item<'a, Config>,
     /// The price source of each coin denom
     pub price_sources: Map<'a, &'a str, P>,
+    /// Phantom data holds the unchecked price source type
+    pub unchecked_price_source: PhantomData<PU>,
     /// Phantom data holds the custom query type
     pub custom_query: PhantomData<C>,
 }
 
-impl<'a, P, C> Default for OracleBase<'a, P, C>
+impl<'a, P, PU, C> Default for OracleBase<'a, P, PU, C>
 where
-    P: PriceSource<C>,
+    P: PriceSourceChecked<C>,
+    PU: PriceSourceUnchecked<P, C>,
     C: CustomQuery,
 {
     fn default() -> Self {
@@ -42,14 +46,16 @@ where
             owner: Owner::new("owner"),
             config: Item::new("config"),
             price_sources: Map::new("price_sources"),
+            unchecked_price_source: PhantomData,
             custom_query: PhantomData,
         }
     }
 }
 
-impl<'a, P, C> OracleBase<'a, P, C>
+impl<'a, P, PU, C> OracleBase<'a, P, PU, C>
 where
-    P: PriceSource<C>,
+    P: PriceSourceChecked<C>,
+    PU: PriceSourceUnchecked<P, C>,
     C: CustomQuery,
 {
     pub fn instantiate(&self, deps: DepsMut<C>, msg: InstantiateMsg) -> ContractResult<Response> {
@@ -77,7 +83,7 @@ where
         &self,
         deps: DepsMut<C>,
         info: MessageInfo,
-        msg: ExecuteMsg<P>,
+        msg: ExecuteMsg<PU>,
     ) -> ContractResult<Response> {
         match msg {
             ExecuteMsg::UpdateOwner(update) => self.update_owner(deps, info, update),
@@ -88,6 +94,9 @@ where
             ExecuteMsg::RemovePriceSource {
                 denom,
             } => self.remove_price_source(deps, info.sender, denom),
+            ExecuteMsg::UpdateConfig {
+                base_denom,
+            } => self.update_config(deps, info.sender, base_denom),
         }
     }
 
@@ -126,14 +135,14 @@ where
         deps: DepsMut<C>,
         sender_addr: Addr,
         denom: String,
-        price_source: P,
+        price_source: PU,
     ) -> ContractResult<Response> {
         self.owner.assert_owner(deps.storage, &sender_addr)?;
 
         validate_native_denom(&denom)?;
 
         let cfg = self.config.load(deps.storage)?;
-        price_source.validate(&deps.querier, &denom, &cfg.base_denom)?;
+        let price_source = price_source.validate(deps.as_ref(), &denom, &cfg.base_denom)?;
         self.price_sources.save(deps.storage, &denom, &price_source)?;
 
         Ok(Response::new()
@@ -155,6 +164,31 @@ where
         Ok(Response::new()
             .add_attribute("action", "remove_price_source")
             .add_attribute("denom", denom))
+    }
+
+    fn update_config(
+        &self,
+        deps: DepsMut<C>,
+        sender_addr: Addr,
+        base_denom: Option<String>,
+    ) -> ContractResult<Response> {
+        self.owner.assert_owner(deps.storage, &sender_addr)?;
+
+        if let Some(bd) = &base_denom {
+            validate_native_denom(bd)?;
+        };
+
+        let mut config = self.config.load(deps.storage)?;
+        let prev_base_denom = config.base_denom.clone();
+        config.base_denom = base_denom.unwrap_or(config.base_denom);
+        self.config.save(deps.storage, &config)?;
+
+        let response = Response::new()
+            .add_attribute("action", "update_config")
+            .add_attribute("prev_base_denom", prev_base_denom)
+            .add_attribute("base_denom", config.base_denom);
+
+        Ok(response)
     }
 
     fn query_config(&self, deps: Deps<C>) -> StdResult<ConfigResponse> {
@@ -204,13 +238,7 @@ where
         let cfg = self.config.load(deps.storage)?;
         let price_source = self.price_sources.load(deps.storage, &denom)?;
         Ok(PriceResponse {
-            price: price_source.query_price(
-                &deps,
-                &env,
-                &denom,
-                &cfg.base_denom,
-                &self.price_sources,
-            )?,
+            price: price_source.query_price(&deps, &env, &denom, &cfg, &self.price_sources)?,
             denom,
         })
     }
@@ -233,7 +261,7 @@ where
             .map(|item| {
                 let (k, v) = item?;
                 Ok(PriceResponse {
-                    price: v.query_price(&deps, &env, &k, &cfg.base_denom, &self.price_sources)?,
+                    price: v.query_price(&deps, &env, &k, &cfg, &self.price_sources)?,
                     denom: k,
                 })
             })

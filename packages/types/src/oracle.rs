@@ -31,6 +31,10 @@ pub enum ExecuteMsg<T> {
     },
     /// Manages admin role state
     UpdateOwner(OwnerUpdate),
+    /// Update contract config (only callable by owner)
+    UpdateConfig {
+        base_denom: Option<String>,
+    },
 }
 
 #[cw_serde]

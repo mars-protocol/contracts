@@ -8,7 +8,7 @@ use mars_testing::mock_info;
 use osmosis_std::types::{
     cosmos::base::v1beta1::Coin,
     osmosis::{
-        gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute},
+        gamm::v1beta1::MsgSwapExactAmountIn, poolmanager::v1beta1::SwapAmountInRoute,
         twap::v1beta1::ArithmeticTwapToNowResponse,
     },
 };
