@@ -66,9 +66,6 @@ pub enum VaultConfigUpdate {
     AddOrUpdate {
         config: VaultConfigUnchecked,
     },
-    Remove {
-        addr: String,
-    },
 }
 
 #[cw_serde]

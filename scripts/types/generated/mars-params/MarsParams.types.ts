@@ -58,17 +58,11 @@ export type HlsAssetTypeForString =
       }
     }
 export type Uint128 = string
-export type VaultConfigUpdate =
-  | {
-      add_or_update: {
-        config: VaultConfigBaseForString
-      }
-    }
-  | {
-      remove: {
-        addr: string
-      }
-    }
+export type VaultConfigUpdate = {
+  add_or_update: {
+    config: VaultConfigBaseForString
+  }
+}
 export type EmergencyUpdate =
   | {
       credit_manager: CmEmergencyUpdate

@@ -2,7 +2,9 @@ use std::str::FromStr;
 
 use cosmwasm_std::{Addr, Decimal};
 use mars_owner::OwnerError;
-use mars_params::{error::ContractError::Owner, msg::VaultConfigUpdate};
+use mars_params::{
+    error::ContractError::Owner, msg::VaultConfigUpdate, types::vault::VaultConfigUnchecked,
+};
 
 use crate::helpers::{assert_contents_equal, assert_err, default_vault_config, MockEnv};
 
@@ -21,8 +23,15 @@ fn only_owner_can_update_vault_configs() {
     let bad_guy = Addr::unchecked("doctor_otto_983");
     let res = mock.update_vault_config(
         &bad_guy,
-        VaultConfigUpdate::Remove {
-            addr: "xyz".to_string(),
+        VaultConfigUpdate::AddOrUpdate {
+            config: VaultConfigUnchecked {
+                addr: "xyz".to_string(),
+                deposit_cap: Default::default(),
+                max_loan_to_value: Default::default(),
+                liquidation_threshold: Default::default(),
+                whitelisted: false,
+                hls: None,
+            },
         },
     );
     assert_err(res, Owner(OwnerError::NotOwner {}));
@@ -142,69 +151,6 @@ fn update_existing_vault_configs() {
     let vault_config = mock.query_vault_config(&vault0);
     assert!(!vault_config.whitelisted);
     assert_eq!(vault_config.max_loan_to_value, new_max_ltv);
-}
-
-#[test]
-fn removing_from_vault_configs() {
-    let mut mock = MockEnv::new().build().unwrap();
-    let owner = mock.query_owner();
-    let vault0 = "vault_addr_0".to_string();
-    let vault1 = "vault_addr_1".to_string();
-    let vault2 = "vault_addr_2".to_string();
-
-    mock.update_vault_config(
-        &owner,
-        VaultConfigUpdate::AddOrUpdate {
-            config: default_vault_config(&vault0),
-        },
-    )
-    .unwrap();
-    mock.update_vault_config(
-        &owner,
-        VaultConfigUpdate::AddOrUpdate {
-            config: default_vault_config(&vault1),
-        },
-    )
-    .unwrap();
-    mock.update_vault_config(
-        &owner,
-        VaultConfigUpdate::AddOrUpdate {
-            config: default_vault_config(&vault2),
-        },
-    )
-    .unwrap();
-
-    let vault_configs = mock.query_all_vault_configs(None, None);
-    assert_eq!(3, vault_configs.len());
-
-    mock.update_vault_config(
-        &owner,
-        VaultConfigUpdate::Remove {
-            addr: vault1,
-        },
-    )
-    .unwrap();
-    let vault_configs = mock.query_all_vault_configs(None, None);
-    assert_eq!(2, vault_configs.len());
-    assert_eq!(&vault0, &vault_configs.first().unwrap().addr);
-    assert_eq!(&vault2, &vault_configs.get(1).unwrap().addr);
-
-    mock.update_vault_config(
-        &owner,
-        VaultConfigUpdate::Remove {
-            addr: vault0,
-        },
-    )
-    .unwrap();
-    mock.update_vault_config(
-        &owner,
-        VaultConfigUpdate::Remove {
-            addr: vault2,
-        },
-    )
-    .unwrap();
-    let vault_configs = mock.query_all_vault_configs(None, None);
-    assert!(vault_configs.is_empty());
 }
 
 #[test]
