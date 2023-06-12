@@ -1971,6 +1971,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-swapper-mock"
+version = "1.1.0"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std",
+ "cw-multi-test 0.16.5",
+ "mars-red-bank-types",
+]
+
+[[package]]
 name = "mars-swapper-osmosis"
 version = "1.1.0"
 dependencies = [
