@@ -62,7 +62,7 @@ pub fn increase_unclaimed_rewards(
 /// Returns asset incentives, with optional pagination.
 /// Caller should make sure that if start_after_incentive_denom is supplied, then
 /// start_after_collateral_denom is also supplied.
-pub fn paginate_incentive_indices(
+pub fn paginate_incentive_states(
     storage: &dyn Storage,
     start_after_collateral_denom: Option<String>,
     start_after_incentive_denom: Option<String>,
@@ -116,18 +116,18 @@ mod tests {
         }
 
         // No pagination
-        let res = paginate_incentive_indices(&storage, None, None, None).unwrap();
+        let res = paginate_incentive_states(&storage, None, None, None).unwrap();
         assert_eq!(res, incentives);
 
         // Start after collateral denom
         let res =
-            paginate_incentive_indices(&storage, Some("collat1".to_string()), None, None).unwrap();
+            paginate_incentive_states(&storage, Some("collat1".to_string()), None, None).unwrap();
         println!("start after collat1: {:?}", res);
         println!("expected: {:?}", incentives[2..].to_vec());
         assert_eq!(res, incentives[2..]);
 
         // Start after collateral denom and incentive denom
-        let res = paginate_incentive_indices(
+        let res = paginate_incentive_states(
             &storage,
             Some("collat1".to_string()),
             Some("incen1".to_string()),
@@ -135,7 +135,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(res, incentives[1..]);
-        let res = paginate_incentive_indices(
+        let res = paginate_incentive_states(
             &storage,
             Some("collat1".to_string()),
             Some("incen2".to_string()),
@@ -145,7 +145,7 @@ mod tests {
         assert_eq!(res, incentives[2..]);
 
         // Limit
-        let res = paginate_incentive_indices(&storage, None, None, Some(2)).unwrap();
+        let res = paginate_incentive_states(&storage, None, None, Some(2)).unwrap();
         assert_eq!(res, incentives[..2].to_vec());
     }
 }

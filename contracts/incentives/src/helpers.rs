@@ -207,9 +207,9 @@ pub fn compute_incentive_index(
     Ok(new_index)
 }
 
-/// Computes user accrued rewards using the difference between asset_incentive index and
-/// user current index
-/// asset_incentives index should be up to date.
+/// Computes user accrued rewards using the difference between incentive index and
+/// user current index.
+/// incentive index should be up to date.
 pub fn compute_user_accrued_rewards(
     user_amount_scaled: Uint128,
     user_asset_index: Decimal,

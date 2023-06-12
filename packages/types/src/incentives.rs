@@ -51,13 +51,13 @@ impl IncentiveStateResponse {
     pub fn from(
         collateral_denom: impl Into<String>,
         incentive_denom: impl Into<String>,
-        ii: IncentiveState,
+        is: IncentiveState,
     ) -> Self {
         Self {
             collateral_denom: collateral_denom.into(),
             incentive_denom: incentive_denom.into(),
-            index: ii.index,
-            last_updated: ii.last_updated,
+            index: is.index,
+            last_updated: is.last_updated,
         }
     }
 }
@@ -147,18 +147,18 @@ pub enum QueryMsg {
     #[returns(ConfigResponse)]
     Config {},
 
-    /// Query info about asset incentive for a given collateral and incentive denom pair
+    /// Query info about the state of an incentive for a given collateral and incentive denom pair
     #[returns(IncentiveStateResponse)]
-    AssetIncentive {
+    IncentiveState {
         /// The denom of the token that users supply as collateral to receive incentives
         collateral_denom: String,
         /// The denom of the token which is used to give incentives with
         incentive_denom: String,
     },
 
-    /// Enumerate asset incentives with pagination
+    /// Enumerate incentive states with pagination
     #[returns(Vec<IncentiveStateResponse>)]
-    AssetIncentives {
+    IncentiveStates {
         /// Start pagination after this collateral denom
         start_after_collateral_denom: Option<String>,
         /// Start pagination after this incentive denom. If supplied you must also supply
