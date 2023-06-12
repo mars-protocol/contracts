@@ -32,7 +32,7 @@ fn denom_must_be_native() {
 }
 
 #[test]
-fn max_ltv_less_than_or_equal_to_one() {
+fn max_ltv_less_than_one() {
     let mut mock = MockEnv::new().build().unwrap();
     let mut params = default_asset_params("denom_xyz");
     params.max_loan_to_value = Decimal::from_str("1.1235").unwrap();
@@ -48,7 +48,7 @@ fn max_ltv_less_than_or_equal_to_one() {
         Validation(InvalidParam {
             param_name: "max_loan_to_value".to_string(),
             invalid_value: "1.1235".to_string(),
-            predicate: "<= 1".to_string(),
+            predicate: "< 1".to_string(),
         }),
     );
 }
@@ -121,7 +121,7 @@ fn liq_threshold_gt_max_ltv() {
 }
 
 #[test]
-fn hls_max_ltv_less_than_or_equal_to_one() {
+fn hls_max_ltv_less_than_one() {
     let mut mock = MockEnv::new().build().unwrap();
     let mut params = default_asset_params("denom_xyz");
     params.credit_manager.hls = Some(HlsParamsUnchecked {
@@ -141,7 +141,7 @@ fn hls_max_ltv_less_than_or_equal_to_one() {
         Validation(InvalidParam {
             param_name: "hls_max_loan_to_value".to_string(),
             invalid_value: "1.1235".to_string(),
-            predicate: "<= 1".to_string(),
+            predicate: "< 1".to_string(),
         }),
     );
 }
