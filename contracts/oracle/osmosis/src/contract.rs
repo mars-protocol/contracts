@@ -48,6 +48,6 @@ pub mod entry {
 
     #[entry_point]
     pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> ContractResult<Response> {
-        migrations::v1_0_0::migrate(deps)
+        migrations::v1_0_1::migrate(deps)
     }
 }
