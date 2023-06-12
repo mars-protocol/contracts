@@ -16,3 +16,20 @@ impl IntoUint128 for Decimal {
         *self * Uint128::new(1)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hashset() {
+        let data = vec![1, 2, 3, 4, 5];
+        let set = hashset(&data);
+        assert_eq!(set.len(), 5);
+        assert!(set.contains(&1));
+        assert!(set.contains(&2));
+        assert!(set.contains(&3));
+        assert!(set.contains(&4));
+        assert!(set.contains(&5));
+    }
+}
