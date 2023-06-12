@@ -38,7 +38,7 @@ fn query_asset_incentive() {
 
     let res: IncentiveStateResponse = helpers::th_query(
         deps.as_ref(),
-        QueryMsg::AssetIncentive {
+        QueryMsg::IncentiveState {
             collateral_denom: "uatom".to_string(),
             incentive_denom: "umars".to_string(),
         },
@@ -82,7 +82,7 @@ fn query_asset_incentives() {
     // NOTE: responses are ordered alphabetically by denom
     let res: Vec<IncentiveStateResponse> = helpers::th_query(
         deps.as_ref(),
-        QueryMsg::AssetIncentives {
+        QueryMsg::IncentiveStates {
             start_after_collateral_denom: None,
             start_after_incentive_denom: None,
             limit: None,
@@ -104,7 +104,7 @@ fn query_asset_incentives() {
     // NOTE: responses are ordered alphabetically by denom
     let res: Vec<IncentiveStateResponse> = helpers::th_query(
         deps.as_ref(),
-        QueryMsg::AssetIncentives {
+        QueryMsg::IncentiveStates {
             start_after_collateral_denom: Some("uatom".to_string()),
             start_after_incentive_denom: None,
             limit: Some(1),
