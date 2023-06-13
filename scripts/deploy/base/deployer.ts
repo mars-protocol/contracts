@@ -5,7 +5,7 @@ import { printBlue, printGreen, printRed, printYellow } from '../../utils/chalk'
 import { ARTIFACTS_PATH, Storage } from './storage'
 import { InstantiateMsgs } from '../../types/msg'
 import assert from 'assert'
-import {InstantiateMsg as ParamsInstantiateMsg } from "../../types/generated/mars-params/MarsParams.types";
+import { InstantiateMsg as ParamsInstantiateMsg } from '../../types/generated/mars-params/MarsParams.types'
 
 export class Deployer {
   constructor(

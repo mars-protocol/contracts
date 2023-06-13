@@ -1,6 +1,6 @@
 import { setupDeployer } from './setupDeployer'
 import { DeploymentConfig } from '../../types/config'
-import {printGreen, printRed} from '../../utils/chalk'
+import { printGreen, printRed } from '../../utils/chalk'
 import { atomOracle, axlUSDCOracle } from '../osmosis/config'
 
 export const taskRunner = async (config: DeploymentConfig) => {

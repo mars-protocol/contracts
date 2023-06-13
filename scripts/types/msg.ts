@@ -1,4 +1,4 @@
-import {InstantiateMsg as ParamsInstantiateMsg } from "./generated/mars-params/MarsParams.types";
+import { InstantiateMsg as ParamsInstantiateMsg } from './generated/mars-params/MarsParams.types'
 
 export type InstantiateMsgs =
   | RedBankInstantiateMsg
