@@ -5,6 +5,7 @@ import { printBlue, printGreen, printRed, printYellow } from '../../utils/chalk'
 import { ARTIFACTS_PATH, Storage } from './storage'
 import { InstantiateMsgs } from '../../types/msg'
 import assert from 'assert'
+import {InstantiateMsg as ParamsInstantiateMsg } from "../../types/generated/mars-params/MarsParams.types";
 
 export class Deployer {
   constructor(
@@ -83,6 +84,14 @@ export class Deployer {
       base_denom: this.config.baseAssetDenom,
     }
     await this.instantiate('oracle', this.storage.codeIds.oracle!, msg)
+  }
+
+  async instantiateParams() {
+    const msg: ParamsInstantiateMsg = {
+      owner: this.deployerAddress,
+      max_close_factor: this.config.maxCloseFactor,
+    }
+    await this.instantiate('params', this.storage.codeIds.params!, msg)
   }
 
   async setOracle(oracleConfig: OracleConfig) {

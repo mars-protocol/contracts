@@ -1,5 +1,15 @@
 import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/config'
 
+// Note: since osmo-test-5 upgrade, testnet and mainnet denoms are no longer the same. Reference asset info here: https://docs.osmosis.zone/osmosis-core/asset-info/
+const uosmo = 'uosmo'
+const uatom = 'ibc/A8C2D23A1E6F95DA4E48BA349667E322BD7A6C996D8A4AAE8BA72E190F3D1477'
+const aUSDC = 'ibc/6F34E1BD664C36CE49ACC28E60D62559A5F96C4F9A6CCE4FC5A67B2852E24CFE' // axelar
+// const nUSDC = 'ibc/B3504E092456BA618CC28AC671A71FB08C6CA0FD0BE7C8A5B5A3E2DD933CC9E4' // noble
+// const atom_osmo = 'gamm/pool/12'
+// const nUSDC_osmo = 'gamm/pool/6'
+// const aUSDC_osmo = 'gamm/pool/5'
+
+// Mainnet:
 const axlUSDC = 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858'
 const atom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
 const marsTestnet = 'ibc/ACA4C8A815A053CC027DB90D15915ADA31939FA331CE745862CDD00A2904FA17'
@@ -13,14 +23,14 @@ const marsOsmoPool = 907
 // axlUSDC does not have a pool on testnet so config can't have swapRoutes configured correctly
 export const osmosisTestnetConfig: DeploymentConfig = {
   chainName: 'osmosis',
-  atomDenom: atom,
-  baseAssetDenom: 'uosmo',
-  chainId: 'osmo-test-4',
+  atomDenom: uatom,
+  baseAssetDenom: uosmo,
+  chainId: 'osmo-test-5',
   chainPrefix: 'osmo',
   channelId: 'channel-2083',
   marsDenom: marsTestnet,
   rewardCollectorTimeoutSeconds: 600,
-  rpcEndpoint: 'https://rpc-test.osmosis.zone',
+  rpcEndpoint: 'https://rpc.osmotest5.osmosis.zone',
   safetyFundFeeShare: '0.5',
   deployerMnemonic:
     'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
@@ -30,13 +40,14 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   runTests: false,
   mainnet: false,
   feeCollectorDenom: marsTestnet,
-  safetyFundDenom: axlUSDC,
+  safetyFundDenom: aUSDC,
   swapRoutes: [
-    { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
+    { denom_in: uatom, denom_out: uosmo, route: [{ pool_id: 12, token_out_denom: uosmo }] },
   ],
   safetyFundAddr: safetyFundAddr,
   protocolAdminAddr: protocolAdminAddr,
   feeCollectorAddr: feeCollectorAddr,
+  maxCloseFactor: '0.5',
 }
 
 // axlUSDC does not have a pool on testnet so config can't have swapRoutes configured correctly
@@ -67,6 +78,7 @@ export const osmosisTestMultisig: DeploymentConfig = {
   safetyFundAddr: safetyFundAddr,
   protocolAdminAddr: protocolAdminAddr,
   feeCollectorAddr: feeCollectorAddr,
+  maxCloseFactor: '0.5',
 }
 
 export const osmosisMainnet: DeploymentConfig = {
@@ -124,6 +136,7 @@ export const osmosisMainnet: DeploymentConfig = {
   safetyFundAddr: safetyFundAddr,
   protocolAdminAddr: protocolAdminAddr,
   feeCollectorAddr: feeCollectorAddr,
+  maxCloseFactor: '0.5',
 }
 
 export const osmosisLocalConfig: DeploymentConfig = {
@@ -152,6 +165,7 @@ export const osmosisLocalConfig: DeploymentConfig = {
   safetyFundAddr: safetyFundAddr,
   protocolAdminAddr: protocolAdminAddr,
   feeCollectorAddr: feeCollectorAddr,
+  maxCloseFactor: '0.5',
 }
 
 export const osmoAsset: AssetConfig = {

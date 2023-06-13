@@ -1,6 +1,6 @@
 import { setupDeployer } from './setupDeployer'
 import { DeploymentConfig } from '../../types/config'
-import { printGreen, printRed } from '../../utils/chalk'
+import {printGreen, printRed} from '../../utils/chalk'
 import { atomOracle, axlUSDCOracle } from '../osmosis/config'
 
 export const taskRunner = async (config: DeploymentConfig) => {
@@ -12,11 +12,13 @@ export const taskRunner = async (config: DeploymentConfig) => {
 
     // Upload contracts
     await deployer.upload('oracle', `mars_oracle_${config.chainName}.wasm`)
+    await deployer.upload('params', `mars_params.wasm`)
     // TODO: upload swapper contract
 
     // Instantiate contracts
     deployer.setOwnerAddr()
     await deployer.instantiateOracle()
+    await deployer.instantiateParams()
     // TODO: instantiate swapper contract
 
     // setup

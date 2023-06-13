@@ -1,9 +1,12 @@
+import {InstantiateMsg as ParamsInstantiateMsg } from "./generated/mars-params/MarsParams.types";
+
 export type InstantiateMsgs =
   | RedBankInstantiateMsg
   | AddressProviderInstantiateMsg
   | IncentivesInstantiateMsg
   | OracleInstantiateMsg
   | RewardsInstantiateMsg
+  | ParamsInstantiateMsg
 
 export interface RedBankInstantiateMsg {
   owner: string

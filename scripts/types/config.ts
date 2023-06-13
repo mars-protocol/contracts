@@ -31,6 +31,7 @@ export interface DeploymentConfig {
   safetyFundAddr: string
   protocolAdminAddr: string
   feeCollectorAddr: string
+  maxCloseFactor: string
 }
 
 export interface AssetConfig {
