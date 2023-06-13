@@ -707,18 +707,17 @@ impl OsmosisPriceSourceChecked {
         let price_feed_response = query_price_feed(&deps.querier, contract_addr, price_feed_id)?;
         let price_feed = price_feed_response.price_feed;
 
-        // Get the current price and confidence interval from the price feed
-        let current_price = price_feed.get_price_unchecked();
-
         // Check if the current price is not too old
-        if (current_time - current_price.publish_time as u64) > max_staleness {
+        let current_price_opt =
+            price_feed.get_price_no_older_than(current_time as i64, max_staleness);
+        let Some(current_price) = current_price_opt else {
             return Err(InvalidPrice {
                 reason: format!(
                     "current price publish time is too old/stale. published: {}, now: {}",
-                    current_price.publish_time, current_time
+                    price_feed.get_price_unchecked().publish_time, current_time
                 ),
             });
-        }
+        };
 
         // Check if the current price is > 0
         if current_price.price <= 0 {
