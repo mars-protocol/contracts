@@ -5,7 +5,9 @@ use cw_it::{
 };
 use mars_red_bank_types::swapper::ExecuteMsg;
 use mars_swapper_base::ContractError;
-use mars_swapper_osmosis::route::{OsmosisRoute, SwapAmountInRoute};
+use mars_swapper_osmosis::route::OsmosisRoute;
+use osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute;
+use osmosis_test_tube::{Account, Bank, FeeSetting, Gamm, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::{
     assert_err, instantiate_contract, query_balance, swap_to_create_twap_records,
