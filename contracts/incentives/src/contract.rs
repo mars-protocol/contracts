@@ -276,6 +276,14 @@ pub fn execute_set_asset_incentive(
         )?;
     }
 
+    // Set up the incentive state if it doesn't exist
+    INCENTIVE_STATES.update(deps.storage, (&collateral_denom, &incentive_denom), |old| {
+        Ok::<_, StdError>(old.unwrap_or_else(|| IncentiveState {
+            index: Decimal::zero(),
+            last_updated: current_time,
+        }))
+    })?;
+
     let response = Response::new().add_attributes(vec![
         attr("action", "set_asset_incentive"),
         attr("collateral_denom", collateral_denom),
