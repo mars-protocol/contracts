@@ -34,4 +34,6 @@ serde               = { workspace = true }
 thiserror           = { workspace = true }
 
 [dev-dependencies]
+mars-osmosis = { workspace = true }
 mars-testing = { workspace = true }
+osmosis-std  = { workspace = true }
