@@ -6,6 +6,7 @@ export interface StorageItems {
     incentives?: number
     oracle?: number
     swapper?: number
+    params?: number
   }
   addresses: {
     'address-provider'?: string
@@ -14,6 +15,7 @@ export interface StorageItems {
     incentives?: string
     oracle?: string
     swapper?: string
+    params?: string
   }
 
   execute: {

@@ -28,6 +28,8 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.upload('incentives', 'mars_incentives.wasm')
     await deployer.upload('oracle', `mars_oracle_${config.chainName}.wasm`)
     await deployer.upload('rewards-collector', `mars_rewards_collector_${config.chainName}.wasm`)
+    await deployer.upload('params', `mars_params.wasm`)
+    // TODO: upload swapper contract
 
     // Instantiate contracts
     deployer.setOwnerAddr()
@@ -37,6 +39,8 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.instantiateOracle()
     await deployer.instantiateRewards()
     await deployer.saveDeploymentAddrsToFile()
+    await deployer.instantiateParams()
+    // TODO: instantiate swapper contract
 
     // setup
     await deployer.updateAddressProvider()
