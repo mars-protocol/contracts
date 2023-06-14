@@ -1,3 +1,5 @@
+#[cfg(feature = "backtraces")]
+use std::backtrace::Backtrace;
 use std::collections::{HashMap, HashSet};
 
 use cosmwasm_std::{Addr, Deps, Env, Order, StdError, StdResult, Uint128};
@@ -42,6 +44,8 @@ pub fn assert_below_liq_threshold_after_withdraw(
         None => {
             return Err(StdError::GenericErr {
                 msg: "No User Balance".to_string(),
+                #[cfg(feature = "backtraces")]
+                backtrace: Backtrace::capture(),
             }
             .into())
         }
