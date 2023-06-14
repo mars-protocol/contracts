@@ -1,9 +1,7 @@
 use std::fmt;
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{
-    BlockInfo, Coin, CosmosMsg, Decimal, Empty, Env, Fraction, QuerierWrapper, Uint128,
-};
+use cosmwasm_std::{BlockInfo, CosmosMsg, Decimal, Empty, Env, Fraction, QuerierWrapper, Uint128};
 use mars_osmosis::helpers::{has_denom, query_arithmetic_twap_price, query_pool};
 use mars_red_bank_types::swapper::EstimateExactInSwapResponse;
 use mars_swapper_base::{ContractError, ContractResult, Route};
@@ -107,7 +105,7 @@ impl Route<Empty, Empty> for OsmosisRoute {
         &self,
         querier: &QuerierWrapper,
         env: &Env,
-        coin_in: &Coin,
+        coin_in: &cosmwasm_std::Coin,
         slippage: Decimal,
     ) -> ContractResult<CosmosMsg> {
         let steps = &self.0;
@@ -136,7 +134,7 @@ impl Route<Empty, Empty> for OsmosisRoute {
         &self,
         querier: &QuerierWrapper,
         env: &Env,
-        coin_in: &Coin,
+        coin_in: &cosmwasm_std::Coin,
     ) -> ContractResult<EstimateExactInSwapResponse> {
         let out_amount = query_out_amount(querier, &env.block, coin_in, &self.0)?;
         Ok(EstimateExactInSwapResponse {
@@ -156,7 +154,7 @@ impl Route<Empty, Empty> for OsmosisRoute {
 fn query_out_amount(
     querier: &QuerierWrapper,
     block: &BlockInfo,
-    coin_in: &Coin,
+    coin_in: &cosmwasm_std::Coin,
     steps: &[SwapAmountInRoute],
 ) -> ContractResult<Uint128> {
     let start_time = block.time.seconds() - TWAP_WINDOW_SIZE_SECONDS;

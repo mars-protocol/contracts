@@ -6,6 +6,6 @@ mod price_source;
 pub mod stride;
 
 pub use price_source::{
-    Downtime, DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked,
+    scale_pyth_price, Downtime, DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked,
     OsmosisPriceSourceUnchecked, RedemptionRate,
 };

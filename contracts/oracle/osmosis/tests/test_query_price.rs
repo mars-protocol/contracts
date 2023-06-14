@@ -10,7 +10,7 @@ use mars_oracle_osmosis::{
     contract::entry, stride::RedemptionRateResponse, Downtime, DowntimeDetector, GeometricTwap,
     OsmosisPriceSourceUnchecked, RedemptionRate,
 };
-use mars_red_bank_types::oracle::msg::{PriceResponse, QueryMsg};
+use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 use osmosis_std::types::osmosis::{
     poolmanager::v1beta1::SpotPriceResponse,

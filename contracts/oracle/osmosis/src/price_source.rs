@@ -685,8 +685,75 @@ impl OsmosisPriceSourceChecked {
     }
 }
 
+/// Price feeds represent numbers in a fixed-point format.
+/// The same exponent is used for both the price and confidence interval.
+/// The integer representation of these values can be computed by multiplying by 10^exponent.
+///
+/// As an example, imagine Pyth reported the following values for ATOM/USD:
+/// expo:  -8
+/// conf:  574566
+/// price: 1365133270
+/// The confidence interval is 574566 * 10^(-8) = $0.00574566, and the price is 1365133270 * 10^(-8) = $13.6513327.
+///
+/// Moreover, we have to represent the price for utoken in base_denom.
+/// Pyth price should be normalized with token decimals.
+///
+/// Let's try to convert ATOM/USD reported by Pyth to uatom/base_denom:
+/// - base_denom = uusd
+/// - price source set for usd (e.g. FIXED price source where 1 usd = 1000000 uusd)
+/// - denom_decimals (ATOM) = 6
+///
+/// 1 ATOM = 10^6 uatom
+///
+/// 1 ATOM = price * 10^expo USD
+/// 10^6 uatom = price * 10^expo * 1000000 uusd
+/// uatom = price * 10^expo * 1000000 / 10^6 uusd
+/// uatom = price * 10^expo * 1000000 * 10^(-6) uusd
+/// uatom/uusd = 1365133270 * 10^(-8) * 1000000 * 10^(-6)
+/// uatom/uusd = 1365133270 * 10^(-8) = 13.6513327
+///
+/// Generalized formula:
+/// utoken/uusd = price * 10^expo * usd_price_in_base_denom * 10^(-denom_decimals)
+pub fn scale_pyth_price(
+    value: u128,
+    expo: i32,
+    denom_decimals: u8,
+    usd_price: Decimal,
+) -> ContractResult<Decimal> {
+    let target_expo = Uint128::from(10u8).checked_pow(expo.unsigned_abs())?;
+    let pyth_price = if expo < 0 {
+        Decimal::checked_from_ratio(value, target_expo)?
+    } else {
+        let res = Uint128::from(value).checked_mul(target_expo)?;
+        Decimal::from_ratio(res, 1u128)
+    };
+
+    let denom_scaled = Decimal::from_atomics(1u128, denom_decimals as u32)?;
+
+    // Multiplication order matters !!! It can overflow doing different ways.
+    // usd_price is represented in smallest unit so it can be quite big number and can be used to reduce number of decimals.
+    //
+    // Let's assume that:
+    // - usd_price = 1000000 = 10^6
+    // - expo = -8
+    // - denom_decimals = 18
+    //
+    // If we multiply usd_price by denom_scaled firstly we will decrease number of decimals used in next multiplication by pyth_price:
+    // 10^6 * 10^(-18) = 10^(-12)
+    // 12 decimals used.
+    //
+    // BUT if we multiply pyth_price by denom_scaled:
+    // 10^(-8) * 10^(-18) = 10^(-26)
+    // 26 decimals used (overflow) !!!
+    let price = usd_price.checked_mul(denom_scaled)?.checked_mul(pyth_price)?;
+
+    Ok(price)
+}
+
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::*;
 
     #[test]
@@ -742,5 +809,36 @@ mod tests {
             },
         };
         assert_eq!(ps.to_string(), "lsd:transitive:456:380:Some(Duration30m:552):osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc:1234");
+    }
+
+    #[test]
+    fn scale_real_pyth_price() {
+        // ATOM
+        let uatom_price_in_uusd =
+            scale_pyth_price(1035200881u128, -8, 6u8, Decimal::from_str("1000000").unwrap())
+                .unwrap();
+        assert_eq!(uatom_price_in_uusd, Decimal::from_str("10.35200881").unwrap());
+
+        // ETH
+        let ueth_price_in_uusd =
+            scale_pyth_price(181598000001u128, -8, 18u8, Decimal::from_str("1000000").unwrap())
+                .unwrap();
+        assert_eq!(ueth_price_in_uusd, Decimal::from_str("0.00000000181598").unwrap());
+    }
+
+    #[test]
+    fn scale_pyth_price_if_expo_above_zero() {
+        let ueth_price_in_uusd =
+            scale_pyth_price(181598000001u128, 8, 18u8, Decimal::from_str("1000000").unwrap())
+                .unwrap();
+        assert_eq!(ueth_price_in_uusd, Decimal::from_atomics(181598000001u128, 4u32).unwrap());
+    }
+
+    #[test]
+    fn scale_big_eth_pyth_price() {
+        let ueth_price_in_uusd =
+            scale_pyth_price(100000098000001u128, -8, 18u8, Decimal::from_str("1000000").unwrap())
+                .unwrap();
+        assert_eq!(ueth_price_in_uusd, Decimal::from_atomics(100000098000001u128, 20u32).unwrap());
     }
 }
