@@ -6,7 +6,6 @@ use cw_it::{
         cosmos::bank::v1beta1::QueryBalanceRequest,
         osmosis::{
             gamm::v1beta1::{MsgSwapExactAmountIn, MsgSwapExactAmountInResponse},
-            poolmanager::v1beta1::SwapAmountInRoute,
         },
     },
     osmosis_test_tube::{
@@ -14,6 +13,7 @@ use cw_it::{
         Wasm,
     },
 };
+use mars_swapper_osmosis::route::SwapAmountInRoute;
 use mars_red_bank_types::swapper::InstantiateMsg;
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");

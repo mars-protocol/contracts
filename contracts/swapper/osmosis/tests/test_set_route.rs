@@ -1,3 +1,6 @@
+#[cfg(feature = "backtraces")]
+use std::backtrace::Backtrace;
+
 use cosmwasm_std::{coin, StdError::GenericErr};
 use cw_it::osmosis_test_tube::{Gamm, Module, OsmosisTestApp, Wasm};
 use mars_owner::OwnerError;
@@ -104,6 +107,8 @@ fn must_be_available_in_osmosis() {
         res_err,
         ContractError::Std(GenericErr {
             msg: "Querier contract error".to_string(),
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
         }),
     );
 }

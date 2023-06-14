@@ -1,3 +1,5 @@
+#[cfg(feature = "backtraces")]
+use std::backtrace::Backtrace;
 use std::collections::HashMap;
 
 use cosmwasm_std::{
@@ -104,7 +106,9 @@ fn from_coins_to_positions() {
         positions,
         StdError::GenericErr {
             msg: "Querier contract error: [mock]: could not find the market for invalid_denom"
-                .to_string()
+                .to_string(),
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
         }
     );
 }
