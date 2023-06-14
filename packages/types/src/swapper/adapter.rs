@@ -103,7 +103,7 @@ mod tests {
                     slippage,
                 })
                 .unwrap(),
-                funds: vec![coin_in.clone()],
+                funds: vec![coin_in],
             })
         );
     }
