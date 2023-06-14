@@ -47,8 +47,8 @@ cw-multi-test     = "0.16.5"
 cw-storage-plus   = "1.0.1"
 cw-utils          = "1.0.1"
 mars-owner        = { version = "1.2.0", features = ["emergency-owner"] }
-osmosis-std       = "0.15.3"
-osmosis-test-tube = "15.1.0"
+osmosis-std       = { git = "https://github.com/apollodao/osmosis-rust.git", rev = "9682deeb2e6869f7d0f9736fbe4e0ceef2d56fb7" }
+osmosis-test-tube = { git = "https://github.com/apollodao/test-tube.git", rev = "530144c4264de6f791c388352f57d8b52f9e1dfd" }
 prost             = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
 schemars          = "0.8.12"
 serde             = { version = "1.0.163", default-features = false, features = ["derive"] }
@@ -60,7 +60,7 @@ strum             = "0.24.1"
 cw-item-set       = "0.7.1"
 
 # dev-dependencies
-cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "2d59e15703aaa377cfb09f0e021b3b63bc827a22" }
+cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "7e33dd9ca2983e2efbfb90e546ad049a18696b08" }
 test-case         = "3.0.0"
 proptest          = "1.1.0"
 

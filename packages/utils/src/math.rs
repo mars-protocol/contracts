@@ -1,3 +1,5 @@
+#[cfg(feature = "backtraces")]
+use std::backtrace::Backtrace;
 use std::convert::TryInto;
 
 use cosmwasm_std::{
@@ -27,11 +29,15 @@ pub fn divide_decimal_by_decimal(a: Decimal, b: Decimal) -> StdResult<Decimal> {
                 operand1: a.numerator().to_string(),
                 operand2: a.denominator().to_string(),
             },
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
         },
         CheckedFromRatioError::DivideByZero => StdError::DivideByZero {
             source: cosmwasm_std::DivideByZeroError {
                 operand: b.to_string(),
             },
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
         },
     })
 }
