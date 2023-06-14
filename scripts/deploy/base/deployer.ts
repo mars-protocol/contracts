@@ -1,4 +1,4 @@
-import { AssetConfig, DeploymentConfig, OracleConfig } from '../../types/config'
+import { AssetConfig, DeploymentConfig, OracleConfig, isAstroportRoute } from '../../types/config'
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
 import * as fs from 'fs'
 import { printBlue, printGreen, printRed, printYellow } from '../../utils/chalk'
@@ -7,8 +7,12 @@ import { InstantiateMsgs } from '../../types/msg'
 import { writeFile } from 'fs/promises'
 import { join, resolve } from 'path'
 import assert from 'assert'
-import { ExecuteMsg } from '../../types/generated/mars-swapper-osmosis/MarsSwapperOsmosis.types'
+
+import { SwapperExecuteMsg } from '../../types/config'
+import { InstantiateMsg as SwapperInstantiateMsg } from '../../types/generated/mars-swapper-astroport/MarsSwapperAstroport.types'
 import { InstantiateMsg as ParamsInstantiateMsg } from '../../types/generated/mars-params/MarsParams.types'
+import { ExecuteMsg as WasmOracleExecuteMsg } from '../../types/generated/mars-oracle-wasm/MarsOracleWasm.types'
+import { StorageItems } from '../../types/storageItems'
 
 export class Deployer {
   constructor(
@@ -60,13 +64,18 @@ export class Deployer {
     printGreen(`Owner is set to: ${this.storage.owner}`)
   }
 
+  setAddress(name: keyof StorageItems['addresses'], address: string) {
+    this.storage.addresses[name] = address
+    printGreen(`Address of ${name} is set to: ${this.storage.addresses[name]}`)
+  }
+
   async instantiate(name: keyof Storage['addresses'], codeId: number, msg: InstantiateMsgs) {
     if (this.storage.addresses[name]) {
       printBlue(`Contract already instantiated :: ${name} :: ${this.storage.addresses[name]}`)
       return
     }
 
-    const { contractAddress } = await this.client.instantiate(
+    const { contractAddress: redBankContractAddress } = await this.client.instantiate(
       this.deployerAddress,
       codeId,
       msg,
@@ -75,7 +84,7 @@ export class Deployer {
       { admin: this.storage.owner },
     )
 
-    this.storage.addresses[name] = contractAddress
+    this.storage.addresses[name] = redBankContractAddress
     printGreen(
       `${this.config.chainId} :: ${name} Contract Address : ${this.storage.addresses[name]}`,
     )
@@ -132,19 +141,41 @@ export class Deployer {
     await this.instantiate('rewards-collector', this.storage.codeIds['rewards-collector']!, msg)
   }
 
+  async instantiateSwapper() {
+    const msg: SwapperInstantiateMsg = {
+      owner: this.storage.owner!,
+    }
+
+    await this.instantiate('swapper', this.storage.codeIds.swapper!, msg)
+  }
+
+  async instantiateParams() {
+    const msg: ParamsInstantiateMsg = {
+      owner: this.deployerAddress,
+      max_close_factor: this.config.maxCloseFactor,
+    }
+    await this.instantiate('params', this.storage.codeIds.params!, msg)
+  }
+
   async setRoutes() {
+    printBlue('Setting Swapper Routes')
     for (const route of this.config.swapRoutes) {
+      printBlue(`Setting route: ${route.denom_in} -> ${route.denom_out}`)
+      if (isAstroportRoute(route.route)) {
+        route.route.oracle = this.storage.addresses.oracle!
+      }
+
       await this.client.execute(
         this.deployerAddress,
         this.storage.addresses.swapper!,
         {
           set_route: route,
-        } satisfies ExecuteMsg,
+        } satisfies SwapperExecuteMsg,
         'auto',
       )
     }
 
-    printYellow(`${this.config.chainId} :: Rewards Collector Routes have been set`)
+    printYellow(`${this.config.chainId} :: Swapper Routes have been set`)
   }
 
   async saveDeploymentAddrsToFile() {
@@ -160,6 +191,7 @@ export class Deployer {
       printBlue('Addresses already updated.')
       return
     }
+    printBlue('Updating addresses in Address Provider...')
     const addressesToSet = [
       {
         address_type: 'rewards_collector',
@@ -189,9 +221,14 @@ export class Deployer {
         address_type: 'protocol_admin',
         address: this.config.protocolAdminAddr,
       },
+      {
+        address_type: 'swapper',
+        address: this.storage.addresses.swapper,
+      },
     ]
 
     for (const addrObj of addressesToSet) {
+      printBlue(`Setting ${addrObj.address_type} to ${addrObj.address}`)
       await this.client.execute(
         this.deployerAddress,
         this.storage.addresses['address-provider']!,
@@ -208,6 +245,7 @@ export class Deployer {
       printBlue(`${assetConfig.symbol} already initialized.`)
       return
     }
+    printBlue(`Initializing ${assetConfig.symbol}...`)
 
     const msg = {
       init_asset: {
@@ -242,55 +280,45 @@ export class Deployer {
     this.storage.execute.assetsInitialized.push(assetConfig.denom)
   }
 
-  async instantiateParams() {
-    const msg: ParamsInstantiateMsg = {
-      owner: this.deployerAddress,
-      max_close_factor: this.config.maxCloseFactor,
+  async recordTwapSnapshots(denoms: string[]) {
+    const msg: WasmOracleExecuteMsg = {
+      custom: {
+        record_twap_snapshots: {
+          denoms,
+        },
+      },
     }
-    await this.instantiate('params', this.storage.codeIds.params!, msg)
-  }
 
+    await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
+
+    printYellow(`Twap snapshots recorded for denoms: ${denoms.join(',')}.`)
+  }
   async setOracle(oracleConfig: OracleConfig) {
-    if (oracleConfig.price) {
-      const msg = {
-        set_price_source: {
-          denom: oracleConfig.denom,
-          price_source: {
-            fixed: { price: oracleConfig.price },
-          },
-        },
-      }
-      await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
-    } else {
-      const msg = {
-        set_price_source: {
-          denom: oracleConfig.denom,
-          price_source: {
-            geometric_twap: {
-              pool_id: oracleConfig.pool_id,
-              window_size: oracleConfig.window_size,
-              downtime_detector: oracleConfig.downtime_detector,
-            },
-          },
-        },
-      }
-      // see if we need fixed price for osmo - remove fixed price
-      await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
+    const msg = {
+      set_price_source: oracleConfig,
     }
+    await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
 
     printYellow('Oracle Price is set.')
 
     this.storage.execute.oraclePriceSet = true
 
-    const oracleResult = (await this.client.queryContractSmart(this.storage.addresses.oracle!, {
-      price: { denom: oracleConfig.denom },
-    })) as { price: number; denom: string }
+    try {
+      const oracleResult = (await this.client.queryContractSmart(this.storage.addresses.oracle!, {
+        price: { denom: oracleConfig.denom },
+      })) as { price: number; denom: string }
 
-    printGreen(
-      `${this.config.chainId} :: ${oracleConfig.denom} oracle price :  ${JSON.stringify(
-        oracleResult,
-      )}`,
-    )
+      printGreen(
+        `${this.config.chainId} :: ${oracleConfig.denom} oracle price :  ${JSON.stringify(
+          oracleResult,
+        )}`,
+      )
+    } catch (e) {
+      // Querying astroport TWAP can fail if enough TWAP snapshots have not been recorded yet
+      if (!Object.keys(oracleConfig.price_source).includes('astroport_twap')) {
+        throw e
+      }
+    }
   }
 
   async executeDeposit() {

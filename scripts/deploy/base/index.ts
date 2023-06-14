@@ -1,19 +1,6 @@
 import { setupDeployer } from './setupDeployer'
 import { DeploymentConfig } from '../../types/config'
 import { printGreen, printRed } from '../../utils/chalk'
-import {
-  atomAsset,
-  osmoAsset,
-  atomOracle,
-  axlUSDCAsset,
-  axlUSDCOracle,
-  atomAssetTest,
-  axlUSDCAssetTest,
-  axlUSDCOracleTest,
-  osmoOracle,
-  marsAssetTest,
-  marsOracleTest,
-} from '../osmosis/config'
 
 export const taskRunner = async (config: DeploymentConfig) => {
   const deployer = await setupDeployer(config)
@@ -29,7 +16,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.upload('oracle', `mars_oracle_${config.chainName}.wasm`)
     await deployer.upload('rewards-collector', `mars_rewards_collector_${config.chainName}.wasm`)
     await deployer.upload('params', `mars_params.wasm`)
-    // TODO: upload swapper contract
+    await deployer.upload('swapper', `mars_swapper_${config.swapperDexName}.wasm`)
 
     // Instantiate contracts
     deployer.setOwnerAddr()
@@ -38,29 +25,18 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.instantiateIncentives()
     await deployer.instantiateOracle()
     await deployer.instantiateRewards()
-    await deployer.saveDeploymentAddrsToFile()
+    await deployer.instantiateSwapper()
     await deployer.instantiateParams()
-    // TODO: instantiate swapper contract
+    await deployer.saveDeploymentAddrsToFile()
 
     // setup
     await deployer.updateAddressProvider()
     await deployer.setRoutes()
-    if (config.mainnet) {
-      await deployer.initializeAsset(osmoAsset)
-      await deployer.initializeAsset(atomAsset)
-      await deployer.initializeAsset(axlUSDCAsset)
-      await deployer.setOracle(osmoOracle)
-      await deployer.setOracle(atomOracle)
-      await deployer.setOracle(axlUSDCOracle)
-    } else {
-      await deployer.initializeAsset(osmoAsset)
-      await deployer.initializeAsset(atomAssetTest)
-      await deployer.initializeAsset(axlUSDCAssetTest)
-      await deployer.initializeAsset(marsAssetTest)
-      // await deployer.setOracle(atomOracle) NEED POOL SET
-      await deployer.setOracle(osmoOracle)
-      await deployer.setOracle(axlUSDCOracleTest)
-      await deployer.setOracle(marsOracleTest)
+    for (const asset of config.assets) {
+      await deployer.initializeAsset(asset)
+    }
+    for (const oracleConfig of config.oracleConfigs) {
+      await deployer.setOracle(oracleConfig)
     }
 
     //run tests

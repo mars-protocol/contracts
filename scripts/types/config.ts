@@ -1,17 +1,33 @@
-import { DowntimeDetector } from './generated/mars-oracle-osmosis/MarsOracleOsmosis.types'
+import { OsmosisPriceSourceForString } from './generated/mars-oracle-osmosis/MarsOracleOsmosis.types'
 import { OsmosisRoute } from './generated/mars-swapper-osmosis/MarsSwapperOsmosis.types'
+import { AstroportRoute } from './generated/mars-swapper-astroport/MarsSwapperAstroport.types'
+import { WasmPriceSourceForString } from './generated/mars-oracle-wasm/MarsOracleWasm.types'
 
 type SwapRoute = {
   denom_in: string
   denom_out: string
-  route: OsmosisRoute
+  route: OsmosisRoute | AstroportRoute
+}
+
+export type SwapperExecuteMsg = {
+  set_route: SwapRoute
+}
+
+export function isOsmosisRoute(route: OsmosisRoute | AstroportRoute): route is OsmosisRoute {
+  return Array.isArray(route)
+}
+
+export function isAstroportRoute(route: OsmosisRoute | AstroportRoute): route is AstroportRoute {
+  return !isOsmosisRoute(route)
 }
 
 export interface DeploymentConfig {
   chainName: string
+  oracleName: string
   rewardCollectorTimeoutSeconds: number
   marsDenom: string
   baseAssetDenom: string
+  gasPrice: string
   atomDenom: string
   chainPrefix: string
   safetyFundFeeShare: string
@@ -32,6 +48,9 @@ export interface DeploymentConfig {
   protocolAdminAddr: string
   feeCollectorAddr: string
   maxCloseFactor: string
+  swapperDexName: string
+  assets: AssetConfig[]
+  oracleConfigs: OracleConfig[]
 }
 
 export interface AssetConfig {
@@ -54,8 +73,5 @@ export interface AssetConfig {
 
 export interface OracleConfig {
   denom: string
-  price?: string
-  pool_id?: number
-  window_size?: number
-  downtime_detector?: DowntimeDetector | null
+  price_source: OsmosisPriceSourceForString | WasmPriceSourceForString
 }
