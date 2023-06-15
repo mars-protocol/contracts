@@ -1,40 +1,40 @@
 use cosmwasm_std::{Decimal, Uint128};
-use mars_incentives::state::ASSET_INCENTIVES;
-use mars_red_bank_types::incentives::{AssetIncentive, IncentiveStateResponse, QueryMsg};
+use mars_incentives::state::INCENTIVE_STATES;
+use mars_red_bank_types::incentives::{IncentiveState, IncentiveStateResponse, QueryMsg};
 
 use crate::helpers::th_setup;
 
 mod helpers;
 
 #[test]
-fn query_asset_incentive() {
+fn query_incentive_state() {
     let mut deps = th_setup();
 
     // incentives
-    let uosmo_incentive = AssetIncentive {
-        emission_per_second: Uint128::new(100),
-        start_time: 120,
-        duration: 8640000,
+    let uosmo_incentive = IncentiveState {
+        // emission_per_second: Uint128::new(100),
+        // start_time: 120,
+        // duration: 8640000,
         index: Decimal::one(),
         last_updated: 150,
     };
-    ASSET_INCENTIVES.save(deps.as_mut().storage, ("uosmo", "umars"), &uosmo_incentive).unwrap();
-    let uatom_incentive = AssetIncentive {
-        emission_per_second: Uint128::zero(),
-        start_time: 0,
-        duration: 1200,
+    INCENTIVE_STATES.save(deps.as_mut().storage, ("uosmo", "umars"), &uosmo_incentive).unwrap();
+    let uatom_incentive = IncentiveState {
+        // emission_per_second: Uint128::zero(),
+        // start_time: 0,
+        // duration: 1200,
         index: Decimal::one(),
         last_updated: 1000,
     };
-    ASSET_INCENTIVES.save(deps.as_mut().storage, ("uatom", "umars"), &uatom_incentive).unwrap();
-    let uusdc_incentive = AssetIncentive {
-        emission_per_second: Uint128::new(200),
-        start_time: 12000,
-        duration: 86400,
+    INCENTIVE_STATES.save(deps.as_mut().storage, ("uatom", "umars"), &uatom_incentive).unwrap();
+    let uusdc_incentive = IncentiveState {
+        // emission_per_second: Uint128::new(200),
+        // start_time: 12000,
+        // duration: 86400,
         index: Decimal::from_ratio(120u128, 50u128),
         last_updated: 120000,
     };
-    ASSET_INCENTIVES.save(deps.as_mut().storage, ("uusdc", "umars"), &uusdc_incentive).unwrap();
+    INCENTIVE_STATES.save(deps.as_mut().storage, ("uusdc", "umars"), &uusdc_incentive).unwrap();
 
     let res: IncentiveStateResponse = helpers::th_query(
         deps.as_ref(),
@@ -50,34 +50,34 @@ fn query_asset_incentive() {
 }
 
 #[test]
-fn query_asset_incentives() {
+fn query_incentive_states() {
     let mut deps = th_setup();
 
     // incentives
-    let uosmo_incentive = AssetIncentive {
-        emission_per_second: Uint128::new(100),
-        start_time: 120,
-        duration: 8640000,
+    let uosmo_incentive = IncentiveState {
+        // emission_per_second: Uint128::new(100),
+        // start_time: 120,
+        // duration: 8640000,
         index: Decimal::one(),
         last_updated: 150,
     };
-    ASSET_INCENTIVES.save(deps.as_mut().storage, ("uosmo", "umars"), &uosmo_incentive).unwrap();
-    let uatom_incentive = AssetIncentive {
-        emission_per_second: Uint128::zero(),
-        start_time: 0,
-        duration: 1200,
+    INCENTIVE_STATES.save(deps.as_mut().storage, ("uosmo", "umars"), &uosmo_incentive).unwrap();
+    let uatom_incentive = IncentiveState {
+        // emission_per_second: Uint128::zero(),
+        // start_time: 0,
+        // duration: 1200,
         index: Decimal::one(),
         last_updated: 1000,
     };
-    ASSET_INCENTIVES.save(deps.as_mut().storage, ("uatom", "umars"), &uatom_incentive).unwrap();
-    let uusdc_incentive = AssetIncentive {
-        emission_per_second: Uint128::new(200),
-        start_time: 12000,
-        duration: 86400,
+    INCENTIVE_STATES.save(deps.as_mut().storage, ("uatom", "umars"), &uatom_incentive).unwrap();
+    let uusdc_incentive = IncentiveState {
+        // emission_per_second: Uint128::new(200),
+        // start_time: 12000,
+        // duration: 86400,
         index: Decimal::from_ratio(120u128, 50u128),
         last_updated: 120000,
     };
-    ASSET_INCENTIVES.save(deps.as_mut().storage, ("uusdc", "umars"), &uusdc_incentive).unwrap();
+    INCENTIVE_STATES.save(deps.as_mut().storage, ("uusdc", "umars"), &uusdc_incentive).unwrap();
 
     // NOTE: responses are ordered alphabetically by denom
     let res: Vec<IncentiveStateResponse> = helpers::th_query(
