@@ -129,8 +129,8 @@ pub fn execute(
 }
 
 pub fn execute_update_whitelist(
-    deps: DepsMut,
-    _env: Env,
+    mut deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     add_denoms: Vec<String>,
     remove_denoms: Vec<String>,
@@ -142,8 +142,48 @@ pub fn execute_update_whitelist(
         WHITELIST.insert(deps.storage, &denom)?;
     }
 
+    let config = CONFIG.load(deps.storage)?;
+
     for denom in remove_denoms.iter() {
-        // TODO: Handle ongoing incentives
+        // Before removing from whitelist we must handle ongoing incentives,
+        // i.e. update the incentive index, and remove any schedules.
+        // So we first get all keys by in the INCENTIVE_STATES Map and then filter out the ones
+        // that match the incentive denom we are removing.
+        // This could be done more efficiently if we could prefix by incentive_denom, but
+        // the map key is (collateral_denom, incentive_denom) so we can't, without introducing
+        // another map, or using IndexedMap.
+        let keys = INCENTIVE_STATES
+            .keys(deps.storage, None, None, Order::Ascending)
+            .filter(|res| {
+                res.as_ref().map_or_else(|_| false, |(_, incentive_denom)| incentive_denom == denom)
+            })
+            .collect::<StdResult<Vec<_>>>()?;
+        for (collateral_denom, incentive_denom) in keys {
+            let total_collateral = helpers::query_red_bank_total_collateral(
+                deps.as_ref(),
+                &config.address_provider,
+                &collateral_denom,
+            )?;
+            update_incentive_index(
+                &mut deps.branch().storage.into(),
+                &collateral_denom,
+                &incentive_denom,
+                total_collateral,
+                env.block.time.seconds(),
+            )?;
+
+            // Remove any incentive schedules
+            let schedules = INCENTIVE_SCHEDULES
+                .prefix((&collateral_denom, &incentive_denom))
+                .range(deps.storage, None, None, Order::Ascending)
+                .collect::<StdResult<Vec<_>>>()?;
+            for (start_time, _) in schedules {
+                INCENTIVE_SCHEDULES
+                    .remove(deps.storage, (&collateral_denom, &incentive_denom, start_time));
+            }
+        }
+
+        // Finally remove the incentive denom from the whitelist
         WHITELIST.remove(deps.storage, &denom)?;
     }
 
@@ -495,6 +535,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             start_after_incentive_denom,
             limit,
         )?),
+        QueryMsg::Whitelist {} => to_binary(&query_whitelist(deps)?),
     }
 }
 
@@ -592,4 +633,10 @@ fn query_red_bank_address(deps: Deps) -> StdResult<Addr> {
         &config.address_provider,
         MarsAddressType::RedBank,
     )
+}
+
+fn query_whitelist(deps: Deps) -> StdResult<Vec<String>> {
+    let whitelist: Vec<String> =
+        WHITELIST.items(deps.storage, None, None, Order::Ascending).collect::<StdResult<_>>()?;
+    Ok(whitelist)
 }
