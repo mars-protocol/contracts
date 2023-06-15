@@ -12,6 +12,9 @@ pub struct Config {
     /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
     /// that an incentive can last, and each incentive must be a multiple of this duration.
     pub epoch_duration: u64,
+    /// The minimum amount of incentive tokens that must be emitted per second for each incentive
+    /// schedule.
+    pub min_incentive_emission: Uint128,
 }
 
 /// A single incentive schedule for a given collateral and incentive denom
@@ -73,6 +76,9 @@ pub struct InstantiateMsg {
     /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
     /// that an incentive can last, and each incentive must be a multiple of this duration.
     pub epoch_duration: u64,
+    /// The minimum amount of incentive tokens that must be emitted per second for each incentive
+    /// schedule.
+    pub min_incentive_emission: Uint128,
 }
 
 #[cw_serde]

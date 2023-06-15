@@ -1,208 +1,326 @@
-use cosmwasm_std::{Decimal, OverflowError, OverflowOperation, StdError, Uint128};
-use mars_incentives::helpers::{
-    compute_incentive_index, compute_user_accrued_rewards, update_asset_incentive_index,
+use cosmwasm_std::{
+    testing::MockStorage, Decimal, OverflowError, OverflowOperation, StdError, Storage, Uint128,
 };
-use mars_red_bank_types::incentives::AssetIncentive;
+use mars_incentives::{
+    helpers::{compute_incentive_index, compute_user_accrued_rewards, update_incentive_index},
+    state::{INCENTIVE_SCHEDULES, INCENTIVE_STATES},
+};
+use mars_red_bank_types::incentives::{IncentiveSchedule, IncentiveState};
 
 mod helpers;
 
 #[test]
-fn update_asset_incentive_index_if_zero_emission() {
+fn update_incentive_index_if_zero_emission() {
+    let mut storage = MockStorage::default();
     let start_time = 0;
-    let mut ai = AssetIncentive {
-        emission_per_second: Uint128::zero(),
-        start_time,
-        duration: 300, // 5 min
+    let ai = IncentiveState {
         index: Decimal::one(),
         last_updated: 0,
     };
+    INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
 
     let current_block_time = start_time + 1;
     let mut expected_ai = ai.clone();
     expected_ai.last_updated = current_block_time;
 
     // only last_updated should be changed to current_block_time
-    update_asset_incentive_index(&mut ai, Uint128::new(100), current_block_time).unwrap();
+    let ai = update_incentive_index(
+        &mut (&storage as &dyn Storage).into(),
+        "uosmo",
+        "umars",
+        Uint128::new(100),
+        current_block_time,
+    )
+    .unwrap();
     assert_eq!(ai, expected_ai);
 }
 
 #[test]
-fn update_asset_incentive_index_if_zero_amount() {
+fn update_incentive_index_if_zero_amount() {
+    let mut storage = MockStorage::default();
+
     let start_time = 0;
-    let mut ai = AssetIncentive {
-        emission_per_second: Uint128::new(50),
-        start_time,
-        duration: 300, // 5 min
+    let ai = IncentiveState {
         index: Decimal::one(),
         last_updated: 0,
     };
+    INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            &mut storage,
+            ("uosmo", "umars", start_time),
+            &IncentiveSchedule {
+                emission_per_second: Uint128::new(50),
+                start_time,
+                duration: 300, // 5 min
+            },
+        )
+        .unwrap();
 
     let current_block_time = start_time + 1;
-    let mut expected_ai = ai.clone();
-    expected_ai.last_updated = current_block_time;
+    let expected_ai = ai.clone();
 
-    // only last_updated should be changed to current_block_time
-    update_asset_incentive_index(&mut ai, Uint128::zero(), current_block_time).unwrap();
+    // No update should occur because total_collateral is zero
+    let ai = update_incentive_index(
+        &mut (&storage as &dyn Storage).into(),
+        "uosmo",
+        "umars",
+        Uint128::zero(),
+        current_block_time,
+    )
+    .unwrap();
     assert_eq!(ai, expected_ai);
 }
 
 #[test]
-fn update_asset_incentive_index_if_current_block_lt_start_time() {
+fn update_incentive_index_if_current_block_lt_start_time() {
+    let mut storage = MockStorage::default();
+
     let start_time = 10;
-    let mut ai = AssetIncentive {
-        emission_per_second: Uint128::new(50),
-        start_time,
-        duration: 300, // 5 min
+    let ai = IncentiveState {
         index: Decimal::one(),
         last_updated: 0,
     };
+    INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            &mut storage,
+            ("uosmo", "umars", start_time),
+            &IncentiveSchedule {
+                emission_per_second: Uint128::new(50),
+                start_time,
+                duration: 300, // 5 min
+            },
+        )
+        .unwrap();
 
     let current_block_time = start_time - 1;
     let mut expected_ai = ai.clone();
     expected_ai.last_updated = current_block_time;
 
     // only last_updated should be changed to current_block_time
-    update_asset_incentive_index(&mut ai, Uint128::new(100), current_block_time).unwrap();
+    let ai = update_incentive_index(
+        &mut (&storage as &dyn Storage).into(),
+        "uosmo",
+        "umars",
+        Uint128::new(100),
+        current_block_time,
+    )
+    .unwrap();
     assert_eq!(ai, expected_ai);
 }
 
 #[test]
-fn update_asset_incentive_index_if_current_block_eq_start_time() {
+fn update_incentive_index_if_current_block_eq_start_time() {
+    let mut storage = MockStorage::default();
+
     let start_time = 10;
-    let mut ai = AssetIncentive {
-        emission_per_second: Uint128::new(50),
-        start_time,
-        duration: 300, // 5 min
+    let ai = IncentiveState {
         index: Decimal::one(),
         last_updated: 0,
     };
+    INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            &mut storage,
+            ("uosmo", "umars", start_time),
+            &IncentiveSchedule {
+                emission_per_second: Uint128::new(50),
+                start_time,
+                duration: 300, // 5 min
+            },
+        )
+        .unwrap();
 
     let current_block_time = start_time;
     let mut expected_ai = ai.clone();
     expected_ai.last_updated = current_block_time;
 
     // only last_updated should be changed to current_block_time
-    update_asset_incentive_index(&mut ai, Uint128::new(100), current_block_time).unwrap();
+    let ai = update_incentive_index(
+        &mut (&storage as &dyn Storage).into(),
+        "uosmo",
+        "umars",
+        Uint128::new(100),
+        current_block_time,
+    )
+    .unwrap();
     assert_eq!(ai, expected_ai);
 }
 
 #[test]
-fn update_asset_incentive_index_if_current_block_gt_start_time() {
+fn update_incentive_index_if_current_block_gt_start_time() {
+    let mut storage = MockStorage::default();
+
     let total_amount = Uint128::new(100);
 
     let start_time = 10;
     let eps = Uint128::new(20);
-    let mut ai = AssetIncentive {
-        emission_per_second: eps,
-        start_time,
-        duration: 300, // 5 min
+    let ai = IncentiveState {
         index: Decimal::one(),
         last_updated: 0,
     };
+    INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            &mut storage,
+            ("uosmo", "umars", start_time),
+            &IncentiveSchedule {
+                emission_per_second: eps,
+                start_time,
+                duration: 300, // 5 min
+            },
+        )
+        .unwrap();
 
     let current_block_time = start_time + 1;
     let mut expected_ai = ai.clone();
     expected_ai.index = Decimal::from_ratio(12u128, 10u128);
     expected_ai.last_updated = current_block_time;
 
-    update_asset_incentive_index(&mut ai, total_amount, current_block_time).unwrap();
+    let ai = update_incentive_index(
+        &mut (&storage as &dyn Storage).into(),
+        "uosmo",
+        "umars",
+        total_amount,
+        current_block_time,
+    )
+    .unwrap();
     assert_eq!(ai, expected_ai);
 
     let current_block_time = current_block_time + 2;
     let mut expected_ai = ai.clone();
     expected_ai.index = Decimal::from_ratio(16u128, 10u128);
     expected_ai.last_updated = current_block_time;
-    update_asset_incentive_index(&mut ai, total_amount, current_block_time).unwrap();
+    let ai = update_incentive_index(
+        &mut (&storage as &dyn Storage).into(),
+        "uosmo",
+        "umars",
+        total_amount,
+        current_block_time,
+    )
+    .unwrap();
     assert_eq!(ai, expected_ai);
 }
 
 #[test]
-fn update_asset_incentive_index_if_last_updated_eq_end_time() {
+fn update_incentive_index_if_last_updated_eq_end_time() {
+    let mut storage = MockStorage::default();
+
     let start_time = 10;
     let duration = 300; // 5 min
     let end_time = start_time + duration;
-    let mut ai = AssetIncentive {
-        emission_per_second: Uint128::new(50),
-        start_time,
-        duration,
+    let ai = IncentiveState {
         index: Decimal::one(),
         last_updated: end_time,
     };
+    INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            &mut storage,
+            ("uosmo", "umars", start_time),
+            &IncentiveSchedule {
+                emission_per_second: Uint128::new(50),
+                start_time,
+                duration,
+            },
+        )
+        .unwrap();
 
     let current_block_time = end_time + 1;
     let mut expected_ai = ai.clone();
     expected_ai.last_updated = current_block_time;
 
     // only last_updated should be changed to current_block_time
-    update_asset_incentive_index(&mut ai, Uint128::new(100), current_block_time).unwrap();
+    let ai = update_incentive_index(
+        &mut (&storage as &dyn Storage).into(),
+        "uosmo",
+        "umars",
+        Uint128::new(100),
+        current_block_time,
+    )
+    .unwrap();
     assert_eq!(ai, expected_ai);
 }
 
 #[test]
-fn update_asset_incentive_index_if_last_updated_gt_end_time() {
-    let start_time = 10;
-    let duration = 300; // 5 min
-    let end_time = start_time + duration;
-    let last_updated = end_time + 1;
-    let mut ai = AssetIncentive {
-        emission_per_second: Uint128::new(50),
-        start_time,
-        duration,
-        index: Decimal::one(),
-        last_updated,
-    };
+fn update_incentive_index_if_last_updated_lt_end_time() {
+    let mut storage = MockStorage::default();
 
-    let current_block_time = last_updated + 1;
-    let mut expected_ai = ai.clone();
-    expected_ai.last_updated = current_block_time;
-
-    // only last_updated should be changed to current_block_time
-    update_asset_incentive_index(&mut ai, Uint128::new(100), current_block_time).unwrap();
-    assert_eq!(ai, expected_ai);
-}
-
-#[test]
-fn update_asset_incentive_index_if_last_updated_lt_end_time() {
     let start_time = 10;
     let duration = 300; // 5 min
     let end_time = start_time + duration;
     let last_updated = end_time - 1;
-    let mut ai = AssetIncentive {
-        emission_per_second: Uint128::new(20),
-        start_time,
-        duration,
+    let ai = IncentiveState {
         index: Decimal::one(),
         last_updated,
     };
+    INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            &mut storage,
+            ("uosmo", "umars", start_time),
+            &IncentiveSchedule {
+                emission_per_second: Uint128::new(20),
+                start_time,
+                duration,
+            },
+        )
+        .unwrap();
 
     let current_block_time = end_time;
     let mut expected_ai = ai.clone();
     expected_ai.index = Decimal::from_ratio(12u128, 10u128);
     expected_ai.last_updated = current_block_time;
 
-    update_asset_incentive_index(&mut ai, Uint128::new(100), current_block_time).unwrap();
+    let ai = update_incentive_index(
+        &mut (&storage as &dyn Storage).into(),
+        "uosmo",
+        "umars",
+        Uint128::new(100),
+        current_block_time,
+    )
+    .unwrap();
     assert_eq!(ai, expected_ai);
 }
 
 #[test]
-fn update_asset_incentive_index_if_not_updated_till_finished() {
+fn update_incentive_index_if_not_updated_till_finished() {
+    let mut storage = MockStorage::default();
+
     let start_time = 10;
     let duration = 300; // 5 min
     let end_time = start_time + duration;
-    let mut ai = AssetIncentive {
-        emission_per_second: Uint128::new(20),
-        start_time,
-        duration,
+    let ai = IncentiveState {
         index: Decimal::one(),
         last_updated: 0,
     };
+    INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            &mut storage,
+            ("uosmo", "umars", start_time),
+            &IncentiveSchedule {
+                emission_per_second: Uint128::new(20),
+                start_time,
+                duration,
+            },
+        )
+        .unwrap();
 
     let current_block_time = end_time + 10;
     let mut expected_ai = ai.clone();
     expected_ai.index = Decimal::from_ratio(610u128, 10u128);
     expected_ai.last_updated = current_block_time;
 
-    update_asset_incentive_index(&mut ai, Uint128::new(100), current_block_time).unwrap();
+    let ai = update_incentive_index(
+        &mut (&storage as &dyn Storage).into(),
+        "uosmo",
+        "umars",
+        Uint128::new(100),
+        current_block_time,
+    )
+    .unwrap();
     assert_eq!(ai, expected_ai);
 }
 
