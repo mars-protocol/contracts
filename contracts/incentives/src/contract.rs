@@ -171,25 +171,14 @@ pub fn execute_set_asset_incentive(
     validate_native_denom(&collateral_denom)?;
     validate_native_denom(&incentive_denom)?;
 
-    // Query Red Bank to check if market exists
-    let config = CONFIG.load(deps.storage)?;
-    let red_bank_addr = address_provider::helpers::query_contract_addr(
-        deps.as_ref(),
-        &config.address_provider,
-        MarsAddressType::RedBank,
-    )?;
-    let market: red_bank::Market = deps
-        .querier
-        .query_wasm_smart(
-            &red_bank_addr,
-            &red_bank::QueryMsg::Market {
-                denom: collateral_denom.to_string(),
-            },
-        )
-        .map_err(|_| ContractError::InvalidIncentive {
-            reason: "Market does not exist on Red Bank".to_string(),
-        })?;
+    // Check that the incentive denom is whitelisted
+    if !WHITELIST.contains(deps.storage, &incentive_denom) {
+        return Err(ContractError::NotWhitelisted {
+            denom: incentive_denom,
+        });
+    }
 
+    let config = CONFIG.load(deps.storage)?;
     let current_time = env.block.time.seconds();
 
     // Validate incentive schedule
