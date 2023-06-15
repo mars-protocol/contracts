@@ -3,7 +3,7 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Addr, Coin, Decimal, Empty, StdResult, Uint128};
+use cosmwasm_std::{coin, Addr, Coin, Decimal, StdResult, Uint128, Empty};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_red_bank_types::{
@@ -98,6 +98,8 @@ impl Incentives {
         duration: u64,
     ) {
         let current_block_time = env.app.block_info().time.seconds();
+        let funds = [coin(emission_per_second * duration as u128, incentive_denom)];
+        env.fund_account(&env.owner.clone(), &funds);
         env.app
             .execute_contract(
                 env.owner.clone(),
@@ -105,11 +107,11 @@ impl Incentives {
                 &incentives::ExecuteMsg::SetAssetIncentive {
                     collateral_denom: collateral_denom.to_string(),
                     incentive_denom: incentive_denom.to_string(),
-                    emission_per_second: Some(emission_per_second.into()),
-                    start_time: Some(current_block_time),
-                    duration: Some(duration),
+                    emission_per_second: emission_per_second.into(),
+                    start_time: current_block_time,
+                    duration,
                 },
-                &[],
+                &funds,
             )
             .unwrap();
     }
@@ -130,32 +132,9 @@ impl Incentives {
                 &incentives::ExecuteMsg::SetAssetIncentive {
                     collateral_denom: collateral_denom.to_string(),
                     incentive_denom: incentive_denom.to_string(),
-                    emission_per_second: Some(emission_per_second.into()),
-                    start_time: Some(start_time),
-                    duration: Some(duration),
-                },
-                &[],
-            )
-            .unwrap();
-    }
-
-    pub fn update_asset_incentive_emission(
-        &self,
-        env: &mut MockEnv,
-        collateral_denom: &str,
-        incentive_denom: &str,
-        emission_per_second: u128,
-    ) {
-        env.app
-            .execute_contract(
-                env.owner.clone(),
-                self.contract_addr.clone(),
-                &incentives::ExecuteMsg::SetAssetIncentive {
-                    collateral_denom: collateral_denom.to_string(),
-                    incentive_denom: incentive_denom.to_string(),
-                    emission_per_second: Some(emission_per_second.into()),
-                    start_time: None,
-                    duration: None,
+                    emission_per_second: emission_per_second.into(),
+                    start_time: start_time,
+                    duration,
                 },
                 &[],
             )
@@ -614,6 +593,8 @@ impl MockEnvBuilder {
                     owner: self.owner.to_string(),
                     address_provider: address_provider_addr.to_string(),
                     mars_denom: self.mars_denom.clone(),
+                    epoch_duration: 86400,
+                    min_incentive_emission: Uint128::from(3u128),
                 },
                 &[],
                 "incentives",

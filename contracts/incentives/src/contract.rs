@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env,
-    Event, MessageInfo, Order, Response, StdResult, Uint128,
+    Event, MessageInfo, Order, Response, StdError, StdResult, Uint128,
 };
 use cw_storage_plus::Bound;
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
@@ -12,8 +12,8 @@ use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
     incentives::{
-        Config, ConfigResponse, ExecuteMsg, IncentiveSchedule, IncentiveStateResponse,
-        InstantiateMsg, QueryMsg,
+        Config, ConfigResponse, ExecuteMsg, IncentiveSchedule, IncentiveState,
+        IncentiveStateResponse, InstantiateMsg, QueryMsg,
     },
     red_bank,
 };
@@ -56,6 +56,7 @@ pub fn instantiate(
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
         mars_denom: msg.mars_denom,
         epoch_duration: msg.epoch_duration,
+        min_incentive_emission: msg.min_incentive_emission,
     };
 
     CONFIG.save(deps.storage, &config)?;

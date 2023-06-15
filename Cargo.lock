@@ -1780,9 +1780,11 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
  "mars-owner",
+ "mars-red-bank",
  "mars-red-bank-types",
  "mars-testing",
  "mars-utils",
+ "osmosis-std",
  "thiserror",
 ]
 

@@ -65,10 +65,24 @@ pub fn validate_incentive_schedule(
             reason: "start_time can't be less than current block time".to_string(),
         });
     }
+    if schedule.duration == 0 {
+        return Err(ContractError::InvalidIncentive {
+            reason: "duration can't be zero".to_string(),
+        });
+    }
     // Duration must be a multiple of epoch duration
     if schedule.duration % config.epoch_duration != 0 {
         return Err(ContractError::InvalidDuration {
             epoch_duration: config.epoch_duration,
+        });
+    }
+    // Emission must meet minimum amount
+    if schedule.emission_per_second < config.min_incentive_emission {
+        return Err(ContractError::InvalidIncentive {
+            reason: format!(
+                "emission_per_second must be greater than min_incentive_emission: {}",
+                config.min_incentive_emission
+            ),
         });
     }
     // Enough tokens must be sent to cover the entire duration
@@ -175,9 +189,11 @@ pub fn update_incentive_index(
         }
     }
 
-    // Save update index if storage is mutable
+    // Set last updated time
+    incentive_state.last_updated = current_block_time;
+
+    // Save updated index if storage is mutable
     if let MaybeMutStorage::Mutable(storage) = storage {
-        incentive_state.last_updated = current_block_time;
         INCENTIVE_STATES.save(*storage, (collateral_denom, incentive_denom), &incentive_state)?;
     }
 
