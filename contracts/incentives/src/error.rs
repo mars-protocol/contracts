@@ -46,6 +46,11 @@ pub enum ContractError {
     InvalidFunds {
         expected: Uint128,
     },
+
+    #[error("Invalid incentive denom. {denom} is not whitelisted")]
+    NotWhitelisted {
+        denom: String,
+    },
 }
 
 impl From<ContractError> for StdError {
