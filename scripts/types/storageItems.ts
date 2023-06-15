@@ -19,7 +19,7 @@ export interface StorageItems {
   }
 
   execute: {
-    addressProviderUpdated?: boolean
+    addressProviderUpdated: Record<string, boolean>
     assetsInitialized: string[]
     secondAssetInitialized?: boolean
     oraclePriceSet?: boolean

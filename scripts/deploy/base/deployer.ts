@@ -9,10 +9,26 @@ import { join, resolve } from 'path'
 import assert from 'assert'
 
 import { SwapperExecuteMsg } from '../../types/config'
-import { InstantiateMsg as SwapperInstantiateMsg } from '../../types/generated/mars-swapper-astroport/MarsSwapperAstroport.types'
+import { InstantiateMsg as AstroportSwapperInstantiateMsg } from '../../types/generated/mars-swapper-astroport/MarsSwapperAstroport.types'
+import { InstantiateMsg as OsmosisSwapperInstantiateMsg } from '../../types/generated/mars-swapper-osmosis/MarsSwapperOsmosis.types'
 import { InstantiateMsg as ParamsInstantiateMsg } from '../../types/generated/mars-params/MarsParams.types'
+import {
+  InstantiateMsg as RedBankInstantiateMsg,
+  QueryMsg as RedBankQueryMsg,
+} from '../../types/generated/mars-red-bank/MarsRedBank.types'
+import { InstantiateMsg as AddressProviderInstantiateMsg } from '../../types/generated/mars-address-provider/MarsAddressProvider.types'
+import { InstantiateMsg as IncentivesInstantiateMsg } from '../../types/generated/mars-incentives/MarsIncentives.types'
+import { InstantiateMsg as RewardsInstantiateMsg } from '../../types/generated/mars-rewards-collector/MarsRewardsCollector.types'
+import {
+  WasmOracleCustomInitParams,
+  InstantiateMsg as WasmOracleInstantiateMsg,
+} from '../../types/generated/mars-oracle-wasm/MarsOracleWasm.types'
+import { InstantiateMsg as OsmosisOracleInstantiateMsg } from '../../types/generated/mars-oracle-osmosis/MarsOracleOsmosis.types'
 import { ExecuteMsg as WasmOracleExecuteMsg } from '../../types/generated/mars-oracle-wasm/MarsOracleWasm.types'
 import { StorageItems } from '../../types/storageItems'
+
+type SwapperInstantiateMsg = AstroportSwapperInstantiateMsg | OsmosisSwapperInstantiateMsg
+type OracleInstantiateMsg = WasmOracleInstantiateMsg | OsmosisOracleInstantiateMsg
 
 export class Deployer {
   constructor(
@@ -91,7 +107,7 @@ export class Deployer {
   }
 
   async instantiateAddressProvider() {
-    const msg = {
+    const msg: AddressProviderInstantiateMsg = {
       owner: this.deployerAddress,
       prefix: this.config.chainPrefix,
     }
@@ -99,9 +115,8 @@ export class Deployer {
   }
 
   async instantiateRedBank() {
-    const msg = {
+    const msg: RedBankInstantiateMsg = {
       owner: this.deployerAddress,
-      emergency_owner: this.storage.owner!,
       config: {
         address_provider: this.storage.addresses['address-provider']!,
         close_factor: '0.5',
@@ -111,7 +126,7 @@ export class Deployer {
   }
 
   async instantiateIncentives() {
-    const msg = {
+    const msg: IncentivesInstantiateMsg = {
       owner: this.deployerAddress,
       address_provider: this.storage.addresses['address-provider']!,
       mars_denom: this.config.marsDenom,
@@ -119,16 +134,17 @@ export class Deployer {
     await this.instantiate('incentives', this.storage.codeIds.incentives!, msg)
   }
 
-  async instantiateOracle() {
-    const msg = {
+  async instantiateOracle(init_params?: WasmOracleCustomInitParams) {
+    const msg: OracleInstantiateMsg = {
       owner: this.deployerAddress,
       base_denom: this.config.baseAssetDenom,
+      custom_init: init_params,
     }
     await this.instantiate('oracle', this.storage.codeIds.oracle!, msg)
   }
 
   async instantiateRewards() {
-    const msg = {
+    const msg: RewardsInstantiateMsg = {
       owner: this.deployerAddress,
       address_provider: this.storage.addresses['address-provider']!,
       safety_tax_rate: this.config.safetyFundFeeShare,
@@ -187,10 +203,6 @@ export class Deployer {
   }
 
   async updateAddressProvider() {
-    if (this.storage.execute.addressProviderUpdated) {
-      printBlue('Addresses already updated.')
-      return
-    }
     printBlue('Updating addresses in Address Provider...')
     const addressesToSet = [
       {
@@ -228,6 +240,10 @@ export class Deployer {
     ]
 
     for (const addrObj of addressesToSet) {
+      if (this.storage.execute.addressProviderUpdated[addrObj.address_type]) {
+        printBlue(`Address already updated for ${addrObj.address_type}.`)
+        continue
+      }
       printBlue(`Setting ${addrObj.address_type} to ${addrObj.address}`)
       await this.client.execute(
         this.deployerAddress,
@@ -235,9 +251,9 @@ export class Deployer {
         { set_address: addrObj },
         'auto',
       )
+      this.storage.execute.addressProviderUpdated[addrObj.address_type] = true
     }
-    printYellow('Address Provider update completed')
-    this.storage.execute.addressProviderUpdated = true
+    printGreen('Address Provider update completed')
   }
 
   async initializeAsset(assetConfig: AssetConfig) {
@@ -338,9 +354,10 @@ export class Deployer {
       undefined,
       coins,
     )
-    printYellow('Deposit Executed:')
+    printYellow('Deposit Executed.')
 
-    const msgTwo = { user_position: { user: this.deployerAddress } }
+    printYellow('Querying user position:')
+    const msgTwo: RedBankQueryMsg = { user_position: { user: this.deployerAddress } }
     console.log(await this.client.queryContractSmart(this.storage.addresses['red-bank']!, msgTwo))
   }
 

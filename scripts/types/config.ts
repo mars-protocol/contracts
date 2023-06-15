@@ -1,7 +1,10 @@
 import { OsmosisPriceSourceForString } from './generated/mars-oracle-osmosis/MarsOracleOsmosis.types'
 import { OsmosisRoute } from './generated/mars-swapper-osmosis/MarsSwapperOsmosis.types'
 import { AstroportRoute } from './generated/mars-swapper-astroport/MarsSwapperAstroport.types'
-import { WasmPriceSourceForString } from './generated/mars-oracle-wasm/MarsOracleWasm.types'
+import {
+  WasmOracleCustomInitParams,
+  WasmPriceSourceForString,
+} from './generated/mars-oracle-wasm/MarsOracleWasm.types'
 
 type SwapRoute = {
   denom_in: string
@@ -22,7 +25,6 @@ export function isAstroportRoute(route: OsmosisRoute | AstroportRoute): route is
 }
 
 export interface DeploymentConfig {
-  chainName: string
   oracleName: string
   rewardCollectorTimeoutSeconds: number
   marsDenom: string
@@ -51,6 +53,7 @@ export interface DeploymentConfig {
   swapperDexName: string
   assets: AssetConfig[]
   oracleConfigs: OracleConfig[]
+  oracleCustomInitParams?: WasmOracleCustomInitParams
 }
 
 export interface AssetConfig {

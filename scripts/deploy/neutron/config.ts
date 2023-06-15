@@ -114,7 +114,7 @@ export const neutronTestnetConfig: DeploymentConfig = {
   slippage_tolerance: '0.01',
   base_asset_symbol: 'NTRN',
   second_asset_symbol: 'ATOM',
-  runTests: false,
+  runTests: true,
   mainnet: false,
   feeCollectorDenom: marsTestnet,
   safetyFundDenom: axlUSDCTestnet,
@@ -154,12 +154,12 @@ export const neutronTestnetConfig: DeploymentConfig = {
             astro_swap: {
               ask_asset_info: {
                 native_token: {
-                  denom: atomTestnet,
+                  denom: axlUSDCTestnet,
                 },
               },
               offer_asset_info: {
                 native_token: {
-                  denom: axlUSDCTestnet,
+                  denom: atomTestnet,
                 },
               },
             },
@@ -179,12 +179,12 @@ export const neutronTestnetConfig: DeploymentConfig = {
             astro_swap: {
               ask_asset_info: {
                 native_token: {
-                  denom: 'untrn',
+                  denom: axlUSDCTestnet,
                 },
               },
               offer_asset_info: {
                 native_token: {
-                  denom: axlUSDCTestnet,
+                  denom: 'untrn',
                 },
               },
             },
@@ -201,4 +201,8 @@ export const neutronTestnetConfig: DeploymentConfig = {
   swapperDexName: 'astroport',
   assets: [ntrnAsset, atomAsset],
   oracleConfigs: [axlUSDCOracleTestnet, ntrnOracleTestnet, atomOracleTestnet],
+  maxCloseFactor: '0.5',
+  oracleCustomInitParams: {
+    astroport_factory: 'neutron1jj0scx400pswhpjes589aujlqagxgcztw04srynmhf0f6zplzn2qqmhwj7',
+  },
 }
