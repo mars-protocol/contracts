@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Decimal, Uint128};
+use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 use mars_owner::OwnerUpdate;
 
 /// Global configuration
@@ -176,7 +176,7 @@ pub enum QueryMsg {
     },
 
     /// Query user current unclaimed rewards
-    #[returns(Uint128)]
+    #[returns(Vec<Coin>)]
     UserUnclaimedRewards {
         /// The user address for which to query unclaimed rewards
         user: String,
@@ -189,6 +189,11 @@ pub enum QueryMsg {
         /// 10 is used.
         limit: Option<u32>,
     },
+
+    /// Queries the incentive denom whitelist. Returns a Vec<String> containing the denoms of all
+    /// whitelisted incentive denoms.
+    #[returns(Vec<String>)]
+    Whitelist {},
 }
 
 #[cw_serde]
