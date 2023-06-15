@@ -6,11 +6,11 @@ use cosmwasm_std::{
 use mars_incentives::{
     contract::{execute, execute_balance_change, query_user_unclaimed_rewards},
     helpers::{compute_incentive_index, compute_user_accrued_rewards},
-    state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
+    state::{INCENTIVE_SCHEDULES, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
 use mars_red_bank_types::{
     error::MarsError,
-    incentives::{AssetIncentive, ExecuteMsg},
+    incentives::{ExecuteMsg, IncentiveSchedule, IncentiveState},
     red_bank::{Market, UserCollateralResponse},
 };
 use mars_testing::MockEnvParams;
@@ -72,16 +72,24 @@ fn balance_change_zero_emission() {
     let user_addr = Addr::unchecked("user");
     let asset_incentive_index = Decimal::from_ratio(1_u128, 2_u128);
 
-    ASSET_INCENTIVES
+    INCENTIVE_STATES
         .save(
             deps.as_mut().storage,
             (denom, "umars"),
-            &AssetIncentive {
+            &IncentiveState {
+                index: asset_incentive_index,
+                last_updated: 500_000,
+            },
+        )
+        .unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            deps.as_mut().storage,
+            (denom, "umars", env.block.time.seconds()),
+            &IncentiveSchedule {
                 emission_per_second: Uint128::zero(),
                 start_time: env.block.time.seconds(),
                 duration: 86400,
-                index: asset_incentive_index,
-                last_updated: 500_000,
             },
         )
         .unwrap();
@@ -118,7 +126,7 @@ fn balance_change_zero_emission() {
     );
 
     // asset incentive index stays the same
-    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
+    let asset_incentive = INCENTIVE_STATES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
     assert_eq!(asset_incentive.index, asset_incentive_index);
     assert_eq!(asset_incentive.last_updated, 600_000);
 
@@ -147,16 +155,24 @@ fn balance_change_user_with_zero_balance() {
     let time_contract_call = 600_000_u64;
     let duration = time_contract_call - time_last_updated;
 
-    ASSET_INCENTIVES
+    INCENTIVE_STATES
         .save(
             deps.as_mut().storage,
             (denom, "umars"),
-            &AssetIncentive {
+            &IncentiveState {
+                index: start_index,
+                last_updated: time_last_updated,
+            },
+        )
+        .unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            deps.as_mut().storage,
+            (denom, "umars", time_last_updated),
+            &IncentiveSchedule {
                 emission_per_second,
                 start_time: time_last_updated,
                 duration,
-                index: start_index,
-                last_updated: time_last_updated,
             },
         )
         .unwrap();
@@ -198,7 +214,7 @@ fn balance_change_user_with_zero_balance() {
     );
 
     // asset incentive gets updated
-    let asset_incentive = ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
+    let asset_incentive = INCENTIVE_STATES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
     assert_eq!(asset_incentive.index, expected_index);
     assert_eq!(asset_incentive.last_updated, time_contract_call);
 
@@ -226,16 +242,24 @@ fn with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
     let time_last_updated = 500_000_u64;
     let time_contract_call = 600_000_u64;
 
-    ASSET_INCENTIVES
+    INCENTIVE_STATES
         .save(
             deps.as_mut().storage,
             (denom, "umars"),
-            &AssetIncentive {
+            &IncentiveState {
+                index: start_index,
+                last_updated: time_last_updated,
+            },
+        )
+        .unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            deps.as_mut().storage,
+            (denom, "umars", time_last_updated),
+            &IncentiveSchedule {
                 emission_per_second,
                 start_time: time_last_updated,
                 duration: 8640000,
-                index: start_index,
-                last_updated: time_last_updated,
             },
         )
         .unwrap();
@@ -282,9 +306,13 @@ fn with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
         let rewards_query =
             query_user_unclaimed_rewards(deps.as_ref(), env, "user".to_string(), None, None, None)
                 .unwrap();
+        // Rewards that are accrued when no one had deposit in Red Bank are distributed to the first depositor
         assert_eq!(
             vec![coin(
-                Uint128::new(1000).checked_mul(emission_per_second).unwrap().u128(),
+                Uint128::from(time_contract_call + 1000 - time_last_updated)
+                    .checked_mul(emission_per_second)
+                    .unwrap()
+                    .u128(),
                 "umars"
             )],
             rewards_query
@@ -324,16 +352,24 @@ fn set_new_asset_incentive_user_non_zero_balance() {
         let emission_per_second = Uint128::new(100);
         let asset_incentive_index = Decimal::zero();
 
-        ASSET_INCENTIVES
+        INCENTIVE_STATES
             .save(
                 deps.as_mut().storage,
                 (denom, "umars"),
-                &AssetIncentive {
+                &IncentiveState {
+                    index: asset_incentive_index,
+                    last_updated: time_last_updated,
+                },
+            )
+            .unwrap();
+        INCENTIVE_SCHEDULES
+            .save(
+                deps.as_mut().storage,
+                (denom, "umars", time_last_updated),
+                &IncentiveSchedule {
                     emission_per_second,
                     start_time: time_last_updated,
                     duration: 8640000,
-                    index: asset_incentive_index,
-                    last_updated: time_last_updated,
                 },
             )
             .unwrap();
@@ -427,16 +463,24 @@ fn balance_change_user_non_zero_balance() {
     let mut expected_time_last_updated = 500_000_u64;
     let mut expected_accumulated_rewards = Uint128::zero();
 
-    ASSET_INCENTIVES
+    INCENTIVE_STATES
         .save(
             deps.as_mut().storage,
             (denom, "umars"),
-            &AssetIncentive {
+            &IncentiveState {
+                index: expected_asset_incentive_index,
+                last_updated: expected_time_last_updated,
+            },
+        )
+        .unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            deps.as_mut().storage,
+            (denom, "umars", expected_time_last_updated),
+            &IncentiveSchedule {
                 emission_per_second,
                 start_time: expected_time_last_updated,
                 duration: 8640000,
-                index: expected_asset_incentive_index,
-                last_updated: expected_time_last_updated,
             },
         )
         .unwrap();
@@ -492,7 +536,7 @@ fn balance_change_user_non_zero_balance() {
         expected_time_last_updated = time_contract_call;
 
         let asset_incentive =
-            ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
+            INCENTIVE_STATES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
         assert_eq!(asset_incentive.index, expected_asset_incentive_index);
         assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
 
@@ -559,7 +603,7 @@ fn balance_change_user_non_zero_balance() {
         expected_time_last_updated = time_contract_call;
 
         let asset_incentive =
-            ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
+            INCENTIVE_STATES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
         assert_eq!(asset_incentive.index, expected_asset_incentive_index);
         assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
 
@@ -608,7 +652,7 @@ fn balance_change_user_non_zero_balance() {
 
         // asset incentive is still the same
         let asset_incentive =
-            ASSET_INCENTIVES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
+            INCENTIVE_STATES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
         assert_eq!(asset_incentive.index, expected_asset_incentive_index);
         assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
 

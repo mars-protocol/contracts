@@ -6,10 +6,10 @@ use cosmwasm_std::{
 use mars_incentives::{
     contract::{execute, query_user_unclaimed_rewards},
     helpers::{compute_incentive_index, compute_user_accrued_rewards},
-    state::{ASSET_INCENTIVES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
+    state::{INCENTIVE_SCHEDULES, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
 use mars_red_bank_types::{
-    incentives::{AssetIncentive, ExecuteMsg},
+    incentives::{ExecuteMsg, IncentiveSchedule, IncentiveState},
     red_bank::{Market, UserCollateralResponse},
 };
 use mars_testing::MockEnvParams;
@@ -88,42 +88,66 @@ fn execute_claim_rewards() {
     );
 
     // incentives
-    ASSET_INCENTIVES
+    INCENTIVE_STATES
         .save(
             deps.as_mut().storage,
             (asset_denom, "umars"),
-            &AssetIncentive {
+            &IncentiveState {
+                index: Decimal::one(),
+                last_updated: time_start,
+            },
+        )
+        .unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            deps.as_mut().storage,
+            (asset_denom, "umars", time_start),
+            &IncentiveSchedule {
                 emission_per_second: Uint128::new(100),
                 start_time: time_start,
                 duration: 8640000,
-                index: Decimal::one(),
-                last_updated: time_start,
             },
         )
         .unwrap();
-    ASSET_INCENTIVES
+    INCENTIVE_STATES
         .save(
             deps.as_mut().storage,
             (zero_denom, "umars"),
-            &AssetIncentive {
-                emission_per_second: Uint128::zero(),
-                start_time: env.block.time.seconds(),
-                duration: 86400,
+            &IncentiveState {
                 index: Decimal::one(),
                 last_updated: time_start,
             },
         )
         .unwrap();
-    ASSET_INCENTIVES
+    INCENTIVE_SCHEDULES
+        .save(
+            deps.as_mut().storage,
+            (zero_denom, "umars", env.block.time.seconds()),
+            &IncentiveSchedule {
+                emission_per_second: Uint128::zero(),
+                start_time: env.block.time.seconds(),
+                duration: 86400,
+            },
+        )
+        .unwrap();
+    INCENTIVE_STATES
         .save(
             deps.as_mut().storage,
             (no_user_denom, "umars"),
-            &AssetIncentive {
+            &IncentiveState {
+                index: Decimal::one(),
+                last_updated: time_start,
+            },
+        )
+        .unwrap();
+    INCENTIVE_SCHEDULES
+        .save(
+            deps.as_mut().storage,
+            (no_user_denom, "umars", time_start),
+            &IncentiveSchedule {
                 emission_per_second: Uint128::new(200),
                 start_time: env.block.time.seconds(),
                 duration: 86400,
-                index: Decimal::one(),
-                last_updated: time_start,
             },
         )
         .unwrap();
@@ -245,17 +269,17 @@ fn execute_claim_rewards() {
     );
     // asset and zero incentives get updated, no_user does not
     let asset_incentive =
-        ASSET_INCENTIVES.load(deps.as_ref().storage, (asset_denom, "umars")).unwrap();
+        INCENTIVE_STATES.load(deps.as_ref().storage, (asset_denom, "umars")).unwrap();
     assert_eq!(asset_incentive.index, expected_asset_incentive_index);
     assert_eq!(asset_incentive.last_updated, time_contract_call);
 
     let zero_incentive =
-        ASSET_INCENTIVES.load(deps.as_ref().storage, (zero_denom, "umars")).unwrap();
+        INCENTIVE_STATES.load(deps.as_ref().storage, (zero_denom, "umars")).unwrap();
     assert_eq!(zero_incentive.index, Decimal::one());
     assert_eq!(zero_incentive.last_updated, time_contract_call);
 
     let no_user_incentive =
-        ASSET_INCENTIVES.load(deps.as_ref().storage, (no_user_denom, "umars")).unwrap();
+        INCENTIVE_STATES.load(deps.as_ref().storage, (no_user_denom, "umars")).unwrap();
     assert_eq!(no_user_incentive.index, Decimal::one());
     assert_eq!(no_user_incentive.last_updated, time_start);
 

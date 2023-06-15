@@ -92,16 +92,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn paginate_asset_incentives_works() {
+    fn paginate_incentive_states_works() {
         let mut storage = MockStorage::new();
 
         //store some incentives
-        let asset_incentive = AssetIncentive {
-            duration: 0,
-            emission_per_second: Uint128::zero(),
+        let asset_incentive = IncentiveState {
             index: Decimal::zero(),
             last_updated: 0,
-            start_time: 0,
         };
         let incentives = vec![
             (("collat1".to_string(), "incen1".to_string()), asset_incentive.clone()),
@@ -110,7 +107,7 @@ mod tests {
             (("collat2".to_string(), "incen2".to_string()), asset_incentive.clone()),
         ];
         for ((collat, incen), incentive) in incentives.iter() {
-            ASSET_INCENTIVES
+            INCENTIVE_STATES
                 .save(&mut storage, (collat.as_str(), incen.as_str()), &incentive)
                 .unwrap();
         }
