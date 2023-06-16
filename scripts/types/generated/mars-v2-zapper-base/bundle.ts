@@ -5,10 +5,10 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
-import * as _40 from './MarsV2ZapperBase.types'
-import * as _41 from './MarsV2ZapperBase.client'
-import * as _42 from './MarsV2ZapperBase.message-composer'
-import * as _43 from './MarsV2ZapperBase.react-query'
+import * as _44 from './MarsV2ZapperBase.types'
+import * as _45 from './MarsV2ZapperBase.client'
+import * as _46 from './MarsV2ZapperBase.message-composer'
+import * as _47 from './MarsV2ZapperBase.react-query'
 export namespace contracts {
-  export const MarsV2ZapperBase = { ..._40, ..._41, ..._42, ..._43 }
+  export const MarsV2ZapperBase = { ..._44, ..._45, ..._46, ..._47 }
 }
