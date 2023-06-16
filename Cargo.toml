@@ -43,16 +43,16 @@ cw2                = "1.0.1"
 cw721              = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main" }
 cw721-base         = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main", features = ["library"] }
 cw-dex             = { version = "0.2.0", features = ["osmosis"] }
-cw-multi-test      = "0.16.4"
+cw-multi-test      = "0.16.5"
 cw-paginate        = "0.2.1"
 cw-utils           = "1.0.1"
 cw-storage-plus    = "1.0.1"
 cw-vault-standard  = { version = "0.3.0", features = ["lockup", "force-unlock"] }
 itertools          = "0.10.5"
-osmosis-std        = { git = "https://github.com/osmosis-labs/osmosis-rust", branch = "main" }
-osmosis-test-tube  = { git = "https://github.com/osmosis-labs/test-tube", branch = "main" }
+osmosis-std        = "0.15.3"
+osmosis-test-tube  = "15.1.0"
 schemars           = "0.8.12"
-serde              = { version = "1.0.163", default-features = false, features = ["derive"] }
+serde              = { version = "1.0.164", default-features = false, features = ["derive"] }
 serde_json         = "1.0.96"
 serde-wasm-bindgen = "0.5.0"
 thiserror          = "1.0.40"
@@ -68,7 +68,7 @@ mars-rover                 = { version = "2.0.0", path = "./packages/rover" }
 
 # contracts
 mars-account-nft    = { version = "2.0.0", path = "./contracts/account-nft", features = ["library"] }
-mars-params         = { version = "1.0.4", features = ["library"] }
+mars-params         = { version = "1.0.6", features = ["library"] }
 mars-rover-health   = { version = "2.0.0", path = "./contracts/health", features = ["library"] }
 mars-swapper-base   = { version = "2.0.0", path = "./contracts/swapper/base", features = ["library"] }
 mars-v2-zapper-base = { version = "2.0.0", path = "./contracts/v2-zapper/base", features = ["library"] }

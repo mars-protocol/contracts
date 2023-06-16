@@ -1324,10 +1324,8 @@
     },
     "next_id": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "uint64",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "title": "String",
+      "type": "string"
     },
     "nft_info": {
       "$schema": "http://json-schema.org/draft-07/schema#",

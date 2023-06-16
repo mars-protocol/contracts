@@ -14,8 +14,7 @@ use osmosis_test_tube::{
     cosmrs::proto::{
         cosmos::bank::v1beta1::QueryBalanceRequest, cosmwasm::wasm::v1::MsgExecuteContractResponse,
     },
-    Account, Bank, ConcentratedLiquidity, Module, OsmosisTestApp, RunnerExecuteResult,
-    SigningAccount, TokenFactory, Wasm,
+    Account, Bank, Module, OsmosisTestApp, RunnerExecuteResult, SigningAccount, TokenFactory, Wasm,
 };
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");

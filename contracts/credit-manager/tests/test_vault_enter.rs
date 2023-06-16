@@ -84,6 +84,7 @@ fn vault_is_whitelisted() {
         max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
         whitelisted: false,
+        hls: None,
     };
 
     let user = Addr::unchecked("user");

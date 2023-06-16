@@ -116,8 +116,7 @@
         ],
         "properties": {
           "create_credit_account": {
-            "type": "object",
-            "additionalProperties": false
+            "$ref": "#/definitions/AccountKind"
           }
         },
         "additionalProperties": false
@@ -259,6 +258,16 @@
       }
     ],
     "definitions": {
+      "AccountKind": {
+        "type": "string",
+        "enum": [
+          "default",
+          "high_levered_strategy"
+        ]
+      },
+      "AccountNftBase_for_String": {
+        "type": "string"
+      },
       "Action": {
         "description": "The list of actions that users can perform on their positions",
         "oneOf": [
@@ -1200,6 +1209,28 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "description": "Ensures that HLS accounts abide by specific rules",
+            "type": "object",
+            "required": [
+              "assert_account_reqs"
+            ],
+            "properties": {
+              "assert_account_reqs": {
+                "type": "object",
+                "required": [
+                  "account_id"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },
@@ -1223,9 +1254,13 @@
         "type": "object",
         "properties": {
           "account_nft": {
-            "type": [
-              "string",
-              "null"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AccountNftBase_for_String"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "health_contract": {
@@ -1562,6 +1597,27 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "QueryMsg",
     "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "account_kind"
+        ],
+        "properties": {
+          "account_kind": {
+            "type": "object",
+            "required": [
+              "account_id"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
       {
         "description": "Rover contract-level config",
         "type": "object",
@@ -2086,6 +2142,15 @@
   "migrate": null,
   "sudo": null,
   "responses": {
+    "account_kind": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AccountKind",
+      "type": "string",
+      "enum": [
+        "default",
+        "high_levered_strategy"
+      ]
+    },
     "all_coin_balances": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Array_of_CoinBalanceResponseItem",

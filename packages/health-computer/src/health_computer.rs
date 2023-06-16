@@ -1,10 +1,15 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Decimal, Uint128};
-use mars_params::types::AssetParams;
+use mars_params::types::{
+    asset::{AssetParams, CmSettings},
+    vault::VaultConfig,
+};
 use mars_rover::{msg::query::Positions, traits::Coins};
 use mars_rover_health_types::{
-    Health,
-    HealthError::{MissingParams, MissingPrice, MissingVaultConfig, MissingVaultValues},
+    AccountKind, Health,
+    HealthError::{
+        MissingHLSParams, MissingParams, MissingPrice, MissingVaultConfig, MissingVaultValues,
+    },
     HealthResult,
 };
 
@@ -14,6 +19,7 @@ use crate::{CollateralValue, DenomsData, VaultsData};
 /// For this reason, it uses a dependency-injection-like pattern where all required data is needed up front.
 #[cw_serde]
 pub struct HealthComputer {
+    pub kind: AccountKind,
     pub positions: Positions,
     pub denoms_data: DenomsData,
     pub vaults_data: VaultsData,
@@ -98,15 +104,24 @@ impl HealthComputer {
             total_collateral_value = total_collateral_value.checked_add(coin_value)?;
 
             let AssetParams {
-                rover,
+                credit_manager:
+                    CmSettings {
+                        whitelisted,
+                        hls,
+                    },
                 max_loan_to_value,
                 liquidation_threshold,
                 ..
             } = self.denoms_data.params.get(&c.denom).ok_or(MissingParams(c.denom.clone()))?;
 
             // If coin has been de-listed, drop MaxLTV to zero
-            let checked_max_ltv = if rover.whitelisted {
-                *max_loan_to_value
+            let checked_max_ltv = if *whitelisted {
+                match self.kind {
+                    AccountKind::Default => *max_loan_to_value,
+                    AccountKind::HighLeveredStrategy => {
+                        hls.as_ref().ok_or(MissingHLSParams(c.denom.clone()))?.max_loan_to_value
+                    }
+                }
             } else {
                 Decimal::zero()
             };
@@ -114,7 +129,13 @@ impl HealthComputer {
             max_ltv_adjusted_collateral =
                 max_ltv_adjusted_collateral.checked_add(max_ltv_adjusted)?;
 
-            let liq_adjusted = coin_value.checked_mul_floor(*liquidation_threshold)?;
+            let checked_liquidation_threshold = match self.kind {
+                AccountKind::Default => *liquidation_threshold,
+                AccountKind::HighLeveredStrategy => {
+                    hls.as_ref().ok_or(MissingHLSParams(c.denom.clone()))?.liquidation_threshold
+                }
+            };
+            let liq_adjusted = coin_value.checked_mul_floor(checked_liquidation_threshold)?;
             liquidation_threshold_adjusted_collateral =
                 liquidation_threshold_adjusted_collateral.checked_add(liq_adjusted)?;
         }
@@ -131,34 +152,42 @@ impl HealthComputer {
         let mut liquidation_threshold_adjusted_collateral = Uint128::zero();
 
         for v in &self.positions.vaults {
+            // Step 1: Calculate Vault coin values
             let values = self
                 .vaults_data
                 .vault_values
                 .get(&v.vault.address)
                 .ok_or(MissingVaultValues(v.vault.address.to_string()))?;
 
-            total_collateral_value = total_collateral_value.checked_add(values.total_value()?)?;
+            total_collateral_value = total_collateral_value.checked_add(values.vault_coin.value)?;
 
-            let config = self
+            let VaultConfig {
+                addr,
+                max_loan_to_value,
+                liquidation_threshold,
+                whitelisted,
+                hls,
+                ..
+            } = self
                 .vaults_data
                 .vault_configs
                 .get(&v.vault.address)
                 .ok_or(MissingVaultConfig(v.vault.address.to_string()))?;
 
-            // If vault or base token has been de-listed, drop MaxLTV to zero
-            let AssetParams {
-                rover,
-                max_loan_to_value,
-                liquidation_threshold,
-                ..
-            } = self
+            let base_params = self
                 .denoms_data
                 .params
                 .get(&values.base_coin.denom)
                 .ok_or(MissingParams(values.base_coin.denom.clone()))?;
-            let base_token_whitelisted = rover.whitelisted;
-            let checked_vault_max_ltv = if config.whitelisted && base_token_whitelisted {
-                config.max_loan_to_value
+
+            // If vault or base token has been de-listed, drop MaxLTV to zero
+            let checked_vault_max_ltv = if *whitelisted && base_params.credit_manager.whitelisted {
+                match self.kind {
+                    AccountKind::Default => *max_loan_to_value,
+                    AccountKind::HighLeveredStrategy => {
+                        hls.as_ref().ok_or(MissingHLSParams(addr.to_string()))?.max_loan_to_value
+                    }
+                }
             } else {
                 Decimal::zero()
             };
@@ -169,30 +198,31 @@ impl HealthComputer {
                 .checked_mul_floor(checked_vault_max_ltv)?
                 .checked_add(max_ltv_adjusted_collateral)?;
 
+            let checked_liquidation_threshold = match self.kind {
+                AccountKind::Default => *liquidation_threshold,
+                AccountKind::HighLeveredStrategy => {
+                    hls.as_ref().ok_or(MissingHLSParams(addr.to_string()))?.liquidation_threshold
+                }
+            };
+
             liquidation_threshold_adjusted_collateral = values
                 .vault_coin
                 .value
-                .checked_mul_floor(config.liquidation_threshold)?
+                .checked_mul_floor(checked_liquidation_threshold)?
                 .checked_add(liquidation_threshold_adjusted_collateral)?;
 
-            // If base token has been de-listed, drop MaxLTV to zero
-            let checked_base_max_ltv = if base_token_whitelisted {
-                *max_loan_to_value
-            } else {
-                Decimal::zero()
-            };
-
-            max_ltv_adjusted_collateral = values
-                .base_coin
-                .value
-                .checked_mul_floor(checked_base_max_ltv)?
-                .checked_add(max_ltv_adjusted_collateral)?;
-
-            liquidation_threshold_adjusted_collateral = values
-                .base_coin
-                .value
-                .checked_mul_floor(*liquidation_threshold)?
-                .checked_add(liquidation_threshold_adjusted_collateral)?;
+            // Step 2: Calculate Base coin values
+            let res = self.calculate_coins_value(&[Coin {
+                denom: values.base_coin.denom.clone(),
+                amount: v.amount.unlocking().total(),
+            }])?;
+            total_collateral_value =
+                total_collateral_value.checked_add(res.total_collateral_value)?;
+            max_ltv_adjusted_collateral =
+                max_ltv_adjusted_collateral.checked_add(res.max_ltv_adjusted_collateral)?;
+            liquidation_threshold_adjusted_collateral =
+                liquidation_threshold_adjusted_collateral
+                    .checked_add(res.liquidation_threshold_adjusted_collateral)?;
         }
 
         Ok(CollateralValue {

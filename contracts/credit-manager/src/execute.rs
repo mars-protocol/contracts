@@ -7,18 +7,20 @@ use mars_rover::{
     error::{ContractError, ContractResult},
     msg::execute::{Action, CallbackMsg, LiquidateRequest},
 };
+use mars_rover_health_types::AccountKind;
 
 use crate::{
     borrow::borrow,
     deposit::deposit,
     health::{assert_max_ltv, query_health},
+    hls::assert_account_requirements,
     lend::lend,
     liquidate_deposit::liquidate_deposit,
     liquidate_lend::liquidate_lend,
     reclaim::reclaim,
     refund::refund_coin_balances,
     repay::{repay, repay_for_recipient},
-    state::ACCOUNT_NFT,
+    state::{ACCOUNT_KINDS, ACCOUNT_NFT},
     swap::swap_exact_in,
     update_coin_balances::update_coin_balance,
     utils::{assert_is_token_owner, assert_not_contract_in_config},
@@ -30,18 +32,28 @@ use crate::{
     zap::{provide_liquidity, withdraw_liquidity},
 };
 
-pub fn create_credit_account(deps: DepsMut, user: Addr) -> ContractResult<Response> {
-    let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
+pub fn create_credit_account(
+    deps: DepsMut,
+    user: Addr,
+    kind: AccountKind,
+) -> ContractResult<Response> {
+    let account_nft = ACCOUNT_NFT.load(deps.storage)?;
+
+    let next_id = account_nft.query_next_id(&deps.querier)?;
+    ACCOUNT_KINDS.save(deps.storage, &next_id, &kind)?;
 
     let nft_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: contract_addr.to_string(),
+        contract_addr: account_nft.address().into(),
         funds: vec![],
         msg: to_binary(&NftExecuteMsg::Mint {
             user: user.to_string(),
         })?,
     });
 
-    Ok(Response::new().add_message(nft_mint_msg).add_attribute("action", "create_credit_account"))
+    Ok(Response::new()
+        .add_message(nft_mint_msg)
+        .add_attribute("action", "create_credit_account")
+        .add_attribute("kind", kind.to_string()))
 }
 
 pub fn dispatch_actions(
@@ -203,7 +215,11 @@ pub fn dispatch_actions(
     }
 
     callbacks.extend([
-        // after user selected actions, we assert LTV is either:
+        // Ensures the account state abides by the rules of the account kind
+        CallbackMsg::AssertAccountReqs {
+            account_id: account_id.to_string(),
+        },
+        // After user selected actions, we assert LTV is either:
         // - Healthy, if prior to actions MaxLTV health factor >= 1 or None
         // - Not further weakened, if prior to actions MaxLTV health factor < 1
         // Else, throw error and revert all actions
@@ -354,5 +370,8 @@ pub fn execute_callback(
         CallbackMsg::RefundAllCoinBalances {
             account_id,
         } => refund_coin_balances(deps, env, &account_id),
+        CallbackMsg::AssertAccountReqs {
+            account_id,
+        } => assert_account_requirements(deps, env, account_id),
     }
 }

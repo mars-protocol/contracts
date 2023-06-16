@@ -9,13 +9,16 @@ use mars_mock_oracle::msg::{CoinPrice, ExecuteMsg::ChangePrice};
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
 use mars_params::{
     msg::{
+        AssetParamsUpdate,
         ExecuteMsg::{UpdateAssetParams, UpdateVaultConfig},
-        QueryMsg as ParamsQueryMsg,
+        QueryMsg as ParamsQueryMsg, VaultConfigUpdate,
     },
-    types::{AssetParamsUpdate, VaultConfig, VaultConfigUpdate},
+    types::vault::VaultConfig,
 };
 use mars_rover::{adapters::vault::VaultUnchecked, msg::query::Positions};
-use mars_rover_health_types::{ConfigResponse, ExecuteMsg::UpdateConfig, HealthResponse, QueryMsg};
+use mars_rover_health_types::{
+    AccountKind, ConfigResponse, ExecuteMsg::UpdateConfig, HealthResponse, QueryMsg,
+};
 
 use crate::helpers::MockEnvBuilder;
 
@@ -45,11 +48,12 @@ impl MockEnv {
         }
     }
 
-    pub fn query_health(&self, account_id: &str) -> StdResult<HealthResponse> {
+    pub fn query_health(&self, account_id: &str, kind: AccountKind) -> StdResult<HealthResponse> {
         self.app.wrap().query_wasm_smart(
             self.health_contract.clone(),
             &QueryMsg::Health {
                 account_id: account_id.to_string(),
+                kind,
             },
         )
     }

@@ -155,11 +155,15 @@
           "health": {
             "type": "object",
             "required": [
-              "account_id"
+              "account_id",
+              "kind"
             ],
             "properties": {
               "account_id": {
                 "type": "string"
+              },
+              "kind": {
+                "$ref": "#/definitions/AccountKind"
               }
             },
             "additionalProperties": false
@@ -180,7 +184,16 @@
         },
         "additionalProperties": false
       }
-    ]
+    ],
+    "definitions": {
+      "AccountKind": {
+        "type": "string",
+        "enum": [
+          "default",
+          "high_levered_strategy"
+        ]
+      }
+    }
   },
   "migrate": null,
   "sudo": null,

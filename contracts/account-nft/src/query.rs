@@ -9,6 +9,6 @@ pub fn query_config(deps: Deps) -> StdResult<UncheckedNftConfig> {
     Ok(CONFIG.load(deps.storage)?.into())
 }
 
-pub fn query_next_id(deps: Deps) -> StdResult<u64> {
-    NEXT_ID.load(deps.storage)
+pub fn query_next_id(deps: Deps) -> StdResult<String> {
+    Ok(NEXT_ID.load(deps.storage)?.to_string())
 }

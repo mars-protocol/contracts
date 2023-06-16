@@ -9,8 +9,11 @@ use mars_mock_oracle::msg::InstantiateMsg as OracleInstantiateMsg;
 use mars_mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
 use mars_owner::OwnerResponse;
 use mars_params::{
-    msg::{ExecuteMsg::UpdateVaultConfig, InstantiateMsg as ParamsInstantiateMsg},
-    types::{VaultConfigUnchecked, VaultConfigUpdate::AddOrUpdate},
+    msg::{
+        ExecuteMsg::UpdateVaultConfig, InstantiateMsg as ParamsInstantiateMsg,
+        VaultConfigUpdate::AddOrUpdate,
+    },
+    types::{hls::HlsParamsUnchecked, vault::VaultConfigUnchecked},
 };
 use mars_rover::{adapters::oracle::OracleUnchecked, msg::query::ConfigResponse};
 use mars_rover_health_types::{ExecuteMsg::UpdateConfig, InstantiateMsg};
@@ -179,9 +182,14 @@ impl MockEnvBuilder {
                     config: VaultConfigUnchecked {
                         addr: vault.to_string(),
                         deposit_cap: coin(10000000u128, "uusdc"),
-                        max_loan_to_value: Decimal::from_atomics(4u128, 1).unwrap(),
-                        liquidation_threshold: Decimal::from_atomics(44u128, 2).unwrap(),
+                        max_loan_to_value: Decimal::from_str("0.4").unwrap(),
+                        liquidation_threshold: Decimal::from_str("0.44").unwrap(),
                         whitelisted: true,
+                        hls: Some(HlsParamsUnchecked {
+                            max_loan_to_value: Decimal::from_str("0.6").unwrap(),
+                            liquidation_threshold: Decimal::from_str("0.7").unwrap(),
+                            correlations: vec![],
+                        }),
                     },
                 }),
                 &[],

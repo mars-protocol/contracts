@@ -6,7 +6,7 @@ use cw721_base::{
     ContractError::Ownership,
     OwnershipError::{NoOwner, NotOwner},
 };
-use mars_rover_health_types::{HealthResponse, QueryMsg::Health};
+use mars_rover_health_types::{AccountKind, HealthResponse, QueryMsg::Health};
 
 use crate::{
     contract::Parent,
@@ -44,6 +44,7 @@ pub fn burn(
         contract_addr: health_contract_addr.into(),
         msg: to_binary(&Health {
             account_id: token_id.clone(),
+            kind: AccountKind::Default,
         })?,
     }))?;
 

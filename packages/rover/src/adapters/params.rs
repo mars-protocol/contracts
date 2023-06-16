@@ -2,7 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Decimal, QuerierWrapper, StdResult};
 use mars_params::{
     msg::QueryMsg,
-    types::{AssetParams, VaultConfig},
+    types::{asset::AssetParams, vault::VaultConfig},
 };
 
 #[cw_serde]

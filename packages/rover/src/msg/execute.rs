@@ -2,6 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
 use mars_account_nft::nft_config::NftConfigUpdates;
 use mars_owner::OwnerUpdate;
+use mars_rover_health_types::AccountKind;
 
 use crate::{
     adapters::vault::{Vault, VaultPositionType, VaultUnchecked},
@@ -14,7 +15,7 @@ pub enum ExecuteMsg {
     // Public messages
     //--------------------------------------------------------------------------------------------------
     /// Mints NFT representing a credit account for user. User can have many.
-    CreateCreditAccount {},
+    CreateCreditAccount(AccountKind),
     /// Update user's position on their credit account
     UpdateCreditAccount {
         account_id: String,
@@ -296,6 +297,10 @@ pub enum CallbackMsg {
     },
     /// Refunds all coin balances back to user wallet
     RefundAllCoinBalances {
+        account_id: String,
+    },
+    /// Ensures that HLS accounts abide by specific rules
+    AssertAccountReqs {
         account_id: String,
     },
 }

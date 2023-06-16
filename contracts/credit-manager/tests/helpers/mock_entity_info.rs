@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_std::{coin, Decimal};
 use cw_utils::Duration;
+use mars_params::types::hls::{HlsAssetType, HlsParamsUnchecked};
 
 use crate::helpers::{CoinInfo, VaultTestInfo};
 
@@ -13,6 +14,7 @@ pub fn uosmo_info() -> CoinInfo {
         liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(12u128, 2).unwrap(),
         whitelisted: true,
+        hls: None,
     }
 }
 
@@ -24,6 +26,21 @@ pub fn uatom_info() -> CoinInfo {
         liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
         liquidation_bonus: Decimal::from_atomics(10u128, 2).unwrap(),
         whitelisted: true,
+        hls: Some(HlsParamsUnchecked {
+            max_loan_to_value: Decimal::from_str("0.86").unwrap(),
+            liquidation_threshold: Decimal::from_str("0.93").unwrap(),
+            correlations: vec![
+                HlsAssetType::Coin {
+                    denom: "uatom".to_string(),
+                },
+                HlsAssetType::Coin {
+                    denom: "stAtom".to_string(),
+                },
+                HlsAssetType::Coin {
+                    denom: lp_token_info().denom,
+                },
+            ],
+        }),
     }
 }
 
@@ -35,6 +52,11 @@ pub fn ujake_info() -> CoinInfo {
         liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
         whitelisted: true,
+        hls: Some(HlsParamsUnchecked {
+            max_loan_to_value: Decimal::from_str("0.7").unwrap(),
+            liquidation_threshold: Decimal::from_str("0.8").unwrap(),
+            correlations: vec![],
+        }),
     }
 }
 
@@ -46,6 +68,7 @@ pub fn blacklisted_coin() -> CoinInfo {
         liquidation_threshold: Decimal::from_str("0.5").unwrap(),
         liquidation_bonus: Decimal::from_str("0.33").unwrap(),
         whitelisted: false,
+        hls: None,
     }
 }
 
@@ -57,6 +80,11 @@ pub fn lp_token_info() -> CoinInfo {
         liquidation_threshold: Decimal::from_atomics(68u128, 2).unwrap(),
         liquidation_bonus: Decimal::from_atomics(12u128, 2).unwrap(),
         whitelisted: true,
+        hls: Some(HlsParamsUnchecked {
+            max_loan_to_value: Decimal::from_str("0.75").unwrap(),
+            liquidation_threshold: Decimal::from_str("0.82").unwrap(),
+            correlations: vec![],
+        }),
     }
 }
 
@@ -79,10 +107,15 @@ pub fn generate_mock_vault(lockup: Option<Duration>) -> VaultTestInfo {
     VaultTestInfo {
         vault_token_denom,
         lockup,
-        base_token_denom: lp_token.denom,
+        base_token_denom: lp_token.denom.clone(),
         deposit_cap: coin(10_000_000, "uusdc"),
-        max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
-        liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
+        max_ltv: Decimal::from_str("0.6").unwrap(),
+        liquidation_threshold: Decimal::from_str("0.7").unwrap(),
         whitelisted: true,
+        hls: Some(HlsParamsUnchecked {
+            max_loan_to_value: lp_token.hls.as_ref().unwrap().max_loan_to_value,
+            liquidation_threshold: lp_token.hls.unwrap().liquidation_threshold,
+            correlations: vec![],
+        }),
     }
 }

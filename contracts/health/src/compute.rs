@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{Deps, StdResult};
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
-use mars_rover_health_types::{HealthError::ContractNotSet, HealthResponse, HealthResult};
+use mars_rover_health_types::{
+    AccountKind, HealthError::ContractNotSet, HealthResponse, HealthResult,
+};
 
 use crate::{
     querier::HealthQuerier,
@@ -12,7 +14,11 @@ use crate::{
 /// Uses `mars-rover-health-computer` which is a data agnostic package given
 /// it's compiled to .wasm and shared with the frontend.
 /// This function queries all necessary data to pass to `HealthComputer`.
-pub fn compute_health(deps: Deps, account_id: &str) -> HealthResult<HealthResponse> {
+pub fn compute_health(
+    deps: Deps,
+    account_id: &str,
+    kind: AccountKind,
+) -> HealthResult<HealthResponse> {
     let credit_manager_addr = CREDIT_MANAGER
         .may_load(deps.storage)?
         .ok_or(ContractNotSet("credit_manger".to_string()))?;
@@ -64,6 +70,7 @@ pub fn compute_health(deps: Deps, account_id: &str) -> HealthResult<HealthRespon
     })?;
 
     let computer = HealthComputer {
+        kind,
         positions,
         denoms_data,
         vaults_data,

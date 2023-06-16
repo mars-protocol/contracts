@@ -4,6 +4,7 @@ pub mod borrow;
 pub mod deposit;
 pub mod execute;
 pub mod health;
+pub mod hls;
 pub mod instantiate;
 pub mod lend;
 pub mod liquidate_deposit;

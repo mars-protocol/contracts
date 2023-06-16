@@ -1,6 +1,8 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use mars_owner::{OwnerResponse, OwnerUpdate};
 
+use crate::AccountKind;
+
 #[cw_serde]
 pub struct InstantiateMsg {
     /// The address with privileged access to update config
@@ -24,6 +26,7 @@ pub enum QueryMsg {
     #[returns(crate::HealthResponse)]
     Health {
         account_id: String,
+        kind: AccountKind,
     },
     #[returns(ConfigResponse)]
     Config {},

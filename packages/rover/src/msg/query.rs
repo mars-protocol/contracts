@@ -10,6 +10,10 @@ use crate::{
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
+    #[returns(mars_rover_health_types::AccountKind)]
+    AccountKind {
+        account_id: String,
+    },
     /// Rover contract-level config
     #[returns(ConfigResponse)]
     Config {},

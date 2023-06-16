@@ -1,9 +1,10 @@
-use std::str::FromStr;
-
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
 use cw_utils::Duration;
-use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
+use mars_params::types::{
+    asset::{AssetParamsUnchecked, CmSettings, RedBankSettings},
+    hls::HlsParamsUnchecked,
+};
 use mars_rover::msg::execute::{ActionAmount, ActionCoin};
 
 #[cw_serde]
@@ -20,6 +21,7 @@ pub struct CoinInfo {
     pub liquidation_threshold: Decimal,
     pub liquidation_bonus: Decimal,
     pub whitelisted: bool,
+    pub hls: Option<HlsParamsUnchecked>,
 }
 
 #[cw_serde]
@@ -40,6 +42,7 @@ pub struct VaultTestInfo {
     pub max_ltv: Decimal,
     pub liquidation_threshold: Decimal,
     pub whitelisted: bool,
+    pub hls: Option<HlsParamsUnchecked>,
 }
 
 impl CoinInfo {
@@ -62,16 +65,13 @@ impl CoinInfo {
     }
 }
 
-impl From<CoinInfo> for AssetParams {
+impl From<CoinInfo> for AssetParamsUnchecked {
     fn from(c: CoinInfo) -> Self {
         Self {
             denom: c.denom,
-            rover: RoverSettings {
+            credit_manager: CmSettings {
                 whitelisted: c.whitelisted,
-                hls: HighLeverageStrategyParams {
-                    max_loan_to_value: Decimal::from_str("0.86").unwrap(),
-                    liquidation_threshold: Decimal::from_str("0.89").unwrap(),
-                },
+                hls: c.hls,
             },
             red_bank: RedBankSettings {
                 deposit_enabled: true,

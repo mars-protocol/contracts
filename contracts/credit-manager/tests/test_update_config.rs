@@ -52,7 +52,7 @@ fn update_config_works_with_full_config() {
     mock.update_config(
         &Addr::unchecked(original_config.ownership.owner.clone().unwrap()),
         ConfigUpdates {
-            account_nft: Some(new_nft_contract.to_string()),
+            account_nft: Some(new_nft_contract.clone()),
             oracle: Some(new_oracle.clone()),
             red_bank: Some(new_red_bank.clone()),
             max_unlocking_positions: Some(new_unlocking_max),
@@ -65,7 +65,7 @@ fn update_config_works_with_full_config() {
 
     let new_config = mock.query_config();
 
-    assert_eq!(new_config.account_nft, Some(new_nft_contract.to_string()));
+    assert_eq!(new_config.account_nft, Some(new_nft_contract.address().clone()));
     assert_ne!(new_config.account_nft, original_config.account_nft);
 
     assert_eq!(
@@ -103,7 +103,7 @@ fn update_config_works_with_some_config() {
     mock.update_config(
         &Addr::unchecked(original_config.ownership.owner.clone().unwrap()),
         ConfigUpdates {
-            account_nft: Some(new_nft_contract.to_string()),
+            account_nft: Some(new_nft_contract.clone()),
             max_unlocking_positions: Some(new_max_unlocking),
             ..Default::default()
         },
@@ -113,7 +113,7 @@ fn update_config_works_with_some_config() {
     let new_config = mock.query_config();
 
     // Changed configs
-    assert_eq!(new_config.account_nft, Some(new_nft_contract.to_string()));
+    assert_eq!(new_config.account_nft, Some(new_nft_contract.address().clone()));
     assert_ne!(new_config.account_nft, original_config.account_nft);
 
     assert_eq!(new_config.max_unlocking_positions, new_max_unlocking);

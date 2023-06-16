@@ -1,5 +1,5 @@
 use cosmwasm_std::{coin, Addr, Coin, OverflowError, OverflowOperation::Sub, Uint128};
-use mars_params::types::AssetParamsUpdate::AddOrUpdate;
+use mars_params::msg::AssetParamsUpdate::AddOrUpdate;
 use mars_rover::{
     error::ContractError as RoverError,
     msg::execute::{

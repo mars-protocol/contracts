@@ -1,6 +1,6 @@
 use cosmwasm_std::{coin, coins, Addr, Uint128};
 use cw_utils::PaymentError;
-use mars_params::types::AssetParamsUpdate::AddOrUpdate;
+use mars_params::msg::AssetParamsUpdate::AddOrUpdate;
 use mars_rover::{
     error::ContractError,
     msg::execute::Action::{Borrow, Deposit},
@@ -184,7 +184,7 @@ fn delisted_assets_can_be_repaid() {
     });
 
     let params = mock.query_asset_params(&coin_info.denom);
-    assert!(!params.rover.whitelisted);
+    assert!(!params.credit_manager.whitelisted);
 
     // There should be no error in repaying for this asset
     mock.repay_from_wallet(&repayer, &account_id, &[coin(12, coin_info.denom)]).unwrap();

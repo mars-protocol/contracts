@@ -13,7 +13,7 @@ pub enum QueryMsg {
     #[returns(crate::nft_config::UncheckedNftConfig)]
     Config {},
 
-    #[returns(u64)]
+    #[returns(String)]
     NextId {},
 
     //--------------------------------------------------------------------------------------------------

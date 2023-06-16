@@ -19,6 +19,7 @@ use crate::{
     },
     repay::repay_from_wallet,
     update_config::{update_config, update_nft_config, update_owner},
+    utils::get_account_kind,
     vault::handle_unlock_request_reply,
     zap::{estimate_provide_liquidity, estimate_withdraw_liquidity},
 };
@@ -46,7 +47,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> ContractResult<Response> {
     match msg {
-        ExecuteMsg::CreateCreditAccount {} => create_credit_account(deps, info.sender),
+        ExecuteMsg::CreateCreditAccount(kind) => create_credit_account(deps, info.sender, kind),
         ExecuteMsg::UpdateConfig {
             updates,
         } => update_config(deps, info, updates),
@@ -77,6 +78,9 @@ pub fn reply(deps: DepsMut, _: Env, reply: Reply) -> ContractResult<Response> {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
     let res = match msg {
+        QueryMsg::AccountKind {
+            account_id,
+        } => to_binary(&get_account_kind(deps.storage, &account_id)?),
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::VaultUtilization {
             vault,

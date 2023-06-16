@@ -2,8 +2,9 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Uint128;
 
 use crate::adapters::{
-    health::HealthContractUnchecked, oracle::OracleUnchecked, params::ParamsUnchecked,
-    red_bank::RedBankUnchecked, swap::SwapperUnchecked, zapper::ZapperUnchecked,
+    account_nft::AccountNftUnchecked, health::HealthContractUnchecked, oracle::OracleUnchecked,
+    params::ParamsUnchecked, red_bank::RedBankUnchecked, swap::SwapperUnchecked,
+    zapper::ZapperUnchecked,
 };
 
 #[cw_serde]
@@ -32,7 +33,7 @@ pub struct InstantiateMsg {
 #[cw_serde]
 #[derive(Default)]
 pub struct ConfigUpdates {
-    pub account_nft: Option<String>,
+    pub account_nft: Option<AccountNftUnchecked>,
     pub oracle: Option<OracleUnchecked>,
     pub red_bank: Option<RedBankUnchecked>,
     pub max_unlocking_positions: Option<Uint128>,

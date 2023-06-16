@@ -1,9 +1,12 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{Coin, Decimal, StdError, Uint128};
-use mars_params::types::{
-    AssetParams, AssetParamsUpdate::AddOrUpdate, HighLeverageStrategyParams, RedBankSettings,
-    RoverSettings, VaultConfigUpdate,
+use mars_params::{
+    msg::{AssetParamsUpdate::AddOrUpdate, VaultConfigUpdate},
+    types::{
+        asset::{AssetParamsUnchecked, CmSettings, RedBankSettings},
+        hls::HlsParamsUnchecked,
+    },
 };
 use mars_rover::{
     adapters::vault::{
@@ -12,6 +15,7 @@ use mars_rover::{
     },
     msg::query::Positions,
 };
+use mars_rover_health_types::AccountKind;
 
 use crate::helpers::MockEnv;
 
@@ -20,7 +24,7 @@ pub mod helpers;
 #[test]
 fn raises_when_credit_manager_not_set() {
     let mock = MockEnv::new().skip_cm_config().build().unwrap();
-    let err: StdError = mock.query_health("xyz").unwrap_err();
+    let err: StdError = mock.query_health("xyz", AccountKind::Default).unwrap_err();
     assert_eq!(
         err,
         StdError::generic_err(
@@ -32,7 +36,7 @@ fn raises_when_credit_manager_not_set() {
 #[test]
 fn raises_when_params_contract_not_set() {
     let mock = MockEnv::new().skip_params_config().build().unwrap();
-    let err: StdError = mock.query_health("xyz").unwrap_err();
+    let err: StdError = mock.query_health("xyz", AccountKind::Default).unwrap_err();
     assert_eq!(
         err,
         StdError::generic_err(
@@ -44,7 +48,7 @@ fn raises_when_params_contract_not_set() {
 #[test]
 fn raises_with_non_existent_account_id() {
     let mock = MockEnv::new().build().unwrap();
-    let err: StdError = mock.query_health("xyz").unwrap_err();
+    let err: StdError = mock.query_health("xyz", AccountKind::Default).unwrap_err();
     assert_eq!(
         err,
         StdError::generic_err(
@@ -70,7 +74,7 @@ fn computes_correct_position_with_zero_assets() {
         },
     );
 
-    let health = mock.query_health(account_id).unwrap();
+    let health = mock.query_health(account_id, AccountKind::Default).unwrap();
     assert_eq!(health.total_debt_value, Uint128::zero());
     assert_eq!(health.total_collateral_value, Uint128::zero());
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::zero());
@@ -118,14 +122,15 @@ fn adds_vault_base_denoms_to_oracle_and_red_bank() {
     let liquidation_threshold = Decimal::from_atomics(5u128, 1).unwrap();
 
     let update = AddOrUpdate {
-        params: AssetParams {
+        params: AssetParamsUnchecked {
             denom: vault_base_token.to_string(),
-            rover: RoverSettings {
+            credit_manager: CmSettings {
                 whitelisted: true,
-                hls: HighLeverageStrategyParams {
+                hls: Some(HlsParamsUnchecked {
                     max_loan_to_value: Decimal::from_str("0.8").unwrap(),
                     liquidation_threshold: Decimal::from_str("0.9").unwrap(),
-                },
+                    correlations: vec![],
+                }),
             },
             red_bank: RedBankSettings {
                 deposit_enabled: false,
@@ -142,7 +147,7 @@ fn adds_vault_base_denoms_to_oracle_and_red_bank() {
 
     mock.set_price(vault_base_token, Decimal::one());
 
-    let health = mock.query_health(account_id).unwrap();
+    let health = mock.query_health(account_id, AccountKind::Default).unwrap();
     assert_eq!(health.total_debt_value, Uint128::zero());
     assert_eq!(health.total_collateral_value, unlocking_amount);
     assert_eq!(
@@ -171,14 +176,15 @@ fn whitelisted_coins_work() {
     let liquidation_threshold = Decimal::from_atomics(5u128, 1).unwrap();
     let liquidation_bonus = Decimal::from_atomics(9u128, 2).unwrap();
 
-    let mut asset_params = AssetParams {
+    let mut asset_params = AssetParamsUnchecked {
         denom: umars.to_string(),
-        rover: RoverSettings {
+        credit_manager: CmSettings {
             whitelisted: false,
-            hls: HighLeverageStrategyParams {
+            hls: Some(HlsParamsUnchecked {
                 max_loan_to_value: Decimal::from_str("0.8").unwrap(),
                 liquidation_threshold: Decimal::from_str("0.9").unwrap(),
-            },
+                correlations: vec![],
+            }),
         },
         red_bank: RedBankSettings {
             deposit_enabled: false,
@@ -213,7 +219,7 @@ fn whitelisted_coins_work() {
         },
     );
 
-    let health = mock.query_health(account_id).unwrap();
+    let health = mock.query_health(account_id, AccountKind::Default).unwrap();
     assert_eq!(health.total_debt_value, Uint128::zero());
     assert_eq!(health.total_collateral_value, deposit_amount); // price of 1
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::zero()); // coin not in whitelist
@@ -227,11 +233,11 @@ fn whitelisted_coins_work() {
     assert!(!health.above_max_ltv);
 
     // Add to whitelist
-    asset_params.rover.whitelisted = true;
+    asset_params.credit_manager.whitelisted = true;
     mock.update_asset_params(AddOrUpdate {
         params: asset_params,
     });
-    let health = mock.query_health(account_id).unwrap();
+    let health = mock.query_health(account_id, AccountKind::Default).unwrap();
     // Now reflects deposit value
     assert_eq!(
         health.max_ltv_adjusted_collateral,
@@ -268,14 +274,15 @@ fn vault_whitelist_affects_max_ltv() {
     );
 
     let update = AddOrUpdate {
-        params: AssetParams {
+        params: AssetParamsUnchecked {
             denom: vault_base_token.to_string(),
-            rover: RoverSettings {
+            credit_manager: CmSettings {
                 whitelisted: true,
-                hls: HighLeverageStrategyParams {
+                hls: Some(HlsParamsUnchecked {
                     max_loan_to_value: Decimal::from_str("0.8").unwrap(),
                     liquidation_threshold: Decimal::from_str("0.9").unwrap(),
-                },
+                    correlations: vec![],
+                }),
             },
             red_bank: RedBankSettings {
                 deposit_enabled: false,
@@ -294,7 +301,7 @@ fn vault_whitelist_affects_max_ltv() {
 
     let mut vault_config = mock.query_vault_config(&vault.into());
 
-    let health = mock.query_health(account_id).unwrap();
+    let health = mock.query_health(account_id, AccountKind::Default).unwrap();
     assert_eq!(health.total_debt_value, Uint128::zero());
     assert_eq!(health.total_collateral_value, base_token_amount);
     assert_eq!(
@@ -317,6 +324,6 @@ fn vault_whitelist_affects_max_ltv() {
         config: vault_config.into(),
     });
 
-    let health = mock.query_health(account_id).unwrap();
+    let health = mock.query_health(account_id, AccountKind::Default).unwrap();
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::zero());
 }

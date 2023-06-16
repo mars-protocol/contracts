@@ -1,7 +1,7 @@
 use std::{collections::HashMap, ops::Add, str::FromStr};
 
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
-use mars_params::types::VaultConfig;
+use mars_params::types::vault::VaultConfig;
 use mars_rover::{
     adapters::vault::{
         CoinValue, LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
@@ -10,6 +10,7 @@ use mars_rover::{
     msg::query::{DebtAmount, LentAmount, Positions},
 };
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
+use mars_rover_health_types::AccountKind;
 
 use crate::helpers::{udai_info, ujuno_info, uluna_info, umars_info, ustars_info};
 
@@ -36,6 +37,7 @@ fn only_assets_with_no_debts() {
 
     let deposit_amount = Uint128::new(300);
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![Coin {
@@ -96,6 +98,7 @@ fn terra_ragnarok() {
     let borrow_amount = Uint128::new(3);
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![Coin {
@@ -154,6 +157,7 @@ fn terra_ragnarok() {
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![Coin {
@@ -214,6 +218,7 @@ fn ltv_and_lqdt_adjusted_values() {
     let borrow_amount = Uint128::new(49);
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![
@@ -322,6 +327,7 @@ fn debt_value() {
     let borrowed_amount_stars = Uint128::new(30);
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![
@@ -443,6 +449,7 @@ fn above_max_ltv_below_liq_threshold() {
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
@@ -497,6 +504,7 @@ fn liquidatable() {
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
@@ -541,7 +549,7 @@ fn rover_whitelist_influences_max_ltv() {
     let umars = umars_info();
     let mut udai = udai_info();
 
-    udai.params.rover.whitelisted = false;
+    udai.params.credit_manager.whitelisted = false;
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
@@ -560,6 +568,7 @@ fn rover_whitelist_influences_max_ltv() {
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
@@ -641,11 +650,13 @@ fn unlocked_vault() {
                 max_loan_to_value: Decimal::from_str("0.4").unwrap(),
                 liquidation_threshold: Decimal::from_str("0.5").unwrap(),
                 whitelisted: true,
+                hls: None,
             },
         )]),
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
@@ -730,11 +741,13 @@ fn locked_vault() {
                 max_loan_to_value: Decimal::from_str("0.4").unwrap(),
                 liquidation_threshold: Decimal::from_str("0.5").unwrap(),
                 whitelisted: true,
+                hls: None,
             },
         )]),
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
@@ -822,11 +835,13 @@ fn locked_vault_with_unlocking_positions() {
                 max_loan_to_value: Decimal::from_str("0.4").unwrap(),
                 liquidation_threshold: Decimal::from_str("0.5").unwrap(),
                 whitelisted: true,
+                hls: None,
             },
         )]),
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
@@ -923,11 +938,13 @@ fn vault_is_not_whitelisted() {
                 max_loan_to_value: Decimal::from_str("0.4").unwrap(),
                 liquidation_threshold: Decimal::from_str("0.5").unwrap(),
                 whitelisted: false,
+                hls: None,
             },
         )]),
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
@@ -977,7 +994,7 @@ fn vault_base_token_is_not_whitelisted() {
     let udai = udai_info();
     let mut ujuno = ujuno_info();
 
-    ujuno.params.rover.whitelisted = false;
+    ujuno.params.credit_manager.whitelisted = false;
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
@@ -1000,12 +1017,12 @@ fn vault_base_token_is_not_whitelisted() {
             VaultPositionValue {
                 vault_coin: CoinValue {
                     denom: "leverage_vault_123".to_string(),
-                    amount: Default::default(),
+                    amount: Uint128::new(40330000),
                     value: Uint128::new(5000),
                 },
                 base_coin: CoinValue {
                     denom: ujuno.denom.clone(),
-                    amount: Default::default(),
+                    amount: Uint128::new(71),
                     value: Uint128::new(497873442),
                 },
             },
@@ -1018,11 +1035,13 @@ fn vault_base_token_is_not_whitelisted() {
                 max_loan_to_value: Decimal::from_str("0.4").unwrap(),
                 liquidation_threshold: Decimal::from_str("0.5").unwrap(),
                 whitelisted: true,
+                hls: None,
             },
         )]),
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
@@ -1102,6 +1121,7 @@ fn lent_coins_used_as_collateral() {
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![coin(1200, &umars.denom), coin(23, &udai.denom)],
@@ -1151,7 +1171,7 @@ fn allowed_lent_coins_influence_max_ltv() {
     let udai = udai_info();
     let mut uluna = uluna_info();
 
-    uluna.params.rover.whitelisted = false;
+    uluna.params.credit_manager.whitelisted = false;
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
@@ -1172,6 +1192,7 @@ fn allowed_lent_coins_influence_max_ltv() {
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![coin(1200, &umars.denom), coin(23, &udai.denom)],

@@ -44,6 +44,7 @@ fn utilization_if_cap_is_base_denom() {
         liquidation_threshold: Decimal::from_str("0.7").unwrap(),
         liquidation_bonus: Decimal::from_str("0.15").unwrap(),
         whitelisted: true,
+        hls: None,
     };
 
     let leverage_vault = VaultTestInfo {
@@ -54,6 +55,7 @@ fn utilization_if_cap_is_base_denom() {
         max_ltv: Decimal::from_str("0.6").unwrap(),
         liquidation_threshold: Decimal::from_str("0.7").unwrap(),
         whitelisted: true,
+        hls: None,
     };
 
     let mut mock = MockEnv::new()
@@ -111,6 +113,7 @@ fn utilization_in_other_denom() {
         max_ltv: Decimal::from_str("0.6").unwrap(),
         liquidation_threshold: Decimal::from_str("0.7").unwrap(),
         whitelisted: true,
+        hls: None,
     };
 
     let user = Addr::unchecked("user");

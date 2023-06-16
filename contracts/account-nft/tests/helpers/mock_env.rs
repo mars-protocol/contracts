@@ -12,7 +12,7 @@ use mars_account_nft::{
     nft_config::{NftConfigUpdates, UncheckedNftConfig},
 };
 use mars_mock_rover_health::msg::ExecuteMsg::SetHealthResponse;
-use mars_rover_health_types::HealthResponse;
+use mars_rover_health_types::{AccountKind, HealthResponse};
 
 use crate::helpers::MockEnvBuilder;
 
@@ -47,7 +47,7 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_next_id(&mut self) -> u64 {
+    pub fn query_next_id(&mut self) -> String {
         self.app.wrap().query_wasm_smart(self.nft_contract.clone(), &QueryMsg::NextId {}).unwrap()
     }
 
@@ -67,6 +67,11 @@ impl MockEnv {
         assert_eq!(user.to_string(), owner_res.owner)
     }
 
+    pub fn assert_next_id(&mut self, expected_next_id: &str) {
+        let actual_next_id = self.query_next_id();
+        assert_eq!(expected_next_id, &actual_next_id)
+    }
+
     pub fn set_health_response(
         &mut self,
         sender: &Addr,
@@ -81,6 +86,7 @@ impl MockEnv {
                 Addr::unchecked(config.health_contract_addr.unwrap()),
                 &SetHealthResponse {
                     account_id: account_id.to_string(),
+                    kind: AccountKind::Default,
                     response: response.clone(),
                 },
                 &[],

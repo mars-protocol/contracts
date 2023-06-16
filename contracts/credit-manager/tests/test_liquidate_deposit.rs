@@ -10,6 +10,7 @@ use mars_rover::{
         LiquidateRequest,
     },
 };
+use mars_rover_health_types::AccountKind;
 
 use crate::helpers::{
     assert_err, get_coin, get_debt, lp_token_info, uatom_info, ujake_info, unlocked_vault_info,
@@ -45,7 +46,7 @@ fn can_only_liquidate_unhealthy_accounts() {
     )
     .unwrap();
 
-    let health = mock.query_health(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
     assert!(!health.liquidatable);
 
     let liquidator = Addr::unchecked("liquidator");
@@ -106,7 +107,7 @@ fn vault_positions_contribute_to_health() {
     )
     .unwrap();
 
-    let health = mock.query_health(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
     assert!(!health.liquidatable);
 
     let liquidator = Addr::unchecked("liquidator");
@@ -157,7 +158,7 @@ fn liquidatee_does_not_have_requested_asset() {
     )
     .unwrap();
 
-    let health = mock.query_health(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
     assert!(!health.liquidatable);
 
     mock.price_change(CoinPrice {
@@ -215,7 +216,7 @@ fn liquidatee_does_not_have_debt_coin() {
     )
     .unwrap();
 
-    let health = mock.query_health(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
     assert!(!health.liquidatable);
 
     // Seeding a jakecoin borrow
@@ -277,7 +278,7 @@ fn liquidator_does_not_have_enough_to_pay_debt() {
     )
     .unwrap();
 
-    let health = mock.query_health(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
     assert!(!health.liquidatable);
 
     mock.price_change(CoinPrice {
@@ -333,7 +334,7 @@ fn liquidator_left_in_unhealthy_state() {
     )
     .unwrap();
 
-    let health = mock.query_health(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
     assert!(!health.liquidatable);
 
     mock.price_change(CoinPrice {

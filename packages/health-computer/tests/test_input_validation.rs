@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{coin, Addr, Uint128};
-use mars_params::types::VaultConfig;
+use mars_params::types::vault::VaultConfig;
 use mars_rover::{
     adapters::vault::{
         CoinValue, Vault, VaultAmount, VaultPosition, VaultPositionAmount, VaultPositionValue,
@@ -9,7 +9,7 @@ use mars_rover::{
     msg::query::{DebtAmount, Positions},
 };
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
-use mars_rover_health_types::HealthError;
+use mars_rover_health_types::{AccountKind, HealthError};
 
 use crate::helpers::{udai_info, umars_info};
 
@@ -34,6 +34,7 @@ fn missing_price_data() {
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
@@ -79,6 +80,7 @@ fn missing_params() {
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
@@ -138,11 +140,13 @@ fn missing_market_data_for_vault_base_token() {
                 max_loan_to_value: Default::default(),
                 liquidation_threshold: Default::default(),
                 whitelisted: false,
+                hls: None,
             },
         )]),
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![],
@@ -180,11 +184,13 @@ fn missing_vault_value() {
                 max_loan_to_value: Default::default(),
                 liquidation_threshold: Default::default(),
                 whitelisted: false,
+                hls: None,
             },
         )]),
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![],
@@ -232,6 +238,7 @@ fn missing_vault_config() {
     };
 
     let h = HealthComputer {
+        kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
             deposits: vec![],
@@ -248,4 +255,39 @@ fn missing_vault_config() {
 
     let err: HealthError = h.compute_health().unwrap_err();
     assert_eq!(err, HealthError::MissingVaultConfig(vault.address.to_string()))
+}
+
+#[test]
+fn missing_hls_params() {
+    let umars = umars_info();
+
+    let denoms_data = DenomsData {
+        prices: HashMap::from([(umars.denom.clone(), umars.price)]),
+        params: HashMap::from([(umars.denom.clone(), umars.params.clone())]),
+    };
+
+    let vaults_data = VaultsData {
+        vault_values: Default::default(),
+        vault_configs: Default::default(),
+    };
+
+    let h = HealthComputer {
+        kind: AccountKind::HighLeveredStrategy,
+        positions: Positions {
+            account_id: "123".to_string(),
+            deposits: vec![coin(1200, &umars.denom)],
+            debts: vec![DebtAmount {
+                denom: umars.denom.clone(),
+                shares: Default::default(),
+                amount: Uint128::new(200),
+            }],
+            lends: vec![],
+            vaults: vec![],
+        },
+        denoms_data,
+        vaults_data,
+    };
+
+    let err: HealthError = h.compute_health().unwrap_err();
+    assert_eq!(err, HealthError::MissingHLSParams(umars.denom))
 }

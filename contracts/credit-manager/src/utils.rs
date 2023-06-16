@@ -10,11 +10,12 @@ use mars_rover::{
     error::{ContractError, ContractResult},
     msg::{execute::CallbackMsg, ExecuteMsg},
 };
+use mars_rover_health_types::AccountKind;
 
 use crate::{
     state::{
-        ACCOUNT_NFT, COIN_BALANCES, HEALTH_CONTRACT, LENT_SHARES, ORACLE, PARAMS, RED_BANK,
-        SWAPPER, TOTAL_DEBT_SHARES, TOTAL_LENT_SHARES, ZAPPER,
+        ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, HEALTH_CONTRACT, LENT_SHARES, ORACLE, PARAMS,
+        RED_BANK, SWAPPER, TOTAL_DEBT_SHARES, TOTAL_LENT_SHARES, ZAPPER,
     },
     update_coin_balances::query_balance,
 };
@@ -33,7 +34,7 @@ pub fn assert_is_token_owner(deps: &DepsMut, user: &Addr, account_id: &str) -> C
 pub fn query_nft_token_owner(deps: Deps, account_id: &str) -> ContractResult<String> {
     let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
     let res: OwnerOfResponse = deps.querier.query_wasm_smart(
-        contract_addr,
+        contract_addr.address(),
         &QueryMsg::<Empty>::OwnerOf {
             token_id: account_id.to_string(),
             include_expired: None,
@@ -45,13 +46,17 @@ pub fn query_nft_token_owner(deps: Deps, account_id: &str) -> ContractResult<Str
 pub fn assert_coin_is_whitelisted(deps: &mut DepsMut, denom: &str) -> ContractResult<()> {
     let params = PARAMS.load(deps.storage)?;
     match params.query_asset_params(&deps.querier, denom) {
-        Ok(p) if p.rover.whitelisted => Ok(()),
+        Ok(p) if p.credit_manager.whitelisted => Ok(()),
         _ => Err(ContractError::NotWhitelisted(denom.to_string())),
     }
 }
 
 pub fn assert_coins_are_whitelisted(deps: &mut DepsMut, denoms: Vec<&str>) -> ContractResult<()> {
     denoms.iter().try_for_each(|denom| assert_coin_is_whitelisted(deps, denom))
+}
+
+pub fn get_account_kind(storage: &dyn Storage, account_id: &str) -> ContractResult<AccountKind> {
+    Ok(ACCOUNT_KINDS.may_load(storage, account_id)?.unwrap_or(AccountKind::Default))
 }
 
 pub fn increment_coin_balance(
@@ -190,7 +195,7 @@ pub fn lent_shares_to_amount(
 /// NOTE: https://twitter.com/larry0x/status/1595919149381079041
 pub fn assert_not_contract_in_config(deps: &Deps, addr_to_flag: &Addr) -> ContractResult<()> {
     let config_contracts = vec![
-        ACCOUNT_NFT.load(deps.storage)?,
+        ACCOUNT_NFT.load(deps.storage)?.address().clone(),
         RED_BANK.load(deps.storage)?.address().clone(),
         ORACLE.load(deps.storage)?.address().clone(),
         SWAPPER.load(deps.storage)?.address().clone(),

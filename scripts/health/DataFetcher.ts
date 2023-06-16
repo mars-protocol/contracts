@@ -3,6 +3,7 @@ import { MarsCreditManagerQueryClient } from '../types/generated/mars-credit-man
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate/build/cosmwasmclient'
 import { HealthResponse } from '../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'
 import {
+  AccountKind,
   DenomsData,
   HealthComputer,
   VaultsData,
@@ -101,6 +102,7 @@ export class DataFetcher {
       positions,
       denoms_data,
       vaults_data,
+      kind: 'default' as AccountKind,
     }
     return this.healthComputer(data)
   }

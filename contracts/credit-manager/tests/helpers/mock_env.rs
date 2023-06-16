@@ -1,4 +1,4 @@
-use std::{mem::take, str::FromStr};
+use std::{default::Default, mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coins, testing::MockApi, Addr, Coin, Decimal, Empty, StdResult, Uint128};
@@ -23,12 +23,14 @@ use mars_mock_vault::{
 use mars_owner::OwnerUpdate;
 use mars_params::{
     msg::{
+        AssetParamsUpdate,
+        AssetParamsUpdate::AddOrUpdate,
         ExecuteMsg::{UpdateAssetParams, UpdateVaultConfig},
-        InstantiateMsg as ParamsInstantiateMsg, QueryMsg as ParamsQueryMsg,
+        InstantiateMsg as ParamsInstantiateMsg, QueryMsg as ParamsQueryMsg, VaultConfigUpdate,
     },
     types::{
-        AssetParams, AssetParamsUpdate, AssetParamsUpdate::AddOrUpdate, VaultConfig,
-        VaultConfigUnchecked, VaultConfigUpdate,
+        asset::AssetParams,
+        vault::{VaultConfig, VaultConfigUnchecked},
     },
 };
 use mars_red_bank_types::red_bank::{
@@ -37,6 +39,7 @@ use mars_red_bank_types::red_bank::{
 };
 use mars_rover::{
     adapters::{
+        account_nft::AccountNftUnchecked,
         health::HealthContract,
         oracle::{Oracle, OracleBase, OracleUnchecked},
         params::Params,
@@ -60,7 +63,7 @@ use mars_rover::{
     },
 };
 use mars_rover_health_types::{
-    ExecuteMsg::UpdateConfig, HealthResponse, InstantiateMsg as HealthInstantiateMsg,
+    AccountKind, ExecuteMsg::UpdateConfig, HealthResponse, InstantiateMsg as HealthInstantiateMsg,
     QueryMsg::Health,
 };
 use mars_v2_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
@@ -226,7 +229,7 @@ impl MockEnv {
         )
     }
 
-    pub fn deploy_new_nft_contract(&mut self) -> AnyResult<Addr> {
+    pub fn deploy_new_nft_contract(&mut self) -> AnyResult<AccountNftUnchecked> {
         let nft_minter = Addr::unchecked("original_nft_minter");
         let nft_contract = deploy_nft_contract(&mut self.app, &nft_minter);
         propose_new_nft_minter(
@@ -235,14 +238,22 @@ impl MockEnv {
             &nft_minter.clone(),
             &self.rover.clone(),
         );
-        Ok(nft_contract)
+        Ok(AccountNftUnchecked::new(nft_contract.to_string()))
     }
 
     pub fn create_credit_account(&mut self, sender: &Addr) -> AnyResult<String> {
+        self._create_credit_account(sender, AccountKind::Default)
+    }
+
+    pub fn create_hls_account(&mut self, sender: &Addr) -> String {
+        self._create_credit_account(sender, AccountKind::HighLeveredStrategy).unwrap()
+    }
+
+    fn _create_credit_account(&mut self, sender: &Addr, kind: AccountKind) -> AnyResult<String> {
         let res = self.app.execute_contract(
             sender.clone(),
             self.rover.clone(),
-            &ExecuteMsg::CreateCreditAccount {},
+            &ExecuteMsg::CreateCreditAccount(kind),
             &[],
         )?;
         Ok(self.get_account_id(res))
@@ -306,13 +317,14 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_health(&self, account_id: &str) -> HealthResponse {
+    pub fn query_health(&self, account_id: &str, kind: AccountKind) -> HealthResponse {
         self.app
             .wrap()
             .query_wasm_smart(
                 self.health_contract.clone().address(),
                 &Health {
                     account_id: account_id.to_string(),
+                    kind,
                 },
             )
             .unwrap()
@@ -324,6 +336,18 @@ impl MockEnv {
 
     pub fn query_config(&self) -> ConfigResponse {
         self.app.wrap().query_wasm_smart(self.rover.clone(), &QueryMsg::Config {}).unwrap()
+    }
+
+    pub fn query_account_kind(&self, account_id: &str) -> AccountKind {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.rover.clone(),
+                &QueryMsg::AccountKind {
+                    account_id: account_id.to_string(),
+                },
+            )
+            .unwrap()
     }
 
     pub fn query_nft_config(&self) -> UncheckedNftConfig {
@@ -685,7 +709,7 @@ impl MockEnvBuilder {
                 self.update_config(
                     rover,
                     ConfigUpdates {
-                        account_nft: Some(nft_contract.to_string()),
+                        account_nft: Some(AccountNftUnchecked::new(nft_contract.to_string())),
                         ..Default::default()
                     },
                 )
@@ -978,6 +1002,7 @@ impl MockEnvBuilder {
                         max_loan_to_value: vault.max_ltv,
                         liquidation_threshold: vault.liquidation_threshold,
                         whitelisted: vault.whitelisted,
+                        hls: vault.hls.clone(),
                     },
                 }),
                 &[],

@@ -18,8 +18,7 @@ fn instantiated_storage_vars() {
     assert_eq!("spiderman_1337", ownership.owner.unwrap());
     assert_eq!(None, ownership.pending_owner);
 
-    let next_id = mock.query_next_id();
-    assert_eq!(next_id, 1);
+    mock.assert_next_id("1");
 }
 
 #[test]
@@ -31,6 +30,5 @@ fn instantiated_storage_vars_with_health_contract() {
     assert_eq!(config.health_contract_addr, Some(health_contract.to_string()));
     assert_eq!(config.max_value_for_burn, MAX_VALUE_FOR_BURN);
 
-    let next_id = mock.query_next_id();
-    assert_eq!(next_id, 1);
+    mock.assert_next_id("1");
 }

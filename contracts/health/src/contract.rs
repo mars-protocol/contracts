@@ -55,7 +55,8 @@ pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> HealthResult<Binary> {
     let res = match msg {
         QueryMsg::Health {
             account_id,
-        } => to_binary(&compute_health(deps, &account_id)?),
+            kind,
+        } => to_binary(&compute_health(deps, &account_id, kind)?),
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
     };
     res.map_err(Into::into)

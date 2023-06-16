@@ -12,6 +12,7 @@ pub fn build_mock_coin_infos(count: usize) -> Vec<CoinInfo> {
             price: Decimal::from_atomics(10u128, 0).unwrap(),
             liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
             whitelisted: true,
+            hls: None,
         })
         .collect()
 }
@@ -28,6 +29,7 @@ pub fn build_mock_vaults(count: usize) -> Vec<VaultTestInfo> {
                 max_ltv: lp_token.max_ltv,
                 liquidation_threshold: lp_token.liquidation_threshold,
                 whitelisted: true,
+                hls: None,
             }
         })
         .collect()

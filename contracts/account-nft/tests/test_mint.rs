@@ -14,42 +14,51 @@ pub mod helpers;
 #[test]
 fn id_incrementer() {
     let mut mock = MockEnv::new().build().unwrap();
+    mock.assert_next_id("1");
 
     let user_1 = Addr::unchecked("user_1");
     let token_id = mock.mint(&user_1).unwrap();
     assert_eq!(token_id, "1");
     mock.assert_owner_is_correct(&user_1, &token_id);
+    mock.assert_next_id("2");
 
     let user_2 = Addr::unchecked("user_2");
     let token_id = mock.mint(&user_2).unwrap();
     assert_eq!(token_id, "2");
     mock.assert_owner_is_correct(&user_2, &token_id);
+    mock.assert_next_id("3");
 
     let user_3 = Addr::unchecked("user_3");
     let token_id = mock.mint(&user_3).unwrap();
     assert_eq!(token_id, "3");
     mock.assert_owner_is_correct(&user_3, &token_id);
+    mock.assert_next_id("4");
 }
 
 #[test]
 fn id_incrementer_works_despite_burns() {
     let mut mock = MockEnv::new().build().unwrap();
+    mock.assert_next_id("1");
 
     let user = Addr::unchecked("user");
     let token_id_1 = mock.mint(&user).unwrap();
     assert_eq!(token_id_1, "1");
+    mock.assert_next_id("2");
 
     let token_id_2 = mock.mint(&user).unwrap();
     assert_eq!(token_id_2, "2");
+    mock.assert_next_id("3");
 
     mock.set_health_response(&user, &token_id_1, &below_max_for_burn());
     mock.burn(&user, &token_id_1).unwrap();
     mock.set_health_response(&user, &token_id_2, &below_max_for_burn());
     mock.burn(&user, &token_id_2).unwrap();
 
+    mock.assert_next_id("3");
     let token_id_3 = mock.mint(&user).unwrap();
     assert_eq!(token_id_3, "3");
     mock.assert_owner_is_correct(&user, &token_id_3);
+    mock.assert_next_id("4");
 }
 
 #[test]

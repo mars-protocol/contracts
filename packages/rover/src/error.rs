@@ -69,6 +69,11 @@ pub enum ContractError {
     },
 
     #[error("{reason:?}")]
+    HLS {
+        reason: String,
+    },
+
+    #[error("{reason:?}")]
     InvalidConfig {
         reason: String,
     },

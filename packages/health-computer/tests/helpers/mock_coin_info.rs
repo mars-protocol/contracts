@@ -1,6 +1,11 @@
+use std::str::FromStr;
+
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Decimal;
-use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
+use mars_params::types::{
+    asset::{AssetParams, CmSettings, RedBankSettings},
+    hls::{HlsAssetType, HlsParams},
+};
 
 #[cw_serde]
 pub struct CoinInfo {
@@ -19,12 +24,9 @@ pub fn umars_info() -> CoinInfo {
             max_loan_to_value: Decimal::from_atomics(8u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(84u128, 2).unwrap(),
             liquidation_bonus: Decimal::from_atomics(12u128, 2).unwrap(),
-            rover: RoverSettings {
+            credit_manager: CmSettings {
                 whitelisted: true,
-                hls: HighLeverageStrategyParams {
-                    max_loan_to_value: Default::default(),
-                    liquidation_threshold: Default::default(),
-                },
+                hls: None,
             },
             red_bank: RedBankSettings {
                 deposit_enabled: true,
@@ -45,12 +47,9 @@ pub fn udai_info() -> CoinInfo {
             max_loan_to_value: Decimal::from_atomics(85u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
             liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
-            rover: RoverSettings {
+            credit_manager: CmSettings {
                 whitelisted: true,
-                hls: HighLeverageStrategyParams {
-                    max_loan_to_value: Default::default(),
-                    liquidation_threshold: Default::default(),
-                },
+                hls: None,
             },
             red_bank: RedBankSettings {
                 deposit_enabled: true,
@@ -71,12 +70,9 @@ pub fn uluna_info() -> CoinInfo {
             max_loan_to_value: Decimal::from_atomics(7u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
             liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
-            rover: RoverSettings {
+            credit_manager: CmSettings {
                 whitelisted: true,
-                hls: HighLeverageStrategyParams {
-                    max_loan_to_value: Default::default(),
-                    liquidation_threshold: Default::default(),
-                },
+                hls: None,
             },
             red_bank: RedBankSettings {
                 deposit_enabled: true,
@@ -97,12 +93,15 @@ pub fn ustars_info() -> CoinInfo {
             max_loan_to_value: Decimal::from_atomics(6u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
             liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
-            rover: RoverSettings {
+            credit_manager: CmSettings {
                 whitelisted: true,
-                hls: HighLeverageStrategyParams {
-                    max_loan_to_value: Default::default(),
-                    liquidation_threshold: Default::default(),
-                },
+                hls: Some(HlsParams {
+                    max_loan_to_value: Decimal::from_str("0.75").unwrap(),
+                    liquidation_threshold: Decimal::from_str("0.8").unwrap(),
+                    correlations: vec![HlsAssetType::Coin {
+                        denom: "stStars".to_string(),
+                    }],
+                }),
             },
             red_bank: RedBankSettings {
                 deposit_enabled: true,
@@ -123,12 +122,9 @@ pub fn ujuno_info() -> CoinInfo {
             max_loan_to_value: Decimal::from_atomics(8u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
             liquidation_bonus: Decimal::from_atomics(12u128, 2).unwrap(),
-            rover: RoverSettings {
+            credit_manager: CmSettings {
                 whitelisted: true,
-                hls: HighLeverageStrategyParams {
-                    max_loan_to_value: Default::default(),
-                    liquidation_threshold: Default::default(),
-                },
+                hls: None,
             },
             red_bank: RedBankSettings {
                 deposit_enabled: true,

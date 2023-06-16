@@ -23,7 +23,7 @@ use crate::{
 pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
     Ok(ConfigResponse {
         ownership: OWNER.query(deps.storage)?,
-        account_nft: ACCOUNT_NFT.may_load(deps.storage)?.map(|addr| addr.to_string()),
+        account_nft: ACCOUNT_NFT.may_load(deps.storage)?.map(|a| a.address().into()),
         red_bank: RED_BANK.load(deps.storage)?.address().into(),
         oracle: ORACLE.load(deps.storage)?.address().into(),
         params: PARAMS.load(deps.storage)?.address().into(),

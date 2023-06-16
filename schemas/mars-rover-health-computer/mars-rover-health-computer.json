@@ -5,12 +5,16 @@
   "type": "object",
   "required": [
     "denoms_data",
+    "kind",
     "positions",
     "vaults_data"
   ],
   "properties": {
     "denoms_data": {
       "$ref": "#/definitions/DenomsData"
+    },
+    "kind": {
+      "$ref": "#/definitions/AccountKind"
     },
     "positions": {
       "$ref": "#/definitions/Positions"
@@ -21,21 +25,31 @@
   },
   "additionalProperties": false,
   "definitions": {
+    "AccountKind": {
+      "type": "string",
+      "enum": [
+        "default",
+        "high_levered_strategy"
+      ]
+    },
     "Addr": {
       "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
       "type": "string"
     },
-    "AssetParams": {
+    "AssetParamsBase_for_Addr": {
       "type": "object",
       "required": [
+        "credit_manager",
         "denom",
         "liquidation_bonus",
         "liquidation_threshold",
         "max_loan_to_value",
-        "red_bank",
-        "rover"
+        "red_bank"
       ],
       "properties": {
+        "credit_manager": {
+          "$ref": "#/definitions/CmSettings_for_Addr"
+        },
         "denom": {
           "type": "string"
         },
@@ -50,9 +64,28 @@
         },
         "red_bank": {
           "$ref": "#/definitions/RedBankSettings"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CmSettings_for_Addr": {
+      "type": "object",
+      "required": [
+        "whitelisted"
+      ],
+      "properties": {
+        "hls": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/HlsParamsBase_for_Addr"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
-        "rover": {
-          "$ref": "#/definitions/RoverSettings"
+        "whitelisted": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false
@@ -136,7 +169,7 @@
         "params": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/AssetParams"
+            "$ref": "#/definitions/AssetParamsBase_for_Addr"
           }
         },
         "prices": {
@@ -149,13 +182,67 @@
       },
       "additionalProperties": false
     },
-    "HighLeverageStrategyParams": {
+    "HlsAssetType_for_Addr": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "coin"
+          ],
+          "properties": {
+            "coin": {
+              "type": "object",
+              "required": [
+                "denom"
+              ],
+              "properties": {
+                "denom": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "vault"
+          ],
+          "properties": {
+            "vault": {
+              "type": "object",
+              "required": [
+                "addr"
+              ],
+              "properties": {
+                "addr": {
+                  "$ref": "#/definitions/Addr"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "HlsParamsBase_for_Addr": {
       "type": "object",
       "required": [
+        "correlations",
         "liquidation_threshold",
         "max_loan_to_value"
       ],
       "properties": {
+        "correlations": {
+          "description": "Given this asset is debt, correlations are the only allowed collateral which are permitted to fulfill the HLS strategy",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/HlsAssetType_for_Addr"
+          }
+        },
         "liquidation_threshold": {
           "$ref": "#/definitions/Decimal"
         },
@@ -271,22 +358,6 @@
       },
       "additionalProperties": false
     },
-    "RoverSettings": {
-      "type": "object",
-      "required": [
-        "hls",
-        "whitelisted"
-      ],
-      "properties": {
-        "hls": {
-          "$ref": "#/definitions/HighLeverageStrategyParams"
-        },
-        "whitelisted": {
-          "type": "boolean"
-        }
-      },
-      "additionalProperties": false
-    },
     "Uint128": {
       "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
       "type": "string"
@@ -327,6 +398,16 @@
         },
         "deposit_cap": {
           "$ref": "#/definitions/Coin"
+        },
+        "hls": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/HlsParamsBase_for_Addr"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "liquidation_threshold": {
           "$ref": "#/definitions/Decimal"
