@@ -102,7 +102,8 @@ pub fn validate_incentive_schedule(
         .next()
         .transpose()?;
     if let Some((existing_start_time, _)) = old_schedule {
-        if (schedule.start_time + existing_start_time) % config.epoch_duration != 0 {
+        let start_time_diff = schedule.start_time.abs_diff(existing_start_time);
+        if start_time_diff % config.epoch_duration != 0 {
             return Err(ContractError::InvalidStartTime {
                 epoch_duration: config.epoch_duration,
                 existing_start_time,
