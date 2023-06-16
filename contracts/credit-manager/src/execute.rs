@@ -61,7 +61,7 @@ pub fn dispatch_actions(
     env: Env,
     info: MessageInfo,
     account_id: &str,
-    actions: &[Action],
+    actions: Vec<Action>,
 ) -> ContractResult<Response> {
     assert_is_token_owner(&deps, &info.sender, account_id)?;
     assert_not_contract_in_config(&deps.as_ref(), &info.sender)?;
@@ -74,16 +74,16 @@ pub fn dispatch_actions(
     for action in actions {
         match action {
             Action::Deposit(coin) => {
-                response = deposit(&mut deps, response, account_id, coin, &mut received_coins)?;
+                response = deposit(&mut deps, response, account_id, &coin, &mut received_coins)?;
             }
             Action::Withdraw(coin) => callbacks.push(CallbackMsg::Withdraw {
                 account_id: account_id.to_string(),
-                coin: coin.clone(),
+                coin,
                 recipient: info.sender.clone(),
             }),
             Action::Borrow(coin) => callbacks.push(CallbackMsg::Borrow {
                 account_id: account_id.to_string(),
-                coin: coin.clone(),
+                coin,
             }),
             Action::Repay {
                 recipient_account_id,
@@ -92,23 +92,23 @@ pub fn dispatch_actions(
                 if let Some(recipient) = recipient_account_id {
                     callbacks.push(CallbackMsg::RepayForRecipient {
                         benefactor_account_id: account_id.to_string(),
-                        recipient_account_id: recipient.clone(),
-                        coin: coin.clone(),
+                        recipient_account_id: recipient,
+                        coin,
                     })
                 } else {
                     callbacks.push(CallbackMsg::Repay {
                         account_id: account_id.to_string(),
-                        coin: coin.clone(),
+                        coin,
                     })
                 }
             }
             Action::Lend(coin) => callbacks.push(CallbackMsg::Lend {
                 account_id: account_id.to_string(),
-                coin: coin.clone(),
+                coin,
             }),
             Action::Reclaim(coin) => callbacks.push(CallbackMsg::Reclaim {
                 account_id: account_id.to_string(),
-                coin: coin.clone(),
+                coin,
             }),
             Action::EnterVault {
                 vault,
@@ -116,7 +116,7 @@ pub fn dispatch_actions(
             } => callbacks.push(CallbackMsg::EnterVault {
                 account_id: account_id.to_string(),
                 vault: vault.check(deps.api)?,
-                coin: coin.clone(),
+                coin,
             }),
             Action::Liquidate {
                 liquidatee_account_id,
@@ -126,14 +126,14 @@ pub fn dispatch_actions(
                 LiquidateRequest::Deposit(denom) => callbacks.push(CallbackMsg::Liquidate {
                     liquidator_account_id: account_id.to_string(),
                     liquidatee_account_id: liquidatee_account_id.to_string(),
-                    debt_coin: debt_coin.clone(),
-                    request: LiquidateRequest::Deposit(denom.clone()),
+                    debt_coin,
+                    request: LiquidateRequest::Deposit(denom),
                 }),
                 LiquidateRequest::Lend(denom) => callbacks.push(CallbackMsg::Liquidate {
                     liquidator_account_id: account_id.to_string(),
                     liquidatee_account_id: liquidatee_account_id.to_string(),
-                    debt_coin: debt_coin.clone(),
-                    request: LiquidateRequest::Lend(denom.clone()),
+                    debt_coin,
+                    request: LiquidateRequest::Lend(denom),
                 }),
                 LiquidateRequest::Vault {
                     request_vault,
@@ -141,10 +141,10 @@ pub fn dispatch_actions(
                 } => callbacks.push(CallbackMsg::Liquidate {
                     liquidator_account_id: account_id.to_string(),
                     liquidatee_account_id: liquidatee_account_id.to_string(),
-                    debt_coin: debt_coin.clone(),
+                    debt_coin,
                     request: LiquidateRequest::Vault {
                         request_vault: request_vault.check(deps.api)?,
-                        position_type: position_type.clone(),
+                        position_type,
                     },
                 }),
             },
@@ -154,9 +154,9 @@ pub fn dispatch_actions(
                 slippage,
             } => callbacks.push(CallbackMsg::SwapExactIn {
                 account_id: account_id.to_string(),
-                coin_in: coin_in.clone(),
-                denom_out: denom_out.clone(),
-                slippage: *slippage,
+                coin_in,
+                denom_out,
+                slippage,
             }),
             Action::ExitVault {
                 vault,
@@ -164,7 +164,7 @@ pub fn dispatch_actions(
             } => callbacks.push(CallbackMsg::ExitVault {
                 account_id: account_id.to_string(),
                 vault: vault.check(deps.api)?,
-                amount: *amount,
+                amount,
             }),
             Action::RequestVaultUnlock {
                 vault,
@@ -172,7 +172,7 @@ pub fn dispatch_actions(
             } => callbacks.push(CallbackMsg::RequestVaultUnlock {
                 account_id: account_id.to_string(),
                 vault: vault.check(deps.api)?,
-                amount: *amount,
+                amount,
             }),
             Action::ExitVaultUnlocked {
                 id,
@@ -180,7 +180,7 @@ pub fn dispatch_actions(
             } => callbacks.push(CallbackMsg::ExitVaultUnlocked {
                 account_id: account_id.to_string(),
                 vault: vault.check(deps.api)?,
-                position_id: *id,
+                position_id: id,
             }),
             Action::ProvideLiquidity {
                 coins_in,
@@ -188,17 +188,17 @@ pub fn dispatch_actions(
                 minimum_receive,
             } => callbacks.push(CallbackMsg::ProvideLiquidity {
                 account_id: account_id.to_string(),
-                lp_token_out: lp_token_out.clone(),
-                coins_in: coins_in.clone(),
-                minimum_receive: *minimum_receive,
+                lp_token_out,
+                coins_in,
+                minimum_receive,
             }),
             Action::WithdrawLiquidity {
                 lp_token,
                 minimum_receive,
             } => callbacks.push(CallbackMsg::WithdrawLiquidity {
                 account_id: account_id.to_string(),
-                lp_token: lp_token.clone(),
-                minimum_receive: minimum_receive.clone(),
+                lp_token,
+                minimum_receive,
             }),
             Action::RefundAllCoinBalances {} => {
                 callbacks.push(CallbackMsg::RefundAllCoinBalances {

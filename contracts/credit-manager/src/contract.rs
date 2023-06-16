@@ -60,7 +60,7 @@ pub fn execute(
         ExecuteMsg::UpdateCreditAccount {
             account_id,
             actions,
-        } => dispatch_actions(deps, env, info, &account_id, &actions),
+        } => dispatch_actions(deps, env, info, &account_id, actions),
         ExecuteMsg::RepayFromWallet {
             account_id,
         } => repay_from_wallet(deps, env, info, account_id),
