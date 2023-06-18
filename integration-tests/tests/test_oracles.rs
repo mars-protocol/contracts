@@ -1059,7 +1059,6 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
         &InstantiateIncentives {
             owner: signer.address(),
             address_provider: addr_provider_addr.clone(),
-            mars_denom: "umars".to_string(),
             epoch_duration: 604800, // 1 week in seconds
             min_incentive_emission: Uint128::from(100u128),
         },

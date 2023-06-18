@@ -20,7 +20,6 @@ pub fn th_setup_with_env(env: Env) -> OwnedDeps<MockStorage, MockApi, MarsMockQu
     let msg = InstantiateMsg {
         owner: String::from("owner"),
         address_provider: String::from("address_provider"),
-        mars_denom: String::from("umars"),
         epoch_duration: 604800, // 1 week in seconds
         min_incentive_emission: Uint128::from(100u128),
     };
@@ -39,7 +38,6 @@ pub fn ths_setup_with_epoch_duration(
     let msg = InstantiateMsg {
         owner: String::from("owner"),
         address_provider: String::from("address_provider"),
-        mars_denom: String::from("umars"),
         epoch_duration,
         min_incentive_emission: Uint128::from(100u128),
     };
