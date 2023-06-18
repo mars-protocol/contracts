@@ -7,7 +7,6 @@ use cw_it::osmosis_test_tube::{Gamm, Module, OsmosisTestApp, SigningAccount, Was
 use mars_red_bank_types::swapper::{ExecuteMsg, QueryMsg, RouteResponse};
 use mars_swapper_osmosis::route::OsmosisRoute;
 use osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute;
-use osmosis_test_tube::{Gamm, Module, OsmosisTestApp, SigningAccount, Wasm};
 
 use crate::helpers::instantiate_contract;
 
