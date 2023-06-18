@@ -120,7 +120,8 @@ pub fn execute(
         ),
         ExecuteMsg::UpdateConfig {
             address_provider,
-        } => Ok(execute_update_config(deps, env, info, address_provider)?),
+            min_incentive_emission,
+        } => Ok(execute_update_config(deps, env, info, address_provider, min_incentive_emission)?),
         ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
     }
 }
@@ -432,6 +433,7 @@ pub fn execute_update_config(
     _env: Env,
     info: MessageInfo,
     address_provider: Option<String>,
+    min_incentive_emission: Option<Uint128>,
 ) -> Result<Response, ContractError> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
@@ -439,6 +441,10 @@ pub fn execute_update_config(
 
     config.address_provider =
         option_string_to_addr(deps.api, address_provider, config.address_provider)?;
+
+    if let Some(min_incentive_emission) = min_incentive_emission {
+        config.min_incentive_emission = min_incentive_emission;
+    }
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -516,6 +522,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         owner: owner_state.owner,
         proposed_new_owner: owner_state.proposed,
         address_provider: config.address_provider,
+        min_incentive_emission: config.min_incentive_emission,
     })
 }
 
