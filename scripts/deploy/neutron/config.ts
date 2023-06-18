@@ -110,7 +110,8 @@ export const neutronTestnetConfig: DeploymentConfig = {
   rewardCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc-palvus.pion-1.ntrn.tech:443',
   safetyFundFeeShare: '0.5',
-  deployerMnemonic: '', // TODO: Set mnemonic before deploying
+  deployerMnemonic:
+    'bundle bundle orchard jeans office umbrella bird around taxi arrive infant discover elder they joy misery photo crunch gift fancy pledge attend adult eight', // TODO: Set mnemonic before deploying
   slippage_tolerance: '0.01',
   base_asset_symbol: 'NTRN',
   second_asset_symbol: 'ATOM',

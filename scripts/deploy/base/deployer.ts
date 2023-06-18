@@ -11,7 +11,6 @@ import assert from 'assert'
 import { SwapperExecuteMsg } from '../../types/config'
 import { InstantiateMsg as AstroportSwapperInstantiateMsg } from '../../types/generated/mars-swapper-astroport/MarsSwapperAstroport.types'
 import { InstantiateMsg as OsmosisSwapperInstantiateMsg } from '../../types/generated/mars-swapper-osmosis/MarsSwapperOsmosis.types'
-import { InstantiateMsg as ParamsInstantiateMsg } from '../../types/generated/mars-params/MarsParams.types'
 import {
   InstantiateMsg as RedBankInstantiateMsg,
   QueryMsg as RedBankQueryMsg,
@@ -163,14 +162,6 @@ export class Deployer {
     }
 
     await this.instantiate('swapper', this.storage.codeIds.swapper!, msg)
-  }
-
-  async instantiateParams() {
-    const msg: ParamsInstantiateMsg = {
-      owner: this.deployerAddress,
-      max_close_factor: this.config.maxCloseFactor,
-    }
-    await this.instantiate('params', this.storage.codeIds.params!, msg)
   }
 
   async setRoutes() {

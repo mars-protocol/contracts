@@ -1876,23 +1876,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-params"
-version = "1.1.0"
-dependencies = [
- "anyhow",
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-multi-test 0.16.5",
- "cw-storage-plus 1.1.0",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus?rev=de1fb0b)",
- "mars-owner",
- "mars-utils",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "mars-red-bank"
 version = "1.1.0"
 dependencies = [
