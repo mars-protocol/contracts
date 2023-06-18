@@ -1,13 +1,28 @@
 use cosmwasm_std::{
-    testing::MockStorage, Decimal, OverflowError, OverflowOperation, StdError, Storage, Uint128,
+    testing::MockStorage, Addr, Decimal, OverflowError, OverflowOperation, StdError, Storage,
+    Uint128,
 };
 use mars_incentives::{
     helpers::{compute_incentive_index, compute_user_accrued_rewards, update_incentive_index},
-    state::{INCENTIVE_SCHEDULES, INCENTIVE_STATES},
+    state::{CONFIG, EMISSIONS, INCENTIVE_STATES},
 };
-use mars_red_bank_types::incentives::{IncentiveSchedule, IncentiveState};
+use mars_red_bank_types::incentives::{Config, IncentiveState};
 
 mod helpers;
+
+fn store_config_with_epoch_duration(storage: &mut dyn Storage, epoch_duration: u64) {
+    CONFIG
+        .save(
+            storage,
+            &Config {
+                epoch_duration,
+                address_provider: Addr::unchecked(""),
+                mars_denom: "".to_string(),
+                min_incentive_emission: Uint128::one(),
+            },
+        )
+        .unwrap();
+}
 
 #[test]
 fn update_incentive_index_if_zero_emission() {
@@ -18,6 +33,7 @@ fn update_incentive_index_if_zero_emission() {
         last_updated: 0,
     };
     INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
+    store_config_with_epoch_duration(&mut storage, 300);
 
     let current_block_time = start_time + 1;
     let mut expected_ai = ai.clone();
@@ -45,17 +61,8 @@ fn update_incentive_index_if_zero_amount() {
         last_updated: 0,
     };
     INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            &mut storage,
-            ("uosmo", "umars", start_time),
-            &IncentiveSchedule {
-                emission_per_second: Uint128::new(50),
-                start_time,
-                duration: 300, // 5 min
-            },
-        )
-        .unwrap();
+    store_config_with_epoch_duration(&mut storage, 300);
+    EMISSIONS.save(&mut storage, ("uosmo", "umars", start_time), &Uint128::new(50)).unwrap();
 
     let current_block_time = start_time + 1;
     let expected_ai = ai.clone();
@@ -82,17 +89,8 @@ fn update_incentive_index_if_current_block_lt_start_time() {
         last_updated: 0,
     };
     INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            &mut storage,
-            ("uosmo", "umars", start_time),
-            &IncentiveSchedule {
-                emission_per_second: Uint128::new(50),
-                start_time,
-                duration: 300, // 5 min
-            },
-        )
-        .unwrap();
+    store_config_with_epoch_duration(&mut storage, 300);
+    EMISSIONS.save(&mut storage, ("uosmo", "umars", start_time), &Uint128::new(50)).unwrap();
 
     let current_block_time = start_time - 1;
     let mut expected_ai = ai.clone();
@@ -120,17 +118,8 @@ fn update_incentive_index_if_current_block_eq_start_time() {
         last_updated: 0,
     };
     INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            &mut storage,
-            ("uosmo", "umars", start_time),
-            &IncentiveSchedule {
-                emission_per_second: Uint128::new(50),
-                start_time,
-                duration: 300, // 5 min
-            },
-        )
-        .unwrap();
+    store_config_with_epoch_duration(&mut storage, 300);
+    EMISSIONS.save(&mut storage, ("uosmo", "umars", start_time), &Uint128::new(50)).unwrap();
 
     let current_block_time = start_time;
     let mut expected_ai = ai.clone();
@@ -161,17 +150,8 @@ fn update_incentive_index_if_current_block_gt_start_time() {
         last_updated: 0,
     };
     INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            &mut storage,
-            ("uosmo", "umars", start_time),
-            &IncentiveSchedule {
-                emission_per_second: eps,
-                start_time,
-                duration: 300, // 5 min
-            },
-        )
-        .unwrap();
+    store_config_with_epoch_duration(&mut storage, 300);
+    EMISSIONS.save(&mut storage, ("uosmo", "umars", start_time), &eps).unwrap();
 
     let current_block_time = start_time + 1;
     let mut expected_ai = ai.clone();
@@ -215,17 +195,8 @@ fn update_incentive_index_if_last_updated_eq_end_time() {
         last_updated: end_time,
     };
     INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            &mut storage,
-            ("uosmo", "umars", start_time),
-            &IncentiveSchedule {
-                emission_per_second: Uint128::new(50),
-                start_time,
-                duration,
-            },
-        )
-        .unwrap();
+    store_config_with_epoch_duration(&mut storage, 300);
+    EMISSIONS.save(&mut storage, ("uosmo", "umars", start_time), &Uint128::new(50)).unwrap();
 
     let current_block_time = end_time + 1;
     let mut expected_ai = ai.clone();
@@ -256,17 +227,8 @@ fn update_incentive_index_if_last_updated_lt_end_time() {
         last_updated,
     };
     INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            &mut storage,
-            ("uosmo", "umars", start_time),
-            &IncentiveSchedule {
-                emission_per_second: Uint128::new(20),
-                start_time,
-                duration,
-            },
-        )
-        .unwrap();
+    store_config_with_epoch_duration(&mut storage, duration);
+    EMISSIONS.save(&mut storage, ("uosmo", "umars", start_time), &Uint128::new(20)).unwrap();
 
     let current_block_time = end_time;
     let mut expected_ai = ai.clone();
@@ -296,17 +258,8 @@ fn update_incentive_index_if_not_updated_till_finished() {
         last_updated: 0,
     };
     INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            &mut storage,
-            ("uosmo", "umars", start_time),
-            &IncentiveSchedule {
-                emission_per_second: Uint128::new(20),
-                start_time,
-                duration,
-            },
-        )
-        .unwrap();
+    store_config_with_epoch_duration(&mut storage, duration);
+    EMISSIONS.save(&mut storage, ("uosmo", "umars", start_time), &Uint128::new(20)).unwrap();
 
     let current_block_time = end_time + 10;
     let mut expected_ai = ai.clone();
