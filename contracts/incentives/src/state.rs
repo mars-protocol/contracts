@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, Decimal, Order, StdResult, Storage, Uint128};
 use cw_item_set::Set;
 use cw_storage_plus::{Bound, Item, Map, PrefixBound};
 use mars_owner::Owner;
-use mars_red_bank_types::incentives::{Config, IncentiveSchedule, IncentiveState};
+use mars_red_bank_types::incentives::{Config, IncentiveState};
 
 use crate::ContractError;
 
@@ -20,10 +20,9 @@ pub const WHITELIST: Set<&str> = Set::new("whitelist", "whitelist_counter");
 /// denom. The key is (collateral denom, incentive denom).
 pub const INCENTIVE_STATES: Map<(&str, &str), IncentiveState> = Map::new("incentive_states");
 
-/// A map containing incentive schedules for a given collateral and incentive denom. The key is
-/// (collateral denom, incentive denom, schedule start time).
-pub const INCENTIVE_SCHEDULES: Map<(&str, &str, u64), IncentiveSchedule> =
-    Map::new("incentive_schedules");
+/// A map containing emission speeds (incentive tokens per second) for a given collateral and
+/// incentive denom. The key is (collateral denom, incentive denom, schedule start time).
+pub const EMISSIONS: Map<(&str, &str, u64), Uint128> = Map::new("emissions");
 
 /// A map containing the incentive index for a given user, collateral denom and incentive denom.
 /// The key is (user address, collateral denom, incentive denom).

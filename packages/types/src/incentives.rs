@@ -17,17 +17,6 @@ pub struct Config {
     pub min_incentive_emission: Uint128,
 }
 
-/// A single incentive schedule for a given collateral and incentive denom
-#[cw_serde]
-pub struct IncentiveSchedule {
-    /// How many incentive tokens per second is emitted to be then distributed to all Red Bank depositors
-    pub emission_per_second: Uint128,
-    /// Start time of the incentive (in seconds) since the UNIX epoch (00:00:00 on 1970-01-01 UTC)
-    pub start_time: u64,
-    /// How many seconds the incentives last
-    pub duration: u64,
-}
-
 /// Incentive Metadata for a given incentive
 #[cw_serde]
 pub struct IncentiveState {
@@ -90,10 +79,7 @@ pub enum ExecuteMsg {
         /// The denoms to remove from the whitelist
         remove_denoms: Vec<String>,
     },
-    /// Set incentive params for an asset to its depositor at Red Bank.
-    ///
-    /// If there is no incentive for the asset, all params are required.
-    /// New incentive can be set (rescheduled) if current one has finished (current_block_time > start_time + duration).
+    /// Add incentives for a given collateral denom and incentive denom pair
     SetAssetIncentive {
         /// The denom of the collatearal token to receive incentives
         collateral_denom: String,

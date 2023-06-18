@@ -7,12 +7,12 @@ use cosmwasm_std::{
 use cw_storage_plus::Bound;
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
-    incentives::{Config, IncentiveSchedule, IncentiveState},
+    incentives::{Config, IncentiveState},
     red_bank,
 };
 
 use crate::{
-    state::{INCENTIVE_SCHEDULES, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
+    state::{CONFIG, EMISSIONS, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
     ContractError,
 };
 
@@ -55,29 +55,31 @@ pub fn validate_incentive_schedule(
     info: &MessageInfo,
     config: &Config,
     current_time: u64,
-    schedule: &IncentiveSchedule,
     collateral_denom: &str,
     incentive_denom: &str,
+    emission_per_second: Uint128,
+    start_time: u64,
+    duration: u64,
 ) -> Result<(), ContractError> {
     // start_time can't be less that current block time
-    if schedule.start_time < current_time {
+    if start_time < current_time {
         return Err(ContractError::InvalidIncentive {
             reason: "start_time can't be less than current block time".to_string(),
         });
     }
-    if schedule.duration == 0 {
+    if duration == 0 {
         return Err(ContractError::InvalidIncentive {
             reason: "duration can't be zero".to_string(),
         });
     }
     // Duration must be a multiple of epoch duration
-    if schedule.duration % config.epoch_duration != 0 {
+    if duration % config.epoch_duration != 0 {
         return Err(ContractError::InvalidDuration {
             epoch_duration: config.epoch_duration,
         });
     }
     // Emission must meet minimum amount
-    if schedule.emission_per_second < config.min_incentive_emission {
+    if emission_per_second < config.min_incentive_emission {
         return Err(ContractError::InvalidIncentive {
             reason: format!(
                 "emission_per_second must be greater than min_incentive_emission: {}",
@@ -86,23 +88,22 @@ pub fn validate_incentive_schedule(
         });
     }
     // Enough tokens must be sent to cover the entire duration
-    let total_emission = schedule.emission_per_second * Uint128::from(schedule.duration);
+    let total_emission = emission_per_second * Uint128::from(duration);
     if info.funds.len() != 1 || info.funds[0].amount != total_emission {
         return Err(ContractError::InvalidFunds {
             expected: total_emission,
         });
     }
     // Start time must be a multiple of epoch duration away from any other existing incentive
-    // for the same collateral denom and incentive denom tuple. We do this so that we don't have
-    // so we have at most one incentive schedule per epoch, to limit gas usage.
-    let old_schedule = INCENTIVE_SCHEDULES
+    // for the same collateral denom and incentive denom tuple. We do this so we have at most oneincentive schedule per epoch, to limit gas usage.
+    let old_schedule = EMISSIONS
         .prefix((&collateral_denom, &incentive_denom))
         .range(storage, None, None, Order::Ascending)
         .into_iter()
         .next()
         .transpose()?;
     if let Some((existing_start_time, _)) = old_schedule {
-        let start_time_diff = schedule.start_time.abs_diff(existing_start_time);
+        let start_time_diff = start_time.abs_diff(existing_start_time);
         if start_time_diff % config.epoch_duration != 0 {
             return Err(ContractError::InvalidStartTime {
                 epoch_duration: config.epoch_duration,
@@ -144,6 +145,8 @@ pub fn update_incentive_index(
     total_collateral: Uint128,
     current_block_time: u64,
 ) -> StdResult<IncentiveState> {
+    let config = CONFIG.load(storage.as_ref())?;
+
     let mut incentive_state = INCENTIVE_STATES
         .may_load(storage.as_ref(), (collateral_denom, incentive_denom))?
         .unwrap_or_else(|| IncentiveState {
@@ -156,9 +159,9 @@ pub fn update_incentive_index(
         return Ok(incentive_state);
     }
 
-    // Range over all relevant asset incentive indexes (those which have a start time before the
+    // Range over the emissions for all relevant epochs (those which have a start time before the
     // current block time)
-    let schedules = INCENTIVE_SCHEDULES
+    let emissions = EMISSIONS
         .prefix((collateral_denom, incentive_denom))
         .range(
             storage.as_ref(),
@@ -169,13 +172,13 @@ pub fn update_incentive_index(
         .into_iter()
         .collect::<StdResult<Vec<_>>>()?;
 
-    for (start_time, schedule) in schedules {
-        let end_time_sec = schedule.start_time + schedule.duration;
-        let time_start = max(schedule.start_time, incentive_state.last_updated);
+    for (start_time, emission_per_second) in emissions {
+        let end_time_sec = start_time + config.epoch_duration;
+        let time_start = max(start_time, incentive_state.last_updated);
         let time_end = min(current_block_time, end_time_sec);
         incentive_state.index = compute_incentive_index(
             incentive_state.index,
-            schedule.emission_per_second,
+            emission_per_second,
             total_collateral,
             time_start,
             time_end,
@@ -184,8 +187,7 @@ pub fn update_incentive_index(
         // If incentive schedule is over, remove it from storage
         if let MaybeMutStorage::Mutable(storage) = storage {
             if end_time_sec <= current_block_time {
-                INCENTIVE_SCHEDULES
-                    .remove(*storage, (collateral_denom, incentive_denom, start_time));
+                EMISSIONS.remove(*storage, (collateral_denom, incentive_denom, start_time));
             }
         }
     }
