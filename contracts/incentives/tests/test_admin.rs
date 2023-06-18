@@ -45,6 +45,7 @@ fn update_config() {
     // *
     let msg = ExecuteMsg::UpdateConfig {
         address_provider: None,
+        min_incentive_emission: None,
     };
     let info = mock_info("somebody", &[]);
     let error_res = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -55,6 +56,7 @@ fn update_config() {
     // *
     let msg = ExecuteMsg::UpdateConfig {
         address_provider: Some("new_addr_provider".to_string()),
+        min_incentive_emission: Some(Uint128::from(420u128)),
     };
     let info = mock_info("owner", &[]);
 
@@ -66,4 +68,5 @@ fn update_config() {
     assert_eq!(new_config.owner, Some("owner".to_string()));
     assert_eq!(new_config.proposed_new_owner, None);
     assert_eq!(new_config.address_provider, Addr::unchecked("new_addr_provider"));
+    assert_eq!(new_config.min_incentive_emission, Uint128::from(420u128));
 }
