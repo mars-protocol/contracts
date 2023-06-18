@@ -22,7 +22,7 @@ mod helpers;
 fn execute_claim_rewards() {
     // SETUP
     let env = mock_env();
-    let mut deps = ths_setup_with_epoch_duration(env.clone(), 86400);
+    let mut deps = ths_setup_with_epoch_duration(env, 86400);
     let user_addr = Addr::unchecked("user");
 
     let previous_unclaimed_rewards = Uint128::new(50_000);
