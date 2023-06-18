@@ -153,6 +153,35 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
 
+    /// Queries the planned emission rate for a given collateral and incentive denom tuple at the
+    /// specified unix timestamp. The emission rate returned is the amount of incentive tokens
+    /// that will be emitted per second for each unit of collateral supplied during the epoch.
+    /// NB: that the returned value can change if someone adds incentives to the contract.
+    #[returns(Uint128)]
+    Emission {
+        /// The denom of the token that users supply as collateral to receive incentives
+        collateral_denom: String,
+        /// The denom of the token which is used to give incentives with
+        incentive_denom: String,
+        /// The unix timestamp in second to query the emission rate at.
+        timestamp: u64,
+    },
+
+    /// Enumerate all incentive emission rates with pagination for a specified collateral and
+    /// indentive denom pair
+    #[returns(Vec<EmissionResponse>)]
+    Emissions {
+        /// The denom of the token that users supply as collateral to receive incentives
+        collateral_denom: String,
+        /// The denom of the token which is used to give incentives with
+        incentive_denom: String,
+        /// Start pagination after this timestamp
+        start_after_timestamp: Option<u64>,
+        /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
+        /// 10 is used.
+        limit: Option<u32>,
+    },
+
     /// Query user current unclaimed rewards
     #[returns(Vec<Coin>)]
     UserUnclaimedRewards {
@@ -172,6 +201,24 @@ pub enum QueryMsg {
     /// whitelisted incentive denoms.
     #[returns(Vec<String>)]
     Whitelist {},
+}
+
+#[cw_serde]
+pub struct EmissionResponse {
+    /// The unix timestamp in seconds at which the emission epoch starts
+    pub epoch_start: u64,
+    /// The emission rate returned is the amount of incentive tokens that will be emitted per
+    /// second for each unit of collateral supplied during the epoch.
+    pub emission_rate: Uint128,
+}
+
+impl From<(u64, Uint128)> for EmissionResponse {
+    fn from((epoch_start, emission_rate): (u64, Uint128)) -> Self {
+        Self {
+            epoch_start,
+            emission_rate,
+        }
+    }
 }
 
 #[cw_serde]
