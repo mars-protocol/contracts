@@ -6,15 +6,15 @@ use cosmwasm_std::{
 use mars_incentives::{
     contract::{execute, query_user_unclaimed_rewards},
     helpers::{compute_incentive_index, compute_user_accrued_rewards},
-    state::{INCENTIVE_SCHEDULES, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
+    state::{EMISSIONS, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
 use mars_red_bank_types::{
-    incentives::{ExecuteMsg, IncentiveSchedule, IncentiveState},
+    incentives::{ExecuteMsg, IncentiveState},
     red_bank::{Market, UserCollateralResponse},
 };
 use mars_testing::MockEnvParams;
 
-use crate::helpers::{th_setup, th_setup_with_env};
+use crate::helpers::{th_setup, ths_setup_with_epoch_duration};
 
 mod helpers;
 
@@ -22,7 +22,7 @@ mod helpers;
 fn execute_claim_rewards() {
     // SETUP
     let env = mock_env();
-    let mut deps = th_setup_with_env(env.clone());
+    let mut deps = ths_setup_with_epoch_duration(env.clone(), 86400);
     let user_addr = Addr::unchecked("user");
 
     let previous_unclaimed_rewards = Uint128::new(50_000);
@@ -98,17 +98,15 @@ fn execute_claim_rewards() {
             },
         )
         .unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            deps.as_mut().storage,
-            (asset_denom, "umars", time_start),
-            &IncentiveSchedule {
-                emission_per_second: Uint128::new(100),
-                start_time: time_start,
-                duration: 8640000,
-            },
-        )
-        .unwrap();
+    for i in 0..100 {
+        EMISSIONS
+            .save(
+                deps.as_mut().storage,
+                (asset_denom, "umars", time_start + 86400 * i),
+                &Uint128::new(100),
+            )
+            .unwrap();
+    }
     INCENTIVE_STATES
         .save(
             deps.as_mut().storage,
@@ -116,17 +114,6 @@ fn execute_claim_rewards() {
             &IncentiveState {
                 index: Decimal::one(),
                 last_updated: time_start,
-            },
-        )
-        .unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            deps.as_mut().storage,
-            (zero_denom, "umars", env.block.time.seconds()),
-            &IncentiveSchedule {
-                emission_per_second: Uint128::zero(),
-                start_time: env.block.time.seconds(),
-                duration: 86400,
             },
         )
         .unwrap();
@@ -140,16 +127,8 @@ fn execute_claim_rewards() {
             },
         )
         .unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            deps.as_mut().storage,
-            (no_user_denom, "umars", time_start),
-            &IncentiveSchedule {
-                emission_per_second: Uint128::new(200),
-                start_time: env.block.time.seconds(),
-                duration: 86400,
-            },
-        )
+    EMISSIONS
+        .save(deps.as_mut().storage, (no_user_denom, "umars", time_start), &Uint128::new(200))
         .unwrap();
 
     // user indices

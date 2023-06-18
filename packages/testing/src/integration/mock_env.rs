@@ -89,6 +89,20 @@ impl MockEnv {
 }
 
 impl Incentives {
+    pub fn whitelist_incentive_denoms(&self, env: &mut MockEnv, incentive_denoms: &[&str]) {
+        env.app
+            .execute_contract(
+                env.owner.clone(),
+                self.contract_addr.clone(),
+                &incentives::ExecuteMsg::UpdateWhitelist {
+                    add_denoms: incentive_denoms.into_iter().map(|x| x.to_string()).collect(),
+                    remove_denoms: vec![],
+                },
+                &[],
+            )
+            .unwrap();
+    }
+
     pub fn init_asset_incentive_from_current_block(
         &self,
         env: &mut MockEnv,
@@ -133,7 +147,7 @@ impl Incentives {
                     collateral_denom: collateral_denom.to_string(),
                     incentive_denom: incentive_denom.to_string(),
                     emission_per_second: emission_per_second.into(),
-                    start_time: start_time,
+                    start_time,
                     duration,
                 },
                 &[],
