@@ -18,7 +18,7 @@ const getDeployer = async (wallet: DirectSecp256k1HdWallet) => {
 
 const setupClient = async (config: DeploymentConfig, wallet: DirectSecp256k1HdWallet) => {
   const clientOption: SigningCosmWasmClientOptions = {
-    gasPrice: GasPrice.fromString(`0.1${config.baseAssetDenom}`),
+    gasPrice: GasPrice.fromString(config.gasPrice),
   }
   return await SigningCosmWasmClient.connectWithSigner(config.rpcEndpoint, wallet, clientOption)
 }

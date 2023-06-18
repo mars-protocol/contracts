@@ -3,7 +3,6 @@ members = [
   "contracts/address-provider",
   "contracts/incentives",
   "contracts/oracle/*",
-  "contracts/params",
   "contracts/swapper/*",
   "contracts/red-bank",
   "contracts/rewards-collector",
@@ -14,6 +13,7 @@ members = [
   "packages/utils",
   "integration-tests",
 ]
+resolver = "2"
 
 [workspace.package]
 version       = "1.1.0"
