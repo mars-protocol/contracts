@@ -171,7 +171,7 @@ fn update_incentive_index_if_current_block_gt_start_time() {
     assert_eq!(ai, expected_ai);
 
     let current_block_time = current_block_time + 2;
-    let mut expected_ai = ai.clone();
+    let mut expected_ai = ai;
     expected_ai.index = Decimal::from_ratio(16u128, 10u128);
     expected_ai.last_updated = current_block_time;
     let ai = update_incentive_index(

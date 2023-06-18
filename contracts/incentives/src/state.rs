@@ -107,11 +107,11 @@ mod tests {
             (("collat1".to_string(), "incen1".to_string()), asset_incentive.clone()),
             (("collat1".to_string(), "incen2".to_string()), asset_incentive.clone()),
             (("collat2".to_string(), "incen1".to_string()), asset_incentive.clone()),
-            (("collat2".to_string(), "incen2".to_string()), asset_incentive.clone()),
+            (("collat2".to_string(), "incen2".to_string()), asset_incentive),
         ];
         for ((collat, incen), incentive) in incentives.iter() {
             INCENTIVE_STATES
-                .save(&mut storage, (collat.as_str(), incen.as_str()), &incentive)
+                .save(&mut storage, (collat.as_str(), incen.as_str()), incentive)
                 .unwrap();
         }
 

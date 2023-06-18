@@ -56,7 +56,7 @@ fn cannot_set_new_asset_incentive_with_time_earlier_than_current_time() {
         start_time: env.block.time.seconds() - 1u64,
         duration: 604800u64,
     };
-    let res_error = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
+    let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(
         res_error,
         ContractError::InvalidIncentive {
@@ -80,7 +80,7 @@ fn cannot_set_new_asset_incentive_with_emission_less_than_minimum() {
         start_time: env.block.time.seconds(),
         duration: 604800u64,
     };
-    let res_error = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
+    let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert!(res_error.to_string().starts_with(
         "Invalid incentive: emission_per_second must be greater than min_incentive_emission:"
     ));
@@ -101,7 +101,7 @@ fn cannot_set_new_asset_incentive_with_zero_duration() {
         start_time: env.block.time.seconds(),
         duration: 0u64,
     };
-    let res_error = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
+    let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(
         res_error,
         ContractError::InvalidIncentive {
@@ -125,7 +125,7 @@ fn cannot_set_new_asset_incentive_with_duration_not_divisibible_by_epoch() {
         start_time: env.block.time.seconds(),
         duration: 269u64,
     };
-    let res_error = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
+    let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert!(res_error.to_string().starts_with("Invalid duration. Incentive duration must be divisible by epoch duration. Epoch duration is "));
 }
 
@@ -144,7 +144,7 @@ fn cannot_set_new_asset_incentive_with_too_few_funds() {
         start_time: env.block.time.seconds(),
         duration: 604800u64,
     };
-    let res_error = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
+    let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000 funds");
 }
 
@@ -163,7 +163,7 @@ fn cannot_set_new_asset_incentive_with_wrong_denom() {
         start_time: env.block.time.seconds(),
         duration: 604800u64,
     };
-    let res_error = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
+    let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000 funds");
 }
 
@@ -182,7 +182,7 @@ fn cannot_set_new_asset_incentive_with_two_denoms() {
         start_time: env.block.time.seconds(),
         duration: 604800u64,
     };
-    let res_error = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap_err();
+    let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000 funds");
 }
 
@@ -296,7 +296,7 @@ fn can_only_set_new_incentive_with_start_time_multiple_of_epoch_duration_from_cu
         start_time: env.block.time.seconds() + epoch_duration,
         duration: epoch_duration,
     };
-    execute(deps.as_mut(), env.clone(), mock_info("owner", &funds), msg).unwrap();
+    execute(deps.as_mut(), env, mock_info("owner", &funds), msg).unwrap();
 }
 
 #[test]
@@ -347,12 +347,12 @@ fn set_asset_incentive_merges_schedules() {
         .collect::<StdResult<Vec<_>>>()
         .unwrap();
     assert!(emissions.len() == 5);
-    for i in 0..5 {
+    for (i, emission) in emissions.iter().enumerate() {
         assert_eq!(
-            emissions[i].0,
+            emission.0,
             ("uosmo".to_string(), "umars".to_string(), start_time + i as u64 * epoch_duration)
         );
-        assert_eq!(emissions[i].1, Uint128::new(base_eps));
+        assert_eq!(emission.1, Uint128::new(base_eps));
     }
 
     // Now set one schedule that lasts just one duration
@@ -392,9 +392,9 @@ fn set_asset_incentive_merges_schedules() {
     assert!(emissions[0].1 == Uint128::new(base_eps));
     assert!(emissions[1].0 .2 == start_time + epoch_duration);
     assert!(emissions[1].1 == Uint128::new(base_eps + new_eps));
-    for i in 2..5 {
-        assert!(emissions[i].0 .2 == start_time + epoch_duration * i as u64);
-        assert!(emissions[i].1 == Uint128::new(base_eps));
+    for (i, emission) in emissions.iter().enumerate().skip(2) {
+        assert!(emission.0 .2 == start_time + epoch_duration * i as u64);
+        assert!(emission.1 == Uint128::new(base_eps));
     }
 
     // Now set a schedule that lasts for three epochs and starts one before the end of the first schedule
