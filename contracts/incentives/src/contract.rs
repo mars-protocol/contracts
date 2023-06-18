@@ -23,7 +23,7 @@ use crate::{
         self, compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_incentive_index,
     },
     state::{
-        self, CONFIG, EMISSIONS, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES,
+        self, CONFIG, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES,
         USER_UNCLAIMED_REWARDS, WHITELIST,
     },
 };
@@ -52,11 +52,11 @@ pub fn instantiate(
 
     let config = Config {
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
-        epoch_duration: msg.epoch_duration,
         min_incentive_emission: msg.min_incentive_emission,
     };
-
     CONFIG.save(deps.storage, &config)?;
+
+    EPOCH_DURATION.save(deps.storage, &msg.epoch_duration)?;
 
     Ok(Response::default())
 }
@@ -214,6 +214,7 @@ pub fn execute_set_asset_incentive(
     }
 
     let config = CONFIG.load(deps.storage)?;
+    let epoch_duration = EPOCH_DURATION.load(deps.storage)?;
     let current_time = env.block.time.seconds();
 
     // Validate incentive schedule
@@ -221,6 +222,7 @@ pub fn execute_set_asset_incentive(
         deps.storage,
         &info,
         &config,
+        epoch_duration,
         current_time,
         &collateral_denom,
         &incentive_denom,
@@ -259,7 +261,7 @@ pub fn execute_set_asset_incentive(
             EMISSIONS.save(deps.storage, key, &emission_per_second)?;
         }
 
-        epoch_start_time += config.epoch_duration;
+        epoch_start_time += epoch_duration;
     }
 
     // Set up the incentive state if it doesn't exist

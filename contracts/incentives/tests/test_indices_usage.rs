@@ -4,7 +4,7 @@ use cosmwasm_std::{
 };
 use mars_incentives::{
     helpers::{compute_incentive_index, compute_user_accrued_rewards, update_incentive_index},
-    state::{CONFIG, EMISSIONS, INCENTIVE_STATES},
+    state::{CONFIG, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES},
 };
 use mars_red_bank_types::incentives::{Config, IncentiveState};
 
@@ -15,12 +15,12 @@ fn store_config_with_epoch_duration(storage: &mut dyn Storage, epoch_duration: u
         .save(
             storage,
             &Config {
-                epoch_duration,
                 address_provider: Addr::unchecked(""),
                 min_incentive_emission: Uint128::one(),
             },
         )
         .unwrap();
+    EPOCH_DURATION.save(storage, &epoch_duration).unwrap();
 }
 
 #[test]

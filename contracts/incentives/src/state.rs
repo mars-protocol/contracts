@@ -12,6 +12,10 @@ pub const OWNER: Owner = Owner::new("owner");
 /// The configuration of the contract
 pub const CONFIG: Item<Config> = Item::new("config");
 
+/// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
+/// that an incentive can last, and each incentive must be a multiple of this duration.
+pub const EPOCH_DURATION: Item<u64> = Item::new("epoch_duration");
+
 /// A set containing all whitelisted incentive denoms. Incentives can only be added for denoms in
 /// this set.
 pub const WHITELIST: Set<&str> = Set::new("whitelist", "whitelist_counter");

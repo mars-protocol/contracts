@@ -12,7 +12,9 @@ use mars_red_bank_types::{
 };
 
 use crate::{
-    state::{CONFIG, EMISSIONS, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
+    state::{
+        EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS,
+    },
     ContractError,
 };
 
@@ -54,6 +56,7 @@ pub fn validate_incentive_schedule(
     storage: &dyn Storage,
     info: &MessageInfo,
     config: &Config,
+    epoch_duration: u64,
     current_time: u64,
     collateral_denom: &str,
     incentive_denom: &str,
@@ -73,9 +76,9 @@ pub fn validate_incentive_schedule(
         });
     }
     // Duration must be a multiple of epoch duration
-    if duration % config.epoch_duration != 0 {
+    if duration % epoch_duration != 0 {
         return Err(ContractError::InvalidDuration {
-            epoch_duration: config.epoch_duration,
+            epoch_duration: epoch_duration,
         });
     }
     // Emission must meet minimum amount
@@ -104,9 +107,9 @@ pub fn validate_incentive_schedule(
         .transpose()?;
     if let Some((existing_start_time, _)) = old_schedule {
         let start_time_diff = start_time.abs_diff(existing_start_time);
-        if start_time_diff % config.epoch_duration != 0 {
+        if start_time_diff % epoch_duration != 0 {
             return Err(ContractError::InvalidStartTime {
-                epoch_duration: config.epoch_duration,
+                epoch_duration: epoch_duration,
                 existing_start_time,
             });
         }
@@ -145,7 +148,7 @@ pub fn update_incentive_index(
     total_collateral: Uint128,
     current_block_time: u64,
 ) -> StdResult<IncentiveState> {
-    let config = CONFIG.load(storage.as_ref())?;
+    let epoch_duration = EPOCH_DURATION.load(storage.as_ref())?;
 
     let mut incentive_state = INCENTIVE_STATES
         .may_load(storage.as_ref(), (collateral_denom, incentive_denom))?
@@ -173,7 +176,7 @@ pub fn update_incentive_index(
         .collect::<StdResult<Vec<_>>>()?;
 
     for (start_time, emission_per_second) in emissions {
-        let end_time_sec = start_time + config.epoch_duration;
+        let end_time_sec = start_time + epoch_duration;
         let time_start = max(start_time, incentive_state.last_updated);
         let time_end = min(current_block_time, end_time_sec);
         incentive_state.index = compute_incentive_index(
