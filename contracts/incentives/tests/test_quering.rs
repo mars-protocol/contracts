@@ -1,4 +1,4 @@
-use cosmwasm_std::{Decimal, Uint128};
+use cosmwasm_std::Decimal;
 use mars_incentives::state::INCENTIVE_STATES;
 use mars_red_bank_types::incentives::{IncentiveState, IncentiveStateResponse, QueryMsg};
 

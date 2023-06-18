@@ -7,8 +7,6 @@ use mars_owner::OwnerUpdate;
 pub struct Config {
     /// Address provider
     pub address_provider: Addr,
-    /// Mars Token Denom
-    pub mars_denom: String,
     /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
     /// that an incentive can last, and each incentive must be a multiple of this duration.
     pub epoch_duration: u64,
@@ -60,8 +58,6 @@ pub struct InstantiateMsg {
     pub owner: String,
     /// Address provider
     pub address_provider: String,
-    /// Mars token denom
-    pub mars_denom: String,
     /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
     /// that an incentive can last, and each incentive must be a multiple of this duration.
     pub epoch_duration: u64,
@@ -125,7 +121,6 @@ pub enum ExecuteMsg {
     /// Update contract config (only callable by owner)
     UpdateConfig {
         address_provider: Option<String>,
-        mars_denom: Option<String>,
     },
 
     /// Manages admin role state
@@ -190,6 +185,4 @@ pub struct ConfigResponse {
     pub proposed_new_owner: Option<String>,
     /// Address provider
     pub address_provider: Addr,
-    /// Mars Token Denom
-    pub mars_denom: String,
 }
