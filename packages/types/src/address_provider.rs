@@ -214,4 +214,10 @@ mod tests {
             assert_eq!(MarsAddressType::from_str(&address_type.to_string()).unwrap(), address_type);
         }
     }
+
+    #[test]
+    #[should_panic]
+    fn mars_address_type_from_str_invalid_string() {
+        MarsAddressType::from_str("invalid_address_type").unwrap();
+    }
 }
