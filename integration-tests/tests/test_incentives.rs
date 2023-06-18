@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Addr, Decimal, Uint128};
+use cosmwasm_std::{assert_approx_eq, coin, Addr, Decimal, Uint128};
 use mars_testing::integration::mock_env::MockEnvBuilder;
 
 use crate::helpers::default_asset_params;
@@ -21,6 +21,7 @@ fn rewards_claim() {
     red_bank.init_asset(&mut mock_env, "uusdc", default_asset_params());
 
     let incentives = mock_env.incentives.clone();
+    incentives.whitelist_incentive_denoms(&mut mock_env, &["umars"]);
     incentives.init_asset_incentive_from_current_block(
         &mut mock_env,
         "uusdc",
@@ -75,6 +76,7 @@ fn emissions_rates() {
     red_bank.init_asset(&mut mock_env, "umars", default_asset_params());
 
     let incentives = mock_env.incentives.clone();
+    incentives.whitelist_incentive_denoms(&mut mock_env, &["umars"]);
     incentives.init_asset_incentive_from_current_block(
         &mut mock_env,
         "uusdc",
@@ -160,6 +162,7 @@ fn no_incentives_accrued_after_withdraw() {
     red_bank.init_asset(&mut mock_env, "umars", default_asset_params());
 
     let incentives = mock_env.incentives.clone();
+    incentives.whitelist_incentive_denoms(&mut mock_env, &["umars"]);
     incentives.init_asset_incentive_from_current_block(
         &mut mock_env,
         "uusdc",
@@ -230,6 +233,7 @@ fn multiple_assets() {
 
     // set incentives
     let incentives = mock_env.incentives.clone();
+    incentives.whitelist_incentive_denoms(&mut mock_env, &["umars"]);
     incentives.init_asset_incentive_from_current_block(
         &mut mock_env,
         "uusdc",
@@ -302,6 +306,7 @@ fn multiple_users() {
 
     // set incentives
     let incentives = mock_env.incentives.clone();
+    incentives.whitelist_incentive_denoms(&mut mock_env, &["umars"]);
     incentives.init_asset_incentive_from_current_block(
         &mut mock_env,
         "uusdc",
@@ -405,6 +410,7 @@ fn rewards_distributed_among_users_and_rewards_collector() {
     let umars_eps_for_uatom = 310000;
     let incentive_duration_sec = 2592000u64;
     let incentives = mock_env.incentives.clone();
+    incentives.whitelist_incentive_denoms(&mut mock_env, &["umars"]);
     incentives.init_asset_incentive_from_current_block(
         &mut mock_env,
         "uusdc",
@@ -480,9 +486,10 @@ fn rewards_distributed_among_users_and_rewards_collector() {
         + rewards_balance_user_a[0].amount
         + rewards_balance_user_b[0].amount;
     // ~ values very close (small difference due to rounding errors for index calculation)
-    assert_eq!(
+    assert_approx_eq!(
         total_claimed_rewards.u128(),
-        umars_incentives_amt - umars_eps_for_uosmo * incentive_duration_sec as u128 - 1
+        umars_incentives_amt - umars_eps_for_uosmo * incentive_duration_sec as u128,
+        "0.00001"
     );
 
     // users claim rewards

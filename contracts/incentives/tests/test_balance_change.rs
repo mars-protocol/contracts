@@ -6,16 +6,16 @@ use cosmwasm_std::{
 use mars_incentives::{
     contract::{execute, execute_balance_change, query_user_unclaimed_rewards},
     helpers::{compute_incentive_index, compute_user_accrued_rewards},
-    state::{INCENTIVE_SCHEDULES, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
+    state::{EMISSIONS, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
 use mars_red_bank_types::{
     error::MarsError,
-    incentives::{ExecuteMsg, IncentiveSchedule, IncentiveState},
+    incentives::{ExecuteMsg, IncentiveState},
     red_bank::{Market, UserCollateralResponse},
 };
 use mars_testing::MockEnvParams;
 
-use crate::helpers::{th_setup, th_setup_with_env};
+use crate::helpers::{th_setup, ths_setup_with_epoch_duration};
 
 mod helpers;
 
@@ -67,7 +67,7 @@ fn execute_balance_change_noops() {
 #[test]
 fn balance_change_zero_emission() {
     let env = mock_env();
-    let mut deps = th_setup_with_env(env.clone());
+    let mut deps = ths_setup_with_epoch_duration(env.clone(), 86400);
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
     let asset_incentive_index = Decimal::from_ratio(1_u128, 2_u128);
@@ -82,16 +82,8 @@ fn balance_change_zero_emission() {
             },
         )
         .unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            deps.as_mut().storage,
-            (denom, "umars", env.block.time.seconds()),
-            &IncentiveSchedule {
-                emission_per_second: Uint128::zero(),
-                start_time: env.block.time.seconds(),
-                duration: 86400,
-            },
-        )
+    EMISSIONS
+        .save(deps.as_mut().storage, (denom, "umars", env.block.time.seconds()), &Uint128::zero())
         .unwrap();
 
     let info = mock_info("red_bank", &[]);
@@ -143,17 +135,17 @@ fn balance_change_zero_emission() {
 
 #[test]
 fn balance_change_user_with_zero_balance() {
-    let env = mock_env();
-    let mut deps = th_setup_with_env(env);
-    let denom = "uosmo";
-    let user_addr = Addr::unchecked("user");
-
     let start_index = Decimal::from_ratio(1_u128, 2_u128);
     let emission_per_second = Uint128::new(100);
     let total_supply = Uint128::new(100_000);
     let time_last_updated = 500_000_u64;
     let time_contract_call = 600_000_u64;
     let duration = time_contract_call - time_last_updated;
+
+    let env = mock_env();
+    let mut deps = ths_setup_with_epoch_duration(env, duration);
+    let denom = "uosmo";
+    let user_addr = Addr::unchecked("user");
 
     INCENTIVE_STATES
         .save(
@@ -165,16 +157,8 @@ fn balance_change_user_with_zero_balance() {
             },
         )
         .unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            deps.as_mut().storage,
-            (denom, "umars", time_last_updated),
-            &IncentiveSchedule {
-                emission_per_second,
-                start_time: time_last_updated,
-                duration,
-            },
-        )
+    EMISSIONS
+        .save(deps.as_mut().storage, (denom, "umars", time_last_updated), &emission_per_second)
         .unwrap();
 
     let info = mock_info("red_bank", &[]);
@@ -233,7 +217,7 @@ fn balance_change_user_with_zero_balance() {
 #[test]
 fn with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
     let env = mock_env();
-    let mut deps = th_setup_with_env(env);
+    let mut deps = ths_setup_with_epoch_duration(env, 8640000);
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
 
@@ -252,16 +236,8 @@ fn with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
             },
         )
         .unwrap();
-    INCENTIVE_SCHEDULES
-        .save(
-            deps.as_mut().storage,
-            (denom, "umars", time_last_updated),
-            &IncentiveSchedule {
-                emission_per_second,
-                start_time: time_last_updated,
-                duration: 8640000,
-            },
-        )
+    EMISSIONS
+        .save(deps.as_mut().storage, (denom, "umars", time_last_updated), &emission_per_second)
         .unwrap();
 
     {
@@ -323,7 +299,7 @@ fn with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
 #[test]
 fn set_new_asset_incentive_user_non_zero_balance() {
     let env = mock_env();
-    let mut deps = th_setup_with_env(env);
+    let mut deps = ths_setup_with_epoch_duration(env, 8640000);
     let user_addr = Addr::unchecked("user");
 
     // set collateral shares for user
@@ -362,16 +338,8 @@ fn set_new_asset_incentive_user_non_zero_balance() {
                 },
             )
             .unwrap();
-        INCENTIVE_SCHEDULES
-            .save(
-                deps.as_mut().storage,
-                (denom, "umars", time_last_updated),
-                &IncentiveSchedule {
-                    emission_per_second,
-                    start_time: time_last_updated,
-                    duration: 8640000,
-                },
-            )
+        EMISSIONS
+            .save(deps.as_mut().storage, (denom, "umars", time_last_updated), &emission_per_second)
             .unwrap();
     }
 
@@ -452,7 +420,7 @@ fn set_new_asset_incentive_user_non_zero_balance() {
 #[test]
 fn balance_change_user_non_zero_balance() {
     let env = mock_env();
-    let mut deps = th_setup_with_env(env);
+    let mut deps = ths_setup_with_epoch_duration(env, 8640000);
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
 
@@ -473,15 +441,11 @@ fn balance_change_user_non_zero_balance() {
             },
         )
         .unwrap();
-    INCENTIVE_SCHEDULES
+    EMISSIONS
         .save(
             deps.as_mut().storage,
             (denom, "umars", expected_time_last_updated),
-            &IncentiveSchedule {
-                emission_per_second,
-                start_time: expected_time_last_updated,
-                duration: 8640000,
-            },
+            &emission_per_second,
         )
         .unwrap();
 

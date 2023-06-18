@@ -5,7 +5,7 @@ use cosmwasm_std::{
 };
 use mars_incentives::{
     contract::{execute, execute_balance_change},
-    state::INCENTIVE_SCHEDULES,
+    state::EMISSIONS,
     ContractError,
 };
 use mars_owner::OwnerError::NotOwner;
@@ -16,7 +16,9 @@ use mars_red_bank_types::{
 use mars_testing::MockEnvParams;
 use mars_utils::error::ValidationError;
 
-use crate::helpers::{th_query, th_query_with_env, th_setup, th_setup_with_env};
+use crate::helpers::{
+    th_query, th_query_with_env, th_setup, th_setup_with_env, ths_setup_with_epoch_duration,
+};
 
 mod helpers;
 
@@ -156,7 +158,7 @@ fn incentive_can_only_be_added_if_denom_whitelisted() {
 #[test]
 fn incentives_updated_and_removed_when_removing_from_whitelist() {
     let env = mock_env();
-    let mut deps = th_setup_with_env(env.clone());
+    let mut deps = ths_setup_with_epoch_duration(env.clone(), 604800);
     let owner = "owner";
 
     let collateral = Uint128::from(1000000u128);
@@ -187,10 +189,9 @@ fn incentives_updated_and_removed_when_removing_from_whitelist() {
     execute(deps.as_mut(), mock_env(), info, set_incentive_msg).unwrap();
 
     // Query incentive schedule
-    let schedule = INCENTIVE_SCHEDULES.load(&deps.storage, ("uosmo", "umars", start_time)).unwrap();
-    assert_eq!(schedule.duration, 604800);
-    assert_eq!(schedule.emission_per_second, Uint128::new(100));
-    assert_eq!(schedule.start_time, start_time);
+    let emission_per_second =
+        EMISSIONS.load(&deps.storage, ("uosmo", "umars", start_time)).unwrap();
+    assert_eq!(emission_per_second, Uint128::new(100));
 
     // Deposit collateral
     let user_addr = Addr::unchecked("user");
@@ -242,6 +243,6 @@ fn incentives_updated_and_removed_when_removing_from_whitelist() {
     );
     assert_eq!(user_rewards, vec![coin(100 * 100, "umars")]);
 
-    // Read incentive schedules. There should be none
-    INCENTIVE_SCHEDULES.load(&deps.storage, ("uosmo", "umars", start_time)).unwrap_err();
+    // Read active emissions. There should be none
+    EMISSIONS.load(&deps.storage, ("uosmo", "umars", start_time)).unwrap_err();
 }

@@ -6,16 +6,14 @@ use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env,
     Event, MessageInfo, Order, Response, StdError, StdResult, Uint128,
 };
-use cw_storage_plus::Bound;
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
     incentives::{
-        Config, ConfigResponse, ExecuteMsg, IncentiveSchedule, IncentiveState,
-        IncentiveStateResponse, InstantiateMsg, QueryMsg,
+        Config, ConfigResponse, ExecuteMsg, IncentiveState, IncentiveStateResponse, InstantiateMsg,
+        QueryMsg,
     },
-    red_bank,
 };
 use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
 
@@ -25,7 +23,7 @@ use crate::{
         self, compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_incentive_index,
     },
     state::{
-        self, CONFIG, INCENTIVE_SCHEDULES, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES,
+        self, CONFIG, EMISSIONS, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES,
         USER_UNCLAIMED_REWARDS, WHITELIST,
     },
 };
@@ -146,7 +144,7 @@ pub fn execute_update_whitelist(
 
     for denom in remove_denoms.iter() {
         // Before removing from whitelist we must handle ongoing incentives,
-        // i.e. update the incentive index, and remove any schedules.
+        // i.e. update the incentive index, and remove any emissions.
         // So we first get all keys by in the INCENTIVE_STATES Map and then filter out the ones
         // that match the incentive denom we are removing.
         // This could be done more efficiently if we could prefix by incentive_denom, but
@@ -172,14 +170,13 @@ pub fn execute_update_whitelist(
                 env.block.time.seconds(),
             )?;
 
-            // Remove any incentive schedules
-            let schedules = INCENTIVE_SCHEDULES
+            // Remove any incentive emissions
+            let emissions = EMISSIONS
                 .prefix((&collateral_denom, &incentive_denom))
                 .range(deps.storage, None, None, Order::Ascending)
                 .collect::<StdResult<Vec<_>>>()?;
-            for (start_time, _) in schedules {
-                INCENTIVE_SCHEDULES
-                    .remove(deps.storage, (&collateral_denom, &incentive_denom, start_time));
+            for (start_time, _) in emissions {
+                EMISSIONS.remove(deps.storage, (&collateral_denom, &incentive_denom, start_time));
             }
         }
 
@@ -222,19 +219,16 @@ pub fn execute_set_asset_incentive(
     let current_time = env.block.time.seconds();
 
     // Validate incentive schedule
-    let mut new_schedule = IncentiveSchedule {
-        start_time,
-        duration,
-        emission_per_second,
-    };
     helpers::validate_incentive_schedule(
         deps.storage,
         &info,
         &config,
         current_time,
-        &new_schedule,
         &collateral_denom,
         &incentive_denom,
+        emission_per_second,
+        start_time,
+        duration,
     )?;
 
     // Update current incentive index
@@ -251,59 +245,23 @@ pub fn execute_set_asset_incentive(
         current_time,
     )?;
 
-    // If the new schedule overlaps any existing schedules, we merge them so that there is at most
-    // one schedule per epoch.
-    // First, find all existing schdules that overlap with the new schedule
-    let overlapping_schedules = INCENTIVE_SCHEDULES
-        .prefix((&collateral_denom, &incentive_denom))
-        .range(deps.storage, None, Some(Bound::exclusive(start_time + duration)), Order::Ascending)
-        .collect::<StdResult<Vec<_>>>()?;
-    // For each overlapping schedule, add the emission to the existing incentive and modify the new
-    // incentive, as well as creating new incentives for any gaps between the new incentive and the
-    // existing incentives.
-    for (_, mut old_schedule) in overlapping_schedules {
-        if old_schedule.start_time > new_schedule.start_time {
-            // The new schdule starts before the existing schedule, so we need to create a new
-            // schedule for the time before the existing schedule starts
-            INCENTIVE_SCHEDULES.save(
-                deps.storage,
-                (&collateral_denom, &incentive_denom, new_schedule.start_time),
-                &IncentiveSchedule {
-                    emission_per_second: new_schedule.emission_per_second,
-                    start_time: new_schedule.start_time,
-                    duration: old_schedule.start_time - new_schedule.start_time,
-                },
-            )?;
-            new_schedule.duration -= old_schedule.start_time - new_schedule.start_time;
-            new_schedule.start_time = old_schedule.start_time;
+    // To simplify the logic and prevent too much gas usage, we split the new schedule into separate
+    // schedules that are exactly one epoch long. This way we can easily merge them with existing
+    // schedules.
+    // Loop over each epoch duration of the new schedule and merge into any existing schedules
+    let mut epoch_start_time = start_time;
+    while epoch_start_time < start_time + duration {
+        // Check if an schedule exists for the current epoch. If it does, merge the new schedule
+        // with the existing schedule. Else add a new schedule.
+        let key = (collateral_denom.as_str(), incentive_denom.as_str(), epoch_start_time);
+        let existing_schedule = EMISSIONS.may_load(deps.storage, key)?;
+        if let Some(existing_schedule) = existing_schedule {
+            EMISSIONS.save(deps.storage, key, &(existing_schedule + emission_per_second))?;
+        } else {
+            EMISSIONS.save(deps.storage, key, &emission_per_second)?;
         }
 
-        old_schedule.emission_per_second += new_schedule.emission_per_second;
-
-        INCENTIVE_SCHEDULES.save(
-            deps.storage,
-            (&collateral_denom, &incentive_denom, old_schedule.start_time),
-            &old_schedule,
-        )?;
-
-        let remaining_duration = new_schedule.duration.saturating_sub(old_schedule.duration);
-        new_schedule.duration = remaining_duration;
-        new_schedule.start_time = old_schedule.start_time + old_schedule.duration;
-
-        if remaining_duration == 0 {
-            // The new incentive is fully covered by the existing incentive, so we can stop
-            // processing
-            break;
-        }
-    }
-
-    // If there is any remaining duration on the new incentive, we save it
-    if new_schedule.duration > 0 {
-        INCENTIVE_SCHEDULES.save(
-            deps.storage,
-            (&collateral_denom, &incentive_denom, new_schedule.start_time),
-            &new_schedule,
-        )?;
+        epoch_start_time += config.epoch_duration;
     }
 
     // Set up the incentive state if it doesn't exist
