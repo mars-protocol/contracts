@@ -36,10 +36,10 @@ pub const USER_ASSET_INDICES: Map<(&Addr, &str, &str), Decimal> = Map::new("indi
 /// The key is (user address, collateral denom, incentive denom).
 pub const USER_UNCLAIMED_REWARDS: Map<(&Addr, &str, &str), Uint128> = Map::new("unclaimed_rewards");
 
-/// The default limit for pagination over asset incentives
+/// The default limit for pagination
 pub const DEFAULT_LIMIT: u32 = 5;
 
-/// The maximum limit for pagination over asset incentives
+/// The maximum limit for pagination
 /// TODO: Remove MAX_LIMIT? What is the purpose? Surely better to have the limit be whatever is the max gas limit?
 pub const MAX_LIMIT: u32 = 10;
 

@@ -6,13 +6,14 @@ use cosmwasm_std::{
     attr, coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env,
     Event, MessageInfo, Order, Response, StdError, StdResult, Uint128,
 };
+use cw_storage_plus::Bound;
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
     incentives::{
-        Config, ConfigResponse, ExecuteMsg, IncentiveState, IncentiveStateResponse, InstantiateMsg,
-        QueryMsg,
+        Config, ConfigResponse, EmissionResponse, ExecuteMsg, IncentiveState,
+        IncentiveStateResponse, InstantiateMsg, QueryMsg,
     },
 };
 use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
@@ -23,8 +24,8 @@ use crate::{
         self, compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_incentive_index,
     },
     state::{
-        self, CONFIG, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES,
-        USER_UNCLAIMED_REWARDS, WHITELIST,
+        self, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT, OWNER,
+        USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS, WHITELIST,
     },
 };
 
@@ -488,6 +489,23 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             limit,
         )?),
         QueryMsg::Whitelist {} => to_binary(&query_whitelist(deps)?),
+        QueryMsg::Emission {
+            collateral_denom,
+            incentive_denom,
+            timestamp,
+        } => to_binary(&query_emission(deps, collateral_denom, incentive_denom, timestamp)?),
+        QueryMsg::Emissions {
+            collateral_denom,
+            incentive_denom,
+            start_after_timestamp,
+            limit,
+        } => to_binary(&query_emissions(
+            deps,
+            collateral_denom,
+            incentive_denom,
+            start_after_timestamp,
+            limit,
+        )?),
     }
 }
 
@@ -590,4 +608,45 @@ fn query_whitelist(deps: Deps) -> StdResult<Vec<String>> {
     let whitelist: Vec<String> =
         WHITELIST.items(deps.storage, None, None, Order::Ascending).collect::<StdResult<_>>()?;
     Ok(whitelist)
+}
+
+pub fn query_emission(
+    deps: Deps,
+    collateral_denom: String,
+    incentive_denom: String,
+    timestamp: u64,
+) -> StdResult<Uint128> {
+    let emission = EMISSIONS
+        .prefix((&collateral_denom, &incentive_denom))
+        .range(deps.storage, Some(Bound::inclusive(timestamp)), None, Order::Ascending)
+        .next()
+        .transpose()?
+        .map(|(start_time, emission)| {
+            // The next emission has not yet started, so the emission at the requested timestamp is 0
+            if timestamp < start_time {
+                Uint128::zero()
+            } else {
+                emission
+            }
+        })
+        .unwrap_or_default();
+    Ok(emission)
+}
+
+pub fn query_emissions(
+    deps: Deps,
+    collateral_denom: String,
+    incentive_denom: String,
+    start_after_timestamp: Option<u64>,
+    limit: Option<u32>,
+) -> StdResult<Vec<EmissionResponse>> {
+    let min = start_after_timestamp.map(Bound::exclusive);
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+    let emissions = EMISSIONS
+        .prefix((&collateral_denom, &incentive_denom))
+        .range(deps.storage, min, None, Order::Ascending)
+        .take(limit)
+        .collect::<StdResult<Vec<_>>>()?;
+
+    Ok(emissions.into_iter().map(|x| x.into()).collect())
 }
