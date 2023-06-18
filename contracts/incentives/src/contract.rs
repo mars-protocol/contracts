@@ -136,8 +136,8 @@ pub fn execute_update_whitelist(
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
     for denom in add_denoms.iter() {
-        validate_native_denom(&denom)?;
-        WHITELIST.insert(deps.storage, &denom)?;
+        validate_native_denom(denom)?;
+        WHITELIST.insert(deps.storage, denom)?;
     }
 
     let config = CONFIG.load(deps.storage)?;
@@ -181,15 +181,15 @@ pub fn execute_update_whitelist(
         }
 
         // Finally remove the incentive denom from the whitelist
-        WHITELIST.remove(deps.storage, &denom)?;
+        WHITELIST.remove(deps.storage, denom)?;
     }
 
     let mut event = Event::new("mars/incentives/update_whitelist");
     if !add_denoms.is_empty() {
-        event = event.add_attribute("add_denoms", add_denoms.join(",").to_string());
+        event = event.add_attribute("add_denoms", add_denoms.join(","));
     }
     if !remove_denoms.is_empty() {
-        event = event.add_attribute("remove_denoms", remove_denoms.join(",").to_string());
+        event = event.add_attribute("remove_denoms", remove_denoms.join(","));
     }
 
     Ok(Response::default().add_event(event))
@@ -389,7 +389,7 @@ pub fn execute_claim_rewards(
     let mut total_unclaimed_rewards: HashMap<String, Uint128> = HashMap::new();
 
     for ((collateral_denom, incentive_denom), _) in asset_incentives {
-        let querier = deps.querier.clone();
+        let querier = deps.querier;
         let unclaimed_rewards = compute_user_unclaimed_rewards(
             &mut deps.branch().storage.into(),
             &querier,

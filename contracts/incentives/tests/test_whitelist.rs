@@ -165,7 +165,7 @@ fn incentives_updated_and_removed_when_removing_from_whitelist() {
     // Set Red Bank Market
     deps.querier.set_redbank_market(Market {
         denom: "uosmo".to_string(),
-        collateral_total_scaled: collateral.clone(),
+        collateral_total_scaled: collateral,
         ..Default::default()
     });
 
@@ -233,7 +233,7 @@ fn incentives_updated_and_removed_when_removing_from_whitelist() {
     // Query users rewards. They should have gotten rewards for the entire time
     let user_rewards: Vec<Coin> = th_query_with_env(
         deps.as_ref(),
-        env.clone(),
+        env,
         QueryMsg::UserUnclaimedRewards {
             user: user_addr.to_string(),
             start_after_collateral_denom: None,

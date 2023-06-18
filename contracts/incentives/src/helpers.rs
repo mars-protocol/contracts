@@ -38,7 +38,7 @@ impl<'a> From<&'a mut dyn Storage> for MaybeMutStorage<'a> {
 }
 
 impl MaybeMutStorage<'_> {
-    pub fn as_ref(&self) -> &dyn Storage {
+    pub fn to_storage(&self) -> &dyn Storage {
         match self {
             MaybeMutStorage::Immutable(storage) => *storage,
             MaybeMutStorage::Mutable(storage) => *storage,
@@ -78,7 +78,7 @@ pub fn validate_incentive_schedule(
     // Duration must be a multiple of epoch duration
     if duration % epoch_duration != 0 {
         return Err(ContractError::InvalidDuration {
-            epoch_duration: epoch_duration,
+            epoch_duration,
         });
     }
     // Emission must meet minimum amount
@@ -100,16 +100,15 @@ pub fn validate_incentive_schedule(
     // Start time must be a multiple of epoch duration away from any other existing incentive
     // for the same collateral denom and incentive denom tuple. We do this so we have at most oneincentive schedule per epoch, to limit gas usage.
     let old_schedule = EMISSIONS
-        .prefix((&collateral_denom, &incentive_denom))
+        .prefix((collateral_denom, incentive_denom))
         .range(storage, None, None, Order::Ascending)
-        .into_iter()
         .next()
         .transpose()?;
     if let Some((existing_start_time, _)) = old_schedule {
         let start_time_diff = start_time.abs_diff(existing_start_time);
         if start_time_diff % epoch_duration != 0 {
             return Err(ContractError::InvalidStartTime {
-                epoch_duration: epoch_duration,
+                epoch_duration,
                 existing_start_time,
             });
         }
@@ -148,10 +147,10 @@ pub fn update_incentive_index(
     total_collateral: Uint128,
     current_block_time: u64,
 ) -> StdResult<IncentiveState> {
-    let epoch_duration = EPOCH_DURATION.load(storage.as_ref())?;
+    let epoch_duration = EPOCH_DURATION.load(storage.to_storage())?;
 
     let mut incentive_state = INCENTIVE_STATES
-        .may_load(storage.as_ref(), (collateral_denom, incentive_denom))?
+        .may_load(storage.to_storage(), (collateral_denom, incentive_denom))?
         .unwrap_or_else(|| IncentiveState {
             index: Decimal::zero(),
             last_updated: current_block_time,
@@ -167,12 +166,11 @@ pub fn update_incentive_index(
     let emissions = EMISSIONS
         .prefix((collateral_denom, incentive_denom))
         .range(
-            storage.as_ref(),
+            storage.to_storage(),
             None,
             Some(Bound::exclusive(current_block_time)),
             cosmwasm_std::Order::Ascending,
         )
-        .into_iter()
         .collect::<StdResult<Vec<_>>>()?;
 
     for (start_time, emission_per_second) in emissions {
@@ -255,7 +253,7 @@ pub fn compute_user_unclaimed_rewards(
     incentive_denom: &str,
 ) -> StdResult<Uint128> {
     let mut unclaimed_rewards = USER_UNCLAIMED_REWARDS
-        .may_load(storage.as_ref(), (user_addr, collateral_denom, incentive_denom))?
+        .may_load(storage.to_storage(), (user_addr, collateral_denom, incentive_denom))?
         .unwrap_or_else(Uint128::zero);
 
     // Get asset user balances and total supply
@@ -289,7 +287,7 @@ pub fn compute_user_unclaimed_rewards(
     )?;
 
     let user_asset_index = USER_ASSET_INDICES
-        .may_load(storage.as_ref(), (user_addr, collateral_denom, incentive_denom))?
+        .may_load(storage.to_storage(), (user_addr, collateral_denom, incentive_denom))?
         .unwrap_or_else(Decimal::zero);
 
     if user_asset_index != incentive_state.index {
@@ -307,7 +305,7 @@ pub fn compute_user_unclaimed_rewards(
         if user_asset_index != incentive_state.index {
             USER_ASSET_INDICES.save(
                 *storage,
-                (&user_addr, &collateral_denom, &incentive_denom),
+                (user_addr, collateral_denom, incentive_denom),
                 &incentive_state.index,
             )?
         }
