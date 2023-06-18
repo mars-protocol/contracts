@@ -5,9 +5,9 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
-import * as _24 from './MarsSwapperOsmosis.types'
-import * as _25 from './MarsSwapperOsmosis.client'
-import * as _26 from './MarsSwapperOsmosis.react-query'
+import * as _21 from './MarsSwapperOsmosis.types'
+import * as _22 from './MarsSwapperOsmosis.client'
+import * as _23 from './MarsSwapperOsmosis.react-query'
 export namespace contracts {
-  export const MarsSwapperOsmosis = { ..._24, ..._25, ..._26 }
+  export const MarsSwapperOsmosis = { ..._21, ..._22, ..._23 }
 }
