@@ -222,7 +222,9 @@ where
         denom: String,
     ) -> StdResult<PriceSourceResponse<P>> {
         Ok(PriceSourceResponse {
-            price_source: self.price_sources.load(deps.storage, &denom)?,
+            price_source: self.price_sources.load(deps.storage, &denom).map_err(|_| {
+                StdError::generic_err(format!("No price source found for denom: {}", denom))
+            })?,
             denom,
         })
     }
@@ -251,9 +253,9 @@ where
 
     fn query_price(&self, deps: Deps<C>, env: Env, denom: String) -> ContractResult<PriceResponse> {
         let cfg = self.config.load(deps.storage)?;
-        let price_source = self.price_sources.load(deps.storage, &denom).map_err(|_| {
-            StdError::generic_err(format!("No price source found for denom: {}", denom))
-        })?;
+
+        let price_source = self.query_price_source(deps, denom.clone())?.price_source;
+
         Ok(PriceResponse {
             price: price_source.query_price(&deps, &env, &denom, &cfg, &self.price_sources)?,
             denom,
