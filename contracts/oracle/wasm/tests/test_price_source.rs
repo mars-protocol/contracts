@@ -323,6 +323,7 @@ fn querying_pyth_price_if_publish_price_too_old() {
         mock_env_at_block_time(price_publish_time + max_staleness + 1u64),
         QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     )
     .unwrap_err();
@@ -401,6 +402,7 @@ fn querying_pyth_price_if_signed() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     )
     .unwrap_err();
@@ -479,6 +481,7 @@ fn querying_pyth_price_successfully() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     )
     .unwrap();
@@ -512,6 +515,7 @@ fn querying_pyth_price_successfully() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     )
     .unwrap();

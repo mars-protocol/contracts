@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, StdError, Uint128};
 use cw_storage_plus::Map;
-use mars_red_bank_types::oracle::Config;
+use mars_red_bank_types::oracle::{ActionKind, Config};
 use pyth_sdk_cw::query_price_feed;
 pub use pyth_sdk_cw::PriceIdentifier;
 
@@ -16,30 +16,29 @@ pub fn query_pyth_price<P: PriceSourceChecked<Empty>>(
     denom_decimals: u8,
     config: &Config,
     price_sources: &Map<&str, P>,
+    kind: ActionKind,
 ) -> ContractResult<Decimal> {
     // Use current price source for USD to check how much 1 USD is worth in base_denom
     let usd_price = price_sources
         .load(deps.storage, "usd")
         .map_err(|_| StdError::generic_err("Price source not found for denom 'usd'"))?
-        .query_price(deps, env, "usd", config, price_sources)?;
+        .query_price(deps, env, "usd", config, price_sources, kind)?;
 
     let current_time = env.block.time.seconds();
 
     let price_feed_response = query_price_feed(&deps.querier, contract_addr, price_feed_id)?;
     let price_feed = price_feed_response.price_feed;
 
-    // Get the current price and confidence interval from the price feed
-    let current_price = price_feed.get_price_unchecked();
-
     // Check if the current price is not too old
-    if (current_time - current_price.publish_time as u64) > max_staleness {
-        return Err(InvalidPrice {
-            reason: format!(
-                "current price publish time is too old/stale. published: {}, now: {}",
-                current_price.publish_time, current_time
-            ),
-        });
-    }
+    let current_price_opt = price_feed.get_price_no_older_than(current_time as i64, max_staleness);
+    let Some(current_price) = current_price_opt else {
+            return Err(InvalidPrice {
+                reason: format!(
+                    "current price publish time is too old/stale. published: {}, now: {}",
+                    price_feed.get_price_unchecked().publish_time, current_time
+                ),
+            });
+        };
 
     // Check if the current price is > 0
     if current_price.price <= 0 {

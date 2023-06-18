@@ -13,7 +13,7 @@ use mars_oracle_base::{
     ContractError::{self},
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
-use mars_red_bank_types::oracle::{AstroportTwapSnapshot, Config};
+use mars_red_bank_types::oracle::{ActionKind, AstroportTwapSnapshot, Config};
 
 use crate::{
     helpers::{
@@ -205,6 +205,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
         denom: &str,
         config: &Config,
         price_sources: &Map<&str, Self>,
+        kind: ActionKind,
     ) -> ContractResult<Decimal> {
         match self {
             WasmPriceSource::Fixed {
@@ -221,6 +222,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 price_sources,
                 pair_address,
                 route_assets,
+                kind,
             ),
             WasmPriceSource::AstroportTwap {
                 pair_address,
@@ -237,6 +239,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 route_assets,
                 *window_size,
                 *tolerance,
+                kind,
             ),
             WasmPriceSource::Pyth {
                 contract_addr,
@@ -252,6 +255,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 *denom_decimals,
                 config,
                 price_sources,
+                kind,
             ),
         }
     }
@@ -266,6 +270,7 @@ fn query_astroport_spot_price(
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     pair_address: &Addr,
     route_assets: &[String],
+    kind: ActionKind,
 ) -> ContractResult<Decimal> {
     let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
 
@@ -287,7 +292,7 @@ fn query_astroport_spot_price(
 
     // If there are route assets, we need to multiply the price by the price of the
     // route assets in the base denom
-    add_route_prices(deps, env, config, price_sources, route_assets, &price)
+    add_route_prices(deps, env, config, price_sources, route_assets, &price, kind)
 }
 
 /// Queries the TWAP price of `denom` denominated in `base_denom` from the Astroport pair at `pair_address`.
@@ -302,6 +307,7 @@ fn query_astroport_twap_price(
     route_assets: &[String],
     window_size: u64,
     tolerance: u64,
+    kind: ActionKind,
 ) -> ContractResult<Decimal> {
     let snapshots = ASTROPORT_TWAP_SNAPSHOTS
         .may_load(deps.storage, denom)?
@@ -341,7 +347,7 @@ fn query_astroport_twap_price(
 
     // If there are route assets, we need to multiply the price by the price of the
     // route assets in the base denom
-    add_route_prices(deps, env, config, price_sources, route_assets, &price)
+    add_route_prices(deps, env, config, price_sources, route_assets, &price, kind)
 }
 
 #[cfg(test)]

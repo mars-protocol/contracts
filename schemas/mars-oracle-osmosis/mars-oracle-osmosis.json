@@ -704,6 +704,16 @@
             "properties": {
               "denom": {
                 "type": "string"
+              },
+              "kind": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/ActionKind"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -721,6 +731,16 @@
           "prices": {
             "type": "object",
             "properties": {
+              "kind": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/ActionKind"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "limit": {
                 "type": [
                   "integer",
@@ -741,7 +761,17 @@
         },
         "additionalProperties": false
       }
-    ]
+    ],
+    "definitions": {
+      "ActionKind": {
+        "description": "Differentiator for the action being performed.",
+        "type": "string",
+        "enum": [
+          "default",
+          "liquidation"
+        ]
+      }
+    }
   },
   "migrate": null,
   "sudo": null,
