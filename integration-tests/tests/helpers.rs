@@ -73,7 +73,9 @@ pub mod osmosis {
         let artifacts_dir =
             std::env::var("ARTIFACTS_DIR_PATH").unwrap_or_else(|_| "artifacts".to_string());
         let snaked_name = contract_name.replace('-', "_");
-        format!("../{artifacts_dir}/{snaked_name}.wasm")
+        let path = format!("../{artifacts_dir}/{snaked_name}.wasm");
+        println!("Trying to read wasm file: {}", snaked_name);
+        path
     }
 
     pub fn instantiate_contract<M>(

@@ -5,18 +5,27 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
+export type Uint128 = string
 export interface InstantiateMsg {
   address_provider: string
-  mars_denom: string
+  epoch_duration: number
+  min_incentive_emission: Uint128
   owner: string
 }
 export type ExecuteMsg =
   | {
+      update_whitelist: {
+        add_denoms: string[]
+        remove_denoms: string[]
+      }
+    }
+  | {
       set_asset_incentive: {
-        denom: string
-        duration?: number | null
-        emission_per_second?: Uint128 | null
-        start_time?: number | null
+        collateral_denom: string
+        duration: number
+        emission_per_second: Uint128
+        incentive_denom: string
+        start_time: number
       }
     }
   | {
@@ -28,18 +37,21 @@ export type ExecuteMsg =
       }
     }
   | {
-      claim_rewards: {}
+      claim_rewards: {
+        limit?: number | null
+        start_after_collateral_denom?: string | null
+        start_after_incentive_denom?: string | null
+      }
     }
   | {
       update_config: {
         address_provider?: string | null
-        mars_denom?: string | null
+        min_incentive_emission?: Uint128 | null
       }
     }
   | {
       update_owner: OwnerUpdate
     }
-export type Uint128 = string
 export type Addr = string
 export type OwnerUpdate =
   | {
@@ -61,34 +73,67 @@ export type QueryMsg =
       config: {}
     }
   | {
-      asset_incentive: {
-        denom: string
+      incentive_state: {
+        collateral_denom: string
+        incentive_denom: string
       }
     }
   | {
-      asset_incentives: {
+      incentive_states: {
         limit?: number | null
-        start_after?: string | null
+        start_after_collateral_denom?: string | null
+        start_after_incentive_denom?: string | null
+      }
+    }
+  | {
+      emission: {
+        collateral_denom: string
+        incentive_denom: string
+        timestamp: number
+      }
+    }
+  | {
+      emissions: {
+        collateral_denom: string
+        incentive_denom: string
+        limit?: number | null
+        start_after_timestamp?: number | null
       }
     }
   | {
       user_unclaimed_rewards: {
+        limit?: number | null
+        start_after_collateral_denom?: string | null
+        start_after_incentive_denom?: string | null
         user: string
       }
     }
-export type Decimal = string
-export interface AssetIncentiveResponse {
-  denom: string
-  duration: number
-  emission_per_second: Uint128
-  index: Decimal
-  last_updated: number
-  start_time: number
-}
-export type ArrayOfAssetIncentiveResponse = AssetIncentiveResponse[]
+  | {
+      whitelist: {}
+    }
 export interface ConfigResponse {
   address_provider: Addr
-  mars_denom: string
+  min_incentive_emission: Uint128
   owner?: string | null
   proposed_new_owner?: string | null
 }
+export type ArrayOfEmissionResponse = EmissionResponse[]
+export interface EmissionResponse {
+  emission_rate: Uint128
+  epoch_start: number
+}
+export type Decimal = string
+export interface IncentiveStateResponse {
+  collateral_denom: string
+  incentive_denom: string
+  index: Decimal
+  last_updated: number
+}
+export type ArrayOfIncentiveStateResponse = IncentiveStateResponse[]
+export type ArrayOfCoin = Coin[]
+export interface Coin {
+  amount: Uint128
+  denom: string
+  [k: string]: unknown
+}
+export type ArrayOfString = string[]
