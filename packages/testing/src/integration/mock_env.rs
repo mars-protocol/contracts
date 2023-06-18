@@ -606,7 +606,6 @@ impl MockEnvBuilder {
                 &incentives::InstantiateMsg {
                     owner: self.owner.to_string(),
                     address_provider: address_provider_addr.to_string(),
-                    mars_denom: self.mars_denom.clone(),
                     epoch_duration: 86400,
                     min_incentive_emission: Uint128::from(3u128),
                 },

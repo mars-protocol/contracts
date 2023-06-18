@@ -52,7 +52,6 @@ pub fn instantiate(
 
     let config = Config {
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
-        mars_denom: msg.mars_denom,
         epoch_duration: msg.epoch_duration,
         min_incentive_emission: msg.min_incentive_emission,
     };
@@ -120,8 +119,7 @@ pub fn execute(
         ),
         ExecuteMsg::UpdateConfig {
             address_provider,
-            mars_denom,
-        } => Ok(execute_update_config(deps, env, info, address_provider, mars_denom)?),
+        } => Ok(execute_update_config(deps, env, info, address_provider)?),
         ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
     }
 }
@@ -431,19 +429,13 @@ pub fn execute_update_config(
     _env: Env,
     info: MessageInfo,
     address_provider: Option<String>,
-    mars_denom: Option<String>,
 ) -> Result<Response, ContractError> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
-
-    if let Some(md) = &mars_denom {
-        validate_native_denom(md)?;
-    };
 
     let mut config = CONFIG.load(deps.storage)?;
 
     config.address_provider =
         option_string_to_addr(deps.api, address_provider, config.address_provider)?;
-    config.mars_denom = mars_denom.unwrap_or(config.mars_denom);
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -504,7 +496,6 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         owner: owner_state.owner,
         proposed_new_owner: owner_state.proposed,
         address_provider: config.address_provider,
-        mars_denom: config.mars_denom,
     })
 }
 
