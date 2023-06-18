@@ -166,12 +166,3 @@ pub enum QueryMsg {
     #[returns(ConfigResponse)]
     Config {},
 }
-
-#[cw_serde]
-pub struct RouteResponse<Route> {
-    pub denom_in: String,
-    pub denom_out: String,
-    pub route: Route,
-}
-
-pub type RoutesResponse<Route> = Vec<RouteResponse<Route>>;
