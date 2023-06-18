@@ -38,6 +38,7 @@ fn querying_fixed_price() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "uosmo".to_string(),
+            kind: None,
         },
     );
     assert_eq!(res.price, Decimal::one());
@@ -68,6 +69,7 @@ fn querying_spot_price() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "umars".to_string(),
+            kind: None,
         },
     );
     assert_eq!(res.price, Decimal::from_ratio(88888u128, 12345u128));
@@ -100,6 +102,7 @@ fn querying_arithmetic_twap_price() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "umars".to_string(),
+            kind: None,
         },
     );
     assert_eq!(res.price, Decimal::from_ratio(77777u128, 12345u128));
@@ -128,6 +131,7 @@ fn querying_arithmetic_twap_price_with_downtime_detector() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "umars".to_string(),
+            kind: None,
         },
     );
     assert_eq!(
@@ -150,6 +154,7 @@ fn querying_arithmetic_twap_price_with_downtime_detector() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "umars".to_string(),
+            kind: None,
         },
     );
     assert_eq!(res.price, Decimal::from_ratio(77777u128, 12345u128));
@@ -182,6 +187,7 @@ fn querying_geometric_twap_price() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "umars".to_string(),
+            kind: None,
         },
     );
     assert_eq!(res.price, Decimal::from_ratio(66666u128, 12345u128));
@@ -210,6 +216,7 @@ fn querying_geometric_twap_price_with_downtime_detector() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "umars".to_string(),
+            kind: None,
         },
     );
     assert_eq!(
@@ -232,6 +239,7 @@ fn querying_geometric_twap_price_with_downtime_detector() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "umars".to_string(),
+            kind: None,
         },
     );
     assert_eq!(res.price, Decimal::from_ratio(77777u128, 12345u128));
@@ -284,6 +292,7 @@ fn querying_staked_geometric_twap_price() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "ustatom".to_string(),
+            kind: None,
         },
     );
     let expected_price = ustatom_uatom_price * uatom_uosmo_price;
@@ -319,6 +328,7 @@ fn querying_staked_geometric_twap_price_if_no_transitive_denom_price_source() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "ustatom".to_string(),
+            kind: None,
         },
     );
     assert_eq!(
@@ -362,6 +372,7 @@ fn querying_staked_geometric_twap_price_with_downtime_detector() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "ustatom".to_string(),
+            kind: None,
         },
     );
     assert_eq!(
@@ -396,6 +407,7 @@ fn querying_staked_geometric_twap_price_with_downtime_detector() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "ustatom".to_string(),
+            kind: None,
         },
     );
     let expected_price = ustatom_uatom_price * uatom_uosmo_price;
@@ -451,6 +463,7 @@ fn querying_lsd_price() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "ustatom".to_string(),
+            kind: None,
         },
     )
     .unwrap();
@@ -491,6 +504,7 @@ fn querying_lsd_price() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "ustatom".to_string(),
+            kind: None,
         },
     )
     .unwrap();
@@ -603,6 +617,7 @@ fn querying_lsd_price_if_no_transitive_denom_price_source() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "ustatom".to_string(),
+            kind: None,
         },
     )
     .unwrap_err();
@@ -657,6 +672,7 @@ fn querying_lsd_price_if_redemption_rate_too_old() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "ustatom".to_string(),
+            kind: None,
         },
     )
     .unwrap_err();
@@ -724,6 +740,7 @@ fn querying_lsd_price_with_downtime_detector() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "ustatom".to_string(),
+            kind: None,
         },
     )
     .unwrap_err();
@@ -740,6 +757,7 @@ fn querying_lsd_price_with_downtime_detector() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "ustatom".to_string(),
+            kind: None,
         },
     )
     .unwrap();
@@ -826,6 +844,7 @@ fn querying_xyk_lp_price() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "uatom_umars_lp".to_string(),
+            kind: None,
         },
     );
     assert_eq!(res.price, Decimal::from_ratio(1770000_u128, 10000_u128));
@@ -851,6 +870,7 @@ fn querying_xyk_lp_price() {
         deps.as_ref(),
         QueryMsg::Price {
             denom: "uatom_umars_lp".to_string(),
+            kind: None,
         },
     );
     // Atom price: 88.5
@@ -919,6 +939,7 @@ fn querying_pyth_price_if_publish_price_too_old() {
         mock_env_at_block_time(price_publish_time + max_staleness + 1u64),
         QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     )
     .unwrap_err();
@@ -989,6 +1010,7 @@ fn querying_pyth_price_if_signed() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     )
     .unwrap_err();
@@ -1059,6 +1081,7 @@ fn querying_pyth_price_successfully() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     )
     .unwrap();
@@ -1092,6 +1115,7 @@ fn querying_pyth_price_successfully() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     )
     .unwrap();
@@ -1148,6 +1172,7 @@ fn querying_all_prices() {
         QueryMsg::Prices {
             start_after: None,
             limit: None,
+            kind: None,
         },
     );
     assert_eq!(

@@ -9,7 +9,7 @@ use mars_osmosis::helpers::{
     query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price,
     recovered_since_downtime_of_length, Pool,
 };
-use mars_red_bank_types::oracle::Config;
+use mars_red_bank_types::oracle::{ActionKind, Config};
 use pyth_sdk_cw::{query_price_feed, PriceIdentifier};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -420,6 +420,7 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
         denom: &str,
         config: &Config,
         price_sources: &Map<&str, Self>,
+        kind: ActionKind,
     ) -> ContractResult<Decimal> {
         match self {
             OsmosisPriceSourceChecked::Fixed {
@@ -465,7 +466,14 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
             }
             OsmosisPriceSourceChecked::XykLiquidityToken {
                 pool_id,
-            } => Self::query_xyk_liquidity_token_price(deps, env, *pool_id, config, price_sources),
+            } => Self::query_xyk_liquidity_token_price(
+                deps,
+                env,
+                *pool_id,
+                config,
+                price_sources,
+                kind,
+            ),
             OsmosisPriceSourceChecked::StakedGeometricTwap {
                 transitive_denom,
                 pool_id,
@@ -483,6 +491,7 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                     *window_size,
                     config,
                     price_sources,
+                    kind,
                 )
             }
             OsmosisPriceSourceChecked::Pyth {
@@ -499,6 +508,7 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                 *denom_decimals,
                 config,
                 price_sources,
+                kind,
             )?),
             OsmosisPriceSourceChecked::Lsd {
                 transitive_denom,
@@ -516,6 +526,7 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                     redemption_rate.clone(),
                     config,
                     price_sources,
+                    kind,
                 )
             }
         }
@@ -553,6 +564,7 @@ impl OsmosisPriceSourceChecked {
         pool_id: u64,
         config: &Config,
         price_sources: &Map<&str, Self>,
+        kind: ActionKind,
     ) -> ContractResult<Decimal> {
         // XYK pool asserted during price source creation
         let pool = query_pool(&deps.querier, pool_id)?;
@@ -566,6 +578,7 @@ impl OsmosisPriceSourceChecked {
             &coin0.denom,
             config,
             price_sources,
+            kind.clone(),
         )?;
         let coin1_price = price_sources.load(deps.storage, &coin1.denom)?.query_price(
             deps,
@@ -573,6 +586,7 @@ impl OsmosisPriceSourceChecked {
             &coin1.denom,
             config,
             price_sources,
+            kind,
         )?;
 
         let coin0_value = Uint256::from_uint128(coin0.amount) * Decimal256::from(coin0_price);
@@ -603,6 +617,7 @@ impl OsmosisPriceSourceChecked {
         window_size: u64,
         config: &Config,
         price_sources: &Map<&str, OsmosisPriceSourceChecked>,
+        kind: ActionKind,
     ) -> ContractResult<Decimal> {
         let start_time = env.block.time.seconds() - window_size;
         let staked_price = query_geometric_twap_price(
@@ -620,6 +635,7 @@ impl OsmosisPriceSourceChecked {
             transitive_denom,
             config,
             price_sources,
+            kind,
         )?;
 
         staked_price.checked_mul(transitive_price).map_err(Into::into)
@@ -640,6 +656,7 @@ impl OsmosisPriceSourceChecked {
         redemption_rate: RedemptionRate<Addr>,
         config: &Config,
         price_sources: &Map<&str, OsmosisPriceSourceChecked>,
+        kind: ActionKind,
     ) -> ContractResult<Decimal> {
         let current_time = env.block.time.seconds();
         let start_time = current_time - geometric_twap.window_size;
@@ -678,11 +695,13 @@ impl OsmosisPriceSourceChecked {
             transitive_denom,
             config,
             price_sources,
+            kind,
         )?;
 
         min_price.checked_mul(transitive_price).map_err(Into::into)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn query_pyth_price(
         deps: &Deps,
         env: &Env,
@@ -692,6 +711,7 @@ impl OsmosisPriceSourceChecked {
         denom_decimals: u8,
         config: &Config,
         price_sources: &Map<&str, OsmosisPriceSourceChecked>,
+        kind: ActionKind,
     ) -> ContractResult<Decimal> {
         // Use current price source for USD to check how much 1 USD is worth in base_denom
         let usd_price = price_sources.load(deps.storage, "usd")?.query_price(
@@ -700,6 +720,7 @@ impl OsmosisPriceSourceChecked {
             "usd",
             config,
             price_sources,
+            kind,
         )?;
 
         let current_time = env.block.time.seconds();

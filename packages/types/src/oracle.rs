@@ -37,6 +37,13 @@ pub enum ExecuteMsg<T> {
     },
 }
 
+/// Differentiator for the action being performed.
+#[cw_serde]
+pub enum ActionKind {
+    Default,
+    Liquidation,
+}
+
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
@@ -65,6 +72,7 @@ pub enum QueryMsg {
     #[returns(PriceResponse)]
     Price {
         denom: String,
+        kind: Option<ActionKind>,
     },
     /// Enumerate all coins' prices.
     ///
@@ -74,6 +82,7 @@ pub enum QueryMsg {
     Prices {
         start_after: Option<String>,
         limit: Option<u32>,
+        kind: Option<ActionKind>,
     },
 }
 
@@ -102,7 +111,7 @@ pub struct PriceResponse {
 pub mod helpers {
     use cosmwasm_std::{Decimal, QuerierWrapper, StdResult};
 
-    use super::{PriceResponse, QueryMsg};
+    use super::{ActionKind, PriceResponse, QueryMsg};
 
     pub fn query_price(
         querier: &QuerierWrapper,
@@ -113,6 +122,7 @@ pub mod helpers {
             oracle.into(),
             &QueryMsg::Price {
                 denom: denom.into(),
+                kind: Some(ActionKind::Default),
             },
         )?;
         Ok(res.price)

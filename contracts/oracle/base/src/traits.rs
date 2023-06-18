@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display};
 
 use cosmwasm_std::{CustomQuery, Decimal, Deps, Env};
 use cw_storage_plus::Map;
-use mars_red_bank_types::oracle::Config;
+use mars_red_bank_types::oracle::{ActionKind, Config};
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -44,5 +44,6 @@ where
         denom: &str,
         config: &Config,
         price_sources: &Map<&str, Self>,
+        kind: ActionKind,
     ) -> ContractResult<Decimal>;
 }

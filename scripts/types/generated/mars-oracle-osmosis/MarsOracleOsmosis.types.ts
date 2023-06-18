@@ -167,14 +167,17 @@ export type QueryMsg =
   | {
       price: {
         denom: string
+        kind?: ActionKind | null
       }
     }
   | {
       prices: {
+        kind?: ActionKind | null
         limit?: number | null
         start_after?: string | null
       }
     }
+export type ActionKind = 'default' | 'liquidation'
 export interface ConfigResponse {
   base_denom: string
   owner?: string | null
