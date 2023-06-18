@@ -3,7 +3,10 @@ use cosmwasm_std::{
     Uint128,
 };
 use mars_incentives::{
-    helpers::{compute_incentive_index, compute_user_accrued_rewards, update_incentive_index},
+    helpers::{
+        compute_incentive_index, compute_user_accrued_rewards, update_incentive_index,
+        MaybeMutStorage,
+    },
     state::{CONFIG, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES},
 };
 use mars_red_bank_types::incentives::{Config, IncentiveState};
@@ -274,6 +277,59 @@ fn update_incentive_index_if_not_updated_till_finished() {
     )
     .unwrap();
     assert_eq!(ai, expected_ai);
+}
+
+#[test]
+/// Tests that update_incentive_index only reads the relevant schedules (i.e. those that are
+/// active at the current block time).
+fn update_incentive_index_only_uses_relevant_schedules() {
+    let mut storage = MockStorage::default();
+
+    let start_time = 10;
+    let duration = 300; // 5 min
+    let ai = IncentiveState {
+        index: Decimal::zero(),
+        last_updated: 0,
+    };
+    INCENTIVE_STATES.save(&mut storage, ("uosmo", "umars"), &ai).unwrap();
+    store_config_with_epoch_duration(&mut storage, duration);
+    for i in 0..5 {
+        EMISSIONS
+            .save(
+                &mut storage,
+                ("uosmo", "umars", start_time + duration * i as u64),
+                &Uint128::new(20),
+            )
+            .unwrap();
+    }
+
+    let current_block_time = start_time + duration * 2;
+
+    let ai = update_incentive_index(
+        &mut MaybeMutStorage::Mutable(&mut storage),
+        "uosmo",
+        "umars",
+        Uint128::new(100),
+        current_block_time,
+    )
+    .unwrap();
+
+    assert_eq!(ai.index, Decimal::from_ratio(20 * duration * 2, 100u128));
+    assert_eq!(ai.last_updated, current_block_time);
+
+    // Check that the state is saved
+    let stored_ai = INCENTIVE_STATES.load(&storage, ("uosmo", "umars")).unwrap();
+    assert_eq!(stored_ai, ai);
+
+    // Check that previous epoch schedules were removed and that future schedules were not updated
+    for i in 0..5 {
+        let key = ("uosmo", "umars", start_time + duration * i as u64);
+        if i < 2 {
+            assert!(EMISSIONS.may_load(&storage, key).unwrap().is_none());
+        } else {
+            assert_eq!(EMISSIONS.load(&storage, key).unwrap(), Uint128::new(20));
+        }
+    }
 }
 
 #[test]
