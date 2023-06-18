@@ -93,6 +93,15 @@ export interface MarsRewardsCollectorInterface extends MarsRewardsCollectorReadO
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
   claimIncentiveRewards: (
+    {
+      limit,
+      startAfterCollateralDenom,
+      startAfterIncentiveDenom,
+    }: {
+      limit?: number
+      startAfterCollateralDenom?: string
+      startAfterIncentiveDenom?: string
+    },
     fee?: number | StdFee | 'auto',
     memo?: string,
     _funds?: Coin[],
@@ -238,6 +247,15 @@ export class MarsRewardsCollectorClient
     )
   }
   claimIncentiveRewards = async (
+    {
+      limit,
+      startAfterCollateralDenom,
+      startAfterIncentiveDenom,
+    }: {
+      limit?: number
+      startAfterCollateralDenom?: string
+      startAfterIncentiveDenom?: string
+    },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     _funds?: Coin[],
@@ -246,7 +264,11 @@ export class MarsRewardsCollectorClient
       this.sender,
       this.contractAddress,
       {
-        claim_incentive_rewards: {},
+        claim_incentive_rewards: {
+          limit,
+          start_after_collateral_denom: startAfterCollateralDenom,
+          start_after_incentive_denom: startAfterIncentiveDenom,
+        },
       },
       fee,
       memo,

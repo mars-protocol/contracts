@@ -44,7 +44,11 @@ export type ExecuteMsg =
       }
     }
   | {
-      claim_incentive_rewards: {}
+      claim_incentive_rewards: {
+        limit?: number | null
+        start_after_collateral_denom?: string | null
+        start_after_incentive_denom?: string | null
+      }
     }
 export type OwnerUpdate =
   | {

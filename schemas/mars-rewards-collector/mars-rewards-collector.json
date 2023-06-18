@@ -212,6 +212,31 @@
         "properties": {
           "claim_incentive_rewards": {
             "type": "object",
+            "properties": {
+              "limit": {
+                "description": "The maximum number of results to return. If not set, 5 is used. If larger than 10, 10 is used.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after_collateral_denom": {
+                "description": "Start pagination after this collateral denom",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "start_after_incentive_denom": {
+                "description": "Start pagination after this incentive denom. If supplied you must also supply start_after_collateral_denom.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
             "additionalProperties": false
           }
         },

@@ -7,18 +7,23 @@
 
 import { UseQueryOptions, useQuery, useMutation, UseMutationOptions } from '@tanstack/react-query'
 import { ExecuteResult } from '@cosmjs/cosmwasm-stargate'
-import { StdFee, Coin } from '@cosmjs/amino'
+import { StdFee } from '@cosmjs/amino'
 import {
+  Uint128,
   InstantiateMsg,
   ExecuteMsg,
-  Uint128,
   Addr,
   OwnerUpdate,
   QueryMsg,
-  Decimal,
-  AssetIncentiveResponse,
-  ArrayOfAssetIncentiveResponse,
   ConfigResponse,
+  ArrayOfEmissionResponse,
+  EmissionResponse,
+  Decimal,
+  IncentiveStateResponse,
+  ArrayOfIncentiveStateResponse,
+  ArrayOfCoin,
+  Coin,
+  ArrayOfString,
 } from './MarsIncentives.types'
 import { MarsIncentivesQueryClient, MarsIncentivesClient } from './MarsIncentives.client'
 export const marsIncentivesQueryKeys = {
@@ -31,13 +36,19 @@ export const marsIncentivesQueryKeys = {
     [{ ...marsIncentivesQueryKeys.contract[0], address: contractAddress }] as const,
   config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'config', args }] as const,
-  assetIncentive: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+  incentiveState: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
-      { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'asset_incentive', args },
+      { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'incentive_state', args },
     ] as const,
-  assetIncentives: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+  incentiveStates: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
-      { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'asset_incentives', args },
+      { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'incentive_states', args },
+    ] as const,
+  emission: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [{ ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'emission', args }] as const,
+  emissions: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'emissions', args },
     ] as const,
   userUnclaimedRewards: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -46,6 +57,10 @@ export const marsIncentivesQueryKeys = {
         method: 'user_unclaimed_rewards',
         args,
       },
+    ] as const,
+  whitelist: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'whitelist', args },
     ] as const,
 }
 export interface MarsIncentivesReactQuery<TResponse, TData = TResponse> {
@@ -57,69 +72,145 @@ export interface MarsIncentivesReactQuery<TResponse, TData = TResponse> {
     initialData?: undefined
   }
 }
+export interface MarsIncentivesWhitelistQuery<TData>
+  extends MarsIncentivesReactQuery<ArrayOfString, TData> {}
+export function useMarsIncentivesWhitelistQuery<TData = ArrayOfString>({
+  client,
+  options,
+}: MarsIncentivesWhitelistQuery<TData>) {
+  return useQuery<ArrayOfString, Error, TData>(
+    marsIncentivesQueryKeys.whitelist(client?.contractAddress),
+    () => (client ? client.whitelist() : Promise.reject(new Error('Invalid client'))),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
 export interface MarsIncentivesUserUnclaimedRewardsQuery<TData>
-  extends MarsIncentivesReactQuery<Uint128, TData> {
+  extends MarsIncentivesReactQuery<ArrayOfCoin, TData> {
   args: {
+    limit?: number
+    startAfterCollateralDenom?: string
+    startAfterIncentiveDenom?: string
     user: string
   }
 }
-export function useMarsIncentivesUserUnclaimedRewardsQuery<TData = Uint128>({
+export function useMarsIncentivesUserUnclaimedRewardsQuery<TData = ArrayOfCoin>({
   client,
   args,
   options,
 }: MarsIncentivesUserUnclaimedRewardsQuery<TData>) {
-  return useQuery<Uint128, Error, TData>(
+  return useQuery<ArrayOfCoin, Error, TData>(
     marsIncentivesQueryKeys.userUnclaimedRewards(client?.contractAddress, args),
     () =>
       client
         ? client.userUnclaimedRewards({
+            limit: args.limit,
+            startAfterCollateralDenom: args.startAfterCollateralDenom,
+            startAfterIncentiveDenom: args.startAfterIncentiveDenom,
             user: args.user,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsIncentivesAssetIncentivesQuery<TData>
-  extends MarsIncentivesReactQuery<ArrayOfAssetIncentiveResponse, TData> {
+export interface MarsIncentivesEmissionsQuery<TData>
+  extends MarsIncentivesReactQuery<ArrayOfEmissionResponse, TData> {
   args: {
+    collateralDenom: string
+    incentiveDenom: string
     limit?: number
-    startAfter?: string
+    startAfterTimestamp?: number
   }
 }
-export function useMarsIncentivesAssetIncentivesQuery<TData = ArrayOfAssetIncentiveResponse>({
+export function useMarsIncentivesEmissionsQuery<TData = ArrayOfEmissionResponse>({
   client,
   args,
   options,
-}: MarsIncentivesAssetIncentivesQuery<TData>) {
-  return useQuery<ArrayOfAssetIncentiveResponse, Error, TData>(
-    marsIncentivesQueryKeys.assetIncentives(client?.contractAddress, args),
+}: MarsIncentivesEmissionsQuery<TData>) {
+  return useQuery<ArrayOfEmissionResponse, Error, TData>(
+    marsIncentivesQueryKeys.emissions(client?.contractAddress, args),
     () =>
       client
-        ? client.assetIncentives({
+        ? client.emissions({
+            collateralDenom: args.collateralDenom,
+            incentiveDenom: args.incentiveDenom,
             limit: args.limit,
-            startAfter: args.startAfter,
+            startAfterTimestamp: args.startAfterTimestamp,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsIncentivesAssetIncentiveQuery<TData>
-  extends MarsIncentivesReactQuery<AssetIncentiveResponse, TData> {
+export interface MarsIncentivesEmissionQuery<TData>
+  extends MarsIncentivesReactQuery<Uint128, TData> {
   args: {
-    denom: string
+    collateralDenom: string
+    incentiveDenom: string
+    timestamp: number
   }
 }
-export function useMarsIncentivesAssetIncentiveQuery<TData = AssetIncentiveResponse>({
+export function useMarsIncentivesEmissionQuery<TData = Uint128>({
   client,
   args,
   options,
-}: MarsIncentivesAssetIncentiveQuery<TData>) {
-  return useQuery<AssetIncentiveResponse, Error, TData>(
-    marsIncentivesQueryKeys.assetIncentive(client?.contractAddress, args),
+}: MarsIncentivesEmissionQuery<TData>) {
+  return useQuery<Uint128, Error, TData>(
+    marsIncentivesQueryKeys.emission(client?.contractAddress, args),
     () =>
       client
-        ? client.assetIncentive({
-            denom: args.denom,
+        ? client.emission({
+            collateralDenom: args.collateralDenom,
+            incentiveDenom: args.incentiveDenom,
+            timestamp: args.timestamp,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsIncentivesIncentiveStatesQuery<TData>
+  extends MarsIncentivesReactQuery<ArrayOfIncentiveStateResponse, TData> {
+  args: {
+    limit?: number
+    startAfterCollateralDenom?: string
+    startAfterIncentiveDenom?: string
+  }
+}
+export function useMarsIncentivesIncentiveStatesQuery<TData = ArrayOfIncentiveStateResponse>({
+  client,
+  args,
+  options,
+}: MarsIncentivesIncentiveStatesQuery<TData>) {
+  return useQuery<ArrayOfIncentiveStateResponse, Error, TData>(
+    marsIncentivesQueryKeys.incentiveStates(client?.contractAddress, args),
+    () =>
+      client
+        ? client.incentiveStates({
+            limit: args.limit,
+            startAfterCollateralDenom: args.startAfterCollateralDenom,
+            startAfterIncentiveDenom: args.startAfterIncentiveDenom,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsIncentivesIncentiveStateQuery<TData>
+  extends MarsIncentivesReactQuery<IncentiveStateResponse, TData> {
+  args: {
+    collateralDenom: string
+    incentiveDenom: string
+  }
+}
+export function useMarsIncentivesIncentiveStateQuery<TData = IncentiveStateResponse>({
+  client,
+  args,
+  options,
+}: MarsIncentivesIncentiveStateQuery<TData>) {
+  return useQuery<IncentiveStateResponse, Error, TData>(
+    marsIncentivesQueryKeys.incentiveState(client?.contractAddress, args),
+    () =>
+      client
+        ? client.incentiveState({
+            collateralDenom: args.collateralDenom,
+            incentiveDenom: args.incentiveDenom,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -161,7 +252,7 @@ export interface MarsIncentivesUpdateConfigMutation {
   client: MarsIncentivesClient
   msg: {
     addressProvider?: string
-    marsDenom?: string
+    minIncentiveEmission?: Uint128
   }
   args?: {
     fee?: number | StdFee | 'auto'
@@ -183,6 +274,11 @@ export function useMarsIncentivesUpdateConfigMutation(
 }
 export interface MarsIncentivesClaimRewardsMutation {
   client: MarsIncentivesClient
+  msg: {
+    limit?: number
+    startAfterCollateralDenom?: string
+    startAfterIncentiveDenom?: string
+  }
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string
@@ -196,7 +292,8 @@ export function useMarsIncentivesClaimRewardsMutation(
   >,
 ) {
   return useMutation<ExecuteResult, Error, MarsIncentivesClaimRewardsMutation>(
-    ({ client, args: { fee, memo, funds } = {} }) => client.claimRewards(fee, memo, funds),
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.claimRewards(msg, fee, memo, funds),
     options,
   )
 }
@@ -229,10 +326,11 @@ export function useMarsIncentivesBalanceChangeMutation(
 export interface MarsIncentivesSetAssetIncentiveMutation {
   client: MarsIncentivesClient
   msg: {
-    denom: string
-    duration?: number
-    emissionPerSecond?: Uint128
-    startTime?: number
+    collateralDenom: string
+    duration: number
+    emissionPerSecond: Uint128
+    incentiveDenom: string
+    startTime: number
   }
   args?: {
     fee?: number | StdFee | 'auto'
@@ -249,6 +347,30 @@ export function useMarsIncentivesSetAssetIncentiveMutation(
   return useMutation<ExecuteResult, Error, MarsIncentivesSetAssetIncentiveMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) =>
       client.setAssetIncentive(msg, fee, memo, funds),
+    options,
+  )
+}
+export interface MarsIncentivesUpdateWhitelistMutation {
+  client: MarsIncentivesClient
+  msg: {
+    addDenoms: string[]
+    removeDenoms: string[]
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsIncentivesUpdateWhitelistMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsIncentivesUpdateWhitelistMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsIncentivesUpdateWhitelistMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateWhitelist(msg, fee, memo, funds),
     options,
   )
 }

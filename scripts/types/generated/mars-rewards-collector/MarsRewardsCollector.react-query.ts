@@ -58,6 +58,11 @@ export function useMarsRewardsCollectorConfigQuery<TData = ConfigResponse>({
 }
 export interface MarsRewardsCollectorClaimIncentiveRewardsMutation {
   client: MarsRewardsCollectorClient
+  msg: {
+    limit?: number
+    startAfterCollateralDenom?: string
+    startAfterIncentiveDenom?: string
+  }
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string
@@ -71,7 +76,8 @@ export function useMarsRewardsCollectorClaimIncentiveRewardsMutation(
   >,
 ) {
   return useMutation<ExecuteResult, Error, MarsRewardsCollectorClaimIncentiveRewardsMutation>(
-    ({ client, args: { fee, memo, funds } = {} }) => client.claimIncentiveRewards(fee, memo, funds),
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.claimIncentiveRewards(msg, fee, memo, funds),
     options,
   )
 }
