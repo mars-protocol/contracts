@@ -117,7 +117,10 @@ pub enum ExecuteMsg {
 
     /// Update contract config (only callable by owner)
     UpdateConfig {
+        /// The address provider contract address
         address_provider: Option<String>,
+        /// The minimum amount of incentive tokens that must be emitted per second for each incentive
+        min_incentive_emission: Option<Uint128>,
     },
 
     /// Manages admin role state
@@ -229,4 +232,6 @@ pub struct ConfigResponse {
     pub proposed_new_owner: Option<String>,
     /// Address provider
     pub address_provider: Addr,
+    /// The minimum amount of incentive tokens that must be emitted per second for each incentive
+    pub min_incentive_emission: Uint128,
 }
