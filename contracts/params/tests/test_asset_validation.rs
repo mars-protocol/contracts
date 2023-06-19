@@ -76,28 +76,6 @@ fn liquidation_threshold_less_than_or_equal_to_one() {
 }
 
 #[test]
-fn liquidation_bonus_less_than_or_equal_to_one() {
-    let mut mock = MockEnv::new().build().unwrap();
-    let mut params = default_asset_params("denom_xyz");
-    params.liquidation_bonus = Decimal::from_str("1.1235").unwrap();
-
-    let res = mock.update_asset_params(
-        &mock.query_owner(),
-        AssetParamsUpdate::AddOrUpdate {
-            params,
-        },
-    );
-    assert_err(
-        res,
-        Validation(InvalidParam {
-            param_name: "liquidation_bonus".to_string(),
-            invalid_value: "1.1235".to_string(),
-            predicate: "<= 1".to_string(),
-        }),
-    );
-}
-
-#[test]
 fn liq_threshold_gt_max_ltv() {
     let mut mock = MockEnv::new().build().unwrap();
     let mut params = default_asset_params("denom_xyz");
@@ -220,6 +198,171 @@ fn correlations_must_be_valid_denoms() {
         res,
         Validation(InvalidDenom {
             reason: "Invalid denom length".to_string(),
+        }),
+    );
+}
+
+#[test]
+fn protocol_liquidation_fee_less_than_one() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let mut params = default_asset_params("denom_xyz");
+    params.protocol_liquidation_fee = Decimal::from_str("1").unwrap();
+
+    let res = mock.update_asset_params(
+        &mock.query_owner(),
+        AssetParamsUpdate::AddOrUpdate {
+            params,
+        },
+    );
+    assert_err(
+        res,
+        Validation(InvalidParam {
+            param_name: "protocol_liquidation_fee".to_string(),
+            invalid_value: "1".to_string(),
+            predicate: "< 1".to_string(),
+        }),
+    );
+}
+
+#[test]
+fn liquidation_bonus_param_b_out_of_range() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let mut params = default_asset_params("denom_xyz");
+    params.liquidation_bonus.starting_lb = Decimal::from_str("0.101").unwrap();
+
+    let res = mock.update_asset_params(
+        &mock.query_owner(),
+        AssetParamsUpdate::AddOrUpdate {
+            params,
+        },
+    );
+    assert_err(
+        res,
+        Validation(InvalidParam {
+            param_name: "starting_lb".to_string(),
+            invalid_value: "0.101".to_string(),
+            predicate: "[0, 0.1]".to_string(),
+        }),
+    );
+}
+
+#[test]
+fn liquidation_bonus_param_slope_out_of_range() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let mut params = default_asset_params("denom_xyz");
+
+    params.liquidation_bonus.slope = Decimal::from_str("0.99").unwrap();
+    let res = mock.update_asset_params(
+        &mock.query_owner(),
+        AssetParamsUpdate::AddOrUpdate {
+            params: params.clone(),
+        },
+    );
+    assert_err(
+        res,
+        Validation(InvalidParam {
+            param_name: "slope".to_string(),
+            invalid_value: "0.99".to_string(),
+            predicate: "[1, 5]".to_string(),
+        }),
+    );
+
+    params.liquidation_bonus.slope = Decimal::from_str("5.01").unwrap();
+    let res = mock.update_asset_params(
+        &mock.query_owner(),
+        AssetParamsUpdate::AddOrUpdate {
+            params,
+        },
+    );
+    assert_err(
+        res,
+        Validation(InvalidParam {
+            param_name: "slope".to_string(),
+            invalid_value: "5.01".to_string(),
+            predicate: "[1, 5]".to_string(),
+        }),
+    );
+}
+
+#[test]
+fn liquidation_bonus_param_min_lb_out_of_range() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let mut params = default_asset_params("denom_xyz");
+    params.liquidation_bonus.min_lb = Decimal::from_str("0.101").unwrap();
+
+    let res = mock.update_asset_params(
+        &mock.query_owner(),
+        AssetParamsUpdate::AddOrUpdate {
+            params,
+        },
+    );
+    assert_err(
+        res,
+        Validation(InvalidParam {
+            param_name: "min_lb".to_string(),
+            invalid_value: "0.101".to_string(),
+            predicate: "[0, 0.1]".to_string(),
+        }),
+    );
+}
+
+#[test]
+fn liquidation_bonus_param_max_lb_out_of_range() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let mut params = default_asset_params("denom_xyz");
+
+    params.liquidation_bonus.max_lb = Decimal::from_str("0.0499").unwrap();
+    let res = mock.update_asset_params(
+        &mock.query_owner(),
+        AssetParamsUpdate::AddOrUpdate {
+            params: params.clone(),
+        },
+    );
+    assert_err(
+        res,
+        Validation(InvalidParam {
+            param_name: "max_lb".to_string(),
+            invalid_value: "0.0499".to_string(),
+            predicate: "[0.05, 0.3]".to_string(),
+        }),
+    );
+
+    params.liquidation_bonus.max_lb = Decimal::from_str("0.31").unwrap();
+    let res = mock.update_asset_params(
+        &mock.query_owner(),
+        AssetParamsUpdate::AddOrUpdate {
+            params,
+        },
+    );
+    assert_err(
+        res,
+        Validation(InvalidParam {
+            param_name: "max_lb".to_string(),
+            invalid_value: "0.31".to_string(),
+            predicate: "[0.05, 0.3]".to_string(),
+        }),
+    );
+}
+
+#[test]
+fn liquidation_bonus_param_max_lb_gt_min_lb() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let mut params = default_asset_params("denom_xyz");
+    params.liquidation_bonus.min_lb = Decimal::from_str("0.08").unwrap();
+    params.liquidation_bonus.max_lb = Decimal::from_str("0.07").unwrap();
+
+    let res = mock.update_asset_params(
+        &mock.query_owner(),
+        AssetParamsUpdate::AddOrUpdate {
+            params,
+        },
+    );
+    assert_err(
+        res,
+        Validation(InvalidParam {
+            param_name: "max_lb".to_string(),
+            invalid_value: "0.07".to_string(),
+            predicate: "> 0.08 (min LB)".to_string(),
         }),
     );
 }

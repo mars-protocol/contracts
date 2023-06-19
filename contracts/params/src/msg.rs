@@ -8,14 +8,14 @@ use crate::types::{asset::AssetParamsUnchecked, vault::VaultConfigUnchecked};
 pub struct InstantiateMsg {
     /// Contract's owner
     pub owner: String,
-    /// The maximum percent a liquidator can decrease the debt amount of the liquidatee
-    pub max_close_factor: Decimal,
+    /// Determines the ideal HF a position should be left at immediately after the position has been liquidated.
+    pub target_health_factor: Decimal,
 }
 
 #[cw_serde]
 pub enum ExecuteMsg {
     UpdateOwner(OwnerUpdate),
-    UpdateMaxCloseFactor(Decimal),
+    UpdateTargetHealthFactor(Decimal),
     UpdateAssetParams(AssetParamsUpdate),
     UpdateVaultConfig(VaultConfigUpdate),
     EmergencyUpdate(EmergencyUpdate),
@@ -51,7 +51,7 @@ pub enum QueryMsg {
     },
 
     #[returns(Decimal)]
-    MaxCloseFactor {},
+    TargetHealthFactor {},
 }
 
 #[cw_serde]
