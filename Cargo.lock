@@ -1784,7 +1784,7 @@ dependencies = [
  "mars-red-bank-types",
  "mars-testing",
  "mars-utils",
- "osmosis-std",
+ "osmosis-std 0.15.2",
  "thiserror",
 ]
 
