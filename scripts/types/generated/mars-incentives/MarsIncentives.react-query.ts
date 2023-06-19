@@ -9,9 +9,9 @@ import { UseQueryOptions, useQuery, useMutation, UseMutationOptions } from '@tan
 import { ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee } from '@cosmjs/amino'
 import {
-  Uint128,
   InstantiateMsg,
   ExecuteMsg,
+  Uint128,
   Addr,
   OwnerUpdate,
   QueryMsg,
@@ -23,7 +23,7 @@ import {
   ArrayOfIncentiveStateResponse,
   ArrayOfCoin,
   Coin,
-  ArrayOfString,
+  ArrayOfTupleOfStringAndUint128,
 } from './MarsIncentives.types'
 import { MarsIncentivesQueryClient, MarsIncentivesClient } from './MarsIncentives.client'
 export const marsIncentivesQueryKeys = {
@@ -73,12 +73,12 @@ export interface MarsIncentivesReactQuery<TResponse, TData = TResponse> {
   }
 }
 export interface MarsIncentivesWhitelistQuery<TData>
-  extends MarsIncentivesReactQuery<ArrayOfString, TData> {}
-export function useMarsIncentivesWhitelistQuery<TData = ArrayOfString>({
+  extends MarsIncentivesReactQuery<ArrayOfTupleOfStringAndUint128, TData> {}
+export function useMarsIncentivesWhitelistQuery<TData = ArrayOfTupleOfStringAndUint128>({
   client,
   options,
 }: MarsIncentivesWhitelistQuery<TData>) {
-  return useQuery<ArrayOfString, Error, TData>(
+  return useQuery<ArrayOfTupleOfStringAndUint128, Error, TData>(
     marsIncentivesQueryKeys.whitelist(client?.contractAddress),
     () => (client ? client.whitelist() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -252,7 +252,7 @@ export interface MarsIncentivesUpdateConfigMutation {
   client: MarsIncentivesClient
   msg: {
     addressProvider?: string
-    minIncentiveEmission?: Uint128
+    maxWhitelistedDenoms?: number
   }
   args?: {
     fee?: number | StdFee | 'auto'
@@ -353,7 +353,7 @@ export function useMarsIncentivesSetAssetIncentiveMutation(
 export interface MarsIncentivesUpdateWhitelistMutation {
   client: MarsIncentivesClient
   msg: {
-    addDenoms: string[]
+    addDenoms: string[][]
     removeDenoms: string[]
   }
   args?: {
