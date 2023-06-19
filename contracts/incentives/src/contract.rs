@@ -25,7 +25,7 @@ use crate::{
     },
     state::{
         self, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT, OWNER,
-        USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS, WHITELIST,
+        USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT,
     },
 };
 
@@ -53,6 +53,7 @@ pub fn instantiate(
 
     let config = Config {
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
+        max_whitelisted_denoms: msg.max_whitelisted_denoms,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -119,7 +120,8 @@ pub fn execute(
         ),
         ExecuteMsg::UpdateConfig {
             address_provider,
-        } => Ok(execute_update_config(deps, env, info, address_provider)?),
+            max_whitelisted_denoms,
+        } => Ok(execute_update_config(deps, env, info, address_provider, max_whitelisted_denoms)?),
         ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
     }
 }
@@ -133,14 +135,14 @@ pub fn execute_update_whitelist(
 ) -> Result<Response, ContractError> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
-    for (denom, min_emission) in add_denoms.iter() {
-        validate_native_denom(denom)?;
-        WHITELIST.save(deps.storage, denom, min_emission)?;
-    }
-
     let config = CONFIG.load(deps.storage)?;
 
+    let prev_whitelist_count = WHITELIST_COUNT.may_load(deps.storage)?.unwrap_or_default();
+    let mut whitelist_count = prev_whitelist_count;
+
     for denom in remove_denoms.iter() {
+        whitelist_count -= 1;
+
         // Before removing from whitelist we must handle ongoing incentives,
         // i.e. update the incentive index, and remove any emissions.
         // So we first get all keys by in the INCENTIVE_STATES Map and then filter out the ones
@@ -180,6 +182,24 @@ pub fn execute_update_whitelist(
 
         // Finally remove the incentive denom from the whitelist
         WHITELIST.remove(deps.storage, denom);
+    }
+
+    for (denom, min_emission) in add_denoms.iter() {
+        // Check that we are not exceeding the max whitelist limit
+        whitelist_count += 1;
+        if whitelist_count > config.max_whitelisted_denoms {
+            return Err(ContractError::MaxWhitelistLimitReached {
+                max_whitelist_limit: config.max_whitelisted_denoms,
+            });
+        }
+
+        validate_native_denom(denom)?;
+        WHITELIST.save(deps.storage, denom, min_emission)?;
+    }
+
+    // Set the new whitelist count, if it has changed
+    if whitelist_count != prev_whitelist_count {
+        WHITELIST_COUNT.save(deps.storage, &whitelist_count)?;
     }
 
     let mut event = Event::new("mars/incentives/update_whitelist");
@@ -426,6 +446,7 @@ pub fn execute_update_config(
     _env: Env,
     info: MessageInfo,
     address_provider: Option<String>,
+    max_whitelisted_denoms: Option<u8>,
 ) -> Result<Response, ContractError> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
@@ -433,6 +454,10 @@ pub fn execute_update_config(
 
     config.address_provider =
         option_string_to_addr(deps.api, address_provider, config.address_provider)?;
+
+    if let Some(max_whitelisted_denoms) = max_whitelisted_denoms {
+        config.max_whitelisted_denoms = max_whitelisted_denoms;
+    }
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -510,6 +535,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         owner: owner_state.owner,
         proposed_new_owner: owner_state.proposed,
         address_provider: config.address_provider,
+        max_whitelisted_denoms: config.max_whitelisted_denoms,
     })
 }
 

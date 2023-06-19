@@ -19,6 +19,10 @@ pub const EPOCH_DURATION: Item<u64> = Item::new("epoch_duration");
 /// Incentives can only be added for denoms in this set.
 pub const WHITELIST: Map<&str, Uint128> = Map::new("whitelist");
 
+/// A counter for the number of whitelisted incentive denoms. This is used to enforce a maximum
+/// number of whitelisted denoms.
+pub const WHITELIST_COUNT: Item<u8> = Item::new("whitelist_count");
+
 /// A map containing the incentive index and last updated time for a given collateral and incentive
 /// denom. The key is (collateral denom, incentive denom).
 pub const INCENTIVE_STATES: Map<(&str, &str), IncentiveState> = Map::new("incentive_states");
