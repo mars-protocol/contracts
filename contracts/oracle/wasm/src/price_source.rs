@@ -174,8 +174,6 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                     &route_assets,
                 )?;
 
-                //TODO: Validate window_size and tolerance?
-
                 Ok(WasmPriceSourceChecked::AstroportTwap {
                     pair_address: deps.api.addr_validate(&pair_address)?,
                     window_size,
