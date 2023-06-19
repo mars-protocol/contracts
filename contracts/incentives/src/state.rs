@@ -43,7 +43,6 @@ pub const USER_UNCLAIMED_REWARDS: Map<(&Addr, &str, &str), Uint128> = Map::new("
 pub const DEFAULT_LIMIT: u32 = 5;
 
 /// The maximum limit for pagination
-/// TODO: Remove MAX_LIMIT? What is the purpose? Surely better to have the limit be whatever is the max gas limit?
 pub const MAX_LIMIT: u32 = 10;
 
 /// Helper function to update unclaimed rewards for a given user, collateral denom and incentive
