@@ -21,7 +21,6 @@ pub fn th_setup_with_env(env: Env) -> OwnedDeps<MockStorage, MockApi, MarsMockQu
         owner: String::from("owner"),
         address_provider: String::from("address_provider"),
         epoch_duration: 604800, // 1 week in seconds
-        min_incentive_emission: Uint128::from(100u128),
     };
     let info = mock_info("owner", &[]);
     instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -39,7 +38,6 @@ pub fn ths_setup_with_epoch_duration(
         owner: String::from("owner"),
         address_provider: String::from("address_provider"),
         epoch_duration,
-        min_incentive_emission: Uint128::from(100u128),
     };
     let info = mock_info("owner", &[]);
     instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -58,7 +56,7 @@ pub fn th_query_with_env<T: serde::de::DeserializeOwned>(deps: Deps, env: Env, m
 pub fn th_whitelist_denom(deps: DepsMut, denom: &str) {
     let owner = "owner";
     let msg = ExecuteMsg::UpdateWhitelist {
-        add_denoms: vec![denom.to_string()],
+        add_denoms: vec![(denom.to_string(), Uint128::new(3))],
         remove_denoms: vec![],
     };
     let info = mock_info(owner, &[]);

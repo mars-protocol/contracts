@@ -26,7 +26,6 @@ mars-owner          = { workspace = true }
 mars-red-bank-types = { workspace = true }
 mars-utils          = { workspace = true }
 thiserror           = { workspace = true }
-cw-item-set         = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema     = { workspace = true }

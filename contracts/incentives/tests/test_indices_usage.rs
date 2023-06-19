@@ -19,7 +19,6 @@ fn store_config_with_epoch_duration(storage: &mut dyn Storage, epoch_duration: u
             storage,
             &Config {
                 address_provider: Addr::unchecked(""),
-                min_incentive_emission: Uint128::one(),
             },
         )
         .unwrap();
