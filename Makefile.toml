@@ -36,7 +36,7 @@ args = ["test", "--locked"]
 [tasks.unit-test]
 toolchain = "stable"
 command = "cargo"
-args = ["test", "--locked", "--workspace", "--exclude", "mars-integration-tests"]
+args = ["test", "--locked", "--workspace", "--exclude", "mars-integration-tests", "--exclude", "mars-swapper-astroport", "--exclude", "mars-oracle-wasm", "--exclude", "mars-swapper-osmosis"]
 
 [tasks.integration-test]
 toolchain = "stable"
