@@ -21,7 +21,7 @@ fn rewards_claim() {
     red_bank.init_asset(&mut mock_env, "uusdc", default_asset_params());
 
     let incentives = mock_env.incentives.clone();
-    incentives.whitelist_incentive_denoms(&mut mock_env, &["umars"]);
+    incentives.whitelist_incentive_denoms(&mut mock_env, &[("umars", 3)]);
     incentives.init_asset_incentive_from_current_block(
         &mut mock_env,
         "uusdc",
@@ -76,7 +76,7 @@ fn emissions_rates() {
     red_bank.init_asset(&mut mock_env, "umars", default_asset_params());
 
     let incentives = mock_env.incentives.clone();
-    incentives.whitelist_incentive_denoms(&mut mock_env, &["umars"]);
+    incentives.whitelist_incentive_denoms(&mut mock_env, &[("umars", 3)]);
     incentives.init_asset_incentive_from_current_block(
         &mut mock_env,
         "uusdc",
@@ -162,7 +162,7 @@ fn no_incentives_accrued_after_withdraw() {
     red_bank.init_asset(&mut mock_env, "umars", default_asset_params());
 
     let incentives = mock_env.incentives.clone();
-    incentives.whitelist_incentive_denoms(&mut mock_env, &["umars"]);
+    incentives.whitelist_incentive_denoms(&mut mock_env, &[("umars", 3)]);
     incentives.init_asset_incentive_from_current_block(
         &mut mock_env,
         "uusdc",
@@ -233,7 +233,7 @@ fn multiple_assets() {
 
     // set incentives
     let incentives = mock_env.incentives.clone();
-    incentives.whitelist_incentive_denoms(&mut mock_env, &["umars"]);
+    incentives.whitelist_incentive_denoms(&mut mock_env, &[("umars", 3)]);
     incentives.init_asset_incentive_from_current_block(
         &mut mock_env,
         "uusdc",
@@ -306,7 +306,7 @@ fn multiple_users() {
 
     // set incentives
     let incentives = mock_env.incentives.clone();
-    incentives.whitelist_incentive_denoms(&mut mock_env, &["umars"]);
+    incentives.whitelist_incentive_denoms(&mut mock_env, &[("umars", 3)]);
     incentives.init_asset_incentive_from_current_block(
         &mut mock_env,
         "uusdc",
@@ -410,7 +410,7 @@ fn rewards_distributed_among_users_and_rewards_collector() {
     let umars_eps_for_uatom = 310000;
     let incentive_duration_sec = 2592000u64;
     let incentives = mock_env.incentives.clone();
-    incentives.whitelist_incentive_denoms(&mut mock_env, &["umars"]);
+    incentives.whitelist_incentive_denoms(&mut mock_env, &[("umars", 3)]);
     incentives.init_asset_incentive_from_current_block(
         &mut mock_env,
         "uusdc",

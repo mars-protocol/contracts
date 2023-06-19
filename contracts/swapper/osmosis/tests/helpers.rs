@@ -4,17 +4,15 @@ use cosmwasm_std::{Coin, Decimal, Uint128};
 use cw_it::{
     osmosis_std::types::{
         cosmos::bank::v1beta1::QueryBalanceRequest,
-        osmosis::{
-            gamm::v1beta1::{MsgSwapExactAmountIn, MsgSwapExactAmountInResponse},
-        },
+        osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, MsgSwapExactAmountInResponse},
     },
     osmosis_test_tube::{
         Account, Bank, ExecuteResponse, Gamm, OsmosisTestApp, Runner, RunnerError, SigningAccount,
         Wasm,
     },
 };
-use mars_swapper_osmosis::route::SwapAmountInRoute;
 use mars_red_bank_types::swapper::InstantiateMsg;
+use mars_swapper_osmosis::route::SwapAmountInRoute;
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 

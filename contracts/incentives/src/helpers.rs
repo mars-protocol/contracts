@@ -7,13 +7,14 @@ use cosmwasm_std::{
 use cw_storage_plus::Bound;
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
-    incentives::{Config, IncentiveState},
+    incentives::IncentiveState,
     red_bank,
 };
 
 use crate::{
     state::{
         EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS,
+        WHITELIST,
     },
     ContractError,
 };
@@ -55,7 +56,6 @@ impl MaybeMutStorage<'_> {
 pub fn validate_incentive_schedule(
     storage: &dyn Storage,
     info: &MessageInfo,
-    config: &Config,
     epoch_duration: u64,
     current_time: u64,
     collateral_denom: &str,
@@ -82,11 +82,12 @@ pub fn validate_incentive_schedule(
         });
     }
     // Emission must meet minimum amount
-    if emission_per_second < config.min_incentive_emission {
+    let min_emission = WHITELIST.load(storage, incentive_denom)?;
+    if emission_per_second < min_emission {
         return Err(ContractError::InvalidIncentive {
             reason: format!(
-                "emission_per_second must be greater than min_incentive_emission: {}",
-                config.min_incentive_emission
+                "emission_per_second must be greater than min_emission: {}",
+                min_emission
             ),
         });
     }

@@ -1,5 +1,4 @@
 use cosmwasm_std::{Addr, Decimal, Order, StdResult, Storage, Uint128};
-use cw_item_set::Set;
 use cw_storage_plus::{Bound, Item, Map, PrefixBound};
 use mars_owner::Owner;
 use mars_red_bank_types::incentives::{Config, IncentiveState};
@@ -16,9 +15,9 @@ pub const CONFIG: Item<Config> = Item::new("config");
 /// that an incentive can last, and each incentive must be a multiple of this duration.
 pub const EPOCH_DURATION: Item<u64> = Item::new("epoch_duration");
 
-/// A set containing all whitelisted incentive denoms. Incentives can only be added for denoms in
-/// this set.
-pub const WHITELIST: Set<&str> = Set::new("whitelist", "whitelist_counter");
+/// A set containing all whitelisted incentive denoms as well as the minimum emission amount for each.
+/// Incentives can only be added for denoms in this set.
+pub const WHITELIST: Map<&str, Uint128> = Map::new("whitelist");
 
 /// A map containing the incentive index and last updated time for a given collateral and incentive
 /// denom. The key is (collateral denom, incentive denom).

@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     testing::{mock_env, mock_info},
-    Addr, SubMsg, Uint128,
+    Addr, SubMsg,
 };
 use mars_incentives::{
     contract::{execute, instantiate},
@@ -23,7 +23,6 @@ fn proper_initialization() {
         owner: String::from("owner"),
         address_provider: String::from("address_provider"),
         epoch_duration: 604800, // 1 week in seconds
-        min_incentive_emission: Uint128::from(100u128),
     };
 
     let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -45,7 +44,6 @@ fn update_config() {
     // *
     let msg = ExecuteMsg::UpdateConfig {
         address_provider: None,
-        min_incentive_emission: None,
     };
     let info = mock_info("somebody", &[]);
     let error_res = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -56,7 +54,6 @@ fn update_config() {
     // *
     let msg = ExecuteMsg::UpdateConfig {
         address_provider: Some("new_addr_provider".to_string()),
-        min_incentive_emission: Some(Uint128::from(420u128)),
     };
     let info = mock_info("owner", &[]);
 
@@ -68,5 +65,4 @@ fn update_config() {
     assert_eq!(new_config.owner, Some("owner".to_string()));
     assert_eq!(new_config.proposed_new_owner, None);
     assert_eq!(new_config.address_provider, Addr::unchecked("new_addr_provider"));
-    assert_eq!(new_config.min_incentive_emission, Uint128::from(420u128));
 }

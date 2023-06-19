@@ -26,7 +26,7 @@ mod helpers;
 fn initialized_state() {
     let deps = th_setup();
 
-    let whitelist: Vec<String> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
+    let whitelist: Vec<(String, Uint128)> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
     assert!(whitelist.is_empty());
 }
 
@@ -41,7 +41,7 @@ fn update_whitelist_only_callable_by_admin() {
         mock_env(),
         mock_info(bad_guy, &[]),
         ExecuteMsg::UpdateWhitelist {
-            add_denoms: vec!["umars".to_string()],
+            add_denoms: vec![("umars".to_string(), Uint128::new(3))],
             remove_denoms: vec![],
         },
     )
@@ -56,14 +56,14 @@ fn update_whitelist_add_denom_works() {
     // only owner can update whitelist
     let owner = "owner";
     let msg = ExecuteMsg::UpdateWhitelist {
-        add_denoms: vec!["umars".to_string()],
+        add_denoms: vec![("umars".to_string(), Uint128::new(3))],
         remove_denoms: vec![],
     };
     let info = mock_info(owner, &[]);
     execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-    let whitelist: Vec<String> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
-    assert_eq!(whitelist, vec!["umars".to_string()]);
+    let whitelist: Vec<(String, Uint128)> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
+    assert_eq!(whitelist, vec![("umars".to_string(), Uint128::new(3))]);
 }
 
 #[test]
@@ -73,14 +73,14 @@ fn update_whitelist_remove_denom_works() {
     // only owner can update whitelist
     let owner = "owner";
     let msg = ExecuteMsg::UpdateWhitelist {
-        add_denoms: vec!["umars".to_string()],
+        add_denoms: vec![("umars".to_string(), Uint128::new(3))],
         remove_denoms: vec![],
     };
     let info = mock_info(owner, &[]);
     execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-    let whitelist: Vec<String> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
-    assert_eq!(whitelist, vec!["umars".to_string()]);
+    let whitelist: Vec<(String, Uint128)> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
+    assert_eq!(whitelist, vec![("umars".to_string(), Uint128::new(3))]);
 
     // remove denom
     let msg = ExecuteMsg::UpdateWhitelist {
@@ -90,7 +90,7 @@ fn update_whitelist_remove_denom_works() {
     let info = mock_info(owner, &[]);
     execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-    let whitelist: Vec<String> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
+    let whitelist: Vec<(String, Uint128)> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
     assert!(whitelist.is_empty());
 }
 
@@ -101,7 +101,7 @@ fn cannot_add_invalid_denom_to_whitelist() {
     // only owner can update whitelist
     let owner = "owner";
     let msg = ExecuteMsg::UpdateWhitelist {
-        add_denoms: vec!["//invalid-denom//".to_string()],
+        add_denoms: vec![("//invalid-denom//".to_string(), Uint128::new(3))],
         remove_denoms: vec![],
     };
     let info = mock_info(owner, &[]);
@@ -145,7 +145,7 @@ fn incentive_can_only_be_added_if_denom_whitelisted() {
 
     // add denom to whitelist
     let add_whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
-        add_denoms: vec!["umars".to_string()],
+        add_denoms: vec![("umars".to_string(), Uint128::new(3))],
         remove_denoms: vec![],
     };
     execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), add_whitelist_msg).unwrap();
@@ -171,7 +171,7 @@ fn incentives_updated_and_removed_when_removing_from_whitelist() {
 
     // add denom to whitelist
     let add_whitelist_msg = ExecuteMsg::UpdateWhitelist {
-        add_denoms: vec!["umars".to_string()],
+        add_denoms: vec![("umars".to_string(), Uint128::new(3))],
         remove_denoms: vec![],
     };
     execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), add_whitelist_msg).unwrap();
@@ -245,4 +245,34 @@ fn incentives_updated_and_removed_when_removing_from_whitelist() {
 
     // Read active emissions. There should be none
     EMISSIONS.load(&deps.storage, ("uosmo", "umars", start_time)).unwrap_err();
+}
+
+#[test]
+fn whitelisting_already_whitelisted_denom_updates_min_emission() {
+    let env = mock_env();
+    let mut deps = th_setup_with_env(env);
+
+    let owner = "owner";
+
+    // add denom to whitelist
+    let add_whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
+        add_denoms: vec![("umars".to_string(), Uint128::new(3))],
+        remove_denoms: vec![],
+    };
+    execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), add_whitelist_msg).unwrap();
+
+    // Query whitelist
+    let whitelist: Vec<(String, Uint128)> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
+    assert_eq!(whitelist, vec![("umars".to_string(), Uint128::new(3))]);
+
+    // add denom to whitelist again, with a higher min emission
+    let add_whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
+        add_denoms: vec![("umars".to_string(), Uint128::new(5))],
+        remove_denoms: vec![],
+    };
+    execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), add_whitelist_msg).unwrap();
+
+    // Query whitelist
+    let whitelist: Vec<(String, Uint128)> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
+    assert_eq!(whitelist, vec![("umars".to_string(), Uint128::new(5))]);
 }
