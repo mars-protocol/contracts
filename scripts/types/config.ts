@@ -54,6 +54,8 @@ export interface DeploymentConfig {
   assets: AssetConfig[]
   oracleConfigs: OracleConfig[]
   oracleCustomInitParams?: WasmOracleCustomInitParams
+  incentiveEpochDuration: number
+  maxWhitelistedIncentiveDenoms: number
 }
 
 export interface AssetConfig {
