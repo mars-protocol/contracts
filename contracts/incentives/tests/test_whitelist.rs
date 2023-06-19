@@ -233,6 +233,25 @@ fn incentives_updated_and_removed_when_removing_from_whitelist() {
     // Query users rewards. They should have gotten rewards for the entire time
     let user_rewards: Vec<Coin> = th_query_with_env(
         deps.as_ref(),
+        env.clone(),
+        QueryMsg::UserUnclaimedRewards {
+            user: user_addr.to_string(),
+            start_after_collateral_denom: None,
+            start_after_incentive_denom: None,
+            limit: None,
+        },
+    );
+    assert_eq!(user_rewards, vec![coin(100 * 100, "umars")]);
+
+    // Fast forward time 100 more seconds and query rewards again.
+    // They should be the same.
+    let new_time = env.block.time.seconds() + 100;
+    let env = mars_testing::mock_env(MockEnvParams {
+        block_time: Timestamp::from_seconds(new_time),
+        ..Default::default()
+    });
+    let user_rewards: Vec<Coin> = th_query_with_env(
+        deps.as_ref(),
         env,
         QueryMsg::UserUnclaimedRewards {
             user: user_addr.to_string(),
