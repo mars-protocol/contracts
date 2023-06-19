@@ -81,9 +81,9 @@ fn cannot_set_new_asset_incentive_with_emission_less_than_minimum() {
         duration: 604800u64,
     };
     let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert!(res_error.to_string().starts_with(
-        "Invalid incentive: emission_per_second must be greater than min_incentive_emission:"
-    ));
+    assert!(res_error
+        .to_string()
+        .starts_with("Invalid incentive: emission_per_second must be greater than min_emission:"));
 }
 
 #[test]
@@ -252,7 +252,7 @@ fn can_only_set_new_incentive_with_start_time_multiple_of_epoch_duration_from_cu
 
     // Whitelist umars as incentive denom
     let msg = ExecuteMsg::UpdateWhitelist {
-        add_denoms: vec!["umars".to_string()],
+        add_denoms: vec![("umars".to_string(), Uint128::new(3))],
         remove_denoms: vec![],
     };
     execute(deps.as_mut(), env.clone(), mock_info("owner", &[]), msg).unwrap();

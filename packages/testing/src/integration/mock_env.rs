@@ -3,7 +3,7 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{coin, Addr, Coin, Decimal, StdResult, Uint128, Empty};
+use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_red_bank_types::{
@@ -89,13 +89,16 @@ impl MockEnv {
 }
 
 impl Incentives {
-    pub fn whitelist_incentive_denoms(&self, env: &mut MockEnv, incentive_denoms: &[&str]) {
+    pub fn whitelist_incentive_denoms(&self, env: &mut MockEnv, incentive_denoms: &[(&str, u128)]) {
         env.app
             .execute_contract(
                 env.owner.clone(),
                 self.contract_addr.clone(),
                 &incentives::ExecuteMsg::UpdateWhitelist {
-                    add_denoms: incentive_denoms.iter().map(|x| x.to_string()).collect(),
+                    add_denoms: incentive_denoms
+                        .iter()
+                        .map(|(denom, min_emission)| (denom.to_string(), (*min_emission).into()))
+                        .collect(),
                     remove_denoms: vec![],
                 },
                 &[],
@@ -607,7 +610,6 @@ impl MockEnvBuilder {
                     owner: self.owner.to_string(),
                     address_provider: address_provider_addr.to_string(),
                     epoch_duration: 86400,
-                    min_incentive_emission: Uint128::from(3u128),
                 },
                 &[],
                 "incentives",

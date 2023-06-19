@@ -53,7 +53,6 @@ pub fn instantiate(
 
     let config = Config {
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
-        min_incentive_emission: msg.min_incentive_emission,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -120,8 +119,7 @@ pub fn execute(
         ),
         ExecuteMsg::UpdateConfig {
             address_provider,
-            min_incentive_emission,
-        } => Ok(execute_update_config(deps, env, info, address_provider, min_incentive_emission)?),
+        } => Ok(execute_update_config(deps, env, info, address_provider)?),
         ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
     }
 }
@@ -130,14 +128,14 @@ pub fn execute_update_whitelist(
     mut deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    add_denoms: Vec<String>,
+    add_denoms: Vec<(String, Uint128)>,
     remove_denoms: Vec<String>,
 ) -> Result<Response, ContractError> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
-    for denom in add_denoms.iter() {
+    for (denom, min_emission) in add_denoms.iter() {
         validate_native_denom(denom)?;
-        WHITELIST.insert(deps.storage, denom)?;
+        WHITELIST.save(deps.storage, denom, min_emission)?;
     }
 
     let config = CONFIG.load(deps.storage)?;
@@ -181,7 +179,7 @@ pub fn execute_update_whitelist(
         }
 
         // Finally remove the incentive denom from the whitelist
-        WHITELIST.remove(deps.storage, denom)?;
+        WHITELIST.remove(deps.storage, denom);
     }
 
     let mut event = Event::new("mars/incentives/update_whitelist");
@@ -205,7 +203,7 @@ pub fn execute_set_asset_incentive(
     validate_native_denom(&incentive_denom)?;
 
     // Check that the incentive denom is whitelisted
-    if !WHITELIST.contains(deps.storage, &incentive_denom) {
+    if !WHITELIST.key(&incentive_denom).has(deps.storage) {
         return Err(ContractError::NotWhitelisted {
             denom: incentive_denom,
         });
@@ -219,7 +217,6 @@ pub fn execute_set_asset_incentive(
     helpers::validate_incentive_schedule(
         deps.storage,
         &info,
-        &config,
         epoch_duration,
         current_time,
         &collateral_denom,
@@ -429,7 +426,6 @@ pub fn execute_update_config(
     _env: Env,
     info: MessageInfo,
     address_provider: Option<String>,
-    min_incentive_emission: Option<Uint128>,
 ) -> Result<Response, ContractError> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
@@ -437,10 +433,6 @@ pub fn execute_update_config(
 
     config.address_provider =
         option_string_to_addr(deps.api, address_provider, config.address_provider)?;
-
-    if let Some(min_incentive_emission) = min_incentive_emission {
-        config.min_incentive_emission = min_incentive_emission;
-    }
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -518,7 +510,6 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         owner: owner_state.owner,
         proposed_new_owner: owner_state.proposed,
         address_provider: config.address_provider,
-        min_incentive_emission: config.min_incentive_emission,
     })
 }
 
@@ -607,9 +598,9 @@ fn query_red_bank_address(deps: Deps) -> StdResult<Addr> {
     )
 }
 
-fn query_whitelist(deps: Deps) -> StdResult<Vec<String>> {
-    let whitelist: Vec<String> =
-        WHITELIST.items(deps.storage, None, None, Order::Ascending).collect::<StdResult<_>>()?;
+fn query_whitelist(deps: Deps) -> StdResult<Vec<(String, Uint128)>> {
+    let whitelist: Vec<(String, Uint128)> =
+        WHITELIST.range(deps.storage, None, None, Order::Ascending).collect::<StdResult<_>>()?;
     Ok(whitelist)
 }
 

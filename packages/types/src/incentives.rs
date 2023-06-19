@@ -7,9 +7,6 @@ use mars_owner::OwnerUpdate;
 pub struct Config {
     /// Address provider
     pub address_provider: Addr,
-    /// The minimum amount of incentive tokens that must be emitted per second for each incentive
-    /// schedule.
-    pub min_incentive_emission: Uint128,
 }
 
 /// Incentive Metadata for a given incentive
@@ -58,18 +55,20 @@ pub struct InstantiateMsg {
     /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
     /// that an incentive can last, and each incentive must be a multiple of this duration.
     pub epoch_duration: u64,
-    /// The minimum amount of incentive tokens that must be emitted per second for each incentive
-    /// schedule.
-    pub min_incentive_emission: Uint128,
 }
 
 #[cw_serde]
 pub enum ExecuteMsg {
     /// Add or remove incentive denoms from the whitelist. Only admin can do this.
     UpdateWhitelist {
-        /// The denoms to add to the whitelist
-        add_denoms: Vec<String>,
-        /// The denoms to remove from the whitelist
+        /// The denoms to add to the whitelist as well as a minimum emission rate per second for
+        /// each. If the denom is already in the whitelist, the minimum emission rate will be updated.
+        add_denoms: Vec<(String, Uint128)>,
+        /// The denoms to remove from the whitelist. This will update the index of the incentive
+        /// state and then remove any active incentive schedules.
+        ///
+        /// NB: If any incentive schedules are still active for this incentive denom, the incentive
+        /// tokens will be trapped forever in the contract.
         remove_denoms: Vec<String>,
     },
     /// Add incentives for a given collateral denom and incentive denom pair
@@ -119,8 +118,6 @@ pub enum ExecuteMsg {
     UpdateConfig {
         /// The address provider contract address
         address_provider: Option<String>,
-        /// The minimum amount of incentive tokens that must be emitted per second for each incentive
-        min_incentive_emission: Option<Uint128>,
     },
 
     /// Manages admin role state
@@ -200,9 +197,9 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
 
-    /// Queries the incentive denom whitelist. Returns a Vec<String> containing the denoms of all
-    /// whitelisted incentive denoms.
-    #[returns(Vec<String>)]
+    /// Queries the incentive denom whitelist. Returns a Vec<(String, Uint128)> containing the
+    /// denoms of all whitelisted incentive denoms, as well as the minimum emission rate for each.
+    #[returns(Vec<(String,Uint128)>)]
     Whitelist {},
 }
 
@@ -232,6 +229,4 @@ pub struct ConfigResponse {
     pub proposed_new_owner: Option<String>,
     /// Address provider
     pub address_provider: Addr,
-    /// The minimum amount of incentive tokens that must be emitted per second for each incentive
-    pub min_incentive_emission: Uint128,
 }
