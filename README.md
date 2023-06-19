@@ -91,7 +91,7 @@ This compiles and optimizes all contracts, storing them in `/artifacts` director
 
 ## Deployment
 
-When the deployment scripts run for the first time, it will upload code IDs for each contract, instantiate each contract, initialize assets, and set oracles. If you want to redeploy, you must locally delete the `osmo-test-4.json` file in the artifacts directory.
+When the deployment scripts run for the first time, it will upload code IDs for each contract, instantiate each contract, initialize assets, and set oracles. If you want to redeploy, you must locally delete the `osmo-test-4.json` file in the artifacts directory. The contracts will be uploaded and instantiated using a wallet created from a 24-word BIP-39 seed phrase in the environment variable `MNEMONIC`. This variable must be set.
 
 Everything related to deployment must be ran from the `scripts` directory.
 

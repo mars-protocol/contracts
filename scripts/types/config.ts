@@ -38,7 +38,6 @@ export interface DeploymentConfig {
   safetyFundDenom: string
   chainId: string
   rpcEndpoint: string
-  deployerMnemonic: string
   slippage_tolerance: string
   base_asset_symbol: string
   second_asset_symbol: string

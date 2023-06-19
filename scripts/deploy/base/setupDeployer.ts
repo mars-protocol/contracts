@@ -6,7 +6,13 @@ import { Deployer } from './deployer'
 import { Storage } from './storage'
 
 const getWallet = async (config: DeploymentConfig) => {
-  return await DirectSecp256k1HdWallet.fromMnemonic(config.deployerMnemonic, {
+  const mnemonic = process.env.MNEMONIC
+
+  if (!mnemonic) {
+    throw new Error('The environment variable MNEMONIC is not set.')
+  }
+
+  return await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
     prefix: config.chainPrefix,
   })
 }

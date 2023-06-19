@@ -200,8 +200,6 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   rewardCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc-test.osmosis.zone',
   safetyFundFeeShare: '0.5',
-  deployerMnemonic:
-    'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
   slippage_tolerance: '0.01',
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
@@ -236,8 +234,6 @@ export const osmosisTestMultisig: DeploymentConfig = {
   rewardCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc-test.osmosis.zone',
   safetyFundFeeShare: '0.5',
-  deployerMnemonic:
-    'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
   slippage_tolerance: '0.01',
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
@@ -272,7 +268,6 @@ export const osmosisMainnet: DeploymentConfig = {
   rewardCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc.osmosis.zone',
   safetyFundFeeShare: '0.5',
-  deployerMnemonic: 'TO BE INSERTED AT TIME OF DEPLOYMENT',
   slippage_tolerance: '0.01',
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
@@ -336,8 +331,6 @@ export const osmosisLocalConfig: DeploymentConfig = {
   rewardCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'http://localhost:26657',
   safetyFundFeeShare: '0.2',
-  deployerMnemonic:
-    'notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius',
   slippage_tolerance: '0.05',
   base_asset_symbol: 'OSMO',
   second_asset_symbol: 'ATOM',
