@@ -206,4 +206,6 @@ export const neutronTestnetConfig: DeploymentConfig = {
   oracleCustomInitParams: {
     astroport_factory: 'neutron1jj0scx400pswhpjes589aujlqagxgcztw04srynmhf0f6zplzn2qqmhwj7',
   },
+  incentiveEpochDuration: 604800, // 1 week
+  maxWhitelistedIncentiveDenoms: 10,
 }

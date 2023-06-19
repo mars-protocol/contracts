@@ -128,7 +128,8 @@ export class Deployer {
     const msg: IncentivesInstantiateMsg = {
       owner: this.deployerAddress,
       address_provider: this.storage.addresses['address-provider']!,
-      mars_denom: this.config.marsDenom,
+      epoch_duration: this.config.incentiveEpochDuration,
+      max_whitelisted_denoms: this.config.maxWhitelistedIncentiveDenoms,
     }
     await this.instantiate('incentives', this.storage.codeIds.incentives!, msg)
   }
