@@ -1,4 +1,4 @@
-import { AssetConfig, DeploymentConfig, OracleConfig } from '../../types/config'
+import { AssetConfig, DeploymentConfig, OracleConfig, isAstroportRoute } from '../../types/config'
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
 import * as fs from 'fs'
 import { printBlue, printGreen, printRed, printYellow } from '../../utils/chalk'
@@ -7,7 +7,27 @@ import { InstantiateMsgs } from '../../types/msg'
 import { writeFile } from 'fs/promises'
 import { join, resolve } from 'path'
 import assert from 'assert'
-import { ExecuteMsg } from '../../types/generated/mars-rewards-collector-osmosis/MarsRewardsCollectorOsmosis.types'
+
+import { SwapperExecuteMsg } from '../../types/config'
+import { InstantiateMsg as AstroportSwapperInstantiateMsg } from '../../types/generated/mars-swapper-astroport/MarsSwapperAstroport.types'
+import { InstantiateMsg as OsmosisSwapperInstantiateMsg } from '../../types/generated/mars-swapper-osmosis/MarsSwapperOsmosis.types'
+import {
+  InstantiateMsg as RedBankInstantiateMsg,
+  QueryMsg as RedBankQueryMsg,
+} from '../../types/generated/mars-red-bank/MarsRedBank.types'
+import { InstantiateMsg as AddressProviderInstantiateMsg } from '../../types/generated/mars-address-provider/MarsAddressProvider.types'
+import { InstantiateMsg as IncentivesInstantiateMsg } from '../../types/generated/mars-incentives/MarsIncentives.types'
+import { InstantiateMsg as RewardsInstantiateMsg } from '../../types/generated/mars-rewards-collector/MarsRewardsCollector.types'
+import {
+  WasmOracleCustomInitParams,
+  InstantiateMsg as WasmOracleInstantiateMsg,
+} from '../../types/generated/mars-oracle-wasm/MarsOracleWasm.types'
+import { InstantiateMsg as OsmosisOracleInstantiateMsg } from '../../types/generated/mars-oracle-osmosis/MarsOracleOsmosis.types'
+import { ExecuteMsg as WasmOracleExecuteMsg } from '../../types/generated/mars-oracle-wasm/MarsOracleWasm.types'
+import { StorageItems } from '../../types/storageItems'
+
+type SwapperInstantiateMsg = AstroportSwapperInstantiateMsg | OsmosisSwapperInstantiateMsg
+type OracleInstantiateMsg = WasmOracleInstantiateMsg | OsmosisOracleInstantiateMsg
 
 export class Deployer {
   constructor(
@@ -50,13 +70,18 @@ export class Deployer {
     printGreen(`${this.config.chainId} :: ${name} : ${this.storage.codeIds[name]}`)
   }
 
-  async setOwnerAddr() {
+  setOwnerAddr() {
     if (this.config.multisigAddr) {
       this.storage.owner = this.config.multisigAddr
     } else {
       this.storage.owner = this.deployerAddress
     }
     printGreen(`Owner is set to: ${this.storage.owner}`)
+  }
+
+  setAddress(name: keyof StorageItems['addresses'], address: string) {
+    this.storage.addresses[name] = address
+    printGreen(`Address of ${name} is set to: ${this.storage.addresses[name]}`)
   }
 
   async instantiate(name: keyof Storage['addresses'], codeId: number, msg: InstantiateMsgs) {
@@ -81,7 +106,7 @@ export class Deployer {
   }
 
   async instantiateAddressProvider() {
-    const msg = {
+    const msg: AddressProviderInstantiateMsg = {
       owner: this.deployerAddress,
       prefix: this.config.chainPrefix,
     }
@@ -89,9 +114,8 @@ export class Deployer {
   }
 
   async instantiateRedBank() {
-    const msg = {
+    const msg: RedBankInstantiateMsg = {
       owner: this.deployerAddress,
-      emergency_owner: this.storage.owner!,
       config: {
         address_provider: this.storage.addresses['address-provider']!,
         close_factor: '0.5',
@@ -101,7 +125,7 @@ export class Deployer {
   }
 
   async instantiateIncentives() {
-    const msg = {
+    const msg: IncentivesInstantiateMsg = {
       owner: this.deployerAddress,
       address_provider: this.storage.addresses['address-provider']!,
       mars_denom: this.config.marsDenom,
@@ -109,16 +133,17 @@ export class Deployer {
     await this.instantiate('incentives', this.storage.codeIds.incentives!, msg)
   }
 
-  async instantiateOracle() {
-    const msg = {
+  async instantiateOracle(init_params?: WasmOracleCustomInitParams) {
+    const msg: OracleInstantiateMsg = {
       owner: this.deployerAddress,
       base_denom: this.config.baseAssetDenom,
+      custom_init: init_params,
     }
     await this.instantiate('oracle', this.storage.codeIds.oracle!, msg)
   }
 
   async instantiateRewards() {
-    const msg = {
+    const msg: RewardsInstantiateMsg = {
       owner: this.deployerAddress,
       address_provider: this.storage.addresses['address-provider']!,
       safety_tax_rate: this.config.safetyFundFeeShare,
@@ -131,19 +156,33 @@ export class Deployer {
     await this.instantiate('rewards-collector', this.storage.codeIds['rewards-collector']!, msg)
   }
 
+  async instantiateSwapper() {
+    const msg: SwapperInstantiateMsg = {
+      owner: this.storage.owner!,
+    }
+
+    await this.instantiate('swapper', this.storage.codeIds.swapper!, msg)
+  }
+
   async setRoutes() {
+    printBlue('Setting Swapper Routes')
     for (const route of this.config.swapRoutes) {
+      printBlue(`Setting route: ${route.denom_in} -> ${route.denom_out}`)
+      if (isAstroportRoute(route.route)) {
+        route.route.oracle = this.storage.addresses.oracle!
+      }
+
       await this.client.execute(
         this.deployerAddress,
-        this.storage.addresses['rewards-collector']!,
+        this.storage.addresses.swapper!,
         {
           set_route: route,
-        } satisfies ExecuteMsg,
+        } satisfies SwapperExecuteMsg,
         'auto',
       )
     }
 
-    printYellow(`${this.config.chainId} :: Rewards Collector Routes have been set`)
+    printYellow(`${this.config.chainId} :: Swapper Routes have been set`)
   }
 
   async saveDeploymentAddrsToFile() {
@@ -155,10 +194,7 @@ export class Deployer {
   }
 
   async updateAddressProvider() {
-    if (this.storage.execute.addressProviderUpdated) {
-      printBlue('Addresses already updated.')
-      return
-    }
+    printBlue('Updating addresses in Address Provider...')
     const addressesToSet = [
       {
         address_type: 'rewards_collector',
@@ -188,18 +224,27 @@ export class Deployer {
         address_type: 'protocol_admin',
         address: this.config.protocolAdminAddr,
       },
+      {
+        address_type: 'swapper',
+        address: this.storage.addresses.swapper,
+      },
     ]
 
     for (const addrObj of addressesToSet) {
+      if (this.storage.execute.addressProviderUpdated[addrObj.address_type]) {
+        printBlue(`Address already updated for ${addrObj.address_type}.`)
+        continue
+      }
+      printBlue(`Setting ${addrObj.address_type} to ${addrObj.address}`)
       await this.client.execute(
         this.deployerAddress,
         this.storage.addresses['address-provider']!,
         { set_address: addrObj },
         'auto',
       )
+      this.storage.execute.addressProviderUpdated[addrObj.address_type] = true
     }
-    printYellow('Address Provider update completed')
-    this.storage.execute.addressProviderUpdated = true
+    printGreen('Address Provider update completed')
   }
 
   async initializeAsset(assetConfig: AssetConfig) {
@@ -207,6 +252,7 @@ export class Deployer {
       printBlue(`${assetConfig.symbol} already initialized.`)
       return
     }
+    printBlue(`Initializing ${assetConfig.symbol}...`)
 
     const msg = {
       init_asset: {
@@ -241,47 +287,45 @@ export class Deployer {
     this.storage.execute.assetsInitialized.push(assetConfig.denom)
   }
 
-  async setOracle(oracleConfig: OracleConfig) {
-    if (oracleConfig.price) {
-      const msg = {
-        set_price_source: {
-          denom: oracleConfig.denom,
-          price_source: {
-            fixed: { price: oracleConfig.price },
-          },
+  async recordTwapSnapshots(denoms: string[]) {
+    const msg: WasmOracleExecuteMsg = {
+      custom: {
+        record_twap_snapshots: {
+          denoms,
         },
-      }
-      await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
-    } else {
-      const msg = {
-        set_price_source: {
-          denom: oracleConfig.denom,
-          price_source: {
-            geometric_twap: {
-              pool_id: oracleConfig.pool_id,
-              window_size: oracleConfig.window_size,
-              downtime_detector: oracleConfig.downtime_detector,
-            },
-          },
-        },
-      }
-      // see if we need fixed price for osmo - remove fixed price
-      await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
+      },
     }
+
+    await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
+
+    printYellow(`Twap snapshots recorded for denoms: ${denoms.join(',')}.`)
+  }
+  async setOracle(oracleConfig: OracleConfig) {
+    const msg = {
+      set_price_source: oracleConfig,
+    }
+    await this.client.execute(this.deployerAddress, this.storage.addresses.oracle!, msg, 'auto')
 
     printYellow('Oracle Price is set.')
 
     this.storage.execute.oraclePriceSet = true
 
-    const oracleResult = (await this.client.queryContractSmart(this.storage.addresses.oracle!, {
-      price: { denom: oracleConfig.denom },
-    })) as { price: number; denom: string }
+    try {
+      const oracleResult = (await this.client.queryContractSmart(this.storage.addresses.oracle!, {
+        price: { denom: oracleConfig.denom },
+      })) as { price: number; denom: string }
 
-    printGreen(
-      `${this.config.chainId} :: ${oracleConfig.denom} oracle price :  ${JSON.stringify(
-        oracleResult,
-      )}`,
-    )
+      printGreen(
+        `${this.config.chainId} :: ${oracleConfig.denom} oracle price :  ${JSON.stringify(
+          oracleResult,
+        )}`,
+      )
+    } catch (e) {
+      // Querying astroport TWAP can fail if enough TWAP snapshots have not been recorded yet
+      if (!Object.keys(oracleConfig.price_source).includes('astroport_twap')) {
+        throw e
+      }
+    }
   }
 
   async executeDeposit() {
@@ -301,9 +345,10 @@ export class Deployer {
       undefined,
       coins,
     )
-    printYellow('Deposit Executed:')
+    printYellow('Deposit Executed.')
 
-    const msgTwo = { user_position: { user: this.deployerAddress } }
+    printYellow('Querying user position:')
+    const msgTwo: RedBankQueryMsg = { user_position: { user: this.deployerAddress } }
     console.log(await this.client.queryContractSmart(this.storage.addresses['red-bank']!, msgTwo))
   }
 

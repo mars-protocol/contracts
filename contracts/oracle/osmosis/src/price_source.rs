@@ -3,14 +3,14 @@ use std::{cmp::min, fmt};
 use cosmwasm_std::{Addr, Decimal, Decimal256, Deps, Empty, Env, Isqrt, Uint128, Uint256};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
-    ContractError::InvalidPrice, ContractResult, PriceSourceChecked, PriceSourceUnchecked,
+    pyth::PriceIdentifier, ContractError::InvalidPrice, ContractResult, PriceSourceChecked,
+    PriceSourceUnchecked,
 };
 use mars_osmosis::helpers::{
     query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price,
     recovered_since_downtime_of_length, Pool,
 };
 use mars_red_bank_types::oracle::Config;
-use pyth_sdk_cw::{query_price_feed, PriceIdentifier};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -305,9 +305,10 @@ impl fmt::Display for OsmosisPriceSourceChecked {
 impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSourceUnchecked {
     fn validate(
         self,
-        deps: Deps,
+        deps: &Deps,
         denom: &str,
         base_denom: &str,
+        _price_sources: &Map<&str, OsmosisPriceSourceChecked>,
     ) -> ContractResult<OsmosisPriceSourceChecked> {
         match &self {
             OsmosisPriceSourceUnchecked::Fixed {
@@ -415,7 +416,7 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
 impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
     fn query_price(
         &self,
-        deps: &Deps,
+        deps: &Deps<'_, Empty>,
         env: &Env,
         denom: &str,
         config: &Config,
@@ -490,7 +491,7 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                 price_feed_id,
                 max_staleness,
                 denom_decimals,
-            } => Ok(Self::query_pyth_price(
+            } => Ok(mars_oracle_base::pyth::query_pyth_price(
                 deps,
                 env,
                 contract_addr.to_owned(),
@@ -682,59 +683,6 @@ impl OsmosisPriceSourceChecked {
 
         min_price.checked_mul(transitive_price).map_err(Into::into)
     }
-
-    fn query_pyth_price(
-        deps: &Deps,
-        env: &Env,
-        contract_addr: Addr,
-        price_feed_id: PriceIdentifier,
-        max_staleness: u64,
-        denom_decimals: u8,
-        config: &Config,
-        price_sources: &Map<&str, OsmosisPriceSourceChecked>,
-    ) -> ContractResult<Decimal> {
-        // Use current price source for USD to check how much 1 USD is worth in base_denom
-        let usd_price = price_sources.load(deps.storage, "usd")?.query_price(
-            deps,
-            env,
-            "usd",
-            config,
-            price_sources,
-        )?;
-
-        let current_time = env.block.time.seconds();
-
-        let price_feed_response = query_price_feed(&deps.querier, contract_addr, price_feed_id)?;
-        let price_feed = price_feed_response.price_feed;
-
-        // Check if the current price is not too old
-        let current_price_opt =
-            price_feed.get_price_no_older_than(current_time as i64, max_staleness);
-        let Some(current_price) = current_price_opt else {
-            return Err(InvalidPrice {
-                reason: format!(
-                    "current price publish time is too old/stale. published: {}, now: {}",
-                    price_feed.get_price_unchecked().publish_time, current_time
-                ),
-            });
-        };
-
-        // Check if the current price is > 0
-        if current_price.price <= 0 {
-            return Err(InvalidPrice {
-                reason: "price can't be <= 0".to_string(),
-            });
-        }
-
-        let current_price_dec = scale_pyth_price(
-            current_price.price as u128,
-            current_price.expo,
-            denom_decimals,
-            usd_price,
-        )?;
-
-        Ok(current_price_dec)
-    }
 }
 
 /// Price feeds represent numbers in a fixed-point format.
@@ -807,6 +755,61 @@ mod tests {
     use std::str::FromStr;
 
     use super::*;
+
+    #[test]
+    fn display_pyth_price_source() {
+        let ps = OsmosisPriceSourceChecked::Pyth {
+            contract_addr: Addr::unchecked("osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08"),
+            price_feed_id: PriceIdentifier::from_hex(
+                "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+            )
+            .unwrap(),
+            max_staleness: 60,
+            denom_decimals: 6,
+        };
+        assert_eq!(
+            ps.to_string(),
+            "pyth:osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60:6"
+        )
+    }
+
+    #[test]
+    fn display_lsd_price_source() {
+        let ps = OsmosisPriceSourceChecked::Lsd {
+            transitive_denom: "transitive".to_string(),
+            geometric_twap: GeometricTwap {
+                pool_id: 456,
+                window_size: 380,
+                downtime_detector: None,
+            },
+            redemption_rate: RedemptionRate {
+                contract_addr: Addr::unchecked(
+                    "osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc",
+                ),
+                max_staleness: 1234,
+            },
+        };
+        assert_eq!(ps.to_string(), "lsd:transitive:456:380:None:osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc:1234");
+
+        let ps = OsmosisPriceSourceChecked::Lsd {
+            transitive_denom: "transitive".to_string(),
+            geometric_twap: GeometricTwap {
+                pool_id: 456,
+                window_size: 380,
+                downtime_detector: Some(DowntimeDetector {
+                    downtime: Downtime::Duration30m,
+                    recovery: 552,
+                }),
+            },
+            redemption_rate: RedemptionRate {
+                contract_addr: Addr::unchecked(
+                    "osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc",
+                ),
+                max_staleness: 1234,
+            },
+        };
+        assert_eq!(ps.to_string(), "lsd:transitive:456:380:Some(Duration30m:552):osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc:1234");
+    }
 
     #[test]
     fn scale_real_pyth_price() {

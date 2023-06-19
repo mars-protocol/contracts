@@ -3,7 +3,7 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Uint128};
+use cosmwasm_std::{Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_red_bank_types::{
@@ -184,7 +184,7 @@ impl Oracle {
             .execute_contract(
                 env.owner.clone(),
                 self.contract_addr.clone(),
-                &oracle::ExecuteMsg::SetPriceSource {
+                &oracle::ExecuteMsg::<_, Empty>::SetPriceSource {
                     denom: denom.to_string(),
                     price_source: OsmosisPriceSourceUnchecked::Fixed {
                         price,
@@ -417,7 +417,7 @@ impl RewardsCollector {
             .execute_contract(
                 Addr::unchecked("anyone"),
                 self.contract_addr.clone(),
-                &mars_rewards_collector_osmosis::msg::ExecuteMsg::WithdrawFromRedBank {
+                &mars_red_bank_types::rewards_collector::ExecuteMsg::WithdrawFromRedBank {
                     denom: denom.to_string(),
                     amount,
                 },
@@ -430,7 +430,7 @@ impl RewardsCollector {
         env.app.execute_contract(
             Addr::unchecked("anyone"),
             self.contract_addr.clone(),
-            &mars_rewards_collector_osmosis::msg::ExecuteMsg::ClaimIncentiveRewards {},
+            &mars_red_bank_types::rewards_collector::ExecuteMsg::ClaimIncentiveRewards {},
             &[],
         )
     }
@@ -612,9 +612,10 @@ impl MockEnvBuilder {
             .instantiate_contract(
                 code_id,
                 self.owner.clone(),
-                &oracle::InstantiateMsg {
+                &oracle::InstantiateMsg::<Empty> {
                     owner: self.owner.to_string(),
                     base_denom: self.base_denom.clone(),
+                    custom_init: None,
                 },
                 &[],
                 "oracle",

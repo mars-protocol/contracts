@@ -24,7 +24,7 @@ cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
 cw-storage-plus     = { workspace = true }
 mars-owner          = { workspace = true }
-mars-oracle-base    = { workspace = true }
+mars-oracle-base    = { workspace = true, features = ["pyth"] }
 mars-osmosis        = { workspace = true }
 mars-red-bank-types = { workspace = true }
 osmosis-std         = { workspace = true }
@@ -38,3 +38,4 @@ cosmwasm-schema = { workspace = true }
 mars-testing    = { workspace = true }
 mars-owner      = { workspace = true }
 mars-utils      = { workspace = true }
+pyth-sdk-cw     = { workspace = true }

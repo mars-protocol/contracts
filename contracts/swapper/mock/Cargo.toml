@@ -1,0 +1,27 @@
+[package]
+name          = "mars-swapper-mock"
+version       = { workspace = true }
+authors       = { workspace = true }
+license       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+library    = []
+
+[dependencies]
+cosmwasm-std        = { workspace = true }
+mars-red-bank-types = { workspace = true }
+
+[dev-dependencies]
+anyhow        = { workspace = true }
+cw-multi-test = { workspace = true }

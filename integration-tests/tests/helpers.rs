@@ -85,6 +85,7 @@ pub mod osmosis {
     where
         M: ?Sized + Serialize,
     {
+        println!("uploading {}", wasm_file(contract_name));
         let wasm_byte_code = std::fs::read(wasm_file(contract_name)).unwrap();
         let code_id = wasm.store_code(&wasm_byte_code, None, owner).unwrap().data.code_id;
 
