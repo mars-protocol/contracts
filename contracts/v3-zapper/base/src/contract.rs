@@ -11,7 +11,7 @@ use crate::{
     error::{ContractError, ContractError::Unauthorized, ContractResult},
     msg::{CallbackMsg, ExecuteMsg, InstantiateMsg, NewPositionRequest, QueryMsg},
     state::OWNER,
-    traits::{OptionFilter, PositionManager},
+    traits::PositionManager,
     utils::assert_exact_funds_sent,
 };
 
@@ -119,9 +119,7 @@ where
         request: NewPositionRequest,
     ) -> ContractResult<Response> {
         OWNER.assert_owner(deps.storage, &info.sender)?;
-
-        let request_coins = vec![&request.token_desired0, &request.token_desired1].only_some();
-        assert_exact_funds_sent(&info, &request_coins)?;
+        assert_exact_funds_sent(&info, &request.tokens_provided)?;
 
         // Creating positions do not guarantee all funds will be used. Refund the leftovers.
         let refund_msg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -129,7 +127,7 @@ where
             funds: vec![],
             msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::RefundCoin {
                 recipient: info.sender,
-                denoms: request_coins.iter().map(|c| c.denom.clone()).collect(),
+                denoms: request.tokens_provided.iter().map(|c| c.denom.clone()).collect(),
             }))?,
         });
 

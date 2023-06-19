@@ -37,8 +37,8 @@ keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
 anyhow             = "1.0.71"
-cosmwasm-schema    = "1.2.6"
-cosmwasm-std       = "1.2.6"
+cosmwasm-schema    = "1.2.7"
+cosmwasm-std       = "1.2.7"
 cw2                = "1.0.1"
 cw721              = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main" }
 cw721-base         = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main", features = ["library"] }
@@ -46,17 +46,17 @@ cw-dex             = { version = "0.2.0", features = ["osmosis"] }
 cw-multi-test      = "0.16.5"
 cw-paginate        = "0.2.1"
 cw-utils           = "1.0.1"
-cw-storage-plus    = "1.0.1"
+cw-storage-plus    = "1.1.0"
 cw-vault-standard  = { version = "0.3.0", features = ["lockup", "force-unlock"] }
 itertools          = "0.10.5"
-osmosis-std        = "0.15.3"
-osmosis-test-tube  = "15.1.0"
+osmosis-std        = "0.16.0-beta.0"
+osmosis-test-tube  = "16.0.0-beta.0"
 schemars           = "0.8.12"
 serde              = { version = "1.0.164", default-features = false, features = ["derive"] }
-serde_json         = "1.0.96"
+serde_json         = "1.0.97"
 serde-wasm-bindgen = "0.5.0"
 thiserror          = "1.0.40"
-wasm-bindgen       = "0.2.86"
+wasm-bindgen       = "0.2.87"
 
 # mars packages
 mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }

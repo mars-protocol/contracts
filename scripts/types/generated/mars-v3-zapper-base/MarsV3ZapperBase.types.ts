@@ -44,10 +44,9 @@ export type Addr = string
 export interface NewPositionRequest {
   lower_tick: number
   pool_id: number
-  token_desired0?: Coin | null
-  token_desired1?: Coin | null
   token_min_amount0: string
   token_min_amount1: string
+  tokens_provided: Coin[]
   upper_tick: number
 }
 export interface Coin {

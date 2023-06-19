@@ -8,11 +8,11 @@ use mars_v3_zapper_base::{
 };
 use osmosis_test_tube::{Account, Module, Wasm};
 
-use crate::helpers::{assert_err, default_new_position_req, MockEnv};
+use crate::helpers::{
+    assert_err, default_new_position_req, MockEnv, ATOM, DAI, DEFAULT_STARTING_BALANCE,
+};
 
 pub mod helpers;
-
-// TODO: Remove ignores when Test-Tube fixed: https://github.com/osmosis-labs/test-tube/commit/f9c1e6ba9b69432d9a19ee9d6454819e57903327
 
 #[test]
 fn only_owner_can_add_positions() {
@@ -33,10 +33,9 @@ fn only_owner_can_add_positions() {
 }
 
 #[test]
-#[ignore = "pending concentrated liquidity type update"]
 fn must_send_exact_funds() {
     let mut mock = MockEnv::new().build().unwrap();
-    let (denom0, denom1, _) = mock.create_pool("ujuno", "umars");
+    mock.create_pool(DAI, ATOM);
 
     let wasm = Wasm::new(&mock.app);
 
@@ -44,10 +43,9 @@ fn must_send_exact_funds() {
         pool_id: 1,
         lower_tick: -1,
         upper_tick: 100,
-        token_desired0: Some(coin(100_000_000, denom0.clone())),
-        token_desired1: Some(coin(100_000_000, denom1.clone())),
         token_min_amount0: "10000".to_string(),
         token_min_amount1: "10000".to_string(),
+        tokens_provided: vec![coin(100_000_000, DAI), coin(100_000_000, ATOM)],
     };
 
     let err = wasm
@@ -59,7 +57,7 @@ fn must_send_exact_funds() {
         .execute(
             &mock.zapper,
             &ExecuteMsg::CreatePosition(new_position.clone()),
-            &[new_position.token_desired0.clone().unwrap()],
+            &[new_position.tokens_provided.first().unwrap().clone()],
             &mock.owner,
         )
         .unwrap_err();
@@ -75,22 +73,21 @@ fn must_send_exact_funds() {
         .unwrap_err();
     assert_err(err, "Sent fund mismatch");
 
-    // assert with None as well
+    // assert with only one token provided
     let new_position = NewPositionRequest {
         pool_id: 1,
         lower_tick: -1,
         upper_tick: 100,
-        token_desired0: None,
-        token_desired1: Some(coin(100_000_000, denom1)),
         token_min_amount0: "0".to_string(),
         token_min_amount1: "10000".to_string(),
+        tokens_provided: vec![coin(100_000_000, DAI)],
     };
 
     let err = wasm
         .execute(
             &mock.zapper,
-            &ExecuteMsg::CreatePosition(new_position.clone()),
-            &[coin(100_000_000, denom0), new_position.token_desired1.unwrap()],
+            &ExecuteMsg::CreatePosition(new_position),
+            &[coin(100_000_000, DAI), coin(100_000_000, ATOM)],
             &mock.owner,
         )
         .unwrap_err();
@@ -98,23 +95,20 @@ fn must_send_exact_funds() {
 }
 
 #[test]
-#[ignore = "pending concentrated liquidity type update"]
 fn add_position_successfully() {
     let mut mock = MockEnv::new().build().unwrap();
-    let (denom0, denom1, _) = mock.create_pool("ujuno", "umars");
-
-    let starting_balance = 100_000_000_000;
+    mock.create_pool(DAI, ATOM);
 
     // assert owner funds before
-    let denom0_balance = mock.query_balance(&mock.owner.address(), &denom0);
-    assert_eq!(starting_balance, denom0_balance);
-    let denom1_balance = mock.query_balance(&mock.owner.address(), &denom1);
-    assert_eq!(starting_balance, denom1_balance);
+    let denom0_balance = mock.query_balance(&mock.owner.address(), DAI);
+    assert_eq!(DEFAULT_STARTING_BALANCE, denom0_balance);
+    let denom1_balance = mock.query_balance(&mock.owner.address(), ATOM);
+    assert_eq!(DEFAULT_STARTING_BALANCE, denom1_balance);
 
     // assert zapper funds before
-    let denom0_balance = mock.query_balance(&mock.zapper, &denom0);
+    let denom0_balance = mock.query_balance(&mock.zapper, DAI);
     assert_eq!(0, denom0_balance);
-    let denom1_balance = mock.query_balance(&mock.zapper, &denom1);
+    let denom1_balance = mock.query_balance(&mock.zapper, ATOM);
     assert_eq!(0, denom1_balance);
 
     let wasm = Wasm::new(&mock.app);
@@ -124,19 +118,15 @@ fn add_position_successfully() {
         pool_id: 1,
         lower_tick: -1,
         upper_tick: 100,
-        token_desired0: Some(coin(amount_sent, denom0.clone())),
-        token_desired1: Some(coin(amount_sent, denom1.clone())),
         token_min_amount0: "10000".to_string(),
         token_min_amount1: "10000".to_string(),
+        tokens_provided: vec![coin(amount_sent, DAI), coin(amount_sent, ATOM)],
     };
     let res = wasm
         .execute(
             &mock.zapper,
             &ExecuteMsg::CreatePosition(new_position.clone()),
-            &[
-                new_position.token_desired0.clone().unwrap(),
-                new_position.token_desired1.clone().unwrap(),
-            ],
+            &new_position.tokens_provided,
             &mock.owner,
         )
         .unwrap();
@@ -160,38 +150,38 @@ fn add_position_successfully() {
     assert_eq!(1, position.pool_id);
     assert_eq!(new_position.lower_tick, position.lower_tick);
     assert_eq!(new_position.upper_tick, position.upper_tick);
-    assert_eq!(new_position.token_desired0.unwrap().denom, p.asset0.clone().unwrap().denom);
-    assert_eq!(new_position.token_desired1.unwrap().denom, p.asset1.clone().unwrap().denom);
+    assert_eq!(
+        new_position.tokens_provided.first().unwrap().denom,
+        p.asset0.clone().unwrap().denom
+    );
+    assert_eq!(new_position.tokens_provided.get(1).unwrap().denom, p.asset1.clone().unwrap().denom);
 
     // assert zapper funds after
-    let denom0_balance = mock.query_balance(&mock.zapper, &denom0);
+    let denom0_balance = mock.query_balance(&mock.zapper, DAI);
     assert_eq!(0, denom0_balance);
-    let denom1_balance = mock.query_balance(&mock.zapper, &denom1);
+    let denom1_balance = mock.query_balance(&mock.zapper, ATOM);
     assert_eq!(0, denom1_balance);
 
     // assert owner funds after
-    let denom0_balance = mock.query_balance(&mock.owner.address(), &denom0);
+    let denom0_balance = mock.query_balance(&mock.owner.address(), DAI);
     let position_amount0 = p.asset0.clone().unwrap().amount.parse::<u128>().unwrap();
-    assert_eq!(starting_balance - position_amount0, denom0_balance);
+    assert_eq!(DEFAULT_STARTING_BALANCE - position_amount0, denom0_balance);
 
-    let denom1_balance = mock.query_balance(&mock.owner.address(), &denom1);
+    let denom1_balance = mock.query_balance(&mock.owner.address(), ATOM);
     let position_amount1 = p.asset1.clone().unwrap().amount.parse::<u128>().unwrap();
-    assert_eq!(starting_balance - position_amount1, denom1_balance);
+    assert_eq!(DEFAULT_STARTING_BALANCE - position_amount1, denom1_balance);
 }
 
 #[test]
-#[ignore = "pending concentrated liquidity type update"]
 fn refunds_are_issued() {
     let mut mock = MockEnv::new().build().unwrap();
-    let (denom0, denom1, _) = mock.create_pool("ujuno", "umars");
-
-    let starting_balance = 100_000_000_000;
+    mock.create_pool(DAI, ATOM);
 
     // assert owner funds before
-    let denom0_balance = mock.query_balance(&mock.owner.address(), &denom0);
-    assert_eq!(starting_balance, denom0_balance);
-    let denom1_balance = mock.query_balance(&mock.owner.address(), &denom1);
-    assert_eq!(starting_balance, denom1_balance);
+    let denom0_balance = mock.query_balance(&mock.owner.address(), DAI);
+    assert_eq!(DEFAULT_STARTING_BALANCE, denom0_balance);
+    let denom1_balance = mock.query_balance(&mock.owner.address(), ATOM);
+    assert_eq!(DEFAULT_STARTING_BALANCE, denom1_balance);
 
     let wasm = Wasm::new(&mock.app);
 
@@ -200,56 +190,54 @@ fn refunds_are_issued() {
         pool_id: 1,
         lower_tick: -100,
         upper_tick: 100,
-        token_desired0: Some(coin(amount_sent, denom0.clone())),
-        token_desired1: Some(coin(amount_sent, denom1.clone())),
         token_min_amount0: "10000".to_string(),
         token_min_amount1: "10000".to_string(),
+        tokens_provided: vec![coin(amount_sent, DAI), coin(amount_sent, ATOM)],
     };
 
     let res = wasm
         .execute(
             &mock.zapper,
             &ExecuteMsg::CreatePosition(new_position.clone()),
-            &[new_position.token_desired0.unwrap(), new_position.token_desired1.unwrap()],
+            &new_position.tokens_provided,
             &mock.owner,
         )
         .unwrap();
 
     // Zapper should not have a balance after tx
-    let denom0_balance = mock.query_balance(&mock.zapper, &denom0);
+    let denom0_balance = mock.query_balance(&mock.zapper, DAI);
     assert_eq!(0, denom0_balance);
-    let denom1_balance = mock.query_balance(&mock.zapper, &denom1);
+    let denom1_balance = mock.query_balance(&mock.zapper, ATOM);
     assert_eq!(0, denom1_balance);
 
     // Assert refund event emitted
-    let refund_amount_a = 8992255u128;
+    let refund_amount_a = 8999922u128;
     let event = res.events.iter().find(|e| e.ty == format!("wasm-{}", REFUND_EVENT_TYPE)).unwrap();
     let attr = event.attributes.iter().find(|a| a.key == REFUND_AMOUNT_ATTR_KEY).unwrap();
-    assert_eq!(format!("{refund_amount_a}{denom1}"), attr.value);
+    assert_eq!(format!("{refund_amount_a}{ATOM}"), attr.value);
 
     // No refund on denom0
-    let denom0_balance = mock.query_balance(&mock.owner.address(), &denom0);
-    assert_eq!(starting_balance - amount_sent, denom0_balance);
+    let denom0_balance = mock.query_balance(&mock.owner.address(), DAI);
+    assert_eq!(DEFAULT_STARTING_BALANCE - amount_sent, denom0_balance);
 
     // assert refund took place for denom1
-    let denom1_balance = mock.query_balance(&mock.owner.address(), &denom1);
-    assert_eq!(starting_balance - amount_sent + refund_amount_a, denom1_balance);
+    let denom1_balance = mock.query_balance(&mock.owner.address(), ATOM);
+    assert_eq!(DEFAULT_STARTING_BALANCE - amount_sent + refund_amount_a, denom1_balance);
 
     let new_position = NewPositionRequest {
         pool_id: 1,
         lower_tick: -100,
         upper_tick: -20,
-        token_desired0: Some(coin(amount_sent, denom0.clone())),
-        token_desired1: Some(coin(amount_sent, denom1.clone())),
         token_min_amount0: "0".to_string(),
         token_min_amount1: "10000".to_string(),
+        tokens_provided: vec![coin(amount_sent, DAI), coin(amount_sent, ATOM)],
     };
 
     let res = wasm
         .execute(
             &mock.zapper,
             &ExecuteMsg::CreatePosition(new_position.clone()),
-            &[new_position.token_desired0.unwrap(), new_position.token_desired1.unwrap()],
+            &new_position.tokens_provided,
             &mock.owner,
         )
         .unwrap();
@@ -258,26 +246,25 @@ fn refunds_are_issued() {
     let refund_amount_b = 10000000u128;
     let event = res.events.iter().find(|e| e.ty == format!("wasm-{}", REFUND_EVENT_TYPE)).unwrap();
     let attr = event.attributes.iter().find(|a| a.key == REFUND_AMOUNT_ATTR_KEY).unwrap();
-    assert_eq!(format!("{refund_amount_b}{denom0}"), attr.value);
+    assert_eq!(format!("{refund_amount_b}{DAI}"), attr.value);
 
     // Full refund on denom0
-    let denom0_balance = mock.query_balance(&mock.owner.address(), &denom0);
+    let denom0_balance = mock.query_balance(&mock.owner.address(), DAI);
     // Starting balance after first position was created
-    let balance_before = starting_balance - amount_sent;
+    let balance_before = DEFAULT_STARTING_BALANCE - amount_sent;
     assert_eq!(balance_before, denom0_balance);
 
     // No refund for denom1
-    let denom1_balance = mock.query_balance(&mock.owner.address(), &denom1);
+    let denom1_balance = mock.query_balance(&mock.owner.address(), ATOM);
     // Starting balance after first position was created
-    let balance_before = starting_balance - amount_sent + refund_amount_a;
+    let balance_before = DEFAULT_STARTING_BALANCE - amount_sent + refund_amount_a;
     assert_eq!(balance_before - amount_sent, denom1_balance);
 }
 
 #[test]
-#[ignore = "pending concentrated liquidity type update"]
 fn adding_multiple_increments() {
     let mut mock = MockEnv::new().build().unwrap();
-    let (denom0, denom1, _) = mock.create_pool("ujuno", "umars");
+    mock.create_pool(DAI, ATOM);
 
     let wasm = Wasm::new(&mock.app);
 
@@ -285,18 +272,14 @@ fn adding_multiple_increments() {
         pool_id: 1,
         lower_tick: -1,
         upper_tick: 100,
-        token_desired0: Some(coin(100_000_000, denom0)),
-        token_desired1: Some(coin(100_000_000, denom1)),
         token_min_amount0: "10000".to_string(),
         token_min_amount1: "10000".to_string(),
+        tokens_provided: vec![coin(100_000_000, DAI), coin(100_000_000, ATOM)],
     };
     wasm.execute(
         &mock.zapper,
         &ExecuteMsg::CreatePosition(new_position.clone()),
-        &[
-            new_position.token_desired0.clone().unwrap(),
-            new_position.token_desired1.clone().unwrap(),
-        ],
+        &new_position.tokens_provided,
         &mock.owner,
     )
     .unwrap();
@@ -304,10 +287,7 @@ fn adding_multiple_increments() {
     wasm.execute(
         &mock.zapper,
         &ExecuteMsg::CreatePosition(new_position.clone()),
-        &[
-            new_position.token_desired0.clone().unwrap(),
-            new_position.token_desired1.clone().unwrap(),
-        ],
+        &new_position.tokens_provided,
         &mock.owner,
     )
     .unwrap();
@@ -316,7 +296,7 @@ fn adding_multiple_increments() {
         .execute(
             &mock.zapper,
             &ExecuteMsg::CreatePosition(new_position.clone()),
-            &[new_position.token_desired0.unwrap(), new_position.token_desired1.unwrap()],
+            &new_position.tokens_provided,
             &mock.owner,
         )
         .unwrap();
@@ -332,18 +312,15 @@ fn adding_multiple_increments() {
 }
 
 #[test]
-#[ignore = "pending concentrated liquidity type update"]
 fn error_rolls_back_state() {
     let mut mock = MockEnv::new().build().unwrap();
-    let (denom0, denom1, _) = mock.create_pool("ujuno", "umars");
-
-    let starting_balance = 100_000_000_000;
+    mock.create_pool(DAI, ATOM);
 
     // assert owner funds before
-    let denom0_balance = mock.query_balance(&mock.owner.address(), &denom0);
-    assert_eq!(starting_balance, denom0_balance);
-    let denom1_balance = mock.query_balance(&mock.owner.address(), &denom1);
-    assert_eq!(starting_balance, denom1_balance);
+    let denom0_balance = mock.query_balance(&mock.owner.address(), ATOM);
+    assert_eq!(DEFAULT_STARTING_BALANCE, denom0_balance);
+    let denom1_balance = mock.query_balance(&mock.owner.address(), DAI);
+    assert_eq!(DEFAULT_STARTING_BALANCE, denom1_balance);
 
     let wasm = Wasm::new(&mock.app);
 
@@ -352,28 +329,27 @@ fn error_rolls_back_state() {
         pool_id: 1,
         lower_tick: -1,
         upper_tick: 100,
-        token_desired0: Some(coin(amount_sent, denom0.clone())),
-        token_desired1: Some(coin(amount_sent, denom1.clone())),
         token_min_amount0: "10000000000000000".to_string(),
         token_min_amount1: "10000".to_string(),
+        tokens_provided: vec![coin(amount_sent, DAI), coin(amount_sent, ATOM)],
     };
     wasm.execute(
         &mock.zapper,
         &ExecuteMsg::CreatePosition(new_position.clone()),
-        &[new_position.token_desired0.clone().unwrap(), new_position.token_desired1.unwrap()],
+        &new_position.tokens_provided,
         &mock.owner,
     )
     .unwrap_err();
 
     // assert zapper funds after
-    let denom0_balance = mock.query_balance(&mock.zapper, &denom0);
+    let denom0_balance = mock.query_balance(&mock.zapper, ATOM);
     assert_eq!(0, denom0_balance);
-    let denom1_balance = mock.query_balance(&mock.zapper, &denom1);
+    let denom1_balance = mock.query_balance(&mock.zapper, DAI);
     assert_eq!(0, denom1_balance);
 
     // assert owner funds after
-    let denom0_balance = mock.query_balance(&mock.owner.address(), &denom0);
-    assert_eq!(starting_balance, denom0_balance);
-    let denom1_balance = mock.query_balance(&mock.owner.address(), &denom1);
-    assert_eq!(starting_balance, denom1_balance);
+    let denom0_balance = mock.query_balance(&mock.owner.address(), ATOM);
+    assert_eq!(DEFAULT_STARTING_BALANCE, denom0_balance);
+    let denom1_balance = mock.query_balance(&mock.owner.address(), DAI);
+    assert_eq!(DEFAULT_STARTING_BALANCE, denom1_balance);
 }

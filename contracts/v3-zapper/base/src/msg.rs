@@ -12,8 +12,7 @@ pub struct NewPositionRequest {
     pub pool_id: u64,
     pub lower_tick: i64,
     pub upper_tick: i64,
-    pub token_desired0: Option<Coin>,
-    pub token_desired1: Option<Coin>,
+    pub tokens_provided: Vec<Coin>,
     pub token_min_amount0: String,
     pub token_min_amount1: String,
 }

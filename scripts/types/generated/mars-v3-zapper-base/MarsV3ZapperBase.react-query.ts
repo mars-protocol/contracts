@@ -98,10 +98,9 @@ export interface MarsV3ZapperBaseCreatePositionMutation {
   msg: {
     lowerTick: number
     poolId: number
-    tokenDesired0?: Coin
-    tokenDesired1?: Coin
     tokenMinAmount0: string
     tokenMinAmount1: string
+    tokensProvided: Coin[]
     upperTick: number
   }
   args?: {

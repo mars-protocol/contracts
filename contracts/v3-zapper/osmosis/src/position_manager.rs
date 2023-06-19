@@ -22,10 +22,9 @@ impl PositionManager for OsmosisPositionManager {
             sender: env.contract.address.to_string(),
             lower_tick: p.lower_tick,
             upper_tick: p.upper_tick,
-            token_desired0: p.token_desired0.to_v1beta_coin(),
-            token_desired1: p.token_desired1.to_v1beta_coin(),
             token_min_amount0: p.token_min_amount0,
             token_min_amount1: p.token_min_amount1,
+            tokens_provided: p.tokens_provided.to_v1beta_coins(),
         };
         Ok(create_msg.into())
     }
@@ -40,15 +39,17 @@ impl PositionManager for OsmosisPositionManager {
     }
 }
 
-pub trait ToV1BetaCoin {
-    fn to_v1beta_coin(&self) -> Option<v1beta1::Coin>;
+pub trait ToV1BetaCoins {
+    fn to_v1beta_coins(&self) -> Vec<v1beta1::Coin>;
 }
 
-impl ToV1BetaCoin for Option<Coin> {
-    fn to_v1beta_coin(&self) -> Option<v1beta1::Coin> {
-        self.clone().map(|c| v1beta1::Coin {
-            denom: c.denom,
-            amount: c.amount.to_string(),
-        })
+impl ToV1BetaCoins for Vec<Coin> {
+    fn to_v1beta_coins(&self) -> Vec<v1beta1::Coin> {
+        self.iter()
+            .map(|c| v1beta1::Coin {
+                denom: c.denom.clone(),
+                amount: c.amount.to_string(),
+            })
+            .collect()
     }
 }

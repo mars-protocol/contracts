@@ -117,6 +117,7 @@
           "pool_id",
           "token_min_amount0",
           "token_min_amount1",
+          "tokens_provided",
           "upper_tick"
         ],
         "properties": {
@@ -129,31 +130,17 @@
             "format": "uint64",
             "minimum": 0.0
           },
-          "token_desired0": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/Coin"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "token_desired1": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/Coin"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "token_min_amount0": {
             "type": "string"
           },
           "token_min_amount1": {
             "type": "string"
+          },
+          "tokens_provided": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Coin"
+            }
           },
           "upper_tick": {
             "type": "integer",

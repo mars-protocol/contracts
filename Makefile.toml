@@ -12,8 +12,7 @@ ARTIFACTS_DIR_PATH = "artifacts"
 
 [tasks.build]
 command = "cargo"
-# TODO: After stable osmosis-test-tube CL version, remove the exclusion
-args = ["build", "--release", "--target", "wasm32-unknown-unknown", "--locked", "--exclude", "mars-v3-zapper-osmosis", "--workspace"]
+args = ["build", "--release", "--target", "wasm32-unknown-unknown", "--locked"]
 
 [tasks.rust-optimizer]
 script = """
@@ -30,8 +29,7 @@ docker run --rm -v "$(pwd)":/code \
 
 [tasks.test]
 command = "cargo"
-# TODO: After stable osmosis-test-tube CL version, remove the exclusion
-args = ["test", "--locked", "--exclude", "mars-v3-zapper-osmosis", "--workspace"]
+args = ["test", "--locked"]
 
 [tasks.fmt]
 toolchain = "nightly"
@@ -40,8 +38,7 @@ args = ["fmt", "--all", "--check"]
 
 [tasks.clippy]
 command = "cargo"
-# TODO: After stable osmosis-test-tube CL version, remove the exclusion
-args = ["clippy", "--tests", "--exclude", "mars-v3-zapper-osmosis", "--workspace", "--", "-D", "warnings"]
+args = ["clippy", "--tests", "--", "-D", "warnings"]
 
 [tasks.audit]
 command = "cargo"

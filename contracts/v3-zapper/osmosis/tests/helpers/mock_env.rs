@@ -1,23 +1,30 @@
 use std::{mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{coin, Coin};
+use cosmwasm_std::coin;
 use mars_owner::{OwnerResponse, OwnerUpdate};
 use mars_v3_zapper_base::msg::{CallbackMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
 use osmosis_std::types::osmosis::{
+    concentratedliquidity,
     concentratedliquidity::v1beta1::{
-        MsgCreateConcentratedPool, PositionWithUnderlyingAssetBreakdown, QueryUserPositionsRequest,
+        CreateConcentratedLiquidityPoolsProposal, FullPositionBreakdown, PoolRecord, PoolsRequest,
+        UserPositionsRequest,
     },
-    tokenfactory::v1beta1::{MsgCreateDenom, MsgMint},
 };
 use osmosis_test_tube::{
     cosmrs::proto::{
         cosmos::bank::v1beta1::QueryBalanceRequest, cosmwasm::wasm::v1::MsgExecuteContractResponse,
+        prost::Message,
     },
-    Account, Bank, Module, OsmosisTestApp, RunnerExecuteResult, SigningAccount, TokenFactory, Wasm,
+    Account, Bank, ConcentratedLiquidity, GovWithAppAccess, Module, OsmosisTestApp,
+    RunnerExecuteResult, SigningAccount, Wasm,
 };
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+pub const DEFAULT_STARTING_BALANCE: u128 = 1_000_000_000_000;
+
+pub const ATOM: &str = "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2";
+pub const DAI: &str = "ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7";
 
 pub struct MockEnv {
     pub app: OsmosisTestApp,
@@ -54,73 +61,38 @@ impl MockEnv {
         )
     }
 
-    pub fn create_pool(&mut self, subdenom0: &str, subdenom1: &str) -> (String, String, u64) {
+    pub fn create_pool(&mut self, denom0: &str, denom1: &str) -> u64 {
         let cl = ConcentratedLiquidity::new(&self.app);
-        let token_factory = TokenFactory::new(&self.app);
+        let gov = GovWithAppAccess::new(&self.app);
 
-        let denom0 = token_factory
-            .create_denom(
-                MsgCreateDenom {
-                    sender: self.owner.address(),
-                    subdenom: subdenom0.to_string(),
-                },
-                &self.owner,
-            )
-            .unwrap()
-            .data
-            .new_token_denom;
-
-        let denom1 = token_factory
-            .create_denom(
-                MsgCreateDenom {
-                    sender: self.owner.address(),
-                    subdenom: subdenom1.to_string(),
-                },
-                &self.owner,
-            )
-            .unwrap()
-            .data
-            .new_token_denom;
-
-        token_factory
-            .mint(
-                MsgMint {
-                    sender: self.owner.address(),
-                    amount: Some(Coin::new(100_000_000_000, &denom0).into()),
-                    mint_to_address: self.owner.address(),
-                },
-                &self.owner,
-            )
-            .unwrap();
-
-        token_factory
-            .mint(
-                MsgMint {
-                    sender: self.owner.address(),
-                    amount: Some(Coin::new(100_000_000_000, &denom1).into()),
-                    mint_to_address: self.owner.address(),
-                },
-                &self.owner,
-            )
-            .unwrap();
-
-        let pool_id = cl
-            .create_concentrated_pool(
-                MsgCreateConcentratedPool {
-                    sender: self.owner.address(),
-                    denom0: denom0.clone(),
-                    denom1: denom1.clone(),
+        gov.propose_and_execute(
+            CreateConcentratedLiquidityPoolsProposal::TYPE_URL.to_string(),
+            CreateConcentratedLiquidityPoolsProposal {
+                title: String::from("test"),
+                description: String::from("test"),
+                pool_records: vec![PoolRecord {
+                    denom0: denom0.to_string(),
+                    denom1: denom1.to_string(),
                     tick_spacing: 1,
                     exponent_at_price_one: "-4".to_string(),
-                    swap_fee: "0".to_string(),
-                },
-                &self.owner,
-            )
-            .unwrap()
-            .data
-            .pool_id;
+                    spread_factor: "500000000000000".to_string(),
+                }],
+            },
+            self.owner.address(),
+            &self.owner,
+        )
+        .unwrap();
 
-        (denom0, denom1, pool_id)
+        let pools = cl
+            .query_pools(&PoolsRequest {
+                pagination: None,
+            })
+            .unwrap()
+            .pools;
+
+        concentratedliquidity::v1beta1::Pool::decode(pools.last().unwrap().value.as_slice())
+            .unwrap()
+            .id
     }
 
     pub fn callback(
@@ -159,12 +131,13 @@ impl MockEnv {
         u128::from_str(&str_balance).unwrap()
     }
 
-    pub fn query_positions(&self, pool_id: u64) -> Vec<PositionWithUnderlyingAssetBreakdown> {
+    pub fn query_positions(&self, pool_id: u64) -> Vec<FullPositionBreakdown> {
         let cl = ConcentratedLiquidity::new(&self.app);
         let res = cl
-            .query_user_positions(&QueryUserPositionsRequest {
+            .query_user_positions(&UserPositionsRequest {
                 address: self.zapper.clone(),
                 pool_id,
+                pagination: None,
             })
             .unwrap();
         res.positions
@@ -173,7 +146,14 @@ impl MockEnv {
 
 impl MockEnvBuilder {
     pub fn build(&mut self) -> AnyResult<MockEnv> {
-        let owner = self.app.init_account(&[coin(1_000_000_000_000, "uosmo")]).unwrap();
+        let owner = self
+            .app
+            .init_account(&[
+                coin(DEFAULT_STARTING_BALANCE, "uosmo"),
+                coin(DEFAULT_STARTING_BALANCE, ATOM),
+                coin(DEFAULT_STARTING_BALANCE, DAI),
+            ])
+            .unwrap();
         let zapper = self.instantiate_contract(&owner);
 
         Ok(MockEnv {

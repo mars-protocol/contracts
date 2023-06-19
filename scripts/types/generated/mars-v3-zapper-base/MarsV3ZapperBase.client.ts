@@ -46,18 +46,16 @@ export interface MarsV3ZapperBaseInterface extends MarsV3ZapperBaseReadOnlyInter
     {
       lowerTick,
       poolId,
-      tokenDesired0,
-      tokenDesired1,
       tokenMinAmount0,
       tokenMinAmount1,
+      tokensProvided,
       upperTick,
     }: {
       lowerTick: number
       poolId: number
-      tokenDesired0?: Coin
-      tokenDesired1?: Coin
       tokenMinAmount0: string
       tokenMinAmount1: string
+      tokensProvided: Coin[]
       upperTick: number
     },
     fee?: number | StdFee | 'auto',
@@ -99,18 +97,16 @@ export class MarsV3ZapperBaseClient
     {
       lowerTick,
       poolId,
-      tokenDesired0,
-      tokenDesired1,
       tokenMinAmount0,
       tokenMinAmount1,
+      tokensProvided,
       upperTick,
     }: {
       lowerTick: number
       poolId: number
-      tokenDesired0?: Coin
-      tokenDesired1?: Coin
       tokenMinAmount0: string
       tokenMinAmount1: string
+      tokensProvided: Coin[]
       upperTick: number
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -124,10 +120,9 @@ export class MarsV3ZapperBaseClient
         create_position: {
           lower_tick: lowerTick,
           pool_id: poolId,
-          token_desired0: tokenDesired0,
-          token_desired1: tokenDesired1,
           token_min_amount0: tokenMinAmount0,
           token_min_amount1: tokenMinAmount1,
+          tokens_provided: tokensProvided,
           upper_tick: upperTick,
         },
       },
