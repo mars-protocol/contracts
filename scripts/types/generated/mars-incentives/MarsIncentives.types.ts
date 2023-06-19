@@ -5,17 +5,16 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
-export type Uint128 = string
 export interface InstantiateMsg {
   address_provider: string
   epoch_duration: number
-  min_incentive_emission: Uint128
+  max_whitelisted_denoms: number
   owner: string
 }
 export type ExecuteMsg =
   | {
       update_whitelist: {
-        add_denoms: string[]
+        add_denoms: [string, Uint128][]
         remove_denoms: string[]
       }
     }
@@ -46,12 +45,13 @@ export type ExecuteMsg =
   | {
       update_config: {
         address_provider?: string | null
-        min_incentive_emission?: Uint128 | null
+        max_whitelisted_denoms?: number | null
       }
     }
   | {
       update_owner: OwnerUpdate
     }
+export type Uint128 = string
 export type Addr = string
 export type OwnerUpdate =
   | {
@@ -113,7 +113,7 @@ export type QueryMsg =
     }
 export interface ConfigResponse {
   address_provider: Addr
-  min_incentive_emission: Uint128
+  max_whitelisted_denoms: number
   owner?: string | null
   proposed_new_owner?: string | null
 }
@@ -136,4 +136,4 @@ export interface Coin {
   denom: string
   [k: string]: unknown
 }
-export type ArrayOfString = string[]
+export type ArrayOfTupleOfStringAndUint128 = [string, Uint128][]
