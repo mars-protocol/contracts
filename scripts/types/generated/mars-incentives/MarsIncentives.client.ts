@@ -8,9 +8,9 @@
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee } from '@cosmjs/amino'
 import {
-  Uint128,
   InstantiateMsg,
   ExecuteMsg,
+  Uint128,
   Addr,
   OwnerUpdate,
   QueryMsg,
@@ -22,7 +22,7 @@ import {
   ArrayOfIncentiveStateResponse,
   ArrayOfCoin,
   Coin,
-  ArrayOfString,
+  ArrayOfTupleOfStringAndUint128,
 } from './MarsIncentives.types'
 export interface MarsIncentivesReadOnlyInterface {
   contractAddress: string
@@ -74,7 +74,7 @@ export interface MarsIncentivesReadOnlyInterface {
     startAfterIncentiveDenom?: string
     user: string
   }) => Promise<ArrayOfCoin>
-  whitelist: () => Promise<ArrayOfString>
+  whitelist: () => Promise<ArrayOfTupleOfStringAndUint128>
 }
 export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterface {
   client: CosmWasmClient
@@ -185,7 +185,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
       },
     })
   }
-  whitelist = async (): Promise<ArrayOfString> => {
+  whitelist = async (): Promise<ArrayOfTupleOfStringAndUint128> => {
     return this.client.queryContractSmart(this.contractAddress, {
       whitelist: {},
     })
@@ -199,7 +199,7 @@ export interface MarsIncentivesInterface extends MarsIncentivesReadOnlyInterface
       addDenoms,
       removeDenoms,
     }: {
-      addDenoms: string[]
+      addDenoms: string[][]
       removeDenoms: string[]
     },
     fee?: number | StdFee | 'auto',
@@ -257,10 +257,10 @@ export interface MarsIncentivesInterface extends MarsIncentivesReadOnlyInterface
   updateConfig: (
     {
       addressProvider,
-      minIncentiveEmission,
+      maxWhitelistedDenoms,
     }: {
       addressProvider?: string
-      minIncentiveEmission?: Uint128
+      maxWhitelistedDenoms?: number
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -299,7 +299,7 @@ export class MarsIncentivesClient
       addDenoms,
       removeDenoms,
     }: {
-      addDenoms: string[]
+      addDenoms: string[][]
       removeDenoms: string[]
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -419,10 +419,10 @@ export class MarsIncentivesClient
   updateConfig = async (
     {
       addressProvider,
-      minIncentiveEmission,
+      maxWhitelistedDenoms,
     }: {
       addressProvider?: string
-      minIncentiveEmission?: Uint128
+      maxWhitelistedDenoms?: number
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -434,7 +434,7 @@ export class MarsIncentivesClient
       {
         update_config: {
           address_provider: addressProvider,
-          min_incentive_emission: minIncentiveEmission,
+          max_whitelisted_denoms: maxWhitelistedDenoms,
         },
       },
       fee,
