@@ -219,6 +219,8 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
   oracleConfigs: [atomOracle, axlUSDCOracle],
   maxCloseFactor: '0.5',
+  incentiveEpochDuration: 86400,
+  maxWhitelistedIncentiveDenoms: 10,
 }
 
 // axlUSDC does not have a pool on testnet so config can't have swapRoutes configured correctly
@@ -254,6 +256,8 @@ export const osmosisTestMultisig: DeploymentConfig = {
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
   oracleConfigs: [atomOracle, axlUSDCOracle],
   maxCloseFactor: '0.5',
+  incentiveEpochDuration: 86400,
+  maxWhitelistedIncentiveDenoms: 10,
 }
 
 export const osmosisMainnet: DeploymentConfig = {
@@ -316,6 +320,8 @@ export const osmosisMainnet: DeploymentConfig = {
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
   oracleConfigs: [atomOracle, axlUSDCOracle],
   maxCloseFactor: '0.5',
+  incentiveEpochDuration: 86400,
+  maxWhitelistedIncentiveDenoms: 10,
 }
 
 export const osmosisLocalConfig: DeploymentConfig = {
@@ -349,4 +355,6 @@ export const osmosisLocalConfig: DeploymentConfig = {
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
   oracleConfigs: [atomOracle, axlUSDCOracle],
   maxCloseFactor: '0.5',
+  incentiveEpochDuration: 86400,
+  maxWhitelistedIncentiveDenoms: 10,
 }
