@@ -1,36 +1,24 @@
 import { DeploymentConfig, VaultType } from '../../types/config'
 
+// Note: since osmo-test-5 upgrade, testnet and mainnet denoms are no longer the same. Reference asset info here: https://docs.osmosis.zone/osmosis-core/asset-info/
 const uosmo = 'uosmo'
-const uatom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
-const udig = 'ibc/307E5C96C8F60D1CBEE269A9A86C0834E1DB06F2B3788AE4F716EDB97A48B97D'
-const ujuno = 'ibc/46B44899322F3CD854D2D46DEEF881958467CDD4B3B10086DA49296BBED94BED'
-const gammPool1 = 'gamm/pool/1'
-const gammPool497 = 'gamm/pool/497'
+const nUSDC = 'ibc/B3504E092456BA618CC28AC671A71FB08C6CA0FD0BE7C8A5B5A3E2DD933CC9E4' // noble
+const nUSDC_osmo = 'gamm/pool/6'
 
-const vaultOsmoAtom1 = 'osmo1zktjv92f76epswjvyxzzt3yyskpw7k6jsyu0kmq4zzc5fphrjumqlahctp'
-const vaultOsmoAtom7 = 'osmo167j3yttwzcm3785tzk4jse2qdkppcy2xxrn5u6srqv7s93wnq6yqw8zhg5'
-const vaultOsmoAtom14 = 'osmo1tp2m6g39h8mvhnu3plqjyen5s63023gj8w873l8wvly0cd77l6hsaa73wt'
-const atomOsmoConfig = (addr: string) => ({
+const nUSDC_OSMO_vault_1 = 'osmo1q40xvrzpldwq5he4ftsf7zm2jf80tj373qaven38yqrvhex8r9rs8n94kv'
+const nUSDC_OSMO_vault_7 = 'osmo14lu7m4ganxs20258dazafrjfaulmfxruq9n0r0th90gs46jk3tuqwfkqwn'
+const nUSDC_OSMO_vault_14 = 'osmo1fmq9hw224fgz8lk48wyd0gfg028kvvzggt6c3zvnaqkw23x68cws5nd5em'
+
+const nUSDC_OSMO_Config = (addr: string) => ({
   addr,
-  deposit_cap: { denom: uatom, amount: '1000000000' }, // 1000 atom
+  deposit_cap: { denom: nUSDC, amount: '1000000000' }, // 1000 atom
   max_loan_to_value: '0.63',
   liquidation_threshold: '0.65',
   whitelisted: true,
 })
 
-const vaultJunoOsmo1 = 'osmo1r6h0pafu3wq0kf6yv09qhc8qvuku2d6fua0rpwwv46h7hd8u586scxspjf'
-const vaultJunoOsmo7 = 'osmo1gr5epxn67q6202l3hy0mcnu7qc039v22pa6x2tsk23zwg235n9jsq6pmes'
-const vaultJunoOsmo14 = 'osmo1d6knwkelyr9eklewnn9htkess4ttpxpf2cze9ec0xfw7e3fj0ggssqzfpp'
-const junoOsmoConfig = (addr: string) => ({
-  addr,
-  deposit_cap: { denom: uatom, amount: '500000000' }, // 500 atom
-  max_loan_to_value: '0.65',
-  liquidation_threshold: '0.66',
-  whitelisted: true,
-})
-
 export const osmosisTestnetConfig: DeploymentConfig = {
-  allowedCoins: [uosmo, uatom, ujuno, gammPool1, gammPool497],
+  allowedCoins: [uosmo, nUSDC, nUSDC, nUSDC_osmo],
   chain: {
     baseDenom: uosmo,
     defaultGasPrice: 0.1,
@@ -40,51 +28,35 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   },
   deployerMnemonic:
     'rely wonder join knock during sudden slow plate segment state agree also arrest mandate grief ordinary lonely lawsuit hurt super banana rule velvet cart',
-  maxCloseFactor: '0.6',
   maxUnlockingPositions: '10',
   maxValueForBurn: '1000000',
-  // Latest from: https://github.com/mars-protocol/outposts/blob/master/scripts/deploy/addresses/osmo-test-4.json
-  oracle: { addr: 'osmo1dqz2u3c8rs5e7w5fnchsr2mpzzsxew69wtdy0aq4jsd76w7upmsstqe0s8' },
-  redBank: { addr: 'osmo1t0dl6r27phqetfu0geaxrng0u9zn8qgrdwztapt5xr32adtwptaq6vwg36' },
-  params: { addr: 'xyz' }, // TODO: add with build scripts update task
+  // Latest from: https://github.com/mars-protocol/outposts/blob/master/scripts/deploy/addresses/osmo-test-5.json
+  oracle: { addr: 'osmo1khe29uw3t85nmmp3mtr8dls7v2qwsfk3tndu5h4w5g2r5tzlz5qqarq2e2' },
+  redBank: { addr: 'osmo1dl4rylasnd7mtfzlkdqn2gr0ss4gvyykpvr6d7t5ylzf6z535n9s5jjt8u' },
+  params: { addr: 'osmo1xvg28lrr72662t9u0hntt76lyax9zvptdvdmff4k2q9dhjm8x6ws9zym4v' },
   swapRoutes: [
-    { denomIn: uosmo, denomOut: uatom, route: [{ token_out_denom: uatom, pool_id: '1' }] },
-    { denomIn: uatom, denomOut: uosmo, route: [{ token_out_denom: uosmo, pool_id: '1' }] },
-    { denomIn: uosmo, denomOut: ujuno, route: [{ token_out_denom: ujuno, pool_id: '497' }] },
-    { denomIn: ujuno, denomOut: uosmo, route: [{ token_out_denom: uosmo, pool_id: '497' }] },
+    { denomIn: uosmo, denomOut: nUSDC, route: [{ token_out_denom: nUSDC, pool_id: '6' }] },
+    { denomIn: nUSDC, denomOut: uosmo, route: [{ token_out_denom: uosmo, pool_id: '6' }] },
   ],
-  // Latest from: https://stats.apollo.farm/api/vaults/v1/all
+  // Latest from: https://api.apollo.farm/api/graph?query=query+MyQuery+%7B%0A++vaults%28network%3A+osmo_test_5%29+%7B%0A++++label%0A++++contract_address%0A++%7D%0A%7D
   vaults: [
-    atomOsmoConfig(vaultOsmoAtom1),
-    atomOsmoConfig(vaultOsmoAtom7),
-    atomOsmoConfig(vaultOsmoAtom14),
-    junoOsmoConfig(vaultJunoOsmo1),
-    junoOsmoConfig(vaultJunoOsmo7),
-    junoOsmoConfig(vaultJunoOsmo14),
+    nUSDC_OSMO_Config(nUSDC_OSMO_vault_1),
+    nUSDC_OSMO_Config(nUSDC_OSMO_vault_7),
+    nUSDC_OSMO_Config(nUSDC_OSMO_vault_14),
   ],
   swapperContractName: 'mars_swapper_osmosis',
-  zapperContractName: 'mars_zapper_osmosis',
+  zapperContractName: 'mars_v2_zapper_osmosis',
   testActions: {
     allowedCoinsConfig: [
       { denom: uosmo, priceSource: { fixed: { price: '1' } }, grantCreditLine: true },
       {
-        denom: uatom,
-        priceSource: { geometric_twap: { pool_id: 1, window_size: 1800 } },
+        denom: nUSDC,
+        priceSource: { geometric_twap: { pool_id: 5, window_size: 1800 } },
         grantCreditLine: true,
       },
       {
-        denom: ujuno,
-        priceSource: { geometric_twap: { pool_id: 497, window_size: 1800 } },
-        grantCreditLine: true,
-      },
-      {
-        denom: gammPool1,
-        priceSource: { xyk_liquidity_token: { pool_id: 1 } },
-        grantCreditLine: false,
-      },
-      {
-        denom: gammPool497,
-        priceSource: { xyk_liquidity_token: { pool_id: 497 } },
+        denom: nUSDC_osmo,
+        priceSource: { xyk_liquidity_token: { pool_id: 6 } },
         grantCreditLine: false,
       },
     ],
@@ -93,15 +65,15 @@ export const osmosisTestnetConfig: DeploymentConfig = {
       withdrawAmount: '1000000',
       mock: {
         config: {
-          deposit_cap: { denom: uosmo, amount: '100000000' }, // 100 osmo
+          deposit_cap: { denom: nUSDC, amount: '100000000' }, // 100 usdc
           liquidation_threshold: '0.585',
           max_loan_to_value: '0.569',
           whitelisted: true,
         },
-        vaultTokenDenom: udig,
+        vaultTokenDenom: uosmo,
         type: VaultType.LOCKED,
         lockup: { time: 900 }, // 15 mins
-        baseToken: gammPool1,
+        baseToken: nUSDC_osmo,
       },
     },
     outpostsDeployerMnemonic:
@@ -112,14 +84,14 @@ export const osmosisTestnetConfig: DeploymentConfig = {
     depositAmount: '100',
     lendAmount: '10',
     reclaimAmount: '5',
-    secondaryDenom: uatom,
-    startingAmountForTestUser: '2500000',
+    secondaryDenom: nUSDC,
+    startingAmountForTestUser: '4000000',
     swap: {
       slippage: '0.4',
       amount: '40',
       route: [
         {
-          token_out_denom: uatom,
+          token_out_denom: nUSDC,
           pool_id: '1',
         },
       ],
@@ -129,12 +101,12 @@ export const osmosisTestnetConfig: DeploymentConfig = {
     zap: {
       coinsIn: [
         {
-          denom: uatom,
+          denom: nUSDC,
           amount: '1',
         },
         { denom: uosmo, amount: '3' },
       ],
-      denomOut: gammPool1,
+      denomOut: nUSDC_osmo,
     },
   },
 }

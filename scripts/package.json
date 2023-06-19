@@ -30,7 +30,7 @@
     "long": "^5.2.3",
     "prepend-file": "^2.0.1",
     "simple-git": "^3.19.0",
-    "wasm-pack": "^0.11.1"
+    "wasm-pack": "^0.12.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.22.5",

@@ -23,6 +23,7 @@ fn main() -> std::io::Result<()> {
         "mars-mock-credit-manager",
         "mars-rover-health-computer",
         "mars-rover-health-types",
+        "mars-rover-health",
     ];
 
     for contract in contracts {

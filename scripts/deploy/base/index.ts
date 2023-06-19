@@ -26,7 +26,7 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
     await deployer.instantiateHealthContract()
     await deployer.instantiateCreditManager()
     await deployer.instantiateNftContract()
-    await deployer.setCmOnHealthContract()
+    await deployer.setConfigOnHealthContract()
     await deployer.transferNftContractOwnership()
     await deployer.saveDeploymentAddrsToFile(label)
 

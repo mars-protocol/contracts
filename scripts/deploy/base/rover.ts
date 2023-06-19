@@ -13,6 +13,7 @@ import {
   Action,
   Coin,
   ConfigUpdates,
+  ExecuteMsg,
 } from '../../types/generated/mars-credit-manager/MarsCreditManager.types'
 import { MarsMockVaultQueryClient } from '../../types/generated/mars-mock-vault/MarsMockVault.client'
 import { VaultConfigBaseForString } from '../../types/generated/mars-params/MarsParams.types'
@@ -41,7 +42,13 @@ export class Rover {
 
   async createCreditAccount() {
     const before = await this.nft.tokens({ owner: this.userAddr })
-    await this.exec.createCreditAccount()
+    const executeMsg = { create_credit_account: 'default' } satisfies ExecuteMsg
+    await this.cwClient.execute(
+      this.userAddr,
+      this.storage.addresses.creditManager!,
+      executeMsg,
+      'auto',
+    )
     const after = await this.nft.tokens({ owner: this.userAddr })
     const diff = difference(after.tokens, before.tokens)
     assert.equal(diff.length, 1)

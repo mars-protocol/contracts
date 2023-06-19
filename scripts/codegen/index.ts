@@ -1,7 +1,7 @@
 import codegen from '@cosmwasm/ts-codegen'
 import { join, resolve } from 'path'
 import { printGreen, printRed } from '../utils/chalk'
-import { readdir, rm, rename } from 'fs/promises'
+import { readdir, rename, rm } from 'fs/promises'
 import simpleGit from 'simple-git'
 
 const generateTypes = async () => {
@@ -42,13 +42,18 @@ const generateTypes = async () => {
 const fetchSchemafromGithub = async ({
   githubRepo,
   pathToSchema,
+  commit,
 }: {
   githubRepo: string
   pathToSchema: string
+  commit: string
 }) => {
-  await simpleGit().clone(githubRepo)
-  const schemaDirName = pathToSchema.split('/').pop()!
+  const git = simpleGit()
+  await git.clone(githubRepo)
   const repoDirName = githubRepo.split('/').pop()!
+  await git.cwd({ path: `./${repoDirName}`, root: true })
+  await git.checkout(commit)
+  const schemaDirName = pathToSchema.split('/').pop()!
   await rename(pathToSchema, `../schemas/${schemaDirName}`)
   await rm(`./${repoDirName}`, { recursive: true, force: true })
 }
@@ -56,6 +61,7 @@ const fetchSchemafromGithub = async ({
 void (async function () {
   await fetchSchemafromGithub({
     githubRepo: 'https://github.com/mars-protocol/mars-common',
+    commit: '1449b4b1cd21d318a48310345ea8c99a0c3cf16c',
     pathToSchema: './mars-common/schemas/mars-params',
   })
   await generateTypes()

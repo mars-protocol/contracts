@@ -13,6 +13,7 @@ export interface InitOutput {
   readonly compute_health_js: (a: number) => number
   readonly allocate: (a: number) => number
   readonly deallocate: (a: number) => void
+  readonly requires_stargate: () => void
   readonly requires_iterator: () => void
   readonly interface_version_8: () => void
   readonly __wbindgen_malloc: (a: number) => number

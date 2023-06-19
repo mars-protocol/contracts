@@ -18,7 +18,6 @@ export const osmosisMainnetConfig: DeploymentConfig = {
     rpcEndpoint: 'https://rpc.osmosis.zone',
   },
   deployerMnemonic: 'TO BE INSERTED AT TIME OF DEPLOYMENT',
-  maxCloseFactor: '0.5',
   maxUnlockingPositions: '1',
   maxValueForBurn: '10000',
   // oracle and redbank contract addresses can be found:  https://github.com/mars-protocol/red-bank/blob/master/README.md#osmosis-1

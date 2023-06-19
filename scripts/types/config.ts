@@ -26,7 +26,6 @@ export interface DeploymentConfig {
   params: { addr: string }
   vaults: VaultConfigBaseForString[]
   allowedCoins: string[]
-  maxCloseFactor: string
   maxValueForBurn: string
   maxUnlockingPositions: string
   swapRoutes: SwapRoute[]

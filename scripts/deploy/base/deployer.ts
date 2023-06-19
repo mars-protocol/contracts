@@ -86,7 +86,7 @@ export class Deployer {
     await this.instantiate('healthContract', this.storage.codeIds.healthContract!, msg)
   }
 
-  async setCmOnHealthContract() {
+  async setConfigOnHealthContract() {
     if (this.storage.actions.healthContractConfigUpdate) {
       printGray('Credit manager address')
     } else {
@@ -96,8 +96,11 @@ export class Deployer {
         this.storage.addresses.healthContract!,
       )
 
-      printBlue('Setting credit manager address on health contract config')
-      await hExec.updateConfig({ creditManager: this.storage.addresses.creditManager! })
+      printBlue('Setting credit manager address & params on health contract config')
+      await hExec.updateConfig({
+        creditManager: this.storage.addresses.creditManager!,
+        params: this.config.params.addr,
+      })
     }
     this.storage.actions.healthContractConfigUpdate = true
   }
@@ -176,7 +179,7 @@ export class Deployer {
 
   async instantiateCreditManager() {
     const msg: RoverInstantiateMsg = {
-      params: this.storage.addresses.params!,
+      params: this.config.params.addr,
       max_unlocking_positions: this.config.maxUnlockingPositions,
       oracle: this.config.oracle.addr,
       owner: this.deployerAddr,
@@ -401,7 +404,7 @@ export class Deployer {
   }
 
   private async transferCoin(recipient: string, coin: Coin) {
-    await this.cwClient.sendTokens(this.deployerAddr, recipient, [coin], 'auto')
+    await this.cwClient.sendTokens(this.deployerAddr, recipient, [coin], 2)
     const balance = await this.cwClient.getBalance(recipient, coin.denom)
     printBlue(`New balance: ${balance.amount} ${balance.denom}`)
   }

@@ -4,6 +4,7 @@ export const memory: WebAssembly.Memory
 export function compute_health_js(a: number): number
 export function allocate(a: number): number
 export function deallocate(a: number): void
+export function requires_stargate(): void
 export function requires_iterator(): void
 export function interface_version_8(): void
 export function __wbindgen_malloc(a: number): number
