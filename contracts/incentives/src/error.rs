@@ -51,6 +51,11 @@ pub enum ContractError {
     NotWhitelisted {
         denom: String,
     },
+
+    #[error("Max whitelist limit reached. Max whitelist limit is {max_whitelist_limit}")]
+    MaxWhitelistLimitReached {
+        max_whitelist_limit: u8,
+    },
 }
 
 impl From<ContractError> for StdError {

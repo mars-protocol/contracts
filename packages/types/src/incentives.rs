@@ -7,6 +7,9 @@ use mars_owner::OwnerUpdate;
 pub struct Config {
     /// Address provider
     pub address_provider: Addr,
+    /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
+    /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
+    pub max_whitelisted_denoms: u8,
 }
 
 /// Incentive Metadata for a given incentive
@@ -55,6 +58,9 @@ pub struct InstantiateMsg {
     /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
     /// that an incentive can last, and each incentive must be a multiple of this duration.
     pub epoch_duration: u64,
+    /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
+    /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
+    pub max_whitelisted_denoms: u8,
 }
 
 #[cw_serde]
@@ -118,6 +124,9 @@ pub enum ExecuteMsg {
     UpdateConfig {
         /// The address provider contract address
         address_provider: Option<String>,
+        /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
+        /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
+        max_whitelisted_denoms: Option<u8>,
     },
 
     /// Manages admin role state
@@ -229,4 +238,7 @@ pub struct ConfigResponse {
     pub proposed_new_owner: Option<String>,
     /// Address provider
     pub address_provider: Addr,
+    /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
+    /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
+    pub max_whitelisted_denoms: u8,
 }

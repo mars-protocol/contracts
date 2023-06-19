@@ -610,6 +610,7 @@ impl MockEnvBuilder {
                     owner: self.owner.to_string(),
                     address_provider: address_provider_addr.to_string(),
                     epoch_duration: 86400,
+                    max_whitelisted_denoms: 10,
                 },
                 &[],
                 "incentives",

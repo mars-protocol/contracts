@@ -23,6 +23,7 @@ fn proper_initialization() {
         owner: String::from("owner"),
         address_provider: String::from("address_provider"),
         epoch_duration: 604800, // 1 week in seconds
+        max_whitelisted_denoms: 10,
     };
 
     let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -44,6 +45,7 @@ fn update_config() {
     // *
     let msg = ExecuteMsg::UpdateConfig {
         address_provider: None,
+        max_whitelisted_denoms: None,
     };
     let info = mock_info("somebody", &[]);
     let error_res = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -54,6 +56,7 @@ fn update_config() {
     // *
     let msg = ExecuteMsg::UpdateConfig {
         address_provider: Some("new_addr_provider".to_string()),
+        max_whitelisted_denoms: Some(20),
     };
     let info = mock_info("owner", &[]);
 
@@ -65,4 +68,5 @@ fn update_config() {
     assert_eq!(new_config.owner, Some("owner".to_string()));
     assert_eq!(new_config.proposed_new_owner, None);
     assert_eq!(new_config.address_provider, Addr::unchecked("new_addr_provider"));
+    assert_eq!(new_config.max_whitelisted_denoms, 20);
 }
