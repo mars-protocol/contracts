@@ -36,7 +36,6 @@ impl IncentivesQuerier {
                 start_after_incentive_denom: _,
                 limit: _,
             } => {
-                // TODO: implement pagination
                 let unclaimed_rewards = self
                     .unclaimed_rewards_at
                     .iter()
