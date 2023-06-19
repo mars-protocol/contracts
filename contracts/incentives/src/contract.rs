@@ -185,12 +185,8 @@ pub fn execute_update_whitelist(
     }
 
     let mut event = Event::new("mars/incentives/update_whitelist");
-    if !add_denoms.is_empty() {
-        event = event.add_attribute("add_denoms", add_denoms.join(","));
-    }
-    if !remove_denoms.is_empty() {
-        event = event.add_attribute("remove_denoms", remove_denoms.join(","));
-    }
+    event = event.add_attribute("add_denoms", format!("{:?}", add_denoms));
+    event = event.add_attribute("remove_denoms", format!("{:?}", remove_denoms));
 
     Ok(Response::default().add_event(event))
 }
