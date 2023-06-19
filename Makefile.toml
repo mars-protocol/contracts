@@ -41,7 +41,7 @@ args = ["test", "--locked", "--workspace", "--exclude", "mars-integration-tests"
 [tasks.integration-test]
 toolchain = "stable"
 command = "cargo"
-args = ["test", "--locked", "-p", "mars-integration-tests", "-p", "mars-swapper-astroport", "-p", "mars-oracle-wasm", "--test", "*"]
+args = ["test", "--locked", "-p", "mars-integration-tests", "-p", "mars-swapper-astroport", "-p", "mars-oracle-wasm", "-p", "mars-swapper-osmosis", "--test", "*"]
 
 [tasks.fmt]
 toolchain = "nightly"
