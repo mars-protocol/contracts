@@ -1,6 +1,8 @@
 use astroport::{asset::AssetInfo, router::SwapOperation};
 use cosmwasm_std::coin;
-use cw_it::traits::CwItRunner;
+use cw_it::{robot::TestRobot, traits::CwItRunner};
+use mars_red_bank_types::swapper::RouteResponse;
+use mars_swapper_astroport::route::AstroportRoute;
 use mars_testing::{astroport_swapper::AstroportSwapperRobot, test_runner::get_test_runner};
 use test_case::test_case;
 
@@ -63,7 +65,9 @@ fn set_route(denom_in: &str, denom_out: &str, operations: Vec<SwapOperation>) {
     let admin = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();
     let robot = AstroportSwapperRobot::new_with_local(&runner, &admin);
 
-    robot.set_route(operations, denom_in, denom_out, &admin);
+    robot
+        .set_route(operations.clone(), denom_in, denom_out, &admin)
+        .assert_route(denom_in, denom_out, operations);
 }
 
 #[test]
@@ -79,4 +83,71 @@ fn set_route_not_admin() {
     let operations = to_native_swap_operations(vec![(denom_in, denom_out)]);
 
     robot.set_route(operations, denom_in, denom_out, &caller);
+}
+
+#[test]
+fn query_non_existing_route() {
+    let runner = get_test_runner();
+    let admin = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();
+    let robot = AstroportSwapperRobot::new_with_local(&runner, &admin);
+
+    let denom_in = "uosmo";
+    let denom_out = "uusd";
+
+    let err = robot
+        .wasm()
+        .query::<_, RouteResponse<AstroportRoute>>(
+            &robot.swapper,
+            &mars_red_bank_types::swapper::QueryMsg::Route {
+                denom_in: denom_in.into(),
+                denom_out: denom_out.into(),
+            },
+        )
+        .unwrap_err()
+        .to_string();
+
+    assert!(err.contains("No route found from uosmo to uusd"));
+}
+
+#[test]
+fn query_routes() {
+    let runner = get_test_runner();
+    let admin = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();
+    let robot = AstroportSwapperRobot::new_with_local(&runner, &admin);
+
+    let denom_in = "uosmo";
+    let denom_out = "uusd";
+    let operations_1 = to_native_swap_operations(vec![(denom_in, denom_out)]);
+    let operations_2 = to_native_swap_operations(vec![(denom_out, denom_in)]);
+
+    robot.set_route(operations_1.clone(), denom_in, denom_out, &admin).set_route(
+        operations_2.clone(),
+        denom_out,
+        denom_in,
+        &admin,
+    );
+
+    let routes = robot.query_routes(None, None);
+
+    assert_eq!(routes.len(), 2);
+    assert!(routes.contains(&RouteResponse {
+        denom_in: denom_in.to_string(),
+        denom_out: denom_out.to_string(),
+        route: AstroportRoute {
+            operations: operations_1,
+            router: robot.astroport_contracts.router.address.clone(),
+            factory: robot.astroport_contracts.factory.address.clone(),
+            oracle: robot.oracle_robot.mars_oracle_contract_addr.clone(),
+        },
+    }));
+    assert!(routes.contains(&RouteResponse {
+        denom_in: denom_out.to_string(),
+        denom_out: denom_in.to_string(),
+        route: AstroportRoute {
+            operations: operations_2,
+            router: robot.astroport_contracts.router.address.clone(),
+            factory: robot.astroport_contracts.factory.address.clone(),
+            oracle: robot.oracle_robot.mars_oracle_contract_addr,
+        },
+    }));
 }

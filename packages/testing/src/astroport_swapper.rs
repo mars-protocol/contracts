@@ -10,7 +10,8 @@ use cw_it::{
 };
 #[cfg(feature = "osmosis-test-tube")]
 use cw_it::{osmosis_test_tube::OsmosisTestApp, Artifact};
-use mars_red_bank_types::swapper::EstimateExactInSwapResponse;
+use mars_owner::OwnerResponse;
+use mars_red_bank_types::swapper::{EstimateExactInSwapResponse, RouteResponse, RoutesResponse};
 use mars_swapper_astroport::route::AstroportRoute;
 
 use crate::wasm_oracle::{get_wasm_oracle_contract, WasmOracleTestRobot};
@@ -211,5 +212,62 @@ impl<'a> AstroportSwapperRobot<'a> {
             )
             .unwrap()
             .amount
+    }
+
+    pub fn query_route(
+        &self,
+        denom_in: impl Into<String>,
+        denom_out: impl Into<String>,
+    ) -> AstroportRoute {
+        self.wasm()
+            .query::<_, RouteResponse<AstroportRoute>>(
+                &self.swapper,
+                &mars_red_bank_types::swapper::QueryMsg::Route {
+                    denom_in: denom_in.into(),
+                    denom_out: denom_out.into(),
+                },
+            )
+            .unwrap()
+            .route
+    }
+
+    pub fn query_routes(
+        &self,
+        start_after: Option<(String, String)>,
+        limit: Option<u32>,
+    ) -> RoutesResponse<AstroportRoute> {
+        self.wasm()
+            .query::<_, RoutesResponse<AstroportRoute>>(
+                &self.swapper,
+                &mars_red_bank_types::swapper::QueryMsg::Routes {
+                    start_after,
+                    limit,
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_owner(&self) -> Option<String> {
+        self.wasm()
+            .query::<_, OwnerResponse>(
+                &self.swapper,
+                &mars_red_bank_types::swapper::QueryMsg::Owner {},
+            )
+            .unwrap()
+            .owner
+    }
+
+    pub fn assert_route(
+        &self,
+        denom_in: impl Into<String>,
+        denom_out: impl Into<String>,
+        operations: Vec<SwapOperation>,
+    ) -> &Self {
+        let route = self.query_route(denom_in, denom_out);
+        assert_eq!(route.operations, operations);
+        assert_eq!(route.router, self.astroport_contracts.router.address);
+        assert_eq!(route.factory, self.astroport_contracts.factory.address);
+        assert_eq!(route.oracle, self.oracle_robot.mars_oracle_contract_addr);
+        self
     }
 }
