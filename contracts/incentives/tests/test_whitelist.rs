@@ -5,7 +5,7 @@ use cosmwasm_std::{
 };
 use mars_incentives::{
     contract::{execute, execute_balance_change},
-    state::EMISSIONS,
+    state::{EMISSIONS, WHITELIST_COUNT},
     ContractError,
 };
 use mars_owner::OwnerError::NotOwner;
@@ -275,4 +275,59 @@ fn whitelisting_already_whitelisted_denom_updates_min_emission() {
     // Query whitelist
     let whitelist: Vec<(String, Uint128)> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
     assert_eq!(whitelist, vec![("umars".to_string(), Uint128::new(5))]);
+}
+
+#[test]
+fn cannot_whitelist_more_than_max_limit() {
+    let env = mock_env();
+    let mut deps = th_setup_with_env(env);
+
+    let owner = "owner";
+
+    // add 10 denoms to whitelist
+    let add_whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
+        add_denoms: vec![
+            ("umars".to_string(), Uint128::new(3)),
+            ("denom1".to_string(), Uint128::new(3)),
+            ("denom2".to_string(), Uint128::new(3)),
+            ("denom3".to_string(), Uint128::new(3)),
+            ("denom4".to_string(), Uint128::new(3)),
+            ("denom5".to_string(), Uint128::new(3)),
+            ("denom6".to_string(), Uint128::new(3)),
+            ("denom7".to_string(), Uint128::new(3)),
+            ("denom8".to_string(), Uint128::new(3)),
+            ("denom9".to_string(), Uint128::new(3)),
+        ],
+        remove_denoms: vec![],
+    };
+    execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), add_whitelist_msg).unwrap();
+
+    // Check whitelist count
+    let whitelist_count = WHITELIST_COUNT.load(&deps.storage).unwrap();
+    assert_eq!(whitelist_count, 10);
+
+    // add denom to whitelist again, should fail
+    let add_whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
+        add_denoms: vec![("denom10".to_string(), Uint128::new(5))],
+        remove_denoms: vec![],
+    };
+    let res =
+        execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), add_whitelist_msg).unwrap_err();
+    assert_eq!(
+        res,
+        ContractError::MaxWhitelistLimitReached {
+            max_whitelist_limit: 10
+        }
+    );
+
+    // Remove one denom from whitelist, and add a new one, should work
+    let add_whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
+        add_denoms: vec![("denom10".to_string(), Uint128::new(5))],
+        remove_denoms: vec![("umars".to_string())],
+    };
+    execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), add_whitelist_msg).unwrap();
+
+    // Check whitelist count. Should still be 10.
+    let whitelist_count = WHITELIST_COUNT.load(&deps.storage).unwrap();
+    assert_eq!(whitelist_count, 10);
 }
