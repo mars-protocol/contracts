@@ -98,7 +98,8 @@ pub fn validate_incentive_schedule(
         });
     }
     // Start time must be a multiple of epoch duration away from any other existing incentive
-    // for the same collateral denom and incentive denom tuple. We do this so we have at most oneincentive schedule per epoch, to limit gas usage.
+    // for the same collateral denom and incentive denom tuple. We do this so we have exactly one
+    // incentive schedule per epoch, to limit gas usage.
     let old_schedule = EMISSIONS
         .prefix((collateral_denom, incentive_denom))
         .range(storage, None, None, Order::Ascending)
