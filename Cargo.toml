@@ -43,7 +43,7 @@ anyhow            = "1.0.71"
 bech32            = "0.9.1"
 cosmwasm-schema   = "1.2.6"
 cosmwasm-std      = "1.2.6"
-cw2               = { git = "https://github.com/CosmWasm/cw-plus", rev = "de1fb0b" }
+cw2               = "1.1.0"
 cw-multi-test     = "0.16.5"
 cw-storage-plus   = "1.0.1"
 cw-utils          = "1.0.1"
