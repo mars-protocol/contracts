@@ -1909,7 +1909,7 @@ dependencies = [
 
 [[package]]
 name = "mars-params"
-version = "1.1.0"
+version = "1.0.7"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",

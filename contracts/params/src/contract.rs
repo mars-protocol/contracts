@@ -7,13 +7,13 @@ use mars_owner::OwnerInit::SetInitialOwner;
 use crate::{
     emergency_powers::{disable_borrowing, disallow_coin, set_zero_deposit_cap, set_zero_max_ltv},
     error::ContractResult,
-    execute::{assert_mcf, update_asset_params, update_max_close_factor, update_vault_config},
+    execute::{assert_thf, update_asset_params, update_target_health_factor, update_vault_config},
     msg::{
         CmEmergencyUpdate, EmergencyUpdate, ExecuteMsg, InstantiateMsg, QueryMsg,
         RedBankEmergencyUpdate,
     },
     query::{query_all_asset_params, query_all_vault_configs, query_vault_config},
-    state::{ASSET_PARAMS, MAX_CLOSE_FACTOR, OWNER},
+    state::{ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR},
 };
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -36,8 +36,8 @@ pub fn instantiate(
         },
     )?;
 
-    assert_mcf(msg.max_close_factor)?;
-    MAX_CLOSE_FACTOR.save(deps.storage, &msg.max_close_factor)?;
+    assert_thf(msg.target_health_factor)?;
+    TARGET_HEALTH_FACTOR.save(deps.storage, &msg.target_health_factor)?;
 
     Ok(Response::default())
 }
@@ -52,7 +52,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::UpdateOwner(update) => Ok(OWNER.update(deps, info, update)?),
         ExecuteMsg::UpdateAssetParams(update) => update_asset_params(deps, info, update),
-        ExecuteMsg::UpdateMaxCloseFactor(mcf) => update_max_close_factor(deps, info, mcf),
+        ExecuteMsg::UpdateTargetHealthFactor(mcf) => update_target_health_factor(deps, info, mcf),
         ExecuteMsg::UpdateVaultConfig(update) => update_vault_config(deps, info, update),
         ExecuteMsg::EmergencyUpdate(update) => match update {
             EmergencyUpdate::RedBank(rb_u) => match rb_u {
@@ -89,7 +89,7 @@ pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> ContractResult<Binary> {
             start_after,
             limit,
         } => to_binary(&query_all_vault_configs(deps, start_after, limit)?),
-        QueryMsg::MaxCloseFactor {} => to_binary(&MAX_CLOSE_FACTOR.load(deps.storage)?),
+        QueryMsg::TargetHealthFactor {} => to_binary(&TARGET_HEALTH_FACTOR.load(deps.storage)?),
     };
     res.map_err(Into::into)
 }

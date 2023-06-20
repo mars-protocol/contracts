@@ -2,27 +2,27 @@ use cosmwasm_std::{Decimal, DepsMut, MessageInfo, Response};
 use mars_utils::error::ValidationError;
 
 use crate::{
-    error::ContractResult,
+    error::{ContractError, ContractResult},
     msg::{AssetParamsUpdate, VaultConfigUpdate},
-    state::{ASSET_PARAMS, MAX_CLOSE_FACTOR, OWNER, VAULT_CONFIGS},
+    state::{ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR, VAULT_CONFIGS},
 };
 
 pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub fn update_max_close_factor(
+pub fn update_target_health_factor(
     deps: DepsMut,
     info: MessageInfo,
-    max_close_factor: Decimal,
+    target_health_factor: Decimal,
 ) -> ContractResult<Response> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
-    assert_mcf(max_close_factor)?;
-    MAX_CLOSE_FACTOR.save(deps.storage, &max_close_factor)?;
+    assert_thf(target_health_factor)?;
+    TARGET_HEALTH_FACTOR.save(deps.storage, &target_health_factor)?;
 
     let response = Response::new()
-        .add_attribute("action", "update_max_close_factor")
-        .add_attribute("value", max_close_factor.to_string());
+        .add_attribute("action", "update_target_health_factor")
+        .add_attribute("value", target_health_factor.to_string());
 
     Ok(response)
 }
@@ -76,16 +76,16 @@ pub fn update_vault_config(
     Ok(response)
 }
 
-pub fn assert_mcf(param_value: Decimal) -> Result<(), ValidationError> {
-    if !param_value.le(&Decimal::one()) {
-        Err(ValidationError::InvalidParam {
-            param_name: "max-close-factor".to_string(),
-            invalid_value: "max-close-factor".to_string(),
-            predicate: "<= 1".to_string(),
-        })
-    } else {
-        Ok(())
+pub fn assert_thf(thf: Decimal) -> Result<(), ContractError> {
+    if thf < Decimal::one() || thf > Decimal::from_atomics(2u128, 0u32)? {
+        return Err(ValidationError::InvalidParam {
+            param_name: "target_health_factor".to_string(),
+            invalid_value: thf.to_string(),
+            predicate: "[1, 2]".to_string(),
+        }
+        .into());
     }
+    Ok(())
 }
 
 /// liquidation_threshold should be greater than or equal to max_loan_to_value
