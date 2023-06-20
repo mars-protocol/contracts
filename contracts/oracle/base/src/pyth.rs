@@ -1,7 +1,7 @@
 use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, StdError, Uint128};
 use cw_storage_plus::Map;
 use mars_red_bank_types::oracle::{ActionKind, Config};
-use pyth_sdk_cw::{query_price_feed, PriceFeedResponse, PriceIdentifier};
+use pyth_sdk_cw::{query_price_feed, Price, PriceFeed, PriceFeedResponse, PriceIdentifier};
 
 use super::*;
 use crate::error::ContractError::InvalidPrice;
@@ -60,31 +60,12 @@ fn query_pyth_price_for_default(
     usd_price: Decimal,
     price_feed_response: PriceFeedResponse,
 ) -> ContractResult<Decimal> {
-    let current_time = env.block.time.seconds();
-
     let price_feed = price_feed_response.price_feed;
 
-    // Check if the current price is not too old
-    let current_price_opt = price_feed.get_price_no_older_than(current_time as i64, max_staleness);
-    let Some(current_price) = current_price_opt else {
-        return Err(InvalidPrice {
-            reason: format!(
-                "current price publish time is too old/stale. published: {}, now: {}",
-                price_feed.get_price_unchecked().publish_time, current_time
-            ),
-        });
-    };
-
-    // Check if the ema price is not too old
-    let ema_price_opt = price_feed.get_ema_price_no_older_than(current_time as i64, max_staleness);
-    let Some(ema_price) = ema_price_opt else {
-        return Err(InvalidPrice {
-            reason: format!(
-                "EMA price publish time is too old/stale. published: {}, now: {}",
-                price_feed.get_ema_price_unchecked().publish_time, current_time
-            ),
-        });
-    };
+    let current_time = env.block.time.seconds();
+    let current_price =
+        assert_pyth_current_price_not_too_old(price_feed, current_time, max_staleness)?;
+    let ema_price = assert_pyth_ema_price_not_too_old(price_feed, current_time, max_staleness)?;
 
     // Check if the current and EMA price is > 0
     if current_price.price <= 0 || ema_price.price <= 0 {
@@ -96,25 +77,8 @@ fn query_pyth_price_for_default(
     let current_price_dec = scale_to_exponent(current_price.price as u128, current_price.expo)?;
     let ema_price_dec = scale_to_exponent(ema_price.price as u128, ema_price.expo)?;
 
-    // Check confidence deviation
-    let confidence = scale_to_exponent(current_price.conf as u128, current_price.expo)?;
-    let price_confidence = confidence.checked_div(ema_price_dec)?;
-    if price_confidence > max_confidence {
-        return Err(InvalidPrice {
-            reason: format!("price confidence deviation {price_confidence} exceeds max allowed {max_confidence}")
-        });
-    }
-
-    // Check price deviation
-    let delta = current_price_dec.abs_diff(ema_price_dec);
-    let price_deviation = delta.checked_div(ema_price_dec)?;
-    if price_deviation > max_deviation {
-        return Err(InvalidPrice {
-            reason: format!(
-                "price deviation {price_deviation} exceeds max allowed {max_deviation}"
-            ),
-        });
-    }
+    assert_pyth_price_confidence(current_price, ema_price_dec, max_confidence)?;
+    assert_pyth_price_deviation(current_price_dec, ema_price_dec, max_deviation)?;
 
     let current_price_dec = scale_pyth_price(
         current_price.price as u128,
@@ -133,20 +97,11 @@ fn query_pyth_price_for_liquidation(
     usd_price: Decimal,
     price_feed_response: PriceFeedResponse,
 ) -> ContractResult<Decimal> {
-    let current_time = env.block.time.seconds();
-
     let price_feed = price_feed_response.price_feed;
 
-    // Check if the current price is not too old
-    let current_price_opt = price_feed.get_price_no_older_than(current_time as i64, max_staleness);
-    let Some(current_price) = current_price_opt else {
-        return Err(InvalidPrice {
-            reason: format!(
-                "current price publish time is too old/stale. published: {}, now: {}",
-                price_feed.get_price_unchecked().publish_time, current_time
-            ),
-        });
-    };
+    let current_time = env.block.time.seconds();
+    let current_price =
+        assert_pyth_current_price_not_too_old(price_feed, current_time, max_staleness)?;
 
     // Check if the current price is > 0
     if current_price.price <= 0 {
@@ -163,6 +118,93 @@ fn query_pyth_price_for_liquidation(
     )?;
 
     Ok(current_price_dec)
+}
+
+/// Assert Pyth configuration
+pub fn assert_pyth(max_confidence: Decimal, max_deviation: Decimal) -> ContractResult<()> {
+    if !max_confidence.le(&Decimal::percent(20u64)) {
+        return Err(ContractError::InvalidPriceSource {
+            reason: "max_confidence must be in the range of <0;0.2>".to_string(),
+        });
+    }
+
+    if !max_deviation.le(&Decimal::percent(20u64)) {
+        return Err(ContractError::InvalidPriceSource {
+            reason: "max_deviation must be in the range of <0;0.2>".to_string(),
+        });
+    }
+
+    Ok(())
+}
+
+/// Check if the current price is not too old
+pub fn assert_pyth_current_price_not_too_old(
+    price_feed: PriceFeed,
+    current_time: u64,
+    max_staleness: u64,
+) -> ContractResult<Price> {
+    let current_price_opt = price_feed.get_price_no_older_than(current_time as i64, max_staleness);
+    let Some(current_price) = current_price_opt else {
+        return Err(InvalidPrice {
+            reason: format!(
+                "current price publish time is too old/stale. published: {}, now: {}",
+                price_feed.get_price_unchecked().publish_time, current_time
+            ),
+        });
+    };
+    Ok(current_price)
+}
+
+/// Check if the ema price is not too old
+pub fn assert_pyth_ema_price_not_too_old(
+    price_feed: PriceFeed,
+    current_time: u64,
+    max_staleness: u64,
+) -> ContractResult<Price> {
+    let ema_price_opt = price_feed.get_ema_price_no_older_than(current_time as i64, max_staleness);
+    let Some(ema_price) = ema_price_opt else {
+            return Err(InvalidPrice {
+                reason: format!(
+                    "EMA price publish time is too old/stale. published: {}, now: {}",
+                    price_feed.get_ema_price_unchecked().publish_time, current_time
+                ),
+            });
+        };
+    Ok(ema_price)
+}
+
+/// Check price confidence
+pub fn assert_pyth_price_confidence(
+    current_price: Price,
+    ema_price_dec: Decimal,
+    max_confidence: Decimal,
+) -> ContractResult<()> {
+    let confidence = scale_to_exponent(current_price.conf as u128, current_price.expo)?;
+    let price_confidence = confidence.checked_div(ema_price_dec)?;
+    if price_confidence > max_confidence {
+        return Err(InvalidPrice {
+            reason: format!("price confidence deviation {price_confidence} exceeds max allowed {max_confidence}")
+        });
+    }
+    Ok(())
+}
+
+/// Check price deviation
+pub fn assert_pyth_price_deviation(
+    current_price_dec: Decimal,
+    ema_price_dec: Decimal,
+    max_deviation: Decimal,
+) -> ContractResult<()> {
+    let delta = current_price_dec.abs_diff(ema_price_dec);
+    let price_deviation = delta.checked_div(ema_price_dec)?;
+    if price_deviation > max_deviation {
+        return Err(InvalidPrice {
+            reason: format!(
+                "price deviation {price_deviation} exceeds max allowed {max_deviation}"
+            ),
+        });
+    }
+    Ok(())
 }
 
 /// We have to represent the price for utoken in base_denom.
@@ -231,23 +273,6 @@ pub fn scale_to_exponent(value: u128, expo: i32) -> ContractResult<Decimal> {
         let res = Uint128::from(value).checked_mul(target_expo)?;
         Ok(Decimal::from_ratio(res, 1u128))
     }
-}
-
-/// Assert Pyth configuration
-pub fn assert_pyth(max_confidence: Decimal, max_deviation: Decimal) -> ContractResult<()> {
-    if !max_confidence.le(&Decimal::percent(20u64)) {
-        return Err(ContractError::InvalidPriceSource {
-            reason: "max_confidence must be in the range of <0;0.2>".to_string(),
-        });
-    }
-
-    if !max_deviation.le(&Decimal::percent(20u64)) {
-        return Err(ContractError::InvalidPriceSource {
-            reason: "max_deviation must be in the range of <0;0.2>".to_string(),
-        });
-    }
-
-    Ok(())
 }
 
 #[cfg(test)]
