@@ -25,6 +25,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.instantiateOracle(config.oracleCustomInitParams)
     await deployer.instantiateRewards()
     await deployer.instantiateSwapper()
+    await deployer.instantiateParams()
     await deployer.saveDeploymentAddrsToFile()
 
     // setup

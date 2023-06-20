@@ -3,6 +3,7 @@ members = [
   "contracts/address-provider",
   "contracts/incentives",
   "contracts/oracle/*",
+  "contracts/params",
   "contracts/swapper/*",
   "contracts/red-bank",
   "contracts/rewards-collector",
