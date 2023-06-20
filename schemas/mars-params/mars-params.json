@@ -7,21 +7,21 @@
     "title": "InstantiateMsg",
     "type": "object",
     "required": [
-      "max_close_factor",
-      "owner"
+      "owner",
+      "target_health_factor"
     ],
     "properties": {
-      "max_close_factor": {
-        "description": "The maximum percent a liquidator can decrease the debt amount of the liquidatee",
+      "owner": {
+        "description": "Contract's owner",
+        "type": "string"
+      },
+      "target_health_factor": {
+        "description": "Determines the ideal HF a position should be left at immediately after the position has been liquidated.",
         "allOf": [
           {
             "$ref": "#/definitions/Decimal"
           }
         ]
-      },
-      "owner": {
-        "description": "Contract's owner",
-        "type": "string"
       }
     },
     "additionalProperties": false,
@@ -51,10 +51,10 @@
       {
         "type": "object",
         "required": [
-          "update_max_close_factor"
+          "update_target_health_factor"
         ],
         "properties": {
-          "update_max_close_factor": {
+          "update_target_health_factor": {
             "$ref": "#/definitions/Decimal"
           }
         },
@@ -106,6 +106,7 @@
           "liquidation_bonus",
           "liquidation_threshold",
           "max_loan_to_value",
+          "protocol_liquidation_fee",
           "red_bank"
         ],
         "properties": {
@@ -116,12 +117,15 @@
             "type": "string"
           },
           "liquidation_bonus": {
-            "$ref": "#/definitions/Decimal"
+            "$ref": "#/definitions/LiquidationBonus"
           },
           "liquidation_threshold": {
             "$ref": "#/definitions/Decimal"
           },
           "max_loan_to_value": {
+            "$ref": "#/definitions/Decimal"
+          },
+          "protocol_liquidation_fee": {
             "$ref": "#/definitions/Decimal"
           },
           "red_bank": {
@@ -330,6 +334,51 @@
           },
           "max_loan_to_value": {
             "$ref": "#/definitions/Decimal"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LiquidationBonus": {
+        "description": "The LB will depend on the Health Factor and a couple other parameters as follows: Liquidation Bonus = min( b + (slope * (1 - HF)), max( min(CR - 1, max_lb), min_lb ) )",
+        "type": "object",
+        "required": [
+          "max_lb",
+          "min_lb",
+          "slope",
+          "starting_lb"
+        ],
+        "properties": {
+          "max_lb": {
+            "description": "Maximum LB that can be granted to a liquidator; in other words, the maxLB establishes a ceiling to the LB. This is a precautionary parameter to mitigate liquidated users being over-punished.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              }
+            ]
+          },
+          "min_lb": {
+            "description": "Minimum LB that will be granted to liquidators even when the position is undercollateralized.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              }
+            ]
+          },
+          "slope": {
+            "description": "Defines the slope at which the LB increases as the HF decreases. The higher the slope, the faster the LB increases as the HF decreases.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              }
+            ]
+          },
+          "starting_lb": {
+            "description": "Marks the level at which the LB starts when HF drops marginally below 1. If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              }
+            ]
           }
         },
         "additionalProperties": false
@@ -636,10 +685,10 @@
       {
         "type": "object",
         "required": [
-          "max_close_factor"
+          "target_health_factor"
         ],
         "properties": {
-          "max_close_factor": {
+          "target_health_factor": {
             "type": "object",
             "additionalProperties": false
           }
@@ -671,6 +720,7 @@
             "liquidation_bonus",
             "liquidation_threshold",
             "max_loan_to_value",
+            "protocol_liquidation_fee",
             "red_bank"
           ],
           "properties": {
@@ -681,12 +731,15 @@
               "type": "string"
             },
             "liquidation_bonus": {
-              "$ref": "#/definitions/Decimal"
+              "$ref": "#/definitions/LiquidationBonus"
             },
             "liquidation_threshold": {
               "$ref": "#/definitions/Decimal"
             },
             "max_loan_to_value": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "protocol_liquidation_fee": {
               "$ref": "#/definitions/Decimal"
             },
             "red_bank": {
@@ -787,6 +840,51 @@
             },
             "max_loan_to_value": {
               "$ref": "#/definitions/Decimal"
+            }
+          },
+          "additionalProperties": false
+        },
+        "LiquidationBonus": {
+          "description": "The LB will depend on the Health Factor and a couple other parameters as follows: Liquidation Bonus = min( b + (slope * (1 - HF)), max( min(CR - 1, max_lb), min_lb ) )",
+          "type": "object",
+          "required": [
+            "max_lb",
+            "min_lb",
+            "slope",
+            "starting_lb"
+          ],
+          "properties": {
+            "max_lb": {
+              "description": "Maximum LB that can be granted to a liquidator; in other words, the maxLB establishes a ceiling to the LB. This is a precautionary parameter to mitigate liquidated users being over-punished.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "min_lb": {
+              "description": "Minimum LB that will be granted to liquidators even when the position is undercollateralized.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "slope": {
+              "description": "Defines the slope at which the LB increases as the HF decreases. The higher the slope, the faster the LB increases as the HF decreases.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "starting_lb": {
+              "description": "Marks the level at which the LB starts when HF drops marginally below 1. If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
             }
           },
           "additionalProperties": false
@@ -972,6 +1070,7 @@
         "liquidation_bonus",
         "liquidation_threshold",
         "max_loan_to_value",
+        "protocol_liquidation_fee",
         "red_bank"
       ],
       "properties": {
@@ -982,12 +1081,15 @@
           "type": "string"
         },
         "liquidation_bonus": {
-          "$ref": "#/definitions/Decimal"
+          "$ref": "#/definitions/LiquidationBonus"
         },
         "liquidation_threshold": {
           "$ref": "#/definitions/Decimal"
         },
         "max_loan_to_value": {
+          "$ref": "#/definitions/Decimal"
+        },
+        "protocol_liquidation_fee": {
           "$ref": "#/definitions/Decimal"
         },
         "red_bank": {
@@ -1096,6 +1198,51 @@
           },
           "additionalProperties": false
         },
+        "LiquidationBonus": {
+          "description": "The LB will depend on the Health Factor and a couple other parameters as follows: Liquidation Bonus = min( b + (slope * (1 - HF)), max( min(CR - 1, max_lb), min_lb ) )",
+          "type": "object",
+          "required": [
+            "max_lb",
+            "min_lb",
+            "slope",
+            "starting_lb"
+          ],
+          "properties": {
+            "max_lb": {
+              "description": "Maximum LB that can be granted to a liquidator; in other words, the maxLB establishes a ceiling to the LB. This is a precautionary parameter to mitigate liquidated users being over-punished.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "min_lb": {
+              "description": "Minimum LB that will be granted to liquidators even when the position is undercollateralized.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "slope": {
+              "description": "Defines the slope at which the LB increases as the HF decreases. The higher the slope, the faster the LB increases as the HF decreases.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "starting_lb": {
+              "description": "Marks the level at which the LB starts when HF drops marginally below 1. If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
         "RedBankSettings": {
           "type": "object",
           "required": [
@@ -1121,12 +1268,6 @@
           "type": "string"
         }
       }
-    },
-    "max_close_factor": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Decimal",
-      "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
-      "type": "string"
     },
     "owner": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1164,6 +1305,12 @@
         }
       },
       "additionalProperties": false
+    },
+    "target_health_factor": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Decimal",
+      "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+      "type": "string"
     },
     "vault_config": {
       "$schema": "http://json-schema.org/draft-07/schema#",

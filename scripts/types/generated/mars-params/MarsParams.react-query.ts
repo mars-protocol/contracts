@@ -23,6 +23,7 @@ import {
   AssetParamsBaseForString,
   CmSettingsForString,
   HlsParamsBaseForString,
+  LiquidationBonus,
   RedBankSettings,
   VaultConfigBaseForString,
   Coin,
@@ -60,9 +61,9 @@ export const marsParamsQueryKeys = {
     [
       { ...marsParamsQueryKeys.address(contractAddress)[0], method: 'all_vault_configs', args },
     ] as const,
-  maxCloseFactor: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+  targetHealthFactor: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
-      { ...marsParamsQueryKeys.address(contractAddress)[0], method: 'max_close_factor', args },
+      { ...marsParamsQueryKeys.address(contractAddress)[0], method: 'target_health_factor', args },
     ] as const,
 }
 export interface MarsParamsReactQuery<TResponse, TData = TResponse> {
@@ -74,15 +75,15 @@ export interface MarsParamsReactQuery<TResponse, TData = TResponse> {
     initialData?: undefined
   }
 }
-export interface MarsParamsMaxCloseFactorQuery<TData>
+export interface MarsParamsTargetHealthFactorQuery<TData>
   extends MarsParamsReactQuery<Decimal, TData> {}
-export function useMarsParamsMaxCloseFactorQuery<TData = Decimal>({
+export function useMarsParamsTargetHealthFactorQuery<TData = Decimal>({
   client,
   options,
-}: MarsParamsMaxCloseFactorQuery<TData>) {
+}: MarsParamsTargetHealthFactorQuery<TData>) {
   return useQuery<Decimal, Error, TData>(
-    marsParamsQueryKeys.maxCloseFactor(client?.contractAddress),
-    () => (client ? client.maxCloseFactor() : Promise.reject(new Error('Invalid client'))),
+    marsParamsQueryKeys.targetHealthFactor(client?.contractAddress),
+    () => (client ? client.targetHealthFactor() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
@@ -252,7 +253,7 @@ export function useMarsParamsUpdateAssetParamsMutation(
     options,
   )
 }
-export interface MarsParamsUpdateMaxCloseFactorMutation {
+export interface MarsParamsUpdateTargetHealthFactorMutation {
   client: MarsParamsClient
   args?: {
     fee?: number | StdFee | 'auto'
@@ -260,15 +261,15 @@ export interface MarsParamsUpdateMaxCloseFactorMutation {
     funds?: Coin[]
   }
 }
-export function useMarsParamsUpdateMaxCloseFactorMutation(
+export function useMarsParamsUpdateTargetHealthFactorMutation(
   options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsParamsUpdateMaxCloseFactorMutation>,
+    UseMutationOptions<ExecuteResult, Error, MarsParamsUpdateTargetHealthFactorMutation>,
     'mutationFn'
   >,
 ) {
-  return useMutation<ExecuteResult, Error, MarsParamsUpdateMaxCloseFactorMutation>(
+  return useMutation<ExecuteResult, Error, MarsParamsUpdateTargetHealthFactorMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) =>
-      client.updateMaxCloseFactor(msg, fee, memo, funds),
+      client.updateTargetHealthFactor(msg, fee, memo, funds),
     options,
   )
 }

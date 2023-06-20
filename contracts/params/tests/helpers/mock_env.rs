@@ -20,7 +20,7 @@ pub struct MockEnv {
 
 pub struct MockEnvBuilder {
     pub app: BasicApp,
-    pub max_close_factor: Option<Decimal>,
+    pub target_health_factor: Option<Decimal>,
     pub emergency_owner: Option<String>,
 }
 
@@ -29,7 +29,7 @@ impl MockEnv {
     pub fn new() -> MockEnvBuilder {
         MockEnvBuilder {
             app: App::default(),
-            max_close_factor: None,
+            target_health_factor: None,
             emergency_owner: None,
         }
     }
@@ -73,15 +73,15 @@ impl MockEnv {
         )
     }
 
-    pub fn update_max_close_factor(
+    pub fn update_target_health_factor(
         &mut self,
         sender: &Addr,
-        mcf: Decimal,
+        thf: Decimal,
     ) -> AnyResult<AppResponse> {
         self.app.execute_contract(
             sender.clone(),
             self.params_contract.clone(),
-            &ExecuteMsg::UpdateMaxCloseFactor(mcf),
+            &ExecuteMsg::UpdateTargetHealthFactor(thf),
             &[],
         )
     }
@@ -170,10 +170,10 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_max_close_factor(&self) -> Decimal {
+    pub fn query_target_health_factor(&self) -> Decimal {
         self.app
             .wrap()
-            .query_wasm_smart(self.params_contract.clone(), &QueryMsg::MaxCloseFactor {})
+            .query_wasm_smart(self.params_contract.clone(), &QueryMsg::TargetHealthFactor {})
             .unwrap()
     }
 }
@@ -187,7 +187,7 @@ impl MockEnvBuilder {
             Addr::unchecked("owner"),
             &InstantiateMsg {
                 owner: "owner".to_string(),
-                max_close_factor: self.get_max_close_factor(),
+                target_health_factor: self.get_target_health_factor(),
             },
             &[],
             "mock-params-contract",
@@ -221,15 +221,15 @@ impl MockEnvBuilder {
     // Get or defaults
     //--------------------------------------------------------------------------------------------------
 
-    pub fn get_max_close_factor(&self) -> Decimal {
-        self.max_close_factor.unwrap_or(Decimal::from_str("0.5").unwrap())
+    pub fn get_target_health_factor(&self) -> Decimal {
+        self.target_health_factor.unwrap_or(Decimal::from_str("1.05").unwrap())
     }
 
     //--------------------------------------------------------------------------------------------------
     // Setter functions
     //--------------------------------------------------------------------------------------------------
-    pub fn max_close_factor(&mut self, mcf: Decimal) -> &mut Self {
-        self.max_close_factor = Some(mcf);
+    pub fn target_health_factor(&mut self, thf: Decimal) -> &mut Self {
+        self.target_health_factor = Some(thf);
         self
     }
 
