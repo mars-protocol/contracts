@@ -5,24 +5,18 @@ import { GasPrice } from '@cosmjs/stargate'
 import { Deployer } from './deployer'
 import { Storage } from './storage'
 
-const getWallet = async (config: DeploymentConfig) => {
-  const mnemonic = process.env.MNEMONIC
-
-  if (!mnemonic) {
-    throw new Error('The environment variable MNEMONIC is not set.')
-  }
-
+export const getWallet = async (config: DeploymentConfig, mnemonic: string) => {
   return await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
     prefix: config.chainPrefix,
   })
 }
 
-const getDeployer = async (wallet: DirectSecp256k1HdWallet) => {
+export const getDeployer = async (wallet: DirectSecp256k1HdWallet) => {
   const accounts = await wallet.getAccounts()
   return accounts[0].address
 }
 
-const setupClient = async (config: DeploymentConfig, wallet: DirectSecp256k1HdWallet) => {
+export const setupClient = async (config: DeploymentConfig, wallet: DirectSecp256k1HdWallet) => {
   const clientOption: SigningCosmWasmClientOptions = {
     gasPrice: GasPrice.fromString(config.gasPrice),
   }
@@ -30,7 +24,13 @@ const setupClient = async (config: DeploymentConfig, wallet: DirectSecp256k1HdWa
 }
 
 export const setupDeployer = async (config: DeploymentConfig) => {
-  const wallet = await getWallet(config)
+  const mnemonic = process.env.MNEMONIC
+
+  if (!mnemonic) {
+    throw new Error('The environment variable MNEMONIC is not set.')
+  }
+
+  const wallet = await getWallet(config, mnemonic)
   const client = await setupClient(config, wallet)
   const deployerAddr = await getDeployer(wallet)
   const storage = await Storage.load(config.chainId)

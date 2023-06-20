@@ -8,18 +8,12 @@ export interface StorageItems {
     swapper?: number
     params?: number
   }
-  addresses: {
-    'address-provider'?: string
-    'rewards-collector'?: string
-    'red-bank'?: string
-    incentives?: string
-    oracle?: string
-    swapper?: string
-    params?: string
-  }
+  addresses: MarsAddresses
 
   execute: {
     addressProviderUpdated: Record<string, boolean>
+    contractOwner: Record<string, string>
+    contractAdmin: Record<string, string>
     assetsInitialized: string[]
     secondAssetInitialized?: boolean
     oraclePriceSet?: boolean
@@ -27,4 +21,14 @@ export interface StorageItems {
   }
 
   owner?: string
+}
+
+export type MarsAddresses = {
+  'address-provider'?: string
+  'rewards-collector'?: string
+  'red-bank'?: string
+  incentives?: string
+  oracle?: string
+  swapper?: string
+  params?: string
 }

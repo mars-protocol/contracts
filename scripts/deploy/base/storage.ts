@@ -28,7 +28,12 @@ export class Storage implements StorageItems {
       return new this(chainId, {
         addresses: {},
         codeIds: {},
-        execute: { assetsInitialized: [], addressProviderUpdated: {} },
+        execute: {
+          assetsInitialized: [],
+          addressProviderUpdated: {},
+          contractAdmin: {},
+          contractOwner: {},
+        },
       })
     }
   }
