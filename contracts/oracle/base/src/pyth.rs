@@ -1,18 +1,23 @@
 use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, StdError, Uint128};
 use cw_storage_plus::Map;
 use mars_red_bank_types::oracle::{ActionKind, Config};
-use pyth_sdk_cw::query_price_feed;
-pub use pyth_sdk_cw::PriceIdentifier;
+use pyth_sdk_cw::{query_price_feed, PriceFeedResponse, PriceIdentifier};
 
 use super::*;
 use crate::error::ContractError::InvalidPrice;
 
+/// We want to discriminate which actions should trigger a circuit breaker check.
+/// The objective is to allow liquidations to happen without requiring too many checks (always be open for liquidations)
+/// while not allowing other actions to be taken in cases of extreme volatility (which could indicate price manipulation attacks).
+#[allow(clippy::too_many_arguments)]
 pub fn query_pyth_price<P: PriceSourceChecked<Empty>>(
     deps: &Deps,
     env: &Env,
     contract_addr: Addr,
     price_feed_id: PriceIdentifier,
     max_staleness: u64,
+    max_confidence: Decimal,
+    max_deviation: Decimal,
     denom_decimals: u8,
     config: &Config,
     price_sources: &Map<&str, P>,
@@ -22,23 +27,126 @@ pub fn query_pyth_price<P: PriceSourceChecked<Empty>>(
     let usd_price = price_sources
         .load(deps.storage, "usd")
         .map_err(|_| StdError::generic_err("Price source not found for denom 'usd'"))?
-        .query_price(deps, env, "usd", config, price_sources, kind)?;
-
-    let current_time = env.block.time.seconds();
+        .query_price(deps, env, "usd", config, price_sources, kind.clone())?;
 
     let price_feed_response = query_price_feed(&deps.querier, contract_addr, price_feed_id)?;
+
+    match kind {
+        ActionKind::Default => query_pyth_price_for_default(
+            env,
+            max_staleness,
+            max_confidence,
+            max_deviation,
+            denom_decimals,
+            usd_price,
+            price_feed_response,
+        ),
+        ActionKind::Liquidation => query_pyth_price_for_liquidation(
+            env,
+            max_staleness,
+            denom_decimals,
+            usd_price,
+            price_feed_response,
+        ),
+    }
+}
+
+fn query_pyth_price_for_default(
+    env: &Env,
+    max_staleness: u64,
+    max_confidence: Decimal,
+    max_deviation: Decimal,
+    denom_decimals: u8,
+    usd_price: Decimal,
+    price_feed_response: PriceFeedResponse,
+) -> ContractResult<Decimal> {
+    let current_time = env.block.time.seconds();
+
     let price_feed = price_feed_response.price_feed;
 
     // Check if the current price is not too old
     let current_price_opt = price_feed.get_price_no_older_than(current_time as i64, max_staleness);
     let Some(current_price) = current_price_opt else {
-            return Err(InvalidPrice {
-                reason: format!(
-                    "current price publish time is too old/stale. published: {}, now: {}",
-                    price_feed.get_price_unchecked().publish_time, current_time
-                ),
-            });
-        };
+        return Err(InvalidPrice {
+            reason: format!(
+                "current price publish time is too old/stale. published: {}, now: {}",
+                price_feed.get_price_unchecked().publish_time, current_time
+            ),
+        });
+    };
+
+    // Check if the ema price is not too old
+    let ema_price_opt = price_feed.get_ema_price_no_older_than(current_time as i64, max_staleness);
+    let Some(ema_price) = ema_price_opt else {
+        return Err(InvalidPrice {
+            reason: format!(
+                "EMA price publish time is too old/stale. published: {}, now: {}",
+                price_feed.get_ema_price_unchecked().publish_time, current_time
+            ),
+        });
+    };
+
+    // Check if the current and EMA price is > 0
+    if current_price.price <= 0 || ema_price.price <= 0 {
+        return Err(InvalidPrice {
+            reason: "price can't be <= 0".to_string(),
+        });
+    }
+
+    let current_price_dec = scale_to_exponent(current_price.price as u128, current_price.expo)?;
+    let ema_price_dec = scale_to_exponent(ema_price.price as u128, ema_price.expo)?;
+
+    // Check confidence deviation
+    let confidence = scale_to_exponent(current_price.conf as u128, current_price.expo)?;
+    let price_confidence = confidence.checked_div(ema_price_dec)?;
+    if price_confidence > max_confidence {
+        return Err(InvalidPrice {
+            reason: format!("price confidence deviation {price_confidence} exceeds max allowed {max_confidence}")
+        });
+    }
+
+    // Check price deviation
+    let delta = current_price_dec.abs_diff(ema_price_dec);
+    let price_deviation = delta.checked_div(ema_price_dec)?;
+    if price_deviation > max_deviation {
+        return Err(InvalidPrice {
+            reason: format!(
+                "price deviation {price_deviation} exceeds max allowed {max_deviation}"
+            ),
+        });
+    }
+
+    let current_price_dec = scale_pyth_price(
+        current_price.price as u128,
+        current_price.expo,
+        denom_decimals,
+        usd_price,
+    )?;
+
+    Ok(current_price_dec)
+}
+
+fn query_pyth_price_for_liquidation(
+    env: &Env,
+    max_staleness: u64,
+    denom_decimals: u8,
+    usd_price: Decimal,
+    price_feed_response: PriceFeedResponse,
+) -> ContractResult<Decimal> {
+    let current_time = env.block.time.seconds();
+
+    let price_feed = price_feed_response.price_feed;
+
+    // Check if the current price is not too old
+    let current_price_opt = price_feed.get_price_no_older_than(current_time as i64, max_staleness);
+    let Some(current_price) = current_price_opt else {
+        return Err(InvalidPrice {
+            reason: format!(
+                "current price publish time is too old/stale. published: {}, now: {}",
+                price_feed.get_price_unchecked().publish_time, current_time
+            ),
+        });
+    };
 
     // Check if the current price is > 0
     if current_price.price <= 0 {
@@ -57,17 +165,7 @@ pub fn query_pyth_price<P: PriceSourceChecked<Empty>>(
     Ok(current_price_dec)
 }
 
-/// Price feeds represent numbers in a fixed-point format.
-/// The same exponent is used for both the price and confidence interval.
-/// The integer representation of these values can be computed by multiplying by 10^exponent.
-///
-/// As an example, imagine Pyth reported the following values for ATOM/USD:
-/// expo:  -8
-/// conf:  574566
-/// price: 1365133270
-/// The confidence interval is 574566 * 10^(-8) = $0.00574566, and the price is 1365133270 * 10^(-8) = $13.6513327.
-///
-/// Moreover, we have to represent the price for utoken in base_denom.
+/// We have to represent the price for utoken in base_denom.
 /// Pyth price should be normalized with token decimals.
 ///
 /// Let's try to convert ATOM/USD reported by Pyth to uatom/base_denom:
@@ -92,13 +190,7 @@ pub fn scale_pyth_price(
     denom_decimals: u8,
     usd_price: Decimal,
 ) -> ContractResult<Decimal> {
-    let target_expo = Uint128::from(10u8).checked_pow(expo.unsigned_abs())?;
-    let pyth_price = if expo < 0 {
-        Decimal::checked_from_ratio(value, target_expo)?
-    } else {
-        let res = Uint128::from(value).checked_mul(target_expo)?;
-        Decimal::from_ratio(res, 1u128)
-    };
+    let pyth_price = scale_to_exponent(value, expo)?;
 
     let denom_scaled = Decimal::from_atomics(1u128, denom_decimals as u32)?;
 
@@ -120,6 +212,42 @@ pub fn scale_pyth_price(
     let price = usd_price.checked_mul(denom_scaled)?.checked_mul(pyth_price)?;
 
     Ok(price)
+}
+
+/// Price feeds represent numbers in a fixed-point format.
+/// The same exponent is used for both the price and confidence interval.
+/// The integer representation of these values can be computed by multiplying by 10^exponent.
+///
+/// As an example, imagine Pyth reported the following values for ATOM/USD:
+/// expo:  -8
+/// conf:  574566
+/// price: 1365133270
+/// The confidence interval is 574566 * 10^(-8) = $0.00574566, and the price is 1365133270 * 10^(-8) = $13.6513327.
+pub fn scale_to_exponent(value: u128, expo: i32) -> ContractResult<Decimal> {
+    let target_expo = Uint128::from(10u8).checked_pow(expo.unsigned_abs())?;
+    if expo < 0 {
+        Ok(Decimal::checked_from_ratio(value, target_expo)?)
+    } else {
+        let res = Uint128::from(value).checked_mul(target_expo)?;
+        Ok(Decimal::from_ratio(res, 1u128))
+    }
+}
+
+/// Assert Pyth configuration
+pub fn assert_pyth(max_confidence: Decimal, max_deviation: Decimal) -> ContractResult<()> {
+    if !max_confidence.le(&Decimal::percent(20u64)) {
+        return Err(ContractError::InvalidPriceSource {
+            reason: "max_confidence must be in the range of <0;0.2>".to_string(),
+        });
+    }
+
+    if !max_deviation.le(&Decimal::percent(20u64)) {
+        return Err(ContractError::InvalidPriceSource {
+            reason: "max_deviation must be in the range of <0;0.2>".to_string(),
+        });
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]

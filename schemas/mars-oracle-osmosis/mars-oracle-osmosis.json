@@ -447,6 +447,8 @@
                 "required": [
                   "contract_addr",
                   "denom_decimals",
+                  "max_confidence",
+                  "max_deviation",
                   "max_staleness",
                   "price_feed_id"
                 ],
@@ -460,6 +462,22 @@
                     "type": "integer",
                     "format": "uint8",
                     "minimum": 0.0
+                  },
+                  "max_confidence": {
+                    "description": "The maximum confidence deviation allowed for an oracle price.\n\nThe confidence is measured as the percent of the confidence interval value provided by the oracle as compared to the weighted average value of the price.",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Decimal"
+                      }
+                    ]
+                  },
+                  "max_deviation": {
+                    "description": "The maximum deviation (percentage) between current and EMA price",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Decimal"
+                      }
+                    ]
                   },
                   "max_staleness": {
                     "description": "The maximum number of seconds since the last price was by an oracle, before rejecting the price as too stale",
@@ -764,7 +782,7 @@
     ],
     "definitions": {
       "ActionKind": {
-        "description": "Differentiator for the action being performed.",
+        "description": "Differentiator for the action (liquidate, withdraw, borrow etc.) being performed.",
         "type": "string",
         "enum": [
           "default",

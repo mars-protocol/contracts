@@ -41,7 +41,7 @@ pub enum ExecuteMsg<T, C = Empty> {
     Custom(C),
 }
 
-/// Differentiator for the action being performed.
+/// Differentiator for the action (liquidate, withdraw, borrow etc.) being performed.
 #[cw_serde]
 pub enum ActionKind {
     Default,

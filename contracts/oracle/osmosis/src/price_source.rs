@@ -9,7 +9,7 @@ use mars_osmosis::helpers::{
     query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price,
     recovered_since_downtime_of_length, Pool,
 };
-use mars_red_bank_types::oracle::msg::{ActionKind, Config};
+use mars_red_bank_types::oracle::{ActionKind, Config};
 use pyth_sdk_cw::PriceIdentifier;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -164,6 +164,16 @@ pub enum OsmosisPriceSource<T> {
         /// rejecting the price as too stale
         max_staleness: u64,
 
+        /// The maximum confidence deviation allowed for an oracle price.
+        ///
+        /// The confidence is measured as the percent of the confidence interval
+        /// value provided by the oracle as compared to the weighted average value
+        /// of the price.
+        max_confidence: Decimal,
+
+        /// The maximum deviation (percentage) between current and EMA price
+        max_deviation: Decimal,
+
         /// Assets are represented in their smallest unit and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).
         ///
         /// Pyth prices are denominated in USD so basically it means how much 1 USDC, 1 ATOM, 1 OSMO is worth in USD (NOT 1 uusdc, 1 uatom, 1 uosmo).
@@ -276,9 +286,11 @@ impl fmt::Display for OsmosisPriceSourceChecked {
                 contract_addr,
                 price_feed_id,
                 max_staleness,
+                max_confidence,
+                max_deviation,
                 denom_decimals,
             } => {
-                format!("pyth:{contract_addr}:{price_feed_id}:{max_staleness}:{denom_decimals}")
+                format!("pyth:{contract_addr}:{price_feed_id}:{max_staleness}:{max_confidence}:{max_deviation}:{denom_decimals}")
             }
             OsmosisPriceSource::Lsd {
                 transitive_denom,
@@ -382,13 +394,20 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
                 contract_addr,
                 price_feed_id,
                 max_staleness,
+                max_confidence,
+                max_deviation,
                 denom_decimals,
-            } => Ok(OsmosisPriceSourceChecked::Pyth {
-                contract_addr: deps.api.addr_validate(contract_addr)?,
-                price_feed_id: *price_feed_id,
-                max_staleness: *max_staleness,
-                denom_decimals: *denom_decimals,
-            }),
+            } => {
+                mars_oracle_base::pyth::assert_pyth(*max_confidence, *max_deviation)?;
+                Ok(OsmosisPriceSourceChecked::Pyth {
+                    contract_addr: deps.api.addr_validate(contract_addr)?,
+                    price_feed_id: *price_feed_id,
+                    max_staleness: *max_staleness,
+                    max_confidence: *max_confidence,
+                    max_deviation: *max_deviation,
+                    denom_decimals: *denom_decimals,
+                })
+            }
             OsmosisPriceSourceUnchecked::Lsd {
                 transitive_denom,
                 geometric_twap,
@@ -499,6 +518,8 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                 contract_addr,
                 price_feed_id,
                 max_staleness,
+                max_confidence,
+                max_deviation,
                 denom_decimals,
             } => Ok(mars_oracle_base::pyth::query_pyth_price(
                 deps,
@@ -506,6 +527,8 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
                 contract_addr.to_owned(),
                 *price_feed_id,
                 *max_staleness,
+                *max_confidence,
+                *max_deviation,
                 *denom_decimals,
                 config,
                 price_sources,

@@ -84,6 +84,8 @@ export type OsmosisPriceSourceForString =
       pyth: {
         contract_addr: string
         denom_decimals: number
+        max_confidence: Decimal
+        max_deviation: Decimal
         max_staleness: number
         price_feed_id: Identifier
         [k: string]: unknown
