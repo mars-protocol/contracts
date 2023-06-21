@@ -150,14 +150,14 @@ fn hls_vault() {
     assert_eq!(health.total_collateral_value, Uint128::new(6318574763758));
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::new(4738931072818));
     assert_eq!(health.liquidation_threshold_adjusted_collateral, Uint128::new(5054859811006));
-    assert_eq!(health.total_debt_value, Uint128::new(1053095794053));
+    assert_eq!(health.total_debt_value, Uint128::new(1053095794055));
     assert_eq!(
         health.max_ltv_health_factor,
-        Some(Decimal::from_str("4.499999999600701092").unwrap())
+        Some(Decimal::from_str("4.499999999592154861").unwrap())
     );
     assert_eq!(
         health.liquidation_health_factor,
-        Some(Decimal::from_str("4.799999999574207776").unwrap())
+        Some(Decimal::from_str("4.799999999565091796").unwrap())
     );
     assert!(!health.is_above_max_ltv());
     assert!(!health.is_liquidatable());
@@ -294,14 +294,14 @@ fn hls_on_blacklisted_vault() {
     assert_eq!(health.total_collateral_value, Uint128::new(6318574763758));
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::new(4738931068870));
     assert_eq!(health.liquidation_threshold_adjusted_collateral, Uint128::new(5054859811006));
-    assert_eq!(health.total_debt_value, Uint128::new(1053095794053));
+    assert_eq!(health.total_debt_value, Uint128::new(1053095794055));
     assert_eq!(
         health.max_ltv_health_factor,
-        Some(Decimal::from_str("4.499999995851754394").unwrap())
+        Some(Decimal::from_str("4.499999995843208163").unwrap())
     );
     assert_eq!(
         health.liquidation_health_factor,
-        Some(Decimal::from_str("4.799999999574207776").unwrap())
+        Some(Decimal::from_str("4.799999999565091796").unwrap())
     );
     assert!(!health.is_above_max_ltv());
     assert!(!health.is_liquidatable());

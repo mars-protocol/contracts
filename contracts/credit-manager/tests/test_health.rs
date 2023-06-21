@@ -189,7 +189,7 @@ fn debts_no_assets() {
         res,
         ContractError::AboveMaxLTV {
             account_id: account_id.clone(),
-            max_ltv_health_factor: "0.68".to_string(),
+            max_ltv_health_factor: "0.653846153846153846".to_string(),
         },
     );
 
@@ -250,10 +250,10 @@ fn cannot_borrow_more_than_healthy() {
     let health = mock.query_health(&account_id, AccountKind::Default);
     let assets_value = Uint128::new(827);
     assert_eq!(health.total_collateral_value, assets_value);
-    let debts_value = Uint128::new(120);
+    let debts_value = Uint128::new(121);
     assert_eq!(health.total_debt_value, debts_value);
-    assert_eq!(health.liquidation_health_factor, Some(Decimal::from_ratio(454u128, 120u128)));
-    assert_eq!(health.max_ltv_health_factor, Some(Decimal::from_ratio(413u128, 120u128)));
+    assert_eq!(health.liquidation_health_factor, Some(Decimal::from_ratio(454u128, 121u128)));
+    assert_eq!(health.max_ltv_health_factor, Some(Decimal::from_ratio(413u128, 121u128)));
     assert!(!health.liquidatable);
     assert!(!health.above_max_ltv);
 
@@ -267,7 +267,7 @@ fn cannot_borrow_more_than_healthy() {
         res,
         ContractError::AboveMaxLTV {
             account_id: account_id.clone(),
-            max_ltv_health_factor: "0.990223463687150837".to_string(),
+            max_ltv_health_factor: "0.988842398884239888".to_string(),
         },
     );
 
@@ -275,10 +275,10 @@ fn cannot_borrow_more_than_healthy() {
     let health = mock.query_health(&account_id, AccountKind::Default);
     let assets_value = Uint128::new(1064);
     assert_eq!(health.total_collateral_value, assets_value);
-    let debts_value = Uint128::new(359);
+    let debts_value = Uint128::new(360);
     assert_eq!(health.total_debt_value, debts_value);
-    assert_eq!(health.liquidation_health_factor, Some(Decimal::from_ratio(585u128, 359u128)));
-    assert_eq!(health.max_ltv_health_factor, Some(Decimal::from_ratio(532u128, 359u128)));
+    assert_eq!(health.liquidation_health_factor, Some(Decimal::from_ratio(585u128, 360u128)));
+    assert_eq!(health.max_ltv_health_factor, Some(Decimal::from_ratio(532u128, 360u128)));
     assert!(!health.liquidatable);
     assert!(!health.above_max_ltv);
 }
@@ -434,7 +434,7 @@ fn assets_and_ltv_lqdt_adjusted_value() {
     );
     assert_eq!(
         health.total_debt_value,
-        Uint128::new(350_615_100) // with simulated interest
+        Uint128::new(350_615_101) // with simulated interest
     );
     let lqdt_adjusted_assets_value = deposit_amount
         .checked_mul_floor(uosmo_info.price)
@@ -452,7 +452,7 @@ fn assets_and_ltv_lqdt_adjusted_value() {
         health.liquidation_health_factor,
         Some(Decimal::from_ratio(
             lqdt_adjusted_assets_value,
-            (borrowed_amount + Uint128::one()).checked_mul_floor(uatom_info.price).unwrap()
+            (borrowed_amount + Uint128::one()).checked_mul_ceil(uatom_info.price).unwrap()
         ))
     );
     let ltv_adjusted_assets_value = deposit_amount
@@ -471,7 +471,7 @@ fn assets_and_ltv_lqdt_adjusted_value() {
         health.max_ltv_health_factor,
         Some(Decimal::from_ratio(
             ltv_adjusted_assets_value,
-            (borrowed_amount + Uint128::one()).checked_mul_floor(uatom_info.price).unwrap()
+            (borrowed_amount + Uint128::one()).checked_mul_ceil(uatom_info.price).unwrap()
         ))
     );
     assert!(!health.liquidatable);
@@ -582,10 +582,10 @@ fn debt_value() {
         .amount
         .checked_mul_ceil((user_a_debt_shares_atom, red_bank_atom_res.shares))
         .unwrap();
-    let user_a_owed_atom_value = user_a_owed_atom.checked_mul_floor(uatom_info.price).unwrap();
+    let user_a_owed_atom_value = user_a_owed_atom.checked_mul_ceil(uatom_info.price).unwrap();
 
     let osmo_debt_value =
-        (user_a_borrowed_amount_osmo + Uint128::one()).checked_mul_floor(uosmo_info.price).unwrap();
+        (user_a_borrowed_amount_osmo + Uint128::one()).checked_mul_ceil(uosmo_info.price).unwrap();
 
     let total_debt_value = user_a_owed_atom_value.add(osmo_debt_value);
     assert_eq!(health.total_debt_value, total_debt_value);

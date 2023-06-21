@@ -81,7 +81,7 @@ fn lent_positions_contribute_to_health() {
         res,
         NotLiquidatable {
             account_id: liquidatee_account_id,
-            lqdt_health_factor: "9.7".to_string(),
+            lqdt_health_factor: "8.818181818181818181".to_string(),
         },
     )
 }
@@ -193,7 +193,7 @@ fn lent_position_partially_liquidated() {
     let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
     assert!(health.liquidatable);
     assert_eq!(health.total_collateral_value, Uint128::new(624u128));
-    assert_eq!(health.total_debt_value, Uint128::new(555u128));
+    assert_eq!(health.total_debt_value, Uint128::new(556u128));
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
 
@@ -377,7 +377,7 @@ fn liquidate_with_reclaiming() {
     let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
     assert!(health.liquidatable);
     assert_eq!(health.total_collateral_value, Uint128::new(624u128));
-    assert_eq!(health.total_debt_value, Uint128::new(555u128));
+    assert_eq!(health.total_debt_value, Uint128::new(556u128));
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
 

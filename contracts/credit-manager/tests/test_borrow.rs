@@ -103,7 +103,7 @@ fn cannot_borrow_above_max_ltv() {
         res,
         ContractError::AboveMaxLTV {
             account_id,
-            max_ltv_health_factor: "0.96".to_string(),
+            max_ltv_health_factor: "0.955223880597014925".to_string(),
         },
     );
 }

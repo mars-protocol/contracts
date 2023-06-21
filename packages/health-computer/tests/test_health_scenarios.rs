@@ -253,7 +253,7 @@ fn ltv_and_lqdt_adjusted_values() {
     );
     assert_eq!(
         health.total_debt_value,
-        Uint128::new(350_615_100) // with simulated interest
+        Uint128::new(350_615_101) // with simulated interest
     );
     let lqdt_adjusted_assets_value = deposit_amount
         .checked_mul_floor(ustars.price)
@@ -271,7 +271,7 @@ fn ltv_and_lqdt_adjusted_values() {
         health.liquidation_health_factor,
         Some(Decimal::from_ratio(
             lqdt_adjusted_assets_value,
-            (borrow_amount + Uint128::one()).checked_mul_floor(ujuno.price).unwrap()
+            (borrow_amount + Uint128::one()).checked_mul_ceil(ujuno.price).unwrap()
         ))
     );
     let ltv_adjusted_assets_value = deposit_amount
@@ -290,7 +290,7 @@ fn ltv_and_lqdt_adjusted_values() {
         health.max_ltv_health_factor,
         Some(Decimal::from_ratio(
             ltv_adjusted_assets_value,
-            (borrow_amount + Uint128::one()).checked_mul_floor(ujuno.price).unwrap()
+            (borrow_amount + Uint128::one()).checked_mul_ceil(ujuno.price).unwrap()
         ))
     );
     assert!(!health.is_liquidatable());
@@ -369,10 +369,10 @@ fn debt_value() {
     assert!(!health.is_liquidatable());
 
     let juno_debt_value =
-        borrowed_amount_juno.add(Uint128::one()).checked_mul_floor(ujuno.price).unwrap();
+        borrowed_amount_juno.add(Uint128::one()).checked_mul_ceil(ujuno.price).unwrap();
 
     let stars_debt_value =
-        borrowed_amount_stars.add(Uint128::one()).checked_mul_floor(ustars.price).unwrap();
+        borrowed_amount_stars.add(Uint128::one()).checked_mul_ceil(ustars.price).unwrap();
 
     let total_debt_value = juno_debt_value.add(stars_debt_value);
     assert_eq!(health.total_debt_value, total_debt_value);
@@ -469,14 +469,14 @@ fn above_max_ltv_below_liq_threshold() {
     assert_eq!(health.total_collateral_value, Uint128::new(1210));
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::new(968));
     assert_eq!(health.liquidation_threshold_adjusted_collateral, Uint128::new(1017));
-    assert_eq!(health.total_debt_value, Uint128::new(971));
+    assert_eq!(health.total_debt_value, Uint128::new(972));
     assert_eq!(
         health.max_ltv_health_factor,
-        Some(Decimal::from_str("0.996910401647785787").unwrap())
+        Some(Decimal::from_str("0.99588477366255144").unwrap())
     );
     assert_eq!(
         health.liquidation_health_factor,
-        Some(Decimal::from_str("1.047373841400617919").unwrap())
+        Some(Decimal::from_str("1.046296296296296296").unwrap())
     );
     assert!(health.is_above_max_ltv());
     assert!(!health.is_liquidatable());
@@ -531,14 +531,14 @@ fn liquidatable() {
     assert_eq!(health.total_collateral_value, Uint128::new(1210));
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::new(968));
     assert_eq!(health.liquidation_threshold_adjusted_collateral, Uint128::new(1017));
-    assert_eq!(health.total_debt_value, Uint128::new(1171));
+    assert_eq!(health.total_debt_value, Uint128::new(1172));
     assert_eq!(
         health.max_ltv_health_factor,
-        Some(Decimal::from_str("0.826643894107600341").unwrap())
+        Some(Decimal::from_str("0.825938566552901023").unwrap())
     );
     assert_eq!(
         health.liquidation_health_factor,
-        Some(Decimal::from_str("0.868488471391972672").unwrap())
+        Some(Decimal::from_str("0.867747440273037542").unwrap())
     );
     assert!(health.is_above_max_ltv());
     assert!(health.is_liquidatable());
@@ -595,14 +595,14 @@ fn rover_whitelist_influences_max_ltv() {
     assert_eq!(health.total_collateral_value, Uint128::new(1210));
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::new(960));
     assert_eq!(health.liquidation_threshold_adjusted_collateral, Uint128::new(1017));
-    assert_eq!(health.total_debt_value, Uint128::new(1171));
+    assert_eq!(health.total_debt_value, Uint128::new(1172));
     assert_eq!(
         health.max_ltv_health_factor,
-        Some(Decimal::from_str("0.819812126387702818").unwrap())
+        Some(Decimal::from_str("0.819112627986348122").unwrap())
     );
     assert_eq!(
         health.liquidation_health_factor,
-        Some(Decimal::from_str("0.868488471391972672").unwrap())
+        Some(Decimal::from_str("0.867747440273037542").unwrap())
     );
     assert!(health.is_above_max_ltv());
     assert!(health.is_liquidatable());
@@ -686,14 +686,14 @@ fn unlocked_vault() {
     assert_eq!(health.total_collateral_value, Uint128::new(6474));
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::new(3073));
     assert_eq!(health.liquidation_threshold_adjusted_collateral, Uint128::new(3649));
-    assert_eq!(health.total_debt_value, Uint128::new(1171));
+    assert_eq!(health.total_debt_value, Uint128::new(1172));
     assert_eq!(
         health.max_ltv_health_factor,
-        Some(Decimal::from_str("2.624252775405636208").unwrap())
+        Some(Decimal::from_str("2.622013651877133105").unwrap())
     );
     assert_eq!(
         health.liquidation_health_factor,
-        Some(Decimal::from_str("3.116140051238257899").unwrap())
+        Some(Decimal::from_str("3.113481228668941979").unwrap())
     );
     assert!(!health.is_above_max_ltv());
     assert!(!health.is_liquidatable());
@@ -780,14 +780,14 @@ fn locked_vault() {
     assert_eq!(health.total_collateral_value, Uint128::new(6474));
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::new(3073));
     assert_eq!(health.liquidation_threshold_adjusted_collateral, Uint128::new(3649));
-    assert_eq!(health.total_debt_value, Uint128::new(1171));
+    assert_eq!(health.total_debt_value, Uint128::new(1172));
     assert_eq!(
         health.max_ltv_health_factor,
-        Some(Decimal::from_str("2.624252775405636208").unwrap())
+        Some(Decimal::from_str("2.622013651877133105").unwrap())
     );
     assert_eq!(
         health.liquidation_health_factor,
-        Some(Decimal::from_str("3.116140051238257899").unwrap())
+        Some(Decimal::from_str("3.113481228668941979").unwrap())
     );
     assert!(!health.is_above_max_ltv());
     assert!(!health.is_liquidatable());
@@ -883,14 +883,14 @@ fn locked_vault_with_unlocking_positions() {
     assert_eq!(health.total_collateral_value, Uint128::new(6474));
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::new(3192));
     assert_eq!(health.liquidation_threshold_adjusted_collateral, Uint128::new(3754));
-    assert_eq!(health.total_debt_value, Uint128::new(1171));
+    assert_eq!(health.total_debt_value, Uint128::new(1172));
     assert_eq!(
         health.max_ltv_health_factor,
-        Some(Decimal::from_str("2.72587532023911187").unwrap())
+        Some(Decimal::from_str("2.723549488054607508").unwrap())
     );
     assert_eq!(
         health.liquidation_health_factor,
-        Some(Decimal::from_str("3.205807002561912894").unwrap())
+        Some(Decimal::from_str("3.203071672354948805").unwrap())
     );
     assert!(!health.is_above_max_ltv());
     assert!(!health.is_liquidatable());
@@ -974,14 +974,14 @@ fn vault_is_not_whitelisted() {
     assert_eq!(health.total_collateral_value, Uint128::new(6474));
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::new(968));
     assert_eq!(health.liquidation_threshold_adjusted_collateral, Uint128::new(3649));
-    assert_eq!(health.total_debt_value, Uint128::new(1171));
+    assert_eq!(health.total_debt_value, Uint128::new(1172));
     assert_eq!(
         health.max_ltv_health_factor,
-        Some(Decimal::from_str("0.826643894107600341").unwrap())
+        Some(Decimal::from_str("0.825938566552901023").unwrap())
     );
     assert_eq!(
         health.liquidation_health_factor,
-        Some(Decimal::from_str("3.116140051238257899").unwrap())
+        Some(Decimal::from_str("3.113481228668941979").unwrap())
     );
     assert!(health.is_above_max_ltv());
     assert!(!health.is_liquidatable());
@@ -1083,14 +1083,14 @@ fn vault_base_token_is_not_whitelisted() {
     assert_eq!(health.total_collateral_value, Uint128::new(497879652));
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::new(968)); // Lower due to vault blacklisted
     assert_eq!(health.liquidation_threshold_adjusted_collateral, Uint128::new(448089614));
-    assert_eq!(health.total_debt_value, Uint128::new(1171));
+    assert_eq!(health.total_debt_value, Uint128::new(1172));
     assert_eq!(
         health.max_ltv_health_factor,
-        Some(Decimal::from_str("0.826643894107600341").unwrap())
+        Some(Decimal::from_str("0.825938566552901023").unwrap())
     );
     assert_eq!(
         health.liquidation_health_factor,
-        Some(Decimal::from_str("382655.520068317677198975").unwrap())
+        Some(Decimal::from_str("382329.022184300341296928").unwrap())
     );
     assert!(health.is_above_max_ltv());
     assert!(!health.is_liquidatable());
@@ -1152,14 +1152,14 @@ fn lent_coins_used_as_collateral() {
     assert_eq!(health.total_collateral_value, Uint128::new(1230));
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::new(981));
     assert_eq!(health.liquidation_threshold_adjusted_collateral, Uint128::new(1031));
-    assert_eq!(health.total_debt_value, Uint128::new(971));
+    assert_eq!(health.total_debt_value, Uint128::new(972));
     assert_eq!(
         health.max_ltv_health_factor,
-        Some(Decimal::from_str("1.010298661174047373").unwrap())
+        Some(Decimal::from_str("1.009259259259259259").unwrap())
     );
     assert_eq!(
         health.liquidation_health_factor,
-        Some(Decimal::from_str("1.061791967044284243").unwrap())
+        Some(Decimal::from_str("1.060699588477366255").unwrap())
     );
     assert!(!health.is_above_max_ltv());
     assert!(!health.is_liquidatable());
@@ -1223,14 +1223,14 @@ fn allowed_lent_coins_influence_max_ltv() {
     assert_eq!(health.total_collateral_value, Uint128::new(1230));
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::new(967));
     assert_eq!(health.liquidation_threshold_adjusted_collateral, Uint128::new(1031));
-    assert_eq!(health.total_debt_value, Uint128::new(971));
+    assert_eq!(health.total_debt_value, Uint128::new(972));
     assert_eq!(
         health.max_ltv_health_factor,
-        Some(Decimal::from_str("0.995880535530381050").unwrap())
+        Some(Decimal::from_str("0.9948559670781893").unwrap())
     );
     assert_eq!(
         health.liquidation_health_factor,
-        Some(Decimal::from_str("1.061791967044284243").unwrap())
+        Some(Decimal::from_str("1.060699588477366255").unwrap())
     );
     assert!(health.is_above_max_ltv());
     assert!(!health.is_liquidatable());

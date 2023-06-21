@@ -65,7 +65,7 @@ impl HealthComputer {
         for debt in &self.positions.debts {
             let coin_price =
                 self.denoms_data.prices.get(&debt.denom).ok_or(MissingPrice(debt.denom.clone()))?;
-            let debt_value = debt.amount.checked_mul_floor(*coin_price)?;
+            let debt_value = debt.amount.checked_mul_ceil(*coin_price)?;
             total = total.checked_add(debt_value)?;
         }
         Ok(total)
