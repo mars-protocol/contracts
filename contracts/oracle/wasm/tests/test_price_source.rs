@@ -7,11 +7,12 @@ use cw_it::{
     test_tube::Account,
 };
 use cw_storage_plus::Map;
-use mars_oracle_base::{pyth::PriceIdentifier, ContractError, PriceSourceUnchecked};
+use mars_oracle_base::{ContractError, PriceSourceUnchecked};
 use mars_oracle_wasm::{
     contract::entry, WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked,
 };
 use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
+use pyth_sdk_cw::PriceIdentifier;
 
 const ONE: Decimal = Decimal::one();
 const TWO: Decimal = Decimal::new(Uint128::new(2_000_000_000_000_000_000u128));
@@ -291,6 +292,8 @@ fn querying_pyth_price_if_publish_price_too_old() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
+            max_confidence: Decimal::percent(12),
+            max_deviation: Decimal::percent(14),
             denom_decimals: 6,
         },
     );
@@ -323,6 +326,7 @@ fn querying_pyth_price_if_publish_price_too_old() {
         mock_env_at_block_time(price_publish_time + max_staleness + 1u64),
         QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     )
     .unwrap_err();
@@ -370,6 +374,8 @@ fn querying_pyth_price_if_signed() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
+            max_confidence: Decimal::percent(12),
+            max_deviation: Decimal::percent(14),
             denom_decimals: 6,
         },
     );
@@ -401,6 +407,7 @@ fn querying_pyth_price_if_signed() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     )
     .unwrap_err();
@@ -446,6 +453,8 @@ fn querying_pyth_price_successfully() {
             contract_addr: "pyth_contract_addr".to_string(),
             price_feed_id: price_id,
             max_staleness,
+            max_confidence: Decimal::percent(12),
+            max_deviation: Decimal::percent(14),
             denom_decimals: 6,
         },
     );
@@ -479,6 +488,7 @@ fn querying_pyth_price_successfully() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     )
     .unwrap();
@@ -512,6 +522,7 @@ fn querying_pyth_price_successfully() {
         mock_env_at_block_time(publish_time),
         QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     )
     .unwrap();

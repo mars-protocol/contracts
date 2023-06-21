@@ -743,7 +743,7 @@ dependencies = [
 [[package]]
 name = "cw-it"
 version = "0.1.0"
-source = "git+https://github.com/apollodao/cw-it.git?rev=7e33dd9ca2983e2efbfb90e546ad049a18696b08#7e33dd9ca2983e2efbfb90e546ad049a18696b08"
+source = "git+https://github.com/apollodao/cw-it.git?rev=3af22b8537c5213d4af8ee7fd0f18e3d602fa64f#3af22b8537c5213d4af8ee7fd0f18e3d602fa64f"
 dependencies = [
  "anyhow",
  "astroport 2.7.1",
@@ -764,8 +764,8 @@ dependencies = [
  "cosmwasm-std",
  "cw-multi-test 0.16.2",
  "cw20 0.15.1",
- "osmosis-std 0.15.2 (git+https://github.com/apollodao/osmosis-rust.git?rev=9682deeb2e6869f7d0f9736fbe4e0ceef2d56fb7)",
- "osmosis-test-tube 15.1.0 (git+https://github.com/apollodao/test-tube.git?rev=530144c4264de6f791c388352f57d8b52f9e1dfd)",
+ "osmosis-std 0.16.0-beta.1",
+ "osmosis-test-tube 15.1.0 (git+https://github.com/apollodao/test-tube.git?rev=a08f7a83231afb499bfdc58e0c2890f110f39bd5)",
  "paste",
  "prost 0.11.9",
  "regex",
@@ -1761,7 +1761,7 @@ dependencies = [
  "mars-red-bank-types",
  "mars-testing",
  "mars-utils",
- "osmosis-std 0.15.2 (git+https://github.com/osmosis-labs/osmosis-rust.git?rev=af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d)",
+ "osmosis-std 0.16.0-beta.1",
  "thiserror",
 ]
 
@@ -1782,7 +1782,7 @@ dependencies = [
  "mars-swapper-osmosis",
  "mars-testing",
  "mars-utils",
- "osmosis-std 0.15.2 (git+https://github.com/osmosis-labs/osmosis-rust.git?rev=af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d)",
+ "osmosis-std 0.16.0-beta.1",
  "osmosis-test-tube 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
 ]
@@ -1817,7 +1817,7 @@ dependencies = [
  "mars-red-bank-types",
  "mars-testing",
  "mars-utils",
- "osmosis-std 0.15.2 (git+https://github.com/osmosis-labs/osmosis-rust.git?rev=af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d)",
+ "osmosis-std 0.16.0-beta.1",
  "pyth-sdk-cw",
  "schemars",
  "serde",
@@ -1848,7 +1848,7 @@ name = "mars-osmosis"
 version = "1.1.0"
 dependencies = [
  "cosmwasm-std",
- "osmosis-std 0.15.2 (git+https://github.com/osmosis-labs/osmosis-rust.git?rev=af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d)",
+ "osmosis-std 0.16.0-beta.1",
  "serde",
 ]
 
@@ -1923,7 +1923,7 @@ dependencies = [
  "mars-red-bank-types",
  "mars-testing",
  "mars-utils",
- "osmosis-std 0.15.2 (git+https://github.com/osmosis-labs/osmosis-rust.git?rev=af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d)",
+ "osmosis-std 0.16.0-beta.1",
  "schemars",
  "serde",
  "thiserror",
@@ -1985,7 +1985,7 @@ dependencies = [
  "mars-owner",
  "mars-red-bank-types",
  "mars-swapper-base",
- "osmosis-std 0.15.2 (git+https://github.com/osmosis-labs/osmosis-rust.git?rev=af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d)",
+ "osmosis-std 0.16.0-beta.1",
 ]
 
 [[package]]
@@ -2007,7 +2007,7 @@ dependencies = [
  "mars-red-bank-types",
  "mars-rewards-collector",
  "mars-swapper-astroport",
- "osmosis-std 0.15.2 (git+https://github.com/osmosis-labs/osmosis-rust.git?rev=af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d)",
+ "osmosis-std 0.16.0-beta.1",
  "prost 0.11.9",
  "pyth-sdk-cw",
  "schemars",
@@ -2153,36 +2153,6 @@ dependencies = [
 
 [[package]]
 name = "osmosis-std"
-version = "0.15.2"
-source = "git+https://github.com/apollodao/osmosis-rust.git?rev=9682deeb2e6869f7d0f9736fbe4e0ceef2d56fb7#9682deeb2e6869f7d0f9736fbe4e0ceef2d56fb7"
-dependencies = [
- "chrono",
- "cosmwasm-std",
- "osmosis-std-derive 0.15.2 (git+https://github.com/apollodao/osmosis-rust.git?rev=9682deeb2e6869f7d0f9736fbe4e0ceef2d56fb7)",
- "prost 0.11.9",
- "prost-types",
- "schemars",
- "serde",
- "serde-cw-value",
-]
-
-[[package]]
-name = "osmosis-std"
-version = "0.15.2"
-source = "git+https://github.com/osmosis-labs/osmosis-rust.git?rev=af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d#af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d"
-dependencies = [
- "chrono",
- "cosmwasm-std",
- "osmosis-std-derive 0.15.2 (git+https://github.com/osmosis-labs/osmosis-rust.git?rev=af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d)",
- "prost 0.11.9",
- "prost-types",
- "schemars",
- "serde",
- "serde-cw-value",
-]
-
-[[package]]
-name = "osmosis-std"
 version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87725a7480b98887167edf878daa52201a13322ad88e34355a7f2ddc663e047e"
@@ -2190,6 +2160,22 @@ dependencies = [
  "chrono",
  "cosmwasm-std",
  "osmosis-std-derive 0.15.3",
+ "prost 0.11.9",
+ "prost-types",
+ "schemars",
+ "serde",
+ "serde-cw-value",
+]
+
+[[package]]
+name = "osmosis-std"
+version = "0.16.0-beta.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1abcc484d988099d0422b34b85f7086478400c2508d09d0724666a2933fec342"
+dependencies = [
+ "chrono",
+ "cosmwasm-std",
+ "osmosis-std-derive 0.16.0-beta.1",
  "prost 0.11.9",
  "prost-types",
  "schemars",
@@ -2210,31 +2196,21 @@ dependencies = [
 
 [[package]]
 name = "osmosis-std-derive"
-version = "0.15.2"
-source = "git+https://github.com/apollodao/osmosis-rust.git?rev=9682deeb2e6869f7d0f9736fbe4e0ceef2d56fb7#9682deeb2e6869f7d0f9736fbe4e0ceef2d56fb7"
-dependencies = [
- "itertools",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "osmosis-std-derive"
-version = "0.15.2"
-source = "git+https://github.com/osmosis-labs/osmosis-rust.git?rev=af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d#af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d"
-dependencies = [
- "itertools",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "osmosis-std-derive"
 version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4d482a16be198ee04e0f94e10dd9b8d02332dcf33bc5ea4b255e7e25eedc5df"
+dependencies = [
+ "itertools",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "osmosis-std-derive"
+version = "0.16.0-beta.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8571de5fb19c9abf11bb4c9a14d9128b8bd4ff180034561fbf87f3b9c42d1f0f"
 dependencies = [
  "itertools",
  "proc-macro2",
@@ -2263,13 +2239,13 @@ dependencies = [
 [[package]]
 name = "osmosis-test-tube"
 version = "15.1.0"
-source = "git+https://github.com/apollodao/test-tube.git?rev=530144c4264de6f791c388352f57d8b52f9e1dfd#530144c4264de6f791c388352f57d8b52f9e1dfd"
+source = "git+https://github.com/apollodao/test-tube.git?rev=a08f7a83231afb499bfdc58e0c2890f110f39bd5#a08f7a83231afb499bfdc58e0c2890f110f39bd5"
 dependencies = [
  "base64",
  "bindgen",
  "cosmrs",
  "cosmwasm-std",
- "osmosis-std 0.15.2 (git+https://github.com/apollodao/osmosis-rust.git?rev=9682deeb2e6869f7d0f9736fbe4e0ceef2d56fb7)",
+ "osmosis-std 0.16.0-beta.1",
  "prost 0.11.9",
  "serde",
  "serde_json",
@@ -3328,12 +3304,12 @@ dependencies = [
 [[package]]
 name = "test-tube"
 version = "0.1.2"
-source = "git+https://github.com/apollodao/test-tube.git?rev=530144c4264de6f791c388352f57d8b52f9e1dfd#530144c4264de6f791c388352f57d8b52f9e1dfd"
+source = "git+https://github.com/apollodao/test-tube.git?rev=a08f7a83231afb499bfdc58e0c2890f110f39bd5#a08f7a83231afb499bfdc58e0c2890f110f39bd5"
 dependencies = [
  "base64",
  "cosmrs",
  "cosmwasm-std",
- "osmosis-std 0.15.2 (git+https://github.com/apollodao/osmosis-rust.git?rev=9682deeb2e6869f7d0f9736fbe4e0ceef2d56fb7)",
+ "osmosis-std 0.16.0-beta.1",
  "prost 0.11.9",
  "serde",
  "serde_json",

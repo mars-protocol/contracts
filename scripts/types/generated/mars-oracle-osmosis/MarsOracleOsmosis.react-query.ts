@@ -21,6 +21,7 @@ import {
   GeometricTwap,
   RedemptionRateForString,
   QueryMsg,
+  ActionKind,
   ConfigResponse,
   PriceResponse,
   PriceSourceResponseForString,
@@ -67,6 +68,7 @@ export interface MarsOracleOsmosisReactQuery<TResponse, TData = TResponse> {
 export interface MarsOracleOsmosisPricesQuery<TData>
   extends MarsOracleOsmosisReactQuery<ArrayOfPriceResponse, TData> {
   args: {
+    kind?: ActionKind
     limit?: number
     startAfter?: string
   }
@@ -81,6 +83,7 @@ export function useMarsOracleOsmosisPricesQuery<TData = ArrayOfPriceResponse>({
     () =>
       client
         ? client.prices({
+            kind: args.kind,
             limit: args.limit,
             startAfter: args.startAfter,
           })
@@ -92,6 +95,7 @@ export interface MarsOracleOsmosisPriceQuery<TData>
   extends MarsOracleOsmosisReactQuery<PriceResponse, TData> {
   args: {
     denom: string
+    kind?: ActionKind
   }
 }
 export function useMarsOracleOsmosisPriceQuery<TData = PriceResponse>({
@@ -105,6 +109,7 @@ export function useMarsOracleOsmosisPriceQuery<TData = PriceResponse>({
       client
         ? client.price({
             denom: args.denom,
+            kind: args.kind,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },

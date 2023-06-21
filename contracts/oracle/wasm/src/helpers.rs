@@ -10,7 +10,7 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError, ContractResult, PriceSourceChecked};
-use mars_red_bank_types::oracle::{AstroportTwapSnapshot, Config};
+use mars_red_bank_types::oracle::{ActionKind, AstroportTwapSnapshot, Config};
 
 use crate::WasmPriceSourceChecked;
 
@@ -149,11 +149,13 @@ pub fn add_route_prices(
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     route_assets: &[String],
     price: &Decimal,
+    kind: ActionKind,
 ) -> ContractResult<Decimal> {
     let mut price = *price;
     for denom in route_assets {
         let price_source = price_sources.load(deps.storage, denom)?;
-        let route_price = price_source.query_price(deps, env, denom, config, price_sources)?;
+        let route_price =
+            price_source.query_price(deps, env, denom, config, price_sources, kind.clone())?;
         price *= route_price;
     }
     Ok(price)

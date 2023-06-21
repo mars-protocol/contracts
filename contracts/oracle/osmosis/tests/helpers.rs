@@ -1,11 +1,11 @@
 #![allow(dead_code)]
 
-use std::marker::PhantomData;
+use std::{marker::PhantomData, str::FromStr};
 
 use cosmwasm_std::{
     coin, from_binary,
     testing::{mock_env, MockApi, MockQuerier, MockStorage},
-    Coin, Deps, DepsMut, OwnedDeps,
+    Coin, Decimal, Deps, DepsMut, OwnedDeps,
 };
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSourceUnchecked};
@@ -69,6 +69,21 @@ pub fn setup_test_with_pools() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerie
             &[5000u64, 5005u64],
             &coin(10000, "gamm/pool/4444"),
         ),
+    );
+
+    deps
+}
+
+pub fn setup_test_for_pyth() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
+    let mut deps = setup_test();
+
+    // price source used to convert USD to base_denom
+    set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
     );
 
     deps
@@ -148,6 +163,8 @@ pub fn set_pyth_price_source(deps: DepsMut, denom: &str, price_id: PriceIdentifi
             contract_addr: "pyth_contract".to_string(),
             price_feed_id: price_id,
             max_staleness: 30,
+            max_confidence: Decimal::percent(10u64),
+            max_deviation: Decimal::percent(15u64),
             denom_decimals: 6,
         },
     )

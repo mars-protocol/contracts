@@ -173,6 +173,7 @@ impl<'a> WasmOracleTestRobot<'a> {
     pub fn query_price(&self, denom: &str) -> mars_red_bank_types::oracle::PriceResponse {
         let msg = &mars_red_bank_types::oracle::msg::QueryMsg::Price {
             denom: denom.to_string(),
+            kind: None,
         };
         self.wasm().query(&self.mars_oracle_contract_addr, &msg).unwrap()
     }
@@ -185,6 +186,7 @@ impl<'a> WasmOracleTestRobot<'a> {
         let msg = &mars_red_bank_types::oracle::msg::QueryMsg::Prices {
             start_after,
             limit,
+            kind: None,
         };
         self.wasm().query(&self.mars_oracle_contract_addr, &msg).unwrap()
     }

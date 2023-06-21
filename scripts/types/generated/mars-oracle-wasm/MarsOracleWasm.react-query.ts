@@ -18,6 +18,7 @@ import {
   OwnerUpdate,
   WasmOracleCustomExecuteMsg,
   QueryMsg,
+  ActionKind,
   ConfigResponse,
   PriceResponse,
   PriceSourceResponseForString,
@@ -60,6 +61,7 @@ export interface MarsOracleWasmReactQuery<TResponse, TData = TResponse> {
 export interface MarsOracleWasmPricesQuery<TData>
   extends MarsOracleWasmReactQuery<ArrayOfPriceResponse, TData> {
   args: {
+    kind?: ActionKind
     limit?: number
     startAfter?: string
   }
@@ -74,6 +76,7 @@ export function useMarsOracleWasmPricesQuery<TData = ArrayOfPriceResponse>({
     () =>
       client
         ? client.prices({
+            kind: args.kind,
             limit: args.limit,
             startAfter: args.startAfter,
           })
@@ -85,6 +88,7 @@ export interface MarsOracleWasmPriceQuery<TData>
   extends MarsOracleWasmReactQuery<PriceResponse, TData> {
   args: {
     denom: string
+    kind?: ActionKind
   }
 }
 export function useMarsOracleWasmPriceQuery<TData = PriceResponse>({
@@ -98,6 +102,7 @@ export function useMarsOracleWasmPriceQuery<TData = PriceResponse>({
       client
         ? client.price({
             denom: args.denom,
+            kind: args.kind,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
