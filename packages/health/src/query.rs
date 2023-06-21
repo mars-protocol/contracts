@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, Decimal, QuerierWrapper, StdResult};
 use mars_red_bank_types::{
-    oracle::{self, PriceResponse},
+    oracle::{self, ActionKind, PriceResponse},
     red_bank::{self, Market},
 };
 
@@ -40,6 +40,7 @@ impl<'a> MarsQuerier<'a> {
             self.oracle_addr,
             &oracle::QueryMsg::Price {
                 denom: denom.to_string(),
+                kind: Some(ActionKind::Default),
             },
         )?;
         Ok(price)

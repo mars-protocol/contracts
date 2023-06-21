@@ -201,7 +201,7 @@ export const neutronTestnetConfig: DeploymentConfig = {
   swapperDexName: 'astroport',
   assets: [ntrnAsset, atomAsset],
   oracleConfigs: [axlUSDCOracleTestnet, ntrnOracleTestnet, atomOracleTestnet],
-  maxCloseFactor: '0.5',
+  targetHealthFactor: '1.2',
   oracleCustomInitParams: {
     astroport_factory: 'neutron1jj0scx400pswhpjes589aujlqagxgcztw04srynmhf0f6zplzn2qqmhwj7',
   },

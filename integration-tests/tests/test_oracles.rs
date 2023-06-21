@@ -86,6 +86,7 @@ fn querying_xyk_lp_price_if_no_price_for_tokens() {
         &contract_addr,
         &QueryMsg::Price {
             denom: "umars_uatom_lp".to_string(),
+            kind: None,
         },
     )
     .unwrap_err();
@@ -197,6 +198,7 @@ fn querying_xyk_lp_price_success() {
             &contract_addr,
             &QueryMsg::Price {
                 denom: "umars_uatom_lp".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -261,6 +263,7 @@ fn query_spot_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -396,6 +399,7 @@ fn update_spot_with_different_pool() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -422,6 +426,7 @@ fn update_spot_with_different_pool() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -471,6 +476,7 @@ fn query_spot_price_after_lp_change() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -483,6 +489,7 @@ fn query_spot_price_after_lp_change() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -555,6 +562,7 @@ fn query_geometric_twap_price_with_downtime_detector() {
         &oracle_addr,
         &QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     );
     assert_err(res.unwrap_err(), "chain is recovering from downtime");
@@ -568,6 +576,7 @@ fn query_geometric_twap_price_with_downtime_detector() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -640,6 +649,7 @@ fn query_arithmetic_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -654,6 +664,7 @@ fn query_arithmetic_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -727,6 +738,7 @@ fn query_geometric_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -741,6 +753,7 @@ fn query_geometric_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -807,6 +820,7 @@ fn compare_spot_and_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -847,6 +861,7 @@ fn compare_spot_and_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -887,6 +902,7 @@ fn compare_spot_and_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();

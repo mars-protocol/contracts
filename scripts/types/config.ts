@@ -49,7 +49,7 @@ export interface DeploymentConfig {
   safetyFundAddr: string
   protocolAdminAddr: string
   feeCollectorAddr: string
-  maxCloseFactor: string
+  targetHealthFactor: string
   swapperDexName: string
   assets: AssetConfig[]
   oracleConfigs: OracleConfig[]
