@@ -218,7 +218,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   swapperDexName: 'osmosis',
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
   oracleConfigs: [atomOracle, axlUSDCOracle],
-  maxCloseFactor: '0.5',
+  targetHealthFactor: '1.2',
   incentiveEpochDuration: 86400,
   maxWhitelistedIncentiveDenoms: 10,
 }
@@ -255,7 +255,7 @@ export const osmosisTestMultisig: DeploymentConfig = {
   swapperDexName: 'osmosis',
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
   oracleConfigs: [atomOracle, axlUSDCOracle],
-  maxCloseFactor: '0.5',
+  targetHealthFactor: '1.2',
   incentiveEpochDuration: 86400,
   maxWhitelistedIncentiveDenoms: 10,
 }
@@ -319,7 +319,7 @@ export const osmosisMainnet: DeploymentConfig = {
   swapperDexName: 'osmosis',
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
   oracleConfigs: [atomOracle, axlUSDCOracle],
-  maxCloseFactor: '0.5',
+  targetHealthFactor: '1.2',
   incentiveEpochDuration: 86400,
   maxWhitelistedIncentiveDenoms: 10,
 }
@@ -354,7 +354,7 @@ export const osmosisLocalConfig: DeploymentConfig = {
   swapperDexName: 'osmosis',
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
   oracleConfigs: [atomOracle, axlUSDCOracle],
-  maxCloseFactor: '0.5',
+  targetHealthFactor: '1.2',
   incentiveEpochDuration: 86400,
   maxWhitelistedIncentiveDenoms: 10,
 }
