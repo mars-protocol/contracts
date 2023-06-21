@@ -9,6 +9,7 @@ use mars_health::{
     health::{Health, Position},
     query::MarsQuerier,
 };
+use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
 use mars_red_bank_types::red_bank::Market;
 use mars_testing::MarsMockQuerier;
 
@@ -105,10 +106,8 @@ fn from_coins_to_positions() {
     assert_eq!(
         positions,
         StdError::GenericErr {
-            msg: "Querier contract error: [mock]: could not find the market for invalid_denom"
-                .to_string(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            msg: "Querier contract error: [mock]: could not find the params for invalid_denom"
+                .to_string()
         }
     );
 }
@@ -125,18 +124,54 @@ fn mock_setup() -> MarsMockQuerier {
     // Set Markets
     let osmo_market = Market {
         denom: "osmo".to_string(),
-        max_loan_to_value: Decimal::from_atomics(50u128, 2).unwrap(),
-        liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
         ..Default::default()
     };
     mock_querier.set_redbank_market(osmo_market);
+    mock_querier.set_redbank_params(
+        "osmo",
+        AssetParams {
+            rover: RoverSettings {
+                whitelisted: false,
+                hls: HighLeverageStrategyParams {
+                    max_loan_to_value: Decimal::percent(90),
+                    liquidation_threshold: Decimal::one(),
+                },
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: false,
+                borrow_enabled: false,
+                deposit_cap: Default::default(),
+            },
+            max_loan_to_value: Decimal::from_atomics(50u128, 2).unwrap(),
+            liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
+            liquidation_bonus: Default::default(),
+        },
+    );
     let atom_market = Market {
         denom: "atom".to_string(),
-        max_loan_to_value: Decimal::from_atomics(70u128, 2).unwrap(),
-        liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
         ..Default::default()
     };
     mock_querier.set_redbank_market(atom_market);
+    mock_querier.set_redbank_params(
+        "atom",
+        AssetParams {
+            rover: RoverSettings {
+                whitelisted: false,
+                hls: HighLeverageStrategyParams {
+                    max_loan_to_value: Decimal::percent(90),
+                    liquidation_threshold: Decimal::one(),
+                },
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: false,
+                borrow_enabled: false,
+                deposit_cap: Default::default(),
+            },
+            max_loan_to_value: Decimal::from_atomics(70u128, 2).unwrap(),
+            liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
+            liquidation_bonus: Default::default(),
+        },
+    );
 
     // Set prices in the oracle
     mock_querier.set_oracle_price("osmo", Decimal::from_atomics(23654u128, 4).unwrap());

@@ -76,7 +76,8 @@
               "incentives",
               "oracle",
               "red_bank",
-              "rewards_collector"
+              "rewards_collector",
+              "params"
             ]
           },
           {
@@ -278,7 +279,8 @@
               "incentives",
               "oracle",
               "red_bank",
-              "rewards_collector"
+              "rewards_collector",
+              "params"
             ]
           },
           {
@@ -348,7 +350,8 @@
                 "incentives",
                 "oracle",
                 "red_bank",
-                "rewards_collector"
+                "rewards_collector",
+                "params"
               ]
             },
             {
@@ -421,7 +424,8 @@
                 "incentives",
                 "oracle",
                 "red_bank",
-                "rewards_collector"
+                "rewards_collector",
+                "params"
               ]
             },
             {
@@ -494,7 +498,8 @@
                 "incentives",
                 "oracle",
                 "red_bank",
-                "rewards_collector"
+                "rewards_collector",
+                "params"
               ]
             },
             {

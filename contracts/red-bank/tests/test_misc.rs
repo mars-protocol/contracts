@@ -7,6 +7,7 @@ use helpers::{
     TestUtilizationDeltaInfo,
 };
 use mars_owner::OwnerError::NotOwner;
+use mars_params::types::AssetParams;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -20,6 +21,8 @@ use mars_red_bank::{
 use mars_red_bank_types::red_bank::{Debt, ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 use mars_utils::math;
+
+use crate::helpers::th_default_asset_params;
 
 mod helpers;
 
@@ -41,6 +44,7 @@ fn uncollateralized_loan_limits() {
 
     // should get index 0
     let market_initial = th_init_market(deps.as_mut(), "somecoin", &mock_market);
+    deps.querier.set_redbank_params("somecoin", th_default_asset_params());
 
     let mut block_time = mock_market.indexes_last_updated + 10000u64;
     let initial_uncollateralized_loan_limit = Uint128::from(2400_u128);
@@ -206,30 +210,43 @@ fn update_asset_collateral() {
     let mock_market_1 = Market {
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
-        max_loan_to_value: Decimal::from_ratio(40u128, 100u128),
-        liquidation_threshold: Decimal::from_ratio(60u128, 100u128),
         ..Default::default()
     };
     let denom_2 = "depositedcoin2";
     let mock_market_2 = Market {
         liquidity_index: Decimal::from_ratio(1u128, 2u128),
         borrow_index: Decimal::one(),
-        max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
-        liquidation_threshold: Decimal::from_ratio(80u128, 100u128),
         ..Default::default()
     };
     let denom_3 = "depositedcoin3";
     let mock_market_3 = Market {
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::from_ratio(2u128, 1u128),
-        max_loan_to_value: Decimal::from_ratio(20u128, 100u128),
-        liquidation_threshold: Decimal::from_ratio(40u128, 100u128),
         ..Default::default()
     };
 
     let market_1_initial = th_init_market(deps.as_mut(), denom_1, &mock_market_1);
     let market_2_initial = th_init_market(deps.as_mut(), denom_2, &mock_market_2);
     let market_3_initial = th_init_market(deps.as_mut(), denom_3, &mock_market_3);
+
+    let asset_params_1 = AssetParams {
+        max_loan_to_value: Decimal::from_ratio(40u128, 100u128),
+        liquidation_threshold: Decimal::from_ratio(60u128, 100u128),
+        ..th_default_asset_params()
+    };
+    deps.querier.set_redbank_params(denom_1, asset_params_1.clone());
+    let asset_params_2 = AssetParams {
+        max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
+        liquidation_threshold: Decimal::from_ratio(80u128, 100u128),
+        ..th_default_asset_params()
+    };
+    deps.querier.set_redbank_params(denom_2, asset_params_2.clone());
+    let asset_params_3 = AssetParams {
+        max_loan_to_value: Decimal::from_ratio(20u128, 100u128),
+        liquidation_threshold: Decimal::from_ratio(40u128, 100u128),
+        ..th_default_asset_params()
+    };
+    deps.querier.set_redbank_params(denom_3, asset_params_3);
 
     // Set the querier to return exchange rates
     let token_1_exchange_rate = Decimal::from_ratio(2u128, 1u128);
@@ -308,7 +325,7 @@ fn update_asset_collateral() {
             ScalingOperation::Truncate,
         )
         .unwrap()
-            * market_1_initial.liquidation_threshold
+            * asset_params_1.liquidation_threshold
             * token_1_exchange_rate;
         let token_2_weighted_lt_in_base_asset = compute_underlying_amount(
             token_2_balance_scaled,
@@ -316,7 +333,7 @@ fn update_asset_collateral() {
             ScalingOperation::Truncate,
         )
         .unwrap()
-            * market_2_initial.liquidation_threshold
+            * asset_params_2.liquidation_threshold
             * token_2_exchange_rate;
         let weighted_liquidation_threshold_in_base_asset =
             token_1_weighted_lt_in_base_asset + token_2_weighted_lt_in_base_asset;
@@ -344,6 +361,7 @@ fn update_asset_collateral() {
             &env,
             &user_addr,
             &Addr::unchecked("oracle"),
+            &Addr::unchecked("params"),
         )
         .unwrap();
         let health = health::compute_position_health(&positions).unwrap();

@@ -6,6 +6,7 @@ use cosmwasm_std::{
     testing::{MockApi, MockStorage},
     Addr, Coin, Decimal, Deps, DepsMut, Event, OwnedDeps, Uint128,
 };
+use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
 use mars_red_bank::{
     contract::{instantiate, query},
     interest_rates::{
@@ -76,7 +77,6 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
     let info = mock_info("owner");
     let config = CreateOrUpdateConfig {
         address_provider: Some("address_provider".to_string()),
-        close_factor: Some(Decimal::from_ratio(1u128, 2u128)),
     };
     let msg = InstantiateMsg {
         owner: "owner".to_string(),
@@ -85,6 +85,8 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
     instantiate(deps.as_mut(), env, info, msg).unwrap();
 
     deps.querier.set_oracle_price("uusd", Decimal::one());
+
+    deps.querier.set_close_factor(Decimal::from_ratio(1u128, 2u128));
 
     deps
 }
@@ -102,6 +104,26 @@ pub fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {
     MARKETS.save(deps.storage, denom, &new_market).unwrap();
 
     new_market
+}
+
+pub fn th_default_asset_params() -> AssetParams {
+    AssetParams {
+        rover: RoverSettings {
+            whitelisted: false,
+            hls: HighLeverageStrategyParams {
+                max_loan_to_value: Decimal::percent(90),
+                liquidation_threshold: Decimal::one(),
+            },
+        },
+        red_bank: RedBankSettings {
+            deposit_enabled: true,
+            borrow_enabled: true,
+            deposit_cap: Uint128::MAX,
+        },
+        max_loan_to_value: Decimal::zero(),
+        liquidation_threshold: Decimal::one(),
+        liquidation_bonus: Decimal::zero(),
+    }
 }
 
 #[derive(Default, Debug)]

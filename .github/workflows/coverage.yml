@@ -37,6 +37,9 @@ jobs:
           cargo make rust-optimizer
           sudo chown -R $USER .
 
+      - name: download mars-common artifacts
+        run: cargo make download-artifacts
+
       - name: Run test coverage
         run: cargo make coverage-lcov
 

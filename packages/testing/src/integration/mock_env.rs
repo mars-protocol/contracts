@@ -6,6 +6,7 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
+use mars_params::types::{AssetParams, AssetParamsUpdate};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     incentives, oracle,
@@ -19,7 +20,7 @@ use mars_red_bank_types::{
 
 use crate::integration::mock_contracts::{
     mock_address_provider_contract, mock_incentives_contract, mock_oracle_osmosis_contract,
-    mock_red_bank_contract, mock_rewards_collector_osmosis_contract,
+    mock_params_osmosis_contract, mock_red_bank_contract, mock_rewards_collector_osmosis_contract,
 };
 
 pub struct MockEnv {
@@ -30,6 +31,7 @@ pub struct MockEnv {
     pub oracle: Oracle,
     pub red_bank: RedBank,
     pub rewards_collector: RewardsCollector,
+    pub params: Params,
 }
 
 #[derive(Clone)]
@@ -54,6 +56,11 @@ pub struct RedBank {
 
 #[derive(Clone)]
 pub struct RewardsCollector {
+    pub contract_addr: Addr,
+}
+
+#[derive(Clone)]
+pub struct Params {
     pub contract_addr: Addr,
 }
 
@@ -449,11 +456,26 @@ impl RewardsCollector {
     }
 }
 
+impl Params {
+    pub fn init_params(&self, env: &mut MockEnv, denom: &str, params: AssetParams) {
+        env.app
+            .execute_contract(
+                env.owner.clone(),
+                self.contract_addr.clone(),
+                &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
+                    denom: denom.to_string(),
+                    params,
+                }),
+                &[],
+            )
+            .unwrap();
+    }
+}
+
 pub struct MockEnvBuilder {
     app: BasicApp,
     admin: Option<String>,
     owner: Addr,
-    emergency_owner: Addr,
 
     chain_prefix: String,
     mars_denom: String,
@@ -475,8 +497,7 @@ impl MockEnvBuilder {
         Self {
             app: App::default(),
             admin,
-            owner: owner.clone(),
-            emergency_owner: owner,
+            owner,
             chain_prefix: "".to_string(), // empty prefix for multitest because deployed contracts have addresses such as contract1, contract2 etc which are invalid in address-provider
             mars_denom: "umars".to_string(),
             base_denom: "uosmo".to_string(),
@@ -542,6 +563,7 @@ impl MockEnvBuilder {
         let oracle_addr = self.deploy_oracle_osmosis();
         let red_bank_addr = self.deploy_red_bank(&address_provider_addr);
         let rewards_collector_addr = self.deploy_rewards_collector_osmosis(&address_provider_addr);
+        let params_addr = self.deploy_params_osmosis();
 
         self.update_address_provider(
             &address_provider_addr,
@@ -559,6 +581,7 @@ impl MockEnvBuilder {
             MarsAddressType::RewardsCollector,
             &rewards_collector_addr,
         );
+        self.update_address_provider(&address_provider_addr, MarsAddressType::Params, &params_addr);
 
         MockEnv {
             app: take(&mut self.app),
@@ -577,6 +600,9 @@ impl MockEnvBuilder {
             },
             rewards_collector: RewardsCollector {
                 contract_addr: rewards_collector_addr,
+            },
+            params: Params {
+                contract_addr: params_addr,
             },
         }
     }
@@ -649,7 +675,6 @@ impl MockEnvBuilder {
                     owner: self.owner.to_string(),
                     config: CreateOrUpdateConfig {
                         address_provider: Some(address_provider_addr.to_string()),
-                        close_factor: Some(self.close_factor),
                     },
                 },
                 &[],
@@ -678,6 +703,24 @@ impl MockEnvBuilder {
                 },
                 &[],
                 "rewards-collector",
+                None,
+            )
+            .unwrap()
+    }
+
+    fn deploy_params_osmosis(&mut self) -> Addr {
+        let code_id = self.app.store_code(mock_params_osmosis_contract());
+
+        self.app
+            .instantiate_contract(
+                code_id,
+                self.owner.clone(),
+                &mars_params::msg::InstantiateMsg {
+                    owner: self.owner.to_string(),
+                    max_close_factor: self.close_factor,
+                },
+                &[],
+                "params",
                 None,
             )
             .unwrap()

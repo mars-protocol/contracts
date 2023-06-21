@@ -1,10 +1,12 @@
+#![allow(dead_code)]
+
 use std::cmp::min;
 
 use cosmwasm_std::{
     attr, coin, coins,
     testing::{mock_info, MockApi, MockStorage},
-    to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps, OwnedDeps, StdError, StdResult,
-    SubMsg, Uint128, WasmMsg,
+    to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps, OwnedDeps, StdError, SubMsg, Uint128,
+    WasmMsg,
 };
 use cw_utils::PaymentError;
 use helpers::{
@@ -12,6 +14,7 @@ use helpers::{
     th_get_expected_indices, th_get_expected_indices_and_rates, th_init_market, th_setup,
     TestUtilizationDeltaInfo,
 };
+use mars_params::types::AssetParams;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -20,7 +23,7 @@ use mars_red_bank::{
         compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
         ScalingOperation, SCALING_FACTOR,
     },
-    state::{COLLATERALS, CONFIG, DEBTS, MARKETS},
+    state::{COLLATERALS, DEBTS, MARKETS},
 };
 use mars_red_bank_types::{
     address_provider::MarsAddressType,
@@ -30,7 +33,7 @@ use mars_red_bank_types::{
 use mars_testing::{mock_env, mock_env_at_block_time, MarsMockQuerier, MockEnvParams};
 use mars_utils::math;
 
-use crate::helpers::{set_debt, TestInterestResults};
+use crate::helpers::{set_debt, th_default_asset_params, TestInterestResults};
 
 mod helpers;
 
@@ -44,6 +47,8 @@ struct TestSuite {
     close_factor: Decimal,
     collateral_market: Market,
     debt_market: Market,
+    collateral_asset_params: AssetParams,
+    debt_asset_params: AssetParams,
 }
 
 fn setup_test() -> TestSuite {
@@ -52,12 +57,7 @@ fn setup_test() -> TestSuite {
     let mut deps = th_setup(&[initial_collateral_coin.clone(), initial_debt_coin.clone()]);
 
     let close_factor = Decimal::from_ratio(1u128, 2u128);
-    CONFIG
-        .update(deps.as_mut().storage, |mut config| -> StdResult<_> {
-            config.close_factor = close_factor;
-            Ok(config)
-        })
-        .unwrap();
+    deps.querier.set_close_factor(close_factor);
 
     let collateral_price = Decimal::from_ratio(2_u128, 1_u128);
     let debt_price = Decimal::from_ratio(11_u128, 10_u128);
@@ -76,9 +76,6 @@ fn setup_test() -> TestSuite {
     };
 
     let collateral_market = Market {
-        max_loan_to_value: Decimal::from_ratio(5u128, 10u128),
-        liquidation_threshold: Decimal::from_ratio(6u128, 10u128),
-        liquidation_bonus: Decimal::from_ratio(1u128, 10u128),
         collateral_total_scaled: Uint128::new(1_500_000_000) * SCALING_FACTOR,
         debt_total_scaled: Uint128::new(800_000_000) * SCALING_FACTOR,
         liquidity_index: Decimal::one(),
@@ -92,7 +89,6 @@ fn setup_test() -> TestSuite {
     };
 
     let debt_market = Market {
-        max_loan_to_value: Decimal::from_ratio(6u128, 10u128),
         collateral_total_scaled: Uint128::new(3_500_000_000) * SCALING_FACTOR,
         debt_total_scaled: Uint128::new(1_800_000_000) * SCALING_FACTOR,
         liquidity_index: Decimal::from_ratio(12u128, 10u128),
@@ -115,6 +111,22 @@ fn setup_test() -> TestSuite {
     let debt_market = th_init_market(deps.as_mut(), &initial_debt_coin.denom, &debt_market);
     th_init_market(deps.as_mut(), uncollateralized_denom, &uncollateralized_debt_market);
 
+    let asset_params_1_collateral = AssetParams {
+        max_loan_to_value: Decimal::from_ratio(5u128, 10u128),
+        liquidation_threshold: Decimal::from_ratio(6u128, 10u128),
+        liquidation_bonus: Decimal::from_ratio(1u128, 10u128),
+        ..th_default_asset_params()
+    };
+    deps.querier
+        .set_redbank_params(&initial_collateral_coin.denom, asset_params_1_collateral.clone());
+    let asset_params_2_debt = AssetParams {
+        max_loan_to_value: Decimal::from_ratio(6u128, 10u128),
+        ..th_default_asset_params()
+    };
+    deps.querier.set_redbank_params(&initial_debt_coin.denom, asset_params_2_debt.clone());
+
+    deps.querier.set_redbank_params(uncollateralized_denom, th_default_asset_params());
+
     TestSuite {
         deps,
         collateral_coin: initial_collateral_coin,
@@ -125,6 +137,8 @@ fn setup_test() -> TestSuite {
         close_factor,
         collateral_market,
         debt_market,
+        collateral_asset_params: asset_params_1_collateral,
+        debt_asset_params: asset_params_2_debt,
     }
 }
 
@@ -183,7 +197,7 @@ fn expected_amounts(
     let expected_liquidated_collateral_amount = math::divide_uint128_by_decimal(
         amount_to_repay
             * test_suite.debt_price
-            * (Decimal::one() + test_suite.collateral_market.liquidation_bonus),
+            * (Decimal::one() + test_suite.collateral_asset_params.liquidation_bonus),
         test_suite.collateral_price,
     )
     .unwrap();
@@ -623,6 +637,7 @@ fn liquidate_fully() {
         debt_price,
         collateral_market,
         debt_market,
+        collateral_asset_params,
         ..
     } = setup_test();
 
@@ -669,7 +684,7 @@ fn liquidate_fully() {
     let expected_less_debt = math::divide_uint128_by_decimal(
         math::divide_uint128_by_decimal(collateral_price * user_collateral_balance, debt_price)
             .unwrap(),
-        Decimal::one() + collateral_market.liquidation_bonus,
+        Decimal::one() + collateral_asset_params.liquidation_bonus,
     )
     .unwrap();
 
@@ -754,6 +769,7 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
         mut deps,
         collateral_price,
         collateral_market,
+        collateral_asset_params,
         ..
     } = setup_test();
     let debt_price = collateral_price;
@@ -808,7 +824,7 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
     let debt_market_after = MARKETS.load(&deps.storage, &collateral_market.denom).unwrap();
 
     let expected_liquidated_collateral_amount = math::divide_uint128_by_decimal(
-        debt_to_repay * debt_price * (Decimal::one() + collateral_market.liquidation_bonus),
+        debt_to_repay * debt_price * (Decimal::one() + collateral_asset_params.liquidation_bonus),
         collateral_price,
     )
     .unwrap();
@@ -901,6 +917,7 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
         collateral_price,
         close_factor,
         collateral_market,
+        collateral_asset_params,
         ..
     } = setup_test();
     let debt_price = collateral_price;
@@ -965,7 +982,9 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
     );
 
     let expected_liquidated_collateral_amount = math::divide_uint128_by_decimal(
-        expected_less_debt * debt_price * (Decimal::one() + collateral_market.liquidation_bonus),
+        expected_less_debt
+            * debt_price
+            * (Decimal::one() + collateral_asset_params.liquidation_bonus),
         collateral_price,
     )
     .unwrap();
@@ -1211,16 +1230,12 @@ fn liquidation_health_factor_check() {
     let collateral_liquidation_bonus = Decimal::from_ratio(1u128, 10u128);
 
     let collateral_market = Market {
-        max_loan_to_value: collateral_ltv,
-        liquidation_threshold: collateral_liquidation_threshold,
-        liquidation_bonus: collateral_liquidation_bonus,
         debt_total_scaled: Uint128::zero(),
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
         ..Default::default()
     };
     let debt_market = Market {
-        max_loan_to_value: Decimal::from_ratio(6u128, 10u128),
         debt_total_scaled: Uint128::new(20_000_000) * SCALING_FACTOR,
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
@@ -1235,6 +1250,24 @@ fn liquidation_health_factor_check() {
     th_init_market(deps.as_mut(), "collateral", &collateral_market);
     th_init_market(deps.as_mut(), "debt", &debt_market);
     th_init_market(deps.as_mut(), "uncollateralized_debt", &uncollateralized_debt_market);
+
+    deps.querier.set_redbank_params(
+        "collateral",
+        AssetParams {
+            max_loan_to_value: collateral_ltv,
+            liquidation_threshold: collateral_liquidation_threshold,
+            liquidation_bonus: collateral_liquidation_bonus,
+            ..th_default_asset_params()
+        },
+    );
+    deps.querier.set_redbank_params(
+        "debt",
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(6u128, 10u128),
+            ..th_default_asset_params()
+        },
+    );
+    deps.querier.set_redbank_params("uncollateralized_debt", th_default_asset_params());
 
     // test health factor check
     let healthy_user_addr = Addr::unchecked("healthy_user");
@@ -1335,14 +1368,18 @@ fn liquidate_if_collateral_disabled() {
 fn liquidator_cannot_receive_collaterals_without_spending_coins() {
     let market = Market {
         liquidity_index: Decimal::one(),
-        liquidation_bonus: Decimal::from_ratio(1u128, 10u128),
         ..Default::default()
+    };
+    let asset_params = AssetParams {
+        liquidation_bonus: Decimal::from_ratio(1u128, 10u128),
+        ..th_default_asset_params()
     };
     let res_err = liquidation_compute_amounts(
         Uint128::new(320000000),
         Uint128::new(800),
         Uint128::new(2),
         &market,
+        &asset_params,
         Decimal::one(),
         Decimal::from_ratio(300u128, 1u128),
         0,
@@ -1356,14 +1393,18 @@ fn liquidator_cannot_receive_collaterals_without_spending_coins() {
 fn cannot_liquidate_without_receiving_collaterals() {
     let market = Market {
         liquidity_index: Decimal::one(),
-        liquidation_bonus: Decimal::from_ratio(1u128, 10u128),
         ..Default::default()
+    };
+    let asset_params = AssetParams {
+        liquidation_bonus: Decimal::from_ratio(1u128, 10u128),
+        ..th_default_asset_params()
     };
     let res_err = liquidation_compute_amounts(
         Uint128::new(320000000),
         Uint128::new(20),
         Uint128::new(30),
         &market,
+        &asset_params,
         Decimal::from_ratio(12u128, 1u128),
         Decimal::one(),
         0,
