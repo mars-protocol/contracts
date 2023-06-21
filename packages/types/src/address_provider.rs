@@ -61,6 +61,7 @@ impl FromStr for MarsAddressType {
             "fee_collector" => Ok(MarsAddressType::FeeCollector),
             "incentives" => Ok(MarsAddressType::Incentives),
             "oracle" => Ok(MarsAddressType::Oracle),
+            "params" => Ok(MarsAddressType::Params),
             "protocol_admin" => Ok(MarsAddressType::ProtocolAdmin),
             "red_bank" => Ok(MarsAddressType::RedBank),
             "rewards_collector" => Ok(MarsAddressType::RewardsCollector),

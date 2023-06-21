@@ -89,7 +89,7 @@ fn setup_test() -> TestSuite {
     };
 
     let debt_market = Market {
-        collateral_total_scaled: Uint128::zero(), // can be any number, but just using zero for now for convenience
+        collateral_total_scaled: Uint128::new(3_500_000_000) * SCALING_FACTOR,
         debt_total_scaled: Uint128::new(1_800_000_000) * SCALING_FACTOR,
         liquidity_index: Decimal::from_ratio(12u128, 10u128),
         borrow_index: Decimal::from_ratio(14u128, 10u128),
