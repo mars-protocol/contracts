@@ -28,6 +28,7 @@ cw-storage-plus     = { workspace = true }
 cw-utils            = { workspace = true }
 mars-health         = { workspace = true }
 mars-owner          = { workspace = true }
+mars-params         = { workspace = true }
 mars-red-bank-types = { workspace = true }
 mars-utils          = { workspace = true }
 thiserror           = { workspace = true }

@@ -1,21 +1,11 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
-use mars_utils::{error::ValidationError, helpers::decimal_param_le_one};
 
 /// Global configuration
 #[cw_serde]
 pub struct Config<T> {
     /// Address provider returns addresses for all protocol contracts
     pub address_provider: T,
-    /// Maximum percentage of outstanding debt that can be covered by a liquidator
-    pub close_factor: Decimal,
-}
-
-impl<T> Config<T> {
-    pub fn validate(&self) -> Result<(), ValidationError> {
-        decimal_param_le_one(self.close_factor, "close_factor")?;
-        Ok(())
-    }
 }
 
 #[cw_serde]
@@ -70,12 +60,8 @@ pub struct ConfigResponse {
     pub owner: Option<String>,
     /// The contract's proposed owner
     pub proposed_new_owner: Option<String>,
-    /// The contract's emergency owner
-    pub emergency_owner: Option<String>,
     /// Address provider returns addresses for all protocol contracts
     pub address_provider: String,
-    /// Maximum percentage of outstanding debt that can be covered by a liquidator
-    pub close_factor: Decimal,
 }
 
 #[cw_serde]

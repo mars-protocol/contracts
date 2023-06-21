@@ -9,11 +9,11 @@ import { UseQueryOptions, useQuery, useMutation, UseMutationOptions } from '@tan
 import { ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee, Coin } from '@cosmjs/amino'
 import {
-  Decimal,
   InstantiateMsg,
   CreateOrUpdateConfig,
   ExecuteMsg,
   OwnerUpdate,
+  Decimal,
   Uint128,
   InitOrUpdateAssetParams,
   InterestRateModel,

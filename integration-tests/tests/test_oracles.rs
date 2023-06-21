@@ -6,6 +6,7 @@ use mars_oracle_osmosis::{
     msg::PriceSourceResponse, Downtime, DowntimeDetector, OsmosisPriceSourceChecked,
     OsmosisPriceSourceUnchecked,
 };
+use mars_params::types::AssetParamsUpdate;
 use mars_red_bank_types::{
     address_provider::{
         ExecuteMsg::SetAddress, InstantiateMsg as InstantiateAddr, MarsAddressType,
@@ -36,6 +37,7 @@ const OSMOSIS_RED_BANK_CONTRACT_NAME: &str = "mars-red-bank";
 const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
 const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector";
 const OSMOSIS_INCENTIVES_CONTRACT_NAME: &str = "mars-incentives";
+const OSMOSIS_PARAMS_CONTRACT_NAME: &str = "mars-params";
 
 #[test]
 fn querying_xyk_lp_price_if_no_price_for_tokens() {
@@ -1063,7 +1065,6 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
             owner: signer.address(),
             config: CreateOrUpdateConfig {
                 address_provider: Some(addr_provider_addr.clone()),
-                close_factor: Some(Decimal::percent(10)),
             },
         },
     );
@@ -1093,6 +1094,16 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
             channel_id: "channel-1".to_string(),
             timeout_seconds: 60,
             slippage_tolerance: Decimal::new(Uint128::from(1u128)),
+        },
+    );
+
+    let params_addr = instantiate_contract(
+        wasm,
+        signer,
+        OSMOSIS_PARAMS_CONTRACT_NAME,
+        &mars_params::msg::InstantiateMsg {
+            owner: (signer.address()),
+            max_close_factor: Decimal::percent(10),
         },
     );
 
@@ -1141,10 +1152,23 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
     .unwrap();
 
     wasm.execute(
+        &addr_provider_addr,
+        &SetAddress {
+            address_type: MarsAddressType::Params,
+            address: params_addr.clone(),
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    let (market_params, asset_params) = default_asset_params();
+
+    wasm.execute(
         &red_bank_addr,
         &ExecuteRedBank::InitAsset {
             denom: "uosmo".to_string(),
-            params: default_asset_params(),
+            params: market_params.clone(),
         },
         &[],
         signer,
@@ -1155,11 +1179,34 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
         &red_bank_addr,
         &ExecuteRedBank::InitAsset {
             denom: "uatom".to_string(),
-            params: default_asset_params(),
+            params: market_params,
         },
         &[],
         signer,
     )
     .unwrap();
+
+    wasm.execute(
+        &params_addr,
+        &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
+            denom: "uosmo".to_string(),
+            params: asset_params.clone(),
+        }),
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    wasm.execute(
+        &params_addr,
+        &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
+            denom: "uatom".to_string(),
+            params: asset_params,
+        }),
+        &[],
+        signer,
+    )
+    .unwrap();
+
     (oracle_addr, red_bank_addr)
 }

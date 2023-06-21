@@ -6,6 +6,7 @@ use mars_red_bank_types::{oracle, red_bank::Position};
 
 use crate::{
     error::ContractError,
+    helpers::query_asset_params,
     interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount},
     state::{COLLATERALS, DEBTS, MARKETS},
 };
@@ -16,8 +17,9 @@ pub fn assert_liquidatable(
     env: &Env,
     user_addr: &Addr,
     oracle_addr: &Addr,
+    params_addr: &Addr,
 ) -> Result<(bool, HashMap<String, Position>), ContractError> {
-    let positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
+    let positions = get_user_positions_map(deps, env, user_addr, oracle_addr, params_addr)?;
     let health = compute_position_health(&positions)?;
 
     Ok((health.is_liquidatable(), positions))
@@ -29,10 +31,11 @@ pub fn assert_below_liq_threshold_after_withdraw(
     env: &Env,
     user_addr: &Addr,
     oracle_addr: &Addr,
+    params_addr: &Addr,
     denom: &str,
     withdraw_amount: Uint128,
 ) -> Result<bool, ContractError> {
-    let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
+    let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr, params_addr)?;
 
     // Update position to compute health factor after withdraw
     match positions.get_mut(denom) {
@@ -52,10 +55,11 @@ pub fn assert_below_max_ltv_after_borrow(
     env: &Env,
     user_addr: &Addr,
     oracle_addr: &Addr,
+    params_addr: &Addr,
     denom: &str,
     borrow_amount: Uint128,
 ) -> Result<bool, ContractError> {
-    let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
+    let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr, params_addr)?;
 
     // Update position to compute health factor after borrow
     positions
@@ -107,6 +111,7 @@ pub fn get_user_positions_map(
     env: &Env,
     user_addr: &Addr,
     oracle_addr: &Addr,
+    params_addr: &Addr,
 ) -> StdResult<HashMap<String, Position>> {
     let block_time = env.block.time.seconds();
 
@@ -131,6 +136,7 @@ pub fn get_user_positions_map(
         .into_iter()
         .map(|denom| {
             let market = MARKETS.load(deps.storage, &denom)?;
+            let params = query_asset_params(&deps.querier, params_addr, &denom)?;
 
             let collateral_amount = match COLLATERALS.may_load(deps.storage, (user_addr, &denom))? {
                 Some(collateral) if collateral.enabled => {
@@ -157,8 +163,8 @@ pub fn get_user_positions_map(
                 collateral_amount,
                 debt_amount,
                 uncollateralized_debt,
-                max_ltv: market.max_loan_to_value,
-                liquidation_threshold: market.liquidation_threshold,
+                max_ltv: params.max_loan_to_value,
+                liquidation_threshold: params.liquidation_threshold,
                 asset_price,
             };
 

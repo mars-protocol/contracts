@@ -12,6 +12,7 @@ pub enum MarsAddressType {
     Oracle,
     RedBank,
     RewardsCollector,
+    Params,
     /// Protocol admin is an ICS-27 interchain account controlled by Mars Hub's x/gov module.
     /// This account will take the owner and admin roles of red-bank contracts.
     ///
@@ -41,6 +42,7 @@ impl fmt::Display for MarsAddressType {
             MarsAddressType::FeeCollector => "fee_collector",
             MarsAddressType::Incentives => "incentives",
             MarsAddressType::Oracle => "oracle",
+            MarsAddressType::Params => "params",
             MarsAddressType::ProtocolAdmin => "protocol_admin",
             MarsAddressType::RedBank => "red_bank",
             MarsAddressType::RewardsCollector => "rewards_collector",
@@ -59,6 +61,7 @@ impl FromStr for MarsAddressType {
             "fee_collector" => Ok(MarsAddressType::FeeCollector),
             "incentives" => Ok(MarsAddressType::Incentives),
             "oracle" => Ok(MarsAddressType::Oracle),
+            "params" => Ok(MarsAddressType::Params),
             "protocol_admin" => Ok(MarsAddressType::ProtocolAdmin),
             "red_bank" => Ok(MarsAddressType::RedBank),
             "rewards_collector" => Ok(MarsAddressType::RewardsCollector),
