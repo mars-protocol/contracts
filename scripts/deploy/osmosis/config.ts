@@ -221,6 +221,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   maxCloseFactor: '0.5',
   incentiveEpochDuration: 86400,
   maxWhitelistedIncentiveDenoms: 10,
+  targetHealthFactor: '1.2',
 }
 
 // axlUSDC does not have a pool on testnet so config can't have swapRoutes configured correctly
@@ -258,6 +259,7 @@ export const osmosisTestMultisig: DeploymentConfig = {
   maxCloseFactor: '0.5',
   incentiveEpochDuration: 86400,
   maxWhitelistedIncentiveDenoms: 10,
+  targetHealthFactor: '1.2',
 }
 
 export const osmosisMainnet: DeploymentConfig = {
@@ -322,6 +324,7 @@ export const osmosisMainnet: DeploymentConfig = {
   maxCloseFactor: '0.5',
   incentiveEpochDuration: 86400,
   maxWhitelistedIncentiveDenoms: 10,
+  targetHealthFactor: '1.2',
 }
 
 export const osmosisLocalConfig: DeploymentConfig = {
@@ -357,4 +360,5 @@ export const osmosisLocalConfig: DeploymentConfig = {
   maxCloseFactor: '0.5',
   incentiveEpochDuration: 86400,
   maxWhitelistedIncentiveDenoms: 10,
+  targetHealthFactor: '1.2',
 }

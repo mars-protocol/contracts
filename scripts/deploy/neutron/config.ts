@@ -208,4 +208,5 @@ export const neutronTestnetConfig: DeploymentConfig = {
   },
   incentiveEpochDuration: 604800, // 1 week
   maxWhitelistedIncentiveDenoms: 10,
+  targetHealthFactor: '1.2',
 }
