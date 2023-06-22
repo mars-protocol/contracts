@@ -56,6 +56,7 @@ export interface DeploymentConfig {
   oracleCustomInitParams?: WasmOracleCustomInitParams
   incentiveEpochDuration: number
   maxWhitelistedIncentiveDenoms: number
+  targetHealthFactor: string
 }
 
 export interface AssetConfig {
