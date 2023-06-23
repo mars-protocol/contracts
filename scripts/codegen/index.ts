@@ -60,9 +60,9 @@ const fetchSchemafromGithub = async ({
 
 void (async function () {
   await fetchSchemafromGithub({
-    githubRepo: 'https://github.com/mars-protocol/mars-common',
-    commit: '1449b4b1cd21d318a48310345ea8c99a0c3cf16c',
-    pathToSchema: './mars-common/schemas/mars-params',
+    githubRepo: 'https://github.com/mars-protocol/red-bank',
+    commit: '32ab53b3130f3fb947c908768fe22b639536b185',
+    pathToSchema: './red-bank/schemas/mars-params',
   })
   await generateTypes()
 })()

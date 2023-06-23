@@ -1,5 +1,6 @@
 use cosmwasm_std::{coin, Decimal};
 use cw_utils::Duration;
+use mars_params::types::asset::LiquidationBonus;
 
 use crate::helpers::{lp_token_info, CoinInfo, VaultTestInfo};
 
@@ -10,7 +11,13 @@ pub fn build_mock_coin_infos(count: usize) -> Vec<CoinInfo> {
             max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
             price: Decimal::from_atomics(10u128, 0).unwrap(),
-            liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(1u64),
+                slope: Decimal::from_atomics(2u128, 0).unwrap(),
+                min_lb: Decimal::percent(2u64),
+                max_lb: Decimal::percent(10u64),
+            },
+            protocol_liquidation_fee: Decimal::percent(2u64),
             whitelisted: true,
             hls: None,
         })

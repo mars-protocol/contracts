@@ -2,6 +2,7 @@ use std::ops::{Add, Mul, Sub};
 
 use cosmwasm_std::{coin, coins, Addr, Decimal, OverflowError, OverflowOperation, Uint128};
 use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
+use mars_params::types::asset::LiquidationBonus;
 use mars_rover::{
     error::ContractError,
     msg::execute::Action::{Borrow, Deposit, Repay, Withdraw},
@@ -83,7 +84,13 @@ fn raises_when_repaying_what_is_not_owed() {
         price: Decimal::from_atomics(9u128, 0).unwrap(),
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(85u128, 2).unwrap(),
-        liquidation_bonus: Decimal::from_atomics(1u128, 1).unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
         whitelisted: true,
         hls: None,
     };
@@ -142,7 +149,13 @@ fn raises_when_not_enough_assets_to_repay() {
         price: Decimal::from_atomics(9u128, 0).unwrap(),
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(85u128, 2).unwrap(),
-        liquidation_bonus: Decimal::from_atomics(1u128, 1).unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
         whitelisted: true,
         hls: None,
     };

@@ -3,7 +3,10 @@ use std::ops::{Add, Mul};
 use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Uint128};
 use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use mars_mock_oracle::msg::CoinPrice;
-use mars_params::msg::{AssetParamsUpdate::AddOrUpdate, VaultConfigUpdate};
+use mars_params::{
+    msg::{AssetParamsUpdate::AddOrUpdate, VaultConfigUpdate},
+    types::asset::LiquidationBonus,
+};
 use mars_rover::{
     error::ContractError,
     msg::{
@@ -86,7 +89,13 @@ fn terra_ragnarok() {
         price: Decimal::from_atomics(100u128, 1).unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-        liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
         whitelisted: true,
         hls: None,
     };
@@ -301,7 +310,13 @@ fn cannot_borrow_more_but_not_liquidatable() {
         price: Decimal::from_atomics(23654u128, 4).unwrap(),
         max_ltv: Decimal::from_atomics(5u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
-        liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
         whitelisted: true,
         hls: None,
     };
@@ -310,7 +325,13 @@ fn cannot_borrow_more_but_not_liquidatable() {
         price: Decimal::from_atomics(102u128, 1).unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
-        liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
         whitelisted: true,
         hls: None,
     };
@@ -381,7 +402,13 @@ fn assets_and_ltv_lqdt_adjusted_value() {
         price: Decimal::from_atomics(5265478965412365487125u128, 12).unwrap(),
         max_ltv: Decimal::from_atomics(6u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
-        liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
         whitelisted: true,
         hls: None,
     };
@@ -390,7 +417,13 @@ fn assets_and_ltv_lqdt_adjusted_value() {
         price: Decimal::from_atomics(7012302005u128, 3).unwrap(),
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
-        liquidation_bonus: Decimal::from_atomics(12u128, 2).unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
         whitelisted: true,
         hls: None,
     };
@@ -491,7 +524,13 @@ fn debt_value() {
         price: Decimal::from_atomics(5265478965412365487125u128, 12).unwrap(),
         max_ltv: Decimal::from_atomics(3u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(5u128, 1).unwrap(),
-        liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
         whitelisted: true,
         hls: None,
     };
@@ -500,7 +539,13 @@ fn debt_value() {
         price: Decimal::from_atomics(7012302005u128, 3).unwrap(),
         max_ltv: Decimal::from_atomics(8u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
-        liquidation_bonus: Decimal::from_atomics(1u128, 1).unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
         whitelisted: true,
         hls: None,
     };
@@ -814,7 +859,13 @@ fn can_take_actions_if_ltv_does_not_weaken() {
         price: Decimal::from_atomics(23654u128, 4).unwrap(),
         max_ltv: Decimal::from_atomics(5u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
-        liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
         whitelisted: true,
         hls: None,
     };
@@ -823,7 +874,13 @@ fn can_take_actions_if_ltv_does_not_weaken() {
         price: Decimal::from_atomics(102u128, 1).unwrap(),
         max_ltv: Decimal::from_atomics(7u128, 1).unwrap(),
         liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
-        liquidation_bonus: Decimal::from_atomics(2u128, 1).unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
         whitelisted: true,
         hls: None,
     };

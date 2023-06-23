@@ -28,6 +28,7 @@ fn only_owner_can_update_config() {
             swapper: None,
             zapper: None,
             health_contract: None,
+            rewards_collector: None,
         },
     );
 
@@ -48,6 +49,7 @@ fn update_config_works_with_full_config() {
     let new_unlocking_max = Uint128::new(321);
     let new_swapper = SwapperBase::new("new_swapper".to_string());
     let new_health_contract = HealthContractUnchecked::new("new_health_contract".to_string());
+    let new_rewards_collector = "rewards_collector_contract_new".to_string();
 
     mock.update_config(
         &Addr::unchecked(original_config.ownership.owner.clone().unwrap()),
@@ -59,6 +61,7 @@ fn update_config_works_with_full_config() {
             swapper: Some(new_swapper.clone()),
             zapper: Some(new_zapper.clone()),
             health_contract: Some(new_health_contract.clone()),
+            rewards_collector: Some(new_rewards_collector.clone()),
         },
     )
     .unwrap();
@@ -90,6 +93,9 @@ fn update_config_works_with_full_config() {
 
     assert_eq!(&new_config.health_contract, new_health_contract.address());
     assert_ne!(new_config.health_contract, original_config.health_contract);
+
+    assert_eq!(new_config.rewards_collector.clone().unwrap(), new_rewards_collector);
+    assert_ne!(new_config.rewards_collector, original_config.rewards_collector);
 }
 
 #[test]

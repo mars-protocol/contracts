@@ -40,4 +40,6 @@ pub struct ConfigUpdates {
     pub swapper: Option<SwapperUnchecked>,
     pub zapper: Option<ZapperUnchecked>,
     pub health_contract: Option<HealthContractUnchecked>,
+    /// The Mars Protocol rewards-collector contract. We collect protocol fee for its account.
+    pub rewards_collector: Option<String>,
 }

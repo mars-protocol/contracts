@@ -60,7 +60,7 @@ impl Params {
         )
     }
 
-    pub fn query_max_close_factor(&self, querier: &QuerierWrapper) -> StdResult<Decimal> {
-        querier.query_wasm_smart(self.address().to_string(), &QueryMsg::MaxCloseFactor {})
+    pub fn query_target_health_factor(&self, querier: &QuerierWrapper) -> StdResult<Decimal> {
+        querier.query_wasm_smart(self.address().to_string(), &QueryMsg::TargetHealthFactor {})
     }
 }

@@ -4,7 +4,7 @@ use cosmwasm_std::{Coin, Decimal, StdError, Uint128};
 use mars_params::{
     msg::{AssetParamsUpdate::AddOrUpdate, VaultConfigUpdate},
     types::{
-        asset::{AssetParamsUnchecked, CmSettings, RedBankSettings},
+        asset::{AssetParamsUnchecked, CmSettings, LiquidationBonus, RedBankSettings},
         hls::HlsParamsUnchecked,
     },
 };
@@ -139,7 +139,13 @@ fn adds_vault_base_denoms_to_oracle_and_red_bank() {
             },
             max_loan_to_value,
             liquidation_threshold,
-            liquidation_bonus: Decimal::from_atomics(9u128, 2).unwrap(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(1u64),
+                slope: Decimal::from_atomics(2u128, 0).unwrap(),
+                min_lb: Decimal::percent(2u64),
+                max_lb: Decimal::percent(10u64),
+            },
+            protocol_liquidation_fee: Decimal::percent(2u64),
         },
     };
 
@@ -174,7 +180,12 @@ fn whitelisted_coins_work() {
 
     let max_loan_to_value = Decimal::from_atomics(4523u128, 4).unwrap();
     let liquidation_threshold = Decimal::from_atomics(5u128, 1).unwrap();
-    let liquidation_bonus = Decimal::from_atomics(9u128, 2).unwrap();
+    let liquidation_bonus = LiquidationBonus {
+        starting_lb: Decimal::percent(1u64),
+        slope: Decimal::from_atomics(2u128, 0).unwrap(),
+        min_lb: Decimal::percent(2u64),
+        max_lb: Decimal::percent(10u64),
+    };
 
     let mut asset_params = AssetParamsUnchecked {
         denom: umars.to_string(),
@@ -194,6 +205,7 @@ fn whitelisted_coins_work() {
         max_loan_to_value,
         liquidation_threshold,
         liquidation_bonus,
+        protocol_liquidation_fee: Decimal::percent(2u64),
     };
 
     let update = AddOrUpdate {
@@ -291,7 +303,13 @@ fn vault_whitelist_affects_max_ltv() {
             },
             max_loan_to_value: Decimal::from_str("0.4523").unwrap(),
             liquidation_threshold: Decimal::from_str("0.5").unwrap(),
-            liquidation_bonus: Decimal::from_atomics(9u128, 2).unwrap(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(1u64),
+                slope: Decimal::from_atomics(2u128, 0).unwrap(),
+                min_lb: Decimal::percent(2u64),
+                max_lb: Decimal::percent(10u64),
+            },
+            protocol_liquidation_fee: Decimal::percent(2u64),
         },
     };
 

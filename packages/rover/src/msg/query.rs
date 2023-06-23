@@ -194,4 +194,5 @@ pub struct ConfigResponse {
     pub swapper: String,
     pub zapper: String,
     pub health_contract: String,
+    pub rewards_collector: Option<String>,
 }

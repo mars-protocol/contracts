@@ -281,6 +281,15 @@ pub enum CallbackMsg {
         /// Total balance for coin in Rover prior to withdraw
         previous_balance: Coin,
     },
+    /// Used to update the coin balance of account after an async action
+    UpdateCoinBalanceAfterVaultLiquidation {
+        /// Account that needs coin balance adjustment
+        account_id: String,
+        /// Total balance for coin in Rover prior to withdraw
+        previous_balance: Coin,
+        /// Protocol fee percentage transfered to rewards-collector account
+        protocol_fee: Decimal,
+    },
     /// Add Vec<Coin> to liquidity pool in exchange for LP tokens
     ProvideLiquidity {
         account_id: String,

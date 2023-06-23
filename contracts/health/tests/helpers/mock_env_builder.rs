@@ -162,6 +162,7 @@ impl MockEnvBuilder {
                         swapper: "n/a".to_string(),
                         zapper: "n/a".to_string(),
                         health_contract: "n/a".to_string(),
+                        rewards_collector: None,
                     },
                 },
                 &[],
@@ -215,7 +216,7 @@ impl MockEnvBuilder {
                 owner.clone(),
                 &ParamsInstantiateMsg {
                     owner: owner.to_string(),
-                    max_close_factor: Decimal::from_str("0.5").unwrap(),
+                    target_health_factor: Decimal::from_str("1.2").unwrap(),
                 },
                 &[],
                 "mock-params-contract",

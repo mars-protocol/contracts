@@ -20,6 +20,7 @@ import {
   AssetParamsBaseForAddr,
   CmSettingsForAddr,
   HlsParamsBaseForAddr,
+  LiquidationBonus,
   RedBankSettings,
   Positions,
   DebtAmount,

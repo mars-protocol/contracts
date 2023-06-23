@@ -1182,6 +1182,12 @@
         "red_bank": {
           "type": "string"
         },
+        "rewards_collector": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "swapper": {
           "type": "string"
         },

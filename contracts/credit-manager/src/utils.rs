@@ -142,6 +142,27 @@ pub fn update_balances_msgs(
     denoms.iter().map(|denom| update_balance_msg(querier, rover_addr, account_id, denom)).collect()
 }
 
+pub fn update_balance_after_vault_liquidation_msg(
+    querier: &QuerierWrapper,
+    rover_addr: &Addr,
+    account_id: &str,
+    denom: &str,
+    protocol_fee: Decimal,
+) -> StdResult<CosmosMsg> {
+    let previous_balance = query_balance(querier, rover_addr, denom)?;
+    Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: rover_addr.to_string(),
+        funds: vec![],
+        msg: to_binary(&ExecuteMsg::Callback(
+            CallbackMsg::UpdateCoinBalanceAfterVaultLiquidation {
+                account_id: account_id.to_string(),
+                previous_balance,
+                protocol_fee,
+            },
+        ))?,
+    }))
+}
+
 pub fn debt_shares_to_amount(
     deps: Deps,
     rover_addr: &Addr,

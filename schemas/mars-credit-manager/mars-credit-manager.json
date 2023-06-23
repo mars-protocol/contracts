@@ -1119,6 +1119,47 @@
             "additionalProperties": false
           },
           {
+            "description": "Used to update the coin balance of account after an async action",
+            "type": "object",
+            "required": [
+              "update_coin_balance_after_vault_liquidation"
+            ],
+            "properties": {
+              "update_coin_balance_after_vault_liquidation": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "previous_balance",
+                  "protocol_fee"
+                ],
+                "properties": {
+                  "account_id": {
+                    "description": "Account that needs coin balance adjustment",
+                    "type": "string"
+                  },
+                  "previous_balance": {
+                    "description": "Total balance for coin in Rover prior to withdraw",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Coin"
+                      }
+                    ]
+                  },
+                  "protocol_fee": {
+                    "description": "Protocol fee percentage transfered to rewards-collector account",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Decimal"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Add Vec<Coin> to liquidity pool in exchange for LP tokens",
             "type": "object",
             "required": [
@@ -1301,6 +1342,13 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "rewards_collector": {
+            "description": "The Mars Protocol rewards-collector contract. We collect protocol fee for its account.",
+            "type": [
+              "string",
+              "null"
             ]
           },
           "swapper": {
@@ -2505,6 +2553,12 @@
         },
         "red_bank": {
           "type": "string"
+        },
+        "rewards_collector": {
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "swapper": {
           "type": "string"

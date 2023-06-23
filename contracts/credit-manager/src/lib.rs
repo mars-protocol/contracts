@@ -7,6 +7,7 @@ pub mod health;
 pub mod hls;
 pub mod instantiate;
 pub mod lend;
+pub mod liquidate;
 pub mod liquidate_deposit;
 pub mod liquidate_lend;
 pub mod query;

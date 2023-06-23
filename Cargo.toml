@@ -68,7 +68,7 @@ mars-rover                 = { version = "2.0.0", path = "./packages/rover" }
 
 # contracts
 mars-account-nft    = { version = "2.0.0", path = "./contracts/account-nft", features = ["library"] }
-mars-params         = { version = "1.0.6", features = ["library"] }
+mars-params         = { version = "1.0.7", features = ["library"] }
 mars-rover-health   = { version = "2.0.0", path = "./contracts/health", features = ["library"] }
 mars-swapper-base   = { version = "2.0.0", path = "./contracts/swapper/base", features = ["library"] }
 mars-v2-zapper-base = { version = "2.0.0", path = "./contracts/v2-zapper/base", features = ["library"] }

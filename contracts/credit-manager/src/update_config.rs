@@ -3,9 +3,14 @@ use cw721_base::Action;
 use mars_account_nft::{msg::ExecuteMsg as NftExecuteMsg, nft_config::NftConfigUpdates};
 use mars_owner::OwnerUpdate;
 use mars_rover::{error::ContractResult, msg::instantiate::ConfigUpdates};
+use mars_rover_health_types::AccountKind;
 
-use crate::state::{
-    ACCOUNT_NFT, HEALTH_CONTRACT, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, RED_BANK, SWAPPER, ZAPPER,
+use crate::{
+    execute::create_credit_account,
+    state::{
+        RewardsCollector, ACCOUNT_NFT, HEALTH_CONTRACT, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER,
+        RED_BANK, REWARDS_COLLECTOR, SWAPPER, ZAPPER,
+    },
 };
 
 pub fn update_config(
@@ -70,6 +75,27 @@ pub fn update_config(
         response = response
             .add_attribute("key", "health_contract")
             .add_attribute("value", unchecked.address());
+    }
+
+    if let Some(unchecked) = updates.rewards_collector {
+        let rewards_collector_addr = deps.api.addr_validate(&unchecked)?;
+
+        let account_nft = ACCOUNT_NFT.load(deps.storage)?;
+        let next_id = account_nft.query_next_id(&deps.querier)?;
+        REWARDS_COLLECTOR.save(
+            deps.storage,
+            &RewardsCollector {
+                address: rewards_collector_addr.to_string(),
+                account_id: next_id.clone(),
+            },
+        )?;
+
+        let res = create_credit_account(deps, rewards_collector_addr, AccountKind::Default)?;
+
+        response = response
+            .add_submessages(res.messages)
+            .add_attribute("key", "rewards_collector_account")
+            .add_attribute("value", next_id);
     }
 
     Ok(response)

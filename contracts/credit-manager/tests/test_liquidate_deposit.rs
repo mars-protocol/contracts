@@ -6,7 +6,7 @@ use mars_rover::{
         ContractError::{AboveMaxLTV, LiquidationNotProfitable, NotLiquidatable},
     },
     msg::execute::{
-        Action::{Borrow, Deposit, EnterVault, Liquidate},
+        Action::{Borrow, Deposit, EnterVault, Liquidate, Withdraw},
         LiquidateRequest,
     },
 };
@@ -20,7 +20,7 @@ use crate::helpers::{
 pub mod helpers;
 
 // Reference figures behind various scenarios
-// https://docs.google.com/spreadsheets/d/1_Bs1Fc1RLf5IARvaXZ0QjigoMWSJQhhrRUtQ8uyoLdI/edit?pli=1#gid=1857897311
+// https://docs.google.com/spreadsheets/d/1H7Ajghsee2l7_litG7EWoM-kkVQOh4dbHa8WSV-Y6Jg/edit#gid=1331087474
 
 #[test]
 fn can_only_liquidate_unhealthy_accounts() {
@@ -363,7 +363,7 @@ fn liquidator_left_in_unhealthy_state() {
         res,
         AboveMaxLTV {
             account_id: liquidator_account_id,
-            max_ltv_health_factor: "0.727272727272727272".to_string(),
+            max_ltv_health_factor: "0.70909090909090909".to_string(),
         },
     )
 }
@@ -437,21 +437,22 @@ fn liquidation_not_profitable_after_calculations() {
 }
 
 #[test]
-fn debt_amount_adjusted_to_close_factor_max() {
+fn target_health_factor_reached_after_max_debt_repayed() {
     let uosmo_info = uosmo_info();
     let uatom_info = uatom_info();
     let liquidator = Addr::unchecked("liquidator");
     let liquidatee = Addr::unchecked("liquidatee");
+    let thf = Decimal::from_atomics(12u128, 1).unwrap();
     let mut mock = MockEnv::new()
-        .max_close_factor(Decimal::from_atomics(1u128, 1).unwrap())
+        .target_health_factor(thf)
         .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
-            funds: coins(300, uosmo_info.denom.clone()),
+            funds: coins(3000, uosmo_info.denom.clone()),
         })
         .fund_account(AccountToFund {
             addr: liquidator.clone(),
-            funds: coins(300, uatom_info.denom.clone()),
+            funds: coins(3000, uatom_info.denom.clone()),
         })
         .build()
         .unwrap();
@@ -460,8 +461,190 @@ fn debt_amount_adjusted_to_close_factor_max() {
     mock.update_credit_account(
         &liquidatee_account_id,
         &liquidatee,
-        vec![Deposit(uosmo_info.to_coin(300)), Borrow(uatom_info.to_coin(100))],
-        &[Coin::new(300, uosmo_info.denom.clone())],
+        vec![
+            Deposit(uosmo_info.to_coin(3000)),
+            Borrow(uatom_info.to_coin(1000)),
+            Withdraw(uatom_info.to_coin(400)),
+        ],
+        &[Coin::new(3000, uosmo_info.denom.clone())],
+    )
+    .unwrap();
+
+    mock.price_change(CoinPrice {
+        denom: uatom_info.denom.clone(),
+        price: Decimal::from_atomics(128u128, 2).unwrap(),
+    });
+
+    let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
+
+    mock.update_credit_account(
+        &liquidator_account_id,
+        &liquidator,
+        vec![
+            Deposit(uatom_info.to_coin(561)), // MDR = 525, refund 36
+            Liquidate {
+                liquidatee_account_id: liquidatee_account_id.clone(),
+                debt_coin: uatom_info.to_coin(561),
+                request: LiquidateRequest::Deposit(uosmo_info.denom),
+            },
+        ],
+        &[uatom_info.to_coin(561)],
+    )
+    .unwrap();
+
+    // Assert liquidatee's new position
+    let position = mock.query_positions(&liquidatee_account_id);
+    assert_eq!(position.deposits.len(), 2);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
+    assert_eq!(osmo_balance.amount, Uint128::new(208));
+    let atom_balance = get_coin("uatom", &position.deposits);
+    assert_eq!(atom_balance.amount, Uint128::new(600));
+
+    assert_eq!(position.debts.len(), 1);
+    let atom_debt = get_debt("uatom", &position.debts);
+    assert_eq!(atom_debt.amount, Uint128::new(476));
+
+    // Assert liquidator's new position
+    let position = mock.query_positions(&liquidator_account_id);
+    assert_eq!(position.deposits.len(), 2);
+    assert_eq!(position.debts.len(), 0);
+    let atom_balance = get_coin("uatom", &position.deposits);
+    assert_eq!(atom_balance.amount, Uint128::new(36));
+    let osmo_balance = get_coin("uosmo", &position.deposits);
+    assert_eq!(osmo_balance.amount, Uint128::new(2740));
+
+    // Assert rewards-collector's new position
+    let rewards_collector_acc_id = mock.query_rewards_collector_account();
+    let position = mock.query_positions(&rewards_collector_acc_id);
+    assert_eq!(position.deposits.len(), 1);
+    assert_eq!(position.debts.len(), 0);
+    let atom_balance = get_coin("uosmo", &position.deposits);
+    assert_eq!(atom_balance.amount, Uint128::new(52));
+
+    // Assert HF for liquidatee
+    let account_kind = mock.query_account_kind(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    // it should be 1.2, but because of roundings it is hard to achieve an exact number
+    let health_diff = health.liquidation_health_factor.unwrap().abs_diff(thf);
+    assert!(health_diff < Decimal::from_atomics(1u128, 2u32).unwrap());
+}
+
+#[test]
+fn debt_amount_adjusted_to_total_debt_for_denom() {
+    let uosmo_info = uosmo_info();
+    let uatom_info = uatom_info();
+    let ujake_info = ujake_info();
+    let liquidator = Addr::unchecked("liquidator");
+    let liquidatee = Addr::unchecked("liquidatee");
+    let mut mock = MockEnv::new()
+        .target_health_factor(Decimal::from_atomics(12u128, 1).unwrap())
+        .set_params(&[uosmo_info.clone(), uatom_info.clone(), ujake_info.clone()])
+        .fund_account(AccountToFund {
+            addr: liquidatee.clone(),
+            funds: coins(3000, uosmo_info.denom.clone()),
+        })
+        .fund_account(AccountToFund {
+            addr: liquidator.clone(),
+            funds: coins(3000, ujake_info.denom.clone()),
+        })
+        .build()
+        .unwrap();
+    let liquidatee_account_id = mock.create_credit_account(&liquidatee).unwrap();
+
+    mock.update_credit_account(
+        &liquidatee_account_id,
+        &liquidatee,
+        vec![
+            Deposit(uosmo_info.to_coin(3000)),
+            Borrow(uatom_info.to_coin(1000)),
+            Borrow(ujake_info.to_coin(100)),
+        ],
+        &[Coin::new(3000, uosmo_info.denom.clone())],
+    )
+    .unwrap();
+
+    mock.price_change(CoinPrice {
+        denom: uatom_info.denom,
+        price: Decimal::from_atomics(5u128, 0).unwrap(),
+    });
+
+    let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
+
+    mock.update_credit_account(
+        &liquidator_account_id,
+        &liquidator,
+        vec![
+            Deposit(ujake_info.to_coin(101)),
+            Liquidate {
+                liquidatee_account_id: liquidatee_account_id.clone(),
+                debt_coin: ujake_info.to_coin(101),
+                request: LiquidateRequest::Deposit(uosmo_info.denom),
+            },
+        ],
+        &[ujake_info.to_coin(101)],
+    )
+    .unwrap();
+
+    // Assert liquidatee's new position
+    let position = mock.query_positions(&liquidatee_account_id);
+    assert_eq!(position.deposits.len(), 3);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
+    assert_eq!(osmo_balance.amount, Uint128::new(2012));
+    let atom_balance = get_coin("uatom", &position.deposits);
+    assert_eq!(atom_balance.amount, Uint128::new(1000));
+    let jake_balance = get_coin("ujake", &position.deposits);
+    assert_eq!(jake_balance.amount, Uint128::new(100));
+
+    assert_eq!(position.debts.len(), 1);
+    let atom_debt = get_debt("uatom", &position.debts);
+    assert_eq!(atom_debt.amount, Uint128::new(1001));
+
+    // Assert liquidator's new position
+    let position = mock.query_positions(&liquidator_account_id);
+    assert_eq!(position.deposits.len(), 1);
+    assert_eq!(position.debts.len(), 0);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
+    assert_eq!(osmo_balance.amount, Uint128::new(972));
+
+    // Assert rewards-collector's new position
+    let rewards_collector_acc_id = mock.query_rewards_collector_account();
+    let position = mock.query_positions(&rewards_collector_acc_id);
+    assert_eq!(position.deposits.len(), 1);
+    assert_eq!(position.debts.len(), 0);
+    let atom_balance = get_coin("uosmo", &position.deposits);
+    assert_eq!(atom_balance.amount, Uint128::new(16));
+
+    // Liq HF should improve
+    let account_kind = mock.query_account_kind(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    assert!(!health.liquidatable);
+}
+
+#[test]
+fn debt_amount_adjusted_to_max_allowed_by_request_coin() {
+    let uosmo_info = uosmo_info();
+    let uatom_info = uatom_info();
+    let liquidator = Addr::unchecked("liquidator");
+    let liquidatee = Addr::unchecked("liquidatee");
+    let mut mock = MockEnv::new()
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
+        .fund_account(AccountToFund {
+            addr: liquidatee.clone(),
+            funds: coins(3000, uosmo_info.denom.clone()),
+        })
+        .fund_account(AccountToFund {
+            addr: liquidator.clone(),
+            funds: coins(3000, uatom_info.denom.clone()),
+        })
+        .build()
+        .unwrap();
+    let liquidatee_account_id = mock.create_credit_account(&liquidatee).unwrap();
+
+    mock.update_credit_account(
+        &liquidatee_account_id,
+        &liquidatee,
+        vec![Deposit(uosmo_info.to_coin(3000)), Borrow(uatom_info.to_coin(1000))],
+        &[Coin::new(3000, uosmo_info.denom.clone())],
     )
     .unwrap();
 
@@ -476,14 +659,14 @@ fn debt_amount_adjusted_to_close_factor_max() {
         &liquidator_account_id,
         &liquidator,
         vec![
-            Deposit(uatom_info.to_coin(50)),
+            Deposit(uatom_info.to_coin(144)),
             Liquidate {
                 liquidatee_account_id: liquidatee_account_id.clone(),
-                debt_coin: uatom_info.to_coin(50),
+                debt_coin: uatom_info.to_coin(120),
                 request: LiquidateRequest::Deposit(uosmo_info.denom),
             },
         ],
-        &[uatom_info.to_coin(50)],
+        &[uatom_info.to_coin(144)],
     )
     .unwrap();
 
@@ -491,174 +674,35 @@ fn debt_amount_adjusted_to_close_factor_max() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.deposits.len(), 2);
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(36));
+    assert_eq!(osmo_balance.amount, Uint128::new(16));
     let atom_balance = get_coin("uatom", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(100));
+    assert_eq!(atom_balance.amount, Uint128::new(1000));
 
     assert_eq!(position.debts.len(), 1);
     let atom_debt = get_debt("uatom", &position.debts);
-    assert_eq!(atom_debt.amount, Uint128::new(91));
+    assert_eq!(atom_debt.amount, Uint128::new(881));
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
     assert_eq!(position.deposits.len(), 2);
     assert_eq!(position.debts.len(), 0);
     let atom_balance = get_coin("uatom", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(40));
+    assert_eq!(atom_balance.amount, Uint128::new(24));
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(264));
-}
+    assert_eq!(osmo_balance.amount, Uint128::new(2928));
 
-#[test]
-fn debt_amount_adjusted_to_total_debt_for_denom() {
-    let uosmo_info = uosmo_info();
-    let uatom_info = uatom_info();
-    let ujake_info = ujake_info();
-    let liquidator = Addr::unchecked("liquidator");
-    let liquidatee = Addr::unchecked("liquidatee");
-    let mut mock = MockEnv::new()
-        .max_close_factor(Decimal::from_atomics(1u128, 1).unwrap())
-        .set_params(&[uosmo_info.clone(), uatom_info.clone(), ujake_info.clone()])
-        .fund_account(AccountToFund {
-            addr: liquidatee.clone(),
-            funds: coins(300, uosmo_info.denom.clone()),
-        })
-        .fund_account(AccountToFund {
-            addr: liquidator.clone(),
-            funds: coins(300, ujake_info.denom.clone()),
-        })
-        .build()
-        .unwrap();
-    let liquidatee_account_id = mock.create_credit_account(&liquidatee).unwrap();
-
-    mock.update_credit_account(
-        &liquidatee_account_id,
-        &liquidatee,
-        vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(uatom_info.to_coin(100)),
-            Borrow(ujake_info.to_coin(10)),
-        ],
-        &[Coin::new(300, uosmo_info.denom.clone())],
-    )
-    .unwrap();
-
-    mock.price_change(CoinPrice {
-        denom: uatom_info.denom,
-        price: Decimal::from_atomics(20u128, 0).unwrap(),
-    });
-
-    let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
-
-    mock.update_credit_account(
-        &liquidator_account_id,
-        &liquidator,
-        vec![
-            Deposit(ujake_info.to_coin(50)),
-            Liquidate {
-                liquidatee_account_id: liquidatee_account_id.clone(),
-                debt_coin: ujake_info.to_coin(50),
-                request: LiquidateRequest::Deposit(uosmo_info.denom),
-            },
-        ],
-        &[ujake_info.to_coin(50)],
-    )
-    .unwrap();
-
-    // Assert liquidatee's new position
-    let position = mock.query_positions(&liquidatee_account_id);
-    assert_eq!(position.deposits.len(), 3);
-    let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(184));
-    let atom_balance = get_coin("uatom", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(100));
-    let jake_balance = get_coin("ujake", &position.deposits);
-    assert_eq!(jake_balance.amount, Uint128::new(10));
-
-    assert_eq!(position.debts.len(), 1);
-    let atom_debt = get_debt("uatom", &position.debts);
-    assert_eq!(atom_debt.amount, Uint128::new(101));
-
-    // Assert liquidator's new position
-    let position = mock.query_positions(&liquidator_account_id);
-    assert_eq!(position.deposits.len(), 2);
+    // Assert rewards-collector's new position
+    let rewards_collector_acc_id = mock.query_rewards_collector_account();
+    let position = mock.query_positions(&rewards_collector_acc_id);
+    assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
-    let jake_balance = get_coin("ujake", &position.deposits);
-    assert_eq!(jake_balance.amount, Uint128::new(39));
-    let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(116));
-}
+    let atom_balance = get_coin("uosmo", &position.deposits);
+    assert_eq!(atom_balance.amount, Uint128::new(56));
 
-#[test]
-fn debt_amount_adjusted_to_max_allowed_by_request_coin() {
-    let uosmo_info = uosmo_info();
-    let uatom_info = uatom_info();
-    let liquidator = Addr::unchecked("liquidator");
-    let liquidatee = Addr::unchecked("liquidatee");
-    let mut mock = MockEnv::new()
-        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
-        .fund_account(AccountToFund {
-            addr: liquidatee.clone(),
-            funds: coins(300, uosmo_info.denom.clone()),
-        })
-        .fund_account(AccountToFund {
-            addr: liquidator.clone(),
-            funds: coins(300, uatom_info.denom.clone()),
-        })
-        .build()
-        .unwrap();
-    let liquidatee_account_id = mock.create_credit_account(&liquidatee).unwrap();
-
-    mock.update_credit_account(
-        &liquidatee_account_id,
-        &liquidatee,
-        vec![Deposit(uosmo_info.to_coin(300)), Borrow(uatom_info.to_coin(100))],
-        &[Coin::new(300, uosmo_info.denom.clone())],
-    )
-    .unwrap();
-
-    mock.price_change(CoinPrice {
-        denom: uatom_info.denom.clone(),
-        price: Decimal::from_atomics(20u128, 0).unwrap(),
-    });
-
-    let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
-
-    mock.update_credit_account(
-        &liquidator_account_id,
-        &liquidator,
-        vec![
-            Deposit(uatom_info.to_coin(50)),
-            Liquidate {
-                liquidatee_account_id: liquidatee_account_id.clone(),
-                debt_coin: uatom_info.to_coin(50),
-                request: LiquidateRequest::Deposit(uosmo_info.denom),
-            },
-        ],
-        &[uatom_info.to_coin(50)],
-    )
-    .unwrap();
-
-    // Assert liquidatee's new position
-    let position = mock.query_positions(&liquidatee_account_id);
-    assert_eq!(position.deposits.len(), 2);
-    let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(36));
-    let atom_balance = get_coin("uatom", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(100));
-
-    assert_eq!(position.debts.len(), 1);
-    let atom_debt = get_debt("uatom", &position.debts);
-    assert_eq!(atom_debt.amount, Uint128::new(98));
-
-    // Assert liquidator's new position
-    let position = mock.query_positions(&liquidator_account_id);
-    assert_eq!(position.deposits.len(), 2);
-    assert_eq!(position.debts.len(), 0);
-    let atom_balance = get_coin("uatom", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(47));
-    let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(264));
+    // Liq HF should improve
+    let account_kind = mock.query_account_kind(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    assert!(!health.liquidatable);
 }
 
 #[test]
@@ -668,15 +712,15 @@ fn debt_amount_no_adjustment() {
     let liquidator = Addr::unchecked("liquidator");
     let liquidatee = Addr::unchecked("liquidatee");
     let mut mock = MockEnv::new()
-        .max_close_factor(Decimal::from_atomics(1u128, 1).unwrap())
+        .target_health_factor(Decimal::from_atomics(12u128, 1).unwrap())
         .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
-            funds: coins(300, uosmo_info.denom.clone()),
+            funds: coins(3000, uosmo_info.denom.clone()),
         })
         .fund_account(AccountToFund {
             addr: liquidator.clone(),
-            funds: coins(300, uatom_info.denom.clone()),
+            funds: coins(3000, uatom_info.denom.clone()),
         })
         .build()
         .unwrap();
@@ -685,14 +729,14 @@ fn debt_amount_no_adjustment() {
     mock.update_credit_account(
         &liquidatee_account_id,
         &liquidatee,
-        vec![Deposit(uosmo_info.to_coin(300)), Borrow(uatom_info.to_coin(100))],
-        &[Coin::new(300, uosmo_info.denom.clone())],
+        vec![Deposit(uosmo_info.to_coin(3000)), Borrow(uatom_info.to_coin(1000))],
+        &[Coin::new(3000, uosmo_info.denom.clone())],
     )
     .unwrap();
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom.clone(),
-        price: Decimal::from_atomics(55u128, 1).unwrap(),
+        price: Decimal::from_atomics(59u128, 1).unwrap(),
     });
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
@@ -701,14 +745,14 @@ fn debt_amount_no_adjustment() {
         &liquidator_account_id,
         &liquidator,
         vec![
-            Deposit(uatom_info.to_coin(10)),
+            Deposit(uatom_info.to_coin(100)),
             Liquidate {
                 liquidatee_account_id: liquidatee_account_id.clone(),
-                debt_coin: uatom_info.to_coin(10),
+                debt_coin: uatom_info.to_coin(100),
                 request: LiquidateRequest::Deposit(uosmo_info.denom),
             },
         ],
-        &[uatom_info.to_coin(10)],
+        &[uatom_info.to_coin(100)],
     )
     .unwrap();
 
@@ -716,21 +760,131 @@ fn debt_amount_no_adjustment() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.deposits.len(), 2);
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(60));
+    assert_eq!(osmo_balance.amount, Uint128::new(564));
     let atom_balance = get_coin("uatom", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(100));
+    assert_eq!(atom_balance.amount, Uint128::new(1000));
 
     assert_eq!(position.debts.len(), 1);
     let atom_debt = get_debt("uatom", &position.debts);
-    assert_eq!(atom_debt.amount, Uint128::new(91));
+    assert_eq!(atom_debt.amount, Uint128::new(901));
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(240));
+    assert_eq!(osmo_balance.amount, Uint128::new(2392));
+
+    // Assert rewards-collector's new position
+    let rewards_collector_acc_id = mock.query_rewards_collector_account();
+    let position = mock.query_positions(&rewards_collector_acc_id);
+    assert_eq!(position.deposits.len(), 1);
+    assert_eq!(position.debts.len(), 0);
+    let atom_balance = get_coin("uosmo", &position.deposits);
+    assert_eq!(atom_balance.amount, Uint128::new(44));
+
+    // Liq HF should improve
+    let account_kind = mock.query_account_kind(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    assert!(!health.liquidatable);
 }
 
 #[test]
-fn liquidate_with_no_deposited_funds() {}
+fn improve_hf_but_acc_unhealthy() {
+    let uosmo_info = uosmo_info();
+    let uatom_info = uatom_info();
+    let ujake_info = ujake_info();
+    let liquidator = Addr::unchecked("liquidator");
+    let liquidatee = Addr::unchecked("liquidatee");
+    let mut mock = MockEnv::new()
+        .target_health_factor(Decimal::from_atomics(12u128, 1).unwrap())
+        .set_params(&[uosmo_info.clone(), uatom_info.clone(), ujake_info.clone()])
+        .fund_account(AccountToFund {
+            addr: liquidatee.clone(),
+            funds: coins(4000, uosmo_info.denom.clone()),
+        })
+        .fund_account(AccountToFund {
+            addr: liquidator.clone(),
+            funds: coins(4000, ujake_info.denom.clone()),
+        })
+        .build()
+        .unwrap();
+    let liquidatee_account_id = mock.create_credit_account(&liquidatee).unwrap();
+
+    mock.update_credit_account(
+        &liquidatee_account_id,
+        &liquidatee,
+        vec![
+            Deposit(uosmo_info.to_coin(4000)),
+            Borrow(uatom_info.to_coin(1000)),
+            Borrow(ujake_info.to_coin(430)),
+        ],
+        &[Coin::new(4000, uosmo_info.denom.clone())],
+    )
+    .unwrap();
+
+    mock.price_change(CoinPrice {
+        denom: uatom_info.denom,
+        price: Decimal::from_atomics(10u128, 0).unwrap(),
+    });
+
+    let account_kind = mock.query_account_kind(&liquidatee_account_id);
+    let prev_health = mock.query_health(&liquidatee_account_id, account_kind.clone());
+
+    let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
+
+    mock.update_credit_account(
+        &liquidator_account_id,
+        &liquidator,
+        vec![
+            Deposit(ujake_info.to_coin(138)),
+            Liquidate {
+                liquidatee_account_id: liquidatee_account_id.clone(),
+                debt_coin: ujake_info.to_coin(120),
+                request: LiquidateRequest::Deposit(uosmo_info.denom),
+            },
+        ],
+        &[ujake_info.to_coin(138)],
+    )
+    .unwrap();
+
+    // Assert liquidatee's new position
+    let position = mock.query_positions(&liquidatee_account_id);
+    assert_eq!(position.deposits.len(), 3);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
+    assert_eq!(osmo_balance.amount, Uint128::new(2748));
+    let atom_balance = get_coin("uatom", &position.deposits);
+    assert_eq!(atom_balance.amount, Uint128::new(1000));
+    let jake_balance = get_coin("ujake", &position.deposits);
+    assert_eq!(jake_balance.amount, Uint128::new(430));
+
+    assert_eq!(position.debts.len(), 2);
+    let atom_debt = get_debt("uatom", &position.debts);
+    assert_eq!(atom_debt.amount, Uint128::new(1001));
+    let jake_debt = get_debt("ujake", &position.debts);
+    assert_eq!(jake_debt.amount, Uint128::new(311));
+
+    // Assert liquidator's new position
+    let position = mock.query_positions(&liquidator_account_id);
+    assert_eq!(position.deposits.len(), 2);
+    assert_eq!(position.debts.len(), 0);
+    let osmo_balance = get_coin("uosmo", &position.deposits);
+    assert_eq!(osmo_balance.amount, Uint128::new(1232));
+    let jake_balance = get_coin("ujake", &position.deposits);
+    assert_eq!(jake_balance.amount, Uint128::new(18));
+
+    // Assert rewards-collector's new position
+    let rewards_collector_acc_id = mock.query_rewards_collector_account();
+    let position = mock.query_positions(&rewards_collector_acc_id);
+    assert_eq!(position.deposits.len(), 1);
+    assert_eq!(position.debts.len(), 0);
+    let atom_balance = get_coin("uosmo", &position.deposits);
+    assert_eq!(atom_balance.amount, Uint128::new(20));
+
+    // Liq HF should improve
+    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    assert!(health.liquidatable);
+    assert!(
+        prev_health.liquidation_health_factor.unwrap() < health.liquidation_health_factor.unwrap()
+    );
+}

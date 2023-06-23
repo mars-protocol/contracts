@@ -22,7 +22,7 @@ use crate::{
     repay::{repay, repay_for_recipient},
     state::{ACCOUNT_KINDS, ACCOUNT_NFT},
     swap::swap_exact_in,
-    update_coin_balances::update_coin_balance,
+    update_coin_balances::{update_coin_balance, update_coin_balance_after_vault_liquidation},
     utils::{assert_is_token_owner, assert_not_contract_in_config},
     vault::{
         enter_vault, exit_vault, exit_vault_unlocked, liquidate_vault, request_vault_unlock,
@@ -341,6 +341,17 @@ pub fn execute_callback(
             account_id,
             previous_balance,
         } => update_coin_balance(deps, env, &account_id, &previous_balance),
+        CallbackMsg::UpdateCoinBalanceAfterVaultLiquidation {
+            account_id,
+            previous_balance,
+            protocol_fee,
+        } => update_coin_balance_after_vault_liquidation(
+            deps,
+            env,
+            &account_id,
+            &previous_balance,
+            protocol_fee,
+        ),
         CallbackMsg::ExitVault {
             account_id,
             vault,

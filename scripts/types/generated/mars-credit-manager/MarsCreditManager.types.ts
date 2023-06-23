@@ -270,6 +270,13 @@ export type CallbackMsg =
       }
     }
   | {
+      update_coin_balance_after_vault_liquidation: {
+        account_id: string
+        previous_balance: Coin
+        protocol_fee: Decimal
+      }
+    }
+  | {
       provide_liquidity: {
         account_id: string
         coins_in: ActionCoin[]
@@ -326,6 +333,7 @@ export interface ConfigUpdates {
   max_unlocking_positions?: Uint128 | null
   oracle?: OracleBaseForString | null
   red_bank?: RedBankBaseForString | null
+  rewards_collector?: string | null
   swapper?: SwapperBaseForString | null
   zapper?: ZapperBaseForString | null
 }
@@ -470,6 +478,7 @@ export interface ConfigResponse {
   ownership: OwnerResponse
   params: string
   red_bank: string
+  rewards_collector?: string | null
   swapper: string
   zapper: string
 }

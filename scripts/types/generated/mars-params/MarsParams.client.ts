@@ -22,6 +22,7 @@ import {
   AssetParamsBaseForString,
   CmSettingsForString,
   HlsParamsBaseForString,
+  LiquidationBonus,
   RedBankSettings,
   VaultConfigBaseForString,
   Coin,
@@ -55,7 +56,7 @@ export interface MarsParamsReadOnlyInterface {
     limit?: number
     startAfter?: string
   }) => Promise<ArrayOfVaultConfigBaseForAddr>
-  maxCloseFactor: () => Promise<Decimal>
+  targetHealthFactor: () => Promise<Decimal>
 }
 export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
   client: CosmWasmClient
@@ -69,7 +70,7 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
     this.allAssetParams = this.allAssetParams.bind(this)
     this.vaultConfig = this.vaultConfig.bind(this)
     this.allVaultConfigs = this.allVaultConfigs.bind(this)
-    this.maxCloseFactor = this.maxCloseFactor.bind(this)
+    this.targetHealthFactor = this.targetHealthFactor.bind(this)
   }
 
   owner = async (): Promise<OwnerResponse> => {
@@ -119,9 +120,9 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
       },
     })
   }
-  maxCloseFactor = async (): Promise<Decimal> => {
+  targetHealthFactor = async (): Promise<Decimal> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      max_close_factor: {},
+      target_health_factor: {},
     })
   }
 }
@@ -134,7 +135,7 @@ export interface MarsParamsInterface extends MarsParamsReadOnlyInterface {
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
-  updateMaxCloseFactor: (
+  updateTargetHealthFactor: (
     fee?: number | StdFee | 'auto',
     memo?: string,
     _funds?: Coin[],
@@ -169,7 +170,7 @@ export class MarsParamsClient extends MarsParamsQueryClient implements MarsParam
     this.sender = sender
     this.contractAddress = contractAddress
     this.updateOwner = this.updateOwner.bind(this)
-    this.updateMaxCloseFactor = this.updateMaxCloseFactor.bind(this)
+    this.updateTargetHealthFactor = this.updateTargetHealthFactor.bind(this)
     this.updateAssetParams = this.updateAssetParams.bind(this)
     this.updateVaultConfig = this.updateVaultConfig.bind(this)
     this.emergencyUpdate = this.emergencyUpdate.bind(this)
@@ -192,7 +193,7 @@ export class MarsParamsClient extends MarsParamsQueryClient implements MarsParam
       _funds,
     )
   }
-  updateMaxCloseFactor = async (
+  updateTargetHealthFactor = async (
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     _funds?: Coin[],
@@ -201,7 +202,7 @@ export class MarsParamsClient extends MarsParamsQueryClient implements MarsParam
       this.sender,
       this.contractAddress,
       {
-        update_max_close_factor: {},
+        update_target_health_factor: {},
       },
       fee,
       memo,

@@ -3,7 +3,7 @@ use std::str::FromStr;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Decimal;
 use mars_params::types::{
-    asset::{AssetParams, CmSettings, RedBankSettings},
+    asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
     hls::{HlsAssetType, HlsParams},
 };
 
@@ -23,7 +23,12 @@ pub fn umars_info() -> CoinInfo {
             denom,
             max_loan_to_value: Decimal::from_atomics(8u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(84u128, 2).unwrap(),
-            liquidation_bonus: Decimal::from_atomics(12u128, 2).unwrap(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(1u64),
+                slope: Decimal::from_atomics(2u128, 0).unwrap(),
+                min_lb: Decimal::percent(2u64),
+                max_lb: Decimal::percent(10u64),
+            },
             credit_manager: CmSettings {
                 whitelisted: true,
                 hls: None,
@@ -33,6 +38,7 @@ pub fn umars_info() -> CoinInfo {
                 borrow_enabled: true,
                 deposit_cap: Default::default(),
             },
+            protocol_liquidation_fee: Decimal::percent(2u64),
         },
     }
 }
@@ -46,7 +52,12 @@ pub fn udai_info() -> CoinInfo {
             denom: "udai".to_string(),
             max_loan_to_value: Decimal::from_atomics(85u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
-            liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(1u64),
+                slope: Decimal::from_atomics(2u128, 0).unwrap(),
+                min_lb: Decimal::percent(2u64),
+                max_lb: Decimal::percent(10u64),
+            },
             credit_manager: CmSettings {
                 whitelisted: true,
                 hls: None,
@@ -56,6 +67,7 @@ pub fn udai_info() -> CoinInfo {
                 borrow_enabled: true,
                 deposit_cap: Default::default(),
             },
+            protocol_liquidation_fee: Decimal::percent(2u64),
         },
     }
 }
@@ -69,7 +81,12 @@ pub fn uluna_info() -> CoinInfo {
             denom,
             max_loan_to_value: Decimal::from_atomics(7u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(78u128, 2).unwrap(),
-            liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(1u64),
+                slope: Decimal::from_atomics(2u128, 0).unwrap(),
+                min_lb: Decimal::percent(2u64),
+                max_lb: Decimal::percent(10u64),
+            },
             credit_manager: CmSettings {
                 whitelisted: true,
                 hls: None,
@@ -79,6 +96,7 @@ pub fn uluna_info() -> CoinInfo {
                 borrow_enabled: true,
                 deposit_cap: Default::default(),
             },
+            protocol_liquidation_fee: Decimal::percent(2u64),
         },
     }
 }
@@ -92,7 +110,12 @@ pub fn ustars_info() -> CoinInfo {
             denom,
             max_loan_to_value: Decimal::from_atomics(6u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
-            liquidation_bonus: Decimal::from_atomics(15u128, 2).unwrap(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(1u64),
+                slope: Decimal::from_atomics(2u128, 0).unwrap(),
+                min_lb: Decimal::percent(2u64),
+                max_lb: Decimal::percent(10u64),
+            },
             credit_manager: CmSettings {
                 whitelisted: true,
                 hls: Some(HlsParams {
@@ -108,6 +131,7 @@ pub fn ustars_info() -> CoinInfo {
                 borrow_enabled: true,
                 deposit_cap: Default::default(),
             },
+            protocol_liquidation_fee: Decimal::percent(2u64),
         },
     }
 }
@@ -121,7 +145,12 @@ pub fn ujuno_info() -> CoinInfo {
             denom,
             max_loan_to_value: Decimal::from_atomics(8u128, 1).unwrap(),
             liquidation_threshold: Decimal::from_atomics(9u128, 1).unwrap(),
-            liquidation_bonus: Decimal::from_atomics(12u128, 2).unwrap(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(1u64),
+                slope: Decimal::from_atomics(2u128, 0).unwrap(),
+                min_lb: Decimal::percent(2u64),
+                max_lb: Decimal::percent(10u64),
+            },
             credit_manager: CmSettings {
                 whitelisted: true,
                 hls: None,
@@ -131,6 +160,7 @@ pub fn ujuno_info() -> CoinInfo {
                 borrow_enabled: true,
                 deposit_cap: Default::default(),
             },
+            protocol_liquidation_fee: Decimal::percent(2u64),
         },
     }
 }

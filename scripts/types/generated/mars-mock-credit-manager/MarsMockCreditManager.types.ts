@@ -179,6 +179,7 @@ export interface ConfigResponse {
   ownership: OwnerResponse
   params: string
   red_bank: string
+  rewards_collector?: string | null
   swapper: string
   zapper: string
 }

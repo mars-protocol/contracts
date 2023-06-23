@@ -23,6 +23,7 @@ import {
   AssetParamsBaseForString,
   CmSettingsForString,
   HlsParamsBaseForString,
+  LiquidationBonus,
   RedBankSettings,
   VaultConfigBaseForString,
   Coin,
@@ -41,7 +42,7 @@ export interface MarsParamsMessage {
   contractAddress: string
   sender: string
   updateOwner: (ownerUpdate: OwnerUpdate, _funds?: Coin[]) => MsgExecuteContractEncodeObject
-  updateMaxCloseFactor: (_funds?: Coin[]) => MsgExecuteContractEncodeObject
+  updateTargetHealthFactor: (_funds?: Coin[]) => MsgExecuteContractEncodeObject
   updateAssetParams: (
     assetParamsUpdate: AssetParamsUpdate,
     _funds?: Coin[],
@@ -63,7 +64,7 @@ export class MarsParamsMessageComposer implements MarsParamsMessage {
     this.sender = sender
     this.contractAddress = contractAddress
     this.updateOwner = this.updateOwner.bind(this)
-    this.updateMaxCloseFactor = this.updateMaxCloseFactor.bind(this)
+    this.updateTargetHealthFactor = this.updateTargetHealthFactor.bind(this)
     this.updateAssetParams = this.updateAssetParams.bind(this)
     this.updateVaultConfig = this.updateVaultConfig.bind(this)
     this.emergencyUpdate = this.emergencyUpdate.bind(this)
@@ -84,7 +85,7 @@ export class MarsParamsMessageComposer implements MarsParamsMessage {
       }),
     }
   }
-  updateMaxCloseFactor = (_funds?: Coin[]): MsgExecuteContractEncodeObject => {
+  updateTargetHealthFactor = (_funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
       value: MsgExecuteContract.fromPartial({
@@ -92,7 +93,7 @@ export class MarsParamsMessageComposer implements MarsParamsMessage {
         contract: this.contractAddress,
         msg: toUtf8(
           JSON.stringify({
-            update_max_close_factor: {},
+            update_target_health_factor: {},
           }),
         ),
         funds: _funds,

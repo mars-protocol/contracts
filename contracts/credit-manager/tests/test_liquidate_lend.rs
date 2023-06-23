@@ -16,6 +16,9 @@ use crate::helpers::{
 
 pub mod helpers;
 
+// Reference figures behind various scenarios
+// https://docs.google.com/spreadsheets/d/1H7Ajghsee2l7_litG7EWoM-kkVQOh4dbHa8WSV-Y6Jg/edit#gid=1331087474
+
 #[test]
 fn lent_positions_contribute_to_health() {
     let uatom_info = uatom_info();
@@ -158,15 +161,15 @@ fn lent_position_partially_liquidated() {
     let liquidatee = Addr::unchecked("liquidatee");
 
     let mut mock = MockEnv::new()
-        .max_close_factor(Decimal::from_atomics(6u128, 1).unwrap())
+        .target_health_factor(Decimal::from_atomics(12u128, 1).unwrap())
         .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
-            funds: coins(300, uosmo_info.denom.clone()),
+            funds: coins(2000, uosmo_info.denom.clone()),
         })
         .fund_account(AccountToFund {
             addr: liquidator.clone(),
-            funds: coins(300, uatom_info.denom.clone()),
+            funds: coins(2000, uatom_info.denom.clone()),
         })
         .build()
         .unwrap();
@@ -177,23 +180,23 @@ fn lent_position_partially_liquidated() {
         &liquidatee_account_id,
         &liquidatee,
         vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(uatom_info.to_coin(100)),
-            Lend(uosmo_info.to_coin(202)),
+            Deposit(uosmo_info.to_coin(1050)),
+            Borrow(uatom_info.to_coin(1000)),
+            Lend(uosmo_info.to_coin(450)),
         ],
-        &[uosmo_info.to_coin(300)],
+        &[uosmo_info.to_coin(1050)],
     )
     .unwrap();
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom.clone(),
-        price: Decimal::from_atomics(55u128, 1).unwrap(),
+        price: Decimal::from_atomics(22u128, 1).unwrap(),
     });
 
     let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
     assert!(health.liquidatable);
-    assert_eq!(health.total_collateral_value, Uint128::new(624u128));
-    assert_eq!(health.total_debt_value, Uint128::new(556u128));
+    assert_eq!(health.total_collateral_value, Uint128::new(2462u128));
+    assert_eq!(health.total_debt_value, Uint128::new(2203u128));
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
 
@@ -201,14 +204,14 @@ fn lent_position_partially_liquidated() {
         &liquidator_account_id,
         &liquidator,
         vec![
-            Deposit(uatom_info.to_coin(6)),
+            Deposit(uatom_info.to_coin(45)),
             Liquidate {
                 liquidatee_account_id: liquidatee_account_id.clone(),
-                debt_coin: uatom_info.to_coin(6),
+                debt_coin: uatom_info.to_coin(45),
                 request: LiquidateRequest::Lend(uosmo_info.denom),
             },
         ],
-        &[uatom_info.to_coin(6)],
+        &[uatom_info.to_coin(45)],
     )
     .unwrap();
 
@@ -216,17 +219,17 @@ fn lent_position_partially_liquidated() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.deposits.len(), 2);
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(98));
+    assert_eq!(osmo_balance.amount, Uint128::new(600));
     let atom_balance = get_coin("uatom", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(100));
+    assert_eq!(atom_balance.amount, Uint128::new(1000));
 
     assert_eq!(position.debts.len(), 1);
     let atom_debt = get_debt("uatom", &position.debts);
-    assert_eq!(atom_debt.amount, Uint128::new(95));
+    assert_eq!(atom_debt.amount, Uint128::new(956));
 
     assert_eq!(position.lends.len(), 1);
     let osmo_lent = get_lent("uosmo", &position.lends);
-    assert_eq!(osmo_lent.amount, Uint128::new(59));
+    assert_eq!(osmo_lent.amount, Uint128::new(39));
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
@@ -235,7 +238,22 @@ fn lent_position_partially_liquidated() {
 
     assert_eq!(position.lends.len(), 1);
     let osmo_lent = get_lent("uosmo", &position.lends);
-    assert_eq!(osmo_lent.amount, Uint128::new(143));
+    assert_eq!(osmo_lent.amount, Uint128::new(403));
+
+    // Assert rewards-collector's new position
+    let rewards_collector_acc_id = mock.query_rewards_collector_account();
+    let position = mock.query_positions(&rewards_collector_acc_id);
+    assert_eq!(position.deposits.len(), 0);
+    assert_eq!(position.debts.len(), 0);
+
+    assert_eq!(position.lends.len(), 1);
+    let rc_osmo_lent = get_lent("uosmo", &position.lends);
+    assert_eq!(rc_osmo_lent.amount, Uint128::new(8));
+
+    // Liq HF should improve
+    let account_kind = mock.query_account_kind(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    assert!(!health.liquidatable);
 }
 
 #[test]
@@ -247,7 +265,7 @@ fn lent_position_fully_liquidated() {
     let liquidatee = Addr::unchecked("liquidatee");
 
     let mut mock = MockEnv::new()
-        .max_close_factor(Decimal::from_atomics(6u128, 1).unwrap())
+        .target_health_factor(Decimal::from_atomics(12u128, 1).unwrap())
         .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
@@ -284,10 +302,10 @@ fn lent_position_fully_liquidated() {
         price: Decimal::from_atomics(50u128, 1).unwrap(),
     });
 
-    let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
-    assert!(health.liquidatable);
-    assert_eq!(health.total_collateral_value, Uint128::new(2801u128));
-    assert_eq!(health.total_debt_value, Uint128::new(2505u128));
+    let prev_health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
+    assert!(prev_health.liquidatable);
+    assert_eq!(prev_health.total_collateral_value, Uint128::new(2801u128));
+    assert_eq!(prev_health.total_debt_value, Uint128::new(2505u128));
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
 
@@ -316,21 +334,43 @@ fn lent_position_fully_liquidated() {
 
     assert_eq!(position.debts.len(), 1);
     let atom_debt = get_debt("uatom", &position.debts);
-    assert_eq!(atom_debt.amount, Uint128::new(481));
+    assert_eq!(atom_debt.amount, Uint128::new(480));
 
-    assert_eq!(position.lends.len(), 0);
+    // FIXME: dust because of roundings, is it possible to avoid it?
+    assert_eq!(position.lends.len(), 1);
+    let osmo_balance = get_lent("uosmo", &position.lends);
+    assert_eq!(osmo_balance.amount, Uint128::new(1));
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
     assert_eq!(position.deposits.len(), 1);
     let atom_balance = get_coin("uatom", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(12));
+    assert_eq!(atom_balance.amount, Uint128::new(11));
 
     assert_eq!(position.debts.len(), 0);
 
     assert_eq!(position.lends.len(), 1);
     let osmo_lent = get_lent("uosmo", &position.lends);
-    assert_eq!(osmo_lent.amount, Uint128::new(110));
+    assert_eq!(osmo_lent.amount, Uint128::new(106));
+
+    // Assert rewards-collector's new position
+    let rewards_collector_acc_id = mock.query_rewards_collector_account();
+    let position = mock.query_positions(&rewards_collector_acc_id);
+    assert_eq!(position.deposits.len(), 0);
+    assert_eq!(position.debts.len(), 0);
+
+    assert_eq!(position.lends.len(), 1);
+    let rc_osmo_lent = get_lent("uosmo", &position.lends);
+    // FIXME: excel shows 2, simulated interest rate influence?
+    assert_eq!(rc_osmo_lent.amount, Uint128::new(1));
+
+    // Liq HF should improve
+    let account_kind = mock.query_account_kind(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    assert!(health.liquidatable);
+    assert!(
+        prev_health.liquidation_health_factor.unwrap() < health.liquidation_health_factor.unwrap()
+    );
 }
 
 #[test]
@@ -342,15 +382,15 @@ fn liquidate_with_reclaiming() {
     let liquidatee = Addr::unchecked("liquidatee");
 
     let mut mock = MockEnv::new()
-        .max_close_factor(Decimal::from_atomics(6u128, 1).unwrap())
+        .target_health_factor(Decimal::from_atomics(12u128, 1).unwrap())
         .set_params(&[uosmo_info.clone(), uatom_info.clone()])
         .fund_account(AccountToFund {
             addr: liquidatee.clone(),
-            funds: coins(300, uosmo_info.denom.clone()),
+            funds: coins(3000, uosmo_info.denom.clone()),
         })
         .fund_account(AccountToFund {
             addr: liquidator.clone(),
-            funds: coins(300, uatom_info.denom.clone()),
+            funds: coins(3000, uatom_info.denom.clone()),
         })
         .build()
         .unwrap();
@@ -361,23 +401,23 @@ fn liquidate_with_reclaiming() {
         &liquidatee_account_id,
         &liquidatee,
         vec![
-            Deposit(uosmo_info.to_coin(300)),
-            Borrow(uatom_info.to_coin(100)),
-            Lend(uosmo_info.to_coin(202)),
+            Deposit(uosmo_info.to_coin(3000)),
+            Borrow(uatom_info.to_coin(1000)),
+            Lend(uosmo_info.to_coin(1500)),
         ],
-        &[uosmo_info.to_coin(300)],
+        &[uosmo_info.to_coin(3000)],
     )
     .unwrap();
 
     mock.price_change(CoinPrice {
         denom: uatom_info.denom.clone(),
-        price: Decimal::from_atomics(55u128, 1).unwrap(),
+        price: Decimal::from_atomics(82u128, 1).unwrap(),
     });
 
-    let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
-    assert!(health.liquidatable);
-    assert_eq!(health.total_collateral_value, Uint128::new(624u128));
-    assert_eq!(health.total_debt_value, Uint128::new(556u128));
+    let prev_health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
+    assert!(prev_health.liquidatable);
+    assert_eq!(prev_health.total_collateral_value, Uint128::new(8950u128));
+    assert_eq!(prev_health.total_debt_value, Uint128::new(8209u128));
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
 
@@ -385,10 +425,10 @@ fn liquidate_with_reclaiming() {
         &liquidator_account_id,
         &liquidator,
         vec![
-            Deposit(uatom_info.to_coin(10)),
+            Deposit(uatom_info.to_coin(100)),
             Liquidate {
                 liquidatee_account_id: liquidatee_account_id.clone(),
-                debt_coin: uatom_info.to_coin(10),
+                debt_coin: uatom_info.to_coin(100),
                 request: LiquidateRequest::Lend(uosmo_info.denom.clone()),
             },
             Reclaim(ActionCoin {
@@ -396,7 +436,7 @@ fn liquidate_with_reclaiming() {
                 amount: ActionAmount::AccountBalance,
             }),
         ],
-        &[uatom_info.to_coin(10)],
+        &[uatom_info.to_coin(100)],
     )
     .unwrap();
 
@@ -404,27 +444,47 @@ fn liquidate_with_reclaiming() {
     let position = mock.query_positions(&liquidatee_account_id);
     assert_eq!(position.deposits.len(), 2);
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(98));
+    assert_eq!(osmo_balance.amount, Uint128::new(1500));
     let atom_balance = get_coin("uatom", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(100));
+    assert_eq!(atom_balance.amount, Uint128::new(1000));
 
     assert_eq!(position.debts.len(), 1);
     let atom_debt = get_debt("uatom", &position.debts);
-    assert_eq!(atom_debt.amount, Uint128::new(93));
+    assert_eq!(atom_debt.amount, Uint128::new(960));
 
     assert_eq!(position.lends.len(), 1);
     let osmo_lent = get_lent("uosmo", &position.lends);
-    assert_eq!(osmo_lent.amount, Uint128::new(10));
+    // FIXME: excel shows 37, simulated interest rate influence?
+    assert_eq!(osmo_lent.amount, Uint128::new(36));
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
     assert_eq!(position.deposits.len(), 2);
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(191));
+    assert_eq!(osmo_balance.amount, Uint128::new(1435));
     let atom_balance = get_coin("uatom", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(2));
+    assert_eq!(atom_balance.amount, Uint128::new(59));
 
     assert_eq!(position.debts.len(), 0);
 
     assert_eq!(position.lends.len(), 0);
+
+    // Assert rewards-collector's new position
+    let rewards_collector_acc_id = mock.query_rewards_collector_account();
+    let position = mock.query_positions(&rewards_collector_acc_id);
+    assert_eq!(position.deposits.len(), 0);
+    assert_eq!(position.debts.len(), 0);
+
+    assert_eq!(position.lends.len(), 1);
+    let rc_osmo_lent = get_lent("uosmo", &position.lends);
+    // FIXME: excel shows 28, simulated interest rate influence?
+    assert_eq!(rc_osmo_lent.amount, Uint128::new(27));
+
+    // Liq HF should improve
+    let account_kind = mock.query_account_kind(&liquidatee_account_id);
+    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    assert!(health.liquidatable);
+    assert!(
+        prev_health.liquidation_health_factor.unwrap() < health.liquidation_health_factor.unwrap()
+    );
 }

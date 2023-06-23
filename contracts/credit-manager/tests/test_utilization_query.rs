@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{Addr, Decimal, Uint128};
+use mars_params::types::asset::LiquidationBonus;
 use mars_rover::{
     adapters::vault::VaultUnchecked,
     msg::execute::{
@@ -42,7 +43,13 @@ fn utilization_if_cap_is_base_denom() {
         price: Decimal::from_str("1").unwrap(),
         max_ltv: Decimal::from_str("0.6").unwrap(),
         liquidation_threshold: Decimal::from_str("0.7").unwrap(),
-        liquidation_bonus: Decimal::from_str("0.15").unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
         whitelisted: true,
         hls: None,
     };

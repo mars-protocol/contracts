@@ -2,6 +2,7 @@ use std::{default::Default, mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coins, testing::MockApi, Addr, Coin, Decimal, Empty, StdResult, Uint128};
+use cw721::TokensResponse;
 use cw721_base::{Action::TransferOwnership, Ownership};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use cw_vault_standard::{
@@ -96,7 +97,7 @@ pub struct MockEnvBuilder {
     pub deploy_nft_contract: bool,
     pub set_nft_contract_minter: bool,
     pub accounts_to_fund: Vec<AccountToFund>,
-    pub max_close_factor: Option<Decimal>,
+    pub target_health_factor: Option<Decimal>,
     pub max_unlocking_positions: Option<Uint128>,
     pub health_contract: Option<HealthContract>,
 }
@@ -116,7 +117,7 @@ impl MockEnv {
             deploy_nft_contract: true,
             set_nft_contract_minter: true,
             accounts_to_fund: vec![],
-            max_close_factor: None,
+            target_health_factor: None,
             max_unlocking_positions: None,
             health_contract: None,
         }
@@ -364,6 +365,23 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(config.account_nft.unwrap(), &NftQueryMsg::Ownership {})
             .unwrap()
+    }
+
+    pub fn query_rewards_collector_account(&self) -> String {
+        let config = self.query_config();
+        let response: TokensResponse = self
+            .app
+            .wrap()
+            .query_wasm_smart(
+                config.account_nft.unwrap(),
+                &NftQueryMsg::Tokens {
+                    owner: config.rewards_collector.unwrap(),
+                    start_after: None,
+                    limit: None,
+                },
+            )
+            .unwrap();
+        response.tokens.first().unwrap().to_string()
     }
 
     pub fn query_vault_params(&self, vault_addr: &str) -> VaultConfig {
@@ -671,6 +689,17 @@ impl MockEnvBuilder {
         self.update_health_contract_config(&rover, params.address());
 
         self.deploy_nft_contract(&rover);
+
+        if self.deploy_nft_contract && self.set_nft_contract_minter {
+            self.update_config(
+                &rover,
+                ConfigUpdates {
+                    rewards_collector: Some("rewards_collector_contract".to_string()),
+                    ..Default::default()
+                },
+            );
+        }
+
         self.fund_users();
 
         self.deploy_vaults();
@@ -871,9 +900,9 @@ impl MockEnvBuilder {
                 owner.clone(),
                 &ParamsInstantiateMsg {
                     owner: owner.to_string(),
-                    max_close_factor: self
-                        .max_close_factor
-                        .unwrap_or(Decimal::from_str("0.5").unwrap()),
+                    target_health_factor: self
+                        .target_health_factor
+                        .unwrap_or(Decimal::from_str("1.2").unwrap()),
                 },
                 &[],
                 "mock-params-contract",
@@ -1159,8 +1188,8 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn max_close_factor(&mut self, cf: Decimal) -> &mut Self {
-        self.max_close_factor = Some(cf);
+    pub fn target_health_factor(&mut self, thf: Decimal) -> &mut Self {
+        self.target_health_factor = Some(thf);
         self
     }
 

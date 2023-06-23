@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_std::Decimal;
 use mars_params::types::{
-    asset::{AssetParamsUnchecked, CmSettings, RedBankSettings},
+    asset::{AssetParamsUnchecked, CmSettings, LiquidationBonus, RedBankSettings},
     hls::HlsParamsUnchecked,
 };
 
@@ -24,6 +24,12 @@ pub fn default_asset_params(denom: &str) -> AssetParamsUnchecked {
         },
         max_loan_to_value: Decimal::from_str("0.4523").unwrap(),
         liquidation_threshold: Decimal::from_str("0.5").unwrap(),
-        liquidation_bonus: Decimal::from_atomics(9u128, 2).unwrap(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1u64),
+            slope: Decimal::from_atomics(2u128, 0).unwrap(),
+            min_lb: Decimal::percent(2u64),
+            max_lb: Decimal::percent(10u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
     }
 }
