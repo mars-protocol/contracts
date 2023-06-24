@@ -730,7 +730,7 @@ pub fn liquidate(
     // check if user has available collateral in specified collateral asset to be liquidated
     let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
 
-    // check if user has outstanding debt in the deposited asset that needs to be repayed
+    // check if user has outstanding debt in the deposited asset that needs to be repaid
     let user_debt = DEBTS
         .may_load(deps.storage, (&user_addr, &debt_denom))?
         .ok_or(ContractError::CannotLiquidateWhenNoDebtBalance {})?;

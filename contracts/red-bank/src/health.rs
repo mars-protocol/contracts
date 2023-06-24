@@ -165,7 +165,7 @@ pub fn get_user_positions_map(
                     None => (Uint128::zero(), false),
                 };
 
-            let asset_price = oracle::helpers::query_price(&deps.querier, oracle_addr, &denom)?;
+            let asset_price = oracle::helpers::query_price_for_liquidate(&deps.querier, oracle_addr, &denom)?;
 
             let position = Position {
                 denom: denom.clone(),

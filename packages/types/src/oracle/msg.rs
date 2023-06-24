@@ -131,4 +131,19 @@ pub mod helpers {
         )?;
         Ok(res.price)
     }
+
+    pub fn query_price_for_liquidate(
+        querier: &QuerierWrapper,
+        oracle: impl Into<String>,
+        denom: impl Into<String>,
+    ) -> StdResult<Decimal> {
+        let res: PriceResponse = querier.query_wasm_smart(
+            oracle.into(),
+            &QueryMsg::Price {
+                denom: denom.into(),
+                kind: Some(ActionKind::Liquidation),
+            },
+        )?;
+        Ok(res.price)
+    }
 }
