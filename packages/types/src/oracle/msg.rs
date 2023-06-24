@@ -116,6 +116,7 @@ pub mod helpers {
     use cosmwasm_std::{Decimal, QuerierWrapper, StdResult};
 
     use super::{ActionKind, PriceResponse, QueryMsg};
+    use crate::oracle::ActionKind::Liquidation;
 
     pub fn query_price(
         querier: &QuerierWrapper,
@@ -141,7 +142,7 @@ pub mod helpers {
             oracle.into(),
             &QueryMsg::Price {
                 denom: denom.into(),
-                kind: Some(ActionKind::Liquidation),
+                kind: Some(Liquidation),
             },
         )?;
         Ok(res.price)

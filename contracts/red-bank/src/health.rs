@@ -76,7 +76,11 @@ pub fn assert_below_max_ltv_after_borrow(
         .or_insert(Position {
             denom: denom.to_string(),
             debt_amount: Uint128::zero(),
-            asset_price: oracle::helpers::query_price(&deps.querier, oracle_addr, denom)?,
+            asset_price: oracle::helpers::query_price_for_liquidate(
+                &deps.querier,
+                oracle_addr,
+                denom,
+            )?,
             ..Default::default()
         })
         .debt_amount += borrow_amount;
