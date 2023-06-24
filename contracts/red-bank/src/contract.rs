@@ -1,6 +1,8 @@
 use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
-use mars_red_bank_types::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use mars_red_bank_types::oracle::{ActionKind, Config};
+use mars_red_bank_types::{
+    oracle::{ActionKind, Config},
+    red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg},
+};
 
 use crate::{error::ContractError, execute, query};
 
