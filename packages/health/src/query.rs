@@ -39,4 +39,18 @@ impl<'a> MarsQuerier<'a> {
         )?;
         Ok(price)
     }
+
+    pub fn query_price_for_liquidate(&self, denom: &str) -> StdResult<Decimal> {
+        let PriceResponse {
+            price,
+            ..
+        } = self.querier.query_wasm_smart(
+            self.oracle_addr,
+            &oracle::QueryMsg::Price {
+                denom: denom.to_string(),
+                kind: Some(ActionKind::Liquidation),
+            },
+        )?;
+        Ok(price)
+    }
 }
