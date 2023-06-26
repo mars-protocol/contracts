@@ -609,7 +609,7 @@ impl MockEnvBuilder {
                 &incentives::InstantiateMsg {
                     owner: self.owner.to_string(),
                     address_provider: address_provider_addr.to_string(),
-                    epoch_duration: 86400,
+                    epoch_duration: 604800,
                     max_whitelisted_denoms: 10,
                 },
                 &[],

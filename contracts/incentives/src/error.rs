@@ -56,6 +56,11 @@ pub enum ContractError {
     MaxWhitelistLimitReached {
         max_whitelist_limit: u8,
     },
+
+    #[error("Epoch duration too short. Minimum epoch duration is {min_epoch_duration}")]
+    EpochDurationTooShort {
+        min_epoch_duration: u64,
+    },
 }
 
 impl From<ContractError> for StdError {
