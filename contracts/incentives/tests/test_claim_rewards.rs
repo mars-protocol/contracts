@@ -22,7 +22,7 @@ mod helpers;
 fn execute_claim_rewards() {
     // SETUP
     let env = mock_env();
-    let mut deps = ths_setup_with_epoch_duration(env, 86400);
+    let mut deps = ths_setup_with_epoch_duration(env, 604800);
     let user_addr = Addr::unchecked("user");
 
     let previous_unclaimed_rewards = Uint128::new(50_000);
@@ -98,11 +98,11 @@ fn execute_claim_rewards() {
             },
         )
         .unwrap();
-    for i in 0..100 {
+    for i in 0..7 {
         EMISSIONS
             .save(
                 deps.as_mut().storage,
-                (asset_denom, "umars", time_start + 86400 * i),
+                (asset_denom, "umars", time_start + 604800 * i),
                 &Uint128::new(100),
             )
             .unwrap();
