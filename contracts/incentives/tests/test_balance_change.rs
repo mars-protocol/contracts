@@ -67,7 +67,7 @@ fn execute_balance_change_noops() {
 #[test]
 fn balance_change_zero_emission() {
     let env = mock_env();
-    let mut deps = ths_setup_with_epoch_duration(env.clone(), 86400);
+    let mut deps = ths_setup_with_epoch_duration(env.clone(), 604800);
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
     let asset_incentive_index = Decimal::from_ratio(1_u128, 2_u128);
@@ -140,10 +140,9 @@ fn balance_change_user_with_zero_balance() {
     let total_supply = Uint128::new(100_000);
     let time_last_updated = 500_000_u64;
     let time_contract_call = 600_000_u64;
-    let duration = time_contract_call - time_last_updated;
 
     let env = mock_env();
-    let mut deps = ths_setup_with_epoch_duration(env, duration);
+    let mut deps = ths_setup_with_epoch_duration(env, 604800);
     let denom = "uosmo";
     let user_addr = Addr::unchecked("user");
 

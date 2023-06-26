@@ -32,6 +32,10 @@ use crate::{
 pub const CONTRACT_NAME: &str = "crates.io:mars-incentives";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// The epoch duration should be at least one week, perhaps ideally one month. This is to ensure
+/// that the max gas limit is not reached when iterating over incentives.
+pub const MIN_EPOCH_DURATION: u64 = 604800u64;
+
 // INIT
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -56,6 +60,12 @@ pub fn instantiate(
         max_whitelisted_denoms: msg.max_whitelisted_denoms,
     };
     CONFIG.save(deps.storage, &config)?;
+
+    if msg.epoch_duration < MIN_EPOCH_DURATION {
+        return Err(ContractError::EpochDurationTooShort {
+            min_epoch_duration: MIN_EPOCH_DURATION,
+        });
+    }
 
     EPOCH_DURATION.save(deps.storage, &msg.epoch_duration)?;
 
