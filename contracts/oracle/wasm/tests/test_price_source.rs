@@ -3,7 +3,11 @@ use std::str::FromStr;
 use astroport::factory::PairType;
 use cosmwasm_std::{from_binary, testing::mock_dependencies, Addr, Decimal, Uint128};
 use cw_it::{
-    astroport::{robot::AstroportTestRobot, utils::native_asset},
+    astroport::{
+        robot::AstroportTestRobot,
+        utils::{native_asset, native_info},
+    },
+    robot::TestRobot,
     test_tube::Account,
 };
 use cw_storage_plus::Map;
@@ -21,7 +25,8 @@ use mars_testing::{
     mock_env_at_block_time,
     test_runner::get_test_runner,
     wasm_oracle::{
-        fixed_source, get_contracts, setup_test, validate_and_query_astroport_spot_price_source,
+        astro_init_params, fixed_source, get_contracts, setup_test,
+        validate_and_query_astroport_spot_price_source,
         validate_and_query_astroport_twap_price_source, WasmOracleTestRobot,
     },
 };
@@ -191,6 +196,9 @@ pub fn test_validate_and_query_astroport_spot_price_source(
 #[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], 5, 100; "XYK, route with non-base existing asset, in pair")]
 #[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", &[], 5, 100; "Stable, no route, base_denom in pair")]
 #[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], 5, 100; "Stable, route with non-base existing asset, in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[], 5,0 => panics; "Zero window size")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[], 0,5; "Zero tolerance")]
+#[test_case(PairType::Xyk {}, &["stake","uatom"], "uatom", &[], 38535, 860495; "idk whats wrong here")]
 fn test_validate_and_query_astroport_twap_price(
     pair_type: PairType,
     pair_denoms: &[&str; 2],
@@ -208,6 +216,54 @@ fn test_validate_and_query_astroport_twap_price(
         window_size,
         &DEFAULT_LIQ,
     )
+}
+
+#[test]
+fn test_query_astroport_twap_price_with_only_one_snapshot() {
+    let base_denom = "uosmo";
+    let runner = get_test_runner();
+    let admin = &runner.init_accounts()[0];
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
+
+    let pair_type = PairType::Xyk {};
+    let pair_denoms = ["uatom", "uosmo"];
+
+    let initial_liq: [Uint128; 2] =
+        DEFAULT_LIQ.iter().map(|x| Uint128::from(*x)).collect::<Vec<_>>().try_into().unwrap();
+    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
+        pair_type.clone(),
+        [native_info(pair_denoms[0]), native_info(pair_denoms[1])],
+        astro_init_params(&pair_type),
+        admin,
+        Some(initial_liq),
+    );
+
+    let price_source = WasmPriceSourceUnchecked::AstroportTwap {
+        pair_address: pair_address.clone(),
+        route_assets: vec![],
+        tolerance: 3,
+        window_size: 2,
+    };
+
+    robot
+        .add_denom_precision_to_coin_registry(pair_denoms[0], 6, admin)
+        .add_denom_precision_to_coin_registry(pair_denoms[1], 6, admin)
+        .add_denom_precision_to_coin_registry(base_denom, 6, admin)
+        .set_price_source(pair_denoms[0], price_source.clone(), admin)
+        .assert_price_source(pair_denoms[0], price_source)
+        .record_twap_snapshots(&[pair_denoms[0]], admin);
+
+    let err = robot
+        .wasm()
+        .query::<_, mars_red_bank_types::oracle::PriceResponse>(
+            &robot.mars_oracle_contract_addr,
+            &QueryMsg::Price {
+                denom: "uatom".to_string(),
+            },
+        )
+        .unwrap_err();
+
+    assert!(err.to_string().contains("There needs to be at least two TWAP snapshots"));
 }
 
 #[test]
