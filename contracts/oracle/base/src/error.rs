@@ -62,6 +62,9 @@ pub enum ContractError {
 
     #[error("No TWAP snapshots found")]
     NoSnapshots {},
+
+    #[error("There needs to be at least two TWAP snapshots")]
+    NotEnoughSnapshots {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

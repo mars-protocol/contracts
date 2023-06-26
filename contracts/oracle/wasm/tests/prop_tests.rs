@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{cmp::min, collections::HashSet};
 
 use astroport::factory::PairType;
 use cosmwasm_std::Decimal;
@@ -34,7 +34,9 @@ pub fn decimal() -> impl Strategy<Value = Decimal> {
 /// Generates a pair of u128s where the first is greater than the second. This is so we can swap
 /// without exceeding max spread.
 pub fn liquidity() -> impl Strategy<Value = [u128; 2]> {
-    (100000000..MAX_LIQ).prop_flat_map(|v| (v..MAX_LIQ, Just(v))).prop_map(|(x, y)| [x, y])
+    (1000000000..MAX_LIQ)
+        .prop_flat_map(|v| (v..min(v * 10000, MAX_LIQ), Just(v / 10)))
+        .prop_map(|(x, y)| [x, y])
 }
 
 /// Generates a vector of (denom, price) tuples that can be used as route assets for the price source.
@@ -95,6 +97,6 @@ proptest! {
     } else {
       pair_denoms[1]
     };
-    validate_and_query_astroport_twap_price_source(pair_type, &pair_denoms, base_denom, &route_prices,  window_size, tolerance,&initial_liq);
+    validate_and_query_astroport_twap_price_source(pair_type, &pair_denoms, base_denom, &route_prices, tolerance, window_size, &initial_liq);
   }
 }

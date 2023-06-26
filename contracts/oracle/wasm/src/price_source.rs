@@ -174,6 +174,12 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                     &route_assets,
                 )?;
 
+                if window_size <= 1 {
+                    return Err(ContractError::InvalidPriceSource {
+                        reason: "window_size must be greater than 1".to_string(),
+                    });
+                }
+
                 Ok(WasmPriceSourceChecked::AstroportTwap {
                     pair_address: deps.api.addr_validate(&pair_address)?,
                     window_size,
@@ -306,6 +312,10 @@ fn query_astroport_twap_price(
     let snapshots = ASTROPORT_TWAP_SNAPSHOTS
         .may_load(deps.storage, denom)?
         .ok_or(ContractError::NoSnapshots {})?;
+
+    if snapshots.len() < 2 {
+        return Err(ContractError::NotEnoughSnapshots {});
+    }
 
     // First, query the current TWAP snapshot
     let current_snapshot = AstroportTwapSnapshot {

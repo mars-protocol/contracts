@@ -241,12 +241,14 @@ impl<'a> WasmOracleTestRobot<'a> {
     }
     pub fn query_price_via_simulation(&self, pair_addr: &str, denom: &str) -> Decimal {
         let decimals = self.query_native_coin_registry(denom).unwrap();
-        let one = Uint128::from(10u128.pow(decimals as u32));
+        let one: Uint128 = Uint128::from(10u128.pow(decimals as u32));
+        let denominator = one * Uint128::from(10u128);
 
-        let return_amount =
-            self.query_simulate_swap(pair_addr, native_asset(denom, one), None).return_amount;
+        let return_amount = self
+            .query_simulate_swap(pair_addr, native_asset(denom, denominator), None)
+            .return_amount;
 
-        Decimal::from_ratio(return_amount, one)
+        Decimal::from_ratio(return_amount, denominator)
     }
 
     // =====  Owner update methods ======
@@ -461,7 +463,7 @@ pub fn validate_and_query_astroport_twap_price_source(
         .set_price_source(pair_denoms[0], price_source.clone(), admin)
         .assert_price_source(pair_denoms[0], price_source)
         .record_twap_snapshots(&[pair_denoms[0]], admin)
-        .increase_time(window_size / 2)
+        .increase_time(window_size + tolerance)
         .swap_on_astroport_pair(
             &pair_address,
             native_asset(pair_denoms[1], initial_liq[1].u128() / 1000000),
@@ -481,6 +483,6 @@ pub fn validate_and_query_astroport_twap_price_source(
 
     robot
         .record_twap_snapshots(&[pair_denoms[0]], admin)
-        .increase_time(window_size / 2)
+        .increase_time(window_size + tolerance)
         .assert_price_almost_equal(pair_denoms[0], expected_price, Decimal::percent(1));
 }
