@@ -55,7 +55,7 @@ const encodeString =
 function passStringToWasm0(arg, malloc, realloc) {
   if (realloc === undefined) {
     const buf = cachedTextEncoder.encode(arg)
-    const ptr = malloc(buf.length) >>> 0
+    const ptr = malloc(buf.length, 1) >>> 0
     getUint8Memory0()
       .subarray(ptr, ptr + buf.length)
       .set(buf)
@@ -64,7 +64,7 @@ function passStringToWasm0(arg, malloc, realloc) {
   }
 
   let len = arg.length
-  let ptr = malloc(len) >>> 0
+  let ptr = malloc(len, 1) >>> 0
 
   const mem = getUint8Memory0()
 
@@ -80,7 +80,7 @@ function passStringToWasm0(arg, malloc, realloc) {
     if (offset !== 0) {
       arg = arg.slice(offset)
     }
-    ptr = realloc(ptr, len, (len = offset + arg.length * 3)) >>> 0
+    ptr = realloc(ptr, len, (len = offset + arg.length * 3), 1) >>> 0
     const view = getUint8Memory0().subarray(ptr + offset, ptr + len)
     const ret = encodeString(arg, view)
 
@@ -205,11 +205,24 @@ function debugString(val) {
   return className
 }
 /**
- * @param {any} val
+ * @param {any} health_computer
  * @returns {any}
  */
-module.exports.compute_health_js = function (val) {
-  const ret = wasm.compute_health_js(addHeapObject(val))
+module.exports.compute_health_js = function (health_computer) {
+  const ret = wasm.compute_health_js(addHeapObject(health_computer))
+  return takeObject(ret)
+}
+
+/**
+ * @param {any} health_computer
+ * @param {any} withdraw_denom
+ * @returns {any}
+ */
+module.exports.max_withdraw_estimate_js = function (health_computer, withdraw_denom) {
+  const ret = wasm.max_withdraw_estimate_js(
+    addHeapObject(health_computer),
+    addHeapObject(withdraw_denom),
+  )
   return takeObject(ret)
 }
 
@@ -257,12 +270,6 @@ module.exports.__wbindgen_error_new = function (arg0, arg1) {
   return addHeapObject(ret)
 }
 
-module.exports.__wbindgen_boolean_get = function (arg0) {
-  const v = getObject(arg0)
-  const ret = typeof v === 'boolean' ? (v ? 1 : 0) : 2
-  return ret
-}
-
 module.exports.__wbindgen_is_string = function (arg0) {
   const ret = typeof getObject(arg0) === 'string'
   return ret
@@ -280,6 +287,12 @@ module.exports.__wbindgen_bigint_from_u64 = function (arg0) {
 
 module.exports.__wbindgen_jsval_eq = function (arg0, arg1) {
   const ret = getObject(arg0) === getObject(arg1)
+  return ret
+}
+
+module.exports.__wbindgen_boolean_get = function (arg0) {
+  const v = getObject(arg0)
+  const ret = typeof v === 'boolean' ? (v ? 1 : 0) : 2
   return ret
 }
 
@@ -304,7 +317,7 @@ module.exports.__wbg_error_f851667af71bcfc6 = function (arg0, arg1) {
     deferred0_1 = arg1
     console.error(getStringFromWasm0(arg0, arg1))
   } finally {
-    wasm.__wbindgen_free(deferred0_0, deferred0_1)
+    wasm.__wbindgen_free(deferred0_0, deferred0_1, 1)
   }
 }
 
@@ -339,12 +352,12 @@ module.exports.__wbg_set_841ac57cff3d672b = function (arg0, arg1, arg2) {
   getObject(arg0)[takeObject(arg1)] = takeObject(arg2)
 }
 
-module.exports.__wbg_get_7303ed2ef026b2f5 = function (arg0, arg1) {
+module.exports.__wbg_get_44be0491f933a435 = function (arg0, arg1) {
   const ret = getObject(arg0)[arg1 >>> 0]
   return addHeapObject(ret)
 }
 
-module.exports.__wbg_length_820c786973abdd8a = function (arg0) {
+module.exports.__wbg_length_fff51ee6522a1a18 = function (arg0) {
   const ret = getObject(arg0).length
   return ret
 }
@@ -354,58 +367,58 @@ module.exports.__wbindgen_is_function = function (arg0) {
   return ret
 }
 
-module.exports.__wbg_next_f4bc0e96ea67da68 = function (arg0) {
+module.exports.__wbg_next_526fc47e980da008 = function (arg0) {
   const ret = getObject(arg0).next
   return addHeapObject(ret)
 }
 
-module.exports.__wbg_next_ec061e48a0e72a96 = function () {
+module.exports.__wbg_next_ddb3312ca1c4e32a = function () {
   return handleError(function (arg0) {
     const ret = getObject(arg0).next()
     return addHeapObject(ret)
   }, arguments)
 }
 
-module.exports.__wbg_done_b6abb27d42b63867 = function (arg0) {
+module.exports.__wbg_done_5c1f01fb660d73b5 = function (arg0) {
   const ret = getObject(arg0).done
   return ret
 }
 
-module.exports.__wbg_value_2f4ef2036bfad28e = function (arg0) {
+module.exports.__wbg_value_1695675138684bd5 = function (arg0) {
   const ret = getObject(arg0).value
   return addHeapObject(ret)
 }
 
-module.exports.__wbg_iterator_7c7e58f62eb84700 = function () {
+module.exports.__wbg_iterator_97f0c81209c6c35a = function () {
   const ret = Symbol.iterator
   return addHeapObject(ret)
 }
 
-module.exports.__wbg_get_f53c921291c381bd = function () {
+module.exports.__wbg_get_97b561fb56f034b5 = function () {
   return handleError(function (arg0, arg1) {
     const ret = Reflect.get(getObject(arg0), getObject(arg1))
     return addHeapObject(ret)
   }, arguments)
 }
 
-module.exports.__wbg_call_557a2f2deacc4912 = function () {
+module.exports.__wbg_call_cb65541d95d71282 = function () {
   return handleError(function (arg0, arg1) {
     const ret = getObject(arg0).call(getObject(arg1))
     return addHeapObject(ret)
   }, arguments)
 }
 
-module.exports.__wbg_new_2b6fea4ea03b1b95 = function () {
+module.exports.__wbg_new_b51585de1b234aff = function () {
   const ret = new Object()
   return addHeapObject(ret)
 }
 
-module.exports.__wbg_isArray_04e59fb73f78ab5b = function (arg0) {
+module.exports.__wbg_isArray_4c24b343cb13cfb1 = function (arg0) {
   const ret = Array.isArray(getObject(arg0))
   return ret
 }
 
-module.exports.__wbg_instanceof_ArrayBuffer_ef2632aa0d4bfff8 = function (arg0) {
+module.exports.__wbg_instanceof_ArrayBuffer_39ac22089b74fddb = function (arg0) {
   let result
   try {
     result = getObject(arg0) instanceof ArrayBuffer
@@ -416,36 +429,36 @@ module.exports.__wbg_instanceof_ArrayBuffer_ef2632aa0d4bfff8 = function (arg0) {
   return ret
 }
 
-module.exports.__wbg_isSafeInteger_2088b01008075470 = function (arg0) {
+module.exports.__wbg_isSafeInteger_bb8e18dd21c97288 = function (arg0) {
   const ret = Number.isSafeInteger(getObject(arg0))
   return ret
 }
 
-module.exports.__wbg_entries_13e011453776468f = function (arg0) {
+module.exports.__wbg_entries_e51f29c7bba0c054 = function (arg0) {
   const ret = Object.entries(getObject(arg0))
   return addHeapObject(ret)
 }
 
-module.exports.__wbg_buffer_55ba7a6b1b92e2ac = function (arg0) {
+module.exports.__wbg_buffer_085ec1f694018c4f = function (arg0) {
   const ret = getObject(arg0).buffer
   return addHeapObject(ret)
 }
 
-module.exports.__wbg_new_09938a7d020f049b = function (arg0) {
+module.exports.__wbg_new_8125e318e6245eed = function (arg0) {
   const ret = new Uint8Array(getObject(arg0))
   return addHeapObject(ret)
 }
 
-module.exports.__wbg_set_3698e3ca519b3c3c = function (arg0, arg1, arg2) {
+module.exports.__wbg_set_5cf90238115182c3 = function (arg0, arg1, arg2) {
   getObject(arg0).set(getObject(arg1), arg2 >>> 0)
 }
 
-module.exports.__wbg_length_0aab7ffd65ad19ed = function (arg0) {
+module.exports.__wbg_length_72e2208bbc0efc61 = function (arg0) {
   const ret = getObject(arg0).length
   return ret
 }
 
-module.exports.__wbg_instanceof_Uint8Array_1349640af2da2e88 = function (arg0) {
+module.exports.__wbg_instanceof_Uint8Array_d8d9cb2b8e8ac1d4 = function (arg0) {
   let result
   try {
     result = getObject(arg0) instanceof Uint8Array

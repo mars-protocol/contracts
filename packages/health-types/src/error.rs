@@ -12,6 +12,9 @@ pub enum HealthError {
     #[error("{0}")]
     CheckedMultiplyFraction(#[from] CheckedMultiplyFractionError),
 
+    #[error("{0} not found in account's positions")]
+    DenomNotPresent(String),
+
     #[error("{0} address has not been set in config")]
     ContractNotSet(String),
 

@@ -1,24 +1,31 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * @param {any} val
+ * @param {any} health_computer
  * @returns {any}
  */
-export function compute_health_js(val: any): any
+export function compute_health_js(health_computer: any): any
+/**
+ * @param {any} health_computer
+ * @param {any} withdraw_denom
+ * @returns {any}
+ */
+export function max_withdraw_estimate_js(health_computer: any, withdraw_denom: any): any
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory
   readonly compute_health_js: (a: number) => number
+  readonly max_withdraw_estimate_js: (a: number, b: number) => number
   readonly allocate: (a: number) => number
   readonly deallocate: (a: number) => void
   readonly requires_stargate: () => void
   readonly requires_iterator: () => void
   readonly interface_version_8: () => void
-  readonly __wbindgen_malloc: (a: number) => number
-  readonly __wbindgen_realloc: (a: number, b: number, c: number) => number
-  readonly __wbindgen_free: (a: number, b: number) => void
+  readonly __wbindgen_malloc: (a: number, b: number) => number
+  readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number
+  readonly __wbindgen_free: (a: number, b: number, c: number) => void
   readonly __wbindgen_exn_store: (a: number) => void
 }
 

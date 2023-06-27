@@ -14,7 +14,8 @@ import { MarsParamsQueryClient } from '../types/generated/mars-params/MarsParams
 
 export class DataFetcher {
   constructor(
-    private healthComputer: (h: HealthComputer) => HealthResponse,
+    private computeHealthFn: (h: HealthComputer) => HealthResponse,
+    private maxWithdrawFn: (h: HealthComputer, denom: string) => string,
     private creditManagerAddr: string,
     private oracleAddr: string,
     private paramsAddr: string,
@@ -90,7 +91,7 @@ export class DataFetcher {
     return vaultsData
   }
 
-  fetchHealth = async (accountId: string): Promise<HealthResponse> => {
+  assembleComputer = async (accountId: string): Promise<HealthComputer> => {
     const positions = await this.fetchPositions(accountId)
 
     const [denoms_data, vaults_data] = await Promise.all([
@@ -98,12 +99,22 @@ export class DataFetcher {
       this.fetchVaultsData(positions),
     ])
 
-    let data = {
+    return {
       positions,
       denoms_data,
       vaults_data,
       kind: 'default' as AccountKind,
     }
-    return this.healthComputer(data)
+  }
+
+  computeHealth = async (accountId: string): Promise<HealthResponse> => {
+    const positions = await this.assembleComputer(accountId)
+    return this.computeHealthFn(positions)
+  }
+
+  maxWithdrawAmount = async (accountId: string, denom: string): Promise<number> => {
+    const positions = await this.assembleComputer(accountId)
+    const result = this.maxWithdrawFn(positions, denom)
+    return parseFloat(result)
   }
 }

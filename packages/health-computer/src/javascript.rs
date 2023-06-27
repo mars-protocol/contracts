@@ -5,11 +5,19 @@ use wasm_bindgen::prelude::*;
 use crate::HealthComputer;
 
 #[wasm_bindgen]
-pub fn compute_health_js(val: JsValue) -> JsValue {
-    let c: HealthComputer = deserialize(val);
+pub fn compute_health_js(health_computer: JsValue) -> JsValue {
+    let c: HealthComputer = deserialize(health_computer);
     let health = c.compute_health().unwrap();
     let health_response: HealthResponse = health.into();
     serialize(health_response)
+}
+
+#[wasm_bindgen]
+pub fn max_withdraw_estimate_js(health_computer: JsValue, withdraw_denom: JsValue) -> JsValue {
+    let c: HealthComputer = deserialize(health_computer);
+    let denom: String = deserialize(withdraw_denom);
+    let max = c.max_withdraw_amount_estimate(&denom).unwrap();
+    serialize(max)
 }
 
 pub fn serialize<T: Serialize>(val: T) -> JsValue {
