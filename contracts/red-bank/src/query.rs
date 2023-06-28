@@ -244,6 +244,8 @@ pub fn query_underlying_debt_amount(
     get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())
 }
 
+// Would we need two queries now? One for ActionKind:Default and one for ActionKind:Liquidate?
+// This doesnt effect any execute messages but wondering if there is a case a user would need to query the liquidate scenario?
 pub fn query_user_position(
     deps: Deps,
     env: Env,
@@ -260,7 +262,8 @@ pub fn query_user_position(
     let params_addr = &addresses[&MarsAddressType::Params];
 
     let positions =
-        health::get_user_positions_map(&deps, &env, &user_addr, oracle_addr, params_addr)?;
+        health::get_user_positions_map(&deps, &env, &user_addr, oracle_addr, params_addr, false)?;
+
     let health = health::compute_position_health(&positions)?;
 
     let health_status = if let (Some(max_ltv_hf), Some(liq_threshold_hf)) =
