@@ -226,6 +226,19 @@ module.exports.max_withdraw_estimate_js = function (health_computer, withdraw_de
   return takeObject(ret)
 }
 
+/**
+ * @param {any} health_computer
+ * @param {any} borrow_denom
+ * @returns {any}
+ */
+module.exports.max_borrow_estimate_js = function (health_computer, borrow_denom) {
+  const ret = wasm.max_borrow_estimate_js(
+    addHeapObject(health_computer),
+    addHeapObject(borrow_denom),
+  )
+  return takeObject(ret)
+}
+
 function handleError(f, args) {
   try {
     return f.apply(this, args)

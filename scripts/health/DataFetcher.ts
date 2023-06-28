@@ -16,6 +16,7 @@ export class DataFetcher {
   constructor(
     private computeHealthFn: (h: HealthComputer) => HealthResponse,
     private maxWithdrawFn: (h: HealthComputer, denom: string) => string,
+    private maxBorrowFn: (h: HealthComputer, denom: string) => string,
     private creditManagerAddr: string,
     private oracleAddr: string,
     private paramsAddr: string,
@@ -115,6 +116,12 @@ export class DataFetcher {
   maxWithdrawAmount = async (accountId: string, denom: string): Promise<number> => {
     const positions = await this.assembleComputer(accountId)
     const result = this.maxWithdrawFn(positions, denom)
-    return parseFloat(result)
+    return parseInt(result)
+  }
+
+  maxBorrowAmount = async (accountId: string, denom: string): Promise<number> => {
+    const positions = await this.assembleComputer(accountId)
+    const result = this.maxBorrowFn(positions, denom)
+    return parseInt(result)
   }
 }

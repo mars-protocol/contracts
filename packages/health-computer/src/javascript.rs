@@ -20,6 +20,14 @@ pub fn max_withdraw_estimate_js(health_computer: JsValue, withdraw_denom: JsValu
     serialize(max)
 }
 
+#[wasm_bindgen]
+pub fn max_borrow_estimate_js(health_computer: JsValue, borrow_denom: JsValue) -> JsValue {
+    let c: HealthComputer = deserialize(health_computer);
+    let denom: String = deserialize(borrow_denom);
+    let max = c.max_borrow_amount_estimate(&denom).unwrap();
+    serialize(max)
+}
+
 pub fn serialize<T: Serialize>(val: T) -> JsValue {
     serde_wasm_bindgen::to_value(&val).unwrap()
 }
