@@ -250,6 +250,7 @@ pub fn query_user_position(
     deps: Deps,
     env: Env,
     user_addr: Addr,
+    liquidation_pricing: bool,
 ) -> Result<UserPositionResponse, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
@@ -262,7 +263,7 @@ pub fn query_user_position(
     let params_addr = &addresses[&MarsAddressType::Params];
 
     let positions =
-        health::get_user_positions_map(&deps, &env, &user_addr, oracle_addr, params_addr, false)?;
+        health::get_user_positions_map(&deps, &env, &user_addr, oracle_addr, params_addr, liquidation_pricing)?;
 
     let health = health::compute_position_health(&positions)?;
 

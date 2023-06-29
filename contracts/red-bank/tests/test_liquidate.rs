@@ -1413,3 +1413,5 @@ fn cannot_liquidate_without_receiving_collaterals() {
     .unwrap_err();
     assert_eq!(res_err, StdError::generic_err("Can't process liquidation. Invalid collateral_amount_to_liquidate (0) and debt_amount_to_repay (10)"))
 }
+
+// Add test to compare query liquidation vs default
