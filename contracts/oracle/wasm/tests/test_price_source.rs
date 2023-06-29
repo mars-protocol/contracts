@@ -239,7 +239,7 @@ fn test_query_astroport_twap_price_with_only_one_snapshot() {
     );
 
     let price_source = WasmPriceSourceUnchecked::AstroportTwap {
-        pair_address: pair_address.clone(),
+        pair_address,
         route_assets: vec![],
         tolerance: 3,
         window_size: 2,
