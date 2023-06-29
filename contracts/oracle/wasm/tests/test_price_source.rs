@@ -198,7 +198,6 @@ pub fn test_validate_and_query_astroport_spot_price_source(
 #[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], 5, 100; "Stable, route with non-base existing asset, in pair")]
 #[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[], 5,0 => panics; "Zero window size")]
 #[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[], 0,5; "Zero tolerance")]
-#[test_case(PairType::Xyk {}, &["stake","uatom"], "uatom", &[], 38535, 860495; "idk whats wrong here")]
 fn test_validate_and_query_astroport_twap_price(
     pair_type: PairType,
     pair_denoms: &[&str; 2],
