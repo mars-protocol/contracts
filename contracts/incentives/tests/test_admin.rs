@@ -37,6 +37,27 @@ fn proper_initialization() {
 }
 
 #[test]
+fn cant_instantiate_with_too_short_epoch_duration() {
+    let mut deps = mock_dependencies(&[]);
+
+    let info = mock_info("sender", &[]);
+    let msg = InstantiateMsg {
+        owner: String::from("owner"),
+        address_provider: String::from("address_provider"),
+        epoch_duration: 604800 - 1,
+        max_whitelisted_denoms: 10,
+    };
+
+    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
+    assert_eq!(
+        res.unwrap_err(),
+        ContractError::EpochDurationTooShort {
+            min_epoch_duration: 604800
+        }
+    );
+}
+
+#[test]
 fn update_config() {
     let mut deps = th_setup();
 
