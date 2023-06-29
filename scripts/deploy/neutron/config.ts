@@ -13,7 +13,7 @@ const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
 
 export const ntrnAsset: AssetConfig = {
   credit_manager: {
-    whitelisted: true
+    whitelisted: true,
   },
   symbol: 'NTRM',
   denom: 'untrn',
@@ -24,12 +24,12 @@ export const ntrnAsset: AssetConfig = {
     borrow_enabled: true,
     deposit_cap: '2500000000000',
     deposit_enabled: true,
-  }
+  },
 }
 
 export const atomAsset: AssetConfig = {
   credit_manager: {
-    whitelisted: true
+    whitelisted: true,
   },
   symbol: 'ATOM',
   denom: atomTestnet,
@@ -40,13 +40,13 @@ export const atomAsset: AssetConfig = {
     borrow_enabled: true,
     deposit_cap: '100000000000',
     deposit_enabled: true,
-  }
+  },
 }
 
 export const axlUSDCAsset: AssetConfig = {
   denom: axlUSDCTestnet,
   credit_manager: {
-    whitelisted: true
+    whitelisted: true,
   },
   symbol: 'axlUSDC',
   liquidation_bonus: '0.1',
@@ -56,9 +56,8 @@ export const axlUSDCAsset: AssetConfig = {
     borrow_enabled: true,
     deposit_cap: '500000000000',
     deposit_enabled: true,
-  }
+  },
 }
-
 
 export const ntrnOracleTestnet: OracleConfig = {
   denom: 'untrn',
@@ -94,7 +93,7 @@ export const axlUSDCOracleTestnet: OracleConfig = {
 }
 
 export const neutronTestnetConfig: DeploymentConfig = {
-  oracleName: 'wasm',
+  chainName: 'wasm',
   atomDenom: atomTestnet,
   baseAssetDenom: 'untrn',
   gasPrice: '0untrn',

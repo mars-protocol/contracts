@@ -32,7 +32,7 @@ export function isAstroportRoute(route: OsmosisRoute | AstroportRoute): route is
 }
 
 export interface DeploymentConfig {
-  oracleName: string
+  chainName: string
   rewardCollectorTimeoutSeconds: number
   marsDenom: string
   baseAssetDenom: string
@@ -48,7 +48,6 @@ export interface DeploymentConfig {
   deployerMnemonic: string
   slippage_tolerance: string
   base_asset_symbol: string
-  second_asset_symbol: string
   multisigAddr?: string
   runTests: boolean
   mainnet: boolean
