@@ -1,4 +1,4 @@
-import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/config'
+import { AssetConfig, OracleConfig } from '../../types/config'
 
 const axlUSDCTestnet = 'ibc/EFB00E728F98F0C4BBE8CA362123ACAB466EDA2826DC6837E49F4C1902F21BBA' // TODO: This is actually ASTRO since there is no pool for axlUSDC on testnet
 const atomTestnet = 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
@@ -92,7 +92,7 @@ export const axlUSDCOracleTestnet: OracleConfig = {
   },
 }
 
-export const neutronTestnetConfig: DeploymentConfig = {
+export const neutronTestnetConfig = {
   chainName: 'wasm',
   atomDenom: atomTestnet,
   baseAssetDenom: 'untrn',

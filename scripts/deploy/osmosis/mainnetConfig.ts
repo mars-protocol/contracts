@@ -86,7 +86,7 @@ export const axlUSDCOracle: OracleConfig = {
   },
 }
 
-export const osmosisMainnet: DeploymentConfig = {
+export const osmosisMainnet = {
   chainName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: osmo,
@@ -138,42 +138,6 @@ export const osmosisMainnet: DeploymentConfig = {
         { pool_id: 907, token_out_denom: mars },
       ],
     },
-  ],
-  safetyFundAddr: safetyFundAddr,
-  protocolAdminAddr: protocolAdminAddr,
-  feeCollectorAddr: feeCollectorAddr,
-  swapperDexName: 'osmosis',
-  assets: [osmoAsset, atomAsset, axlUSDCAsset],
-  vaults: [],
-  oracleConfigs: [atomOracle, axlUSDCOracle],
-  targetHealthFactor: '1.2',
-  incentiveEpochDuration: 86400,
-  maxWhitelistedIncentiveDenoms: 10,
-}
-
-export const osmosisLocalConfig: DeploymentConfig = {
-  chainName: 'osmosis',
-  atomDenom: atom,
-  baseAssetDenom: 'uosmo',
-  gasPrice: '0.1uosmo',
-  chainId: 'localosmosis',
-  chainPrefix: 'osmo',
-  channelId: 'channel-1',
-  marsDenom: 'umars',
-  rewardCollectorTimeoutSeconds: 600,
-  rpcEndpoint: 'http://localhost:26657',
-  safetyFundFeeShare: '0.2',
-  deployerMnemonic:
-    'notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius',
-  slippage_tolerance: '0.05',
-  base_asset_symbol: 'OSMO',
-  second_asset_symbol: 'ATOM',
-  runTests: false,
-  mainnet: false,
-  feeCollectorDenom: axlUSDC,
-  safetyFundDenom: axlUSDC,
-  swapRoutes: [
-    { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
   ],
   safetyFundAddr: safetyFundAddr,
   protocolAdminAddr: protocolAdminAddr,

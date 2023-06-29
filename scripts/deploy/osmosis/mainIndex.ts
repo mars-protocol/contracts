@@ -1,5 +1,5 @@
 import { taskRunner } from '../base'
-import { osmosisMainnet } from './testnetConfig'
+import { osmosisMainnet } from './mainnetConfig'
 
 void (async function () {
   await taskRunner(osmosisMainnet)

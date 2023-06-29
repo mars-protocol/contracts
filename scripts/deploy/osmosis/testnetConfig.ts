@@ -99,7 +99,7 @@ export const USDCOracle: OracleConfig = {
   },
 }
 
-export const osmosisTestnetConfig: DeploymentConfig = {
+export const osmosisTestnetConfig = {
   chainName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: osmo,
@@ -132,8 +132,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   maxWhitelistedIncentiveDenoms: 10,
 }
 
-// axlUSDC does not have a pool on testnet so config can't have swapRoutes configured correctly
-export const osmosisTestMultisig: DeploymentConfig = {
+export const osmosisTestMultisig = {
   chainName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: 'uosmo',
