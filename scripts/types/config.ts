@@ -75,7 +75,7 @@ export interface AssetConfig {
   liquidation_bonus: string
   liquidation_threshold: string
   max_loan_to_value: string
-  protocol_liquidation_fee: Decimal
+  protocol_liquidation_fee?: Decimal
   red_bank: {
     borrow_enabled: boolean
     deposit_cap: Uint128

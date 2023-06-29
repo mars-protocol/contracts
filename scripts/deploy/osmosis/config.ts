@@ -1,13 +1,13 @@
 import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/config'
 
 // Note: since osmo-test-5 upgrade, testnet and mainnet denoms are no longer the same. Reference asset info here: https://docs.osmosis.zone/osmosis-core/asset-info/
-// const uosmo = 'uosmo'
-// const uatom = 'ibc/A8C2D23A1E6F95DA4E48BA349667E322BD7A6C996D8A4AAE8BA72E190F3D1477'
-// const aUSDC = 'ibc/6F34E1BD664C36CE49ACC28E60D62559A5F96C4F9A6CCE4FC5A67B2852E24CFE' // axelar
-// const nUSDC = 'ibc/B3504E092456BA618CC28AC671A71FB08C6CA0FD0BE7C8A5B5A3E2DD933CC9E4' // noble
-// const atom_osmo = 'gamm/pool/12'
-// const nUSDC_osmo = 'gamm/pool/6'
-// const aUSDC_osmo = 'gamm/pool/5'
+const uosmo = 'uosmo'
+const uatom = 'ibc/A8C2D23A1E6F95DA4E48BA349667E322BD7A6C996D8A4AAE8BA72E190F3D1477'
+const aUSDC = 'ibc/6F34E1BD664C36CE49ACC28E60D62559A5F96C4F9A6CCE4FC5A67B2852E24CFE' // axelar
+const nUSDC = 'ibc/B3504E092456BA618CC28AC671A71FB08C6CA0FD0BE7C8A5B5A3E2DD933CC9E4' // noble
+const atom_osmo = 'gamm/pool/12'
+const nUSDC_osmo = 'gamm/pool/6'
+const aUSDC_osmo = 'gamm/pool/5'
 
 // Mainnet:
 const axlUSDC = 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858'
@@ -24,117 +24,84 @@ const marsOsmoPool = 907
 // const marsOsmoPoolTest = 9
 
 export const osmoAsset: AssetConfig = {
-  denom: 'uosmo',
-  max_loan_to_value: '0.59',
-  reserve_factor: '0.2',
-  liquidation_threshold: '0.61',
-  liquidation_bonus: '0.15',
-  interest_rate_model: {
-    optimal_utilization_rate: '0.6',
-    base: '0',
-    slope_1: '0.15',
-    slope_2: '3',
+  credit_manager: {
+    whitelisted: true
   },
-  deposit_cap: '2500000000000',
-  deposit_enabled: true,
-  borrow_enabled: true,
   symbol: 'OSMO',
+  denom: 'uosmo',
+  liquidation_bonus: '0.15',
+  liquidation_threshold: '0.61',
+  max_loan_to_value: '0.59',
+  red_bank: {
+    borrow_enabled: true,
+    deposit_cap: '2500000000000',
+    deposit_enabled: true,
+  }
 }
 
 export const atomAsset: AssetConfig = {
-  denom: atom,
-  max_loan_to_value: '0.68',
-  reserve_factor: '0.2',
-  liquidation_threshold: '0.7',
-  liquidation_bonus: '0.15',
-  interest_rate_model: {
-    optimal_utilization_rate: '0.6',
-    base: '0',
-    slope_1: '0.15',
-    slope_2: '3',
+  credit_manager: {
+    whitelisted: true
   },
-  deposit_cap: '100000000000',
-  deposit_enabled: true,
-  borrow_enabled: true,
   symbol: 'ATOM',
+  denom: atom,
+  liquidation_bonus: '0.15',
+  liquidation_threshold: '0.7',
+  max_loan_to_value: '0.68',
+  red_bank: {
+    borrow_enabled: true,
+    deposit_cap: '100000000000',
+    deposit_enabled: true,
+  }
 }
 
 export const atomAssetTest: AssetConfig = {
-  denom: atomTest,
-  max_loan_to_value: '0.68',
-  reserve_factor: '0.2',
-  liquidation_threshold: '0.7',
-  liquidation_bonus: '0.15',
-  interest_rate_model: {
-    optimal_utilization_rate: '0.6',
-    base: '0',
-    slope_1: '0.15',
-    slope_2: '3',
+  credit_manager: {
+    whitelisted: true
   },
-  deposit_cap: '100000000000',
-  deposit_enabled: true,
-  borrow_enabled: true,
   symbol: 'ATOM',
+  denom: atomTest,
+  liquidation_bonus: '0.15',
+  liquidation_threshold: '0.7',
+  max_loan_to_value: '0.68',
+  red_bank: {
+    borrow_enabled: true,
+    deposit_cap: '100000000000',
+    deposit_enabled: true,
+  }
 }
 
 export const axlUSDCAsset: AssetConfig = {
-  denom: axlUSDC,
-  max_loan_to_value: '0.74',
-  reserve_factor: '0.2',
-  liquidation_threshold: '0.75',
-  liquidation_bonus: '0.1',
-  interest_rate_model: {
-    optimal_utilization_rate: '0.8',
-    base: '0',
-    slope_1: '0.2',
-    slope_2: '2',
+  credit_manager: {
+    whitelisted: true
   },
-  deposit_cap: '500000000000',
-  deposit_enabled: true,
-  borrow_enabled: true,
   symbol: 'axlUSDC',
+  denom: axlUSDC,
+  liquidation_bonus: '0.1',
+  liquidation_threshold: '0.75',
+  max_loan_to_value: '0.74',
+  red_bank: {
+    borrow_enabled: true,
+    deposit_cap: '500000000000',
+    deposit_enabled: true,
+  }
 }
 
 export const axlUSDCAssetTest: AssetConfig = {
-  denom: usdcTest,
-  max_loan_to_value: '0.74',
-  reserve_factor: '0.2',
-  liquidation_threshold: '0.75',
-  liquidation_bonus: '0.1',
-  interest_rate_model: {
-    optimal_utilization_rate: '0.8',
-    base: '0',
-    slope_1: '0.2',
-    slope_2: '2',
+  credit_manager: {
+    whitelisted: true
   },
-  deposit_cap: '500000000000',
-  deposit_enabled: true,
-  borrow_enabled: true,
   symbol: 'axlUSDC',
-}
-
-export const marsAssetTest: AssetConfig = {
-  denom: marsTest,
-  max_loan_to_value: '0.74',
-  reserve_factor: '0.2',
-  liquidation_threshold: '0.75',
+  denom: aUSDC,
   liquidation_bonus: '0.1',
-  interest_rate_model: {
-    optimal_utilization_rate: '0.8',
-    base: '0',
-    slope_1: '0.2',
-    slope_2: '2',
-  },
-  deposit_cap: '500000000000',
-  deposit_enabled: true,
-  borrow_enabled: true,
-  symbol: 'mars',
+  liquidation_threshold: '0.75',
+  max_loan_to_value: '0.74',
+  red_bank: {
+    borrow_enabled: true,
+    deposit_cap: '500000000000',
+    deposit_enabled: true,
+  }
 }
-
-// export const osmoOracle: OracleConfig = {
-//   denom: 'uosmo',
-//   price: '1',
-// }
 
 export const atomOracle: OracleConfig = {
   denom: 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2',
@@ -146,13 +113,6 @@ export const atomOracle: OracleConfig = {
     },
   },
 }
-
-// export const atomOracleTest: OracleConfig = {
-//   denom: atomTest,
-//   pool_id: 'TBD',
-//   window_size: 1800,
-//   downtime_detector: { downtime: 'duration30m', recovery: 7200 },
-// }
 
 export const axlUSDCOracle: OracleConfig = {
   denom: 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
@@ -217,6 +177,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   feeCollectorAddr: feeCollectorAddr,
   swapperDexName: 'osmosis',
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
+  vaults: [],
   oracleConfigs: [atomOracle, axlUSDCOracle],
   targetHealthFactor: '1.2',
   incentiveEpochDuration: 86400,
@@ -254,6 +215,7 @@ export const osmosisTestMultisig: DeploymentConfig = {
   feeCollectorAddr: feeCollectorAddr,
   swapperDexName: 'osmosis',
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
+  vaults: [],
   oracleConfigs: [atomOracle, axlUSDCOracle],
   targetHealthFactor: '1.2',
   incentiveEpochDuration: 86400,
@@ -318,6 +280,7 @@ export const osmosisMainnet: DeploymentConfig = {
   feeCollectorAddr: feeCollectorAddr,
   swapperDexName: 'osmosis',
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
+  vaults: [],
   oracleConfigs: [atomOracle, axlUSDCOracle],
   targetHealthFactor: '1.2',
   incentiveEpochDuration: 86400,
@@ -353,6 +316,7 @@ export const osmosisLocalConfig: DeploymentConfig = {
   feeCollectorAddr: feeCollectorAddr,
   swapperDexName: 'osmosis',
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
+  vaults: [],
   oracleConfigs: [atomOracle, axlUSDCOracle],
   targetHealthFactor: '1.2',
   incentiveEpochDuration: 86400,
