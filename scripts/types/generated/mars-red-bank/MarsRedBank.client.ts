@@ -83,6 +83,7 @@ export interface MarsRedBankReadOnlyInterface {
     user: string
   }) => Promise<ArrayOfUserCollateralResponse>
   userPosition: ({ user }: { user: string }) => Promise<UserPositionResponse>
+  userPositionLiquidationPricing: ({ user }: { user: string }) => Promise<UserPositionResponse>
   scaledLiquidityAmount: ({ amount, denom }: { amount: Uint128; denom: string }) => Promise<Uint128>
   scaledDebtAmount: ({ amount, denom }: { amount: Uint128; denom: string }) => Promise<Uint128>
   underlyingLiquidityAmount: ({
@@ -117,6 +118,7 @@ export class MarsRedBankQueryClient implements MarsRedBankReadOnlyInterface {
     this.userCollateral = this.userCollateral.bind(this)
     this.userCollaterals = this.userCollaterals.bind(this)
     this.userPosition = this.userPosition.bind(this)
+    this.userPositionLiquidationPricing = this.userPositionLiquidationPricing.bind(this)
     this.scaledLiquidityAmount = this.scaledLiquidityAmount.bind(this)
     this.scaledDebtAmount = this.scaledDebtAmount.bind(this)
     this.underlyingLiquidityAmount = this.underlyingLiquidityAmount.bind(this)
@@ -245,6 +247,17 @@ export class MarsRedBankQueryClient implements MarsRedBankReadOnlyInterface {
   userPosition = async ({ user }: { user: string }): Promise<UserPositionResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       user_position: {
+        user,
+      },
+    })
+  }
+  userPositionLiquidationPricing = async ({
+    user,
+  }: {
+    user: string
+  }): Promise<UserPositionResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      user_position_liquidation_pricing: {
         user,
       },
     })

@@ -83,6 +83,17 @@ export const marsRedBankQueryKeys = {
     [
       { ...marsRedBankQueryKeys.address(contractAddress)[0], method: 'user_position', args },
     ] as const,
+  userPositionLiquidationPricing: (
+    contractAddress: string | undefined,
+    args?: Record<string, unknown>,
+  ) =>
+    [
+      {
+        ...marsRedBankQueryKeys.address(contractAddress)[0],
+        method: 'user_position_liquidation_pricing',
+        args,
+      },
+    ] as const,
   scaledLiquidityAmount: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       {
@@ -215,6 +226,28 @@ export function useMarsRedBankScaledLiquidityAmountQuery<TData = Uint128>({
         ? client.scaledLiquidityAmount({
             amount: args.amount,
             denom: args.denom,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsRedBankUserPositionLiquidationPricingQuery<TData>
+  extends MarsRedBankReactQuery<UserPositionResponse, TData> {
+  args: {
+    user: string
+  }
+}
+export function useMarsRedBankUserPositionLiquidationPricingQuery<TData = UserPositionResponse>({
+  client,
+  args,
+  options,
+}: MarsRedBankUserPositionLiquidationPricingQuery<TData>) {
+  return useQuery<UserPositionResponse, Error, TData>(
+    marsRedBankQueryKeys.userPositionLiquidationPricing(client?.contractAddress, args),
+    () =>
+      client
+        ? client.userPositionLiquidationPricing({
+            user: args.user,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
