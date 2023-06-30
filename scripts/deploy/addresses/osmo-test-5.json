@@ -1,1 +1,9 @@
-{"address-provider":"osmo1xlf93me2979mvgj0gmluzuw22zxwd9rt2jaafzymw7d8kghkhwsqlwgh2r","red-bank":"osmo1r9ks824qewvpa9sqgzs3w2ylxx582c6d0hrnzqf3csufchqneydq60hgrv","incentives":"osmo1uq2y7h5sw8xtzhluhh7m9l3h9jdv5zjz7jhvavc3sgq0ps8ggq9s39qgcf","oracle":"osmo1vae2gsgeqw8q2x5ycvcrspsuqrnydveqgca03v8k9p4uvl2fgdlqp5r8fc","rewards-collector":"osmo1uw8g8mxlfk4at27xq26vqzttddtae7fgup4sd59ndrh0ymk99prsezh896","swapper":"osmo1q97xatqr3c0zrlgck60yd6f6nqvvtcg5772pngthzrkmdxkc6kqqdj56v2","params":"osmo1et0qv7acfv0wv3wlqmjtyflw5dectct24nuwjeqdkfzm9fznfunste0hnc"}
+{
+  "address-provider": "osmo1xlf93me2979mvgj0gmluzuw22zxwd9rt2jaafzymw7d8kghkhwsqlwgh2r",
+  "red-bank": "osmo1r9ks824qewvpa9sqgzs3w2ylxx582c6d0hrnzqf3csufchqneydq60hgrv",
+  "incentives": "osmo1uq2y7h5sw8xtzhluhh7m9l3h9jdv5zjz7jhvavc3sgq0ps8ggq9s39qgcf",
+  "oracle": "osmo1vae2gsgeqw8q2x5ycvcrspsuqrnydveqgca03v8k9p4uvl2fgdlqp5r8fc",
+  "rewards-collector": "osmo1uw8g8mxlfk4at27xq26vqzttddtae7fgup4sd59ndrh0ymk99prsezh896",
+  "swapper": "osmo1q97xatqr3c0zrlgck60yd6f6nqvvtcg5772pngthzrkmdxkc6kqqdj56v2",
+  "params": "osmo1et0qv7acfv0wv3wlqmjtyflw5dectct24nuwjeqdkfzm9fznfunste0hnc"
+}

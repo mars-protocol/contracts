@@ -137,7 +137,9 @@ export const osmosisTestnetConfig = {
   mainnet: false,
   feeCollectorDenom: mars,
   safetyFundDenom: nUSDC,
-  swapRoutes: [{ denom_in: atom, denom_out: osmo, route: [{ pool_id: 12, token_out_denom: osmo }] }],
+  swapRoutes: [
+    { denom_in: atom, denom_out: osmo, route: [{ pool_id: 12, token_out_denom: osmo }] },
+  ],
   safetyFundAddr: safetyFundAddr,
   protocolAdminAddr: protocolAdminAddr,
   feeCollectorAddr: feeCollectorAddr,
