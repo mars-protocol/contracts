@@ -262,8 +262,14 @@ pub fn query_user_position(
     let oracle_addr = &addresses[&MarsAddressType::Oracle];
     let params_addr = &addresses[&MarsAddressType::Params];
 
-    let positions =
-        health::get_user_positions_map(&deps, &env, &user_addr, oracle_addr, params_addr, liquidation_pricing)?;
+    let positions = health::get_user_positions_map(
+        &deps,
+        &env,
+        &user_addr,
+        oracle_addr,
+        params_addr,
+        liquidation_pricing,
+    )?;
 
     let health = health::compute_position_health(&positions)?;
 
