@@ -6,12 +6,12 @@ const atom = 'ibc/A8C2D23A1E6F95DA4E48BA349667E322BD7A6C996D8A4AAE8BA72E190F3D14
 const nUSDC = 'ibc/40F1B2458AEDA66431F9D44F48413240B8D28C072463E2BF53655728683583E3' // noble
 const mars = 'ibc/2E7368A14AC9AB7870F32CFEA687551C5064FA861868EDF7437BC877358A81F9'
 
-const pythContractAddr = ''
+const pythContractAddr = 'UPDATE'
 
 // note the following three addresses are all 'mars' bech32 prefix
-const safetyFundAddr = ''
-const protocolAdminAddr = ''
-const feeCollectorAddr = ''
+const safetyFundAddr = 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575'
+const protocolAdminAddr = 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n'
+const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
 
 export const osmoAsset: AssetConfig = {
   credit_manager: {
@@ -19,7 +19,13 @@ export const osmoAsset: AssetConfig = {
   },
   symbol: 'OSMO',
   denom: osmo,
-  liquidation_bonus: '0.15',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
   liquidation_threshold: '0.61',
   max_loan_to_value: '0.59',
   red_bank: {
@@ -35,7 +41,13 @@ export const atomAsset: AssetConfig = {
   },
   symbol: 'ATOM',
   denom: atom,
-  liquidation_bonus: '0.15',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
   liquidation_threshold: '0.7',
   max_loan_to_value: '0.68',
   red_bank: {
@@ -51,7 +63,13 @@ export const USDCAsset: AssetConfig = {
   },
   symbol: 'nUSDC',
   denom: nUSDC,
-  liquidation_bonus: '0.1',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
   liquidation_threshold: '0.75',
   max_loan_to_value: '0.74',
   red_bank: {
@@ -73,16 +91,16 @@ export const usdcOsmoVault: VaultConfig = {
   whitelisted: true,
 }
 
-export const atomOracle = {
+export const atomOracle: OracleConfig = {
   denom: atom,
   price_source: {
     pyth: {
       contract_addr: pythContractAddr,
-      price_feed_id: '',
+      price_feed_id: 'UPDATE',
       max_staleness: 60,
       denom_decimals: 6,
-      max_confidence: 5,
-      max_deviation: 4,
+      max_confidence: '5',
+      max_deviation: '4',
     },
   },
 }
@@ -119,7 +137,7 @@ export const osmosisTestnetConfig = {
   mainnet: false,
   feeCollectorDenom: mars,
   safetyFundDenom: nUSDC,
-  swapRoutes: [{ denom_in: atom, denom_out: osmo, route: [{ pool_id: 1, token_out_denom: osmo }] }],
+  swapRoutes: [{ denom_in: atom, denom_out: osmo, route: [{ pool_id: 12, token_out_denom: osmo }] }],
   safetyFundAddr: safetyFundAddr,
   protocolAdminAddr: protocolAdminAddr,
   feeCollectorAddr: feeCollectorAddr,
@@ -132,7 +150,7 @@ export const osmosisTestnetConfig = {
   maxWhitelistedIncentiveDenoms: 10,
 }
 
-export const osmosisTestMultisig = {
+export const osmosisTestMultisig: DeploymentConfig = {
   chainName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: 'uosmo',
@@ -148,7 +166,6 @@ export const osmosisTestMultisig = {
     'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
   slippage_tolerance: '0.01',
   base_asset_symbol: 'OSMO',
-  second_asset_symbol: 'ATOM',
   multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
   runTests: false,
   mainnet: false,

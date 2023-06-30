@@ -7,7 +7,7 @@ const protocolAdminAddrTestnet = 'neutron1ke0vqqzyymlp5esr8gjwuzh94ysnpvj8er5hm7
 const astroportFactoryTestnet = 'neutron1jj0scx400pswhpjes589aujlqagxgcztw04srynmhf0f6zplzn2qqmhwj7'
 const astroportRouterTestnet = 'neutron12jm24l9lr9cupufqjuxpdjnnweana4h66tsx5cl800mke26td26sq7m05p'
 
-// note the following three addresses are all 'mars' bech32 prefix
+// note the following addresses are all 'mars' bech32 prefix
 const safetyFundAddr = 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575'
 const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
 
@@ -17,7 +17,13 @@ export const ntrnAsset: AssetConfig = {
   },
   symbol: 'NTRM',
   denom: 'untrn',
-  liquidation_bonus: '0.15',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
   liquidation_threshold: '0.61',
   max_loan_to_value: '0.59',
   red_bank: {
@@ -33,7 +39,13 @@ export const atomAsset: AssetConfig = {
   },
   symbol: 'ATOM',
   denom: atomTestnet,
-  liquidation_bonus: '0.15',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
   liquidation_threshold: '0.7',
   max_loan_to_value: '0.68',
   red_bank: {
@@ -49,7 +61,13 @@ export const axlUSDCAsset: AssetConfig = {
     whitelisted: true,
   },
   symbol: 'axlUSDC',
-  liquidation_bonus: '0.1',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
   liquidation_threshold: '0.75',
   max_loan_to_value: '0.74',
   red_bank: {

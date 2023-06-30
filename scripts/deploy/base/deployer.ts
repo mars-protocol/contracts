@@ -187,11 +187,12 @@ export class Deployer {
     }
     printBlue(`Updating ${assetConfig.symbol}...`)
 
-    const msg = {
+    const msg: ParamsExecuteMsg = {
       update_asset_params: {
         add_or_update: {
           params: {
             credit_manager: {
+              hls: assetConfig.credit_manager.hls,
               whitelisted: assetConfig.credit_manager.whitelisted,
             },
             denom: assetConfig.denom,

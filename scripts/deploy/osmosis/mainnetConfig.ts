@@ -6,12 +6,12 @@ const atom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5E
 const axlUSDC = 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858'
 const mars = 'ibc/573FCD90FACEE750F55A8864EF7D38265F07E5A9273FA0E8DAFD39951332B580'
 
-const pythContractAddr = ''
+const pythContractAddr = 'UPDATE'
 
 // note the following three addresses are all 'mars' bech32 prefix
-const safetyFundAddr = ''
-const protocolAdminAddr = ''
-const feeCollectorAddr = ''
+const safetyFundAddr = 'UPDATE'
+const protocolAdminAddr = 'UPDATE'
+const feeCollectorAddr = 'UPDATE'
 
 export const osmoAsset: AssetConfig = {
   credit_manager: {
@@ -19,7 +19,13 @@ export const osmoAsset: AssetConfig = {
   },
   symbol: 'OSMO',
   denom: osmo,
-  liquidation_bonus: '0.15',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
   liquidation_threshold: '0.61',
   max_loan_to_value: '0.59',
   red_bank: {
@@ -35,7 +41,13 @@ export const atomAsset: AssetConfig = {
   },
   symbol: 'ATOM',
   denom: atom,
-  liquidation_bonus: '0.15',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
   liquidation_threshold: '0.7',
   max_loan_to_value: '0.68',
   red_bank: {
@@ -51,7 +63,13 @@ export const axlUSDCAsset: AssetConfig = {
   },
   symbol: 'axlUSDC',
   denom: axlUSDC,
-  liquidation_bonus: '0.1',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
   liquidation_threshold: '0.75',
   max_loan_to_value: '0.74',
   red_bank: {
@@ -61,20 +79,19 @@ export const axlUSDCAsset: AssetConfig = {
   },
 }
 
-export const atomOracle = {
+export const atomOracle: OracleConfig = {
   denom: atom,
   price_source: {
     pyth: {
       contract_addr: pythContractAddr,
-      price_feed_id: '',
+      price_feed_id: 'UPDATE',
       max_staleness: 60,
       denom_decimals: 6,
-      max_confidence: 5,
-      max_deviation: 4,
+      max_confidence: '5',
+      max_deviation: '4',
     },
   },
 }
-
 export const axlUSDCOracle: OracleConfig = {
   denom: axlUSDC,
   price_source: {
@@ -86,7 +103,7 @@ export const axlUSDCOracle: OracleConfig = {
   },
 }
 
-export const osmosisMainnet = {
+export const osmosisMainnet: DeploymentConfig = {
   chainName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: osmo,
@@ -101,7 +118,6 @@ export const osmosisMainnet = {
   deployerMnemonic: 'TO BE INSERTED AT TIME OF DEPLOYMENT',
   slippage_tolerance: '0.01',
   base_asset_symbol: 'OSMO',
-  second_asset_symbol: 'ATOM',
   multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
   runTests: false,
   mainnet: true,

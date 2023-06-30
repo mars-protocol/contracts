@@ -6,11 +6,12 @@ import {
   WasmPriceSourceForString,
 } from './generated/mars-oracle-wasm/MarsOracleWasm.types'
 import {
+  CmSettingsForString,
   Coin,
   Decimal,
-  HlsAssetTypeForString,
   HlsParamsBaseForString,
-  Uint128,
+  LiquidationBonus,
+  RedBankSettings,
 } from './generated/mars-params/MarsParams.types'
 
 type SwapRoute = {
@@ -66,47 +67,24 @@ export interface DeploymentConfig {
 }
 
 export interface AssetConfig {
-  credit_manager: {
-    whitelisted: boolean
-  }
   symbol: string
+  credit_manager: CmSettingsForString
   denom: string
-  liquidation_bonus: string
-  liquidation_threshold: string
-  max_loan_to_value: string
-  protocol_liquidation_fee?: Decimal
-  red_bank: {
-    borrow_enabled: boolean
-    deposit_cap: Uint128
-    deposit_enabled: boolean
-  }
+  liquidation_bonus: LiquidationBonus
+  liquidation_threshold: Decimal
+  max_loan_to_value: Decimal
+  protocol_liquidation_fee: Decimal
+  red_bank: RedBankSettings
 }
-
 export interface VaultConfig {
   addr: string
   symbol: string
   deposit_cap: Coin
-  hls?: {
-    correlations: HlsAssetTypeForString
-    liquidation_threshold: Decimal
-    max_loan_to_value: Decimal
-  }
+  hls?: HlsParamsBaseForString | null
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
   whitelisted: boolean
 }
-
-export type HlsAssetTypeForString =
-  | {
-      coin: {
-        denom: string
-      }
-    }
-  | {
-      vault: {
-        addr: string
-      }
-    }
 
 export interface OracleConfig {
   denom: string
