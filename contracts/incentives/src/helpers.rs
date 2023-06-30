@@ -1,7 +1,7 @@
 use std::cmp::{max, min};
 
 use cosmwasm_std::{
-    Addr, BlockInfo, Decimal, Deps, MessageInfo, Order, OverflowError, OverflowOperation,
+    coin, Addr, BlockInfo, Decimal, Deps, MessageInfo, Order, OverflowError, OverflowOperation,
     QuerierWrapper, StdError, StdResult, Storage, Uint128,
 };
 use cw_storage_plus::Bound;
@@ -93,9 +93,12 @@ pub fn validate_incentive_schedule(
     }
     // Enough tokens must be sent to cover the entire duration
     let total_emission = emission_per_second * Uint128::from(duration);
-    if info.funds.len() != 1 || info.funds[0].amount != total_emission {
+    if info.funds.len() != 1
+        || info.funds[0].amount != total_emission
+        || info.funds[0].denom != incentive_denom
+    {
         return Err(ContractError::InvalidFunds {
-            expected: total_emission,
+            expected: coin(total_emission.u128(), incentive_denom),
         });
     }
     // Start time must be a multiple of epoch duration away from any other existing incentive

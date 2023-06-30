@@ -147,7 +147,7 @@ fn cannot_set_new_asset_incentive_with_too_few_funds() {
         duration: ONE_WEEK_IN_SECS,
     };
     let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000 funds");
+    assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000umars funds");
 }
 
 #[test]
@@ -166,7 +166,7 @@ fn cannot_set_new_asset_incentive_with_wrong_denom() {
         duration: ONE_WEEK_IN_SECS,
     };
     let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000 funds");
+    assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000umars funds");
 }
 
 #[test]
@@ -185,7 +185,7 @@ fn cannot_set_new_asset_incentive_with_two_denoms() {
         duration: ONE_WEEK_IN_SECS,
     };
     let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000 funds");
+    assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000umars funds");
 }
 
 #[test]
@@ -474,13 +474,12 @@ fn test_incorrect_denom_deposit() {
         start_time,
         duration: incentive_duration,
     };
-    let err = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+    let err = execute(deps.as_mut(), env, info, msg).unwrap_err();
 
     assert_eq!(
         err,
         mars_incentives::ContractError::InvalidFunds {
             expected: coin(total_emissions, incentive_denom),
-            got: vec![coin(total_emissions, false_incentive_denom)]
         }
     );
 }
