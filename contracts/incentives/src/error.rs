@@ -61,6 +61,11 @@ pub enum ContractError {
     EpochDurationTooShort {
         min_epoch_duration: u64,
     },
+
+    #[error("Whitelist update arguments contain duplicate denom")]
+    DuplicateDenom {
+        denom: String,
+    },
 }
 
 impl From<ContractError> for StdError {
