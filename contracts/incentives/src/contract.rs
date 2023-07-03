@@ -162,6 +162,11 @@ pub fn execute_update_whitelist(
     let mut whitelist_count = prev_whitelist_count;
 
     for denom in remove_denoms.iter() {
+        // If denom is not on the whitelist, skip it
+        if !WHITELIST.has(deps.storage, denom) {
+            continue;
+        }
+
         whitelist_count -= 1;
 
         // Before removing from whitelist we must handle ongoing incentives,
@@ -206,12 +211,16 @@ pub fn execute_update_whitelist(
     }
 
     for (denom, min_emission) in add_denoms.iter() {
-        // Check that we are not exceeding the max whitelist limit
-        whitelist_count += 1;
-        if whitelist_count > config.max_whitelisted_denoms {
-            return Err(ContractError::MaxWhitelistLimitReached {
-                max_whitelist_limit: config.max_whitelisted_denoms,
-            });
+        // If the denom is not already whitelisted, increase the counter and check that we are not
+        // exceeding the max whitelist limit. If the denom is already whitelisted, we don't need
+        // to change the counter and instead just update the min_emission.
+        if !WHITELIST.has(deps.storage, denom) {
+            whitelist_count += 1;
+            if whitelist_count > config.max_whitelisted_denoms {
+                return Err(ContractError::MaxWhitelistLimitReached {
+                    max_whitelist_limit: config.max_whitelisted_denoms,
+                });
+            }
         }
 
         validate_native_denom(denom)?;
