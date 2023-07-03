@@ -2,7 +2,10 @@ use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, Uint128, WasmMs
 use mars_rover::{
     adapters::vault::{UpdateType, Vault, VaultPositionUpdate},
     error::ContractResult,
-    msg::{execute::CallbackMsg, ExecuteMsg as RoverExecuteMsg},
+    msg::{
+        execute::{CallbackMsg, ChangeExpected},
+        ExecuteMsg as RoverExecuteMsg,
+    },
 };
 
 use crate::vault::utils::{
@@ -39,6 +42,7 @@ pub fn exit_vault(
         msg: to_binary(&RoverExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
             account_id: account_id.to_string(),
             previous_balance,
+            change: ChangeExpected::Increase,
         }))?,
     });
 

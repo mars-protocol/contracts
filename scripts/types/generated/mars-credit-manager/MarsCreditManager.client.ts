@@ -28,6 +28,7 @@ import {
   CallbackMsg,
   Addr,
   LiquidateRequestForVaultBaseForAddr,
+  ChangeExpected,
   Coin,
   ActionCoin,
   VaultBaseForString,

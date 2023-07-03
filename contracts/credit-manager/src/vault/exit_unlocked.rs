@@ -3,7 +3,10 @@ use cw_vault_standard::extensions::lockup::UnlockingPosition;
 use mars_rover::{
     adapters::vault::{UnlockingChange, Vault, VaultPositionUpdate},
     error::{ContractError, ContractResult},
-    msg::{execute::CallbackMsg, ExecuteMsg},
+    msg::{
+        execute::{CallbackMsg, ChangeExpected},
+        ExecuteMsg,
+    },
 };
 
 use crate::{
@@ -53,6 +56,7 @@ pub fn exit_vault_unlocked(
         msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
             account_id: account_id.to_string(),
             previous_balance,
+            change: ChangeExpected::Increase,
         }))?,
     });
 

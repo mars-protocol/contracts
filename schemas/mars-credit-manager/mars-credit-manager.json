@@ -1097,12 +1097,21 @@
                 "type": "object",
                 "required": [
                   "account_id",
+                  "change",
                   "previous_balance"
                 ],
                 "properties": {
                   "account_id": {
                     "description": "Account that needs coin balance adjustment",
                     "type": "string"
+                  },
+                  "change": {
+                    "description": "The kind of change that is anticipated to balance of coin. If does not match expectation, an error is raised.",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/ChangeExpected"
+                      }
+                    ]
                   },
                   "previous_balance": {
                     "description": "Total balance for coin in Rover prior to withdraw",
@@ -1273,6 +1282,13 @@
             },
             "additionalProperties": false
           }
+        ]
+      },
+      "ChangeExpected": {
+        "type": "string",
+        "enum": [
+          "increase",
+          "decrease"
         ]
       },
       "Coin": {

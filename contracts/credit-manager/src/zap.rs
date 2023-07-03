@@ -1,7 +1,7 @@
 use cosmwasm_std::{Coin, Deps, DepsMut, Env, Response, Uint128};
 use mars_rover::{
     error::{ContractError, ContractResult},
-    msg::execute::{ActionAmount, ActionCoin},
+    msg::execute::{ActionAmount, ActionCoin, ChangeExpected},
     traits::{Denoms, Stringify},
 };
 
@@ -43,8 +43,13 @@ pub fn provide_liquidity(
     // After zap is complete, update account's LP token balance
     let zapper = ZAPPER.load(deps.storage)?;
     let zap_msg = zapper.provide_liquidity_msg(&updated_coins_in, lp_token_out, minimum_receive)?;
-    let update_balance_msg =
-        update_balance_msg(&deps.querier, &env.contract.address, account_id, lp_token_out)?;
+    let update_balance_msg = update_balance_msg(
+        &deps.querier,
+        &env.contract.address,
+        account_id,
+        lp_token_out,
+        ChangeExpected::Increase,
+    )?;
 
     Ok(Response::new()
         .add_message(zap_msg)
@@ -91,6 +96,7 @@ pub fn withdraw_liquidity(
         &env.contract.address,
         account_id,
         coins_out.to_denoms(),
+        ChangeExpected::Increase,
     )?;
 
     Ok(Response::new()

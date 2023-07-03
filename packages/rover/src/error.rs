@@ -27,6 +27,15 @@ pub enum ContractError {
     #[error("{0}")]
     Owner(#[from] OwnerError),
 
+    #[error(
+        "{denom:?} balance change was unexpected. Prev: {prev_amount:?}, Curr: {curr_amount:?}."
+    )]
+    BalanceChange {
+        denom: String,
+        prev_amount: Uint128,
+        curr_amount: Uint128,
+    },
+
     #[error("{0} is not an available coin to request")]
     CoinNotAvailable(String),
 

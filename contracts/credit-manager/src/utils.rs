@@ -8,7 +8,10 @@ use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg;
 use mars_rover::{
     error::{ContractError, ContractResult},
-    msg::{execute::CallbackMsg, ExecuteMsg},
+    msg::{
+        execute::{CallbackMsg, ChangeExpected},
+        ExecuteMsg,
+    },
 };
 use mars_rover_health_types::AccountKind;
 
@@ -121,6 +124,7 @@ pub fn update_balance_msg(
     rover_addr: &Addr,
     account_id: &str,
     denom: &str,
+    change: ChangeExpected,
 ) -> StdResult<CosmosMsg> {
     let previous_balance = query_balance(querier, rover_addr, denom)?;
     Ok(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -129,6 +133,7 @@ pub fn update_balance_msg(
         msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
             account_id: account_id.to_string(),
             previous_balance,
+            change,
         }))?,
     }))
 }
@@ -138,8 +143,12 @@ pub fn update_balances_msgs(
     rover_addr: &Addr,
     account_id: &str,
     denoms: Vec<&str>,
+    change: ChangeExpected,
 ) -> StdResult<Vec<CosmosMsg>> {
-    denoms.iter().map(|denom| update_balance_msg(querier, rover_addr, account_id, denom)).collect()
+    denoms
+        .iter()
+        .map(|denom| update_balance_msg(querier, rover_addr, account_id, denom, change.clone()))
+        .collect()
 }
 
 pub fn update_balance_after_vault_liquidation_msg(

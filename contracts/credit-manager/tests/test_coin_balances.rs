@@ -1,8 +1,8 @@
-use cosmwasm_std::{coin, coins, Addr, OverflowError, OverflowOperation::Sub};
+use cosmwasm_std::{coin, coins, Addr, Uint128};
 use cw_multi_test::{BankSudo, SudoMsg};
 use mars_rover::{
     error::ContractError,
-    msg::execute::{Action::Deposit, CallbackMsg},
+    msg::execute::{Action::Deposit, CallbackMsg, ChangeExpected},
 };
 
 use crate::helpers::{assert_err, uosmo_info, AccountToFund, MockEnv};
@@ -20,13 +20,14 @@ fn only_rover_can_call_update_coin_balances() {
         CallbackMsg::UpdateCoinBalance {
             account_id,
             previous_balance: coin(1, "utest"),
+            change: ChangeExpected::Increase,
         },
     );
     assert_err(res, ContractError::ExternalInvocation)
 }
 
 #[test]
-fn user_does_not_have_enough_to_pay_diff() {
+fn change_does_not_match_expecations() {
     let osmo_info = uosmo_info();
 
     let user = Addr::unchecked("user");
@@ -48,22 +49,77 @@ fn user_does_not_have_enough_to_pay_diff() {
     )
     .unwrap();
 
+    // Expected increase, but prev balance was the same
+    let res = mock.invoke_callback(
+        &mock.rover.clone(),
+        CallbackMsg::UpdateCoinBalance {
+            account_id: account_id.clone(),
+            previous_balance: coin(300, osmo_info.denom.clone()),
+            change: ChangeExpected::Increase,
+        },
+    );
+    assert_err(
+        res,
+        ContractError::BalanceChange {
+            denom: "uosmo".to_string(),
+            prev_amount: Uint128::new(300),
+            curr_amount: Uint128::new(300),
+        },
+    );
+
+    // Expected increase, but prev balance was higher
+    let res = mock.invoke_callback(
+        &mock.rover.clone(),
+        CallbackMsg::UpdateCoinBalance {
+            account_id: account_id.clone(),
+            previous_balance: coin(601, osmo_info.denom.clone()),
+            change: ChangeExpected::Increase,
+        },
+    );
+    assert_err(
+        res,
+        ContractError::BalanceChange {
+            denom: "uosmo".to_string(),
+            prev_amount: Uint128::new(601),
+            curr_amount: Uint128::new(300),
+        },
+    );
+
+    // Expected decrease, but prev balance was the same
+    let res = mock.invoke_callback(
+        &mock.rover.clone(),
+        CallbackMsg::UpdateCoinBalance {
+            account_id: account_id.clone(),
+            previous_balance: coin(300, osmo_info.denom.clone()),
+            change: ChangeExpected::Decrease,
+        },
+    );
+    assert_err(
+        res,
+        ContractError::BalanceChange {
+            denom: "uosmo".to_string(),
+            prev_amount: Uint128::new(300),
+            curr_amount: Uint128::new(300),
+        },
+    );
+
+    // Expected decrease, but prev balance was lower
     let res = mock.invoke_callback(
         &mock.rover.clone(),
         CallbackMsg::UpdateCoinBalance {
             account_id,
-            previous_balance: coin(601, osmo_info.denom),
+            previous_balance: coin(250, osmo_info.denom),
+            change: ChangeExpected::Decrease,
         },
     );
-
     assert_err(
         res,
-        ContractError::Overflow(OverflowError {
-            operation: Sub,
-            operand1: "300".to_string(),
-            operand2: "301".to_string(),
-        }),
-    )
+        ContractError::BalanceChange {
+            denom: "uosmo".to_string(),
+            prev_amount: Uint128::new(250),
+            curr_amount: Uint128::new(300),
+        },
+    );
 }
 
 #[test]
@@ -94,6 +150,7 @@ fn user_gets_rebalanced_down() {
         CallbackMsg::UpdateCoinBalance {
             account_id: account_id.clone(),
             previous_balance: coin(500, osmo_info.denom.clone()),
+            change: ChangeExpected::Decrease,
         },
     )
     .unwrap();
@@ -139,6 +196,7 @@ fn user_gets_rebalanced_up() {
         CallbackMsg::UpdateCoinBalance {
             account_id: account_id.clone(),
             previous_balance: coin(300, osmo_info.denom.clone()),
+            change: ChangeExpected::Increase,
         },
     )
     .unwrap();

@@ -1,7 +1,7 @@
 use cosmwasm_std::{Coin, Decimal, DepsMut, Env, Response, Uint128};
 use mars_rover::{
     error::{ContractError, ContractResult},
-    msg::execute::{ActionAmount, ActionCoin},
+    msg::execute::{ActionAmount, ActionCoin, ChangeExpected},
 };
 
 use crate::{
@@ -36,8 +36,13 @@ pub fn swap_exact_in(
     decrement_coin_balance(deps.storage, account_id, &coin_in_to_trade)?;
 
     // Updates coin balances for account after the swap has taken place
-    let update_coin_balance_msg =
-        update_balance_msg(&deps.querier, &env.contract.address, account_id, denom_out)?;
+    let update_coin_balance_msg = update_balance_msg(
+        &deps.querier,
+        &env.contract.address,
+        account_id,
+        denom_out,
+        ChangeExpected::Increase,
+    )?;
 
     let swapper = SWAPPER.load(deps.storage)?;
 

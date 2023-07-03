@@ -266,6 +266,7 @@ export type CallbackMsg =
   | {
       update_coin_balance: {
         account_id: string
+        change: ChangeExpected
         previous_balance: Coin
       }
     }
@@ -315,6 +316,7 @@ export type LiquidateRequestForVaultBaseForAddr =
         request_vault: VaultBaseForAddr
       }
     }
+export type ChangeExpected = 'increase' | 'decrease'
 export interface Coin {
   amount: Uint128
   denom: string

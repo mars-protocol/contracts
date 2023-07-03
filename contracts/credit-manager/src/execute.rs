@@ -340,7 +340,8 @@ pub fn execute_callback(
         CallbackMsg::UpdateCoinBalance {
             account_id,
             previous_balance,
-        } => update_coin_balance(deps, env, &account_id, &previous_balance),
+            change,
+        } => update_coin_balance(deps, env, &account_id, previous_balance, change),
         CallbackMsg::UpdateCoinBalanceAfterVaultLiquidation {
             account_id,
             previous_balance,

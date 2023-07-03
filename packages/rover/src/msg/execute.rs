@@ -76,6 +76,12 @@ impl From<&Coin> for ActionCoin {
 }
 
 #[cw_serde]
+pub enum ChangeExpected {
+    Increase,
+    Decrease,
+}
+
+#[cw_serde]
 pub enum LiquidateRequest<T> {
     /// Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt
     /// denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the
@@ -280,6 +286,9 @@ pub enum CallbackMsg {
         account_id: String,
         /// Total balance for coin in Rover prior to withdraw
         previous_balance: Coin,
+        /// The kind of change that is anticipated to balance of coin.
+        /// If does not match expectation, an error is raised.
+        change: ChangeExpected,
     },
     /// Used to update the coin balance of account after an async action
     UpdateCoinBalanceAfterVaultLiquidation {
