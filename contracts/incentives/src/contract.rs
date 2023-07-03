@@ -162,9 +162,11 @@ pub fn execute_update_whitelist(
     let mut whitelist_count = prev_whitelist_count;
 
     for denom in remove_denoms.iter() {
-        // If denom is not on the whitelist, skip it
+        // If denom is not on the whitelist, we can't remove it
         if !WHITELIST.has(deps.storage, denom) {
-            continue;
+            return Err(ContractError::NotWhitelisted {
+                denom: denom.clone(),
+            });
         }
 
         whitelist_count -= 1;
