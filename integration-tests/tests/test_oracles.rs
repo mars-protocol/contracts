@@ -949,15 +949,7 @@ fn redbank_should_fail_if_no_price() {
     )
     .unwrap();
 
-    wasm.execute(
-        &red_bank_addr,
-        &Deposit {
-            on_behalf_of: None,
-        },
-        &[coin(1_000_000, "uatom")],
-        depositor,
-    )
-    .unwrap();
+    wasm.execute(&red_bank_addr, &Deposit {}, &[coin(1_000_000, "uatom")], depositor).unwrap();
 
     // execute msg should fail since it is attempting to query an asset from the oracle contract that doesn't have an LP pool set up
     wasm.execute(
@@ -1011,15 +1003,7 @@ fn redbank_quering_oracle_successfully() {
     )
     .unwrap();
 
-    wasm.execute(
-        &red_bank_addr,
-        &Deposit {
-            on_behalf_of: None,
-        },
-        &[coin(1_000_000, "uatom")],
-        depositor,
-    )
-    .unwrap();
+    wasm.execute(&red_bank_addr, &Deposit {}, &[coin(1_000_000, "uatom")], depositor).unwrap();
 
     wasm.execute(
         &red_bank_addr,

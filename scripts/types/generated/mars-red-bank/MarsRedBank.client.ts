@@ -364,11 +364,6 @@ export interface MarsRedBankInterface extends MarsRedBankReadOnlyInterface {
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
   deposit: (
-    {
-      onBehalfOf,
-    }: {
-      onBehalfOf?: string
-    },
     fee?: number | StdFee | 'auto',
     memo?: string,
     _funds?: Coin[],
@@ -583,11 +578,6 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
     )
   }
   deposit = async (
-    {
-      onBehalfOf,
-    }: {
-      onBehalfOf?: string
-    },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     _funds?: Coin[],
@@ -596,9 +586,7 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
       this.sender,
       this.contractAddress,
       {
-        deposit: {
-          on_behalf_of: onBehalfOf,
-        },
+        deposit: {},
       },
       fee,
       memo,

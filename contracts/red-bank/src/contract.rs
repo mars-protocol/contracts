@@ -41,11 +41,9 @@ pub fn execute(
             let user_addr = deps.api.addr_validate(&user)?;
             execute::update_uncollateralized_loan_limit(deps, info, user_addr, denom, new_limit)
         }
-        ExecuteMsg::Deposit {
-            on_behalf_of,
-        } => {
+        ExecuteMsg::Deposit {} => {
             let sent_coin = cw_utils::one_coin(&info)?;
-            execute::deposit(deps, env, info, on_behalf_of, sent_coin.denom, sent_coin.amount)
+            execute::deposit(deps, env, info, sent_coin.denom, sent_coin.amount)
         }
         ExecuteMsg::Withdraw {
             denom,

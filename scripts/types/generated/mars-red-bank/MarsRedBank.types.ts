@@ -41,9 +41,7 @@ export type ExecuteMsg =
       }
     }
   | {
-      deposit: {
-        on_behalf_of?: string | null
-      }
+      deposit: {}
     }
   | {
       withdraw: {

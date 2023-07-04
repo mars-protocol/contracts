@@ -53,10 +53,7 @@ pub enum ExecuteMsg {
 
     /// Deposit native coins. Deposited coins must be sent in the transaction
     /// this call is made
-    Deposit {
-        /// Address that will receive the coins
-        on_behalf_of: Option<String>,
-    },
+    Deposit {},
 
     /// Withdraw native coins
     Withdraw {
