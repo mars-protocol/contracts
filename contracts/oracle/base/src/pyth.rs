@@ -148,7 +148,8 @@ pub fn assert_pyth_current_price_not_too_old(
         return Err(InvalidPrice {
             reason: format!(
                 "current price publish time is too old/stale. published: {}, now: {}",
-                price_feed.get_price_unchecked().publish_time, current_time
+                price_feed.get_price_unchecked().publish_time,
+                current_time
             ),
         });
     };
@@ -163,13 +164,14 @@ pub fn assert_pyth_ema_price_not_too_old(
 ) -> ContractResult<Price> {
     let ema_price_opt = price_feed.get_ema_price_no_older_than(current_time as i64, max_staleness);
     let Some(ema_price) = ema_price_opt else {
-            return Err(InvalidPrice {
-                reason: format!(
-                    "EMA price publish time is too old/stale. published: {}, now: {}",
-                    price_feed.get_ema_price_unchecked().publish_time, current_time
-                ),
-            });
-        };
+        return Err(InvalidPrice {
+            reason: format!(
+                "EMA price publish time is too old/stale. published: {}, now: {}",
+                price_feed.get_ema_price_unchecked().publish_time,
+                current_time
+            ),
+        });
+    };
     Ok(ema_price)
 }
 

@@ -231,9 +231,7 @@ impl RedBank {
         env.app.execute_contract(
             sender.clone(),
             self.contract_addr.clone(),
-            &red_bank::ExecuteMsg::Deposit {
-                on_behalf_of: None,
-            },
+            &red_bank::ExecuteMsg::Deposit {},
             &[coin],
         )
     }

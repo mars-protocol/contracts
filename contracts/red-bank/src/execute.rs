@@ -277,18 +277,9 @@ pub fn deposit(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    on_behalf_of: Option<String>,
     denom: String,
     deposit_amount: Uint128,
 ) -> Result<Response, ContractError> {
-    let user_addr: Addr;
-    let user = if let Some(address) = on_behalf_of {
-        user_addr = deps.api.addr_validate(&address)?;
-        User(&user_addr)
-    } else {
-        User(&info.sender)
-    };
-
     let mut market = MARKETS.load(deps.storage, &denom)?;
 
     let config = CONFIG.load(deps.storage)?;
@@ -343,7 +334,7 @@ pub fn deposit(
     let deposit_amount_scaled =
         get_scaled_liquidity_amount(deposit_amount, &market, env.block.time.seconds())?;
 
-    response = user.increase_collateral(
+    response = User(&info.sender).increase_collateral(
         deps.storage,
         &market,
         deposit_amount_scaled,
@@ -357,7 +348,6 @@ pub fn deposit(
     Ok(response
         .add_attribute("action", "deposit")
         .add_attribute("sender", &info.sender)
-        .add_attribute("on_behalf_of", user)
         .add_attribute("denom", denom)
         .add_attribute("amount", deposit_amount)
         .add_attribute("amount_scaled", deposit_amount_scaled))
