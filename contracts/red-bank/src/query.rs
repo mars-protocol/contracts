@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, BlockInfo, Coin, Deps, Env, Order, StdError, StdResult, Uint128};
 use cw_storage_plus::Bound;
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
@@ -281,4 +281,24 @@ pub fn query_user_position(
         weighted_liquidation_threshold_collateral: health.liquidation_threshold_adjusted_collateral,
         health_status,
     })
+}
+
+pub fn query_tvl(deps: Deps, env: Env) -> Result<Vec<Coin>, ContractError> {
+    MARKETS
+        .range(deps.storage, None, None, Order::Ascending)
+        .map(|item| {
+            let (denom, market) = item?;
+
+            let amount = get_underlying_liquidity_amount(
+                market.collateral_total_scaled,
+                &market,
+                env.block.time.seconds(),
+            )?;
+
+            Ok(Coin {
+                denom,
+                amount,
+            })
+        })
+        .collect()
 }

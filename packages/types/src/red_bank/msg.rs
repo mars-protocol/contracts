@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Decimal, Uint128};
+use cosmwasm_std::{Coin, Decimal, Uint128};
 use mars_owner::OwnerUpdate;
 
 use crate::red_bank::InterestRateModel;
@@ -224,4 +224,9 @@ pub enum QueryMsg {
         denom: String,
         amount_scaled: Uint128,
     },
+
+    /// Query Red Bank's total deposited asset amounts.
+    /// Unlike DefiLlama, we include lent out assets in TVL.
+    #[returns(Vec<Coin>)]
+    Tvl {},
 }

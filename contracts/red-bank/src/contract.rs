@@ -184,6 +184,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
             denom,
             amount_scaled,
         } => to_binary(&query::query_underlying_debt_amount(deps, env, denom, amount_scaled)?),
+        QueryMsg::Tvl {} => to_binary(&query::query_tvl(deps, env)?),
     };
     res.map_err(Into::into)
 }
