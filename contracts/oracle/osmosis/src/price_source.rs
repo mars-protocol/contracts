@@ -308,7 +308,7 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
         deps: &Deps,
         denom: &str,
         base_denom: &str,
-        _price_sources: &Map<&str, OsmosisPriceSourceChecked>,
+        price_sources: &Map<&str, OsmosisPriceSourceChecked>,
     ) -> ContractResult<OsmosisPriceSourceChecked> {
         match &self {
             OsmosisPriceSourceUnchecked::Fixed {
@@ -383,12 +383,16 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
                 price_feed_id,
                 max_staleness,
                 denom_decimals,
-            } => Ok(OsmosisPriceSourceChecked::Pyth {
-                contract_addr: deps.api.addr_validate(contract_addr)?,
-                price_feed_id: *price_feed_id,
-                max_staleness: *max_staleness,
-                denom_decimals: *denom_decimals,
-            }),
+            } => {
+                mars_oracle_base::pyth::assert_usd_price_source(deps, price_sources)?;
+
+                Ok(OsmosisPriceSourceChecked::Pyth {
+                    contract_addr: deps.api.addr_validate(contract_addr)?,
+                    price_feed_id: *price_feed_id,
+                    max_staleness: *max_staleness,
+                    denom_decimals: *denom_decimals,
+                })
+            }
             OsmosisPriceSourceUnchecked::Lsd {
                 transitive_denom,
                 geometric_twap,
