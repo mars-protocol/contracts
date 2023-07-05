@@ -1,7 +1,11 @@
 use std::str::FromStr;
 
 use astroport::factory::PairType;
-use cosmwasm_std::{from_binary, testing::mock_dependencies, Addr, Decimal, Uint128};
+use cosmwasm_std::{
+    from_binary,
+    testing::{mock_dependencies, mock_env},
+    Addr, Decimal, Uint128,
+};
 use cw_it::{
     astroport::{
         robot::AstroportTestRobot,
@@ -13,16 +17,17 @@ use cw_it::{
 use cw_storage_plus::Map;
 use mars_oracle_base::{pyth::PriceIdentifier, ContractError, PriceSourceUnchecked};
 use mars_oracle_wasm::{
-    contract::entry, WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked,
+    contract::entry::{self, execute},
+    WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked,
 };
-use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
+use mars_red_bank_types::oracle::{ExecuteMsg, PriceResponse, QueryMsg};
 
 const ONE: Decimal = Decimal::one();
 const TWO: Decimal = Decimal::new(Uint128::new(2_000_000_000_000_000_000u128));
 const DEFAULT_LIQ: [u128; 2] = [10000000000000000000000u128, 1000000000000000000000u128];
 
 use mars_testing::{
-    mock_env_at_block_time,
+    mock_env_at_block_time, mock_info,
     test_runner::get_test_runner,
     wasm_oracle::{
         astro_init_params, fixed_source, get_contracts, setup_test,
@@ -572,4 +577,44 @@ fn querying_pyth_price_successfully() {
     .unwrap();
     let res: PriceResponse = from_binary(&res).unwrap();
     assert_eq!(res.price, Decimal::from_ratio(102000u128, 1u128));
+}
+
+#[test]
+fn setting_price_source_pyth_if_missing_usd() {
+    let runner = get_test_runner();
+    let robot = WasmOracleTestRobot::new(
+        &runner,
+        get_contracts(&get_test_runner()),
+        &get_test_runner().init_accounts()[0],
+        None,
+    );
+
+    let mut deps = helpers::setup_test(&robot.astroport_contracts.factory.address);
+
+    let price_id = PriceIdentifier::from_hex(
+        "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+    )
+    .unwrap();
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("owner"),
+        ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: WasmPriceSourceUnchecked::Pyth {
+                contract_addr: "new_pyth_contract_addr".to_string(),
+                price_feed_id: price_id,
+                max_staleness: 30,
+                denom_decimals: 8,
+            },
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "missing price source for usd".to_string()
+        }
+    );
 }

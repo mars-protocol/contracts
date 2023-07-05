@@ -192,12 +192,16 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 price_feed_id,
                 max_staleness,
                 denom_decimals,
-            } => Ok(WasmPriceSourceChecked::Pyth {
-                contract_addr: deps.api.addr_validate(&contract_addr)?,
-                price_feed_id,
-                max_staleness,
-                denom_decimals,
-            }),
+            } => {
+                mars_oracle_base::pyth::assert_usd_price_source(deps, price_sources)?;
+
+                Ok(WasmPriceSourceChecked::Pyth {
+                    contract_addr: deps.api.addr_validate(&contract_addr)?,
+                    price_feed_id,
+                    max_staleness,
+                    denom_decimals,
+                })
+            }
         }
     }
 }
