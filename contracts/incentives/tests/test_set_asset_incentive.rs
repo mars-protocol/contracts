@@ -441,7 +441,7 @@ fn set_asset_incentive_merges_schedules() {
 }
 
 #[test]
-fn test_incorrect_denom_deposit() {
+fn incorrect_denom_deposit() {
     let env = mock_env();
     let epoch_duration = ONE_WEEK_IN_SECS;
     let mut deps = ths_setup_with_epoch_duration(env.clone(), epoch_duration);
