@@ -559,9 +559,6 @@ export function useMarsRedBankWithdrawMutation(
 }
 export interface MarsRedBankDepositMutation {
   client: MarsRedBankClient
-  msg: {
-    onBehalfOf?: string
-  }
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string
@@ -575,7 +572,7 @@ export function useMarsRedBankDepositMutation(
   >,
 ) {
   return useMutation<ExecuteResult, Error, MarsRedBankDepositMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) => client.deposit(msg, fee, memo, funds),
+    ({ client, args: { fee, memo, funds } = {} }) => client.deposit(fee, memo, funds),
     options,
   )
 }

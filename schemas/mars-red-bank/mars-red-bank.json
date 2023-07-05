@@ -189,15 +189,6 @@
         "properties": {
           "deposit": {
             "type": "object",
-            "properties": {
-              "on_behalf_of": {
-                "description": "Address that will receive the coins",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
             "additionalProperties": false
           }
         },
