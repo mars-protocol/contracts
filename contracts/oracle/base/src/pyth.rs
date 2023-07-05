@@ -122,6 +122,20 @@ pub fn scale_pyth_price(
     Ok(price)
 }
 
+/// Assert availability of usd price source
+pub fn assert_usd_price_source<P: PriceSourceChecked<Empty>>(
+    deps: &Deps,
+    price_sources: &Map<&str, P>,
+) -> ContractResult<()> {
+    if !price_sources.has(deps.storage, "usd") {
+        return Err(ContractError::InvalidPriceSource {
+            reason: "missing price source for usd".to_string(),
+        });
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;

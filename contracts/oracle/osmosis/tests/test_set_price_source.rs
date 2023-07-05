@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use cosmwasm_std::{testing::mock_env, Addr, Decimal};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
@@ -943,8 +945,47 @@ fn setting_price_source_xyk_lp() {
 }
 
 #[test]
+fn setting_price_source_pyth_if_missing_usd() {
+    let mut deps = helpers::setup_test();
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("owner"),
+        ExecuteMsg::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSourceUnchecked::Pyth {
+                contract_addr: "new_pyth_contract_addr".to_string(),
+                price_feed_id: PriceIdentifier::from_hex(
+                    "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+                )
+                .unwrap(),
+                max_staleness: 30,
+                denom_decimals: 8,
+            },
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "missing price source for usd".to_string()
+        }
+    );
+}
+
+#[test]
 fn setting_price_source_pyth_successfully() {
     let mut deps = helpers::setup_test();
+
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
 
     let res = execute(
         deps.as_mut(),
