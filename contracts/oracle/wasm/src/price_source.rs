@@ -6,7 +6,7 @@ use astroport::{
     querier::{query_token_precision, simulate},
 };
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
+use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, StdError, Uint128};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
     pyth::PriceIdentifier,
@@ -165,6 +165,12 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 tolerance,
                 route_assets,
             } => {
+                if tolerance >= window_size {
+                    return Err(
+                        StdError::generic_err("tolerance must be less than window size").into()
+                    );
+                }
+
                 validate_route_assets(
                     deps,
                     denom,
