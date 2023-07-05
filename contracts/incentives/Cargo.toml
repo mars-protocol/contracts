@@ -14,6 +14,9 @@ keywords      = { workspace = true }
 crate-type = ["cdylib", "rlib"]
 doctest = false
 
+[profile.release]
+overflow-checks  = true
+
 [features]
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces", "mars-testing/backtraces", "mars-utils/backtraces", "mars-red-bank/backtraces"]

@@ -17,6 +17,9 @@ crate-type = [
 ]
 doctest = false
 
+[profile.release]
+overflow-checks  = true
+
 [features]
 # for more explicit tests, cargo test --features=backtraces
 backtraces = [
