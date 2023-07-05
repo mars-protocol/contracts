@@ -31,7 +31,7 @@ impl PositionManager for OsmosisPositionManager {
 
     fn parse_position_id(_: DepsMut, _: Env, response: SubMsgResponse) -> ContractResult<String> {
         let Some(b) = response.data else {
-            return Err(ReplyError("No data sent back after creating position".to_string()))
+            return Err(ReplyError("No data sent back after creating position".to_string()));
         };
 
         let parsed_response: MsgCreatePositionResponse = b.try_into()?;

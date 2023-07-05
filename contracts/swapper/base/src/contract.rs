@@ -214,7 +214,7 @@ where
 
         let transfer_msg = CosmosMsg::Bank(BankMsg::Send {
             to_address: recipient.to_string(),
-            amount: vec![denom_in_balance, denom_out_balance]
+            amount: [denom_in_balance, denom_out_balance]
                 .iter()
                 .filter(|c| !c.amount.is_zero())
                 .cloned()

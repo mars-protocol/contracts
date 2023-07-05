@@ -13,5 +13,9 @@ pub const COIN_BALANCE: Item<Coin> = Item::new("underlying_coin");
 pub const UNLOCKING_POSITIONS: Map<Addr, Vec<UnlockingPosition>> = Map::new("unlocking_positions");
 pub const NEXT_LOCKUP_ID: Item<u64> = Item::new("next_lockup_id");
 
+// Used to simulate a compromised vault that attempts reentrancy
+// String == Credit account evil vault owns
+pub const IS_EVIL: Item<Option<String>> = Item::new("is_evil");
+
 // Used for mock LP token minting
 pub const CHAIN_BANK: Item<Uint128> = Item::new("chain_bank");

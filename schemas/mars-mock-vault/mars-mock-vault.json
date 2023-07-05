@@ -16,6 +16,13 @@
         "description": "Denom required for entry. Also denom received on withdraw.",
         "type": "string"
       },
+      "is_evil": {
+        "description": "Used to simulate a compromised vault that attempts reentrancy",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
       "lockup": {
         "description": "Duration of unlock period",
         "anyOf": [

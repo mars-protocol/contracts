@@ -1281,6 +1281,20 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "description": "At the end of the execution of dispatched actions, this callback removes the guard and allows subsequent dispatches.",
+            "type": "object",
+            "required": [
+              "remove_reentrancy_guard"
+            ],
+            "properties": {
+              "remove_reentrancy_guard": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },

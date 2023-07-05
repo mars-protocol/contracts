@@ -12,4 +12,6 @@ pub struct InstantiateMsg {
     /// Duration of unlock period
     pub lockup: Option<Duration>,
     pub oracle: OracleUnchecked,
+    /// Used to simulate a compromised vault that attempts reentrancy
+    pub is_evil: Option<String>,
 }

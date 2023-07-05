@@ -15,6 +15,7 @@ export type Duration =
 export type OracleBaseForString = string
 export interface InstantiateMsg {
   base_token_denom: string
+  is_evil?: string | null
   lockup?: Duration | null
   oracle: OracleBaseForString
   vault_token_denom: string

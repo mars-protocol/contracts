@@ -37,7 +37,7 @@ pub fn burn(
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let Some(health_contract_addr) = config.health_contract_addr else {
-        return Err(HealthContractNotSet)
+        return Err(HealthContractNotSet);
     };
 
     let response: HealthResponse = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {

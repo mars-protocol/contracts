@@ -148,7 +148,7 @@ fn calculate_liquidation_amounts(
         .checked_div_floor(Decimal::one().add(updated_tlf))?
         .checked_div_floor(debt_price)?;
 
-    let debt_amount_to_repay = *vec![
+    let debt_amount_to_repay = *[
         debt_amount,
         debt_requested_to_repay,
         max_debt_repayable_amount,

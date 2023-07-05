@@ -100,6 +100,7 @@ pub struct MockEnvBuilder {
     pub target_health_factor: Option<Decimal>,
     pub max_unlocking_positions: Option<Uint128>,
     pub health_contract: Option<HealthContract>,
+    pub evil_vault: Option<String>,
 }
 
 #[allow(clippy::new_ret_no_self)]
@@ -120,6 +121,7 @@ impl MockEnv {
             target_health_factor: None,
             max_unlocking_positions: None,
             health_contract: None,
+            evil_vault: None,
         }
     }
 
@@ -1010,6 +1012,7 @@ impl MockEnvBuilder {
                     lockup: vault.lockup,
                     base_token_denom: vault.clone().base_token_denom,
                     oracle,
+                    is_evil: self.evil_vault.clone(),
                 },
                 &[],
                 "mock-vault",
@@ -1195,6 +1198,11 @@ impl MockEnvBuilder {
 
     pub fn max_unlocking_positions(&mut self, max: u128) -> &mut Self {
         self.max_unlocking_positions = Some(Uint128::new(max));
+        self
+    }
+
+    pub fn evil_vault(&mut self, credit_account: &str) -> &mut Self {
+        self.evil_vault = Some(credit_account.to_string());
         self
     }
 }

@@ -20,10 +20,10 @@ use crate::{
     reclaim::reclaim,
     refund::refund_coin_balances,
     repay::{repay, repay_for_recipient},
-    state::{ACCOUNT_KINDS, ACCOUNT_NFT},
+    state::{ACCOUNT_KINDS, ACCOUNT_NFT, REENTRANCY_GUARD},
     swap::swap_exact_in,
     update_coin_balances::{update_coin_balance, update_coin_balance_after_vault_liquidation},
-    utils::{assert_is_token_owner, assert_not_contract_in_config},
+    utils::assert_is_token_owner,
     vault::{
         enter_vault, exit_vault, exit_vault_unlocked, liquidate_vault, request_vault_unlock,
         update_vault_coin_balance,
@@ -64,7 +64,7 @@ pub fn dispatch_actions(
     actions: Vec<Action>,
 ) -> ContractResult<Response> {
     assert_is_token_owner(&deps, &info.sender, account_id)?;
-    assert_not_contract_in_config(&deps.as_ref(), &info.sender)?;
+    REENTRANCY_GUARD.try_lock(deps.storage)?;
 
     let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];
@@ -227,6 +227,8 @@ pub fn dispatch_actions(
             account_id: account_id.to_string(),
             prev_max_ltv_health_factor: prev_health.max_ltv_health_factor,
         },
+        // Removes guard so that subsequent action dispatches can be made
+        CallbackMsg::RemoveReentrancyGuard {},
     ]);
 
     let callback_msgs = callbacks
@@ -385,5 +387,6 @@ pub fn execute_callback(
         CallbackMsg::AssertAccountReqs {
             account_id,
         } => assert_account_requirements(deps, env, account_id),
+        CallbackMsg::RemoveReentrancyGuard {} => REENTRANCY_GUARD.try_unlock(deps.storage),
     }
 }

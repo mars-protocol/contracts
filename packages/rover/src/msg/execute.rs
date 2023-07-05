@@ -321,6 +321,9 @@ pub enum CallbackMsg {
     AssertAccountReqs {
         account_id: String,
     },
+    /// At the end of the execution of dispatched actions, this callback removes the guard
+    /// and allows subsequent dispatches.
+    RemoveReentrancyGuard {},
 }
 
 impl CallbackMsg {

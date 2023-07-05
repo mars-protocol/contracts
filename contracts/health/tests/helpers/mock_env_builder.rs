@@ -246,6 +246,7 @@ impl MockEnvBuilder {
                     lockup: Some(Duration::Height(100)),
                     base_token_denom: "base_token_abc".to_string(),
                     oracle: OracleUnchecked::new("oracle_123".to_string()),
+                    is_evil: None,
                 },
                 &[],
                 "mock-vault",

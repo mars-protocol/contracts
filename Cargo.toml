@@ -49,11 +49,11 @@ cw-utils           = "1.0.1"
 cw-storage-plus    = "1.1.0"
 cw-vault-standard  = { version = "0.3.0", features = ["lockup", "force-unlock"] }
 itertools          = "0.11.0"
-osmosis-std        = "0.16.0-beta.0"
+osmosis-std        = "0.16.0-beta.1"
 osmosis-test-tube  = "16.0.0-beta.0"
 proptest           = "1.2.0"
 schemars           = "0.8.12"
-serde              = { version = "1.0.164", default-features = false, features = ["derive"] }
+serde              = { version = "1.0.165", default-features = false, features = ["derive"] }
 serde_json         = "1.0.99"
 serde-wasm-bindgen = "0.5.0"
 thiserror          = "1.0.40"

@@ -19,7 +19,7 @@ use crate::{
         query_vault_info, query_vault_token_supply, shares_to_base_denom_amount,
     },
     state::{
-        CHAIN_BANK, COIN_BALANCE, LOCKUP_TIME, NEXT_LOCKUP_ID, ORACLE, TOTAL_VAULT_SHARES,
+        CHAIN_BANK, COIN_BALANCE, IS_EVIL, LOCKUP_TIME, NEXT_LOCKUP_ID, ORACLE, TOTAL_VAULT_SHARES,
         VAULT_TOKEN_DENOM,
     },
     unlock::{request_unlock, withdraw_unlocked, withdraw_unlocking_force},
@@ -46,6 +46,7 @@ pub fn instantiate(
     CHAIN_BANK.save(deps.storage, &DEFAULT_VAULT_TOKEN_PREFUND)?;
     NEXT_LOCKUP_ID.save(deps.storage, &1)?;
     TOTAL_VAULT_SHARES.save(deps.storage, &Uint128::zero())?;
+    IS_EVIL.save(deps.storage, &msg.is_evil)?;
     Ok(Response::default())
 }
 

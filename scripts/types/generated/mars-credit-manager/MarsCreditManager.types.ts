@@ -302,6 +302,9 @@ export type CallbackMsg =
         account_id: string
       }
     }
+  | {
+      remove_reentrancy_guard: {}
+    }
 export type Addr = string
 export type LiquidateRequestForVaultBaseForAddr =
   | {

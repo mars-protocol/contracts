@@ -137,6 +137,9 @@ pub enum ContractError {
     #[error("{0}")]
     Payment(#[from] PaymentError),
 
+    #[error("{0}")]
+    ReentrancyGuard(String),
+
     #[error("Reply id: {0} not valid")]
     ReplyIdError(u64),
 

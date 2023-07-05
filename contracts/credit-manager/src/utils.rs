@@ -17,8 +17,8 @@ use mars_rover_health_types::AccountKind;
 
 use crate::{
     state::{
-        ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, HEALTH_CONTRACT, LENT_SHARES, ORACLE, PARAMS,
-        RED_BANK, SWAPPER, TOTAL_DEBT_SHARES, TOTAL_LENT_SHARES, ZAPPER,
+        ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, LENT_SHARES, PARAMS, RED_BANK,
+        TOTAL_DEBT_SHARES, TOTAL_LENT_SHARES,
     },
     update_coin_balances::query_balance,
 };
@@ -216,32 +216,6 @@ pub fn lent_shares_to_amount(
         denom: denom.to_string(),
         amount,
     })
-}
-
-/// Contracts we call from Rover should not be attempting to execute actions.
-/// This assertion prevents a kind of reentrancy attack where a contract we call (that turned evil)
-/// can deposit into their own credit account and trick our state updates like update_coin_balances.rs
-/// which rely on pre-post querying of bank balances of Rover.
-/// NOTE: https://twitter.com/larry0x/status/1595919149381079041
-pub fn assert_not_contract_in_config(deps: &Deps, addr_to_flag: &Addr) -> ContractResult<()> {
-    let config_contracts = vec![
-        ACCOUNT_NFT.load(deps.storage)?.address().clone(),
-        RED_BANK.load(deps.storage)?.address().clone(),
-        ORACLE.load(deps.storage)?.address().clone(),
-        SWAPPER.load(deps.storage)?.address().clone(),
-        ZAPPER.load(deps.storage)?.address().clone(),
-        HEALTH_CONTRACT.load(deps.storage)?.address().clone(),
-    ];
-
-    let flagged_addr_in_config = config_contracts.into_iter().any(|addr| addr == *addr_to_flag);
-
-    if flagged_addr_in_config {
-        return Err(ContractError::Unauthorized {
-            user: addr_to_flag.to_string(),
-            action: "execute actions on rover".to_string(),
-        });
-    }
-    Ok(())
 }
 
 pub trait IntoUint128 {

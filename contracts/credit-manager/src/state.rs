@@ -2,9 +2,12 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Uint128};
 use cw_storage_plus::{Item, Map};
 use mars_owner::Owner;
-use mars_rover::adapters::{
-    account_nft::AccountNft, health::HealthContract, oracle::Oracle, params::Params,
-    red_bank::RedBank, swap::Swapper, vault::VaultPositionAmount, zapper::Zapper,
+use mars_rover::{
+    adapters::{
+        account_nft::AccountNft, health::HealthContract, oracle::Oracle, params::Params,
+        red_bank::RedBank, swap::Swapper, vault::VaultPositionAmount, zapper::Zapper,
+    },
+    reentrancy_guard::ReentrancyGuard,
 };
 use mars_rover_health_types::AccountKind;
 
@@ -17,7 +20,6 @@ pub struct RewardsCollector {
 }
 
 // Contract dependencies
-// NOTE: Ensure assert_not_contract_in_config() is updated when an external contract is added here
 pub const ACCOUNT_NFT: Item<AccountNft> = Item::new("account_nft");
 pub const ORACLE: Item<Oracle> = Item::new("oracle");
 pub const RED_BANK: Item<RedBank> = Item::new("red_bank");
@@ -29,6 +31,7 @@ pub const PARAMS: Item<Params> = Item::new("params");
 // Config
 pub const OWNER: Owner = Owner::new("owner");
 pub const MAX_UNLOCKING_POSITIONS: Item<Uint128> = Item::new("max_unlocking_positions");
+pub const REENTRANCY_GUARD: ReentrancyGuard = ReentrancyGuard::new("reentrancy_guard");
 
 // Positions
 pub const ACCOUNT_KINDS: Map<&str, AccountKind> = Map::new("account_types"); // Map<AccountId, AccountKind>
