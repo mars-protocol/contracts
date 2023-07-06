@@ -125,7 +125,6 @@ fn swap(
             denom_in,
             WasmPriceSourceUnchecked::AstroportSpot {
                 pair_address,
-                route_assets: vec![denom_out.to_string()],
             },
             &admin,
         );
