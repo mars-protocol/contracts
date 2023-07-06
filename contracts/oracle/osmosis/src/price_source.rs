@@ -714,7 +714,8 @@ impl OsmosisPriceSourceChecked {
             return Err(InvalidPrice {
                 reason: format!(
                     "current price publish time is too old/stale. published: {}, now: {}",
-                    price_feed.get_price_unchecked().publish_time, current_time
+                    price_feed.get_price_unchecked().publish_time,
+                    current_time
                 ),
             });
         };
