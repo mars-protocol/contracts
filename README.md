@@ -69,6 +69,8 @@ A bug bounty is currently open for these contracts. See details [here][2].
 - Create the build folder:
 
    ```bash
+   cd scripts
+   yarn
    yarn build
    ```
 
@@ -81,6 +83,7 @@ A bug bounty is currently open for these contracts. See details [here][2].
 - Formatting:
 
    ```bash
+   cd scripts
    yarn format
    yarn lint
    ```
