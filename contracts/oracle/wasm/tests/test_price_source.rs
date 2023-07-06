@@ -167,6 +167,22 @@ fn test_query_fixed_price() {
     robot.set_price_source(denom, price_source, admin).assert_price(denom, ONE);
 }
 
+#[test]
+#[should_panic(expected = "cannot set price source for base denom")]
+/// base_denom is set in instantiate of the contract. You should not be able to change it.
+fn cannot_set_base_denom_price_source() {
+    let runner = get_test_runner();
+    let admin = &runner.init_default_account().unwrap();
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uusd"));
+    let denom = "uusd";
+    let price_source = WasmPriceSourceUnchecked::Fixed {
+        price: ONE,
+    };
+
+    // Set price, should fail
+    robot.set_price_source(denom, price_source, admin);
+}
+
 #[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[], true; "XYK, no route, base_denom in pair")]
 #[test_case(PairType::Xyk {}, &["uatom","uosmo"], "USD", &[], true => panics; "XYK, no route, base_denom not in pair")]
 #[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[("uusd", TWO)], false => panics; "XYK, route asset does not exist")]
