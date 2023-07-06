@@ -103,7 +103,7 @@ export const neutronTestnetConfig: DeploymentConfig = {
   atomDenom: atomTestnet,
   baseAssetDenom: 'untrn',
   gasPrice: '0untrn',
-  // gasPrice: '1untrn',
+  // gasPrice: '1untrn', // when using polkachu we cannot have 0 gas price
   chainId: 'pion-1',
   chainPrefix: 'neutron',
   channelId: 'channel-97',
