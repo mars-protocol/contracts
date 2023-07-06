@@ -284,6 +284,10 @@ fn whitelisting_already_whitelisted_denom_updates_min_emission() {
     let whitelist: Vec<(String, Uint128)> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
     assert_eq!(whitelist, vec![("umars".to_string(), Uint128::new(3))]);
 
+    // Query whitelist count
+    let whitelist_count = WHITELIST_COUNT.load(&deps.storage).unwrap();
+    assert_eq!(whitelist_count, 1);
+
     // add denom to whitelist again, with a higher min emission
     let add_whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
         add_denoms: vec![("umars".to_string(), Uint128::new(5))],
@@ -294,6 +298,10 @@ fn whitelisting_already_whitelisted_denom_updates_min_emission() {
     // Query whitelist
     let whitelist: Vec<(String, Uint128)> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
     assert_eq!(whitelist, vec![("umars".to_string(), Uint128::new(5))]);
+
+    // Query whitelist count, should not have changed.
+    let whitelist_count = WHITELIST_COUNT.load(&deps.storage).unwrap();
+    assert_eq!(whitelist_count, 1);
 }
 
 #[test]
@@ -399,4 +407,49 @@ fn update_whitelist_args_cannot_contain_duplicate_denoms() {
             denom: "umars".to_string()
         }
     );
+}
+
+#[test]
+fn cannot_remove_denom_from_whitelist_that_is_not_there() {
+    let env = mock_env();
+    let mut deps = th_setup_with_env(env);
+
+    let owner = "owner";
+
+    // add 1 denoms to whitelist
+    let add_whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
+        add_denoms: vec![("umars".to_string(), Uint128::new(3))],
+        remove_denoms: vec![],
+    };
+    execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), add_whitelist_msg).unwrap();
+
+    // Query whitelist
+    let whitelist: Vec<(String, Uint128)> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
+    assert_eq!(whitelist, vec![("umars".to_string(), Uint128::new(3))]);
+
+    // Check whitelist count
+    let whitelist_count = WHITELIST_COUNT.load(&deps.storage).unwrap();
+    assert_eq!(whitelist_count, 1);
+
+    // Remove non-whitelisted denom, should error
+    let add_whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
+        add_denoms: vec![],
+        remove_denoms: vec![("denom1".to_string())],
+    };
+    let res =
+        execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), add_whitelist_msg).unwrap_err();
+    assert_eq!(
+        res,
+        ContractError::NotWhitelisted {
+            denom: "denom1".to_string()
+        }
+    );
+
+    // Query whitelist, should still be the same
+    let whitelist: Vec<(String, Uint128)> = th_query(deps.as_ref(), QueryMsg::Whitelist {});
+    assert_eq!(whitelist, vec![("umars".to_string(), Uint128::new(3))]);
+
+    // Check whitelist count. Should still be 1.
+    let whitelist_count = WHITELIST_COUNT.load(&deps.storage).unwrap();
+    assert_eq!(whitelist_count, 1);
 }
