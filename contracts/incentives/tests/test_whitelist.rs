@@ -350,3 +350,53 @@ fn cannot_whitelist_more_than_max_limit() {
     let whitelist_count = WHITELIST_COUNT.load(&deps.storage).unwrap();
     assert_eq!(whitelist_count, 10);
 }
+
+#[test]
+fn update_whitelist_args_cannot_contain_duplicate_denoms() {
+    let env = mock_env();
+    let mut deps = th_setup_with_env(env);
+
+    let owner = "owner";
+
+    // add 1 denoms to whitelist twice
+    let whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
+        add_denoms: vec![
+            ("umars".to_string(), Uint128::new(3)),
+            ("umars".to_string(), Uint128::new(5)),
+        ],
+        remove_denoms: vec![],
+    };
+    let err = execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), whitelist_msg).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::DuplicateDenom {
+            denom: "umars".to_string()
+        }
+    );
+
+    // Try to remove the same denom twice
+    let whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
+        add_denoms: vec![],
+        remove_denoms: vec!["umars".to_string(), "umars".to_string()],
+    };
+    let err = execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), whitelist_msg).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::DuplicateDenom {
+            denom: "umars".to_string()
+        }
+    );
+
+    // Try to add and remove the same denom
+    let whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
+        add_denoms: vec![("umars".to_string(), Uint128::new(3))],
+        remove_denoms: vec![("umars".to_string())],
+    };
+    let err = execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), whitelist_msg).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::DuplicateDenom {
+            denom: "umars".to_string()
+        }
+    );
+}
