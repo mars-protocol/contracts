@@ -88,11 +88,11 @@ impl AstroportRoute {
         }?;
 
         // Query oracle for prices
-        let offer_price = self.query_oracle_price(querier, self.offer()?)?;
-        let ask_price = self.query_oracle_price(querier, self.ask()?)?;
+        let usd_per_offer_unit = self.query_oracle_price(querier, self.offer()?)?;
+        let usd_per_ask_unit = self.query_oracle_price(querier, self.ask()?)?;
 
         // Calculate the minimum amount of output tokens to receive
-        Ok(coin_in.amount.checked_mul_floor(ask_price.checked_div(offer_price)?)?)
+        Ok(coin_in.amount.checked_mul_floor(usd_per_offer_unit.checked_div(usd_per_ask_unit)?)?)
     }
 }
 
