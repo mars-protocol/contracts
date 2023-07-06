@@ -1,5 +1,3 @@
-#[cfg(feature = "backtraces")]
-use std::backtrace::Backtrace;
 use std::convert::TryInto;
 
 use cosmwasm_std::{
@@ -23,22 +21,16 @@ pub fn uint128_checked_div_with_ceil(
 /// Divide 'a' by 'b'.
 pub fn divide_decimal_by_decimal(a: Decimal, b: Decimal) -> StdResult<Decimal> {
     Decimal::checked_from_ratio(a.numerator(), b.numerator()).map_err(|e| match e {
-        CheckedFromRatioError::Overflow => StdError::Overflow {
-            source: OverflowError {
-                operation: OverflowOperation::Mul,
-                operand1: a.numerator().to_string(),
-                operand2: a.denominator().to_string(),
-            },
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
-        },
-        CheckedFromRatioError::DivideByZero => StdError::DivideByZero {
-            source: cosmwasm_std::DivideByZeroError {
+        CheckedFromRatioError::Overflow => StdError::overflow(OverflowError {
+            operation: OverflowOperation::Mul,
+            operand1: a.numerator().to_string(),
+            operand2: a.denominator().to_string(),
+        }),
+        CheckedFromRatioError::DivideByZero => {
+            StdError::divide_by_zero(cosmwasm_std::DivideByZeroError {
                 operand: b.to_string(),
-            },
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
-        },
+            })
+        }
     })
 }
 
