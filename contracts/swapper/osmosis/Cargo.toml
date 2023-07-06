@@ -12,6 +12,9 @@ keywords      = { workspace = true }
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[profile.release]
+overflow-checks  = true
+
 [features]
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces

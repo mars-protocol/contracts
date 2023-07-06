@@ -12,6 +12,9 @@ keywords      = { workspace = true }
 [lib]
 doctest = false
 
+[profile.release]
+overflow-checks  = true
+
 [features]
 pyth        = ["pyth-sdk-cw"]
 # for more explicit tests, cargo test --features=backtraces
