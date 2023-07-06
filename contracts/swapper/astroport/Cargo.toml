@@ -16,10 +16,12 @@ crate-type = ["cdylib", "rlib"]
 overflow-checks  = true
 
 [features]
+default = []
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
 library    = []
+osmosis-test-tube = ["cw-it/osmosis-test-tube", "mars-testing/osmosis-test-tube"]
 
 [dependencies]
 cosmwasm-schema     = { workspace = true }
@@ -34,5 +36,5 @@ astroport           = { workspace = true }
 [dev-dependencies]
 anyhow            = { workspace = true }
 mars-testing      = { workspace = true, features = ["astroport"] }
-cw-it             = { workspace = true , features = ["astroport", "astroport-multi-test", "osmosis-test-tube"] }
+cw-it             = { workspace = true, features = ["astroport", "astroport-multi-test"] }
 test-case         = "3.0.0"

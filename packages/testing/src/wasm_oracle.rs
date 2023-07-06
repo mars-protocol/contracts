@@ -1,5 +1,7 @@
 use astroport::{factory::PairType, pair::StablePoolParams};
 use cosmwasm_std::{to_binary, Binary, Decimal, Empty, Uint128};
+#[cfg(feature = "osmosis-test-tube")]
+use cw_it::Artifact;
 use cw_it::{
     astroport::{
         robot::AstroportTestRobot,
@@ -15,8 +17,6 @@ use mars_owner::OwnerUpdate;
 use mars_red_bank_types::oracle::{
     InstantiateMsg, WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams,
 };
-#[cfg(feature = "osmosis-test-tube")]
-use {cw_it::osmosis_test_tube::OsmosisTestApp, cw_it::Artifact};
 
 use crate::test_runner::get_test_runner;
 
@@ -25,7 +25,7 @@ pub const BASE_DENOM: &str = "USD";
 
 /// The path to the artifacts folder
 pub const ARTIFACTS_PATH: &str = "../../../artifacts";
-pub const APPEND_ARCH: bool = true;
+pub const APPEND_ARCH: bool = false;
 
 /// The path to the artifacts folder
 pub const ASTRO_ARTIFACTS_PATH: Option<&str> = Some("tests/astroport-artifacts");
@@ -96,20 +96,15 @@ impl<'a> WasmOracleTestRobot<'a> {
         self
     }
 
-    pub fn create_default_astro_pair(
-        &self,
-        pair_type: PairType,
-        signer: &SigningAccount,
-    ) -> (String, String) {
-        let initial_liq: [Uint128; 2] =
-            [10000000000000000000000u128.into(), 1000000000000000000000u128.into()];
-        let init_params = astro_init_params(&pair_type);
+    pub fn create_default_astro_pair(&self, signer: &SigningAccount) -> (String, String) {
+        let initial_liq: [u128; 2] = [10000000000000000000000u128, 1000000000000000000000u128];
         self.create_astroport_pair(
-            pair_type,
-            [native_info("uatom"), native_info("uosmo")],
-            init_params,
+            PairType::Xyk {},
+            &[native_info("uatom"), native_info("uosmo")],
+            None,
             signer,
-            Some(initial_liq),
+            Some(&initial_liq),
+            None,
         )
     }
 
@@ -377,17 +372,16 @@ pub fn validate_and_query_astroport_spot_price_source(
     register_routes: bool,
 ) {
     let runner = get_test_runner();
-    let admin = &runner.init_accounts()[0];
+    let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
 
-    let initial_liq: [Uint128; 2] =
-        initial_liq.iter().map(|x| Uint128::from(*x)).collect::<Vec<_>>().try_into().unwrap();
     let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
         pair_type.clone(),
-        [native_info(pair_denoms[0]), native_info(pair_denoms[1])],
+        &[native_info(pair_denoms[0]), native_info(pair_denoms[1])],
         astro_init_params(&pair_type),
         admin,
         Some(initial_liq),
+        Some(&[6, 6]), //TODO: make this configurable
     );
 
     let price_source = WasmPriceSourceUnchecked::AstroportSpot {
@@ -429,17 +423,16 @@ pub fn validate_and_query_astroport_twap_price_source(
     initial_liq: &[u128; 2],
 ) {
     let runner = get_test_runner();
-    let admin = &runner.init_accounts()[0];
+    let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
 
-    let initial_liq: [Uint128; 2] =
-        initial_liq.iter().map(|x| Uint128::from(*x)).collect::<Vec<_>>().try_into().unwrap();
     let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
         pair_type.clone(),
-        [native_info(pair_denoms[0]), native_info(pair_denoms[1])],
+        &[native_info(pair_denoms[0]), native_info(pair_denoms[1])],
         astro_init_params(&pair_type),
         admin,
         Some(initial_liq),
+        Some(&[6, 6]), //TODO: make this configurable
     );
     let initial_price = robot
         .add_denom_precision_to_coin_registry(pair_denoms[0], 6, admin)
@@ -456,7 +449,7 @@ pub fn validate_and_query_astroport_twap_price_source(
     let route_price_sources: Vec<_> =
         route_prices.iter().map(|&(s, p)| (s, fixed_source(p))).collect();
 
-    println!("Swap amount: {}", initial_liq[1].u128() / 1000000);
+    println!("Swap amount: {}", initial_liq[1] / 1000000);
 
     let price_after_swap = robot
         .set_price_sources(route_price_sources, admin)
@@ -466,7 +459,7 @@ pub fn validate_and_query_astroport_twap_price_source(
         .increase_time(window_size + tolerance)
         .swap_on_astroport_pair(
             &pair_address,
-            native_asset(pair_denoms[1], initial_liq[1].u128() / 1000000),
+            native_asset(pair_denoms[1], initial_liq[1] / 1000000),
             None,
             None,
             Some(Decimal::from_ratio(1u128, 2u128)),

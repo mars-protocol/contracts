@@ -1,5 +1,7 @@
 use astroport::router::SwapOperation;
 use cosmwasm_std::{Coin, Decimal, Uint128};
+#[cfg(feature = "osmosis-test-tube")]
+use cw_it::Artifact;
 use cw_it::{
     astroport::{robot::AstroportTestRobot, utils::AstroportContracts},
     cw_multi_test::ContractWrapper,
@@ -8,8 +10,6 @@ use cw_it::{
     test_tube::{Account, Module, RunnerExecuteResult, SigningAccount, Wasm},
     ContractMap, ContractType, TestRunner,
 };
-#[cfg(feature = "osmosis-test-tube")]
-use cw_it::{osmosis_test_tube::OsmosisTestApp, Artifact};
 use mars_owner::OwnerResponse;
 use mars_red_bank_types::swapper::{EstimateExactInSwapResponse, RouteResponse, RoutesResponse};
 use mars_swapper_astroport::route::AstroportRoute;
@@ -17,12 +17,12 @@ use mars_swapper_astroport::route::AstroportRoute;
 use crate::wasm_oracle::{get_wasm_oracle_contract, WasmOracleTestRobot};
 
 #[cfg(feature = "osmosis-test-tube")]
-const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+const CONTRACT_NAME: &str = "mars_swapper_astroport";
 
 pub const ASTRO_ARTIFACTS_PATH: Option<&str> = Some("tests/astroport-artifacts");
 
-const ARTIFACTS_PATH: &str = "artifacts/";
-const APPEND_ARCH: bool = true;
+const ARTIFACTS_PATH: &str = "../../../artifacts";
+const APPEND_ARCH: bool = false;
 
 #[cfg(feature = "osmosis-test-tube")]
 fn get_swapper_wasm_path() -> String {
@@ -62,7 +62,6 @@ pub struct AstroportSwapperRobot<'a> {
     pub swapper: String,
     /// The mars wasm oracle address
     pub oracle_robot: WasmOracleTestRobot<'a>,
-    pub astroport_contracts: AstroportContracts,
 }
 
 impl<'a> TestRobot<'a, TestRunner<'a>> for AstroportSwapperRobot<'a> {
@@ -73,7 +72,7 @@ impl<'a> TestRobot<'a, TestRunner<'a>> for AstroportSwapperRobot<'a> {
 
 impl<'a> AstroportTestRobot<'a, TestRunner<'a>> for AstroportSwapperRobot<'a> {
     fn astroport_contracts(&self) -> &AstroportContracts {
-        &self.astroport_contracts
+        &self.oracle_robot.astroport_contracts
     }
 }
 
@@ -116,13 +115,10 @@ impl<'a> AstroportSwapperRobot<'a> {
             .data
             .address;
 
-        let astroport_contracts = oracle_robot.astroport_contracts.clone();
-
         Self {
             runner,
             oracle_robot,
             swapper,
-            astroport_contracts,
         }
     }
 
@@ -151,8 +147,8 @@ impl<'a> AstroportSwapperRobot<'a> {
                 &mars_red_bank_types::swapper::ExecuteMsg::SetRoute {
                     route: AstroportRoute {
                         operations,
-                        router: self.astroport_contracts.router.address.clone(),
-                        factory: self.astroport_contracts.factory.address.clone(),
+                        router: self.astroport_contracts().router.address.clone(),
+                        factory: self.astroport_contracts().factory.address.clone(),
                         oracle: self.oracle_robot.mars_oracle_contract_addr.clone(),
                     },
                     denom_in: denom_in.into(),
@@ -265,8 +261,8 @@ impl<'a> AstroportSwapperRobot<'a> {
     ) -> &Self {
         let route = self.query_route(denom_in, denom_out);
         assert_eq!(route.operations, operations);
-        assert_eq!(route.router, self.astroport_contracts.router.address);
-        assert_eq!(route.factory, self.astroport_contracts.factory.address);
+        assert_eq!(route.router, self.astroport_contracts().router.address);
+        assert_eq!(route.factory, self.astroport_contracts().factory.address);
         assert_eq!(route.oracle, self.oracle_robot.mars_oracle_contract_addr);
         self
     }
