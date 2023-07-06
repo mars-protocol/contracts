@@ -405,8 +405,6 @@ pub fn deposit(
         response,
     )?;
 
-    response = update_interest_rates(&env, &mut market, response)?;
-
     if market.liquidity_index.is_zero() {
         return Err(ContractError::InvalidLiquidityIndex {});
     }
@@ -422,6 +420,9 @@ pub fn deposit(
     )?;
 
     market.increase_collateral(deposit_amount_scaled)?;
+
+    response = update_interest_rates(&env, &mut market, response)?;
+
     MARKETS.save(deps.storage, &denom, &market)?;
 
     Ok(response
@@ -517,8 +518,6 @@ pub fn withdraw(
         response,
     )?;
 
-    response = update_interest_rates(&env, &mut market, response)?;
-
     // reduce the withdrawer's scaled collateral amount
     let withdrawer_balance_after = withdrawer_balance_before.checked_sub(withdraw_amount)?;
     let withdrawer_balance_scaled_after =
@@ -536,6 +535,9 @@ pub fn withdraw(
     )?;
 
     market.decrease_collateral(withdraw_amount_scaled)?;
+
+    response = update_interest_rates(&env, &mut market, response)?;
+
     MARKETS.save(deps.storage, &denom, &market)?;
 
     // send underlying asset to user or another recipient
@@ -566,18 +568,24 @@ pub fn borrow(
 ) -> Result<Response, ContractError> {
     let borrower = User(&info.sender);
 
-    // Cannot borrow zero amount
-    if borrow_amount.is_zero() {
-        return Err(ContractError::InvalidBorrowAmount {
-            denom,
-        });
-    }
-
     // Load market and user state
     let mut borrow_market = MARKETS.load(deps.storage, &denom)?;
 
     if !borrow_market.borrow_enabled {
         return Err(ContractError::BorrowNotEnabled {
+            denom,
+        });
+    }
+
+    let collateral_balance_before = get_underlying_liquidity_amount(
+        borrow_market.collateral_total_scaled,
+        &borrow_market,
+        env.block.time.seconds(),
+    )?;
+
+    // Cannot borrow zero amount or more than available collateral
+    if borrow_amount.is_zero() || borrow_amount > collateral_balance_before {
+        return Err(ContractError::InvalidBorrowAmount {
             denom,
         });
     }

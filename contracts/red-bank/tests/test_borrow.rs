@@ -46,6 +46,7 @@ fn borrow_and_repay() {
         borrow_rate: Decimal::from_ratio(20u128, 100u128),
         liquidity_rate: Decimal::from_ratio(10u128, 100u128),
         reserve_factor: Decimal::from_ratio(1u128, 100u128),
+        collateral_total_scaled: Uint128::new(1_000_000_000_000u128),
         debt_total_scaled: Uint128::zero(),
         indexes_last_updated: 10000000,
         ..Default::default()
@@ -53,6 +54,7 @@ fn borrow_and_repay() {
     let mock_market_2 = Market {
         borrow_index: Decimal::one(),
         liquidity_index: Decimal::one(),
+        collateral_total_scaled: Uint128::new(1_000_000_000_000u128),
         ..Default::default()
     };
     let mock_market_3 = Market {
@@ -481,6 +483,7 @@ fn repay_without_refund_on_behalf_of() {
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
         max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
+        collateral_total_scaled: Uint128::new(1_000_000_000_000u128),
         ..Default::default()
     };
 
@@ -561,6 +564,7 @@ fn repay_with_refund_on_behalf_of() {
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
         max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
+        collateral_total_scaled: Uint128::new(1_000_000_000_000u128),
         ..Default::default()
     };
 
@@ -672,6 +676,7 @@ fn borrow_uusd() {
         borrow_index: Decimal::from_ratio(20u128, 10u128),
         borrow_rate: Decimal::one(),
         liquidity_rate: Decimal::one(),
+        collateral_total_scaled: Uint128::new(1_000_000_000_000u128),
         debt_total_scaled: Uint128::zero(),
         indexes_last_updated: block_time,
         ..Default::default()
@@ -750,6 +755,7 @@ fn borrow_full_liquidity_and_then_repay() {
         borrow_index: Decimal::one(),
         borrow_rate: Decimal::one(),
         liquidity_rate: Decimal::one(),
+        collateral_total_scaled: Uint128::new(1_000_000_000_000u128),
         debt_total_scaled: Uint128::zero(),
         reserve_factor: Decimal::from_ratio(12u128, 100u128),
         indexes_last_updated: block_time,
@@ -826,6 +832,7 @@ fn borrow_collateral_check() {
 
     let mock_market_1 = Market {
         max_loan_to_value: Decimal::from_ratio(8u128, 10u128),
+        collateral_total_scaled: Uint128::new(10_000_000_000_000u128),
         debt_total_scaled: Uint128::zero(),
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::from_ratio(1u128, 2u128),
@@ -833,6 +840,7 @@ fn borrow_collateral_check() {
     };
     let mock_market_2 = Market {
         max_loan_to_value: Decimal::from_ratio(6u128, 10u128),
+        collateral_total_scaled: Uint128::new(10_000_000_000_000u128),
         debt_total_scaled: Uint128::zero(),
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::from_ratio(1u128, 2u128),
@@ -840,6 +848,7 @@ fn borrow_collateral_check() {
     };
     let mock_market_3 = Market {
         max_loan_to_value: Decimal::from_ratio(4u128, 10u128),
+        collateral_total_scaled: Uint128::new(10_000_000_000_000u128),
         debt_total_scaled: Uint128::zero(),
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::from_ratio(1u128, 2u128),
@@ -954,6 +963,7 @@ fn borrow_and_send_funds_to_another_user() {
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
         max_loan_to_value: Decimal::from_ratio(5u128, 10u128),
+        collateral_total_scaled: Uint128::new(1_000_000_000_000u128),
         debt_total_scaled: Uint128::zero(),
         ..Default::default()
     };
