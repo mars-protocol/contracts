@@ -1,7 +1,8 @@
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
+use mars_red_bank::error::ContractError;
 use mars_testing::integration::mock_env::{MockEnv, MockEnvBuilder, RedBank};
 
-use crate::helpers::default_asset_params;
+use crate::helpers::{assert_err, default_asset_params, default_asset_params_with};
 
 mod helpers;
 
@@ -264,4 +265,80 @@ fn prepare_debt_for_repayment() -> (MockEnv, RedBank, Addr) {
     // add more usdc to user_1 account to repay full debt
     mock_env.fund_account(&user_1, &[coin(1_000_000_000u128, "uusdc")]);
     (mock_env, red_bank, user_1)
+}
+
+#[test]
+fn interest_accured_based_on_internally_tracked_balances() {
+    let owner = Addr::unchecked("owner");
+    let borrower = Addr::unchecked("borrower");
+    let borrower2 = Addr::unchecked("borrower2");
+
+    let close_factor = Decimal::percent(40);
+    let atom_price = Decimal::from_ratio(12u128, 1u128);
+    let osmo_price = Decimal::from_ratio(15u128, 10u128);
+    let atom_max_ltv = Decimal::percent(60);
+    let osmo_max_ltv = Decimal::percent(80);
+    let atom_liq_threshold = Decimal::percent(75);
+    let osmo_liq_threshold = Decimal::percent(90);
+    let atom_liq_bonus = Decimal::percent(2);
+    let osmo_liq_bonus = Decimal::percent(5);
+
+    let mut mock_env = MockEnvBuilder::new(None, owner).close_factor(close_factor).build();
+
+    // setup oracle prices
+    let oracle = mock_env.oracle.clone();
+    oracle.set_price_source_fixed(&mut mock_env, "uatom", atom_price);
+    oracle.set_price_source_fixed(&mut mock_env, "uosmo", osmo_price);
+
+    // setup Red Bank assets
+    let red_bank = mock_env.red_bank.clone();
+    red_bank.init_asset(
+        &mut mock_env,
+        "uatom",
+        default_asset_params_with(atom_max_ltv, atom_liq_threshold, atom_liq_bonus),
+    );
+    red_bank.init_asset(
+        &mut mock_env,
+        "uosmo",
+        default_asset_params_with(osmo_max_ltv, osmo_liq_threshold, osmo_liq_bonus),
+    );
+
+    // initial deposit amount
+    let funded_atom = 1u128; // 1 uatom
+
+    // donation to protocol to check if it influences interest
+    let donated_atom = 1_000_000_000u128; // 1k atom
+
+    // amount needed to borrow all donated amount (if contract balance is used but we track balances in states)
+    let funded_osmo = 10_000_000_000u128; // 10k osmo
+
+    // 1. deposit atom
+    mock_env.fund_account(&borrower, &[coin(funded_atom, "uatom")]);
+    red_bank.deposit(&mut mock_env, &borrower, coin(funded_atom, "uatom")).unwrap();
+
+    // 2. donate atom to protocol (amount larger than deposit in step 1)
+    mock_env.fund_account(&red_bank.contract_addr, &[coin(donated_atom, "uatom")]);
+
+    // 3. from another account, deposit osmo and try to borrow atom donated from step 2
+    mock_env.fund_account(&borrower2, &[coin(funded_osmo, "uosmo")]);
+    red_bank.deposit(&mut mock_env, &borrower2, coin(funded_osmo, "uosmo")).unwrap();
+    let res = red_bank.borrow(&mut mock_env, &borrower2, "uatom", donated_atom);
+    assert_err(
+        res,
+        ContractError::InvalidBorrowAmount {
+            denom: "uatom".to_string(),
+        },
+    );
+
+    // 4. from another account borrow atom deposited in step 1
+    red_bank.borrow(&mut mock_env, &borrower2, "uatom", funded_atom).unwrap();
+
+    // 5. wait 10 seconds
+    let user_res = red_bank.query_user_collateral(&mut mock_env, &borrower, "uatom");
+    assert_eq!(user_res.amount, Uint128::new(funded_atom));
+    mock_env.app.update_block(|b| b.time = b.time.plus_seconds(10));
+
+    // 6. analyze interest accrued
+    let new_user_res = red_bank.query_user_collateral(&mut mock_env, &borrower, "uatom");
+    assert_eq!(new_user_res.amount, Uint128::new(1u128));
 }

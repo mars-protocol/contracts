@@ -566,18 +566,24 @@ pub fn borrow(
 ) -> Result<Response, ContractError> {
     let borrower = User(&info.sender);
 
-    // Cannot borrow zero amount
-    if borrow_amount.is_zero() {
-        return Err(ContractError::InvalidBorrowAmount {
-            denom,
-        });
-    }
-
     // Load market and user state
     let mut borrow_market = MARKETS.load(deps.storage, &denom)?;
 
     if !borrow_market.borrow_enabled {
         return Err(ContractError::BorrowNotEnabled {
+            denom,
+        });
+    }
+
+    let collateral_balance_before = get_underlying_liquidity_amount(
+        borrow_market.collateral_total_scaled,
+        &borrow_market,
+        env.block.time.seconds(),
+    )?;
+
+    // Cannot borrow zero amount or more than available collateral
+    if borrow_amount.is_zero() || borrow_amount > collateral_balance_before {
+        return Err(ContractError::InvalidBorrowAmount {
             denom,
         });
     }

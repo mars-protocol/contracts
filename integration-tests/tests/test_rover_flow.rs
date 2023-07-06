@@ -24,9 +24,13 @@ fn rover_flow() {
 
     let rover = Addr::unchecked("rover");
 
-    // fund red-bank and set credit line for rover
+    // deposit more than credit line
     let rover_uusdc_limit = 1_000_000_000_000u128;
-    mock_env.fund_account(&red_bank.contract_addr, &[coin(rover_uusdc_limit, "uusdc")]);
+    let uusdc_deposited = rover_uusdc_limit + 100_000u128;
+    mock_env.fund_account(&owner, &[coin(uusdc_deposited, "uusdc")]);
+    red_bank.deposit(&mut mock_env, &owner, coin(uusdc_deposited, "uusdc")).unwrap();
+
+    // set credit line for rover
     red_bank
         .update_uncollateralized_loan_limit(
             &mut mock_env,
