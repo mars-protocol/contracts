@@ -64,7 +64,7 @@ pub enum ContractError {
     #[error("Cannot have 0 as liquidity index")]
     InvalidLiquidityIndex {},
 
-    #[error("Borrow amount must be greater than 0 {denom:?}")]
+    #[error("Borrow amount must be greater than 0 and less or equal available collateral (asset: {denom:?})")]
     InvalidBorrowAmount {
         denom: String,
     },

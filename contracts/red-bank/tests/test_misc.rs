@@ -34,6 +34,7 @@ fn uncollateralized_loan_limits() {
         borrow_rate: Decimal::from_ratio(20u128, 100u128),
         liquidity_rate: Decimal::from_ratio(10u128, 100u128),
         reserve_factor: Decimal::from_ratio(1u128, 10u128),
+        collateral_total_scaled: Uint128::new(1_000_000_000_000u128),
         debt_total_scaled: Uint128::zero(),
         indexes_last_updated: 10000000,
         ..Default::default()
