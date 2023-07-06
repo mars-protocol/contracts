@@ -66,18 +66,16 @@ fn display_fixed_price_source() {
 fn display_spot_price_source() {
     let ps = WasmPriceSourceChecked::AstroportSpot {
         pair_address: Addr::unchecked("fake_addr"),
-        route_assets: vec![],
     };
-    assert_eq!(ps.to_string(), "astroport_spot:fake_addr. Route: ")
+    assert_eq!(ps.to_string(), "astroport_spot:fake_addr.")
 }
 
 #[test]
 fn display_spot_price_source_with_route() {
     let ps = WasmPriceSourceChecked::AstroportSpot {
         pair_address: Addr::unchecked("fake_addr"),
-        route_assets: vec!["fake_asset1".to_string(), "fake_asset2".to_string()],
     };
-    assert_eq!(ps.to_string(), "astroport_spot:fake_addr. Route: fake_asset1,fake_asset2")
+    assert_eq!(ps.to_string(), "astroport_spot:fake_addr.")
 }
 
 #[test]
@@ -86,9 +84,8 @@ fn display_twap_price_source() {
         pair_address: Addr::unchecked("fake_addr"),
         window_size: 100,
         tolerance: 10,
-        route_assets: vec![],
     };
-    assert_eq!(ps.to_string(), "astroport_twap:fake_addr. Window Size: 100. Tolerance: 10. Route: ")
+    assert_eq!(ps.to_string(), "astroport_twap:fake_addr. Window Size: 100. Tolerance: 10.")
 }
 
 #[test]
@@ -97,12 +94,8 @@ fn display_twap_price_source_with_route() {
         pair_address: Addr::unchecked("fake_addr"),
         window_size: 100,
         tolerance: 10,
-        route_assets: vec!["fake_asset1".to_string(), "fake_asset2".to_string()],
     };
-    assert_eq!(
-        ps.to_string(),
-        "astroport_twap:fake_addr. Window Size: 100. Tolerance: 10. Route: fake_asset1,fake_asset2"
-    )
+    assert_eq!(ps.to_string(), "astroport_twap:fake_addr. Window Size: 100. Tolerance: 10.")
 }
 
 #[test]
@@ -191,8 +184,6 @@ fn cannot_set_base_denom_price_source() {
 #[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], true; "XYK, route with non-base existing asset, in pair")]
 #[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", &[], true; "Stable, no route, base_denom in pair")]
 #[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], true; "Stable, route with non-base existing asset, in pair")]
-#[test_case(PairType::Xyk {}, &["uosmo","stake"], "stake", &[("stake", TWO),("stake", TWO)], true => panics; "Duplicate asset in route")]
-#[test_case(PairType::Xyk {}, &["stake", "uatom"], "uatom", &[("uatom", TWO),("stake", TWO)], true => panics; "pair asset in route")]
 pub fn test_validate_and_query_astroport_spot_price_source(
     pair_type: PairType,
     pair_denoms: &[&str; 2],
@@ -260,7 +251,6 @@ fn test_query_astroport_twap_price_with_only_one_snapshot() {
 
     let price_source = WasmPriceSourceUnchecked::AstroportTwap {
         pair_address,
-        route_assets: vec![],
         tolerance: 3,
         window_size: 4,
     };
@@ -308,7 +298,6 @@ fn record_twap_snapshot_does_not_save_when_less_than_tolerance_ago() {
 
     let price_source = WasmPriceSourceUnchecked::AstroportTwap {
         pair_address: pair_address.clone(),
-        route_assets: vec![],
         tolerance: 20,
         window_size: 100,
     };
@@ -645,7 +634,6 @@ fn twap_window_size_not_gt_tolerance() {
 
     let price_source = WasmPriceSourceUnchecked::AstroportTwap {
         pair_address,
-        route_assets: vec![],
         tolerance: 100,
         window_size: 100,
     };

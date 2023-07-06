@@ -201,6 +201,8 @@ impl<'a> WasmOracleTestRobot<'a> {
         tolerance: Decimal,
     ) -> &Self {
         let price = self.query_price(denom);
+        println!("price: {:?}", price);
+        println!("expected_price: {:?}", expected_price);
         assert_almost_equal(price.price, expected_price, tolerance);
         assert_eq!(price.denom, denom);
         self
@@ -386,7 +388,6 @@ pub fn validate_and_query_astroport_spot_price_source(
 
     let price_source = WasmPriceSourceUnchecked::AstroportSpot {
         pair_address: pair_address.clone(),
-        route_assets: route_prices.iter().map(|&(s, _)| s.to_string()).collect(),
     };
     let route_price_sources: Vec<_> = if register_routes {
         route_prices
@@ -446,7 +447,6 @@ pub fn validate_and_query_astroport_twap_price_source(
 
     let price_source = WasmPriceSourceUnchecked::AstroportTwap {
         pair_address: pair_address.clone(),
-        route_assets: route_prices.iter().map(|&(s, _)| s.to_string()).collect(),
         tolerance,
         window_size,
     };

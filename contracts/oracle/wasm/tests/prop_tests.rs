@@ -41,7 +41,7 @@ pub fn liquidity() -> impl Strategy<Value = [u128; 2]> {
 
 /// Generates a vector of (denom, price) tuples that can be used as route assets for the price source.
 pub fn route_prices(pair_denoms: [&str; 2]) -> impl Strategy<Value = Vec<(&'_ str, Decimal)>> {
-    vec((denom(), decimal()), 0..4)
+    vec((denom(), decimal()), 0..1)
         .prop_flat_map(move |x| {
             let mut v = x;
             if !v.is_empty() {
