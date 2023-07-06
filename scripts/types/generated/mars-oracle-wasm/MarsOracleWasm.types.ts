@@ -45,13 +45,11 @@ export type WasmPriceSourceForString =
   | {
       astroport_spot: {
         pair_address: string
-        route_assets: string[]
       }
     }
   | {
       astroport_twap: {
         pair_address: string
-        route_assets: string[]
         tolerance: number
         window_size: number
       }

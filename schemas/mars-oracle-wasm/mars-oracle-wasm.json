@@ -295,20 +295,12 @@
               "astroport_spot": {
                 "type": "object",
                 "required": [
-                  "pair_address",
-                  "route_assets"
+                  "pair_address"
                 ],
                 "properties": {
                   "pair_address": {
                     "description": "Address of the Astroport pair",
                     "type": "string"
-                  },
-                  "route_assets": {
-                    "description": "Other assets to route through when calculating the price. E.g. if the pair is USDC/ETH and `config.base_denom` is USD, and we want to get the price of ETH in USD, then `route_assets` could be `[\"USDC\"]`, which would mean we would get the price of ETH in USDC, and then multiply by the price of USDC in USD.",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
                   }
                 },
                 "additionalProperties": false
@@ -327,7 +319,6 @@
                 "type": "object",
                 "required": [
                   "pair_address",
-                  "route_assets",
                   "tolerance",
                   "window_size"
                 ],
@@ -335,13 +326,6 @@
                   "pair_address": {
                     "description": "Address of the Astroport pair",
                     "type": "string"
-                  },
-                  "route_assets": {
-                    "description": "Other assets to route through when calculating the price. E.g. if the pair is USDC/ETH and `config.base_denom` is USD, and we want to get the price of ETH in USD, then `route_assets` could be `[\"USDC\"]`, which would mean we would get the price of ETH in USDC, and then multiply by the price of USDC in USD.",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
                   },
                   "tolerance": {
                     "description": "The tolerance in seconds for the sliding TWAP window.",
