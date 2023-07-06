@@ -139,7 +139,7 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 let pair_address = deps.api.addr_validate(&pair_address)?;
 
                 validate_astroport_pair_price_source(
-                    &deps,
+                    deps,
                     &pair_address,
                     denom,
                     base_denom,
