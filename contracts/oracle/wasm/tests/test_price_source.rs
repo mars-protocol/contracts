@@ -4,7 +4,7 @@ use astroport::factory::PairType;
 use cosmwasm_std::{
     from_binary,
     testing::{mock_dependencies, mock_env},
-    Addr, Decimal, Uint128,
+    Addr, Decimal, Empty, Uint128,
 };
 use cw_it::{
     astroport::{
@@ -12,7 +12,7 @@ use cw_it::{
         utils::{native_asset, native_info},
     },
     robot::TestRobot,
-    test_tube::Account,
+    test_tube::{Account, Module, Wasm},
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{pyth::PriceIdentifier, ContractError, PriceSourceUnchecked};
@@ -246,7 +246,7 @@ fn test_query_astroport_twap_price_with_only_one_snapshot() {
         pair_address,
         route_assets: vec![],
         tolerance: 3,
-        window_size: 2,
+        window_size: 4,
     };
 
     robot
@@ -617,4 +617,30 @@ fn setting_price_source_pyth_if_missing_usd() {
             reason: "missing price source for usd".to_string()
         }
     );
+}
+
+#[test]
+fn twap_window_size_not_gt_tolerance() {
+    let runner = get_test_runner();
+    let admin = &runner.init_accounts()[0];
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&get_test_runner()), admin, None);
+
+    let (pair_address, _) = robot.create_default_astro_pair(PairType::Xyk {}, admin);
+
+    let price_source = WasmPriceSourceUnchecked::AstroportTwap {
+        pair_address,
+        route_assets: vec![],
+        tolerance: 100,
+        window_size: 100,
+    };
+
+    let wasm = Wasm::new(&runner);
+    let msg = mars_red_bank_types::oracle::msg::ExecuteMsg::<_, Empty>::SetPriceSource {
+        denom: "uatom".to_string(),
+        price_source,
+    };
+    let err = wasm.execute(&robot.mars_oracle_contract_addr, &msg, &[], admin).unwrap_err();
+
+    println!("{:?}", err);
+    assert!(err.to_string().contains("tolerance must be less than window size"));
 }

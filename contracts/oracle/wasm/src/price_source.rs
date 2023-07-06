@@ -165,6 +165,12 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 tolerance,
                 route_assets,
             } => {
+                if tolerance >= window_size {
+                    return Err(ContractError::InvalidPriceSource {
+                        reason: "tolerance must be less than window size".to_string(),
+                    });
+                }
+
                 validate_route_assets(
                     deps,
                     denom,
