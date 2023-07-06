@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use astroport::{
     asset::{Asset, AssetInfo, PairInfo},
     pair::{CumulativePricesResponse, QueryMsg as PairQueryMsg},
@@ -37,74 +35,67 @@ pub fn astro_native_asset(denom: impl Into<String>, amount: impl Into<Uint128>) 
     }
 }
 
-/// Validates the route assets of an Astroport price source. Used for both TWAP and spot price sources.
-pub fn validate_route_assets(
+pub fn validate_astroport_pair_price_source(
     deps: &Deps,
+    pair_address: &Addr,
     denom: &str,
     base_denom: &str,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
-    pair_address: &str,
-    route_assets: &[String],
 ) -> ContractResult<()> {
-    // For all route assets, there must be a price source available
-    for asset in route_assets {
-        if !price_sources.has(deps.storage, asset) {
-            Err(ContractError::InvalidPriceSource {
-                reason: format!("No price source found for asset {}", asset),
-            })?;
-        }
+    // Get the denoms of the pair
+    let mut pair_denoms = get_astroport_pair_denoms(deps, pair_address)?;
+
+    // Pair must contain two assets
+    if pair_denoms.len() != 2 {
+        return Err(ContractError::InvalidPriceSource {
+            reason: format!("pair contains more than two assets: {:?}", pair_denoms),
+        });
     }
 
-    // Route assets should be unique
-    let mut route_assets_set = HashSet::new();
-    for asset in route_assets {
-        if !route_assets_set.insert(asset) {
-            Err(ContractError::InvalidPriceSource {
-                reason: format!("Duplicate route asset {}", asset),
-            })?;
-        }
+    // Pair must contain the denom
+    if !pair_denoms.contains(&denom.to_string()) {
+        return Err(ContractError::InvalidPriceSource {
+            reason: format!("pair does not contain denom {}", denom),
+        });
     }
 
-    // Route assets can not contain the price source's denom
-    if route_assets.contains(&denom.to_string()) {
-        Err(ContractError::InvalidPriceSource {
-            reason: format!("Route assets contain the price source denom {}", denom),
-        })?;
-    }
+    // Get the other denom of the pair. This works because we asserted above that the pair contains
+    // exactly two assets.
+    pair_denoms.retain(|d| d != denom);
+    let other_pair_denom = pair_denoms.first().unwrap();
 
-    let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
-
-    if route_assets.is_empty() {
-        // If there are no route assets, then the pair must contain the denom and base denom.
-        assert_astroport_pair_contains_denoms(&pair_info, &[denom, base_denom])?;
-    } else {
-        // If there are route assets, the pair must contain the denom and the first route asset.
-        // The rest should already be validated in the same way because we checked above that a
-        // price source exists for each of them, and the corresponding validation would have been
-        // done when they were added.
-        assert_astroport_pair_contains_denoms(&pair_info, &[denom, &route_assets[0]])?;
+    // If the pair does not contain the base denom, a price source for the other denom of the pair
+    // must exist.
+    if !pair_denoms.contains(&base_denom.to_string())
+        && !price_sources.has(deps.storage, other_pair_denom)
+    {
+        return Err(ContractError::InvalidPriceSource {
+            reason: format!(
+                "pair does not contain base denom and no price source is configured for the other denom {}",
+                other_pair_denom
+            ),
+        });
     }
 
     Ok(())
 }
 
-/// Asserts that the pair contains exactly the specified denoms.
-pub fn assert_astroport_pair_contains_denoms(
-    pair_info: &PairInfo,
-    denoms: &[&str],
-) -> ContractResult<()> {
-    let pair_denoms: HashSet<_> = pair_info.asset_infos.iter().map(|a| a.to_string()).collect();
-    let denoms: HashSet<_> = denoms.iter().map(|s| s.to_string()).collect();
-
-    if pair_denoms != denoms {
-        return Err(ContractError::InvalidPriceSource {
-            reason: format!(
-                "pair {} does not contain the denoms {:?}",
-                pair_info.contract_addr, denoms
-            ),
-        });
-    }
-    Ok(())
+pub fn get_astroport_pair_denoms(deps: &Deps, pair_address: &Addr) -> ContractResult<Vec<String>> {
+    let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
+    pair_info
+        .asset_infos
+        .iter()
+        .map(|a| match a {
+            AssetInfo::Token {
+                contract_addr,
+            } => Err(ContractError::InvalidPriceSource {
+                reason: format!("pair contains cw20 token: {}", contract_addr),
+            }),
+            AssetInfo::NativeToken {
+                denom,
+            } => Ok(denom.clone()),
+        })
+        .collect()
 }
 
 /// Queries the pair contract for the cumulate price of the specified denom denominated in the other
@@ -140,57 +131,32 @@ pub fn period_diff(
     snapshot1.timestamp.abs_diff(snapshot2.timestamp).abs_diff(window_size)
 }
 
-/// Add the prices of the route assets to the supplied price to get a price denominated in the base
-/// asset.
-pub fn add_route_prices(
+/// Check if the pair contains the base denom. If not then normalize the price to the base denom
+/// by querying the price source for the other denom of the pair. If the pair contains the base
+/// denom then return the price as is.
+pub fn normalize_price(
     deps: &Deps,
     env: &Env,
     config: &Config,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
-    route_assets: &[String],
-    price: &Decimal,
+    pair_address: &Addr,
+    denom: &str,
+    price: Decimal,
 ) -> ContractResult<Decimal> {
-    let mut price = *price;
-    for denom in route_assets {
-        let price_source = price_sources.load(deps.storage, denom)?;
-        let route_price = price_source.query_price(deps, env, denom, config, price_sources)?;
-        price *= route_price;
-    }
-    Ok(price)
-}
+    let mut pair_denoms = get_astroport_pair_denoms(deps, pair_address)?;
 
-#[cfg(test)]
-mod tests {
-    use cosmwasm_std::Addr;
+    if pair_denoms.contains(&config.base_denom) {
+        Ok(price)
+    } else {
+        // In validate we assert that the pair contains the denom, and that it contains only
+        // two denoms.
+        pair_denoms.retain(|d| d != denom);
+        let other_pair_denom = pair_denoms.first().unwrap();
 
-    use super::*;
+        let other_price_source = price_sources.load(deps.storage, other_pair_denom)?;
+        let other_price =
+            other_price_source.query_price(deps, env, other_pair_denom, config, price_sources)?;
 
-    #[test]
-    fn test_assert_astroport_pair_contains_denoms() {
-        let pair_info = PairInfo {
-            contract_addr: Addr::unchecked("pair_contract"),
-            asset_infos: vec![
-                astro_native_info("uusd"),
-                astro_native_info("uatom"),
-                astro_native_info("uluna"),
-            ],
-            liquidity_token: Addr::unchecked("liquidity_token"),
-            pair_type: astroport::factory::PairType::Xyk {},
-        };
-
-        assert_astroport_pair_contains_denoms(&pair_info, &["uusd", "uatom", "uluna"]).unwrap();
-        assert_astroport_pair_contains_denoms(&pair_info, &["uusd", "uluna", "uatom"]).unwrap();
-        assert_astroport_pair_contains_denoms(&pair_info, &["uatom", "uusd", "uluna"]).unwrap();
-        assert_astroport_pair_contains_denoms(&pair_info, &["uusd"]).unwrap_err();
-        assert_astroport_pair_contains_denoms(&pair_info, &["uatom"]).unwrap_err();
-        assert_astroport_pair_contains_denoms(&pair_info, &["uluna"]).unwrap_err();
-
-        assert_astroport_pair_contains_denoms(&pair_info, &["uusd", "uatom", "uluna", "ukrw"])
-            .unwrap_err();
-        assert_astroport_pair_contains_denoms(&pair_info, &["uusd", "uatom", "ukrw"]).unwrap_err();
-        assert_astroport_pair_contains_denoms(&pair_info, &["uusd", "ukrw"]).unwrap_err();
-        assert_astroport_pair_contains_denoms(&pair_info, &["uatom", "ukrw"]).unwrap_err();
-        assert_astroport_pair_contains_denoms(&pair_info, &["uluna", "ukrw"]).unwrap_err();
-        assert_astroport_pair_contains_denoms(&pair_info, &["ukrw"]).unwrap_err();
+        Ok(price.checked_mul(other_price)?)
     }
 }

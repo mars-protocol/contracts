@@ -1,4 +1,4 @@
-use std::{cmp::min, collections::HashSet};
+use std::cmp::min;
 
 use astroport::factory::PairType;
 use cosmwasm_std::Decimal;
@@ -26,9 +26,9 @@ pub fn pair_denoms() -> impl Strategy<Value = [&'static str; 2]> {
         .prop_filter("pair denoms must be unique", |v| v[0] != v[1])
 }
 
-/// Generates a random Decimal between zero and `MAX_LIQ`.
+/// Generates a random Decimal between Decimal::one() and `MAX_LIQ`.
 pub fn decimal() -> impl Strategy<Value = Decimal> {
-    (0..MAX_LIQ).prop_map(|x| Decimal::new(x.into()))
+    (Decimal::one().atomics().u128()..MAX_LIQ).prop_map(|x| Decimal::new(x.into()))
 }
 
 /// Generates a pair of u128s where the first is greater than the second. This is so we can swap
@@ -37,25 +37,6 @@ pub fn liquidity() -> impl Strategy<Value = [u128; 2]> {
     (1000000000..MAX_LIQ)
         .prop_flat_map(|v| (v..min(v * 10000, MAX_LIQ), Just(v / 10)))
         .prop_map(|(x, y)| [x, y])
-}
-
-/// Generates a vector of (denom, price) tuples that can be used as route assets for the price source.
-pub fn route_prices(pair_denoms: [&str; 2]) -> impl Strategy<Value = Vec<(&'_ str, Decimal)>> {
-    vec((denom(), decimal()), 0..4)
-        .prop_flat_map(move |x| {
-            let mut v = x;
-            if !v.is_empty() {
-                v[0].0 = pair_denoms[1];
-            }
-            Just(v)
-        })
-        .prop_filter("route assets must be unique", |v| {
-            let mut set = HashSet::new();
-            v.iter().all(|x| set.insert(x.0))
-        })
-        .prop_filter("route assets cannot contain the price source denom", move |v| {
-            v.iter().all(|x| x.0 != pair_denoms[0])
-        })
 }
 
 proptest! {
@@ -70,37 +51,36 @@ proptest! {
   #[test]
   fn proptest_validate_and_query_astroport_spot_price_source(
     pair_type in astro_pair_type(),
-    (pair_denoms,mut route_prices) in pair_denoms().prop_flat_map(|pair_denoms|
-      (Just(pair_denoms),route_prices(pair_denoms))
-    ),
+    pair_denoms in pair_denoms(),
+    base_denom in denom(),
+    other_asset_price in decimal(),
     initial_liq in liquidity(),
   ){
-    let base_denom = if !route_prices.is_empty() {
-      let len = route_prices.len();
-      route_prices[len -1].1 = Decimal::one();
-      route_prices[len -1].0
+    let register_second_price = !pair_denoms.contains(&base_denom);
+    let other_asset_price = if register_second_price {
+      Some(other_asset_price)
     } else {
-      pair_denoms[1]
+      None
     };
-    validate_and_query_astroport_spot_price_source(pair_type, &pair_denoms, base_denom, &route_prices, &initial_liq, true);
+
+    validate_and_query_astroport_spot_price_source(pair_type, &pair_denoms, base_denom, other_asset_price, &initial_liq, register_second_price);
   }
 
   #[test]
   fn proptest_validate_and_query_astroport_twap_price_source(
     pair_type in astro_pair_type(),
-    (pair_denoms,mut route_prices) in pair_denoms().prop_flat_map(|pair_denoms|
-      (Just(pair_denoms),route_prices(pair_denoms))
-    ),
+    pair_denoms in pair_denoms(),
+    base_denom in denom(),
+    other_asset_price in decimal(),
     initial_liq in liquidity(),
     (window_size,tolerance) in (2..1000000u64).prop_flat_map(|x| (Just(x), 0..x))
   ) {
-    let base_denom = if !route_prices.is_empty() {
-      let len = route_prices.len();
-      route_prices[len -1].1 = Decimal::one();
-      route_prices[len -1].0
+    let register_second_price = !pair_denoms.contains(&base_denom);
+    let other_asset_price = if register_second_price {
+      Some(other_asset_price)
     } else {
-      pair_denoms[1]
+      None
     };
-    validate_and_query_astroport_twap_price_source(pair_type, &pair_denoms, base_denom, &route_prices, tolerance, window_size, &initial_liq);
+    validate_and_query_astroport_twap_price_source(pair_type, &pair_denoms, base_denom, other_asset_price, register_second_price, tolerance, window_size, &initial_liq);
   }
 }

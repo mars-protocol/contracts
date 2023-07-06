@@ -33,7 +33,6 @@ impl ExecuteTwapSnapshots for WasmOracle<'_> {
             let (pair_address, window_size, tolerance) = match price_source {
                 WasmPriceSourceChecked::AstroportTwap {
                     pair_address,
-                    route_assets: _,
                     window_size,
                     tolerance,
                 } => (pair_address, window_size, tolerance),

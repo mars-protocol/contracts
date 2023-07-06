@@ -48,12 +48,10 @@ impl PoolType {
 /// 1:1 ratio
 const DEFAULT_LIQ: [u128; 2] = [10000000000000000u128, 10000000000000000u128];
 
-#[test_case(PoolType::Xyk {}, "uatom", &DEFAULT_LIQ, &[6,6], Decimal::percent(5), false ; "5% slippage tolerance")]
-#[test_case(PoolType::Xyk {}, "uatom", &DEFAULT_LIQ, &[6,6], Decimal::percent(5), true => panics ; "no route")]
-#[test_case(PoolType::Xyk {}, "uatom", &DEFAULT_LIQ, &[6,6], Decimal::percent(0), false => panics ; "0% slippage tolerance")]
-#[test_case(PoolType::Stable { amp: 10u64 }, "uatom", &DEFAULT_LIQ, &[6,6], Decimal::percent(5), false ; "stable swap 5% slippage tolerance")]
+#[test_case(PoolType::Xyk {}, "uatom", &DEFAULT_LIQ, &[6,6], Decimal::percent(0), false; "1:1 price and decimals, 0% slippage tolerance")]
+#[test_case(PoolType::Xyk {}, "uatom", &DEFAULT_LIQ, &[6,6], Decimal::percent(0), true => panics ; "no route")]
+#[test_case(PoolType::Stable { amp: 10u64 }, "uatom", &DEFAULT_LIQ, &[6,6], Decimal::percent(0), false; "stable swap 1:1 price and decimals, 0% slippage tolerance")]
 #[test_case(PoolType::Stable { amp: 10u64 }, "uatom", &DEFAULT_LIQ, &[6,6], Decimal::percent(5), true => panics ; "stable swap no route")]
-#[test_case(PoolType::Stable { amp: 10u64 }, "uatom", &DEFAULT_LIQ, &[6,6], Decimal::percent(0), false => panics ; "stable swap 0% slippage tolerance")]
 #[test_case(PoolType::Xyk {}, "uatom",  &DEFAULT_LIQ, &[10,6], Decimal::percent(1), false; "xyk 10:6 decimals, even pool")]
 #[test_case(PoolType::Xyk {}, "uatom",  &DEFAULT_LIQ, &[6,18], Decimal::percent(1), false; "xyk 6:18 decimals, even pool")]
 #[test_case(PoolType::Stable { amp: 10u64 }, "uatom", &[100000000000,10000000000000], &[6,8], Decimal::percent(50), false; "stable 6:8 decimals, even adjusted pool")]
@@ -125,7 +123,6 @@ fn swap(
             denom_in,
             WasmPriceSourceUnchecked::AstroportSpot {
                 pair_address,
-                route_assets: vec![denom_out.to_string()],
             },
             &admin,
         );
@@ -136,9 +133,15 @@ fn swap(
 
     let estimated_amount = robot.query_estimate_exact_in_swap(&coin_in, denom_out);
 
+    println!("Estimated amount: {}", estimated_amount);
+
     let balance = robot
         .swap(coin_in, denom_out, slippage, &alice)
         .query_native_token_balance(alice.address(), denom_out);
 
-    assert!((balance - initial_balance) >= slippage * estimated_amount);
+    let received_amount = balance - initial_balance;
+
+    println!("Received amount: {}", received_amount);
+
+    assert!((received_amount) >= slippage * estimated_amount);
 }

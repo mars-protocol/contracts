@@ -17,8 +17,8 @@ use mars_red_bank_types::oracle::{AstroportTwapSnapshot, Config};
 
 use crate::{
     helpers::{
-        add_route_prices, astro_native_asset, period_diff, query_astroport_cumulative_price,
-        validate_route_assets,
+        astro_native_asset, normalize_price, period_diff, query_astroport_cumulative_price,
+        validate_astroport_pair_price_source,
     },
     state::{ASTROPORT_FACTORY, ASTROPORT_TWAP_SNAPSHOTS},
 };
@@ -33,11 +33,6 @@ pub enum WasmPriceSource<A> {
     AstroportSpot {
         /// Address of the Astroport pair
         pair_address: A,
-        /// Other assets to route through when calculating the price. E.g. if the pair is USDC/ETH
-        /// and `config.base_denom` is USD, and we want to get the price of ETH in USD, then
-        /// `route_assets` could be `["USDC"]`, which would mean we would get the price of ETH in
-        /// USDC, and then multiply by the price of USDC in USD.
-        route_assets: Vec<String>,
     },
     /// Astroport TWAP price
     ///
@@ -55,11 +50,6 @@ pub enum WasmPriceSource<A> {
         window_size: u64,
         /// The tolerance in seconds for the sliding TWAP window.
         tolerance: u64,
-        /// Other assets to route through when calculating the price. E.g. if the pair is USDC/ETH
-        /// and `config.base_denom` is USD, and we want to get the price of ETH in USD, then
-        /// `route_assets` could be `["USDC"]`, which would mean we would get the price of ETH in
-        /// USDC, and then multiply by the price of USDC in USD.
-        route_assets: Vec<String>,
     },
     Pyth {
         /// Contract address of Pyth
@@ -100,20 +90,16 @@ impl fmt::Display for WasmPriceSourceChecked {
             } => format!("fixed:{price}"),
             WasmPriceSource::AstroportSpot {
                 pair_address,
-                route_assets,
             } => {
-                let route_str = route_assets.join(",");
-                format!("astroport_spot:{pair_address}. Route: {route_str}")
+                format!("astroport_spot:{pair_address}.")
             }
             WasmPriceSource::AstroportTwap {
                 pair_address,
                 window_size,
                 tolerance,
-                route_assets,
             } => {
-                let route_str = route_assets.join(",");
                 format!(
-                    "astroport_twap:{pair_address}. Window Size: {window_size}. Tolerance: {tolerance}. Route: {route_str}"
+                    "astroport_twap:{pair_address}. Window Size: {window_size}. Tolerance: {tolerance}."
                 )
             }
             WasmPriceSource::Pyth {
@@ -149,27 +135,25 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
             }),
             WasmPriceSource::AstroportSpot {
                 pair_address,
-                route_assets,
             } => {
-                validate_route_assets(
+                let pair_address = deps.api.addr_validate(&pair_address)?;
+
+                validate_astroport_pair_price_source(
                     deps,
+                    &pair_address,
                     denom,
                     base_denom,
                     price_sources,
-                    &pair_address,
-                    &route_assets,
                 )?;
 
                 Ok(WasmPriceSourceChecked::AstroportSpot {
-                    pair_address: deps.api.addr_validate(&pair_address)?,
-                    route_assets,
+                    pair_address,
                 })
             }
             WasmPriceSource::AstroportTwap {
                 pair_address,
                 window_size,
                 tolerance,
-                route_assets,
             } => {
                 if tolerance >= window_size {
                     return Err(ContractError::InvalidPriceSource {
@@ -177,15 +161,14 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                     });
                 }
 
-                validate_route_assets(
+                let pair_address = deps.api.addr_validate(&pair_address)?;
+                validate_astroport_pair_price_source(
                     deps,
+                    &pair_address,
                     denom,
                     base_denom,
                     price_sources,
-                    &pair_address,
-                    &route_assets,
                 )?;
-
                 if window_size <= 1 {
                     return Err(ContractError::InvalidPriceSource {
                         reason: "window_size must be greater than 1".to_string(),
@@ -193,10 +176,9 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 }
 
                 Ok(WasmPriceSourceChecked::AstroportTwap {
-                    pair_address: deps.api.addr_validate(&pair_address)?,
+                    pair_address,
                     window_size,
                     tolerance,
-                    route_assets,
                 })
             }
             WasmPriceSource::Pyth {
@@ -234,21 +216,11 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
             } => Ok(*price),
             WasmPriceSource::AstroportSpot {
                 pair_address,
-                route_assets,
-            } => query_astroport_spot_price(
-                deps,
-                env,
-                denom,
-                config,
-                price_sources,
-                pair_address,
-                route_assets,
-            ),
+            } => query_astroport_spot_price(deps, env, denom, config, price_sources, pair_address),
             WasmPriceSource::AstroportTwap {
                 pair_address,
                 window_size,
                 tolerance,
-                route_assets,
             } => query_astroport_twap_price(
                 deps,
                 env,
@@ -256,7 +228,6 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 config,
                 price_sources,
                 pair_address,
-                route_assets,
                 *window_size,
                 *tolerance,
             ),
@@ -287,7 +258,6 @@ fn query_astroport_spot_price(
     config: &Config,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     pair_address: &Addr,
-    route_assets: &[String],
 ) -> ContractResult<Decimal> {
     let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
 
@@ -307,9 +277,7 @@ fn query_astroport_spot_price(
 
     let price = Decimal::from_ratio(sim_res.return_amount, one);
 
-    // If there are route assets, we need to multiply the price by the price of the
-    // route assets in the base denom
-    add_route_prices(deps, env, config, price_sources, route_assets, &price)
+    normalize_price(deps, env, config, price_sources, pair_address, denom, price)
 }
 
 /// Queries the TWAP price of `denom` denominated in `base_denom` from the Astroport pair at `pair_address`.
@@ -321,7 +289,6 @@ fn query_astroport_twap_price(
     config: &Config,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     pair_address: &Addr,
-    route_assets: &[String],
     window_size: u64,
     tolerance: u64,
 ) -> ContractResult<Decimal> {
@@ -365,11 +332,8 @@ fn query_astroport_twap_price(
     let price_precision = Uint128::from(10_u128.pow(TWAP_PRECISION.into()));
     let price = Decimal::from_ratio(price_delta, price_precision.checked_mul(period.into())?);
 
-    // If there are route assets, we need to multiply the price by the price of the
-    // route assets in the base denom
-    add_route_prices(deps, env, config, price_sources, route_assets, &price)
+    normalize_price(deps, env, config, price_sources, pair_address, denom, price)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;

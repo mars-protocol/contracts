@@ -72,7 +72,6 @@ export const ntrnOracleTestnet: OracleConfig = {
       window_size: 1800, // 30 minutes
       tolerance: 120, // 2 minutes
       pair_address: 'neutron1vwrktvvxnevy7s5t7v44z72pdxncnq9gdsjwq9607cdd6vl2lfcs33fpah',
-      route_assets: [axlUSDCTestnet],
     },
   },
 }
@@ -84,7 +83,6 @@ export const atomOracleTestnet: OracleConfig = {
       window_size: 1800, // 30 minutes
       tolerance: 120, // 2 minutes
       pair_address: 'neutron1sm23jnz4lqd88etklvwlm66a0x6mhflaqlv65wwr7nwwxa6258ks6nshpq',
-      route_assets: ['untrn'],
     },
   },
 }
