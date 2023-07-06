@@ -2,7 +2,7 @@ import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/config'
 
 const axlUSDCTestnet = 'ibc/EFB00E728F98F0C4BBE8CA362123ACAB466EDA2826DC6837E49F4C1902F21BBA' // TODO: This is actually ASTRO since there is no pool for axlUSDC on testnet
 const atomTestnet = 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
-const marsTestnet = 'ibc/EFB00E728F98F0C4BBE8CA362123ACAB466EDA2826DC6837E49F4C1902F21BBA' // TODO: Use real MARS denom when it is available
+const marsTestnet = 'ibc/584A4A23736884E0C198FD1EE932455A9357A492A7B94324E4A02B5628687831'
 const protocolAdminAddrTestnet = 'neutron1ke0vqqzyymlp5esr8gjwuzh94ysnpvj8er5hm7'
 const astroportFactoryTestnet = 'neutron1jj0scx400pswhpjes589aujlqagxgcztw04srynmhf0f6zplzn2qqmhwj7'
 const astroportRouterTestnet = 'neutron12jm24l9lr9cupufqjuxpdjnnweana4h66tsx5cl800mke26td26sq7m05p'
@@ -103,12 +103,14 @@ export const neutronTestnetConfig: DeploymentConfig = {
   atomDenom: atomTestnet,
   baseAssetDenom: 'untrn',
   gasPrice: '0untrn',
+  // gasPrice: '1untrn', // when using polkachu we cannot have 0 gas price
   chainId: 'pion-1',
   chainPrefix: 'neutron',
-  channelId: '', //TODO
+  channelId: 'channel-97',
   marsDenom: marsTestnet,
   rewardCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc-palvus.pion-1.ntrn.tech:443',
+  // rpcEndpoint: 'https://neutron-testnet-rpc.polkachu.com:443',
   safetyFundFeeShare: '0.5',
   deployerMnemonic:
     'bundle bundle orchard jeans office umbrella bird around taxi arrive infant discover elder they joy misery photo crunch gift fancy pledge attend adult eight', // TODO: Set mnemonic before deploying
