@@ -258,7 +258,9 @@ fn validate_params_for_new_incentive(
     current_block_time: u64,
 ) -> Result<(u64, u64, Uint128), ContractError> {
     // all params are required during incentive initialization (if start_time = None then set to current block time)
-    let (Some(start_time), Some(duration), Some(emission_per_second)) = (start_time, duration, emission_per_second) else {
+    let (Some(start_time), Some(duration), Some(emission_per_second)) =
+        (start_time, duration, emission_per_second)
+    else {
         return Err(ContractError::InvalidIncentive {
             reason: "all params are required during incentive initialization".to_string(),
         });
