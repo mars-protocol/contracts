@@ -148,8 +148,7 @@ pub fn execute_update_whitelist(
     let config = CONFIG.load(deps.storage)?;
 
     // Add add_denoms and remove_denoms to a set to check for duplicates
-    let denoms =
-        add_denoms.iter().map(|(denom, _)| denom).chain(remove_denoms.iter()).collect::<Vec<_>>();
+    let denoms = add_denoms.iter().map(|(denom, _)| denom).chain(remove_denoms.iter());
     let mut denoms_set = std::collections::HashSet::new();
     for denom in denoms {
         if !denoms_set.insert(denom) {
