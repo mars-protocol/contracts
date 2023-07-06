@@ -70,13 +70,15 @@ proptest! {
   #[test]
   fn proptest_validate_and_query_astroport_spot_price_source(
     pair_type in astro_pair_type(),
-    (pair_denoms,route_prices) in pair_denoms().prop_flat_map(|pair_denoms|
+    (pair_denoms,mut route_prices) in pair_denoms().prop_flat_map(|pair_denoms|
       (Just(pair_denoms),route_prices(pair_denoms))
     ),
     initial_liq in liquidity(),
   ){
     let base_denom = if !route_prices.is_empty() {
-      route_prices[route_prices.len() -1].0
+      let len = route_prices.len();
+      route_prices[len -1].1 = Decimal::one();
+      route_prices[len -1].0
     } else {
       pair_denoms[1]
     };
@@ -86,14 +88,16 @@ proptest! {
   #[test]
   fn proptest_validate_and_query_astroport_twap_price_source(
     pair_type in astro_pair_type(),
-    (pair_denoms,route_prices) in pair_denoms().prop_flat_map(|pair_denoms|
+    (pair_denoms,mut route_prices) in pair_denoms().prop_flat_map(|pair_denoms|
       (Just(pair_denoms),route_prices(pair_denoms))
     ),
     initial_liq in liquidity(),
     (window_size,tolerance) in (2..1000000u64).prop_flat_map(|x| (Just(x), 0..x))
   ) {
     let base_denom = if !route_prices.is_empty() {
-      route_prices[route_prices.len() -1].0
+      let len = route_prices.len();
+      route_prices[len -1].1 = Decimal::one();
+      route_prices[len -1].0
     } else {
       pair_denoms[1]
     };

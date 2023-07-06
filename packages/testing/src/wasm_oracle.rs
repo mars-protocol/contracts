@@ -389,7 +389,11 @@ pub fn validate_and_query_astroport_spot_price_source(
         route_assets: route_prices.iter().map(|&(s, _)| s.to_string()).collect(),
     };
     let route_price_sources: Vec<_> = if register_routes {
-        route_prices.iter().map(|&(s, p)| (s, fixed_source(p))).collect()
+        route_prices
+            .iter()
+            .filter(|x| x.0 != base_denom)
+            .map(|&(s, p)| (s, fixed_source(p)))
+            .collect()
     } else {
         vec![]
     };
@@ -446,8 +450,12 @@ pub fn validate_and_query_astroport_twap_price_source(
         tolerance,
         window_size,
     };
-    let route_price_sources: Vec<_> =
-        route_prices.iter().map(|&(s, p)| (s, fixed_source(p))).collect();
+
+    let route_price_sources: Vec<_> = route_prices
+        .iter()
+        .filter(|x| x.0 != base_denom)
+        .map(|&(s, p)| (s, fixed_source(p)))
+        .collect();
 
     println!("Swap amount: {}", initial_liq[1] / 1000000);
 
