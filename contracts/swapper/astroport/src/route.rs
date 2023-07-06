@@ -1,6 +1,6 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
 
-use astroport::{asset::AssetInfo, router::SwapOperation};
+use astroport::{asset::AssetInfo, pair::MAX_ALLOWED_SLIPPAGE, router::SwapOperation};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_binary, Coin, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, QueryRequest, StdError,
@@ -178,7 +178,9 @@ impl Route<Empty, Empty> for AstroportRoute {
                 operations: self.operations.clone(),
                 minimum_receive,
                 to: None,
-                max_spread: None,
+                // If we set max_spread to None, Astroport will unwrap it as 0.5%, so instead we
+                // set it to the max allowed since we control slippage via minimum_receive instead.
+                max_spread: Some(Decimal::from_str(MAX_ALLOWED_SLIPPAGE)?),
             })?,
             funds: vec![coin_in.clone()],
         }
