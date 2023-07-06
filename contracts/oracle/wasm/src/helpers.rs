@@ -55,7 +55,7 @@ pub fn validate_astroport_pair_price_source(
     // If the pair does not contain the base denom a price source for the other denom of the pair
     // must exist.
     if !pair_denoms.contains(&base_denom.to_string())
-        && !price_sources.has(deps.storage, &base_denom.to_string())
+        && !price_sources.has(deps.storage, base_denom)
     {
         return Err(ContractError::InvalidPriceSource {
                         reason: format!("pair does not contain base denom and no price source is configured for pair base {}", base_denom),
