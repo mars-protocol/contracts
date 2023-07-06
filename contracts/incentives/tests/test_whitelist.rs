@@ -431,7 +431,7 @@ fn cannot_remove_denom_from_whitelist_that_is_not_there() {
     let whitelist_count = WHITELIST_COUNT.load(&deps.storage).unwrap();
     assert_eq!(whitelist_count, 1);
 
-    // Remove one denom from whitelist, and add a new one, should work
+    // Remove non-whitelisted denom, should error
     let add_whitelist_msg: ExecuteMsg = ExecuteMsg::UpdateWhitelist {
         add_denoms: vec![],
         remove_denoms: vec![("denom1".to_string())],
