@@ -63,6 +63,48 @@ fn lending_zero_raises() {
 }
 
 #[test]
+fn zero_to_reclaim_raises() {
+    let coin_info = uosmo_info();
+
+    let user_a = Addr::unchecked("user_a");
+    let user_b = Addr::unchecked("user_b");
+
+    let mut mock = MockEnv::new()
+        .set_params(&[coin_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user_a.clone(),
+            funds: coins(1_000_000, coin_info.denom.clone()),
+        })
+        .fund_account(AccountToFund {
+            addr: user_b.clone(),
+            funds: coins(1, coin_info.denom.clone()),
+        })
+        .build()
+        .unwrap();
+
+    let account_id_a = mock.create_credit_account(&user_a).unwrap();
+
+    mock.update_credit_account(
+        &account_id_a,
+        &user_a,
+        vec![Deposit(coin_info.to_coin(1_000_000)), Lend(coin_info.to_coin(1_000_000))],
+        &[coin_info.to_coin(1_000_000)],
+    )
+    .unwrap();
+
+    let account_id_b = mock.create_credit_account(&user_b).unwrap();
+
+    let res = mock.update_credit_account(
+        &account_id_b,
+        &user_b,
+        vec![Deposit(coin_info.to_coin(1)), Lend(coin_info.to_coin(1))],
+        &[coin_info.to_coin(1)],
+    );
+
+    assert_err(res, ContractError::NoAmount);
+}
+
+#[test]
 fn raises_when_not_enough_assets_to_lend() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
