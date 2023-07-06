@@ -1,6 +1,6 @@
 use std::string::FromUtf8Error;
 
-use cosmwasm_std::{StdError, Uint128};
+use cosmwasm_std::{Coin, StdError};
 use mars_owner::OwnerError;
 use mars_red_bank_types::error::MarsError;
 use mars_utils::error::ValidationError;
@@ -44,7 +44,7 @@ pub enum ContractError {
 
     #[error("Invalid funds. Expected {expected} funds")]
     InvalidFunds {
-        expected: Uint128,
+        expected: Coin,
     },
 
     #[error("Invalid incentive denom. {denom} is not whitelisted")]

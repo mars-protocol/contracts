@@ -151,7 +151,7 @@ fn incentive_can_only_be_added_if_denom_whitelisted() {
     execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), add_whitelist_msg).unwrap();
 
     // add incentive
-    let info = mock_info(owner, &[coin(100 * 604800, "uosmo")]);
+    let info = mock_info(owner, &[coin(100 * 604800, "umars")]);
     execute(deps.as_mut(), mock_env(), info, set_incentive_msg).unwrap();
 }
 
@@ -185,7 +185,7 @@ fn incentives_updated_and_removed_when_removing_from_whitelist() {
         start_time,
         duration: 604800,
     };
-    let info = mock_info(owner, &[coin(100 * 604800, "uosmo")]);
+    let info = mock_info(owner, &[coin(100 * 604800, "umars")]);
     execute(deps.as_mut(), mock_env(), info, set_incentive_msg).unwrap();
 
     // Query incentive schedule

@@ -18,6 +18,8 @@ use crate::helpers::{
 
 mod helpers;
 
+const ONE_WEEK_IN_SECS: u64 = 604800;
+
 #[test]
 fn invalid_denom_for_incentives() {
     let mut deps = th_setup();
@@ -54,7 +56,7 @@ fn cannot_set_new_asset_incentive_with_time_earlier_than_current_time() {
         incentive_denom: "umars".to_string(),
         emission_per_second: Uint128::from(420u128),
         start_time: env.block.time.seconds() - 1u64,
-        duration: 604800u64,
+        duration: ONE_WEEK_IN_SECS,
     };
     let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert_eq!(
@@ -78,7 +80,7 @@ fn cannot_set_new_asset_incentive_with_emission_less_than_minimum() {
         incentive_denom: "umars".to_string(),
         emission_per_second: Uint128::zero(),
         start_time: env.block.time.seconds(),
-        duration: 604800u64,
+        duration: ONE_WEEK_IN_SECS,
     };
     let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
     assert!(res_error
@@ -142,10 +144,10 @@ fn cannot_set_new_asset_incentive_with_too_few_funds() {
         incentive_denom: "umars".to_string(),
         emission_per_second: Uint128::from(1000000u32),
         start_time: env.block.time.seconds(),
-        duration: 604800u64,
+        duration: ONE_WEEK_IN_SECS,
     };
     let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000 funds");
+    assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000umars funds");
 }
 
 #[test]
@@ -161,10 +163,10 @@ fn cannot_set_new_asset_incentive_with_wrong_denom() {
         incentive_denom: "umars".to_string(),
         emission_per_second: Uint128::from(1000000u32),
         start_time: env.block.time.seconds(),
-        duration: 604800u64,
+        duration: ONE_WEEK_IN_SECS,
     };
     let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000 funds");
+    assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000umars funds");
 }
 
 #[test]
@@ -180,10 +182,10 @@ fn cannot_set_new_asset_incentive_with_two_denoms() {
         incentive_denom: "umars".to_string(),
         emission_per_second: Uint128::from(1000000u32),
         start_time: env.block.time.seconds(),
-        duration: 604800u64,
+        duration: ONE_WEEK_IN_SECS,
     };
     let res_error = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000 funds");
+    assert_eq!(res_error.to_string(), "Invalid funds. Expected 604800000000umars funds");
 }
 
 #[test]
@@ -257,7 +259,7 @@ fn can_only_set_new_incentive_with_start_time_multiple_of_epoch_duration_from_cu
     };
     execute(deps.as_mut(), env.clone(), mock_info("owner", &[]), msg).unwrap();
 
-    let epoch_duration = 604800u64;
+    let epoch_duration = ONE_WEEK_IN_SECS;
 
     // First set one incentive schedule
     let msg = ExecuteMsg::SetAssetIncentive {
@@ -302,7 +304,7 @@ fn can_only_set_new_incentive_with_start_time_multiple_of_epoch_duration_from_cu
 #[test]
 fn set_asset_incentive_merges_schedules() {
     let env = mock_env();
-    let epoch_duration = 604800u64;
+    let epoch_duration = ONE_WEEK_IN_SECS;
     let mut deps = ths_setup_with_epoch_duration(env.clone(), epoch_duration);
 
     // Setup red bank market for collateral denom
@@ -436,4 +438,48 @@ fn set_asset_incentive_merges_schedules() {
     assert!(emissions[5].1 == Uint128::new(new_eps));
     assert!(emissions[6].0 .2 == start_time + epoch_duration * 6);
     assert!(emissions[6].1 == Uint128::new(new_eps));
+}
+
+#[test]
+fn incorrect_denom_deposit() {
+    let env = mock_env();
+    let epoch_duration = ONE_WEEK_IN_SECS;
+    let mut deps = ths_setup_with_epoch_duration(env.clone(), epoch_duration);
+
+    // Test params
+    let collateral_denom = "uusdc";
+    let incentive_denom = "umars";
+    let false_incentive_denom: &str = "ushit";
+    let emission_per_second = 100u128;
+
+    // Setup red bank market for collateral denom
+    deps.querier.set_redbank_market(Market {
+        denom: collateral_denom.to_string(),
+        collateral_total_scaled: Uint128::from(1000000u128),
+        ..Default::default()
+    });
+
+    // Whitelist umars as incentive denom
+    th_whitelist_denom(deps.as_mut(), incentive_denom);
+
+    // First set one long schedule
+    let incentive_duration = epoch_duration * 5;
+    let total_emissions = emission_per_second * incentive_duration as u128;
+    let info = mock_info("user1", &[coin(total_emissions, false_incentive_denom)]);
+    let start_time = env.block.time.seconds();
+    let msg = ExecuteMsg::SetAssetIncentive {
+        collateral_denom: collateral_denom.to_string(),
+        incentive_denom: incentive_denom.to_string(),
+        emission_per_second: emission_per_second.into(),
+        start_time,
+        duration: incentive_duration,
+    };
+    let err = execute(deps.as_mut(), env, info, msg).unwrap_err();
+
+    assert_eq!(
+        err,
+        mars_incentives::ContractError::InvalidFunds {
+            expected: coin(total_emissions, incentive_denom),
+        }
+    );
 }
