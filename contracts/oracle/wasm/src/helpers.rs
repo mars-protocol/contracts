@@ -160,6 +160,3 @@ pub fn normalize_price(
         Ok(price.checked_mul(other_price)?)
     }
 }
-
-#[cfg(test)]
-mod tests {}
