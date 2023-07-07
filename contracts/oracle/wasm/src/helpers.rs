@@ -43,7 +43,7 @@ pub fn validate_astroport_pair_price_source(
     price_sources: &Map<&str, WasmPriceSourceChecked>,
 ) -> ContractResult<()> {
     // Get the denoms of the pair
-    let pair_denoms = get_astroport_pair_denoms(deps, pair_address)?;
+    let mut pair_denoms = get_astroport_pair_denoms(deps, pair_address)?;
 
     // Pair must contain two assets
     if pair_denoms.len() != 2 {
@@ -59,14 +59,22 @@ pub fn validate_astroport_pair_price_source(
         });
     }
 
-    // If the pair does not contain the base denom a price source for the other denom of the pair
+    // Get the other denom of the pair. This works because we asserted above that the pair contains
+    // exactly two assets.
+    pair_denoms.retain(|d| d != denom);
+    let other_pair_denom = pair_denoms.first().unwrap();
+
+    // If the pair does not contain the base denom, a price source for the other denom of the pair
     // must exist.
     if !pair_denoms.contains(&base_denom.to_string())
-        && !price_sources.has(deps.storage, base_denom)
+        && !price_sources.has(deps.storage, other_pair_denom)
     {
         return Err(ContractError::InvalidPriceSource {
-                        reason: format!("pair does not contain base denom and no price source is configured for pair base {}", base_denom),
-                    });
+            reason: format!(
+                "pair does not contain base denom and no price source is configured for the other denom {}",
+                other_pair_denom
+            ),
+        });
     }
 
     Ok(())
