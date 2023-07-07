@@ -108,7 +108,7 @@ fn swap(
         pool_type.init_params(),
         &admin,
         Some(pool_liq),
-        Some(&decimals),
+        Some(decimals),
     );
 
     // Setup oracle prices

@@ -601,7 +601,7 @@ fn setting_price_source_pyth_if_missing_usd() {
     let robot = WasmOracleTestRobot::new(
         &runner,
         get_contracts(&get_test_runner()),
-        &get_test_runner().init_accounts()[0],
+        &get_test_runner().init_default_accounts().unwrap()[0],
         None,
     );
 
@@ -638,10 +638,10 @@ fn setting_price_source_pyth_if_missing_usd() {
 #[test]
 fn twap_window_size_not_gt_tolerance() {
     let runner = get_test_runner();
-    let admin = &runner.init_accounts()[0];
+    let admin = &runner.init_default_accounts().unwrap()[0];
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&get_test_runner()), admin, None);
 
-    let (pair_address, _) = robot.create_default_astro_pair(PairType::Xyk {}, admin);
+    let (pair_address, _) = robot.create_default_astro_pair(admin);
 
     let price_source = WasmPriceSourceUnchecked::AstroportTwap {
         pair_address,
