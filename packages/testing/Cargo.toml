@@ -14,11 +14,12 @@ keywords      = { workspace = true }
 doctest = false
 
 [features]
+default = []
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
 astroport = ["cw-it/astroport", "dep:astroport"]
 osmosis-test-tube = ["cw-it/osmosis-test-tube"]
-backtraces = ["cosmwasm-std/backtraces", "osmosis-std/backtraces"]
+backtraces = ["cosmwasm-std/backtraces", "osmosis-std/backtraces", "cw-it/backtraces"]
 
 [dependencies]
 anyhow                         = { workspace = true }

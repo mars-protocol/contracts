@@ -55,11 +55,11 @@ serde             = { version = "1.0.163", default-features = false, features = 
 thiserror         = "1.0.40"
 pyth-sdk-cw        = "1.2.0"
 cw-paginate       = "0.2.1"
-astroport         = { git = "https://github.com/astroport-fi/astroport-core", tag = "v2.7.1" }
+astroport         = "2.8.0"
 strum             = "0.24.1"
 
 # dev-dependencies
-cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "3af22b8537c5213d4af8ee7fd0f18e3d602fa64f" }
+cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "31e6aa1e012a516ad67c38bed70f450564f40e78" }
 test-case         = "3.0.0"
 proptest          = "1.1.0"
 
