@@ -45,6 +45,13 @@ pub fn validate_astroport_pair_price_source(
     // Get the denoms of the pair
     let pair_denoms = get_astroport_pair_denoms(deps, pair_address)?;
 
+    // Pair must contain two assets
+    if pair_denoms.len() != 2 {
+        return Err(ContractError::InvalidPriceSource {
+            reason: format!("pair contains more than two assets: {:?}", pair_denoms),
+        });
+    }
+
     // Pair must contain the denom
     if !pair_denoms.contains(&denom.to_string()) {
         return Err(ContractError::InvalidPriceSource {
@@ -60,13 +67,6 @@ pub fn validate_astroport_pair_price_source(
         return Err(ContractError::InvalidPriceSource {
                         reason: format!("pair does not contain base denom and no price source is configured for pair base {}", base_denom),
                     });
-    }
-
-    // Pair must contain two assets
-    if pair_denoms.len() != 2 {
-        return Err(ContractError::InvalidPriceSource {
-            reason: format!("pair contains more than two assets: {:?}", pair_denoms),
-        });
     }
 
     Ok(())
@@ -138,9 +138,10 @@ pub fn normalize_price(
     let mut pair_denoms = get_astroport_pair_denoms(deps, pair_address)?;
 
     if pair_denoms.contains(&config.base_denom) {
-        deps.api.debug(&format!("Pair {} contains base denom {}", pair_address, config.base_denom));
         Ok(price)
     } else {
+        // In validate we assert that the pair contains the denom, and that it contains only
+        // two denoms.
         pair_denoms.retain(|d| d != denom);
         let other_pair_denom = pair_denoms.first().unwrap();
 
