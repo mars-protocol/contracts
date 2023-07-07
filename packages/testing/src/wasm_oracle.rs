@@ -372,15 +372,16 @@ pub fn validate_and_query_astroport_spot_price_source(
     other_asset_price: Option<Decimal>,
     initial_liq: &[u128; 2],
     register_second_price: bool,
+    decimals: &[u8; 2],
 ) {
     let runner = get_test_runner();
     let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
 
-    let (primary_denom, other_denom) = if pair_denoms[0] == base_denom {
-        (pair_denoms[1], pair_denoms[0])
+    let (primary_denom, other_denom, primary_decimals) = if pair_denoms[0] == base_denom {
+        (pair_denoms[1], pair_denoms[0], decimals[1])
     } else {
-        (pair_denoms[0], pair_denoms[1])
+        (pair_denoms[0], pair_denoms[1], decimals[0])
     };
 
     let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
@@ -389,7 +390,7 @@ pub fn validate_and_query_astroport_spot_price_source(
         astro_init_params(&pair_type),
         admin,
         Some(initial_liq),
-        Some(&[6, 6]), //TODO: make this configurable
+        Some(decimals),
     );
 
     let price_source = WasmPriceSourceUnchecked::AstroportSpot {
@@ -402,27 +403,19 @@ pub fn validate_and_query_astroport_spot_price_source(
     };
 
     // Oracle uses a swap simulation rather than just dividing the reserves, because we need to support non-XYK pools
-    let sim_res =
-        robot.query_simulate_swap(&pair_address, native_asset(primary_denom, 1000000u128), None);
-    let mut expected_price = Decimal::from_ratio(sim_res.return_amount, 1000000u128);
+    let one = Uint128::new(10_u128.pow(primary_decimals.into()));
+    let sim_res = robot.query_simulate_swap(&pair_address, native_asset(primary_denom, one), None);
+    let mut expected_price = Decimal::from_ratio(sim_res.return_amount, one);
     if let Some(other_asset_price) = other_asset_price {
         expected_price *= other_asset_price
     }
 
-    // Execute SetPriceSource
+    // Set price sources and assert that the price is as expected
     robot
-        .add_denom_precision_to_coin_registry(pair_denoms[0], 6, admin)
-        .add_denom_precision_to_coin_registry(pair_denoms[1], 6, admin)
-        .add_denom_precision_to_coin_registry(base_denom, 6, admin)
-        .set_price_sources(other_asset_price_source, admin);
-
-    robot.set_price_source(primary_denom, price_source.clone(), admin);
-
-    robot.assert_price_source(primary_denom, price_source).assert_price_almost_equal(
-        primary_denom,
-        expected_price,
-        Decimal::percent(1),
-    );
+        .set_price_sources(other_asset_price_source, admin)
+        .set_price_source(primary_denom, price_source.clone(), admin)
+        .assert_price_source(primary_denom, price_source)
+        .assert_price_almost_equal(primary_denom, expected_price, Decimal::percent(1));
 }
 
 /// Tests that Astroport TWAP Price Source validation and querying works as expected
@@ -435,6 +428,7 @@ pub fn validate_and_query_astroport_twap_price_source(
     tolerance: u64,
     window_size: u64,
     initial_liq: &[u128; 2],
+    decimals: &[u8; 2],
 ) {
     let runner = get_test_runner();
     let admin = &runner.init_default_account().unwrap();
@@ -452,13 +446,9 @@ pub fn validate_and_query_astroport_twap_price_source(
         astro_init_params(&pair_type),
         admin,
         Some(initial_liq),
-        Some(&[6, 6]), //TODO: make this configurable
+        Some(decimals),
     );
-    let initial_price = robot
-        .add_denom_precision_to_coin_registry(primary_denom, 6, admin)
-        .add_denom_precision_to_coin_registry(other_denom, 6, admin)
-        .add_denom_precision_to_coin_registry(base_denom, 6, admin)
-        .query_price_via_simulation(&pair_address, primary_denom);
+    let initial_price = robot.query_price_via_simulation(&pair_address, primary_denom);
 
     let price_source = WasmPriceSourceUnchecked::AstroportTwap {
         pair_address: pair_address.clone(),
