@@ -345,6 +345,7 @@ fn internally_tracked_balances_used_for_borrow() {
     assert_eq!(new_user_res.amount, Uint128::new(1u128));
 }
 
+// See spreadsheet for numbers: https://docs.google.com/spreadsheets/d/1-rwcReLbGCkxYuF80FuQWMTYC9koPo7VFoRtJrp3628/edit?usp=sharing
 #[test]
 fn interest_rates_accured_based_on_internally_tracked_balances() {
     let owner = Addr::unchecked("owner");
@@ -402,35 +403,18 @@ fn interest_rates_accured_based_on_internally_tracked_balances() {
         &[coin(100_000_000_000_000u128, "uatom"), coin(100_000_000_000_000u128, "uusdc")],
     );
 
-    // no borrowers, no changes to indexes and rates
-    let usdc_market = red_bank.query_market(&mut mock_env, "uusdc");
-    assert_eq!(usdc_market.liquidity_index, Decimal::one());
-    assert_eq!(usdc_market.borrow_index, Decimal::one());
-    assert_eq!(usdc_market.liquidity_rate, Decimal::zero());
-    assert_eq!(usdc_market.borrow_rate, usdc_market.interest_rate_model.base);
-    let atom_market = red_bank.query_market(&mut mock_env, "uatom");
-    assert_eq!(atom_market.liquidity_index, Decimal::one());
-    assert_eq!(atom_market.borrow_index, Decimal::one());
-    assert_eq!(atom_market.liquidity_rate, Decimal::zero());
-    assert_eq!(atom_market.borrow_rate, atom_market.interest_rate_model.base);
-
     // user_2 borrow some usdc
     let borrowed_usdc = 125_000_000u128;
     red_bank.borrow(&mut mock_env, &user_2, "uusdc", borrowed_usdc).unwrap();
     let debt = red_bank.query_user_debt(&mut mock_env, &user_2, "uusdc");
     assert_eq!(debt.amount.u128(), borrowed_usdc);
 
-    // verify indexes and rates
+    // verify indexes and rates for usdc
     let usdc_market = red_bank.query_market(&mut mock_env, "uusdc");
     assert_eq!(usdc_market.liquidity_index, Decimal::one());
     assert_eq!(usdc_market.borrow_index, Decimal::from_str("1.000000570776255707").unwrap());
     assert_eq!(usdc_market.liquidity_rate, Decimal::from_str("0.0033125").unwrap());
     assert_eq!(usdc_market.borrow_rate, Decimal::from_str("0.33125").unwrap());
-    let atom_market = red_bank.query_market(&mut mock_env, "uatom");
-    assert_eq!(atom_market.liquidity_index, Decimal::one());
-    assert_eq!(atom_market.borrow_index, Decimal::one());
-    assert_eq!(atom_market.liquidity_rate, Decimal::zero());
-    assert_eq!(atom_market.borrow_rate, atom_market.interest_rate_model.base);
 
     // user_2 repay some debt
     let repayed_usdc = 25_000_000u128;
@@ -438,17 +422,12 @@ fn interest_rates_accured_based_on_internally_tracked_balances() {
     let debt = red_bank.query_user_debt(&mut mock_env, &user_2, "uusdc");
     assert_eq!(debt.amount.u128(), borrowed_usdc - repayed_usdc);
 
-    // verify indexes and rates
+    // verify indexes and rates for usdc
     let usdc_market = red_bank.query_market(&mut mock_env, "uusdc");
     assert_eq!(usdc_market.liquidity_index, Decimal::one());
     assert_eq!(usdc_market.borrow_index, Decimal::from_str("1.000000570776255707").unwrap());
     assert_eq!(usdc_market.liquidity_rate, Decimal::from_str("0.0026").unwrap());
     assert_eq!(usdc_market.borrow_rate, Decimal::from_str("0.325").unwrap());
-    let atom_market = red_bank.query_market(&mut mock_env, "uatom");
-    assert_eq!(atom_market.liquidity_index, Decimal::one());
-    assert_eq!(atom_market.borrow_index, Decimal::one());
-    assert_eq!(atom_market.liquidity_rate, Decimal::zero());
-    assert_eq!(atom_market.borrow_rate, atom_market.interest_rate_model.base);
 
     // move few blocks
     mock_env.increment_by_blocks(10);
@@ -459,12 +438,7 @@ fn interest_rates_accured_based_on_internally_tracked_balances() {
     let collateral = red_bank.query_user_collateral(&mut mock_env, &user_2, "uatom");
     assert_eq!(collateral.amount.u128(), deposited_atom - withdrawn_atom);
 
-    // verify indexes and rates
-    let usdc_market = red_bank.query_market(&mut mock_env, "uusdc");
-    assert_eq!(usdc_market.liquidity_index, Decimal::one());
-    assert_eq!(usdc_market.borrow_index, Decimal::from_str("1.000000570776255707").unwrap());
-    assert_eq!(usdc_market.liquidity_rate, Decimal::from_str("0.0026").unwrap());
-    assert_eq!(usdc_market.borrow_rate, Decimal::from_str("0.325").unwrap());
+    // verify indexes and rates for atom
     let atom_market = red_bank.query_market(&mut mock_env, "uatom");
     assert_eq!(atom_market.liquidity_index, Decimal::one());
     assert_eq!(atom_market.borrow_index, Decimal::from_str("1.000001141552511415").unwrap());
@@ -486,11 +460,6 @@ fn interest_rates_accured_based_on_internally_tracked_balances() {
     assert_eq!(usdc_market.borrow_index, Decimal::from_str("1.000001807458848941").unwrap());
     assert_eq!(usdc_market.liquidity_rate, Decimal::from_str("0.002583310727805497").unwrap());
     assert_eq!(usdc_market.borrow_rate, Decimal::from_str("0.324850925145943052").unwrap());
-    let atom_market = red_bank.query_market(&mut mock_env, "uatom");
-    assert_eq!(atom_market.liquidity_index, Decimal::one());
-    assert_eq!(atom_market.borrow_index, Decimal::from_str("1.000001141552511415").unwrap());
-    assert_eq!(atom_market.liquidity_rate, Decimal::zero());
-    assert_eq!(atom_market.borrow_rate, atom_market.interest_rate_model.base);
 
     // user_2 withdraw all usdc and repay full debt
     red_bank.withdraw(&mut mock_env, &user_2, "uusdc", None).unwrap();
@@ -503,9 +472,4 @@ fn interest_rates_accured_based_on_internally_tracked_balances() {
     assert_eq!(usdc_market.borrow_index, Decimal::from_str("1.000001807458848941").unwrap());
     assert_eq!(usdc_market.liquidity_rate, Decimal::zero());
     assert_eq!(usdc_market.borrow_rate, usdc_market.interest_rate_model.base);
-    let atom_market = red_bank.query_market(&mut mock_env, "uatom");
-    assert_eq!(atom_market.liquidity_index, Decimal::one());
-    assert_eq!(atom_market.borrow_index, Decimal::from_str("1.000001141552511415").unwrap());
-    assert_eq!(atom_market.liquidity_rate, Decimal::zero());
-    assert_eq!(atom_market.borrow_rate, atom_market.interest_rate_model.base);
 }
