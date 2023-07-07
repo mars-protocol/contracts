@@ -116,11 +116,11 @@ pub fn query_token_precision(
     denom: &str,
 ) -> ContractResult<u8> {
     Ok(astroport::querier::query_token_precision(
-        &querier,
+        querier,
         &AssetInfo::NativeToken {
             denom: denom.to_string(),
         },
-        &astroport_factory,
+        astroport_factory,
     )?)
 }
 
