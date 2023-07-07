@@ -105,7 +105,7 @@ fn validate_fixed_price_source() {
     };
     let deps = mock_dependencies();
     let price_sources = Map::new("price_sources");
-    let denom = "uusd";
+    let denom = "uosmo";
     let base_denom = "uusd";
     let res = ps.validate(&deps.as_ref(), denom, base_denom, &price_sources);
     assert!(res.is_ok());
