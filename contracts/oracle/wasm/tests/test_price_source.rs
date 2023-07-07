@@ -176,44 +176,44 @@ fn cannot_set_base_denom_price_source() {
     robot.set_price_source(denom, price_source, admin);
 }
 
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[], true; "XYK, no route, base_denom in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "USD", &[], true => panics; "XYK, no route, base_denom not in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[("uusd", TWO)], false => panics; "XYK, route asset does not exist")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[("uion",TWO)], true => panics; "XYK, route with non-base existing asset, not in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], true; "XYK, route with non-base existing asset, in pair")]
-#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", &[], true; "Stable, no route, base_denom in pair")]
-#[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], true; "Stable, route with non-base existing asset, in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false; "XYK, base_denom in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", Some(TWO), true; "XYK, non-base asset in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "USD", None, false => panics "pair does not contain base denom and no price source is configured for the other denom"; "XYK, base_denom not in pair, no source for other asset")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false; "Stable, base_denom in pair")]
+#[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", Some(TWO), true; "Stable, non-base asset in pair")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "USD", None, false => panics; "Stable, base_denom not in pair, no source for other asset")]
 pub fn test_validate_and_query_astroport_spot_price_source(
     pair_type: PairType,
     pair_denoms: &[&str; 2],
     base_denom: &str,
-    route_prices: &[(&str, Decimal)],
-    register_routes: bool,
+    other_asset_price: Option<Decimal>,
+    register_second_price: bool,
 ) {
     validate_and_query_astroport_spot_price_source(
         pair_type,
         pair_denoms,
         base_denom,
-        route_prices,
+        other_asset_price,
         &DEFAULT_LIQ,
-        register_routes,
+        register_second_price,
     )
 }
 
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[], 5, 100; "XYK, no route, base_denom in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "USD", &[], 5, 100 => panics; "XYK, no route, base_denom not in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[("uusd", TWO)], 5, 100 => panics; "XYK, route asset does not exist")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[("uion",TWO)], 5, 100 => panics; "XYK, route with non-base existing asset, not in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], 5, 100; "XYK, route with non-base existing asset, in pair")]
-#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", &[], 5, 100; "Stable, no route, base_denom in pair")]
-#[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", &[("uion",TWO)], 5, 100; "Stable, route with non-base existing asset, in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[], 5,0 => panics; "Zero window size")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", &[], 0,5; "Zero tolerance")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 5, 100; "XYK, base_denom in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", Some(TWO), true, 5, 100; "XYK, non-base asset in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "USD", None, false, 5, 100 => panics "pair does not contain base denom and no price source is configured for the other denom"; "XYK, base_denom not in pair, no source for other asset")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 100; "Stable, base_denom in pair")]
+#[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", Some(TWO), true, 5, 100; "Stable, non-base asset in pair")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "USD", None, false, 5, 100 => panics "pair does not contain base denom and no price source is configured for the other denom"; "Stable, base_denom not in pair, no source for other asset")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 0,0 => panics; "Zero window size")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 0,5; "Zero tolerance")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 5,2 => panics "tolerance must be less than window size"; "tolerance larger than window size")]
 fn test_validate_and_query_astroport_twap_price(
     pair_type: PairType,
     pair_denoms: &[&str; 2],
     base_denom: &str,
-    route_prices: &[(&str, Decimal)],
+    other_asset_price: Option<Decimal>,
+    register_second_price: bool,
     tolerance: u64,
     window_size: u64,
 ) {
@@ -221,7 +221,8 @@ fn test_validate_and_query_astroport_twap_price(
         pair_type,
         pair_denoms,
         base_denom,
-        route_prices,
+        other_asset_price,
+        register_second_price,
         tolerance,
         window_size,
         &DEFAULT_LIQ,
