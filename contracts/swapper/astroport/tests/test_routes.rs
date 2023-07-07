@@ -1,6 +1,6 @@
 use astroport::{asset::AssetInfo, router::SwapOperation};
 use cosmwasm_std::coin;
-use cw_it::{robot::TestRobot, traits::CwItRunner};
+use cw_it::{astroport::robot::AstroportTestRobot, robot::TestRobot, traits::CwItRunner};
 use mars_red_bank_types::swapper::RouteResponse;
 use mars_swapper_astroport::route::AstroportRoute;
 use mars_testing::{astroport_swapper::AstroportSwapperRobot, test_runner::get_test_runner};
@@ -135,8 +135,8 @@ fn query_routes() {
         denom_out: denom_out.to_string(),
         route: AstroportRoute {
             operations: operations_1,
-            router: robot.astroport_contracts.router.address.clone(),
-            factory: robot.astroport_contracts.factory.address.clone(),
+            router: robot.astroport_contracts().router.address.clone(),
+            factory: robot.astroport_contracts().factory.address.clone(),
             oracle: robot.oracle_robot.mars_oracle_contract_addr.clone(),
         },
     }));
@@ -145,8 +145,8 @@ fn query_routes() {
         denom_out: denom_in.to_string(),
         route: AstroportRoute {
             operations: operations_2,
-            router: robot.astroport_contracts.router.address.clone(),
-            factory: robot.astroport_contracts.factory.address.clone(),
+            router: robot.astroport_contracts().router.address.clone(),
+            factory: robot.astroport_contracts().factory.address.clone(),
             oracle: robot.oracle_robot.mars_oracle_contract_addr,
         },
     }));

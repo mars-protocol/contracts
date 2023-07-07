@@ -1,4 +1,4 @@
-use cw_it::test_tube::Account;
+use cw_it::{test_tube::Account, traits::CwItRunner};
 use mars_owner::OwnerUpdate;
 use mars_testing::{
     test_runner::get_test_runner,
@@ -10,7 +10,7 @@ use test_case::test_case;
 #[test_case(false => panics ; "caller is not owner")]
 fn test_update_admin(caller_is_owner: bool) {
     let runner = get_test_runner();
-    let accs = runner.init_accounts();
+    let accs = runner.init_default_accounts().unwrap();
     let alice = &accs[0];
     let bob = &accs[1];
 
@@ -37,7 +37,7 @@ fn test_update_admin(caller_is_owner: bool) {
 #[test_case(false => panics ; "caller is not new owner")]
 fn test_accept_proposed(caller_is_new_owner: bool) {
     let runner = get_test_runner();
-    let accs = runner.init_accounts();
+    let accs = runner.init_default_accounts().unwrap();
     let alice = &accs[0];
     let bob = &accs[1];
 
@@ -65,7 +65,7 @@ fn test_accept_proposed(caller_is_new_owner: bool) {
 #[test_case(false => panics ; "caller is not owner")]
 fn test_clear_proposed(caller_is_owner: bool) {
     let runner = get_test_runner();
-    let accs = runner.init_accounts();
+    let accs = runner.init_default_accounts().unwrap();
     let alice = &accs[0];
     let bob = &accs[1];
 

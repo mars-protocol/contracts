@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use cosmwasm_std::{to_binary, CosmosMsg, Empty, WasmMsg};
 use cw_it::{
     osmosis_std::types::cosmwasm::wasm::v1::MsgMigrateContractResponse, test_tube::Runner,
+    traits::CwItRunner,
 };
 use mars_oracle_wasm::contract::CONTRACT_NAME;
 use mars_testing::{
@@ -13,7 +14,7 @@ use mars_testing::{
 #[test]
 fn test_migrate_wasm_oracle() {
     let runner = get_test_runner();
-    let admin = &runner.init_accounts()[0];
+    let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, None);
 
     let contract = get_wasm_oracle_contract(&runner);

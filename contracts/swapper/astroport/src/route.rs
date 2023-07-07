@@ -1,6 +1,6 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
 
-use astroport::{asset::AssetInfo, router::SwapOperation};
+use astroport::{asset::AssetInfo, pair::MAX_ALLOWED_SLIPPAGE, router::SwapOperation};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_binary, Coin, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, QueryRequest, StdError,
@@ -88,11 +88,11 @@ impl AstroportRoute {
         }?;
 
         // Query oracle for prices
-        let offer_price = self.query_oracle_price(querier, self.offer()?)?;
-        let ask_price = self.query_oracle_price(querier, self.ask()?)?;
+        let usd_per_offer_unit = self.query_oracle_price(querier, self.offer()?)?;
+        let usd_per_ask_unit = self.query_oracle_price(querier, self.ask()?)?;
 
         // Calculate the minimum amount of output tokens to receive
-        Ok(coin_in.amount.checked_mul_floor(ask_price.checked_div(offer_price)?)?)
+        Ok(coin_in.amount.checked_mul_floor(usd_per_offer_unit.checked_div(usd_per_ask_unit)?)?)
     }
 }
 
@@ -178,7 +178,9 @@ impl Route<Empty, Empty> for AstroportRoute {
                 operations: self.operations.clone(),
                 minimum_receive,
                 to: None,
-                max_spread: None,
+                // If we set max_spread to None, Astroport will unwrap it as 0.5%, so instead we
+                // set it to the max allowed since we control slippage via minimum_receive instead.
+                max_spread: Some(Decimal::from_str(MAX_ALLOWED_SLIPPAGE)?),
             })?,
             funds: vec![coin_in.clone()],
         }

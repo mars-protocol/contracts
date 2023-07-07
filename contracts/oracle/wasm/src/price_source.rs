@@ -135,6 +135,12 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
         base_denom: &str,
         price_sources: &Map<&str, WasmPriceSourceChecked>,
     ) -> ContractResult<WasmPriceSourceChecked> {
+        if denom == base_denom {
+            return Err(ContractError::InvalidPriceSource {
+                reason: "cannot set price source for base denom".to_string(),
+            });
+        }
+
         match self {
             WasmPriceSource::Fixed {
                 price,
