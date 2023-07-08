@@ -332,7 +332,7 @@ fn query_astroport_twap_price(
     let price = match pair_info.pair_type {
         PairType::Xyk {} => {
             let price_precision = Uint128::from(10_u128.pow(TWAP_PRECISION.into()));
-            
+
             Decimal::from_ratio(price_delta, price_precision.checked_mul(period.into())?)
         }
         PairType::Stable {} => {
@@ -350,11 +350,8 @@ fn query_astroport_twap_price(
             // Calculate the price by dividing the price delta by the amount of offer asset used in
             // the simulated swap and then multiply by the period
             let offer_simulation_amount = Uint128::from(10_u128.pow(offer_decimals.into()));
-            
-            Decimal::from_ratio(
-                price_delta,
-                offer_simulation_amount.checked_mul(period.into())?,
-            )
+
+            Decimal::from_ratio(price_delta, offer_simulation_amount.checked_mul(period.into())?)
         }
         PairType::Custom(_) => return Err(ContractError::InvalidPairType {}),
     };
