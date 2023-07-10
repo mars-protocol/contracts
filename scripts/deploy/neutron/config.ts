@@ -111,7 +111,7 @@ export const axlUSDCOracleTestnet: OracleConfig = {
 }
 
 export const neutronTestnetConfig = {
-  chainName: 'wasm',
+  oracleName: 'wasm',
   atomDenom: atomTestnet,
   baseAssetDenom: 'untrn',
   gasPrice: '0untrn',

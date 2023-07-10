@@ -7,11 +7,11 @@ const axlUSDC = 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F
 const mars = 'ibc/573FCD90FACEE750F55A8864EF7D38265F07E5A9273FA0E8DAFD39951332B580'
 
 const pythContractAddr = 'UPDATE'
+const protocolAdminAddr = 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n'
 
-// note the following three addresses are all 'mars' bech32 prefix
-const safetyFundAddr = 'UPDATE'
-const protocolAdminAddr = 'UPDATE'
-const feeCollectorAddr = 'UPDATE'
+// note the following addresses are all 'mars' bech32 prefix
+const safetyFundAddr = 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575'
+const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
 
 export const osmoAsset: AssetConfig = {
   credit_manager: {

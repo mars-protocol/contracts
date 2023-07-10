@@ -59,7 +59,7 @@ export class Deployer {
         Number(accountBalance.amount) / 1e6
       } ${this.config.chainPrefix})`,
     )
-    if (Number(accountBalance.amount) < 1_000_000 && this.config.chainId === 'osmo-test-4') {
+    if (Number(accountBalance.amount) < 1_000_000 && this.config.chainId === 'osmo-test-5') {
       printRed(
         `not enough ${this.config.chainPrefix} tokens to complete action, you may need to go to a test faucet to get more tokens.`,
       )
