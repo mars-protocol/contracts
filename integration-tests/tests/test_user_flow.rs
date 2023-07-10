@@ -345,7 +345,7 @@ fn internally_tracked_balances_used_for_borrow() {
     assert_eq!(new_user_res.amount, Uint128::new(1u128));
 }
 
-// See spreadsheet for numbers: https://docs.google.com/spreadsheets/d/1-rwcReLbGCkxYuF80FuQWMTYC9koPo7VFoRtJrp3628/edit?usp=sharing
+// See spreadsheet for numbers: files/Red Bank interest rates.xlsx
 #[test]
 fn interest_rates_accured_based_on_internally_tracked_balances() {
     let owner = Addr::unchecked("owner");
