@@ -42,13 +42,12 @@ anyhow            = "1.0.71"
 bech32            = "0.9.1"
 cosmwasm-schema   = "1.2.6"
 cosmwasm-std      = "1.2.6"
-cw2               = { git = "https://github.com/CosmWasm/cw-plus", rev = "de1fb0b" }
+cw2               = "1.1.0"
 cw-multi-test     = "0.16.5"
 cw-storage-plus   = "1.0.1"
 cw-utils          = "1.0.1"
 mars-owner        = { version = "1.2.0", features = ["emergency-owner"] }
-osmosis-std       = "0.16.0-beta.1"
-osmosis-test-tube = "15.1.0"
+osmosis-std       = "0.16.0"
 prost             = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
 schemars          = "0.8.12"
 serde             = { version = "1.0.163", default-features = false, features = ["derive"] }
@@ -59,7 +58,8 @@ astroport         = "2.8.0"
 strum             = "0.24.1"
 
 # dev-dependencies
-cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "31e6aa1e012a516ad67c38bed70f450564f40e78" }
+cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "af23474183cc56746a0b9785328a0009427caa9a" }
+osmosis-test-tube = "16.0.0"
 test-case         = "3.0.0"
 proptest          = "1.1.0"
 
