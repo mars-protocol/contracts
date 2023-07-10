@@ -15,16 +15,23 @@ pub enum ExecuteMsg {
     UpdateOwner(OwnerUpdate),
     /// Update contract config constants
     UpdateConfig {
-        credit_manager: Option<String>,
-        params: Option<String>,
+        credit_manager: String,
     },
 }
 
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    #[returns(crate::HealthResponse)]
-    Health {
+    /// Returns all values that comprise health for account
+    #[returns(crate::HealthValuesResponse)]
+    HealthValues {
+        account_id: String,
+        kind: AccountKind,
+    },
+    /// Returns Healthy or Unhealthy state. Does not do health calculations if no debt.
+    /// This is helpful in the cases like liquidation where we should not query the oracle if can help it.
+    #[returns(crate::HealthState)]
+    HealthState {
         account_id: String,
         kind: AccountKind,
     },
@@ -35,6 +42,5 @@ pub enum QueryMsg {
 #[cw_serde]
 pub struct ConfigResponse {
     pub credit_manager: Option<String>,
-    pub params: Option<String>,
     pub owner_response: OwnerResponse,
 }

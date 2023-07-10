@@ -99,7 +99,6 @@ export class Deployer {
       printBlue('Setting credit manager address & params on health contract config')
       await hExec.updateConfig({
         creditManager: this.storage.addresses.creditManager!,
-        params: this.config.params.addr,
       })
     }
     this.storage.actions.healthContractConfigUpdate = true

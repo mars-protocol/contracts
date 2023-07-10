@@ -51,7 +51,7 @@ pub fn is_below_one(health_factor: &Option<Decimal>) -> bool {
 }
 
 #[cw_serde]
-pub struct HealthResponse {
+pub struct HealthValuesResponse {
     pub total_debt_value: Uint128,
     pub total_collateral_value: Uint128,
     pub max_ltv_adjusted_collateral: Uint128,
@@ -62,7 +62,7 @@ pub struct HealthResponse {
     pub above_max_ltv: bool,
 }
 
-impl From<Health> for HealthResponse {
+impl From<Health> for HealthValuesResponse {
     fn from(h: Health) -> Self {
         Self {
             total_debt_value: h.total_debt_value,
@@ -75,4 +75,12 @@ impl From<Health> for HealthResponse {
             above_max_ltv: h.is_above_max_ltv(),
         }
     }
+}
+
+#[cw_serde]
+pub enum HealthState {
+    Healthy,
+    Unhealthy {
+        max_ltv_health_factor: Decimal,
+    },
 }

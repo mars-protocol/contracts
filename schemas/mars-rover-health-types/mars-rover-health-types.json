@@ -43,18 +43,12 @@
         "properties": {
           "update_config": {
             "type": "object",
+            "required": [
+              "credit_manager"
+            ],
             "properties": {
               "credit_manager": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "params": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -147,12 +141,39 @@
     "title": "QueryMsg",
     "oneOf": [
       {
+        "description": "Returns all values that comprise health for account",
         "type": "object",
         "required": [
-          "health"
+          "health_values"
         ],
         "properties": {
-          "health": {
+          "health_values": {
+            "type": "object",
+            "required": [
+              "account_id",
+              "kind"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string"
+              },
+              "kind": {
+                "$ref": "#/definitions/AccountKind"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Returns Healthy or Unhealthy state. Does not do health calculations if no debt. This is helpful in the cases like liquidation where we should not query the oracle if can help it.",
+        "type": "object",
+        "required": [
+          "health_state"
+        ],
+        "properties": {
+          "health_state": {
             "type": "object",
             "required": [
               "account_id",
@@ -214,12 +235,6 @@
         },
         "owner_response": {
           "$ref": "#/definitions/OwnerResponse"
-        },
-        "params": {
-          "type": [
-            "string",
-            "null"
-          ]
         }
       },
       "additionalProperties": false,
@@ -261,9 +276,48 @@
         }
       }
     },
-    "health": {
+    "health_state": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "HealthResponse",
+      "title": "HealthState",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "healthy"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "unhealthy"
+          ],
+          "properties": {
+            "unhealthy": {
+              "type": "object",
+              "required": [
+                "max_ltv_health_factor"
+              ],
+              "properties": {
+                "max_ltv_health_factor": {
+                  "$ref": "#/definitions/Decimal"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      ],
+      "definitions": {
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        }
+      }
+    },
+    "health_values": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HealthValuesResponse",
       "type": "object",
       "required": [
         "above_max_ltv",

@@ -323,6 +323,11 @@ function __wbg_get_imports() {
     const ret = new Error(getStringFromWasm0(arg0, arg1))
     return addHeapObject(ret)
   }
+  imports.wbg.__wbindgen_boolean_get = function (arg0) {
+    const v = getObject(arg0)
+    const ret = typeof v === 'boolean' ? (v ? 1 : 0) : 2
+    return ret
+  }
   imports.wbg.__wbindgen_is_string = function (arg0) {
     const ret = typeof getObject(arg0) === 'string'
     return ret
@@ -337,11 +342,6 @@ function __wbg_get_imports() {
   }
   imports.wbg.__wbindgen_jsval_eq = function (arg0, arg1) {
     const ret = getObject(arg0) === getObject(arg1)
-    return ret
-  }
-  imports.wbg.__wbindgen_boolean_get = function (arg0) {
-    const v = getObject(arg0)
-    const ret = typeof v === 'boolean' ? (v ? 1 : 0) : 2
     return ret
   }
   imports.wbg.__wbg_new_abda76e883ba8a5f = function () {

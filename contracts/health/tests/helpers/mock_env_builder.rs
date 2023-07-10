@@ -32,17 +32,12 @@ pub struct MockEnvBuilder {
     pub oracle: Option<Addr>,
     pub params: Option<Addr>,
     pub set_cm_config: bool,
-    pub set_params_config: bool,
 }
 
 impl MockEnvBuilder {
     pub fn build(&mut self) -> AnyResult<MockEnv> {
         if self.set_cm_config {
             self.add_cm_to_config();
-        }
-
-        if self.set_params_config {
-            self.add_params_to_config();
         }
 
         Ok(MockEnv {
@@ -61,11 +56,6 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn skip_params_config(&mut self) -> &mut Self {
-        self.set_params_config = false;
-        self
-    }
-
     fn add_cm_to_config(&mut self) {
         let health_contract = self.get_health_contract();
         let cm_contract = self.get_cm_contract();
@@ -75,25 +65,7 @@ impl MockEnvBuilder {
                 self.deployer.clone(),
                 health_contract,
                 &UpdateConfig {
-                    credit_manager: Some(cm_contract.to_string()),
-                    params: None,
-                },
-                &[],
-            )
-            .unwrap();
-    }
-
-    fn add_params_to_config(&mut self) {
-        let health_contract = self.get_health_contract();
-        let params_contract = self.get_params_contract();
-
-        self.app
-            .execute_contract(
-                self.deployer.clone(),
-                health_contract,
-                &UpdateConfig {
-                    credit_manager: None,
-                    params: Some(params_contract.to_string()),
+                    credit_manager: cm_contract.to_string(),
                 },
                 &[],
             )

@@ -1,5 +1,5 @@
 use cosmwasm_schema::serde::{de::DeserializeOwned, Serialize};
-use mars_rover_health_types::HealthResponse;
+use mars_rover_health_types::HealthValuesResponse;
 use wasm_bindgen::prelude::*;
 
 use crate::HealthComputer;
@@ -8,7 +8,7 @@ use crate::HealthComputer;
 pub fn compute_health_js(health_computer: JsValue) -> JsValue {
     let c: HealthComputer = deserialize(health_computer);
     let health = c.compute_health().unwrap();
-    let health_response: HealthResponse = health.into();
+    let health_response: HealthValuesResponse = health.into();
     serialize(health_response)
 }
 

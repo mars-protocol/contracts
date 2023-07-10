@@ -3,11 +3,11 @@ use mars_rover::{
     error::{ContractError, ContractResult},
     traits::Stringify,
 };
-use mars_rover_health_types::{is_below_one, HealthResponse};
+use mars_rover_health_types::{is_below_one, HealthValuesResponse};
 
 use crate::{state::HEALTH_CONTRACT, utils::get_account_kind};
 
-pub fn query_health(deps: Deps, account_id: &str) -> ContractResult<HealthResponse> {
+pub fn query_health(deps: Deps, account_id: &str) -> ContractResult<HealthValuesResponse> {
     let hc = HEALTH_CONTRACT.load(deps.storage)?;
     let kind = get_account_kind(deps.storage, account_id)?;
     Ok(hc.query_health(&deps.querier, account_id, kind)?)

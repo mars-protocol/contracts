@@ -24,23 +24,11 @@ pub mod helpers;
 #[test]
 fn raises_when_credit_manager_not_set() {
     let mock = MockEnv::new().skip_cm_config().build().unwrap();
-    let err: StdError = mock.query_health("xyz", AccountKind::Default).unwrap_err();
+    let err: StdError = mock.query_health_values("xyz", AccountKind::Default).unwrap_err();
     assert_eq!(
         err,
         StdError::generic_err(
-            "Querier contract error: credit_manger address has not been set in config".to_string()
-        )
-    );
-}
-
-#[test]
-fn raises_when_params_contract_not_set() {
-    let mock = MockEnv::new().skip_params_config().build().unwrap();
-    let err: StdError = mock.query_health("xyz", AccountKind::Default).unwrap_err();
-    assert_eq!(
-        err,
-        StdError::generic_err(
-            "Querier contract error: params address has not been set in config".to_string()
+            "Querier contract error: cosmwasm_std::addresses::Addr not found".to_string()
         )
     );
 }
@@ -48,7 +36,7 @@ fn raises_when_params_contract_not_set() {
 #[test]
 fn raises_with_non_existent_account_id() {
     let mock = MockEnv::new().build().unwrap();
-    let err: StdError = mock.query_health("xyz", AccountKind::Default).unwrap_err();
+    let err: StdError = mock.query_health_values("xyz", AccountKind::Default).unwrap_err();
     assert_eq!(
         err,
         StdError::generic_err(
@@ -74,7 +62,7 @@ fn computes_correct_position_with_zero_assets() {
         },
     );
 
-    let health = mock.query_health(account_id, AccountKind::Default).unwrap();
+    let health = mock.query_health_values(account_id, AccountKind::Default).unwrap();
     assert_eq!(health.total_debt_value, Uint128::zero());
     assert_eq!(health.total_collateral_value, Uint128::zero());
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::zero());
@@ -153,7 +141,7 @@ fn adds_vault_base_denoms_to_oracle_and_red_bank() {
 
     mock.set_price(vault_base_token, Decimal::one());
 
-    let health = mock.query_health(account_id, AccountKind::Default).unwrap();
+    let health = mock.query_health_values(account_id, AccountKind::Default).unwrap();
     assert_eq!(health.total_debt_value, Uint128::zero());
     assert_eq!(health.total_collateral_value, unlocking_amount);
     assert_eq!(
@@ -231,7 +219,7 @@ fn whitelisted_coins_work() {
         },
     );
 
-    let health = mock.query_health(account_id, AccountKind::Default).unwrap();
+    let health = mock.query_health_values(account_id, AccountKind::Default).unwrap();
     assert_eq!(health.total_debt_value, Uint128::zero());
     assert_eq!(health.total_collateral_value, deposit_amount); // price of 1
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::zero()); // coin not in whitelist
@@ -249,7 +237,7 @@ fn whitelisted_coins_work() {
     mock.update_asset_params(AddOrUpdate {
         params: asset_params,
     });
-    let health = mock.query_health(account_id, AccountKind::Default).unwrap();
+    let health = mock.query_health_values(account_id, AccountKind::Default).unwrap();
     // Now reflects deposit value
     assert_eq!(
         health.max_ltv_adjusted_collateral,
@@ -319,7 +307,7 @@ fn vault_whitelist_affects_max_ltv() {
 
     let mut vault_config = mock.query_vault_config(&vault.into());
 
-    let health = mock.query_health(account_id, AccountKind::Default).unwrap();
+    let health = mock.query_health_values(account_id, AccountKind::Default).unwrap();
     assert_eq!(health.total_debt_value, Uint128::zero());
     assert_eq!(health.total_collateral_value, base_token_amount);
     assert_eq!(
@@ -342,6 +330,6 @@ fn vault_whitelist_affects_max_ltv() {
         config: vault_config.into(),
     });
 
-    let health = mock.query_health(account_id, AccountKind::Default).unwrap();
+    let health = mock.query_health_values(account_id, AccountKind::Default).unwrap();
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::zero());
 }

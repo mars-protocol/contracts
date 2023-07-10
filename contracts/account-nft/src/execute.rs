@@ -6,7 +6,7 @@ use cw721_base::{
     ContractError::Ownership,
     OwnershipError::{NoOwner, NotOwner},
 };
-use mars_rover_health_types::{AccountKind, HealthResponse, QueryMsg::Health};
+use mars_rover_health_types::{AccountKind, HealthValuesResponse, QueryMsg::HealthValues};
 
 use crate::{
     contract::Parent,
@@ -40,13 +40,14 @@ pub fn burn(
         return Err(HealthContractNotSet);
     };
 
-    let response: HealthResponse = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-        contract_addr: health_contract_addr.into(),
-        msg: to_binary(&Health {
-            account_id: token_id.clone(),
-            kind: AccountKind::Default,
-        })?,
-    }))?;
+    let response: HealthValuesResponse =
+        deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: health_contract_addr.into(),
+            msg: to_binary(&HealthValues {
+                account_id: token_id.clone(),
+                kind: AccountKind::Default,
+            })?,
+        }))?;
 
     if !response.total_debt_value.is_zero() {
         return Err(BurnNotAllowed {

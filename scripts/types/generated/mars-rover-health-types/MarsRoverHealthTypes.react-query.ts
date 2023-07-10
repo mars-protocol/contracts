@@ -16,9 +16,10 @@ import {
   AccountKind,
   ConfigResponse,
   OwnerResponse,
+  HealthState,
   Decimal,
   Uint128,
-  HealthResponse,
+  HealthValuesResponse,
 } from './MarsRoverHealthTypes.types'
 import {
   MarsRoverHealthTypesQueryClient,
@@ -32,9 +33,21 @@ export const marsRoverHealthTypesQueryKeys = {
   ] as const,
   address: (contractAddress: string | undefined) =>
     [{ ...marsRoverHealthTypesQueryKeys.contract[0], address: contractAddress }] as const,
-  health: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+  healthValues: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
-      { ...marsRoverHealthTypesQueryKeys.address(contractAddress)[0], method: 'health', args },
+      {
+        ...marsRoverHealthTypesQueryKeys.address(contractAddress)[0],
+        method: 'health_values',
+        args,
+      },
+    ] as const,
+  healthState: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      {
+        ...marsRoverHealthTypesQueryKeys.address(contractAddress)[0],
+        method: 'health_state',
+        args,
+      },
     ] as const,
   config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -62,23 +75,47 @@ export function useMarsRoverHealthTypesConfigQuery<TData = ConfigResponse>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsRoverHealthTypesHealthQuery<TData>
-  extends MarsRoverHealthTypesReactQuery<HealthResponse, TData> {
+export interface MarsRoverHealthTypesHealthStateQuery<TData>
+  extends MarsRoverHealthTypesReactQuery<HealthState, TData> {
   args: {
     accountId: string
     kind: AccountKind
   }
 }
-export function useMarsRoverHealthTypesHealthQuery<TData = HealthResponse>({
+export function useMarsRoverHealthTypesHealthStateQuery<TData = HealthState>({
   client,
   args,
   options,
-}: MarsRoverHealthTypesHealthQuery<TData>) {
-  return useQuery<HealthResponse, Error, TData>(
-    marsRoverHealthTypesQueryKeys.health(client?.contractAddress, args),
+}: MarsRoverHealthTypesHealthStateQuery<TData>) {
+  return useQuery<HealthState, Error, TData>(
+    marsRoverHealthTypesQueryKeys.healthState(client?.contractAddress, args),
     () =>
       client
-        ? client.health({
+        ? client.healthState({
+            accountId: args.accountId,
+            kind: args.kind,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsRoverHealthTypesHealthValuesQuery<TData>
+  extends MarsRoverHealthTypesReactQuery<HealthValuesResponse, TData> {
+  args: {
+    accountId: string
+    kind: AccountKind
+  }
+}
+export function useMarsRoverHealthTypesHealthValuesQuery<TData = HealthValuesResponse>({
+  client,
+  args,
+  options,
+}: MarsRoverHealthTypesHealthValuesQuery<TData>) {
+  return useQuery<HealthValuesResponse, Error, TData>(
+    marsRoverHealthTypesQueryKeys.healthValues(client?.contractAddress, args),
+    () =>
+      client
+        ? client.healthValues({
             accountId: args.accountId,
             kind: args.kind,
           })
@@ -89,8 +126,7 @@ export function useMarsRoverHealthTypesHealthQuery<TData = HealthResponse>({
 export interface MarsRoverHealthTypesUpdateConfigMutation {
   client: MarsRoverHealthTypesClient
   msg: {
-    creditManager?: string
-    params?: string
+    creditManager: string
   }
   args?: {
     fee?: number | StdFee | 'auto'

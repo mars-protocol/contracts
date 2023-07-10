@@ -1,7 +1,7 @@
 import { Positions } from '../types/generated/mars-credit-manager/MarsCreditManager.types'
 import { MarsCreditManagerQueryClient } from '../types/generated/mars-credit-manager/MarsCreditManager.client'
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate/build/cosmwasmclient'
-import { HealthResponse } from '../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'
+import { HealthValuesResponse } from '../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'
 import {
   AccountKind,
   DenomsData,
@@ -14,7 +14,7 @@ import { MarsParamsQueryClient } from '../types/generated/mars-params/MarsParams
 
 export class DataFetcher {
   constructor(
-    private computeHealthFn: (h: HealthComputer) => HealthResponse,
+    private computeHealthFn: (h: HealthComputer) => HealthValuesResponse,
     private maxWithdrawFn: (h: HealthComputer, denom: string) => string,
     private maxBorrowFn: (h: HealthComputer, denom: string) => string,
     private creditManagerAddr: string,
@@ -108,7 +108,7 @@ export class DataFetcher {
     }
   }
 
-  computeHealth = async (accountId: string): Promise<HealthResponse> => {
+  computeHealth = async (accountId: string): Promise<HealthValuesResponse> => {
     const positions = await this.assembleComputer(accountId)
     return this.computeHealthFn(positions)
   }

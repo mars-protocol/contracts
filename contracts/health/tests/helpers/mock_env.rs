@@ -17,7 +17,8 @@ use mars_params::{
 };
 use mars_rover::{adapters::vault::VaultUnchecked, msg::query::Positions};
 use mars_rover_health_types::{
-    AccountKind, ConfigResponse, ExecuteMsg::UpdateConfig, HealthResponse, QueryMsg,
+    AccountKind, ConfigResponse, ExecuteMsg::UpdateConfig, HealthState, HealthValuesResponse,
+    QueryMsg,
 };
 
 use crate::helpers::MockEnvBuilder;
@@ -40,7 +41,6 @@ impl MockEnv {
             deployer: Addr::unchecked("deployer"),
             health_contract: None,
             set_cm_config: true,
-            set_params_config: true,
             cm_contract: None,
             vault_contract: None,
             oracle: None,
@@ -48,10 +48,28 @@ impl MockEnv {
         }
     }
 
-    pub fn query_health(&self, account_id: &str, kind: AccountKind) -> StdResult<HealthResponse> {
+    pub fn query_health_values(
+        &self,
+        account_id: &str,
+        kind: AccountKind,
+    ) -> StdResult<HealthValuesResponse> {
         self.app.wrap().query_wasm_smart(
             self.health_contract.clone(),
-            &QueryMsg::Health {
+            &QueryMsg::HealthValues {
+                account_id: account_id.to_string(),
+                kind,
+            },
+        )
+    }
+
+    pub fn query_health_state(
+        &self,
+        account_id: &str,
+        kind: AccountKind,
+    ) -> StdResult<HealthState> {
+        self.app.wrap().query_wasm_smart(
+            self.health_contract.clone(),
+            &QueryMsg::HealthState {
                 account_id: account_id.to_string(),
                 kind,
             },
@@ -80,15 +98,13 @@ impl MockEnv {
     pub fn update_config(
         &mut self,
         sender: &Addr,
-        credit_manager: Option<String>,
-        params: Option<String>,
+        credit_manager: String,
     ) -> AnyResult<AppResponse> {
         self.app.execute_contract(
             sender.clone(),
             self.health_contract.clone(),
             &UpdateConfig {
                 credit_manager,
-                params,
             },
             &[],
         )

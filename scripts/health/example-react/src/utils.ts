@@ -5,7 +5,7 @@ import init, {
   max_withdraw_estimate_js,
   max_borrow_estimate_js,
 } from '../../pkg-web'
-import { HealthResponse } from '../../../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'
+import { HealthValuesResponse } from '../../../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'
 import { DataFetcher } from '../../DataFetcher'
 import { osmosisTestnetConfig } from '../../../deploy/osmosis/testnet-config'
 
@@ -29,7 +29,7 @@ export const fetchPositions = async (cmAddress: string, accountId: string): Prom
 export const fetchHealth = async (
   cmAddress: string,
   accountId: string,
-): Promise<HealthResponse> => {
+): Promise<HealthValuesResponse> => {
   await init()
   const dataFetcher = getFetcher(cmAddress)
   return await dataFetcher.computeHealth(accountId)

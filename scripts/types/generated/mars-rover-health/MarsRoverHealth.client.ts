@@ -15,13 +15,27 @@ import {
   AccountKind,
   ConfigResponse,
   OwnerResponse,
+  HealthState,
   Decimal,
   Uint128,
-  HealthResponse,
+  HealthValuesResponse,
 } from './MarsRoverHealth.types'
 export interface MarsRoverHealthReadOnlyInterface {
   contractAddress: string
-  health: ({ accountId, kind }: { accountId: string; kind: AccountKind }) => Promise<HealthResponse>
+  healthValues: ({
+    accountId,
+    kind,
+  }: {
+    accountId: string
+    kind: AccountKind
+  }) => Promise<HealthValuesResponse>
+  healthState: ({
+    accountId,
+    kind,
+  }: {
+    accountId: string
+    kind: AccountKind
+  }) => Promise<HealthState>
   config: () => Promise<ConfigResponse>
 }
 export class MarsRoverHealthQueryClient implements MarsRoverHealthReadOnlyInterface {
@@ -31,19 +45,34 @@ export class MarsRoverHealthQueryClient implements MarsRoverHealthReadOnlyInterf
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client
     this.contractAddress = contractAddress
-    this.health = this.health.bind(this)
+    this.healthValues = this.healthValues.bind(this)
+    this.healthState = this.healthState.bind(this)
     this.config = this.config.bind(this)
   }
 
-  health = async ({
+  healthValues = async ({
     accountId,
     kind,
   }: {
     accountId: string
     kind: AccountKind
-  }): Promise<HealthResponse> => {
+  }): Promise<HealthValuesResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      health: {
+      health_values: {
+        account_id: accountId,
+        kind,
+      },
+    })
+  }
+  healthState = async ({
+    accountId,
+    kind,
+  }: {
+    accountId: string
+    kind: AccountKind
+  }): Promise<HealthState> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      health_state: {
         account_id: accountId,
         kind,
       },
@@ -67,10 +96,8 @@ export interface MarsRoverHealthInterface extends MarsRoverHealthReadOnlyInterfa
   updateConfig: (
     {
       creditManager,
-      params,
     }: {
-      creditManager?: string
-      params?: string
+      creditManager: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -114,10 +141,8 @@ export class MarsRoverHealthClient
   updateConfig = async (
     {
       creditManager,
-      params,
     }: {
-      creditManager?: string
-      params?: string
+      creditManager: string
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -129,7 +154,6 @@ export class MarsRoverHealthClient
       {
         update_config: {
           credit_manager: creditManager,
-          params,
         },
       },
       fee,

@@ -17,9 +17,10 @@ import {
   AccountKind,
   ConfigResponse,
   OwnerResponse,
+  HealthState,
   Decimal,
   Uint128,
-  HealthResponse,
+  HealthValuesResponse,
 } from './MarsRoverHealth.types'
 export interface MarsRoverHealthMessage {
   contractAddress: string
@@ -28,10 +29,8 @@ export interface MarsRoverHealthMessage {
   updateConfig: (
     {
       creditManager,
-      params,
     }: {
-      creditManager?: string
-      params?: string
+      creditManager: string
     },
     _funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
@@ -65,10 +64,8 @@ export class MarsRoverHealthMessageComposer implements MarsRoverHealthMessage {
   updateConfig = (
     {
       creditManager,
-      params,
     }: {
-      creditManager?: string
-      params?: string
+      creditManager: string
     },
     _funds?: Coin[],
   ): MsgExecuteContractEncodeObject => {
@@ -81,7 +78,6 @@ export class MarsRoverHealthMessageComposer implements MarsRoverHealthMessage {
           JSON.stringify({
             update_config: {
               credit_manager: creditManager,
-              params,
             },
           }),
         ),

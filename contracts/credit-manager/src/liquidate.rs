@@ -10,7 +10,7 @@ use mars_rover::{
     error::{ContractError, ContractResult},
     traits::Stringify,
 };
-use mars_rover_health_types::HealthResponse;
+use mars_rover_health_types::HealthValuesResponse;
 
 use crate::{
     health::query_health,
@@ -113,7 +113,7 @@ fn calculate_liquidation_amounts(
     debt_requested_to_repay: Uint128,
     debt_price: Decimal,
     target_health_factor: Decimal,
-    health: &HealthResponse,
+    health: &HealthValuesResponse,
 ) -> Result<(Uint128, Uint128, Uint128), ContractError> {
     // if health.liquidatable == true, save to unwrap
     let liquidation_health_factor = health.liquidation_health_factor.unwrap();

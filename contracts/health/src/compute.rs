@@ -1,34 +1,21 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{Deps, StdResult};
+use mars_rover::msg::query::Positions;
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
-use mars_rover_health_types::{
-    AccountKind, HealthError::ContractNotSet, HealthResponse, HealthResult,
-};
+use mars_rover_health_types::{AccountKind, HealthResult, HealthState, HealthValuesResponse};
 
-use crate::{
-    querier::HealthQuerier,
-    state::{CREDIT_MANAGER, PARAMS},
-};
+use crate::querier::HealthQuerier;
 
 /// Uses `mars-rover-health-computer` which is a data agnostic package given
 /// it's compiled to .wasm and shared with the frontend.
 /// This function queries all necessary data to pass to `HealthComputer`.
 pub fn compute_health(
     deps: Deps,
-    account_id: &str,
     kind: AccountKind,
-) -> HealthResult<HealthResponse> {
-    let credit_manager_addr = CREDIT_MANAGER
-        .may_load(deps.storage)?
-        .ok_or(ContractNotSet("credit_manger".to_string()))?;
-    let params_contract_addr =
-        PARAMS.may_load(deps.storage)?.ok_or(ContractNotSet("params".to_string()))?;
-
-    let querier = HealthQuerier::new(&deps.querier, &credit_manager_addr, &params_contract_addr);
-
-    let positions = querier.query_positions(account_id)?;
-
+    q: HealthQuerier,
+    positions: Positions,
+) -> HealthResult<HealthValuesResponse> {
     // Get the denoms that need prices + markets
     let deposit_denoms = positions.deposits.iter().map(|d| &d.denom).collect::<Vec<_>>();
     let debt_denoms = positions.debts.iter().map(|d| &d.denom).collect::<Vec<_>>();
@@ -44,7 +31,6 @@ pub fn compute_health(
     let vault_base_token_denoms = vault_infos.values().map(|v| &v.base_token).collect::<Vec<_>>();
 
     // Collect prices + asset
-    let (oracle, params) = querier.query_deps()?;
     let mut denoms_data: DenomsData = Default::default();
     deposit_denoms
         .into_iter()
@@ -52,9 +38,9 @@ pub fn compute_health(
         .chain(lend_denoms)
         .chain(vault_base_token_denoms)
         .try_for_each(|denom| -> StdResult<()> {
-            let price = oracle.query_price(&deps.querier, denom)?.price;
+            let price = q.oracle.query_price(&deps.querier, denom)?.price;
             denoms_data.prices.insert(denom.clone(), price);
-            let params = params.query_asset_params(&deps.querier, denom)?;
+            let params = q.params.query_asset_params(&deps.querier, denom)?;
             denoms_data.params.insert(denom.clone(), params);
             Ok(())
         })?;
@@ -62,9 +48,9 @@ pub fn compute_health(
     // Collect all vault data
     let mut vaults_data: VaultsData = Default::default();
     positions.vaults.iter().try_for_each(|v| -> HealthResult<()> {
-        let vault_coin_value = v.query_values(&deps.querier, &oracle)?;
+        let vault_coin_value = v.query_values(&deps.querier, &q.oracle)?;
         vaults_data.vault_values.insert(v.vault.address.clone(), vault_coin_value);
-        let config = querier.query_vault_config(&v.vault)?;
+        let config = q.query_vault_config(&v.vault)?;
         vaults_data.vault_configs.insert(v.vault.address.clone(), config);
         Ok(())
     })?;
@@ -77,4 +63,34 @@ pub fn compute_health(
     };
 
     Ok(computer.compute_health()?.into())
+}
+
+pub fn health_values(
+    deps: Deps,
+    account_id: &str,
+    kind: AccountKind,
+) -> HealthResult<HealthValuesResponse> {
+    let q = HealthQuerier::new(&deps)?;
+    let positions = q.query_positions(account_id)?;
+    compute_health(deps, kind, q, positions)
+}
+
+pub fn health_state(deps: Deps, account_id: &str, kind: AccountKind) -> HealthResult<HealthState> {
+    let q = HealthQuerier::new(&deps)?;
+    let positions = q.query_positions(account_id)?;
+
+    // Helpful to not have to do computations & query the oracle for cases
+    // like liquidations where oracle circuit breakers may hinder it.
+    if positions.debts.is_empty() {
+        return Ok(HealthState::Healthy);
+    }
+
+    let health = compute_health(deps, kind, q, positions)?;
+    if !health.above_max_ltv {
+        Ok(HealthState::Healthy)
+    } else {
+        Ok(HealthState::Unhealthy {
+            max_ltv_health_factor: health.max_ltv_health_factor.unwrap(),
+        })
+    }
 }

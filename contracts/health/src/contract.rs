@@ -6,8 +6,8 @@ use mars_owner::OwnerInit::SetInitialOwner;
 use mars_rover_health_types::{ConfigResponse, ExecuteMsg, HealthResult, InstantiateMsg, QueryMsg};
 
 use crate::{
-    compute::compute_health,
-    state::{CREDIT_MANAGER, OWNER, PARAMS},
+    compute::{health_state, health_values},
+    state::{CREDIT_MANAGER, OWNER},
     update_config::update_config,
 };
 
@@ -45,18 +45,21 @@ pub fn execute(
         ExecuteMsg::UpdateOwner(update) => Ok(OWNER.update(deps, info, update)?),
         ExecuteMsg::UpdateConfig {
             credit_manager,
-            params,
-        } => update_config(deps, info, credit_manager, params),
+        } => update_config(deps, info, credit_manager),
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> HealthResult<Binary> {
     let res = match msg {
-        QueryMsg::Health {
+        QueryMsg::HealthValues {
             account_id,
             kind,
-        } => to_binary(&compute_health(deps, &account_id, kind)?),
+        } => to_binary(&health_values(deps, &account_id, kind)?),
+        QueryMsg::HealthState {
+            account_id,
+            kind,
+        } => to_binary(&health_state(deps, &account_id, kind)?),
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
     };
     res.map_err(Into::into)
@@ -64,12 +67,10 @@ pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> HealthResult<Binary> {
 
 pub fn query_config(deps: Deps) -> HealthResult<ConfigResponse> {
     let credit_manager = CREDIT_MANAGER.may_load(deps.storage)?.map(Into::into);
-    let params = PARAMS.may_load(deps.storage)?.map(Into::into);
     let owner_response = OWNER.query(deps.storage)?;
 
     Ok(ConfigResponse {
         credit_manager,
-        params,
         owner_response,
     })
 }

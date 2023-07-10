@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, QuerierWrapper, StdResult};
-use mars_rover_health_types::{AccountKind, HealthResponse, QueryMsg};
+use mars_rover_health_types::{AccountKind, HealthValuesResponse, QueryMsg};
 
 #[cw_serde]
 pub struct HealthContractBase<T>(T);
@@ -36,10 +36,10 @@ impl HealthContract {
         querier: &QuerierWrapper,
         account_id: &str,
         kind: AccountKind,
-    ) -> StdResult<HealthResponse> {
+    ) -> StdResult<HealthValuesResponse> {
         querier.query_wasm_smart(
             self.address().to_string(),
-            &QueryMsg::Health {
+            &QueryMsg::HealthValues {
                 account_id: account_id.to_string(),
                 kind,
             },

@@ -12,7 +12,7 @@ use mars_account_nft::{
     nft_config::{NftConfigUpdates, UncheckedNftConfig},
 };
 use mars_mock_rover_health::msg::ExecuteMsg::SetHealthResponse;
-use mars_rover_health_types::{AccountKind, HealthResponse};
+use mars_rover_health_types::{AccountKind, HealthValuesResponse};
 
 use crate::helpers::MockEnvBuilder;
 
@@ -76,7 +76,7 @@ impl MockEnv {
         &mut self,
         sender: &Addr,
         account_id: &str,
-        response: &HealthResponse,
+        response: &HealthValuesResponse,
     ) -> AppResponse {
         let config = self.query_config();
 

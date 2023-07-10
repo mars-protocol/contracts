@@ -64,8 +64,8 @@ use mars_rover::{
     },
 };
 use mars_rover_health_types::{
-    AccountKind, ExecuteMsg::UpdateConfig, HealthResponse, InstantiateMsg as HealthInstantiateMsg,
-    QueryMsg::Health,
+    AccountKind, ExecuteMsg::UpdateConfig, HealthValuesResponse,
+    InstantiateMsg as HealthInstantiateMsg, QueryMsg::HealthValues,
 };
 use mars_v2_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 
@@ -320,12 +320,12 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_health(&self, account_id: &str, kind: AccountKind) -> HealthResponse {
+    pub fn query_health(&self, account_id: &str, kind: AccountKind) -> HealthValuesResponse {
         self.app
             .wrap()
             .query_wasm_smart(
                 self.health_contract.clone().address(),
-                &Health {
+                &HealthValues {
                     account_id: account_id.to_string(),
                     kind,
                 },
@@ -688,7 +688,7 @@ impl MockEnvBuilder {
         self.add_params_to_contract();
 
         let health_contract = self.get_health_contract();
-        self.update_health_contract_config(&rover, params.address());
+        self.update_health_contract_config(&rover);
 
         self.deploy_nft_contract(&rover);
 
@@ -944,7 +944,7 @@ impl MockEnvBuilder {
         HealthContract::new(addr)
     }
 
-    fn update_health_contract_config(&mut self, cm_addr: &Addr, params: &Addr) {
+    fn update_health_contract_config(&mut self, cm_addr: &Addr) {
         let health_contract = self.get_health_contract();
 
         self.app
@@ -952,8 +952,7 @@ impl MockEnvBuilder {
                 self.get_owner(),
                 health_contract.address().clone(),
                 &UpdateConfig {
-                    credit_manager: Some(cm_addr.to_string()),
-                    params: Some(params.to_string()),
+                    credit_manager: cm_addr.to_string(),
                 },
                 &[],
             )

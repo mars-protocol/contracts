@@ -14,8 +14,7 @@ export type ExecuteMsg =
     }
   | {
       update_config: {
-        credit_manager?: string | null
-        params?: string | null
+        credit_manager: string
       }
     }
 export type OwnerUpdate =
@@ -35,7 +34,13 @@ export type OwnerUpdate =
   | 'clear_emergency_owner'
 export type QueryMsg =
   | {
-      health: {
+      health_values: {
+        account_id: string
+        kind: AccountKind
+      }
+    }
+  | {
+      health_state: {
         account_id: string
         kind: AccountKind
       }
@@ -47,7 +52,6 @@ export type AccountKind = 'default' | 'high_levered_strategy'
 export interface ConfigResponse {
   credit_manager?: string | null
   owner_response: OwnerResponse
-  params?: string | null
 }
 export interface OwnerResponse {
   abolished: boolean
@@ -56,9 +60,16 @@ export interface OwnerResponse {
   owner?: string | null
   proposed?: string | null
 }
+export type HealthState =
+  | 'healthy'
+  | {
+      unhealthy: {
+        max_ltv_health_factor: Decimal
+      }
+    }
 export type Decimal = string
 export type Uint128 = string
-export interface HealthResponse {
+export interface HealthValuesResponse {
   above_max_ltv: boolean
   liquidatable: boolean
   liquidation_health_factor?: Decimal | null

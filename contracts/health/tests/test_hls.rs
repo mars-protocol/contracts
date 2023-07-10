@@ -55,7 +55,7 @@ fn hls_account_kind_passed_along() {
 
     let vault_config = mock.query_vault_config(&vault.into());
 
-    let health = mock.query_health(account_id, AccountKind::HighLeveredStrategy).unwrap();
+    let health = mock.query_health_values(account_id, AccountKind::HighLeveredStrategy).unwrap();
     assert_eq!(health.total_debt_value, positions.debts.first().unwrap().amount);
     assert_eq!(health.total_collateral_value, base_token_amount);
     assert_eq!(

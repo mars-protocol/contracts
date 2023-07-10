@@ -4,7 +4,7 @@ use mars_rover::{
     error::ContractError,
     msg::execute::Action::{Borrow, Deposit, EnterVault, Lend},
 };
-use mars_rover_health_types::{AccountKind, HealthResponse};
+use mars_rover_health_types::{AccountKind, HealthValuesResponse};
 
 use crate::helpers::{
     assert_err, lp_token_info, uatom_info, ujake_info, unlocked_vault_info, AccountToFund, MockEnv,
@@ -277,7 +277,7 @@ fn successful_with_asset_correlations() {
     let atom_hls_liq = atom_collateral_value * atom_info.hls.unwrap().liquidation_threshold;
 
     assert_eq!(
-        HealthResponse {
+        HealthValuesResponse {
             total_debt_value,
             total_collateral_value: lp_collateral_value + atom_collateral_value,
             max_ltv_adjusted_collateral: lp_hls_max_ltv + atom_hls_max_ltv,
@@ -358,7 +358,7 @@ fn successful_with_vault_correlations() {
     let atom_hls_liq = atom_collateral_value * atom_info.hls.unwrap().liquidation_threshold;
 
     assert_eq!(
-        HealthResponse {
+        HealthValuesResponse {
             total_debt_value,
             total_collateral_value: lp_collateral_value + atom_collateral_value,
             max_ltv_adjusted_collateral: lp_hls_max_ltv + atom_hls_max_ltv,
