@@ -321,20 +321,38 @@ fn query_astroport_twap_price(
     };
     let period = current_snapshot.timestamp - previous_snapshot.timestamp;
 
+    let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
     // NOTE: Astroport introduces TWAP_PRECISION (https://github.com/astroport-fi/astroport/pull/143).
     // We must adjust the cumulative price delta by the precision factor to get the correct price.
-    // For XYK we just need to divide by the TWAP_PRECISION.
-    // For StableSwap, the cumulative price is stored as a simulated swap of one unit of the
-    // offer asset into the ask asset and then adjusted by the TWAP_PRECISION. So we need to
-    // adjust the price delta from TWAP_PRECISION to ask decimals and then divide by one offer unit.
-    let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
-
     let price = match pair_info.pair_type {
+        // For XYK we just need to divide by the TWAP_PRECISION as the number of decimals for each asset
+        // is disregarded in the calculations.
         PairType::Xyk {} => {
             let price_precision = Uint128::from(10_u128.pow(TWAP_PRECISION.into()));
 
             Decimal::from_ratio(price_delta, price_precision.checked_mul(period.into())?)
         }
+        // For StableSwap, the cumulative price is stored as a simulated swap of one unit of the
+        // offer asset into the ask asset and then adjusted by the TWAP_PRECISION. So we need to
+        // adjust the price delta from TWAP_PRECISION to ask decimals and then divide by one offer unit.
+        // E.g. for a stableswap pool with 5 decimals for the offer asset and 7 decimals for ask:
+        // Lets assume the price source denom is ATOM and the ask denom is OSMO. Further assume:
+        // ATOM: 5 decimals
+        // OSMO: 8 decimals
+        // TWAP_PRECISION: 6 decimals
+        // 1 ATOM = 10^5 uatom
+        // 1 OSMO = 10^8 uosmo
+        // Pool contains: 1000 ATOM and 1000 OSMO, i.e. 10^8 uatom and 10^11 uosmo, this means that
+        // the price is 1:1 ATOM:OSMO, or 1:1000 uatom:uosmo.
+        //
+        // When calculating the cumulative price, astroport simulates a swap of 1 base unit of the
+        // offer asset into the ask asset. In our example, this means 10^5 uatom is swapped into
+        // 10^8 uosmo. This is then adjusted by the TWAP_PRECISION, i.e. divided by 10^(8-6).
+        // Which gives a cumulative price of 10^6.
+        // In order to convert this back into a price of uosmo/uatom, we need to reverse the
+        // process. So we `adjust_precision` back from TWAP_PRECISION to 8 decimals, which performs
+        // 10^6 * 10^8-6) = 10^8. This is then divided by one base unit of ATOM (10^5) to get the
+        // final price of 10^3 uosmo/uatom.
         PairType::Stable {} => {
             // Get the number of decimals of offer and ask denoms
             let pair_denoms = get_astroport_pair_denoms(&pair_info)?;
