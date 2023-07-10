@@ -318,7 +318,7 @@
             ],
             "properties": {
               "lend": {
-                "$ref": "#/definitions/Coin"
+                "$ref": "#/definitions/ActionCoin"
               }
             },
             "additionalProperties": false
@@ -794,7 +794,7 @@
                     "type": "string"
                   },
                   "coin": {
-                    "$ref": "#/definitions/Coin"
+                    "$ref": "#/definitions/ActionCoin"
                   }
                 },
                 "additionalProperties": false

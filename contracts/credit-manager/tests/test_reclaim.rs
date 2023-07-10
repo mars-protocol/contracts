@@ -78,7 +78,7 @@ fn when_trying_to_reclaim_more_than_lent() {
     mock.update_credit_account(
         &account_id,
         &user,
-        vec![Deposit(coin_info.to_coin(300)), Lend(coin_info.to_coin(50))],
+        vec![Deposit(coin_info.to_coin(300)), Lend(coin_info.to_action_coin(50))],
         &[coin_info.to_coin(300)],
     )
     .unwrap();
@@ -133,7 +133,7 @@ fn reclaiming_less_than_entire_lent_share() {
     mock.update_credit_account(
         &account_id,
         &user,
-        vec![Deposit(coin_info.to_coin(300)), Lend(coin_info.to_coin(200))],
+        vec![Deposit(coin_info.to_coin(300)), Lend(coin_info.to_action_coin(200))],
         &[coin(300, coin_info.denom.clone())],
     )
     .unwrap();
@@ -188,7 +188,7 @@ fn reclaiming_the_entire_lent_share() {
     mock.update_credit_account(
         &account_id,
         &user,
-        vec![Deposit(coin_info.to_coin(300)), Lend(coin_info.to_coin(100))],
+        vec![Deposit(coin_info.to_coin(300)), Lend(coin_info.to_action_coin(100))],
         &[coin(300, coin_info.denom.clone())],
     )
     .unwrap();
@@ -248,7 +248,7 @@ fn reclaiming_multiple_assets() {
     mock.update_credit_account(
         &account_id,
         &user,
-        vec![Deposit(uatom_info.to_coin(300)), Lend(uatom_info.to_coin(100))],
+        vec![Deposit(uatom_info.to_coin(300)), Lend(uatom_info.to_action_coin(100))],
         &[coin(300, uatom_info.denom.clone())],
     )
     .unwrap();
@@ -256,7 +256,7 @@ fn reclaiming_multiple_assets() {
     mock.update_credit_account(
         &account_id,
         &user,
-        vec![Deposit(uosmo_info.to_coin(200)), Lend(uosmo_info.to_coin(100))],
+        vec![Deposit(uosmo_info.to_coin(200)), Lend(uosmo_info.to_action_coin(100))],
         &[coin(200, uosmo_info.denom.clone())],
     )
     .unwrap();

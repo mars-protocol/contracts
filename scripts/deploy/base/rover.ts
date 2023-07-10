@@ -71,7 +71,10 @@ export class Rover {
 
   async lend() {
     const amount = this.actions.lendAmount
-    await this.updateCreditAccount([{ lend: { amount, denom: this.config.chain.baseDenom } }], [])
+    await this.updateCreditAccount(
+      [{ lend: { amount: { exact: amount }, denom: this.config.chain.baseDenom } }],
+      [],
+    )
     const positions = await this.query.positions({ accountId: this.accountId! })
     assert.equal(positions.lends.length, 1)
     assert.equal(positions.lends[0].denom, this.config.chain.baseDenom)

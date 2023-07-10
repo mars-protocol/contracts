@@ -1,6 +1,9 @@
 use cosmwasm_std::{coin, Addr};
 use mars_credit_manager::lend::DEFAULT_LENT_SHARES_PER_COIN;
-use mars_rover::msg::{execute::Action, query::LentShares};
+use mars_rover::msg::{
+    execute::{Action, ActionAmount, ActionCoin},
+    query::LentShares,
+};
 
 use crate::helpers::{build_mock_coin_infos, AccountToFund, MockEnv};
 
@@ -13,44 +16,44 @@ fn pagination_on_all_total_lent_shares_query_works() {
     let user_c = Addr::unchecked("user_c");
 
     let user_a_coins = vec![
-        coin(10, "coin_1"),
-        coin(10, "coin_2"),
-        coin(10, "coin_3"),
-        coin(10, "coin_4"),
-        coin(10, "coin_5"),
-        coin(10, "coin_6"),
-        coin(10, "coin_7"),
-        coin(10, "coin_8"),
-        coin(10, "coin_9"),
-        coin(10, "coin_10"),
-        coin(10, "coin_11"),
-        coin(10, "coin_12"),
-        coin(10, "coin_13"),
-        coin(10, "coin_14"),
+        coin(1, "coin_1"),
+        coin(1, "coin_2"),
+        coin(1, "coin_3"),
+        coin(1, "coin_4"),
+        coin(1, "coin_5"),
+        coin(1, "coin_6"),
+        coin(1, "coin_7"),
+        coin(1, "coin_8"),
+        coin(1, "coin_9"),
+        coin(1, "coin_10"),
+        coin(1, "coin_11"),
+        coin(1, "coin_12"),
+        coin(1, "coin_13"),
+        coin(1, "coin_14"),
     ];
 
     let user_b_coins = vec![
-        coin(10, "coin_15"),
-        coin(10, "coin_16"),
-        coin(10, "coin_17"),
-        coin(10, "coin_18"),
-        coin(10, "coin_19"),
-        coin(10, "coin_20"),
-        coin(10, "coin_21"),
-        coin(10, "coin_22"),
-        coin(10, "coin_23"),
-        coin(10, "coin_24"),
+        coin(1, "coin_15"),
+        coin(1, "coin_16"),
+        coin(1, "coin_17"),
+        coin(1, "coin_18"),
+        coin(1, "coin_19"),
+        coin(1, "coin_20"),
+        coin(1, "coin_21"),
+        coin(1, "coin_22"),
+        coin(1, "coin_23"),
+        coin(1, "coin_24"),
     ];
 
     let user_c_coins = vec![
-        coin(10, "coin_25"),
-        coin(10, "coin_26"),
-        coin(10, "coin_27"),
-        coin(10, "coin_28"),
-        coin(10, "coin_29"),
-        coin(10, "coin_30"),
-        coin(10, "coin_31"),
-        coin(10, "coin_32"),
+        coin(1, "coin_25"),
+        coin(1, "coin_26"),
+        coin(1, "coin_27"),
+        coin(1, "coin_28"),
+        coin(1, "coin_29"),
+        coin(1, "coin_30"),
+        coin(1, "coin_31"),
+        coin(1, "coin_32"),
     ];
 
     let mut mock = MockEnv::new()
@@ -76,7 +79,15 @@ fn pagination_on_all_total_lent_shares_query_works() {
         &user_a,
         user_a_coins
             .iter()
-            .flat_map(|c| vec![Action::Deposit(c.clone()), Action::Lend(coin(1, c.denom.clone()))])
+            .flat_map(|c| {
+                vec![
+                    Action::Deposit(c.clone()),
+                    Action::Lend(ActionCoin {
+                        denom: c.denom.clone(),
+                        amount: ActionAmount::Exact(c.amount),
+                    }),
+                ]
+            })
             .collect::<Vec<Action>>(),
         &user_a_coins,
     )
@@ -88,7 +99,15 @@ fn pagination_on_all_total_lent_shares_query_works() {
         &user_b,
         user_b_coins
             .iter()
-            .flat_map(|c| vec![Action::Deposit(c.clone()), Action::Lend(coin(1, c.denom.clone()))])
+            .flat_map(|c| {
+                vec![
+                    Action::Deposit(c.clone()),
+                    Action::Lend(ActionCoin {
+                        denom: c.denom.clone(),
+                        amount: ActionAmount::Exact(c.amount),
+                    }),
+                ]
+            })
             .collect::<Vec<Action>>(),
         &user_b_coins,
     )
@@ -100,7 +119,15 @@ fn pagination_on_all_total_lent_shares_query_works() {
         &user_c,
         user_c_coins
             .iter()
-            .flat_map(|c| vec![Action::Deposit(c.clone()), Action::Lend(coin(1, c.denom.clone()))])
+            .flat_map(|c| {
+                vec![
+                    Action::Deposit(c.clone()),
+                    Action::Lend(ActionCoin {
+                        denom: c.denom.clone(),
+                        amount: ActionAmount::Exact(c.amount),
+                    }),
+                ]
+            })
             .collect::<Vec<Action>>(),
         &user_c_coins,
     )

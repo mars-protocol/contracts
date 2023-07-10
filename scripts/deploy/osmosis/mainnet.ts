@@ -30,7 +30,6 @@ export const osmosisMainnetConfig: DeploymentConfig = {
     { denomIn: uosmo, denomOut: axlUSDC, route: [{ token_out_denom: axlUSDC, pool_id: '678' }] },
     { denomIn: axlUSDC, denomOut: uosmo, route: [{ token_out_denom: uosmo, pool_id: '678' }] },
   ],
-  // Latest from: https://stats.apollo.farm/api/vaults/v1/all
   vaults: [
     {
       addr: 'osmo1g3kmqpp8608szfp0pdag3r6z85npph7wmccat8lgl3mp407kv73qlj7qwp',

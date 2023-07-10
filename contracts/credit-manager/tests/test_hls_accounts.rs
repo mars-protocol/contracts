@@ -189,7 +189,7 @@ fn wrong_correlations_does_not_qualify() {
         &account_id,
         &user,
         vec![
-            Lend(jake_info.to_coin(50)),
+            Lend(jake_info.to_action_coin(50)),
             Deposit(jake_info.to_coin(50)),
             Deposit(atom_info.to_coin(300)),
             Borrow(atom_info.to_coin(1)),

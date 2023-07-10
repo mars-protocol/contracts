@@ -273,7 +273,7 @@ pub fn execute_callback(
         CallbackMsg::Lend {
             account_id,
             coin,
-        } => lend(deps, env, &account_id, coin),
+        } => lend(deps, env, &account_id, &coin),
         CallbackMsg::Reclaim {
             account_id,
             coin,

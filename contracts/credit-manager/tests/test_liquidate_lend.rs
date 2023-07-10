@@ -50,7 +50,7 @@ fn lent_positions_contribute_to_health() {
     mock.update_credit_account(
         &liquidatee_account_id,
         &liquidatee,
-        vec![Lend(uatom_info.to_coin(50))],
+        vec![Lend(uatom_info.to_action_coin(50))],
         &[],
     )
     .unwrap();
@@ -118,7 +118,7 @@ fn liquidatee_does_not_have_requested_lent_coin() {
         &liquidatee,
         vec![
             Deposit(uatom_info.to_coin(100)),
-            Lend(uatom_info.to_coin(50)),
+            Lend(uatom_info.to_action_coin(50)),
             Borrow(uosmo_info.to_coin(100)),
         ],
         &[uatom_info.to_coin(100)],
@@ -182,7 +182,7 @@ fn lent_position_partially_liquidated() {
         vec![
             Deposit(uosmo_info.to_coin(1050)),
             Borrow(uatom_info.to_coin(1000)),
-            Lend(uosmo_info.to_coin(450)),
+            Lend(uosmo_info.to_action_coin(450)),
         ],
         &[uosmo_info.to_coin(1050)],
     )
@@ -291,7 +291,7 @@ fn lent_position_fully_liquidated() {
         vec![
             Deposit(uosmo_info.to_coin(300)),
             Borrow(uatom_info.to_coin(500)),
-            Lend(uosmo_info.to_coin(109)),
+            Lend(uosmo_info.to_action_coin(109)),
         ],
         &[uosmo_info.to_coin(300)],
     )
@@ -403,7 +403,7 @@ fn liquidate_with_reclaiming() {
         vec![
             Deposit(uosmo_info.to_coin(3000)),
             Borrow(uatom_info.to_coin(1000)),
-            Lend(uosmo_info.to_coin(1500)),
+            Lend(uosmo_info.to_action_coin(1500)),
         ],
         &[uosmo_info.to_coin(3000)],
     )
