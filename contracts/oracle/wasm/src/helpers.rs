@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use astroport::{
     asset::{Asset, AssetInfo, PairInfo},
     pair::{CumulativePricesResponse, QueryMsg as PairQueryMsg},
@@ -43,31 +45,17 @@ pub fn validate_astroport_pair_price_source(
     price_sources: &Map<&str, WasmPriceSourceChecked>,
 ) -> ContractResult<()> {
     // Get the denoms of the pair
-    let mut pair_denoms = get_astroport_pair_denoms(deps, pair_address)?;
+    let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
+    let pair_denoms = get_astroport_pair_denoms(&pair_info)?;
 
-    // Pair must contain two assets
-    if pair_denoms.len() != 2 {
-        return Err(ContractError::InvalidPriceSource {
-            reason: format!("pair contains more than two assets: {:?}", pair_denoms),
-        });
-    }
-
-    // Pair must contain the denom
-    if !pair_denoms.contains(&denom.to_string()) {
-        return Err(ContractError::InvalidPriceSource {
-            reason: format!("pair does not contain denom {}", denom),
-        });
-    }
-
-    // Get the other denom of the pair. This works because we asserted above that the pair contains
-    // exactly two assets.
-    pair_denoms.retain(|d| d != denom);
-    let other_pair_denom = pair_denoms.first().unwrap();
+    // Get the other denom of the pair. This also checks that the pair contains the first denom
+    // and that the pair only has two assets.
+    let other_pair_denom = get_other_astroport_pair_denom(&pair_denoms, denom)?;
 
     // If the pair does not contain the base denom, a price source for the other denom of the pair
     // must exist.
     if !pair_denoms.contains(&base_denom.to_string())
-        && !price_sources.has(deps.storage, other_pair_denom)
+        && !price_sources.has(deps.storage, &other_pair_denom)
     {
         return Err(ContractError::InvalidPriceSource {
             reason: format!(
@@ -80,8 +68,8 @@ pub fn validate_astroport_pair_price_source(
     Ok(())
 }
 
-pub fn get_astroport_pair_denoms(deps: &Deps, pair_address: &Addr) -> ContractResult<Vec<String>> {
-    let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
+/// Gets the native denoms from an Astroport pair. Fails if the pair contains a CW20 token.
+pub fn get_astroport_pair_denoms(pair_info: &PairInfo) -> ContractResult<Vec<String>> {
     pair_info
         .asset_infos
         .iter()
@@ -98,6 +86,44 @@ pub fn get_astroport_pair_denoms(deps: &Deps, pair_address: &Addr) -> ContractRe
         .collect()
 }
 
+/// Gets the other native denom of an Astroport pair. Fails if the pair contains more than two assets or
+/// if the pair does not contain the specified denom.
+pub fn get_other_astroport_pair_denom(
+    pair_denoms: &[String],
+    denom: &str,
+) -> ContractResult<String> {
+    if pair_denoms.len() != 2 {
+        return Err(ContractError::InvalidPriceSource {
+            reason: format!("pair contains more than two assets: {:?}", pair_denoms),
+        });
+    }
+    if !pair_denoms.contains(&denom.to_string()) {
+        return Err(ContractError::InvalidPriceSource {
+            reason: format!("pair does not contain denom {}", denom),
+        });
+    }
+    if pair_denoms[0] == denom {
+        Ok(pair_denoms[1].clone())
+    } else {
+        Ok(pair_denoms[0].clone())
+    }
+}
+
+/// Queries the Astroport factory contract for the token precision of the specified denom.
+pub fn query_token_precision(
+    querier: &QuerierWrapper,
+    astroport_factory: &Addr,
+    denom: &str,
+) -> ContractResult<u8> {
+    Ok(astroport::querier::query_token_precision(
+        querier,
+        &AssetInfo::NativeToken {
+            denom: denom.to_string(),
+        },
+        astroport_factory,
+    )?)
+}
+
 /// Queries the pair contract for the cumulate price of the specified denom denominated in the other
 /// asset of the pair.
 pub fn query_astroport_cumulative_price(
@@ -112,7 +138,7 @@ pub fn query_astroport_cumulative_price(
         }))?;
 
     let (_, _, price) =
-        response.cumulative_prices.iter().find(|(d, _, _)| d.to_string() == denom).ok_or(
+        response.cumulative_prices.iter().find(|(from, _, _)| from.to_string() == denom).ok_or(
             // This error should not happen, but lets return it instead of unwrapping anyway
             ContractError::InvalidPriceSource {
                 reason: format!("Cumulative price not found for asset {}", denom),
@@ -139,24 +165,38 @@ pub fn normalize_price(
     env: &Env,
     config: &Config,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
-    pair_address: &Addr,
+    pair_info: &PairInfo,
     denom: &str,
     price: Decimal,
 ) -> ContractResult<Decimal> {
-    let mut pair_denoms = get_astroport_pair_denoms(deps, pair_address)?;
+    let pair_denoms = get_astroport_pair_denoms(pair_info)?;
 
     if pair_denoms.contains(&config.base_denom) {
         Ok(price)
     } else {
-        // In validate we assert that the pair contains the denom, and that it contains only
-        // two denoms.
-        pair_denoms.retain(|d| d != denom);
-        let other_pair_denom = pair_denoms.first().unwrap();
+        let other_pair_denom = get_other_astroport_pair_denom(&pair_denoms, denom)?;
 
-        let other_price_source = price_sources.load(deps.storage, other_pair_denom)?;
+        let other_price_source = price_sources.load(deps.storage, &other_pair_denom)?;
         let other_price =
-            other_price_source.query_price(deps, env, other_pair_denom, config, price_sources)?;
+            other_price_source.query_price(deps, env, &other_pair_denom, config, price_sources)?;
 
         Ok(price.checked_mul(other_price)?)
     }
+}
+
+/// Adjusts the precision of `value` from `current_precision` to `new_precision`. Copied from
+/// https://github.com/astroport-fi/astroport-core/blob/v2.8.0/contracts/pair_stable/src/utils.rs#L139
+/// because it is not public.
+pub fn adjust_precision(
+    value: Uint128,
+    current_precision: u8,
+    new_precision: u8,
+) -> ContractResult<Uint128> {
+    Ok(match current_precision.cmp(&new_precision) {
+        Ordering::Equal => value,
+        Ordering::Less => value
+            .checked_mul(Uint128::new(10_u128.pow((new_precision - current_precision) as u32)))?,
+        Ordering::Greater => value
+            .checked_div(Uint128::new(10_u128.pow((current_precision - new_precision) as u32)))?,
+    })
 }

@@ -1,10 +1,6 @@
 use std::fmt;
 
-use astroport::{
-    asset::AssetInfo,
-    pair::TWAP_PRECISION,
-    querier::{query_token_precision, simulate},
-};
+use astroport::{factory::PairType, pair::TWAP_PRECISION, querier::simulate};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
@@ -17,7 +13,9 @@ use mars_red_bank_types::oracle::{AstroportTwapSnapshot, Config};
 
 use crate::{
     helpers::{
-        astro_native_asset, normalize_price, period_diff, query_astroport_cumulative_price,
+        adjust_precision, astro_native_asset, get_astroport_pair_denoms,
+        get_other_astroport_pair_denom, normalize_price, period_diff,
+        query_astroport_cumulative_price, query_astroport_pair_info, query_token_precision,
         validate_astroport_pair_price_source,
     },
     state::{ASTROPORT_FACTORY, ASTROPORT_TWAP_SNAPSHOTS},
@@ -260,15 +258,10 @@ fn query_astroport_spot_price(
     pair_address: &Addr,
 ) -> ContractResult<Decimal> {
     let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
+    let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
 
     // Get the token's precision
-    let p = query_token_precision(
-        &deps.querier,
-        &AssetInfo::NativeToken {
-            denom: denom.to_string(),
-        },
-        &astroport_factory,
-    )?;
+    let p = query_token_precision(&deps.querier, &astroport_factory, denom)?;
     let one = Uint128::new(10_u128.pow(p.into()));
 
     // Simulate a swap with one unit to get the price. We can't just divide the pools reserves,
@@ -277,7 +270,7 @@ fn query_astroport_spot_price(
 
     let price = Decimal::from_ratio(sim_res.return_amount, one);
 
-    normalize_price(deps, env, config, price_sources, pair_address, denom, price)
+    normalize_price(deps, env, config, price_sources, &pair_info, denom, price)
 }
 
 /// Queries the TWAP price of `denom` denominated in `base_denom` from the Astroport pair at `pair_address`.
@@ -327,13 +320,64 @@ fn query_astroport_twap_price(
             .checked_add(Uint128::MAX - previous_snapshot.price_cumulative)?
     };
     let period = current_snapshot.timestamp - previous_snapshot.timestamp;
-    // NOTE: Astroport introduces TWAP precision (https://github.com/astroport-fi/astroport/pull/143).
-    // We need to divide the result by price_precision: (price_delta / (time * price_precision)).
-    let price_precision = Uint128::from(10_u128.pow(TWAP_PRECISION.into()));
-    let price = Decimal::from_ratio(price_delta, price_precision.checked_mul(period.into())?);
 
-    normalize_price(deps, env, config, price_sources, pair_address, denom, price)
+    let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
+    // NOTE: Astroport introduces TWAP_PRECISION (https://github.com/astroport-fi/astroport/pull/143).
+    // We must adjust the cumulative price delta by the precision factor to get the correct price.
+    let price = match pair_info.pair_type {
+        // For XYK we just need to divide by the TWAP_PRECISION as the number of decimals for each asset
+        // is disregarded in the calculations.
+        PairType::Xyk {} => {
+            let price_precision = Uint128::from(10_u128.pow(TWAP_PRECISION.into()));
+
+            Decimal::from_ratio(price_delta, price_precision.checked_mul(period.into())?)
+        }
+        // For StableSwap, the cumulative price is stored as a simulated swap of one unit of the
+        // offer asset into the ask asset and then adjusted by the TWAP_PRECISION. So we need to
+        // adjust the price delta from TWAP_PRECISION to ask decimals and then divide by one offer unit.
+        // E.g. for a stableswap pool with 5 decimals for the offer asset and 7 decimals for ask:
+        // Lets assume the price source denom is ATOM and the ask denom is OSMO. Further assume:
+        // ATOM: 5 decimals
+        // OSMO: 8 decimals
+        // TWAP_PRECISION: 6 decimals
+        // 1 ATOM = 10^5 uatom
+        // 1 OSMO = 10^8 uosmo
+        // Pool contains: 1000 ATOM and 1000 OSMO, i.e. 10^8 uatom and 10^11 uosmo, this means that
+        // the price is 1:1 ATOM:OSMO, or 1:1000 uatom:uosmo.
+        //
+        // When calculating the cumulative price, astroport simulates a swap of 1 base unit of the
+        // offer asset into the ask asset. In our example, this means 10^5 uatom is swapped into
+        // 10^8 uosmo. This is then adjusted by the TWAP_PRECISION:
+        // cumulative_price = swap_return_amount / 10^(OSMO - DECIMALS - TWAP_PRECISION) = 10^8 / 10^(8-6) = 10^6.
+        // In order to convert this back into a price of uosmo/uatom, we need to reverse the
+        // process. So we `adjust_precision` back from TWAP_PRECISION to 8 decimals, which performs
+        // cumulative_price * 10^(OSMO_DECIMALS - TWAP_DECIMALS) = 10^6 * 10^(8-6) = 10^8.
+        // This is then divided by one base unit of ATOM (10^5) to get the
+        // final price of 10^3 uosmo/uatom.
+        PairType::Stable {} => {
+            // Get the number of decimals of offer and ask denoms
+            let pair_denoms = get_astroport_pair_denoms(&pair_info)?;
+            let other_pair_denom = get_other_astroport_pair_denom(&pair_denoms, denom)?;
+            let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
+            let offer_decimals = query_token_precision(&deps.querier, &astroport_factory, denom)?;
+            let ask_decimals =
+                query_token_precision(&deps.querier, &astroport_factory, &other_pair_denom)?;
+
+            // Adjust the precision of the price delta from TWAP_PRECISION to ask_decimals
+            let price_delta = adjust_precision(price_delta, TWAP_PRECISION, ask_decimals)?;
+
+            // Calculate the price by dividing the price delta by the amount of offer asset used in
+            // the simulated swap and then multiply by the period
+            let offer_simulation_amount = Uint128::from(10_u128.pow(offer_decimals.into()));
+
+            Decimal::from_ratio(price_delta, offer_simulation_amount.checked_mul(period.into())?)
+        }
+        PairType::Custom(_) => return Err(ContractError::InvalidPairType {}),
+    };
+
+    normalize_price(deps, env, config, price_sources, &pair_info, denom, price)
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
