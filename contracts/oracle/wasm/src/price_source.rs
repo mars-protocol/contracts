@@ -312,8 +312,12 @@ fn query_astroport_twap_price(
     //
     // Calculations below assumes the cumulative price doesn't overflows more than once during
     // the period, which should always be the case in practice
-    let price_delta = if current_snapshot.price_cumulative >= previous_snapshot.price_cumulative {
+    let price_delta = if current_snapshot.price_cumulative > previous_snapshot.price_cumulative {
         current_snapshot.price_cumulative - previous_snapshot.price_cumulative
+    } else if current_snapshot.price_cumulative == previous_snapshot.price_cumulative {
+        // This should never happen since cumulative price is monotonically increasing, but we throw
+        // here just in case, rather than returning a zero price.
+        return Err(ContractError::InvalidCumulativePrice {});
     } else {
         current_snapshot
             .price_cumulative

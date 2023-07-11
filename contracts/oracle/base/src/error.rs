@@ -71,6 +71,9 @@ pub enum ContractError {
 
     #[error("Invalid pair type")]
     InvalidPairType {},
+
+    #[error("Snapshots have the same cumulative price. This should never happen.")]
+    InvalidCumulativePrice {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;
