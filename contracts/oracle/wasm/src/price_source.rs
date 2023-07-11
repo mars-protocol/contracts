@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{cmp::Ordering, fmt};
 
 use astroport::{factory::PairType, pair::TWAP_PRECISION, querier::simulate};
 use cosmwasm_schema::cw_serde;
@@ -312,16 +312,19 @@ fn query_astroport_twap_price(
     //
     // Calculations below assumes the cumulative price doesn't overflows more than once during
     // the period, which should always be the case in practice
-    let price_delta = if current_snapshot.price_cumulative > previous_snapshot.price_cumulative {
-        current_snapshot.price_cumulative - previous_snapshot.price_cumulative
-    } else if current_snapshot.price_cumulative == previous_snapshot.price_cumulative {
-        // This should never happen since cumulative price is monotonically increasing, but we throw
-        // here just in case, rather than returning a zero price.
-        return Err(ContractError::InvalidCumulativePrice {});
-    } else {
-        current_snapshot
+    let price_delta = match current_snapshot
+        .price_cumulative
+        .cmp(&previous_snapshot.price_cumulative)
+    {
+        Ordering::Greater => current_snapshot.price_cumulative - previous_snapshot.price_cumulative,
+        Ordering::Less => current_snapshot
             .price_cumulative
-            .checked_add(Uint128::MAX - previous_snapshot.price_cumulative)?
+            .checked_add(Uint128::MAX - previous_snapshot.price_cumulative)?,
+        Ordering::Equal => {
+            // This should never happen since cumulative price is monotonically increasing, but we throw
+            // here just in case, rather than returning a zero price.
+            return Err(ContractError::InvalidCumulativePrice {});
+        }
     };
     let period = current_snapshot.timestamp - previous_snapshot.timestamp;
 
