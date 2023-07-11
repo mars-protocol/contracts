@@ -1,4 +1,4 @@
-import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/config'
+import { AssetConfig, OracleConfig } from '../../types/config'
 
 const axlUSDCTestnet = 'ibc/EFB00E728F98F0C4BBE8CA362123ACAB466EDA2826DC6837E49F4C1902F21BBA' // TODO: This is actually ASTRO since there is no pool for axlUSDC on testnet
 const atomTestnet = 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
@@ -7,62 +7,74 @@ const protocolAdminAddrTestnet = 'neutron1ke0vqqzyymlp5esr8gjwuzh94ysnpvj8er5hm7
 const astroportFactoryTestnet = 'neutron1jj0scx400pswhpjes589aujlqagxgcztw04srynmhf0f6zplzn2qqmhwj7'
 const astroportRouterTestnet = 'neutron12jm24l9lr9cupufqjuxpdjnnweana4h66tsx5cl800mke26td26sq7m05p'
 
-// note the following three addresses are all 'mars' bech32 prefix
+// note the following addresses are all 'mars' bech32 prefix
 const safetyFundAddr = 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575'
 const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
 
 export const ntrnAsset: AssetConfig = {
-  denom: 'untrn',
-  max_loan_to_value: '0.59',
-  reserve_factor: '0.2',
-  liquidation_threshold: '0.61',
-  liquidation_bonus: '0.15',
-  interest_rate_model: {
-    optimal_utilization_rate: '0.6',
-    base: '0',
-    slope_1: '0.15',
-    slope_2: '3',
+  credit_manager: {
+    whitelisted: true,
   },
-  deposit_cap: '2500000000000',
-  deposit_enabled: true,
-  borrow_enabled: true,
-  symbol: 'NTRN',
+  symbol: 'NTRM',
+  denom: 'untrn',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
+  liquidation_threshold: '0.61',
+  max_loan_to_value: '0.59',
+  red_bank: {
+    borrow_enabled: true,
+    deposit_cap: '2500000000000',
+    deposit_enabled: true,
+  },
 }
 
 export const atomAsset: AssetConfig = {
-  denom: atomTestnet,
-  max_loan_to_value: '0.68',
-  reserve_factor: '0.2',
-  liquidation_threshold: '0.7',
-  liquidation_bonus: '0.15',
-  interest_rate_model: {
-    optimal_utilization_rate: '0.6',
-    base: '0',
-    slope_1: '0.15',
-    slope_2: '3',
+  credit_manager: {
+    whitelisted: true,
   },
-  deposit_cap: '100000000000',
-  deposit_enabled: true,
-  borrow_enabled: true,
   symbol: 'ATOM',
+  denom: atomTestnet,
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
+  liquidation_threshold: '0.7',
+  max_loan_to_value: '0.68',
+  red_bank: {
+    borrow_enabled: true,
+    deposit_cap: '100000000000',
+    deposit_enabled: true,
+  },
 }
 
 export const axlUSDCAsset: AssetConfig = {
   denom: axlUSDCTestnet,
-  max_loan_to_value: '0.74',
-  reserve_factor: '0.2',
-  liquidation_threshold: '0.75',
-  liquidation_bonus: '0.1',
-  interest_rate_model: {
-    optimal_utilization_rate: '0.8',
-    base: '0',
-    slope_1: '0.2',
-    slope_2: '2',
+  credit_manager: {
+    whitelisted: true,
   },
-  deposit_cap: '500000000000',
-  deposit_enabled: true,
-  borrow_enabled: true,
   symbol: 'axlUSDC',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
+  liquidation_threshold: '0.75',
+  max_loan_to_value: '0.74',
+  red_bank: {
+    borrow_enabled: true,
+    deposit_cap: '500000000000',
+    deposit_enabled: true,
+  },
 }
 
 export const ntrnOracleTestnet: OracleConfig = {
@@ -96,7 +108,7 @@ export const axlUSDCOracleTestnet: OracleConfig = {
   },
 }
 
-export const neutronTestnetConfig: DeploymentConfig = {
+export const neutronTestnetConfig = {
   oracleName: 'wasm',
   atomDenom: atomTestnet,
   baseAssetDenom: 'untrn',
@@ -200,6 +212,7 @@ export const neutronTestnetConfig: DeploymentConfig = {
   feeCollectorAddr: feeCollectorAddr,
   swapperDexName: 'astroport',
   assets: [ntrnAsset, atomAsset],
+  vaults: [],
   oracleConfigs: [axlUSDCOracleTestnet, ntrnOracleTestnet, atomOracleTestnet],
   targetHealthFactor: '1.2',
   oracleCustomInitParams: {
