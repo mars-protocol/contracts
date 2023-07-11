@@ -104,7 +104,7 @@ export const axlUSDCOracle: OracleConfig = {
 }
 
 export const osmosisMainnet: DeploymentConfig = {
-  chainName: 'osmosis',
+  oracleName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: osmo,
   gasPrice: '0.1uosmo',

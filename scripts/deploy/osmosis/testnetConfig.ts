@@ -118,7 +118,7 @@ export const USDCOracle: OracleConfig = {
 }
 
 export const osmosisTestnetConfig = {
-  chainName: 'osmosis',
+  oracleName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: osmo,
   gasPrice: '0.1uosmo',
@@ -153,7 +153,7 @@ export const osmosisTestnetConfig = {
 }
 
 export const osmosisTestMultisig: DeploymentConfig = {
-  chainName: 'osmosis',
+  oracleName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: 'uosmo',
   gasPrice: '0.1uosmo',

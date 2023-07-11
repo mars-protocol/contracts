@@ -33,7 +33,7 @@ export function isAstroportRoute(route: OsmosisRoute | AstroportRoute): route is
 }
 
 export interface DeploymentConfig {
-  chainName: string
+  oracleName: string
   rewardCollectorTimeoutSeconds: number
   marsDenom: string
   baseAssetDenom: string
