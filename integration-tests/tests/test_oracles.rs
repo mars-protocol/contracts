@@ -935,6 +935,7 @@ fn redbank_should_fail_if_no_price() {
         &red_bank_addr,
         &Deposit {
             on_behalf_of: None,
+            account_id: None,
         },
         &[coin(1_000_000, "uatom")],
         depositor,
@@ -997,6 +998,7 @@ fn redbank_quering_oracle_successfully() {
         &red_bank_addr,
         &Deposit {
             on_behalf_of: None,
+            account_id: None,
         },
         &[coin(1_000_000, "uatom")],
         depositor,

@@ -159,10 +159,20 @@ impl Incentives {
     }
 
     pub fn claim_rewards(&self, env: &mut MockEnv, sender: &Addr) -> AnyResult<AppResponse> {
+        self.claim_rewards_with_acc_id(env, sender, None)
+    }
+
+    pub fn claim_rewards_with_acc_id(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        account_id: Option<String>,
+    ) -> AnyResult<AppResponse> {
         env.app.execute_contract(
             sender.clone(),
             self.contract_addr.clone(),
             &incentives::ExecuteMsg::ClaimRewards {
+                account_id,
                 start_after_collateral_denom: None,
                 start_after_incentive_denom: None,
                 limit: None,
@@ -172,11 +182,21 @@ impl Incentives {
     }
 
     pub fn query_unclaimed_rewards(&self, env: &mut MockEnv, user: &Addr) -> Vec<Coin> {
+        self.query_unclaimed_rewards_with_acc_id(env, user, None)
+    }
+
+    pub fn query_unclaimed_rewards_with_acc_id(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+        account_id: Option<String>,
+    ) -> Vec<Coin> {
         env.app
             .wrap()
             .query_wasm_smart(
                 self.contract_addr.clone(),
                 &incentives::QueryMsg::UserUnclaimedRewards {
+                    account_id,
                     user: user.to_string(),
                     start_after_collateral_denom: None,
                     start_after_incentive_denom: None,
@@ -221,11 +241,22 @@ impl RedBank {
     }
 
     pub fn deposit(&self, env: &mut MockEnv, sender: &Addr, coin: Coin) -> AnyResult<AppResponse> {
+        self.deposit_with_acc_id(env, sender, coin, None)
+    }
+
+    pub fn deposit_with_acc_id(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        coin: Coin,
+        account_id: Option<String>,
+    ) -> AnyResult<AppResponse> {
         env.app.execute_contract(
             sender.clone(),
             self.contract_addr.clone(),
             &red_bank::ExecuteMsg::Deposit {
                 on_behalf_of: None,
+                account_id,
             },
             &[coin],
         )
@@ -268,6 +299,17 @@ impl RedBank {
         denom: &str,
         amount: Option<Uint128>,
     ) -> AnyResult<AppResponse> {
+        self.withdraw_with_acc_id(env, sender, denom, amount, None)
+    }
+
+    pub fn withdraw_with_acc_id(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        denom: &str,
+        amount: Option<Uint128>,
+        account_id: Option<String>,
+    ) -> AnyResult<AppResponse> {
         env.app.execute_contract(
             sender.clone(),
             self.contract_addr.clone(),
@@ -275,6 +317,7 @@ impl RedBank {
                 denom: denom.to_string(),
                 amount,
                 recipient: None,
+                account_id,
             },
             &[],
         )

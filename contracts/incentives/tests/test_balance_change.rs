@@ -30,6 +30,7 @@ fn balance_change_unauthorized() {
         mock_info("jake", &[]), // not Red Bank
         ExecuteMsg::BalanceChange {
             user_addr: Addr::unchecked("user"),
+            account_id: None,
             denom: "uosmo".to_string(),
             user_amount_scaled_before: Uint128::new(100000),
             total_amount_scaled_before: Uint128::new(100000),
@@ -47,6 +48,7 @@ fn execute_balance_change_noops() {
     let info = mock_info("red_bank", &[]);
     let msg = ExecuteMsg::BalanceChange {
         user_addr: Addr::unchecked("user"),
+        account_id: None,
         denom: "uosmo".to_string(),
         user_amount_scaled_before: Uint128::new(100000),
         total_amount_scaled_before: Uint128::new(100000),
@@ -93,6 +95,7 @@ fn balance_change_zero_emission() {
     });
     let msg = ExecuteMsg::BalanceChange {
         user_addr: Addr::unchecked("user"),
+        account_id: None,
         denom: "uosmo".to_string(),
         user_amount_scaled_before: Uint128::new(100_000),
         total_amount_scaled_before: Uint128::new(100_000),
@@ -167,6 +170,7 @@ fn balance_change_user_with_zero_balance() {
     });
     let msg = ExecuteMsg::BalanceChange {
         user_addr: user_addr.clone(),
+        account_id: None,
         denom: "uosmo".to_string(),
         user_amount_scaled_before: Uint128::zero(),
         total_amount_scaled_before: total_supply,
@@ -247,6 +251,7 @@ fn with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
         });
         let msg = ExecuteMsg::BalanceChange {
             user_addr: user_addr.clone(),
+            account_id: None,
             denom: "uosmo".to_string(),
             user_amount_scaled_before: Uint128::zero(),
             total_amount_scaled_before: Uint128::zero(),
@@ -461,6 +466,7 @@ fn balance_change_user_non_zero_balance() {
         });
         let msg = ExecuteMsg::BalanceChange {
             user_addr: user_addr.clone(),
+            account_id: None,
             denom: "uosmo".to_string(),
             user_amount_scaled_before: user_balance,
             total_amount_scaled_before: total_supply,
@@ -527,6 +533,7 @@ fn balance_change_user_non_zero_balance() {
         });
         let msg = ExecuteMsg::BalanceChange {
             user_addr: user_addr.clone(),
+            account_id: None,
             denom: "uosmo".to_string(),
             user_amount_scaled_before: user_balance,
             total_amount_scaled_before: total_supply,
@@ -594,6 +601,7 @@ fn balance_change_user_non_zero_balance() {
         });
         let msg = ExecuteMsg::BalanceChange {
             user_addr: user_addr.clone(),
+            account_id: None,
             denom: "uosmo".to_string(),
             user_amount_scaled_before: user_balance,
             total_amount_scaled_before: total_supply,

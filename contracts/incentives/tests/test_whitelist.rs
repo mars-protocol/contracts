@@ -236,6 +236,7 @@ fn incentives_updated_and_removed_when_removing_from_whitelist() {
         env.clone(),
         QueryMsg::UserUnclaimedRewards {
             user: user_addr.to_string(),
+            account_id: None,
             start_after_collateral_denom: None,
             start_after_incentive_denom: None,
             limit: None,
@@ -255,6 +256,7 @@ fn incentives_updated_and_removed_when_removing_from_whitelist() {
         env,
         QueryMsg::UserUnclaimedRewards {
             user: user_addr.to_string(),
+            account_id: None,
             start_after_collateral_denom: None,
             start_after_incentive_denom: None,
             limit: None,

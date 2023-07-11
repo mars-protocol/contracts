@@ -186,6 +186,7 @@ fn execute_claim_rewards() {
         ..Default::default()
     });
     let msg = ExecuteMsg::ClaimRewards {
+        account_id: None,
         start_after_collateral_denom: None,
         start_after_incentive_denom: None,
         limit: None,
@@ -291,6 +292,7 @@ fn claim_zero_rewards() {
 
     let info = mock_info("user", &[]);
     let msg = ExecuteMsg::ClaimRewards {
+        account_id: None,
         start_after_collateral_denom: None,
         start_after_incentive_denom: None,
         limit: None,

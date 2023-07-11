@@ -76,6 +76,7 @@ fn depositing_with_no_coin_sent() {
         mock_info(depositor_addr.as_str(), &[]),
         ExecuteMsg::Deposit {
             on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -98,6 +99,7 @@ fn depositing_with_multiple_coins_sent() {
         mock_info(depositor_addr.as_str(), &sent_coins),
         ExecuteMsg::Deposit {
             on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -121,6 +123,7 @@ fn depositing_to_non_existent_market() {
         mock_info(depositor_addr.as_str(), &coins(123, false_denom)),
         ExecuteMsg::Deposit {
             on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -151,6 +154,7 @@ fn depositing_to_disabled_market() {
         mock_info(depositor_addr.as_str(), &coins(123, denom)),
         ExecuteMsg::Deposit {
             on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -188,6 +192,7 @@ fn depositing_above_cap() {
         mock_info(depositor_addr.as_str(), &coins(1_000_001, denom)),
         ExecuteMsg::Deposit {
             on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -205,6 +210,7 @@ fn depositing_above_cap() {
         mock_info(depositor_addr.as_str(), &coins(123, denom)),
         ExecuteMsg::Deposit {
             on_behalf_of: None,
+            account_id: None,
         },
     );
     assert!(result.is_ok());
@@ -238,6 +244,7 @@ fn depositing_without_existing_position() {
         mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
         ExecuteMsg::Deposit {
             on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap();
@@ -251,6 +258,7 @@ fn depositing_without_existing_position() {
             contract_addr: MarsAddressType::Incentives.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
+                account_id: None,
                 denom: initial_market.denom.clone(),
                 user_amount_scaled_before: Uint128::zero(),
                 // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
@@ -328,6 +336,7 @@ fn depositing_with_existing_position() {
         mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
         ExecuteMsg::Deposit {
             on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap();
@@ -341,6 +350,7 @@ fn depositing_with_existing_position() {
             contract_addr: MarsAddressType::Incentives.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
+                account_id: None,
                 denom: initial_market.denom.clone(),
                 user_amount_scaled_before: collateral_amount_scaled,
                 // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
@@ -399,6 +409,7 @@ fn depositing_on_behalf_of() {
         mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
         ExecuteMsg::Deposit {
             on_behalf_of: Some(on_behalf_of_addr.clone().into()),
+            account_id: None,
         },
     )
     .unwrap();
@@ -412,6 +423,7 @@ fn depositing_on_behalf_of() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
+                    account_id: None,
                     denom: initial_market.denom.clone(),
                     user_amount_scaled_before: Uint128::zero(),
                     total_amount_scaled_before: initial_market.collateral_total_scaled,
@@ -423,6 +435,7 @@ fn depositing_on_behalf_of() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: on_behalf_of_addr.clone(),
+                    account_id: None,
                     denom: initial_market.denom.clone(),
                     user_amount_scaled_before: Uint128::zero(),
                     // NOTE: New collateral shares were minted to the rewards collector first, so
@@ -473,6 +486,7 @@ fn depositing_on_behalf_of_cannot_enable_collateral() {
         mock_info(on_behalf_of_addr.as_str(), &coins(1u128, denom)),
         ExecuteMsg::Deposit {
             on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap();
@@ -504,6 +518,7 @@ fn depositing_on_behalf_of_cannot_enable_collateral() {
         mock_info(depositor_addr.as_str(), &coins(1u128, denom)),
         ExecuteMsg::Deposit {
             on_behalf_of: Some(on_behalf_of_addr.to_string()),
+            account_id: None,
         },
     )
     .unwrap();
