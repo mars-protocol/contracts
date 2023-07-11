@@ -176,18 +176,23 @@ fn cannot_set_base_denom_price_source() {
     robot.set_price_source(denom, price_source, admin);
 }
 
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false; "XYK, base_denom in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", Some(TWO), true; "XYK, non-base asset in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "USD", None, false => panics "pair does not contain base denom and no price source is configured for the other denom"; "XYK, base_denom not in pair, no source for other asset")]
-#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false; "Stable, base_denom in pair")]
-#[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", Some(TWO), true; "Stable, non-base asset in pair")]
-#[test_case(PairType::Stable {}, &["uatom","uosmo"], "USD", None, false => panics; "Stable, base_denom not in pair, no source for other asset")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, &[6,6]; "XYK, base_denom in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", Some(TWO), true, &[6,6]; "XYK, non-base asset in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "USD", None, false, &[6,6] => panics "pair does not contain base denom and no price source is configured for the other denom"; "XYK, base_denom not in pair, no source for other asset")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, &[6,8]; "XYK, base_denom in pair, 6:8 decimals")]
+#[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", Some(TWO), true, &[8,6]; "XYK, non-base asset in pair, 8:6 decimals")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, &[6,6]; "Stable, base_denom in pair")]
+#[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", Some(TWO), true, &[6,6]; "Stable, non-base asset in pair")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "USD", None, false, &[6,6] => panics; "Stable, base_denom not in pair, no source for other asset")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, &[6,8]; "Stable, base_denom in pair, 6:8 decimals")]
+#[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", Some(TWO), true, &[6,8]; "Stable, non-base asset in pair, 6:8 decimals")]
 pub fn test_validate_and_query_astroport_spot_price_source(
     pair_type: PairType,
     pair_denoms: &[&str; 2],
     base_denom: &str,
     other_asset_price: Option<Decimal>,
     register_second_price: bool,
+    decimals: &[u8; 2],
 ) {
     validate_and_query_astroport_spot_price_source(
         pair_type,
@@ -196,18 +201,27 @@ pub fn test_validate_and_query_astroport_spot_price_source(
         other_asset_price,
         &DEFAULT_LIQ,
         register_second_price,
+        decimals,
     )
 }
 
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 5, 100; "XYK, base_denom in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", Some(TWO), true, 5, 100; "XYK, non-base asset in pair")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "USD", None, false, 5, 100 => panics "pair does not contain base denom and no price source is configured for the other denom"; "XYK, base_denom not in pair, no source for other asset")]
-#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 100; "Stable, base_denom in pair")]
-#[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", Some(TWO), true, 5, 100; "Stable, non-base asset in pair")]
-#[test_case(PairType::Stable {}, &["uatom","uosmo"], "USD", None, false, 5, 100 => panics "pair does not contain base denom and no price source is configured for the other denom"; "Stable, base_denom not in pair, no source for other asset")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 0,0 => panics; "Zero window size")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 0,5; "Zero tolerance")]
-#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 5,2 => panics "tolerance must be less than window size"; "tolerance larger than window size")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 5, 100, DEFAULT_LIQ, &[6,6]; "XYK, base_denom in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", Some(TWO), true, 5, 100, DEFAULT_LIQ, &[6,6]; "XYK, non-base asset in pair")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "USD", None, false, 5, 100, DEFAULT_LIQ, &[6,6] => panics "pair does not contain base denom and no price source is configured for the other denom"; "XYK, base_denom not in pair, no source for other asset")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 5, 100, DEFAULT_LIQ, &[6,8]; "XYK, base_denom in pair, 6:8 decimals")]
+#[test_case(PairType::Xyk {}, &["uatom","uion"], "uosmo", Some(TWO), true, 5, 100, DEFAULT_LIQ, &[8,6]; "XYK, non-base asset in pair, 8:6 decimals")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 100, DEFAULT_LIQ, &[6,6]; "Stable, base_denom in pair")]
+#[test_case(PairType::Stable {}, &["uatom","uion"], "uosmo", Some(TWO), true, 5, 100, DEFAULT_LIQ, &[6,6]; "Stable, non-base asset in pair")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "USD", None, false, 5, 100, DEFAULT_LIQ, &[6,6] => panics "pair does not contain base denom and no price source is configured for the other denom"; "Stable, base_denom not in pair, no source for other asset")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 0,0, DEFAULT_LIQ, &[6,6] => panics; "Zero window size")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 0,5, DEFAULT_LIQ, &[6,6]; "Zero tolerance")]
+#[test_case(PairType::Xyk {}, &["uatom","uosmo"], "uosmo", None, false, 5,2, DEFAULT_LIQ, &[6,6] => panics "tolerance must be less than window size"; "tolerance larger than window size")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 100, DEFAULT_LIQ, &[6,8]; "Stable, base_denom in pair, 6:8 decimals")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 100, DEFAULT_LIQ, &[7,6]; "Stable, base_denom in pair, 7:6 decimals")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 100, DEFAULT_LIQ, &[8,7]; "Stable, base_denom in pair, 8:7 decimals")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 213378, [100000000000000000000, 1000000000000000000], &[7,5]; "Stable, base_denom in pair, 6:4 decimals, adjusted 1:1 price")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 1000, [1000000000000000000u128, 1000000000000000000000u128], &[5,9]; "Stable, base_denom in pair, 5:9 decimals, adjusted 1:1 price")]
+#[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 1000, [10000000000000000000000u128, 100000000000000000u128], &[10,5]; "Stable, base_denom in pair, 10:5 decimals, adjusted 1:1 price")]
 fn test_validate_and_query_astroport_twap_price(
     pair_type: PairType,
     pair_denoms: &[&str; 2],
@@ -216,6 +230,8 @@ fn test_validate_and_query_astroport_twap_price(
     register_second_price: bool,
     tolerance: u64,
     window_size: u64,
+    initial_liq: [u128; 2],
+    decimals: &[u8; 2],
 ) {
     validate_and_query_astroport_twap_price_source(
         pair_type,
@@ -225,7 +241,8 @@ fn test_validate_and_query_astroport_twap_price(
         register_second_price,
         tolerance,
         window_size,
-        &DEFAULT_LIQ,
+        &initial_liq,
+        decimals,
     )
 }
 

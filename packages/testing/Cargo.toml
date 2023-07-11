@@ -19,7 +19,7 @@ default = []
 # for more explicit tests, cargo test --features=backtraces
 astroport = ["cw-it/astroport", "dep:astroport"]
 osmosis-test-tube = ["cw-it/osmosis-test-tube"]
-backtraces = ["cosmwasm-std/backtraces", "osmosis-std/backtraces", "cw-it/backtraces"]
+backtraces = ["cosmwasm-std/backtraces", "osmosis-std/backtraces"]
 
 [dependencies]
 anyhow                         = { workspace = true }

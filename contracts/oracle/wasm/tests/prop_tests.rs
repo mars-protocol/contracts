@@ -63,7 +63,7 @@ proptest! {
       None
     };
 
-    validate_and_query_astroport_spot_price_source(pair_type, &pair_denoms, base_denom, other_asset_price, &initial_liq, register_second_price);
+    validate_and_query_astroport_spot_price_source(pair_type, &pair_denoms, base_denom, other_asset_price, &initial_liq, register_second_price, &[6,6]);
   }
 
   #[test]
@@ -81,6 +81,6 @@ proptest! {
     } else {
       None
     };
-    validate_and_query_astroport_twap_price_source(pair_type, &pair_denoms, base_denom, other_asset_price, register_second_price, tolerance, window_size, &initial_liq);
+    validate_and_query_astroport_twap_price_source(pair_type, &pair_denoms, base_denom, other_asset_price, register_second_price, tolerance, window_size, &initial_liq, &[6,6]);
   }
 }
