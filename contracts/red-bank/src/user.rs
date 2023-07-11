@@ -48,8 +48,14 @@ impl<'a> User<'a> {
     }
 
     /// Load the user's collateral
-    pub fn collateral(&self, store: &dyn Storage, denom: &str) -> StdResult<Collateral> {
-        COLLATERALS.load(store, (self.0, denom))
+    pub fn collateral(
+        &self,
+        store: &dyn Storage,
+        denom: &str,
+        account_id: Option<String>,
+    ) -> StdResult<Collateral> {
+        let acc_id = account_id.unwrap_or("".to_string());
+        COLLATERALS.load(store, (self.0, &acc_id, denom))
     }
 
     /// Load the user's debt
@@ -102,10 +108,13 @@ impl<'a> User<'a> {
         amount_scaled: Uint128,
         incentives_addr: &Addr,
         response: Response,
+        account_id: Option<String>,
     ) -> StdResult<Response> {
+        let acc_id = account_id.clone().unwrap_or("".to_string());
+
         let mut amount_scaled_before = Uint128::zero();
 
-        COLLATERALS.update(store, (self.0, &market.denom), |opt| -> StdResult<_> {
+        COLLATERALS.update(store, (self.0, &acc_id, &market.denom), |opt| -> StdResult<_> {
             match opt {
                 Some(mut col) => {
                     amount_scaled_before = col.amount_scaled;
@@ -123,6 +132,7 @@ impl<'a> User<'a> {
             incentives_addr,
             market,
             amount_scaled_before,
+            account_id,
         )?;
 
         Ok(response.add_message(msg))
@@ -141,22 +151,26 @@ impl<'a> User<'a> {
         amount_scaled: Uint128,
         incentives_addr: &Addr,
         response: Response,
+        account_id: Option<String>,
     ) -> StdResult<Response> {
-        let mut collateral = COLLATERALS.load(store, (self.0, &market.denom))?;
+        let acc_id = account_id.clone().unwrap_or("".to_string());
+
+        let mut collateral = COLLATERALS.load(store, (self.0, &acc_id, &market.denom))?;
 
         let amount_scaled_before = collateral.amount_scaled;
         collateral.amount_scaled = collateral.amount_scaled.checked_sub(amount_scaled)?;
 
         if collateral.amount_scaled.is_zero() {
-            COLLATERALS.remove(store, (self.0, &market.denom));
+            COLLATERALS.remove(store, (self.0, &acc_id, &market.denom));
         } else {
-            COLLATERALS.save(store, (self.0, &market.denom), &collateral)?;
+            COLLATERALS.save(store, (self.0, &acc_id, &market.denom), &collateral)?;
         }
 
         let msg = self.build_incentives_balance_changed_msg(
             incentives_addr,
             market,
             amount_scaled_before,
+            account_id,
         )?;
 
         Ok(response.add_message(msg))
@@ -171,11 +185,13 @@ impl<'a> User<'a> {
         incentives_addr: &Addr,
         market: &Market,
         user_amount_scaled_before: Uint128,
+        account_id: Option<String>,
     ) -> StdResult<CosmosMsg> {
         Ok(WasmMsg::Execute {
             contract_addr: incentives_addr.into(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: self.address().clone(),
+                account_id,
                 denom: market.denom.clone(),
                 user_amount_scaled_before,
                 total_amount_scaled_before: market.collateral_total_scaled,

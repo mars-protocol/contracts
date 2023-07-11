@@ -46,17 +46,20 @@ pub fn execute(
                 deps, info, user_addr, denom, new_limit,
             )
         }
-        ExecuteMsg::Deposit {} => {
+        ExecuteMsg::Deposit {
+            account_id,
+        } => {
             let sent_coin = cw_utils::one_coin(&info)?;
-            deposit::deposit(deps, env, info, sent_coin.denom, sent_coin.amount)
+            deposit::deposit(deps, env, info, sent_coin.denom, sent_coin.amount, account_id)
         }
         ExecuteMsg::Withdraw {
             denom,
             amount,
             recipient,
+            account_id,
         } => {
             cw_utils::nonpayable(&info)?;
-            withdraw::withdraw(deps, env, info, denom, amount, recipient)
+            withdraw::withdraw(deps, env, info, denom, amount, recipient, account_id)
         }
         ExecuteMsg::Borrow {
             denom,
@@ -148,13 +151,17 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
         }
         QueryMsg::UserCollateral {
             user,
+            account_id,
             denom,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_collateral(deps, &env.block, user_addr, denom)?)
+            to_binary(&query::query_user_collateral(
+                deps, &env.block, user_addr, account_id, denom,
+            )?)
         }
         QueryMsg::UserCollaterals {
             user,
+            account_id,
             start_after,
             limit,
         } => {
@@ -163,6 +170,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
                 deps,
                 &env.block,
                 user_addr,
+                account_id,
                 start_after,
                 limit,
             )?)

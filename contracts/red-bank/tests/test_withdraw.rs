@@ -85,6 +85,7 @@ fn withdrawing_more_than_balance() {
             denom: denom.to_string(),
             amount: Some(Uint128::from(2000u128)),
             recipient: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -128,6 +129,7 @@ fn withdrawing_partially() {
             denom: denom.to_string(),
             amount: Some(withdraw_amount),
             recipient: None,
+            account_id: None,
         },
     )
     .unwrap();
@@ -181,6 +183,7 @@ fn withdrawing_partially() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
+                    account_id: None,
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
                     total_amount_scaled_before: initial_market.collateral_total_scaled,
@@ -192,6 +195,7 @@ fn withdrawing_partially() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
+                    account_id: None,
                     denom: denom.to_string(),
                     user_amount_scaled_before: initial_deposit_amount_scaled,
                     total_amount_scaled_before: initial_market.collateral_total_scaled
@@ -229,12 +233,13 @@ fn withdrawing_partially() {
     assert_eq!(market.collateral_total_scaled, expected_total_collateral_amount_scaled);
 
     // the user's collateral scaled amount should have been decreased
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, denom)).unwrap();
+    let collateral =
+        COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, "", denom)).unwrap();
     assert_eq!(collateral.amount_scaled, expected_withdraw_amount_scaled_remaining);
 
     // the reward collector's collateral scaled amount should have been increased
     let rewards_addr = Addr::unchecked(MarsAddressType::RewardsCollector.to_string());
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&rewards_addr, denom)).unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&rewards_addr, "", denom)).unwrap();
     assert_eq!(collateral.amount_scaled, expected_rewards_amount_scaled);
 }
 
@@ -261,6 +266,7 @@ fn withdrawing_completely() {
             denom: denom.to_string(),
             amount: None,
             recipient: None,
+            account_id: None,
         },
     )
     .unwrap();
@@ -297,6 +303,7 @@ fn withdrawing_completely() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
+                    account_id: None,
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
                     total_amount_scaled_before: initial_market.collateral_total_scaled,
@@ -308,6 +315,7 @@ fn withdrawing_completely() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
+                    account_id: None,
                     denom: denom.to_string(),
                     user_amount_scaled_before: withdrawer_balance_scaled,
                     total_amount_scaled_before: initial_market.collateral_total_scaled
@@ -368,6 +376,7 @@ fn withdrawing_to_another_user() {
             denom: denom.to_string(),
             amount: None,
             recipient: Some(recipient_addr.to_string()),
+            account_id: None,
         },
     )
     .unwrap();
@@ -405,6 +414,7 @@ fn withdrawing_to_another_user() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
+                    account_id: None,
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
                     total_amount_scaled_before: initial_market.collateral_total_scaled,
@@ -416,6 +426,7 @@ fn withdrawing_to_another_user() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
+                    account_id: None,
                     denom: denom.to_string(),
                     user_amount_scaled_before: withdrawer_balance_scaled,
                     total_amount_scaled_before: initial_market.collateral_total_scaled
@@ -561,7 +572,9 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
 
     denoms.iter().zip(collaterals.iter()).for_each(|(denom, collateral)| {
         if !collateral.amount_scaled.is_zero() {
-            COLLATERALS.save(deps.as_mut().storage, (&withdrawer_addr, denom), collateral).unwrap();
+            COLLATERALS
+                .save(deps.as_mut().storage, (&withdrawer_addr, "", denom), collateral)
+                .unwrap();
         }
     });
 
@@ -661,6 +674,7 @@ fn withdrawing_if_health_factor_not_met() {
             denom: denoms[2].to_string(),
             amount: Some(withdraw_amount),
             recipient: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -697,6 +711,7 @@ fn withdrawing_if_health_factor_met() {
             denom: denoms[2].to_string(),
             amount: Some(withdraw_amount),
             recipient: None,
+            account_id: None,
         },
     )
     .unwrap();
@@ -711,6 +726,7 @@ fn withdrawing_if_health_factor_met() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
+                    account_id: None,
                     denom: denoms[2].to_string(),
                     user_amount_scaled_before: collaterals[2].amount_scaled,
                     // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
@@ -733,7 +749,7 @@ fn withdrawing_if_health_factor_met() {
     let expected_collateral_total_amount_scaled_after =
         markets[2].collateral_total_scaled - expected_withdraw_amount_scaled;
 
-    let col = COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, denoms[2])).unwrap();
+    let col = COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, "", denoms[2])).unwrap();
     assert_eq!(col.amount_scaled, expected_withdrawer_balance_after);
 
     let market = MARKETS.load(deps.as_ref().storage, denoms[2]).unwrap();

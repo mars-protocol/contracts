@@ -41,10 +41,13 @@ export type ExecuteMsg =
       }
     }
   | {
-      deposit: {}
+      deposit: {
+        account_id?: string | null
+      }
     }
   | {
       withdraw: {
+        account_id?: string | null
         amount?: Uint128 | null
         denom: string
         recipient?: string | null
@@ -145,6 +148,7 @@ export type QueryMsg =
     }
   | {
       user_collateral: {
+        account_id?: string | null
         denom: string
         user: string
       }

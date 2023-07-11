@@ -77,7 +77,8 @@
               "oracle",
               "red_bank",
               "rewards_collector",
-              "params"
+              "params",
+              "credit_manager"
             ]
           },
           {
@@ -280,7 +281,8 @@
               "oracle",
               "red_bank",
               "rewards_collector",
-              "params"
+              "params",
+              "credit_manager"
             ]
           },
           {
@@ -351,7 +353,8 @@
                 "oracle",
                 "red_bank",
                 "rewards_collector",
-                "params"
+                "params",
+                "credit_manager"
               ]
             },
             {
@@ -425,7 +428,8 @@
                 "oracle",
                 "red_bank",
                 "rewards_collector",
-                "params"
+                "params",
+                "credit_manager"
               ]
             },
             {
@@ -499,7 +503,8 @@
                 "oracle",
                 "red_bank",
                 "rewards_collector",
-                "params"
+                "params",
+                "credit_manager"
               ]
             },
             {

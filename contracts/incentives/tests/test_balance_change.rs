@@ -30,6 +30,7 @@ fn balance_change_unauthorized() {
         mock_info("jake", &[]), // not Red Bank
         ExecuteMsg::BalanceChange {
             user_addr: Addr::unchecked("user"),
+            account_id: None,
             denom: "uosmo".to_string(),
             user_amount_scaled_before: Uint128::new(100000),
             total_amount_scaled_before: Uint128::new(100000),
@@ -47,6 +48,7 @@ fn execute_balance_change_noops() {
     let info = mock_info("red_bank", &[]);
     let msg = ExecuteMsg::BalanceChange {
         user_addr: Addr::unchecked("user"),
+        account_id: None,
         denom: "uosmo".to_string(),
         user_amount_scaled_before: Uint128::new(100000),
         total_amount_scaled_before: Uint128::new(100000),
@@ -93,6 +95,7 @@ fn balance_change_zero_emission() {
     });
     let msg = ExecuteMsg::BalanceChange {
         user_addr: Addr::unchecked("user"),
+        account_id: None,
         denom: "uosmo".to_string(),
         user_amount_scaled_before: Uint128::new(100_000),
         total_amount_scaled_before: Uint128::new(100_000),
@@ -106,7 +109,7 @@ fn balance_change_zero_emission() {
 
     assert_eq!(
         res.events[0].attributes,
-        vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user"),]
+        vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user")]
     );
     assert_eq!(
         res.events[1].attributes,
@@ -123,13 +126,15 @@ fn balance_change_zero_emission() {
     assert_eq!(asset_incentive.last_updated, 600_000);
 
     // user index is set to asset's index
-    let user_asset_index =
-        USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_addr, denom, "umars")).unwrap();
+    let user_asset_index = USER_ASSET_INDICES
+        .load(deps.as_ref().storage, (user_addr.as_str(), denom, "umars"))
+        .unwrap();
     assert_eq!(user_asset_index, asset_incentive_index);
 
     // rewards get updated
-    let user_unclaimed_rewards =
-        USER_UNCLAIMED_REWARDS.load(deps.as_ref().storage, (&user_addr, denom, "umars")).unwrap();
+    let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
+        .load(deps.as_ref().storage, (user_addr.as_str(), denom, "umars"))
+        .unwrap();
     assert_eq!(user_unclaimed_rewards, expected_accrued_rewards)
 }
 
@@ -167,6 +172,7 @@ fn balance_change_user_with_zero_balance() {
     });
     let msg = ExecuteMsg::BalanceChange {
         user_addr: user_addr.clone(),
+        account_id: None,
         denom: "uosmo".to_string(),
         user_amount_scaled_before: Uint128::zero(),
         total_amount_scaled_before: total_supply,
@@ -185,7 +191,7 @@ fn balance_change_user_with_zero_balance() {
 
     assert_eq!(
         res.events[0].attributes,
-        vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user"),]
+        vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user")]
     );
     assert_eq!(
         res.events[1].attributes,
@@ -202,13 +208,14 @@ fn balance_change_user_with_zero_balance() {
     assert_eq!(asset_incentive.last_updated, time_contract_call);
 
     // user index is set to asset's index
-    let user_asset_index =
-        USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_addr, denom, "umars")).unwrap();
+    let user_asset_index = USER_ASSET_INDICES
+        .load(deps.as_ref().storage, (user_addr.as_str(), denom, "umars"))
+        .unwrap();
     assert_eq!(user_asset_index, expected_index);
 
     // no new rewards
     let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-        .may_load(deps.as_ref().storage, (&user_addr, denom, "umars"))
+        .may_load(deps.as_ref().storage, (user_addr.as_str(), denom, "umars"))
         .unwrap();
     assert_eq!(user_unclaimed_rewards, None)
 }
@@ -247,6 +254,7 @@ fn with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
         });
         let msg = ExecuteMsg::BalanceChange {
             user_addr: user_addr.clone(),
+            account_id: None,
             denom: "uosmo".to_string(),
             user_amount_scaled_before: Uint128::zero(),
             total_amount_scaled_before: Uint128::zero(),
@@ -278,9 +286,16 @@ fn with_zero_previous_balance_and_asset_with_zero_index_accumulates_rewards() {
             block_time: Timestamp::from_seconds(time_contract_call + 1000),
             ..Default::default()
         });
-        let rewards_query =
-            query_user_unclaimed_rewards(deps.as_ref(), env, "user".to_string(), None, None, None)
-                .unwrap();
+        let rewards_query = query_user_unclaimed_rewards(
+            deps.as_ref(),
+            env,
+            "user".to_string(),
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
         // Rewards that are accrued when no one had deposit in Red Bank are distributed to the first depositor
         assert_eq!(
             vec![coin(
@@ -351,9 +366,16 @@ fn set_new_asset_incentive_user_non_zero_balance() {
             ..Default::default()
         });
 
-        let unclaimed_rewards =
-            query_user_unclaimed_rewards(deps.as_ref(), env, "user".to_string(), None, None, None)
-                .unwrap();
+        let unclaimed_rewards = query_user_unclaimed_rewards(
+            deps.as_ref(),
+            env,
+            "user".to_string(),
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
         // 100_000 s * 100 MARS/s * 1/10th of total deposit
         let expected_unclaimed_rewards = vec![coin(1_000_000, "umars")];
         assert_eq!(unclaimed_rewards, expected_unclaimed_rewards);
@@ -386,6 +408,7 @@ fn set_new_asset_incentive_user_non_zero_balance() {
             env,
             info,
             user_addr,
+            None,
             denom.to_string(),
             Uint128::new(10_000),
             total_supply,
@@ -402,9 +425,16 @@ fn set_new_asset_incentive_user_non_zero_balance() {
             ..Default::default()
         });
 
-        let unclaimed_rewards =
-            query_user_unclaimed_rewards(deps.as_ref(), env, "user".to_string(), None, None, None)
-                .unwrap();
+        let unclaimed_rewards = query_user_unclaimed_rewards(
+            deps.as_ref(),
+            env,
+            "user".to_string(),
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
         let expected_unclaimed_rewards = vec![coin(
             // 200_000 s * 100 MARS/s * 1/10th of total deposit +
             2_000_000 +
@@ -461,6 +491,7 @@ fn balance_change_user_non_zero_balance() {
         });
         let msg = ExecuteMsg::BalanceChange {
             user_addr: user_addr.clone(),
+            account_id: None,
             denom: "uosmo".to_string(),
             user_amount_scaled_before: user_balance,
             total_amount_scaled_before: total_supply,
@@ -484,7 +515,7 @@ fn balance_change_user_non_zero_balance() {
         .unwrap();
         assert_eq!(
             res.events[0].attributes,
-            vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user"),]
+            vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user")]
         );
         assert_eq!(
             res.events[1].attributes,
@@ -504,13 +535,14 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
 
         // user index is set to asset's index
-        let user_asset_index =
-            USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_addr, denom, "umars")).unwrap();
+        let user_asset_index = USER_ASSET_INDICES
+            .load(deps.as_ref().storage, (user_addr.as_str(), denom, "umars"))
+            .unwrap();
         assert_eq!(user_asset_index, expected_asset_incentive_index);
 
         // user gets new rewards
         let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-            .load(deps.as_ref().storage, (&user_addr, denom, "umars"))
+            .load(deps.as_ref().storage, (user_addr.as_str(), denom, "umars"))
             .unwrap();
         expected_accumulated_rewards += expected_accrued_rewards;
         assert_eq!(user_unclaimed_rewards, expected_accumulated_rewards)
@@ -527,6 +559,7 @@ fn balance_change_user_non_zero_balance() {
         });
         let msg = ExecuteMsg::BalanceChange {
             user_addr: user_addr.clone(),
+            account_id: None,
             denom: "uosmo".to_string(),
             user_amount_scaled_before: user_balance,
             total_amount_scaled_before: total_supply,
@@ -551,7 +584,7 @@ fn balance_change_user_non_zero_balance() {
         .unwrap();
         assert_eq!(
             res.events[0].attributes,
-            vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user"),]
+            vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user")]
         );
         assert_eq!(
             res.events[1].attributes,
@@ -571,13 +604,14 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
 
         // user index is set to asset's index
-        let user_asset_index =
-            USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_addr, denom, "umars")).unwrap();
+        let user_asset_index = USER_ASSET_INDICES
+            .load(deps.as_ref().storage, (user_addr.as_str(), denom, "umars"))
+            .unwrap();
         assert_eq!(user_asset_index, expected_asset_incentive_index);
 
         // user gets new rewards
         let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-            .load(deps.as_ref().storage, (&user_addr, denom, "umars"))
+            .load(deps.as_ref().storage, (user_addr.as_str(), denom, "umars"))
             .unwrap();
         expected_accumulated_rewards += expected_accrued_rewards;
         assert_eq!(user_unclaimed_rewards, expected_accumulated_rewards)
@@ -594,6 +628,7 @@ fn balance_change_user_non_zero_balance() {
         });
         let msg = ExecuteMsg::BalanceChange {
             user_addr: user_addr.clone(),
+            account_id: None,
             denom: "uosmo".to_string(),
             user_amount_scaled_before: user_balance,
             total_amount_scaled_before: total_supply,
@@ -602,7 +637,7 @@ fn balance_change_user_non_zero_balance() {
 
         assert_eq!(
             res.events[0].attributes,
-            vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user"),]
+            vec![attr("action", "balance_change"), attr("denom", denom), attr("user", "user")]
         );
         assert_eq!(
             res.events[1].attributes,
@@ -620,13 +655,14 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
 
         // user index is still the same
-        let user_asset_index =
-            USER_ASSET_INDICES.load(deps.as_ref().storage, (&user_addr, denom, "umars")).unwrap();
+        let user_asset_index = USER_ASSET_INDICES
+            .load(deps.as_ref().storage, (user_addr.as_str(), denom, "umars"))
+            .unwrap();
         assert_eq!(user_asset_index, expected_asset_incentive_index);
 
         // user gets no new rewards
         let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-            .load(deps.as_ref().storage, (&user_addr, denom, "umars"))
+            .load(deps.as_ref().storage, (user_addr.as_str(), denom, "umars"))
             .unwrap();
         assert_eq!(user_unclaimed_rewards, expected_accumulated_rewards)
     }

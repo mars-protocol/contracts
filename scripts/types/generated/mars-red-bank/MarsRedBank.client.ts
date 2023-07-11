@@ -67,9 +67,11 @@ export interface MarsRedBankReadOnlyInterface {
     user: string
   }) => Promise<ArrayOfUserDebtResponse>
   userCollateral: ({
+    accountId,
     denom,
     user,
   }: {
+    accountId?: string
     denom: string
     user: string
   }) => Promise<UserCollateralResponse>
@@ -212,14 +214,17 @@ export class MarsRedBankQueryClient implements MarsRedBankReadOnlyInterface {
     })
   }
   userCollateral = async ({
+    accountId,
     denom,
     user,
   }: {
+    accountId?: string
     denom: string
     user: string
   }): Promise<UserCollateralResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       user_collateral: {
+        account_id: accountId,
         denom,
         user,
       },
@@ -364,16 +369,23 @@ export interface MarsRedBankInterface extends MarsRedBankReadOnlyInterface {
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
   deposit: (
+    {
+      accountId,
+    }: {
+      accountId?: string
+    },
     fee?: number | StdFee | 'auto',
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
   withdraw: (
     {
+      accountId,
       amount,
       denom,
       recipient,
     }: {
+      accountId?: string
       amount?: Uint128
       denom: string
       recipient?: string
@@ -578,6 +590,11 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
     )
   }
   deposit = async (
+    {
+      accountId,
+    }: {
+      accountId?: string
+    },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     _funds?: Coin[],
@@ -586,7 +603,9 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
       this.sender,
       this.contractAddress,
       {
-        deposit: {},
+        deposit: {
+          account_id: accountId,
+        },
       },
       fee,
       memo,
@@ -595,10 +614,12 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
   }
   withdraw = async (
     {
+      accountId,
       amount,
       denom,
       recipient,
     }: {
+      accountId?: string
       amount?: Uint128
       denom: string
       recipient?: string
@@ -612,6 +633,7 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
       this.contractAddress,
       {
         withdraw: {
+          account_id: accountId,
           amount,
           denom,
           recipient,

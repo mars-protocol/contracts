@@ -37,11 +37,11 @@ pub fn set_collateral(
         amount_scaled,
         enabled,
     };
-    COLLATERALS.save(deps.storage, (user_addr, denom), &collateral).unwrap();
+    COLLATERALS.save(deps.storage, (user_addr, "", denom), &collateral).unwrap();
 }
 
 pub fn unset_collateral(deps: DepsMut, user_addr: &Addr, denom: &str) {
-    COLLATERALS.remove(deps.storage, (user_addr, denom));
+    COLLATERALS.remove(deps.storage, (user_addr, "", denom));
 }
 
 pub fn set_debt(
@@ -65,13 +65,13 @@ pub fn has_debt_position(deps: Deps, user_addr: &Addr, denom: &str) -> bool {
 
 /// Find if a user has a collateral position in the specified asset, regardless of whether enabled
 pub fn has_collateral_position(deps: Deps, user_addr: &Addr, denom: &str) -> bool {
-    COLLATERALS.may_load(deps.storage, (user_addr, denom)).unwrap().is_some()
+    COLLATERALS.may_load(deps.storage, (user_addr, "", denom)).unwrap().is_some()
 }
 
 /// Find whether a user has a collateral position AND has it enabled in the specified asset
 pub fn has_collateral_enabled(deps: Deps, user_addr: &Addr, denom: &str) -> bool {
     COLLATERALS
-        .may_load(deps.storage, (user_addr, denom))
+        .may_load(deps.storage, (user_addr, "", denom))
         .unwrap()
         .map(|collateral| collateral.enabled)
         .unwrap_or(false)
