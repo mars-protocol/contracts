@@ -43,17 +43,27 @@ pub fn execute(
         }
         ExecuteMsg::Deposit {
             on_behalf_of,
+            account_id,
         } => {
             let sent_coin = cw_utils::one_coin(&info)?;
-            execute::deposit(deps, env, info, on_behalf_of, sent_coin.denom, sent_coin.amount)
+            execute::deposit(
+                deps,
+                env,
+                info,
+                on_behalf_of,
+                sent_coin.denom,
+                sent_coin.amount,
+                account_id,
+            )
         }
         ExecuteMsg::Withdraw {
             denom,
             amount,
             recipient,
+            account_id,
         } => {
             cw_utils::nonpayable(&info)?;
-            execute::withdraw(deps, env, info, denom, amount, recipient)
+            execute::withdraw(deps, env, info, denom, amount, recipient, account_id)
         }
         ExecuteMsg::Borrow {
             denom,

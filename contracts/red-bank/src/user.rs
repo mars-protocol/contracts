@@ -102,6 +102,7 @@ impl<'a> User<'a> {
         amount_scaled: Uint128,
         incentives_addr: &Addr,
         response: Response,
+        account_id: Option<String>,
     ) -> StdResult<Response> {
         let mut amount_scaled_before = Uint128::zero();
 
@@ -123,6 +124,7 @@ impl<'a> User<'a> {
             incentives_addr,
             market,
             amount_scaled_before,
+            account_id,
         )?;
 
         Ok(response.add_message(msg))
@@ -141,6 +143,7 @@ impl<'a> User<'a> {
         amount_scaled: Uint128,
         incentives_addr: &Addr,
         response: Response,
+        account_id: Option<String>,
     ) -> StdResult<Response> {
         let mut collateral = COLLATERALS.load(store, (self.0, &market.denom))?;
 
@@ -157,6 +160,7 @@ impl<'a> User<'a> {
             incentives_addr,
             market,
             amount_scaled_before,
+            account_id,
         )?;
 
         Ok(response.add_message(msg))
@@ -171,11 +175,13 @@ impl<'a> User<'a> {
         incentives_addr: &Addr,
         market: &Market,
         user_amount_scaled_before: Uint128,
+        account_id: Option<String>,
     ) -> StdResult<CosmosMsg> {
         Ok(WasmMsg::Execute {
             contract_addr: incentives_addr.into(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: self.address().clone(),
+                account_id,
                 denom: market.denom.clone(),
                 user_amount_scaled_before,
                 total_amount_scaled_before: market.collateral_total_scaled,

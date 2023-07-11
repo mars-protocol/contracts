@@ -99,6 +99,8 @@ pub enum ExecuteMsg {
         /// User address. Address is trusted as it must be validated by the Red Bank
         /// contract before calling this method
         user_addr: Addr,
+        /// Credit account id (Rover)
+        account_id: Option<String>,
         /// Denom of the asset of which deposited balance is changed
         denom: String,
         /// The user's scaled collateral amount up to the instant before the change
@@ -110,6 +112,8 @@ pub enum ExecuteMsg {
     /// Claim rewards. MARS rewards accrued by the user will be staked into xMARS before
     /// being sent.
     ClaimRewards {
+        /// Credit account id (Rover)
+        account_id: Option<String>,
         /// Start pagination after this collateral denom
         start_after_collateral_denom: Option<String>,
         /// Start pagination after this incentive denom. If supplied you must also supply
@@ -196,6 +200,8 @@ pub enum QueryMsg {
     UserUnclaimedRewards {
         /// The user address for which to query unclaimed rewards
         user: String,
+        /// Credit account id (Rover)
+        account_id: Option<String>,
         /// Start pagination after this collateral denom
         start_after_collateral_denom: Option<String>,
         /// Start pagination after this incentive denom. If supplied you must also supply

@@ -56,6 +56,8 @@ pub enum ExecuteMsg {
     Deposit {
         /// Address that will receive the coins
         on_behalf_of: Option<String>,
+        /// Credit account id (Rover)
+        account_id: Option<String>,
     },
 
     /// Withdraw native coins
@@ -66,6 +68,8 @@ pub enum ExecuteMsg {
         amount: Option<Uint128>,
         /// The address where the withdrawn amount is sent
         recipient: Option<String>,
+        /// Credit account id (Rover)
+        account_id: Option<String>,
     },
 
     /// Borrow native coins. If borrow allowed, amount is added to caller's debt

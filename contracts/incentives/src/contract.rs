@@ -104,6 +104,7 @@ pub fn execute(
         ),
         ExecuteMsg::BalanceChange {
             user_addr,
+            account_id: _,
             denom,
             user_amount_scaled_before,
             total_amount_scaled_before,
@@ -117,6 +118,7 @@ pub fn execute(
             total_amount_scaled_before,
         ),
         ExecuteMsg::ClaimRewards {
+            account_id: _,
             start_after_collateral_denom,
             start_after_incentive_denom,
             limit,
@@ -528,6 +530,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         )?),
         QueryMsg::UserUnclaimedRewards {
             user,
+            account_id: _,
             start_after_collateral_denom,
             start_after_incentive_denom,
             limit,

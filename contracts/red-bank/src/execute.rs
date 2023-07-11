@@ -358,6 +358,7 @@ pub fn deposit(
     on_behalf_of: Option<String>,
     denom: String,
     deposit_amount: Uint128,
+    account_id: Option<String>,
 ) -> Result<Response, ContractError> {
     let user_addr: Addr;
     let user = if let Some(address) = on_behalf_of {
@@ -417,6 +418,7 @@ pub fn deposit(
         deposit_amount_scaled,
         incentives_addr,
         response,
+        account_id,
     )?;
 
     market.increase_collateral(deposit_amount_scaled)?;
@@ -442,6 +444,7 @@ pub fn withdraw(
     denom: String,
     amount: Option<Uint128>,
     recipient: Option<String>,
+    account_id: Option<String>,
 ) -> Result<Response, ContractError> {
     let withdrawer = User(&info.sender);
 
@@ -532,6 +535,7 @@ pub fn withdraw(
         withdraw_amount_scaled,
         incentives_addr,
         response,
+        account_id,
     )?;
 
     market.decrease_collateral(withdraw_amount_scaled)?;
@@ -874,6 +878,7 @@ pub fn liquidate(
         collateral_amount_to_liquidate_scaled,
         incentives_addr,
         response,
+        None,
     )?;
     response = recipient.increase_collateral(
         deps.storage,
@@ -881,6 +886,7 @@ pub fn liquidate(
         collateral_amount_to_liquidate_scaled,
         incentives_addr,
         response,
+        None,
     )?;
 
     // 5. Reduce the user's debt shares
