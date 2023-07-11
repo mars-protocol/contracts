@@ -5,6 +5,14 @@ import {
   WasmOracleCustomInitParams,
   WasmPriceSourceForString,
 } from './generated/mars-oracle-wasm/MarsOracleWasm.types'
+import {
+  CmSettingsForString,
+  Coin,
+  Decimal,
+  HlsParamsBaseForString,
+  LiquidationBonus,
+  RedBankSettings,
+} from './generated/mars-params/MarsParams.types'
 
 type SwapRoute = {
   denom_in: string
@@ -41,7 +49,6 @@ export interface DeploymentConfig {
   deployerMnemonic: string
   slippage_tolerance: string
   base_asset_symbol: string
-  second_asset_symbol: string
   multisigAddr?: string
   runTests: boolean
   mainnet: boolean
@@ -52,6 +59,7 @@ export interface DeploymentConfig {
   targetHealthFactor: string
   swapperDexName: string
   assets: AssetConfig[]
+  vaults: VaultConfig[]
   oracleConfigs: OracleConfig[]
   oracleCustomInitParams?: WasmOracleCustomInitParams
   incentiveEpochDuration: number
@@ -59,21 +67,23 @@ export interface DeploymentConfig {
 }
 
 export interface AssetConfig {
-  denom: string
-  max_loan_to_value: string
-  reserve_factor: string
-  liquidation_threshold: string
-  liquidation_bonus: string
-  interest_rate_model: {
-    optimal_utilization_rate: string
-    base: string
-    slope_1: string
-    slope_2: string
-  }
-  deposit_cap: string
-  deposit_enabled: boolean
-  borrow_enabled: boolean
   symbol: string
+  credit_manager: CmSettingsForString
+  denom: string
+  liquidation_bonus: LiquidationBonus
+  liquidation_threshold: Decimal
+  max_loan_to_value: Decimal
+  protocol_liquidation_fee: Decimal
+  red_bank: RedBankSettings
+}
+export interface VaultConfig {
+  addr: string
+  symbol: string
+  deposit_cap: Coin
+  hls?: HlsParamsBaseForString | null
+  liquidation_threshold: Decimal
+  max_loan_to_value: Decimal
+  whitelisted: boolean
 }
 
 export interface OracleConfig {
