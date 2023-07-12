@@ -6,12 +6,14 @@
  */
 
 export type Decimal = string
+export type ActionKind = 'default' | 'liquidation'
 export interface InstantiateMsg {
   prices: CoinPrice[]
 }
 export interface CoinPrice {
   denom: string
   price: Decimal
+  pricing: ActionKind
 }
 export type ExecuteMsg = {
   change_price: CoinPrice
@@ -19,6 +21,7 @@ export type ExecuteMsg = {
 export type QueryMsg = {
   price: {
     denom: string
+    kind?: ActionKind | null
   }
 }
 export interface PriceResponse {

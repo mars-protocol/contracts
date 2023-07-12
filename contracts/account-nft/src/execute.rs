@@ -6,6 +6,7 @@ use cw721_base::{
     ContractError::Ownership,
     OwnershipError::{NoOwner, NotOwner},
 };
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover_health_types::{AccountKind, HealthValuesResponse, QueryMsg::HealthValues};
 
 use crate::{
@@ -46,6 +47,7 @@ pub fn burn(
             msg: to_binary(&HealthValues {
                 account_id: token_id.clone(),
                 kind: AccountKind::Default,
+                action: ActionKind::Default,
             })?,
         }))?;
 

@@ -315,12 +315,6 @@ export interface MarsMockRedBankInterface extends MarsMockRedBankReadOnlyInterfa
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
-  updateEmergencyOwner: (
-    ownerUpdate: OwnerUpdate,
-    fee?: number | StdFee | 'auto',
-    memo?: string,
-    _funds?: Coin[],
-  ) => Promise<ExecuteResult>
   updateConfig: (
     {
       config,
@@ -370,11 +364,6 @@ export interface MarsMockRedBankInterface extends MarsMockRedBankReadOnlyInterfa
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
   deposit: (
-    {
-      onBehalfOf,
-    }: {
-      onBehalfOf?: string
-    },
     fee?: number | StdFee | 'auto',
     memo?: string,
     _funds?: Coin[],
@@ -458,7 +447,6 @@ export class MarsMockRedBankClient
     this.sender = sender
     this.contractAddress = contractAddress
     this.updateOwner = this.updateOwner.bind(this)
-    this.updateEmergencyOwner = this.updateEmergencyOwner.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
     this.initAsset = this.initAsset.bind(this)
     this.updateAsset = this.updateAsset.bind(this)
@@ -482,23 +470,6 @@ export class MarsMockRedBankClient
       this.contractAddress,
       {
         update_owner: ownerUpdate,
-      },
-      fee,
-      memo,
-      _funds,
-    )
-  }
-  updateEmergencyOwner = async (
-    ownerUpdate: OwnerUpdate,
-    fee: number | StdFee | 'auto' = 'auto',
-    memo?: string,
-    _funds?: Coin[],
-  ): Promise<ExecuteResult> => {
-    return await this.client.execute(
-      this.sender,
-      this.contractAddress,
-      {
-        update_emergency_owner: ownerUpdate,
       },
       fee,
       memo,
@@ -610,11 +581,6 @@ export class MarsMockRedBankClient
     )
   }
   deposit = async (
-    {
-      onBehalfOf,
-    }: {
-      onBehalfOf?: string
-    },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     _funds?: Coin[],
@@ -623,9 +589,7 @@ export class MarsMockRedBankClient
       this.sender,
       this.contractAddress,
       {
-        deposit: {
-          on_behalf_of: onBehalfOf,
-        },
+        deposit: {},
       },
       fee,
       memo,

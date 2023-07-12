@@ -35,10 +35,6 @@ export interface MarsMockRedBankMessage {
   contractAddress: string
   sender: string
   updateOwner: (ownerUpdate: OwnerUpdate, _funds?: Coin[]) => MsgExecuteContractEncodeObject
-  updateEmergencyOwner: (
-    ownerUpdate: OwnerUpdate,
-    _funds?: Coin[],
-  ) => MsgExecuteContractEncodeObject
   updateConfig: (
     {
       config,
@@ -79,14 +75,7 @@ export interface MarsMockRedBankMessage {
     },
     _funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
-  deposit: (
-    {
-      onBehalfOf,
-    }: {
-      onBehalfOf?: string
-    },
-    _funds?: Coin[],
-  ) => MsgExecuteContractEncodeObject
+  deposit: (_funds?: Coin[]) => MsgExecuteContractEncodeObject
   withdraw: (
     {
       amount,
@@ -150,7 +139,6 @@ export class MarsMockRedBankMessageComposer implements MarsMockRedBankMessage {
     this.sender = sender
     this.contractAddress = contractAddress
     this.updateOwner = this.updateOwner.bind(this)
-    this.updateEmergencyOwner = this.updateEmergencyOwner.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
     this.initAsset = this.initAsset.bind(this)
     this.updateAsset = this.updateAsset.bind(this)
@@ -172,24 +160,6 @@ export class MarsMockRedBankMessageComposer implements MarsMockRedBankMessage {
         msg: toUtf8(
           JSON.stringify({
             update_owner: ownerUpdate,
-          }),
-        ),
-        funds: _funds,
-      }),
-    }
-  }
-  updateEmergencyOwner = (
-    ownerUpdate: OwnerUpdate,
-    _funds?: Coin[],
-  ): MsgExecuteContractEncodeObject => {
-    return {
-      typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
-      value: MsgExecuteContract.fromPartial({
-        sender: this.sender,
-        contract: this.contractAddress,
-        msg: toUtf8(
-          JSON.stringify({
-            update_emergency_owner: ownerUpdate,
           }),
         ),
         funds: _funds,
@@ -304,14 +274,7 @@ export class MarsMockRedBankMessageComposer implements MarsMockRedBankMessage {
       }),
     }
   }
-  deposit = (
-    {
-      onBehalfOf,
-    }: {
-      onBehalfOf?: string
-    },
-    _funds?: Coin[],
-  ): MsgExecuteContractEncodeObject => {
+  deposit = (_funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
       value: MsgExecuteContract.fromPartial({
@@ -319,9 +282,7 @@ export class MarsMockRedBankMessageComposer implements MarsMockRedBankMessage {
         contract: this.contractAddress,
         msg: toUtf8(
           JSON.stringify({
-            deposit: {
-              on_behalf_of: onBehalfOf,
-            },
+            deposit: {},
           }),
         ),
         funds: _funds,

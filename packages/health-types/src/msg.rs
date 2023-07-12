@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use mars_owner::{OwnerResponse, OwnerUpdate};
+use mars_red_bank_types::oracle::ActionKind;
 
 use crate::AccountKind;
 
@@ -27,6 +28,7 @@ pub enum QueryMsg {
     HealthValues {
         account_id: String,
         kind: AccountKind,
+        action: ActionKind,
     },
     /// Returns Healthy or Unhealthy state. Does not do health calculations if no debt.
     /// This is helpful in the cases like liquidation where we should not query the oracle if can help it.
@@ -34,6 +36,7 @@ pub enum QueryMsg {
     HealthState {
         account_id: String,
         kind: AccountKind,
+        action: ActionKind,
     },
     #[returns(ConfigResponse)]
     Config {},

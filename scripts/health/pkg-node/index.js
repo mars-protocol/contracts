@@ -283,14 +283,14 @@ module.exports.__wbindgen_error_new = function (arg0, arg1) {
   return addHeapObject(ret)
 }
 
-module.exports.__wbindgen_boolean_get = function (arg0) {
-  const v = getObject(arg0)
-  const ret = typeof v === 'boolean' ? (v ? 1 : 0) : 2
+module.exports.__wbindgen_is_string = function (arg0) {
+  const ret = typeof getObject(arg0) === 'string'
   return ret
 }
 
-module.exports.__wbindgen_is_string = function (arg0) {
-  const ret = typeof getObject(arg0) === 'string'
+module.exports.__wbindgen_boolean_get = function (arg0) {
+  const v = getObject(arg0)
+  const ret = typeof v === 'boolean' ? (v ? 1 : 0) : 2
   return ret
 }
 

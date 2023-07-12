@@ -14,6 +14,7 @@ import {
   ExecuteMsg,
   OwnerUpdate,
   QueryMsg,
+  ActionKind,
   AccountKind,
   ConfigResponse,
   OwnerResponse,

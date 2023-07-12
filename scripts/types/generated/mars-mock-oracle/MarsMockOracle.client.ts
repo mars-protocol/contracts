@@ -9,6 +9,7 @@ import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from '@cosmjs/co
 import { Coin, StdFee } from '@cosmjs/amino'
 import {
   Decimal,
+  ActionKind,
   InstantiateMsg,
   CoinPrice,
   ExecuteMsg,
@@ -17,7 +18,7 @@ import {
 } from './MarsMockOracle.types'
 export interface MarsMockOracleReadOnlyInterface {
   contractAddress: string
-  price: ({ denom }: { denom: string }) => Promise<PriceResponse>
+  price: ({ denom, kind }: { denom: string; kind?: ActionKind }) => Promise<PriceResponse>
 }
 export class MarsMockOracleQueryClient implements MarsMockOracleReadOnlyInterface {
   client: CosmWasmClient
@@ -29,10 +30,11 @@ export class MarsMockOracleQueryClient implements MarsMockOracleReadOnlyInterfac
     this.price = this.price.bind(this)
   }
 
-  price = async ({ denom }: { denom: string }): Promise<PriceResponse> => {
+  price = async ({ denom, kind }: { denom: string; kind?: ActionKind }): Promise<PriceResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       price: {
         denom,
+        kind,
       },
     })
   }
@@ -44,9 +46,11 @@ export interface MarsMockOracleInterface extends MarsMockOracleReadOnlyInterface
     {
       denom,
       price,
+      pricing,
     }: {
       denom: string
       price: Decimal
+      pricing: ActionKind
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -73,9 +77,11 @@ export class MarsMockOracleClient
     {
       denom,
       price,
+      pricing,
     }: {
       denom: string
       price: Decimal
+      pricing: ActionKind
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -88,6 +94,7 @@ export class MarsMockOracleClient
         change_price: {
           denom,
           price,
+          pricing,
         },
       },
       fee,

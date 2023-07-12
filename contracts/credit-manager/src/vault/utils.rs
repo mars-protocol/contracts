@@ -1,4 +1,5 @@
 use cosmwasm_std::{Addr, Coin, Deps, DepsMut, StdResult, Storage, Uint128};
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     adapters::vault::{
         LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
@@ -89,7 +90,7 @@ pub fn vault_utilization_in_deposit_cap_denom(
     let config = params.query_vault_config(&deps.querier, &vault.address)?;
     let oracle = ORACLE.load(deps.storage)?;
     let deposit_cap_denom_price =
-        oracle.query_price(&deps.querier, &config.deposit_cap.denom)?.price;
+        oracle.query_price(&deps.querier, &config.deposit_cap.denom, ActionKind::Default)?.price;
 
     Ok(Coin {
         denom: config.deposit_cap.denom,
@@ -117,6 +118,7 @@ pub fn rover_vault_coin_balance_value(
             }),
         },
     };
-    let vault_coin_balance_val = position.query_values(&deps.querier, &oracle)?.vault_coin.value;
+    let vault_coin_balance_val =
+        position.query_values(&deps.querier, &oracle, ActionKind::Default)?.vault_coin.value;
     Ok(vault_coin_balance_val)
 }

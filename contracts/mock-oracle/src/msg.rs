@@ -1,8 +1,10 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Decimal;
+use mars_red_bank_types::oracle::ActionKind;
 
 #[cw_serde]
 pub struct CoinPrice {
+    pub pricing: ActionKind,
     pub denom: String,
     pub price: Decimal,
 }
@@ -24,5 +26,6 @@ pub enum QueryMsg {
     #[returns(mars_red_bank_types::oracle::PriceResponse)]
     Price {
         denom: String,
+        kind: Option<ActionKind>,
     },
 }

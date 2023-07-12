@@ -1,6 +1,7 @@
 use cosmwasm_std::{Coin, Deps, Env, Order, StdResult};
 use cw_paginate::paginate_map;
 use cw_storage_plus::Bound;
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     adapters::vault::{VaultBase, VaultPosition, VaultPositionValue, VaultUnchecked},
     error::ContractResult,
@@ -240,5 +241,5 @@ pub fn query_vault_position_value(
     vault_position: VaultPosition,
 ) -> StdResult<VaultPositionValue> {
     let oracle = ORACLE.load(deps.storage)?;
-    vault_position.query_values(&deps.querier, &oracle)
+    vault_position.query_values(&deps.querier, &oracle, ActionKind::Default)
 }

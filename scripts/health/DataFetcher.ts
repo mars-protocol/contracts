@@ -39,20 +39,26 @@ export class DataFetcher {
       params: await pQuery.assetParams({ denom }),
     }))
     const responses = await Promise.all(promises)
-    return responses.reduce((acc, curr) => {
-      acc[curr.denom] = curr.params
-      return acc
-    }, {} as DenomsData['params'])
+    return responses.reduce(
+      (acc, curr) => {
+        acc[curr.denom] = curr.params
+        return acc
+      },
+      {} as DenomsData['params'],
+    )
   }
 
   fetchPrices = async (denoms: string[]): Promise<DenomsData['prices']> => {
     const oQuery = new MarsMockOracleQueryClient(await this.getClient(), this.oracleAddr)
     const promises = denoms.map(async (denom) => await oQuery.price({ denom }))
     const responses = await Promise.all(promises)
-    return responses.reduce((acc, curr) => {
-      acc[curr.denom] = curr.price
-      return acc
-    }, {} as DenomsData['prices'])
+    return responses.reduce(
+      (acc, curr) => {
+        acc[curr.denom] = curr.price
+        return acc
+      },
+      {} as DenomsData['prices'],
+    )
   }
 
   fetchDenomsData = async (positions: Positions): Promise<DenomsData> => {

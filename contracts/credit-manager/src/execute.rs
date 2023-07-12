@@ -2,6 +2,7 @@ use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
 use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     coins::Coins,
     error::{ContractError, ContractResult},
@@ -12,7 +13,7 @@ use mars_rover_health_types::AccountKind;
 use crate::{
     borrow::borrow,
     deposit::deposit,
-    health::{assert_max_ltv, query_health},
+    health::{assert_max_ltv, query_health_state},
     hls::assert_account_requirements,
     lend::lend,
     liquidate::assert_not_self_liquidation,
@@ -70,7 +71,7 @@ pub fn dispatch_actions(
     let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];
     let mut received_coins = Coins::try_from(info.funds)?;
-    let prev_health = query_health(deps.as_ref(), account_id)?;
+    let prev_health_state = query_health_state(deps.as_ref(), account_id, ActionKind::Default)?;
 
     for action in actions {
         match action {
@@ -226,7 +227,7 @@ pub fn dispatch_actions(
         // Else, throw error and revert all actions
         CallbackMsg::AssertMaxLTV {
             account_id: account_id.to_string(),
-            prev_max_ltv_health_factor: prev_health.max_ltv_health_factor,
+            prev_health_state,
         },
         // Removes guard so that subsequent action dispatches can be made
         CallbackMsg::RemoveReentrancyGuard {},
@@ -281,8 +282,8 @@ pub fn execute_callback(
         } => reclaim(deps, env, &account_id, &coin),
         CallbackMsg::AssertMaxLTV {
             account_id,
-            prev_max_ltv_health_factor,
-        } => assert_max_ltv(deps.as_ref(), env, &account_id, &prev_max_ltv_health_factor),
+            prev_health_state,
+        } => assert_max_ltv(deps.as_ref(), &account_id, prev_health_state),
         CallbackMsg::EnterVault {
             account_id,
             vault,

@@ -2,7 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
 use mars_account_nft::nft_config::NftConfigUpdates;
 use mars_owner::OwnerUpdate;
-use mars_rover_health_types::AccountKind;
+use mars_rover_health_types::{AccountKind, HealthState};
 
 use crate::{
     adapters::vault::{Vault, VaultPositionType, VaultUnchecked},
@@ -231,7 +231,7 @@ pub enum CallbackMsg {
     #[serde(rename = "assert_max_ltv")]
     AssertMaxLTV {
         account_id: String,
-        prev_max_ltv_health_factor: Option<Decimal>,
+        prev_health_state: HealthState,
     },
     /// Adds coin to a vault strategy
     EnterVault {

@@ -5,6 +5,7 @@ use std::{
 
 use cosmwasm_std::{Coin, Decimal, DepsMut, Env, QuerierWrapper, StdError, Uint128};
 use mars_params::types::asset::AssetParams;
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     adapters::oracle::Oracle,
     error::{ContractError, ContractResult},
@@ -13,7 +14,7 @@ use mars_rover::{
 use mars_rover_health_types::HealthValuesResponse;
 
 use crate::{
-    health::query_health,
+    health::query_health_values,
     repay::current_debt_for_denom,
     state::{ORACLE, PARAMS},
 };
@@ -34,7 +35,8 @@ pub fn calculate_liquidation(
     request_coin_balance: Uint128,
 ) -> ContractResult<(Coin, Coin, Coin)> {
     // Assert the liquidatee's credit account is liquidatable
-    let health = query_health(deps.as_ref(), liquidatee_account_id)?;
+    let health =
+        query_health_values(deps.as_ref(), liquidatee_account_id, ActionKind::Liquidation)?;
     if !health.liquidatable {
         return Err(ContractError::NotLiquidatable {
             account_id: liquidatee_account_id.to_string(),
@@ -51,8 +53,10 @@ pub fn calculate_liquidation(
     let request_coin_params = params.query_asset_params(&deps.querier, request_coin)?;
 
     let oracle = ORACLE.load(deps.storage)?;
-    let debt_coin_price = oracle.query_price(&deps.querier, &debt_coin.denom)?.price;
-    let request_coin_price = oracle.query_price(&deps.querier, request_coin)?.price;
+    let debt_coin_price =
+        oracle.query_price(&deps.querier, &debt_coin.denom, ActionKind::Liquidation)?.price;
+    let request_coin_price =
+        oracle.query_price(&deps.querier, request_coin, ActionKind::Liquidation)?.price;
 
     let (debt_amount_to_repay, request_amount_to_liquidate, request_amount_received_by_liquidator) =
         calculate_liquidation_amounts(
@@ -249,8 +253,8 @@ fn assert_liquidation_profitable(
     oracle: &Oracle,
     (debt_coin, request_coin, ..): (Coin, Coin, Coin),
 ) -> ContractResult<()> {
-    let debt_value = oracle.query_total_value(querier, &[debt_coin.clone()])?;
-    let request_value = oracle.query_total_value(querier, &[request_coin.clone()])?;
+    let debt_value = oracle.query_value(querier, &debt_coin, ActionKind::Liquidation)?;
+    let request_value = oracle.query_value(querier, &request_coin, ActionKind::Liquidation)?;
 
     if debt_value >= request_value {
         return Err(ContractError::LiquidationNotProfitable {

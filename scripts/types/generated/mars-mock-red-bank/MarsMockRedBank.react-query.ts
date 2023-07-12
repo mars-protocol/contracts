@@ -574,9 +574,6 @@ export function useMarsMockRedBankWithdrawMutation(
 }
 export interface MarsMockRedBankDepositMutation {
   client: MarsMockRedBankClient
-  msg: {
-    onBehalfOf?: string
-  }
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string
@@ -590,7 +587,7 @@ export function useMarsMockRedBankDepositMutation(
   >,
 ) {
   return useMutation<ExecuteResult, Error, MarsMockRedBankDepositMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) => client.deposit(msg, fee, memo, funds),
+    ({ client, args: { fee, memo, funds } = {} }) => client.deposit(fee, memo, funds),
     options,
   )
 }
@@ -689,27 +686,6 @@ export function useMarsMockRedBankUpdateConfigMutation(
   return useMutation<ExecuteResult, Error, MarsMockRedBankUpdateConfigMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) =>
       client.updateConfig(msg, fee, memo, funds),
-    options,
-  )
-}
-export interface MarsMockRedBankUpdateEmergencyOwnerMutation {
-  client: MarsMockRedBankClient
-  msg: OwnerUpdate
-  args?: {
-    fee?: number | StdFee | 'auto'
-    memo?: string
-    funds?: Coin[]
-  }
-}
-export function useMarsMockRedBankUpdateEmergencyOwnerMutation(
-  options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsMockRedBankUpdateEmergencyOwnerMutation>,
-    'mutationFn'
-  >,
-) {
-  return useMutation<ExecuteResult, Error, MarsMockRedBankUpdateEmergencyOwnerMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) =>
-      client.updateEmergencyOwner(msg, fee, memo, funds),
     options,
   )
 }

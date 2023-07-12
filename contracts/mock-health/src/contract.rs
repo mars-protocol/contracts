@@ -39,6 +39,7 @@ pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> HealthResult<Binary> {
         QueryMsg::HealthValues {
             account_id,
             kind,
+            ..
         } => to_binary(&query_health(deps, &account_id, kind)?),
         _ => unimplemented!("query msg not supported"),
     };

@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_std::{Decimal, Uint128};
 use mars_params::msg::AssetParamsUpdate::AddOrUpdate;
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     adapters::vault::{Vault, VaultAmount, VaultPosition, VaultPositionAmount},
     msg::query::{DebtAmount, Positions},
@@ -42,7 +43,7 @@ fn hls_account_kind_passed_along() {
         }],
     };
     mock.set_positions_response(account_id, &positions);
-    mock.set_price(debt_token, Decimal::one());
+    mock.set_price(debt_token, Decimal::one(), ActionKind::Default);
     mock.update_asset_params(AddOrUpdate {
         params: default_asset_params(debt_token),
     });
@@ -51,11 +52,13 @@ fn hls_account_kind_passed_along() {
         params: default_asset_params(vault_base_token),
     });
 
-    mock.set_price(vault_base_token, Decimal::one());
+    mock.set_price(vault_base_token, Decimal::one(), ActionKind::Default);
 
     let vault_config = mock.query_vault_config(&vault.into());
 
-    let health = mock.query_health_values(account_id, AccountKind::HighLeveredStrategy).unwrap();
+    let health = mock
+        .query_health_values(account_id, AccountKind::HighLeveredStrategy, ActionKind::Default)
+        .unwrap();
     assert_eq!(health.total_debt_value, positions.debts.first().unwrap().amount);
     assert_eq!(health.total_collateral_value, base_token_amount);
     assert_eq!(

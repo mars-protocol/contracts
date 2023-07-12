@@ -11,6 +11,7 @@ import { MsgExecuteContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx'
 import { toUtf8 } from '@cosmjs/encoding'
 import {
   Decimal,
+  ActionKind,
   InstantiateMsg,
   CoinPrice,
   ExecuteMsg,
@@ -24,9 +25,11 @@ export interface MarsMockOracleMessage {
     {
       denom,
       price,
+      pricing,
     }: {
       denom: string
       price: Decimal
+      pricing: ActionKind
     },
     _funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
@@ -45,9 +48,11 @@ export class MarsMockOracleMessageComposer implements MarsMockOracleMessage {
     {
       denom,
       price,
+      pricing,
     }: {
       denom: string
       price: Decimal
+      pricing: ActionKind
     },
     _funds?: Coin[],
   ): MsgExecuteContractEncodeObject => {
@@ -61,6 +66,7 @@ export class MarsMockOracleMessageComposer implements MarsMockOracleMessage {
             change_price: {
               denom,
               price,
+              pricing,
             },
           }),
         ),

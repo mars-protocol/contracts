@@ -84,3 +84,20 @@ pub enum HealthState {
         max_ltv_health_factor: Decimal,
     },
 }
+
+impl fmt::Display for HealthState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            HealthState::Healthy => write!(f, "healthy"),
+            HealthState::Unhealthy {
+                max_ltv_health_factor,
+            } => {
+                write!(
+                    f,
+                    "unhealthy (max_ltv_health_factor: {:?}",
+                    max_ltv_health_factor.to_string(),
+                )
+            }
+        }
+    }
+}

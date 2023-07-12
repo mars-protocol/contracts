@@ -26,19 +26,6 @@
         "additionalProperties": false
       },
       {
-        "description": "Manages emergency owner state",
-        "type": "object",
-        "required": [
-          "update_emergency_owner"
-        ],
-        "properties": {
-          "update_emergency_owner": {
-            "$ref": "#/definitions/OwnerUpdate"
-          }
-        },
-        "additionalProperties": false
-      },
-      {
         "description": "Update contract config (only owner can call)",
         "type": "object",
         "required": [
@@ -170,15 +157,6 @@
         "properties": {
           "deposit": {
             "type": "object",
-            "properties": {
-              "on_behalf_of": {
-                "description": "Address that will receive the coins",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
             "additionalProperties": false
           }
         },
@@ -360,16 +338,6 @@
               "string",
               "null"
             ]
-          },
-          "close_factor": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/Decimal"
-              },
-              {
-                "type": "null"
-              }
-            ]
           }
         },
         "additionalProperties": false
@@ -381,69 +349,11 @@
       "InitOrUpdateAssetParams": {
         "type": "object",
         "properties": {
-          "borrow_enabled": {
-            "description": "If false cannot borrow",
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "deposit_cap": {
-            "description": "Deposit Cap defined in terms of the asset (Unlimited by default)",
-            "anyOf": [
-              {
-                "$ref": "#/definitions/Uint128"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "deposit_enabled": {
-            "description": "If false cannot deposit",
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
           "interest_rate_model": {
             "description": "Interest rate strategy to calculate borrow_rate and liquidity_rate",
             "anyOf": [
               {
                 "$ref": "#/definitions/InterestRateModel"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "liquidation_bonus": {
-            "description": "Bonus amount of collateral liquidator get when repaying user's debt (Will get collateral from user in an amount equal to debt repayed + bonus)",
-            "anyOf": [
-              {
-                "$ref": "#/definitions/Decimal"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "liquidation_threshold": {
-            "description": "uusd amount in debt position per uusd of asset collateral that if surpassed makes the user's position liquidatable.",
-            "anyOf": [
-              {
-                "$ref": "#/definitions/Decimal"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "max_loan_to_value": {
-            "description": "Max uusd that can be borrowed per uusd of collateral when using the asset as collateral",
-            "anyOf": [
-              {
-                "$ref": "#/definitions/Decimal"
               },
               {
                 "type": "null"
@@ -551,6 +461,35 @@
             "type": "string",
             "enum": [
               "abolish_owner_role"
+            ]
+          },
+          {
+            "description": "A separate entity managed by Owner that can be used for granting specific emergency powers.",
+            "type": "object",
+            "required": [
+              "set_emergency_owner"
+            ],
+            "properties": {
+              "set_emergency_owner": {
+                "type": "object",
+                "required": [
+                  "emergency_owner"
+                ],
+                "properties": {
+                  "emergency_owner": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Remove the entity in the Emergency Owner role",
+            "type": "string",
+            "enum": [
+              "clear_emergency_owner"
             ]
           }
         ]
@@ -959,38 +898,15 @@
       "title": "ConfigResponse",
       "type": "object",
       "required": [
-        "address_provider",
-        "close_factor"
+        "address_provider"
       ],
       "properties": {
         "address_provider": {
           "description": "Address provider returns addresses for all protocol contracts",
           "type": "string"
         },
-        "close_factor": {
-          "description": "Maximum percentage of outstanding debt that can be covered by a liquidator",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Decimal"
-            }
-          ]
-        },
-        "emergency_owner": {
-          "description": "The contract's emergency owner",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "owner": {
           "description": "The contract's owner",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "proposed_new_emergency_owner": {
-          "description": "The contract's proposed emergency owner",
           "type": [
             "string",
             "null"
@@ -1004,41 +920,25 @@
           ]
         }
       },
-      "additionalProperties": false,
-      "definitions": {
-        "Decimal": {
-          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
-          "type": "string"
-        }
-      }
+      "additionalProperties": false
     },
     "market": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Market",
       "type": "object",
       "required": [
-        "borrow_enabled",
         "borrow_index",
         "borrow_rate",
         "collateral_total_scaled",
         "debt_total_scaled",
         "denom",
-        "deposit_cap",
-        "deposit_enabled",
         "indexes_last_updated",
         "interest_rate_model",
-        "liquidation_bonus",
-        "liquidation_threshold",
         "liquidity_index",
         "liquidity_rate",
-        "max_loan_to_value",
         "reserve_factor"
       ],
       "properties": {
-        "borrow_enabled": {
-          "description": "If false cannot borrow",
-          "type": "boolean"
-        },
         "borrow_index": {
           "description": "Borrow index (Used to compute borrow interest)",
           "allOf": [
@@ -1075,18 +975,6 @@
           "description": "Denom of the asset",
           "type": "string"
         },
-        "deposit_cap": {
-          "description": "Deposit Cap (defined in terms of the asset)",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Uint128"
-            }
-          ]
-        },
-        "deposit_enabled": {
-          "description": "If false cannot deposit",
-          "type": "boolean"
-        },
         "indexes_last_updated": {
           "description": "Timestamp (seconds) where indexes and where last updated",
           "type": "integer",
@@ -1101,22 +989,6 @@
             }
           ]
         },
-        "liquidation_bonus": {
-          "description": "Bonus amount of collateral liquidator get when repaying user's debt (Will get collateral from user in an amount equal to debt repayed + bonus)",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Decimal"
-            }
-          ]
-        },
-        "liquidation_threshold": {
-          "description": "Base asset amount in debt position per \"base asset\" of asset collateral that if surpassed makes the user's position liquidatable.",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Decimal"
-            }
-          ]
-        },
         "liquidity_index": {
           "description": "Liquidity index (Used to compute deposit interest)",
           "allOf": [
@@ -1127,14 +999,6 @@
         },
         "liquidity_rate": {
           "description": "Rate paid to depositors",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Decimal"
-            }
-          ]
-        },
-        "max_loan_to_value": {
-          "description": "Max base asset that can be borrowed per \"base asset\" collateral when using the asset as collateral",
           "allOf": [
             {
               "$ref": "#/definitions/Decimal"
@@ -1265,28 +1129,18 @@
         "Market": {
           "type": "object",
           "required": [
-            "borrow_enabled",
             "borrow_index",
             "borrow_rate",
             "collateral_total_scaled",
             "debt_total_scaled",
             "denom",
-            "deposit_cap",
-            "deposit_enabled",
             "indexes_last_updated",
             "interest_rate_model",
-            "liquidation_bonus",
-            "liquidation_threshold",
             "liquidity_index",
             "liquidity_rate",
-            "max_loan_to_value",
             "reserve_factor"
           ],
           "properties": {
-            "borrow_enabled": {
-              "description": "If false cannot borrow",
-              "type": "boolean"
-            },
             "borrow_index": {
               "description": "Borrow index (Used to compute borrow interest)",
               "allOf": [
@@ -1323,18 +1177,6 @@
               "description": "Denom of the asset",
               "type": "string"
             },
-            "deposit_cap": {
-              "description": "Deposit Cap (defined in terms of the asset)",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Uint128"
-                }
-              ]
-            },
-            "deposit_enabled": {
-              "description": "If false cannot deposit",
-              "type": "boolean"
-            },
             "indexes_last_updated": {
               "description": "Timestamp (seconds) where indexes and where last updated",
               "type": "integer",
@@ -1349,22 +1191,6 @@
                 }
               ]
             },
-            "liquidation_bonus": {
-              "description": "Bonus amount of collateral liquidator get when repaying user's debt (Will get collateral from user in an amount equal to debt repayed + bonus)",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Decimal"
-                }
-              ]
-            },
-            "liquidation_threshold": {
-              "description": "Base asset amount in debt position per \"base asset\" of asset collateral that if surpassed makes the user's position liquidatable.",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Decimal"
-                }
-              ]
-            },
             "liquidity_index": {
               "description": "Liquidity index (Used to compute deposit interest)",
               "allOf": [
@@ -1375,14 +1201,6 @@
             },
             "liquidity_rate": {
               "description": "Rate paid to depositors",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Decimal"
-                }
-              ]
-            },
-            "max_loan_to_value": {
-              "description": "Max base asset that can be borrowed per \"base asset\" collateral when using the asset as collateral",
               "allOf": [
                 {
                   "$ref": "#/definitions/Decimal"

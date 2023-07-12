@@ -1,5 +1,6 @@
 use cosmwasm_std::{coins, Addr, Decimal, Uint128};
 use mars_mock_oracle::msg::CoinPrice;
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     error::{ContractError, ContractError::NotLiquidatable},
     msg::execute::{
@@ -44,7 +45,8 @@ fn lent_positions_contribute_to_health() {
     )
     .unwrap();
 
-    let health_1 = mock.query_health(&liquidatee_account_id, AccountKind::Default);
+    let health_1 =
+        mock.query_health(&liquidatee_account_id, AccountKind::Default, ActionKind::Liquidation);
     assert!(!health_1.liquidatable);
 
     mock.update_credit_account(
@@ -56,7 +58,8 @@ fn lent_positions_contribute_to_health() {
     .unwrap();
 
     // Collateral should be the same after Lend
-    let health_2 = mock.query_health(&liquidatee_account_id, AccountKind::Default);
+    let health_2 =
+        mock.query_health(&liquidatee_account_id, AccountKind::Default, ActionKind::Liquidation);
     assert!(!health_2.liquidatable);
     // health_2.total_collateral_value bigger (+1) because of simulated yield
     assert_eq!(health_1.total_collateral_value, health_2.total_collateral_value - Uint128::one());
@@ -126,11 +129,13 @@ fn liquidatee_does_not_have_requested_lent_coin() {
     .unwrap();
 
     mock.price_change(CoinPrice {
+        pricing: ActionKind::Liquidation,
         denom: uosmo_info.denom.clone(),
         price: Decimal::from_atomics(20u128, 0).unwrap(),
     });
 
-    let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
+    let health =
+        mock.query_health(&liquidatee_account_id, AccountKind::Default, ActionKind::Liquidation);
     assert!(health.liquidatable);
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
@@ -189,11 +194,13 @@ fn lent_position_partially_liquidated() {
     .unwrap();
 
     mock.price_change(CoinPrice {
+        pricing: ActionKind::Liquidation,
         denom: uatom_info.denom.clone(),
         price: Decimal::from_atomics(22u128, 1).unwrap(),
     });
 
-    let health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
+    let health =
+        mock.query_health(&liquidatee_account_id, AccountKind::Default, ActionKind::Liquidation);
     assert!(health.liquidatable);
     assert_eq!(health.total_collateral_value, Uint128::new(2462u128));
     assert_eq!(health.total_debt_value, Uint128::new(2203u128));
@@ -252,7 +259,7 @@ fn lent_position_partially_liquidated() {
 
     // Liq HF should improve
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
-    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    let health = mock.query_health(&liquidatee_account_id, account_kind, ActionKind::Liquidation);
     assert!(!health.liquidatable);
 }
 
@@ -281,6 +288,13 @@ fn lent_position_fully_liquidated() {
     let liquidatee_account_id = mock.create_credit_account(&liquidatee).unwrap();
 
     mock.price_change(CoinPrice {
+        pricing: ActionKind::Default,
+        denom: uosmo_info.denom.clone(),
+        price: Decimal::from_atomics(10u128, 1).unwrap(),
+    });
+
+    mock.price_change(CoinPrice {
+        pricing: ActionKind::Liquidation,
         denom: uosmo_info.denom.clone(),
         price: Decimal::from_atomics(10u128, 1).unwrap(),
     });
@@ -298,11 +312,13 @@ fn lent_position_fully_liquidated() {
     .unwrap();
 
     mock.price_change(CoinPrice {
+        pricing: ActionKind::Liquidation,
         denom: uatom_info.denom.clone(),
         price: Decimal::from_atomics(50u128, 1).unwrap(),
     });
 
-    let prev_health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
+    let prev_health =
+        mock.query_health(&liquidatee_account_id, AccountKind::Default, ActionKind::Liquidation);
     assert!(prev_health.liquidatable);
     assert_eq!(prev_health.total_collateral_value, Uint128::new(2801u128));
     assert_eq!(prev_health.total_debt_value, Uint128::new(2505u128));
@@ -366,7 +382,7 @@ fn lent_position_fully_liquidated() {
 
     // Liq HF should improve
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
-    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    let health = mock.query_health(&liquidatee_account_id, account_kind, ActionKind::Liquidation);
     assert!(health.liquidatable);
     assert!(
         prev_health.liquidation_health_factor.unwrap() < health.liquidation_health_factor.unwrap()
@@ -410,11 +426,13 @@ fn liquidate_with_reclaiming() {
     .unwrap();
 
     mock.price_change(CoinPrice {
+        pricing: ActionKind::Liquidation,
         denom: uatom_info.denom.clone(),
         price: Decimal::from_atomics(82u128, 1).unwrap(),
     });
 
-    let prev_health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
+    let prev_health =
+        mock.query_health(&liquidatee_account_id, AccountKind::Default, ActionKind::Liquidation);
     assert!(prev_health.liquidatable);
     assert_eq!(prev_health.total_collateral_value, Uint128::new(8950u128));
     assert_eq!(prev_health.total_debt_value, Uint128::new(8209u128));
@@ -482,7 +500,7 @@ fn liquidate_with_reclaiming() {
 
     // Liq HF should improve
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
-    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    let health = mock.query_health(&liquidatee_account_id, account_kind, ActionKind::Liquidation);
     assert!(health.liquidatable);
     assert!(
         prev_health.liquidation_health_factor.unwrap() < health.liquidation_health_factor.unwrap()

@@ -2,6 +2,7 @@ use cosmwasm_std::{
     Addr, Decimal, OverflowError, OverflowOperation::Sub, StdError::NotFound, Uint128,
 };
 use mars_mock_oracle::msg::CoinPrice;
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     adapters::vault::{VaultBase, VaultPositionType},
     error::ContractError,
@@ -169,6 +170,7 @@ fn liquidator_does_not_have_debt_coin_in_credit_account() {
     .unwrap();
 
     mock.price_change(CoinPrice {
+        pricing: ActionKind::Liquidation,
         denom: ujake.denom.clone(),
         price: Decimal::from_atomics(20u128, 0).unwrap(),
     });
@@ -365,11 +367,13 @@ fn liquidate_unlocked_vault() {
     .unwrap();
 
     mock.price_change(CoinPrice {
+        pricing: ActionKind::Liquidation,
         denom: ujake.denom.clone(),
         price: Decimal::from_atomics(18u128, 0).unwrap(),
     });
 
-    let prev_health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
+    let prev_health =
+        mock.query_health(&liquidatee_account_id, AccountKind::Default, ActionKind::Liquidation);
     assert!(prev_health.liquidatable);
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
@@ -423,7 +427,7 @@ fn liquidate_unlocked_vault() {
 
     // Liq HF should improve
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
-    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    let health = mock.query_health(&liquidatee_account_id, account_kind, ActionKind::Liquidation);
     assert!(!health.liquidatable);
 }
 
@@ -469,11 +473,13 @@ fn liquidate_locked_vault() {
     .unwrap();
 
     mock.price_change(CoinPrice {
+        pricing: ActionKind::Liquidation,
         denom: atom.denom.clone(),
         price: Decimal::from_atomics(20u128, 0).unwrap(),
     });
 
-    let prev_health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
+    let prev_health =
+        mock.query_health(&liquidatee_account_id, AccountKind::Default, ActionKind::Liquidation);
     assert!(prev_health.liquidatable);
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
@@ -530,7 +536,7 @@ fn liquidate_locked_vault() {
 
     // Liq HF should improve
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
-    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    let health = mock.query_health(&liquidatee_account_id, account_kind, ActionKind::Liquidation);
     assert!(health.liquidatable);
     assert!(
         prev_health.liquidation_health_factor.unwrap() < health.liquidation_health_factor.unwrap()
@@ -596,11 +602,13 @@ fn liquidate_unlocking_liquidation_order() {
     .unwrap();
 
     mock.price_change(CoinPrice {
+        pricing: ActionKind::Liquidation,
         denom: ujake.denom.clone(),
         price: Decimal::from_atomics(20u128, 0).unwrap(),
     });
 
-    let prev_health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
+    let prev_health =
+        mock.query_health(&liquidatee_account_id, AccountKind::Default, ActionKind::Liquidation);
     assert!(prev_health.liquidatable);
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
@@ -666,7 +674,7 @@ fn liquidate_unlocking_liquidation_order() {
 
     // Liq HF should improve
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
-    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    let health = mock.query_health(&liquidatee_account_id, account_kind, ActionKind::Liquidation);
     assert!(health.liquidatable);
     assert!(
         prev_health.liquidation_health_factor.unwrap() < health.liquidation_health_factor.unwrap()
@@ -717,11 +725,13 @@ fn liquidation_calculation_adjustment() {
     .unwrap();
 
     mock.price_change(CoinPrice {
+        pricing: ActionKind::Liquidation,
         denom: ujake.denom.clone(),
         price: Decimal::from_atomics(20u128, 0).unwrap(),
     });
 
-    let prev_health = mock.query_health(&liquidatee_account_id, AccountKind::Default);
+    let prev_health =
+        mock.query_health(&liquidatee_account_id, AccountKind::Default, ActionKind::Liquidation);
     assert!(prev_health.liquidatable);
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
@@ -779,6 +789,6 @@ fn liquidation_calculation_adjustment() {
 
     // Liq HF should improve
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
-    let health = mock.query_health(&liquidatee_account_id, account_kind);
+    let health = mock.query_health(&liquidatee_account_id, account_kind, ActionKind::Liquidation);
     assert!(!health.liquidatable);
 }

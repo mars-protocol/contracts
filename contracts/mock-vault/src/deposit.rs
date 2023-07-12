@@ -2,6 +2,7 @@ use cosmwasm_std::{
     to_binary, BankMsg, Coin, CosmosMsg, DepsMut, MessageInfo, Response, StdResult, Uint128,
     WasmMsg,
 };
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::msg::{execute::Action::Deposit, ExecuteMsg::UpdateCreditAccount};
 
 use crate::{
@@ -26,8 +27,9 @@ pub fn deposit(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractErr
         TOTAL_VAULT_SHARES.save(deps.storage, &STARTING_VAULT_SHARES)?;
         STARTING_VAULT_SHARES
     } else {
-        let total_vault_value = oracle.query_total_value(&deps.querier, &[balance])?;
-        let assets_value = oracle.query_total_value(&deps.querier, &info.funds)?;
+        let total_vault_value = oracle.query_value(&deps.querier, &balance, ActionKind::Default)?;
+        let assets_value =
+            oracle.query_total_value(&deps.querier, &info.funds, ActionKind::Default)?;
         let shares_to_add = total_shares.checked_multiply_ratio(assets_value, total_vault_value)?;
         TOTAL_VAULT_SHARES.save(deps.storage, &(total_shares + shares_to_add))?;
         shares_to_add

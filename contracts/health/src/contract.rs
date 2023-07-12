@@ -55,11 +55,13 @@ pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> HealthResult<Binary> {
         QueryMsg::HealthValues {
             account_id,
             kind,
-        } => to_binary(&health_values(deps, &account_id, kind)?),
+            action,
+        } => to_binary(&health_values(deps, &account_id, kind, action)?),
         QueryMsg::HealthState {
             account_id,
             kind,
-        } => to_binary(&health_state(deps, &account_id, kind)?),
+            action,
+        } => to_binary(&health_state(deps, &account_id, kind, action)?),
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
     };
     res.map_err(Into::into)

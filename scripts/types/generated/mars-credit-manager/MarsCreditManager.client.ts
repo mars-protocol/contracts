@@ -27,6 +27,7 @@ import {
   OwnerUpdate,
   CallbackMsg,
   Addr,
+  HealthState,
   LiquidateRequestForVaultBaseForAddr,
   ChangeExpected,
   Coin,

@@ -1,6 +1,7 @@
 use cosmwasm_std::{
     to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Uint128, WasmMsg,
 };
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     adapters::vault::{UpdateType, Vault, VaultPositionUpdate},
     error::{ContractError, ContractResult},
@@ -119,14 +120,16 @@ pub fn assert_deposit_is_under_cap(
     rover_addr: &Addr,
 ) -> ContractResult<()> {
     let oracle = ORACLE.load(deps.storage)?;
-    let deposit_request_value = oracle.query_total_value(&deps.querier, &[coin_to_add.clone()])?;
+    let deposit_request_value =
+        oracle.query_value(&deps.querier, coin_to_add, ActionKind::Default)?;
     let rover_vault_balance_value = rover_vault_coin_balance_value(&deps, vault, rover_addr)?;
 
     let new_total_vault_value = rover_vault_balance_value.checked_add(deposit_request_value)?;
 
     let params = PARAMS.load(deps.storage)?;
     let config = params.query_vault_config(&deps.querier, &vault.address)?;
-    let deposit_cap_value = oracle.query_total_value(&deps.querier, &[config.deposit_cap])?;
+    let deposit_cap_value =
+        oracle.query_value(&deps.querier, &config.deposit_cap, ActionKind::Default)?;
 
     if new_total_vault_value > deposit_cap_value {
         return Err(ContractError::AboveVaultDepositCap {

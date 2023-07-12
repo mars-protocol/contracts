@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Coin, QuerierWrapper, StdResult, Uint128};
-use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
+use mars_red_bank_types::oracle::{ActionKind, PriceResponse, QueryMsg};
 
 use crate::error::ContractResult;
 
@@ -33,28 +33,40 @@ impl OracleUnchecked {
 }
 
 impl Oracle {
-    pub fn query_price(&self, querier: &QuerierWrapper, denom: &str) -> StdResult<PriceResponse> {
+    pub fn query_price(
+        &self,
+        querier: &QuerierWrapper,
+        denom: &str,
+        pricing: ActionKind,
+    ) -> StdResult<PriceResponse> {
         querier.query_wasm_smart(
             self.address().to_string(),
             &QueryMsg::Price {
                 denom: denom.to_string(),
+                kind: Some(pricing),
             },
         )
     }
 
-    pub fn query_value(&self, querier: &QuerierWrapper, coin: &Coin) -> ContractResult<Uint128> {
-        self.query_total_value(querier, &[coin.clone()])
+    pub fn query_value(
+        &self,
+        querier: &QuerierWrapper,
+        coin: &Coin,
+        action: ActionKind,
+    ) -> ContractResult<Uint128> {
+        self.query_total_value(querier, &[coin.clone()], action)
     }
 
     pub fn query_total_value(
         &self,
         querier: &QuerierWrapper,
         coins: &[Coin],
+        action: ActionKind,
     ) -> ContractResult<Uint128> {
         Ok(coins
             .iter()
             .map(|coin| {
-                let res = self.query_price(querier, &coin.denom)?;
+                let res = self.query_price(querier, &coin.denom, action.clone())?;
                 Ok(coin.amount.checked_mul_floor(res.price)?)
             })
             .collect::<ContractResult<Vec<_>>>()?

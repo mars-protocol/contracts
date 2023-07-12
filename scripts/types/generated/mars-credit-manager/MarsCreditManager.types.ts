@@ -209,7 +209,7 @@ export type CallbackMsg =
   | {
       assert_max_ltv: {
         account_id: string
-        prev_max_ltv_health_factor?: Decimal | null
+        prev_health_state: HealthState
       }
     }
   | {
@@ -306,6 +306,13 @@ export type CallbackMsg =
       remove_reentrancy_guard: {}
     }
 export type Addr = string
+export type HealthState =
+  | 'healthy'
+  | {
+      unhealthy: {
+        max_ltv_health_factor: Decimal
+      }
+    }
 export type LiquidateRequestForVaultBaseForAddr =
   | {
       deposit: string

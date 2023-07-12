@@ -34,9 +34,12 @@ use mars_params::{
         vault::{VaultConfig, VaultConfigUnchecked},
     },
 };
-use mars_red_bank_types::red_bank::{
-    QueryMsg::{UserCollateral, UserDebt},
-    UserCollateralResponse, UserDebtResponse,
+use mars_red_bank_types::{
+    oracle::ActionKind,
+    red_bank::{
+        QueryMsg::{UserCollateral, UserDebt},
+        UserCollateralResponse, UserDebtResponse,
+    },
 };
 use mars_rover::{
     adapters::{
@@ -320,7 +323,12 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_health(&self, account_id: &str, kind: AccountKind) -> HealthValuesResponse {
+    pub fn query_health(
+        &self,
+        account_id: &str,
+        kind: AccountKind,
+        action: ActionKind,
+    ) -> HealthValuesResponse {
         self.app
             .wrap()
             .query_wasm_smart(
@@ -328,6 +336,7 @@ impl MockEnv {
                 &HealthValues {
                     account_id: account_id.to_string(),
                     kind,
+                    action,
                 },
             )
             .unwrap()
@@ -846,11 +855,13 @@ impl MockEnvBuilder {
             .get_coin_params()
             .iter()
             .map(|item| CoinPrice {
+                pricing: ActionKind::Default,
                 denom: item.denom.clone(),
                 price: item.price,
             })
             .collect();
         prices.push(CoinPrice {
+            pricing: ActionKind::Default,
             denom: "uusdc".to_string(),
             price: Decimal::from_atomics(12345u128, 4).unwrap(),
         });
@@ -861,6 +872,7 @@ impl MockEnvBuilder {
         self.vault_configs.clone().unwrap_or_default().iter().for_each(|v| {
             if !price_denoms.contains(&v.base_token_denom) {
                 prices.push(CoinPrice {
+                    pricing: ActionKind::Default,
                     denom: v.base_token_denom.clone(),
                     price: Decimal::from_atomics(456u128, 5).unwrap(),
                 });

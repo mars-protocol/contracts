@@ -1,4 +1,5 @@
 use cosmwasm_std::{Coin, Deps, StdResult, Storage, Uint128};
+use mars_red_bank_types::oracle::ActionKind;
 
 use crate::{
     contract::STARTING_LP_POOL_TOKENS,
@@ -27,8 +28,10 @@ pub fn estimate_provide_liquidity(
             })
             .collect::<StdResult<Vec<_>>>()?;
         let oracle = ORACLE.load(deps.storage)?;
-        let total_underlying_value = oracle.query_total_value(&deps.querier, &coins)?;
-        let given_value = oracle.query_total_value(&deps.querier, &coins_in)?;
+        let total_underlying_value =
+            oracle.query_total_value(&deps.querier, &coins, ActionKind::Default)?;
+        let given_value =
+            oracle.query_total_value(&deps.querier, &coins_in, ActionKind::Default)?;
         total_supply.checked_multiply_ratio(given_value, total_underlying_value)?
     };
     Ok(lp_tokens_estimate)

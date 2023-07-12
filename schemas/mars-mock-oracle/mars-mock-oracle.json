@@ -19,11 +19,20 @@
     },
     "additionalProperties": false,
     "definitions": {
+      "ActionKind": {
+        "description": "Differentiator for the action (liquidate, withdraw, borrow etc.) being performed.",
+        "type": "string",
+        "enum": [
+          "default",
+          "liquidation"
+        ]
+      },
       "CoinPrice": {
         "type": "object",
         "required": [
           "denom",
-          "price"
+          "price",
+          "pricing"
         ],
         "properties": {
           "denom": {
@@ -31,6 +40,9 @@
           },
           "price": {
             "$ref": "#/definitions/Decimal"
+          },
+          "pricing": {
+            "$ref": "#/definitions/ActionKind"
           }
         },
         "additionalProperties": false
@@ -59,11 +71,20 @@
       }
     ],
     "definitions": {
+      "ActionKind": {
+        "description": "Differentiator for the action (liquidate, withdraw, borrow etc.) being performed.",
+        "type": "string",
+        "enum": [
+          "default",
+          "liquidation"
+        ]
+      },
       "CoinPrice": {
         "type": "object",
         "required": [
           "denom",
-          "price"
+          "price",
+          "pricing"
         ],
         "properties": {
           "denom": {
@@ -71,6 +92,9 @@
           },
           "price": {
             "$ref": "#/definitions/Decimal"
+          },
+          "pricing": {
+            "$ref": "#/definitions/ActionKind"
           }
         },
         "additionalProperties": false
@@ -99,6 +123,16 @@
             "properties": {
               "denom": {
                 "type": "string"
+              },
+              "kind": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/ActionKind"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -106,7 +140,17 @@
         },
         "additionalProperties": false
       }
-    ]
+    ],
+    "definitions": {
+      "ActionKind": {
+        "description": "Differentiator for the action (liquidate, withdraw, borrow etc.) being performed.",
+        "type": "string",
+        "enum": [
+          "default",
+          "liquidation"
+        ]
+      }
+    }
   },
   "migrate": null,
   "sudo": null,

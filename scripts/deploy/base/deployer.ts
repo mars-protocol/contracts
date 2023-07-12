@@ -325,19 +325,13 @@ export class Deployer {
           init_asset: {
             denom,
             params: {
-              max_loan_to_value: '0.65',
               reserve_factor: '0.2',
-              liquidation_threshold: '0.7',
-              liquidation_bonus: '0.1',
               interest_rate_model: {
                 optimal_utilization_rate: '0.1',
                 base: '0.3',
                 slope_1: '0.25',
                 slope_2: '0.3',
               },
-              deposit_cap: '1000000000',
-              deposit_enabled: true,
-              borrow_enabled: true,
             },
           },
         }

@@ -1,5 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, QuerierWrapper, StdError, StdResult, Uint128};
+use mars_red_bank_types::oracle::ActionKind;
 
 use crate::adapters::{
     oracle::Oracle,
@@ -53,14 +54,20 @@ impl VaultPosition {
         &self,
         querier: &QuerierWrapper,
         oracle: &Oracle,
+        action: ActionKind,
     ) -> StdResult<VaultPositionValue> {
         Ok(VaultPositionValue {
-            vault_coin: self.vault_coin_value(querier, oracle)?,
-            base_coin: self.base_coin_value(querier, oracle)?,
+            vault_coin: self.vault_coin_value(querier, oracle, action.clone())?,
+            base_coin: self.base_coin_value(querier, oracle, action)?,
         })
     }
 
-    fn vault_coin_value(&self, querier: &QuerierWrapper, oracle: &Oracle) -> StdResult<CoinValue> {
+    fn vault_coin_value(
+        &self,
+        querier: &QuerierWrapper,
+        oracle: &Oracle,
+        action: ActionKind,
+    ) -> StdResult<CoinValue> {
         let vault_info = self.vault.query_info(querier)?;
 
         let total_supply = self.vault.query_total_vault_coins_issued(querier)?;
@@ -74,7 +81,7 @@ impl VaultPosition {
 
         let vault_coin_amount = self.amount.unlocked().checked_add(self.amount.locked())?;
         let amount_in_base_coin = self.vault.query_preview_redeem(querier, vault_coin_amount)?;
-        let price_res = oracle.query_price(querier, &vault_info.base_token)?;
+        let price_res = oracle.query_price(querier, &vault_info.base_token, action)?;
         let total_value = amount_in_base_coin
             .checked_mul_floor(price_res.price)
             .map_err(|_| StdError::generic_err("CheckedMultiplyFractionError"))?;
@@ -85,9 +92,14 @@ impl VaultPosition {
         })
     }
 
-    fn base_coin_value(&self, querier: &QuerierWrapper, oracle: &Oracle) -> StdResult<CoinValue> {
+    fn base_coin_value(
+        &self,
+        querier: &QuerierWrapper,
+        oracle: &Oracle,
+        action: ActionKind,
+    ) -> StdResult<CoinValue> {
         let vault_info = self.vault.query_info(querier)?;
-        let base_token_price = oracle.query_price(querier, &vault_info.base_token)?.price;
+        let base_token_price = oracle.query_price(querier, &vault_info.base_token, action)?.price;
 
         let total_value = self.amount.unlocking().positions().iter().try_fold(
             Uint128::zero(),

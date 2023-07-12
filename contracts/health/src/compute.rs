@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{Deps, StdResult};
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::msg::query::Positions;
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_rover_health_types::{AccountKind, HealthResult, HealthState, HealthValuesResponse};
@@ -15,6 +16,7 @@ pub fn compute_health(
     kind: AccountKind,
     q: HealthQuerier,
     positions: Positions,
+    action: ActionKind,
 ) -> HealthResult<HealthValuesResponse> {
     // Get the denoms that need prices + markets
     let deposit_denoms = positions.deposits.iter().map(|d| &d.denom).collect::<Vec<_>>();
@@ -38,7 +40,7 @@ pub fn compute_health(
         .chain(lend_denoms)
         .chain(vault_base_token_denoms)
         .try_for_each(|denom| -> StdResult<()> {
-            let price = q.oracle.query_price(&deps.querier, denom)?.price;
+            let price = q.oracle.query_price(&deps.querier, denom, action.clone())?.price;
             denoms_data.prices.insert(denom.clone(), price);
             let params = q.params.query_asset_params(&deps.querier, denom)?;
             denoms_data.params.insert(denom.clone(), params);
@@ -48,7 +50,7 @@ pub fn compute_health(
     // Collect all vault data
     let mut vaults_data: VaultsData = Default::default();
     positions.vaults.iter().try_for_each(|v| -> HealthResult<()> {
-        let vault_coin_value = v.query_values(&deps.querier, &q.oracle)?;
+        let vault_coin_value = v.query_values(&deps.querier, &q.oracle, action.clone())?;
         vaults_data.vault_values.insert(v.vault.address.clone(), vault_coin_value);
         let config = q.query_vault_config(&v.vault)?;
         vaults_data.vault_configs.insert(v.vault.address.clone(), config);
@@ -69,13 +71,19 @@ pub fn health_values(
     deps: Deps,
     account_id: &str,
     kind: AccountKind,
+    action: ActionKind,
 ) -> HealthResult<HealthValuesResponse> {
     let q = HealthQuerier::new(&deps)?;
     let positions = q.query_positions(account_id)?;
-    compute_health(deps, kind, q, positions)
+    compute_health(deps, kind, q, positions, action)
 }
 
-pub fn health_state(deps: Deps, account_id: &str, kind: AccountKind) -> HealthResult<HealthState> {
+pub fn health_state(
+    deps: Deps,
+    account_id: &str,
+    kind: AccountKind,
+    action: ActionKind,
+) -> HealthResult<HealthState> {
     let q = HealthQuerier::new(&deps)?;
     let positions = q.query_positions(account_id)?;
 
@@ -85,7 +93,7 @@ pub fn health_state(deps: Deps, account_id: &str, kind: AccountKind) -> HealthRe
         return Ok(HealthState::Healthy);
     }
 
-    let health = compute_health(deps, kind, q, positions)?;
+    let health = compute_health(deps, kind, q, positions, action)?;
     if !health.above_max_ltv {
         Ok(HealthState::Healthy)
     } else {

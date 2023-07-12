@@ -1,6 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, QuerierWrapper, StdResult};
-use mars_rover_health_types::{AccountKind, HealthValuesResponse, QueryMsg};
+use mars_red_bank_types::oracle::ActionKind;
+use mars_rover_health_types::{AccountKind, HealthState, HealthValuesResponse, QueryMsg};
 
 #[cw_serde]
 pub struct HealthContractBase<T>(T);
@@ -31,17 +32,36 @@ impl HealthContractUnchecked {
 }
 
 impl HealthContract {
-    pub fn query_health(
+    pub fn query_health_state(
         &self,
         querier: &QuerierWrapper,
         account_id: &str,
         kind: AccountKind,
+        action: ActionKind,
+    ) -> StdResult<HealthState> {
+        querier.query_wasm_smart(
+            self.address().to_string(),
+            &QueryMsg::HealthState {
+                account_id: account_id.to_string(),
+                kind,
+                action,
+            },
+        )
+    }
+
+    pub fn query_health_values(
+        &self,
+        querier: &QuerierWrapper,
+        account_id: &str,
+        kind: AccountKind,
+        action: ActionKind,
     ) -> StdResult<HealthValuesResponse> {
         querier.query_wasm_smart(
             self.address().to_string(),
             &QueryMsg::HealthValues {
                 account_id: account_id.to_string(),
                 kind,
+                action,
             },
         )
     }

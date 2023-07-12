@@ -49,20 +49,20 @@ cw-utils           = "1.0.1"
 cw-storage-plus    = "1.1.0"
 cw-vault-standard  = { version = "0.3.0", features = ["lockup", "force-unlock"] }
 itertools          = "0.11.0"
-osmosis-std        = "0.16.0-beta.1"
-osmosis-test-tube  = "16.0.0-beta.0"
+osmosis-std        = "0.16.0"
+osmosis-test-tube  = "16.0.0"
 proptest           = "1.2.0"
 schemars           = "0.8.12"
-serde              = { version = "1.0.165", default-features = false, features = ["derive"] }
-serde_json         = "1.0.99"
+serde              = { version = "1.0.171", default-features = false, features = ["derive"] }
+serde_json         = "1.0.100"
 serde-wasm-bindgen = "0.5.0"
-thiserror          = "1.0.40"
+thiserror          = "1.0.43"
 wasm-bindgen       = "0.2.87"
 
 # mars packages
 mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
 mars-owner                 = { version = "1.2.0", features = ["emergency-owner"] }
-mars-red-bank-types        = "1.0.0"
+mars-red-bank-types        = "1.1.0-develop-0"
 mars-rover-health-computer = { version = "2.0.0", path = "./packages/health-computer" }
 mars-rover-health-types    = { version = "2.0.0", path = "./packages/health-types" }
 mars-rover                 = { version = "2.0.0", path = "./packages/rover" }

@@ -1,5 +1,6 @@
 use cosmwasm_std::{coins, Addr, Decimal, Uint128};
 use mars_params::{msg::AssetParamsUpdate::AddOrUpdate, types::hls::HlsAssetType};
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     error::ContractError,
     msg::execute::Action::{Borrow, Deposit, EnterVault, Lend},
@@ -266,7 +267,8 @@ fn successful_with_asset_correlations() {
     )
     .unwrap();
 
-    let hls_health = mock.query_health(&account_id, AccountKind::HighLeveredStrategy);
+    let hls_health =
+        mock.query_health(&account_id, AccountKind::HighLeveredStrategy, ActionKind::Default);
     let total_debt_value = atom_info.price * Uint128::new(atom_borrow_amount) + Uint128::one();
     let lp_collateral_value = lp_token.price * Uint128::new(lp_deposit_amount);
     let atom_collateral_value = atom_info.price * Uint128::new(atom_borrow_amount);
@@ -295,7 +297,7 @@ fn successful_with_asset_correlations() {
         hls_health
     );
 
-    let default_health = mock.query_health(&account_id, AccountKind::Default);
+    let default_health = mock.query_health(&account_id, AccountKind::Default, ActionKind::Default);
     assert_ne!(hls_health, default_health);
 }
 
@@ -347,7 +349,8 @@ fn successful_with_vault_correlations() {
     )
     .unwrap();
 
-    let hls_health = mock.query_health(&account_id, AccountKind::HighLeveredStrategy);
+    let hls_health =
+        mock.query_health(&account_id, AccountKind::HighLeveredStrategy, ActionKind::Default);
     let total_debt_value = atom_info.price * Uint128::new(atom_borrow_amount) + Uint128::one();
     let lp_collateral_value = lp_token.price * Uint128::new(lp_deposit_amount);
     let atom_collateral_value = atom_info.price * Uint128::new(atom_borrow_amount);
@@ -376,6 +379,6 @@ fn successful_with_vault_correlations() {
         hls_health
     );
 
-    let default_health = mock.query_health(&account_id, AccountKind::Default);
+    let default_health = mock.query_health(&account_id, AccountKind::Default, ActionKind::Default);
     assert_ne!(hls_health, default_health);
 }

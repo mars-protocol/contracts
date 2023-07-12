@@ -10,6 +10,7 @@ import { ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee, Coin } from '@cosmjs/amino'
 import {
   Decimal,
+  ActionKind,
   InstantiateMsg,
   CoinPrice,
   ExecuteMsg,
@@ -41,6 +42,7 @@ export interface MarsMockOraclePriceQuery<TData>
   extends MarsMockOracleReactQuery<PriceResponse, TData> {
   args: {
     denom: string
+    kind?: ActionKind
   }
 }
 export function useMarsMockOraclePriceQuery<TData = PriceResponse>({
@@ -54,6 +56,7 @@ export function useMarsMockOraclePriceQuery<TData = PriceResponse>({
       client
         ? client.price({
             denom: args.denom,
+            kind: args.kind,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -64,6 +67,7 @@ export interface MarsMockOracleChangePriceMutation {
   msg: {
     denom: string
     price: Decimal
+    pricing: ActionKind
   }
   args?: {
     fee?: number | StdFee | 'auto'

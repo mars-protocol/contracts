@@ -13,6 +13,7 @@ import {
   ExecuteMsg,
   OwnerUpdate,
   QueryMsg,
+  ActionKind,
   AccountKind,
   ConfigResponse,
   OwnerResponse,
@@ -79,6 +80,7 @@ export interface MarsRoverHealthTypesHealthStateQuery<TData>
   extends MarsRoverHealthTypesReactQuery<HealthState, TData> {
   args: {
     accountId: string
+    action: ActionKind
     kind: AccountKind
   }
 }
@@ -93,6 +95,7 @@ export function useMarsRoverHealthTypesHealthStateQuery<TData = HealthState>({
       client
         ? client.healthState({
             accountId: args.accountId,
+            action: args.action,
             kind: args.kind,
           })
         : Promise.reject(new Error('Invalid client')),
@@ -103,6 +106,7 @@ export interface MarsRoverHealthTypesHealthValuesQuery<TData>
   extends MarsRoverHealthTypesReactQuery<HealthValuesResponse, TData> {
   args: {
     accountId: string
+    action: ActionKind
     kind: AccountKind
   }
 }
@@ -117,6 +121,7 @@ export function useMarsRoverHealthTypesHealthValuesQuery<TData = HealthValuesRes
       client
         ? client.healthValues({
             accountId: args.accountId,
+            action: args.action,
             kind: args.kind,
           })
         : Promise.reject(new Error('Invalid client')),

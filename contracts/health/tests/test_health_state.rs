@@ -1,5 +1,6 @@
 use cosmwasm_std::{Coin, Decimal, Uint128};
 use mars_params::msg::AssetParamsUpdate::AddOrUpdate;
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::msg::query::{DebtAmount, Positions};
 use mars_rover_health_types::{AccountKind, HealthState};
 
@@ -26,7 +27,8 @@ fn zero_debts_results_in_healthy_state() {
         },
     );
 
-    let state = mock.query_health_state(account_id, AccountKind::Default).unwrap();
+    let state =
+        mock.query_health_state(account_id, AccountKind::Default, ActionKind::Default).unwrap();
 
     assert_eq!(state, HealthState::Healthy);
 }
@@ -36,7 +38,7 @@ fn computing_health_when_healthy() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let umars = "umars";
-    mock.set_price(umars, Decimal::one());
+    mock.set_price(umars, Decimal::one(), ActionKind::Default);
     mock.update_asset_params(AddOrUpdate {
         params: default_asset_params(umars),
     });
@@ -60,7 +62,8 @@ fn computing_health_when_healthy() {
         },
     );
 
-    let state = mock.query_health_state(account_id, AccountKind::Default).unwrap();
+    let state =
+        mock.query_health_state(account_id, AccountKind::Default, ActionKind::Default).unwrap();
     assert_eq!(state, HealthState::Healthy);
 }
 
@@ -69,7 +72,7 @@ fn computing_health_when_unhealthy() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let umars = "umars";
-    mock.set_price(umars, Decimal::one());
+    mock.set_price(umars, Decimal::one(), ActionKind::Default);
     mock.update_asset_params(AddOrUpdate {
         params: default_asset_params(umars),
     });
@@ -93,6 +96,7 @@ fn computing_health_when_unhealthy() {
         },
     );
 
-    let state = mock.query_health_state(account_id, AccountKind::Default).unwrap();
+    let state =
+        mock.query_health_state(account_id, AccountKind::Default, ActionKind::Default).unwrap();
     assert!(matches!(state, HealthState::Unhealthy { .. }));
 }

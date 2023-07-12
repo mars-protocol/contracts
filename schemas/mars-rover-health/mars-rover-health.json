@@ -151,11 +151,15 @@
             "type": "object",
             "required": [
               "account_id",
+              "action",
               "kind"
             ],
             "properties": {
               "account_id": {
                 "type": "string"
+              },
+              "action": {
+                "$ref": "#/definitions/ActionKind"
               },
               "kind": {
                 "$ref": "#/definitions/AccountKind"
@@ -177,11 +181,15 @@
             "type": "object",
             "required": [
               "account_id",
+              "action",
               "kind"
             ],
             "properties": {
               "account_id": {
                 "type": "string"
+              },
+              "action": {
+                "$ref": "#/definitions/ActionKind"
               },
               "kind": {
                 "$ref": "#/definitions/AccountKind"
@@ -212,6 +220,14 @@
         "enum": [
           "default",
           "high_levered_strategy"
+        ]
+      },
+      "ActionKind": {
+        "description": "Differentiator for the action (liquidate, withdraw, borrow etc.) being performed.",
+        "type": "string",
+        "enum": [
+          "default",
+          "liquidation"
         ]
       }
     }

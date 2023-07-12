@@ -15,6 +15,7 @@ use mars_params::{
     },
     types::vault::VaultConfig,
 };
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{adapters::vault::VaultUnchecked, msg::query::Positions};
 use mars_rover_health_types::{
     AccountKind, ConfigResponse, ExecuteMsg::UpdateConfig, HealthState, HealthValuesResponse,
@@ -52,12 +53,14 @@ impl MockEnv {
         &self,
         account_id: &str,
         kind: AccountKind,
+        action: ActionKind,
     ) -> StdResult<HealthValuesResponse> {
         self.app.wrap().query_wasm_smart(
             self.health_contract.clone(),
             &QueryMsg::HealthValues {
                 account_id: account_id.to_string(),
                 kind,
+                action,
             },
         )
     }
@@ -66,12 +69,14 @@ impl MockEnv {
         &self,
         account_id: &str,
         kind: AccountKind,
+        action: ActionKind,
     ) -> StdResult<HealthState> {
         self.app.wrap().query_wasm_smart(
             self.health_contract.clone(),
             &QueryMsg::HealthState {
                 account_id: account_id.to_string(),
                 kind,
+                action,
             },
         )
     }
@@ -169,12 +174,13 @@ impl MockEnv {
             .unwrap();
     }
 
-    pub fn set_price(&mut self, denom: &str, price: Decimal) {
+    pub fn set_price(&mut self, denom: &str, price: Decimal, pricing: ActionKind) {
         self.app
             .execute_contract(
                 self.deployer.clone(),
                 self.oracle.clone(),
                 &ChangePrice(CoinPrice {
+                    pricing,
                     denom: denom.to_string(),
                     price,
                 }),

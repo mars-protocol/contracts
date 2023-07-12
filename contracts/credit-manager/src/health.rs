@@ -1,56 +1,76 @@
-use cosmwasm_std::{Decimal, Deps, Env, Event, Response};
-use mars_rover::{
-    error::{ContractError, ContractResult},
-    traits::Stringify,
-};
-use mars_rover_health_types::{is_below_one, HealthValuesResponse};
+use cosmwasm_std::{Deps, Response};
+use mars_red_bank_types::oracle::ActionKind;
+use mars_rover::error::{ContractError, ContractResult};
+use mars_rover_health_types::{HealthState, HealthValuesResponse};
 
 use crate::{state::HEALTH_CONTRACT, utils::get_account_kind};
 
-pub fn query_health(deps: Deps, account_id: &str) -> ContractResult<HealthValuesResponse> {
+pub fn query_health_state(
+    deps: Deps,
+    account_id: &str,
+    action: ActionKind,
+) -> ContractResult<HealthState> {
     let hc = HEALTH_CONTRACT.load(deps.storage)?;
     let kind = get_account_kind(deps.storage, account_id)?;
-    Ok(hc.query_health(&deps.querier, account_id, kind)?)
+    Ok(hc.query_health_state(&deps.querier, account_id, kind, action)?)
+}
+
+pub fn query_health_values(
+    deps: Deps,
+    account_id: &str,
+    action: ActionKind,
+) -> ContractResult<HealthValuesResponse> {
+    let hc = HEALTH_CONTRACT.load(deps.storage)?;
+    let kind = get_account_kind(deps.storage, account_id)?;
+    Ok(hc.query_health_values(&deps.querier, account_id, kind, action)?)
 }
 
 pub fn assert_max_ltv(
     deps: Deps,
-    env: Env,
     account_id: &str,
-    prev_max_ltv_health_factor: &Option<Decimal>,
+    prev_health: HealthState,
 ) -> ContractResult<Response> {
-    let new_health = query_health(deps, account_id)?;
+    let new_health = query_health_state(deps, account_id, ActionKind::Default)?;
 
-    // If previous health was in a bad state, assert it did not further weaken
-    if is_below_one(prev_max_ltv_health_factor) {
-        if let (Some(prev_hf), Some(new_hf)) =
-            (prev_max_ltv_health_factor, new_health.max_ltv_health_factor)
-        {
-            if prev_hf > &new_hf {
+    match (&prev_health, &new_health) {
+        // If account ends in a healthy state, all good! ✅
+        (_, HealthState::Healthy) => {}
+        // If previous health was in an unhealthy state, assert it did not further weaken ⚠️
+        (
+            HealthState::Unhealthy {
+                max_ltv_health_factor: prev_hf,
+                ..
+            },
+            HealthState::Unhealthy {
+                max_ltv_health_factor: new_hf,
+                ..
+            },
+        ) => {
+            if prev_hf > new_hf {
                 return Err(ContractError::HealthNotImproved {
                     prev_hf: prev_hf.to_string(),
                     new_hf: new_hf.to_string(),
                 });
             }
         }
-    // if previous health was in a good state, assert it's still healthy
-    } else if new_health.above_max_ltv {
-        return Err(ContractError::AboveMaxLTV {
-            account_id: account_id.to_string(),
-            max_ltv_health_factor: new_health.max_ltv_health_factor.to_string(),
-        });
+        // Else, it went from healthy to unhealthy, raise! ❌
+        (
+            HealthState::Healthy,
+            HealthState::Unhealthy {
+                max_ltv_health_factor,
+                ..
+            },
+        ) => {
+            return Err(ContractError::AboveMaxLTV {
+                account_id: account_id.to_string(),
+                max_ltv_health_factor: max_ltv_health_factor.to_string(),
+            });
+        }
     }
 
-    let event = Event::new("position_changed")
-        .add_attribute("timestamp", env.block.time.seconds().to_string())
-        .add_attribute("height", env.block.height.to_string())
+    Ok(Response::new()
+        .add_attribute("action", "callback/assert_health")
         .add_attribute("account_id", account_id)
-        .add_attribute("collateral_value", new_health.total_collateral_value.to_string())
-        .add_attribute("debts_value", new_health.total_debt_value.to_string())
-        .add_attribute("lqdt_health_factor", new_health.liquidation_health_factor.to_string())
-        .add_attribute("liquidatable", new_health.liquidatable.to_string())
-        .add_attribute("max_ltv_health_factor", new_health.max_ltv_health_factor.to_string())
-        .add_attribute("above_max_ltv", new_health.above_max_ltv.to_string());
-
-    Ok(Response::new().add_attribute("action", "callback/assert_health").add_event(event))
+        .add_attribute("prev_health_state", prev_health.to_string())
+        .add_attribute("new_health_state", new_health.to_string()))
 }

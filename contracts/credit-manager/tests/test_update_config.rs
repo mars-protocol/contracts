@@ -1,6 +1,7 @@
 use cosmwasm_std::{Addr, Decimal, Empty, Uint128};
 use cw_multi_test::{BasicApp, Executor};
 use mars_mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
+use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     adapters::{
         health::HealthContractUnchecked, oracle::OracleUnchecked, red_bank::RedBankUnchecked,
@@ -168,10 +169,12 @@ fn deploy_new_oracle(app: &mut BasicApp) -> OracleUnchecked {
             &OracleInstantiateMsg {
                 prices: vec![
                     CoinPrice {
+                        pricing: ActionKind::Default,
                         denom: "uusdc".to_string(),
                         price: Decimal::from_atomics(12345u128, 4).unwrap(),
                     },
                     CoinPrice {
+                        pricing: ActionKind::Default,
                         denom: "vault_xyz".to_string(),
                         price: Decimal::from_atomics(989685877u128, 8).unwrap(),
                     },

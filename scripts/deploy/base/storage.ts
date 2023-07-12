@@ -9,7 +9,11 @@ export class Storage implements StorageItems {
   public codeIds: StorageItems['codeIds']
   public actions: StorageItems['actions']
 
-  constructor(private chainId: string, private label: string, items: StorageItems) {
+  constructor(
+    private chainId: string,
+    private label: string,
+    items: StorageItems,
+  ) {
     this.addresses = items.addresses
     this.codeIds = items.codeIds
     this.actions = items.actions

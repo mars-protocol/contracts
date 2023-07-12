@@ -838,21 +838,15 @@
               "assert_max_ltv": {
                 "type": "object",
                 "required": [
-                  "account_id"
+                  "account_id",
+                  "prev_health_state"
                 ],
                 "properties": {
                   "account_id": {
                     "type": "string"
                   },
-                  "prev_max_ltv_health_factor": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/Decimal"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                  "prev_health_state": {
+                    "$ref": "#/definitions/HealthState"
                   }
                 },
                 "additionalProperties": false
@@ -1410,6 +1404,37 @@
       },
       "HealthContractBase_for_String": {
         "type": "string"
+      },
+      "HealthState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "healthy"
+            ]
+          },
+          {
+            "type": "object",
+            "required": [
+              "unhealthy"
+            ],
+            "properties": {
+              "unhealthy": {
+                "type": "object",
+                "required": [
+                  "max_ltv_health_factor"
+                ],
+                "properties": {
+                  "max_ltv_health_factor": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
       },
       "LiquidateRequest_for_VaultBase_for_Addr": {
         "oneOf": [
