@@ -261,3 +261,14 @@ fn assert_liquidation_profitable(
 
     Ok(())
 }
+
+/// Guards against the case an account is trying to liquidate itself
+pub fn assert_not_self_liquidation(
+    liquidator_account_id: &str,
+    liquidatee_account_id: &str,
+) -> ContractResult<()> {
+    if liquidator_account_id == liquidatee_account_id {
+        return Err(ContractError::SelfLiquidation);
+    }
+    Ok(())
+}

@@ -146,6 +146,9 @@ pub enum ContractError {
     #[error("{0}")]
     RequirementsNotMet(String),
 
+    #[error("Cannot request liquidation on own credit account")]
+    SelfLiquidation,
+
     #[error("{0}")]
     Std(#[from] StdError),
 

@@ -252,7 +252,7 @@ fn successful_account_balance_lend() {
             funds: coins(300, coin_info.denom.clone()),
         })
         .fund_account(AccountToFund {
-            addr: user_b.clone(),
+            addr: user_b,
             funds: coins(300, coin_info.denom.clone()),
         })
         .build()

@@ -15,6 +15,7 @@ use crate::{
     health::{assert_max_ltv, query_health},
     hls::assert_account_requirements,
     lend::lend,
+    liquidate::assert_not_self_liquidation,
     liquidate_deposit::liquidate_deposit,
     liquidate_lend::liquidate_lend,
     reclaim::reclaim,
@@ -303,36 +304,39 @@ pub fn execute_callback(
             liquidatee_account_id,
             debt_coin,
             request,
-        } => match request {
-            LiquidateRequest::Deposit(request_coin_denom) => liquidate_deposit(
-                deps,
-                env,
-                &liquidator_account_id,
-                &liquidatee_account_id,
-                debt_coin,
-                &request_coin_denom,
-            ),
-            LiquidateRequest::Lend(request_coin_denom) => liquidate_lend(
-                deps,
-                env,
-                &liquidator_account_id,
-                &liquidatee_account_id,
-                debt_coin,
-                &request_coin_denom,
-            ),
-            LiquidateRequest::Vault {
-                request_vault,
-                position_type,
-            } => liquidate_vault(
-                deps,
-                env,
-                &liquidator_account_id,
-                &liquidatee_account_id,
-                debt_coin,
-                request_vault,
-                position_type,
-            ),
-        },
+        } => {
+            assert_not_self_liquidation(&liquidator_account_id, &liquidatee_account_id)?;
+            match request {
+                LiquidateRequest::Deposit(request_coin_denom) => liquidate_deposit(
+                    deps,
+                    env,
+                    &liquidator_account_id,
+                    &liquidatee_account_id,
+                    debt_coin,
+                    &request_coin_denom,
+                ),
+                LiquidateRequest::Lend(request_coin_denom) => liquidate_lend(
+                    deps,
+                    env,
+                    &liquidator_account_id,
+                    &liquidatee_account_id,
+                    debt_coin,
+                    &request_coin_denom,
+                ),
+                LiquidateRequest::Vault {
+                    request_vault,
+                    position_type,
+                } => liquidate_vault(
+                    deps,
+                    env,
+                    &liquidator_account_id,
+                    &liquidatee_account_id,
+                    debt_coin,
+                    request_vault,
+                    position_type,
+                ),
+            }
+        }
         CallbackMsg::SwapExactIn {
             account_id,
             coin_in,
