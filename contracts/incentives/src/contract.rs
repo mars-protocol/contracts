@@ -21,7 +21,8 @@ use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
 use crate::{
     error::ContractError,
     helpers::{
-        self, compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_incentive_index,
+        self, compute_user_accrued_rewards, compute_user_unclaimed_rewards, get_current_emission,
+        update_incentive_index,
     },
     state::{
         self, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT, OWNER,
@@ -557,7 +558,37 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             start_after_timestamp,
             limit,
         )?),
+        QueryMsg::ActiveEmissions {
+            collateral_denom,
+        } => to_binary(&query_active_emissions(deps, env, collateral_denom)?),
     }
+}
+
+pub fn query_active_emissions(
+    deps: Deps,
+    env: Env,
+    collateral_denom: String,
+) -> StdResult<Vec<(String, EmissionResponse)>> {
+    let emissions: Vec<(String, EmissionResponse)> = INCENTIVE_STATES
+        .prefix(&collateral_denom)
+        .keys(deps.storage, None, None, Order::Ascending)
+        .map(|incentive_denom| {
+            let incentive_denom = incentive_denom?;
+            let emission = get_current_emission(
+                deps.storage,
+                &collateral_denom,
+                &incentive_denom,
+                env.block.time.seconds(),
+            )?;
+
+            Ok(emission.map(|e| (incentive_denom, e)))
+        })
+        .collect::<StdResult<Vec<_>>>()?
+        .into_iter()
+        .filter_map(|x| x)
+        .collect(); // remove None and unwrap Some
+
+    Ok(emissions)
 }
 
 pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {

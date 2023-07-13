@@ -70,6 +70,11 @@ export type OwnerUpdate =
   | 'clear_emergency_owner'
 export type QueryMsg =
   | {
+      active_emissions: {
+        collateral_denom: string
+      }
+    }
+  | {
       config: {}
     }
   | {
@@ -111,6 +116,11 @@ export type QueryMsg =
   | {
       whitelist: {}
     }
+export type ArrayOfTupleOfStringAndEmissionResponse = [string, EmissionResponse][]
+export interface EmissionResponse {
+  emission_rate: Uint128
+  epoch_start: number
+}
 export interface ConfigResponse {
   address_provider: Addr
   epoch_duration: number
@@ -119,10 +129,6 @@ export interface ConfigResponse {
   proposed_new_owner?: string | null
 }
 export type ArrayOfEmissionResponse = EmissionResponse[]
-export interface EmissionResponse {
-  emission_rate: Uint128
-  epoch_start: number
-}
 export type Decimal = string
 export interface IncentiveStateResponse {
   collateral_denom: string
