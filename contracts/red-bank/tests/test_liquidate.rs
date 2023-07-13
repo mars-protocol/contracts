@@ -2,12 +2,7 @@
 
 use std::cmp::min;
 
-use cosmwasm_std::{
-    attr, coin, coins,
-    testing::{mock_info, MockApi, MockStorage},
-    to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps, OwnedDeps, StdError, SubMsg, Uint128,
-    WasmMsg,
-};
+use cosmwasm_std::{attr, coin, coins, testing::{mock_info, MockApi, MockStorage}, to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps, OwnedDeps, StdError, SubMsg, Uint128, WasmMsg, QueryResponse};
 use cw_utils::PaymentError;
 use helpers::{
     has_collateral_position, set_collateral, th_build_interests_updated_event,
@@ -25,11 +20,13 @@ use mars_red_bank::{
     },
     state::{COLLATERALS, DEBTS, MARKETS},
 };
+use mars_red_bank::query::query_user_position;
 use mars_red_bank_types::{
     address_provider::MarsAddressType,
     incentives,
     red_bank::{Collateral, Debt, ExecuteMsg, InterestRateModel, Market},
 };
+use mars_red_bank_types::red_bank::{QueryMsg, UserPositionResponse};
 use mars_testing::{mock_env, mock_env_at_block_time, MarsMockQuerier, MockEnvParams};
 use mars_utils::math;
 
@@ -1414,4 +1411,59 @@ fn cannot_liquidate_without_receiving_collaterals() {
     assert_eq!(res_err, StdError::generic_err("Can't process liquidation. Invalid collateral_amount_to_liquidate (0) and debt_amount_to_repay (10)"))
 }
 
-// Add test to compare query liquidation vs default
+#[test]
+fn compare_liquidation_query_to_default_query() {
+    let TestSuite {
+        mut deps,
+        collateral_price,
+        debt_price,
+        collateral_market,
+        debt_market,
+        collateral_asset_params,
+        ..
+    } = setup_test();
+
+    let user_addr = Addr::unchecked("user");
+    let liquidator_addr = Addr::unchecked("liquidator");
+
+    let user_collateral_scaled_before = Uint128::new(100) * SCALING_FACTOR;
+    let user_debt_scaled_before = Uint128::new(400) * SCALING_FACTOR;
+
+    set_collateral(
+        deps.as_mut(),
+        &user_addr,
+        &collateral_market.denom,
+        user_collateral_scaled_before,
+        true,
+    );
+    set_debt(deps.as_mut(), &user_addr, &debt_market.denom, user_debt_scaled_before, false);
+
+    let liquidate_msg = ExecuteMsg::Liquidate {
+        user: user_addr.to_string(),
+        collateral_denom: collateral_market.denom.clone(),
+        recipient: None,
+    };
+
+    let debt_to_repay = Uint128::from(300u128);
+    let block_time = 16_000_000;
+    let env = mock_env_at_block_time(block_time);
+    let info = mock_info(
+        liquidator_addr.as_str(),
+        &coins(debt_to_repay.u128(), debt_market.denom.clone()),
+    );
+
+    execute(deps.as_mut(), env, info, liquidate_msg).unwrap();
+
+    let user_position_liquidate = QueryMsg::UserPositionLiquidationPricing {
+        user: "user".to_string(),
+    }?;
+
+    let user_position_default = QueryMsg::UserPosition {
+        user: "user".to_string(),
+    }?;
+
+    let user_position_liquidate_response: UserPositionResponse = deps.querier.query()?;
+
+    assert_ne!(user_position_liquidate, user_position_default);
+
+}
