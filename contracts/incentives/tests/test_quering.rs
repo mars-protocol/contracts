@@ -143,6 +143,28 @@ fn query_emission() {
         },
     );
     assert_eq!(res, Uint128::new(50));
+
+    // Query at timestamp some time into emission start
+    let res: Uint128 = helpers::th_query(
+        deps.as_ref(),
+        QueryMsg::Emission {
+            collateral_denom: "uatom".to_string(),
+            incentive_denom: "umars".to_string(),
+            timestamp: 604800 * 2 + 100,
+        },
+    );
+    assert_eq!(res, Uint128::new(50));
+
+    // Query at timestamp some time after emission end
+    let res: Uint128 = helpers::th_query(
+        deps.as_ref(),
+        QueryMsg::Emission {
+            collateral_denom: "uatom".to_string(),
+            incentive_denom: "umars".to_string(),
+            timestamp: 604800 * 3,
+        },
+    );
+    assert_eq!(res, Uint128::zero());
 }
 
 #[test]
