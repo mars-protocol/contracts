@@ -155,10 +155,13 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
         }
         QueryMsg::UserCollateral {
             user,
+            account_id,
             denom,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_collateral(deps, &env.block, user_addr, denom)?)
+            to_binary(&query::query_user_collateral(
+                deps, &env.block, user_addr, account_id, denom,
+            )?)
         }
         QueryMsg::UserCollaterals {
             user,

@@ -30,6 +30,7 @@ pub struct MockEnv {
     pub oracle: Oracle,
     pub red_bank: RedBank,
     pub rewards_collector: RewardsCollector,
+    pub credit_manager: Addr,
 }
 
 #[derive(Clone)]
@@ -181,7 +182,7 @@ impl Incentives {
         )
     }
 
-    pub fn query_unclaimed_rewards(&self, env: &mut MockEnv, user: &Addr) -> Vec<Coin> {
+    pub fn query_unclaimed_rewards(&self, env: &mut MockEnv, user: &Addr) -> StdResult<Vec<Coin>> {
         self.query_unclaimed_rewards_with_acc_id(env, user, None)
     }
 
@@ -190,20 +191,17 @@ impl Incentives {
         env: &mut MockEnv,
         user: &Addr,
         account_id: Option<String>,
-    ) -> Vec<Coin> {
-        env.app
-            .wrap()
-            .query_wasm_smart(
-                self.contract_addr.clone(),
-                &incentives::QueryMsg::UserUnclaimedRewards {
-                    account_id,
-                    user: user.to_string(),
-                    start_after_collateral_denom: None,
-                    start_after_incentive_denom: None,
-                    limit: None,
-                },
-            )
-            .unwrap()
+    ) -> StdResult<Vec<Coin>> {
+        env.app.wrap().query_wasm_smart(
+            self.contract_addr.clone(),
+            &incentives::QueryMsg::UserUnclaimedRewards {
+                account_id,
+                user: user.to_string(),
+                start_after_collateral_denom: None,
+                start_after_incentive_denom: None,
+                limit: None,
+            },
+        )
     }
 }
 
@@ -394,12 +392,23 @@ impl RedBank {
         user: &Addr,
         denom: &str,
     ) -> UserCollateralResponse {
+        self.query_user_collateral_with_acc_id(env, user, None, denom)
+    }
+
+    pub fn query_user_collateral_with_acc_id(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+        account_id: Option<String>,
+        denom: &str,
+    ) -> UserCollateralResponse {
         env.app
             .wrap()
             .query_wasm_smart(
                 self.contract_addr.clone(),
                 &red_bank::QueryMsg::UserCollateral {
                     user: user.to_string(),
+                    account_id,
                     denom: denom.to_string(),
                 },
             )
@@ -511,6 +520,8 @@ pub struct MockEnvBuilder {
     slippage_tolerance: Decimal,
 
     pyth_contract_addr: String,
+
+    credit_manager_contract_addr: String,
 }
 
 impl MockEnvBuilder {
@@ -531,6 +542,8 @@ impl MockEnvBuilder {
             slippage_tolerance: Decimal::percent(5),
             pyth_contract_addr: "osmo1svg55quy7jjee6dn0qx85qxxvx5cafkkw4tmqpcjr9dx99l0zrhs4usft5"
                 .to_string(), // correct bech32 addr to pass validation
+            credit_manager_contract_addr:
+                "osmo1q7khj532p2fyvmnu83tul6xddl6yl0d0kmrzdz2pfel3lkxem92sw6zqrl".to_string(),
         }
     }
 
@@ -602,6 +615,12 @@ impl MockEnvBuilder {
             MarsAddressType::RewardsCollector,
             &rewards_collector_addr,
         );
+        let cm_addr = Addr::unchecked(&self.credit_manager_contract_addr);
+        self.update_address_provider(
+            &address_provider_addr,
+            MarsAddressType::CreditManager,
+            &cm_addr,
+        );
 
         MockEnv {
             app: take(&mut self.app),
@@ -621,6 +640,7 @@ impl MockEnvBuilder {
             rewards_collector: RewardsCollector {
                 contract_addr: rewards_collector_addr,
             },
+            credit_manager: cm_addr,
         }
     }
 

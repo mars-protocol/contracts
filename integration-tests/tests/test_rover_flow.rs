@@ -3,7 +3,7 @@ use mars_red_bank::error::ContractError;
 use mars_red_bank_types::red_bank::UserHealthStatus;
 use mars_testing::integration::mock_env::MockEnvBuilder;
 
-use crate::helpers::{assert_err, default_asset_params};
+use crate::helpers::{assert_red_bank_err, default_asset_params};
 
 mod helpers;
 
@@ -43,7 +43,7 @@ fn rover_flow() {
 
     // rover can't borrow above the credit line
     let res_err = red_bank.borrow(&mut mock_env, &rover, "uusdc", rover_uusdc_limit + 1u128);
-    assert_err(res_err, ContractError::BorrowAmountExceedsUncollateralizedLoanLimit {});
+    assert_red_bank_err(res_err, ContractError::BorrowAmountExceedsUncollateralizedLoanLimit {});
 
     // rover borrows the entire line of credit
     let balance = mock_env.query_balance(&rover, "uusdc").unwrap();
@@ -69,7 +69,7 @@ fn rover_flow() {
 
     // can't borrow above the credit line
     let res_err = red_bank.borrow(&mut mock_env, &rover, "uusdc", 1u128);
-    assert_err(res_err, ContractError::BorrowAmountExceedsUncollateralizedLoanLimit {});
+    assert_red_bank_err(res_err, ContractError::BorrowAmountExceedsUncollateralizedLoanLimit {});
 
     // rover should be healthy (NotBorrowing because uncollateralized debt is not included in HF calculation)
     let position = red_bank.query_user_position(&mut mock_env, &rover);
@@ -83,7 +83,7 @@ fn rover_flow() {
         "uusdc",
         Uint128::zero(),
     );
-    assert_err(res_err, ContractError::UserHasUncollateralizedDebt {});
+    assert_red_bank_err(res_err, ContractError::UserHasUncollateralizedDebt {});
     let debt = red_bank.query_user_debt(&mut mock_env, &rover, "uusdc");
     assert!(debt.uncollateralized);
     assert_eq!(debt.amount.u128(), rover_uusdc_limit);
@@ -122,5 +122,5 @@ fn rover_flow() {
         "uusdc",
         Uint128::from(rover_uusdc_limit),
     );
-    assert_err(res_err, ContractError::UserHasCollateralizedDebt {});
+    assert_red_bank_err(res_err, ContractError::UserHasCollateralizedDebt {});
 }

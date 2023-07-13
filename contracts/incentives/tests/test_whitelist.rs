@@ -210,6 +210,7 @@ fn incentives_updated_and_removed_when_removing_from_whitelist() {
         env.clone(),
         mock_info("red_bank", &[]),
         user_addr.clone(),
+        None,
         "uosmo".to_string(),
         Uint128::zero(),
         Uint128::zero(),

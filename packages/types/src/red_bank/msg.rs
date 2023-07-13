@@ -196,6 +196,7 @@ pub enum QueryMsg {
     #[returns(crate::red_bank::UserCollateralResponse)]
     UserCollateral {
         user: String,
+        account_id: Option<String>,
         denom: String,
     },
 

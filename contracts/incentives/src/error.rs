@@ -66,6 +66,9 @@ pub enum ContractError {
     DuplicateDenom {
         denom: String,
     },
+
+    #[error("Missing account id for credit manager call")]
+    AccountIdNotProvided,
 }
 
 impl From<ContractError> for StdError {

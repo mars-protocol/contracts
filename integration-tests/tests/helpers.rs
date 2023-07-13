@@ -3,7 +3,6 @@
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Coin, Decimal};
 use cw_multi_test::AppResponse;
-use mars_red_bank::error::ContractError;
 use mars_red_bank_types::red_bank::{
     InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
 };
@@ -160,11 +159,21 @@ pub fn swap(
     .unwrap()
 }
 
-pub fn assert_err(res: AnyResult<AppResponse>, err: ContractError) {
+pub fn assert_red_bank_err(res: AnyResult<AppResponse>, err: mars_red_bank::error::ContractError) {
     match res {
         Ok(_) => panic!("Result was not an error"),
         Err(generic_err) => {
-            let contract_err: ContractError = generic_err.downcast().unwrap();
+            let contract_err: mars_red_bank::error::ContractError = generic_err.downcast().unwrap();
+            assert_eq!(contract_err, err);
+        }
+    }
+}
+
+pub fn assert_incentives_err(res: AnyResult<AppResponse>, err: mars_incentives::ContractError) {
+    match res {
+        Ok(_) => panic!("Result was not an error"),
+        Err(generic_err) => {
+            let contract_err: mars_incentives::ContractError = generic_err.downcast().unwrap();
             assert_eq!(contract_err, err);
         }
     }

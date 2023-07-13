@@ -15,7 +15,9 @@ use crate::{
         get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
         get_underlying_liquidity_amount,
     },
-    state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS},
+    state::{
+        COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER, ROVER_COLLATERALS, UNCOLLATERALIZED_LOAN_LIMITS,
+    },
 };
 
 const DEFAULT_LIMIT: u32 = 5;
@@ -153,6 +155,7 @@ pub fn query_user_collateral(
     deps: Deps,
     block: &BlockInfo,
     user_addr: Addr,
+    account_id: Option<String>,
     denom: String,
 ) -> StdResult<UserCollateralResponse> {
     let Collateral {
@@ -164,12 +167,24 @@ pub fn query_user_collateral(
     let market = MARKETS.load(deps.storage, &denom)?;
     let amount = get_underlying_liquidity_amount(amount_scaled, &market, block_time)?;
 
-    Ok(UserCollateralResponse {
-        denom,
-        amount_scaled,
-        amount,
-        enabled,
-    })
+    if let Some(acc_id) = account_id {
+        let amount_scaled =
+            ROVER_COLLATERALS.may_load(deps.storage, (&acc_id, &denom))?.unwrap_or_default();
+        let amount = get_underlying_liquidity_amount(amount_scaled, &market, block_time)?;
+        Ok(UserCollateralResponse {
+            denom,
+            amount_scaled,
+            amount,
+            enabled,
+        })
+    } else {
+        Ok(UserCollateralResponse {
+            denom,
+            amount_scaled,
+            amount,
+            enabled,
+        })
+    }
 }
 
 pub fn query_user_collaterals(

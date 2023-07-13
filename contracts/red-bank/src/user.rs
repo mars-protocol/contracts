@@ -6,7 +6,7 @@ use mars_red_bank_types::{
     red_bank::{Collateral, Debt, Market},
 };
 
-use crate::state::{COLLATERALS, DEBTS, UNCOLLATERALIZED_LOAN_LIMITS};
+use crate::state::{COLLATERALS, DEBTS, ROVER_COLLATERALS, UNCOLLATERALIZED_LOAN_LIMITS};
 
 /// A helper class providing an intuitive API for managing user positions in the contract store.
 ///
@@ -120,6 +120,18 @@ impl<'a> User<'a> {
             }
         })?;
 
+        if let Some(acc_id) = &account_id {
+            ROVER_COLLATERALS.update(store, (acc_id, &market.denom), |opt| -> StdResult<_> {
+                match opt {
+                    Some(mut col) => {
+                        col = col.checked_add(amount_scaled)?;
+                        Ok(col)
+                    }
+                    None => Ok(amount_scaled),
+                }
+            })?;
+        }
+
         let msg = self.build_incentives_balance_changed_msg(
             incentives_addr,
             market,
@@ -154,6 +166,16 @@ impl<'a> User<'a> {
             COLLATERALS.remove(store, (self.0, &market.denom));
         } else {
             COLLATERALS.save(store, (self.0, &market.denom), &collateral)?;
+        }
+
+        if let Some(acc_id) = &account_id {
+            let mut collateral = ROVER_COLLATERALS.load(store, (acc_id, &market.denom))?;
+            collateral = collateral.checked_sub(amount_scaled)?;
+            if collateral.is_zero() {
+                ROVER_COLLATERALS.remove(store, (acc_id, &market.denom));
+            } else {
+                ROVER_COLLATERALS.save(store, (acc_id, &market.denom), &collateral)?;
+            }
         }
 
         let msg = self.build_incentives_balance_changed_msg(
