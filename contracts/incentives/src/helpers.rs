@@ -7,7 +7,7 @@ use cosmwasm_std::{
 use cw_storage_plus::Bound;
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
-    incentives::{EmissionResponse, IncentiveState},
+    incentives::IncentiveState,
     red_bank,
 };
 
@@ -120,39 +120,6 @@ pub fn validate_incentive_schedule(
     }
 
     Ok(())
-}
-
-/// Get the current emmision rate and epoch start time for a given collateral denom
-/// and incentive denom tuple. If no emission is found, return None.
-pub fn get_current_emission(
-    storage: &dyn Storage,
-    collateral_denom: &str,
-    incentive_denom: &str,
-    timestamp: u64,
-) -> StdResult<Option<EmissionResponse>> {
-    let epoch_duration = EPOCH_DURATION.load(storage)?;
-    let emission = EMISSIONS
-        .prefix((&collateral_denom, &incentive_denom))
-        .range(
-            storage,
-            Some(Bound::inclusive(timestamp.saturating_sub(epoch_duration - 1))),
-            Some(Bound::inclusive(timestamp)),
-            Order::Ascending,
-        )
-        .next()
-        .transpose()?
-        .and_then(|(start_time, emission)| {
-            if start_time > timestamp {
-                None
-            } else {
-                Some(EmissionResponse {
-                    epoch_start: start_time,
-                    emission_rate: emission,
-                })
-            }
-        });
-
-    Ok(emission)
 }
 
 /// Queries the total scaled collateral for a given collateral denom from the red bank contract

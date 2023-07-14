@@ -14,16 +14,15 @@ import {
   Addr,
   OwnerUpdate,
   QueryMsg,
-  ArrayOfTupleOfStringAndEmissionResponse,
-  EmissionResponse,
+  ArrayOfTupleOfStringAndUint128,
   ConfigResponse,
   ArrayOfEmissionResponse,
+  EmissionResponse,
   Decimal,
   IncentiveStateResponse,
   ArrayOfIncentiveStateResponse,
   ArrayOfCoin,
   Coin,
-  ArrayOfTupleOfStringAndUint128,
 } from './MarsIncentives.types'
 export interface MarsIncentivesReadOnlyInterface {
   contractAddress: string
@@ -31,7 +30,7 @@ export interface MarsIncentivesReadOnlyInterface {
     collateralDenom,
   }: {
     collateralDenom: string
-  }) => Promise<ArrayOfTupleOfStringAndEmissionResponse>
+  }) => Promise<ArrayOfTupleOfStringAndUint128>
   config: () => Promise<ConfigResponse>
   incentiveState: ({
     collateralDenom,
@@ -103,7 +102,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     collateralDenom,
   }: {
     collateralDenom: string
-  }): Promise<ArrayOfTupleOfStringAndEmissionResponse> => {
+  }): Promise<ArrayOfTupleOfStringAndUint128> => {
     return this.client.queryContractSmart(this.contractAddress, {
       active_emissions: {
         collateral_denom: collateralDenom,

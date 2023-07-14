@@ -15,16 +15,15 @@ import {
   Addr,
   OwnerUpdate,
   QueryMsg,
-  ArrayOfTupleOfStringAndEmissionResponse,
-  EmissionResponse,
+  ArrayOfTupleOfStringAndUint128,
   ConfigResponse,
   ArrayOfEmissionResponse,
+  EmissionResponse,
   Decimal,
   IncentiveStateResponse,
   ArrayOfIncentiveStateResponse,
   ArrayOfCoin,
   Coin,
-  ArrayOfTupleOfStringAndUint128,
 } from './MarsIncentives.types'
 import { MarsIncentivesQueryClient, MarsIncentivesClient } from './MarsIncentives.client'
 export const marsIncentivesQueryKeys = {
@@ -234,15 +233,17 @@ export function useMarsIncentivesConfigQuery<TData = ConfigResponse>({
   )
 }
 export interface MarsIncentivesActiveEmissionsQuery<TData>
-  extends MarsIncentivesReactQuery<ArrayOfTupleOfStringAndEmissionResponse, TData> {
+  extends MarsIncentivesReactQuery<ArrayOfTupleOfStringAndUint128, TData> {
   args: {
     collateralDenom: string
   }
 }
-export function useMarsIncentivesActiveEmissionsQuery<
-  TData = ArrayOfTupleOfStringAndEmissionResponse,
->({ client, args, options }: MarsIncentivesActiveEmissionsQuery<TData>) {
-  return useQuery<ArrayOfTupleOfStringAndEmissionResponse, Error, TData>(
+export function useMarsIncentivesActiveEmissionsQuery<TData = ArrayOfTupleOfStringAndUint128>({
+  client,
+  args,
+  options,
+}: MarsIncentivesActiveEmissionsQuery<TData>) {
+  return useQuery<ArrayOfTupleOfStringAndUint128, Error, TData>(
     marsIncentivesQueryKeys.activeEmissions(client?.contractAddress, args),
     () =>
       client

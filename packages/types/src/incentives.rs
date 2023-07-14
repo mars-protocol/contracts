@@ -137,7 +137,7 @@ pub enum ExecuteMsg {
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Query all active incentive emissions for a collateral denom
-    #[returns(Vec<(String, EmissionResponse)>)]
+    #[returns(Vec<(String, Uint128)>)]
     ActiveEmissions {
         /// The denom of the token that users supply as collateral to receive incentives
         collateral_denom: String,
