@@ -104,7 +104,7 @@ pub struct PriceResponse {
 }
 
 pub mod helpers {
-    use cosmwasm_std::{Decimal, QuerierWrapper, StdResult};
+    use cosmwasm_std::{Decimal, QuerierWrapper, StdError, StdResult};
 
     use super::{PriceResponse, QueryMsg};
 
@@ -113,12 +113,20 @@ pub mod helpers {
         oracle: impl Into<String>,
         denom: impl Into<String>,
     ) -> StdResult<Decimal> {
-        let res: PriceResponse = querier.query_wasm_smart(
-            oracle.into(),
-            &QueryMsg::Price {
-                denom: denom.into(),
-            },
-        )?;
+        let denom = denom.into();
+        let res: PriceResponse = querier
+            .query_wasm_smart(
+                oracle.into(),
+                &QueryMsg::Price {
+                    denom: denom.clone(),
+                },
+            )
+            .map_err(|e| {
+                StdError::generic_err(format!(
+                    "failed to query price for denom: {}. Error: {}",
+                    denom, e
+                ))
+            })?;
         Ok(res.price)
     }
 }
