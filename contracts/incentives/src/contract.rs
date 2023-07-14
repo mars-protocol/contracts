@@ -669,9 +669,15 @@ pub fn query_emission(
     incentive_denom: String,
     timestamp: u64,
 ) -> StdResult<Uint128> {
+    let epoch_duration = EPOCH_DURATION.load(deps.storage)?;
     let emission = EMISSIONS
         .prefix((&collateral_denom, &incentive_denom))
-        .range(deps.storage, Some(Bound::inclusive(timestamp)), None, Order::Ascending)
+        .range(
+            deps.storage,
+            Some(Bound::inclusive(timestamp.saturating_sub(epoch_duration - 1))),
+            Some(Bound::inclusive(timestamp)),
+            Order::Ascending,
+        )
         .next()
         .transpose()?
         .map(|(start_time, emission)| {
