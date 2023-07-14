@@ -241,4 +241,6 @@ pub struct ConfigResponse {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
+    /// The epoch duration in seconds
+    pub epoch_duration: u64,
 }
