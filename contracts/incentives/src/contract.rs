@@ -680,14 +680,7 @@ pub fn query_emission(
         )
         .next()
         .transpose()?
-        .map(|(start_time, emission)| {
-            // The next emission has not yet started, so the emission at the requested timestamp is 0
-            if timestamp < start_time {
-                Uint128::zero()
-            } else {
-                emission
-            }
-        })
+        .map(|(_, emission)| emission)
         .unwrap_or_default();
     Ok(emission)
 }
