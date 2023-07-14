@@ -569,7 +569,7 @@ pub fn query_active_emissions(
     collateral_denom: &str,
 ) -> StdResult<Vec<(String, Uint128)>> {
     Ok(INCENTIVE_STATES
-        .prefix(&collateral_denom)
+        .prefix(collateral_denom)
         .keys(deps.storage, None, None, Order::Ascending)
         .map(|incentive_denom| {
             let incentive_denom = incentive_denom?;
