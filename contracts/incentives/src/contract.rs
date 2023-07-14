@@ -568,6 +568,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         proposed_new_owner: owner_state.proposed,
         address_provider: config.address_provider,
         max_whitelisted_denoms: config.max_whitelisted_denoms,
+        epoch_duration: EPOCH_DURATION.load(deps.storage)?,
     })
 }
 

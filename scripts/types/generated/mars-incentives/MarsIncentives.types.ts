@@ -113,6 +113,7 @@ export type QueryMsg =
     }
 export interface ConfigResponse {
   address_provider: Addr
+  epoch_duration: number
   max_whitelisted_denoms: number
   owner?: string | null
   proposed_new_owner?: string | null

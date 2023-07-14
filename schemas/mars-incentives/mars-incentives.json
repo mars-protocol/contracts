@@ -594,6 +594,7 @@
       "type": "object",
       "required": [
         "address_provider",
+        "epoch_duration",
         "max_whitelisted_denoms"
       ],
       "properties": {
@@ -604,6 +605,12 @@
               "$ref": "#/definitions/Addr"
             }
           ]
+        },
+        "epoch_duration": {
+          "description": "The epoch duration in seconds",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
         },
         "max_whitelisted_denoms": {
           "description": "The maximum number of incentive denoms that can be whitelisted at any given time. This is a guard against accidentally whitelisting too many denoms, which could cause max gas errors.",
