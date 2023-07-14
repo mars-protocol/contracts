@@ -585,8 +585,8 @@ pub fn query_active_emissions(
         })
         .collect::<StdResult<Vec<_>>>()?
         .into_iter()
-        .filter_map(|x| x)
-        .collect(); // remove None and unwrap Some
+        .flatten()
+        .collect();
 
     Ok(emissions)
 }
