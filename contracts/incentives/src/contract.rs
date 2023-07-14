@@ -673,8 +673,8 @@ pub fn query_emission(
         .prefix((&collateral_denom, &incentive_denom))
         .range(
             deps.storage,
-            Some(Bound::inclusive(timestamp.saturating_sub(epoch_duration))),
-            Some(Bound::exclusive(timestamp)),
+            Some(Bound::inclusive(timestamp.saturating_sub(epoch_duration - 1))),
+            Some(Bound::inclusive(timestamp)),
             Order::Ascending,
         )
         .next()
