@@ -108,12 +108,12 @@ fn query_incentive_states() {
 fn query_emission() {
     let mut deps = th_setup();
 
-    EMISSIONS.save(deps.as_mut().storage, ("uusdc", "umars", 0), &Uint128::new(200)).unwrap();
     EMISSIONS.save(deps.as_mut().storage, ("uosmo", "umars", 604800), &Uint128::new(100)).unwrap();
     EMISSIONS
         .save(deps.as_mut().storage, ("uatom", "umars", 604800 * 2), &Uint128::new(50))
         .unwrap();
 
+    // Query before emission start
     let res: Uint128 = helpers::th_query(
         deps.as_ref(),
         QueryMsg::Emission {
@@ -122,8 +122,9 @@ fn query_emission() {
             timestamp: 0,
         },
     );
-    assert_eq!(res, Uint128::new(200));
+    assert_eq!(res, Uint128::zero());
 
+    // Query at timestamp of first emission start
     let res: Uint128 = helpers::th_query(
         deps.as_ref(),
         QueryMsg::Emission {
@@ -134,6 +135,7 @@ fn query_emission() {
     );
     assert_eq!(res, Uint128::new(100));
 
+    // Query at timestamp of second emission start
     let res: Uint128 = helpers::th_query(
         deps.as_ref(),
         QueryMsg::Emission {
@@ -144,7 +146,7 @@ fn query_emission() {
     );
     assert_eq!(res, Uint128::new(50));
 
-    // Query at timestamp some time into emission start
+    // Query at timestamp some time into second emission start
     let res: Uint128 = helpers::th_query(
         deps.as_ref(),
         QueryMsg::Emission {
@@ -155,7 +157,18 @@ fn query_emission() {
     );
     assert_eq!(res, Uint128::new(50));
 
-    // Query at timestamp some time after emission end
+    // Query the second before emission end
+    let res: Uint128 = helpers::th_query(
+        deps.as_ref(),
+        QueryMsg::Emission {
+            collateral_denom: "uatom".to_string(),
+            incentive_denom: "umars".to_string(),
+            timestamp: 604800 * 3 - 1,
+        },
+    );
+    assert_eq!(res, Uint128::new(50));
+
+    // Query the second after emission end
     let res: Uint128 = helpers::th_query(
         deps.as_ref(),
         QueryMsg::Emission {
