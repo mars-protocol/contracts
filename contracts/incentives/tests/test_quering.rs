@@ -110,14 +110,14 @@ fn query_emission() {
 
     EMISSIONS.save(deps.as_mut().storage, ("uosmo", "umars", 604800), &Uint128::new(100)).unwrap();
     EMISSIONS
-        .save(deps.as_mut().storage, ("uatom", "umars", 604800 * 2), &Uint128::new(50))
+        .save(deps.as_mut().storage, ("uosmo", "umars", 604800 * 2), &Uint128::new(50))
         .unwrap();
 
     // Query before emission start
     let res: Uint128 = helpers::th_query(
         deps.as_ref(),
         QueryMsg::Emission {
-            collateral_denom: "uusdc".to_string(),
+            collateral_denom: "uosmo".to_string(),
             incentive_denom: "umars".to_string(),
             timestamp: 0,
         },
@@ -139,18 +139,29 @@ fn query_emission() {
     let res: Uint128 = helpers::th_query(
         deps.as_ref(),
         QueryMsg::Emission {
-            collateral_denom: "uatom".to_string(),
+            collateral_denom: "uosmo".to_string(),
             incentive_denom: "umars".to_string(),
             timestamp: 604800 * 2,
         },
     );
     assert_eq!(res, Uint128::new(50));
 
+    // Query one second before second emission start
+    let res: Uint128 = helpers::th_query(
+        deps.as_ref(),
+        QueryMsg::Emission {
+            collateral_denom: "uosmo".to_string(),
+            incentive_denom: "umars".to_string(),
+            timestamp: 604800 * 2 - 1,
+        },
+    );
+    assert_eq!(res, Uint128::new(100));
+
     // Query at timestamp some time into second emission start
     let res: Uint128 = helpers::th_query(
         deps.as_ref(),
         QueryMsg::Emission {
-            collateral_denom: "uatom".to_string(),
+            collateral_denom: "uosmo".to_string(),
             incentive_denom: "umars".to_string(),
             timestamp: 604800 * 2 + 100,
         },
@@ -161,7 +172,7 @@ fn query_emission() {
     let res: Uint128 = helpers::th_query(
         deps.as_ref(),
         QueryMsg::Emission {
-            collateral_denom: "uatom".to_string(),
+            collateral_denom: "uosmo".to_string(),
             incentive_denom: "umars".to_string(),
             timestamp: 604800 * 3 - 1,
         },
@@ -172,7 +183,7 @@ fn query_emission() {
     let res: Uint128 = helpers::th_query(
         deps.as_ref(),
         QueryMsg::Emission {
-            collateral_denom: "uatom".to_string(),
+            collateral_denom: "uosmo".to_string(),
             incentive_denom: "umars".to_string(),
             timestamp: 604800 * 3,
         },
