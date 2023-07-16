@@ -1,12 +1,12 @@
 import { DeploymentConfig, AssetConfig, OracleConfig, VaultConfig } from '../../types/config'
 
 // assets based off of OSMO-TEST-5: https://docs.osmosis.zone/osmosis-core/asset-info/
-const osmo = 'uosmo'
+const uosmo = 'uosmo'
+const ion = 'uion'
+const aUSDC = 'ibc/6F34E1BD664C36CE49ACC28E60D62559A5F96C4F9A6CCE4FC5A67B2852E24CFE' // axelar USDC
 const atom = 'ibc/A8C2D23A1E6F95DA4E48BA349667E322BD7A6C996D8A4AAE8BA72E190F3D1477'
-const nUSDC = 'ibc/40F1B2458AEDA66431F9D44F48413240B8D28C072463E2BF53655728683583E3' // noble
 const mars = 'ibc/2E7368A14AC9AB7870F32CFEA687551C5064FA861868EDF7437BC877358A81F9'
 
-const pythContractAddr = 'UPDATE'
 const protocolAdminAddr = 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n'
 
 // note the following addresses are all 'mars' bech32 prefix
@@ -18,7 +18,7 @@ export const osmoAsset: AssetConfig = {
     whitelisted: true,
   },
   symbol: 'OSMO',
-  denom: osmo,
+  denom: uosmo,
   liquidation_bonus: {
     max_lb: '0.05',
     min_lb: '0',
@@ -57,12 +57,33 @@ export const atomAsset: AssetConfig = {
   deposit_cap: '100000000000',
 }
 
+export const ionAsset: AssetConfig = {
+  credit_manager: {
+    whitelisted: true,
+  },
+  symbol: 'ION',
+  denom: ion,
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
+  liquidation_threshold: '0.7',
+  max_loan_to_value: '0.68',
+  red_bank: {
+    borrow_enabled: true,
+    deposit_cap: '100000000000',
+    deposit_enabled: true,
+  },
+}
 export const USDCAsset: AssetConfig = {
   credit_manager: {
     whitelisted: true,
   },
-  symbol: 'nUSDC',
-  denom: nUSDC,
+  symbol: 'aUSDC',
+  denom: aUSDC,
   liquidation_bonus: {
     max_lb: '0.05',
     min_lb: '0',
@@ -80,10 +101,10 @@ export const USDCAsset: AssetConfig = {
 }
 
 export const usdcOsmoVault: VaultConfig = {
-  addr: 'osmo1fmq9hw224fgz8lk48wyd0gfg028kvvzggt6c3zvnaqkw23x68cws5nd5em',
+  addr: 'osmo1l3q4mrhkzjyernjhg8lz2t52ddw589y5qc0z7y8y28h6y5wcl46sg9n28j',
   symbol: 'usdcOsmoVault',
   deposit_cap: {
-    denom: nUSDC,
+    denom: aUSDC,
     amount: '1000000000',
   },
   liquidation_threshold: '0.65',
@@ -91,38 +112,105 @@ export const usdcOsmoVault: VaultConfig = {
   whitelisted: true,
 }
 
-export const atomOracle: OracleConfig = {
-  denom: atom,
+export const ionOsmoVault: VaultConfig = {
+  addr: 'osmo1xwh9fqsla39v4px4qreztdegwy4czh4jepwgrfd94c03gphd0tjspfg86d',
+  symbol: 'ionOsmoVault',
+  deposit_cap: {
+    denom: aUSDC,
+    amount: '1000000000',
+  },
+  liquidation_threshold: '0.65',
+  max_loan_to_value: '0.63',
+  whitelisted: true,
+}
+
+export const atomOsmoVault: VaultConfig = {
+  addr: 'osmo1m45ap4rq4m2mfjkcqu9ks9mxmyx2hvx0cdca9sjmrg46q7lghzqqhxxup5',
+  symbol: 'ionOsmoVault',
+  deposit_cap: {
+    denom: aUSDC,
+    amount: '1000000000',
+  },
+  liquidation_threshold: '0.65',
+  max_loan_to_value: '0.63',
+  whitelisted: true,
+}
+
+export const ionOracle: OracleConfig = {
+  denom: ion,
   price_source: {
-    pyth: {
-      contract_addr: pythContractAddr,
-      price_feed_id: 'UPDATE',
-      max_staleness: 60,
-      denom_decimals: 6,
-      max_confidence: '5',
-      max_deviation: '4',
+    geometric_twap: {
+      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      window_size: 1800,
+      pool_id: 1,
     },
   },
 }
 
+export const osmoOracle: OracleConfig = {
+  denom: uosmo,
+  price_source: {
+    fixed: {
+      price: '1',
+    },
+  },
+}
+
+export const atomOracle: OracleConfig = {
+  denom: atom,
+  price_source: {
+    geometric_twap: {
+      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      window_size: 1800,
+      pool_id: 12,
+    },
+  },
+}
 export const USDCOracle: OracleConfig = {
-  denom: nUSDC,
+  denom: aUSDC,
   price_source: {
     staked_geometric_twap: {
-      transitive_denom: osmo,
-      pool_id: 6,
+      transitive_denom: uosmo,
+      pool_id: 5,
       window_size: 1800,
       downtime_detector: { downtime: 'duration30m', recovery: 7200 },
     },
   },
 }
 
-export const osmosisTestnetConfig: DeploymentConfig = {
+export const ionOsmoOracle: OracleConfig = {
+  denom: ion,
+  price_source: {
+    xyk_liquidity_token: {
+      pool_id: 1,
+    },
+  },
+}
+
+export const usdcOsmoOracle: OracleConfig = {
+  denom: ion,
+  price_source: {
+    xyk_liquidity_token: {
+      pool_id: 5,
+    },
+  },
+}
+
+export const atomOsmoOracle: OracleConfig = {
+  denom: ion,
+  price_source: {
+    xyk_liquidity_token: {
+      pool_id: 1,
+    },
+  },
+}
+
+export const osmosisTestnetConfig = {
   oracleName: 'osmosis',
   oracleBaseDenom: 'uusd',
   rewardsCollectorName: 'osmosis',
   atomDenom: atom,
-  baseAssetDenom: osmo,
+  baseAssetDenom: uosmo,
   gasPrice: '0.1uosmo',
   chainId: 'osmo-test-5',
   chainPrefix: 'osmo',
@@ -138,17 +226,25 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   runTests: false,
   mainnet: false,
   feeCollectorDenom: mars,
-  safetyFundDenom: nUSDC,
+  safetyFundDenom: aUSDC,
   swapRoutes: [
-    { denom_in: atom, denom_out: osmo, route: [{ pool_id: 12, token_out_denom: osmo }] },
+    { denom_in: atom, denom_out: uosmo, route: [{ pool_id: 12, token_out_denom: uosmo }] },
   ],
   safetyFundAddr: safetyFundAddr,
   protocolAdminAddr: protocolAdminAddr,
   feeCollectorAddr: feeCollectorAddr,
   swapperDexName: 'osmosis',
-  assets: [osmoAsset, atomAsset, USDCAsset],
-  vaults: [usdcOsmoVault],
-  oracleConfigs: [atomOracle, USDCOracle],
+  assets: [osmoAsset, atomAsset, USDCAsset, ionAsset],
+  vaults: [usdcOsmoVault, ionOsmoVault, atomOsmoVault],
+  oracleConfigs: [
+    atomOracle,
+    USDCOracle,
+    ionOracle,
+    osmoOracle,
+    ionOsmoOracle,
+    atomOsmoOracle,
+    usdcOsmoOracle,
+  ],
   targetHealthFactor: '1.2',
   incentiveEpochDuration: 86400,
   maxWhitelistedIncentiveDenoms: 10,
@@ -176,17 +272,25 @@ export const osmosisTestMultisig: DeploymentConfig = {
   runTests: false,
   mainnet: false,
   feeCollectorDenom: mars,
-  safetyFundDenom: nUSDC,
+  safetyFundDenom: aUSDC,
   swapRoutes: [
-    { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 1, token_out_denom: 'uosmo' }] },
+    { denom_in: atom, denom_out: 'uosmo', route: [{ pool_id: 12, token_out_denom: 'uosmo' }] },
   ],
   safetyFundAddr: safetyFundAddr,
   protocolAdminAddr: protocolAdminAddr,
   feeCollectorAddr: feeCollectorAddr,
   swapperDexName: 'osmosis',
-  assets: [osmoAsset, atomAsset, USDCAsset],
-  vaults: [usdcOsmoVault],
-  oracleConfigs: [atomOracle, USDCOracle],
+  assets: [osmoAsset, atomAsset, USDCAsset, ionAsset],
+  vaults: [usdcOsmoVault, ionOsmoVault, atomOsmoVault],
+  oracleConfigs: [
+    atomOracle,
+    USDCOracle,
+    ionOracle,
+    osmoOracle,
+    ionOsmoOracle,
+    atomOsmoOracle,
+    usdcOsmoOracle,
+  ],
   targetHealthFactor: '1.2',
   incentiveEpochDuration: 86400,
   maxWhitelistedIncentiveDenoms: 10,
