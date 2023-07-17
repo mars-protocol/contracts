@@ -14,6 +14,7 @@ import {
   Addr,
   OwnerUpdate,
   QueryMsg,
+  ArrayOfTupleOfStringAndUint128,
   ConfigResponse,
   ArrayOfEmissionResponse,
   EmissionResponse,
@@ -22,10 +23,14 @@ import {
   ArrayOfIncentiveStateResponse,
   ArrayOfCoin,
   Coin,
-  ArrayOfTupleOfStringAndUint128,
 } from './MarsIncentives.types'
 export interface MarsIncentivesReadOnlyInterface {
   contractAddress: string
+  activeEmissions: ({
+    collateralDenom,
+  }: {
+    collateralDenom: string
+  }) => Promise<ArrayOfTupleOfStringAndUint128>
   config: () => Promise<ConfigResponse>
   incentiveState: ({
     collateralDenom,
@@ -83,6 +88,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client
     this.contractAddress = contractAddress
+    this.activeEmissions = this.activeEmissions.bind(this)
     this.config = this.config.bind(this)
     this.incentiveState = this.incentiveState.bind(this)
     this.incentiveStates = this.incentiveStates.bind(this)
@@ -92,6 +98,17 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     this.whitelist = this.whitelist.bind(this)
   }
 
+  activeEmissions = async ({
+    collateralDenom,
+  }: {
+    collateralDenom: string
+  }): Promise<ArrayOfTupleOfStringAndUint128> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      active_emissions: {
+        collateral_denom: collateralDenom,
+      },
+    })
+  }
   config = async (): Promise<ConfigResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {},

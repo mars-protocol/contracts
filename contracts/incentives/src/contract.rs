@@ -544,7 +544,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             collateral_denom,
             incentive_denom,
             timestamp,
-        } => to_binary(&query_emission(deps, collateral_denom, incentive_denom, timestamp)?),
+        } => to_binary(&query_emission(deps, &collateral_denom, &incentive_denom, timestamp)?),
         QueryMsg::Emissions {
             collateral_denom,
             incentive_denom,
@@ -557,7 +557,31 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             start_after_timestamp,
             limit,
         )?),
+        QueryMsg::ActiveEmissions {
+            collateral_denom,
+        } => to_binary(&query_active_emissions(deps, env, &collateral_denom)?),
     }
+}
+
+pub fn query_active_emissions(
+    deps: Deps,
+    env: Env,
+    collateral_denom: &str,
+) -> StdResult<Vec<(String, Uint128)>> {
+    Ok(INCENTIVE_STATES
+        .prefix(collateral_denom)
+        .keys(deps.storage, None, None, Order::Ascending)
+        .map(|incentive_denom| {
+            let incentive_denom = incentive_denom?;
+            let emission =
+                query_emission(deps, collateral_denom, &incentive_denom, env.block.time.seconds())?;
+
+            Ok((incentive_denom, emission))
+        })
+        .collect::<StdResult<Vec<_>>>()?
+        .into_iter()
+        .filter(|(_, emission)| emission != Uint128::zero())
+        .collect())
 }
 
 pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
@@ -665,13 +689,13 @@ fn query_whitelist(deps: Deps) -> StdResult<Vec<(String, Uint128)>> {
 
 pub fn query_emission(
     deps: Deps,
-    collateral_denom: String,
-    incentive_denom: String,
+    collateral_denom: &str,
+    incentive_denom: &str,
     timestamp: u64,
 ) -> StdResult<Uint128> {
     let epoch_duration = EPOCH_DURATION.load(deps.storage)?;
     let emission = EMISSIONS
-        .prefix((&collateral_denom, &incentive_denom))
+        .prefix((collateral_denom, incentive_denom))
         .range(
             deps.storage,
             Some(Bound::inclusive(timestamp.saturating_sub(epoch_duration - 1))),
@@ -682,6 +706,7 @@ pub fn query_emission(
         .transpose()?
         .map(|(_, emission)| emission)
         .unwrap_or_default();
+
     Ok(emission)
 }
 

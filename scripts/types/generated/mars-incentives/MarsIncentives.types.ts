@@ -70,6 +70,11 @@ export type OwnerUpdate =
   | 'clear_emergency_owner'
 export type QueryMsg =
   | {
+      active_emissions: {
+        collateral_denom: string
+      }
+    }
+  | {
       config: {}
     }
   | {
@@ -111,6 +116,7 @@ export type QueryMsg =
   | {
       whitelist: {}
     }
+export type ArrayOfTupleOfStringAndUint128 = [string, Uint128][]
 export interface ConfigResponse {
   address_provider: Addr
   epoch_duration: number
@@ -137,4 +143,3 @@ export interface Coin {
   denom: string
   [k: string]: unknown
 }
-export type ArrayOfTupleOfStringAndUint128 = [string, Uint128][]

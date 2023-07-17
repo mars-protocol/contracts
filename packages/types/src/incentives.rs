@@ -136,6 +136,13 @@ pub enum ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
+    /// Query all active incentive emissions for a collateral denom
+    #[returns(Vec<(String, Uint128)>)]
+    ActiveEmissions {
+        /// The denom of the token that users supply as collateral to receive incentives
+        collateral_denom: String,
+    },
+
     /// Query contract config
     #[returns(ConfigResponse)]
     Config {},
