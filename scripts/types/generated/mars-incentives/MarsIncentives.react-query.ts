@@ -15,6 +15,7 @@ import {
   Addr,
   OwnerUpdate,
   QueryMsg,
+  ArrayOfTupleOfStringAndUint128,
   ConfigResponse,
   ArrayOfEmissionResponse,
   EmissionResponse,
@@ -23,7 +24,6 @@ import {
   ArrayOfIncentiveStateResponse,
   ArrayOfCoin,
   Coin,
-  ArrayOfTupleOfStringAndUint128,
 } from './MarsIncentives.types'
 import { MarsIncentivesQueryClient, MarsIncentivesClient } from './MarsIncentives.client'
 export const marsIncentivesQueryKeys = {
@@ -34,6 +34,10 @@ export const marsIncentivesQueryKeys = {
   ] as const,
   address: (contractAddress: string | undefined) =>
     [{ ...marsIncentivesQueryKeys.contract[0], address: contractAddress }] as const,
+  activeEmissions: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'active_emissions', args },
+    ] as const,
   config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'config', args }] as const,
   incentiveState: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
@@ -225,6 +229,28 @@ export function useMarsIncentivesConfigQuery<TData = ConfigResponse>({
   return useQuery<ConfigResponse, Error, TData>(
     marsIncentivesQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsIncentivesActiveEmissionsQuery<TData>
+  extends MarsIncentivesReactQuery<ArrayOfTupleOfStringAndUint128, TData> {
+  args: {
+    collateralDenom: string
+  }
+}
+export function useMarsIncentivesActiveEmissionsQuery<TData = ArrayOfTupleOfStringAndUint128>({
+  client,
+  args,
+  options,
+}: MarsIncentivesActiveEmissionsQuery<TData>) {
+  return useQuery<ArrayOfTupleOfStringAndUint128, Error, TData>(
+    marsIncentivesQueryKeys.activeEmissions(client?.contractAddress, args),
+    () =>
+      client
+        ? client.activeEmissions({
+            collateralDenom: args.collateralDenom,
+          })
+        : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
