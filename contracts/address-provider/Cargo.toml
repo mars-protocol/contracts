@@ -11,12 +11,19 @@ documentation = { workspace = true }
 keywords      = { workspace = true }
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = [
+    "cdylib",
+    "rlib",
+]
 doctest = false
 
 [features]
 # for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
+backtraces = [
+    "cosmwasm-std/backtraces",
+]
+library = [
+]
 
 [dependencies]
 bech32              = { workspace = true }

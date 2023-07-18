@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, QuerierResult, Uint128};
+use cosmwasm_std::{to_binary, Addr, Binary, Coin, ContractResult, QuerierResult, Uint128};
 use mars_red_bank_types::incentives::QueryMsg;
 
 pub struct IncentivesQuerier {
     /// incentives contract address to be used in queries
     pub incentives_addr: Addr,
-    /// maps human address to a specific unclaimed Mars rewards balance (which will be staked with the staking contract and distributed as xMars)
-    pub unclaimed_rewards_at: HashMap<Addr, Uint128>,
+    /// maps human address and incentive denom to a specific unclaimed rewards balance
+    pub unclaimed_rewards_at: HashMap<(Addr, String), Uint128>,
 }
 
 impl Default for IncentivesQuerier {
@@ -31,12 +31,21 @@ impl IncentivesQuerier {
 
         let ret: ContractResult<Binary> = match query {
             QueryMsg::UserUnclaimedRewards {
-                user,
-            } => match self.unclaimed_rewards_at.get(&(Addr::unchecked(user.clone()))) {
-                Some(balance) => to_binary(balance).into(),
-                None => Err(format!("[mock]: no unclaimed rewards for account address {}", &user))
-                    .into(),
-            },
+                user: _,
+                start_after_collateral_denom: _,
+                start_after_incentive_denom: _,
+                limit: _,
+            } => {
+                let unclaimed_rewards = self
+                    .unclaimed_rewards_at
+                    .iter()
+                    .map(|((_, denom), amount)| Coin {
+                        denom: denom.clone(),
+                        amount: *amount,
+                    })
+                    .collect::<Vec<_>>();
+                to_binary(&unclaimed_rewards).into()
+            }
             _ => Err("[mock]: query not supported").into(),
         };
 

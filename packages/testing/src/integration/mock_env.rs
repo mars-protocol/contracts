@@ -3,7 +3,7 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Addr, Coin, Decimal, StdResult, Uint128};
+use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_red_bank_types::{
@@ -89,25 +89,46 @@ impl MockEnv {
 }
 
 impl Incentives {
+    pub fn whitelist_incentive_denoms(&self, env: &mut MockEnv, incentive_denoms: &[(&str, u128)]) {
+        env.app
+            .execute_contract(
+                env.owner.clone(),
+                self.contract_addr.clone(),
+                &incentives::ExecuteMsg::UpdateWhitelist {
+                    add_denoms: incentive_denoms
+                        .iter()
+                        .map(|(denom, min_emission)| (denom.to_string(), (*min_emission).into()))
+                        .collect(),
+                    remove_denoms: vec![],
+                },
+                &[],
+            )
+            .unwrap();
+    }
+
     pub fn init_asset_incentive_from_current_block(
         &self,
         env: &mut MockEnv,
-        denom: &str,
+        collateral_denom: &str,
+        incentive_denom: &str,
         emission_per_second: u128,
         duration: u64,
     ) {
         let current_block_time = env.app.block_info().time.seconds();
+        let funds = [coin(emission_per_second * duration as u128, incentive_denom)];
+        env.fund_account(&env.owner.clone(), &funds);
         env.app
             .execute_contract(
                 env.owner.clone(),
                 self.contract_addr.clone(),
                 &incentives::ExecuteMsg::SetAssetIncentive {
-                    denom: denom.to_string(),
-                    emission_per_second: Some(emission_per_second.into()),
-                    start_time: Some(current_block_time),
-                    duration: Some(duration),
+                    collateral_denom: collateral_denom.to_string(),
+                    incentive_denom: incentive_denom.to_string(),
+                    emission_per_second: emission_per_second.into(),
+                    start_time: current_block_time,
+                    duration,
                 },
-                &[],
+                &funds,
             )
             .unwrap();
     }
@@ -115,7 +136,8 @@ impl Incentives {
     pub fn init_asset_incentive(
         &self,
         env: &mut MockEnv,
-        denom: &str,
+        collateral_denom: &str,
+        incentive_denom: &str,
         emission_per_second: u128,
         start_time: u64,
         duration: u64,
@@ -125,31 +147,11 @@ impl Incentives {
                 env.owner.clone(),
                 self.contract_addr.clone(),
                 &incentives::ExecuteMsg::SetAssetIncentive {
-                    denom: denom.to_string(),
-                    emission_per_second: Some(emission_per_second.into()),
-                    start_time: Some(start_time),
-                    duration: Some(duration),
-                },
-                &[],
-            )
-            .unwrap();
-    }
-
-    pub fn update_asset_incentive_emission(
-        &self,
-        env: &mut MockEnv,
-        denom: &str,
-        emission_per_second: u128,
-    ) {
-        env.app
-            .execute_contract(
-                env.owner.clone(),
-                self.contract_addr.clone(),
-                &incentives::ExecuteMsg::SetAssetIncentive {
-                    denom: denom.to_string(),
-                    emission_per_second: Some(emission_per_second.into()),
-                    start_time: None,
-                    duration: None,
+                    collateral_denom: collateral_denom.to_string(),
+                    incentive_denom: incentive_denom.to_string(),
+                    emission_per_second: emission_per_second.into(),
+                    start_time,
+                    duration,
                 },
                 &[],
             )
@@ -160,18 +162,25 @@ impl Incentives {
         env.app.execute_contract(
             sender.clone(),
             self.contract_addr.clone(),
-            &incentives::ExecuteMsg::ClaimRewards {},
+            &incentives::ExecuteMsg::ClaimRewards {
+                start_after_collateral_denom: None,
+                start_after_incentive_denom: None,
+                limit: None,
+            },
             &[],
         )
     }
 
-    pub fn query_unclaimed_rewards(&self, env: &mut MockEnv, user: &Addr) -> Uint128 {
+    pub fn query_unclaimed_rewards(&self, env: &mut MockEnv, user: &Addr) -> Vec<Coin> {
         env.app
             .wrap()
             .query_wasm_smart(
                 self.contract_addr.clone(),
                 &incentives::QueryMsg::UserUnclaimedRewards {
                     user: user.to_string(),
+                    start_after_collateral_denom: None,
+                    start_after_incentive_denom: None,
+                    limit: None,
                 },
             )
             .unwrap()
@@ -184,7 +193,7 @@ impl Oracle {
             .execute_contract(
                 env.owner.clone(),
                 self.contract_addr.clone(),
-                &oracle::ExecuteMsg::SetPriceSource {
+                &oracle::ExecuteMsg::<_, Empty>::SetPriceSource {
                     denom: denom.to_string(),
                     price_source: OsmosisPriceSourceUnchecked::Fixed {
                         price,
@@ -417,7 +426,7 @@ impl RewardsCollector {
             .execute_contract(
                 Addr::unchecked("anyone"),
                 self.contract_addr.clone(),
-                &mars_rewards_collector_osmosis::msg::ExecuteMsg::WithdrawFromRedBank {
+                &mars_red_bank_types::rewards_collector::ExecuteMsg::WithdrawFromRedBank {
                     denom: denom.to_string(),
                     amount,
                 },
@@ -430,7 +439,11 @@ impl RewardsCollector {
         env.app.execute_contract(
             Addr::unchecked("anyone"),
             self.contract_addr.clone(),
-            &mars_rewards_collector_osmosis::msg::ExecuteMsg::ClaimIncentiveRewards {},
+            &mars_red_bank_types::rewards_collector::ExecuteMsg::ClaimIncentiveRewards {
+                start_after_collateral_denom: None,
+                start_after_incentive_denom: None,
+                limit: None,
+            },
             &[],
         )
     }
@@ -596,7 +609,8 @@ impl MockEnvBuilder {
                 &incentives::InstantiateMsg {
                     owner: self.owner.to_string(),
                     address_provider: address_provider_addr.to_string(),
-                    mars_denom: self.mars_denom.clone(),
+                    epoch_duration: 86400,
+                    max_whitelisted_denoms: 10,
                 },
                 &[],
                 "incentives",
@@ -612,9 +626,10 @@ impl MockEnvBuilder {
             .instantiate_contract(
                 code_id,
                 self.owner.clone(),
-                &oracle::InstantiateMsg {
+                &oracle::InstantiateMsg::<Empty> {
                     owner: self.owner.to_string(),
                     base_denom: self.base_denom.clone(),
+                    custom_init: None,
                 },
                 &[],
                 "oracle",

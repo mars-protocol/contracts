@@ -81,10 +81,16 @@ impl MarsMockQuerier {
         self.incentives_querier.incentives_addr = address;
     }
 
-    pub fn set_unclaimed_rewards(&mut self, user_address: String, unclaimed_rewards: Uint128) {
-        self.incentives_querier
-            .unclaimed_rewards_at
-            .insert(Addr::unchecked(user_address), unclaimed_rewards);
+    pub fn set_unclaimed_rewards(
+        &mut self,
+        user_address: String,
+        incentive_denom: &str,
+        unclaimed_rewards: Uint128,
+    ) {
+        self.incentives_querier.unclaimed_rewards_at.insert(
+            (Addr::unchecked(user_address), incentive_denom.to_string()),
+            unclaimed_rewards,
+        );
     }
 
     pub fn set_query_pool_response(&mut self, pool_id: u64, pool_response: QueryPoolResponse) {
@@ -149,6 +155,19 @@ impl MarsMockQuerier {
         self.pyth_querier.prices.insert(id, price);
     }
 
+    pub fn set_redemption_rate(
+        &mut self,
+        denom: &str,
+        base_denom: &str,
+        redemption_rate: RedemptionRateResponse,
+    ) {
+        let price_key = Price {
+            denom: denom.to_string(),
+            base_denom: base_denom.to_string(),
+        };
+        self.redemption_rate_querier.redemption_rates.insert(price_key, redemption_rate);
+    }
+
     pub fn set_redbank_market(&mut self, market: red_bank::Market) {
         self.redbank_querier.markets.insert(market.denom.clone(), market);
     }
@@ -169,19 +188,6 @@ impl MarsMockQuerier {
         position: red_bank::UserPositionResponse,
     ) {
         self.redbank_querier.users_positions.insert(user_address, position);
-    }
-
-    pub fn set_redemption_rate(
-        &mut self,
-        denom: &str,
-        base_denom: &str,
-        redemption_rate: RedemptionRateResponse,
-    ) {
-        let price_key = Price {
-            denom: denom.to_string(),
-            base_denom: base_denom.to_string(),
-        };
-        self.redemption_rate_querier.redemption_rates.insert(price_key, redemption_rate);
     }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
@@ -222,6 +228,11 @@ impl MarsMockQuerier {
                 // RedBank Queries
                 if let Ok(redbank_query) = from_binary::<red_bank::QueryMsg>(msg) {
                     return self.redbank_querier.handle_query(redbank_query);
+                }
+
+                // Pyth Queries
+                if let Ok(pyth_query) = from_binary::<pyth_sdk_cw::QueryMsg>(msg) {
+                    return self.pyth_querier.handle_query(&contract_addr, pyth_query);
                 }
 
                 // Redemption Rate Queries

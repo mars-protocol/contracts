@@ -10,7 +10,7 @@ use cosmwasm_std::{
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSourceUnchecked};
 use mars_osmosis::helpers::{Pool, QueryPoolResponse};
-use mars_red_bank_types::oracle::{InstantiateMsg, QueryMsg};
+use mars_red_bank_types::oracle::msg::{InstantiateMsg, QueryMsg};
 use mars_testing::{mock_info, MarsMockQuerier};
 use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
 use pyth_sdk_cw::PriceIdentifier;
@@ -90,6 +90,7 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
         InstantiateMsg {
             owner: "owner".to_string(),
             base_denom: "uosmo".to_string(),
+            custom_init: None,
         },
     )
     .unwrap();

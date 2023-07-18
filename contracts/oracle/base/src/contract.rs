@@ -2,22 +2,24 @@ use std::marker::PhantomData;
 
 use cosmwasm_std::{
     to_binary, Addr, Binary, CustomQuery, Deps, DepsMut, Env, MessageInfo, Order, Response,
-    StdResult,
+    StdError, StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
-use mars_red_bank_types::oracle::{
+use mars_red_bank_types::oracle::msg::{
     Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
     QueryMsg,
 };
-use mars_utils::helpers::validate_native_denom;
 
-use crate::{error::ContractResult, PriceSourceChecked, PriceSourceUnchecked};
+use crate::{
+    error::ContractResult, utils::validate_native_denom, ContractError, PriceSourceChecked,
+    PriceSourceUnchecked,
+};
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
 
-pub struct OracleBase<'a, P, PU, C>
+pub struct OracleBase<'a, P, PU, C, I, E>
 where
     P: PriceSourceChecked<C>,
     PU: PriceSourceUnchecked<P, C>,
@@ -33,9 +35,13 @@ where
     pub unchecked_price_source: PhantomData<PU>,
     /// Phantom data holds the custom query type
     pub custom_query: PhantomData<C>,
+    /// Phantom data holds the instantiate msg custom type
+    pub instantiate_msg: PhantomData<I>,
+    /// Phantom data holds the execute msg custom type
+    pub execute_msg: PhantomData<E>,
 }
 
-impl<'a, P, PU, C> Default for OracleBase<'a, P, PU, C>
+impl<'a, P, PU, C, I, E> Default for OracleBase<'a, P, PU, C, I, E>
 where
     P: PriceSourceChecked<C>,
     PU: PriceSourceUnchecked<P, C>,
@@ -48,17 +54,23 @@ where
             price_sources: Map::new("price_sources"),
             unchecked_price_source: PhantomData,
             custom_query: PhantomData,
+            instantiate_msg: PhantomData,
+            execute_msg: PhantomData,
         }
     }
 }
 
-impl<'a, P, PU, C> OracleBase<'a, P, PU, C>
+impl<'a, P, PU, C, I, E> OracleBase<'a, P, PU, C, I, E>
 where
     P: PriceSourceChecked<C>,
     PU: PriceSourceUnchecked<P, C>,
     C: CustomQuery,
 {
-    pub fn instantiate(&self, deps: DepsMut<C>, msg: InstantiateMsg) -> ContractResult<Response> {
+    pub fn instantiate(
+        &self,
+        deps: DepsMut<C>,
+        msg: InstantiateMsg<I>,
+    ) -> ContractResult<Response> {
         validate_native_denom(&msg.base_denom)?;
 
         self.owner.initialize(
@@ -83,7 +95,7 @@ where
         &self,
         deps: DepsMut<C>,
         info: MessageInfo,
-        msg: ExecuteMsg<PU>,
+        msg: ExecuteMsg<PU, E>,
     ) -> ContractResult<Response> {
         match msg {
             ExecuteMsg::UpdateOwner(update) => self.update_owner(deps, info, update),
@@ -97,6 +109,8 @@ where
             ExecuteMsg::UpdateConfig {
                 base_denom,
             } => self.update_config(deps, info.sender, base_denom),
+            // Custom messages should be handled by the implementing contract
+            ExecuteMsg::Custom(_) => Err(ContractError::MissingCustomExecuteParams {}),
         }
     }
 
@@ -142,7 +156,8 @@ where
         validate_native_denom(&denom)?;
 
         let cfg = self.config.load(deps.storage)?;
-        let price_source = price_source.validate(deps.as_ref(), &denom, &cfg.base_denom)?;
+        let price_source =
+            price_source.validate(&deps.as_ref(), &denom, &cfg.base_denom, &self.price_sources)?;
         self.price_sources.save(deps.storage, &denom, &price_source)?;
 
         Ok(Response::new()
@@ -207,7 +222,9 @@ where
         denom: String,
     ) -> StdResult<PriceSourceResponse<P>> {
         Ok(PriceSourceResponse {
-            price_source: self.price_sources.load(deps.storage, &denom)?,
+            price_source: self.price_sources.load(deps.storage, &denom).map_err(|_| {
+                StdError::generic_err(format!("No price source found for denom: {}", denom))
+            })?,
             denom,
         })
     }
@@ -236,7 +253,9 @@ where
 
     fn query_price(&self, deps: Deps<C>, env: Env, denom: String) -> ContractResult<PriceResponse> {
         let cfg = self.config.load(deps.storage)?;
-        let price_source = self.price_sources.load(deps.storage, &denom)?;
+
+        let price_source = self.query_price_source(deps, denom.clone())?.price_source;
+
         Ok(PriceResponse {
             price: price_source.query_price(&deps, &env, &denom, &cfg, &self.price_sources)?,
             denom,

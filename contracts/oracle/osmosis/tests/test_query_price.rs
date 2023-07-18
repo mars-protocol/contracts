@@ -2,13 +2,13 @@ use std::str::FromStr;
 
 use cosmwasm_std::{
     coin, from_binary,
-    testing::{MockApi, MockStorage},
+    testing::{mock_env, MockApi, MockStorage},
     Decimal, OwnedDeps, StdError,
 };
-use mars_oracle_base::ContractError;
+use mars_oracle_base::{pyth::scale_pyth_price, ContractError};
 use mars_oracle_osmosis::{
-    contract::entry, scale_pyth_price, stride::RedemptionRateResponse, Downtime, DowntimeDetector,
-    GeometricTwap, OsmosisPriceSourceUnchecked, RedemptionRate,
+    contract::entry, stride::RedemptionRateResponse, Downtime, DowntimeDetector, GeometricTwap,
+    OsmosisPriceSourceUnchecked, RedemptionRate,
 };
 use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
@@ -41,6 +41,25 @@ fn querying_fixed_price() {
         },
     );
     assert_eq!(res.price, Decimal::one());
+}
+
+#[test]
+fn querying_fixed_price_price_source_not_set() {
+    let deps = helpers::setup_test_with_pools();
+
+    let err = entry::query(
+        deps.as_ref(),
+        mock_env(),
+        QueryMsg::Price {
+            denom: "uosmo".to_string(),
+        },
+    )
+    .unwrap_err();
+
+    assert_eq!(
+        err,
+        ContractError::Std(StdError::generic_err("No price source found for denom: uosmo"))
+    );
 }
 
 #[test]

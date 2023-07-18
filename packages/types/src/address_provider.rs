@@ -3,9 +3,10 @@ use std::{any::type_name, fmt, str::FromStr};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::StdError;
 use mars_owner::OwnerUpdate;
+use strum::EnumIter;
 
 #[cw_serde]
-#[derive(Copy, Eq, Hash)]
+#[derive(Copy, Eq, Hash, EnumIter)]
 pub enum MarsAddressType {
     Incentives,
     Oracle,
@@ -30,6 +31,8 @@ pub enum MarsAddressType {
     /// NOTE: This is a Mars Hub address with the `mars` bech32 prefix, which may not be recognized
     /// by the `api.addr_validate` method.
     SafetyFund,
+    /// The swapper contract on the chain
+    Swapper,
 }
 
 impl fmt::Display for MarsAddressType {
@@ -42,6 +45,7 @@ impl fmt::Display for MarsAddressType {
             MarsAddressType::RedBank => "red_bank",
             MarsAddressType::RewardsCollector => "rewards_collector",
             MarsAddressType::SafetyFund => "safety_fund",
+            MarsAddressType::Swapper => "swapper",
         };
         write!(f, "{s}")
     }
@@ -59,6 +63,7 @@ impl FromStr for MarsAddressType {
             "red_bank" => Ok(MarsAddressType::RedBank),
             "rewards_collector" => Ok(MarsAddressType::RewardsCollector),
             "safety_fund" => Ok(MarsAddressType::SafetyFund),
+            "swapper" => Ok(MarsAddressType::Swapper),
             _ => Err(StdError::parse_err(type_name::<Self>(), s)),
         }
     }
@@ -192,5 +197,27 @@ pub mod helpers {
                 &QueryMsg::Address(module),
             )
             .map(|res| res.address)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use strum::IntoEnumIterator;
+
+    use super::MarsAddressType;
+
+    #[test]
+    fn mars_address_type_fmt_and_from_string() {
+        for address_type in MarsAddressType::iter() {
+            assert_eq!(MarsAddressType::from_str(&address_type.to_string()).unwrap(), address_type);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn mars_address_type_from_str_invalid_string() {
+        MarsAddressType::from_str("invalid_address_type").unwrap();
     }
 }

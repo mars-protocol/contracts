@@ -7,9 +7,8 @@ use mars_oracle_osmosis::{
     OsmosisPriceSourceUnchecked, RedemptionRate,
 };
 use mars_owner::OwnerError::NotOwner;
-use mars_red_bank_types::oracle::QueryMsg;
+use mars_red_bank_types::oracle::msg::QueryMsg;
 use mars_testing::mock_info;
-use mars_utils::error::ValidationError;
 use pyth_sdk_cw::PriceIdentifier;
 
 mod helpers;
@@ -82,9 +81,9 @@ fn setting_price_source_incorrect_denom() {
     );
     assert_eq!(
         res,
-        Err(ContractError::Validation(ValidationError::InvalidDenom {
+        Err(ContractError::InvalidDenom {
             reason: "First character is not ASCII alphabetic".to_string()
-        }))
+        })
     );
 
     let res_two = execute(
@@ -100,10 +99,10 @@ fn setting_price_source_incorrect_denom() {
     );
     assert_eq!(
         res_two,
-        Err(ContractError::Validation(ValidationError::InvalidDenom {
+        Err(ContractError::InvalidDenom {
             reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
                 .to_string()
-        }))
+        })
     );
 
     let res_three = execute(
@@ -119,9 +118,9 @@ fn setting_price_source_incorrect_denom() {
     );
     assert_eq!(
         res_three,
-        Err(ContractError::Validation(ValidationError::InvalidDenom {
+        Err(ContractError::InvalidDenom {
             reason: "Invalid denom length".to_string()
-        }))
+        })
     );
 }
 

@@ -101,23 +101,13 @@ pub struct UpdateConfig {
 }
 
 #[cw_serde]
-pub enum ExecuteMsg<Route> {
+pub enum ExecuteMsg {
     /// Manages admin role state
     UpdateOwner(OwnerUpdate),
 
     /// Update contract config
     UpdateConfig {
         new_cfg: UpdateConfig,
-    },
-
-    /// Configure the route for swapping an asset
-    ///
-    /// This is chain-specific, and can include parameters such as slippage tolerance and the routes
-    /// for multi-step swaps
-    SetRoute {
-        denom_in: String,
-        denom_out: String,
-        route: Route,
     },
 
     /// Withdraw coins from the red bank
@@ -144,7 +134,16 @@ pub enum ExecuteMsg<Route> {
     ///
     /// We wanted to leave protocol rewards in the red-bank so they continue to work as liquidity (until the bot invokes WithdrawFromRedBank).
     /// As an side effect to this, if the market is incentivised with MARS tokens, the contract will also accrue MARS token incentives.
-    ClaimIncentiveRewards {},
+    ClaimIncentiveRewards {
+        /// Start pagination after this collateral denom
+        start_after_collateral_denom: Option<String>,
+        /// Start pagination after this incentive denom. If supplied you must also supply
+        /// start_after_collateral_denom.
+        start_after_incentive_denom: Option<String>,
+        /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
+        /// 10 is used.
+        limit: Option<u32>,
+    },
 }
 
 #[cw_serde]
@@ -175,29 +174,4 @@ pub enum QueryMsg {
     /// Get config parameters
     #[returns(ConfigResponse)]
     Config {},
-    /// Get routes for swapping an input denom into an output denom.
-    ///
-    /// NOTE: The response type of this query is chain-specific.
-    #[returns(RouteResponse<String>)]
-    Route {
-        denom_in: String,
-        denom_out: String,
-    },
-    /// Enumerate all swap routes.
-    ///
-    /// NOTE: The response type of this query is chain-specific.
-    #[returns(Vec<RouteResponse<String>>)]
-    Routes {
-        start_after: Option<(String, String)>,
-        limit: Option<u32>,
-    },
 }
-
-#[cw_serde]
-pub struct RouteResponse<Route> {
-    pub denom_in: String,
-    pub denom_out: String,
-    pub route: Route,
-}
-
-pub type RoutesResponse<Route> = Vec<RouteResponse<Route>>;

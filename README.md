@@ -76,9 +76,9 @@ A bug bounty is currently open for these contracts. See details [here][2].
 
 - Compile all contracts:
 
-   ```bash
-   cargo make rust-optimizer
-   ```
+  ```bash
+  cargo make rust-optimizer
+  ```
 
 - Formatting:
 

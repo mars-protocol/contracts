@@ -3,8 +3,9 @@ members = [
   "contracts/address-provider",
   "contracts/incentives",
   "contracts/oracle/*",
+  "contracts/swapper/*",
   "contracts/red-bank",
-  "contracts/rewards-collector/*",
+  "contracts/rewards-collector",
   "packages/chains/*",
   "packages/health",
   "packages/testing",
@@ -12,22 +13,29 @@ members = [
   "packages/utils",
   "integration-tests",
 ]
+resolver = "2"
 
 [workspace.package]
 version       = "1.1.0"
 authors       = [
+  "Gabe R. <gabe.r@delphilabs.io>",
   "Larry Engineer <larry@delphidigital.io>",
   "Piotr Babel <piotr@delphilabs.io>",
   "Spike Spiegel <spikeonmars@protonmail.com>",
+  "Brianna M. <brianna@delphilabs.io>",
   "Ahmad Kaouk",
   "Harry Scholes",
 ]
-edition       = "2021"
-license       = "GPL-3.0-or-later"
-repository    = "https://github.com/mars-protocol/red-bank"
-homepage      = "https://marsprotocol.io"
+edition = "2021"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/mars-protocol/red-bank"
+homepage = "https://marsprotocol.io"
 documentation = "https://docs.marsprotocol.io/"
-keywords      = ["mars", "cosmos", "cosmwasm"]
+keywords = [
+  "mars",
+  "cosmos",
+  "cosmwasm",
+]
 
 [workspace.dependencies]
 anyhow            = "1.0.71"
@@ -39,13 +47,21 @@ cw-multi-test     = "0.16.5"
 cw-storage-plus   = "1.0.1"
 cw-utils          = "1.0.1"
 mars-owner        = { version = "1.2.0", features = ["emergency-owner"] }
-osmosis-std       = "0.15.3"
+osmosis-std       = { git = "https://github.com/osmosis-labs/osmosis-rust.git", rev = "af36f5e0ba6f1a83e244c6e43c2a8bf442dd7c0d" }
 osmosis-test-tube = "15.1.0"
 prost             = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
-pyth-sdk-cw       = "1.2.0"
 schemars          = "0.8.12"
 serde             = { version = "1.0.163", default-features = false, features = ["derive"] }
 thiserror         = "1.0.40"
+pyth-sdk-cw        = "1.2.0"
+cw-paginate       = "0.2.1"
+astroport         = { git = "https://github.com/astroport-fi/astroport-core", tag = "v2.7.1" }
+strum             = "0.24.1"
+
+# dev-dependencies
+cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "7e33dd9ca2983e2efbfb90e546ad049a18696b08" }
+test-case         = "3.0.0"
+proptest          = "1.1.0"
 
 # packages
 mars-health         = { version = "1.0.0", path = "./packages/health" }
@@ -59,9 +75,12 @@ mars-address-provider          = { version = "1.0.0", path = "./contracts/addres
 mars-incentives                = { version = "1.0.0", path = "./contracts/incentives" }
 mars-oracle-base               = { version = "1.0.0", path = "./contracts/oracle/base" }
 mars-oracle-osmosis            = { version = "1.0.0", path = "./contracts/oracle/osmosis" }
+mars-oracle-wasm               = { version = "1.0.0", path = "./contracts/oracle/wasm" }
 mars-red-bank                  = { version = "1.0.0", path = "./contracts/red-bank" }
-mars-rewards-collector-base    = { version = "1.0.0", path = "./contracts/rewards-collector/base" }
-mars-rewards-collector-osmosis = { version = "1.0.0", path = "./contracts/rewards-collector/osmosis" }
+mars-rewards-collector         = { version = "1.0.0", path = "./contracts/rewards-collector" }
+mars-swapper-base              = { version = "1.0.0", path = "./contracts/swapper/base" }
+mars-swapper-astroport         = { version = "1.0.0", path = "./contracts/swapper/astroport" }
+mars-swapper-osmosis           = { version = "1.0.0", path = "./contracts/swapper/osmosis" }
 
 [profile.release]
 codegen-units    = 1
