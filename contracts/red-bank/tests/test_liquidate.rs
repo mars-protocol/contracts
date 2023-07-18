@@ -310,6 +310,24 @@ fn liquidate_if_no_coins_sent() {
 }
 
 #[test]
+fn cannot_self_liquidate() {
+    let TestSuite {
+        mut deps,
+        ..
+    } = setup_test();
+
+    let env = mock_env(MockEnvParams::default());
+    let info = mock_info("liquidator", &[coin(100, "somecoin1")]);
+    let msg = ExecuteMsg::Liquidate {
+        user: "liquidator".to_string(),
+        collateral_denom: "collateral".to_string(),
+        recipient: None,
+    };
+    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
+    assert_eq!(error_res, ContractError::CannotLiquidateSelf {}.into());
+}
+
+#[test]
 fn liquidate_if_many_coins_sent() {
     let TestSuite {
         mut deps,
