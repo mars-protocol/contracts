@@ -50,6 +50,32 @@ impl IncentiveStateResponse {
 }
 
 #[cw_serde]
+pub struct WhitelistEntry {
+    /// The incentive token denom that is whitelisted
+    pub denom: String,
+    /// The minimum emission rate per second for this incentive token
+    pub min_emission_rate: Uint128,
+}
+
+impl From<&(&str, u128)> for WhitelistEntry {
+    fn from((denom, min_emission_rate): &(&str, u128)) -> Self {
+        Self {
+            denom: denom.to_string(),
+            min_emission_rate: Uint128::from(*min_emission_rate),
+        }
+    }
+}
+
+impl From<(String, Uint128)> for WhitelistEntry {
+    fn from((denom, min_emission_rate): (String, Uint128)) -> Self {
+        Self {
+            denom,
+            min_emission_rate,
+        }
+    }
+}
+
+#[cw_serde]
 pub struct InstantiateMsg {
     /// Contract owner
     pub owner: String,
@@ -69,7 +95,7 @@ pub enum ExecuteMsg {
     UpdateWhitelist {
         /// The denoms to add to the whitelist as well as a minimum emission rate per second for
         /// each. If the denom is already in the whitelist, the minimum emission rate will be updated.
-        add_denoms: Vec<(String, Uint128)>,
+        add_denoms: Vec<WhitelistEntry>,
         /// The denoms to remove from the whitelist. This will update the index of the incentive
         /// state and then remove any active incentive schedules.
         ///
@@ -215,7 +241,7 @@ pub enum QueryMsg {
 
     /// Queries the incentive denom whitelist. Returns a Vec<(String, Uint128)> containing the
     /// denoms of all whitelisted incentive denoms, as well as the minimum emission rate for each.
-    #[returns(Vec<(String,Uint128)>)]
+    #[returns(Vec<WhitelistEntry>)]
     Whitelist {},
 }
 

@@ -58,7 +58,7 @@ pub fn th_query_with_env<T: serde::de::DeserializeOwned>(deps: Deps, env: Env, m
 pub fn th_whitelist_denom(deps: DepsMut, denom: &str) {
     let owner = "owner";
     let msg = ExecuteMsg::UpdateWhitelist {
-        add_denoms: vec![(denom.to_string(), Uint128::new(3))],
+        add_denoms: vec![(denom.to_string(), Uint128::new(3)).into()],
         remove_denoms: vec![],
     };
     let info = mock_info(owner, &[]);

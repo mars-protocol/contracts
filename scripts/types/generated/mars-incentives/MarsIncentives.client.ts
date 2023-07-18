@@ -13,6 +13,7 @@ import {
   Uint128,
   Addr,
   OwnerUpdate,
+  WhitelistEntry,
   QueryMsg,
   ArrayOfTupleOfStringAndUint128,
   ConfigResponse,
@@ -23,6 +24,7 @@ import {
   ArrayOfIncentiveStateResponse,
   ArrayOfCoin,
   Coin,
+  ArrayOfWhitelistEntry,
 } from './MarsIncentives.types'
 export interface MarsIncentivesReadOnlyInterface {
   contractAddress: string
@@ -79,7 +81,7 @@ export interface MarsIncentivesReadOnlyInterface {
     startAfterIncentiveDenom?: string
     user: string
   }) => Promise<ArrayOfCoin>
-  whitelist: () => Promise<ArrayOfTupleOfStringAndUint128>
+  whitelist: () => Promise<ArrayOfWhitelistEntry>
 }
 export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterface {
   client: CosmWasmClient
@@ -202,7 +204,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
       },
     })
   }
-  whitelist = async (): Promise<ArrayOfTupleOfStringAndUint128> => {
+  whitelist = async (): Promise<ArrayOfWhitelistEntry> => {
     return this.client.queryContractSmart(this.contractAddress, {
       whitelist: {},
     })
@@ -216,7 +218,7 @@ export interface MarsIncentivesInterface extends MarsIncentivesReadOnlyInterface
       addDenoms,
       removeDenoms,
     }: {
-      addDenoms: string[][]
+      addDenoms: WhitelistEntry[]
       removeDenoms: string[]
     },
     fee?: number | StdFee | 'auto',
@@ -316,7 +318,7 @@ export class MarsIncentivesClient
       addDenoms,
       removeDenoms,
     }: {
-      addDenoms: string[][]
+      addDenoms: WhitelistEntry[]
       removeDenoms: string[]
     },
     fee: number | StdFee | 'auto' = 'auto',

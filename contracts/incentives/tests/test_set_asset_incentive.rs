@@ -254,7 +254,7 @@ fn can_only_set_new_incentive_with_start_time_multiple_of_epoch_duration_from_cu
 
     // Whitelist umars as incentive denom
     let msg = ExecuteMsg::UpdateWhitelist {
-        add_denoms: vec![("umars".to_string(), Uint128::new(3))],
+        add_denoms: vec![("umars".to_string(), Uint128::new(3)).into()],
         remove_denoms: vec![],
     };
     execute(deps.as_mut(), env.clone(), mock_info("owner", &[]), msg).unwrap();

@@ -58,17 +58,7 @@
                 "description": "The denoms to add to the whitelist as well as a minimum emission rate per second for each. If the denom is already in the whitelist, the minimum emission rate will be updated.",
                 "type": "array",
                 "items": {
-                  "type": "array",
-                  "items": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "$ref": "#/definitions/Uint128"
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
+                  "$ref": "#/definitions/WhitelistEntry"
                 }
               },
               "remove_denoms": {
@@ -354,6 +344,28 @@
       "Uint128": {
         "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
         "type": "string"
+      },
+      "WhitelistEntry": {
+        "type": "object",
+        "required": [
+          "denom",
+          "min_emission_rate"
+        ],
+        "properties": {
+          "denom": {
+            "description": "The incentive token denom that is whitelisted",
+            "type": "string"
+          },
+          "min_emission_rate": {
+            "description": "The minimum emission rate per second for this incentive token",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Uint128"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
       }
     }
   },
@@ -855,25 +867,37 @@
     },
     "whitelist": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Array_of_Tuple_of_String_and_Uint128",
+      "title": "Array_of_WhitelistEntry",
       "type": "array",
       "items": {
-        "type": "array",
-        "items": [
-          {
-            "type": "string"
-          },
-          {
-            "$ref": "#/definitions/Uint128"
-          }
-        ],
-        "maxItems": 2,
-        "minItems": 2
+        "$ref": "#/definitions/WhitelistEntry"
       },
       "definitions": {
         "Uint128": {
           "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
           "type": "string"
+        },
+        "WhitelistEntry": {
+          "type": "object",
+          "required": [
+            "denom",
+            "min_emission_rate"
+          ],
+          "properties": {
+            "denom": {
+              "description": "The incentive token denom that is whitelisted",
+              "type": "string"
+            },
+            "min_emission_rate": {
+              "description": "The minimum emission rate per second for this incentive token",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Uint128"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
         }
       }
     }

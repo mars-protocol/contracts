@@ -95,10 +95,7 @@ impl Incentives {
                 env.owner.clone(),
                 self.contract_addr.clone(),
                 &incentives::ExecuteMsg::UpdateWhitelist {
-                    add_denoms: incentive_denoms
-                        .iter()
-                        .map(|(denom, min_emission)| (denom.to_string(), (*min_emission).into()))
-                        .collect(),
+                    add_denoms: incentive_denoms.iter().map(|x| x.into()).collect(),
                     remove_denoms: vec![],
                 },
                 &[],
