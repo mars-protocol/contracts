@@ -19,24 +19,19 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
-          profile: minimal
-          override: true
-          components: llvm-tools-preview
-
       - name: Install cargo make
         uses: davidB/rust-cargo-make@v1
 
-      # Artifacts used by tests.
-      # Change owner of the current directory (rust-optimizer set root for artifacts / target).
+      - name: Install stable Rust
+        run: cargo make install-stable
+
+      # selecting a toolchain should happen before the plugin, as the cache uses the current rustc version as its cache key
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      # Artifacts used by tests
       - name: Compile workspace
-        run: |
-          cargo make rust-optimizer
-          sudo chown -R $USER .
+        run: cargo make build
 
       - name: Run test coverage
         run: cargo make coverage-lcov
