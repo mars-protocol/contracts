@@ -709,6 +709,12 @@ pub fn liquidate(
     let recipient = User(&recipient_addr);
 
     // 1. Validate liquidation
+
+    // User cannot liquidate themselves
+    if info.sender == user_addr {
+        return Err(ContractError::CannotLiquidateSelf {});
+    }
+
     // If user (contract) has a positive uncollateralized limit then the user
     // cannot be liquidated
     if !user.uncollateralized_loan_limit(deps.storage, &debt_denom)?.is_zero() {
