@@ -6,18 +6,18 @@ use mars_rover::{
     adapters::vault::{VaultBase, VaultPosition, VaultPositionValue, VaultUnchecked},
     error::ContractResult,
     msg::query::{
-        CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, LentAmount, LentShares,
-        Positions, SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
+        CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, Positions,
+        SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
     },
 };
 
 use crate::{
     state::{
-        ACCOUNT_NFT, COIN_BALANCES, DEBT_SHARES, HEALTH_CONTRACT, LENT_SHARES,
-        MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, PARAMS, RED_BANK, REWARDS_COLLECTOR, SWAPPER,
-        TOTAL_DEBT_SHARES, TOTAL_LENT_SHARES, VAULT_POSITIONS, ZAPPER,
+        ACCOUNT_NFT, COIN_BALANCES, DEBT_SHARES, HEALTH_CONTRACT, MAX_UNLOCKING_POSITIONS, ORACLE,
+        OWNER, PARAMS, RED_BANK, REWARDS_COLLECTOR, SWAPPER, TOTAL_DEBT_SHARES, VAULT_POSITIONS,
+        ZAPPER,
     },
-    utils::{debt_shares_to_amount, lent_shares_to_amount},
+    utils::debt_shares_to_amount,
     vault::vault_utilization_in_deposit_cap_denom,
 };
 
@@ -25,7 +25,7 @@ pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
     Ok(ConfigResponse {
         ownership: OWNER.query(deps.storage)?,
         account_nft: ACCOUNT_NFT.may_load(deps.storage)?.map(|a| a.address().into()),
-        red_bank: RED_BANK.load(deps.storage)?.address().into(),
+        red_bank: RED_BANK.load(deps.storage)?.addr.into(),
         oracle: ORACLE.load(deps.storage)?.address().into(),
         params: PARAMS.load(deps.storage)?.address().into(),
         max_unlocking_positions: MAX_UNLOCKING_POSITIONS.load(deps.storage)?,
@@ -36,12 +36,12 @@ pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
     })
 }
 
-pub fn query_positions(deps: Deps, env: &Env, account_id: &str) -> ContractResult<Positions> {
+pub fn query_positions(deps: Deps, account_id: &str) -> ContractResult<Positions> {
     Ok(Positions {
         account_id: account_id.to_string(),
         deposits: query_coin_balances(deps, account_id)?,
-        debts: query_debt_amounts(deps, env, account_id)?,
-        lends: query_lent_amounts(deps, env, account_id)?,
+        debts: query_debt_amounts(deps, account_id)?,
+        lends: RED_BANK.load(deps.storage)?.query_all_lent(&deps.querier, account_id)?,
         vaults: query_vault_positions(deps, account_id)?,
     })
 }
@@ -63,29 +63,13 @@ pub fn query_all_coin_balances(
     })
 }
 
-fn query_lent_amounts(deps: Deps, env: &Env, account_id: &str) -> ContractResult<Vec<LentAmount>> {
-    LENT_SHARES
-        .prefix(account_id)
-        .range(deps.storage, None, None, Order::Ascending)
-        .map(|res| {
-            let (denom, shares) = res?;
-            let coin = lent_shares_to_amount(deps, &env.contract.address, &denom, shares)?;
-            Ok(LentAmount {
-                denom,
-                shares,
-                amount: coin.amount,
-            })
-        })
-        .collect()
-}
-
-fn query_debt_amounts(deps: Deps, env: &Env, account_id: &str) -> ContractResult<Vec<DebtAmount>> {
+fn query_debt_amounts(deps: Deps, account_id: &str) -> ContractResult<Vec<DebtAmount>> {
     DEBT_SHARES
         .prefix(account_id)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|res| {
             let (denom, shares) = res?;
-            let coin = debt_shares_to_amount(deps, &env.contract.address, &denom, shares)?;
+            let coin = debt_shares_to_amount(deps, &denom, shares)?;
             Ok(DebtAmount {
                 denom,
                 shares,
@@ -118,23 +102,6 @@ pub fn query_all_debt_shares(
         .as_ref()
         .map(|(account_id, denom)| Bound::exclusive((account_id.as_str(), denom.as_str())));
     paginate_map(&DEBT_SHARES, deps.storage, start, limit, |(account_id, denom), shares| {
-        Ok(SharesResponseItem {
-            account_id,
-            denom,
-            shares,
-        })
-    })
-}
-
-pub fn query_all_lent_shares(
-    deps: Deps,
-    start_after: Option<(String, String)>,
-    limit: Option<u32>,
-) -> StdResult<Vec<SharesResponseItem>> {
-    let start = start_after
-        .as_ref()
-        .map(|(account_id, denom)| Bound::exclusive((account_id.as_str(), denom.as_str())));
-    paginate_map(&LENT_SHARES, deps.storage, start, limit, |(account_id, denom), shares| {
         Ok(SharesResponseItem {
             account_id,
             denom,
@@ -200,14 +167,6 @@ pub fn query_total_debt_shares(deps: Deps, denom: &str) -> StdResult<DebtShares>
     })
 }
 
-pub fn query_total_lent_shares(deps: Deps, denom: &str) -> StdResult<LentShares> {
-    let shares = TOTAL_LENT_SHARES.load(deps.storage, denom)?;
-    Ok(LentShares {
-        denom: denom.to_string(),
-        shares,
-    })
-}
-
 pub fn query_all_total_debt_shares(
     deps: Deps,
     start_after: Option<String>,
@@ -216,20 +175,6 @@ pub fn query_all_total_debt_shares(
     let start = start_after.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
     paginate_map(&TOTAL_DEBT_SHARES, deps.storage, start, limit, |denom, shares| {
         Ok(DebtShares {
-            denom,
-            shares,
-        })
-    })
-}
-
-pub fn query_all_total_lent_shares(
-    deps: Deps,
-    start_after: Option<String>,
-    limit: Option<u32>,
-) -> StdResult<Vec<LentShares>> {
-    let start = start_after.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
-    paginate_map(&TOTAL_LENT_SHARES, deps.storage, start, limit, |denom, shares| {
-        Ok(LentShares {
             denom,
             shares,
         })

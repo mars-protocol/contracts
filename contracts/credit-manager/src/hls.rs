@@ -1,20 +1,16 @@
-use cosmwasm_std::{Deps, DepsMut, Env, Response};
+use cosmwasm_std::{Deps, DepsMut, Response};
 use mars_params::types::hls::HlsAssetType;
 use mars_rover::error::{ContractError, ContractResult};
 use mars_rover_health_types::AccountKind;
 
 use crate::{query::query_positions, state::PARAMS, utils::get_account_kind};
 
-pub fn assert_account_requirements(
-    deps: DepsMut,
-    env: Env,
-    account_id: String,
-) -> ContractResult<Response> {
+pub fn assert_account_requirements(deps: DepsMut, account_id: String) -> ContractResult<Response> {
     let kind = get_account_kind(deps.storage, &account_id)?;
 
     match kind {
         AccountKind::Default => {} // No restrictions
-        AccountKind::HighLeveredStrategy => assert_hls_rules(deps.as_ref(), &env, &account_id)?,
+        AccountKind::HighLeveredStrategy => assert_hls_rules(deps.as_ref(), &account_id)?,
     }
 
     Ok(Response::new()
@@ -23,9 +19,9 @@ pub fn assert_account_requirements(
         .add_attribute("account_kind", kind.to_string()))
 }
 
-fn assert_hls_rules(deps: Deps, env: &Env, account_id: &str) -> ContractResult<()> {
+fn assert_hls_rules(deps: Deps, account_id: &str) -> ContractResult<()> {
     // Rule #1 - There can only be 0 or 1 debt denom in the account
-    let positions = query_positions(deps, env, account_id)?;
+    let positions = query_positions(deps, account_id)?;
 
     if positions.debts.len() > 1 {
         return Err(ContractError::HLS {

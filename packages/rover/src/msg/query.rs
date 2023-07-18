@@ -49,21 +49,6 @@ pub enum QueryMsg {
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    /// Enumerate debt shares for all token positions; start_after accepts (account_id, denom)
-    #[returns(Vec<SharesResponseItem>)]
-    AllLentShares {
-        start_after: Option<(String, String)>,
-        limit: Option<u32>,
-    },
-    /// Total debt shares issued for Coin
-    #[returns(LentShares)]
-    TotalLentShares(String),
-    /// Enumerate total lent shares for all supported coins; start_after accepts denom string
-    #[returns(Vec<LentShares>)]
-    AllTotalLentShares {
-        start_after: Option<String>,
-        limit: Option<u32>,
-    },
     /// Enumerate all vault positions; start_after accepts (account_id, addr)
     #[returns(Vec<VaultPositionResponseItem>)]
     AllVaultPositions {
@@ -131,15 +116,6 @@ pub struct DebtAmount {
     pub amount: Uint128,
 }
 
-#[cw_serde]
-pub struct LentAmount {
-    pub denom: String,
-    /// number of shares in lent pool
-    pub shares: Uint128,
-    /// amount of coins
-    pub amount: Uint128,
-}
-
 impl Coins for Vec<DebtAmount> {
     fn to_coins(&self) -> Vec<Coin> {
         self.iter()
@@ -151,23 +127,12 @@ impl Coins for Vec<DebtAmount> {
     }
 }
 
-impl Coins for Vec<LentAmount> {
-    fn to_coins(&self) -> Vec<Coin> {
-        self.iter()
-            .map(|l| Coin {
-                denom: l.denom.to_string(),
-                amount: l.amount,
-            })
-            .collect()
-    }
-}
-
 #[cw_serde]
 pub struct Positions {
     pub account_id: String,
     pub deposits: Vec<Coin>,
     pub debts: Vec<DebtAmount>,
-    pub lends: Vec<LentAmount>,
+    pub lends: Vec<Coin>,
     pub vaults: Vec<VaultPosition>,
 }
 

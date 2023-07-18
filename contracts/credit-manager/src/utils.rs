@@ -16,10 +16,7 @@ use mars_rover::{
 use mars_rover_health_types::AccountKind;
 
 use crate::{
-    state::{
-        ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, LENT_SHARES, PARAMS, RED_BANK,
-        TOTAL_DEBT_SHARES, TOTAL_LENT_SHARES,
-    },
+    state::{ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, PARAMS, RED_BANK, TOTAL_DEBT_SHARES},
     update_coin_balances::query_balance,
 };
 
@@ -91,34 +88,6 @@ pub fn decrement_coin_balance(
     Ok(new_value)
 }
 
-pub fn increment_lent_shares(
-    storage: &mut dyn Storage,
-    account_id: &str,
-    denom: &str,
-    shares: Uint128,
-) -> ContractResult<Uint128> {
-    LENT_SHARES.update(storage, (account_id, denom), |value_opt| {
-        value_opt.unwrap_or_else(Uint128::zero).checked_add(shares).map_err(ContractError::Overflow)
-    })
-}
-
-pub fn decrement_lent_shares(
-    storage: &mut dyn Storage,
-    account_id: &str,
-    denom: &str,
-    shares: Uint128,
-) -> ContractResult<Uint128> {
-    let path = LENT_SHARES.key((account_id, denom));
-    let value_opt = path.may_load(storage)?;
-    let new_value = value_opt.unwrap_or_else(Uint128::zero).checked_sub(shares)?;
-    if new_value.is_zero() {
-        path.remove(storage);
-    } else {
-        path.save(storage, &new_value)?;
-    }
-    Ok(new_value)
-}
-
 pub fn update_balance_msg(
     querier: &QuerierWrapper,
     rover_addr: &Addr,
@@ -172,45 +141,16 @@ pub fn update_balance_after_vault_liquidation_msg(
     }))
 }
 
-pub fn debt_shares_to_amount(
-    deps: Deps,
-    rover_addr: &Addr,
-    denom: &str,
-    shares: Uint128,
-) -> ContractResult<Coin> {
+pub fn debt_shares_to_amount(deps: Deps, denom: &str, shares: Uint128) -> ContractResult<Coin> {
     // total shares of debt issued for denom
     let total_debt_shares = TOTAL_DEBT_SHARES.load(deps.storage, denom).unwrap_or(Uint128::zero());
 
     // total rover debt amount in Redbank for asset
     let red_bank = RED_BANK.load(deps.storage)?;
-    let total_debt_amount = red_bank.query_debt(&deps.querier, rover_addr, denom)?;
+    let total_debt_amount = red_bank.query_debt(&deps.querier, denom)?;
 
     // Amount of debt for token's position. Rounded up to favor participants in the debt pool.
     let amount = total_debt_amount.checked_mul_ceil((shares, total_debt_shares))?;
-
-    Ok(Coin {
-        denom: denom.to_string(),
-        amount,
-    })
-}
-
-pub fn lent_shares_to_amount(
-    deps: Deps,
-    rover_addr: &Addr,
-    denom: &str,
-    shares: Uint128,
-) -> ContractResult<Coin> {
-    // total shares of lent issued for denom
-    let total_lent_shares = TOTAL_LENT_SHARES.load(deps.storage, denom).unwrap_or(Uint128::zero());
-
-    // total rover lent amount in Redbank for asset
-    let red_bank = RED_BANK.load(deps.storage)?;
-    let total_lent_amount = red_bank.query_lent(&deps.querier, rover_addr, denom)?;
-
-    // amount of lent for account's position
-    // NOTE: Given the nature of integers, the lent amount is rounded down.
-    //       This means the account donates the fractional unit to the lending pool.
-    let amount = total_lent_amount.checked_multiply_ratio(shares, total_lent_shares)?;
 
     Ok(Coin {
         denom: denom.to_string(),

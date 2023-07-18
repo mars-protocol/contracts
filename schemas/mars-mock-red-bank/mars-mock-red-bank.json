@@ -157,6 +157,15 @@
         "properties": {
           "deposit": {
             "type": "object",
+            "properties": {
+              "account_id": {
+                "description": "Credit account id (Rover)",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
             "additionalProperties": false
           }
         },
@@ -175,6 +184,13 @@
               "denom"
             ],
             "properties": {
+              "account_id": {
+                "description": "Credit account id (Rover)",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "amount": {
                 "description": "Amount to be withdrawn. If None is specified, the full amount will be withdrawn.",
                 "anyOf": [
@@ -708,6 +724,12 @@
               "user"
             ],
             "properties": {
+              "account_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "denom": {
                 "type": "string"
               },
@@ -733,6 +755,12 @@
               "user"
             ],
             "properties": {
+              "account_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "limit": {
                 "type": [
                   "integer",

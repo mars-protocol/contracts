@@ -288,12 +288,6 @@ module.exports.__wbindgen_is_string = function (arg0) {
   return ret
 }
 
-module.exports.__wbindgen_boolean_get = function (arg0) {
-  const v = getObject(arg0)
-  const ret = typeof v === 'boolean' ? (v ? 1 : 0) : 2
-  return ret
-}
-
 module.exports.__wbindgen_is_bigint = function (arg0) {
   const ret = typeof getObject(arg0) === 'bigint'
   return ret
@@ -306,6 +300,12 @@ module.exports.__wbindgen_bigint_from_u64 = function (arg0) {
 
 module.exports.__wbindgen_jsval_eq = function (arg0, arg1) {
   const ret = getObject(arg0) === getObject(arg1)
+  return ret
+}
+
+module.exports.__wbindgen_boolean_get = function (arg0) {
+  const v = getObject(arg0)
+  const ret = typeof v === 'boolean' ? (v ? 1 : 0) : 2
   return ret
 }
 

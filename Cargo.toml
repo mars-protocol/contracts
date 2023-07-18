@@ -1,5 +1,6 @@
 [workspace]
-members = [
+resolver = "2"
+members  = [
     # prod contracts
     "contracts/account-nft",
     "contracts/credit-manager",
@@ -36,7 +37,7 @@ documentation = "https://docs.marsprotocol.io/"
 keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
-anyhow             = "1.0.71"
+anyhow             = "1.0.72"
 cosmwasm-schema    = "1.2.7"
 cosmwasm-std       = "1.2.7"
 cw2                = "1.1.0"
@@ -54,7 +55,7 @@ osmosis-test-tube  = "16.0.0"
 proptest           = "1.2.0"
 schemars           = "0.8.12"
 serde              = { version = "1.0.171", default-features = false, features = ["derive"] }
-serde_json         = "1.0.100"
+serde_json         = "1.0.103"
 serde-wasm-bindgen = "0.5.0"
 thiserror          = "1.0.43"
 wasm-bindgen       = "0.2.87"
@@ -62,7 +63,7 @@ wasm-bindgen       = "0.2.87"
 # mars packages
 mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
 mars-owner                 = { version = "1.2.0", features = ["emergency-owner"] }
-mars-red-bank-types        = "1.1.0-develop-0"
+mars-red-bank-types        = "1.1.0-ntrn-2"
 mars-rover-health-computer = { version = "2.0.0", path = "./packages/health-computer" }
 mars-rover-health-types    = { version = "2.0.0", path = "./packages/health-types" }
 mars-rover                 = { version = "2.0.0", path = "./packages/rover" }

@@ -256,36 +256,6 @@
       },
       "additionalProperties": false
     },
-    "LentAmount": {
-      "type": "object",
-      "required": [
-        "amount",
-        "denom",
-        "shares"
-      ],
-      "properties": {
-        "amount": {
-          "description": "amount of coins",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Uint128"
-            }
-          ]
-        },
-        "denom": {
-          "type": "string"
-        },
-        "shares": {
-          "description": "number of shares in lent pool",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Uint128"
-            }
-          ]
-        }
-      },
-      "additionalProperties": false
-    },
     "LiquidationBonus": {
       "description": "The LB will depend on the Health Factor and a couple other parameters as follows: Liquidation Bonus = min( b + (slope * (1 - HF)), max( min(CR - 1, max_lb), min_lb ) )",
       "type": "object",
@@ -375,7 +345,7 @@
         "lends": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/LentAmount"
+            "$ref": "#/definitions/Coin"
           }
         },
         "vaults": {

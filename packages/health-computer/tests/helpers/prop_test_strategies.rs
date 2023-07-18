@@ -11,7 +11,7 @@ use mars_rover::{
         CoinValue, LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
         VaultPositionAmount, VaultPositionValue,
     },
-    msg::query::{DebtAmount, LentAmount, Positions},
+    msg::query::{DebtAmount, Positions},
 };
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_rover_health_types::AccountKind;
@@ -193,7 +193,7 @@ fn random_param_maps() -> impl Strategy<Value = (DenomsData, VaultsData)> {
     })
 }
 
-fn random_deposits(denoms_data: DenomsData) -> impl Strategy<Value = Vec<Coin>> {
+fn random_coins(denoms_data: DenomsData) -> impl Strategy<Value = Vec<Coin>> {
     let denoms = denoms_data.params.keys().cloned().collect::<Vec<String>>();
     let denoms_len = denoms.len();
     vec(
@@ -219,24 +219,6 @@ fn random_debts(denoms_data: DenomsData) -> impl Strategy<Value = Vec<DebtAmount
             let amount = Uint128::new(amount as u128);
 
             DebtAmount {
-                denom,
-                shares: amount * Uint128::new(10),
-                amount,
-            }
-        }),
-        0..denoms_len,
-    )
-}
-
-fn random_lends(denoms_data: DenomsData) -> impl Strategy<Value = Vec<LentAmount>> {
-    let denoms = denoms_data.params.keys().cloned().collect::<Vec<String>>();
-    let denoms_len = denoms.len();
-    vec(
-        (0..denoms_len, 1..=10000).prop_map(move |(index, amount)| {
-            let denom = denoms.get(index).unwrap().clone();
-            let amount = Uint128::new(amount as u128);
-
-            LentAmount {
                 denom,
                 shares: amount * Uint128::new(10),
                 amount,
@@ -285,9 +267,9 @@ pub fn random_health_computer() -> impl Strategy<Value = HealthComputer> {
     (random_param_maps()).prop_flat_map(|(denoms_data, vaults_data)| {
         (
             random_account_kind(),
-            random_deposits(denoms_data.clone()),
+            random_coins(denoms_data.clone()),
             random_debts(denoms_data.clone()),
-            random_lends(denoms_data.clone()),
+            random_coins(denoms_data.clone()),
             random_vault_positions(vaults_data.clone()),
         )
             .prop_map(move |(kind, deposits, debts, lends, vaults)| HealthComputer {

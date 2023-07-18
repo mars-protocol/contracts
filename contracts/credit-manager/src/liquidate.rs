@@ -3,7 +3,7 @@ use std::{
     ops::Add,
 };
 
-use cosmwasm_std::{Coin, Decimal, DepsMut, Env, QuerierWrapper, StdError, Uint128};
+use cosmwasm_std::{Coin, Decimal, DepsMut, QuerierWrapper, StdError, Uint128};
 use mars_params::types::asset::AssetParams;
 use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
@@ -28,7 +28,6 @@ use crate::{
 /// Difference between Liquidator Request Coin and Liquidatee Request Coin goes to rewards-collector account as protocol fee.
 pub fn calculate_liquidation(
     deps: &DepsMut,
-    env: &Env,
     liquidatee_account_id: &str,
     debt_coin: &Coin,
     request_coin: &str,
@@ -46,7 +45,7 @@ pub fn calculate_liquidation(
 
     // Ensure debt repaid does not exceed liquidatee's total debt for denom
     let (total_debt_amount, _) =
-        current_debt_for_denom(deps.as_ref(), env, liquidatee_account_id, &debt_coin.denom)?;
+        current_debt_for_denom(deps.as_ref(), liquidatee_account_id, &debt_coin.denom)?;
 
     let params = PARAMS.load(deps.storage)?;
     let target_health_factor = params.query_target_health_factor(&deps.querier)?;

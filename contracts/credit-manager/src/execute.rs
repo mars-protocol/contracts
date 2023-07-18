@@ -262,11 +262,11 @@ pub fn execute_callback(
         CallbackMsg::Borrow {
             coin,
             account_id,
-        } => borrow(deps, env, &account_id, coin),
+        } => borrow(deps, &account_id, coin),
         CallbackMsg::Repay {
             account_id,
             coin,
-        } => repay(deps, env, &account_id, &coin),
+        } => repay(deps, &account_id, &coin),
         CallbackMsg::RepayForRecipient {
             benefactor_account_id,
             recipient_account_id,
@@ -275,11 +275,11 @@ pub fn execute_callback(
         CallbackMsg::Lend {
             account_id,
             coin,
-        } => lend(deps, env, &account_id, &coin),
+        } => lend(deps, &account_id, &coin),
         CallbackMsg::Reclaim {
             account_id,
             coin,
-        } => reclaim(deps, env, &account_id, &coin),
+        } => reclaim(deps, &account_id, &coin),
         CallbackMsg::AssertMaxLTV {
             account_id,
             prev_health_state,
@@ -391,7 +391,7 @@ pub fn execute_callback(
         } => refund_coin_balances(deps, env, &account_id),
         CallbackMsg::AssertAccountReqs {
             account_id,
-        } => assert_account_requirements(deps, env, account_id),
+        } => assert_account_requirements(deps, account_id),
         CallbackMsg::RemoveReentrancyGuard {} => REENTRANCY_GUARD.try_unlock(deps.storage),
     }
 }

@@ -38,8 +38,6 @@ pub const ACCOUNT_KINDS: Map<&str, AccountKind> = Map::new("account_types"); // 
 pub const COIN_BALANCES: Map<(&str, &str), Uint128> = Map::new("coin_balance"); // Map<(AccountId, Denom), Amount>
 pub const DEBT_SHARES: Map<(&str, &str), Uint128> = Map::new("debt_shares"); // Map<(AccountId, Denom), Shares>
 pub const TOTAL_DEBT_SHARES: Map<&str, Uint128> = Map::new("total_debt_shares"); // Map<Denom, Shares>
-pub const LENT_SHARES: Map<(&str, &str), Uint128> = Map::new("lent_shares"); // Map<(AccountId, Denom), Shares>
-pub const TOTAL_LENT_SHARES: Map<&str, Uint128> = Map::new("total_lent_shares"); // Map<Denom, Shares>
 
 pub const VAULT_POSITIONS: Map<(&str, Addr), VaultPositionAmount> = Map::new("vault_positions"); // Map<(AccountId, VaultAddr), VaultPositionAmount>
 

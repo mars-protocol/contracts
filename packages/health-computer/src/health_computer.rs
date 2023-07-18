@@ -6,7 +6,7 @@ use mars_params::types::{
     asset::{AssetParams, CmSettings},
     vault::VaultConfig,
 };
-use mars_rover::{msg::query::Positions, traits::Coins};
+use mars_rover::msg::query::Positions;
 use mars_rover_health_types::{
     AccountKind, Health,
     HealthError::{
@@ -206,7 +206,7 @@ impl HealthComputer {
 
     fn total_collateral_value(&self) -> HealthResult<CollateralValue> {
         let deposits = self.coins_value(&self.positions.deposits)?;
-        let lends = self.coins_value(&self.positions.lends.to_coins())?;
+        let lends = self.coins_value(&self.positions.lends)?;
         let vaults = self.vaults_value()?;
 
         Ok(CollateralValue {

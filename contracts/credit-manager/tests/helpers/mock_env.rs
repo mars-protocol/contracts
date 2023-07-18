@@ -47,7 +47,7 @@ use mars_rover::{
         health::HealthContract,
         oracle::{Oracle, OracleBase, OracleUnchecked},
         params::Params,
-        red_bank::RedBankBase,
+        red_bank::RedBankUnchecked,
         swap::{
             EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg,
             QueryMsg::EstimateExactInSwap, Swapper, SwapperBase,
@@ -59,8 +59,8 @@ use mars_rover::{
         execute::{Action, CallbackMsg},
         instantiate::ConfigUpdates,
         query::{
-            CoinBalanceResponseItem, ConfigResponse, DebtShares, LentShares, Positions,
-            SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
+            CoinBalanceResponseItem, ConfigResponse, DebtShares, Positions, SharesResponseItem,
+            VaultPositionResponseItem, VaultUtilizationResponse,
         },
         ExecuteMsg, InstantiateMsg, QueryMsg,
         QueryMsg::{EstimateProvideLiquidity, VaultPositionValue},
@@ -96,7 +96,7 @@ pub struct MockEnvBuilder {
     pub coin_params: Option<Vec<CoinInfo>>,
     pub oracle: Option<Oracle>,
     pub params: Option<Params>,
-    pub red_bank: Option<RedBankBase<Addr>>,
+    pub red_bank: Option<RedBankUnchecked>,
     pub deploy_nft_contract: bool,
     pub set_nft_contract_minter: bool,
     pub accounts_to_fund: Vec<AccountToFund>,
@@ -507,51 +507,10 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_all_lent_shares(
-        &self,
-        start_after: Option<(String, String)>,
-        limit: Option<u32>,
-    ) -> Vec<SharesResponseItem> {
-        self.app
-            .wrap()
-            .query_wasm_smart(
-                self.rover.clone(),
-                &QueryMsg::AllLentShares {
-                    start_after,
-                    limit,
-                },
-            )
-            .unwrap()
-    }
-
-    pub fn query_all_total_lent_shares(
-        &self,
-        start_after: Option<String>,
-        limit: Option<u32>,
-    ) -> Vec<LentShares> {
-        self.app
-            .wrap()
-            .query_wasm_smart(
-                self.rover.clone(),
-                &QueryMsg::AllTotalLentShares {
-                    start_after,
-                    limit,
-                },
-            )
-            .unwrap()
-    }
-
     pub fn query_total_debt_shares(&self, denom: &str) -> DebtShares {
         self.app
             .wrap()
             .query_wasm_smart(self.rover.clone(), &QueryMsg::TotalDebtShares(denom.to_string()))
-            .unwrap()
-    }
-
-    pub fn query_total_lent_shares(&self, denom: &str) -> LentShares {
-        self.app
-            .wrap()
-            .query_wasm_smart(self.rover.clone(), &QueryMsg::TotalLentShares(denom.to_string()))
             .unwrap()
     }
 
@@ -569,7 +528,11 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_red_bank_collateral(&self, denom: &str) -> UserCollateralResponse {
+    pub fn query_red_bank_collateral(
+        &self,
+        account_id: &str,
+        denom: &str,
+    ) -> UserCollateralResponse {
         let config = self.query_config();
         self.app
             .wrap()
@@ -577,6 +540,7 @@ impl MockEnv {
                 config.red_bank,
                 &UserCollateral {
                     user: self.rover.to_string(),
+                    account_id: Some(account_id.to_string()),
                     denom: denom.into(),
                 },
             )
@@ -809,7 +773,7 @@ impl MockEnvBuilder {
 
     fn get_rover(&mut self) -> AnyResult<Addr> {
         let code_id = self.app.store_code(mock_rover_contract());
-        let red_bank = self.get_red_bank().into();
+        let red_bank = self.get_red_bank();
         let swapper = self.deploy_swapper().into();
         let max_unlocking_positions = self.get_max_unlocking_positions();
 
@@ -971,15 +935,15 @@ impl MockEnvBuilder {
             .unwrap();
     }
 
-    fn get_red_bank(&mut self) -> RedBankBase<Addr> {
+    fn get_red_bank(&mut self) -> RedBankUnchecked {
         if self.red_bank.is_none() {
-            let addr = self.deploy_red_bank();
-            self.red_bank = Some(addr);
+            let rb = self.deploy_red_bank();
+            self.red_bank = Some(rb);
         }
         self.red_bank.clone().unwrap()
     }
 
-    pub fn deploy_red_bank(&mut self) -> RedBankBase<Addr> {
+    pub fn deploy_red_bank(&mut self) -> RedBankUnchecked {
         let contract_code_id = self.app.store_code(mock_red_bank_contract());
         let addr = self
             .app
@@ -1007,7 +971,7 @@ impl MockEnvBuilder {
                 .unwrap();
         }
 
-        RedBankBase::new(addr)
+        RedBankUnchecked::new(addr.to_string())
     }
 
     fn deploy_vault(&mut self, vault: &VaultTestInfo) -> Addr {
@@ -1178,7 +1142,7 @@ impl MockEnvBuilder {
     }
 
     pub fn red_bank(&mut self, red_bank: &str) -> &mut Self {
-        self.red_bank = Some(RedBankBase::new(Addr::unchecked(red_bank)));
+        self.red_bank = Some(RedBankUnchecked::new(red_bank.to_string()));
         self
     }
 

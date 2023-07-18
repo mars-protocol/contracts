@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, DepsMut, Env, Response, Uint128};
+use cosmwasm_std::{Coin, DepsMut, Response, Uint128};
 use mars_rover::error::{ContractError, ContractResult};
 
 use crate::{
@@ -13,12 +13,7 @@ pub static DEFAULT_DEBT_SHARES_PER_COIN_BORROWED: Uint128 = Uint128::new(1_000_0
 /// else, get debt ownership % and multiply by total existing shares
 ///
 /// increment total debt shares, token debt shares, and asset amount
-pub fn borrow(
-    mut deps: DepsMut,
-    env: Env,
-    account_id: &str,
-    coin: Coin,
-) -> ContractResult<Response> {
+pub fn borrow(mut deps: DepsMut, account_id: &str, coin: Coin) -> ContractResult<Response> {
     if coin.amount.is_zero() {
         return Err(ContractError::NoAmount);
     }
@@ -26,8 +21,7 @@ pub fn borrow(
     assert_coin_is_whitelisted(&mut deps, &coin.denom)?;
 
     let red_bank = RED_BANK.load(deps.storage)?;
-    let total_debt_amount =
-        red_bank.query_debt(&deps.querier, &env.contract.address, &coin.denom)?;
+    let total_debt_amount = red_bank.query_debt(&deps.querier, &coin.denom)?;
 
     let debt_shares_to_add = if total_debt_amount.is_zero() {
         coin.amount.checked_mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)?

@@ -7,7 +7,7 @@ use mars_red_bank_types::red_bank;
 
 use crate::{
     execute::{borrow, deposit, repay, withdraw},
-    query::{query_collateral, query_debt},
+    query::{query_collateral, query_collaterals, query_debt},
 };
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -37,13 +37,14 @@ pub fn execute(
             ..
         } => repay(deps, info),
         red_bank::ExecuteMsg::Deposit {
-            ..
-        } => deposit(deps, info),
+            account_id,
+        } => deposit(deps, info, account_id),
         red_bank::ExecuteMsg::Withdraw {
             denom,
             amount,
+            account_id,
             ..
-        } => withdraw(deps, info, &denom, &amount),
+        } => withdraw(deps, info, &denom, &amount, account_id),
         _ => unimplemented!("Msg not supported!"),
     }
 }
@@ -57,8 +58,14 @@ pub fn query(deps: Deps, _env: Env, msg: red_bank::QueryMsg) -> StdResult<Binary
         } => to_binary(&query_debt(deps, user, denom)?),
         red_bank::QueryMsg::UserCollateral {
             user,
+            account_id,
             denom,
-        } => to_binary(&query_collateral(deps, user, denom)?),
+        } => to_binary(&query_collateral(deps, user, account_id, denom)?),
+        red_bank::QueryMsg::UserCollaterals {
+            user,
+            account_id,
+            ..
+        } => to_binary(&query_collaterals(deps, user, account_id)?),
         _ => unimplemented!("Query not supported!"),
     }
 }

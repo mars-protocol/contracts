@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, MessageInfo, Response, WasmMsg};
+use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, WasmMsg};
 use cw721_base::Action;
 use mars_account_nft::{msg::ExecuteMsg as NftExecuteMsg, nft_config::NftConfigUpdates};
 use mars_owner::OwnerUpdate;
@@ -15,6 +15,7 @@ use crate::{
 
 pub fn update_config(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     updates: ConfigUpdates,
 ) -> ContractResult<Response> {
@@ -46,7 +47,7 @@ pub fn update_config(
     }
 
     if let Some(unchecked) = updates.red_bank {
-        RED_BANK.save(deps.storage, &unchecked.check(deps.api)?)?;
+        RED_BANK.save(deps.storage, &unchecked.check(deps.api, env.contract.address)?)?;
         response =
             response.add_attribute("key", "red_bank").add_attribute("value", unchecked.address());
     }

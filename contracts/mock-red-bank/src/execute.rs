@@ -4,8 +4,8 @@ use cosmwasm_std::{
 use cw_utils::one_coin;
 
 use crate::{
-    helpers::{load_collateral_amount, load_debt_amount, load_lent_amount},
-    state::{COLLATERAL_AMOUNT, DEBT_AMOUNT},
+    helpers::{load_collateral_amount, load_debt_amount},
+    state::{COLLATERAL_AMOUNT, COLLATERAL_DENOMS, DEBT_AMOUNT},
 };
 
 pub fn borrow(
@@ -44,15 +44,34 @@ pub fn repay(deps: DepsMut, info: MessageInfo) -> StdResult<Response> {
     Ok(Response::new())
 }
 
-pub fn deposit(deps: DepsMut, info: MessageInfo) -> StdResult<Response> {
+pub fn deposit(
+    deps: DepsMut,
+    info: MessageInfo,
+    account_id: Option<String>,
+) -> StdResult<Response> {
     let to_deposit =
         one_coin(&info).map_err(|_| StdError::generic_err("Deposit coin reqs not met"))?;
-    let collateral_amount = load_collateral_amount(deps.storage, &info.sender, &to_deposit.denom)?;
+    let collateral_amount = load_collateral_amount(
+        deps.storage,
+        info.sender.as_str(),
+        &account_id.clone().unwrap_or_default(),
+        &to_deposit.denom,
+    )?;
 
     COLLATERAL_AMOUNT.save(
         deps.storage,
-        (info.sender, to_deposit.denom.clone()),
+        (info.sender.to_string(), account_id.clone().unwrap_or_default(), to_deposit.denom.clone()),
         &collateral_amount.checked_add(to_deposit.amount)?.checked_add(Uint128::new(1))?, // The extra unit is simulated accrued yield
+    )?;
+
+    COLLATERAL_DENOMS.update(
+        deps.storage,
+        (info.sender.to_string(), account_id.clone().unwrap_or_default()),
+        |denoms_opt| -> StdResult<_> {
+            let mut denoms = denoms_opt.unwrap_or_default();
+            denoms.push(to_deposit.denom.clone());
+            Ok(denoms)
+        },
     )?;
 
     Ok(Response::new())
@@ -63,14 +82,33 @@ pub fn withdraw(
     info: MessageInfo,
     denom: &str,
     amount: &Option<Uint128>,
+    account_id: Option<String>,
 ) -> StdResult<Response> {
-    let total_lent = load_lent_amount(deps.storage, &info.sender, denom)?;
+    let total_lent = load_collateral_amount(
+        deps.storage,
+        info.sender.as_str(),
+        &account_id.clone().unwrap_or_default(),
+        denom,
+    )?;
     let amount_to_reclaim = amount.unwrap_or(total_lent);
 
+    let new_amount = total_lent.checked_sub(amount_to_reclaim)?;
     COLLATERAL_AMOUNT.save(
         deps.storage,
-        (info.sender.clone(), denom.to_string()),
-        &total_lent.checked_sub(amount_to_reclaim)?,
+        (info.sender.to_string(), account_id.clone().unwrap_or_default(), denom.to_string()),
+        &new_amount,
+    )?;
+
+    COLLATERAL_DENOMS.update(
+        deps.storage,
+        (info.sender.to_string(), account_id.clone().unwrap_or_default()),
+        |denoms_opt| -> StdResult<_> {
+            let mut denoms = denoms_opt.unwrap_or_default();
+            if new_amount.is_zero() {
+                denoms.retain(|s| s != denom);
+            }
+            Ok(denoms)
+        },
     )?;
 
     let transfer_msg = CosmosMsg::Bank(BankMsg::Send {

@@ -24,7 +24,6 @@ pub fn liquidate_deposit(
 
     let (debt, liquidator_request, liquidatee_request) = calculate_liquidation(
         &deps,
-        &env,
         liquidatee_account_id,
         &debt_coin,
         request_coin_denom,

@@ -37,6 +37,3 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 [dev-dependencies]
 proptest = { workspace = true }
 
-[profile.release]
-opt-level = 's'
-lto = true

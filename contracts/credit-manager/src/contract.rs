@@ -12,9 +12,8 @@ use crate::{
     execute::{create_credit_account, dispatch_actions, execute_callback},
     instantiate::store_config,
     query::{
-        query_all_coin_balances, query_all_debt_shares, query_all_lent_shares,
-        query_all_total_debt_shares, query_all_total_lent_shares, query_all_vault_positions,
-        query_config, query_positions, query_total_debt_shares, query_total_lent_shares,
+        query_all_coin_balances, query_all_debt_shares, query_all_total_debt_shares,
+        query_all_vault_positions, query_config, query_positions, query_total_debt_shares,
         query_vault_position_value, query_vault_utilization,
     },
     repay::repay_from_wallet,
@@ -30,12 +29,12 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> ContractResult<Response> {
     set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
-    store_config(deps, &msg)?;
+    store_config(deps, env, &msg)?;
     Ok(Response::default())
 }
 
@@ -50,7 +49,7 @@ pub fn execute(
         ExecuteMsg::CreateCreditAccount(kind) => create_credit_account(deps, info.sender, kind),
         ExecuteMsg::UpdateConfig {
             updates,
-        } => update_config(deps, info, updates),
+        } => update_config(deps, env, info, updates),
         ExecuteMsg::UpdateNftConfig {
             config,
             ownership,
@@ -87,7 +86,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         } => to_binary(&query_vault_utilization(deps, env, vault)?),
         QueryMsg::Positions {
             account_id,
-        } => to_binary(&query_positions(deps, &env, &account_id)?),
+        } => to_binary(&query_positions(deps, &account_id)?),
         QueryMsg::AllCoinBalances {
             start_after,
             limit,
@@ -101,15 +100,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             start_after,
             limit,
         } => to_binary(&query_all_total_debt_shares(deps, start_after, limit)?),
-        QueryMsg::AllLentShares {
-            start_after,
-            limit,
-        } => to_binary(&query_all_lent_shares(deps, start_after, limit)?),
-        QueryMsg::TotalLentShares(denom) => to_binary(&query_total_lent_shares(deps, &denom)?),
-        QueryMsg::AllTotalLentShares {
-            start_after,
-            limit,
-        } => to_binary(&query_all_total_lent_shares(deps, start_after, limit)?),
         QueryMsg::AllVaultPositions {
             start_after,
             limit,

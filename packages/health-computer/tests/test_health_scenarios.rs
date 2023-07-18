@@ -7,7 +7,7 @@ use mars_rover::{
         CoinValue, LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
         VaultPositionAmount, VaultPositionValue, VaultUnlockingPosition,
     },
-    msg::query::{DebtAmount, LentAmount, Positions},
+    msg::query::{DebtAmount, Positions},
 };
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_rover_health_types::AccountKind;
@@ -1130,18 +1130,7 @@ fn lent_coins_used_as_collateral() {
                 shares: Default::default(),
                 amount: Uint128::new(3100),
             }],
-            lends: vec![
-                LentAmount {
-                    denom: udai.denom,
-                    shares: Default::default(),
-                    amount: Uint128::new(10),
-                },
-                LentAmount {
-                    denom: uluna.denom,
-                    shares: Default::default(),
-                    amount: Uint128::new(2),
-                },
-            ],
+            lends: vec![coin(10, udai.denom), coin(2, uluna.denom)],
             vaults: vec![],
         },
         denoms_data,
@@ -1201,18 +1190,7 @@ fn allowed_lent_coins_influence_max_ltv() {
                 shares: Default::default(),
                 amount: Uint128::new(3100),
             }],
-            lends: vec![
-                LentAmount {
-                    denom: udai.denom,
-                    shares: Default::default(),
-                    amount: Uint128::new(10),
-                },
-                LentAmount {
-                    denom: uluna.denom,
-                    shares: Default::default(),
-                    amount: Uint128::new(2),
-                },
-            ],
+            lends: vec![coin(10, udai.denom), coin(2, uluna.denom)],
             vaults: vec![],
         },
         denoms_data,

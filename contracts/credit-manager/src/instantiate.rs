@@ -1,4 +1,4 @@
-use cosmwasm_std::DepsMut;
+use cosmwasm_std::{DepsMut, Env};
 use mars_owner::OwnerInit::SetInitialOwner;
 use mars_rover::{error::ContractResult, msg::InstantiateMsg};
 
@@ -6,7 +6,7 @@ use crate::state::{
     HEALTH_CONTRACT, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, PARAMS, RED_BANK, SWAPPER, ZAPPER,
 };
 
-pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
+pub fn store_config(deps: DepsMut, env: Env, msg: &InstantiateMsg) -> ContractResult<()> {
     OWNER.initialize(
         deps.storage,
         deps.api,
@@ -15,7 +15,7 @@ pub fn store_config(deps: DepsMut, msg: &InstantiateMsg) -> ContractResult<()> {
         },
     )?;
 
-    RED_BANK.save(deps.storage, &msg.red_bank.check(deps.api)?)?;
+    RED_BANK.save(deps.storage, &msg.red_bank.check(deps.api, env.contract.address)?)?;
     ORACLE.save(deps.storage, &msg.oracle.check(deps.api)?)?;
     SWAPPER.save(deps.storage, &msg.swapper.check(deps.api)?)?;
     ZAPPER.save(deps.storage, &msg.zapper.check(deps.api)?)?;
