@@ -1,5 +1,4 @@
 use cosmwasm_std::{coin, Addr, Coin, OverflowError, OverflowOperation::Sub, Uint128};
-use mars_params::msg::AssetParamsUpdate::AddOrUpdate;
 use mars_rover::{
     error::ContractError as RoverError,
     msg::execute::{
@@ -13,8 +12,7 @@ use mars_v2_zapper_mock::{
 };
 
 use crate::helpers::{
-    assert_err, blacklisted_coin, get_coin, lp_token_info, uatom_info, uosmo_info, AccountToFund,
-    MockEnv,
+    assert_err, get_coin, lp_token_info, uatom_info, uosmo_info, AccountToFund, MockEnv,
 };
 
 pub mod helpers;
@@ -46,79 +44,6 @@ fn only_token_owner_can_unzap_for_account() {
             account_id,
         },
     )
-}
-
-#[test]
-fn lp_token_in_must_be_whitelisted() {
-    let blacklisted = blacklisted_coin();
-    let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().build().unwrap();
-
-    let account_id = mock.create_credit_account(&user).unwrap();
-    let res = mock.update_credit_account(
-        &account_id,
-        &user,
-        vec![WithdrawLiquidity {
-            lp_token: blacklisted.to_action_coin(100),
-            minimum_receive: vec![],
-        }],
-        &[],
-    );
-
-    assert_err(res, RoverError::NotWhitelisted(blacklisted.denom))
-}
-
-#[test]
-fn coins_out_must_be_whitelisted() {
-    let atom = uatom_info();
-    let mut osmo = uosmo_info();
-    let lp_token = lp_token_info();
-
-    let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new()
-        .set_params(&[lp_token.clone(), atom.clone(), osmo.clone()])
-        .fund_account(AccountToFund {
-            addr: user.clone(),
-            funds: vec![atom.to_coin(300), osmo.to_coin(300)],
-        })
-        .build()
-        .unwrap();
-
-    // Seed zapper with denoms so test can estimate withdraws
-    let account_id = mock.create_credit_account(&user).unwrap();
-    mock.update_credit_account(
-        &account_id,
-        &user,
-        vec![
-            Deposit(atom.to_coin(100)),
-            Deposit(osmo.to_coin(50)),
-            ProvideLiquidity {
-                coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(50)],
-                lp_token_out: lp_token.denom.clone(),
-                minimum_receive: Uint128::zero(),
-            },
-        ],
-        &[atom.to_coin(100), osmo.to_coin(50)],
-    )
-    .unwrap();
-
-    // update params to disallow denoms out
-    osmo.whitelisted = false;
-    mock.update_asset_params(AddOrUpdate {
-        params: osmo.clone().into(),
-    });
-
-    let res = mock.update_credit_account(
-        &account_id,
-        &user,
-        vec![WithdrawLiquidity {
-            lp_token: lp_token.to_action_coin(100_000),
-            minimum_receive: vec![],
-        }],
-        &[],
-    );
-
-    assert_err(res, RoverError::NotWhitelisted(osmo.denom))
 }
 
 #[test]

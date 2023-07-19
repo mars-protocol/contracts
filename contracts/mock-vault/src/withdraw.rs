@@ -60,7 +60,7 @@ pub fn withdraw_state_update(
     Ok(base_amount)
 }
 
-pub fn get_vault_token(storage: &mut dyn Storage, funds: Vec<Coin>) -> ContractResult<Coin> {
+pub fn get_vault_token(storage: &dyn Storage, funds: Vec<Coin>) -> ContractResult<Coin> {
     let vault_token_denom = VAULT_TOKEN_DENOM.load(storage)?;
     let res = funds.iter().find(|coin| coin.denom == vault_token_denom);
     match res {

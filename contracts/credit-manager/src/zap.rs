@@ -61,14 +61,12 @@ pub fn provide_liquidity(
 }
 
 pub fn withdraw_liquidity(
-    mut deps: DepsMut,
+    deps: DepsMut,
     env: Env,
     account_id: &str,
     lp_token_action: &ActionCoin,
     minimum_receive: Vec<Coin>,
 ) -> ContractResult<Response> {
-    assert_coin_is_whitelisted(&mut deps, &lp_token_action.denom)?;
-
     let lp_token = Coin {
         denom: lp_token_action.denom.clone(),
         amount: match lp_token_action.amount {
@@ -84,13 +82,12 @@ pub fn withdraw_liquidity(
     }
 
     let zapper = ZAPPER.load(deps.storage)?;
-    let coins_out = zapper.estimate_withdraw_liquidity(&deps.querier, &lp_token)?;
-    assert_coins_are_whitelisted(&mut deps, coins_out.to_denoms())?;
-
     decrement_coin_balance(deps.storage, account_id, &lp_token)?;
 
+    let unzap_msg = zapper.withdraw_liquidity_msg(&lp_token, minimum_receive)?;
+
     // After unzap is complete, update account's coin balances
-    let zap_msg = zapper.withdraw_liquidity_msg(&lp_token, minimum_receive)?;
+    let coins_out = zapper.estimate_withdraw_liquidity(&deps.querier, &lp_token)?;
     let update_balances_msgs = update_balances_msgs(
         &deps.querier,
         &env.contract.address,
@@ -100,7 +97,7 @@ pub fn withdraw_liquidity(
     )?;
 
     Ok(Response::new()
-        .add_message(zap_msg)
+        .add_message(unzap_msg)
         .add_messages(update_balances_msgs)
         .add_attribute("action", "withdraw_liquidity")
         .add_attribute("account_id", account_id)

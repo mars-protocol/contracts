@@ -40,7 +40,7 @@ impl<'a> ReentrancyGuard<'a> {
         Ok(Response::new().add_attribute("action", "remove_reentrancy_guard"))
     }
 
-    fn assert_unlocked(&self, storage: &mut dyn Storage) -> ContractResult<()> {
+    fn assert_unlocked(&self, storage: &dyn Storage) -> ContractResult<()> {
         match self.state(storage)? {
             GuardState::Locked => {
                 Err(ContractError::ReentrancyGuard("Reentrancy guard is active".to_string()))

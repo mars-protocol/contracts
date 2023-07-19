@@ -30,7 +30,7 @@ pub fn vault_is_whitelisted(deps: &mut DepsMut, vault: &Vault) -> ContractResult
 }
 
 pub fn assert_under_max_unlocking_limit(
-    storage: &mut dyn Storage,
+    storage: &dyn Storage,
     account_id: &str,
     vault: &Vault,
 ) -> ContractResult<()> {
