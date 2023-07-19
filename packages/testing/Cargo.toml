@@ -38,9 +38,6 @@ mars-rewards-collector         = { workspace = true }
 mars-swapper-astroport         = { workspace = true }
 prost                          = { workspace = true }
 pyth-sdk-cw                    = { workspace = true }
-schemars                       = { workspace = true }
-serde                          = { workspace = true }
-thiserror                      = { workspace = true }
 
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

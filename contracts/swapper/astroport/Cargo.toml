@@ -27,7 +27,6 @@ osmosis-test-tube = ["cw-it/osmosis-test-tube", "mars-testing/osmosis-test-tube"
 cosmwasm-schema     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
-mars-owner          = { workspace = true }
 mars-swapper-base   = { workspace = true }
 mars-oracle-wasm    = { workspace = true }
 mars-red-bank-types = { workspace = true }
