@@ -1,7 +1,7 @@
 use cosmwasm_std::{Decimal, Timestamp, Uint128};
 use mars_incentives::state::{EMISSIONS, INCENTIVE_STATES};
 use mars_red_bank_types::incentives::{
-    EmissionResponse, IncentiveState, IncentiveStateResponse, QueryMsg,
+    ActiveEmission, EmissionResponse, IncentiveState, IncentiveStateResponse, QueryMsg,
 };
 use mars_testing::{mock_env, MockEnvParams};
 use test_case::test_case;
@@ -297,7 +297,7 @@ fn query_active_emissions(query_at_time: u64) -> Vec<(String, Uint128)> {
         .save(deps.as_mut().storage, ("uusdc", "uosmo", 604800 * 2), &Uint128::new(100))
         .unwrap();
 
-    helpers::th_query_with_env::<Vec<(String, Uint128)>>(
+    helpers::th_query_with_env::<Vec<ActiveEmission>>(
         deps.as_ref(),
         mock_env(MockEnvParams {
             block_time: Timestamp::from_seconds(query_at_time),
@@ -307,4 +307,7 @@ fn query_active_emissions(query_at_time: u64) -> Vec<(String, Uint128)> {
             collateral_denom: "uusdc".to_string(),
         },
     )
+    .into_iter()
+    .map(|x| (x.denom, x.emission_rate))
+    .collect()
 }

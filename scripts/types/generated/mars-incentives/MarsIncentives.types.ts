@@ -120,7 +120,11 @@ export type QueryMsg =
   | {
       whitelist: {}
     }
-export type ArrayOfTupleOfStringAndUint128 = [string, Uint128][]
+export type ArrayOfActiveEmission = ActiveEmission[]
+export interface ActiveEmission {
+  denom: string
+  emission_rate: Uint128
+}
 export interface ConfigResponse {
   address_provider: Addr
   epoch_duration: number

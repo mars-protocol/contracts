@@ -16,7 +16,8 @@ import {
   OwnerUpdate,
   WhitelistEntry,
   QueryMsg,
-  ArrayOfTupleOfStringAndUint128,
+  ArrayOfActiveEmission,
+  ActiveEmission,
   ConfigResponse,
   ArrayOfEmissionResponse,
   EmissionResponse,
@@ -235,17 +236,17 @@ export function useMarsIncentivesConfigQuery<TData = ConfigResponse>({
   )
 }
 export interface MarsIncentivesActiveEmissionsQuery<TData>
-  extends MarsIncentivesReactQuery<ArrayOfTupleOfStringAndUint128, TData> {
+  extends MarsIncentivesReactQuery<ArrayOfActiveEmission, TData> {
   args: {
     collateralDenom: string
   }
 }
-export function useMarsIncentivesActiveEmissionsQuery<TData = ArrayOfTupleOfStringAndUint128>({
+export function useMarsIncentivesActiveEmissionsQuery<TData = ArrayOfActiveEmission>({
   client,
   args,
   options,
 }: MarsIncentivesActiveEmissionsQuery<TData>) {
-  return useQuery<ArrayOfTupleOfStringAndUint128, Error, TData>(
+  return useQuery<ArrayOfActiveEmission, Error, TData>(
     marsIncentivesQueryKeys.activeEmissions(client?.contractAddress, args),
     () =>
       client
