@@ -31,7 +31,9 @@ jobs:
 
       # Remove unused folders to free disk space (otherwise build job can fail)
       - name: Free disk space
-        run: sudo rm -rf /usr/share/dotnet
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
 
       # Artifacts used by tests
       - name: Compile workspace
