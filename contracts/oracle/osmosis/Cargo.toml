@@ -34,7 +34,6 @@ osmosis-std         = { workspace = true }
 pyth-sdk-cw         = { workspace = true }
 schemars            = { workspace = true }
 serde               = { workspace = true }
-thiserror           = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }

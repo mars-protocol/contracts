@@ -43,7 +43,6 @@ bech32            = "0.9.1"
 cosmwasm-schema   = "1.2.6"
 cosmwasm-std      = "1.2.6"
 cw2               = "1.1.0"
-cw-multi-test     = "0.16.5"
 cw-storage-plus   = "1.0.1"
 cw-utils          = "1.0.1"
 mars-owner        = { version = "1.2.0", features = ["emergency-owner"] }
@@ -58,6 +57,7 @@ astroport         = "2.8.0"
 strum             = "0.24.1"
 
 # dev-dependencies
+cw-multi-test     = "0.16.5"
 cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "af23474183cc56746a0b9785328a0009427caa9a" }
 osmosis-test-tube = "16.0.0"
 test-case         = "3.0.0"
