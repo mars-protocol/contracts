@@ -34,6 +34,7 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache
 
       # Artifacts used by tests
       - name: Compile workspace
