@@ -14,6 +14,7 @@ import {
   Uint128,
   Addr,
   OwnerUpdate,
+  WhitelistEntry,
   QueryMsg,
   ArrayOfTupleOfStringAndUint128,
   ConfigResponse,
@@ -24,6 +25,7 @@ import {
   ArrayOfIncentiveStateResponse,
   ArrayOfCoin,
   Coin,
+  ArrayOfWhitelistEntry,
 } from './MarsIncentives.types'
 import { MarsIncentivesQueryClient, MarsIncentivesClient } from './MarsIncentives.client'
 export const marsIncentivesQueryKeys = {
@@ -77,12 +79,12 @@ export interface MarsIncentivesReactQuery<TResponse, TData = TResponse> {
   }
 }
 export interface MarsIncentivesWhitelistQuery<TData>
-  extends MarsIncentivesReactQuery<ArrayOfTupleOfStringAndUint128, TData> {}
-export function useMarsIncentivesWhitelistQuery<TData = ArrayOfTupleOfStringAndUint128>({
+  extends MarsIncentivesReactQuery<ArrayOfWhitelistEntry, TData> {}
+export function useMarsIncentivesWhitelistQuery<TData = ArrayOfWhitelistEntry>({
   client,
   options,
 }: MarsIncentivesWhitelistQuery<TData>) {
-  return useQuery<ArrayOfTupleOfStringAndUint128, Error, TData>(
+  return useQuery<ArrayOfWhitelistEntry, Error, TData>(
     marsIncentivesQueryKeys.whitelist(client?.contractAddress),
     () => (client ? client.whitelist() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -379,7 +381,7 @@ export function useMarsIncentivesSetAssetIncentiveMutation(
 export interface MarsIncentivesUpdateWhitelistMutation {
   client: MarsIncentivesClient
   msg: {
-    addDenoms: string[][]
+    addDenoms: WhitelistEntry[]
     removeDenoms: string[]
   }
   args?: {

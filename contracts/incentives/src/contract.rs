@@ -13,7 +13,7 @@ use mars_red_bank_types::{
     error::MarsError,
     incentives::{
         Config, ConfigResponse, EmissionResponse, ExecuteMsg, IncentiveState,
-        IncentiveStateResponse, InstantiateMsg, QueryMsg,
+        IncentiveStateResponse, InstantiateMsg, MigrateMsg, QueryMsg, WhitelistEntry,
     },
 };
 use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
@@ -140,7 +140,7 @@ pub fn execute_update_whitelist(
     mut deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    add_denoms: Vec<(String, Uint128)>,
+    add_denoms: Vec<WhitelistEntry>,
     remove_denoms: Vec<String>,
 ) -> Result<Response, ContractError> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
@@ -148,7 +148,7 @@ pub fn execute_update_whitelist(
     let config = CONFIG.load(deps.storage)?;
 
     // Add add_denoms and remove_denoms to a set to check for duplicates
-    let denoms = add_denoms.iter().map(|(denom, _)| denom).chain(remove_denoms.iter());
+    let denoms = add_denoms.iter().map(|entry| &entry.denom).chain(remove_denoms.iter());
     let mut denoms_set = std::collections::HashSet::new();
     for denom in denoms {
         if !denoms_set.insert(denom) {
@@ -212,7 +212,11 @@ pub fn execute_update_whitelist(
         WHITELIST.remove(deps.storage, denom);
     }
 
-    for (denom, min_emission) in add_denoms.iter() {
+    for entry in add_denoms.iter() {
+        let WhitelistEntry {
+            denom,
+            min_emission_rate,
+        } = entry;
         // If the denom is not already whitelisted, increase the counter and check that we are not
         // exceeding the max whitelist limit. If the denom is already whitelisted, we don't need
         // to change the counter and instead just update the min_emission.
@@ -226,7 +230,7 @@ pub fn execute_update_whitelist(
         }
 
         validate_native_denom(denom)?;
-        WHITELIST.save(deps.storage, denom, min_emission)?;
+        WHITELIST.save(deps.storage, denom, min_emission_rate)?;
     }
 
     // Set the new whitelist count, if it has changed
@@ -681,9 +685,17 @@ fn query_red_bank_address(deps: Deps) -> StdResult<Addr> {
     )
 }
 
-fn query_whitelist(deps: Deps) -> StdResult<Vec<(String, Uint128)>> {
-    let whitelist: Vec<(String, Uint128)> =
-        WHITELIST.range(deps.storage, None, None, Order::Ascending).collect::<StdResult<_>>()?;
+fn query_whitelist(deps: Deps) -> StdResult<Vec<WhitelistEntry>> {
+    let whitelist: Vec<WhitelistEntry> = WHITELIST
+        .range(deps.storage, None, None, Order::Ascending)
+        .map(|res| {
+            let (denom, min_emission_rate) = res?;
+            Ok(WhitelistEntry {
+                denom,
+                min_emission_rate,
+            })
+        })
+        .collect::<StdResult<_>>()?;
     Ok(whitelist)
 }
 
@@ -726,4 +738,11 @@ pub fn query_emissions(
         .collect::<StdResult<Vec<_>>>()?;
 
     Ok(emissions.into_iter().map(|x| x.into()).collect())
+}
+
+/// MIGRATION
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    Ok(Response::default())
 }

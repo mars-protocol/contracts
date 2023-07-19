@@ -14,7 +14,7 @@ export interface InstantiateMsg {
 export type ExecuteMsg =
   | {
       update_whitelist: {
-        add_denoms: [string, Uint128][]
+        add_denoms: WhitelistEntry[]
         remove_denoms: string[]
       }
     }
@@ -68,6 +68,10 @@ export type OwnerUpdate =
       }
     }
   | 'clear_emergency_owner'
+export interface WhitelistEntry {
+  denom: string
+  min_emission_rate: Uint128
+}
 export type QueryMsg =
   | {
       active_emissions: {
@@ -143,3 +147,4 @@ export interface Coin {
   denom: string
   [k: string]: unknown
 }
+export type ArrayOfWhitelistEntry = WhitelistEntry[]
