@@ -13,7 +13,7 @@ use mars_red_bank_types::{
     error::MarsError,
     incentives::{
         Config, ConfigResponse, EmissionResponse, ExecuteMsg, IncentiveState,
-        IncentiveStateResponse, InstantiateMsg, QueryMsg, WhitelistEntry,
+        IncentiveStateResponse, InstantiateMsg, MigrateMsg, QueryMsg, WhitelistEntry,
     },
 };
 use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
@@ -738,4 +738,11 @@ pub fn query_emissions(
         .collect::<StdResult<Vec<_>>>()?;
 
     Ok(emissions.into_iter().map(|x| x.into()).collect())
+}
+
+/// MIGRATION
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    Ok(Response::default())
 }

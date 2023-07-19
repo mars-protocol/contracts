@@ -246,6 +246,9 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
+pub struct MigrateMsg {}
+
+#[cw_serde]
 pub struct EmissionResponse {
     /// The unix timestamp in seconds at which the emission epoch starts
     pub epoch_start: u64,
