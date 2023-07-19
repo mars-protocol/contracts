@@ -29,6 +29,10 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
+      # Remove unused folders to free disk space (otherwise build job can fail)
+      - name: Free disk space
+        run: sudo rm -rf /usr/share/dotnet
+
       # Artifacts used by tests
       - name: Compile workspace
         run: cargo make build
