@@ -4,3 +4,4 @@ pub mod incentives;
 pub mod oracle;
 pub mod red_bank;
 pub mod rewards_collector;
+pub mod swapper;

@@ -6,7 +6,7 @@ use mars_oracle_osmosis::{
     OsmosisPriceSourceUnchecked,
 };
 use mars_owner::OwnerError::NotOwner;
-use mars_red_bank_types::oracle::QueryMsg;
+use mars_red_bank_types::oracle::msg::QueryMsg;
 use mars_testing::mock_info;
 
 mod helpers;

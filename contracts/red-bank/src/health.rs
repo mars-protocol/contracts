@@ -39,12 +39,7 @@ pub fn assert_below_liq_threshold_after_withdraw(
         Some(p) => {
             p.collateral_amount = p.collateral_amount.checked_sub(withdraw_amount)?;
         }
-        None => {
-            return Err(StdError::GenericErr {
-                msg: "No User Balance".to_string(),
-            }
-            .into())
-        }
+        None => return Err(StdError::generic_err("No User Balance").into()),
     }
 
     let health = compute_position_health(&positions)?;

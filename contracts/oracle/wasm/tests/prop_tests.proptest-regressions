@@ -1,0 +1,15 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc dfaa3bc082c4bd0e6e6785f7cc41bccf5ff8454817e3541e03f9610b16fd891c # shrinks to pair_type = Xyk, pair_denoms = ["uatom", "uatom"], base_denom_index = 0, route_prices = [("uatom", Decimal(0))], register_routes = false
+cc ff448d0e7a8b4e91c6c668325d60ed494de44be55fda33ecc379cba616e20f85 # shrinks to pair_type = Xyk, (pair_denoms, route_prices) = (["uosmo", "stake"], [("stake", Decimal(0)), ("stake", Decimal(0.000000004585472013))])
+cc 5ca64eeb9f8cb0df4166ea7782ec07d91492eee50da8160b1342f6e8f4f33cfe # shrinks to pair_type = Xyk, (pair_denoms, route_prices) = (["stake", "uatom"], [("uatom", Decimal(0.637403151169969837)), ("stake", Decimal(0.495188105830810358))])
+cc 122d1c7329103011810193f8f25f5908c783eed3271f56b7c00f14e11422aeba # shrinks to pair_type = Xyk, (pair_denoms, route_prices) = (["uosmo", "stake"], [("stake", Decimal(132373101975.866291703926105585)), ("uatom", Decimal(552431738294.751627746132883125))])
+cc 6d24c61ba6a263d4d4f0e29f8e2a6c16db3518d2d271202f2a17ac595339cb4f # shrinks to pair_type = Xyk, (pair_denoms, route_prices) = (["stake", "uion"], [("uion", Decimal(7040706654.440918446759799961)), ("uatom", Decimal(1483941554.657027178575457782)), ("uosmo", Decimal(1833715528.085063919419402131))])
+cc ba1ad666b045dcc03e1fd28f4d45f10c4f54611eac4b65c7eafbc37507572997 # shrinks to pair_type = Stable, (pair_denoms, route_prices) = (["uosmo", "uatom"], []), initial_liq = [1, 1], (window_size, tolerance) = (2, 0)
+cc 9ad2ce2c26a6c085aa252fee5b122324fcfda2fcd470fbe206174da2389f47ab # shrinks to pair_type = Xyk, (pair_denoms, route_prices) = (["uatom", "uosmo"], []), initial_liq = [10822962050445088126871, 10822962036372087568463], (window_size, tolerance) = (6, 0)
+cc b4ff0f2eb1a0d677fc1972633f2c2a381e68eb54965501ff58605b81f0093732 # shrinks to pair_type = Xyk, (pair_denoms, route_prices) = (["stake", "uatom"], []), initial_liq = [240051541009477748141810, 6721157557512798311], (window_size, tolerance) = (860495, 38535)
+cc 72e53f8b940ea84ad9709479facdc45af95a67f0b6447bbc316ac5ea02152f57 # shrinks to pair_type = Stable, (pair_denoms, route_prices) = (["uosmo", "uatom"], []), initial_liq = [54095484775203625044646, 512553686986456532], (window_size, tolerance) = (82800, 12299)

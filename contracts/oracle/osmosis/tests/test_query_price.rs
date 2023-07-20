@@ -2,13 +2,13 @@ use std::str::FromStr;
 
 use cosmwasm_std::{
     coin, from_binary,
-    testing::{MockApi, MockStorage},
+    testing::{mock_env, MockApi, MockStorage},
     Decimal, OwnedDeps, StdError,
 };
-use mars_oracle_base::ContractError;
+use mars_oracle_base::{pyth::scale_pyth_price, ContractError};
 use mars_oracle_osmosis::{
-    contract::entry, scale_pyth_price, stride::RedemptionRateResponse, Downtime, DowntimeDetector,
-    GeometricTwap, OsmosisPriceSourceUnchecked, RedemptionRate,
+    contract::entry, stride::RedemptionRateResponse, Downtime, DowntimeDetector, GeometricTwap,
+    OsmosisPriceSourceUnchecked, RedemptionRate,
 };
 use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
@@ -41,6 +41,25 @@ fn querying_fixed_price() {
         },
     );
     assert_eq!(res.price, Decimal::one());
+}
+
+#[test]
+fn querying_fixed_price_price_source_not_set() {
+    let deps = helpers::setup_test_with_pools();
+
+    let err = entry::query(
+        deps.as_ref(),
+        mock_env(),
+        QueryMsg::Price {
+            denom: "uosmo".to_string(),
+        },
+    )
+    .unwrap_err();
+
+    assert_eq!(
+        err,
+        ContractError::Std(StdError::generic_err("No price source found for denom: uosmo"))
+    );
 }
 
 #[test]
@@ -618,6 +637,15 @@ fn querying_lsd_price_if_no_transitive_denom_price_source() {
 fn querying_lsd_price_if_redemption_rate_too_old() {
     let mut deps = helpers::setup_test_with_pools();
 
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
     let max_staleness = 21600u64;
 
     let publish_time = 1677157333u64;
@@ -672,6 +700,15 @@ fn querying_lsd_price_if_redemption_rate_too_old() {
 fn querying_lsd_price_with_downtime_detector() {
     let mut deps = helpers::setup_test_with_pools();
 
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
     let publish_time = 1677157333u64;
     let (pyth_price, ustatom_uatom_price) =
         setup_pyth_and_geometric_twap_for_lsd(&mut deps, publish_time);
@@ -690,15 +727,6 @@ fn querying_lsd_price_with_downtime_detector() {
         downtime: Downtime::Duration10m,
         recovery: 360,
     };
-
-    // price source used to convert USD to base_denom
-    helpers::set_price_source(
-        deps.as_mut(),
-        "usd",
-        OsmosisPriceSourceUnchecked::Fixed {
-            price: Decimal::from_str("1000000").unwrap(),
-        },
-    );
 
     // query price if geometric TWAP < redemption rate
     helpers::set_price_source(

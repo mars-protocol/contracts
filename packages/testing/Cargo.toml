@@ -14,26 +14,32 @@ keywords      = { workspace = true }
 doctest = false
 
 [features]
+default = []
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
+astroport = ["cw-it/astroport", "dep:astroport"]
+osmosis-test-tube = ["cw-it/osmosis-test-tube"]
+backtraces = ["cosmwasm-std/backtraces", "osmosis-std/backtraces"]
 
 [dependencies]
 anyhow                         = { workspace = true }
+astroport                      = { workspace = true, optional = true }
 cosmwasm-std                   = { workspace = true }
 osmosis-std                    = { workspace = true }
 mars-address-provider          = { workspace = true }
 mars-incentives                = { workspace = true }
 mars-oracle-osmosis            = { workspace = true }
+mars-oracle-wasm               = { workspace = true }
 mars-osmosis                   = { workspace = true }
+mars-owner                     = { workspace = true }
 mars-red-bank                  = { workspace = true }
 mars-red-bank-types            = { workspace = true }
-mars-rewards-collector-osmosis = { workspace = true }
+mars-rewards-collector         = { workspace = true }
+mars-swapper-astroport         = { workspace = true }
 prost                          = { workspace = true }
 pyth-sdk-cw                    = { workspace = true }
-schemars                       = { workspace = true }
-serde                          = { workspace = true }
-thiserror                      = { workspace = true }
+
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-cw-multi-test = { workspace = true }
+cw-it                  = { workspace = true, features = ["multi-test"] }
+cw-multi-test          = { workspace = true }

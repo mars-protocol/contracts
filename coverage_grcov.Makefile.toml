@@ -22,7 +22,6 @@ run_task = "test"
 
 [tasks.coverage-grcov-run-test.env]
 CARGO_BUILD_TARGET_DIR = "${COVERAGE_TARGET_DIRECTORY}"
-CARGO_INCREMENTAL = "0"
 RUSTFLAGS = "-Cinstrument-coverage"
 LLVM_PROFILE_FILE = "${COVERAGE_PROF_OUTPUT}/coverage-%p-%m.profraw"
 
@@ -40,14 +39,14 @@ set -eux
 
 grcov ${COVERAGE_PROF_OUTPUT} \
   -b ${COVERAGE_BINARIES} -s ${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY} \
-  -t ${GRCOV_OUTPUT_TYPE} --llvm --branch --ignore-not-existing --ignore "/*" --ignore "*/tests/*" --ignore "*/testing/*" --ignore "target/*" -o ${GRCOV_OUTPUT_PATH}
+  -t ${GRCOV_OUTPUT_TYPE} --llvm --branch --ignore-not-existing --ignore "/*" --ignore "*/tests/*" --ignore "*/testing/*" --ignore "target/*" --ignore "contracts/swapper/mock/*" --ignore "contracts/swapper/osmosis/*" -o ${GRCOV_OUTPUT_PATH}
 '''
 dependencies = ["install-grcov", "coverage-grcov-prepare-outdir", "coverage-grcov-run-test"]
 
 [tasks.coverage-grcov-html]
-env = { GRCOV_OUTPUT_TYPE = "html", GRCOV_OUTPUT_PATH = "${COVERAGE_TARGET_DIRECTORY}/html" }
+env = { GRCOV_OUTPUT_TYPE = "html", GRCOV_OUTPUT_PATH = "${COVERAGE_TARGET_DIRECTORY}/html", TEST_RUNNER = "multi-test" }
 run_task = "coverage-grcov"
 
 [tasks.coverage-grcov-lcov]
-env = { GRCOV_OUTPUT_TYPE = "lcov", GRCOV_OUTPUT_PATH = "${COVERAGE_TARGET_DIRECTORY}/lcov.info" }
+env = { GRCOV_OUTPUT_TYPE = "lcov", GRCOV_OUTPUT_PATH = "${COVERAGE_TARGET_DIRECTORY}/lcov.info", TEST_RUNNER = "multi-test" }
 run_task = "coverage-grcov"

@@ -1,45 +1,21 @@
+import { InstantiateMsg as AstroportSwapperInstantiateMsg } from './generated/mars-swapper-astroport/MarsSwapperAstroport.types'
+import { InstantiateMsg as RedBankInstantiateMsg } from './generated/mars-red-bank/MarsRedBank.types'
+import { InstantiateMsg as AddressProviderInstantiateMsg } from './generated/mars-address-provider/MarsAddressProvider.types'
+import { InstantiateMsg as IncentivesInstantiateMsg } from './generated/mars-incentives/MarsIncentives.types'
+import { InstantiateMsg as RewardsInstantiateMsg } from './generated/mars-rewards-collector/MarsRewardsCollector.types'
+import { InstantiateMsg as WasmOracleInstantiateMsg } from './generated/mars-oracle-wasm/MarsOracleWasm.types'
+import { InstantiateMsg as OsmosisSwapperInstantiateMsg } from './generated/mars-swapper-osmosis/MarsSwapperOsmosis.types'
+import { InstantiateMsg as OsmosisOracleInstantiateMsg } from './generated/mars-oracle-osmosis/MarsOracleOsmosis.types'
+
 export type InstantiateMsgs =
   | RedBankInstantiateMsg
   | AddressProviderInstantiateMsg
   | IncentivesInstantiateMsg
-  | OracleInstantiateMsg
+  | WasmOracleInstantiateMsg
   | RewardsInstantiateMsg
-
-export interface RedBankInstantiateMsg {
-  owner: string
-  emergency_owner: string
-  config: {
-    address_provider: string
-    close_factor: string
-  }
-}
-
-export interface AddressProviderInstantiateMsg {
-  owner: string
-  prefix: string
-}
-
-export interface IncentivesInstantiateMsg {
-  owner: string
-  address_provider: string
-  mars_denom: string
-}
-
-export interface OracleInstantiateMsg {
-  owner: string
-  base_denom: string
-}
-
-export interface RewardsInstantiateMsg {
-  owner: string
-  safety_fund_denom: string
-  address_provider: string
-  slippage_tolerance: string
-  safety_tax_rate: string
-  timeout_seconds: number
-  fee_collector_denom: string
-  channel_id: string
-}
+  | AstroportSwapperInstantiateMsg
+  | OsmosisSwapperInstantiateMsg
+  | OsmosisOracleInstantiateMsg
 
 export interface UpdateOwner {
   owner: string

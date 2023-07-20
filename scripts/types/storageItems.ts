@@ -5,6 +5,8 @@ export interface StorageItems {
     'address-provider'?: number
     incentives?: number
     oracle?: number
+    swapper?: number
+    params?: number
   }
   addresses: {
     'address-provider'?: string
@@ -12,10 +14,12 @@ export interface StorageItems {
     'red-bank'?: string
     incentives?: string
     oracle?: string
+    swapper?: string
+    params?: string
   }
 
   execute: {
-    addressProviderUpdated?: boolean
+    addressProviderUpdated: Record<string, boolean>
     assetsInitialized: string[]
     secondAssetInitialized?: boolean
     oraclePriceSet?: boolean

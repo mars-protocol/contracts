@@ -15,9 +15,14 @@ where
     C: CustomQuery,
 {
     /// Validate whether the price source is valid for a given denom
-    fn validate(self, deps: Deps<C>, denom: &str, base_denom: &str) -> ContractResult<P>;
+    fn validate(
+        self,
+        deps: &Deps<C>,
+        denom: &str,
+        base_denom: &str,
+        price_sources: &Map<&str, P>,
+    ) -> ContractResult<P>;
 }
-
 pub trait PriceSourceChecked<C>:
     Serialize + DeserializeOwned + Clone + Debug + Display + PartialEq + JsonSchema
 where

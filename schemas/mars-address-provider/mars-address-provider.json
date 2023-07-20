@@ -99,6 +99,13 @@
             "enum": [
               "safety_fund"
             ]
+          },
+          {
+            "description": "The swapper contract on the chain",
+            "type": "string",
+            "enum": [
+              "swapper"
+            ]
           }
         ]
       },
@@ -294,6 +301,13 @@
             "enum": [
               "safety_fund"
             ]
+          },
+          {
+            "description": "The swapper contract on the chain",
+            "type": "string",
+            "enum": [
+              "swapper"
+            ]
           }
         ]
       }
@@ -356,6 +370,13 @@
               "type": "string",
               "enum": [
                 "safety_fund"
+              ]
+            },
+            {
+              "description": "The swapper contract on the chain",
+              "type": "string",
+              "enum": [
+                "swapper"
               ]
             }
           ]
@@ -423,6 +444,13 @@
               "enum": [
                 "safety_fund"
               ]
+            },
+            {
+              "description": "The swapper contract on the chain",
+              "type": "string",
+              "enum": [
+                "swapper"
+              ]
             }
           ]
         }
@@ -488,6 +516,13 @@
               "type": "string",
               "enum": [
                 "safety_fund"
+              ]
+            },
+            {
+              "description": "The swapper contract on the chain",
+              "type": "string",
+              "enum": [
+                "swapper"
               ]
             }
           ]

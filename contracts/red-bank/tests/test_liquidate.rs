@@ -757,7 +757,6 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
         ..
     } = setup_test();
     let debt_price = collateral_price;
-    let debt_market = collateral_market.clone();
 
     let user_addr = Addr::unchecked("user");
     let liquidator_addr = Addr::unchecked("liquidator");
@@ -765,7 +764,7 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
     let user_collateral_scaled_before = Uint128::from(2_000_000u64) * SCALING_FACTOR;
     let user_debt_scaled_before = compute_scaled_amount(
         Uint128::from(3_000_000u64),
-        debt_market.borrow_index,
+        collateral_market.borrow_index,
         ScalingOperation::Ceil,
     )
     .unwrap();
@@ -777,7 +776,7 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
         user_collateral_scaled_before,
         true,
     );
-    set_debt(deps.as_mut(), &user_addr, &debt_market.denom, user_debt_scaled_before, false);
+    set_debt(deps.as_mut(), &user_addr, &collateral_market.denom, user_debt_scaled_before, false);
 
     let liquidate_msg = ExecuteMsg::Liquidate {
         user: user_addr.to_string(),
@@ -790,13 +789,13 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
     let env = mock_env_at_block_time(block_time);
     let info = mock_info(
         liquidator_addr.as_str(),
-        &coins(debt_to_repay.u128(), debt_market.denom.clone()),
+        &coins(debt_to_repay.u128(), collateral_market.denom.clone()),
     );
     let res = execute(deps.as_mut(), env.clone(), info, liquidate_msg).unwrap();
 
     // get expected indices and rates for debt market
     let expected_debt_rates = th_get_expected_indices_and_rates(
-        &debt_market,
+        &collateral_market,
         block_time,
         TestUtilizationDeltaInfo {
             less_debt: debt_to_repay,
@@ -806,7 +805,7 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
     );
 
     let collateral_market_after = MARKETS.load(&deps.storage, &collateral_market.denom).unwrap();
-    let debt_market_after = MARKETS.load(&deps.storage, &debt_market.denom).unwrap();
+    let debt_market_after = MARKETS.load(&deps.storage, &collateral_market.denom).unwrap();
 
     let expected_liquidated_collateral_amount = math::divide_uint128_by_decimal(
         debt_to_repay * debt_price * (Decimal::one() + collateral_market.liquidation_bonus),
@@ -834,7 +833,7 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
         user_collateral_scaled_before,
         Uint128::zero(),
         &collateral_market,
-        &debt_market,
+        &collateral_market,
     );
     assert_eq!(res.messages, expected_msgs);
 
@@ -848,14 +847,14 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
             attr("collateral_denom", collateral_market.denom.as_str()),
             attr("collateral_amount", expected_liquidated_collateral_amount),
             attr("collateral_amount_scaled", expected_liquidated_collateral_amount_scaled),
-            attr("debt_denom", debt_market.denom.as_str()),
+            attr("debt_denom", collateral_market.denom.as_str()),
             attr("debt_amount", debt_to_repay),
             attr("debt_amount_scaled", expected_debt_rates.less_debt_scaled),
         ],
     );
     assert_eq!(
         res.events,
-        vec![th_build_interests_updated_event(&debt_market.denom, &expected_debt_rates)]
+        vec![th_build_interests_updated_event(&collateral_market.denom, &expected_debt_rates)]
     );
 
     // user's collateral scaled amount should have been correctly decreased
@@ -873,23 +872,23 @@ fn liquidate_partially_if_same_asset_for_debt_and_collateral() {
     assert_eq!(collateral.amount_scaled, expected_liquidated_collateral_amount_scaled);
 
     // check user's debt decreased by the appropriate amount
-    let debt = DEBTS.load(&deps.storage, (&user_addr, &debt_market.denom)).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&user_addr, &collateral_market.denom)).unwrap();
     assert_eq!(debt.amount_scaled, user_debt_scaled_before - expected_debt_rates.less_debt_scaled);
 
     // check global debt decreased by the appropriate amount
     assert_eq!(
         debt_market_after.debt_total_scaled,
-        debt_market.debt_total_scaled - expected_debt_rates.less_debt_scaled
+        collateral_market.debt_total_scaled - expected_debt_rates.less_debt_scaled
     );
 
     // rewards collector's collateral scaled amount **of the debt asset** should have been correctly increased
-    let collateral = rewards_collector_collateral(deps.as_ref(), &debt_market.denom);
+    let collateral = rewards_collector_collateral(deps.as_ref(), &collateral_market.denom);
     assert_eq!(collateral.amount_scaled, expected_reward_amount_scaled);
 
     // global collateral scaled amount **of the debt asset** should have been correctly increased
     assert_eq!(
         debt_market_after.collateral_total_scaled,
-        debt_market.collateral_total_scaled + expected_reward_amount_scaled
+        collateral_market.collateral_total_scaled + expected_reward_amount_scaled
     );
 }
 
@@ -905,7 +904,6 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
         ..
     } = setup_test();
     let debt_price = collateral_price;
-    let debt_market = collateral_market.clone();
 
     let user_addr = Addr::unchecked("user");
     let liquidator_addr = Addr::unchecked("liquidator");
@@ -913,7 +911,7 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
     let user_collateral_scaled_before = Uint128::from(2_000_000u64) * SCALING_FACTOR;
     let user_debt_scaled_before = compute_scaled_amount(
         Uint128::from(3_000_000u64),
-        debt_market.borrow_index,
+        collateral_market.borrow_index,
         ScalingOperation::Ceil,
     )
     .unwrap();
@@ -925,7 +923,7 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
         user_collateral_scaled_before,
         true,
     );
-    set_debt(deps.as_mut(), &user_addr, &debt_market.denom, user_debt_scaled_before, false);
+    set_debt(deps.as_mut(), &user_addr, &collateral_market.denom, user_debt_scaled_before, false);
 
     let liquidate_msg = ExecuteMsg::Liquidate {
         user: user_addr.to_string(),
@@ -938,12 +936,12 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
     let env = mock_env_at_block_time(block_time);
     let info = mock_info(
         liquidator_addr.as_str(),
-        &coins(debt_to_repay.u128(), debt_market.denom.clone()),
+        &coins(debt_to_repay.u128(), collateral_market.denom.clone()),
     );
     let res = execute(deps.as_mut(), env, info, liquidate_msg).unwrap();
 
     // get expected indices and rates for debt and collateral markets
-    let expected_debt_indices = th_get_expected_indices(&debt_market, block_time);
+    let expected_debt_indices = th_get_expected_indices(&collateral_market, block_time);
     let user_debt_asset_total_debt = compute_underlying_amount(
         user_debt_scaled_before,
         expected_debt_indices.borrow,
@@ -956,7 +954,7 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
     let expected_refund_amount = debt_to_repay - expected_less_debt;
 
     let expected_debt_rates = th_get_expected_indices_and_rates(
-        &debt_market,
+        &collateral_market,
         block_time,
         TestUtilizationDeltaInfo {
             less_debt: expected_less_debt,
@@ -981,7 +979,7 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
         },
     );
 
-    let debt_market_after = MARKETS.load(&deps.storage, &debt_market.denom).unwrap();
+    let debt_market_after = MARKETS.load(&deps.storage, &collateral_market.denom).unwrap();
 
     let expected_liquidated_collateral_amount_scaled = compute_scaled_amount(
         expected_liquidated_collateral_amount,
@@ -1003,11 +1001,11 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
         user_collateral_scaled_before,
         Uint128::zero(),
         &collateral_market,
-        &debt_market,
+        &collateral_market,
     );
     expected_msgs.push(SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
         to_address: liquidator_addr.to_string(),
-        amount: coins(expected_refund_amount.u128(), debt_market.denom.clone()),
+        amount: coins(expected_refund_amount.u128(), collateral_market.denom.clone()),
     })));
     assert_eq!(res.messages, expected_msgs);
 
@@ -1020,7 +1018,7 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
             attr("collateral_denom", collateral_market.denom.as_str()),
             attr("collateral_amount", expected_liquidated_collateral_amount),
             attr("collateral_amount_scaled", expected_liquidated_collateral_amount_scaled),
-            attr("debt_denom", debt_market.denom.as_str()),
+            attr("debt_denom", collateral_market.denom.as_str()),
             attr("debt_amount", expected_less_debt),
             attr("debt_amount_scaled", expected_debt_rates.less_debt_scaled),
         ],
@@ -1028,7 +1026,7 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
     );
     assert_eq!(
         res.events,
-        vec![th_build_interests_updated_event(&debt_market.denom, &expected_debt_rates)],
+        vec![th_build_interests_updated_event(&collateral_market.denom, &expected_debt_rates)],
     );
 
     // user's collateral scaled amount should have been correctly decreased
@@ -1046,23 +1044,23 @@ fn liquidate_with_refund_if_same_asset_for_debt_and_collateral() {
     assert_eq!(collateral.amount_scaled, expected_liquidated_collateral_amount_scaled);
 
     // check user's debt decreased by the appropriate amount
-    let debt = DEBTS.load(&deps.storage, (&user_addr, &debt_market.denom)).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&user_addr, &collateral_market.denom)).unwrap();
     assert_eq!(debt.amount_scaled, user_debt_scaled_before - expected_debt_rates.less_debt_scaled);
 
     // check global debt decreased by the appropriate amount
     assert_eq!(
         debt_market_after.debt_total_scaled,
-        debt_market.debt_total_scaled - expected_debt_rates.less_debt_scaled
+        collateral_market.debt_total_scaled - expected_debt_rates.less_debt_scaled
     );
 
     // rewards collector's collateral scaled amount **of the debt asset** should have been correctly increased
-    let collateral = rewards_collector_collateral(deps.as_ref(), &debt_market.denom);
+    let collateral = rewards_collector_collateral(deps.as_ref(), &collateral_market.denom);
     assert_eq!(collateral.amount_scaled, expected_reward_amount_scaled);
 
     // global collateral scaled amount **of the debt asset** should have been correctly increased
     assert_eq!(
         debt_market_after.collateral_total_scaled,
-        debt_market.collateral_total_scaled + expected_reward_amount_scaled
+        collateral_market.collateral_total_scaled + expected_reward_amount_scaled
     );
 }
 

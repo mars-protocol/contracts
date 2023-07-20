@@ -12,9 +12,13 @@ keywords      = { workspace = true }
 [lib]
 doctest = false
 
+[profile.release]
+overflow-checks  = true
+
 [features]
+pyth        = ["pyth-sdk-cw"]
 # for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
+backtraces  = ["cosmwasm-std/backtraces"]
 
 [dependencies]
 cosmwasm-std        = { workspace = true }
@@ -22,7 +26,7 @@ cw2                 = { workspace = true }
 cw-storage-plus     = { workspace = true }
 mars-owner          = { workspace = true }
 mars-red-bank-types = { workspace = true }
-mars-utils          = { workspace = true }
 schemars            = { workspace = true }
 serde               = { workspace = true }
 thiserror           = { workspace = true }
+pyth-sdk-cw         = { workspace = true, optional = true }

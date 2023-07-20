@@ -1,6 +1,6 @@
 use std::string::FromUtf8Error;
 
-use cosmwasm_std::StdError;
+use cosmwasm_std::{Coin, StdError};
 use mars_owner::OwnerError;
 use mars_red_bank_types::error::MarsError;
 use mars_utils::error::ValidationError;
@@ -27,4 +27,49 @@ pub enum ContractError {
     InvalidIncentive {
         reason: String,
     },
+
+    #[error("Invalid Pagination Params. If start_after_incentive_denom is supplied, then start_after_collateral_denom must also be supplied")]
+    InvalidPaginationParams,
+
+    #[error("Invalid duration. Incentive duration must be divisible by epoch duration. Epoch duration is {epoch_duration}")]
+    InvalidDuration {
+        epoch_duration: u64,
+    },
+
+    #[error("Invalid start time. Incentive start time must be a multiple of epoch duration away from an existing schedule. Epoch duration is {epoch_duration}. Existing start time is {existing_start_time}")]
+    InvalidStartTime {
+        existing_start_time: u64,
+        epoch_duration: u64,
+    },
+
+    #[error("Invalid funds. Expected {expected} funds")]
+    InvalidFunds {
+        expected: Coin,
+    },
+
+    #[error("Invalid incentive denom. {denom} is not whitelisted")]
+    NotWhitelisted {
+        denom: String,
+    },
+
+    #[error("Max whitelist limit reached. Max whitelist limit is {max_whitelist_limit}")]
+    MaxWhitelistLimitReached {
+        max_whitelist_limit: u8,
+    },
+
+    #[error("Epoch duration too short. Minimum epoch duration is {min_epoch_duration}")]
+    EpochDurationTooShort {
+        min_epoch_duration: u64,
+    },
+
+    #[error("Whitelist update arguments contain duplicate denom")]
+    DuplicateDenom {
+        denom: String,
+    },
+}
+
+impl From<ContractError> for StdError {
+    fn from(err: ContractError) -> Self {
+        StdError::generic_err(err.to_string())
+    }
 }

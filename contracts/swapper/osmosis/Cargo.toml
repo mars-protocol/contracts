@@ -1,0 +1,36 @@
+[package]
+name          = "mars-swapper-osmosis"
+version       = { workspace = true }
+authors       = { workspace = true }
+license       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+overflow-checks  = true
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+library    = []
+
+[dependencies]
+cosmwasm-schema     = { workspace = true }
+cosmwasm-std        = { workspace = true }
+cw2                 = { workspace = true }
+mars-osmosis        = { workspace = true }
+mars-owner          = { workspace = true }
+mars-swapper-base   = { workspace = true }
+osmosis-std         = { workspace = true }
+mars-red-bank-types = { workspace = true }
+
+[dev-dependencies]
+anyhow            = { workspace = true }
+cw-it             = { workspace = true, features = ["osmosis-test-tube"] }
