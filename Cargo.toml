@@ -46,7 +46,7 @@ cw2               = "1.1.0"
 cw-storage-plus   = "1.0.1"
 cw-utils          = "1.0.1"
 mars-owner        = { version = "1.2.0", features = ["emergency-owner"] }
-osmosis-std       = "0.16.0"
+osmosis-std       = "0.16.1"
 prost             = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
 schemars          = "0.8.12"
 serde             = { version = "1.0.163", default-features = false, features = ["derive"] }
@@ -58,8 +58,8 @@ strum             = "0.24.1"
 
 # dev-dependencies
 cw-multi-test     = "0.16.5"
-cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "af23474183cc56746a0b9785328a0009427caa9a" }
-osmosis-test-tube = "16.0.0"
+cw-it             = { git = "https://github.com/apollodao/cw-it.git", rev = "e30393f8bbe78aff0ab9b080835c6910afd19e7c" }
+osmosis-test-tube = "16.0.1"
 test-case         = "3.0.0"
 proptest          = "1.1.0"
 
