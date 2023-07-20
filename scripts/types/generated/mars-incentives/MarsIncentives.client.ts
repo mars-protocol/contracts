@@ -15,7 +15,8 @@ import {
   OwnerUpdate,
   WhitelistEntry,
   QueryMsg,
-  ArrayOfTupleOfStringAndUint128,
+  ArrayOfActiveEmission,
+  ActiveEmission,
   ConfigResponse,
   ArrayOfEmissionResponse,
   EmissionResponse,
@@ -32,7 +33,7 @@ export interface MarsIncentivesReadOnlyInterface {
     collateralDenom,
   }: {
     collateralDenom: string
-  }) => Promise<ArrayOfTupleOfStringAndUint128>
+  }) => Promise<ArrayOfActiveEmission>
   config: () => Promise<ConfigResponse>
   incentiveState: ({
     collateralDenom,
@@ -104,7 +105,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     collateralDenom,
   }: {
     collateralDenom: string
-  }): Promise<ArrayOfTupleOfStringAndUint128> => {
+  }): Promise<ArrayOfActiveEmission> => {
     return this.client.queryContractSmart(this.contractAddress, {
       active_emissions: {
         collateral_denom: collateralDenom,

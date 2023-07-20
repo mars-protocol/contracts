@@ -163,7 +163,7 @@ pub enum ExecuteMsg {
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Query all active incentive emissions for a collateral denom
-    #[returns(Vec<(String, Uint128)>)]
+    #[returns(Vec<ActiveEmission>)]
     ActiveEmissions {
         /// The denom of the token that users supply as collateral to receive incentives
         collateral_denom: String,
@@ -261,6 +261,24 @@ impl From<(u64, Uint128)> for EmissionResponse {
     fn from((epoch_start, emission_rate): (u64, Uint128)) -> Self {
         Self {
             epoch_start,
+            emission_rate,
+        }
+    }
+}
+
+#[cw_serde]
+/// The currently active emission for a given incentive denom
+pub struct ActiveEmission {
+    /// The denom for which incentives are being distributed
+    pub denom: String,
+    /// The amount of incentive tokens that are being emitted per second
+    pub emission_rate: Uint128,
+}
+
+impl From<(String, Uint128)> for ActiveEmission {
+    fn from((denom, emission_rate): (String, Uint128)) -> Self {
+        Self {
+            denom,
             emission_rate,
         }
     }

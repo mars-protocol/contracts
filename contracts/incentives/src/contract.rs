@@ -12,7 +12,7 @@ use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
     incentives::{
-        Config, ConfigResponse, EmissionResponse, ExecuteMsg, IncentiveState,
+        ActiveEmission, Config, ConfigResponse, EmissionResponse, ExecuteMsg, IncentiveState,
         IncentiveStateResponse, InstantiateMsg, MigrateMsg, QueryMsg, WhitelistEntry,
     },
 };
@@ -571,7 +571,7 @@ pub fn query_active_emissions(
     deps: Deps,
     env: Env,
     collateral_denom: &str,
-) -> StdResult<Vec<(String, Uint128)>> {
+) -> StdResult<Vec<ActiveEmission>> {
     Ok(INCENTIVE_STATES
         .prefix(collateral_denom)
         .keys(deps.storage, None, None, Order::Ascending)
@@ -580,11 +580,11 @@ pub fn query_active_emissions(
             let emission =
                 query_emission(deps, collateral_denom, &incentive_denom, env.block.time.seconds())?;
 
-            Ok((incentive_denom, emission))
+            Ok::<ActiveEmission, _>((incentive_denom, emission).into())
         })
         .collect::<StdResult<Vec<_>>>()?
         .into_iter()
-        .filter(|(_, emission)| emission != Uint128::zero())
+        .filter(|emission| emission.emission_rate != Uint128::zero())
         .collect())
 }
 
