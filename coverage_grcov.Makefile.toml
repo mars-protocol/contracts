@@ -22,7 +22,6 @@ run_task = "test"
 
 [tasks.coverage-grcov-run-test.env]
 CARGO_BUILD_TARGET_DIR = "${COVERAGE_TARGET_DIRECTORY}"
-CARGO_INCREMENTAL = "0"
 RUSTFLAGS = "-Cinstrument-coverage"
 LLVM_PROFILE_FILE = "${COVERAGE_PROF_OUTPUT}/coverage-%p-%m.profraw"
 
