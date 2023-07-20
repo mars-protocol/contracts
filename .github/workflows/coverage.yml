@@ -33,11 +33,15 @@ jobs:
       - name: Compile workspace
         run: cargo make build
 
-      - name: Run test coverage
-        run: cargo make coverage-lcov
+      - name: Run test
+        run: cargo make test
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: target/coverage/lcov.info
+      # disabled because of "no space left" error.
+      # - name: Run test coverage
+      #   run: cargo make coverage-lcov
+
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     files: target/coverage/lcov.info
