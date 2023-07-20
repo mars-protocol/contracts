@@ -127,6 +127,7 @@ impl MockEnvBuilder {
                             abolished: false,
                         },
                         red_bank: "n/a".to_string(),
+                        incentives: "n/a".to_string(),
                         oracle,
                         params,
                         account_nft: None,

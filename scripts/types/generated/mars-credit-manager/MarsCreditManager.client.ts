@@ -9,6 +9,7 @@ import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from '@cosmjs/co
 import { StdFee } from '@cosmjs/amino'
 import {
   HealthContractBaseForString,
+  IncentivesUnchecked,
   Uint128,
   OracleBaseForString,
   ParamsBaseForString,

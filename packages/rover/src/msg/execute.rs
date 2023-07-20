@@ -122,6 +122,9 @@ pub enum Action {
     Lend(ActionCoin),
     /// Reclaim the coins that were lent to the Red Bank.
     Reclaim(ActionCoin),
+    /// For assets lent to the Red Bank, some can accumulate incentive rewards.
+    /// This message claims all of them adds them to account balance.
+    ClaimRewards {},
     /// Repay coin of specified amount back to Red Bank. If `amount: AccountBalance` is passed,
     /// the repaid amount will be the minimum between account balance for denom and total owed.
     /// The sender will repay on behalf of the recipient account. If 'recipient_account_id: None',
@@ -223,6 +226,10 @@ pub enum CallbackMsg {
     Reclaim {
         account_id: String,
         coin: ActionCoin,
+    },
+    /// Calls incentive contract to claim all rewards and increments account balance
+    ClaimRewards {
+        account_id: String,
     },
     /// Assert MaxLTV is either:
     /// - Healthy, if prior to actions MaxLTV health factor >= 1 or None

@@ -972,6 +972,7 @@
       "type": "object",
       "required": [
         "health_contract",
+        "incentives",
         "max_unlocking_positions",
         "oracle",
         "ownership",
@@ -988,6 +989,9 @@
           ]
         },
         "health_contract": {
+          "type": "string"
+        },
+        "incentives": {
           "type": "string"
         },
         "max_unlocking_positions": {

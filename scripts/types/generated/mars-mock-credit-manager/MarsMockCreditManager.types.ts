@@ -149,6 +149,7 @@ export interface VaultPositionResponseItem {
 export interface ConfigResponse {
   account_nft?: string | null
   health_contract: string
+  incentives: string
   max_unlocking_positions: Uint128
   oracle: string
   ownership: OwnerResponse

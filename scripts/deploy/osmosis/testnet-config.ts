@@ -34,6 +34,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   oracle: { addr: 'osmo1khe29uw3t85nmmp3mtr8dls7v2qwsfk3tndu5h4w5g2r5tzlz5qqarq2e2' },
   redBank: { addr: 'osmo1dl4rylasnd7mtfzlkdqn2gr0ss4gvyykpvr6d7t5ylzf6z535n9s5jjt8u' },
   params: { addr: 'osmo1xvg28lrr72662t9u0hntt76lyax9zvptdvdmff4k2q9dhjm8x6ws9zym4v' },
+  incentives: { addr: 'osmo1zyz57xf82963mcsgqu3hq5y0h9mrltm4ttq2qe5mjth9ezp3375qe0sm7d' },
   swapRoutes: [
     { denomIn: uosmo, denomOut: nUSDC, route: [{ token_out_denom: nUSDC, pool_id: '6' }] },
     { denomIn: nUSDC, denomOut: uosmo, route: [{ token_out_denom: uosmo, pool_id: '6' }] },

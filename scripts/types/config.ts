@@ -23,6 +23,7 @@ export interface DeploymentConfig {
   deployerMnemonic: string
   oracle: { addr: string }
   redBank: { addr: string }
+  incentives: { addr: string }
   params: { addr: string }
   vaults: VaultConfigBaseForString[]
   allowedCoins: string[]

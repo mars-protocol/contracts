@@ -2,9 +2,9 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Uint128;
 
 use crate::adapters::{
-    account_nft::AccountNftUnchecked, health::HealthContractUnchecked, oracle::OracleUnchecked,
-    params::ParamsUnchecked, red_bank::RedBankUnchecked, swap::SwapperUnchecked,
-    zapper::ZapperUnchecked,
+    account_nft::AccountNftUnchecked, health::HealthContractUnchecked,
+    incentives::IncentivesUnchecked, oracle::OracleUnchecked, params::ParamsUnchecked,
+    red_bank::RedBankUnchecked, swap::SwapperUnchecked, zapper::ZapperUnchecked,
 };
 
 #[cw_serde]
@@ -27,6 +27,8 @@ pub struct InstantiateMsg {
     pub health_contract: HealthContractUnchecked,
     /// Contract that stores asset and vault params
     pub params: ParamsUnchecked,
+    /// Contract that handles lending incentive rewards
+    pub incentives: IncentivesUnchecked,
 }
 
 /// Used when you want to update fields on Instantiate config
@@ -36,6 +38,7 @@ pub struct ConfigUpdates {
     pub account_nft: Option<AccountNftUnchecked>,
     pub oracle: Option<OracleUnchecked>,
     pub red_bank: Option<RedBankUnchecked>,
+    pub incentives: Option<IncentivesUnchecked>,
     pub max_unlocking_positions: Option<Uint128>,
     pub swapper: Option<SwapperUnchecked>,
     pub zapper: Option<ZapperUnchecked>,

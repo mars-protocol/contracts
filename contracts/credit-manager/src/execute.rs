@@ -12,6 +12,7 @@ use mars_rover_health_types::AccountKind;
 
 use crate::{
     borrow::borrow,
+    claim_rewards::claim_rewards,
     deposit::deposit,
     health::{assert_max_ltv, query_health_state},
     hls::assert_account_requirements,
@@ -111,6 +112,9 @@ pub fn dispatch_actions(
             Action::Reclaim(coin) => callbacks.push(CallbackMsg::Reclaim {
                 account_id: account_id.to_string(),
                 coin,
+            }),
+            Action::ClaimRewards {} => callbacks.push(CallbackMsg::ClaimRewards {
+                account_id: account_id.to_string(),
             }),
             Action::EnterVault {
                 vault,
@@ -280,6 +284,9 @@ pub fn execute_callback(
             account_id,
             coin,
         } => reclaim(deps, &account_id, &coin),
+        CallbackMsg::ClaimRewards {
+            account_id,
+        } => claim_rewards(deps, env, &account_id),
         CallbackMsg::AssertMaxLTV {
             account_id,
             prev_health_state,

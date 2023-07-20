@@ -35,6 +35,7 @@ use mars_params::{
     },
 };
 use mars_red_bank_types::{
+    incentives::{ExecuteMsg::BalanceChange, QueryMsg::UserUnclaimedRewards},
     oracle::ActionKind,
     red_bank::{
         QueryMsg::{UserCollateral, UserDebt},
@@ -45,6 +46,7 @@ use mars_rover::{
     adapters::{
         account_nft::AccountNftUnchecked,
         health::HealthContract,
+        incentives::{Incentives, IncentivesUnchecked},
         oracle::{Oracle, OracleBase, OracleUnchecked},
         params::Params,
         red_bank::RedBankUnchecked,
@@ -73,9 +75,10 @@ use mars_rover_health_types::{
 use mars_v2_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 
 use crate::helpers::{
-    lp_token_info, mock_account_nft_contract, mock_health_contract, mock_oracle_contract,
-    mock_params_contract, mock_red_bank_contract, mock_rover_contract, mock_swapper_contract,
-    mock_v2_zapper_contract, mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo,
+    lp_token_info, mock_account_nft_contract, mock_health_contract, mock_incentives_contract,
+    mock_oracle_contract, mock_params_contract, mock_red_bank_contract, mock_rover_contract,
+    mock_swapper_contract, mock_v2_zapper_contract, mock_vault_contract, AccountToFund, CoinInfo,
+    VaultTestInfo,
 };
 
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000);
@@ -85,6 +88,7 @@ pub struct MockEnv {
     pub rover: Addr,
     pub mars_oracle: Addr,
     pub health_contract: HealthContract,
+    pub incentives: Incentives,
     pub params: Params,
 }
 
@@ -97,6 +101,7 @@ pub struct MockEnvBuilder {
     pub oracle: Option<Oracle>,
     pub params: Option<Params>,
     pub red_bank: Option<RedBankUnchecked>,
+    pub incentives: Option<IncentivesUnchecked>,
     pub deploy_nft_contract: bool,
     pub set_nft_contract_minter: bool,
     pub accounts_to_fund: Vec<AccountToFund>,
@@ -118,6 +123,7 @@ impl MockEnv {
             oracle: None,
             params: None,
             red_bank: None,
+            incentives: None,
             deploy_nft_contract: true,
             set_nft_contract_minter: true,
             accounts_to_fund: vec![],
@@ -307,6 +313,32 @@ impl MockEnv {
         )
     }
 
+    pub fn add_incentive_reward(&mut self, account_id: &str, coin: Coin) {
+        // Register reward in mock contract
+        self.app
+            .execute_contract(
+                self.rover.clone(),
+                self.incentives.addr.clone(),
+                &BalanceChange {
+                    user_addr: self.rover.clone(),
+                    account_id: Some(account_id.to_string()),
+                    denom: coin.denom.clone(),
+                    user_amount_scaled_before: coin.amount,
+                    total_amount_scaled_before: Default::default(),
+                },
+                &[],
+            )
+            .unwrap();
+
+        // Mint token for incentives contract so it can be claimed
+        self.app
+            .sudo(SudoMsg::Bank(BankSudo::Mint {
+                to_address: self.incentives.addr.to_string(),
+                amount: vec![coin],
+            }))
+            .unwrap();
+    }
+
     //--------------------------------------------------------------------------------------------------
     // Queries
     //--------------------------------------------------------------------------------------------------
@@ -337,6 +369,22 @@ impl MockEnv {
                     account_id: account_id.to_string(),
                     kind,
                     action,
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_unclaimed_rewards(&self, account_id: &str) -> Vec<Coin> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.incentives.clone().addr,
+                &UserUnclaimedRewards {
+                    user: self.rover.to_string(),
+                    account_id: Some(account_id.to_string()),
+                    start_after_collateral_denom: None,
+                    start_after_incentive_denom: None,
+                    limit: None,
                 },
             )
             .unwrap()
@@ -656,6 +704,8 @@ impl MockEnvBuilder {
         self.set_emergency_owner(&rover);
 
         let mars_oracle = self.get_oracle();
+        let incentives =
+            Incentives::new(Addr::unchecked(self.get_incentives().address()), rover.clone());
 
         let params = self.get_params_contract();
         self.add_params_to_contract();
@@ -684,6 +734,7 @@ impl MockEnvBuilder {
             rover,
             mars_oracle: mars_oracle.address().clone(),
             health_contract,
+            incentives,
             params,
         })
     }
@@ -774,6 +825,7 @@ impl MockEnvBuilder {
     fn get_rover(&mut self) -> AnyResult<Addr> {
         let code_id = self.app.store_code(mock_rover_contract());
         let red_bank = self.get_red_bank();
+        let incentives = self.get_incentives();
         let swapper = self.deploy_swapper().into();
         let max_unlocking_positions = self.get_max_unlocking_positions();
 
@@ -794,6 +846,7 @@ impl MockEnvBuilder {
                 zapper,
                 health_contract,
                 params,
+                incentives,
             },
             &[],
             "mock-rover-contract",
@@ -972,6 +1025,31 @@ impl MockEnvBuilder {
         }
 
         RedBankUnchecked::new(addr.to_string())
+    }
+
+    fn get_incentives(&mut self) -> IncentivesUnchecked {
+        if self.incentives.is_none() {
+            let rb = self.deploy_incentives();
+            self.incentives = Some(rb);
+        }
+        self.incentives.clone().unwrap()
+    }
+
+    pub fn deploy_incentives(&mut self) -> IncentivesUnchecked {
+        let contract_code_id = self.app.store_code(mock_incentives_contract());
+        let addr = self
+            .app
+            .instantiate_contract(
+                contract_code_id,
+                Addr::unchecked("incentives_contract_owner"),
+                &Empty {},
+                &[],
+                "mock-incentives",
+                None,
+            )
+            .unwrap();
+
+        IncentivesUnchecked::new(addr.to_string())
     }
 
     fn deploy_vault(&mut self, vault: &VaultTestInfo) -> Addr {

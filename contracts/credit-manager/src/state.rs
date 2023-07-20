@@ -4,8 +4,9 @@ use cw_storage_plus::{Item, Map};
 use mars_owner::Owner;
 use mars_rover::{
     adapters::{
-        account_nft::AccountNft, health::HealthContract, oracle::Oracle, params::Params,
-        red_bank::RedBank, swap::Swapper, vault::VaultPositionAmount, zapper::Zapper,
+        account_nft::AccountNft, health::HealthContract, incentives::Incentives, oracle::Oracle,
+        params::Params, red_bank::RedBank, swap::Swapper, vault::VaultPositionAmount,
+        zapper::Zapper,
     },
     reentrancy_guard::ReentrancyGuard,
 };
@@ -27,6 +28,7 @@ pub const SWAPPER: Item<Swapper> = Item::new("swapper");
 pub const ZAPPER: Item<Zapper> = Item::new("zapper");
 pub const HEALTH_CONTRACT: Item<HealthContract> = Item::new("health_contract");
 pub const PARAMS: Item<Params> = Item::new("params");
+pub const INCENTIVES: Item<Incentives> = Item::new("incentives");
 
 // Config
 pub const OWNER: Owner = Owner::new("owner");

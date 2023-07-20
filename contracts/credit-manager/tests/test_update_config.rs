@@ -4,8 +4,8 @@ use mars_mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
 use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     adapters::{
-        health::HealthContractUnchecked, oracle::OracleUnchecked, red_bank::RedBankUnchecked,
-        swap::SwapperBase, zapper::ZapperBase,
+        health::HealthContractUnchecked, incentives::IncentivesUnchecked, oracle::OracleUnchecked,
+        red_bank::RedBankUnchecked, swap::SwapperBase, zapper::ZapperBase,
     },
     msg::instantiate::ConfigUpdates,
 };
@@ -25,6 +25,7 @@ fn only_owner_can_update_config() {
             account_nft: None,
             oracle: None,
             red_bank: None,
+            incentives: None,
             max_unlocking_positions: None,
             swapper: None,
             zapper: None,
@@ -46,6 +47,7 @@ fn update_config_works_with_full_config() {
     let new_nft_contract = mock.deploy_new_nft_contract().unwrap();
     let new_oracle = deploy_new_oracle(&mut mock.app);
     let new_red_bank = deploy_new_red_bank(&mut mock.app);
+    let new_incentives = IncentivesUnchecked::new("new_incentives".to_string());
     let new_zapper = ZapperBase::new("new_zapper".to_string());
     let new_unlocking_max = Uint128::new(321);
     let new_swapper = SwapperBase::new("new_swapper".to_string());
@@ -58,6 +60,7 @@ fn update_config_works_with_full_config() {
             account_nft: Some(new_nft_contract.clone()),
             oracle: Some(new_oracle.clone()),
             red_bank: Some(new_red_bank.clone()),
+            incentives: Some(new_incentives.clone()),
             max_unlocking_positions: Some(new_unlocking_max),
             swapper: Some(new_swapper.clone()),
             zapper: Some(new_zapper.clone()),
@@ -97,6 +100,9 @@ fn update_config_works_with_full_config() {
 
     assert_eq!(new_config.rewards_collector.clone().unwrap(), new_rewards_collector);
     assert_ne!(new_config.rewards_collector, original_config.rewards_collector);
+
+    assert_eq!(&new_config.incentives, new_incentives.address());
+    assert_ne!(new_config.incentives, original_config.incentives);
 }
 
 #[test]

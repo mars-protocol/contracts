@@ -10,6 +10,7 @@ import { ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee } from '@cosmjs/amino'
 import {
   HealthContractBaseForString,
+  IncentivesUnchecked,
   Uint128,
   OracleBaseForString,
   ParamsBaseForString,

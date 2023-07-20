@@ -33,6 +33,15 @@ pub fn mock_red_bank_contract() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
+pub fn mock_incentives_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        mars_mock_incentives::contract::execute,
+        mars_mock_incentives::contract::instantiate,
+        mars_mock_incentives::contract::query,
+    );
+    Box::new(contract)
+}
+
 pub fn mock_oracle_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
         mars_mock_oracle::contract::execute,

@@ -153,6 +153,7 @@ pub struct ConfigResponse {
     pub ownership: OwnerResponse,
     pub account_nft: Option<String>,
     pub red_bank: String,
+    pub incentives: String,
     pub oracle: String,
     pub params: String,
     pub max_unlocking_positions: Uint128,

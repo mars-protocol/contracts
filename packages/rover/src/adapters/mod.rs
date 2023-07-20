@@ -1,5 +1,6 @@
 pub mod account_nft;
 pub mod health;
+pub mod incentives;
 pub mod oracle;
 pub mod params;
 pub mod red_bank;

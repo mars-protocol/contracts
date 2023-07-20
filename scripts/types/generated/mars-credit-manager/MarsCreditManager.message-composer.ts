@@ -10,6 +10,7 @@ import { MsgExecuteContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx'
 import { toUtf8 } from '@cosmjs/encoding'
 import {
   HealthContractBaseForString,
+  IncentivesUnchecked,
   Uint128,
   OracleBaseForString,
   ParamsBaseForString,

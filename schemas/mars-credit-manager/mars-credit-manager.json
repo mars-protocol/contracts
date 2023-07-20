@@ -8,6 +8,7 @@
     "type": "object",
     "required": [
       "health_contract",
+      "incentives",
       "max_unlocking_positions",
       "oracle",
       "owner",
@@ -22,6 +23,14 @@
         "allOf": [
           {
             "$ref": "#/definitions/HealthContractBase_for_String"
+          }
+        ]
+      },
+      "incentives": {
+        "description": "Contract that handles lending incentive rewards",
+        "allOf": [
+          {
+            "$ref": "#/definitions/IncentivesUnchecked"
           }
         ]
       },
@@ -81,6 +90,9 @@
     "additionalProperties": false,
     "definitions": {
       "HealthContractBase_for_String": {
+        "type": "string"
+      },
+      "IncentivesUnchecked": {
         "type": "string"
       },
       "OracleBase_for_String": {
@@ -332,6 +344,20 @@
             "properties": {
               "reclaim": {
                 "$ref": "#/definitions/ActionCoin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "For assets lent to the Red Bank, some can accumulate incentive rewards. This message claims all of them adds them to account balance.",
+            "type": "object",
+            "required": [
+              "claim_rewards"
+            ],
+            "properties": {
+              "claim_rewards": {
+                "type": "object",
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -821,6 +847,28 @@
                   },
                   "coin": {
                     "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Calls incentive contract to claim all rewards and increments account balance",
+            "type": "object",
+            "required": [
+              "claim_rewards"
+            ],
+            "properties": {
+              "claim_rewards": {
+                "type": "object",
+                "required": [
+                  "account_id"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
                   }
                 },
                 "additionalProperties": false
@@ -1338,6 +1386,16 @@
               }
             ]
           },
+          "incentives": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/IncentivesUnchecked"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "max_unlocking_positions": {
             "anyOf": [
               {
@@ -1435,6 +1493,9 @@
             "additionalProperties": false
           }
         ]
+      },
+      "IncentivesUnchecked": {
+        "type": "string"
       },
       "LiquidateRequest_for_VaultBase_for_Addr": {
         "oneOf": [
@@ -2429,6 +2490,7 @@
       "type": "object",
       "required": [
         "health_contract",
+        "incentives",
         "max_unlocking_positions",
         "oracle",
         "ownership",
@@ -2445,6 +2507,9 @@
           ]
         },
         "health_contract": {
+          "type": "string"
+        },
+        "incentives": {
           "type": "string"
         },
         "max_unlocking_positions": {

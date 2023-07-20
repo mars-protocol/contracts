@@ -8,8 +8,8 @@ use mars_rover_health_types::AccountKind;
 use crate::{
     execute::create_credit_account,
     state::{
-        RewardsCollector, ACCOUNT_NFT, HEALTH_CONTRACT, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER,
-        RED_BANK, REWARDS_COLLECTOR, SWAPPER, ZAPPER,
+        RewardsCollector, ACCOUNT_NFT, HEALTH_CONTRACT, INCENTIVES, MAX_UNLOCKING_POSITIONS,
+        ORACLE, OWNER, RED_BANK, REWARDS_COLLECTOR, SWAPPER, ZAPPER,
     },
 };
 
@@ -47,7 +47,7 @@ pub fn update_config(
     }
 
     if let Some(unchecked) = updates.red_bank {
-        RED_BANK.save(deps.storage, &unchecked.check(deps.api, env.contract.address)?)?;
+        RED_BANK.save(deps.storage, &unchecked.check(deps.api, env.contract.address.clone())?)?;
         response =
             response.add_attribute("key", "red_bank").add_attribute("value", unchecked.address());
     }
@@ -76,6 +76,12 @@ pub fn update_config(
         response = response
             .add_attribute("key", "health_contract")
             .add_attribute("value", unchecked.address());
+    }
+
+    if let Some(unchecked) = updates.incentives {
+        INCENTIVES.save(deps.storage, &unchecked.check(deps.api, env.contract.address)?)?;
+        response =
+            response.add_attribute("key", "incentives").add_attribute("value", unchecked.address());
     }
 
     if let Some(unchecked) = updates.rewards_collector {

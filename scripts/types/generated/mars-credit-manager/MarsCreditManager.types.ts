@@ -6,6 +6,7 @@
  */
 
 export type HealthContractBaseForString = string
+export type IncentivesUnchecked = string
 export type Uint128 = string
 export type OracleBaseForString = string
 export type ParamsBaseForString = string
@@ -14,6 +15,7 @@ export type SwapperBaseForString = string
 export type ZapperBaseForString = string
 export interface InstantiateMsg {
   health_contract: HealthContractBaseForString
+  incentives: IncentivesUnchecked
   max_unlocking_positions: Uint128
   oracle: OracleBaseForString
   owner: string
@@ -70,6 +72,9 @@ export type Action =
     }
   | {
       reclaim: ActionCoin
+    }
+  | {
+      claim_rewards: {}
     }
   | {
       repay: {
@@ -204,6 +209,11 @@ export type CallbackMsg =
       reclaim: {
         account_id: string
         coin: ActionCoin
+      }
+    }
+  | {
+      claim_rewards: {
+        account_id: string
       }
     }
   | {
@@ -342,6 +352,7 @@ export interface VaultBaseForString {
 export interface ConfigUpdates {
   account_nft?: AccountNftBaseForString | null
   health_contract?: HealthContractBaseForString | null
+  incentives?: IncentivesUnchecked | null
   max_unlocking_positions?: Uint128 | null
   oracle?: OracleBaseForString | null
   red_bank?: RedBankUnchecked | null
@@ -465,6 +476,7 @@ export interface VaultPositionResponseItem {
 export interface ConfigResponse {
   account_nft?: string | null
   health_contract: string
+  incentives: string
   max_unlocking_positions: Uint128
   oracle: string
   ownership: OwnerResponse

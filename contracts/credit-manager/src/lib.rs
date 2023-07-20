@@ -1,6 +1,7 @@
 pub mod contract;
 
 pub mod borrow;
+pub mod claim_rewards;
 pub mod deposit;
 pub mod execute;
 pub mod health;
