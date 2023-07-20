@@ -21,6 +21,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profil
 rustup target add wasm32-unknown-unknown --toolchain ${RUST_VERSION}
 rustup component add rustfmt --toolchain ${RUST_VERSION}
 rustup component add clippy --toolchain ${RUST_VERSION}
+rustup component add llvm-tools-preview --toolchain ${RUST_VERSION}
 '''
 
 [tasks.install-nightly]
