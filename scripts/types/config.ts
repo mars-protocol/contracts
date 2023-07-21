@@ -5,6 +5,7 @@ import {
   WasmOracleCustomInitParams,
   WasmPriceSourceForString,
 } from './generated/mars-oracle-wasm/MarsOracleWasm.types'
+import { NeutronIbcConfig } from './generated/mars-rewards-collector-base/MarsRewardsCollectorBase.types'
 
 type SwapRoute = {
   denom_in: string
@@ -26,7 +27,10 @@ export function isAstroportRoute(route: OsmosisRoute | AstroportRoute): route is
 
 export interface DeploymentConfig {
   oracleName: string
-  rewardCollectorTimeoutSeconds: number
+  oracleBaseDenom: string
+  rewardsCollectorName: string
+  rewardsCollectorTimeoutSeconds: number
+  rewardsCollectorNeutronIbcConfig?: NeutronIbcConfig | null
   marsDenom: string
   baseAssetDenom: string
   gasPrice: string

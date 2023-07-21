@@ -1,5 +1,5 @@
 import { setupDeployer } from '../base/setupDeployer'
-import { neutronTestnetConfig } from './config'
+import { neutronTestnetConfig } from './config_testnet'
 
 async function main() {
   const deployer = await setupDeployer(neutronTestnetConfig)
