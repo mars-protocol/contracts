@@ -6,7 +6,7 @@ members = [
   "contracts/params",
   "contracts/swapper/*",
   "contracts/red-bank",
-  "contracts/rewards-collector",
+  "contracts/rewards-collector/*",
   "packages/chains/*",
   "packages/health",
   "packages/interest-rate",
@@ -58,6 +58,7 @@ pyth-sdk-cw        = "1.2.0"
 cw-paginate       = "0.2.1"
 astroport         = "2.8.0"
 strum             = "0.24.1"
+neutron-sdk       = "0.6.0"
 
 # dev-dependencies
 cw-multi-test     = "0.16.5"
@@ -83,7 +84,8 @@ mars-oracle-base               = { version = "1.0.0", path = "./contracts/oracle
 mars-oracle-osmosis            = { version = "1.0.0", path = "./contracts/oracle/osmosis" }
 mars-oracle-wasm               = { version = "1.0.0", path = "./contracts/oracle/wasm" }
 mars-red-bank                  = { version = "1.0.0", path = "./contracts/red-bank" }
-mars-rewards-collector         = { version = "1.0.0", path = "./contracts/rewards-collector" }
+mars-rewards-collector-base    = { version = "1.0.0", path = "./contracts/rewards-collector/base" }
+mars-rewards-collector-osmosis = { version = "1.0.0", path = "./contracts/rewards-collector/osmosis" }
 mars-swapper-base              = { version = "1.0.0", path = "./contracts/swapper/base" }
 mars-swapper-astroport         = { version = "1.0.0", path = "./contracts/swapper/astroport" }
 mars-swapper-osmosis           = { version = "1.0.0", path = "./contracts/swapper/osmosis" }

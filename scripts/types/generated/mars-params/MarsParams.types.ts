@@ -7,6 +7,7 @@
 
 export type Decimal = string
 export interface InstantiateMsg {
+  address_provider: string
   owner: string
   target_health_factor: Decimal
 }
@@ -153,6 +154,11 @@ export type QueryMsg =
     }
   | {
       target_health_factor: {}
+    }
+  | {
+      total_deposit: {
+        denom: string
+      }
     }
 export type HlsAssetTypeForAddr =
   | {

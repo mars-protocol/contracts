@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Api, Decimal, StdResult, Uint128};
+use cosmwasm_std::{Addr, Api, Coin, Decimal, StdResult, Uint128};
 use mars_owner::OwnerUpdate;
 use mars_utils::{
     error::ValidationError,
@@ -26,6 +26,8 @@ pub struct InstantiateMsg {
     pub timeout_seconds: u64,
     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
     pub slippage_tolerance: Decimal,
+    /// Neutron Ibc config
+    pub neutron_ibc_config: Option<NeutronIbcConfig>,
 }
 
 #[cw_serde]
@@ -44,6 +46,15 @@ pub struct Config {
     pub timeout_seconds: u64,
     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
     pub slippage_tolerance: Decimal,
+    /// Neutron IBC config
+    pub neutron_ibc_config: Option<NeutronIbcConfig>,
+}
+
+#[cw_serde]
+pub struct NeutronIbcConfig {
+    pub source_port: String,
+    pub acc_fee: Vec<Coin>,
+    pub timeout_fee: Vec<Coin>,
 }
 
 impl Config {
@@ -77,6 +88,7 @@ impl Config {
             channel_id: msg.channel_id,
             timeout_seconds: msg.timeout_seconds,
             slippage_tolerance: msg.slippage_tolerance,
+            neutron_ibc_config: msg.neutron_ibc_config,
         })
     }
 }
@@ -98,6 +110,8 @@ pub struct UpdateConfig {
     pub timeout_seconds: Option<u64>,
     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
     pub slippage_tolerance: Option<Decimal>,
+    /// Neutron Ibc config
+    pub neutron_ibc_config: Option<NeutronIbcConfig>,
 }
 
 #[cw_serde]

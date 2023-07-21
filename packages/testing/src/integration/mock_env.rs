@@ -828,6 +828,7 @@ impl MockEnvBuilder {
                     channel_id: "0".to_string(),
                     timeout_seconds: 900,
                     slippage_tolerance: self.slippage_tolerance,
+                    neutron_ibc_config: None,
                 },
                 &[],
                 "rewards-collector",

@@ -20,7 +20,7 @@ mod cosmos_bank;
 mod helpers;
 
 const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
-const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector";
+const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
 const OSMOSIS_SWAPPER_CONTRACT_NAME: &str = "mars-swapper-osmosis";
 
 #[test]
@@ -67,6 +67,7 @@ fn swapping_rewards() {
             channel_id: "channel-1".to_string(),
             timeout_seconds: 60,
             slippage_tolerance: Decimal::percent(1),
+            neutron_ibc_config: None,
         },
     );
 
@@ -325,6 +326,7 @@ fn distribute_rewards_if_ibc_channel_invalid() {
             channel_id: "".to_string(),
             timeout_seconds: 60,
             slippage_tolerance: Decimal::percent(1),
+            neutron_ibc_config: None,
         },
     );
 
@@ -365,6 +367,7 @@ fn distribute_rewards_if_ibc_channel_invalid() {
                 channel_id: Some("channel-1".to_string()),
                 timeout_seconds: None,
                 slippage_tolerance: None,
+                neutron_ibc_config: None,
             },
         },
         &[],

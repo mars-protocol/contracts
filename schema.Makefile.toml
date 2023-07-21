@@ -14,7 +14,7 @@ fn main() -> std::io::Result<()> {
         "mars-address-provider",
         "mars-incentives",
         "mars-red-bank",
-        "mars-rewards-collector",
+        "mars-rewards-collector-base",
         "mars-params",
         "mars-swapper-osmosis",
         "mars-swapper-astroport",
