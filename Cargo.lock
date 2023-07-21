@@ -114,7 +114,7 @@ dependencies = [
  "cw-storage-plus 0.15.1",
  "cw2 0.15.1",
  "itertools",
- "protobuf",
+ "protobuf 2.28.0",
  "thiserror",
 ]
 
@@ -131,7 +131,7 @@ dependencies = [
  "cw1-whitelist",
  "cw2 0.15.1",
  "cw20 0.15.1",
- "protobuf",
+ "protobuf 2.28.0",
  "thiserror",
 ]
 
@@ -200,7 +200,7 @@ dependencies = [
  "cw2 0.15.1",
  "cw20 0.15.1",
  "integer-sqrt",
- "protobuf",
+ "protobuf 2.28.0",
  "thiserror",
 ]
 
@@ -246,7 +246,7 @@ dependencies = [
  "cw-storage-plus 0.15.1",
  "cw2 0.15.1",
  "cw20 0.15.1",
- "protobuf",
+ "protobuf 2.28.0",
  "thiserror",
 ]
 
@@ -346,6 +346,12 @@ name = "base64"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
+
+[[package]]
+name = "base64"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ea22880d78093b0cbe17c89f64a7d457941e65759157ec6cb31a31d652b05e5"
 
 [[package]]
 name = "base64ct"
@@ -510,6 +516,9 @@ name = "bytes"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89b2fd2a0dcf38d7971e2194b6b6eebab45ae01067456a7fd93d5547a61b70be"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "cc"
@@ -626,7 +635,18 @@ checksum = "20b42021d8488665b1a0d9748f1f81df7235362d194f44481e2e61bf376b77b4"
 dependencies = [
  "prost 0.11.9",
  "prost-types",
- "tendermint-proto",
+ "tendermint-proto 0.23.9",
+]
+
+[[package]]
+name = "cosmos-sdk-proto"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4776e787b24d9568dd61d3237eeb4eb321d622fb881b858c7b82806420e87d4"
+dependencies = [
+ "prost 0.11.9",
+ "prost-types",
+ "tendermint-proto 0.27.0",
 ]
 
 [[package]]
@@ -636,7 +656,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3903590099dcf1ea580d9353034c9ba1dbf55d1389a5bd2ade98535c3445d1f9"
 dependencies = [
  "bip32",
- "cosmos-sdk-proto",
+ "cosmos-sdk-proto 0.14.0",
  "ecdsa",
  "eyre",
  "getrandom",
@@ -702,7 +722,7 @@ version = "1.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4337eef8dfaf8572fe6b6b415d6ec25f9308c7bb09f2da63789209fb131363be"
 dependencies = [
- "base64",
+ "base64 0.13.1",
  "cosmwasm-crypto",
  "cosmwasm-derive",
  "derivative",
@@ -710,7 +730,7 @@ dependencies = [
  "hex",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1",
  "sha2 0.10.7",
  "thiserror",
  "uint",
@@ -1443,7 +1463,7 @@ version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3e372db8e5c0d213e0cd0b9be18be2aca3d44cf2fe30a9d46a65581cd454584"
 dependencies = [
- "base64",
+ "base64 0.13.1",
  "bitflags",
  "bytes",
  "headers-core",
@@ -1822,7 +1842,7 @@ dependencies = [
  "mars-osmosis",
  "mars-red-bank",
  "mars-red-bank-types",
- "mars-rewards-collector",
+ "mars-rewards-collector-osmosis",
  "mars-swapper-osmosis",
  "mars-testing",
  "mars-utils",
@@ -1937,7 +1957,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-rewards-collector"
+name = "mars-rewards-collector-base"
 version = "1.1.0"
 dependencies = [
  "cosmwasm-schema",
@@ -1946,6 +1966,45 @@ dependencies = [
  "mars-osmosis",
  "mars-owner",
  "mars-red-bank-types",
+ "mars-testing",
+ "mars-utils",
+ "osmosis-std 0.16.0",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-rewards-collector-neutron"
+version = "1.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
+ "mars-osmosis",
+ "mars-owner",
+ "mars-red-bank-types",
+ "mars-rewards-collector-base",
+ "mars-testing",
+ "mars-utils",
+ "neutron-sdk",
+ "osmosis-std 0.16.0",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-rewards-collector-osmosis"
+version = "1.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
+ "mars-osmosis",
+ "mars-owner",
+ "mars-red-bank-types",
+ "mars-rewards-collector-base",
  "mars-testing",
  "mars-utils",
  "osmosis-std 0.16.0",
@@ -2029,7 +2088,7 @@ dependencies = [
  "mars-owner",
  "mars-red-bank",
  "mars-red-bank-types",
- "mars-rewards-collector",
+ "mars-rewards-collector-osmosis",
  "mars-swapper-astroport",
  "osmosis-std 0.16.0",
  "prost 0.11.9",
@@ -2080,6 +2139,27 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys",
+]
+
+[[package]]
+name = "neutron-sdk"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7cc760801f3ed881155431c6a0102c1a8df178430af341c9f8008951ceb0721"
+dependencies = [
+ "base64 0.20.0",
+ "bech32",
+ "cosmos-sdk-proto 0.16.0",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
+ "prost 0.11.9",
+ "protobuf 3.2.0",
+ "schemars",
+ "serde",
+ "serde-json-wasm 0.4.1",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -2235,7 +2315,7 @@ name = "osmosis-test-tube"
 version = "15.1.0"
 source = "git+https://github.com/apollodao/test-tube.git?rev=800a2af15bdd8270a4d832a2b1b799446fc8e1cf#800a2af15bdd8270a4d832a2b1b799446fc8e1cf"
 dependencies = [
- "base64",
+ "base64 0.13.1",
  "bindgen",
  "cosmrs",
  "cosmwasm-std",
@@ -2253,7 +2333,7 @@ version = "16.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4988b1215f3fffdb1af5ae4930ed97e0be2d61221fc27dff7b89973670cbb50"
 dependencies = [
- "base64",
+ "base64 0.13.1",
  "bindgen",
  "cosmrs",
  "cosmwasm-std",
@@ -2544,6 +2624,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "protobuf"
+version = "3.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b55bad9126f378a853655831eb7363b7b01b81d19f8cb1218861086ca4a1a61e"
+dependencies = [
+ "bytes",
+ "once_cell",
+ "protobuf-support",
+ "thiserror",
+]
+
+[[package]]
+name = "protobuf-support"
+version = "3.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5d4d7b8601c814cfb36bcebb79f0e61e45e1e93640cf778837833bbed05c372"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
 name = "pyth-sdk"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2724,7 +2825,7 @@ version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88073939a61e5b7680558e6be56b419e208420c2adb92be54921fa6b72283f1a"
 dependencies = [
- "base64",
+ "base64 0.13.1",
  "bitflags",
  "serde",
 ]
@@ -2771,7 +2872,7 @@ version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35edb675feee39aec9c99fa5ff985081995a06d594114ae14cbe797ad7b7a6d7"
 dependencies = [
- "base64",
+ "base64 0.13.1",
  "log",
  "ring",
  "sct",
@@ -2923,6 +3024,15 @@ name = "serde-cw-value"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a75d32da6b8ed758b7d850b6c3c08f1d7df51a4df3cb201296e63e34a78e99d4"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "serde-json-wasm"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "479b4dbc401ca13ee8ce902851b834893251404c4f3c65370a49e047a6be09a5"
 dependencies = [
  "serde",
 ]
@@ -3217,7 +3327,7 @@ dependencies = [
  "signature",
  "subtle",
  "subtle-encoding",
- "tendermint-proto",
+ "tendermint-proto 0.23.9",
  "time",
  "zeroize",
 ]
@@ -3255,6 +3365,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "tendermint-proto"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5895470f28c530f8ae8c4071bf8190304ce00bd131d25e81730453124a3375c"
+dependencies = [
+ "bytes",
+ "flex-error",
+ "num-derive",
+ "num-traits",
+ "prost 0.11.9",
+ "prost-types",
+ "serde",
+ "serde_bytes",
+ "subtle-encoding",
+ "time",
+]
+
+[[package]]
 name = "tendermint-rpc"
 version = "0.23.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3277,7 +3405,7 @@ dependencies = [
  "subtle-encoding",
  "tendermint",
  "tendermint-config",
- "tendermint-proto",
+ "tendermint-proto 0.23.9",
  "thiserror",
  "time",
  "tokio",
@@ -3336,7 +3464,7 @@ name = "test-tube"
 version = "0.1.2"
 source = "git+https://github.com/apollodao/test-tube.git?rev=800a2af15bdd8270a4d832a2b1b799446fc8e1cf#800a2af15bdd8270a4d832a2b1b799446fc8e1cf"
 dependencies = [
- "base64",
+ "base64 0.13.1",
  "cosmrs",
  "cosmwasm-std",
  "osmosis-std 0.16.0",
@@ -3352,7 +3480,7 @@ version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2152b79646afbca662896e917b94fb839af6939eb592b7af9cd5dcb1cd42f99e"
 dependencies = [
- "base64",
+ "base64 0.13.1",
  "cosmrs",
  "cosmwasm-std",
  "prost 0.11.9",

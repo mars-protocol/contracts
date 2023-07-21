@@ -5,16 +5,28 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
+export type Uint128 = string
 export type Decimal = string
 export interface InstantiateMsg {
   address_provider: string
   channel_id: string
   fee_collector_denom: string
+  neutron_ibc_config?: NeutronIbcConfig | null
   owner: string
   safety_fund_denom: string
   safety_tax_rate: Decimal
   slippage_tolerance: Decimal
   timeout_seconds: number
+}
+export interface NeutronIbcConfig {
+  acc_fee: Coin[]
+  source_port: string
+  timeout_fee: Coin[]
+}
+export interface Coin {
+  amount: Uint128
+  denom: string
+  [k: string]: unknown
 }
 export type ExecuteMsg =
   | {
@@ -65,11 +77,11 @@ export type OwnerUpdate =
       }
     }
   | 'clear_emergency_owner'
-export type Uint128 = string
 export interface UpdateConfig {
   address_provider?: string | null
   channel_id?: string | null
   fee_collector_denom?: string | null
+  neutron_ibc_config?: NeutronIbcConfig | null
   safety_fund_denom?: string | null
   safety_tax_rate?: Decimal | null
   slippage_tolerance?: Decimal | null
