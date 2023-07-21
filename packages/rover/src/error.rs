@@ -2,6 +2,7 @@ use cosmwasm_std::{
     CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError, Coin,
     DecimalRangeExceeded, OverflowError, StdError, Uint128,
 };
+use cw2::VersionError;
 use cw_utils::PaymentError;
 use mars_owner::OwnerError;
 use thiserror::Error;
@@ -160,4 +161,7 @@ pub enum ContractError {
 
     #[error("There is more time left on the lock period")]
     UnlockNotReady,
+
+    #[error("{0}")]
+    Version(#[from] VersionError),
 }

@@ -4,20 +4,20 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::coin;
 use mars_owner::{OwnerResponse, OwnerUpdate};
 use mars_v3_zapper_base::msg::{CallbackMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
-use osmosis_std::types::osmosis::{
-    concentratedliquidity,
-    concentratedliquidity::v1beta1::{
-        CreateConcentratedLiquidityPoolsProposal, FullPositionBreakdown, PoolRecord, PoolsRequest,
-        UserPositionsRequest,
+use osmosis_std::types::{
+    cosmos::bank::v1beta1::QueryBalanceRequest,
+    cosmwasm::wasm::v1::MsgExecuteContractResponse,
+    osmosis::{
+        concentratedliquidity,
+        concentratedliquidity::v1beta1::{
+            CreateConcentratedLiquidityPoolsProposal, FullPositionBreakdown, PoolRecord,
+            PoolsRequest, UserPositionsRequest,
+        },
     },
 };
 use osmosis_test_tube::{
-    cosmrs::proto::{
-        cosmos::bank::v1beta1::QueryBalanceRequest, cosmwasm::wasm::v1::MsgExecuteContractResponse,
-        prost::Message,
-    },
-    Account, Bank, ConcentratedLiquidity, GovWithAppAccess, Module, OsmosisTestApp,
-    RunnerExecuteResult, SigningAccount, Wasm,
+    cosmrs::proto::prost::Message, Account, Bank, ConcentratedLiquidity, GovWithAppAccess, Module,
+    OsmosisTestApp, RunnerExecuteResult, SigningAccount, Wasm,
 };
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -79,6 +79,7 @@ impl MockEnv {
                 }],
             },
             self.owner.address(),
+            false,
             &self.owner,
         )
         .unwrap();

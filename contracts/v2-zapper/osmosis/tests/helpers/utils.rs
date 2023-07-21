@@ -1,10 +1,8 @@
 use std::{fmt::Display, str::FromStr};
 
 use mars_v2_zapper_base::InstantiateMsg;
-use osmosis_test_tube::{
-    cosmrs::proto::cosmos::bank::v1beta1::QueryBalanceRequest, Bank, OsmosisTestApp, RunnerError,
-    SigningAccount, Wasm,
-};
+use osmosis_std::types::cosmos::bank::v1beta1::QueryBalanceRequest;
+use osmosis_test_tube::{Bank, OsmosisTestApp, RunnerError, SigningAccount, Wasm};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 

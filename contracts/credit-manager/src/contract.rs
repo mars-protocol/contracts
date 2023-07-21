@@ -5,12 +5,14 @@ use cw2::set_contract_version;
 use mars_rover::{
     adapters::vault::VAULT_REQUEST_REPLY_ID,
     error::{ContractError, ContractResult},
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+    msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
 };
 
 use crate::{
     execute::{create_credit_account, dispatch_actions, execute_callback},
     instantiate::store_config,
+    migrations,
+    migrations::helpers::assert_migration_env,
     query::{
         query_all_coin_balances, query_all_debt_shares, query_all_total_debt_shares,
         query_all_vault_positions, query_config, query_positions, query_total_debt_shares,
@@ -23,8 +25,8 @@ use crate::{
     zap::{estimate_provide_liquidity, estimate_withdraw_liquidity},
 };
 
-const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -116,4 +118,14 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         } => to_binary(&query_vault_position_value(deps, vault_position)?),
     };
     res.map_err(Into::into)
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> ContractResult<Response> {
+    match msg {
+        MigrateMsg::V1_0_0ToV2_0_0(updates) => {
+            assert_migration_env(deps.storage, "1.0.0", "2.0.0")?;
+            migrations::v2_0_0::migrate(deps, env, updates)
+        }
+    }
 }

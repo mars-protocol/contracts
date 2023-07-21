@@ -1,24 +1,17 @@
-use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Uint128};
 use cw_storage_plus::{Item, Map};
 use mars_owner::Owner;
 use mars_rover::{
     adapters::{
         account_nft::AccountNft, health::HealthContract, incentives::Incentives, oracle::Oracle,
-        params::Params, red_bank::RedBank, swap::Swapper, vault::VaultPositionAmount,
-        zapper::Zapper,
+        params::Params, red_bank::RedBank, rewards_collector::RewardsCollector, swap::Swapper,
+        vault::VaultPositionAmount, zapper::Zapper,
     },
     reentrancy_guard::ReentrancyGuard,
 };
 use mars_rover_health_types::AccountKind;
 
 use crate::vault::RequestTempStorage;
-
-#[cw_serde]
-pub struct RewardsCollector {
-    pub address: String,
-    pub account_id: String,
-}
 
 // Contract dependencies
 pub const ACCOUNT_NFT: Item<AccountNft> = Item::new("account_nft");

@@ -633,9 +633,9 @@ dependencies = [
 
 [[package]]
 name = "cw-vault-standard"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2e72c053adf399c2dc95cf07ee0c8723dfceeb13ba127cc96ba31d96e454919"
+checksum = "a6fa4a5fff2fbf57eb19b06eb757d21a84933c9526531160ef77b445d8e9d36a"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1613,6 +1613,7 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
  "cw-vault-standard",
+ "cw2 1.1.0",
  "cw721 0.18.0",
  "cw721-base 0.18.0",
  "mars-account-nft",
@@ -1717,7 +1718,7 @@ dependencies = [
  "mars-owner",
  "mars-rover",
  "mars-swapper-base",
- "osmosis-std 0.16.0",
+ "osmosis-std 0.16.1",
  "osmosis-test-tube",
  "schemars",
  "thiserror",
@@ -1769,7 +1770,7 @@ dependencies = [
  "cw-utils 1.0.1",
  "cw2 1.1.0",
  "mars-v2-zapper-base",
- "osmosis-std 0.16.0",
+ "osmosis-std 0.16.1",
  "osmosis-test-tube",
 ]
 
@@ -1794,7 +1795,7 @@ dependencies = [
  "cosmwasm-std",
  "mars-owner",
  "mars-v3-zapper-base",
- "osmosis-std 0.16.0",
+ "osmosis-std 0.16.1",
  "osmosis-test-tube",
 ]
 
@@ -1937,13 +1938,13 @@ dependencies = [
 
 [[package]]
 name = "osmosis-std"
-version = "0.16.0"
+version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c254b73ab62f7e7a19eb7249cf1443e49999ecc8169bb4535a855b6e87d55498"
+checksum = "2fa46d2ad5ae738572887974e000934374ce3546b820505c0ee19ca708e49622"
 dependencies = [
  "chrono",
  "cosmwasm-std",
- "osmosis-std-derive 0.16.0",
+ "osmosis-std-derive 0.16.1",
  "prost 0.11.9",
  "prost-types",
  "schemars",
@@ -1965,9 +1966,9 @@ dependencies = [
 
 [[package]]
 name = "osmosis-std-derive"
-version = "0.16.0"
+version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67a6feeb2c5de684262032a6719ff58cfecfdffa5f31eba1835faa857ac3a762"
+checksum = "11c2ba5535743617d6f44ae8d572d064fabab6d06ffcf403512f89c58954dbe9"
 dependencies = [
  "itertools 0.10.5",
  "proc-macro2",
@@ -1978,15 +1979,15 @@ dependencies = [
 
 [[package]]
 name = "osmosis-test-tube"
-version = "16.0.0"
+version = "16.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4988b1215f3fffdb1af5ae4930ed97e0be2d61221fc27dff7b89973670cbb50"
+checksum = "527375c01396e7e4de4ccc18a0141aeb6b342dc089d30c57282025f3a8753e72"
 dependencies = [
  "base64",
  "bindgen",
  "cosmrs",
  "cosmwasm-std",
- "osmosis-std 0.16.0",
+ "osmosis-std 0.16.1",
  "prost 0.11.9",
  "serde",
  "serde_json",
@@ -2098,9 +2099,9 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.65"
+version = "1.0.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92de25114670a878b1261c79c9f8f729fb97e95bac93f6312f583c60dd6a1dfe"
+checksum = "18fb31db3f9bddb2ea821cde30a9f70117e3f119938b5ee630b7403aa6e2ead9"
 dependencies = [
  "unicode-ident",
 ]
@@ -2188,9 +2189,9 @@ checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
-version = "1.0.30"
+version = "1.0.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5907a1b7c277254a8b15170f6e7c97cfa60ee7872a3217663bb81151e48184bb"
+checksum = "5fe8a65d69dd0808184ebb5f836ab526bb259db23c657efa38711b1072ee47f0"
 dependencies = [
  "proc-macro2",
 ]
@@ -2502,9 +2503,9 @@ checksum = "b0293b4b29daaf487284529cc2f5675b8e57c61f70167ba415a463651fd6a918"
 
 [[package]]
 name = "serde"
-version = "1.0.171"
+version = "1.0.173"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30e27d1e4fd7659406c492fd6cfaf2066ba8773de45ca75e855590f856dc34a9"
+checksum = "e91f70896d6720bc714a4a57d22fc91f1db634680e65c8efe13323f1fa38d53f"
 dependencies = [
  "serde_derive",
 ]
@@ -2549,9 +2550,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.171"
+version = "1.0.173"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "389894603bd18c46fa56231694f8d827779c0951a667087194cf9de94ed24682"
+checksum = "a6250dde8342e0232232be9ca3db7aa40aceb5a3e5dd9bddbc00d99a007cde49"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2873,13 +2874,14 @@ dependencies = [
 
 [[package]]
 name = "test-tube"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2152b79646afbca662896e917b94fb839af6939eb592b7af9cd5dcb1cd42f99e"
+checksum = "a520f35c8ca6665ea5231a81ce9110f49a6901a1cbedb751e72859e83320bfea"
 dependencies = [
  "base64",
  "cosmrs",
  "cosmwasm-std",
+ "osmosis-std 0.16.1",
  "prost 0.11.9",
  "serde",
  "serde_json",
