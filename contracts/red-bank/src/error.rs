@@ -1,4 +1,4 @@
-use cosmwasm_std::{OverflowError, StdError};
+use cosmwasm_std::{CheckedFromRatioError, CheckedMultiplyFractionError, OverflowError, StdError};
 use cw_utils::PaymentError;
 use mars_health::error::HealthError;
 use mars_owner::OwnerError;
@@ -25,6 +25,12 @@ pub enum ContractError {
 
     #[error("{0}")]
     Overflow(#[from] OverflowError),
+
+    #[error("{0}")]
+    CheckedFromRatio(#[from] CheckedFromRatioError),
+
+    #[error("{0}")]
+    CheckedMultiplyFraction(#[from] CheckedMultiplyFractionError),
 
     #[error("{0}")]
     Health(#[from] HealthError),

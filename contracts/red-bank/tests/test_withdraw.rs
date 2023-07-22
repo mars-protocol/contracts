@@ -7,7 +7,7 @@ use helpers::{
     has_collateral_position, set_collateral, th_build_interests_updated_event,
     th_get_expected_indices_and_rates, th_setup, TestUtilizationDeltaInfo,
 };
-use mars_params::types::AssetParams;
+use mars_params::types::asset::AssetParams;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,

@@ -1,10 +1,5 @@
-use std::{cmp::min, str};
-
-use cosmwasm_std::{
-    Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128,
-};
+use cosmwasm_std::{Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128};
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
-use mars_params::types::AssetParams;
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
@@ -12,18 +7,17 @@ use mars_red_bank_types::{
         Config, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg, Market,
     },
 };
-use mars_utils::{
-    helpers::{build_send_asset_msg, option_string_to_addr, validate_native_denom, zero_address},
-    math,
+use mars_utils::helpers::{
+    build_send_asset_msg, option_string_to_addr, validate_native_denom, zero_address,
 };
 
 use crate::{
     error::ContractError,
     health::{
         assert_below_liq_threshold_after_withdraw, assert_below_max_ltv_after_borrow,
-        assert_liquidatable,
+        get_health_and_positions,
     },
-    helpers::{query_asset_params, query_close_factor},
+    helpers::query_asset_params,
     interest_rates::{
         apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
         get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
@@ -691,281 +685,6 @@ pub fn repay(
         .add_attribute("amount_scaled", debt_amount_scaled_delta))
 }
 
-/// Execute loan liquidations on under-collateralized loans
-pub fn liquidate(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    collateral_denom: String,
-    debt_denom: String,
-    user_addr: Addr,
-    sent_debt_amount: Uint128,
-    recipient: Option<String>,
-) -> Result<Response, ContractError> {
-    let block_time = env.block.time.seconds();
-    let user = User(&user_addr);
-    // The recipient address for receiving underlying collateral
-    let recipient_addr = option_string_to_addr(deps.api, recipient, info.sender.clone())?;
-    let recipient = User(&recipient_addr);
-
-    // 1. Validate liquidation
-
-    // User cannot liquidate themselves
-    if info.sender == user_addr {
-        return Err(ContractError::CannotLiquidateSelf {});
-    }
-
-    // If user (contract) has a positive uncollateralized limit then the user
-    // cannot be liquidated
-    if !user.uncollateralized_loan_limit(deps.storage, &debt_denom)?.is_zero() {
-        return Err(ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});
-    };
-
-    // check if the user has enabled the collateral asset as collateral
-    let user_collateral = COLLATERALS
-        .may_load(deps.storage, (&user_addr, &collateral_denom))?
-        .ok_or(ContractError::CannotLiquidateWhenNoCollateralBalance {})?;
-    if !user_collateral.enabled {
-        return Err(ContractError::CannotLiquidateWhenCollateralUnset {
-            denom: collateral_denom,
-        });
-    }
-
-    // check if user has available collateral in specified collateral asset to be liquidated
-    let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
-
-    // check if user has outstanding debt in the deposited asset that needs to be repayed
-    let user_debt = DEBTS
-        .may_load(deps.storage, (&user_addr, &debt_denom))?
-        .ok_or(ContractError::CannotLiquidateWhenNoDebtBalance {})?;
-
-    // 2. Compute health factor
-    let config = CONFIG.load(deps.storage)?;
-
-    let addresses = address_provider::helpers::query_contract_addrs(
-        deps.as_ref(),
-        &config.address_provider,
-        vec![
-            MarsAddressType::Oracle,
-            MarsAddressType::Incentives,
-            MarsAddressType::RewardsCollector,
-            MarsAddressType::Params,
-        ],
-    )?;
-    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
-    let incentives_addr = &addresses[&MarsAddressType::Incentives];
-    let oracle_addr = &addresses[&MarsAddressType::Oracle];
-    let params_addr = &addresses[&MarsAddressType::Params];
-
-    let (liquidatable, assets_positions) =
-        assert_liquidatable(&deps.as_ref(), &env, &user_addr, oracle_addr, params_addr)?;
-
-    if !liquidatable {
-        return Err(ContractError::CannotLiquidateHealthyPosition {});
-    }
-
-    let collateral_and_debt_are_the_same_asset = debt_denom == collateral_denom;
-
-    let debt_market = if !collateral_and_debt_are_the_same_asset {
-        MARKETS.load(deps.storage, &debt_denom)?
-    } else {
-        collateral_market.clone()
-    };
-
-    // 3. Compute debt to repay and collateral to liquidate
-    let collateral_price = assets_positions
-        .get(&collateral_denom)
-        .ok_or(ContractError::CannotLiquidateWhenNoCollateralBalance {})?
-        .asset_price;
-    let debt_price = assets_positions
-        .get(&debt_denom)
-        .ok_or(ContractError::CannotLiquidateWhenNoDebtBalance {})?
-        .asset_price;
-
-    let mut response = Response::new();
-
-    let user_debt_amount =
-        get_underlying_debt_amount(user_debt.amount_scaled, &debt_market, block_time)?;
-
-    let collateral_params = query_asset_params(&deps.querier, params_addr, &collateral_denom)?;
-    let close_factor = query_close_factor(&deps.querier, params_addr)?;
-
-    let (
-        debt_amount_to_repay,
-        collateral_amount_to_liquidate,
-        collateral_amount_to_liquidate_scaled,
-        refund_amount,
-    ) = liquidation_compute_amounts(
-        user_collateral.amount_scaled,
-        user_debt_amount,
-        sent_debt_amount,
-        &collateral_market,
-        &collateral_params,
-        collateral_price,
-        debt_price,
-        block_time,
-        close_factor,
-    )?;
-
-    // 4. Transfer collateral shares from the user to the liquidator
-    response = user.decrease_collateral(
-        deps.storage,
-        &collateral_market,
-        collateral_amount_to_liquidate_scaled,
-        incentives_addr,
-        response,
-    )?;
-    response = recipient.increase_collateral(
-        deps.storage,
-        &collateral_market,
-        collateral_amount_to_liquidate_scaled,
-        incentives_addr,
-        response,
-    )?;
-
-    // 5. Reduce the user's debt shares
-    let user_debt_amount_after = user_debt_amount.checked_sub(debt_amount_to_repay)?;
-    let user_debt_amount_scaled_after =
-        get_scaled_debt_amount(user_debt_amount_after, &debt_market, block_time)?;
-
-    // Compute delta so it can be substracted to total debt
-    let debt_amount_scaled_delta =
-        user_debt.amount_scaled.checked_sub(user_debt_amount_scaled_after)?;
-
-    user.decrease_debt(deps.storage, &debt_denom, debt_amount_scaled_delta)?;
-
-    let debt_market_debt_total_scaled_after =
-        debt_market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;
-
-    // 6. Update markets depending on whether the collateral and debt markets are the same
-    // and whether the liquidator receives coins (no change in liquidity) or underlying asset
-    // (changes liquidity)
-    if collateral_and_debt_are_the_same_asset {
-        // NOTE: for the sake of clarity copy attributes from collateral market and
-        // give generic naming. Debt market could have been used as well
-        let mut asset_market_after = collateral_market;
-        let denom = &collateral_denom;
-
-        response = apply_accumulated_interests(
-            deps.storage,
-            &env,
-            &mut asset_market_after,
-            rewards_collector_addr,
-            incentives_addr,
-            response,
-        )?;
-
-        asset_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
-
-        response = update_interest_rates(&env, &mut asset_market_after, response)?;
-
-        MARKETS.save(deps.storage, denom, &asset_market_after)?;
-    } else {
-        let mut debt_market_after = debt_market;
-
-        response = apply_accumulated_interests(
-            deps.storage,
-            &env,
-            &mut debt_market_after,
-            rewards_collector_addr,
-            incentives_addr,
-            response,
-        )?;
-
-        debt_market_after.debt_total_scaled = debt_market_debt_total_scaled_after;
-
-        response = update_interest_rates(&env, &mut debt_market_after, response)?;
-
-        MARKETS.save(deps.storage, &debt_denom, &debt_market_after)?;
-    }
-
-    // 7. Build response
-    // refund sent amount in excess of actual debt amount to liquidate
-    if !refund_amount.is_zero() {
-        response =
-            response.add_message(build_send_asset_msg(&info.sender, &debt_denom, refund_amount));
-    }
-
-    Ok(response
-        .add_attribute("action", "liquidate")
-        .add_attribute("user", user)
-        .add_attribute("liquidator", info.sender.to_string())
-        .add_attribute("recipient", recipient)
-        .add_attribute("collateral_denom", collateral_denom)
-        .add_attribute("collateral_amount", collateral_amount_to_liquidate)
-        .add_attribute("collateral_amount_scaled", collateral_amount_to_liquidate_scaled)
-        .add_attribute("debt_denom", debt_denom)
-        .add_attribute("debt_amount", debt_amount_to_repay)
-        .add_attribute("debt_amount_scaled", debt_amount_scaled_delta))
-}
-
-/// Computes debt to repay (in debt asset),
-/// collateral to liquidate (in collateral asset) and
-/// amount to refund the liquidator (in debt asset)
-pub fn liquidation_compute_amounts(
-    user_collateral_amount_scaled: Uint128,
-    user_debt_amount: Uint128,
-    sent_debt_amount: Uint128,
-    collateral_market: &Market,
-    collateral_params: &AssetParams,
-    collateral_price: Decimal,
-    debt_price: Decimal,
-    block_time: u64,
-    close_factor: Decimal,
-) -> StdResult<(Uint128, Uint128, Uint128, Uint128)> {
-    // Debt: Only up to a fraction of the total debt (determined by the close factor) can be
-    // repayed.
-    let mut debt_amount_to_repay = min(sent_debt_amount, close_factor * user_debt_amount);
-
-    // Collateral: debt to repay in base asset times the liquidation bonus
-    let mut collateral_amount_to_liquidate = math::divide_uint128_by_decimal(
-        debt_amount_to_repay * debt_price * (Decimal::one() + collateral_params.liquidation_bonus),
-        collateral_price,
-    )?;
-    let mut collateral_amount_to_liquidate_scaled =
-        get_scaled_liquidity_amount(collateral_amount_to_liquidate, collateral_market, block_time)?;
-
-    // If collateral amount to liquidate is higher than user_collateral_balance,
-    // liquidate the full balance and adjust the debt amount to repay accordingly
-    if collateral_amount_to_liquidate_scaled > user_collateral_amount_scaled {
-        collateral_amount_to_liquidate_scaled = user_collateral_amount_scaled;
-        collateral_amount_to_liquidate = get_underlying_liquidity_amount(
-            collateral_amount_to_liquidate_scaled,
-            collateral_market,
-            block_time,
-        )?;
-        debt_amount_to_repay = math::divide_uint128_by_decimal(
-            math::divide_uint128_by_decimal(
-                collateral_amount_to_liquidate * collateral_price,
-                debt_price,
-            )?,
-            Decimal::one() + collateral_params.liquidation_bonus,
-        )?;
-    }
-
-    // In some edges scenarios:
-    // - if debt_amount_to_repay = 0, some liquidators could drain collaterals and all their coins
-    // would be refunded, i.e.: without spending coins.
-    // - if collateral_amount_to_liquidate is 0, some users could liquidate without receiving collaterals
-    // in return.
-    if (!collateral_amount_to_liquidate.is_zero() && debt_amount_to_repay.is_zero())
-        || (collateral_amount_to_liquidate.is_zero() && !debt_amount_to_repay.is_zero())
-    {
-        return Err(StdError::generic_err(
-            format!("Can't process liquidation. Invalid collateral_amount_to_liquidate ({collateral_amount_to_liquidate}) and debt_amount_to_repay ({debt_amount_to_repay})")
-        ));
-    }
-
-    let refund_amount = sent_debt_amount - debt_amount_to_repay;
-
-    Ok((
-        debt_amount_to_repay,
-        collateral_amount_to_liquidate,
-        collateral_amount_to_liquidate_scaled,
-        refund_amount,
-    ))
-}
-
 /// Update (enable / disable) collateral asset for specific user
 pub fn update_asset_collateral_status(
     deps: DepsMut,
@@ -1002,10 +721,15 @@ pub fn update_asset_collateral_status(
         let oracle_addr = &addresses[&MarsAddressType::Oracle];
         let params_addr = &addresses[&MarsAddressType::Params];
 
-        let (liquidatable, _) =
-            assert_liquidatable(&deps.as_ref(), &env, user.address(), oracle_addr, params_addr)?;
+        let (health, _) = get_health_and_positions(
+            &deps.as_ref(),
+            &env,
+            user.address(),
+            oracle_addr,
+            params_addr,
+        )?;
 
-        if liquidatable {
+        if health.is_liquidatable() {
             return Err(ContractError::InvalidHealthFactorAfterDisablingCollateral {});
         }
     }

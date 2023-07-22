@@ -34,5 +34,7 @@ mars-utils          = { workspace = true }
 thiserror           = { workspace = true }
 
 [dev-dependencies]
+anyhow          = { workspace = true }
 cosmwasm-schema = { workspace = true }
+cw-multi-test   = { workspace = true }
 mars-testing    = { workspace = true }

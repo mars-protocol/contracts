@@ -5,7 +5,7 @@ use cosmwasm_std::{
     Uint128,
 };
 use mars_health::{error::HealthError, health::Health};
-use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
+use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
 use mars_red_bank_types::red_bank::Market;
 use mars_testing::MarsMockQuerier;
 
@@ -22,12 +22,10 @@ fn health_success_from_coins() {
     mock_querier.set_redbank_params(
         "osmo",
         AssetParams {
-            rover: RoverSettings {
+            denom: "osmo".to_string(),
+            credit_manager: CmSettings {
                 whitelisted: false,
-                hls: HighLeverageStrategyParams {
-                    max_loan_to_value: Decimal::percent(90),
-                    liquidation_threshold: Decimal::one(),
-                },
+                hls: None,
             },
             red_bank: RedBankSettings {
                 deposit_enabled: true,
@@ -36,7 +34,13 @@ fn health_success_from_coins() {
             },
             max_loan_to_value: Decimal::from_atomics(50u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
-            liquidation_bonus: Default::default(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(0u64),
+                slope: Decimal::one(),
+                min_lb: Decimal::percent(0u64),
+                max_lb: Decimal::percent(5u64),
+            },
+            protocol_liquidation_fee: Decimal::zero(),
         },
     );
     let atom_market = Market {
@@ -47,12 +51,10 @@ fn health_success_from_coins() {
     mock_querier.set_redbank_params(
         "atom",
         AssetParams {
-            rover: RoverSettings {
+            denom: "atom".to_string(),
+            credit_manager: CmSettings {
                 whitelisted: false,
-                hls: HighLeverageStrategyParams {
-                    max_loan_to_value: Decimal::percent(90),
-                    liquidation_threshold: Decimal::one(),
-                },
+                hls: None,
             },
             red_bank: RedBankSettings {
                 deposit_enabled: true,
@@ -61,7 +63,13 @@ fn health_success_from_coins() {
             },
             max_loan_to_value: Decimal::from_atomics(70u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
-            liquidation_bonus: Default::default(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(0u64),
+                slope: Decimal::one(),
+                min_lb: Decimal::percent(0u64),
+                max_lb: Decimal::percent(5u64),
+            },
+            protocol_liquidation_fee: Decimal::zero(),
         },
     );
 
@@ -111,12 +119,10 @@ fn health_error_from_coins() {
     mock_querier.set_redbank_params(
         "osmo",
         AssetParams {
-            rover: RoverSettings {
+            denom: "osmo".to_string(),
+            credit_manager: CmSettings {
                 whitelisted: false,
-                hls: HighLeverageStrategyParams {
-                    max_loan_to_value: Decimal::percent(90),
-                    liquidation_threshold: Decimal::one(),
-                },
+                hls: None,
             },
             red_bank: RedBankSettings {
                 deposit_enabled: false,
@@ -125,7 +131,13 @@ fn health_error_from_coins() {
             },
             max_loan_to_value: Decimal::from_atomics(50u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
-            liquidation_bonus: Default::default(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(0u64),
+                slope: Decimal::one(),
+                min_lb: Decimal::percent(0u64),
+                max_lb: Decimal::percent(5u64),
+            },
+            protocol_liquidation_fee: Decimal::zero(),
         },
     );
 

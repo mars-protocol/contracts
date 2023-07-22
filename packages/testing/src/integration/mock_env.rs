@@ -1,15 +1,16 @@
 #![allow(dead_code)]
 
-use std::mem::take;
+use std::{collections::HashMap, mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
-use mars_params::types::{AssetParams, AssetParamsUpdate};
+use mars_params::{msg::AssetParamsUpdate, types::asset::AssetParams};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
-    incentives, oracle,
+    incentives,
+    oracle::{self, PriceResponse},
     red_bank::{
         self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market,
         UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
@@ -81,6 +82,13 @@ impl MockEnv {
         })
     }
 
+    pub fn fund_accounts(&mut self, addrs: &[&Addr], amount: u128, denoms: &[&str]) {
+        for addr in addrs {
+            let coins: Vec<_> = denoms.iter().map(|&d| coin(amount, d)).collect();
+            self.fund_account(addr, &coins);
+        }
+    }
+
     pub fn fund_account(&mut self, addr: &Addr, coins: &[Coin]) {
         self.app
             .sudo(SudoMsg::Bank(BankSudo::Mint {
@@ -92,6 +100,11 @@ impl MockEnv {
 
     pub fn query_balance(&self, addr: &Addr, denom: &str) -> StdResult<Coin> {
         self.app.wrap().query_balance(addr, denom)
+    }
+
+    pub fn query_all_balances(&self, addr: &Addr) -> HashMap<String, Uint128> {
+        let res: Vec<Coin> = self.app.wrap().query_all_balances(addr).unwrap();
+        res.into_iter().map(|r| (r.denom, r.amount)).collect()
     }
 }
 
@@ -207,6 +220,19 @@ impl Oracle {
             )
             .unwrap();
     }
+
+    pub fn query_price(&self, env: &mut MockEnv, denom: &str) -> PriceResponse {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &oracle::QueryMsg::Price {
+                    denom: denom.to_string(),
+                    kind: None,
+                },
+            )
+            .unwrap()
+    }
 }
 
 impl RedBank {
@@ -218,6 +244,26 @@ impl RedBank {
                 &red_bank::ExecuteMsg::InitAsset {
                     denom: denom.to_string(),
                     params,
+                },
+                &[],
+            )
+            .unwrap();
+    }
+
+    pub fn update_user_collateral_status(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        denom: &str,
+        enabled: bool,
+    ) {
+        env.app
+            .execute_contract(
+                sender.clone(),
+                self.contract_addr.clone(),
+                &red_bank::ExecuteMsg::UpdateAssetCollateralStatus {
+                    denom: denom.to_string(),
+                    enable: enabled,
                 },
                 &[],
             )
@@ -288,7 +334,26 @@ impl RedBank {
         liquidator: &Addr,
         user: &Addr,
         collateral_denom: &str,
-        coin: Coin,
+        send_funds: &[Coin],
+    ) -> AnyResult<AppResponse> {
+        self.liquidate_with_different_recipient(
+            env,
+            liquidator,
+            user,
+            collateral_denom,
+            send_funds,
+            None,
+        )
+    }
+
+    pub fn liquidate_with_different_recipient(
+        &self,
+        env: &mut MockEnv,
+        liquidator: &Addr,
+        user: &Addr,
+        collateral_denom: &str,
+        send_funds: &[Coin],
+        recipient: Option<String>,
     ) -> AnyResult<AppResponse> {
         env.app.execute_contract(
             liquidator.clone(),
@@ -296,9 +361,9 @@ impl RedBank {
             &red_bank::ExecuteMsg::Liquidate {
                 user: user.to_string(),
                 collateral_denom: collateral_denom.to_string(),
-                recipient: None,
+                recipient,
             },
-            &[coin],
+            send_funds,
         )
     }
 
@@ -334,6 +399,21 @@ impl RedBank {
             .unwrap()
     }
 
+    pub fn query_markets(&self, env: &mut MockEnv) -> HashMap<String, Market> {
+        let res: Vec<Market> = env
+            .app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::Markets {
+                    start_after: None,
+                    limit: Some(100),
+                },
+            )
+            .unwrap();
+        res.into_iter().map(|r| (r.denom.clone(), r)).collect()
+    }
+
     pub fn query_user_debt(&self, env: &mut MockEnv, user: &Addr, denom: &str) -> UserDebtResponse {
         env.app
             .wrap()
@@ -345,6 +425,26 @@ impl RedBank {
                 },
             )
             .unwrap()
+    }
+
+    pub fn query_user_debts(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+    ) -> HashMap<String, UserDebtResponse> {
+        let res: Vec<UserDebtResponse> = env
+            .app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::UserDebts {
+                    user: user.to_string(),
+                    start_after: None,
+                    limit: Some(100),
+                },
+            )
+            .unwrap();
+        res.into_iter().map(|r| (r.denom.clone(), r)).collect()
     }
 
     pub fn query_user_collateral(
@@ -363,6 +463,26 @@ impl RedBank {
                 },
             )
             .unwrap()
+    }
+
+    pub fn query_user_collaterals(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+    ) -> HashMap<String, UserCollateralResponse> {
+        let res: Vec<UserCollateralResponse> = env
+            .app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::UserCollaterals {
+                    user: user.to_string(),
+                    start_after: None,
+                    limit: Some(100),
+                },
+            )
+            .unwrap();
+        res.into_iter().map(|r| (r.denom.clone(), r)).collect()
     }
 
     pub fn query_user_position(&self, env: &mut MockEnv, user: &Addr) -> UserPositionResponse {
@@ -452,18 +572,29 @@ impl RewardsCollector {
 }
 
 impl Params {
-    pub fn init_params(&self, env: &mut MockEnv, denom: &str, params: AssetParams) {
+    pub fn init_params(&self, env: &mut MockEnv, params: AssetParams) {
         env.app
             .execute_contract(
                 env.owner.clone(),
                 self.contract_addr.clone(),
                 &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
-                    denom: denom.to_string(),
-                    params,
+                    params: params.into(),
                 }),
                 &[],
             )
             .unwrap();
+    }
+
+    pub fn query_params(&self, env: &mut MockEnv, denom: &str) -> AssetParams {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &mars_params::msg::QueryMsg::AssetParams {
+                    denom: denom.to_string(),
+                },
+            )
+            .unwrap()
     }
 }
 
@@ -476,7 +607,7 @@ pub struct MockEnvBuilder {
     mars_denom: String,
     base_denom: String,
     base_denom_decimals: u8,
-    close_factor: Decimal,
+    target_health_factor: Decimal,
 
     // rewards-collector params
     safety_tax_rate: Decimal,
@@ -497,7 +628,7 @@ impl MockEnvBuilder {
             mars_denom: "umars".to_string(),
             base_denom: "uosmo".to_string(),
             base_denom_decimals: 6u8,
-            close_factor: Decimal::percent(80),
+            target_health_factor: Decimal::from_str("1.05").unwrap(),
             safety_tax_rate: Decimal::percent(50),
             safety_fund_denom: "uusdc".to_string(),
             fee_collector_denom: "uusdc".to_string(),
@@ -522,8 +653,8 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn close_factor(&mut self, percentage: Decimal) -> &mut Self {
-        self.close_factor = percentage;
+    pub fn target_health_factor(&mut self, thf: Decimal) -> &mut Self {
+        self.target_health_factor = thf;
         self
     }
 
@@ -712,7 +843,7 @@ impl MockEnvBuilder {
                 self.owner.clone(),
                 &mars_params::msg::InstantiateMsg {
                     owner: self.owner.to_string(),
-                    max_close_factor: self.close_factor,
+                    target_health_factor: self.target_health_factor,
                 },
                 &[],
                 "params",

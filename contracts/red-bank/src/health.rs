@@ -11,18 +11,18 @@ use crate::{
     state::{COLLATERALS, DEBTS, MARKETS},
 };
 
-/// Check the Health Factor for a given user
-pub fn assert_liquidatable(
+/// Get health and positions for a given user
+pub fn get_health_and_positions(
     deps: &Deps,
     env: &Env,
     user_addr: &Addr,
     oracle_addr: &Addr,
     params_addr: &Addr,
-) -> Result<(bool, HashMap<String, Position>), ContractError> {
+) -> Result<(Health, HashMap<String, Position>), ContractError> {
     let positions = get_user_positions_map(deps, env, user_addr, oracle_addr, params_addr)?;
     let health = compute_position_health(&positions)?;
 
-    Ok((health.is_liquidatable(), positions))
+    Ok((health, positions))
 }
 
 /// Check the Health Factor for a given user after a withdraw

@@ -6,7 +6,7 @@ use mars_oracle_osmosis::{
     msg::PriceSourceResponse, Downtime, DowntimeDetector, OsmosisPriceSourceChecked,
     OsmosisPriceSourceUnchecked,
 };
-use mars_params::types::AssetParamsUpdate;
+use mars_params::msg::AssetParamsUpdate;
 use mars_red_bank_types::{
     address_provider::{
         ExecuteMsg::SetAddress, InstantiateMsg as InstantiateAddr, MarsAddressType,
@@ -1087,7 +1087,7 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
         OSMOSIS_PARAMS_CONTRACT_NAME,
         &mars_params::msg::InstantiateMsg {
             owner: (signer.address()),
-            max_close_factor: Decimal::percent(10),
+            target_health_factor: Decimal::from_str("1.05").unwrap(),
         },
     );
 
@@ -1146,18 +1146,29 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
     )
     .unwrap();
 
-    let (market_params, asset_params) = default_asset_params();
+    let (market_params, asset_params) = default_asset_params("uosmo");
 
     wasm.execute(
         &red_bank_addr,
         &ExecuteRedBank::InitAsset {
             denom: "uosmo".to_string(),
-            params: market_params.clone(),
+            params: market_params,
         },
         &[],
         signer,
     )
     .unwrap();
+    wasm.execute(
+        &params_addr,
+        &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
+            params: asset_params.into(),
+        }),
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    let (market_params, asset_params) = default_asset_params("uatom");
 
     wasm.execute(
         &red_bank_addr,
@@ -1173,19 +1184,7 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
     wasm.execute(
         &params_addr,
         &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
-            denom: "uosmo".to_string(),
-            params: asset_params.clone(),
-        }),
-        &[],
-        signer,
-    )
-    .unwrap();
-
-    wasm.execute(
-        &params_addr,
-        &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
-            denom: "uatom".to_string(),
-            params: asset_params,
+            params: asset_params.into(),
         }),
         &[],
         signer,

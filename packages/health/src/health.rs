@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt};
 
 use cosmwasm_std::{Addr, Coin, Decimal, Fraction, QuerierWrapper, StdResult, Uint128};
-use mars_params::types::AssetParams;
+use mars_params::types::asset::AssetParams;
 
 use crate::{error::HealthError, query::MarsQuerier};
 

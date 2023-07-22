@@ -1,7 +1,7 @@
 use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
 use mars_red_bank_types::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::{error::ContractError, execute, query};
+use crate::{error::ContractError, execute, liquidate, query};
 
 #[entry_point]
 pub fn instantiate(
@@ -74,7 +74,7 @@ pub fn execute(
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
             let sent_coin = cw_utils::one_coin(&info)?;
-            execute::liquidate(
+            liquidate::liquidate(
                 deps,
                 env,
                 info,

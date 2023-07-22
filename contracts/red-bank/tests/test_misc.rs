@@ -7,7 +7,7 @@ use helpers::{
     TestUtilizationDeltaInfo,
 };
 use mars_owner::OwnerError::NotOwner;
-use mars_params::types::AssetParams;
+use mars_params::types::asset::AssetParams;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
