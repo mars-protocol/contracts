@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
 use mars_interest_rate::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
@@ -31,10 +31,8 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     })
 }
 
-pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
-    MARKETS
-        .load(deps.storage, &denom)
-        .map_err(|_| StdError::generic_err(format!("failed to load market for: {denom}")))
+pub fn query_market(deps: Deps, denom: String) -> StdResult<Option<Market>> {
+    MARKETS.may_load(deps.storage, &denom)
 }
 
 pub fn query_markets(
