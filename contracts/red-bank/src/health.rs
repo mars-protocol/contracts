@@ -19,7 +19,7 @@ pub fn get_health_and_positions(
     oracle_addr: &Addr,
     params_addr: &Addr,
 ) -> Result<(Health, HashMap<String, Position>), ContractError> {
-    let positions = get_user_positions_map(deps, env, user_addr, oracle_addr, params_addr)?;
+    let positions = get_user_positions_map(deps, env, user_addr, oracle_addr, params_addr, true)?;
     let health = compute_position_health(&positions)?;
 
     Ok((health, positions))
@@ -35,8 +35,8 @@ pub fn assert_below_liq_threshold_after_withdraw(
     denom: &str,
     withdraw_amount: Uint128,
 ) -> Result<bool, ContractError> {
-    let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr, params_addr)?;
-
+    let mut positions =
+        get_user_positions_map(deps, env, user_addr, oracle_addr, params_addr, false)?;
     // Update position to compute health factor after withdraw
     match positions.get_mut(denom) {
         Some(p) => {
@@ -59,7 +59,8 @@ pub fn assert_below_max_ltv_after_borrow(
     denom: &str,
     borrow_amount: Uint128,
 ) -> Result<bool, ContractError> {
-    let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr, params_addr)?;
+    let mut positions =
+        get_user_positions_map(deps, env, user_addr, oracle_addr, params_addr, false)?;
 
     // Update position to compute health factor after borrow
     positions
@@ -112,6 +113,7 @@ pub fn get_user_positions_map(
     user_addr: &Addr,
     oracle_addr: &Addr,
     params_addr: &Addr,
+    is_liquidation: bool,
 ) -> StdResult<HashMap<String, Position>> {
     let block_time = env.block.time.seconds();
 
@@ -156,7 +158,11 @@ pub fn get_user_positions_map(
                     None => (Uint128::zero(), false),
                 };
 
-            let asset_price = oracle::helpers::query_price(&deps.querier, oracle_addr, &denom)?;
+            let asset_price = if is_liquidation {
+                oracle::helpers::query_price_for_liquidate(&deps.querier, oracle_addr, &denom)?
+            } else {
+                oracle::helpers::query_price(&deps.querier, oracle_addr, &denom)?
+            };
 
             let position = Position {
                 denom: denom.clone(),

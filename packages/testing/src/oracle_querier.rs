@@ -13,7 +13,7 @@ impl OracleQuerier {
         let ret: ContractResult<Binary> = match query {
             QueryMsg::Price {
                 denom,
-                kind: _,
+                kind,
             } => {
                 let option_price = self.prices.get(&denom);
 
