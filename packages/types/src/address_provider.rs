@@ -34,6 +34,7 @@ pub enum MarsAddressType {
     SafetyFund,
     /// The swapper contract on the chain
     Swapper,
+    CreditManager,
 }
 
 impl fmt::Display for MarsAddressType {
@@ -48,6 +49,7 @@ impl fmt::Display for MarsAddressType {
             MarsAddressType::RewardsCollector => "rewards_collector",
             MarsAddressType::SafetyFund => "safety_fund",
             MarsAddressType::Swapper => "swapper",
+            MarsAddressType::CreditManager => "credit_manager",
         };
         write!(f, "{s}")
     }
