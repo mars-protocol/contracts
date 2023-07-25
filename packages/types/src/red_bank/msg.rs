@@ -198,6 +198,12 @@ pub enum QueryMsg {
         user: String,
     },
 
+    /// Get user position for liquidation
+    #[returns(crate::red_bank::UserPositionResponse)]
+    UserPositionLiquidationPricing {
+        user: String,
+    },
+
     /// Get liquidity scaled amount for a given underlying asset amount.
     /// (i.e: how much scaled collateral is added if the given amount is deposited)
     #[returns(Uint128)]
