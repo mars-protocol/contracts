@@ -29,6 +29,11 @@ jobs:
       - name: Compile workspace
         run: cargo make build
 
+      # - remove `target/release` deps
+      - name: Cleanup
+        run: |
+          rm -rf target/release
+
       - name: Run test
         run: cargo make test
 
