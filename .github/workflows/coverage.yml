@@ -26,8 +26,8 @@ jobs:
         run: cargo make install-stable
 
       # selecting a toolchain should happen before the plugin, as the cache uses the current rustc version as its cache key
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
+      # - name: Cache dependencies
+      #   uses: Swatinem/rust-cache@v2
 
       # Artifacts used by tests
       - name: Compile workspace

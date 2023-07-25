@@ -214,7 +214,6 @@ export const neutronTestnetConfig = {
   assets: [ntrnAsset, atomAsset],
   vaults: [],
   oracleConfigs: [axlUSDCOracleTestnet, ntrnOracleTestnet, atomOracleTestnet],
-  targetHealthFactor: '1.2',
   oracleCustomInitParams: {
     astroport_factory: 'neutron1jj0scx400pswhpjes589aujlqagxgcztw04srynmhf0f6zplzn2qqmhwj7',
   },
