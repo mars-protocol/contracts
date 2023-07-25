@@ -787,6 +787,12 @@
               "user"
             ],
             "properties": {
+              "account_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "limit": {
                 "type": [
                   "integer",

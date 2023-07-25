@@ -155,6 +155,7 @@ export type QueryMsg =
     }
   | {
       user_collaterals: {
+        account_id?: string | null
         limit?: number | null
         start_after?: string | null
         user: string

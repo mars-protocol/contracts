@@ -245,6 +245,7 @@ export function useMarsRedBankUserPositionQuery<TData = UserPositionResponse>({
 export interface MarsRedBankUserCollateralsQuery<TData>
   extends MarsRedBankReactQuery<ArrayOfUserCollateralResponse, TData> {
   args: {
+    accountId?: string
     limit?: number
     startAfter?: string
     user: string
@@ -260,6 +261,7 @@ export function useMarsRedBankUserCollateralsQuery<TData = ArrayOfUserCollateral
     () =>
       client
         ? client.userCollaterals({
+            accountId: args.accountId,
             limit: args.limit,
             startAfter: args.startAfter,
             user: args.user,

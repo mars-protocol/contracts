@@ -258,11 +258,10 @@ pub fn compute_user_unclaimed_rewards(
     collateral_denom: &str,
     incentive_denom: &str,
 ) -> StdResult<Uint128> {
-    let user = account_id.clone().unwrap_or(user_addr.to_string());
-    let user = user.as_str();
+    let acc_id = account_id.clone().unwrap_or("".to_string());
 
     let mut unclaimed_rewards = USER_UNCLAIMED_REWARDS
-        .may_load(storage.to_storage(), (user, collateral_denom, incentive_denom))?
+        .may_load(storage.to_storage(), ((user_addr, &acc_id), collateral_denom, incentive_denom))?
         .unwrap_or_else(Uint128::zero);
 
     // Get asset user balances and total supply
@@ -297,7 +296,7 @@ pub fn compute_user_unclaimed_rewards(
     )?;
 
     let user_asset_index = USER_ASSET_INDICES
-        .may_load(storage.to_storage(), (user, collateral_denom, incentive_denom))?
+        .may_load(storage.to_storage(), ((user_addr, &acc_id), collateral_denom, incentive_denom))?
         .unwrap_or_else(Decimal::zero);
 
     if user_asset_index != incentive_state.index {
@@ -315,7 +314,7 @@ pub fn compute_user_unclaimed_rewards(
         if user_asset_index != incentive_state.index {
             USER_ASSET_INDICES.save(
                 *storage,
-                (user, collateral_denom, incentive_denom),
+                ((user_addr, &acc_id), collateral_denom, incentive_denom),
                 &incentive_state.index,
             )?
         }

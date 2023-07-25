@@ -76,10 +76,12 @@ export interface MarsRedBankReadOnlyInterface {
     user: string
   }) => Promise<UserCollateralResponse>
   userCollaterals: ({
+    accountId,
     limit,
     startAfter,
     user,
   }: {
+    accountId?: string
     limit?: number
     startAfter?: string
     user: string
@@ -231,16 +233,19 @@ export class MarsRedBankQueryClient implements MarsRedBankReadOnlyInterface {
     })
   }
   userCollaterals = async ({
+    accountId,
     limit,
     startAfter,
     user,
   }: {
+    accountId?: string
     limit?: number
     startAfter?: string
     user: string
   }): Promise<ArrayOfUserCollateralResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       user_collaterals: {
+        account_id: accountId,
         limit,
         start_after: startAfter,
         user,

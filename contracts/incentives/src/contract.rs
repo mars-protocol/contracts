@@ -354,13 +354,17 @@ pub fn execute_balance_change(
         return Err(MarsError::Unauthorized {}.into());
     }
 
-    let user = account_id.unwrap_or(user_addr.to_string());
-    let user = user.as_str();
+    let acc_id = account_id.clone().unwrap_or("".to_string());
 
     let base_event = Event::new("mars/incentives/balance_change")
         .add_attribute("action", "balance_change")
         .add_attribute("denom", collateral_denom.clone())
-        .add_attribute("user", user);
+        .add_attribute("user", user_addr.to_string());
+    let base_event = if account_id.is_some() {
+        base_event.add_attribute("account_id", &acc_id)
+    } else {
+        base_event
+    };
     let mut events = vec![base_event];
 
     let incentive_states = INCENTIVE_STATES
@@ -379,7 +383,7 @@ pub fn execute_balance_change(
 
         // Check if user has accumulated uncomputed rewards (which means index is not up to date)
         let user_asset_index_key =
-            USER_ASSET_INDICES.key((user, &collateral_denom, &incentive_denom));
+            USER_ASSET_INDICES.key(((&user_addr, &acc_id), &collateral_denom, &incentive_denom));
 
         let user_asset_index =
             user_asset_index_key.may_load(deps.storage)?.unwrap_or_else(Decimal::zero);
@@ -398,7 +402,8 @@ pub fn execute_balance_change(
             if !accrued_rewards.is_zero() {
                 state::increase_unclaimed_rewards(
                     deps.storage,
-                    user,
+                    &user_addr,
+                    &acc_id,
                     &collateral_denom,
                     &incentive_denom,
                     accrued_rewards,
@@ -429,27 +434,19 @@ pub fn execute_claim_rewards(
     limit: Option<u32>,
 ) -> Result<Response, ContractError> {
     let user_addr = info.sender;
+    let acc_id = account_id.clone().unwrap_or("".to_string());
 
-    let config = CONFIG.load(deps.storage)?;
-    let addresses = address_provider::helpers::query_contract_addrs(
-        deps.as_ref(),
-        &config.address_provider,
-        vec![MarsAddressType::RedBank, MarsAddressType::CreditManager],
-    )?;
-    let red_bank_addr = &addresses[&MarsAddressType::RedBank];
-    let cm_addr = &addresses[&MarsAddressType::CreditManager];
-
-    if cm_addr == user_addr && account_id.is_none() {
-        return Err(ContractError::AccountIdNotProvided);
-    }
-
-    let user = account_id.clone().unwrap_or(user_addr.to_string());
-    let user = user.as_str();
+    let red_bank_addr = query_red_bank_address(deps.as_ref())?;
 
     let mut response = Response::new();
     let base_event = Event::new("mars/incentives/claim_rewards")
         .add_attribute("action", "claim_rewards")
-        .add_attribute("user", user);
+        .add_attribute("user", user_addr.to_string());
+    let base_event = if account_id.is_some() {
+        base_event.add_attribute("account_id", &acc_id)
+    } else {
+        base_event
+    };
     let mut events = vec![base_event];
 
     let asset_incentives = state::paginate_incentive_states(
@@ -467,7 +464,7 @@ pub fn execute_claim_rewards(
             &mut deps.branch().storage.into(),
             &querier,
             &env.block,
-            red_bank_addr,
+            &red_bank_addr,
             &user_addr,
             &account_id,
             &collateral_denom,
@@ -477,7 +474,7 @@ pub fn execute_claim_rewards(
         // clear unclaimed rewards
         USER_UNCLAIMED_REWARDS.save(
             deps.storage,
-            (user, &collateral_denom, &incentive_denom),
+            ((&user_addr, &acc_id), &collateral_denom, &incentive_denom),
             &Uint128::zero(),
         )?;
 
@@ -669,18 +666,7 @@ pub fn query_user_unclaimed_rewards(
 ) -> Result<Vec<Coin>, ContractError> {
     let user_addr = deps.api.addr_validate(&user)?;
 
-    let config = CONFIG.load(deps.storage)?;
-    let addresses = address_provider::helpers::query_contract_addrs(
-        deps,
-        &config.address_provider,
-        vec![MarsAddressType::RedBank, MarsAddressType::CreditManager],
-    )?;
-    let red_bank_addr = &addresses[&MarsAddressType::RedBank];
-    let cm_addr = &addresses[&MarsAddressType::CreditManager];
-
-    if cm_addr == user_addr && account_id.is_none() {
-        return Err(ContractError::AccountIdNotProvided);
-    }
+    let red_bank_addr = query_red_bank_address(deps)?;
 
     let incentive_states = state::paginate_incentive_states(
         deps.storage,
@@ -696,7 +682,7 @@ pub fn query_user_unclaimed_rewards(
             &mut deps.storage.into(),
             &deps.querier,
             &env.block,
-            red_bank_addr,
+            &red_bank_addr,
             &user_addr,
             &account_id,
             &collateral_denom,

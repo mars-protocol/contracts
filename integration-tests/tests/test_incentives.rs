@@ -1,8 +1,7 @@
 use cosmwasm_std::{assert_approx_eq, coin, Addr, Decimal, Uint128};
-use mars_incentives::ContractError;
 use mars_testing::integration::mock_env::MockEnvBuilder;
 
-use crate::helpers::{assert_incentives_err, default_asset_params};
+use crate::helpers::default_asset_params;
 
 mod helpers;
 
@@ -156,11 +155,12 @@ fn rewards_claim_for_credit_account() {
         .unwrap();
     assert_eq!(rewards_balance_acc_id_2[0].amount, Uint128::new(345600)); // 40% * 864000
 
-    // can't claim and query credit manager rewards without account id
-    let res_err = incentives.claim_rewards(&mut mock_env, &credit_manager);
-    assert_incentives_err(res_err, ContractError::AccountIdNotProvided);
-    let res_err = incentives.query_unclaimed_rewards(&mut mock_env, &credit_manager).unwrap_err();
-    assert!(res_err.to_string().contains(&ContractError::AccountIdNotProvided.to_string()));
+    // claiming credit manager rewards without account id should fail
+    incentives.claim_rewards(&mut mock_env, &credit_manager).unwrap_err();
+    // query credit manager rewards without account id should return zero
+    let rewards_balance =
+        incentives.query_unclaimed_rewards(&mut mock_env, &credit_manager).unwrap();
+    assert_eq!(rewards_balance[0].amount, Uint128::zero());
 
     // claim rewards for credit accounts
     incentives

@@ -133,13 +133,13 @@ fn execute_claim_rewards() {
 
     // user indices
     USER_ASSET_INDICES
-        .save(deps.as_mut().storage, (user_addr.as_str(), asset_denom, "umars"), &Decimal::one())
+        .save(deps.as_mut().storage, ((&user_addr, ""), asset_denom, "umars"), &Decimal::one())
         .unwrap();
 
     USER_ASSET_INDICES
         .save(
             deps.as_mut().storage,
-            (user_addr.as_str(), zero_denom, "umars"),
+            ((&user_addr, ""), zero_denom, "umars"),
             &Decimal::from_ratio(1_u128, 2_u128),
         )
         .unwrap();
@@ -148,7 +148,7 @@ fn execute_claim_rewards() {
     USER_UNCLAIMED_REWARDS
         .save(
             deps.as_mut().storage,
-            (user_addr.as_str(), asset_denom, "umars"),
+            ((&user_addr, ""), asset_denom, "umars"),
             &previous_unclaimed_rewards,
         )
         .unwrap();
@@ -274,24 +274,24 @@ fn execute_claim_rewards() {
 
     // user's asset and zero indices are updated
     let user_asset_index = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, (user_addr.as_str(), asset_denom, "umars"))
+        .load(deps.as_ref().storage, ((&user_addr, ""), asset_denom, "umars"))
         .unwrap();
     assert_eq!(user_asset_index, expected_asset_incentive_index);
 
     let user_zero_index = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, (user_addr.as_str(), zero_denom, "umars"))
+        .load(deps.as_ref().storage, ((&user_addr, ""), zero_denom, "umars"))
         .unwrap();
     assert_eq!(user_zero_index, Decimal::one());
 
     // user's no_user does not get updated
     let user_no_user_index = USER_ASSET_INDICES
-        .may_load(deps.as_ref().storage, (user_addr.as_str(), no_user_denom, "umars"))
+        .may_load(deps.as_ref().storage, ((&user_addr, ""), no_user_denom, "umars"))
         .unwrap();
     assert_eq!(user_no_user_index, None);
 
     // user rewards are cleared
     let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-        .load(deps.as_ref().storage, (user_addr.as_str(), asset_denom, "umars"))
+        .load(deps.as_ref().storage, ((&user_addr, ""), asset_denom, "umars"))
         .unwrap();
     assert_eq!(user_unclaimed_rewards, Uint128::zero())
 }
