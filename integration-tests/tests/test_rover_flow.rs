@@ -19,13 +19,15 @@ fn rover_flow() {
     oracle.set_price_source_fixed(&mut mock_env, "uatom", Decimal::from_ratio(12u128, 1u128));
     let red_bank = mock_env.red_bank.clone();
     let params = mock_env.params.clone();
-    let (market_params, asset_params) = default_asset_params();
-    red_bank.init_asset(&mut mock_env, "uosmo", market_params.clone());
-    red_bank.init_asset(&mut mock_env, "uusdc", market_params.clone());
+    let (market_params, asset_params) = default_asset_params("uusdc");
+    red_bank.init_asset(&mut mock_env, "uusdc", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("uosmo");
+    red_bank.init_asset(&mut mock_env, "uosmo", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("uatom");
     red_bank.init_asset(&mut mock_env, "uatom", market_params);
-    params.init_params(&mut mock_env, "uosmo", asset_params.clone());
-    params.init_params(&mut mock_env, "uusdc", asset_params.clone());
-    params.init_params(&mut mock_env, "uatom", asset_params);
+    params.init_params(&mut mock_env, asset_params);
 
     let rover = Addr::unchecked("rover");
 

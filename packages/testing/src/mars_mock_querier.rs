@@ -10,7 +10,7 @@ use mars_oracle_osmosis::{
     DowntimeDetector,
 };
 use mars_osmosis::helpers::QueryPoolResponse;
-use mars_params::types::AssetParams;
+use mars_params::types::asset::AssetParams;
 use mars_red_bank_types::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
@@ -198,8 +198,8 @@ impl MarsMockQuerier {
         self.params_querier.params.insert(denom.to_string(), params);
     }
 
-    pub fn set_close_factor(&mut self, close_factor: Decimal) {
-        self.params_querier.close_factor = close_factor;
+    pub fn set_target_health_factor(&mut self, thf: Decimal) {
+        self.params_querier.target_health_factor = thf;
     }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {

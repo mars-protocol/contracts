@@ -20,9 +20,9 @@ fn rewards_claim() {
     let red_bank = mock_env.red_bank.clone();
     let params = mock_env.params.clone();
 
-    let (market_params, asset_params) = default_asset_params();
+    let (market_params, asset_params) = default_asset_params("uusdc");
     red_bank.init_asset(&mut mock_env, "uusdc", market_params);
-    params.init_params(&mut mock_env, "uusdc", asset_params);
+    params.init_params(&mut mock_env, asset_params);
 
     let incentives = mock_env.incentives.clone();
     incentives.whitelist_incentive_denoms(&mut mock_env, &[("umars", 3)]);
@@ -77,13 +77,15 @@ fn emissions_rates() {
     let red_bank = mock_env.red_bank.clone();
     let params = mock_env.params.clone();
 
-    let (market_params, asset_params) = default_asset_params();
-    red_bank.init_asset(&mut mock_env, "uusdc", market_params.clone());
-    red_bank.init_asset(&mut mock_env, "uosmo", market_params.clone());
+    let (market_params, asset_params) = default_asset_params("uusdc");
+    red_bank.init_asset(&mut mock_env, "uusdc", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("uosmo");
+    red_bank.init_asset(&mut mock_env, "uosmo", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("umars");
     red_bank.init_asset(&mut mock_env, "umars", market_params);
-    params.init_params(&mut mock_env, "uusdc", asset_params.clone());
-    params.init_params(&mut mock_env, "uosmo", asset_params.clone());
-    params.init_params(&mut mock_env, "umars", asset_params);
+    params.init_params(&mut mock_env, asset_params);
 
     let incentives = mock_env.incentives.clone();
     incentives.whitelist_incentive_denoms(&mut mock_env, &[("umars", 3)]);
@@ -169,13 +171,15 @@ fn no_incentives_accrued_after_withdraw() {
     let red_bank = mock_env.red_bank.clone();
     let params = mock_env.params.clone();
 
-    let (market_params, asset_params) = default_asset_params();
-    red_bank.init_asset(&mut mock_env, "uusdc", market_params.clone());
-    red_bank.init_asset(&mut mock_env, "uosmo", market_params.clone());
+    let (market_params, asset_params) = default_asset_params("uusdc");
+    red_bank.init_asset(&mut mock_env, "uusdc", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("uosmo");
+    red_bank.init_asset(&mut mock_env, "uosmo", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("umars");
     red_bank.init_asset(&mut mock_env, "umars", market_params);
-    params.init_params(&mut mock_env, "uusdc", asset_params.clone());
-    params.init_params(&mut mock_env, "uosmo", asset_params.clone());
-    params.init_params(&mut mock_env, "umars", asset_params);
+    params.init_params(&mut mock_env, asset_params);
 
     let incentives = mock_env.incentives.clone();
     incentives.whitelist_incentive_denoms(&mut mock_env, &[("umars", 3)]);
@@ -244,15 +248,18 @@ fn multiple_assets() {
     let red_bank = mock_env.red_bank.clone();
     let params = mock_env.params.clone();
 
-    let (market_params, asset_params) = default_asset_params();
-    red_bank.init_asset(&mut mock_env, "uusdc", market_params.clone());
-    red_bank.init_asset(&mut mock_env, "uosmo", market_params.clone());
-    red_bank.init_asset(&mut mock_env, "uatom", market_params.clone());
+    let (market_params, asset_params) = default_asset_params("uusdc");
+    red_bank.init_asset(&mut mock_env, "uusdc", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("uosmo");
+    red_bank.init_asset(&mut mock_env, "uosmo", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("uatom");
+    red_bank.init_asset(&mut mock_env, "uatom", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("umars");
     red_bank.init_asset(&mut mock_env, "umars", market_params);
-    params.init_params(&mut mock_env, "uusdc", asset_params.clone());
-    params.init_params(&mut mock_env, "uosmo", asset_params.clone());
-    params.init_params(&mut mock_env, "uatom", asset_params.clone());
-    params.init_params(&mut mock_env, "umars", asset_params);
+    params.init_params(&mut mock_env, asset_params);
 
     // set incentives
     let incentives = mock_env.incentives.clone();
@@ -327,9 +334,9 @@ fn multiple_users() {
     let red_bank = mock_env.red_bank.clone();
     let params = mock_env.params.clone();
 
-    let (market_params, asset_params) = default_asset_params();
+    let (market_params, asset_params) = default_asset_params("uusdc");
     red_bank.init_asset(&mut mock_env, "uusdc", market_params);
-    params.init_params(&mut mock_env, "uusdc", asset_params);
+    params.init_params(&mut mock_env, asset_params);
 
     // set incentives
     let incentives = mock_env.incentives.clone();
@@ -414,13 +421,15 @@ fn rewards_distributed_among_users_and_rewards_collector() {
     let red_bank = mock_env.red_bank.clone();
     let params = mock_env.params.clone();
 
-    let (market_params, asset_params) = default_asset_params();
-    red_bank.init_asset(&mut mock_env, "uusdc", market_params.clone());
-    red_bank.init_asset(&mut mock_env, "uosmo", market_params.clone());
+    let (market_params, asset_params) = default_asset_params("uusdc");
+    red_bank.init_asset(&mut mock_env, "uusdc", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("uosmo");
+    red_bank.init_asset(&mut mock_env, "uosmo", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("uatom");
     red_bank.init_asset(&mut mock_env, "uatom", market_params);
-    params.init_params(&mut mock_env, "uusdc", asset_params.clone());
-    params.init_params(&mut mock_env, "uosmo", asset_params.clone());
-    params.init_params(&mut mock_env, "uatom", asset_params);
+    params.init_params(&mut mock_env, asset_params);
 
     // fund user accounts
     let user_a = Addr::unchecked("user_a");

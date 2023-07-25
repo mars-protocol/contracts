@@ -318,7 +318,7 @@ fn update_asset() {
     let info = mock_info("owner", &[]);
     instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-    deps.querier.set_close_factor(Decimal::from_ratio(1u128, 2u128));
+    deps.querier.set_target_health_factor(Decimal::from_ratio(1u128, 2u128));
 
     let ir_model = InterestRateModel {
         optimal_utilization_rate: Decimal::one(),
@@ -455,7 +455,7 @@ fn update_asset_with_new_interest_rate_model_params() {
     let env = mock_env(MockEnvParams::default());
     instantiate(deps.as_mut(), env, info, msg).unwrap();
 
-    deps.querier.set_close_factor(Decimal::from_ratio(1u128, 2u128));
+    deps.querier.set_target_health_factor(Decimal::from_ratio(1u128, 2u128));
 
     let ir_model = InterestRateModel {
         optimal_utilization_rate: Decimal::one(),

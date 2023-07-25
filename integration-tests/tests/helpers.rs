@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Coin, Decimal, Uint128};
+use cosmwasm_std::{Coin, Decimal, Fraction, Uint128};
 use cw_multi_test::AppResponse;
-use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
+use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
 use mars_red_bank::error::ContractError;
 use mars_red_bank_types::red_bank::{
     InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
@@ -14,7 +14,7 @@ use osmosis_std::types::osmosis::{
 };
 use osmosis_test_tube::{Account, ExecuteResponse, OsmosisTestApp, Runner, SigningAccount};
 
-pub fn default_asset_params() -> (InitOrUpdateAssetParams, AssetParams) {
+pub fn default_asset_params(denom: &str) -> (InitOrUpdateAssetParams, AssetParams) {
     let market_params = InitOrUpdateAssetParams {
         reserve_factor: Some(Decimal::percent(20)),
         interest_rate_model: Some(InterestRateModel {
@@ -25,12 +25,10 @@ pub fn default_asset_params() -> (InitOrUpdateAssetParams, AssetParams) {
         }),
     };
     let asset_params = AssetParams {
-        rover: RoverSettings {
+        denom: denom.to_string(),
+        credit_manager: CmSettings {
             whitelisted: false,
-            hls: HighLeverageStrategyParams {
-                max_loan_to_value: Decimal::percent(90),
-                liquidation_threshold: Decimal::one(),
-            },
+            hls: None,
         },
         red_bank: RedBankSettings {
             deposit_enabled: true,
@@ -39,15 +37,22 @@ pub fn default_asset_params() -> (InitOrUpdateAssetParams, AssetParams) {
         },
         max_loan_to_value: Decimal::percent(60),
         liquidation_threshold: Decimal::percent(80),
-        liquidation_bonus: Decimal::percent(10),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(0u64),
+            slope: Decimal::one(),
+            min_lb: Decimal::percent(0u64),
+            max_lb: Decimal::percent(5u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
     };
     (market_params, asset_params)
 }
 
 pub fn default_asset_params_with(
+    denom: &str,
     max_loan_to_value: Decimal,
     liquidation_threshold: Decimal,
-    liquidation_bonus: Decimal,
+    liquidation_bonus: LiquidationBonus,
 ) -> (InitOrUpdateAssetParams, AssetParams) {
     let market_params = InitOrUpdateAssetParams {
         reserve_factor: Some(Decimal::percent(20)),
@@ -59,12 +64,10 @@ pub fn default_asset_params_with(
         }),
     };
     let asset_params = AssetParams {
-        rover: RoverSettings {
+        denom: denom.to_string(),
+        credit_manager: CmSettings {
             whitelisted: false,
-            hls: HighLeverageStrategyParams {
-                max_loan_to_value: Decimal::percent(90),
-                liquidation_threshold: Decimal::one(),
-            },
+            hls: None,
         },
         red_bank: RedBankSettings {
             deposit_enabled: true,
@@ -74,6 +77,7 @@ pub fn default_asset_params_with(
         max_loan_to_value,
         liquidation_threshold,
         liquidation_bonus,
+        protocol_liquidation_fee: Decimal::percent(2u64),
     };
     (market_params, asset_params)
 }
@@ -86,6 +90,35 @@ pub fn is_user_liquidatable(position: &UserPositionResponse) -> bool {
             ..
         } => liq_threshold_hf < Decimal::one(),
     }
+}
+
+pub fn liq_threshold_hf(position: &UserPositionResponse) -> Decimal {
+    match position.health_status {
+        UserHealthStatus::Borrowing {
+            liq_threshold_hf,
+            ..
+        } if liq_threshold_hf < Decimal::one() => liq_threshold_hf,
+        _ => panic!("User is not liquidatable"),
+    }
+}
+
+pub fn calculate_max_debt_repayable(
+    thf: Decimal,
+    tlf: Decimal,
+    collateral_liq_th: Decimal,
+    debt_price: Decimal,
+    position: &UserPositionResponse,
+) -> Uint128 {
+    let max_debt_repayable_numerator = (thf * position.total_collateralized_debt)
+        - position.weighted_liquidation_threshold_collateral;
+    let max_debt_repayable_denominator = thf - (collateral_liq_th * (Decimal::one() + tlf));
+
+    let max_debt_repayable_value = max_debt_repayable_numerator.multiply_ratio(
+        max_debt_repayable_denominator.denominator(),
+        max_debt_repayable_denominator.numerator(),
+    );
+
+    max_debt_repayable_value.div_floor(debt_price)
 }
 
 pub mod osmosis {
