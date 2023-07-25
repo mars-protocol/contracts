@@ -1,5 +1,5 @@
 use cosmwasm_std::{Decimal, QuerierWrapper, StdResult};
-use mars_params::{msg::QueryMsg, types::AssetParams};
+use mars_params::{msg::QueryMsg, types::asset::AssetParams};
 
 pub fn query_asset_params(
     querier: &QuerierWrapper,
@@ -14,9 +14,9 @@ pub fn query_asset_params(
     )
 }
 
-pub fn query_close_factor(
+pub fn query_target_health_factor(
     querier: &QuerierWrapper,
     params: impl Into<String>,
 ) -> StdResult<Decimal> {
-    querier.query_wasm_smart(params.into(), &QueryMsg::MaxCloseFactor {})
+    querier.query_wasm_smart(params.into(), &QueryMsg::TargetHealthFactor {})
 }

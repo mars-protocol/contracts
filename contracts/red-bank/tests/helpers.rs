@@ -1,22 +1,28 @@
 #![allow(dead_code)]
 
+use std::collections::HashMap;
+
+use anyhow::Result as AnyResult;
 use cosmwasm_schema::serde;
 use cosmwasm_std::{
     from_binary,
     testing::{MockApi, MockStorage},
     Addr, Coin, Decimal, Deps, DepsMut, Event, OwnedDeps, Uint128,
 };
+use cw_multi_test::AppResponse;
 use mars_interest_rate::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     ScalingOperation,
 };
-use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
+use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
 use mars_red_bank::{
     contract::{instantiate, query},
+    error::ContractError,
     state::{COLLATERALS, DEBTS, MARKETS},
 };
 use mars_red_bank_types::red_bank::{
     Collateral, CreateOrUpdateConfig, Debt, InstantiateMsg, Market, QueryMsg,
+    UserCollateralResponse, UserDebtResponse, UserHealthStatus, UserPositionResponse,
 };
 use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
 
@@ -86,7 +92,7 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
 
     deps.querier.set_oracle_price("uusd", Decimal::one());
 
-    deps.querier.set_close_factor(Decimal::from_ratio(1u128, 2u128));
+    deps.querier.set_target_health_factor(Decimal::from_ratio(12u128, 10u128));
 
     deps
 }
@@ -108,12 +114,10 @@ pub fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {
 
 pub fn th_default_asset_params() -> AssetParams {
     AssetParams {
-        rover: RoverSettings {
+        denom: "todo".to_string(),
+        credit_manager: CmSettings {
             whitelisted: false,
-            hls: HighLeverageStrategyParams {
-                max_loan_to_value: Decimal::percent(90),
-                liquidation_threshold: Decimal::one(),
-            },
+            hls: None,
         },
         red_bank: RedBankSettings {
             deposit_enabled: true,
@@ -122,7 +126,13 @@ pub fn th_default_asset_params() -> AssetParams {
         },
         max_loan_to_value: Decimal::zero(),
         liquidation_threshold: Decimal::one(),
-        liquidation_bonus: Decimal::zero(),
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(0u64),
+            slope: Decimal::one(),
+            min_lb: Decimal::percent(0u64),
+            max_lb: Decimal::percent(5u64),
+        },
+        protocol_liquidation_fee: Decimal::percent(2u64),
     }
 }
 
@@ -176,31 +186,20 @@ pub fn th_get_expected_indices_and_rates(
         th_get_expected_protocol_rewards(market, &expected_indices);
 
     // When borrowing, new computed index is used for scaled amount
-    let more_debt_scaled = compute_scaled_amount(
-        delta_info.more_debt,
-        expected_indices.borrow,
-        ScalingOperation::Ceil,
-    )
-    .unwrap();
+    let more_debt_scaled = th_get_scaled_debt_amount(delta_info.more_debt, expected_indices.borrow);
 
     // When repaying, new computed index is used to get current debt and deduct amount
     let less_debt_scaled = if !delta_info.less_debt.is_zero() {
-        let user_current_debt = compute_underlying_amount(
+        let user_current_debt = th_get_underlying_debt_amount(
             delta_info.user_current_debt_scaled,
             expected_indices.borrow,
-            ScalingOperation::Ceil,
-        )
-        .unwrap();
+        );
 
-        let user_new_debt = if delta_info.less_debt >= user_current_debt {
-            Uint128::zero()
-        } else {
-            user_current_debt - delta_info.less_debt
-        };
+        let user_new_debt =
+            user_current_debt.checked_sub(delta_info.less_debt).unwrap_or(Uint128::zero());
 
         let user_new_debt_scaled =
-            compute_scaled_amount(user_new_debt, expected_indices.borrow, ScalingOperation::Ceil)
-                .unwrap();
+            th_get_scaled_debt_amount(user_new_debt, expected_indices.borrow);
 
         delta_info.user_current_debt_scaled - user_new_debt_scaled
     } else {
@@ -209,25 +208,15 @@ pub fn th_get_expected_indices_and_rates(
 
     // NOTE: Don't panic here so that the total repay of debt can be simulated
     // when less debt is greater than outstanding debt
-    let new_debt_total_scaled = if (market.debt_total_scaled + more_debt_scaled) > less_debt_scaled
-    {
-        market.debt_total_scaled + more_debt_scaled - less_debt_scaled
-    } else {
-        Uint128::zero()
-    };
-    let debt_total = compute_underlying_amount(
-        new_debt_total_scaled,
-        expected_indices.borrow,
-        ScalingOperation::Ceil,
-    )
-    .unwrap();
+    let new_debt_total_scaled = (market.debt_total_scaled + more_debt_scaled)
+        .checked_sub(less_debt_scaled)
+        .unwrap_or(Uint128::zero());
+    let debt_total = th_get_underlying_debt_amount(new_debt_total_scaled, expected_indices.borrow);
 
-    let total_collateral = compute_underlying_amount(
+    let total_collateral = th_get_underlying_liquidity_amount(
         market.collateral_total_scaled,
         expected_indices.liquidity,
-        ScalingOperation::Truncate,
-    )
-    .unwrap();
+    );
 
     // Total collateral increased by accured protocol rewards
     let total_collateral = total_collateral + expected_protocol_rewards_to_distribute;
@@ -258,23 +247,12 @@ pub fn th_get_expected_protocol_rewards(
     expected_indices: &TestExpectedIndices,
 ) -> Uint128 {
     let previous_borrow_index = market.borrow_index;
-    let previous_debt_total = compute_underlying_amount(
-        market.debt_total_scaled,
-        previous_borrow_index,
-        ScalingOperation::Ceil,
-    )
-    .unwrap();
-    let current_debt_total = compute_underlying_amount(
-        market.debt_total_scaled,
-        expected_indices.borrow,
-        ScalingOperation::Ceil,
-    )
-    .unwrap();
-    let interest_accrued = if current_debt_total > previous_debt_total {
-        current_debt_total - previous_debt_total
-    } else {
-        Uint128::zero()
-    };
+    let previous_debt_total =
+        th_get_underlying_debt_amount(market.debt_total_scaled, previous_borrow_index);
+    let current_debt_total =
+        th_get_underlying_debt_amount(market.debt_total_scaled, expected_indices.borrow);
+    let interest_accrued =
+        current_debt_total.checked_sub(previous_debt_total).unwrap_or(Uint128::zero());
     interest_accrued * market.reserve_factor
 }
 
@@ -304,5 +282,93 @@ pub fn th_get_expected_indices(market: &Market, block_time: u64) -> TestExpected
     TestExpectedIndices {
         liquidity: expected_liquidity_index,
         borrow: expected_borrow_index,
+    }
+}
+
+pub fn th_get_scaled_liquidity_amount(amount: Uint128, liquidity_index: Decimal) -> Uint128 {
+    compute_scaled_amount(amount, liquidity_index, ScalingOperation::Truncate).unwrap()
+}
+
+pub fn th_get_scaled_debt_amount(amount: Uint128, borrow_index: Decimal) -> Uint128 {
+    compute_scaled_amount(amount, borrow_index, ScalingOperation::Ceil).unwrap()
+}
+
+pub fn th_get_underlying_liquidity_amount(
+    amount_scaled: Uint128,
+    liquidity_index: Decimal,
+) -> Uint128 {
+    compute_underlying_amount(amount_scaled, liquidity_index, ScalingOperation::Truncate).unwrap()
+}
+
+pub fn th_get_underlying_debt_amount(amount_scaled: Uint128, borrow_index: Decimal) -> Uint128 {
+    compute_underlying_amount(amount_scaled, borrow_index, ScalingOperation::Ceil).unwrap()
+}
+
+pub fn liq_threshold_hf(position: &UserPositionResponse) -> Decimal {
+    match position.health_status {
+        UserHealthStatus::Borrowing {
+            liq_threshold_hf,
+            ..
+        } => liq_threshold_hf,
+        _ => panic!("User is not borrowing"),
+    }
+}
+
+// Merge collaterals and debts for users.
+// Return total amount_scaled for collateral / debt and balance amounts for denoms.
+pub fn merge_collaterals_and_debts(
+    users_collaterals: &[&HashMap<String, UserCollateralResponse>],
+    users_debts: &[&HashMap<String, UserDebtResponse>],
+) -> (HashMap<String, Uint128>, HashMap<String, Uint128>, HashMap<String, Uint128>) {
+    let mut balances: HashMap<String, Uint128> = HashMap::new();
+
+    let mut merged_collaterals: HashMap<String, Uint128> = HashMap::new();
+
+    for user_collaterals in users_collaterals {
+        for (denom, collateral) in user_collaterals.iter() {
+            merged_collaterals
+                .entry(denom.clone())
+                .and_modify(|v| {
+                    *v += collateral.amount_scaled;
+                })
+                .or_insert(collateral.amount_scaled);
+            balances
+                .entry(denom.clone())
+                .and_modify(|v| {
+                    *v += collateral.amount;
+                })
+                .or_insert(collateral.amount);
+        }
+    }
+
+    let mut merged_debts: HashMap<String, Uint128> = HashMap::new();
+
+    for user_debts in users_debts {
+        for (denom, debt) in user_debts.iter() {
+            merged_debts
+                .entry(denom.clone())
+                .and_modify(|v| {
+                    *v += debt.amount_scaled;
+                })
+                .or_insert(debt.amount_scaled);
+            balances
+                .entry(denom.clone())
+                .and_modify(|v| {
+                    *v -= debt.amount;
+                })
+                .or_insert(Uint128::zero()); // balance can't be negative
+        }
+    }
+
+    (merged_collaterals, merged_debts, balances)
+}
+
+pub fn assert_err(res: AnyResult<AppResponse>, err: ContractError) {
+    match res {
+        Ok(_) => panic!("Result was not an error"),
+        Err(generic_err) => {
+            let contract_err: ContractError = generic_err.downcast().unwrap();
+            assert_eq!(contract_err, err);
+        }
     }
 }

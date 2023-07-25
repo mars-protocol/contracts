@@ -11,7 +11,7 @@ use mars_interest_rate::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
     get_updated_borrow_index, get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
 };
-use mars_params::types::AssetParams;
+use mars_params::types::asset::AssetParams;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,

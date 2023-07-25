@@ -56,7 +56,6 @@ export interface DeploymentConfig {
   safetyFundAddr: string
   protocolAdminAddr: string
   feeCollectorAddr: string
-  targetHealthFactor: string
   swapperDexName: string
   assets: AssetConfig[]
   vaults: VaultConfig[]

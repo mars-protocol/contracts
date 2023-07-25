@@ -11,7 +11,7 @@ use mars_interest_rate::{
     get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
 };
 use mars_owner::OwnerError::NotOwner;
-use mars_params::types::AssetParams;
+use mars_params::types::asset::AssetParams;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,

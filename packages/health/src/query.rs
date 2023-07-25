@@ -1,5 +1,5 @@
 use cosmwasm_std::{Addr, Decimal, QuerierWrapper, StdResult};
-use mars_params::types::AssetParams;
+use mars_params::types::asset::AssetParams;
 use mars_red_bank_types::oracle::{self, ActionKind, PriceResponse};
 
 pub struct MarsQuerier<'a> {

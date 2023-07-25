@@ -1,7 +1,10 @@
 use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
 use mars_red_bank_types::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::{error::ContractError, execute, query};
+use crate::{
+    asset, borrow, collateral, config, deposit, error::ContractError, instantiate, liquidate,
+    query, repay, uncollateralized_loan, withdraw,
+};
 
 #[entry_point]
 pub fn instantiate(
@@ -10,7 +13,7 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    execute::instantiate(deps, msg)
+    instantiate::instantiate(deps, msg)
 }
 
 #[entry_point]
@@ -21,29 +24,31 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::UpdateOwner(update) => execute::update_owner(deps, info, update),
+        ExecuteMsg::UpdateOwner(update) => config::update_owner(deps, info, update),
         ExecuteMsg::UpdateConfig {
             config,
-        } => execute::update_config(deps, info, config),
+        } => config::update_config(deps, info, config),
         ExecuteMsg::InitAsset {
             denom,
             params,
-        } => execute::init_asset(deps, env, info, denom, params),
+        } => asset::init_asset(deps, env, info, denom, params),
         ExecuteMsg::UpdateAsset {
             denom,
             params,
-        } => execute::update_asset(deps, env, info, denom, params),
+        } => asset::update_asset(deps, env, info, denom, params),
         ExecuteMsg::UpdateUncollateralizedLoanLimit {
             user,
             denom,
             new_limit,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            execute::update_uncollateralized_loan_limit(deps, info, user_addr, denom, new_limit)
+            uncollateralized_loan::update_uncollateralized_loan_limit(
+                deps, info, user_addr, denom, new_limit,
+            )
         }
         ExecuteMsg::Deposit {} => {
             let sent_coin = cw_utils::one_coin(&info)?;
-            execute::deposit(deps, env, info, sent_coin.denom, sent_coin.amount)
+            deposit::deposit(deps, env, info, sent_coin.denom, sent_coin.amount)
         }
         ExecuteMsg::Withdraw {
             denom,
@@ -51,7 +56,7 @@ pub fn execute(
             recipient,
         } => {
             cw_utils::nonpayable(&info)?;
-            execute::withdraw(deps, env, info, denom, amount, recipient)
+            withdraw::withdraw(deps, env, info, denom, amount, recipient)
         }
         ExecuteMsg::Borrow {
             denom,
@@ -59,13 +64,13 @@ pub fn execute(
             recipient,
         } => {
             cw_utils::nonpayable(&info)?;
-            execute::borrow(deps, env, info, denom, amount, recipient)
+            borrow::borrow(deps, env, info, denom, amount, recipient)
         }
         ExecuteMsg::Repay {
             on_behalf_of,
         } => {
             let sent_coin = cw_utils::one_coin(&info)?;
-            execute::repay(deps, env, info, on_behalf_of, sent_coin.denom, sent_coin.amount)
+            repay::repay(deps, env, info, on_behalf_of, sent_coin.denom, sent_coin.amount)
         }
         ExecuteMsg::Liquidate {
             user,
@@ -74,7 +79,7 @@ pub fn execute(
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
             let sent_coin = cw_utils::one_coin(&info)?;
-            execute::liquidate(
+            liquidate::liquidate(
                 deps,
                 env,
                 info,
@@ -90,7 +95,7 @@ pub fn execute(
             enable,
         } => {
             cw_utils::nonpayable(&info)?;
-            execute::update_asset_collateral_status(deps, env, info, denom, enable)
+            collateral::update_asset_collateral_status(deps, env, info, denom, enable)
         }
     }
 }

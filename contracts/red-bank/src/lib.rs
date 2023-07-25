@@ -1,11 +1,20 @@
+pub mod asset;
+pub mod borrow;
+pub mod collateral;
+pub mod config;
 #[cfg(not(feature = "library"))]
 pub mod contract;
+pub mod deposit;
 pub mod error;
-pub mod execute;
 pub mod health;
+pub mod instantiate;
 pub mod interest_rates;
+pub mod liquidate;
 pub mod query;
+pub mod repay;
 pub mod state;
+pub mod uncollateralized_loan;
 pub mod user;
+pub mod withdraw;
 
 pub mod helpers;

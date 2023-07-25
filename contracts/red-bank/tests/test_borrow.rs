@@ -10,7 +10,7 @@ use mars_interest_rate::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     ScalingOperation, SCALING_FACTOR,
 };
-use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
+use mars_params::types::asset::{AssetParams, CmSettings, RedBankSettings};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -1000,13 +1000,10 @@ fn cannot_borrow_if_market_not_enabled() {
     deps.querier.set_redbank_params(
         "somecoin",
         AssetParams {
-            rover: RoverSettings {
+            credit_manager: CmSettings {
                 whitelisted: false,
 
-                hls: HighLeverageStrategyParams {
-                    max_loan_to_value: Decimal::percent(90),
-                    liquidation_threshold: Decimal::one(),
-                },
+                hls: None,
             },
             red_bank: RedBankSettings {
                 deposit_enabled: false,
