@@ -1823,6 +1823,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-liquidation"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-std",
+ "mars-health",
+ "mars-params",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-oracle-base"
 version = "1.1.0"
 dependencies = [
@@ -1927,6 +1937,7 @@ dependencies = [
  "cw-utils 1.0.1",
  "cw2 1.1.0",
  "mars-health",
+ "mars-liquidation",
  "mars-owner",
  "mars-params",
  "mars-red-bank-types",

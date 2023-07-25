@@ -1,6 +1,7 @@
 use cosmwasm_std::{CheckedFromRatioError, CheckedMultiplyFractionError, OverflowError, StdError};
 use cw_utils::PaymentError;
 use mars_health::error::HealthError;
+use mars_liquidation::error::LiquidationError;
 use mars_owner::OwnerError;
 use mars_red_bank_types::error::MarsError;
 use mars_utils::error::ValidationError;
@@ -34,6 +35,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Health(#[from] HealthError),
+
+    #[error("{0}")]
+    Liquidation(#[from] LiquidationError),
 
     #[error("Price not found for asset: {denom:?}")]
     PriceNotFound {
