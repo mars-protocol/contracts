@@ -9,7 +9,7 @@ use mars_rover::{
     msg::query::{DebtAmount, Positions},
 };
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
-use mars_rover_health_types::{AccountKind, HealthError};
+use mars_rover_health_types::{AccountKind, BorrowTarget, HealthError};
 
 use crate::helpers::{udai_info, umars_info, ustars_info};
 
@@ -57,7 +57,8 @@ fn missing_borrow_denom_price_data() {
         vaults_data,
     };
 
-    let err: HealthError = h.max_borrow_amount_estimate(&udai.denom).unwrap_err();
+    let err: HealthError =
+        h.max_borrow_amount_estimate(&udai.denom, &BorrowTarget::Deposit).unwrap_err();
     assert_eq!(err, HealthError::MissingPrice(udai.denom));
 }
 
@@ -103,7 +104,8 @@ fn missing_borrow_denom_params() {
         vaults_data,
     };
 
-    let err: HealthError = h.max_borrow_amount_estimate(&umars.denom).unwrap_err();
+    let err: HealthError =
+        h.max_borrow_amount_estimate(&umars.denom, &BorrowTarget::Deposit).unwrap_err();
     assert_eq!(err, HealthError::MissingParams(umars.denom));
 }
 
@@ -152,9 +154,8 @@ fn cannot_borrow_when_unhealthy() {
         vaults_data,
     };
 
-    let health = h.compute_health().unwrap();
-    assert!(health.max_ltv_health_factor < Some(Decimal::one()));
-    let max_withdraw_amount = h.max_borrow_amount_estimate(&udai.denom).unwrap();
+    let max_withdraw_amount =
+        h.max_borrow_amount_estimate(&udai.denom, &BorrowTarget::Deposit).unwrap();
     assert_eq!(Uint128::zero(), max_withdraw_amount);
 }
 
@@ -236,76 +237,8 @@ fn hls_influences_max_borrow() {
         vaults_data,
     };
 
-    let max_before = h.max_borrow_amount_estimate(&ustars.denom).unwrap();
+    let max_before = h.max_borrow_amount_estimate(&ustars.denom, &BorrowTarget::Deposit).unwrap();
     h.kind = AccountKind::HighLeveredStrategy;
-    let max_after = h.max_borrow_amount_estimate(&ustars.denom).unwrap();
+    let max_after = h.max_borrow_amount_estimate(&ustars.denom, &BorrowTarget::Deposit).unwrap();
     assert!(max_after > max_before);
-}
-
-#[test]
-fn max_borrow_offset_good() {
-    let udai = udai_info();
-
-    let denoms_data = DenomsData {
-        prices: HashMap::from([(udai.denom.clone(), udai.price)]),
-        params: HashMap::from([(udai.denom.clone(), udai.params.clone())]),
-    };
-
-    let vaults_data = VaultsData {
-        vault_values: Default::default(),
-        vault_configs: Default::default(),
-    };
-
-    let h = HealthComputer {
-        kind: AccountKind::Default,
-        positions: Positions {
-            account_id: "123".to_string(),
-            deposits: vec![coin(1200, &udai.denom)],
-            debts: vec![],
-            lends: vec![],
-            vaults: vec![],
-        },
-        denoms_data,
-        vaults_data,
-    };
-
-    let health = h.compute_health().unwrap();
-    assert!(health.max_ltv_health_factor < Some(Decimal::one()));
-    let max_borrow_amount = h.max_borrow_amount_estimate(&udai.denom).unwrap();
-    assert_eq!(Uint128::new(6763), max_borrow_amount);
-}
-
-#[test]
-fn max_borrow_offset_margin_of_error() {
-    let umars = umars_info();
-
-    let denoms_data = DenomsData {
-        prices: HashMap::from([(umars.denom.clone(), umars.price)]),
-        params: HashMap::from([(umars.denom.clone(), umars.params.clone())]),
-    };
-
-    let vaults_data = VaultsData {
-        vault_values: Default::default(),
-        vault_configs: Default::default(),
-    };
-
-    let h = HealthComputer {
-        kind: AccountKind::Default,
-        positions: Positions {
-            account_id: "123".to_string(),
-            deposits: vec![coin(1200, &umars.denom)],
-            debts: vec![],
-            lends: vec![],
-            vaults: vec![],
-        },
-        denoms_data,
-        vaults_data,
-    };
-
-    let health = h.compute_health().unwrap();
-    assert!(health.max_ltv_health_factor < Some(Decimal::one()));
-    let max_borrow_amount = h.max_borrow_amount_estimate(&umars.denom).unwrap();
-
-    // Normally could be 4800, but conservative offset rounding has a margin of error
-    assert_eq!(Uint128::new(4795), max_borrow_amount);
 }

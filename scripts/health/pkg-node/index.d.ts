@@ -14,6 +14,7 @@ export function max_withdraw_estimate_js(health_computer: any, withdraw_denom: a
 /**
  * @param {any} health_computer
  * @param {any} borrow_denom
+ * @param {any} target
  * @returns {any}
  */
-export function max_borrow_estimate_js(health_computer: any, borrow_denom: any): any
+export function max_borrow_estimate_js(health_computer: any, borrow_denom: any, target: any): any

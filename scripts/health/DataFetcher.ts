@@ -12,11 +12,16 @@ import { MarsMockOracleQueryClient } from '../types/generated/mars-mock-oracle/M
 import { MarsMockVaultQueryClient } from '../types/generated/mars-mock-vault/MarsMockVault.client'
 import { MarsParamsQueryClient } from '../types/generated/mars-params/MarsParams.client'
 
+export enum BorrowTarget {
+  DEPOSIT = 'deposit',
+  WALLET = 'wallet',
+}
+
 export class DataFetcher {
   constructor(
     private computeHealthFn: (h: HealthComputer) => HealthValuesResponse,
     private maxWithdrawFn: (h: HealthComputer, denom: string) => string,
-    private maxBorrowFn: (h: HealthComputer, denom: string) => string,
+    private maxBorrowFn: (h: HealthComputer, denom: string, target: BorrowTarget) => string,
     private creditManagerAddr: string,
     private oracleAddr: string,
     private paramsAddr: string,
@@ -125,9 +130,13 @@ export class DataFetcher {
     return parseInt(result)
   }
 
-  maxBorrowAmount = async (accountId: string, denom: string): Promise<number> => {
+  maxBorrowAmount = async (
+    accountId: string,
+    denom: string,
+    target: BorrowTarget,
+  ): Promise<number> => {
     const positions = await this.assembleComputer(accountId)
-    const result = this.maxBorrowFn(positions, denom)
+    const result = this.maxBorrowFn(positions, denom, target)
     return parseInt(result)
   }
 }

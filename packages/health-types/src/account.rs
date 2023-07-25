@@ -13,3 +13,9 @@ impl fmt::Display for AccountKind {
         write!(f, "{:?}", self)
     }
 }
+
+#[cw_serde]
+pub enum BorrowTarget {
+    Deposit,
+    Wallet,
+}
