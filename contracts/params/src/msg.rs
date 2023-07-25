@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Decimal;
+use cosmwasm_std::{Coin, Decimal};
 use mars_owner::OwnerUpdate;
 
 use crate::types::{asset::AssetParamsUnchecked, vault::VaultConfigUnchecked};
@@ -8,6 +8,8 @@ use crate::types::{asset::AssetParamsUnchecked, vault::VaultConfigUnchecked};
 pub struct InstantiateMsg {
     /// Contract's owner
     pub owner: String,
+    /// Address of the address provider contract
+    pub address_provider: String,
     /// Determines the ideal HF a position should be left at immediately after the position has been liquidated.
     pub target_health_factor: Decimal,
 }
@@ -52,6 +54,13 @@ pub enum QueryMsg {
 
     #[returns(Decimal)]
     TargetHealthFactor {},
+
+    /// Compute the total amount deposited of the given asset across Red Bank
+    /// and Credit Manager.
+    #[returns(Coin)]
+    TotalDeposit {
+        denom: String,
+    },
 }
 
 #[cw_serde]

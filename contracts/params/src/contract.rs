@@ -12,8 +12,10 @@ use crate::{
         CmEmergencyUpdate, EmergencyUpdate, ExecuteMsg, InstantiateMsg, QueryMsg,
         RedBankEmergencyUpdate,
     },
-    query::{query_all_asset_params, query_all_vault_configs, query_vault_config},
-    state::{ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR},
+    query::{
+        query_all_asset_params, query_all_vault_configs, query_total_deposit, query_vault_config,
+    },
+    state::{ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR, ADDRESS_PROVIDER},
 };
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -35,6 +37,9 @@ pub fn instantiate(
             owner: msg.owner,
         },
     )?;
+
+    let address_provider_addr = deps.api.addr_validate(&msg.address_provider)?;
+    ADDRESS_PROVIDER.save(deps.storage, &address_provider_addr)?;
 
     assert_thf(msg.target_health_factor)?;
     TARGET_HEALTH_FACTOR.save(deps.storage, &msg.target_health_factor)?;
@@ -72,7 +77,7 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> ContractResult<Binary> {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
     let res = match msg {
         QueryMsg::Owner {} => to_binary(&OWNER.query(deps.storage)?),
         QueryMsg::AssetParams {
@@ -90,6 +95,9 @@ pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> ContractResult<Binary> {
             limit,
         } => to_binary(&query_all_vault_configs(deps, start_after, limit)?),
         QueryMsg::TargetHealthFactor {} => to_binary(&TARGET_HEALTH_FACTOR.load(deps.storage)?),
+        QueryMsg::TotalDeposit {
+            denom,
+        } => to_binary(&query_total_deposit(deps, &env, denom)?),
     };
     res.map_err(Into::into)
 }
