@@ -19,7 +19,9 @@ backtraces = ["cosmwasm-std/backtraces"]
 library    = []
 
 [dependencies]
-cosmwasm-std    = { workspace = true }
-cw-storage-plus = { workspace = true }
-mars-rover      = { workspace = true }
-thiserror       = { workspace = true }
+cosmwasm-std        = { workspace = true }
+mars-red-bank-types = { workspace = true }
+
+[dev-dependencies]
+anyhow        = { workspace = true }
+cw-multi-test = { workspace = true }

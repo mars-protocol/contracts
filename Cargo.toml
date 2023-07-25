@@ -6,7 +6,6 @@ members  = [
     "contracts/credit-manager",
     "contracts/swapper/*",
     "contracts/v2-zapper/*",
-    "contracts/v3-zapper/*",
     "contracts/health",
 
     # mock contracts
@@ -50,16 +49,16 @@ cw-multi-test      = "0.16.5"
 cw-paginate        = "0.2.1"
 cw-utils           = "1.0.1"
 cw-storage-plus    = "1.1.0"
-cw-vault-standard  = { version = "0.3.0", features = ["lockup", "force-unlock"] }
+cw-vault-standard  = { version = "0.3.1", features = ["lockup", "force-unlock"] }
 itertools          = "0.11.0"
-osmosis-std        = "0.16.0"
-osmosis-test-tube  = "16.0.0"
+osmosis-std        = "0.16.1"
+osmosis-test-tube  = "16.0.1"
 proptest           = "1.2.0"
 schemars           = "0.8.12"
-serde              = { version = "1.0.171", default-features = false, features = ["derive"] }
+serde              = { version = "1.0.175", default-features = false, features = ["derive"] }
 serde_json         = "1.0.103"
 serde-wasm-bindgen = "0.5.0"
-thiserror          = "1.0.43"
+thiserror          = "1.0.44"
 wasm-bindgen       = "0.2.87"
 
 # mars packages
@@ -76,7 +75,6 @@ mars-params         = { version = "1.0.7", features = ["library"] }
 mars-rover-health   = { version = "2.0.0", path = "./contracts/health", features = ["library"] }
 mars-swapper-base   = { version = "2.0.0", path = "./contracts/swapper/base", features = ["library"] }
 mars-v2-zapper-base = { version = "2.0.0", path = "./contracts/v2-zapper/base", features = ["library"] }
-mars-v3-zapper-base = { version = "2.0.0", path = "./contracts/v3-zapper/base", features = ["library"] }
 
 # mocks
 mars-mock-credit-manager = { version = "2.0.0", path = "./contracts/mock-credit-manager", features = ["library"] }

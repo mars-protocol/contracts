@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Display};
 
 use cosmwasm_std::{Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Env, QuerierWrapper};
-use mars_rover::adapters::swap::EstimateExactInSwapResponse;
+use mars_red_bank_types::swapper::EstimateExactInSwapResponse;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 

@@ -2,7 +2,7 @@ use cosmwasm_std::{
     coins, to_binary, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
     MessageInfo, Response, StdError, StdResult, Uint128,
 };
-use mars_rover::adapters::swap::{
+use mars_red_bank_types::swapper::{
     EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg,
 };
 
