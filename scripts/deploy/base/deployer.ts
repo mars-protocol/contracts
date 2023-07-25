@@ -23,7 +23,10 @@ import {
   InstantiateMsg as RedBankInstantiateMsg,
   QueryMsg as RedBankQueryMsg,
 } from '../../types/generated/mars-red-bank/MarsRedBank.types'
-import { InstantiateMsg as AddressProviderInstantiateMsg } from '../../types/generated/mars-address-provider/MarsAddressProvider.types'
+import {
+  AddressResponseItem,
+  InstantiateMsg as AddressProviderInstantiateMsg,
+} from '../../types/generated/mars-address-provider/MarsAddressProvider.types'
 import { InstantiateMsg as IncentivesInstantiateMsg } from '../../types/generated/mars-incentives/MarsIncentives.types'
 import { InstantiateMsg as RewardsInstantiateMsg } from '../../types/generated/mars-rewards-collector/MarsRewardsCollector.types'
 import {
@@ -271,38 +274,38 @@ export class Deployer {
 
   async updateAddressProvider() {
     printBlue('Updating addresses in Address Provider...')
-    const addressesToSet = [
+    const addressesToSet: AddressResponseItem[] = [
       {
+        address: this.storage.addresses['rewards-collector']!,
         address_type: 'rewards_collector',
-        address: this.storage.addresses['rewards-collector'],
       },
       {
+        address: this.storage.addresses.incentives!,
         address_type: 'incentives',
-        address: this.storage.addresses.incentives,
       },
       {
+        address: this.storage.addresses.oracle!,
         address_type: 'oracle',
-        address: this.storage.addresses.oracle,
       },
       {
+        address: this.storage.addresses['red-bank']!,
         address_type: 'red_bank',
-        address: this.storage.addresses['red-bank'],
       },
       {
-        address_type: 'fee_collector',
         address: this.config.feeCollectorAddr,
+        address_type: 'fee_collector',
       },
       {
-        address_type: 'safety_fund',
         address: this.config.safetyFundAddr,
+        address_type: 'safety_fund',
       },
       {
-        address_type: 'protocol_admin',
         address: this.config.protocolAdminAddr,
+        address_type: 'protocol_admin',
       },
       {
+        address: this.storage.addresses.swapper!,
         address_type: 'swapper',
-        address: this.storage.addresses.swapper,
       },
     ]
 
