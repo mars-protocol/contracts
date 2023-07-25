@@ -18,7 +18,7 @@ use osmosis_std::types::osmosis::{
 };
 use pyth_sdk_cw::{Price, PriceFeed, PriceFeedResponse, PriceIdentifier};
 
-use crate::helpers::prepare_query_pool_response;
+use crate::helpers::prepare_query_balancer_pool_response;
 
 mod helpers;
 
@@ -804,7 +804,7 @@ fn querying_xyk_lp_price() {
     let assets = vec![coin(1, "uatom"), coin(1, "uosmo")];
     deps.querier.set_query_pool_response(
         10001,
-        prepare_query_pool_response(
+        prepare_query_balancer_pool_response(
             10001,
             &assets,
             &[5000u64, 5000u64],
@@ -815,7 +815,7 @@ fn querying_xyk_lp_price() {
     let assets = vec![coin(1, "umars"), coin(1, "uosmo")];
     deps.querier.set_query_pool_response(
         10002,
-        prepare_query_pool_response(
+        prepare_query_balancer_pool_response(
             10002,
             &assets,
             &[5000u64, 5000u64],
@@ -826,7 +826,7 @@ fn querying_xyk_lp_price() {
     let assets = vec![coin(10000, "uatom"), coin(885000, "umars")];
     deps.querier.set_query_pool_response(
         10003,
-        prepare_query_pool_response(
+        prepare_query_balancer_pool_response(
             10003,
             &assets,
             &[5000u64, 5000u64],
@@ -889,7 +889,7 @@ fn querying_xyk_lp_price() {
     let assets = vec![coin(6389, "uatom"), coin(1385000, "umars")];
     deps.querier.set_query_pool_response(
         10003,
-        prepare_query_pool_response(
+        prepare_query_balancer_pool_response(
             10003,
             &assets,
             &[5000u64, 5000u64],
