@@ -2,12 +2,12 @@ use std::collections::{HashMap, HashSet};
 
 use cosmwasm_std::{Addr, Deps, Env, Order, StdError, StdResult, Uint128};
 use mars_health::health::{Health, Position as HealthPosition};
+use mars_interest_rate::{get_underlying_debt_amount, get_underlying_liquidity_amount};
 use mars_red_bank_types::{oracle, red_bank::Position};
 
 use crate::{
     error::ContractError,
     helpers::query_asset_params,
-    interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount},
     state::{COLLATERALS, DEBTS, MARKETS},
 };
 

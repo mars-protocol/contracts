@@ -6,16 +6,16 @@ use helpers::{
     th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
     TestUtilizationDeltaInfo,
 };
+use mars_interest_rate::{
+    compute_scaled_amount, compute_underlying_amount, get_scaled_debt_amount,
+    get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
+};
 use mars_owner::OwnerError::NotOwner;
 use mars_params::types::AssetParams;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
     health,
-    interest_rates::{
-        compute_scaled_amount, compute_underlying_amount, get_scaled_debt_amount,
-        get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
-    },
     state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
 };
 use mars_red_bank_types::red_bank::{Debt, ExecuteMsg, Market};

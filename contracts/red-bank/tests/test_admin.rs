@@ -1,9 +1,9 @@
 use cosmwasm_std::{attr, coin, from_binary, testing::mock_info, Addr, Decimal, Event, Uint128};
+use mars_interest_rate::{compute_scaled_amount, compute_underlying_amount, ScalingOperation};
 use mars_owner::OwnerError::NotOwner;
 use mars_red_bank::{
     contract::{execute, instantiate, query},
     error::ContractError,
-    interest_rates::{compute_scaled_amount, compute_underlying_amount, ScalingOperation},
     state::{COLLATERALS, MARKETS},
 };
 use mars_red_bank_types::{

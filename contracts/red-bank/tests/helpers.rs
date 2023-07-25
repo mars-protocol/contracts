@@ -6,13 +6,13 @@ use cosmwasm_std::{
     testing::{MockApi, MockStorage},
     Addr, Coin, Decimal, Deps, DepsMut, Event, OwnedDeps, Uint128,
 };
+use mars_interest_rate::{
+    calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
+    ScalingOperation,
+};
 use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
 use mars_red_bank::{
     contract::{instantiate, query},
-    interest_rates::{
-        calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
-        ScalingOperation,
-    },
     state::{COLLATERALS, DEBTS, MARKETS},
 };
 use mars_red_bank_types::red_bank::{

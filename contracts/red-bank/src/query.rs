@@ -1,5 +1,9 @@
 use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdError, StdResult, Uint128};
 use cw_storage_plus::Bound;
+use mars_interest_rate::{
+    get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
+    get_underlying_liquidity_amount,
+};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     red_bank::{
@@ -11,10 +15,6 @@ use mars_red_bank_types::{
 use crate::{
     error::ContractError,
     health,
-    interest_rates::{
-        get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
-        get_underlying_liquidity_amount,
-    },
     state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS},
 };
 

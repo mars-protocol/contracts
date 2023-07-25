@@ -7,14 +7,14 @@ use helpers::{
     has_collateral_position, set_collateral, th_build_interests_updated_event,
     th_get_expected_indices_and_rates, th_setup, TestUtilizationDeltaInfo,
 };
+use mars_interest_rate::{
+    compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
+    get_updated_borrow_index, get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
+};
 use mars_params::types::AssetParams;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
-    interest_rates::{
-        compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
-        get_updated_borrow_index, get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
-    },
     state::{COLLATERALS, DEBTS, MARKETS},
 };
 use mars_red_bank_types::{

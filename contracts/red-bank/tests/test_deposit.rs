@@ -9,11 +9,11 @@ use cw_utils::PaymentError;
 use helpers::{
     set_collateral, th_build_interests_updated_event, th_get_expected_indices_and_rates, th_setup,
 };
+use mars_interest_rate::{compute_scaled_amount, ScalingOperation, SCALING_FACTOR};
 use mars_params::types::{AssetParams, HighLeverageStrategyParams, RedBankSettings, RoverSettings};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
-    interest_rates::{compute_scaled_amount, ScalingOperation, SCALING_FACTOR},
     state::{COLLATERALS, MARKETS},
 };
 use mars_red_bank_types::{

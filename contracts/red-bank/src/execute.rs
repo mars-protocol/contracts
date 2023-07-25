@@ -3,6 +3,10 @@ use std::{cmp::min, str};
 use cosmwasm_std::{
     Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128,
 };
+use mars_interest_rate::{
+    get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
+    get_underlying_liquidity_amount,
+};
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_params::types::AssetParams;
 use mars_red_bank_types::{
@@ -24,10 +28,7 @@ use crate::{
         assert_liquidatable,
     },
     helpers::{query_asset_params, query_close_factor},
-    interest_rates::{
-        apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
-        get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
-    },
+    interest_rates::{apply_accumulated_interests, update_interest_rates},
     state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS},
     user::User,
 };
