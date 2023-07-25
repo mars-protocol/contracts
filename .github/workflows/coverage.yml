@@ -29,13 +29,14 @@ jobs:
       - name: Compile workspace
         run: cargo make build
 
+      # FIXME: enable it one problem with `no space left fixed`
       # - remove `target/release` deps
-      - name: Cleanup
-        run: |
-          rm -rf target/release
+      # - name: Cleanup
+      #   run: |
+      #     rm -rf target/release
 
-      - name: Run test
-        run: cargo make test
+      # - name: Run test
+      #   run: cargo make test
 
       # disabled because of "no space left" error.
       # - name: Run test coverage
