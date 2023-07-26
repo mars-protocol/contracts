@@ -7,7 +7,7 @@ use cosmwasm_std::{
 };
 use mars_osmosis::helpers::{Pool, QueryPoolResponse};
 use mars_red_bank_types::rewards_collector::{Config, InstantiateMsg, QueryMsg};
-use mars_rewards_collector::contract::entry;
+use mars_rewards_collector_osmosis::entry;
 use mars_testing::{mock_info, MarsMockQuerier};
 use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
 
@@ -21,6 +21,7 @@ pub fn mock_instantiate_msg() -> InstantiateMsg {
         channel_id: "channel-69".to_string(),
         timeout_seconds: 300,
         slippage_tolerance: Decimal::percent(3),
+        neutron_ibc_config: None,
     }
 }
 

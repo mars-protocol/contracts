@@ -26,15 +26,16 @@ jobs:
         run: cargo make install-stable
 
       # selecting a toolchain should happen before the plugin, as the cache uses the current rustc version as its cache key
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
+      # - name: Cache dependencies
+      #   uses: Swatinem/rust-cache@v2
 
       # Artifacts used by tests
       - name: Compile workspace
         run: cargo make build
 
-      - name: Run test
-        run: cargo make test
+      # FIXME: disable because of "no space left" in github pipeline
+      # - name: Run test
+      #   run: cargo make test
 
       # disabled because of "no space left" error.
       # - name: Run test coverage

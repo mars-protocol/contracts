@@ -5,7 +5,7 @@ use mars_red_bank_types::{
     rewards_collector::{ConfigResponse, ExecuteMsg, QueryMsg},
     swapper,
 };
-use mars_rewards_collector::contract::entry::execute;
+use mars_rewards_collector_osmosis::entry::execute;
 use mars_testing::mock_info;
 use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
