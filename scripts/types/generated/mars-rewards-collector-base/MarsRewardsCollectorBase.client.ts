@@ -6,22 +6,26 @@
  */
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from '@cosmjs/cosmwasm-stargate'
-import { Coin, StdFee } from '@cosmjs/amino'
+import { StdFee } from '@cosmjs/amino'
 import {
+  Uint128,
   Decimal,
   InstantiateMsg,
+  NeutronIbcConfig,
+  Coin,
   ExecuteMsg,
   OwnerUpdate,
-  Uint128,
   UpdateConfig,
   QueryMsg,
   ConfigResponse,
-} from './MarsRewardsCollector.types'
-export interface MarsRewardsCollectorReadOnlyInterface {
+} from './MarsRewardsCollectorBase.types'
+export interface MarsRewardsCollectorBaseReadOnlyInterface {
   contractAddress: string
   config: () => Promise<ConfigResponse>
 }
-export class MarsRewardsCollectorQueryClient implements MarsRewardsCollectorReadOnlyInterface {
+export class MarsRewardsCollectorBaseQueryClient
+  implements MarsRewardsCollectorBaseReadOnlyInterface
+{
   client: CosmWasmClient
   contractAddress: string
 
@@ -37,7 +41,8 @@ export class MarsRewardsCollectorQueryClient implements MarsRewardsCollectorRead
     })
   }
 }
-export interface MarsRewardsCollectorInterface extends MarsRewardsCollectorReadOnlyInterface {
+export interface MarsRewardsCollectorBaseInterface
+  extends MarsRewardsCollectorBaseReadOnlyInterface {
   contractAddress: string
   sender: string
   updateOwner: (
@@ -107,9 +112,9 @@ export interface MarsRewardsCollectorInterface extends MarsRewardsCollectorReadO
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
 }
-export class MarsRewardsCollectorClient
-  extends MarsRewardsCollectorQueryClient
-  implements MarsRewardsCollectorInterface
+export class MarsRewardsCollectorBaseClient
+  extends MarsRewardsCollectorBaseQueryClient
+  implements MarsRewardsCollectorBaseInterface
 {
   client: SigningCosmWasmClient
   sender: string

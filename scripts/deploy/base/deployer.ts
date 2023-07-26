@@ -25,7 +25,7 @@ import {
 } from '../../types/generated/mars-red-bank/MarsRedBank.types'
 import { InstantiateMsg as AddressProviderInstantiateMsg } from '../../types/generated/mars-address-provider/MarsAddressProvider.types'
 import { InstantiateMsg as IncentivesInstantiateMsg } from '../../types/generated/mars-incentives/MarsIncentives.types'
-import { InstantiateMsg as RewardsInstantiateMsg } from '../../types/generated/mars-rewards-collector/MarsRewardsCollector.types'
+import { InstantiateMsg as RewardsInstantiateMsg } from '../../types/generated/mars-rewards-collector-base/MarsRewardsCollectorBase.types'
 import {
   WasmOracleCustomInitParams,
   InstantiateMsg as WasmOracleInstantiateMsg,

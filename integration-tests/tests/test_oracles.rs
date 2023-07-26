@@ -35,7 +35,7 @@ mod helpers;
 const OSMOSIS_ORACLE_CONTRACT_NAME: &str = "mars-oracle-osmosis";
 const OSMOSIS_RED_BANK_CONTRACT_NAME: &str = "mars-red-bank";
 const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
-const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector";
+const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
 const OSMOSIS_INCENTIVES_CONTRACT_NAME: &str = "mars-incentives";
 const OSMOSIS_PARAMS_CONTRACT_NAME: &str = "mars-params";
 
@@ -1094,6 +1094,7 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
             channel_id: "channel-1".to_string(),
             timeout_seconds: 60,
             slippage_tolerance: Decimal::new(Uint128::from(1u128)),
+            neutron_ibc_config: None,
         },
     );
 
