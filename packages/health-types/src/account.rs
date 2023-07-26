@@ -1,6 +1,7 @@
 use std::fmt;
 
 use cosmwasm_schema::cw_serde;
+use tsify::Tsify;
 
 #[cw_serde]
 pub enum AccountKind {
@@ -15,6 +16,8 @@ impl fmt::Display for AccountKind {
 }
 
 #[cw_serde]
+#[derive(Tsify)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum BorrowTarget {
     Deposit,
     Wallet,

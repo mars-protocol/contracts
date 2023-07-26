@@ -1,20 +1,43 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * @param {any} health_computer
- * @returns {any}
+ * @param {HealthComputer} c
+ * @returns {HealthValuesResponse}
  */
-export function compute_health_js(health_computer: any): any
+export function compute_health_js(c: HealthComputer): HealthValuesResponse
 /**
- * @param {any} health_computer
- * @param {any} withdraw_denom
- * @returns {any}
+ * @param {HealthComputer} c
+ * @param {string} withdraw_denom
+ * @returns {string}
  */
-export function max_withdraw_estimate_js(health_computer: any, withdraw_denom: any): any
+export function max_withdraw_estimate_js(c: HealthComputer, withdraw_denom: string): string
 /**
- * @param {any} health_computer
- * @param {any} borrow_denom
- * @param {any} target
- * @returns {any}
+ * @param {HealthComputer} c
+ * @param {string} borrow_denom
+ * @param {BorrowTarget} target
+ * @returns {string}
  */
-export function max_borrow_estimate_js(health_computer: any, borrow_denom: any, target: any): any
+export function max_borrow_estimate_js(
+  c: HealthComputer,
+  borrow_denom: string,
+  target: BorrowTarget,
+): string
+export interface HealthComputer {
+  kind: AccountKind
+  positions: Positions
+  denoms_data: DenomsData
+  vaults_data: VaultsData
+}
+
+export interface HealthValuesResponse {
+  total_debt_value: Uint128
+  total_collateral_value: Uint128
+  max_ltv_adjusted_collateral: Uint128
+  liquidation_threshold_adjusted_collateral: Uint128
+  max_ltv_health_factor: Decimal | null
+  liquidation_health_factor: Decimal | null
+  liquidatable: boolean
+  above_max_ltv: boolean
+}
+
+export type BorrowTarget = 'deposit' | 'wallet'

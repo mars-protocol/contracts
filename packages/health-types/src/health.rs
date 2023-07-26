@@ -2,6 +2,7 @@ use std::fmt;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
+use tsify::Tsify;
 
 #[cw_serde]
 pub struct Health {
@@ -51,6 +52,8 @@ pub fn is_below_one(health_factor: &Option<Decimal>) -> bool {
 }
 
 #[cw_serde]
+#[derive(Tsify)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct HealthValuesResponse {
     pub total_debt_value: Uint128,
     pub total_collateral_value: Uint128,

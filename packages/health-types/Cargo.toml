@@ -21,4 +21,9 @@ cosmwasm-schema     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 mars-red-bank-types = { workspace = true }
 mars-owner          = { workspace = true }
+schemars            = { workspace = true }
+serde               = { workspace = true }
+serde_json          = { workspace = true }
 thiserror           = { workspace = true }
+tsify               = { workspace = true }
+wasm-bindgen        = { workspace = true }

@@ -1,9 +1,11 @@
 import { Positions } from '../types/generated/mars-credit-manager/MarsCreditManager.types'
 import { MarsCreditManagerQueryClient } from '../types/generated/mars-credit-manager/MarsCreditManager.client'
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate/build/cosmwasmclient'
-import { HealthValuesResponse } from '../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'
 import {
   AccountKind,
+  HealthValuesResponse,
+} from '../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'
+import {
   DenomsData,
   HealthComputer,
   VaultsData,
@@ -11,17 +13,18 @@ import {
 import { MarsMockOracleQueryClient } from '../types/generated/mars-mock-oracle/MarsMockOracle.client'
 import { MarsMockVaultQueryClient } from '../types/generated/mars-mock-vault/MarsMockVault.client'
 import { MarsParamsQueryClient } from '../types/generated/mars-params/MarsParams.client'
-
-export enum BorrowTarget {
-  DEPOSIT = 'deposit',
-  WALLET = 'wallet',
-}
+import {
+  BorrowTarget,
+  compute_health_js,
+  max_borrow_estimate_js,
+  max_withdraw_estimate_js,
+} from './pkg-web'
 
 export class DataFetcher {
   constructor(
-    private computeHealthFn: (h: HealthComputer) => HealthValuesResponse,
-    private maxWithdrawFn: (h: HealthComputer, denom: string) => string,
-    private maxBorrowFn: (h: HealthComputer, denom: string, target: BorrowTarget) => string,
+    private computeHealthFn: typeof compute_health_js,
+    private maxWithdrawFn: typeof max_withdraw_estimate_js,
+    private maxBorrowFn: typeof max_borrow_estimate_js,
     private creditManagerAddr: string,
     private oracleAddr: string,
     private paramsAddr: string,

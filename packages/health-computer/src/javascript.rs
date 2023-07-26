@@ -1,44 +1,28 @@
-use cosmwasm_schema::serde::{de::DeserializeOwned, Serialize};
 use mars_rover_health_types::{BorrowTarget, HealthValuesResponse};
 use wasm_bindgen::prelude::*;
 
 use crate::HealthComputer;
 
+// Note: Arguments and return values must use:
+//          #[derive(Tsify)]
+//          #[tsify(into_wasm_abi, from_wasm_abi)]
+//      as attributes in order for Typescript type generation to work
+
 #[wasm_bindgen]
-pub fn compute_health_js(health_computer: JsValue) -> JsValue {
-    let c: HealthComputer = deserialize(health_computer);
-    let health = c.compute_health().unwrap();
-    let health_response: HealthValuesResponse = health.into();
-    serialize(health_response)
+pub fn compute_health_js(c: HealthComputer) -> HealthValuesResponse {
+    c.compute_health().unwrap().into()
 }
 
 #[wasm_bindgen]
-pub fn max_withdraw_estimate_js(health_computer: JsValue, withdraw_denom: JsValue) -> JsValue {
-    let c: HealthComputer = deserialize(health_computer);
-    let denom: String = deserialize(withdraw_denom);
-    let max = c.max_withdraw_amount_estimate(&denom).unwrap();
-    serialize(max)
+pub fn max_withdraw_estimate_js(c: HealthComputer, withdraw_denom: String) -> String {
+    c.max_withdraw_amount_estimate(&withdraw_denom).unwrap().to_string()
 }
 
 #[wasm_bindgen]
 pub fn max_borrow_estimate_js(
-    health_computer: JsValue,
-    borrow_denom: JsValue,
-    target: JsValue,
-) -> JsValue {
-    let c: HealthComputer = deserialize(health_computer);
-    let denom: String = deserialize(borrow_denom);
-    let target: BorrowTarget = deserialize(target);
-    let max = c.max_borrow_amount_estimate(&denom, &target).unwrap();
-    serialize(max)
-}
-
-pub fn serialize<T: Serialize>(val: T) -> JsValue {
-    serde_wasm_bindgen::to_value(&val).unwrap()
-}
-
-pub fn deserialize<T: DeserializeOwned>(val: JsValue) -> T {
-    #[cfg(feature = "console_error_panic_hook")]
-    console_error_panic_hook::set_once();
-    serde_wasm_bindgen::from_value(val).unwrap()
+    c: HealthComputer,
+    borrow_denom: String,
+    target: BorrowTarget,
+) -> String {
+    c.max_borrow_amount_estimate(&borrow_denom, &target).unwrap().to_string()
 }
