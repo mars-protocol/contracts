@@ -9,11 +9,11 @@ import { UseQueryOptions, useQuery, useMutation, UseMutationOptions } from '@tan
 import { ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee, Coin } from '@cosmjs/amino'
 import {
-  Decimal,
   InstantiateMsg,
   CreateOrUpdateConfig,
   ExecuteMsg,
   OwnerUpdate,
+  Decimal,
   Uint128,
   InitOrUpdateAssetParams,
   InterestRateModel,
@@ -245,6 +245,7 @@ export function useMarsRedBankUserPositionQuery<TData = UserPositionResponse>({
 export interface MarsRedBankUserCollateralsQuery<TData>
   extends MarsRedBankReactQuery<ArrayOfUserCollateralResponse, TData> {
   args: {
+    accountId?: string
     limit?: number
     startAfter?: string
     user: string
@@ -260,6 +261,7 @@ export function useMarsRedBankUserCollateralsQuery<TData = ArrayOfUserCollateral
     () =>
       client
         ? client.userCollaterals({
+            accountId: args.accountId,
             limit: args.limit,
             startAfter: args.startAfter,
             user: args.user,
@@ -271,6 +273,7 @@ export function useMarsRedBankUserCollateralsQuery<TData = ArrayOfUserCollateral
 export interface MarsRedBankUserCollateralQuery<TData>
   extends MarsRedBankReactQuery<UserCollateralResponse, TData> {
   args: {
+    accountId?: string
     denom: string
     user: string
   }
@@ -285,6 +288,7 @@ export function useMarsRedBankUserCollateralQuery<TData = UserCollateralResponse
     () =>
       client
         ? client.userCollateral({
+            accountId: args.accountId,
             denom: args.denom,
             user: args.user,
           })
@@ -536,6 +540,7 @@ export function useMarsRedBankBorrowMutation(
 export interface MarsRedBankWithdrawMutation {
   client: MarsRedBankClient
   msg: {
+    accountId?: string
     amount?: Uint128
     denom: string
     recipient?: string
@@ -560,7 +565,7 @@ export function useMarsRedBankWithdrawMutation(
 export interface MarsRedBankDepositMutation {
   client: MarsRedBankClient
   msg: {
-    onBehalfOf?: string
+    accountId?: string
   }
   args?: {
     fee?: number | StdFee | 'auto'

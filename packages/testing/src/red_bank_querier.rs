@@ -23,6 +23,7 @@ impl RedBankQuerier {
             },
             QueryMsg::UserCollateral {
                 user,
+                account_id: _,
                 denom,
             } => match self.users_denoms_collaterals.get(&(user.clone(), denom)) {
                 Some(collateral) => to_binary(&collateral).into(),

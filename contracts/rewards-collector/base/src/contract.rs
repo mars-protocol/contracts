@@ -182,6 +182,7 @@ where
                 denom: denom.clone(),
                 amount,
                 recipient: None,
+                account_id: None,
             })?,
             funds: vec![],
         });
@@ -211,6 +212,7 @@ where
         let claim_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: incentives_addr.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::ClaimRewards {
+                account_id: None,
                 start_after_collateral_denom,
                 start_after_incentive_denom,
                 limit,

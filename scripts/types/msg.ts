@@ -1,3 +1,4 @@
+import { InstantiateMsg as ParamsInstantiateMsg } from './generated/mars-params/MarsParams.types'
 import { InstantiateMsg as AstroportSwapperInstantiateMsg } from './generated/mars-swapper-astroport/MarsSwapperAstroport.types'
 import { InstantiateMsg as RedBankInstantiateMsg } from './generated/mars-red-bank/MarsRedBank.types'
 import { InstantiateMsg as AddressProviderInstantiateMsg } from './generated/mars-address-provider/MarsAddressProvider.types'
@@ -13,6 +14,7 @@ export type InstantiateMsgs =
   | IncentivesInstantiateMsg
   | WasmOracleInstantiateMsg
   | RewardsInstantiateMsg
+  | ParamsInstantiateMsg
   | AstroportSwapperInstantiateMsg
   | OsmosisSwapperInstantiateMsg
   | OsmosisOracleInstantiateMsg

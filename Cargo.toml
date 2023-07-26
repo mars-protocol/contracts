@@ -3,11 +3,13 @@ members = [
   "contracts/address-provider",
   "contracts/incentives",
   "contracts/oracle/*",
+  "contracts/params",
   "contracts/swapper/*",
   "contracts/red-bank",
   "contracts/rewards-collector/*",
   "packages/chains/*",
   "packages/health",
+  "packages/liquidation",
   "packages/testing",
   "packages/types",
   "packages/utils",
@@ -66,7 +68,9 @@ proptest          = "1.1.0"
 
 # packages
 mars-health         = { version = "1.0.0", path = "./packages/health" }
+mars-liquidation    = { version = "1.0.0", path = "./packages/liquidation" }
 mars-osmosis        = { version = "1.0.0", path = "./packages/chains/osmosis" }
+mars-params         = { version = "1.0.7", path = "./contracts/params" }
 mars-red-bank-types = { version = "1.0.0", path = "./packages/types" }
 mars-testing        = { version = "1.0.0", path = "./packages/testing" }
 mars-utils          = { version = "1.0.0", path = "./packages/utils" }

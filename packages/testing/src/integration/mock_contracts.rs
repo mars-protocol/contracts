@@ -49,3 +49,12 @@ pub fn mock_rewards_collector_osmosis_contract() -> Box<dyn Contract<Empty>> {
     );
     Box::new(contract)
 }
+
+pub fn mock_params_osmosis_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        mars_params::contract::execute,
+        mars_params::contract::instantiate,
+        mars_params::contract::query,
+    );
+    Box::new(contract)
+}
