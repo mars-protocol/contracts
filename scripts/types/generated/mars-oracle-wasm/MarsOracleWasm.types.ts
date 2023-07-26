@@ -58,6 +58,8 @@ export type WasmPriceSourceForString =
       pyth: {
         contract_addr: string
         denom_decimals: number
+        max_confidence: Decimal
+        max_deviation: Decimal
         max_staleness: number
         price_feed_id: Identifier
       }
@@ -102,14 +104,17 @@ export type QueryMsg =
   | {
       price: {
         denom: string
+        kind?: ActionKind | null
       }
     }
   | {
       prices: {
+        kind?: ActionKind | null
         limit?: number | null
         start_after?: string | null
       }
     }
+export type ActionKind = 'default' | 'liquidation'
 export interface ConfigResponse {
   base_denom: string
   owner?: string | null

@@ -1741,6 +1741,7 @@ name = "mars-health"
 version = "1.2.0"
 dependencies = [
  "cosmwasm-std",
+ "mars-params",
  "mars-red-bank-types",
  "mars-testing",
  "thiserror",
@@ -1772,9 +1773,11 @@ dependencies = [
  "cosmwasm-std",
  "cw-it",
  "cw-multi-test",
+ "mars-incentives",
  "mars-oracle-base",
  "mars-oracle-osmosis",
  "mars-osmosis",
+ "mars-params",
  "mars-red-bank",
  "mars-red-bank-types",
  "mars-rewards-collector-osmosis",
@@ -1784,6 +1787,16 @@ dependencies = [
  "osmosis-std",
  "osmosis-test-tube",
  "serde",
+]
+
+[[package]]
+name = "mars-liquidation"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-std",
+ "mars-health",
+ "mars-params",
+ "thiserror",
 ]
 
 [[package]]
@@ -1863,16 +1876,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-params"
+version = "1.0.7"
+dependencies = [
+ "anyhow",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus 1.1.0",
+ "cw2 1.1.0",
+ "mars-owner",
+ "mars-utils",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-red-bank"
 version = "1.2.0"
 dependencies = [
+ "anyhow",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-multi-test",
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
  "cw2 1.1.0",
  "mars-health",
+ "mars-liquidation",
  "mars-owner",
+ "mars-params",
  "mars-red-bank-types",
  "mars-testing",
  "mars-utils",
@@ -2021,6 +2055,7 @@ dependencies = [
  "mars-oracle-wasm",
  "mars-osmosis",
  "mars-owner",
+ "mars-params",
  "mars-red-bank",
  "mars-red-bank-types",
  "mars-rewards-collector-osmosis",

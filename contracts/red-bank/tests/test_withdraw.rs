@@ -7,6 +7,7 @@ use helpers::{
     has_collateral_position, set_collateral, th_build_interests_updated_event,
     th_get_expected_indices_and_rates, th_setup, TestUtilizationDeltaInfo,
 };
+use mars_params::types::asset::AssetParams;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -23,6 +24,8 @@ use mars_red_bank_types::{
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 use mars_utils::math;
+
+use crate::helpers::th_default_asset_params;
 
 mod helpers;
 
@@ -82,6 +85,7 @@ fn withdrawing_more_than_balance() {
             denom: denom.to_string(),
             amount: Some(Uint128::from(2000u128)),
             recipient: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -125,6 +129,7 @@ fn withdrawing_partially() {
             denom: denom.to_string(),
             amount: Some(withdraw_amount),
             recipient: None,
+            account_id: None,
         },
     )
     .unwrap();
@@ -178,6 +183,7 @@ fn withdrawing_partially() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
+                    account_id: None,
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
                     total_amount_scaled_before: initial_market.collateral_total_scaled,
@@ -189,6 +195,7 @@ fn withdrawing_partially() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
+                    account_id: None,
                     denom: denom.to_string(),
                     user_amount_scaled_before: initial_deposit_amount_scaled,
                     total_amount_scaled_before: initial_market.collateral_total_scaled
@@ -226,12 +233,13 @@ fn withdrawing_partially() {
     assert_eq!(market.collateral_total_scaled, expected_total_collateral_amount_scaled);
 
     // the user's collateral scaled amount should have been decreased
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, denom)).unwrap();
+    let collateral =
+        COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, "", denom)).unwrap();
     assert_eq!(collateral.amount_scaled, expected_withdraw_amount_scaled_remaining);
 
     // the reward collector's collateral scaled amount should have been increased
     let rewards_addr = Addr::unchecked(MarsAddressType::RewardsCollector.to_string());
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&rewards_addr, denom)).unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&rewards_addr, "", denom)).unwrap();
     assert_eq!(collateral.amount_scaled, expected_rewards_amount_scaled);
 }
 
@@ -258,6 +266,7 @@ fn withdrawing_completely() {
             denom: denom.to_string(),
             amount: None,
             recipient: None,
+            account_id: None,
         },
     )
     .unwrap();
@@ -294,6 +303,7 @@ fn withdrawing_completely() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
+                    account_id: None,
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
                     total_amount_scaled_before: initial_market.collateral_total_scaled,
@@ -305,6 +315,7 @@ fn withdrawing_completely() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
+                    account_id: None,
                     denom: denom.to_string(),
                     user_amount_scaled_before: withdrawer_balance_scaled,
                     total_amount_scaled_before: initial_market.collateral_total_scaled
@@ -365,6 +376,7 @@ fn withdrawing_to_another_user() {
             denom: denom.to_string(),
             amount: None,
             recipient: Some(recipient_addr.to_string()),
+            account_id: None,
         },
     )
     .unwrap();
@@ -402,6 +414,7 @@ fn withdrawing_to_another_user() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
+                    account_id: None,
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
                     total_amount_scaled_before: initial_market.collateral_total_scaled,
@@ -413,6 +426,7 @@ fn withdrawing_to_another_user() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
+                    account_id: None,
                     denom: denom.to_string(),
                     user_amount_scaled_before: withdrawer_balance_scaled,
                     total_amount_scaled_before: initial_market.collateral_total_scaled
@@ -447,6 +461,7 @@ struct HealthCheckTestSuite {
     deps: OwnedDeps<MockStorage, MockApi, MarsMockQuerier>,
     denoms: [&'static str; 3],
     markets: [Market; 3],
+    asset_params: [AssetParams; 3],
     prices: [Decimal; 3],
     collaterals: [Collateral; 3],
     debts: [Debt; 3],
@@ -466,8 +481,6 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
             denom: denoms[0].to_string(),
             liquidity_index: Decimal::one(),
             borrow_index: Decimal::one(),
-            max_loan_to_value: Decimal::from_ratio(40u128, 100u128),
-            liquidation_threshold: Decimal::from_ratio(60u128, 100u128),
             collateral_total_scaled: Uint128::new(100_000) * SCALING_FACTOR,
             ..Default::default()
         },
@@ -475,8 +488,6 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
             denom: denoms[1].to_string(),
             liquidity_index: Decimal::one(),
             borrow_index: Decimal::one(),
-            max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
-            liquidation_threshold: Decimal::from_ratio(80u128, 100u128),
             collateral_total_scaled: Uint128::new(100_000) * SCALING_FACTOR,
             ..Default::default()
         },
@@ -484,10 +495,26 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
             denom: denoms[2].to_string(),
             liquidity_index: Decimal::one(),
             borrow_index: Decimal::one(),
-            max_loan_to_value: Decimal::from_ratio(20u128, 100u128),
-            liquidation_threshold: Decimal::from_ratio(40u128, 100u128),
             collateral_total_scaled: Uint128::new(100_000) * SCALING_FACTOR,
             ..Default::default()
+        },
+    ];
+
+    let asset_params = [
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(40u128, 100u128),
+            liquidation_threshold: Decimal::from_ratio(60u128, 100u128),
+            ..th_default_asset_params()
+        },
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
+            liquidation_threshold: Decimal::from_ratio(80u128, 100u128),
+            ..th_default_asset_params()
+        },
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(20u128, 100u128),
+            liquidation_threshold: Decimal::from_ratio(40u128, 100u128),
+            ..th_default_asset_params()
         },
     ];
 
@@ -535,12 +562,19 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
 
     denoms
         .iter()
+        .zip(asset_params.iter())
+        .for_each(|(denom, ap)| deps.querier.set_redbank_params(denom, ap.clone()));
+
+    denoms
+        .iter()
         .zip(prices.iter())
         .for_each(|(denom, price)| deps.querier.set_oracle_price(denom, *price));
 
     denoms.iter().zip(collaterals.iter()).for_each(|(denom, collateral)| {
         if !collateral.amount_scaled.is_zero() {
-            COLLATERALS.save(deps.as_mut().storage, (&withdrawer_addr, denom), collateral).unwrap();
+            COLLATERALS
+                .save(deps.as_mut().storage, (&withdrawer_addr, "", denom), collateral)
+                .unwrap();
         }
     });
 
@@ -554,6 +588,7 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
         deps,
         denoms,
         markets,
+        asset_params,
         prices,
         collaterals,
         debts,
@@ -565,6 +600,7 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
 fn how_much_to_withdraw(suite: &HealthCheckTestSuite, block_time: u64) -> Uint128 {
     let HealthCheckTestSuite {
         markets,
+        asset_params,
         prices,
         collaterals,
         debts,
@@ -577,7 +613,7 @@ fn how_much_to_withdraw(suite: &HealthCheckTestSuite, block_time: u64) -> Uint12
         ScalingOperation::Truncate,
     )
     .unwrap()
-        * markets[0].liquidation_threshold
+        * asset_params[0].liquidation_threshold
         * prices[0];
 
     let token_3_weighted_lt_in_base_asset = compute_underlying_amount(
@@ -586,7 +622,7 @@ fn how_much_to_withdraw(suite: &HealthCheckTestSuite, block_time: u64) -> Uint12
         ScalingOperation::Truncate,
     )
     .unwrap()
-        * markets[2].liquidation_threshold
+        * asset_params[2].liquidation_threshold
         * prices[2];
 
     let weighted_liquidation_threshold_in_base_asset =
@@ -603,7 +639,7 @@ fn how_much_to_withdraw(suite: &HealthCheckTestSuite, block_time: u64) -> Uint12
     // How much to withdraw in base asset to have health factor equal to one
     let how_much_to_withdraw_in_base_asset = math::divide_uint128_by_decimal(
         weighted_liquidation_threshold_in_base_asset - total_collateralized_debt_in_base_asset,
-        markets[2].liquidation_threshold,
+        asset_params[2].liquidation_threshold,
     )
     .unwrap();
 
@@ -638,6 +674,7 @@ fn withdrawing_if_health_factor_not_met() {
             denom: denoms[2].to_string(),
             amount: Some(withdraw_amount),
             recipient: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -674,6 +711,7 @@ fn withdrawing_if_health_factor_met() {
             denom: denoms[2].to_string(),
             amount: Some(withdraw_amount),
             recipient: None,
+            account_id: None,
         },
     )
     .unwrap();
@@ -688,6 +726,7 @@ fn withdrawing_if_health_factor_met() {
                 contract_addr: MarsAddressType::Incentives.to_string(),
                 msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
+                    account_id: None,
                     denom: denoms[2].to_string(),
                     user_amount_scaled_before: collaterals[2].amount_scaled,
                     // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
@@ -710,7 +749,7 @@ fn withdrawing_if_health_factor_met() {
     let expected_collateral_total_amount_scaled_after =
         markets[2].collateral_total_scaled - expected_withdraw_amount_scaled;
 
-    let col = COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, denoms[2])).unwrap();
+    let col = COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, "", denoms[2])).unwrap();
     assert_eq!(col.amount_scaled, expected_withdrawer_balance_after);
 
     let market = MARKETS.load(deps.as_ref().storage, denoms[2]).unwrap();

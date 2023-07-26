@@ -29,7 +29,8 @@ fn withdrawing_from_red_bank() {
             msg: to_binary(&mars_red_bank_types::red_bank::ExecuteMsg::Withdraw {
                 denom: "uatom".to_string(),
                 amount: Some(Uint128::new(42069)),
-                recipient: None
+                recipient: None,
+                account_id: None
             })
             .unwrap(),
             funds: vec![]
