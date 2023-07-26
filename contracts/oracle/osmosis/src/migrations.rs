@@ -101,7 +101,7 @@ pub mod v1_0_1 {
                 vec![
                     attr("action", "migrate"),
                     attr("from_version", "1.0.1"),
-                    attr("to_version", "1.1.0")
+                    attr("to_version", "1.2.0")
                 ]
             );
 
@@ -131,7 +131,7 @@ pub mod v1_0_1 {
                 vec![
                     attr("action", "migrate"),
                     attr("from_version", "1.0.1"),
-                    attr("to_version", "1.1.0")
+                    attr("to_version", "1.2.0")
                 ]
             );
 
