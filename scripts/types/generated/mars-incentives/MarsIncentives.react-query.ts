@@ -94,6 +94,7 @@ export function useMarsIncentivesWhitelistQuery<TData = ArrayOfWhitelistEntry>({
 export interface MarsIncentivesUserUnclaimedRewardsQuery<TData>
   extends MarsIncentivesReactQuery<ArrayOfCoin, TData> {
   args: {
+    accountId?: string
     limit?: number
     startAfterCollateralDenom?: string
     startAfterIncentiveDenom?: string
@@ -110,6 +111,7 @@ export function useMarsIncentivesUserUnclaimedRewardsQuery<TData = ArrayOfCoin>(
     () =>
       client
         ? client.userUnclaimedRewards({
+            accountId: args.accountId,
             limit: args.limit,
             startAfterCollateralDenom: args.startAfterCollateralDenom,
             startAfterIncentiveDenom: args.startAfterIncentiveDenom,
@@ -304,6 +306,7 @@ export function useMarsIncentivesUpdateConfigMutation(
 export interface MarsIncentivesClaimRewardsMutation {
   client: MarsIncentivesClient
   msg: {
+    accountId?: string
     limit?: number
     startAfterCollateralDenom?: string
     startAfterIncentiveDenom?: string
@@ -329,6 +332,7 @@ export function useMarsIncentivesClaimRewardsMutation(
 export interface MarsIncentivesBalanceChangeMutation {
   client: MarsIncentivesClient
   msg: {
+    accountId?: string
     denom: string
     totalAmountScaledBefore: Uint128
     userAddr: Addr

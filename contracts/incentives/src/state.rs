@@ -32,12 +32,13 @@ pub const INCENTIVE_STATES: Map<(&str, &str), IncentiveState> = Map::new("incent
 pub const EMISSIONS: Map<(&str, &str, u64), Uint128> = Map::new("emissions");
 
 /// A map containing the incentive index for a given user, collateral denom and incentive denom.
-/// The key is (user address, collateral denom, incentive denom).
-pub const USER_ASSET_INDICES: Map<(&Addr, &str, &str), Decimal> = Map::new("indices");
+/// The key is (user address with optional account id, collateral denom, incentive denom).
+pub const USER_ASSET_INDICES: Map<((&Addr, &str), &str, &str), Decimal> = Map::new("indices");
 
 /// A map containing the amount of unclaimed incentives for a given user and incentive denom.
-/// The key is (user address, collateral denom, incentive denom).
-pub const USER_UNCLAIMED_REWARDS: Map<(&Addr, &str, &str), Uint128> = Map::new("unclaimed_rewards");
+/// The key is (user address with optional account id, collateral denom, incentive denom).
+pub const USER_UNCLAIMED_REWARDS: Map<((&Addr, &str), &str, &str), Uint128> =
+    Map::new("unclaimed_rewards");
 
 /// The default limit for pagination
 pub const DEFAULT_LIMIT: u32 = 5;
@@ -50,13 +51,14 @@ pub const MAX_LIMIT: u32 = 10;
 pub fn increase_unclaimed_rewards(
     storage: &mut dyn Storage,
     user_addr: &Addr,
+    acc_id: &str,
     collateral_denom: &str,
     incentive_denom: &str,
     accrued_rewards: Uint128,
 ) -> StdResult<()> {
     USER_UNCLAIMED_REWARDS.update(
         storage,
-        (user_addr, collateral_denom, incentive_denom),
+        ((user_addr, acc_id), collateral_denom, incentive_denom),
         |ur: Option<Uint128>| -> StdResult<Uint128> {
             Ok(ur.map_or_else(|| accrued_rewards, |r| r + accrued_rewards))
         },

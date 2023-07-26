@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt};
 
 use cosmwasm_std::{Addr, Coin, Decimal, Fraction, QuerierWrapper, StdResult, Uint128};
-use mars_red_bank_types::red_bank::Market;
+use mars_params::types::asset::AssetParams;
 
 use crate::{error::HealthError, query::MarsQuerier};
 
@@ -123,11 +123,11 @@ impl Health {
                     p.collateral_amount += c.amount;
                 }
                 None => {
-                    let Market {
+                    let AssetParams {
                         max_loan_to_value,
                         liquidation_threshold,
                         ..
-                    } = querier.query_market(&c.denom)?;
+                    } = querier.query_asset_params(&c.denom)?;
 
                     positions.insert(
                         c.denom.clone(),
@@ -151,11 +151,11 @@ impl Health {
                     p.debt_amount += d.amount;
                 }
                 None => {
-                    let Market {
+                    let AssetParams {
                         max_loan_to_value,
                         liquidation_threshold,
                         ..
-                    } = querier.query_market(&d.denom)?;
+                    } = querier.query_asset_params(&d.denom)?;
 
                     positions.insert(
                         d.denom.clone(),

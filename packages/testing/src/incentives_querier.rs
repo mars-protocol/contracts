@@ -32,6 +32,7 @@ impl IncentivesQuerier {
         let ret: ContractResult<Binary> = match query {
             QueryMsg::UserUnclaimedRewards {
                 user: _,
+                account_id: _,
                 start_after_collateral_denom: _,
                 start_after_incentive_denom: _,
                 limit: _,

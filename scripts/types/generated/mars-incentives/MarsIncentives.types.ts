@@ -29,6 +29,7 @@ export type ExecuteMsg =
     }
   | {
       balance_change: {
+        account_id?: string | null
         denom: string
         total_amount_scaled_before: Uint128
         user_addr: Addr
@@ -37,6 +38,7 @@ export type ExecuteMsg =
     }
   | {
       claim_rewards: {
+        account_id?: string | null
         limit?: number | null
         start_after_collateral_denom?: string | null
         start_after_incentive_denom?: string | null
@@ -111,6 +113,7 @@ export type QueryMsg =
     }
   | {
       user_unclaimed_rewards: {
+        account_id?: string | null
         limit?: number | null
         start_after_collateral_denom?: string | null
         start_after_incentive_denom?: string | null

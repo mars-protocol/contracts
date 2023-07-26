@@ -10,7 +10,7 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError, ContractResult, PriceSourceChecked};
-use mars_red_bank_types::oracle::{AstroportTwapSnapshot, Config};
+use mars_red_bank_types::oracle::{ActionKind, AstroportTwapSnapshot, Config};
 
 use crate::WasmPriceSourceChecked;
 
@@ -168,6 +168,7 @@ pub fn normalize_price(
     pair_info: &PairInfo,
     denom: &str,
     price: Decimal,
+    kind: ActionKind,
 ) -> ContractResult<Decimal> {
     let pair_denoms = get_astroport_pair_denoms(pair_info)?;
 
@@ -177,8 +178,14 @@ pub fn normalize_price(
         let other_pair_denom = get_other_astroport_pair_denom(&pair_denoms, denom)?;
 
         let other_price_source = price_sources.load(deps.storage, &other_pair_denom)?;
-        let other_price =
-            other_price_source.query_price(deps, env, &other_pair_denom, config, price_sources)?;
+        let other_price = other_price_source.query_price(
+            deps,
+            env,
+            &other_pair_denom,
+            config,
+            price_sources,
+            kind,
+        )?;
 
         Ok(price.checked_mul(other_price)?)
     }
