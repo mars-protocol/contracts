@@ -653,7 +653,7 @@ fn update_asset_new_reserve_factor_accrues_interest_rate() {
     let collateral = COLLATERALS
         .load(
             deps.as_ref().storage,
-            (&Addr::unchecked(MarsAddressType::RewardsCollector.to_string()), "somecoin"),
+            (&Addr::unchecked(MarsAddressType::RewardsCollector.to_string()), "", "somecoin"),
         )
         .unwrap();
     assert_eq!(collateral.amount_scaled, expected_rewards_scaled);

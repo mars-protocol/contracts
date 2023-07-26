@@ -151,12 +151,15 @@ pub fn query_user_collateral(
     deps: Deps,
     block: &BlockInfo,
     user_addr: Addr,
+    account_id: Option<String>,
     denom: String,
 ) -> StdResult<UserCollateralResponse> {
+    let acc_id = account_id.unwrap_or("".to_string());
+
     let Collateral {
         amount_scaled,
         enabled,
-    } = COLLATERALS.may_load(deps.storage, (&user_addr, &denom))?.unwrap_or_default();
+    } = COLLATERALS.may_load(deps.storage, (&user_addr, &acc_id, &denom))?.unwrap_or_default();
 
     let block_time = block.time.seconds();
     let market = MARKETS.load(deps.storage, &denom)?;
@@ -174,6 +177,7 @@ pub fn query_user_collaterals(
     deps: Deps,
     block: &BlockInfo,
     user_addr: Addr,
+    account_id: Option<String>,
     start_after: Option<String>,
     limit: Option<u32>,
 ) -> StdResult<Vec<UserCollateralResponse>> {
@@ -182,8 +186,10 @@ pub fn query_user_collaterals(
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
+    let acc_id = account_id.unwrap_or("".to_string());
+
     COLLATERALS
-        .prefix(&user_addr)
+        .prefix((&user_addr, &acc_id))
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
         .map(|item| {

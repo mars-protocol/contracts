@@ -5,7 +5,7 @@ use mars_params::types::asset::LiquidationBonus;
 use mars_red_bank::error::ContractError;
 use mars_testing::integration::mock_env::{MockEnv, MockEnvBuilder, RedBank};
 
-use crate::helpers::{assert_err, default_asset_params, default_asset_params_with};
+use crate::helpers::{assert_red_bank_err, default_asset_params, default_asset_params_with};
 
 mod helpers;
 
@@ -343,7 +343,7 @@ fn internally_tracked_balances_used_for_borrow() {
     mock_env.fund_account(&borrower2, &[coin(funded_osmo, "uosmo")]);
     red_bank.deposit(&mut mock_env, &borrower2, coin(funded_osmo, "uosmo")).unwrap();
     let res = red_bank.borrow(&mut mock_env, &borrower2, "uatom", donated_atom);
-    assert_err(
+    assert_red_bank_err(
         res,
         ContractError::InvalidBorrowAmount {
             denom: "uatom".to_string(),

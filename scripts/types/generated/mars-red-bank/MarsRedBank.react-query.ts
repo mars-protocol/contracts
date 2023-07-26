@@ -245,6 +245,7 @@ export function useMarsRedBankUserPositionQuery<TData = UserPositionResponse>({
 export interface MarsRedBankUserCollateralsQuery<TData>
   extends MarsRedBankReactQuery<ArrayOfUserCollateralResponse, TData> {
   args: {
+    accountId?: string
     limit?: number
     startAfter?: string
     user: string
@@ -260,6 +261,7 @@ export function useMarsRedBankUserCollateralsQuery<TData = ArrayOfUserCollateral
     () =>
       client
         ? client.userCollaterals({
+            accountId: args.accountId,
             limit: args.limit,
             startAfter: args.startAfter,
             user: args.user,
@@ -271,6 +273,7 @@ export function useMarsRedBankUserCollateralsQuery<TData = ArrayOfUserCollateral
 export interface MarsRedBankUserCollateralQuery<TData>
   extends MarsRedBankReactQuery<UserCollateralResponse, TData> {
   args: {
+    accountId?: string
     denom: string
     user: string
   }
@@ -285,6 +288,7 @@ export function useMarsRedBankUserCollateralQuery<TData = UserCollateralResponse
     () =>
       client
         ? client.userCollateral({
+            accountId: args.accountId,
             denom: args.denom,
             user: args.user,
           })
@@ -536,6 +540,7 @@ export function useMarsRedBankBorrowMutation(
 export interface MarsRedBankWithdrawMutation {
   client: MarsRedBankClient
   msg: {
+    accountId?: string
     amount?: Uint128
     denom: string
     recipient?: string
@@ -559,6 +564,9 @@ export function useMarsRedBankWithdrawMutation(
 }
 export interface MarsRedBankDepositMutation {
   client: MarsRedBankClient
+  msg: {
+    accountId?: string
+  }
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string
@@ -572,7 +580,7 @@ export function useMarsRedBankDepositMutation(
   >,
 ) {
   return useMutation<ExecuteResult, Error, MarsRedBankDepositMutation>(
-    ({ client, args: { fee, memo, funds } = {} }) => client.deposit(fee, memo, funds),
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.deposit(msg, fee, memo, funds),
     options,
   )
 }

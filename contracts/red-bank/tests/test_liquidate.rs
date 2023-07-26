@@ -801,14 +801,18 @@ fn response_verification() {
         deps.as_mut(),
         env.clone(),
         mock_info(provider.as_str(), &[coin(1000000, "uusdc")]),
-        ExecuteMsg::Deposit {},
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
     )
     .unwrap();
     execute(
         deps.as_mut(),
         env.clone(),
         mock_info(provider.as_str(), &[coin(1000000, "untrn")]),
-        ExecuteMsg::Deposit {},
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
     )
     .unwrap();
 
@@ -817,14 +821,18 @@ fn response_verification() {
         deps.as_mut(),
         env.clone(),
         mock_info(liquidatee.as_str(), &[coin(10000, "uosmo")]),
-        ExecuteMsg::Deposit {},
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
     )
     .unwrap();
     execute(
         deps.as_mut(),
         env.clone(),
         mock_info(liquidatee.as_str(), &[coin(900, "uatom")]),
-        ExecuteMsg::Deposit {},
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
     )
     .unwrap();
     execute(
@@ -869,6 +877,7 @@ fn response_verification() {
         deps.as_ref(),
         QueryMsg::UserCollateral {
             user: liquidatee.to_string(),
+            account_id: None,
             denom: "uosmo".to_string(),
         },
     );
@@ -980,6 +989,7 @@ fn expected_messages(
             contract_addr: MarsAddressType::Incentives.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: user_addr.clone(),
+                account_id: None,
                 denom: collateral_market.denom.clone(),
                 user_amount_scaled_before: user_collateral_scaled,
                 total_amount_scaled_before: collateral_market.collateral_total_scaled,
@@ -991,6 +1001,7 @@ fn expected_messages(
             contract_addr: MarsAddressType::Incentives.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: recipient_addr.clone(),
+                account_id: None,
                 denom: collateral_market.denom.clone(),
                 user_amount_scaled_before: recipient_collateral_scaled,
                 total_amount_scaled_before: collateral_market.collateral_total_scaled,
@@ -1002,6 +1013,7 @@ fn expected_messages(
             contract_addr: MarsAddressType::Incentives.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
+                account_id: None,
                 denom: collateral_market.denom.clone(),
                 user_amount_scaled_before: Uint128::zero(),
                 total_amount_scaled_before: collateral_market.collateral_total_scaled,
@@ -1013,6 +1025,7 @@ fn expected_messages(
             contract_addr: MarsAddressType::Incentives.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
+                account_id: None,
                 denom: debt_market.denom.clone(),
                 user_amount_scaled_before: Uint128::zero(),
                 total_amount_scaled_before: debt_market.collateral_total_scaled,

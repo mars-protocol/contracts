@@ -53,7 +53,10 @@ pub enum ExecuteMsg {
 
     /// Deposit native coins. Deposited coins must be sent in the transaction
     /// this call is made
-    Deposit {},
+    Deposit {
+        /// Credit account id (Rover)
+        account_id: Option<String>,
+    },
 
     /// Withdraw native coins
     Withdraw {
@@ -63,6 +66,8 @@ pub enum ExecuteMsg {
         amount: Option<Uint128>,
         /// The address where the withdrawn amount is sent
         recipient: Option<String>,
+        /// Credit account id (Rover)
+        account_id: Option<String>,
     },
 
     /// Borrow native coins. If borrow allowed, amount is added to caller's debt
@@ -174,6 +179,7 @@ pub enum QueryMsg {
     #[returns(crate::red_bank::UserCollateralResponse)]
     UserCollateral {
         user: String,
+        account_id: Option<String>,
         denom: String,
     },
 
@@ -181,6 +187,7 @@ pub enum QueryMsg {
     #[returns(Vec<crate::red_bank::UserCollateralResponse>)]
     UserCollaterals {
         user: String,
+        account_id: Option<String>,
         start_after: Option<String>,
         limit: Option<u32>,
     },

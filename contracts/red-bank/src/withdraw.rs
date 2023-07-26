@@ -20,12 +20,13 @@ pub fn withdraw(
     denom: String,
     amount: Option<Uint128>,
     recipient: Option<String>,
+    account_id: Option<String>,
 ) -> Result<Response, ContractError> {
     let withdrawer = User(&info.sender);
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
 
-    let collateral = withdrawer.collateral(deps.storage, &denom)?;
+    let collateral = withdrawer.collateral(deps.storage, &denom, account_id.clone())?;
     let withdrawer_balance_scaled_before = collateral.amount_scaled;
 
     if withdrawer_balance_scaled_before.is_zero() {
@@ -113,6 +114,7 @@ pub fn withdraw(
         withdraw_amount_scaled,
         incentives_addr,
         response,
+        account_id,
     )?;
 
     market.decrease_collateral(withdraw_amount_scaled)?;

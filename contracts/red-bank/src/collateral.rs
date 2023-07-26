@@ -21,18 +21,17 @@ pub fn update_asset_collateral_status(
 ) -> Result<Response, ContractError> {
     let user = User(&info.sender);
 
-    let mut collateral =
-        COLLATERALS.may_load(deps.storage, (user.address(), &denom))?.ok_or_else(|| {
-            ContractError::UserNoCollateralBalance {
-                user: user.into(),
-                denom: denom.clone(),
-            }
+    let mut collateral = COLLATERALS
+        .may_load(deps.storage, (user.address(), "", &denom))?
+        .ok_or_else(|| ContractError::UserNoCollateralBalance {
+            user: user.into(),
+            denom: denom.clone(),
         })?;
 
     let previously_enabled = collateral.enabled;
 
     collateral.enabled = enable;
-    COLLATERALS.save(deps.storage, (user.address(), &denom), &collateral)?;
+    COLLATERALS.save(deps.storage, (user.address(), "", &denom), &collateral)?;
 
     // if the collateral was previously enabled, but is not disabled, it is necessary to ensure the
     // user is not liquidatable after disabling

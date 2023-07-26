@@ -141,6 +141,13 @@
               "user_amount_scaled_before"
             ],
             "properties": {
+              "account_id": {
+                "description": "Credit account id (Rover)",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "denom": {
                 "description": "Denom of the asset of which deposited balance is changed",
                 "type": "string"
@@ -185,6 +192,13 @@
           "claim_rewards": {
             "type": "object",
             "properties": {
+              "account_id": {
+                "description": "Credit account id (Rover)",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "limit": {
                 "description": "The maximum number of results to return. If not set, 5 is used. If larger than 10, 10 is used.",
                 "type": [
@@ -571,6 +585,13 @@
               "user"
             ],
             "properties": {
+              "account_id": {
+                "description": "Credit account id (Rover)",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "limit": {
                 "description": "The maximum number of results to return. If not set, 5 is used. If larger than 10, 10 is used.",
                 "type": [

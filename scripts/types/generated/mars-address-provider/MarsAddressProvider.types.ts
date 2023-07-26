@@ -20,7 +20,7 @@ export type ExecuteMsg =
       update_owner: OwnerUpdate
     }
 export type MarsAddressType =
-  | ('incentives' | 'oracle' | 'red_bank' | 'rewards_collector' | 'params')
+  | ('incentives' | 'oracle' | 'red_bank' | 'rewards_collector' | 'params' | 'credit_manager')
   | 'protocol_admin'
   | 'fee_collector'
   | 'safety_fund'
