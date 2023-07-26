@@ -117,7 +117,7 @@ pub fn get_user_positions_map(
 
     // Find all denoms that the user has a collateral or debt position in
     let collateral_denoms = COLLATERALS
-        .prefix(user_addr)
+        .prefix((user_addr, ""))
         .keys(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?;
     let debt_denoms = DEBTS
@@ -138,13 +138,14 @@ pub fn get_user_positions_map(
             let market = MARKETS.load(deps.storage, &denom)?;
             let params = query_asset_params(&deps.querier, params_addr, &denom)?;
 
-            let collateral_amount = match COLLATERALS.may_load(deps.storage, (user_addr, &denom))? {
-                Some(collateral) if collateral.enabled => {
-                    let amount_scaled = collateral.amount_scaled;
-                    get_underlying_liquidity_amount(amount_scaled, &market, block_time)?
-                }
-                _ => Uint128::zero(),
-            };
+            let collateral_amount =
+                match COLLATERALS.may_load(deps.storage, (user_addr, "", &denom))? {
+                    Some(collateral) if collateral.enabled => {
+                        let amount_scaled = collateral.amount_scaled;
+                        get_underlying_liquidity_amount(amount_scaled, &market, block_time)?
+                    }
+                    _ => Uint128::zero(),
+                };
 
             let (debt_amount, uncollateralized_debt) =
                 match DEBTS.may_load(deps.storage, (user_addr, &denom))? {

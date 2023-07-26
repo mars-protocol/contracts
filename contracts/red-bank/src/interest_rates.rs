@@ -86,6 +86,7 @@ pub fn apply_accumulated_interests(
             reward_amount_scaled,
             incentives_addr,
             response,
+            None,
         )?;
         market.increase_collateral(reward_amount_scaled)?;
     }

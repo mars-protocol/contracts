@@ -1773,6 +1773,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-it",
  "cw-multi-test",
+ "mars-incentives",
  "mars-oracle-base",
  "mars-oracle-osmosis",
  "mars-osmosis",

@@ -30,6 +30,7 @@ fn rejecting_unexpected_payments() {
             denom: "".into(),
             amount: None,
             recipient: None,
+            account_id: None,
         },
     )
     .unwrap_err();

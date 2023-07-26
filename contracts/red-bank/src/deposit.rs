@@ -16,6 +16,7 @@ pub fn deposit(
     info: MessageInfo,
     denom: String,
     deposit_amount: Uint128,
+    account_id: Option<String>,
 ) -> Result<Response, ContractError> {
     let mut market = MARKETS.load(deps.storage, &denom)?;
 
@@ -73,6 +74,7 @@ pub fn deposit(
         deposit_amount_scaled,
         incentives_addr,
         response,
+        account_id,
     )?;
 
     market.increase_collateral(deposit_amount_scaled)?;

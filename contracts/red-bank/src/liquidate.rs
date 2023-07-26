@@ -50,7 +50,7 @@ pub fn liquidate(
 
     // check if the user has enabled the collateral asset as collateral
     let user_collateral = COLLATERALS
-        .may_load(deps.storage, (&liquidatee_addr, &collateral_denom))?
+        .may_load(deps.storage, (&liquidatee_addr, "", &collateral_denom))?
         .ok_or(ContractError::CannotLiquidateWhenNoCollateralBalance {})?;
     if !user_collateral.enabled {
         return Err(ContractError::CannotLiquidateWhenCollateralUnset {
@@ -160,6 +160,7 @@ pub fn liquidate(
         collateral_amount_to_liquidate_scaled,
         incentives_addr,
         response,
+        None,
     )?;
     response = recipient.increase_collateral(
         deps.storage,
@@ -167,6 +168,7 @@ pub fn liquidate(
         collateral_amount_received_by_liquidator_scaled,
         incentives_addr,
         response,
+        None,
     )?;
     if !protocol_fee.is_zero() {
         response = User(rewards_collector_addr).increase_collateral(
@@ -175,6 +177,7 @@ pub fn liquidate(
             protocol_fee_scaled,
             incentives_addr,
             response,
+            None,
         )?;
     }
 

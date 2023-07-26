@@ -100,7 +100,9 @@ fn depositing_with_no_coin_sent() {
         deps.as_mut(),
         mock_env(),
         mock_info(depositor_addr.as_str(), &[]),
-        ExecuteMsg::Deposit {},
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
     )
     .unwrap_err();
     assert_eq!(err, PaymentError::NoFunds {}.into());
@@ -120,7 +122,9 @@ fn depositing_with_multiple_coins_sent() {
         deps.as_mut(),
         mock_env(),
         mock_info(depositor_addr.as_str(), &sent_coins),
-        ExecuteMsg::Deposit {},
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
     )
     .unwrap_err();
     assert_eq!(err, PaymentError::MultipleDenoms {}.into());
@@ -141,7 +145,9 @@ fn depositing_to_non_existent_market() {
         deps.as_mut(),
         mock_env(),
         mock_info(depositor_addr.as_str(), &coins(123, false_denom)),
-        ExecuteMsg::Deposit {},
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
     )
     .unwrap_err();
     assert_eq!(err, StdError::not_found(type_name::<Market>()).into());
@@ -177,7 +183,9 @@ fn depositing_to_disabled_market() {
         deps.as_mut(),
         mock_env(),
         mock_info(depositor_addr.as_str(), &coins(123, denom)),
-        ExecuteMsg::Deposit {},
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
     )
     .unwrap_err();
     assert_eq!(
@@ -226,7 +234,9 @@ fn depositing_above_cap() {
         deps.as_mut(),
         mock_env_at_block_time(10000100),
         mock_info(depositor_addr.as_str(), &coins(1_000_001, denom)),
-        ExecuteMsg::Deposit {},
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
     )
     .unwrap_err();
     assert_eq!(
@@ -241,7 +251,9 @@ fn depositing_above_cap() {
         deps.as_mut(),
         mock_env_at_block_time(10000100),
         mock_info(depositor_addr.as_str(), &coins(123, denom)),
-        ExecuteMsg::Deposit {},
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
     );
     assert!(result.is_ok());
 }
@@ -272,7 +284,9 @@ fn depositing_without_existing_position() {
         deps.as_mut(),
         mock_env_at_block_time(block_time),
         mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
-        ExecuteMsg::Deposit {},
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
     )
     .unwrap();
 
@@ -285,6 +299,7 @@ fn depositing_without_existing_position() {
             contract_addr: MarsAddressType::Incentives.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
+                account_id: None,
                 denom: initial_market.denom.clone(),
                 user_amount_scaled_before: Uint128::zero(),
                 // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
@@ -319,7 +334,7 @@ fn depositing_without_existing_position() {
 
     // the depositor previously did not have a collateral position
     // a position should have been created with the correct scaled amount, and enabled by default
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, denom)).unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, "", denom)).unwrap();
     assert_eq!(
         collateral,
         Collateral {
@@ -359,7 +374,9 @@ fn depositing_with_existing_position() {
         deps.as_mut(),
         mock_env_at_block_time(block_time),
         mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
-        ExecuteMsg::Deposit {},
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
     )
     .unwrap();
 
@@ -372,6 +389,7 @@ fn depositing_with_existing_position() {
             contract_addr: MarsAddressType::Incentives.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
+                account_id: None,
                 denom: initial_market.denom.clone(),
                 user_amount_scaled_before: collateral_amount_scaled,
                 // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
@@ -384,7 +402,7 @@ fn depositing_with_existing_position() {
 
     // the depositor's scaled collateral amount should have been increased
     // however, the `enabled` status should not been affected
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, denom)).unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, "", denom)).unwrap();
     let expected = collateral_amount_scaled + expected_mint_amount;
     assert_eq!(
         collateral,
@@ -393,62 +411,4 @@ fn depositing_with_existing_position() {
             enabled: false
         }
     );
-}
-
-#[test]
-fn depositing_on_behalf_of_cannot_enable_collateral() {
-    let TestSuite {
-        mut deps,
-        denom,
-        depositor_addr,
-        ..
-    } = setup_test();
-
-    deps.querier.set_oracle_price(denom, Decimal::one());
-
-    let on_behalf_of_addr = Addr::unchecked("jake");
-
-    let block_time = 10000300;
-
-    // 'on_behalf_of_addr' deposit funds to their own account
-    execute(
-        deps.as_mut(),
-        mock_env_at_block_time(block_time),
-        mock_info(on_behalf_of_addr.as_str(), &coins(1u128, denom)),
-        ExecuteMsg::Deposit {},
-    )
-    .unwrap();
-
-    // 'on_behalf_of_addr' should have collateral enabled
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
-    assert!(collateral.enabled);
-
-    // 'on_behalf_of_addr' disables asset as collateral
-    execute(
-        deps.as_mut(),
-        mock_env_at_block_time(block_time),
-        mock_info(on_behalf_of_addr.as_str(), &[]),
-        ExecuteMsg::UpdateAssetCollateralStatus {
-            denom: denom.to_string(),
-            enable: false,
-        },
-    )
-    .unwrap();
-
-    // verify asset is disabled as collateral for 'on_behalf_of_addr'
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
-    assert!(!collateral.enabled);
-
-    // 'depositor_addr' deposits a small amount of funds to 'on_behalf_of_addr' to enable his asset as collateral
-    execute(
-        deps.as_mut(),
-        mock_env_at_block_time(block_time),
-        mock_info(depositor_addr.as_str(), &coins(1u128, denom)),
-        ExecuteMsg::Deposit {},
-    )
-    .unwrap();
-
-    // 'on_behalf_of_addr' doesn't have the asset enabled as collateral
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
-    assert!(!collateral.enabled);
 }
