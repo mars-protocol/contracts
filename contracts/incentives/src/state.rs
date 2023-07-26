@@ -32,11 +32,11 @@ pub const INCENTIVE_STATES: Map<(&str, &str), IncentiveState> = Map::new("incent
 pub const EMISSIONS: Map<(&str, &str, u64), Uint128> = Map::new("emissions");
 
 /// A map containing the incentive index for a given user, collateral denom and incentive denom.
-/// The key is (user address or account id, collateral denom, incentive denom).
+/// The key is (user address with optional account id, collateral denom, incentive denom).
 pub const USER_ASSET_INDICES: Map<((&Addr, &str), &str, &str), Decimal> = Map::new("indices");
 
 /// A map containing the amount of unclaimed incentives for a given user and incentive denom.
-/// The key is (user address or account id, collateral denom, incentive denom).
+/// The key is (user address with optional account id, collateral denom, incentive denom).
 pub const USER_UNCLAIMED_REWARDS: Map<((&Addr, &str), &str, &str), Uint128> =
     Map::new("unclaimed_rewards");
 

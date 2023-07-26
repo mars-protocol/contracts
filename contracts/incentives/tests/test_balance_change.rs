@@ -665,3 +665,105 @@ fn balance_change_user_non_zero_balance() {
         assert_eq!(user_unclaimed_rewards, expected_accumulated_rewards)
     }
 }
+
+#[test]
+fn balance_change_for_credit_account_id_with_non_zero_balance() {
+    let env = mock_env();
+    let mut deps = ths_setup_with_epoch_duration(env, 8640000);
+    let denom = "uosmo";
+    let user_addr = Addr::unchecked("credit_manager");
+    let account_id = "random_account_id";
+
+    let emission_per_second = Uint128::new(100);
+    let total_supply = Uint128::new(100_000);
+
+    let mut expected_asset_incentive_index = Decimal::from_ratio(1_u128, 2_u128);
+    let mut expected_time_last_updated = 500_000_u64;
+    let mut expected_accumulated_rewards = Uint128::zero();
+
+    INCENTIVE_STATES
+        .save(
+            deps.as_mut().storage,
+            (denom, "umars"),
+            &IncentiveState {
+                index: expected_asset_incentive_index,
+                last_updated: expected_time_last_updated,
+            },
+        )
+        .unwrap();
+    EMISSIONS
+        .save(
+            deps.as_mut().storage,
+            (denom, "umars", expected_time_last_updated),
+            &emission_per_second,
+        )
+        .unwrap();
+
+    let info = mock_info("red_bank", &[]);
+
+    let time_contract_call = 600_000_u64;
+    let user_balance = Uint128::new(10_000);
+
+    let env = mars_testing::mock_env(MockEnvParams {
+        block_time: Timestamp::from_seconds(time_contract_call),
+        ..Default::default()
+    });
+    let msg = ExecuteMsg::BalanceChange {
+        user_addr: user_addr.clone(),
+        account_id: Some(account_id.to_string()),
+        denom: "uosmo".to_string(),
+        user_amount_scaled_before: user_balance,
+        total_amount_scaled_before: total_supply,
+    };
+    let res = execute(deps.as_mut(), env, info, msg).unwrap();
+
+    expected_asset_incentive_index = compute_incentive_index(
+        expected_asset_incentive_index,
+        emission_per_second,
+        total_supply,
+        expected_time_last_updated,
+        time_contract_call,
+    )
+    .unwrap();
+
+    let expected_accrued_rewards =
+        compute_user_accrued_rewards(user_balance, Decimal::zero(), expected_asset_incentive_index)
+            .unwrap();
+    assert_eq!(
+        res.events[0].attributes,
+        vec![
+            attr("action", "balance_change"),
+            attr("denom", denom),
+            attr("user", "credit_manager"),
+            attr("account_id", account_id)
+        ]
+    );
+    assert_eq!(
+        res.events[1].attributes,
+        vec![
+            attr("incentive_denom", "umars"),
+            attr("rewards_accrued", expected_accrued_rewards),
+            attr("asset_index", expected_asset_incentive_index.to_string())
+        ]
+    );
+
+    // asset incentive gets updated
+    expected_time_last_updated = time_contract_call;
+
+    let asset_incentive = INCENTIVE_STATES.load(deps.as_ref().storage, (denom, "umars")).unwrap();
+    assert_eq!(asset_incentive.index, expected_asset_incentive_index);
+    assert_eq!(asset_incentive.last_updated, expected_time_last_updated);
+
+    // user index is set to asset's index
+    let user_asset_index = USER_ASSET_INDICES
+        .load(deps.as_ref().storage, ((&user_addr, account_id), denom, "umars"))
+        .unwrap();
+    assert_eq!(user_asset_index, expected_asset_incentive_index);
+
+    // user gets new rewards
+    let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
+        .load(deps.as_ref().storage, ((&user_addr, account_id), denom, "umars"))
+        .unwrap();
+    expected_accumulated_rewards += expected_accrued_rewards;
+    assert_eq!(user_unclaimed_rewards, expected_accumulated_rewards)
+}
