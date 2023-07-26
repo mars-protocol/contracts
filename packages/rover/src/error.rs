@@ -4,6 +4,7 @@ use cosmwasm_std::{
 };
 use cw2::VersionError;
 use cw_utils::PaymentError;
+use mars_liquidation::error::LiquidationError;
 use mars_owner::OwnerError;
 use thiserror::Error;
 
@@ -164,4 +165,7 @@ pub enum ContractError {
 
     #[error("{0}")]
     Version(#[from] VersionError),
+
+    #[error("{0}")]
+    Liquidation(#[from] LiquidationError),
 }

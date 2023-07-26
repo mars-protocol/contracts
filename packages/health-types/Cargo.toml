@@ -19,6 +19,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 [dependencies]
 cosmwasm-schema     = { workspace = true }
 cosmwasm-std        = { workspace = true }
+mars-health         = { workspace = true }
 mars-red-bank-types = { workspace = true }
 mars-owner          = { workspace = true }
 schemars            = { workspace = true }

@@ -29,6 +29,7 @@ cw-storage-plus         = { workspace = true }
 cw-utils                = { workspace = true }
 cw-vault-standard       = { workspace = true }
 mars-account-nft        = { workspace = true }
+mars-liquidation        = { workspace = true }
 mars-params             = { workspace = true }
 mars-owner              = { workspace = true }
 mars-red-bank-types     = { workspace = true }

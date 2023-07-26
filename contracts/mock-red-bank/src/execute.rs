@@ -66,7 +66,7 @@ pub fn deposit(
 
     COLLATERAL_DENOMS.update(
         deps.storage,
-        (info.sender.to_string(), account_id.clone().unwrap_or_default()),
+        (info.sender.to_string(), account_id.unwrap_or_default()),
         |denoms_opt| -> StdResult<_> {
             let mut denoms = denoms_opt.unwrap_or_default();
             denoms.push(to_deposit.denom.clone());
@@ -101,7 +101,7 @@ pub fn withdraw(
 
     COLLATERAL_DENOMS.update(
         deps.storage,
-        (info.sender.to_string(), account_id.clone().unwrap_or_default()),
+        (info.sender.to_string(), account_id.unwrap_or_default()),
         |denoms_opt| -> StdResult<_> {
             let mut denoms = denoms_opt.unwrap_or_default();
             if new_amount.is_zero() {

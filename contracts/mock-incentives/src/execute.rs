@@ -40,7 +40,7 @@ pub fn balance_change(
 
     UNCLAIMED_REWARDS.save(
         deps.storage,
-        (info.sender, account_id.clone().unwrap_or_default()),
+        (info.sender, account_id.unwrap_or_default()),
         &unclaimed,
     )?;
 

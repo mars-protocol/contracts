@@ -63,6 +63,8 @@ tsify              = "0.4.5"
 wasm-bindgen       = "0.2.87"
 
 # mars packages
+mars-health                = { git = "https://github.com/mars-protocol/red-bank", rev = "cf28835abb717b00a2f30eef06db4ba32d3eeae2" }
+mars-liquidation           = { git = "https://github.com/mars-protocol/red-bank", rev = "cf28835abb717b00a2f30eef06db4ba32d3eeae2" }
 mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
 mars-owner                 = { version = "1.2.0", features = ["emergency-owner"] }
 mars-red-bank-types        = "1.1.0-ntrn-2"
@@ -72,7 +74,7 @@ mars-rover                 = { version = "2.0.0", path = "./packages/rover" }
 
 # contracts
 mars-account-nft    = { version = "2.0.0", path = "./contracts/account-nft", features = ["library"] }
-mars-params         = { version = "1.0.7", features = ["library"] }
+mars-params         = { git = "https://github.com/mars-protocol/red-bank", rev = "cf28835abb717b00a2f30eef06db4ba32d3eeae2", features = ["library"] }
 mars-rover-health   = { version = "2.0.0", path = "./contracts/health", features = ["library"] }
 mars-swapper-base   = { version = "2.0.0", path = "./contracts/swapper/base", features = ["library"] }
 mars-v2-zapper-base = { version = "2.0.0", path = "./contracts/v2-zapper/base", features = ["library"] }

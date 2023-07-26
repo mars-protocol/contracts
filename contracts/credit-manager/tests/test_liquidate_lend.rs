@@ -17,7 +17,7 @@ use crate::helpers::{
 pub mod helpers;
 
 // Reference figures behind various scenarios
-// https://docs.google.com/spreadsheets/d/1H7Ajghsee2l7_litG7EWoM-kkVQOh4dbHa8WSV-Y6Jg/edit#gid=1331087474
+// https://docs.google.com/spreadsheets/d/14Dk0L2oqI4gOKQZqe12TyjE4ZbVsJMViN1h1B4sJaQs/edit#gid=884610559
 
 #[test]
 fn lent_positions_contribute_to_health() {
@@ -235,7 +235,7 @@ fn lent_position_partially_liquidated() {
 
     assert_eq!(position.lends.len(), 1);
     let osmo_lent = get_coin("uosmo", &position.lends);
-    assert_eq!(osmo_lent.amount, Uint128::new(39));
+    assert_eq!(osmo_lent.amount, Uint128::new(47));
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
@@ -243,14 +243,14 @@ fn lent_position_partially_liquidated() {
     assert_eq!(position.debts.len(), 0);
     assert_eq!(position.deposits.len(), 1);
     let osmo_deposited = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_deposited.amount, Uint128::new(404));
+    assert_eq!(osmo_deposited.amount, Uint128::new(403));
 
     // Assert rewards-collector's new position
     let rewards_collector_acc_id = mock.query_rewards_collector_account();
     let position = mock.query_positions(&rewards_collector_acc_id);
     assert_eq!(position.deposits.len(), 1);
     let rc_osmo_deposited = get_coin("uosmo", &position.deposits);
-    assert_eq!(rc_osmo_deposited.amount, Uint128::new(8));
+    assert_eq!(rc_osmo_deposited.amount, Uint128::new(1));
     assert_eq!(position.lends.len(), 0);
     assert_eq!(position.debts.len(), 0);
 
@@ -352,7 +352,7 @@ fn lent_position_fully_liquidated() {
     // FIXME: dust because of roundings, is it possible to avoid it?
     assert_eq!(position.lends.len(), 1);
     let osmo_balance = get_coin("uosmo", &position.lends);
-    assert_eq!(osmo_balance.amount, Uint128::new(1));
+    assert_eq!(osmo_balance.amount, Uint128::new(3));
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
@@ -362,7 +362,7 @@ fn lent_position_fully_liquidated() {
     let atom_balance = get_coin("uatom", &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(11));
     let osmo_deposit = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_deposit.amount, Uint128::new(107));
+    assert_eq!(osmo_deposit.amount, Uint128::new(106));
 
     // Assert rewards-collector's new position
     let rewards_collector_acc_id = mock.query_rewards_collector_account();
@@ -371,12 +371,12 @@ fn lent_position_fully_liquidated() {
     assert_eq!(position.debts.len(), 0);
     assert_eq!(position.deposits.len(), 1);
     let rc_osmo_lent = get_coin("uosmo", &position.deposits);
-    assert_eq!(rc_osmo_lent.amount, Uint128::new(2));
+    assert_eq!(rc_osmo_lent.amount, Uint128::new(1));
 
     // Liq HF should improve
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
     let health = mock.query_health(&liquidatee_account_id, account_kind, ActionKind::Liquidation);
-    assert!(health.liquidatable);
+    assert!(!health.liquidatable);
     assert!(
         prev_health.liquidation_health_factor.unwrap() < health.liquidation_health_factor.unwrap()
     );

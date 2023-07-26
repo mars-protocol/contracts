@@ -2,6 +2,7 @@ use std::fmt;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
+use mars_health::health::Health as RedBankHealth;
 use tsify::Tsify;
 
 #[cw_serde]
@@ -76,6 +77,19 @@ impl From<Health> for HealthValuesResponse {
             liquidation_health_factor: h.liquidation_health_factor,
             liquidatable: h.is_liquidatable(),
             above_max_ltv: h.is_above_max_ltv(),
+        }
+    }
+}
+
+impl From<HealthValuesResponse> for RedBankHealth {
+    fn from(h: HealthValuesResponse) -> Self {
+        Self {
+            total_debt_value: h.total_debt_value,
+            total_collateral_value: h.total_collateral_value,
+            max_ltv_adjusted_collateral: h.max_ltv_adjusted_collateral,
+            liquidation_threshold_adjusted_collateral: h.liquidation_threshold_adjusted_collateral,
+            max_ltv_health_factor: h.max_ltv_health_factor,
+            liquidation_health_factor: h.liquidation_health_factor,
         }
     }
 }
