@@ -52,6 +52,7 @@ pub fn update_asset_collateral_status(
             user.address(),
             oracle_addr,
             params_addr,
+            false,
         )?;
 
         if health.is_liquidatable() {

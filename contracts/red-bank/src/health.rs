@@ -18,8 +18,10 @@ pub fn get_health_and_positions(
     user_addr: &Addr,
     oracle_addr: &Addr,
     params_addr: &Addr,
+    is_liquidation: bool,
 ) -> Result<(Health, HashMap<String, Position>), ContractError> {
-    let positions = get_user_positions_map(deps, env, user_addr, oracle_addr, params_addr, true)?;
+    let positions =
+        get_user_positions_map(deps, env, user_addr, oracle_addr, params_addr, is_liquidation)?;
     let health = compute_position_health(&positions)?;
 
     Ok((health, positions))

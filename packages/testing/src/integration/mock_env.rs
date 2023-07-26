@@ -1,16 +1,21 @@
 #![allow(dead_code)]
 
-use std::{collections::HashMap, mem::take, str::FromStr};
+use std::{collections::HashMap, default::Default, mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
+use mars_mock_pyth::msg::QueryMsg;
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_params::{msg::AssetParamsUpdate, types::asset::AssetParams};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     incentives,
-    oracle::{self, PriceResponse},
+    oracle::{
+        self,
+        ActionKind::{Default as ActionDefault, Liquidation},
+        PriceResponse,
+    },
     red_bank::{
         self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market,
         UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
@@ -18,10 +23,12 @@ use mars_red_bank_types::{
     },
     rewards_collector,
 };
+use pyth_sdk_cw::{PriceFeedResponse, PriceIdentifier};
 
 use crate::integration::mock_contracts::{
     mock_address_provider_contract, mock_incentives_contract, mock_oracle_osmosis_contract,
-    mock_params_osmosis_contract, mock_red_bank_contract, mock_rewards_collector_osmosis_contract,
+    mock_params_osmosis_contract, mock_pyth_contract, mock_red_bank_contract,
+    mock_rewards_collector_osmosis_contract,
 };
 
 pub struct MockEnv {
@@ -34,6 +41,7 @@ pub struct MockEnv {
     pub rewards_collector: RewardsCollector,
     pub params: Params,
     pub credit_manager: Addr,
+    pub pyth: Pyth,
 }
 
 #[derive(Clone)]
@@ -63,6 +71,11 @@ pub struct RewardsCollector {
 
 #[derive(Clone)]
 pub struct Params {
+    pub contract_addr: Addr,
+}
+
+#[derive(Clone)]
+pub struct Pyth {
     pub contract_addr: Addr,
 }
 
@@ -239,6 +252,37 @@ impl Oracle {
             .unwrap();
     }
 
+    pub fn set_price_source_pyth(
+        &self,
+        env: &mut MockEnv,
+        denom: &str,
+        pyth_addr: String,
+        max_confidence: Decimal,
+        max_deviation: Decimal,
+    ) {
+        env.app
+            .execute_contract(
+                env.owner.clone(),
+                self.contract_addr.clone(),
+                &oracle::ExecuteMsg::<_, Empty>::SetPriceSource {
+                    denom: denom.to_string(),
+                    price_source: OsmosisPriceSourceUnchecked::Pyth {
+                        contract_addr: pyth_addr,
+                        price_feed_id: PriceIdentifier::from_hex(
+                            "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+                        )
+                        .unwrap(),
+                        max_staleness: 30u64,
+                        max_confidence,
+                        max_deviation,
+                        denom_decimals: 6u8,
+                    },
+                },
+                &[],
+            )
+            .unwrap();
+    }
+
     pub fn query_price(&self, env: &mut MockEnv, denom: &str) -> PriceResponse {
         env.app
             .wrap()
@@ -246,7 +290,38 @@ impl Oracle {
                 self.contract_addr.clone(),
                 &oracle::QueryMsg::Price {
                     denom: denom.to_string(),
-                    kind: None,
+                    kind: Some(ActionDefault),
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_price_for_liquidate(&self, env: &mut MockEnv, denom: &str) -> PriceResponse {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &oracle::QueryMsg::Price {
+                    denom: denom.to_string(),
+                    kind: Some(Liquidation),
+                },
+            )
+            .unwrap()
+    }
+}
+
+impl Pyth {
+    pub fn query_price_feed(
+        &self,
+        env: &mut MockEnv,
+        price_id: PriceIdentifier,
+    ) -> PriceFeedResponse {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &QueryMsg::PriceFeed {
+                    id: price_id,
                 },
             )
             .unwrap()
@@ -757,6 +832,7 @@ impl MockEnvBuilder {
         let red_bank_addr = self.deploy_red_bank(&address_provider_addr);
         let rewards_collector_addr = self.deploy_rewards_collector_osmosis(&address_provider_addr);
         let params_addr = self.deploy_params_osmosis(&address_provider_addr);
+        let pyth_addr = self.deploy_mock_pyth();
 
         self.update_address_provider(
             &address_provider_addr,
@@ -804,6 +880,9 @@ impl MockEnvBuilder {
                 contract_addr: params_addr,
             },
             credit_manager: cm_addr,
+            pyth: Pyth {
+                contract_addr: pyth_addr,
+            },
         }
     }
 
@@ -925,6 +1004,14 @@ impl MockEnvBuilder {
                 "params",
                 None,
             )
+            .unwrap()
+    }
+
+    pub fn deploy_mock_pyth(&mut self) -> Addr {
+        let code_id = self.app.store_code(mock_pyth_contract());
+
+        self.app
+            .instantiate_contract(code_id, self.owner.clone(), &Empty {}, &[], "mock-pyth", None)
             .unwrap()
     }
 

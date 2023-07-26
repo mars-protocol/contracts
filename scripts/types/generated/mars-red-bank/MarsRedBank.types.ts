@@ -167,6 +167,11 @@ export type QueryMsg =
       }
     }
   | {
+      user_position_liquidation_pricing: {
+        user: string
+      }
+    }
+  | {
       scaled_liquidity_amount: {
         amount: Uint128
         denom: string

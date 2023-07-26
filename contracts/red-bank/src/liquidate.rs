@@ -84,8 +84,14 @@ pub fn liquidate(
     let oracle_addr = &addresses[&MarsAddressType::Oracle];
     let params_addr = &addresses[&MarsAddressType::Params];
 
-    let (health, assets_positions) =
-        get_health_and_positions(&deps.as_ref(), &env, &liquidatee_addr, oracle_addr, params_addr)?;
+    let (health, assets_positions) = get_health_and_positions(
+        &deps.as_ref(),
+        &env,
+        &liquidatee_addr,
+        oracle_addr,
+        params_addr,
+        true,
+    )?;
 
     if !health.is_liquidatable() {
         return Err(ContractError::CannotLiquidateHealthyPosition {});

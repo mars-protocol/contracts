@@ -1810,6 +1810,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-mock-pyth"
+version = "1.2.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "pyth-sdk-cw",
+]
+
+[[package]]
 name = "mars-oracle-base"
 version = "1.2.0"
 dependencies = [
@@ -1926,6 +1935,7 @@ dependencies = [
  "mars-red-bank-types",
  "mars-testing",
  "mars-utils",
+ "pyth-sdk-cw",
  "test-case",
  "thiserror",
 ]
@@ -2065,11 +2075,13 @@ version = "1.2.0"
 dependencies = [
  "anyhow",
  "astroport",
+ "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
  "cw-multi-test",
  "mars-address-provider",
  "mars-incentives",
+ "mars-mock-pyth",
  "mars-oracle-osmosis",
  "mars-oracle-wasm",
  "mars-osmosis",
