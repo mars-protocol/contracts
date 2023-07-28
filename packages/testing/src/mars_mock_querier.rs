@@ -186,6 +186,16 @@ impl MarsMockQuerier {
             .insert((user.into(), collateral.denom.clone()), collateral);
     }
 
+    pub fn set_red_bank_user_debt(
+        &mut self,
+        user: impl Into<String>,
+        debt: red_bank::UserDebtResponse,
+    ) {
+        self.redbank_querier
+            .users_denoms_debts
+            .insert((user.into(), debt.denom.clone()), debt);
+    }
+
     pub fn set_redbank_user_position(
         &mut self,
         user_address: String,
