@@ -690,6 +690,7 @@ impl MockEnvBuilder {
         let red_bank_addr = self.deploy_red_bank(&address_provider_addr);
         let rewards_collector_addr = self.deploy_rewards_collector_osmosis(&address_provider_addr);
         let params_addr = self.deploy_params_osmosis(&address_provider_addr);
+        let credit_manager_addr = Addr::unchecked("credit_manager");
 
         self.update_address_provider(
             &address_provider_addr,
@@ -708,6 +709,7 @@ impl MockEnvBuilder {
             &rewards_collector_addr,
         );
         self.update_address_provider(&address_provider_addr, MarsAddressType::Params, &params_addr);
+        self.update_address_provider(&address_provider_addr, MarsAddressType::CreditManager, &credit_manager_addr);
 
         MockEnv {
             app: take(&mut self.app),
