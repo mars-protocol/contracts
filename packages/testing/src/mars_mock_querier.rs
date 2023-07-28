@@ -77,6 +77,10 @@ impl MarsMockQuerier {
         self.base.update_balance(contract_addr.to_string(), contract_balances.to_vec());
     }
 
+    pub fn update_balances(&mut self, addr: impl Into<String>, balance: Vec<Coin>) {
+        self.base.update_balance(addr, balance);
+    }
+
     pub fn set_oracle_price(&mut self, denom: &str, price: Decimal) {
         self.oracle_querier.prices.insert(denom.to_string(), price);
     }
