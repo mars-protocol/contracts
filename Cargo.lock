@@ -1931,9 +1931,11 @@ dependencies = [
  "mars-interest-rate",
  "mars-owner",
  "mars-red-bank-types",
+ "mars-testing",
  "mars-utils",
  "schemars",
  "serde",
+ "test-case",
  "thiserror",
 ]
 
