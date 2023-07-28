@@ -18,9 +18,9 @@ impl RedBankQuerier {
         let ret: ContractResult<Binary> = match query {
             QueryMsg::Market {
                 denom,
-            } => match self.markets.get(&denom) {
-                Some(market) => to_binary(&market).into(),
-                None => Err(format!("[mock]: could not find the market for {denom}")).into(),
+            } => {
+                let maybe_market = self.markets.get(&denom);
+                to_binary(&maybe_market).into()
             },
             QueryMsg::UserCollateral {
                 user,
