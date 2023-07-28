@@ -3,7 +3,8 @@ use std::{cmp::min, fmt};
 use cosmwasm_std::{Addr, Decimal, Decimal256, Deps, Empty, Env, Isqrt, Uint128, Uint256};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
-    ContractError::InvalidPrice, ContractResult, PriceSourceChecked, PriceSourceUnchecked,
+    ContractError::{self, InvalidPrice},
+    ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
 use mars_osmosis::helpers::{
     query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price,
@@ -369,7 +370,7 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
                 pool_id,
             } => {
                 let pool = query_pool(&deps.querier, *pool_id)?;
-                helpers::assert_osmosis_xyk_pool(&pool)?;
+                helpers::assert_osmosis_xyk_lp_pool(&pool)?;
                 Ok(OsmosisPriceSourceChecked::XykLiquidityToken {
                     pool_id: *pool_id,
                 })
@@ -593,6 +594,14 @@ impl OsmosisPriceSourceChecked {
     ) -> ContractResult<Decimal> {
         // XYK pool asserted during price source creation
         let pool = query_pool(&deps.querier, pool_id)?;
+        let pool = match pool {
+            Pool::Balancer(pool) => pool,
+            Pool::StableSwap(pool) => {
+                return Err(ContractError::InvalidPrice {
+                    reason: format!("StableSwap pool not supported. Pool id {}", pool.id),
+                })
+            }
+        };
 
         let coin0 = Pool::unwrap_coin(&pool.pool_assets[0].token)?;
         let coin1 = Pool::unwrap_coin(&pool.pool_assets[1].token)?;

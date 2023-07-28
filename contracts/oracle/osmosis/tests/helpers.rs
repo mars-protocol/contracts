@@ -9,10 +9,10 @@ use cosmwasm_std::{
 };
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSourceUnchecked};
-use mars_osmosis::helpers::{Pool, QueryPoolResponse};
+use mars_osmosis::{BalancerPool, StableSwapPool};
 use mars_red_bank_types::oracle::msg::{InstantiateMsg, QueryMsg};
 use mars_testing::{mock_info, MarsMockQuerier};
-use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
+use osmosis_std::types::osmosis::{gamm::v1beta1::PoolAsset, poolmanager::v1beta1::PoolResponse};
 use pyth_sdk_cw::PriceIdentifier;
 
 pub fn setup_test_with_pools() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
@@ -22,25 +22,40 @@ pub fn setup_test_with_pools() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerie
     let assets = vec![coin(42069, "uatom"), coin(69420, "uosmo")];
     deps.querier.set_query_pool_response(
         1,
-        prepare_query_pool_response(1, &assets, &[5000u64, 5000u64], &coin(10000, "gamm/pool/1")),
+        prepare_query_balancer_pool_response(
+            1,
+            &assets,
+            &[5000u64, 5000u64],
+            &coin(10000, "gamm/pool/1"),
+        ),
     );
 
     let assets = vec![coin(12345, "uusdc"), coin(23456, "uatom")];
     deps.querier.set_query_pool_response(
         64,
-        prepare_query_pool_response(64, &assets, &[5000u64, 5000u64], &coin(10000, "gamm/pool/64")),
+        prepare_query_balancer_pool_response(
+            64,
+            &assets,
+            &[5000u64, 5000u64],
+            &coin(10000, "gamm/pool/64"),
+        ),
     );
 
     let assets = vec![coin(12345, "uosmo"), coin(88888, "umars")];
     deps.querier.set_query_pool_response(
         89,
-        prepare_query_pool_response(89, &assets, &[5000u64, 5000u64], &coin(10000, "gamm/pool/89")),
+        prepare_query_balancer_pool_response(
+            89,
+            &assets,
+            &[5000u64, 5000u64],
+            &coin(10000, "gamm/pool/89"),
+        ),
     );
 
     let assets = vec![coin(12345, "ustatom"), coin(88888, "uatom")];
     deps.querier.set_query_pool_response(
         803,
-        prepare_query_pool_response(
+        prepare_query_balancer_pool_response(
             803,
             &assets,
             &[5000u64, 5000u64],
@@ -51,7 +66,7 @@ pub fn setup_test_with_pools() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerie
     let assets = vec![coin(100000, "uusdc"), coin(100000, "uusdt"), coin(100000, "udai")];
     deps.querier.set_query_pool_response(
         3333,
-        prepare_query_pool_response(
+        prepare_query_balancer_pool_response(
             3333,
             &assets,
             &[5000u64, 5000u64, 5000u64],
@@ -63,13 +78,18 @@ pub fn setup_test_with_pools() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerie
     let assets = vec![coin(100000, "uion"), coin(100000, "uosmo")];
     deps.querier.set_query_pool_response(
         4444,
-        prepare_query_pool_response(
+        prepare_query_balancer_pool_response(
             4444,
             &assets,
             &[5000u64, 5005u64],
             &coin(10000, "gamm/pool/4444"),
         ),
     );
+
+    // Set StableSwap pool
+    let assets = vec![coin(42069, "uatom"), coin(69420, "uosmo")];
+    deps.querier
+        .set_query_pool_response(5555, prepare_query_stable_swap_pool_response(5555, &assets));
 
     deps
 }
@@ -113,15 +133,15 @@ pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     deps
 }
 
-pub fn prepare_query_pool_response(
+pub fn prepare_query_balancer_pool_response(
     pool_id: u64,
     assets: &[Coin],
     weights: &[u64],
     shares: &Coin,
-) -> QueryPoolResponse {
-    let pool = Pool {
+) -> PoolResponse {
+    let pool = BalancerPool {
         address: "address".to_string(),
-        id: pool_id.to_string(),
+        id: pool_id,
         pool_params: None,
         future_pool_governor: "future_pool_governor".to_string(),
         total_shares: Some(osmosis_std::types::cosmos::base::v1beta1::Coin {
@@ -131,8 +151,8 @@ pub fn prepare_query_pool_response(
         pool_assets: prepare_pool_assets(assets, weights),
         total_weight: "".to_string(),
     };
-    QueryPoolResponse {
-        pool,
+    PoolResponse {
+        pool: Some(pool.to_any()),
     }
 }
 
@@ -153,6 +173,33 @@ fn prepare_pool_assets(coins: &[Coin], weights: &[u64]) -> Vec<PoolAsset> {
             }
         })
         .collect()
+}
+
+pub fn prepare_query_stable_swap_pool_response(pool_id: u64, assets: &[Coin]) -> PoolResponse {
+    let pool_liquidity: Vec<_> = assets
+        .iter()
+        .map(|coin| osmosis_std::types::cosmos::base::v1beta1::Coin {
+            denom: coin.denom.clone(),
+            amount: coin.amount.to_string(),
+        })
+        .collect();
+
+    let pool = StableSwapPool {
+        address: "osmo15v4mn84s9flhzpstkf9ql2mu0rnxh42pm8zhq47kh2fzs5zlwjsqaterkr".to_string(),
+        id: pool_id,
+        pool_params: None,
+        future_pool_governor: "".to_string(),
+        total_shares: Some(osmosis_std::types::cosmos::base::v1beta1::Coin {
+            denom: format!("gamm/pool/{pool_id}"),
+            amount: 4497913440357232330148u128.to_string(),
+        }),
+        pool_liquidity,
+        scaling_factors: vec![100000u64, 113890u64],
+        scaling_factor_controller: "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af".to_string(),
+    };
+    PoolResponse {
+        pool: Some(pool.to_any()),
+    }
 }
 
 pub fn set_pyth_price_source(deps: DepsMut, denom: &str, price_id: PriceIdentifier) {

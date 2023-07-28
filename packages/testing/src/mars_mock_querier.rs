@@ -9,12 +9,11 @@ use mars_oracle_osmosis::{
     stride::{Price, RedemptionRateResponse},
     DowntimeDetector,
 };
-use mars_osmosis::helpers::QueryPoolResponse;
 use mars_params::types::asset::AssetParams;
 use mars_red_bank_types::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
-    poolmanager::v1beta1::SpotPriceResponse,
+    poolmanager::v1beta1::{PoolResponse, SpotPriceResponse},
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
 use pyth_sdk_cw::{PriceFeedResponse, PriceIdentifier};
@@ -97,7 +96,7 @@ impl MarsMockQuerier {
         );
     }
 
-    pub fn set_query_pool_response(&mut self, pool_id: u64, pool_response: QueryPoolResponse) {
+    pub fn set_query_pool_response(&mut self, pool_id: u64, pool_response: PoolResponse) {
         self.osmosis_querier.pools.insert(pool_id, pool_response);
     }
 

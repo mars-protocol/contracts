@@ -926,6 +926,15 @@ fn setting_price_source_xyk_lp() {
         }
     );
 
+    // attempting to use StableSwap pool
+    let err = set_price_source_xyk_lp("atom_mars_lp", 5555).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "StableSwap pool not supported. Pool id 5555".to_string()
+        }
+    );
+
     // properly set xyk lp price source
     let res = set_price_source_xyk_lp("uosmo_umars_lp", 89).unwrap();
     assert_eq!(res.messages.len(), 0);
