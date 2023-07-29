@@ -222,11 +222,7 @@ fn depositing_to_disabled_market() {
     true;
     "deposit cap not exceeded, should work"
 )]
-fn depositing_above_cap(
-    amount_to_deposit: u128,
-    deposit_cap: u128,
-    exp_ok: bool,
-) {
+fn depositing_above_cap(amount_to_deposit: u128, deposit_cap: u128, exp_ok: bool) {
     let TestSuite {
         mut deps,
         denom,
