@@ -1926,6 +1926,7 @@ dependencies = [
  "mars-red-bank-types",
  "mars-testing",
  "mars-utils",
+ "test-case",
  "thiserror",
 ]
 

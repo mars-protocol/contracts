@@ -796,6 +796,12 @@ fn response_verification() {
     deps.querier.set_oracle_price("uusdc", Decimal::from_ratio(68u128, 10u128));
     deps.querier.set_oracle_price("untrn", Decimal::from_ratio(55u128, 10u128));
 
+    // no deposit yet, initialize total deposit to zero
+    deps.querier.set_total_deposit("uosmo", Uint128::zero());
+    deps.querier.set_total_deposit("uatom", Uint128::zero());
+    deps.querier.set_total_deposit("uusdc", Uint128::zero());
+    deps.querier.set_total_deposit("untrn", Uint128::zero());
+
     // provider deposits collaterals
     execute(
         deps.as_mut(),

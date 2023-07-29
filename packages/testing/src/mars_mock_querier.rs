@@ -213,8 +213,8 @@ impl MarsMockQuerier {
         self.params_querier.target_health_factor = thf;
     }
 
-    pub fn set_total_deposit(&mut self, denom: String, amount: Uint128) {
-        self.params_querier.total_deposits.insert(denom, amount);
+    pub fn set_total_deposit(&mut self, denom: impl Into<String>, amount: impl Into<Uint128>) {
+        self.params_querier.total_deposits.insert(denom.into(), amount.into());
     }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
