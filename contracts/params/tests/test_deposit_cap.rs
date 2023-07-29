@@ -45,11 +45,7 @@ const TIMESTAMP: u64 = 1690573960;
     Uint128::new(1751191642);
     "real data queried from mainnet"
 )]
-fn querying_total_deposit(
-    rb_market: Market,
-    rb_debt: UserDebtResponse,
-    cm_balance: Uint128,
-) {
+fn querying_total_deposit(rb_market: Market, rb_debt: UserDebtResponse, cm_balance: Uint128) {
     let mut deps = mock_dependencies(&[]);
     let env = mock_env_at_block_time(TIMESTAMP);
 
@@ -60,7 +56,9 @@ fn querying_total_deposit(
     ADDRESS_PROVIDER.save(deps.as_mut().storage, &Addr::unchecked("address_provider")).unwrap();
 
     // compute the correct, expected total deposit
-    let rb_deposit = get_underlying_liquidity_amount(rb_market.collateral_total_scaled, &rb_market, TIMESTAMP).unwrap();
+    let rb_deposit =
+        get_underlying_liquidity_amount(rb_market.collateral_total_scaled, &rb_market, TIMESTAMP)
+            .unwrap();
     let exp_total_deposit = rb_deposit + cm_balance - rb_debt.amount;
 
     // query total deposit

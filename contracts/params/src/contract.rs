@@ -15,7 +15,7 @@ use crate::{
     query::{
         query_all_asset_params, query_all_vault_configs, query_total_deposit, query_vault_config,
     },
-    state::{ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR, ADDRESS_PROVIDER},
+    state::{ADDRESS_PROVIDER, ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR},
 };
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");

@@ -194,9 +194,7 @@ impl MarsMockQuerier {
         user: impl Into<String>,
         debt: red_bank::UserDebtResponse,
     ) {
-        self.redbank_querier
-            .users_denoms_debts
-            .insert((user.into(), debt.denom.clone()), debt);
+        self.redbank_querier.users_denoms_debts.insert((user.into(), debt.denom.clone()), debt);
     }
 
     pub fn set_redbank_user_position(

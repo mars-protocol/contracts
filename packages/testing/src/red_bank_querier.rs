@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult};
 use mars_red_bank_types::red_bank::{
-    Market, QueryMsg, UserCollateralResponse, UserPositionResponse, UserDebtResponse,
+    Market, QueryMsg, UserCollateralResponse, UserDebtResponse, UserPositionResponse,
 };
 
 #[derive(Default)]
@@ -21,7 +21,7 @@ impl RedBankQuerier {
             } => {
                 let maybe_market = self.markets.get(&denom);
                 to_binary(&maybe_market).into()
-            },
+            }
             QueryMsg::UserCollateral {
                 user,
                 account_id: _,
