@@ -254,7 +254,7 @@ fn execute_claim_rewards() {
     );
     assert_eq!(
         res.events[1].attributes,
-        vec![attr("denom", "umars"), attr("amount", expected_accrued_rewards),]
+        vec![attr("coins", format!("{expected_accrued_rewards}umars"))]
     );
     // asset and zero incentives get updated, no_user does not
     let asset_incentive =
