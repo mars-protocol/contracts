@@ -223,10 +223,14 @@ fn execute_claim_rewards() {
     let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
     // query after execution gives 0 rewards
+    //
+    // NOTE: the query should return an empty array, instead of a non-empty array
+    // with a zero-amount coin! the latter is considered an invalid coins array
+    // and will result in error.
     let rewards_query_after =
         query_user_unclaimed_rewards(deps.as_ref(), env, String::from("user"), None, None, None)
             .unwrap();
-    assert_eq!(rewards_query_after[0].amount, Uint128::zero());
+    assert!(rewards_query_after.is_empty());
 
     // ASSERT
 
@@ -240,11 +244,11 @@ fn execute_claim_rewards() {
 
     assert_eq!(
         res.events[0].attributes,
-        vec![attr("action", "claim_rewards"), attr("user", "user"),]
+        vec![attr("action", "claim_rewards"), attr("user", "user")]
     );
     assert_eq!(
         res.events[1].attributes,
-        vec![attr("denom", "umars"), attr("amount", expected_accrued_rewards),]
+        vec![attr("coins", format!("{expected_accrued_rewards}umars"))]
     );
     // asset and zero incentives get updated, no_user does not
     let asset_incentive =

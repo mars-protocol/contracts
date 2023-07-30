@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env,
-    Event, MessageInfo, Order, Response, StdError, StdResult, Uint128,
+    attr, to_binary, Addr, BankMsg, Binary, Coin, Coins, Decimal, Deps, DepsMut, Env, Event,
+    MessageInfo, Order, Response, StdError, StdResult, Uint128,
 };
 use cw_storage_plus::Bound;
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
@@ -422,11 +420,11 @@ pub fn execute_claim_rewards(
     let red_bank_addr = query_red_bank_address(deps.as_ref())?;
     let user_addr = info.sender;
 
-    let mut response = Response::new();
-    let base_event = Event::new("mars/incentives/claim_rewards")
-        .add_attribute("action", "claim_rewards")
-        .add_attribute("user", user_addr.to_string());
-    let mut events = vec![base_event];
+    let mut response = Response::new().add_event(
+        Event::new("mars/incentives/claim_rewards")
+            .add_attribute("action", "claim_rewards")
+            .add_attribute("user", user_addr.to_string()),
+    );
 
     let asset_incentives = state::paginate_incentive_states(
         deps.storage,
@@ -435,7 +433,7 @@ pub fn execute_claim_rewards(
         limit,
     )?;
 
-    let mut total_unclaimed_rewards: HashMap<String, Uint128> = HashMap::new();
+    let mut total_unclaimed_rewards = Coins::default();
 
     for ((collateral_denom, incentive_denom), _) in asset_incentives {
         let querier = deps.querier;
@@ -456,25 +454,25 @@ pub fn execute_claim_rewards(
             &Uint128::zero(),
         )?;
 
-        total_unclaimed_rewards
-            .entry(incentive_denom)
-            .and_modify(|amount| *amount += unclaimed_rewards)
-            .or_insert(unclaimed_rewards);
+        total_unclaimed_rewards.add(Coin {
+            denom: incentive_denom,
+            amount: unclaimed_rewards,
+        })?;
     }
 
-    for (denom, amount) in total_unclaimed_rewards.iter() {
-        response = response.add_message(CosmosMsg::Bank(BankMsg::Send {
-            to_address: user_addr.to_string(),
-            amount: coins(amount.u128(), denom),
-        }));
-        events.push(
-            Event::new("mars/incentives/claim_rewards/claimed_reward")
-                .add_attribute("denom", denom)
-                .add_attribute("amount", *amount),
-        );
+    if !total_unclaimed_rewards.is_empty() {
+        response = response
+            .add_event(
+                Event::new("mars/incentives/claim_rewards/claimed_rewards")
+                    .add_attribute("coins", total_unclaimed_rewards.to_string()),
+            )
+            .add_message(BankMsg::Send {
+                to_address: user_addr.into(),
+                amount: total_unclaimed_rewards.into(),
+            });
     }
 
-    Ok(response.add_events(events))
+    Ok(response)
 }
 
 pub fn execute_update_config(
@@ -649,7 +647,7 @@ pub fn query_user_unclaimed_rewards(
         limit,
     )?;
 
-    let mut total_unclaimed_rewards: HashMap<String, Uint128> = HashMap::new();
+    let mut total_unclaimed_rewards = Coins::default();
 
     for ((collateral_denom, incentive_denom), _) in incentive_states {
         let unclaimed_rewards = compute_user_unclaimed_rewards(
@@ -661,19 +659,14 @@ pub fn query_user_unclaimed_rewards(
             &collateral_denom,
             &incentive_denom,
         )?;
-        total_unclaimed_rewards
-            .entry(incentive_denom)
-            .and_modify(|amount| *amount += unclaimed_rewards)
-            .or_insert(unclaimed_rewards);
+
+        total_unclaimed_rewards.add(Coin {
+            denom: incentive_denom,
+            amount: unclaimed_rewards,
+        })?;
     }
 
-    Ok(total_unclaimed_rewards
-        .into_iter()
-        .map(|(denom, amount)| Coin {
-            denom,
-            amount,
-        })
-        .collect())
+    Ok(total_unclaimed_rewards.into())
 }
 
 fn query_red_bank_address(deps: Deps) -> StdResult<Addr> {
