@@ -23,3 +23,11 @@ jobs:
 
       - name: Compile contracts to wasm
         run: cargo make rust-optimizer
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: mars-artifacts
+          retention-days: 7
+          path: |
+            artifacts
