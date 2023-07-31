@@ -2,7 +2,6 @@ use std::str;
 
 use cosmwasm_std::{Addr, Decimal, Env, Event, Response, StdError, StdResult, Storage, Uint128};
 use mars_red_bank_types::red_bank::Market;
-use mars_utils::math;
 
 use crate::{error::ContractError, user::User};
 
@@ -28,7 +27,7 @@ pub fn apply_accumulated_interests(
     rewards_collector_addr: &Addr,
     incentives_addr: &Addr,
     mut response: Response,
-) -> StdResult<Response> {
+) -> Result<Response, ContractError> {
     let current_timestamp = env.block.time.seconds();
     let previous_borrow_index = market.borrow_index;
 
@@ -120,7 +119,7 @@ pub fn get_scaled_liquidity_amount(
     amount: Uint128,
     market: &Market,
     timestamp: u64,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     compute_scaled_amount(
         amount,
         get_updated_liquidity_index(market, timestamp)?,
@@ -137,7 +136,7 @@ pub fn get_underlying_liquidity_amount(
     amount_scaled: Uint128,
     market: &Market,
     timestamp: u64,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     compute_underlying_amount(
         amount_scaled,
         get_updated_liquidity_index(market, timestamp)?,
@@ -157,7 +156,7 @@ pub fn get_scaled_debt_amount(
     amount: Uint128,
     market: &Market,
     timestamp: u64,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     compute_scaled_amount(
         amount,
         get_updated_borrow_index(market, timestamp)?,
@@ -174,7 +173,7 @@ pub fn get_underlying_debt_amount(
     amount_scaled: Uint128,
     market: &Market,
     timestamp: u64,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     compute_underlying_amount(
         amount_scaled,
         get_updated_borrow_index(market, timestamp)?,
@@ -197,12 +196,12 @@ pub fn compute_scaled_amount(
     amount: Uint128,
     index: Decimal,
     scaling_operation: ScalingOperation,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     // Scale by SCALING_FACTOR to have better precision
     let scaled_amount = amount.checked_mul(SCALING_FACTOR)?;
     match scaling_operation {
-        ScalingOperation::Truncate => math::divide_uint128_by_decimal(scaled_amount, index),
-        ScalingOperation::Ceil => math::divide_uint128_by_decimal_and_ceil(scaled_amount, index),
+        ScalingOperation::Truncate => Ok(scaled_amount.checked_div_floor(index)?),
+        ScalingOperation::Ceil => Ok(scaled_amount.checked_div_ceil(index)?),
     }
 }
 
@@ -212,7 +211,7 @@ pub fn compute_underlying_amount(
     scaled_amount: Uint128,
     index: Decimal,
     scaling_operation: ScalingOperation,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     // Multiply scaled amount by decimal (index)
     let before_scaling_factor = scaled_amount * index;
 
@@ -220,7 +219,8 @@ pub fn compute_underlying_amount(
     match scaling_operation {
         ScalingOperation::Truncate => Ok(before_scaling_factor.checked_div(SCALING_FACTOR)?),
         ScalingOperation::Ceil => {
-            math::uint128_checked_div_with_ceil(before_scaling_factor, SCALING_FACTOR)
+            let scaling_factor_dec = Decimal::from_ratio(SCALING_FACTOR, Uint128::one());
+            Ok(before_scaling_factor.checked_div_ceil(scaling_factor_dec)?)
         }
     }
 }

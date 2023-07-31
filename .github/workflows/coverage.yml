@@ -35,8 +35,8 @@ jobs:
       #   run: |
       #     rm -rf target/release
 
-      # - name: Run test
-      #   run: cargo make test
+      - name: Run test
+        run: cargo make test
 
       # disabled because of "no space left" error.
       # - name: Run test coverage

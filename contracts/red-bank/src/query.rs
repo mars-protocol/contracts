@@ -95,7 +95,7 @@ pub fn query_user_debt(
     block: &BlockInfo,
     user_addr: Addr,
     denom: String,
-) -> StdResult<UserDebtResponse> {
+) -> Result<UserDebtResponse, ContractError> {
     let Debt {
         amount_scaled,
         uncollateralized,
@@ -119,7 +119,7 @@ pub fn query_user_debts(
     user_addr: Addr,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<UserDebtResponse>> {
+) -> Result<Vec<UserDebtResponse>, ContractError> {
     let block_time = block.time.seconds();
 
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
@@ -153,7 +153,7 @@ pub fn query_user_collateral(
     user_addr: Addr,
     account_id: Option<String>,
     denom: String,
-) -> StdResult<UserCollateralResponse> {
+) -> Result<UserCollateralResponse, ContractError> {
     let acc_id = account_id.unwrap_or("".to_string());
 
     let Collateral {
@@ -180,7 +180,7 @@ pub fn query_user_collaterals(
     account_id: Option<String>,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<UserCollateralResponse>> {
+) -> Result<Vec<UserCollateralResponse>, ContractError> {
     let block_time = block.time.seconds();
 
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
@@ -215,7 +215,7 @@ pub fn query_scaled_liquidity_amount(
     env: Env,
     denom: String,
     amount: Uint128,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     let market = MARKETS.load(deps.storage, &denom)?;
     get_scaled_liquidity_amount(amount, &market, env.block.time.seconds())
 }
@@ -225,7 +225,7 @@ pub fn query_scaled_debt_amount(
     env: Env,
     denom: String,
     amount: Uint128,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     let market = MARKETS.load(deps.storage, &denom)?;
     get_scaled_debt_amount(amount, &market, env.block.time.seconds())
 }
@@ -235,7 +235,7 @@ pub fn query_underlying_liquidity_amount(
     env: Env,
     denom: String,
     amount_scaled: Uint128,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     let market = MARKETS.load(deps.storage, &denom)?;
     get_underlying_liquidity_amount(amount_scaled, &market, env.block.time.seconds())
 }
@@ -245,7 +245,7 @@ pub fn query_underlying_debt_amount(
     env: Env,
     denom: String,
     amount_scaled: Uint128,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     let market = MARKETS.load(deps.storage, &denom)?;
     get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())
 }

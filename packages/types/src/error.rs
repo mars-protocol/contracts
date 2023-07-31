@@ -1,4 +1,4 @@
-use cosmwasm_std::StdError;
+use cosmwasm_std::{CheckedFromRatioError, DivideByZeroError, OverflowError, StdError};
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -22,6 +22,15 @@ pub enum MarsError {
     Deserialize {
         target_type: String,
     },
+
+    #[error("{0}")]
+    Overflow(#[from] OverflowError),
+
+    #[error("{0}")]
+    DivideByZero(#[from] DivideByZeroError),
+
+    #[error("{0}")]
+    CheckedFromRatio(#[from] CheckedFromRatioError),
 }
 
 impl From<MarsError> for StdError {

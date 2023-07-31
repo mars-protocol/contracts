@@ -23,7 +23,6 @@ use mars_red_bank_types::{
     red_bank::{Collateral, Debt, ExecuteMsg, Market},
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
-use mars_utils::math;
 
 use crate::helpers::th_default_asset_params;
 
@@ -637,13 +636,12 @@ fn how_much_to_withdraw(suite: &HealthCheckTestSuite, block_time: u64) -> Uint12
         * prices[1];
 
     // How much to withdraw in base asset to have health factor equal to one
-    let how_much_to_withdraw_in_base_asset = math::divide_uint128_by_decimal(
-        weighted_liquidation_threshold_in_base_asset - total_collateralized_debt_in_base_asset,
-        asset_params[2].liquidation_threshold,
-    )
-    .unwrap();
+    let how_much_to_withdraw_in_base_asset = (weighted_liquidation_threshold_in_base_asset
+        - total_collateralized_debt_in_base_asset)
+        .checked_div_floor(asset_params[2].liquidation_threshold)
+        .unwrap();
 
-    math::divide_uint128_by_decimal(how_much_to_withdraw_in_base_asset, prices[2]).unwrap()
+    how_much_to_withdraw_in_base_asset.checked_div_floor(prices[2]).unwrap()
 }
 
 #[test]

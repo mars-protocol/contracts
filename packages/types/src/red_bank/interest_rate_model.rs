@@ -1,6 +1,8 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Decimal, StdError, StdResult};
-use mars_utils::{error::ValidationError, helpers::decimal_param_le_one, math};
+use cosmwasm_std::Decimal;
+use mars_utils::{error::ValidationError, helpers::decimal_param_le_one};
+
+use crate::error::MarsError;
 
 #[cw_serde]
 #[derive(Eq, Default)]
@@ -21,7 +23,7 @@ impl InterestRateModel {
         Ok(())
     }
 
-    pub fn get_borrow_rate(&self, current_utilization_rate: Decimal) -> StdResult<Decimal> {
+    pub fn get_borrow_rate(&self, current_utilization_rate: Decimal) -> Result<Decimal, MarsError> {
         let new_borrow_rate = if current_utilization_rate <= self.optimal_utilization_rate {
             if current_utilization_rate.is_zero() {
                 // prevent division by zero when optimal_utilization_rate is zero
@@ -29,20 +31,18 @@ impl InterestRateModel {
             } else {
                 // The borrow interest rates increase slowly with utilization
                 self.base
-                    + self.slope_1.checked_mul(math::divide_decimal_by_decimal(
-                        current_utilization_rate,
-                        self.optimal_utilization_rate,
-                    )?)?
+                    + self.slope_1.checked_mul(
+                        current_utilization_rate.checked_div(self.optimal_utilization_rate)?,
+                    )?
             }
         } else {
             // The borrow interest rates increase sharply with utilization
             self.base
                 + self.slope_1
-                + math::divide_decimal_by_decimal(
-                    self.slope_2
-                        .checked_mul(current_utilization_rate - self.optimal_utilization_rate)?,
-                    Decimal::one() - self.optimal_utilization_rate,
-                )?
+                + self
+                    .slope_2
+                    .checked_mul(current_utilization_rate - self.optimal_utilization_rate)?
+                    .checked_div(Decimal::one() - self.optimal_utilization_rate)?
         };
         Ok(new_borrow_rate)
     }
@@ -52,12 +52,11 @@ impl InterestRateModel {
         borrow_rate: Decimal,
         current_utilization_rate: Decimal,
         reserve_factor: Decimal,
-    ) -> StdResult<Decimal> {
-        borrow_rate
+    ) -> Result<Decimal, MarsError> {
+        Ok(borrow_rate
             .checked_mul(current_utilization_rate)?
             // This operation should not underflow as reserve_factor is checked to be <= 1
-            .checked_mul(Decimal::one() - reserve_factor)
-            .map_err(StdError::from)
+            .checked_mul(Decimal::one() - reserve_factor)?)
     }
 }
 
@@ -92,11 +91,12 @@ mod tests {
         market.update_interest_rates(utilization_rate).unwrap();
 
         let expected_borrow_rate = model.base
-            + math::divide_decimal_by_decimal(
-                model.slope_1.checked_mul(utilization_rate).unwrap(),
-                model.optimal_utilization_rate,
-            )
-            .unwrap();
+            + model
+                .slope_1
+                .checked_mul(utilization_rate)
+                .unwrap()
+                .checked_div(model.optimal_utilization_rate)
+                .unwrap();
 
         assert_eq!(market.borrow_rate, expected_borrow_rate);
         assert_eq!(
@@ -124,11 +124,12 @@ mod tests {
             let new_borrow_rate = model.get_borrow_rate(current_utilization_rate).unwrap();
 
             let expected_borrow_rate = model.base
-                + math::divide_decimal_by_decimal(
-                    model.slope_1.checked_mul(current_utilization_rate).unwrap(),
-                    model.optimal_utilization_rate,
-                )
-                .unwrap();
+                + model
+                    .slope_1
+                    .checked_mul(current_utilization_rate)
+                    .unwrap()
+                    .checked_div(model.optimal_utilization_rate)
+                    .unwrap();
 
             assert_eq!(new_borrow_rate, expected_borrow_rate);
         }
@@ -139,11 +140,12 @@ mod tests {
             let new_borrow_rate = model.get_borrow_rate(current_utilization_rate).unwrap();
 
             let expected_borrow_rate = model.base
-                + math::divide_decimal_by_decimal(
-                    model.slope_1.checked_mul(current_utilization_rate).unwrap(),
-                    model.optimal_utilization_rate,
-                )
-                .unwrap();
+                + model
+                    .slope_1
+                    .checked_mul(current_utilization_rate)
+                    .unwrap()
+                    .checked_div(model.optimal_utilization_rate)
+                    .unwrap();
 
             assert_eq!(new_borrow_rate, expected_borrow_rate);
         }
@@ -155,14 +157,12 @@ mod tests {
 
             let expected_borrow_rate = model.base
                 + model.slope_1
-                + math::divide_decimal_by_decimal(
-                    model
-                        .slope_2
-                        .checked_mul(current_utilization_rate - model.optimal_utilization_rate)
-                        .unwrap(),
-                    Decimal::one() - model.optimal_utilization_rate,
-                )
-                .unwrap();
+                + model
+                    .slope_2
+                    .checked_mul(current_utilization_rate - model.optimal_utilization_rate)
+                    .unwrap()
+                    .checked_div(Decimal::one() - model.optimal_utilization_rate)
+                    .unwrap();
 
             assert_eq!(new_borrow_rate, expected_borrow_rate);
         }
