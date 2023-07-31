@@ -1,28 +1,63 @@
 use mars_oracle_base::{ContractError, ContractResult};
-use mars_osmosis::helpers::{has_denom, Pool};
+use mars_osmosis::{
+    helpers::{CommonPoolData, Pool},
+    BalancerPool,
+};
 
 use crate::DowntimeDetector;
 
 /// 48 hours in seconds
 const TWO_DAYS_IN_SECONDS: u64 = 172800u64;
 
-/// Assert the Osmosis pool indicated by `pool_id` is of XYK type and assets are OSMO and `denom`
+/// Assert the Osmosis pool indicated by `pool_id` is of Balancer XYK or StableSwap and assets are OSMO and `denom`
 pub fn assert_osmosis_pool_assets(
     pool: &Pool,
     denom: &str,
     base_denom: &str,
 ) -> ContractResult<()> {
-    assert_osmosis_xyk_pool(pool)?;
+    match pool {
+        Pool::Balancer(balancer_pool) => {
+            assert_osmosis_xyk_pool(balancer_pool)?;
+        }
+        Pool::StableSwap(_) => {}
+    };
 
-    if !has_denom(base_denom, &pool.pool_assets) {
+    assert_osmosis_pool_contains_two_assets(pool, denom, base_denom)?;
+
+    Ok(())
+}
+
+/// Assert the Osmosis pool indicated by `pool_id` is Balancer XYK type
+pub fn assert_osmosis_xyk_lp_pool(pool: &Pool) -> ContractResult<()> {
+    match pool {
+        Pool::Balancer(balancer_pool) => assert_osmosis_xyk_pool(balancer_pool)?,
+        Pool::StableSwap(stable_swap_pool) => {
+            return Err(ContractError::InvalidPriceSource {
+                reason: format!("StableSwap pool not supported. Pool id {}", stable_swap_pool.id),
+            });
+        }
+    };
+
+    Ok(())
+}
+
+fn assert_osmosis_pool_contains_two_assets(
+    pool: &Pool,
+    denom: &str,
+    base_denom: &str,
+) -> ContractResult<()> {
+    let pool_id = pool.get_pool_id();
+    let pool_denoms = pool.get_pool_denoms();
+
+    if !pool_denoms.contains(&base_denom.to_string()) {
         return Err(ContractError::InvalidPriceSource {
-            reason: format!("pool {} does not contain the base denom {}", pool.id, base_denom),
+            reason: format!("pool {} does not contain the base denom {}", pool_id, base_denom),
         });
     }
 
-    if !has_denom(denom, &pool.pool_assets) {
+    if !pool_denoms.contains(&denom.to_string()) {
         return Err(ContractError::InvalidPriceSource {
-            reason: format!("pool {} does not contain {}", pool.id, denom),
+            reason: format!("pool {} does not contain {}", pool_id, denom),
         });
     }
 
@@ -30,7 +65,7 @@ pub fn assert_osmosis_pool_assets(
 }
 
 /// Assert the Osmosis pool indicated by `pool_id` is of XYK type
-pub fn assert_osmosis_xyk_pool(pool: &Pool) -> ContractResult<()> {
+pub fn assert_osmosis_xyk_pool(pool: &BalancerPool) -> ContractResult<()> {
     if pool.pool_assets.len() != 2 {
         return Err(ContractError::InvalidPriceSource {
             reason: format!(
