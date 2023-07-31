@@ -18,7 +18,6 @@ use mars_red_bank::{
 };
 use mars_red_bank_types::red_bank::{ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
-use mars_utils::math;
 
 use crate::helpers::th_default_asset_params;
 
@@ -965,10 +964,10 @@ fn borrow_collateral_check() {
             .unwrap()
             * exchange_rate_3);
     let exceeding_borrow_amount =
-        math::divide_uint128_by_decimal(max_borrow_allowed_in_base_asset, exchange_rate_2).unwrap()
+        max_borrow_allowed_in_base_asset.checked_div_floor(exchange_rate_2).unwrap()
             + Uint128::from(100_u64);
     let permissible_borrow_amount =
-        math::divide_uint128_by_decimal(max_borrow_allowed_in_base_asset, exchange_rate_2).unwrap()
+        max_borrow_allowed_in_base_asset.checked_div_floor(exchange_rate_2).unwrap()
             - Uint128::from(100_u64);
 
     // borrow above the allowed amount given current collateral, should fail

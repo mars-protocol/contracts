@@ -1,6 +1,5 @@
 use cosmwasm_std::{Decimal, StdError, StdResult, Uint128};
-use mars_red_bank_types::red_bank::Market;
-use mars_utils::math;
+use mars_red_bank_types::{error::MarsError, red_bank::Market};
 
 /// Scaling factor used to keep more precision during division / multiplication by index.
 pub const SCALING_FACTOR: Uint128 = Uint128::new(1_000_000);
@@ -31,7 +30,7 @@ pub fn get_scaled_liquidity_amount(
     amount: Uint128,
     market: &Market,
     timestamp: u64,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, MarsError> {
     compute_scaled_amount(
         amount,
         get_updated_liquidity_index(market, timestamp)?,
@@ -48,7 +47,7 @@ pub fn get_underlying_liquidity_amount(
     amount_scaled: Uint128,
     market: &Market,
     timestamp: u64,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, MarsError> {
     compute_underlying_amount(
         amount_scaled,
         get_updated_liquidity_index(market, timestamp)?,
@@ -68,7 +67,7 @@ pub fn get_scaled_debt_amount(
     amount: Uint128,
     market: &Market,
     timestamp: u64,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, MarsError> {
     compute_scaled_amount(
         amount,
         get_updated_borrow_index(market, timestamp)?,
@@ -85,7 +84,7 @@ pub fn get_underlying_debt_amount(
     amount_scaled: Uint128,
     market: &Market,
     timestamp: u64,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, MarsError> {
     compute_underlying_amount(
         amount_scaled,
         get_updated_borrow_index(market, timestamp)?,
@@ -108,12 +107,12 @@ pub fn compute_scaled_amount(
     amount: Uint128,
     index: Decimal,
     scaling_operation: ScalingOperation,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, MarsError> {
     // Scale by SCALING_FACTOR to have better precision
     let scaled_amount = amount.checked_mul(SCALING_FACTOR)?;
     match scaling_operation {
-        ScalingOperation::Truncate => math::divide_uint128_by_decimal(scaled_amount, index),
-        ScalingOperation::Ceil => math::divide_uint128_by_decimal_and_ceil(scaled_amount, index),
+        ScalingOperation::Truncate => Ok(scaled_amount.checked_div_floor(index)?),
+        ScalingOperation::Ceil => Ok(scaled_amount.checked_div_ceil(index)?),
     }
 }
 
@@ -123,7 +122,7 @@ pub fn compute_underlying_amount(
     scaled_amount: Uint128,
     index: Decimal,
     scaling_operation: ScalingOperation,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, MarsError> {
     // Multiply scaled amount by decimal (index)
     let before_scaling_factor = scaled_amount * index;
 
@@ -131,7 +130,8 @@ pub fn compute_underlying_amount(
     match scaling_operation {
         ScalingOperation::Truncate => Ok(before_scaling_factor.checked_div(SCALING_FACTOR)?),
         ScalingOperation::Ceil => {
-            math::uint128_checked_div_with_ceil(before_scaling_factor, SCALING_FACTOR)
+            let scaling_factor_dec = Decimal::from_ratio(SCALING_FACTOR, Uint128::one());
+            Ok(before_scaling_factor.checked_div_ceil(scaling_factor_dec)?)
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::str;
 
-use cosmwasm_std::{Addr, Decimal, Env, Event, Response, StdResult, Storage, Uint128};
+use cosmwasm_std::{Addr, Decimal, Env, Event, Response, Storage, Uint128};
 use mars_interest_rate::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     get_underlying_debt_amount, get_underlying_liquidity_amount, ScalingOperation,
@@ -26,7 +26,7 @@ pub fn apply_accumulated_interests(
     rewards_collector_addr: &Addr,
     incentives_addr: &Addr,
     mut response: Response,
-) -> StdResult<Response> {
+) -> Result<Response, ContractError> {
     let current_timestamp = env.block.time.seconds();
     let previous_borrow_index = market.borrow_index;
 
