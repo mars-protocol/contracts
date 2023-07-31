@@ -1164,6 +1164,18 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
     )
     .unwrap();
 
+    // We can simulate credit manager contract balance with own params address (used by params contract for deposit caps logic)
+    wasm.execute(
+        &addr_provider_addr,
+        &SetAddress {
+            address_type: MarsAddressType::CreditManager,
+            address: params_addr.clone(),
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
     let (market_params, asset_params) = default_asset_params("uosmo");
 
     wasm.execute(
