@@ -1741,6 +1741,7 @@ name = "mars-health"
 version = "1.2.0"
 dependencies = [
  "cosmwasm-std",
+ "mars-params",
  "mars-red-bank-types",
  "mars-testing",
  "thiserror",
@@ -1772,9 +1773,11 @@ dependencies = [
  "cosmwasm-std",
  "cw-it",
  "cw-multi-test",
+ "mars-incentives",
  "mars-oracle-base",
  "mars-oracle-osmosis",
  "mars-osmosis",
+ "mars-params",
  "mars-red-bank",
  "mars-red-bank-types",
  "mars-rewards-collector-osmosis",
@@ -1784,6 +1787,16 @@ dependencies = [
  "osmosis-std",
  "osmosis-test-tube",
  "serde",
+]
+
+[[package]]
+name = "mars-liquidation"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-std",
+ "mars-health",
+ "mars-params",
+ "thiserror",
 ]
 
 [[package]]
@@ -1846,6 +1859,7 @@ version = "1.2.0"
 dependencies = [
  "cosmwasm-std",
  "osmosis-std",
+ "prost 0.11.9",
  "serde",
 ]
 
@@ -1863,16 +1877,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-params"
+version = "1.0.7"
+dependencies = [
+ "anyhow",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus 1.1.0",
+ "cw2 1.1.0",
+ "mars-owner",
+ "mars-utils",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-red-bank"
 version = "1.2.0"
 dependencies = [
+ "anyhow",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-multi-test",
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
  "cw2 1.1.0",
  "mars-health",
+ "mars-liquidation",
  "mars-owner",
+ "mars-params",
  "mars-red-bank-types",
  "mars-testing",
  "mars-utils",
@@ -2021,6 +2056,7 @@ dependencies = [
  "mars-oracle-wasm",
  "mars-osmosis",
  "mars-owner",
+ "mars-params",
  "mars-red-bank",
  "mars-red-bank-types",
  "mars-rewards-collector-osmosis",
@@ -2221,9 +2257,9 @@ dependencies = [
 
 [[package]]
 name = "osmosis-test-tube"
-version = "16.0.1"
+version = "16.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "527375c01396e7e4de4ccc18a0141aeb6b342dc089d30c57282025f3a8753e72"
+checksum = "4929047d1dcec5d7d02fd0a00ecdfca78918d3a33bffc193bf57b3eeb4d407ab"
 dependencies = [
  "base64 0.13.1",
  "bindgen",
@@ -2981,9 +3017,9 @@ dependencies = [
 
 [[package]]
 name = "serde_repr"
-version = "0.1.15"
+version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e168eaaf71e8f9bd6037feb05190485708e019f4fd87d161b3c0a0d37daf85e5"
+checksum = "8725e1dfadb3a50f7e5ce0b1a540466f6ed3fe7a0fca2ac2b8b831d31316bd00"
 dependencies = [
  "proc-macro2",
  "quote",

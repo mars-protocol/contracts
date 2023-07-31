@@ -110,11 +110,13 @@ fn display_pyth_price_source() {
         )
         .unwrap(),
         max_staleness: 60,
+        max_confidence: Decimal::percent(10u64),
+        max_deviation: Decimal::percent(15u64),
         denom_decimals: 18,
     };
     assert_eq!(
             ps.to_string(),
-            "pyth:osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60:18"
+            "pyth:osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60:0.1:0.15:18"
         )
 }
 

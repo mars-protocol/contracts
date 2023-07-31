@@ -72,11 +72,13 @@ export interface MarsIncentivesReadOnlyInterface {
     startAfterTimestamp?: number
   }) => Promise<ArrayOfEmissionResponse>
   userUnclaimedRewards: ({
+    accountId,
     limit,
     startAfterCollateralDenom,
     startAfterIncentiveDenom,
     user,
   }: {
+    accountId?: string
     limit?: number
     startAfterCollateralDenom?: string
     startAfterIncentiveDenom?: string
@@ -186,11 +188,13 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     })
   }
   userUnclaimedRewards = async ({
+    accountId,
     limit,
     startAfterCollateralDenom,
     startAfterIncentiveDenom,
     user,
   }: {
+    accountId?: string
     limit?: number
     startAfterCollateralDenom?: string
     startAfterIncentiveDenom?: string
@@ -198,6 +202,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
   }): Promise<ArrayOfCoin> => {
     return this.client.queryContractSmart(this.contractAddress, {
       user_unclaimed_rewards: {
+        account_id: accountId,
         limit,
         start_after_collateral_denom: startAfterCollateralDenom,
         start_after_incentive_denom: startAfterIncentiveDenom,
@@ -246,11 +251,13 @@ export interface MarsIncentivesInterface extends MarsIncentivesReadOnlyInterface
   ) => Promise<ExecuteResult>
   balanceChange: (
     {
+      accountId,
       denom,
       totalAmountScaledBefore,
       userAddr,
       userAmountScaledBefore,
     }: {
+      accountId?: string
       denom: string
       totalAmountScaledBefore: Uint128
       userAddr: Addr
@@ -262,10 +269,12 @@ export interface MarsIncentivesInterface extends MarsIncentivesReadOnlyInterface
   ) => Promise<ExecuteResult>
   claimRewards: (
     {
+      accountId,
       limit,
       startAfterCollateralDenom,
       startAfterIncentiveDenom,
     }: {
+      accountId?: string
       limit?: number
       startAfterCollateralDenom?: string
       startAfterIncentiveDenom?: string
@@ -377,11 +386,13 @@ export class MarsIncentivesClient
   }
   balanceChange = async (
     {
+      accountId,
       denom,
       totalAmountScaledBefore,
       userAddr,
       userAmountScaledBefore,
     }: {
+      accountId?: string
       denom: string
       totalAmountScaledBefore: Uint128
       userAddr: Addr
@@ -396,6 +407,7 @@ export class MarsIncentivesClient
       this.contractAddress,
       {
         balance_change: {
+          account_id: accountId,
           denom,
           total_amount_scaled_before: totalAmountScaledBefore,
           user_addr: userAddr,
@@ -409,10 +421,12 @@ export class MarsIncentivesClient
   }
   claimRewards = async (
     {
+      accountId,
       limit,
       startAfterCollateralDenom,
       startAfterIncentiveDenom,
     }: {
+      accountId?: string
       limit?: number
       startAfterCollateralDenom?: string
       startAfterIncentiveDenom?: string
@@ -426,6 +440,7 @@ export class MarsIncentivesClient
       this.contractAddress,
       {
         claim_rewards: {
+          account_id: accountId,
           limit,
           start_after_collateral_denom: startAfterCollateralDenom,
           start_after_incentive_denom: startAfterIncentiveDenom,

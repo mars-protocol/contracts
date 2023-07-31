@@ -1,10 +1,11 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
+use mars_params::types::asset::LiquidationBonus;
 use mars_red_bank::error::ContractError;
 use mars_testing::integration::mock_env::{MockEnv, MockEnvBuilder, RedBank};
 
-use crate::helpers::{assert_err, default_asset_params, default_asset_params_with};
+use crate::helpers::{assert_red_bank_err, default_asset_params, default_asset_params_with};
 
 mod helpers;
 
@@ -18,8 +19,13 @@ fn user_flow() {
     oracle.set_price_source_fixed(&mut mock_env, "uatom", Decimal::from_ratio(12u128, 1u128));
     oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::one());
     let red_bank = mock_env.red_bank.clone();
-    red_bank.init_asset(&mut mock_env, "uatom", default_asset_params());
-    red_bank.init_asset(&mut mock_env, "uusdc", default_asset_params());
+    let params = mock_env.params.clone();
+    let (market_params, asset_params) = default_asset_params("uatom");
+    red_bank.init_asset(&mut mock_env, "uatom", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("uusdc");
+    red_bank.init_asset(&mut mock_env, "uusdc", market_params);
+    params.init_params(&mut mock_env, asset_params);
 
     // fund user_1 account with atom
     let user_1 = Addr::unchecked("user_1");
@@ -108,8 +114,13 @@ fn borrow_exact_liquidity() {
     oracle.set_price_source_fixed(&mut mock_env, "uatom", Decimal::from_ratio(12u128, 1u128));
     oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::one());
     let red_bank = mock_env.red_bank.clone();
-    red_bank.init_asset(&mut mock_env, "uatom", default_asset_params());
-    red_bank.init_asset(&mut mock_env, "uusdc", default_asset_params());
+    let params = mock_env.params.clone();
+    let (market_params, asset_params) = default_asset_params("uatom");
+    red_bank.init_asset(&mut mock_env, "uatom", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("uusdc");
+    red_bank.init_asset(&mut mock_env, "uusdc", market_params);
+    params.init_params(&mut mock_env, asset_params);
 
     // fund provider account with usdc
     let provider = Addr::unchecked("provider");
@@ -229,8 +240,13 @@ fn prepare_debt_for_repayment() -> (MockEnv, RedBank, Addr) {
     oracle.set_price_source_fixed(&mut mock_env, "uatom", Decimal::from_ratio(12u128, 1u128));
     oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::one());
     let red_bank = mock_env.red_bank.clone();
-    red_bank.init_asset(&mut mock_env, "uatom", default_asset_params());
-    red_bank.init_asset(&mut mock_env, "uusdc", default_asset_params());
+    let params = mock_env.params.clone();
+    let (market_params, asset_params) = default_asset_params("uatom");
+    red_bank.init_asset(&mut mock_env, "uatom", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("uusdc");
+    red_bank.init_asset(&mut mock_env, "uusdc", market_params);
+    params.init_params(&mut mock_env, asset_params);
 
     // fund user_1 account with atom
     let user_1 = Addr::unchecked("user_1");
@@ -275,17 +291,20 @@ fn internally_tracked_balances_used_for_borrow() {
     let borrower = Addr::unchecked("borrower");
     let borrower2 = Addr::unchecked("borrower2");
 
-    let close_factor = Decimal::percent(40);
     let atom_price = Decimal::from_ratio(12u128, 1u128);
     let osmo_price = Decimal::from_ratio(15u128, 10u128);
     let atom_max_ltv = Decimal::percent(60);
     let osmo_max_ltv = Decimal::percent(80);
     let atom_liq_threshold = Decimal::percent(75);
     let osmo_liq_threshold = Decimal::percent(90);
-    let atom_liq_bonus = Decimal::percent(2);
-    let osmo_liq_bonus = Decimal::percent(5);
+    let liq_bonus = LiquidationBonus {
+        starting_lb: Decimal::percent(0u64),
+        slope: Decimal::one(),
+        min_lb: Decimal::percent(0u64),
+        max_lb: Decimal::percent(5u64),
+    };
 
-    let mut mock_env = MockEnvBuilder::new(None, owner).close_factor(close_factor).build();
+    let mut mock_env = MockEnvBuilder::new(None, owner).build();
 
     // setup oracle prices
     let oracle = mock_env.oracle.clone();
@@ -294,16 +313,15 @@ fn internally_tracked_balances_used_for_borrow() {
 
     // setup Red Bank assets
     let red_bank = mock_env.red_bank.clone();
-    red_bank.init_asset(
-        &mut mock_env,
-        "uatom",
-        default_asset_params_with(atom_max_ltv, atom_liq_threshold, atom_liq_bonus),
-    );
-    red_bank.init_asset(
-        &mut mock_env,
-        "uosmo",
-        default_asset_params_with(osmo_max_ltv, osmo_liq_threshold, osmo_liq_bonus),
-    );
+    let params = mock_env.params.clone();
+    let (market_params, asset_params) =
+        default_asset_params_with("uatom", atom_max_ltv, atom_liq_threshold, liq_bonus.clone());
+    red_bank.init_asset(&mut mock_env, "uatom", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) =
+        default_asset_params_with("uosmo", osmo_max_ltv, osmo_liq_threshold, liq_bonus);
+    red_bank.init_asset(&mut mock_env, "uosmo", market_params);
+    params.init_params(&mut mock_env, asset_params);
 
     // initial deposit amount
     let funded_atom = 1u128; // 1 uatom
@@ -325,7 +343,7 @@ fn internally_tracked_balances_used_for_borrow() {
     mock_env.fund_account(&borrower2, &[coin(funded_osmo, "uosmo")]);
     red_bank.deposit(&mut mock_env, &borrower2, coin(funded_osmo, "uosmo")).unwrap();
     let res = red_bank.borrow(&mut mock_env, &borrower2, "uatom", donated_atom);
-    assert_err(
+    assert_red_bank_err(
         res,
         ContractError::InvalidBorrowAmount {
             denom: "uatom".to_string(),
@@ -356,8 +374,13 @@ fn interest_rates_accured_based_on_internally_tracked_balances() {
     oracle.set_price_source_fixed(&mut mock_env, "uatom", Decimal::from_ratio(12u128, 1u128));
     oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::one());
     let red_bank = mock_env.red_bank.clone();
-    red_bank.init_asset(&mut mock_env, "uatom", default_asset_params());
-    red_bank.init_asset(&mut mock_env, "uusdc", default_asset_params());
+    let params = mock_env.params.clone();
+    let (market_params, asset_params) = default_asset_params("uatom");
+    red_bank.init_asset(&mut mock_env, "uatom", market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = default_asset_params("uusdc");
+    red_bank.init_asset(&mut mock_env, "uusdc", market_params);
+    params.init_params(&mut mock_env, asset_params);
 
     // fund user_1 account with usdc
     let user_1 = Addr::unchecked("user_1");

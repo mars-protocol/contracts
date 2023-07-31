@@ -20,6 +20,7 @@ import {
   GeometricTwap,
   RedemptionRateForString,
   QueryMsg,
+  ActionKind,
   ConfigResponse,
   PriceResponse,
   PriceSourceResponseForString,
@@ -37,11 +38,13 @@ export interface MarsOracleOsmosisReadOnlyInterface {
     limit?: number
     startAfter?: string
   }) => Promise<ArrayOfPriceSourceResponseForString>
-  price: ({ denom }: { denom: string }) => Promise<PriceResponse>
+  price: ({ denom, kind }: { denom: string; kind?: ActionKind }) => Promise<PriceResponse>
   prices: ({
+    kind,
     limit,
     startAfter,
   }: {
+    kind?: ActionKind
     limit?: number
     startAfter?: string
   }) => Promise<ArrayOfPriceResponse>
@@ -86,22 +89,26 @@ export class MarsOracleOsmosisQueryClient implements MarsOracleOsmosisReadOnlyIn
       },
     })
   }
-  price = async ({ denom }: { denom: string }): Promise<PriceResponse> => {
+  price = async ({ denom, kind }: { denom: string; kind?: ActionKind }): Promise<PriceResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       price: {
         denom,
+        kind,
       },
     })
   }
   prices = async ({
+    kind,
     limit,
     startAfter,
   }: {
+    kind?: ActionKind
     limit?: number
     startAfter?: string
   }): Promise<ArrayOfPriceResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       prices: {
+        kind,
         limit,
         start_after: startAfter,
       },

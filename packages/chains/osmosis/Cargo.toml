@@ -21,3 +21,4 @@ backtraces = ["cosmwasm-std/backtraces"]
 cosmwasm-std = { workspace = true }
 osmosis-std  = { workspace = true }
 serde        = { workspace = true }
+prost        = { workspace = true }

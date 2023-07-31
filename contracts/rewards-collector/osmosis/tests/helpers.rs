@@ -5,11 +5,11 @@ use cosmwasm_std::{
     testing::{mock_env, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR},
     Coin, Decimal, Deps, OwnedDeps,
 };
-use mars_osmosis::helpers::{Pool, QueryPoolResponse};
+use mars_osmosis::BalancerPool;
 use mars_red_bank_types::rewards_collector::{Config, InstantiateMsg, QueryMsg};
 use mars_rewards_collector_osmosis::entry;
 use mars_testing::{mock_info, MarsMockQuerier};
-use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
+use osmosis_std::types::osmosis::{gamm::v1beta1::PoolAsset, poolmanager::v1beta1::PoolResponse};
 
 pub fn mock_instantiate_msg() -> InstantiateMsg {
     InstantiateMsg {
@@ -93,10 +93,10 @@ fn prepare_query_pool_response(
     assets: &[Coin],
     weights: &[u64],
     shares: &Coin,
-) -> QueryPoolResponse {
-    let pool = Pool {
+) -> PoolResponse {
+    let pool = BalancerPool {
         address: "address".to_string(),
-        id: pool_id.to_string(),
+        id: pool_id,
         pool_params: None,
         future_pool_governor: "future_pool_governor".to_string(),
         total_shares: Some(osmosis_std::types::cosmos::base::v1beta1::Coin {
@@ -106,8 +106,8 @@ fn prepare_query_pool_response(
         pool_assets: prepare_pool_assets(assets, weights),
         total_weight: "".to_string(),
     };
-    QueryPoolResponse {
-        pool,
+    PoolResponse {
+        pool: Some(pool.to_any()),
     }
 }
 

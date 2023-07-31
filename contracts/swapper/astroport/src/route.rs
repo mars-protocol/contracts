@@ -56,6 +56,7 @@ impl AstroportRoute {
                 contract_addr: self.oracle.clone(),
                 msg: to_binary(&mars_red_bank_types::oracle::QueryMsg::Price {
                     denom: denom.to_string(),
+                    kind: None,
                 })?,
             }))
             .map(|res| res.price)
