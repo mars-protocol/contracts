@@ -27,7 +27,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: mars-artifacts
+          name: mars-artifacts-${{ github.sha }}
           retention-days: 7
           path: |
             artifacts
