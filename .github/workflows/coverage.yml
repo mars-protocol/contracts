@@ -33,9 +33,8 @@ jobs:
       - name: Compile workspace
         run: cargo make build
 
-      # FIXME: disable because of "no space left" in github pipeline
-      # - name: Run test
-      #   run: cargo make test
+      - name: Run test
+        run: cargo make test
 
       # disabled because of "no space left" error.
       # - name: Run test coverage
