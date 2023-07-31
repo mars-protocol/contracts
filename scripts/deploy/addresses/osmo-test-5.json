@@ -1,5 +1,4 @@
 {
-<<<<<<< Updated upstream
   "address-provider": "osmo1uc6w32l8hr5qkjk3r6jpw8pcmzgdlm698zpj8elymrzcgc4se40qqjalkk",
   "red-bank": "osmo1anculkxrl75g73c8wgplx9vz32akhlaz6xk397qz28tujzwnn5yqxjamyn",
   "incentives": "osmo14uwwmutdjtdsx8yr7mk88el2yrjv5wnq4hsv0fxw24txdq3d0urqthfaws",
@@ -7,13 +6,4 @@
   "rewards-collector": "osmo1px2s0dt25h5964auc7eqd45w5wjr3tt7a7809p85gw0pudqewnrq4fm4ay",
   "swapper": "osmo1v296m5sallzv64q7grxc4gw9dp88cdvk2w9pr5aum89jk8ek7lfqxkere6",
   "params": "osmo1g6n8fsvyzek8esq6w6lg9n3mmasmhzrt8lh4htzswf6fyfwg9hhq2pch52"
-=======
-  "address-provider": "osmo1gedkuwxln4d2n8etvmthkpdfam4rv94k5ga6wgqg4ghemekv2z5srq22wn",
-  "red-bank": "osmo1qdcvtrq4d2jd7hrhq98cnr53n7jeg8z75kwjj973metgpmzsct2sdr5azp",
-  "incentives": "osmo1vudgtf6rjyv62zp8lpzv8sqpftt7c2zytpkeks5u9sl3z2dmnreqpj6pgj",
-  "oracle": "osmo170njcxeh0hr4z7d6cfu0s94ewy9alvyelvwrpjgxvpsydavh3deqyz9nzs",
-  "rewards-collector": "osmo16k73sc7grdnjgtm3ljklwyf7mx2fta5stxp0hq9lcs6sullxsugsc37rr2",
-  "swapper": "osmo1jca7p8nzfjetrp4efmsa0f4jtq90ncppzhnu27fzmfukfamjvsxqjg6a44",
-  "params": "osmo13vx944l068tyztsa6ky0m8hyzg5nqvpksl72pnqdcmvc8ewttv9q8z6tl7"
->>>>>>> Stashed changes
 }
