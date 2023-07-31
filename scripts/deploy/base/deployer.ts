@@ -175,6 +175,7 @@ export class Deployer {
   async instantiateParams() {
     const msg: ParamsInstantiateMsg = {
       owner: this.deployerAddress,
+      address_provider: this.storage.addresses['address-provider']!,
       target_health_factor: this.config.targetHealthFactor,
     }
     await this.instantiate('params', this.storage.codeIds.params!, msg)
